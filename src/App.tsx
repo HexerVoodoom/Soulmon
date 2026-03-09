@@ -349,7 +349,7 @@ export default function App() {
       // Check poop event
       if (gameState.poopEventScheduled && !gameState.poopEventCompleted && !careEvent) {
         const timeSinceScheduled = now - gameState.poopEventScheduled;
-        
+
         // Show request message
         if (timeSinceScheduled >= 0 && timeSinceScheduled < 5 * 60 * 1000) {
           if (!careEvent || careEvent.type !== 'poop') {
@@ -378,33 +378,33 @@ export default function App() {
             return;
           }
 
-        const timeSinceScheduled = now - foodTime;
-        
-        // Show request message
-        if (timeSinceScheduled >= 0 && timeSinceScheduled < 5 * 60 * 1000) {
-          if (!careEvent || careEvent.type !== 'food') {
+          const timeSinceScheduled = now - foodTime;
+
+          // Show request message
+          if (timeSinceScheduled >= 0 && timeSinceScheduled < 5 * 60 * 1000) {
+            if (!careEvent || careEvent.type !== 'food') {
+              setCareEvent({
+                type: 'food',
+                requestTime: foodTime,
+                showSprite: false,
+              });
+              setMessageTrigger(prev => prev + 1);
+            }
+          }
+          // After 5 minutes, show sprite and reduce HP
+          else if (timeSinceScheduled >= 5 * 60 * 1000 && timeSinceScheduled < 6 * 60 * 1000) {
             setCareEvent({
               type: 'food',
               requestTime: foodTime,
-              showSprite: false,
+              showSprite: true,
             });
-            setMessageTrigger(prev => prev + 1);
+            // Reduce HP by 2 (one full heart)
+            setGameState(prev => ({
+              ...prev,
+              healthPoints: Math.max(0, prev.healthPoints - 2),
+              foodEventsCompleted: [...(prev.foodEventsCompleted || []), index],
+            }));
           }
-        }
-        // After 5 minutes, show sprite and reduce HP
-        else if (timeSinceScheduled >= 5 * 60 * 1000 && timeSinceScheduled < 6 * 60 * 1000) {
-          setCareEvent({
-            type: 'food',
-            requestTime: foodTime,
-            showSprite: true,
-          });
-          // Reduce HP by 2 (one full heart)
-          setGameState(prev => ({
-            ...prev,
-            healthPoints: Math.max(0, prev.healthPoints - 2),
-            foodEventsCompleted: [...(prev.foodEventsCompleted || []), index],
-          }));
-        }
         });
       }
     }, 10000); // Check every 10 seconds
@@ -427,12 +427,12 @@ export default function App() {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(0, 0, 0, 0);
-      
+
       const diff = tomorrow.getTime() - now.getTime();
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      
+
       setTimeUntilReset(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
 
       // Check if we need to reset
@@ -454,19 +454,19 @@ export default function App() {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayString = yesterday.toDateString();
       const yesterdayWeekDay = yesterday.getDay();
-      
+
       // Get required for current stage
       const currentLevel = getStageLevel(prev.evolutionStage);
       const requirements = FORM_REQUIREMENTS[currentLevel];
       const requiredToday = requirements.required;
-      
+
       // Calcula quantas atividades/tasks foram completas de ONTEM
       let dailyDone = 0;
-      
+
       const availableActivities = !canSelectWeekdays(prev.evolutionStage)
         ? prev.activities
         : prev.activities.filter(a => a.weekDays?.includes(yesterdayWeekDay));
-      
+
       availableActivities.forEach(activity => {
         let isComplete = false;
         if (activity.steps.length > 0) {
@@ -476,12 +476,12 @@ export default function App() {
         }
         if (isComplete) dailyDone++;
       });
-      
+
       dailyDone += prev.tasks.filter(t => t.completed).length;
-      
+
       // Dia perfeito = completou o required
       const dayWasPerfect = dailyDone >= requiredToday;
-      
+
       let newHP = prev.healthPoints;
       let newPerfectDays = prev.perfectDays;
       let newXP = prev.totalXP;
@@ -492,48 +492,48 @@ export default function App() {
       let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
       let wasDegeneratedByHP = false;
       let newMaxActivityCap = prev.maxActivityCap;
-      
+
       // Regra de HP: perde 1 HP se não completar nenhuma atividade
       if (dailyDone === 0) {
         newHP = Math.max(0, prev.healthPoints - 1);
       }
-      
+
       // Dia perfeito: ganha 1 ponto de progresso
       if (dayWasPerfect) {
         newPerfectDays++;
-        
+
         // Calcula atributos das atividades completadas
         let dailyVirus = 0;
         let dailyData = 0;
         let dailyVaccine = 0;
-        
+
         availableActivities.forEach(activity => {
           const attrs = CATEGORY_ATTRIBUTES[activity.category];
           dailyVirus += attrs.virus;
           dailyData += attrs.data;
           dailyVaccine += attrs.vaccine;
         });
-        
+
         newVirusPoints += dailyVirus;
         newDataPoints += dailyData;
         newVaccinePoints += dailyVaccine;
-        
+
         const dailyXP = (dailyVirus + dailyData + dailyVaccine) * 10;
         newXP += dailyXP;
       }
-      
+
       // Verifica evolução baseada em perfectDays
       if (newPerfectDays >= requirements.required) {
         // Pronto para evoluir!
         newPerfectDays = 0; // Reset para a próxima forma
-        
+
         // Determina próxima evolução baseada no branch
         const dominantAttr = Math.max(newVirusPoints, newDataPoints, newVaccinePoints);
         let branch = prev.currentBranch;
         if (newVirusPoints === dominantAttr) branch = 'virus';
         else if (newDataPoints === dominantAttr) branch = 'data';
         else if (newVaccinePoints === dominantAttr) branch = 'vaccine';
-        
+
         // Evolução simples baseada na forma atual
         if (prev.evolutionStage === 'digiegg') {
           newEvolutionStage = 'pichimon';
@@ -561,34 +561,34 @@ export default function App() {
           else newEvolutionStage = 'ultimatebrachiomon';
         } else if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(prev.evolutionStage)) {
           // Só evolui para Ultra se tiver os 3 megas
-          const hasAllMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'].every(m => 
+          const hasAllMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'].every(m =>
             prev.unlockedEvolutions.includes(m)
           );
           if (hasAllMegas) {
             newEvolutionStage = 'gaioumon-itto';
           }
         }
-        
+
         // Atualiza HP para o máximo da nova forma
         const newStageLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[newStageLevel];
-        
+
         // Atualiza maxActivityCap se o novo nível tem cap maior
         const newCap = FORM_REQUIREMENTS[newStageLevel].cap;
         if (newCap > newMaxActivityCap) {
           newMaxActivityCap = newCap;
         }
-        
+
         // Adiciona aos desbloqueados
         if (!finalUnlockedEvolutions.includes(newEvolutionStage)) {
           finalUnlockedEvolutions.push(newEvolutionStage);
         }
       }
-      
+
       // Degeneração por HP zerado
       if (newHP === 0) {
         wasDegeneratedByHP = true;
-        
+
         // Devolve para forma anterior
         if (prev.evolutionStage === 'gaioumon-itto') {
           newEvolutionStage = ['gaioumon', 'ultimatebrachiomon', 'titamon'][Math.floor(Math.random() * 3)];
@@ -605,11 +605,11 @@ export default function App() {
         } else if (prev.evolutionStage === 'pichimon') {
           newEvolutionStage = 'digiegg';
         }
-        
+
         // Restaura HP da nova forma
         const degeneratedStageLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[degeneratedStageLevel];
-        
+
         // Dá metade dos dias necessários já preenchidos
         const degeneratedRequirements = FORM_REQUIREMENTS[degeneratedStageLevel];
         newPerfectDays = Math.floor(degeneratedRequirements.required / 2);
@@ -621,13 +621,13 @@ export default function App() {
         steps: activity.steps.map(step => ({ ...step, completed: false })),
         completedToday: false,
       }));
-      
+
       // Reset tasks
       const resetTasks = prev.tasks.map(task => ({
         ...task,
         completed: false,
       }));
-      
+
       // Atualiza maxHP baseado na nova forma
       const newStageLevel = getStageLevel(newEvolutionStage);
       const newMaxHP = MAX_HP_BY_FORM[newStageLevel];
@@ -663,7 +663,7 @@ export default function App() {
   const calculateDailyTotal = () => {
     const today = new Date().toDateString();
     const todayWeekDay = new Date().getDay();
-    
+
     // Antes de Rookie: todas as atividades/tasks são diárias (sempre disponíveis)
     if (!canSelectWeekdays(gameState.evolutionStage)) {
       // Inclui tasks históricas completadas hoje
@@ -671,19 +671,19 @@ export default function App() {
         const completedDate = new Date(ct.completedAt).toDateString();
         return completedDate === today;
       });
-      
+
       return gameState.activities.length + gameState.tasks.length + tasksCompletedToday.length;
     }
-    
+
     // A partir de Rookie: filtra por dia da semana
     const availableActivities = gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-    
+
     // Inclui tasks históricas completadas hoje
     const tasksCompletedToday = gameState.completedTasks.filter(ct => {
       const completedDate = new Date(ct.completedAt).toDateString();
       return completedDate === today;
     });
-    
+
     return availableActivities.length + gameState.tasks.length + tasksCompletedToday.length;
   };
 
@@ -691,39 +691,39 @@ export default function App() {
   const calculateDailyDone = () => {
     const today = new Date().toDateString();
     const todayWeekDay = new Date().getDay();
-    
+
     let completedCount = 0;
-    
+
     // Filtra atividades disponíveis para hoje
     const availableActivities = !canSelectWeekdays(gameState.evolutionStage)
       ? gameState.activities
       : gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-    
+
     availableActivities.forEach(activity => {
       let isComplete = false;
-      
+
       if (activity.steps.length > 0) {
         isComplete = activity.steps.every(s => s.completed);
       } else {
         isComplete = activity.completedToday && activity.lastCompletedDate === today;
       }
-      
+
       if (isComplete) {
         completedCount++;
       }
     });
-    
+
     // Adiciona tasks completas ATIVAS
     completedCount += gameState.tasks.filter(t => t.completed).length;
-    
+
     // NOVO: Adiciona tasks HISTÓRICAS completadas HOJE
     const tasksCompletedToday = gameState.completedTasks.filter(ct => {
       const completedDate = new Date(ct.completedAt).toDateString();
       return completedDate === today;
     });
-    
+
     completedCount += tasksCompletedToday.length;
-    
+
     return completedCount;
   };
 
@@ -738,13 +738,13 @@ export default function App() {
   const calculateProgress = () => {
     const today = new Date().toDateString();
     const todayWeekDay = new Date().getDay();
-    
+
     // Filtra apenas atividades programadas para hoje
     const availableActivities = gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-    
+
     let totalItems = 0;
     let completedItems = 0;
-    
+
     availableActivities.forEach(activity => {
       if (activity.steps.length > 0) {
         // Atividade com etapas - conta cada step
@@ -758,20 +758,20 @@ export default function App() {
         }
       }
     });
-    
+
     // Adiciona tasks ATIVAS (ainda na lista)
     totalItems += gameState.tasks.length;
     completedItems += gameState.tasks.filter(t => t.completed).length;
-    
+
     // NOVO: Adiciona tasks HISTÓRICAS completadas HOJE (já removidas da lista)
     const tasksCompletedToday = gameState.completedTasks.filter(ct => {
       const completedDate = new Date(ct.completedAt).toDateString();
       return completedDate === today;
     });
-    
+
     totalItems += tasksCompletedToday.length;
     completedItems += tasksCompletedToday.length; // Todas já estão completas
-    
+
     return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
   };
 
@@ -784,7 +784,7 @@ export default function App() {
 
     gameState.activities.forEach(activity => {
       let isComplete = false;
-      
+
       if (activity.steps.length > 0) {
         // Atividade com etapas
         isComplete = activity.steps.every(s => s.completed);
@@ -792,7 +792,7 @@ export default function App() {
         // Atividade sem etapas
         isComplete = activity.completedToday && activity.lastCompletedDate === today;
       }
-      
+
       if (isComplete) {
         const attrs = CATEGORY_ATTRIBUTES[activity.category];
         virus += attrs.virus;
@@ -869,9 +869,9 @@ export default function App() {
   const getDominantBranch = (): 'virus' | 'data' | 'vaccine' | 'balanced' => {
     const { virusPoints, dataPoints, vaccinePoints } = gameState;
     const total = virusPoints + dataPoints + vaccinePoints;
-    
+
     if (total === 0) return 'balanced';
-    
+
     const max = Math.max(virusPoints, dataPoints, vaccinePoints);
     if (virusPoints === max && virusPoints > dataPoints && virusPoints > vaccinePoints) return 'virus';
     if (dataPoints === max && dataPoints > virusPoints && dataPoints > vaccinePoints) return 'data';
@@ -921,11 +921,11 @@ export default function App() {
         const updatedActivities = prev.activities.map(act =>
           act.id === activityId
             ? {
-                ...act,
-                steps: act.steps.map(s =>
-                  s.id === stepId ? { ...s, completed: true } : s
-                ),
-              }
+              ...act,
+              steps: act.steps.map(s =>
+                s.id === stepId ? { ...s, completed: true } : s
+              ),
+            }
             : act
         );
 
@@ -959,26 +959,26 @@ export default function App() {
           activityStats: newActivityStats,
         };
       });
-      
+
       // Check if this is the first task/step ever completed and show popup
       if (!hasShownFirstTaskPopup) {
         // Check if ANY step has been completed before this one
-        const anyStepCompleted = gameState.activities.some(a => 
+        const anyStepCompleted = gameState.activities.some(a =>
           a.steps.some(s => s.completed && s.id !== stepId)
         ) || gameState.tasks.some(t => t.completed);
-        
+
         if (!anyStepCompleted) {
           setShowFirstTaskPopup(true);
           setHasShownFirstTaskPopup(true);
           localStorage.setItem('digiapp-first-task-popup-shown', 'true');
         }
       }
-      
+
       // If there's an active care event, complete it
       if (careEvent) {
         handleCareEventComplete();
       }
-      
+
       // Trigger message bubble
       setMessageTrigger(prev => prev + 1);
     }
@@ -987,7 +987,7 @@ export default function App() {
   // Handler para atividades sem etapas
   const handleToggleActivityCompletion = (activityId: string) => {
     const today = new Date().toDateString();
-    
+
     setGameState(prev => {
       const activity = prev.activities.find(a => a.id === activityId);
       if (!activity) return prev;
@@ -998,10 +998,10 @@ export default function App() {
       const updatedActivities = prev.activities.map(act =>
         act.id === activityId
           ? {
-              ...act,
-              completedToday: newCompletedState,
-              lastCompletedDate: newCompletedState ? today : act.lastCompletedDate,
-            }
+            ...act,
+            completedToday: newCompletedState,
+            lastCompletedDate: newCompletedState ? today : act.lastCompletedDate,
+          }
           : act
       );
 
@@ -1034,22 +1034,22 @@ export default function App() {
 
     // Check if this is the first task ever completed and show popup
     if (!hasShownFirstTaskPopup) {
-      const anyTaskCompleted = gameState.activities.some(a => 
+      const anyTaskCompleted = gameState.activities.some(a =>
         a.steps.some(s => s.completed)
       ) || gameState.tasks.some(t => t.completed);
-      
+
       if (!anyTaskCompleted) {
         setShowFirstTaskPopup(true);
         setHasShownFirstTaskPopup(true);
         localStorage.setItem('digiapp-first-task-popup-shown', 'true');
       }
     }
-    
+
     // If there's an active care event, complete it
     if (careEvent) {
       handleCareEventComplete();
     }
-    
+
     // Trigger message bubble
     setMessageTrigger(prev => prev + 1);
   };
@@ -1061,11 +1061,11 @@ export default function App() {
       activities: prev.activities.map(activity =>
         activity.id === activityId
           ? {
-              ...activity,
-              steps: activity.steps.map(step =>
-                step.id === stepId ? { ...step, completed: false } : step
-              ),
-            }
+            ...activity,
+            steps: activity.steps.map(step =>
+              step.id === stepId ? { ...step, completed: false } : step
+            ),
+          }
           : activity
       ),
     }));
@@ -1082,8 +1082,8 @@ export default function App() {
       setGameState(prev => ({
         ...prev,
         activities: prev.activities.map(activity =>
-          activity.id === editingActivity 
-            ? { ...activity, name: data.name, category: data.category as ActivityCategory, emoji: data.emoji, steps: data.steps } 
+          activity.id === editingActivity
+            ? { ...activity, name: data.name, category: data.category as ActivityCategory, emoji: data.emoji, steps: data.steps }
             : activity
         ),
       }));
@@ -1122,7 +1122,7 @@ export default function App() {
     points: { virus: number; data: number; vaccine: number };
   }) => {
     console.log('AI creating activity:', activity);
-    
+
     // Map AI category to ActivityCategory
     const categoryMap: { [key: string]: ActivityCategory } = {
       'Physical': 'Health',
@@ -1130,9 +1130,9 @@ export default function App() {
       'Social': 'Social',
       'Creative': 'Creativity'
     };
-    
+
     const category = categoryMap[activity.category] || 'Study';
-    
+
     // Get emoji based on category
     const emojiMap: { [key: string]: string } = {
       'Health': '💪',
@@ -1140,9 +1140,9 @@ export default function App() {
       'Social': '👥',
       'Creativity': '🎨'
     };
-    
+
     const emoji = emojiMap[category] || '✨';
-    
+
     // Create auto-generated steps based on category and points
     const steps: Step[] = [
       {
@@ -1151,7 +1151,7 @@ export default function App() {
         completed: false
       }
     ];
-    
+
     // Create the activity with custom points
     const newActivity: Activity = {
       id: Date.now().toString(),
@@ -1161,15 +1161,15 @@ export default function App() {
       steps,
       weekDays: [0, 1, 2, 3, 4, 5, 6], // Available all days by default
     };
-    
+
     setGameState(prev => ({
       ...prev,
       activities: [...prev.activities, newActivity],
     }));
-    
+
     // Trigger message bubble
     setMessageTrigger(prev => prev + 1);
-    
+
     console.log('Activity created successfully:', newActivity);
   };
 
@@ -1186,8 +1186,8 @@ export default function App() {
       setGameState(prev => ({
         ...prev,
         tasks: prev.tasks.map(task =>
-          task.id === editingTask 
-            ? { ...task, name: data.name, category: data.category as ActivityCategory, emoji: data.emoji } 
+          task.id === editingTask
+            ? { ...task, name: data.name, category: data.category as ActivityCategory, emoji: data.emoji }
             : task
         ),
       }));
@@ -1224,10 +1224,10 @@ export default function App() {
 
       // Check if this is the first task ever completed and show popup
       if (!hasShownFirstTaskPopup) {
-        const anyStepCompleted = gameState.activities.some(a => 
+        const anyStepCompleted = gameState.activities.some(a =>
           a.steps.some(s => s.completed)
         ) || gameState.tasks.some(t => t.completed && t.id !== taskId);
-        
+
         if (!anyStepCompleted) {
           setShowFirstTaskPopup(true);
           setHasShownFirstTaskPopup(true);
@@ -1238,7 +1238,7 @@ export default function App() {
       // After 3 seconds, add points, save to history, and remove from list
       setTimeout(() => {
         const attrs = CATEGORY_ATTRIBUTES[task.category];
-        
+
         setGameState(prev => {
           // Increment activity stats if activity exists
           const activityKey = `task-${task.name}-${task.category}`;
@@ -1305,13 +1305,13 @@ export default function App() {
       let newEvolutionStage = prev.evolutionStage;
       let newHP = prev.healthPoints;
       let newSegmentsNeeded = prev.digivolutionSegmentsNeeded;
-      
+
       // Determine evolution based on current stage and dominant attribute
       const dominantAttr = Math.max(prev.virusPoints, prev.dataPoints, prev.vaccinePoints);
       const isVirus = prev.virusPoints === dominantAttr && prev.virusPoints > 0;
       const isData = prev.dataPoints === dominantAttr && prev.dataPoints > 0;
       const isVaccine = prev.vaccinePoints === dominantAttr && prev.vaccinePoints > 0;
-      
+
       // Evolve to next stage
       if (prev.evolutionStage === 'digiegg') {
         newEvolutionStage = 'pichimon';
@@ -1341,9 +1341,9 @@ export default function App() {
         newEvolutionStage = 'gaioumon-itto';
         newSegmentsNeeded = 999;
       }
-      
+
       newHP = getMaxHPForStage(newEvolutionStage);
-      
+
       return {
         ...prev,
         evolutionStage: newEvolutionStage,
@@ -1364,9 +1364,9 @@ export default function App() {
         return { ...prev, poopEventCompleted: true };
       } else {
         const eventIndex = (prev.foodEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
-        return { 
-          ...prev, 
-          foodEventsCompleted: [...(prev.foodEventsCompleted || []), eventIndex] 
+        return {
+          ...prev,
+          foodEventsCompleted: [...(prev.foodEventsCompleted || []), eventIndex]
         };
       }
     });
@@ -1398,7 +1398,7 @@ export default function App() {
       if (!newStage) return prev;
 
       const newHP = getMaxHPForStage(newStage);
-      
+
       return {
         ...prev,
         evolutionStage: newStage,
@@ -1439,7 +1439,7 @@ export default function App() {
       if (!isRookieOrHigher) return prev;
 
       const newHP = getMaxHPForStage(newStage);
-      
+
       return {
         ...prev,
         evolutionStage: newStage,
@@ -1544,26 +1544,26 @@ export default function App() {
         setNotificationsEnabled(true);
       } else {
         // User denied permission - provide detailed instructions
-        const message = language === 'pt-BR' 
+        const message = language === 'pt-BR'
           ? '🔔 Permissão de Notificações Negada\n\n' +
-            'Para habilitar notificações:\n\n' +
-            '1. Clique no ícone de cadeado 🔒 (ou ⓘ) na barra de endereço\n' +
-            '2. Procure por "Notificações" nas configurações do site\n' +
-            '3. Altere para "Permitir"\n' +
-            '4. Recarregue a página\n' +
-            '5. Volte em Configurações > Notificações e ative novamente\n\n' +
-            '💡 Você também pode acessar:\n' +
-            'Configurações do navegador > Privacidade e Segurança > Configurações do site > Notificações'
+          'Para habilitar notificações:\n\n' +
+          '1. Clique no ícone de cadeado 🔒 (ou ⓘ) na barra de endereço\n' +
+          '2. Procure por "Notificações" nas configurações do site\n' +
+          '3. Altere para "Permitir"\n' +
+          '4. Recarregue a página\n' +
+          '5. Volte em Configurações > Notificações e ative novamente\n\n' +
+          '💡 Você também pode acessar:\n' +
+          'Configurações do navegador > Privacidade e Segurança > Configurações do site > Notificações'
           : '🔔 Notification Permission Denied\n\n' +
-            'To enable notifications:\n\n' +
-            '1. Click the lock icon 🔒 (or ⓘ) in the address bar\n' +
-            '2. Look for "Notifications" in site settings\n' +
-            '3. Change to "Allow"\n' +
-            '4. Reload the page\n' +
-            '5. Go back to Settings > Notifications and enable again\n\n' +
-            '💡 You can also access:\n' +
-            'Browser settings > Privacy and Security > Site Settings > Notifications';
-        
+          'To enable notifications:\n\n' +
+          '1. Click the lock icon 🔒 (or ⓘ) in the address bar\n' +
+          '2. Look for "Notifications" in site settings\n' +
+          '3. Change to "Allow"\n' +
+          '4. Reload the page\n' +
+          '5. Go back to Settings > Notifications and enable again\n\n' +
+          '💡 You can also access:\n' +
+          'Browser settings > Privacy and Security > Site Settings > Notifications';
+
         alert(message);
       }
     } else {
@@ -1578,20 +1578,18 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen ${
-      theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()
-    }`}>
-      <div className={`w-full h-screen overflow-hidden flex flex-col relative ${
-        theme === 'default' ? 'bg-gray-50' : getContainerClass()
+    <div className={`min-h-screen ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()
       }`}>
+      <div className={`w-full h-screen overflow-hidden flex flex-col relative ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
+        }`}>
         {/* Fixed Header */}
         <div className="flex-shrink-0">
           <Header
             title={
-              currentView === 'main' ? 'Home' : 
-              currentView === 'evolution' ? 'Digivolution Path' :
-              currentView === 'stats' ? 'Statistics' :
-              'Settings'
+              currentView === 'main' ? 'Home' :
+                currentView === 'evolution' ? 'Digivolution Path' :
+                  currentView === 'stats' ? 'Statistics' :
+                    'Settings'
             }
             subtitle={currentView === 'main' ? getCurrentDay() : undefined}
             currentView={currentView}
@@ -1605,7 +1603,7 @@ export default function App() {
         <div className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3' : 'px-6 pt-3'} pb-[380px]`}>
           {currentView === 'main' && (
             <div className="space-y-3">
-              <AttributeBadges 
+              <AttributeBadges
                 virusPoints={gameState.virusPoints}
                 dataPoints={gameState.dataPoints}
                 vaccinePoints={gameState.vaccinePoints}
@@ -1616,7 +1614,7 @@ export default function App() {
 
               {gameState.tasks.length === 0 && gameState.activities.length === 0 ? (
                 <div className="flex items-center justify-center" style={{ minHeight: '300px' }}>
-                  <p 
+                  <p
                     className="text-gray-400"
                     style={{ fontFamily: 'monospace', fontSize: '1.25rem' }}
                   >
@@ -1650,10 +1648,10 @@ export default function App() {
                     const todayString = new Date().toDateString();
                     const availableActivities = gameState.activities.filter(a => a.weekDays?.includes(today));
                     const unavailableActivities = gameState.activities.filter(a => !a.weekDays?.includes(today));
-                    
+
                     // Combine and sort: incomplete first, completed last
                     const allActivities = [...availableActivities, ...unavailableActivities].map(activity => {
-                      const isComplete = activity.steps.length > 0 
+                      const isComplete = activity.steps.length > 0
                         ? activity.steps.every(s => s.completed)
                         : (activity.completedToday && activity.lastCompletedDate === todayString);
                       return { ...activity, isComplete };
@@ -1664,7 +1662,7 @@ export default function App() {
 
                     return allActivities.map(activity => {
                       const isAvailable = activity.weekDays?.includes(today);
-                      
+
                       return (
                         <ActivityCard
                           key={activity.id}
@@ -1716,6 +1714,7 @@ export default function App() {
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
               theme={theme}
+              language={language}
             />
           )}
 
@@ -1898,6 +1897,7 @@ export default function App() {
         completedTasks={gameState.completedTasks}
         activityStats={gameState.activityStats}
         theme={theme}
+        language={language}
       />
 
       {/* First Task Completed Popup */}
@@ -1913,7 +1913,7 @@ export default function App() {
         onClose={() => setShowRookieUnlockPopup(false)}
         theme={theme}
       />
-      
+
       {/* Guide Modal */}
       <GuideModal
         isOpen={guideModalOpen}

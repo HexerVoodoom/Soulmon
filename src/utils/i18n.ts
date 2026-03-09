@@ -114,6 +114,18 @@ export interface Translations {
     vaccine: string;
     evolutionTree: string;
     viewTree: string;
+    stats_history: string;
+    completed_activities: string;
+    no_activities: string;
+    completed_tasks: string;
+    no_tasks: string;
+    recent_history: string;
+    no_history: string;
+    just_now: string;
+    mins_ago: string;
+    hours_ago: string;
+    yesterday: string;
+    days_ago: string;
   };
 
   // Settings
@@ -379,6 +391,18 @@ export const translations: Record<Language, Translations> = {
       vaccine: 'Vaccine',
       evolutionTree: 'Evolution Tree',
       viewTree: 'View Tree',
+      stats_history: 'Stats & History',
+      completed_activities: 'Completed Activities',
+      no_activities: 'No activities completed yet.',
+      completed_tasks: 'Completed Tasks',
+      no_tasks: 'No tasks completed yet.',
+      recent_history: 'Recent History',
+      no_history: 'No history yet.',
+      just_now: 'Just now',
+      mins_ago: 'm ago',
+      hours_ago: 'h ago',
+      yesterday: 'Yesterday',
+      days_ago: 'd ago',
     },
 
     settings: {
