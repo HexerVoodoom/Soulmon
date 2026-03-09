@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DigiApp</string>
+    <string name="title_activity_main">DigiApp</string>
+    <string name="package_name">com.digipartner.digiapp</string>
+    <string name="custom_url_scheme">com.digipartner.digiapp</string>
+    <string name="widget_description">Atalhos rápidos para o DigiApp</string>
+</resources>

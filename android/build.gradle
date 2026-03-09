@@ -1,0 +1,53 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // EXPLICITLY put the working Bouncy Castle version on the classpath FIRST
+        classpath 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+        classpath 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
+        classpath 'org.bouncycastle:bcutil-jdk18on:1.78.1'
+        
+        classpath 'com.android.tools.build:gradle:8.2.1'
+        classpath 'com.google.gms:google-services:4.4.1'
+    }
+    
+    // Safety net: Keep resolution strategy
+    configurations.classpath {
+        resolutionStrategy {
+            force 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+            force 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
+            force 'org.bouncycastle:bcutil-jdk18on:1.78.1'
+        }
+    }
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    
+    // Force subprojects to also align (just in case)
+    configurations.all {
+        resolutionStrategy {
+            // Fix 1: Bouncy Castle (Java 21 vs 17 conflict)
+            force 'org.bouncycastle:bcprov-jdk18on:1.78.1'
+            force 'org.bouncycastle:bcpkix-jdk18on:1.78.1'
+            force 'org.bouncycastle:bcutil-jdk18on:1.78.1'
+
+            // Fix 2: Kotlin Duplicate Classes (1.8.22 vs 1.6.21)
+            force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
