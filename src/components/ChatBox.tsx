@@ -555,6 +555,8 @@ export function ChatBox({
           onKeyPress={handleKeyPress}
           placeholder={`Talk to ${digimonName}...`}
           disabled={isLoading}
+          autoComplete="off"
+          name="digital-companion-chat"
           className={
             isGlitch
               ? 'flex-1 px-3 py-2 bg-[#0a0a0a] border-2 border-[#00ffff] rounded-[4px] text-[#00ffff] placeholder-[#00ffff]/40 focus:outline-none focus:border-[#ff00ff] disabled:opacity-50 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'
