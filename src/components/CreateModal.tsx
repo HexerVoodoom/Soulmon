@@ -285,6 +285,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
             </label>
             <Input
               type="text"
+              autoComplete="new-password"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={txt.namePlaceholder}

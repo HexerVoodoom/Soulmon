@@ -211,7 +211,7 @@ export function TaskEditModal({
             </label>
             <input
               type="text"
-              autoComplete="off"
+              autoComplete="new-password"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 ${
@@ -492,7 +492,7 @@ export function TaskEditModal({
                   </label>
                   <input
                     type="time"
-                    autoComplete="off"
+                    autoComplete="new-password"
                     value={customAlarmTime}
                     onChange={(e) => handleCustomTimeChange(e.target.value)}
                     className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 ${isWin98 ? 'bg-white border-2 border-gray-400' : 'border-gray-300'}`}

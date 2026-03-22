@@ -555,7 +555,7 @@ export function ChatBox({
           onKeyPress={handleKeyPress}
           placeholder={`Talk to ${digimonName}...`}
           disabled={isLoading}
-          autoComplete="off"
+          autoComplete="new-password"
           name="digital-companion-chat"
           className={
             isGlitch

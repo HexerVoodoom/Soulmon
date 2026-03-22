@@ -239,7 +239,7 @@ export function AISettingsModal({
             </label>
             <textarea
               value={settings.customKeywords}
-              autoComplete="off"
+              autoComplete="new-password"
               onChange={(e) => setSettings({ ...settings, customKeywords: e.target.value })}
               placeholder="e.g., always say 'partner', avoid 'boss', use slang..."
               className={`w-full p-3 rounded border resize-none ${
@@ -272,7 +272,7 @@ export function AISettingsModal({
               max="1.0"
               step="0.05"
               value={settings.temperature}
-              autoComplete="off"
+              autoComplete="new-password"
               onChange={(e) => setSettings({ ...settings, temperature: parseFloat(e.target.value) })}
               className="w-full"
             />
