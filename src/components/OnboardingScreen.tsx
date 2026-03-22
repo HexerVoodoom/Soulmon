@@ -145,6 +145,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                 <div className="bg-[#0d1420] relative rounded-xl w-full">
                   <input
                     type="text"
+                    autoComplete="off"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleNameSubmit()}

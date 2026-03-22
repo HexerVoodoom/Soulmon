@@ -209,15 +209,16 @@ export function TaskEditModal({
             }`} style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>
               Name
             </label>
-            <Input
+            <input
               type="text"
+              autoComplete="off"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className={
+              className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 ${
                 isWin98
                   ? 'bg-white border-2 border-gray-400 text-black'
                   : 'border-gray-300 focus:border-teal-500 focus:ring-teal-500'
-              }
+              }`}
               style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
             />
           </div>
@@ -489,11 +490,12 @@ export function TaskEditModal({
                   <label className={`block mb-1 text-xs ${isWin98 ? 'text-black' : 'text-gray-600'}`} style={{ fontFamily: 'monospace' }}>
                     Time {hasDeadline ? 'custom' : ''}:
                   </label>
-                  <Input
+                  <input
                     type="time"
+                    autoComplete="off"
                     value={customAlarmTime}
                     onChange={(e) => handleCustomTimeChange(e.target.value)}
-                    className={isWin98 ? 'bg-white border-2 border-gray-400' : 'border-gray-300'}
+                    className={`w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 ${isWin98 ? 'bg-white border-2 border-gray-400' : 'border-gray-300'}`}
                     style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
                   />
                 </div>
