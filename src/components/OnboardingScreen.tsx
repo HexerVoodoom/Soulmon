@@ -43,6 +43,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [selectedEgg, setSelectedEgg] = useState<EggType | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [squashFrame, setSquashFrame] = useState(0);
+  
+  // Anti-autofill trick
+  const [isInputReadOnly, setIsInputReadOnly] = useState(true);
+  const [randomName] = useState(`obs-${Math.random().toString(36).substring(7)}`);
 
   // Squash/stretch animation
   useEffect(() => {
@@ -146,6 +150,14 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                   <input
                     type="text"
                     autoComplete="new-password"
+                    data-form-type="other"
+                    spellCheck="false"
+                    autoCapitalize="off"
+                    name={randomName}
+                    id={randomName}
+                    readOnly={isInputReadOnly}
+                    onFocus={() => setIsInputReadOnly(false)}
+                    onBlur={() => setIsInputReadOnly(true)}
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleNameSubmit()}

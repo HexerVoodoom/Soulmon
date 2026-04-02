@@ -37,6 +37,10 @@ export function ChatBox({
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  
+  // Anti-autofill trick
+  const [isInputReadOnly, setIsInputReadOnly] = useState(true);
+  const [randomName] = useState(`chat-${Math.random().toString(36).substring(7)}`);
 
   // Digimon responses based on keywords and mood
   const getDigimonResponse = (userMessage: string): string => {
@@ -553,10 +557,17 @@ export function ChatBox({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={handleKeyPress}
+          onFocus={() => setIsInputReadOnly(false)}
+          onBlur={() => setIsInputReadOnly(true)}
+          readOnly={isInputReadOnly}
           placeholder={`Talk to ${digimonName}...`}
           disabled={isLoading}
           autoComplete="new-password"
-          name="digital-companion-chat"
+          data-form-type="other"
+          spellCheck="false"
+          autoCapitalize="off"
+          name={randomName}
+          id={randomName}
           className={
             isGlitch
               ? 'flex-1 px-3 py-2 bg-[#0a0a0a] border-2 border-[#00ffff] rounded-[4px] text-[#00ffff] placeholder-[#00ffff]/40 focus:outline-none focus:border-[#ff00ff] disabled:opacity-50 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'

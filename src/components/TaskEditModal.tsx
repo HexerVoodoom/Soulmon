@@ -209,7 +209,7 @@ export function TaskEditModal({
             }`} style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>
               Name
             </label>
-            <input
+            <Input
               type="text"
               autoComplete="new-password"
               value={name}

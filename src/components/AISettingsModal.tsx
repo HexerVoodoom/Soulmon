@@ -240,6 +240,9 @@ export function AISettingsModal({
             <textarea
               value={settings.customKeywords}
               autoComplete="new-password"
+              data-form-type="other"
+              spellCheck="false"
+              autoCapitalize="off"
               onChange={(e) => setSettings({ ...settings, customKeywords: e.target.value })}
               placeholder="e.g., always say 'partner', avoid 'boss', use slang..."
               className={`w-full p-3 rounded border resize-none ${
