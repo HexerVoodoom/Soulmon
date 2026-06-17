@@ -47,6 +47,10 @@
                 android:resource="@xml/digiapp_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".notifications.AlarmReceiver"
+            android:exported="false" />
+
     </application>
 
     <!-- Permissions -->

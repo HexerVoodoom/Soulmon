@@ -17,6 +17,10 @@ class DigiAppWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onEnabled(context: Context) {
+        WidgetRefreshWorker.schedule(context)
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         if (intent.action == ACTION_UPDATE_WIDGET) {
@@ -72,13 +76,7 @@ class DigiAppWidgetProvider : AppWidgetProvider() {
         }
 
         private fun resolveSprite(context: Context, stage: String, eggType: String, branchType: String): Int {
-            val candidateName = when {
-                stage == "digiegg" -> "sprite_digiegg"
-                stage in listOf("pichimon", "chicomon", "yukimibotamon") -> "sprite_intraining1_$eggType"
-                stage in listOf("pukamon", "chibimon", "nyaromon") -> "sprite_intraining2_$eggType"
-                stage in listOf("tapirmon", "veemon", "plotmon") -> "sprite_rookie_$eggType"
-                else -> "sprite_${stage.replace("-", "_")}"
-            }
+            val candidateName = "sprite_${stage.replace("-", "_")}"
             val id = context.resources.getIdentifier(candidateName, "drawable", context.packageName)
             return if (id != 0) id else R.drawable.triceramon_dot
         }
