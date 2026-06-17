@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Plus, Trash2, Clock, Bell } from 'lucide-react';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -6,12 +6,7 @@ import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
-
-interface Step {
-  id: string;
-  label: string;
-  completed: boolean;
-}
+import { useItemForm } from '../hooks/useItemForm';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -60,77 +55,29 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
   const language: Language = 'en-US';
   const t = useTranslation(language);
   
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<ActivityCategory>(CATEGORIES[0]);
   const [isSingleExecution, setIsSingleExecution] = useState(false);
-  const [weekDays, setWeekDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]); // Por padrão todos os dias marcados
-  const [steps, setSteps] = useState<Step[]>([]);
-  
-  // Verifica se atingiu o cap (só para atividades, não para tasks)
+  const [weekDays, setWeekDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+
+  const {
+    name, setName,
+    category, setCategory,
+    steps,
+    hasDeadline, setHasDeadline,
+    deadlineDate, setDeadlineDate,
+    deadlineTime, setDeadlineTime,
+    hasAlarm, setHasAlarm,
+    selectedPreset,
+    customAlarmTime,
+    handlePresetClick,
+    handleCustomTimeChange,
+    handleAddStep,
+    handleUpdateStepLabel,
+    handleDeleteStep,
+    buildAlarm,
+    buildDeadline,
+  } = useItemForm({ isOpen });
+
   const isAtCap = !isSingleExecution && activitiesCount >= activitiesCap;
-  
-  // Timer/Alarm
-  const [hasAlarm, setHasAlarm] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<'2h' | '1h' | '30min' | null>(null);
-  const [customAlarmTime, setCustomAlarmTime] = useState('');
-  
-  // Deadline (só para single execution)
-  const [hasDeadline, setHasDeadline] = useState(false);
-  const [deadlineDate, setDeadlineDate] = useState('');
-  const [deadlineTime, setDeadlineTime] = useState('23:59');
-
-  // Reset state when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setName('');
-      setCategory(CATEGORIES[0]);
-      setIsSingleExecution(false);
-      // Por padrão, todos os dias sempre marcados
-      setWeekDays([0, 1, 2, 3, 4, 5, 6]);
-      setSteps([]);
-      setHasAlarm(false);
-      setSelectedPreset(null);
-      setCustomAlarmTime('');
-      setHasDeadline(false);
-      const today = new Date().toISOString().split('T')[0];
-      setDeadlineDate(today);
-      setDeadlineTime('23:59');
-    }
-  }, [isOpen]);
-
-  // Calcula o horário baseado no preset e deadline
-  const calculatePresetTime = (preset: '2h' | '1h' | '30min'): string => {
-    if (!hasDeadline || !deadlineTime) return '';
-    
-    const [hours, minutes] = deadlineTime.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes;
-    
-    let offset = 0;
-    if (preset === '2h') offset = 120;
-    else if (preset === '1h') offset = 60;
-    else if (preset === '30min') offset = 30;
-    
-    const resultMinutes = totalMinutes - offset;
-    if (resultMinutes < 0) return '00:00';
-    
-    const resultHours = Math.floor(resultMinutes / 60);
-    const resultMins = resultMinutes % 60;
-    
-    return `${String(resultHours).padStart(2, '0')}:${String(resultMins).padStart(2, '0')}`;
-  };
-
-  // Quando seleciona um preset, atualiza o campo customizado
-  const handlePresetClick = (preset: '2h' | '1h' | '30min') => {
-    setSelectedPreset(preset);
-    const calculatedTime = calculatePresetTime(preset);
-    setCustomAlarmTime(calculatedTime);
-  };
-
-  // Quando altera o campo customizado manualmente, remove seleção de preset
-  const handleCustomTimeChange = (time: string) => {
-    setCustomAlarmTime(time);
-    setSelectedPreset(null);
-  };
 
   const attributes = CATEGORY_ATTRIBUTES[category];
   const currentEmoji = CATEGORY_ICONS[category];
@@ -141,72 +88,29 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
     if (!name.trim()) return;
 
     if (isSingleExecution) {
-      // Save as Task
-      const taskData: any = { 
-        name, 
-        category, 
+      onSaveTask({
+        name,
+        category,
         emoji: currentEmoji,
         steps: steps.length > 0 ? steps : undefined,
-      };
-      
-      if (hasDeadline) {
-        taskData.deadline = {
-          date: deadlineDate,
-          time: deadlineTime,
-        };
-      }
-      
-      // Salva o alarme se houver um horário definido
-      if (customAlarmTime) {
-        taskData.alarm = {
-          type: selectedPreset || 'custom',
-          time: !selectedPreset ? customAlarmTime : undefined,
-        };
-      }
-      
-      onSaveTask(taskData);
+        deadline: buildDeadline(),
+        alarm: buildAlarm(),
+      });
     } else {
-      // Save as Activity
-      // Se pode selecionar dias, exige pelo menos um. Se não pode, considera todos os dias (weekDays vazio = todos)
       if (showWeekdayGrid && weekDays.length === 0) {
         alert('Select at least one weekday');
         return;
       }
-      
-      const activityData: any = { 
-        name, 
-        category, 
-        emoji: currentEmoji, 
+      onSaveActivity({
+        name,
+        category,
+        emoji: currentEmoji,
         steps,
-        // Se não pode selecionar dias (antes de Rookie), passa todos os dias marcados
         weekDays: showWeekdayGrid ? weekDays : [0, 1, 2, 3, 4, 5, 6],
-      };
-      
-      // Salva o alarme se houver um horário definido
-      if (customAlarmTime) {
-        activityData.alarm = { time: customAlarmTime };
-      }
-      
-      onSaveActivity(activityData);
+        alarm: customAlarmTime ? { time: customAlarmTime } : undefined,
+      });
     }
     onClose();
-  };
-
-  const handleAddStep = () => {
-    const newStep: Step = {
-      id: `${Date.now()}-${steps.length}`,
-      label: '',
-      completed: false,
-    };
-    setSteps([...steps, newStep]);
-  };
-
-  const handleUpdateStepLabel = (id: string, label: string) => {
-    setSteps(steps.map(step => step.id === id ? { ...step, label } : step));
-  };
-
-  const handleDeleteStep = (id: string) => {
-    setSteps(steps.filter(step => step.id !== id));
   };
 
   const toggleWeekDay = (day: number) => {

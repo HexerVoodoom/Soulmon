@@ -79,22 +79,17 @@
 
 ---
 
-### MOD-07 — Unificar CreateModal e TaskEditModal
+### MOD-07 — Unificar CreateModal e TaskEditModal ✅
 **Arquivos**: `src/components/CreateModal.tsx`, `src/components/TaskEditModal.tsx`  
-**O que fazer**:
-- Extrair lógica de formulário comum para `src/hooks/useItemForm.ts`
-- Ambos os modais usam o hook em vez de duplicar a lógica
-**Risco**: Médio
+**Criado**: `src/hooks/useItemForm.ts`  
+**Resultado**: ~215 linhas de lógica duplicada removidas (step handlers, alarm preset, state declarations)
 
 ---
 
-### MOD-08 — Lazy loading dos modais grandes
+### MOD-08 — Lazy loading dos modais grandes ✅
 **Arquivo**: `src/App.tsx`  
-**O que fazer**:
-- Usar `React.lazy()` + `Suspense` para:
-  - `CreateModal` (660 linhas)
-  - `ChatBox` (636 linhas) — só quando `useAI` ou chat aberto
-  - `StatsPage`, `SettingsPage`, `EvolutionPath`
+**Resultado**: 7 chunks lazy criados (EvolutionPath, CreateModal, StatsModal, StatsPage, SettingsPage, GuideModal, OnboardingScreen)  
+- Bundle principal: 439 kB → 364 kB (gzip: 148 → 121 kB, -18%)
 **Risco**: Baixo-médio
 
 ---
@@ -109,5 +104,5 @@
 | MOD-04 error handling | ✅ Concluído | P0 |
 | MOD-05 testes | ✅ Concluído | P0 |
 | MOD-06 hooks | ✅ Concluído | P1 |
-| MOD-07 modais | ⬜ Pendente | P2 |
-| MOD-08 lazy loading | ⬜ Pendente | P2 |
+| MOD-07 modais | ✅ Concluído | P2 |
+| MOD-08 lazy loading | ✅ Concluído | P2 |

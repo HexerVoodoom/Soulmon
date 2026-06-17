@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
@@ -6,19 +6,19 @@ import { Header } from './components/Header';
 import { ActivityCard } from './components/ActivityCard';
 import { TaskCard } from './components/TaskCard';
 import { CompanionHUD } from './components/CompanionHUD';
-import { EvolutionPath } from './components/EvolutionPath';
 import { EditModal } from './components/EditModal';
 import { TaskEditModal } from './components/TaskEditModal';
-import { CreateModal } from './components/CreateModal';
-import { StatsModal } from './components/StatsModal';
-import { StatsPage } from './components/StatsPage';
-import { SettingsPage } from './components/SettingsPage';
-import { OnboardingScreen } from './components/OnboardingScreen';
+const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
+const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
+const StatsModal = lazy(() => import('./components/StatsModal').then(m => ({ default: m.StatsModal })));
+const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
+const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
 import { WidgetView } from './components/WidgetView';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { AttributeBadges } from './components/AttributeBadges';
 import { ProgressInfo } from './components/ProgressInfo';
-import { GuideModal } from './components/GuideModal';
+const GuideModal = lazy(() => import('./components/GuideModal').then(m => ({ default: m.GuideModal })));
 import { SettingsModal } from './components/SettingsModal';
 import { AISettingsModal, type AISettings } from './components/AISettingsModal';
 import { Toaster } from './components/ui/sonner';
@@ -1078,7 +1078,7 @@ export default function App() {
 
   // Show onboarding if not completed
   if (!hasCompletedOnboarding) {
-    return <OnboardingScreen onComplete={handleCompleteOnboarding} />;
+    return <Suspense fallback={null}><OnboardingScreen onComplete={handleCompleteOnboarding} /></Suspense>;
   }
 
   return (
@@ -1192,7 +1192,7 @@ export default function App() {
           )}
 
           {currentView === 'evolution' && (
-            <EvolutionPath
+            <Suspense fallback={null}><EvolutionPath
               currentStage={getCurrentStageName()}
               currentBranch={getDominantBranch() === 'balanced' ? 'data' : getDominantBranch() as 'virus' | 'data' | 'vaccine'}
               currentXP={gameState.totalXP}
@@ -1210,20 +1210,20 @@ export default function App() {
               evolutionStage={gameState.evolutionStage}
               perfectDays={gameState.perfectDays}
               eggType={gameState.eggType}
-            />
+            /></Suspense>
           )}
 
           {currentView === 'stats' && (
-            <StatsPage
+            <Suspense fallback={null}><StatsPage
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
               theme={theme}
               language={language}
-            />
+            /></Suspense>
           )}
 
           {currentView === 'settings' && (
-            <SettingsPage
+            <Suspense fallback={null}><SettingsPage
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               aiSettings={aiSettings}
@@ -1236,7 +1236,7 @@ export default function App() {
               onOpenGuide={() => setGuideModalOpen(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
-            />
+            /></Suspense>
           )}
         </div>
 
@@ -1331,46 +1331,48 @@ export default function App() {
         theme={theme}
       />
 
-      <CreateModal
-        isOpen={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        evolutionStage={gameState.evolutionStage}
-        activitiesCount={gameState.activities.length}
-        activitiesCap={gameState.maxActivityCap}
-        onSaveTask={(data) => {
-          const newTask: Task = {
-            id: `task-${Date.now()}`,
-            name: data.name,
-            category: data.category as ActivityCategory,
-            emoji: data.emoji,
-            completed: false,
-            deadline: data.deadline,
-            alarm: data.alarm,
-            steps: data.steps,
-          };
-          setGameState(prev => ({
-            ...prev,
-            tasks: [...prev.tasks, newTask],
-          }));
-        }}
-        onSaveActivity={(data) => {
-          const newActivity: Activity = {
-            id: `activity-${Date.now()}`,
-            name: data.name,
-            category: data.category as ActivityCategory,
-            emoji: data.emoji,
-            steps: data.steps,
-            weekDays: data.weekDays,
-            alarm: data.alarm,
-          };
-          setGameState(prev => ({
-            ...prev,
-            activities: [...prev.activities, newActivity],
-          }));
-        }}
-        theme={theme}
-        language={language}
-      />
+      {createModalOpen && (
+        <Suspense fallback={null}><CreateModal
+          isOpen={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          evolutionStage={gameState.evolutionStage}
+          activitiesCount={gameState.activities.length}
+          activitiesCap={gameState.maxActivityCap}
+          onSaveTask={(data) => {
+            const newTask: Task = {
+              id: `task-${Date.now()}`,
+              name: data.name,
+              category: data.category as ActivityCategory,
+              emoji: data.emoji,
+              completed: false,
+              deadline: data.deadline,
+              alarm: data.alarm,
+              steps: data.steps,
+            };
+            setGameState(prev => ({
+              ...prev,
+              tasks: [...prev.tasks, newTask],
+            }));
+          }}
+          onSaveActivity={(data) => {
+            const newActivity: Activity = {
+              id: `activity-${Date.now()}`,
+              name: data.name,
+              category: data.category as ActivityCategory,
+              emoji: data.emoji,
+              steps: data.steps,
+              weekDays: data.weekDays,
+              alarm: data.alarm,
+            };
+            setGameState(prev => ({
+              ...prev,
+              activities: [...prev.activities, newActivity],
+            }));
+          }}
+          theme={theme}
+          language={language}
+        /></Suspense>
+      )}
 
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
@@ -1395,14 +1397,16 @@ export default function App() {
       />
 
       {/* Stats Modal */}
-      <StatsModal
-        isOpen={statsModalOpen}
-        onClose={() => setStatsModalOpen(false)}
-        completedTasks={gameState.completedTasks}
-        activityStats={gameState.activityStats}
-        theme={theme}
-        language={language}
-      />
+      {statsModalOpen && (
+        <Suspense fallback={null}><StatsModal
+          isOpen={statsModalOpen}
+          onClose={() => setStatsModalOpen(false)}
+          completedTasks={gameState.completedTasks}
+          activityStats={gameState.activityStats}
+          theme={theme}
+          language={language}
+        /></Suspense>
+      )}
 
       {/* First Task Completed Popup */}
       <FirstTaskCompletedPopup
@@ -1419,11 +1423,13 @@ export default function App() {
       />
 
       {/* Guide Modal */}
-      <GuideModal
-        isOpen={guideModalOpen}
-        onClose={() => setGuideModalOpen(false)}
-        theme={theme}
-      />
+      {guideModalOpen && (
+        <Suspense fallback={null}><GuideModal
+          isOpen={guideModalOpen}
+          onClose={() => setGuideModalOpen(false)}
+          theme={theme}
+        /></Suspense>
+      )}
 
       {/* Notification Manager */}
       <NotificationManager

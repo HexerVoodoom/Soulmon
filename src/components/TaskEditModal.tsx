@@ -1,32 +1,27 @@
-import { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Clock, Bell } from 'lucide-react';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS } from '../types/category-icons';
-
-interface Step {
-  id: string;
-  label: string;
-  completed: boolean;
-}
+import { useItemForm } from '../hooks/useItemForm';
 
 interface TaskEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { 
-    name: string; 
-    category: string; 
+  onSave: (data: {
+    name: string;
+    category: string;
     emoji: string;
-    steps?: Step[];
+    steps?: { id: string; label: string; completed: boolean }[];
     deadline?: { date: string; time: string };
     alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
   }) => void;
   onDelete?: () => void;
+  title?: string;
   initialData?: {
     name: string;
     category: string;
     emoji: string;
-    steps?: Step[];
+    steps?: { id: string; label: string; completed: boolean }[];
     deadline?: { date: string; time: string };
     alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
   };
@@ -34,14 +29,7 @@ interface TaskEditModalProps {
 }
 
 const CATEGORIES: ActivityCategory[] = [
-  'Health',
-  'Creativity',
-  'Discipline',
-  'Study',
-  'Work',
-  'Social',
-  'Wellness',
-  'Fitness',
+  'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
 ];
 
 export function TaskEditModal({
@@ -54,118 +42,41 @@ export function TaskEditModal({
 }: TaskEditModalProps) {
   const isWin98 = theme === 'win98';
 
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState<ActivityCategory>(CATEGORIES[0]);
-  const [steps, setSteps] = useState<Step[]>([]);
-  
-  const [hasDeadline, setHasDeadline] = useState(false);
-  const [deadlineDate, setDeadlineDate] = useState('');
-  const [deadlineTime, setDeadlineTime] = useState('23:59');
-  
-  const [hasAlarm, setHasAlarm] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<'2h' | '1h' | '30min' | null>(null);
-  const [customAlarmTime, setCustomAlarmTime] = useState('');
-
-  useEffect(() => {
-    if (isOpen && initialData) {
-      setName(initialData.name);
-      setCategory(initialData.category as ActivityCategory);
-      setSteps(initialData.steps || []);
-      setHasDeadline(!!initialData.deadline);
-      setDeadlineDate(initialData.deadline?.date || '');
-      setDeadlineTime(initialData.deadline?.time || '23:59');
-      setHasAlarm(!!initialData.alarm);
-      
-      if (initialData.alarm) {
-        if (initialData.alarm.type !== 'custom') {
-          setSelectedPreset(initialData.alarm.type);
-        } else {
-          setSelectedPreset(null);
-          setCustomAlarmTime(initialData.alarm.time || '');
-        }
-      }
-    }
-  }, [isOpen, initialData]);
+  const {
+    name, setName,
+    category, setCategory,
+    steps,
+    hasDeadline, setHasDeadline,
+    deadlineDate, setDeadlineDate,
+    deadlineTime, setDeadlineTime,
+    hasAlarm, setHasAlarm,
+    selectedPreset,
+    customAlarmTime,
+    handlePresetClick,
+    handleCustomTimeChange,
+    handleAddStep,
+    handleUpdateStepLabel,
+    handleDeleteStep,
+    buildAlarm,
+    buildDeadline,
+  } = useItemForm({ isOpen, initialData });
 
   const attributes = CATEGORY_ATTRIBUTES[category];
   const currentEmoji = CATEGORY_ICONS[category];
 
   if (!isOpen) return null;
 
-  const calculatePresetTime = (preset: '2h' | '1h' | '30min'): string => {
-    if (!hasDeadline || !deadlineTime) return '';
-    
-    const [hours, minutes] = deadlineTime.split(':').map(Number);
-    const totalMinutes = hours * 60 + minutes;
-    
-    let offset = 0;
-    if (preset === '2h') offset = 120;
-    else if (preset === '1h') offset = 60;
-    else if (preset === '30min') offset = 30;
-    
-    const resultMinutes = totalMinutes - offset;
-    if (resultMinutes < 0) return '00:00';
-    
-    const resultHours = Math.floor(resultMinutes / 60);
-    const resultMins = resultMinutes % 60;
-    
-    return `${String(resultHours).padStart(2, '0')}:${String(resultMins).padStart(2, '0')}`;
-  };
-
-  const handlePresetClick = (preset: '2h' | '1h' | '30min') => {
-    setSelectedPreset(preset);
-    const calculatedTime = calculatePresetTime(preset);
-    setCustomAlarmTime(calculatedTime);
-  };
-
-  const handleCustomTimeChange = (time: string) => {
-    setCustomAlarmTime(time);
-    setSelectedPreset(null);
-  };
-
   const handleSave = () => {
     if (!name.trim()) return;
-
-    const taskData: any = { 
-      name, 
-      category, 
+    onSave({
+      name,
+      category,
       emoji: currentEmoji,
       steps: steps.length > 0 ? steps : undefined,
-    };
-    
-    if (hasDeadline) {
-      taskData.deadline = {
-        date: deadlineDate,
-        time: deadlineTime,
-      };
-    }
-    
-    if (hasAlarm && customAlarmTime) {
-      taskData.alarm = {
-        type: selectedPreset || 'custom',
-        time: !selectedPreset ? customAlarmTime : undefined,
-      };
-    }
-    
-    onSave(taskData);
+      deadline: buildDeadline(),
+      alarm: hasAlarm ? buildAlarm() : undefined,
+    });
     onClose();
-  };
-
-  const handleAddStep = () => {
-    const newStep: Step = {
-      id: `${Date.now()}-${steps.length}`,
-      label: '',
-      completed: false,
-    };
-    setSteps([...steps, newStep]);
-  };
-
-  const handleUpdateStepLabel = (id: string, label: string) => {
-    setSteps(steps.map(step => step.id === id ? { ...step, label } : step));
-  };
-
-  const handleDeleteStep = (id: string) => {
-    setSteps(steps.filter(step => step.id !== id));
   };
 
   return (
