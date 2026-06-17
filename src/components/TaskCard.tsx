@@ -1,4 +1,5 @@
 import { Edit2 } from 'lucide-react';
+import { Language, useTranslation } from '../utils/i18n';
 
 interface TaskCardProps {
   id: string;
@@ -9,6 +10,7 @@ interface TaskCardProps {
   onToggleComplete: (id: string) => void;
   onEdit: (id: string) => void;
   theme?: 'default' | 'win98';
+  language?: Language;
 }
 
 export function TaskCard({
@@ -19,8 +21,10 @@ export function TaskCard({
   onToggleComplete,
   onEdit,
   theme = 'default',
+  language = 'en-US',
 }: TaskCardProps) {
   const isWin98 = theme === 'win98';
+  const t = useTranslation(language);
 
   return (
     <div
@@ -61,11 +65,11 @@ export function TaskCard({
           >
             {emoji} {name}
           </p>
-          <p 
+          <p
             className={completed ? 'text-[#9ca3af]' : 'text-[#a1a1a1]'}
             style={{ fontFamily: 'Consolas, monospace', fontSize: '0.75rem' }}
           >
-            Realização única
+            {t.main.singleExecution}
           </p>
         </div>
 

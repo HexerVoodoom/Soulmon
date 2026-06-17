@@ -1,7 +1,6 @@
 // Internationalization (i18n) structure for DigiApp
-// English only
 
-export type Language = 'en-US';
+export type Language = 'en-US' | 'pt-BR';
 
 export interface Translations {
   // Common
@@ -38,6 +37,34 @@ export interface Translations {
     evolutionProgress: string;
     tasksCompleted: string;
     of: string;
+    noActivityRegistered: string;
+    dayProgress: string;
+    minimum: string;
+    evolution: string;
+    perfectDaysLabel: string;
+    registeredActivities: string;
+    maximum: string;
+    singleExecution: string;
+    uncheckTask: string;
+    uncheckTaskMessage: string;
+    editTask: string;
+    newTask: string;
+    companionNeedHelp: string;
+    companionAmazing: string;
+    companionGoodProgress: string;
+    companionYouGotThis: string;
+    companionBelieve: string;
+    daySunday: string;
+    dayMonday: string;
+    dayTuesday: string;
+    dayWednesday: string;
+    dayThursday: string;
+    dayFriday: string;
+    daySaturday: string;
+    viewHome: string;
+    viewEvolution: string;
+    viewStats: string;
+    viewSettings: string;
   };
 
   // Activities
@@ -263,6 +290,8 @@ export interface Translations {
     stats: string;
     settings: string;
     widget: string;
+    evolution: string;
+    debugMode: string;
   };
 
   // Messages
@@ -319,6 +348,34 @@ export const translations: Record<Language, Translations> = {
       evolutionProgress: 'Evolution Progress',
       tasksCompleted: 'Tasks Completed',
       of: 'of',
+      noActivityRegistered: 'No activity registered.',
+      dayProgress: 'Day progress',
+      minimum: 'minimum',
+      evolution: 'Evolution',
+      perfectDaysLabel: 'perfect days',
+      registeredActivities: 'Registered activities',
+      maximum: 'maximum!',
+      singleExecution: 'Single execution',
+      uncheckTask: 'Uncheck Task?',
+      uncheckTaskMessage: 'Are you sure you want to uncheck this task? This action requires confirmation.',
+      editTask: 'Edit Task',
+      newTask: 'New Task',
+      companionNeedHelp: "I need your help! Complete tasks to keep me healthy!",
+      companionAmazing: "You're doing amazing! Keep it up! 🌟",
+      companionGoodProgress: "Good progress! Let's keep going!",
+      companionYouGotThis: "You've got this! One step at a time!",
+      companionBelieve: "I believe in you! Let's start together!",
+      daySunday: 'Sunday',
+      dayMonday: 'Monday',
+      dayTuesday: 'Tuesday',
+      dayWednesday: 'Wednesday',
+      dayThursday: 'Thursday',
+      dayFriday: 'Friday',
+      daySaturday: 'Saturday',
+      viewHome: 'Home',
+      viewEvolution: 'Digivolution Path',
+      viewStats: 'Statistics',
+      viewSettings: 'Settings',
     },
 
     activities: {
@@ -531,6 +588,8 @@ export const translations: Record<Language, Translations> = {
       stats: 'Stats',
       settings: 'Settings',
       widget: 'Widget',
+      evolution: 'Evolution',
+      debugMode: 'Debug Mode',
     },
 
     messages: {
@@ -551,6 +610,301 @@ export const translations: Record<Language, Translations> = {
       glitch: 'Glitch',
     },
   },
+
+  'pt-BR': {
+    common: {
+      save: 'Salvar',
+      cancel: 'Cancelar',
+      confirm: 'Confirmar',
+      delete: 'Excluir',
+      edit: 'Editar',
+      close: 'Fechar',
+      loading: 'Carregando...',
+      error: 'Erro',
+      success: 'Sucesso',
+      yes: 'Sim',
+      no: 'Não',
+      back: 'Voltar',
+      next: 'Próximo',
+    },
+
+    onboarding: {
+      welcome: 'Bem-vindo ao DigiApp!',
+      enterName: 'Digite seu nome',
+      namePlaceholder: 'Digite seu nome aqui',
+      start: 'Começar Aventura',
+    },
+
+    main: {
+      healthPoints: 'Pontos de Vida',
+      energy: 'Energia',
+      dailyGoal: 'Meta Diária',
+      perfectDays: 'Dias Perfeitos',
+      evolutionProgress: 'Progresso de Evolução',
+      tasksCompleted: 'Tarefas Concluídas',
+      of: 'de',
+      noActivityRegistered: 'Nenhuma atividade cadastrada.',
+      dayProgress: 'Progresso do dia',
+      minimum: 'mínimo',
+      evolution: 'Evolução',
+      perfectDaysLabel: 'dias perfeitos',
+      registeredActivities: 'Atividades cadastradas',
+      maximum: 'máximo!',
+      singleExecution: 'Realização única',
+      uncheckTask: 'Desmarcar Tarefa?',
+      uncheckTaskMessage: 'Tem certeza que deseja desmarcar esta tarefa? Esta ação requer confirmação.',
+      editTask: 'Editar Tarefa',
+      newTask: 'Nova Tarefa',
+      companionNeedHelp: 'Preciso da sua ajuda! Complete tarefas para me manter saudável!',
+      companionAmazing: 'Você está incrível! Continue assim! 🌟',
+      companionGoodProgress: 'Bom progresso! Vamos continuar!',
+      companionYouGotThis: 'Você consegue! Um passo de cada vez!',
+      companionBelieve: 'Eu acredito em você! Vamos começar juntos!',
+      daySunday: 'Domingo',
+      dayMonday: 'Segunda-feira',
+      dayTuesday: 'Terça-feira',
+      dayWednesday: 'Quarta-feira',
+      dayThursday: 'Quinta-feira',
+      dayFriday: 'Sexta-feira',
+      daySaturday: 'Sábado',
+      viewHome: 'Início',
+      viewEvolution: 'Caminho de Digievolução',
+      viewStats: 'Estatísticas',
+      viewSettings: 'Configurações',
+    },
+
+    activities: {
+      title: 'Atividades',
+      completed: 'Concluída',
+      incomplete: 'Pendente',
+      addNew: 'Nova Atividade',
+      create: 'Criar',
+      edit: 'Editar',
+      category: 'Categoria',
+      points: 'Pontos',
+      noActivities: 'Nenhuma atividade criada ainda',
+      createActivity: 'Criar Atividade',
+      editActivity: 'Editar Atividade',
+      activityName: 'Nome da Atividade',
+      activityNamePlaceholder: 'Ex: Fazer exercícios',
+      selectCategory: 'Selecione uma categoria',
+      deleteActivity: 'Excluir Atividade',
+      confirmDelete: 'Confirmar Exclusão',
+      deleteMessage: 'Tem certeza que deseja excluir esta atividade?',
+    },
+
+    createModal: {
+      newActivity: 'Nova Atividade',
+      firstActivity: 'Primeira Atividade',
+      name: 'Nome',
+      namePlaceholder: 'Ex: Fazer exercícios',
+      category: 'Categoria',
+      attributesPerActivity: 'Atributos por Atividade',
+      steps: 'Etapas',
+      stepsOptional: 'Etapas (opcional)',
+      addStep: 'Adicionar Etapa',
+      executeOnce: 'Executar Uma Vez',
+      weekdays: 'Dias da Semana',
+      weekdaysRequired: 'Dias da Semana (obrigatório)',
+      selectAtLeastOneDay: 'Selecione pelo menos um dia',
+      defineDeadline: 'Definir Prazo',
+      date: 'Data',
+      time: 'Hora',
+      alarm: 'Alarme',
+      schedule: 'Agendar',
+      quickOptions: 'Opções Rápidas',
+      hoursBefore: 'Horas Antes',
+      hourBefore: 'Hora Antes',
+      minBefore: 'Min Antes',
+      customTime: 'Hora Personalizada',
+      cancel: 'Cancelar',
+      save: 'Salvar',
+      createAndStart: 'Criar e Começar',
+      limitReached: 'Limite Atingido',
+    },
+
+    categories: {
+      physical: 'Físico',
+      mental: 'Mental',
+      social: 'Social',
+      creative: 'Criativo',
+    },
+
+    evolution: {
+      title: 'Evolução',
+      currentStage: 'Estágio Atual',
+      nextStage: 'Próximo Estágio',
+      degenerate: 'Degenerar',
+      confirmDegeneration: '⚠️ Confirmar Degeneração',
+      finalWarning: '⚠️ AVISO FINAL!',
+      branches: 'Ramos de Evolução',
+      virus: 'Vírus',
+      data: 'Dados',
+      vaccine: 'Vacina',
+      evolutionTree: 'Árvore de Evolução',
+      viewTree: 'Ver Árvore',
+      stats_history: 'Stats e Histórico',
+      completed_activities: 'Atividades Concluídas',
+      no_activities: 'Nenhuma atividade concluída ainda.',
+      completed_tasks: 'Tarefas Concluídas',
+      no_tasks: 'Nenhuma tarefa concluída ainda.',
+      recent_history: 'Histórico Recente',
+      no_history: 'Nenhum histórico ainda.',
+      just_now: 'Agora mesmo',
+      mins_ago: 'min atrás',
+      hours_ago: 'h atrás',
+      yesterday: 'Ontem',
+      days_ago: 'd atrás',
+    },
+
+    settings: {
+      title: 'Configurações',
+      language: 'Idioma',
+      languageDescription: 'Selecione o idioma do aplicativo',
+      theme: 'Tema',
+      ai: 'Inteligência Artificial',
+      aiToggle: 'IA Habilitada',
+      aiChatEnabled: 'Chat com IA',
+      keywordsOnly: 'Somente Palavras-chave',
+      aiDescription: 'Configurações de IA',
+      aiDescriptionEnabled: 'Seu digimon usa IA para conversas personalizadas',
+      aiDescriptionDisabled: 'Mensagens baseadas apenas em palavras-chave',
+      configureAI: 'Configurar IA',
+      about: 'Sobre o App',
+      aboutDescription: 'App de produtividade gamificado com um companheiro digital em evolução',
+      version: 'Versão',
+      guide: 'Guia',
+      guideDescription: 'Aprenda como funcionam o sistema de evolução, dias perfeitos, HP e mais.',
+      openGuide: 'Abrir Guia',
+      saveData: 'Salvar Dados',
+      loadData: 'Carregar Dados',
+      resetApp: 'Resetar App',
+      notifications: 'Notificações',
+      notificationsDescription: 'Receba lembretes para atividades e uma mensagem diária do seu Digimon às 12h',
+      notificationsEnabled: 'Notificações Habilitadas',
+      notificationsDisabled: 'Notificações Desabilitadas',
+    },
+
+    chat: {
+      title: 'Chat',
+      typeMessage: 'Digite uma mensagem...',
+      send: 'Enviar',
+      aiSettings: 'Configurações de IA',
+      tone: 'Tom',
+      emojiIntensity: 'Intensidade de Emoji',
+      motivationStyle: 'Estilo de Motivação',
+      aiDisabled: 'IA Desabilitada',
+      aiDisabledMessage: 'Habilite a IA nas configurações para usar o chat',
+      enableAI: 'Habilitar IA',
+      microphoneError: 'Erro de microfone. Verifique as permissões e tente novamente.',
+    },
+
+    stats: {
+      title: 'Estatísticas',
+      overview: 'Visão Geral',
+      attributes: 'Atributos',
+      virus: 'Vírus',
+      data: 'Dados',
+      vaccine: 'Vacina',
+      total: 'Total',
+      level: 'Nível',
+      stage: 'Estágio',
+      perfectDays: 'Dias Perfeitos',
+      tasksCompleted: 'Tarefas Concluídas',
+      currentStreak: 'Sequência Atual',
+      longestStreak: 'Maior Sequência',
+      evolutionPath: 'Caminho de Evolução',
+    },
+
+    widget: {
+      title: 'Widget',
+      todaysTasks: 'Tarefas de Hoje',
+      noTasks: 'Sem tarefas para hoje',
+      allDone: 'Tudo feito!',
+      dailyProgress: 'Progresso Diário',
+    },
+
+    aiModal: {
+      title: 'Configurações de IA',
+      personalityTone: 'Tom de Personalidade',
+      friendly: 'Amigável',
+      professional: 'Profissional',
+      playful: 'Brincalhão',
+      motivational: 'Motivacional',
+      emojiUsage: 'Uso de Emoji',
+      none: 'Nenhum',
+      minimal: 'Mínimo',
+      moderate: 'Moderado',
+      high: 'Alto',
+      motivationStyle: 'Estilo de Motivação',
+      supportive: 'Apoiador',
+      challenging: 'Desafiador',
+      balanced: 'Equilibrado',
+      customInstructions: 'Instruções Personalizadas',
+      customPlaceholder: 'Adicione instruções personalizadas para personalizar ainda mais a IA...',
+    },
+
+    guide: {
+      title: 'Guia DigiApp',
+      welcome: 'Bem-vindo!',
+      welcomeText: 'O DigiApp é um app de produtividade gamificado onde você conclui tarefas da vida real para evoluir seu companheiro digital.',
+      howItWorks: 'Como Funciona',
+      howItWorksText: 'Complete atividades diárias para ganhar pontos de atributo (Vírus, Dados, Vacina). Cada categoria de atividade contribui para um tipo específico de atributo.',
+      evolutionSystem: 'Sistema de Evolução',
+      evolutionSystemText: 'Seu digimon evolui por estágios (DigiEgg → Baby → Em Treinamento → Rookie → Champion → Ultimate → Mega). A evolução depende de completar um número específico de "dias perfeitos" onde você atinge sua meta diária.',
+      perfectDays: 'Dias Perfeitos',
+      perfectDaysText: 'Um dia perfeito é quando você completa todas as tarefas necessárias para atingir sua meta diária. O número de tarefas necessárias aumenta a cada estágio evolutivo.',
+      healthSystem: 'Sistema de Saúde (HP)',
+      healthSystemText: 'Seu digimon começa com 1 coração e ganha mais a cada evolução (máximo 5). Perder todos os corações resulta em degeneração para o estágio anterior.',
+      attributes: 'Atributos',
+      attributesText: 'Vírus (verde): Atividades físicas\nDados (azul): Atividades mentais\nVacina (amarelo): Atividades sociais e criativas\n\nOs atributos que você mais desenvolve determinam o caminho evolutivo do seu digimon.',
+      tips: 'Dicas',
+      tipsText: '• Complete tarefas diariamente para manter seu digimon saudável\n• Equilibre diferentes tipos de atividades para evoluções únicas\n• Use o chat com IA para motivação e novas ideias de tarefas\n• Acompanhe suas estatísticas para ver seu progresso',
+    },
+
+    confirm: {
+      areYouSure: 'Tem certeza?',
+      cannotUndo: 'Esta ação não pode ser desfeita.',
+    },
+
+    stages: {
+      digiegg: 'DigiOvo',
+      baby: 'Bebê',
+      inTraining: 'Em Treinamento',
+      rookie: 'Iniciante',
+      champion: 'Campeão',
+      ultimate: 'Supremo',
+      mega: 'Mega',
+    },
+
+    nav: {
+      home: 'Início',
+      chat: 'Chat',
+      stats: 'Stats',
+      settings: 'Configurações',
+      widget: 'Widget',
+      evolution: 'Evolução',
+      debugMode: 'Modo Debug',
+    },
+
+    messages: {
+      taskCompleted: 'Tarefa concluída!',
+      taskUncompleted: 'Tarefa desmarcada',
+      evolutionUnlocked: 'Nova evolução desbloqueada!',
+      perfectDayAchieved: 'Dia perfeito alcançado!',
+      healthLow: 'HP baixo! Complete mais tarefas.',
+      gameOver: 'Fim de Jogo',
+      dataSaved: 'Dados salvos com sucesso',
+      dataLoaded: 'Dados carregados com sucesso',
+      appReset: 'App resetado com sucesso',
+    },
+
+    themes: {
+      default: 'Padrão',
+      win98: 'Windows 98',
+      glitch: 'Glitch',
+    },
+  },
 };
 
 // Hook to use translations
@@ -560,10 +914,10 @@ export function useTranslation(language: Language) {
 
 // Helper to get language name
 export function getLanguageName(language: Language): string {
-  return 'English';
+  return language === 'pt-BR' ? 'Português' : 'English';
 }
 
 // Helper to get language flag emoji
 export function getLanguageFlag(language: Language): string {
-  return '🇺🇸';
+  return language === 'pt-BR' ? '🇧🇷' : '🇺🇸';
 }

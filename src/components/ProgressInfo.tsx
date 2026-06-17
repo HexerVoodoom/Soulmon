@@ -1,4 +1,5 @@
 import { FORM_REQUIREMENTS, getStageLevel } from '../types/progression';
+import { Language, useTranslation } from '../utils/i18n';
 
 interface ProgressInfoProps {
   dailyDone: number;
@@ -8,17 +9,20 @@ interface ProgressInfoProps {
   evolutionStage: string;
   perfectDays: number;
   theme?: 'default' | 'win98' | 'glitch';
+  language?: Language;
 }
 
-export function ProgressInfo({ 
-  dailyDone, 
-  dailyTotal, 
+export function ProgressInfo({
+  dailyDone,
+  dailyTotal,
   dailyRequired,
-  activitiesCount, 
+  activitiesCount,
   evolutionStage,
   perfectDays,
-  theme = 'default' 
+  theme = 'default',
+  language = 'en-US',
 }: ProgressInfoProps) {
+  const t = useTranslation(language);
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
   
@@ -43,10 +47,10 @@ export function ProgressInfo({
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className={`text-xs ${isWin98 ? 'text-black' : isGlitch ? 'text-[#00ffff]' : 'text-[#686868]'}`} style={{ fontFamily: 'Consolas, monospace' }}>
-              Progresso do dia {isDayPerfect && '✓'}
+              {t.main.dayProgress} {isDayPerfect && '✓'}
             </span>
             <span className={`text-xs ${isDayPerfect ? 'text-[#22A900]' : isWin98 ? 'text-black' : isGlitch ? 'text-[#ff00ff]' : 'text-[#686868]'}`} style={{ fontFamily: 'Consolas, monospace', fontWeight: isDayPerfect ? '600' : 'normal' }}>
-              {dailyDone} / {dailyRequired} (mínimo)
+              {dailyDone} / {dailyRequired} ({t.main.minimum})
             </span>
           </div>
           <div className={`w-full h-1.5 rounded-full overflow-hidden ${
@@ -63,10 +67,10 @@ export function ProgressInfo({
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className={`text-xs ${isWin98 ? 'text-black' : isGlitch ? 'text-[#00ffff]' : 'text-[#686868]'}`} style={{ fontFamily: 'Consolas, monospace' }}>
-              Evolution
+              {t.main.evolution}
             </span>
             <span className={`text-xs ${isWin98 ? 'text-black' : isGlitch ? 'text-[#ff00ff]' : 'text-[#686868]'}`} style={{ fontFamily: 'Consolas, monospace' }}>
-              {perfectDays} / {required} perfect days
+              {perfectDays} / {required} {t.main.perfectDaysLabel}
             </span>
           </div>
           <div className={`w-full h-1.5 rounded-full overflow-hidden ${
@@ -82,10 +86,10 @@ export function ProgressInfo({
         {/* Cap de Atividades */}
         <div className="flex items-center justify-between">
           <span className={`text-xs ${isWin98 ? 'text-black' : isGlitch ? 'text-[#00ffff]' : 'text-[#686868]'}`} style={{ fontFamily: 'Consolas, monospace' }}>
-            Atividades cadastradas
+            {t.main.registeredActivities}
           </span>
           <span className={`text-xs ${activitiesCount >= cap ? 'text-[#E69600]' : isWin98 ? 'text-black' : isGlitch ? 'text-[#ff00ff]' : 'text-[#686868]'}`} style={{ fontFamily: 'Consolas, monospace', fontWeight: activitiesCount >= cap ? '600' : 'normal' }}>
-            {activitiesCount} / {cap} {activitiesCount >= cap && '(máximo!)'}
+            {activitiesCount} / {cap} {activitiesCount >= cap && `(${t.main.maximum})`}
           </span>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { StepRow } from './StepRow';
 import { Edit2 } from 'lucide-react';
 import { Progress } from './ui/progress';
+import { Language, useTranslation } from '../utils/i18n';
 
 interface Step {
   id: string;
@@ -21,12 +22,13 @@ interface ActivityCardProps {
   isDisabled?: boolean;
   isSingleExecution?: boolean; // Se é execução única
   theme?: 'default' | 'win98';
+  language?: Language;
 }
 
-export function ActivityCard({ 
-  id, 
-  name, 
-  steps, 
+export function ActivityCard({
+  id,
+  name,
+  steps,
   weekDays = [],
   onUpdateStep,
   onEditActivity,
@@ -36,8 +38,10 @@ export function ActivityCard({
   isDisabled = false,
   isSingleExecution = false,
   theme = 'default',
+  language = 'en-US',
 }: ActivityCardProps) {
   const isWin98 = theme === 'win98';
+  const t = useTranslation(language);
   const completedSteps = steps.filter(s => s.completed).length;
   const totalSteps = steps.length;
   const progressPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
@@ -94,7 +98,7 @@ export function ActivityCard({
             {/* Descritor de frequência */}
             <p className={activityComplete ? 'text-[#9ca3af]' : 'text-[#a1a1a1]'} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.75rem' }}>
               {isSingleExecution ? (
-                'Realização única'
+                t.main.singleExecution
               ) : (
                 <span className="flex gap-2 items-center">
                   {daysLabels.map((label, index) => {

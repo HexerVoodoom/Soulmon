@@ -312,6 +312,8 @@ export default function App() {
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
 
+  const t = useTranslation(language);
+
   // Sync game state to Android home screen widget
   useEffect(() => {
     const digimonName = gameState.evolutionStage.charAt(0).toUpperCase() + gameState.evolutionStage.slice(1);
@@ -337,17 +339,25 @@ export default function App() {
   // Get companion message based on progress and HP
   const getCompanionMessage = (): string => {
     if (gameState.healthPoints <= 1) {
-      return "I need your help! Complete tasks to keep me healthy!";
+      return t.main.companionNeedHelp;
     }
-    if (progress >= 70) return "You're doing amazing! Keep it up! 🌟";
-    if (progress >= 40) return "Good progress! Let's keep going!";
-    if (progress >= 20) return "You've got this! One step at a time!";
-    return "I believe in you! Let's start together!";
+    if (progress >= 70) return t.main.companionAmazing;
+    if (progress >= 40) return t.main.companionGoodProgress;
+    if (progress >= 20) return t.main.companionYouGotThis;
+    return t.main.companionBelieve;
   };
 
   // Get current day
   const getCurrentDay = () => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const days = [
+      t.main.daySunday,
+      t.main.dayMonday,
+      t.main.dayTuesday,
+      t.main.dayWednesday,
+      t.main.dayThursday,
+      t.main.dayFriday,
+      t.main.daySaturday,
+    ];
     return days[new Date().getDay()];
   };
 
@@ -1106,10 +1116,10 @@ export default function App() {
         <div className="flex-shrink-0">
           <Header
             title={
-              currentView === 'main' ? 'Home' :
-                currentView === 'evolution' ? 'Digivolution Path' :
-                  currentView === 'stats' ? 'Statistics' :
-                    'Settings'
+              currentView === 'main' ? t.main.viewHome :
+                currentView === 'evolution' ? t.main.viewEvolution :
+                  currentView === 'stats' ? t.main.viewStats :
+                    t.main.viewSettings
             }
             subtitle={currentView === 'main' ? getCurrentDay() : undefined}
             currentView={currentView}
@@ -1138,7 +1148,7 @@ export default function App() {
                     className="text-gray-400"
                     style={{ fontFamily: 'monospace', fontSize: '1.25rem' }}
                   >
-                    No activity registered.
+                    {t.main.noActivityRegistered}
                   </p>
                 </div>
               ) : (
@@ -1343,7 +1353,7 @@ export default function App() {
             ? gameState.tasks.find(t => t.id === editingTask)
             : undefined
         }
-        title={editingTask ? 'Edit Task' : 'New Task'}
+        title={editingTask ? t.main.editTask : t.main.newTask}
         theme={theme}
       />
 
@@ -1394,8 +1404,8 @@ export default function App() {
         isOpen={confirmDialog.isOpen}
         onClose={() => setConfirmDialog({ isOpen: false, activityId: '', stepId: '' })}
         onConfirm={handleConfirmUncheck}
-        title="Uncheck Task?"
-        message="Are you sure you want to uncheck this task? This action requires confirmation."
+        title={t.main.uncheckTask}
+        message={t.main.uncheckTaskMessage}
       />
 
       {/* Settings Menu */}

@@ -1,11 +1,85 @@
-// DigiApp Service Worker
+// DigiApp Service Worker — cache-first for static assets
 
-self.addEventListener('install', () => {
+const CACHE_VERSION = 'v2';
+const STATIC_CACHE = `digiapp-static-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `digiapp-runtime-${CACHE_VERSION}`;
+
+// Core shell — always cache on install
+const PRECACHE_URLS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon-192x192.png',
+];
+
+self.addEventListener('install', (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
+  );
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((k) => k.startsWith('digiapp-') && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
+          .map((k) => caches.delete(k))
+      )
+    ).then(() => self.clients.claim())
+  );
+});
+
+// Cache-first for same-origin assets (JS, CSS, images, fonts)
+// Network-first for navigation (HTML) so updates reach the user
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET and cross-origin requests
+  if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  // Navigation: network-first with offline fallback
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
+          return res;
+        })
+        .catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Static assets (hashed filenames in /assets/): cache-first
+  if (url.pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          fetch(request).then((res) => {
+            const clone = res.clone();
+            caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
+            return res;
+          })
+      )
+    );
+    return;
+  }
+
+  // Other same-origin resources (manifest, icons): network-first with cache fallback
+  event.respondWith(
+    fetch(request)
+      .then((res) => {
+        const clone = res.clone();
+        caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
+        return res;
+      })
+      .catch(() => caches.match(request))
+  );
 });
 
 // Show notification triggered from app via postMessage
