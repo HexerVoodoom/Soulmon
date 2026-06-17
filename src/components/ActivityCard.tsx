@@ -126,7 +126,7 @@ export function ActivityCard({
                 ? 'win98-button'
                 : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
             }`}
-            aria-label="Edit activity"
+            aria-label="Editar atividade"
           >
             <Edit2 size={16} strokeWidth={1.5} color={isWin98 ? '#000000' : undefined} />
           </button>

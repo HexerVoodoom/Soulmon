@@ -203,6 +203,7 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
               <div className="bg-clip-padding border-0 border-[transparent] border-solid content-stretch flex gap-[23.993px] items-center relative size-full">
                 <button
                   onClick={() => onNavigate('main')}
+                  aria-label="Início"
                   className="bg-[#e5e7eb] relative rounded-[14px] shrink-0 size-[39.993px] transition-all"
                 >
                   <div className="bg-clip-padding border-0 border-[transparent] border-solid content-stretch flex flex-col items-start pb-0 pt-[9.998px] px-[9.998px] relative size-full">
@@ -221,6 +222,7 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
             {onResetOnboarding && (
               <button
                 onClick={onResetOnboarding}
+                aria-label="Modo Debug"
                 className="bg-[#f3e8ff] relative rounded-[14px] shrink-0 size-[39.993px] transition-all"
                 title="Debug Mode"
               >
@@ -236,6 +238,7 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
               {/* Branches */}
               <button
                 onClick={() => onNavigate('evolution')}
+                aria-label="Evolução"
                 className={`relative rounded-[14px] shrink-0 size-[39.993px] transition-all ${
                   currentView === 'evolution' ? 'bg-[#e5e7eb]' : 'bg-white'
                 }`}
@@ -251,6 +254,7 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
               {/* Stats */}
               <button
                 onClick={() => onNavigate('stats')}
+                aria-label="Estatísticas"
                 className={`relative rounded-[14px] shrink-0 size-[39.993px] transition-all ${
                   currentView === 'stats' ? 'bg-[#e5e7eb]' : 'bg-white'
                 }`}
@@ -266,6 +270,7 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
               {/* Settings */}
               <button
                 onClick={() => onNavigate('settings')}
+                aria-label="Configurações"
                 className={`relative rounded-[14px] shrink-0 size-[39.993px] transition-all ${
                   currentView === 'settings' ? 'bg-[#e5e7eb]' : 'bg-white'
                 }`}
