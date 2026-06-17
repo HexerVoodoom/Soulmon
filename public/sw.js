@@ -1,6 +1,6 @@
 // DigiApp Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `digiapp-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `digiapp-runtime-${CACHE_VERSION}`;
 
@@ -54,8 +54,41 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets (hashed filenames in /assets/): cache-first
+  // Static assets (hashed filenames in /assets/): cache-first.
+  // For PNG images, transparently serve the WebP version if the browser supports it.
   if (url.pathname.startsWith('/assets/')) {
+    const acceptsWebP =
+      url.pathname.endsWith('.png') &&
+      (request.headers.get('Accept') || '').includes('image/webp');
+
+    if (acceptsWebP) {
+      const webpUrl = request.url.replace(/\.png$/, '.webp');
+      const webpRequest = new Request(webpUrl, { headers: request.headers });
+      event.respondWith(
+        caches.match(webpRequest).then((cached) => {
+          if (cached) return cached;
+          return fetch(webpRequest)
+            .then((res) => {
+              if (!res.ok) throw new Error('WebP not found');
+              const clone = res.clone();
+              caches.open(STATIC_CACHE).then((c) => c.put(webpRequest, clone));
+              return res;
+            })
+            .catch(() =>
+              caches.match(request).then(
+                (c) =>
+                  c ||
+                  fetch(request).then((res) => {
+                    caches.open(STATIC_CACHE).then((cache) => cache.put(request, res.clone()));
+                    return res;
+                  })
+              )
+            );
+        })
+      );
+      return;
+    }
+
     event.respondWith(
       caches.match(request).then(
         (cached) =>

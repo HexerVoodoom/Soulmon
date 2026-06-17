@@ -23,6 +23,7 @@ import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
+import { InstallPrompt } from './components/InstallPrompt';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { CareEvent } from './components/CareSystem';
@@ -1457,6 +1458,7 @@ export default function App() {
         enabled={notificationsEnabled}
       />
       <Toaster richColors position="top-right" />
+      <InstallPrompt theme={theme} language={language} />
     </div>
   );
 }
