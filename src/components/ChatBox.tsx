@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Send, Mic, Square } from 'lucide-react';
+import { toast } from 'sonner';
+import { type AISettings } from './AISettingsModal';
 
 interface ChatBoxProps {
   digimonName: string;
@@ -9,7 +11,7 @@ interface ChatBoxProps {
   useAI: boolean;
   onSendMessage: (response: string) => void;
   theme?: 'default' | 'win98' | 'glitch';
-  aiSettings?: any;
+  aiSettings?: AISettings;
   onOpenAISettings?: () => void;
   onCreateActivity?: (activity: {
     name: string;
@@ -368,23 +370,22 @@ export function ChatBox({
       );
 
       if (!response.ok) {
-        console.error('AI API error:', await response.text());
-        // Fallback to keyword response
+        if (import.meta.env.DEV) console.error('AI API error:', await response.text());
+        toast.warning('AI unavailable, using local responses');
         return getDigimonResponse(userMessage);
       }
 
       const data = await response.json();
-      
-      // Check if AI detected activity creation intent
+
       if (data.action && data.action.type === 'create_activity' && onCreateActivity) {
-        console.log('Creating activity:', data.action.activity);
+        if (import.meta.env.DEV) console.log('Creating activity:', data.action.activity);
         onCreateActivity(data.action.activity);
       }
-      
+
       return data.response;
     } catch (error) {
-      console.error('Failed to get AI response:', error);
-      // Fallback to keyword response
+      if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
+      toast.warning('AI unavailable, using local responses');
       return getDigimonResponse(userMessage);
     }
   };
@@ -410,7 +411,7 @@ export function ChatBox({
 
       onSendMessage(response);
     } catch (error) {
-      console.error('Error sending message:', error);
+      if (import.meta.env.DEV) console.error('Error sending message:', error);
       onSendMessage('Oops... something went wrong! 😅');
     } finally {
       setIsLoading(false);
@@ -445,7 +446,7 @@ export function ChatBox({
           recorder = new MediaRecorder(stream, options);
         } catch (e) {
           // Fallback to default if opus not supported
-          console.log('Opus codec not supported, using default');
+          if (import.meta.env.DEV) console.log('Opus codec not supported, using default');
           recorder = new MediaRecorder(stream);
         }
         
@@ -461,11 +462,7 @@ export function ChatBox({
           setIsLoading(true);
           
           const audioBlob = new Blob(chunks, { type: recorder.mimeType });
-          console.log('Audio recorded:', {
-            size: audioBlob.size,
-            type: audioBlob.type,
-            chunks: chunks.length
-          });
+          if (import.meta.env.DEV) console.log('Audio recorded:', { size: audioBlob.size, type: audioBlob.type, chunks: chunks.length });
           
           await transcribeAudio(audioBlob);
           
@@ -487,7 +484,7 @@ export function ChatBox({
           }
         }
         // Only log other unexpected errors
-        console.warn('Microphone access issue:', error);
+        if (import.meta.env.DEV) console.warn('Microphone access issue:', error);
         onSendMessage('Microphone error 🎤');
       }
     }
@@ -515,7 +512,8 @@ export function ChatBox({
       );
 
       if (!response.ok) {
-        console.error('Transcription failed:', await response.text());
+        if (import.meta.env.DEV) console.error('Transcription failed:', await response.text());
+        toast.error('Audio transcription failed. Please try again.');
         throw new Error('Transcription failed');
       }
 
@@ -529,7 +527,7 @@ export function ChatBox({
         onSendMessage('Could not understand the audio 🤔');
       }
     } catch (error) {
-      console.error('Transcription error:', error);
+      if (import.meta.env.DEV) console.error('Transcription error:', error);
       onSendMessage('Error transcribing audio 😅');
     } finally {
       setIsLoading(false);

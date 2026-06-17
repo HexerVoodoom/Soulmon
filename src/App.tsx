@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useProgressTracking } from './hooks/useProgressTracking';
+import { useCareSystem } from './hooks/useCareSystem';
+import { useDailyReset } from './hooks/useDailyReset';
 import { Header } from './components/Header';
 import { ActivityCard } from './components/ActivityCard';
 import { TaskCard } from './components/TaskCard';
@@ -18,12 +21,13 @@ import { ProgressInfo } from './components/ProgressInfo';
 import { GuideModal } from './components/GuideModal';
 import { SettingsModal } from './components/SettingsModal';
 import { AISettingsModal, type AISettings } from './components/AISettingsModal';
+import { Toaster } from './components/ui/sonner';
 import { FirstTaskCompletedPopup } from './components/FirstTaskCompletedPopup';
 import { RookieUnlockPopup } from './components/RookieUnlockPopup';
 import { NotificationManager } from './components/NotificationManager';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, ActivityCategory, XP_THRESHOLDS } from './types/attributes';
-import { CareEvent, getCareMessage } from './components/CareSystem';
+import { CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from './types/progression';
 import { Language, useTranslation } from './utils/i18n';
 
@@ -164,7 +168,6 @@ export default function App() {
     activityId: '',
     stepId: '',
   });
-  const [timeUntilReset, setTimeUntilReset] = useState('');
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
@@ -290,522 +293,23 @@ export default function App() {
     localStorage.setItem('digiapp_state_v3', JSON.stringify(gameState));
   }, [gameState]);
 
-  // Care system - Schedule poop and food events
-  useEffect(() => {
-    // Check if there are incomplete tasks
-    const allSteps = gameState.activities.flatMap(a => a.steps);
-    const hasIncompleteTasks = allSteps.some(s => !s.completed);
-
-    if (!hasIncompleteTasks) {
-      return; // Don't schedule care events if all tasks are done
-    }
-
-    // Schedule events for today
-    const scheduleEvents = () => {
-      const now = Date.now();
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const startOfDay = today.getTime();
-      const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
-
-      // Only schedule if on current day
-      if (gameState.lastResetDate !== new Date().toDateString()) {
-        return;
-      }
-
-      // Schedule poop event (once a day) if not completed
-      if (!gameState.poopEventScheduled && !gameState.poopEventCompleted) {
-        const poopHour = 8 + Math.random() * 12; // 8 AM to 8 PM
-        const poopTime = startOfDay + (poopHour * 60 * 60 * 1000);
-        setGameState(prev => ({ ...prev, poopEventScheduled: poopTime }));
-      }
-
-      // Schedule food events (twice a day) if not scheduled
-      if (!gameState.foodEventsScheduled || gameState.foodEventsScheduled.length === 0) {
-        const firstFoodHour = 8 + Math.random() * 6; // 8 AM to 2 PM
-        const secondFoodHour = 14 + Math.random() * 6; // 2 PM to 8 PM
-        const foodTimes = [
-          startOfDay + (firstFoodHour * 60 * 60 * 1000),
-          startOfDay + (secondFoodHour * 60 * 60 * 1000),
-        ];
-        setGameState(prev => ({ ...prev, foodEventsScheduled: foodTimes }));
-      }
-    };
-
-    scheduleEvents();
-  }, [gameState.lastResetDate, gameState.poopEventCompleted, gameState.foodEventsScheduled]);
-
-  // Check for care events and trigger them
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const allSteps = gameState.activities.flatMap(a => a.steps);
-      const hasIncompleteTasks = allSteps.some(s => !s.completed);
-
-      if (!hasIncompleteTasks) {
-        return; // Don't trigger care events if all tasks are done
-      }
-
-      // Check poop event
-      if (gameState.poopEventScheduled && !gameState.poopEventCompleted && !careEvent) {
-        const timeSinceScheduled = now - gameState.poopEventScheduled;
-
-        // Show request message
-        if (timeSinceScheduled >= 0 && timeSinceScheduled < 5 * 60 * 1000) {
-          if (!careEvent || careEvent.type !== 'poop') {
-            setCareEvent({
-              type: 'poop',
-              requestTime: gameState.poopEventScheduled,
-              showSprite: false,
-            });
-            setMessageTrigger(prev => prev + 1);
-          }
-        }
-        // After 5 minutes, show sprite
-        else if (timeSinceScheduled >= 5 * 60 * 1000) {
-          setCareEvent({
-            type: 'poop',
-            requestTime: gameState.poopEventScheduled,
-            showSprite: true,
-          });
-        }
-      }
-
-      // Check food events
-      if (gameState.foodEventsScheduled && gameState.foodEventsCompleted) {
-        gameState.foodEventsScheduled.forEach((foodTime, index) => {
-          if (gameState.foodEventsCompleted.includes(index) || careEvent) {
-            return;
-          }
-
-          const timeSinceScheduled = now - foodTime;
-
-          // Show request message
-          if (timeSinceScheduled >= 0 && timeSinceScheduled < 5 * 60 * 1000) {
-            if (!careEvent || careEvent.type !== 'food') {
-              setCareEvent({
-                type: 'food',
-                requestTime: foodTime,
-                showSprite: false,
-              });
-              setMessageTrigger(prev => prev + 1);
-            }
-          }
-          // After 5 minutes, show sprite and reduce HP
-          else if (timeSinceScheduled >= 5 * 60 * 1000 && timeSinceScheduled < 6 * 60 * 1000) {
-            setCareEvent({
-              type: 'food',
-              requestTime: foodTime,
-              showSprite: true,
-            });
-            // Reduce HP by 2 (one full heart)
-            setGameState(prev => ({
-              ...prev,
-              healthPoints: Math.max(0, prev.healthPoints - 2),
-              foodEventsCompleted: [...(prev.foodEventsCompleted || []), index],
-            }));
-          }
-        });
-      }
-    }, 10000); // Check every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [gameState.poopEventScheduled, gameState.foodEventsScheduled, gameState.poopEventCompleted, gameState.foodEventsCompleted, careEvent]);
-
-  // Update message when care event is active
-  const getCompanionMessageWithCare = (): string => {
-    if (careEvent && !careEvent.showSprite) {
-      return getCareMessage(careEvent.type);
-    }
-    return getCompanionMessage();
-  };
-
-  // Timer and daily reset logic
-  useEffect(() => {
-    const updateTimer = () => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-
-      const diff = tomorrow.getTime() - now.getTime();
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      setTimeUntilReset(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-
-      // Check if we need to reset
-      const currentDate = now.toDateString();
-      if (currentDate !== gameState.lastResetDate) {
-        performDailyReset();
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [gameState.lastResetDate]);
-
-  const performDailyReset = () => {
-    setGameState(prev => {
-      // === NOVO SISTEMA: REQUIRED POR NÍVEL ===
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayString = yesterday.toDateString();
-      const yesterdayWeekDay = yesterday.getDay();
-
-      // Get required for current stage
-      const currentLevel = getStageLevel(prev.evolutionStage);
-      const requirements = FORM_REQUIREMENTS[currentLevel];
-      const requiredToday = requirements.required;
-
-      // Calcula quantas atividades/tasks foram completas de ONTEM
-      let dailyDone = 0;
-
-      const availableActivities = !canSelectWeekdays(prev.evolutionStage)
-        ? prev.activities
-        : prev.activities.filter(a => a.weekDays?.includes(yesterdayWeekDay));
-
-      availableActivities.forEach(activity => {
-        let isComplete = false;
-        if (activity.steps.length > 0) {
-          isComplete = activity.steps.every(s => s.completed);
-        } else {
-          isComplete = activity.completedToday && activity.lastCompletedDate === yesterdayString;
-        }
-        if (isComplete) dailyDone++;
-      });
-
-      dailyDone += prev.tasks.filter(t => t.completed).length;
-
-      // Dia perfeito = completou o required
-      const dayWasPerfect = dailyDone >= requiredToday;
-
-      let newHP = prev.healthPoints;
-      let newPerfectDays = prev.perfectDays;
-      let newXP = prev.totalXP;
-      let newVirusPoints = prev.virusPoints;
-      let newDataPoints = prev.dataPoints;
-      let newVaccinePoints = prev.vaccinePoints;
-      let newEvolutionStage = prev.evolutionStage;
-      let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
-      let wasDegeneratedByHP = false;
-      let newMaxActivityCap = prev.maxActivityCap;
-
-      // Regra de HP: perde 1 HP se não completar nenhuma atividade
-      if (dailyDone === 0) {
-        newHP = Math.max(0, prev.healthPoints - 1);
-      }
-
-      // Dia perfeito: ganha 1 ponto de progresso
-      if (dayWasPerfect) {
-        newPerfectDays++;
-
-        // Calcula atributos das atividades completadas
-        let dailyVirus = 0;
-        let dailyData = 0;
-        let dailyVaccine = 0;
-
-        availableActivities.forEach(activity => {
-          const attrs = CATEGORY_ATTRIBUTES[activity.category];
-          dailyVirus += attrs.virus;
-          dailyData += attrs.data;
-          dailyVaccine += attrs.vaccine;
-        });
-
-        newVirusPoints += dailyVirus;
-        newDataPoints += dailyData;
-        newVaccinePoints += dailyVaccine;
-
-        const dailyXP = (dailyVirus + dailyData + dailyVaccine) * 10;
-        newXP += dailyXP;
-      }
-
-      // Verifica evolução baseada em perfectDays
-      if (newPerfectDays >= requirements.required) {
-        // Pronto para evoluir!
-        newPerfectDays = 0; // Reset para a próxima forma
-
-        // Determina próxima evolução baseada no branch
-        const dominantAttr = Math.max(newVirusPoints, newDataPoints, newVaccinePoints);
-        let branch = prev.currentBranch;
-        if (newVirusPoints === dominantAttr) branch = 'virus';
-        else if (newDataPoints === dominantAttr) branch = 'data';
-        else if (newVaccinePoints === dominantAttr) branch = 'vaccine';
-
-        // Evolução simples baseada na forma atual
-        if (prev.evolutionStage === 'digiegg') {
-          newEvolutionStage = 'pichimon';
-        } else if (prev.evolutionStage === 'pichimon') {
-          newEvolutionStage = 'pukamon';
-        } else if (prev.evolutionStage === 'pukamon') {
-          newEvolutionStage = 'tapirmon';
-          // Mostra popup do Rookie na primeira vez
-          if (!hasShownRookiePopup) {
-            setShowRookieUnlockPopup(true);
-            setHasShownRookiePopup(true);
-            localStorage.setItem('digiapp-rookie-popup-shown', 'true');
-          }
-        } else if (prev.evolutionStage === 'tapirmon') {
-          if (branch === 'virus') newEvolutionStage = 'tuskmon';
-          else if (branch === 'data') newEvolutionStage = 'monochromon';
-          else newEvolutionStage = 'bakemon';
-        } else if (['tuskmon', 'monochromon', 'bakemon'].includes(prev.evolutionStage)) {
-          if (branch === 'virus') newEvolutionStage = 'gigadramon';
-          else if (branch === 'data') newEvolutionStage = 'triceramon';
-          else newEvolutionStage = 'digitamamon';
-        } else if (['gigadramon', 'triceramon', 'digitamamon'].includes(prev.evolutionStage)) {
-          if (branch === 'virus') newEvolutionStage = 'gaioumon';
-          else if (branch === 'vaccine') newEvolutionStage = 'titamon';
-          else newEvolutionStage = 'ultimatebrachiomon';
-        } else if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(prev.evolutionStage)) {
-          // Só evolui para Ultra se tiver os 3 megas
-          const hasAllMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'].every(m =>
-            prev.unlockedEvolutions.includes(m)
-          );
-          if (hasAllMegas) {
-            newEvolutionStage = 'gaioumon-itto';
-          }
-        }
-
-        // Atualiza HP para o máximo da nova forma
-        const newStageLevel = getStageLevel(newEvolutionStage);
-        newHP = MAX_HP_BY_FORM[newStageLevel];
-
-        // Atualiza maxActivityCap se o novo nível tem cap maior
-        const newCap = FORM_REQUIREMENTS[newStageLevel].cap;
-        if (newCap > newMaxActivityCap) {
-          newMaxActivityCap = newCap;
-        }
-
-        // Adiciona aos desbloqueados
-        if (!finalUnlockedEvolutions.includes(newEvolutionStage)) {
-          finalUnlockedEvolutions.push(newEvolutionStage);
-        }
-      }
-
-      // Degeneração por HP zerado
-      if (newHP === 0) {
-        wasDegeneratedByHP = true;
-
-        // Devolve para forma anterior
-        if (prev.evolutionStage === 'gaioumon-itto') {
-          newEvolutionStage = ['gaioumon', 'ultimatebrachiomon', 'titamon'][Math.floor(Math.random() * 3)];
-        } else if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(prev.evolutionStage)) {
-          newEvolutionStage = ['gigadramon', 'triceramon', 'digitamamon'][Math.floor(Math.random() * 3)];
-        } else if (['gigadramon', 'triceramon', 'digitamamon'].includes(prev.evolutionStage)) {
-          newEvolutionStage = ['tuskmon', 'monochromon', 'bakemon'][Math.floor(Math.random() * 3)];
-        } else if (['tuskmon', 'monochromon', 'bakemon'].includes(prev.evolutionStage)) {
-          newEvolutionStage = 'tapirmon';
-        } else if (prev.evolutionStage === 'tapirmon') {
-          newEvolutionStage = 'pukamon';
-        } else if (prev.evolutionStage === 'pukamon') {
-          newEvolutionStage = 'pichimon';
-        } else if (prev.evolutionStage === 'pichimon') {
-          newEvolutionStage = 'digiegg';
-        }
-
-        // Restaura HP da nova forma
-        const degeneratedStageLevel = getStageLevel(newEvolutionStage);
-        newHP = MAX_HP_BY_FORM[degeneratedStageLevel];
-
-        // Dá metade dos dias necessários já preenchidos
-        const degeneratedRequirements = FORM_REQUIREMENTS[degeneratedStageLevel];
-        newPerfectDays = Math.floor(degeneratedRequirements.required / 2);
-      }
-
-      // Reset all activity checkboxes and completion status
-      const resetActivities = prev.activities.map(activity => ({
-        ...activity,
-        steps: activity.steps.map(step => ({ ...step, completed: false })),
-        completedToday: false,
-      }));
-
-      // Reset tasks
-      const resetTasks = prev.tasks.map(task => ({
-        ...task,
-        completed: false,
-      }));
-
-      // Atualiza maxHP baseado na nova forma
-      const newStageLevel = getStageLevel(newEvolutionStage);
-      const newMaxHP = MAX_HP_BY_FORM[newStageLevel];
-
-      return {
-        ...prev,
-        activities: resetActivities,
-        tasks: resetTasks,
-        healthPoints: newHP,
-        maxHealthPoints: newMaxHP,
-        perfectDays: newPerfectDays,
-        totalXP: newXP,
-        virusPoints: newVirusPoints,
-        dataPoints: newDataPoints,
-        vaccinePoints: newVaccinePoints,
-        lastResetDate: new Date().toDateString(),
-        evolutionStage: newEvolutionStage,
-        digivolutionSegments: 0, // Não usado mais, mas mantido
-        digivolutionSegmentsNeeded: 999, // Não usado mais
-        poopEventScheduled: null,
-        foodEventsScheduled: [],
-        poopEventCompleted: false,
-        foodEventsCompleted: [],
-        unlockedEvolutions: finalUnlockedEvolutions,
-        degeneratedByHP: wasDegeneratedByHP,
-        lastDayWasPerfect: dayWasPerfect,
-        maxActivityCap: newMaxActivityCap,
-      };
-    });
-  };
-
-  // Calcula total de tarefas disponíveis para hoje
-  const calculateDailyTotal = () => {
-    const today = new Date().toDateString();
-    const todayWeekDay = new Date().getDay();
-
-    // Antes de Rookie: todas as atividades/tasks são diárias (sempre disponíveis)
-    if (!canSelectWeekdays(gameState.evolutionStage)) {
-      // Inclui tasks históricas completadas hoje
-      const tasksCompletedToday = gameState.completedTasks.filter(ct => {
-        const completedDate = new Date(ct.completedAt).toDateString();
-        return completedDate === today;
-      });
-
-      return gameState.activities.length + gameState.tasks.length + tasksCompletedToday.length;
-    }
-
-    // A partir de Rookie: filtra por dia da semana
-    const availableActivities = gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-
-    // Inclui tasks históricas completadas hoje
-    const tasksCompletedToday = gameState.completedTasks.filter(ct => {
-      const completedDate = new Date(ct.completedAt).toDateString();
-      return completedDate === today;
-    });
-
-    return availableActivities.length + gameState.tasks.length + tasksCompletedToday.length;
-  };
-
-  // Calcula quantas tarefas foram concluídas hoje
-  const calculateDailyDone = () => {
-    const today = new Date().toDateString();
-    const todayWeekDay = new Date().getDay();
-
-    let completedCount = 0;
-
-    // Filtra atividades disponíveis para hoje
-    const availableActivities = !canSelectWeekdays(gameState.evolutionStage)
-      ? gameState.activities
-      : gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-
-    availableActivities.forEach(activity => {
-      let isComplete = false;
-
-      if (activity.steps.length > 0) {
-        isComplete = activity.steps.every(s => s.completed);
-      } else {
-        isComplete = activity.completedToday && activity.lastCompletedDate === today;
-      }
-
-      if (isComplete) {
-        completedCount++;
-      }
-    });
-
-    // Adiciona tasks completas ATIVAS
-    completedCount += gameState.tasks.filter(t => t.completed).length;
-
-    // NOVO: Adiciona tasks HISTÓRICAS completadas HOJE
-    const tasksCompletedToday = gameState.completedTasks.filter(ct => {
-      const completedDate = new Date(ct.completedAt).toDateString();
-      return completedDate === today;
-    });
-
-    completedCount += tasksCompletedToday.length;
-
-    return completedCount;
-  };
-
-  // Verifica se o dia está 100% completo
-  const isDayPerfect = () => {
-    const total = calculateDailyTotal();
-    const done = calculateDailyDone();
-    return total > 0 && done === total;
-  };
-
-  // Calculate overall progress for today
-  const calculateProgress = () => {
-    const today = new Date().toDateString();
-    const todayWeekDay = new Date().getDay();
-
-    // Filtra apenas atividades programadas para hoje
-    const availableActivities = gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-
-    let totalItems = 0;
-    let completedItems = 0;
-
-    availableActivities.forEach(activity => {
-      if (activity.steps.length > 0) {
-        // Atividade com etapas - conta cada step
-        totalItems += activity.steps.length;
-        completedItems += activity.steps.filter(s => s.completed).length;
-      } else {
-        // Atividade sem etapas - conta como 1 item
-        totalItems += 1;
-        if (activity.completedToday && activity.lastCompletedDate === today) {
-          completedItems += 1;
-        }
-      }
-    });
-
-    // Adiciona tasks ATIVAS (ainda na lista)
-    totalItems += gameState.tasks.length;
-    completedItems += gameState.tasks.filter(t => t.completed).length;
-
-    // NOVO: Adiciona tasks HISTÓRICAS completadas HOJE (já removidas da lista)
-    const tasksCompletedToday = gameState.completedTasks.filter(ct => {
-      const completedDate = new Date(ct.completedAt).toDateString();
-      return completedDate === today;
-    });
-
-    totalItems += tasksCompletedToday.length;
-    completedItems += tasksCompletedToday.length; // Todas já estão completas
-
-    return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
-  };
-
-  // Calculate today's potential attribute gains
-  const calculateTodayAttributes = () => {
-    const today = new Date().toDateString();
-    let virus = 0;
-    let data = 0;
-    let vaccine = 0;
-
-    gameState.activities.forEach(activity => {
-      let isComplete = false;
-
-      if (activity.steps.length > 0) {
-        // Atividade com etapas
-        isComplete = activity.steps.every(s => s.completed);
-      } else {
-        // Atividade sem etapas
-        isComplete = activity.completedToday && activity.lastCompletedDate === today;
-      }
-
-      if (isComplete) {
-        const attrs = CATEGORY_ATTRIBUTES[activity.category];
-        virus += attrs.virus;
-        data += attrs.data;
-        vaccine += attrs.vaccine;
-      }
-    });
-
-    return { virus, data, vaccine };
-  };
-
-  const progress = calculateProgress();
-  const todayAttrs = calculateTodayAttributes();
+  const { getCompanionMessageWithCare: _careMessageFn } = useCareSystem({
+    gameState,
+    careEvent,
+    setCareEvent,
+    setMessageTrigger,
+    setGameState,
+  });
+
+  const { timeUntilReset } = useDailyReset({
+    gameState,
+    setGameState,
+    hasShownRookiePopup,
+    setShowRookieUnlockPopup,
+    setHasShownRookiePopup,
+  });
+
+  const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
 
   // Determine companion mood based on progress
   const getCompanionMood = (): 'idle' | 'happy' | 'tired' => {
@@ -1121,7 +625,7 @@ export default function App() {
     category: string;
     points: { virus: number; data: number; vaccine: number };
   }) => {
-    console.log('AI creating activity:', activity);
+    if (import.meta.env.DEV) console.log('AI creating activity:', activity);
 
     // Map AI category to ActivityCategory
     const categoryMap: { [key: string]: ActivityCategory } = {
@@ -1170,7 +674,7 @@ export default function App() {
     // Trigger message bubble
     setMessageTrigger(prev => prev + 1);
 
-    console.log('Activity created successfully:', newActivity);
+    if (import.meta.env.DEV) console.log('Activity created successfully:', newActivity);
   };
 
   // Handle creating new task
@@ -1699,8 +1203,8 @@ export default function App() {
               digivolutionSegmentsNeeded={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].daysToEvolve}
               onDegenerate={handleDegenerate}
               theme={theme}
-              dailyDone={calculateDailyDone()}
-              dailyTotal={calculateDailyTotal()}
+              dailyDone={dailyDone}
+              dailyTotal={dailyTotal}
               dailyRequired={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
               activitiesCount={gameState.activities.length}
               evolutionStage={gameState.evolutionStage}
@@ -1741,7 +1245,7 @@ export default function App() {
           <CompanionHUD
             companionMood={getCompanionMood()}
             energyLevel={progress}
-            message={getCompanionMessageWithCare()}
+            message={_careMessageFn(getCompanionMessage())}
             currentStage={getCurrentStageName()}
             evolutionStage={gameState.evolutionStage}
             healthPoints={gameState.healthPoints}
@@ -1929,6 +1433,7 @@ export default function App() {
         language={language}
         enabled={notificationsEnabled}
       />
+      <Toaster richColors position="top-right" />
     </div>
   );
 }

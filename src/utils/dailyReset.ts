@@ -179,39 +179,43 @@ export function getNextEvolution(currentStage: string, branch: 'virus' | 'data' 
   return currentStage; // Sem evolução
 }
 
-// Determina a forma anterior para degeneração
-export function getPreviousForm(currentStage: string): string {
-  if (currentStage === 'gaioumon-itto') return 'gaioumon';
-  
+// Determina a forma anterior para degeneração, determinístico baseado no branch
+export function getPreviousForm(currentStage: string, branch: 'virus' | 'data' | 'vaccine' = 'data'): string {
+  if (currentStage === 'gaioumon-itto') {
+    const branchMap = { virus: 'gaioumon', data: 'ultimatebrachiomon', vaccine: 'titamon' } as const;
+    return branchMap[branch];
+  }
+
   if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(currentStage)) {
-    // Devolve para um Ultimate aleatório
-    return ['megadramon', 'gigadramon', 'triceramon'][Math.floor(Math.random() * 3)];
+    const branchMap = { virus: 'megadramon', data: 'gigadramon', vaccine: 'triceramon' } as const;
+    return branchMap[branch];
   }
-  
+
   if (['megadramon', 'gigadramon', 'triceramon', 'digitamamon'].includes(currentStage)) {
-    // Devolve para um Champion aleatório
-    return ['monochromon', 'tyrannomon', 'ogremon', 'meramon', 'leomon', 'ikkakumon'][Math.floor(Math.random() * 6)];
+    const branchMap = { virus: 'monochromon', data: 'leomon', vaccine: 'geremon' } as const;
+    return branchMap[branch];
   }
-  
+
   if ([
     'monochromon', 'tyrannomon', 'ogremon',
     'meramon', 'leomon', 'ikkakumon',
     'geremon', 'bakemon', 'devimon'
   ].includes(currentStage)) {
-    return ['tapirmon', 'kudamon', 'kamemon'][Math.floor(Math.random() * 3)];
+    const branchMap = { virus: 'tapirmon', data: 'kudamon', vaccine: 'kamemon' } as const;
+    return branchMap[branch];
   }
-  
+
   if (['tapirmon', 'kudamon', 'kamemon'].includes(currentStage)) {
-    return ['tsunomon', 'pagumon'][Math.floor(Math.random() * 2)];
+    return 'koromon';
   }
-  
+
   if (['tsunomon', 'pagumon'].includes(currentStage)) {
     return 'koromon';
   }
-  
+
   if (currentStage === 'koromon') {
     return 'digiegg';
   }
-  
-  return 'digiegg'; // Fallback
+
+  return 'digiegg';
 }
