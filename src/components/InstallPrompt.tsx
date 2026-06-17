@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { type Language } from '../utils/i18n';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -12,7 +13,7 @@ interface InstallPromptProps {
   language?: Language;
 }
 
-const DISMISSED_KEY = 'digiapp-pwa-install-dismissed';
+const DISMISSED_KEY = STORAGE_KEYS.PWA_INSTALL_DISMISSED;
 
 export function InstallPrompt({ theme = 'default', language = 'en-US' }: InstallPromptProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);

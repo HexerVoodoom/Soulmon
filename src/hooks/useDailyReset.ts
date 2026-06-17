@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 interface Step { id: string; label: string; completed: boolean; }
 interface Activity {
@@ -132,7 +133,7 @@ export function useDailyReset({
           if (!hasShownRookiePopup) {
             setShowRookieUnlockPopup(true);
             setHasShownRookiePopup(true);
-            localStorage.setItem('digiapp-rookie-popup-shown', 'true');
+            localStorage.setItem(STORAGE_KEYS.ROOKIE_POPUP_SHOWN, 'true');
           }
         } else if (prev.evolutionStage === 'tapirmon') {
           if (branch === 'virus') newEvolutionStage = 'tuskmon';

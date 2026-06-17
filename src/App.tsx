@@ -6,171 +6,36 @@ import { Header } from './components/Header';
 import { ActivityCard } from './components/ActivityCard';
 import { TaskCard } from './components/TaskCard';
 import { CompanionHUD } from './components/CompanionHUD';
-import { EditModal } from './components/EditModal';
-import { TaskEditModal } from './components/TaskEditModal';
-const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
-const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
-const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
-const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
-const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
-import { WidgetView } from './components/WidgetView';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { AttributeBadges } from './components/AttributeBadges';
-import { ProgressInfo } from './components/ProgressInfo';
-import { SettingsModal } from './components/SettingsModal';
-import { AISettingsModal, type AISettings } from './components/AISettingsModal';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { InstallPrompt } from './components/InstallPrompt';
 import { Plus, Edit2 } from 'lucide-react';
-import { CATEGORY_ATTRIBUTES, ActivityCategory, XP_THRESHOLDS } from './types/attributes';
-import { CareEvent } from './components/CareSystem';
-import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from './types/progression';
-import { Language, useTranslation } from './utils/i18n';
+import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
+import { type CareEvent } from './components/CareSystem';
+import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays } from './types/progression';
+import { type Language, useTranslation } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
+import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
+import { STORAGE_KEYS } from './utils/storageKeys';
+import type { AISettings } from './components/AISettingsModal';
 
-interface Step {
-  id: string;
-  label: string;
-  completed: boolean;
-}
-
-interface Activity {
-  id: string;
-  name: string;
-  category: ActivityCategory;
-  emoji: string;
-  steps: Step[];
-  weekDays: number[]; // 0-6 (domingo a sábado)
-  alarm?: {
-    time: string; // HH:mm
-  };
-  completedToday?: boolean; // Para atividades sem etapas
-  lastCompletedDate?: string; // Data da última conclusão
-}
-
-interface Task {
-  id: string;
-  name: string;
-  category: ActivityCategory;
-  emoji: string;
-  completed: boolean;
-  deadline?: {
-    date: string; // YYYY-MM-DD
-    time: string; // HH:mm
-  };
-  alarm?: {
-    type: '2h' | '1h' | '30min' | 'custom';
-    time?: string; // HH:mm (only for custom)
-  };
-  steps?: Step[]; // Tasks agora também podem ter steps
-}
-
-interface CompletedTask {
-  id: string;
-  name: string;
-  category: ActivityCategory;
-  emoji: string;
-  completedAt: string;
-}
-
-interface ActivityStats {
-  [activityId: string]: {
-    name: string;
-    emoji: string;
-    category: ActivityCategory;
-    completionCount: number;
-  };
-}
-
-interface GameState {
-  activities: Activity[];
-  tasks: Task[];
-  completedTasks: CompletedTask[];
-  activityStats: ActivityStats;
-  healthPoints: number;
-  maxHealthPoints: number;
-  perfectDays: number; // Dias perfeitos acumulados na forma atual
-  totalXP: number; // Mantido para compatibilidade
-  virusPoints: number;
-  dataPoints: number;
-  vaccinePoints: number;
-  lastResetDate: string;
-  // Agumon line
-  evolutionStage: 'digiegg' | 'pichimon' | 'pukamon' | 'tapirmon'
-    | 'monochromon' | 'tuskmon' | 'bakemon'
-    | 'gigadramon' | 'triceramon' | 'digitamamon'
-    | 'gaioumon' | 'ultimatebrachiomon' | 'titamon'
-    // Veemon line
-    | 'chicomon' | 'chibimon' | 'veemon'
-    | 'exveemon' | 'veedramon' | 'flamdramon'
-    | 'paildramon' | 'aeroveedramon' | 'raidramon'
-    | 'imperialdramon' | 'ulforceveemon' | 'magnamon'
-    // Salamon line
-    | 'yukimibotamon' | 'nyaromon' | 'plotmon'
-    | 'gatomon' | 'blackgatomon' | 'mikemon'
-    | 'angewomon' | 'ladydevimon' | 'nefertimon'
-    | 'ophanimon' | 'lilithmon' | 'holydramon'
-    // Ultra (shared)
-    | 'gaioumon-itto' | 'imperialdramonpaladin' | 'mastemon';
-  digivolutionSegments: number;
-  digivolutionSegmentsNeeded: number;
-  poopEventScheduled: number | null;
-  foodEventsScheduled: number[];
-  poopEventCompleted: boolean;
-  foodEventsCompleted: number[];
-  unlockedEvolutions: string[]; // Track all unlocked evolution stages
-  degeneratedByHP: boolean; // Track if current stage was reached by HP loss degeneration
-  currentBranch: 'virus' | 'data' | 'vaccine'; // Track selected evolution branch
-  lastDayWasPerfect: boolean; // Se o último dia foi perfeito (para evitar contar múltiplas vezes)
-  maxActivityCap: number; // Cap máximo de atividades desbloqueado (nunca diminui)
-  eggType?: 'agumon' | 'veemon' | 'salamon'; // Ovo escolhido no onboarding (permanente)
-}
+const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
+const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
+const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
+const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
+const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings';
 
-const INITIAL_ACTIVITIES: Activity[] = [
-  {
-    id: '1',
-    name: 'Morning Routine',
-    category: 'Health',
-    emoji: '🏥',
-    weekDays: [1, 2, 3, 4, 5], // Seg a Sex
-    steps: [
-      { id: '1-1', label: 'Step 1: Wake up early', completed: false },
-      { id: '1-2', label: 'Step 2: Exercise 20min', completed: false },
-      { id: '1-3', label: 'Step 3: Healthy breakfast', completed: false },
-      { id: '1-4', label: 'Step 4: Meditation', completed: false },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Study Session',
-    category: 'Study',
-    emoji: '📚',
-    weekDays: [1, 2, 3, 4, 5], // Seg a Sex
-    steps: [
-      { id: '2-1', label: 'Step 1: Review notes', completed: false },
-      { id: '2-2', label: 'Step 2: Complete assignment', completed: false },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Creative Work',
-    category: 'Creativity',
-    emoji: '🎨',
-    weekDays: [0, 6], // Fim de semana
-    steps: [
-      { id: '3-1', label: 'Step 1: Brainstorm ideas', completed: false },
-      { id: '3-2', label: 'Step 2: Create draft', completed: false },
-      { id: '3-3', label: 'Step 3: Review and refine', completed: false },
-    ],
-  },
-];
-
 export default function App() {
+  const { gameState, setGameState } = useGameState();
   const [currentView, setCurrentView] = useState<ViewType>('main');
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
@@ -188,9 +53,9 @@ export default function App() {
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [useAI, setUseAI] = useState(true); // AI chat toggle
-  const [aiSettings, setAiSettings] = useState(() => {
-    const saved = localStorage.getItem('digiapp-ai-settings');
+  const [useAI, setUseAI] = useState(true);
+  const [aiSettings, setAiSettings] = useState<AISettings>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
       tone: 'casual',
       emojiIntensity: 'medium',
@@ -200,113 +65,42 @@ export default function App() {
     };
   });
   const [theme, setTheme] = useState<'default' | 'win98' | 'glitch'>(() => {
-    const saved = localStorage.getItem('digiapp-theme');
+    const saved = localStorage.getItem(STORAGE_KEYS.THEME);
     return (saved as 'default' | 'win98' | 'glitch') || 'default';
   });
   const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem('digiapp-language');
+    const saved = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
     return saved === 'pt-BR' ? 'pt-BR' : 'en-US';
   });
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
-    return localStorage.getItem('digiapp-onboarding-complete') === 'true';
+    return localStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE) === 'true';
   });
   const [userName, setUserName] = useState(() => {
-    return localStorage.getItem('digiapp-user-name') || '';
+    return localStorage.getItem(STORAGE_KEYS.USER_NAME) || '';
   });
   const [showFirstTaskPopup, setShowFirstTaskPopup] = useState(false);
   const [hasShownFirstTaskPopup, setHasShownFirstTaskPopup] = useState(() => {
-    return localStorage.getItem('digiapp-first-task-popup-shown') === 'true';
+    return localStorage.getItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN) === 'true';
   });
   const [showRookieUnlockPopup, setShowRookieUnlockPopup] = useState(false);
   const [hasShownRookiePopup, setHasShownRookiePopup] = useState(() => {
-    return localStorage.getItem('digiapp-rookie-popup-shown') === 'true';
+    return localStorage.getItem(STORAGE_KEYS.ROOKIE_POPUP_SHOWN) === 'true';
   });
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-    return localStorage.getItem('digiapp-notifications-enabled') === 'true';
+    return localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'true';
   });
 
-  // Save theme to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem('digiapp-theme', theme);
+    localStorage.setItem(STORAGE_KEYS.THEME, theme);
   }, [theme]);
 
-
-  // Save AI settings to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('digiapp-ai-settings', JSON.stringify(aiSettings));
+    localStorage.setItem(STORAGE_KEYS.AI_SETTINGS, JSON.stringify(aiSettings));
   }, [aiSettings]);
 
-  // Save notifications state to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem('digiapp-notifications-enabled', notificationsEnabled ? 'true' : 'false');
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled ? 'true' : 'false');
   }, [notificationsEnabled]);
-
-  // Get max HP based on evolution stage
-  const getMaxHPForStage = (stage: GameState['evolutionStage']): number => {
-    const stageLevel = getStageLevel(stage);
-    return MAX_HP_BY_FORM[stageLevel];
-  };
-
-  // Load game state from localStorage
-  const [gameState, setGameState] = useState<GameState>(() => {
-    const saved = localStorage.getItem('digiapp_state_v3');
-    if (saved) {
-      const loadedState = JSON.parse(saved);
-      const savedEggType = localStorage.getItem('digiapp-egg-type') as 'agumon' | 'veemon' | 'salamon' | null;
-      // Ensure maxHealthPoints is correct for the stage and add new fields if missing
-      return {
-        ...loadedState,
-        tasks: loadedState.tasks ?? [],
-        completedTasks: loadedState.completedTasks ?? [],
-        activityStats: loadedState.activityStats ?? {},
-        maxHealthPoints: getMaxHPForStage(loadedState.evolutionStage),
-        perfectDays: loadedState.perfectDays ?? 0,
-        lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
-        poopEventScheduled: loadedState.poopEventScheduled ?? null,
-        foodEventsScheduled: loadedState.foodEventsScheduled ?? [],
-        poopEventCompleted: loadedState.poopEventCompleted ?? false,
-        foodEventsCompleted: loadedState.foodEventsCompleted ?? [],
-        unlockedEvolutions: loadedState.unlockedEvolutions ?? ['digiegg'],
-        degeneratedByHP: loadedState.degeneratedByHP ?? false,
-        currentBranch: loadedState.currentBranch ?? 'data',
-        maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage)].cap,
-        eggType: loadedState.eggType ?? savedEggType ?? 'agumon', // Load from state or localStorage, default to agumon
-      };
-    }
-    const savedEggType = localStorage.getItem('digiapp-egg-type') as 'agumon' | 'veemon' | 'salamon' | null;
-    return {
-      activities: [],
-      tasks: [],
-      completedTasks: [],
-      activityStats: {},
-      healthPoints: 1,
-      maxHealthPoints: 1,
-      perfectDays: 0,
-      totalXP: 0,
-      virusPoints: 0,
-      dataPoints: 0,
-      vaccinePoints: 0,
-      lastResetDate: new Date().toDateString(),
-      evolutionStage: 'digiegg' as const,
-      digivolutionSegments: 0,
-      digivolutionSegmentsNeeded: 1,
-      poopEventScheduled: null,
-      foodEventsScheduled: [],
-      poopEventCompleted: false,
-      foodEventsCompleted: [],
-      unlockedEvolutions: ['digiegg'],
-      degeneratedByHP: false,
-      currentBranch: 'data',
-      lastDayWasPerfect: false,
-      maxActivityCap: 2, // Inicia com o cap do digiegg
-      eggType: savedEggType ?? 'agumon', // Load from localStorage, default to agumon
-    };
-  });
-
-  // Save game state to localStorage
-  useEffect(() => {
-    localStorage.setItem('digiapp_state_v3', JSON.stringify(gameState));
-  }, [gameState]);
 
   const { getCompanionMessageWithCare: _careMessageFn } = useCareSystem({
     gameState,
@@ -514,7 +308,7 @@ export default function App() {
         if (!anyStepCompleted) {
           setShowFirstTaskPopup(true);
           setHasShownFirstTaskPopup(true);
-          localStorage.setItem('digiapp-first-task-popup-shown', 'true');
+          localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
         }
       }
 
@@ -585,7 +379,7 @@ export default function App() {
       if (!anyTaskCompleted) {
         setShowFirstTaskPopup(true);
         setHasShownFirstTaskPopup(true);
-        localStorage.setItem('digiapp-first-task-popup-shown', 'true');
+        localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
       }
     }
 
@@ -775,7 +569,7 @@ export default function App() {
         if (!anyStepCompleted) {
           setShowFirstTaskPopup(true);
           setHasShownFirstTaskPopup(true);
-          localStorage.setItem('digiapp-first-task-popup-shown', 'true');
+          localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
         }
       }
 
@@ -1027,9 +821,9 @@ export default function App() {
     };
   }) => {
     // Save user name, egg type, and onboarding completion
-    localStorage.setItem('digiapp-user-name', data.userName);
-    localStorage.setItem('digiapp-egg-type', data.eggType);
-    localStorage.setItem('digiapp-onboarding-complete', 'true');
+    localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
+    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, data.eggType);
+    localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
     setUserName(data.userName);
     setHasCompletedOnboarding(true);
 
@@ -1071,9 +865,9 @@ export default function App() {
   // Handle reset onboarding (DEBUG ONLY)
   const handleResetOnboarding = () => {
     if (confirm('Reset onboarding? This will clear your name and egg choice.')) {
-      localStorage.removeItem('digiapp-onboarding-complete');
-      localStorage.removeItem('digiapp-user-name');
-      localStorage.removeItem('digiapp-egg-type');
+      localStorage.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
+      localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+      localStorage.removeItem(STORAGE_KEYS.EGG_TYPE);
       window.location.reload();
     }
   };
@@ -1262,14 +1056,13 @@ export default function App() {
               aiSettings={aiSettings}
               onSaveAISettings={(settings) => {
                 setAiSettings(settings);
-                localStorage.setItem('digiapp-ai-settings', JSON.stringify(settings));
               }}
               theme={theme}
               onChangeTheme={setTheme}
               language={language}
               onChangeLanguage={(lang) => {
                 setLanguage(lang);
-                localStorage.setItem('digiapp-language', lang);
+                localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
               }}
               onOpenGuide={() => setGuideModalOpen(true)}
               notificationsEnabled={notificationsEnabled}
@@ -1331,43 +1124,51 @@ export default function App() {
         </div>
       </div>
 
-      <EditModal
-        isOpen={editModalOpen}
-        onClose={() => {
-          setEditModalOpen(false);
-          setEditingActivity(null);
-        }}
-        onSave={handleSaveActivity}
-        onDelete={editingActivity ? () => handleDeleteActivity(editingActivity) : undefined}
-        initialData={
-          editingActivity
-            ? gameState.activities.find(a => a.id === editingActivity)
-            : undefined
-        }
-        canEditWeekdays={canSelectWeekdays(gameState.evolutionStage)}
-        theme={theme}
-      />
+      {editModalOpen && (
+        <Suspense fallback={null}>
+          <EditModal
+            isOpen={editModalOpen}
+            onClose={() => {
+              setEditModalOpen(false);
+              setEditingActivity(null);
+            }}
+            onSave={handleSaveActivity}
+            onDelete={editingActivity ? () => handleDeleteActivity(editingActivity) : undefined}
+            initialData={
+              editingActivity
+                ? gameState.activities.find(a => a.id === editingActivity)
+                : undefined
+            }
+            canEditWeekdays={canSelectWeekdays(gameState.evolutionStage)}
+            theme={theme}
+          />
+        </Suspense>
+      )}
 
-      <TaskEditModal
-        isOpen={taskEditModalOpen}
-        onClose={() => {
-          setTaskEditModalOpen(false);
-          setEditingTask(null);
-        }}
-        onSave={handleSaveTask}
-        onDelete={editingTask ? () => {
-          handleDeleteTask(editingTask);
-          setTaskEditModalOpen(false);
-          setEditingTask(null);
-        } : undefined}
-        initialData={
-          editingTask
-            ? gameState.tasks.find(t => t.id === editingTask)
-            : undefined
-        }
-        title={editingTask ? t.main.editTask : t.main.newTask}
-        theme={theme}
-      />
+      {taskEditModalOpen && (
+        <Suspense fallback={null}>
+          <TaskEditModal
+            isOpen={taskEditModalOpen}
+            onClose={() => {
+              setTaskEditModalOpen(false);
+              setEditingTask(null);
+            }}
+            onSave={handleSaveTask}
+            onDelete={editingTask ? () => {
+              handleDeleteTask(editingTask);
+              setTaskEditModalOpen(false);
+              setEditingTask(null);
+            } : undefined}
+            initialData={
+              editingTask
+                ? gameState.tasks.find(t => t.id === editingTask)
+                : undefined
+            }
+            title={editingTask ? t.main.editTask : t.main.newTask}
+            theme={theme}
+          />
+        </Suspense>
+      )}
 
       {createModalOpen && (
         <Suspense fallback={null}><CreateModal
@@ -1420,19 +1221,21 @@ export default function App() {
         message={t.main.uncheckTaskMessage}
       />
 
-      {/* Settings Menu */}
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        useAI={useAI}
-        onToggleAI={() => setUseAI(!useAI)}
-        aiSettings={aiSettings}
-        onSaveAISettings={(settings) => {
-          setAiSettings(settings);
-          localStorage.setItem('digiapp-ai-settings', JSON.stringify(settings));
-        }}
-        theme={theme}
-      />
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            useAI={useAI}
+            onToggleAI={() => setUseAI(!useAI)}
+            aiSettings={aiSettings}
+            onSaveAISettings={(settings) => {
+              setAiSettings(settings);
+            }}
+            theme={theme}
+          />
+        </Suspense>
+      )}
 
       <ContentModals
         statsModalOpen={statsModalOpen}

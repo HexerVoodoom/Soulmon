@@ -74,8 +74,10 @@ export interface ScheduledNotification {
   type: 'alarm' | 'daily';
 }
 
-const STORAGE_KEY = 'digiapp-scheduled-notifications';
-const DAILY_CHECK_KEY = 'digiapp-daily-notification-check';
+import { STORAGE_KEYS } from './storageKeys';
+
+const STORAGE_KEY = STORAGE_KEYS.SCHEDULED_NOTIFICATIONS;
+const DAILY_CHECK_KEY = STORAGE_KEYS.DAILY_NOTIFICATION_CHECK;
 
 export const getScheduledNotifications = (): ScheduledNotification[] => {
   try {

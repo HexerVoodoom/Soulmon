@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { en } from '../translations/en';
 import { pt } from '../translations/pt';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 type Language = 'en' | 'pt';
 
@@ -16,7 +17,7 @@ const translations = { en, pt };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] = useState<Language>(() => {
-        const saved = localStorage.getItem('digiapp-language');
+        const saved = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
         if (saved === 'en' || saved === 'pt') return saved;
 
         // Default to Portuguese based on original app state
@@ -25,7 +26,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     const setLanguage = (lang: Language) => {
         setLanguageState(lang);
-        localStorage.setItem('digiapp-language', lang);
+        localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
     };
 
     const t = (key: string): string => {

@@ -1,0 +1,15 @@
+export const STORAGE_KEYS = {
+  GAME_STATE: 'digiapp_state_v3',
+  AI_SETTINGS: 'digiapp-ai-settings',
+  THEME: 'digiapp-theme',
+  LANGUAGE: 'digiapp-language',
+  ONBOARDING_COMPLETE: 'digiapp-onboarding-complete',
+  USER_NAME: 'digiapp-user-name',
+  EGG_TYPE: 'digiapp-egg-type',
+  FIRST_TASK_POPUP_SHOWN: 'digiapp-first-task-popup-shown',
+  ROOKIE_POPUP_SHOWN: 'digiapp-rookie-popup-shown',
+  NOTIFICATIONS_ENABLED: 'digiapp-notifications-enabled',
+  PWA_INSTALL_DISMISSED: 'digiapp-pwa-install-dismissed',
+  SCHEDULED_NOTIFICATIONS: 'digiapp-scheduled-notifications',
+  DAILY_NOTIFICATION_CHECK: 'digiapp-daily-notification-check',
+} as const;

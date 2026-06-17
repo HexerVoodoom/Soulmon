@@ -1,0 +1,174 @@
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { type ActivityCategory } from '../types/attributes';
+import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
+import { STORAGE_KEYS } from '../utils/storageKeys';
+
+export interface Step {
+  id: string;
+  label: string;
+  completed: boolean;
+}
+
+export interface Activity {
+  id: string;
+  name: string;
+  category: ActivityCategory;
+  emoji: string;
+  steps: Step[];
+  weekDays: number[];
+  alarm?: { time: string };
+  completedToday?: boolean;
+  lastCompletedDate?: string;
+}
+
+export interface Task {
+  id: string;
+  name: string;
+  category: ActivityCategory;
+  emoji: string;
+  completed: boolean;
+  deadline?: { date: string; time: string };
+  alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
+  steps?: Step[];
+}
+
+export interface CompletedTask {
+  id: string;
+  name: string;
+  category: ActivityCategory;
+  emoji: string;
+  completedAt: string;
+}
+
+export interface ActivityStats {
+  [activityId: string]: {
+    name: string;
+    emoji: string;
+    category: ActivityCategory;
+    completionCount: number;
+  };
+}
+
+export interface GameState {
+  activities: Activity[];
+  tasks: Task[];
+  completedTasks: CompletedTask[];
+  activityStats: ActivityStats;
+  healthPoints: number;
+  maxHealthPoints: number;
+  perfectDays: number;
+  totalXP: number;
+  virusPoints: number;
+  dataPoints: number;
+  vaccinePoints: number;
+  lastResetDate: string;
+  evolutionStage:
+    | 'digiegg' | 'pichimon' | 'pukamon' | 'tapirmon'
+    | 'monochromon' | 'tuskmon' | 'bakemon'
+    | 'gigadramon' | 'triceramon' | 'digitamamon'
+    | 'gaioumon' | 'ultimatebrachiomon' | 'titamon'
+    | 'chicomon' | 'chibimon' | 'veemon'
+    | 'exveemon' | 'veedramon' | 'flamdramon'
+    | 'paildramon' | 'aeroveedramon' | 'raidramon'
+    | 'imperialdramon' | 'ulforceveemon' | 'magnamon'
+    | 'yukimibotamon' | 'nyaromon' | 'plotmon'
+    | 'gatomon' | 'blackgatomon' | 'mikemon'
+    | 'angewomon' | 'ladydevimon' | 'nefertimon'
+    | 'ophanimon' | 'lilithmon' | 'holydramon'
+    | 'gaioumon-itto' | 'imperialdramonpaladin' | 'mastemon';
+  digivolutionSegments: number;
+  digivolutionSegmentsNeeded: number;
+  poopEventScheduled: number | null;
+  foodEventsScheduled: number[];
+  poopEventCompleted: boolean;
+  foodEventsCompleted: number[];
+  unlockedEvolutions: string[];
+  degeneratedByHP: boolean;
+  currentBranch: 'virus' | 'data' | 'vaccine';
+  lastDayWasPerfect: boolean;
+  maxActivityCap: number;
+  eggType?: 'agumon' | 'veemon' | 'salamon';
+}
+
+export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
+  return MAX_HP_BY_FORM[getStageLevel(stage)];
+}
+
+interface GameStateContextType {
+  gameState: GameState;
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
+}
+
+const GameStateContext = createContext<GameStateContextType | null>(null);
+
+export function GameStateProvider({ children }: { children: ReactNode }) {
+  const [gameState, setGameState] = useState<GameState>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
+    if (saved) {
+      const loadedState = JSON.parse(saved) as Partial<GameState>;
+      const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
+      return {
+        ...loadedState,
+        tasks: loadedState.tasks ?? [],
+        completedTasks: loadedState.completedTasks ?? [],
+        activityStats: loadedState.activityStats ?? {},
+        maxHealthPoints: getMaxHPForStage(loadedState.evolutionStage ?? 'digiegg'),
+        perfectDays: loadedState.perfectDays ?? 0,
+        lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
+        poopEventScheduled: loadedState.poopEventScheduled ?? null,
+        foodEventsScheduled: loadedState.foodEventsScheduled ?? [],
+        poopEventCompleted: loadedState.poopEventCompleted ?? false,
+        foodEventsCompleted: loadedState.foodEventsCompleted ?? [],
+        unlockedEvolutions: loadedState.unlockedEvolutions ?? ['digiegg'],
+        degeneratedByHP: loadedState.degeneratedByHP ?? false,
+        currentBranch: loadedState.currentBranch ?? 'data',
+        maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'digiegg')].cap,
+        eggType: loadedState.eggType ?? savedEggType ?? 'agumon',
+      } as GameState;
+    }
+    const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
+    return {
+      activities: [],
+      tasks: [],
+      completedTasks: [],
+      activityStats: {},
+      healthPoints: 1,
+      maxHealthPoints: 1,
+      perfectDays: 0,
+      totalXP: 0,
+      virusPoints: 0,
+      dataPoints: 0,
+      vaccinePoints: 0,
+      lastResetDate: new Date().toDateString(),
+      evolutionStage: 'digiegg',
+      digivolutionSegments: 0,
+      digivolutionSegmentsNeeded: 1,
+      poopEventScheduled: null,
+      foodEventsScheduled: [],
+      poopEventCompleted: false,
+      foodEventsCompleted: [],
+      unlockedEvolutions: ['digiegg'],
+      degeneratedByHP: false,
+      currentBranch: 'data',
+      lastDayWasPerfect: false,
+      maxActivityCap: 2,
+      eggType: savedEggType ?? 'agumon',
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState));
+  }, [gameState]);
+
+  return (
+    <GameStateContext.Provider value={{ gameState, setGameState }}>
+      {children}
+    </GameStateContext.Provider>
+  );
+}
+
+export function useGameState() {
+  const ctx = useContext(GameStateContext);
+  if (!ctx) throw new Error('useGameState must be used within GameStateProvider');
+  return ctx;
+}
