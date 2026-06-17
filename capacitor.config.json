@@ -1,5 +1,5 @@
 {
-  "appId": "com.digiapp.prototype",
+  "appId": "com.digipartner.digiapp",
   "appName": "DigiApp",
-  "webDir": "build"
+  "webDir": "dist"
 }

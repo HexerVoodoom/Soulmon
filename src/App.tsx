@@ -30,6 +30,7 @@ import { CATEGORY_ATTRIBUTES, ActivityCategory, XP_THRESHOLDS } from './types/at
 import { CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from './types/progression';
 import { Language, useTranslation } from './utils/i18n';
+import { DigiWidget } from './plugins/DigiWidgetPlugin';
 
 interface Step {
   id: string;
@@ -310,6 +311,21 @@ export default function App() {
   });
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
+
+  // Sync game state to Android home screen widget
+  useEffect(() => {
+    const digimonName = gameState.evolutionStage.charAt(0).toUpperCase() + gameState.evolutionStage.slice(1);
+    DigiWidget.updateWidgetData({
+      digimonName,
+      currentStage: gameState.evolutionStage,
+      eggType: gameState.eggType ?? 'agumon',
+      branchType: gameState.currentBranch,
+      completedTasks: dailyDone,
+      totalTasks: dailyTotal,
+      hp: Math.round((gameState.healthPoints / gameState.maxHealthPoints) * 100),
+    }).catch(() => {});
+  }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
+      gameState.healthPoints, gameState.maxHealthPoints, dailyDone, dailyTotal]);
 
   // Determine companion mood based on progress
   const getCompanionMood = (): 'idle' | 'happy' | 'tired' => {
