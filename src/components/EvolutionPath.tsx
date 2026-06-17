@@ -13,7 +13,7 @@ interface EvolutionPathProps {
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   onDegenerate?: (targetStage: string) => void;
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
   dailyDone?: number;
   dailyTotal?: number;
   activitiesCount?: number;

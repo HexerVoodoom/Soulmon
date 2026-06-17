@@ -52,6 +52,7 @@ export function ActivityList({ activities, onUpdateStep, onEditActivity }: Activ
                 name={`${activity.emoji} ${activity.name}`}
                 steps={activity.steps}
                 onUpdateStep={onUpdateStep}
+                onEditActivity={onEditActivity}
                 isExpanded={true}
                 isCompleted={isComplete}
               />

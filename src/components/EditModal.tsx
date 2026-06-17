@@ -31,7 +31,7 @@ interface EditModalProps {
     weekDays?: number[];
     alarm?: { time: string };
   };
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
   canEditWeekdays?: boolean; // Se a atividade foi criada quando podia selecionar dias
 }
 

@@ -25,7 +25,7 @@ interface TaskEditModalProps {
     deadline?: { date: string; time: string };
     alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
   };
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
 }
 
 const CATEGORIES: ActivityCategory[] = [

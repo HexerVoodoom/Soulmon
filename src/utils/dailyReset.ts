@@ -62,7 +62,7 @@ export function wasDayPerfect(prev: GameState): boolean {
     if (activity.steps.length > 0) {
       isComplete = activity.steps.every(s => s.completed);
     } else {
-      isComplete = activity.completedToday && activity.lastCompletedDate === yesterdayString;
+      isComplete = !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
     }
     
     if (isComplete) {
@@ -95,7 +95,7 @@ export function countCompletedYesterday(prev: GameState): number {
     if (activity.steps.length > 0) {
       isComplete = activity.steps.every(s => s.completed);
     } else {
-      isComplete = activity.completedToday && activity.lastCompletedDate === yesterdayString;
+      isComplete = !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
     }
     
     if (isComplete) {

@@ -10,7 +10,6 @@ import { EditModal } from './components/EditModal';
 import { TaskEditModal } from './components/TaskEditModal';
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
-const StatsModal = lazy(() => import('./components/StatsModal').then(m => ({ default: m.StatsModal })));
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
@@ -18,12 +17,11 @@ import { WidgetView } from './components/WidgetView';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { AttributeBadges } from './components/AttributeBadges';
 import { ProgressInfo } from './components/ProgressInfo';
-const GuideModal = lazy(() => import('./components/GuideModal').then(m => ({ default: m.GuideModal })));
 import { SettingsModal } from './components/SettingsModal';
 import { AISettingsModal, type AISettings } from './components/AISettingsModal';
 import { Toaster } from './components/ui/sonner';
-import { FirstTaskCompletedPopup } from './components/FirstTaskCompletedPopup';
-import { RookieUnlockPopup } from './components/RookieUnlockPopup';
+import { GamePopups } from './components/GamePopups';
+import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, ActivityCategory, XP_THRESHOLDS } from './types/attributes';
@@ -99,7 +97,23 @@ interface GameState {
   dataPoints: number;
   vaccinePoints: number;
   lastResetDate: string;
-  evolutionStage: 'digiegg' | 'koromon' | 'tsunomon' | 'pagumon' | 'tapirmon' | 'kudamon' | 'kamemon' | 'monochromon' | 'tyrannomon' | 'ogremon' | 'meramon' | 'leomon' | 'ikkakumon' | 'geremon' | 'bakemon' | 'devimon' | 'megadramon' | 'gigadramon' | 'triceramon' | 'digitamamon' | 'gaioumon' | 'ultimatebrachiomon' | 'titamon' | 'gaioumon-itto';
+  // Agumon line
+  evolutionStage: 'digiegg' | 'pichimon' | 'pukamon' | 'tapirmon'
+    | 'monochromon' | 'tuskmon' | 'bakemon'
+    | 'gigadramon' | 'triceramon' | 'digitamamon'
+    | 'gaioumon' | 'ultimatebrachiomon' | 'titamon'
+    // Veemon line
+    | 'chicomon' | 'chibimon' | 'veemon'
+    | 'exveemon' | 'veedramon' | 'flamdramon'
+    | 'paildramon' | 'aeroveedramon' | 'raidramon'
+    | 'imperialdramon' | 'ulforceveemon' | 'magnamon'
+    // Salamon line
+    | 'yukimibotamon' | 'nyaromon' | 'plotmon'
+    | 'gatomon' | 'blackgatomon' | 'mikemon'
+    | 'angewomon' | 'ladydevimon' | 'nefertimon'
+    | 'ophanimon' | 'lilithmon' | 'holydramon'
+    // Ultra (shared)
+    | 'gaioumon-itto' | 'imperialdramonpaladin' | 'mastemon';
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventScheduled: number | null;
@@ -184,11 +198,11 @@ export default function App() {
       temperature: 0.85
     };
   });
-  const [theme, setTheme] = useState<'default' | 'win98'>(() => {
+  const [theme, setTheme] = useState<'default' | 'win98' | 'glitch'>(() => {
     const saved = localStorage.getItem('digiapp-theme');
-    return (saved as 'default' | 'win98') || 'default';
+    return (saved as 'default' | 'win98' | 'glitch') || 'default';
   });
-  const language: Language = 'en-US';
+  const language = 'en-US' as Language;
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return localStorage.getItem('digiapp-onboarding-complete') === 'true';
   });
@@ -1115,13 +1129,6 @@ export default function App() {
         {/* Fixed Header */}
         <div className="flex-shrink-0">
           <Header
-            title={
-              currentView === 'main' ? t.main.viewHome :
-                currentView === 'evolution' ? t.main.viewEvolution :
-                  currentView === 'stats' ? t.main.viewStats :
-                    t.main.viewSettings
-            }
-            subtitle={currentView === 'main' ? getCurrentDay() : undefined}
             currentView={currentView}
             onNavigate={setCurrentView}
             theme={theme}
@@ -1312,7 +1319,7 @@ export default function App() {
             onCareEventComplete={handleCareEventComplete}
             useAI={useAI}
             aiSettings={aiSettings}
-            onOpenAISettings={() => setAiSettingsOpen(true)}
+            onOpenAISettings={() => setSettingsOpen(true)}
             onCreateActivity={handleAICreateActivity}
             language={language}
           />
@@ -1422,40 +1429,24 @@ export default function App() {
         theme={theme}
       />
 
-      {/* Stats Modal */}
-      {statsModalOpen && (
-        <Suspense fallback={null}><StatsModal
-          isOpen={statsModalOpen}
-          onClose={() => setStatsModalOpen(false)}
-          completedTasks={gameState.completedTasks}
-          activityStats={gameState.activityStats}
-          theme={theme}
-          language={language}
-        /></Suspense>
-      )}
-
-      {/* First Task Completed Popup */}
-      <FirstTaskCompletedPopup
-        isOpen={showFirstTaskPopup}
-        onClose={() => setShowFirstTaskPopup(false)}
+      <ContentModals
+        statsModalOpen={statsModalOpen}
+        onCloseStats={() => setStatsModalOpen(false)}
+        completedTasks={gameState.completedTasks}
+        activityStats={gameState.activityStats}
+        guideModalOpen={guideModalOpen}
+        onCloseGuide={() => setGuideModalOpen(false)}
         theme={theme}
+        language={language}
       />
 
-      {/* Rookie Feature Unlock Popup */}
-      <RookieUnlockPopup
-        isOpen={showRookieUnlockPopup}
-        onClose={() => setShowRookieUnlockPopup(false)}
+      <GamePopups
+        showFirstTaskPopup={showFirstTaskPopup}
+        onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
+        showRookieUnlockPopup={showRookieUnlockPopup}
+        onCloseRookieUnlockPopup={() => setShowRookieUnlockPopup(false)}
         theme={theme}
       />
-
-      {/* Guide Modal */}
-      {guideModalOpen && (
-        <Suspense fallback={null}><GuideModal
-          isOpen={guideModalOpen}
-          onClose={() => setGuideModalOpen(false)}
-          theme={theme}
-        /></Suspense>
-      )}
 
       {/* Notification Manager */}
       <NotificationManager

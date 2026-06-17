@@ -9,7 +9,7 @@ interface TaskCardProps {
   completed: boolean;
   onToggleComplete: (id: string) => void;
   onEdit: (id: string) => void;
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
 }
 

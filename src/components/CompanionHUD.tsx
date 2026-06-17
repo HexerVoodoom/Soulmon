@@ -90,7 +90,7 @@ export function CompanionHUD({
   const [showBubble, setShowBubble] = useState(false);
   const [squashFrame, setSquashFrame] = useState(0);
   const [chatResponse, setChatResponse] = useState('');
-  const [bubbleTimeoutId, setBubbleTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const [bubbleTimeoutId, setBubbleTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   // Walking animation
   useEffect(() => {

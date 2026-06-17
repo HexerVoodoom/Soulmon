@@ -6,7 +6,7 @@ import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
-import { useItemForm } from '../hooks/useItemForm';
+import { useItemForm, type Step } from '../hooks/useItemForm';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -27,7 +27,8 @@ interface CreateModalProps {
     weekDays: number[];
     alarm?: { time: string };
   }) => void;
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
+  language?: Language;
   isOnboarding?: boolean;
   evolutionStage?: string;
   activitiesCount?: number;
@@ -49,10 +50,9 @@ const CATEGORIES: ActivityCategory[] = [
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', isOnboarding = false, evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2 }: CreateModalProps) {
+export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', isOnboarding = false, evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2 }: CreateModalProps) {
   const isWin98 = theme === 'win98';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);
-  const language: Language = 'en-US';
   const t = useTranslation(language);
   
   const [isSingleExecution, setIsSingleExecution] = useState(false);

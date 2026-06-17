@@ -21,7 +21,7 @@ interface ActivityCardProps {
   isCompleted?: boolean;
   isDisabled?: boolean;
   isSingleExecution?: boolean; // Se é execução única
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
 }
 

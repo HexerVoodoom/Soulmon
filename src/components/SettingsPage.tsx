@@ -272,7 +272,6 @@ export function SettingsPage({
           setShowAISettings(false);
         }}
         theme={theme}
-        language={language}
       />
     </>
   );

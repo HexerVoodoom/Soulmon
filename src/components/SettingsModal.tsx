@@ -204,7 +204,6 @@ export function SettingsModal({
         currentSettings={aiSettings}
         onSave={onSaveAISettings}
         theme={theme}
-        language={language}
       />
     </>
   );

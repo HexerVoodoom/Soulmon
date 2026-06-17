@@ -7,7 +7,7 @@ type ViewType = 'main' | 'evolution' | 'stats' | 'settings';
 interface HeaderProps {
   currentView: ViewType;
   onNavigate: (view: ViewType) => void;
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
   onResetOnboarding?: () => void;
 }
 

@@ -1,4 +1,6 @@
 // Notification utilities for DigiApp
+import { Capacitor } from '@capacitor/core';
+import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -99,6 +101,9 @@ export const scheduleNotification = (notification: ScheduledNotification) => {
 export const removeScheduledNotification = (id: string) => {
   const stored = getScheduledNotifications();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stored.filter(n => n.id !== id)));
+  if (Capacitor.isNativePlatform()) {
+    DigiAlarm.cancelAlarm({ id }).catch(() => {});
+  }
 };
 
 export const clearScheduledNotifications = () => {
@@ -131,13 +136,16 @@ export const checkAndShowNotifications = (
     localStorage.setItem(DAILY_CHECK_KEY, today);
   }
 
-  // Alarm notifications scheduled for this exact minute
-  const scheduled = getScheduledNotifications();
-  scheduled
-    .filter(n => n.scheduledTime === currentTime)
-    .forEach(n => {
-      showNotification(n.title, { body: n.body, tag: n.id });
-    });
+  // Alarm notifications scheduled for this exact minute (web/PWA path)
+  // On native Android, AlarmManager handles this — no polling needed.
+  if (!Capacitor.isNativePlatform()) {
+    const scheduled = getScheduledNotifications();
+    scheduled
+      .filter(n => n.scheduledTime === currentTime)
+      .forEach(n => {
+        showNotification(n.title, { body: n.body, tag: n.id });
+      });
+  }
 };
 
 // ── Sync alarms from activities/tasks → scheduled notifications ───────────
@@ -152,6 +160,7 @@ export const syncActivityAlarms = (
   language: 'pt-BR' | 'en-US' = 'en-US'
 ) => {
   const todayWeekDay = new Date().getDay();
+  const isNative = Capacitor.isNativePlatform();
 
   // Replace old activity alarms with fresh set
   const stored = getScheduledNotifications();
@@ -163,14 +172,15 @@ export const syncActivityAlarms = (
     const isToday = !activity.weekDays || activity.weekDays.includes(todayWeekDay);
     if (!isToday) return;
 
-    scheduleNotification({
-      id: `activity-${activity.id}`,
-      title: language === 'pt-BR' ? '⏰ Lembrete de Atividade!' : '⏰ Activity Reminder!',
-      body: language === 'pt-BR' ? `Hora de: ${activity.name}` : `Time for: ${activity.name}`,
-      scheduledTime: activity.alarm.time,
-      activityId: activity.id,
-      type: 'alarm',
-    });
+    const id = `activity-${activity.id}`;
+    const title = language === 'pt-BR' ? '⏰ Lembrete de Atividade!' : '⏰ Activity Reminder!';
+    const body = language === 'pt-BR' ? `Hora de: ${activity.name}` : `Time for: ${activity.name}`;
+
+    scheduleNotification({ id, title, body, scheduledTime: activity.alarm.time, activityId: activity.id, type: 'alarm' });
+
+    if (isNative) {
+      DigiAlarm.scheduleAlarm({ id, title, body, scheduledTime: activity.alarm.time }).catch(() => {});
+    }
   });
 };
 
@@ -184,6 +194,7 @@ export const syncTaskAlarms = (
   language: 'pt-BR' | 'en-US' = 'en-US'
 ) => {
   const todayISO = new Date().toISOString().split('T')[0];
+  const isNative = Capacitor.isNativePlatform();
 
   // Replace old task alarms with fresh set
   const stored = getScheduledNotifications();
@@ -192,10 +203,9 @@ export const syncTaskAlarms = (
 
   tasks.forEach(task => {
     if (!task.alarm || !task.deadline) return;
-    if (task.deadline.date !== todayISO) return; // Only today's tasks
+    if (task.deadline.date !== todayISO) return;
 
     let alarmTime = '';
-
     if (task.alarm.type === 'custom' && task.alarm.time) {
       alarmTime = task.alarm.time;
     } else if (task.deadline.time) {
@@ -209,13 +219,14 @@ export const syncTaskAlarms = (
 
     if (!alarmTime) return;
 
-    scheduleNotification({
-      id: `task-${task.id}`,
-      title: language === 'pt-BR' ? '⏰ Lembrete de Tarefa!' : '⏰ Task Reminder!',
-      body: language === 'pt-BR' ? `Lembrete: ${task.name}` : `Reminder: ${task.name}`,
-      scheduledTime: alarmTime,
-      taskId: task.id,
-      type: 'alarm',
-    });
+    const id = `task-${task.id}`;
+    const title = language === 'pt-BR' ? '⏰ Lembrete de Tarefa!' : '⏰ Task Reminder!';
+    const body = language === 'pt-BR' ? `Lembrete: ${task.name}` : `Reminder: ${task.name}`;
+
+    scheduleNotification({ id, title, body, scheduledTime: alarmTime, taskId: task.id, type: 'alarm' });
+
+    if (isNative) {
+      DigiAlarm.scheduleAlarm({ id, title, body, scheduledTime: alarmTime }).catch(() => {});
+    }
   });
 };

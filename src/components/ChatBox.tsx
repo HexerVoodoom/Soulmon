@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Send, Mic, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
+import { type Language } from '../utils/i18n';
 
 interface ChatBoxProps {
   digimonName: string;
@@ -13,6 +14,7 @@ interface ChatBoxProps {
   theme?: 'default' | 'win98' | 'glitch';
   aiSettings?: AISettings;
   onOpenAISettings?: () => void;
+  language?: Language;
   onCreateActivity?: (activity: {
     name: string;
     category: string;

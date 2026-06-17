@@ -3,7 +3,7 @@ interface StepRowProps {
   label: string;
   completed: boolean;
   onToggle: (id: string) => void;
-  theme?: 'default' | 'win98';
+  theme?: 'default' | 'win98' | 'glitch';
   disabled?: boolean;
 }
 
