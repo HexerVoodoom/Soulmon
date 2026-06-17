@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
-import { Language, useTranslation } from '../utils/i18n';
+import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
 import { Bell, BellOff } from 'lucide-react';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
 
@@ -11,6 +11,8 @@ interface SettingsPageProps {
   onSaveAISettings: (settings: AISettings) => void;
   theme: 'default' | 'win98' | 'glitch';
   onChangeTheme: (theme: 'default' | 'win98' | 'glitch') => void;
+  language: Language;
+  onChangeLanguage: (lang: Language) => void;
   onOpenGuide: () => void;
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
@@ -23,11 +25,12 @@ export function SettingsPage({
   onSaveAISettings,
   theme,
   onChangeTheme,
+  language,
+  onChangeLanguage,
   onOpenGuide,
   notificationsEnabled,
   onToggleNotifications,
 }: SettingsPageProps) {
-  const language: Language = 'en-US';
   const [showAISettings, setShowAISettings] = useState(false);
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -220,6 +223,60 @@ export function SettingsPage({
                 }`}
               />
             </div>
+          </div>
+        </div>
+
+        {/* Language */}
+        <div
+          className={`p-6 rounded-2xl ${
+            isGlitch
+              ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
+              : isWin98
+              ? 'win98-button bg-white'
+              : 'bg-white shadow-sm ring-1 ring-gray-200/50'
+          }`}
+        >
+          <h3
+            className={`mb-3 ${
+              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
+            }`}
+            style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}
+          >
+            🌐 {t.settings.language}
+          </h3>
+          <p
+            className={`mb-4 text-xs ${
+              isGlitch ? 'text-[#00ffff]/60' : isWin98 ? 'text-[#808080]' : 'text-gray-500'
+            }`}
+            style={{ fontFamily: 'monospace' }}
+          >
+            {t.settings.languageDescription}
+          </p>
+          <div className="flex gap-2">
+            {(['en-US', 'pt-BR'] as Language[]).map((lang) => (
+              <button
+                key={lang}
+                onClick={() => onChangeLanguage(lang)}
+                className={`flex-1 py-2 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                  language === lang
+                    ? isGlitch
+                      ? 'bg-[#00ffff] text-[#0a0a0a] border-2 border-[#00ffff]'
+                      : isWin98
+                      ? 'bg-[#000080] text-white border-2 border-[#000080]'
+                      : 'bg-teal-500 text-white shadow-sm'
+                    : isGlitch
+                    ? 'bg-transparent text-[#00ffff]/60 border border-[#00ffff]/30 hover:border-[#00ffff]/60'
+                    : isWin98
+                    ? 'win98-button bg-[#c0c0c0] text-black'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                style={{ fontFamily: 'monospace' }}
+                aria-pressed={language === lang}
+              >
+                <span>{getLanguageFlag(lang)}</span>
+                <span>{getLanguageName(lang)}</span>
+              </button>
+            ))}
           </div>
         </div>
 

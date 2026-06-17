@@ -203,7 +203,10 @@ export default function App() {
     const saved = localStorage.getItem('digiapp-theme');
     return (saved as 'default' | 'win98' | 'glitch') || 'default';
   });
-  const language = 'en-US' as Language;
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('digiapp-language');
+    return saved === 'pt-BR' ? 'pt-BR' : 'en-US';
+  });
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return localStorage.getItem('digiapp-onboarding-complete') === 'true';
   });
@@ -227,10 +230,6 @@ export default function App() {
     localStorage.setItem('digiapp-theme', theme);
   }, [theme]);
 
-  // Save language to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('digiapp-language', language);
-  }, [language]);
 
   // Save AI settings to localStorage when they change
   useEffect(() => {
@@ -1267,6 +1266,11 @@ export default function App() {
               }}
               theme={theme}
               onChangeTheme={setTheme}
+              language={language}
+              onChangeLanguage={(lang) => {
+                setLanguage(lang);
+                localStorage.setItem('digiapp-language', lang);
+              }}
               onOpenGuide={() => setGuideModalOpen(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}

@@ -1,7 +1,6 @@
 import { X, Settings, Sparkles, Zap } from 'lucide-react';
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
-import { Language } from '../utils/i18n';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -25,7 +24,6 @@ export function SettingsModal({
   const [showAISettings, setShowAISettings] = useState(false);
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
-  const language: Language = 'en-US';
 
   if (!isOpen) return null;
 
