@@ -700,7 +700,7 @@ export default function App() {
 
       const newHP = getMaxHPForStage(newStage);
       const newStageLevel = getStageLevel(newStage);
-      // Mirror automatic degeneration: reset perfectDays to half the requirement
+      // Intentional degen: head start at half the requirement (easier recovery than neglect)
       const newPerfectDays = Math.floor(FORM_REQUIREMENTS[newStageLevel].required / 2);
 
       return {

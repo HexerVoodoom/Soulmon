@@ -202,8 +202,8 @@ export function useDailyReset({
 
         const degeneratedLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[degeneratedLevel];
-        const degReqs = FORM_REQUIREMENTS[degeneratedLevel];
-        newPerfectDays = Math.floor(degReqs.required / 2);
+        // HP-based degeneration is a real penalty: start from zero
+        newPerfectDays = 0;
       }
 
       const resetActivities = prev.activities.map((activity: Activity) => ({
