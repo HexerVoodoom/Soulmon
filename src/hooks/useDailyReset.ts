@@ -88,6 +88,7 @@ export function useDailyReset({
       let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
       let wasDegeneratedByHP = false;
       let newMaxActivityCap = prev.maxActivityCap;
+      let newCurrentBranch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
 
       if (dailyDone === 0) {
         newHP = Math.max(0, prev.healthPoints - 1);
@@ -123,6 +124,7 @@ export function useDailyReset({
         if (newVirusPoints === dominantAttr) branch = 'virus';
         else if (newDataPoints === dominantAttr) branch = 'data';
         else if (newVaccinePoints === dominantAttr) branch = 'vaccine';
+        newCurrentBranch = branch;
 
         if (prev.evolutionStage === 'digiegg') {
           newEvolutionStage = 'pichimon';
@@ -167,7 +169,17 @@ export function useDailyReset({
       // Degeneration by HP
       if (newHP === 0) {
         wasDegeneratedByHP = true;
-        const branch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
+        // Derive branch from the current stage (reliable) rather than the
+        // stored currentBranch field, which may be stale for older saves.
+        // For gaioumon-itto (which transcends all branches) use newCurrentBranch.
+        const stageToAttr = (s: string): 'virus' | 'data' | 'vaccine' => {
+          if (['tuskmon', 'gigadramon', 'gaioumon'].includes(s)) return 'virus';
+          if (['bakemon', 'digitamamon', 'titamon'].includes(s)) return 'vaccine';
+          return 'data';
+        };
+        const branch = prev.evolutionStage === 'gaioumon-itto'
+          ? newCurrentBranch
+          : stageToAttr(prev.evolutionStage);
 
         if (prev.evolutionStage === 'gaioumon-itto') {
           const branchMap = { virus: 'gaioumon', data: 'ultimatebrachiomon', vaccine: 'titamon' } as const;
@@ -224,6 +236,7 @@ export function useDailyReset({
         foodEventsScheduled: [],
         poopEventCompleted: false,
         foodEventsCompleted: [],
+        currentBranch: newCurrentBranch,
         unlockedEvolutions: finalUnlockedEvolutions,
         degeneratedByHP: wasDegeneratedByHP,
         lastDayWasPerfect: dayWasPerfect,

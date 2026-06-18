@@ -600,6 +600,12 @@ export default function App() {
       const isData = prev.dataPoints === dominantAttr && prev.dataPoints > 0;
       const isVaccine = prev.vaccinePoints === dominantAttr && prev.vaccinePoints > 0;
 
+      // Determine new branch for state persistence
+      let newCurrentBranch: 'virus' | 'data' | 'vaccine' = prev.currentBranch;
+      if (isVirus) newCurrentBranch = 'virus';
+      else if (isVaccine) newCurrentBranch = 'vaccine';
+      else if (isData) newCurrentBranch = 'data';
+
       // Evolve to next stage
       if (prev.evolutionStage === 'digiegg') {
         newEvolutionStage = 'pichimon';
@@ -626,8 +632,14 @@ export default function App() {
         else newEvolutionStage = 'ultimatebrachiomon';
         newSegmentsNeeded = 14;
       } else if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(prev.evolutionStage)) {
-        newEvolutionStage = 'gaioumon-itto';
-        newSegmentsNeeded = 999;
+        // Ultra requires all three Mega forms to be previously unlocked
+        const hasAllMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'].every(m =>
+          prev.unlockedEvolutions.includes(m)
+        );
+        if (hasAllMegas) {
+          newEvolutionStage = 'gaioumon-itto';
+          newSegmentsNeeded = 999;
+        }
       }
 
       newHP = getMaxHPForStage(newEvolutionStage);
@@ -635,6 +647,7 @@ export default function App() {
       return {
         ...prev,
         evolutionStage: newEvolutionStage,
+        currentBranch: newCurrentBranch,
         healthPoints: newHP,
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
         digivolutionSegments: 0,
@@ -686,6 +699,9 @@ export default function App() {
       if (!newStage) return prev;
 
       const newHP = getMaxHPForStage(newStage);
+      const newStageLevel = getStageLevel(newStage);
+      // Mirror automatic degeneration: reset perfectDays to half the requirement
+      const newPerfectDays = Math.floor(FORM_REQUIREMENTS[newStageLevel].required / 2);
 
       return {
         ...prev,
@@ -693,7 +709,8 @@ export default function App() {
         healthPoints: newHP,
         maxHealthPoints: newHP,
         digivolutionSegments: 0,
-        degeneratedByHP: false, // Manual degeneration, not by HP loss
+        perfectDays: newPerfectDays,
+        degeneratedByHP: false,
       };
     });
     setMessageTrigger(prev => prev + 1);
