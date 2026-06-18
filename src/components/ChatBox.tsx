@@ -23,17 +23,18 @@ interface ChatBoxProps {
   }) => void;
 }
 
-export function ChatBox({ 
-  digimonName, 
-  mood, 
-  evolutionStage, 
-  dominantBranch, 
-  useAI, 
-  onSendMessage, 
-  theme = 'default', 
-  aiSettings, 
-  onOpenAISettings, 
-  onCreateActivity
+export function ChatBox({
+  digimonName,
+  mood,
+  evolutionStage,
+  dominantBranch,
+  useAI,
+  onSendMessage,
+  theme = 'default',
+  aiSettings,
+  onOpenAISettings,
+  onCreateActivity,
+  language = 'en-US',
 }: ChatBoxProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -140,9 +141,11 @@ export function ChatBox({
 
   // AI-powered response using Groq API
   const getAIResponse = async (userMessage: string): Promise<string> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const { projectId, publicAnonKey } = await import('../utils/supabase/info');
-      
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-7de212d9/chat`,
         {
@@ -157,8 +160,10 @@ export function ChatBox({
             mood,
             evolutionStage,
             dominantBranch,
+            language,
             aiSettings
-          })
+          }),
+          signal: controller.signal,
         }
       );
 
@@ -177,9 +182,15 @@ export function ChatBox({
 
       return data.response;
     } catch (error) {
-      if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
-      toast.warning('AI unavailable, using local responses');
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.warning('AI response timed out, using local responses');
+      } else {
+        if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
+        toast.warning('AI unavailable, using local responses');
+      }
       return getDigimonResponse(userMessage);
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
@@ -285,14 +296,16 @@ export function ChatBox({
 
   // Transcribe audio using server endpoint
   const transcribeAudio = async (audioBlob: Blob) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
     try {
       const { projectId, publicAnonKey } = await import('../utils/supabase/info');
-      
+
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
-      // Add language parameter to restrict transcription language
-      formData.append('language', 'en');
-      
+      // Convert locale code (e.g. 'pt-BR') to base language code ('pt') for Whisper
+      formData.append('language', language.split('-')[0]);
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-7de212d9/transcribe`,
         {
@@ -300,7 +313,8 @@ export function ChatBox({
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`
           },
-          body: formData
+          body: formData,
+          signal: controller.signal,
         }
       );
 
@@ -312,17 +326,21 @@ export function ChatBox({
 
       const data = await response.json();
       const transcribedText = data.text || '';
-      
+
       if (transcribedText.trim()) {
-        // Set the transcribed text in the input field for user to review
         setInputValue(transcribedText);
       } else {
         onSendMessage('Could not understand the audio 🤔');
       }
     } catch (error) {
-      if (import.meta.env.DEV) console.error('Transcription error:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.error('Transcription timed out. Please try again.');
+      } else {
+        if (import.meta.env.DEV) console.error('Transcription error:', error);
+      }
       onSendMessage('Error transcribing audio 😅');
     } finally {
+      clearTimeout(timeout);
       setIsLoading(false);
     }
   };

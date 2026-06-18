@@ -118,7 +118,7 @@ export function AISettingsModal({
               {['casual', 'energetic', 'calm', 'playful'].map((tone) => (
                 <button
                   key={tone}
-                  onClick={() => setSettings({ ...settings, tone: tone as any })}
+                  onClick={() => setSettings({ ...settings, tone: tone as AISettings['tone'] })}
                   className={`p-3 rounded border transition-all ${
                     settings.tone === tone
                       ? isGlitch
@@ -168,7 +168,7 @@ export function AISettingsModal({
               ].map(({ value, label, emoji }) => (
                 <button
                   key={value}
-                  onClick={() => setSettings({ ...settings, emojiIntensity: value as any })}
+                  onClick={() => setSettings({ ...settings, emojiIntensity: value as AISettings['emojiIntensity'] })}
                   className={`p-3 rounded border transition-all ${
                     settings.emojiIntensity === value
                       ? isGlitch
@@ -207,7 +207,7 @@ export function AISettingsModal({
               ].map(({ value, label, desc }) => (
                 <button
                   key={value}
-                  onClick={() => setSettings({ ...settings, motivationStyle: value as any })}
+                  onClick={() => setSettings({ ...settings, motivationStyle: value as AISettings['motivationStyle'] })}
                   className={`p-3 rounded border transition-all text-left ${
                     settings.motivationStyle === value
                       ? isGlitch
@@ -244,6 +244,7 @@ export function AISettingsModal({
               spellCheck="false"
               autoCapitalize="off"
               onChange={(e) => setSettings({ ...settings, customKeywords: e.target.value })}
+              maxLength={500}
               placeholder="e.g., always say 'partner', avoid 'boss', use slang..."
               className={`w-full p-3 rounded border resize-none ${
                 isGlitch
@@ -255,11 +256,20 @@ export function AISettingsModal({
               style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
               rows={3}
             />
-            <p className={`text-xs mt-1 ${
-              isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-gray-600' : 'text-gray-500'
-            }`} style={{ fontFamily: 'monospace' }}>
-              💡 Additional instructions to customize even more
-            </p>
+            <div className="flex justify-between mt-1">
+              <p className={`text-xs ${
+                isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-gray-600' : 'text-gray-500'
+              }`} style={{ fontFamily: 'monospace' }}>
+                💡 Additional instructions to customize even more
+              </p>
+              <p className={`text-xs ${
+                settings.customKeywords.length > 450
+                  ? 'text-red-500'
+                  : isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-gray-600' : 'text-gray-400'
+              }`} style={{ fontFamily: 'monospace' }}>
+                {settings.customKeywords.length}/500
+              </p>
+            </div>
           </div>
 
           {/* Temperature Slider */}
