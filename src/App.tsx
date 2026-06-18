@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
@@ -50,6 +51,7 @@ export default function App() {
     activityId: '',
     stepId: '',
   });
+  const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
@@ -812,13 +814,12 @@ export default function App() {
 
 
   // Handle reset onboarding (DEBUG ONLY)
-  const handleResetOnboarding = () => {
-    if (confirm('Reset onboarding? This will clear your name and egg choice.')) {
-      localStorage.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
-      localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-      localStorage.removeItem(STORAGE_KEYS.EGG_TYPE);
-      window.location.reload();
-    }
+  const handleResetOnboarding = () => setResetOnboardingOpen(true);
+  const handleConfirmResetOnboarding = () => {
+    localStorage.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
+    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem(STORAGE_KEYS.EGG_TYPE);
+    window.location.reload();
   };
 
   // Handle toggle notifications
@@ -830,28 +831,16 @@ export default function App() {
       if (granted) {
         setNotificationsEnabled(true);
       } else {
-        // User denied permission - provide detailed instructions
-        const message = language === 'pt-BR'
-          ? '🔔 Permissão de Notificações Negada\n\n' +
-          'Para habilitar notificações:\n\n' +
-          '1. Clique no ícone de cadeado 🔒 (ou ⓘ) na barra de endereço\n' +
-          '2. Procure por "Notificações" nas configurações do site\n' +
-          '3. Altere para "Permitir"\n' +
-          '4. Recarregue a página\n' +
-          '5. Volte em Configurações > Notificações e ative novamente\n\n' +
-          '💡 Você também pode acessar:\n' +
-          'Configurações do navegador > Privacidade e Segurança > Configurações do site > Notificações'
-          : '🔔 Notification Permission Denied\n\n' +
-          'To enable notifications:\n\n' +
-          '1. Click the lock icon 🔒 (or ⓘ) in the address bar\n' +
-          '2. Look for "Notifications" in site settings\n' +
-          '3. Change to "Allow"\n' +
-          '4. Reload the page\n' +
-          '5. Go back to Settings > Notifications and enable again\n\n' +
-          '💡 You can also access:\n' +
-          'Browser settings > Privacy and Security > Site Settings > Notifications';
-
-        alert(message);
+        // User denied permission - guide them to browser settings
+        toast.warning(
+          language === 'pt-BR' ? '🔔 Permissão Negada' : '🔔 Permission Denied',
+          {
+            description: language === 'pt-BR'
+              ? 'Clique no cadeado 🔒 na barra de endereço → Notificações → Permitir, depois recarregue.'
+              : 'Click the lock 🔒 in the address bar → Notifications → Allow, then reload the page.',
+            duration: 8000,
+          }
+        );
       }
     } else {
       // Disable notifications
@@ -1185,6 +1174,14 @@ export default function App() {
         onConfirm={handleConfirmUncheck}
         title={t.main.uncheckTask}
         message={t.main.uncheckTaskMessage}
+      />
+
+      <ConfirmDialog
+        isOpen={resetOnboardingOpen}
+        onClose={() => setResetOnboardingOpen(false)}
+        onConfirm={handleConfirmResetOnboarding}
+        title="Reset Onboarding"
+        message="This will clear your name and egg choice. Continue?"
       />
 
       {settingsOpen && (

@@ -77,7 +77,6 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, them
 
   const handleSave = () => {
     if (!name.trim() || weekDays.length === 0) {
-      alert('Name and at least one weekday are required');
       return;
     }
 
@@ -168,6 +167,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, them
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              maxLength={60}
               className={
                 isWin98
                   ? 'bg-white border-2 border-gray-400 text-black'

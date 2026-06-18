@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Download, Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface SaveLoadButtonProps {
   gameState: any;
@@ -49,8 +50,8 @@ export function SaveLoadButton({ gameState, onLoad, isOpen, onClose, useAI, onTo
           fileInputRef.current.value = '';
         }
       } catch (error) {
-        alert('Erro ao carregar arquivo. Verifique se é um save válido.');
-        console.error('Error loading save:', error);
+        toast.error('Invalid save file. Please check the file and try again.');
+        if (import.meta.env.DEV) console.error('Error loading save:', error);
       }
     };
     reader.readAsText(file);

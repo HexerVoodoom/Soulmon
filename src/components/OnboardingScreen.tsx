@@ -161,6 +161,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleNameSubmit()}
+                    maxLength={30}
                     placeholder="enter your name"
                     className="w-full px-6 py-3 bg-transparent text-white text-center border-0 outline-none placeholder-[#4a5568] rounded-[inherit]"
                     style={{

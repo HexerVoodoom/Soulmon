@@ -98,7 +98,6 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
       });
     } else {
       if (showWeekdayGrid && weekDays.length === 0) {
-        alert('Select at least one weekday');
         return;
       }
       onSaveActivity({
@@ -193,6 +192,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={txt.namePlaceholder}
+              maxLength={60}
               className={
                 isWin98
                   ? 'bg-white border-2 border-gray-400 text-black'
