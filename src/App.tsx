@@ -871,10 +871,8 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()
+    <div className={`fixed inset-0 overflow-hidden flex flex-col relative ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()} ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
       }`}>
-      <div className={`w-full h-screen overflow-hidden flex flex-col relative ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
-        }`}>
         {/* Fixed Header */}
         <div className="flex-shrink-0">
           <Header
@@ -886,7 +884,7 @@ export default function App() {
         </div>
 
         {/* Scrollable Content - com padding bottom para não ficar atrás do companion */}
-        <div className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3' : 'px-6 pt-3'} pb-[380px]`}>
+        <div className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3' : 'px-6 pt-3'} pb-4`}>
           {currentView === 'main' && (
             <div className="space-y-3">
               <AttributeBadges
@@ -1043,8 +1041,8 @@ export default function App() {
           )}
         </div>
 
-        {/* Fixed Companion HUD - Sempre visível na base da tela */}
-        <div className={`fixed bottom-3 left-0 right-0 z-10 ${theme === 'win98' ? 'bg-[#c0c0c0] border-t-2 border-white px-6 pb-3 pt-3' : 'bg-gray-50 px-6 pb-3 pt-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]'}`}>
+        {/* Companion HUD - fixo no rodapé como parte do flex */}
+        <div className={`flex-shrink-0 ${theme === 'win98' ? 'bg-[#c0c0c0] border-t-2 border-white px-6 pb-3 pt-3' : 'bg-gray-50 px-6 pb-3 pt-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]'}`}>
           <CompanionHUD
             companionMood={getCompanionMood()}
             energyLevel={progress}
@@ -1094,7 +1092,6 @@ export default function App() {
             language={language}
           />
         </div>
-      </div>
 
       {editModalOpen && (
         <Suspense fallback={null}>

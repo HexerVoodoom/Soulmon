@@ -36,14 +36,26 @@ const INTRO_TEXTS = [
   'Your destiny and your partner\'s destiny are in your hands!',
 ];
 
+const EGG_FILTERS: Record<string, string> = {
+  veemon: 'hue-rotate(200deg) saturate(1.5)',
+  salamon: 'hue-rotate(300deg) saturate(1.3) brightness(1.1)',
+};
+
+const EGG_GLOW: Record<string, string> = {
+  agumon: 'rgba(255,255,255,0.35)',
+  veemon: 'rgba(74,144,226,0.45)',
+  salamon: 'rgba(255,182,193,0.45)',
+};
+
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [step, setStep] = useState<'name' | 'egg' | 'intro' | 'create'>('name');
   const [introIndex, setIntroIndex] = useState(0);
   const [userName, setUserName] = useState('');
   const [selectedEgg, setSelectedEgg] = useState<EggType | null>(null);
+  const [previewedEgg, setPreviewedEgg] = useState<EggType | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [squashFrame, setSquashFrame] = useState(0);
-  
+
   // Anti-autofill trick
   const [isInputReadOnly, setIsInputReadOnly] = useState(true);
   const [randomName] = useState(`obs-${Math.random().toString(36).substring(7)}`);
@@ -56,9 +68,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     return () => clearInterval(interval);
   }, []);
 
-  const getSquashScale = () => {
-    return squashFrame === 0 ? 0.9 : 1.0;
-  };
+  const getSquashScale = () => squashFrame === 0 ? 0.9 : 1.0;
 
   const handleNameSubmit = () => {
     if (userName.trim()) {
@@ -66,7 +76,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     }
   };
 
-  const handleEggSelection = (egg: EggType) => {
+  const handleEggConfirm = (egg: EggType) => {
     setSelectedEgg(egg);
     setStep('intro');
   };
@@ -80,9 +90,9 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     }
   };
 
-  const handleCreateTask = (data: { 
-    name: string; 
-    category: string; 
+  const handleCreateTask = (data: {
+    name: string;
+    category: string;
     emoji: string;
     steps?: Step[];
     deadline?: { date: string; time: string };
@@ -103,10 +113,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     });
   };
 
-  const handleCreateActivity = (data: { 
-    name: string; 
-    category: string; 
-    emoji: string; 
+  const handleCreateActivity = (data: {
+    name: string;
+    category: string;
+    emoji: string;
     steps: Step[];
     weekDays: number[];
     alarm?: { time: string };
@@ -126,25 +136,25 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     });
   };
 
+  // Which egg to show in the preview window
+  const displayEgg = previewedEgg ?? selectedEgg;
+  const eggFilter = displayEgg ? (EGG_FILTERS[displayEgg] ?? 'none') : 'none';
+  const eggGlow = displayEgg ? EGG_GLOW[displayEgg] : undefined;
+
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-[#0a2f1a] flex flex-col">
-      {/* Background Grid Texture - Direct, no transparency */}
-      <div className="absolute inset-0 w-full h-full">
-        <img 
-          alt="" 
-          className="w-full h-full object-cover pointer-events-none" 
-          src={imgUiTBg01}
-        />
+    <div className="relative w-full min-h-screen bg-[#0a2f1a] flex flex-col">
+      {/* Background */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none">
+        <img alt="" className="w-full h-full object-cover" src={imgUiTBg01} />
       </div>
 
-      {/* Content Container - Mobile First */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-between px-6 py-8 max-w-md mx-auto w-full">
-        
+      {/* Scrollable content — allows layout to breathe on small screens */}
+      <div className="relative z-10 flex-1 flex flex-col items-center px-6 py-8 max-w-md mx-auto w-full gap-6">
+
         {/* Top Content Area */}
-        <div className="w-full flex-1 flex items-center justify-center pt-12">
+        <div className="w-full flex-1 flex items-center justify-center pt-8">
           {step === 'name' && (
             <div className="w-full space-y-4 max-w-[280px]">
-              {/* Input Field */}
               <div className="w-full">
                 <div className="bg-[#0d1420] relative rounded-xl w-full">
                   <input
@@ -171,14 +181,13 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                     }}
                     autoFocus
                   />
-                  <div 
-                    aria-hidden="true" 
-                    className="absolute border-[#00ff99] border-2 border-solid inset-0 pointer-events-none rounded-xl" 
+                  <div
+                    aria-hidden="true"
+                    className="absolute border-[#00ff99] border-2 border-solid inset-0 pointer-events-none rounded-xl"
                   />
                 </div>
               </div>
 
-              {/* Continue Button */}
               <div className="w-full flex justify-center">
                 <button
                   onClick={handleNameSubmit}
@@ -199,15 +208,15 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           )}
 
           {step === 'egg' && (
-            <div className="w-full space-y-4 max-w-[320px]">
-              {/* Egg Selection */}
+            <div className="w-full max-w-[320px]">
               <div className="bg-[#0d1420] relative rounded-xl w-full">
                 <EggSelection
-                  onSelect={handleEggSelection}
+                  onSelect={handleEggConfirm}
+                  onPreview={setPreviewedEgg}
                 />
-                <div 
-                  aria-hidden="true" 
-                  className="absolute border-[#00ff99] border-2 border-solid inset-0 pointer-events-none rounded-xl" 
+                <div
+                  aria-hidden="true"
+                  className="absolute border-[#00ff99] border-2 border-solid inset-0 pointer-events-none rounded-xl"
                 />
               </div>
             </div>
@@ -215,10 +224,9 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
 
           {step === 'intro' && (
             <div className="w-full space-y-4 max-w-[320px]">
-              {/* Text Box */}
               <div className="bg-[#0d1420] relative rounded-xl w-full">
                 <div className="px-6 py-8 min-h-[200px] flex items-center justify-center">
-                  <p 
+                  <p
                     className="text-[#d0d0d0] text-center"
                     style={{
                       fontFamily: 'Consolas, monospace',
@@ -230,13 +238,12 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                     {INTRO_TEXTS[introIndex]}
                   </p>
                 </div>
-                <div 
-                  aria-hidden="true" 
-                  className="absolute border-[#00ff99] border-2 border-solid inset-0 pointer-events-none rounded-xl" 
+                <div
+                  aria-hidden="true"
+                  className="absolute border-[#00ff99] border-2 border-solid inset-0 pointer-events-none rounded-xl"
                 />
               </div>
 
-              {/* Continue Button */}
               <div className="w-full flex justify-center">
                 <button
                   onClick={handleIntroNext}
@@ -256,33 +263,42 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           )}
         </div>
 
-        {/* DigiEgg Sprite in Container Window */}
-        <div className="relative w-full max-w-[240px] mx-auto">
+        {/* Egg Preview Window — always visible at bottom */}
+        <div className="relative w-full max-w-[200px] mx-auto flex-shrink-0 pb-4">
           {/* Outer Grey Border Container */}
-          <div className="bg-[#6a7282] rounded-[32px] p-3 shadow-lg">
+          <div className="bg-[#6a7282] rounded-[28px] p-3 shadow-lg">
             {/* Inner Container Window */}
-            <div className="relative w-full aspect-[487/590] overflow-hidden rounded-xl">
-              {/* Background with gradient - NO transparency */}
+            <div className="relative w-full aspect-square overflow-hidden rounded-xl">
+              {/* Background */}
               <div aria-hidden="true" className="absolute inset-0 pointer-events-none rounded-xl">
                 <img alt="" className="absolute max-w-none object-cover rounded-xl size-full" src={imgContainer} />
                 <div className="absolute bg-gradient-to-b from-[#cdded4] inset-0 rounded-xl to-[#cfcfcf]" />
               </div>
-              
+
               {/* Dark Inner Border */}
               <div aria-hidden="true" className="absolute border-[#1f2a39] border-[3px] border-solid inset-0 pointer-events-none rounded-xl" />
-              
-              {/* DigiEgg Sprite Inside */}
+
+              {/* Egg glow when one is selected */}
+              {eggGlow && (
+                <div
+                  className="absolute inset-0 rounded-xl pointer-events-none"
+                  style={{ background: `radial-gradient(circle at center, ${eggGlow} 0%, transparent 70%)` }}
+                />
+              )}
+
+              {/* Egg Sprite */}
               <div className="relative z-10 w-full h-full flex items-center justify-center">
-                <img 
-                  alt="DigiEgg" 
-                  className="object-contain pointer-events-none" 
+                <img
+                  alt="DigiEgg"
+                  className="object-contain pointer-events-none transition-all duration-300"
                   src={digiEggSprite}
-                  style={{ 
+                  style={{
                     imageRendering: 'pixelated',
-                    width: '140px',
-                    height: '140px',
+                    width: '110px',
+                    height: '110px',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'center',
+                    filter: eggFilter,
                   }}
                 />
               </div>
