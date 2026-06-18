@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StepRow } from './StepRow';
 import { Edit2 } from 'lucide-react';
 import { Progress } from './ui/progress';
@@ -25,7 +26,7 @@ interface ActivityCardProps {
   language?: Language;
 }
 
-export function ActivityCard({
+export const ActivityCard = memo(function ActivityCard({
   id,
   name,
   steps,
@@ -166,4 +167,4 @@ export function ActivityCard({
       </div>
     </div>
   );
-}
+});

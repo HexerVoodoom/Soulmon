@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Edit2 } from 'lucide-react';
 import { Language, useTranslation } from '../utils/i18n';
 
@@ -13,7 +14,7 @@ interface TaskCardProps {
   language?: Language;
 }
 
-export function TaskCard({
+export const TaskCard = memo(function TaskCard({
   id,
   name,
   emoji,
@@ -88,4 +89,4 @@ export function TaskCard({
       </div>
     </div>
   );
-}
+});

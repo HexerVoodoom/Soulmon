@@ -3,6 +3,7 @@ import { Send, Mic, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
 import { type Language } from '../utils/i18n';
+import { detectMessageCategory } from '../utils/chatKeywords';
 
 interface ChatBoxProps {
   digimonName: string;
@@ -48,302 +49,92 @@ export function ChatBox({
 
   // Digimon responses based on keywords and mood
   const getDigimonResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Check for greetings
-    if (lowerMessage.match(/\b(hi|hey|hello|hola|sup|yo|greetings)\b/)) {
-      const greetings = [
-        `Hello! 👋 How are you today?`,
-        `Hey! Ready to complete tasks?`,
-        `Hi! Good to see you! 😊`,
-        `Hello, partner! Let's evolve together?`,
-        `What's up! All good? ✨`,
-        `Yo! What are we doing today?`,
-        `Hey there! You showed up! 🎮`
-      ];
-      return greetings[Math.floor(Math.random() * greetings.length)];
-    }
+    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+    const category = detectMessageCategory(userMessage);
 
-    // Check for farewell
-    if (lowerMessage.match(/\b(bye|goodbye|see you|later|cya)\b/)) {
-      const farewells = [
-        `See you later! Come back soon! 👋`,
-        `Goodbye! I'll be waiting! 😊`,
-        `See you, partner! ✨`,
-        `Later! Don't disappear! 🎮`,
-        `See you soon! 💚`,
-        `Bye! Keep being amazing! ⭐`
-      ];
-      return farewells[Math.floor(Math.random() * farewells.length)];
-    }
-
-    // Check for questions about feelings
-    if (lowerMessage.match(/\b(how|are|you|doing|feeling|feel)\b/)) {
-      if (mood === 'happy') {
-        const happyFeelings = [
-          `Very happy! 😊`,
-          `Amazing! 💪`,
-          `Feeling great! ✨`,
-          `So happy! 🌟`,
-          `Radiant! ❤️`
-        ];
-        return happyFeelings[Math.floor(Math.random() * happyFeelings.length)];
-      } else if (mood === 'tired') {
-        const tiredFeelings = [
-          `A bit tired... 😴`,
-          `*yawn* 💤`,
-          `Need energy! ⚡`,
-          `Let's do something? 🥺`
-        ];
-        return tiredFeelings[Math.floor(Math.random() * tiredFeelings.length)];
-      } else {
-        const idleFeelings = [
-          `I'm good! ✨`,
-          `Normal! 🎯`,
-          `Chill! 🤔`,
-          `Ready! 😊`,
-          `Always ready! 💚`
-        ];
-        return idleFeelings[Math.floor(Math.random() * idleFeelings.length)];
+    switch (category) {
+      case 'greeting':
+        return pick([
+          `Hello! 👋 How are you today?`,
+          `Hey! Ready to complete tasks?`,
+          `Hi! Good to see you! 😊`,
+          `Hello, partner! Let's evolve together?`,
+          `What's up! All good? ✨`,
+          `Yo! What are we doing today?`,
+          `Hey there! You showed up! 🎮`,
+        ]);
+      case 'farewell':
+        return pick([
+          `See you later! Come back soon! 👋`,
+          `Goodbye! I'll be waiting! 😊`,
+          `See you, partner! ✨`,
+          `Later! Don't disappear! 🎮`,
+          `See you soon! 💚`,
+          `Bye! Keep being amazing! ⭐`,
+        ]);
+      case 'feeling':
+        if (mood === 'happy')
+          return pick([`Very happy! 😊`, `Amazing! 💪`, `Feeling great! ✨`, `So happy! 🌟`, `Radiant! ❤️`]);
+        if (mood === 'tired')
+          return pick([`A bit tired... 😴`, `*yawn* 💤`, `Need energy! ⚡`, `Let's do something? 🥺`]);
+        return pick([`I'm good! ✨`, `Normal! 🎯`, `Chill! 🤔`, `Ready! 😊`, `Always ready! 💚`]);
+      case 'encouragement':
+        return pick([`Let's go! 💪`, `Come on! 🚀`, `Yes! ⚡`, `Sure! 🌟`, `That's it! ✨`, `You bet! 🤝`, `Let's! 💚`]);
+      case 'compliment':
+        return pick([`Thank you! ❤️`, `How sweet! 😊`, `Aww! ✨`, `Thanks! 🌟`, `Hehe! 💚`, `Thank you so much! 🥰`, `Awesome! 💪`]);
+      case 'affection':
+        return pick([`Love you! ❤️`, `Me too! 💚`, `So much love! 🥰`, `I adore you! ✨`, `Aww! 💖`, `You're the best! 🌟`]);
+      case 'food':
+        return pick([`Complete tasks! ⚡`, `Hungry for achievements! 🍖`, `Let's do something? 🥺`, `Tasks = energy! 💚`, `Let's get energy! 🚀`, `Need tasks! 🔋`]);
+      case 'evolution':
+        return pick([`I'll evolve soon! 🌟`, `Can't wait! ✨`, `I feel it coming! 🚀`, `I'll get stronger! 💪`, `It'll be amazing! 🎮`, `Let's do this! 🔥`]);
+      case 'name':
+        return pick([`I'm ${digimonName}! 🎮`, `${digimonName}! 😊`, `I am ${digimonName}! 🤝`, `${digimonName}! ✨`, `${digimonName}! 💚`]);
+      case 'task':
+        return pick([`Let's go! 💪`, `Love tasks! 🌟`, `How many today? 🎯`, `Let's go! ⚡`, `Victory! 🏆`, `Let's! 🚀`]);
+      case 'time':
+        return pick([`New chance! ☀️`, `Eternal partnership! ⏰`, `Enjoy! 🌟`, `Great day! 😊`, `Time flies! ⌚`, `New adventure! 🎮`]);
+      case 'help':
+        return pick([`I'm here! 💚`, `Together! 💪`, `Count on me! 🤝`, `We'll solve it! ✨`, `Don't give up! 🌟`, `Side by side! 🛡️`]);
+      case 'sad':
+        return pick([`It'll be okay! 🥺`, `Don't be sad! 💚`, `You're strong! 💪`, `I'm listening! 👂`, `Cheer up! ✨`, `Count on me! 🤗`]);
+      case 'happy':
+        return pick([`I'm happy too! 😊`, `Such energy! ⚡`, `Motivates me! 🌟`, `Keep going! ✨`, `That's it! 💚`, `I'm smiling too! 😄`]);
+      case 'yes':
+        return pick([`That's it! 👍`, `Great! 🌟`, `Good! 😊`, `I knew it! ✨`, `Wonderful! 💚`, `Deal! 🤝`]);
+      case 'no':
+        return pick([`Alright! 👌`, `I understand! 🤔`, `No problem! 😊`, `Okay! ✨`, `Cool! 💚`, `Got it! 👍`]);
+      case 'question':
+        return pick([
+          `Good question! 🤔`,
+          `Let me think... Hmm... 💭`,
+          `Interesting! Never thought about that! 💡`,
+          `I don't know much about that, but I can learn! 📚`,
+          `What do you think? Tell me! 😊`,
+          `That's a tough one! Shall we find out together? 🔍`,
+        ]);
+      default: {
+        // 25% chance to ask back a question
+        if (Math.random() < 0.25) {
+          return pick([
+            `And you? 🤔`,
+            `Did you do tasks? ✨`,
+            `What shall we do? 💭`,
+            `Are you okay? 😊`,
+            `Your goal today? 🎯`,
+            `Shall we evolve? 🌟`,
+            `Are you excited? ⚡`,
+            `Need help? 💚`,
+            `Which activity? 🚀`,
+            `Are you happy? 😄`,
+          ]);
+        }
+        if (mood === 'happy')
+          return pick([`Loving it! 😊`, `Cool! ✨`, `Awesome! 🌟`, `Hehe! 😄`, `Wow! 🎮`, `Great! 💚`, `Good! ⚡`, `Nice! 🚀`]);
+        if (mood === 'tired')
+          return pick([`Hmm... 😴`, `Okay... 💤`, `Zzz... 😪`, `Slowly... 🐌`, `No energy... 🔋`]);
+        return pick([`I see! 👍`, `Hmm... 🤔`, `Tell me more!`, `Cool! 😊`, `I understand!`, `Listening! 👂`, `Nice! ✨`, `Got it! 💡`, `I see! 🎯`, `Speak! 💚`]);
       }
-    }
-
-    // Check for encouragement
-    if (lowerMessage.match(/\b(let's|go|come on|strength|can|will)\b/)) {
-      const encouragement = [
-        `Let's go! 💪`,
-        `Come on! 🚀`,
-        `Yes! ⚡`,
-        `Sure! 🌟`,
-        `That's it! ✨`,
-        `You bet! 🤝`,
-        `Let's! 💚`
-      ];
-      return encouragement[Math.floor(Math.random() * encouragement.length)];
-    }
-
-    // Check for compliments
-    if (lowerMessage.match(/\b(cool|nice|awesome|great|amazing|wonderful|beautiful|cute)\b/)) {
-      const compliments = [
-        `Thank you! ❤️`,
-        `How sweet! 😊`,
-        `Aww! ✨`,
-        `Thanks! 🌟`,
-        `Hehe! 💚`,
-        `Thank you so much! 🥰`,
-        `Awesome! 💪`
-      ];
-      return compliments[Math.floor(Math.random() * compliments.length)];
-    }
-
-    // Check for love/affection
-    if (lowerMessage.match(/\b(love|adore|like|dear|friend)\b/)) {
-      const affection = [
-        `Love you! ❤️`,
-        `Me too! 💚`,
-        `So much love! 🥰`,
-        `I adore you! ✨`,
-        `Aww! 💖`,
-        `You're the best! 🌟`
-      ];
-      return affection[Math.floor(Math.random() * affection.length)];
-    }
-
-    // Check for food/energy
-    if (lowerMessage.match(/\b(eat|food|hungry|energy|tired|weak)\b/)) {
-      const foodEnergy = [
-        `Complete tasks! ⚡`,
-        `Hungry for achievements! 🍖`,
-        `Let's do something? 🥺`,
-        `Tasks = energy! 💚`,
-        `Let's get energy! 🚀`,
-        `Need tasks! 🔋`
-      ];
-      return foodEnergy[Math.floor(Math.random() * foodEnergy.length)];
-    }
-
-    // Check for evolution
-    if (lowerMessage.match(/\b(evolve|digivolve|transform|next|level|up)\b/)) {
-      const evolution = [
-        `I'll evolve soon! 🌟`,
-        `Can't wait! ✨`,
-        `I feel it coming! 🚀`,
-        `I'll get stronger! 💪`,
-        `It'll be amazing! 🎮`,
-        `Let's do this! 🔥`
-      ];
-      return evolution[Math.floor(Math.random() * evolution.length)];
-    }
-
-    // Check for name
-    if (lowerMessage.match(/\b(name|called|who|are you)\b/)) {
-      const nameResponses = [
-        `I'm ${digimonName}! 🎮`,
-        `${digimonName}! 😊`,
-        `I am ${digimonName}! 🤝`,
-        `${digimonName}! ✨`,
-        `${digimonName}! 💚`
-      ];
-      return nameResponses[Math.floor(Math.random() * nameResponses.length)];
-    }
-
-    // Check for tasks/activities
-    if (lowerMessage.match(/\b(task|activity|do|work|mission|goal)\b/)) {
-      const tasks = [
-        `Let's go! 💪`,
-        `Love tasks! 🌟`,
-        `How many today? 🎯`,
-        `Let's go! ⚡`,
-        `Victory! 🏆`,
-        `Let's! 🚀`
-      ];
-      return tasks[Math.floor(Math.random() * tasks.length)];
-    }
-
-    // Check for time/day
-    if (lowerMessage.match(/\b(day|night|morning|afternoon|time|today|tomorrow)\b/)) {
-      const timeResponses = [
-        `New chance! ☀️`,
-        `Eternal partnership! ⏰`,
-        `Enjoy! 🌟`,
-        `Great day! 😊`,
-        `Time flies! ⌚`,
-        `New adventure! 🎮`
-      ];
-      return timeResponses[Math.floor(Math.random() * timeResponses.length)];
-    }
-
-    // Check for help/support
-    if (lowerMessage.match(/\b(help|support|need|hard|difficult|problem)\b/)) {
-      const support = [
-        `I'm here! 💚`,
-        `Together! 💪`,
-        `Count on me! 🤝`,
-        `We'll solve it! ✨`,
-        `Don't give up! 🌟`,
-        `Side by side! 🛡️`
-      ];
-      return support[Math.floor(Math.random() * support.length)];
-    }
-
-    // Check for sadness
-    if (lowerMessage.match(/\b(sad|upset|bad|down|depressed)\b/)) {
-      const comfort = [
-        `It'll be okay! 🥺`,
-        `Don't be sad! 💚`,
-        `You're strong! 💪`,
-        `I'm listening! 👂`,
-        `Cheer up! ✨`,
-        `Count on me! 🤗`
-      ];
-      return comfort[Math.floor(Math.random() * comfort.length)];
-    }
-
-    // Check for happiness
-    if (lowerMessage.match(/\b(happy|cheerful|glad|excited|pumped)\b/)) {
-      const happiness = [
-        `I'm happy too! 😊`,
-        `Such energy! ⚡`,
-        `Motivates me! 🌟`,
-        `Keep going! ✨`,
-        `That's it! 💚`,
-        `I'm smiling too! 😄`
-      ];
-      return happiness[Math.floor(Math.random() * happiness.length)];
-    }
-
-    // Check for yes/no responses
-    if (lowerMessage.match(/^(yes|yeah|yep|sure|okay|ok)$/)) {
-      const yesResponses = [
-        `That's it! 👍`,
-        `Great! 🌟`,
-        `Good! 😊`,
-        `I knew it! ✨`,
-        `Wonderful! 💚`,
-        `Deal! 🤝`
-      ];
-      return yesResponses[Math.floor(Math.random() * yesResponses.length)];
-    }
-
-    if (lowerMessage.match(/^(no|nope|nah)$/)) {
-      const noResponses = [
-        `Alright! 👌`,
-        `I understand! 🤔`,
-        `No problem! 😊`,
-        `Okay! ✨`,
-        `Cool! 💚`,
-        `Got it! 👍`
-      ];
-      return noResponses[Math.floor(Math.random() * noResponses.length)];
-    }
-
-    // Check for questions (ending with ?)
-    if (lowerMessage.endsWith('?')) {
-      const questionResponses = [
-        `Good question! 🤔`,
-        `Let me think... Hmm... 💭`,
-        `Interesting! Never thought about that! 💡`,
-        `I don't know much about that, but I can learn! 📚`,
-        `What do you think? Tell me! 😊`,
-        `That's a tough one! Shall we find out together? 🔍`
-      ];
-      return questionResponses[Math.floor(Math.random() * questionResponses.length)];
-    }
-
-    // Digimon asks questions sometimes
-    const shouldAskQuestion = Math.random() < 0.25; // 25% chance
-    if (shouldAskQuestion) {
-      const digimonQuestions = [
-        `And you? 🤔`,
-        `Did you do tasks? ✨`,
-        `What shall we do? 💭`,
-        `Are you okay? 😊`,
-        `Your goal today? 🎯`,
-        `Shall we evolve? 🌟`,
-        `Are you excited? ⚡`,
-        `Need help? 💚`,
-        `Which activity? 🚀`,
-        `Are you happy? 😄`
-      ];
-      return digimonQuestions[Math.floor(Math.random() * digimonQuestions.length)];
-    }
-
-    // Default responses based on mood
-    if (mood === 'happy') {
-      const happyResponses = [
-        `Loving it! 😊`,
-        `Cool! ✨`,
-        `Awesome! 🌟`,
-        `Hehe! 😄`,
-        `Wow! 🎮`,
-        `Great! 💚`,
-        `Good! ⚡`,
-        `Nice! 🚀`
-      ];
-      return happyResponses[Math.floor(Math.random() * happyResponses.length)];
-    } else if (mood === 'tired') {
-      const tiredResponses = [
-        `Hmm... 😴`,
-        `Okay... 💤`,
-        `Zzz... 😪`,
-        `Slowly... 🐌`,
-        `No energy... 🔋`
-      ];
-      return tiredResponses[Math.floor(Math.random() * tiredResponses.length)];
-    } else {
-      const idleResponses = [
-        `I see! 👍`,
-        `Hmm... 🤔`,
-        `Tell me more!`,
-        `Cool! 😊`,
-        `I understand!`,
-        `Listening! 👂`,
-        `Nice! ✨`,
-        `Got it! 💡`,
-        `I see! 🎯`,
-        `Speak! 💚`
-      ];
-      return idleResponses[Math.floor(Math.random() * idleResponses.length)];
     }
   };
 

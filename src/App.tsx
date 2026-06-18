@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
@@ -21,6 +21,7 @@ import { type Language, useTranslation } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, DIGIMON_STAGE_NAMES } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
@@ -169,40 +170,8 @@ export default function App() {
     return days[new Date().getDay()];
   };
 
-  const getCurrentStageName = (): string => {
-    switch (gameState.evolutionStage) {
-      case 'digiegg':
-        return 'DigiEgg';
-      case 'pichimon':
-        return 'Pichimon';
-      case 'pukamon':
-        return 'Pukamon';
-      case 'tapirmon':
-        return 'Tapirmon';
-      case 'tuskmon':
-        return 'Tuskmon';
-      case 'monochromon':
-        return 'Monochromon';
-      case 'bakemon':
-        return 'Bakemon';
-      case 'gigadramon':
-        return 'Gigadramon';
-      case 'triceramon':
-        return 'Triceramon';
-      case 'digitamamon':
-        return 'Digitamamon';
-      case 'gaioumon':
-        return 'Gaioumon';
-      case 'ultimatebrachiomon':
-        return 'UltimateBrachiomon';
-      case 'titamon':
-        return 'Titamon';
-      case 'gaioumon-itto':
-        return 'Gaioumon: Itto Mode';
-      default:
-        return 'DigiEgg';
-    }
-  };
+  const getCurrentStageName = (): string =>
+    DIGIMON_STAGE_NAMES[gameState.evolutionStage] ?? 'DigiEgg';
 
   const getDominantBranch = (): 'virus' | 'data' | 'vaccine' | 'balanced' => {
     const { virusPoints, dataPoints, vaccinePoints } = gameState;
@@ -410,10 +379,10 @@ export default function App() {
     setConfirmDialog({ isOpen: false, activityId: '', stepId: '' });
   };
 
-  const handleEditActivity = (activityId: string) => {
+  const handleEditActivity = useCallback((activityId: string) => {
     setEditingActivity(activityId);
     setEditModalOpen(true);
-  };
+  }, []);
 
   const handleSaveActivity = (data: { name: string; category: string; emoji: string; steps: Step[] }) => {
     if (editingActivity) {
@@ -444,42 +413,24 @@ export default function App() {
     setEditingActivity(null);
   };
 
-  const handleDeleteActivity = (activityId: string) => {
+  const handleDeleteActivity = useCallback((activityId: string) => {
     setGameState(prev => ({
       ...prev,
       activities: prev.activities.filter(activity => activity.id !== activityId),
     }));
     setEditModalOpen(false);
     setEditingActivity(null);
-  };
+  }, []);
 
-  // Handle AI-created activity
-  const handleAICreateActivity = (activity: {
+  const handleAICreateActivity = useCallback((activity: {
     name: string;
     category: string;
     points: { virus: number; data: number; vaccine: number };
   }) => {
     if (import.meta.env.DEV) console.log('AI creating activity:', activity);
 
-    // Map AI category to ActivityCategory
-    const categoryMap: { [key: string]: ActivityCategory } = {
-      'Physical': 'Health',
-      'Mental': 'Study',
-      'Social': 'Social',
-      'Creative': 'Creativity'
-    };
-
-    const category = categoryMap[activity.category] || 'Study';
-
-    // Get emoji based on category
-    const emojiMap: { [key: string]: string } = {
-      'Health': '💪',
-      'Study': '📚',
-      'Social': '👥',
-      'Creativity': '🎨'
-    };
-
-    const emoji = emojiMap[category] || '✨';
+    const category = AI_CATEGORY_MAP[activity.category] || 'Study';
+    const emoji = CATEGORY_EMOJIS[category] || '✨';
 
     // Create auto-generated steps based on category and points
     const steps: Step[] = [
@@ -509,13 +460,12 @@ export default function App() {
     setMessageTrigger(prev => prev + 1);
 
     if (import.meta.env.DEV) console.log('Activity created successfully:', newActivity);
-  };
+  }, []);
 
-  // Handle creating new task
-  const handleAddNewTask = () => {
+  const handleAddNewTask = useCallback(() => {
     setEditingTask(null);
     setTaskEditModalOpen(true);
-  };
+  }, []);
 
   // Handle saving task
   const handleSaveTask = (data: { name: string; category: string; emoji: string }) => {
@@ -619,26 +569,24 @@ export default function App() {
     }
   };
 
-  // Handle deleting task
-  const handleDeleteTask = (taskId: string) => {
+  const handleDeleteTask = useCallback((taskId: string) => {
     setGameState(prev => ({
       ...prev,
       tasks: prev.tasks.filter(t => t.id !== taskId),
     }));
-  };
+  }, []);
 
-  // Handle editing task
-  const handleEditTask = (taskId: string) => {
+  const handleEditTask = useCallback((taskId: string) => {
     setEditingTask(taskId);
     setTaskEditModalOpen(true);
-  };
+  }, []);
 
-  const handleAddNewActivity = () => {
+  const handleAddNewActivity = useCallback(() => {
     setEditingActivity(null);
     setEditModalOpen(true);
-  };
+  }, []);
 
-  const handleDigivolve = () => {
+  const handleDigivolve = useCallback(() => {
     setGameState(prev => {
       let newEvolutionStage = prev.evolutionStage;
       let newHP = prev.healthPoints;
@@ -692,9 +640,9 @@ export default function App() {
       };
     });
     setMessageTrigger(prev => prev + 1);
-  };
+  }, []);
 
-  const handleCareEventComplete = () => {
+  const handleCareEventComplete = useCallback(() => {
     if (!careEvent) return;
 
     setGameState(prev => {
@@ -711,9 +659,9 @@ export default function App() {
 
     setCareEvent(null);
     setMessageTrigger(prev => prev + 1);
-  };
+  }, [careEvent]);
 
-  const handleDegenerate = (targetStage: string) => {
+  const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
       const stageMap: Record<string, GameState['evolutionStage']> = {
         'DigiEgg': 'digiegg',
@@ -747,10 +695,9 @@ export default function App() {
       };
     });
     setMessageTrigger(prev => prev + 1);
-  };
+  }, []);
 
-  // Handle manual evolution to unlocked forms
-  const handleEvolveToUnlocked = (targetStage: string) => {
+  const handleEvolveToUnlocked = useCallback((targetStage: string) => {
     setGameState(prev => {
       const stageMap: Record<string, GameState['evolutionStage']> = {
         'DigiEgg': 'digiegg',
@@ -789,7 +736,9 @@ export default function App() {
     });
     setMessageTrigger(prev => prev + 1);
     setShowEvolutionChoice(false);
-  };
+  }, []);
+
+  const handleOpenAISettings = useCallback(() => setSettingsOpen(true), []);
 
   const getOuterContainerClass = () => {
     switch (theme) {
@@ -991,6 +940,23 @@ export default function App() {
                       return a.isComplete ? 1 : -1;
                     });
 
+                    if (allActivities.length === 0 && gameState.tasks.length > 0) {
+                      return (
+                        <div key="no-activities" className="flex flex-col items-center justify-center py-8 gap-2">
+                          <p className={`text-sm ${theme === 'glitch' ? 'text-[#00ffff]/50' : 'text-gray-400'}`}
+                            style={{ fontFamily: 'monospace' }}>
+                            {t.main.noActivityRegistered}
+                          </p>
+                          <button
+                            onClick={handleAddNewActivity}
+                            className={`text-xs px-3 py-1 rounded-lg transition-colors ${theme === 'glitch' ? 'text-[#00ffff] border border-[#00ffff]/40 hover:bg-[#00ffff]/10' : theme === 'win98' ? 'win98-button text-black' : 'text-teal-600 border border-teal-200 hover:bg-teal-50'}`}
+                            style={{ fontFamily: 'monospace' }}>
+                            + {t.activities.addNew}
+                          </button>
+                        </div>
+                      );
+                    }
+
                     return allActivities.map(activity => {
                       const isAvailable = activity.weekDays?.includes(today);
 
@@ -1117,7 +1083,7 @@ export default function App() {
             onCareEventComplete={handleCareEventComplete}
             useAI={useAI}
             aiSettings={aiSettings}
-            onOpenAISettings={() => setSettingsOpen(true)}
+            onOpenAISettings={handleOpenAISettings}
             onCreateActivity={handleAICreateActivity}
             language={language}
           />

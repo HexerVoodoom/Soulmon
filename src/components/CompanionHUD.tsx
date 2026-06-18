@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import bgCyberpunk from "figma:asset/7342065b1193c2befe599eb2d86ef8641f1a596c.png";
 import digiEggSprite from 'figma:asset/6479b687e03b8292ee02a4453bff2eb1a76cfecb.png';
@@ -54,7 +54,7 @@ interface CompanionHUDProps {
   language: Language;
 }
 
-export function CompanionHUD({ 
+export const CompanionHUD = memo(function CompanionHUD({
   companionMood, 
   energyLevel, 
   message, 
@@ -526,4 +526,4 @@ export function CompanionHUD({
       </div>
     </div>
   );
-}
+});
