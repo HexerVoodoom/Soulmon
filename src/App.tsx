@@ -111,6 +111,7 @@ export default function App() {
     setCareEvent,
     setMessageTrigger,
     setGameState,
+    language,
   });
 
   const { timeUntilReset } = useDailyReset({
@@ -711,6 +712,8 @@ export default function App() {
         digivolutionSegments: 0,
         perfectDays: newPerfectDays,
         degeneratedByHP: false,
+        // Reset recent branch window — next evolution reflects habits going forward
+        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       };
     });
     setMessageTrigger(prev => prev + 1);
@@ -1240,6 +1243,10 @@ export default function App() {
         userName={userName}
         language={language}
         enabled={notificationsEnabled}
+        healthPoints={gameState.healthPoints}
+        maxHealthPoints={gameState.maxHealthPoints}
+        completedSteps={dailyDone}
+        totalRequired={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
       />
       <Toaster richColors position="top-right" />
       <InstallPrompt theme={theme} language={language} />

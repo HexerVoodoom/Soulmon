@@ -29,6 +29,7 @@ interface ResetGameState {
   currentBranch: 'virus' | 'data' | 'vaccine';
   maxActivityCap: number;
   lastResetDate: string;
+  attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
 }
 
 interface UseDailyResetProps {
@@ -58,6 +59,8 @@ export function useDailyReset({
       const currentLevel = getStageLevel(prev.evolutionStage);
       const requirements = FORM_REQUIREMENTS[currentLevel];
       const requiredToday = requirements.required;
+      // HP penalty threshold: completing less than half is considered neglect
+      const halfRequired = Math.ceil(requiredToday / 2);
 
       let dailyDone = 0;
       const availableActivities = !canSelectWeekdays(prev.evolutionStage)
@@ -89,8 +92,14 @@ export function useDailyReset({
       let wasDegeneratedByHP = false;
       let newMaxActivityCap = prev.maxActivityCap;
       let newCurrentBranch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
+      let newRecentAttrs = {
+        virus: prev.attributesSinceLastEvolution?.virus ?? 0,
+        data: prev.attributesSinceLastEvolution?.data ?? 0,
+        vaccine: prev.attributesSinceLastEvolution?.vaccine ?? 0,
+      };
 
-      if (dailyDone === 0) {
+      // HP penalty: doing less than half the daily requirement is neglect
+      if (dailyDone < halfRequired) {
         newHP = Math.max(0, prev.healthPoints - 1);
       }
 
@@ -113,18 +122,38 @@ export function useDailyReset({
         newDataPoints += dailyData;
         newVaccinePoints += dailyVaccine;
         newXP += (dailyVirus + dailyData + dailyVaccine) * 10;
+
+        // Accumulate recent attributes — these drive the next branch selection
+        newRecentAttrs = {
+          virus: newRecentAttrs.virus + dailyVirus,
+          data: newRecentAttrs.data + dailyData,
+          vaccine: newRecentAttrs.vaccine + dailyVaccine,
+        };
+      } else {
+        // Streak break: any non-perfect day loses one day of accumulated progress
+        newPerfectDays = Math.max(0, prev.perfectDays - 1);
       }
 
       // Evolution check
       if (newPerfectDays >= requirements.required) {
         newPerfectDays = 0;
 
-        const dominantAttr = Math.max(newVirusPoints, newDataPoints, newVaccinePoints);
+        // Use attributes accumulated since the last evolution for branch — not the
+        // cumulative all-time total, so the player's current habits still matter.
+        const recentV = newRecentAttrs.virus;
+        const recentD = newRecentAttrs.data;
+        const recentVac = newRecentAttrs.vaccine;
+        const dominantAttr = Math.max(recentV, recentD, recentVac);
         let branch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
-        if (newVirusPoints === dominantAttr) branch = 'virus';
-        else if (newDataPoints === dominantAttr) branch = 'data';
-        else if (newVaccinePoints === dominantAttr) branch = 'vaccine';
+        if (dominantAttr > 0) {
+          if (recentV === dominantAttr) branch = 'virus';
+          else if (recentD === dominantAttr) branch = 'data';
+          else branch = 'vaccine';
+        }
         newCurrentBranch = branch;
+
+        // Reset the recent window after each evolution
+        newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
 
         if (prev.evolutionStage === 'digiegg') {
           newEvolutionStage = 'pichimon';
@@ -169,9 +198,6 @@ export function useDailyReset({
       // Degeneration by HP
       if (newHP === 0) {
         wasDegeneratedByHP = true;
-        // Derive branch from the current stage (reliable) rather than the
-        // stored currentBranch field, which may be stale for older saves.
-        // For gaioumon-itto (which transcends all branches) use newCurrentBranch.
         const stageToAttr = (s: string): 'virus' | 'data' | 'vaccine' => {
           if (['tuskmon', 'gigadramon', 'gaioumon'].includes(s)) return 'virus';
           if (['bakemon', 'digitamamon', 'titamon'].includes(s)) return 'vaccine';
@@ -202,8 +228,10 @@ export function useDailyReset({
 
         const degeneratedLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[degeneratedLevel];
-        // HP-based degeneration is a real penalty: start from zero
+        // HP-based degeneration is a hard penalty: start from zero
         newPerfectDays = 0;
+        // Also reset recent branch window after forced degen
+        newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
       }
 
       const resetActivities = prev.activities.map((activity: Activity) => ({
@@ -241,6 +269,8 @@ export function useDailyReset({
         degeneratedByHP: wasDegeneratedByHP,
         lastDayWasPerfect: dayWasPerfect,
         maxActivityCap: newMaxActivityCap,
+        attributesSinceLastEvolution: newRecentAttrs,
+        careHPLostToday: 0, // Reset daily care damage cap at midnight
       };
     });
   }, [hasShownRookiePopup, setShowRookieUnlockPopup, setHasShownRookiePopup]);

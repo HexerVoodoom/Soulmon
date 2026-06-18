@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { checkAndShowNotifications, syncActivityAlarms, syncTaskAlarms } from '../utils/notifications';
+import { useEffect, useRef } from 'react';
+import { checkAndShowNotifications, showNotification, syncActivityAlarms, syncTaskAlarms } from '../utils/notifications';
 
 interface Activity {
   id: string;
@@ -21,19 +21,28 @@ interface NotificationManagerProps {
   userName: string;
   language: 'pt-BR' | 'en-US';
   enabled: boolean;
+  healthPoints: number;
+  maxHealthPoints: number;
+  completedSteps: number;
+  totalRequired: number;
 }
 
-export function NotificationManager({ 
-  activities, 
-  tasks, 
-  userName, 
+export function NotificationManager({
+  activities,
+  tasks,
+  userName,
   language,
-  enabled 
+  enabled,
+  healthPoints,
+  maxHealthPoints,
+  completedSteps,
+  totalRequired,
 }: NotificationManagerProps) {
+  const lastEveningWarnDate = useRef<string>('');
+
   // Sync alarms when activities or tasks change
   useEffect(() => {
     if (!enabled) return;
-
     syncActivityAlarms(activities, language);
     syncTaskAlarms(tasks, language);
   }, [activities, tasks, language, enabled]);
@@ -42,16 +51,61 @@ export function NotificationManager({
   useEffect(() => {
     if (!enabled) return;
 
-    // Check immediately
     checkAndShowNotifications(userName, language);
 
-    // Then check every minute
     const interval = setInterval(() => {
       checkAndShowNotifications(userName, language);
-    }, 60000); // 60 seconds
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [userName, language, enabled]);
 
-  return null; // This component doesn't render anything
+  // Evening HP risk warning — fires once at 20:00 if HP critical and day not complete
+  useEffect(() => {
+    if (!enabled) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const hh = now.getHours();
+      const mm = now.getMinutes();
+      const today = now.toDateString();
+
+      if (hh !== 20 || mm !== 0) return;
+      if (lastEveningWarnDate.current === today) return;
+
+      const halfRequired = Math.ceil(totalRequired / 2);
+      const atRisk = healthPoints === 1 && completedSteps < halfRequired;
+
+      if (atRisk) {
+        lastEveningWarnDate.current = today;
+        const ispt = language === 'pt-BR';
+        showNotification(
+          ispt ? '⚠️ Seu Digimon está em perigo!' : '⚠️ Your Digimon is in danger!',
+          {
+            body: ispt
+              ? `Complete ao menos ${halfRequired} tarefa(s) hoje ou seu parceiro vai regredir amanhã!`
+              : `Complete at least ${halfRequired} task(s) today or your partner will degenerate tomorrow!`,
+            tag: 'hp-critical-evening',
+          },
+        );
+      } else if (!atRisk && healthPoints < maxHealthPoints) {
+        // Low HP but progressing — gentle reminder
+        lastEveningWarnDate.current = today;
+        const ispt = language === 'pt-BR';
+        showNotification(
+          ispt ? '🌙 Fim do dia!' : '🌙 End of day!',
+          {
+            body: ispt
+              ? `Você tem ${completedSteps}/${totalRequired} tarefas. Continue assim!`
+              : `You have ${completedSteps}/${totalRequired} tasks done. Keep it up!`,
+            tag: 'evening-reminder',
+          },
+        );
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [enabled, healthPoints, maxHealthPoints, completedSteps, totalRequired, language]);
+
+  return null;
 }

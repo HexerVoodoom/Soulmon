@@ -1,5 +1,8 @@
 import { useEffect } from 'react';
 import { CareEvent, getCareMessage } from '../components/CareSystem';
+import { showNotification } from '../utils/notifications';
+import { getStageLevel } from '../types/progression';
+import type { Language } from '../utils/i18n';
 
 interface Activity {
   steps: { completed: boolean }[];
@@ -12,6 +15,9 @@ interface CareGameState {
   poopEventCompleted: boolean;
   foodEventsScheduled: number[];
   foodEventsCompleted: number[];
+  evolutionStage: string;
+  maxHealthPoints: number;
+  careHPLostToday: number;
 }
 
 interface UseCareSystemProps {
@@ -20,6 +26,12 @@ interface UseCareSystemProps {
   setCareEvent: (event: CareEvent | null) => void;
   setMessageTrigger: (fn: (prev: number) => number) => void;
   setGameState: (fn: (prev: any) => any) => void;
+  language: Language;
+}
+
+/** HP damage for a missed food/poop event, scaled by stage. */
+function carePenalty(maxHP: number): number {
+  return maxHP >= 3 ? 2 : 1;
 }
 
 export function useCareSystem({
@@ -28,6 +40,7 @@ export function useCareSystem({
   setCareEvent,
   setMessageTrigger,
   setGameState,
+  language,
 }: UseCareSystemProps) {
   // Schedule poop and food events
   useEffect(() => {
@@ -66,20 +79,59 @@ export function useCareSystem({
       const allSteps = gameState.activities.flatMap(a => a.steps);
       if (!allSteps.some(s => !s.completed)) return;
 
-      // Poop event
+      const maxHP = gameState.maxHealthPoints;
+      const dailyCap = Math.floor(maxHP / 2);
+      const penalty = carePenalty(maxHP);
+      const ispt = language === 'pt-BR';
+
+      // ── Poop event ──────────────────────────────────────────────────────────
       if (gameState.poopEventScheduled && !gameState.poopEventCompleted && !careEvent) {
         const elapsed = now - gameState.poopEventScheduled;
+
         if (elapsed >= 0 && elapsed < 5 * 60000) {
+          // First 5 min: message only
           if (!careEvent || (careEvent as CareEvent).type !== 'poop') {
             setCareEvent({ type: 'poop', requestTime: gameState.poopEventScheduled, showSprite: false });
             setMessageTrigger(prev => prev + 1);
+            showNotification(
+              ispt ? '🚽 Hora de limpar!' : '🚽 Bathroom time!',
+              {
+                body: ispt
+                  ? 'Seu Digimon precisa de você agora! Responda logo.'
+                  : 'Your Digimon needs you right now! Respond quickly.',
+                tag: 'poop-event',
+              },
+            );
           }
-        } else if (elapsed >= 5 * 60000) {
+        } else if (elapsed >= 5 * 60000 && elapsed < 30 * 60000) {
+          // 5–30 min: sprite visible — still time to act
           setCareEvent({ type: 'poop', requestTime: gameState.poopEventScheduled, showSprite: true });
+        } else if (elapsed >= 30 * 60000) {
+          // 30+ min: penalty fires, event auto-completes
+          setGameState((prev: any) => {
+            const remaining = dailyCap - (prev.careHPLostToday ?? 0);
+            const damage = remaining > 0 ? 1 : 0;
+            return {
+              ...prev,
+              healthPoints: Math.max(0, prev.healthPoints - damage),
+              poopEventCompleted: true,
+              careHPLostToday: (prev.careHPLostToday ?? 0) + damage,
+            };
+          });
+          setCareEvent(null);
+          showNotification(
+            ispt ? '😔 Que bagunça!' : '😔 What a mess!',
+            {
+              body: ispt
+                ? 'Seu Digimon ficou sujo demais. Você perdeu HP.'
+                : 'Your Digimon got too dirty. You lost HP.',
+              tag: 'poop-missed',
+            },
+          );
         }
       }
 
-      // Food events
+      // ── Food events ──────────────────────────────────────────────────────────
       if (gameState.foodEventsScheduled && gameState.foodEventsCompleted) {
         gameState.foodEventsScheduled.forEach((foodTime, index) => {
           if (gameState.foodEventsCompleted.includes(index) || careEvent) return;
@@ -90,14 +142,41 @@ export function useCareSystem({
             if (!careEvent || (careEvent as CareEvent).type !== 'food') {
               setCareEvent({ type: 'food', requestTime: foodTime, showSprite: false });
               setMessageTrigger(prev => prev + 1);
+              showNotification(
+                ispt ? '🍎 Hora da comida!' : '🍎 Feeding time!',
+                {
+                  body: ispt
+                    ? 'Seu Digimon está com fome. Alimente-o logo!'
+                    : 'Your Digimon is hungry. Feed it quickly!',
+                  tag: `food-event-${index}`,
+                },
+              );
             }
           } else if (elapsed >= 5 * 60000 && elapsed < 6 * 60000) {
+            // 5–6 min: sprite + HP penalty (with daily cap and stage scaling)
             setCareEvent({ type: 'food', requestTime: foodTime, showSprite: true });
-            setGameState(prev => ({
-              ...prev,
-              healthPoints: Math.max(0, prev.healthPoints - 2),
-              foodEventsCompleted: [...(prev.foodEventsCompleted || []), index],
-            }));
+            setGameState((prev: any) => {
+              const remaining = dailyCap - (prev.careHPLostToday ?? 0);
+              if (remaining <= 0) {
+                return { ...prev, foodEventsCompleted: [...(prev.foodEventsCompleted || []), index] };
+              }
+              const damage = Math.min(penalty, remaining);
+              return {
+                ...prev,
+                healthPoints: Math.max(0, prev.healthPoints - damage),
+                foodEventsCompleted: [...(prev.foodEventsCompleted || []), index],
+                careHPLostToday: (prev.careHPLostToday ?? 0) + damage,
+              };
+            });
+            showNotification(
+              ispt ? '😢 Digimon com fome!' : '😢 Digimon went hungry!',
+              {
+                body: ispt
+                  ? `Você perdeu ${penalty} HP por não alimentar seu Digimon a tempo.`
+                  : `You lost ${penalty} HP for missing your Digimon's meal.`,
+                tag: `food-missed-${index}`,
+              },
+            );
           }
         });
       }
@@ -109,7 +188,10 @@ export function useCareSystem({
     gameState.foodEventsScheduled,
     gameState.poopEventCompleted,
     gameState.foodEventsCompleted,
+    gameState.maxHealthPoints,
+    gameState.careHPLostToday,
     careEvent,
+    language,
   ]);
 
   const getCompanionMessageWithCare = (fallbackMessage: string): string => {

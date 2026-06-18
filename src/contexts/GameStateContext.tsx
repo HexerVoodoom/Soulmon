@@ -88,6 +88,10 @@ export interface GameState {
   lastDayWasPerfect: boolean;
   maxActivityCap: number;
   eggType?: 'agumon' | 'veemon' | 'salamon';
+  /** Attribute points accumulated since the last evolution — drives branch selection */
+  attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  /** HP lost to care events today — caps daily care damage */
+  careHPLostToday: number;
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
@@ -124,6 +128,8 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         currentBranch: loadedState.currentBranch ?? 'data',
         maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'digiegg')].cap,
         eggType: loadedState.eggType ?? savedEggType ?? 'agumon',
+        attributesSinceLastEvolution: loadedState.attributesSinceLastEvolution ?? { virus: 0, data: 0, vaccine: 0 },
+        careHPLostToday: loadedState.careHPLostToday ?? 0,
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -153,6 +159,8 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       lastDayWasPerfect: false,
       maxActivityCap: 2,
       eggType: savedEggType ?? 'agumon',
+      attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+      careHPLostToday: 0,
     };
   });
 
