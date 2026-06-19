@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Download, X } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { type Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 
@@ -23,7 +23,6 @@ export function InstallPrompt({ theme = 'default', language = 'en-US' }: Install
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    // Already running as installed PWA
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setInstalled(true);
       return;
@@ -60,45 +59,71 @@ export function InstallPrompt({ theme = 'default', language = 'en-US' }: Install
     localStorage.setItem(DISMISSED_KEY, 'true');
   };
 
-  const label = language === 'pt-BR'
-    ? '📱 Adicionar DigiApp à tela inicial'
-    : '📱 Add DigiApp to home screen';
-  const installBtn = language === 'pt-BR' ? 'Instalar' : 'Install';
-
   const isWin98 = theme === 'win98';
+  const isGlitch = theme === 'glitch';
+
+  const label = language === 'pt-BR'
+    ? '📱 Adicionar à tela inicial'
+    : '📱 Add to home screen';
+  const installBtn = language === 'pt-BR' ? 'Instalar' : 'Install';
+  const dismissBtn = language === 'pt-BR' ? 'Não, obrigado' : 'No thanks';
+  const description = language === 'pt-BR'
+    ? 'Instale o DigiApp para acesso rápido, funcionamento offline e notificações.'
+    : 'Install DigiApp for quick access, offline support and notifications.';
 
   return (
     <div
-      role="banner"
-      aria-label={label}
-      className={`fixed top-0 left-0 right-0 z-[60] flex items-center justify-between px-4 py-2 gap-3 shadow-md ${
-        isWin98
-          ? 'bg-[#c0c0c0] border-b-2 border-white text-black'
-          : 'bg-teal-600 text-white'
+      className={`p-6 rounded-2xl ${
+        isGlitch
+          ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
+          : isWin98
+          ? 'win98-button bg-white'
+          : 'bg-white shadow-sm ring-1 ring-gray-200/50'
       }`}
     >
-      <span className="text-sm font-medium truncate">{label}</span>
-      <div className="flex items-center gap-2 shrink-0">
+      <h3
+        className={`mb-3 ${
+          isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
+        }`}
+        style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}
+      >
+        {label}
+      </h3>
+      <p
+        className={`mb-5 text-xs ${
+          isGlitch ? 'text-[#00ffff]/60' : isWin98 ? 'text-[#808080]' : 'text-gray-500'
+        }`}
+        style={{ fontFamily: 'monospace' }}
+      >
+        {description}
+      </p>
+      <div className="flex gap-2">
         <button
           onClick={handleInstall}
-          className={`flex items-center gap-1 px-3 py-1 rounded text-sm font-bold transition-colors ${
-            isWin98
-              ? 'bg-white border-2 border-gray-400 text-black hover:bg-gray-100 shadow-[inset_1px_1px_0_rgba(255,255,255,0.8)]'
-              : 'bg-white text-teal-700 hover:bg-teal-50'
+          className={`flex-1 py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${
+            isGlitch
+              ? 'bg-[#00ffff] text-[#0a0a0a] hover:bg-[#00ffff]/90 border-2 border-[#00ffff]'
+              : isWin98
+              ? 'win98-button bg-[#c0c0c0] text-[#000000]'
+              : 'bg-gray-900 text-white hover:bg-gray-800 shadow-sm'
           }`}
-          aria-label={installBtn}
+          style={{ fontFamily: 'monospace', fontWeight: '500' }}
         >
           <Download size={14} />
           {installBtn}
         </button>
         <button
           onClick={handleDismiss}
-          className={`p-1 rounded transition-colors ${
-            isWin98 ? 'hover:bg-gray-300 text-black' : 'text-white/80 hover:text-white'
+          className={`py-3 px-4 rounded-xl transition-all text-xs ${
+            isGlitch
+              ? 'text-[#00ffff]/60 border border-[#00ffff]/30 hover:border-[#00ffff]/60'
+              : isWin98
+              ? 'win98-button bg-[#c0c0c0] text-[#000000]'
+              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
           }`}
-          aria-label="Dismiss"
+          style={{ fontFamily: 'monospace' }}
         >
-          <X size={16} />
+          {dismissBtn}
         </button>
       </div>
     </div>

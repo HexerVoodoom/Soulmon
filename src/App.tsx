@@ -13,7 +13,6 @@ import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
-import { InstallPrompt } from './components/InstallPrompt';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
@@ -52,6 +51,7 @@ export default function App() {
     stepId: '',
   });
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
+  const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
@@ -874,7 +874,7 @@ export default function App() {
   }
 
   return (
-    <div className={`fixed inset-0 overflow-hidden flex flex-col relative ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()} ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
+    <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()} ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
       }`}>
         {/* Fixed Header */}
         <div className="flex-shrink-0">
@@ -1043,6 +1043,31 @@ export default function App() {
             /></Suspense>
           )}
         </div>
+
+        {/* HP risk banner — dismissible strip above companion */}
+        {gameState.healthPoints === 1 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
+          <div className={`flex-shrink-0 flex items-center gap-2 px-4 py-1.5 animate-pulse ${
+            theme === 'win98'
+              ? 'bg-[#800000] border-t border-[#ff0000] text-white'
+              : theme === 'glitch'
+              ? 'bg-[#200000] border-t border-[#ff0066]/60'
+              : 'bg-red-950 border-t border-red-500/50'
+          }`}>
+            <span style={{ fontSize: '0.75rem' }}>⚠️</span>
+            <p className="text-red-300 flex-1 text-xs" style={{ fontFamily: 'monospace', lineHeight: '1.3' }}>
+              {language === 'pt-BR'
+                ? `1 HP restante — complete ao menos ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) hoje para não regredir!`
+                : `1 HP left — complete at least ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) today to avoid degeneration!`}
+            </p>
+            <button
+              onClick={() => setHpBannerDismissed(true)}
+              className="text-red-400 hover:text-red-200 flex-shrink-0 px-1 text-sm leading-none"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Companion HUD - fixo no rodapé como parte do flex */}
         <div className={`flex-shrink-0 ${theme === 'win98' ? 'bg-[#c0c0c0] border-t-2 border-white px-6 pb-3 pt-3' : 'bg-gray-50 px-6 pb-3 pt-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]'}`}>
@@ -1249,7 +1274,6 @@ export default function App() {
         totalRequired={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
       />
       <Toaster richColors position="top-right" />
-      <InstallPrompt theme={theme} language={language} />
     </div>
   );
 }

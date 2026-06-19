@@ -3,6 +3,7 @@ import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
 import { Bell, BellOff } from 'lucide-react';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
+import { InstallPrompt } from './InstallPrompt';
 
 interface SettingsPageProps {
   useAI: boolean;
@@ -39,6 +40,9 @@ export function SettingsPage({
   return (
     <>
       <div className="space-y-6">
+        {/* PWA Install */}
+        <InstallPrompt theme={theme} language={language} />
+
         {/* AI Settings */}
         <div
           className={`p-6 rounded-2xl ${

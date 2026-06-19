@@ -508,27 +508,6 @@ export const CompanionHUD = memo(function CompanionHUD({
         </div>
       </div>
 
-      {/* Degeneration risk warning — shown when HP is critically low */}
-      {healthPoints === 1 && completedSteps < Math.ceil(totalSteps / 2) && (
-        <div
-          className={`mt-2 px-3 py-1.5 rounded-lg flex items-center gap-2 animate-pulse ${
-            isWin98
-              ? 'bg-[#800000] border border-[#ff0000]'
-              : 'bg-red-900/70 border border-red-500/60'
-          }`}
-        >
-          <span style={{ fontSize: '0.8rem' }}>⚠️</span>
-          <p
-            className="text-red-300 flex-1"
-            style={{ fontFamily: 'monospace', fontSize: '0.65rem', lineHeight: '1.3' }}
-          >
-            {language === 'pt-BR'
-              ? `1 HP restante — complete ao menos ${Math.ceil(totalSteps / 2)} item(s) hoje para não regredir!`
-              : `1 HP left — complete at least ${Math.ceil(totalSteps / 2)} item(s) today to avoid degeneration!`}
-          </p>
-        </div>
-      )}
-
       {/* Chat Box - Below Companion Area */}
       <div className="mt-2">
         <ChatBox 
