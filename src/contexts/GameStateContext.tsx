@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { cloudSave } from '../utils/cloudSave';
 
 export interface Step {
   id: string;
@@ -164,8 +165,26 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     };
   });
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState));
+
+    // Skip cloud backup on first render (initial load from localStorage)
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    // Generate save ID on first use
+    let saveId = localStorage.getItem(STORAGE_KEYS.SAVE_ID);
+    if (!saveId) {
+      saveId = crypto.randomUUID();
+      localStorage.setItem(STORAGE_KEYS.SAVE_ID, saveId);
+    }
+
+    const timer = setTimeout(() => cloudSave(saveId!, gameState), 3000);
+    return () => clearTimeout(timer);
   }, [gameState]);
 
   return (

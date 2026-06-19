@@ -12,4 +12,5 @@ export const STORAGE_KEYS = {
   PWA_INSTALL_DISMISSED: 'digiapp-pwa-install-dismissed',
   SCHEDULED_NOTIFICATIONS: 'digiapp-scheduled-notifications',
   DAILY_NOTIFICATION_CHECK: 'digiapp-daily-notification-check',
+  SAVE_ID: 'digiapp-save-id',
 } as const;

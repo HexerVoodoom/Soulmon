@@ -783,52 +783,29 @@ export default function App() {
   const handleCompleteOnboarding = (data: {
     userName: string;
     eggType: 'agumon' | 'veemon' | 'salamon';
-    firstItem: {
-      type: 'task' | 'activity';
-      name: string;
-      category: ActivityCategory;
-      emoji: string;
-      steps?: Step[];
-    };
+    initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
   }) => {
-    // Save user name, egg type, and onboarding completion
     localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
     localStorage.setItem(STORAGE_KEYS.EGG_TYPE, data.eggType);
     localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
     setUserName(data.userName);
     setHasCompletedOnboarding(true);
 
-    // Create the first item
-    if (data.firstItem.type === 'task') {
-      const newTask: Task = {
-        id: Date.now().toString(),
-        name: data.firstItem.name,
-        category: data.firstItem.category,
-        emoji: data.firstItem.emoji,
-        completed: false,
-      };
-      setGameState(prev => ({
-        ...prev,
-        tasks: [newTask],
-        activities: [], // Start with no default activities
-        eggType: data.eggType, // Store egg type
-      }));
-    } else {
-      const newActivity: Activity = {
-        id: Date.now().toString(),
-        name: data.firstItem.name,
-        category: data.firstItem.category,
-        emoji: data.firstItem.emoji,
-        steps: data.firstItem.steps || [],
-        weekDays: [0, 1, 2, 3, 4, 5, 6], // Available all days by default
-      };
-      setGameState(prev => ({
-        ...prev,
-        activities: [newActivity],
-        tasks: [], // Start with no default tasks
-        eggType: data.eggType, // Store egg type
-      }));
-    }
+    const newActivities: Activity[] = data.initialActivities.map((item, i) => ({
+      id: `${Date.now() + i}`,
+      name: item.name,
+      category: item.category,
+      emoji: item.emoji,
+      steps: [],
+      weekDays: [0, 1, 2, 3, 4, 5, 6],
+    }));
+
+    setGameState(prev => ({
+      ...prev,
+      activities: newActivities,
+      tasks: [],
+      eggType: data.eggType,
+    }));
   };
 
 
@@ -1040,6 +1017,15 @@ export default function App() {
               onOpenGuide={() => setGuideModalOpen(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
+              onRestoreFromCloud={async (id) => {
+                const { cloudLoad } = await import('./utils/cloudSave');
+                const state = await cloudLoad(id);
+                if (!state) return false;
+                localStorage.setItem(STORAGE_KEYS.SAVE_ID, id);
+                localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(state));
+                window.location.reload();
+                return true;
+              }}
             /></Suspense>
           )}
         </div>

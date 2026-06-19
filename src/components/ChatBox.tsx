@@ -144,28 +144,20 @@ export function ChatBox({
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const { projectId, publicAnonKey } = await import('../utils/supabase/info');
-
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-7de212d9/chat`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
-          },
-          body: JSON.stringify({
-            message: userMessage,
-            digimonName,
-            mood,
-            evolutionStage,
-            dominantBranch,
-            language,
-            aiSettings
-          }),
-          signal: controller.signal,
-        }
-      );
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          digimonName,
+          mood,
+          evolutionStage,
+          dominantBranch,
+          language,
+          aiSettings,
+        }),
+        signal: controller.signal,
+      });
 
       if (!response.ok) {
         if (import.meta.env.DEV) console.error('AI API error:', await response.text());

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
-import { Bell, BellOff } from 'lucide-react';
+import { Bell, BellOff, Copy, Check } from 'lucide-react';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
 import { InstallPrompt } from './InstallPrompt';
+import { STORAGE_KEYS } from '../utils/storageKeys';
+import { cloudLoad } from '../utils/cloudSave';
 
 interface SettingsPageProps {
   useAI: boolean;
@@ -17,6 +19,7 @@ interface SettingsPageProps {
   onOpenGuide: () => void;
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
+  onRestoreFromCloud: (saveId: string) => Promise<boolean>;
 }
 
 export function SettingsPage({
@@ -31,17 +34,96 @@ export function SettingsPage({
   onOpenGuide,
   notificationsEnabled,
   onToggleNotifications,
+  onRestoreFromCloud,
 }: SettingsPageProps) {
   const [showAISettings, setShowAISettings] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [restoreInput, setRestoreInput] = useState('');
+  const [restoreStatus, setRestoreStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
   const t = useTranslation(language);
+  const saveId = localStorage.getItem(STORAGE_KEYS.SAVE_ID) ?? null;
+
+  const handleCopy = () => {
+    if (!saveId) return;
+    navigator.clipboard.writeText(saveId).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const handleRestore = async () => {
+    const id = restoreInput.trim();
+    if (!id) return;
+    setRestoreStatus('loading');
+    const ok = await onRestoreFromCloud(id);
+    setRestoreStatus(ok ? 'ok' : 'err');
+    if (!ok) setTimeout(() => setRestoreStatus('idle'), 3000);
+  };
 
   return (
     <>
       <div className="space-y-6">
         {/* PWA Install */}
         <InstallPrompt theme={theme} language={language} />
+
+        {/* Cloud Save */}
+        <div className={`p-6 rounded-2xl ${isGlitch ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30' : isWin98 ? 'win98-button bg-white' : 'bg-white shadow-sm ring-1 ring-gray-200/50'}`}>
+          <h3 className={`mb-3 ${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'}`} style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}>
+            ☁️ {language === 'pt-BR' ? 'Backup na nuvem' : 'Cloud backup'}
+          </h3>
+          <p className={`mb-4 text-xs ${isGlitch ? 'text-[#00ffff]/60' : isWin98 ? 'text-[#808080]' : 'text-gray-500'}`} style={{ fontFamily: 'monospace' }}>
+            {language === 'pt-BR'
+              ? 'Seu progresso é salvo automaticamente. Guarde o código abaixo para recuperar se o armazenamento do navegador for limpo.'
+              : 'Your progress is automatically backed up. Save the code below to restore if browser storage is cleared.'}
+          </p>
+
+          {saveId && (
+            <div className="mb-4">
+              <p className={`text-xs mb-1 ${isGlitch ? 'text-[#00ffff]/50' : isWin98 ? 'text-[#808080]' : 'text-gray-400'}`} style={{ fontFamily: 'monospace' }}>
+                {language === 'pt-BR' ? 'Código de recuperação:' : 'Recovery code:'}
+              </p>
+              <div className="flex items-center gap-2">
+                <code className={`flex-1 text-xs px-3 py-2 rounded-lg break-all ${isGlitch ? 'bg-[#001a00] text-[#00ffff]' : isWin98 ? 'bg-[#c0c0c0] text-black border border-gray-400' : 'bg-gray-100 text-gray-700'}`} style={{ fontFamily: 'monospace' }}>
+                  {saveId}
+                </code>
+                <button onClick={handleCopy} className={`flex-shrink-0 p-2 rounded-lg transition-colors ${isGlitch ? 'text-[#00ffff] hover:bg-[#00ffff]/10' : isWin98 ? 'win98-button' : 'text-gray-500 hover:bg-gray-100'}`} aria-label="Copy">
+                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <p className={`text-xs ${isGlitch ? 'text-[#00ffff]/50' : isWin98 ? 'text-[#808080]' : 'text-gray-400'}`} style={{ fontFamily: 'monospace' }}>
+              {language === 'pt-BR' ? 'Restaurar a partir de um código:' : 'Restore from a code:'}
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={restoreInput}
+                onChange={e => setRestoreInput(e.target.value)}
+                placeholder={language === 'pt-BR' ? 'cole o código aqui' : 'paste code here'}
+                className={`flex-1 text-xs px-3 py-2 rounded-lg outline-none ${isGlitch ? 'bg-[#001a00] text-[#00ffff] border border-[#00ffff]/30' : isWin98 ? 'border border-gray-400 bg-white' : 'border border-gray-200 bg-gray-50'}`}
+                style={{ fontFamily: 'monospace' }}
+              />
+              <button
+                onClick={handleRestore}
+                disabled={!restoreInput.trim() || restoreStatus === 'loading'}
+                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-40 ${isGlitch ? 'bg-[#00ffff] text-[#0a0a0a]' : isWin98 ? 'win98-button' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+                style={{ fontFamily: 'monospace' }}
+              >
+                {restoreStatus === 'loading' ? '...' : restoreStatus === 'ok' ? '✓' : restoreStatus === 'err' ? '✗' : language === 'pt-BR' ? 'restaurar' : 'restore'}
+              </button>
+            </div>
+            {restoreStatus === 'err' && (
+              <p className="text-red-500 text-xs" style={{ fontFamily: 'monospace' }}>
+                {language === 'pt-BR' ? 'Código não encontrado.' : 'Code not found.'}
+              </p>
+            )}
+          </div>
+        </div>
 
         {/* AI Settings */}
         <div
