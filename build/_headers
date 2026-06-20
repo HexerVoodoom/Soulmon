@@ -1,0 +1,17 @@
+# Cache hashed assets indefinitely
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Never cache the entry point
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Never cache the service worker
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Security headers for all pages
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
