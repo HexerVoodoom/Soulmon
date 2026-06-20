@@ -44,7 +44,7 @@ export function FirstTaskCompletedPopup({
                 ? 'text-black hover:bg-gray-300'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
           }`}
-          aria-label="Fechar"
+          aria-label="Close"
         >
           <X size={20} />
         </button>
@@ -63,7 +63,7 @@ export function FirstTaskCompletedPopup({
             }`}
             style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold' }}
           >
-            Primeira Tarefa Completa!
+            First Task Complete!
           </h2>
 
           {/* Message */}
@@ -73,7 +73,7 @@ export function FirstTaskCompletedPopup({
             }`}
             style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
           >
-            Seu parceiro cresce conforme você cresce. Você deve cumprir todas atividades do dia para que ele fique saudável e se fortaleça até evoluir.
+            Your partner grows as you grow. Complete all of the day's activities to keep them healthy and strong enough to evolve.
           </p>
 
           {/* Button */}
@@ -88,7 +88,7 @@ export function FirstTaskCompletedPopup({
             }`}
             style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold' }}
           >
-            Entendi!
+            Got it!
           </button>
         </div>
       </div>

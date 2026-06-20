@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import imgUiTBg01 from "figma:asset/7342065b1193c2befe599eb2d86ef8641f1a596c.png";
 import digiEggSprite from 'figma:asset/50a3811e08593d7a5f52463335a0bdcb7a2e181f.png';
+import imgContainer from "figma:asset/7ad0373538d7e96df49e437c4c65f56e56ae6f30.png";
 import { EggSelection, EggType } from './EggSelection';
 import { ActivityCategory } from '../types/attributes';
 
@@ -18,7 +19,7 @@ interface OnboardingScreenProps {
   }) => void;
 }
 
-const ispt = navigator.language.startsWith('pt');
+const ispt = false; // onboarding is English-only
 
 const INTRO_TEXTS = ispt ? [
   'Bem-vindo ao DigiApp! Em breve você vai conhecer seu parceiro digital que vai te ajudar a alcançar seus objetivos.',
@@ -273,7 +274,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           {step === 'goals' && (
             <div className="w-full max-w-[340px] space-y-4">
               <div className="bg-[#0d1420] relative rounded-xl w-full">
-                <div className="px-5 py-5">
+                <div className="px-7 py-7">
                   {/* Challenge chips */}
                   <p className="text-white text-xs mb-3 font-bold" style={{ fontFamily: 'Consolas, monospace', letterSpacing: '0.05em' }}>
                     {ispt ? 'o que te desafia?' : 'what challenges you?'}
@@ -354,7 +355,8 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           <div className="bg-[#6a7282] rounded-[28px] p-3 shadow-lg">
             <div className="relative w-full aspect-square overflow-hidden rounded-xl">
               <div aria-hidden="true" className="absolute inset-0 pointer-events-none rounded-xl">
-                <img alt="" className="absolute max-w-none object-cover rounded-xl size-full" src={imgUiTBg01} />
+                <img alt="" className="absolute max-w-none object-cover rounded-xl size-full" src={imgContainer} />
+                <div className="absolute bg-gradient-to-b from-[#cdded4] inset-0 rounded-xl to-[#cfcfcf]" />
               </div>
               <div aria-hidden="true" className="absolute border-[#1f2a39] border-[3px] border-solid inset-0 pointer-events-none rounded-xl" />
               {eggGlow && (
