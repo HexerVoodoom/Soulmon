@@ -272,10 +272,10 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
           {/* Step: goals (challenge + activity suggestions) */}
           {step === 'goals' && (
             <div className="w-full max-w-[340px] space-y-4">
-              <div className="bg-[#0a1628] relative rounded-xl w-full border border-[#1e3a5a]">
+              <div className="bg-[#0d1420] relative rounded-xl w-full">
                 <div className="px-5 py-5">
                   {/* Challenge chips */}
-                  <p className="text-[#00ff99] text-xs mb-3 font-bold" style={{ fontFamily: 'Consolas, monospace', letterSpacing: '0.05em' }}>
+                  <p className="text-white text-xs mb-3 font-bold" style={{ fontFamily: 'Consolas, monospace', letterSpacing: '0.05em' }}>
                     {ispt ? 'o que te desafia?' : 'what challenges you?'}
                   </p>
                   <div className="flex flex-wrap gap-2 mb-5">
@@ -288,7 +288,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border-2 ${
                             active
                               ? 'bg-[#00ff99] text-[#061510] border-[#00ff99] shadow-[0_0_8px_rgba(0,255,153,0.5)]'
-                              : 'bg-[#162840] text-[#e0f0ff] border-[#3a6090] hover:border-[#00ff99] hover:bg-[#1e3a58]'
+                              : 'bg-transparent text-white border-white hover:border-[#00ff99] hover:text-[#00ff99]'
                           }`}
                           style={{ fontFamily: 'Consolas, monospace' }}
                         >
@@ -301,7 +301,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                   {/* Activity pool */}
                   {poolItems.length > 0 && (
                     <>
-                      <p className="text-[#00ff99] text-xs mb-3 font-bold" style={{ fontFamily: 'Consolas, monospace', letterSpacing: '0.05em' }}>
+                      <p className="text-white text-xs mb-3 font-bold" style={{ fontFamily: 'Consolas, monospace', letterSpacing: '0.05em' }}>
                         {ispt ? 'selecione suas atividades:' : 'pick your activities:'}
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -314,7 +314,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border-2 ${
                                 active
                                   ? 'bg-[#00ff99] text-[#061510] border-[#00ff99] shadow-[0_0_8px_rgba(0,255,153,0.5)]'
-                                  : 'bg-[#162840] text-[#e0f0ff] border-[#3a6090] hover:border-[#00ff99] hover:bg-[#1e3a58]'
+                                  : 'bg-transparent text-white border-white hover:border-[#00ff99] hover:text-[#00ff99]'
                               }`}
                               style={{ fontFamily: 'Consolas, monospace' }}
                             >
@@ -327,7 +327,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                   )}
 
                   {selectedChallenges.size === 0 && (
-                    <p className="text-[#6090c0] text-xs text-center py-4" style={{ fontFamily: 'Consolas, monospace' }}>
+                    <p className="text-white/60 text-xs text-center py-4" style={{ fontFamily: 'Consolas, monospace' }}>
                       {ispt ? '↑ selecione ao menos um desafio' : '↑ select at least one challenge'}
                     </p>
                   )}
