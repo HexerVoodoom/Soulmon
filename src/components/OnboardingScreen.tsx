@@ -289,7 +289,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                           className={`px-3 py-1 rounded-full text-xs transition-all border ${
                             active
                               ? 'bg-[#00ff99] text-[#0a2f1a] border-[#00ff99]'
-                              : 'bg-transparent text-[#8a9ab0] border-[#2a3a4a] hover:border-[#00ff99]/50'
+                              : 'bg-[#1c3048] text-[#c8dce8] border-[#2e4a6a] hover:border-[#00ff99]/70'
                           }`}
                           style={{ fontFamily: 'Consolas, monospace' }}
                         >
@@ -315,7 +315,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                               className={`px-3 py-1.5 rounded-lg text-xs transition-all border ${
                                 active
                                   ? 'bg-[#00ff99] text-[#0a2f1a] border-[#00ff99]'
-                                  : 'bg-[#1a2a1a] text-[#8a9ab0] border-[#2a3a2a] hover:border-[#00ff99]/50'
+                                  : 'bg-[#1c3048] text-[#c8dce8] border-[#2e4a6a] hover:border-[#00ff99]/70'
                               }`}
                               style={{ fontFamily: 'Consolas, monospace' }}
                             >
@@ -328,7 +328,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
                   )}
 
                   {selectedChallenges.size === 0 && (
-                    <p className="text-[#4a5a6a] text-xs text-center py-4" style={{ fontFamily: 'Consolas, monospace' }}>
+                    <p className="text-[#7a9ab8] text-xs text-center py-4" style={{ fontFamily: 'Consolas, monospace' }}>
                       {ispt ? '↑ selecione ao menos um desafio' : '↑ select at least one challenge'}
                     </p>
                   )}
