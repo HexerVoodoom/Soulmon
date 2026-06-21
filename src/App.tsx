@@ -1155,6 +1155,7 @@ export default function App() {
             onCareEventComplete={handleCareEventComplete}
             foodInventory={gameState.foodInventory}
             onFeed={handleFeed}
+            eggType={gameState.eggType ?? 'agumon'}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

@@ -54,6 +54,7 @@ interface CompanionHUDProps {
   language: Language;
   foodInventory?: Record<string, number>;
   onFeed?: (foodEmoji: string) => void;
+  eggType?: 'agumon' | 'veemon' | 'salamon';
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -86,6 +87,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   language,
   foodInventory = {},
   onFeed,
+  eggType = 'agumon',
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -475,14 +477,21 @@ export const CompanionHUD = memo(function CompanionHUD({
               onClick={handleDigimonClick}
             >
               {sprite ? (
-                <img 
-                  src={sprite} 
+                <img
+                  src={sprite}
                   alt={currentStage}
                   className={`w-20 h-20 object-contain ${getCompanionFilter()}`}
-                  style={{ 
+                  style={{
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
-                    transformOrigin: 'bottom'
+                    transformOrigin: 'bottom',
+                    filter: evolutionStage.toLowerCase() === 'digiegg'
+                      ? eggType === 'veemon'
+                        ? 'hue-rotate(200deg) saturate(1.5)'
+                        : eggType === 'salamon'
+                        ? 'hue-rotate(300deg) saturate(1.3) brightness(1.1)'
+                        : undefined
+                      : undefined,
                   }}
                 />
               ) : (
@@ -512,17 +521,12 @@ export const CompanionHUD = memo(function CompanionHUD({
         </div>
       </div>
 
-      {/* Version B: Food Inventory + Feed Panel */}
-      {onFeed && (
+      {/* Version B: Food Inventory + Feed Panel — only shown when there is food */}
+      {onFeed && Object.keys(foodInventory).length > 0 && (
         <div className={`mt-2 rounded-lg px-3 py-2 flex items-center gap-2 flex-wrap ${
           isWin98 ? 'win98-button' : isGlitch ? 'bg-[#0a0a0a] border border-[#00ffff]' : 'bg-[#1F2A39]'
         }`}>
-          {Object.keys(foodInventory).length === 0 ? (
-            <p className="text-xs text-gray-500 flex-1" style={{ fontFamily: 'monospace' }}>
-              Complete activities to earn food
-            </p>
-          ) : (
-            <div className="flex gap-1.5 flex-wrap flex-1">
+          <div className="flex gap-1.5 flex-wrap flex-1">
               {Object.entries(foodInventory).map(([emoji, count]) =>
                 count > 0 ? (
                   <button
@@ -537,7 +541,6 @@ export const CompanionHUD = memo(function CompanionHUD({
                 ) : null
               )}
             </div>
-          )}
           <span className="text-[10px] text-gray-500 flex-shrink-0" style={{ fontFamily: 'monospace' }}>
             tap to feed +1❤️
           </span>
