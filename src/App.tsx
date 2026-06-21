@@ -630,16 +630,23 @@ export default function App() {
       else if (isVaccine) newCurrentBranch = 'vaccine';
       else if (isData) newCurrentBranch = 'data';
 
-      // Evolve to next stage
+      // Evolve to next stage — early stages branch by eggType
       if (prev.evolutionStage === 'digiegg') {
-        newEvolutionStage = 'pichimon';
+        if (prev.eggType === 'veemon') newEvolutionStage = 'chicomon';
+        else if (prev.eggType === 'salamon') newEvolutionStage = 'yukimibotamon';
+        else newEvolutionStage = 'pichimon';
         newSegmentsNeeded = 2;
-      } else if (prev.evolutionStage === 'pichimon') {
-        newEvolutionStage = 'pukamon';
+      } else if (['pichimon', 'chicomon', 'yukimibotamon'].includes(prev.evolutionStage)) {
+        if (prev.eggType === 'veemon') newEvolutionStage = 'chibimon';
+        else if (prev.eggType === 'salamon') newEvolutionStage = 'nyaromon';
+        else newEvolutionStage = 'pukamon';
         newSegmentsNeeded = 4;
-      } else if (prev.evolutionStage === 'pukamon') {
-        newEvolutionStage = 'tapirmon';
+      } else if (['pukamon', 'chibimon', 'nyaromon'].includes(prev.evolutionStage)) {
+        if (prev.eggType === 'veemon') newEvolutionStage = 'veemon';
+        else if (prev.eggType === 'salamon') newEvolutionStage = 'plotmon';
+        else newEvolutionStage = 'tapirmon';
         newSegmentsNeeded = 7;
+      // ── Tapirmon line ────────────────────────────────────────────────────
       } else if (prev.evolutionStage === 'tapirmon') {
         if (isVirus) newEvolutionStage = 'tuskmon';
         else if (isVaccine) newEvolutionStage = 'bakemon';
@@ -656,14 +663,52 @@ export default function App() {
         else newEvolutionStage = 'ultimatebrachiomon';
         newSegmentsNeeded = 14;
       } else if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(prev.evolutionStage)) {
-        // Ultra requires all three Mega forms to be previously unlocked
         const hasAllMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'].every(m =>
           prev.unlockedEvolutions.includes(m)
         );
-        if (hasAllMegas) {
-          newEvolutionStage = 'gaioumon-itto';
-          newSegmentsNeeded = 999;
-        }
+        if (hasAllMegas) { newEvolutionStage = 'gaioumon-itto'; newSegmentsNeeded = 999; }
+      // ── Veemon line ──────────────────────────────────────────────────────
+      } else if (prev.evolutionStage === 'veemon') {
+        if (isData) newEvolutionStage = 'exveemon';
+        else if (isVirus) newEvolutionStage = 'veedramon';
+        else newEvolutionStage = 'flamedramon';
+        newSegmentsNeeded = 9;
+      } else if (['exveemon', 'veedramon', 'flamedramon'].includes(prev.evolutionStage)) {
+        if (isData) newEvolutionStage = 'paildramon';
+        else if (isVirus) newEvolutionStage = 'aeroveedramon';
+        else newEvolutionStage = 'raidramon';
+        newSegmentsNeeded = 11;
+      } else if (['paildramon', 'aeroveedramon', 'raidramon'].includes(prev.evolutionStage)) {
+        if (isData) newEvolutionStage = 'imperialdramon';
+        else if (isVirus) newEvolutionStage = 'ulforceveedramon';
+        else newEvolutionStage = 'magnamon';
+        newSegmentsNeeded = 14;
+      } else if (['imperialdramon', 'ulforceveedramon', 'magnamon'].includes(prev.evolutionStage)) {
+        const hasAllMegas = ['imperialdramon', 'ulforceveedramon', 'magnamon'].every(m =>
+          prev.unlockedEvolutions.includes(m)
+        );
+        if (hasAllMegas) { newEvolutionStage = 'imperialdramon-paladin'; newSegmentsNeeded = 999; }
+      // ── Salamon line ─────────────────────────────────────────────────────
+      } else if (prev.evolutionStage === 'plotmon') {
+        if (isVaccine) newEvolutionStage = 'gatomon';
+        else if (isVirus) newEvolutionStage = 'gatomon-black';
+        else newEvolutionStage = 'mikemon';
+        newSegmentsNeeded = 9;
+      } else if (['gatomon', 'gatomon-black', 'mikemon'].includes(prev.evolutionStage)) {
+        if (isVaccine) newEvolutionStage = 'angewomon';
+        else if (isVirus) newEvolutionStage = 'ladydevimon';
+        else newEvolutionStage = 'nefertimon';
+        newSegmentsNeeded = 11;
+      } else if (['angewomon', 'ladydevimon', 'nefertimon'].includes(prev.evolutionStage)) {
+        if (isVaccine) newEvolutionStage = 'ophanimon';
+        else if (isVirus) newEvolutionStage = 'lilithmon';
+        else newEvolutionStage = 'holydramon';
+        newSegmentsNeeded = 14;
+      } else if (['ophanimon', 'lilithmon', 'holydramon'].includes(prev.evolutionStage)) {
+        const hasAllMegas = ['ophanimon', 'lilithmon', 'holydramon'].every(m =>
+          prev.unlockedEvolutions.includes(m)
+        );
+        if (hasAllMegas) { newEvolutionStage = 'mastemon'; newSegmentsNeeded = 999; }
       }
 
       newHP = getMaxHPForStage(newEvolutionStage);

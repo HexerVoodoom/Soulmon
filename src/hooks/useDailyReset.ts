@@ -133,17 +133,25 @@ export function useDailyReset({
         // Reset the recent window after each evolution
         newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
 
+        // ── Early stages: branch by eggType ──────────────────────────────
         if (prev.evolutionStage === 'digiegg') {
-          newEvolutionStage = 'pichimon';
-        } else if (prev.evolutionStage === 'pichimon') {
-          newEvolutionStage = 'pukamon';
-        } else if (prev.evolutionStage === 'pukamon') {
-          newEvolutionStage = 'tapirmon';
+          if (prev.eggType === 'veemon') newEvolutionStage = 'chicomon';
+          else if (prev.eggType === 'salamon') newEvolutionStage = 'yukimibotamon';
+          else newEvolutionStage = 'pichimon';
+        } else if (['pichimon', 'chicomon', 'yukimibotamon'].includes(prev.evolutionStage)) {
+          if (prev.eggType === 'veemon') newEvolutionStage = 'chibimon';
+          else if (prev.eggType === 'salamon') newEvolutionStage = 'nyaromon';
+          else newEvolutionStage = 'pukamon';
+        } else if (['pukamon', 'chibimon', 'nyaromon'].includes(prev.evolutionStage)) {
+          if (prev.eggType === 'veemon') newEvolutionStage = 'veemon';
+          else if (prev.eggType === 'salamon') newEvolutionStage = 'plotmon';
+          else newEvolutionStage = 'tapirmon';
           if (!hasShownRookiePopup) {
             setShowRookieUnlockPopup(true);
             setHasShownRookiePopup(true);
             localStorage.setItem(STORAGE_KEYS.ROOKIE_POPUP_SHOWN, 'true');
           }
+        // ── Tapirmon line ─────────────────────────────────────────────────
         } else if (prev.evolutionStage === 'tapirmon') {
           if (branch === 'virus') newEvolutionStage = 'tuskmon';
           else if (branch === 'data') newEvolutionStage = 'monochromon';
@@ -161,6 +169,42 @@ export function useDailyReset({
             prev.unlockedEvolutions.includes(m),
           );
           if (hasAllMegas) newEvolutionStage = 'gaioumon-itto';
+        // ── Veemon line ───────────────────────────────────────────────────
+        } else if (prev.evolutionStage === 'veemon') {
+          if (branch === 'data') newEvolutionStage = 'exveemon';
+          else if (branch === 'virus') newEvolutionStage = 'veedramon';
+          else newEvolutionStage = 'flamedramon';
+        } else if (['exveemon', 'veedramon', 'flamedramon'].includes(prev.evolutionStage)) {
+          if (branch === 'data') newEvolutionStage = 'paildramon';
+          else if (branch === 'virus') newEvolutionStage = 'aeroveedramon';
+          else newEvolutionStage = 'raidramon';
+        } else if (['paildramon', 'aeroveedramon', 'raidramon'].includes(prev.evolutionStage)) {
+          if (branch === 'data') newEvolutionStage = 'imperialdramon';
+          else if (branch === 'virus') newEvolutionStage = 'ulforceveedramon';
+          else newEvolutionStage = 'magnamon';
+        } else if (['imperialdramon', 'ulforceveedramon', 'magnamon'].includes(prev.evolutionStage)) {
+          const hasAllMegas = ['imperialdramon', 'ulforceveedramon', 'magnamon'].every(m =>
+            prev.unlockedEvolutions.includes(m),
+          );
+          if (hasAllMegas) newEvolutionStage = 'imperialdramon-paladin';
+        // ── Salamon line ──────────────────────────────────────────────────
+        } else if (prev.evolutionStage === 'plotmon') {
+          if (branch === 'vaccine') newEvolutionStage = 'gatomon';
+          else if (branch === 'virus') newEvolutionStage = 'gatomon-black';
+          else newEvolutionStage = 'mikemon';
+        } else if (['gatomon', 'gatomon-black', 'mikemon'].includes(prev.evolutionStage)) {
+          if (branch === 'vaccine') newEvolutionStage = 'angewomon';
+          else if (branch === 'virus') newEvolutionStage = 'ladydevimon';
+          else newEvolutionStage = 'nefertimon';
+        } else if (['angewomon', 'ladydevimon', 'nefertimon'].includes(prev.evolutionStage)) {
+          if (branch === 'vaccine') newEvolutionStage = 'ophanimon';
+          else if (branch === 'virus') newEvolutionStage = 'lilithmon';
+          else newEvolutionStage = 'holydramon';
+        } else if (['ophanimon', 'lilithmon', 'holydramon'].includes(prev.evolutionStage)) {
+          const hasAllMegas = ['ophanimon', 'lilithmon', 'holydramon'].every(m =>
+            prev.unlockedEvolutions.includes(m),
+          );
+          if (hasAllMegas) newEvolutionStage = 'mastemon';
         }
 
         const newStageLevel = getStageLevel(newEvolutionStage);
