@@ -52,6 +52,8 @@ interface CompanionHUDProps {
     points: { virus: number; data: number; vaccine: number };
   }) => void;
   language: Language;
+  foodInventory?: Record<string, number>;
+  onFeed?: (foodEmoji: string) => void;
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -81,7 +83,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   aiSettings,
   onOpenAISettings,
   onCreateActivity,
-  language
+  language,
+  foodInventory = {},
+  onFeed,
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -507,6 +511,38 @@ export const CompanionHUD = memo(function CompanionHUD({
           <EnergyBar totalSteps={totalSteps} completedSteps={completedSteps} />
         </div>
       </div>
+
+      {/* Version B: Food Inventory + Feed Panel */}
+      {onFeed && (
+        <div className={`mt-2 rounded-lg px-3 py-2 flex items-center gap-2 flex-wrap ${
+          isWin98 ? 'win98-button' : isGlitch ? 'bg-[#0a0a0a] border border-[#00ffff]' : 'bg-[#1F2A39]'
+        }`}>
+          {Object.keys(foodInventory).length === 0 ? (
+            <p className="text-xs text-gray-500 flex-1" style={{ fontFamily: 'monospace' }}>
+              Complete activities to earn food
+            </p>
+          ) : (
+            <div className="flex gap-1.5 flex-wrap flex-1">
+              {Object.entries(foodInventory).map(([emoji, count]) =>
+                count > 0 ? (
+                  <button
+                    key={emoji}
+                    onClick={() => onFeed(emoji)}
+                    className="flex items-center gap-0.5 bg-[#0d1a2d] hover:bg-[#162840] active:scale-95 rounded-md px-1.5 py-0.5 transition-all border border-[#2a4060]"
+                    title={`Feed ${emoji} (+1 HP)`}
+                  >
+                    <span style={{ fontSize: '0.9rem' }}>{emoji}</span>
+                    <span className="text-[#a0c0e0] text-[10px] font-bold" style={{ fontFamily: 'monospace' }}>×{count}</span>
+                  </button>
+                ) : null
+              )}
+            </div>
+          )}
+          <span className="text-[10px] text-gray-500 flex-shrink-0" style={{ fontFamily: 'monospace' }}>
+            tap to feed +1❤️
+          </span>
+        </div>
+      )}
 
       {/* Chat Box - Below Companion Area */}
       <div className="mt-2">

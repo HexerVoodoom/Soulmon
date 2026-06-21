@@ -21,7 +21,7 @@ import { type Language, useTranslation } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
-import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, DIGIMON_STAGE_NAMES } from './constants/labels';
+import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, DIGIMON_STAGE_NAMES, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
@@ -263,10 +263,23 @@ export default function App() {
           };
         }
 
+        // Version B: generate food when activity is fully completed
+        let newFoodInventory = prev.foodInventory;
+        if (isFullyCompleted && updatedActivity) {
+          const food = FOOD_BY_CATEGORY[updatedActivity.category as keyof typeof FOOD_BY_CATEGORY];
+          if (food) {
+            newFoodInventory = {
+              ...prev.foodInventory,
+              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+            };
+          }
+        }
+
         return {
           ...prev,
           activities: updatedActivities,
           activityStats: newActivityStats,
+          foodInventory: newFoodInventory,
         };
       });
 
@@ -335,10 +348,23 @@ export default function App() {
         };
       }
 
+      // Version B: generate food when completing (not when unchecking)
+      let newFoodInventory = prev.foodInventory;
+      if (newCompletedState && activity) {
+        const food = FOOD_BY_CATEGORY[activity.category as keyof typeof FOOD_BY_CATEGORY];
+        if (food) {
+          newFoodInventory = {
+            ...prev.foodInventory,
+            [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+          };
+        }
+      }
+
       return {
         ...prev,
         activities: updatedActivities,
         activityStats: newActivityStats,
+        foodInventory: newFoodInventory,
       };
     });
 
@@ -564,6 +590,12 @@ export default function App() {
             dataPoints: prev.dataPoints + attrs.data,
             vaccinePoints: prev.vaccinePoints + attrs.vaccine,
             totalXP: prev.totalXP + (attrs.virus + attrs.data + attrs.vaccine) * 10,
+            // Version B: generate food from task category
+            foodInventory: (() => {
+              const food = FOOD_BY_CATEGORY[task.category as keyof typeof FOOD_BY_CATEGORY];
+              if (!food) return prev.foodInventory;
+              return { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 };
+            })(),
           };
         });
 
@@ -676,6 +708,22 @@ export default function App() {
     setCareEvent(null);
     setMessageTrigger(prev => prev + 1);
   }, [careEvent]);
+
+  // Version B: consume one food item from inventory → +1 HP (capped at maxHP)
+  const handleFeed = useCallback((foodEmoji: string) => {
+    setGameState(prev => {
+      const count = prev.foodInventory[foodEmoji] ?? 0;
+      if (count <= 0 || prev.healthPoints >= prev.maxHealthPoints) return prev;
+      const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
+      if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
+      return {
+        ...prev,
+        healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
+        foodInventory: newInventory,
+      };
+    });
+    setMessageTrigger(prev => prev + 1);
+  }, []);
 
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
@@ -1099,6 +1147,8 @@ export default function App() {
             onDigivolve={handleDigivolve}
             careEvent={careEvent}
             onCareEventComplete={handleCareEventComplete}
+            foodInventory={gameState.foodInventory}
+            onFeed={handleFeed}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

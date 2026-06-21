@@ -93,6 +93,8 @@ export interface GameState {
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
   /** HP lost to care events today — caps daily care damage */
   careHPLostToday: number;
+  /** Version B: food stockpile keyed by food emoji */
+  foodInventory: Record<string, number>;
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
@@ -131,6 +133,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         eggType: loadedState.eggType ?? savedEggType ?? 'agumon',
         attributesSinceLastEvolution: loadedState.attributesSinceLastEvolution ?? { virus: 0, data: 0, vaccine: 0 },
         careHPLostToday: loadedState.careHPLostToday ?? 0,
+        foodInventory: loadedState.foodInventory ?? {},
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -162,6 +165,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       eggType: savedEggType ?? 'agumon',
       attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       careHPLostToday: 0,
+      foodInventory: {},
     };
   });
 
