@@ -37,7 +37,7 @@ const EGG_FILTERS: Record<string, string> = {
 };
 
 const EGG_GLOW: Record<string, string> = {
-  agumon: 'rgba(255,255,255,0.35)',
+  tapirmon: 'rgba(255,255,255,0.35)',
   veemon: 'rgba(74,144,226,0.45)',
   salamon: 'rgba(255,182,193,0.45)',
 };

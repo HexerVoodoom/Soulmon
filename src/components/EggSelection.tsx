@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import digiEggSprite from 'figma:asset/6479b687e03b8292ee02a4453bff2eb1a76cfecb.png';
 
-export type EggType = 'agumon' | 'veemon' | 'salamon';
+export type EggType = 'tapirmon' | 'veemon' | 'salamon';
 
 interface EggSelectionProps {
   onSelect: (eggType: EggType) => void;
@@ -9,7 +9,7 @@ interface EggSelectionProps {
 }
 
 const EGG_DATA = {
-  agumon: {
+  tapirmon: {
     name: 'White Egg',
     description: 'Tapirmon Line',
     color: '#FFFFFF',

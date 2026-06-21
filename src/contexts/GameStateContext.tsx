@@ -88,7 +88,7 @@ export interface GameState {
   currentBranch: 'virus' | 'data' | 'vaccine';
   lastDayWasPerfect: boolean;
   maxActivityCap: number;
-  eggType?: 'agumon' | 'veemon' | 'salamon';
+  eggType?: 'tapirmon' | 'veemon' | 'salamon';
   /** Attribute points accumulated since the last evolution — drives branch selection */
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
   /** HP lost to care events today — caps daily care damage */
@@ -130,7 +130,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         degeneratedByHP: loadedState.degeneratedByHP ?? false,
         currentBranch: loadedState.currentBranch ?? 'data',
         maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'digiegg')].cap,
-        eggType: loadedState.eggType ?? savedEggType ?? 'agumon',
+        eggType: loadedState.eggType ?? savedEggType ?? 'tapirmon',
         attributesSinceLastEvolution: loadedState.attributesSinceLastEvolution ?? { virus: 0, data: 0, vaccine: 0 },
         careHPLostToday: loadedState.careHPLostToday ?? 0,
         foodInventory: loadedState.foodInventory ?? {},
@@ -162,7 +162,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       currentBranch: 'data',
       lastDayWasPerfect: false,
       maxActivityCap: 2,
-      eggType: savedEggType ?? 'agumon',
+      eggType: savedEggType ?? 'tapirmon',
       attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       careHPLostToday: 0,
       foodInventory: {},

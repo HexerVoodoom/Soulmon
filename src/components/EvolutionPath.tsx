@@ -41,7 +41,7 @@ export function EvolutionPath({
   digivolutionSegmentsNeeded, 
   onDegenerate, 
   theme, 
-  eggType = 'agumon' 
+  eggType = 'tapirmon'
 }: EvolutionPathProps) {
   const [selectedBranch, setSelectedBranch] = useState<'virus' | 'data' | 'vaccine'>(currentBranch);
   const [confirmDegenerate, setConfirmDegenerate] = useState<{ stage: string; isSecondConfirm: boolean } | null>(null);

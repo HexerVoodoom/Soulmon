@@ -54,7 +54,7 @@ interface CompanionHUDProps {
   language: Language;
   foodInventory?: Record<string, number>;
   onFeed?: (foodEmoji: string) => void;
-  eggType?: 'agumon' | 'veemon' | 'salamon';
+  eggType?: 'tapirmon' | 'veemon' | 'salamon';
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -87,7 +87,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   language,
   foodInventory = {},
   onFeed,
-  eggType = 'agumon',
+  eggType = 'tapirmon',
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -485,13 +485,6 @@ export const CompanionHUD = memo(function CompanionHUD({
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
-                    filter: evolutionStage.toLowerCase() === 'digiegg'
-                      ? eggType === 'veemon'
-                        ? 'hue-rotate(200deg) saturate(1.5)'
-                        : eggType === 'salamon'
-                        ? 'hue-rotate(300deg) saturate(1.3) brightness(1.1)'
-                        : undefined
-                      : undefined,
                   }}
                 />
               ) : (

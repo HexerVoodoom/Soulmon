@@ -132,7 +132,7 @@ export default function App() {
     DigiWidget.updateWidgetData({
       digimonName,
       currentStage: gameState.evolutionStage,
-      eggType: gameState.eggType ?? 'agumon',
+      eggType: gameState.eggType ?? 'tapirmon',
       branchType: gameState.currentBranch,
       completedTasks: dailyDone,
       totalTasks: dailyTotal,
@@ -836,7 +836,7 @@ export default function App() {
 
   const handleCompleteOnboarding = (data: {
     userName: string;
-    eggType: 'agumon' | 'veemon' | 'salamon';
+    eggType: 'tapirmon' | 'veemon' | 'salamon';
     initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
   }) => {
     localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
@@ -1155,7 +1155,7 @@ export default function App() {
             onCareEventComplete={handleCareEventComplete}
             foodInventory={gameState.foodInventory}
             onFeed={handleFeed}
-            eggType={gameState.eggType ?? 'agumon'}
+            eggType={gameState.eggType ?? 'tapirmon'}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

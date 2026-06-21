@@ -49,7 +49,7 @@ import nefertimonSprite from 'figma:asset/750c493568ac7846d39b203e8be583d896133c
 import holyDramonSprite from 'figma:asset/829e91e67710908cd0cecd99b5b12163536d3926.png';
 import mastemonSprite from 'figma:asset/a036d6071a61f5a7cde8ca604f58cd0267141481.png';
 
-export type EggType = 'agumon' | 'veemon' | 'salamon';
+export type EggType = 'tapirmon' | 'veemon' | 'salamon';
 
 export interface EvolutionStage {
   name: string;
@@ -74,9 +74,9 @@ export interface EvolutionLine {
   ultra: EvolutionStage; // Shared ultra form
 }
 
-// AGUMON LINE (White Egg) - Tapirmon line
-export const AGUMON_LINE: EvolutionLine = {
-  eggType: 'agumon',
+// TAPIRMON LINE (White Egg)
+export const TAPIRMON_LINE: EvolutionLine = {
+  eggType: 'tapirmon',
   digiegg: {
     name: 'DigiEgg',
     stage: 'digiegg',
@@ -268,7 +268,7 @@ export const SALAMON_LINE: EvolutionLine = {
 
 // Export all lines
 export const EVOLUTION_LINES: Record<EggType, EvolutionLine> = {
-  agumon: AGUMON_LINE,
+  tapirmon: TAPIRMON_LINE,
   veemon: VEEMON_LINE,
   salamon: SALAMON_LINE,
 };
