@@ -105,30 +105,8 @@ export function useDailyReset({
 
       if (dayWasPerfect) {
         newPerfectDays++;
-
-        let dailyVirus = 0;
-        let dailyData = 0;
-        let dailyVaccine = 0;
-        availableActivities.forEach((activity: Activity) => {
-          const attrs = (CATEGORY_ATTRIBUTES as any)[activity.category];
-          if (attrs) {
-            dailyVirus += attrs.virus;
-            dailyData += attrs.data;
-            dailyVaccine += attrs.vaccine;
-          }
-        });
-
-        newVirusPoints += dailyVirus;
-        newDataPoints += dailyData;
-        newVaccinePoints += dailyVaccine;
-        newXP += (dailyVirus + dailyData + dailyVaccine) * 10;
-
-        // Accumulate recent attributes — these drive the next branch selection
-        newRecentAttrs = {
-          virus: newRecentAttrs.virus + dailyVirus,
-          data: newRecentAttrs.data + dailyData,
-          vaccine: newRecentAttrs.vaccine + dailyVaccine,
-        };
+        // Version B: attribute points come from feeding, not from daily reset.
+        // newRecentAttrs carries whatever was accumulated via handleFeed during the day.
       } else {
         // Streak break: any non-perfect day loses one day of accumulated progress
         newPerfectDays = Math.max(0, prev.perfectDays - 1);

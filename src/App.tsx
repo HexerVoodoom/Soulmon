@@ -552,12 +552,10 @@ export default function App() {
         }
       }
 
-      // After 3 seconds, add points, save to history, and remove from list
+      // After 3 seconds, save to history, remove from list, and generate food
+      // Version B: attribute points come from feeding, not from task completion
       setTimeout(() => {
-        const attrs = CATEGORY_ATTRIBUTES[task.category];
-
         setGameState(prev => {
-          // Increment activity stats if activity exists
           const activityKey = `task-${task.name}-${task.category}`;
           const currentStats = prev.activityStats[activityKey] || {
             name: task.name,
@@ -565,6 +563,11 @@ export default function App() {
             category: task.category,
             completionCount: 0,
           };
+
+          const food = FOOD_BY_CATEGORY[task.category as keyof typeof FOOD_BY_CATEGORY];
+          const newFoodInventory = food
+            ? { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 }
+            : prev.foodInventory;
 
           return {
             ...prev,
@@ -581,21 +584,9 @@ export default function App() {
             ],
             activityStats: {
               ...prev.activityStats,
-              [activityKey]: {
-                ...currentStats,
-                completionCount: currentStats.completionCount + 1,
-              },
+              [activityKey]: { ...currentStats, completionCount: currentStats.completionCount + 1 },
             },
-            virusPoints: prev.virusPoints + attrs.virus,
-            dataPoints: prev.dataPoints + attrs.data,
-            vaccinePoints: prev.vaccinePoints + attrs.vaccine,
-            totalXP: prev.totalXP + (attrs.virus + attrs.data + attrs.vaccine) * 10,
-            // Version B: generate food from task category
-            foodInventory: (() => {
-              const food = FOOD_BY_CATEGORY[task.category as keyof typeof FOOD_BY_CATEGORY];
-              if (!food) return prev.foodInventory;
-              return { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 };
-            })(),
+            foodInventory: newFoodInventory,
           };
         });
 
@@ -709,17 +700,32 @@ export default function App() {
     setMessageTrigger(prev => prev + 1);
   }, [careEvent]);
 
-  // Version B: consume one food item from inventory → +1 HP (capped at maxHP)
+  // Version B: consume one food item → +1 HP + attribute points of that food's category
   const handleFeed = useCallback((foodEmoji: string) => {
     setGameState(prev => {
       const count = prev.foodInventory[foodEmoji] ?? 0;
-      if (count <= 0 || prev.healthPoints >= prev.maxHealthPoints) return prev;
+      if (count <= 0) return prev;
+
       const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
       if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
+
+      // Resolve category → attribute points from the food emoji
+      const foodDef = Object.values(FOOD_BY_CATEGORY).find(f => f.emoji === foodEmoji);
+      const attrs = foodDef ? CATEGORY_ATTRIBUTES[foodDef.category] : { virus: 0, data: 0, vaccine: 0 };
+
       return {
         ...prev,
         healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
         foodInventory: newInventory,
+        virusPoints: prev.virusPoints + attrs.virus,
+        dataPoints: prev.dataPoints + attrs.data,
+        vaccinePoints: prev.vaccinePoints + attrs.vaccine,
+        totalXP: prev.totalXP + (attrs.virus + attrs.data + attrs.vaccine) * 10,
+        attributesSinceLastEvolution: {
+          virus: (prev.attributesSinceLastEvolution?.virus ?? 0) + attrs.virus,
+          data: (prev.attributesSinceLastEvolution?.data ?? 0) + attrs.data,
+          vaccine: (prev.attributesSinceLastEvolution?.vaccine ?? 0) + attrs.vaccine,
+        },
       };
     });
     setMessageTrigger(prev => prev + 1);
