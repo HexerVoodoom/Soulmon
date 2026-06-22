@@ -69,14 +69,14 @@ export interface GameState {
     | 'gigadramon' | 'triceramon' | 'digitamamon'
     | 'gaioumon' | 'ultimatebrachiomon' | 'titamon'
     | 'chicomon' | 'chibimon' | 'veemon'
-    | 'exveemon' | 'veedramon' | 'flamdramon'
+    | 'exveemon' | 'veedramon' | 'flamedramon'
     | 'paildramon' | 'aeroveedramon' | 'raidramon'
-    | 'imperialdramon' | 'ulforceveemon' | 'magnamon'
+    | 'imperialdramon' | 'ulforceveedramon' | 'magnamon'
     | 'yukimibotamon' | 'nyaromon' | 'plotmon'
-    | 'gatomon' | 'blackgatomon' | 'mikemon'
+    | 'gatomon' | 'gatomon-black' | 'mikemon'
     | 'angewomon' | 'ladydevimon' | 'nefertimon'
     | 'ophanimon' | 'lilithmon' | 'holydramon'
-    | 'gaioumon-itto' | 'imperialdramonpaladin' | 'mastemon';
+    | 'gaioumon-itto' | 'imperialdramon-paladin' | 'mastemon';
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventScheduled: number | null;

@@ -108,114 +108,129 @@ export function countCompletedYesterday(prev: GameState): number {
   return completed;
 }
 
-// Determina a próxima evolução baseada no estágio atual e branch
-export function getNextEvolution(currentStage: string, branch: 'virus' | 'data' | 'vaccine', unlockedEvolutions: string[]): string {
-  // Digiegg -> Baby I
+type EggLine = 'tapirmon' | 'veemon' | 'salamon';
+type Attr = 'virus' | 'data' | 'vaccine';
+
+// Determina a próxima evolução para todas as 3 linhas
+export function getNextEvolution(
+  currentStage: string,
+  eggType: EggLine,
+  branch: Attr,
+  unlockedEvolutions: string[],
+): string {
+  // digiegg → baby-i (by line)
   if (currentStage === 'digiegg') {
-    return 'koromon';
+    if (eggType === 'veemon') return 'chicomon';
+    if (eggType === 'salamon') return 'yukimibotamon';
+    return 'pichimon';
   }
-  
-  // Baby I -> Baby II
-  if (currentStage === 'koromon') {
-    // Baseado no branch escolhido
-    if (branch === 'virus') return 'tsunomon';
-    if (branch === 'vaccine') return 'pagumon';
-    return 'tsunomon'; // Default
+  // baby-i → baby-ii (by line)
+  if (['pichimon', 'chicomon', 'yukimibotamon'].includes(currentStage)) {
+    if (eggType === 'veemon') return 'chibimon';
+    if (eggType === 'salamon') return 'nyaromon';
+    return 'pukamon';
   }
-  
-  // Baby II -> Rookie
-  if (['tsunomon', 'pagumon'].includes(currentStage)) {
-    if (branch === 'virus') return 'tapirmon';
-    if (branch === 'data') return 'kudamon';
-    if (branch === 'vaccine') return 'kamemon';
-    return 'kudamon'; // Default
+  // baby-ii → rookie (by line)
+  if (['pukamon', 'chibimon', 'nyaromon'].includes(currentStage)) {
+    if (eggType === 'veemon') return 'veemon';
+    if (eggType === 'salamon') return 'plotmon';
+    return 'tapirmon';
   }
-  
-  // Rookie -> Champion
-  if (['tapirmon', 'kudamon', 'kamemon'].includes(currentStage)) {
-    if (branch === 'virus') {
-      return ['monochromon', 'tyrannomon', 'ogremon'][Math.floor(Math.random() * 3)];
-    }
-    if (branch === 'data') {
-      return ['meramon', 'leomon', 'ikkakumon'][Math.floor(Math.random() * 3)];
-    }
-    if (branch === 'vaccine') {
-      return ['geremon', 'bakemon', 'devimon'][Math.floor(Math.random() * 3)];
-    }
-    return 'leomon';
+  // ── Tapirmon line ────────────────────────────────────────────────────
+  if (currentStage === 'tapirmon') {
+    if (branch === 'virus') return 'tuskmon';
+    if (branch === 'vaccine') return 'bakemon';
+    return 'monochromon';
   }
-  
-  // Champion -> Ultimate
-  if ([
-    'monochromon', 'tyrannomon', 'ogremon',
-    'meramon', 'leomon', 'ikkakumon',
-    'geremon', 'bakemon', 'devimon'
-  ].includes(currentStage)) {
-    if (branch === 'virus') return 'megadramon';
-    if (branch === 'data') return 'gigadramon';
-    if (branch === 'vaccine') return 'triceramon';
-    return 'gigadramon';
+  if (['tuskmon', 'monochromon', 'bakemon'].includes(currentStage)) {
+    if (branch === 'virus') return 'gigadramon';
+    if (branch === 'vaccine') return 'digitamamon';
+    return 'triceramon';
   }
-  
-  // Ultimate -> Mega
-  if (['megadramon', 'gigadramon', 'triceramon', 'digitamamon'].includes(currentStage)) {
+  if (['gigadramon', 'triceramon', 'digitamamon'].includes(currentStage)) {
     if (branch === 'virus') return 'gaioumon';
-    if (branch === 'data') return 'ultimatebrachiomon';
     if (branch === 'vaccine') return 'titamon';
     return 'ultimatebrachiomon';
   }
-  
-  // Mega -> Ultra (só se tiver desbloqueado os 3 megas)
   if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(currentStage)) {
-    const hasAllMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'].every(m => 
-      unlockedEvolutions.includes(m)
-    );
-    
-    if (hasAllMegas) {
-      return 'gaioumon-itto';
-    }
+    const allMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'];
+    if (allMegas.every(m => unlockedEvolutions.includes(m))) return 'gaioumon-itto';
+    return currentStage;
   }
-  
-  return currentStage; // Sem evolução
+  // ── Veemon line ──────────────────────────────────────────────────────
+  if (currentStage === 'veemon') {
+    if (branch === 'data') return 'exveemon';
+    if (branch === 'virus') return 'veedramon';
+    return 'flamedramon';
+  }
+  if (['exveemon', 'veedramon', 'flamedramon'].includes(currentStage)) {
+    if (branch === 'data') return 'paildramon';
+    if (branch === 'virus') return 'aeroveedramon';
+    return 'raidramon';
+  }
+  if (['paildramon', 'aeroveedramon', 'raidramon'].includes(currentStage)) {
+    if (branch === 'data') return 'imperialdramon';
+    if (branch === 'virus') return 'ulforceveedramon';
+    return 'magnamon';
+  }
+  if (['imperialdramon', 'ulforceveedramon', 'magnamon'].includes(currentStage)) {
+    const allMegas = ['imperialdramon', 'ulforceveedramon', 'magnamon'];
+    if (allMegas.every(m => unlockedEvolutions.includes(m))) return 'imperialdramon-paladin';
+    return currentStage;
+  }
+  // ── Salamon line ─────────────────────────────────────────────────────
+  if (currentStage === 'plotmon') {
+    if (branch === 'vaccine') return 'gatomon';
+    if (branch === 'virus') return 'gatomon-black';
+    return 'mikemon';
+  }
+  if (['gatomon', 'gatomon-black', 'mikemon'].includes(currentStage)) {
+    if (branch === 'vaccine') return 'angewomon';
+    if (branch === 'virus') return 'ladydevimon';
+    return 'nefertimon';
+  }
+  if (['angewomon', 'ladydevimon', 'nefertimon'].includes(currentStage)) {
+    if (branch === 'vaccine') return 'ophanimon';
+    if (branch === 'virus') return 'lilithmon';
+    return 'holydramon';
+  }
+  if (['ophanimon', 'lilithmon', 'holydramon'].includes(currentStage)) {
+    const allMegas = ['ophanimon', 'lilithmon', 'holydramon'];
+    if (allMegas.every(m => unlockedEvolutions.includes(m))) return 'mastemon';
+    return currentStage;
+  }
+  // Ultra — already at max
+  return currentStage;
 }
 
-// Determina a forma anterior para degeneração, determinístico baseado no branch
-export function getPreviousForm(currentStage: string, branch: 'virus' | 'data' | 'vaccine' = 'data'): string {
-  if (currentStage === 'gaioumon-itto') {
-    const branchMap = { virus: 'gaioumon', data: 'ultimatebrachiomon', vaccine: 'titamon' } as const;
-    return branchMap[branch];
-  }
+// Lookup table: each stage's deterministic predecessor (same-attribute tier above)
+const PREV_FORM: Record<string, string> = {
+  // Tapirmon line
+  gaioumon: 'gigadramon', ultimatebrachiomon: 'triceramon', titamon: 'digitamamon',
+  gigadramon: 'tuskmon',  triceramon: 'monochromon',        digitamamon: 'bakemon',
+  tuskmon: 'tapirmon',    monochromon: 'tapirmon',           bakemon: 'tapirmon',
+  tapirmon: 'pukamon', pukamon: 'pichimon', pichimon: 'digiegg',
+  // Veemon line
+  imperialdramon: 'paildramon', ulforceveedramon: 'aeroveedramon', magnamon: 'raidramon',
+  paildramon: 'exveemon',       aeroveedramon: 'veedramon',        raidramon: 'flamedramon',
+  exveemon: 'veemon',           veedramon: 'veemon',               flamedramon: 'veemon',
+  veemon: 'chibimon', chibimon: 'chicomon', chicomon: 'digiegg',
+  // Salamon line
+  ophanimon: 'angewomon', lilithmon: 'ladydevimon', holydramon: 'nefertimon',
+  angewomon: 'gatomon',   ladydevimon: 'gatomon-black', nefertimon: 'mikemon',
+  gatomon: 'plotmon',     'gatomon-black': 'plotmon',  mikemon: 'plotmon',
+  plotmon: 'nyaromon', nyaromon: 'yukimibotamon', yukimibotamon: 'digiegg',
+};
 
-  if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(currentStage)) {
-    const branchMap = { virus: 'megadramon', data: 'gigadramon', vaccine: 'triceramon' } as const;
-    return branchMap[branch];
-  }
+// For ultra → mega the previous form depends on branch (any mega can reach ultra)
+const ULTRA_PREV: Record<string, Record<Attr, string>> = {
+  'gaioumon-itto':          { virus: 'gaioumon',       data: 'ultimatebrachiomon', vaccine: 'titamon'   },
+  'imperialdramon-paladin': { data: 'imperialdramon',  virus: 'ulforceveedramon',  vaccine: 'magnamon'  },
+  mastemon:                 { vaccine: 'ophanimon',     virus: 'lilithmon',         data: 'holydramon'   },
+};
 
-  if (['megadramon', 'gigadramon', 'triceramon', 'digitamamon'].includes(currentStage)) {
-    const branchMap = { virus: 'monochromon', data: 'leomon', vaccine: 'geremon' } as const;
-    return branchMap[branch];
-  }
-
-  if ([
-    'monochromon', 'tyrannomon', 'ogremon',
-    'meramon', 'leomon', 'ikkakumon',
-    'geremon', 'bakemon', 'devimon'
-  ].includes(currentStage)) {
-    const branchMap = { virus: 'tapirmon', data: 'kudamon', vaccine: 'kamemon' } as const;
-    return branchMap[branch];
-  }
-
-  if (['tapirmon', 'kudamon', 'kamemon'].includes(currentStage)) {
-    return 'koromon';
-  }
-
-  if (['tsunomon', 'pagumon'].includes(currentStage)) {
-    return 'koromon';
-  }
-
-  if (currentStage === 'koromon') {
-    return 'digiegg';
-  }
-
-  return 'digiegg';
+// Determina a forma anterior determinística baseada no estágio e branch
+export function getPreviousForm(currentStage: string, branch: Attr = 'data'): string {
+  if (ULTRA_PREV[currentStage]) return ULTRA_PREV[currentStage][branch] ?? currentStage;
+  return PREV_FORM[currentStage] ?? 'digiegg';
 }
