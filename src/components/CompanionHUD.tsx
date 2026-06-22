@@ -385,7 +385,6 @@ export const CompanionHUD = memo(function CompanionHUD({
     setEatKey(k => k + 1);
     setIsMunching(true);
     onFeed?.(emoji);
-    handleChatMessage('+1❤️');
     setTimeout(() => setEatingEmoji(null), 1500);
     setTimeout(() => setIsMunching(false), 600);
   };
@@ -559,19 +558,34 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Digimon Sprite - Centered with walking animation */}
           <div className="absolute inset-0 flex items-center justify-center">
-            {/* Floating food emoji when eating */}
+            {/* Floating food emoji + +1❤️ label when eating */}
             {eatingEmoji && (
-              <span
-                key={eatKey}
-                className="absolute pointer-events-none z-20 text-2xl"
-                style={{
-                  left: `${position}%`,
-                  top: '50%',
-                  animation: 'float-up 1.5s ease-out forwards',
-                }}
-              >
-                {eatingEmoji}
-              </span>
+              <>
+                <span
+                  key={`emoji-${eatKey}`}
+                  className="absolute pointer-events-none z-20 text-2xl"
+                  style={{
+                    left: `${position}%`,
+                    top: '50%',
+                    animation: 'float-up 1.5s ease-out forwards',
+                  }}
+                >
+                  {eatingEmoji}
+                </span>
+                <span
+                  key={`hp-${eatKey}`}
+                  className="absolute pointer-events-none z-20 font-bold text-red-400"
+                  style={{
+                    left: `calc(${position}% + 24px)`,
+                    top: '50%',
+                    fontSize: '0.75rem',
+                    fontFamily: 'monospace',
+                    animation: 'float-up 1.5s ease-out forwards',
+                  }}
+                >
+                  +1❤️
+                </span>
+              </>
             )}
 
             {/* Digimon Sprite with flip */}
