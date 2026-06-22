@@ -773,7 +773,6 @@ export default function App() {
         },
       };
     });
-    setMessageTrigger(prev => prev + 1);
   }, []);
 
   const handleDegenerate = useCallback((targetStage: string) => {
