@@ -275,7 +275,7 @@ export const EVOLUTION_LINES: Record<EggType, EvolutionLine> = {
 
 // Helper function to get evolution line for an egg type
 export function getEvolutionLine(eggType: EggType): EvolutionLine {
-  return EVOLUTION_LINES[eggType];
+  return EVOLUTION_LINES[eggType] ?? TAPIRMON_LINE;
 }
 
 // Helper function to get all stages in order for a specific line and branch

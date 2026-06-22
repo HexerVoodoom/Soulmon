@@ -130,7 +130,13 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         degeneratedByHP: loadedState.degeneratedByHP ?? false,
         currentBranch: loadedState.currentBranch ?? 'data',
         maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'digiegg')].cap,
-        eggType: loadedState.eggType ?? savedEggType ?? 'tapirmon',
+        eggType: (
+          (loadedState.eggType as string) === 'agumon' ? 'tapirmon'
+          : loadedState.eggType
+        ) ?? (
+          (savedEggType as string) === 'agumon' ? 'tapirmon'
+          : savedEggType
+        ) ?? 'tapirmon',
         attributesSinceLastEvolution: loadedState.attributesSinceLastEvolution ?? { virus: 0, data: 0, vaccine: 0 },
         careHPLostToday: loadedState.careHPLostToday ?? 0,
         foodInventory: loadedState.foodInventory ?? {},
@@ -162,7 +168,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       currentBranch: 'data',
       lastDayWasPerfect: false,
       maxActivityCap: 2,
-      eggType: savedEggType ?? 'tapirmon',
+      eggType: ((savedEggType as string) === 'agumon' ? 'tapirmon' : savedEggType) ?? 'tapirmon',
       attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       careHPLostToday: 0,
       foodInventory: {},
