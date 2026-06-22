@@ -385,6 +385,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     setEatKey(k => k + 1);
     setIsMunching(true);
     onFeed?.(emoji);
+    handleChatMessage('+1❤️');
     setTimeout(() => setEatingEmoji(null), 1500);
     setTimeout(() => setIsMunching(false), 600);
   };

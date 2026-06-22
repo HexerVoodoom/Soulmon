@@ -530,7 +530,7 @@ export default function App() {
   // Handle toggling task completion
   const handleToggleTask = (taskId: string) => {
     const task = gameState.tasks.find(t => t.id === taskId);
-    if (!task) return;
+    if (!task || task.completed) return; // completed tasks cannot be unchecked
 
     if (!task.completed) {
       // Mark task as completed first
