@@ -589,8 +589,6 @@ export default function App() {
             foodInventory: newFoodInventory,
           };
         });
-
-        setMessageTrigger(prev => prev + 1);
       }, 3000);
     }
   };
