@@ -22,57 +22,45 @@ export const MAX_HP_BY_FORM = {
   ultra: 5,
 } as const;
 
-// Formas que mostram grid de dias (a partir de Rookie)
-export const FORMS_WITH_WEEKDAY_SELECTION = [
-  'rookie',
-  'tapirmon',
-  'kudamon',
-  'kamemon',
-  'champion',
-  'ultimate',
-  'mega',
-  'ultra',
-  // Champion branches
-  'monochromon',
-  'tuskmon',
-  'bakemon',
-  // Ultimate branches
-  'gigadramon',
-  'triceramon',
-  'digitamamon',
-  // Mega branches
-  'gaioumon',
-  'ultimatebrachiomon',
-  'titamon',
-  // Ultra
-  'gaioumon-itto',
-] as const;
-
 export type EvolutionStage = keyof typeof FORM_REQUIREMENTS;
 
-// Mapeia formas específicas para o nível base para determinar required
+// Estágios agrupados por nível, cobrindo as três linhas (Tapirmon, Veemon, Salamon)
+const STAGES_BY_LEVEL: Record<Exclude<EvolutionStage, 'digiegg'>, readonly string[]> = {
+  'baby-i': ['pichimon', 'chicomon', 'yukimibotamon'],
+  'baby-ii': ['pukamon', 'chibimon', 'nyaromon'],
+  rookie: ['tapirmon', 'veemon', 'plotmon'],
+  champion: [
+    // Tapirmon
+    'monochromon', 'tuskmon', 'bakemon',
+    // Veemon
+    'exveemon', 'veedramon', 'flamedramon',
+    // Salamon
+    'gatomon', 'gatomon-black', 'mikemon',
+  ],
+  ultimate: [
+    'gigadramon', 'triceramon', 'digitamamon',
+    'paildramon', 'aeroveedramon', 'raidramon',
+    'angewomon', 'ladydevimon', 'nefertimon',
+  ],
+  mega: [
+    'gaioumon', 'ultimatebrachiomon', 'titamon',
+    'imperialdramon', 'ulforceveedramon', 'magnamon',
+    'ophanimon', 'lilithmon', 'holydramon',
+  ],
+  ultra: ['gaioumon-itto', 'imperialdramon-paladin', 'mastemon'],
+};
+
+// Mapeia formas específicas para o nível base para determinar required/HP/cap
 export function getStageLevel(stage: string): EvolutionStage {
   if (stage === 'digiegg') return 'digiegg';
-  if (stage === 'pichimon') return 'baby-i';
-  if (stage === 'pukamon') return 'baby-ii';
-  if (stage === 'tapirmon') return 'rookie';
-  
-  // Champions
-  if (['monochromon', 'tuskmon', 'bakemon'].includes(stage)) return 'champion';
-  
-  // Ultimates
-  if (['gigadramon', 'triceramon', 'digitamamon'].includes(stage)) return 'ultimate';
-  
-  // Megas
-  if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(stage)) return 'mega';
-  
-  // Ultra
-  if (stage === 'gaioumon-itto') return 'ultra';
-  
+  for (const level of Object.keys(STAGES_BY_LEVEL) as Exclude<EvolutionStage, 'digiegg'>[]) {
+    if (STAGES_BY_LEVEL[level].includes(stage)) return level;
+  }
   return 'digiegg';
 }
 
-// Verifica se a forma atual permite seleção de dias da semana
+// Verifica se a forma atual permite seleção de dias da semana (Rookie ou superior)
+const WEEKDAY_LEVELS: EvolutionStage[] = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
 export function canSelectWeekdays(stage: string): boolean {
-  return FORMS_WITH_WEEKDAY_SELECTION.includes(stage as any);
+  return WEEKDAY_LEVELS.includes(getStageLevel(stage));
 }

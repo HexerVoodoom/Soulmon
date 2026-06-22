@@ -55,19 +55,19 @@ export const DIGIMON_STAGE_NAMES: Record<string, string> = {
   veemon: 'Veemon',
   exveemon: 'ExVeemon',
   veedramon: 'Veedramon',
-  flamdramon: 'Flamdramon',
+  flamedramon: 'Flamedramon',
   paildramon: 'Paildramon',
   aeroveedramon: 'AeroVeedramon',
   raidramon: 'Raidramon',
   imperialdramon: 'Imperialdramon',
-  ulforceveemon: 'UlforceVeedramon',
+  ulforceveedramon: 'UlforceVeedramon',
   magnamon: 'Magnamon',
   // Salamon line
   yukimibotamon: 'Yukimibotamon',
   nyaromon: 'Nyaromon',
   plotmon: 'Plotmon',
   gatomon: 'Gatomon',
-  blackgatomon: 'BlackGatomon',
+  'gatomon-black': 'BlackGatomon',
   mikemon: 'Mikemon',
   angewomon: 'Angewomon',
   ladydevimon: 'LadyDevimon',
@@ -77,7 +77,7 @@ export const DIGIMON_STAGE_NAMES: Record<string, string> = {
   holydramon: 'Holydramon',
   // Ultra
   'gaioumon-itto': 'Gaioumon: Itto Mode',
-  imperialdramonpaladin: 'Imperialdramon Paladin Mode',
+  'imperialdramon-paladin': 'Imperialdramon Paladin Mode',
   mastemon: 'Mastemon',
 };
 

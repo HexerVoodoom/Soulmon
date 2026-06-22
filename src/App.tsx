@@ -21,7 +21,7 @@ import { type Language, useTranslation } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
-import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, DIGIMON_STAGE_NAMES, FOOD_BY_CATEGORY } from './constants/labels';
+import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, DIGIMON_STAGE_NAMES, DEGENERATION_STAGE_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
@@ -775,24 +775,7 @@ export default function App() {
 
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
-      const stageMap: Record<string, GameState['evolutionStage']> = {
-        'DigiEgg': 'digiegg',
-        'Pichimon': 'pichimon',
-        'Pukamon': 'pukamon',
-        'Tapirmon': 'tapirmon',
-        'Tuskmon': 'tuskmon',
-        'Monochromon': 'monochromon',
-        'Bakemon': 'bakemon',
-        'Gigadramon': 'gigadramon',
-        'Triceramon': 'triceramon',
-        'Digitamamon': 'digitamamon',
-        'Gaioumon': 'gaioumon',
-        'UltimateBrachiomon': 'ultimatebrachiomon',
-        'Titamon': 'titamon',
-        'Gaioumon: Itto Mode': 'gaioumon-itto',
-      };
-
-      const newStage = stageMap[targetStage];
+      const newStage = DEGENERATION_STAGE_MAP[targetStage] as GameState['evolutionStage'];
       if (!newStage) return prev;
 
       const newHP = getMaxHPForStage(newStage);
@@ -817,24 +800,7 @@ export default function App() {
 
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {
     setGameState(prev => {
-      const stageMap: Record<string, GameState['evolutionStage']> = {
-        'DigiEgg': 'digiegg',
-        'Pichimon': 'pichimon',
-        'Pukamon': 'pukamon',
-        'Tapirmon': 'tapirmon',
-        'Tuskmon': 'tuskmon',
-        'Monochromon': 'monochromon',
-        'Bakemon': 'bakemon',
-        'Gigadramon': 'gigadramon',
-        'Triceramon': 'triceramon',
-        'Digitamamon': 'digitamamon',
-        'Gaioumon': 'gaioumon',
-        'UltimateBrachiomon': 'ultimatebrachiomon',
-        'Titamon': 'titamon',
-        'Gaioumon: Itto Mode': 'gaioumon-itto',
-      };
-
-      const newStage = stageMap[targetStage];
+      const newStage = DEGENERATION_STAGE_MAP[targetStage] as GameState['evolutionStage'];
       if (!newStage || !prev.unlockedEvolutions.includes(newStage)) return prev;
 
       // Can only evolve to unlocked forms if at Rookie level or higher
@@ -1197,7 +1163,6 @@ export default function App() {
             onCareEventComplete={handleCareEventComplete}
             foodInventory={gameState.foodInventory}
             onFeed={handleFeed}
-            eggType={gameState.eggType ?? 'tapirmon'}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

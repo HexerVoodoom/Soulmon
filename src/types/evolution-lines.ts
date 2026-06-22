@@ -4,7 +4,7 @@
 // Common sprites
 import digiEggSprite from 'figma:asset/6479b687e03b8292ee02a4453bff2eb1a76cfecb.png';
 
-// AGUMON LINE sprites (White Egg)
+// TAPIRMON LINE sprites (White Egg)
 import pichimonSprite from 'figma:asset/99ff747d7f7ecc2424e131a43c54669bcba9a301.png';
 import pukamonSprite from 'figma:asset/104dc13e2c146bb51e00903d6eaa5f6fae7619c6.png';
 import tapirmonSprite from 'figma:asset/8deb0c4ab0625c36e8f7d8484d047391e366e6cd.png';

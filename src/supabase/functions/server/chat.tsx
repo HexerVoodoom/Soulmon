@@ -92,13 +92,25 @@ export async function handleChatRequest(c: Context) {
 
     const getStageMaturity = () => {
       const stage = evolutionStage.toLowerCase();
-      if (stage.includes('egg') || stage === 'pichimon' || stage === 'pukamon') {
+      // In-training / baby forms across all three lines
+      const young = ['pichimon', 'pukamon', 'chicomon', 'chibimon', 'yukimibotamon', 'nyaromon'];
+      // Rookies
+      const rookies = ['tapirmon', 'veemon', 'plotmon'];
+      // Champions + Ultimates across all lines
+      const experienced = [
+        'monochromon', 'tuskmon', 'bakemon', 'gigadramon', 'triceramon', 'digitamamon',
+        'exveemon', 'veedramon', 'flamedramon', 'paildramon', 'aeroveedramon', 'raidramon',
+        'gatomon', 'gatomon-black', 'mikemon', 'angewomon', 'ladydevimon', 'nefertimon',
+      ];
+
+      if (stage.includes('egg') || young.includes(stage)) {
         return 'You are young and innocent, curious about the world. Use simple and childish language.';
-      } else if (stage === 'tapirmon') {
+      } else if (rookies.includes(stage)) {
         return 'You are young and excited, starting to discover your abilities. Be eager and a learner.';
-      } else if (['monochromon', 'tuskmon', 'bakemon', 'digitamamon', 'gigadramon', 'triceramon'].includes(stage)) {
+      } else if (experienced.includes(stage)) {
         return 'You are experienced and confident. Be a mature and balanced partner.';
       } else {
+        // Megas + Ultras
         return 'You are powerful and wise, with a deep connection with your partner. Be a guide and mentor.';
       }
     };

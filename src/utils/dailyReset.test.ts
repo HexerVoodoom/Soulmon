@@ -58,6 +58,8 @@ const _yesterday = new Date(_now);
 _yesterday.setDate(_now.getDate() - 1);
 const YESTERDAY_STRING = _yesterday.toDateString();
 const YESTERDAY_WEEKDAY = _yesterday.getDay();
+// A weekday guaranteed to differ from yesterday's, so the weekday filter excludes it
+const NOT_YESTERDAY_WEEKDAY = (YESTERDAY_WEEKDAY + 1) % 7;
 
 // ── wasDayPerfect ──────────────────────────────────────────────
 
@@ -117,9 +119,9 @@ describe('wasDayPerfect', () => {
 
   it('ignores activities not scheduled for yesterday (weekday filter)', () => {
     const state = baseState();
-    // weekDays = [0] → Sunday, yesterday was Tuesday (2) — should be excluded
+    // Scheduled for a weekday that is NOT yesterday — should be excluded by the filter
     state.activities = [
-      makeActivity({ weekDays: [0] }),
+      makeActivity({ weekDays: [NOT_YESTERDAY_WEEKDAY] }),
     ];
     // Only the task counts
     state.tasks = [makeTask(true)];

@@ -82,7 +82,6 @@ interface CompanionHUDProps {
   language: Language;
   foodInventory?: Record<string, number>;
   onFeed?: (foodEmoji: string) => void;
-  eggType?: 'tapirmon' | 'veemon' | 'salamon';
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -115,7 +114,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   language,
   foodInventory = {},
   onFeed,
-  eggType = 'tapirmon',
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';

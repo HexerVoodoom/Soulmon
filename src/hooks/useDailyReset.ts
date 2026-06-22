@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
-import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 
 interface Step { id: string; label: string; completed: boolean; }
@@ -25,11 +24,68 @@ interface ResetGameState {
   dataPoints: number;
   vaccinePoints: number;
   evolutionStage: string;
+  eggType?: 'tapirmon' | 'veemon' | 'salamon';
   unlockedEvolutions: string[];
   currentBranch: 'virus' | 'data' | 'vaccine';
   maxActivityCap: number;
   lastResetDate: string;
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+}
+
+type Attr = 'virus' | 'data' | 'vaccine';
+type EggLine = 'tapirmon' | 'veemon' | 'salamon';
+
+// Estágios por linha, agrupados por tier e atributo — usados na degeneração
+const LINE_STAGES: Record<EggLine, {
+  babyI: string; babyII: string; rookie: string;
+  champion: Record<Attr, string>;
+  ultimate: Record<Attr, string>;
+  mega: Record<Attr, string>;
+  ultra: string;
+}> = {
+  tapirmon: {
+    babyI: 'pichimon', babyII: 'pukamon', rookie: 'tapirmon',
+    champion: { virus: 'tuskmon', data: 'monochromon', vaccine: 'bakemon' },
+    ultimate: { virus: 'gigadramon', data: 'triceramon', vaccine: 'digitamamon' },
+    mega: { virus: 'gaioumon', data: 'ultimatebrachiomon', vaccine: 'titamon' },
+    ultra: 'gaioumon-itto',
+  },
+  veemon: {
+    babyI: 'chicomon', babyII: 'chibimon', rookie: 'veemon',
+    champion: { data: 'exveemon', virus: 'veedramon', vaccine: 'flamedramon' },
+    ultimate: { data: 'paildramon', virus: 'aeroveedramon', vaccine: 'raidramon' },
+    mega: { data: 'imperialdramon', virus: 'ulforceveedramon', vaccine: 'magnamon' },
+    ultra: 'imperialdramon-paladin',
+  },
+  salamon: {
+    babyI: 'yukimibotamon', babyII: 'nyaromon', rookie: 'plotmon',
+    champion: { vaccine: 'gatomon', virus: 'gatomon-black', data: 'mikemon' },
+    ultimate: { vaccine: 'angewomon', virus: 'ladydevimon', data: 'nefertimon' },
+    mega: { vaccine: 'ophanimon', virus: 'lilithmon', data: 'holydramon' },
+    ultra: 'mastemon',
+  },
+};
+
+// Degeneração: retorna a forma anterior, ciente da linha (eggType) e do atributo da forma atual
+function getDegeneratedStage(stage: string, eggType: EggLine | undefined, currentBranch: Attr): string {
+  const line = LINE_STAGES[eggType ?? 'tapirmon'] ?? LINE_STAGES.tapirmon;
+  const level = getStageLevel(stage);
+  const attrOf = (s: string): Attr => {
+    for (const a of ['virus', 'data', 'vaccine'] as Attr[]) {
+      if (line.champion[a] === s || line.ultimate[a] === s || line.mega[a] === s) return a;
+    }
+    return currentBranch;
+  };
+  switch (level) {
+    case 'ultra':     return line.mega[currentBranch];
+    case 'mega':      return line.ultimate[attrOf(stage)];
+    case 'ultimate':  return line.champion[attrOf(stage)];
+    case 'champion':  return line.rookie;
+    case 'rookie':    return line.babyII;
+    case 'baby-ii':   return line.babyI;
+    case 'baby-i':    return 'digiegg';
+    default:          return 'digiegg';
+  }
 }
 
 interface UseDailyResetProps {
@@ -83,10 +139,6 @@ export function useDailyReset({
 
       let newHP = prev.healthPoints;
       let newPerfectDays = prev.perfectDays;
-      let newXP = prev.totalXP;
-      let newVirusPoints = prev.virusPoints;
-      let newDataPoints = prev.dataPoints;
-      let newVaccinePoints = prev.vaccinePoints;
       let newEvolutionStage = prev.evolutionStage;
       let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
       let wasDegeneratedByHP = false;
@@ -220,33 +272,7 @@ export function useDailyReset({
       // Degeneration by HP
       if (newHP === 0) {
         wasDegeneratedByHP = true;
-        const stageToAttr = (s: string): 'virus' | 'data' | 'vaccine' => {
-          if (['tuskmon', 'gigadramon', 'gaioumon'].includes(s)) return 'virus';
-          if (['bakemon', 'digitamamon', 'titamon'].includes(s)) return 'vaccine';
-          return 'data';
-        };
-        const branch = prev.evolutionStage === 'gaioumon-itto'
-          ? newCurrentBranch
-          : stageToAttr(prev.evolutionStage);
-
-        if (prev.evolutionStage === 'gaioumon-itto') {
-          const branchMap = { virus: 'gaioumon', data: 'ultimatebrachiomon', vaccine: 'titamon' } as const;
-          newEvolutionStage = branchMap[branch];
-        } else if (['gaioumon', 'ultimatebrachiomon', 'titamon'].includes(prev.evolutionStage)) {
-          const branchMap = { virus: 'gigadramon', data: 'triceramon', vaccine: 'digitamamon' } as const;
-          newEvolutionStage = branchMap[branch];
-        } else if (['gigadramon', 'triceramon', 'digitamamon'].includes(prev.evolutionStage)) {
-          const branchMap = { virus: 'tuskmon', data: 'monochromon', vaccine: 'bakemon' } as const;
-          newEvolutionStage = branchMap[branch];
-        } else if (['tuskmon', 'monochromon', 'bakemon'].includes(prev.evolutionStage)) {
-          newEvolutionStage = 'tapirmon';
-        } else if (prev.evolutionStage === 'tapirmon') {
-          newEvolutionStage = 'pukamon';
-        } else if (prev.evolutionStage === 'pukamon') {
-          newEvolutionStage = 'pichimon';
-        } else if (prev.evolutionStage === 'pichimon') {
-          newEvolutionStage = 'digiegg';
-        }
+        newEvolutionStage = getDegeneratedStage(prev.evolutionStage, prev.eggType, newCurrentBranch);
 
         const degeneratedLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[degeneratedLevel];
@@ -274,10 +300,6 @@ export function useDailyReset({
         healthPoints: newHP,
         maxHealthPoints: newMaxHP,
         perfectDays: newPerfectDays,
-        totalXP: newXP,
-        virusPoints: newVirusPoints,
-        dataPoints: newDataPoints,
-        vaccinePoints: newVaccinePoints,
         lastResetDate: new Date().toDateString(),
         evolutionStage: newEvolutionStage,
         digivolutionSegments: 0,
