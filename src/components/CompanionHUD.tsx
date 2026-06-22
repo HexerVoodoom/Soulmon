@@ -125,6 +125,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [squashFrame, setSquashFrame] = useState(0);
   const [chatResponse, setChatResponse] = useState('');
   const [bubbleTimeoutId, setBubbleTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [eatingEmoji, setEatingEmoji] = useState<string | null>(null);
+  const [eatKey, setEatKey] = useState(0);
+  const [isMunching, setIsMunching] = useState(false);
 
   // Walking animation
   useEffect(() => {
@@ -377,6 +380,15 @@ export const CompanionHUD = memo(function CompanionHUD({
   };
 
   // Apply filters based on companion mood (without saturation reduction)
+  const handleFeedWithAnimation = (emoji: string) => {
+    setEatingEmoji(emoji);
+    setEatKey(k => k + 1);
+    setIsMunching(true);
+    onFeed?.(emoji);
+    setTimeout(() => setEatingEmoji(null), 1500);
+    setTimeout(() => setIsMunching(false), 600);
+  };
+
   const getCompanionFilter = () => {
     const auraColor = getBranchAuraColor();
     switch (companionMood) {
@@ -546,10 +558,25 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Digimon Sprite - Centered with walking animation */}
           <div className="absolute inset-0 flex items-center justify-center">
+            {/* Floating food emoji when eating */}
+            {eatingEmoji && (
+              <span
+                key={eatKey}
+                className="absolute pointer-events-none z-20 text-2xl"
+                style={{
+                  left: `${position}%`,
+                  top: '50%',
+                  animation: 'float-up 1.5s ease-out forwards',
+                }}
+              >
+                {eatingEmoji}
+              </span>
+            )}
+
             {/* Digimon Sprite with flip */}
-            <div 
+            <div
               className="absolute transition-all duration-100 ease-linear cursor-pointer hover:scale-110 active:scale-95"
-              style={{ 
+              style={{
                 left: `${position}%`,
                 transform: getHorizontalFlip(),
                 top: '50%',
@@ -567,6 +594,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
+                    animation: isMunching ? 'pet-munch 0.6s ease-out' : undefined,
                   }}
                 />
               ) : (
@@ -606,7 +634,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 count > 0 ? (
                   <button
                     key={emoji}
-                    onClick={() => onFeed(emoji)}
+                    onClick={() => handleFeedWithAnimation(emoji)}
                     className="flex items-center gap-0.5 bg-[#0d1a2d] hover:bg-[#162840] active:scale-95 rounded-md px-1.5 py-0.5 transition-all border border-[#2a4060]"
                     title={`Feed ${emoji} (+1 HP)`}
                   >
