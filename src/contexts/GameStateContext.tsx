@@ -81,9 +81,9 @@ export interface GameState {
     | 'gaioumon-itto' | 'imperialdramon-paladin' | 'mastemon';
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
-  poopEventScheduled: number | null;
+  poopEventsScheduled: number[];
   foodEventsScheduled: number[];
-  poopEventCompleted: boolean;
+  poopEventsCompleted: number[];
   foodEventsCompleted: number[];
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
@@ -125,9 +125,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         energyPoints: loadedState.energyPoints ?? 0,
         perfectDays: loadedState.perfectDays ?? 0,
         lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
-        poopEventScheduled: loadedState.poopEventScheduled ?? null,
+        poopEventsScheduled: loadedState.poopEventsScheduled ?? [],
         foodEventsScheduled: loadedState.foodEventsScheduled ?? [],
-        poopEventCompleted: loadedState.poopEventCompleted ?? false,
+        poopEventsCompleted: loadedState.poopEventsCompleted ?? [],
         foodEventsCompleted: loadedState.foodEventsCompleted ?? [],
         unlockedEvolutions: loadedState.unlockedEvolutions ?? ['digiegg'],
         degeneratedByHP: loadedState.degeneratedByHP ?? false,
@@ -163,9 +163,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       evolutionStage: 'digiegg',
       digivolutionSegments: 0,
       digivolutionSegmentsNeeded: 1,
-      poopEventScheduled: null,
+      poopEventsScheduled: [],
       foodEventsScheduled: [],
-      poopEventCompleted: false,
+      poopEventsCompleted: [],
       foodEventsCompleted: [],
       unlockedEvolutions: ['digiegg'],
       degeneratedByHP: false,

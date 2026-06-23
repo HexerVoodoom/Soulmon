@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { CareEvent, getCareMessage } from '../components/CareSystem';
 import { showNotification } from '../utils/notifications';
-import { getStageLevel } from '../types/progression';
 import type { Language } from '../utils/i18n';
 
 interface Activity {
@@ -11,8 +10,8 @@ interface Activity {
 interface CareGameState {
   activities: Activity[];
   lastResetDate: string;
-  poopEventScheduled: number | null;
-  poopEventCompleted: boolean;
+  poopEventsScheduled: number[];
+  poopEventsCompleted: number[];
   foodEventsScheduled: number[];
   foodEventsCompleted: number[];
   evolutionStage: string;
@@ -42,19 +41,27 @@ export function useCareSystem({
   setGameState,
   language,
 }: UseCareSystemProps) {
-  // Schedule the next poop relative to now — recurring and independent of
-  // activities, so it reliably appears even for task-only players.
+  // Schedule 2 poop events per day (independent of activities)
   useEffect(() => {
-    if (gameState.poopEventScheduled || careEvent?.type === 'poop') return;
-    const delayMs = (30 + Math.random() * 60) * 60000; // 30–90 minutes
+    if (gameState.lastResetDate !== new Date().toDateString()) return;
+    if (gameState.poopEventsScheduled && gameState.poopEventsScheduled.length > 0) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startOfDay = today.getTime();
+    const firstPoopHour = 9 + Math.random() * 4;   // 9 AM – 1 PM
+    const secondPoopHour = 13 + Math.random() * 5; // 1 PM – 6 PM
     setGameState(prev => ({
       ...prev,
-      poopEventScheduled: Date.now() + delayMs,
-      poopEventCompleted: false,
+      poopEventsScheduled: [
+        startOfDay + firstPoopHour * 3600000,
+        startOfDay + secondPoopHour * 3600000,
+      ],
+      poopEventsCompleted: [],
     }));
-  }, [gameState.poopEventScheduled, careEvent]);
+  }, [gameState.lastResetDate, gameState.poopEventsScheduled]);
 
-  // Schedule food events (still tied to having pending activity steps)
+  // Schedule 2 food events per day (tied to having pending activity steps)
   useEffect(() => {
     const allSteps = gameState.activities.flatMap(a => a.steps);
     const hasIncompleteTasks = allSteps.some(s => !s.completed);
@@ -87,47 +94,55 @@ export function useCareSystem({
       const penalty = carePenalty(maxHP);
       const ispt = language === 'pt-BR';
 
-      // ── Poop appears when due (independent of activities) ────────────────────
-      if (gameState.poopEventScheduled && !careEvent && now >= gameState.poopEventScheduled) {
-        setCareEvent({ type: 'poop', requestTime: now, showSprite: true });
-        // Clear the schedule; a fresh poop is queued once this one is cleaned.
-        setGameState(prev => ({ ...prev, poopEventScheduled: null }));
-        setMessageTrigger(prev => prev + 1);
-        showNotification(
-          ispt ? '🚽 Hora de limpar!' : '🚽 Bathroom time!',
-          {
-            body: ispt
-              ? 'Seu Digimon fez cocô! Dê um banho para limpar. 🚿'
-              : 'Your Digimon pooped! Give it a shower to clean up. 🚿',
-            tag: 'poop-event',
-          },
-        );
-        return;
-      }
+      // ── Poop events (2x per day, 30-min window to clean up) ─────────────────
+      if (gameState.poopEventsScheduled && gameState.poopEventsCompleted) {
+        gameState.poopEventsScheduled.forEach((poopTime, index) => {
+          if (gameState.poopEventsCompleted.includes(index) || careEvent) return;
 
-      // ── Poop neglected too long → HP penalty, then reschedule ────────────────
-      if (careEvent?.type === 'poop' && now - careEvent.requestTime >= 30 * 60000) {
-        setGameState((prev: any) => {
-          const remaining = dailyCap - (prev.careHPLostToday ?? 0);
-          const damage = remaining > 0 ? 1 : 0;
-          return {
-            ...prev,
-            healthPoints: Math.max(0, prev.healthPoints - damage),
-            careHPLostToday: (prev.careHPLostToday ?? 0) + damage,
-            poopEventScheduled: null, // queue the next poop
-          };
+          const elapsed = now - poopTime;
+
+          if (elapsed >= 0 && elapsed < 30 * 60000) {
+            // Within the 30-minute window: show poop sprite
+            if (!careEvent || (careEvent as CareEvent).type !== 'poop') {
+              setCareEvent({ type: 'poop', requestTime: poopTime, showSprite: true });
+              setMessageTrigger(prev => prev + 1);
+              showNotification(
+                ispt ? '🚽 Hora de limpar!' : '🚽 Bathroom time!',
+                {
+                  body: ispt
+                    ? 'Seu Digimon fez cocô! Dê um banho para limpar. 🚿'
+                    : 'Your Digimon pooped! Give it a shower to clean up. 🚿',
+                  tag: `poop-event-${index}`,
+                },
+              );
+            }
+          } else if (elapsed >= 30 * 60000 && elapsed < 31 * 60000) {
+            // Neglected 30+ min: HP penalty, mark completed
+            setGameState((prev: any) => {
+              const remaining = dailyCap - (prev.careHPLostToday ?? 0);
+              if (remaining <= 0) {
+                return { ...prev, poopEventsCompleted: [...(prev.poopEventsCompleted || []), index] };
+              }
+              const damage = Math.min(1, remaining);
+              return {
+                ...prev,
+                healthPoints: Math.max(0, prev.healthPoints - damage),
+                poopEventsCompleted: [...(prev.poopEventsCompleted || []), index],
+                careHPLostToday: (prev.careHPLostToday ?? 0) + damage,
+              };
+            });
+            setCareEvent(null);
+            showNotification(
+              ispt ? '😔 Que bagunça!' : '😔 What a mess!',
+              {
+                body: ispt
+                  ? 'Seu Digimon ficou sujo demais. Você perdeu HP.'
+                  : 'Your Digimon got too dirty. You lost HP.',
+                tag: `poop-missed-${index}`,
+              },
+            );
+          }
         });
-        setCareEvent(null);
-        showNotification(
-          ispt ? '😔 Que bagunça!' : '😔 What a mess!',
-          {
-            body: ispt
-              ? 'Seu Digimon ficou sujo demais. Você perdeu HP.'
-              : 'Your Digimon got too dirty. You lost HP.',
-            tag: 'poop-missed',
-          },
-        );
-        return;
       }
 
       // ── Food events (still tied to pending activity steps) ───────────────────
@@ -155,7 +170,6 @@ export function useCareSystem({
               );
             }
           } else if (elapsed >= 5 * 60000 && elapsed < 6 * 60000) {
-            // 5–6 min: sprite + HP penalty (with daily cap and stage scaling)
             setCareEvent({ type: 'food', requestTime: foodTime, showSprite: true });
             setGameState((prev: any) => {
               const remaining = dailyCap - (prev.careHPLostToday ?? 0);
@@ -186,9 +200,9 @@ export function useCareSystem({
 
     return () => clearInterval(interval);
   }, [
-    gameState.poopEventScheduled,
+    gameState.poopEventsScheduled,
+    gameState.poopEventsCompleted,
     gameState.foodEventsScheduled,
-    gameState.poopEventCompleted,
     gameState.foodEventsCompleted,
     gameState.maxHealthPoints,
     gameState.careHPLostToday,

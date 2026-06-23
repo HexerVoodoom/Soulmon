@@ -661,8 +661,8 @@ export default function App() {
 
     setGameState(prev => {
       if (careEvent.type === 'poop') {
-        // Clear the poop and let useCareSystem queue the next one
-        return { ...prev, poopEventScheduled: null, poopEventCompleted: false };
+        const poopIndex = (prev.poopEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
+        return { ...prev, poopEventsCompleted: [...(prev.poopEventsCompleted || []), poopIndex] };
       } else {
         const eventIndex = (prev.foodEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
         return {
