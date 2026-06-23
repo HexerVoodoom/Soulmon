@@ -13,7 +13,7 @@ import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
-import { CoachMark } from './components/CoachMark';
+import { ItemsWindow } from './components/ItemsWindow';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
@@ -23,7 +23,7 @@ import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
-import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate } from './utils/sounds';
+import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -67,9 +67,8 @@ export default function App() {
   const [useAI, setUseAI] = useState(true);
   const [soundMuted, setSoundMuted] = useState(() => isMuted());
   const [evolutionFlash, setEvolutionFlash] = useState(false);
-  const [showCoachMark, setShowCoachMark] = useState(() =>
-    !localStorage.getItem(STORAGE_KEYS.COACH_MARK_SHOWN)
-  );
+  const [showItemsWindow, setShowItemsWindow] = useState(false);
+  const [isSleeping, setIsSleeping] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -732,6 +731,11 @@ export default function App() {
     }
   }, [careEvent, handleCareEventComplete]);
 
+  const handleSleep = useCallback(() => {
+    setIsSleeping(prev => !prev);
+    playSleep();
+  }, []);
+
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
       const newStage = DEGENERATION_STAGE_MAP[targetStage] as GameState['evolutionStage'];
@@ -875,15 +879,13 @@ export default function App() {
   return (
     <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()} ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
       }`}>
-        {/* Coach mark — shown once after onboarding, positioned over footer */}
-        {showCoachMark && (
-          <CoachMark
+        {/* Floating Items Window */}
+        {showItemsWindow && (
+          <ItemsWindow
+            foodInventory={gameState.foodInventory}
+            onFeed={handleFeed}
+            onClose={() => setShowItemsWindow(false)}
             language={language}
-            theme={theme}
-            onDismiss={() => {
-              setShowCoachMark(false);
-              localStorage.setItem(STORAGE_KEYS.COACH_MARK_SHOWN, 'true');
-            }}
           />
         )}
 
@@ -1118,6 +1120,9 @@ export default function App() {
             foodInventory={gameState.foodInventory}
             onFeed={handleFeed}
             onShower={handleShower}
+            onOpenItems={() => setShowItemsWindow(prev => !prev)}
+            onSleep={handleSleep}
+            isSleeping={isSleeping}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

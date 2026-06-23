@@ -137,3 +137,12 @@ export function playMenuOpen(): void {
     beep(ctx, 800, 0, 0.04, 'square', 0.08);
   });
 }
+
+/** Soft descending lullaby notes */
+export function playSleep(): void {
+  play(ctx => {
+    beep(ctx, 523, 0,    0.18, 'sine', 0.08);
+    beep(ctx, 440, 0.21, 0.18, 'sine', 0.07);
+    beep(ctx, 349, 0.44, 0.25, 'sine', 0.05);
+  });
+}

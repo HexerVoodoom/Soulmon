@@ -46,8 +46,9 @@ import mastemonSprite from 'figma:asset/a036d6071a61f5a7cde8ca604f58cd0267141481
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
+import { DigiActionsBar } from './DigiActionsBar';
 import { Language } from '../utils/i18n';
-import { playMenuOpen, playShower } from '../utils/sounds';
+import { playShower } from '../utils/sounds';
 
 interface CompanionHUDProps {
   companionMood: 'idle' | 'happy' | 'tired';
@@ -83,6 +84,9 @@ interface CompanionHUDProps {
   foodInventory?: Record<string, number>;
   onFeed?: (foodEmoji: string) => void;
   onShower?: () => void;
+  onOpenItems?: () => void;
+  onSleep?: () => void;
+  isSleeping?: boolean;
   evolutionFlash?: boolean;
   poopEventsScheduled?: number[];
   poopEventsCompleted?: number[];
@@ -118,6 +122,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   foodInventory = {},
   onFeed,
   onShower,
+  onOpenItems,
+  onSleep,
+  isSleeping = false,
   evolutionFlash = false,
   poopEventsScheduled = [],
   poopEventsCompleted = [],
@@ -133,7 +140,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [eatingEmoji, setEatingEmoji] = useState<string | null>(null);
   const [eatKey, setEatKey] = useState(0);
   const [isMunching, setIsMunching] = useState(false);
-  const [careMenuOpen, setCareMenuOpen] = useState(false);
   const [isShowering, setIsShowering] = useState(false);
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
@@ -728,62 +734,25 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           </div>
 
-          {/* Care Menu Panel — bottom bar, no background, white text */}
-          {(onFeed || onShower) && careMenuOpen && (
-            <div className="absolute bottom-10 left-0 right-0 z-30 px-2 pb-1 flex gap-1.5 flex-wrap items-center animate-in fade-in slide-in-from-bottom-1 duration-200">
-              {Object.entries(foodInventory).filter(([, c]) => c > 0).length > 0 ? (
-                Object.entries(foodInventory).map(([emoji, count]) =>
-                  count > 0 ? (
-                    <button
-                      key={emoji}
-                      onClick={() => handleFeedWithAnimation(emoji)}
-                      className="flex items-center gap-0.5 active:scale-95 transition-all px-1 py-0.5"
-                      title={`Feed ${emoji} (+1❤️)`}
-                    >
-                      <span style={{ fontSize: '0.9rem' }}>{emoji}</span>
-                      <span className="text-white text-[10px] font-bold" style={{ fontFamily: 'monospace' }}>×{count}</span>
-                    </button>
-                  ) : null
-                )
-              ) : (
-                <span className="text-white text-[10px]" style={{ fontFamily: 'monospace' }}>No food yet</span>
-              )}
-              {onShower && (
-                <button
-                  onClick={handleShowerClick}
-                  disabled={!energyFull || showerCooldown}
-                  className={`flex items-center gap-0.5 active:scale-95 transition-all px-1 py-0.5 ${
-                    energyFull && !showerCooldown ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'
-                  }`}
-                  style={{ fontFamily: 'monospace' }}
-                  title={showerCooldown ? 'Cooling down…' : energyFull ? 'Shower' : 'Needs full energy'}
+          {/* Sleeping overlay */}
+          {isSleeping && (
+            <div className="absolute inset-0 z-20 pointer-events-none">
+              <div className="absolute inset-0 bg-black/40" />
+              {[0, 1, 2].map(i => (
+                <span
+                  key={i}
+                  className="absolute text-white font-bold"
+                  style={{
+                    left: `${56 + i * 9}%`,
+                    top: `${42 - i * 13}%`,
+                    fontSize: `${0.65 + i * 0.18}rem`,
+                    fontFamily: 'monospace',
+                    animation: `float-up 2s ease-out ${i * 0.9}s infinite`,
+                  }}
                 >
-                  <span style={{ fontSize: '0.9rem' }}>🚿</span>
-                  <span className="text-white text-[10px] font-bold">
-                    {showerCooldown ? 'wait…' : energyFull ? 'Shower' : 'low'}
-                  </span>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Care Menu Button — black pixel icon, bottom-left inside the pet window */}
-          {(onFeed || onShower) && (
-            <div className="absolute bottom-2 left-2 z-30">
-              {/* The black pixel button itself */}
-              <button
-                onClick={() => { setCareMenuOpen(o => !o); playMenuOpen(); }}
-                aria-label="Care menu"
-                className="w-8 h-8 flex items-center justify-center bg-black border-2 border-[#3a3a3a] active:scale-95 transition-transform"
-                style={{ imageRendering: 'pixelated', borderRadius: '2px', boxShadow: 'inset -2px -2px 0 #000, inset 2px 2px 0 #2a2a2a' }}
-              >
-                {/* pixel "menu" glyph: three white bars */}
-                <span className="flex flex-col gap-[3px]">
-                  <span className="block w-4 h-[3px] bg-white" />
-                  <span className="block w-4 h-[3px] bg-white" />
-                  <span className="block w-4 h-[3px] bg-white" />
+                  Z
                 </span>
-              </button>
+              ))}
             </div>
           )}
         </div>
@@ -806,8 +775,19 @@ export const CompanionHUD = memo(function CompanionHUD({
         </div>
       </div>
 
+      {/* DigiActions bar — Items, Bath, Sleep */}
+      <DigiActionsBar
+        onOpenItems={onOpenItems ?? (() => {})}
+        onBath={handleShowerClick}
+        onSleep={onSleep ?? (() => {})}
+        canBath={energyFull && !showerCooldown}
+        isSleeping={isSleeping}
+        language={language}
+        theme={theme}
+      />
+
       {/* Chat Box - Below Companion Area */}
-      <div className="mt-2">
+      <div className="mt-1">
         <ChatBox 
           digimonName={currentStage}
           mood={companionMood}

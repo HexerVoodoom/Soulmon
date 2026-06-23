@@ -15,5 +15,4 @@ export const STORAGE_KEYS = {
   SAVE_ID: 'digiapp-save-id',
   SOUND_MUTED: 'digiapp-sound-muted',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
-  COACH_MARK_SHOWN: 'digiapp-coach-mark-shown',
 } as const;
