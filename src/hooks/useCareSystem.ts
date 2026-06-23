@@ -46,7 +46,7 @@ export function useCareSystem({
   // activities, so it reliably appears even for task-only players.
   useEffect(() => {
     if (gameState.poopEventScheduled || careEvent?.type === 'poop') return;
-    const delayMs = (2 + Math.random() * 3) * 60000; // 2–5 minutes
+    const delayMs = (30 + Math.random() * 60) * 60000; // 30–90 minutes
     setGameState(prev => ({
       ...prev,
       poopEventScheduled: Date.now() + delayMs,

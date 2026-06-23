@@ -254,7 +254,8 @@ export function useDailyReset({
         lastDayWasPerfect: dayWasPerfect,
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
-        careHPLostToday: 0, // Reset daily care damage cap at midnight
+        careHPLostToday: 0,
+        energyPoints: 0, // Energy resets daily; shower requires re-feeding each day
       };
     });
   }, [hasShownRookiePopup, setShowRookieUnlockPopup, setHasShownRookiePopup]);
