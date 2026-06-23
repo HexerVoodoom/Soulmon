@@ -3,6 +3,20 @@ import { StepRow } from './StepRow';
 import { Edit2 } from 'lucide-react';
 import { Progress } from './ui/progress';
 import { Language, useTranslation } from '../utils/i18n';
+import { CATEGORY_ATTRIBUTES, type ActivityCategory } from '../types/attributes';
+
+const ATTR_BADGE: Record<string, { label: string; labelPt: string; color: string }> = {
+  virus:   { label: 'Virus 🦠',   labelPt: 'Vírus 🦠',   color: '#E94F4F' },
+  data:    { label: 'Data 💾',    labelPt: 'Dado 💾',    color: '#4F80E9' },
+  vaccine: { label: 'Vaccine 💉', labelPt: 'Vacina 💉',  color: '#22c55e' },
+};
+
+function getDominantAttr(cat: ActivityCategory): 'virus' | 'data' | 'vaccine' {
+  const pts = CATEGORY_ATTRIBUTES[cat];
+  if (pts.vaccine >= pts.virus && pts.vaccine >= pts.data) return 'vaccine';
+  if (pts.data >= pts.virus) return 'data';
+  return 'virus';
+}
 
 interface Step {
   id: string;
@@ -13,6 +27,7 @@ interface Step {
 interface ActivityCardProps {
   id: string;
   name: string;
+  category?: ActivityCategory;
   steps: Step[];
   weekDays?: number[]; // 0-6 (domingo a sábado)
   onUpdateStep: (activityId: string, stepId: string) => void;
@@ -29,6 +44,7 @@ interface ActivityCardProps {
 export const ActivityCard = memo(function ActivityCard({
   id,
   name,
+  category,
   steps,
   weekDays = [],
   onUpdateStep,
@@ -43,6 +59,8 @@ export const ActivityCard = memo(function ActivityCard({
 }: ActivityCardProps) {
   const isWin98 = theme === 'win98';
   const t = useTranslation(language);
+  const attrKey = category ? getDominantAttr(category) : null;
+  const attrBadge = attrKey ? ATTR_BADGE[attrKey] : null;
   const completedSteps = steps.filter(s => s.completed).length;
   const totalSteps = steps.length;
   const progressPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
@@ -90,12 +108,22 @@ export const ActivityCard = memo(function ActivityCard({
 
           {/* Nome da atividade */}
           <div className="flex-1">
-            <h3 className={`${
-              activityComplete ? 'text-[#6b7280]' : 'text-[#101828]'
-            }`} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.9375rem', fontWeight: '400' }}>
-              {name}
-            </h3>
-            
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h3 className={`${
+                activityComplete ? 'text-[#6b7280]' : 'text-[#101828]'
+              }`} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.9375rem', fontWeight: '400' }}>
+                {name}
+              </h3>
+              {attrBadge && !isWin98 && (
+                <span
+                  className="text-[9px] px-1 py-0.5 rounded font-bold leading-none flex-shrink-0"
+                  style={{ fontFamily: 'monospace', color: attrBadge.color, border: `1px solid ${attrBadge.color}33`, backgroundColor: `${attrBadge.color}15` }}
+                >
+                  {language === 'pt-BR' ? attrBadge.labelPt : attrBadge.label}
+                </span>
+              )}
+            </div>
+
             {/* Descritor de frequência */}
             <p className={activityComplete ? 'text-[#9ca3af]' : 'text-[#a1a1a1]'} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.75rem' }}>
               {isSingleExecution ? (

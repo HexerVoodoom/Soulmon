@@ -5,6 +5,7 @@ export async function cloudSave(saveId: string, state: unknown): Promise<void> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ state }),
     });
+    localStorage.setItem('digiapp-last-cloud-sync', new Date().toISOString());
   } catch {
     // Silent — local save already persisted
   }

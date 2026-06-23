@@ -83,6 +83,9 @@ interface CompanionHUDProps {
   foodInventory?: Record<string, number>;
   onFeed?: (foodEmoji: string) => void;
   onShower?: () => void;
+  evolutionFlash?: boolean;
+  poopEventsScheduled?: number[];
+  poopEventsCompleted?: number[];
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -115,6 +118,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   foodInventory = {},
   onFeed,
   onShower,
+  evolutionFlash = false,
+  poopEventsScheduled = [],
+  poopEventsCompleted = [],
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -139,6 +145,20 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Energy is full when the gauge reaches the stage's max HP (its capacity)
   const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
+
+  // Next scheduled poop event that hasn't been completed yet
+  const nextPoopTime = poopEventsScheduled
+    .filter((_, i) => !poopEventsCompleted.includes(i))
+    .sort((a, b) => a - b)[0] ?? null;
+  const nextPoopLabel = (() => {
+    if (!nextPoopTime) return null;
+    const now = Date.now();
+    const diff = nextPoopTime - now;
+    if (diff <= 0) return null; // already showing or missed
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return h > 0 ? `~${h}h` : `~${m}m`;
+  })();
 
   // Walking animation
   useEffect(() => {
@@ -469,30 +489,35 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Render segmented Digivolution bar using perfect days
   const renderDigivolutionBar = () => {
-    // Use new perfectDays/requiredDays system
     const totalSegments = requiredDays;
     const filledSegments = perfectDays;
-    
+    const isPt = language === 'pt-BR';
+
     return (
-      <div className="flex gap-[2px]">
-        {Array.from({ length: totalSegments }, (_, i) => (
-          <div
-            key={i}
-            className={`h-3 flex-1 transition-colors duration-300 ${
-              isWin98 
-                ? (i < filledSegments ? 'bg-[#000080]' : 'bg-[#808080]')
-                : (i < filledSegments ? 'bg-gradient-to-r from-[#2bff95] to-teal-400' : 'bg-gray-600')
-            }`}
-            style={{ 
-              minWidth: '8px',
-              boxShadow: isWin98 
-                ? (i < filledSegments 
-                  ? 'inset 1px 1px 0 #000000, inset -1px -1px 0 #1084d0' 
-                  : 'inset -1px -1px 0 #ffffff, inset 1px 1px 0 #808080')
-                : (i < filledSegments ? '0 0 6px rgba(192, 132, 252, 0.6)' : 'none')
-            }}
-          />
-        ))}
+      <div title={isPt ? `${filledSegments}/${totalSegments} dias perfeitos para digivolução` : `${filledSegments}/${totalSegments} perfect days to digivolve`}>
+        <div className="flex gap-[2px]">
+          {Array.from({ length: totalSegments }, (_, i) => (
+            <div
+              key={i}
+              className={`h-3 flex-1 transition-colors duration-300 ${
+                isWin98
+                  ? (i < filledSegments ? 'bg-[#000080]' : 'bg-[#808080]')
+                  : (i < filledSegments ? 'bg-gradient-to-r from-[#2bff95] to-teal-400' : 'bg-gray-600')
+              }`}
+              style={{
+                minWidth: '8px',
+                boxShadow: isWin98
+                  ? (i < filledSegments
+                    ? 'inset 1px 1px 0 #000000, inset -1px -1px 0 #1084d0'
+                    : 'inset -1px -1px 0 #ffffff, inset 1px 1px 0 #808080')
+                  : (i < filledSegments ? '0 0 6px rgba(192, 132, 252, 0.6)' : 'none')
+              }}
+            />
+          ))}
+        </div>
+        <p className={`text-[9px] mt-0.5 text-right ${isWin98 ? 'text-[#000080]' : 'text-gray-300'}`} style={{ fontFamily: 'monospace' }}>
+          {filledSegments}/{totalSegments} {isPt ? 'dias' : 'days'}
+        </p>
       </div>
     );
   };
@@ -550,7 +575,10 @@ export const CompanionHUD = memo(function CompanionHUD({
         >
           {isWin98 && <div className="scan-line" />}
           {/* HP Hearts - Top Left Corner */}
-          <div className="absolute top-2 left-2 flex items-center gap-1 flex-wrap z-10">
+          <div
+            className="absolute top-2 left-2 flex items-center gap-1 flex-wrap z-10"
+            title={language === 'pt-BR' ? `HP: ${healthPoints}/${maxHealthPoints} — cai quando você perde cuidados` : `HP: ${healthPoints}/${maxHealthPoints} — drops when care events are missed`}
+          >
             {renderHearts()}
           </div>
 
@@ -579,6 +607,27 @@ export const CompanionHUD = memo(function CompanionHUD({
                   {displayText(chatResponse || message)}
                 </p>
               </div>
+            </div>
+          )}
+
+          {/* Evolution flash overlay */}
+          {evolutionFlash && (
+            <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
+              <div className="absolute inset-0 bg-white/70 animate-pulse" />
+              <span className="relative text-[#2bff95] font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', textShadow: '0 0 12px #2bff95' }}>
+                {language === 'pt-BR' ? '✨ DIGIVOLUÇÃO! ✨' : '✨ DIGIVOLVE! ✨'}
+              </span>
+            </div>
+          )}
+
+          {/* Next poop indicator — top-right, shown when event is scheduled but not yet triggered */}
+          {nextPoopLabel && (
+            <div
+              className="absolute top-2 right-2 z-10 flex items-center gap-0.5"
+              title={language === 'pt-BR' ? `Próximo cocô em ${nextPoopLabel}` : `Next poop in ${nextPoopLabel}`}
+            >
+              <span style={{ fontSize: '0.65rem' }}>🚽</span>
+              <span className="text-white/60" style={{ fontFamily: 'monospace', fontSize: '0.55rem' }}>{nextPoopLabel}</span>
             </div>
           )}
 
@@ -740,15 +789,18 @@ export const CompanionHUD = memo(function CompanionHUD({
         </div>
 
         {/* Energy Bar - Vertical on Right Side */}
-        <div 
+        <div
           className={`flex flex-col-reverse items-center justify-end gap-1 rounded-[4px] ${
-            isGlitch 
-              ? 'bg-[#0a0a0a] border-2 border-[#00ffff]' 
-              : isWin98 
-                ? 'win98-lcd-screen' 
+            isGlitch
+              ? 'bg-[#0a0a0a] border-2 border-[#00ffff]'
+              : isWin98
+                ? 'win98-lcd-screen'
                 : 'bg-[#1F2A39]'
           }`}
           style={{ height: '185px', width: '26px', padding: '11.998px 0' }}
+          title={language === 'pt-BR'
+            ? `Energia: ${energyPoints}/${maxHealthPoints} — sobe comendo, necessária para o banho`
+            : `Energy: ${energyPoints}/${maxHealthPoints} — fills by eating, needed for shower`}
         >
           <EnergyBar totalSegments={maxHealthPoints} filledSegments={energyPoints} />
         </div>

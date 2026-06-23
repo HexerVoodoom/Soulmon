@@ -19,7 +19,7 @@ interface OnboardingScreenProps {
   }) => void;
 }
 
-const ispt = false; // onboarding is English-only
+const ispt = localStorage.getItem('digiapp-language') === 'pt-BR';
 
 const INTRO_TEXTS = ispt ? [
   'Bem-vindo ao DigiApp! Em breve você vai conhecer seu parceiro digital que vai te ajudar a alcançar seus objetivos.',
@@ -137,6 +137,11 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const handleIntroNext = () => {
     if (introIndex < INTRO_TEXTS.length - 1) setIntroIndex(introIndex + 1);
     else setStep('goals');
+  };
+  const handleBack = () => {
+    if (step === 'egg') setStep('name');
+    else if (step === 'intro') { setIntroIndex(0); setStep('egg'); }
+    else if (step === 'goals') { setIntroIndex(0); setStep('intro'); }
   };
 
   const toggleChallenge = (id: string) => {
@@ -349,6 +354,19 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
             </div>
           )}
         </div>
+
+        {/* ── Back button (all steps except name) ──────────────────────── */}
+        {step !== 'name' && (
+          <div className="w-full flex justify-start">
+            <button
+              onClick={handleBack}
+              className="text-[#00ff99]/70 hover:text-[#00ff99] transition-colors"
+              style={{ fontFamily: 'Consolas, monospace', fontSize: '0.8rem', letterSpacing: '0.05em' }}
+            >
+              ← {ispt ? 'voltar' : 'back'}
+            </button>
+          </div>
+        )}
 
         {/* ── Egg Preview ────────────────────────────────────────────────── */}
         <div className="relative w-full max-w-[200px] mx-auto flex-shrink-0 pb-4">

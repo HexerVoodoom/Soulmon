@@ -293,6 +293,15 @@ export function AISettingsModal({
               <span className={isGlitch ? 'text-[#ff00ff]' : 'text-gray-500'}>Conservative</span>
               <span className={isGlitch ? 'text-[#ff00ff]' : 'text-gray-500'}>Creative</span>
             </div>
+            <p className={`text-xs mt-1 text-center ${isGlitch ? 'text-[#ff00ff]/70' : isWin98 ? 'text-gray-600' : 'text-gray-400'}`} style={{ fontFamily: 'monospace' }}>
+              {settings.temperature <= 0.6
+                ? '🔒 Very consistent — predictable responses'
+                : settings.temperature <= 0.75
+                ? '⚖️ Balanced — consistent with some variety'
+                : settings.temperature <= 0.9
+                ? '✨ Creative — varied and expressive (default)'
+                : '🎲 Maximum creativity — highly unpredictable'}
+            </p>
           </div>
 
         </div>

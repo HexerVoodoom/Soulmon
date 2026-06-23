@@ -44,6 +44,10 @@ export function SettingsPage({
   const isGlitch = theme === 'glitch';
   const t = useTranslation(language);
   const saveId = localStorage.getItem(STORAGE_KEYS.SAVE_ID) ?? null;
+  const lastSyncRaw = localStorage.getItem(STORAGE_KEYS.LAST_CLOUD_SYNC);
+  const lastSyncLabel = lastSyncRaw
+    ? new Date(lastSyncRaw).toLocaleString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })
+    : null;
 
   const handleCopy = () => {
     if (!saveId) return;
@@ -81,9 +85,16 @@ export function SettingsPage({
 
           {saveId && (
             <div className="mb-4">
-              <p className={`text-xs mb-1 ${isGlitch ? 'text-[#00ffff]/50' : isWin98 ? 'text-[#808080]' : 'text-gray-400'}`} style={{ fontFamily: 'monospace' }}>
-                {language === 'pt-BR' ? 'Código de recuperação:' : 'Recovery code:'}
-              </p>
+              <div className="flex items-center justify-between mb-1">
+                <p className={`text-xs ${isGlitch ? 'text-[#00ffff]/50' : isWin98 ? 'text-[#808080]' : 'text-gray-400'}`} style={{ fontFamily: 'monospace' }}>
+                  {language === 'pt-BR' ? 'Código de recuperação:' : 'Recovery code:'}
+                </p>
+                {lastSyncLabel && (
+                  <p className={`text-[10px] ${isGlitch ? 'text-[#00ffff]/40' : isWin98 ? 'text-[#808080]' : 'text-gray-400'}`} style={{ fontFamily: 'monospace' }}>
+                    {language === 'pt-BR' ? `sync: ${lastSyncLabel}` : `synced: ${lastSyncLabel}`}
+                  </p>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <code className={`flex-1 text-xs px-3 py-2 rounded-lg break-all ${isGlitch ? 'bg-[#001a00] text-[#00ffff]' : isWin98 ? 'bg-[#c0c0c0] text-black border border-gray-400' : 'bg-gray-100 text-gray-700'}`} style={{ fontFamily: 'monospace' }}>
                   {saveId}

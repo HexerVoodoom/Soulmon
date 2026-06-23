@@ -13,6 +13,7 @@ import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
+import { CoachMark } from './components/CoachMark';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
@@ -65,6 +66,10 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [useAI, setUseAI] = useState(true);
   const [soundMuted, setSoundMuted] = useState(() => isMuted());
+  const [evolutionFlash, setEvolutionFlash] = useState(false);
+  const [showCoachMark, setShowCoachMark] = useState(() =>
+    !localStorage.getItem(STORAGE_KEYS.COACH_MARK_SHOWN)
+  );
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -661,6 +666,8 @@ export default function App() {
       };
     });
     playDigivolve();
+    setEvolutionFlash(true);
+    setTimeout(() => setEvolutionFlash(false), 2000);
     setMessageTrigger(prev => prev + 1);
   }, []);
 
@@ -868,6 +875,18 @@ export default function App() {
   return (
     <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()} ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
       }`}>
+        {/* Coach mark — shown once after onboarding, positioned over footer */}
+        {showCoachMark && (
+          <CoachMark
+            language={language}
+            theme={theme}
+            onDismiss={() => {
+              setShowCoachMark(false);
+              localStorage.setItem(STORAGE_KEYS.COACH_MARK_SHOWN, 'true');
+            }}
+          />
+        )}
+
         {/* Fixed Header */}
         <div className="flex-shrink-0">
           <Header
@@ -964,6 +983,7 @@ export default function App() {
                           key={activity.id}
                           id={activity.id}
                           name={`${activity.emoji} ${activity.name}`}
+                          category={activity.category as ActivityCategory}
                           steps={activity.steps}
                           weekDays={activity.weekDays}
                           onUpdateStep={handleUpdateStep}
@@ -974,6 +994,7 @@ export default function App() {
                           isDisabled={!isAvailable}
                           isSingleExecution={!activity.weekDays || activity.weekDays.length === 0}
                           theme={theme}
+                          language={language}
                         />
                       );
                     });
@@ -1102,6 +1123,9 @@ export default function App() {
             onOpenAISettings={handleOpenAISettings}
             onCreateActivity={handleAICreateActivity}
             language={language}
+            evolutionFlash={evolutionFlash}
+            poopEventsScheduled={gameState.poopEventsScheduled}
+            poopEventsCompleted={gameState.poopEventsCompleted}
           />
         </div>
 
