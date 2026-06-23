@@ -13,4 +13,5 @@ export const STORAGE_KEYS = {
   SCHEDULED_NOTIFICATIONS: 'digiapp-scheduled-notifications',
   DAILY_NOTIFICATION_CHECK: 'digiapp-daily-notification-check',
   SAVE_ID: 'digiapp-save-id',
+  SOUND_MUTED: 'digiapp-sound-muted',
 } as const;

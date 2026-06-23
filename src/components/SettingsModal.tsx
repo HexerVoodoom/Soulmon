@@ -1,4 +1,4 @@
-import { X, Settings, Sparkles, Zap } from 'lucide-react';
+import { X, Settings, Sparkles, Zap, Volume2, VolumeX } from 'lucide-react';
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
 
@@ -7,16 +7,20 @@ interface SettingsModalProps {
   onClose: () => void;
   useAI: boolean;
   onToggleAI: () => void;
+  soundMuted?: boolean;
+  onToggleSound?: () => void;
   aiSettings: AISettings;
   onSaveAISettings: (settings: AISettings) => void;
   theme?: 'default' | 'win98' | 'glitch';
 }
 
-export function SettingsModal({ 
-  isOpen, 
-  onClose, 
-  useAI, 
+export function SettingsModal({
+  isOpen,
+  onClose,
+  useAI,
   onToggleAI,
+  soundMuted = false,
+  onToggleSound,
   aiSettings,
   onSaveAISettings,
   theme = 'default'
@@ -73,6 +77,60 @@ export function SettingsModal({
             isGlitch ? 'bg-[#0a0a0a]' : isWin98 ? 'bg-[#c0c0c0]' : 'bg-white'
           }`}>
             
+            {/* Sound Toggle */}
+            <div className={`p-4 rounded border ${
+              isGlitch
+                ? 'bg-[#1a1a1a] border-[#00ffff]'
+                : isWin98
+                  ? 'bg-white border-gray-400'
+                  : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {soundMuted
+                    ? <VolumeX size={20} className={isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-[#000080]' : 'text-teal-600'} />
+                    : <Volume2 size={20} className={isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-[#000080]' : 'text-teal-600'} />
+                  }
+                  <div>
+                    <h3 className={`${
+                      isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-900'
+                    }`} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                      Sound Effects
+                    </h3>
+                    <p className={`text-xs mt-0.5 ${
+                      isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-gray-600' : 'text-gray-500'
+                    }`} style={{ fontFamily: 'monospace' }}>
+                      {soundMuted ? 'Muted' : 'On — task, feed, shower, evolve…'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={onToggleSound}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    !soundMuted
+                      ? isGlitch
+                        ? 'bg-gradient-to-r from-[#00ffff] to-[#ff00ff]'
+                        : isWin98
+                          ? 'bg-[#000080]'
+                          : 'bg-gradient-to-r from-[#2bff95] to-teal-500'
+                      : isGlitch
+                        ? 'bg-[#2a2a2a]'
+                        : isWin98
+                          ? 'bg-gray-400'
+                          : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
+                      !soundMuted
+                        ? 'translate-x-6 bg-black'
+                        : 'translate-x-1 bg-white'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
             {/* AI Chat Toggle */}
             <div className={`p-4 rounded border ${
               isGlitch

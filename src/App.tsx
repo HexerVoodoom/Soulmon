@@ -22,6 +22,7 @@ import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
+import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate } from './utils/sounds';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -63,6 +64,7 @@ export default function App() {
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [useAI, setUseAI] = useState(true);
+  const [soundMuted, setSoundMuted] = useState(() => isMuted());
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -288,6 +290,8 @@ export default function App() {
           foodInventory: newFoodInventory,
         };
       });
+
+      playTaskComplete();
 
       // Check if this is the first task/step ever completed and show popup
       if (!hasShownFirstTaskPopup) {
@@ -539,6 +543,8 @@ export default function App() {
     if (!task || task.completed) return; // completed tasks cannot be unchecked
 
     if (!task.completed) {
+      playTaskComplete();
+
       // Mark task as completed first
       setGameState(prev => ({
         ...prev,
@@ -653,6 +659,7 @@ export default function App() {
         digivolutionSegmentsNeeded: newSegmentsNeeded,
       };
     });
+    playDigivolve();
     setMessageTrigger(prev => prev + 1);
   }, []);
 
@@ -672,12 +679,14 @@ export default function App() {
       }
     });
 
+    if (careEvent.type === 'poop') playPoopClean();
     setCareEvent(null);
     setMessageTrigger(prev => prev + 1);
   }, [careEvent]);
 
   // Version B: consume one food item → +1 HP + attribute points of that food's category
   const handleFeed = useCallback((foodEmoji: string) => {
+    playFeed();
     setGameState(prev => {
       const count = prev.foodInventory[foodEmoji] ?? 0;
       if (count <= 0) return prev;
@@ -736,6 +745,7 @@ export default function App() {
         attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       };
     });
+    playDegenerate();
     setMessageTrigger(prev => prev + 1);
   }, []);
 
@@ -1205,6 +1215,8 @@ export default function App() {
             onClose={() => setSettingsOpen(false)}
             useAI={useAI}
             onToggleAI={() => setUseAI(!useAI)}
+            soundMuted={soundMuted}
+            onToggleSound={() => { setMuted(!soundMuted); setSoundMuted(!soundMuted); }}
             aiSettings={aiSettings}
             onSaveAISettings={(settings) => {
               setAiSettings(settings);

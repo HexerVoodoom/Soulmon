@@ -47,6 +47,7 @@ import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
+import { playMenuOpen, playShower } from '../utils/sounds';
 
 interface CompanionHUDProps {
   companionMood: 'idle' | 'happy' | 'tired';
@@ -400,6 +401,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     setIsShowering(true);
     setShowerCooldown(true);
     onShower?.();
+    playShower();
     handleChatMessage('🚿✨');
     setTimeout(() => setIsShowering(false), 1600);
     setTimeout(() => setShowerCooldown(false), 5000);
@@ -714,7 +716,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
               {/* The black pixel button itself */}
               <button
-                onClick={() => setCareMenuOpen(o => !o)}
+                onClick={() => { setCareMenuOpen(o => !o); playMenuOpen(); }}
                 aria-label="Care menu"
                 className="w-8 h-8 flex items-center justify-center bg-black border-2 border-[#3a3a3a] active:scale-95 transition-transform"
                 style={{ imageRendering: 'pixelated', borderRadius: '2px', boxShadow: 'inset -2px -2px 0 #000, inset 2px 2px 0 #2a2a2a' }}
