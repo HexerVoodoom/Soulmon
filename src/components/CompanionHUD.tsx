@@ -130,6 +130,12 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [careMenuOpen, setCareMenuOpen] = useState(false);
   const [isShowering, setIsShowering] = useState(false);
   const [showerCooldown, setShowerCooldown] = useState(false);
+  const [hugBalloon, setHugBalloon] = useState(false);
+
+  const showHug = () => {
+    setHugBalloon(true);
+    setTimeout(() => setHugBalloon(false), 2000);
+  };
 
   // Energy is full when the gauge reaches the stage's max HP (its capacity)
   const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
@@ -390,7 +396,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     setEatKey(k => k + 1);
     setIsMunching(true);
     onFeed?.(emoji);
-    handleChatMessage('+1❤️');
+    showHug();
     setTimeout(() => setEatingEmoji(null), 1500);
     setTimeout(() => setIsMunching(false), 600);
   };
@@ -402,7 +408,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     setShowerCooldown(true);
     onShower?.();
     playShower();
-    handleChatMessage('🚿✨');
+    showHug();
     setTimeout(() => setIsShowering(false), 1600);
     setTimeout(() => setShowerCooldown(false), 5000);
   };
@@ -418,6 +424,11 @@ export const CompanionHUD = memo(function CompanionHUD({
         return `drop-shadow-[0_0_8px_${auraColor}]`;
     }
   };
+
+  const emojiIntensity = aiSettings?.emojiIntensity ?? 'medium';
+  const stripEmojis = (text: string) =>
+    text.replace(/\p{Emoji_Presentation}|\p{Emoji}️/gu, '').replace(/\s{2,}/g, ' ').trim();
+  const displayText = (raw: string) => emojiIntensity === 'none' ? stripEmojis(raw) : raw;
 
   // Render pixel hearts for HP
   const renderHearts = () => {
@@ -528,7 +539,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 : 'border-[#596980]'
           }`}
           style={{ 
-            height: '151px',
+            height: '185px',
             backgroundImage: isWin98 ? 'none' : `url(${bgCyberpunk})`,
             backgroundColor: isWin98 ? '#9cbd90' : undefined,
             backgroundSize: 'cover',
@@ -565,7 +576,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined
                   }}
                 >
-                  {chatResponse || message}
+                  {displayText(chatResponse || message)}
                 </p>
               </div>
             </div>
@@ -576,6 +587,19 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Digimon Sprite - Centered with walking animation */}
           <div className="absolute inset-0 flex items-center justify-center">
+            {/* Hug balloon — follows pet position, shown after feed or shower */}
+            {hugBalloon && (
+              <div
+                className="absolute z-25 pointer-events-none animate-in fade-in zoom-in-75 duration-150"
+                style={{ left: `${position}%`, top: 'calc(50% - 78px)', transform: 'translateX(-50%)' }}
+              >
+                <div className="relative bg-white rounded-full px-2 py-0.5 shadow text-lg leading-none">
+                  🤗
+                  <span className="absolute left-1/2 -bottom-[5px] -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white" />
+                </div>
+              </div>
+            )}
+
             {/* Floating food emoji when eating */}
             {eatingEmoji && (
               <span
