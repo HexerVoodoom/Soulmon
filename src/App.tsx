@@ -601,6 +601,7 @@ export default function App() {
             foodInventory: newFoodInventory,
           };
         });
+        setMessageTrigger(prev => prev + 1);
       }, 3000);
     }
   };
@@ -717,11 +718,12 @@ export default function App() {
     });
   }, []);
 
-  // Shower: cosmetic wash (no energy cost). Also cleans an active poop event;
-  // clearing the poop lets useCareSystem schedule the next one.
+  // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
-    setCareEvent(prev => (prev?.type === 'poop' ? null : prev));
-  }, []);
+    if (careEvent?.type === 'poop') {
+      handleCareEventComplete();
+    }
+  }, [careEvent, handleCareEventComplete]);
 
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {

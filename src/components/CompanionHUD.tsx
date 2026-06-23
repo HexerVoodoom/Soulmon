@@ -748,7 +748,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 ? 'win98-lcd-screen' 
                 : 'bg-[#1F2A39]'
           }`}
-          style={{ height: '151px', width: '26px', padding: '11.998px 0' }}
+          style={{ height: '185px', width: '26px', padding: '11.998px 0' }}
         >
           <EnergyBar totalSegments={maxHealthPoints} filledSegments={energyPoints} />
         </div>

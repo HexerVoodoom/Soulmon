@@ -83,7 +83,7 @@ export function useCareSystem({
         ],
       }));
     }
-  }, [gameState.lastResetDate, gameState.foodEventsScheduled]);
+  }, [gameState.lastResetDate, gameState.foodEventsScheduled, gameState.activities]);
 
   // Check care events and trigger them
   useEffect(() => {
@@ -97,7 +97,7 @@ export function useCareSystem({
       // ── Poop events (2x per day, 30-min window to clean up) ─────────────────
       if (gameState.poopEventsScheduled && gameState.poopEventsCompleted) {
         gameState.poopEventsScheduled.forEach((poopTime, index) => {
-          if (gameState.poopEventsCompleted.includes(index) || careEvent) return;
+          if (gameState.poopEventsCompleted.includes(index) || careEvent?.type === 'poop') return;
 
           const elapsed = now - poopTime;
 
@@ -151,7 +151,7 @@ export function useCareSystem({
 
       if (gameState.foodEventsScheduled && gameState.foodEventsCompleted) {
         gameState.foodEventsScheduled.forEach((foodTime, index) => {
-          if (gameState.foodEventsCompleted.includes(index) || careEvent) return;
+          if (gameState.foodEventsCompleted.includes(index) || careEvent?.type === 'food') return;
 
           const elapsed = now - foodTime;
 
