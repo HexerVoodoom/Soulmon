@@ -655,65 +655,48 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           </div>
 
+          {/* Care Menu Panel — bottom bar, no background, white text */}
+          {(onFeed || onShower) && careMenuOpen && (
+            <div className="absolute bottom-10 left-0 right-0 z-30 px-2 pb-1 flex gap-1.5 flex-wrap items-center animate-in fade-in slide-in-from-bottom-1 duration-200">
+              {Object.entries(foodInventory).filter(([, c]) => c > 0).length > 0 ? (
+                Object.entries(foodInventory).map(([emoji, count]) =>
+                  count > 0 ? (
+                    <button
+                      key={emoji}
+                      onClick={() => handleFeedWithAnimation(emoji)}
+                      className="flex items-center gap-0.5 active:scale-95 transition-all px-1 py-0.5"
+                      title={`Feed ${emoji} (+1❤️)`}
+                    >
+                      <span style={{ fontSize: '0.9rem' }}>{emoji}</span>
+                      <span className="text-white text-[10px] font-bold" style={{ fontFamily: 'monospace' }}>×{count}</span>
+                    </button>
+                  ) : null
+                )
+              ) : (
+                <span className="text-white text-[10px]" style={{ fontFamily: 'monospace' }}>No food yet</span>
+              )}
+              {onShower && (
+                <button
+                  onClick={handleShowerClick}
+                  disabled={!energyFull || showerCooldown}
+                  className={`flex items-center gap-0.5 active:scale-95 transition-all px-1 py-0.5 ${
+                    energyFull && !showerCooldown ? 'cursor-pointer' : 'cursor-not-allowed opacity-40'
+                  }`}
+                  style={{ fontFamily: 'monospace' }}
+                  title={showerCooldown ? 'Cooling down…' : energyFull ? 'Shower' : 'Needs full energy'}
+                >
+                  <span style={{ fontSize: '0.9rem' }}>🚿</span>
+                  <span className="text-white text-[10px] font-bold">
+                    {showerCooldown ? 'wait…' : energyFull ? 'Shower' : 'low'}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Care Menu Button — black pixel icon, bottom-left inside the pet window */}
           {(onFeed || onShower) && (
             <div className="absolute bottom-2 left-2 z-30">
-              {/* Care panel (food + shower), opens above the button */}
-              {careMenuOpen && (
-                <div
-                  className={`absolute bottom-10 left-0 min-w-[160px] max-w-[230px] p-2 rounded-md flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-1 duration-200 ${
-                    isGlitch ? 'bg-[#0a0a0a] border border-[#00ffff]' : isWin98 ? 'win98-button' : 'bg-[#1F2A39] border border-[#2a4060] shadow-xl'
-                  }`}
-                >
-                  {/* Food row */}
-                  <div className="flex gap-1.5 flex-wrap">
-                    {Object.entries(foodInventory).filter(([, c]) => c > 0).length > 0 ? (
-                      Object.entries(foodInventory).map(([emoji, count]) =>
-                        count > 0 ? (
-                          <button
-                            key={emoji}
-                            onClick={() => handleFeedWithAnimation(emoji)}
-                            className="flex items-center gap-0.5 bg-[#0d1a2d] hover:bg-[#162840] active:scale-95 rounded-md px-1.5 py-1 transition-all border border-[#2a4060]"
-                            title={`Feed ${emoji} (+1❤️)`}
-                          >
-                            <span style={{ fontSize: '0.9rem' }}>{emoji}</span>
-                            <span className="text-[#a0c0e0] text-[10px] font-bold" style={{ fontFamily: 'monospace' }}>×{count}</span>
-                          </button>
-                        ) : null
-                      )
-                    ) : (
-                      <span className="text-[10px] text-gray-400" style={{ fontFamily: 'monospace' }}>
-                        No food yet
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Shower button */}
-                  {onShower && (
-                    <button
-                      onClick={handleShowerClick}
-                      disabled={!energyFull || showerCooldown}
-                      className={`flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] transition-all border ${
-                        energyFull && !showerCooldown
-                          ? 'bg-[#0d2d2a] hover:bg-[#114038] active:scale-95 border-[#2a6055] text-[#7fffe0] cursor-pointer'
-                          : 'bg-[#1a2230] border-[#2a3340] text-gray-500 cursor-not-allowed'
-                      }`}
-                      style={{ fontFamily: 'monospace' }}
-                      title={
-                        showerCooldown
-                          ? 'Cooling down…'
-                          : energyFull
-                            ? 'Give a shower (needs full energy)'
-                            : 'Needs full energy to shower'
-                      }
-                    >
-                      <span style={{ fontSize: '0.95rem' }}>🚿</span>
-                      <span>{showerCooldown ? 'wait…' : energyFull ? 'Shower' : 'Energy low'}</span>
-                    </button>
-                  )}
-                </div>
-              )}
-
               {/* The black pixel button itself */}
               <button
                 onClick={() => { setCareMenuOpen(o => !o); playMenuOpen(); }}
