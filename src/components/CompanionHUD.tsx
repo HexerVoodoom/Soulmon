@@ -61,8 +61,7 @@ interface CompanionHUDProps {
   currentXP: number;
   nextLevelXP: number;
   triggerMessage?: number; // Prop to trigger message from outside
-  totalSteps: number;
-  completedSteps: number;
+  energyPoints?: number; // Version B: energy gauge, fills only via feeding
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
@@ -82,6 +81,7 @@ interface CompanionHUDProps {
   language: Language;
   foodInventory?: Record<string, number>;
   onFeed?: (foodEmoji: string) => void;
+  onShower?: () => void;
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -97,8 +97,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   currentXP, 
   nextLevelXP,
   triggerMessage = 0,
-  totalSteps,
-  completedSteps,
+  energyPoints = 0,
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   perfectDays = 0,
@@ -114,6 +113,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   language,
   foodInventory = {},
   onFeed,
+  onShower,
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -126,6 +126,12 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [eatingEmoji, setEatingEmoji] = useState<string | null>(null);
   const [eatKey, setEatKey] = useState(0);
   const [isMunching, setIsMunching] = useState(false);
+  const [careMenuOpen, setCareMenuOpen] = useState(false);
+  const [isShowering, setIsShowering] = useState(false);
+  const [showerCooldown, setShowerCooldown] = useState(false);
+
+  // Energy is full when the gauge reaches the stage's max HP (its capacity)
+  const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
 
   // Walking animation
   useEffect(() => {
@@ -388,6 +394,17 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setIsMunching(false), 600);
   };
 
+  // Shower: only while energy is full, free (no energy cost), 5s cooldown
+  const handleShowerClick = () => {
+    if (!energyFull || isShowering || showerCooldown) return;
+    setIsShowering(true);
+    setShowerCooldown(true);
+    onShower?.();
+    handleChatMessage('🚿✨');
+    setTimeout(() => setIsShowering(false), 1600);
+    setTimeout(() => setShowerCooldown(false), 5000);
+  };
+
   const getCompanionFilter = () => {
     const auraColor = getBranchAuraColor();
     switch (companionMood) {
@@ -593,7 +610,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
-                    animation: isMunching ? 'pet-munch 0.6s ease-out' : undefined,
+                    animation: isShowering
+                      ? 'pet-shower-shake 0.5s ease-in-out 3'
+                      : isMunching
+                        ? 'pet-munch 0.6s ease-out'
+                        : undefined,
                   }}
                 />
               ) : (
@@ -604,8 +625,109 @@ export const CompanionHUD = memo(function CompanionHUD({
                   <span className="text-white" style={{ fontSize: '3rem', fontWeight: 'bold' }}>?</span>
                 </div>
               )}
+
+              {/* Shower water droplets */}
+              {isShowering && (
+                <div className="absolute inset-0 pointer-events-none z-30">
+                  {[0, 1, 2, 3, 4, 5].map(i => (
+                    <span
+                      key={i}
+                      className="absolute text-sm"
+                      style={{
+                        left: `${10 + i * 14}%`,
+                        top: '-10px',
+                        animation: `shower-drop 0.9s linear ${i * 0.12}s infinite`,
+                      }}
+                    >
+                      💧
+                    </span>
+                  ))}
+                  <span
+                    className="absolute text-xl"
+                    style={{ left: '50%', top: '-26px', transform: 'translateX(-50%)' }}
+                  >
+                    🚿
+                  </span>
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Care Menu Button — black pixel icon, bottom-left inside the pet window */}
+          {(onFeed || onShower) && (
+            <div className="absolute bottom-2 left-2 z-30">
+              {/* Care panel (food + shower), opens above the button */}
+              {careMenuOpen && (
+                <div
+                  className={`absolute bottom-10 left-0 min-w-[160px] max-w-[230px] p-2 rounded-md flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-1 duration-200 ${
+                    isGlitch ? 'bg-[#0a0a0a] border border-[#00ffff]' : isWin98 ? 'win98-button' : 'bg-[#1F2A39] border border-[#2a4060] shadow-xl'
+                  }`}
+                >
+                  {/* Food row */}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {Object.entries(foodInventory).filter(([, c]) => c > 0).length > 0 ? (
+                      Object.entries(foodInventory).map(([emoji, count]) =>
+                        count > 0 ? (
+                          <button
+                            key={emoji}
+                            onClick={() => handleFeedWithAnimation(emoji)}
+                            className="flex items-center gap-0.5 bg-[#0d1a2d] hover:bg-[#162840] active:scale-95 rounded-md px-1.5 py-1 transition-all border border-[#2a4060]"
+                            title={`Feed ${emoji} (+1❤️)`}
+                          >
+                            <span style={{ fontSize: '0.9rem' }}>{emoji}</span>
+                            <span className="text-[#a0c0e0] text-[10px] font-bold" style={{ fontFamily: 'monospace' }}>×{count}</span>
+                          </button>
+                        ) : null
+                      )
+                    ) : (
+                      <span className="text-[10px] text-gray-400" style={{ fontFamily: 'monospace' }}>
+                        No food yet
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Shower button */}
+                  {onShower && (
+                    <button
+                      onClick={handleShowerClick}
+                      disabled={!energyFull || showerCooldown}
+                      className={`flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-[11px] transition-all border ${
+                        energyFull && !showerCooldown
+                          ? 'bg-[#0d2d2a] hover:bg-[#114038] active:scale-95 border-[#2a6055] text-[#7fffe0] cursor-pointer'
+                          : 'bg-[#1a2230] border-[#2a3340] text-gray-500 cursor-not-allowed'
+                      }`}
+                      style={{ fontFamily: 'monospace' }}
+                      title={
+                        showerCooldown
+                          ? 'Cooling down…'
+                          : energyFull
+                            ? 'Give a shower (needs full energy)'
+                            : 'Needs full energy to shower'
+                      }
+                    >
+                      <span style={{ fontSize: '0.95rem' }}>🚿</span>
+                      <span>{showerCooldown ? 'wait…' : energyFull ? 'Shower' : 'Energy low'}</span>
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* The black pixel button itself */}
+              <button
+                onClick={() => setCareMenuOpen(o => !o)}
+                aria-label="Care menu"
+                className="w-8 h-8 flex items-center justify-center bg-black border-2 border-[#3a3a3a] active:scale-95 transition-transform"
+                style={{ imageRendering: 'pixelated', borderRadius: '2px', boxShadow: 'inset -2px -2px 0 #000, inset 2px 2px 0 #2a2a2a' }}
+              >
+                {/* pixel "menu" glyph: three white bars */}
+                <span className="flex flex-col gap-[3px]">
+                  <span className="block w-4 h-[3px] bg-white" />
+                  <span className="block w-4 h-[3px] bg-white" />
+                  <span className="block w-4 h-[3px] bg-white" />
+                </span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Energy Bar - Vertical on Right Side */}
@@ -619,35 +741,9 @@ export const CompanionHUD = memo(function CompanionHUD({
           }`}
           style={{ height: '151px', width: '26px', padding: '11.998px 0' }}
         >
-          <EnergyBar totalSteps={totalSteps} completedSteps={completedSteps} />
+          <EnergyBar totalSegments={maxHealthPoints} filledSegments={energyPoints} />
         </div>
       </div>
-
-      {/* Version B: Food Inventory + Feed Panel — only shown when there is food */}
-      {onFeed && Object.keys(foodInventory).length > 0 && (
-        <div className={`mt-2 rounded-lg px-3 py-2 flex items-center gap-2 flex-wrap ${
-          isWin98 ? 'win98-button' : isGlitch ? 'bg-[#0a0a0a] border border-[#00ffff]' : 'bg-[#1F2A39]'
-        }`}>
-          <div className="flex gap-1.5 flex-wrap flex-1">
-              {Object.entries(foodInventory).map(([emoji, count]) =>
-                count > 0 ? (
-                  <button
-                    key={emoji}
-                    onClick={() => handleFeedWithAnimation(emoji)}
-                    className="flex items-center gap-0.5 bg-[#0d1a2d] hover:bg-[#162840] active:scale-95 rounded-md px-1.5 py-0.5 transition-all border border-[#2a4060]"
-                    title={`Feed ${emoji} (+1 HP)`}
-                  >
-                    <span style={{ fontSize: '0.9rem' }}>{emoji}</span>
-                    <span className="text-[#a0c0e0] text-[10px] font-bold" style={{ fontFamily: 'monospace' }}>×{count}</span>
-                  </button>
-                ) : null
-              )}
-            </div>
-          <span className="text-[10px] text-gray-500 flex-shrink-0" style={{ fontFamily: 'monospace' }}>
-            tap to feed +1❤️
-          </span>
-        </div>
-      )}
 
       {/* Chat Box - Below Companion Area */}
       <div className="mt-2">

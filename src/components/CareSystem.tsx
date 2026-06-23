@@ -19,11 +19,13 @@ export function CareSystem({ careEvent, onCareEventComplete }: CareSystemProps) 
   }
 
   return (
-    <div className="absolute bottom-4 left-4 z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div className="absolute bottom-3 right-3 z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <img
         src={careEvent.type === 'poop' ? poopSprite : foodSprite}
         alt={careEvent.type}
-        className="w-12 h-12 object-contain"
+        onClick={onCareEventComplete}
+        className="w-12 h-12 object-contain cursor-pointer hover:scale-110 active:scale-95 transition-transform"
+        title={careEvent.type === 'poop' ? 'Clean up' : 'Feed'}
         style={{ imageRendering: 'pixelated' }}
       />
     </div>

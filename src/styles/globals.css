@@ -13,6 +13,22 @@
   100% { transform: scaleY(1) scaleX(1); }
 }
 
+/* Shower: falling water droplets */
+@keyframes shower-drop {
+  0%   { opacity: 0; transform: translateY(-26px) scale(0.8); }
+  20%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(30px) scale(1); }
+}
+
+/* Shower: pet wiggles happily while being washed */
+@keyframes pet-shower-shake {
+  0%, 100% { transform: rotate(0deg); }
+  20%      { transform: rotate(-5deg); }
+  40%      { transform: rotate(5deg); }
+  60%      { transform: rotate(-4deg); }
+  80%      { transform: rotate(4deg); }
+}
+
 /* Win98 Fonts */
 @font-face {
   font-family: 'MS Sans Serif';

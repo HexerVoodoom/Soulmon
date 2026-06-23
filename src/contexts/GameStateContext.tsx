@@ -57,6 +57,8 @@ export interface GameState {
   activityStats: ActivityStats;
   healthPoints: number;
   maxHealthPoints: number;
+  /** Version B: energy/satiety gauge — fills only by feeding, caps at maxHealthPoints */
+  energyPoints: number;
   perfectDays: number;
   totalXP: number;
   virusPoints: number;
@@ -120,6 +122,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         completedTasks: loadedState.completedTasks ?? [],
         activityStats: loadedState.activityStats ?? {},
         maxHealthPoints: getMaxHPForStage(loadedState.evolutionStage ?? 'digiegg'),
+        energyPoints: loadedState.energyPoints ?? 0,
         perfectDays: loadedState.perfectDays ?? 0,
         lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
         poopEventScheduled: loadedState.poopEventScheduled ?? null,
@@ -150,6 +153,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       activityStats: {},
       healthPoints: 1,
       maxHealthPoints: 1,
+      energyPoints: 0,
       perfectDays: 0,
       totalXP: 0,
       virusPoints: 0,

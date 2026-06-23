@@ -661,7 +661,8 @@ export default function App() {
 
     setGameState(prev => {
       if (careEvent.type === 'poop') {
-        return { ...prev, poopEventCompleted: true };
+        // Clear the poop and let useCareSystem queue the next one
+        return { ...prev, poopEventScheduled: null, poopEventCompleted: false };
       } else {
         const eventIndex = (prev.foodEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
         return {
@@ -691,6 +692,8 @@ export default function App() {
       return {
         ...prev,
         healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
+        // Energy gauge fills only by feeding, capped at maxHealthPoints
+        energyPoints: Math.min(prev.maxHealthPoints, (prev.energyPoints ?? 0) + 1),
         foodInventory: newInventory,
         virusPoints: prev.virusPoints + attrs.virus,
         dataPoints: prev.dataPoints + attrs.data,
@@ -703,6 +706,12 @@ export default function App() {
         },
       };
     });
+  }, []);
+
+  // Shower: cosmetic wash (no energy cost). Also cleans an active poop event;
+  // clearing the poop lets useCareSystem schedule the next one.
+  const handleShower = useCallback(() => {
+    setCareEvent(prev => (prev?.type === 'poop' ? null : prev));
   }, []);
 
   const handleDegenerate = useCallback((targetStage: string) => {
@@ -1064,27 +1073,7 @@ export default function App() {
             currentXP={gameState.totalXP}
             nextLevelXP={getNextLevelXP()}
             triggerMessage={messageTrigger}
-            totalSteps={(() => {
-              // Usa o required do nível atual
-              const currentLevel = getStageLevel(gameState.evolutionStage);
-              return FORM_REQUIREMENTS[currentLevel].required;
-            })()}
-            completedSteps={(() => {
-              // Conta quantas atividades/tasks foram completadas
-              const today = new Date().toDateString();
-              const todayWeekDay = new Date().getDay();
-              const availableActivities = !canSelectWeekdays(gameState.evolutionStage)
-                ? gameState.activities
-                : gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-              const completedActivities = availableActivities.filter(a => {
-                if (a.steps.length > 0) {
-                  return a.steps.every(s => s.completed);
-                } else {
-                  return a.completedToday && a.lastCompletedDate === today;
-                }
-              }).length;
-              return completedActivities + gameState.tasks.filter(t => t.completed).length;
-            })()}
+            energyPoints={gameState.energyPoints}
             digivolutionSegments={gameState.digivolutionSegments}
             theme={theme}
             digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}
@@ -1095,6 +1084,7 @@ export default function App() {
             onCareEventComplete={handleCareEventComplete}
             foodInventory={gameState.foodInventory}
             onFeed={handleFeed}
+            onShower={handleShower}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}
