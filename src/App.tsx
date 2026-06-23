@@ -14,6 +14,7 @@ import { GamePopups } from './components/GamePopups';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { ItemsWindow } from './components/ItemsWindow';
+import { HelpModal } from './components/HelpModal';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
@@ -95,12 +96,38 @@ export default function App() {
   });
   const [showFirstTaskPopup, setShowFirstTaskPopup] = useState(false);
   const [hasShownFirstTaskPopup, setHasShownFirstTaskPopup] = useState(() => {
-    return localStorage.getItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN) === 'true';
+    if (localStorage.getItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN) === 'true') return true;
+    // Auto-mark for established users (have completed-task history or activity stats)
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if ((s.completedTasks?.length ?? 0) > 0 || Object.keys(s.activityStats ?? {}).length > 0 || (s.perfectDays ?? 0) > 0) {
+          localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
+          return true;
+        }
+      }
+    } catch { /* ignore */ }
+    return false;
   });
   const [showRookieUnlockPopup, setShowRookieUnlockPopup] = useState(false);
   const [hasShownRookiePopup, setHasShownRookiePopup] = useState(() => {
-    return localStorage.getItem(STORAGE_KEYS.ROOKIE_POPUP_SHOWN) === 'true';
+    if (localStorage.getItem(STORAGE_KEYS.ROOKIE_POPUP_SHOWN) === 'true') return true;
+    // Auto-mark for users already past baby stage
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
+      if (raw) {
+        const s = JSON.parse(raw);
+        const babyStages = new Set(['digiegg', 'pichimon', 'pukamon', 'chicomon', 'chibimon', 'yukimibotamon', 'nyaromon']);
+        if (!babyStages.has(s.evolutionStage ?? 'digiegg')) {
+          localStorage.setItem(STORAGE_KEYS.ROOKIE_POPUP_SHOWN, 'true');
+          return true;
+        }
+      }
+    } catch { /* ignore */ }
+    return false;
   });
+  const [showHelpModal, setShowHelpModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'true';
   });
@@ -879,6 +906,14 @@ export default function App() {
   return (
     <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()} ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
       }`}>
+        {/* Help Modal */}
+        <HelpModal
+          isOpen={showHelpModal}
+          onClose={() => setShowHelpModal(false)}
+          language={language}
+          theme={theme}
+        />
+
         {/* Floating Items Window */}
         {showItemsWindow && (
           <ItemsWindow
@@ -1122,6 +1157,7 @@ export default function App() {
             onShower={handleShower}
             onOpenItems={() => setShowItemsWindow(prev => !prev)}
             onSleep={handleSleep}
+            onOpenHelp={() => setShowHelpModal(true)}
             isSleeping={isSleeping}
             useAI={useAI}
             aiSettings={aiSettings}

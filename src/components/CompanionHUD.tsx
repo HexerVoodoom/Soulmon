@@ -86,6 +86,7 @@ interface CompanionHUDProps {
   onShower?: () => void;
   onOpenItems?: () => void;
   onSleep?: () => void;
+  onOpenHelp?: () => void;
   isSleeping?: boolean;
   evolutionFlash?: boolean;
   poopEventsScheduled?: number[];
@@ -124,6 +125,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   onShower,
   onOpenItems,
   onSleep,
+  onOpenHelp,
   isSleeping = false,
   evolutionFlash = false,
   poopEventsScheduled = [],
@@ -780,6 +782,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         onOpenItems={onOpenItems ?? (() => {})}
         onBath={handleShowerClick}
         onSleep={onSleep ?? (() => {})}
+        onOpenHelp={onOpenHelp ?? (() => {})}
         canBath={energyFull && !showerCooldown}
         isSleeping={isSleeping}
         language={language}

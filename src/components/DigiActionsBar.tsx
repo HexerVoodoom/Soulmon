@@ -4,6 +4,7 @@ interface DigiActionsBarProps {
   onOpenItems: () => void;
   onBath: () => void;
   onSleep: () => void;
+  onOpenHelp: () => void;
   canBath: boolean;
   isSleeping: boolean;
   language: Language;
@@ -14,6 +15,7 @@ export function DigiActionsBar({
   onOpenItems,
   onBath,
   onSleep,
+  onOpenHelp,
   canBath,
   isSleeping,
   language,
@@ -47,6 +49,14 @@ export function DigiActionsBar({
       onClick: onSleep,
       disabled: false,
       active: isSleeping,
+    },
+    {
+      icon: 'ℹ️',
+      labelEn: 'Help',
+      labelPt: 'Ajuda',
+      onClick: onOpenHelp,
+      disabled: false,
+      active: false,
     },
   ];
 
