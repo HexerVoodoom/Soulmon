@@ -18,14 +18,16 @@ export function CareSystem({ careEvent, onCareEventComplete }: CareSystemProps) 
     return null;
   }
 
+  const isPoop = careEvent.type === 'poop';
+
   return (
     <div className="absolute bottom-3 right-3 z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <img
-        src={careEvent.type === 'poop' ? poopSprite : foodSprite}
+        src={isPoop ? poopSprite : foodSprite}
         alt={careEvent.type}
-        onClick={onCareEventComplete}
-        className="w-12 h-12 object-contain cursor-pointer hover:scale-110 active:scale-95 transition-transform"
-        title={careEvent.type === 'poop' ? 'Clean up' : 'Feed'}
+        onClick={isPoop ? undefined : onCareEventComplete}
+        className={`w-12 h-12 object-contain transition-transform ${isPoop ? 'cursor-default' : 'cursor-pointer hover:scale-110 active:scale-95'}`}
+        title={isPoop ? '🚿 Use shower to clean' : 'Feed'}
         style={{ imageRendering: 'pixelated' }}
       />
     </div>

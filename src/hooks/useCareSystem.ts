@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { CareEvent, getCareMessage } from '../components/CareSystem';
 import { showNotification } from '../utils/notifications';
 import type { Language } from '../utils/i18n';
+import { getStageLevel } from '../types/progression';
 
 interface Activity {
   steps: { completed: boolean }[];
@@ -47,9 +48,9 @@ export function useCareSystem({
   // Resets to false whenever energy leaves the threshold so the next visit fires again.
   const poopFiredRef = useRef(false);
   useEffect(() => {
-    const maxHP = gameState.maxHealthPoints;
-    if (maxHP <= 1) return;
+    if (['digiegg', 'baby-i'].includes(getStageLevel(gameState.evolutionStage))) return;
 
+    const maxHP = gameState.maxHealthPoints;
     if (gameState.energyPoints !== maxHP - 1) {
       poopFiredRef.current = false;
       return;
@@ -71,7 +72,7 @@ export function useCareSystem({
         tag: 'poop-energy-trigger',
       },
     );
-  }, [gameState.energyPoints, gameState.maxHealthPoints]);
+  }, [gameState.energyPoints, gameState.maxHealthPoints, gameState.evolutionStage]);
 
   // Schedule 2 food events per day (tied to having pending activity steps)
   useEffect(() => {
