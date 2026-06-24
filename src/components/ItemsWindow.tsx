@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Language } from '../utils/i18n';
+import { FOOD_BY_CATEGORY } from '../constants/labels';
+import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 
 interface ItemsWindowProps {
   foodInventory: Record<string, number>;
@@ -8,23 +10,27 @@ interface ItemsWindowProps {
   language?: Language;
 }
 
-// Pixel-art food icon names (Win98 file names style)
-const FOOD_NAMES: Record<string, { en: string; pt: string }> = {
-  '🍎': { en: 'Apple',      pt: 'Maçã'      },
-  '🥩': { en: 'Meat',       pt: 'Carne'     },
-  '🥗': { en: 'Salad',      pt: 'Salada'    },
-  '📚': { en: 'EduPack',    pt: 'Edu-Pack'  },
-  '🎯': { en: 'FocusBite',  pt: 'FocoSnack' },
-  '💧': { en: 'AquaDrop',   pt: 'AquaDrop'  },
-  '🧘': { en: 'ZenBar',     pt: 'Zen Bar'   },
-  '💪': { en: 'ProtBar',    pt: 'Prot-Bar'  },
-  '📓': { en: 'ThinkSnack', pt: 'PensaSnack'},
-  '🌅': { en: 'DawnBite',   pt: 'Amanhecer' },
-  '💻': { en: 'CodeFuel',   pt: 'CodeFuel'  },
-  '📅': { en: 'PlanBite',   pt: 'PlanBite'  },
-  '🍅': { en: 'TomatoBit',  pt: 'TomatoBit' },
-  '🔕': { en: 'FocusPack',  pt: 'SilêncPac' },
-  '📞': { en: 'SocialPill', pt: 'SocialPil' },
+const FOOD_NAMES: Record<string, { en: string; pt: string; descEn: string; descPt: string }> = {
+  '🍎': { en: 'Apple',       pt: 'Maçã',      descEn: 'Sharpens the mind',       descPt: 'Aguça a mente'         },
+  '🥩': { en: 'Protein',     pt: 'Proteína',   descEn: 'Builds strength',          descPt: 'Constrói força'         },
+  '🥗': { en: 'Salad',       pt: 'Salada',     descEn: 'Balanced nourishment',     descPt: 'Nutrição equilibrada'   },
+  '☕': { en: 'Coffee',      pt: 'Café',       descEn: 'Fuels productivity',       descPt: 'Combustível produtivo'  },
+  '🧃': { en: 'Juice',       pt: 'Suco',       descEn: 'Refreshing boost',         descPt: 'Energia refrescante'    },
+  '🍚': { en: 'Rice',        pt: 'Arroz',      descEn: 'Steady sustenance',        descPt: 'Sustento constante'     },
+  '🍕': { en: 'Pizza',       pt: 'Pizza',      descEn: 'Social energy',            descPt: 'Energia social'         },
+  '🍭': { en: 'Candy',       pt: 'Doce',       descEn: 'Creative burst',           descPt: 'Explosão criativa'      },
+  '📚': { en: 'EduPack',     pt: 'Edu-Pack',   descEn: 'Knowledge fuel',           descPt: 'Combustível do saber'   },
+  '🎯': { en: 'FocusBite',   pt: 'FocoSnack',  descEn: 'Precision focus',          descPt: 'Foco preciso'           },
+  '💧': { en: 'AquaDrop',    pt: 'AquaDrop',   descEn: 'Pure hydration',           descPt: 'Hidratação pura'        },
+  '🧘': { en: 'ZenBar',      pt: 'Zen Bar',    descEn: 'Calm the mind',            descPt: 'Acalma a mente'         },
+  '💪': { en: 'ProtBar',     pt: 'Prot-Bar',   descEn: 'Muscle recovery',          descPt: 'Recuperação muscular'   },
+  '📓': { en: 'ThinkSnack',  pt: 'PensaSnack', descEn: 'Deep thinking fuel',       descPt: 'Combustível reflexivo'  },
+  '🌅': { en: 'DawnBite',    pt: 'Amanhecer',  descEn: 'Morning energy',           descPt: 'Energia matinal'        },
+  '💻': { en: 'CodeFuel',    pt: 'CodeFuel',   descEn: 'Digital productivity',     descPt: 'Prod. digital'          },
+  '📅': { en: 'PlanBite',    pt: 'PlanBite',   descEn: 'Organize your day',        descPt: 'Organiza o dia'         },
+  '🍅': { en: 'TomatoBit',   pt: 'TomatoBit',  descEn: 'Sprint booster',           descPt: 'Impulsiona sprints'     },
+  '🔕': { en: 'FocusPack',   pt: 'SilêncPac',  descEn: 'Silent focus',             descPt: 'Silêncio focado'        },
+  '📞': { en: 'SocialPill',  pt: 'SocialPil',  descEn: 'Connection energy',        descPt: 'Energia de conexão'     },
 };
 
 function getFoodName(emoji: string, lang: Language): string {
@@ -33,14 +39,32 @@ function getFoodName(emoji: string, lang: Language): string {
   return lang === 'pt-BR' ? entry.pt : entry.en;
 }
 
+function getFoodDesc(emoji: string, lang: Language): string {
+  const entry = FOOD_NAMES[emoji];
+  if (!entry) return '';
+  return lang === 'pt-BR' ? entry.descPt : entry.descEn;
+}
+
+function getFoodAttrs(emoji: string) {
+  const foodDef = Object.values(FOOD_BY_CATEGORY).find(f => f.emoji === emoji);
+  if (!foodDef) return null;
+  return CATEGORY_ATTRIBUTES[foodDef.category];
+}
+
 interface Popover {
   emoji: string;
-  x: number; // fixed screen coords
+  x: number;
   y: number;
 }
 
+const ATTR_COLORS = {
+  vaccine: '#22c55e',
+  data: '#4F80E9',
+  virus: '#E94F4F',
+};
+
 export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US' }: ItemsWindowProps) {
-  const [pos, setPos] = useState({ x: 40, y: -320 }); // relative to bottom of screen
+  const [pos, setPos] = useState({ x: 40, y: -320 });
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ mx: 0, my: 0, px: 0, py: 0 });
   const [justFed, setJustFed] = useState<string | null>(null);
@@ -50,7 +74,6 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
   const isPt = language === 'pt-BR';
   const items = Object.entries(foodInventory).filter(([, c]) => c > 0);
 
-  // Drag handlers
   const onTitleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setDragging(true);
@@ -74,7 +97,6 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
     };
   }, [dragging, dragStart]);
 
-  // Close popover on outside click
   useEffect(() => {
     if (!popover) return;
     const handler = () => setPopover(null);
@@ -110,7 +132,6 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
         className="fixed z-[200] select-none"
         style={{ bottom: `calc(0px + ${-pos.y}px)`, left: pos.x, width: 260 }}
       >
-        {/* Win98 window frame */}
         <div
           className="flex flex-col"
           style={{
@@ -130,7 +151,6 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
             <span className="text-white flex-1 text-xs font-bold" style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>
               {isPt ? 'Itens' : 'Items'}
             </span>
-            {/* Title bar buttons */}
             <div className="flex gap-0.5">
               {['_', '□'].map(label => (
                 <button
@@ -264,70 +284,110 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
         </div>
       </div>
 
-      {/* Win98-style popover above clicked item */}
-      {popover && (
-        <div
-          className="fixed z-[300]"
-          style={{
-            left: popover.x,
-            top: popover.y - 54,
-            transform: 'translateX(-50%)',
-            pointerEvents: 'auto',
-          }}
-          onMouseDown={e => e.stopPropagation()}
-        >
+      {/* Item detail popover */}
+      {popover && (() => {
+        const name = getFoodName(popover.emoji, language);
+        const desc = getFoodDesc(popover.emoji, language);
+        const attrs = getFoodAttrs(popover.emoji);
+        const attrEntries = attrs
+          ? (['vaccine', 'data', 'virus'] as const).filter(k => attrs[k] > 0)
+          : [];
+
+        return (
           <div
+            className="fixed z-[300]"
             style={{
-              border: '2px solid',
-              borderColor: '#ffffff #808080 #808080 #ffffff',
-              backgroundColor: '#c0c0c0',
-              boxShadow: '2px 2px 0 #000',
-              padding: '4px 6px',
-              display: 'flex',
-              gap: 4,
-              alignItems: 'center',
-              whiteSpace: 'nowrap',
+              left: popover.x,
+              top: popover.y - 160,
+              transform: 'translateX(-50%)',
+              pointerEvents: 'auto',
+              width: 186,
             }}
+            onMouseDown={e => e.stopPropagation()}
           >
-            <button
-              onClick={() => handleFeed(popover.emoji)}
+            <div
               style={{
-                fontFamily: 'monospace', fontSize: '0.65rem',
-                backgroundColor: '#c0c0c0', padding: '2px 8px',
-                border: '1.5px solid',
+                border: '2px solid',
                 borderColor: '#ffffff #808080 #808080 #ffffff',
-                cursor: 'default',
+                backgroundColor: '#c0c0c0',
+                boxShadow: '2px 2px 0 #000',
               }}
-              onMouseDown={e => e.stopPropagation()}
             >
-              {isPt ? 'Usar' : 'Use'}
-            </button>
-            <button
-              onClick={() => setPopover(null)}
+              {/* Icon + name + description */}
+              <div style={{ padding: '6px 8px', display: 'flex', gap: 8, alignItems: 'flex-start', borderBottom: '1px solid #808080' }}>
+                <span style={{ fontSize: '1.75rem', lineHeight: 1, flexShrink: 0 }}>{popover.emoji}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', fontWeight: 'bold', color: '#000' }}>{name}</div>
+                  {desc && (
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#666', marginTop: 2 }}>{desc}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Attribute points */}
+              {attrEntries.length > 0 && (
+                <div style={{ padding: '4px 8px', display: 'flex', gap: 6, borderBottom: '1px solid #808080' }}>
+                  {attrEntries.map(k => (
+                    <span
+                      key={k}
+                      style={{
+                        fontFamily: 'monospace',
+                        fontSize: '0.6rem',
+                        color: ATTR_COLORS[k],
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {k === 'vaccine' ? '💉' : k === 'data' ? '💾' : '🦠'}+{attrs![k]}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Buttons */}
+              <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
+                <button
+                  onClick={() => setPopover(null)}
+                  style={{
+                    fontFamily: 'monospace', fontSize: '0.65rem',
+                    backgroundColor: '#c0c0c0', padding: '2px 8px',
+                    border: '1.5px solid',
+                    borderColor: '#ffffff #808080 #808080 #ffffff',
+                    cursor: 'default',
+                  }}
+                  onMouseDown={e => e.stopPropagation()}
+                >
+                  {isPt ? 'Cancelar' : 'Cancel'}
+                </button>
+                <button
+                  onClick={() => handleFeed(popover.emoji)}
+                  style={{
+                    fontFamily: 'monospace', fontSize: '0.65rem',
+                    backgroundColor: '#c0c0c0', padding: '2px 8px',
+                    border: '1.5px solid',
+                    borderColor: '#ffffff #808080 #808080 #ffffff',
+                    cursor: 'default',
+                    fontWeight: 'bold',
+                  }}
+                  onMouseDown={e => e.stopPropagation()}
+                >
+                  {isPt ? 'Usar' : 'Use'}
+                </button>
+              </div>
+            </div>
+
+            {/* Down-pointing caret */}
+            <div
               style={{
-                fontFamily: 'monospace', fontSize: '0.65rem',
-                backgroundColor: '#c0c0c0', padding: '2px 8px',
-                border: '1.5px solid',
-                borderColor: '#ffffff #808080 #808080 #ffffff',
-                cursor: 'default',
+                width: 0, height: 0,
+                borderLeft: '6px solid transparent',
+                borderRight: '6px solid transparent',
+                borderTop: '6px solid #808080',
+                margin: '0 auto',
               }}
-              onMouseDown={e => e.stopPropagation()}
-            >
-              {isPt ? 'Cancelar' : 'Cancel'}
-            </button>
+            />
           </div>
-          {/* Down-pointing triangle caret */}
-          <div
-            style={{
-              width: 0, height: 0,
-              borderLeft: '6px solid transparent',
-              borderRight: '6px solid transparent',
-              borderTop: '6px solid #808080',
-              margin: '0 auto',
-            }}
-          />
-        </div>
-      )}
+        );
+      })()}
     </>
   );
 }
