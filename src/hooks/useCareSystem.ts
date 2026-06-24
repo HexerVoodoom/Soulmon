@@ -112,26 +112,25 @@ export function useCareSystem({
 
       if (gameState.foodEventsScheduled && gameState.foodEventsCompleted) {
         gameState.foodEventsScheduled.forEach((foodTime, index) => {
-          if (gameState.foodEventsCompleted.includes(index) || careEvent?.type === 'food') return;
+          // Skip if already completed, or if any care event is already active (poop takes priority)
+          if (gameState.foodEventsCompleted.includes(index) || careEvent) return;
 
           const elapsed = now - foodTime;
 
           if (elapsed >= 0 && elapsed < 5 * 60000) {
-            if (!careEvent || (careEvent as CareEvent).type !== 'food') {
-              setCareEvent({ type: 'food', requestTime: foodTime, showSprite: false });
-              setMessageTrigger(prev => prev + 1);
-              showNotification(
-                ispt ? '🍎 Hora da comida!' : '🍎 Feeding time!',
-                {
-                  body: ispt
-                    ? 'Seu Digimon está com fome. Alimente-o logo!'
-                    : 'Your Digimon is hungry. Feed it quickly!',
-                  tag: `food-event-${index}`,
-                },
-              );
-            }
+            setCareEvent({ type: 'food', requestTime: foodTime, showSprite: false });
+            setMessageTrigger(prev => prev + 1);
+            showNotification(
+              ispt ? '🍎 Hora da comida!' : '🍎 Feeding time!',
+              {
+                body: ispt
+                  ? 'Seu Digimon está com fome. Alimente-o logo!'
+                  : 'Your Digimon is hungry. Feed it quickly!',
+                tag: `food-event-${index}`,
+              },
+            );
           } else if (elapsed >= 5 * 60000 && elapsed < 6 * 60000) {
-            setCareEvent({ type: 'food', requestTime: foodTime, showSprite: true });
+            if (!careEvent) setCareEvent({ type: 'food', requestTime: foodTime, showSprite: true });
             setGameState((prev: any) => {
               const remaining = dailyCap - (prev.careHPLostToday ?? 0);
               if (remaining <= 0) {
