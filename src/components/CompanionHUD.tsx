@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import bgCyberpunk from "figma:asset/7342065b1193c2befe599eb2d86ef8641f1a596c.png";
 import digiEggSprite from 'figma:asset/6479b687e03b8292ee02a4453bff2eb1a76cfecb.png';
@@ -136,7 +136,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [showBubble, setShowBubble] = useState(false);
   const [squashFrame, setSquashFrame] = useState(0);
   const [chatResponse, setChatResponse] = useState('');
-  const [bubbleTimeoutId, setBubbleTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const bubbleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [eatingEmoji, setEatingEmoji] = useState<string | null>(null);
   const [eatKey, setEatKey] = useState(0);
   const [isMunching, setIsMunching] = useState(false);
@@ -148,6 +148,20 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setHugBalloon(false), 2000);
   };
 
+  // Handle chat message response — stable via useCallback + ref timeout
+  const handleChatMessage = useCallback((response: string) => {
+    if (bubbleTimeoutRef.current) {
+      clearTimeout(bubbleTimeoutRef.current);
+    }
+    setChatResponse(response);
+    setShowBubble(true);
+    bubbleTimeoutRef.current = setTimeout(() => {
+      setShowBubble(false);
+      setChatResponse('');
+      bubbleTimeoutRef.current = null;
+    }, 7000);
+  }, []);
+
   // Trigger eating animation when a food item is used from inventory
   useEffect(() => {
     if (!feedAnim) return;
@@ -158,8 +172,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     handleChatMessage('+1❤️');
     setTimeout(() => setEatingEmoji(null), 1500);
     setTimeout(() => setIsMunching(false), 600);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedAnim?.n]);
+  }, [feedAnim?.n, handleChatMessage]);
 
   // Energy is full when the gauge reaches the stage's max HP (its capacity)
   const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
@@ -202,68 +215,41 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Random message bubble (exactly every 3 minutes)
   useEffect(() => {
     const showMessage = () => {
-      setChatResponse(''); // Clear chat response to show random message
+      if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+      setChatResponse('');
       setShowBubble(true);
-      setTimeout(() => {
+      bubbleTimeoutRef.current = setTimeout(() => {
         setShowBubble(false);
-      }, 8000); // 8 seconds for random messages
+        setChatResponse('');
+        bubbleTimeoutRef.current = null;
+      }, 8000);
     };
 
-    // Show message every 3 minutes (180000ms)
-    const interval = setInterval(() => {
-      showMessage();
-    }, 180000);
-
+    const interval = setInterval(showMessage, 180000);
     return () => clearInterval(interval);
-  }, []); // Run once on mount
+  }, []);
 
-  // Trigger message from outside (when activity is checked or new activity added)
+  // Trigger message from outside (activity checked, new activity, care event)
   useEffect(() => {
     if (triggerMessage > 0) {
-      setChatResponse(''); // Clear chat response to show random message
+      if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+      setChatResponse('');
       setShowBubble(true);
-      setTimeout(() => {
+      bubbleTimeoutRef.current = setTimeout(() => {
         setShowBubble(false);
-      }, 8000); // 8 seconds for trigger messages
+        setChatResponse('');
+        bubbleTimeoutRef.current = null;
+      }, 8000);
     }
   }, [triggerMessage]);
 
-  // Handle chat message response
-  const handleChatMessage = (response: string) => {
-    // Clear existing timeout if any
-    if (bubbleTimeoutId) {
-      clearTimeout(bubbleTimeoutId);
-    }
-    
-    setChatResponse(response);
-    setShowBubble(true);
-    
-    // Set new timeout for 7 seconds
-    const timeoutId = setTimeout(() => {
-      setShowBubble(false);
-      setChatResponse('');
-    }, 7000);
-    
-    setBubbleTimeoutId(timeoutId);
-  };
-
   // Handle bubble click to dismiss
   const handleBubbleClick = () => {
-    if (bubbleTimeoutId) {
-      clearTimeout(bubbleTimeoutId);
-    }
+    if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+    bubbleTimeoutRef.current = null;
     setShowBubble(false);
     setChatResponse('');
   };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (bubbleTimeoutId) {
-        clearTimeout(bubbleTimeoutId);
-      }
-    };
-  }, [bubbleTimeoutId]);
 
   // Contextual fallback phrases based on pet state
   const getContextualPhrase = (): string => {
