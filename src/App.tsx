@@ -313,15 +313,20 @@ export default function App() {
           };
         }
 
-        // Version B: generate food when activity is fully completed
+        // Version B: early stages gain energy directly; baby-ii+ generate food
         let newFoodInventory = prev.foodInventory;
+        let energyGain = 0;
         if (isFullyCompleted && updatedActivity) {
-          const food = FOOD_BY_CATEGORY[updatedActivity.category as keyof typeof FOOD_BY_CATEGORY];
-          if (food) {
-            newFoodInventory = {
-              ...prev.foodInventory,
-              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-            };
+          if (['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage))) {
+            energyGain = 1;
+          } else {
+            const food = FOOD_BY_CATEGORY[updatedActivity.category as keyof typeof FOOD_BY_CATEGORY];
+            if (food) {
+              newFoodInventory = {
+                ...prev.foodInventory,
+                [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+              };
+            }
           }
         }
 
@@ -330,6 +335,7 @@ export default function App() {
           activities: updatedActivities,
           activityStats: newActivityStats,
           foodInventory: newFoodInventory,
+          ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, prev.maxHealthPoints) }),
         };
       });
 
@@ -353,9 +359,6 @@ export default function App() {
       if (careEvent) {
         handleCareEventComplete();
       }
-
-      // Trigger message bubble
-      setMessageTrigger(prev => prev + 1);
     }
   };
 
@@ -400,15 +403,20 @@ export default function App() {
         };
       }
 
-      // Version B: generate food when completing (not when unchecking)
+      // Version B: early stages gain energy directly; baby-ii+ generate food
       let newFoodInventory = prev.foodInventory;
+      let energyGain = 0;
       if (newCompletedState && activity) {
-        const food = FOOD_BY_CATEGORY[activity.category as keyof typeof FOOD_BY_CATEGORY];
-        if (food) {
-          newFoodInventory = {
-            ...prev.foodInventory,
-            [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-          };
+        if (['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage))) {
+          energyGain = 1;
+        } else {
+          const food = FOOD_BY_CATEGORY[activity.category as keyof typeof FOOD_BY_CATEGORY];
+          if (food) {
+            newFoodInventory = {
+              ...prev.foodInventory,
+              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+            };
+          }
         }
       }
 
@@ -417,6 +425,7 @@ export default function App() {
         activities: updatedActivities,
         activityStats: newActivityStats,
         foodInventory: newFoodInventory,
+        ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, prev.maxHealthPoints) }),
       };
     });
 
@@ -437,9 +446,6 @@ export default function App() {
     if (careEvent) {
       handleCareEventComplete();
     }
-
-    // Trigger message bubble
-    setMessageTrigger(prev => prev + 1);
   };
 
   const handleConfirmUncheck = () => {
@@ -618,10 +624,17 @@ export default function App() {
             completionCount: 0,
           };
 
-          const food = FOOD_BY_CATEGORY[task.category as keyof typeof FOOD_BY_CATEGORY];
-          const newFoodInventory = food
-            ? { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 }
-            : prev.foodInventory;
+          const isEarlyStage = ['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage));
+          let newFoodInventory = prev.foodInventory;
+          let energyGain = 0;
+          if (isEarlyStage) {
+            energyGain = 1;
+          } else {
+            const food = FOOD_BY_CATEGORY[task.category as keyof typeof FOOD_BY_CATEGORY];
+            if (food) {
+              newFoodInventory = { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 };
+            }
+          }
 
           return {
             ...prev,
@@ -641,6 +654,7 @@ export default function App() {
               [activityKey]: { ...currentStats, completionCount: currentStats.completionCount + 1 },
             },
             foodInventory: newFoodInventory,
+            ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, prev.maxHealthPoints) }),
           };
         });
       }, 3000);

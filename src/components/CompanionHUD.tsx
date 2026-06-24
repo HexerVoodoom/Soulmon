@@ -48,6 +48,7 @@ import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
 import { playShower } from '../utils/sounds';
+import { getStageLevel } from '../types/progression';
 
 interface CompanionHUDProps {
   companionMood: 'idle' | 'happy' | 'tired';
@@ -148,6 +149,8 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Energy is full when the gauge reaches the stage's max HP (its capacity)
   const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
+
+  const isEarlyStage = ['digiegg', 'baby-i'].includes(getStageLevel(evolutionStage));
 
   // Walking animation
   useEffect(() => {
@@ -741,10 +744,10 @@ export const CompanionHUD = memo(function CompanionHUD({
           {/* Desktop icons — top-right of pet area */}
           <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
             {([
-              { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-              { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
+              !isEarlyStage && { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+              !isEarlyStage && { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
               { key: 'sleep', icon: isSleeping ? '☀️' : '💤', en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-            ] as const).map(a => (
+            ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
               <button
                 key={a.key}
                 onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
