@@ -143,6 +143,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [isShowering, setIsShowering] = useState(false);
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
+  const [isTapLoading, setIsTapLoading] = useState(false);
 
   const showHug = () => {
     setHugBalloon(true);
@@ -266,16 +267,98 @@ export const CompanionHUD = memo(function CompanionHUD({
     };
   }, [bubbleTimeoutId]);
 
-  // Handle digimon click - shows text face based on current energy level
-  const handleDigimonClick = () => {
+  // Contextual fallback phrases based on pet state
+  const getContextualPhrase = (): string => {
+    const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
-    let face: string;
-    if (ratio >= 1)        face = ':D';
-    else if (ratio >= 0.6) face = '^^';
-    else if (ratio >= 0.35) face = ':)';
-    else if (ratio >= 0.1)  face = ':-/';
-    else                    face = ':T';
-    handleChatMessage(face);
+    const hpRatio = maxHealthPoints > 0 ? healthPoints / maxHealthPoints : 0;
+    const isPt = language === 'pt-BR';
+
+    if (careEvent?.type === 'poop') return isPt
+      ? pick(['Preciso de banho! 🚿', 'Tô sujo! 💩', 'Me limpa! 🚿'])
+      : pick(['Need a shower! 🚿', 'I made a mess! 💩', 'Clean me! 🚿']);
+
+    if (careEvent?.type === 'food') return isPt
+      ? pick(['Estou com fome! 🍖', 'Me alimenta! 😋', 'Com fome! 🍎'])
+      : pick(['I\'m hungry! 🍖', 'Feed me! 😋', 'So hungry! 🍎']);
+
+    if (hpRatio <= 0.25) return isPt
+      ? pick(['Não me sinto bem... 💔', 'Preciso de cuidados! 🥺', 'Meu HP está baixo... 😢'])
+      : pick(['Not feeling great... 💔', 'I need some care! 🥺', 'My HP is low... 😢']);
+
+    if (ratio >= 1) return isPt
+      ? pick(['Cheio de energia! ⚡', 'Pronto para tudo! 💪', 'Totalmente carregado! 🌟', 'Vamos lá! 😄'])
+      : pick(['Full power! ⚡', 'Ready for anything! 💪', 'Fully charged! 🌟', 'Let\'s go! 😄']);
+
+    if (ratio >= 0.6) return isPt
+      ? pick(['Me sentindo bem! 😊', 'Tudo ótimo! ✨', 'Energia boa! 🎮', 'Firme e forte! 💚'])
+      : pick(['Feeling great! 😊', 'All good! ✨', 'Good energy! 🎮', 'Going strong! 💚']);
+
+    if (ratio >= 0.35) return isPt
+      ? pick(['Podia comer algo... 🤔', 'Como está seu dia? 😌', 'Vamos completar tarefas! 🎯', 'Quase na metade! 🙂'])
+      : pick(['Could use a snack... 🤔', 'How\'s your day? 😌', 'Let\'s complete tasks! 🎯', 'Getting there! 🙂']);
+
+    if (ratio >= 0.1) return isPt
+      ? pick(['Ficando com fome... 😴', 'Preciso de comida! 🍎', 'Complete tarefas! 💪', 'Pouca energia... 🔋'])
+      : pick(['Getting hungry... 😴', 'Need food! 🍎', 'Complete tasks! 💪', 'Low energy... 🔋']);
+
+    return isPt
+      ? pick(['Com muita fome... 😭', 'Por favor me alimente! 🍖', 'Estômago vazio... 😢', 'Preciso comer! 😩'])
+      : pick(['So hungry... 😭', 'Please feed me! 🍖', 'Empty stomach... 😢', 'Need to eat! 😩']);
+  };
+
+  // Handle digimon click — contextual phrase, AI if enabled
+  const handleDigimonClick = async () => {
+    if (isTapLoading) return;
+    const fallback = getContextualPhrase();
+
+    if (!useAI) {
+      handleChatMessage(fallback);
+      return;
+    }
+
+    setIsTapLoading(true);
+    handleChatMessage('...');
+
+    const timer = setTimeout(() => {
+      handleChatMessage(fallback);
+      setIsTapLoading(false);
+    }, 5000);
+
+    try {
+      const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
+      const contextMsg = language === 'pt-BR'
+        ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
+        : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
+
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: contextMsg,
+          digimonName: currentStage,
+          mood: companionMood,
+          evolutionStage,
+          dominantBranch,
+          language,
+          aiSettings,
+        }),
+      });
+
+      clearTimeout(timer);
+
+      if (res.ok) {
+        const data = await res.json();
+        handleChatMessage(data.response || fallback);
+      } else {
+        handleChatMessage(fallback);
+      }
+    } catch {
+      clearTimeout(timer);
+      handleChatMessage(fallback);
+    } finally {
+      setIsTapLoading(false);
+    }
   };
 
   // Get sprite based on evolution stage
@@ -598,29 +681,29 @@ export const CompanionHUD = memo(function CompanionHUD({
             {renderHearts()}
           </div>
 
-          {/* Message bubble - Fixed at top, full width, absolute positioning */}
+          {/* Message bubble - bottom of pet area */}
           {showBubble && (
-            <div className="absolute top-0 left-0 right-0 px-4 pt-2 z-20">
-              <div 
-                className={`px-4 py-2.5 animate-in fade-in slide-in-from-top-2 duration-300 cursor-pointer transition-all ${
+            <div className="absolute bottom-0 left-0 right-0 px-3 pb-2 z-20">
+              <div
+                className={`px-3 py-2 animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer transition-all ${
                   isGlitch
                     ? 'glitch-activity-card'
-                    : isWin98 
+                    : isWin98
                       ? 'win98-activity-card'
-                      : 'bg-white rounded-xl shadow-lg hover:shadow-xl'
+                      : 'bg-white/90 rounded-xl shadow-lg hover:shadow-xl'
                 }`}
                 onClick={handleBubbleClick}
               >
                 <p 
                   className={isWin98 ? 'text-[#ffffff] text-center break-words' : 'text-gray-800 text-center break-words'}
-                  style={{ 
-                    fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace', 
-                    fontSize: '0.75rem',
-                    lineHeight: '1.4',
-                    textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined
+                  style={{
+                    fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace',
+                    fontSize: '0.7rem',
+                    lineHeight: '1.3',
+                    textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined,
                   }}
                 >
-                  {displayText(chatResponse || message)}
+                  {isTapLoading && chatResponse === '...' ? '...' : displayText(chatResponse || message)}
                 </p>
               </div>
             </div>
