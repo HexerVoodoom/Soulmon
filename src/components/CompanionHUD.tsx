@@ -169,9 +169,10 @@ export const CompanionHUD = memo(function CompanionHUD({
   useEffect(() => {
     const speed = companionMood === 'happy' ? 0.5 : companionMood === 'tired' ? 0.15 : 0.3;
     const interval = setInterval(() => {
+      if (isSleeping || isShowering || isMunching) return;
       setPosition(prev => {
         const newPos = direction === 'right' ? prev + speed : prev - speed;
-        
+
         // Reverse direction at boundaries (10 to 90 to prevent edge clipping)
         if (newPos >= 90) {
           setDirection('left');
@@ -180,13 +181,13 @@ export const CompanionHUD = memo(function CompanionHUD({
           setDirection('right');
           return 10;
         }
-        
+
         return newPos;
       });
     }, 50);
 
     return () => clearInterval(interval);
-  }, [direction, companionMood]);
+  }, [direction, companionMood, isSleeping, isShowering, isMunching]);
 
   // Squash and stretch animation (10% height variation)
   useEffect(() => {
@@ -756,7 +757,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           )}
 
           {/* Win98 desktop icons — bottom of pet area */}
-          <div className="absolute bottom-1 left-0 right-0 z-30 flex justify-center gap-3">
+          <div className="absolute bottom-0 left-0 right-0 z-30 flex justify-center gap-3">
             {[
               { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false },
               { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown },
