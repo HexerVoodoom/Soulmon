@@ -57,6 +57,7 @@ export default function App() {
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   const [messageTrigger, setMessageTrigger] = useState(0);
+  const [feedAnim, setFeedAnim] = useState<{ emoji: string; n: number } | null>(null);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -751,6 +752,7 @@ export default function App() {
         },
       };
     });
+    setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, []);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
@@ -1167,6 +1169,7 @@ export default function App() {
             onCreateActivity={handleAICreateActivity}
             language={language}
             evolutionFlash={evolutionFlash}
+            feedAnim={feedAnim}
           />
         </div>
 

@@ -89,6 +89,7 @@ interface CompanionHUDProps {
   isSleeping?: boolean;
   hasNewItems?: boolean;
   evolutionFlash?: boolean;
+  feedAnim?: { emoji: string; n: number } | null;
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -126,6 +127,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   isSleeping = false,
   hasNewItems = false,
   evolutionFlash = false,
+  feedAnim = null,
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -146,6 +148,19 @@ export const CompanionHUD = memo(function CompanionHUD({
     setHugBalloon(true);
     setTimeout(() => setHugBalloon(false), 2000);
   };
+
+  // Trigger eating animation when a food item is used from inventory
+  useEffect(() => {
+    if (!feedAnim) return;
+    setEatingEmoji(feedAnim.emoji);
+    setEatKey(k => k + 1);
+    setIsMunching(true);
+    showHug();
+    handleChatMessage('+1❤️');
+    setTimeout(() => setEatingEmoji(null), 1500);
+    setTimeout(() => setIsMunching(false), 600);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedAnim?.n]);
 
   // Energy is full when the gauge reaches the stage's max HP (its capacity)
   const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
