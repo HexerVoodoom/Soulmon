@@ -46,7 +46,6 @@ import mastemonSprite from 'figma:asset/a036d6071a61f5a7cde8ca604f58cd0267141481
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
-import { DigiActionsBar } from './DigiActionsBar';
 import { Language } from '../utils/i18n';
 import { playShower } from '../utils/sounds';
 
@@ -86,7 +85,6 @@ interface CompanionHUDProps {
   onShower?: () => void;
   onOpenItems?: () => void;
   onSleep?: () => void;
-  onOpenHelp?: () => void;
   isSleeping?: boolean;
   evolutionFlash?: boolean;
   poopEventsScheduled?: number[];
@@ -125,7 +123,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   onShower,
   onOpenItems,
   onSleep,
-  onOpenHelp,
   isSleeping = false,
   evolutionFlash = false,
   poopEventsScheduled = [],
@@ -378,7 +375,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Check if sprite is flipped by default and needs correction
   const isFlippedByDefault = () => {
-    return evolutionStage.toLowerCase() === 'pichimon';
+    return ['pichimon', 'chicomon', 'yukimibotamon'].includes(evolutionStage.toLowerCase());
   };
 
   // Get the correct horizontal flip for the sprite
@@ -757,6 +754,28 @@ export const CompanionHUD = memo(function CompanionHUD({
               ))}
             </div>
           )}
+
+          {/* Win98 desktop icons — bottom of pet area */}
+          <div className="absolute bottom-1 left-0 right-0 z-30 flex justify-center gap-3">
+            {[
+              { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false },
+              { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown },
+              { key: 'sleep', icon: isSleeping ? '☀️' : '💤', en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false },
+            ].map(a => (
+              <button
+                key={a.key}
+                onClick={a.disabled ? undefined : a.onClick}
+                disabled={a.disabled}
+                title={a.key === 'bath' && a.disabled ? (language === 'pt-BR' ? 'Energia cheia necessária' : 'Full energy required') : (language === 'pt-BR' ? a.pt : a.en)}
+                className={`flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-sm select-none ${a.disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:bg-[#000080]/70 active:bg-[#000080]'}`}
+              >
+                <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{a.icon}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.5rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
+                  {language === 'pt-BR' ? a.pt : a.en}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Energy Bar - Vertical on Right Side */}
@@ -777,20 +796,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         </div>
       </div>
 
-      {/* DigiActions bar — Items, Bath, Sleep */}
-      <DigiActionsBar
-        onOpenItems={onOpenItems ?? (() => {})}
-        onBath={handleShowerClick}
-        onSleep={onSleep ?? (() => {})}
-        onOpenHelp={onOpenHelp ?? (() => {})}
-        canBath={energyFull && !showerCooldown}
-        isSleeping={isSleeping}
-        language={language}
-        theme={theme}
-      />
-
       {/* Chat Box - Below Companion Area */}
-      <div className="mt-1">
+      <div className="mt-2">
         <ChatBox 
           digimonName={currentStage}
           mood={companionMood}

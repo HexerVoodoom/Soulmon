@@ -1157,7 +1157,6 @@ export default function App() {
             onShower={handleShower}
             onOpenItems={() => setShowItemsWindow(prev => !prev)}
             onSleep={handleSleep}
-            onOpenHelp={() => setShowHelpModal(true)}
             isSleeping={isSleeping}
             useAI={useAI}
             aiSettings={aiSettings}
