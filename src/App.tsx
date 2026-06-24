@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
@@ -69,6 +69,7 @@ export default function App() {
   const [soundMuted, setSoundMuted] = useState(() => isMuted());
   const [evolutionFlash, setEvolutionFlash] = useState(false);
   const [showItemsWindow, setShowItemsWindow] = useState(false);
+  const [newItemsReady, setNewItemsReady] = useState(false);
   const [isSleeping, setIsSleeping] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
@@ -143,6 +144,16 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled ? 'true' : 'false');
   }, [notificationsEnabled]);
+
+  // Detect when food items are added to inventory
+  const prevInventoryTotalRef = useRef(
+    Object.values(gameState.foodInventory).reduce((s, n) => s + n, 0)
+  );
+  useEffect(() => {
+    const total = Object.values(gameState.foodInventory).reduce((s, n) => s + n, 0);
+    if (total > prevInventoryTotalRef.current) setNewItemsReady(true);
+    prevInventoryTotalRef.current = total;
+  }, [gameState.foodInventory]);
 
   const { getCompanionMessageWithCare: _careMessageFn } = useCareSystem({
     gameState,
@@ -1155,7 +1166,8 @@ export default function App() {
             foodInventory={gameState.foodInventory}
             onFeed={handleFeed}
             onShower={handleShower}
-            onOpenItems={() => setShowItemsWindow(prev => !prev)}
+            hasNewItems={newItemsReady}
+            onOpenItems={() => { setShowItemsWindow(prev => !prev); setNewItemsReady(false); }}
             onSleep={handleSleep}
             isSleeping={isSleeping}
             useAI={useAI}
