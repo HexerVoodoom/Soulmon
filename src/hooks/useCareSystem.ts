@@ -119,7 +119,7 @@ export function useCareSystem({
           const elapsed = now - foodTime;
 
           if (elapsed >= 0 && elapsed < 5 * 60000) {
-            setCareEvent({ type: 'food', requestTime: foodTime, showSprite: false });
+            setCareEvent({ type: 'food', requestTime: foodTime, showSprite: true });
             setMessageTrigger(prev => prev + 1);
             showNotification(
               ispt ? '🍎 Hora da comida!' : '🍎 Feeding time!',
@@ -171,7 +171,7 @@ export function useCareSystem({
   ]);
 
   const getCompanionMessageWithCare = (fallbackMessage: string): string => {
-    if (careEvent && !careEvent.showSprite) {
+    if (careEvent) {
       return getCareMessage(careEvent.type);
     }
     return fallbackMessage;
