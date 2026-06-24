@@ -738,8 +738,8 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
-          {/* Win98 desktop icons — bottom of pet area */}
-          <div className="absolute bottom-0 left-0 right-0 z-30 flex justify-center gap-3">
+          {/* Win98 desktop icons — bottom-left of pet area */}
+          <div className="absolute bottom-0 left-0 z-30 flex gap-1">
             {([
               { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
               { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
