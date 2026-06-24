@@ -738,8 +738,8 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
-          {/* Desktop icons — bottom-left of pet area */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
+          {/* Desktop icons — top-right of pet area */}
+          <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
             {([
               { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
               { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
