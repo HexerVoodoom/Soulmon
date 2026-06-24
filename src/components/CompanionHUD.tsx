@@ -143,8 +143,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [isShowering, setIsShowering] = useState(false);
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
-  const [isTapLoading, setIsTapLoading] = useState(false);
-
   const showHug = () => {
     setHugBalloon(true);
     setTimeout(() => setHugBalloon(false), 2000);
@@ -307,58 +305,26 @@ export const CompanionHUD = memo(function CompanionHUD({
       : pick(['So hungry... 😭', 'Please feed me! 🍖', 'Empty stomach... 😢', 'Need to eat! 😩']);
   };
 
-  // Handle digimon click — contextual phrase, AI if enabled
-  const handleDigimonClick = async () => {
-    if (isTapLoading) return;
+  // Handle digimon click — show phrase immediately, fire-and-forget AI update
+  const handleDigimonClick = () => {
     const fallback = getContextualPhrase();
+    handleChatMessage(fallback);
 
-    if (!useAI) {
-      handleChatMessage(fallback);
-      return;
-    }
+    if (!useAI) return;
 
-    setIsTapLoading(true);
-    handleChatMessage('...');
+    const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
+    const contextMsg = language === 'pt-BR'
+      ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
+      : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
 
-    const timer = setTimeout(() => {
-      handleChatMessage(fallback);
-      setIsTapLoading(false);
-    }, 5000);
-
-    try {
-      const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
-      const contextMsg = language === 'pt-BR'
-        ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
-        : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
-
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: contextMsg,
-          digimonName: currentStage,
-          mood: companionMood,
-          evolutionStage,
-          dominantBranch,
-          language,
-          aiSettings,
-        }),
-      });
-
-      clearTimeout(timer);
-
-      if (res.ok) {
-        const data = await res.json();
-        handleChatMessage(data.response || fallback);
-      } else {
-        handleChatMessage(fallback);
-      }
-    } catch {
-      clearTimeout(timer);
-      handleChatMessage(fallback);
-    } finally {
-      setIsTapLoading(false);
-    }
+    fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: contextMsg, digimonName: currentStage, mood: companionMood, evolutionStage, dominantBranch, language, aiSettings }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.response) handleChatMessage(data.response); })
+      .catch(() => {});
   };
 
   // Get sprite based on evolution stage
@@ -703,7 +669,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined,
                   }}
                 >
-                  {isTapLoading && chatResponse === '...' ? '...' : displayText(chatResponse || message)}
+                  {displayText(chatResponse || message)}
                 </p>
               </div>
             </div>
