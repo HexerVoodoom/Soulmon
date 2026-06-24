@@ -248,16 +248,16 @@ export const CompanionHUD = memo(function CompanionHUD({
     };
   }, [bubbleTimeoutId]);
 
-  // Handle digimon click - sends random emoji
+  // Handle digimon click - shows text face based on current energy level
   const handleDigimonClick = () => {
-    const emojis = [
-      '❤️', '💚', '💙', '💜', '✨', '⭐', '🌟', 
-      '😊', '😄', '🥰', '😍', '🤗', '😎', '🤩',
-      '💪', '👍', '✌️', '🙌', '👋', '🎮', '🎯',
-      '🔥', '⚡', '💫', '🌈', '🎉', '🎊', '🚀'
-    ];
-    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-    handleChatMessage(randomEmoji);
+    const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
+    let face: string;
+    if (ratio >= 1)        face = ':D';
+    else if (ratio >= 0.6) face = '^^';
+    else if (ratio >= 0.35) face = ':)';
+    else if (ratio >= 0.1)  face = ':-/';
+    else                    face = ':T';
+    handleChatMessage(face);
   };
 
   // Get sprite based on evolution stage
@@ -360,7 +360,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Check if sprite is flipped by default and needs correction
   const isFlippedByDefault = () => {
-    return ['pichimon', 'chicomon', 'yukimibotamon'].includes(evolutionStage.toLowerCase());
+    return ['pichimon', 'chicomon', 'yukimibotamon', 'pukamon'].includes(evolutionStage.toLowerCase());
   };
 
   // Get the correct horizontal flip for the sprite
