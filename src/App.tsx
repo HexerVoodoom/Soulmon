@@ -1164,8 +1164,6 @@ export default function App() {
             onCreateActivity={handleAICreateActivity}
             language={language}
             evolutionFlash={evolutionFlash}
-            poopEventsScheduled={gameState.poopEventsScheduled}
-            poopEventsCompleted={gameState.poopEventsCompleted}
           />
         </div>
 

@@ -87,8 +87,6 @@ interface CompanionHUDProps {
   onSleep?: () => void;
   isSleeping?: boolean;
   evolutionFlash?: boolean;
-  poopEventsScheduled?: number[];
-  poopEventsCompleted?: number[];
 }
 
 export const CompanionHUD = memo(function CompanionHUD({
@@ -125,8 +123,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   onSleep,
   isSleeping = false,
   evolutionFlash = false,
-  poopEventsScheduled = [],
-  poopEventsCompleted = [],
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -150,20 +146,6 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Energy is full when the gauge reaches the stage's max HP (its capacity)
   const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
-
-  // Next scheduled poop event that hasn't been completed yet
-  const nextPoopTime = poopEventsScheduled
-    .filter((_, i) => !poopEventsCompleted.includes(i))
-    .sort((a, b) => a - b)[0] ?? null;
-  const nextPoopLabel = (() => {
-    if (!nextPoopTime) return null;
-    const now = Date.now();
-    const diff = nextPoopTime - now;
-    if (diff <= 0) return null; // already showing or missed
-    const h = Math.floor(diff / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    return h > 0 ? `~${h}h` : `~${m}m`;
-  })();
 
   // Walking animation
   useEffect(() => {
@@ -626,16 +608,6 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
-          {/* Next poop indicator — top-right, shown when event is scheduled but not yet triggered */}
-          {nextPoopLabel && (
-            <div
-              className="absolute top-2 right-2 z-10 flex items-center gap-0.5"
-              title={language === 'pt-BR' ? `Próximo cocô em ${nextPoopLabel}` : `Next poop in ${nextPoopLabel}`}
-            >
-              <span style={{ fontSize: '0.65rem' }}>🚽</span>
-              <span className="text-white/60" style={{ fontFamily: 'monospace', fontSize: '0.55rem' }}>{nextPoopLabel}</span>
-            </div>
-          )}
 
           {/* Care Event Sprite */}
           {careEvent && <CareSystem careEvent={careEvent} onCareEventComplete={onCareEventComplete || (() => {})} />}
