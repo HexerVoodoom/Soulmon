@@ -54,11 +54,6 @@ export default function App() {
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
-  const [confirmDialog, setConfirmDialog] = useState<{ isOpen: boolean; activityId: string; stepId: string }>({
-    isOpen: false,
-    activityId: '',
-    stepId: '',
-  });
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
   const [messageTrigger, setMessageTrigger] = useState(0);
@@ -272,12 +267,11 @@ export default function App() {
     const activity = gameState.activities.find(a => a.id === activityId);
     const step = activity?.steps.find(s => s.id === stepId);
 
-    // If trying to uncheck, require confirmation
-    if (step?.completed) {
-      setConfirmDialog({ isOpen: true, activityId, stepId });
-    } else {
-      // Allow checking without confirmation
-      setGameState(prev => {
+    // Completed steps cannot be unchecked — only daily reset restores them
+    if (step?.completed) return;
+
+    // Allow checking without confirmation
+    setGameState(prev => {
         const updatedActivities = prev.activities.map(act =>
           act.id === activityId
             ? {
@@ -359,12 +353,14 @@ export default function App() {
       if (careEvent) {
         handleCareEventComplete();
       }
-    }
   };
 
   // Handler para atividades sem etapas
   const handleToggleActivityCompletion = (activityId: string) => {
     const today = new Date().toDateString();
+    const activity = gameState.activities.find(a => a.id === activityId);
+    // Completed activities cannot be unchecked — only daily reset restores them
+    if (activity?.completedToday && activity?.lastCompletedDate === today) return;
 
     setGameState(prev => {
       const activity = prev.activities.find(a => a.id === activityId);
@@ -446,24 +442,6 @@ export default function App() {
     if (careEvent) {
       handleCareEventComplete();
     }
-  };
-
-  const handleConfirmUncheck = () => {
-    const { activityId, stepId } = confirmDialog;
-    setGameState(prev => ({
-      ...prev,
-      activities: prev.activities.map(activity =>
-        activity.id === activityId
-          ? {
-            ...activity,
-            steps: activity.steps.map(step =>
-              step.id === stepId ? { ...step, completed: false } : step
-            ),
-          }
-          : activity
-      ),
-    }));
-    setConfirmDialog({ isOpen: false, activityId: '', stepId: '' });
   };
 
   const handleEditActivity = useCallback((activityId: string) => {
@@ -1280,14 +1258,6 @@ export default function App() {
           language={language}
         /></Suspense>
       )}
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        onClose={() => setConfirmDialog({ isOpen: false, activityId: '', stepId: '' })}
-        onConfirm={handleConfirmUncheck}
-        title={t.main.uncheckTask}
-        message={t.main.uncheckTaskMessage}
-      />
 
       <ConfirmDialog
         isOpen={resetOnboardingOpen}

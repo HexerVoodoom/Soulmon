@@ -87,15 +87,15 @@ export const ActivityCard = memo(function ActivityCard({
           {/* Checkbox - sempre presente quando NÃO tem steps */}
           {totalSteps === 0 && (
             <div 
-              onClick={isDisabled ? undefined : () => onToggleCompletion?.(id)}
-              className={`w-6 h-6 rounded-lg border flex items-center justify-center cursor-pointer transition-all flex-shrink-0 ${
+              onClick={isDisabled || isCompleted ? undefined : () => onToggleCompletion?.(id)}
+              className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all flex-shrink-0 ${
                 isDisabled
                   ? 'opacity-50 cursor-not-allowed border-[#d1d5dc]'
                   : isCompleted
-                  ? 'bg-[#22c55e] border-[#22c55e]'
+                  ? 'bg-[#22c55e] border-[#22c55e] cursor-default'
                   : isWin98
-                  ? 'border-[#d1d5dc] bg-white hover:bg-gray-50'
-                  : 'border-[#d1d5dc] bg-white hover:bg-gray-50'
+                  ? 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
+                  : 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
               }`}
             >
               {isCompleted && (

@@ -17,16 +17,16 @@ export function StepRow({ id, label, completed, onToggle, theme = 'default', dis
         : completed ? 'bg-[#e8e8e8]' : 'bg-[#f3f4f6] hover:bg-gray-100'
     }`}>
       {/* Custom Checkbox */}
-      <div 
-        onClick={disabled ? undefined : () => onToggle(id)}
-        className={`w-5 h-5 rounded-lg border flex items-center justify-center cursor-pointer transition-all flex-shrink-0 ${
+      <div
+        onClick={disabled || completed ? undefined : () => onToggle(id)}
+        className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all flex-shrink-0 ${
           disabled
             ? 'opacity-50 cursor-not-allowed border-[#d1d5dc]'
             : completed
-            ? 'bg-[#22c55e] border-[#22c55e]'
+            ? 'bg-[#22c55e] border-[#22c55e] cursor-default'
             : isWin98
-            ? 'border-[#d1d5dc] bg-white hover:bg-gray-50'
-            : 'border-[#d1d5dc] bg-white hover:bg-gray-50 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]'
+            ? 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
+            : 'border-[#d1d5dc] bg-white hover:bg-gray-50 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] cursor-pointer'
         }`}
       >
         {completed && (
@@ -37,9 +37,9 @@ export function StepRow({ id, label, completed, onToggle, theme = 'default', dis
       </div>
 
       <label
-        onClick={disabled ? undefined : () => onToggle(id)}
+        onClick={disabled || completed ? undefined : () => onToggle(id)}
         className={`select-none flex-1 ${
-          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          disabled ? 'cursor-not-allowed opacity-50' : completed ? 'cursor-default' : 'cursor-pointer'
         } ${
           isWin98 ? 'text-[#4d5461]' : completed ? 'text-[#6b7280]' : 'text-[#4d5461]'
         }`}
