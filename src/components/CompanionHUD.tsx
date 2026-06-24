@@ -604,6 +604,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       )}
       
       {/* Main Container with Companion Area and Energy Bar */}
+      <div className="relative">
       <div className={`flex gap-2 ${isWin98 ? 'p-2' : ''}`}>
         {/* Companion Display Area */}
         <div 
@@ -632,34 +633,6 @@ export const CompanionHUD = memo(function CompanionHUD({
           >
             {renderHearts()}
           </div>
-
-          {/* Message bubble - bottom of pet area */}
-          {showBubble && (
-            <div className="absolute bottom-0 left-0 right-0 px-3 pb-2 z-20">
-              <div
-                className={`px-3 py-2 animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer transition-all ${
-                  isGlitch
-                    ? 'glitch-activity-card'
-                    : isWin98
-                      ? 'win98-activity-card'
-                      : 'bg-white/90 rounded-xl shadow-lg hover:shadow-xl'
-                }`}
-                onClick={handleBubbleClick}
-              >
-                <p 
-                  className={isWin98 ? 'text-[#ffffff] text-center break-words' : 'text-gray-800 text-center break-words'}
-                  style={{
-                    fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace',
-                    fontSize: '0.7rem',
-                    lineHeight: '1.3',
-                    textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined,
-                  }}
-                >
-                  {displayText(chatResponse || message)}
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Evolution flash overlay */}
           {evolutionFlash && (
@@ -853,6 +826,38 @@ export const CompanionHUD = memo(function CompanionHUD({
         >
           <EnergyBar totalSegments={maxHealthPoints} filledSegments={energyPoints} />
         </div>
+      </div>
+
+      {/* Speech bubble — outside overflow-hidden so it's never clipped */}
+      {showBubble && (
+        <div
+          className="absolute bottom-0 left-0 px-3 pb-2"
+          style={{ right: '34px', zIndex: 50 }}
+        >
+          <div
+            className={`px-3 py-2 cursor-pointer ${
+              isGlitch
+                ? 'glitch-activity-card'
+                : isWin98
+                  ? 'win98-activity-card'
+                  : 'bg-white/90 rounded-xl shadow-lg'
+            }`}
+            onClick={handleBubbleClick}
+          >
+            <p
+              className={isWin98 ? 'text-[#ffffff] text-center break-words' : 'text-gray-800 text-center break-words'}
+              style={{
+                fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace',
+                fontSize: '0.7rem',
+                lineHeight: '1.3',
+                textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined,
+              }}
+            >
+              {displayText(chatResponse || message)}
+            </p>
+          </div>
+        </div>
+      )}
       </div>
 
       {/* Chat Box - Below Companion Area */}
