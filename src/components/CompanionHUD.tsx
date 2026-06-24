@@ -738,8 +738,8 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
-          {/* Win98 desktop icons — bottom-left of pet area */}
-          <div className="absolute bottom-0 left-0 z-30 flex gap-1">
+          {/* Desktop icons — bottom-left of pet area */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
             {([
               { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
               { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
@@ -750,10 +750,30 @@ export const CompanionHUD = memo(function CompanionHUD({
                 onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
                 disabled={a.key !== 'bath' && a.disabled}
                 title={language === 'pt-BR' ? a.pt : a.en}
-                className={`relative flex flex-col items-center gap-0.5 px-2 py-0.5 rounded-sm select-none ${a.disabled ? 'opacity-40 cursor-default' : 'cursor-pointer hover:bg-[#000080]/70 active:bg-[#000080]'}`}
+                style={{
+                  position: 'relative',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '2px',
+                  padding: '2px 6px 3px',
+                  cursor: a.disabled ? 'default' : 'pointer',
+                  opacity: a.disabled ? 0.4 : 1,
+                  background: 'transparent',
+                  border: 'none',
+                  userSelect: 'none',
+                }}
               >
                 {a.badge && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 border border-black z-10" />
+                  <span style={{
+                    position: 'absolute',
+                    top: 0, right: 2,
+                    width: 8, height: 8,
+                    borderRadius: '50%',
+                    backgroundColor: '#ef4444',
+                    border: '1px solid #000',
+                    zIndex: 10,
+                  }} />
                 )}
                 <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{a.icon}</span>
                 <span style={{ fontFamily: 'monospace', fontSize: '0.5rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
