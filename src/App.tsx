@@ -1312,6 +1312,7 @@ export default function App() {
         activities={gameState.activities}
         tasks={gameState.tasks}
         userName={userName}
+        digimonName={getCurrentStageName()}
         language={language}
         enabled={notificationsEnabled}
         healthPoints={gameState.healthPoints}
