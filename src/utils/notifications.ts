@@ -1,6 +1,7 @@
 // Notification utilities for DigiApp
 import { Capacitor } from '@capacitor/core';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
+import { VAPID_PUBLIC_KEY } from './vapid';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -110,6 +111,74 @@ export const removeScheduledNotification = (id: string) => {
 
 export const clearScheduledNotifications = () => {
   localStorage.removeItem(STORAGE_KEY);
+};
+
+// ── Web Push subscription (PWA / browser) ─────────────────────────────────
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const pad = base64String.length % 4;
+  const base64 = base64String.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(pad ? 4 - pad : 0);
+  const raw = atob(base64);
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+}
+
+export const subscribeToPush = async (
+  digimonName: string,
+  language: 'pt-BR' | 'en-US'
+): Promise<boolean> => {
+  if (Capacitor.isNativePlatform()) return false;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+  if (Notification.permission !== 'granted') return false;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    const body = {
+      ...sub.toJSON(),
+      digimonName,
+      language,
+    };
+
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    return res.ok;
+  } catch (err) {
+    console.error('Push subscribe error:', err);
+    return false;
+  }
+};
+
+export const unsubscribeFromPush = async (): Promise<void> => {
+  if (Capacitor.isNativePlatform()) return;
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return;
+
+    await fetch('/api/subscribe', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: sub.endpoint }),
+    });
+
+    await sub.unsubscribe();
+  } catch (err) {
+    console.error('Push unsubscribe error:', err);
+  }
 };
 
 // ── Check & fire due notifications ────────────────────────────────────────

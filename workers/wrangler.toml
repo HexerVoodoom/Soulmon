@@ -1,0 +1,19 @@
+name = "digiapp-push-scheduler"
+main = "push-scheduler.js"
+compatibility_date = "2024-09-23"
+
+# Cron triggers (UTC) — all times are BRT (UTC-3) + 3h
+# 10h BRT = 13h UTC, 16h BRT = 19h UTC, 21h BRT = 00h UTC next day, 22h BRT = 01h UTC
+[triggers]
+crons = ["0 13 * * *", "0 19 * * *", "0 0 * * *", "0 1 * * *"]
+
+[[kv_namespaces]]
+binding = "PUSH_SUBSCRIPTIONS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+VAPID_PUBLIC_KEY = "BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY"
+
+# VAPID_JWK must be set as a secret:
+# wrangler secret put VAPID_JWK
+# (paste the full JWK JSON when prompted)

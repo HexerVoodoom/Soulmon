@@ -131,7 +131,6 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Handle push notifications (future use)
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   const data = event.data.json();
@@ -140,6 +139,8 @@ self.addEventListener('push', (event) => {
       body: data.body,
       icon: '/favicon-192x192.png',
       badge: '/favicon-192x192.png',
+      tag: data.tag,
+      renotify: false,
       data: { url: '/' },
     })
   );

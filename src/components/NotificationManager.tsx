@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
-import { checkAndShowNotifications, showNotification, syncActivityAlarms, syncTaskAlarms } from '../utils/notifications';
+import { checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms, unsubscribeFromPush } from '../utils/notifications';
 
 interface Activity {
   id: string;
@@ -47,6 +47,15 @@ export function NotificationManager({
   const lastNudge16Date = useRef<string>('');
   const lastNudge21Date = useRef<string>('');
   const lastGoodnightDate = useRef<string>('');
+
+  // Web Push subscription — register/unregister when notifications toggle
+  useEffect(() => {
+    if (enabled) {
+      subscribeToPush(digimonName, language);
+    } else {
+      unsubscribeFromPush();
+    }
+  }, [enabled, digimonName, language]);
 
   // Sync alarms when activities or tasks change
   useEffect(() => {
