@@ -14,6 +14,11 @@ id = "REPLACE_WITH_KV_NAMESPACE_ID"
 [vars]
 VAPID_PUBLIC_KEY = "BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY"
 
-# VAPID_JWK must be set as a secret:
-# wrangler secret put VAPID_JWK
-# (paste the full JWK JSON when prompted)
+# Secrets — set via Cloudflare dashboard or wrangler CLI:
+#
+#   wrangler secret put VAPID_JWK
+#   (paste the full ECDSA P-256 JWK JSON when prompted)
+#
+#   wrangler secret put FCM_SERVICE_ACCOUNT_JSON
+#   (paste the full Firebase service account JSON when prompted)
+#   Get it at: Firebase Console → Project Settings → Service accounts → Generate new private key

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
 import { checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms, unsubscribeFromPush } from '../utils/notifications';
+import { registerFcmToken, unregisterFcmToken } from '../utils/fcm';
 
 interface Activity {
   id: string;
@@ -48,12 +49,14 @@ export function NotificationManager({
   const lastNudge21Date = useRef<string>('');
   const lastGoodnightDate = useRef<string>('');
 
-  // Web Push subscription — register/unregister when notifications toggle
+  // Web Push (PWA) + FCM (Android native) — register/unregister when notifications toggle
   useEffect(() => {
     if (enabled) {
       subscribeToPush(digimonName, language);
+      registerFcmToken(digimonName, language);
     } else {
       unsubscribeFromPush();
+      unregisterFcmToken();
     }
   }, [enabled, digimonName, language]);
 
