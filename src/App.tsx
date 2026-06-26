@@ -25,6 +25,7 @@ import { useGameState, getMaxHPForStage, type GameState, type Activity, type Tas
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
+import { requestNotificationPermission } from './utils/notifications';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -879,8 +880,10 @@ export default function App() {
   // Handle toggle notifications
   const handleToggleNotifications = async () => {
     if (!notificationsEnabled) {
-      // Request permission when enabling
-      const { requestNotificationPermission } = await import('./utils/notifications');
+      // Request permission when enabling.
+      // NOTE: requestNotificationPermission is imported statically (not via dynamic
+      // import) so the browser permission prompt stays inside the user-gesture and
+      // actually shows up. A dynamic import here loses the user-activation context.
       const granted = await requestNotificationPermission();
       if (granted) {
         setNotificationsEnabled(true);
