@@ -1,4 +1,4 @@
-// POST   /api/subscribe  — save a push subscription (Web Push or FCM)
+// POST   /api/subscribe  — save a push subscription
 // DELETE /api/subscribe  — remove a push subscription
 
 const CORS = {
@@ -22,23 +22,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { endpoint, keys, fcmToken, digimonName, language } = body;
-
-  // FCM token (Android native push)
-  if (fcmToken) {
-    const kvKey = `fcm:${await hashString(fcmToken)}`;
-    await env.PUSH_SUBSCRIPTIONS.put(
-      kvKey,
-      JSON.stringify({ fcmToken, digimonName: digimonName || 'DigiMon', language: language || 'pt-BR' }),
-      { expirationTtl: 60 * 60 * 24 * 365 }, // 1 year
-    );
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json', ...CORS },
-    });
-  }
-
-  // Web Push subscription
+  const { endpoint, keys, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
@@ -46,7 +30,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const kvKey = `push:${await hashString(endpoint)}`;
+  const kvKey = `push:${await hashEndpoint(endpoint)}`;
   await env.PUSH_SUBSCRIPTIONS.put(
     kvKey,
     JSON.stringify({ endpoint, keys, digimonName: digimonName || 'DigiMon', language: language || 'pt-BR' }),
@@ -70,18 +54,16 @@ export async function onRequestDelete({ request, env }) {
     });
   }
 
-  const { endpoint, fcmToken } = body;
-
-  if (fcmToken) {
-    await env.PUSH_SUBSCRIPTIONS.delete(`fcm:${await hashString(fcmToken)}`);
-  } else if (endpoint) {
-    await env.PUSH_SUBSCRIPTIONS.delete(`push:${await hashString(endpoint)}`);
-  } else {
-    return new Response(JSON.stringify({ error: 'Missing endpoint or fcmToken' }), {
+  const { endpoint } = body;
+  if (!endpoint) {
+    return new Response(JSON.stringify({ error: 'Missing endpoint' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...CORS },
     });
   }
+
+  const kvKey = `push:${await hashEndpoint(endpoint)}`;
+  await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
@@ -89,10 +71,7 @@ export async function onRequestDelete({ request, env }) {
   });
 }
 
-async function hashString(value) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 32);
+async function hashEndpoint(endpoint) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }

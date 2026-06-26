@@ -2,13 +2,11 @@
 // Cron triggers: 10h, 16h, 21h (task reminders) + 22h (goodnight) — BRT (UTC-3)
 //
 // Required environment bindings (set in CF dashboard or wrangler.toml):
-//   PUSH_SUBSCRIPTIONS        — KV namespace
-//   VAPID_JWK                 — Secret: full ECDSA P-256 private key as JSON string
-//   VAPID_PUBLIC_KEY          — Plain text: base64url uncompressed public key
-//   FCM_SERVICE_ACCOUNT_JSON  — Secret: Firebase service account JSON (optional, enables Android FCM)
+//   PUSH_SUBSCRIPTIONS  — KV namespace
+//   VAPID_JWK           — Secret: full ECDSA P-256 private key as JSON string
+//   VAPID_PUBLIC_KEY    — Plain text: base64url uncompressed public key
 
 import { sendWebPush } from './webpush.js';
-import { getGoogleAccessToken, sendFcmPush } from './fcm.js';
 
 const VAPID_PUBLIC_KEY = 'BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY';
 const CONTACT = 'mailto:contact@digiapp.app';
@@ -29,7 +27,7 @@ function getNotification(brtHour, digimonName, language) {
       title: ispt ? `⏰ ${name} está preocupado!` : `⏰ ${name} is worried!`,
       body: ispt
         ? 'Ainda dá tempo! Complete suas tarefas antes de dormir 🌙'
-        : 'Still time! Complete your tasks before bed 🌙',
+        : "Still time! Complete your tasks before bed 🌙",
       tag: 'pet-nudge-21',
     };
   }
@@ -60,32 +58,20 @@ export default {
       return;
     }
 
-    // FCM auth — optional; skip gracefully if secret not configured
-    let fcmAccessToken, fcmProjectId;
-    if (env.FCM_SERVICE_ACCOUNT_JSON) {
-      try {
-        const auth = await getGoogleAccessToken(env.FCM_SERVICE_ACCOUNT_JSON);
-        fcmAccessToken = auth.accessToken;
-        fcmProjectId = auth.projectId;
-      } catch (err) {
-        console.error('FCM auth failed:', err.message);
-      }
-    }
-
+    let cursor;
     let totalSent = 0;
     let totalFailed = 0;
     let totalRemoved = 0;
 
-    // Web Push subscriptions (browsers / PWA)
-    let webCursor;
     do {
-      const list = await env.PUSH_SUBSCRIPTIONS.list({ prefix: 'push:', cursor: webCursor, limit: 100 });
-      webCursor = list.cursor;
+      const list = await env.PUSH_SUBSCRIPTIONS.list({ prefix: 'push:', cursor, limit: 100 });
+      cursor = list.cursor;
 
       await Promise.allSettled(
         list.keys.map(async ({ name }) => {
           const raw = await env.PUSH_SUBSCRIPTIONS.get(name);
           if (!raw) return;
+
           let sub;
           try { sub = JSON.parse(raw); } catch { return; }
 
@@ -109,53 +95,12 @@ export default {
               totalFailed++;
             }
           } catch (err) {
-            console.error(`Web push failed for ${name}:`, err.message);
+            console.error(`Push failed for ${name}:`, err.message);
             totalFailed++;
           }
         }),
       );
-    } while (webCursor);
-
-    // FCM tokens (Android native)
-    if (fcmAccessToken) {
-      let fcmCursor;
-      do {
-        const list = await env.PUSH_SUBSCRIPTIONS.list({ prefix: 'fcm:', cursor: fcmCursor, limit: 100 });
-        fcmCursor = list.cursor;
-
-        await Promise.allSettled(
-          list.keys.map(async ({ name }) => {
-            const raw = await env.PUSH_SUBSCRIPTIONS.get(name);
-            if (!raw) return;
-            let sub;
-            try { sub = JSON.parse(raw); } catch { return; }
-
-            const notif = getNotification(brtHour, sub.digimonName, sub.language);
-
-            try {
-              const result = await sendFcmPush(sub.fcmToken, notif, fcmProjectId, fcmAccessToken);
-
-              if (result.ok) {
-                totalSent++;
-              } else {
-                const body = await result.json().catch(() => ({}));
-                const errCode = body?.error?.details?.[0]?.errorCode;
-                if (result.status === 404 || errCode === 'UNREGISTERED') {
-                  await env.PUSH_SUBSCRIPTIONS.delete(name);
-                  totalRemoved++;
-                } else {
-                  console.error(`FCM error for ${name}:`, JSON.stringify(body));
-                  totalFailed++;
-                }
-              }
-            } catch (err) {
-              console.error(`FCM failed for ${name}:`, err.message);
-              totalFailed++;
-            }
-          }),
-        );
-      } while (fcmCursor);
-    }
+    } while (cursor);
 
     console.log(
       `[BRT ${brtHour}h] Push scheduler done — sent: ${totalSent}, failed: ${totalFailed}, removed: ${totalRemoved}`,

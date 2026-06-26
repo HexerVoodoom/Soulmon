@@ -126,7 +126,6 @@ export const subscribeToPush = async (
   digimonName: string,
   language: 'pt-BR' | 'en-US'
 ): Promise<boolean> => {
-  if (Capacitor.isNativePlatform()) return false;
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (Notification.permission !== 'granted') return false;
 
@@ -161,7 +160,6 @@ export const subscribeToPush = async (
 };
 
 export const unsubscribeFromPush = async (): Promise<void> => {
-  if (Capacitor.isNativePlatform()) return;
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 
   try {
