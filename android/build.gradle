@@ -32,7 +32,7 @@ allprojects {
         google()
         mavenCentral()
     }
-    
+
     // Force subprojects to also align (just in case)
     configurations.all {
         resolutionStrategy {
@@ -45,6 +45,25 @@ allprojects {
             force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
             force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
             force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+        }
+    }
+
+    // Fix 3: cap sync generates capacitor-cordova-android-plugins with VERSION_21
+    // which breaks builds on Java 17. Override to Java 17 for all subprojects.
+    plugins.withId('com.android.library') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+    }
+    plugins.withId('com.android.application') {
+        android {
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
         }
     }
 }
