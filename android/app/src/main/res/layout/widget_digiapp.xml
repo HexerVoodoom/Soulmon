@@ -8,13 +8,26 @@
     android:background="@drawable/partner_area"
     android:gravity="center_vertical">
 
-    <!-- Sprite (left) -->
-    <ImageView
-        android:id="@+id/widget_sprite"
+    <!-- Sprite (left) — 2-frame bounce via ViewFlipper -->
+    <ViewFlipper
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:scaleType="centerInside"
-        android:src="@drawable/triceramon_dot" />
+        android:autoStart="true"
+        android:flipInterval="450">
+        <ImageView
+            android:id="@+id/widget_sprite"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerInside"
+            android:src="@drawable/triceramon_dot" />
+        <ImageView
+            android:id="@+id/widget_sprite_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerInside"
+            android:paddingBottom="5dp"
+            android:src="@drawable/triceramon_dot" />
+    </ViewFlipper>
 
     <!-- Text column (right) -->
     <LinearLayout

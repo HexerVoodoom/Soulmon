@@ -24,7 +24,7 @@ object WidgetRenderer {
         val branchType = prefs.getString("branch_type", "data") ?: "data"
 
         val views = RemoteViews(context.packageName, layoutId)
-        views.setImageViewResource(R.id.widget_sprite, resolveSprite(context, currentStage, eggType, branchType))
+        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
         views.setTextViewText(R.id.widget_digimon_name, digimonName)
         views.setTextViewText(R.id.widget_stage, stageLabel(currentStage))
         views.setTextViewText(R.id.widget_tasks, if (totalTasks > 0) "$completedTasks/$totalTasks" else "—")
@@ -41,9 +41,15 @@ object WidgetRenderer {
         val branchType = prefs.getString("branch_type", "data") ?: "data"
 
         val views = RemoteViews(context.packageName, layoutId)
-        views.setImageViewResource(R.id.widget_sprite, resolveSprite(context, currentStage, eggType, branchType))
+        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
         attachClick(context, views)
         mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    // Both ViewFlipper frames use the same sprite (frame 2 is offset in XML for the bounce).
+    private fun setSprite(views: RemoteViews, spriteId: Int) {
+        views.setImageViewResource(R.id.widget_sprite, spriteId)
+        views.setImageViewResource(R.id.widget_sprite_2, spriteId)
     }
 
     // Refresh every active instance of all three widget variants.
