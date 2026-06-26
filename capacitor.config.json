@@ -1,5 +1,9 @@
 {
   "appId": "com.digipartner.digiapp",
   "appName": "DigiApp",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "url": "https://digiapp-a5e.pages.dev",
+    "cleartext": false
+  }
 }
