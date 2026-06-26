@@ -8,6 +8,8 @@ export interface DigiWidgetData {
   completedTasks: number;
   totalTasks: number;
   hp: number;
+  healthPoints: number;
+  maxHealthPoints: number;
 }
 
 export interface DigiWidgetPlugin {

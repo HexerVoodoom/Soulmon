@@ -184,6 +184,8 @@ export default function App() {
       completedTasks: dailyDone,
       totalTasks: dailyTotal,
       hp: Math.round((gameState.healthPoints / gameState.maxHealthPoints) * 100),
+      healthPoints: gameState.healthPoints,
+      maxHealthPoints: gameState.maxHealthPoints,
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, dailyDone, dailyTotal]);
