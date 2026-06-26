@@ -1106,6 +1106,22 @@ export default function App() {
                 window.location.reload();
                 return true;
               }}
+              onLoginWithEmail={async (email) => {
+                const { emailToSaveId, cloudLoad, cloudSave } = await import('./utils/cloudSave');
+                const id = await emailToSaveId(email);
+                const state = await cloudLoad(id);
+                localStorage.setItem(STORAGE_KEYS.SAVE_ID, id);
+                localStorage.setItem(STORAGE_KEYS.USER_EMAIL, email.trim().toLowerCase());
+                if (state) {
+                  // Existing account on this email — adopt its cloud progress
+                  localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(state));
+                } else {
+                  // First login for this email — claim it with the current progress
+                  await cloudSave(id, gameState);
+                }
+                window.location.reload();
+                return state ? 'loaded' : 'created';
+              }}
             /></Suspense>
           )}
         </div>
