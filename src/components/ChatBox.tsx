@@ -360,7 +360,7 @@ export function ChatBox({
           onFocus={() => setIsInputReadOnly(false)}
           onBlur={() => setIsInputReadOnly(true)}
           readOnly={isInputReadOnly}
-          placeholder={`Talk to ${digimonName}...`}
+          placeholder={`>_ Type to ${digimonName}`}
           disabled={isLoading}
           autoComplete="new-password"
           data-form-type="other"
@@ -375,10 +375,15 @@ export function ChatBox({
                 ? 'flex-1 px-3 py-2 bg-white border-2 border-gray-400 rounded-[4px] text-black placeholder-gray-500 focus:outline-none focus:border-[#000080] disabled:opacity-50'
                 : 'flex-1 px-3 py-2 bg-[#364153] rounded-[4px] text-white placeholder-[#99a1af] focus:outline-none focus:border-[#4a5565] disabled:opacity-50'
           }
-          style={{ 
-            fontFamily: 'Courier New, monospace', 
+          style={{
+            fontFamily: 'Courier New, monospace',
             fontSize: '12px',
-            textShadow: isGlitch ? '0 0 5px rgba(0, 255, 255, 0.6)' : undefined,
+            color: inputValue && !isGlitch && !isWin98 ? '#2bff95' : undefined,
+            textShadow: isGlitch
+              ? '0 0 5px rgba(0, 255, 255, 0.6)'
+              : inputValue && !isWin98
+                ? '0 0 8px rgba(43, 255, 149, 0.55)'
+                : undefined,
             border: !isGlitch && !isWin98 ? '1.1px solid #4a5565' : undefined
           }}
           maxLength={200}
