@@ -22,8 +22,13 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        // Kotlin 1.8.22 doesn't recognise JVM target 21; on JDK 21 the plugin
+        // would otherwise auto-pick 21 and fail. Pin to 17 (matches Java target).
+        jvmTarget = '17'
     }
 }
 
