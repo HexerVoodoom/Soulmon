@@ -1,9 +1,7 @@
 package com.digipartner.digiapp.plugins
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
-import com.digipartner.digiapp.widget.DigiAppWidgetProvider
+import com.digipartner.digiapp.widget.WidgetRenderer
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
@@ -15,7 +13,7 @@ class DigiWidgetPlugin : Plugin() {
     @PluginMethod
     fun updateWidgetData(call: PluginCall) {
         val ctx = context
-        val prefs = ctx.getSharedPreferences(DigiAppWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = ctx.getSharedPreferences(WidgetRenderer.PREFS_NAME, Context.MODE_PRIVATE)
         val editor = prefs.edit()
 
         call.getString("digimonName")?.let { editor.putString("digimon_name", it) }
@@ -37,10 +35,8 @@ class DigiWidgetPlugin : Plugin() {
 
         editor.apply()
 
-        // Push update to all active widget instances
-        val manager = AppWidgetManager.getInstance(ctx)
-        val ids = manager.getAppWidgetIds(ComponentName(ctx, DigiAppWidgetProvider::class.java))
-        for (id in ids) DigiAppWidgetProvider.updateWidget(ctx, manager, id)
+        // Push update to all active widget instances (all 3 variants)
+        WidgetRenderer.updateAll(ctx)
 
         call.resolve()
     }

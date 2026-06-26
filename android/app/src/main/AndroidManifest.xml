@@ -35,9 +35,10 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- STATIC WIDGET RECEIVER -->
+        <!-- WIDGET A — horizontal (sprite + info ao lado) -->
         <receiver
             android:name=".widget.DigiAppWidgetProvider"
+            android:label="DigiApp"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -45,6 +46,32 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/digiapp_widget_info" />
+        </receiver>
+
+        <!-- WIDGET B — vertical (sprite + info embaixo) -->
+        <receiver
+            android:name=".widget.DigiAppWidgetVerticalProvider"
+            android:label="DigiApp Vertical"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/digiapp_widget_vertical_info" />
+        </receiver>
+
+        <!-- WIDGET C — pet only -->
+        <receiver
+            android:name=".widget.DigiAppWidgetPetProvider"
+            android:label="DigiApp Pet"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/digiapp_widget_pet_info" />
         </receiver>
 
         <receiver

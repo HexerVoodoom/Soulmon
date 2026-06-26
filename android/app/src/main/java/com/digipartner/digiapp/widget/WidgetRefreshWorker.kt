@@ -1,7 +1,5 @@
 package com.digipartner.digiapp.widget
 
-import android.appwidget.AppWidgetManager
-import android.content.ComponentName
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -12,9 +10,7 @@ import java.util.concurrent.TimeUnit
 
 class WidgetRefreshWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val manager = AppWidgetManager.getInstance(applicationContext)
-        val ids = manager.getAppWidgetIds(ComponentName(applicationContext, DigiAppWidgetProvider::class.java))
-        for (id in ids) DigiAppWidgetProvider.updateWidget(applicationContext, manager, id)
+        WidgetRenderer.updateAll(applicationContext)
         return Result.success()
     }
 

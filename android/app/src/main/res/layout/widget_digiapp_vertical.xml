@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@drawable/partner_area"
+    android:gravity="center">
+
+    <!-- Sprite (top) -->
+    <ImageView
+        android:id="@+id/widget_sprite"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/triceramon_dot" />
+
+    <!-- Digimon name -->
+    <TextView
+        android:id="@+id/widget_digimon_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="DigiEgg"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:shadowColor="#000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        android:layout_marginTop="4dp" />
+
+    <!-- Stage label -->
+    <TextView
+        android:id="@+id/widget_stage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ovo Digital"
+        android:textSize="10sp"
+        android:textColor="#CCFFFFFF"
+        android:gravity="center"
+        android:maxLines="1" />
+
+    <!-- Task progress -->
+    <TextView
+        android:id="@+id/widget_tasks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="—"
+        android:textSize="11sp"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:maxLines="1"
+        android:layout_marginTop="2dp" />
+
+    <!-- Contextual message -->
+    <TextView
+        android:id="@+id/widget_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Adicione tarefas!"
+        android:textSize="10sp"
+        android:textColor="#CCFFFFFF"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end" />
+
+</LinearLayout>
