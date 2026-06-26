@@ -352,6 +352,20 @@ export function ChatBox({
         : undefined
     }>
       <div className="flex gap-2">
+        {/* Wrapper for fake blinking cursor placeholder */}
+        <div className="relative flex-1">
+          {!inputValue && (
+            <div
+              className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10"
+              style={{
+                fontFamily: '"VT323", monospace',
+                fontSize: '16px',
+                color: isGlitch ? 'rgba(0,255,255,0.5)' : isWin98 ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.45)',
+              }}
+            >
+              {'>'}<span className="terminal-cursor">_</span>
+            </div>
+          )}
         <input
           type="text"
           value={inputValue}
@@ -360,7 +374,7 @@ export function ChatBox({
           onFocus={() => setIsInputReadOnly(false)}
           onBlur={() => setIsInputReadOnly(true)}
           readOnly={isInputReadOnly}
-          placeholder={`>_ Type to ${digimonName}`}
+          placeholder=""
           disabled={isLoading}
           autoComplete="new-password"
           data-form-type="other"
@@ -370,25 +384,22 @@ export function ChatBox({
           id={randomName}
           className={
             isGlitch
-              ? 'flex-1 px-3 py-2 bg-[#0a0a0a] border-2 border-[#00ffff] rounded-[4px] text-[#00ffff] placeholder-[#00ffff]/40 focus:outline-none focus:border-[#ff00ff] disabled:opacity-50 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'
+              ? 'w-full px-3 py-2 bg-[#0a0a0a] border-2 border-[#00ffff] rounded-[4px] text-[#00ffff] focus:outline-none focus:border-[#ff00ff] disabled:opacity-50 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'
               : isWin98
-                ? 'flex-1 px-3 py-2 bg-white border-2 border-gray-400 rounded-[4px] text-black placeholder-gray-500 focus:outline-none focus:border-[#000080] disabled:opacity-50'
-                : 'flex-1 px-3 py-2 bg-[#364153] rounded-[4px] text-white placeholder-[#99a1af] focus:outline-none focus:border-[#4a5565] disabled:opacity-50'
+                ? 'w-full px-3 py-2 bg-white border-2 border-gray-400 rounded-[4px] text-black focus:outline-none focus:border-[#000080] disabled:opacity-50'
+                : 'w-full px-3 py-2 bg-[#364153] rounded-[4px] text-white focus:outline-none focus:border-[#4a5565] disabled:opacity-50'
           }
           style={{
-            fontFamily: 'Courier New, monospace',
-            fontSize: '12px',
-            color: inputValue && !isGlitch && !isWin98 ? '#2bff95' : undefined,
-            textShadow: isGlitch
-              ? '0 0 5px rgba(0, 255, 255, 0.6)'
-              : inputValue && !isWin98
-                ? '0 0 8px rgba(43, 255, 149, 0.55)'
-                : undefined,
+            fontFamily: '"VT323", monospace',
+            fontSize: '16px',
+            letterSpacing: '0.05em',
+            textShadow: isGlitch ? '0 0 5px rgba(0, 255, 255, 0.6)' : undefined,
             border: !isGlitch && !isWin98 ? '1.1px solid #4a5565' : undefined
           }}
           maxLength={200}
         />
-        
+        </div>
+
         {/* Send or Mic Button - Mic shows when empty, Send shows when typing */}
         {inputValue.trim() ? (
           <button
