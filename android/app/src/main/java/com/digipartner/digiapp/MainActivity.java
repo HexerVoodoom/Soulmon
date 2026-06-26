@@ -1,4 +1,4 @@
-package com.digiapp.prototype;
+package com.digipartner.digiapp;
 
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
