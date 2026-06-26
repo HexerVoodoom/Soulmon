@@ -430,7 +430,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Check if sprite is flipped by default and needs correction
   const isFlippedByDefault = () => {
-    return ['pichimon', 'chicomon', 'yukimibotamon', 'pukamon'].includes(evolutionStage.toLowerCase());
+    return ['pichimon', 'chicomon', 'yukimibotamon', 'pukamon', 'tapirmon'].includes(evolutionStage.toLowerCase());
   };
 
   // Get the correct horizontal flip for the sprite
@@ -699,7 +699,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 left: `${position}%`,
                 transform: getHorizontalFlip(),
                 top: '50%',
-                marginTop: '-40px',
+                marginTop: '-35px',
                 transition: 'left 0.1s ease-linear, transform 0.1s ease-linear'
               }}
               onClick={handleDigimonClick}
@@ -882,6 +882,34 @@ export const CompanionHUD = memo(function CompanionHUD({
       </div>
 
       </div>
+
+      {/* Message bubble — just above ChatBox input */}
+      {showBubble && (
+        <div className="mt-1">
+          <div
+            className={`px-3 py-2 cursor-pointer ${
+              isGlitch
+                ? 'glitch-activity-card'
+                : isWin98
+                  ? 'win98-activity-card'
+                  : 'bg-white/90 rounded-xl shadow-lg'
+            }`}
+            onClick={handleBubbleClick}
+          >
+            <p
+              className={isWin98 ? 'text-[#ffffff] text-center break-words' : 'text-gray-800 text-center break-words'}
+              style={{
+                fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace',
+                fontSize: '0.7rem',
+                lineHeight: '1.3',
+                textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined,
+              }}
+            >
+              {displayText(chatResponse || message)}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Chat Box - Below Companion Area */}
       <div className="mt-2">
