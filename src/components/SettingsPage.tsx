@@ -109,26 +109,26 @@ export function SettingsPage({
                 {language === 'pt-BR' ? `conectado: ${savedEmail}` : `signed in: ${savedEmail}`}
               </p>
             )}
-            <div className="flex gap-2">
-              <input
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                value={emailInput}
-                onChange={e => { setEmailInput(e.target.value); if (loginStatus === 'err') setLoginStatus('idle'); }}
-                placeholder={savedEmail ?? (language === 'pt-BR' ? 'seu@email.com' : 'your@email.com')}
-                className={`flex-1 text-xs px-3 py-2 rounded-lg outline-none ${isGlitch ? 'bg-[#001a00] text-[#00ffff] border border-[#00ffff]/30' : isWin98 ? 'border border-gray-400 bg-white' : 'border border-gray-200 bg-gray-50'}`}
-                style={{ fontFamily: 'monospace' }}
-              />
-              <button
-                onClick={handleLogin}
-                disabled={!emailInput.trim() || loginStatus === 'loading'}
-                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-40 ${isGlitch ? 'bg-[#00ffff] text-[#0a0a0a]' : isWin98 ? 'win98-button' : 'bg-teal-600 text-white hover:bg-teal-700'}`}
-                style={{ fontFamily: 'monospace' }}
-              >
-                {loginStatus === 'loading' ? '...' : language === 'pt-BR' ? 'entrar' : 'sign in'}
-              </button>
-            </div>
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={emailInput}
+              onChange={e => { setEmailInput(e.target.value); if (loginStatus === 'err') setLoginStatus('idle'); }}
+              placeholder={savedEmail ?? (language === 'pt-BR' ? 'seu@email.com' : 'your@email.com')}
+              className={`w-full text-xs px-3 py-2 rounded-lg outline-none mb-2 ${isGlitch ? 'bg-[#001a00] text-[#00ffff] border border-[#00ffff]/30' : isWin98 ? 'border border-gray-400 bg-white' : 'border border-gray-200 bg-gray-50'}`}
+              style={{ fontFamily: 'monospace' }}
+            />
+            <button
+              onClick={handleLogin}
+              disabled={!emailInput.trim() || loginStatus === 'loading'}
+              className={`w-full px-3 py-2.5 rounded-lg text-xs font-bold transition-all disabled:opacity-60 ${isGlitch ? 'bg-[#00ffff] text-[#0a0a0a]' : isWin98 ? 'win98-button' : 'bg-gray-900 text-white hover:bg-gray-800'}`}
+              style={{ fontFamily: 'monospace' }}
+            >
+              {loginStatus === 'loading'
+                ? (language === 'pt-BR' ? 'sincronizando...' : 'syncing...')
+                : (language === 'pt-BR' ? 'Entrar / Sincronizar' : 'Sign in / Sync')}
+            </button>
             {loginStatus === 'err' && (
               <p className="text-red-500 text-xs mt-1" style={{ fontFamily: 'monospace' }}>
                 {language === 'pt-BR' ? 'E-mail inválido ou falha ao sincronizar.' : 'Invalid email or sync failed.'}
