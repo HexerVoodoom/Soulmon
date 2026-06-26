@@ -699,7 +699,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 left: `${position}%`,
                 transform: getHorizontalFlip(),
                 top: '50%',
-                marginTop: '-30px',
+                marginTop: '-20px',
                 transition: 'left 0.1s ease-linear, transform 0.1s ease-linear'
               }}
               onClick={handleDigimonClick}
