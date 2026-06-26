@@ -56,85 +56,84 @@ export function ChatBox({
     switch (category) {
       case 'greeting':
         return pick([
-          `Hello! 👋 How are you today?`,
+          `Hello! How are you today?`,
           `Hey! Ready to complete tasks?`,
-          `Hi! Good to see you! 😊`,
+          `Hi! Good to see you!`,
           `Hello, partner! Let's evolve together?`,
-          `What's up! All good? ✨`,
+          `What's up! All good?`,
           `Yo! What are we doing today?`,
-          `Hey there! You showed up! 🎮`,
+          `Hey there! You showed up!`,
         ]);
       case 'farewell':
         return pick([
-          `See you later! Come back soon! 👋`,
-          `Goodbye! I'll be waiting! 😊`,
-          `See you, partner! ✨`,
-          `Later! Don't disappear! 🎮`,
-          `See you soon! 💚`,
-          `Bye! Keep being amazing! ⭐`,
+          `See you later! Come back soon!`,
+          `Goodbye! I'll be waiting!`,
+          `See you, partner!`,
+          `Later! Don't disappear!`,
+          `See you soon!`,
+          `Bye! Keep being amazing!`,
         ]);
       case 'feeling':
         if (mood === 'happy')
-          return pick([`Very happy! 😊`, `Amazing! 💪`, `Feeling great! ✨`, `So happy! 🌟`, `Radiant! ❤️`]);
+          return pick([`Very happy!`, `Amazing!`, `Feeling great!`, `So happy!`, `Radiant!`]);
         if (mood === 'tired')
-          return pick([`A bit tired... 😴`, `*yawn* 💤`, `Need energy! ⚡`, `Let's do something? 🥺`]);
-        return pick([`I'm good! ✨`, `Normal! 🎯`, `Chill! 🤔`, `Ready! 😊`, `Always ready! 💚`]);
+          return pick([`A bit tired...`, `*yawn*`, `Need energy!`, `Let's do something?`]);
+        return pick([`I'm good!`, `Normal!`, `Chill!`, `Ready!`, `Always ready!`]);
       case 'encouragement':
-        return pick([`Let's go! 💪`, `Come on! 🚀`, `Yes! ⚡`, `Sure! 🌟`, `That's it! ✨`, `You bet! 🤝`, `Let's! 💚`]);
+        return pick([`Let's go!`, `Come on!`, `Yes!`, `Sure!`, `That's it!`, `You bet!`, `Let's!`]);
       case 'compliment':
-        return pick([`Thank you! ❤️`, `How sweet! 😊`, `Aww! ✨`, `Thanks! 🌟`, `Hehe! 💚`, `Thank you so much! 🥰`, `Awesome! 💪`]);
+        return pick([`Thank you!`, `How sweet!`, `Aww!`, `Thanks!`, `Hehe!`, `Thank you so much!`, `Awesome!`]);
       case 'affection':
-        return pick([`Love you! ❤️`, `Me too! 💚`, `So much love! 🥰`, `I adore you! ✨`, `Aww! 💖`, `You're the best! 🌟`]);
+        return pick([`Love you!`, `Me too!`, `So much love!`, `I adore you!`, `Aww!`, `You're the best!`]);
       case 'food':
-        return pick([`Complete tasks! ⚡`, `Hungry for achievements! 🍖`, `Let's do something? 🥺`, `Tasks = energy! 💚`, `Let's get energy! 🚀`, `Need tasks! 🔋`]);
+        return pick([`Complete tasks!`, `Hungry for achievements!`, `Let's do something?`, `Tasks give energy!`, `Let's get energy!`, `Need tasks!`]);
       case 'evolution':
-        return pick([`I'll evolve soon! 🌟`, `Can't wait! ✨`, `I feel it coming! 🚀`, `I'll get stronger! 💪`, `It'll be amazing! 🎮`, `Let's do this! 🔥`]);
+        return pick([`I'll evolve soon!`, `Can't wait!`, `I feel it coming!`, `I'll get stronger!`, `It'll be amazing!`, `Let's do this!`]);
       case 'name':
-        return pick([`I'm ${digimonName}! 🎮`, `${digimonName}! 😊`, `I am ${digimonName}! 🤝`, `${digimonName}! ✨`, `${digimonName}! 💚`]);
+        return pick([`I'm ${digimonName}!`, `${digimonName}!`, `I am ${digimonName}!`, `${digimonName}, at your service!`]);
       case 'task':
-        return pick([`Let's go! 💪`, `Love tasks! 🌟`, `How many today? 🎯`, `Let's go! ⚡`, `Victory! 🏆`, `Let's! 🚀`]);
+        return pick([`Let's go!`, `Love tasks!`, `How many today?`, `Let's go!`, `Victory!`, `Let's!`]);
       case 'time':
-        return pick([`New chance! ☀️`, `Eternal partnership! ⏰`, `Enjoy! 🌟`, `Great day! 😊`, `Time flies! ⌚`, `New adventure! 🎮`]);
+        return pick([`New chance!`, `Eternal partnership!`, `Enjoy!`, `Great day!`, `Time flies!`, `New adventure!`]);
       case 'help':
-        return pick([`I'm here! 💚`, `Together! 💪`, `Count on me! 🤝`, `We'll solve it! ✨`, `Don't give up! 🌟`, `Side by side! 🛡️`]);
+        return pick([`I'm here!`, `Together!`, `Count on me!`, `We'll solve it!`, `Don't give up!`, `Side by side!`]);
       case 'sad':
-        return pick([`It'll be okay! 🥺`, `Don't be sad! 💚`, `You're strong! 💪`, `I'm listening! 👂`, `Cheer up! ✨`, `Count on me! 🤗`]);
+        return pick([`It'll be okay!`, `Don't be sad!`, `You're strong!`, `I'm listening!`, `Cheer up!`, `Count on me!`]);
       case 'happy':
-        return pick([`I'm happy too! 😊`, `Such energy! ⚡`, `Motivates me! 🌟`, `Keep going! ✨`, `That's it! 💚`, `I'm smiling too! 😄`]);
+        return pick([`I'm happy too!`, `Such energy!`, `Motivates me!`, `Keep going!`, `That's it!`, `I'm smiling too!`]);
       case 'yes':
-        return pick([`That's it! 👍`, `Great! 🌟`, `Good! 😊`, `I knew it! ✨`, `Wonderful! 💚`, `Deal! 🤝`]);
+        return pick([`That's it!`, `Great!`, `Good!`, `I knew it!`, `Wonderful!`, `Deal!`]);
       case 'no':
-        return pick([`Alright! 👌`, `I understand! 🤔`, `No problem! 😊`, `Okay! ✨`, `Cool! 💚`, `Got it! 👍`]);
+        return pick([`Alright!`, `I understand!`, `No problem!`, `Okay!`, `Cool!`, `Got it!`]);
       case 'question':
         return pick([
-          `Good question! 🤔`,
-          `Let me think... Hmm... 💭`,
-          `Interesting! Never thought about that! 💡`,
-          `I don't know much about that, but I can learn! 📚`,
-          `What do you think? Tell me! 😊`,
-          `That's a tough one! Shall we find out together? 🔍`,
+          `Good question!`,
+          `Let me think... Hmm...`,
+          `Interesting! Never thought about that!`,
+          `I don't know much about that, but I can learn!`,
+          `What do you think? Tell me!`,
+          `That's a tough one! Shall we find out together?`,
         ]);
       default: {
-        // 25% chance to ask back a question
         if (Math.random() < 0.25) {
           return pick([
-            `And you? 🤔`,
-            `Did you do tasks? ✨`,
-            `What shall we do? 💭`,
-            `Are you okay? 😊`,
-            `Your goal today? 🎯`,
-            `Shall we evolve? 🌟`,
-            `Are you excited? ⚡`,
-            `Need help? 💚`,
-            `Which activity? 🚀`,
-            `Are you happy? 😄`,
+            `And you?`,
+            `Did you do tasks?`,
+            `What shall we do?`,
+            `Are you okay?`,
+            `Your goal today?`,
+            `Shall we evolve?`,
+            `Are you excited?`,
+            `Need help?`,
+            `Which activity?`,
+            `Are you happy?`,
           ]);
         }
         if (mood === 'happy')
-          return pick([`Loving it! 😊`, `Cool! ✨`, `Awesome! 🌟`, `Hehe! 😄`, `Wow! 🎮`, `Great! 💚`, `Good! ⚡`, `Nice! 🚀`]);
+          return pick([`Loving it!`, `Cool!`, `Awesome!`, `Hehe!`, `Wow!`, `Great!`, `Good!`, `Nice!`]);
         if (mood === 'tired')
-          return pick([`Hmm... 😴`, `Okay... 💤`, `Zzz... 😪`, `Slowly... 🐌`, `No energy... 🔋`]);
-        return pick([`I see! 👍`, `Hmm... 🤔`, `Tell me more!`, `Cool! 😊`, `I understand!`, `Listening! 👂`, `Nice! ✨`, `Got it! 💡`, `I see! 🎯`, `Speak! 💚`]);
+          return pick([`Hmm...`, `Okay...`, `Zzz...`, `Slowly...`, `No energy...`]);
+        return pick([`I see!`, `Hmm...`, `Tell me more!`, `Cool!`, `I understand!`, `Listening!`, `Nice!`, `Got it!`, `Speak!`]);
       }
     }
   };
@@ -208,7 +207,7 @@ export function ChatBox({
       onSendMessage(response);
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error sending message:', error);
-      onSendMessage('Oops... something went wrong! 😅');
+      onSendMessage('Oops... something went wrong!');
     } finally {
       setIsLoading(false);
     }

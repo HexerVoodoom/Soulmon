@@ -135,7 +135,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [direction, setDirection] = useState<'right' | 'left'>('right');
   const [showBubble, setShowBubble] = useState(false);
   const [squashFrame, setSquashFrame] = useState(0);
-  const [chatResponse, setChatResponse] = useState('');
+  const [bubbleText, setBubbleText] = useState('');
   const bubbleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [eatingEmoji, setEatingEmoji] = useState<string | null>(null);
   const [eatKey, setEatKey] = useState(0);
@@ -143,36 +143,58 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [isShowering, setIsShowering] = useState(false);
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
+
+  // Always-current snapshot of props for stable intervals
+  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping });
+  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping };
+
+  // speak: strips all emojis, shows bubble, auto-hides after durationMs
+  const speak = useCallback((text: string, durationMs = 4000) => {
+    const clean = (text || '').replace(/\p{Emoji_Presentation}|\p{Emoji}️/gu, '').replace(/\s{2,}/g, ' ').trim();
+    if (!clean) return;
+    if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+    setBubbleText(clean);
+    setShowBubble(true);
+    bubbleTimeoutRef.current = setTimeout(() => {
+      setShowBubble(false);
+      setBubbleText('');
+      bubbleTimeoutRef.current = null;
+    }, durationMs);
+  }, []);
+
+  // speakRaw: no emoji stripping — only for the ❤️ feeding response
+  const speakRaw = useCallback((text: string, durationMs = 3000) => {
+    if (!text) return;
+    if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
+    setBubbleText(text);
+    setShowBubble(true);
+    bubbleTimeoutRef.current = setTimeout(() => {
+      setShowBubble(false);
+      setBubbleText('');
+      bubbleTimeoutRef.current = null;
+    }, durationMs);
+  }, []);
+
   const showHug = () => {
     setHugBalloon(true);
     setTimeout(() => setHugBalloon(false), 2000);
   };
 
-  // Handle chat message response — stable via useCallback + ref timeout
+  // Chat message from ChatBox — strip emojis, show for 5s
   const handleChatMessage = useCallback((response: string) => {
-    if (bubbleTimeoutRef.current) {
-      clearTimeout(bubbleTimeoutRef.current);
-    }
-    setChatResponse(response);
-    setShowBubble(true);
-    bubbleTimeoutRef.current = setTimeout(() => {
-      setShowBubble(false);
-      setChatResponse('');
-      bubbleTimeoutRef.current = null;
-    }, 7000);
-  }, []);
+    speak(response, 5000);
+  }, [speak]);
 
-  // Trigger eating animation when a food item is used from inventory
   useEffect(() => {
     if (!feedAnim) return;
     setEatingEmoji(feedAnim.emoji);
     setEatKey(k => k + 1);
     setIsMunching(true);
     showHug();
-    handleChatMessage('+1❤️');
+    speakRaw('+1❤️');
     setTimeout(() => setEatingEmoji(null), 1500);
     setTimeout(() => setIsMunching(false), 600);
-  }, [feedAnim?.n, handleChatMessage]);
+  }, [feedAnim?.n, speakRaw]);
 
   // Energy is full when the gauge reaches the stage's max HP (its capacity)
   const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
@@ -212,93 +234,88 @@ export const CompanionHUD = memo(function CompanionHUD({
     return () => clearInterval(squashInterval);
   }, []);
 
-  // Random message bubble (exactly every 3 minutes)
+  // Random idle speech every 3 min — preset shown immediately, then API updates it
   useEffect(() => {
-    const showMessage = () => {
-      if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
-      setChatResponse('');
-      setShowBubble(true);
-      bubbleTimeoutRef.current = setTimeout(() => {
-        setShowBubble(false);
-        setChatResponse('');
-        bubbleTimeoutRef.current = null;
-      }, 8000);
+    const getIdlePhrase = (): string => {
+      const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+      const p = propsRef.current;
+      const ratio = p.maxHealthPoints > 0 ? p.energyPoints / p.maxHealthPoints : 0;
+      const hpRatio = p.maxHealthPoints > 0 ? p.healthPoints / p.maxHealthPoints : 0;
+      const isPt = p.language === 'pt-BR';
+      if (p.careEvent?.type === 'poop') return isPt
+        ? pick(['Preciso de banho!', 'Estou sujo!', 'Me limpa!'])
+        : pick(['Need a shower!', 'I made a mess!', 'Clean me!']);
+      if (p.careEvent?.type === 'food') return isPt
+        ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!'])
+        : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
+      if (hpRatio <= 0.25) return isPt
+        ? pick(['Nao me sinto bem...', 'Preciso de cuidados!', 'HP baixo...'])
+        : pick(['Not feeling great...', 'Need some care!', 'My HP is low...']);
+      if (ratio >= 1) return isPt
+        ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!'])
+        : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
+      if (ratio >= 0.6) return isPt
+        ? pick(['Me sentindo bem!', 'Tudo certo!', 'Energia boa!'])
+        : pick(['Feeling great!', 'All good!', 'Good energy!']);
+      if (ratio >= 0.35) return isPt
+        ? pick(['Podia comer algo...', 'Como esta seu dia?', 'Vamos completar tarefas!'])
+        : pick(['Could use a snack...', "How's your day?", "Let's complete tasks!"]);
+      if (ratio >= 0.1) return isPt
+        ? pick(['Ficando com fome...', 'Preciso de comida!', 'Pouca energia...'])
+        : pick(['Getting hungry...', 'Need food!', 'Low energy...']);
+      return isPt
+        ? pick(['Com muita fome...', 'Me alimenta por favor!', 'Estomago vazio...'])
+        : pick(['So hungry...', 'Please feed me!', 'Empty stomach...']);
     };
 
-    const interval = setInterval(showMessage, 180000);
-    return () => clearInterval(interval);
-  }, []);
+    const interval = setInterval(() => {
+      const p = propsRef.current;
+      if (p.isSleeping) return;
+      speak(getIdlePhrase(), 5000);
+      if (!p.useAI) return;
+      const contextMsg = p.language === 'pt-BR'
+        ? `[ALEATÓRIO] Diga algo espontâneo em primeira pessoa como ${p.currentStage}. Máx 12 palavras. Sem emojis.`
+        : `[RANDOM] Say something spontaneous in first person as ${p.currentStage}. Max 12 words. No emojis.`;
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: contextMsg, digimonName: p.currentStage, mood: p.companionMood, evolutionStage: p.evolutionStage, dominantBranch: p.dominantBranch, language: p.language, aiSettings: p.aiSettings }),
+      })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data?.response) speak(data.response, 5000); })
+        .catch(() => {});
+    }, 180000);
 
-  // Trigger message from outside (activity checked, new activity, care event)
-  useEffect(() => {
-    if (triggerMessage > 0) {
-      if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
-      setChatResponse('');
-      setShowBubble(true);
-      bubbleTimeoutRef.current = setTimeout(() => {
-        setShowBubble(false);
-        setChatResponse('');
-        bubbleTimeoutRef.current = null;
-      }, 8000);
-    }
-  }, [triggerMessage]);
+    return () => clearInterval(interval);
+  }, [speak]);
 
   // Handle bubble click to dismiss
   const handleBubbleClick = () => {
     if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
     bubbleTimeoutRef.current = null;
     setShowBubble(false);
-    setChatResponse('');
+    setBubbleText('');
   };
 
-  // Contextual fallback phrases based on pet state
-  const getContextualPhrase = (): string => {
+  // Handle digimon click — show preset phrase immediately, then fire API update
+  const handleDigimonClick = () => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
     const hpRatio = maxHealthPoints > 0 ? healthPoints / maxHealthPoints : 0;
     const isPt = language === 'pt-BR';
-
-    if (careEvent?.type === 'poop') return isPt
-      ? pick(['Preciso de banho! 🚿', 'Tô sujo! 💩', 'Me limpa! 🚿'])
-      : pick(['Need a shower! 🚿', 'I made a mess! 💩', 'Clean me! 🚿']);
-
-    if (careEvent?.type === 'food') return isPt
-      ? pick(['Estou com fome! 🍖', 'Me alimenta! 😋', 'Com fome! 🍎'])
-      : pick(['I\'m hungry! 🍖', 'Feed me! 😋', 'So hungry! 🍎']);
-
-    if (hpRatio <= 0.25) return isPt
-      ? pick(['Não me sinto bem... 💔', 'Preciso de cuidados! 🥺', 'Meu HP está baixo... 😢'])
-      : pick(['Not feeling great... 💔', 'I need some care! 🥺', 'My HP is low... 😢']);
-
-    if (ratio >= 1) return isPt
-      ? pick(['Cheio de energia! ⚡', 'Pronto para tudo! 💪', 'Totalmente carregado! 🌟', 'Vamos lá! 😄'])
-      : pick(['Full power! ⚡', 'Ready for anything! 💪', 'Fully charged! 🌟', 'Let\'s go! 😄']);
-
-    if (ratio >= 0.6) return isPt
-      ? pick(['Me sentindo bem! 😊', 'Tudo ótimo! ✨', 'Energia boa! 🎮', 'Firme e forte! 💚'])
-      : pick(['Feeling great! 😊', 'All good! ✨', 'Good energy! 🎮', 'Going strong! 💚']);
-
-    if (ratio >= 0.35) return isPt
-      ? pick(['Podia comer algo... 🤔', 'Como está seu dia? 😌', 'Vamos completar tarefas! 🎯', 'Quase na metade! 🙂'])
-      : pick(['Could use a snack... 🤔', 'How\'s your day? 😌', 'Let\'s complete tasks! 🎯', 'Getting there! 🙂']);
-
-    if (ratio >= 0.1) return isPt
-      ? pick(['Ficando com fome... 😴', 'Preciso de comida! 🍎', 'Complete tarefas! 💪', 'Pouca energia... 🔋'])
-      : pick(['Getting hungry... 😴', 'Need food! 🍎', 'Complete tasks! 💪', 'Low energy... 🔋']);
-
-    return isPt
-      ? pick(['Com muita fome... 😭', 'Por favor me alimente! 🍖', 'Estômago vazio... 😢', 'Preciso comer! 😩'])
-      : pick(['So hungry... 😭', 'Please feed me! 🍖', 'Empty stomach... 😢', 'Need to eat! 😩']);
-  };
-
-  // Handle digimon click — show phrase immediately, fire-and-forget AI update
-  const handleDigimonClick = () => {
-    const fallback = getContextualPhrase();
-    handleChatMessage(fallback);
+    let fallback: string;
+    if (careEvent?.type === 'poop') fallback = isPt ? pick(['Preciso de banho!', 'Estou sujo!', 'Me limpa!']) : pick(['Need a shower!', 'I made a mess!', 'Clean me!']);
+    else if (careEvent?.type === 'food') fallback = isPt ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!']) : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
+    else if (hpRatio <= 0.25) fallback = isPt ? pick(['Nao me sinto bem...', 'Preciso de cuidados!', 'HP baixo...']) : pick(['Not feeling great...', 'Need some care!', 'My HP is low...']);
+    else if (ratio >= 1) fallback = isPt ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!']) : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
+    else if (ratio >= 0.6) fallback = isPt ? pick(['Me sentindo bem!', 'Tudo otimo!', 'Energia boa!']) : pick(['Feeling great!', 'All good!', 'Good energy!']);
+    else if (ratio >= 0.35) fallback = isPt ? pick(['Podia comer algo...', 'Como esta seu dia?', 'Vamos completar tarefas!']) : pick(['Could use a snack...', "How's your day?", "Let's complete tasks!"]);
+    else if (ratio >= 0.1) fallback = isPt ? pick(['Ficando com fome...', 'Preciso de comida!', 'Pouca energia...']) : pick(['Getting hungry...', 'Need food!', 'Low energy...']);
+    else fallback = isPt ? pick(['Com muita fome...', 'Me alimenta por favor!', 'Estomago vazio...']) : pick(['So hungry...', 'Please feed me!', 'Empty stomach...']);
+    speak(fallback, 4000);
 
     if (!useAI) return;
 
-    const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
     const contextMsg = language === 'pt-BR'
       ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
       : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
@@ -309,7 +326,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       body: JSON.stringify({ message: contextMsg, digimonName: currentStage, mood: companionMood, evolutionStage, dominantBranch, language, aiSettings }),
     })
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.response) handleChatMessage(data.response); })
+      .then(data => { if (data?.response) speak(data.response, 5000); })
       .catch(() => {});
   };
 
@@ -468,10 +485,11 @@ export const CompanionHUD = memo(function CompanionHUD({
   const handleShowerClick = () => {
     if (isShowering || showerCooldown) return;
     if (!energyFull) {
-      handleChatMessage(
+      speak(
         language === 'pt-BR'
-          ? 'Preciso de energia cheia para o banho! Come mais primeiro. 🍎'
-          : 'Need full energy for a shower! Eat something first. 🍎'
+          ? 'Preciso de energia cheia para o banho! Come mais primeiro.'
+          : 'Need full energy for a shower! Eat something first.',
+        4000
       );
       return;
     }
@@ -495,11 +513,6 @@ export const CompanionHUD = memo(function CompanionHUD({
         return `drop-shadow-[0_0_8px_${auraColor}]`;
     }
   };
-
-  const emojiIntensity = aiSettings?.emojiIntensity ?? 'medium';
-  const stripEmojis = (text: string) =>
-    text.replace(/\p{Emoji_Presentation}|\p{Emoji}️/gu, '').replace(/\s{2,}/g, ' ').trim();
-  const displayText = (raw: string) => emojiIntensity === 'none' ? stripEmojis(raw) : raw;
 
   // Render pixel hearts for HP
   const renderHearts = () => {
@@ -765,6 +778,45 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
+          {/* Speech bubble — anchored to bottom of pet area */}
+          {showBubble && (
+            <div
+              className="absolute bottom-0 left-0 right-0 z-[45] px-2 pb-1 pointer-events-auto"
+              onClick={handleBubbleClick}
+            >
+              <div
+                className={`relative px-3 py-1.5 cursor-pointer ${
+                  isGlitch
+                    ? 'glitch-activity-card'
+                    : isWin98
+                      ? 'win98-activity-card'
+                      : 'bg-white rounded-xl shadow-lg'
+                }`}
+              >
+                <p
+                  className={isWin98 ? 'text-white text-center break-words' : 'text-gray-800 text-center break-words'}
+                  style={{
+                    fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace',
+                    fontSize: '0.68rem',
+                    lineHeight: '1.3',
+                    textShadow: isWin98 ? '0 0 10px rgba(0,255,255,0.8)' : undefined,
+                  }}
+                >
+                  {bubbleText}
+                </p>
+                {/* Bubble tail pointing up */}
+                <span
+                  className="absolute -top-[6px] left-1/2 -translate-x-1/2 w-0 h-0"
+                  style={{
+                    borderLeft: '6px solid transparent',
+                    borderRight: '6px solid transparent',
+                    borderBottom: isWin98 ? '6px solid #003' : '6px solid white',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Desktop icons — top-right of pet area */}
           <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
             {([
@@ -830,34 +882,6 @@ export const CompanionHUD = memo(function CompanionHUD({
       </div>
 
       </div>
-
-      {/* Message bubble — just above ChatBox input */}
-      {showBubble && (
-        <div className="mt-1">
-          <div
-            className={`px-3 py-2 cursor-pointer ${
-              isGlitch
-                ? 'glitch-activity-card'
-                : isWin98
-                  ? 'win98-activity-card'
-                  : 'bg-white/90 rounded-xl shadow-lg'
-            }`}
-            onClick={handleBubbleClick}
-          >
-            <p
-              className={isWin98 ? 'text-[#ffffff] text-center break-words' : 'text-gray-800 text-center break-words'}
-              style={{
-                fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace',
-                fontSize: '0.7rem',
-                lineHeight: '1.3',
-                textShadow: isWin98 ? '0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(255, 0, 255, 0.4)' : undefined,
-              }}
-            >
-              {displayText(chatResponse || message)}
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Chat Box - Below Companion Area */}
       <div className="mt-2">
