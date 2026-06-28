@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 4x2 chat widget: animated pet (left) + auto-rotating phrases (right).
-     Both ViewFlippers auto-advance in the launcher: sprite ~450ms, phrases ~5s. -->
+<!-- 4x1 chat widget: animated pet (left) + auto-rotating phrases (right).
+     Sprite flips ~450ms (breathing, bottom-anchored), phrases flip ~5s. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:padding="10dp"
+    android:padding="6dp"
     android:background="@drawable/partner_area"
     android:gravity="center_vertical">
 
-    <!-- Pet sprite (left) — 2-frame bounce -->
+    <!-- Pet sprite (left) — 2-frame breathing -->
     <ViewFlipper
-        android:layout_width="80dp"
-        android:layout_height="80dp"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
         android:autoStart="true"
         android:flipInterval="450">
         <ImageView
             android:id="@+id/widget_sprite"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerInside"
+            android:scaleType="fitCenter"
             android:src="@drawable/triceramon_dot" />
         <ImageView
             android:id="@+id/widget_sprite_2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerInside"
-            android:paddingBottom="6dp"
+            android:scaleType="fitCenter"
+            android:paddingTop="5dp"
             android:src="@drawable/triceramon_dot" />
     </ViewFlipper>
 
@@ -37,7 +37,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="8dp"
         android:gravity="center_vertical">
 
         <TextView
@@ -45,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="DigiEgg"
-            android:textSize="14sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
             android:maxLines="1"
@@ -58,14 +58,13 @@
         <ViewFlipper
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
             android:autoStart="true"
             android:flipInterval="5000">
-            <TextView android:id="@+id/widget_phrase_1" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#F0FFFFFF" android:maxLines="3" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
-            <TextView android:id="@+id/widget_phrase_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#F0FFFFFF" android:maxLines="3" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
-            <TextView android:id="@+id/widget_phrase_3" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#F0FFFFFF" android:maxLines="3" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
-            <TextView android:id="@+id/widget_phrase_4" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#F0FFFFFF" android:maxLines="3" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
-            <TextView android:id="@+id/widget_phrase_5" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="#F0FFFFFF" android:maxLines="3" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
+            <TextView android:id="@+id/widget_phrase_1" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="#F0FFFFFF" android:maxLines="2" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
+            <TextView android:id="@+id/widget_phrase_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="#F0FFFFFF" android:maxLines="2" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
+            <TextView android:id="@+id/widget_phrase_3" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="#F0FFFFFF" android:maxLines="2" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
+            <TextView android:id="@+id/widget_phrase_4" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="#F0FFFFFF" android:maxLines="2" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
+            <TextView android:id="@+id/widget_phrase_5" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="#F0FFFFFF" android:maxLines="2" android:ellipsize="end" android:shadowColor="#000000" android:shadowDx="1" android:shadowDy="1" android:shadowRadius="2" />
         </ViewFlipper>
 
     </LinearLayout>
