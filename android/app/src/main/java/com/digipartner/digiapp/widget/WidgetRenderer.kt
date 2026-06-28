@@ -84,6 +84,7 @@ object WidgetRenderer {
         val views = RemoteViews(context.packageName, layoutId)
         setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
         views.setTextViewText(R.id.widget_digimon_name, digimonName)
+        views.setTextViewText(R.id.widget_tasks, if (total > 0) "$completed/$total" else "—")
 
         val phrases = buildChatPhrases(currentStage, completed, total, hp)
         for (i in CHAT_PHRASE_SLOTS.indices) {

@@ -18,13 +18,13 @@
             android:id="@+id/widget_sprite"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitCenter"
+            android:scaleType="fitEnd"
             android:src="@drawable/triceramon_dot" />
         <ImageView
             android:id="@+id/widget_sprite_2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitCenter"
+            android:scaleType="fitEnd"
             android:paddingTop="8dp"
             android:src="@drawable/triceramon_dot" />
     </ViewFlipper>
