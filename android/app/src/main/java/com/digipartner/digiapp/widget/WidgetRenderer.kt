@@ -58,16 +58,16 @@ object WidgetRenderer {
     )
 
     private val CHAT_FIXED_PHRASES = listOf(
-        "Tô feliz que você voltou!",
-        "Vamos cuidar das tarefas juntos?",
-        "Você é meu parceiro favorito!",
-        "Bora evoluir hoje?",
-        "Senti sua falta!",
-        "Conta comigo sempre!",
-        "Que bom te ver!",
-        "Juntos somos mais fortes!",
-        "Não esquece de mim hoje, hein!",
-        "Tô torcendo por você!"
+        "Glad you're back!",
+        "Let's tackle our tasks together?",
+        "You're my favorite partner!",
+        "Ready to evolve today?",
+        "I missed you!",
+        "You can always count on me!",
+        "Good to see you!",
+        "Together we're stronger!",
+        "Don't forget about me today!",
+        "I'm rooting for you!"
     )
 
     // Chat widget (4x2): animated sprite + auto-rotating phrases.
@@ -97,12 +97,12 @@ object WidgetRenderer {
 
     private fun buildChatPhrases(stage: String, completed: Int, total: Int, hp: Int): List<String> {
         val contextual = mutableListOf<String>()
-        if (hp <= 20) contextual.add("Tô precisando de carinho...")
-        if (stage == "digiegg") contextual.add("Logo logo eu choco!")
+        if (hp <= 20) contextual.add("I need some care...")
+        if (stage == "digiegg") contextual.add("I'll hatch soon!")
         when {
-            total == 0 -> contextual.add("Bora adicionar uma tarefa?")
-            completed >= total -> contextual.add("Arrasamos hoje! ✨")
-            else -> contextual.add("Faltam ${total - completed} tarefa(s), bora!")
+            total == 0 -> contextual.add("Let's add a task?")
+            completed >= total -> contextual.add("We crushed it today! ✨")
+            else -> contextual.add("${total - completed} task(s) left, let's go!")
         }
         val result = (contextual + CHAT_FIXED_PHRASES.shuffled()).toMutableList()
         while (result.size < CHAT_PHRASE_SLOTS.size) result.add(CHAT_FIXED_PHRASES.random())
