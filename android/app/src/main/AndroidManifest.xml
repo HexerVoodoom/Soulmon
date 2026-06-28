@@ -74,6 +74,19 @@
                 android:resource="@xml/digiapp_widget_pet_info" />
         </receiver>
 
+        <!-- WIDGET D — chat 4x2 (pet animado + frases girando) -->
+        <receiver
+            android:name=".widget.DigiAppWidgetChatProvider"
+            android:label="DigiApp Chat"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/digiapp_widget_chat_info" />
+        </receiver>
+
         <receiver
             android:name=".notifications.AlarmReceiver"
             android:exported="false" />

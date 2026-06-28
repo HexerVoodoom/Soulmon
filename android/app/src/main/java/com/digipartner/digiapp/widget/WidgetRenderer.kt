@@ -52,7 +52,63 @@ object WidgetRenderer {
         views.setImageViewResource(R.id.widget_sprite_2, spriteId)
     }
 
-    // Refresh every active instance of all three widget variants.
+    private val CHAT_PHRASE_SLOTS = intArrayOf(
+        R.id.widget_phrase_1, R.id.widget_phrase_2, R.id.widget_phrase_3,
+        R.id.widget_phrase_4, R.id.widget_phrase_5
+    )
+
+    private val CHAT_FIXED_PHRASES = listOf(
+        "Tô feliz que você voltou!",
+        "Vamos cuidar das tarefas juntos?",
+        "Você é meu parceiro favorito!",
+        "Bora evoluir hoje?",
+        "Senti sua falta!",
+        "Conta comigo sempre!",
+        "Que bom te ver!",
+        "Juntos somos mais fortes!",
+        "Não esquece de mim hoje, hein!",
+        "Tô torcendo por você!"
+    )
+
+    // Chat widget (4x2): animated sprite + auto-rotating phrases.
+    fun renderChat(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val digimonName = prefs.getString("digimon_name", "DigiEgg") ?: "DigiEgg"
+        val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
+        val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
+        val branchType = prefs.getString("branch_type", "data") ?: "data"
+        val completed = prefs.getInt("completed_tasks", 0)
+        val total = prefs.getInt("total_tasks", 0)
+        val hp = prefs.getInt("hp", 100)
+
+        val views = RemoteViews(context.packageName, layoutId)
+        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
+        views.setTextViewText(R.id.widget_digimon_name, digimonName)
+
+        val phrases = buildChatPhrases(currentStage, completed, total, hp)
+        for (i in CHAT_PHRASE_SLOTS.indices) {
+            views.setTextViewText(CHAT_PHRASE_SLOTS[i], phrases[i % phrases.size])
+        }
+
+        attachClick(context, views)
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun buildChatPhrases(stage: String, completed: Int, total: Int, hp: Int): List<String> {
+        val contextual = mutableListOf<String>()
+        if (hp <= 20) contextual.add("Tô precisando de carinho...")
+        if (stage == "digiegg") contextual.add("Logo logo eu choco!")
+        when {
+            total == 0 -> contextual.add("Bora adicionar uma tarefa?")
+            completed >= total -> contextual.add("Arrasamos hoje! ✨")
+            else -> contextual.add("Faltam ${total - completed} tarefa(s), bora!")
+        }
+        val result = (contextual + CHAT_FIXED_PHRASES.shuffled()).toMutableList()
+        while (result.size < CHAT_PHRASE_SLOTS.size) result.add(CHAT_FIXED_PHRASES.random())
+        return result.take(CHAT_PHRASE_SLOTS.size)
+    }
+
+    // Refresh every active instance of all widget variants.
     fun updateAll(context: Context) {
         val mgr = AppWidgetManager.getInstance(context)
         for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetProvider::class.java)))
@@ -61,6 +117,8 @@ object WidgetRenderer {
             renderFull(context, mgr, id, R.layout.widget_digiapp_vertical)
         for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetPetProvider::class.java)))
             renderPet(context, mgr, id, R.layout.widget_digiapp_pet)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetChatProvider::class.java)))
+            renderChat(context, mgr, id, R.layout.widget_digiapp_chat)
     }
 
     private fun attachClick(context: Context, views: RemoteViews) {
