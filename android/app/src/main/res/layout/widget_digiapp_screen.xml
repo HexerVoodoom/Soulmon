@@ -5,12 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Background grid (explicit ImageView fills reliably in RemoteViews) -->
+    <!-- Background grid (vector — partner_area.png is a broken 0-byte file) -->
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:src="@drawable/partner_area" />
+        android:scaleType="fitXY"
+        android:src="@drawable/pet_grid" />
 
     <RelativeLayout
         android:layout_width="match_parent"
