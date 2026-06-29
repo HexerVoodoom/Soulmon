@@ -186,9 +186,10 @@ export default function App() {
       hp: Math.round((gameState.healthPoints / gameState.maxHealthPoints) * 100),
       healthPoints: gameState.healthPoints,
       maxHealthPoints: gameState.maxHealthPoints,
+      energyPoints: gameState.energyPoints ?? 0,
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
-      gameState.healthPoints, gameState.maxHealthPoints, dailyDone, dailyTotal]);
+      gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints, dailyDone, dailyTotal]);
 
   // Determine companion mood based on progress
   const getCompanionMood = (): 'idle' | 'happy' | 'tired' => {

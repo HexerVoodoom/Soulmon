@@ -74,7 +74,7 @@
                 android:resource="@xml/digiapp_widget_pet_info" />
         </receiver>
 
-        <!-- WIDGET D — chat 4x2 (pet animado + frases girando) -->
+        <!-- WIDGET D — chat (pet animado + frases girando) -->
         <receiver
             android:name=".widget.DigiAppWidgetChatProvider"
             android:label="DigiApp Chat"
@@ -85,6 +85,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/digiapp_widget_chat_info" />
+        </receiver>
+
+        <!-- WIDGET E — tela do pet (grade + corações + pet + barra de energia) -->
+        <receiver
+            android:name=".widget.DigiAppWidgetScreenProvider"
+            android:label="DigiApp Tela"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/digiapp_widget_screen_info" />
         </receiver>
 
         <receiver

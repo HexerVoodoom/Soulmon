@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.view.View
 import android.widget.RemoteViews
 import com.digipartner.digiapp.R
 
@@ -109,6 +110,55 @@ object WidgetRenderer {
         return result.take(CHAT_PHRASE_SLOTS.size)
     }
 
+    private val SCREEN_HEART_IDS = intArrayOf(
+        R.id.widget_heart_1, R.id.widget_heart_2, R.id.widget_heart_3,
+        R.id.widget_heart_4, R.id.widget_heart_5
+    )
+    // index 0 = bottom segment (bar fills from the bottom up)
+    private val SCREEN_ENERGY_IDS = intArrayOf(
+        R.id.widget_energy_1, R.id.widget_energy_2, R.id.widget_energy_3,
+        R.id.widget_energy_4, R.id.widget_energy_5
+    )
+
+    // Pet-screen widget: green grid + hearts (health) + animated pet + energy bar.
+    fun renderScreen(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
+        val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
+        val branchType = prefs.getString("branch_type", "data") ?: "data"
+        val maxH = prefs.getInt("max_health_points", 2).coerceIn(1, SCREEN_HEART_IDS.size)
+        val health = prefs.getInt("health_points", maxH).coerceIn(0, maxH)
+        val energy = prefs.getInt("energy_points", 0).coerceIn(0, maxH)
+
+        val views = RemoteViews(context.packageName, layoutId)
+        setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
+
+        // Hearts: red = current health, dark = empty; hide slots beyond maxHealth.
+        for (i in SCREEN_HEART_IDS.indices) {
+            if (i < maxH) {
+                views.setViewVisibility(SCREEN_HEART_IDS[i], View.VISIBLE)
+                views.setImageViewResource(
+                    SCREEN_HEART_IDS[i],
+                    if (i < health) R.drawable.heart_full else R.drawable.heart_empty
+                )
+            } else {
+                views.setViewVisibility(SCREEN_HEART_IDS[i], View.GONE)
+            }
+        }
+
+        // Energy bar: 5 segments filled by energy/maxHealth ratio, from the bottom.
+        val fill = if (maxH > 0) Math.round(energy.toFloat() / maxH * SCREEN_ENERGY_IDS.size) else 0
+        for (i in SCREEN_ENERGY_IDS.indices) {
+            views.setInt(
+                SCREEN_ENERGY_IDS[i], "setBackgroundResource",
+                if (i < fill) R.drawable.bar_on else R.drawable.bar_off
+            )
+        }
+
+        attachClick(context, views)
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
     // Refresh every active instance of all widget variants.
     fun updateAll(context: Context) {
         val mgr = AppWidgetManager.getInstance(context)
@@ -120,6 +170,8 @@ object WidgetRenderer {
             renderPet(context, mgr, id, R.layout.widget_digiapp_pet)
         for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetChatProvider::class.java)))
             renderChat(context, mgr, id, R.layout.widget_digiapp_chat)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetScreenProvider::class.java)))
+            renderScreen(context, mgr, id, R.layout.widget_digiapp_screen)
     }
 
     private fun attachClick(context: Context, views: RemoteViews) {

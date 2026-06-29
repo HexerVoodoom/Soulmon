@@ -10,6 +10,7 @@ export interface DigiWidgetData {
   hp: number;
   healthPoints: number;
   maxHealthPoints: number;
+  energyPoints: number;
 }
 
 export interface DigiWidgetPlugin {
