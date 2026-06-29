@@ -1,4 +1,4 @@
-import { X, Sparkles, MessageCircle, Heart } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 interface AISettings {
@@ -25,10 +25,10 @@ const defaultSettings: AISettings = {
   temperature: 0.85
 };
 
-export function AISettingsModal({ 
-  isOpen, 
-  onClose, 
-  currentSettings, 
+export function AISettingsModal({
+  isOpen,
+  onClose,
+  currentSettings,
   onSave,
   theme = 'default'
 }: AISettingsModalProps) {
@@ -42,201 +42,119 @@ export function AISettingsModal({
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    onSave(settings);
-    onClose();
-  };
+  const handleSave = () => { onSave(settings); onClose(); };
+  const handleReset = () => setSettings(defaultSettings);
 
-  const handleReset = () => {
-    setSettings(defaultSettings);
-  };
+  const mono = { fontFamily: 'monospace' as const };
+
+  // Shared option-button styling (selected vs not) per theme — clean & minimal.
+  const optionClass = (selected: boolean) =>
+    `px-3 py-2.5 rounded-md border text-left transition-colors ${
+      selected
+        ? isGlitch
+          ? 'bg-[#002a2a] border-[#00ffff] text-[#00ffff]'
+          : isWin98
+            ? 'win98-button bg-[#000080] text-white'
+            : 'bg-teal-50 border-teal-500 text-teal-700'
+        : isGlitch
+          ? 'bg-[#0f0f0f] border-[#1f3a3a] text-[#7fdede] hover:border-[#00ffff]'
+          : isWin98
+            ? 'bg-white border-gray-400 text-black hover:bg-gray-100'
+            : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400'
+    }`;
+
+  const labelClass = `block mb-2 text-xs uppercase tracking-wide ${
+    isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-500'
+  }`;
+
+  const hintClass = `text-xs mt-1.5 ${
+    isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-600' : 'text-gray-400'
+  }`;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className={`w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-lg shadow-2xl ${
-        isGlitch 
-          ? 'glitch-container' 
-          : isWin98 
-            ? 'win98-container' 
-            : 'modern-container bg-white'
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className={`w-full max-w-lg max-h-[88vh] overflow-y-auto rounded-xl shadow-2xl ${
+        isGlitch ? 'glitch-container' : isWin98 ? 'win98-container' : 'bg-white'
       }`}>
         {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b ${
-          isGlitch
-            ? 'glitch-header'
-            : isWin98
-              ? 'win98-header'
-              : 'modern-header border-gray-200'
+        <div className={`flex items-center justify-between px-5 py-4 border-b ${
+          isGlitch ? 'glitch-header' : isWin98 ? 'win98-header' : 'border-gray-100'
         }`}>
           <div className="flex items-center gap-2">
-            <Sparkles size={20} className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-teal-600'} />
-            <h2 className={`${
-              isGlitch ? 'glitch-title' : isWin98 ? 'win98-title' : 'modern-title'
-            }`} style={{ fontFamily: 'monospace' }}>
-              ⚙️ AI Personality
+            <Sparkles size={16} className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-teal-600'} />
+            <h2 className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-900'}
+                style={{ ...mono, fontSize: '0.95rem', fontWeight: 600 }}>
+              AI Personality
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className={`p-2 rounded transition-colors ${
-              isGlitch
-                ? 'glitch-button'
-                : isWin98
-                  ? 'win98-button'
-                  : 'hover:bg-gray-200'
-            }`}
-          >
-            <X size={18} />
+          <button onClick={onClose}
+            className={`p-1.5 rounded-md transition-colors ${isGlitch ? 'text-[#00ffff] hover:bg-[#00ffff]/10' : isWin98 ? 'win98-button' : 'text-gray-400 hover:bg-gray-100'}`}>
+            <X size={16} />
           </button>
         </div>
 
         {/* Content */}
-        <div className={`p-4 space-y-6 ${
-          isGlitch ? 'bg-[#0a0a0a]' : isWin98 ? 'bg-[#c0c0c0]' : 'bg-white'
-        }`}>
-          
-          {/* Description */}
-          <div className={`p-3 rounded border ${
-            isGlitch
-              ? 'bg-[#1a1a1a] border-[#00ffff] text-[#00ffff]'
-              : isWin98
-                ? 'bg-white border-gray-400 text-black'
-                : 'bg-teal-50 border-teal-200 text-teal-900'
-          }`} style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-            💡 Customize how your digital companion talks to you! These settings affect the AI's personality.
-          </div>
+        <div className={`px-5 py-5 space-y-6 ${isGlitch ? 'bg-[#0a0a0a]' : isWin98 ? 'bg-[#c0c0c0]' : 'bg-white'}`}>
 
           {/* Tone */}
           <div>
-            <label className={`flex items-center gap-2 mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-700'
-            }`} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-              <MessageCircle size={16} />
-              Tone of Voice
-            </label>
+            <label className={labelClass} style={mono}>Tone of voice</label>
             <div className="grid grid-cols-2 gap-2">
-              {['casual', 'energetic', 'calm', 'playful'].map((tone) => (
-                <button
-                  key={tone}
-                  onClick={() => setSettings({ ...settings, tone: tone as AISettings['tone'] })}
-                  className={`p-3 rounded border transition-all ${
-                    settings.tone === tone
-                      ? isGlitch
-                        ? 'glitch-button'
-                        : isWin98
-                          ? 'win98-button bg-[#000080] text-white'
-                          : 'bg-gradient-to-r from-[#2bff95] to-teal-500 text-black border-teal-600'
-                      : isGlitch
-                        ? 'bg-[#1a1a1a] border-[#00ffff] text-[#00ffff] hover:bg-[#2a2a2a]'
-                        : isWin98
-                          ? 'bg-white border-gray-400 text-black hover:bg-gray-100'
-                          : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
-                >
-                  {tone === 'casual' && '😊 Casual'}
-                  {tone === 'energetic' && '⚡ Energetic'}
-                  {tone === 'calm' && '🧘 Calm'}
-                  {tone === 'playful' && '🎮 Playful'}
+              {(['casual', 'energetic', 'calm', 'playful'] as const).map((tone) => (
+                <button key={tone} onClick={() => setSettings({ ...settings, tone })}
+                  className={optionClass(settings.tone === tone)} style={{ ...mono, fontSize: '0.85rem' }}>
+                  {tone.charAt(0).toUpperCase() + tone.slice(1)}
                 </button>
               ))}
             </div>
-            <p className={`text-xs mt-1 ${
-              isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-gray-600' : 'text-gray-500'
-            }`} style={{ fontFamily: 'monospace' }}>
-              {settings.tone === 'casual' && 'Relaxed language: "hey, yeah, let\'s go"'}
-              {settings.tone === 'energetic' && 'Very excited: "LET\'S GO! 🔥"'}
-              {settings.tone === 'calm' && 'Peaceful and serene: "take it easy..."'}
-              {settings.tone === 'playful' && 'Fun and full of jokes'}
+            <p className={hintClass} style={mono}>
+              {settings.tone === 'casual' && 'Relaxed: "hey", "yeah", "let\'s go"'}
+              {settings.tone === 'energetic' && 'Very excited, uses caps'}
+              {settings.tone === 'calm' && 'Peaceful and serene'}
+              {settings.tone === 'playful' && 'Fun, with the occasional joke'}
             </p>
           </div>
 
-          {/* Emoji Intensity */}
+          {/* Emoji intensity */}
           <div>
-            <label className={`flex items-center gap-2 mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-700'
-            }`} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-              <Heart size={16} />
-              Emoji Intensity
-            </label>
+            <label className={labelClass} style={mono}>Emoji usage</label>
             <div className="grid grid-cols-4 gap-2">
-              {[
-                { value: 'none', label: 'None', emoji: '🚫' },
-                { value: 'low', label: 'Low', emoji: '😊' },
-                { value: 'medium', label: 'Medium', emoji: '😊✨' },
-                { value: 'high', label: 'High', emoji: '😊✨🔥' }
-              ].map(({ value, label, emoji }) => (
-                <button
-                  key={value}
-                  onClick={() => setSettings({ ...settings, emojiIntensity: value as AISettings['emojiIntensity'] })}
-                  className={`p-3 rounded border transition-all ${
-                    settings.emojiIntensity === value
-                      ? isGlitch
-                        ? 'glitch-button'
-                        : isWin98
-                          ? 'win98-button bg-[#000080] text-white'
-                          : 'bg-gradient-to-r from-[#2bff95] to-teal-500 text-black border-teal-600'
-                      : isGlitch
-                        ? 'bg-[#1a1a1a] border-[#00ffff] text-[#00ffff] hover:bg-[#2a2a2a]'
-                        : isWin98
-                          ? 'bg-white border-gray-400 text-black hover:bg-gray-100'
-                          : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-                >
-                  <div>{emoji}</div>
-                  <div>{label}</div>
+              {([
+                { value: 'none', label: 'None' },
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+              ] as const).map(({ value, label }) => (
+                <button key={value} onClick={() => setSettings({ ...settings, emojiIntensity: value })}
+                  className={`text-center ${optionClass(settings.emojiIntensity === value)}`} style={{ ...mono, fontSize: '0.8rem' }}>
+                  {label}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Motivation Style */}
+          {/* Motivation style */}
           <div>
-            <label className={`flex items-center gap-2 mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-700'
-            }`} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-              💪 Motivation Style
-            </label>
+            <label className={labelClass} style={mono}>Motivation style</label>
             <div className="grid grid-cols-2 gap-2">
-              {[
-                { value: 'encouraging', label: '🌟 Encouraging', desc: 'Always positive' },
-                { value: 'challenging', label: '🔥 Challenging', desc: 'Pushes you' },
-                { value: 'supportive', label: '💚 Supportive', desc: 'Very caring' },
-                { value: 'balanced', label: '⚖️ Balanced', desc: 'Mix of all' }
-              ].map(({ value, label, desc }) => (
-                <button
-                  key={value}
-                  onClick={() => setSettings({ ...settings, motivationStyle: value as AISettings['motivationStyle'] })}
-                  className={`p-3 rounded border transition-all text-left ${
-                    settings.motivationStyle === value
-                      ? isGlitch
-                        ? 'glitch-button'
-                        : isWin98
-                          ? 'win98-button bg-[#000080] text-white'
-                          : 'bg-gradient-to-r from-[#2bff95] to-teal-500 text-black border-teal-600'
-                      : isGlitch
-                        ? 'bg-[#1a1a1a] border-[#00ffff] text-[#00ffff] hover:bg-[#2a2a2a]'
-                        : isWin98
-                          ? 'bg-white border-gray-400 text-black hover:bg-gray-100'
-                          : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
-                >
+              {([
+                { value: 'encouraging', label: 'Encouraging', desc: 'Always positive' },
+                { value: 'challenging', label: 'Challenging', desc: 'Pushes you' },
+                { value: 'supportive', label: 'Supportive', desc: 'Very caring' },
+                { value: 'balanced', label: 'Balanced', desc: 'A mix of all' },
+              ] as const).map(({ value, label, desc }) => (
+                <button key={value} onClick={() => setSettings({ ...settings, motivationStyle: value })}
+                  className={optionClass(settings.motivationStyle === value)} style={{ ...mono, fontSize: '0.85rem' }}>
                   <div>{label}</div>
-                  <div className="text-xs opacity-70">{desc}</div>
+                  <div className="text-xs opacity-60">{desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Custom Keywords */}
+          {/* Custom instructions */}
           <div>
-            <label className={`flex items-center gap-2 mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-700'
-            }`} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-              🏷️ Custom Keywords
-            </label>
+            <label className={labelClass} style={mono}>Custom instructions</label>
             <textarea
               value={settings.customKeywords}
               autoComplete="new-password"
@@ -245,113 +163,69 @@ export function AISettingsModal({
               autoCapitalize="off"
               onChange={(e) => setSettings({ ...settings, customKeywords: e.target.value })}
               maxLength={500}
-              placeholder="e.g., always say 'partner', avoid 'boss', use slang..."
-              className={`w-full p-3 rounded border resize-none ${
+              placeholder="e.g. always call me 'partner', avoid 'boss'..."
+              rows={3}
+              className={`w-full px-3 py-2.5 rounded-md border resize-none outline-none ${
                 isGlitch
-                  ? 'bg-[#1a1a1a] border-[#00ffff] text-[#00ffff] placeholder:text-[#ff00ff]'
+                  ? 'bg-[#0f0f0f] border-[#1f3a3a] text-[#00ffff] placeholder:text-[#3a6a6a] focus:border-[#00ffff]'
                   : isWin98
                     ? 'bg-white border-gray-400 text-black'
-                    : 'bg-white border-gray-300 text-gray-700'
+                    : 'bg-white border-gray-200 text-gray-700 placeholder:text-gray-300 focus:border-teal-400'
               }`}
-              style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
-              rows={3}
+              style={{ ...mono, fontSize: '0.85rem' }}
             />
-            <div className="flex justify-between mt-1">
-              <p className={`text-xs ${
-                isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-gray-600' : 'text-gray-500'
-              }`} style={{ fontFamily: 'monospace' }}>
-                💡 Additional instructions to customize even more
-              </p>
-              <p className={`text-xs ${
-                settings.customKeywords.length > 450
-                  ? 'text-red-500'
-                  : isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-gray-600' : 'text-gray-400'
-              }`} style={{ fontFamily: 'monospace' }}>
+            <div className="flex justify-end">
+              <p className={`text-xs mt-1 ${settings.customKeywords.length > 450 ? 'text-red-500' : isGlitch ? 'text-[#5fbcbc]' : 'text-gray-400'}`} style={mono}>
                 {settings.customKeywords.length}/500
               </p>
             </div>
           </div>
 
-          {/* Temperature Slider */}
+          {/* Creativity */}
           <div>
-            <label className={`flex items-center gap-2 mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-700'
-            }`} style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-              🌡️ Creativity: {settings.temperature.toFixed(2)}
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className={labelClass.replace('mb-2', '')} style={mono}>Creativity</label>
+              <span className={`text-xs ${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-700'}`} style={mono}>
+                {settings.temperature.toFixed(2)}
+              </span>
+            </div>
             <input
-              type="range"
-              min="0.5"
-              max="1.0"
-              step="0.05"
+              type="range" min="0.5" max="1.0" step="0.05"
               value={settings.temperature}
               autoComplete="new-password"
               onChange={(e) => setSettings({ ...settings, temperature: parseFloat(e.target.value) })}
-              className="w-full"
+              className="w-full accent-teal-500"
             />
-            <div className="flex justify-between text-xs mt-1" style={{ fontFamily: 'monospace' }}>
-              <span className={isGlitch ? 'text-[#ff00ff]' : 'text-gray-500'}>Conservative</span>
-              <span className={isGlitch ? 'text-[#ff00ff]' : 'text-gray-500'}>Creative</span>
+            <div className="flex justify-between text-xs mt-1" style={mono}>
+              <span className={isGlitch ? 'text-[#5fbcbc]' : 'text-gray-400'}>Consistent</span>
+              <span className={isGlitch ? 'text-[#5fbcbc]' : 'text-gray-400'}>Creative</span>
             </div>
-            <p className={`text-xs mt-1 text-center ${isGlitch ? 'text-[#ff00ff]/70' : isWin98 ? 'text-gray-600' : 'text-gray-400'}`} style={{ fontFamily: 'monospace' }}>
-              {settings.temperature <= 0.6
-                ? '🔒 Very consistent — predictable responses'
-                : settings.temperature <= 0.75
-                ? '⚖️ Balanced — consistent with some variety'
-                : settings.temperature <= 0.9
-                ? '✨ Creative — varied and expressive (default)'
-                : '🎲 Maximum creativity — highly unpredictable'}
-            </p>
           </div>
 
         </div>
 
         {/* Footer */}
-        <div className={`flex gap-2 p-4 border-t ${
-          isGlitch
-            ? 'bg-[#0a0a0a] border-[#00ffff]'
-            : isWin98
-              ? 'bg-[#c0c0c0] border-white'
-              : 'bg-gray-50 border-gray-200'
+        <div className={`flex gap-2 px-5 py-4 border-t ${
+          isGlitch ? 'bg-[#0a0a0a] border-[#1f3a3a]' : isWin98 ? 'bg-[#c0c0c0] border-white' : 'bg-white border-gray-100'
         }`}>
-          <button
-            onClick={handleReset}
-            className={`flex-1 py-2 px-4 rounded transition-colors ${
-              isGlitch
-                ? 'bg-[#1a1a1a] border-2 border-[#ff00ff] text-[#ff00ff] hover:bg-[#2a2a2a]'
-                : isWin98
-                  ? 'win98-button'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-            style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-          >
-            🔄 Reset
+          <button onClick={handleReset}
+            className={`py-2 px-4 rounded-md text-sm transition-colors ${
+              isGlitch ? 'text-[#5fbcbc] hover:text-[#00ffff]' : isWin98 ? 'win98-button' : 'text-gray-500 hover:bg-gray-100'
+            }`} style={{ ...mono, fontWeight: 600 }}>
+            Reset
           </button>
-          <button
-            onClick={onClose}
-            className={`flex-1 py-2 px-4 rounded transition-colors ${
-              isGlitch
-                ? 'bg-[#1a1a1a] border-2 border-[#00ffff] text-[#00ffff] hover:bg-[#2a2a2a]'
-                : isWin98
-                  ? 'win98-button'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-            style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-          >
+          <div className="flex-1" />
+          <button onClick={onClose}
+            className={`py-2 px-4 rounded-md text-sm transition-colors ${
+              isGlitch ? 'text-[#5fbcbc] hover:text-[#00ffff]' : isWin98 ? 'win98-button' : 'text-gray-600 hover:bg-gray-100'
+            }`} style={{ ...mono, fontWeight: 600 }}>
             Cancel
           </button>
-          <button
-            onClick={handleSave}
-            className={`flex-1 py-2 px-4 rounded transition-colors ${
-              isGlitch
-                ? 'glitch-button primary'
-                : isWin98
-                  ? 'win98-button primary'
-                  : 'modern-button'
-            }`}
-            style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-          >
-            ✅ Save
+          <button onClick={handleSave}
+            className={`py-2 px-5 rounded-md text-sm transition-colors ${
+              isGlitch ? 'glitch-button primary' : isWin98 ? 'win98-button primary' : 'bg-teal-600 text-white hover:bg-teal-700'
+            }`} style={{ ...mono, fontWeight: 600 }}>
+            Save
           </button>
         </div>
       </div>
