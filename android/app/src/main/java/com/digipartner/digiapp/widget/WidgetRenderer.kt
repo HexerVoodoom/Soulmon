@@ -146,13 +146,18 @@ object WidgetRenderer {
             }
         }
 
-        // Energy bar: 5 segments filled by energy/maxHealth ratio, from the bottom.
-        val fill = if (maxH > 0) Math.round(energy.toFloat() / maxH * SCREEN_ENERGY_IDS.size) else 0
+        // Energy bar: one segment per max-health unit (like the hearts), filled from
+        // the bottom by energyPoints. Hide segments beyond maxHealth.
         for (i in SCREEN_ENERGY_IDS.indices) {
-            views.setInt(
-                SCREEN_ENERGY_IDS[i], "setBackgroundResource",
-                if (i < fill) R.drawable.bar_on else R.drawable.bar_off
-            )
+            if (i < maxH) {
+                views.setViewVisibility(SCREEN_ENERGY_IDS[i], View.VISIBLE)
+                views.setImageViewResource(
+                    SCREEN_ENERGY_IDS[i],
+                    if (i < energy) R.drawable.bar_on else R.drawable.bar_off
+                )
+            } else {
+                views.setViewVisibility(SCREEN_ENERGY_IDS[i], View.GONE)
+            }
         }
 
         attachClick(context, views)
