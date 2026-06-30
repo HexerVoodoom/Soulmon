@@ -564,7 +564,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   const renderHungerMeter = () => {
     const lit = satietyBars(satiety);
     const isPt = language === 'pt-BR';
-    const heights = [4, 6, 8, 10, 12]; // growing "traços"
+    const barHeight = (i: number) => 4 + i * 2; // growing "traços"
     const litColor = isWin98 ? '#000080' : isGlitch ? '#00ffff' : '#111111';
     const dimColor = 'rgba(0,0,0,0.18)';
     return (
@@ -594,7 +594,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             key={i}
             style={{
               width: '3px',
-              height: `${heights[i]}px`,
+              height: `${barHeight(i)}px`,
               backgroundColor: i < lit ? litColor : dimColor,
               imageRendering: 'pixelated',
             }}

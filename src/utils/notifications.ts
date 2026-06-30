@@ -115,11 +115,16 @@ export const clearScheduledNotifications = () => {
 
 // ── Web Push subscription (PWA / browser) ─────────────────────────────────
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const pad = base64String.length % 4;
   const base64 = base64String.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat(pad ? 4 - pad : 0);
   const raw = atob(base64);
-  return Uint8Array.from(raw, c => c.charCodeAt(0));
+  // Build over an explicit ArrayBuffer so the type is Uint8Array<ArrayBuffer>
+  // (assignable to BufferSource — the bare constructor infers ArrayBufferLike).
+  const buffer = new ArrayBuffer(raw.length);
+  const out = new Uint8Array(buffer);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
 }
 
 export const subscribeToPush = async (
