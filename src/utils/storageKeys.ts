@@ -14,6 +14,7 @@ export const STORAGE_KEYS = {
   DAILY_NOTIFICATION_CHECK: 'digiapp-daily-notification-check',
   SAVE_ID: 'digiapp-save-id',
   USER_EMAIL: 'digiapp-user-email',
+  IS_SLEEPING: 'digiapp-is-sleeping',
   SOUND_MUTED: 'digiapp-sound-muted',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
 } as const;

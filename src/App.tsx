@@ -67,7 +67,8 @@ export default function App() {
   const [evolutionFlash, setEvolutionFlash] = useState(false);
   const [showItemsWindow, setShowItemsWindow] = useState(false);
   const [newItemsReady, setNewItemsReady] = useState(false);
-  const [isSleeping, setIsSleeping] = useState(false);
+  // Sleep state persists across app close/reopen — the pet stays asleep until woken.
+  const [isSleeping, setIsSleeping] = useState(() => localStorage.getItem(STORAGE_KEYS.IS_SLEEPING) === 'true');
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -767,7 +768,11 @@ export default function App() {
   }, [careEvent, handleCareEventComplete]);
 
   const handleSleep = useCallback(() => {
-    setIsSleeping(prev => !prev);
+    setIsSleeping(prev => {
+      const next = !prev;
+      localStorage.setItem(STORAGE_KEYS.IS_SLEEPING, next ? 'true' : 'false');
+      return next;
+    });
     playSleep();
   }, []);
 
