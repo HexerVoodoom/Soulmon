@@ -252,7 +252,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!'])
         : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
       // Empty hunger meter → always say it's hungry, whatever the energy level.
-      if (satietyBars(p.satiety ?? 1) <= 0) return isPt
+      // (Skipped for egg/baby-i, which have no hunger mechanic.)
+      if (!['digiegg', 'baby-i'].includes(getStageLevel(p.evolutionStage)) && satietyBars(p.satiety ?? 1) <= 0) return isPt
         ? pick(['Estou faminto!', 'Preciso comer!', 'Que fome!', 'Meu estomago ronca...'])
         : pick(["I'm starving!", 'I need to eat!', 'So hungry!', 'My tummy rumbles...']);
       if (hpRatio <= 0.25) return isPt
@@ -313,7 +314,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     let fallback: string;
     if (careEvent?.type === 'poop') fallback = isPt ? pick(['Preciso de banho!', 'Estou sujo!', 'Me limpa!']) : pick(['Need a shower!', 'I made a mess!', 'Clean me!']);
     else if (careEvent?.type === 'food') fallback = isPt ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!']) : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
-    else if (satietyBars(satiety) <= 0) fallback = isPt ? pick(['Estou faminto!', 'Preciso comer!', 'Que fome!', 'Meu estomago ronca...']) : pick(["I'm starving!", 'I need to eat!', 'So hungry!', 'My tummy rumbles...']);
+    else if (!['digiegg', 'baby-i'].includes(getStageLevel(evolutionStage)) && satietyBars(satiety) <= 0) fallback = isPt ? pick(['Estou faminto!', 'Preciso comer!', 'Que fome!', 'Meu estomago ronca...']) : pick(["I'm starving!", 'I need to eat!', 'So hungry!', 'My tummy rumbles...']);
     else if (hpRatio <= 0.25) fallback = isPt ? pick(['Nao me sinto bem...', 'Preciso de cuidados!', 'HP baixo...']) : pick(['Not feeling great...', 'Need some care!', 'My HP is low...']);
     else if (ratio >= 1) fallback = isPt ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!']) : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
     else if (ratio >= 0.6) fallback = isPt ? pick(['Me sentindo bem!', 'Tudo otimo!', 'Energia boa!']) : pick(['Feeling great!', 'All good!', 'Good energy!']);
@@ -562,6 +563,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Discreet horizontal hunger meter: a pixel black food icon + 5 growing bars
   // (smallest near the icon, largest at the end). Lit bars = current satiety.
   const renderHungerMeter = () => {
+    // Hunger isn't a mechanic for egg/baby-i (same stages poop skips).
+    if (['digiegg', 'baby-i'].includes(getStageLevel(evolutionStage))) return null;
     const lit = satietyBars(satiety);
     const isPt = language === 'pt-BR';
     const barHeight = (i: number) => 4 + i * 2; // growing "traços"

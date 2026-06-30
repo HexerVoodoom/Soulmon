@@ -713,9 +713,12 @@ export default function App() {
     setGameState(prev => {
       if (careEvent.type === 'poop') {
         const poopIndex = (prev.poopEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
+        // Guard against -1 (e.g. a daily reset cleared the schedule mid-event).
+        if (poopIndex < 0) return prev;
         return { ...prev, poopEventsCompleted: [...(prev.poopEventsCompleted || []), poopIndex] };
       } else {
         const eventIndex = (prev.foodEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
+        if (eventIndex < 0) return prev;
         return {
           ...prev,
           foodEventsCompleted: [...(prev.foodEventsCompleted || []), eventIndex]
@@ -785,6 +788,11 @@ export default function App() {
         const now = Date.now();
         const elapsedMs = now - (prev.satietyUpdatedAt ?? now);
         if (elapsedMs <= 0) return prev;
+        // Hunger isn't a mechanic for egg/baby-i (same stages poop skips):
+        // keep them full so they never show an empty meter / "starving" lines.
+        if (['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage))) {
+          return { ...prev, satiety: 1, satietyUpdatedAt: now };
+        }
         if (isSleeping) return { ...prev, satietyUpdatedAt: now };
         const drop = elapsedMs / (SATIETY_DECAY_HOURS * 3600000);
         const next = Math.max(0, (prev.satiety ?? 1) - drop);
