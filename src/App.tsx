@@ -25,8 +25,8 @@ import { useGameState, getMaxHPForStage, type GameState, type Activity, type Tas
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
-import { requestNotificationPermission } from './utils/notifications';
-import { satietyPerFeed, SATIETY_DECAY_HOURS } from './utils/hunger';
+import { requestNotificationPermission, showNotification } from './utils/notifications';
+import { satietyPerFeed, SATIETY_DECAY_HOURS, satietyBars } from './utils/hunger';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -803,6 +803,29 @@ export default function App() {
     const id = setInterval(decay, 120000);
     return () => clearInterval(id);
   }, [isSleeping, setGameState]);
+
+  // Alert the user once each time the hunger meter empties (resets when fed).
+  const hungerNotifiedRef = useRef(false);
+  useEffect(() => {
+    const isEarly = ['digiegg', 'baby-i'].includes(getStageLevel(gameState.evolutionStage));
+    const empty = satietyBars(gameState.satiety ?? 1) <= 0;
+    if (isEarly || !empty) {
+      hungerNotifiedRef.current = false; // re-arm for the next hungry episode
+      return;
+    }
+    if (hungerNotifiedRef.current) return;
+    hungerNotifiedRef.current = true;
+    const ispt = language === 'pt-BR';
+    showNotification(
+      ispt ? '🍽️ Seu Digimon está com fome!' : '🍽️ Your Digimon is hungry!',
+      {
+        body: ispt
+          ? 'O medidor de fome esvaziou. Alimente-o!'
+          : 'The hunger meter is empty. Feed it!',
+        tag: 'hunger-empty',
+      },
+    );
+  }, [gameState.satiety, gameState.evolutionStage, language]);
 
   const handleSleep = useCallback(() => {
     setIsSleeping(prev => {
