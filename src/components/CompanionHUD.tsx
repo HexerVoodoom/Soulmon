@@ -49,6 +49,7 @@ import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
 import { playShower } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
+import { satietyBars, SATIETY_BARS } from '../utils/hunger';
 
 interface CompanionHUDProps {
   companionMood: 'idle' | 'happy' | 'tired';
@@ -64,6 +65,7 @@ interface CompanionHUDProps {
   nextLevelXP: number;
   triggerMessage?: number; // Prop to trigger message from outside
   energyPoints?: number; // Version B: energy gauge, fills only via feeding
+  satiety?: number; // Hunger meter, 0..1 — separate horizontal indicator
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
@@ -106,6 +108,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   nextLevelXP,
   triggerMessage = 0,
   energyPoints = 0,
+  satiety = 1,
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   perfectDays = 0,
@@ -145,8 +148,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [hugBalloon, setHugBalloon] = useState(false);
 
   // Always-current snapshot of props for stable intervals
-  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping });
-  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping };
+  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping, satiety });
+  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping, satiety };
 
   // speak: strips all emojis, shows bubble, auto-hides after durationMs
   const speak = useCallback((text: string, durationMs = 4000) => {
@@ -248,6 +251,10 @@ export const CompanionHUD = memo(function CompanionHUD({
       if (p.careEvent?.type === 'food') return isPt
         ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!'])
         : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
+      // Empty hunger meter → always say it's hungry, whatever the energy level.
+      if (satietyBars(p.satiety ?? 1) <= 0) return isPt
+        ? pick(['Estou faminto!', 'Preciso comer!', 'Que fome!', 'Meu estomago ronca...'])
+        : pick(["I'm starving!", 'I need to eat!', 'So hungry!', 'My tummy rumbles...']);
       if (hpRatio <= 0.25) return isPt
         ? pick(['Nao me sinto bem...', 'Preciso de cuidados!', 'HP baixo...'])
         : pick(['Not feeling great...', 'Need some care!', 'My HP is low...']);
@@ -306,6 +313,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     let fallback: string;
     if (careEvent?.type === 'poop') fallback = isPt ? pick(['Preciso de banho!', 'Estou sujo!', 'Me limpa!']) : pick(['Need a shower!', 'I made a mess!', 'Clean me!']);
     else if (careEvent?.type === 'food') fallback = isPt ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!']) : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
+    else if (satietyBars(satiety) <= 0) fallback = isPt ? pick(['Estou faminto!', 'Preciso comer!', 'Que fome!', 'Meu estomago ronca...']) : pick(["I'm starving!", 'I need to eat!', 'So hungry!', 'My tummy rumbles...']);
     else if (hpRatio <= 0.25) fallback = isPt ? pick(['Nao me sinto bem...', 'Preciso de cuidados!', 'HP baixo...']) : pick(['Not feeling great...', 'Need some care!', 'My HP is low...']);
     else if (ratio >= 1) fallback = isPt ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!']) : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
     else if (ratio >= 0.6) fallback = isPt ? pick(['Me sentindo bem!', 'Tudo otimo!', 'Energia boa!']) : pick(['Feeling great!', 'All good!', 'Good energy!']);
@@ -551,6 +559,51 @@ export const CompanionHUD = memo(function CompanionHUD({
     return hearts;
   };
 
+  // Discreet horizontal hunger meter: a pixel black food icon + 5 growing bars
+  // (smallest near the icon, largest at the end). Lit bars = current satiety.
+  const renderHungerMeter = () => {
+    const lit = satietyBars(satiety);
+    const isPt = language === 'pt-BR';
+    const heights = [4, 6, 8, 10, 12]; // growing "traços"
+    const litColor = isWin98 ? '#000080' : isGlitch ? '#00ffff' : '#111111';
+    const dimColor = 'rgba(0,0,0,0.18)';
+    return (
+      <div
+        className="absolute top-2 right-2 z-10 flex items-end gap-[2px] rounded-[3px] px-1 py-[3px] bg-white/55"
+        style={{ backdropFilter: 'blur(1px)' }}
+        title={isPt ? `Fome: ${lit}/${SATIETY_BARS}` : `Hunger: ${lit}/${SATIETY_BARS}`}
+      >
+        {/* Pixelated black food icon (apple) */}
+        <svg
+          width="11" height="11" viewBox="0 0 10 10"
+          shapeRendering="crispEdges"
+          className="self-center mr-[1px]"
+          style={{ imageRendering: 'pixelated' }}
+        >
+          <g fill="#111111">
+            <rect x="5" y="0" width="1" height="2" />
+            <rect x="6" y="1" width="2" height="1" />
+            <rect x="2" y="2" width="6" height="1" />
+            <rect x="1" y="3" width="8" height="4" />
+            <rect x="2" y="7" width="6" height="1" />
+            <rect x="3" y="8" width="4" height="1" />
+          </g>
+        </svg>
+        {Array.from({ length: SATIETY_BARS }, (_, i) => (
+          <div
+            key={i}
+            style={{
+              width: '3px',
+              height: `${heights[i]}px`,
+              backgroundColor: i < lit ? litColor : dimColor,
+              imageRendering: 'pixelated',
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
   // Render segmented Digivolution bar using perfect days
   const renderDigivolutionBar = () => {
     const totalSegments = requiredDays;
@@ -646,6 +699,9 @@ export const CompanionHUD = memo(function CompanionHUD({
           >
             {renderHearts()}
           </div>
+
+          {/* Hunger meter - Top Right Corner (discreet) */}
+          {renderHungerMeter()}
 
 
           {/* Evolution flash overlay */}

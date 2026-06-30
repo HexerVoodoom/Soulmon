@@ -97,6 +97,12 @@ export interface GameState {
   careHPLostToday: number;
   /** Version B: food stockpile keyed by food emoji */
   foodInventory: Record<string, number>;
+  /** Hunger/satiety meter, 0..1 (separate from energy). Fills by feeding, decays over time while awake. */
+  satiety: number;
+  /** Epoch ms of the last satiety update — used to decay across app close/reopen. */
+  satietyUpdatedAt: number;
+  /** Indices of scheduled poop events that actually appeared on screen (so sleep-skipped ones don't penalize). */
+  poopEventsShown: number[];
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
@@ -143,6 +149,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         attributesSinceLastEvolution: loadedState.attributesSinceLastEvolution ?? { virus: 0, data: 0, vaccine: 0 },
         careHPLostToday: loadedState.careHPLostToday ?? 0,
         foodInventory: loadedState.foodInventory ?? {},
+        satiety: loadedState.satiety ?? 1,
+        satietyUpdatedAt: loadedState.satietyUpdatedAt ?? Date.now(),
+        poopEventsShown: loadedState.poopEventsShown ?? [],
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -176,6 +185,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       careHPLostToday: 0,
       foodInventory: {},
+      satiety: 1,
+      satietyUpdatedAt: Date.now(),
+      poopEventsShown: [],
     };
   });
 

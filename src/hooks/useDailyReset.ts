@@ -31,6 +31,9 @@ interface ResetGameState {
   maxActivityCap: number;
   lastResetDate: string;
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  poopEventsShown: number[];
+  poopEventsCompleted: number[];
+  careHPLostToday: number;
 }
 
 type Attr = 'virus' | 'data' | 'vaccine';
@@ -156,6 +159,21 @@ export function useDailyReset({
         newHP = Math.max(0, prev.healthPoints - 1);
       }
 
+      // Care penalty: poop that appeared but was never cleaned costs HP at the
+      // day turn. Sleeping all night means no poop appeared → nothing missed →
+      // no penalty. Capped (together with the day's food losses) at half max HP.
+      const careMaxHP = prev.maxHealthPoints;
+      const careDailyCap = Math.floor(careMaxHP / 2);
+      const poopPenaltyEach = careMaxHP >= 3 ? 2 : 1;
+      const poopShown = prev.poopEventsShown || [];
+      const poopDone = prev.poopEventsCompleted || [];
+      const missedPoops = poopShown.filter((i: number) => !poopDone.includes(i)).length;
+      const remainingCareCap = Math.max(0, careDailyCap - (prev.careHPLostToday ?? 0));
+      const poopDamage = Math.min(missedPoops * poopPenaltyEach, remainingCareCap);
+      if (poopDamage > 0) {
+        newHP = Math.max(0, newHP - poopDamage);
+      }
+
       if (dayWasPerfect) {
         newPerfectDays++;
         // Version B: attribute points come from feeding, not from daily reset.
@@ -248,6 +266,7 @@ export function useDailyReset({
         foodEventsScheduled: [],
         poopEventsCompleted: [],
         foodEventsCompleted: [],
+        poopEventsShown: [],
         currentBranch: newCurrentBranch,
         unlockedEvolutions: finalUnlockedEvolutions,
         degeneratedByHP: wasDegeneratedByHP,

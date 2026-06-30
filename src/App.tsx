@@ -26,6 +26,7 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission } from './utils/notifications';
+import { satietyPerFeed, SATIETY_DECAY_HOURS } from './utils/hunger';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -160,6 +161,7 @@ export default function App() {
     setMessageTrigger,
     setGameState,
     language,
+    isSleeping,
   });
 
   const { timeUntilReset } = useDailyReset({
@@ -728,6 +730,11 @@ export default function App() {
 
   // Version B: consume one food item → +1 HP + attribute points of that food's category
   const handleFeed = useCallback((foodEmoji: string) => {
+    // Refuse to eat when the hunger meter is already full.
+    if ((gameState.satiety ?? 1) >= 0.999) {
+      toast.info(language === 'pt-BR' ? 'Já está satisfeito!' : 'Already full!', { duration: 2000 });
+      return;
+    }
     playFeed();
     setGameState(prev => {
       const count = prev.foodInventory[foodEmoji] ?? 0;
@@ -745,6 +752,9 @@ export default function App() {
         healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
         // Energy gauge fills only by feeding, capped at maxHealthPoints
         energyPoints: Math.min(prev.maxHealthPoints, (prev.energyPoints ?? 0) + 1),
+        // Hunger/satiety meter — fills per feeding (amount scales with stage)
+        satiety: Math.min(1, (prev.satiety ?? 1) + satietyPerFeed(prev.evolutionStage)),
+        satietyUpdatedAt: Date.now(),
         foodInventory: newInventory,
         virusPoints: prev.virusPoints + attrs.virus,
         dataPoints: prev.dataPoints + attrs.data,
@@ -758,7 +768,7 @@ export default function App() {
       };
     });
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-  }, []);
+  }, [gameState.satiety, language]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -766,6 +776,25 @@ export default function App() {
       handleCareEventComplete();
     }
   }, [careEvent, handleCareEventComplete]);
+
+  // Hunger decay — satiety drops over time while awake (timestamp-based so it works
+  // across app close/reopen), and pauses while the pet is sleeping.
+  useEffect(() => {
+    const decay = () => {
+      setGameState(prev => {
+        const now = Date.now();
+        const elapsedMs = now - (prev.satietyUpdatedAt ?? now);
+        if (elapsedMs <= 0) return prev;
+        if (isSleeping) return { ...prev, satietyUpdatedAt: now };
+        const drop = elapsedMs / (SATIETY_DECAY_HOURS * 3600000);
+        const next = Math.max(0, (prev.satiety ?? 1) - drop);
+        return { ...prev, satiety: next, satietyUpdatedAt: now };
+      });
+    };
+    decay();
+    const id = setInterval(decay, 120000);
+    return () => clearInterval(id);
+  }, [isSleeping, setGameState]);
 
   const handleSleep = useCallback(() => {
     setIsSleeping(prev => {
@@ -1175,6 +1204,7 @@ export default function App() {
             nextLevelXP={getNextLevelXP()}
             triggerMessage={messageTrigger}
             energyPoints={gameState.energyPoints}
+            satiety={gameState.satiety}
             digivolutionSegments={gameState.digivolutionSegments}
             theme={theme}
             digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}
