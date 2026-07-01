@@ -146,7 +146,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [eatKey, setEatKey] = useState(0);
   const [isMunching, setIsMunching] = useState(false);
   const [isRubbing, setIsRubbing] = useState(false);
-  const [rubHearts, setRubHearts] = useState<{ id: number; dx: number }[]>([]);
+  const [rubHearts, setRubHearts] = useState<{ id: number; dx: number; dy: number }[]>([]);
   const [isShowering, setIsShowering] = useState(false);
   // Rub-to-heal gesture bookkeeping (refs to avoid stale closures in the interval)
   const rubPressedRef = useRef(false);
@@ -554,11 +554,15 @@ export const CompanionHUD = memo(function CompanionHUD({
       if (!active) return;
       // Spawn a floating heart every ~300ms while rubbing
       rubHeartTickRef.current += 1;
-      if (rubHeartTickRef.current % 3 === 0) {
+      if (rubHeartTickRef.current % 2 === 0) {
         const id2 = ++rubHeartIdRef.current;
-        const dx = Math.round((Math.random() - 0.5) * 44);
-        setRubHearts(prev => [...prev, { id: id2, dx }]);
-        setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1100);
+        // Scatter from the pet center in a random direction, short distance.
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 18 + Math.random() * 34; // short trajectory (18–52px)
+        const dx = Math.round(Math.cos(angle) * dist);
+        const dy = Math.round(Math.sin(angle) * dist);
+        setRubHearts(prev => [...prev, { id: id2, dx, dy }]);
+        setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1000);
       }
       // Accumulate heal time only while there's HP to restore
       const p = propsRef.current;
@@ -796,17 +800,19 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Digimon Sprite - Centered with walking animation */}
           <div className="absolute inset-0 flex items-center justify-center">
-            {/* Little hearts popping out while the pet is being rubbed */}
+            {/* Little hearts bursting from the pet center and scattering out */}
             {rubHearts.map(h => (
               <span
                 key={h.id}
                 className="absolute pointer-events-none z-30 select-none"
                 style={{
-                  left: `calc(${position}% + ${h.dx}px)`,
-                  top: 'calc(50% - 10px)',
-                  fontSize: '0.95rem',
-                  animation: 'rub-heart 1.1s ease-out forwards',
-                }}
+                  left: `${position}%`,
+                  top: 'calc(50% - 8px)',
+                  fontSize: '0.85rem',
+                  ['--tx' as string]: `${h.dx}px`,
+                  ['--ty' as string]: `${h.dy}px`,
+                  animation: 'rub-heart 1s ease-out forwards',
+                } as React.CSSProperties}
               >
                 ❤️
               </span>

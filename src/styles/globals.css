@@ -36,11 +36,12 @@
   75%      { transform: rotate(3deg) scaleY(0.97); }
 }
 
-/* Rub-to-heal: little hearts float up from the pet */
+/* Rub-to-heal: little hearts burst from the pet center and scatter outward
+   (short trajectory) before fading out. Direction comes from --tx / --ty. */
 @keyframes rub-heart {
-  0%   { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.5); }
-  25%  { opacity: 1; transform: translateX(-50%) translateY(-14px) scale(1); }
-  100% { opacity: 0; transform: translateX(-50%) translateY(-48px) scale(0.75); }
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px))) scale(0.85); }
 }
 
 /* Win98 Fonts */
