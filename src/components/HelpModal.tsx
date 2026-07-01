@@ -27,13 +27,6 @@ const SECTIONS = [
         descEn: 'Fills only by feeding from the Items menu. Required to be full before giving a bath. Resets to 0 each day.',
         descPt: 'Sobe apenas alimentando pelo menu Itens. Deve estar cheia para dar banho. Zera todo dia.',
       },
-      {
-        icon: '🍖',
-        labelEn: 'Hunger meter',
-        labelPt: 'Medidor de fome',
-        descEn: 'The small bar at the bottom-left. Fills by feeding and slowly empties over time (paused when energy is full or asleep). Empty = your Digimon is hungry.',
-        descPt: 'A barrinha no canto inferior esquerdo. Enche alimentando e esvazia com o tempo (pausa com energia cheia ou dormindo). Vazia = seu Digimon está com fome.',
-      },
     ],
   },
   {
@@ -64,8 +57,8 @@ const SECTIONS = [
         icon: '📁',
         labelEn: 'Items',
         labelPt: 'Itens',
-        descEn: 'Your food inventory. Feeding refills energy, fills the hunger meter, and grants attribute points (it does not heal hearts). Food is earned by completing activities.',
-        descPt: 'Seu inventário de comida. Alimentar enche energia, enche o medidor de fome e dá pontos de atributo (não cura coração). Comida é gerada ao completar atividades.',
+        descEn: 'Your food inventory. Feeding refills energy and grants attribute points (it does not heal hearts). Up to 5 feedings per hour — once full the pet says so. Food is earned by completing activities.',
+        descPt: 'Seu inventário de comida. Alimentar enche energia e dá pontos de atributo (não cura coração). Até 5 alimentações por hora — quando cheio o pet avisa. Comida é gerada ao completar atividades.',
       },
       {
         icon: '🚿',

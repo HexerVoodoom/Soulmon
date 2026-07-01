@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   USER_EMAIL: 'digiapp-user-email',
   IS_SLEEPING: 'digiapp-is-sleeping',
   AFFECTION_LAST_USED: 'digiapp-affection-last-used',
+  FOOD_FEED_TIMES: 'digiapp-food-feed-times',
   SOUND_MUTED: 'digiapp-sound-muted',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
 } as const;

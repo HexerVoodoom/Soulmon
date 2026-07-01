@@ -25,8 +25,7 @@ import { useGameState, getMaxHPForStage, type GameState, type Activity, type Tas
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
-import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { satietyPerFeed, SATIETY_DECAY_MINUTES, satietyBars } from './utils/hunger';
+import { requestNotificationPermission } from './utils/notifications';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -70,6 +69,12 @@ export default function App() {
   const [newItemsReady, setNewItemsReady] = useState(false);
   // Sleep state persists across app close/reopen — the pet stays asleep until woken.
   const [isSleeping, setIsSleeping] = useState(() => localStorage.getItem(STORAGE_KEYS.IS_SLEEPING) === 'true');
+  // Feeding is limited to 5 per rolling hour; timestamps persist across app close.
+  const feedTimesRef = useRef<number[]>(
+    (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.FOOD_FEED_TIMES) || '[]'); } catch { return []; } })()
+  );
+  // Bumped when a feed is refused for being full → pet says it's full.
+  const [fullSignal, setFullSignal] = useState(0);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -735,14 +740,20 @@ export default function App() {
     setMessageTrigger(prev => prev + 1);
   }, [careEvent]);
 
-  // Consume one food item → energy + hunger + attribute points (NOT HP; HP is
-  // only healed via "carinho").
+  // Consume one food item → energy + attribute points (NOT HP; HP is only healed
+  // via "carinho"). Limited to 5 feedings per rolling hour; once full, the pet
+  // just says it's full (no other feedback).
   const handleFeed = useCallback((foodEmoji: string) => {
-    // Refuse to eat when the hunger meter is already full.
-    if ((gameState.satiety ?? 1) >= 0.999) {
-      toast.info(language === 'pt-BR' ? 'Já está satisfeito!' : 'Already full!', { duration: 2000 });
+    const now = Date.now();
+    const recent = feedTimesRef.current.filter(t => now - t < 3600000);
+    if (recent.length >= 5) {
+      setFullSignal(n => n + 1); // pet says "I'm full"
       return;
     }
+    const nextTimes = [...recent, now];
+    feedTimesRef.current = nextTimes;
+    localStorage.setItem(STORAGE_KEYS.FOOD_FEED_TIMES, JSON.stringify(nextTimes));
+
     playFeed();
     setGameState(prev => {
       const count = prev.foodInventory[foodEmoji] ?? 0;
@@ -759,9 +770,6 @@ export default function App() {
         ...prev,
         // Energy gauge fills only by feeding, capped at maxHealthPoints
         energyPoints: Math.min(prev.maxHealthPoints, (prev.energyPoints ?? 0) + 1),
-        // Hunger/satiety meter — fills per feeding (amount scales with stage)
-        satiety: Math.min(1, (prev.satiety ?? 1) + satietyPerFeed(prev.evolutionStage)),
-        satietyUpdatedAt: Date.now(),
         foodInventory: newInventory,
         virusPoints: prev.virusPoints + attrs.virus,
         dataPoints: prev.dataPoints + attrs.data,
@@ -775,7 +783,7 @@ export default function App() {
       };
     });
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-  }, [gameState.satiety, language]);
+  }, []);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -783,33 +791,6 @@ export default function App() {
       handleCareEventComplete();
     }
   }, [careEvent, handleCareEventComplete]);
-
-  // Hunger decay — satiety drops over time while awake (timestamp-based so it works
-  // across app close/reopen), and pauses while the pet is sleeping.
-  useEffect(() => {
-    const decay = () => {
-      setGameState(prev => {
-        const now = Date.now();
-        const elapsedMs = now - (prev.satietyUpdatedAt ?? now);
-        if (elapsedMs <= 0) return prev;
-        // Hunger isn't a mechanic for egg/baby-i (same stages poop skips):
-        // keep them full so they never show an empty meter / "starving" lines.
-        if (['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage))) {
-          return { ...prev, satiety: 1, satietyUpdatedAt: now };
-        }
-        // Pause hunger decay while sleeping OR while energy is full.
-        if (isSleeping || (prev.energyPoints ?? 0) >= prev.maxHealthPoints) {
-          return { ...prev, satietyUpdatedAt: now };
-        }
-        const drop = elapsedMs / (SATIETY_DECAY_MINUTES * 60000);
-        const next = Math.max(0, (prev.satiety ?? 1) - drop);
-        return { ...prev, satiety: next, satietyUpdatedAt: now };
-      });
-    };
-    decay();
-    const id = setInterval(decay, 60000);
-    return () => clearInterval(id);
-  }, [isSleeping, setGameState]);
 
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
   // clock starts when a poop is on screen and stops the moment it's cleaned.
@@ -841,29 +822,6 @@ export default function App() {
     const id = setInterval(drain, 60000);
     return () => clearInterval(id);
   }, [isSleeping, setGameState]);
-
-  // Alert the user once each time the hunger meter empties (resets when fed).
-  const hungerNotifiedRef = useRef(false);
-  useEffect(() => {
-    const isEarly = ['digiegg', 'baby-i'].includes(getStageLevel(gameState.evolutionStage));
-    const empty = satietyBars(gameState.satiety ?? 1) <= 0;
-    if (isEarly || !empty) {
-      hungerNotifiedRef.current = false; // re-arm for the next hungry episode
-      return;
-    }
-    if (hungerNotifiedRef.current) return;
-    hungerNotifiedRef.current = true;
-    const ispt = language === 'pt-BR';
-    showNotification(
-      ispt ? '🍽️ Seu Digimon está com fome!' : '🍽️ Your Digimon is hungry!',
-      {
-        body: ispt
-          ? 'O medidor de fome esvaziou. Alimente-o!'
-          : 'The hunger meter is empty. Feed it!',
-        tag: 'hunger-empty',
-      },
-    );
-  }, [gameState.satiety, gameState.evolutionStage, language]);
 
   const handleSleep = useCallback(() => {
     setIsSleeping(prev => {
@@ -1283,7 +1241,7 @@ export default function App() {
             nextLevelXP={getNextLevelXP()}
             triggerMessage={messageTrigger}
             energyPoints={gameState.energyPoints}
-            satiety={gameState.satiety}
+            fullSignal={fullSignal}
             digivolutionSegments={gameState.digivolutionSegments}
             theme={theme}
             digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}

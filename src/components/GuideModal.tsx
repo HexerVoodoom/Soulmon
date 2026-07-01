@@ -75,10 +75,10 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
                 <strong> full energy</strong> to give your Digimon a bath.
               </li>
               <li>
-                <strong>🍎 Food (Feed)</strong> — Refills energy, fills the
-                <strong> hunger meter</strong>, and grants attribute points (which steer your
-                evolution branch). <strong>It does not heal hearts.</strong> The hunger meter
-                slowly empties over time; a hungry Digimon will tell you it needs to eat.
+                <strong>🍎 Food (Feed)</strong> — Refills energy and grants attribute points
+                (which steer your evolution branch). <strong>It does not heal hearts.</strong>
+                You can feed up to <strong>5 times per hour</strong>; once full, the pet just
+                says it's full.
               </li>
               <li>
                 <strong>🚿 Bath</strong> — Cleans up <strong>poop</strong> and washes your
