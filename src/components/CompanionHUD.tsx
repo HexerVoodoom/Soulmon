@@ -146,7 +146,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [eatKey, setEatKey] = useState(0);
   const [isMunching, setIsMunching] = useState(false);
   const [isRubbing, setIsRubbing] = useState(false);
-  const [rubHearts, setRubHearts] = useState<{ id: number; dx: number; dy: number }[]>([]);
+  const [rubHearts, setRubHearts] = useState<{ id: number; dx: number; dy: number; size: number; emoji: string }[]>([]);
   const [isShowering, setIsShowering] = useState(false);
   // Rub-to-heal gesture bookkeeping (refs to avoid stale closures in the interval)
   const rubPressedRef = useRef(false);
@@ -552,17 +552,26 @@ export const CompanionHUD = memo(function CompanionHUD({
       const active = rubPressedRef.current && now - rubLastMoveRef.current < 180;
       setIsRubbing(active);
       if (!active) return;
-      // Spawn a floating heart every ~300ms while rubbing
+      // Every ~300ms emit a BURST of hearts exploding out from the pet center.
       rubHeartTickRef.current += 1;
-      if (rubHeartTickRef.current % 2 === 0) {
-        const id2 = ++rubHeartIdRef.current;
-        // Scatter from the pet center in a random direction, short distance.
-        const angle = Math.random() * Math.PI * 2;
-        const dist = 18 + Math.random() * 34; // short trajectory (18–52px)
-        const dx = Math.round(Math.cos(angle) * dist);
-        const dy = Math.round(Math.sin(angle) * dist);
-        setRubHearts(prev => [...prev, { id: id2, dx, dy }]);
-        setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1000);
+      if (rubHeartTickRef.current % 3 === 0) {
+        const EMOJIS = ['❤️', '💕', '💖', '💗'];
+        const burst = 6 + Math.floor(Math.random() * 3); // 6–8 hearts at once
+        const spawned: { id: number; dx: number; dy: number; size: number; emoji: string }[] = [];
+        for (let k = 0; k < burst; k++) {
+          const id2 = ++rubHeartIdRef.current;
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 20 + Math.random() * 40; // radiate outward (20–60px)
+          spawned.push({
+            id: id2,
+            dx: Math.round(Math.cos(angle) * dist),
+            dy: Math.round(Math.sin(angle) * dist),
+            size: 0.7 + Math.random() * 0.7, // varied heart sizes
+            emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+          });
+          setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 900);
+        }
+        setRubHearts(prev => [...prev, ...spawned]);
       }
       // Accumulate heal time only while there's HP to restore
       const p = propsRef.current;
@@ -800,7 +809,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Digimon Sprite - Centered with walking animation */}
           <div className="absolute inset-0 flex items-center justify-center">
-            {/* Little hearts bursting from the pet center and scattering out */}
+            {/* Burst of hearts exploding from the pet center and radiating out */}
             {rubHearts.map(h => (
               <span
                 key={h.id}
@@ -808,13 +817,13 @@ export const CompanionHUD = memo(function CompanionHUD({
                 style={{
                   left: `${position}%`,
                   top: 'calc(50% - 8px)',
-                  fontSize: '0.85rem',
+                  fontSize: `${h.size}rem`,
                   ['--tx' as string]: `${h.dx}px`,
                   ['--ty' as string]: `${h.dy}px`,
-                  animation: 'rub-heart 1s ease-out forwards',
+                  animation: 'rub-heart 0.9s ease-out forwards',
                 } as React.CSSProperties}
               >
-                ❤️
+                {h.emoji}
               </span>
             ))}
 
