@@ -17,8 +17,8 @@ const SECTIONS = [
         icon: '❤️',
         labelEn: 'HP (Hearts)',
         labelPt: 'HP (Corações)',
-        descEn: 'Your Digimon\'s health. At day\'s end you lose hearts in proportion to the tasks you didn\'t finish; uncleaned poop drains 1 heart every 6h. Restored by feeding. Reaches 0 → degeneration.',
-        descPt: 'A saúde do seu Digimon. Na virada do dia você perde corações proporcional às tarefas não feitas; cocô não limpo tira 1 coração a cada 6h. Recupera alimentando. Chega a 0 → degeneração.',
+        descEn: 'Your Digimon\'s health. At day\'s end you lose hearts in proportion to the tasks you didn\'t finish; uncleaned poop drains 1 heart every 6h. Healed only by Affection (petting). Reaches 0 → degeneration.',
+        descPt: 'A saúde do seu Digimon. Na virada do dia você perde corações proporcional às tarefas não feitas; cocô não limpo tira 1 coração a cada 6h. Só recupera com Carinho. Chega a 0 → degeneração.',
       },
       {
         icon: '⚡',
@@ -64,8 +64,8 @@ const SECTIONS = [
         icon: '📁',
         labelEn: 'Items',
         labelPt: 'Itens',
-        descEn: 'Your food inventory. Feeding restores 1 heart, refills energy, fills the hunger meter, and grants attribute points. Food is earned by completing activities.',
-        descPt: 'Seu inventário de comida. Alimentar restaura 1 coração, enche energia, enche o medidor de fome e dá pontos de atributo. Comida é gerada ao completar atividades.',
+        descEn: 'Your food inventory. Feeding refills energy, fills the hunger meter, and grants attribute points (it does not heal hearts). Food is earned by completing activities.',
+        descPt: 'Seu inventário de comida. Alimentar enche energia, enche o medidor de fome e dá pontos de atributo (não cura coração). Comida é gerada ao completar atividades.',
       },
       {
         icon: '🚿',
@@ -78,8 +78,8 @@ const SECTIONS = [
         icon: '🫶',
         labelEn: 'Affection (Pet)',
         labelPt: 'Carinho',
-        descEn: 'Pet your Digimon anytime to make it happy — it hops around excitedly. Pure interaction, no effect on stats.',
-        descPt: 'Faça carinho a qualquer hora para deixá-lo feliz — ele dá pulinhos animado. Interação pura, sem efeito nos status.',
+        descEn: 'Pet your Digimon to make it happy — it hops around excitedly. The only way to heal HP: restores half a heart, once per hour.',
+        descPt: 'Faça carinho para deixá-lo feliz — ele dá pulinhos animado. Único jeito de curar HP: recupera meio coração, 1× por hora.',
       },
       {
         icon: '💤',

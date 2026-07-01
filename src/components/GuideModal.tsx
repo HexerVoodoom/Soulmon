@@ -68,26 +68,26 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
                 <em> don't</em> finish: do 30% of the day's tasks and you neglect 70%,
                 so you lose ~70% of your hearts (always rounded down, whole hearts).
                 Uncleaned <strong>poop</strong> also drains <strong>1 heart every 6 hours</strong>.
-                Hearts come back by <strong>feeding</strong>. If HP hits 0, your Digimon degenerates.
+                Hearts are healed <strong>only by Affection (petting)</strong>. If HP hits 0, your Digimon degenerates.
               </li>
               <li>
                 <strong>⚡ Energy</strong> — Fills only by <strong>feeding</strong>. You need
                 <strong> full energy</strong> to give your Digimon a bath.
               </li>
               <li>
-                <strong>🍎 Food (Feed)</strong> — Restores energy and a heart, fills the
+                <strong>🍎 Food (Feed)</strong> — Refills energy, fills the
                 <strong> hunger meter</strong>, and grants attribute points (which steer your
-                evolution branch). The hunger meter slowly empties over time; a hungry
-                Digimon will tell you it needs to eat.
+                evolution branch). <strong>It does not heal hearts.</strong> The hunger meter
+                slowly empties over time; a hungry Digimon will tell you it needs to eat.
               </li>
               <li>
                 <strong>🚿 Bath</strong> — Cleans up <strong>poop</strong> and washes your
                 Digimon. Requires full energy.
               </li>
               <li>
-                <strong>🫶 Affection (Pet)</strong> — Pet your Digimon anytime to make it
-                happy. It's a pure interaction: it hops around excitedly but doesn't change
-                any stats.
+                <strong>🫶 Affection (Pet)</strong> — Pet your Digimon to make it happy — it
+                hops around excitedly. This is the <strong>only way to heal HP</strong>: it
+                restores <strong>half a heart, once per hour</strong>.
               </li>
               <li>
                 <strong>💤 Sleep</strong> — Your Digimon rests. It won't poop while asleep,
@@ -150,7 +150,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             </p>
             <p className="mb-2">
               Uncleaned <strong>poop</strong> drains an extra <strong>1 heart every 6 hours</strong> until you
-              give a bath. Hearts are recovered by <strong>feeding</strong>.
+              give a bath. Hearts are healed <strong>only by Affection (petting)</strong> — half a heart, once per hour.
             </p>
             <p>
               Maximum HP per form:

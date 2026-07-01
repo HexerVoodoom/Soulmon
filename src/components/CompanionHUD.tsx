@@ -90,6 +90,7 @@ interface CompanionHUDProps {
   onSleep?: () => void;
   isSleeping?: boolean;
   onPet?: () => void;
+  affectionRemainingMs?: number;
   hasNewItems?: boolean;
   evolutionFlash?: boolean;
   feedAnim?: { emoji: string; n: number } | null;
@@ -130,6 +131,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   onSleep,
   isSleeping = false,
   onPet,
+  affectionRemainingMs = 0,
   hasNewItems = false,
   evolutionFlash = false,
   feedAnim = null,
@@ -514,13 +516,20 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setShowerCooldown(false), 5000);
   };
 
-  // Affection ("carinho"): a pure mascot interaction — no cooldown, no HP change.
-  // The pet hops happily several times to show it received the affection.
+  // Affection ("carinho"): petting always plays the mascot bounce; the heal
+  // itself (half a heart, once per hour) is handled by the parent (onPet).
   const handlePetClick = () => {
     onPet?.();
     showHug();
     setIsPetting(true);
     setTimeout(() => setIsPetting(false), 1050);
+  };
+  // mm:ss remaining until the carinho heal is available again
+  const formatCooldown = (ms: number) => {
+    const total = Math.ceil(ms / 1000);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
   };
 
   const getCompanionFilter = () => {
@@ -904,7 +913,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             {([
               !isEarlyStage && { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
               !isEarlyStage && { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
-              { key: 'pet', icon: '🫶', en: 'Pet', pt: 'Carinho', onClick: handlePetClick, disabled: false, badge: false },
+              { key: 'pet', icon: '🫶', en: 'Pet', pt: 'Carinho', onClick: handlePetClick, disabled: false, badge: false, sub: affectionRemainingMs > 0 ? formatCooldown(affectionRemainingMs) : undefined },
               { key: 'sleep', icon: isSleeping ? '☀️' : '💤', en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
             ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined; sub?: string }[]).map(a => (
               <button

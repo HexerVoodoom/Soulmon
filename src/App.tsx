@@ -735,7 +735,8 @@ export default function App() {
     setMessageTrigger(prev => prev + 1);
   }, [careEvent]);
 
-  // Version B: consume one food item → +1 HP + attribute points of that food's category
+  // Consume one food item → energy + hunger + attribute points (NOT HP; HP is
+  // only healed via "carinho").
   const handleFeed = useCallback((foodEmoji: string) => {
     // Refuse to eat when the hunger meter is already full.
     if ((gameState.satiety ?? 1) >= 0.999) {
@@ -756,7 +757,6 @@ export default function App() {
 
       return {
         ...prev,
-        healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
         // Energy gauge fills only by feeding, capped at maxHealthPoints
         energyPoints: Math.min(prev.maxHealthPoints, (prev.energyPoints ?? 0) + 1),
         // Hunger/satiety meter — fills per feeding (amount scales with stage)
@@ -874,11 +874,32 @@ export default function App() {
     playSleep();
   }, []);
 
-  // Carinho: a pure affection interaction (mascot). No cooldown, no HP change —
-  // the pet just reacts happily (bounce animation lives in CompanionHUD).
+  // Carinho: the ONLY way to heal HP. Petting always plays the mascot bounce
+  // (in CompanionHUD), but the heal (half a heart) is limited to once per hour.
+  const AFFECTION_COOLDOWN_MS = 3600000; // 1 hour
+  const [lastAffectionAt, setLastAffectionAt] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.AFFECTION_LAST_USED)) || 0);
+  const [affectionRemainingMs, setAffectionRemainingMs] = useState(0);
+  useEffect(() => {
+    const tick = () => setAffectionRemainingMs(Math.max(0, lastAffectionAt + AFFECTION_COOLDOWN_MS - Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lastAffectionAt]);
+
   const handlePet = useCallback(() => {
     playFeed();
-  }, []);
+    const now = Date.now();
+    // Still resting or already at full HP → just the affection animation, no heal.
+    if (now < lastAffectionAt + AFFECTION_COOLDOWN_MS) return;
+    if (gameState.healthPoints >= gameState.maxHealthPoints) return;
+    setGameState(prev => ({
+      ...prev,
+      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5),
+    }));
+    setLastAffectionAt(now);
+    localStorage.setItem(STORAGE_KEYS.AFFECTION_LAST_USED, String(now));
+    toast.success(language === 'pt-BR' ? '❤️ Meio coração recuperado!' : '❤️ Half a heart restored!', { duration: 2000 });
+  }, [lastAffectionAt, gameState.healthPoints, gameState.maxHealthPoints, language]);
 
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
@@ -1296,6 +1317,7 @@ export default function App() {
             onSleep={handleSleep}
             isSleeping={isSleeping}
             onPet={handlePet}
+            affectionRemainingMs={affectionRemainingMs}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}
