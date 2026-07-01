@@ -552,24 +552,24 @@ export const CompanionHUD = memo(function CompanionHUD({
       const active = rubPressedRef.current && now - rubLastMoveRef.current < 180;
       setIsRubbing(active);
       if (!active) return;
-      // Every ~300ms emit a BURST of hearts exploding out from the pet center.
+      // Every ~500ms emit a small BURST of hearts drifting out from the center.
       rubHeartTickRef.current += 1;
-      if (rubHeartTickRef.current % 3 === 0) {
+      if (rubHeartTickRef.current % 5 === 0) {
         const EMOJIS = ['❤️', '💕', '💖', '💗'];
-        const burst = 6 + Math.floor(Math.random() * 3); // 6–8 hearts at once
+        const burst = 2 + Math.floor(Math.random() * 2); // 2–3 hearts at once
         const spawned: { id: number; dx: number; dy: number; size: number; emoji: string }[] = [];
         for (let k = 0; k < burst; k++) {
           const id2 = ++rubHeartIdRef.current;
           const angle = Math.random() * Math.PI * 2;
-          const dist = 55 + Math.random() * 95; // fly far across the box (55–150px)
+          const dist = 32 + Math.random() * 46; // moderate spread (32–78px)
           spawned.push({
             id: id2,
             dx: Math.round(Math.cos(angle) * dist),
             dy: Math.round(Math.sin(angle) * dist),
-            size: 0.7 + Math.random() * 0.7, // varied heart sizes
+            size: 0.65 + Math.random() * 0.55, // varied heart sizes
             emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
           });
-          setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1100);
+          setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1500);
         }
         setRubHearts(prev => [...prev, ...spawned]);
       }
@@ -820,7 +820,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   fontSize: `${h.size}rem`,
                   ['--tx' as string]: `${h.dx}px`,
                   ['--ty' as string]: `${h.dy}px`,
-                  animation: 'rub-heart 1.1s ease-out forwards',
+                  animation: 'rub-heart 1.5s ease-out forwards',
                 } as React.CSSProperties}
               >
                 {h.emoji}
