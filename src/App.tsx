@@ -70,6 +70,10 @@ export default function App() {
   const [newItemsReady, setNewItemsReady] = useState(false);
   // Sleep state persists across app close/reopen — the pet stays asleep until woken.
   const [isSleeping, setIsSleeping] = useState(() => localStorage.getItem(STORAGE_KEYS.IS_SLEEPING) === 'true');
+  // Affection ("carinho"): the only way to recover a lost heart. Restores half a
+  // heart, usable once per hour. Timestamp persists across app close/reopen.
+  const [lastAffectionAt, setLastAffectionAt] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.AFFECTION_LAST_USED)) || 0);
+  const [affectionRemainingMs, setAffectionRemainingMs] = useState(0);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -187,7 +191,7 @@ export default function App() {
       completedTasks: dailyDone,
       totalTasks: dailyTotal,
       hp: Math.round((gameState.healthPoints / gameState.maxHealthPoints) * 100),
-      healthPoints: gameState.healthPoints,
+      healthPoints: Math.floor(gameState.healthPoints),
       maxHealthPoints: gameState.maxHealthPoints,
       energyPoints: gameState.energyPoints ?? 0,
     }).catch(() => {});
@@ -839,6 +843,39 @@ export default function App() {
     playSleep();
   }, []);
 
+  // Affection cooldown countdown — ticks every second so the button shows the
+  // remaining time until it can be used again.
+  const AFFECTION_COOLDOWN_MS = 3600000; // 1 hour
+  useEffect(() => {
+    const tick = () => setAffectionRemainingMs(Math.max(0, lastAffectionAt + AFFECTION_COOLDOWN_MS - Date.now()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [lastAffectionAt]);
+
+  // Carinho: recover half a heart, once per hour. Only real way to heal HP.
+  const handlePet = useCallback(() => {
+    const now = Date.now();
+    const isPt = language === 'pt-BR';
+    if (now < lastAffectionAt + AFFECTION_COOLDOWN_MS) {
+      const mins = Math.ceil((lastAffectionAt + AFFECTION_COOLDOWN_MS - now) / 60000);
+      toast.info(isPt ? `Carinho disponível em ~${mins} min` : `Affection ready in ~${mins} min`, { duration: 2000 });
+      return;
+    }
+    if (gameState.healthPoints >= gameState.maxHealthPoints) {
+      toast.info(isPt ? 'O coração já está cheio!' : 'Heart already full!', { duration: 2000 });
+      return;
+    }
+    playFeed();
+    setGameState(prev => ({
+      ...prev,
+      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5),
+    }));
+    setLastAffectionAt(now);
+    localStorage.setItem(STORAGE_KEYS.AFFECTION_LAST_USED, String(now));
+    toast.success(isPt ? '❤️ Meio coração recuperado!' : '❤️ Half a heart restored!', { duration: 2000 });
+  }, [lastAffectionAt, gameState.healthPoints, gameState.maxHealthPoints, language]);
+
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
       const newStage = DEGENERATION_STAGE_MAP[targetStage] as GameState['evolutionStage'];
@@ -1254,6 +1291,8 @@ export default function App() {
             onOpenItems={() => { setShowItemsWindow(prev => !prev); setNewItemsReady(false); }}
             onSleep={handleSleep}
             isSleeping={isSleeping}
+            onPet={handlePet}
+            affectionRemainingMs={affectionRemainingMs}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

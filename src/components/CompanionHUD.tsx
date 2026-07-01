@@ -89,6 +89,8 @@ interface CompanionHUDProps {
   onOpenItems?: () => void;
   onSleep?: () => void;
   isSleeping?: boolean;
+  onPet?: () => void;
+  affectionRemainingMs?: number;
   hasNewItems?: boolean;
   evolutionFlash?: boolean;
   feedAnim?: { emoji: string; n: number } | null;
@@ -128,6 +130,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   onOpenItems,
   onSleep,
   isSleeping = false,
+  onPet,
+  affectionRemainingMs = 0,
   hasNewItems = false,
   evolutionFlash = false,
   feedAnim = null,
@@ -511,6 +515,20 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setShowerCooldown(false), 5000);
   };
 
+  // Affection ("carinho"): hug animation + delegate HP/cooldown logic to parent.
+  const affectionReady = affectionRemainingMs <= 0;
+  const handlePetClick = () => {
+    onPet?.();
+    if (affectionReady) showHug();
+  };
+  // mm:ss remaining until affection is usable again
+  const formatCooldown = (ms: number) => {
+    const total = Math.ceil(ms / 1000);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
   const getCompanionFilter = () => {
     const auraColor = getBranchAuraColor();
     switch (companionMood) {
@@ -523,40 +541,44 @@ export const CompanionHUD = memo(function CompanionHUD({
     }
   };
 
-  // Render pixel hearts for HP
+  // Render pixel hearts for HP (supports half hearts from "carinho")
   const renderHearts = () => {
     const hearts = [];
     const totalHearts = maxHealthPoints;
-    
+    const fullHearts = Math.floor(healthPoints);
+    const hasHalf = healthPoints - fullHearts >= 0.5;
+
     for (let i = 0; i < totalHearts; i++) {
-      const isFilled = i < healthPoints;
-      
+      const isFull = i < fullHearts;
+      const isHalf = i === fullHearts && hasHalf;
+
       hearts.push(
         <div key={i} className="relative h-[22px] w-[23px] flex-shrink-0">
-          {isFilled ? (
-            // Full heart (red)
-            <img 
-              alt="" 
-              className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" 
-              src={imgHeartSprite}
-              style={{ imageRendering: 'pixelated' }}
-            />
-          ) : (
-            // Empty heart (black/dark)
-            <img 
-              alt="" 
-              className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" 
-              src={imgHeartSprite}
-              style={{ 
-                imageRendering: 'pixelated',
-                filter: 'brightness(0.2) saturate(0)'
-              }}
-            />
+          {/* Base heart: red when full, dark when empty/half */}
+          <img
+            alt=""
+            className="absolute inset-0 max-w-none object-cover pointer-events-none size-full"
+            src={imgHeartSprite}
+            style={{
+              imageRendering: 'pixelated',
+              filter: isFull ? 'none' : 'brightness(0.2) saturate(0)',
+            }}
+          />
+          {/* Half overlay: red left 50% over the dark base */}
+          {isHalf && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: '50%' }}>
+              <img
+                alt=""
+                className="max-w-none"
+                src={imgHeartSprite}
+                style={{ imageRendering: 'pixelated', width: '23px', height: '22px' }}
+              />
+            </div>
           )}
         </div>
       );
     }
-    
+
     return hearts;
   };
 
@@ -886,8 +908,9 @@ export const CompanionHUD = memo(function CompanionHUD({
             {([
               !isEarlyStage && { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
               !isEarlyStage && { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
+              { key: 'pet', icon: '🫶', en: 'Pet', pt: 'Carinho', onClick: handlePetClick, disabled: !affectionReady, badge: false, sub: affectionReady ? undefined : formatCooldown(affectionRemainingMs) },
               { key: 'sleep', icon: isSleeping ? '☀️' : '💤', en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-            ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+            ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined; sub?: string }[]).map(a => (
               <button
                 key={a.key}
                 onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
@@ -922,6 +945,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <span style={{ fontFamily: 'monospace', fontSize: '0.5rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
                   {language === 'pt-BR' ? a.pt : a.en}
                 </span>
+                {a.sub && (
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.5rem', color: '#ffd27f', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', lineHeight: 1 }}>
+                    {a.sub}
+                  </span>
+                )}
               </button>
             ))}
           </div>
