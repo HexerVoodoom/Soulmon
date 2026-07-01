@@ -561,7 +561,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         for (let k = 0; k < burst; k++) {
           const id2 = ++rubHeartIdRef.current;
           const angle = Math.random() * Math.PI * 2;
-          const dist = 20 + Math.random() * 40; // radiate outward (20–60px)
+          const dist = 55 + Math.random() * 95; // fly far across the box (55–150px)
           spawned.push({
             id: id2,
             dx: Math.round(Math.cos(angle) * dist),
@@ -569,7 +569,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             size: 0.7 + Math.random() * 0.7, // varied heart sizes
             emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
           });
-          setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 900);
+          setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1100);
         }
         setRubHearts(prev => [...prev, ...spawned]);
       }
@@ -820,7 +820,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   fontSize: `${h.size}rem`,
                   ['--tx' as string]: `${h.dx}px`,
                   ['--ty' as string]: `${h.dy}px`,
-                  animation: 'rub-heart 0.9s ease-out forwards',
+                  animation: 'rub-heart 1.1s ease-out forwards',
                 } as React.CSSProperties}
               >
                 {h.emoji}
