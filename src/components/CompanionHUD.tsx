@@ -573,8 +573,8 @@ export const CompanionHUD = memo(function CompanionHUD({
     const dimColor = '#c9c9c9';
     return (
       <div
-        className="absolute bottom-2 left-2 z-10 flex items-end gap-[2px] rounded-[3px] px-1 py-[3px] bg-white/55"
-        style={{ backdropFilter: 'blur(1px)' }}
+        className="z-10 flex items-end gap-[2px] rounded-[3px] px-1 py-[3px] bg-white/55"
+        style={{ position: 'absolute', bottom: 8, left: 8, backdropFilter: 'blur(1px)' }}
         title={isPt ? `Fome: ${lit}/${SATIETY_BARS}` : `Hunger: ${lit}/${SATIETY_BARS}`}
       >
         {/* Pixelated black food icon (apple) */}
@@ -704,7 +704,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             {renderHearts()}
           </div>
 
-          {/* Hunger meter - Top Right Corner (discreet) */}
+          {/* Hunger meter - Bottom Left Corner (discreet) */}
           {renderHungerMeter()}
 
 
