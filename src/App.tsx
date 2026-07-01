@@ -874,32 +874,15 @@ export default function App() {
     playSleep();
   }, []);
 
-  // Carinho: the ONLY way to heal HP. Petting always plays the mascot bounce
-  // (in CompanionHUD), but the heal (half a heart) is limited to once per hour.
-  const AFFECTION_COOLDOWN_MS = 3600000; // 1 hour
-  const [lastAffectionAt, setLastAffectionAt] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.AFFECTION_LAST_USED)) || 0);
-  const [affectionRemainingMs, setAffectionRemainingMs] = useState(0);
-  useEffect(() => {
-    const tick = () => setAffectionRemainingMs(Math.max(0, lastAffectionAt + AFFECTION_COOLDOWN_MS - Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [lastAffectionAt]);
-
+  // Carinho: the ONLY way to heal HP. Called by CompanionHUD after every ~2s of
+  // rubbing the pet — each grant restores half a heart (capped at max HP).
   const handlePet = useCallback(() => {
-    playFeed();
-    const now = Date.now();
-    // Still resting or already at full HP → just the affection animation, no heal.
-    if (now < lastAffectionAt + AFFECTION_COOLDOWN_MS) return;
-    if (gameState.healthPoints >= gameState.maxHealthPoints) return;
-    setGameState(prev => ({
-      ...prev,
-      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5),
-    }));
-    setLastAffectionAt(now);
-    localStorage.setItem(STORAGE_KEYS.AFFECTION_LAST_USED, String(now));
-    toast.success(language === 'pt-BR' ? '❤️ Meio coração recuperado!' : '❤️ Half a heart restored!', { duration: 2000 });
-  }, [lastAffectionAt, gameState.healthPoints, gameState.maxHealthPoints, language]);
+    setGameState(prev => {
+      if (prev.healthPoints >= prev.maxHealthPoints) return prev;
+      playFeed();
+      return { ...prev, healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5) };
+    });
+  }, []);
 
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
@@ -1317,7 +1300,6 @@ export default function App() {
             onSleep={handleSleep}
             isSleeping={isSleeping}
             onPet={handlePet}
-            affectionRemainingMs={affectionRemainingMs}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

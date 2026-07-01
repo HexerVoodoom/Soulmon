@@ -17,8 +17,8 @@ const SECTIONS = [
         icon: '❤️',
         labelEn: 'HP (Hearts)',
         labelPt: 'HP (Corações)',
-        descEn: 'Your Digimon\'s health. At day\'s end you lose hearts in proportion to the tasks you didn\'t finish; uncleaned poop drains 1 heart every 6h. Healed only by Affection (petting). Reaches 0 → degeneration.',
-        descPt: 'A saúde do seu Digimon. Na virada do dia você perde corações proporcional às tarefas não feitas; cocô não limpo tira 1 coração a cada 6h. Só recupera com Carinho. Chega a 0 → degeneração.',
+        descEn: 'Your Digimon\'s health. At day\'s end you lose hearts in proportion to the tasks you didn\'t finish; uncleaned poop drains 1 heart every 6h. Healed only by rubbing your Digimon. Reaches 0 → degeneration.',
+        descPt: 'A saúde do seu Digimon. Na virada do dia você perde corações proporcional às tarefas não feitas; cocô não limpo tira 1 coração a cada 6h. Só recupera esfregando o Digimon. Chega a 0 → degeneração.',
       },
       {
         icon: '⚡',
@@ -76,10 +76,10 @@ const SECTIONS = [
       },
       {
         icon: '🫶',
-        labelEn: 'Affection (Pet)',
-        labelPt: 'Carinho',
-        descEn: 'Pet your Digimon to make it happy — it hops around excitedly. The only way to heal HP: restores half a heart, once per hour.',
-        descPt: 'Faça carinho para deixá-lo feliz — ele dá pulinhos animado. Único jeito de curar HP: recupera meio coração, 1× por hora.',
+        labelEn: 'Affection (Rub)',
+        labelPt: 'Carinho (esfregar)',
+        descEn: 'Rub your Digimon (press and drag over it) to pop little hearts. The only way to heal HP: every ~2 seconds of rubbing restores half a heart.',
+        descPt: 'Esfregue seu Digimon (segure e arraste sobre ele) para soltar coraçõezinhos. Único jeito de curar HP: a cada ~2 segundos esfregando recupera meio coração.',
       },
       {
         icon: '💤',

@@ -90,7 +90,6 @@ interface CompanionHUDProps {
   onSleep?: () => void;
   isSleeping?: boolean;
   onPet?: () => void;
-  affectionRemainingMs?: number;
   hasNewItems?: boolean;
   evolutionFlash?: boolean;
   feedAnim?: { emoji: string; n: number } | null;
@@ -131,7 +130,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   onSleep,
   isSleeping = false,
   onPet,
-  affectionRemainingMs = 0,
   hasNewItems = false,
   evolutionFlash = false,
   feedAnim = null,
@@ -147,8 +145,18 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [eatingEmoji, setEatingEmoji] = useState<string | null>(null);
   const [eatKey, setEatKey] = useState(0);
   const [isMunching, setIsMunching] = useState(false);
-  const [isPetting, setIsPetting] = useState(false);
+  const [isRubbing, setIsRubbing] = useState(false);
+  const [rubHearts, setRubHearts] = useState<{ id: number; dx: number }[]>([]);
   const [isShowering, setIsShowering] = useState(false);
+  // Rub-to-heal gesture bookkeeping (refs to avoid stale closures in the interval)
+  const rubPressedRef = useRef(false);
+  const rubMovedRef = useRef(false);
+  const rubLastMoveRef = useRef(0);
+  const rubAccumRef = useRef(0);
+  const rubHeartTickRef = useRef(0);
+  const rubHeartIdRef = useRef(0);
+  const onPetRef = useRef<(() => void) | undefined>(undefined);
+  onPetRef.current = onPet;
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
 
@@ -213,7 +221,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   useEffect(() => {
     const speed = companionMood === 'happy' ? 0.5 : companionMood === 'tired' ? 0.15 : 0.3;
     const interval = setInterval(() => {
-      if (isSleeping || isShowering || isMunching || isPetting) return;
+      if (isSleeping || isShowering || isMunching || isRubbing) return;
       setPosition(prev => {
         const newPos = direction === 'right' ? prev + speed : prev - speed;
 
@@ -231,7 +239,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     }, 50);
 
     return () => clearInterval(interval);
-  }, [direction, companionMood, isSleeping, isShowering, isMunching, isPetting]);
+  }, [direction, companionMood, isSleeping, isShowering, isMunching, isRubbing]);
 
   // Squash and stretch animation (10% height variation)
   useEffect(() => {
@@ -516,21 +524,56 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setShowerCooldown(false), 5000);
   };
 
-  // Affection ("carinho"): petting always plays the mascot bounce; the heal
-  // itself (half a heart, once per hour) is handled by the parent (onPet).
-  const handlePetClick = () => {
-    onPet?.();
-    showHug();
-    setIsPetting(true);
-    setTimeout(() => setIsPetting(false), 1050);
+  // Rub-to-heal ("carinho"): rub the pet (drag over it) to make little hearts
+  // pop out; every ~2s of active rubbing restores half a heart (via onPet).
+  const startRub = (e: React.PointerEvent) => {
+    rubPressedRef.current = true;
+    rubMovedRef.current = false;
+    rubLastMoveRef.current = Date.now();
+    rubAccumRef.current = 0;
+    try { (e.currentTarget as Element).setPointerCapture(e.pointerId); } catch { /* noop */ }
   };
-  // mm:ss remaining until the carinho heal is available again
-  const formatCooldown = (ms: number) => {
-    const total = Math.ceil(ms / 1000);
-    const m = Math.floor(total / 60);
-    const s = total % 60;
-    return `${m}:${String(s).padStart(2, '0')}`;
+  const moveRub = () => {
+    if (rubPressedRef.current) {
+      rubLastMoveRef.current = Date.now();
+      rubMovedRef.current = true;
+    }
   };
+  const endRub = () => {
+    rubPressedRef.current = false;
+    rubAccumRef.current = 0;
+    setIsRubbing(false);
+  };
+
+  useEffect(() => {
+    const TICK = 100;
+    const id = setInterval(() => {
+      const now = Date.now();
+      const active = rubPressedRef.current && now - rubLastMoveRef.current < 180;
+      setIsRubbing(active);
+      if (!active) return;
+      // Spawn a floating heart every ~300ms while rubbing
+      rubHeartTickRef.current += 1;
+      if (rubHeartTickRef.current % 3 === 0) {
+        const id2 = ++rubHeartIdRef.current;
+        const dx = Math.round((Math.random() - 0.5) * 44);
+        setRubHearts(prev => [...prev, { id: id2, dx }]);
+        setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1100);
+      }
+      // Accumulate heal time only while there's HP to restore
+      const p = propsRef.current;
+      if (p.healthPoints < p.maxHealthPoints) {
+        rubAccumRef.current += TICK;
+        if (rubAccumRef.current >= 2000) {
+          rubAccumRef.current -= 2000;
+          onPetRef.current?.();
+        }
+      } else {
+        rubAccumRef.current = 0;
+      }
+    }, TICK);
+    return () => clearInterval(id);
+  }, []);
 
   const getCompanionFilter = () => {
     const auraColor = getBranchAuraColor();
@@ -753,6 +796,22 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Digimon Sprite - Centered with walking animation */}
           <div className="absolute inset-0 flex items-center justify-center">
+            {/* Little hearts popping out while the pet is being rubbed */}
+            {rubHearts.map(h => (
+              <span
+                key={h.id}
+                className="absolute pointer-events-none z-30 select-none"
+                style={{
+                  left: `calc(${position}% + ${h.dx}px)`,
+                  top: 'calc(50% - 10px)',
+                  fontSize: '0.95rem',
+                  animation: 'rub-heart 1.1s ease-out forwards',
+                }}
+              >
+                ❤️
+              </span>
+            ))}
+
             {/* Hug balloon — follows pet position, shown after feed or shower */}
             {hugBalloon && (
               <div
@@ -789,9 +848,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                 transform: getHorizontalFlip(),
                 top: '50%',
                 marginTop: '-20px',
-                transition: 'left 0.1s ease-linear, transform 0.1s ease-linear'
+                transition: 'left 0.1s ease-linear, transform 0.1s ease-linear',
+                touchAction: 'none', // let the rub gesture own the pointer
               }}
-              onClick={handleDigimonClick}
+              onClick={() => { if (rubMovedRef.current) { rubMovedRef.current = false; return; } handleDigimonClick(); }}
+              onPointerDown={startRub}
+              onPointerMove={moveRub}
+              onPointerUp={endRub}
+              onPointerCancel={endRub}
             >
               {sprite ? (
                 <img
@@ -802,8 +866,8 @@ export const CompanionHUD = memo(function CompanionHUD({
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
-                    animation: isPetting
-                      ? 'pet-affection 1.05s ease-out'
+                    animation: isRubbing
+                      ? 'pet-rub 0.35s ease-in-out infinite'
                       : isShowering
                         ? 'pet-shower-shake 0.5s ease-in-out 3'
                         : isMunching
@@ -913,7 +977,6 @@ export const CompanionHUD = memo(function CompanionHUD({
             {([
               !isEarlyStage && { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
               !isEarlyStage && { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
-              { key: 'pet', icon: '🫶', en: 'Pet', pt: 'Carinho', onClick: handlePetClick, disabled: false, badge: false, sub: affectionRemainingMs > 0 ? formatCooldown(affectionRemainingMs) : undefined },
               { key: 'sleep', icon: isSleeping ? '☀️' : '💤', en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
             ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined; sub?: string }[]).map(a => (
               <button

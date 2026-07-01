@@ -29,16 +29,18 @@
   80%      { transform: rotate(4deg); }
 }
 
-/* Affection ("carinho"): pet hops happily ~3 times to show it got petted */
-@keyframes pet-affection {
-  0%   { transform: translateY(0) scaleY(1); }
-  12%  { transform: translateY(-18px) scaleY(1.08); }
-  24%  { transform: translateY(0) scaleY(0.9); }
-  40%  { transform: translateY(-13px) scaleY(1.06); }
-  52%  { transform: translateY(0) scaleY(0.93); }
-  68%  { transform: translateY(-8px) scaleY(1.04); }
-  80%  { transform: translateY(0) scaleY(0.96); }
-  100% { transform: translateY(0) scaleY(1); }
+/* Rub-to-heal: pet wiggles gently while being rubbed */
+@keyframes pet-rub {
+  0%, 100% { transform: rotate(0deg) scaleY(1); }
+  25%      { transform: rotate(-3deg) scaleY(1.03); }
+  75%      { transform: rotate(3deg) scaleY(0.97); }
+}
+
+/* Rub-to-heal: little hearts float up from the pet */
+@keyframes rub-heart {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.5); }
+  25%  { opacity: 1; transform: translateX(-50%) translateY(-14px) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-48px) scale(0.75); }
 }
 
 /* Win98 Fonts */
