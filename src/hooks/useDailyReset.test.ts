@@ -44,8 +44,12 @@ function simulateReset(prev: any): any {
   let wasDegeneratedByHP = false;
   let newMaxActivityCap = prev.maxActivityCap;
 
-  if (dailyDone === 0) {
-    newHP = Math.max(0, prev.healthPoints - 1);
+  // Proportional HP loss: lose floor((1 - done/total) * maxHP) whole hearts.
+  const totalTasks = availableActivities.length + prev.tasks.length;
+  const completionRatio = totalTasks > 0 ? dailyDone / totalTasks : 1;
+  const heartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
+  if (heartsLost > 0) {
+    newHP = Math.max(0, prev.healthPoints - heartsLost);
   }
 
   if (dayWasPerfect) {
@@ -140,18 +144,30 @@ const baseState = () => ({
   lastResetDate: 'yesterday',
 });
 
-describe('performDailyReset — daily progress', () => {
-  it('loses 1 HP when nothing was done', () => {
+describe('performDailyReset — proportional HP loss', () => {
+  it('no penalty when there were no tasks to do', () => {
     const result = simulateReset({ ...baseState(), healthPoints: 3 });
-    expect(result.healthPoints).toBe(2);
+    expect(result.healthPoints).toBe(3);
     expect(result.lastDayWasPerfect).toBe(false);
   });
 
-  it('does not lose HP when at least 1 task done (not a perfect day)', () => {
-    const state = { ...baseState(), tasks: [{ id: 't1', completed: true }, { id: 't2', completed: false }] };
-    const result = simulateReset(state);
+  it('no penalty when all tasks were completed', () => {
+    const tasks = [{ id: 't1', completed: true }, { id: 't2', completed: true }];
+    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
     expect(result.healthPoints).toBe(3);
+  });
+
+  it('30% done with 3 hearts loses 2 hearts (floor(0.7*3))', () => {
+    const tasks = Array.from({ length: 10 }, (_, i) => ({ id: `t${i}`, completed: i < 3 }));
+    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
+    expect(result.healthPoints).toBe(1);
     expect(result.lastDayWasPerfect).toBe(false);
+  });
+
+  it('50% done with 3 hearts loses 1 heart (floor(0.5*3))', () => {
+    const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: i < 2 }));
+    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
+    expect(result.healthPoints).toBe(2);
   });
 
   it('increments perfectDays and awards XP on a perfect day', () => {
@@ -173,7 +189,9 @@ describe('performDailyReset — daily progress', () => {
 
 describe('performDailyReset — degeneration', () => {
   it('degenerates tapirmon to pukamon when HP drops to 0', () => {
-    const result = simulateReset({ ...baseState(), healthPoints: 1, evolutionStage: 'tapirmon' });
+    // 3 tasks, none done → lose all 3 hearts from 1 → 0 → degenerate
+    const tasks = Array.from({ length: 3 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = simulateReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'tapirmon' });
     expect(result.degeneratedByHP).toBe(true);
     expect(result.evolutionStage).toBe('pukamon');
   });

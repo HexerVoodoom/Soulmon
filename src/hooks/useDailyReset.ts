@@ -119,8 +119,6 @@ export function useDailyReset({
       const currentLevel = getStageLevel(prev.evolutionStage);
       const requirements = FORM_REQUIREMENTS[currentLevel];
       const requiredToday = requirements.required;
-      // HP penalty threshold: completing less than half is considered neglect
-      const halfRequired = Math.ceil(requiredToday / 2);
 
       let dailyDone = 0;
       const availableActivities = !canSelectWeekdays(prev.evolutionStage)
@@ -154,9 +152,15 @@ export function useDailyReset({
         vaccine: prev.attributesSinceLastEvolution?.vaccine ?? 0,
       };
 
-      // HP penalty: doing less than half the daily requirement is neglect
-      if (dailyDone < halfRequired) {
-        newHP = Math.max(0, prev.healthPoints - 1);
+      // HP penalty: proportional to the tasks NOT done. If the pet completed
+      // 30% of the tasks it had, it neglected 70% → loses floor(70% of hearts).
+      // Hearts are always lost in whole units (floor); only "carinho" restores
+      // half a heart at a time. No tasks available → nothing to fail → no loss.
+      const totalTasks = availableActivities.length + prev.tasks.length;
+      const completionRatio = totalTasks > 0 ? dailyDone / totalTasks : 1;
+      const heartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
+      if (heartsLost > 0) {
+        newHP = Math.max(0, prev.healthPoints - heartsLost);
       }
 
       // Care penalty: poop that appeared but was never cleaned costs HP at the
