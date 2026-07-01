@@ -61,7 +61,45 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           <section>
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>2. Requirements per Form</h3>
+            }`}>2. What Each Action Does</h3>
+            <ul className="space-y-2 ml-4 list-disc">
+              <li>
+                <strong>❤️ Hearts (HP)</strong> — Lost in proportion to the tasks you
+                <em> don't</em> finish: do 30% of the day's tasks and you neglect 70%,
+                so you lose ~70% of your hearts (always rounded down, whole hearts).
+                Uncleaned <strong>poop</strong> also drains <strong>1 heart every 6 hours</strong>.
+                Hearts come back by <strong>feeding</strong>. If HP hits 0, your Digimon degenerates.
+              </li>
+              <li>
+                <strong>⚡ Energy</strong> — Fills only by <strong>feeding</strong>. You need
+                <strong> full energy</strong> to give your Digimon a bath.
+              </li>
+              <li>
+                <strong>🍎 Food (Feed)</strong> — Restores energy and a heart, fills the
+                <strong> hunger meter</strong>, and grants attribute points (which steer your
+                evolution branch). The hunger meter slowly empties over time; a hungry
+                Digimon will tell you it needs to eat.
+              </li>
+              <li>
+                <strong>🚿 Bath</strong> — Cleans up <strong>poop</strong> and washes your
+                Digimon. Requires full energy.
+              </li>
+              <li>
+                <strong>🫶 Affection (Pet)</strong> — Pet your Digimon anytime to make it
+                happy. It's a pure interaction: it hops around excitedly but doesn't change
+                any stats.
+              </li>
+              <li>
+                <strong>💤 Sleep</strong> — Your Digimon rests. It won't poop while asleep,
+                so sleeping through the night protects it from overnight penalties.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h3 className={`font-bold mb-2 ${
+              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
+            }`}>3. Requirements per Form</h3>
             <ul className="space-y-1 ml-4 list-disc">
               <li>Digiegg → Baby I: 1 perfect day</li>
               <li>Baby I → Baby II: 2 perfect days</li>
@@ -77,7 +115,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           <section>
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>3. Activity Cap</h3>
+            }`}>4. Activity Cap</h3>
             <p>
               Each form has a limit on activities you can register = <strong>2× the number of perfect days required</strong>.
             </p>
@@ -89,7 +127,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           <section>
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>4. Weekday Selection</h3>
+            }`}>5. Weekday Selection</h3>
             <p className="mb-2">
               <strong>Before Rookie</strong> (Digiegg, Baby I, Baby II): 
               No weekday selection. All activities are considered daily.
@@ -104,12 +142,15 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           <section>
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>5. HP System (Hearts)</h3>
+            }`}>6. HP System (Hearts)</h3>
             <p className="mb-2">
-              Your Digimon <strong>only loses 1 heart if you don't do ANY task in the day</strong> (daily_done == 0).
+              At the end of each day you lose hearts <strong>in proportion to the tasks you didn't finish</strong>:
+              lost hearts = ⌊(1 − done/total) × maxHearts⌋. Example: finish 30% of the day's tasks and you
+              lose ⌊70% of your hearts⌋. Complete 100% (or have no tasks) and you lose nothing.
             </p>
             <p className="mb-2">
-              If you do at least 1 task, even without completing 100%, you don't lose HP.
+              Uncleaned <strong>poop</strong> drains an extra <strong>1 heart every 6 hours</strong> until you
+              give a bath. Hearts are recovered by <strong>feeding</strong>.
             </p>
             <p>
               Maximum HP per form:
@@ -129,7 +170,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           <section>
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>6. Branches (Evolution Lines)</h3>
+            }`}>7. Branches (Evolution Lines)</h3>
             <p className="mb-2">
               From Rookie onwards, there are 3 branches available:
             </p>
@@ -147,7 +188,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           <section>
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>7. Ultra and Itto Mode</h3>
+            }`}>8. Ultra and Itto Mode</h3>
             <p>
               To reach Ultra form, you need to unlock the <strong>3 Megas</strong> (one from each branch).
               After unlocking Ultra, continue accumulating perfect days to reach the final Itto Mode.

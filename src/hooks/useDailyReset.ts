@@ -163,20 +163,8 @@ export function useDailyReset({
         newHP = Math.max(0, prev.healthPoints - heartsLost);
       }
 
-      // Care penalty: poop that appeared but was never cleaned costs HP at the
-      // day turn. Sleeping all night means no poop appeared → nothing missed →
-      // no penalty. Capped (together with the day's food losses) at half max HP.
-      const careMaxHP = prev.maxHealthPoints;
-      const careDailyCap = Math.floor(careMaxHP / 2);
-      const poopPenaltyEach = careMaxHP >= 3 ? 2 : 1;
-      const poopShown = prev.poopEventsShown || [];
-      const poopDone = prev.poopEventsCompleted || [];
-      const missedPoops = poopShown.filter((i: number) => !poopDone.includes(i)).length;
-      const remainingCareCap = Math.max(0, careDailyCap - (prev.careHPLostToday ?? 0));
-      const poopDamage = Math.min(missedPoops * poopPenaltyEach, remainingCareCap);
-      if (poopDamage > 0) {
-        newHP = Math.max(0, newHP - poopDamage);
-      }
+      // (Poop no longer penalizes at the day turn — uncleaned poop drains 1 heart
+      // every 6 hours while it's on screen; handled live in App.tsx.)
 
       if (dayWasPerfect) {
         newPerfectDays++;
@@ -271,6 +259,7 @@ export function useDailyReset({
         poopEventsCompleted: [],
         foodEventsCompleted: [],
         poopEventsShown: [],
+        poopPenaltyClockAt: 0,
         currentBranch: newCurrentBranch,
         unlockedEvolutions: finalUnlockedEvolutions,
         degeneratedByHP: wasDegeneratedByHP,

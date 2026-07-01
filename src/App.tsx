@@ -70,10 +70,6 @@ export default function App() {
   const [newItemsReady, setNewItemsReady] = useState(false);
   // Sleep state persists across app close/reopen — the pet stays asleep until woken.
   const [isSleeping, setIsSleeping] = useState(() => localStorage.getItem(STORAGE_KEYS.IS_SLEEPING) === 'true');
-  // Affection ("carinho"): the only way to recover a lost heart. Restores half a
-  // heart, usable once per hour. Timestamp persists across app close/reopen.
-  const [lastAffectionAt, setLastAffectionAt] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.AFFECTION_LAST_USED)) || 0);
-  const [affectionRemainingMs, setAffectionRemainingMs] = useState(0);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -719,7 +715,11 @@ export default function App() {
         const poopIndex = (prev.poopEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
         // Guard against -1 (e.g. a daily reset cleared the schedule mid-event).
         if (poopIndex < 0) return prev;
-        return { ...prev, poopEventsCompleted: [...(prev.poopEventsCompleted || []), poopIndex] };
+        return {
+          ...prev,
+          poopEventsCompleted: [...(prev.poopEventsCompleted || []), poopIndex],
+          poopPenaltyClockAt: 0, // stop the 6h heart-drain clock
+        };
       } else {
         const eventIndex = (prev.foodEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
         if (eventIndex < 0) return prev;
@@ -811,6 +811,37 @@ export default function App() {
     return () => clearInterval(id);
   }, [isSleeping, setGameState]);
 
+  // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
+  // clock starts when a poop is on screen and stops the moment it's cleaned.
+  useEffect(() => {
+    const SIX_HOURS = 6 * 3600000;
+    const drain = () => {
+      setGameState(prev => {
+        const shown = prev.poopEventsShown || [];
+        const cleaned = prev.poopEventsCompleted || [];
+        const hasUncleanPoop = shown.some(i => !cleaned.includes(i));
+        const clock = prev.poopPenaltyClockAt ?? 0;
+        if (!hasUncleanPoop) {
+          return clock === 0 ? prev : { ...prev, poopPenaltyClockAt: 0 };
+        }
+        const now = Date.now();
+        // Sleeping pauses the clock (advance it without penalizing).
+        if (isSleeping) return { ...prev, poopPenaltyClockAt: now };
+        if (clock === 0) return { ...prev, poopPenaltyClockAt: now };
+        const periods = Math.floor((now - clock) / SIX_HOURS);
+        if (periods <= 0) return prev;
+        return {
+          ...prev,
+          healthPoints: Math.max(0, prev.healthPoints - periods),
+          poopPenaltyClockAt: clock + periods * SIX_HOURS,
+        };
+      });
+    };
+    drain();
+    const id = setInterval(drain, 60000);
+    return () => clearInterval(id);
+  }, [isSleeping, setGameState]);
+
   // Alert the user once each time the hunger meter empties (resets when fed).
   const hungerNotifiedRef = useRef(false);
   useEffect(() => {
@@ -843,38 +874,11 @@ export default function App() {
     playSleep();
   }, []);
 
-  // Affection cooldown countdown — ticks every second so the button shows the
-  // remaining time until it can be used again.
-  const AFFECTION_COOLDOWN_MS = 3600000; // 1 hour
-  useEffect(() => {
-    const tick = () => setAffectionRemainingMs(Math.max(0, lastAffectionAt + AFFECTION_COOLDOWN_MS - Date.now()));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [lastAffectionAt]);
-
-  // Carinho: recover half a heart, once per hour. Only real way to heal HP.
+  // Carinho: a pure affection interaction (mascot). No cooldown, no HP change —
+  // the pet just reacts happily (bounce animation lives in CompanionHUD).
   const handlePet = useCallback(() => {
-    const now = Date.now();
-    const isPt = language === 'pt-BR';
-    if (now < lastAffectionAt + AFFECTION_COOLDOWN_MS) {
-      const mins = Math.ceil((lastAffectionAt + AFFECTION_COOLDOWN_MS - now) / 60000);
-      toast.info(isPt ? `Carinho disponível em ~${mins} min` : `Affection ready in ~${mins} min`, { duration: 2000 });
-      return;
-    }
-    if (gameState.healthPoints >= gameState.maxHealthPoints) {
-      toast.info(isPt ? 'O coração já está cheio!' : 'Heart already full!', { duration: 2000 });
-      return;
-    }
     playFeed();
-    setGameState(prev => ({
-      ...prev,
-      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5),
-    }));
-    setLastAffectionAt(now);
-    localStorage.setItem(STORAGE_KEYS.AFFECTION_LAST_USED, String(now));
-    toast.success(isPt ? '❤️ Meio coração recuperado!' : '❤️ Half a heart restored!', { duration: 2000 });
-  }, [lastAffectionAt, gameState.healthPoints, gameState.maxHealthPoints, language]);
+  }, []);
 
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
@@ -1292,7 +1296,6 @@ export default function App() {
             onSleep={handleSleep}
             isSleeping={isSleeping}
             onPet={handlePet}
-            affectionRemainingMs={affectionRemainingMs}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

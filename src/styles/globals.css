@@ -29,6 +29,18 @@
   80%      { transform: rotate(4deg); }
 }
 
+/* Affection ("carinho"): pet hops happily ~3 times to show it got petted */
+@keyframes pet-affection {
+  0%   { transform: translateY(0) scaleY(1); }
+  12%  { transform: translateY(-18px) scaleY(1.08); }
+  24%  { transform: translateY(0) scaleY(0.9); }
+  40%  { transform: translateY(-13px) scaleY(1.06); }
+  52%  { transform: translateY(0) scaleY(0.93); }
+  68%  { transform: translateY(-8px) scaleY(1.04); }
+  80%  { transform: translateY(0) scaleY(0.96); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+
 /* Win98 Fonts */
 @font-face {
   font-family: 'MS Sans Serif';

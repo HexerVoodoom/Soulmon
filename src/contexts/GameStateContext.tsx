@@ -103,6 +103,8 @@ export interface GameState {
   satietyUpdatedAt: number;
   /** Indices of scheduled poop events that actually appeared on screen (so sleep-skipped ones don't penalize). */
   poopEventsShown: number[];
+  /** Epoch ms clock for the "uncleaned poop drains 1 heart / 6h" penalty (0 = inactive). */
+  poopPenaltyClockAt: number;
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
@@ -152,6 +154,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         satiety: loadedState.satiety ?? 1,
         satietyUpdatedAt: loadedState.satietyUpdatedAt ?? Date.now(),
         poopEventsShown: loadedState.poopEventsShown ?? [],
+        poopPenaltyClockAt: loadedState.poopPenaltyClockAt ?? 0,
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -188,6 +191,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       satiety: 1,
       satietyUpdatedAt: Date.now(),
       poopEventsShown: [],
+      poopPenaltyClockAt: 0,
     };
   });
 
