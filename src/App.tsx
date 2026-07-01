@@ -26,7 +26,7 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { satietyPerFeed, SATIETY_DECAY_HOURS, satietyBars } from './utils/hunger';
+import { satietyPerFeed, SATIETY_DECAY_MINUTES, satietyBars } from './utils/hunger';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -793,14 +793,17 @@ export default function App() {
         if (['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage))) {
           return { ...prev, satiety: 1, satietyUpdatedAt: now };
         }
-        if (isSleeping) return { ...prev, satietyUpdatedAt: now };
-        const drop = elapsedMs / (SATIETY_DECAY_HOURS * 3600000);
+        // Pause hunger decay while sleeping OR while energy is full.
+        if (isSleeping || (prev.energyPoints ?? 0) >= prev.maxHealthPoints) {
+          return { ...prev, satietyUpdatedAt: now };
+        }
+        const drop = elapsedMs / (SATIETY_DECAY_MINUTES * 60000);
         const next = Math.max(0, (prev.satiety ?? 1) - drop);
         return { ...prev, satiety: next, satietyUpdatedAt: now };
       });
     };
     decay();
-    const id = setInterval(decay, 120000);
+    const id = setInterval(decay, 60000);
     return () => clearInterval(id);
   }, [isSleeping, setGameState]);
 

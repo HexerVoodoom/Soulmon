@@ -22,8 +22,11 @@ export function satietyPerFeed(stage: string): number {
   return 1 / feedingsToFill(stage);
 }
 
-/** Satiety (0..1) empties over this many AWAKE hours. */
-export const SATIETY_DECAY_HOURS = 12;
+/**
+ * Satiety (0..1) empties over this many minutes of decay time.
+ * Decay is paused while sleeping AND while energy is full (see App.tsx).
+ */
+export const SATIETY_DECAY_MINUTES = 30;
 
 /** Number of bars shown in the hunger meter. */
 export const SATIETY_BARS = 5;

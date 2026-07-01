@@ -568,11 +568,12 @@ export const CompanionHUD = memo(function CompanionHUD({
     const lit = satietyBars(satiety);
     const isPt = language === 'pt-BR';
     const barHeight = (i: number) => 4 + i * 2; // growing "traços"
-    const litColor = isWin98 ? '#000080' : isGlitch ? '#00ffff' : '#111111';
-    const dimColor = 'rgba(0,0,0,0.18)';
+    // Filled = black, empty = light gray (so the meter reads as full/empty).
+    const litColor = '#000000';
+    const dimColor = '#c9c9c9';
     return (
       <div
-        className="absolute top-2 right-2 z-10 flex items-end gap-[2px] rounded-[3px] px-1 py-[3px] bg-white/55"
+        className="absolute bottom-2 left-2 z-10 flex items-end gap-[2px] rounded-[3px] px-1 py-[3px] bg-white/55"
         style={{ backdropFilter: 'blur(1px)' }}
         title={isPt ? `Fome: ${lit}/${SATIETY_BARS}` : `Hunger: ${lit}/${SATIETY_BARS}`}
       >
