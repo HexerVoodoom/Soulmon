@@ -560,31 +560,35 @@ export const CompanionHUD = memo(function CompanionHUD({
     return hearts;
   };
 
-  // Discreet horizontal hunger meter: a pixel black food icon + 5 growing bars
-  // (smallest near the icon, largest at the end). Lit bars = current satiety.
+  // Discreet horizontal hunger meter: a pixel food icon + 5 bars that grow in
+  // height from the icon outward. Bars are BASE-aligned (grow upward). Empty =
+  // white, filling with a discreet reddish-orange. Dark pill so both read well.
   const renderHungerMeter = () => {
     // Hunger isn't a mechanic for egg/baby-i (same stages poop skips).
     if (['digiegg', 'baby-i'].includes(getStageLevel(evolutionStage))) return null;
     const lit = satietyBars(satiety);
     const isPt = language === 'pt-BR';
-    const barHeight = (i: number) => 4 + i * 2; // growing "traços"
-    // Filled = black, empty = light gray (so the meter reads as full/empty).
-    const litColor = '#000000';
-    const dimColor = '#c9c9c9';
+    const barHeight = (i: number) => 5 + i * 2; // 5,7,9,11,13 — grow upward
+    const fillColor = '#d9663f';  // discreet reddish-orange (filled)
+    const emptyColor = '#ffffff'; // white (empty)
     return (
       <div
-        className="z-10 flex items-end gap-[2px] rounded-[3px] px-1 py-[3px] bg-white/55"
-        style={{ position: 'absolute', bottom: 8, left: 8, backdropFilter: 'blur(1px)' }}
+        className="z-10 flex rounded-[3px]"
+        style={{
+          position: 'absolute', bottom: 8, left: 8,
+          alignItems: 'flex-end', // base-aligned so bars grow UP
+          gap: 2, padding: '3px 5px',
+          background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(1px)',
+        }}
         title={isPt ? `Fome: ${lit}/${SATIETY_BARS}` : `Hunger: ${lit}/${SATIETY_BARS}`}
       >
-        {/* Pixelated black food icon (apple) */}
+        {/* Pixelated food icon (apple), light so it reads on the dark pill */}
         <svg
           width="11" height="11" viewBox="0 0 10 10"
           shapeRendering="crispEdges"
-          className="self-center mr-[1px]"
-          style={{ imageRendering: 'pixelated' }}
+          style={{ imageRendering: 'pixelated', alignSelf: 'center', marginRight: 1 }}
         >
-          <g fill="#111111">
+          <g fill="#ffffff">
             <rect x="5" y="0" width="1" height="2" />
             <rect x="6" y="1" width="2" height="1" />
             <rect x="2" y="2" width="6" height="1" />
@@ -597,9 +601,9 @@ export const CompanionHUD = memo(function CompanionHUD({
           <div
             key={i}
             style={{
-              width: '3px',
+              width: '4px',
               height: `${barHeight(i)}px`,
-              backgroundColor: i < lit ? litColor : dimColor,
+              backgroundColor: i < lit ? fillColor : emptyColor,
               imageRendering: 'pixelated',
             }}
           />
