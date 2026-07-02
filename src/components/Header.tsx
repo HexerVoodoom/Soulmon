@@ -2,7 +2,7 @@ import React from 'react';
 import svgPaths from '../imports/svg-hfvoappsgk';
 import { TestTube2 } from 'lucide-react';
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games';
 
 interface HeaderProps {
   currentView: ViewType;
@@ -175,6 +175,9 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
           <button className={`win98-menu-item ${currentView === 'stats' ? 'active' : ''}`} onClick={() => onNavigate('stats')}>
             Stats
           </button>
+          <button className={`win98-menu-item ${currentView === 'games' ? 'active' : ''}`} onClick={() => onNavigate('games')}>
+            Games
+          </button>
           <button className={`win98-menu-item ${currentView === 'settings' ? 'active' : ''}`} onClick={() => onNavigate('settings')}>
             Settings
           </button>
@@ -232,9 +235,25 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
               </button>
             )}
 
-            {/* Right: 4 buttons grouped (Branch, Stats, Config, and a spacer for Debug) */}
+            {/* Right: buttons grouped (Games, Branch, Stats, Config) */}
             <div className="h-[39.993px] relative shrink-0 flex gap-[5.985px] items-start">
-              
+
+              {/* Games / Activities */}
+              <button
+                onClick={() => onNavigate('games')}
+                aria-label="Atividades"
+                className={`relative rounded-[14px] shrink-0 size-[39.993px] transition-all ${
+                  currentView === 'games' ? 'bg-[#e5e7eb]' : 'bg-white'
+                }`}
+              >
+                {currentView !== 'games' && (
+                  <div aria-hidden="true" className="absolute border border-[#c0c0c0] border-solid inset-0 pointer-events-none rounded-[14px]" />
+                )}
+                <div className="flex items-center justify-center size-full" style={{ fontSize: '1.05rem', lineHeight: 1 }}>
+                  🎮
+                </div>
+              </button>
+
               {/* Branches */}
               <button
                 onClick={() => onNavigate('evolution')}

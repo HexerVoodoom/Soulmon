@@ -22,6 +22,7 @@ export const STORAGE_KEYS = {
   AUTO_SLEEP_ENABLED: 'digiapp-auto-sleep-enabled',
   AUTO_SLEEP_START: 'digiapp-auto-sleep-start',
   AUTO_SLEEP_END: 'digiapp-auto-sleep-end',
+  DUNGEON_REWARDS: 'digiapp-dungeon-rewards',
   SOUND_MUTED: 'digiapp-sound-muted',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
 } as const;

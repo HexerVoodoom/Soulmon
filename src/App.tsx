@@ -39,12 +39,13 @@ const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => 
 const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const ActivitiesPage = lazy(() => import('./components/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
 const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games';
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
@@ -863,6 +864,27 @@ export default function App() {
     playSleep();
   }, []);
 
+  // Dungeon reward: each defeated enemy grants 1 random food, capped at 3/day.
+  // Returns the food emoji granted, or null when the daily cap was reached.
+  const handleDungeonReward = useCallback((): string | null => {
+    const today = new Date().toDateString();
+    let rec = { date: today, count: 0 };
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.DUNGEON_REWARDS) || 'null');
+      if (saved?.date === today) rec = saved;
+    } catch { /* fresh record */ }
+    if (rec.count >= 3) return null;
+    rec = { date: today, count: rec.count + 1 };
+    localStorage.setItem(STORAGE_KEYS.DUNGEON_REWARDS, JSON.stringify(rec));
+    const foods = Object.values(FOOD_BY_CATEGORY);
+    const food = foods[Math.floor(Math.random() * foods.length)];
+    setGameState(prev => ({
+      ...prev,
+      foodInventory: { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 },
+    }));
+    return food.emoji;
+  }, []);
+
   // Stable identity so CompanionHUD's memo() isn't defeated by an inline lambda.
   const handleOpenItems = useCallback(() => {
     setShowItemsWindow(prev => !prev);
@@ -1309,6 +1331,17 @@ export default function App() {
                 return state ? 'loaded' : 'created';
               }}
             /></Suspense>
+          )}
+
+          {currentView === 'games' && (
+            <Suspense fallback={null}>
+              <ActivitiesPage
+                evolutionStage={gameState.evolutionStage}
+                language={language}
+                theme={theme}
+                onDungeonReward={handleDungeonReward}
+              />
+            </Suspense>
           )}
         </div>
 

@@ -4880,6 +4880,12 @@ html {
   75%      { transform: rotate(3deg) scaleY(0.97); }
 }
 
+/* Dungeon minigame: subtle breathing/hover for battle sprites */
+@keyframes dungeon-idle {
+  0%, 100% { transform: translateY(0) scaleX(var(--flip, 1)); }
+  50%      { transform: translateY(-5px) scaleX(var(--flip, 1)); }
+}
+
 /* Rub-to-heal: hearts EXPLODE from the pet center — quick pop, then radiate
    far outward (like fireworks) and fade. Direction from --tx / --ty. */
 @keyframes rub-heart {
