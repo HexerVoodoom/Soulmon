@@ -97,6 +97,8 @@ export interface GameState {
   poopEventsShown: number[];
   /** Epoch ms clock for the "uncleaned poop drains 1 heart / 6h" penalty (0 = inactive). */
   poopPenaltyClockAt: number;
+  /** Minigame score (🎖️): earned in the Activities games. Accumulates only, for now. */
+  gamePoints: number;
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
   lastDayReport?: {
     date: string;
@@ -160,6 +162,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         foodInventory: loadedState.foodInventory ?? {},
         poopEventsShown: loadedState.poopEventsShown ?? [],
         poopPenaltyClockAt: loadedState.poopPenaltyClockAt ?? 0,
+        gamePoints: loadedState.gamePoints ?? 0,
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -192,6 +195,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       foodInventory: {},
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
+      gamePoints: 0,
     };
   });
 

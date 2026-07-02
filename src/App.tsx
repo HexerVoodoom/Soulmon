@@ -885,6 +885,12 @@ export default function App() {
     return food.emoji;
   }, []);
 
+  // 🎖️ Minigame points — accumulate in GameState (cloud-synced). No spending yet.
+  const handleEarnGamePoints = useCallback((pts: number) => {
+    if (pts <= 0) return;
+    setGameState(prev => ({ ...prev, gamePoints: (prev.gamePoints ?? 0) + pts }));
+  }, []);
+
   // Stable identity so CompanionHUD's memo() isn't defeated by an inline lambda.
   const handleOpenItems = useCallback(() => {
     setShowItemsWindow(prev => !prev);
@@ -1339,7 +1345,9 @@ export default function App() {
                 evolutionStage={gameState.evolutionStage}
                 language={language}
                 theme={theme}
+                totalPoints={gameState.gamePoints ?? 0}
                 onDungeonReward={handleDungeonReward}
+                onEarnPoints={handleEarnGamePoints}
               />
             </Suspense>
           )}

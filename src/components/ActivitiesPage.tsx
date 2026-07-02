@@ -1,72 +1,84 @@
 import { useState } from 'react';
 import { DungeonGame } from './DungeonGame';
+import { DinoGame } from './DinoGame';
+import { RPSGame } from './RPSGame';
 import type { Language } from '../utils/i18n';
 
 /**
  * "Atividades" page — interactive minigames hub.
- * Dungeon is playable; Dino Runner and Rock-Paper-Scissors are placeholders
- * (see CLAUDE.md: they follow this page's card pattern when implemented).
+ * All games award 🎖️ gamePoints (accumulate only, for now — see docs/SHOP-PLAN.md).
+ * Balance: Dungeon 4-12/enemy +10 clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', onDungeonReward }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, onDungeonReward, onEarnPoints }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
+  totalPoints: number;
   onDungeonReward: () => string | null;
+  onEarnPoints: (pts: number) => void;
 }) {
   const isPt = language === 'pt-BR';
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
-  const [openGame, setOpenGame] = useState<'dungeon' | null>(null);
+  const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
   const mono = { fontFamily: 'monospace' as const };
 
-  const cards: { key: string; icon: string; title: string; desc: string; ready: boolean }[] = [
+  const cards: { key: 'dungeon' | 'dino' | 'rps'; icon: string; title: string; desc: string; pts: string }[] = [
     {
       key: 'dungeon', icon: '⚔️',
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
         ? 'Batalhas por turno com barra de precisão. Vença inimigos e ganhe comida!'
         : 'Turn-based battles with a timing bar. Beat enemies and earn food!',
-      ready: true,
+      pts: isPt ? '4–12 🎖️ por inimigo' : '4–12 🎖️ per enemy',
     },
     {
       key: 'dino', icon: '🦖',
       title: isPt ? 'Corrida do Dino' : 'Dino Runner',
       desc: isPt ? 'Pule os obstáculos e corra o máximo que conseguir.' : 'Jump the obstacles and run as far as you can.',
-      ready: false,
+      pts: isPt ? '1 🎖️ a cada 100 de score' : '1 🎖️ per 100 score',
     },
     {
       key: 'rps', icon: '✊',
       title: isPt ? 'Pedra, Papel e Tesoura' : 'Rock, Paper, Scissors',
-      desc: isPt ? 'Clássico duelo contra o seu Digimon.' : 'The classic duel against your Digimon.',
-      ready: false,
+      desc: isPt ? 'Clássico duelo contra o seu Digimon. Melhor de 5.' : 'The classic duel against your Digimon. First to 3.',
+      pts: isPt ? '5 🎖️ por vitória' : '5 🎖️ per match win',
     },
   ];
 
   return (
     <div className="p-4 space-y-3">
-      <h2
-        className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-900'}
-        style={{ ...mono, fontSize: '1.05rem', fontWeight: 700 }}
-      >
-        🎮 {isPt ? 'Atividades' : 'Activities'}
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2
+          className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-900'}
+          style={{ ...mono, fontSize: '1.05rem', fontWeight: 700 }}
+        >
+          🎮 {isPt ? 'Atividades' : 'Activities'}
+        </h2>
+        <span
+          className={`px-3 py-1 rounded-full ${isGlitch ? 'bg-[#00ffff]/10 text-[#00ffff]' : isWin98 ? 'bg-white text-black border border-gray-400' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'}`}
+          style={{ ...mono, fontSize: '0.8rem', fontWeight: 700 }}
+          title={isPt ? 'Pontos de minijogos (em breve: loja!)' : 'Minigame points (shop coming soon!)'}
+        >
+          🎖️ {totalPoints}
+        </span>
+      </div>
       <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : 'text-gray-500'}
          style={{ ...mono, fontSize: '0.78rem' }}>
-        {isPt ? 'Minijogos para se divertir com seu Digimon.' : 'Minigames to have fun with your Digimon.'}
+        {isPt ? 'Minijogos para se divertir e acumular pontos com seu Digimon.' : 'Minigames to have fun and earn points with your Digimon.'}
       </p>
 
       {cards.map(c => (
         <button
           key={c.key}
-          disabled={!c.ready}
-          onClick={() => c.ready && setOpenGame(c.key as 'dungeon')}
-          className={`w-full text-left rounded-2xl p-4 transition-all ${
+          onClick={() => setOpenGame(c.key)}
+          className={`w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] ${
             isGlitch
               ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
               : isWin98
                 ? 'win98-button bg-white'
                 : 'bg-white shadow-sm ring-1 ring-gray-200/50'
-          } ${c.ready ? 'cursor-pointer active:scale-[0.99]' : 'opacity-55 cursor-default'}`}
+          }`}
         >
           <div className="flex items-center gap-3">
             <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>{c.icon}</span>
@@ -76,19 +88,17 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', on
                       style={{ ...mono, fontSize: '0.9rem', fontWeight: 700 }}>
                   {c.title}
                 </span>
-                {!c.ready && (
-                  <span className={`px-2 py-[2px] rounded-full ${isGlitch ? 'bg-[#00ffff]/10 text-[#5fbcbc]' : 'bg-gray-100 text-gray-400'}`}
-                        style={{ ...mono, fontSize: '0.6rem' }}>
-                    {isPt ? 'EM BREVE' : 'COMING SOON'}
-                  </span>
-                )}
+                <span className={`px-2 py-[2px] rounded-full ${isGlitch ? 'bg-[#00ffff]/10 text-[#5fbcbc]' : 'bg-gray-100 text-gray-500'}`}
+                      style={{ ...mono, fontSize: '0.6rem' }}>
+                  {c.pts}
+                </span>
               </div>
               <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : 'text-gray-500'}
                  style={{ ...mono, fontSize: '0.72rem', marginTop: 2 }}>
                 {c.desc}
               </p>
             </div>
-            {c.ready && <span className={isGlitch ? 'text-[#00ffff]' : 'text-gray-400'} style={{ fontSize: '1.1rem' }}>›</span>}
+            <span className={isGlitch ? 'text-[#00ffff]' : 'text-gray-400'} style={{ fontSize: '1.1rem' }}>›</span>
           </div>
         </button>
       ))}
@@ -98,6 +108,23 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', on
           evolutionStage={evolutionStage}
           language={language}
           onReward={onDungeonReward}
+          onEarnPoints={onEarnPoints}
+          onExit={() => setOpenGame(null)}
+        />
+      )}
+      {openGame === 'dino' && (
+        <DinoGame
+          evolutionStage={evolutionStage}
+          language={language}
+          onEarnPoints={onEarnPoints}
+          onExit={() => setOpenGame(null)}
+        />
+      )}
+      {openGame === 'rps' && (
+        <RPSGame
+          evolutionStage={evolutionStage}
+          language={language}
+          onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}
         />
       )}

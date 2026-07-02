@@ -8,11 +8,15 @@ import type { Language } from '../utils/i18n';
  *
  * Attack: a marker sweeps back and forth; stop it near the CENTER for more
  * damage (perfect ≥92% = crit). Defense uses the same mechanic but graded the
- * other way: the closer to center, the more damage you avoid — a perfect stop
- * fully dodges AND lands a free counter-attack.
+ * other way: closer to center avoids more damage — a perfect stop fully
+ * dodges AND lands a free counter-attack. Defense also has a TIME LIMIT: the
+ * countdown is shown and running out = taking the hit in full.
  *
- * The run is self-contained (does not touch the pet's real HP). Each defeated
- * enemy grants a food reward via onReward (App caps rewards per day).
+ * Every action shows a result popup for a beat before the next phase starts,
+ * and each defeated enemy waits for confirmation before the next challenge.
+ *
+ * Self-contained run (never touches the pet's real HP). Rewards: food via
+ * onReward (App caps 3/day) + 🎖️ points per enemy + clear bonus.
  */
 
 interface Enemy {
@@ -21,21 +25,26 @@ interface Enemy {
   hp: number;
   atk: number;
   speed: number;   // bar sweeps per second (higher = harder)
+  points: number;  // 🎖️ granted when defeated
 }
 
 const ENEMIES: Enemy[] = [
-  { name: 'Bakemon',      stage: 'bakemon',      hp: 8,  atk: 3, speed: 0.9 },
-  { name: 'Tuskmon',      stage: 'tuskmon',      hp: 12, atk: 4, speed: 1.15 },
-  { name: 'Gigadramon',   stage: 'gigadramon',   hp: 16, atk: 5, speed: 1.4 },
-  { name: 'LadyDevimon',  stage: 'ladydevimon',  hp: 20, atk: 6, speed: 1.7 },
-  { name: 'Titamon',      stage: 'titamon',      hp: 26, atk: 7, speed: 2.0 },
+  { name: 'Bakemon',      stage: 'bakemon',      hp: 8,  atk: 3, speed: 0.9,  points: 4 },
+  { name: 'Tuskmon',      stage: 'tuskmon',      hp: 12, atk: 4, speed: 1.15, points: 6 },
+  { name: 'Gigadramon',   stage: 'gigadramon',   hp: 16, atk: 5, speed: 1.4,  points: 8 },
+  { name: 'LadyDevimon',  stage: 'ladydevimon',  hp: 20, atk: 6, speed: 1.7,  points: 10 },
+  { name: 'Titamon',      stage: 'titamon',      hp: 26, atk: 7, speed: 2.0,  points: 12 },
 ];
 
 const PLAYER_MAX_HP = 12;
 const PLAYER_BASE_DMG = 4;
 const PERFECT = 0.92;
+const DEFEND_TIME = 3.0;   // seconds to react on defense
+const POPUP_MS = 1400;     // how long result popups stay before the next phase
+const CLEAR_BONUS = 10;    // 🎖️ for finishing the whole dungeon
 
-type Phase = 'intro' | 'attack' | 'defend' | 'enemy-down' | 'cleared' | 'lost';
+type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'cleared' | 'lost';
+interface Popup { icon: string; title: string; detail: string; color: string }
 
 // ── Timing bar ─────────────────────────────────────────────────────────────
 function TimingBar({ speed, color, label, onStop }: {
@@ -76,10 +85,8 @@ function TimingBar({ speed, color, label, onStop }: {
         onPointerDown={stop}
         style={{ position: 'relative', height: 34, borderRadius: 6, background: '#131a26', border: '1px solid #2c3a52', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
       >
-        {/* zones: outer (weak) / mid (good) / center (perfect) */}
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: '30%', background: 'rgba(250, 204, 21, 0.22)' }} />
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: '46%', width: '8%', background: 'rgba(74, 222, 128, 0.45)' }} />
-        {/* marker */}
         <div style={{ position: 'absolute', top: 2, bottom: 2, left: `calc(${pos * 100}% - 3px)`, width: 6, borderRadius: 2, background: color, boxShadow: `0 0 8px ${color}` }} />
       </div>
       <button
@@ -93,11 +100,13 @@ function TimingBar({ speed, color, label, onStop }: {
 }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
+export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, onExit }: {
   evolutionStage: string;
   language: Language;
   /** Called on each enemy defeated; returns the food emoji granted, or null if the daily cap was hit. */
   onReward: () => string | null;
+  /** Grants 🎖️ minigame points. */
+  onEarnPoints: (pts: number) => void;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -105,16 +114,17 @@ export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
   const [enemyHp, setEnemyHp] = useState(ENEMIES[0].hp);
   const [playerHp, setPlayerHp] = useState(PLAYER_MAX_HP);
   const [phase, setPhase] = useState<Phase>('intro');
-  const [message, setMessage] = useState('');
+  const [popup, setPopup] = useState<Popup | null>(null);
   const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
   const [rewardMsg, setRewardMsg] = useState('');
+  const [defendTimeLeft, setDefendTimeLeft] = useState(DEFEND_TIME);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const defendResolvedRef = useRef(false);
 
   const enemy = ENEMIES[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage);
   const mono = { fontFamily: 'monospace' as const };
 
-  // Single place to schedule delayed phase changes (cleared on unmount)
   const after = useCallback((ms: number, fn: () => void) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(fn, ms);
@@ -126,6 +136,20 @@ export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
     setTimeout(() => setHitFx(null), 450);
   };
 
+  // Enemy defeated: grant points + food, show the confirm screen.
+  const defeatEnemy = (finalMsg: Popup) => {
+    playTaskComplete();
+    onEarnPoints(enemy.points);
+    const emoji = onReward();
+    setRewardMsg(
+      `🎖️ +${enemy.points} ${isPt ? 'pontos' : 'points'}` +
+      (emoji ? ` · ${emoji} +1 ${isPt ? 'comida' : 'food'}` : ''),
+    );
+    setPopup(finalMsg);
+    setPhase('result');
+    after(POPUP_MS, () => { setPopup(null); setPhase('enemy-down'); });
+  };
+
   // Player attack: damage scales with accuracy² (edge hits still chip a little)
   const handleAttack = (acc: number) => {
     const crit = acc >= PERFECT;
@@ -134,70 +158,95 @@ export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
     setEnemyHp(newHp);
     flash('enemy');
     try { navigator.vibrate?.(crit ? 40 : 15); } catch { /* noop */ }
-    setMessage(crit
-      ? (isPt ? `PERFEITO! ${dmg} de dano!` : `PERFECT! ${dmg} damage!`)
-      : acc >= 0.6
-        ? (isPt ? `Bom golpe! ${dmg} de dano` : `Good hit! ${dmg} damage`)
-        : (isPt ? `Raspão... ${dmg} de dano` : `Graze... ${dmg} damage`));
-    if (newHp <= 0) {
-      playTaskComplete();
-      const emoji = onReward();
-      setRewardMsg(emoji
-        ? (isPt ? `Recompensa: ${emoji} +1 comida!` : `Reward: ${emoji} +1 food!`)
-        : (isPt ? 'Sem mais recompensas hoje.' : 'No more rewards today.'));
-      setPhase('enemy-down');
-      return;
-    }
-    after(1000, () => {
-      setMessage(isPt ? `${enemy.name} vai atacar — DESVIE!` : `${enemy.name} is attacking — DODGE!`);
+
+    const title = crit ? (isPt ? 'PERFEITO!' : 'PERFECT!')
+      : acc >= 0.6 ? (isPt ? 'Bom golpe!' : 'Good hit!')
+      : (isPt ? 'Raspão...' : 'Graze...');
+    const atkPopup: Popup = { icon: '⚔️', title, detail: isPt ? `${dmg} de dano no ${enemy.name}` : `${dmg} damage to ${enemy.name}`, color: '#4ade80' };
+
+    if (newHp <= 0) { defeatEnemy(atkPopup); return; }
+
+    setPopup(atkPopup);
+    setPhase('result');
+    after(POPUP_MS, () => {
+      setPopup(null);
+      defendResolvedRef.current = false;
+      setDefendTimeLeft(DEFEND_TIME);
       setPhase('defend');
     });
   };
 
-  // Defense: graded — closer to center avoids more; perfect = full dodge + counter
-  const handleDefend = (acc: number) => {
-    if (acc >= PERFECT) {
+  // Defense: graded — closer to center avoids more; perfect = dodge + counter.
+  // timedOut = the countdown expired before the player reacted → full hit.
+  const handleDefend = (acc: number, timedOut = false) => {
+    if (defendResolvedRef.current) return;
+    defendResolvedRef.current = true;
+
+    if (!timedOut && acc >= PERFECT) {
       const counter = 2;
       const newEnemyHp = Math.max(0, enemyHp - counter);
       setEnemyHp(newEnemyHp);
       flash('enemy');
       try { navigator.vibrate?.(40); } catch { /* noop */ }
-      setMessage(isPt ? `DESVIO PERFEITO! Contra-ataque: ${counter} de dano!` : `PERFECT DODGE! Counter: ${counter} damage!`);
-      if (newEnemyHp <= 0) {
-        playTaskComplete();
-        const emoji = onReward();
-        setRewardMsg(emoji
-          ? (isPt ? `Recompensa: ${emoji} +1 comida!` : `Reward: ${emoji} +1 food!`)
-          : (isPt ? 'Sem mais recompensas hoje.' : 'No more rewards today.'));
-        setPhase('enemy-down');
-        return;
-      }
-      after(1100, () => { setMessage(isPt ? 'Seu turno!' : 'Your turn!'); setPhase('attack'); });
+      const dodgePopup: Popup = {
+        icon: '🛡️', title: isPt ? 'DESVIO PERFEITO!' : 'PERFECT DODGE!',
+        detail: isPt ? `Contra-ataque: ${counter} de dano!` : `Counter-attack: ${counter} damage!`,
+        color: '#60a5fa',
+      };
+      if (newEnemyHp <= 0) { defeatEnemy(dodgePopup); return; }
+      setPopup(dodgePopup);
+      setPhase('result');
+      after(POPUP_MS, () => { setPopup(null); setPhase('attack'); });
       return;
     }
-    const taken = Math.max(1, Math.ceil(enemy.atk * (1 - acc)));
+
+    const effAcc = timedOut ? 0 : acc;
+    const taken = Math.max(1, Math.ceil(enemy.atk * (1 - effAcc)));
     const newHp = Math.max(0, playerHp - taken);
     setPlayerHp(newHp);
     flash('player');
     try { navigator.vibrate?.(30); } catch { /* noop */ }
-    setMessage(acc >= 0.6
-      ? (isPt ? `Desvio parcial! Sofreu ${taken}` : `Partial dodge! Took ${taken}`)
-      : (isPt ? `Ataque em cheio! Sofreu ${taken}` : `Direct hit! Took ${taken}`));
+
+    const title = timedOut ? (isPt ? 'Muito lento!' : 'Too slow!')
+      : effAcc >= 0.6 ? (isPt ? 'Desvio parcial!' : 'Partial dodge!')
+      : (isPt ? 'Ataque em cheio!' : 'Direct hit!');
+    setPopup({ icon: '💥', title, detail: isPt ? `Você sofreu ${taken} de dano` : `You took ${taken} damage`, color: '#f87171' });
+    setPhase('result');
+
     if (newHp <= 0) {
       playDegenerate();
-      setPhase('lost');
+      after(POPUP_MS, () => { setPopup(null); setPhase('lost'); });
       return;
     }
-    after(1100, () => { setMessage(isPt ? 'Seu turno!' : 'Your turn!'); setPhase('attack'); });
+    after(POPUP_MS, () => { setPopup(null); setPhase('attack'); });
   };
+  const handleDefendRef = useRef(handleDefend);
+  handleDefendRef.current = handleDefend;
+
+  // Defense countdown — shown to the player; expiring = full hit.
+  useEffect(() => {
+    if (phase !== 'defend') return;
+    const id = setInterval(() => {
+      setDefendTimeLeft(t => {
+        const nt = Math.max(0, +(t - 0.1).toFixed(1));
+        if (nt <= 0) handleDefendRef.current(0, true);
+        return nt;
+      });
+    }, 100);
+    return () => clearInterval(id);
+  }, [phase]);
 
   const nextEnemy = () => {
-    if (enemyIdx + 1 >= ENEMIES.length) { playFeed(); setPhase('cleared'); return; }
+    if (enemyIdx + 1 >= ENEMIES.length) {
+      playFeed();
+      onEarnPoints(CLEAR_BONUS);
+      setPhase('cleared');
+      return;
+    }
     const idx = enemyIdx + 1;
     setEnemyIdx(idx);
     setEnemyHp(ENEMIES[idx].hp);
     setRewardMsg('');
-    setMessage(isPt ? `${ENEMIES[idx].name} apareceu!` : `${ENEMIES[idx].name} appeared!`);
     setPhase('attack');
   };
 
@@ -206,7 +255,7 @@ export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
     setEnemyHp(ENEMIES[0].hp);
     setPlayerHp(PLAYER_MAX_HP);
     setRewardMsg('');
-    setMessage('');
+    setPopup(null);
     setPhase('intro');
   };
 
@@ -241,10 +290,10 @@ export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
           style={{
             position: 'absolute', top: '18%', right: '10%', width: 96, height: 96, objectFit: 'contain',
             imageRendering: 'pixelated',
-            ['--flip' as string]: '-1', // face the pet (animation reads this var)
+            ['--flip' as string]: '-1',
             filter: hitFx === 'enemy' ? 'brightness(3) drop-shadow(0 0 10px #f87171)' : 'drop-shadow(0 0 8px rgba(248,113,113,0.35))',
             transition: 'filter 0.15s',
-            animation: phase === 'lost' ? undefined : 'dungeon-idle 1.6s ease-in-out infinite',
+            animation: 'dungeon-idle 1.6s ease-in-out infinite',
           } as React.CSSProperties}
         />
         {/* Pet (bottom-left) */}
@@ -263,42 +312,64 @@ export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
             animation: 'dungeon-idle 1.3s ease-in-out infinite',
           }}
         />
-        {/* Message */}
-        <p style={{ ...mono, position: 'absolute', top: '48%', left: 0, right: 0, textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, textShadow: '0 2px 6px #000', padding: '0 12px' }}>
-          {message}
-        </p>
+
+        {/* Result popup — feedback beat between actions */}
+        {popup && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
+            <div style={{ ...mono, textAlign: 'center', background: '#0e1522', border: `2px solid ${popup.color}`, borderRadius: 12, padding: '16px 26px', boxShadow: `0 0 24px ${popup.color}55` }}>
+              <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{popup.icon}</div>
+              <p style={{ fontWeight: 800, fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
+              <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action area */}
-      <div style={{ padding: 16, minHeight: 140 }}>
+      <div style={{ padding: 16, minHeight: 150 }}>
         {phase === 'intro' && (
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...mono, fontSize: '0.8rem', color: '#9fb2d8', marginBottom: 10 }}>
               {isPt
-                ? 'Pare o marcador no CENTRO para causar mais dano. Na defesa, o centro desvia — perfeito contra-ataca!'
-                : 'Stop the marker at the CENTER for more damage. On defense, center dodges — perfect counters!'}
+                ? 'Pare o marcador no CENTRO para causar mais dano. Na defesa você tem 3s — o centro desvia, e perfeito contra-ataca!'
+                : 'Stop the marker at the CENTER for more damage. On defense you have 3s — center dodges, perfect counters!'}
             </p>
-            <button onClick={() => { setMessage(isPt ? `${enemy.name} apareceu!` : `${enemy.name} appeared!`); setPhase('attack'); }}
+            <button onClick={() => setPhase('attack')}
               style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>
               {isPt ? 'ENTRAR NA MASMORRA' : 'ENTER THE DUNGEON'}
             </button>
           </div>
         )}
         {phase === 'attack' && (
-          <TimingBar key={`atk-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'ATACAR!' : 'ATTACK!'} onStop={handleAttack} />
+          <div>
+            <p style={{ ...mono, textAlign: 'center', fontSize: '0.78rem', color: '#9fb2d8', marginBottom: 6 }}>
+              {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
+            </p>
+            <TimingBar key={`atk-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'ATACAR!' : 'ATTACK!'} onStop={handleAttack} />
+          </div>
         )}
         {phase === 'defend' && (
-          <TimingBar key={`def-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'DESVIAR!' : 'DODGE!'} onStop={handleDefend} />
+          <div>
+            <p style={{ ...mono, textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
+              {isPt ? `${enemy.name} atacando — DESVIE!` : `${enemy.name} attacking — DODGE!`} ⏱ {defendTimeLeft.toFixed(1)}s
+            </p>
+            <TimingBar key={`def-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'DESVIAR!' : 'DODGE!'} onStop={a => handleDefend(a)} />
+          </div>
+        )}
+        {phase === 'result' && (
+          <p style={{ ...mono, textAlign: 'center', fontSize: '0.8rem', color: '#5d729c', paddingTop: 24 }}>…</p>
         )}
         {phase === 'enemy-down' && (
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...mono, fontWeight: 800, marginBottom: 4 }}>
-              {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
+              ✅ {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
             </p>
-            <p style={{ ...mono, fontSize: '0.8rem', color: '#9fb2d8', marginBottom: 10 }}>{rewardMsg}</p>
+            <p style={{ ...mono, fontSize: '0.82rem', color: '#facc15', marginBottom: 10 }}>{rewardMsg}</p>
             <button onClick={nextEnemy}
               style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
-              {enemyIdx + 1 >= ENEMIES.length ? (isPt ? 'FINALIZAR' : 'FINISH') : (isPt ? 'PRÓXIMO INIMIGO →' : 'NEXT ENEMY →')}
+              {enemyIdx + 1 >= ENEMIES.length
+                ? (isPt ? `FINALIZAR (+${CLEAR_BONUS} 🎖️ bônus)` : `FINISH (+${CLEAR_BONUS} 🎖️ bonus)`)
+                : (isPt ? `DESAFIAR ${ENEMIES[enemyIdx + 1].name.toUpperCase()} →` : `CHALLENGE ${ENEMIES[enemyIdx + 1].name.toUpperCase()} →`)}
             </button>
           </div>
         )}
@@ -306,7 +377,7 @@ export function DungeonGame({ evolutionStage, language, onReward, onExit }: {
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 10 }}>
               {phase === 'cleared'
-                ? (isPt ? '🏆 Masmorra concluída!' : '🏆 Dungeon cleared!')
+                ? (isPt ? `🏆 Masmorra concluída! 🎖️ +${CLEAR_BONUS} bônus` : `🏆 Dungeon cleared! 🎖️ +${CLEAR_BONUS} bonus`)
                 : (isPt ? '💀 Você foi derrotado...' : '💀 You were defeated...')}
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
