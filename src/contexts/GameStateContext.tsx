@@ -105,6 +105,7 @@ export interface GameState {
     required: number;
     heartsLost: number;
     wasPerfect: boolean;
+    energyWasFull?: boolean;
     perfectDays: number;
     degenerated: boolean;
   };

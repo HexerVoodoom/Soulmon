@@ -19,6 +19,7 @@ interface ResetGameState {
   tasks: Task[];
   healthPoints: number;
   maxHealthPoints: number;
+  energyPoints: number;
   perfectDays: number;
   totalXP: number;
   virusPoints: number;
@@ -134,7 +135,10 @@ export function useDailyReset({
 
       dailyDone += prev.tasks.filter((t: Task) => t.completed).length;
 
-      const dayWasPerfect = dailyDone >= requiredToday;
+      // A perfect day (evolution point) requires BOTH the task requirement AND
+      // full energy at the end of the day — feeding is part of the care loop.
+      const energyWasFull = (prev.energyPoints ?? 0) >= prev.maxHealthPoints;
+      const dayWasPerfect = dailyDone >= requiredToday && energyWasFull;
 
       let newHP = prev.healthPoints;
       let newPerfectDays = prev.perfectDays;
@@ -272,6 +276,7 @@ export function useDailyReset({
           required: requiredToday,
           heartsLost,
           wasPerfect: dayWasPerfect,
+          energyWasFull,
           perfectDays: newPerfectDays,
           degenerated: wasDegeneratedByHP,
         },

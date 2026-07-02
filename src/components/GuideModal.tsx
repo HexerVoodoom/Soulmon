@@ -50,8 +50,9 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
             }`}>1. Evolution System</h3>
             <p className="mb-2">
-              Your Digimon evolves through <strong>perfect days</strong>. 
-              A day is considered perfect when you complete <strong>100% of the tasks</strong> scheduled for that day.
+              Your Digimon evolves through <strong>perfect days</strong>.
+              A day is perfect when you complete <strong>the day's task requirement</strong> AND
+              your Digimon's <strong>energy is full at the end of the day</strong> (feed it!).
             </p>
             <p>
               Each evolution form requires a fixed number of perfect days to evolve to the next one.
@@ -73,7 +74,8 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               </li>
               <li>
                 <strong>⚡ Energy</strong> — Fills only by <strong>feeding</strong> and resets
-                daily. It shows how well-fed your Digimon is today.
+                daily. It must be <strong>full at the end of the day</strong> for the day to
+                count as perfect (your evolution point).
               </li>
               <li>
                 <strong>🍎 Food (Feed)</strong> — Refills energy and grants attribute points

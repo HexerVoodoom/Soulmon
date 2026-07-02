@@ -1028,13 +1028,13 @@ export const CompanionHUD = memo(function CompanionHUD({
           }`}
           style={{ height: '185px', width: '26px', padding: '11.998px 0', cursor: 'pointer' }}
           title={language === 'pt-BR'
-            ? `Energia: ${energyPoints}/${maxHealthPoints} — sobe comendo, zera todo dia`
-            : `Energy: ${energyPoints}/${maxHealthPoints} — fills by eating, resets daily`}
+            ? `Energia: ${energyPoints}/${maxHealthPoints} — sobe comendo; cheia no fim do dia = ponto de evolução`
+            : `Energy: ${energyPoints}/${maxHealthPoints} — fills by eating; full at day's end = evolution point`}
           onClick={() => speak(
             language === 'pt-BR'
-              ? `Essa é minha energia: ${energyPoints}/${maxHealthPoints}! Ela enche quando eu como e zera todo dia.`
-              : `That's my energy: ${energyPoints}/${maxHealthPoints}! It fills when I eat and resets daily.`,
-            4500,
+              ? `Minha energia: ${energyPoints}/${maxHealthPoints}! Enche comendo — se estiver cheia no fim do dia, o dia conta pra evolução!`
+              : `My energy: ${energyPoints}/${maxHealthPoints}! Fills by eating — full at day's end makes the day count for evolution!`,
+            5000,
           )}
         >
           <EnergyBar totalSegments={maxHealthPoints} filledSegments={energyPoints} />

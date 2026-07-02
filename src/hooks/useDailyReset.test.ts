@@ -31,7 +31,9 @@ function simulateReset(prev: any): any {
 
   dailyDone += prev.tasks.filter((t: any) => t.completed).length;
 
-  const dayWasPerfect = dailyDone >= requiredToday;
+  // Perfect day requires the task requirement AND full energy at day's end
+  const energyWasFull = (prev.energyPoints ?? 0) >= prev.maxHealthPoints;
+  const dayWasPerfect = dailyDone >= requiredToday && energyWasFull;
 
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
@@ -134,6 +136,7 @@ const baseState = () => ({
   tasks: [],
   healthPoints: 3,
   maxHealthPoints: 3,
+  energyPoints: 3, // full by default so task-focused tests aren't affected
   perfectDays: 0,
   totalXP: 0,
   virusPoints: 0,
@@ -180,11 +183,19 @@ describe('performDailyReset — proportional HP loss', () => {
   });
 
   it('increments perfectDays and awards XP on a perfect day', () => {
-    // tapirmon requires 4; give 4 completed tasks
+    // tapirmon requires 4; give 4 completed tasks + full energy (baseState)
     const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
     const result = simulateReset({ ...baseState(), tasks });
     expect(result.lastDayWasPerfect).toBe(true);
     expect(result.perfectDays).toBeGreaterThanOrEqual(1);
+  });
+
+  it('tasks met but energy NOT full → day is not perfect', () => {
+    const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
+    const result = simulateReset({ ...baseState(), tasks, energyPoints: 1 });
+    expect(result.lastDayWasPerfect).toBe(false);
+    // No heart loss either — tasks were all done
+    expect(result.healthPoints).toBe(3);
   });
 
   it('resets activities and tasks to incomplete', () => {

@@ -74,6 +74,13 @@ export function DailyReportModal({ report, onClose, language, theme = 'default' 
               </span>
             </div>
           ))}
+          {report.done >= report.required && report.energyWasFull === false && (
+            <p className={`pt-1 ${isGlitch ? 'text-[#5fbcbc]' : 'text-gray-400'}`} style={{ ...mono, fontSize: '0.7rem' }}>
+              {isPt
+                ? 'Tarefas ok, mas a energia não estava cheia — alimente até encher antes do fim do dia para o dia perfeito!'
+                : 'Tasks done, but energy was not full — feed to full before the day ends for a perfect day!'}
+            </p>
+          )}
           {report.heartsLost > 0 && !report.degenerated && (
             <p className={`pt-1 ${isGlitch ? 'text-[#5fbcbc]' : 'text-gray-400'}`} style={{ ...mono, fontSize: '0.7rem' }}>
               {isPt
