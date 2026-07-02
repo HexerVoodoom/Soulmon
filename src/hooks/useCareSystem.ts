@@ -4,22 +4,14 @@ import { showNotification } from '../utils/notifications';
 import type { Language } from '../utils/i18n';
 import { getStageLevel } from '../types/progression';
 
-interface Activity {
-  steps: { completed: boolean }[];
-}
-
 interface CareGameState {
-  activities: Activity[];
   lastResetDate: string;
   poopEventsScheduled: number[];
   poopEventsCompleted: number[];
   poopEventsShown: number[];
-  foodEventsScheduled: number[];
-  foodEventsCompleted: number[];
   evolutionStage: string;
   maxHealthPoints: number;
   energyPoints: number;
-  careHPLostToday: number;
 }
 
 interface UseCareSystemProps {

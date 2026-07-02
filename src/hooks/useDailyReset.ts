@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getNextEvolution } from '../utils/dailyReset';
@@ -33,7 +33,6 @@ interface ResetGameState {
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
   poopEventsShown: number[];
   poopEventsCompleted: number[];
-  careHPLostToday: number;
 }
 
 type Attr = 'virus' | 'data' | 'vaccine';
@@ -107,8 +106,6 @@ export function useDailyReset({
   setShowRookieUnlockPopup,
   setHasShownRookiePopup,
 }: UseDailyResetProps) {
-  const [timeUntilReset, setTimeUntilReset] = useState('');
-
   const performDailyReset = useCallback(() => {
     setGameState(prev => {
       const yesterday = new Date();
@@ -255,9 +252,7 @@ export function useDailyReset({
         digivolutionSegments: 0,
         digivolutionSegmentsNeeded: 999,
         poopEventsScheduled: [],
-        foodEventsScheduled: [],
         poopEventsCompleted: [],
-        foodEventsCompleted: [],
         poopEventsShown: [],
         poopPenaltyClockAt: 0,
         currentBranch: newCurrentBranch,
@@ -266,36 +261,23 @@ export function useDailyReset({
         lastDayWasPerfect: dayWasPerfect,
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
-        careHPLostToday: 0,
         energyPoints: 0, // Energy resets daily; shower requires re-feeding each day
       };
     });
   }, [hasShownRookiePopup, setShowRookieUnlockPopup, setHasShownRookiePopup]);
 
+  // Day-rollover check. A 30s cadence is plenty (the reset just needs to land
+  // shortly after midnight) and avoids the old 1s ticker that re-rendered the
+  // whole app every second for a countdown string nothing displayed.
   useEffect(() => {
-    const updateTimer = () => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-
-      const diff = tomorrow.getTime() - now.getTime();
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setTimeUntilReset(
-        `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`,
-      );
-
-      if (now.toDateString() !== gameState.lastResetDate) {
+    const checkRollover = () => {
+      if (new Date().toDateString() !== gameState.lastResetDate) {
         performDailyReset();
       }
     };
 
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
+    checkRollover();
+    const interval = setInterval(checkRollover, 30000);
     return () => clearInterval(interval);
   }, [gameState.lastResetDate, performDailyReset]);
-
-  return { timeUntilReset };
 }

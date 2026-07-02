@@ -169,7 +169,7 @@ export default function App() {
     isSleeping,
   });
 
-  const { timeUntilReset } = useDailyReset({
+  useDailyReset({
     gameState,
     setGameState,
     hasShownRookiePopup,
@@ -630,6 +630,8 @@ export default function App() {
           return {
             ...prev,
             tasks: prev.tasks.filter(t => t.id !== taskId),
+            // Keep only the most recent 200 — the UI shows at most the last 50,
+            // and an unbounded list bloats every localStorage/cloud save.
             completedTasks: [
               ...prev.completedTasks,
               {
@@ -639,7 +641,7 @@ export default function App() {
                 emoji: task.emoji,
                 completedAt: new Date().toISOString(),
               },
-            ],
+            ].slice(-200),
             activityStats: {
               ...prev.activityStats,
               [activityKey]: { ...currentStats, completionCount: currentStats.completionCount + 1 },
@@ -716,23 +718,16 @@ export default function App() {
     if (!careEvent) return;
 
     setGameState(prev => {
-      if (careEvent.type === 'poop') {
-        const poopIndex = (prev.poopEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
-        // Guard against -1 (e.g. a daily reset cleared the schedule mid-event).
-        if (poopIndex < 0) return prev;
-        return {
-          ...prev,
-          poopEventsCompleted: [...(prev.poopEventsCompleted || []), poopIndex],
-          poopPenaltyClockAt: 0, // stop the 6h heart-drain clock
-        };
-      } else {
-        const eventIndex = (prev.foodEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
-        if (eventIndex < 0) return prev;
-        return {
-          ...prev,
-          foodEventsCompleted: [...(prev.foodEventsCompleted || []), eventIndex]
-        };
-      }
+      // Only poop care events exist now (scheduled food events were removed).
+      if (careEvent.type !== 'poop') return prev;
+      const poopIndex = (prev.poopEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
+      // Guard against -1 (e.g. a daily reset cleared the schedule mid-event).
+      if (poopIndex < 0) return prev;
+      return {
+        ...prev,
+        poopEventsCompleted: [...(prev.poopEventsCompleted || []), poopIndex],
+        poopPenaltyClockAt: 0, // stop the 6h heart-drain clock
+      };
     });
 
     if (careEvent.type === 'poop') playPoopClean();
@@ -744,6 +739,8 @@ export default function App() {
   // via "carinho"). Limited to 5 feedings per rolling hour; once full, the pet
   // just says it's full (no other feedback).
   const handleFeed = useCallback((foodEmoji: string) => {
+    // No food in stock → nothing happens (don't burn a feed slot or animate).
+    if ((gameState.foodInventory[foodEmoji] ?? 0) <= 0) return;
     const now = Date.now();
     const recent = feedTimesRef.current.filter(t => now - t < 3600000);
     if (recent.length >= 5) {
@@ -783,7 +780,7 @@ export default function App() {
       };
     });
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-  }, []);
+  }, [gameState.foodInventory]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -806,8 +803,12 @@ export default function App() {
           return clock === 0 ? prev : { ...prev, poopPenaltyClockAt: 0 };
         }
         const now = Date.now();
-        // Sleeping pauses the clock (advance it without penalizing).
-        if (isSleeping) return { ...prev, poopPenaltyClockAt: now };
+        // Sleeping pauses the clock. Only persist the bump every ≥5 min so we
+        // don't write state (and trigger a cloud save) every 60s all night.
+        if (isSleeping) {
+          if (clock !== 0 && now - clock < 5 * 60000) return prev;
+          return { ...prev, poopPenaltyClockAt: now };
+        }
         if (clock === 0) return { ...prev, poopPenaltyClockAt: now };
         const periods = Math.floor((now - clock) / SIX_HOURS);
         if (periods <= 0) return prev;
@@ -830,6 +831,12 @@ export default function App() {
       return next;
     });
     playSleep();
+  }, []);
+
+  // Stable identity so CompanionHUD's memo() isn't defeated by an inline lambda.
+  const handleOpenItems = useCallback(() => {
+    setShowItemsWindow(prev => !prev);
+    setNewItemsReady(false);
   }, []);
 
   // Carinho: the ONLY way to heal HP. Called by CompanionHUD after every ~2s of
@@ -1201,7 +1208,7 @@ export default function App() {
         </div>
 
         {/* HP risk banner — dismissible strip above companion */}
-        {gameState.healthPoints === 1 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
+        {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
           <div className={`flex-shrink-0 flex items-center gap-2 px-4 py-1.5 animate-pulse ${
             theme === 'win98'
               ? 'bg-[#800000] border-t border-[#ff0000] text-white'
@@ -1235,7 +1242,6 @@ export default function App() {
             evolutionStage={gameState.evolutionStage}
             healthPoints={gameState.healthPoints}
             maxHealthPoints={gameState.maxHealthPoints}
-            timeUntilReset={timeUntilReset}
             dominantBranch={getDominantBranch()}
             currentXP={gameState.totalXP}
             nextLevelXP={getNextLevelXP()}
@@ -1254,7 +1260,7 @@ export default function App() {
             onFeed={handleFeed}
             onShower={handleShower}
             hasNewItems={newItemsReady}
-            onOpenItems={() => { setShowItemsWindow(prev => !prev); setNewItemsReady(false); }}
+            onOpenItems={handleOpenItems}
             onSleep={handleSleep}
             isSleeping={isSleeping}
             onPet={handlePet}

@@ -105,6 +105,17 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'dist',
+    // Keep sprites as real files (never inlined base64): they stay out of the
+    // JS parse cost and the service worker can serve their WebP variants.
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Long-term-cacheable vendor chunk — app changes don't invalidate it.
+          vendor: ['react', 'react-dom'],
+        },
+      },
+    },
   },
   server: {
     port: 3000,

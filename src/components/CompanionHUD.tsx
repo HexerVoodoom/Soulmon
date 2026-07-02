@@ -58,7 +58,6 @@ interface CompanionHUDProps {
   evolutionStage: 'digiegg' | 'pichimon' | 'pukamon' | 'tapirmon' | 'tuskmon' | 'monochromon' | 'bakemon' | 'gigadramon' | 'triceramon' | 'digitamamon' | 'gaioumon' | 'ultimatebrachiomon' | 'titamon' | 'gaioumon-itto' | string;
   healthPoints: number;
   maxHealthPoints: number;
-  timeUntilReset: string;
   dominantBranch: 'virus' | 'data' | 'vaccine' | 'balanced';
   currentXP: number;
   nextLevelXP: number;
@@ -102,7 +101,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   evolutionStage, 
   healthPoints, 
   maxHealthPoints, 
-  timeUntilReset, 
   dominantBranch, 
   currentXP, 
   nextLevelXP,
@@ -294,6 +292,8 @@ export const CompanionHUD = memo(function CompanionHUD({
     };
 
     const interval = setInterval(() => {
+      // Hidden tab: nobody sees the phrase — skip (and skip the paid AI call).
+      if (document.hidden) return;
       const p = propsRef.current;
       if (p.isSleeping) return;
       speak(getIdlePhrase(), 5000);
@@ -529,12 +529,15 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Rub-to-heal ("carinho"): rub the pet (drag over it) to make little hearts
   // pop out; every ~2s of active rubbing restores half a heart (via onPet).
+  // The 100ms ticker only exists while the pointer is down (battery-friendly).
+  const rubIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startRub = (e: React.PointerEvent) => {
     rubPressedRef.current = true;
     rubMovedRef.current = false;
     rubLastMoveRef.current = Date.now();
     rubAccumRef.current = 0;
     try { (e.currentTarget as Element).setPointerCapture(e.pointerId); } catch { /* noop */ }
+    if (!rubIntervalRef.current) rubIntervalRef.current = setInterval(rubTick, 100);
   };
   const moveRub = () => {
     if (rubPressedRef.current) {
@@ -546,11 +549,19 @@ export const CompanionHUD = memo(function CompanionHUD({
     rubPressedRef.current = false;
     rubAccumRef.current = 0;
     setIsRubbing(false);
+    if (rubIntervalRef.current) {
+      clearInterval(rubIntervalRef.current);
+      rubIntervalRef.current = null;
+    }
   };
+  // Clear the ticker if the component unmounts mid-rub.
+  useEffect(() => () => {
+    if (rubIntervalRef.current) clearInterval(rubIntervalRef.current);
+  }, []);
 
-  useEffect(() => {
+  const rubTick = () => {
     const TICK = 100;
-    const id = setInterval(() => {
+    {
       const now = Date.now();
       const active = rubPressedRef.current && now - rubLastMoveRef.current < 180;
       setIsRubbing(active);
@@ -587,9 +598,8 @@ export const CompanionHUD = memo(function CompanionHUD({
       } else {
         rubAccumRef.current = 0;
       }
-    }, TICK);
-    return () => clearInterval(id);
-  }, []);
+    }
+  };
 
   const getCompanionFilter = () => {
     const auraColor = getBranchAuraColor();

@@ -1,6 +1,6 @@
 // DigiApp Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const STATIC_CACHE = `digiapp-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `digiapp-runtime-${CACHE_VERSION}`;
 
@@ -39,6 +39,10 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET and cross-origin requests
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  // Never cache API calls (e.g. /api/save) — a cached cloud save could be
+  // served stale offline and overwrite fresher local state.
+  if (url.pathname.startsWith('/api/')) return;
 
   // Navigation: network-first with offline fallback
   if (request.mode === 'navigate') {

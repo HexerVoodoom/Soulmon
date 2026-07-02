@@ -91,7 +91,7 @@ export function NotificationManager({
       if (lastEveningWarnDate.current === today) return;
 
       const halfRequired = Math.ceil(totalRequired / 2);
-      const atRisk = healthPoints === 1 && completedSteps < halfRequired;
+      const atRisk = healthPoints <= 1 && healthPoints > 0 && completedSteps < halfRequired;
 
       if (atRisk) {
         lastEveningWarnDate.current = today;

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -82,9 +82,7 @@ export interface GameState {
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventsScheduled: number[];
-  foodEventsScheduled: number[];
   poopEventsCompleted: number[];
-  foodEventsCompleted: number[];
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
   currentBranch: 'virus' | 'data' | 'vaccine';
@@ -93,14 +91,8 @@ export interface GameState {
   eggType?: 'tapirmon' | 'veemon' | 'salamon';
   /** Attribute points accumulated since the last evolution — drives branch selection */
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
-  /** HP lost to care events today — caps daily care damage */
-  careHPLostToday: number;
   /** Version B: food stockpile keyed by food emoji */
   foodInventory: Record<string, number>;
-  /** Hunger/satiety meter, 0..1 (separate from energy). Fills by feeding, decays over time while awake. */
-  satiety: number;
-  /** Epoch ms of the last satiety update — used to decay across app close/reopen. */
-  satietyUpdatedAt: number;
   /** Indices of scheduled poop events that actually appeared on screen (so sleep-skipped ones don't penalize). */
   poopEventsShown: number[];
   /** Epoch ms clock for the "uncleaned poop drains 1 heart / 6h" penalty (0 = inactive). */
@@ -120,9 +112,15 @@ const GameStateContext = createContext<GameStateContextType | null>(null);
 
 export function GameStateProvider({ children }: { children: ReactNode }) {
   const [gameState, setGameState] = useState<GameState>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
-    if (saved) {
-      const loadedState = JSON.parse(saved) as Partial<GameState>;
+    // A corrupted save must never white-screen the app — fall back to a fresh state.
+    let loadedState: Partial<GameState> | null = null;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
+      if (saved) loadedState = JSON.parse(saved) as Partial<GameState>;
+    } catch {
+      loadedState = null;
+    }
+    if (loadedState) {
       const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
       return {
         ...loadedState,
@@ -134,9 +132,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         perfectDays: loadedState.perfectDays ?? 0,
         lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
         poopEventsScheduled: loadedState.poopEventsScheduled ?? [],
-        foodEventsScheduled: loadedState.foodEventsScheduled ?? [],
         poopEventsCompleted: loadedState.poopEventsCompleted ?? [],
-        foodEventsCompleted: loadedState.foodEventsCompleted ?? [],
         unlockedEvolutions: loadedState.unlockedEvolutions ?? ['digiegg'],
         degeneratedByHP: loadedState.degeneratedByHP ?? false,
         currentBranch: loadedState.currentBranch ?? 'data',
@@ -149,10 +145,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
           : savedEggType
         ) ?? 'tapirmon',
         attributesSinceLastEvolution: loadedState.attributesSinceLastEvolution ?? { virus: 0, data: 0, vaccine: 0 },
-        careHPLostToday: loadedState.careHPLostToday ?? 0,
         foodInventory: loadedState.foodInventory ?? {},
-        satiety: loadedState.satiety ?? 1,
-        satietyUpdatedAt: loadedState.satietyUpdatedAt ?? Date.now(),
         poopEventsShown: loadedState.poopEventsShown ?? [],
         poopPenaltyClockAt: loadedState.poopPenaltyClockAt ?? 0,
       } as GameState;
@@ -176,9 +169,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       digivolutionSegments: 0,
       digivolutionSegmentsNeeded: 1,
       poopEventsScheduled: [],
-      foodEventsScheduled: [],
       poopEventsCompleted: [],
-      foodEventsCompleted: [],
       unlockedEvolutions: ['digiegg'],
       degeneratedByHP: false,
       currentBranch: 'data',
@@ -186,10 +177,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       maxActivityCap: 2,
       eggType: ((savedEggType as string) === 'agumon' ? 'tapirmon' : savedEggType) ?? 'tapirmon',
       attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
-      careHPLostToday: 0,
       foodInventory: {},
-      satiety: 1,
-      satietyUpdatedAt: Date.now(),
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
     };
@@ -217,8 +205,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [gameState]);
 
+  const value = useMemo(() => ({ gameState, setGameState }), [gameState]);
+
   return (
-    <GameStateContext.Provider value={{ gameState, setGameState }}>
+    <GameStateContext.Provider value={value}>
       {children}
     </GameStateContext.Provider>
   );
