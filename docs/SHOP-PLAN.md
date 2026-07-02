@@ -1,4 +1,4 @@
-# Loja de pontos 🎖️ — plano de design (NÃO implementado ainda)
+# Loja de pontos 🎖️ — v1 IMPLEMENTADA (chips, emblemas, cenários) — ideias futuras abaixo
 
 Os minijogos da página Atividades acumulam `gamePoints` (GameState, cloud-synced).
 Este documento guarda a direção combinada com o dono do projeto para a futura loja.

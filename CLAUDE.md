@@ -38,7 +38,8 @@ npm run build        # vite build + conversão PNG→WebP (dist/ é commitado!)
 | 🚿 Banho | Sempre disponível. Limpa o cocô (para o dreno). |
 | 💤 Dormir | Toggle manual (persistido) + sono automático opcional (janela nas Configurações; age só nas transições). Dormindo: sem cocô, dreno pausado. |
 | 📊 Relatório diário | Escrito no reset (`lastDayReport` no GameState), mostrado 1×/dia (`DAILY_REPORT_SHOWN`). |
-| 🎖️ Pontos de jogo | Minijogos (página Atividades): Masmorra 4–12/inimigo +10 clear · Dino floor(score/100) · PPT 5/vitória. Acumulam em `gamePoints` (só acumulam — loja futura: `docs/SHOP-PLAN.md`). Masmorra também dá comida (máx. 3/dia). |
+| 🎖️ Pontos de jogo | Minijogos (página Atividades): Masmorra 4–12/inimigo +10 clear · Dino floor(score/100) · PPT 5/vitória. Masmorra também dá comida (máx. 3/dia). Stats do jogador na Masmorra escalam com o estágio real (`PLAYER_STATS`). |
+| 🛒 Loja | Na página Atividades (`ShopModal`, estética 8-bit). Catálogo em `utils/shop.ts`: chips +3 atributo (40🎖️, consumível) · emblemas que forçam o galho da PRÓXIMA evolução (120🎖️, `forcedBranch`, consumido ao evoluir — vale no reset E no digivolve manual) · cenários CSS do box do pet (50🎖️, `ownedBackgrounds`/`equippedBackground`, mapa em `utils/backgrounds.ts`). Efeitos aplicados em `handleShopBuy` no App. |
 
 Estágios/HP máx: digiegg,baby-i=1 · baby-ii=2 · rookie/champion/ultimate=3 · mega=4 · ultra=5.
 

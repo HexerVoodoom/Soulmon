@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
+import { ShopModal } from './ShopModal';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -9,18 +10,24 @@ import type { Language } from '../utils/i18n';
  * All games award 🎖️ gamePoints (accumulate only, for now — see docs/SHOP-PLAN.md).
  * Balance: Dungeon 4-12/enemy +10 clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, onDungeonReward, onEarnPoints }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, forcedBranch, onDungeonReward, onEarnPoints, onShopBuy, onEquipBackground }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
   totalPoints: number;
+  ownedBackgrounds: string[];
+  equippedBackground: string | null;
+  forcedBranch: 'virus' | 'data' | 'vaccine' | null;
   onDungeonReward: () => string | null;
   onEarnPoints: (pts: number) => void;
+  onShopBuy: (itemId: string) => boolean;
+  onEquipBackground: (id: string | null) => void;
 }) {
   const isPt = language === 'pt-BR';
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
   const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
+  const [shopOpen, setShopOpen] = useState(false);
   const mono = { fontFamily: 'monospace' as const };
 
   const cards: { key: 'dungeon' | 'dino' | 'rps'; icon: string; title: string; desc: string; pts: string }[] = [
@@ -102,6 +109,48 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           </div>
         </button>
       ))}
+
+      {/* 🛒 Shop entry — deliberately 8-bit */}
+      <button
+        onClick={() => setShopOpen(true)}
+        className="w-full text-left cursor-pointer active:scale-[0.99] transition-all"
+        style={{
+          fontFamily: "'Courier New', monospace",
+          background: '#0d1420',
+          border: '3px solid #4ade80',
+          boxShadow: '4px 4px 0 #000',
+          padding: '14px 16px',
+          imageRendering: 'pixelated',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>🛒</span>
+          <div className="flex-1">
+            <span style={{ color: '#4ade80', fontWeight: 800, fontSize: '0.9rem', letterSpacing: 2, textShadow: '2px 2px 0 #000' }}>
+              {isPt ? 'LOJA' : 'SHOP'}
+            </span>
+            <p style={{ color: '#9fb2d8', fontSize: '0.7rem', marginTop: 2 }}>
+              {isPt ? 'Gaste seus 🎖️ em chips, emblemas e cenários!' : 'Spend your 🎖️ on chips, emblems and backdrops!'}
+            </p>
+          </div>
+          <span style={{ color: '#facc15', fontWeight: 800, fontSize: '0.85rem', textShadow: '2px 2px 0 #000' }}>
+            🎖️ {totalPoints}
+          </span>
+        </div>
+      </button>
+
+      {shopOpen && (
+        <ShopModal
+          language={language}
+          points={totalPoints}
+          ownedBackgrounds={ownedBackgrounds}
+          equippedBackground={equippedBackground}
+          forcedBranch={forcedBranch}
+          onBuy={onShopBuy}
+          onEquip={onEquipBackground}
+          onClose={() => setShopOpen(false)}
+        />
+      )}
 
       {openGame === 'dungeon' && (
         <DungeonGame

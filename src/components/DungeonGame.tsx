@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
+import { getStageLevel } from '../types/progression';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -36,8 +37,18 @@ const ENEMIES: Enemy[] = [
   { name: 'Titamon',      stage: 'titamon',      hp: 26, atk: 7, speed: 2.0,  points: 12 },
 ];
 
-const PLAYER_MAX_HP = 12;
-const PLAYER_BASE_DMG = 4;
+// Player battle stats scale with the pet's REAL evolution level: a stronger
+// pet hits harder and endures more (received damage shrinks relative to HP).
+const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
+  digiegg:  { hp: 10, dmg: 3 },
+  'baby-i': { hp: 10, dmg: 3 },
+  'baby-ii':{ hp: 11, dmg: 3 },
+  rookie:   { hp: 12, dmg: 4 },
+  champion: { hp: 14, dmg: 5 },
+  ultimate: { hp: 16, dmg: 6 },
+  mega:     { hp: 18, dmg: 7 },
+  ultra:    { hp: 20, dmg: 8 },
+};
 const PERFECT = 0.92;
 const DEFEND_TIME = 3.0;   // seconds to react on defense
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
@@ -110,9 +121,10 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const playerStats = PLAYER_STATS[getStageLevel(evolutionStage)] ?? PLAYER_STATS.rookie;
   const [enemyIdx, setEnemyIdx] = useState(0);
   const [enemyHp, setEnemyHp] = useState(ENEMIES[0].hp);
-  const [playerHp, setPlayerHp] = useState(PLAYER_MAX_HP);
+  const [playerHp, setPlayerHp] = useState(playerStats.hp);
   const [phase, setPhase] = useState<Phase>('intro');
   const [popup, setPopup] = useState<Popup | null>(null);
   const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
@@ -153,7 +165,7 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
   // Player attack: damage scales with accuracy² (edge hits still chip a little)
   const handleAttack = (acc: number) => {
     const crit = acc >= PERFECT;
-    const dmg = Math.max(1, Math.round(PLAYER_BASE_DMG * (0.25 + 0.75 * acc * acc) * (crit ? 1.5 : 1)));
+    const dmg = Math.max(1, Math.round(playerStats.dmg * (0.25 + 0.75 * acc * acc) * (crit ? 1.5 : 1)));
     const newHp = Math.max(0, enemyHp - dmg);
     setEnemyHp(newHp);
     flash('enemy');
@@ -253,7 +265,7 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
   const restart = () => {
     setEnemyIdx(0);
     setEnemyHp(ENEMIES[0].hp);
-    setPlayerHp(PLAYER_MAX_HP);
+    setPlayerHp(playerStats.hp);
     setRewardMsg('');
     setPopup(null);
     setPhase('intro');
@@ -299,7 +311,7 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
         {/* Pet (bottom-left) */}
         <div style={{ position: 'absolute', bottom: 'calc(6% + 96px)', left: 16 }}>
           <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
-          {hpBar(playerHp, PLAYER_MAX_HP, '#4ade80')}
+          {hpBar(playerHp, playerStats.hp, '#4ade80')}
         </div>
         <img
           src={petSprite}

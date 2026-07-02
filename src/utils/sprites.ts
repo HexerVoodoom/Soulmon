@@ -86,3 +86,6 @@ export const STAGE_SPRITES: Record<string, string> = {
 export function getSpriteForStage(stage: string): string {
   return STAGE_SPRITES[stage.toLowerCase()] ?? digiEggSprite;
 }
+
+/** Sprites drawn facing LEFT by default — flip them when they should face right. */
+export const LEFT_FACING_STAGES = ['pichimon', 'chicomon', 'yukimibotamon', 'pukamon', 'tapirmon'];

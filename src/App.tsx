@@ -27,6 +27,7 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
+import { SHOP_ITEMS, CHIP_BOOST } from './utils/shop';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -694,6 +695,8 @@ export default function App() {
       if (isVirus) newCurrentBranch = 'virus';
       else if (isVaccine) newCurrentBranch = 'vaccine';
       else if (isData) newCurrentBranch = 'data';
+      // Shop emblem overrides the attribute-based branch (consumed below)
+      if (prev.forcedBranch) newCurrentBranch = prev.forcedBranch;
 
       newEvolutionStage = getNextEvolution(
         prev.evolutionStage,
@@ -712,6 +715,7 @@ export default function App() {
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
         digivolutionSegments: 0,
         digivolutionSegmentsNeeded: newSegmentsNeeded,
+        forcedBranch: null, // emblem (if any) is consumed by this evolution
       };
     });
     playDigivolve();
@@ -885,10 +889,43 @@ export default function App() {
     return food.emoji;
   }, []);
 
-  // 🎖️ Minigame points — accumulate in GameState (cloud-synced). No spending yet.
+  // 🎖️ Minigame points — accumulate in GameState (cloud-synced), spent in the shop.
   const handleEarnGamePoints = useCallback((pts: number) => {
     if (pts <= 0) return;
     setGameState(prev => ({ ...prev, gamePoints: (prev.gamePoints ?? 0) + pts }));
+  }, []);
+
+  // 🛒 Shop purchase — charges points and applies the item's effect.
+  const handleShopBuy = useCallback((itemId: string): boolean => {
+    const item = SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return false;
+    if ((gameState.gamePoints ?? 0) < item.price) return false;
+    if (item.kind === 'bg' && (gameState.ownedBackgrounds ?? []).includes(item.id)) return false;
+    if (item.kind === 'emblem' && gameState.forcedBranch === item.attr) return false;
+
+    setGameState(prev => {
+      const next = { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
+      if (item.kind === 'chip' && item.attr) {
+        const key = `${item.attr}Points` as 'virusPoints' | 'dataPoints' | 'vaccinePoints';
+        next[key] = prev[key] + CHIP_BOOST;
+        next.attributesSinceLastEvolution = {
+          ...prev.attributesSinceLastEvolution,
+          [item.attr]: (prev.attributesSinceLastEvolution?.[item.attr] ?? 0) + CHIP_BOOST,
+        };
+      } else if (item.kind === 'emblem' && item.attr) {
+        next.forcedBranch = item.attr;
+      } else if (item.kind === 'bg') {
+        next.ownedBackgrounds = [...(prev.ownedBackgrounds ?? []), item.id];
+        next.equippedBackground = item.id; // equip right away
+      }
+      return next;
+    });
+    playFeed();
+    return true;
+  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.forcedBranch]);
+
+  const handleEquipBackground = useCallback((id: string | null) => {
+    setGameState(prev => ({ ...prev, equippedBackground: id }));
   }, []);
 
   // Stable identity so CompanionHUD's memo() isn't defeated by an inline lambda.
@@ -1346,8 +1383,13 @@ export default function App() {
                 language={language}
                 theme={theme}
                 totalPoints={gameState.gamePoints ?? 0}
+                ownedBackgrounds={gameState.ownedBackgrounds ?? []}
+                equippedBackground={gameState.equippedBackground ?? null}
+                forcedBranch={gameState.forcedBranch ?? null}
                 onDungeonReward={handleDungeonReward}
                 onEarnPoints={handleEarnGamePoints}
+                onShopBuy={handleShopBuy}
+                onEquipBackground={handleEquipBackground}
               />
             </Suspense>
           )}
@@ -1411,6 +1453,7 @@ export default function App() {
             isSleeping={isSleeping}
             onPet={handlePet}
             healCapSignal={healCapSignal}
+            equippedBackground={gameState.equippedBackground ?? null}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}

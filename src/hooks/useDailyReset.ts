@@ -145,6 +145,7 @@ export function useDailyReset({
       let newEvolutionStage = prev.evolutionStage;
       let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
       let wasDegeneratedByHP = false;
+      let usedForcedBranch = false;
       let newMaxActivityCap = prev.maxActivityCap;
       let newCurrentBranch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
       let newRecentAttrs = {
@@ -193,6 +194,11 @@ export function useDailyReset({
           if (recentV === dominantAttr) branch = 'virus';
           else if (recentD === dominantAttr) branch = 'data';
           else branch = 'vaccine';
+        }
+        // Shop emblem overrides the attribute-based branch (consumed on use)
+        if (prev.forcedBranch) {
+          branch = prev.forcedBranch;
+          usedForcedBranch = true;
         }
         newCurrentBranch = branch;
 
@@ -267,6 +273,7 @@ export function useDailyReset({
         lastDayWasPerfect: dayWasPerfect,
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
+        forcedBranch: usedForcedBranch ? null : (prev.forcedBranch ?? null),
         energyPoints: 0, // Energy resets daily (refills by feeding)
         // Summary of yesterday, shown once as a "daily report" on next open.
         lastDayReport: {

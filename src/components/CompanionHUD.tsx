@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import bgCyberpunk from "figma:asset/7342065b1193c2befe599eb2d86ef8641f1a596c.png";
-import { getSpriteForStage } from '../utils/sprites';
+import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
+import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
@@ -24,6 +25,7 @@ interface CompanionHUDProps {
   energyPoints?: number; // Version B: energy gauge, fills only via feeding
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
   healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
+  equippedBackground?: string | null; // shop backdrop id for the pet box
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
@@ -68,6 +70,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   energyPoints = 0,
   fullSignal = 0,
   healCapSignal = 0,
+  equippedBackground = null,
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   perfectDays = 0,
@@ -354,7 +357,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Check if sprite is flipped by default and needs correction
   const isFlippedByDefault = () => {
-    return ['pichimon', 'chicomon', 'yukimibotamon', 'pukamon', 'tapirmon'].includes(evolutionStage.toLowerCase());
+    return LEFT_FACING_STAGES.includes(evolutionStage.toLowerCase());
   };
 
   // Get the correct horizontal flip for the sprite
@@ -625,7 +628,9 @@ export const CompanionHUD = memo(function CompanionHUD({
           }`}
           style={{ 
             height: '185px',
-            backgroundImage: isWin98 ? 'none' : `url(${bgCyberpunk})`,
+            backgroundImage: isWin98
+              ? 'none'
+              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css) || `url(${bgCyberpunk})`,
             backgroundColor: isWin98 ? '#9cbd90' : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center',

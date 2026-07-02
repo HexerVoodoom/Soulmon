@@ -97,8 +97,14 @@ export interface GameState {
   poopEventsShown: number[];
   /** Epoch ms clock for the "uncleaned poop drains 1 heart / 6h" penalty (0 = inactive). */
   poopPenaltyClockAt: number;
-  /** Minigame score (🎖️): earned in the Activities games. Accumulates only, for now. */
+  /** Minigame score (🎖️): earned in the Activities games, spent in the shop. */
   gamePoints: number;
+  /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
+  ownedBackgrounds: string[];
+  /** Shop: equipped pet-box background id, or null for the default. */
+  equippedBackground: string | null;
+  /** Shop emblem: forces this branch on the NEXT digivolution (consumed on evolve). */
+  forcedBranch: 'virus' | 'data' | 'vaccine' | null;
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
   lastDayReport?: {
     date: string;
@@ -163,6 +169,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         poopEventsShown: loadedState.poopEventsShown ?? [],
         poopPenaltyClockAt: loadedState.poopPenaltyClockAt ?? 0,
         gamePoints: loadedState.gamePoints ?? 0,
+        ownedBackgrounds: loadedState.ownedBackgrounds ?? [],
+        equippedBackground: loadedState.equippedBackground ?? null,
+        forcedBranch: loadedState.forcedBranch ?? null,
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -196,6 +205,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
       gamePoints: 0,
+      ownedBackgrounds: [],
+      equippedBackground: null,
+      forcedBranch: null,
     };
   });
 
