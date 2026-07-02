@@ -43,6 +43,11 @@ export function SettingsPage({
   const [restoreInput, setRestoreInput] = useState('');
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
   const [emailInput, setEmailInput] = useState('');
+  // Auto-sleep schedule (self-contained: read/written straight to localStorage;
+  // the App-level effect picks changes up on its next minute tick)
+  const [autoSleepEnabled, setAutoSleepEnabled] = useState(() => localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED) === 'true');
+  const [autoSleepStart, setAutoSleepStart] = useState(() => localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00');
+  const [autoSleepEnd, setAutoSleepEnd] = useState(() => localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
   const [loginStatus, setLoginStatus] = useState<'idle' | 'loading' | 'loaded' | 'created' | 'err'>('idle');
   const savedEmail = localStorage.getItem(STORAGE_KEYS.USER_EMAIL) ?? null;
 
@@ -390,6 +395,86 @@ export function SettingsPage({
               />
             </div>
           </div>
+        </div>
+
+        {/* Auto-sleep schedule */}
+        <div
+          className={`p-6 rounded-2xl ${
+            isGlitch
+              ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
+              : isWin98
+              ? 'win98-button bg-white'
+              : 'bg-white shadow-sm ring-1 ring-gray-200/50'
+          }`}
+        >
+          <h3
+            className={`mb-3 ${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'}`}
+            style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}
+          >
+            💤 {language === 'pt-BR' ? 'Sono automático' : 'Auto sleep'}
+          </h3>
+          <p
+            className={`mb-5 text-xs ${isGlitch ? 'text-[#00ffff]/60' : isWin98 ? 'text-[#808080]' : 'text-gray-500'}`}
+            style={{ fontFamily: 'monospace' }}
+          >
+            {language === 'pt-BR'
+              ? 'O pet dorme e acorda sozinho nesse horário. Dormindo, ele não faz cocô.'
+              : 'The pet sleeps and wakes on this schedule. It never poops while asleep.'}
+          </p>
+          <div className="flex items-center justify-between mb-4">
+            <span className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-700'}
+                  style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+              {autoSleepEnabled
+                ? (language === 'pt-BR' ? 'Ativado' : 'Enabled')
+                : (language === 'pt-BR' ? 'Desativado' : 'Disabled')}
+            </span>
+            <div
+              className={`relative w-12 h-6 rounded-full transition-colors cursor-pointer ${
+                autoSleepEnabled
+                  ? isGlitch ? 'bg-[#00ffff]' : isWin98 ? 'bg-[#000080]' : 'bg-teal-500'
+                  : isGlitch ? 'bg-[#ff0066]/30' : isWin98 ? 'bg-[#808080]' : 'bg-gray-300'
+              }`}
+              onClick={() => {
+                setAutoSleepEnabled(prev => {
+                  const next = !prev;
+                  localStorage.setItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED, next ? 'true' : 'false');
+                  return next;
+                });
+              }}
+            >
+              <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                autoSleepEnabled ? 'translate-x-6' : 'translate-x-0'
+              }`} />
+            </div>
+          </div>
+          {autoSleepEnabled && (
+            <div className="flex items-center gap-3">
+              {([
+                { label: language === 'pt-BR' ? 'Dormir' : 'Sleep', value: autoSleepStart, set: setAutoSleepStart, key: STORAGE_KEYS.AUTO_SLEEP_START },
+                { label: language === 'pt-BR' ? 'Acordar' : 'Wake', value: autoSleepEnd, set: setAutoSleepEnd, key: STORAGE_KEYS.AUTO_SLEEP_END },
+              ] as const).map(f => (
+                <label key={f.label} className="flex items-center gap-2">
+                  <span className={`text-xs ${isGlitch ? 'text-[#00ffff]/70' : isWin98 ? 'text-black' : 'text-gray-500'}`}
+                        style={{ fontFamily: 'monospace' }}>
+                    {f.label}
+                  </span>
+                  <input
+                    type="time"
+                    value={f.value}
+                    onChange={e => { f.set(e.target.value); localStorage.setItem(f.key, e.target.value); }}
+                    className={`px-2 py-1 rounded-md border text-sm ${
+                      isGlitch
+                        ? 'bg-[#0f0f0f] border-[#1f3a3a] text-[#00ffff]'
+                        : isWin98
+                          ? 'bg-white border-gray-400 text-black'
+                          : 'bg-white border-gray-200 text-gray-700'
+                    }`}
+                    style={{ fontFamily: 'monospace' }}
+                  />
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Language */}

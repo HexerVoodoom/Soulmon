@@ -97,6 +97,17 @@ export interface GameState {
   poopEventsShown: number[];
   /** Epoch ms clock for the "uncleaned poop drains 1 heart / 6h" penalty (0 = inactive). */
   poopPenaltyClockAt: number;
+  /** Summary of the previous day, written at the daily reset and shown once as a report. */
+  lastDayReport?: {
+    date: string;
+    done: number;
+    total: number;
+    required: number;
+    heartsLost: number;
+    wasPerfect: boolean;
+    perfectDays: number;
+    degenerated: boolean;
+  };
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {

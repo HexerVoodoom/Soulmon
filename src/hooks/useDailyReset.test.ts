@@ -44,9 +44,11 @@ function simulateReset(prev: any): any {
   let wasDegeneratedByHP = false;
   let newMaxActivityCap = prev.maxActivityCap;
 
-  // Proportional HP loss: lose floor((1 - done/total) * maxHP) whole hearts.
+  // Proportional HP loss vs min(registered, requirement):
+  // lose floor((1 - done/goal) * maxHP) whole hearts.
   const totalTasks = availableActivities.length + prev.tasks.length;
-  const completionRatio = totalTasks > 0 ? dailyDone / totalTasks : 1;
+  const penaltyDenominator = Math.min(totalTasks, requiredToday);
+  const completionRatio = penaltyDenominator > 0 ? Math.min(1, dailyDone / penaltyDenominator) : 1;
   const heartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
   if (heartsLost > 0) {
     newHP = Math.max(0, prev.healthPoints - heartsLost);
@@ -157,8 +159,15 @@ describe('performDailyReset — proportional HP loss', () => {
     expect(result.healthPoints).toBe(3);
   });
 
-  it('30% done with 3 hearts loses 2 hearts (floor(0.7*3))', () => {
-    const tasks = Array.from({ length: 10 }, (_, i) => ({ id: `t${i}`, completed: i < 3 }));
+  it('meeting the stage requirement is safe even with many registered tasks', () => {
+    // tapirmon requires 4; 10 registered but 4 done → goal met → no loss
+    const tasks = Array.from({ length: 10 }, (_, i) => ({ id: `t${i}`, completed: i < 4 }));
+    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
+    expect(result.healthPoints).toBe(3);
+  });
+
+  it('doing 1 of the required 4 loses 2 hearts (floor(0.75*3))', () => {
+    const tasks = Array.from({ length: 10 }, (_, i) => ({ id: `t${i}`, completed: i < 1 }));
     const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
     expect(result.healthPoints).toBe(1);
     expect(result.lastDayWasPerfect).toBe(false);

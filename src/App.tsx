@@ -13,6 +13,7 @@ import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
+import { DailyReportModal } from './components/DailyReportModal';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { Plus, Edit2 } from 'lucide-react';
@@ -25,7 +26,7 @@ import { useGameState, getMaxHPForStage, type GameState, type Activity, type Tas
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
-import { requestNotificationPermission } from './utils/notifications';
+import { requestNotificationPermission, showNotification } from './utils/notifications';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -75,6 +76,8 @@ export default function App() {
   );
   // Bumped when a feed is refused for being full → pet says it's full.
   const [fullSignal, setFullSignal] = useState(0);
+  // Daily report: shown once per day, on the first open after the reset ran.
+  const [showDailyReport, setShowDailyReport] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
     return saved ? JSON.parse(saved) : {
@@ -195,9 +198,11 @@ export default function App() {
       healthPoints: Math.floor(gameState.healthPoints),
       maxHealthPoints: gameState.maxHealthPoints,
       energyPoints: gameState.energyPoints ?? 0,
+      hasPoop: (gameState.poopEventsShown || []).some(i => !(gameState.poopEventsCompleted || []).includes(i)),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
-      gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints, dailyDone, dailyTotal]);
+      gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
+      gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal]);
 
   // Determine companion mood based on progress
   const getCompanionMood = (): 'idle' | 'happy' | 'tired' => {
@@ -791,9 +796,34 @@ export default function App() {
 
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
   // clock starts when a poop is on screen and stops the moment it's cleaned.
+  const poopDrainWarnedAtRef = useRef(0);
   useEffect(() => {
     const SIX_HOURS = 6 * 3600000;
     const drain = () => {
+      // Warn ~30min before a drain tick so the user can react (bath) in time.
+      {
+        const shown = gameState.poopEventsShown || [];
+        const cleaned = gameState.poopEventsCompleted || [];
+        const clock = gameState.poopPenaltyClockAt ?? 0;
+        if (!isSleeping && clock !== 0 && shown.some(i => !cleaned.includes(i))) {
+          const now = Date.now();
+          const periodStart = clock + Math.floor((now - clock) / SIX_HOURS) * SIX_HOURS;
+          const msToNextTick = periodStart + SIX_HOURS - now;
+          if (msToNextTick <= 30 * 60000 && poopDrainWarnedAtRef.current !== periodStart) {
+            poopDrainWarnedAtRef.current = periodStart;
+            const ispt = language === 'pt-BR';
+            showNotification(
+              ispt ? '🚽 Seu Digimon está na sujeira!' : '🚽 Your Digimon is in a mess!',
+              {
+                body: ispt
+                  ? 'Cocô não limpo tira 1 coração em breve. Dê um banho!'
+                  : 'Uncleaned poop will drain 1 heart soon. Give it a bath!',
+                tag: 'poop-drain-warning',
+              },
+            );
+          }
+        }
+      }
       setGameState(prev => {
         const shown = prev.poopEventsShown || [];
         const cleaned = prev.poopEventsCompleted || [];
@@ -822,7 +852,7 @@ export default function App() {
     drain();
     const id = setInterval(drain, 60000);
     return () => clearInterval(id);
-  }, [isSleeping, setGameState]);
+  }, [isSleeping, setGameState, gameState.poopEventsShown, gameState.poopEventsCompleted, gameState.poopPenaltyClockAt, language]);
 
   const handleSleep = useCallback(() => {
     setIsSleeping(prev => {
@@ -839,15 +869,90 @@ export default function App() {
     setNewItemsReady(false);
   }, []);
 
-  // Carinho: the ONLY way to heal HP. Called by CompanionHUD after every ~2s of
-  // rubbing the pet — each grant restores half a heart (capped at max HP).
-  const handlePet = useCallback(() => {
-    setGameState(prev => {
-      if (prev.healthPoints >= prev.maxHealthPoints) return prev;
-      playFeed();
-      return { ...prev, healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5) };
-    });
+  // Show the daily report once when a fresh reset summary exists.
+  useEffect(() => {
+    const report = gameState.lastDayReport;
+    if (!report) return;
+    if (localStorage.getItem(STORAGE_KEYS.DAILY_REPORT_SHOWN) === report.date) return;
+    setShowDailyReport(true);
+  }, [gameState.lastDayReport]);
+
+  const handleCloseDailyReport = useCallback(() => {
+    if (gameState.lastDayReport) {
+      localStorage.setItem(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date);
+    }
+    setShowDailyReport(false);
+  }, [gameState.lastDayReport]);
+
+  // Optional auto-sleep schedule: puts the pet to sleep when entering the
+  // configured window and wakes it when leaving. Only acts on window EDGES, so
+  // a manual wake/sleep inside the window isn't fought by the automation.
+  const autoSleepPrevInWindowRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    const parseHM = (s: string | null, fallback: string) => {
+      const m = /^(\d{1,2}):(\d{2})$/.exec(s || fallback);
+      return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+    };
+    const check = () => {
+      if (localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED) !== 'true') {
+        autoSleepPrevInWindowRef.current = null;
+        return;
+      }
+      const start = parseHM(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_START), '23:00');
+      const end = parseHM(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_END), '07:00');
+      const nowD = new Date();
+      const cur = nowD.getHours() * 60 + nowD.getMinutes();
+      // Window may cross midnight (e.g. 23:00–07:00)
+      const inWindow = start <= end ? cur >= start && cur < end : cur >= start || cur < end;
+      const prev = autoSleepPrevInWindowRef.current;
+      autoSleepPrevInWindowRef.current = inWindow;
+      // Act on window transitions, plus on the very first check when already
+      // inside the window (app opened after bedtime → pet goes to sleep).
+      const shouldAct = prev === null ? inWindow : prev !== inWindow;
+      if (!shouldAct) return;
+      setIsSleeping(sleeping => {
+        if (inWindow === sleeping) return sleeping;
+        localStorage.setItem(STORAGE_KEYS.IS_SLEEPING, inWindow ? 'true' : 'false');
+        return inWindow;
+      });
+    };
+    check();
+    const id = setInterval(check, 60000);
+    return () => clearInterval(id);
   }, []);
+
+  // Carinho: the ONLY way to heal HP. Called by CompanionHUD after every ~2s of
+  // rubbing — each grant restores half a heart, capped at 1 full heart PER DAY
+  // (so rubbing can't trivialize the daily heart loss). Animation always plays.
+  const RUB_HEAL_CAP = 1; // hearts per day
+  const rubHealRef = useRef<{ date: string; healed: number }>(
+    (() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.RUB_HEAL_DAY) || 'null');
+        if (saved && saved.date === new Date().toDateString()) return saved;
+      } catch { /* fall through */ }
+      return { date: new Date().toDateString(), healed: 0 };
+    })()
+  );
+  // Bumped when rubbing can't heal because today's cap was reached → pet comments.
+  const [healCapSignal, setHealCapSignal] = useState(0);
+
+  const handlePet = useCallback(() => {
+    if (gameState.healthPoints >= gameState.maxHealthPoints) return;
+    const today = new Date().toDateString();
+    if (rubHealRef.current.date !== today) rubHealRef.current = { date: today, healed: 0 };
+    if (rubHealRef.current.healed >= RUB_HEAL_CAP) {
+      setHealCapSignal(n => n + 1);
+      return;
+    }
+    rubHealRef.current = { date: today, healed: rubHealRef.current.healed + 0.5 };
+    localStorage.setItem(STORAGE_KEYS.RUB_HEAL_DAY, JSON.stringify(rubHealRef.current));
+    playFeed();
+    setGameState(prev => ({
+      ...prev,
+      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5),
+    }));
+  }, [gameState.healthPoints, gameState.maxHealthPoints]);
 
   const handleDegenerate = useCallback((targetStage: string) => {
     setGameState(prev => {
@@ -1264,6 +1369,7 @@ export default function App() {
             onSleep={handleSleep}
             isSleeping={isSleeping}
             onPet={handlePet}
+            healCapSignal={healCapSignal}
             useAI={useAI}
             aiSettings={aiSettings}
             onOpenAISettings={handleOpenAISettings}
@@ -1421,6 +1527,14 @@ export default function App() {
         completedSteps={dailyDone}
         totalRequired={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
       />
+      {showDailyReport && gameState.lastDayReport && (
+        <DailyReportModal
+          report={gameState.lastDayReport}
+          onClose={handleCloseDailyReport}
+          language={language}
+          theme={theme}
+        />
+      )}
       <Toaster richColors position="top-right" />
     </div>
   );

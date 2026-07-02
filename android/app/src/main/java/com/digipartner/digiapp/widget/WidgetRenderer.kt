@@ -34,15 +34,17 @@ object WidgetRenderer {
         mgr.updateAppWidget(appWidgetId, views)
     }
 
-    // Pet-only widget: just the sprite.
+    // Pet-only widget: just the sprite (+ needs-cleaning indicator).
     fun renderPet(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
         val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
         val branchType = prefs.getString("branch_type", "data") ?: "data"
+        val hasPoop = prefs.getBoolean("has_poop", false)
 
         val views = RemoteViews(context.packageName, layoutId)
         setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
+        views.setViewVisibility(R.id.widget_poop, if (hasPoop) View.VISIBLE else View.GONE)
         attachClick(context, views)
         mgr.updateAppWidget(appWidgetId, views)
     }

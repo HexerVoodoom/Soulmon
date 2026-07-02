@@ -34,6 +34,7 @@ class DigiWidgetPlugin : Plugin() {
         if (healthPoints >= 0) editor.putInt("health_points", healthPoints)
         if (maxHealthPoints >= 0) editor.putInt("max_health_points", maxHealthPoints)
         if (energyPoints >= 0) editor.putInt("energy_points", energyPoints)
+        editor.putBoolean("has_poop", call.data.optBoolean("hasPoop", false))
 
         editor.apply()
 

@@ -64,15 +64,16 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             }`}>2. What Each Action Does</h3>
             <ul className="space-y-2 ml-4 list-disc">
               <li>
-                <strong>❤️ Hearts (HP)</strong> — Lost in proportion to the tasks you
-                <em> don't</em> finish: do 30% of the day's tasks and you neglect 70%,
-                so you lose ~70% of your hearts (always rounded down, whole hearts).
-                Uncleaned <strong>poop</strong> also drains <strong>1 heart every 6 hours</strong>.
-                Hearts are healed <strong>only by rubbing your Digimon</strong>. If HP hits 0, your Digimon degenerates.
+                <strong>❤️ Hearts (HP)</strong> — Lost in proportion to what you leave undone,
+                measured against your stage's <strong>daily requirement</strong>: meet the
+                requirement (or finish everything you registered) and you're safe. Uncleaned
+                <strong> poop</strong> also drains <strong>1 heart every 6 hours</strong>.
+                Hearts are healed <strong>only by rubbing your Digimon</strong> (up to
+                <strong> 1 heart per day</strong>). If HP hits 0, your Digimon degenerates.
               </li>
               <li>
-                <strong>⚡ Energy</strong> — Fills only by <strong>feeding</strong>. You need
-                <strong> full energy</strong> to give your Digimon a bath.
+                <strong>⚡ Energy</strong> — Fills only by <strong>feeding</strong> and resets
+                daily. It shows how well-fed your Digimon is today.
               </li>
               <li>
                 <strong>🍎 Food (Feed)</strong> — Refills energy and grants attribute points
@@ -82,12 +83,13 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               </li>
               <li>
                 <strong>🚿 Bath</strong> — Cleans up <strong>poop</strong> and washes your
-                Digimon. Requires full energy.
+                Digimon. Always available.
               </li>
               <li>
                 <strong>🫶 Affection (Rub)</strong> — <strong>Rub your Digimon</strong> (press and
                 drag over it) to make little hearts pop out. This is the <strong>only way to
-                heal HP</strong>: every <strong>~2 seconds of rubbing restores half a heart</strong>.
+                heal HP</strong>: every ~2 seconds of rubbing restores half a heart, up to
+                <strong> 1 full heart per day</strong>.
               </li>
               <li>
                 <strong>💤 Sleep</strong> — Your Digimon rests. It won't poop while asleep,
@@ -144,13 +146,16 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
             }`}>6. HP System (Hearts)</h3>
             <p className="mb-2">
-              At the end of each day you lose hearts <strong>in proportion to the tasks you didn't finish</strong>:
-              lost hearts = ⌊(1 − done/total) × maxHearts⌋. Example: finish 30% of the day's tasks and you
-              lose ⌊70% of your hearts⌋. Complete 100% (or have no tasks) and you lose nothing.
+              At the end of each day you lose hearts <strong>in proportion to what you left undone</strong>,
+              measured against min(registered, stage requirement):
+              lost hearts = ⌊(1 − done/goal) × maxHearts⌋. Meeting the stage requirement — or finishing
+              everything you registered — means <strong>no loss</strong>, and registering extra activities
+              never adds risk.
             </p>
             <p className="mb-2">
               Uncleaned <strong>poop</strong> drains an extra <strong>1 heart every 6 hours</strong> until you
-              give a bath. Hearts are healed <strong>only by rubbing your Digimon</strong> — every ~2 seconds of rubbing restores half a heart.
+              give a bath. Hearts are healed <strong>only by rubbing your Digimon</strong> — every ~2 seconds
+              of rubbing restores half a heart, up to <strong>1 heart per day</strong>.
             </p>
             <p>
               Maximum HP per form:

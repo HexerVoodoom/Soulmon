@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="6dp"
-    android:background="@drawable/partner_area"
-    android:gravity="center">
+    android:background="@drawable/partner_area">
 
     <!-- Sprite only — 2-frame bounce via ViewFlipper -->
     <ViewFlipper
@@ -29,4 +27,14 @@
             android:src="@drawable/triceramon_dot" />
     </ViewFlipper>
 
-</LinearLayout>
+    <!-- Needs-cleaning indicator (shown while there's uncleaned poop) -->
+    <TextView
+        android:id="@+id/widget_poop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:text="💩"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+</FrameLayout>

@@ -16,6 +16,12 @@ export const STORAGE_KEYS = {
   USER_EMAIL: 'digiapp-user-email',
   IS_SLEEPING: 'digiapp-is-sleeping',
   FOOD_FEED_TIMES: 'digiapp-food-feed-times',
+  RUB_HEAL_DAY: 'digiapp-rub-heal-day',
+  DAILY_REPORT_SHOWN: 'digiapp-daily-report-shown',
+  RUB_HINT_SHOWN: 'digiapp-rub-hint-shown',
+  AUTO_SLEEP_ENABLED: 'digiapp-auto-sleep-enabled',
+  AUTO_SLEEP_START: 'digiapp-auto-sleep-start',
+  AUTO_SLEEP_END: 'digiapp-auto-sleep-end',
   SOUND_MUTED: 'digiapp-sound-muted',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
 } as const;

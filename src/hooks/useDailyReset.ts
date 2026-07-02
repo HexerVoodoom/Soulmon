@@ -149,12 +149,14 @@ export function useDailyReset({
         vaccine: prev.attributesSinceLastEvolution?.vaccine ?? 0,
       };
 
-      // HP penalty: proportional to the tasks NOT done. If the pet completed
-      // 30% of the tasks it had, it neglected 70% → loses floor(70% of hearts).
-      // Hearts are always lost in whole units (floor); only "carinho" restores
-      // half a heart at a time. No tasks available → nothing to fail → no loss.
+      // HP penalty: proportional to the tasks NOT done, measured against
+      // min(registered, stage requirement). Meeting the stage requirement is
+      // always safe, and registering MORE activities than required never adds
+      // risk (no perverse incentive to register fewer). Doing everything you
+      // registered is also safe. No tasks registered → nothing to fail.
       const totalTasks = availableActivities.length + prev.tasks.length;
-      const completionRatio = totalTasks > 0 ? dailyDone / totalTasks : 1;
+      const penaltyDenominator = Math.min(totalTasks, requiredToday);
+      const completionRatio = penaltyDenominator > 0 ? Math.min(1, dailyDone / penaltyDenominator) : 1;
       const heartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
       if (heartsLost > 0) {
         newHP = Math.max(0, prev.healthPoints - heartsLost);
@@ -261,7 +263,18 @@ export function useDailyReset({
         lastDayWasPerfect: dayWasPerfect,
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
-        energyPoints: 0, // Energy resets daily; shower requires re-feeding each day
+        energyPoints: 0, // Energy resets daily (refills by feeding)
+        // Summary of yesterday, shown once as a "daily report" on next open.
+        lastDayReport: {
+          date: yesterdayString,
+          done: dailyDone,
+          total: totalTasks,
+          required: requiredToday,
+          heartsLost,
+          wasPerfect: dayWasPerfect,
+          perfectDays: newPerfectDays,
+          degenerated: wasDegeneratedByHP,
+        },
       };
     });
   }, [hasShownRookiePopup, setShowRookieUnlockPopup, setHasShownRookiePopup]);

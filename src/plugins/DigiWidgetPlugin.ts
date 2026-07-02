@@ -11,6 +11,8 @@ export interface DigiWidgetData {
   healthPoints: number;
   maxHealthPoints: number;
   energyPoints: number;
+  /** True while there's poop on screen that hasn't been cleaned. */
+  hasPoop: boolean;
 }
 
 export interface DigiWidgetPlugin {

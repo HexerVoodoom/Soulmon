@@ -64,6 +64,7 @@ interface CompanionHUDProps {
   triggerMessage?: number; // Prop to trigger message from outside
   energyPoints?: number; // Version B: energy gauge, fills only via feeding
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
+  healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
@@ -107,6 +108,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   triggerMessage = 0,
   energyPoints = 0,
   fullSignal = 0,
+  healCapSignal = 0,
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   perfectDays = 0,
@@ -209,18 +211,45 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setIsMunching(false), 600);
   }, [feedAnim?.n, speakRaw]);
 
-  // When a feed is refused (5/hour limit reached), the pet just says it's full.
+  // When a feed is refused (5/hour limit reached), the pet just says it's full
+  // — with a hint that it can eat again in a little while.
   useEffect(() => {
     if (!fullSignal) return;
     const isPt = language === 'pt-BR';
     const lines = isPt
-      ? ['Estou cheio!', 'Não aguento mais!', 'Chega, obrigado!']
-      : ["I'm full!", "I can't eat more!", 'Enough, thanks!'];
-    speak(lines[Math.floor(Math.random() * lines.length)], 3000);
+      ? ['Estou cheio! Me dá uma horinha...', 'Não aguento mais! Volta mais tarde.', 'Chega, obrigado! Daqui a pouco eu como de novo.']
+      : ["I'm full! Give me an hour...", "I can't eat more! Come back later.", 'Enough, thanks! I can eat again in a bit.'];
+    speak(lines[Math.floor(Math.random() * lines.length)], 3500);
   }, [fullSignal]);
 
-  // Energy is full when the gauge reaches the stage's max HP (its capacity)
-  const energyFull = energyPoints >= maxHealthPoints && maxHealthPoints > 0;
+  // When rubbing can't heal anymore today (daily cap), the pet says so.
+  useEffect(() => {
+    if (!healCapSignal) return;
+    const isPt = language === 'pt-BR';
+    const lines = isPt
+      ? ['Já recebi muito carinho hoje! Hehe', 'Adoro carinho... mas já sarei o que dava por hoje!', 'Carinho é bom! Amanhã ele cura de novo.']
+      : ['So much affection today! Hehe', 'I love it... but no more healing today!', 'Petting feels great! It heals again tomorrow.'];
+    speak(lines[Math.floor(Math.random() * lines.length)], 3500);
+  }, [healCapSignal]);
+
+  // One-time coach mark: teach the rub-to-heal gesture the first time the pet
+  // is hurt (it's the only way to heal, and gestures aren't discoverable).
+  useEffect(() => {
+    if (healthPoints >= maxHealthPoints) return;
+    if (localStorage.getItem('digiapp-rub-hint-shown') === 'true') return;
+    localStorage.setItem('digiapp-rub-hint-shown', 'true');
+    const isPt = language === 'pt-BR';
+    const t = setTimeout(() => {
+      speak(
+        isPt
+          ? 'Estou machucado... faz carinho em mim! Segura e esfrega aqui que eu saro!'
+          : "I'm hurt... pet me! Press and rub on me to heal me!",
+        8000,
+      );
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [healthPoints, maxHealthPoints]);
+
 
   const isEarlyStage = ['digiegg', 'baby-i'].includes(getStageLevel(evolutionStage));
 
@@ -506,18 +535,9 @@ export const CompanionHUD = memo(function CompanionHUD({
     setTimeout(() => setIsMunching(false), 600);
   };
 
-  // Shower: only while energy is full, free (no energy cost), 5s cooldown
+  // Shower: always available (cleans poop anytime), 5s cooldown
   const handleShowerClick = () => {
     if (isShowering || showerCooldown) return;
-    if (!energyFull) {
-      speak(
-        language === 'pt-BR'
-          ? 'Preciso de energia cheia para o banho! Come mais primeiro.'
-          : 'Need full energy for a shower! Eat something first.',
-        4000
-      );
-      return;
-    }
     setIsShowering(true);
     setShowerCooldown(true);
     onShower?.();
@@ -569,6 +589,8 @@ export const CompanionHUD = memo(function CompanionHUD({
       // Every ~500ms emit a small BURST of hearts drifting out from the center.
       rubHeartTickRef.current += 1;
       if (rubHeartTickRef.current % 5 === 0) {
+        // Tactile feedback on devices that support it (Android)
+        try { navigator.vibrate?.(20); } catch { /* noop */ }
         const EMOJIS = ['❤️', '💕', '💖', '💗'];
         const burst = 2 + Math.floor(Math.random() * 2); // 2–3 hearts at once
         const spawned: { id: number; dx: number; dy: number; size: number; emoji: string }[] = [];
@@ -948,7 +970,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
             {([
               !isEarlyStage && { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-              !isEarlyStage && { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: !energyFull || showerCooldown, badge: false },
+              !isEarlyStage && { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
               { key: 'sleep', icon: isSleeping ? '☀️' : '💤', en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
             ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined; sub?: string }[]).map(a => (
               <button
@@ -962,7 +984,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '2px',
-                  padding: '2px 6px 3px',
+                  padding: '4px 8px 5px',
                   cursor: a.disabled ? 'default' : 'pointer',
                   opacity: a.disabled ? 0.4 : 1,
                   background: 'transparent',
@@ -981,12 +1003,12 @@ export const CompanionHUD = memo(function CompanionHUD({
                     zIndex: 10,
                   }} />
                 )}
-                <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{a.icon}</span>
-                <span style={{ fontFamily: 'monospace', fontSize: '0.5rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '1.35rem', lineHeight: 1 }}>{a.icon}</span>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.62rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
                   {language === 'pt-BR' ? a.pt : a.en}
                 </span>
                 {a.sub && (
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.5rem', color: '#ffd27f', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', lineHeight: 1 }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.62rem', color: '#ffd27f', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', lineHeight: 1 }}>
                     {a.sub}
                   </span>
                 )}
@@ -1004,10 +1026,16 @@ export const CompanionHUD = memo(function CompanionHUD({
                 ? 'win98-lcd-screen'
                 : 'bg-[#1F2A39]'
           }`}
-          style={{ height: '185px', width: '26px', padding: '11.998px 0' }}
+          style={{ height: '185px', width: '26px', padding: '11.998px 0', cursor: 'pointer' }}
           title={language === 'pt-BR'
-            ? `Energia: ${energyPoints}/${maxHealthPoints} — sobe comendo, necessária para o banho`
-            : `Energy: ${energyPoints}/${maxHealthPoints} — fills by eating, needed for shower`}
+            ? `Energia: ${energyPoints}/${maxHealthPoints} — sobe comendo, zera todo dia`
+            : `Energy: ${energyPoints}/${maxHealthPoints} — fills by eating, resets daily`}
+          onClick={() => speak(
+            language === 'pt-BR'
+              ? `Essa é minha energia: ${energyPoints}/${maxHealthPoints}! Ela enche quando eu como e zera todo dia.`
+              : `That's my energy: ${energyPoints}/${maxHealthPoints}! It fills when I eat and resets daily.`,
+            4500,
+          )}
         >
           <EnergyBar totalSegments={maxHealthPoints} filledSegments={energyPoints} />
         </div>
