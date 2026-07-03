@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getNextEvolution } from '../utils/dailyReset';
+import { EVO_ITEMS } from '../utils/shop';
 
 interface Step { id: string; label: string; completed: boolean; }
 interface Activity {
@@ -34,6 +35,7 @@ interface ResetGameState {
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
   poopEventsShown: number[];
   poopEventsCompleted: number[];
+  equippedEvoItem?: string | null;
 }
 
 type Attr = 'virus' | 'data' | 'vaccine';
@@ -146,6 +148,7 @@ export function useDailyReset({
       let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
       let wasDegeneratedByHP = false;
       let usedForcedBranch = false;
+      let usedEvoItem = false;
       let newMaxActivityCap = prev.maxActivityCap;
       let newCurrentBranch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
       let newRecentAttrs = {
@@ -212,6 +215,16 @@ export function useDailyReset({
           branch,
           prev.unlockedEvolutions,
         );
+        // Item digivolution (shop): when criteria are met AND an item is
+        // equipped for this level, the item form REPLACES the branch form.
+        // The natural form is still unlocked (tree/mega logic stays coherent);
+        // degeneration later returns to the branch form, never the item form.
+        const naturalNext = newEvolutionStage;
+        const evoItem = prev.equippedEvoItem ? EVO_ITEMS[prev.equippedEvoItem] : null;
+        if (evoItem?.evoTarget && getStageLevel(naturalNext) === evoItem.evoLevel && naturalNext !== prev.evolutionStage) {
+          newEvolutionStage = evoItem.evoTarget;
+          usedEvoItem = true;
+        }
         if (isBabyII && !hasShownRookiePopup) {
           setShowRookieUnlockPopup(true);
           setHasShownRookiePopup(true);
@@ -223,8 +236,8 @@ export function useDailyReset({
         const newCap = FORM_REQUIREMENTS[newStageLevel].cap;
         if (newCap > newMaxActivityCap) newMaxActivityCap = newCap;
 
-        if (!finalUnlockedEvolutions.includes(newEvolutionStage)) {
-          finalUnlockedEvolutions.push(newEvolutionStage);
+        if (!finalUnlockedEvolutions.includes(naturalNext)) {
+          finalUnlockedEvolutions.push(naturalNext);
         }
       }
 
@@ -274,6 +287,7 @@ export function useDailyReset({
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
         forcedBranch: usedForcedBranch ? null : (prev.forcedBranch ?? null),
+        equippedEvoItem: usedEvoItem ? null : (prev.equippedEvoItem ?? null),
         energyPoints: 0, // Energy resets daily (refills by feeding)
         // Summary of yesterday, shown once as a "daily report" on next open.
         lastDayReport: {

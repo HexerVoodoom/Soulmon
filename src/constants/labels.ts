@@ -36,6 +36,11 @@ export const AI_CATEGORY_MAP: Record<string, ActivityCategory> = {
 };
 
 export const DIGIMON_STAGE_NAMES: Record<string, string> = {
+  greymon: 'Greymon',
+  garurumon: 'Garurumon',
+  meramon: 'Meramon',
+  monzaemon: 'Monzaemon',
+  etemon: 'Etemon',
   digiegg: 'DigiEgg',
   pichimon: 'Pichimon',
   pukamon: 'Pukamon',

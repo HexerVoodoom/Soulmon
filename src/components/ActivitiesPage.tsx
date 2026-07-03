@@ -10,7 +10,7 @@ import type { Language } from '../utils/i18n';
  * All games award 🎖️ gamePoints (accumulate only, for now — see docs/SHOP-PLAN.md).
  * Balance: Dungeon 4-12/enemy +10 clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, forcedBranch, onDungeonReward, onEarnPoints, onShopBuy, onEquipBackground }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, forcedBranch, equippedEvoItem, onDungeonReward, onEarnPoints, onShopBuy, onEquipBackground }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
@@ -18,6 +18,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   ownedBackgrounds: string[];
   equippedBackground: string | null;
   forcedBranch: 'virus' | 'data' | 'vaccine' | null;
+  equippedEvoItem: string | null;
   onDungeonReward: () => string | null;
   onEarnPoints: (pts: number) => void;
   onShopBuy: (itemId: string) => boolean;
@@ -130,7 +131,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
               {isPt ? 'LOJA' : 'SHOP'}
             </span>
             <p style={{ color: '#9fb2d8', fontSize: '0.7rem', marginTop: 2 }}>
-              {isPt ? 'Gaste seus 🎖️ em chips, emblemas e cenários!' : 'Spend your 🎖️ on chips, emblems and backdrops!'}
+              {isPt ? 'Chips, emblemas, itens de digievolução e cenários!' : 'Chips, emblems, digivolution items and backdrops!'}
             </p>
           </div>
           <span style={{ color: '#facc15', fontWeight: 800, fontSize: '0.85rem', textShadow: '2px 2px 0 #000' }}>
@@ -146,6 +147,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           ownedBackgrounds={ownedBackgrounds}
           equippedBackground={equippedBackground}
           forcedBranch={forcedBranch}
+          equippedEvoItem={equippedEvoItem}
           onBuy={onShopBuy}
           onEquip={onEquipBackground}
           onClose={() => setShopOpen(false)}

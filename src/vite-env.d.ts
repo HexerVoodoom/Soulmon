@@ -6,6 +6,12 @@ declare module 'figma:asset/*.png' {
   export default url;
 }
 
+// Plain PNG imports (e.g. src/assets/*_dmc.png) resolve to string URLs
+declare module '*.png' {
+  const url: string;
+  export default url;
+}
+
 // Versioned package aliases (vite.config.ts maps pkg@version → pkg)
 declare module 'lucide-react@*' {
   export * from 'lucide-react';

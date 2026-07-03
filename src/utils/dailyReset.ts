@@ -118,6 +118,30 @@ export function getNextEvolution(
   branch: Attr,
   unlockedEvolutions: string[],
 ): string {
+  // Item-digivolution forms (shop): continue the line as if the pet were the
+  // branch form the item replaced at that level.
+  const ITEM_FORM_LEVEL: Record<string, 'champion' | 'ultimate'> = {
+    greymon: 'champion', garurumon: 'champion', meramon: 'champion',
+    monzaemon: 'ultimate', etemon: 'ultimate',
+  };
+  if (ITEM_FORM_LEVEL[currentStage]) {
+    const NATURAL: Record<EggLine, Record<'champion' | 'ultimate', Record<Attr, string>>> = {
+      tapirmon: {
+        champion: { virus: 'tuskmon', data: 'monochromon', vaccine: 'bakemon' },
+        ultimate: { virus: 'gigadramon', data: 'triceramon', vaccine: 'digitamamon' },
+      },
+      veemon: {
+        champion: { data: 'exveemon', virus: 'veedramon', vaccine: 'flamedramon' },
+        ultimate: { data: 'paildramon', virus: 'aeroveedramon', vaccine: 'raidramon' },
+      },
+      salamon: {
+        champion: { vaccine: 'gatomon', virus: 'gatomon-black', data: 'mikemon' },
+        ultimate: { vaccine: 'angewomon', virus: 'ladydevimon', data: 'nefertimon' },
+      },
+    };
+    currentStage = NATURAL[eggType][ITEM_FORM_LEVEL[currentStage]][branch];
+  }
+
   // digiegg → baby-i (by line)
   if (currentStage === 'digiegg') {
     if (eggType === 'veemon') return 'chicomon';

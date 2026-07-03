@@ -78,7 +78,8 @@ export interface GameState {
     | 'gatomon' | 'gatomon-black' | 'mikemon'
     | 'angewomon' | 'ladydevimon' | 'nefertimon'
     | 'ophanimon' | 'lilithmon' | 'holydramon'
-    | 'gaioumon-itto' | 'imperialdramon-paladin' | 'mastemon';
+    | 'gaioumon-itto' | 'imperialdramon-paladin' | 'mastemon'
+    | 'greymon' | 'garurumon' | 'meramon' | 'monzaemon' | 'etemon';
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventsScheduled: number[];
@@ -105,6 +106,8 @@ export interface GameState {
   equippedBackground: string | null;
   /** Shop emblem: forces this branch on the NEXT digivolution (consumed on evolve). */
   forcedBranch: 'virus' | 'data' | 'vaccine' | null;
+  /** Shop item digivolution: replaces the branch form when the pet evolves to the item's level (consumed on evolve). */
+  equippedEvoItem: string | null;
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
   lastDayReport?: {
     date: string;
@@ -172,6 +175,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         ownedBackgrounds: loadedState.ownedBackgrounds ?? [],
         equippedBackground: loadedState.equippedBackground ?? null,
         forcedBranch: loadedState.forcedBranch ?? null,
+        equippedEvoItem: loadedState.equippedEvoItem ?? null,
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -208,6 +212,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       ownedBackgrounds: [],
       equippedBackground: null,
       forcedBranch: null,
+      equippedEvoItem: null,
     };
   });
 

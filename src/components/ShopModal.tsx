@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
+import { getSpriteForStage } from '../utils/sprites';
 import type { Language } from '../utils/i18n';
 
 /**
  * 🛒 8-bit shop — spend minigame points (🎖️).
  * Chunky pixel borders, scanlines, hard shadows: intentionally retro.
  */
-export function ShopModal({ language, points, ownedBackgrounds, equippedBackground, forcedBranch, onBuy, onEquip, onClose }: {
+export function ShopModal({ language, points, ownedBackgrounds, equippedBackground, forcedBranch, equippedEvoItem, onBuy, onEquip, onClose }: {
   language: Language;
   points: number;
   ownedBackgrounds: string[];
   equippedBackground: string | null;
   forcedBranch: 'virus' | 'data' | 'vaccine' | null;
+  equippedEvoItem: string | null;
   onBuy: (itemId: string) => boolean;
   onEquip: (id: string | null) => void;
   onClose: () => void;
@@ -39,6 +41,7 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
   const sections: { title: string; items: ShopItem[] }[] = [
     { title: isPt ? '─ CHIPS DE ATRIBUTO ─' : '─ ATTRIBUTE CHIPS ─', items: SHOP_ITEMS.filter(i => i.kind === 'chip') },
     { title: isPt ? '─ EMBLEMAS DE EVOLUÇÃO ─' : '─ EVOLUTION EMBLEMS ─', items: SHOP_ITEMS.filter(i => i.kind === 'emblem') },
+    { title: isPt ? '─ ITENS DE DIGIEVOLUÇÃO ─' : '─ DIGIVOLUTION ITEMS ─', items: SHOP_ITEMS.filter(i => i.kind === 'evo') },
     { title: isPt ? '─ CENÁRIOS DO PET ─' : '─ PET BACKDROPS ─', items: SHOP_ITEMS.filter(i => i.kind === 'bg') },
   ];
 
@@ -76,6 +79,8 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
                   const ownedBg = item.kind === 'bg' && ownedBackgrounds.includes(item.id);
                   const equipped = ownedBg && equippedBackground === item.id;
                   const emblemActive = item.kind === 'emblem' && forcedBranch === item.attr;
+                  const evoActive = item.kind === 'evo' && equippedEvoItem === item.id;
+                  const evoBlocked = item.kind === 'evo' && !!equippedEvoItem && !evoActive;
                   const affordable = points >= item.price;
                   const flashHere = flash?.id === item.id;
 
@@ -84,6 +89,9 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
                       {/* icon / bg preview */}
                       {item.kind === 'bg' ? (
                         <div style={{ width: 44, height: 44, flexShrink: 0, border: '2px solid #000', background: PET_BACKGROUNDS[item.id]?.css }} />
+                      ) : item.kind === 'evo' && item.evoTarget ? (
+                        <img src={getSpriteForStage(item.evoTarget)} alt={item.evoTarget}
+                             style={{ width: 44, height: 44, flexShrink: 0, objectFit: 'contain', imageRendering: 'pixelated' }} />
                       ) : (
                         <span style={{ fontSize: '1.7rem', width: 44, textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
                       )}
@@ -99,6 +107,11 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
                             ★ {isPt ? 'ATIVO na próxima evolução' : 'ACTIVE for next evolution'}
                           </p>
                         )}
+                        {evoActive && (
+                          <p style={{ ...px, color: '#facc15', fontSize: '0.66rem', fontWeight: 800 }}>
+                            ★ {isPt ? 'EQUIPADO — aguardando evolução' : 'EQUIPPED — waiting for evolution'}
+                          </p>
+                        )}
                       </div>
                       {/* action */}
                       {ownedBg ? (
@@ -110,13 +123,13 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
                       ) : (
                         <button
                           onClick={() => buy(item)}
-                          disabled={!affordable || emblemActive}
+                          disabled={!affordable || emblemActive || evoActive || evoBlocked}
                           style={{
                             ...px,
-                            ...pixelBox(affordable && !emblemActive ? '#4ade80' : '#374151'),
-                            color: affordable && !emblemActive ? '#4ade80' : '#6b7280',
+                            ...pixelBox(affordable && !emblemActive && !evoActive && !evoBlocked ? '#4ade80' : '#374151'),
+                            color: affordable && !emblemActive && !evoActive && !evoBlocked ? '#4ade80' : '#6b7280',
                             fontWeight: 800, fontSize: '0.7rem', padding: '6px 8px',
-                            cursor: affordable && !emblemActive ? 'pointer' : 'default', flexShrink: 0,
+                            cursor: affordable && !emblemActive && !evoActive && !evoBlocked ? 'pointer' : 'default', flexShrink: 0,
                           }}>
                           🎖️{item.price}
                         </button>

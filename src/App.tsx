@@ -27,7 +27,7 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { SHOP_ITEMS, CHIP_BOOST } from './utils/shop';
+import { SHOP_ITEMS, CHIP_BOOST, EVO_ITEMS } from './utils/shop';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -704,6 +704,13 @@ export default function App() {
         newCurrentBranch,
         prev.unlockedEvolutions,
       ) as typeof newEvolutionStage;
+      // Item digivolution (shop): replaces the branch form at the item's level.
+      let usedEvoItem = false;
+      const evoItem = prev.equippedEvoItem ? EVO_ITEMS[prev.equippedEvoItem] : null;
+      if (evoItem?.evoTarget && getStageLevel(newEvolutionStage) === evoItem.evoLevel && newEvolutionStage !== prev.evolutionStage) {
+        newEvolutionStage = evoItem.evoTarget as typeof newEvolutionStage;
+        usedEvoItem = true;
+      }
       newSegmentsNeeded = DIGIVOLVE_SEGMENTS[getStageLevel(newEvolutionStage)] ?? newSegmentsNeeded;
       newHP = getMaxHPForStage(newEvolutionStage);
 
@@ -716,6 +723,7 @@ export default function App() {
         digivolutionSegments: 0,
         digivolutionSegmentsNeeded: newSegmentsNeeded,
         forcedBranch: null, // emblem (if any) is consumed by this evolution
+        equippedEvoItem: usedEvoItem ? null : (prev.equippedEvoItem ?? null),
       };
     });
     playDigivolve();
@@ -902,6 +910,8 @@ export default function App() {
     if ((gameState.gamePoints ?? 0) < item.price) return false;
     if (item.kind === 'bg' && (gameState.ownedBackgrounds ?? []).includes(item.id)) return false;
     if (item.kind === 'emblem' && gameState.forcedBranch === item.attr) return false;
+    // Only one digivolution item can be held at a time (avoid wasted points)
+    if (item.kind === 'evo' && gameState.equippedEvoItem) return false;
 
     setGameState(prev => {
       const next = { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
@@ -917,12 +927,14 @@ export default function App() {
       } else if (item.kind === 'bg') {
         next.ownedBackgrounds = [...(prev.ownedBackgrounds ?? []), item.id];
         next.equippedBackground = item.id; // equip right away
+      } else if (item.kind === 'evo') {
+        next.equippedEvoItem = item.id;
       }
       return next;
     });
     playFeed();
     return true;
-  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.forcedBranch]);
+  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.forcedBranch, gameState.equippedEvoItem]);
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
@@ -1386,6 +1398,7 @@ export default function App() {
                 ownedBackgrounds={gameState.ownedBackgrounds ?? []}
                 equippedBackground={gameState.equippedBackground ?? null}
                 forcedBranch={gameState.forcedBranch ?? null}
+                equippedEvoItem={gameState.equippedEvoItem ?? null}
                 onDungeonReward={handleDungeonReward}
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}

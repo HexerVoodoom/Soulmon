@@ -39,6 +39,12 @@ import mikemonSprite from 'figma:asset/79da08e63a9021eed7f83f46fafd43e36f1e30dd.
 import nefertimonSprite from 'figma:asset/750c493568ac7846d39b203e8be583d896133c60.png';
 import holyDramonSprite from 'figma:asset/829e91e67710908cd0cecd99b5b12163536d3926.png';
 import mastemonSprite from 'figma:asset/a036d6071a61f5a7cde8ca604f58cd0267141481.png';
+// Item-digivolution forms (shop) — DMC-style dots from src/assets
+import greymonSprite from '../assets/greymon_dmc.png';
+import garurumonSprite from '../assets/garurumon_dmc.png';
+import meramonSprite from '../assets/meramon_dmc.png';
+import monzaemonSprite from '../assets/monzaemon_dmc.png';
+import etemonSprite from '../assets/etemon_dmc.png';
 
 export const STAGE_SPRITES: Record<string, string> = {
   digiegg: digiEggSprite,
@@ -81,6 +87,12 @@ export const STAGE_SPRITES: Record<string, string> = {
   nefertimon: nefertimonSprite,
   holydramon: holyDramonSprite,
   mastemon: mastemonSprite,
+  // Item digivolutions (shop)
+  greymon: greymonSprite,
+  garurumon: garurumonSprite,
+  meramon: meramonSprite,
+  monzaemon: monzaemonSprite,
+  etemon: etemonSprite,
 };
 
 export function getSpriteForStage(stage: string): string {
