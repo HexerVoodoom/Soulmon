@@ -31,9 +31,12 @@ function simulateReset(prev: any): any {
 
   dailyDone += prev.tasks.filter((t: any) => t.completed).length;
 
-  // Perfect day requires the task requirement AND full energy at day's end
+  // Daily goal = min(registered, requirement); perfect day = goal met (with at
+  // least 1 task registered) AND full energy at day's end
+  const totalTasks = availableActivities.length + prev.tasks.length;
+  const dailyGoal = Math.min(totalTasks, requiredToday);
   const energyWasFull = (prev.energyPoints ?? 0) >= prev.maxHealthPoints;
-  const dayWasPerfect = dailyDone >= requiredToday && energyWasFull;
+  const dayWasPerfect = totalTasks > 0 && dailyDone >= dailyGoal && energyWasFull;
 
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
@@ -46,11 +49,8 @@ function simulateReset(prev: any): any {
   let wasDegeneratedByHP = false;
   let newMaxActivityCap = prev.maxActivityCap;
 
-  // Proportional HP loss vs min(registered, requirement):
-  // lose floor((1 - done/goal) * maxHP) whole hearts.
-  const totalTasks = availableActivities.length + prev.tasks.length;
-  const penaltyDenominator = Math.min(totalTasks, requiredToday);
-  const completionRatio = penaltyDenominator > 0 ? Math.min(1, dailyDone / penaltyDenominator) : 1;
+  // Proportional HP loss vs the same daily goal.
+  const completionRatio = dailyGoal > 0 ? Math.min(1, dailyDone / dailyGoal) : 1;
   const heartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
   if (heartsLost > 0) {
     newHP = Math.max(0, prev.healthPoints - heartsLost);
@@ -188,6 +188,14 @@ describe('performDailyReset — proportional HP loss', () => {
     const result = simulateReset({ ...baseState(), tasks });
     expect(result.lastDayWasPerfect).toBe(true);
     expect(result.perfectDays).toBeGreaterThanOrEqual(1);
+  });
+
+  it('doing ALL registered tasks (fewer than the requirement) + full energy = perfect day', () => {
+    // rookie requires 4, but only 3 registered — all 3 done, energy full
+    const tasks = Array.from({ length: 3 }, (_, i) => ({ id: `t${i}`, completed: true }));
+    const result = simulateReset({ ...baseState(), tasks });
+    expect(result.lastDayWasPerfect).toBe(true);
+    expect(result.healthPoints).toBe(3);
   });
 
   it('tasks met but energy NOT full → day is not perfect', () => {

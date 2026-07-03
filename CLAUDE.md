@@ -33,7 +33,7 @@ npm run build        # vite build + conversão PNG→WebP (dist/ é commitado!)
 | 🫶 Carinho | ÚNICA cura de HP. Esfregar o pet (pointer drag): ~2s = +0.5 coração, **máx. 1 coração/dia** (`RUB_HEAL_DAY` no localStorage). Animação (explosão de corações) sempre toca. |
 | 🍎 Comida | Máx. **5 por hora** (janela deslizante, `FOOD_FEED_TIMES`). Dá +1 energia + pontos de atributo (vírus/dado/vacina → galho de evolução). NÃO cura HP. Recusa = pet fala que está cheio (sem toast). Ganha-se comida completando atividades. |
 | ⚡ Energia | Enche só comendo, zera todo dia. **Cheia no fim do dia = condição do dia perfeito** (junto com o requisito de tarefas). |
-| ⭐ Dia perfeito | `tarefas ≥ requisito && energia cheia` → +1 ponto de evolução (perfectDays). |
+| ⭐ Dia perfeito | `tarefas ≥ min(cadastradas, requisito) && ≥1 cadastrada && energia cheia` → +1 ponto de evolução (perfectDays). Mesma meta da regra de HP. |
 | 💩 Cocô | Até 2×/dia: 1º agendado 07–15h; 2º agendado 8–10h após o 1º APARECER. Nunca aparece dormindo. Não limpo = **−1 coração a cada 6h** (`poopPenaltyClockAt`; pausa dormindo; banho zera). Notificação ~30min antes do tick. Ovo/baby-i isentos. |
 | 🚿 Banho | Sempre disponível. Limpa o cocô (para o dreno). |
 | 💤 Dormir | Toggle manual (persistido) + sono automático opcional (janela nas Configurações; age só nas transições). Dormindo: sem cocô, dreno pausado. |

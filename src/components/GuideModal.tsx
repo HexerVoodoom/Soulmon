@@ -51,8 +51,9 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             }`}>1. Evolution System</h3>
             <p className="mb-2">
               Your Digimon evolves through <strong>perfect days</strong>.
-              A day is perfect when you complete <strong>the day's task requirement</strong> AND
-              your Digimon's <strong>energy is full at the end of the day</strong> (feed it!).
+              A day is perfect when you complete your <strong>daily goal</strong> — everything
+              you registered, up to the stage requirement — AND your Digimon's
+              <strong> energy is full at the end of the day</strong> (feed it!).
             </p>
             <p>
               Each evolution form requires a fixed number of perfect days to evolve to the next one.

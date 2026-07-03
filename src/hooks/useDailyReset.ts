@@ -137,10 +137,16 @@ export function useDailyReset({
 
       dailyDone += prev.tasks.filter((t: Task) => t.completed).length;
 
-      // A perfect day (evolution point) requires BOTH the task requirement AND
-      // full energy at the end of the day — feeding is part of the care loop.
+      // Daily goal = min(registered, stage requirement) — same rule as the HP
+      // penalty: finishing everything you registered counts, and the stage
+      // requirement is the ceiling.
+      const totalTasks = availableActivities.length + prev.tasks.length;
+      const dailyGoal = Math.min(totalTasks, requiredToday);
+
+      // A perfect day (evolution point) requires completing the daily goal
+      // (at least 1 task registered) AND full energy at the end of the day.
       const energyWasFull = (prev.energyPoints ?? 0) >= prev.maxHealthPoints;
-      const dayWasPerfect = dailyDone >= requiredToday && energyWasFull;
+      const dayWasPerfect = totalTasks > 0 && dailyDone >= dailyGoal && energyWasFull;
 
       let newHP = prev.healthPoints;
       let newPerfectDays = prev.perfectDays;
@@ -157,14 +163,10 @@ export function useDailyReset({
         vaccine: prev.attributesSinceLastEvolution?.vaccine ?? 0,
       };
 
-      // HP penalty: proportional to the tasks NOT done, measured against
-      // min(registered, stage requirement). Meeting the stage requirement is
-      // always safe, and registering MORE activities than required never adds
-      // risk (no perverse incentive to register fewer). Doing everything you
-      // registered is also safe. No tasks registered → nothing to fail.
-      const totalTasks = availableActivities.length + prev.tasks.length;
-      const penaltyDenominator = Math.min(totalTasks, requiredToday);
-      const completionRatio = penaltyDenominator > 0 ? Math.min(1, dailyDone / penaltyDenominator) : 1;
+      // HP penalty: proportional to the tasks NOT done, measured against the
+      // same daily goal. Meeting it = safe; registering MORE than required
+      // never adds risk. No tasks registered → nothing to fail.
+      const completionRatio = dailyGoal > 0 ? Math.min(1, dailyDone / dailyGoal) : 1;
       const heartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
       if (heartsLost > 0) {
         newHP = Math.max(0, prev.healthPoints - heartsLost);
@@ -294,7 +296,7 @@ export function useDailyReset({
           date: yesterdayString,
           done: dailyDone,
           total: totalTasks,
-          required: requiredToday,
+          required: dailyGoal, // the effective goal: min(registered, stage requirement)
           heartsLost,
           wasPerfect: dayWasPerfect,
           energyWasFull,
