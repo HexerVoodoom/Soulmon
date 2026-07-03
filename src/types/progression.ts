@@ -63,6 +63,12 @@ export function getStageLevel(stage: string): EvolutionStage {
   return 'digiegg';
 }
 
+// Energy bars for a stage = the number of daily tasks required to earn an
+// evolution point at that stage (so rookie's 4-task requirement shows 4 bars).
+export function getMaxEnergyForStage(stage: string): number {
+  return FORM_REQUIREMENTS[getStageLevel(stage)].required;
+}
+
 // Verifica se a forma atual permite seleção de dias da semana (Rookie ou superior)
 const WEEKDAY_LEVELS: EvolutionStage[] = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
 export function canSelectWeekdays(stage: string): boolean {

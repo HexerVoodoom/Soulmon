@@ -1,6 +1,6 @@
 // 🛒 Shop catalog — bought with minigame points (gamePoints).
 // Effects are applied in App.tsx (handleShopBuy); see docs/SHOP-PLAN.md.
-export type ShopItemKind = 'chip' | 'emblem' | 'bg' | 'evo';
+export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'evo';
 export type Attr = 'virus' | 'data' | 'vaccine';
 
 export interface ShopItem {
@@ -18,29 +18,70 @@ export interface ShopItem {
   evoLevel?: 'champion' | 'ultimate';
 }
 
-export const CHIP_BOOST = 3; // attribute points granted per chip
+export const CHIP_BOOST = 3;   // attribute points granted when a chip is USED
+export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
+
+// Inventory emojis for the consumable items that live in the Items folder.
+export const CHIP_EMOJI: Record<Attr, string> = { virus: '🦠', data: '💾', vaccine: '💉' };
+export const HEART_ITEM_EMOJI = '💗';
+
+// Consumables that live in the Items folder alongside food, but behave
+// differently when USED: chips only add attribute points (no energy), and the
+// heart item only heals HP. Keyed by their inventory emoji.
+export interface SpecialItem {
+  emoji: string;
+  kind: 'chip' | 'heart';
+  attr?: Attr;
+  namePt: string;
+  nameEn: string;
+  descPt: string;
+  descEn: string;
+}
+
+export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
+  [CHIP_EMOJI.virus]: {
+    emoji: CHIP_EMOJI.virus, kind: 'chip', attr: 'virus',
+    namePt: 'Chip de Vírus', nameEn: 'Virus Chip',
+    descPt: `Usar dá +${CHIP_BOOST} de vírus (não enche energia)`, descEn: `Use for +${CHIP_BOOST} virus (no energy)`,
+  },
+  [CHIP_EMOJI.data]: {
+    emoji: CHIP_EMOJI.data, kind: 'chip', attr: 'data',
+    namePt: 'Chip de Dado', nameEn: 'Data Chip',
+    descPt: `Usar dá +${CHIP_BOOST} de dado (não enche energia)`, descEn: `Use for +${CHIP_BOOST} data (no energy)`,
+  },
+  [CHIP_EMOJI.vaccine]: {
+    emoji: CHIP_EMOJI.vaccine, kind: 'chip', attr: 'vaccine',
+    namePt: 'Chip de Vacina', nameEn: 'Vaccine Chip',
+    descPt: `Usar dá +${CHIP_BOOST} de vacina (não enche energia)`, descEn: `Use for +${CHIP_BOOST} vaccine (no energy)`,
+  },
+  [HEART_ITEM_EMOJI]: {
+    emoji: HEART_ITEM_EMOJI, kind: 'heart',
+    namePt: 'Coraçãozinho', nameEn: 'Little Heart',
+    descPt: `Usar cura ${HEART_HEAL} coração`, descEn: `Use to heal ${HEART_HEAL} heart`,
+  },
+};
+
+export function isSpecialItem(emoji: string): boolean {
+  return emoji in SPECIAL_ITEMS;
+}
 
 export const SHOP_ITEMS: ShopItem[] = [
-  // Consumable attribute chips — nudge the evolution branch
-  { id: 'chip-virus',   kind: 'chip', icon: '🦠', attr: 'virus',
+  // Attribute chips — bought here, then USED from the Items folder (they only
+  // raise the attribute, no energy). They steer the evolution branch.
+  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, attr: 'virus',
     namePt: 'Chip de Vírus',  nameEn: 'Virus Chip',
-    descPt: `+${CHIP_BOOST} pontos de vírus na hora`, descEn: `+${CHIP_BOOST} virus points instantly`, price: 40 },
-  { id: 'chip-data',    kind: 'chip', icon: '💾', attr: 'data',
+    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de vírus`, descEn: `Goes to Items; use for +${CHIP_BOOST} virus`, price: 40 },
+  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, attr: 'data',
     namePt: 'Chip de Dado',   nameEn: 'Data Chip',
-    descPt: `+${CHIP_BOOST} pontos de dado na hora`, descEn: `+${CHIP_BOOST} data points instantly`, price: 40 },
-  { id: 'chip-vaccine', kind: 'chip', icon: '💉', attr: 'vaccine',
+    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de dado`, descEn: `Goes to Items; use for +${CHIP_BOOST} data`, price: 40 },
+  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, attr: 'vaccine',
     namePt: 'Chip de Vacina', nameEn: 'Vaccine Chip',
-    descPt: `+${CHIP_BOOST} pontos de vacina na hora`, descEn: `+${CHIP_BOOST} vaccine points instantly`, price: 40 },
-  // Emblems — force the branch of the NEXT digivolution (consumed on evolve)
-  { id: 'emblem-virus',   kind: 'emblem', icon: '🟣', attr: 'virus',
-    namePt: 'Emblema do Vírus',  nameEn: 'Virus Emblem',
-    descPt: 'Próxima digivolução será do galho VÍRUS', descEn: 'Next digivolution takes the VIRUS branch', price: 120 },
-  { id: 'emblem-data',    kind: 'emblem', icon: '🔵', attr: 'data',
-    namePt: 'Emblema do Dado',   nameEn: 'Data Emblem',
-    descPt: 'Próxima digivolução será do galho DADO', descEn: 'Next digivolution takes the DATA branch', price: 120 },
-  { id: 'emblem-vaccine', kind: 'emblem', icon: '🟡', attr: 'vaccine',
-    namePt: 'Emblema da Vacina', nameEn: 'Vaccine Emblem',
-    descPt: 'Próxima digivolução será do galho VACINA', descEn: 'Next digivolution takes the VACCINE branch', price: 120 },
+    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de vacina`, descEn: `Goes to Items; use for +${CHIP_BOOST} vaccine`, price: 40 },
+  // Heart item — the ONLY buyable HP heal. Goes to the Items folder; using it
+  // restores a heart. Also drops (rarely) in the dungeon.
+  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI,
+    namePt: 'Coraçãozinho', nameEn: 'Little Heart',
+    descPt: `Vai pra pastinha; usar cura ${HEART_HEAL} coração`, descEn: `Goes to Items; use to heal ${HEART_HEAL} heart`, price: 60 },
   // Item digivolutions (Digimon World 1 style): equip one; when the pet's
   // NORMAL evolution to that level happens, the form is replaced by the item's
   // Digimon (item consumed). Next evolution continues the branch normally, and

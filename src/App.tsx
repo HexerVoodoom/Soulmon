@@ -19,7 +19,7 @@ import { HelpModal } from './components/HelpModal';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
-import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays } from './types/progression';
+import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
@@ -27,7 +27,8 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { SHOP_ITEMS, CHIP_BOOST, EVO_ITEMS } from './utils/shop';
+import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI } from './utils/shop';
+import { getDungeonDifficulty, bumpDungeonDifficulty, getDungeonRunsLeft, consumeDungeonRun, getDungeonBest, recordDungeonScore, rollDungeonHeartDrop } from './utils/dungeon';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -349,7 +350,7 @@ export default function App() {
           activities: updatedActivities,
           activityStats: newActivityStats,
           foodInventory: newFoodInventory,
-          ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, prev.maxHealthPoints) }),
+          ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, getMaxEnergyForStage(prev.evolutionStage)) }),
         };
       });
 
@@ -441,7 +442,7 @@ export default function App() {
         activities: updatedActivities,
         activityStats: newActivityStats,
         foodInventory: newFoodInventory,
-        ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, prev.maxHealthPoints) }),
+        ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, getMaxEnergyForStage(prev.evolutionStage)) }),
       };
     });
 
@@ -654,7 +655,7 @@ export default function App() {
               [activityKey]: { ...currentStats, completionCount: currentStats.completionCount + 1 },
             },
             foodInventory: newFoodInventory,
-            ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, prev.maxHealthPoints) }),
+            ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, getMaxEnergyForStage(prev.evolutionStage)) }),
           };
         });
       }, 3000);
@@ -695,8 +696,6 @@ export default function App() {
       if (isVirus) newCurrentBranch = 'virus';
       else if (isVaccine) newCurrentBranch = 'vaccine';
       else if (isData) newCurrentBranch = 'data';
-      // Shop emblem overrides the attribute-based branch (consumed below)
-      if (prev.forcedBranch) newCurrentBranch = prev.forcedBranch;
 
       newEvolutionStage = getNextEvolution(
         prev.evolutionStage,
@@ -722,7 +721,6 @@ export default function App() {
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
         digivolutionSegments: 0,
         digivolutionSegmentsNeeded: newSegmentsNeeded,
-        forcedBranch: null, // emblem (if any) is consumed by this evolution
         equippedEvoItem: usedEvoItem ? null : (prev.equippedEvoItem ?? null),
       };
     });
@@ -757,8 +755,59 @@ export default function App() {
   // via "carinho"). Limited to 5 feedings per rolling hour; once full, the pet
   // just says it's full (no other feedback).
   const handleFeed = useCallback((foodEmoji: string) => {
-    // No food in stock → nothing happens (don't burn a feed slot or animate).
+    // No item in stock → nothing happens (don't burn a feed slot or animate).
     if ((gameState.foodInventory[foodEmoji] ?? 0) <= 0) return;
+
+    // Special items (shop consumables) behave differently from food: chips only
+    // grant attribute points (no energy) and the heart item only heals HP.
+    // Neither counts against the 5-feeds-per-hour food limit.
+    const special = SPECIAL_ITEMS[foodEmoji];
+    if (special) {
+      if (special.kind === 'heart') {
+        // The heart item is the only buyable HP heal. Refuse (keep it) if full.
+        if (gameState.healthPoints >= gameState.maxHealthPoints) {
+          setHealCapSignal(n => n + 1);
+          return;
+        }
+        playTaskComplete();
+        setGameState(prev => {
+          const count = prev.foodInventory[foodEmoji] ?? 0;
+          if (count <= 0) return prev;
+          const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
+          if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
+          return {
+            ...prev,
+            foodInventory: newInventory,
+            healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + HEART_HEAL),
+          };
+        });
+        setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
+        return;
+      }
+      // Chip: attribute points only, no energy.
+      playFeed();
+      setGameState(prev => {
+        const count = prev.foodInventory[foodEmoji] ?? 0;
+        if (count <= 0) return prev;
+        const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
+        if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
+        const attr = special.attr!;
+        const key = `${attr}Points` as 'virusPoints' | 'dataPoints' | 'vaccinePoints';
+        return {
+          ...prev,
+          foodInventory: newInventory,
+          [key]: prev[key] + CHIP_BOOST,
+          totalXP: prev.totalXP + CHIP_BOOST * 10,
+          attributesSinceLastEvolution: {
+            ...prev.attributesSinceLastEvolution,
+            [attr]: (prev.attributesSinceLastEvolution?.[attr] ?? 0) + CHIP_BOOST,
+          },
+        };
+      });
+      setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
+      return;
+    }
+
     const now = Date.now();
     const recent = feedTimesRef.current.filter(t => now - t < 3600000);
     if (recent.length >= 5) {
@@ -783,8 +832,8 @@ export default function App() {
 
       return {
         ...prev,
-        // Energy gauge fills only by feeding, capped at maxHealthPoints
-        energyPoints: Math.min(prev.maxHealthPoints, (prev.energyPoints ?? 0) + 1),
+        // Energy gauge fills only by feeding, capped at the stage's energy bars
+        energyPoints: Math.min(getMaxEnergyForStage(prev.evolutionStage), (prev.energyPoints ?? 0) + 1),
         foodInventory: newInventory,
         virusPoints: prev.virusPoints + attrs.virus,
         dataPoints: prev.dataPoints + attrs.data,
@@ -798,7 +847,7 @@ export default function App() {
       };
     });
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-  }, [gameState.foodInventory]);
+  }, [gameState.foodInventory, gameState.healthPoints, gameState.maxHealthPoints]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -876,25 +925,40 @@ export default function App() {
     playSleep();
   }, []);
 
-  // Dungeon reward: each defeated enemy grants 1 random food, capped at 3/day.
-  // Returns the food emoji granted, or null when the daily cap was reached.
-  const handleDungeonReward = useCallback((): string | null => {
-    const today = new Date().toDateString();
-    let rec = { date: today, count: 0 };
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.DUNGEON_REWARDS) || 'null');
-      if (saved?.date === today) rec = saved;
-    } catch { /* fresh record */ }
-    if (rec.count >= 3) return null;
-    rec = { date: today, count: rec.count + 1 };
-    localStorage.setItem(STORAGE_KEYS.DUNGEON_REWARDS, JSON.stringify(rec));
-    const foods = Object.values(FOOD_BY_CATEGORY);
-    const food = foods[Math.floor(Math.random() * foods.length)];
+  // Dungeon: entering consumes a daily run and is blocked at ≤1 heart (a loss
+  // costs a real heart, so the player must recover first). Returns the current
+  // monthly difficulty + best score, or a block reason.
+  const handleDungeonEnter = useCallback((): { ok: true; level: number; best: number } | { ok: false; reason: 'hp' | 'limit' } => {
+    if (gameState.healthPoints <= 1) return { ok: false, reason: 'hp' };
+    if (getDungeonRunsLeft() <= 0) return { ok: false, reason: 'limit' };
+    consumeDungeonRun();
+    return { ok: true, level: getDungeonDifficulty(), best: getDungeonBest() };
+  }, [gameState.healthPoints]);
+
+  // Losing the dungeon costs one real heart; the run's score still counts for
+  // the ranking. Returns the (possibly new) best score.
+  const handleDungeonLose = useCallback((score: number): number => {
+    setGameState(prev => ({ ...prev, healthPoints: Math.max(0, prev.healthPoints - 1) }));
+    return recordDungeonScore(score);
+  }, []);
+
+  // Clearing the whole dungeon records the score (ranking) and makes the next
+  // run harder; difficulty resets to 1 at the start of each month.
+  const handleDungeonClear = useCallback((score: number): { best: number; level: number } => {
+    const best = recordDungeonScore(score);
+    const level = bumpDungeonDifficulty();
+    return { best, level };
+  }, []);
+
+  // Heart item can drop in the dungeon (capped per day). Adds it to the Items
+  // folder and returns whether one dropped. The dungeon no longer drops food.
+  const handleDungeonHeartDrop = useCallback((): boolean => {
+    if (!rollDungeonHeartDrop()) return false;
     setGameState(prev => ({
       ...prev,
-      foodInventory: { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 },
+      foodInventory: { ...prev.foodInventory, [HEART_ITEM_EMOJI]: (prev.foodInventory[HEART_ITEM_EMOJI] ?? 0) + 1 },
     }));
-    return food.emoji;
+    return true;
   }, []);
 
   // 🎖️ Minigame points — accumulate in GameState (cloud-synced), spent in the shop.
@@ -909,21 +973,17 @@ export default function App() {
     if (!item) return false;
     if ((gameState.gamePoints ?? 0) < item.price) return false;
     if (item.kind === 'bg' && (gameState.ownedBackgrounds ?? []).includes(item.id)) return false;
-    if (item.kind === 'emblem' && gameState.forcedBranch === item.attr) return false;
     // Only one digivolution item can be held at a time (avoid wasted points)
     if (item.kind === 'evo' && gameState.equippedEvoItem) return false;
 
     setGameState(prev => {
       const next = { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
-      if (item.kind === 'chip' && item.attr) {
-        const key = `${item.attr}Points` as 'virusPoints' | 'dataPoints' | 'vaccinePoints';
-        next[key] = prev[key] + CHIP_BOOST;
-        next.attributesSinceLastEvolution = {
-          ...prev.attributesSinceLastEvolution,
-          [item.attr]: (prev.attributesSinceLastEvolution?.[item.attr] ?? 0) + CHIP_BOOST,
+      if (item.kind === 'chip' || item.kind === 'heart') {
+        // Consumables go to the Items folder; their effect is applied on USE.
+        next.foodInventory = {
+          ...prev.foodInventory,
+          [item.icon]: (prev.foodInventory[item.icon] ?? 0) + 1,
         };
-      } else if (item.kind === 'emblem' && item.attr) {
-        next.forcedBranch = item.attr;
       } else if (item.kind === 'bg') {
         next.ownedBackgrounds = [...(prev.ownedBackgrounds ?? []), item.id];
         next.equippedBackground = item.id; // equip right away
@@ -934,7 +994,7 @@ export default function App() {
     });
     playFeed();
     return true;
-  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.forcedBranch, gameState.equippedEvoItem]);
+  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.equippedEvoItem]);
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
@@ -1397,9 +1457,11 @@ export default function App() {
                 totalPoints={gameState.gamePoints ?? 0}
                 ownedBackgrounds={gameState.ownedBackgrounds ?? []}
                 equippedBackground={gameState.equippedBackground ?? null}
-                forcedBranch={gameState.forcedBranch ?? null}
                 equippedEvoItem={gameState.equippedEvoItem ?? null}
-                onDungeonReward={handleDungeonReward}
+                onDungeonEnter={handleDungeonEnter}
+                onDungeonLose={handleDungeonLose}
+                onDungeonClear={handleDungeonClear}
+                onDungeonHeartDrop={handleDungeonHeartDrop}
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}
                 onEquipBackground={handleEquipBackground}
@@ -1448,6 +1510,7 @@ export default function App() {
             nextLevelXP={getNextLevelXP()}
             triggerMessage={messageTrigger}
             energyPoints={gameState.energyPoints}
+            maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
             fullSignal={fullSignal}
             digivolutionSegments={gameState.digivolutionSegments}
             theme={theme}

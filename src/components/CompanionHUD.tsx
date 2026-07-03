@@ -23,6 +23,7 @@ interface CompanionHUDProps {
   nextLevelXP: number;
   triggerMessage?: number; // Prop to trigger message from outside
   energyPoints?: number; // Version B: energy gauge, fills only via feeding
+  maxEnergyPoints?: number; // energy bars = the stage's daily task requirement
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
   healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
   equippedBackground?: string | null; // shop backdrop id for the pet box
@@ -68,6 +69,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   nextLevelXP,
   triggerMessage = 0,
   energyPoints = 0,
+  maxEnergyPoints,
   fullSignal = 0,
   healCapSignal = 0,
   equippedBackground = null,
@@ -97,6 +99,9 @@ export const CompanionHUD = memo(function CompanionHUD({
 }: CompanionHUDProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
+  // Energy bars = the stage's daily task requirement (falls back to HP max for
+  // older callers that don't pass it).
+  const maxEnergy = maxEnergyPoints ?? maxHealthPoints;
   const [position, setPosition] = useState(10);
   const [direction, setDirection] = useState<'right' | 'left'>('right');
   const [showBubble, setShowBubble] = useState(false);
@@ -122,8 +127,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [hugBalloon, setHugBalloon] = useState(false);
 
   // Always-current snapshot of props for stable intervals
-  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping });
-  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxHealthPoints, careEvent, isSleeping };
+  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping });
+  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping };
 
   // speak: strips all emojis, shows bubble, auto-hides after durationMs
   const speak = useCallback((text: string, durationMs = 4000) => {
@@ -253,7 +258,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     const getIdlePhrase = (): string => {
       const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
       const p = propsRef.current;
-      const ratio = p.maxHealthPoints > 0 ? p.energyPoints / p.maxHealthPoints : 0;
+      const ratio = p.maxEnergy > 0 ? p.energyPoints / p.maxEnergy : 0;
       const hpRatio = p.maxHealthPoints > 0 ? p.healthPoints / p.maxHealthPoints : 0;
       const isPt = p.language === 'pt-BR';
       if (p.careEvent?.type === 'poop') return isPt
@@ -316,7 +321,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Handle digimon click — show preset phrase immediately, then fire API update
   const handleDigimonClick = () => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-    const ratio = maxHealthPoints > 0 ? energyPoints / maxHealthPoints : 0;
+    const ratio = maxEnergy > 0 ? energyPoints / maxEnergy : 0;
     const hpRatio = maxHealthPoints > 0 ? healthPoints / maxHealthPoints : 0;
     const isPt = language === 'pt-BR';
     let fallback: string;
@@ -903,16 +908,16 @@ export const CompanionHUD = memo(function CompanionHUD({
           }`}
           style={{ height: '185px', width: '26px', padding: '11.998px 0', cursor: 'pointer' }}
           title={language === 'pt-BR'
-            ? `Energia: ${energyPoints}/${maxHealthPoints} — sobe comendo; cheia no fim do dia = ponto de evolução`
-            : `Energy: ${energyPoints}/${maxHealthPoints} — fills by eating; full at day's end = evolution point`}
+            ? `Energia: ${energyPoints}/${maxEnergy} — sobe comendo; cheia no fim do dia = ponto de evolução`
+            : `Energy: ${energyPoints}/${maxEnergy} — fills by eating; full at day's end = evolution point`}
           onClick={() => speak(
             language === 'pt-BR'
-              ? `Minha energia: ${energyPoints}/${maxHealthPoints}! Enche comendo — se estiver cheia no fim do dia, o dia conta pra evolução!`
-              : `My energy: ${energyPoints}/${maxHealthPoints}! Fills by eating — full at day's end makes the day count for evolution!`,
+              ? `Minha energia: ${energyPoints}/${maxEnergy}! Enche comendo — se estiver cheia no fim do dia, o dia conta pra evolução!`
+              : `My energy: ${energyPoints}/${maxEnergy}! Fills by eating — full at day's end makes the day count for evolution!`,
             5000,
           )}
         >
-          <EnergyBar totalSegments={maxHealthPoints} filledSegments={energyPoints} />
+          <EnergyBar totalSegments={maxEnergy} filledSegments={energyPoints} />
         </div>
       </div>
 

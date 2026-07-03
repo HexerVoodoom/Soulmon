@@ -1,40 +1,42 @@
-# Loja de pontos 🎖️ — v1 IMPLEMENTADA (chips, emblemas, cenários) — ideias futuras abaixo
+# Loja de pontos 🎖️ — IMPLEMENTADA (chips-item, coraçõezinhos, itens de evolução, cenários)
 
-Os minijogos da página Atividades acumulam `gamePoints` (GameState, cloud-synced).
-Este documento guarda a direção combinada com o dono do projeto para a futura loja.
+Os minijogos da página Atividades acumulam `gamePoints` (GameState, cloud-synced),
+gastos na `ShopModal`. Catálogo/efeitos em `utils/shop.ts` + `handleShopBuy` (App.tsx).
 
-## Ganho atual (balanceamento v1)
+## Ganho atual (balanceamento)
 
-| Jogo | Pontos | Ritmo aproximado |
+| Jogo | Pontos | Observações |
 |---|---|---|
-| ⚔️ Masmorra | 4/6/8/10/12 por inimigo + 10 bônus de clear (máx. 50/run) | ~5 min/run completa, alta habilidade |
+| ⚔️ Masmorra | pontos por inimigo (escalam com a dificuldade) + 10 de clear | **limite 3 runs/dia**; perder custa 1 coração real; ranking em `DUNGEON_BEST` |
 | 🦖 Dino | floor(score/100) por corrida (score ≈ 10/s) | ~6 pts/min de corrida boa |
 | ✊ PPT | 5 por partida vencida (melhor de 5) | ~40s/partida, sorte (~50%) |
 
-## Itens planejados (ideias do dono, estilo Digimon World 1)
+## Catálogo atual (`ShopItemKind = 'chip' | 'heart' | 'bg' | 'evo'`)
 
-1. **Itens equipáveis que influenciam a PRÓXIMA evolução**
-   - Ex.: *Fantasia de Monzaemon* — equipável no nível champion; ao digivolver, vira Monzaemon.
-   - *Digimentals*, *Banana de Aço* etc. — pesquisar a lista de itens de evolução do
-     Digimon World 1 (PSX) como referência de nomes/efeitos.
-   - Mecânica: item equipado (novo campo `equippedItem` no GameState) tem prioridade
-     sobre o cálculo normal de galho na hora da evolução em `useDailyReset`/`getNextEvolution`.
-2. **Chips de atributo** — compram pontos de vacina/vírus/dado para manipular o
-   resultado da evolução independente das tarefas feitas (soma em
-   `attributesSinceLastEvolution`).
-3. **Skins temáticas para o app** — novos temas além de default/win98/glitch
-   (o tema já é um enum; skin comprada desbloqueia opção nas Configurações).
-4. **Backgrounds para o box do Digimon** — alternativas ao `bgCyberpunk` do
-   CompanionHUD (campo `equippedBackground`, mapa de assets).
+1. **Chips de atributo** (40 🎖️) — **NÃO** aplicam na hora. Vão pra pastinha de
+   itens (`foodInventory`, emoji 🦠/💾/💉). Ao **usar** (como comida), dão +3 no
+   atributo (`CHIP_BOOST`) e **nada mais** — sem energia. Distinguidos de comida
+   por `SPECIAL_ITEMS` no `handleFeed`.
+2. **Coraçãozinho** (`💗`, 60 🎖️) — vai pra pastinha; usar cura +1 HP (`HEART_HEAL`).
+   Única cura de HP comprável. Também **dropa na masmorra** (máx. 2/dia).
+3. **Itens de digievolução** (180–220 🎖️, estilo Digimon World 1) — equipa um
+   (`equippedEvoItem`); quando o pet evolui pro nível do item E os critérios são
+   cumpridos, a forma do galho é **substituída** pela artificial (Greymon/
+   Garurumon/Meramon no champion; Monzaemon/Etemon no ultimate). Consumido ao
+   evoluir; o próximo estágio segue o branch normal; degeneração volta pra forma
+   do branch (nunca a artificial).
+4. **Cenários do box** (50 🎖️) — `ownedBackgrounds`/`equippedBackground`,
+   CSS em `utils/backgrounds.ts`.
 
-## Preços (proposta inicial — validar com o dono)
+## Removido
 
-- Background: 30–60 🎖️ · Skin de app: 100 🎖️ · Chip de atributo: 40 🎖️ (+3 no atributo)
-- Item de evolução (muda a próxima digivolução): 150–250 🎖️ conforme raridade.
-- Referência de renda: jogador ativo ganha ~30–60 🎖️/dia.
+- **Emblemas** (`forcedBranch`) — removidos do catálogo e do GameState. O galho da
+  evolução volta a ser 100% guiado pelos atributos acumulados (que os chips ainda
+  influenciam, agora via uso na pastinha).
 
-## Regras ao implementar
+## Regras ao implementar mudanças
 
-- Loja = nova aba/card na página Atividades (ou seção própria).
-- Compras/equipados vão no GameState (sincronizar via cloud save; fallback `?? []`).
-- Atualizar GuideModal/HelpModal e a tabela do CLAUDE.md.
+- Compras/equipados/inventário vão no GameState (cloud save; fallback `?? []`/`?? {}`).
+- Bookkeeping da masmorra (dificuldade mensal, runs/dia, best, heart-drops) fica em
+  localStorage via `utils/dungeon.ts`.
+- Atualizar GuideModal/HelpModal e a tabela do CLAUDE.md a cada mudança de regra.

@@ -10,16 +10,18 @@ import type { Language } from '../utils/i18n';
  * All games award 🎖️ gamePoints (accumulate only, for now — see docs/SHOP-PLAN.md).
  * Balance: Dungeon 4-12/enemy +10 clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, forcedBranch, equippedEvoItem, onDungeonReward, onEarnPoints, onShopBuy, onEquipBackground }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonClear, onDungeonHeartDrop, onEarnPoints, onShopBuy, onEquipBackground }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
   totalPoints: number;
   ownedBackgrounds: string[];
   equippedBackground: string | null;
-  forcedBranch: 'virus' | 'data' | 'vaccine' | null;
   equippedEvoItem: string | null;
-  onDungeonReward: () => string | null;
+  onDungeonEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' | 'limit' };
+  onDungeonLose: (score: number) => number;
+  onDungeonClear: (score: number) => { best: number; level: number };
+  onDungeonHeartDrop: () => boolean;
   onEarnPoints: (pts: number) => void;
   onShopBuy: (itemId: string) => boolean;
   onEquipBackground: (id: string | null) => void;
@@ -36,9 +38,9 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       key: 'dungeon', icon: '⚔️',
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
-        ? 'Batalhas por turno com barra de precisão. Vença inimigos e ganhe comida!'
-        : 'Turn-based battles with a timing bar. Beat enemies and earn food!',
-      pts: isPt ? '4–12 🎖️ por inimigo' : '4–12 🎖️ per enemy',
+        ? 'Inimigos aleatórios que ficam mais fortes. Perder custa 1 coração! Pode dropar coraçãozinho.'
+        : 'Random enemies that grow stronger. Losing costs 1 heart! Can drop a little heart.',
+      pts: isPt ? 'Pontos por inimigo + ranking' : 'Points per enemy + ranking',
     },
     {
       key: 'dino', icon: '🦖',
@@ -131,7 +133,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
               {isPt ? 'LOJA' : 'SHOP'}
             </span>
             <p style={{ color: '#9fb2d8', fontSize: '0.7rem', marginTop: 2 }}>
-              {isPt ? 'Chips, emblemas, itens de digievolução e cenários!' : 'Chips, emblems, digivolution items and backdrops!'}
+              {isPt ? 'Chips, coraçõezinhos, itens de digievolução e cenários!' : 'Chips, little hearts, digivolution items and backdrops!'}
             </p>
           </div>
           <span style={{ color: '#facc15', fontWeight: 800, fontSize: '0.85rem', textShadow: '2px 2px 0 #000' }}>
@@ -146,7 +148,6 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           points={totalPoints}
           ownedBackgrounds={ownedBackgrounds}
           equippedBackground={equippedBackground}
-          forcedBranch={forcedBranch}
           equippedEvoItem={equippedEvoItem}
           onBuy={onShopBuy}
           onEquip={onEquipBackground}
@@ -158,7 +159,10 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
         <DungeonGame
           evolutionStage={evolutionStage}
           language={language}
-          onReward={onDungeonReward}
+          onEnter={onDungeonEnter}
+          onLose={onDungeonLose}
+          onClear={onDungeonClear}
+          onHeartDrop={onDungeonHeartDrop}
           onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}
         />

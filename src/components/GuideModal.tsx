@@ -70,13 +70,15 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
                 measured against your stage's <strong>daily requirement</strong>: meet the
                 requirement (or finish everything you registered) and you're safe. Uncleaned
                 <strong> poop</strong> also drains <strong>1 heart every 6 hours</strong>.
-                Hearts are healed <strong>only by rubbing your Digimon</strong> (up to
-                <strong> 1 heart per day</strong>). If HP hits 0, your Digimon degenerates.
+                Hearts are healed by <strong>rubbing your Digimon</strong> (up to
+                <strong> 1 heart per day</strong>) or by using a <strong>Little Heart</strong> item
+                (bought in the shop or dropped in the dungeon). If HP hits 0, your Digimon degenerates.
               </li>
               <li>
-                <strong>⚡ Energy</strong> — Fills only by <strong>feeding</strong> and resets
-                daily. It must be <strong>full at the end of the day</strong> for the day to
-                count as perfect (your evolution point).
+                <strong>⚡ Energy</strong> — The number of energy bars equals your stage's
+                <strong> daily task requirement</strong> (e.g. Rookie needs 4 tasks → 4 bars).
+                Fills only by <strong>feeding</strong> and resets daily. It must be
+                <strong> full at the end of the day</strong> for the day to count as perfect.
               </li>
               <li>
                 <strong>🍎 Food (Feed)</strong> — Refills energy and grants attribute points

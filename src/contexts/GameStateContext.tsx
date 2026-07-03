@@ -104,8 +104,6 @@ export interface GameState {
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
   equippedBackground: string | null;
-  /** Shop emblem: forces this branch on the NEXT digivolution (consumed on evolve). */
-  forcedBranch: 'virus' | 'data' | 'vaccine' | null;
   /** Shop item digivolution: replaces the branch form when the pet evolves to the item's level (consumed on evolve). */
   equippedEvoItem: string | null;
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
@@ -174,7 +172,6 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         gamePoints: loadedState.gamePoints ?? 0,
         ownedBackgrounds: loadedState.ownedBackgrounds ?? [],
         equippedBackground: loadedState.equippedBackground ?? null,
-        forcedBranch: loadedState.forcedBranch ?? null,
         equippedEvoItem: loadedState.equippedEvoItem ?? null,
       } as GameState;
     }
@@ -211,7 +208,6 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       gamePoints: 0,
       ownedBackgrounds: [],
       equippedBackground: null,
-      forcedBranch: null,
       equippedEvoItem: null,
     };
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
+import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from '../types/progression';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 
 // Replicate the performDailyReset state-updater logic for unit testing.
@@ -35,7 +35,8 @@ function simulateReset(prev: any): any {
   // least 1 task registered) AND full energy at day's end
   const totalTasks = availableActivities.length + prev.tasks.length;
   const dailyGoal = Math.min(totalTasks, requiredToday);
-  const energyWasFull = (prev.energyPoints ?? 0) >= prev.maxHealthPoints;
+  // Energy bars = the stage's task requirement (requiredToday), not maxHP.
+  const energyWasFull = (prev.energyPoints ?? 0) >= requiredToday;
   const dayWasPerfect = totalTasks > 0 && dailyDone >= dailyGoal && energyWasFull;
 
   let newHP = prev.healthPoints;
@@ -136,7 +137,7 @@ const baseState = () => ({
   tasks: [],
   healthPoints: 3,
   maxHealthPoints: 3,
-  energyPoints: 3, // full by default so task-focused tests aren't affected
+  energyPoints: 10, // full by default (≥ any stage requirement) so task-focused tests aren't affected
   perfectDays: 0,
   totalXP: 0,
   virusPoints: 0,
@@ -212,6 +213,19 @@ describe('performDailyReset — proportional HP loss', () => {
     const result = simulateReset({ ...baseState(), tasks, activities: acts });
     expect(result.tasks[0].completed).toBe(false);
     expect(result.activities[0].steps[0].completed).toBe(false);
+  });
+});
+
+describe('getMaxEnergyForStage — energy bars = task requirement', () => {
+  it('matches the stage requirement for each form', () => {
+    expect(getMaxEnergyForStage('tapirmon')).toBe(FORM_REQUIREMENTS.rookie.required);   // 4
+    expect(getMaxEnergyForStage('tuskmon')).toBe(FORM_REQUIREMENTS.champion.required);   // 5
+    expect(getMaxEnergyForStage('digiegg')).toBe(FORM_REQUIREMENTS.digiegg.required);    // 1
+  });
+
+  it('can differ from the stage max HP (rookie: 4 energy bars, 3 hearts)', () => {
+    expect(getMaxEnergyForStage('tapirmon')).toBe(4);
+    expect(MAX_HP_BY_FORM.rookie).toBe(3);
   });
 });
 

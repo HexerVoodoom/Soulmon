@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
+import {
+  buildDungeonEnemies, getDungeonDifficulty, getDungeonBest, getDungeonRunsLeft,
+  DUNGEON_DAILY_LIMIT, type DungeonEnemy,
+} from '../utils/dungeon';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -10,35 +14,15 @@ import type { Language } from '../utils/i18n';
  * Attack: a marker sweeps back and forth; stop it near the CENTER for more
  * damage (perfect ≥92% = crit). Defense uses the same mechanic but graded the
  * other way: closer to center avoids more damage — a perfect stop fully
- * dodges AND lands a free counter-attack. Defense also has a TIME LIMIT: the
- * countdown is shown and running out = taking the hit in full.
+ * dodges AND lands a free counter-attack, with a visible countdown.
  *
- * Every action shows a result popup for a beat before the next phase starts,
- * and each defeated enemy waits for confirmation before the next challenge.
- *
- * Self-contained run (never touches the pet's real HP). Rewards: food via
- * onReward (App caps 3/day) + 🎖️ points per enemy + clear bonus.
+ * Enemies are RANDOM Digimon from the pet's tier and scale with the monthly
+ * difficulty (which bumps on each clear and resets at the start of the month).
+ * A run costs one of the day's limited entries; LOSING costs one real heart, so
+ * entry is blocked at ≤1 heart. Hearts (not food) can drop, and the run score
+ * feeds a best-score ranking.
  */
 
-interface Enemy {
-  name: string;
-  stage: string;   // sprite key
-  hp: number;
-  atk: number;
-  speed: number;   // bar sweeps per second (higher = harder)
-  points: number;  // 🎖️ granted when defeated
-}
-
-const ENEMIES: Enemy[] = [
-  { name: 'Bakemon',      stage: 'bakemon',      hp: 8,  atk: 3, speed: 0.9,  points: 4 },
-  { name: 'Tuskmon',      stage: 'tuskmon',      hp: 12, atk: 4, speed: 1.15, points: 6 },
-  { name: 'Gigadramon',   stage: 'gigadramon',   hp: 16, atk: 5, speed: 1.4,  points: 8 },
-  { name: 'LadyDevimon',  stage: 'ladydevimon',  hp: 20, atk: 6, speed: 1.7,  points: 10 },
-  { name: 'Titamon',      stage: 'titamon',      hp: 26, atk: 7, speed: 2.0,  points: 12 },
-];
-
-// Player battle stats scale with the pet's REAL evolution level: a stronger
-// pet hits harder and endures more (received damage shrinks relative to HP).
 const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
   digiegg:  { hp: 10, dmg: 3 },
   'baby-i': { hp: 10, dmg: 3 },
@@ -54,7 +38,7 @@ const DEFEND_TIME = 3.0;   // seconds to react on defense
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
 const CLEAR_BONUS = 10;    // 🎖️ for finishing the whole dungeon
 
-type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'cleared' | 'lost';
+type Phase = 'intro' | 'blocked' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'cleared' | 'lost';
 interface Popup { icon: string; title: string; detail: string; color: string }
 
 // ── Timing bar ─────────────────────────────────────────────────────────────
@@ -111,29 +95,43 @@ function TimingBar({ speed, color, label, onStop }: {
 }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, onExit }: {
+export function DungeonGame({ evolutionStage, language, onEnter, onLose, onClear, onHeartDrop, onEarnPoints, onExit }: {
   evolutionStage: string;
   language: Language;
-  /** Called on each enemy defeated; returns the food emoji granted, or null if the daily cap was hit. */
-  onReward: () => string | null;
+  /** Start a run: consumes a daily entry and gates on HP. */
+  onEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' | 'limit' };
+  /** Losing costs 1 real heart; records the run score. Returns the best score. */
+  onLose: (score: number) => number;
+  /** Clearing records the score and bumps difficulty. Returns best + new level. */
+  onClear: (score: number) => { best: number; level: number };
+  /** Rolls for a heart drop (added to Items); returns whether one dropped. */
+  onHeartDrop: () => boolean;
   /** Grants 🎖️ minigame points. */
   onEarnPoints: (pts: number) => void;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const playerStats = PLAYER_STATS[getStageLevel(evolutionStage)] ?? PLAYER_STATS.rookie;
+
+  const [enemies, setEnemies] = useState<DungeonEnemy[]>([]);
   const [enemyIdx, setEnemyIdx] = useState(0);
-  const [enemyHp, setEnemyHp] = useState(ENEMIES[0].hp);
+  const [enemyHp, setEnemyHp] = useState(0);
   const [playerHp, setPlayerHp] = useState(playerStats.hp);
   const [phase, setPhase] = useState<Phase>('intro');
   const [popup, setPopup] = useState<Popup | null>(null);
   const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
   const [rewardMsg, setRewardMsg] = useState('');
   const [defendTimeLeft, setDefendTimeLeft] = useState(DEFEND_TIME);
+  const [level, setLevel] = useState(() => getDungeonDifficulty());
+  const [best, setBest] = useState(() => getDungeonBest());
+  const [runsLeft, setRunsLeft] = useState(() => getDungeonRunsLeft());
+  const [runScore, setRunScore] = useState(0);
+  const [blockReason, setBlockReason] = useState<'hp' | 'limit' | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const defendResolvedRef = useRef(false);
+  const runScoreRef = useRef(0);
 
-  const enemy = ENEMIES[enemyIdx];
+  const enemy = enemies[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage);
   const mono = { fontFamily: 'monospace' as const };
 
@@ -148,14 +146,44 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
     setTimeout(() => setHitFx(null), 450);
   };
 
-  // Enemy defeated: grant points + food, show the confirm screen.
+  const addPoints = (pts: number) => {
+    onEarnPoints(pts);
+    runScoreRef.current += pts;
+  };
+
+  // Begin a run: gate on HP + daily limit, then build the random enemy line-up.
+  const startRun = () => {
+    const res = onEnter();
+    if (!res.ok) {
+      setBlockReason(res.reason);
+      setRunsLeft(getDungeonRunsLeft());
+      setPhase('blocked');
+      return;
+    }
+    const list = buildDungeonEnemies(evolutionStage, res.level);
+    setLevel(res.level);
+    setBest(res.best);
+    setRunsLeft(getDungeonRunsLeft());
+    setEnemies(list);
+    setEnemyIdx(0);
+    setEnemyHp(list[0].hp);
+    setPlayerHp(playerStats.hp);
+    runScoreRef.current = 0;
+    setRunScore(0);
+    setRewardMsg('');
+    setPopup(null);
+    setBlockReason(null);
+    setPhase('attack');
+  };
+
+  // Enemy defeated: grant points + roll a heart drop, then show the confirm screen.
   const defeatEnemy = (finalMsg: Popup) => {
     playTaskComplete();
-    onEarnPoints(enemy.points);
-    const emoji = onReward();
+    addPoints(enemy.points);
+    const gotHeart = onHeartDrop();
     setRewardMsg(
       `🎖️ +${enemy.points} ${isPt ? 'pontos' : 'points'}` +
-      (emoji ? ` · ${emoji} +1 ${isPt ? 'comida' : 'food'}` : ''),
+      (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : ''),
     );
     setPopup(finalMsg);
     setPhase('result');
@@ -227,6 +255,9 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
 
     if (newHp <= 0) {
       playDegenerate();
+      const newBest = onLose(runScoreRef.current); // -1 real heart + record score
+      setBest(newBest);
+      setRunScore(runScoreRef.current);
       after(POPUP_MS, () => { setPopup(null); setPhase('lost'); });
       return;
     }
@@ -249,26 +280,21 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
   }, [phase]);
 
   const nextEnemy = () => {
-    if (enemyIdx + 1 >= ENEMIES.length) {
+    if (enemyIdx + 1 >= enemies.length) {
       playFeed();
-      onEarnPoints(CLEAR_BONUS);
+      addPoints(CLEAR_BONUS);
+      const res = onClear(runScoreRef.current); // record score + bump difficulty
+      setBest(res.best);
+      setLevel(res.level);
+      setRunScore(runScoreRef.current);
       setPhase('cleared');
       return;
     }
     const idx = enemyIdx + 1;
     setEnemyIdx(idx);
-    setEnemyHp(ENEMIES[idx].hp);
+    setEnemyHp(enemies[idx].hp);
     setRewardMsg('');
     setPhase('attack');
-  };
-
-  const restart = () => {
-    setEnemyIdx(0);
-    setEnemyHp(ENEMIES[0].hp);
-    setPlayerHp(playerStats.hp);
-    setRewardMsg('');
-    setPopup(null);
-    setPhase('intro');
   };
 
   const hpBar = (cur: number, max: number, color: string) => (
@@ -277,134 +303,174 @@ export function DungeonGame({ evolutionStage, language, onReward, onEarnPoints, 
     </div>
   );
 
+  const inBattle = enemies.length > 0 && ['attack', 'defend', 'result', 'enemy-down', 'cleared', 'lost'].includes(phase);
+
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0b0f17 0%, #121a2a 60%, #1a1426 100%)', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
         <span style={{ ...mono, fontWeight: 800, fontSize: '0.95rem', letterSpacing: 1 }}>
-          ⚔️ {isPt ? 'MASMORRA' : 'DUNGEON'} — {enemyIdx + 1}/{ENEMIES.length}
+          ⚔️ {isPt ? 'MASMORRA' : 'DUNGEON'}
+          {inBattle ? ` — ${enemyIdx + 1}/${enemies.length}` : ''}
+          <span style={{ color: '#c084fc', marginLeft: 8, fontSize: '0.8rem' }}>{isPt ? 'Nv' : 'Lv'}.{level}</span>
         </span>
         <button onClick={onExit} style={{ ...mono, background: 'rgba(255,255,255,0.08)', border: '1px solid #2c3a52', color: '#e8eefc', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
           {isPt ? 'Sair' : 'Exit'}
         </button>
       </div>
 
-      {/* Battlefield */}
-      <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 12, border: '1px solid #2c3a52', background: 'repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(90,120,190,0.07) 31px), repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(90,120,190,0.07) 31px)', overflow: 'hidden' }}>
-        {/* Enemy (top-right) */}
-        <div style={{ position: 'absolute', top: 14, right: 16, textAlign: 'right' }}>
-          <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{enemy.name}</p>
-          {hpBar(enemyHp, enemy.hp, '#f87171')}
-        </div>
-        <img
-          src={getSpriteForStage(enemy.stage)}
-          alt={enemy.name}
-          style={{
-            position: 'absolute', top: '18%', right: '10%', width: 96, height: 96, objectFit: 'contain',
-            imageRendering: 'pixelated',
-            ['--flip' as string]: '-1',
-            filter: hitFx === 'enemy' ? 'brightness(3) drop-shadow(0 0 10px #f87171)' : 'drop-shadow(0 0 8px rgba(248,113,113,0.35))',
-            transition: 'filter 0.15s',
-            animation: 'dungeon-idle 1.6s ease-in-out infinite',
-          } as React.CSSProperties}
-        />
-        {/* Pet (bottom-left) */}
-        <div style={{ position: 'absolute', bottom: 'calc(6% + 96px)', left: 16 }}>
-          <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
-          {hpBar(playerHp, playerStats.hp, '#4ade80')}
-        </div>
-        <img
-          src={petSprite}
-          alt="pet"
-          style={{
-            position: 'absolute', bottom: '6%', left: '8%', width: 84, height: 84, objectFit: 'contain',
-            imageRendering: 'pixelated',
-            filter: hitFx === 'player' ? 'brightness(3) drop-shadow(0 0 10px #f87171)' : 'drop-shadow(0 0 8px rgba(74,222,128,0.35))',
-            transition: 'filter 0.15s',
-            animation: 'dungeon-idle 1.3s ease-in-out infinite',
-          }}
-        />
-
-        {/* Result popup — feedback beat between actions */}
-        {popup && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
-            <div style={{ ...mono, textAlign: 'center', background: '#0e1522', border: `2px solid ${popup.color}`, borderRadius: 12, padding: '16px 26px', boxShadow: `0 0 24px ${popup.color}55` }}>
-              <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{popup.icon}</div>
-              <p style={{ fontWeight: 800, fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
-              <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
-            </div>
+      {/* Battlefield (only during a run) */}
+      {inBattle && enemy && (
+        <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 12, border: '1px solid #2c3a52', background: 'repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(90,120,190,0.07) 31px), repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(90,120,190,0.07) 31px)', overflow: 'hidden' }}>
+          {/* Enemy (top-right) */}
+          <div style={{ position: 'absolute', top: 14, right: 16, textAlign: 'right' }}>
+            <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{enemy.name}</p>
+            {hpBar(enemyHp, enemy.hp, '#f87171')}
           </div>
-        )}
-      </div>
+          <img
+            src={getSpriteForStage(enemy.stage)}
+            alt={enemy.name}
+            style={{
+              position: 'absolute', top: '18%', right: '10%', width: 96, height: 96, objectFit: 'contain',
+              imageRendering: 'pixelated',
+              ['--flip' as string]: '-1',
+              filter: hitFx === 'enemy' ? 'brightness(3) drop-shadow(0 0 10px #f87171)' : 'drop-shadow(0 0 8px rgba(248,113,113,0.35))',
+              transition: 'filter 0.15s',
+              animation: 'dungeon-idle 1.6s ease-in-out infinite',
+            } as React.CSSProperties}
+          />
+          {/* Pet (bottom-left) */}
+          <div style={{ position: 'absolute', bottom: 'calc(6% + 96px)', left: 16 }}>
+            <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
+            {hpBar(playerHp, playerStats.hp, '#4ade80')}
+          </div>
+          <img
+            src={petSprite}
+            alt="pet"
+            style={{
+              position: 'absolute', bottom: '6%', left: '8%', width: 84, height: 84, objectFit: 'contain',
+              imageRendering: 'pixelated',
+              filter: hitFx === 'player' ? 'brightness(3) drop-shadow(0 0 10px #f87171)' : 'drop-shadow(0 0 8px rgba(74,222,128,0.35))',
+              transition: 'filter 0.15s',
+              animation: 'dungeon-idle 1.3s ease-in-out infinite',
+            }}
+          />
 
-      {/* Action area */}
-      <div style={{ padding: 16, minHeight: 150 }}>
-        {phase === 'intro' && (
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...mono, fontSize: '0.8rem', color: '#9fb2d8', marginBottom: 10 }}>
+          {/* Result popup — feedback beat between actions */}
+          {popup && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
+              <div style={{ ...mono, textAlign: 'center', background: '#0e1522', border: `2px solid ${popup.color}`, borderRadius: 12, padding: '16px 26px', boxShadow: `0 0 24px ${popup.color}55` }}>
+                <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{popup.icon}</div>
+                <p style={{ fontWeight: 800, fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
+                <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Intro / blocked title area */}
+      {(phase === 'intro' || phase === 'blocked') && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem' }}>⚔️</div>
+          <div style={{ ...mono, display: 'flex', gap: 18, fontSize: '0.82rem', color: '#c6d4f2' }}>
+            <span>🏅 {isPt ? 'Recorde' : 'Best'}: <b style={{ color: '#facc15' }}>{best}</b></span>
+            <span>🔥 {isPt ? 'Dificuldade' : 'Difficulty'}: <b style={{ color: '#c084fc' }}>{level}</b></span>
+          </div>
+          <p style={{ ...mono, fontSize: '0.78rem', color: runsLeft > 0 ? '#9fb2d8' : '#f87171' }}>
+            {isPt ? `Entradas hoje: ${runsLeft}/${DUNGEON_DAILY_LIMIT}` : `Runs today: ${runsLeft}/${DUNGEON_DAILY_LIMIT}`}
+          </p>
+          {phase === 'blocked' ? (
+            <p style={{ ...mono, fontSize: '0.82rem', color: '#f87171', maxWidth: 300, fontWeight: 700 }}>
+              {blockReason === 'hp'
+                ? (isPt ? '💔 Corações insuficientes! Perder custa 1 coração — recupere antes (você não pode entrar com 1 ou meio coração).'
+                        : '💔 Not enough hearts! Losing costs 1 heart — recover first (you can\'t enter with 1 or half a heart).')
+                : (isPt ? '⏳ Limite diário atingido! Volte amanhã.' : '⏳ Daily limit reached! Come back tomorrow.')}
+            </p>
+          ) : (
+            <p style={{ ...mono, fontSize: '0.76rem', color: '#9fb2d8', maxWidth: 320 }}>
               {isPt
-                ? 'Pare o marcador no CENTRO para causar mais dano. Na defesa você tem 3s — o centro desvia, e perfeito contra-ataca!'
-                : 'Stop the marker at the CENTER for more damage. On defense you have 3s — center dodges, perfect counters!'}
+                ? 'Inimigos aleatórios que ficam mais fortes a cada vitória. Perder custa 1 coração de verdade!'
+                : 'Random enemies that grow stronger with each clear. Losing costs 1 real heart!'}
             </p>
-            <button onClick={() => setPhase('attack')}
-              style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, fontSize: '1rem', cursor: 'pointer' }}>
-              {isPt ? 'ENTRAR NA MASMORRA' : 'ENTER THE DUNGEON'}
-            </button>
-          </div>
-        )}
-        {phase === 'attack' && (
-          <div>
-            <p style={{ ...mono, textAlign: 'center', fontSize: '0.78rem', color: '#9fb2d8', marginBottom: 6 }}>
-              {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
-            </p>
-            <TimingBar key={`atk-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'ATACAR!' : 'ATTACK!'} onStop={handleAttack} />
-          </div>
-        )}
-        {phase === 'defend' && (
-          <div>
-            <p style={{ ...mono, textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
-              {isPt ? `${enemy.name} atacando — DESVIE!` : `${enemy.name} attacking — DODGE!`} ⏱ {defendTimeLeft.toFixed(1)}s
-            </p>
-            <TimingBar key={`def-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'DESVIAR!' : 'DODGE!'} onStop={a => handleDefend(a)} />
-          </div>
-        )}
-        {phase === 'result' && (
-          <p style={{ ...mono, textAlign: 'center', fontSize: '0.8rem', color: '#5d729c', paddingTop: 24 }}>…</p>
-        )}
-        {phase === 'enemy-down' && (
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...mono, fontWeight: 800, marginBottom: 4 }}>
-              ✅ {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
-            </p>
-            <p style={{ ...mono, fontSize: '0.82rem', color: '#facc15', marginBottom: 10 }}>{rewardMsg}</p>
-            <button onClick={nextEnemy}
-              style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
-              {enemyIdx + 1 >= ENEMIES.length
-                ? (isPt ? `FINALIZAR (+${CLEAR_BONUS} 🎖️ bônus)` : `FINISH (+${CLEAR_BONUS} 🎖️ bonus)`)
-                : (isPt ? `DESAFIAR ${ENEMIES[enemyIdx + 1].name.toUpperCase()} →` : `CHALLENGE ${ENEMIES[enemyIdx + 1].name.toUpperCase()} →`)}
-            </button>
-          </div>
-        )}
-        {(phase === 'cleared' || phase === 'lost') && (
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 10 }}>
-              {phase === 'cleared'
-                ? (isPt ? `🏆 Masmorra concluída! 🎖️ +${CLEAR_BONUS} bônus` : `🏆 Dungeon cleared! 🎖️ +${CLEAR_BONUS} bonus`)
-                : (isPt ? '💀 Você foi derrotado...' : '💀 You were defeated...')}
-            </p>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={restart}
-                style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                {isPt ? 'JOGAR DE NOVO' : 'PLAY AGAIN'}
-              </button>
-              <button onClick={onExit}
-                style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-                {isPt ? 'SAIR' : 'EXIT'}
+          )}
+          <button
+            onClick={phase === 'blocked' ? onExit : startRun}
+            disabled={phase !== 'blocked' && runsLeft <= 0}
+            style={{
+              ...mono, width: '100%', maxWidth: 320, padding: '12px 0', borderRadius: 8, border: 'none',
+              background: phase === 'blocked' ? '#60a5fa' : runsLeft > 0 ? '#4ade80' : '#374151',
+              color: phase === 'blocked' ? '#0b0f17' : runsLeft > 0 ? '#0b0f17' : '#6b7280',
+              fontWeight: 800, fontSize: '1rem', cursor: phase === 'blocked' || runsLeft > 0 ? 'pointer' : 'default',
+            }}>
+            {phase === 'blocked'
+              ? (isPt ? 'VOLTAR' : 'BACK')
+              : runsLeft > 0 ? (isPt ? 'ENTRAR NA MASMORRA' : 'ENTER THE DUNGEON')
+              : (isPt ? 'SEM ENTRADAS HOJE' : 'NO RUNS LEFT TODAY')}
+          </button>
+        </div>
+      )}
+
+      {/* Action area (during a run) */}
+      {inBattle && (
+        <div style={{ padding: 16, minHeight: 150 }}>
+          {phase === 'attack' && (
+            <div>
+              <p style={{ ...mono, textAlign: 'center', fontSize: '0.78rem', color: '#9fb2d8', marginBottom: 6 }}>
+                {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
+              </p>
+              <TimingBar key={`atk-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'ATACAR!' : 'ATTACK!'} onStop={handleAttack} />
+            </div>
+          )}
+          {phase === 'defend' && (
+            <div>
+              <p style={{ ...mono, textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
+                {isPt ? `${enemy.name} atacando — DESVIE!` : `${enemy.name} attacking — DODGE!`} ⏱ {defendTimeLeft.toFixed(1)}s
+              </p>
+              <TimingBar key={`def-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'DESVIAR!' : 'DODGE!'} onStop={a => handleDefend(a)} />
+            </div>
+          )}
+          {phase === 'result' && (
+            <p style={{ ...mono, textAlign: 'center', fontSize: '0.8rem', color: '#5d729c', paddingTop: 24 }}>…</p>
+          )}
+          {phase === 'enemy-down' && (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...mono, fontWeight: 800, marginBottom: 4 }}>
+                ✅ {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
+              </p>
+              <p style={{ ...mono, fontSize: '0.82rem', color: '#facc15', marginBottom: 10 }}>{rewardMsg}</p>
+              <button onClick={nextEnemy}
+                style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
+                {enemyIdx + 1 >= enemies.length
+                  ? (isPt ? `FINALIZAR (+${CLEAR_BONUS} 🎖️ bônus)` : `FINISH (+${CLEAR_BONUS} 🎖️ bonus)`)
+                  : (isPt ? `DESAFIAR ${enemies[enemyIdx + 1].name.toUpperCase()} →` : `CHALLENGE ${enemies[enemyIdx + 1].name.toUpperCase()} →`)}
               </button>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+          {(phase === 'cleared' || phase === 'lost') && (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
+                {phase === 'cleared'
+                  ? (isPt ? `🏆 Masmorra concluída! 🎖️ +${CLEAR_BONUS} bônus` : `🏆 Dungeon cleared! 🎖️ +${CLEAR_BONUS} bonus`)
+                  : (isPt ? '💀 Você foi derrotado... (−1 ❤️)' : '💀 You were defeated... (−1 ❤️)')}
+              </p>
+              <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 10 }}>
+                {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={startRun} disabled={runsLeft <= 0}
+                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: runsLeft > 0 ? '#4ade80' : '#374151', color: runsLeft > 0 ? '#0b0f17' : '#6b7280', fontWeight: 800, cursor: runsLeft > 0 ? 'pointer' : 'default' }}>
+                  {runsLeft > 0 ? (isPt ? `JOGAR (${runsLeft})` : `PLAY (${runsLeft})`) : (isPt ? 'SEM ENTRADAS' : 'NO RUNS')}
+                </button>
+                <button onClick={onExit}
+                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'SAIR' : 'EXIT'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

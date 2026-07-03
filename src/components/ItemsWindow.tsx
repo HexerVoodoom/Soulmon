@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Language } from '../utils/i18n';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
+import { SPECIAL_ITEMS, CHIP_BOOST, HEART_HEAL } from '../utils/shop';
 
 interface ItemsWindowProps {
   foodInventory: Record<string, number>;
@@ -34,12 +35,16 @@ const FOOD_NAMES: Record<string, { en: string; pt: string; descEn: string; descP
 };
 
 function getFoodName(emoji: string, lang: Language): string {
+  const special = SPECIAL_ITEMS[emoji];
+  if (special) return lang === 'pt-BR' ? special.namePt : special.nameEn;
   const entry = FOOD_NAMES[emoji];
   if (!entry) return emoji;
   return lang === 'pt-BR' ? entry.pt : entry.en;
 }
 
 function getFoodDesc(emoji: string, lang: Language): string {
+  const special = SPECIAL_ITEMS[emoji];
+  if (special) return lang === 'pt-BR' ? special.descPt : special.descEn;
   const entry = FOOD_NAMES[emoji];
   if (!entry) return '';
   return lang === 'pt-BR' ? entry.descPt : entry.descEn;
@@ -288,7 +293,8 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
       {popover && (() => {
         const name = getFoodName(popover.emoji, language);
         const desc = getFoodDesc(popover.emoji, language);
-        const attrs = getFoodAttrs(popover.emoji);
+        const special = SPECIAL_ITEMS[popover.emoji];
+        const attrs = special ? null : getFoodAttrs(popover.emoji);
         const attrEntries = attrs
           ? (['vaccine', 'data', 'virus'] as const).filter(k => attrs[k] > 0)
           : [];
@@ -324,7 +330,7 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                 </div>
               </div>
 
-              {/* Attribute points */}
+              {/* Attribute points (food) */}
               {attrEntries.length > 0 && (
                 <div style={{ padding: '4px 8px', display: 'flex', gap: 6, borderBottom: '1px solid #808080' }}>
                   {attrEntries.map(k => (
@@ -340,6 +346,21 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                       {k === 'vaccine' ? '💉' : k === 'data' ? '💾' : '🦠'}+{attrs![k]}
                     </span>
                   ))}
+                </div>
+              )}
+
+              {/* Special item effect (chip = attribute only; heart = heal) */}
+              {special && (
+                <div style={{ padding: '4px 8px', display: 'flex', gap: 6, borderBottom: '1px solid #808080' }}>
+                  {special.kind === 'chip' && special.attr ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: ATTR_COLORS[special.attr], fontWeight: 'bold' }}>
+                      {special.attr === 'vaccine' ? '💉' : special.attr === 'data' ? '💾' : '🦠'}+{CHIP_BOOST}
+                    </span>
+                  ) : (
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#E94F4F', fontWeight: 'bold' }}>
+                      ❤️+{HEART_HEAL}
+                    </span>
+                  )}
                 </div>
               )}
 
