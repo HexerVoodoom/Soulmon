@@ -45,6 +45,16 @@ export function EvolutionPath({
 }: EvolutionPathProps) {
   const [selectedBranch, setSelectedBranch] = useState<'virus' | 'data' | 'vaccine'>(currentBranch);
   const [confirmDegenerate, setConfirmDegenerate] = useState<{ stage: string; isSecondConfirm: boolean } | null>(null);
+  // Locked evolutions are hidden behind a pixelated "?" (spoiler guard). The
+  // user can reveal one (shown darkened) after confirming; this local set resets
+  // when they leave the screen (the component unmounts on navigation).
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [confirmReveal, setConfirmReveal] = useState<string | null>(null);
+
+  const handleRevealConfirm = () => {
+    if (confirmReveal) setRevealed(prev => new Set(prev).add(confirmReveal));
+    setConfirmReveal(null);
+  };
 
   // Get the correct evolution line based on egg type
   const evolutionLine = useMemo(() => getEvolutionLine(eggType), [eggType]);
@@ -143,7 +153,12 @@ export function EvolutionPath({
     // Verifica se este estágio está na linha evolutiva ATUAL do Digimon E se está ANTES do estágio atual
     const isInCurrentLine = currentEvolutionLine.some(e => e.name.toLowerCase() === evolution.name.toLowerCase());
     const isPreviousStage = isInCurrentLine && isUnlocked && !isCurrent;
-    
+
+    const isRevealed = revealed.has(evolution.name);
+    // Spoiler-guard only genuinely-future forms — stages already in your current
+    // line (you've passed them) are never hidden, even if XP-"locked".
+    const hidden = !isUnlocked && !isInCurrentLine && !isRevealed;
+
     return (
       <div key={`${evolution.name}-${index}`}>
         <div className={`bg-white rounded-xl p-5 border transition-all ${
@@ -154,25 +169,40 @@ export function EvolutionPath({
             : 'border-gray-100 opacity-50'
         }`}>
           <div className="flex items-center gap-3">
-            {/* Sprite */}
+            {/* Sprite — locked evolutions are hidden behind a pixelated "?" */}
             <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
               isUnlocked ? 'bg-gray-100' : 'bg-gray-200'
             }`}>
-              {evolution.sprite && (
-                <img 
-                  src={evolution.sprite} 
-                  alt={evolution.name}
-                  className={`w-12 h-12 object-contain ${!isUnlocked && 'grayscale opacity-50'}`}
-                  style={{ imageRendering: 'pixelated' }}
+              {hidden ? (
+                <button
+                  onClick={() => setConfirmReveal(evolution.name)}
+                  aria-label="Reveal evolution (spoiler)"
+                  title="Reveal (spoiler)"
+                  className="w-12 h-12 flex items-center justify-center rounded-md hover:bg-gray-300 transition-colors"
+                  style={{
+                    fontFamily: 'monospace', fontWeight: 900, fontSize: '1.7rem',
+                    color: '#6b7280', lineHeight: 1, cursor: 'pointer',
+                    imageRendering: 'pixelated',
+                    textShadow: '2px 2px 0 #cbd5e1, 3px 3px 0 #e5e7eb',
+                  }}
+                >
+                  ?
+                </button>
+              ) : evolution.sprite ? (
+                <img
+                  src={evolution.sprite}
+                  alt={isUnlocked ? evolution.name : 'revealed evolution'}
+                  className="w-12 h-12 object-contain"
+                  style={{ imageRendering: 'pixelated', filter: (isUnlocked || isInCurrentLine) ? 'none' : 'brightness(0.35) grayscale(0.35)' }}
                 />
-              )}
+              ) : null}
             </div>
 
             {/* Info */}
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className={`${isUnlocked ? 'text-gray-900' : 'text-gray-500'}`} style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                  {evolution.name}
+                  {hidden ? '???' : evolution.name}
                 </h3>
                 {isCurrent && (
                   <span className={`${colors.bg} text-white text-xs px-2 py-0.5 rounded`} style={{ fontFamily: 'monospace' }}>
@@ -249,6 +279,37 @@ export function EvolutionPath({
                 style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
               >
                 {confirmDegenerate.isSecondConfirm ? 'YES, DEGENERATE!' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reveal (spoiler) confirmation */}
+      {confirmReveal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h3 className="text-lg mb-4" style={{ fontFamily: 'monospace' }}>
+              👁️ Reveal this evolution?
+            </h3>
+            <p className="text-gray-700 mb-6" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+              This is a future evolution you haven't unlocked yet — peeking is a spoiler!
+              It'll show up darkened, and hide again once you leave this screen.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmReveal(null)}
+                className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-colors"
+                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRevealConfirm}
+                className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-xl transition-colors"
+                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+              >
+                Yes, reveal
               </button>
             </div>
           </div>
