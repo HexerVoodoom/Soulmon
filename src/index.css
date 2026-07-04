@@ -4886,6 +4886,12 @@ html {
   50%      { transform: translateY(-5px) scaleX(var(--flip, 1)); }
 }
 
+/* VHS scanline drift for the dungeon battlefield overlay. */
+@keyframes dungeon-vhs {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
 /* Rub-to-heal: hearts EXPLODE from the pet center — quick pop, then radiate
    far outward (like fireworks) and fade. Direction from --tx / --ty. */
 @keyframes rub-heart {

@@ -7,23 +7,25 @@ import {
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
   type DungeonEnemy,
 } from '../utils/dungeon';
-import { BITS_ICON } from '../utils/currency';
+import { sceneForFloor } from '../utils/dungeonScenes';
 import type { Language } from '../utils/i18n';
 
 /**
- * Dungeon minigame — timing-bar battle over an ascending enemy ladder.
+ * Dungeon minigame — timing-bar battle across up to 5 FLOORS.
  *
- * A wave is a fixed ladder of RANDOM Digimon climbing the tiers in order
- * (baby-i → baby-ii → rookie → champion → ultimate → mega), each stronger than
- * the last. Clearing the whole ladder advances the dungeon level: the next
- * wave's enemies deal MORE damage and take LESS. That level persists (resets
- * monthly), so runs start where you left off and only get harder.
+ * A run is up to 5 floors; each floor is a fixed ladder of 6 RANDOM Digimon
+ * climbing the tiers (baby-i → baby-ii → rookie → champion → ultimate → mega).
+ * Floor difficulty = base level + (floor-1), so floor 1 suits a rookie, floor 2
+ * a champion, floor 3 an ultimate… — a couple floors above the pet is brutal.
+ * Each floor has its own retro scene (Tamagotchi/VHS/synthwave/CRT/glitch).
+ * Clearing all 5 floors COMPLETES the run and raises the base level (next run is
+ * harder); the base level resets WEEKLY. Player HP carries between floors with a
+ * small heal on each clear.
  *
  * Attack: stop the sweeping marker near CENTER for more damage (≥92% = crit).
  * Defense: same bar, timed — center dodges, a perfect stop dodges + counters.
- * A run costs one of the day's limited entries; LOSING costs one real heart, so
- * entry is blocked at ≤1 heart. Hearts (not food) can drop, and the run's score
- * feeds a best-score ranking.
+ * No daily cap — entry is gated only by HP: LOSING costs one real heart, so you
+ * can't enter with ≤1 heart. Hearts (rarely) drop; the run score feeds a ranking.
  */
 
 const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
@@ -36,12 +38,13 @@ const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
   mega:     { hp: 18, dmg: 7 },
   ultra:    { hp: 20, dmg: 8 },
 };
+const MAX_FLOORS = 5;
 const PERFECT = 0.92;
 const DEFEND_TIME = 3.0;   // seconds to react on defense
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
-const CLEAR_BONUS = 12;    // 🎖️ for clearing a whole wave
+const CLEAR_BONUS = 12;    // Bits for clearing a whole floor
 
-type Phase = 'intro' | 'blocked' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'wave-clear' | 'lost';
+type Phase = 'intro' | 'blocked' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 interface Popup { icon: string; title: string; detail: string; color: string }
 
 // ── Timing bar ─────────────────────────────────────────────────────────────
@@ -101,13 +104,13 @@ function TimingBar({ speed, color, label, onStop }: {
 export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onEarnPoints, onExit }: {
   evolutionStage: string;
   language: Language;
-  /** Start a run: gates on HP only. Returns the starting level. */
+  /** Start a run: gates on HP only. Returns the base level (floor 1's level). */
   onEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' };
   /** Losing costs 1 real heart. */
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
   onHeartDrop: () => boolean;
-  /** Grants 🪙 Bits. */
+  /** Grants Bits. */
   onEarnPoints: (pts: number) => void;
   onExit: () => void;
 }) {
@@ -123,10 +126,10 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
   const [rewardMsg, setRewardMsg] = useState('');
   const [defendTimeLeft, setDefendTimeLeft] = useState(DEFEND_TIME);
-  const [waveLevel, setWaveLevel] = useState(() => getDungeonDifficulty());
+  const [baseLevel, setBaseLevel] = useState(() => getDungeonDifficulty());
+  const [floor, setFloor] = useState(1);
   const [best, setBest] = useState(() => getDungeonBest());
   const [runScore, setRunScore] = useState(0);
-  const [wavesCleared, setWavesCleared] = useState(0);
   const [blocked, setBlocked] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const defendResolvedRef = useRef(false);
@@ -136,6 +139,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   const petSprite = getSpriteForStage(evolutionStage);
   const mono = { fontFamily: 'monospace' as const };
   const ladderLen = LADDER_TIERS.length;
+  const scene = sceneForFloor(floor);
 
   const after = useCallback((ms: number, fn: () => void) => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -159,7 +163,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     onExit();
   };
 
-  // Begin a run at the persisted dungeon level; gated only by HP.
+  // Begin a run at floor 1 (level = persisted base); gated only by HP.
   const startRun = () => {
     const res = onEnter();
     if (!res.ok) {
@@ -168,15 +172,15 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
       return;
     }
     const list = buildDungeonWave(res.level, evolutionStage);
-    setWaveLevel(res.level);
+    setBaseLevel(res.level);
     setBest(res.best);
+    setFloor(1);
     setEnemies(list);
     setEnemyIdx(0);
     setEnemyHp(list[0].hp);
     setPlayerHp(playerStats.hp);
     runScoreRef.current = 0;
     setRunScore(0);
-    setWavesCleared(0);
     setRewardMsg('');
     setPopup(null);
     setBlocked(false);
@@ -189,7 +193,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     addPoints(enemy.points);
     const gotHeart = onHeartDrop();
     setRewardMsg(
-      `${BITS_ICON} +${enemy.points} Bits` +
+      `+${enemy.points} Bits` +
       (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : ''),
     );
     setPopup(finalMsg);
@@ -287,20 +291,23 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     return () => clearInterval(id);
   }, [phase]);
 
-  // Advance to the next enemy, or clear the wave (bump level, heal a little).
+  // Advance to the next enemy; or clear the floor (heal), or complete the run.
   const nextEnemy = () => {
     if (enemyIdx + 1 >= enemies.length) {
       playFeed();
       addPoints(CLEAR_BONUS);
       recordDungeonScore(runScoreRef.current);
       setBest(getDungeonBest());
-      setDungeonDifficultyAtLeast(waveLevel + 1);  // persist progress (monthly)
+      setRunScore(runScoreRef.current);
+      if (floor >= MAX_FLOORS) {
+        setDungeonDifficultyAtLeast(baseLevel + 1); // run complete → next run harder
+        setPhase('run-complete');
+        return;
+      }
       const heal = Math.ceil(playerStats.hp * 0.25);
       setPlayerHp(hp => Math.min(playerStats.hp, hp + heal));
-      setRunScore(runScoreRef.current);
-      setWavesCleared(n => n + 1);
       setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
-      setPhase('wave-clear');
+      setPhase('floor-clear');
       return;
     }
     const idx = enemyIdx + 1;
@@ -310,11 +317,11 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     setPhase('attack');
   };
 
-  // Continue into the next (harder) wave, carrying HP over.
-  const continueWave = () => {
-    const nextWave = waveLevel + 1;
-    const list = buildDungeonWave(nextWave, evolutionStage);
-    setWaveLevel(nextWave);
+  // Descend to the next (harder) floor, carrying HP over.
+  const nextFloor = () => {
+    const f = floor + 1;
+    const list = buildDungeonWave(baseLevel + (f - 1), evolutionStage);
+    setFloor(f);
     setEnemies(list);
     setEnemyIdx(0);
     setEnemyHp(list[0].hp);
@@ -329,15 +336,18 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     </div>
   );
 
-  const inBattle = enemies.length > 0 && ['attack', 'defend', 'result', 'enemy-down', 'wave-clear', 'lost'].includes(phase);
+  const inBattle = enemies.length > 0 && ['attack', 'defend', 'result', 'enemy-down', 'floor-clear', 'run-complete', 'lost'].includes(phase);
+  const sceneName = isPt ? scene.namePt : scene.nameEn;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0b0f17 0%, #121a2a 60%, #1a1426 100%)', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#07090f', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
       {/* Top bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
         <span style={{ ...mono, fontWeight: 800, fontSize: '0.95rem', letterSpacing: 1 }}>
           ⚔️ {isPt ? 'MASMORRA' : 'DUNGEON'}
-          <span style={{ color: '#c084fc', marginLeft: 8, fontSize: '0.8rem' }}>{isPt ? 'Onda' : 'Wave'} {waveLevel}</span>
+          <span style={{ color: scene.accent, marginLeft: 8, fontSize: '0.8rem' }}>
+            {isPt ? 'Andar' : 'Floor'} {floor}/{MAX_FLOORS} · {sceneName}
+          </span>
           {inBattle ? <span style={{ color: '#9fb2d8', marginLeft: 8, fontSize: '0.8rem' }}>{enemyIdx + 1}/{ladderLen}</span> : null}
         </span>
         <button onClick={exitRun} style={{ ...mono, background: 'rgba(255,255,255,0.08)', border: '1px solid #2c3a52', color: '#e8eefc', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
@@ -345,9 +355,13 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
         </button>
       </div>
 
-      {/* Battlefield (only during a run) */}
+      {/* Battlefield (only during a run) — per-floor retro scene + VHS overlay */}
       {inBattle && enemy && (
-        <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 12, border: '1px solid #2c3a52', background: 'repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(90,120,190,0.07) 31px), repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(90,120,190,0.07) 31px)', overflow: 'hidden' }}>
+        <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 12, border: `1px solid ${scene.accent}55`, background: scene.bg, overflow: 'hidden', boxShadow: `inset 0 0 60px rgba(0,0,0,0.6)` }}>
+          {/* VHS scanline overlay */}
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px)', backgroundSize: '100% 6px', animation: 'dungeon-vhs 5s linear infinite', opacity: 0.55, mixBlendMode: 'overlay' }} />
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 40px ${scene.accent}22` }} />
+
           {/* Enemy (top-right) */}
           <div style={{ position: 'absolute', top: 14, right: 16, textAlign: 'right' }}>
             <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{enemy.name}</p>
@@ -401,7 +415,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
           <div style={{ fontSize: '3rem' }}>⚔️</div>
           <div style={{ ...mono, display: 'flex', gap: 18, fontSize: '0.82rem', color: '#c6d4f2' }}>
             <span>🏅 {isPt ? 'Recorde' : 'Best'}: <b style={{ color: '#facc15' }}>{best}</b></span>
-            <span>🌊 {isPt ? 'Onda inicial' : 'Start wave'}: <b style={{ color: '#c084fc' }}>{waveLevel}</b></span>
+            <span>🔥 {isPt ? 'Dificuldade base' : 'Base level'}: <b style={{ color: '#c084fc' }}>{baseLevel}</b></span>
           </div>
           {blocked ? (
             <p style={{ ...mono, fontSize: '0.82rem', color: '#f87171', maxWidth: 300, fontWeight: 700 }}>
@@ -409,10 +423,10 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
                     : '💔 Not enough hearts! Losing costs 1 heart — recover first (you can\'t enter with 1 or half a heart).'}
             </p>
           ) : (
-            <p style={{ ...mono, fontSize: '0.76rem', color: '#9fb2d8', maxWidth: 320 }}>
+            <p style={{ ...mono, fontSize: '0.76rem', color: '#9fb2d8', maxWidth: 330 }}>
               {isPt
-                ? 'Escada de inimigos bebê→mega, cada um mais forte. Vença todos pra subir de onda — aí ficam ainda mais fortes. Perder custa 1 coração real!'
-                : 'Enemy ladder baby→mega, each stronger. Beat them all to level up the wave — they get even tougher. Losing costs 1 real heart!'}
+                ? '5 andares, cada um com 6 inimigos e mais forte que o anterior. Andar 1 serve pra um rookie; alguns andares acima ficam brutais. Concluir a run inteira sobe a dificuldade (reset semanal). Perder custa 1 coração real!'
+                : '5 floors, each with 6 enemies and tougher than the last. Floor 1 suits a rookie; a few floors up gets brutal. Completing the whole run raises the difficulty (weekly reset). Losing costs 1 real heart!'}
             </p>
           )}
           <button
@@ -437,7 +451,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
               <p style={{ ...mono, textAlign: 'center', fontSize: '0.78rem', color: '#9fb2d8', marginBottom: 6 }}>
                 {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
               </p>
-              <TimingBar key={`atk-${waveLevel}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'ATACAR!' : 'ATTACK!'} onStop={handleAttack} />
+              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'ATACAR!' : 'ATTACK!'} onStop={handleAttack} />
             </div>
           )}
           {phase === 'defend' && (
@@ -445,7 +459,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
               <p style={{ ...mono, textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
                 {isPt ? `${enemy.name} atacando — DESVIE!` : `${enemy.name} attacking — DODGE!`} ⏱ {defendTimeLeft.toFixed(1)}s
               </p>
-              <TimingBar key={`def-${waveLevel}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'DESVIAR!' : 'DODGE!'} onStop={a => handleDefend(a)} />
+              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'DESVIAR!' : 'DODGE!'} onStop={a => handleDefend(a)} />
             </div>
           )}
           {phase === 'result' && (
@@ -460,28 +474,53 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
               <button onClick={nextEnemy}
                 style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
                 {enemyIdx + 1 >= enemies.length
-                  ? (isPt ? `LIMPAR ONDA (+${CLEAR_BONUS} ${BITS_ICON})` : `CLEAR WAVE (+${CLEAR_BONUS} ${BITS_ICON})`)
+                  ? (floor >= MAX_FLOORS
+                      ? (isPt ? `CONCLUIR RUN (+${CLEAR_BONUS} Bits)` : `FINISH RUN (+${CLEAR_BONUS} Bits)`)
+                      : (isPt ? `LIMPAR ANDAR (+${CLEAR_BONUS} Bits)` : `CLEAR FLOOR (+${CLEAR_BONUS} Bits)`))
                   : (isPt ? `DESAFIAR ${enemies[enemyIdx + 1].name.toUpperCase()} →` : `CHALLENGE ${enemies[enemyIdx + 1].name.toUpperCase()} →`)}
               </button>
             </div>
           )}
-          {phase === 'wave-clear' && (
+          {phase === 'floor-clear' && (
             <div style={{ textAlign: 'center' }}>
               <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
-                🌊 {isPt ? `Onda ${waveLevel} concluída!` : `Wave ${waveLevel} cleared!`}
+                🚪 {isPt ? `Andar ${floor} concluído!` : `Floor ${floor} cleared!`}
               </p>
               <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
                 {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
               </p>
               <p style={{ ...mono, fontSize: '0.74rem', color: '#4ade80', marginBottom: 10 }}>{rewardMsg}</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={continueWave}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: '#c084fc', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? `ONDA ${waveLevel + 1} →` : `WAVE ${waveLevel + 1} →`}
+                <button onClick={nextFloor}
+                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: sceneForFloor(floor + 1).accent, color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? `ANDAR ${floor + 1} →` : `FLOOR ${floor + 1} →`}
                 </button>
                 <button onClick={exitRun}
                   style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
                   {isPt ? 'SAIR C/ PLACAR' : 'BANK & EXIT'}
+                </button>
+              </div>
+            </div>
+          )}
+          {phase === 'run-complete' && (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 4, color: '#facc15' }}>
+                {isPt ? '🏆 RUN COMPLETA! Os 5 andares caíram!' : '🏆 RUN COMPLETE! All 5 floors down!'}
+              </p>
+              <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
+                {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
+              </p>
+              <p style={{ ...mono, fontSize: '0.74rem', color: '#c084fc', marginBottom: 10 }}>
+                {isPt ? 'A próxima run ficou mais difícil.' : 'The next run got harder.'}
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={startRun}
+                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'NOVA RUN' : 'NEW RUN'}
+                </button>
+                <button onClick={onExit}
+                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'SAIR' : 'EXIT'}
                 </button>
               </div>
             </div>
@@ -492,7 +531,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
                 {isPt ? '💀 Você foi derrotado... (−1 ❤️)' : '💀 You were defeated... (−1 ❤️)'}
               </p>
               <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 10 }}>
-                {isPt ? `Ondas: ${wavesCleared} · Placar: ${runScore} · Recorde: ${best}` : `Waves: ${wavesCleared} · Score: ${runScore} · Best: ${best}`}
+                {isPt ? `Andar ${floor} · Placar: ${runScore} · Recorde: ${best}` : `Floor ${floor} · Score: ${runScore} · Best: ${best}`}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={startRun}

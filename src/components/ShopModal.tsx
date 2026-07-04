@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { getSpriteForStage } from '../utils/sprites';
-import { BITS_ICON } from '../utils/currency';
+import { bitsStyle } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -57,8 +57,8 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
             🛒 {isPt ? 'LOJA' : 'SHOP'}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ ...px, color: '#facc15', fontWeight: 800, fontSize: '0.9rem', textShadow: '2px 2px 0 #000' }}>
-              {BITS_ICON} {points} Bits
+            <span style={{ ...bitsStyle, fontSize: '0.9rem' }}>
+              {points} Bits
             </span>
             <button onClick={onClose}
               style={{ ...px, ...pixelBox('#f87171'), color: '#f87171', fontWeight: 800, padding: '2px 10px', cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -125,7 +125,7 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
                             fontWeight: 800, fontSize: '0.7rem', padding: '6px 8px',
                             cursor: affordable && !evoActive && !evoBlocked ? 'pointer' : 'default', flexShrink: 0,
                           }}>
-                          {BITS_ICON}{item.price}
+                          {item.price}
                         </button>
                       )}
                     </div>
@@ -135,7 +135,7 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
             </div>
           ))}
           <p style={{ ...px, color: '#5d729c', fontSize: '0.64rem', textAlign: 'center' }}>
-            {isPt ? `Ganhe ${BITS_ICON} Bits jogando os minijogos!` : `Earn ${BITS_ICON} Bits by playing the minigames!`}
+            {isPt ? 'Ganhe Bits jogando os minijogos!' : 'Earn Bits by playing the minigames!'}
           </p>
         </div>
       </div>

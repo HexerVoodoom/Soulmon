@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { playDegenerate, playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { BITS_ICON } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -205,15 +204,15 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onExit }: {
               <>
                 <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem' }}>💥 {isPt ? 'Fim de jogo!' : 'Game over!'}</p>
                 <p style={{ ...mono, fontSize: '0.85rem', color: '#9fb2d8' }}>
-                  Score: {finalScore} · {BITS_ICON} +{earned} Bits
+                  Score: {finalScore} · +{earned} Bits
                 </p>
               </>
             )}
             {phase === 'ready' && (
               <p style={{ ...mono, fontSize: '0.8rem', color: '#9fb2d8', padding: '0 20px', textAlign: 'center' }}>
                 {isPt
-                  ? `Pule os Digimon inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 ${BITS_ICON}`
-                  : `Jump the enemy Digimon! They get scarier over time. 100 score = 1 ${BITS_ICON}`}
+                  ? 'Pule os Digimon inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
+                  : 'Jump the enemy Digimon! They get scarier over time. 100 score = 1 Bit'}
               </p>
             )}
             <button onClick={start}

@@ -67,11 +67,16 @@ function poolForTier(tier: EnemyTier, exclude: string): string[] {
  * dealt and less damage taken (dmgReduction). Random each call.
  */
 export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[] {
+  // A "level" is roughly one player-tier of difficulty: level 1 suits a rookie,
+  // level 2 a champion, level 3 an ultimate… so a floor a couple levels above
+  // the player is brutal. Each level: more enemy HP + damage, and the enemy
+  // shrugs off more of the player's damage.
   const step = Math.max(0, level - 1);
-  const atkMult = 1 + 0.12 * step;                 // deals more damage each level
-  const dmgReduction = Math.min(0.7, 0.08 * step); // takes less damage each level
-  const speedBump = Math.min(0.4, 0.04 * step);
-  const ptsMult = 1 + 0.1 * step;
+  const hpMult = 1 + 0.14 * step;
+  const atkMult = 1 + 0.2 * step;
+  const dmgReduction = Math.min(0.72, 0.11 * step);
+  const speedBump = Math.min(0.5, 0.05 * step);
+  const ptsMult = 1 + 0.12 * step;
 
   return LADDER_TIERS.map(tier => {
     const base = TIER_BASE[tier];
@@ -81,7 +86,7 @@ export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[
     return {
       name: prettyName(key),
       stage: key,
-      hp: Math.max(5, Math.round(base.hp * variance)),
+      hp: Math.max(5, Math.round(base.hp * hpMult * variance)),
       atk: Math.max(2, Math.round(base.atk * atkMult)),
       speed: +(base.speed + speedBump).toFixed(2),
       points: Math.max(2, Math.round(base.points * ptsMult)),
@@ -90,26 +95,30 @@ export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[
   });
 }
 
-// ── Dungeon level (persists; resets monthly) ────────────────────────────────
-function monthKey(d = new Date()): string {
-  return `${d.getFullYear()}-${d.getMonth() + 1}`;
+// ── Dungeon base level (persists; resets weekly) ────────────────────────────
+function weekKey(d = new Date()): string {
+  // Simple year+week bucket — good enough for a weekly reset boundary.
+  const onejan = new Date(d.getFullYear(), 0, 1);
+  const days = Math.floor((d.getTime() - onejan.getTime()) / 86400000);
+  const week = Math.floor((days + onejan.getDay()) / 7);
+  return `${d.getFullYear()}-W${week}`;
 }
 
-/** Current dungeon level (the wave a run starts at). Resets to 1 each month. */
+/** Base dungeon level (floor 1's difficulty). Resets to 1 each week. */
 export function getDungeonDifficulty(): number {
-  const month = monthKey();
+  const week = weekKey();
   try {
     const rec = JSON.parse(localStorage.getItem(STORAGE_KEYS.DUNGEON_DIFFICULTY) || 'null');
-    if (rec?.month === month && typeof rec.level === 'number') return rec.level;
+    if (rec?.week === week && typeof rec.level === 'number') return rec.level;
   } catch { /* fall through to reset */ }
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ month, level: 1 }));
+  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ week, level: 1 }));
   return 1;
 }
 
-/** Raise the persisted dungeon level to at least `level` (called on wave clear). */
+/** Raise the persisted base level to at least `level` (called on run completion). */
 export function setDungeonDifficultyAtLeast(level: number): number {
   const next = Math.max(getDungeonDifficulty(), level);
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ month: monthKey(), level: next }));
+  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ week: weekKey(), level: next }));
   return next;
 }
 

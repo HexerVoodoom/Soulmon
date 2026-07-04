@@ -8,7 +8,7 @@ A moeda dos minijogos são os **Bits** (`gamePoints` no GameState, cloud-synced;
 
 | Jogo | Bits | Observações |
 |---|---|---|
-| ⚔️ Masmorra | Bits por inimigo (escalam com o nível) + bônus de onda | **sem limite diário** — só HP; perder custa 1 coração real; ranking em `DUNGEON_BEST` |
+| ⚔️ Masmorra | Bits por inimigo (escalam com o nível) + bônus de andar | **run = 5 andares** retrô; dificuldade do andar = base+(F−1); reset **semanal**; sem limite diário — só HP; perder custa 1 coração; ranking em `DUNGEON_BEST` |
 | 🦖 Dino | floor(score/100) por corrida (score ≈ 10/s) | ~6 Bits/min de corrida boa |
 | ✊ PPT | 5 por partida vencida (melhor de 5) | ~40s/partida, sorte (~50%) |
 

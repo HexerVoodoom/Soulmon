@@ -3,7 +3,7 @@ import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
 import { ShopModal } from './ShopModal';
-import { BITS_ICON } from '../utils/currency';
+import { bitsStyle } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -38,21 +38,21 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       key: 'dungeon', icon: '⚔️',
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
-        ? 'Escada de inimigos (bebê→mega) que sobe de nível a cada onda. Perder custa 1 coração! Pode dropar coraçãozinho.'
-        : 'Enemy ladder (baby→mega) that levels up each wave. Losing costs 1 heart! Can drop a little heart.',
+        ? '5 andares retrô, cada um com 6 inimigos e mais forte. Perder custa 1 coração! Reset semanal.'
+        : '5 retro floors, each with 6 tougher enemies. Losing costs 1 heart! Weekly reset.',
       pts: isPt ? 'Bits por inimigo + ranking' : 'Bits per enemy + ranking',
     },
     {
       key: 'dino', icon: '🦖',
       title: isPt ? 'Corrida do Dino' : 'Dino Runner',
       desc: isPt ? 'Pule os obstáculos e corra o máximo que conseguir.' : 'Jump the obstacles and run as far as you can.',
-      pts: isPt ? `1 ${BITS_ICON} a cada 100 de score` : `1 ${BITS_ICON} per 100 score`,
+      pts: isPt ? '1 Bit a cada 100 de score' : '1 Bit per 100 score',
     },
     {
       key: 'rps', icon: '✊',
       title: isPt ? 'Pedra, Papel e Tesoura' : 'Rock, Paper, Scissors',
       desc: isPt ? 'Clássico duelo contra o seu Digimon. Melhor de 5.' : 'The classic duel against your Digimon. First to 3.',
-      pts: isPt ? `5 ${BITS_ICON} por vitória` : `5 ${BITS_ICON} per match win`,
+      pts: isPt ? '5 Bits por vitória' : '5 Bits per match win',
     },
   ];
 
@@ -66,11 +66,11 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           🎮 {isPt ? 'Atividades' : 'Activities'}
         </h2>
         <span
-          className={`px-3 py-1 rounded-full ${isGlitch ? 'bg-[#00ffff]/10 text-[#00ffff]' : isWin98 ? 'bg-white text-black border border-gray-400' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'}`}
-          style={{ ...mono, fontSize: '0.8rem', fontWeight: 700 }}
+          className="px-3 py-1 rounded-md"
+          style={{ ...bitsStyle, fontSize: '0.85rem', background: '#0a1408', border: '1px solid rgba(57,255,20,0.4)' }}
           title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
         >
-          {BITS_ICON} {totalPoints} Bits
+          {totalPoints} Bits
         </span>
       </div>
       <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : 'text-gray-500'}
@@ -136,8 +136,8 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
               {isPt ? 'Chips, coraçõezinhos, itens de digievolução e cenários!' : 'Chips, little hearts, digivolution items and backdrops!'}
             </p>
           </div>
-          <span style={{ color: '#facc15', fontWeight: 800, fontSize: '0.85rem', textShadow: '2px 2px 0 #000' }}>
-            {BITS_ICON} {totalPoints}
+          <span style={{ ...bitsStyle, fontSize: '0.85rem' }}>
+            {totalPoints} Bits
           </span>
         </div>
       </button>
