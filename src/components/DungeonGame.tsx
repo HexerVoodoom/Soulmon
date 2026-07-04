@@ -3,10 +3,11 @@ import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import {
-  buildDungeonWave, getDungeonDifficulty, getDungeonBest, getDungeonRunsLeft,
-  setDungeonDifficultyAtLeast, recordDungeonScore, DUNGEON_DAILY_LIMIT, LADDER_TIERS,
+  buildDungeonWave, getDungeonDifficulty, getDungeonBest,
+  setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
   type DungeonEnemy,
 } from '../utils/dungeon';
+import { BITS_ICON } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -100,13 +101,13 @@ function TimingBar({ speed, color, label, onStop }: {
 export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onEarnPoints, onExit }: {
   evolutionStage: string;
   language: Language;
-  /** Start a run: consumes a daily entry and gates on HP. Returns the starting level. */
-  onEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' | 'limit' };
+  /** Start a run: gates on HP only. Returns the starting level. */
+  onEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' };
   /** Losing costs 1 real heart. */
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
   onHeartDrop: () => boolean;
-  /** Grants 🎖️ minigame points. */
+  /** Grants 🪙 Bits. */
   onEarnPoints: (pts: number) => void;
   onExit: () => void;
 }) {
@@ -124,10 +125,9 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   const [defendTimeLeft, setDefendTimeLeft] = useState(DEFEND_TIME);
   const [waveLevel, setWaveLevel] = useState(() => getDungeonDifficulty());
   const [best, setBest] = useState(() => getDungeonBest());
-  const [runsLeft, setRunsLeft] = useState(() => getDungeonRunsLeft());
   const [runScore, setRunScore] = useState(0);
   const [wavesCleared, setWavesCleared] = useState(0);
-  const [blockReason, setBlockReason] = useState<'hp' | 'limit' | null>(null);
+  const [blocked, setBlocked] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const defendResolvedRef = useRef(false);
   const runScoreRef = useRef(0);
@@ -159,19 +159,17 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     onExit();
   };
 
-  // Begin a run at the persisted dungeon level; gate on HP + daily limit.
+  // Begin a run at the persisted dungeon level; gated only by HP.
   const startRun = () => {
     const res = onEnter();
     if (!res.ok) {
-      setBlockReason(res.reason);
-      setRunsLeft(getDungeonRunsLeft());
+      setBlocked(true);
       setPhase('blocked');
       return;
     }
     const list = buildDungeonWave(res.level, evolutionStage);
     setWaveLevel(res.level);
     setBest(res.best);
-    setRunsLeft(getDungeonRunsLeft());
     setEnemies(list);
     setEnemyIdx(0);
     setEnemyHp(list[0].hp);
@@ -181,7 +179,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     setWavesCleared(0);
     setRewardMsg('');
     setPopup(null);
-    setBlockReason(null);
+    setBlocked(false);
     setPhase('attack');
   };
 
@@ -191,7 +189,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     addPoints(enemy.points);
     const gotHeart = onHeartDrop();
     setRewardMsg(
-      `🎖️ +${enemy.points} ${isPt ? 'pontos' : 'points'}` +
+      `${BITS_ICON} +${enemy.points} Bits` +
       (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : ''),
     );
     setPopup(finalMsg);
@@ -405,15 +403,10 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
             <span>🏅 {isPt ? 'Recorde' : 'Best'}: <b style={{ color: '#facc15' }}>{best}</b></span>
             <span>🌊 {isPt ? 'Onda inicial' : 'Start wave'}: <b style={{ color: '#c084fc' }}>{waveLevel}</b></span>
           </div>
-          <p style={{ ...mono, fontSize: '0.78rem', color: runsLeft > 0 ? '#9fb2d8' : '#f87171' }}>
-            {isPt ? `Entradas hoje: ${runsLeft}/${DUNGEON_DAILY_LIMIT}` : `Runs today: ${runsLeft}/${DUNGEON_DAILY_LIMIT}`}
-          </p>
-          {phase === 'blocked' ? (
+          {blocked ? (
             <p style={{ ...mono, fontSize: '0.82rem', color: '#f87171', maxWidth: 300, fontWeight: 700 }}>
-              {blockReason === 'hp'
-                ? (isPt ? '💔 Corações insuficientes! Perder custa 1 coração — recupere antes (não dá pra entrar com 1 ou meio coração).'
-                        : '💔 Not enough hearts! Losing costs 1 heart — recover first (you can\'t enter with 1 or half a heart).')
-                : (isPt ? '⏳ Limite diário atingido! Volte amanhã.' : '⏳ Daily limit reached! Come back tomorrow.')}
+              {isPt ? '💔 Corações insuficientes! Perder custa 1 coração — recupere antes (não dá pra entrar com 1 ou meio coração).'
+                    : '💔 Not enough hearts! Losing costs 1 heart — recover first (you can\'t enter with 1 or half a heart).'}
             </p>
           ) : (
             <p style={{ ...mono, fontSize: '0.76rem', color: '#9fb2d8', maxWidth: 320 }}>
@@ -423,18 +416,15 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
             </p>
           )}
           <button
-            onClick={phase === 'blocked' ? exitRun : startRun}
-            disabled={phase !== 'blocked' && runsLeft <= 0}
+            onClick={blocked ? exitRun : startRun}
             style={{
               ...mono, width: '100%', maxWidth: 320, padding: '12px 0', borderRadius: 8, border: 'none',
-              background: phase === 'blocked' ? '#60a5fa' : runsLeft > 0 ? '#4ade80' : '#374151',
-              color: phase === 'blocked' ? '#0b0f17' : runsLeft > 0 ? '#0b0f17' : '#6b7280',
-              fontWeight: 800, fontSize: '1rem', cursor: phase === 'blocked' || runsLeft > 0 ? 'pointer' : 'default',
+              background: blocked ? '#60a5fa' : '#4ade80', color: '#0b0f17',
+              fontWeight: 800, fontSize: '1rem', cursor: 'pointer',
             }}>
-            {phase === 'blocked'
+            {blocked
               ? (isPt ? 'VOLTAR' : 'BACK')
-              : runsLeft > 0 ? (isPt ? 'ENTRAR NA MASMORRA' : 'ENTER THE DUNGEON')
-              : (isPt ? 'SEM ENTRADAS HOJE' : 'NO RUNS LEFT TODAY')}
+              : (isPt ? 'ENTRAR NA MASMORRA' : 'ENTER THE DUNGEON')}
           </button>
         </div>
       )}
@@ -470,7 +460,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
               <button onClick={nextEnemy}
                 style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
                 {enemyIdx + 1 >= enemies.length
-                  ? (isPt ? `LIMPAR ONDA (+${CLEAR_BONUS} 🎖️)` : `CLEAR WAVE (+${CLEAR_BONUS} 🎖️)`)
+                  ? (isPt ? `LIMPAR ONDA (+${CLEAR_BONUS} ${BITS_ICON})` : `CLEAR WAVE (+${CLEAR_BONUS} ${BITS_ICON})`)
                   : (isPt ? `DESAFIAR ${enemies[enemyIdx + 1].name.toUpperCase()} →` : `CHALLENGE ${enemies[enemyIdx + 1].name.toUpperCase()} →`)}
               </button>
             </div>
@@ -505,9 +495,9 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
                 {isPt ? `Ondas: ${wavesCleared} · Placar: ${runScore} · Recorde: ${best}` : `Waves: ${wavesCleared} · Score: ${runScore} · Best: ${best}`}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={startRun} disabled={runsLeft <= 0}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: runsLeft > 0 ? '#4ade80' : '#374151', color: runsLeft > 0 ? '#0b0f17' : '#6b7280', fontWeight: 800, cursor: runsLeft > 0 ? 'pointer' : 'default' }}>
-                  {runsLeft > 0 ? (isPt ? `JOGAR (${runsLeft})` : `PLAY (${runsLeft})`) : (isPt ? 'SEM ENTRADAS' : 'NO RUNS')}
+                <button onClick={startRun}
+                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'JOGAR DE NOVO' : 'PLAY AGAIN'}
                 </button>
                 <button onClick={onExit}
                   style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>

@@ -121,8 +121,8 @@ export function getNextEvolution(
   // Item-digivolution forms (shop): continue the line as if the pet were the
   // branch form the item replaced at that level.
   const ITEM_FORM_LEVEL: Record<string, 'champion' | 'ultimate'> = {
-    greymon: 'champion', garurumon: 'champion', meramon: 'champion',
-    monzaemon: 'ultimate', etemon: 'ultimate',
+    greymon: 'champion', garurumon: 'champion', meramon: 'champion', devimon: 'champion',
+    monzaemon: 'ultimate', etemon: 'ultimate', andromon: 'ultimate',
   };
   if (ITEM_FORM_LEVEL[currentStage]) {
     const NATURAL: Record<EggLine, Record<'champion' | 'ultimate', Record<Attr, string>>> = {

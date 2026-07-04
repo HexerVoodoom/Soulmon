@@ -37,14 +37,14 @@ const STAGES_BY_LEVEL: Record<Exclude<EvolutionStage, 'digiegg'>, readonly strin
     // Salamon
     'gatomon', 'gatomon-black', 'mikemon',
     // Item digivolutions (shop) — replace the branch form at this level
-    'greymon', 'garurumon', 'meramon',
+    'greymon', 'garurumon', 'meramon', 'devimon',
   ],
   ultimate: [
     'gigadramon', 'triceramon', 'digitamamon',
     'paildramon', 'aeroveedramon', 'raidramon',
     'angewomon', 'ladydevimon', 'nefertimon',
     // Item digivolutions (shop)
-    'monzaemon', 'etemon',
+    'monzaemon', 'etemon', 'andromon',
   ],
   mega: [
     'gaioumon', 'ultimatebrachiomon', 'titamon',

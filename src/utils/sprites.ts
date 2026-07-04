@@ -45,6 +45,24 @@ import garurumonSprite from '../assets/garurumon_dmc.png';
 import meramonSprite from '../assets/meramon_dmc.png';
 import monzaemonSprite from '../assets/monzaemon_dmc.png';
 import etemonSprite from '../assets/etemon_dmc.png';
+// Extra dungeon enemies (+ 2 new evo forms) — DMC dots from src/assets
+import agumonSprite from '../assets/agumon_dmc.png';
+import patamonSprite from '../assets/patamon_dmc.png';
+import palmonSprite from '../assets/palmon_dmc.png';
+import betamonSprite from '../assets/betamon_dmc.png';
+import birdramonSprite from '../assets/birdramon_dmc.png';
+import kabuterimonSprite from '../assets/kabuterimon_dmc.png';
+import angemonSprite from '../assets/angemon_dmc.png';
+import devimonSprite from '../assets/devimon_dmc.png';
+import airdramonSprite from '../assets/airdramon_dmc.png';
+import seadramonSprite from '../assets/seadramon_dmc.png';
+import kuwagamonSprite from '../assets/kuwagamon_dmc.png';
+import ogremonSprite from '../assets/ogremon_dmc.png';
+import numemonSprite from '../assets/numemon_dmc.png';
+import megadramonSprite from '../assets/megadramon_dmc.png';
+import andromonSprite from '../assets/andromon_dmc.png';
+import vademonSprite from '../assets/vademon_dmc.png';
+import nanimonSprite from '../assets/nanimon_dmc.png';
 
 export const STAGE_SPRITES: Record<string, string> = {
   digiegg: digiEggSprite,
@@ -93,6 +111,24 @@ export const STAGE_SPRITES: Record<string, string> = {
   meramon: meramonSprite,
   monzaemon: monzaemonSprite,
   etemon: etemonSprite,
+  // Extra dungeon enemies (devimon + andromon are also shop evo forms)
+  agumon: agumonSprite,
+  patamon: patamonSprite,
+  palmon: palmonSprite,
+  betamon: betamonSprite,
+  birdramon: birdramonSprite,
+  kabuterimon: kabuterimonSprite,
+  angemon: angemonSprite,
+  devimon: devimonSprite,
+  airdramon: airdramonSprite,
+  seadramon: seadramonSprite,
+  kuwagamon: kuwagamonSprite,
+  ogremon: ogremonSprite,
+  numemon: numemonSprite,
+  megadramon: megadramonSprite,
+  andromon: andromonSprite,
+  vademon: vademonSprite,
+  nanimon: nanimonSprite,
 };
 
 export function getSpriteForStage(stage: string): string {

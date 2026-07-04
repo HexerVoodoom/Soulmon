@@ -22,7 +22,6 @@ export const STORAGE_KEYS = {
   AUTO_SLEEP_ENABLED: 'digiapp-auto-sleep-enabled',
   AUTO_SLEEP_START: 'digiapp-auto-sleep-start',
   AUTO_SLEEP_END: 'digiapp-auto-sleep-end',
-  DUNGEON_RUNS: 'digiapp-dungeon-runs',
   DUNGEON_DIFFICULTY: 'digiapp-dungeon-difficulty',
   DUNGEON_BEST: 'digiapp-dungeon-best',
   DUNGEON_HEART_DROPS: 'digiapp-dungeon-heart-drops',

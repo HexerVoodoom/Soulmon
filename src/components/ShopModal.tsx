@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { getSpriteForStage } from '../utils/sprites';
+import { BITS_ICON } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
- * 🛒 8-bit shop — spend minigame points (🎖️).
+ * 🛒 8-bit shop — spend Bits (🪙) earned in the minigames.
  * Chunky pixel borders, scanlines, hard shadows: intentionally retro.
  */
 export function ShopModal({ language, points, ownedBackgrounds, equippedBackground, equippedEvoItem, onBuy, onEquip, onClose }: {
@@ -57,7 +58,7 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ ...px, color: '#facc15', fontWeight: 800, fontSize: '0.9rem', textShadow: '2px 2px 0 #000' }}>
-              🎖️ {points}
+              {BITS_ICON} {points} Bits
             </span>
             <button onClick={onClose}
               style={{ ...px, ...pixelBox('#f87171'), color: '#f87171', fontWeight: 800, padding: '2px 10px', cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -124,7 +125,7 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
                             fontWeight: 800, fontSize: '0.7rem', padding: '6px 8px',
                             cursor: affordable && !evoActive && !evoBlocked ? 'pointer' : 'default', flexShrink: 0,
                           }}>
-                          🎖️{item.price}
+                          {BITS_ICON}{item.price}
                         </button>
                       )}
                     </div>
@@ -134,7 +135,7 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
             </div>
           ))}
           <p style={{ ...px, color: '#5d729c', fontSize: '0.64rem', textAlign: 'center' }}>
-            {isPt ? 'Ganhe 🎖️ jogando os minijogos!' : 'Earn 🎖️ by playing the minigames!'}
+            {isPt ? `Ganhe ${BITS_ICON} Bits jogando os minijogos!` : `Earn ${BITS_ICON} Bits by playing the minigames!`}
           </p>
         </div>
       </div>

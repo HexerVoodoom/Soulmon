@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
+import { BITS_ICON } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
  * Rock-Paper-Scissors vs the pet. First to 3 round-wins takes the match.
- * Scoring: 🎖️ +5 on a match victory (luck-based game → flat, modest reward).
+ * Scoring: 🪙 +5 Bits on a match victory (luck-based game → flat, modest reward).
  */
 type Hand = 0 | 1 | 2; // rock, paper, scissors
 const HANDS = ['✊', '✋', '✌️'];
@@ -99,7 +100,7 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
           {thinking ? '💭' : petHand !== null ? HANDS[petHand] : ''}
         </div>
         <p style={{ ...mono, fontSize: '0.9rem', fontWeight: 700, minHeight: 22 }}>
-          {matchOver === 'won' ? (isPt ? `🏆 Você venceu! 🎖️ +${MATCH_POINTS} pontos` : `🏆 You won! 🎖️ +${MATCH_POINTS} points`)
+          {matchOver === 'won' ? (isPt ? `🏆 Você venceu! ${BITS_ICON} +${MATCH_POINTS} Bits` : `🏆 You won! ${BITS_ICON} +${MATCH_POINTS} Bits`)
             : matchOver === 'lost' ? (isPt ? '💀 Seu Digimon venceu a partida!' : '💀 Your Digimon won the match!')
             : roundMsg}
         </p>

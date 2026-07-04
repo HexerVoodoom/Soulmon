@@ -79,7 +79,8 @@ export interface GameState {
     | 'angewomon' | 'ladydevimon' | 'nefertimon'
     | 'ophanimon' | 'lilithmon' | 'holydramon'
     | 'gaioumon-itto' | 'imperialdramon-paladin' | 'mastemon'
-    | 'greymon' | 'garurumon' | 'meramon' | 'monzaemon' | 'etemon';
+    | 'greymon' | 'garurumon' | 'meramon' | 'monzaemon' | 'etemon'
+    | 'devimon' | 'andromon';
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventsScheduled: number[];
@@ -98,7 +99,7 @@ export interface GameState {
   poopEventsShown: number[];
   /** Epoch ms clock for the "uncleaned poop drains 1 heart / 6h" penalty (0 = inactive). */
   poopPenaltyClockAt: number;
-  /** Minigame score (🎖️): earned in the Activities games, spent in the shop. */
+  /** Bits (🪙): minigame currency earned in the Activities games, spent in the shop. */
   gamePoints: number;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];

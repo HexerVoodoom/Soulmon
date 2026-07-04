@@ -28,7 +28,7 @@ import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI } from './utils/shop';
-import { getDungeonDifficulty, getDungeonRunsLeft, consumeDungeonRun, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
+import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -925,13 +925,11 @@ export default function App() {
     playSleep();
   }, []);
 
-  // Dungeon: entering consumes a daily run and is blocked at ≤1 heart (a loss
-  // costs a real heart, so the player must recover first). Returns the current
-  // monthly difficulty + best score, or a block reason.
-  const handleDungeonEnter = useCallback((): { ok: true; level: number; best: number } | { ok: false; reason: 'hp' | 'limit' } => {
+  // Dungeon: no daily cap — entry is blocked only at ≤1 heart (a loss costs a
+  // real heart, so the player must be able to afford it). As long as HP allows,
+  // they can go as often as they like. Returns the monthly difficulty + best.
+  const handleDungeonEnter = useCallback((): { ok: true; level: number; best: number } | { ok: false; reason: 'hp' } => {
     if (gameState.healthPoints <= 1) return { ok: false, reason: 'hp' };
-    if (getDungeonRunsLeft() <= 0) return { ok: false, reason: 'limit' };
-    consumeDungeonRun();
     return { ok: true, level: getDungeonDifficulty(), best: getDungeonBest() };
   }, [gameState.healthPoints]);
 
@@ -952,7 +950,7 @@ export default function App() {
     return true;
   }, []);
 
-  // 🎖️ Minigame points — accumulate in GameState (cloud-synced), spent in the shop.
+  // 🪙 Bits — minigame currency; accumulates in GameState (cloud-synced), spent in the shop.
   const handleEarnGamePoints = useCallback((pts: number) => {
     if (pts <= 0) return;
     setGameState(prev => ({ ...prev, gamePoints: (prev.gamePoints ?? 0) + pts }));

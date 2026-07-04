@@ -3,12 +3,13 @@ import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
 import { ShopModal } from './ShopModal';
+import { BITS_ICON } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
  * "Atividades" page — interactive minigames hub.
- * All games award 🎖️ gamePoints (accumulate only, for now — see docs/SHOP-PLAN.md).
- * Balance: Dungeon 4-12/enemy +10 clear · Dino floor(score/100) · RPS +5/match.
+ * All games award 🪙 Bits (GameState.gamePoints), spent in the shop.
+ * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
 export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onEarnPoints, onShopBuy, onEquipBackground }: {
   evolutionStage: string;
@@ -18,7 +19,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   ownedBackgrounds: string[];
   equippedBackground: string | null;
   equippedEvoItem: string | null;
-  onDungeonEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' | 'limit' };
+  onDungeonEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' };
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
   onEarnPoints: (pts: number) => void;
@@ -39,19 +40,19 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       desc: isPt
         ? 'Escada de inimigos (bebê→mega) que sobe de nível a cada onda. Perder custa 1 coração! Pode dropar coraçãozinho.'
         : 'Enemy ladder (baby→mega) that levels up each wave. Losing costs 1 heart! Can drop a little heart.',
-      pts: isPt ? 'Pontos por inimigo + ranking' : 'Points per enemy + ranking',
+      pts: isPt ? 'Bits por inimigo + ranking' : 'Bits per enemy + ranking',
     },
     {
       key: 'dino', icon: '🦖',
       title: isPt ? 'Corrida do Dino' : 'Dino Runner',
       desc: isPt ? 'Pule os obstáculos e corra o máximo que conseguir.' : 'Jump the obstacles and run as far as you can.',
-      pts: isPt ? '1 🎖️ a cada 100 de score' : '1 🎖️ per 100 score',
+      pts: isPt ? `1 ${BITS_ICON} a cada 100 de score` : `1 ${BITS_ICON} per 100 score`,
     },
     {
       key: 'rps', icon: '✊',
       title: isPt ? 'Pedra, Papel e Tesoura' : 'Rock, Paper, Scissors',
       desc: isPt ? 'Clássico duelo contra o seu Digimon. Melhor de 5.' : 'The classic duel against your Digimon. First to 3.',
-      pts: isPt ? '5 🎖️ por vitória' : '5 🎖️ per match win',
+      pts: isPt ? `5 ${BITS_ICON} por vitória` : `5 ${BITS_ICON} per match win`,
     },
   ];
 
@@ -67,9 +68,9 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
         <span
           className={`px-3 py-1 rounded-full ${isGlitch ? 'bg-[#00ffff]/10 text-[#00ffff]' : isWin98 ? 'bg-white text-black border border-gray-400' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'}`}
           style={{ ...mono, fontSize: '0.8rem', fontWeight: 700 }}
-          title={isPt ? 'Pontos de minijogos (em breve: loja!)' : 'Minigame points (shop coming soon!)'}
+          title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
         >
-          🎖️ {totalPoints}
+          {BITS_ICON} {totalPoints} Bits
         </span>
       </div>
       <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : 'text-gray-500'}
@@ -136,7 +137,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
             </p>
           </div>
           <span style={{ color: '#facc15', fontWeight: 800, fontSize: '0.85rem', textShadow: '2px 2px 0 #000' }}>
-            🎖️ {totalPoints}
+            {BITS_ICON} {totalPoints}
           </span>
         </div>
       </button>

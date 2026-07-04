@@ -13,7 +13,7 @@ export interface DungeonEnemy {
   hp: number;
   atk: number;
   speed: number;       // timing-bar sweeps per second (higher = harder)
-  points: number;      // 🎖️ granted when defeated
+  points: number;      // 🪙 Bits granted when defeated
   dmgReduction: number; // 0..~0.7 — fraction of the player's damage it shrugs off
 }
 
@@ -21,9 +21,10 @@ export interface DungeonEnemy {
 export type EnemyTier = 'baby-i' | 'baby-ii' | 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const LADDER_TIERS: EnemyTier[] = ['baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega'];
 
-export const DUNGEON_DAILY_LIMIT = 3;      // runs per day (dungeon rewards more)
+// No daily run cap: entry is gated only by HP (losing costs a real heart, so the
+// player can go as often as they can afford). Heart drops are deliberately rare.
 const HEART_DROP_DAILY_CAP = 2;            // hearts the dungeon can drop per day
-const HEART_DROP_CHANCE = 0.3;             // per enemy defeated
+const HEART_DROP_CHANCE = 0.05;            // per enemy defeated (very low)
 
 // Base enemy stats per tier, before the per-wave difficulty scaling.
 const TIER_BASE: Record<EnemyTier, { hp: number; atk: number; speed: number; points: number }> = {
@@ -40,9 +41,22 @@ function prettyName(stage: string): string {
   return stage.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 }
 
-// Sprite keys whose ACTUAL evolution level equals the tier (candidates as enemies).
+// Extra dungeon-only enemies (not part of the pet's evolution tree). Their
+// sprites live in STAGE_SPRITES; this maps each to the tier it fights at.
+// (devimon/andromon are omitted — they're in STAGES_BY_LEVEL, so getStageLevel
+// already tiers them as champion/ultimate.)
+const DUNGEON_ENEMY_TIERS: Record<string, EnemyTier> = {
+  agumon: 'rookie', patamon: 'rookie', palmon: 'rookie', betamon: 'rookie',
+  birdramon: 'champion', kabuterimon: 'champion', angemon: 'champion',
+  airdramon: 'champion', seadramon: 'champion', kuwagamon: 'champion',
+  ogremon: 'champion', numemon: 'champion',
+  megadramon: 'ultimate', vademon: 'ultimate', nanimon: 'ultimate',
+};
+
+// Sprite keys that fight at a given tier — the pet's own evolution forms (via
+// getStageLevel) plus the extra dungeon-only enemies above.
 function poolForTier(tier: EnemyTier, exclude: string): string[] {
-  const atTier = (k: string) => getStageLevel(k) === tier;
+  const atTier = (k: string) => getStageLevel(k) === tier || DUNGEON_ENEMY_TIERS[k] === tier;
   const pool = Object.keys(STAGE_SPRITES).filter(k => atTier(k) && k !== exclude);
   return pool.length > 0 ? pool : Object.keys(STAGE_SPRITES).filter(atTier);
 }
@@ -97,28 +111,6 @@ export function setDungeonDifficultyAtLeast(level: number): number {
   const next = Math.max(getDungeonDifficulty(), level);
   localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ month: monthKey(), level: next }));
   return next;
-}
-
-// ── Daily run limit ──────────────────────────────────────────────────────────
-function readRuns(): { date: string; count: number } {
-  const today = new Date().toDateString();
-  try {
-    const rec = JSON.parse(localStorage.getItem(STORAGE_KEYS.DUNGEON_RUNS) || 'null');
-    if (rec?.date === today) return rec;
-  } catch { /* fresh */ }
-  return { date: today, count: 0 };
-}
-
-export function getDungeonRunsLeft(): number {
-  return Math.max(0, DUNGEON_DAILY_LIMIT - readRuns().count);
-}
-
-/** Consume one daily run; returns the runs left afterwards. */
-export function consumeDungeonRun(): number {
-  const rec = readRuns();
-  const next = { date: rec.date, count: rec.count + 1 };
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_RUNS, JSON.stringify(next));
-  return Math.max(0, DUNGEON_DAILY_LIMIT - next.count);
 }
 
 // ── Best score (ranking) ─────────────────────────────────────────────────────
