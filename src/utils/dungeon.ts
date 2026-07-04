@@ -1,104 +1,87 @@
-// ⚔️ Dungeon logic — random enemies by tier, monthly-scaling difficulty,
-// daily play limit, score/ranking and heart drops. Kept out of the component so
-// the rules are testable and the storage bookkeeping lives in one place.
+// ⚔️ Dungeon logic — an ascending ladder of enemies (baby-i → mega), each random
+// within its tier and each stronger than the last. Clearing the whole ladder
+// advances the "dungeon level" (wave): enemies then deal MORE damage and take
+// LESS. That level persists (resets monthly), plus a daily play limit, score
+// ranking and heart drops. Kept out of the component so the rules are testable.
 import { STAGE_SPRITES } from './sprites';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from './storageKeys';
 
 export interface DungeonEnemy {
   name: string;
-  stage: string;   // sprite key
+  stage: string;       // sprite key
   hp: number;
   atk: number;
-  speed: number;   // timing-bar sweeps per second (higher = harder)
-  points: number;  // 🎖️ granted when defeated
+  speed: number;       // timing-bar sweeps per second (higher = harder)
+  points: number;      // 🎖️ granted when defeated
+  dmgReduction: number; // 0..~0.7 — fraction of the player's damage it shrugs off
 }
 
-export type BattleTier = 'rookie' | 'champion' | 'ultimate' | 'mega';
+// Enemies always climb these tiers in order within a wave (weakest → strongest).
+export type EnemyTier = 'baby-i' | 'baby-ii' | 'rookie' | 'champion' | 'ultimate' | 'mega';
+export const LADDER_TIERS: EnemyTier[] = ['baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega'];
 
 export const DUNGEON_DAILY_LIMIT = 3;      // runs per day (dungeon rewards more)
 const HEART_DROP_DAILY_CAP = 2;            // hearts the dungeon can drop per day
 const HEART_DROP_CHANCE = 0.3;             // per enemy defeated
 
-// Base enemy stats per tier, before the monthly difficulty scaling.
-const TIER_BASE: Record<BattleTier, { hp: number; atk: number; speed: number; points: number }> = {
-  rookie:   { hp: 10, atk: 3, speed: 1.0,  points: 4 },
-  champion: { hp: 15, atk: 4, speed: 1.25, points: 7 },
-  ultimate: { hp: 20, atk: 5, speed: 1.5,  points: 10 },
-  mega:     { hp: 28, atk: 7, speed: 1.8,  points: 13 },
+// Base enemy stats per tier, before the per-wave difficulty scaling.
+const TIER_BASE: Record<EnemyTier, { hp: number; atk: number; speed: number; points: number }> = {
+  'baby-i':   { hp: 6,  atk: 2, speed: 0.85, points: 2 },
+  'baby-ii':  { hp: 8,  atk: 3, speed: 0.95, points: 3 },
+  rookie:     { hp: 11, atk: 4, speed: 1.05, points: 4 },
+  champion:   { hp: 15, atk: 5, speed: 1.2,  points: 6 },
+  ultimate:   { hp: 20, atk: 6, speed: 1.4,  points: 9 },
+  mega:       { hp: 28, atk: 8, speed: 1.6,  points: 13 },
 };
-
-// Map the pet's evolution level to a battle tier (babies fight rookie-tier
-// enemies; ultra fights mega-tier).
-export function getBattleTier(stage: string): BattleTier {
-  const level = getStageLevel(stage);
-  switch (level) {
-    case 'champion': return 'champion';
-    case 'ultimate': return 'ultimate';
-    case 'mega':
-    case 'ultra':    return 'mega';
-    default:         return 'rookie';
-  }
-}
 
 // Pretty display name from a sprite key: 'gatomon-black' → 'Gatomon Black'.
 function prettyName(stage: string): string {
   return stage.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 }
 
-// Sprite keys whose ACTUAL evolution level equals the tier (so eggs/babies —
-// which getStageLevel collapses oddly — never show up as enemies). The tier is
-// always one of rookie/champion/ultimate/mega, matching real stage levels.
-function poolForTier(tier: BattleTier, exclude: string): string[] {
+// Sprite keys whose ACTUAL evolution level equals the tier (candidates as enemies).
+function poolForTier(tier: EnemyTier, exclude: string): string[] {
   const atTier = (k: string) => getStageLevel(k) === tier;
   const pool = Object.keys(STAGE_SPRITES).filter(k => atTier(k) && k !== exclude);
   return pool.length > 0 ? pool : Object.keys(STAGE_SPRITES).filter(atTier);
 }
 
-/** How many enemies a run has at a given difficulty level (3 → 5). */
-export function enemyCountForLevel(level: number): number {
-  return Math.min(5, 3 + Math.floor((level - 1) / 2));
-}
-
 /**
- * Build a run's enemy line-up: random Digimon from the pet's tier, with stats
- * scaled by the monthly difficulty `level` (1 = easiest). Random each call.
+ * Build one wave: a random Digimon from each tier (baby-i → mega, in order),
+ * with stats scaled by the dungeon `level`. Higher level = more enemy damage
+ * dealt and less damage taken (dmgReduction). Random each call.
  */
-export function buildDungeonEnemies(stage: string, level: number): DungeonEnemy[] {
-  const tier = getBattleTier(stage);
-  const base = TIER_BASE[tier];
-  const mult = 1 + 0.15 * (level - 1);         // hp/atk/points scaling
-  const speedMult = Math.min(1.6, 1 + 0.05 * (level - 1));
-  const count = enemyCountForLevel(level);
+export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[] {
+  const step = Math.max(0, level - 1);
+  const atkMult = 1 + 0.12 * step;                 // deals more damage each level
+  const dmgReduction = Math.min(0.7, 0.08 * step); // takes less damage each level
+  const speedBump = Math.min(0.4, 0.04 * step);
+  const ptsMult = 1 + 0.1 * step;
 
-  const pool = poolForTier(tier, stage);
-  // Shuffle for distinct picks; fall back to random when the pool is small.
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-
-  const enemies: DungeonEnemy[] = [];
-  for (let i = 0; i < count; i++) {
-    const key = shuffled.length > i ? shuffled[i] : pool[Math.floor(Math.random() * pool.length)];
-    const variance = 0.9 + Math.random() * 0.2;  // ±10%
-    // Later enemies in the run are a touch tougher than the first.
-    const slot = 1 + i * 0.12;
-    enemies.push({
+  return LADDER_TIERS.map(tier => {
+    const base = TIER_BASE[tier];
+    const pool = poolForTier(tier, petStage);
+    const key = pool[Math.floor(Math.random() * pool.length)];
+    const variance = 0.9 + Math.random() * 0.2;    // ±10% on HP
+    return {
       name: prettyName(key),
       stage: key,
-      hp: Math.max(6, Math.round(base.hp * mult * variance * slot)),
-      atk: Math.max(2, Math.round(base.atk * mult * slot)),
-      speed: +(base.speed * speedMult).toFixed(2),
-      points: Math.max(3, Math.round(base.points * mult)),
-    });
-  }
-  return enemies;
+      hp: Math.max(5, Math.round(base.hp * variance)),
+      atk: Math.max(2, Math.round(base.atk * atkMult)),
+      speed: +(base.speed + speedBump).toFixed(2),
+      points: Math.max(2, Math.round(base.points * ptsMult)),
+      dmgReduction: +dmgReduction.toFixed(2),
+    };
+  });
 }
 
-// ── Monthly difficulty ───────────────────────────────────────────────────────
+// ── Dungeon level (persists; resets monthly) ────────────────────────────────
 function monthKey(d = new Date()): string {
   return `${d.getFullYear()}-${d.getMonth() + 1}`;
 }
 
-/** Current dungeon difficulty level (resets to 1 at the start of each month). */
+/** Current dungeon level (the wave a run starts at). Resets to 1 each month. */
 export function getDungeonDifficulty(): number {
   const month = monthKey();
   try {
@@ -109,11 +92,11 @@ export function getDungeonDifficulty(): number {
   return 1;
 }
 
-/** Bump difficulty by one (called when a whole dungeon is cleared). */
-export function bumpDungeonDifficulty(): number {
-  const level = getDungeonDifficulty() + 1;
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ month: monthKey(), level }));
-  return level;
+/** Raise the persisted dungeon level to at least `level` (called on wave clear). */
+export function setDungeonDifficultyAtLeast(level: number): number {
+  const next = Math.max(getDungeonDifficulty(), level);
+  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ month: monthKey(), level: next }));
+  return next;
 }
 
 // ── Daily run limit ──────────────────────────────────────────────────────────

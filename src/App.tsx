@@ -28,7 +28,7 @@ import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI } from './utils/shop';
-import { getDungeonDifficulty, bumpDungeonDifficulty, getDungeonRunsLeft, consumeDungeonRun, getDungeonBest, recordDungeonScore, rollDungeonHeartDrop } from './utils/dungeon';
+import { getDungeonDifficulty, getDungeonRunsLeft, consumeDungeonRun, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -935,19 +935,10 @@ export default function App() {
     return { ok: true, level: getDungeonDifficulty(), best: getDungeonBest() };
   }, [gameState.healthPoints]);
 
-  // Losing the dungeon costs one real heart; the run's score still counts for
-  // the ranking. Returns the (possibly new) best score.
-  const handleDungeonLose = useCallback((score: number): number => {
+  // Losing the dungeon costs one real heart. (Score/difficulty bookkeeping lives
+  // in the game component via utils/dungeon.)
+  const handleDungeonLose = useCallback(() => {
     setGameState(prev => ({ ...prev, healthPoints: Math.max(0, prev.healthPoints - 1) }));
-    return recordDungeonScore(score);
-  }, []);
-
-  // Clearing the whole dungeon records the score (ranking) and makes the next
-  // run harder; difficulty resets to 1 at the start of each month.
-  const handleDungeonClear = useCallback((score: number): { best: number; level: number } => {
-    const best = recordDungeonScore(score);
-    const level = bumpDungeonDifficulty();
-    return { best, level };
   }, []);
 
   // Heart item can drop in the dungeon (capped per day). Adds it to the Items
@@ -1460,7 +1451,6 @@ export default function App() {
                 equippedEvoItem={gameState.equippedEvoItem ?? null}
                 onDungeonEnter={handleDungeonEnter}
                 onDungeonLose={handleDungeonLose}
-                onDungeonClear={handleDungeonClear}
                 onDungeonHeartDrop={handleDungeonHeartDrop}
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}

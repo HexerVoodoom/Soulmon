@@ -10,7 +10,7 @@ import type { Language } from '../utils/i18n';
  * All games award 🎖️ gamePoints (accumulate only, for now — see docs/SHOP-PLAN.md).
  * Balance: Dungeon 4-12/enemy +10 clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonClear, onDungeonHeartDrop, onEarnPoints, onShopBuy, onEquipBackground }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onEarnPoints, onShopBuy, onEquipBackground }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
@@ -19,8 +19,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   equippedBackground: string | null;
   equippedEvoItem: string | null;
   onDungeonEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' | 'limit' };
-  onDungeonLose: (score: number) => number;
-  onDungeonClear: (score: number) => { best: number; level: number };
+  onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
   onEarnPoints: (pts: number) => void;
   onShopBuy: (itemId: string) => boolean;
@@ -38,8 +37,8 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       key: 'dungeon', icon: '⚔️',
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
-        ? 'Inimigos aleatórios que ficam mais fortes. Perder custa 1 coração! Pode dropar coraçãozinho.'
-        : 'Random enemies that grow stronger. Losing costs 1 heart! Can drop a little heart.',
+        ? 'Escada de inimigos (bebê→mega) que sobe de nível a cada onda. Perder custa 1 coração! Pode dropar coraçãozinho.'
+        : 'Enemy ladder (baby→mega) that levels up each wave. Losing costs 1 heart! Can drop a little heart.',
       pts: isPt ? 'Pontos por inimigo + ranking' : 'Points per enemy + ranking',
     },
     {
@@ -161,7 +160,6 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           language={language}
           onEnter={onDungeonEnter}
           onLose={onDungeonLose}
-          onClear={onDungeonClear}
           onHeartDrop={onDungeonHeartDrop}
           onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}
