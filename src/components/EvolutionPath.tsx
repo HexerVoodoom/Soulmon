@@ -2,6 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { DigivolutionProgress } from './DigivolutionProgress';
 import { getEvolutionLine, type EggType } from '../types/evolution-lines';
+import { getStageLevel } from '../types/progression';
+
+// Numeric tier for each stage level (matches the card `level` field: egg=-3 …
+// rookie=0 … ultra=4) so we can tell which forms are "future" for the pet.
+const TIER_LEVEL: Record<string, number> = {
+  digiegg: -3, 'baby-i': -2, 'baby-ii': -1, rookie: 0,
+  champion: 1, ultimate: 2, mega: 3, ultra: 4,
+};
 
 interface EvolutionPathProps {
   currentStage: string;
@@ -43,9 +51,12 @@ export function EvolutionPath({
   onDegenerate,
   theme,
   unlockedEvolutions = [],
+  evolutionStage,
   eggType = 'tapirmon'
 }: EvolutionPathProps) {
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions.map(s => s.toLowerCase())), [unlockedEvolutions]);
+  // The pet's real current tier (independent of accumulated XP).
+  const currentLevel = TIER_LEVEL[getStageLevel(evolutionStage ?? currentStage.toLowerCase())] ?? 0;
   const [selectedBranch, setSelectedBranch] = useState<'virus' | 'data' | 'vaccine'>(currentBranch);
   const [confirmDegenerate, setConfirmDegenerate] = useState<{ stage: string; isSecondConfirm: boolean } | null>(null);
   // Locked evolutions are hidden behind a pixelated "?" (spoiler guard). The
@@ -105,10 +116,15 @@ export function EvolutionPath({
     }
   };
 
-  // Check if all Mega evolutions from all branches are unlocked (for Ultra Mode)
-  const areAllMegasUnlocked = () => {
-    return currentXP >= 1500;
-  };
+  // The 3 Mega forms (one per branch) for this egg line — Ultra unlocks only
+  // once all three are actually unlocked.
+  const megaKeys = useMemo(
+    () => evolutionLine.branches
+      .map(b => b.stages[b.stages.length - 1]?.name.toLowerCase())
+      .filter(Boolean) as string[],
+    [evolutionLine],
+  );
+  const areAllMegasUnlocked = () => megaKeys.length > 0 && megaKeys.every(k => unlockedSet.has(k));
 
   const branchPath = getBranchPath(selectedBranch);
   const colors = getBranchColor(selectedBranch);
@@ -158,10 +174,17 @@ export function EvolutionPath({
     const isPreviousStage = isInCurrentLine && isUnlocked && !isCurrent;
 
     const isRevealed = revealed.has(evolution.name);
-    // "Reached" = a form the pet actually unlocked (or a stage in the current
-    // line). Spoiler-guard everything else — future forms and other branches —
+    const stageKey = evolution.name.toLowerCase();
+    const isUltra = evolution.level === 4;
+    // "Reached" (shown) = the current form, an already-unlocked form, a shared
+    // trunk stage the pet has passed (egg → rookie), or — for Ultra — once all 3
+    // megas are unlocked. Everything else is a spoiler-hidden future form,
     // regardless of accumulated XP.
-    const isReached = unlockedSet.has(evolution.name.toLowerCase()) || isInCurrentLine || isCurrent;
+    const isReached =
+      isCurrent
+      || unlockedSet.has(stageKey)
+      || (evolution.level <= 0 && currentLevel >= evolution.level)
+      || (isUltra && areAllMegasUnlocked());
     const hidden = !isReached && !isRevealed;
 
     return (
@@ -224,7 +247,11 @@ export function EvolutionPath({
 
             {/* Status / Action Button */}
             <div>
-              {isPreviousStage ? (
+              {!isReached ? (
+                <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
+                  🔒
+                </div>
+              ) : isPreviousStage ? (
                 <button
                   onClick={() => handleDegenerateClick(evolution.name)}
                   className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs transition-colors"
@@ -232,10 +259,6 @@ export function EvolutionPath({
                 >
                   Degenerate
                 </button>
-              ) : !isReached ? (
-                <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
-                  🔒
-                </div>
               ) : null}
             </div>
           </div>
