@@ -20,6 +20,7 @@ interface EvolutionPathProps {
   evolutionStage?: string;
   perfectDays?: number;
   dailyRequired?: number;
+  unlockedEvolutions?: string[];
   eggType?: EggType;
 }
 
@@ -37,12 +38,14 @@ export function EvolutionPath({
   virusPoints, 
   dataPoints, 
   vaccinePoints, 
-  digivolutionSegments, 
-  digivolutionSegmentsNeeded, 
-  onDegenerate, 
-  theme, 
+  digivolutionSegments,
+  digivolutionSegmentsNeeded,
+  onDegenerate,
+  theme,
+  unlockedEvolutions = [],
   eggType = 'tapirmon'
 }: EvolutionPathProps) {
+  const unlockedSet = useMemo(() => new Set(unlockedEvolutions.map(s => s.toLowerCase())), [unlockedEvolutions]);
   const [selectedBranch, setSelectedBranch] = useState<'virus' | 'data' | 'vaccine'>(currentBranch);
   const [confirmDegenerate, setConfirmDegenerate] = useState<{ stage: string; isSecondConfirm: boolean } | null>(null);
   // Locked evolutions are hidden behind a pixelated "?" (spoiler guard). The
@@ -155,23 +158,25 @@ export function EvolutionPath({
     const isPreviousStage = isInCurrentLine && isUnlocked && !isCurrent;
 
     const isRevealed = revealed.has(evolution.name);
-    // Spoiler-guard only genuinely-future forms — stages already in your current
-    // line (you've passed them) are never hidden, even if XP-"locked".
-    const hidden = !isUnlocked && !isInCurrentLine && !isRevealed;
+    // "Reached" = a form the pet actually unlocked (or a stage in the current
+    // line). Spoiler-guard everything else — future forms and other branches —
+    // regardless of accumulated XP.
+    const isReached = unlockedSet.has(evolution.name.toLowerCase()) || isInCurrentLine || isCurrent;
+    const hidden = !isReached && !isRevealed;
 
     return (
       <div key={`${evolution.name}-${index}`}>
         <div className={`bg-white rounded-xl p-5 border transition-all ${
-          isCurrent 
-            ? `${colors.border} shadow-md ${colors.aura}` 
-            : isUnlocked
+          isCurrent
+            ? `${colors.border} shadow-md ${colors.aura}`
+            : isReached
             ? 'border-gray-200'
             : 'border-gray-100 opacity-50'
         }`}>
           <div className="flex items-center gap-3">
             {/* Sprite — locked evolutions are hidden behind a pixelated "?" */}
             <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
-              isUnlocked ? 'bg-gray-100' : 'bg-gray-200'
+              isReached ? 'bg-gray-100' : 'bg-gray-200'
             }`}>
               {hidden ? (
                 <button
@@ -193,7 +198,7 @@ export function EvolutionPath({
                   src={evolution.sprite}
                   alt={isUnlocked ? evolution.name : 'revealed evolution'}
                   className="w-12 h-12 object-contain"
-                  style={{ imageRendering: 'pixelated', filter: (isUnlocked || isInCurrentLine) ? 'none' : 'brightness(0.35) grayscale(0.35)' }}
+                  style={{ imageRendering: 'pixelated', filter: isReached ? 'none' : 'brightness(0.35) grayscale(0.35)' }}
                 />
               ) : null}
             </div>
@@ -201,7 +206,7 @@ export function EvolutionPath({
             {/* Info */}
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className={`${isUnlocked ? 'text-gray-900' : 'text-gray-500'}`} style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                <h3 className={`${isReached ? 'text-gray-900' : 'text-gray-500'}`} style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                   {hidden ? '???' : evolution.name}
                 </h3>
                 {isCurrent && (
@@ -227,7 +232,7 @@ export function EvolutionPath({
                 >
                   Degenerate
                 </button>
-              ) : !isUnlocked ? (
+              ) : !isReached ? (
                 <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
                   🔒
                 </div>

@@ -1378,6 +1378,7 @@ export default function App() {
               activitiesCount={gameState.activities.length}
               evolutionStage={gameState.evolutionStage}
               perfectDays={gameState.perfectDays}
+              unlockedEvolutions={gameState.unlockedEvolutions}
               eggType={gameState.eggType}
             /></Suspense>
           )}
