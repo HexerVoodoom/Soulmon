@@ -27,5 +27,6 @@ export const STORAGE_KEYS = {
   DUNGEON_HEART_DROPS: 'digiapp-dungeon-heart-drops',
   DINO_BEST: 'digiapp-dino-best',
   SOUND_MUTED: 'digiapp-sound-muted',
+  FCM_TOKEN: 'digiapp-fcm-token',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
 } as const;

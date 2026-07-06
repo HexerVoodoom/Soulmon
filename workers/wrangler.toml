@@ -17,3 +17,8 @@ VAPID_PUBLIC_KEY = "BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t
 # VAPID_JWK must be set as a secret:
 # wrangler secret put VAPID_JWK
 # (paste the full JWK JSON when prompted)
+
+# FIREBASE_SERVICE_ACCOUNT must be set as a secret — powers FCM push to the
+# native Android app (Firebase Console → Project Settings → Service accounts
+# → Generate new private key; paste the FULL downloaded JSON when prompted):
+# wrangler secret put FIREBASE_SERVICE_ACCOUNT

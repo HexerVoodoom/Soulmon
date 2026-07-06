@@ -1,7 +1,9 @@
 // Notification utilities for DigiApp
 import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
 import { VAPID_PUBLIC_KEY } from './vapid';
+import { STORAGE_KEYS } from './storageKeys';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -74,8 +76,6 @@ export interface ScheduledNotification {
   taskId?: string;
   type: 'alarm' | 'daily';
 }
-
-import { STORAGE_KEYS } from './storageKeys';
 
 const STORAGE_KEY = STORAGE_KEYS.SCHEDULED_NOTIFICATIONS;
 const DAILY_CHECK_KEY = STORAGE_KEYS.DAILY_NOTIFICATION_CHECK;
@@ -181,6 +181,80 @@ export const unsubscribeFromPush = async (): Promise<void> => {
     await sub.unsubscribe();
   } catch (err) {
     console.error('Push unsubscribe error:', err);
+  }
+};
+
+// ── FCM (native Android remote push) ──────────────────────────────────────
+// The Web Push path above doesn't work inside the Capacitor WebView — Android
+// WebView has no PushManager/Notification API. The native app instead uses
+// Firebase Cloud Messaging via @capacitor/push-notifications; the token is
+// uploaded to the SAME KV store the Web Push subscriptions live in (prefixed
+// `fcm:` instead of `push:`), and the scheduled worker (workers/) sends to both.
+let fcmListenersBound = false;
+
+export const registerForPushNotifications = async (
+  digimonName: string,
+  language: 'pt-BR' | 'en-US',
+  onForegroundNotification?: (title: string, body: string) => void,
+): Promise<boolean> => {
+  if (Capacitor.getPlatform() !== 'android') return false;
+
+  try {
+    const current = await PushNotifications.checkPermissions();
+    let granted = current.receive === 'granted';
+    if (!granted) {
+      const requested = await PushNotifications.requestPermissions();
+      granted = requested.receive === 'granted';
+    }
+    if (!granted) return false;
+
+    if (!fcmListenersBound) {
+      fcmListenersBound = true;
+
+      PushNotifications.addListener('registration', (token) => {
+        localStorage.setItem(STORAGE_KEYS.FCM_TOKEN, token.value);
+        fetch('/api/fcm-subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: token.value, digimonName, language }),
+        }).catch((err) => console.error('FCM token upload failed:', err));
+      });
+
+      PushNotifications.addListener('registrationError', (err) => {
+        console.error('FCM registration error:', err);
+      });
+
+      // The OS only auto-displays a system notification for background/killed
+      // app state. While the app is open, we get the payload here instead —
+      // surface it however the caller wants (e.g. an in-app toast).
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        onForegroundNotification?.(notification.title ?? 'DigiApp', notification.body ?? '');
+      });
+    }
+
+    await PushNotifications.register();
+    return true;
+  } catch (err) {
+    console.error('FCM register error:', err);
+    return false;
+  }
+};
+
+export const unregisterFromPushNotifications = async (): Promise<void> => {
+  if (Capacitor.getPlatform() !== 'android') return;
+
+  const token = localStorage.getItem(STORAGE_KEYS.FCM_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.FCM_TOKEN);
+  if (!token) return;
+
+  try {
+    await fetch('/api/fcm-subscribe', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+  } catch (err) {
+    console.error('FCM token removal failed:', err);
   }
 };
 

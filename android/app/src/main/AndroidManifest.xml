@@ -113,6 +113,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- FCM (remote push): default icon/channel used when the app is in the
+             background — Firebase Messaging auto-displays the notification using
+             these. The "digiapp_push" channel is created in MainActivity. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="digiapp_push" />
+
     </application>
 
     <!-- Permissions -->

@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
+import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
-import { checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms, unsubscribeFromPush } from '../utils/notifications';
+import {
+  checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms,
+  unsubscribeFromPush, registerForPushNotifications, unregisterFromPushNotifications,
+} from '../utils/notifications';
 
 interface Activity {
   id: string;
@@ -48,12 +52,26 @@ export function NotificationManager({
   const lastNudge21Date = useRef<string>('');
   const lastGoodnightDate = useRef<string>('');
 
-  // Web Push subscription — register/unregister when notifications toggle
+  // Push subscription — register/unregister when notifications toggle. Native
+  // Android uses FCM (the WebView has no Web Push support); browsers/PWA use
+  // Web Push VAPID.
   useEffect(() => {
+    const isNativeAndroid = Capacitor.getPlatform() === 'android';
+
     if (enabled) {
-      subscribeToPush(digimonName, language);
+      if (isNativeAndroid) {
+        registerForPushNotifications(digimonName, language, (title, body) => {
+          toast(title, { description: body });
+        });
+      } else {
+        subscribeToPush(digimonName, language);
+      }
     } else {
-      unsubscribeFromPush();
+      if (isNativeAndroid) {
+        unregisterFromPushNotifications();
+      } else {
+        unsubscribeFromPush();
+      }
     }
   }, [enabled, digimonName, language]);
 

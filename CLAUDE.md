@@ -62,7 +62,27 @@ Estágios/HP máx: digiegg,baby-i=1 · baby-ii=2 · rookie/champion/ultimate=3 �
   falas (idle a cada 3min chama `/api/chat` — Groq; TEM guard de `document.hidden`).
 - `src/utils/storageKeys.ts` — TODAS as chaves de localStorage passam por aqui.
 - IA: `functions/api/chat.js` (Groq llama-3.1-8b-instant, personalidade via aiSettings).
-- Push: Web Push VAPID nativo (SEM Firebase) — `functions/api/subscribe.js` + `public/sw.js`.
+- Push: **dois canais**, mesma KV (`PUSH_SUBSCRIPTIONS`), mesmo cron
+  (`workers/push-scheduler.js`, deploy manual via `wrangler deploy` dentro de
+  `workers/` — NÃO é uma Pages Function, não builda sozinho no push do main).
+  **Web Push VAPID** (browser/PWA instalado, e também funciona dentro do
+  WebView do Capacitor — `PushManager` é suportado): `functions/api/subscribe.js`
+  + `public/sw.js` + `workers/webpush.js` (chaves `push:*`). **FCM** (canal
+  nativo extra, só no app Android): `functions/api/fcm-subscribe.js` +
+  `src/utils/notifications.ts` (`registerForPushNotifications`, via
+  `@capacitor/push-notifications`) + `workers/fcm.js` (chaves `fcm:*`,
+  autentica com `FIREBASE_SERVICE_ACCOUNT` — secret do wrangler, baixe em
+  Firebase Console → Configurações do projeto → Contas de serviço). Exige
+  `android/app/google-services.json` (commitado; API key restrita por pacote,
+  não é segredo) e canal `digiapp_push` criado em `MainActivity.java`.
+  **Histórico:** o FCM já foi implementado e depois revertido uma vez (commit
+  `056a6b06`) com a tese de que o Web Push sozinho já é entregue de forma
+  confiável mesmo com o app fechado (o WebView delega ao FCM por baixo dos
+  panos, de forma transparente). Foi reintroduzido de propósito para o
+  lançamento na Play Store — FCM nativo tem tratamento mais confiável contra
+  Doze/otimização de bateria em ROMs de fabricante (MIUI, EMUI etc.) do que uma
+  subscription de Web Push crua, e dá visibilidade de entrega pelo Firebase
+  Console. Web Push continua ativo (cobre PWA/desktop); os dois convivem.
 - Widgets Android: `android/.../widget/WidgetRenderer.kt` + layouts. Dados via
   `DigiWidgetPlugin` (SharedPreferences). Testes: `npx vitest run` cobre lógica de reset.
 
