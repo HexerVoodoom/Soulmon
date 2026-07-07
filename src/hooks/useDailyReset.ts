@@ -245,8 +245,11 @@ export function useDailyReset({
 
         const degeneratedLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[degeneratedLevel];
-        // HP-based degeneration is a hard penalty: start from zero
-        newPerfectDays = 0;
+        // Recovery discount: climbing back to the stage you fell from costs half
+        // the perfect days (head start at floor(required/2)). Non-cumulative — it's
+        // always half of the *new* (lower) stage's requirement, so a second
+        // degeneration gets the same discount again, never a smaller one.
+        newPerfectDays = Math.floor(FORM_REQUIREMENTS[degeneratedLevel].required / 2);
         // Also reset recent branch window after forced degen
         newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
       }

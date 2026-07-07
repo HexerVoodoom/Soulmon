@@ -237,4 +237,24 @@ describe('performDailyReset — degeneration', () => {
     expect(result.degeneratedByHP).toBe(true);
     expect(result.evolutionStage).toBe('pukamon');
   });
+
+  it('grants a half-requirement head start when degenerating by HP (recovery discount)', () => {
+    // rookie (tapirmon) with 1 HP, 3 tasks none done → loses the heart →
+    // degenerates back to baby-ii (pukamon). Re-climbing baby-ii→rookie normally
+    // needs baby-ii's requirement (3); the discount gives floor(3/2)=1 perfect
+    // day for free, so fewer are needed than a from-scratch climb. The formula is
+    // non-cumulative: always floor(required/2) of the new stage, so a second
+    // degeneration gets the same discount again.
+    const tasks = Array.from({ length: 3 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = simulateReset({
+      ...baseState(),
+      tasks,
+      healthPoints: 1,
+      evolutionStage: 'tapirmon',
+    });
+    expect(result.degeneratedByHP).toBe(true);
+    expect(result.evolutionStage).toBe('pukamon'); // rookie → baby-ii
+    // baby-ii.required = 3 → head start = floor(3/2) = 1
+    expect(result.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS['baby-ii'].required / 2));
+  });
 });

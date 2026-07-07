@@ -17,8 +17,8 @@ const SECTIONS = [
         icon: '❤️',
         labelEn: 'HP (Hearts)',
         labelPt: 'HP (Corações)',
-        descEn: 'Your Digimon\'s health. At day\'s end you lose hearts for what you left undone vs. the stage requirement; uncleaned poop drains 1 heart every 6h. Healed by rubbing (max 1 heart/day) or by using a Little Heart item (shop / dungeon drop). Reaches 0 → degeneration.',
-        descPt: 'A saúde do seu Digimon. Na virada do dia você perde corações pelo que faltou em relação ao requisito do estágio; cocô não limpo tira 1 coração a cada 6h. Recupera esfregando (máx. 1 coração/dia) ou usando um Coraçãozinho (loja / drop da masmorra). Chega a 0 → degeneração.',
+        descEn: 'Your Digimon\'s health. At day\'s end you lose hearts for what you left undone vs. the stage requirement; uncleaned poop drains 1 heart every 6h. Healed by rubbing (max 1 heart/day) or by using a Little Heart item (shop / dungeon drop). Reaches 0 → degeneration (you keep a head start of half the perfect days to climb back; doesn\'t stack).',
+        descPt: 'A saúde do seu Digimon. Na virada do dia você perde corações pelo que faltou em relação ao requisito do estágio; cocô não limpo tira 1 coração a cada 6h. Recupera esfregando (máx. 1 coração/dia) ou usando um Coraçãozinho (loja / drop da masmorra). Chega a 0 → degeneração (você mantém metade dos dias perfeitos de vantagem para voltar; não acumula).',
       },
       {
         icon: '⚡',

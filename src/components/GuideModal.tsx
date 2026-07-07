@@ -174,6 +174,10 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             </ul>
             <p className="mt-2">
               <strong>If HP reaches 0:</strong> Your Digimon degenerates to the previous form.
+              Climbing back is easier: you keep a head start of half the perfect days
+              needed for that stage (e.g. Rookie → Champion needs 4, but after a
+              degeneration only 2 more are required). This discount doesn't stack —
+              it's always half again if you degenerate a second time.
             </p>
           </section>
 
