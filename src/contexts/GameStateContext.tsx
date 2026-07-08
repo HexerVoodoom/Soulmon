@@ -80,7 +80,10 @@ export interface GameState {
     | 'ophanimon' | 'lilithmon' | 'holydramon'
     | 'gaioumon-itto' | 'imperialdramon-paladin' | 'mastemon'
     | 'greymon' | 'garurumon' | 'meramon' | 'monzaemon' | 'etemon'
-    | 'devimon' | 'andromon';
+    | 'devimon' | 'andromon'
+    | 'angemon' | 'birdramon' | 'kabuterimon' | 'seadramon'
+    | 'airdramon' | 'ogremon' | 'kuwagamon' | 'numemon'
+    | 'megadramon' | 'vademon' | 'nanimon';
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventsScheduled: number[];

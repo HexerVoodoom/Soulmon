@@ -43,14 +43,10 @@ function prettyName(stage: string): string {
 
 // Extra dungeon-only enemies (not part of the pet's evolution tree). Their
 // sprites live in STAGE_SPRITES; this maps each to the tier it fights at.
-// (devimon/andromon are omitted — they're in STAGES_BY_LEVEL, so getStageLevel
-// already tiers them as champion/ultimate.)
+// (The champion/ultimate extras became shop evo forms — they're now in
+// STAGES_BY_LEVEL, so getStageLevel already tiers them.)
 const DUNGEON_ENEMY_TIERS: Record<string, EnemyTier> = {
   agumon: 'rookie', patamon: 'rookie', palmon: 'rookie', betamon: 'rookie',
-  birdramon: 'champion', kabuterimon: 'champion', angemon: 'champion',
-  airdramon: 'champion', seadramon: 'champion', kuwagamon: 'champion',
-  ogremon: 'champion', numemon: 'champion',
-  megadramon: 'ultimate', vademon: 'ultimate', nanimon: 'ultimate',
 };
 
 // Sprite keys that fight at a given tier — the pet's own evolution forms (via

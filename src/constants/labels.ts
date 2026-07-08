@@ -36,11 +36,25 @@ export const AI_CATEGORY_MAP: Record<string, ActivityCategory> = {
 };
 
 export const DIGIMON_STAGE_NAMES: Record<string, string> = {
+  // Item digivolutions (shop)
   greymon: 'Greymon',
   garurumon: 'Garurumon',
   meramon: 'Meramon',
+  devimon: 'Devimon',
+  angemon: 'Angemon',
+  birdramon: 'Birdramon',
+  kabuterimon: 'Kabuterimon',
+  seadramon: 'Seadramon',
+  airdramon: 'Airdramon',
+  ogremon: 'Ogremon',
+  kuwagamon: 'Kuwagamon',
+  numemon: 'Numemon',
   monzaemon: 'Monzaemon',
   etemon: 'Etemon',
+  andromon: 'Andromon',
+  megadramon: 'Megadramon',
+  vademon: 'Vademon',
+  nanimon: 'Nanimon',
   digiegg: 'DigiEgg',
   pichimon: 'Pichimon',
   pukamon: 'Pukamon',

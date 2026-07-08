@@ -118,11 +118,18 @@ export function getNextEvolution(
   branch: Attr,
   unlockedEvolutions: string[],
 ): string {
+  // Lore-faithful secret from the 1997 v-pet (Ver.1): the "failure" champion
+  // Numemon always evolves into Monzaemon, the strongest Perfect.
+  if (currentStage === 'numemon') return 'monzaemon';
+
   // Item-digivolution forms (shop): continue the line as if the pet were the
   // branch form the item replaced at that level.
   const ITEM_FORM_LEVEL: Record<string, 'champion' | 'ultimate'> = {
     greymon: 'champion', garurumon: 'champion', meramon: 'champion', devimon: 'champion',
+    angemon: 'champion', birdramon: 'champion', kabuterimon: 'champion', seadramon: 'champion',
+    airdramon: 'champion', ogremon: 'champion', kuwagamon: 'champion',
     monzaemon: 'ultimate', etemon: 'ultimate', andromon: 'ultimate',
+    megadramon: 'ultimate', vademon: 'ultimate', nanimon: 'ultimate',
   };
   if (ITEM_FORM_LEVEL[currentStage]) {
     const NATURAL: Record<EggLine, Record<'champion' | 'ultimate', Record<Attr, string>>> = {
