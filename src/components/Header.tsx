@@ -137,6 +137,25 @@ function StatsIcon({ isActive }: { isActive: boolean }) {
   );
 }
 
+// Gamepad Icon — pixel-art (8-bit) to match the app's retro vibe.
+// Drawn as filled squares on an integer grid (crispEdges keeps it blocky).
+function PixelGamepadIcon({ isActive }: { isActive: boolean }) {
+  const c = isActive ? '#101828' : '#6A7282';
+  return (
+    <svg width="22" height="15" viewBox="0 0 12 8" shapeRendering="crispEdges" aria-hidden="true">
+      {/* body */}
+      <rect x="1" y="1" width="10" height="6" fill={c} />
+      <rect x="0" y="2" width="12" height="4" fill={c} />
+      {/* d-pad cross */}
+      <rect x="2" y="3" width="3" height="1" fill="#fff" />
+      <rect x="3" y="2" width="1" height="3" fill="#fff" />
+      {/* A/B buttons */}
+      <rect x="8" y="3" width="1" height="1" fill="#fff" />
+      <rect x="10" y="3" width="1" height="1" fill="#fff" />
+    </svg>
+  );
+}
+
 // Settings Icon
 function SettingsIcon({ isActive }: { isActive: boolean }) {
   const strokeColor = isActive ? '#101828' : '#6A7282';
@@ -249,8 +268,8 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
                 {currentView !== 'games' && (
                   <div aria-hidden="true" className="absolute border border-[#c0c0c0] border-solid inset-0 pointer-events-none rounded-[14px]" />
                 )}
-                <div className="flex items-center justify-center size-full" style={{ fontSize: '1.05rem', lineHeight: 1 }}>
-                  🎮
+                <div className="flex items-center justify-center size-full">
+                  <PixelGamepadIcon isActive={currentView === 'games'} />
                 </div>
               </button>
 

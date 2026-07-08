@@ -65,13 +65,37 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
         >
           🎮 {isPt ? 'Atividades' : 'Activities'}
         </h2>
-        <span
-          className="px-3 py-1 rounded-md"
-          style={{ ...bitsStyle, fontSize: '0.85rem', background: '#0a1408', border: '1px solid rgba(57,255,20,0.4)' }}
-          title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
-        >
-          {totalPoints} Bits
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className="px-3 py-1 rounded-md"
+            style={{ ...bitsStyle, fontSize: '0.85rem', background: '#0a1408', border: '1px solid rgba(57,255,20,0.4)' }}
+            title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
+          >
+            {totalPoints} Bits
+          </span>
+          {/* 🛒 Shop entry — deliberately 8-bit */}
+          <button
+            onClick={() => setShopOpen(true)}
+            aria-label={isPt ? 'Loja' : 'Shop'}
+            title={isPt ? 'Loja — chips, coraçõezinhos, itens de digievolução e cenários!' : 'Shop — chips, little hearts, digivolution items and backdrops!'}
+            className="cursor-pointer active:scale-[0.97] transition-all"
+            style={{
+              background: '#0d1420',
+              border: '3px solid #4ade80',
+              boxShadow: '3px 3px 0 #000',
+              width: 40,
+              height: 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.15rem',
+              lineHeight: 1,
+              imageRendering: 'pixelated',
+            }}
+          >
+            🛒
+          </button>
+        </div>
       </div>
       <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : 'text-gray-500'}
          style={{ ...mono, fontSize: '0.78rem' }}>
@@ -112,35 +136,6 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           </div>
         </button>
       ))}
-
-      {/* 🛒 Shop entry — deliberately 8-bit */}
-      <button
-        onClick={() => setShopOpen(true)}
-        className="w-full text-left cursor-pointer active:scale-[0.99] transition-all"
-        style={{
-          fontFamily: "'Courier New', monospace",
-          background: '#0d1420',
-          border: '3px solid #4ade80',
-          boxShadow: '4px 4px 0 #000',
-          padding: '14px 16px',
-          imageRendering: 'pixelated',
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>🛒</span>
-          <div className="flex-1">
-            <span style={{ color: '#4ade80', fontWeight: 800, fontSize: '0.9rem', letterSpacing: 2, textShadow: '2px 2px 0 #000' }}>
-              {isPt ? 'LOJA' : 'SHOP'}
-            </span>
-            <p style={{ color: '#9fb2d8', fontSize: '0.7rem', marginTop: 2 }}>
-              {isPt ? 'Chips, coraçõezinhos, itens de digievolução e cenários!' : 'Chips, little hearts, digivolution items and backdrops!'}
-            </p>
-          </div>
-          <span style={{ ...bitsStyle, fontSize: '0.85rem' }}>
-            {totalPoints} Bits
-          </span>
-        </div>
-      </button>
 
       {shopOpen && (
         <ShopModal
