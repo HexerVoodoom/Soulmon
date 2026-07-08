@@ -11,6 +11,7 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { AttributeBadges } from './components/AttributeBadges';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
+import { DigivolveTaskModal } from './components/DigivolveTaskModal';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
@@ -55,6 +56,7 @@ export default function App() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [digivolveModalStage, setDigivolveModalStage] = useState<string | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
@@ -186,6 +188,22 @@ export default function App() {
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
 
   const t = useTranslation(language);
+
+  // Detect a digivolution (level up) to show the task-goal modal. We track the
+  // previous stage LEVEL so branch swaps at the same level don't trigger it, and
+  // degeneration (level down) never does. FORM_REQUIREMENTS.required increases
+  // monotonically per level, so a higher requirement means a higher stage.
+  const prevStageLevelRef = useRef(getStageLevel(gameState.evolutionStage));
+  useEffect(() => {
+    const currentLevel = getStageLevel(gameState.evolutionStage);
+    const prevLevel = prevStageLevelRef.current;
+    if (currentLevel !== prevLevel) {
+      const leveledUp =
+        FORM_REQUIREMENTS[currentLevel].required > FORM_REQUIREMENTS[prevLevel].required;
+      prevStageLevelRef.current = currentLevel;
+      if (leveledUp) setDigivolveModalStage(gameState.evolutionStage);
+    }
+  }, [gameState.evolutionStage]);
 
   // Sync game state to Android home screen widget
   useEffect(() => {
@@ -1661,6 +1679,17 @@ export default function App() {
         showRookieUnlockPopup={showRookieUnlockPopup}
         onCloseRookieUnlockPopup={() => setShowRookieUnlockPopup(false)}
         theme={theme}
+      />
+
+      <DigivolveTaskModal
+        isOpen={digivolveModalStage !== null}
+        onClose={() => setDigivolveModalStage(null)}
+        onCreateTask={() => { setDigivolveModalStage(null); setCreateModalOpen(true); }}
+        requiredTasks={FORM_REQUIREMENTS[getStageLevel(digivolveModalStage ?? gameState.evolutionStage)].required}
+        registeredTasks={gameState.activities.length + gameState.tasks.length}
+        stageName={digivolveModalStage ? (DIGIMON_STAGE_NAMES[digivolveModalStage] ?? getCurrentStageName()) : ''}
+        theme={theme}
+        language={language}
       />
 
       {/* Notification Manager */}
