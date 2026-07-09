@@ -30,6 +30,10 @@ interface EvolutionPathProps {
   dailyRequired?: number;
   unlockedEvolutions?: string[];
   eggType?: EggType;
+  /** Evolution padlock: tapping the CURRENT Digimon toggles it. */
+  evolutionLocked?: boolean;
+  onToggleEvolutionLock?: () => void;
+  language?: 'pt-BR' | 'en-US';
 }
 
 interface Evolution {
@@ -52,8 +56,12 @@ export function EvolutionPath({
   theme,
   unlockedEvolutions = [],
   evolutionStage,
-  eggType = 'tapirmon'
+  eggType = 'tapirmon',
+  evolutionLocked = false,
+  onToggleEvolutionLock,
+  language = 'en-US',
 }: EvolutionPathProps) {
+  const isPt = language === 'pt-BR';
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions.map(s => s.toLowerCase())), [unlockedEvolutions]);
   // The pet's real current tier (independent of accumulated XP).
   const currentLevel = TIER_LEVEL[getStageLevel(evolutionStage ?? currentStage.toLowerCase())] ?? 0;
@@ -197,7 +205,8 @@ export function EvolutionPath({
             : 'border-gray-100 opacity-50'
         }`}>
           <div className="flex items-center gap-3">
-            {/* Sprite — locked evolutions are hidden behind a pixelated "?" */}
+            {/* Sprite — locked evolutions are hidden behind a pixelated "?".
+                Tapping the CURRENT Digimon toggles the evolution padlock. */}
             <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
               isReached ? 'bg-gray-100' : 'bg-gray-200'
             }`}>
@@ -215,6 +224,30 @@ export function EvolutionPath({
                   }}
                 >
                   ?
+                </button>
+              ) : isCurrent && onToggleEvolutionLock ? (
+                <button
+                  onClick={onToggleEvolutionLock}
+                  aria-label={isPt ? 'Alternar cadeado de digievolução' : 'Toggle digivolution padlock'}
+                  title={evolutionLocked
+                    ? (isPt ? 'Destravar digievolução' : 'Unlock digivolution')
+                    : (isPt ? 'Travar digievolução' : 'Lock digivolution')}
+                  className="relative w-12 h-12 flex items-center justify-center rounded-md cursor-pointer"
+                >
+                  <img
+                    src={evolution.sprite}
+                    alt={evolution.name}
+                    className="w-12 h-12 object-contain"
+                    style={{ imageRendering: 'pixelated', filter: evolutionLocked ? 'grayscale(0.7) brightness(0.75)' : 'none' }}
+                  />
+                  {evolutionLocked && (
+                    <span
+                      className="absolute inset-0 flex items-center justify-center"
+                      style={{ fontSize: '1.5rem', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
+                    >
+                      🔒
+                    </span>
+                  )}
                 </button>
               ) : evolution.sprite ? (
                 <img
@@ -235,6 +268,11 @@ export function EvolutionPath({
                 {isCurrent && (
                   <span className={`${colors.bg} text-white text-xs px-2 py-0.5 rounded`} style={{ fontFamily: 'monospace' }}>
                     CURRENT
+                  </span>
+                )}
+                {isCurrent && evolutionLocked && (
+                  <span className="bg-gray-800 text-white text-xs px-2 py-0.5 rounded" style={{ fontFamily: 'monospace' }}>
+                    🔒 {isPt ? 'EVOLUÇÃO TRAVADA' : 'EVOLUTION LOCKED'}
                   </span>
                 )}
                 {isUltraMode && (

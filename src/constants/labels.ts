@@ -36,6 +36,17 @@ export const AI_CATEGORY_MAP: Record<string, ActivityCategory> = {
 };
 
 export const DIGIMON_STAGE_NAMES: Record<string, string> = {
+  // Armor digivolution (Digimental of Friendship). Listed FIRST on purpose:
+  // DEGENERATION_STAGE_MAP inverts this object and keeps the LAST entry per
+  // display name, so 'Raidramon' keeps resolving to the veemon-line form.
+  'raidramon-armor': 'Raidramon',
+  // Rookie item digivolutions (minigame drops)
+  agumon: 'Agumon',
+  gabumon: 'Gabumon',
+  piyomon: 'Piyomon',
+  tentomon: 'Tentomon',
+  patamon: 'Patamon',
+  palmon: 'Palmon',
   // Item digivolutions (shop)
   greymon: 'Greymon',
   garurumon: 'Garurumon',

@@ -43,10 +43,10 @@ function prettyName(stage: string): string {
 
 // Extra dungeon-only enemies (not part of the pet's evolution tree). Their
 // sprites live in STAGE_SPRITES; this maps each to the tier it fights at.
-// (The champion/ultimate extras became shop evo forms — they're now in
-// STAGES_BY_LEVEL, so getStageLevel already tiers them.)
+// (Nearly all extras became item-evolution forms — they're in STAGES_BY_LEVEL,
+// so getStageLevel already tiers them. Only Betamon remains dungeon-only.)
 const DUNGEON_ENEMY_TIERS: Record<string, EnemyTier> = {
-  agumon: 'rookie', patamon: 'rookie', palmon: 'rookie', betamon: 'rookie',
+  betamon: 'rookie',
 };
 
 // Sprite keys that fight at a given tier — the pet's own evolution forms (via
@@ -129,6 +129,15 @@ export function recordDungeonScore(score: number): number {
   const best = Math.max(getDungeonBest(), score);
   localStorage.setItem(STORAGE_KEYS.DUNGEON_BEST, String(best));
   return best;
+}
+
+// ── Digimental drops ─────────────────────────────────────────────────────────
+// Ultra-rare (0.1% per defeated enemy), uncapped — the rarity IS the cap.
+// Returns the dropped digimental's EVO_ITEMS id, or null.
+const DIGIMENTAL_DROP_CHANCE = 0.001;
+export function rollDungeonDigimental(rng: () => number = Math.random): string | null {
+  if (rng() > DIGIMENTAL_DROP_CHANCE) return null;
+  return rng() < 0.5 ? 'digimental-courage' : 'digimental-friendship';
 }
 
 // ── Heart drops ──────────────────────────────────────────────────────────────

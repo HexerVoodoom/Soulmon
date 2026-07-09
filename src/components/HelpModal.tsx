@@ -47,6 +47,27 @@ const SECTIONS = [
         descEn: 'Attribute points earned through feeding. The dominant attribute shapes which form your Digimon evolves into.',
         descPt: 'Pontos de atributo ganhos alimentando. O atributo dominante define para qual forma seu Digimon irá evoluir.',
       },
+      {
+        icon: '🔒',
+        labelEn: 'Evolution padlock',
+        labelPt: 'Cadeado de evolução',
+        descEn: 'On the Evolution page, tap your CURRENT Digimon to lock/unlock digivolution. While locked it never evolves (perfect days still accumulate); unlock and it evolves at the next day turn.',
+        descPt: 'Na página de Evolução, toque no seu Digimon ATUAL para travar/destravar a digievolução. Travado, ele nunca evolui (os dias perfeitos continuam contando); destrave e ele evolui na próxima virada de dia.',
+      },
+      {
+        icon: '🌀',
+        labelEn: 'Glitchtama',
+        labelPt: 'Glitchtama',
+        descEn: 'Rare item earned by clearing all 5 dungeon floors. Using it from the Items folder grants 1 perfect day (an evolution point).',
+        descPt: 'Item raro ganho ao concluir os 5 andares da masmorra. Usar na pastinha de itens concede 1 dia perfeito (um ponto de evolução).',
+      },
+      {
+        icon: '🌞',
+        labelEn: 'Digimentals & rookie items',
+        labelPt: 'Digimentais e itens rookie',
+        descEn: 'Ultra-rare drops. Digimentals (dungeon, 0.1%) make your CHAMPION evolution Flamedramon (Courage) or Raidramon (Friendship) and are NEVER consumed. Rookie items (Dino Run / RPS, 1%) make your BABY II evolve into a specific rookie (Agumon, Gabumon, Piyomon, Tentomon, Patamon, Palmon) and ARE consumed. Use one from the Items folder to equip it.',
+        descPt: 'Drops ultra-raros. Digimentais (masmorra, 0,1%) fazem a evolução de CAMPEÃO virar Flamedramon (Coragem) ou Raidramon (Amizade) e NUNCA são consumidos. Itens rookie (Dino Run / PPT, 1%) fazem o BEBÊ II evoluir para um rookie específico (Agumon, Gabumon, Piyomon, Tentomon, Patamon, Palmon) e SÃO consumidos. Use na pastinha de itens para equipar.',
+      },
     ],
   },
   {

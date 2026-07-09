@@ -28,8 +28,8 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI } from './utils/shop';
-import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
+import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
+import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop, rollDungeonDigimental } from './utils/dungeon';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -699,6 +699,8 @@ export default function App() {
 
   const handleDigivolve = useCallback(() => {
     setGameState(prev => {
+      // Evolution padlock (Evolution page): while locked, never evolve.
+      if (prev.evolutionLocked) return prev;
       let newEvolutionStage = prev.evolutionStage;
       let newHP = prev.healthPoints;
       let newSegmentsNeeded = prev.digivolutionSegmentsNeeded;
@@ -731,6 +733,10 @@ export default function App() {
       newSegmentsNeeded = DIGIVOLVE_SEGMENTS[getStageLevel(newEvolutionStage)] ?? newSegmentsNeeded;
       newHP = getMaxHPForStage(newEvolutionStage);
 
+      // Digimentals are never consumed — after the evolution they go back to
+      // the Items folder (frees the single equip slot for other items).
+      const returnEmoji = usedEvoItem && evoItem?.consumedOnEvolve === false ? evoItem.inventoryEmoji : null;
+
       return {
         ...prev,
         evolutionStage: newEvolutionStage,
@@ -740,6 +746,9 @@ export default function App() {
         digivolutionSegments: 0,
         digivolutionSegmentsNeeded: newSegmentsNeeded,
         equippedEvoItem: usedEvoItem ? null : (prev.equippedEvoItem ?? null),
+        ...(returnEmoji && {
+          foodInventory: { ...prev.foodInventory, [returnEmoji]: (prev.foodInventory[returnEmoji] ?? 0) + 1 },
+        }),
       };
     });
     playDigivolve();
@@ -781,6 +790,43 @@ export default function App() {
     // Neither counts against the 5-feeds-per-hour food limit.
     const special = SPECIAL_ITEMS[foodEmoji];
     if (special) {
+      // 🌀 Glitchtama: using it grants 1 perfect day (evolution point).
+      if (special.kind === 'glitchtama') {
+        playDigivolve();
+        setGameState(prev => {
+          const count = prev.foodInventory[foodEmoji] ?? 0;
+          if (count <= 0) return prev;
+          const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
+          if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
+          return { ...prev, foodInventory: newInventory, perfectDays: prev.perfectDays + 1 };
+        });
+        setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
+        toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia perfeito' : '🌀 Glitchtama! +1 perfect day');
+        return;
+      }
+      // Digimentals / rookie items: USING equips it as THE evolution item (one
+      // slot, same rule as the shop). Digimentals return here after evolving.
+      if (special.kind === 'evo-equip') {
+        if (gameState.equippedEvoItem) {
+          toast(language === 'pt-BR'
+            ? 'Já há um item de digievolução equipado!'
+            : 'A digivolution item is already equipped!');
+          return;
+        }
+        playFeed();
+        setGameState(prev => {
+          if (prev.equippedEvoItem) return prev;
+          const count = prev.foodInventory[foodEmoji] ?? 0;
+          if (count <= 0) return prev;
+          const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
+          if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
+          return { ...prev, foodInventory: newInventory, equippedEvoItem: special.evoItemId! };
+        });
+        toast(language === 'pt-BR'
+          ? `${foodEmoji} Equipado — aguardando a próxima digievolução!`
+          : `${foodEmoji} Equipped — waiting for the next digivolution!`);
+        return;
+      }
       if (special.kind === 'heart') {
         // The heart item is the only buyable HP heal. Refuse (keep it) if full.
         if (gameState.healthPoints >= gameState.maxHealthPoints) {
@@ -865,7 +911,7 @@ export default function App() {
       };
     });
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-  }, [gameState.foodInventory, gameState.healthPoints, gameState.maxHealthPoints]);
+  }, [gameState.foodInventory, gameState.healthPoints, gameState.maxHealthPoints, gameState.equippedEvoItem, language]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -968,6 +1014,39 @@ export default function App() {
     return true;
   }, []);
 
+  // ✨ Digimental drop (dungeon, 0.1%/enemy): adds it to the Items folder and
+  // returns its display name for the reward line, or null when nothing dropped.
+  const handleDungeonDigimental = useCallback((): string | null => {
+    const id = rollDungeonDigimental();
+    if (!id) return null;
+    const item = EVO_ITEMS[id];
+    const emoji = item.inventoryEmoji!;
+    setGameState(prev => ({
+      ...prev,
+      foodInventory: { ...prev.foodInventory, [emoji]: (prev.foodInventory[emoji] ?? 0) + 1 },
+    }));
+    return language === 'pt-BR' ? item.namePt : item.nameEn;
+  }, [language]);
+
+  // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
+  const handleGlitchtama = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
+    }));
+  }, []);
+
+  // Rookie evolution items dropped by the minigames (Dino Run / RPS). Adds the
+  // item to the Items folder and returns its display name for the drop line.
+  const handleMinigameItemDrop = useCallback((emoji: string): string => {
+    setGameState(prev => ({
+      ...prev,
+      foodInventory: { ...prev.foodInventory, [emoji]: (prev.foodInventory[emoji] ?? 0) + 1 },
+    }));
+    const special = SPECIAL_ITEMS[emoji];
+    return special ? (language === 'pt-BR' ? special.namePt : special.nameEn) : emoji;
+  }, [language]);
+
   // 🪙 Bits — minigame currency; accumulates in GameState (cloud-synced), spent in the shop.
   const handleEarnGamePoints = useCallback((pts: number) => {
     if (pts <= 0) return;
@@ -1005,6 +1084,13 @@ export default function App() {
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
+  }, []);
+
+  // 🔒 Evolution padlock (Evolution page): tapping the current Digimon toggles
+  // it. While locked, the pet never evolves at the day turn; unlocking lets the
+  // (already met) criteria trigger the evolution on the NEXT day turn.
+  const handleToggleEvolutionLock = useCallback(() => {
+    setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
   }, []);
 
   // Stable identity so CompanionHUD's memo() isn't defeated by an inline lambda.
@@ -1398,6 +1484,9 @@ export default function App() {
               perfectDays={gameState.perfectDays}
               unlockedEvolutions={gameState.unlockedEvolutions}
               eggType={gameState.eggType}
+              evolutionLocked={gameState.evolutionLocked ?? false}
+              onToggleEvolutionLock={handleToggleEvolutionLock}
+              language={language}
             /></Suspense>
           )}
 
@@ -1469,6 +1558,9 @@ export default function App() {
                 onDungeonEnter={handleDungeonEnter}
                 onDungeonLose={handleDungeonLose}
                 onDungeonHeartDrop={handleDungeonHeartDrop}
+                onDungeonDigimental={handleDungeonDigimental}
+                onGlitchtama={handleGlitchtama}
+                onItemDrop={handleMinigameItemDrop}
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}
                 onEquipBackground={handleEquipBackground}

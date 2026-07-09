@@ -55,8 +55,19 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               you registered, up to the stage requirement — AND your Digimon's
               <strong> energy is full at the end of the day</strong> (feed it!).
             </p>
-            <p>
+            <p className="mb-2">
               Each evolution form requires a fixed number of perfect days to evolve to the next one.
+            </p>
+            <p>
+              Don't want to evolve yet? On the <strong>Evolution page</strong>, tap your
+              <strong> current Digimon</strong> to toggle a <strong>🔒 padlock</strong>: while
+              locked it never evolves (perfect days still accumulate), and after unlocking it
+              evolves at the <strong>next day turn</strong>. Rare items can also shape evolution:
+              the <strong>🌀 Glitchtama</strong> (clear all 5 dungeon floors) grants a perfect day
+              when used; <strong>Digimentals</strong> (ultra-rare dungeon drops, never consumed)
+              turn your champion into <strong>Flamedramon</strong> or <strong>Raidramon</strong>;
+              and <strong>rookie items</strong> (rare Dino Run / RPS drops, consumed on use) pick
+              which rookie your Baby II becomes.
             </p>
           </section>
 

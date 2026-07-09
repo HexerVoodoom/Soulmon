@@ -83,7 +83,9 @@ export interface GameState {
     | 'devimon' | 'andromon'
     | 'angemon' | 'birdramon' | 'kabuterimon' | 'seadramon'
     | 'airdramon' | 'ogremon' | 'kuwagamon' | 'numemon'
-    | 'megadramon' | 'vademon' | 'nanimon';
+    | 'megadramon' | 'vademon' | 'nanimon'
+    | 'agumon' | 'gabumon' | 'piyomon' | 'tentomon' | 'patamon' | 'palmon'
+    | 'raidramon-armor';
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventsScheduled: number[];
@@ -110,6 +112,8 @@ export interface GameState {
   equippedBackground: string | null;
   /** Shop item digivolution: replaces the branch form when the pet evolves to the item's level (consumed on evolve). */
   equippedEvoItem: string | null;
+  /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
+  evolutionLocked?: boolean;
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
   lastDayReport?: {
     date: string;

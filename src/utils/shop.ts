@@ -15,7 +15,11 @@ export interface ShopItem {
   attr?: Attr;
   /** Item digivolution: the form it produces and at which evolution level it triggers. */
   evoTarget?: string;
-  evoLevel?: 'champion' | 'ultimate';
+  evoLevel?: 'rookie' | 'champion' | 'ultimate';
+  /** Digimentals survive the evolution (returned to the Items folder instead of consumed). */
+  consumedOnEvolve?: boolean;
+  /** Inventory emoji for equippable drops that live in the Items folder before being equipped. */
+  inventoryEmoji?: string;
 }
 
 export const CHIP_BOOST = 3;   // attribute points granted when a chip is USED
@@ -26,19 +30,82 @@ export const CHIP_EMOJI: Record<Attr, string> = { virus: '🦠', data: '💾', v
 export const HEART_ITEM_EMOJI = '💗';
 
 // Consumables that live in the Items folder alongside food, but behave
-// differently when USED: chips only add attribute points (no energy), and the
-// heart item only heals HP. Keyed by their inventory emoji.
+// differently when USED: chips only add attribute points (no energy), the
+// heart item only heals HP, the Glitchtama grants a perfect day, and
+// evo-equip items (digimentals / rookie items) equip as the evolution item.
+// Keyed by their inventory emoji.
 export interface SpecialItem {
   emoji: string;
-  kind: 'chip' | 'heart';
+  kind: 'chip' | 'heart' | 'glitchtama' | 'evo-equip';
   attr?: Attr;
   namePt: string;
   nameEn: string;
   descPt: string;
   descEn: string;
+  /** evo-equip only: id of the matching entry in EVO_ITEMS. */
+  evoItemId?: string;
 }
 
+// 🌀 Glitchtama — dropped by completing all 5 dungeon floors. Using it grants
+// one perfect day (an evolution point), no questions asked.
+export const GLITCHTAMA_EMOJI = '🌀';
+
+// Equippable evolution drops (NOT sold in the shop). They sit in the Items
+// folder; USING one equips it as the evolution item (same single slot as the
+// shop items). Digimentals are NEVER consumed — after the evolution they
+// return to the Items folder. Rookie items ARE consumed, like shop items.
+export const DROP_EVO_ITEMS: ShopItem[] = [
+  // Digimentals — ultra-rare dungeon drops (0.1%/enemy). Armor evolution:
+  // the CHAMPION form becomes the armor Digimon, on any egg line.
+  { id: 'digimental-courage', kind: 'evo', icon: '🌞', evoTarget: 'flamedramon', evoLevel: 'champion',
+    consumedOnEvolve: false, inventoryEmoji: '🌞', price: 0,
+    namePt: 'Digimental da Coragem', nameEn: 'Digimental of Courage',
+    descPt: 'A evolução para CAMPEÃO vira Flamedramon — nunca é consumido', descEn: 'Your CHAMPION evolution becomes Flamedramon — never consumed' },
+  { id: 'digimental-friendship', kind: 'evo', icon: '🌩️', evoTarget: 'raidramon-armor', evoLevel: 'champion',
+    consumedOnEvolve: false, inventoryEmoji: '🌩️', price: 0,
+    namePt: 'Digimental da Amizade', nameEn: 'Digimental of Friendship',
+    descPt: 'A evolução para CAMPEÃO vira Raidramon — nunca é consumido', descEn: 'Your CHAMPION evolution becomes Raidramon — never consumed' },
+  // Rookie items — minigame drops (Dino Run / RPS). Consumed on evolution.
+  { id: 'rookie-agumon', kind: 'evo', icon: '🔥', evoTarget: 'agumon', evoLevel: 'rookie',
+    inventoryEmoji: '🔥', price: 0,
+    namePt: 'Chama Corajosa', nameEn: 'Brave Flame',
+    descPt: 'A evolução para ROOKIE vira Agumon', descEn: 'Your ROOKIE evolution becomes Agumon' },
+  { id: 'rookie-gabumon', kind: 'evo', icon: '🐺', evoTarget: 'gabumon', evoLevel: 'rookie',
+    inventoryEmoji: '🐺', price: 0,
+    namePt: 'Pelo de Lobo', nameEn: 'Wolf Pelt',
+    descPt: 'A evolução para ROOKIE vira Gabumon', descEn: 'Your ROOKIE evolution becomes Gabumon' },
+  { id: 'rookie-piyomon', kind: 'evo', icon: '🐣', evoTarget: 'piyomon', evoLevel: 'rookie',
+    inventoryEmoji: '🐣', price: 0,
+    namePt: 'Pena Rosa', nameEn: 'Pink Feather',
+    descPt: 'A evolução para ROOKIE vira Piyomon', descEn: 'Your ROOKIE evolution becomes Piyomon' },
+  { id: 'rookie-tentomon', kind: 'evo', icon: '🐞', evoTarget: 'tentomon', evoLevel: 'rookie',
+    inventoryEmoji: '🐞', price: 0,
+    namePt: 'Casco Elétrico', nameEn: 'Electro Shell',
+    descPt: 'A evolução para ROOKIE vira Tentomon', descEn: 'Your ROOKIE evolution becomes Tentomon' },
+  { id: 'rookie-patamon', kind: 'evo', icon: '🍃', evoTarget: 'patamon', evoLevel: 'rookie',
+    inventoryEmoji: '🍃', price: 0,
+    namePt: 'Brisa Sagrada', nameEn: 'Holy Breeze',
+    descPt: 'A evolução para ROOKIE vira Patamon', descEn: 'Your ROOKIE evolution becomes Patamon' },
+  { id: 'rookie-palmon', kind: 'evo', icon: '🌺', evoTarget: 'palmon', evoLevel: 'rookie',
+    inventoryEmoji: '🌺', price: 0,
+    namePt: 'Semente Florida', nameEn: 'Flower Seed',
+    descPt: 'A evolução para ROOKIE vira Palmon', descEn: 'Your ROOKIE evolution becomes Palmon' },
+];
+
+/** Inventory emojis for the rookie items dropped by each minigame. */
+export const DINO_ROOKIE_DROPS = ['🔥', '🐺', '🐣'];   // Agumon, Gabumon, Piyomon
+export const RPS_ROOKIE_DROPS = ['🐞', '🍃', '🌺'];    // Tentomon, Patamon, Palmon
+
 export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
+  [GLITCHTAMA_EMOJI]: {
+    emoji: GLITCHTAMA_EMOJI, kind: 'glitchtama',
+    namePt: 'Glitchtama', nameEn: 'Glitchtama',
+    descPt: 'Usar concede 1 dia perfeito (+1 ponto de evolução)', descEn: 'Use to gain 1 perfect day (+1 evolution point)',
+  },
+  ...Object.fromEntries(DROP_EVO_ITEMS.map(i => [i.inventoryEmoji!, {
+    emoji: i.inventoryEmoji!, kind: 'evo-equip' as const, evoItemId: i.id,
+    namePt: i.namePt, nameEn: i.nameEn, descPt: i.descPt, descEn: i.descEn,
+  }])),
   [CHIP_EMOJI.virus]: {
     emoji: CHIP_EMOJI.virus, kind: 'chip', attr: 'virus',
     namePt: 'Chip de Vírus', nameEn: 'Virus Chip',
@@ -180,7 +247,7 @@ export const SHOP_ITEMS: ShopItem[] = [
     descPt: 'Sol neon e grade infinita anos 80', descEn: 'Neon sun over an endless 80s grid', price: 250 },
 ];
 
-/** Quick lookup for item-digivolution entries by id. */
+/** Quick lookup for item-digivolution entries by id (shop items + drops). */
 export const EVO_ITEMS: Record<string, ShopItem> = Object.fromEntries(
-  SHOP_ITEMS.filter(i => i.kind === 'evo').map(i => [i.id, i]),
+  [...SHOP_ITEMS.filter(i => i.kind === 'evo'), ...DROP_EVO_ITEMS].map(i => [i.id, i]),
 );

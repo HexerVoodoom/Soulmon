@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
+import { RPS_ROOKIE_DROPS } from '../utils/shop';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -12,10 +13,12 @@ const HANDS = ['✊', '✋', '✌️'];
 const MATCH_POINTS = 5;
 const WINS_NEEDED = 3;
 
-export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
+export function RPSGame({ evolutionStage, language, onEarnPoints, onItemDrop, onExit }: {
   evolutionStage: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
+  /** Adds a rookie evolution item to the Items folder; returns its display name. */
+  onItemDrop: (emoji: string) => string;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -26,6 +29,7 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
   const [thinking, setThinking] = useState(false);
   const [roundMsg, setRoundMsg] = useState('');
   const [matchOver, setMatchOver] = useState<'won' | 'lost' | null>(null);
+  const [drop, setDrop] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
   const mono = { fontFamily: 'monospace' as const };
@@ -53,6 +57,11 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
         if (w >= WINS_NEEDED) {
           playTaskComplete();
           onEarnPoints(MATCH_POINTS);
+          // Rookie item drop: 1% per match win (Tentomon/Patamon/Palmon items).
+          if (Math.random() < 0.01) {
+            const emoji = RPS_ROOKIE_DROPS[Math.floor(Math.random() * RPS_ROOKIE_DROPS.length)];
+            setDrop(`${emoji} ${onItemDrop(emoji)}`);
+          }
           setMatchOver('won');
         }
       } else {
@@ -72,6 +81,7 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
     setPlayerWins(0); setPetWins(0);
     setPlayerHand(null); setPetHand(null);
     setRoundMsg(''); setMatchOver(null);
+    setDrop(null);
   };
 
   return (
@@ -103,6 +113,11 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
             : matchOver === 'lost' ? (isPt ? '💀 Seu Digimon venceu a partida!' : '💀 Your Digimon won the match!')
             : roundMsg}
         </p>
+        {drop && (
+          <p style={{ ...mono, fontSize: '0.8rem', fontWeight: 800, color: '#facc15' }}>
+            ✨ {isPt ? 'Item raro:' : 'Rare item:'} {drop}
+          </p>
+        )}
         <div style={{ fontSize: '2.2rem', minHeight: 44, lineHeight: 1 }}>
           {playerHand !== null ? HANDS[playerHand] : ''}
         </div>

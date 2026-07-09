@@ -11,7 +11,7 @@ import type { Language } from '../utils/i18n';
  * All games award 🪙 Bits (GameState.gamePoints), spent in the shop.
  * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onEarnPoints, onShopBuy, onEquipBackground }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onDungeonDigimental, onGlitchtama, onItemDrop, onEarnPoints, onShopBuy, onEquipBackground }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
@@ -22,6 +22,9 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   onDungeonEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' };
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
+  onDungeonDigimental: () => string | null;
+  onGlitchtama: () => void;
+  onItemDrop: (emoji: string) => string;
   onEarnPoints: (pts: number) => void;
   onShopBuy: (itemId: string) => boolean;
   onEquipBackground: (id: string | null) => void;
@@ -157,6 +160,8 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           onEnter={onDungeonEnter}
           onLose={onDungeonLose}
           onHeartDrop={onDungeonHeartDrop}
+          onDigimentalDrop={onDungeonDigimental}
+          onGlitchtama={onGlitchtama}
           onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}
         />
@@ -166,6 +171,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           evolutionStage={evolutionStage}
           language={language}
           onEarnPoints={onEarnPoints}
+          onItemDrop={onItemDrop}
           onExit={() => setOpenGame(null)}
         />
       )}
@@ -174,6 +180,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           evolutionStage={evolutionStage}
           language={language}
           onEarnPoints={onEarnPoints}
+          onItemDrop={onItemDrop}
           onExit={() => setOpenGame(null)}
         />
       )}

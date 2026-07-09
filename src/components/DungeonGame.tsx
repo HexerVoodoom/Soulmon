@@ -7,7 +7,7 @@ import {
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
   type DungeonEnemy,
 } from '../utils/dungeon';
-import { sceneForFloor } from '../utils/dungeonScenes';
+import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -42,7 +42,8 @@ const MAX_FLOORS = 5;
 const PERFECT = 0.92;
 const DEFEND_TIME = 3.0;   // seconds to react on defense
 const POPUP_MS = 1400;     // how long result popups stay before the next phase
-const CLEAR_BONUS = 12;    // Bits for clearing a whole floor
+// Bits for clearing a floor — scales with how deep you are (10/15/20/25/30).
+const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
 
 type Phase = 'intro' | 'blocked' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 interface Popup { icon: string; title: string; detail: string; color: string }
@@ -101,7 +102,7 @@ function TimingBar({ speed, color, label, onStop }: {
 }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onEarnPoints, onExit }: {
+export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onDigimentalDrop, onGlitchtama, onEarnPoints, onExit }: {
   evolutionStage: string;
   language: Language;
   /** Start a run: gates on HP only. Returns the base level (floor 1's level). */
@@ -110,6 +111,10 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
   onHeartDrop: () => boolean;
+  /** Rolls for a digimental drop (added to Items); returns its display name or null. */
+  onDigimentalDrop: () => string | null;
+  /** Completing all 5 floors grants a Glitchtama (added to Items). */
+  onGlitchtama: () => void;
   /** Grants Bits. */
   onEarnPoints: (pts: number) => void;
   onExit: () => void;
@@ -131,6 +136,8 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   const [best, setBest] = useState(() => getDungeonBest());
   const [runScore, setRunScore] = useState(0);
   const [blocked, setBlocked] = useState(false);
+  // 5 scenes drawn per run from the classic pool + the shop backdrops.
+  const [runScenes, setRunScenes] = useState<DungeonScene[]>(() => buildRunScenes());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const defendResolvedRef = useRef(false);
   const runScoreRef = useRef(0);
@@ -139,7 +146,9 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   const petSprite = getSpriteForStage(evolutionStage);
   const mono = { fontFamily: 'monospace' as const };
   const ladderLen = LADDER_TIERS.length;
-  const scene = sceneForFloor(floor);
+  const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
+  // Some shop backdrops are LIGHT — keep the in-scene labels readable on them.
+  const sceneLabel = { textShadow: '0 1px 3px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.5)' as const };
 
   const after = useCallback((ms: number, fn: () => void) => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -172,6 +181,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
       return;
     }
     const list = buildDungeonWave(res.level, evolutionStage);
+    setRunScenes(buildRunScenes());
     setBaseLevel(res.level);
     setBest(res.best);
     setFloor(1);
@@ -187,14 +197,16 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     setPhase('attack');
   };
 
-  // Enemy defeated: grant points + roll a heart drop, then show the confirm screen.
+  // Enemy defeated: grant points + roll heart/digimental drops, then confirm.
   const defeatEnemy = (finalMsg: Popup) => {
     playTaskComplete();
     addPoints(enemy.points);
     const gotHeart = onHeartDrop();
+    const digimental = onDigimentalDrop();
     setRewardMsg(
       `+${enemy.points} Bits` +
-      (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : ''),
+      (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : '') +
+      (digimental ? ` · ✨ ${digimental}!` : ''),
     );
     setPopup(finalMsg);
     setPhase('result');
@@ -295,12 +307,13 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   const nextEnemy = () => {
     if (enemyIdx + 1 >= enemies.length) {
       playFeed();
-      addPoints(CLEAR_BONUS);
+      addPoints(clearBonus(floor));
       recordDungeonScore(runScoreRef.current);
       setBest(getDungeonBest());
       setRunScore(runScoreRef.current);
       if (floor >= MAX_FLOORS) {
         setDungeonDifficultyAtLeast(baseLevel + 1); // run complete → next run harder
+        onGlitchtama();                             // full clear → 🌀 Glitchtama
         setPhase('run-complete');
         return;
       }
@@ -364,7 +377,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
 
           {/* Enemy (top-right) */}
           <div style={{ position: 'absolute', top: 14, right: 16, textAlign: 'right' }}>
-            <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{enemy.name}</p>
+            <p style={{ ...mono, ...sceneLabel, fontSize: '0.8rem', marginBottom: 4 }}>{enemy.name}</p>
             {hpBar(enemyHp, enemy.hp, '#f87171')}
           </div>
           <img
@@ -381,7 +394,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
           />
           {/* Pet (bottom-left) */}
           <div style={{ position: 'absolute', bottom: 'calc(6% + 96px)', left: 16 }}>
-            <p style={{ ...mono, fontSize: '0.8rem', marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
+            <p style={{ ...mono, ...sceneLabel, fontSize: '0.8rem', marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
             {hpBar(playerHp, playerStats.hp, '#4ade80')}
           </div>
           <img
@@ -475,8 +488,8 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
                 style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
                 {enemyIdx + 1 >= enemies.length
                   ? (floor >= MAX_FLOORS
-                      ? (isPt ? `CONCLUIR RUN (+${CLEAR_BONUS} Bits)` : `FINISH RUN (+${CLEAR_BONUS} Bits)`)
-                      : (isPt ? `LIMPAR ANDAR (+${CLEAR_BONUS} Bits)` : `CLEAR FLOOR (+${CLEAR_BONUS} Bits)`))
+                      ? (isPt ? `CONCLUIR RUN (+${clearBonus(floor)} Bits + 🌀)` : `FINISH RUN (+${clearBonus(floor)} Bits + 🌀)`)
+                      : (isPt ? `LIMPAR ANDAR (+${clearBonus(floor)} Bits)` : `CLEAR FLOOR (+${clearBonus(floor)} Bits)`))
                   : (isPt ? `DESAFIAR ${enemies[enemyIdx + 1].name.toUpperCase()} →` : `CHALLENGE ${enemies[enemyIdx + 1].name.toUpperCase()} →`)}
               </button>
             </div>
@@ -492,7 +505,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
               <p style={{ ...mono, fontSize: '0.74rem', color: '#4ade80', marginBottom: 10 }}>{rewardMsg}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={nextFloor}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: sceneForFloor(floor + 1).accent, color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
+                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: (runScenes[floor] ?? DUNGEON_SCENES[0]).accent, color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
                   {isPt ? `ANDAR ${floor + 1} →` : `FLOOR ${floor + 1} →`}
                 </button>
                 <button onClick={exitRun}
@@ -509,6 +522,9 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
               </p>
               <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
                 {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
+              </p>
+              <p style={{ ...mono, fontSize: '0.78rem', color: '#4ade80', marginBottom: 2, fontWeight: 800 }}>
+                🌀 {isPt ? 'Glitchtama obtido! (pastinha de itens)' : 'Glitchtama acquired! (Items folder)'}
               </p>
               <p style={{ ...mono, fontSize: '0.74rem', color: '#c084fc', marginBottom: 10 }}>
                 {isPt ? 'A próxima run ficou mais difícil.' : 'The next run got harder.'}

@@ -184,8 +184,11 @@ export function useDailyReset({
         newPerfectDays = Math.max(0, prev.perfectDays - 1);
       }
 
-      // Evolution check
-      if (newPerfectDays >= requirements.required) {
+      // Evolution check. The padlock on the Evolution page blocks it entirely:
+      // perfect days keep accumulating, and unlocking makes the pet evolve on
+      // the NEXT day turn (this same check passes then).
+      let returnedDigimentalEmoji: string | null = null;
+      if (!prev.evolutionLocked && newPerfectDays >= requirements.required) {
         newPerfectDays = 0;
 
         // Use attributes accumulated since the last evolution for branch — not the
@@ -221,6 +224,10 @@ export function useDailyReset({
         if (evoItem?.evoTarget && getStageLevel(naturalNext) === evoItem.evoLevel && naturalNext !== prev.evolutionStage) {
           newEvolutionStage = evoItem.evoTarget;
           usedEvoItem = true;
+          // Digimentals are never consumed — return them to the Items folder.
+          if (evoItem.consumedOnEvolve === false && evoItem.inventoryEmoji) {
+            returnedDigimentalEmoji = evoItem.inventoryEmoji;
+          }
         }
         if (isBabyII && !hasShownRookiePopup) {
           setShowRookieUnlockPopup(true);
@@ -287,6 +294,12 @@ export function useDailyReset({
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
         equippedEvoItem: usedEvoItem ? null : (prev.equippedEvoItem ?? null),
+        ...(returnedDigimentalEmoji && {
+          foodInventory: {
+            ...prev.foodInventory,
+            [returnedDigimentalEmoji]: (prev.foodInventory?.[returnedDigimentalEmoji] ?? 0) + 1,
+          },
+        }),
         energyPoints: 0, // Energy resets daily (refills by feeding)
         // Summary of yesterday, shown once as a "daily report" on next open.
         lastDayReport: {

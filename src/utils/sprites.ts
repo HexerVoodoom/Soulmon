@@ -63,6 +63,10 @@ import megadramonSprite from '../assets/megadramon_dmc.png';
 import andromonSprite from '../assets/andromon_dmc.png';
 import vademonSprite from '../assets/vademon_dmc.png';
 import nanimonSprite from '../assets/nanimon_dmc.png';
+// Rookie item digivolutions (minigame drops)
+import gabumonSprite from '../assets/gabumon_dmc.png';
+import piyomonSprite from '../assets/piyomon_dmc.png';
+import tentomonSprite from '../assets/tentomon_dmc.png';
 
 export const STAGE_SPRITES: Record<string, string> = {
   digiegg: digiEggSprite,
@@ -129,6 +133,12 @@ export const STAGE_SPRITES: Record<string, string> = {
   andromon: andromonSprite,
   vademon: vademonSprite,
   nanimon: nanimonSprite,
+  // Rookie item digivolutions (agumon/patamon/palmon already mapped above)
+  gabumon: gabumonSprite,
+  piyomon: piyomonSprite,
+  tentomon: tentomonSprite,
+  // Armor digivolution — same sprite as the veemon-line raidramon
+  'raidramon-armor': raidramonSprite,
 };
 
 export function getSpriteForStage(stage: string): string {

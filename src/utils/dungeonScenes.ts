@@ -39,6 +39,43 @@ export const DUNGEON_SCENES: DungeonScene[] = [
   },
 ];
 
+// Shop pet-box backgrounds doubling as dungeon floors (accent picked per bg).
+// Kept as ids into PET_BACKGROUNDS so the CSS lives in one place.
+import { PET_BACKGROUNDS } from './backgrounds';
+
+const SHOP_BG_ACCENTS: Record<string, string> = {
+  'bg-forest': '#4ade80',
+  'bg-ocean': '#38bdf8',
+  'bg-gameboy': '#0f380f',
+  'bg-snow': '#1d4ed8',
+  'bg-lava': '#fb923c',
+  'bg-sakura': '#db2777',
+  'bg-toytown': '#f59e0b',
+  'bg-synthwave': '#ff2bd6',
+};
+
+const SHOP_BG_SCENES: DungeonScene[] = Object.entries(SHOP_BG_ACCENTS)
+  .filter(([id]) => PET_BACKGROUNDS[id])
+  .map(([id, accent]) => ({
+    namePt: PET_BACKGROUNDS[id].namePt,
+    nameEn: PET_BACKGROUNDS[id].nameEn,
+    bg: PET_BACKGROUNDS[id].css,
+    accent,
+  }));
+
+/**
+ * Scenes for one run: 5 picks without repeats, drawn at random from the classic
+ * retro scenes + the shop backgrounds. Every run looks different.
+ */
+export function buildRunScenes(count = 5): DungeonScene[] {
+  const pool = [...DUNGEON_SCENES, ...SHOP_BG_SCENES];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
+}
+
 /** Scene for a run floor (1-based). Clamps to the 5 defined scenes. */
 export function sceneForFloor(floor: number): DungeonScene {
   const i = Math.min(Math.max(1, floor), DUNGEON_SCENES.length) - 1;

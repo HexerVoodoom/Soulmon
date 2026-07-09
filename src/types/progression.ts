@@ -28,7 +28,11 @@ export type EvolutionStage = keyof typeof FORM_REQUIREMENTS;
 const STAGES_BY_LEVEL: Record<Exclude<EvolutionStage, 'digiegg'>, readonly string[]> = {
   'baby-i': ['pichimon', 'chicomon', 'yukimibotamon'],
   'baby-ii': ['pukamon', 'chibimon', 'nyaromon'],
-  rookie: ['tapirmon', 'veemon', 'plotmon'],
+  rookie: [
+    'tapirmon', 'veemon', 'plotmon',
+    // Rookie item digivolutions (minigame drops) — replace the line's rookie
+    'agumon', 'gabumon', 'piyomon', 'tentomon', 'patamon', 'palmon',
+  ],
   champion: [
     // Tapirmon
     'monochromon', 'tuskmon', 'bakemon',
@@ -40,6 +44,10 @@ const STAGES_BY_LEVEL: Record<Exclude<EvolutionStage, 'digiegg'>, readonly strin
     'greymon', 'garurumon', 'meramon', 'devimon',
     'angemon', 'birdramon', 'kabuterimon', 'seadramon',
     'airdramon', 'ogremon', 'kuwagamon', 'numemon',
+    // Armor digivolution (Digimental of Friendship). Flamedramon (Courage) is
+    // already the veemon line's champion; Raidramon needs a champion-level
+    // alias since 'raidramon' is that line's ULTIMATE form.
+    'raidramon-armor',
   ],
   ultimate: [
     'gigadramon', 'triceramon', 'digitamamon',

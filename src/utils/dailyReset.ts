@@ -122,12 +122,18 @@ export function getNextEvolution(
   // Numemon always evolves into Monzaemon, the strongest Perfect.
   if (currentStage === 'numemon') return 'monzaemon';
 
-  // Item-digivolution forms (shop): continue the line as if the pet were the
-  // branch form the item replaced at that level.
-  const ITEM_FORM_LEVEL: Record<string, 'champion' | 'ultimate'> = {
+  // Item-digivolution forms (shop/drops): continue the line as if the pet were
+  // the branch form the item replaced at that level. Rookie item forms map to
+  // the line's single rookie; flamedramon/raidramon-armor are the armor
+  // (digimental) champions, valid on ANY line — flamedramon is also the veemon
+  // line's natural champion, and the mapping is equivalent for it there.
+  const ITEM_FORM_LEVEL: Record<string, 'rookie' | 'champion' | 'ultimate'> = {
+    agumon: 'rookie', gabumon: 'rookie', piyomon: 'rookie',
+    tentomon: 'rookie', patamon: 'rookie', palmon: 'rookie',
     greymon: 'champion', garurumon: 'champion', meramon: 'champion', devimon: 'champion',
     angemon: 'champion', birdramon: 'champion', kabuterimon: 'champion', seadramon: 'champion',
     airdramon: 'champion', ogremon: 'champion', kuwagamon: 'champion',
+    flamedramon: 'champion', 'raidramon-armor': 'champion',
     monzaemon: 'ultimate', etemon: 'ultimate', andromon: 'ultimate',
     megadramon: 'ultimate', vademon: 'ultimate', nanimon: 'ultimate',
   };
@@ -146,7 +152,9 @@ export function getNextEvolution(
         ultimate: { vaccine: 'angewomon', virus: 'ladydevimon', data: 'nefertimon' },
       },
     };
-    currentStage = NATURAL[eggType][ITEM_FORM_LEVEL[currentStage]][branch];
+    const ROOKIE_OF: Record<EggLine, string> = { tapirmon: 'tapirmon', veemon: 'veemon', salamon: 'plotmon' };
+    const level = ITEM_FORM_LEVEL[currentStage];
+    currentStage = level === 'rookie' ? ROOKIE_OF[eggType] : NATURAL[eggType][level][branch];
   }
 
   // digiegg → baby-i (by line)

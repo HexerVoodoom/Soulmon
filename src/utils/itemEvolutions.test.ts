@@ -47,3 +47,34 @@ describe('item digivolutions — branch continuity', () => {
     expect(getNextEvolution('monzaemon', 'salamon', 'vaccine', [])).toBe('ophanimon');
   });
 });
+
+describe('rookie item forms (minigame drops)', () => {
+  it('map to the rookie level (HP/energy/degeneration follow)', () => {
+    for (const r of ['agumon', 'gabumon', 'piyomon', 'tentomon', 'patamon', 'palmon']) {
+      expect(getStageLevel(r)).toBe('rookie');
+    }
+  });
+
+  it('rookie item form evolves into the line champion of the current branch', () => {
+    expect(getNextEvolution('agumon', 'tapirmon', 'virus', [])).toBe('tuskmon');
+    expect(getNextEvolution('gabumon', 'veemon', 'data', [])).toBe('exveemon');
+    expect(getNextEvolution('piyomon', 'salamon', 'vaccine', [])).toBe('gatomon');
+    expect(getNextEvolution('tentomon', 'tapirmon', 'data', [])).toBe('monochromon');
+  });
+});
+
+describe('armor digivolutions (digimentals)', () => {
+  it('flamedramon and raidramon-armor are champion level', () => {
+    expect(getStageLevel('flamedramon')).toBe('champion');
+    expect(getStageLevel('raidramon-armor')).toBe('champion');
+  });
+
+  it('armor champion evolves into the line ultimate of the current branch, on any line', () => {
+    // Non-veemon lines: the armor form continues THAT line
+    expect(getNextEvolution('flamedramon', 'tapirmon', 'virus', [])).toBe('gigadramon');
+    expect(getNextEvolution('raidramon-armor', 'salamon', 'vaccine', [])).toBe('angewomon');
+    // Veemon line keeps its natural continuations
+    expect(getNextEvolution('flamedramon', 'veemon', 'vaccine', [])).toBe('raidramon');
+    expect(getNextEvolution('raidramon-armor', 'veemon', 'data', [])).toBe('paildramon');
+  });
+});

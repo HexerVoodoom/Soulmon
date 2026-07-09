@@ -349,12 +349,21 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                 </div>
               )}
 
-              {/* Special item effect (chip = attribute only; heart = heal) */}
+              {/* Special item effect (chip = attribute; heart = heal;
+                  glitchtama = perfect day; evo-equip = equips as evo item) */}
               {special && (
                 <div style={{ padding: '4px 8px', display: 'flex', gap: 6, borderBottom: '1px solid #808080' }}>
                   {special.kind === 'chip' && special.attr ? (
                     <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: ATTR_COLORS[special.attr], fontWeight: 'bold' }}>
                       {special.attr === 'vaccine' ? '💉' : special.attr === 'data' ? '💾' : '🦠'}+{CHIP_BOOST}
+                    </span>
+                  ) : special.kind === 'glitchtama' ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#8b5cf6', fontWeight: 'bold' }}>
+                      ⭐+1 {isPt ? 'dia perfeito' : 'perfect day'}
+                    </span>
+                  ) : special.kind === 'evo-equip' ? (
+                    <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#0e7490', fontWeight: 'bold' }}>
+                      ⚙ {isPt ? 'Usar = equipar p/ digievolução' : 'Use = equip for digivolution'}
                     </span>
                   ) : (
                     <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#E94F4F', fontWeight: 'bold' }}>
