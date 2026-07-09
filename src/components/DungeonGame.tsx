@@ -102,7 +102,7 @@ function TimingBar({ speed, color, label, onStop }: {
 }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onDigimentalDrop, onGlitchtama, onEarnPoints, onExit }: {
+export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onDigimentalDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit }: {
   evolutionStage: string;
   language: Language;
   /** Start a run: gates on HP only. Returns the base level (floor 1's level). */
@@ -115,6 +115,8 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   onDigimentalDrop: () => string | null;
   /** Completing all 5 floors grants a Glitchtama (added to Items). */
   onGlitchtama: () => void;
+  /** Mission counter: called once per defeated enemy. */
+  onEnemyDefeated: () => void;
   /** Grants Bits. */
   onEarnPoints: (pts: number) => void;
   onExit: () => void;
@@ -200,6 +202,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   // Enemy defeated: grant points + roll heart/digimental drops, then confirm.
   const defeatEnemy = (finalMsg: Popup) => {
     playTaskComplete();
+    onEnemyDefeated();
     addPoints(enemy.points);
     const gotHeart = onHeartDrop();
     const digimental = onDigimentalDrop();

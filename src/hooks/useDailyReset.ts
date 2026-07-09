@@ -291,6 +291,8 @@ export function useDailyReset({
         unlockedEvolutions: finalUnlockedEvolutions,
         degeneratedByHP: wasDegeneratedByHP,
         lastDayWasPerfect: dayWasPerfect,
+        // Lifetime perfect-day counter (missions) — never resets on evolution
+        totalPerfectDays: (prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0),
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
         equippedEvoItem: usedEvoItem ? null : (prev.equippedEvoItem ?? null),

@@ -22,12 +22,14 @@ const OBSTACLE_TIERS = [
   { stage: 'titamon',    from: 75, size: 56 },
 ];
 
-export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, onExit }: {
+export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, onScore, onExit }: {
   evolutionStage: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
   /** Adds a rookie evolution item to the Items folder; returns its display name. */
   onItemDrop: (emoji: string) => string;
+  /** Mission counter: reports the final score of each run. */
+  onScore: (score: number) => void;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -176,6 +178,7 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
       setFinalScore(score);
       setEarned(pts);
       if (pts > 0) { onEarnPoints(pts); playTaskComplete(); } else { playDegenerate(); }
+      onScore(score);
       setDrops(s.pendingDrops.map(emoji => `${emoji} ${onItemDrop(emoji)}`));
       setBest(prev => {
         const nb = Math.max(prev, score);
@@ -192,7 +195,7 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, jump, onEarnPoints, onItemDrop, petNeedsFlip]);
+  }, [phase, jump, onEarnPoints, onItemDrop, onScore, petNeedsFlip]);
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0b0f17 0%, #16202f 100%)', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>

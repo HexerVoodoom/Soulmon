@@ -62,6 +62,13 @@ const SECTIONS = [
         descPt: 'Item raro ganho ao concluir os 5 andares da masmorra. Usar na pastinha de itens concede 1 dia perfeito (um ponto de evolução).',
       },
       {
+        icon: '🏅',
+        labelEn: 'Missions',
+        labelPt: 'Missões',
+        descEn: 'Permanent goals in the Shop (evolve to a level, defeat dungeon enemies, high scores…). Completing one unlocks an EXCLUSIVE pet-box backdrop that can\'t be bought.',
+        descPt: 'Objetivos permanentes na Loja (evoluir até um nível, derrotar inimigos na masmorra, recordes…). Completar uma desbloqueia um cenário EXCLUSIVO do box do pet que não pode ser comprado.',
+      },
+      {
         icon: '🌞',
         labelEn: 'Digimentals & rookie items',
         labelPt: 'Digimentais e itens rookie',

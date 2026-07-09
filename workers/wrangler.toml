@@ -9,7 +9,7 @@ crons = ["0 13 * * *", "0 19 * * *", "0 0 * * *", "0 1 * * *"]
 
 [[kv_namespaces]]
 binding = "PUSH_SUBSCRIPTIONS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "12dd88d3282140e786a5b2c5b5b940cf"
 
 [vars]
 VAPID_PUBLIC_KEY = "BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY"

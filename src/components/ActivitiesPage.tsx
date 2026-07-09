@@ -11,7 +11,7 @@ import type { Language } from '../utils/i18n';
  * All games award 🪙 Bits (GameState.gamePoints), spent in the shop.
  * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onDungeonDigimental, onGlitchtama, onItemDrop, onEarnPoints, onShopBuy, onEquipBackground }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onDungeonDigimental, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onItemDrop, onEarnPoints, onShopBuy, onEquipBackground, missionProgress, onClaimMission }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
@@ -24,10 +24,14 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   onDungeonHeartDrop: () => boolean;
   onDungeonDigimental: () => string | null;
   onGlitchtama: () => void;
+  onDungeonEnemyDefeated: () => void;
+  onDinoScore: (score: number) => void;
   onItemDrop: (emoji: string) => string;
   onEarnPoints: (pts: number) => void;
   onShopBuy: (itemId: string) => boolean;
   onEquipBackground: (id: string | null) => void;
+  missionProgress: Record<string, number>;
+  onClaimMission: (missionId: string) => boolean;
 }) {
   const isPt = language === 'pt-BR';
   const isWin98 = theme === 'win98';
@@ -147,6 +151,8 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           ownedBackgrounds={ownedBackgrounds}
           equippedBackground={equippedBackground}
           equippedEvoItem={equippedEvoItem}
+          missionProgress={missionProgress}
+          onClaimMission={onClaimMission}
           onBuy={onShopBuy}
           onEquip={onEquipBackground}
           onClose={() => setShopOpen(false)}
@@ -162,6 +168,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           onHeartDrop={onDungeonHeartDrop}
           onDigimentalDrop={onDungeonDigimental}
           onGlitchtama={onGlitchtama}
+          onEnemyDefeated={onDungeonEnemyDefeated}
           onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}
         />
@@ -172,6 +179,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           language={language}
           onEarnPoints={onEarnPoints}
           onItemDrop={onItemDrop}
+          onScore={onDinoScore}
           onExit={() => setOpenGame(null)}
         />
       )}

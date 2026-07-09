@@ -114,6 +114,11 @@ export interface GameState {
   equippedEvoItem: string | null;
   /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
   evolutionLocked?: boolean;
+  /** Mission counters (lifetime, cloud-synced) — see utils/missions.ts. */
+  dungeonKills?: number;
+  dungeonRunsCompleted?: number;
+  dinoBest?: number;
+  totalPerfectDays?: number;
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
   lastDayReport?: {
     date: string;

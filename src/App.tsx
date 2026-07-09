@@ -30,6 +30,7 @@ import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigiv
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop, rollDungeonDigimental } from './utils/dungeon';
+import { MISSIONS, getMissionProgress, isMissionClaimable } from './utils/missions';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -798,7 +799,12 @@ export default function App() {
           if (count <= 0) return prev;
           const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
           if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
-          return { ...prev, foodInventory: newInventory, perfectDays: prev.perfectDays + 1 };
+          return {
+            ...prev,
+            foodInventory: newInventory,
+            perfectDays: prev.perfectDays + 1,
+            totalPerfectDays: (prev.totalPerfectDays ?? 0) + 1,
+          };
         });
         setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia perfeito' : '🌀 Glitchtama! +1 perfect day');
@@ -1029,12 +1035,51 @@ export default function App() {
   }, [language]);
 
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
+  // Also counts a completed run for the missions.
   const handleGlitchtama = useCallback(() => {
     setGameState(prev => ({
       ...prev,
       foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
+      dungeonRunsCompleted: (prev.dungeonRunsCompleted ?? 0) + 1,
     }));
   }, []);
+
+  // 🏅 Mission counters
+  const handleDungeonEnemyDefeated = useCallback(() => {
+    setGameState(prev => ({ ...prev, dungeonKills: (prev.dungeonKills ?? 0) + 1 }));
+  }, []);
+
+  const handleDinoScore = useCallback((score: number) => {
+    setGameState(prev => (score > (prev.dinoBest ?? 0) ? { ...prev, dinoBest: score } : prev));
+  }, []);
+
+  // Mission progress — derived from GameState counters. Dino's best also reads
+  // the pre-existing localStorage record so old feats keep counting.
+  const missionState = {
+    evolutionStage: gameState.evolutionStage,
+    unlockedEvolutions: gameState.unlockedEvolutions,
+    dungeonKills: gameState.dungeonKills ?? 0,
+    dungeonRunsCompleted: gameState.dungeonRunsCompleted ?? 0,
+    dinoBest: Math.max(gameState.dinoBest ?? 0, Number(localStorage.getItem(STORAGE_KEYS.DINO_BEST)) || 0),
+    totalPerfectDays: gameState.totalPerfectDays ?? 0,
+  };
+  const missionProgress = getMissionProgress(missionState);
+
+  const handleClaimMission = useCallback((missionId: string): boolean => {
+    const mission = MISSIONS.find(m => m.id === missionId);
+    if (!mission) return false;
+    if (!isMissionClaimable(mission, missionState, gameState.ownedBackgrounds ?? [])) return false;
+    playTaskComplete();
+    setGameState(prev => ({
+      ...prev,
+      ownedBackgrounds: [...(prev.ownedBackgrounds ?? []), mission.bgReward],
+    }));
+    return true;
+    // missionState is derived from gameState each render; the deps below cover it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameState.evolutionStage, gameState.unlockedEvolutions, gameState.dungeonKills,
+      gameState.dungeonRunsCompleted, gameState.dinoBest, gameState.totalPerfectDays,
+      gameState.ownedBackgrounds]);
 
   // Rookie evolution items dropped by the minigames (Dino Run / RPS). Adds the
   // item to the Items folder and returns its display name for the drop line.
@@ -1560,7 +1605,11 @@ export default function App() {
                 onDungeonHeartDrop={handleDungeonHeartDrop}
                 onDungeonDigimental={handleDungeonDigimental}
                 onGlitchtama={handleGlitchtama}
+                onDungeonEnemyDefeated={handleDungeonEnemyDefeated}
+                onDinoScore={handleDinoScore}
                 onItemDrop={handleMinigameItemDrop}
+                missionProgress={missionProgress}
+                onClaimMission={handleClaimMission}
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}
                 onEquipBackground={handleEquipBackground}
