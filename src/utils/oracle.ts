@@ -440,10 +440,25 @@ export const ROLE_INFO: Record<RoleId, { name: LText; emoji: string; profile: LT
   alcance: { name: { pt: 'Longo alcance', en: 'Long range' }, emoji: '🏹', profile: { pt: 'Perfil observador: age à distância, com precisão e timing.', en: 'Observer profile: acts from afar, with precision and timing.' } },
 };
 
-export const ALIGNMENT_INFO: Record<AlignmentId, { name: LText; emoji: string; profile: LText }> = {
-  poder: { name: { pt: 'Poder', en: 'Power' }, emoji: '👑', profile: { pt: 'Busca conquistar, dominar desafios e deixar marca no mundo.', en: 'Seeks to conquer, master challenges and leave a mark on the world.' } },
-  harmonia: { name: { pt: 'Harmonia', en: 'Harmony' }, emoji: '☯️', profile: { pt: 'Busca equilíbrio, conhecimento e o fluxo natural das coisas.', en: 'Seeks balance, knowledge and the natural flow of things.' } },
-  benevolencia: { name: { pt: 'Benevolência', en: 'Benevolence' }, emoji: '🕊️', profile: { pt: 'Busca cuidar, proteger e elevar quem está ao redor.', en: 'Seeks to care for, protect and uplift those around.' } },
+// Alinhamento = o "atributo" da criatura, equivalente direto ao Digimon:
+// Poder ≈ Vírus · Harmonia ≈ Data · Benevolência ≈ Vacina. Tem MUITO peso
+// visual: define silhueta, olhos e viés de paleta em todos os estágios.
+export const ALIGNMENT_INFO: Record<AlignmentId, { name: LText; emoji: string; profile: LText; attribute: LText }> = {
+  poder: {
+    name: { pt: 'Poder', en: 'Power' }, emoji: '👑',
+    profile: { pt: 'Busca conquistar, dominar desafios e deixar marca no mundo.', en: 'Seeks to conquer, master challenges and leave a mark on the world.' },
+    attribute: { pt: 'Vírus', en: 'Virus' },
+  },
+  harmonia: {
+    name: { pt: 'Harmonia', en: 'Harmony' }, emoji: '☯️',
+    profile: { pt: 'Busca equilíbrio, conhecimento e o fluxo natural das coisas.', en: 'Seeks balance, knowledge and the natural flow of things.' },
+    attribute: { pt: 'Data', en: 'Data' },
+  },
+  benevolencia: {
+    name: { pt: 'Benevolência', en: 'Benevolence' }, emoji: '🕊️',
+    profile: { pt: 'Busca cuidar, proteger e elevar quem está ao redor.', en: 'Seeks to care for, protect and uplift those around.' },
+    attribute: { pt: 'Vacina', en: 'Vaccine' },
+  },
 };
 
 export const REALM_INFO: Record<RealmId, { name: LText; emoji: string; description: LText; scenery: string; accent: string }> = {
@@ -861,6 +876,34 @@ const ELEMENT_MANIFEST: Record<ElementId, { en: string; pt: string }> = {
   industrial: { en: 'bolted mechanical augments, pistons and antenna arrays', pt: 'implementos mecânicos parafusados, pistões e antenas' },
 };
 
+// Linguagem de design por alinhamento — entra CEDO no prompt e em TODOS os
+// estágios, como o atributo dos Digimon (Vírus/Data/Vacina): dá pra
+// reconhecer o alinhamento só de olhar a criatura.
+const ALIGNMENT_DESIGN: Record<AlignmentId, string> = {
+  poder:
+    'VIRUS-attribute design language (like virus-type Digimon): jagged asymmetric silhouette, ' +
+    'sharp angular spikes and horns, small fangs and pointed claws, mischievous fierce eyes with narrow pupils, ' +
+    'darker moodier shading of the palette with one aggressive blood-red or toxic-purple accent, ' +
+    'slightly villainous but charming look',
+  harmonia:
+    'DATA-attribute design language (like data-type Digimon): clean symmetric silhouette, ' +
+    'balanced geometric shapes with smooth rounded edges, calm focused intelligent eyes, ' +
+    'evenly balanced palette with one cool cyan or emerald accent, ' +
+    'composed scholarly neutral look',
+  benevolencia:
+    'VACCINE-attribute design language (like vaccine-type Digimon): noble heroic silhouette, ' +
+    'soft rounded shapes with an upright proud posture, big kind sparkling eyes, ' +
+    'brighter cleaner shading of the palette with white and gold highlights, ' +
+    'knightly guardian look with a touch of angelic ornament',
+};
+
+// O atributo já aparece na forma bebê (reconhecível desde o primeiro estágio)
+const ALIGNMENT_BABY_HINT: Record<AlignmentId, string> = {
+  poder: 'even the baby form already shows tiny fangs, a mischievous smirk and one little crooked spike',
+  harmonia: 'even the baby form already looks calm, symmetric and quietly observant',
+  benevolencia: 'even the baby form already has kind sparkling eyes and a soft bright glow',
+};
+
 const MEGA_REGALIA: Record<AlignmentId, { en: string; pt: string }> = {
   poder: {
     en: 'warlord-monarch apotheosis: a crown-like crest, a tattered banner-cape and one oversized weapon-arm',
@@ -1128,9 +1171,10 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
   const roleName = ROLE_INFO[dominantRole].name;
   const alignName = ALIGNMENT_INFO[dominantAlignment].name;
 
+  const attribute = ALIGNMENT_INFO[dominantAlignment].attribute;
   const concept: LText = {
-    pt: `Fusão de ${fusionA.pt} com ${fusionB.pt}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. Elemento ${elName.pt} com traços de ${el2Name.pt}, alinhamento ${alignName.pt}, função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Os astros são só o eco distante; a criatura é única.`,
-    en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elName.en} element with ${el2Name.en} traits, ${alignName.en} alignment, ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". The stars are only a distant echo; the creature is one of a kind.`,
+    pt: `Fusão de ${fusionA.pt} com ${fusionB.pt}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. Elemento ${elName.pt} com traços de ${el2Name.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Os astros são só o eco distante; a criatura é única.`,
+    en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elName.en} element with ${el2Name.en} traits, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". The stars are only a distant echo; the creature is one of a kind.`,
   };
 
   const stageDescriptions: Record<StageId, LText> = {
@@ -1152,8 +1196,11 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
     },
   };
 
-  // Núcleo visual compartilhado por todos os estágios (identidade da espécie)
+  // Núcleo visual compartilhado por todos os estágios (identidade da espécie).
+  // O design do alinhamento vem PRIMEIRO — é o atributo da criatura
+  // (Vírus/Data/Vacina) e precisa ser reconhecível de bater o olho.
   const coreIdentity = [
+    ALIGNMENT_DESIGN[dominantAlignment],
     `an original monster species: a fusion of ${an(fusionA.en)} and ${an(fusionB.en)}${zodiacEcho}`,
     `signature crest present in every evolution stage: ${crest}`,
     marking,
@@ -1165,6 +1212,7 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
       'dormant larval baby form: a tiny round blob with no limbs, huge cute eyes',
       `only the ${fusionA.en} heritage is visible in the face and colors, the ${fusionB.en} side has not awakened yet`,
       'the signature crest appears only as a tiny bud, soft simple body, no gear, no armor',
+      ALIGNMENT_BABY_HINT[dominantAlignment],
       texture,
     ],
     adulto: [

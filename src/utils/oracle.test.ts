@@ -196,6 +196,24 @@ describe('generateOracle', () => {
     }
   });
 
+  it('alinhamento é o atributo Digimon e pesa em TODOS os estágios do prompt', () => {
+    const r = generateOracle(INPUT, 42);
+    const attributeToken: Record<string, string> = {
+      poder: 'VIRUS-attribute',
+      harmonia: 'DATA-attribute',
+      benevolencia: 'VACCINE-attribute',
+    };
+    const token = attributeToken[r.dominantAlignment];
+    for (const s of r.creature.stages) {
+      expect(s.imagePrompt).toContain(token);
+      expect(s.imagePrompt).toContain('design language');
+    }
+    // A forma bebê já denuncia o atributo
+    expect(r.creature.stages[0].imagePrompt).toContain('even the baby form');
+    // Conceito exibe a equivalência (Vírus/Data/Vacina)
+    expect(r.creature.concept.pt).toMatch(/atributo (Vírus|Data|Vacina)/);
+  });
+
   it('progressão é conceitual: cada estágio tem transformação própria', () => {
     const r = generateOracle(INPUT, 42);
     const [crianca, adulto, perfeito, mega] = r.creature.stages.map(s => s.imagePrompt);

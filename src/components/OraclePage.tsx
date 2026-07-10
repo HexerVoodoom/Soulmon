@@ -345,7 +345,15 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                   );
                 })}
             </div>
-            <p className={`text-xs mt-2 ${mutedCls}`}>{L(ALIGNMENT_INFO[result.dominantAlignment].profile)}</p>
+            <p className={`text-xs mt-2 ${titleCls}`}>
+              {ALIGNMENT_INFO[result.dominantAlignment].emoji}{' '}
+              <strong>{L(ALIGNMENT_INFO[result.dominantAlignment].name)}</strong>
+              {' ≈ '}
+              {isPt ? 'atributo' : 'attribute'}{' '}
+              <strong>{L(ALIGNMENT_INFO[result.dominantAlignment].attribute)}</strong>{' '}
+              {{ poder: '🦠', harmonia: '💾', benevolencia: '💉' }[result.dominantAlignment]}
+            </p>
+            <p className={`text-xs ${mutedCls}`}>{L(ALIGNMENT_INFO[result.dominantAlignment].profile)}</p>
           </div>
 
           {/* Reino */}
