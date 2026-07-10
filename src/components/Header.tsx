@@ -2,7 +2,7 @@ import React from 'react';
 import svgPaths from '../imports/svg-hfvoappsgk';
 import { TestTube2 } from 'lucide-react';
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle';
 
 interface HeaderProps {
   currentView: ViewType;
@@ -197,6 +197,9 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
           <button className={`win98-menu-item ${currentView === 'games' ? 'active' : ''}`} onClick={() => onNavigate('games')}>
             Games
           </button>
+          <button className={`win98-menu-item ${currentView === 'oracle' ? 'active' : ''}`} onClick={() => onNavigate('oracle')}>
+            Oracle
+          </button>
           <button className={`win98-menu-item ${currentView === 'settings' ? 'active' : ''}`} onClick={() => onNavigate('settings')}>
             Settings
           </button>
@@ -270,6 +273,22 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
                 )}
                 <div className="flex items-center justify-center size-full">
                   <PixelGamepadIcon isActive={currentView === 'games'} />
+                </div>
+              </button>
+
+              {/* Oráculo de Criaturas (provisório) */}
+              <button
+                onClick={() => onNavigate('oracle')}
+                aria-label="Oráculo"
+                className={`relative rounded-[14px] shrink-0 size-[39.993px] transition-all ${
+                  currentView === 'oracle' ? 'bg-[#e5e7eb]' : 'bg-white'
+                }`}
+              >
+                {currentView !== 'oracle' && (
+                  <div aria-hidden="true" className="absolute border border-[#c0c0c0] border-solid inset-0 pointer-events-none rounded-[14px]" />
+                )}
+                <div className="flex items-center justify-center size-full">
+                  <span style={{ fontSize: '18px', lineHeight: 1, filter: currentView === 'oracle' ? 'none' : 'grayscale(1)' }}>🔮</span>
                 </div>
               </button>
 

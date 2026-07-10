@@ -48,8 +48,9 @@ const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
+const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ default: m.OraclePage })));
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle';
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
@@ -1591,6 +1592,12 @@ export default function App() {
                 return state ? 'loaded' : 'created';
               }}
             /></Suspense>
+          )}
+
+          {currentView === 'oracle' && (
+            <Suspense fallback={null}>
+              <OraclePage theme={theme} language={language} />
+            </Suspense>
           )}
 
           {currentView === 'games' && (

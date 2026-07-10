@@ -29,4 +29,5 @@ export const STORAGE_KEYS = {
   SOUND_MUTED: 'digiapp-sound-muted',
   FCM_TOKEN: 'digiapp-fcm-token',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
+  ORACLE_FORM: 'digiapp-oracle-form',
 } as const;
