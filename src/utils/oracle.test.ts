@@ -185,14 +185,33 @@ describe('generateOracle', () => {
       // O prompt precisa carregar o estilo dos sprites do jogo em texto
       // (a ferramenta de imagem não aceita imagem de referência)
       expect(s.imagePrompt).toContain('Digital Monster LCD');
-      expect(s.imagePrompt).toContain('pixel grid');
       expect(s.imagePrompt).toContain('no anti-aliasing');
       expect(s.imagePrompt).toContain('fusion of');
       expect(s.imagePrompt).toContain('white background');
+      // Qualidade uniforme: mesmo grid e teto de cores em todos os estágios
+      expect(s.imagePrompt).toContain('24x24 pixel grid');
+      expect(s.imagePrompt).toContain('maximum 6 solid colors');
+      // Núcleo persiste em todos os estágios
+      expect(s.imagePrompt).toContain('signature crest');
     }
-    // Grids crescem com o estágio
-    expect(r.creature.stages[0].imagePrompt).toContain('16x16');
-    expect(r.creature.stages[3].imagePrompt).toContain('48x48');
+  });
+
+  it('progressão é conceitual: cada estágio tem transformação própria', () => {
+    const r = generateOracle(INPUT, 42);
+    const [crianca, adulto, perfeito, mega] = r.creature.stages.map(s => s.imagePrompt);
+    // Prompts todos diferentes entre si
+    expect(new Set([crianca, adulto, perfeito, mega]).size).toBe(4);
+    // Criança: larval, só a base A visível, sem equipamento
+    expect(crianca).toContain('dormant larval');
+    expect(crianca).toContain('has not awakened yet');
+    // Adulto: despertar da segunda base + plano corporal
+    expect(adulto).toContain('first awakened form');
+    // Perfeito: metamorfose de ofício + elemento secundário materializado
+    expect(perfeito).toContain('metamorphosis');
+    expect(perfeito).toContain('materializes physically');
+    // Mega: apoteose com silhueta nova, mantendo o núcleo
+    expect(mega).toContain('apotheosis');
+    expect(mega).toContain('same face, same signature crest');
   });
 
   it('seeds diferentes variam a parte criativa mantendo o perfil', () => {

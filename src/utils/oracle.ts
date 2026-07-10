@@ -805,11 +805,87 @@ const SPRITE_STYLE_END =
   'single full-body character, centered, facing slightly left, plain white background, ' +
   'no text, no watermark, no frame, no scenery, single frame';
 
-const STAGE_SPRITE_SPEC: Record<StageId, { grid: string; colors: number; body: string }> = {
-  crianca: { grid: '16x16', colors: 4, body: 'baby stage: a tiny round blob-like body, almost no limbs, huge cute eyes' },
-  adulto: { grid: '24x24', colors: 6, body: 'adult stage: a small bipedal body with short limbs, confident smile' },
-  perfeito: { grid: '32x32', colors: 8, body: 'perfect stage: a larger battle-ready body with elaborate details' },
-  mega: { grid: '48x48', colors: 10, body: 'mega stage: an imposing final-form body with ornate details and a powerful aura' },
+// Qualidade uniforme em TODOS os estágios (a evolução é conceitual, não de
+// resolução): mesmo grid e mesmo teto de cores do estágio rookie.
+const SPRITE_SPEC = 'designed on a 24x24 pixel grid, maximum 6 solid colors';
+
+// ----- Progressão conceitual -----
+// Cada estágio é uma TRANSFORMAÇÃO de conceito, não um "crescimento":
+//   criança  = forma larval adormecida (só a herança da base A visível)
+//   adulto   = despertar da fusão (base B emerge, plano corporal definido)
+//   perfeito = metamorfose de função (vira um "ofício" encarnado + elemento
+//              secundário materializado + emblema do reino)
+//   mega     = apoteose do alinhamento (regalia + corpo transmutado no elemento)
+// O núcleo persiste: mesmo rosto, mesma crista-assinatura, mesma família de cores.
+
+const BODY_PLANS: Array<{ en: string; pt: string }> = [
+  { en: 'small bipedal', pt: 'bípede compacto' },
+  { en: 'sturdy quadruped', pt: 'quadrúpede robusto' },
+  { en: 'winged bipedal', pt: 'bípede alado' },
+  { en: 'serpentine coiled', pt: 'serpentino enrolado' },
+  { en: 'floating levitating', pt: 'flutuante' },
+];
+
+const ROLE_METAMORPH: Record<RoleId, { en: string; pt: string }> = {
+  tanque: {
+    en: 'a bulwark knight: heavy segmented armor plates, massive pauldrons and one arm shaped like a tower shield',
+    pt: 'cavaleiro-baluarte: placas de armadura segmentada, ombreiras massivas e um braço em forma de escudo-torre',
+  },
+  suporte: {
+    en: 'a radiant cleric: flowing vestment drapes, a relic censer and small floating healing orbs',
+    pt: 'clérigo radiante: vestes esvoaçantes, um turíbulo-relíquia e pequenos orbes de cura flutuantes',
+  },
+  fisico: {
+    en: 'a battle master: reinforced gauntlets, blade-like limb edges and a fierce combat stance',
+    pt: 'mestre de batalha: manoplas reforçadas, membros com bordas de lâmina e postura feroz de combate',
+  },
+  magico: {
+    en: 'an arcane sage: rune-etched robe folds, a floating grimoire and glowing sigils orbiting the body',
+    pt: 'sábio arcano: dobras de manto gravadas com runas, um grimório flutuante e sigilos brilhantes orbitando o corpo',
+  },
+  alcance: {
+    en: 'a sharpshooter: a long arm-cannon, a targeting visor over one eye and stabilizer fins',
+    pt: 'atirador de elite: um longo canhão no braço, visor de mira sobre um olho e aletas estabilizadoras',
+  },
+};
+
+// O elemento secundário deixa de ser "toque" e vira matéria no estágio perfeito
+const ELEMENT_MANIFEST: Record<ElementId, { en: string; pt: string }> = {
+  agua: { en: 'flowing water veils and liquid ribbons around the limbs', pt: 'véus de água corrente e fitas líquidas nos membros' },
+  fogo: { en: 'magma plating and glowing ember vents on the shoulders', pt: 'placas de magma e aberturas de brasa nos ombros' },
+  terra: { en: 'heavy stone slabs growing from the back and forearms', pt: 'lajes de pedra crescendo das costas e antebraços' },
+  ar: { en: 'wind-swept plumes and small cyclone rings around the arms', pt: 'plumas ao vento e pequenos anéis de ciclone nos braços' },
+  sombra: { en: 'smoky shadow trails and a dark mist cloak', pt: 'rastros de sombra fumegante e um manto de névoa escura' },
+  luz: { en: 'shards of solid light forming a broken halo', pt: 'estilhaços de luz sólida formando uma auréola partida' },
+  planta: { en: 'blooming vines, bark guards and flower buds along the body', pt: 'vinhas floridas, proteções de casca e botões de flor pelo corpo' },
+  industrial: { en: 'bolted mechanical augments, pistons and antenna arrays', pt: 'implementos mecânicos parafusados, pistões e antenas' },
+};
+
+const MEGA_REGALIA: Record<AlignmentId, { en: string; pt: string }> = {
+  poder: {
+    en: 'warlord-monarch apotheosis: a crown-like crest, a tattered banner-cape and one oversized weapon-arm',
+    pt: 'apoteose de monarca da guerra: crista em coroa, capa-estandarte esfarrapada e um braço-arma desproporcional',
+  },
+  harmonia: {
+    en: 'celestial arbiter apotheosis: detached floating body segments, orbiting rings and a serene extra pair of eyes',
+    pt: 'apoteose de árbitro celeste: segmentos do corpo flutuando separados, anéis em órbita e um sereno par extra de olhos',
+  },
+  benevolencia: {
+    en: 'guardian seraph apotheosis: a protective mantle of layered wings, a soft aureole and open embracing arms',
+    pt: 'apoteose de serafim guardião: manto protetor de asas em camadas, auréola suave e braços abertos que acolhem',
+  },
+};
+
+const REALM_EMBLEM: Record<RealmId, { en: string; pt: string }> = {
+  deserto: { en: 'a sun-disc emblem', pt: 'um emblema de disco solar' },
+  picos: { en: 'a storm-bolt emblem', pt: 'um emblema de raio' },
+  oceano: { en: 'a tide-crest emblem', pt: 'um emblema de crista de maré' },
+  pantano: { en: 'a miasma-orchid emblem', pt: 'um emblema de orquídea do miasma' },
+  floresta: { en: 'a wild-antler emblem', pt: 'um emblema de galhada selvagem' },
+  cavernas: { en: 'a geode emblem', pt: 'um emblema de geodo' },
+  gelo: { en: 'a snowflake-sigil emblem', pt: 'um emblema de floco de neve' },
+  campina: { en: 'a golden-bloom emblem', pt: 'um emblema de flor dourada' },
+  akasha: { en: 'a twin-crescent emblem of light and shadow', pt: 'um emblema de crescentes gêmeos de luz e sombra' },
 };
 
 export const STAGE_NAMES: Record<StageId, LText> = {
@@ -1011,10 +1087,15 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
   // Características sorteadas (assinatura visual única)
   const crest = pick(rng, CRESTS);
   const tail = pick(rng, TAILS);
+  const bodyPlan = pick(rng, BODY_PLANS);
   const texture = ELEMENT_TEXTURE[dominantElement];
   const texture2 = ELEMENT_TEXTURE[secondaryElement];
   const marking = ALIGNMENT_MARKING[dominantAlignment];
   const realmInfo = REALM_INFO[dominantRealm];
+  const metamorph = ROLE_METAMORPH[dominantRole];
+  const manifest = ELEMENT_MANIFEST[secondaryElement];
+  const regalia = MEGA_REGALIA[dominantAlignment];
+  const emblem = REALM_EMBLEM[dominantRealm];
   // Eco do horóscopo: só às vezes, e sempre sutil
   const zodiacEcho = rng() < 0.35
     ? `, and a very faint, subtle hint of ${chinese.animalEn} in the face`
@@ -1054,46 +1135,75 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
 
   const stageDescriptions: Record<StageId, LText> = {
     crianca: {
-      pt: `${stageForms.crianca} é um filhotinho arredondado do reino ${realmInfo.name.pt}: uma mistura tímida de ${fusionA.pt} com ${fusionB.pt}, ainda desajeitado, com a aura de ${alignName.pt.toLowerCase()} brilhando fraquinha. ${adjRole.pt} desde o primeiro dia.`,
-      en: `${stageForms.crianca} is a round little hatchling of the ${realmInfo.name.en}: a shy blend of ${fusionA.en} and ${fusionB.en}, still clumsy, its ${alignName.en.toLowerCase()} aura glowing faintly. ${adjRole.en} from day one.`,
+      pt: `${stageForms.crianca} é a forma larval adormecida: uma bolotinha em que só a herança de ${fusionA.pt} aparece — o lado ${fusionB.pt} ainda dorme lá dentro. A crista-assinatura é só um brotinho, e a aura de ${alignName.pt.toLowerCase()} mal cintila. ${adjRole.pt} desde o primeiro dia.`,
+      en: `${stageForms.crianca} is the dormant larval form: a little blob where only the ${fusionA.en} heritage shows — the ${fusionB.en} side still sleeps within. The signature crest is just a bud, and the ${alignName.en.toLowerCase()} aura barely flickers. ${adjRole.en} from day one.`,
     },
     adulto: {
-      pt: `${stageForms.adulto} cresceu explorando cada canto do reino ${realmInfo.name.pt}. A fusão de ${fusionA.pt} e ${fusionB.pt} se firmou num corpo ágil de ${elName.pt}, e ele assume de vez o posto de ${roleName.pt.toLowerCase()} — ${sunTrait.pt}, como manda sua essência.`,
-      en: `${stageForms.adulto} grew up exploring every corner of the ${realmInfo.name.en}. The fusion of ${fusionA.en} and ${fusionB.en} settled into an agile ${elName.en} body, and it fully claims the ${roleName.en.toLowerCase()} post — ${sunTrait.en}, true to its essence.`,
+      pt: `${stageForms.adulto} é o despertar: a herança de ${fusionB.pt} emerge e a fusão se completa num corpo ${bodyPlan.pt} de ${elName.pt}. A crista se forma por inteiro e ele assume o posto de ${roleName.pt.toLowerCase()} — ${sunTrait.pt}, como manda sua essência.`,
+      en: `${stageForms.adulto} is the awakening: the ${fusionB.en} heritage emerges and the fusion completes into a ${bodyPlan.en} ${elName.en} body. The crest fully forms and it claims the ${roleName.en.toLowerCase()} post — ${sunTrait.en}, true to its essence.`,
     },
     perfeito: {
-      pt: `${stageForms.perfeito} atinge a forma perfeita: ${adjElement.pt} e ${adjRole.pt}, com ${el2Name.pt} entrelaçado ao corpo e as marcas de ${alignName.pt.toLowerCase()} reluzindo. É reconhecido como guardião do reino ${realmInfo.name.pt}.`,
-      en: `${stageForms.perfeito} reaches its perfect form: ${adjElement.en} and ${adjRole.en}, with ${el2Name.en} woven into its body and its ${alignName.en.toLowerCase()} markings gleaming. It is hailed as a guardian of the ${realmInfo.name.en}.`,
+      pt: `${stageForms.perfeito} não é um adulto maior — é uma metamorfose: a criatura encarna um ofício e vira ${metamorph.pt}. O lado ${el2Name.pt} se materializa (${manifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca seu corpo. O rosto e a crista continuam os mesmos.`,
+      en: `${stageForms.perfeito} is not a bigger adult — it is a metamorphosis: the creature embodies a calling and becomes ${metamorph.en.split(':')[0]}. Its ${el2Name.en} side materializes (${manifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. The face and crest remain the same.`,
     },
     mega: {
-      pt: `${stageForms.mega} é a forma final: a lenda viva do reino ${realmInfo.name.pt}, expressão máxima do arquétipo "${archetype.phrase.pt}". Nenhuma outra criatura reúne essa mistura — ela carrega a assinatura de quem a inspirou.`,
-      en: `${stageForms.mega} is the final form: the living legend of the ${realmInfo.name.en}, ultimate expression of the archetype "${archetype.phrase.en}". No other creature holds this exact blend — it bears the signature of the person who inspired it.`,
+      pt: `${stageForms.mega} é a apoteose: ${regalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo e a silhueta muda por completo — mas o rosto, a crista e as cores contam que é a mesma alma. Expressão máxima do arquétipo "${archetype.phrase.pt}".`,
+      en: `${stageForms.mega} is the apotheosis: ${regalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en} and the silhouette changes completely — yet the face, crest and colors tell it is the same soul. Ultimate expression of the archetype "${archetype.phrase.en}".`,
     },
   };
 
-  const stages: CreatureStage[] = (Object.keys(STAGE_NAMES) as StageId[]).map(stage => {
-    const spec = STAGE_SPRITE_SPEC[stage];
-    return {
-      stage,
-      stageName: STAGE_NAMES[stage],
-      name: stageForms[stage],
-      description: stageDescriptions[stage],
-      imagePrompt: [
-        SPRITE_STYLE_BASE,
-        `designed on a ${spec.grid} pixel grid, maximum ${spec.colors} solid colors`,
-        spec.body,
-        `an original monster: a fusion of ${an(fusionA.en)} and ${an(fusionB.en)}${zodiacEcho}`,
-        `${texture}, with touches of ${texture2}`,
-        crest,
-        tail,
-        marking,
-        ROLE_MOTIF[dominantRole],
-        `${ELEMENT_PALETTE[dominantElement]}, with ${realmInfo.accent}`,
-        `a creature born in ${realmInfo.scenery} (environment for color mood only, do NOT draw the background)`,
-        SPRITE_STYLE_END,
-      ].join(', '),
-    };
-  });
+  // Núcleo visual compartilhado por todos os estágios (identidade da espécie)
+  const coreIdentity = [
+    `an original monster species: a fusion of ${an(fusionA.en)} and ${an(fusionB.en)}${zodiacEcho}`,
+    `signature crest present in every evolution stage: ${crest}`,
+    marking,
+    `${ELEMENT_PALETTE[dominantElement]}, with ${realmInfo.accent}`,
+  ];
+
+  const stageConcepts: Record<StageId, string[]> = {
+    crianca: [
+      'dormant larval baby form: a tiny round blob with no limbs, huge cute eyes',
+      `only the ${fusionA.en} heritage is visible in the face and colors, the ${fusionB.en} side has not awakened yet`,
+      'the signature crest appears only as a tiny bud, soft simple body, no gear, no armor',
+      texture,
+    ],
+    adulto: [
+      `first awakened form: the ${fusionB.en} heritage emerges, completing the fusion`,
+      `${bodyPlan.en} body with short limbs, ${texture}, with touches of ${texture2}`,
+      tail,
+      `light starter gear: ${ROLE_MOTIF[dominantRole]}`,
+    ],
+    perfeito: [
+      'conceptual metamorphosis stage, NOT just a grown-up version: the creature now embodies a calling',
+      `it transforms into ${metamorph.en}`,
+      `its secondary element materializes physically: ${manifest.en}`,
+      `wearing ${emblem.en} on the chest or brow`,
+      `${texture}, ${tail}`,
+      'the silhouette must read clearly different from the adult form while keeping the same face and signature crest',
+    ],
+    mega: [
+      'final apotheosis stage, a radical transformation with a completely new silhouette',
+      regalia.en,
+      `its body is partially transmuted into living ${ELEMENT_INFO[dominantElement].name.en.toLowerCase()} element`,
+      `keeping ${emblem.en} and the ${metamorph.en.split(':')[0].replace(/^an? /, '')} theme from the previous stage`,
+      'same face, same signature crest and same color family as all previous stages — clearly the same species, utterly transformed',
+    ],
+  };
+
+  const stages: CreatureStage[] = (Object.keys(STAGE_NAMES) as StageId[]).map(stage => ({
+    stage,
+    stageName: STAGE_NAMES[stage],
+    name: stageForms[stage],
+    description: stageDescriptions[stage],
+    imagePrompt: [
+      SPRITE_STYLE_BASE,
+      SPRITE_SPEC,
+      ...coreIdentity,
+      ...stageConcepts[stage],
+      `a creature born in ${realmInfo.scenery} (environment for color mood only, do NOT draw the background)`,
+      SPRITE_STYLE_END,
+    ].join(', '),
+  }));
 
   return {
     input,
