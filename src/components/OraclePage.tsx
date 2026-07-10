@@ -4,6 +4,7 @@ import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import {
   generateOracle, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
+  ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
 
@@ -117,6 +118,8 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
 
   const maxElementScore = result ? Math.max(...ELEMENT_ORDER.map(e => result.elementScores[e]), 1) : 1;
   const maxRoleScore = result ? Math.max(...ROLE_ORDER.map(r => result.roleScores[r]), 1) : 1;
+  const maxAlignScore = result ? Math.max(...ALIGNMENT_ORDER.map(a => result.alignmentScores[a]), 1) : 1;
+  const maxRealmScore = result ? Math.max(...REALM_ORDER.map(r => result.realmScores[r]), 1) : 1;
 
   return (
     <div className="space-y-4" style={mono}>
@@ -310,6 +313,76 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                 })}
             </div>
             <p className={`text-xs mt-2 ${mutedCls}`}>{L(ROLE_INFO[result.dominantRole].profile)}</p>
+          </div>
+
+          {/* Alinhamento */}
+          <div className={cardCls}>
+            <h3 className={`mb-2 ${titleCls}`}>⚖️ {isPt ? 'Alinhamento' : 'Alignment'}</h3>
+            <div className="space-y-1">
+              {[...ALIGNMENT_ORDER]
+                .sort((a, b) => result.alignmentScores[b] - result.alignmentScores[a])
+                .map(al => {
+                  const info = ALIGNMENT_INFO[al];
+                  const score = result.alignmentScores[al];
+                  const isTop = al === result.dominantAlignment;
+                  return (
+                    <div key={al} className="flex items-center gap-2 text-xs">
+                      <span className="w-5 text-center">{info.emoji}</span>
+                      <span className={`w-28 ${isTop ? titleCls : mutedCls}`} style={isTop ? { fontWeight: 700 } : undefined}>
+                        {L(info.name)}
+                      </span>
+                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: isGlitch ? '#0a2a2a' : '#e5e7eb' }}>
+                        <div
+                          className="h-full rounded"
+                          style={{
+                            width: `${(score / maxAlignScore) * 100}%`,
+                            background: isTop ? (isGlitch ? '#ffcc00' : '#d97706') : (isGlitch ? '#ffcc0055' : '#fde68a'),
+                          }}
+                        />
+                      </div>
+                      <span className={`w-6 text-right ${isTop ? titleCls : mutedCls}`}>{score}</span>
+                    </div>
+                  );
+                })}
+            </div>
+            <p className={`text-xs mt-2 ${mutedCls}`}>{L(ALIGNMENT_INFO[result.dominantAlignment].profile)}</p>
+          </div>
+
+          {/* Reino */}
+          <div className={cardCls}>
+            <h3 className={`mb-2 ${titleCls}`}>🗺️ {isPt ? 'Reino de origem' : 'Home realm'}</h3>
+            <div className="space-y-1">
+              {[...REALM_ORDER]
+                .sort((a, b) => result.realmScores[b] - result.realmScores[a])
+                .slice(0, 4)
+                .map(realm => {
+                  const info = REALM_INFO[realm];
+                  const score = result.realmScores[realm];
+                  const isTop = realm === result.dominantRealm;
+                  return (
+                    <div key={realm} className="flex items-center gap-2 text-xs">
+                      <span className="w-5 text-center">{info.emoji}</span>
+                      <span className={`w-36 ${isTop ? titleCls : mutedCls}`} style={isTop ? { fontWeight: 700 } : undefined}>
+                        {L(info.name)}
+                      </span>
+                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: isGlitch ? '#0a2a2a' : '#e5e7eb' }}>
+                        <div
+                          className="h-full rounded"
+                          style={{
+                            width: `${(score / maxRealmScore) * 100}%`,
+                            background: isTop ? (isGlitch ? '#00ff88' : '#059669') : (isGlitch ? '#00ff8855' : '#a7f3d0'),
+                          }}
+                        />
+                      </div>
+                      <span className={`w-6 text-right ${isTop ? titleCls : mutedCls}`}>{score}</span>
+                    </div>
+                  );
+                })}
+            </div>
+            <p className={`text-xs mt-2 ${titleCls}`}>
+              {REALM_INFO[result.dominantRealm].emoji} <strong>{L(REALM_INFO[result.dominantRealm].name)}</strong>
+            </p>
+            <p className={`text-xs ${mutedCls}`}>{L(REALM_INFO[result.dominantRealm].description)}</p>
           </div>
 
           {/* Personalidade + Arquétipo */}

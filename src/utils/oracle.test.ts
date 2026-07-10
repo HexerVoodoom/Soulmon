@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   normalizeName, reduceNumber, computeNumerology, westernSunSign,
   approximateAscendant, computeChinese, computeVedic, generateOracle,
-  ELEMENT_ORDER, ROLE_ORDER,
+  ELEMENT_ORDER, ROLE_ORDER, ALIGNMENT_ORDER, REALM_ORDER,
   type OracleInput,
 } from './oracle';
 
@@ -116,9 +116,42 @@ describe('generateOracle', () => {
     const b = generateOracle(INPUT, 999999);
     expect(a.elementScores).toEqual(b.elementScores);
     expect(a.roleScores).toEqual(b.roleScores);
+    expect(a.alignmentScores).toEqual(b.alignmentScores);
+    expect(a.realmScores).toEqual(b.realmScores);
     expect(a.dominantElement).toBe(b.dominantElement);
     expect(a.dominantRole).toBe(b.dominantRole);
+    expect(a.dominantAlignment).toBe(b.dominantAlignment);
+    expect(a.dominantRealm).toBe(b.dominantRealm);
     expect(a.numerology).toEqual(b.numerology);
+  });
+
+  it('alinhamento e reino dominantes são os de maior pontuação', () => {
+    const r = generateOracle(INPUT, 42);
+    const maxAlign = Math.max(...ALIGNMENT_ORDER.map(a => r.alignmentScores[a]));
+    expect(r.alignmentScores[r.dominantAlignment]).toBe(maxAlign);
+    const maxRealm = Math.max(...REALM_ORDER.map(x => r.realmScores[x]));
+    expect(r.realmScores[r.dominantRealm]).toBe(maxRealm);
+  });
+
+  it('criatura é fusão de duas bases distintas', () => {
+    const r = generateOracle(INPUT, 42);
+    expect(r.creature.fusion.a.en.length).toBeGreaterThan(0);
+    expect(r.creature.fusion.b.en.length).toBeGreaterThan(0);
+    expect(r.creature.fusion.a.en).not.toBe(r.creature.fusion.b.en);
+  });
+
+  it('inputs diferentes geram perfis diferentes (unicidade)', () => {
+    const inputs: OracleInput[] = [
+      INPUT,
+      { fullName: 'João Pedro Alves', birthDate: '1988-03-02', birthTime: '07:15', birthPlace: 'Recife, Brasil' },
+      { fullName: 'Ana Beatriz Rocha', birthDate: '2001-12-25', birthTime: '23:50', birthPlace: 'Manaus, Brasil' },
+      { fullName: 'Carlos Eduardo Lima', birthDate: '1975-06-10', birthTime: '03:33', birthPlace: 'Curitiba, Brasil' },
+    ];
+    const signatures = inputs.map(i => {
+      const r = generateOracle(i, 42); // mesmo seed — diferença vem só do input
+      return `${r.dominantElement}|${r.dominantRole}|${r.dominantAlignment}|${r.dominantRealm}|${r.creature.fusion.a.en}|${r.creature.fusion.b.en}`;
+    });
+    expect(new Set(signatures).size).toBe(inputs.length);
   });
 
   it('elemento dominante é o de maior pontuação', () => {
@@ -149,9 +182,17 @@ describe('generateOracle', () => {
       expect(s.name.length).toBeGreaterThan(2);
       expect(s.description.pt.length).toBeGreaterThan(20);
       expect(s.description.en.length).toBeGreaterThan(20);
-      expect(s.imagePrompt).toContain('8-bit');
-      expect(s.imagePrompt).toContain('pixel art');
+      // O prompt precisa carregar o estilo dos sprites do jogo em texto
+      // (a ferramenta de imagem não aceita imagem de referência)
+      expect(s.imagePrompt).toContain('Digital Monster LCD');
+      expect(s.imagePrompt).toContain('pixel grid');
+      expect(s.imagePrompt).toContain('no anti-aliasing');
+      expect(s.imagePrompt).toContain('fusion of');
+      expect(s.imagePrompt).toContain('white background');
     }
+    // Grids crescem com o estágio
+    expect(r.creature.stages[0].imagePrompt).toContain('16x16');
+    expect(r.creature.stages[3].imagePrompt).toContain('48x48');
   });
 
   it('seeds diferentes variam a parte criativa mantendo o perfil', () => {
