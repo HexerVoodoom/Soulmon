@@ -11,7 +11,7 @@ import type { Language } from '../utils/i18n';
  * All games award 🪙 Bits (GameState.gamePoints), spent in the shop.
  * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onDungeonDigimental, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onItemDrop, onEarnPoints, onShopBuy, onEquipBackground, missionProgress, onClaimMission }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, equippedEvoItem, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onDungeonDigimental, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onItemDrop, onEarnPoints, onShopBuy, onEquipBackground, missionProgress, droppedItems }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
@@ -31,7 +31,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   onShopBuy: (itemId: string) => boolean;
   onEquipBackground: (id: string | null) => void;
   missionProgress: Record<string, number>;
-  onClaimMission: (missionId: string) => boolean;
+  droppedItems: string[];
 }) {
   const isPt = language === 'pt-BR';
   const isWin98 = theme === 'win98';
@@ -152,7 +152,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
           equippedBackground={equippedBackground}
           equippedEvoItem={equippedEvoItem}
           missionProgress={missionProgress}
-          onClaimMission={onClaimMission}
+          droppedItems={droppedItems}
           onBuy={onShopBuy}
           onEquip={onEquipBackground}
           onClose={() => setShopOpen(false)}

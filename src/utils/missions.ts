@@ -1,8 +1,9 @@
-// 🏅 Missions — permanent goals that unlock EXCLUSIVE pet-box backgrounds
-// (they never appear in the shop; the only way in is playing). Progress is
-// derived from GameState counters; claiming adds the background to
-// ownedBackgrounds, so "claimed" simply means the background is owned.
+// 🏅 Missions — permanent achievements that UNLOCK THE PURCHASE of exclusive
+// shop items (the mission backgrounds). Locked items show in the shop with a
+// padlock; completing the mission makes them buyable. Progress is derived
+// from GameState counters.
 import { getStageLevel, type EvolutionStage } from '../types/progression';
+import type { ShopItem } from './shop';
 
 export interface MissionState {
   evolutionStage: string;
@@ -25,7 +26,7 @@ export interface Mission {
   descPt: string;
   descEn: string;
   target: number;
-  /** Background unlocked on claim (id into PET_BACKGROUNDS). */
+  /** Shop item whose PURCHASE this mission unlocks (id into SHOP_ITEMS). */
   bgReward: string;
   progress: (s: MissionState) => number;
 }
@@ -86,7 +87,24 @@ export function getMissionProgress(s: MissionState): Record<string, number> {
   return Object.fromEntries(MISSIONS.map(m => [m.id, Math.min(m.target, m.progress(s))]));
 }
 
-/** A mission is claimable when complete and its background isn't owned yet. */
-export function isMissionClaimable(m: Mission, s: MissionState, ownedBackgrounds: string[]): boolean {
-  return m.progress(s) >= m.target && !ownedBackgrounds.includes(m.bgReward);
+/** Whether a mission is complete, given a getMissionProgress record. */
+export function isMissionComplete(missionId: string, progress: Record<string, number>): boolean {
+  const m = MISSIONS.find(x => x.id === missionId);
+  return !!m && (progress[missionId] ?? 0) >= m.target;
+}
+
+/**
+ * Whether a shop item's purchase is unlocked. Locked items still render in
+ * the shop (darkened + padlock) with a hint on how to unlock them.
+ * - drop-gated: unlocked once the item has EVER dropped (droppedItems ids).
+ * - mission-gated: unlocked once the mission is complete.
+ */
+export function isShopItemUnlocked(
+  item: ShopItem,
+  droppedItems: string[],
+  missionProgress: Record<string, number>,
+): boolean {
+  if (!item.unlock) return true;
+  if (item.unlock.kind === 'drop') return droppedItems.includes(item.id);
+  return isMissionComplete(item.unlock.missionId, missionProgress);
 }

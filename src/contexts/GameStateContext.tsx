@@ -119,6 +119,8 @@ export interface GameState {
   dungeonRunsCompleted?: number;
   dinoBest?: number;
   totalPerfectDays?: number;
+  /** Shop item ids that have EVER dropped — unlocks their purchase (utils/shop.ts unlock:'drop'). */
+  droppedItems?: string[];
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
   lastDayReport?: {
     date: string;

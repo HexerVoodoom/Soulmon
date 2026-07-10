@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { MISSIONS, getMissionProgress, isMissionClaimable, type MissionState } from './missions';
+import { MISSIONS, getMissionProgress, isMissionComplete, isShopItemUnlocked, type MissionState } from './missions';
+import { SHOP_ITEMS, DROP_EVO_ITEMS } from './shop';
 import { PET_BACKGROUNDS } from './backgrounds';
 
 const base: MissionState = {
@@ -37,18 +38,36 @@ describe('missions — progress', () => {
   });
 });
 
-describe('missions — claim', () => {
-  const kills = MISSIONS.find(m => m.id === 'mission-kills-100')!;
-
-  it('claimable only when complete and background not yet owned', () => {
-    expect(isMissionClaimable(kills, { ...base, dungeonKills: 99 }, [])).toBe(false);
-    expect(isMissionClaimable(kills, { ...base, dungeonKills: 100 }, [])).toBe(true);
-    expect(isMissionClaimable(kills, { ...base, dungeonKills: 100 }, [kills.bgReward])).toBe(false);
+describe('missions — shop unlock gating', () => {
+  it('every mission unlocks a distinct shop item, with CSS defined for bg rewards', () => {
+    const rewards = MISSIONS.map(m => m.bgReward);
+    expect(new Set(rewards).size).toBe(rewards.length);
+    for (const id of rewards) {
+      const item = SHOP_ITEMS.find(i => i.id === id);
+      expect(item, id).toBeDefined();
+      expect(item!.unlock).toEqual({ kind: 'mission', missionId: MISSIONS.find(m => m.bgReward === id)!.id });
+      if (item!.kind === 'bg') expect(PET_BACKGROUNDS[id]?.css).toBeTruthy();
+    }
   });
 
-  it('every mission rewards a distinct background with CSS defined', () => {
-    const bgs = MISSIONS.map(m => m.bgReward);
-    expect(new Set(bgs).size).toBe(bgs.length);
-    for (const bg of bgs) expect(PET_BACKGROUNDS[bg]?.css).toBeTruthy();
+  it('mission-gated item unlocks only when the mission completes', () => {
+    const item = SHOP_ITEMS.find(i => i.id === 'bg-mission-kills-100') ?? SHOP_ITEMS.find(i => i.id === 'bg-mission-coliseum')!;
+    const at = (kills: number) => getMissionProgress({ ...base, dungeonKills: kills });
+    expect(isMissionComplete('mission-kills-100', at(99))).toBe(false);
+    expect(isMissionComplete('mission-kills-100', at(100))).toBe(true);
+    expect(isShopItemUnlocked(item, [], at(99))).toBe(false);
+    expect(isShopItemUnlocked(item, [], at(100))).toBe(true);
+  });
+
+  it('drop-gated items unlock after their first drop; plain items are always unlocked', () => {
+    const digimental = DROP_EVO_ITEMS.find(i => i.id === 'digimental-courage')!;
+    const progress = getMissionProgress(base);
+    expect(isShopItemUnlocked(digimental, [], progress)).toBe(false);
+    expect(isShopItemUnlocked(digimental, ['digimental-courage'], progress)).toBe(true);
+
+    const chip = SHOP_ITEMS.find(i => i.id === 'chip-virus')!;
+    expect(isShopItemUnlocked(chip, [], progress)).toBe(true);
+    // Glitchtama must NOT be sold at all
+    expect([...SHOP_ITEMS, ...DROP_EVO_ITEMS].some(i => i.id === 'glitchtama')).toBe(false);
   });
 });

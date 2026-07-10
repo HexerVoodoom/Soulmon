@@ -63,10 +63,10 @@ const SECTIONS = [
       },
       {
         icon: '🏅',
-        labelEn: 'Missions',
-        labelPt: 'Missões',
-        descEn: 'Permanent goals in the Shop (evolve to a level, defeat dungeon enemies, high scores…). Completing one unlocks an EXCLUSIVE pet-box backdrop that can\'t be bought.',
-        descPt: 'Objetivos permanentes na Loja (evoluir até um nível, derrotar inimigos na masmorra, recordes…). Completar uma desbloqueia um cenário EXCLUSIVO do box do pet que não pode ser comprado.',
+        labelEn: 'Missions & locked items',
+        labelPt: 'Missões e itens bloqueados',
+        descEn: 'The Shop has tabs, and some items show darkened with a 🔒: tap one to see how to unlock its purchase. Missions (evolve to a level, defeat dungeon enemies, high scores…) unlock exclusive backdrops; drop items (digimentals, rookie items) become buyable after they drop once.',
+        descPt: 'A Loja tem abas, e alguns itens aparecem escurecidos com 🔒: toque para ver como liberar a compra. Missões (evoluir até um nível, derrotar inimigos na masmorra, recordes…) liberam cenários exclusivos; itens de drop (digimentais, itens rookie) ficam compráveis depois de dropar uma vez.',
       },
       {
         icon: '🌞',

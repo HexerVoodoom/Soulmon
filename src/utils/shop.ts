@@ -3,6 +3,16 @@
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'evo';
 export type Attr = 'virus' | 'data' | 'vaccine';
 
+/**
+ * Purchase gate. Locked items still show in the shop — darkened, with a
+ * padlock; tapping them reveals HOW to unlock:
+ * - 'drop': buyable after the item DROPS at least once (minigames/dungeon).
+ * - 'mission': buyable after the mission (utils/missions.ts) is complete.
+ */
+export type UnlockReq =
+  | { kind: 'drop'; hintPt: string; hintEn: string }
+  | { kind: 'mission'; missionId: string };
+
 export interface ShopItem {
   id: string;
   kind: ShopItemKind;
@@ -20,6 +30,8 @@ export interface ShopItem {
   consumedOnEvolve?: boolean;
   /** Inventory emoji for equippable drops that live in the Items folder before being equipped. */
   inventoryEmoji?: string;
+  /** When present, purchasing is locked until the requirement is met. */
+  unlock?: UnlockReq;
 }
 
 export const CHIP_BOOST = 3;   // attribute points granted when a chip is USED
@@ -50,44 +62,59 @@ export interface SpecialItem {
 // one perfect day (an evolution point), no questions asked.
 export const GLITCHTAMA_EMOJI = '🌀';
 
-// Equippable evolution drops (NOT sold in the shop). They sit in the Items
-// folder; USING one equips it as the evolution item (same single slot as the
-// shop items). Digimentals are NEVER consumed — after the evolution they
-// return to the Items folder. Rookie items ARE consumed, like shop items.
+// Equippable evolution drops. They sit in the Items folder; USING one equips
+// it as the evolution item (same single slot as the shop items). Digimentals
+// are NEVER consumed — after the evolution they return to the Items folder.
+// Rookie items ARE consumed, like shop items.
+// They ALSO show in the shop, locked until the first drop happens — from then
+// on extra copies can be bought with Bits.
+const DUNGEON_DROP_HINT = {
+  hintPt: 'Consiga um na masmorra primeiro (drop de 0,1% por inimigo)',
+  hintEn: 'Get one in the dungeon first (0.1% drop per enemy)',
+};
+const DINO_DROP_HINT = {
+  hintPt: 'Consiga um na Corrida do Dino primeiro (1% a cada 250 de score)',
+  hintEn: 'Get one in Dino Runner first (1% per 250 score)',
+};
+const RPS_DROP_HINT = {
+  hintPt: 'Consiga um no Pedra-Papel-Tesoura primeiro (1% por vitória)',
+  hintEn: 'Get one in Rock-Paper-Scissors first (1% per match win)',
+};
+
 export const DROP_EVO_ITEMS: ShopItem[] = [
   // Digimentals — ultra-rare dungeon drops (0.1%/enemy). Armor evolution:
   // the CHAMPION form becomes the armor Digimon, on any egg line.
   { id: 'digimental-courage', kind: 'evo', icon: '🌞', evoTarget: 'flamedramon', evoLevel: 'champion',
-    consumedOnEvolve: false, inventoryEmoji: '🌞', price: 0,
+    consumedOnEvolve: false, inventoryEmoji: '🌞', price: 900, unlock: { kind: 'drop', ...DUNGEON_DROP_HINT },
     namePt: 'Digimental da Coragem', nameEn: 'Digimental of Courage',
     descPt: 'A evolução para CAMPEÃO vira Flamedramon — nunca é consumido', descEn: 'Your CHAMPION evolution becomes Flamedramon — never consumed' },
   { id: 'digimental-friendship', kind: 'evo', icon: '🌩️', evoTarget: 'raidramon-armor', evoLevel: 'champion',
-    consumedOnEvolve: false, inventoryEmoji: '🌩️', price: 0,
+    consumedOnEvolve: false, inventoryEmoji: '🌩️', price: 900, unlock: { kind: 'drop', ...DUNGEON_DROP_HINT },
     namePt: 'Digimental da Amizade', nameEn: 'Digimental of Friendship',
     descPt: 'A evolução para CAMPEÃO vira Raidramon — nunca é consumido', descEn: 'Your CHAMPION evolution becomes Raidramon — never consumed' },
   // Rookie items — minigame drops (Dino Run / RPS). Consumed on evolution.
   { id: 'rookie-agumon', kind: 'evo', icon: '🔥', evoTarget: 'agumon', evoLevel: 'rookie',
-    inventoryEmoji: '🔥', price: 0,
+    inventoryEmoji: '🔥', price: 350, unlock: { kind: 'drop', ...DINO_DROP_HINT },
     namePt: 'Chama Corajosa', nameEn: 'Brave Flame',
     descPt: 'A evolução para ROOKIE vira Agumon', descEn: 'Your ROOKIE evolution becomes Agumon' },
   { id: 'rookie-gabumon', kind: 'evo', icon: '🐺', evoTarget: 'gabumon', evoLevel: 'rookie',
-    inventoryEmoji: '🐺', price: 0,
+    inventoryEmoji: '🐺', price: 350, unlock: { kind: 'drop', ...DINO_DROP_HINT },
     namePt: 'Pelo de Lobo', nameEn: 'Wolf Pelt',
     descPt: 'A evolução para ROOKIE vira Gabumon', descEn: 'Your ROOKIE evolution becomes Gabumon' },
   { id: 'rookie-piyomon', kind: 'evo', icon: '🐣', evoTarget: 'piyomon', evoLevel: 'rookie',
-    inventoryEmoji: '🐣', price: 0,
+    inventoryEmoji: '🐣', price: 350, unlock: { kind: 'drop', ...DINO_DROP_HINT },
     namePt: 'Pena Rosa', nameEn: 'Pink Feather',
     descPt: 'A evolução para ROOKIE vira Piyomon', descEn: 'Your ROOKIE evolution becomes Piyomon' },
   { id: 'rookie-tentomon', kind: 'evo', icon: '🐞', evoTarget: 'tentomon', evoLevel: 'rookie',
-    inventoryEmoji: '🐞', price: 0,
+    inventoryEmoji: '🐞', price: 350, unlock: { kind: 'drop', ...RPS_DROP_HINT },
     namePt: 'Casco Elétrico', nameEn: 'Electro Shell',
     descPt: 'A evolução para ROOKIE vira Tentomon', descEn: 'Your ROOKIE evolution becomes Tentomon' },
   { id: 'rookie-patamon', kind: 'evo', icon: '🍃', evoTarget: 'patamon', evoLevel: 'rookie',
-    inventoryEmoji: '🍃', price: 0,
+    inventoryEmoji: '🍃', price: 350, unlock: { kind: 'drop', ...RPS_DROP_HINT },
     namePt: 'Brisa Sagrada', nameEn: 'Holy Breeze',
     descPt: 'A evolução para ROOKIE vira Patamon', descEn: 'Your ROOKIE evolution becomes Patamon' },
   { id: 'rookie-palmon', kind: 'evo', icon: '🌺', evoTarget: 'palmon', evoLevel: 'rookie',
-    inventoryEmoji: '🌺', price: 0,
+    inventoryEmoji: '🌺', price: 350, unlock: { kind: 'drop', ...RPS_DROP_HINT },
     namePt: 'Semente Florida', nameEn: 'Flower Seed',
     descPt: 'A evolução para ROOKIE vira Palmon', descEn: 'Your ROOKIE evolution becomes Palmon' },
 ];
@@ -149,6 +176,8 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI,
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
     descPt: `Vai pra pastinha; usar cura ${HEART_HEAL} coração`, descEn: `Goes to Items; use to heal ${HEART_HEAL} heart`, price: 150 },
+  // (Glitchtama is deliberately NOT sold — the only way to get one is
+  // clearing all 5 dungeon floors.)
   // Item digivolutions (Digimon World 1 style): equip one; when the pet's
   // NORMAL evolution to that level happens, the form is replaced by the item's
   // Digimon (item consumed). Next evolution continues the branch normally, and
@@ -245,6 +274,32 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'bg-synthwave', kind: 'bg', icon: '🌆',
     namePt: 'Synthwave', nameEn: 'Synthwave',
     descPt: 'Sol neon e grade infinita anos 80', descEn: 'Neon sun over an endless 80s grid', price: 250 },
+  // Mission-gated backdrops — visible from day one, locked behind achievements
+  // (utils/missions.ts). Completing the mission unlocks the PURCHASE.
+  { id: 'bg-mission-filecity', kind: 'bg', icon: '🏘️',
+    namePt: 'Cidade do Arquivo', nameEn: 'File City',
+    descPt: 'A vila onde tudo começa', descEn: 'The village where it all begins', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-champion' } },
+  { id: 'bg-mission-infinity', kind: 'bg', icon: '🗻',
+    namePt: 'Monte Infinito', nameEn: 'Mount Infinity',
+    descPt: 'O pico final sob as estrelas', descEn: 'The final peak under the stars', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-mega' } },
+  { id: 'bg-mission-coliseum', kind: 'bg', icon: '🏟️',
+    namePt: 'Coliseu Digital', nameEn: 'Digital Coliseum',
+    descPt: 'Arena dourada dos gladiadores', descEn: 'Golden arena of gladiators', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-kills-100' } },
+  { id: 'bg-mission-abyss', kind: 'bg', icon: '🕳️',
+    namePt: 'Abismo da Masmorra', nameEn: 'Dungeon Abyss',
+    descPt: 'O fundo vermelho da masmorra', descEn: 'The dungeon\'s crimson depths', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-runs-3' } },
+  { id: 'bg-mission-dinoland', kind: 'bg', icon: '🦕',
+    namePt: 'Vale dos Dinos', nameEn: 'Dino Valley',
+    descPt: 'Pôr do sol pré-histórico', descEn: 'Prehistoric sunset', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-dino-1000' } },
+  { id: 'bg-mission-aurora', kind: 'bg', icon: '🌠',
+    namePt: 'Aurora Digital', nameEn: 'Digital Aurora',
+    descPt: 'Luzes dançando no céu polar', descEn: 'Lights dancing in the polar sky', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-perfect-30' } },
 ];
 
 /** Quick lookup for item-digivolution entries by id (shop items + drops). */

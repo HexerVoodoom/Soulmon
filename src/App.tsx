@@ -28,9 +28,9 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
+import { SHOP_ITEMS, DROP_EVO_ITEMS, CHIP_BOOST, HEART_HEAL, EVO_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop, rollDungeonDigimental } from './utils/dungeon';
-import { MISSIONS, getMissionProgress, isMissionClaimable } from './utils/missions';
+import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 
 const DIGIVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -1020,6 +1020,12 @@ export default function App() {
     return true;
   }, []);
 
+  // Records a drop-gated item id so its shop purchase unlocks (idempotent).
+  const recordDrop = (prev: GameState, itemId: string): string[] => {
+    const dropped = prev.droppedItems ?? [];
+    return dropped.includes(itemId) ? dropped : [...dropped, itemId];
+  };
+
   // ✨ Digimental drop (dungeon, 0.1%/enemy): adds it to the Items folder and
   // returns its display name for the reward line, or null when nothing dropped.
   const handleDungeonDigimental = useCallback((): string | null => {
@@ -1030,6 +1036,7 @@ export default function App() {
     setGameState(prev => ({
       ...prev,
       foodInventory: { ...prev.foodInventory, [emoji]: (prev.foodInventory[emoji] ?? 0) + 1 },
+      droppedItems: recordDrop(prev, id),
     }));
     return language === 'pt-BR' ? item.namePt : item.nameEn;
   }, [language]);
@@ -1065,30 +1072,15 @@ export default function App() {
   };
   const missionProgress = getMissionProgress(missionState);
 
-  const handleClaimMission = useCallback((missionId: string): boolean => {
-    const mission = MISSIONS.find(m => m.id === missionId);
-    if (!mission) return false;
-    if (!isMissionClaimable(mission, missionState, gameState.ownedBackgrounds ?? [])) return false;
-    playTaskComplete();
-    setGameState(prev => ({
-      ...prev,
-      ownedBackgrounds: [...(prev.ownedBackgrounds ?? []), mission.bgReward],
-    }));
-    return true;
-    // missionState is derived from gameState each render; the deps below cover it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameState.evolutionStage, gameState.unlockedEvolutions, gameState.dungeonKills,
-      gameState.dungeonRunsCompleted, gameState.dinoBest, gameState.totalPerfectDays,
-      gameState.ownedBackgrounds]);
-
   // Rookie evolution items dropped by the minigames (Dino Run / RPS). Adds the
   // item to the Items folder and returns its display name for the drop line.
   const handleMinigameItemDrop = useCallback((emoji: string): string => {
+    const special = SPECIAL_ITEMS[emoji];
     setGameState(prev => ({
       ...prev,
       foodInventory: { ...prev.foodInventory, [emoji]: (prev.foodInventory[emoji] ?? 0) + 1 },
+      ...(special?.evoItemId && { droppedItems: recordDrop(prev, special.evoItemId) }),
     }));
-    const special = SPECIAL_ITEMS[emoji];
     return special ? (language === 'pt-BR' ? special.namePt : special.nameEn) : emoji;
   }, [language]);
 
@@ -1098,14 +1090,18 @@ export default function App() {
     setGameState(prev => ({ ...prev, gamePoints: (prev.gamePoints ?? 0) + pts }));
   }, []);
 
-  // 🛒 Shop purchase — charges points and applies the item's effect.
+  // 🛒 Shop purchase — charges points and applies the item's effect. Items can
+  // be locked behind a mission or a first-drop (utils/shop.ts `unlock`).
   const handleShopBuy = useCallback((itemId: string): boolean => {
-    const item = SHOP_ITEMS.find(i => i.id === itemId);
+    const item = [...SHOP_ITEMS, ...DROP_EVO_ITEMS].find(i => i.id === itemId);
     if (!item) return false;
+    if (!isShopItemUnlocked(item, gameState.droppedItems ?? [], missionProgress)) return false;
     if ((gameState.gamePoints ?? 0) < item.price) return false;
     if (item.kind === 'bg' && (gameState.ownedBackgrounds ?? []).includes(item.id)) return false;
-    // Only one digivolution item can be held at a time (avoid wasted points)
-    if (item.kind === 'evo' && gameState.equippedEvoItem) return false;
+    // Only one digivolution item can be EQUIPPED at a time (avoid wasted
+    // points) — inventory-based evo items (digimentals/rookie) aren't equipped
+    // on purchase, so they skip this gate.
+    if (item.kind === 'evo' && !item.inventoryEmoji && gameState.equippedEvoItem) return false;
 
     setGameState(prev => {
       const next = { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
@@ -1118,6 +1114,12 @@ export default function App() {
       } else if (item.kind === 'bg') {
         next.ownedBackgrounds = [...(prev.ownedBackgrounds ?? []), item.id];
         next.equippedBackground = item.id; // equip right away
+      } else if (item.kind === 'evo' && item.inventoryEmoji) {
+        // Digimentals / rookie items go to the Items folder (equip via Items)
+        next.foodInventory = {
+          ...prev.foodInventory,
+          [item.inventoryEmoji]: (prev.foodInventory[item.inventoryEmoji] ?? 0) + 1,
+        };
       } else if (item.kind === 'evo') {
         next.equippedEvoItem = item.id;
       }
@@ -1125,7 +1127,8 @@ export default function App() {
     });
     playFeed();
     return true;
-  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.equippedEvoItem]);
+  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.equippedEvoItem,
+      gameState.droppedItems, missionProgress]);
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
@@ -1609,7 +1612,7 @@ export default function App() {
                 onDinoScore={handleDinoScore}
                 onItemDrop={handleMinigameItemDrop}
                 missionProgress={missionProgress}
-                onClaimMission={handleClaimMission}
+                droppedItems={gameState.droppedItems ?? []}
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}
                 onEquipBackground={handleEquipBackground}
