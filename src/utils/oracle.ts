@@ -41,6 +41,19 @@ export interface OracleInput {
   birthPlace: string;
 }
 
+/**
+ * Ajustes manuais do usuário: sobrescrevem os VENCEDORES de cada eixo antes
+ * da geração criativa (arquétipo + criatura). As pontuações/barras continuam
+ * sendo a "leitura" pura dos astros — só o resultado final muda.
+ */
+export interface OracleOverrides {
+  dominantElement?: ElementId;
+  secondaryElement?: ElementId;
+  dominantRole?: RoleId;
+  dominantAlignment?: AlignmentId;
+  dominantRealm?: RealmId;
+}
+
 export interface NumerologyResult {
   lifePath: number;    // caminho de vida (data)
   expression: number;  // expressão/destino (todas as letras)
@@ -953,7 +966,7 @@ function addScore<K extends string>(
   breakdown[key].push({ source, points });
 }
 
-export function generateOracle(input: OracleInput, seed?: number): OracleResult {
+export function generateOracle(input: OracleInput, seed?: number, overrides?: OracleOverrides): OracleResult {
   const [year, month, day] = input.birthDate.split('-').map(Number);
   const [hour, minute] = (input.birthTime || '12:00').split(':').map(Number);
 
@@ -1005,8 +1018,8 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
     { pt: 'Eco do local de nascimento', en: 'Echo of the birthplace' });
 
   const sortedElements = [...ELEMENT_ORDER].sort((a, b) => elementScores[b] - elementScores[a]);
-  const dominantElement = sortedElements[0];
-  const secondaryElement = sortedElements[1];
+  let dominantElement = sortedElements[0];
+  let secondaryElement = sortedElements[1];
 
   // ----- Pontuação de funções -----
   const roleScores = Object.fromEntries(ROLE_ORDER.map(r => [r, 0])) as Record<RoleId, number>;
@@ -1045,7 +1058,7 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
   }
 
   const sortedRoles = [...ROLE_ORDER].sort((a, b) => roleScores[b] - roleScores[a]);
-  const dominantRole = sortedRoles[0];
+  let dominantRole = sortedRoles[0];
 
   // ----- Pontuação de alinhamento (poder / harmonia / benevolência) -----
   const alignmentScores = Object.fromEntries(ALIGNMENT_ORDER.map(a => [a, 0])) as Record<AlignmentId, number>;
@@ -1066,7 +1079,7 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
   }
 
   const sortedAlignments = [...ALIGNMENT_ORDER].sort((a, b) => alignmentScores[b] - alignmentScores[a]);
-  const dominantAlignment = sortedAlignments[0];
+  let dominantAlignment = sortedAlignments[0];
 
   // ----- Pontuação de reino -----
   // Combina os 8 elementos via matriz de pesos + bônus do alinhamento + jitter
@@ -1082,7 +1095,21 @@ export function generateOracle(input: OracleInput, seed?: number): OracleResult 
     score += hashString(`${inputKey}|${realm}`) % 4; // 0–3: assinatura pessoal
     realmScores[realm] = score;
   }
-  const dominantRealm = [...REALM_ORDER].sort((a, b) => realmScores[b] - realmScores[a])[0];
+  let dominantRealm = [...REALM_ORDER].sort((a, b) => realmScores[b] - realmScores[a])[0];
+
+  // ----- Ajustes manuais do usuário -----
+  // Aplicados DEPOIS de toda a pontuação (a leitura fica intacta) e ANTES da
+  // parte criativa: arquétipo e criatura respeitam os valores escolhidos.
+  if (overrides) {
+    dominantElement = overrides.dominantElement ?? dominantElement;
+    secondaryElement = overrides.secondaryElement ?? secondaryElement;
+    if (secondaryElement === dominantElement) {
+      secondaryElement = sortedElements.find(e => e !== dominantElement) ?? secondaryElement;
+    }
+    dominantRole = overrides.dominantRole ?? dominantRole;
+    dominantAlignment = overrides.dominantAlignment ?? dominantAlignment;
+    dominantRealm = overrides.dominantRealm ?? dominantRealm;
+  }
 
   // ----- RNG semeado (parte criativa) -----
   const baseHash = hashString(inputKey);

@@ -5,7 +5,8 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import {
   generateOracle, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
   ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER,
-  type OracleInput, type OracleResult, type LText,
+  type OracleInput, type OracleResult, type OracleOverrides, type LText,
+  type ElementId, type RoleId, type AlignmentId, type RealmId,
 } from '../utils/oracle';
 
 interface OraclePageProps {
@@ -13,7 +14,12 @@ interface OraclePageProps {
   language?: Language;
 }
 
-interface SavedOracleForm extends OracleInput { seed?: number }
+interface SavedOracleForm extends OracleInput {
+  seed?: number;
+  overrides?: OracleOverrides;
+}
+
+const ATTRIBUTE_EMOJI: Record<AlignmentId, string> = { poder: '🦠', harmonia: '💾', benevolencia: '💉' };
 
 function loadSavedForm(): SavedOracleForm | null {
   try {
@@ -22,6 +28,10 @@ function loadSavedForm(): SavedOracleForm | null {
   } catch {
     return null;
   }
+}
+
+function formComplete(f: SavedOracleForm | null): f is SavedOracleForm {
+  return !!f && f.fullName.trim().length >= 3 && !!f.birthDate && !!f.birthTime && f.birthPlace.trim().length >= 2;
 }
 
 export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePageProps) {
@@ -35,35 +45,77 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
   const [birthDate, setBirthDate] = useState(saved?.birthDate ?? '');
   const [birthTime, setBirthTime] = useState(saved?.birthTime ?? '12:00');
   const [birthPlace, setBirthPlace] = useState(saved?.birthPlace ?? '');
-  const [result, setResult] = useState<OracleResult | null>(() => {
+
+  // Etapa 1: leitura (perfil místico + eixos, tudo ajustável)
+  const [profile, setProfile] = useState<OracleResult | null>(() => {
     const s = loadSavedForm();
-    if (s?.fullName && s.birthDate && s.seed !== undefined) {
-      try { return generateOracle(s, s.seed); } catch { return null; }
-    }
-    return null;
+    if (!formComplete(s)) return null;
+    try { return generateOracle(s, 0); } catch { return null; }
+  });
+  const [overrides, setOverrides] = useState<OracleOverrides>(() => {
+    const s = loadSavedForm();
+    if (s?.overrides) return s.overrides;
+    if (!formComplete(s)) return {};
+    try {
+      const p = generateOracle(s, 0);
+      return {
+        dominantElement: p.dominantElement, secondaryElement: p.secondaryElement,
+        dominantRole: p.dominantRole, dominantAlignment: p.dominantAlignment, dominantRealm: p.dominantRealm,
+      };
+    } catch { return {}; }
+  });
+
+  // Etapa 2: criatura + prompts (só depois de clicar em "Gerar")
+  const [creature, setCreature] = useState<OracleResult | null>(() => {
+    const s = loadSavedForm();
+    if (!formComplete(s) || s.seed === undefined) return null;
+    try { return generateOracle(s, s.seed, s.overrides); } catch { return null; }
   });
 
   useEffect(() => {
-    const form: SavedOracleForm = { fullName, birthDate, birthTime, birthPlace, seed: result?.seed };
+    const form: SavedOracleForm = {
+      fullName, birthDate, birthTime, birthPlace,
+      seed: creature?.seed,
+      overrides: profile ? overrides : undefined,
+    };
     localStorage.setItem(STORAGE_KEYS.ORACLE_FORM, JSON.stringify(form));
-  }, [fullName, birthDate, birthTime, birthPlace, result?.seed]);
+  }, [fullName, birthDate, birthTime, birthPlace, creature?.seed, overrides, profile]);
 
-  const canGenerate = fullName.trim().length >= 3 && !!birthDate && !!birthTime && birthPlace.trim().length >= 2;
+  const canReveal = formComplete({ fullName, birthDate, birthTime, birthPlace });
 
-  const handleGenerate = () => {
-    if (!canGenerate) {
+  const input = (): OracleInput => ({
+    fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(),
+  });
+
+  const handleReveal = () => {
+    if (!canReveal) {
       toast.error(isPt ? 'Preencha todos os campos!' : 'Fill in all fields!');
       return;
     }
-    const input: OracleInput = {
-      fullName: fullName.trim(),
-      birthDate,
-      birthTime,
-      birthPlace: birthPlace.trim(),
-    };
-    // Salt novo a cada clique: varia arquétipo/criatura; o perfil místico
-    // (numerologia, signos, pontuações) é determinístico e não muda.
-    setResult(generateOracle(input));
+    const p = generateOracle(input(), 0);
+    setProfile(p);
+    setOverrides({
+      dominantElement: p.dominantElement, secondaryElement: p.secondaryElement,
+      dominantRole: p.dominantRole, dominantAlignment: p.dominantAlignment, dominantRealm: p.dominantRealm,
+    });
+    setCreature(null);
+  };
+
+  const setOverride = <K extends keyof OracleOverrides>(key: K, value: OracleOverrides[K]) => {
+    setOverrides(prev => {
+      const next = { ...prev, [key]: value };
+      // Secundário não pode ser igual ao dominante
+      if (next.secondaryElement === next.dominantElement) {
+        next.secondaryElement = ELEMENT_ORDER.find(e => e !== next.dominantElement);
+      }
+      return next;
+    });
+    setCreature(null); // valores mudaram → precisa gerar de novo
+  };
+
+  const handleGenerateCreature = () => {
+    // Salt novo a cada clique (variação criativa); eixos vêm dos ajustes
+    setCreature(generateOracle(input(), undefined, overrides));
   };
 
   const copyText = async (text: string, okMsg: string) => {
@@ -76,14 +128,14 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
   };
 
   const copyAllPrompts = () => {
-    if (!result) return;
-    const all = result.creature.stages
+    if (!creature) return;
+    const all = creature.creature.stages
       .map(s => `## ${s.name} (${L(s.stageName)})\n${s.imagePrompt}`)
       .join('\n\n');
     copyText(all, isPt ? 'Todos os prompts copiados!' : 'All prompts copied!');
   };
 
-  // --- estilos base (inline p/ posicionamento crítico; ver footgun do index.css)
+  // --- estilos base (inline p/ cores críticas; classes fora do index.css não aplicam)
   const cardCls = isGlitch
     ? 'border border-[#00ffff]/40 bg-black/40 rounded-lg p-3'
     : isWin98
@@ -96,8 +148,6 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
     : isWin98
       ? 'w-full win98-input px-2 py-1.5 text-black'
       : 'w-full rounded-md border border-[#c0c0c0] bg-white text-gray-900 px-2 py-1.5';
-  // Botões com cor via style inline — classes utilitárias fora do index.css
-  // pré-compilado não aplicam nada (footgun conhecido do projeto).
   const btnCls = isGlitch
     ? 'px-3 py-2 rounded-md border border-[#00ffff] text-[#00ffff] hover:bg-[#00ffff]/10 transition-colors'
     : isWin98
@@ -114,12 +164,19 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
   const smallBtnStyle = (!isGlitch && !isWin98)
     ? { border: '1px solid #5eead4', color: '#0f766e' }
     : {};
+  const selectCls = isGlitch
+    ? 'rounded border border-[#00ffff]/40 bg-black/60 text-[#00ffff] px-1.5 py-1 text-xs'
+    : isWin98
+      ? 'win98-input px-1.5 py-1 text-xs text-black'
+      : 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
   const mono = { fontFamily: 'monospace' } as const;
 
-  const maxElementScore = result ? Math.max(...ELEMENT_ORDER.map(e => result.elementScores[e]), 1) : 1;
-  const maxRoleScore = result ? Math.max(...ROLE_ORDER.map(r => result.roleScores[r]), 1) : 1;
-  const maxAlignScore = result ? Math.max(...ALIGNMENT_ORDER.map(a => result.alignmentScores[a]), 1) : 1;
-  const maxRealmScore = result ? Math.max(...REALM_ORDER.map(r => result.realmScores[r]), 1) : 1;
+  const maxElementScore = profile ? Math.max(...ELEMENT_ORDER.map(e => profile.elementScores[e]), 1) : 1;
+  const maxRoleScore = profile ? Math.max(...ROLE_ORDER.map(r => profile.roleScores[r]), 1) : 1;
+  const maxAlignScore = profile ? Math.max(...ALIGNMENT_ORDER.map(a => profile.alignmentScores[a]), 1) : 1;
+  const maxRealmScore = profile ? Math.max(...REALM_ORDER.map(r => profile.realmScores[r]), 1) : 1;
+
+  const adjustLabel = isPt ? 'Ajustar:' : 'Adjust:';
 
   return (
     <div className="space-y-4" style={mono}>
@@ -128,8 +185,8 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
         <h2 className={`text-lg ${titleCls}`}>🔮 {isPt ? 'Oráculo de Criaturas' : 'Creature Oracle'}</h2>
         <p className={`text-xs ${mutedCls}`}>
           {isPt
-            ? 'Numerologia + astrologia ocidental, chinesa e védica → seu monstrinho pessoal.'
-            : 'Numerology + Western, Chinese and Vedic astrology → your personal little monster.'}
+            ? '1) Revele a leitura → 2) ajuste o que quiser → 3) gere a criatura e os prompts.'
+            : '1) Reveal the reading → 2) adjust anything → 3) generate the creature and prompts.'}
         </p>
       </div>
 
@@ -178,39 +235,32 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
           </div>
           <div className="flex gap-2 pt-1">
             <button
-              onClick={handleGenerate}
+              onClick={handleReveal}
               className={`flex-1 ${btnCls}`}
-              style={{ ...mono, ...btnStyle, opacity: canGenerate ? 1 : 0.5 }}
-              disabled={!canGenerate}
+              style={{ ...mono, ...btnStyle, opacity: canReveal ? 1 : 0.5 }}
+              disabled={!canReveal}
             >
-              {result ? (isPt ? '🎲 Gerar novamente' : '🎲 Generate again') : (isPt ? '✨ Revelar criatura' : '✨ Reveal creature')}
+              {profile ? (isPt ? '🔮 Refazer leitura' : '🔮 Redo reading') : (isPt ? '✨ Revelar leitura' : '✨ Reveal reading')}
             </button>
           </div>
-          {result && (
-            <p className={`text-[10px] ${mutedCls}`}>
-              {isPt ? 'Semente' : 'Seed'}: {result.seed} — {isPt
-                ? 'o perfil místico é fixo; gerar de novo só varia arquétipo e criatura.'
-                : 'the mystic profile is fixed; regenerating only varies archetype and creature.'}
-            </p>
-          )}
         </div>
       </div>
 
-      {result && (
+      {profile && (
         <>
           {/* Numerologia */}
           <div className={cardCls}>
             <h3 className={`mb-2 ${titleCls}`}>🔢 {isPt ? 'Numerologia do nome' : 'Name numerology'}</h3>
             <div className="space-y-1.5 text-xs">
               {([
-                ['lifePath', isPt ? 'Caminho de vida' : 'Life path', result.numerology.lifePath],
-                ['expression', isPt ? 'Expressão' : 'Expression', result.numerology.expression],
-                ['soulUrge', isPt ? 'Motivação (vogais)' : 'Soul urge (vowels)', result.numerology.soulUrge],
-                ['personality', isPt ? 'Impressão (consoantes)' : 'Personality (consonants)', result.numerology.personality],
+                ['lifePath', isPt ? 'Caminho de vida' : 'Life path', profile.numerology.lifePath],
+                ['expression', isPt ? 'Expressão' : 'Expression', profile.numerology.expression],
+                ['soulUrge', isPt ? 'Motivação (vogais)' : 'Soul urge (vowels)', profile.numerology.soulUrge],
+                ['personality', isPt ? 'Impressão (consoantes)' : 'Personality (consonants)', profile.numerology.personality],
               ] as const).map(([key, label, num]) => (
                 <div key={key}>
                   <span className={titleCls}>{label}: <strong>{num}</strong></span>
-                  <span className={` ${mutedCls}`}> — {L(result.numerology.meanings[key])}</span>
+                  <span className={` ${mutedCls}`}> — {L(profile.numerology.meanings[key])}</span>
                 </div>
               ))}
             </div>
@@ -221,20 +271,20 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
             <h3 className={`mb-2 ${titleCls}`}>🌌 {isPt ? 'Céu de nascimento' : 'Birth sky'}</h3>
             <div className="space-y-1.5 text-xs">
               <div className={titleCls}>
-                ☀️ {isPt ? 'Sol em' : 'Sun in'} <strong>{L(result.western.sun.name)}</strong>
-                <span className={mutedCls}> — {L(result.western.sun.traits[0])}</span>
+                ☀️ {isPt ? 'Sol em' : 'Sun in'} <strong>{L(profile.western.sun.name)}</strong>
+                <span className={mutedCls}> — {L(profile.western.sun.traits[0])}</span>
               </div>
               <div className={titleCls}>
-                🌅 {isPt ? 'Ascendente (aprox.) em' : 'Ascendant (approx.) in'} <strong>{L(result.western.ascendant.name)}</strong>
-                <span className={mutedCls}> — {L(result.western.ascendant.traits[0])}</span>
+                🌅 {isPt ? 'Ascendente (aprox.) em' : 'Ascendant (approx.) in'} <strong>{L(profile.western.ascendant.name)}</strong>
+                <span className={mutedCls}> — {L(profile.western.ascendant.traits[0])}</span>
               </div>
               <div className={titleCls}>
-                🐉 {isPt ? 'Chinês' : 'Chinese'}: <strong>{L(result.chinese.animal)}</strong> {isPt ? 'de' : 'of'} {L(result.chinese.element)} ({result.chinese.yinYang})
-                <span className={mutedCls}> — {L(result.chinese.traits[0])}</span>
+                🐉 {isPt ? 'Chinês' : 'Chinese'}: <strong>{L(profile.chinese.animal)}</strong> {isPt ? 'de' : 'of'} {L(profile.chinese.element)} ({profile.chinese.yinYang})
+                <span className={mutedCls}> — {L(profile.chinese.traits[0])}</span>
               </div>
               <div className={titleCls}>
-                🕉️ {isPt ? 'Védico' : 'Vedic'}: <strong>{result.vedic.rashi}</strong> ({L(result.vedic.equivalent)})
-                <span className={mutedCls}> — {L(result.vedic.traits[0])}</span>
+                🕉️ {isPt ? 'Védico' : 'Vedic'}: <strong>{profile.vedic.rashi}</strong> ({L(profile.vedic.equivalent)})
+                <span className={mutedCls}> — {L(profile.vedic.traits[0])}</span>
               </div>
               <p className={`text-[10px] ${mutedCls}`}>
                 {isPt
@@ -249,11 +299,11 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
             <h3 className={`mb-2 ${titleCls}`}>🧪 {isPt ? 'Elementos' : 'Elements'}</h3>
             <div className="space-y-1">
               {[...ELEMENT_ORDER]
-                .sort((a, b) => result.elementScores[b] - result.elementScores[a])
+                .sort((a, b) => profile.elementScores[b] - profile.elementScores[a])
                 .map(el => {
                   const info = ELEMENT_INFO[el];
-                  const score = result.elementScores[el];
-                  const isTop = el === result.dominantElement;
+                  const score = profile.elementScores[el];
+                  const isTop = el === overrides.dominantElement;
                   return (
                     <div key={el} className="flex items-center gap-2 text-xs">
                       <span className="w-5 text-center">{info.emoji}</span>
@@ -274,12 +324,33 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                   );
                 })}
             </div>
-            <p className={`text-xs mt-2 ${titleCls}`}>
-              {ELEMENT_INFO[result.dominantElement].emoji} <strong>{L(ELEMENT_INFO[result.dominantElement].name)}</strong>
-              {' + '}
-              {ELEMENT_INFO[result.secondaryElement].emoji} {L(ELEMENT_INFO[result.secondaryElement].name)}
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+              <span className={mutedCls}>✏️ {adjustLabel}</span>
+              <select
+                className={selectCls}
+                style={mono}
+                value={overrides.dominantElement}
+                onChange={e => setOverride('dominantElement', e.target.value as ElementId)}
+              >
+                {ELEMENT_ORDER.map(el => (
+                  <option key={el} value={el}>{ELEMENT_INFO[el].emoji} {L(ELEMENT_INFO[el].name)}</option>
+                ))}
+              </select>
+              <span className={mutedCls}>+</span>
+              <select
+                className={selectCls}
+                style={mono}
+                value={overrides.secondaryElement}
+                onChange={e => setOverride('secondaryElement', e.target.value as ElementId)}
+              >
+                {ELEMENT_ORDER.filter(el => el !== overrides.dominantElement).map(el => (
+                  <option key={el} value={el}>{ELEMENT_INFO[el].emoji} {L(ELEMENT_INFO[el].name)}</option>
+                ))}
+              </select>
+            </div>
+            <p className={`text-xs mt-2 ${mutedCls}`}>
+              {overrides.dominantElement ? L(ELEMENT_INFO[overrides.dominantElement].personality) : ''}
             </p>
-            <p className={`text-xs ${mutedCls}`}>{L(ELEMENT_INFO[result.dominantElement].personality)}</p>
           </div>
 
           {/* Funções */}
@@ -287,11 +358,11 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
             <h3 className={`mb-2 ${titleCls}`}>🎯 {isPt ? 'Função' : 'Role'}</h3>
             <div className="space-y-1">
               {[...ROLE_ORDER]
-                .sort((a, b) => result.roleScores[b] - result.roleScores[a])
+                .sort((a, b) => profile.roleScores[b] - profile.roleScores[a])
                 .map(role => {
                   const info = ROLE_INFO[role];
-                  const score = result.roleScores[role];
-                  const isTop = role === result.dominantRole;
+                  const score = profile.roleScores[role];
+                  const isTop = role === overrides.dominantRole;
                   return (
                     <div key={role} className="flex items-center gap-2 text-xs">
                       <span className="w-5 text-center">{info.emoji}</span>
@@ -312,7 +383,22 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                   );
                 })}
             </div>
-            <p className={`text-xs mt-2 ${mutedCls}`}>{L(ROLE_INFO[result.dominantRole].profile)}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+              <span className={mutedCls}>✏️ {adjustLabel}</span>
+              <select
+                className={selectCls}
+                style={mono}
+                value={overrides.dominantRole}
+                onChange={e => setOverride('dominantRole', e.target.value as RoleId)}
+              >
+                {ROLE_ORDER.map(role => (
+                  <option key={role} value={role}>{ROLE_INFO[role].emoji} {L(ROLE_INFO[role].name)}</option>
+                ))}
+              </select>
+            </div>
+            <p className={`text-xs mt-2 ${mutedCls}`}>
+              {overrides.dominantRole ? L(ROLE_INFO[overrides.dominantRole].profile) : ''}
+            </p>
           </div>
 
           {/* Alinhamento */}
@@ -320,11 +406,11 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
             <h3 className={`mb-2 ${titleCls}`}>⚖️ {isPt ? 'Alinhamento' : 'Alignment'}</h3>
             <div className="space-y-1">
               {[...ALIGNMENT_ORDER]
-                .sort((a, b) => result.alignmentScores[b] - result.alignmentScores[a])
+                .sort((a, b) => profile.alignmentScores[b] - profile.alignmentScores[a])
                 .map(al => {
                   const info = ALIGNMENT_INFO[al];
-                  const score = result.alignmentScores[al];
-                  const isTop = al === result.dominantAlignment;
+                  const score = profile.alignmentScores[al];
+                  const isTop = al === overrides.dominantAlignment;
                   return (
                     <div key={al} className="flex items-center gap-2 text-xs">
                       <span className="w-5 text-center">{info.emoji}</span>
@@ -345,15 +431,34 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                   );
                 })}
             </div>
-            <p className={`text-xs mt-2 ${titleCls}`}>
-              {ALIGNMENT_INFO[result.dominantAlignment].emoji}{' '}
-              <strong>{L(ALIGNMENT_INFO[result.dominantAlignment].name)}</strong>
-              {' ≈ '}
-              {isPt ? 'atributo' : 'attribute'}{' '}
-              <strong>{L(ALIGNMENT_INFO[result.dominantAlignment].attribute)}</strong>{' '}
-              {{ poder: '🦠', harmonia: '💾', benevolencia: '💉' }[result.dominantAlignment]}
-            </p>
-            <p className={`text-xs ${mutedCls}`}>{L(ALIGNMENT_INFO[result.dominantAlignment].profile)}</p>
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+              <span className={mutedCls}>✏️ {adjustLabel}</span>
+              <select
+                className={selectCls}
+                style={mono}
+                value={overrides.dominantAlignment}
+                onChange={e => setOverride('dominantAlignment', e.target.value as AlignmentId)}
+              >
+                {ALIGNMENT_ORDER.map(al => (
+                  <option key={al} value={al}>
+                    {ALIGNMENT_INFO[al].emoji} {L(ALIGNMENT_INFO[al].name)} ({L(ALIGNMENT_INFO[al].attribute)})
+                  </option>
+                ))}
+              </select>
+            </div>
+            {overrides.dominantAlignment && (
+              <>
+                <p className={`text-xs mt-2 ${titleCls}`}>
+                  {ALIGNMENT_INFO[overrides.dominantAlignment].emoji}{' '}
+                  <strong>{L(ALIGNMENT_INFO[overrides.dominantAlignment].name)}</strong>
+                  {' ≈ '}
+                  {isPt ? 'atributo' : 'attribute'}{' '}
+                  <strong>{L(ALIGNMENT_INFO[overrides.dominantAlignment].attribute)}</strong>{' '}
+                  {ATTRIBUTE_EMOJI[overrides.dominantAlignment]}
+                </p>
+                <p className={`text-xs ${mutedCls}`}>{L(ALIGNMENT_INFO[overrides.dominantAlignment].profile)}</p>
+              </>
+            )}
           </div>
 
           {/* Reino */}
@@ -361,12 +466,12 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
             <h3 className={`mb-2 ${titleCls}`}>🗺️ {isPt ? 'Reino de origem' : 'Home realm'}</h3>
             <div className="space-y-1">
               {[...REALM_ORDER]
-                .sort((a, b) => result.realmScores[b] - result.realmScores[a])
+                .sort((a, b) => profile.realmScores[b] - profile.realmScores[a])
                 .slice(0, 4)
                 .map(realm => {
                   const info = REALM_INFO[realm];
-                  const score = result.realmScores[realm];
-                  const isTop = realm === result.dominantRealm;
+                  const score = profile.realmScores[realm];
+                  const isTop = realm === overrides.dominantRealm;
                   return (
                     <div key={realm} className="flex items-center gap-2 text-xs">
                       <span className="w-5 text-center">{info.emoji}</span>
@@ -387,33 +492,70 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                   );
                 })}
             </div>
-            <p className={`text-xs mt-2 ${titleCls}`}>
-              {REALM_INFO[result.dominantRealm].emoji} <strong>{L(REALM_INFO[result.dominantRealm].name)}</strong>
+            <div className="flex flex-wrap items-center gap-2 mt-2 text-xs">
+              <span className={mutedCls}>✏️ {adjustLabel}</span>
+              <select
+                className={selectCls}
+                style={mono}
+                value={overrides.dominantRealm}
+                onChange={e => setOverride('dominantRealm', e.target.value as RealmId)}
+              >
+                {REALM_ORDER.map(realm => (
+                  <option key={realm} value={realm}>{REALM_INFO[realm].emoji} {L(REALM_INFO[realm].name)}</option>
+                ))}
+              </select>
+            </div>
+            <p className={`text-xs mt-2 ${mutedCls}`}>
+              {overrides.dominantRealm ? L(REALM_INFO[overrides.dominantRealm].description) : ''}
             </p>
-            <p className={`text-xs ${mutedCls}`}>{L(REALM_INFO[result.dominantRealm].description)}</p>
           </div>
 
+          {/* Botão: gerar criatura */}
+          <button
+            onClick={handleGenerateCreature}
+            className={`w-full ${btnCls}`}
+            style={{ ...mono, ...btnStyle }}
+          >
+            {creature
+              ? (isPt ? '🎲 Gerar outra variação' : '🎲 Generate another variation')
+              : (isPt ? '👾 Gerar criatura e prompts' : '👾 Generate creature and prompts')}
+          </button>
+          {!creature && (
+            <p className={`text-[10px] -mt-2 ${mutedCls}`}>
+              {isPt
+                ? 'Os prompts de imagem só aparecem depois de gerar. Ajustou algum valor? Ele será respeitado.'
+                : 'Image prompts only appear after generating. Adjusted a value? It will be respected.'}
+            </p>
+          )}
+        </>
+      )}
+
+      {profile && creature && (
+        <>
           {/* Personalidade + Arquétipo */}
           <div className={cardCls}>
             <h3 className={`mb-2 ${titleCls}`}>🧬 {isPt ? 'Arquétipo' : 'Archetype'}</h3>
             <p className={`text-sm mb-2 ${titleCls}`} style={{ fontWeight: 700 }}>
-              “{L(result.archetype.phrase)}”
+              “{L(creature.archetype.phrase)}”
             </p>
-            <p className={`text-xs ${mutedCls}`}>{L(result.personalitySummary)}</p>
+            <p className={`text-xs ${mutedCls}`}>{L(creature.personalitySummary)}</p>
           </div>
 
           {/* Criatura */}
           <div className={cardCls}>
             <div className="flex items-center justify-between mb-2">
-              <h3 className={titleCls}>👾 {result.creature.baseName}</h3>
+              <h3 className={titleCls}>👾 {creature.creature.baseName}</h3>
               <button onClick={copyAllPrompts} className={smallBtnCls} style={{ ...mono, ...smallBtnStyle }}>
                 📋 {isPt ? 'Copiar todos os prompts' : 'Copy all prompts'}
               </button>
             </div>
-            <p className={`text-xs mb-3 ${mutedCls}`}>{L(result.creature.concept)}</p>
+            <p className={`text-xs mb-1 ${mutedCls}`}>{L(creature.creature.concept)}</p>
+            <p className={`text-[10px] mb-3 ${mutedCls}`}>
+              {isPt ? 'Semente' : 'Seed'}: {creature.seed}
+            </p>
 
             <div className="space-y-3">
-              {result.creature.stages.map(stage => (
+              {creature.creature.stages.map(stage => (
                 <div
                   key={stage.stage}
                   className="rounded-lg p-2"

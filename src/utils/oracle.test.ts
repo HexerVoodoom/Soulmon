@@ -240,6 +240,38 @@ describe('generateOracle', () => {
     expect(dominants.size).toBe(1); // ...mas não o elemento dominante
   });
 
+  it('overrides do usuário mudam o resultado criativo, não a leitura', () => {
+    const base = generateOracle(INPUT, 42);
+    const r = generateOracle(INPUT, 42, {
+      dominantElement: 'industrial',
+      secondaryElement: 'sombra',
+      dominantRole: 'tanque',
+      dominantAlignment: 'poder',
+      dominantRealm: 'akasha',
+    });
+    // Vencedores respeitam os ajustes
+    expect(r.dominantElement).toBe('industrial');
+    expect(r.secondaryElement).toBe('sombra');
+    expect(r.dominantRole).toBe('tanque');
+    expect(r.dominantAlignment).toBe('poder');
+    expect(r.dominantRealm).toBe('akasha');
+    // A leitura (pontuações) continua a mesma
+    expect(r.elementScores).toEqual(base.elementScores);
+    expect(r.roleScores).toEqual(base.roleScores);
+    expect(r.alignmentScores).toEqual(base.alignmentScores);
+    // A criatura reflete os ajustes
+    const prompt = r.creature.stages[0].imagePrompt;
+    expect(prompt).toContain('VIRUS-attribute');
+    expect(prompt).toContain('steel gray');
+    expect(r.creature.concept.pt).toContain('Akasha');
+  });
+
+  it('secundário igual ao dominante é corrigido para um distinto', () => {
+    const r = generateOracle(INPUT, 42, { dominantElement: 'fogo', secondaryElement: 'fogo' });
+    expect(r.dominantElement).toBe('fogo');
+    expect(r.secondaryElement).not.toBe('fogo');
+  });
+
   it('sem seed usa salt aleatório e o devolve no resultado', () => {
     const r = generateOracle(INPUT);
     expect(Number.isInteger(r.seed)).toBe(true);
