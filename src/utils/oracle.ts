@@ -29,7 +29,7 @@ export type RealmId =
   | 'deserto' | 'picos' | 'oceano' | 'pantano' | 'floresta'
   | 'cavernas' | 'gelo' | 'campina' | 'akasha';
 
-export type StageId = 'crianca' | 'adulto' | 'perfeito' | 'mega';
+export type StageId = 'rookie' | 'champion' | 'perfeito' | 'mega' | 'ultra';
 
 /** Texto bilíngue (o app sempre exibe PT-BR e EN). */
 export interface LText { pt: string; en: string }
@@ -110,8 +110,11 @@ export interface ArchetypeResult {
 
 export interface CreatureStage {
   stage: StageId;
+  /** champion/perfeito/mega existem em 3 LINHAS, uma por tipo (Vírus/Data/
+   *  Vacina). rookie e ultra não têm branch. */
+  branch?: AlignmentId;
   stageName: LText;
-  name: string;                // nome da forma (ex.: "Pyrachi")
+  name: string;                // nome da forma (ex.: "FangPyramon")
   description: LText;
   imagePrompt: string;         // EN — prompt pronto p/ gerador de imagem
 }
@@ -812,8 +815,127 @@ const REALM_NAME_STEMS: Record<RealmId, string[]> = {
   akasha: ['Akasha', 'Aetheri', 'Nimbra'],
 };
 
-const PERFECT_PREFIXES = ['Neo', 'Vex', 'Prime', 'Hyper'];
-const MEGA_PREFIXES = ['Omega', 'Zenith', 'Ultima', 'Apex'];
+// Prefixos de nome por LINHA de evolução (uma linha por tipo) — o nome conta
+// a história: Fang→War→Zeed (Vírus), Sage→Meta→Aeon (Data), Holy→Arch→Seraph
+// (Vacina), e o Ultra é sempre Omni_.
+const CHAMPION_PREFIXES: Record<AlignmentId, string[]> = {
+  poder: ['Fang', 'Dark', 'Rage', 'Grim'],
+  harmonia: ['Sage', 'Rune', 'Gale', 'Echo'],
+  benevolencia: ['Holy', 'Sol', 'Aegis', 'Bell'],
+};
+const PERFECT_STAGE_PREFIXES: Record<AlignmentId, string[]> = {
+  poder: ['War', 'Chaos', 'Doom'],
+  harmonia: ['Meta', 'Astra', 'Prime'],
+  benevolencia: ['Arch', 'Radiant', 'Lumen'],
+};
+const MEGA_STAGE_PREFIXES: Record<AlignmentId, string[]> = {
+  poder: ['Zeed', 'Omega', 'Abyss'],
+  harmonia: ['Aeon', 'Zenith', 'Cosmo'],
+  benevolencia: ['Seraph', 'Ultima', 'Elysium'],
+};
+
+// ---------------------------------------------------------------------------
+// POOL DE FORMAS DE EVOLUÇÃO por nível — arquétipos corporais no espírito dos
+// Digimon (e um pouco de Pokémon): shapes variados por estágio, com afinidade
+// de tipo (alignments) e de elemento (elements). Vazio = serve para qualquer.
+// A forma é sorteada por linha, sem repetir entre as 9 evoluções.
+// ---------------------------------------------------------------------------
+
+interface EvoShape { pt: string; en: string; elements: ElementId[]; alignments: AlignmentId[] }
+
+const CHAMPION_SHAPES: EvoShape[] = [
+  { pt: 'dinossauro tirano bípede com elmo de caveira', en: 'a bipedal tyrant dinosaur with a horned skull helm', elements: ['fogo', 'terra'], alignments: ['poder'] },
+  { pt: 'fera lupina selvagem de quatro patas', en: 'a savage four-legged wolf beast with bristling fur', elements: ['sombra', 'agua'], alignments: ['poder', 'harmonia'] },
+  { pt: 'ogro brutamontes com clava de osso', en: 'a hulking ogre brute swinging a bone club', elements: ['terra'], alignments: ['poder'] },
+  { pt: 'guerreiro demônio de asas rasgadas', en: 'a horned demon warrior with tattered wings', elements: ['sombra'], alignments: ['poder'] },
+  { pt: 'predador marinho de barbatanas-navalha', en: 'a razor-finned sea predator with a harpoon snout', elements: ['agua'], alignments: ['poder'] },
+  { pt: 'serpente venenosa de capuz', en: 'a hooded venomous serpent with dripping fangs', elements: ['sombra', 'planta'], alignments: ['poder'] },
+  { pt: 'planta carnívora ambulante', en: 'a walking carnivorous plant with snapping jaw-buds', elements: ['planta'], alignments: ['poder'] },
+  { pt: 'fera elegante de cauda-lâmina', en: 'a sleek quadruped beast with a blade-tipped tail', elements: [], alignments: ['harmonia'] },
+  { pt: 'inseto blindado de chifre elétrico', en: 'a giant armored insect with a crackling electric horn', elements: ['industrial', 'ar'], alignments: ['harmonia'] },
+  { pt: 'coruja-fera de asas rúnicas', en: 'a great owl beast with rune-marked wings', elements: ['ar', 'sombra'], alignments: ['harmonia'] },
+  { pt: 'golem sentinela de pedra', en: 'a stone golem sentinel with glowing core lines', elements: ['terra'], alignments: ['harmonia'] },
+  { pt: 'raposa mística de várias caudas', en: 'a mystic fox with multiple flowing tails', elements: ['sombra', 'luz'], alignments: ['harmonia'] },
+  { pt: 'autômato andarilho de engrenagens', en: 'a clockwork walker automaton with brass joints', elements: ['industrial'], alignments: ['harmonia'] },
+  { pt: 'dragão-marinho de coral', en: 'a coral sea-dragon with gem-like eyes', elements: ['agua'], alignments: ['harmonia'] },
+  { pt: 'corcel alado nobre', en: 'a noble winged stallion with a shining mane', elements: ['luz', 'ar'], alignments: ['benevolencia'] },
+  { pt: 'cão de guarda em armadura de bronze', en: 'a loyal guardian hound in bronze armor', elements: ['luz', 'terra'], alignments: ['benevolencia'] },
+  { pt: 'lutador angélico de bastão sagrado', en: 'an angelic fighter wielding a sacred staff', elements: ['luz'], alignments: ['benevolencia'] },
+  { pt: 'dragão-flor de asas de pétala', en: 'a flower dragon with petal wings', elements: ['planta'], alignments: ['benevolencia'] },
+  { pt: 'yeti guardião das neves', en: 'a gentle snow yeti guardian with icicle bracers', elements: ['agua', 'terra'], alignments: ['benevolencia'] },
+  { pt: 'ave-canora gigante da alvorada', en: 'a giant dawn songbird with radiant tail feathers', elements: ['ar', 'luz'], alignments: ['benevolencia'] },
+  { pt: 'fera de juba flamejante', en: 'a proud beast with a blazing flame mane', elements: ['fogo'], alignments: [] },
+  { pt: 'raptor relâmpago', en: 'a lightning raptor crackling with static', elements: ['ar', 'industrial'], alignments: [] },
+  { pt: 'marionete assombrada', en: 'a haunted marionette with living strings', elements: ['sombra', 'industrial'], alignments: ['poder', 'harmonia'] },
+  { pt: 'tartaruga guerreira de rio', en: 'a river turtle warrior with a shell-shield', elements: ['agua', 'terra'], alignments: [] },
+];
+
+const PERFECT_SHAPES: EvoShape[] = [
+  { pt: 'dino ciborgue com canhão no peito', en: 'a cyborg dinosaur with a metal chest cannon and one mechanical arm', elements: ['industrial', 'fogo'], alignments: ['poder'] },
+  { pt: 'nobre vampiro de capa alta', en: 'a vampire noble with a high-collared cape and piercing gaze', elements: ['sombra'], alignments: ['poder'] },
+  { pt: 'general demônio de seis braços', en: 'a six-armed demon general gripping many weapons', elements: ['sombra', 'fogo'], alignments: ['poder'] },
+  { pt: 'ceifador espectral de foice', en: 'a spectral reaper wraith carrying a great scythe', elements: ['sombra'], alignments: ['poder'] },
+  { pt: 'leviatã couraçado colossal', en: 'a colossal armored leviathan breaching the deep', elements: ['agua'], alignments: ['poder'] },
+  { pt: 'minotauro de guerra acorrentado', en: 'a chained war minotaur with cracked horns', elements: ['terra', 'fogo'], alignments: ['poder'] },
+  { pt: 'cavaleiro de armadura completa', en: 'a full-plate armored knight with a greatsword', elements: ['industrial', 'terra'], alignments: ['harmonia', 'benevolencia'] },
+  { pt: 'besouro-samurai senhor da lâmina', en: 'a samurai beetle lord with katana-shaped horn blades', elements: ['industrial', 'planta'], alignments: ['harmonia'] },
+  { pt: 'mago dos espelhos', en: 'a mirror mage whose body reflects like polished glass', elements: ['luz', 'agua'], alignments: ['harmonia'] },
+  { pt: 'místico do planetário', en: 'an orrery mystic with tiny planets orbiting its shoulders', elements: ['luz', 'sombra'], alignments: ['harmonia'] },
+  { pt: 'esfinge enigmática', en: 'an enigmatic sphinx posing eternal riddles', elements: ['luz', 'terra'], alignments: ['harmonia'] },
+  { pt: 'atirador ciborgue de precisão', en: 'a precision cyborg gunner frame with a long-barrel arm', elements: ['industrial'], alignments: ['harmonia'] },
+  { pt: 'rainha-inseto da colmeia', en: 'a regal insect queen with layered wing veils', elements: ['planta', 'ar'], alignments: ['harmonia'] },
+  { pt: 'valquíria de lança luminosa', en: 'a valkyrie with a luminous lance and winged helm', elements: ['luz', 'ar'], alignments: ['benevolencia'] },
+  { pt: 'sumo-sacerdote bestial', en: 'a beastly high priest in ceremonial vestments', elements: ['luz'], alignments: ['benevolencia'] },
+  { pt: 'paladino canino de escudo duplo', en: 'a canine paladin bearing twin shields', elements: ['luz', 'terra'], alignments: ['benevolencia'] },
+  { pt: 'rainha do jardim vivo', en: 'a garden queen whose gown blooms with living flowers', elements: ['planta'], alignments: ['benevolencia'] },
+  { pt: 'dama da geleira', en: 'a glacier maiden crowned with aurora ice', elements: ['agua', 'luz'], alignments: ['benevolencia'] },
+  { pt: 'harpia rainha das tempestades', en: 'a storm harpy queen wreathed in lightning', elements: ['ar'], alignments: [] },
+  { pt: 'ancião treant de galhos sábios', en: 'an elder treant with wise branching antlers', elements: ['planta', 'terra'], alignments: [] },
+  { pt: 'juggernaut de magma', en: 'a magma juggernaut with molten armor seams', elements: ['fogo', 'terra'], alignments: [] },
+];
+
+const MEGA_SHAPES: EvoShape[] = [
+  { pt: 'dragão soberano de armadura negra', en: 'a dragon overlord clad in black spiked armor', elements: ['fogo', 'sombra'], alignments: ['poder'] },
+  { pt: 'deus-demônio do abismo', en: 'an abyssal demon god wreathed in dark flames', elements: ['sombra'], alignments: ['poder'] },
+  { pt: 'deus da guerra berserker de machados gêmeos', en: 'a berserker war god swinging twin great-axes', elements: ['fogo', 'terra'], alignments: ['poder'] },
+  { pt: 'serpente do fim que morde o horizonte', en: 'a doom serpent vast enough to bite the horizon', elements: ['agua', 'sombra'], alignments: ['poder'] },
+  { pt: 'kaiju de ferro fumegante', en: 'a smoldering iron kaiju with furnace eyes', elements: ['industrial', 'fogo'], alignments: ['poder'] },
+  { pt: 'lorde lobisomem da lua de sangue', en: 'a blood-moon werewolf lord in shredded regalia', elements: ['sombra'], alignments: ['poder'] },
+  { pt: 'dragão cósmico da ordem', en: 'a cosmic dragon whose scales map the constellations', elements: ['luz', 'ar'], alignments: ['harmonia'] },
+  { pt: 'divindade-máquina de anéis orbitais', en: 'a machine deity with orbital rings and a satellite halo', elements: ['industrial'], alignments: ['harmonia'] },
+  { pt: 'soberano do tempo com auréola de relógio', en: 'a time sovereign crowned with a clockwork halo', elements: ['industrial', 'luz'], alignments: ['harmonia'] },
+  { pt: 'imperador-fera dos sábios', en: 'a sage emperor beast draped in scholar silks', elements: ['terra', 'luz'], alignments: ['harmonia'] },
+  { pt: 'imperatriz-esfinge estelar', en: 'a star sphinx empress with galaxy-pattern wings', elements: ['sombra', 'luz'], alignments: ['harmonia'] },
+  { pt: 'duelista divino de mercúrio', en: 'a quicksilver divine duelist with liquid-metal blades', elements: ['agua', 'industrial'], alignments: ['harmonia'] },
+  { pt: 'cavaleiro sagrado de branco e ouro', en: 'a holy knight in white-and-gold plate armor with a cape', elements: ['luz'], alignments: ['benevolencia'] },
+  { pt: 'serafim de dez asas', en: 'a ten-winged seraph radiating gentle light', elements: ['luz', 'ar'], alignments: ['benevolencia'] },
+  { pt: 'deusa da vida do jardim eterno', en: 'a life goddess of the eternal garden trailing blossoms', elements: ['planta', 'luz'], alignments: ['benevolencia'] },
+  { pt: 'imperador fênix solar', en: 'a solar phoenix emperor with a corona crest', elements: ['fogo', 'luz'], alignments: ['benevolencia'] },
+  { pt: 'colosso guardião da cidadela', en: 'a citadel guardian colossus sheltering a tiny town on its back', elements: ['terra'], alignments: ['benevolencia'] },
+  { pt: 'soberana curadora dos oceanos', en: 'an ocean sovereign healer robed in living tides', elements: ['agua'], alignments: ['benevolencia'] },
+  { pt: 'avatar da árvore-mundo', en: 'a world-tree avatar with continents of moss on its shoulders', elements: ['planta', 'terra'], alignments: [] },
+  { pt: 'deus-cervo da aurora', en: 'an aurora stag god with antlers of northern lights', elements: ['luz', 'agua'], alignments: [] },
+  { pt: 'fera de duas almas yin-yang', en: 'a twin-souled yin-yang beast, half light and half shadow', elements: ['luz', 'sombra'], alignments: [] },
+];
+
+/** Sorteia uma forma de evolução: prioriza afinidade de tipo e de elemento,
+ *  nunca repete forma entre as 9 evoluções da mesma criatura. */
+function pickShape(
+  rng: () => number,
+  pool: EvoShape[],
+  branch: AlignmentId,
+  elements: ElementId[],
+  used: Set<string>,
+): EvoShape {
+  let candidates = pool.filter(s => !used.has(s.en) && (s.alignments.length === 0 || s.alignments.includes(branch)));
+  const elMatches = candidates.filter(s => s.elements.length === 0 || s.elements.some(e => elements.includes(e)));
+  if (elMatches.length >= 2) candidates = elMatches;
+  if (candidates.length === 0) candidates = pool.filter(s => !used.has(s.en));
+  if (candidates.length === 0) candidates = pool;
+  const shape = pick(rng, candidates);
+  used.add(shape.en);
+  return shape;
+}
 
 // Bestiário: bases corporais para a FUSÃO. Cada criatura funde DUAS bases
 // sorteadas de um pool filtrado por elemento dominante/secundário + reino —
@@ -1383,10 +1505,11 @@ const REALM_ACCENTS: Record<RealmId, string[]> = {
 };
 
 export const STAGE_NAMES: Record<StageId, LText> = {
-  crianca: { pt: 'Criança', en: 'Child' },
-  adulto: { pt: 'Adulto', en: 'Adult' },
+  rookie: { pt: 'Rookie', en: 'Rookie' },
+  champion: { pt: 'Champion', en: 'Champion' },
   perfeito: { pt: 'Perfeito', en: 'Perfect' },
   mega: { pt: 'Mega', en: 'Mega' },
+  ultra: { pt: 'Ultra', en: 'Ultra' },
 };
 
 // ---------------------------------------------------------------------------
@@ -1701,9 +1824,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const marking = pick(rng, ALIGNMENT_MARKINGS[dominantAlignment]);
   const realmInfo = REALM_INFO[dominantRealm];
   const realmAccent = pick(rng, REALM_ACCENTS[dominantRealm]);
-  const metamorph = pick(rng, ROLE_METAMORPHS[dominantRole]);
-  const manifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
-  const regalia = pick(rng, MEGA_REGALIAS[dominantAlignment]);
   const emblem = pick(rng, REALM_EMBLEMS[dominantRealm]);
   const roleMotif = pick(rng, ROLE_MOTIFS[dominantRole]);
 
@@ -1725,14 +1845,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     : 'mo';
   const baseName = (stem + nameSyllable).replace(/(.)\1+/g, '$1');
 
-  const perfectPrefix = pick(rng, PERFECT_PREFIXES);
-  const megaPrefix = pick(rng, MEGA_PREFIXES);
-  const stageForms: Record<StageId, string> = {
-    crianca: `${baseName}chi`,
-    adulto: `${baseName}mon`,
-    perfeito: `${perfectPrefix}${baseName}mon`,
-    mega: `${megaPrefix}${baseName}mon`,
-  };
+  const rookieName = `${baseName}mon`;
 
   const elName = ELEMENT_INFO[dominantElement].name;
   const el2Name = secondaryElement ? ELEMENT_INFO[secondaryElement].name : null;
@@ -1745,87 +1858,150 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     en: el2Name ? `${elName.en} element with ${el2Name.en} traits` : `pure ${elName.en} element`,
   };
   const concept: LText = {
-    pt: `Fusão de ${fusionA.pt} com ${fusionB.pt}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. ${elementPhrase.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}".`,
-    en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}".`,
+    pt: `Fusão de ${fusionA.pt} com ${fusionB.pt}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. ${elementPhrase.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Do rookie partem 3 linhas de evolução (Vírus, Data e Vacina), e os três Megas se fundem no Ultra.`,
+    en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". From the rookie, 3 evolution lines branch out (Virus, Data and Vaccine), and the three Megas fuse into the Ultra.`,
   };
 
-  const stageDescriptions: Record<StageId, LText> = {
-    crianca: {
-      pt: `${stageForms.crianca} é a forma larval adormecida: uma bolotinha em que só a herança de ${fusionA.pt} aparece — o lado ${fusionB.pt} ainda dorme lá dentro. A crista-assinatura é só um brotinho, e a aura de ${alignName.pt.toLowerCase()} mal cintila. ${adjRole.pt} desde o primeiro dia.`,
-      en: `${stageForms.crianca} is the dormant larval form: a little blob where only the ${fusionA.en} heritage shows — the ${fusionB.en} side still sleeps within. The signature crest is just a bud, and the ${alignName.en.toLowerCase()} aura barely flickers. ${adjRole.en} from day one.`,
-    },
-    adulto: {
-      pt: `${stageForms.adulto} é o despertar: a herança de ${fusionB.pt} emerge e a fusão se completa num corpo ${bodyPlan.pt} de ${elName.pt}. A crista se forma por inteiro e ele assume o posto de ${roleName.pt.toLowerCase()} — ${alignTrait.pt}, como manda seu alinhamento.`,
-      en: `${stageForms.adulto} is the awakening: the ${fusionB.en} heritage emerges and the fusion completes into a ${bodyPlan.en} ${elName.en} body. The crest fully forms and it claims the ${roleName.en.toLowerCase()} post — ${alignTrait.en}, true to its alignment.`,
-    },
-    perfeito: {
-      pt: `${stageForms.perfeito} não é um adulto maior — é uma metamorfose: a criatura encarna um ofício e vira ${metamorph.pt}. ${el2Name ? `O lado ${el2Name.pt}` : `Seu elemento`} se materializa (${manifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca seu corpo. O rosto e a crista continuam os mesmos.`,
-      en: `${stageForms.perfeito} is not a bigger adult — it is a metamorphosis: the creature embodies a calling and becomes ${metamorph.en.split(':')[0]}. ${el2Name ? `Its ${el2Name.en} side` : `Its element`} materializes (${manifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. The face and crest remain the same.`,
-    },
-    mega: {
-      pt: `${stageForms.mega} é a apoteose: ${regalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo e a silhueta muda por completo — mas o rosto, a crista e as cores contam que é a mesma alma. Expressão máxima do arquétipo "${archetype.phrase.pt}".`,
-      en: `${stageForms.mega} is the apotheosis: ${regalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en} and the silhouette changes completely — yet the face, crest and colors tell it is the same soul. Ultimate expression of the archetype "${archetype.phrase.en}".`,
-    },
-  };
-
-  // Núcleo visual compartilhado por todos os estágios (identidade da espécie).
-  // Ordem de prioridade no prompt: atributo → visão do dono → fusão → núcleo.
-  const coreIdentity = [
-    alignDesign,
+  // Núcleo visual compartilhado por TODOS os estágios (identidade da espécie).
+  // A linguagem de tipo NÃO entra aqui: cada linha usa a do seu atributo.
+  const sharedCore = [
     ...(ownerVision ? [ownerVision] : []),
     `an original monster species: a fusion of ${an(fusionA.en)} and ${an(fusionB.en)}`,
     `signature crest present in every evolution stage: ${crest}`,
-    marking,
     `${palette}, with ${realmAccent}`,
   ];
+  const realmMood = `a creature born in ${realmInfo.scenery} (environment for color mood only, do NOT draw the background)`;
+  const buildPrompt = (parts: string[]) =>
+    [SPRITE_STYLE_BASE, SPRITE_SPEC, ...parts, realmMood, SPRITE_STYLE_END].join(', ');
 
-  const stageConcepts: Record<StageId, string[]> = {
-    crianca: [
-      'dormant larval baby form: a tiny round blob with no limbs, huge cute eyes',
-      `only the ${fusionA.en} heritage is visible in the face and colors, the ${fusionB.en} side has not awakened yet`,
-      'the signature crest appears only as a tiny bud, soft simple body, no gear, no armor',
-      babyHint,
-      texture,
-    ],
-    adulto: [
-      `first awakened form: the ${fusionB.en} heritage emerges, completing the fusion`,
+  const stages: CreatureStage[] = [];
+
+  // ----- Rookie: forma base ÚNICA (usa o tipo dominante da leitura) -----
+  stages.push({
+    stage: 'rookie',
+    stageName: STAGE_NAMES.rookie,
+    name: rookieName,
+    description: {
+      pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que a fusão de ${fusionA.pt} com ${fusionB.pt} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
+      en: `${rookieName} is the base form: a small, simple little monster where the fusion of ${fusionA.en} and ${fusionB.en} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
+    },
+    imagePrompt: buildPrompt([
+      alignDesign,
+      ...sharedCore,
+      marking,
+      'rookie stage: a small, cute and simple monster, the base form of every evolution line',
       `${bodyPlan.en} body with short limbs, ${texture}${texture2 ? `, with touches of ${texture2}` : ''}`,
       tail,
+      babyHint,
       `light starter gear: ${roleMotif}`,
-    ],
-    perfeito: [
-      'conceptual metamorphosis stage, NOT just a grown-up version: the creature now embodies a calling',
-      `it transforms into ${metamorph.en}`,
-      secondaryElement
-        ? `its secondary element materializes physically: ${manifest.en}`
-        : `its element materializes physically at full power: ${manifest.en}`,
-      `wearing ${emblem.en} on the chest or brow`,
-      `${texture}, ${tail}`,
-      'the silhouette must read clearly different from the adult form while keeping the same face and signature crest',
-    ],
-    mega: [
-      'final apotheosis stage, a radical transformation with a completely new silhouette',
-      regalia.en,
-      `its body is partially transmuted into living ${ELEMENT_INFO[dominantElement].name.en.toLowerCase()} element`,
-      `keeping ${emblem.en} and the ${metamorph.en.split(':')[0].replace(/^an? /, '')} theme from the previous stage`,
-      'same face, same signature crest and same color family as all previous stages — clearly the same species, utterly transformed',
-    ],
-  };
+    ]),
+  });
 
-  const stages: CreatureStage[] = (Object.keys(STAGE_NAMES) as StageId[]).map(stage => ({
-    stage,
-    stageName: STAGE_NAMES[stage],
-    name: stageForms[stage],
-    description: stageDescriptions[stage],
-    imagePrompt: [
-      SPRITE_STYLE_BASE,
-      SPRITE_SPEC,
-      ...coreIdentity,
-      ...stageConcepts[stage],
-      `a creature born in ${realmInfo.scenery} (environment for color mood only, do NOT draw the background)`,
-      SPRITE_STYLE_END,
-    ].join(', '),
-  }));
+  // ----- 3 linhas de evolução: champion → perfeito → mega por TIPO -----
+  const usedShapes = new Set<string>();
+  const petElements: ElementId[] = [dominantElement, ...(secondaryElement ? [secondaryElement] : [])];
+  const megaShapeByBranch = {} as Record<AlignmentId, EvoShape>;
+
+  for (const branch of ALIGNMENT_ORDER) {
+    const bInfo = ALIGNMENT_INFO[branch];
+    const bDesign = pick(rng, ALIGNMENT_DESIGNS[branch]);
+    const bMarking = pick(rng, ALIGNMENT_MARKINGS[branch]);
+    const bTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[branch]);
+    const bManifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
+    const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
+    const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes);
+    const perfShape = pickShape(rng, PERFECT_SHAPES, branch, petElements, usedShapes);
+    const megaShape = pickShape(rng, MEGA_SHAPES, branch, petElements, usedShapes);
+    megaShapeByBranch[branch] = megaShape;
+
+    const champName = `${pick(rng, CHAMPION_PREFIXES[branch])}${baseName}mon`;
+    const perfName = `${pick(rng, PERFECT_STAGE_PREFIXES[branch])}${baseName}mon`;
+    const megaName = `${pick(rng, MEGA_STAGE_PREFIXES[branch])}${baseName}mon`;
+    const linePt = `linha ${bInfo.name.pt} (${bInfo.attribute.pt})`;
+    const lineEn = `${bInfo.name.en} (${bInfo.attribute.en}) line`;
+
+    stages.push({
+      stage: 'champion',
+      branch,
+      stageName: STAGE_NAMES.champion,
+      name: champName,
+      description: {
+        pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista.`,
+        en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest.`,
+      },
+      imagePrompt: buildPrompt([
+        bDesign,
+        ...sharedCore,
+        bMarking,
+        `champion stage of the ${bInfo.attribute.en} evolution line: it evolves into ${champShape.en}`,
+        texture,
+        tail,
+        'clearly bigger and wilder than the rookie stage, yet the same face and signature crest',
+      ]),
+    });
+
+    stages.push({
+      stage: 'perfeito',
+      branch,
+      stageName: STAGE_NAMES.perfeito,
+      name: perfName,
+      description: {
+        pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
+        en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest.`,
+      },
+      imagePrompt: buildPrompt([
+        bDesign,
+        ...sharedCore,
+        bMarking,
+        `perfect stage of the ${bInfo.attribute.en} evolution line — a conceptual metamorphosis, NOT just a grown-up champion`,
+        `it transforms into ${perfShape.en}`,
+        `its element materializes physically: ${bManifest.en}`,
+        `wearing ${emblem.en} on the chest or brow`,
+        'the silhouette must read clearly different from the champion form while keeping the same face and signature crest',
+      ]),
+    });
+
+    stages.push({
+      stage: 'mega',
+      branch,
+      stageName: STAGE_NAMES.mega,
+      name: megaName,
+      description: {
+        pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo.`,
+        en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${bRegalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en}.`,
+      },
+      imagePrompt: buildPrompt([
+        bDesign,
+        ...sharedCore,
+        bMarking,
+        `mega stage — the final apotheosis of the ${bInfo.attribute.en} evolution line, a radical transformation with a completely new silhouette`,
+        `it ascends as ${megaShape.en}`,
+        bRegalia.en,
+        `its body is partially transmuted into living ${ELEMENT_INFO[dominantElement].name.en.toLowerCase()} element`,
+        'same face, same signature crest and same color family as all previous stages — clearly the same species, utterly transformed',
+      ]),
+    });
+  }
+
+  // ----- Ultra: a fusão dos 3 Megas (o ápice absoluto) -----
+  const ultraName = `Omni${baseName}mon`;
+  stages.push({
+    stage: 'ultra',
+    stageName: STAGE_NAMES.ultra,
+    name: ultraName,
+    description: {
+      pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}".`,
+      en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}".`,
+    },
+    imagePrompt: buildPrompt([
+      'ULTRA stage — the supreme final form: a fusion of its three mega forms into one transcendent being',
+      `merging these three mega bodies into one design: ${megaShapeByBranch.poder.en}; ${megaShapeByBranch.harmonia.en}; ${megaShapeByBranch.benevolencia.en}`,
+      'unifying VIRUS-attribute ferocity, DATA-attribute balance and VACCINE-attribute nobility in a single silhouette',
+      ...sharedCore,
+      'a tri-colored aura with one accent from each mega form, regalia pieces borrowed from all three',
+      'same face and signature crest as every previous stage — the same soul at its absolute apex',
+    ]),
+  });
 
   return {
     input,

@@ -693,14 +693,18 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
             <div className="space-y-3">
               {creature.creature.stages.map(stage => (
                 <div
-                  key={stage.stage}
+                  key={`${stage.stage}-${stage.branch ?? 'base'}`}
                   className="rounded-lg p-2"
                   style={{ border: isGlitch ? '1px dashed #00ffff66' : '1px dashed #c0c0c0' }}
                 >
                   <div className="flex items-center justify-between">
                     <span className={`text-xs ${titleCls}`} style={{ fontWeight: 700 }}>
-                      {stage.stage === 'crianca' ? '🐣' : stage.stage === 'adulto' ? '🐉' : stage.stage === 'perfeito' ? '⚡' : '🌟'}{' '}
-                      {L(stage.stageName)} — {stage.name}
+                      {{ rookie: '🐤', champion: '🐉', perfeito: '⚡', mega: '🌟', ultra: '👑' }[stage.stage]}{' '}
+                      {L(stage.stageName)}
+                      {stage.branch && (
+                        <> {ATTRIBUTE_EMOJI[stage.branch]} {L(ALIGNMENT_INFO[stage.branch].attribute)}</>
+                      )}
+                      {' — '}{stage.name}
                     </span>
                     <button
                       onClick={() => copyText(stage.imagePrompt, isPt ? 'Prompt copiado!' : 'Prompt copied!')}
