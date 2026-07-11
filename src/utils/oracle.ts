@@ -34,11 +34,24 @@ export type StageId = 'crianca' | 'adulto' | 'perfeito' | 'mega';
 /** Texto bilíngue (o app sempre exibe PT-BR e EN). */
 export interface LText { pt: string; en: string }
 
+export interface OraclePreferences {
+  element?: ElementId;
+  realm?: RealmId;
+  alignment?: AlignmentId;
+}
+
 export interface OracleInput {
   fullName: string;
   birthDate: string;  // 'YYYY-MM-DD'
   birthTime: string;  // 'HH:MM'
   birthPlace: string;
+  /** Respostas do quiz de personalidade (id da pergunta → id da opção). */
+  answers?: Record<string, string>;
+  /** Preferências diretas OPCIONAIS — pesam 25% no eixo correspondente. */
+  preferences?: OraclePreferences;
+  /** Descrição livre de como o usuário imagina o pet — pesa 50% (por
+   *  palavras-chave) e é injetada no prompt de imagem. Opcional. */
+  petDescription?: string;
 }
 
 /**
@@ -48,7 +61,8 @@ export interface OracleInput {
  */
 export interface OracleOverrides {
   dominantElement?: ElementId;
-  secondaryElement?: ElementId;
+  /** ElementId força um secundário; null força elemento ÚNICO; undefined = automático. */
+  secondaryElement?: ElementId | null;
   dominantRole?: RoleId;
   dominantAlignment?: AlignmentId;
   dominantRealm?: RealmId;
@@ -112,7 +126,8 @@ export interface OracleResult {
   elementScores: Record<ElementId, number>;
   elementBreakdown: Record<ElementId, ScoreEntry[]>;
   dominantElement: ElementId;
-  secondaryElement: ElementId;
+  /** null = criatura de elemento ÚNICO (só há secundário se a pontuação for próxima). */
+  secondaryElement: ElementId | null;
   roleScores: Record<RoleId, number>;
   roleBreakdown: Record<RoleId, ScoreEntry[]>;
   dominantRole: RoleId;
@@ -566,6 +581,91 @@ const CHINESE_ELEMENT_MAP: ElementId[] = ['planta', 'fogo', 'terra', 'industrial
 export const ELEMENT_ORDER: ElementId[] = ['agua', 'fogo', 'terra', 'ar', 'sombra', 'luz', 'planta', 'industrial'];
 export const ROLE_ORDER: RoleId[] = ['suporte', 'tanque', 'fisico', 'magico', 'alcance'];
 
+// ---------------------------------------------------------------------------
+// Quiz de personalidade — as respostas pontuam direto nos eixos (fazem parte
+// da "leitura", junto com numerologia e astrologia).
+// ---------------------------------------------------------------------------
+
+export interface QuestionEffects {
+  elements?: Partial<Record<ElementId, number>>;
+  roles?: Partial<Record<RoleId, number>>;
+  alignments?: Partial<Record<AlignmentId, number>>;
+  realms?: Partial<Record<RealmId, number>>;
+}
+
+export interface OracleQuestion {
+  id: string;
+  text: LText;
+  options: Array<{ id: string; text: LText; effects: QuestionEffects }>;
+}
+
+export const ORACLE_QUESTIONS: OracleQuestion[] = [
+  {
+    id: 'grupo',
+    text: { pt: 'Num grupo, você costuma ser quem...', en: 'In a group, you are usually the one who...' },
+    options: [
+      { id: 'protege', text: { pt: 'Protege e segura as pontas', en: 'Protects and holds the line' }, effects: { roles: { tanque: 4 }, alignments: { benevolencia: 2 }, elements: { terra: 2 } } },
+      { id: 'cuida', text: { pt: 'Cuida e apoia todo mundo', en: 'Cares for and supports everyone' }, effects: { roles: { suporte: 4 }, alignments: { benevolencia: 3 }, elements: { agua: 1, luz: 1 } } },
+      { id: 'ataca', text: { pt: 'Vai pra cima e resolve no braço', en: 'Charges in and solves it head-on' }, effects: { roles: { fisico: 4 }, alignments: { poder: 3 }, elements: { fogo: 2 } } },
+      { id: 'planeja', text: { pt: 'Planeja e enxerga o todo', en: 'Plans and sees the big picture' }, effects: { roles: { magico: 4 }, alignments: { harmonia: 3 }, elements: { sombra: 1, ar: 1 } } },
+      { id: 'observa', text: { pt: 'Observa e age na hora certa', en: 'Watches and strikes at the right time' }, effects: { roles: { alcance: 4 }, alignments: { harmonia: 2 }, elements: { ar: 1, sombra: 1 } } },
+    ],
+  },
+  {
+    id: 'objetivo',
+    text: { pt: 'Seu objetivo de vida se parece mais com...', en: 'Your life goal looks most like...' },
+    options: [
+      { id: 'conquistar', text: { pt: 'Conquistar e deixar minha marca', en: 'Conquering and leaving my mark' }, effects: { alignments: { poder: 4 }, elements: { fogo: 1 }, roles: { fisico: 1 } } },
+      { id: 'sabedoria', text: { pt: 'Entender o mundo e me equilibrar', en: 'Understanding the world and finding balance' }, effects: { alignments: { harmonia: 4 }, elements: { luz: 1 }, roles: { magico: 1 } } },
+      { id: 'cuidar', text: { pt: 'Cuidar de quem eu amo e elevar os outros', en: 'Caring for my loved ones and uplifting others' }, effects: { alignments: { benevolencia: 4 }, elements: { planta: 1 }, roles: { suporte: 1 } } },
+      { id: 'liberdade', text: { pt: 'Ser livre e viver aventuras', en: 'Being free and living adventures' }, effects: { alignments: { harmonia: 2, poder: 1 }, elements: { ar: 2 }, roles: { alcance: 1 } } },
+    ],
+  },
+  {
+    id: 'pressao',
+    text: { pt: 'Sob pressão, você...', en: 'Under pressure, you...' },
+    options: [
+      { id: 'explode', text: { pt: 'Explode e resolve com intensidade', en: 'Explode and solve with intensity' }, effects: { elements: { fogo: 3 }, alignments: { poder: 2 } } },
+      { id: 'flui', text: { pt: 'Mantém a calma e flui com a situação', en: 'Stay calm and flow with it' }, effects: { elements: { agua: 3 }, alignments: { harmonia: 2 } } },
+      { id: 'firme', text: { pt: 'Fica firme, sem se abalar', en: 'Stand firm, unshaken' }, effects: { elements: { terra: 3 }, roles: { tanque: 2 } } },
+      { id: 'improvisa', text: { pt: 'Improvisa rápido e muda de rota', en: 'Improvise fast and change course' }, effects: { elements: { ar: 3 }, roles: { alcance: 1 } } },
+      { id: 'recolhe', text: { pt: 'Se recolhe, analisa e volta com um plano', en: 'Withdraw, analyze and return with a plan' }, effects: { elements: { sombra: 3 }, roles: { magico: 2 } } },
+    ],
+  },
+  {
+    id: 'energia',
+    text: { pt: 'O que te dá mais energia?', en: 'What energizes you the most?' },
+    options: [
+      { id: 'sol', text: { pt: 'Sol, gente e movimento', en: 'Sun, people and motion' }, effects: { elements: { luz: 3 }, alignments: { benevolencia: 1 } } },
+      { id: 'noite', text: { pt: 'Noite, silêncio e mistério', en: 'Night, silence and mystery' }, effects: { elements: { sombra: 3 }, alignments: { harmonia: 1 } } },
+      { id: 'natureza', text: { pt: 'Natureza, plantas e bichos', en: 'Nature, plants and animals' }, effects: { elements: { planta: 3 }, realms: { floresta: 2 } } },
+      { id: 'tecnologia', text: { pt: 'Tecnologia, máquinas e sistemas', en: 'Technology, machines and systems' }, effects: { elements: { industrial: 3 }, roles: { alcance: 1 } } },
+    ],
+  },
+  {
+    id: 'lugar',
+    text: { pt: 'Onde você se imagina vivendo?', en: 'Where do you imagine yourself living?' },
+    options: [
+      { id: 'praia', text: { pt: 'Perto do mar', en: 'Near the sea' }, effects: { realms: { oceano: 4 }, elements: { agua: 1 } } },
+      { id: 'montanha', text: { pt: 'No alto das montanhas', en: 'High in the mountains' }, effects: { realms: { picos: 4 }, elements: { ar: 1 } } },
+      { id: 'floresta', text: { pt: 'No meio da mata', en: 'Deep in the woods' }, effects: { realms: { floresta: 4 }, elements: { planta: 1 } } },
+      { id: 'campo', text: { pt: 'Num campo tranquilo', en: 'In a peaceful field' }, effects: { realms: { campina: 4 }, elements: { luz: 1 } } },
+      { id: 'extremos', text: { pt: 'Em lugares extremos (deserto, gelo...)', en: 'In extreme places (desert, ice...)' }, effects: { realms: { deserto: 2, gelo: 2 }, alignments: { poder: 1 } } },
+      { id: 'oculto', text: { pt: 'Num lugar secreto (caverna, brejo, outro plano)', en: 'Somewhere hidden (cave, marsh, another plane)' }, effects: { realms: { cavernas: 2, pantano: 1, akasha: 1 }, elements: { sombra: 1 } } },
+    ],
+  },
+  {
+    id: 'conflito',
+    text: { pt: 'Diante de um conflito injusto, você...', en: 'Facing an unfair conflict, you...' },
+    options: [
+      { id: 'enfrenta', text: { pt: 'Enfrenta de frente, custe o que custar', en: 'Face it head-on, whatever it takes' }, effects: { alignments: { poder: 3 }, roles: { fisico: 2 } } },
+      { id: 'media', text: { pt: 'Media e busca o meio-termo justo', en: 'Mediate and seek the fair middle ground' }, effects: { alignments: { harmonia: 3 }, roles: { suporte: 1 } } },
+      { id: 'defende', text: { pt: 'Defende quem não pode se defender', en: 'Defend those who cannot defend themselves' }, effects: { alignments: { benevolencia: 3 }, roles: { tanque: 2 } } },
+      { id: 'estrategia', text: { pt: 'Age por trás, com estratégia', en: 'Act from behind the scenes, strategically' }, effects: { alignments: { poder: 1, harmonia: 1 }, elements: { sombra: 2 }, roles: { alcance: 1 } } },
+    ],
+  },
+];
+
 // ----- Alinhamento (poder / harmonia / benevolência) -----
 
 const NUMBER_ALIGNMENT: Record<number, AlignmentId> = {
@@ -767,29 +867,126 @@ const CREATURE_BASES: CreatureBase[] = [
   { pt: 'autômato', en: 'clockwork automaton', elements: ['industrial'], realms: ['cavernas', 'akasha'] },
   { pt: 'besouro mecânico', en: 'mechanical beetle', elements: ['industrial'], realms: ['deserto', 'picos'] },
   { pt: 'dínamo vivo', en: 'living dynamo', elements: ['industrial', 'ar'], realms: ['picos'] },
+  { pt: 'tubarão', en: 'shark', elements: ['agua'], realms: ['oceano'] },
+  { pt: 'enguia elétrica', en: 'electric eel', elements: ['agua', 'industrial'], realms: ['oceano', 'pantano'] },
+  { pt: 'caranguejo', en: 'crab', elements: ['agua', 'terra'], realms: ['oceano'] },
+  { pt: 'louva-a-deus', en: 'praying mantis', elements: ['planta'], realms: ['floresta', 'campina'] },
+  { pt: 'javali', en: 'wild boar', elements: ['terra'], realms: ['floresta'] },
+  { pt: 'texugo', en: 'badger', elements: ['terra'], realms: ['floresta', 'cavernas'] },
+  { pt: 'camaleão', en: 'chameleon', elements: ['planta', 'sombra'], realms: ['floresta', 'pantano'] },
+  { pt: 'gato selvagem', en: 'wildcat', elements: ['sombra', 'fogo'], realms: ['floresta', 'deserto'] },
+  { pt: 'águia', en: 'eagle', elements: ['ar', 'luz'], realms: ['picos'] },
+  { pt: 'mangusto', en: 'mongoose', elements: ['fogo'], realms: ['deserto', 'campina'] },
+  { pt: 'tatu', en: 'armadillo', elements: ['terra'], realms: ['deserto', 'campina'] },
+  { pt: 'alce', en: 'moose', elements: ['terra', 'planta'], realms: ['gelo', 'floresta'] },
+  { pt: 'foca', en: 'seal', elements: ['agua'], realms: ['gelo', 'oceano'] },
+  { pt: 'salamandra de neon', en: 'neon axolotl', elements: ['industrial', 'agua'], realms: ['akasha', 'oceano'] },
+  { pt: 'gênio de fumaça', en: 'smoke djinn', elements: ['sombra', 'ar'], realms: ['akasha', 'deserto'] },
+  { pt: 'carbúnculo', en: 'carbuncle', elements: ['luz', 'terra'], realms: ['akasha', 'cavernas'] },
+  { pt: 'ouriço', en: 'hedgehog', elements: ['terra', 'planta'], realms: ['campina', 'floresta'] },
+  // Pedidos comuns na descrição livre do pet — precisam existir p/ casar por nome
+  { pt: 'dragão', en: 'dragon', elements: ['fogo'], realms: ['picos', 'cavernas'] },
+  { pt: 'urso', en: 'bear', elements: ['terra'], realms: ['floresta', 'gelo'] },
+  { pt: 'gato', en: 'cat', elements: ['sombra'], realms: ['campina', 'akasha'] },
+  { pt: 'cachorro', en: 'dog', elements: ['luz'], realms: ['campina'] },
+  { pt: 'dinossauro', en: 'dinosaur', elements: ['terra', 'fogo'], realms: ['deserto', 'floresta'] },
+  { pt: 'macaco', en: 'monkey', elements: ['planta'], realms: ['floresta'] },
+  { pt: 'panda', en: 'panda', elements: ['planta', 'terra'], realms: ['floresta'] },
 ];
 
-const ELEMENT_PALETTE: Record<ElementId, string> = {
-  agua: 'cool blue and teal color palette',
-  fogo: 'warm red, orange and ember-yellow color palette',
-  terra: 'earthy brown and ochre color palette',
-  ar: 'sky blue, white and pale silver color palette',
-  sombra: 'deep purple and charcoal color palette',
-  luz: 'golden yellow, white and warm cream color palette',
-  planta: 'leafy green and lime color palette',
-  industrial: 'steel gray and gunmetal color palette',
+// POOLS por elemento: paletas e texturas variadas (sorteio semeado)
+const ELEMENT_PALETTES: Record<ElementId, string[]> = {
+  agua: [
+    'cool blue and teal color palette',
+    'deep navy and seafoam color palette',
+    'turquoise and pearl-white color palette',
+  ],
+  fogo: [
+    'warm red, orange and ember-yellow color palette',
+    'crimson and charcoal-smoke color palette',
+    'sunset orange and molten-gold color palette',
+  ],
+  terra: [
+    'earthy brown and ochre color palette',
+    'clay-red and sandstone color palette',
+    'moss-brown and slate color palette',
+  ],
+  ar: [
+    'sky blue, white and pale silver color palette',
+    'cloud-white and periwinkle color palette',
+    'pale gray-blue and silver-lining color palette',
+  ],
+  sombra: [
+    'deep purple and charcoal color palette',
+    'midnight blue and smoky black color palette',
+    'dark violet and ash-gray color palette',
+  ],
+  luz: [
+    'golden yellow, white and warm cream color palette',
+    'dawn-pink and radiant white color palette',
+    'amber and ivory color palette',
+  ],
+  planta: [
+    'leafy green and lime color palette',
+    'deep fern and blossom-pink color palette',
+    'sage green and sunflower color palette',
+  ],
+  industrial: [
+    'steel gray and gunmetal color palette',
+    'brass and copper machinery color palette',
+    'chrome and hazard-yellow color palette',
+  ],
 };
 
-// Texturas de corpo por elemento (a "pele" da fusão)
-const ELEMENT_TEXTURE: Record<ElementId, string> = {
-  agua: 'smooth glossy skin with small fins and droplet shapes',
-  fogo: 'ember-flecked hide with tiny flame tufts',
-  terra: 'cracked stone plates and pebble bumps',
-  ar: 'fluffy feather-down and cloud-like puffs',
-  sombra: 'sleek dark velvet fur with faint glow marks',
-  luz: 'softly glowing pearl-like skin',
-  planta: 'leaf-scale skin with sprouts and buds',
-  industrial: 'riveted metal plates with visible gears',
+const ELEMENT_TEXTURES: Record<ElementId, string[]> = {
+  agua: [
+    'smooth glossy skin with small fins and droplet shapes',
+    'scaled hide with rippling wave patterns',
+    'translucent jelly-like body parts with bubble details',
+    'sleek wet-look coat with tide-line markings',
+  ],
+  fogo: [
+    'ember-flecked hide with tiny flame tufts',
+    'charcoal-cracked skin glowing from within',
+    'smoldering fur with sparks at the tips',
+    'smooth magma-vein patterns across the body',
+  ],
+  terra: [
+    'cracked stone plates and pebble bumps',
+    'compact clay body with carved groove patterns',
+    'crystal shards growing from the shoulders and back',
+    'sandy hide with fossil-like spiral marks',
+  ],
+  ar: [
+    'fluffy feather-down and cloud-like puffs',
+    'streamlined body with wind-groove lines',
+    'wispy tufts that trail like small contrails',
+    'light plumage with layered feather rows',
+  ],
+  sombra: [
+    'sleek dark velvet fur with faint glow marks',
+    'smoky edges that fade like mist',
+    'ink-black patches with tiny star-like specks',
+    'matte shadowy carapace with a single glowing seam',
+  ],
+  luz: [
+    'softly glowing pearl-like skin',
+    'prism-scale patches that catch the light',
+    'radiant fur with a faint halo shimmer',
+    'stained-glass-like translucent panels on the body',
+  ],
+  planta: [
+    'leaf-scale skin with sprouts and buds',
+    'bark-plated limbs with moss patches',
+    'petal-layered coat with a flower bud somewhere',
+    'vine-wrapped body with tiny berries',
+  ],
+  industrial: [
+    'riveted metal plates with visible gears',
+    'segmented chassis with piston joints',
+    'brass clockwork panels with a small wind-up key',
+    'wired body with blinking indicator lights',
+  ],
 };
 
 // Características avulsas (sorteio semeado — aumentam a variedade combinatória)
@@ -797,28 +994,129 @@ const CRESTS = [
   'small curved horns', 'branching antlers', 'a fin-shaped crest', 'a sprouting leaf on the head',
   'a tiny gear halo', 'crystal spikes along the head', 'a flame tuft on the forehead', 'an icicle crown',
   'a mushroom cap hat', 'insect antennae', 'a third-eye gem on the forehead', 'a star-shaped emblem on the brow',
+  'a single spiral unicorn nub', 'a mohawk of stiff bristles', 'droopy long ears like a hood',
+  'a cracked half-mask over one eye', 'a floating tiny crown that never touches the head', 'twin feather plumes',
+  'a bone-white skull cap', 'a glowing rune etched on the forehead',
 ];
 
 const TAILS = [
   'a stubby round tail', 'a long whip-like tail with a glowing tip', 'a leafy vine tail',
   'a segmented armored tail', 'a fluffy fan tail', 'a coiled spring tail', 'twin ribbon tails',
   'a crystal-tipped tail', 'a little flame tail', 'no tail at all',
+  'a paddle-shaped swimming tail', 'a scorpion-curl tail held high', 'a peacock-fan tail kept folded',
+  'a plug-and-cable tail', 'a fox-brush tail with a pale tip', 'a chain-link tail ending in a tiny weight',
 ];
 
-// Marcas corporais por alinhamento
-const ALIGNMENT_MARKING: Record<AlignmentId, string> = {
-  poder: 'bold jagged war-paint stripes on the body',
-  harmonia: 'concentric ring and spiral markings on the body',
-  benevolencia: 'small heart and star speckle markings on the body',
+// Marcas corporais por alinhamento (pool)
+const ALIGNMENT_MARKINGS: Record<AlignmentId, string[]> = {
+  poder: [
+    'bold jagged war-paint stripes on the body',
+    'claw-slash markings raked across the flank',
+    'cracked-glass fracture lines glowing faintly',
+    'tally-mark scratches counting victories',
+  ],
+  harmonia: [
+    'concentric ring and spiral markings on the body',
+    'perfectly symmetric mandala patterns on the back',
+    'thin meridian lines tracing the body like a map',
+    'yin-yang teardrop marks on the shoulders',
+  ],
+  benevolencia: [
+    'small heart and star speckle markings on the body',
+    'soft cloud-and-sun patches on the chest',
+    'a pale guardian sigil over the heart',
+    'freckle constellations that form a smile',
+  ],
 };
 
-const ROLE_MOTIF: Record<RoleId, string> = {
-  suporte: 'carrying a small healing charm, kind expression',
-  tanque: 'wearing chunky shield-like armor pieces, sturdy stance',
-  fisico: 'with bold little claws or fists, energetic pose',
-  magico: 'with a floating rune orb beside it, mystical gaze',
-  alcance: 'with a tiny slingshot or shoulder cannon, focused eyes',
+const ROLE_MOTIFS: Record<RoleId, string[]> = {
+  suporte: [
+    'carrying a small healing charm, kind expression',
+    'a first-aid pouch slung across the body, attentive eyes',
+    'a tiny bell that chimes to rally allies, gentle look',
+  ],
+  tanque: [
+    'wearing chunky shield-like armor pieces, sturdy stance',
+    'a heavy collar-guard and knuckle plates, grounded pose',
+    'one oversized armored shoulder it leans into, stoic look',
+  ],
+  fisico: [
+    'with bold little claws or fists, energetic pose',
+    'wrapped sparring bandages on the paws, bouncing on its feet',
+    'a cracked training dummy strap as a trophy, eager grin',
+  ],
+  magico: [
+    'with a floating rune orb beside it, mystical gaze',
+    'a spellbook page tucked under one arm, knowing look',
+    'faint glyphs circling one raised paw, focused eyes',
+  ],
+  alcance: [
+    'with a tiny slingshot or shoulder cannon, focused eyes',
+    'a spotting scope held to one eye, patient posture',
+    'a bandolier of pebble-ammo across the chest, steady aim',
+  ],
 };
+
+// ---------------------------------------------------------------------------
+// Descrição livre do pet — palavras-chave (PT/EN) que pontuam nos eixos.
+// A descrição também é injetada crua no prompt (50% de peso).
+// ---------------------------------------------------------------------------
+
+const DESC_KEYWORDS: {
+  elements: Record<ElementId, string[]>;
+  realms: Record<RealmId, string[]>;
+  alignments: Record<AlignmentId, string[]>;
+  roles: Record<RoleId, string[]>;
+} = {
+  elements: {
+    agua: ['agua', 'mar', 'oceano', 'peixe', 'azul', 'chuva', 'rio', 'onda', 'aquatic', 'water', 'sea', 'fish', 'blue', 'rain', 'wave'],
+    fogo: ['fogo', 'chama', 'lava', 'brasa', 'vermelho', 'quente', 'vulcao', 'fire', 'flame', 'ember', 'red', 'burn', 'volcano'],
+    terra: ['terra', 'pedra', 'rocha', 'montanha', 'marrom', 'cristal', 'areia', 'earth', 'stone', 'rock', 'brown', 'crystal', 'sand'],
+    ar: ['vento', 'voar', 'asas', 'ceu', 'nuvem', 'passaro', 'leve', 'wind', 'fly', 'wings', 'sky', 'cloud', 'bird', 'feather'],
+    sombra: ['sombra', 'escuro', 'noite', 'roxo', 'preto', 'misterio', 'lua', 'shadow', 'dark', 'night', 'purple', 'black', 'moon', 'mist'],
+    luz: ['luz', 'brilho', 'dourado', 'sol', 'estrela', 'sagrado', 'anjo', 'light', 'glow', 'golden', 'sun', 'star', 'holy', 'angel'],
+    planta: ['planta', 'folha', 'flor', 'verde', 'arvore', 'musgo', 'semente', 'plant', 'leaf', 'flower', 'green', 'tree', 'moss', 'seed'],
+    industrial: ['metal', 'robo', 'maquina', 'engrenagem', 'cromado', 'aco', 'cyber', 'robot', 'machine', 'gear', 'chrome', 'steel', 'mech', 'tech'],
+  },
+  realms: {
+    deserto: ['deserto', 'duna', 'arido', 'desert', 'dune', 'arid'],
+    picos: ['pico', 'tempestade', 'raio', 'trovao', 'montanha', 'peak', 'storm', 'lightning', 'thunder'],
+    oceano: ['oceano', 'abissal', 'profundo', 'mar', 'ocean', 'abyss', 'deep sea'],
+    pantano: ['pantano', 'brejo', 'lodo', 'veneno', 'toxico', 'swamp', 'marsh', 'bog', 'poison', 'toxic'],
+    floresta: ['floresta', 'mata', 'selva', 'bosque', 'forest', 'jungle', 'woods'],
+    cavernas: ['caverna', 'gruta', 'subterraneo', 'cave', 'cavern', 'underground'],
+    gelo: ['gelo', 'neve', 'frio', 'congelado', 'artico', 'ice', 'snow', 'cold', 'frozen', 'arctic'],
+    campina: ['campo', 'campina', 'prado', 'jardim', 'meadow', 'field', 'garden', 'prairie'],
+    akasha: ['espirito', 'etereo', 'cosmico', 'astral', 'dimensao', 'spirit', 'ethereal', 'cosmic', 'astral', 'void'],
+  },
+  alignments: {
+    poder: ['feroz', 'bravo', 'selvagem', 'garra', 'presa', 'espinho', 'assustador', 'forte', 'fierce', 'wild', 'savage', 'claw', 'fang', 'spike', 'scary', 'strong', 'demon', 'demonio'],
+    harmonia: ['calmo', 'sereno', 'sabio', 'equilibrado', 'zen', 'inteligente', 'calm', 'serene', 'wise', 'balanced', 'smart', 'neutral'],
+    benevolencia: ['fofo', 'gentil', 'protetor', 'amoroso', 'heroi', 'nobre', 'bondoso', 'cute', 'gentle', 'protective', 'loving', 'hero', 'noble', 'kind'],
+  },
+  roles: {
+    suporte: ['curar', 'cuidar', 'apoiar', 'heal', 'care', 'support'],
+    tanque: ['escudo', 'armadura', 'defender', 'proteger', 'shield', 'armor', 'defend', 'protect', 'tank'],
+    fisico: ['lutar', 'garras', 'punho', 'briga', 'fight', 'punch', 'melee', 'brawl'],
+    magico: ['magia', 'feitico', 'runa', 'arcano', 'magic', 'spell', 'rune', 'arcane', 'wizard', 'mago'],
+    alcance: ['arco', 'flecha', 'canhao', 'atirar', 'longe', 'bow', 'arrow', 'cannon', 'shoot', 'sniper', 'ranged'],
+  },
+};
+
+/** Normaliza texto para casar palavras-chave (minúsculas, sem acento). */
+function normalizeText(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+function countKeywordHits<K extends string>(text: string, dict: Record<K, string[]>, keys: K[]): Record<K, number> {
+  const hits = Object.fromEntries(keys.map(k => [k, 0])) as Record<K, number>;
+  for (const key of keys) {
+    for (const kw of dict[key]) {
+      if (text.includes(kw)) hits[key] += 1;
+    }
+  }
+  return hits;
+}
 
 // Estilo-base dos sprites do jogo (DMC / Digital Monster Color), descrito em
 // texto porque a ferramenta de imagem (Nanobanana) não aceita imagem de
@@ -854,94 +1152,234 @@ const BODY_PLANS: Array<{ en: string; pt: string }> = [
   { en: 'floating levitating', pt: 'flutuante' },
 ];
 
-const ROLE_METAMORPH: Record<RoleId, { en: string; pt: string }> = {
-  tanque: {
-    en: 'a bulwark knight: heavy segmented armor plates, massive pauldrons and one arm shaped like a tower shield',
-    pt: 'cavaleiro-baluarte: placas de armadura segmentada, ombreiras massivas e um braço em forma de escudo-torre',
-  },
-  suporte: {
-    en: 'a radiant cleric: flowing vestment drapes, a relic censer and small floating healing orbs',
-    pt: 'clérigo radiante: vestes esvoaçantes, um turíbulo-relíquia e pequenos orbes de cura flutuantes',
-  },
-  fisico: {
-    en: 'a battle master: reinforced gauntlets, blade-like limb edges and a fierce combat stance',
-    pt: 'mestre de batalha: manoplas reforçadas, membros com bordas de lâmina e postura feroz de combate',
-  },
-  magico: {
-    en: 'an arcane sage: rune-etched robe folds, a floating grimoire and glowing sigils orbiting the body',
-    pt: 'sábio arcano: dobras de manto gravadas com runas, um grimório flutuante e sigilos brilhantes orbitando o corpo',
-  },
-  alcance: {
-    en: 'a sharpshooter: a long arm-cannon, a targeting visor over one eye and stabilizer fins',
-    pt: 'atirador de elite: um longo canhão no braço, visor de mira sobre um olho e aletas estabilizadoras',
-  },
+const ROLE_METAMORPHS: Record<RoleId, Array<{ en: string; pt: string }>> = {
+  tanque: [
+    { en: 'a bulwark knight: heavy segmented armor plates, massive pauldrons and one arm shaped like a tower shield', pt: 'cavaleiro-baluarte: placas de armadura segmentada, ombreiras massivas e um braço em forma de escudo-torre' },
+    { en: 'a living fortress: castle-wall plating, battlement ridges along the back and a gate-like chest guard', pt: 'fortaleza viva: blindagem de muralha, ameias ao longo das costas e um protetor de peito em forma de portão' },
+    { en: 'an immovable colossus: dense oversized forearms planted like pillars and a low unshakable stance', pt: 'colosso imóvel: antebraços densos e desproporcionais fincados como pilares e postura baixa inabalável' },
+  ],
+  suporte: [
+    { en: 'a radiant cleric: flowing vestment drapes, a relic censer and small floating healing orbs', pt: 'clérigo radiante: vestes esvoaçantes, um turíbulo-relíquia e pequenos orbes de cura flutuantes' },
+    { en: 'a field medic spirit: satchels of remedies, bandage wraps and a stretcher-tail for carrying allies', pt: 'espírito de médico de campo: bolsas de remédios, faixas enroladas e uma cauda-maca para carregar aliados' },
+    { en: 'a hearth keeper: a warm lantern staff, a cloak that shelters smaller creatures and steam of comfort rising', pt: 'guardião da lareira: cajado-lanterna aquecido, manto que abriga criaturas menores e vapor de conforto subindo' },
+  ],
+  fisico: [
+    { en: 'a battle master: reinforced gauntlets, blade-like limb edges and a fierce combat stance', pt: 'mestre de batalha: manoplas reforçadas, membros com bordas de lâmina e postura feroz de combate' },
+    { en: 'a martial-arts adept: wrapped fists, a training-belt sash and a coiled ready-to-strike pose', pt: 'adepto de artes marciais: punhos enfaixados, faixa de treinamento e pose enrolada pronta pro golpe' },
+    { en: 'a wild brawler: cracked knuckle guards, a torn cape and claw marks raked across its own armor', pt: 'brigador selvagem: proteções de punho rachadas, capa rasgada e marcas de garra riscadas na própria armadura' },
+  ],
+  magico: [
+    { en: 'an arcane sage: rune-etched robe folds, a floating grimoire and glowing sigils orbiting the body', pt: 'sábio arcano: dobras de manto gravadas com runas, um grimório flutuante e sigilos brilhantes orbitando o corpo' },
+    { en: 'an elemental conduit: energy channels glowing along the limbs and a focusing crystal at the chest', pt: 'condutor elemental: canais de energia brilhando pelos membros e um cristal focalizador no peito' },
+    { en: 'a hex weaver: threads of spell-light between the fingers and charm talismans hanging from the crest', pt: 'tecelão de feitiços: fios de luz-mágica entre os dedos e talismãs pendurados na crista' },
+  ],
+  alcance: [
+    { en: 'a sharpshooter: a long arm-cannon, a targeting visor over one eye and stabilizer fins', pt: 'atirador de elite: um longo canhão no braço, visor de mira sobre um olho e aletas estabilizadoras' },
+    { en: 'a phantom archer: an energy bow grown from the forearm and a quiver of light arrows on the back', pt: 'arqueiro fantasma: um arco de energia crescido do antebraço e uma aljava de flechas de luz nas costas' },
+    { en: 'an artillery frame: shoulder-mounted launchers, ammo-belt details and fold-out bipod legs', pt: 'chassi de artilharia: lançadores nos ombros, detalhes de cinto de munição e pernas-bipé dobráveis' },
+  ],
 };
 
-// O elemento secundário deixa de ser "toque" e vira matéria no estágio perfeito
-const ELEMENT_MANIFEST: Record<ElementId, { en: string; pt: string }> = {
-  agua: { en: 'flowing water veils and liquid ribbons around the limbs', pt: 'véus de água corrente e fitas líquidas nos membros' },
-  fogo: { en: 'magma plating and glowing ember vents on the shoulders', pt: 'placas de magma e aberturas de brasa nos ombros' },
-  terra: { en: 'heavy stone slabs growing from the back and forearms', pt: 'lajes de pedra crescendo das costas e antebraços' },
-  ar: { en: 'wind-swept plumes and small cyclone rings around the arms', pt: 'plumas ao vento e pequenos anéis de ciclone nos braços' },
-  sombra: { en: 'smoky shadow trails and a dark mist cloak', pt: 'rastros de sombra fumegante e um manto de névoa escura' },
-  luz: { en: 'shards of solid light forming a broken halo', pt: 'estilhaços de luz sólida formando uma auréola partida' },
-  planta: { en: 'blooming vines, bark guards and flower buds along the body', pt: 'vinhas floridas, proteções de casca e botões de flor pelo corpo' },
-  industrial: { en: 'bolted mechanical augments, pistons and antenna arrays', pt: 'implementos mecânicos parafusados, pistões e antenas' },
+// O elemento vira matéria física no estágio perfeito (pool por elemento)
+const ELEMENT_MANIFESTS: Record<ElementId, Array<{ en: string; pt: string }>> = {
+  agua: [
+    { en: 'flowing water veils and liquid ribbons around the limbs', pt: 'véus de água corrente e fitas líquidas nos membros' },
+    { en: 'a living tide that swirls around its feet', pt: 'uma maré viva que rodopia em volta dos pés' },
+    { en: 'frost-and-spray armor condensing over the shoulders', pt: 'armadura de bruma e respingo condensada nos ombros' },
+  ],
+  fogo: [
+    { en: 'magma plating and glowing ember vents on the shoulders', pt: 'placas de magma e aberturas de brasa nos ombros' },
+    { en: 'a mane of controlled flame down the spine', pt: 'uma juba de chama controlada ao longo da espinha' },
+    { en: 'twin torch-tips burning at the elbows', pt: 'duas pontas de tocha ardendo nos cotovelos' },
+  ],
+  terra: [
+    { en: 'heavy stone slabs growing from the back and forearms', pt: 'lajes de pedra crescendo das costas e antebraços' },
+    { en: 'floating orbiting boulders bound to its will', pt: 'pedregulhos flutuantes orbitando sob seu comando' },
+    { en: 'crystal gauntlets crusted over the fists', pt: 'manoplas de cristal incrustadas nos punhos' },
+  ],
+  ar: [
+    { en: 'wind-swept plumes and small cyclone rings around the arms', pt: 'plumas ao vento e pequenos anéis de ciclone nos braços' },
+    { en: 'a personal whirlwind that lifts it slightly off the ground', pt: 'um redemoinho pessoal que o ergue de leve do chão' },
+    { en: 'blade-thin air currents visible as white streaks', pt: 'correntes de ar finas como lâminas, visíveis em riscos brancos' },
+  ],
+  sombra: [
+    { en: 'smoky shadow trails and a dark mist cloak', pt: 'rastros de sombra fumegante e um manto de névoa escura' },
+    { en: 'its own shadow moving independently as a second pair of arms', pt: 'a própria sombra se movendo sozinha como um segundo par de braços' },
+    { en: 'a veil of dusk that dims the light around it', pt: 'um véu de crepúsculo que escurece a luz ao redor' },
+  ],
+  luz: [
+    { en: 'shards of solid light forming a broken halo', pt: 'estilhaços de luz sólida formando uma auréola partida' },
+    { en: 'sunbeam ribbons woven through its limbs', pt: 'fitas de raio de sol trançadas nos membros' },
+    { en: 'a constellation of small stars orbiting the crest', pt: 'uma constelação de estrelinhas orbitando a crista' },
+  ],
+  planta: [
+    { en: 'blooming vines, bark guards and flower buds along the body', pt: 'vinhas floridas, proteções de casca e botões de flor pelo corpo' },
+    { en: 'a small living garden sprouting along the spine', pt: 'um pequeno jardim vivo brotando ao longo da espinha' },
+    { en: 'root-whips coiled around the forearms', pt: 'chicotes de raiz enrolados nos antebraços' },
+  ],
+  industrial: [
+    { en: 'bolted mechanical augments, pistons and antenna arrays', pt: 'implementos mecânicos parafusados, pistões e antenas' },
+    { en: 'deployable turbine wings folded on the back', pt: 'asas-turbina retráteis dobradas nas costas' },
+    { en: 'a humming power core visible in the chest', pt: 'um núcleo de energia zumbindo visível no peito' },
+  ],
 };
 
 // Linguagem de design por alinhamento — entra CEDO no prompt e em TODOS os
-// estágios, como o atributo dos Digimon (Vírus/Data/Vacina): dá pra
-// reconhecer o alinhamento só de olhar a criatura.
-const ALIGNMENT_DESIGN: Record<AlignmentId, string> = {
-  poder:
-    'VIRUS-attribute design language (like virus-type Digimon): jagged asymmetric silhouette, ' +
-    'sharp angular spikes and horns, small fangs and pointed claws, mischievous fierce eyes with narrow pupils, ' +
-    'darker moodier shading of the palette with one aggressive blood-red or toxic-purple accent, ' +
-    'slightly villainous but charming look',
-  harmonia:
-    'DATA-attribute design language (like data-type Digimon): clean symmetric silhouette, ' +
-    'balanced geometric shapes with smooth rounded edges, calm focused intelligent eyes, ' +
-    'evenly balanced palette with one cool cyan or emerald accent, ' +
-    'composed scholarly neutral look',
-  benevolencia:
-    'VACCINE-attribute design language (like vaccine-type Digimon): noble heroic silhouette, ' +
-    'soft rounded shapes with an upright proud posture, big kind sparkling eyes, ' +
-    'brighter cleaner shading of the palette with white and gold highlights, ' +
-    'knightly guardian look with a touch of angelic ornament',
+// estágios, como o atributo dos Digimon (Vírus/Data/Vacina). POOL grande por
+// tipo: nem todo Vírus é demoníaco, mas é sempre mais feroz, voraz e
+// perspicaz; nem todo Vacina é angelical, mas é sempre nobre e protetor.
+const ALIGNMENT_DESIGNS: Record<AlignmentId, string[]> = {
+  poder: [
+    'VIRUS-attribute design language: jagged asymmetric silhouette, sharp angular spikes, small fangs and pointed claws, mischievous fierce eyes with narrow pupils, one aggressive blood-red accent, villainous but charming look',
+    'VIRUS-attribute design language: apex-predator build, lean muscular stance ready to pounce, slit predatory eyes, scratch-mark motifs, one deep crimson accent, wild untamed look',
+    'VIRUS-attribute design language: gladiator bearing, battle-scarred details, cracked horn or chipped ear, confident smirk with one visible fang, burnt-orange war accent, veteran brawler look',
+    'VIRUS-attribute design language: cunning trickster energy, sly grin, sharp angular ears or fins, mismatched asymmetric details, one toxic-purple accent, streetwise rogue look',
+    'VIRUS-attribute design language: stormy berserker energy, bristling fur or plating standing on end, wild wide fierce eyes, jagged lightning-shaped marks, one hot magenta accent, untamable look',
+    'VIRUS-attribute design language: silent hunter poise, low crouched stance, cold calculating narrow eyes, arrow-sharp silhouette edges, one dark scarlet accent, ruthless precision look',
+  ],
+  harmonia: [
+    'DATA-attribute design language: clean symmetric silhouette, balanced geometric shapes with smooth rounded edges, calm focused intelligent eyes, one cool cyan accent, composed scholarly look',
+    'DATA-attribute design language: wandering-monk simplicity, minimal serene lines, half-closed meditative eyes, circular zen motifs, one soft jade accent, tranquil sage look',
+    'DATA-attribute design language: inventor-tinkerer energy, tidy modular body segments, bright curious round eyes, subtle blueprint-line marks, one teal accent, clever craftsman look',
+    'DATA-attribute design language: stargazer poise, upright contemplative posture, deep thoughtful eyes, tiny constellation dot patterns, one indigo accent, quiet oracle look',
+    'DATA-attribute design language: tactician bearing, neat symmetric armor lines, sharp attentive eyes scanning ahead, chessboard-like subtle patterning, one emerald accent, strategist look',
+    'DATA-attribute design language: flowing dancer grace, smooth continuous curves, gentle balanced expression, ripple and wave motifs, one aquamarine accent, effortless equilibrium look',
+  ],
+  benevolencia: [
+    'VACCINE-attribute design language: noble heroic silhouette, soft rounded shapes with upright proud posture, big kind sparkling eyes, white and gold highlights, knightly guardian look',
+    'VACCINE-attribute design language: gentle-healer warmth, plump huggable proportions, warm smiling eyes, ribbon or bandage motifs, cream and rose-gold highlights, caretaker look',
+    'VACCINE-attribute design language: loyal-shepherd bearing, sturdy dependable frame, soft attentive eyes always watching over others, bell or lantern charm, ivory and amber highlights, protector look',
+    'VACCINE-attribute design language: cheerful-champion energy, bouncy confident posture, bright optimistic eyes, star and medal motifs, sunny yellow and white highlights, inspiring hero look',
+    'VACCINE-attribute design language: serene-priestess aura, flowing graceful lines, calm compassionate eyes, subtle halo or petal ornaments, pearl and pale-gold highlights, blessed look',
+    'VACCINE-attribute design language: big-brother bulk, broad gentle frame that shields smaller creatures, soft brave eyes, shield and heart motifs, silver and warm-white highlights, dependable look',
+  ],
 };
 
-// O atributo já aparece na forma bebê (reconhecível desde o primeiro estágio)
-const ALIGNMENT_BABY_HINT: Record<AlignmentId, string> = {
-  poder: 'even the baby form already shows tiny fangs, a mischievous smirk and one little crooked spike',
-  harmonia: 'even the baby form already looks calm, symmetric and quietly observant',
-  benevolencia: 'even the baby form already has kind sparkling eyes and a soft bright glow',
+// O atributo já aparece na forma bebê (pool por tipo)
+const ALIGNMENT_BABY_HINTS: Record<AlignmentId, string[]> = {
+  poder: [
+    'even the baby form already shows tiny fangs and a mischievous smirk',
+    'even the baby form already crouches like a tiny predator, eyes locked on a target',
+    'even the baby form already has one little crooked spike and a defiant pout',
+    'even the baby form already growls adorably, bristling when approached',
+  ],
+  harmonia: [
+    'even the baby form already looks calm, symmetric and quietly observant',
+    'even the baby form already sits in a tiny meditative pose',
+    'even the baby form already tilts its head, studying everything with curious eyes',
+    'even the baby form already arranges things around it in neat little patterns',
+  ],
+  benevolencia: [
+    'even the baby form already has kind sparkling eyes and a soft bright glow',
+    'even the baby form already tries to hug everything nearby',
+    'even the baby form already stands between danger and smaller creatures',
+    'even the baby form already offers little gifts with a warm smile',
+  ],
 };
 
-const MEGA_REGALIA: Record<AlignmentId, { en: string; pt: string }> = {
-  poder: {
-    en: 'warlord-monarch apotheosis: a crown-like crest, a tattered banner-cape and one oversized weapon-arm',
-    pt: 'apoteose de monarca da guerra: crista em coroa, capa-estandarte esfarrapada e um braço-arma desproporcional',
-  },
-  harmonia: {
-    en: 'celestial arbiter apotheosis: detached floating body segments, orbiting rings and a serene extra pair of eyes',
-    pt: 'apoteose de árbitro celeste: segmentos do corpo flutuando separados, anéis em órbita e um sereno par extra de olhos',
-  },
-  benevolencia: {
-    en: 'guardian seraph apotheosis: a protective mantle of layered wings, a soft aureole and open embracing arms',
-    pt: 'apoteose de serafim guardião: manto protetor de asas em camadas, auréola suave e braços abertos que acolhem',
-  },
+// Traços de temperamento por alinhamento (usados nos TEXTOS das descrições —
+// substituem qualquer menção simbólica a signos/horóscopo)
+const ALIGNMENT_TRAIT_WORDS: Record<AlignmentId, LText[]> = {
+  poder: [
+    { pt: 'feroz e perspicaz', en: 'fierce and sharp-witted' },
+    { pt: 'voraz e destemido', en: 'voracious and fearless' },
+    { pt: 'implacável quando provocado', en: 'relentless when provoked' },
+    { pt: 'audaz e territorial', en: 'bold and territorial' },
+  ],
+  harmonia: [
+    { pt: 'sereno e observador', en: 'serene and observant' },
+    { pt: 'curioso e equilibrado', en: 'curious and balanced' },
+    { pt: 'paciente e engenhoso', en: 'patient and resourceful' },
+    { pt: 'contemplativo e preciso', en: 'contemplative and precise' },
+  ],
+  benevolencia: [
+    { pt: 'gentil e protetor', en: 'gentle and protective' },
+    { pt: 'leal até o fim', en: 'loyal to the end' },
+    { pt: 'acolhedor e corajoso', en: 'warm-hearted and brave' },
+    { pt: 'altruísta e vigilante', en: 'selfless and watchful' },
+  ],
 };
 
-const REALM_EMBLEM: Record<RealmId, { en: string; pt: string }> = {
-  deserto: { en: 'a sun-disc emblem', pt: 'um emblema de disco solar' },
-  picos: { en: 'a storm-bolt emblem', pt: 'um emblema de raio' },
-  oceano: { en: 'a tide-crest emblem', pt: 'um emblema de crista de maré' },
-  pantano: { en: 'a miasma-orchid emblem', pt: 'um emblema de orquídea do miasma' },
-  floresta: { en: 'a wild-antler emblem', pt: 'um emblema de galhada selvagem' },
-  cavernas: { en: 'a geode emblem', pt: 'um emblema de geodo' },
-  gelo: { en: 'a snowflake-sigil emblem', pt: 'um emblema de floco de neve' },
-  campina: { en: 'a golden-bloom emblem', pt: 'um emblema de flor dourada' },
-  akasha: { en: 'a twin-crescent emblem of light and shadow', pt: 'um emblema de crescentes gêmeos de luz e sombra' },
+const MEGA_REGALIAS: Record<AlignmentId, Array<{ en: string; pt: string }>> = {
+  poder: [
+    { en: 'warlord-monarch apotheosis: a crown-like crest, a tattered banner-cape and one oversized weapon-arm', pt: 'apoteose de monarca da guerra: crista em coroa, capa-estandarte esfarrapada e um braço-arma desproporcional' },
+    { en: 'apex-predator apotheosis: a colossal beast frame, saber fangs and trophy scars worn like medals', pt: 'apoteose de predador supremo: corpo colossal de fera, presas de sabre e cicatrizes-troféu exibidas como medalhas' },
+    { en: 'grand-gladiator apotheosis: spiked champion armor, a chained gauntlet and an arena-champion stance', pt: 'apoteose de grande gladiador: armadura de campeão com espinhos, manopla acorrentada e postura de campeão de arena' },
+    { en: 'storm-tyrant apotheosis: crackling energy horns, a mantle of living lightning and thunderous presence', pt: 'apoteose de tirano da tempestade: chifres de energia crepitante, manto de relâmpago vivo e presença trovejante' },
+  ],
+  harmonia: [
+    { en: 'celestial arbiter apotheosis: detached floating body segments, orbiting rings and a serene extra pair of eyes', pt: 'apoteose de árbitro celeste: segmentos do corpo flutuando separados, anéis em órbita e um sereno par extra de olhos' },
+    { en: 'grand-sage apotheosis: a levitating lotus throne of energy, flowing scholar robes and a third-eye gem', pt: 'apoteose de grande sábio: trono de lótus de energia levitante, vestes de erudito esvoaçantes e joia de terceiro olho' },
+    { en: 'world-clock apotheosis: rotating orrery rings around the body and planetary orbs in orbit', pt: 'apoteose de relógio do mundo: anéis de planetário girando ao redor do corpo e esferas planetárias em órbita' },
+    { en: 'perfect-form apotheosis: an impossibly clean geometric body of pure balance, hovering in stillness', pt: 'apoteose da forma perfeita: corpo geométrico de equilíbrio puro, pairando em quietude absoluta' },
+  ],
+  benevolencia: [
+    { en: 'guardian seraph apotheosis: a protective mantle of layered wings, a soft aureole and open embracing arms', pt: 'apoteose de serafim guardião: manto protetor de asas em camadas, auréola suave e braços abertos que acolhem' },
+    { en: 'holy-paladin apotheosis: radiant plate armor, a banner of hope and a greatshield planted at its side', pt: 'apoteose de paladino sagrado: armadura de placas radiante, estandarte da esperança e escudo enorme fincado ao lado' },
+    { en: 'great-shepherd apotheosis: a colossal gentle frame that smaller creatures shelter beneath, lantern staff in hand', pt: 'apoteose de grande pastor: corpo colossal e gentil sob o qual criaturas menores se abrigam, cajado-lanterna na mão' },
+    { en: 'life-fountain apotheosis: healing springs flowing from the shoulders and blooming flowers in its footsteps', pt: 'apoteose de fonte da vida: nascentes curativas fluindo dos ombros e flores brotando por onde pisa' },
+  ],
+};
+
+const REALM_EMBLEMS: Record<RealmId, Array<{ en: string; pt: string }>> = {
+  deserto: [
+    { en: 'a sun-disc emblem', pt: 'um emblema de disco solar' },
+    { en: 'a scarab-seal emblem', pt: 'um emblema de selo de escaravelho' },
+    { en: 'a mirage-eye emblem', pt: 'um emblema de olho de miragem' },
+  ],
+  picos: [
+    { en: 'a storm-bolt emblem', pt: 'um emblema de raio' },
+    { en: 'a summit-peak emblem', pt: 'um emblema de pico nevado' },
+    { en: 'a wind-spiral emblem', pt: 'um emblema de espiral de vento' },
+  ],
+  oceano: [
+    { en: 'a tide-crest emblem', pt: 'um emblema de crista de maré' },
+    { en: 'a nautilus-spiral emblem', pt: 'um emblema de espiral de náutilo' },
+    { en: 'an abyssal-lantern emblem', pt: 'um emblema de lanterna abissal' },
+  ],
+  pantano: [
+    { en: 'a miasma-orchid emblem', pt: 'um emblema de orquídea do miasma' },
+    { en: 'a will-o-wisp emblem', pt: 'um emblema de fogo-fátuo' },
+    { en: 'a twisted-root emblem', pt: 'um emblema de raiz retorcida' },
+  ],
+  floresta: [
+    { en: 'a wild-antler emblem', pt: 'um emblema de galhada selvagem' },
+    { en: 'an ancient-leaf emblem', pt: 'um emblema de folha ancestral' },
+    { en: 'a beast-claw emblem', pt: 'um emblema de garra de fera' },
+  ],
+  cavernas: [
+    { en: 'a geode emblem', pt: 'um emblema de geodo' },
+    { en: 'a stalactite-fang emblem', pt: 'um emblema de presa de estalactite' },
+    { en: 'an echo-rune emblem', pt: 'um emblema de runa do eco' },
+  ],
+  gelo: [
+    { en: 'a snowflake-sigil emblem', pt: 'um emblema de floco de neve' },
+    { en: 'an aurora-arc emblem', pt: 'um emblema de arco de aurora' },
+    { en: 'a frozen-star emblem', pt: 'um emblema de estrela congelada' },
+  ],
+  campina: [
+    { en: 'a golden-bloom emblem', pt: 'um emblema de flor dourada' },
+    { en: 'a honeycomb emblem', pt: 'um emblema de favo de mel' },
+    { en: 'a morning-dew emblem', pt: 'um emblema de orvalho da manhã' },
+  ],
+  akasha: [
+    { en: 'a twin-crescent emblem of light and shadow', pt: 'um emblema de crescentes gêmeos de luz e sombra' },
+    { en: 'an all-seeing-prism emblem', pt: 'um emblema de prisma onisciente' },
+    { en: 'an infinity-loop emblem', pt: 'um emblema de laço do infinito' },
+  ],
+};
+
+// Acentos de cor por reino (pool — complementa a paleta do elemento)
+const REALM_ACCENTS: Record<RealmId, string[]> = {
+  deserto: ['sand-gold and terracotta accents', 'dune-beige and cactus-green accents', 'sunset-copper accents'],
+  picos: ['storm-blue and electric-yellow accents', 'granite-gray and lightning-white accents', 'thundercloud-violet accents'],
+  oceano: ['abyssal-blue and bioluminescent-cyan accents', 'coral-pink and deep-teal accents', 'pearl and kelp-green accents'],
+  pantano: ['murky-green and toxic-purple accents', 'bog-brown and firefly-yellow accents', 'moss and orchid-violet accents'],
+  floresta: ['forest-green and bark-brown accents', 'fern and mushroom-red accents', 'canopy-emerald and acorn accents'],
+  cavernas: ['slate-gray and amethyst accents', 'obsidian and glowworm-blue accents', 'copper-vein and quartz accents'],
+  gelo: ['ice-white and glacial-blue accents', 'aurora-green and frost-lilac accents', 'polar-silver accents'],
+  campina: ['sunny-yellow and blossom-pink accents', 'wheat-gold and sky accents', 'clover-green and daisy-white accents'],
+  akasha: ['duotone gold-and-violet twilight accents', 'starlight-silver and void-purple accents', 'dawn-and-dusk gradient accents'],
 };
 
 export const STAGE_NAMES: Record<StageId, LText> = {
@@ -1017,9 +1455,23 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   addScore(elementScores, elementBreakdown, placeElement, 1,
     { pt: 'Eco do local de nascimento', en: 'Echo of the birthplace' });
 
-  const sortedElements = [...ELEMENT_ORDER].sort((a, b) => elementScores[b] - elementScores[a]);
-  let dominantElement = sortedElements[0];
-  let secondaryElement = sortedElements[1];
+  // Respostas do quiz somam na LEITURA (fazem parte da base, como os astros)
+  const answerSource: LText = { pt: 'Suas respostas', en: 'Your answers' };
+  const questionEffects: QuestionEffects[] = [];
+  if (input.answers) {
+    for (const q of ORACLE_QUESTIONS) {
+      const chosen = q.options.find(o => o.id === input.answers?.[q.id]);
+      if (chosen) questionEffects.push(chosen.effects);
+    }
+  }
+  for (const fx of questionEffects) {
+    for (const [el, pts] of Object.entries(fx.elements ?? {}) as Array<[ElementId, number]>) {
+      addScore(elementScores, elementBreakdown, el, pts, answerSource);
+    }
+  }
+
+  const baseSortedElements = [...ELEMENT_ORDER].sort((a, b) => elementScores[b] - elementScores[a]);
+  const baseDominantElement = baseSortedElements[0];
 
   // ----- Pontuação de funções -----
   const roleScores = Object.fromEntries(ROLE_ORDER.map(r => [r, 0])) as Record<RoleId, number>;
@@ -1044,17 +1496,23 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   }
 
   // Sombra puxa dano mágico; industrial puxa longo alcance (afinidade temática)
-  if (dominantElement === 'sombra') {
+  if (baseDominantElement === 'sombra') {
     addScore(roleScores, roleBreakdown, 'magico', 2, { pt: 'Elemento dominante Sombra', en: 'Dominant Shadow element' });
   }
-  if (dominantElement === 'industrial') {
+  if (baseDominantElement === 'industrial') {
     addScore(roleScores, roleBreakdown, 'alcance', 2, { pt: 'Elemento dominante Industrial', en: 'Dominant Industrial element' });
   }
-  if (dominantElement === 'planta') {
+  if (baseDominantElement === 'planta') {
     addScore(roleScores, roleBreakdown, 'suporte', 2, { pt: 'Elemento dominante Planta', en: 'Dominant Plant element' });
   }
-  if (dominantElement === 'luz') {
+  if (baseDominantElement === 'luz') {
     addScore(roleScores, roleBreakdown, 'suporte', 1, { pt: 'Elemento dominante Luz', en: 'Dominant Light element' });
+  }
+
+  for (const fx of questionEffects) {
+    for (const [role, pts] of Object.entries(fx.roles ?? {}) as Array<[RoleId, number]>) {
+      addScore(roleScores, roleBreakdown, role, pts, answerSource);
+    }
   }
 
   const sortedRoles = [...ROLE_ORDER].sort((a, b) => roleScores[b] - roleScores[a]);
@@ -1077,34 +1535,104 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   for (const [num, pts, source] of numberContribs) {
     addScore(alignmentScores, alignmentBreakdown, NUMBER_ALIGNMENT[num], pts, source);
   }
+  for (const fx of questionEffects) {
+    for (const [al, pts] of Object.entries(fx.alignments ?? {}) as Array<[AlignmentId, number]>) {
+      addScore(alignmentScores, alignmentBreakdown, al, pts, answerSource);
+    }
+  }
 
-  const sortedAlignments = [...ALIGNMENT_ORDER].sort((a, b) => alignmentScores[b] - alignmentScores[a]);
-  let dominantAlignment = sortedAlignments[0];
+  const baseSortedAlignments = [...ALIGNMENT_ORDER].sort((a, b) => alignmentScores[b] - alignmentScores[a]);
+  const baseDominantAlignment = baseSortedAlignments[0];
 
   // ----- Pontuação de reino -----
-  // Combina os 8 elementos via matriz de pesos + bônus do alinhamento + jitter
-  // determinístico por pessoa (desempata de um jeito único para cada input).
-  const inputKey = `${normalizeName(input.fullName)}|${input.birthDate}|${input.birthTime}|${input.birthPlace.trim().toLowerCase()}`;
+  // Matriz de pesos sobre os elementos + bônus do alinhamento + respostas do
+  // quiz + jitter determinístico por pessoa (desempate único por input).
+  const inputKey = [
+    normalizeName(input.fullName), input.birthDate, input.birthTime,
+    input.birthPlace.trim().toLowerCase(),
+    JSON.stringify(input.answers ?? {}), JSON.stringify(input.preferences ?? {}),
+    (input.petDescription ?? '').trim().toLowerCase(),
+  ].join('|');
   const realmScores = Object.fromEntries(REALM_ORDER.map(r => [r, 0])) as Record<RealmId, number>;
   for (const realm of REALM_ORDER) {
     let score = 0;
     for (const [el, weight] of Object.entries(REALM_WEIGHTS[realm]) as Array<[ElementId, number]>) {
       score += weight * elementScores[el];
     }
-    if (ALIGNMENT_REALM_BONUS[dominantAlignment].includes(realm)) score += 3;
+    if (ALIGNMENT_REALM_BONUS[baseDominantAlignment].includes(realm)) score += 3;
+    for (const fx of questionEffects) {
+      score += (fx.realms?.[realm] ?? 0) * 3; // quiz pesa forte no reino
+    }
     score += hashString(`${inputKey}|${realm}`) % 4; // 0–3: assinatura pessoal
     realmScores[realm] = score;
   }
-  let dominantRealm = [...REALM_ORDER].sort((a, b) => realmScores[b] - realmScores[a])[0];
 
-  // ----- Ajustes manuais do usuário -----
-  // Aplicados DEPOIS de toda a pontuação (a leitura fica intacta) e ANTES da
-  // parte criativa: arquétipo e criatura respeitam os valores escolhidos.
+  // ----- Combinação de pesos: leitura + preferências (25%) + descrição (50%) -----
+  // Sem preferências e sem descrição → 100% leitura (astros + numerologia + quiz).
+  const descText = input.petDescription?.trim() ? normalizeText(input.petDescription) : '';
+  const descHits = {
+    elements: descText ? countKeywordHits(descText, DESC_KEYWORDS.elements, ELEMENT_ORDER) : null,
+    realms: descText ? countKeywordHits(descText, DESC_KEYWORDS.realms, REALM_ORDER) : null,
+    alignments: descText ? countKeywordHits(descText, DESC_KEYWORDS.alignments, ALIGNMENT_ORDER) : null,
+    roles: descText ? countKeywordHits(descText, DESC_KEYWORDS.roles, ROLE_ORDER) : null,
+  };
+
+  function combineAxis<K extends string>(
+    base: Record<K, number>,
+    order: K[],
+    pref: K | undefined,
+    hits: Record<K, number> | null,
+  ): Record<K, number> {
+    const totalBase = order.reduce((s, k) => s + base[k], 0) || 1;
+    const totalHits = hits ? order.reduce((s, k) => s + hits[k], 0) : 0;
+    const wPref = pref ? 0.25 : 0;
+    const wDesc = totalHits > 0 ? 0.5 : 0;
+    const wBase = 1 - wPref - wDesc;
+    const out = {} as Record<K, number>;
+    for (const k of order) {
+      let f = wBase * (base[k] / totalBase);
+      if (pref && k === pref) f += wPref;
+      if (hits && totalHits > 0) f += wDesc * (hits[k] / totalHits);
+      out[k] = Math.round(f * 100);
+    }
+    return out;
+  }
+
+  const finalElementScores = combineAxis(elementScores, ELEMENT_ORDER, input.preferences?.element, descHits.elements);
+  const finalRoleScores = combineAxis(roleScores, ROLE_ORDER, undefined, descHits.roles);
+  const finalAlignmentScores = combineAxis(alignmentScores, ALIGNMENT_ORDER, input.preferences?.alignment, descHits.alignments);
+  const finalRealmScores = combineAxis(realmScores, REALM_ORDER, input.preferences?.realm, descHits.realms);
+
+  // Registra as influências extras no breakdown (transparência)
+  if (input.preferences?.element) {
+    addScore(elementScores, elementBreakdown, input.preferences.element, 0,
+      { pt: 'Preferência direta (25%)', en: 'Direct preference (25%)' });
+  }
+  if (descText) {
+    addScore(elementScores, elementBreakdown,
+      [...ELEMENT_ORDER].sort((a, b) => (descHits.elements?.[b] ?? 0) - (descHits.elements?.[a] ?? 0))[0], 0,
+      { pt: 'Descrição do pet (50%)', en: 'Pet description (50%)' });
+  }
+
+  const sortedElements = [...ELEMENT_ORDER].sort((a, b) => finalElementScores[b] - finalElementScores[a]);
+  let dominantElement = sortedElements[0];
+  // Elemento ÚNICO por padrão; só há um segundo elemento se a pontuação for
+  // próxima da do primeiro (≥ 75%).
+  let secondaryElement: ElementId | null =
+    finalElementScores[sortedElements[1]] >= finalElementScores[sortedElements[0]] * 0.75
+      ? sortedElements[1]
+      : null;
+
+  dominantRole = [...ROLE_ORDER].sort((a, b) => finalRoleScores[b] - finalRoleScores[a])[0];
+  let dominantAlignment = [...ALIGNMENT_ORDER].sort((a, b) => finalAlignmentScores[b] - finalAlignmentScores[a])[0];
+  let dominantRealm = [...REALM_ORDER].sort((a, b) => finalRealmScores[b] - finalRealmScores[a])[0];
+
+  // ----- Ajustes manuais do usuário (override direto dos vencedores) -----
   if (overrides) {
     dominantElement = overrides.dominantElement ?? dominantElement;
-    secondaryElement = overrides.secondaryElement ?? secondaryElement;
+    if (overrides.secondaryElement !== undefined) secondaryElement = overrides.secondaryElement; // pode ser null (único)
     if (secondaryElement === dominantElement) {
-      secondaryElement = sortedElements.find(e => e !== dominantElement) ?? secondaryElement;
+      secondaryElement = sortedElements.find(e => e !== dominantElement) ?? null;
     }
     dominantRole = overrides.dominantRole ?? dominantRole;
     dominantAlignment = overrides.dominantAlignment ?? dominantAlignment;
@@ -1117,11 +1645,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const rng = mulberry32((baseHash ^ salt) >>> 0);
 
   // ----- Arquétipo: 1 substantivo + 2 adjetivos -----
-  // Pool ampliado (elemento dominante + secundário) — menos literal, mais variado.
-  const nounPool = [...NOUNS_BY_ELEMENT[dominantElement], ...NOUNS_BY_ELEMENT[secondaryElement]];
+  const nounPool = [
+    ...NOUNS_BY_ELEMENT[dominantElement],
+    ...(secondaryElement ? NOUNS_BY_ELEMENT[secondaryElement] : []),
+  ];
   const noun = pick(rng, nounPool);
   const adjRole = pick(rng, ADJECTIVES_BY_ROLE[dominantRole]);
-  const adjElement = pick(rng, ADJECTIVES_BY_ELEMENT[secondaryElement]);
+  const adjElement = pick(rng, ADJECTIVES_BY_ELEMENT[secondaryElement ?? dominantElement]);
   const archetype: ArchetypeResult = {
     noun: { pt: noun.pt, en: noun.en },
     nounEn: noun.en,
@@ -1132,7 +1662,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
   };
 
-  // ----- Resumo de personalidade -----
+  // ----- Resumo de personalidade (deduzida dos astros + numerologia + quiz;
+  // os símbolos ficam SÓ aqui — a criatura não os representa) -----
   const sunTrait = pick(rng, sun.traits);
   const ascTrait = pick(rng, ascendant.traits);
   const chinTrait = chinese.traits[0];
@@ -1143,38 +1674,48 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   };
 
   // ----- Criatura: fusão de duas bases do bestiário -----
-  // Pool filtrado por elemento dominante/secundário OU reino — o horóscopo
-  // NÃO define o corpo; no máximo vira um aceno sutil sorteado.
+  // Bases citadas na DESCRIÇÃO DO PET têm prioridade máxima; depois, pool
+  // filtrado por elemento(s) OU reino. O horóscopo NUNCA aparece no corpo.
+  const mentionedBases = descText
+    ? CREATURE_BASES.filter(b => descText.includes(normalizeText(b.pt)) || descText.includes(normalizeText(b.en)))
+    : [];
   const basePool = CREATURE_BASES.filter(b =>
     b.elements.includes(dominantElement) ||
-    b.elements.includes(secondaryElement) ||
+    (secondaryElement !== null && b.elements.includes(secondaryElement)) ||
     b.realms.includes(dominantRealm),
   );
-  const fusionA = pick(rng, basePool);
-  const poolB = basePool.filter(b => b.en !== fusionA.en);
+  const fusionA = mentionedBases[0] ?? pick(rng, basePool);
+  const poolB = (mentionedBases[1] ? [mentionedBases[1]] : basePool).filter(b => b.en !== fusionA.en);
   const fusionB = poolB.length > 0 ? pick(rng, poolB) : pick(rng, CREATURE_BASES.filter(b => b.en !== fusionA.en));
 
-  // Características sorteadas (assinatura visual única)
+  // Características sorteadas dos POOLS (assinatura visual única)
+  const alignDesign = pick(rng, ALIGNMENT_DESIGNS[dominantAlignment]);
+  const babyHint = pick(rng, ALIGNMENT_BABY_HINTS[dominantAlignment]);
+  const alignTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[dominantAlignment]);
   const crest = pick(rng, CRESTS);
   const tail = pick(rng, TAILS);
   const bodyPlan = pick(rng, BODY_PLANS);
-  const texture = ELEMENT_TEXTURE[dominantElement];
-  const texture2 = ELEMENT_TEXTURE[secondaryElement];
-  const marking = ALIGNMENT_MARKING[dominantAlignment];
+  const palette = pick(rng, ELEMENT_PALETTES[dominantElement]);
+  const texture = pick(rng, ELEMENT_TEXTURES[dominantElement]);
+  const texture2 = secondaryElement ? pick(rng, ELEMENT_TEXTURES[secondaryElement]) : null;
+  const marking = pick(rng, ALIGNMENT_MARKINGS[dominantAlignment]);
   const realmInfo = REALM_INFO[dominantRealm];
-  const metamorph = ROLE_METAMORPH[dominantRole];
-  const manifest = ELEMENT_MANIFEST[secondaryElement];
-  const regalia = MEGA_REGALIA[dominantAlignment];
-  const emblem = REALM_EMBLEM[dominantRealm];
-  // Eco do horóscopo: só às vezes, e sempre sutil
-  const zodiacEcho = rng() < 0.35
-    ? `, and a very faint, subtle hint of ${chinese.animalEn} in the face`
-    : '';
+  const realmAccent = pick(rng, REALM_ACCENTS[dominantRealm]);
+  const metamorph = pick(rng, ROLE_METAMORPHS[dominantRole]);
+  const manifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
+  const regalia = pick(rng, MEGA_REGALIAS[dominantAlignment]);
+  const emblem = pick(rng, REALM_EMBLEMS[dominantRealm]);
+  const roleMotif = pick(rng, ROLE_MOTIFS[dominantRole]);
 
-  // Nome: radical de elemento OU de reino + sílaba pessoal
+  // Visão do dono (descrição livre) — injetada crua no prompt, com prioridade
+  const ownerVision = input.petDescription?.trim()
+    ? `the owner's own vision of this pet, HIGH PRIORITY: "${input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 300)}"`
+    : null;
+
+  // Nome: radical de elemento(s) OU de reino + sílaba pessoal
   const stemPool = [
     ...ELEMENT_NAME_STEMS[dominantElement],
-    ...ELEMENT_NAME_STEMS[secondaryElement],
+    ...(secondaryElement ? ELEMENT_NAME_STEMS[secondaryElement] : []),
     ...REALM_NAME_STEMS[dominantRealm],
   ];
   const stem = pick(rng, stemPool);
@@ -1194,14 +1735,18 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   };
 
   const elName = ELEMENT_INFO[dominantElement].name;
-  const el2Name = ELEMENT_INFO[secondaryElement].name;
+  const el2Name = secondaryElement ? ELEMENT_INFO[secondaryElement].name : null;
   const roleName = ROLE_INFO[dominantRole].name;
   const alignName = ALIGNMENT_INFO[dominantAlignment].name;
 
   const attribute = ALIGNMENT_INFO[dominantAlignment].attribute;
+  const elementPhrase = {
+    pt: el2Name ? `Elemento ${elName.pt} com traços de ${el2Name.pt}` : `Elemento ${elName.pt} puro`,
+    en: el2Name ? `${elName.en} element with ${el2Name.en} traits` : `pure ${elName.en} element`,
+  };
   const concept: LText = {
-    pt: `Fusão de ${fusionA.pt} com ${fusionB.pt}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. Elemento ${elName.pt} com traços de ${el2Name.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Os astros são só o eco distante; a criatura é única.`,
-    en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elName.en} element with ${el2Name.en} traits, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". The stars are only a distant echo; the creature is one of a kind.`,
+    pt: `Fusão de ${fusionA.pt} com ${fusionB.pt}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. ${elementPhrase.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}".`,
+    en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}".`,
   };
 
   const stageDescriptions: Record<StageId, LText> = {
@@ -1210,12 +1755,12 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       en: `${stageForms.crianca} is the dormant larval form: a little blob where only the ${fusionA.en} heritage shows — the ${fusionB.en} side still sleeps within. The signature crest is just a bud, and the ${alignName.en.toLowerCase()} aura barely flickers. ${adjRole.en} from day one.`,
     },
     adulto: {
-      pt: `${stageForms.adulto} é o despertar: a herança de ${fusionB.pt} emerge e a fusão se completa num corpo ${bodyPlan.pt} de ${elName.pt}. A crista se forma por inteiro e ele assume o posto de ${roleName.pt.toLowerCase()} — ${sunTrait.pt}, como manda sua essência.`,
-      en: `${stageForms.adulto} is the awakening: the ${fusionB.en} heritage emerges and the fusion completes into a ${bodyPlan.en} ${elName.en} body. The crest fully forms and it claims the ${roleName.en.toLowerCase()} post — ${sunTrait.en}, true to its essence.`,
+      pt: `${stageForms.adulto} é o despertar: a herança de ${fusionB.pt} emerge e a fusão se completa num corpo ${bodyPlan.pt} de ${elName.pt}. A crista se forma por inteiro e ele assume o posto de ${roleName.pt.toLowerCase()} — ${alignTrait.pt}, como manda seu alinhamento.`,
+      en: `${stageForms.adulto} is the awakening: the ${fusionB.en} heritage emerges and the fusion completes into a ${bodyPlan.en} ${elName.en} body. The crest fully forms and it claims the ${roleName.en.toLowerCase()} post — ${alignTrait.en}, true to its alignment.`,
     },
     perfeito: {
-      pt: `${stageForms.perfeito} não é um adulto maior — é uma metamorfose: a criatura encarna um ofício e vira ${metamorph.pt}. O lado ${el2Name.pt} se materializa (${manifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca seu corpo. O rosto e a crista continuam os mesmos.`,
-      en: `${stageForms.perfeito} is not a bigger adult — it is a metamorphosis: the creature embodies a calling and becomes ${metamorph.en.split(':')[0]}. Its ${el2Name.en} side materializes (${manifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. The face and crest remain the same.`,
+      pt: `${stageForms.perfeito} não é um adulto maior — é uma metamorfose: a criatura encarna um ofício e vira ${metamorph.pt}. ${el2Name ? `O lado ${el2Name.pt}` : `Seu elemento`} se materializa (${manifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca seu corpo. O rosto e a crista continuam os mesmos.`,
+      en: `${stageForms.perfeito} is not a bigger adult — it is a metamorphosis: the creature embodies a calling and becomes ${metamorph.en.split(':')[0]}. ${el2Name ? `Its ${el2Name.en} side` : `Its element`} materializes (${manifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. The face and crest remain the same.`,
     },
     mega: {
       pt: `${stageForms.mega} é a apoteose: ${regalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo e a silhueta muda por completo — mas o rosto, a crista e as cores contam que é a mesma alma. Expressão máxima do arquétipo "${archetype.phrase.pt}".`,
@@ -1224,14 +1769,14 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   };
 
   // Núcleo visual compartilhado por todos os estágios (identidade da espécie).
-  // O design do alinhamento vem PRIMEIRO — é o atributo da criatura
-  // (Vírus/Data/Vacina) e precisa ser reconhecível de bater o olho.
+  // Ordem de prioridade no prompt: atributo → visão do dono → fusão → núcleo.
   const coreIdentity = [
-    ALIGNMENT_DESIGN[dominantAlignment],
-    `an original monster species: a fusion of ${an(fusionA.en)} and ${an(fusionB.en)}${zodiacEcho}`,
+    alignDesign,
+    ...(ownerVision ? [ownerVision] : []),
+    `an original monster species: a fusion of ${an(fusionA.en)} and ${an(fusionB.en)}`,
     `signature crest present in every evolution stage: ${crest}`,
     marking,
-    `${ELEMENT_PALETTE[dominantElement]}, with ${realmInfo.accent}`,
+    `${palette}, with ${realmAccent}`,
   ];
 
   const stageConcepts: Record<StageId, string[]> = {
@@ -1239,19 +1784,21 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       'dormant larval baby form: a tiny round blob with no limbs, huge cute eyes',
       `only the ${fusionA.en} heritage is visible in the face and colors, the ${fusionB.en} side has not awakened yet`,
       'the signature crest appears only as a tiny bud, soft simple body, no gear, no armor',
-      ALIGNMENT_BABY_HINT[dominantAlignment],
+      babyHint,
       texture,
     ],
     adulto: [
       `first awakened form: the ${fusionB.en} heritage emerges, completing the fusion`,
-      `${bodyPlan.en} body with short limbs, ${texture}, with touches of ${texture2}`,
+      `${bodyPlan.en} body with short limbs, ${texture}${texture2 ? `, with touches of ${texture2}` : ''}`,
       tail,
-      `light starter gear: ${ROLE_MOTIF[dominantRole]}`,
+      `light starter gear: ${roleMotif}`,
     ],
     perfeito: [
       'conceptual metamorphosis stage, NOT just a grown-up version: the creature now embodies a calling',
       `it transforms into ${metamorph.en}`,
-      `its secondary element materializes physically: ${manifest.en}`,
+      secondaryElement
+        ? `its secondary element materializes physically: ${manifest.en}`
+        : `its element materializes physically at full power: ${manifest.en}`,
       `wearing ${emblem.en} on the chest or brow`,
       `${texture}, ${tail}`,
       'the silhouette must read clearly different from the adult form while keeping the same face and signature crest',
@@ -1287,17 +1834,18 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     western: { sun, ascendant },
     chinese,
     vedic,
-    elementScores,
+    // Pontuações FINAIS (leitura + preferências 25% + descrição 50%), 0–100
+    elementScores: finalElementScores,
     elementBreakdown,
     dominantElement,
     secondaryElement,
-    roleScores,
+    roleScores: finalRoleScores,
     roleBreakdown,
     dominantRole,
-    alignmentScores,
+    alignmentScores: finalAlignmentScores,
     alignmentBreakdown,
     dominantAlignment,
-    realmScores,
+    realmScores: finalRealmScores,
     dominantRealm,
     personalitySummary,
     archetype,

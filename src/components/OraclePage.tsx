@@ -4,8 +4,8 @@ import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import {
   generateOracle, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
-  ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER,
-  type OracleInput, type OracleResult, type OracleOverrides, type LText,
+  ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER, ORACLE_QUESTIONS,
+  type OracleInput, type OracleResult, type OracleOverrides, type OraclePreferences, type LText,
   type ElementId, type RoleId, type AlignmentId, type RealmId,
 } from '../utils/oracle';
 
@@ -17,6 +17,10 @@ interface OraclePageProps {
 interface SavedOracleForm extends OracleInput {
   seed?: number;
   overrides?: OracleOverrides;
+}
+
+function allQuestionsAnswered(answers: Record<string, string>): boolean {
+  return ORACLE_QUESTIONS.every(q => !!answers[q.id]);
 }
 
 const ATTRIBUTE_EMOJI: Record<AlignmentId, string> = { poder: '🦠', harmonia: '💾', benevolencia: '💉' };
@@ -31,7 +35,8 @@ function loadSavedForm(): SavedOracleForm | null {
 }
 
 function formComplete(f: SavedOracleForm | null): f is SavedOracleForm {
-  return !!f && f.fullName.trim().length >= 3 && !!f.birthDate && !!f.birthTime && f.birthPlace.trim().length >= 2;
+  return !!f && f.fullName.trim().length >= 3 && !!f.birthDate && !!f.birthTime && f.birthPlace.trim().length >= 2
+    && allQuestionsAnswered(f.answers ?? {});
 }
 
 export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePageProps) {
@@ -45,6 +50,9 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
   const [birthDate, setBirthDate] = useState(saved?.birthDate ?? '');
   const [birthTime, setBirthTime] = useState(saved?.birthTime ?? '12:00');
   const [birthPlace, setBirthPlace] = useState(saved?.birthPlace ?? '');
+  const [answers, setAnswers] = useState<Record<string, string>>(saved?.answers ?? {});
+  const [prefs, setPrefs] = useState<OraclePreferences>(saved?.preferences ?? {});
+  const [petDescription, setPetDescription] = useState(saved?.petDescription ?? '');
 
   // Etapa 1: leitura (perfil místico + eixos, tudo ajustável)
   const [profile, setProfile] = useState<OracleResult | null>(() => {
@@ -75,16 +83,20 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
   useEffect(() => {
     const form: SavedOracleForm = {
       fullName, birthDate, birthTime, birthPlace,
+      answers, preferences: prefs, petDescription,
       seed: creature?.seed,
       overrides: profile ? overrides : undefined,
     };
     localStorage.setItem(STORAGE_KEYS.ORACLE_FORM, JSON.stringify(form));
-  }, [fullName, birthDate, birthTime, birthPlace, creature?.seed, overrides, profile]);
+  }, [fullName, birthDate, birthTime, birthPlace, answers, prefs, petDescription, creature?.seed, overrides, profile]);
 
-  const canReveal = formComplete({ fullName, birthDate, birthTime, birthPlace });
+  const canReveal = formComplete({ fullName, birthDate, birthTime, birthPlace, answers });
 
   const input = (): OracleInput => ({
     fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(),
+    answers,
+    preferences: (prefs.element || prefs.realm || prefs.alignment) ? prefs : undefined,
+    petDescription: petDescription.trim() || undefined,
   });
 
   const handleReveal = () => {
@@ -233,6 +245,114 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
               style={mono}
             />
           </div>
+
+          {/* Quiz de personalidade (obrigatório — soma na leitura) */}
+          <div className="pt-2">
+            <p className={`text-xs mb-2 ${titleCls}`}>
+              🧠 {isPt ? 'Sobre você' : 'About you'}
+              <span className={mutedCls}> — {isPt ? 'suas respostas entram na leitura' : 'your answers feed the reading'}</span>
+            </p>
+            <div className="space-y-3">
+              {ORACLE_QUESTIONS.map(q => (
+                <div key={q.id}>
+                  <p className={`text-xs mb-1 ${mutedCls}`}>{L(q.text)}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {q.options.map(opt => {
+                      const selected = answers[q.id] === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => {
+                            setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
+                            setCreature(null);
+                          }}
+                          className="text-xs px-2 py-1 rounded-lg transition-colors"
+                          style={{
+                            ...mono,
+                            border: selected
+                              ? (isGlitch ? '1px solid #00ffff' : '1px solid #0d9488')
+                              : (isGlitch ? '1px solid #00ffff44' : '1px solid #c0c0c0'),
+                            background: selected ? (isGlitch ? '#00ffff22' : '#ccfbf1') : 'transparent',
+                            color: isGlitch ? '#00ffff' : (selected ? '#0f766e' : '#6b7280'),
+                          }}
+                        >
+                          {L(opt.text)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Preferências diretas (opcionais — 25% de peso) */}
+          <div className="pt-2">
+            <p className={`text-xs mb-1 ${titleCls}`}>
+              ⭐ {isPt ? 'Preferências diretas' : 'Direct preferences'}
+              <span className={mutedCls}> — {isPt ? 'opcional, 25% de peso' : 'optional, 25% weight'}</span>
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <select
+                className={selectCls}
+                style={mono}
+                value={prefs.element ?? ''}
+                onChange={e => { setPrefs(p => ({ ...p, element: (e.target.value || undefined) as ElementId | undefined })); setCreature(null); }}
+              >
+                <option value="">{isPt ? '✨ Elemento: astros decidem' : '✨ Element: let the stars decide'}</option>
+                {ELEMENT_ORDER.map(el => (
+                  <option key={el} value={el}>{ELEMENT_INFO[el].emoji} {L(ELEMENT_INFO[el].name)}</option>
+                ))}
+              </select>
+              <select
+                className={selectCls}
+                style={mono}
+                value={prefs.alignment ?? ''}
+                onChange={e => { setPrefs(p => ({ ...p, alignment: (e.target.value || undefined) as AlignmentId | undefined })); setCreature(null); }}
+              >
+                <option value="">{isPt ? '✨ Tipo: astros decidem' : '✨ Type: let the stars decide'}</option>
+                {ALIGNMENT_ORDER.map(al => (
+                  <option key={al} value={al}>{ALIGNMENT_INFO[al].emoji} {L(ALIGNMENT_INFO[al].name)} ({L(ALIGNMENT_INFO[al].attribute)})</option>
+                ))}
+              </select>
+              <select
+                className={selectCls}
+                style={mono}
+                value={prefs.realm ?? ''}
+                onChange={e => { setPrefs(p => ({ ...p, realm: (e.target.value || undefined) as RealmId | undefined })); setCreature(null); }}
+              >
+                <option value="">{isPt ? '✨ Reino: astros decidem' : '✨ Realm: let the stars decide'}</option>
+                {REALM_ORDER.map(realm => (
+                  <option key={realm} value={realm}>{REALM_INFO[realm].emoji} {L(REALM_INFO[realm].name)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Descrição livre do pet (opcional — 50% de peso) */}
+          <div className="pt-2">
+            <p className={`text-xs mb-1 ${titleCls}`}>
+              💭 {isPt ? 'Como você imagina seu pet?' : 'How do you imagine your pet?'}
+              <span className={mutedCls}> — {isPt ? 'opcional, 50% de peso' : 'optional, 50% weight'}</span>
+            </p>
+            <textarea
+              value={petDescription}
+              onChange={e => { setPetDescription(e.target.value); setCreature(null); }}
+              placeholder={isPt
+                ? 'Ex.: um lobo de gelo protetor, calmo, com olhos azuis...'
+                : 'E.g.: a protective ice wolf, calm, with blue eyes...'}
+              maxLength={300}
+              rows={2}
+              className={inputCls}
+              style={{ ...mono, resize: 'vertical' }}
+            />
+            <p className={`text-[10px] ${mutedCls}`}>
+              {isPt
+                ? 'Deixe em branco para 100% leitura (nome, nascimento e respostas).'
+                : 'Leave empty for 100% reading (name, birth and answers).'}
+            </p>
+          </div>
+
           <div className="flex gap-2 pt-1">
             <button
               onClick={handleReveal}
@@ -243,6 +363,11 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
               {profile ? (isPt ? '🔮 Refazer leitura' : '🔮 Redo reading') : (isPt ? '✨ Revelar leitura' : '✨ Reveal reading')}
             </button>
           </div>
+          {!canReveal && (
+            <p className={`text-[10px] ${mutedCls}`}>
+              {isPt ? 'Preencha os dados e responda todas as perguntas.' : 'Fill in your data and answer all questions.'}
+            </p>
+          )}
         </div>
       </div>
 
@@ -340,15 +465,26 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
               <select
                 className={selectCls}
                 style={mono}
-                value={overrides.secondaryElement}
-                onChange={e => setOverride('secondaryElement', e.target.value as ElementId)}
+                value={overrides.secondaryElement ?? ''}
+                onChange={e => setOverride('secondaryElement', (e.target.value || null) as ElementId | null)}
               >
+                <option value="">{isPt ? '— único (sem 2º) —' : '— single (no 2nd) —'}</option>
                 {ELEMENT_ORDER.filter(el => el !== overrides.dominantElement).map(el => (
                   <option key={el} value={el}>{ELEMENT_INFO[el].emoji} {L(ELEMENT_INFO[el].name)}</option>
                 ))}
               </select>
             </div>
-            <p className={`text-xs mt-2 ${mutedCls}`}>
+            <p className={`text-xs mt-2 ${titleCls}`}>
+              {overrides.dominantElement && (
+                <>
+                  {ELEMENT_INFO[overrides.dominantElement].emoji} <strong>{L(ELEMENT_INFO[overrides.dominantElement].name)}</strong>
+                  {overrides.secondaryElement
+                    ? <> + {ELEMENT_INFO[overrides.secondaryElement].emoji} {L(ELEMENT_INFO[overrides.secondaryElement].name)}</>
+                    : <span className={mutedCls}> ({isPt ? 'elemento único' : 'single element'})</span>}
+                </>
+              )}
+            </p>
+            <p className={`text-xs ${mutedCls}`}>
               {overrides.dominantElement ? L(ELEMENT_INFO[overrides.dominantElement].personality) : ''}
             </p>
           </div>

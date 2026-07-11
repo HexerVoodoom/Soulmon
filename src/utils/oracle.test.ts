@@ -262,7 +262,7 @@ describe('generateOracle', () => {
     // A criatura reflete os ajustes
     const prompt = r.creature.stages[0].imagePrompt;
     expect(prompt).toContain('VIRUS-attribute');
-    expect(prompt).toContain('steel gray');
+    expect(prompt).toMatch(/steel gray|brass and copper|chrome and hazard/); // paleta industrial (pool)
     expect(r.creature.concept.pt).toContain('Akasha');
   });
 
@@ -270,6 +270,69 @@ describe('generateOracle', () => {
     const r = generateOracle(INPUT, 42, { dominantElement: 'fogo', secondaryElement: 'fogo' });
     expect(r.dominantElement).toBe('fogo');
     expect(r.secondaryElement).not.toBe('fogo');
+  });
+
+  it('elemento secundário só existe se a pontuação for próxima (≥75%)', () => {
+    const r = generateOracle(INPUT, 42);
+    const sorted = [...ELEMENT_ORDER].sort((a, b) => r.elementScores[b] - r.elementScores[a]);
+    if (r.secondaryElement !== null) {
+      expect(r.elementScores[sorted[1]]).toBeGreaterThanOrEqual(r.elementScores[sorted[0]] * 0.75);
+    } else {
+      expect(r.elementScores[sorted[1]]).toBeLessThan(r.elementScores[sorted[0]] * 0.75);
+    }
+  });
+
+  it('override secundário = null força elemento único', () => {
+    const r = generateOracle(INPUT, 42, { secondaryElement: null });
+    expect(r.secondaryElement).toBeNull();
+    expect(r.creature.concept.pt).toContain('puro');
+  });
+
+  it('respostas do quiz pontuam nos eixos', () => {
+    const semQuiz = generateOracle(INPUT, 42);
+    const comQuiz = generateOracle({
+      ...INPUT,
+      answers: { grupo: 'protege', objetivo: 'cuidar', pressao: 'firme', energia: 'natureza', lugar: 'floresta', conflito: 'defende' },
+    }, 42);
+    // Perfil todo puxado p/ benevolência/tanque/floresta deve refletir
+    expect(comQuiz.alignmentScores.benevolencia).toBeGreaterThan(semQuiz.alignmentScores.benevolencia);
+    expect(comQuiz.roleScores.tanque).toBeGreaterThan(semQuiz.roleScores.tanque);
+    expect(comQuiz.realmScores.floresta).toBeGreaterThan(semQuiz.realmScores.floresta);
+  });
+
+  it('preferência direta pesa 25% no eixo escolhido', () => {
+    const sem = generateOracle(INPUT, 42);
+    const com = generateOracle({ ...INPUT, preferences: { element: 'industrial' } }, 42);
+    expect(com.elementScores.industrial).toBeGreaterThan(sem.elementScores.industrial);
+    expect(com.elementScores.industrial).toBeGreaterThanOrEqual(25); // fatia da preferência
+    // Só o eixo com preferência muda de composição; reino segue a leitura
+    expect(com.dominantRealm).toBe(sem.dominantRealm);
+  });
+
+  it('descrição do pet pesa 50%, prioriza bases citadas e entra no prompt', () => {
+    const r = generateOracle({
+      ...INPUT,
+      petDescription: 'um lobo de gelo protetor, calmo, com olhos azuis',
+    }, 42);
+    // Palavras-chave: gelo → reino; lobo → base da fusão
+    expect(r.realmScores.gelo).toBeGreaterThanOrEqual(40); // 50% concentrado em gelo
+    expect([r.creature.fusion.a.en, r.creature.fusion.b.en]).toContain('wolf');
+    // A visão do dono é injetada no prompt de TODOS os estágios
+    for (const s of r.creature.stages) {
+      expect(s.imagePrompt).toContain("owner's own vision");
+      expect(s.imagePrompt).toContain('um lobo de gelo protetor');
+    }
+  });
+
+  it('horóscopo NÃO aparece simbolicamente na criatura (só pontua)', () => {
+    const r = generateOracle(INPUT, 42);
+    // 1993 = Galo (rooster); Sol em Escorpião (scorpio) — nada disso no prompt
+    for (const s of r.creature.stages) {
+      const p = s.imagePrompt.toLowerCase();
+      expect(p).not.toContain('rooster');
+      expect(p).not.toContain('scorpio');
+      expect(p).not.toContain('zodiac');
+    }
   });
 
   it('sem seed usa salt aleatório e o devolve no resultado', () => {
