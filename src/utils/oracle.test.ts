@@ -198,9 +198,19 @@ describe('generateOracle', () => {
       expect(s.imagePrompt).toContain('no anti-aliasing');
       expect(s.imagePrompt).toContain('solid black background');
       expect(s.imagePrompt).toContain('vintage Tamagotchi or Digimon V-pet aesthetic');
-      // Descrição mínima do monstro: a fusão
-      expect(s.imagePrompt).toContain('fusion creature');
+      // Bloco conceito no slot do subject (super curto, ≤6 palavras)
+      const conceptMatch = s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/);
+      expect(conceptMatch).not.toBeNull();
+      expect(conceptMatch![1].split(/\s+/).length).toBeLessThanOrEqual(6);
     }
+  });
+
+  it('conceito é uma frase curta (≤6 palavras) sintetizada do perfil', () => {
+    const r = generateOracle(INPUT, 42);
+    // Mesmo conceito em todos os estágios (identidade da espécie)
+    const concepts = r.creature.stages.map(s => s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/)![1]);
+    expect(new Set(concepts).size).toBe(1);
+    expect(concepts[0].split(/\s+/).length).toBeLessThanOrEqual(6);
   });
 
   it('formas de evolução vêm do pool sem repetir entre as 9 evoluções', () => {
@@ -209,7 +219,7 @@ describe('generateOracle', () => {
     expect(evolved).toHaveLength(9);
     // Cada evolução cita a forma do estágio no prompt
     const shapeLines = evolved.map(s => {
-      const m = s.imagePrompt.match(/has evolved into ([^.]+)\.|has transformed into ([^.]+)\.|in its final form, ([^.]+)\./);
+      const m = s.imagePrompt.match(/has evolved into ([^.]+)\.|has transformed into ([^.]+)\.|in its final form, it is ([^.]+)\./);
       expect(m).not.toBeNull();
       return m![1] ?? m![2] ?? m![3];
     });
@@ -222,10 +232,10 @@ describe('generateOracle', () => {
     const megas = r.creature.stages.filter(s => s.stage === 'mega');
     expect(ultra.name.startsWith('Omni')).toBe(true);
     expect(ultra.imagePrompt).toContain('ultra fusion of its three mega forms');
-    // As três formas mega aparecem citadas no prompt do ultra
+    // As três formas mega são citadas nas DESCRIÇÕES; o prompt do ultra
+    // carrega o bloco de nível ultra
     for (const mega of megas) {
-      const shape = mega.imagePrompt.match(/in its final form, ([^.]+)\./)![1];
-      expect(ultra.imagePrompt).toContain(shape);
+      expect(mega.imagePrompt).toMatch(/in its final form, it is [^.]+\./);
     }
   });
 
@@ -243,21 +253,30 @@ describe('generateOracle', () => {
     expect(r.creature.concept.pt).toMatch(/atributo (Vírus|Data|Vacina)/);
   });
 
-  it('cada nível tem o próprio "subject" e a forma do estágio no prompt', () => {
+  it('cada nível carrega seu bloco de nível no prompt', () => {
     const r = generateOracle(INPUT, 42);
     const line = (stage: string) => r.creature.stages.find(s => s.stage === stage && s.branch === 'poder')!;
     const rookie = r.creature.stages.find(s => s.stage === 'rookie')!;
-    expect(rookie.imagePrompt).toContain('a small, cute monster');
-    expect(rookie.imagePrompt).toContain('tiny round baby form');
-    expect(line('champion').imagePrompt).toContain('a wild battle monster');
+    // Rookie: bloco de nível do pool ROOKIE_LOOK (corpinho pequeno/simples)
+    expect(rookie.imagePrompt).toMatch(/tiny|small|little|blob|round|chibi|baby|squishy|pint-sized|button-eyed|bouncy/);
     expect(line('champion').imagePrompt).toContain('has evolved into');
-    expect(line('perfeito').imagePrompt).toContain('an armored evolved monster');
     expect(line('perfeito').imagePrompt).toContain('has transformed into');
-    expect(line('mega').imagePrompt).toContain('a majestic final-form monster');
-    expect(line('mega').imagePrompt).toContain('in its final form');
+    expect(line('mega').imagePrompt).toContain('in its final form, it is');
     // Prompts da mesma linha são todos diferentes
     const prompts = ['champion', 'perfeito', 'mega'].map(st => line(st).imagePrompt);
     expect(new Set([rookie.imagePrompt, ...prompts]).size).toBe(4);
+  });
+
+  it('blocos tipo/elemento/bioma vêm dos pools; elemento e bioma são constantes', () => {
+    const r = generateOracle(INPUT, 42);
+    // Elemento e bioma (identidade da espécie) iguais em todos os estágios;
+    // o bloco de tipo muda por linha. Extraímos o trecho de blocos (após o
+    // ". " que segue "aesthetic.").
+    const tail = (s: string) => s.split('aesthetic. ')[1];
+    const tails = r.creature.stages.map(s => tail(s.imagePrompt));
+    // Todos terminam com ", <type>, <element>, <biome>." — element+biome fixos
+    const lastTwo = tails.map(t => t.split(', ').slice(-2).join(', '));
+    expect(new Set(lastTwo).size).toBe(1); // elemento+bioma constantes
   });
 
   it('seeds diferentes variam a parte criativa mantendo o perfil', () => {
@@ -345,10 +364,10 @@ describe('generateOracle', () => {
     // Palavras-chave: gelo → reino; lobo → base da fusão
     expect(r.realmScores.gelo).toBeGreaterThanOrEqual(40); // 50% concentrado em gelo
     expect([r.creature.fusion.a.en, r.creature.fusion.b.en]).toContain('wolf');
-    // A visão do dono é injetada no prompt de TODOS os estágios
+    // A descrição do pet SUBSTITUI o conceito (no slot do subject) em TODOS
     for (const s of r.creature.stages) {
-      expect(s.imagePrompt).toContain('The owner imagines it as');
-      expect(s.imagePrompt).toContain('um lobo de gelo protetor');
+      const concept = s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/)![1];
+      expect(concept).toBe('um lobo de gelo protetor, calmo, com olhos azuis'.slice(0, 80));
     }
   });
 

@@ -1258,39 +1258,196 @@ function countKeywordHits<K extends string>(text: string, dict: Record<K, string
 // (fusão) + a descrição do ESTÁGIO em si (a forma que ele assume).
 // ---------------------------------------------------------------------------
 
+// ===========================================================================
+// BLOCOS DO PROMPT — o prompt final é a soma de blocos pré-definidos:
+//   [estilo fixo] + [conceito] + [nível] + [tipo] + [elemento] + [bioma]
+// Cada bloco (tipo/elemento/bioma/nível) tem um POOL grande e o gerador
+// sorteia UMA opção coerente com o perfil. Conceito = frase super curta
+// (≤6 palavras) sintetizada do perfil — e a descrição livre do pet
+// SUBSTITUI o conceito (não soma).
+// ===========================================================================
+
 const ALIGNMENT_ACCENT: Record<AlignmentId, string> = {
   poder: 'red',
   harmonia: 'cyan',
   benevolencia: 'gold',
 };
 
-const STAGE_SUBJECT: Record<StageId, string> = {
-  rookie: 'a small, cute monster',
-  champion: 'a wild battle monster',
-  perfeito: 'an armored evolved monster',
-  mega: 'a majestic final-form monster',
-  ultra: 'a legendary fused monster',
+// ----- Bloco CONCEITO: palavras curtas p/ montar "a <tipo> <elemento> <bicho>"
+const TYPE_CONCEPT_WORDS: Record<AlignmentId, string[]> = {
+  poder: ['fierce', 'wild', 'fanged', 'savage', 'bold', 'feral', 'raging', 'sharp'],
+  harmonia: ['calm', 'wise', 'serene', 'mystic', 'balanced', 'clever', 'quiet', 'zen'],
+  benevolencia: ['noble', 'gentle', 'kind', 'brave', 'loyal', 'shining', 'sweet', 'guardian'],
+};
+const ELEMENT_CONCEPT_WORDS: Record<ElementId, string[]> = {
+  agua: ['water', 'aqua', 'tidal', 'sea'],
+  fogo: ['fire', 'ember', 'flame', 'lava'],
+  terra: ['rock', 'earth', 'stone', 'crystal'],
+  ar: ['wind', 'sky', 'cloud', 'storm'],
+  sombra: ['shadow', 'dusk', 'night', 'dark'],
+  luz: ['light', 'sun', 'star', 'radiant'],
+  planta: ['leaf', 'forest', 'bloom', 'thorn'],
+  industrial: ['steel', 'gear', 'cyber', 'metal'],
 };
 
-/** Monta o prompt: template fixo + descrição mínima (fusão + estágio). */
-function spritePrompt(stage: StageId, colorDesc: string, accent: string, monsterDesc: string, ownerVision: string | null): string {
+// ----- Bloco TIPO (visual): nem todo Poder é demoníaco, mas sempre feroz;
+//       Data sempre equilibrado; Vacina sempre nobre. ~24 opções cada.
+const TYPE_LOOK: Record<AlignmentId, string[]> = {
+  poder: [
+    'a fierce fanged grin', 'bristling sharp spikes', 'jagged claws', 'battle scars',
+    'a fierce scowl', 'narrow predatory eyes', 'an aggressive spiky silhouette', 'a single curved horn',
+    'a wild spiky mane', 'clenched fists', 'a snarling mouth', 'angular armor plates',
+    'a spiked whip-tail', 'glowing angry eyes', 'a torn ragged cape', 'a muscular hunched stance',
+    'twin sharp horns', 'a menacing pose', 'a scarred eye', 'bared fangs',
+    'a bladed forearm', 'a crest of quills', 'a predator crouch', 'a chipped tusk',
+  ],
+  harmonia: [
+    'a calm expression', 'a symmetric balanced body', 'a serene half-smile', 'glowing rune marks',
+    'a small floating orb', 'a smooth rounded shape', 'meditative closed eyes', 'tidy geometric patterns',
+    'a scholarly posture', 'gentle glowing lines', 'a small halo ring', 'neat crystalline edges',
+    'a thoughtful gaze', 'balanced twin features', 'a zen sitting pose', 'soft flowing curves',
+    'a wise steady look', 'tiny orbiting dots', 'a mirrored pattern', 'a poised stance',
+    'a spiral emblem', 'a monk-like robe', 'a focused stare', 'clean minimal lines',
+  ],
+  benevolencia: [
+    'big kind eyes', 'a warm smile', 'a soft rounded body', 'a small halo',
+    'angelic feather tufts', 'a protective posture', 'a heart marking', 'a gentle glowing aura',
+    'a tiny cape', 'sparkling friendly eyes', 'a shield emblem', 'fluffy soft edges',
+    'a caring expression', 'a little bell charm', 'a noble upright stance', 'a golden trim',
+    'a gentle bow', 'open welcoming arms', 'a soft chest fluff', 'a guardian sigil',
+    'rosy cheeks', 'a beaming grin', 'a plush huggable shape', 'a small crown',
+  ],
+};
+
+// ----- Bloco ELEMENTO (visual): ~20 opções cada
+const ELEMENT_LOOK: Record<ElementId, string[]> = {
+  agua: [
+    'dripping water droplets', 'blue fins', 'fish-scale skin', 'a wavy body', 'bubble details',
+    'a teardrop shape', 'gill slits', 'a splashing tail', 'a smooth wet look', 'aqua highlights',
+    'a water-drop crest', 'rippling patterns', 'webbed feet', 'a shiny blue hide', 'tidal markings',
+    'a coral fin', 'a bubbly trail', 'a seafoam tuft', 'a dripping snout', 'a wave-shaped ear',
+  ],
+  fogo: [
+    'little flame tufts', 'glowing embers', 'a fiery crest', 'smoldering cracks', 'spark details',
+    'a flame tail', 'burning eyes', 'ember-flecked skin', 'a small fire mane', 'heat-glow marks',
+    'charred edges', 'a torch-tip tail', 'molten seams', 'flickering flames', 'a blazing aura',
+    'a spark-lit crest', 'smoke wisps', 'a coal-red belly', 'a flame eyebrow', 'ash-gray patches',
+  ],
+  terra: [
+    'rocky plates', 'pebble bumps', 'crystal shards', 'a stony hide', 'cracked-earth skin',
+    'moss patches', 'a boulder shape', 'sandy texture', 'jagged rock spikes', 'a mineral crest',
+    'a clay-like body', 'fossil marks', 'sturdy stone armor', 'a rugged look', 'earthy ridges',
+    'a gravel mane', 'a stone-slab back', 'quartz knuckles', 'a dusty coat', 'a rock-brow',
+  ],
+  ar: [
+    'fluffy cloud puffs', 'feather tufts', 'a wispy trail', 'light plumage', 'a breezy shape',
+    'wind-swept fur', 'small wings', 'a floating pose', 'airy white streaks', 'a cloud-like body',
+    'soft feathers', 'a gust crest', 'nimble thin limbs', 'a swirl mark', 'drifting wisps',
+    'a feathered collar', 'a kite-tail', 'puffy cheeks', 'a breeze-blown crest', 'a pale down coat',
+  ],
+  sombra: [
+    'smoky edges', 'a shadowy body', 'eyes glowing in the dark', 'a dark mist trail', 'a crescent mark',
+    'ink-black patches', 'a single glowing seam', 'a spooky silhouette', 'faint star specks', 'a dusk-colored hide',
+    'a hooded shape', 'a wispy shadow tail', 'purple glow marks', 'a mysterious veil', 'a dark aura',
+    'a masked face', 'a fading outline', 'violet eyes', 'a smoke plume', 'a night-black coat',
+  ],
+  luz: [
+    'a soft glow', 'a small halo', 'pearl-like skin', 'sunbeam streaks', 'a star mark',
+    'radiant edges', 'a shining crest', 'glowing trim', 'prism sparkles', 'a bright aura',
+    'twinkling dots', 'a golden shimmer', 'a lantern glow', 'luminous eyes', 'a dawn tint',
+    'a sunburst crest', 'a ray-of-light tail', 'a glowing chest gem', 'a bright halo ring', 'a warm cream coat',
+  ],
+  planta: [
+    'leaf details', 'a flower bud', 'vine wraps', 'sprout tufts', 'bark patches',
+    'petal edges', 'a mossy hide', 'a leafy crest', 'berry dots', 'a seedling shape',
+    'green shoots', 'a blooming mark', 'ivy trails', 'a bud crown', 'foliage texture',
+    'a petal collar', 'a twig tail', 'a mushroom cap', 'a clover mark', 'a vine whisker',
+  ],
+  industrial: [
+    'metal plates', 'visible gears', 'bolt rivets', 'a piston joint', 'an antenna',
+    'blinking lights', 'a wind-up key', 'chrome trim', 'a robotic body', 'wired seams',
+    'a gauge dial', 'brass panels', 'a mechanical arm', 'a small screen face', 'segmented armor',
+    'a bolt-eye', 'a vent grille', 'a cable tail', 'a lever switch', 'a rivet-studded plate',
+  ],
+};
+
+// ----- Bloco BIOMA (visual): ~16 opções cada
+const BIOME_LOOK: Record<RealmId, string[]> = {
+  deserto: [
+    'sun-baked coloring', 'sandy tones', 'a desert-worn look', 'cactus-green trim', 'a dune-beige hide',
+    'a sun-disc mark', 'heat-hardened skin', 'a nomad wrap', 'ochre patterns', 'a mirage shimmer',
+    'scorched edges', 'a scarab motif', 'a sunbaked crest', 'terracotta spots', 'a dry cracked coat', 'a sand-swept tail',
+  ],
+  picos: [
+    'storm-cloud coloring', 'a windswept crest', 'lightning marks', 'granite-gray tones', 'a peak-climber build',
+    'electric sparks', 'a highland cloak', 'jagged mountain edges', 'thunder-bruised hide', 'a soaring pose',
+    'frosty tips', 'a storm emblem', 'a bolt-shaped tail', 'a cliffside stance', 'a gale-blown mane', 'slate-blue patches',
+  ],
+  oceano: [
+    'deep-sea coloring', 'bioluminescent dots', 'coral trim', 'a fin crest', 'an abyssal-blue hide',
+    'pearl highlights', 'a tide mark', 'kelp-green streaks', 'a nautilus spiral', 'a glowing lure',
+    'wave patterns', 'a deep-water glow', 'a shell plate', 'anemone tufts', 'a barnacle crust', 'a jellyfish veil',
+  ],
+  pantano: [
+    'murky-green tones', 'a toxic-purple glow', 'a bog-brown hide', 'firefly dots', 'a miasma haze',
+    'twisted-root trim', 'swamp-slick skin', 'orchid marks', 'a will-o-wisp light', 'mossy patches',
+    'a venom drip', 'muddy texture', 'a lily-pad ear', 'a reed crest', 'a fungal bloom', 'a slime coat',
+  ],
+  floresta: [
+    'forest-green tones', 'bark-brown trim', 'a leafy mane', 'mushroom-red spots', 'canopy shadows',
+    'an acorn charm', 'a wild-antler crest', 'vine wraps', 'a woodland cloak', 'dappled-light marks',
+    'a beast-claw motif', 'earthy fur', 'a fern tail', 'a bramble collar', 'a bird-nest crest', 'a sap streak',
+  ],
+  cavernas: [
+    'slate-gray tones', 'amethyst crystals', 'a glowworm-blue glow', 'obsidian edges', 'a geode crest',
+    'copper-vein marks', 'stone-dust hide', 'a stalactite fang', 'echoing rune marks', 'quartz sparkles',
+    'a cave-dweller look', 'dark rocky armor', 'a crystal horn', 'a mineral crust', 'a lantern-eye', 'a gem-studded back',
+  ],
+  gelo: [
+    'ice-white coloring', 'glacial-blue trim', 'an aurora glow', 'frost-lilac marks', 'icicle spikes',
+    'a snowflake crest', 'a polar-silver hide', 'frozen breath', 'a snow-dusted look', 'crystal-ice edges',
+    'a frostbitten tint', 'a blizzard aura', 'an ice-shard tail', 'a frozen mane', 'a snowcap crest', 'glassy frost plates',
+  ],
+  campina: [
+    'sunny-yellow tones', 'blossom-pink trim', 'a flower crown', 'a wheat-gold hide', 'clover-green marks',
+    'a daisy motif', 'morning-dew sparkles', 'a meadow-fresh look', 'butterfly dots', 'a gentle breeze pose',
+    'petal confetti', 'a honeycomb charm', 'a dandelion tuft', 'a ladybug spot', 'a grassy tail', 'a sunlit coat',
+  ],
+  akasha: [
+    'twilight gold-and-violet tones', 'starlight-silver trim', 'a void-purple glow', 'a dawn-and-dusk gradient', 'an all-seeing eye',
+    'twin-crescent marks', 'an infinity glyph', 'cosmic sparkles', 'an ethereal aura', 'a duotone shimmer',
+    'floating light motes', 'a celestial crest', 'a galaxy-swirl mark', 'a halo of runes', 'a phasing outline', 'a starfield coat',
+  ],
+};
+
+// ----- Bloco NÍVEL para rookie/ultra (champion/perfeito/mega usam os SHAPES)
+const ROOKIE_LOOK: string[] = [
+  'a tiny round chibi body', 'small and simple with a big head', 'a little blob-like body',
+  'a small egg-shaped body', 'a chubby palm-sized body', 'a tiny two-legged sprout',
+  'a small curled-up shape', 'a baby-sized round form', 'a squishy little body',
+  'a pint-sized simple shape', 'a tiny bouncy body', 'a small button-eyed form',
+];
+const ULTRA_LOOK: string[] = [
+  'a grand fused body merging its three final forms', 'a towering tri-part fusion silhouette',
+  'a radiant fusion of three great forms', 'a colossal combined body of all three lines',
+  'a majestic three-in-one fused shape', 'an imposing unified apex body',
+  'a transcendent triple-fusion form', 'a supreme combined silhouette',
+];
+
+/** Junta os blocos num prompt. Estilo fixo + conceito + nível + tipo +
+ *  elemento + bioma. Ordem pensada para o modelo (estilo primeiro). */
+function composeSpritePrompt(args: {
+  concept: string; colorDesc: string; accent: string;
+  levelBlock: string; typeLook: string; elementLook: string; biomeLook: string;
+}): string {
   return (
-    `Generate image: Micro pixel art of ${STAGE_SUBJECT[stage]}, 16-bit retro RPG sprite style, ` +
-    `extreme low resolution, blocky pixels, flat ${colorDesc} colors with ${accent} accents, ` +
+    `Generate image: Micro pixel art of ${args.concept}, 16-bit retro RPG sprite style, ` +
+    `extreme low resolution, blocky pixels, flat ${args.colorDesc} colors with ${args.accent} accents, ` +
     `no black outlines, no shading, no anti-aliasing, solid black background, ` +
-    `vintage Tamagotchi or Digimon V-pet aesthetic. ${monsterDesc}` +
-    (ownerVision ? ` ${ownerVision}` : '')
+    `vintage Tamagotchi or Digimon V-pet aesthetic. ${args.levelBlock}. ` +
+    `${args.typeLook}, ${args.elementLook}, ${args.biomeLook}.`
   );
 }
-
-// ----- Progressão conceitual -----
-// Cada estágio é uma TRANSFORMAÇÃO de conceito, não um "crescimento":
-//   criança  = forma larval adormecida (só a herança da base A visível)
-//   adulto   = despertar da fusão (base B emerge, plano corporal definido)
-//   perfeito = metamorfose de função (vira um "ofício" encarnado + elemento
-//              secundário materializado + emblema do reino)
-//   mega     = apoteose do alinhamento (regalia + corpo transmutado no elemento)
-// O núcleo persiste: mesmo rosto, mesma crista-assinatura, mesma família de cores.
 
 const BODY_PLANS: Array<{ en: string; pt: string }> = [
   { en: 'small bipedal', pt: 'bípede compacto' },
@@ -1878,17 +2035,27 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". From the rookie, 3 evolution lines branch out (Virus, Data and Vaccine), and the three Megas fuse into the Ultra.`,
   };
 
-  // Cor base (paleta variada do pool, sem "color palette") + fusão mínima
+  // ----- BLOCOS DO PROMPT -----
+  // Cor base (paleta variada do pool, sem "color palette").
   const colorDesc = palette.replace(/\s*color palette\s*$/i, '');
-  const fusionMini = `a ${fusionA.en}-${fusionB.en} fusion creature`;
-  // Visão do dono em forma curta p/ o template
-  const ownerVisionShort = input.petDescription?.trim()
-    ? `The owner imagines it as: "${input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)}".`
+  // Bloco CONCEITO (≤6 palavras) — sintetizado do perfil; a descrição livre
+  // do pet SUBSTITUI o conceito (não soma).
+  const baseNoun = fusionA.en.split(/[\s-]+/).pop() ?? 'creature';
+  const conceptWord1 = pick(rng, TYPE_CONCEPT_WORDS[dominantAlignment]);
+  const conceptWord2 = pick(rng, ELEMENT_CONCEPT_WORDS[dominantElement]);
+  const synthesizedConcept = `a ${conceptWord1} ${conceptWord2} ${baseNoun}`;
+  const petConcept = input.petDescription?.trim()
+    ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 80)
     : null;
+  const spriteConcept = petConcept ?? synthesizedConcept;
+  // Blocos ELEMENTO e BIOMA — constantes (identidade da espécie), 1 sorteio.
+  const elementLook = pick(rng, ELEMENT_LOOK[dominantElement]);
+  const biomeLook = pick(rng, BIOME_LOOK[dominantRealm]);
 
   const stages: CreatureStage[] = [];
 
   // ----- Rookie: forma base ÚNICA (usa o tipo dominante da leitura) -----
+  const rookieLevel = pick(rng, ROOKIE_LOOK);
   stages.push({
     stage: 'rookie',
     stageName: STAGE_NAMES.rookie,
@@ -1897,11 +2064,12 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que a fusão de ${fusionA.pt} com ${fusionB.pt} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
       en: `${rookieName} is the base form: a small, simple little monster where the fusion of ${fusionA.en} and ${fusionB.en} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
     },
-    imagePrompt: spritePrompt(
-      'rookie', colorDesc, ALIGNMENT_ACCENT[dominantAlignment],
-      `It is ${fusionMini} in its tiny round baby form.`,
-      ownerVisionShort,
-    ),
+    imagePrompt: composeSpritePrompt({
+      concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
+      levelBlock: rookieLevel,
+      typeLook: pick(rng, TYPE_LOOK[dominantAlignment]),
+      elementLook, biomeLook,
+    }),
   });
 
   // ----- 3 linhas de evolução: champion → perfeito → mega por TIPO -----
@@ -1914,6 +2082,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     const bTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[branch]);
     const bManifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
+    const bTypeLook = pick(rng, TYPE_LOOK[branch]);
+    const bAccent = ALIGNMENT_ACCENT[branch];
     const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes);
     const perfShape = pickShape(rng, PERFECT_SHAPES, branch, petElements, usedShapes);
     const megaShape = pickShape(rng, MEGA_SHAPES, branch, petElements, usedShapes);
@@ -1934,11 +2104,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista.`,
         en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest.`,
       },
-      imagePrompt: spritePrompt(
-        'champion', colorDesc, ALIGNMENT_ACCENT[branch],
-        `It is ${fusionMini} that has evolved into ${champShape.en}.`,
-        ownerVisionShort,
-      ),
+      imagePrompt: composeSpritePrompt({
+        concept: spriteConcept, colorDesc, accent: bAccent,
+        levelBlock: `it has evolved into ${champShape.en}`,
+        typeLook: bTypeLook, elementLook, biomeLook,
+      }),
     });
 
     stages.push({
@@ -1950,11 +2120,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
         en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest.`,
       },
-      imagePrompt: spritePrompt(
-        'perfeito', colorDesc, ALIGNMENT_ACCENT[branch],
-        `It is ${fusionMini} that has transformed into ${perfShape.en}.`,
-        ownerVisionShort,
-      ),
+      imagePrompt: composeSpritePrompt({
+        concept: spriteConcept, colorDesc, accent: bAccent,
+        levelBlock: `it has transformed into ${perfShape.en}`,
+        typeLook: bTypeLook, elementLook, biomeLook,
+      }),
     });
 
     stages.push({
@@ -1966,11 +2136,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo.`,
         en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${bRegalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en}.`,
       },
-      imagePrompt: spritePrompt(
-        'mega', colorDesc, ALIGNMENT_ACCENT[branch],
-        `It is ${fusionMini} in its final form, ${megaShape.en}.`,
-        ownerVisionShort,
-      ),
+      imagePrompt: composeSpritePrompt({
+        concept: spriteConcept, colorDesc, accent: bAccent,
+        levelBlock: `in its final form, it is ${megaShape.en}`,
+        typeLook: bTypeLook, elementLook, biomeLook,
+      }),
     });
   }
 
@@ -1984,11 +2154,12 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}".`,
       en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}".`,
     },
-    imagePrompt: spritePrompt(
-      'ultra', colorDesc, 'red, cyan and gold',
-      `It is ${fusionMini}, the ultra fusion of its three mega forms (${megaShapeByBranch.poder.en}; ${megaShapeByBranch.harmonia.en}; ${megaShapeByBranch.benevolencia.en}) into one being.`,
-      ownerVisionShort,
-    ),
+    imagePrompt: composeSpritePrompt({
+      concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
+      levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
+      typeLook: pick(rng, TYPE_LOOK[dominantAlignment]),
+      elementLook, biomeLook,
+    }),
   });
 
   return {
