@@ -190,13 +190,17 @@ describe('generateOracle', () => {
       expect(s.description.pt.length).toBeGreaterThan(20);
       expect(s.description.en.length).toBeGreaterThan(20);
       // O prompt precisa carregar o estilo dos sprites do jogo em texto
-      expect(s.imagePrompt).toContain('Digital Monster LCD');
+      expect(s.imagePrompt).toContain('Tamagotchi / Digimon');
+      expect(s.imagePrompt).toContain('Game Boy Color');
       expect(s.imagePrompt).toContain('no anti-aliasing');
       expect(s.imagePrompt).toContain('fusion of');
       expect(s.imagePrompt).toContain('white background');
-      // Qualidade uniforme: mesmo grid e teto de cores em todos os estágios
-      expect(s.imagePrompt).toContain('24x24 pixel grid');
-      expect(s.imagePrompt).toContain('maximum 6 solid colors');
+      // Qualidade uniforme: grid mínimo de v-pet e teto de cores em todos
+      expect(s.imagePrompt).toContain('16x16 pixel grid');
+      expect(s.imagePrompt).toContain('maximum 4 flat solid colors');
+      // Âncora de simplificação (evita que o modelo vire ilustração)
+      expect(s.imagePrompt).toContain('extremely simplified');
+      expect(s.imagePrompt).toContain('NOT a detailed illustration');
       // Núcleo persiste em todos os estágios
       expect(s.imagePrompt).toContain('signature crest');
     }

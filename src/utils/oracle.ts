@@ -1240,22 +1240,33 @@ function countKeywordHits<K extends string>(text: string, dict: Record<K, string
   return hits;
 }
 
-// Estilo-base dos sprites do jogo (DMC / Digital Monster Color), descrito em
-// texto porque a ferramenta de imagem (Nanobanana) não aceita imagem de
-// referência — o prompt precisa carregar o estilo inteiro.
+// Estilo-base dos sprites, descrito em texto porque a ferramenta de imagem
+// (Nanobanana) não aceita imagem de referência. Lições aprendidas:
+// 1. Modelos genéricos tratam "pixel art" como ilustração com filtro — o
+//    estilo precisa DOMINAR o prompt (vem primeiro e é repetido no fim).
+// 2. Detalhe demais briga com o grid: descrição rica ⇒ ilustração rica.
+//    Por isso os prompts pedem SIMPLIFICAÇÃO radical e listam pouquíssimas
+//    características por forma.
 const SPRITE_STYLE_BASE =
-  'retro virtual pet monster sprite in the exact style of the 1997 Bandai Digital Monster LCD device sprites (Digimon Color), ' +
-  'drawn on a tiny pixel grid and upscaled with hard square pixels (nearest-neighbor, no smoothing), ' +
-  'flat solid colors only, no gradients, no anti-aliasing, no shading except simple two-tone, ' +
-  'clean 1-pixel dark outline around the whole silhouette, stubby proportions with oversized head and big simple eyes';
+  'pixel art sprite, authentic 8-bit retro style, exactly like an original 1997 Tamagotchi / Digimon ' +
+  'virtual pet LCD creature or a Game Boy Color monster sprite';
+
+// Grid mínimo real de v-pet: 16x16 e pouquíssimas cores em TODOS os estágios
+// (nos v-pets originais até o mega é 16x16 — a evolução é o DESENHO mudar).
+const SPRITE_SPEC =
+  'drawn on a tiny 16x16 pixel grid, shown enlarged with big clearly visible square pixels ' +
+  '(hard nearest-neighbor edges), maximum 4 flat solid colors plus black outline';
+
+// Âncora de simplificação — vem DEPOIS da descrição para reancorar o estilo
+const SPRITE_SIMPLIFY =
+  'IMPORTANT: extremely simplified — at 16x16 only the 2 or 3 most essential features can exist, ' +
+  'omit every fine detail, no shading, no gradients, no anti-aliasing, no smooth curves, ' +
+  'blocky chunky forms, oversized head, eyes are 1-2 dark pixels';
 
 const SPRITE_STYLE_END =
-  'single full-body character, centered, facing slightly left, plain white background, ' +
-  'no text, no watermark, no frame, no scenery, single frame';
-
-// Qualidade uniforme em TODOS os estágios (a evolução é conceitual, não de
-// resolução): mesmo grid e mesmo teto de cores do estágio rookie.
-const SPRITE_SPEC = 'designed on a 24x24 pixel grid, maximum 6 solid colors';
+  'single full-body sprite centered on a plain white background, no text, no watermark, no frame, ' +
+  'the final image must look like a zoomed-in screenshot of a real retro handheld game sprite, ' +
+  'NOT a detailed illustration';
 
 // ----- Progressão conceitual -----
 // Cada estágio é uma TRANSFORMAÇÃO de conceito, não um "crescimento":
@@ -1811,17 +1822,15 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const poolB = (mentionedBases[1] ? [mentionedBases[1]] : basePool).filter(b => b.en !== fusionA.en);
   const fusionB = poolB.length > 0 ? pick(rng, poolB) : pick(rng, CREATURE_BASES.filter(b => b.en !== fusionA.en));
 
-  // Características sorteadas dos POOLS (assinatura visual única)
+  // Características sorteadas dos POOLS (assinatura visual única).
+  // Nota: em 16x16 não cabem textura/cauda/marcas — esses pools continuam
+  // existindo para descrições e para um futuro "modo HD", mas os prompts de
+  // sprite carregam só o essencial (design do tipo, fusão, crista, paleta).
   const alignDesign = pick(rng, ALIGNMENT_DESIGNS[dominantAlignment]);
   const babyHint = pick(rng, ALIGNMENT_BABY_HINTS[dominantAlignment]);
   const alignTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[dominantAlignment]);
   const crest = pick(rng, CRESTS);
-  const tail = pick(rng, TAILS);
-  const bodyPlan = pick(rng, BODY_PLANS);
   const palette = pick(rng, ELEMENT_PALETTES[dominantElement]);
-  const texture = pick(rng, ELEMENT_TEXTURES[dominantElement]);
-  const texture2 = secondaryElement ? pick(rng, ELEMENT_TEXTURES[secondaryElement]) : null;
-  const marking = pick(rng, ALIGNMENT_MARKINGS[dominantAlignment]);
   const realmInfo = REALM_INFO[dominantRealm];
   const realmAccent = pick(rng, REALM_ACCENTS[dominantRealm]);
   const emblem = pick(rng, REALM_EMBLEMS[dominantRealm]);
@@ -1870,9 +1879,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     `signature crest present in every evolution stage: ${crest}`,
     `${palette}, with ${realmAccent}`,
   ];
-  const realmMood = `a creature born in ${realmInfo.scenery} (environment for color mood only, do NOT draw the background)`;
   const buildPrompt = (parts: string[]) =>
-    [SPRITE_STYLE_BASE, SPRITE_SPEC, ...parts, realmMood, SPRITE_STYLE_END].join(', ');
+    [SPRITE_STYLE_BASE, SPRITE_SPEC, ...parts, SPRITE_SIMPLIFY, SPRITE_STYLE_END].join(', ');
 
   const stages: CreatureStage[] = [];
 
@@ -1888,10 +1896,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     imagePrompt: buildPrompt([
       alignDesign,
       ...sharedCore,
-      marking,
-      'rookie stage: a small, cute and simple monster, the base form of every evolution line',
-      `${bodyPlan.en} body with short limbs, ${texture}${texture2 ? `, with touches of ${texture2}` : ''}`,
-      tail,
+      'rookie stage: a small, round, cute and simple monster, the base form of every evolution line',
       babyHint,
       `light starter gear: ${roleMotif}`,
     ]),
@@ -1905,7 +1910,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   for (const branch of ALIGNMENT_ORDER) {
     const bInfo = ALIGNMENT_INFO[branch];
     const bDesign = pick(rng, ALIGNMENT_DESIGNS[branch]);
-    const bMarking = pick(rng, ALIGNMENT_MARKINGS[branch]);
     const bTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[branch]);
     const bManifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
@@ -1932,10 +1936,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       imagePrompt: buildPrompt([
         bDesign,
         ...sharedCore,
-        bMarking,
         `champion stage of the ${bInfo.attribute.en} evolution line: it evolves into ${champShape.en}`,
-        texture,
-        tail,
         'clearly bigger and wilder than the rookie stage, yet the same face and signature crest',
       ]),
     });
@@ -1952,12 +1953,10 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       imagePrompt: buildPrompt([
         bDesign,
         ...sharedCore,
-        bMarking,
         `perfect stage of the ${bInfo.attribute.en} evolution line — a conceptual metamorphosis, NOT just a grown-up champion`,
         `it transforms into ${perfShape.en}`,
         `its element materializes physically: ${bManifest.en}`,
-        `wearing ${emblem.en} on the chest or brow`,
-        'the silhouette must read clearly different from the champion form while keeping the same face and signature crest',
+        'a silhouette clearly different from the champion form, same face and signature crest',
       ]),
     });
 
@@ -1973,12 +1972,10 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       imagePrompt: buildPrompt([
         bDesign,
         ...sharedCore,
-        bMarking,
         `mega stage — the final apotheosis of the ${bInfo.attribute.en} evolution line, a radical transformation with a completely new silhouette`,
         `it ascends as ${megaShape.en}`,
-        bRegalia.en,
-        `its body is partially transmuted into living ${ELEMENT_INFO[dominantElement].name.en.toLowerCase()} element`,
-        'same face, same signature crest and same color family as all previous stages — clearly the same species, utterly transformed',
+        bRegalia.en.split(':')[0],
+        'same face, same signature crest and same color family as all previous stages',
       ]),
     });
   }
@@ -1998,7 +1995,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       `merging these three mega bodies into one design: ${megaShapeByBranch.poder.en}; ${megaShapeByBranch.harmonia.en}; ${megaShapeByBranch.benevolencia.en}`,
       'unifying VIRUS-attribute ferocity, DATA-attribute balance and VACCINE-attribute nobility in a single silhouette',
       ...sharedCore,
-      'a tri-colored aura with one accent from each mega form, regalia pieces borrowed from all three',
       'same face and signature crest as every previous stage — the same soul at its absolute apex',
     ]),
   });
