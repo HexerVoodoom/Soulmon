@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { PixelizerCard } from './PixelizerCard';
 import {
   generateOracle, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
   ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER, ORACLE_QUESTIONS,
@@ -732,6 +733,9 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
           </div>
         </>
       )}
+
+      {/* Pixelador — converte a imagem gerada pela IA em sprite v-pet real */}
+      <PixelizerCard theme={theme} language={language} />
     </div>
   );
 }
