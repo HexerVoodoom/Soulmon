@@ -1240,33 +1240,48 @@ function countKeywordHits<K extends string>(text: string, dict: Record<K, string
   return hits;
 }
 
-// Estilo-base dos sprites, descrito em texto porque a ferramenta de imagem
-// (Nanobanana) não aceita imagem de referência. Lições aprendidas:
-// 1. Modelos genéricos tratam "pixel art" como ilustração com filtro — o
-//    estilo precisa DOMINAR o prompt (vem primeiro e é repetido no fim).
-// 2. Detalhe demais briga com o grid: descrição rica ⇒ ilustração rica.
-//    Por isso os prompts pedem SIMPLIFICAÇÃO radical e listam pouquíssimas
-//    características por forma.
-const SPRITE_STYLE_BASE =
-  'pixel art sprite, authentic 8-bit retro style, exactly like an original 1997 Tamagotchi / Digimon ' +
-  'virtual pet LCD creature or a Game Boy Color monster sprite';
+// ---------------------------------------------------------------------------
+// Prompt de sprite — TEMPLATE VALIDADO pelo dono do projeto em testes reais
+// no Nanobanana (o que funcionou melhor na prática). Regra de ouro: o molde
+// fica fixo e a descrição do monstro é a MÍNIMA possível — detalhe demais
+// faz o modelo virar ilustração.
+//
+//   "Generate image: Micro pixel art of a small, cute monster, 16-bit retro
+//    RPG sprite style, extreme low resolution, blocky pixels, flat dark grey
+//    and white colors with red accents, no black outlines, no shading, no
+//    anti-aliasing, solid black background, vintage Tamagotchi or Digimon
+//    V-pet aesthetic."
+//
+// Parametrizamos as cores sem travar demais: a paleta base vem do POOL variado
+// do elemento (muda por seed) e o ACENTO marca o tipo p/ reconhecibilidade
+// (Vírus=red, Data=cyan, Vacina=gold). A descrição do monstro = mínima
+// (fusão) + a descrição do ESTÁGIO em si (a forma que ele assume).
+// ---------------------------------------------------------------------------
 
-// Grid mínimo real de v-pet: 16x16 e pouquíssimas cores em TODOS os estágios
-// (nos v-pets originais até o mega é 16x16 — a evolução é o DESENHO mudar).
-const SPRITE_SPEC =
-  'drawn on a tiny 16x16 pixel grid, shown enlarged with big clearly visible square pixels ' +
-  '(hard nearest-neighbor edges), maximum 4 flat solid colors plus black outline';
+const ALIGNMENT_ACCENT: Record<AlignmentId, string> = {
+  poder: 'red',
+  harmonia: 'cyan',
+  benevolencia: 'gold',
+};
 
-// Âncora de simplificação — vem DEPOIS da descrição para reancorar o estilo
-const SPRITE_SIMPLIFY =
-  'IMPORTANT: extremely simplified — at 16x16 only the 2 or 3 most essential features can exist, ' +
-  'omit every fine detail, no shading, no gradients, no anti-aliasing, no smooth curves, ' +
-  'blocky chunky forms, oversized head, eyes are 1-2 dark pixels';
+const STAGE_SUBJECT: Record<StageId, string> = {
+  rookie: 'a small, cute monster',
+  champion: 'a wild battle monster',
+  perfeito: 'an armored evolved monster',
+  mega: 'a majestic final-form monster',
+  ultra: 'a legendary fused monster',
+};
 
-const SPRITE_STYLE_END =
-  'single full-body sprite centered on a plain white background, no text, no watermark, no frame, ' +
-  'the final image must look like a zoomed-in screenshot of a real retro handheld game sprite, ' +
-  'NOT a detailed illustration';
+/** Monta o prompt: template fixo + descrição mínima (fusão + estágio). */
+function spritePrompt(stage: StageId, colorDesc: string, accent: string, monsterDesc: string, ownerVision: string | null): string {
+  return (
+    `Generate image: Micro pixel art of ${STAGE_SUBJECT[stage]}, 16-bit retro RPG sprite style, ` +
+    `extreme low resolution, blocky pixels, flat ${colorDesc} colors with ${accent} accents, ` +
+    `no black outlines, no shading, no anti-aliasing, solid black background, ` +
+    `vintage Tamagotchi or Digimon V-pet aesthetic. ${monsterDesc}` +
+    (ownerVision ? ` ${ownerVision}` : '')
+  );
+}
 
 // ----- Progressão conceitual -----
 // Cada estágio é uma TRANSFORMAÇÃO de conceito, não um "crescimento":
@@ -1825,21 +1840,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // Características sorteadas dos POOLS (assinatura visual única).
   // Nota: em 16x16 não cabem textura/cauda/marcas — esses pools continuam
   // existindo para descrições e para um futuro "modo HD", mas os prompts de
-  // sprite carregam só o essencial (design do tipo, fusão, crista, paleta).
-  const alignDesign = pick(rng, ALIGNMENT_DESIGNS[dominantAlignment]);
-  const babyHint = pick(rng, ALIGNMENT_BABY_HINTS[dominantAlignment]);
+  // sprite carregam só o essencial: paleta do elemento + acento do tipo +
+  // fusão mínima + a forma do estágio. Os pools ricos abaixo alimentam as
+  // DESCRIÇÕES em texto (e um futuro modo HD), não o prompt 16x16.
   const alignTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[dominantAlignment]);
-  const crest = pick(rng, CRESTS);
   const palette = pick(rng, ELEMENT_PALETTES[dominantElement]);
   const realmInfo = REALM_INFO[dominantRealm];
-  const realmAccent = pick(rng, REALM_ACCENTS[dominantRealm]);
   const emblem = pick(rng, REALM_EMBLEMS[dominantRealm]);
-  const roleMotif = pick(rng, ROLE_MOTIFS[dominantRole]);
-
-  // Visão do dono (descrição livre) — injetada crua no prompt, com prioridade
-  const ownerVision = input.petDescription?.trim()
-    ? `the owner's own vision of this pet, HIGH PRIORITY: "${input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 300)}"`
-    : null;
 
   // Nome: radical de elemento(s) OU de reino + sílaba pessoal
   const stemPool = [
@@ -1871,16 +1878,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". From the rookie, 3 evolution lines branch out (Virus, Data and Vaccine), and the three Megas fuse into the Ultra.`,
   };
 
-  // Núcleo visual compartilhado por TODOS os estágios (identidade da espécie).
-  // A linguagem de tipo NÃO entra aqui: cada linha usa a do seu atributo.
-  const sharedCore = [
-    ...(ownerVision ? [ownerVision] : []),
-    `an original monster species: a fusion of ${an(fusionA.en)} and ${an(fusionB.en)}`,
-    `signature crest present in every evolution stage: ${crest}`,
-    `${palette}, with ${realmAccent}`,
-  ];
-  const buildPrompt = (parts: string[]) =>
-    [SPRITE_STYLE_BASE, SPRITE_SPEC, ...parts, SPRITE_SIMPLIFY, SPRITE_STYLE_END].join(', ');
+  // Cor base (paleta variada do pool, sem "color palette") + fusão mínima
+  const colorDesc = palette.replace(/\s*color palette\s*$/i, '');
+  const fusionMini = `a ${fusionA.en}-${fusionB.en} fusion creature`;
+  // Visão do dono em forma curta p/ o template
+  const ownerVisionShort = input.petDescription?.trim()
+    ? `The owner imagines it as: "${input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)}".`
+    : null;
 
   const stages: CreatureStage[] = [];
 
@@ -1893,13 +1897,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que a fusão de ${fusionA.pt} com ${fusionB.pt} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
       en: `${rookieName} is the base form: a small, simple little monster where the fusion of ${fusionA.en} and ${fusionB.en} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
     },
-    imagePrompt: buildPrompt([
-      alignDesign,
-      ...sharedCore,
-      'rookie stage: a small, round, cute and simple monster, the base form of every evolution line',
-      babyHint,
-      `light starter gear: ${roleMotif}`,
-    ]),
+    imagePrompt: spritePrompt(
+      'rookie', colorDesc, ALIGNMENT_ACCENT[dominantAlignment],
+      `It is ${fusionMini} in its tiny round baby form.`,
+      ownerVisionShort,
+    ),
   });
 
   // ----- 3 linhas de evolução: champion → perfeito → mega por TIPO -----
@@ -1909,7 +1911,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
 
   for (const branch of ALIGNMENT_ORDER) {
     const bInfo = ALIGNMENT_INFO[branch];
-    const bDesign = pick(rng, ALIGNMENT_DESIGNS[branch]);
     const bTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[branch]);
     const bManifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
@@ -1933,12 +1934,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista.`,
         en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest.`,
       },
-      imagePrompt: buildPrompt([
-        bDesign,
-        ...sharedCore,
-        `champion stage of the ${bInfo.attribute.en} evolution line: it evolves into ${champShape.en}`,
-        'clearly bigger and wilder than the rookie stage, yet the same face and signature crest',
-      ]),
+      imagePrompt: spritePrompt(
+        'champion', colorDesc, ALIGNMENT_ACCENT[branch],
+        `It is ${fusionMini} that has evolved into ${champShape.en}.`,
+        ownerVisionShort,
+      ),
     });
 
     stages.push({
@@ -1950,14 +1950,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
         en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest.`,
       },
-      imagePrompt: buildPrompt([
-        bDesign,
-        ...sharedCore,
-        `perfect stage of the ${bInfo.attribute.en} evolution line — a conceptual metamorphosis, NOT just a grown-up champion`,
-        `it transforms into ${perfShape.en}`,
-        `its element materializes physically: ${bManifest.en}`,
-        'a silhouette clearly different from the champion form, same face and signature crest',
-      ]),
+      imagePrompt: spritePrompt(
+        'perfeito', colorDesc, ALIGNMENT_ACCENT[branch],
+        `It is ${fusionMini} that has transformed into ${perfShape.en}.`,
+        ownerVisionShort,
+      ),
     });
 
     stages.push({
@@ -1969,14 +1966,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo.`,
         en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${bRegalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en}.`,
       },
-      imagePrompt: buildPrompt([
-        bDesign,
-        ...sharedCore,
-        `mega stage — the final apotheosis of the ${bInfo.attribute.en} evolution line, a radical transformation with a completely new silhouette`,
-        `it ascends as ${megaShape.en}`,
-        bRegalia.en.split(':')[0],
-        'same face, same signature crest and same color family as all previous stages',
-      ]),
+      imagePrompt: spritePrompt(
+        'mega', colorDesc, ALIGNMENT_ACCENT[branch],
+        `It is ${fusionMini} in its final form, ${megaShape.en}.`,
+        ownerVisionShort,
+      ),
     });
   }
 
@@ -1990,13 +1984,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}".`,
       en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}".`,
     },
-    imagePrompt: buildPrompt([
-      'ULTRA stage — the supreme final form: a fusion of its three mega forms into one transcendent being',
-      `merging these three mega bodies into one design: ${megaShapeByBranch.poder.en}; ${megaShapeByBranch.harmonia.en}; ${megaShapeByBranch.benevolencia.en}`,
-      'unifying VIRUS-attribute ferocity, DATA-attribute balance and VACCINE-attribute nobility in a single silhouette',
-      ...sharedCore,
-      'same face and signature crest as every previous stage — the same soul at its absolute apex',
-    ]),
+    imagePrompt: spritePrompt(
+      'ultra', colorDesc, 'red, cyan and gold',
+      `It is ${fusionMini}, the ultra fusion of its three mega forms (${megaShapeByBranch.poder.en}; ${megaShapeByBranch.harmonia.en}; ${megaShapeByBranch.benevolencia.en}) into one being.`,
+      ownerVisionShort,
+    ),
   });
 
   return {

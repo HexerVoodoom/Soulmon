@@ -189,20 +189,17 @@ describe('generateOracle', () => {
       expect(s.name.length).toBeGreaterThan(2);
       expect(s.description.pt.length).toBeGreaterThan(20);
       expect(s.description.en.length).toBeGreaterThan(20);
-      // O prompt precisa carregar o estilo dos sprites do jogo em texto
-      expect(s.imagePrompt).toContain('Tamagotchi / Digimon');
-      expect(s.imagePrompt).toContain('Game Boy Color');
+      // Template validado (o que funcionou no Nanobanana): estilo fixo,
+      // fundo preto, estética v-pet, sem outline/shading/anti-aliasing
+      expect(s.imagePrompt.startsWith('Generate image: Micro pixel art of ')).toBe(true);
+      expect(s.imagePrompt).toContain('16-bit retro RPG sprite style');
+      expect(s.imagePrompt).toContain('blocky pixels');
+      expect(s.imagePrompt).toContain('no black outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
-      expect(s.imagePrompt).toContain('fusion of');
-      expect(s.imagePrompt).toContain('white background');
-      // Qualidade uniforme: grid mínimo de v-pet e teto de cores em todos
-      expect(s.imagePrompt).toContain('16x16 pixel grid');
-      expect(s.imagePrompt).toContain('maximum 4 flat solid colors');
-      // Âncora de simplificação (evita que o modelo vire ilustração)
-      expect(s.imagePrompt).toContain('extremely simplified');
-      expect(s.imagePrompt).toContain('NOT a detailed illustration');
-      // Núcleo persiste em todos os estágios
-      expect(s.imagePrompt).toContain('signature crest');
+      expect(s.imagePrompt).toContain('solid black background');
+      expect(s.imagePrompt).toContain('vintage Tamagotchi or Digimon V-pet aesthetic');
+      // Descrição mínima do monstro: a fusão
+      expect(s.imagePrompt).toContain('fusion creature');
     }
   });
 
@@ -210,11 +207,11 @@ describe('generateOracle', () => {
     const r = generateOracle(INPUT, 42);
     const evolved = r.creature.stages.filter(s => s.branch);
     expect(evolved).toHaveLength(9);
-    // Cada evolução declara sua forma no prompt (evolves/transforms/ascends)
+    // Cada evolução cita a forma do estágio no prompt
     const shapeLines = evolved.map(s => {
-      const m = s.imagePrompt.match(/it (?:evolves into|transforms into|ascends as) ([^,]+)/);
+      const m = s.imagePrompt.match(/has evolved into ([^.]+)\.|has transformed into ([^.]+)\.|in its final form, ([^.]+)\./);
       expect(m).not.toBeNull();
-      return m![1];
+      return m![1] ?? m![2] ?? m![3];
     });
     expect(new Set(shapeLines).size).toBe(9); // todas distintas
   });
@@ -224,53 +221,40 @@ describe('generateOracle', () => {
     const ultra = r.creature.stages.find(s => s.stage === 'ultra')!;
     const megas = r.creature.stages.filter(s => s.stage === 'mega');
     expect(ultra.name.startsWith('Omni')).toBe(true);
-    expect(ultra.imagePrompt).toContain('fusion of its three mega forms');
+    expect(ultra.imagePrompt).toContain('ultra fusion of its three mega forms');
     // As três formas mega aparecem citadas no prompt do ultra
     for (const mega of megas) {
-      const shape = mega.imagePrompt.match(/it ascends as ([^,]+)/)![1];
+      const shape = mega.imagePrompt.match(/in its final form, ([^.]+)\./)![1];
       expect(ultra.imagePrompt).toContain(shape);
     }
-    // E os três atributos são unificados
-    expect(ultra.imagePrompt).toContain('VIRUS-attribute');
-    expect(ultra.imagePrompt).toContain('DATA-attribute');
-    expect(ultra.imagePrompt).toContain('VACCINE-attribute');
   });
 
-  it('cada LINHA usa a linguagem do próprio atributo; rookie usa o dominante', () => {
+  it('acento de cor marca o tipo: rookie=dominante, cada linha o seu, ultra=todos', () => {
     const r = generateOracle(INPUT, 42);
-    const attributeToken: Record<string, string> = {
-      poder: 'VIRUS-attribute',
-      harmonia: 'DATA-attribute',
-      benevolencia: 'VACCINE-attribute',
-    };
-    // Rookie: atributo dominante da leitura
+    const accent: Record<string, string> = { poder: 'red', harmonia: 'cyan', benevolencia: 'gold' };
     const rookie = r.creature.stages.find(s => s.stage === 'rookie')!;
-    expect(rookie.imagePrompt).toContain(attributeToken[r.dominantAlignment]);
-    expect(rookie.imagePrompt).toContain('even the baby form');
-    // Cada linha evoluída usa o token do SEU tipo
+    expect(rookie.imagePrompt).toContain(`with ${accent[r.dominantAlignment]} accents`);
     for (const s of r.creature.stages.filter(x => x.branch)) {
-      expect(s.imagePrompt).toContain(attributeToken[s.branch!]);
-      expect(s.imagePrompt).toContain('design language');
+      expect(s.imagePrompt).toContain(`with ${accent[s.branch!]} accents`);
     }
+    const ultra = r.creature.stages.find(s => s.stage === 'ultra')!;
+    expect(ultra.imagePrompt).toContain('with red, cyan and gold accents');
     // Conceito exibe a equivalência (Vírus/Data/Vacina)
     expect(r.creature.concept.pt).toMatch(/atributo (Vírus|Data|Vacina)/);
   });
 
-  it('progressão é conceitual: cada nível tem transformação própria', () => {
+  it('cada nível tem o próprio "subject" e a forma do estágio no prompt', () => {
     const r = generateOracle(INPUT, 42);
     const line = (stage: string) => r.creature.stages.find(s => s.stage === stage && s.branch === 'poder')!;
     const rookie = r.creature.stages.find(s => s.stage === 'rookie')!;
-    // Rookie: forma base simples com equipamento leve
-    expect(rookie.imagePrompt).toContain('rookie stage');
-    expect(rookie.imagePrompt).toContain('light starter gear');
-    // Champion: evolui para uma forma do pool
-    expect(line('champion').imagePrompt).toContain('it evolves into');
-    // Perfeito: metamorfose + elemento materializado
-    expect(line('perfeito').imagePrompt).toContain('metamorphosis');
-    expect(line('perfeito').imagePrompt).toContain('materializes physically');
-    // Mega: apoteose com silhueta nova, mantendo o núcleo
-    expect(line('mega').imagePrompt).toContain('apotheosis');
-    expect(line('mega').imagePrompt).toContain('same face, same signature crest');
+    expect(rookie.imagePrompt).toContain('a small, cute monster');
+    expect(rookie.imagePrompt).toContain('tiny round baby form');
+    expect(line('champion').imagePrompt).toContain('a wild battle monster');
+    expect(line('champion').imagePrompt).toContain('has evolved into');
+    expect(line('perfeito').imagePrompt).toContain('an armored evolved monster');
+    expect(line('perfeito').imagePrompt).toContain('has transformed into');
+    expect(line('mega').imagePrompt).toContain('a majestic final-form monster');
+    expect(line('mega').imagePrompt).toContain('in its final form');
     // Prompts da mesma linha são todos diferentes
     const prompts = ['champion', 'perfeito', 'mega'].map(st => line(st).imagePrompt);
     expect(new Set([rookie.imagePrompt, ...prompts]).size).toBe(4);
@@ -303,9 +287,9 @@ describe('generateOracle', () => {
     expect(r.elementScores).toEqual(base.elementScores);
     expect(r.roleScores).toEqual(base.roleScores);
     expect(r.alignmentScores).toEqual(base.alignmentScores);
-    // A criatura reflete os ajustes
+    // A criatura reflete os ajustes (rookie: acento do tipo Poder = red)
     const prompt = r.creature.stages[0].imagePrompt;
-    expect(prompt).toContain('VIRUS-attribute');
+    expect(prompt).toContain('with red accents');
     expect(prompt).toMatch(/steel gray|brass and copper|chrome and hazard/); // paleta industrial (pool)
     expect(r.creature.concept.pt).toContain('Akasha');
   });
@@ -363,7 +347,7 @@ describe('generateOracle', () => {
     expect([r.creature.fusion.a.en, r.creature.fusion.b.en]).toContain('wolf');
     // A visão do dono é injetada no prompt de TODOS os estágios
     for (const s of r.creature.stages) {
-      expect(s.imagePrompt).toContain("owner's own vision");
+      expect(s.imagePrompt).toContain('The owner imagines it as');
       expect(s.imagePrompt).toContain('um lobo de gelo protetor');
     }
   });
