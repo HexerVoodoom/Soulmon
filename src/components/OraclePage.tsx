@@ -142,10 +142,11 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
 
   const copyAllPrompts = () => {
     if (!creature) return;
+    const header = `# ${creature.creature.baseName}\n${L(creature.creature.bio)}\n`;
     const all = creature.creature.stages
       .map(s => `## ${s.name} (${L(s.stageName)})\n${s.imagePrompt}`)
       .join('\n\n');
-    copyText(all, isPt ? 'Todos os prompts copiados!' : 'All prompts copied!');
+    copyText(`${header}\n${all}`, isPt ? 'Todos os prompts copiados!' : 'All prompts copied!');
   };
 
   // --- estilos base (inline p/ cores críticas; classes fora do index.css não aplicam)
@@ -687,6 +688,9 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
               </button>
             </div>
             <p className={`text-xs mb-1 ${mutedCls}`}>{L(creature.creature.concept)}</p>
+            <p className={`text-xs mb-2 ${titleCls}`} style={{ fontStyle: 'italic' }}>
+              “{L(creature.creature.bio)}”
+            </p>
             <p className={`text-[10px] mb-3 ${mutedCls}`}>
               {isPt ? 'Semente' : 'Seed'}: {creature.seed}
             </p>

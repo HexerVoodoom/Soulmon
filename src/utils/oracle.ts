@@ -144,6 +144,10 @@ export interface OracleResult {
   creature: {
     baseName: string;
     concept: LText;
+    /** Descrição narrativa breve e rica do personagem (arquétipo + poder +
+     *  efeito). Constante em toda a espécie; a descrição livre do pet
+     *  substitui esse texto quando informada. */
+    bio: LText;
     fusion: { a: LText; b: LText };  // as duas bases fundidas no corpo
     stages: CreatureStage[];
   };
@@ -1273,22 +1277,233 @@ const ALIGNMENT_ACCENT: Record<AlignmentId, string> = {
   benevolencia: 'gold',
 };
 
-// ----- Bloco CONCEITO: palavras curtas p/ montar "a <tipo> <elemento> <bicho>"
-const TYPE_CONCEPT_WORDS: Record<AlignmentId, string[]> = {
-  poder: ['fierce', 'wild', 'fanged', 'savage', 'bold', 'feral', 'raging', 'sharp'],
-  harmonia: ['calm', 'wise', 'serene', 'mystic', 'balanced', 'clever', 'quiet', 'zen'],
-  benevolencia: ['noble', 'gentle', 'kind', 'brave', 'loyal', 'shining', 'sweet', 'guardian'],
+// ---------------------------------------------------------------------------
+// Bloco CONCEITO — versão rica: "um(a) <bicho> humanoide <arquétipo>, que
+// empunha <poder>, para <efeito>" (ex.: "a humanoid triceratops witch doctor,
+// wielding hex magic that warps reality, to heal allies and harm foes").
+// Escolhido UMA vez por criatura (constante nos 11 prompts — é a identidade
+// fixa da espécie); a descrição livre do pet SUBSTITUI esse bloco inteiro.
+// ---------------------------------------------------------------------------
+
+// Arquétipo humanoide por FUNÇÃO (~10 cada)
+const ROLE_ARCHETYPES: Record<RoleId, LText[]> = {
+  suporte: [
+    { pt: 'curandeiro xamã', en: 'witch doctor' },
+    { pt: 'médico de batalha', en: 'battle medic' },
+    { pt: 'sacerdote do lar', en: 'hearth priest' },
+    { pt: 'oráculo curador', en: 'healing oracle' },
+    { pt: 'sábio herborista', en: 'herbalist sage' },
+    { pt: 'médico da peste', en: 'plague doctor' },
+    { pt: 'místico tecelão de vida', en: 'life-weaving mystic' },
+    { pt: 'sacerdotisa da alvorada', en: 'dawn priestess' },
+    { pt: 'monge remendador de almas', en: 'soul-mending monk' },
+    { pt: 'capelão de campo', en: 'field chaplain' },
+  ],
+  tanque: [
+    { pt: 'cavaleiro de ferro', en: 'iron knight' },
+    { pt: 'guardião-baluarte', en: 'bulwark guardian' },
+    { pt: 'donzela-escudo', en: 'shieldmaiden' },
+    { pt: 'guardião da fortaleza', en: 'fortress warden' },
+    { pt: 'paladino de égide', en: 'aegis paladin' },
+    { pt: 'colosso quebra-cercos', en: 'siege-breaking juggernaut' },
+    { pt: 'sentinela de pedra', en: 'stone sentinel' },
+    { pt: 'cavaleiro-barricada', en: 'barricade knight' },
+    { pt: 'defensor de vanguarda', en: 'vanguard defender' },
+    { pt: 'brutamontes derrubador de muros', en: 'wall-breaking brute' },
+  ],
+  fisico: [
+    { pt: 'gladiador', en: 'gladiator' },
+    { pt: 'fora-da-lei motoqueiro', en: 'biker outlaw' },
+    { pt: 'brigão de rua', en: 'street brawler' },
+    { pt: 'duelista espadachim', en: 'duelist swordsman' },
+    { pt: 'invasor berserker', en: 'berserker raider' },
+    { pt: 'dançarino de lâminas', en: 'blade dancer' },
+    { pt: 'lutador premiado', en: 'prizefighter' },
+    { pt: 'brutamontes de arena clandestina', en: 'pit-fighting brute' },
+    { pt: 'invasor pintado de guerra', en: 'war-painted raider' },
+    { pt: 'campeão de arena', en: 'arena champion' },
+  ],
+  magico: [
+    { pt: 'bruxo de feitiços', en: 'hex witch' },
+    { pt: 'feiticeiro rúnico', en: 'rune sorcerer' },
+    { pt: 'erudito arcano', en: 'arcane scholar' },
+    { pt: 'duelista de lâmina mágica', en: 'spellblade duelist' },
+    { pt: 'conjurador do vazio', en: 'void conjurer' },
+    { pt: 'tecelão de glifos', en: 'glyph weaver' },
+    { pt: 'bruxa lançadora de maldições', en: 'curse-casting witch' },
+    { pt: 'místico tocado pelas estrelas', en: 'star-touched mystic' },
+    { pt: 'alquimista', en: 'alchemist' },
+    { pt: 'erudito de tomo proibido', en: 'forbidden-tome scholar' },
+  ],
+  alcance: [
+    { pt: 'caçador de recompensas', en: 'bounty hunter' },
+    { pt: 'atirador de elite', en: 'sniper marksman' },
+    { pt: 'patrulheiro da tempestade', en: 'storm ranger' },
+    { pt: 'armador de sombras', en: 'shadow trapper' },
+    { pt: 'batedor falcoeiro', en: 'falconer scout' },
+    { pt: 'duelista de arco longo', en: 'longbow duelist' },
+    { pt: 'arqueiro do céu', en: 'sky archer' },
+    { pt: 'pistoleiro certeiro', en: 'deadeye gunslinger' },
+    { pt: 'atirador de tiros de efeito', en: 'trick-shot ranger' },
+    { pt: 'rastreador silencioso', en: 'silent tracker' },
+  ],
 };
-const ELEMENT_CONCEPT_WORDS: Record<ElementId, string[]> = {
-  agua: ['water', 'aqua', 'tidal', 'sea'],
-  fogo: ['fire', 'ember', 'flame', 'lava'],
-  terra: ['rock', 'earth', 'stone', 'crystal'],
-  ar: ['wind', 'sky', 'cloud', 'storm'],
-  sombra: ['shadow', 'dusk', 'night', 'dark'],
-  luz: ['light', 'sun', 'star', 'radiant'],
-  planta: ['leaf', 'forest', 'bloom', 'thorn'],
-  industrial: ['steel', 'gear', 'cyber', 'metal'],
+
+// Poder empunhado por ELEMENTO (~10 cada) — o que completa "que empunha ___"
+const ELEMENT_POWERS: Record<ElementId, LText[]> = {
+  agua: [
+    { pt: 'correntes de maré que se quebram como ondas', en: 'tidal chains that crash like waves' },
+    { pt: 'um tridente que canaliza a pressão do mar profundo', en: 'a trident channeling deep-sea pressure' },
+    { pt: 'chicotes de água viva', en: 'living water whips' },
+    { pt: 'duas azagaias com pontas de gelo', en: 'frost-tipped twin harpoons' },
+    { pt: 'uma concha que comanda as marés', en: 'a conch horn that commands the tides' },
+    { pt: 'lâminas gêmeas esculpidas em água sólida', en: 'twin blades carved from solid water' },
+    { pt: 'um tambor de guerra que invoca chuva', en: 'a rain-summoning war drum' },
+    { pt: 'manoplas incrustadas de coral', en: 'coral-encrusted gauntlets' },
+    { pt: 'um redemoinho preso na palma da mão', en: 'a whirlpool bound to its palm' },
+    { pt: 'canhões gêmeos movidos a vapor', en: 'steam-vented dual cannons' },
+  ],
+  fogo: [
+    { pt: 'correntes de chamas vivas', en: 'living flame chains' },
+    { pt: 'um martelo de guerra vulcânico', en: 'a volcanic warhammer' },
+    { pt: 'lâminas gêmeas de brasa', en: 'twin ember blades' },
+    { pt: 'uma lança de fogo-fênix', en: 'a phoenix-fire lance' },
+    { pt: 'manoplas em fusão que nunca esfriam', en: 'molten gauntlets that never cool' },
+    { pt: 'uma lâmina em forma de disco solar', en: 'a solar disk blade' },
+    { pt: 'punhos de tempestade de cinzas', en: 'cinder-storm fists' },
+    { pt: 'um canhão de sopro de dragão', en: "a dragon's-breath cannon" },
+    { pt: 'chicotes de corrente em chamas', en: 'burning chain whips' },
+    { pt: 'um machado de batalha forjado em magma', en: 'a magma-forged battle axe' },
+  ],
+  terra: [
+    { pt: 'punhos que despedaçam com terremotos', en: 'quake-shattering fists' },
+    { pt: 'um martelo de guerra forjado em montanha', en: 'a mountain-forged warhammer' },
+    { pt: 'manoplas de pedra viva', en: 'living stone gauntlets' },
+    { pt: 'espinhos de cristal que irrompem do chão', en: 'crystal spikes bursting from the ground' },
+    { pt: 'um estilingue de arremesso de pedregulhos', en: 'a boulder-throwing sling' },
+    { pt: 'correntes de raízes de ferro', en: 'iron-root chains' },
+    { pt: 'um tambor de guerra sísmico', en: 'a seismic war drum' },
+    { pt: 'lâminas gêmeas de obsidiana', en: 'obsidian twin blades' },
+    { pt: 'anéis de pedra que dobram a gravidade', en: 'gravity-bending stone rings' },
+    { pt: 'garras com pontas de diamante', en: 'diamond-tipped claws' },
+  ],
+  ar: [
+    { pt: 'chicotes de corrente da tempestade', en: 'storm-chain whips' },
+    { pt: 'um arco forjado em relâmpago', en: 'a lightning-forged bow' },
+    { pt: 'lâminas gêmeas de ciclone', en: 'twin cyclone blades' },
+    { pt: 'um martelo de guerra de trovão', en: 'a thunderclap warhammer' },
+    { pt: 'adagas gêmeas de lâmina de vento', en: 'wind-blade twin daggers' },
+    { pt: 'um furacão engarrafado à cintura', en: 'a hurricane bottled at its side' },
+    { pt: 'manoplas carregadas de eletricidade estática', en: 'static-charged gauntlets' },
+    { pt: 'uma lança de tempestade', en: 'a tempest spear' },
+    { pt: 'punhos com força de vendaval', en: 'gale-force fists' },
+    { pt: 'um chicote de corrente eletrificado', en: 'an electrified chain whip' },
+  ],
+  sombra: [
+    { pt: 'correntes forjadas de sombra viva', en: 'chains forged from living shadow' },
+    { pt: 'uma foice tocada pelo vazio', en: 'a void-touched scythe' },
+    { pt: 'adagas gêmeas tecidas de maldição', en: 'curse-woven twin daggers' },
+    { pt: 'uma lanterna de pesadelos', en: 'a nightmare lantern' },
+    { pt: 'garras forjadas em eclipse', en: 'eclipse-forged claws' },
+    { pt: 'um cajado que suga almas', en: 'a soul-siphoning staff' },
+    { pt: 'tentáculos de sombra viva', en: 'living shadow tendrils' },
+    { pt: 'uma lâmina de noite sem lua', en: 'a moonless-night blade' },
+    { pt: 'chicotes de corrente fantasma', en: 'phantom chain whips' },
+    { pt: 'uma foice presa a um espírito', en: 'a wraith-bound sickle' },
+  ],
+  luz: [
+    { pt: 'correntes forjadas em luz solar', en: 'sunlight-forged chains' },
+    { pt: 'uma lança radiante', en: 'a radiant lance' },
+    { pt: 'lâminas gêmeas forjadas em estrelas', en: 'twin star-forged blades' },
+    { pt: 'um escudo-lâmina em forma de auréola', en: 'a halo-shaped blade-shield' },
+    { pt: 'adagas gêmeas talhadas em prisma', en: 'prism-cut twin daggers' },
+    { pt: 'um martelo de guerra do amanhecer', en: 'a dawnbreaker warhammer' },
+    { pt: 'chicotes de corrente sagrados', en: 'holy chain whips' },
+    { pt: 'um arco de luz de cometa', en: 'a comet-light bow' },
+    { pt: 'manoplas de fogo solar', en: 'sunfire gauntlets' },
+    { pt: 'um florete celestial', en: 'a celestial rapier' },
+  ],
+  planta: [
+    { pt: 'correntes de vinhas espinhosas envoltas em chamas', en: 'thorned vine chains wrapped in flame' },
+    { pt: 'chicotes de raízes vivas', en: 'living root whips' },
+    { pt: 'um martelo de guerra florescente', en: 'a blooming warhammer' },
+    { pt: 'adagas gêmeas de nuvem de esporos', en: 'spore-cloud twin daggers' },
+    { pt: 'um escudo de flor carnívora', en: 'a carnivorous-flower shield' },
+    { pt: 'manoplas envoltas em espinhos', en: 'bramble-wrapped gauntlets' },
+    { pt: 'um canhão lançador de sementes', en: 'a seed-launching cannon' },
+    { pt: 'lâminas gêmeas envoltas em hera', en: 'ivy-wrapped twin blades' },
+    { pt: 'um cajado de batalha de mandrágora', en: 'a mandrake battle staff' },
+    { pt: 'um chicote de corrente com espinhos venenosos', en: 'a poison-thorn chain whip' },
+  ],
+  industrial: [
+    { pt: 'chicotes mecânicos movidos a corrente', en: 'chain-driven mechanical whips' },
+    { pt: 'um martelo de guerra movido a pistão', en: 'a piston-powered warhammer' },
+    { pt: 'lâminas gêmeas de serra circular', en: 'twin buzzsaw blades' },
+    { pt: 'um canhão de rebites', en: 'a rivet-gun cannon' },
+    { pt: 'manoplas eletromagnéticas', en: 'electro-magnetic gauntlets' },
+    { pt: 'uma lança movida a vapor', en: 'a steam-powered lance' },
+    { pt: 'um mangual movido a engrenagens', en: 'a gear-driven flail' },
+    { pt: 'uma lâmina cortadora a plasma', en: 'a plasma-cutter blade' },
+    { pt: 'uma manopla-foguete', en: 'a rocket-fist gauntlet' },
+    { pt: 'chicotes de corrente cromados', en: 'chrome chain whips' },
+  ],
 };
+
+/** Efeito final ("para ___"), marcado por afinidade de ALINHAMENTO — a mesma
+ *  função tem sabores diferentes conforme o tipo (ex.: suporte Vírus cura E
+ *  pune; suporte Vacina cura com compaixão pura). */
+interface AlignedEffect extends LText { alignments: AlignmentId[] }
+
+const ROLE_EFFECTS: Record<RoleId, AlignedEffect[]> = {
+  suporte: [
+    { pt: 'curar aliados enquanto pune quem os ameaça', en: 'heal allies while punishing those who threaten them', alignments: ['poder'] },
+    { pt: 'sarar feridas e desencadear retribuição sobre os responsáveis', en: 'mend wounds and unleash retribution on those responsible', alignments: ['poder'] },
+    { pt: 'sarar feridas e restaurar o equilíbrio no campo de batalha', en: 'mend wounds and restore balance to the battlefield', alignments: ['harmonia'] },
+    { pt: 'canalizar uma energia calma que acalma o coração de cada aliado', en: "channel calm energy that steadies every ally's heart", alignments: ['harmonia'] },
+    { pt: 'curar aliados e protegê-los com cuidado incondicional', en: 'heal allies and shield them with unconditional care', alignments: ['benevolencia'] },
+    { pt: 'sarar cada ferida com compaixão radiante e altruísta', en: 'mend every wound with selfless, radiant compassion', alignments: ['benevolencia'] },
+  ],
+  tanque: [
+    { pt: 'esmagar qualquer um tolo o bastante para romper seu muro', en: 'crush anything foolish enough to breach its wall', alignments: ['poder'] },
+    { pt: 'punir todo atacante que ousar se aproximar', en: 'punish every attacker who dares to get close', alignments: ['poder'] },
+    { pt: 'absorver com calma cada golpe destinado a seus aliados', en: 'calmly absorb every blow meant for its allies', alignments: ['harmonia'] },
+    { pt: 'segurar a linha de frente com resolução disciplinada e inabalável', en: 'hold the line with unshakable, disciplined resolve', alignments: ['harmonia'] },
+    { pt: 'proteger os inocentes de qualquer mal, custe o que custar', en: 'shield the innocent from any harm, whatever the cost', alignments: ['benevolencia'] },
+    { pt: 'se colocar entre o perigo e quem não pode se defender', en: 'stand between danger and those who cannot defend themselves', alignments: ['benevolencia'] },
+  ],
+  fisico: [
+    { pt: 'esmagar inimigos com força bruta e implacável', en: 'crush enemies with brute, merciless force', alignments: ['poder'] },
+    { pt: 'deixar um rastro de inimigos despedaçados por onde passa', en: 'leave a trail of shattered foes in its wake', alignments: ['poder'] },
+    { pt: 'golpear com maestria marcial precisa e disciplinada', en: 'strike with precise, disciplined martial mastery', alignments: ['harmonia'] },
+    { pt: 'superar rivais através de técnica perfeita, não fúria', en: 'overcome rivals through perfect technique, not rage', alignments: ['harmonia'] },
+    { pt: 'defender os fracos com força justa e imparável', en: 'defend the weak with righteous, unstoppable strength', alignments: ['benevolencia'] },
+    { pt: 'lutar só para proteger quem não pode lutar', en: 'fight only to protect those who cannot fight back', alignments: ['benevolencia'] },
+  ],
+  magico: [
+    { pt: 'torcer o destino e dobrar a realidade a uma vontade implacável', en: 'twist fate and bend reality to a ruthless will', alignments: ['poder'] },
+    { pt: 'desfazer inimigos com magia proibida e impiedosa', en: 'unravel enemies with forbidden, merciless magic', alignments: ['poder'] },
+    { pt: 'manipular a própria realidade com precisão calma e calculada', en: 'manipulate reality itself with calm, calculated precision', alignments: ['harmonia'] },
+    { pt: 'dobrar as leis da natureza rumo ao equilíbrio perfeito', en: 'bend the laws of nature toward perfect balance', alignments: ['harmonia'] },
+    { pt: 'tecer magia protetora que escuda os inocentes', en: 'weave protective magic that shields the innocent', alignments: ['benevolencia'] },
+    { pt: 'curar e elevar os outros através de magia sagrada e radiante', en: 'heal and uplift others through radiant, sacred magic', alignments: ['benevolencia'] },
+  ],
+  alcance: [
+    { pt: 'caçar toda ameaça sem hesitação ou piedade', en: 'hunt down every threat without hesitation or mercy', alignments: ['poder'] },
+    { pt: 'atirar primeiro e não deixar nenhum alvo de pé', en: 'strike first and leave no target standing', alignments: ['poder'] },
+    { pt: 'atacar inimigos de distâncias impossíveis com precisão serena', en: 'strike foes from impossible distances with calm precision', alignments: ['harmonia'] },
+    { pt: 'observar, esperar e eliminar ameaças no momento perfeito', en: 'observe, wait, and eliminate threats with perfect timing', alignments: ['harmonia'] },
+    { pt: 'proteger aliados atacando o perigo antes que ele chegue', en: 'protect allies by striking danger before it arrives', alignments: ['benevolencia'] },
+    { pt: 'vigiar seus companheiros à distância, guardando cada passo', en: "watch over its companions from afar, guarding every step", alignments: ['benevolencia'] },
+  ],
+};
+
+/** Escolhe pelo alinhamento (com fallback pro pool inteiro se não achar). */
+function pickAligned<T extends { alignments: AlignmentId[] }>(
+  rng: () => number, pool: T[], alignment: AlignmentId,
+): T {
+  const matches = pool.filter(p => p.alignments.includes(alignment));
+  return pick(rng, matches.length > 0 ? matches : pool);
+}
 
 // ----- Bloco TIPO (visual): nem todo Poder é demoníaco, mas sempre feroz;
 //       Data sempre equilibrado; Vacina sempre nobre. ~24 opções cada.
@@ -1445,7 +1660,12 @@ function composeSpritePrompt(args: {
     `extreme low resolution, blocky pixels, flat ${args.colorDesc} colors with ${args.accent} accents, ` +
     `no black outlines, no shading, no anti-aliasing, solid black background, ` +
     `vintage Tamagotchi or Digimon V-pet aesthetic. ${args.levelBlock}. ` +
-    `${args.typeLook}, ${args.elementLook}, ${args.biomeLook}.`
+    `${args.typeLook}, ${args.elementLook}, ${args.biomeLook}. ` +
+    // Cada prompt é gerado de forma INDEPENDENTE (a IA não vê os outros
+    // estágios) — por isso repetimos o conceito/paleta/traços VERBATIM em
+    // todos os 11 prompts e reforçamos explicitamente que é a mesma espécie.
+    `This exact character design, color palette and defining features must ` +
+    `stay recognizable — this is one evolution stage of a single fixed species.`
   );
 }
 
@@ -2038,16 +2258,24 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // ----- BLOCOS DO PROMPT -----
   // Cor base (paleta variada do pool, sem "color palette").
   const colorDesc = palette.replace(/\s*color palette\s*$/i, '');
-  // Bloco CONCEITO (≤6 palavras) — sintetizado do perfil; a descrição livre
-  // do pet SUBSTITUI o conceito (não soma).
-  const baseNoun = fusionA.en.split(/[\s-]+/).pop() ?? 'creature';
-  const conceptWord1 = pick(rng, TYPE_CONCEPT_WORDS[dominantAlignment]);
-  const conceptWord2 = pick(rng, ELEMENT_CONCEPT_WORDS[dominantElement]);
-  const synthesizedConcept = `a ${conceptWord1} ${conceptWord2} ${baseNoun}`;
-  const petConcept = input.petDescription?.trim()
-    ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 80)
+  // Bloco CONCEITO — rico: "um(a) <bicho> humanoide <arquétipo>, que empunha
+  // <poder>, para <efeito>". Escolhido UMA vez (constante nos 11 prompts —
+  // é a identidade fixa da espécie). A descrição livre do pet SUBSTITUI esse
+  // bloco inteiro (não soma).
+  const conceptArchetype = pick(rng, ROLE_ARCHETYPES[dominantRole]);
+  const conceptPower = pick(rng, ELEMENT_POWERS[dominantElement]);
+  const conceptEffect = pickAligned(rng, ROLE_EFFECTS[dominantRole], dominantAlignment);
+  const richConceptEn = `a humanoid ${fusionA.en} ${conceptArchetype.en}, wielding ${conceptPower.en}, to ${conceptEffect.en}`;
+  const richConceptPt = `um(a) ${fusionA.pt} humanoide na forma de ${conceptArchetype.pt}, que empunha ${conceptPower.pt}, para ${conceptEffect.pt}`;
+  const petConceptRaw = input.petDescription?.trim()
+    ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)
     : null;
-  const spriteConcept = petConcept ?? synthesizedConcept;
+  const spriteConcept = petConceptRaw ?? richConceptEn;
+  // Bio: descrição breve e legível da criatura (não some no prompt, é exibida
+  // na página/exportação). Se o dono descreveu o pet, essa descrição vale.
+  const bio: LText = petConceptRaw
+    ? { pt: petConceptRaw, en: petConceptRaw }
+    : { pt: richConceptPt, en: richConceptEn };
   // Blocos ELEMENTO e BIOMA — constantes (identidade da espécie), 1 sorteio.
   const elementLook = pick(rng, ELEMENT_LOOK[dominantElement]);
   const biomeLook = pick(rng, BIOME_LOOK[dominantRealm]);
@@ -2187,6 +2415,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     creature: {
       baseName,
       concept,
+      bio,
       fusion: { a: { pt: fusionA.pt, en: fusionA.en }, b: { pt: fusionB.pt, en: fusionB.en } },
       stages,
     },

@@ -198,19 +198,33 @@ describe('generateOracle', () => {
       expect(s.imagePrompt).toContain('no anti-aliasing');
       expect(s.imagePrompt).toContain('solid black background');
       expect(s.imagePrompt).toContain('vintage Tamagotchi or Digimon V-pet aesthetic');
-      // Bloco conceito no slot do subject (super curto, ≤6 palavras)
+      // Bloco conceito no slot do subject: agora é rico (arquétipo+poder+efeito)
       const conceptMatch = s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/);
       expect(conceptMatch).not.toBeNull();
-      expect(conceptMatch![1].split(/\s+/).length).toBeLessThanOrEqual(6);
+      expect(conceptMatch![1].length).toBeGreaterThan(20);
+      // Cláusula de consistência: prompts são independentes (a IA não vê os
+      // outros estágios), então cada um precisa reforçar isso explicitamente
+      expect(s.imagePrompt).toContain('single fixed species');
     }
   });
 
-  it('conceito é uma frase curta (≤6 palavras) sintetizada do perfil', () => {
+  it('conceito é rico (arquétipo humanoide + poder + efeito) e constante entre estágios', () => {
     const r = generateOracle(INPUT, 42);
     // Mesmo conceito em todos os estágios (identidade da espécie)
     const concepts = r.creature.stages.map(s => s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/)![1]);
     expect(new Set(concepts).size).toBe(1);
-    expect(concepts[0].split(/\s+/).length).toBeLessThanOrEqual(6);
+    const concept = concepts[0];
+    expect(concept.startsWith('a humanoid ')).toBe(true);
+    expect(concept).toContain('wielding');
+    expect(concept).toContain(', to ');
+    expect(concept.split(/\s+/).length).toBeGreaterThan(10); // bem mais rico que 6 palavras
+  });
+
+  it('creature.bio traz uma descrição narrativa breve e legível', () => {
+    const r = generateOracle(INPUT, 42);
+    expect(r.creature.bio.pt.length).toBeGreaterThan(20);
+    expect(r.creature.bio.en.length).toBeGreaterThan(20);
+    expect(r.creature.bio.en).toContain('wielding');
   });
 
   it('formas de evolução vêm do pool sem repetir entre as 9 evoluções', () => {
@@ -367,8 +381,10 @@ describe('generateOracle', () => {
     // A descrição do pet SUBSTITUI o conceito (no slot do subject) em TODOS
     for (const s of r.creature.stages) {
       const concept = s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/)![1];
-      expect(concept).toBe('um lobo de gelo protetor, calmo, com olhos azuis'.slice(0, 80));
+      expect(concept).toBe('um lobo de gelo protetor, calmo, com olhos azuis'.slice(0, 200));
     }
+    // A bio também vira a descrição literal do dono (não a narrativa gerada)
+    expect(r.creature.bio.pt).toBe('um lobo de gelo protetor, calmo, com olhos azuis');
   });
 
   it('horóscopo NÃO aparece simbolicamente na criatura (só pontua)', () => {
