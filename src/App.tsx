@@ -45,6 +45,7 @@ const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ defau
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ActivitiesPage = lazy(() => import('./components/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
 const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
+const SoulmonOnboarding = lazy(() => import('./components/SoulmonOnboarding').then(m => ({ default: m.SoulmonOnboarding })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
@@ -1370,9 +1371,9 @@ export default function App() {
     }
   };
 
-  // Show onboarding if not completed
+  // Show onboarding if not completed — Soulmon: quiz da alma no lugar do ovo
   if (!hasCompletedOnboarding) {
-    return <Suspense fallback={null}><OnboardingScreen onComplete={handleCompleteOnboarding} /></Suspense>;
+    return <Suspense fallback={null}><SoulmonOnboarding onComplete={handleCompleteOnboarding} /></Suspense>;
   }
 
   return (
