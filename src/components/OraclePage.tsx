@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { PixelizerCard } from './PixelizerCard';
+import { generateAllSprites } from '../utils/spriteGen';
 import {
   generateOracle, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
   ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER, ORACLE_QUESTIONS,
@@ -147,6 +148,38 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
       .map(s => `## ${s.name} (${L(s.stageName)})\n${s.imagePrompt}`)
       .join('\n\n');
     copyText(`${header}\n${all}`, isPt ? 'Todos os prompts copiados!' : 'All prompts copied!');
+  };
+
+  // --- Geração automática das imagens (via IA + Pixelador) ---
+  const [genSprites, setGenSprites] = useState<Record<string, string>>({});
+  const [genBusy, setGenBusy] = useState(false);
+  const [genProgress, setGenProgress] = useState({ done: 0, total: 0 });
+
+  const stageKey = (s: OracleResult['creature']['stages'][number]) => `${s.stage}-${s.branch ?? 'base'}`;
+
+  const handleGenerateImages = async () => {
+    if (!creature || genBusy) return;
+    setGenBusy(true);
+    setGenSprites({});
+    setGenProgress({ done: 0, total: creature.creature.stages.length });
+    const stages = creature.creature.stages.map(s => ({ key: stageKey(s), prompt: s.imagePrompt }));
+    const { sprites, errors } = await generateAllSprites(stages, {
+      onProgress: (done, total) => setGenProgress({ done, total }),
+    });
+    setGenSprites(Object.fromEntries(sprites.map(s => [s.key, s.sprite])));
+    setGenBusy(false);
+    if (errors.length === stages.length) {
+      const first = errors[0]?.message || '';
+      toast.error(
+        /not configured|503/.test(first)
+          ? (isPt ? 'Geração de imagem ainda não configurada no servidor.' : 'Image generation not configured on the server yet.')
+          : (isPt ? 'Falha ao gerar imagens.' : 'Failed to generate images.'),
+      );
+    } else if (errors.length > 0) {
+      toast.warning(isPt ? `${errors.length} imagem(ns) falharam.` : `${errors.length} image(s) failed.`);
+    } else {
+      toast.success(isPt ? 'Imagens geradas!' : 'Images generated!');
+    }
   };
 
   // --- estilos base (inline p/ cores críticas; classes fora do index.css não aplicam)
@@ -681,11 +714,23 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
 
           {/* Criatura */}
           <div className={cardCls}>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
               <h3 className={titleCls}>👾 {creature.creature.baseName}</h3>
-              <button onClick={copyAllPrompts} className={smallBtnCls} style={{ ...mono, ...smallBtnStyle }}>
-                📋 {isPt ? 'Copiar todos os prompts' : 'Copy all prompts'}
-              </button>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={handleGenerateImages}
+                  disabled={genBusy}
+                  className={smallBtnCls}
+                  style={{ ...mono, ...smallBtnStyle, opacity: genBusy ? 0.5 : 1 }}
+                >
+                  {genBusy
+                    ? `⏳ ${genProgress.done}/${genProgress.total}`
+                    : `🎨 ${isPt ? 'Gerar imagens' : 'Generate images'}`}
+                </button>
+                <button onClick={copyAllPrompts} className={smallBtnCls} style={{ ...mono, ...smallBtnStyle }}>
+                  📋 {isPt ? 'Prompts' : 'Prompts'}
+                </button>
+              </div>
             </div>
             <p className={`text-xs mb-1 ${mutedCls}`}>{L(creature.creature.concept)}</p>
             <p className={`text-xs mb-2 ${titleCls}`} style={{ fontStyle: 'italic' }}>
@@ -702,19 +747,28 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                   className="rounded-lg p-2"
                   style={{ border: isGlitch ? '1px dashed #00ffff66' : '1px dashed #c0c0c0' }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`text-xs ${titleCls}`} style={{ fontWeight: 700 }}>
-                      {{ rookie: '🐤', champion: '🐉', perfeito: '⚡', mega: '🌟', ultra: '👑' }[stage.stage]}{' '}
-                      {L(stage.stageName)}
-                      {stage.branch && (
-                        <> {ATTRIBUTE_EMOJI[stage.branch]} {L(ALIGNMENT_INFO[stage.branch].attribute)}</>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs ${titleCls} flex items-center gap-2`} style={{ fontWeight: 700 }}>
+                      {genSprites[stageKey(stage)] && (
+                        <img
+                          src={genSprites[stageKey(stage)]}
+                          alt={stage.name}
+                          style={{ width: 40, height: 40, imageRendering: 'pixelated', borderRadius: 6, flexShrink: 0 }}
+                        />
                       )}
-                      {' — '}{stage.name}
+                      <span>
+                        {{ rookie: '🐤', champion: '🐉', perfeito: '⚡', mega: '🌟', ultra: '👑' }[stage.stage]}{' '}
+                        {L(stage.stageName)}
+                        {stage.branch && (
+                          <> {ATTRIBUTE_EMOJI[stage.branch]} {L(ALIGNMENT_INFO[stage.branch].attribute)}</>
+                        )}
+                        {' — '}{stage.name}
+                      </span>
                     </span>
                     <button
                       onClick={() => copyText(stage.imagePrompt, isPt ? 'Prompt copiado!' : 'Prompt copied!')}
                       className={smallBtnCls}
-                      style={{ ...mono, ...smallBtnStyle }}
+                      style={{ ...mono, ...smallBtnStyle, flexShrink: 0 }}
                     >
                       📋 Prompt
                     </button>
