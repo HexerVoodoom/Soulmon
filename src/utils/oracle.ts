@@ -149,8 +149,24 @@ export interface OracleResult {
      *  substitui esse texto quando informada. */
     bio: LText;
     fusion: { a: LText; b: LText };  // as duas bases fundidas no corpo
+    /** Família da criatura: 2 slots. O 1º é dominante; o 2º tem impacto menor
+     *  e, na maioria das vezes, repete a mesma família (mono). Raramente é uma
+     *  2ª família distinta e, mais raro ainda, um OBJETO (só no 2º slot). */
+    family: FamilyResult;
     stages: CreatureStage[];
   };
+}
+
+export interface FamilySlot {
+  family: LText;      // ex.: "Dinossauro"
+  subfamily: LText;   // ex.: "Ceratopsídeo"
+  noun: LText;        // criatura concreta p/ o conceito, ex.: "triceratops"
+  isObject: boolean;  // true quando o slot é um objeto (só possível no 2º)
+}
+export interface FamilyResult {
+  primary: FamilySlot;
+  secondary: FamilySlot;
+  mono: boolean;      // true = mesma família nos dois slots
 }
 
 // ---------------------------------------------------------------------------
@@ -941,84 +957,384 @@ function pickShape(
   return shape;
 }
 
-// Bestiário: bases corporais para a FUSÃO. Cada criatura funde DUAS bases
-// sorteadas de um pool filtrado por elemento dominante/secundário + reino —
-// o horóscopo entra só como eco sutil, nunca como corpo principal.
-interface CreatureBase { pt: string; en: string; elements: ElementId[]; realms: RealmId[] }
+// ---------------------------------------------------------------------------
+// FAMÍLIAS — taxonomia grande (família → subfamílias). 2 slots por criatura:
+// o 1º é dominante; o 2º tem impacto menor e quase sempre repete a mesma
+// família (mono). Raramente uma 2ª família distinta e, mais raro ainda, um
+// OBJETO (pool especial, SÓ no 2º slot). Cada subfamília tem um substantivo
+// concreto (`noun`) usado no conceito. Afinidade por elemento/reino orienta
+// o sorteio. Pool o maior possível.
+// ---------------------------------------------------------------------------
 
-const CREATURE_BASES: CreatureBase[] = [
-  { pt: 'axolote', en: 'axolotl', elements: ['agua'], realms: ['oceano', 'pantano'] },
-  { pt: 'polvo', en: 'octopus', elements: ['agua', 'sombra'], realms: ['oceano'] },
-  { pt: 'cavalo-marinho', en: 'seahorse', elements: ['agua'], realms: ['oceano'] },
-  { pt: 'tartaruga', en: 'turtle', elements: ['agua', 'terra'], realms: ['oceano', 'campina'] },
-  { pt: 'peixe-lanterna', en: 'anglerfish', elements: ['agua', 'sombra'], realms: ['oceano'] },
-  { pt: 'sapo', en: 'frog', elements: ['agua', 'planta'], realms: ['pantano'] },
-  { pt: 'crocodilo', en: 'crocodile', elements: ['agua'], realms: ['pantano'] },
-  { pt: 'planta carnívora', en: 'venus flytrap', elements: ['planta'], realms: ['pantano'] },
-  { pt: 'cogumelo', en: 'mushroom', elements: ['planta', 'sombra'], realms: ['pantano', 'floresta'] },
-  { pt: 'salamandra', en: 'salamander', elements: ['fogo'], realms: ['deserto', 'pantano'] },
-  { pt: 'raposa', en: 'fox', elements: ['fogo'], realms: ['floresta', 'campina'] },
-  { pt: 'leão', en: 'lion', elements: ['fogo', 'luz'], realms: ['deserto', 'campina'] },
-  { pt: 'escorpião', en: 'scorpion', elements: ['terra', 'sombra'], realms: ['deserto'] },
-  { pt: 'escaravelho', en: 'scarab beetle', elements: ['terra', 'industrial'], realms: ['deserto'] },
-  { pt: 'cacto', en: 'cactus', elements: ['planta'], realms: ['deserto'] },
-  { pt: 'víbora', en: 'viper', elements: ['sombra'], realms: ['deserto', 'pantano'] },
-  { pt: 'golem de pedra', en: 'stone golem', elements: ['terra'], realms: ['cavernas', 'picos'] },
-  { pt: 'morcego', en: 'bat', elements: ['sombra', 'ar'], realms: ['cavernas'] },
-  { pt: 'toupeira', en: 'mole', elements: ['terra'], realms: ['cavernas'] },
-  { pt: 'gárgula', en: 'gargoyle', elements: ['terra', 'sombra'], realms: ['cavernas', 'picos'] },
-  { pt: 'salamandra de cristal', en: 'crystal newt', elements: ['terra', 'luz'], realms: ['cavernas'] },
-  { pt: 'falcão', en: 'falcon', elements: ['ar'], realms: ['picos'] },
-  { pt: 'grifo', en: 'griffin', elements: ['ar', 'luz'], realms: ['picos'] },
-  { pt: 'wyvern', en: 'wyvern', elements: ['ar', 'fogo'], realms: ['picos'] },
-  { pt: 'carneiro-da-montanha', en: 'mountain ram', elements: ['terra'], realms: ['picos', 'gelo'] },
-  { pt: 'nuvem de tempestade', en: 'living storm cloud', elements: ['ar'], realms: ['picos'] },
-  { pt: 'coruja', en: 'owl', elements: ['ar', 'sombra'], realms: ['floresta'] },
-  { pt: 'cervo', en: 'deer', elements: ['luz', 'planta'], realms: ['floresta', 'campina'] },
-  { pt: 'lobo', en: 'wolf', elements: ['sombra'], realms: ['floresta', 'gelo'] },
-  { pt: 'ent (árvore anciã)', en: 'ancient tree ent', elements: ['planta', 'terra'], realms: ['floresta'] },
-  { pt: 'yeti', en: 'yeti', elements: ['agua', 'terra'], realms: ['gelo'] },
-  { pt: 'pinguim', en: 'penguin', elements: ['agua'], realms: ['gelo'] },
-  { pt: 'raposa-do-ártico', en: 'arctic fox', elements: ['luz', 'agua'], realms: ['gelo'] },
-  { pt: 'golem de gelo', en: 'ice golem', elements: ['agua', 'industrial'], realms: ['gelo'] },
-  { pt: 'coelho', en: 'rabbit', elements: ['luz'], realms: ['campina'] },
-  { pt: 'abelha', en: 'bumblebee', elements: ['ar', 'planta'], realms: ['campina'] },
-  { pt: 'borboleta', en: 'butterfly', elements: ['luz', 'ar'], realms: ['campina', 'akasha'] },
-  { pt: 'unicórnio', en: 'unicorn', elements: ['luz'], realms: ['campina', 'akasha'] },
-  { pt: 'fada', en: 'fairy', elements: ['luz', 'planta'], realms: ['akasha', 'floresta'] },
-  { pt: 'esfinge', en: 'sphinx', elements: ['luz', 'sombra'], realms: ['akasha', 'deserto'] },
-  { pt: 'fênix', en: 'phoenix', elements: ['fogo', 'luz'], realms: ['akasha', 'picos'] },
-  { pt: 'corvo', en: 'raven', elements: ['sombra'], realms: ['akasha', 'floresta'] },
-  { pt: 'quimera', en: 'chimera', elements: ['fogo', 'sombra'], realms: ['akasha', 'cavernas'] },
-  { pt: 'autômato', en: 'clockwork automaton', elements: ['industrial'], realms: ['cavernas', 'akasha'] },
-  { pt: 'besouro mecânico', en: 'mechanical beetle', elements: ['industrial'], realms: ['deserto', 'picos'] },
-  { pt: 'dínamo vivo', en: 'living dynamo', elements: ['industrial', 'ar'], realms: ['picos'] },
-  { pt: 'tubarão', en: 'shark', elements: ['agua'], realms: ['oceano'] },
-  { pt: 'enguia elétrica', en: 'electric eel', elements: ['agua', 'industrial'], realms: ['oceano', 'pantano'] },
-  { pt: 'caranguejo', en: 'crab', elements: ['agua', 'terra'], realms: ['oceano'] },
-  { pt: 'louva-a-deus', en: 'praying mantis', elements: ['planta'], realms: ['floresta', 'campina'] },
-  { pt: 'javali', en: 'wild boar', elements: ['terra'], realms: ['floresta'] },
-  { pt: 'texugo', en: 'badger', elements: ['terra'], realms: ['floresta', 'cavernas'] },
-  { pt: 'camaleão', en: 'chameleon', elements: ['planta', 'sombra'], realms: ['floresta', 'pantano'] },
-  { pt: 'gato selvagem', en: 'wildcat', elements: ['sombra', 'fogo'], realms: ['floresta', 'deserto'] },
-  { pt: 'águia', en: 'eagle', elements: ['ar', 'luz'], realms: ['picos'] },
-  { pt: 'mangusto', en: 'mongoose', elements: ['fogo'], realms: ['deserto', 'campina'] },
-  { pt: 'tatu', en: 'armadillo', elements: ['terra'], realms: ['deserto', 'campina'] },
-  { pt: 'alce', en: 'moose', elements: ['terra', 'planta'], realms: ['gelo', 'floresta'] },
-  { pt: 'foca', en: 'seal', elements: ['agua'], realms: ['gelo', 'oceano'] },
-  { pt: 'salamandra de neon', en: 'neon axolotl', elements: ['industrial', 'agua'], realms: ['akasha', 'oceano'] },
-  { pt: 'gênio de fumaça', en: 'smoke djinn', elements: ['sombra', 'ar'], realms: ['akasha', 'deserto'] },
-  { pt: 'carbúnculo', en: 'carbuncle', elements: ['luz', 'terra'], realms: ['akasha', 'cavernas'] },
-  { pt: 'ouriço', en: 'hedgehog', elements: ['terra', 'planta'], realms: ['campina', 'floresta'] },
-  // Pedidos comuns na descrição livre do pet — precisam existir p/ casar por nome
-  { pt: 'dragão', en: 'dragon', elements: ['fogo'], realms: ['picos', 'cavernas'] },
-  { pt: 'urso', en: 'bear', elements: ['terra'], realms: ['floresta', 'gelo'] },
-  { pt: 'gato', en: 'cat', elements: ['sombra'], realms: ['campina', 'akasha'] },
-  { pt: 'cachorro', en: 'dog', elements: ['luz'], realms: ['campina'] },
-  { pt: 'dinossauro', en: 'dinosaur', elements: ['terra', 'fogo'], realms: ['deserto', 'floresta'] },
-  { pt: 'macaco', en: 'monkey', elements: ['planta'], realms: ['floresta'] },
-  { pt: 'panda', en: 'panda', elements: ['planta', 'terra'], realms: ['floresta'] },
+interface Subfamily { pt: string; en: string; noun: LText }
+interface CreatureFamily {
+  id: string;
+  name: LText;
+  elements: ElementId[];
+  realms: RealmId[];
+  subs: Subfamily[];
+}
+const sf = (pt: string, en: string, nounPt: string, nounEn: string): Subfamily =>
+  ({ pt, en, noun: { pt: nounPt, en: nounEn } });
+
+const CREATURE_FAMILIES: CreatureFamily[] = [
+  // ---- Animais ----
+  { id: 'dinosaur', name: { pt: 'Dinossauro', en: 'Dinosaur' }, elements: ['terra', 'fogo'], realms: ['deserto', 'floresta', 'cavernas'], subs: [
+    sf('ceratopsídeo', 'ceratopsian', 'triceratops', 'triceratops'),
+    sf('terópode', 'theropod', 'tiranossauro', 'tyrannosaur'),
+    sf('saurópode', 'sauropod', 'braquiossauro', 'brachiosaur'),
+    sf('estegossauro', 'stegosaur', 'estegossauro', 'stegosaurus'),
+    sf('anquilossauro', 'ankylosaur', 'anquilossauro', 'ankylosaur'),
+    sf('pterossauro', 'pterosaur', 'pteranodonte', 'pteranodon'),
+  ]},
+  { id: 'bird', name: { pt: 'Ave', en: 'Bird' }, elements: ['ar', 'luz'], realms: ['picos', 'campina', 'floresta'], subs: [
+    sf('ave de rapina', 'bird of prey', 'águia', 'eagle'),
+    sf('corvídeo', 'corvid', 'corvo', 'raven'),
+    sf('coruja', 'owl', 'coruja', 'owl'),
+    sf('ave canora', 'songbird', 'pardal', 'sparrow'),
+    sf('ave aquática', 'waterfowl', 'cisne', 'swan'),
+    sf('ave ornamental', 'ornamental bird', 'pavão', 'peacock'),
+    sf('ratita', 'ratite', 'avestruz', 'ostrich'),
+  ]},
+  { id: 'reptile', name: { pt: 'Réptil', en: 'Reptile' }, elements: ['terra', 'sombra'], realms: ['deserto', 'pantano', 'cavernas'], subs: [
+    sf('serpente', 'serpent', 'cobra', 'cobra'),
+    sf('lagarto', 'lizard', 'lagarto', 'lizard'),
+    sf('crocodiliano', 'crocodilian', 'crocodilo', 'crocodile'),
+    sf('quelônio', 'chelonian', 'tartaruga', 'tortoise'),
+    sf('camaleão', 'chameleon', 'camaleão', 'chameleon'),
+    sf('varano', 'monitor', 'dragão-de-komodo', 'komodo dragon'),
+  ]},
+  { id: 'feline', name: { pt: 'Felino', en: 'Feline' }, elements: ['fogo', 'sombra'], realms: ['floresta', 'campina', 'deserto'], subs: [
+    sf('grande felino', 'big cat', 'leão', 'lion'),
+    sf('tigre', 'tiger', 'tigre', 'tiger'),
+    sf('pantera', 'panther', 'pantera', 'panther'),
+    sf('lince', 'lynx', 'lince', 'lynx'),
+    sf('felino doméstico', 'domestic cat', 'gato', 'housecat'),
+    sf('guepardo', 'cheetah', 'guepardo', 'cheetah'),
+  ]},
+  { id: 'canine', name: { pt: 'Canino', en: 'Canine' }, elements: ['sombra', 'luz'], realms: ['floresta', 'gelo', 'campina'], subs: [
+    sf('lobo', 'wolf', 'lobo', 'wolf'),
+    sf('raposa', 'fox', 'raposa', 'fox'),
+    sf('cão', 'hound', 'cão', 'hound'),
+    sf('chacal', 'jackal', 'chacal', 'jackal'),
+    sf('licaão', 'wild dog', 'mabeco', 'painted dog'),
+  ]},
+  { id: 'ursine', name: { pt: 'Urso', en: 'Bear' }, elements: ['terra'], realms: ['floresta', 'gelo'], subs: [
+    sf('urso pardo', 'brown bear', 'urso', 'bear'),
+    sf('urso polar', 'polar bear', 'urso polar', 'polar bear'),
+    sf('panda', 'panda', 'panda', 'panda'),
+  ]},
+  { id: 'rodent', name: { pt: 'Roedor', en: 'Rodent' }, elements: ['terra', 'planta'], realms: ['floresta', 'cavernas', 'campina'], subs: [
+    sf('camundongo', 'mouse', 'rato', 'mouse'),
+    sf('esquilo', 'squirrel', 'esquilo', 'squirrel'),
+    sf('castor', 'beaver', 'castor', 'beaver'),
+    sf('porco-espinho', 'porcupine', 'porco-espinho', 'porcupine'),
+    sf('capivara', 'capybara', 'capivara', 'capybara'),
+  ]},
+  { id: 'insect', name: { pt: 'Inseto', en: 'Insect' }, elements: ['planta', 'ar', 'industrial'], realms: ['floresta', 'campina', 'pantano'], subs: [
+    sf('besouro', 'beetle', 'besouro', 'beetle'),
+    sf('louva-a-deus', 'mantis', 'louva-a-deus', 'mantis'),
+    sf('borboleta', 'butterfly', 'borboleta', 'butterfly'),
+    sf('abelha', 'bee', 'abelha', 'bee'),
+    sf('libélula', 'dragonfly', 'libélula', 'dragonfly'),
+    sf('formiga', 'ant', 'formiga', 'ant'),
+    sf('vaga-lume', 'firefly', 'vaga-lume', 'firefly'),
+  ]},
+  { id: 'arachnid', name: { pt: 'Aracnídeo', en: 'Arachnid' }, elements: ['sombra', 'terra'], realms: ['cavernas', 'deserto', 'pantano'], subs: [
+    sf('aranha', 'spider', 'aranha', 'spider'),
+    sf('escorpião', 'scorpion', 'escorpião', 'scorpion'),
+    sf('tarântula', 'tarantula', 'tarântula', 'tarantula'),
+  ]},
+  { id: 'fish', name: { pt: 'Peixe', en: 'Fish' }, elements: ['agua'], realms: ['oceano', 'pantano', 'gelo'], subs: [
+    sf('tubarão', 'shark', 'tubarão', 'shark'),
+    sf('peixe-lanterna', 'anglerfish', 'peixe-lanterna', 'anglerfish'),
+    sf('carpa', 'koi', 'carpa', 'koi'),
+    sf('baiacu', 'pufferfish', 'baiacu', 'pufferfish'),
+    sf('enguia', 'eel', 'enguia', 'eel'),
+    sf('peixe-espada', 'swordfish', 'peixe-espada', 'swordfish'),
+  ]},
+  { id: 'cephalopod', name: { pt: 'Cefalópode', en: 'Cephalopod' }, elements: ['agua', 'sombra'], realms: ['oceano'], subs: [
+    sf('polvo', 'octopus', 'polvo', 'octopus'),
+    sf('lula', 'squid', 'lula', 'squid'),
+    sf('náutilo', 'nautilus', 'náutilo', 'nautilus'),
+  ]},
+  { id: 'crustacean', name: { pt: 'Crustáceo', en: 'Crustacean' }, elements: ['agua', 'terra'], realms: ['oceano', 'pantano'], subs: [
+    sf('caranguejo', 'crab', 'caranguejo', 'crab'),
+    sf('lagosta', 'lobster', 'lagosta', 'lobster'),
+    sf('camarão-boxeador', 'mantis shrimp', 'camarão-boxeador', 'mantis shrimp'),
+  ]},
+  { id: 'amphibian', name: { pt: 'Anfíbio', en: 'Amphibian' }, elements: ['agua', 'planta'], realms: ['pantano', 'floresta'], subs: [
+    sf('sapo', 'frog', 'sapo', 'frog'),
+    sf('salamandra', 'salamander', 'salamandra', 'salamander'),
+    sf('axolote', 'axolotl', 'axolote', 'axolotl'),
+  ]},
+  { id: 'cetacean', name: { pt: 'Cetáceo', en: 'Cetacean' }, elements: ['agua'], realms: ['oceano', 'gelo'], subs: [
+    sf('baleia', 'whale', 'baleia', 'whale'),
+    sf('golfinho', 'dolphin', 'golfinho', 'dolphin'),
+    sf('orca', 'orca', 'orca', 'orca'),
+  ]},
+  { id: 'equine', name: { pt: 'Equino', en: 'Equine' }, elements: ['ar', 'terra'], realms: ['campina', 'picos'], subs: [
+    sf('cavalo', 'horse', 'cavalo', 'horse'),
+    sf('zebra', 'zebra', 'zebra', 'zebra'),
+  ]},
+  { id: 'bovine', name: { pt: 'Bovino', en: 'Bovine' }, elements: ['terra', 'fogo'], realms: ['campina', 'picos'], subs: [
+    sf('touro', 'bull', 'touro', 'bull'),
+    sf('bisão', 'bison', 'bisão', 'bison'),
+    sf('carneiro', 'ram', 'carneiro', 'ram'),
+  ]},
+  { id: 'deer', name: { pt: 'Cervídeo', en: 'Deer' }, elements: ['planta', 'luz'], realms: ['floresta', 'gelo', 'campina'], subs: [
+    sf('veado', 'stag', 'veado', 'stag'),
+    sf('alce', 'moose', 'alce', 'moose'),
+    sf('rena', 'reindeer', 'rena', 'reindeer'),
+  ]},
+  { id: 'primate', name: { pt: 'Primata', en: 'Primate' }, elements: ['planta', 'terra'], realms: ['floresta'], subs: [
+    sf('macaco', 'monkey', 'macaco', 'monkey'),
+    sf('gorila', 'ape', 'gorila', 'gorilla'),
+    sf('lêmure', 'lemur', 'lêmure', 'lemur'),
+  ]},
+  { id: 'mustelid', name: { pt: 'Mustelídeo', en: 'Mustelid' }, elements: ['agua', 'terra'], realms: ['floresta', 'oceano', 'cavernas'], subs: [
+    sf('lontra', 'otter', 'lontra', 'otter'),
+    sf('texugo', 'badger', 'texugo', 'badger'),
+    sf('furão', 'ferret', 'furão', 'ferret'),
+  ]},
+  { id: 'proboscidean', name: { pt: 'Proboscídeo', en: 'Elephantine' }, elements: ['terra'], realms: ['campina', 'gelo', 'deserto'], subs: [
+    sf('elefante', 'elephant', 'elefante', 'elephant'),
+    sf('mamute', 'mammoth', 'mamute', 'mammoth'),
+  ]},
+  { id: 'chiroptera', name: { pt: 'Morcego', en: 'Bat' }, elements: ['sombra', 'ar'], realms: ['cavernas'], subs: [
+    sf('morcego frugívoro', 'fruit bat', 'morcego', 'bat'),
+    sf('morcego vampiro', 'vampire bat', 'morcego-vampiro', 'vampire bat'),
+  ]},
+  // ---- Plantas ----
+  { id: 'flower', name: { pt: 'Flor', en: 'Flower' }, elements: ['planta', 'luz'], realms: ['campina', 'floresta', 'akasha'], subs: [
+    sf('rosa', 'rose', 'rosa', 'rose'),
+    sf('girassol', 'sunflower', 'girassol', 'sunflower'),
+    sf('orquídea', 'orchid', 'orquídea', 'orchid'),
+    sf('lótus', 'lotus', 'lótus', 'lotus'),
+  ]},
+  { id: 'tree', name: { pt: 'Árvore', en: 'Tree' }, elements: ['planta', 'terra'], realms: ['floresta', 'campina'], subs: [
+    sf('carvalho', 'oak', 'carvalho', 'oak'),
+    sf('salgueiro', 'willow', 'salgueiro', 'willow'),
+    sf('pinheiro', 'pine', 'pinheiro', 'pine'),
+    sf('bonsai', 'bonsai', 'bonsai', 'bonsai'),
+  ]},
+  { id: 'fungus', name: { pt: 'Fungo', en: 'Fungus' }, elements: ['planta', 'sombra'], realms: ['pantano', 'floresta', 'cavernas'], subs: [
+    sf('cogumelo', 'mushroom', 'cogumelo', 'mushroom'),
+    sf('chapéu-de-sapo', 'toadstool', 'chapéu-de-sapo', 'toadstool'),
+    sf('mofo luminoso', 'glowcap', 'cogumelo luminoso', 'glowcap mushroom'),
+  ]},
+  { id: 'carniplant', name: { pt: 'Planta Carnívora', en: 'Carnivorous Plant' }, elements: ['planta'], realms: ['pantano', 'floresta'], subs: [
+    sf('dioneia', 'venus flytrap', 'dioneia', 'venus flytrap'),
+    sf('planta-jarro', 'pitcher plant', 'planta-jarro', 'pitcher plant'),
+  ]},
+  { id: 'desertplant', name: { pt: 'Planta do Deserto', en: 'Desert Plant' }, elements: ['planta', 'terra'], realms: ['deserto'], subs: [
+    sf('cacto', 'cactus', 'cacto', 'cactus'),
+    sf('suculenta', 'succulent', 'suculenta', 'succulent'),
+  ]},
+  { id: 'vine', name: { pt: 'Trepadeira', en: 'Vine' }, elements: ['planta'], realms: ['floresta', 'pantano'], subs: [
+    sf('hera', 'ivy', 'hera', 'ivy'),
+    sf('mandrágora', 'mandrake', 'mandrágora', 'mandrake'),
+  ]},
+  { id: 'fruitgourd', name: { pt: 'Fruto', en: 'Fruit' }, elements: ['planta', 'luz'], realms: ['campina', 'floresta'], subs: [
+    sf('abóbora', 'pumpkin', 'abóbora', 'pumpkin'),
+    sf('pêssego', 'peach', 'pêssego', 'peach'),
+  ]},
+  // ---- Míticos ----
+  { id: 'dragon', name: { pt: 'Dragão', en: 'Dragon' }, elements: ['fogo', 'ar', 'sombra'], realms: ['picos', 'cavernas', 'akasha'], subs: [
+    sf('dragão ocidental', 'western dragon', 'dragão', 'dragon'),
+    sf('dragão oriental', 'eastern dragon', 'dragão-serpente', 'lung dragon'),
+    sf('wyvern', 'wyvern', 'wyvern', 'wyvern'),
+    sf('hidra', 'hydra', 'hidra', 'hydra'),
+    sf('draconete', 'drake', 'draconete', 'drake'),
+  ]},
+  { id: 'fae', name: { pt: 'Feérico', en: 'Fae' }, elements: ['luz', 'planta', 'ar'], realms: ['akasha', 'campina', 'floresta'], subs: [
+    sf('fada', 'fairy', 'fada', 'fairy'),
+    sf('pixie', 'pixie', 'pixie', 'pixie'),
+    sf('silfo', 'sylph', 'silfo', 'sylph'),
+  ]},
+  { id: 'undead', name: { pt: 'Morto-vivo', en: 'Undead' }, elements: ['sombra'], realms: ['cavernas', 'pantano', 'akasha'], subs: [
+    sf('esqueleto', 'skeleton', 'esqueleto', 'skeleton'),
+    sf('fantasma', 'ghost', 'fantasma', 'ghost'),
+    sf('espectro', 'wraith', 'espectro', 'wraith'),
+    sf('lich', 'lich', 'lich', 'lich'),
+  ]},
+  { id: 'fiend', name: { pt: 'Demônio', en: 'Fiend' }, elements: ['fogo', 'sombra'], realms: ['cavernas', 'akasha', 'deserto'], subs: [
+    sf('diabrete', 'imp', 'diabrete', 'imp'),
+    sf('demônio', 'demon', 'demônio', 'demon'),
+    sf('íncubo', 'incubus', 'íncubo', 'incubus'),
+  ]},
+  { id: 'celestial', name: { pt: 'Celestial', en: 'Celestial' }, elements: ['luz', 'ar'], realms: ['akasha', 'picos'], subs: [
+    sf('anjo', 'angel', 'anjo', 'angel'),
+    sf('serafim', 'seraph', 'serafim', 'seraph'),
+    sf('querubim', 'cherub', 'querubim', 'cherub'),
+  ]},
+  { id: 'chimeric', name: { pt: 'Quimérico', en: 'Chimeric' }, elements: ['fogo', 'terra', 'ar'], realms: ['akasha', 'deserto', 'picos'], subs: [
+    sf('quimera', 'chimera', 'quimera', 'chimera'),
+    sf('grifo', 'griffin', 'grifo', 'griffin'),
+    sf('mantícora', 'manticore', 'mantícora', 'manticore'),
+    sf('esfinge', 'sphinx', 'esfinge', 'sphinx'),
+  ]},
+  { id: 'aquamyth', name: { pt: 'Mito Aquático', en: 'Aquatic Myth' }, elements: ['agua', 'sombra'], realms: ['oceano', 'pantano', 'akasha'], subs: [
+    sf('sereia', 'mermaid', 'sereia', 'mermaid'),
+    sf('serpente marinha', 'sea serpent', 'serpente marinha', 'sea serpent'),
+    sf('kraken', 'kraken', 'kraken', 'kraken'),
+    sf('leviatã', 'leviathan', 'leviatã', 'leviathan'),
+  ]},
+  { id: 'halfhuman', name: { pt: 'Meio-humano', en: 'Half-human' }, elements: ['terra', 'fogo', 'ar'], realms: ['floresta', 'campina', 'cavernas'], subs: [
+    sf('centauro', 'centaur', 'centauro', 'centaur'),
+    sf('sátiro', 'satyr', 'sátiro', 'satyr'),
+    sf('minotauro', 'minotaur', 'minotauro', 'minotaur'),
+    sf('harpia', 'harpy', 'harpia', 'harpy'),
+    sf('naga', 'naga', 'naga', 'naga'),
+    sf('lamia', 'lamia', 'lamia', 'lamia'),
+  ]},
+  { id: 'elemental', name: { pt: 'Elemental', en: 'Elemental' }, elements: ['fogo', 'agua', 'terra', 'ar'], realms: ['akasha', 'cavernas', 'picos'], subs: [
+    sf('golem', 'golem', 'golem', 'golem'),
+    sf('elemental', 'elemental', 'elemental', 'elemental'),
+    sf('fênix', 'phoenix', 'fênix', 'phoenix'),
+    sf('gênio', 'djinn', 'gênio', 'djinn'),
+  ]},
+  { id: 'unicornkin', name: { pt: 'Equino Mítico', en: 'Mythic Steed' }, elements: ['luz', 'ar'], realms: ['akasha', 'campina', 'picos'], subs: [
+    sf('unicórnio', 'unicorn', 'unicórnio', 'unicorn'),
+    sf('pégaso', 'pegasus', 'pégaso', 'pegasus'),
+    sf('quilin', 'kirin', 'quilin', 'kirin'),
+  ]},
+  { id: 'yokai', name: { pt: 'Yokai', en: 'Yokai' }, elements: ['sombra', 'fogo'], realms: ['akasha', 'floresta', 'pantano'], subs: [
+    sf('kitsune', 'kitsune', 'raposa de nove caudas', 'nine-tailed fox'),
+    sf('tengu', 'tengu', 'tengu', 'tengu'),
+    sf('oni', 'oni', 'oni', 'oni'),
+    sf('kappa', 'kappa', 'kappa', 'kappa'),
+  ]},
+  { id: 'giantkin', name: { pt: 'Gigante', en: 'Giantkin' }, elements: ['terra', 'fogo'], realms: ['picos', 'cavernas', 'gelo'], subs: [
+    sf('troll', 'troll', 'troll', 'troll'),
+    sf('ogro', 'ogre', 'ogro', 'ogre'),
+    sf('ciclope', 'cyclops', 'ciclope', 'cyclops'),
+    sf('golias', 'giant', 'gigante', 'giant'),
+  ]},
+  { id: 'goblinoid', name: { pt: 'Goblinoide', en: 'Goblinoid' }, elements: ['sombra', 'industrial'], realms: ['cavernas', 'pantano'], subs: [
+    sf('goblin', 'goblin', 'goblin', 'goblin'),
+    sf('kobold', 'kobold', 'kobold', 'kobold'),
+    sf('gremlin', 'gremlin', 'gremlin', 'gremlin'),
+  ]},
+  { id: 'lycan', name: { pt: 'Licantropo', en: 'Lycanthrope' }, elements: ['sombra', 'terra'], realms: ['floresta', 'gelo', 'cavernas'], subs: [
+    sf('lobisomem', 'werewolf', 'lobisomem', 'werewolf'),
+    sf('urso-guerreiro', 'werebear', 'urso-licantropo', 'werebear'),
+  ]},
+  { id: 'slime', name: { pt: 'Gosma', en: 'Slime' }, elements: ['agua', 'planta', 'sombra'], realms: ['pantano', 'cavernas', 'akasha'], subs: [
+    sf('slime', 'slime', 'slime', 'slime'),
+    sf('gelatina', 'ooze', 'gosma', 'ooze'),
+  ]},
+  { id: 'construct', name: { pt: 'Autômato', en: 'Construct' }, elements: ['industrial'], realms: ['cavernas', 'picos', 'akasha'], subs: [
+    sf('autômato', 'automaton', 'autômato', 'automaton'),
+    sf('golem mecânico', 'mech golem', 'golem mecânico', 'mech golem'),
+    sf('dínamo vivo', 'living dynamo', 'dínamo vivo', 'living dynamo'),
+  ]},
 ];
+
+// Pool ESPECIAL de OBJETOS — só pode aparecer no 2º slot de família e é raro.
+const FAMILY_OBJECTS: Subfamily[] = [
+  sf('lâmina', 'blade', 'espada', 'sword'),
+  sf('relojoaria', 'clockwork', 'relógio', 'clock'),
+  sf('luminária', 'lantern', 'lanterna', 'lantern'),
+  sf('grimório', 'tome', 'livro de feitiços', 'spellbook'),
+  sf('espelho', 'mirror', 'espelho', 'mirror'),
+  sf('sino', 'bell', 'sino', 'bell'),
+  sf('cálice', 'chalice', 'cálice', 'chalice'),
+  sf('coroa', 'crown', 'coroa', 'crown'),
+  sf('chave', 'key', 'chave', 'key'),
+  sf('bússola', 'compass', 'bússola', 'compass'),
+  sf('ampulheta', 'hourglass', 'ampulheta', 'hourglass'),
+  sf('bigorna', 'anvil', 'bigorna', 'anvil'),
+  sf('canhão', 'cannon', 'canhão', 'cannon'),
+  sf('tambor', 'drum', 'tambor', 'drum'),
+  sf('máscara', 'mask', 'máscara', 'mask'),
+  sf('escudo', 'shield', 'escudo', 'shield'),
+  sf('orbe', 'orb', 'orbe', 'orb'),
+  sf('engrenagem', 'gear', 'engrenagem', 'gear'),
+  sf('telescópio', 'telescope', 'telescópio', 'telescope'),
+  sf('guarda-chuva', 'umbrella', 'guarda-chuva', 'umbrella'),
+  sf('pipa', 'kite', 'pipa', 'kite'),
+  sf('caixa de música', 'music box', 'caixa de música', 'music box'),
+  sf('vela', 'candle', 'vela', 'candle'),
+  sf('peça de xadrez', 'chess piece', 'peça de xadrez', 'chess piece'),
+  sf('dado', 'die', 'dado', 'die'),
+  sf('moeda', 'coin', 'moeda', 'coin'),
+  sf('pergaminho', 'scroll', 'pergaminho', 'scroll'),
+  sf('pena de escrever', 'quill', 'pena', 'quill'),
+  sf('manopla', 'gauntlet', 'manopla', 'gauntlet'),
+  sf('elmo', 'helmet', 'elmo', 'helmet'),
+  sf('cajado', 'staff', 'cajado', 'staff'),
+  sf('varinha', 'wand', 'varinha', 'wand'),
+  sf('bola de cristal', 'crystal ball', 'bola de cristal', 'crystal ball'),
+  sf('bule', 'teapot', 'bule', 'teapot'),
+  sf('marionete', 'marionette', 'marionete', 'marionette'),
+  sf('lampião a vapor', 'steam lamp', 'lampião a vapor', 'steam lamp'),
+  sf('fonógrafo', 'phonograph', 'fonógrafo', 'phonograph'),
+  sf('âncora', 'anchor', 'âncora', 'anchor'),
+  sf('fechadura', 'lockbox', 'baú-fechadura', 'lockbox'),
+  sf('foguete', 'rocket', 'foguete', 'rocket'),
+];
+
+/** Constrói um FamilySlot a partir de uma família + subfamília. */
+function makeSlot(fam: CreatureFamily, sub: Subfamily): FamilySlot {
+  return { family: fam.name, subfamily: { pt: sub.pt, en: sub.en }, noun: sub.noun, isObject: false };
+}
+
+/**
+ * Seleciona as duas famílias. Regras:
+ *  - Slot 1 (dominante): família com afinidade ao elemento/reino, subfamília
+ *    sorteada. Descrição do pet citando um bicho tem prioridade.
+ *  - Slot 2 (impacto menor): ~65% MESMA família (mono), ~30% 2ª família
+ *    distinta, ~5% um OBJETO (pool especial, só aqui).
+ */
+function pickFamilies(
+  rng: () => number,
+  dominantElement: ElementId,
+  secondaryElement: ElementId | null,
+  dominantRealm: RealmId,
+  descText: string,
+): FamilyResult {
+  // Descrição do pet: procura família/subfamília citada pelo nome
+  const mentioned = descText
+    ? CREATURE_FAMILIES.flatMap(f => f.subs.filter(s =>
+        descText.includes(normalizeText(s.noun.en)) || descText.includes(normalizeText(s.noun.pt)) ||
+        descText.includes(normalizeText(f.name.en)) || descText.includes(normalizeText(f.name.pt)),
+      ).map(s => ({ f, s })))
+    : [];
+
+  const affinity = (f: CreatureFamily) =>
+    f.elements.includes(dominantElement) ||
+    (secondaryElement !== null && f.elements.includes(secondaryElement)) ||
+    f.realms.includes(dominantRealm);
+
+  const pool1 = CREATURE_FAMILIES.filter(affinity);
+  const fam1 = mentioned[0]?.f ?? pick(rng, pool1.length ? pool1 : CREATURE_FAMILIES);
+  const sub1 = mentioned[0]?.s ?? pick(rng, fam1.subs);
+  const primary = makeSlot(fam1, sub1);
+
+  // Slot 2
+  const roll = rng();
+  let secondary: FamilySlot;
+  let mono = false;
+  if (mentioned[1]) {
+    secondary = makeSlot(mentioned[1].f, mentioned[1].s);
+  } else if (roll < 0.65) {
+    // mono — mesma família E mesma subfamília (criatura única nos dois slots)
+    secondary = makeSlot(fam1, sub1);
+    mono = true;
+  } else if (roll < 0.95) {
+    // 2ª família distinta (afinidade ao elemento secundário quando existe)
+    const el2 = secondaryElement ?? dominantElement;
+    const pool2 = CREATURE_FAMILIES.filter(f => f.id !== fam1.id && (f.elements.includes(el2) || f.realms.includes(dominantRealm)));
+    const fam2 = pick(rng, pool2.length ? pool2 : CREATURE_FAMILIES.filter(f => f.id !== fam1.id));
+    secondary = makeSlot(fam2, pick(rng, fam2.subs));
+  } else {
+    // raro — OBJETO no 2º slot
+    const obj = pick(rng, FAMILY_OBJECTS);
+    secondary = { family: { pt: 'Objeto', en: 'Object' }, subfamily: { pt: obj.pt, en: obj.en }, noun: obj.noun, isObject: true };
+  }
+  return { primary, secondary, mono };
+}
 
 // POOLS por elemento: paletas e texturas variadas (sorteio semeado)
 const ELEMENT_PALETTES: Record<ElementId, string[]> = {
@@ -2199,20 +2515,19 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     en: `${ELEMENT_INFO[dominantElement].personality.en} Deep down ${sunTrait.en}, outwardly ${ascTrait.en}, carrying the essence of someone ${chinTrait.en} and the Vedic soul of "${vedTrait.en}". ${ROLE_INFO[dominantRole].profile.en} ${ALIGNMENT_INFO[dominantAlignment].name.en} alignment: ${ALIGNMENT_INFO[dominantAlignment].profile.en.toLowerCase()}`,
   };
 
-  // ----- Criatura: fusão de duas bases do bestiário -----
-  // Bases citadas na DESCRIÇÃO DO PET têm prioridade máxima; depois, pool
-  // filtrado por elemento(s) OU reino. O horóscopo NUNCA aparece no corpo.
-  const mentionedBases = descText
-    ? CREATURE_BASES.filter(b => descText.includes(normalizeText(b.pt)) || descText.includes(normalizeText(b.en)))
-    : [];
-  const basePool = CREATURE_BASES.filter(b =>
-    b.elements.includes(dominantElement) ||
-    (secondaryElement !== null && b.elements.includes(secondaryElement)) ||
-    b.realms.includes(dominantRealm),
-  );
-  const fusionA = mentionedBases[0] ?? pick(rng, basePool);
-  const poolB = (mentionedBases[1] ? [mentionedBases[1]] : basePool).filter(b => b.en !== fusionA.en);
-  const fusionB = poolB.length > 0 ? pick(rng, poolB) : pick(rng, CREATURE_BASES.filter(b => b.en !== fusionA.en));
+  // ----- Criatura: FAMÍLIA (2 slots) -----
+  // Slot 1 dominante + slot 2 (menor impacto, quase sempre a mesma família;
+  // raramente 2ª família distinta; mais raro ainda, um OBJETO). Descrição do
+  // pet citando um bicho tem prioridade. O horóscopo NUNCA aparece no corpo.
+  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, descText);
+  // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
+  const fusionA = family.primary.noun;
+  const fusionB = family.secondary.noun;
+  // Identidade da criatura p/ o conceito: mono = 1 bicho; senão híbrido
+  // (2ª família distinta OU objeto no 2º slot).
+  const identity: LText = family.mono
+    ? { pt: fusionA.pt, en: fusionA.en }
+    : { pt: `híbrido de ${fusionA.pt} e ${fusionB.pt}`, en: `${fusionA.en}-${fusionB.en} hybrid` };
 
   // Características sorteadas dos POOLS (assinatura visual única).
   // Nota: em 16x16 não cabem textura/cauda/marcas — esses pools continuam
@@ -2251,8 +2566,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     en: el2Name ? `${elName.en} element with ${el2Name.en} traits` : `pure ${elName.en} element`,
   };
   const concept: LText = {
-    pt: `Fusão de ${fusionA.pt} com ${fusionB.pt}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. ${elementPhrase.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Do rookie partem 3 linhas de evolução (Vírus, Data e Vacina), e os três Megas se fundem no Ultra.`,
-    en: `A fusion of ${fusionA.en} and ${fusionB.en}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". From the rookie, 3 evolution lines branch out (Virus, Data and Vaccine), and the three Megas fuse into the Ultra.`,
+    pt: `Família ${family.primary.family.pt} (${family.primary.subfamily.pt})${family.mono ? '' : family.secondary.isObject ? ` + objeto ${family.secondary.subfamily.pt}` : ` + ${family.secondary.family.pt} (${family.secondary.subfamily.pt})`}, nascida no reino ${realmInfo.name.pt} ${realmInfo.emoji}. ${elementPhrase.pt}, alinhamento ${alignName.pt} (atributo ${attribute.pt}), função ${roleName.pt} — encarnação do arquétipo "${archetype.phrase.pt}". Do rookie partem 3 linhas de evolução (Vírus, Data e Vacina), e os três Megas se fundem no Ultra.`,
+    en: `${family.primary.family.en} family (${family.primary.subfamily.en})${family.mono ? '' : family.secondary.isObject ? ` + ${family.secondary.subfamily.en} object` : ` + ${family.secondary.family.en} (${family.secondary.subfamily.en})`}, born in the ${realmInfo.name.en} realm ${realmInfo.emoji}. ${elementPhrase.en}, ${alignName.en} alignment (${attribute.en} attribute), ${roleName.en} role — incarnation of the archetype "${archetype.phrase.en}". From the rookie, 3 evolution lines branch out (Virus, Data and Vaccine), and the three Megas fuse into the Ultra.`,
   };
 
   // ----- BLOCOS DO PROMPT -----
@@ -2265,8 +2580,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const conceptArchetype = pick(rng, ROLE_ARCHETYPES[dominantRole]);
   const conceptPower = pick(rng, ELEMENT_POWERS[dominantElement]);
   const conceptEffect = pickAligned(rng, ROLE_EFFECTS[dominantRole], dominantAlignment);
-  const richConceptEn = `a humanoid ${fusionA.en} ${conceptArchetype.en}, wielding ${conceptPower.en}, to ${conceptEffect.en}`;
-  const richConceptPt = `um(a) ${fusionA.pt} humanoide na forma de ${conceptArchetype.pt}, que empunha ${conceptPower.pt}, para ${conceptEffect.pt}`;
+  const richConceptEn = `a humanoid ${identity.en} ${conceptArchetype.en}, wielding ${conceptPower.en}, to ${conceptEffect.en}`;
+  const richConceptPt = `um(a) ${identity.pt} humanoide na forma de ${conceptArchetype.pt}, que empunha ${conceptPower.pt}, para ${conceptEffect.pt}`;
   const petConceptRaw = input.petDescription?.trim()
     ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)
     : null;
@@ -2289,8 +2604,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     stageName: STAGE_NAMES.rookie,
     name: rookieName,
     description: {
-      pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que a fusão de ${fusionA.pt} com ${fusionB.pt} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
-      en: `${rookieName} is the base form: a small, simple little monster where the fusion of ${fusionA.en} and ${fusionB.en} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
+      pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que ${family.mono ? `a família ${fusionA.pt}` : `a mistura de ${fusionA.pt} e ${fusionB.pt}`} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
+      en: `${rookieName} is the base form: a small, simple little monster where ${family.mono ? `the ${fusionA.en} family` : `the ${fusionA.en}-${fusionB.en} blend`} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
     },
     imagePrompt: composeSpritePrompt({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
@@ -2417,6 +2732,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       concept,
       bio,
       fusion: { a: { pt: fusionA.pt, en: fusionA.en }, b: { pt: fusionB.pt, en: fusionB.en } },
+      family,
       stages,
     },
   };

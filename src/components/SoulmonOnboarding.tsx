@@ -247,6 +247,15 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
               </div>
             </div>
 
+            <p style={{ fontSize: 12, color: '#c9bdea', textAlign: 'center', margin: '0 0 8px' }}>
+              🧬 {L(result.creature.family.primary.family)} ({L(result.creature.family.primary.subfamily)})
+              {!result.creature.family.mono && (
+                result.creature.family.secondary.isObject
+                  ? ` + 🗡️ ${L(result.creature.family.secondary.subfamily)}`
+                  : ` + ${L(result.creature.family.secondary.family)} (${L(result.creature.family.secondary.subfamily)})`
+              )}
+            </p>
+
             <p style={{ fontSize: 13, fontStyle: 'italic', color: '#e0d6ff', textAlign: 'center',
               lineHeight: 1.6, margin: '0 0 20px', padding: '0 4px' }}>
               “{L(result.creature.bio)}”

@@ -733,6 +733,19 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
               </div>
             </div>
             <p className={`text-xs mb-1 ${mutedCls}`}>{L(creature.creature.concept)}</p>
+            {(() => {
+              const f = creature.creature.family;
+              return (
+                <p className={`text-xs mb-1 ${titleCls}`}>
+                  🧬 {isPt ? 'Família' : 'Family'}: <strong>{L(f.primary.family)}</strong> ({L(f.primary.subfamily)})
+                  {!f.mono && (
+                    f.secondary.isObject
+                      ? <> + 🗡️ {isPt ? 'objeto' : 'object'} <strong>{L(f.secondary.subfamily)}</strong></>
+                      : <> + <strong>{L(f.secondary.family)}</strong> ({L(f.secondary.subfamily)})</>
+                  )}
+                </p>
+              );
+            })()}
             <p className={`text-xs mb-2 ${titleCls}`} style={{ fontStyle: 'italic' }}>
               “{L(creature.creature.bio)}”
             </p>

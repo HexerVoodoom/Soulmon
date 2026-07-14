@@ -133,11 +133,34 @@ describe('generateOracle', () => {
     expect(r.realmScores[r.dominantRealm]).toBe(maxRealm);
   });
 
-  it('criatura é fusão de duas bases distintas', () => {
+  it('criatura tem família com 2 slots (dominante + secundário)', () => {
     const r = generateOracle(INPUT, 42);
-    expect(r.creature.fusion.a.en.length).toBeGreaterThan(0);
-    expect(r.creature.fusion.b.en.length).toBeGreaterThan(0);
-    expect(r.creature.fusion.a.en).not.toBe(r.creature.fusion.b.en);
+    const fam = r.creature.family;
+    expect(fam.primary.family.en.length).toBeGreaterThan(0);
+    expect(fam.primary.subfamily.en.length).toBeGreaterThan(0);
+    expect(fam.primary.noun.en.length).toBeGreaterThan(0);
+    expect(fam.secondary.noun.en.length).toBeGreaterThan(0);
+    // fusion.a/b derivam dos nouns dos dois slots
+    expect(r.creature.fusion.a.en).toBe(fam.primary.noun.en);
+    expect(r.creature.fusion.b.en).toBe(fam.secondary.noun.en);
+    // mono ⇒ mesmo bicho nos dois slots; não-mono ⇒ distintos
+    if (fam.mono) expect(fam.primary.noun.en).toBe(fam.secondary.noun.en);
+    // objeto só pode aparecer no 2º slot
+    expect(fam.primary.isObject).toBe(false);
+  });
+
+  it('distribuição das famílias: maioria mono, rara dupla, raríssimo objeto', () => {
+    let mono = 0, dual = 0, obj = 0;
+    for (let s = 0; s < 400; s++) {
+      const f = generateOracle(INPUT, s).creature.family;
+      if (f.secondary.isObject) obj++;
+      else if (f.mono) mono++;
+      else dual++;
+    }
+    expect(mono).toBeGreaterThan(dual);      // mono é a maioria
+    expect(dual).toBeGreaterThan(obj);       // dupla mais comum que objeto
+    expect(obj).toBeGreaterThan(0);          // objeto acontece, mas raro
+    expect(obj).toBeLessThan(mono / 3);      // objeto é bem raro
   });
 
   it('inputs diferentes geram perfis diferentes (unicidade)', () => {
