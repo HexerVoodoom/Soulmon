@@ -132,9 +132,9 @@ export function recordDungeonScore(score: number): number {
 }
 
 // ── Digimental drops ─────────────────────────────────────────────────────────
-// Ultra-rare (0.1% per defeated enemy), uncapped — the rarity IS the cap.
+// Rare (1% per defeated enemy), uncapped — the rarity IS the cap.
 // Returns the dropped digimental's EVO_ITEMS id, or null.
-const DIGIMENTAL_DROP_CHANCE = 0.001;
+const DIGIMENTAL_DROP_CHANCE = 0.01;
 export function rollDungeonDigimental(rng: () => number = Math.random): string | null {
   if (rng() > DIGIMENTAL_DROP_CHANCE) return null;
   return rng() < 0.5 ? 'digimental-courage' : 'digimental-friendship';

@@ -1028,7 +1028,7 @@ export default function App() {
     return dropped.includes(itemId) ? dropped : [...dropped, itemId];
   };
 
-  // ✨ Digimental drop (dungeon, 0.1%/enemy): adds it to the Items folder and
+  // ✨ Digimental drop (dungeon, 1%/enemy): adds it to the Items folder and
   // returns its display name for the reward line, or null when nothing dropped.
   const handleDungeonDigimental = useCallback((): string | null => {
     const id = rollDungeonDigimental();

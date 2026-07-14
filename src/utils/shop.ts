@@ -69,8 +69,8 @@ export const GLITCHTAMA_EMOJI = '🌀';
 // They ALSO show in the shop, locked until the first drop happens — from then
 // on extra copies can be bought with Bits.
 const DUNGEON_DROP_HINT = {
-  hintPt: 'Consiga um na masmorra primeiro (drop de 0,1% por inimigo)',
-  hintEn: 'Get one in the dungeon first (0.1% drop per enemy)',
+  hintPt: 'Consiga um na masmorra primeiro (drop de 1% por inimigo)',
+  hintEn: 'Get one in the dungeon first (1% drop per enemy)',
 };
 const DINO_DROP_HINT = {
   hintPt: 'Consiga um na Corrida do Dino primeiro (1% a cada 250 de score)',
@@ -82,7 +82,7 @@ const RPS_DROP_HINT = {
 };
 
 export const DROP_EVO_ITEMS: ShopItem[] = [
-  // Digimentals — ultra-rare dungeon drops (0.1%/enemy). Armor evolution:
+  // Digimentals — rare dungeon drops (1%/enemy). Armor evolution:
   // the CHAMPION form becomes the armor Digimon, on any egg line.
   { id: 'digimental-courage', kind: 'evo', icon: '🌞', evoTarget: 'flamedramon', evoLevel: 'champion',
     consumedOnEvolve: false, inventoryEmoji: '🌞', price: 900, unlock: { kind: 'drop', ...DUNGEON_DROP_HINT },
