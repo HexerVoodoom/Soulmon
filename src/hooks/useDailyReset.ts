@@ -1,8 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
-import { STORAGE_KEYS } from '../utils/storageKeys';
-import { getNextEvolution } from '../utils/dailyReset';
-import { EVO_ITEMS } from '../utils/shop';
+import { getNextEvolution, getPreviousForm } from '../utils/dailyReset';
 
 interface Step { id: string; label: string; completed: boolean; }
 interface Activity {
@@ -27,7 +25,6 @@ interface ResetGameState {
   dataPoints: number;
   vaccinePoints: number;
   evolutionStage: string;
-  eggType?: 'tapirmon' | 'veemon' | 'salamon';
   unlockedEvolutions: string[];
   currentBranch: 'virus' | 'data' | 'vaccine';
   maxActivityCap: number;
@@ -35,79 +32,16 @@ interface ResetGameState {
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
   poopEventsShown: number[];
   poopEventsCompleted: number[];
-  equippedEvoItem?: string | null;
-}
-
-type Attr = 'virus' | 'data' | 'vaccine';
-type EggLine = 'tapirmon' | 'veemon' | 'salamon';
-
-// Estágios por linha, agrupados por tier e atributo — usados na degeneração
-const LINE_STAGES: Record<EggLine, {
-  babyI: string; babyII: string; rookie: string;
-  champion: Record<Attr, string>;
-  ultimate: Record<Attr, string>;
-  mega: Record<Attr, string>;
-  ultra: string;
-}> = {
-  tapirmon: {
-    babyI: 'pichimon', babyII: 'pukamon', rookie: 'tapirmon',
-    champion: { virus: 'tuskmon', data: 'monochromon', vaccine: 'bakemon' },
-    ultimate: { virus: 'gigadramon', data: 'triceramon', vaccine: 'digitamamon' },
-    mega: { virus: 'gaioumon', data: 'ultimatebrachiomon', vaccine: 'titamon' },
-    ultra: 'gaioumon-itto',
-  },
-  veemon: {
-    babyI: 'chicomon', babyII: 'chibimon', rookie: 'veemon',
-    champion: { data: 'exveemon', virus: 'veedramon', vaccine: 'flamedramon' },
-    ultimate: { data: 'paildramon', virus: 'aeroveedramon', vaccine: 'raidramon' },
-    mega: { data: 'imperialdramon', virus: 'ulforceveedramon', vaccine: 'magnamon' },
-    ultra: 'imperialdramon-paladin',
-  },
-  salamon: {
-    babyI: 'yukimibotamon', babyII: 'nyaromon', rookie: 'plotmon',
-    champion: { vaccine: 'gatomon', virus: 'gatomon-black', data: 'mikemon' },
-    ultimate: { vaccine: 'angewomon', virus: 'ladydevimon', data: 'nefertimon' },
-    mega: { vaccine: 'ophanimon', virus: 'lilithmon', data: 'holydramon' },
-    ultra: 'mastemon',
-  },
-};
-
-// Degeneração: retorna a forma anterior, ciente da linha (eggType) e do atributo da forma atual
-function getDegeneratedStage(stage: string, eggType: EggLine | undefined, currentBranch: Attr): string {
-  const line = LINE_STAGES[eggType ?? 'tapirmon'] ?? LINE_STAGES.tapirmon;
-  const level = getStageLevel(stage);
-  const attrOf = (s: string): Attr => {
-    for (const a of ['virus', 'data', 'vaccine'] as Attr[]) {
-      if (line.champion[a] === s || line.ultimate[a] === s || line.mega[a] === s) return a;
-    }
-    return currentBranch;
-  };
-  switch (level) {
-    case 'ultra':     return line.mega[currentBranch];
-    case 'mega':      return line.ultimate[attrOf(stage)];
-    case 'ultimate':  return line.champion[attrOf(stage)];
-    case 'champion':  return line.rookie;
-    case 'rookie':    return line.babyII;
-    case 'baby-ii':   return line.babyI;
-    case 'baby-i':    return 'digiegg';
-    default:          return 'digiegg';
-  }
 }
 
 interface UseDailyResetProps {
   gameState: ResetGameState;
   setGameState: (fn: (prev: any) => any) => void;
-  hasShownRookiePopup: boolean;
-  setShowRookieUnlockPopup: (v: boolean) => void;
-  setHasShownRookiePopup: (v: boolean) => void;
 }
 
 export function useDailyReset({
   gameState,
   setGameState,
-  hasShownRookiePopup,
-  setShowRookieUnlockPopup,
-  setHasShownRookiePopup,
 }: UseDailyResetProps) {
   const performDailyReset = useCallback(() => {
     setGameState(prev => {
@@ -154,7 +88,6 @@ export function useDailyReset({
       let newEvolutionStage = prev.evolutionStage;
       let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
       let wasDegeneratedByHP = false;
-      let usedEvoItem = false;
       let newMaxActivityCap = prev.maxActivityCap;
       let newCurrentBranch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
       let newRecentAttrs = {
@@ -187,7 +120,6 @@ export function useDailyReset({
       // Evolution check. The padlock on the Evolution page blocks it entirely:
       // perfect days keep accumulating, and unlocking makes the pet evolve on
       // the NEXT day turn (this same check passes then).
-      let returnedDigimentalEmoji: string | null = null;
       if (!prev.evolutionLocked && newPerfectDays >= requirements.required) {
         newPerfectDays = 0;
 
@@ -208,32 +140,12 @@ export function useDailyReset({
         // Reset the recent window after each evolution
         newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
 
-        const isBabyII = ['pukamon', 'chibimon', 'nyaromon'].includes(prev.evolutionStage);
         newEvolutionStage = getNextEvolution(
           prev.evolutionStage,
-          prev.eggType ?? 'tapirmon',
           branch,
           prev.unlockedEvolutions,
         );
-        // Item digivolution (shop): when criteria are met AND an item is
-        // equipped for this level, the item form REPLACES the branch form.
-        // The natural form is still unlocked (tree/mega logic stays coherent);
-        // degeneration later returns to the branch form, never the item form.
         const naturalNext = newEvolutionStage;
-        const evoItem = prev.equippedEvoItem ? EVO_ITEMS[prev.equippedEvoItem] : null;
-        if (evoItem?.evoTarget && getStageLevel(naturalNext) === evoItem.evoLevel && naturalNext !== prev.evolutionStage) {
-          newEvolutionStage = evoItem.evoTarget;
-          usedEvoItem = true;
-          // Digimentals are never consumed — return them to the Items folder.
-          if (evoItem.consumedOnEvolve === false && evoItem.inventoryEmoji) {
-            returnedDigimentalEmoji = evoItem.inventoryEmoji;
-          }
-        }
-        if (isBabyII && !hasShownRookiePopup) {
-          setShowRookieUnlockPopup(true);
-          setHasShownRookiePopup(true);
-          localStorage.setItem(STORAGE_KEYS.ROOKIE_POPUP_SHOWN, 'true');
-        }
 
         const newStageLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[newStageLevel];
@@ -248,7 +160,7 @@ export function useDailyReset({
       // Degeneration by HP
       if (newHP === 0) {
         wasDegeneratedByHP = true;
-        newEvolutionStage = getDegeneratedStage(prev.evolutionStage, prev.eggType, newCurrentBranch);
+        newEvolutionStage = getPreviousForm(prev.evolutionStage, newCurrentBranch);
 
         const degeneratedLevel = getStageLevel(newEvolutionStage);
         newHP = MAX_HP_BY_FORM[degeneratedLevel];
@@ -295,13 +207,6 @@ export function useDailyReset({
         totalPerfectDays: (prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0),
         maxActivityCap: newMaxActivityCap,
         attributesSinceLastEvolution: newRecentAttrs,
-        equippedEvoItem: usedEvoItem ? null : (prev.equippedEvoItem ?? null),
-        ...(returnedDigimentalEmoji && {
-          foodInventory: {
-            ...prev.foodInventory,
-            [returnedDigimentalEmoji]: (prev.foodInventory?.[returnedDigimentalEmoji] ?? 0) + 1,
-          },
-        }),
         energyPoints: 0, // Energy resets daily (refills by feeding)
         // Summary of yesterday, shown once as a "daily report" on next open.
         lastDayReport: {
@@ -317,7 +222,7 @@ export function useDailyReset({
         },
       };
     });
-  }, [hasShownRookiePopup, setShowRookieUnlockPopup, setHasShownRookiePopup]);
+  }, []);
 
   // Day-rollover check. A 30s cadence is plenty (the reset just needs to land
   // shortly after midnight) and avoids the old 1s ticker that re-rendered the

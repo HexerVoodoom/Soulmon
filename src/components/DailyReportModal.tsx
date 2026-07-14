@@ -38,7 +38,7 @@ export function DailyReportModal({ report, onClose, language, theme = 'default' 
   ];
 
   const headline = report.degenerated
-    ? (isPt ? '💔 Seu Digimon regrediu...' : '💔 Your Digimon degenerated...')
+    ? (isPt ? '💔 Seu Soulmon regrediu...' : '💔 Your Soulmon degenerated...')
     : report.wasPerfect
       ? (isPt ? '⭐ Dia perfeito!' : '⭐ Perfect day!')
       : report.heartsLost > 0

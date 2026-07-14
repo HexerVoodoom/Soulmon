@@ -3,6 +3,7 @@ import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { cloudSave } from '../utils/cloudSave';
+import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 
 export interface Step {
   id: string;
@@ -65,27 +66,9 @@ export interface GameState {
   dataPoints: number;
   vaccinePoints: number;
   lastResetDate: string;
-  evolutionStage:
-    | 'digiegg' | 'pichimon' | 'pukamon' | 'tapirmon'
-    | 'monochromon' | 'tuskmon' | 'bakemon'
-    | 'gigadramon' | 'triceramon' | 'digitamamon'
-    | 'gaioumon' | 'ultimatebrachiomon' | 'titamon'
-    | 'chicomon' | 'chibimon' | 'veemon'
-    | 'exveemon' | 'veedramon' | 'flamedramon'
-    | 'paildramon' | 'aeroveedramon' | 'raidramon'
-    | 'imperialdramon' | 'ulforceveedramon' | 'magnamon'
-    | 'yukimibotamon' | 'nyaromon' | 'plotmon'
-    | 'gatomon' | 'gatomon-black' | 'mikemon'
-    | 'angewomon' | 'ladydevimon' | 'nefertimon'
-    | 'ophanimon' | 'lilithmon' | 'holydramon'
-    | 'gaioumon-itto' | 'imperialdramon-paladin' | 'mastemon'
-    | 'greymon' | 'garurumon' | 'meramon' | 'monzaemon' | 'etemon'
-    | 'devimon' | 'andromon'
-    | 'angemon' | 'birdramon' | 'kabuterimon' | 'seadramon'
-    | 'airdramon' | 'ogremon' | 'kuwagamon' | 'numemon'
-    | 'megadramon' | 'vademon' | 'nanimon'
-    | 'agumon' | 'gabumon' | 'piyomon' | 'tentomon' | 'patamon' | 'palmon'
-    | 'raidramon-armor';
+  /** Id da forma atual na árvore do Soulmon: 'rookie' | '{champion|ultimate|mega}-{virus|data|vaccine}' | 'ultra'
+   *  (ver types/progression.ts). Único por jogador — o NOME de exibição vem de soulmonStages. */
+  evolutionStage: string;
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   poopEventsScheduled: number[];
@@ -95,7 +78,23 @@ export interface GameState {
   currentBranch: 'virus' | 'data' | 'vaccine';
   lastDayWasPerfect: boolean;
   maxActivityCap: number;
+  /** Não é mais escolha do jogador (era o "tipo de ovo") — hoje é a linha de
+   *  sprite GENÉRICO sorteada uma vez no onboarding (utils/sprites.ts), usada
+   *  como visual provisório até a Fase 2 (imagem gerada por IA) assumir. */
   eggType?: 'tapirmon' | 'veemon' | 'salamon';
+  /** A árvore de 11 formas ÚNICA do jogador, gerada pelo oráculo no onboarding
+   *  (utils/oracle.ts generateOracle().creature.stages) e congelada — nomes,
+   *  descrições e prompts de imagem de cada forma. */
+  soulmonStages?: CreatureStage[];
+  /** Metadados do oráculo usados fora da árvore (fallback de sprite genérico,
+   *  telas de perfil etc.). */
+  soulmonMeta?: {
+    seed: number;
+    baseName: string;
+    dominantElement: ElementId;
+    dominantAlignment: AlignmentId;
+    dominantRealm: RealmId;
+  };
   /** Attribute points accumulated since the last evolution — drives branch selection */
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
   /** Version B: food stockpile keyed by food emoji */
@@ -110,8 +109,6 @@ export interface GameState {
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
   equippedBackground: string | null;
-  /** Shop item digivolution: replaces the branch form when the pet evolves to the item's level (consumed on evolve). */
-  equippedEvoItem: string | null;
   /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
   evolutionLocked?: boolean;
   /** Mission counters (lifetime, cloud-synced) — see utils/missions.ts. */
@@ -163,16 +160,16 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         tasks: loadedState.tasks ?? [],
         completedTasks: loadedState.completedTasks ?? [],
         activityStats: loadedState.activityStats ?? {},
-        maxHealthPoints: getMaxHPForStage(loadedState.evolutionStage ?? 'digiegg'),
+        maxHealthPoints: getMaxHPForStage(loadedState.evolutionStage ?? 'rookie'),
         energyPoints: loadedState.energyPoints ?? 0,
         perfectDays: loadedState.perfectDays ?? 0,
         lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
         poopEventsScheduled: loadedState.poopEventsScheduled ?? [],
         poopEventsCompleted: loadedState.poopEventsCompleted ?? [],
-        unlockedEvolutions: loadedState.unlockedEvolutions ?? ['digiegg'],
+        unlockedEvolutions: loadedState.unlockedEvolutions ?? ['rookie'],
         degeneratedByHP: loadedState.degeneratedByHP ?? false,
         currentBranch: loadedState.currentBranch ?? 'data',
-        maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'digiegg')].cap,
+        maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'rookie')].cap,
         eggType: (
           (loadedState.eggType as string) === 'agumon' ? 'tapirmon'
           : loadedState.eggType
@@ -187,7 +184,6 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         gamePoints: loadedState.gamePoints ?? 0,
         ownedBackgrounds: loadedState.ownedBackgrounds ?? [],
         equippedBackground: loadedState.equippedBackground ?? null,
-        equippedEvoItem: loadedState.equippedEvoItem ?? null,
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -205,16 +201,16 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       dataPoints: 0,
       vaccinePoints: 0,
       lastResetDate: new Date().toDateString(),
-      evolutionStage: 'digiegg',
+      evolutionStage: 'rookie',
       digivolutionSegments: 0,
       digivolutionSegmentsNeeded: 1,
       poopEventsScheduled: [],
       poopEventsCompleted: [],
-      unlockedEvolutions: ['digiegg'],
+      unlockedEvolutions: ['rookie'],
       degeneratedByHP: false,
       currentBranch: 'data',
       lastDayWasPerfect: false,
-      maxActivityCap: 2,
+      maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       eggType: ((savedEggType as string) === 'agumon' ? 'tapirmon' : savedEggType) ?? 'tapirmon',
       attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       foodInventory: {},
@@ -223,7 +219,6 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       gamePoints: 0,
       ownedBackgrounds: [],
       equippedBackground: null,
-      equippedEvoItem: null,
     };
   });
 

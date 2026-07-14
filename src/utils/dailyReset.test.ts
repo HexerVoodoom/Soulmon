@@ -44,8 +44,8 @@ const baseState = (): GameState => ({
   virusPoints: 0,
   dataPoints: 0,
   vaccinePoints: 0,
-  evolutionStage: 'tapirmon',
-  unlockedEvolutions: ['digiegg', 'tapirmon'],
+  evolutionStage: 'rookie',
+  unlockedEvolutions: ['rookie'],
   degeneratedByHP: false,
   currentBranch: 'data',
   lastDayWasPerfect: false,
@@ -139,21 +139,6 @@ describe('wasDayPerfect', () => {
     state.tasks = [makeTask(true), makeTask(false)];
     expect(wasDayPerfect(state)).toBe(false);
   });
-
-  it('ignores weekday filter for pre-rookie stages', () => {
-    const state = baseState();
-    state.evolutionStage = 'digiegg';
-    // Activity with only Thursday (4) — yesterday was Tuesday (2), so normally excluded
-    // But pre-rookie ignores weekday filter — activity is always included
-    state.activities = [
-      makeActivity({
-        weekDays: [4],
-        steps: [{ id: 's1', label: 'step', completed: true }],
-      }),
-    ];
-    // Pre-rookie ignores weekDay filter — activity is included
-    expect(wasDayPerfect(state)).toBe(true);
-  });
 });
 
 // ── countCompletedYesterday ────────────────────────────────────
@@ -180,160 +165,79 @@ describe('countCompletedYesterday', () => {
 });
 
 // ── getNextEvolution ───────────────────────────────────────────
+// The Soulmon tree is unique per player (utils/oracle.ts) — the engine only
+// deals in ids ('rookie' | '{champion|ultimate|mega}-{virus|data|vaccine}' |
+// 'ultra'), never species names, so evolution is pure id arithmetic.
 
 describe('getNextEvolution', () => {
-  // digiegg → baby-i by line
-  it('digiegg → pichimon (tapirmon)', () => {
-    expect(getNextEvolution('digiegg', 'tapirmon', 'data', [])).toBe('pichimon');
-  });
-  it('digiegg → chicomon (veemon)', () => {
-    expect(getNextEvolution('digiegg', 'veemon', 'data', [])).toBe('chicomon');
-  });
-  it('digiegg → yukimibotamon (salamon)', () => {
-    expect(getNextEvolution('digiegg', 'salamon', 'data', [])).toBe('yukimibotamon');
+  it('rookie → champion, by the current dominant attribute', () => {
+    expect(getNextEvolution('rookie', 'virus', [])).toBe('champion-virus');
+    expect(getNextEvolution('rookie', 'data', [])).toBe('champion-data');
+    expect(getNextEvolution('rookie', 'vaccine', [])).toBe('champion-vaccine');
   });
 
-  // baby-i → baby-ii by line
-  it('baby-i → baby-ii by line', () => {
-    expect(getNextEvolution('pichimon',      'tapirmon', 'data', [])).toBe('pukamon');
-    expect(getNextEvolution('chicomon',      'veemon',   'data', [])).toBe('chibimon');
-    expect(getNextEvolution('yukimibotamon', 'salamon',  'data', [])).toBe('nyaromon');
+  it('champion → ultimate, by the current dominant attribute (can differ from the champion\'s own branch)', () => {
+    expect(getNextEvolution('champion-virus', 'virus', [])).toBe('ultimate-virus');
+    expect(getNextEvolution('champion-virus', 'data', [])).toBe('ultimate-data');
   });
 
-  // baby-ii → rookie by line
-  it('baby-ii → rookie by line', () => {
-    expect(getNextEvolution('pukamon',  'tapirmon', 'data', [])).toBe('tapirmon');
-    expect(getNextEvolution('chibimon', 'veemon',   'data', [])).toBe('veemon');
-    expect(getNextEvolution('nyaromon', 'salamon',  'data', [])).toBe('plotmon');
+  it('ultimate → mega, by the current dominant attribute', () => {
+    expect(getNextEvolution('ultimate-virus', 'virus', [])).toBe('mega-virus');
+    expect(getNextEvolution('ultimate-data', 'vaccine', [])).toBe('mega-vaccine');
   });
 
-  // rookie → champion (branch-based, per line)
-  it('tapirmon rookie → champion by branch', () => {
-    expect(getNextEvolution('tapirmon', 'tapirmon', 'virus',    [])).toBe('tuskmon');
-    expect(getNextEvolution('tapirmon', 'tapirmon', 'data',     [])).toBe('monochromon');
-    expect(getNextEvolution('tapirmon', 'tapirmon', 'vaccine',  [])).toBe('bakemon');
-  });
-  it('veemon rookie → champion by branch', () => {
-    expect(getNextEvolution('veemon', 'veemon', 'data',    [])).toBe('exveemon');
-    expect(getNextEvolution('veemon', 'veemon', 'virus',   [])).toBe('veedramon');
-    expect(getNextEvolution('veemon', 'veemon', 'vaccine', [])).toBe('flamedramon');
-  });
-  it('salamon rookie → champion by branch', () => {
-    expect(getNextEvolution('plotmon', 'salamon', 'vaccine', [])).toBe('gatomon');
-    expect(getNextEvolution('plotmon', 'salamon', 'virus',   [])).toBe('gatomon-black');
-    expect(getNextEvolution('plotmon', 'salamon', 'data',    [])).toBe('mikemon');
-  });
-
-  // champion → ultimate (branch-based)
-  it('tapirmon champion → ultimate by branch', () => {
-    expect(getNextEvolution('monochromon', 'tapirmon', 'virus',   [])).toBe('gigadramon');
-    expect(getNextEvolution('tuskmon',     'tapirmon', 'data',    [])).toBe('triceramon');
-    expect(getNextEvolution('bakemon',     'tapirmon', 'vaccine', [])).toBe('digitamamon');
-  });
-
-  // ultimate → mega (branch-based)
-  it('tapirmon ultimate → mega by branch', () => {
-    expect(getNextEvolution('gigadramon',  'tapirmon', 'virus',   [])).toBe('gaioumon');
-    expect(getNextEvolution('triceramon',  'tapirmon', 'data',    [])).toBe('ultimatebrachiomon');
-    expect(getNextEvolution('digitamamon', 'tapirmon', 'vaccine', [])).toBe('titamon');
-  });
-
-  // mega → ultra only when all 3 megas unlocked
-  it('mega → ultra only when all 3 megas unlocked (tapirmon)', () => {
-    const allMegas = ['gaioumon', 'ultimatebrachiomon', 'titamon'];
-    expect(getNextEvolution('gaioumon', 'tapirmon', 'virus', allMegas)).toBe('gaioumon-itto');
-  });
-  it('mega → ultra (veemon)', () => {
-    const allMegas = ['imperialdramon', 'ulforceveedramon', 'magnamon'];
-    expect(getNextEvolution('imperialdramon', 'veemon', 'data', allMegas)).toBe('imperialdramon-paladin');
-  });
-  it('mega → ultra (salamon)', () => {
-    const allMegas = ['ophanimon', 'lilithmon', 'holydramon'];
-    expect(getNextEvolution('ophanimon', 'salamon', 'vaccine', allMegas)).toBe('mastemon');
+  it('mega → ultra only when all 3 megas are unlocked', () => {
+    const allMegas = ['mega-virus', 'mega-data', 'mega-vaccine'];
+    expect(getNextEvolution('mega-virus', 'virus', allMegas)).toBe('ultra');
+    expect(getNextEvolution('mega-data', 'data', allMegas)).toBe('ultra');
   });
 
   it('mega stays put when not all megas unlocked', () => {
-    expect(getNextEvolution('gaioumon', 'tapirmon', 'virus', ['gaioumon'])).toBe('gaioumon');
+    expect(getNextEvolution('mega-virus', 'virus', ['mega-virus'])).toBe('mega-virus');
   });
 
   it('ultra stays at ultra', () => {
-    expect(getNextEvolution('gaioumon-itto',         'tapirmon', 'virus',   [])).toBe('gaioumon-itto');
-    expect(getNextEvolution('imperialdramon-paladin', 'veemon',   'data',    [])).toBe('imperialdramon-paladin');
-    expect(getNextEvolution('mastemon',               'salamon',  'vaccine', [])).toBe('mastemon');
+    expect(getNextEvolution('ultra', 'virus', [])).toBe('ultra');
+    expect(getNextEvolution('ultra', 'data', [])).toBe('ultra');
   });
 });
 
 // ── getPreviousForm ────────────────────────────────────────────
 
 describe('getPreviousForm', () => {
-  it('ultra → correct mega by branch (tapirmon)', () => {
-    expect(getPreviousForm('gaioumon-itto', 'virus')).toBe('gaioumon');
-    expect(getPreviousForm('gaioumon-itto', 'data')).toBe('ultimatebrachiomon');
-    expect(getPreviousForm('gaioumon-itto', 'vaccine')).toBe('titamon');
+  it('ultra → mega of the CURRENT branch (ultra has no branch embedded)', () => {
+    expect(getPreviousForm('ultra', 'virus')).toBe('mega-virus');
+    expect(getPreviousForm('ultra', 'data')).toBe('mega-data');
+    expect(getPreviousForm('ultra', 'vaccine')).toBe('mega-vaccine');
   });
 
-  it('ultra → correct mega by branch (veemon)', () => {
-    expect(getPreviousForm('imperialdramon-paladin', 'data')).toBe('imperialdramon');
-    expect(getPreviousForm('imperialdramon-paladin', 'virus')).toBe('ulforceveedramon');
-    expect(getPreviousForm('imperialdramon-paladin', 'vaccine')).toBe('magnamon');
+  it('mega → ultimate of the SAME branch (embedded in the id, ignores the passed branch)', () => {
+    expect(getPreviousForm('mega-virus', 'data')).toBe('ultimate-virus');
+    expect(getPreviousForm('mega-vaccine', 'virus')).toBe('ultimate-vaccine');
   });
 
-  it('ultra → correct mega by branch (salamon)', () => {
-    expect(getPreviousForm('mastemon', 'vaccine')).toBe('ophanimon');
-    expect(getPreviousForm('mastemon', 'virus')).toBe('lilithmon');
-    expect(getPreviousForm('mastemon', 'data')).toBe('holydramon');
+  it('ultimate → champion of the SAME branch', () => {
+    expect(getPreviousForm('ultimate-virus', 'data')).toBe('champion-virus');
+    expect(getPreviousForm('ultimate-data', 'virus')).toBe('champion-data');
   });
 
-  it('mega → correct ultimate (tapirmon — same-attribute)', () => {
-    expect(getPreviousForm('gaioumon',           'virus')).toBe('gigadramon');
-    expect(getPreviousForm('ultimatebrachiomon', 'data')).toBe('triceramon');
-    expect(getPreviousForm('titamon',            'vaccine')).toBe('digitamamon');
+  it('champion → rookie (all branches collapse to the single rookie)', () => {
+    expect(getPreviousForm('champion-virus', 'virus')).toBe('rookie');
+    expect(getPreviousForm('champion-data', 'data')).toBe('rookie');
+    expect(getPreviousForm('champion-vaccine', 'vaccine')).toBe('rookie');
   });
 
-  it('mega → correct ultimate (veemon — same-attribute)', () => {
-    expect(getPreviousForm('imperialdramon',   'data')).toBe('paildramon');
-    expect(getPreviousForm('ulforceveedramon', 'virus')).toBe('aeroveedramon');
-    expect(getPreviousForm('magnamon',         'vaccine')).toBe('raidramon');
+  it('rookie stays at rookie — nothing below it', () => {
+    expect(getPreviousForm('rookie', 'data')).toBe('rookie');
   });
 
-  it('ultimate → correct champion (tapirmon — same-attribute)', () => {
-    expect(getPreviousForm('gigadramon',  'virus')).toBe('tuskmon');
-    expect(getPreviousForm('triceramon',  'data')).toBe('monochromon');
-    expect(getPreviousForm('digitamamon', 'vaccine')).toBe('bakemon');
-  });
-
-  it('champion → rookie (all champions collapse to the line rookie)', () => {
-    expect(getPreviousForm('monochromon', 'data')).toBe('tapirmon');
-    expect(getPreviousForm('tuskmon',     'virus')).toBe('tapirmon');
-    expect(getPreviousForm('exveemon',    'data')).toBe('veemon');
-    expect(getPreviousForm('gatomon',     'vaccine')).toBe('plotmon');
-  });
-
-  it('rookie → baby-ii', () => {
-    expect(getPreviousForm('tapirmon', 'data')).toBe('pukamon');
-    expect(getPreviousForm('veemon',   'data')).toBe('chibimon');
-    expect(getPreviousForm('plotmon',  'data')).toBe('nyaromon');
-  });
-
-  it('baby-ii → baby-i', () => {
-    expect(getPreviousForm('pukamon',  'data')).toBe('pichimon');
-    expect(getPreviousForm('chibimon', 'data')).toBe('chicomon');
-    expect(getPreviousForm('nyaromon', 'data')).toBe('yukimibotamon');
-  });
-
-  it('baby-i → digiegg', () => {
-    expect(getPreviousForm('pichimon',      'data')).toBe('digiegg');
-    expect(getPreviousForm('chicomon',      'data')).toBe('digiegg');
-    expect(getPreviousForm('yukimibotamon', 'data')).toBe('digiegg');
-  });
-
-  it('unknown stage → digiegg', () => {
-    expect(getPreviousForm('unknown-stage', 'data')).toBe('digiegg');
+  it('unknown stage → rookie', () => {
+    expect(getPreviousForm('unknown-stage', 'data')).toBe('rookie');
   });
 
   it('is deterministic — same inputs always produce same output', () => {
-    const r1 = getPreviousForm('gaioumon-itto', 'virus');
-    const r2 = getPreviousForm('gaioumon-itto', 'virus');
+    const r1 = getPreviousForm('ultra', 'virus');
+    const r2 = getPreviousForm('ultra', 'virus');
     expect(r1).toBe(r2);
   });
 });

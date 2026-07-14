@@ -119,6 +119,23 @@ export interface CreatureStage {
   imagePrompt: string;         // EN — prompt pronto p/ gerador de imagem
 }
 
+/**
+ * Id da forma no MOTOR DO JOGO ('rookie' | '{champion|ultimate|mega}-{virus|
+ * data|vaccine}' | 'ultra' — ver types/progression.ts). Único ponto que
+ * traduz o vocabulário do oráculo (stage 'perfeito' + branch poder/harmonia/
+ * benevolencia) pro vocabulário do jogo (nível 'ultimate' + atributo
+ * virus/data/vaccine, já usado em todo o resto do app).
+ */
+export function creatureFormId(form: Pick<CreatureStage, 'stage' | 'branch'>): string {
+  if (form.stage === 'rookie' || form.stage === 'ultra') return form.stage;
+  const level = form.stage === 'perfeito' ? 'ultimate' : form.stage; // champion/mega: 1:1
+  const attrByAlignment: Record<AlignmentId, 'virus' | 'data' | 'vaccine'> = {
+    poder: 'virus', harmonia: 'data', benevolencia: 'vaccine',
+  };
+  const attr = form.branch ? attrByAlignment[form.branch] : 'data';
+  return `${level}-${attr}`;
+}
+
 export interface OracleResult {
   input: OracleInput;
   seed: number;                // salt usado — repassar para reproduzir
@@ -1616,30 +1633,30 @@ function countKeywordHits<K extends string>(text: string, dict: Record<K, string
 }
 
 // ---------------------------------------------------------------------------
-// Prompt de sprite — TEMPLATE VALIDADO pelo dono do projeto em testes reais
-// no Nanobanana (o que funcionou melhor na prática). Regra de ouro: o molde
-// fica fixo e a descrição do monstro é a MÍNIMA possível — detalhe demais
-// faz o modelo virar ilustração.
+// Prompt de sprite — TEMPLATE VALIDADO pelo dono do projeto em testes reais.
+// Regra de ouro: prompt CURTO, estilo Tamagotchi, sem fundo — frases longas
+// ("wielding X to Y", blocos extra de tipo/elemento/bioma) geram sprites
+// PIORES na prática. A descrição do monstro é uma lista curta de traços
+// (espécie + classe definitiva + adjetivo do elemento secundário), não uma
+// frase corrida — ver composeSpritePrompt.
 //
-//   "Generate image: Micro pixel art of a small, cute monster, 16-bit retro
-//    RPG sprite style, extreme low resolution, blocky pixels, flat dark grey
-//    and white colors with red accents, no black outlines, no shading, no
-//    anti-aliasing, solid black background, vintage Tamagotchi or Digimon
-//    V-pet aesthetic."
+//   "Tamagotchi-style v-pet sprite, 16x16 pixel art, no background:
+//    octopus-frog, Druid, mechanical. it has evolved into a towering
+//    shape. Flat cool blue and teal colors with gold accents, no shading,
+//    no outlines, no anti-aliasing."
 //
 // Parametrizamos as cores sem travar demais: a paleta base vem do POOL variado
 // do elemento (muda por seed) e o ACENTO marca o tipo p/ reconhecibilidade
-// (Vírus=red, Data=cyan, Vacina=gold). A descrição do monstro = mínima
-// (fusão) + a descrição do ESTÁGIO em si (a forma que ele assume).
+// (Vírus=red, Data=cyan, Vacina=gold).
 // ---------------------------------------------------------------------------
 
 // ===========================================================================
 // BLOCOS DO PROMPT — o prompt final é a soma de blocos pré-definidos:
-//   [estilo fixo] + [conceito] + [nível] + [tipo] + [elemento] + [bioma]
-// Cada bloco (tipo/elemento/bioma/nível) tem um POOL grande e o gerador
-// sorteia UMA opção coerente com o perfil. Conceito = frase super curta
-// (≤6 palavras) sintetizada do perfil — e a descrição livre do pet
-// SUBSTITUI o conceito (não soma).
+//   [estilo fixo, sem fundo] + [espécie + classe + adjetivo] + [nível/forma] + [paleta]
+// Espécie vem do sistema de família/subfamília; classe vem de CLASS_MATRIX
+// (função × alinhamento × elemento dominante); o adjetivo vem do elemento
+// SECUNDÁRIO (ELEMENT_FLAVOR_WORDS). A descrição livre do pet SUBSTITUI esse
+// bloco inteiro (não soma).
 // ===========================================================================
 
 const ALIGNMENT_ACCENT: Record<AlignmentId, string> = {

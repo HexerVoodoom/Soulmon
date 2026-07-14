@@ -2,12 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { playDegenerate, playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { DINO_ROOKIE_DROPS } from '../utils/shop';
 import type { Language } from '../utils/i18n';
 
 /**
  * Dino Runner — endless runner starring the pet.
- * Obstacles are enemy Digimon and get scarier as difficulty ramps:
+ * Obstacles are enemy creatures and get scarier as difficulty ramps:
  * Bakemon → Tuskmon → Gigadramon → Titamon (tier by elapsed time; speed and
  * spawn rate also scale continuously). Jump via the big button BELOW the game
  * box (thumb never covers the action), the box itself, or SPACE.
@@ -22,12 +21,10 @@ const OBSTACLE_TIERS = [
   { stage: 'titamon',    from: 75, size: 56 },
 ];
 
-export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, onScore, onExit }: {
+export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onExit }: {
   evolutionStage: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
-  /** Adds a rookie evolution item to the Items folder; returns its display name. */
-  onItemDrop: (emoji: string) => string;
   /** Mission counter: reports the final score of each run. */
   onScore: (score: number) => void;
   onExit: () => void;
@@ -42,7 +39,6 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
   phaseRef.current = phase;
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
-  const [drops, setDrops] = useState<string[]>([]);
   const [best, setBest] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.DINO_BEST)) || 0);
   const mono = { fontFamily: 'monospace' as const };
 
@@ -51,9 +47,7 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
   const petNeedsFlip = LEFT_FACING_STAGES.includes(evolutionStage.toLowerCase());
 
   // Physics/game state lives in a ref — the loop never re-renders React.
-  // `dropRolls` counts the 250-score thresholds already rolled for item drops;
-  // `pendingDrops` holds the run's drops, applied at game over.
-  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, dropRolls: 0, pendingDrops: [] as string[] });
+  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number }[], speed: 0, t: 0, spawnIn: 0, score: 0 });
 
   useEffect(() => {
     const pet = new Image();
@@ -76,9 +70,8 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
   }, []);
 
   const start = () => {
-    g.current = { h: 0, vy: 0, obstacles: [], speed: 260, t: 0, spawnIn: 1.1, score: 0, dropRolls: 0, pendingDrops: [] };
+    g.current = { h: 0, vy: 0, obstacles: [], speed: 260, t: 0, spawnIn: 1.1, score: 0 };
     setEarned(0);
-    setDrops([]);
     setPhase('playing');
   };
 
@@ -117,16 +110,6 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
       s.t += dt;
       s.speed = Math.min(620, 260 + s.t * 9);
       s.score += dt * 10;
-
-      // Rookie item drop: at every 250-score threshold, roll 1% for one of the
-      // Dino drops (Agumon/Gabumon/Piyomon items). Applied at game over.
-      const thresholds = Math.floor(s.score / 250);
-      while (s.dropRolls < thresholds) {
-        s.dropRolls++;
-        if (Math.random() < 0.01) {
-          s.pendingDrops.push(DINO_ROOKIE_DROPS[Math.floor(Math.random() * DINO_ROOKIE_DROPS.length)]);
-        }
-      }
 
       // Jump physics
       if (s.h > 0 || s.vy > 0) {
@@ -179,7 +162,6 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
       setEarned(pts);
       if (pts > 0) { onEarnPoints(pts); playTaskComplete(); } else { playDegenerate(); }
       onScore(score);
-      setDrops(s.pendingDrops.map(emoji => `${emoji} ${onItemDrop(emoji)}`));
       setBest(prev => {
         const nb = Math.max(prev, score);
         localStorage.setItem(STORAGE_KEYS.DINO_BEST, String(nb));
@@ -195,7 +177,7 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, jump, onEarnPoints, onItemDrop, onScore, petNeedsFlip]);
+  }, [phase, jump, onEarnPoints, onScore, petNeedsFlip]);
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0b0f17 0%, #16202f 100%)', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
@@ -227,18 +209,13 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onItemDrop, o
                 <p style={{ ...mono, fontSize: '0.85rem', color: '#9fb2d8' }}>
                   Score: {finalScore} · +{earned} Bits
                 </p>
-                {drops.map(d => (
-                  <p key={d} style={{ ...mono, fontSize: '0.8rem', color: '#facc15', fontWeight: 800 }}>
-                    ✨ {isPt ? 'Item raro:' : 'Rare item:'} {d}
-                  </p>
-                ))}
               </>
             )}
             {phase === 'ready' && (
               <p style={{ ...mono, fontSize: '0.8rem', color: '#9fb2d8', padding: '0 20px', textAlign: 'center' }}>
                 {isPt
-                  ? 'Pule os Digimon inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
-                  : 'Jump the enemy Digimon! They get scarier over time. 100 score = 1 Bit'}
+                  ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
+                  : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
               </p>
             )}
             <button onClick={start}

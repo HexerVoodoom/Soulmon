@@ -50,9 +50,9 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
             }`}>1. Evolution System</h3>
             <p className="mb-2">
-              Your Digimon evolves through <strong>perfect days</strong>.
+              Your Soulmon evolves through <strong>perfect days</strong>.
               A day is perfect when you complete your <strong>daily goal</strong> — everything
-              you registered, up to the stage requirement — AND your Digimon's
+              you registered, up to the stage requirement — AND your Soulmon's
               <strong> energy is full at the end of the day</strong> (feed it!).
             </p>
             <p className="mb-2">
@@ -60,7 +60,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             </p>
             <p>
               Don't want to evolve yet? On the <strong>Evolution page</strong>, tap your
-              <strong> current Digimon</strong> to toggle a <strong>🔒 padlock</strong>: while
+              <strong> current Soulmon</strong> to toggle a <strong>🔒 padlock</strong>: while
               locked it never evolves (perfect days still accumulate), and after unlocking it
               evolves at the <strong>next day turn</strong>. Rare items can also shape evolution:
               the <strong>🌀 Glitchtama</strong> (clear all 5 dungeon floors) grants a perfect day
@@ -81,9 +81,9 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
                 measured against your stage's <strong>daily requirement</strong>: meet the
                 requirement (or finish everything you registered) and you're safe. Uncleaned
                 <strong> poop</strong> also drains <strong>1 heart every 6 hours</strong>.
-                Hearts are healed by <strong>rubbing your Digimon</strong> (up to
+                Hearts are healed by <strong>rubbing your Soulmon</strong> (up to
                 <strong> 1 heart per day</strong>) or by using a <strong>Little Heart</strong> item
-                (bought in the shop or dropped in the dungeon). If HP hits 0, your Digimon degenerates.
+                (bought in the shop or dropped in the dungeon). If HP hits 0, your Soulmon degenerates.
               </li>
               <li>
                 <strong>⚡ Energy</strong> — The number of energy bars equals your stage's
@@ -99,16 +99,16 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               </li>
               <li>
                 <strong>🚿 Bath</strong> — Cleans up <strong>poop</strong> and washes your
-                Digimon. Always available.
+                Soulmon. Always available.
               </li>
               <li>
-                <strong>🫶 Affection (Rub)</strong> — <strong>Rub your Digimon</strong> (press and
+                <strong>🫶 Affection (Rub)</strong> — <strong>Rub your Soulmon</strong> (press and
                 drag over it) to make little hearts pop out. This is the <strong>only way to
                 heal HP</strong>: every ~2 seconds of rubbing restores half a heart, up to
                 <strong> 1 full heart per day</strong>.
               </li>
               <li>
-                <strong>💤 Sleep</strong> — Your Digimon rests. It won't poop while asleep,
+                <strong>💤 Sleep</strong> — Your Soulmon rests. It won't poop while asleep,
                 so sleeping through the night protects it from overnight penalties.
               </li>
             </ul>
@@ -170,7 +170,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             </p>
             <p className="mb-2">
               Uncleaned <strong>poop</strong> drains an extra <strong>1 heart every 6 hours</strong> until you
-              give a bath. Hearts are healed <strong>only by rubbing your Digimon</strong> — every ~2 seconds
+              give a bath. Hearts are healed <strong>only by rubbing your Soulmon</strong> — every ~2 seconds
               of rubbing restores half a heart, up to <strong>1 heart per day</strong>.
             </p>
             <p>
@@ -184,7 +184,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               <li>Ultra: 5 hearts</li>
             </ul>
             <p className="mt-2">
-              <strong>If HP reaches 0:</strong> Your Digimon degenerates to the previous form.
+              <strong>If HP reaches 0:</strong> Your Soulmon degenerates to the previous form.
               Climbing back is easier: you keep a head start of half the perfect days
               needed for that stage (e.g. Rookie → Champion needs 4, but after a
               degeneration only 2 more are required). This discount doesn't stack —
@@ -222,7 +222,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
 
           <section className="border-t pt-4 mt-4" style={{ borderColor: isGlitch ? '#00ffff' : isWin98 ? '#000080' : '#e5e6e7' }}>
             <p className="text-center italic">
-              Tip: Focus on completing 100% of daily tasks to evolve faster and keep your Digimon strong! 💪
+              Tip: Focus on completing 100% of daily tasks to evolve faster and keep your Soulmon strong! 💪
             </p>
           </section>
         </div>

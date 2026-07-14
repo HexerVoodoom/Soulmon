@@ -115,7 +115,7 @@ export function NotificationManager({
         lastEveningWarnDate.current = today;
         const ispt = language === 'pt-BR';
         showNotification(
-          ispt ? '⚠️ Seu Digimon está em perigo!' : '⚠️ Your Digimon is in danger!',
+          ispt ? '⚠️ Seu Soulmon está em perigo!' : '⚠️ Your Soulmon is in danger!',
           {
             body: ispt
               ? `Complete ao menos ${halfRequired} tarefa(s) hoje ou seu parceiro vai regredir amanhã!`

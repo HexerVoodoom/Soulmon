@@ -82,8 +82,8 @@ export function useCareSystem({
               ispt ? '🚽 Hora de limpar!' : '🚽 Bathroom time!',
               {
                 body: ispt
-                  ? 'Seu Digimon fez cocô! Dê um banho para limpar. 🚿'
-                  : 'Your Digimon pooped! Give it a shower to clean up. 🚿',
+                  ? 'Seu Soulmon fez cocô! Dê um banho para limpar. 🚿'
+                  : 'Your Soulmon pooped! Give it a shower to clean up. 🚿',
                 tag: `poop-event-${index}`,
               },
             );

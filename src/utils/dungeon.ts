@@ -58,7 +58,7 @@ function poolForTier(tier: EnemyTier, exclude: string): string[] {
 }
 
 /**
- * Build one wave: a random Digimon from each tier (baby-i → mega, in order),
+ * Build one wave: a random creature from each tier (rookie → mega, in order),
  * with stats scaled by the dungeon `level`. Higher level = more enemy damage
  * dealt and less damage taken (dmgReduction). Random each call.
  */
@@ -129,15 +129,6 @@ export function recordDungeonScore(score: number): number {
   const best = Math.max(getDungeonBest(), score);
   localStorage.setItem(STORAGE_KEYS.DUNGEON_BEST, String(best));
   return best;
-}
-
-// ── Digimental drops ─────────────────────────────────────────────────────────
-// Rare (1% per defeated enemy), uncapped — the rarity IS the cap.
-// Returns the dropped digimental's EVO_ITEMS id, or null.
-const DIGIMENTAL_DROP_CHANCE = 0.01;
-export function rollDungeonDigimental(rng: () => number = Math.random): string | null {
-  if (rng() > DIGIMENTAL_DROP_CHANCE) return null;
-  return rng() < 0.5 ? 'digimental-courage' : 'digimental-friendship';
 }
 
 // ── Heart drops ──────────────────────────────────────────────────────────────

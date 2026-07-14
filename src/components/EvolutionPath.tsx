@@ -1,202 +1,117 @@
 import React, { useState, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { DigivolutionProgress } from './DigivolutionProgress';
-import { getEvolutionLine, type EggType } from '../types/evolution-lines';
-import { getStageLevel } from '../types/progression';
+import { getSpriteForStage } from '../utils/sprites';
+import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 
-// Numeric tier for each stage level (matches the card `level` field: egg=-3 …
-// rookie=0 … ultra=4) so we can tell which forms are "future" for the pet.
-const TIER_LEVEL: Record<string, number> = {
-  digiegg: -3, 'baby-i': -2, 'baby-ii': -1, rookie: 0,
-  champion: 1, ultimate: 2, mega: 3, ultra: 4,
-};
+type Attr = 'virus' | 'data' | 'vaccine';
+const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
+const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
 
 interface EvolutionPathProps {
-  currentStage: string;
-  currentBranch: 'virus' | 'data' | 'vaccine';
-  currentXP: number;
+  /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */
+  currentStageId: string;
+  currentBranch: Attr;
   virusPoints: number;
   dataPoints: number;
   vaccinePoints: number;
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
-  onDegenerate?: (targetStage: string) => void;
+  onDegenerate?: (targetStageId: string) => void;
   theme?: 'default' | 'win98' | 'glitch';
-  dailyDone?: number;
-  dailyTotal?: number;
-  activitiesCount?: number;
-  evolutionStage?: string;
-  perfectDays?: number;
-  dailyRequired?: number;
+  /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
+  stages: CreatureStage[];
+  /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
+  eggType?: 'tapirmon' | 'veemon' | 'salamon';
   unlockedEvolutions?: string[];
-  eggType?: EggType;
-  /** Evolution padlock: tapping the CURRENT Digimon toggles it. */
+  /** Evolution padlock: tapping the CURRENT Soulmon toggles it. */
   evolutionLocked?: boolean;
   onToggleEvolutionLock?: () => void;
   language?: 'pt-BR' | 'en-US';
 }
 
-interface Evolution {
-  level: number;
-  name: string;
-  xpRequired: number;
-  sprite?: string;
-}
-
-export function EvolutionPath({ 
-  currentStage, 
-  currentBranch, 
-  currentXP, 
-  virusPoints, 
-  dataPoints, 
-  vaccinePoints, 
+export function EvolutionPath({
+  currentStageId,
+  currentBranch,
+  virusPoints,
+  dataPoints,
+  vaccinePoints,
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   onDegenerate,
   theme,
-  unlockedEvolutions = [],
-  evolutionStage,
+  stages,
   eggType = 'tapirmon',
+  unlockedEvolutions = [],
   evolutionLocked = false,
   onToggleEvolutionLock,
   language = 'en-US',
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
-  const unlockedSet = useMemo(() => new Set(unlockedEvolutions.map(s => s.toLowerCase())), [unlockedEvolutions]);
-  // The pet's real current tier (independent of accumulated XP).
-  const currentLevel = TIER_LEVEL[getStageLevel(evolutionStage ?? currentStage.toLowerCase())] ?? 0;
-  const [selectedBranch, setSelectedBranch] = useState<'virus' | 'data' | 'vaccine'>(currentBranch);
-  const [confirmDegenerate, setConfirmDegenerate] = useState<{ stage: string; isSecondConfirm: boolean } | null>(null);
+  const L = (t: LText) => (isPt ? t.pt : t.en);
+  const unlockedSet = useMemo(() => new Set(unlockedEvolutions), [unlockedEvolutions]);
+  const [selectedBranch, setSelectedBranch] = useState<Attr>(currentBranch);
+  const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean } | null>(null);
   // Locked evolutions are hidden behind a pixelated "?" (spoiler guard). The
   // user can reveal one (shown darkened) after confirming; this local set resets
   // when they leave the screen (the component unmounts on navigation).
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
-  const [confirmReveal, setConfirmReveal] = useState<string | null>(null);
+  const [confirmReveal, setConfirmReveal] = useState<CreatureStage | null>(null);
 
   const handleRevealConfirm = () => {
-    if (confirmReveal) setRevealed(prev => new Set(prev).add(confirmReveal));
+    if (confirmReveal) setRevealed(prev => new Set(prev).add(creatureFormId(confirmReveal)));
     setConfirmReveal(null);
   };
 
-  // Get the correct evolution line based on egg type
-  const evolutionLine = useMemo(() => getEvolutionLine(eggType), [eggType]);
+  const rookie = stages.find(s => s.stage === 'rookie');
+  const ultra = stages.find(s => s.stage === 'ultra');
+  const getBranchPath = (branch: Attr): CreatureStage[] =>
+    stages.filter(s => s.branch && ALIGN_TO_ATTR[s.branch] === branch);
 
-  // Build evolution paths from the evolution line
-  const COMMON_PATH: Evolution[] = useMemo(() => [
-    { level: -3, name: evolutionLine.digiegg.name, xpRequired: evolutionLine.digiegg.xpRequired, sprite: evolutionLine.digiegg.sprite },
-    { level: -2, name: evolutionLine.inTraining1.name, xpRequired: evolutionLine.inTraining1.xpRequired, sprite: evolutionLine.inTraining1.sprite },
-    { level: -1, name: evolutionLine.inTraining2.name, xpRequired: evolutionLine.inTraining2.xpRequired, sprite: evolutionLine.inTraining2.sprite },
-  ], [evolutionLine]);
-
-  const ROOKIE: Evolution = useMemo(() => ({ 
-    level: 0, 
-    name: evolutionLine.rookie.name, 
-    xpRequired: evolutionLine.rookie.xpRequired, 
-    sprite: evolutionLine.rookie.sprite 
-  }), [evolutionLine]);
-
-  const ULTRA: Evolution = useMemo(() => ({
-    level: 4,
-    name: evolutionLine.ultra.name,
-    xpRequired: evolutionLine.ultra.xpRequired,
-    sprite: evolutionLine.ultra.sprite,
-  }), [evolutionLine]);
-
-  const getBranchPath = (branch: 'virus' | 'data' | 'vaccine'): Evolution[] => {
-    const branchData = evolutionLine.branches.find(b => b.type === branch);
-    if (!branchData) return [ULTRA];
-    
-    const branchStages = branchData.stages.map((stage, index) => ({
-      level: index + 1,
-      name: stage.name,
-      xpRequired: stage.xpRequired,
-      sprite: stage.sprite,
-    }));
-
-    return [...branchStages, ULTRA];
-  };
-
-  const getBranchColor = (branch: 'virus' | 'data' | 'vaccine') => {
-    switch (branch) {
-      case 'virus': return { bg: 'bg-[#22A900]', text: 'text-[#22A900]', border: 'border-[#22A900]', aura: 'shadow-[#22A900]/50' };
-      case 'data': return { bg: 'bg-[#009ED8]', text: 'text-[#009ED8]', border: 'border-[#009ED8]', aura: 'shadow-[#009ED8]/50' };
-      case 'vaccine': return { bg: 'bg-[#E69600]', text: 'text-[#E69600]', border: 'border-[#E69600]', aura: 'shadow-[#E69600]/50' };
-    }
-  };
-
-  // The 3 Mega forms (one per branch) for this egg line — Ultra unlocks only
-  // once all three are actually unlocked.
-  const megaKeys = useMemo(
-    () => evolutionLine.branches
-      .map(b => b.stages[b.stages.length - 1]?.name.toLowerCase())
-      .filter(Boolean) as string[],
-    [evolutionLine],
-  );
-  const areAllMegasUnlocked = () => megaKeys.length > 0 && megaKeys.every(k => unlockedSet.has(k));
+  const megaIds = ATTR_ORDER.map(a => `mega-${a}`);
+  const areAllMegasUnlocked = megaIds.every(id => unlockedSet.has(id));
 
   const branchPath = getBranchPath(selectedBranch);
   const colors = getBranchColor(selectedBranch);
-  
-  // Constrói a linha evolutiva ATUAL do Digimon (do início até o estágio atual)
-  const getCurrentEvolutionLine = (): Evolution[] => {
-    const currentBranchPath = getBranchPath(currentBranch);
-    const fullPath = [...COMMON_PATH, ROOKIE, ...currentBranchPath];
-    
-    // Encontra o índice do estágio atual
-    const currentIndex = fullPath.findIndex(e => e.name.toLowerCase() === currentStage.toLowerCase());
-    
-    // Retorna apenas os estágios até o atual (inclusive)
-    return currentIndex >= 0 ? fullPath.slice(0, currentIndex + 1) : fullPath;
-  };
-  
-  const currentEvolutionLine = getCurrentEvolutionLine();
 
-  const handleDegenerateClick = (stage: string) => {
-    setConfirmDegenerate({ stage, isSecondConfirm: false });
+  const handleDegenerateClick = (evolution: CreatureStage) => {
+    setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false });
   };
 
   const handleDegenerateConfirm = () => {
     if (confirmDegenerate?.isSecondConfirm) {
-      // Second confirmation - execute degeneration
-      if (onDegenerate) {
-        onDegenerate(confirmDegenerate.stage);
-      }
+      onDegenerate?.(confirmDegenerate.id);
       setConfirmDegenerate(null);
     } else {
-      // First confirmation - show second confirmation
-      setConfirmDegenerate({ stage: confirmDegenerate!.stage, isSecondConfirm: true });
+      setConfirmDegenerate({ ...confirmDegenerate!, isSecondConfirm: true });
     }
   };
 
-  const handleDegenerateCancel = () => {
-    setConfirmDegenerate(null);
-  };
+  const handleDegenerateCancel = () => setConfirmDegenerate(null);
 
-  const renderEvolutionCard = (evolution: Evolution, colors: any, index: number, pathLength: number) => {
-    const isUnlocked = currentXP >= evolution.xpRequired;
-    const isCurrent = evolution.name.toLowerCase() === currentStage.toLowerCase();
-    const isUltraMode = evolution.level === 4 && !areAllMegasUnlocked();
-    
-    // Verifica se este estágio está na linha evolutiva ATUAL do Digimon E se está ANTES do estágio atual
-    const isInCurrentLine = currentEvolutionLine.some(e => e.name.toLowerCase() === evolution.name.toLowerCase());
-    const isPreviousStage = isInCurrentLine && isUnlocked && !isCurrent;
-
-    const isRevealed = revealed.has(evolution.name);
-    const stageKey = evolution.name.toLowerCase();
-    const isUltra = evolution.level === 4;
-    // "Reached" (shown) = the current form, an already-unlocked form, a shared
-    // trunk stage the pet has passed (egg → rookie), or — for Ultra — once all 3
-    // megas are unlocked. Everything else is a spoiler-hidden future form,
-    // regardless of accumulated XP.
+  const renderEvolutionCard = (evolution: CreatureStage, colors: BranchColors, index: number, pathLength: number) => {
+    const stageId = creatureFormId(evolution);
+    const isCurrent = stageId === currentStageId;
+    const isUltra = evolution.stage === 'ultra';
+    const isUltraMode = isUltra && !areAllMegasUnlocked;
+    const isRevealed = revealed.has(stageId);
+    // "Reached" (shown) = the current form, an already-unlocked form, the
+    // shared rookie trunk, or — for Ultra — once all 3 megas are unlocked.
+    // Everything else is a spoiler-hidden future form.
     const isReached =
       isCurrent
-      || unlockedSet.has(stageKey)
-      || (evolution.level <= 0 && currentLevel >= evolution.level)
-      || (isUltra && areAllMegasUnlocked());
+      || unlockedSet.has(stageId)
+      || evolution.stage === 'rookie'
+      || (isUltra && areAllMegasUnlocked);
     const hidden = !isReached && !isRevealed;
+    // A stage the pet already passed through, on the branch it's CURRENTLY
+    // on — offer to degenerate back to it.
+    const isPreviousStage = isReached && !isCurrent && evolution.stage !== 'rookie' && evolution.branch
+      ? ALIGN_TO_ATTR[evolution.branch] === currentBranch
+      : false;
 
     return (
-      <div key={`${evolution.name}-${index}`}>
+      <div key={stageId}>
         <div className={`bg-white rounded-xl p-5 border transition-all ${
           isCurrent
             ? `${colors.border} shadow-md ${colors.aura}`
@@ -206,13 +121,13 @@ export function EvolutionPath({
         }`}>
           <div className="flex items-center gap-3">
             {/* Sprite — locked evolutions are hidden behind a pixelated "?".
-                Tapping the CURRENT Digimon toggles the evolution padlock. */}
+                Tapping the CURRENT Soulmon toggles the evolution padlock. */}
             <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
               isReached ? 'bg-gray-100' : 'bg-gray-200'
             }`}>
               {hidden ? (
                 <button
-                  onClick={() => setConfirmReveal(evolution.name)}
+                  onClick={() => setConfirmReveal(evolution)}
                   aria-label="Reveal evolution (spoiler)"
                   title="Reveal (spoiler)"
                   className="w-12 h-12 flex items-center justify-center rounded-md hover:bg-gray-300 transition-colors"
@@ -228,14 +143,14 @@ export function EvolutionPath({
               ) : isCurrent && onToggleEvolutionLock ? (
                 <button
                   onClick={onToggleEvolutionLock}
-                  aria-label={isPt ? 'Alternar cadeado de digievolução' : 'Toggle digivolution padlock'}
+                  aria-label={isPt ? 'Alternar cadeado de evolução' : 'Toggle evolution padlock'}
                   title={evolutionLocked
-                    ? (isPt ? 'Destravar digievolução' : 'Unlock digivolution')
-                    : (isPt ? 'Travar digievolução' : 'Lock digivolution')}
+                    ? (isPt ? 'Destravar evolução' : 'Unlock evolution')
+                    : (isPt ? 'Travar evolução' : 'Lock evolution')}
                   className="relative w-12 h-12 flex items-center justify-center rounded-md cursor-pointer"
                 >
                   <img
-                    src={evolution.sprite}
+                    src={getSpriteForStage(stageId, eggType)}
                     alt={evolution.name}
                     className="w-12 h-12 object-contain"
                     style={{ imageRendering: 'pixelated', filter: evolutionLocked ? 'grayscale(0.7) brightness(0.75)' : 'none' }}
@@ -249,14 +164,14 @@ export function EvolutionPath({
                     </span>
                   )}
                 </button>
-              ) : evolution.sprite ? (
+              ) : (
                 <img
-                  src={evolution.sprite}
-                  alt={isUnlocked ? evolution.name : 'revealed evolution'}
+                  src={getSpriteForStage(stageId, eggType)}
+                  alt={isReached ? evolution.name : 'revealed evolution'}
                   className="w-12 h-12 object-contain"
                   style={{ imageRendering: 'pixelated', filter: isReached ? 'none' : 'brightness(0.35) grayscale(0.35)' }}
                 />
-              ) : null}
+              )}
             </div>
 
             {/* Info */}
@@ -265,6 +180,11 @@ export function EvolutionPath({
                 <h3 className={`${isReached ? 'text-gray-900' : 'text-gray-500'}`} style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
                   {hidden ? '???' : evolution.name}
                 </h3>
+                {!hidden && (
+                  <span className="text-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>
+                    {L(evolution.stageName)}
+                  </span>
+                )}
                 {isCurrent && (
                   <span className={`${colors.bg} text-white text-xs px-2 py-0.5 rounded`} style={{ fontFamily: 'monospace' }}>
                     CURRENT
@@ -291,11 +211,11 @@ export function EvolutionPath({
                 </div>
               ) : isPreviousStage ? (
                 <button
-                  onClick={() => handleDegenerateClick(evolution.name)}
+                  onClick={() => handleDegenerateClick(evolution)}
                   className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs transition-colors"
                   style={{ fontFamily: 'monospace' }}
                 >
-                  Degenerate
+                  {isPt ? 'Degenerar' : 'Degenerate'}
                 </button>
               ) : null}
             </div>
@@ -305,7 +225,7 @@ export function EvolutionPath({
         {/* Arrow */}
         {index < pathLength - 1 && (
           <div className="flex justify-center py-1">
-            <ChevronDown size={20} className={isUnlocked ? colors.text : 'text-gray-400'} />
+            <ChevronDown size={20} className={isReached ? colors.text : 'text-gray-400'} />
           </div>
         )}
       </div>
@@ -319,12 +239,18 @@ export function EvolutionPath({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <h3 className="text-lg mb-4" style={{ fontFamily: 'monospace' }}>
-              {confirmDegenerate.isSecondConfirm ? '⚠️ FINAL WARNING!' : '⚠️ Confirm Degeneration'}
+              {confirmDegenerate.isSecondConfirm
+                ? (isPt ? '⚠️ AVISO FINAL!' : '⚠️ FINAL WARNING!')
+                : (isPt ? '⚠️ Confirmar degeneração' : '⚠️ Confirm Degeneration')}
             </h3>
             <p className="text-gray-700 mb-6" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-              {confirmDegenerate.isSecondConfirm 
-                ? `Are you ABSOLUTELY SURE you want to degenerate to ${confirmDegenerate.stage}? This action CANNOT be undone!`
-                : `Do you want to degenerate to ${confirmDegenerate.stage}? You will lose all progress beyond this stage.`
+              {confirmDegenerate.isSecondConfirm
+                ? (isPt
+                    ? `Tem CERTEZA ABSOLUTA que quer degenerar para ${confirmDegenerate.name}? Essa ação NÃO pode ser desfeita!`
+                    : `Are you ABSOLUTELY SURE you want to degenerate to ${confirmDegenerate.name}? This action CANNOT be undone!`)
+                : (isPt
+                    ? `Quer degenerar para ${confirmDegenerate.name}? Você vai perder o progresso além deste estágio.`
+                    : `Do you want to degenerate to ${confirmDegenerate.name}? You will lose all progress beyond this stage.`)
               }
             </p>
             <div className="flex gap-3">
@@ -333,18 +259,18 @@ export function EvolutionPath({
                 className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-colors"
                 style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
               >
-                Cancel
+                {isPt ? 'Cancelar' : 'Cancel'}
               </button>
               <button
                 onClick={handleDegenerateConfirm}
                 className={`flex-1 py-2.5 ${
-                  confirmDegenerate.isSecondConfirm 
-                    ? 'bg-red-500 hover:bg-red-600' 
+                  confirmDegenerate.isSecondConfirm
+                    ? 'bg-red-500 hover:bg-red-600'
                     : 'bg-gray-800 hover:bg-gray-900'
                 } text-white rounded-xl transition-colors`}
                 style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
               >
-                {confirmDegenerate.isSecondConfirm ? 'YES, DEGENERATE!' : 'Confirm'}
+                {confirmDegenerate.isSecondConfirm ? (isPt ? 'SIM, DEGENERAR!' : 'YES, DEGENERATE!') : (isPt ? 'Confirmar' : 'Confirm')}
               </button>
             </div>
           </div>
@@ -356,11 +282,12 @@ export function EvolutionPath({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
             <h3 className="text-lg mb-4" style={{ fontFamily: 'monospace' }}>
-              👁️ Reveal this evolution?
+              👁️ {isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
             </h3>
             <p className="text-gray-700 mb-6" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-              This is a future evolution you haven't unlocked yet — peeking is a spoiler!
-              It'll show up darkened, and hide again once you leave this screen.
+              {isPt
+                ? 'Essa é uma evolução futura que você ainda não desbloqueou — espiar é spoiler! Ela vai aparecer escurecida e esconder de novo quando você sair dessa tela.'
+                : "This is a future evolution you haven't unlocked yet — peeking is a spoiler! It'll show up darkened, and hide again once you leave this screen."}
             </p>
             <div className="flex gap-3">
               <button
@@ -368,14 +295,14 @@ export function EvolutionPath({
                 className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-colors"
                 style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
               >
-                Cancel
+                {isPt ? 'Cancelar' : 'Cancel'}
               </button>
               <button
                 onClick={handleRevealConfirm}
                 className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-xl transition-colors"
                 style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
               >
-                Yes, reveal
+                {isPt ? 'Sim, revelar' : 'Yes, reveal'}
               </button>
             </div>
           </div>
@@ -385,17 +312,17 @@ export function EvolutionPath({
       {/* Attribute Balance */}
       <div className="bg-white rounded-xl p-5 mb-4 border border-gray-200 shadow-sm">
         <p className="text-gray-700 mb-2" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-          CURRENT ATTRIBUTES
+          {isPt ? 'ATRIBUTOS ATUAIS' : 'CURRENT ATTRIBUTES'}
         </p>
         <div className="flex justify-between text-sm" style={{ fontFamily: 'monospace' }}>
           <span className="text-[#22A900]" style={{ fontWeight: '600' }}>
-            🦠 Virus: {virusPoints}
+            🦠 {isPt ? 'Vírus' : 'Virus'}: {virusPoints}
           </span>
           <span className="text-[#009ED8]" style={{ fontWeight: '600' }}>
-            💾 Data: {dataPoints}
+            💾 {isPt ? 'Dado' : 'Data'}: {dataPoints}
           </span>
           <span className="text-[#E69600]" style={{ fontWeight: '600' }}>
-            💉 Vaccine: {vaccinePoints}
+            💉 {isPt ? 'Vacina' : 'Vaccine'}: {vaccinePoints}
           </span>
         </div>
       </div>
@@ -409,23 +336,18 @@ export function EvolutionPath({
         />
       </div>
 
-      {/* Common Evolution Path (Egg to In-Training 2) */}
-      <div className="mb-4 space-y-3">
-        {COMMON_PATH.map((evolution, index) => 
-          renderEvolutionCard(evolution, { bg: 'bg-teal-500', text: 'text-teal-600', border: 'border-teal-500', aura: 'shadow-teal-500/50' }, index, COMMON_PATH.length)
-        )}
-      </div>
-
-      {/* Rookie - Branching Point */}
-      <div className="mb-4">
-        {renderEvolutionCard(ROOKIE, { bg: 'bg-teal-500', text: 'text-teal-600', border: 'border-teal-500', aura: 'shadow-teal-500/50' }, 0, 1)}
-      </div>
+      {/* Rookie — Branching Point */}
+      {rookie && (
+        <div className="mb-4">
+          {renderEvolutionCard(rookie, { bg: 'bg-teal-500', text: 'text-teal-600', border: 'border-teal-500', aura: 'shadow-teal-500/50' }, 0, 1)}
+        </div>
+      )}
 
       {/* Branch Selector Divider */}
       <div className="my-4 flex items-center gap-3">
         <div className="h-px bg-gradient-to-r from-transparent via-gray-400 to-transparent flex-1" />
         <span className="text-gray-500 text-xs" style={{ fontFamily: 'monospace' }}>
-          EVOLUTION BRANCHES
+          {isPt ? 'LINHAS DE EVOLUÇÃO' : 'EVOLUTION BRANCHES'}
         </span>
         <div className="h-px bg-gradient-to-r from-transparent via-gray-400 to-transparent flex-1" />
       </div>
@@ -469,11 +391,21 @@ export function EvolutionPath({
 
       {/* Branch-Specific Evolution Path - Always visible */}
       <div className="space-y-3">
-        {branchPath.map((evolution, index) => 
-          renderEvolutionCard(evolution, colors, index, branchPath.length)
+        {branchPath.map((evolution, index) =>
+          renderEvolutionCard(evolution, colors, index, branchPath.length + 1),
         )}
+        {ultra && renderEvolutionCard(ultra, colors, branchPath.length, branchPath.length + 1)}
       </div>
-
     </div>
   );
+}
+
+interface BranchColors { bg: string; text: string; border: string; aura: string }
+
+function getBranchColor(branch: Attr): BranchColors {
+  switch (branch) {
+    case 'virus': return { bg: 'bg-[#22A900]', text: 'text-[#22A900]', border: 'border-[#22A900]', aura: 'shadow-[#22A900]/50' };
+    case 'data': return { bg: 'bg-[#009ED8]', text: 'text-[#009ED8]', border: 'border-[#009ED8]', aura: 'shadow-[#009ED8]/50' };
+    case 'vaccine': return { bg: 'bg-[#E69600]', text: 'text-[#E69600]', border: 'border-[#E69600]', aura: 'shadow-[#E69600]/50' };
+  }
 }

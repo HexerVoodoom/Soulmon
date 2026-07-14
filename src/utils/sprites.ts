@@ -1,4 +1,5 @@
 // Stage → sprite map, shared by CompanionHUD and the dungeon minigame.
+import { getEvolutionLine, type EggType } from '../types/evolution-lines';
 import digiEggSprite from 'figma:asset/6479b687e03b8292ee02a4453bff2eb1a76cfecb.png';
 import pichimonSprite from 'figma:asset/99ff747d7f7ecc2424e131a43c54669bcba9a301.png';
 import pukamonSprite from 'figma:asset/104dc13e2c146bb51e00903d6eaa5f6fae7619c6.png';
@@ -141,8 +142,27 @@ export const STAGE_SPRITES: Record<string, string> = {
   'raidramon-armor': raidramonSprite,
 };
 
-export function getSpriteForStage(stage: string): string {
-  return STAGE_SPRITES[stage.toLowerCase()] ?? digiEggSprite;
+/**
+ * Fallback visual PROVISÓRIO pra árvore única do Soulmon (utils/oracle.ts):
+ * até a Fase 2 (sprite gerado por IA) assumir, reaproveita um dos ~60 sprites
+ * DMC/figma já existentes, escolhido pela linha genérica sorteada uma vez no
+ * onboarding (GameState.eggType) + nível/branch embutidos no id
+ * ('champion-virus', 'rookie', 'ultra' — ver types/progression.ts).
+ */
+function genericSpriteForStage(stageId: string, line: EggType): string {
+  const evoLine = getEvolutionLine(line);
+  if (stageId === 'rookie') return evoLine.rookie.sprite;
+  if (stageId === 'ultra') return evoLine.ultra.sprite;
+  const [level, branch] = stageId.split('-');
+  const branchData = evoLine.branches.find(b => b.type === branch);
+  if (!branchData) return evoLine.rookie.sprite;
+  const idx = level === 'champion' ? 0 : level === 'ultimate' ? 1 : level === 'mega' ? 2 : -1;
+  return branchData.stages[idx]?.sprite ?? evoLine.rookie.sprite;
+}
+
+export function getSpriteForStage(stage: string, genericLine: EggType = 'tapirmon'): string {
+  const key = stage.toLowerCase();
+  return STAGE_SPRITES[key] ?? genericSpriteForStage(key, genericLine);
 }
 
 /** Sprites drawn facing LEFT by default — flip them when they should face right. */

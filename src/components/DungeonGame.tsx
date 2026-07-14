@@ -13,7 +13,7 @@ import type { Language } from '../utils/i18n';
 /**
  * Dungeon minigame — timing-bar battle across up to 5 FLOORS.
  *
- * A run is up to 5 floors; each floor is a fixed ladder of 6 RANDOM Digimon
+ * A run is up to 5 floors; each floor is a fixed ladder of 6 RANDOM wild creatures
  * climbing the tiers (baby-i → baby-ii → rookie → champion → ultimate → mega).
  * Floor difficulty = base level + (floor-1), so floor 1 suits a rookie, floor 2
  * a champion, floor 3 an ultimate… — a couple floors above the pet is brutal.
@@ -102,7 +102,7 @@ function TimingBar({ speed, color, label, onStop }: {
 }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onDigimentalDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit }: {
+export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit }: {
   evolutionStage: string;
   language: Language;
   /** Start a run: gates on HP only. Returns the base level (floor 1's level). */
@@ -111,8 +111,6 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
   onHeartDrop: () => boolean;
-  /** Rolls for a digimental drop (added to Items); returns its display name or null. */
-  onDigimentalDrop: () => string | null;
   /** Completing all 5 floors grants a Glitchtama (added to Items). */
   onGlitchtama: () => void;
   /** Mission counter: called once per defeated enemy. */
@@ -199,17 +197,15 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
     setPhase('attack');
   };
 
-  // Enemy defeated: grant points + roll heart/digimental drops, then confirm.
+  // Enemy defeated: grant points + roll a heart drop, then confirm.
   const defeatEnemy = (finalMsg: Popup) => {
     playTaskComplete();
     onEnemyDefeated();
     addPoints(enemy.points);
     const gotHeart = onHeartDrop();
-    const digimental = onDigimentalDrop();
     setRewardMsg(
       `+${enemy.points} Bits` +
-      (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : '') +
-      (digimental ? ` · ✨ ${digimental}!` : ''),
+      (gotHeart ? ` · 💗 +1 ${isPt ? 'coração' : 'heart'}` : ''),
     );
     setPopup(finalMsg);
     setPhase('result');

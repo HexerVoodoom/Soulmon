@@ -10,8 +10,8 @@ interface CoachMarkProps {
 const TIPS = [
   {
     icon: '❤️',
-    en: { title: 'HP & Energy', body: 'Hearts = your Digimon\'s health. The side bar = energy, filled only by feeding. Full energy unlocks the shower.' },
-    pt: { title: 'HP e Energia', body: 'Corações = saúde do seu Digimon. A barra lateral = energia, carregada só comendo. Energia cheia libera o banho.' },
+    en: { title: 'HP & Energy', body: 'Hearts = your Soulmon\'s health. The side bar = energy, filled only by feeding. Full energy unlocks the shower.' },
+    pt: { title: 'HP e Energia', body: 'Corações = saúde do seu Soulmon. A barra lateral = energia, carregada só comendo. Energia cheia libera o banho.' },
   },
   {
     icon: '📅',
@@ -20,7 +20,7 @@ const TIPS = [
   },
   {
     icon: '🦠',
-    en: { title: 'Attributes', body: 'Each activity category feeds Virus 🦠, Data 💾 or Vaccine 💉 points. The dominant attribute shapes your Digimon\'s evolution path!' },
+    en: { title: 'Attributes', body: 'Each activity category feeds Virus 🦠, Data 💾 or Vaccine 💉 points. The dominant attribute shapes your Soulmon\'s evolution path!' },
     pt: { title: 'Atributos', body: 'Cada categoria de atividade alimenta pontos Vírus 🦠, Dado 💾 ou Vacina 💉. O atributo dominante define o caminho de evolução!' },
   },
 ];

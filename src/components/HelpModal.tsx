@@ -10,15 +10,15 @@ interface HelpModalProps {
 
 const SECTIONS = [
   {
-    titleEn: 'Your Digimon',
-    titlePt: 'Seu Digimon',
+    titleEn: 'Your Soulmon',
+    titlePt: 'Seu Soulmon',
     items: [
       {
         icon: '❤️',
         labelEn: 'HP (Hearts)',
         labelPt: 'HP (Corações)',
-        descEn: 'Your Digimon\'s health. At day\'s end you lose hearts for what you left undone vs. the stage requirement; uncleaned poop drains 1 heart every 6h. Healed by rubbing (max 1 heart/day) or by using a Little Heart item (shop / dungeon drop). Reaches 0 → degeneration (you keep a head start of half the perfect days to climb back; doesn\'t stack).',
-        descPt: 'A saúde do seu Digimon. Na virada do dia você perde corações pelo que faltou em relação ao requisito do estágio; cocô não limpo tira 1 coração a cada 6h. Recupera esfregando (máx. 1 coração/dia) ou usando um Coraçãozinho (loja / drop da masmorra). Chega a 0 → degeneração (você mantém metade dos dias perfeitos de vantagem para voltar; não acumula).',
+        descEn: 'Your Soulmon\'s health. At day\'s end you lose hearts for what you left undone vs. the stage requirement; uncleaned poop drains 1 heart every 6h. Healed by rubbing (max 1 heart/day) or by using a Little Heart item (shop / dungeon drop). Reaches 0 → degeneration (you keep a head start of half the perfect days to climb back; doesn\'t stack).',
+        descPt: 'A saúde do seu Soulmon. Na virada do dia você perde corações pelo que faltou em relação ao requisito do estágio; cocô não limpo tira 1 coração a cada 6h. Recupera esfregando (máx. 1 coração/dia) ou usando um Coraçãozinho (loja / drop da masmorra). Chega a 0 → degeneração (você mantém metade dos dias perfeitos de vantagem para voltar; não acumula).',
       },
       {
         icon: '⚡',
@@ -44,15 +44,15 @@ const SECTIONS = [
         icon: '🦠',
         labelEn: 'Virus / 💾 Data / 💉 Vaccine',
         labelPt: 'Vírus / 💾 Dado / 💉 Vacina',
-        descEn: 'Attribute points earned through feeding. The dominant attribute shapes which form your Digimon evolves into.',
-        descPt: 'Pontos de atributo ganhos alimentando. O atributo dominante define para qual forma seu Digimon irá evoluir.',
+        descEn: 'Attribute points earned through feeding. The dominant attribute shapes which form your Soulmon evolves into.',
+        descPt: 'Pontos de atributo ganhos alimentando. O atributo dominante define para qual forma seu Soulmon irá evoluir.',
       },
       {
         icon: '🔒',
         labelEn: 'Evolution padlock',
         labelPt: 'Cadeado de evolução',
-        descEn: 'On the Evolution page, tap your CURRENT Digimon to lock/unlock digivolution. While locked it never evolves (perfect days still accumulate); unlock and it evolves at the next day turn.',
-        descPt: 'Na página de Evolução, toque no seu Digimon ATUAL para travar/destravar a digievolução. Travado, ele nunca evolui (os dias perfeitos continuam contando); destrave e ele evolui na próxima virada de dia.',
+        descEn: 'On the Evolution page, tap your CURRENT Soulmon to lock/unlock digivolution. While locked it never evolves (perfect days still accumulate); unlock and it evolves at the next day turn.',
+        descPt: 'Na página de Evolução, toque no seu Soulmon ATUAL para travar/destravar a digievolução. Travado, ele nunca evolui (os dias perfeitos continuam contando); destrave e ele evolui na próxima virada de dia.',
       },
       {
         icon: '🌀',
@@ -92,22 +92,22 @@ const SECTIONS = [
         icon: '🚿',
         labelEn: 'Bath',
         labelPt: 'Banho',
-        descEn: 'Give your Digimon a shower anytime. Cleans up active poop events (stopping the heart drain).',
-        descPt: 'Dê banho no seu Digimon a qualquer hora. Limpa o cocô ativo (e para o dreno de coração).',
+        descEn: 'Give your Soulmon a shower anytime. Cleans up active poop events (stopping the heart drain).',
+        descPt: 'Dê banho no seu Soulmon a qualquer hora. Limpa o cocô ativo (e para o dreno de coração).',
       },
       {
         icon: '🫶',
         labelEn: 'Affection (Rub)',
         labelPt: 'Carinho (esfregar)',
-        descEn: 'Rub your Digimon (press and drag over it) to pop little hearts. The only way to heal HP: ~2s of rubbing = half a heart, up to 1 heart per day.',
-        descPt: 'Esfregue seu Digimon (segure e arraste sobre ele) para soltar coraçõezinhos. Único jeito de curar HP: ~2s esfregando = meio coração, máx. 1 coração por dia.',
+        descEn: 'Rub your Soulmon (press and drag over it) to pop little hearts. The only way to heal HP: ~2s of rubbing = half a heart, up to 1 heart per day.',
+        descPt: 'Esfregue seu Soulmon (segure e arraste sobre ele) para soltar coraçõezinhos. Único jeito de curar HP: ~2s esfregando = meio coração, máx. 1 coração por dia.',
       },
       {
         icon: '💤',
         labelEn: 'Sleep',
         labelPt: 'Dormir',
-        descEn: 'Let your Digimon rest. It won\'t poop while asleep, so sleeping overnight protects it from penalties.',
-        descPt: 'Deixe seu Digimon descansar. Ele não faz cocô dormindo, então dormir à noite o protege de penalidades.',
+        descEn: 'Let your Soulmon rest. It won\'t poop while asleep, so sleeping overnight protects it from penalties.',
+        descPt: 'Deixe seu Soulmon descansar. Ele não faz cocô dormindo, então dormir à noite o protege de penalidades.',
       },
       {
         icon: '🚽',

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { MISSIONS, getMissionProgress, isMissionComplete, isShopItemUnlocked, type MissionState } from './missions';
-import { SHOP_ITEMS, DROP_EVO_ITEMS } from './shop';
+import { SHOP_ITEMS } from './shop';
 import { PET_BACKGROUNDS } from './backgrounds';
 
 const base: MissionState = {
@@ -55,19 +55,14 @@ describe('missions — shop unlock gating', () => {
     const at = (kills: number) => getMissionProgress({ ...base, dungeonKills: kills });
     expect(isMissionComplete('mission-kills-100', at(99))).toBe(false);
     expect(isMissionComplete('mission-kills-100', at(100))).toBe(true);
-    expect(isShopItemUnlocked(item, [], at(99))).toBe(false);
-    expect(isShopItemUnlocked(item, [], at(100))).toBe(true);
+    expect(isShopItemUnlocked(item, at(99))).toBe(false);
+    expect(isShopItemUnlocked(item, at(100))).toBe(true);
   });
 
-  it('drop-gated items unlock after their first drop; plain items are always unlocked', () => {
-    const digimental = DROP_EVO_ITEMS.find(i => i.id === 'digimental-courage')!;
+  it('plain (unlock-less) items are always unlocked; Glitchtama is never sold', () => {
     const progress = getMissionProgress(base);
-    expect(isShopItemUnlocked(digimental, [], progress)).toBe(false);
-    expect(isShopItemUnlocked(digimental, ['digimental-courage'], progress)).toBe(true);
-
     const chip = SHOP_ITEMS.find(i => i.id === 'chip-virus')!;
-    expect(isShopItemUnlocked(chip, [], progress)).toBe(true);
-    // Glitchtama must NOT be sold at all
-    expect([...SHOP_ITEMS, ...DROP_EVO_ITEMS].some(i => i.id === 'glitchtama')).toBe(false);
+    expect(isShopItemUnlocked(chip, progress)).toBe(true);
+    expect(SHOP_ITEMS.some(i => i.id === 'glitchtama')).toBe(false);
   });
 });

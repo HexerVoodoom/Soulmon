@@ -2,31 +2,21 @@ import { useState } from 'react';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import {
   generateOracle, ORACLE_QUESTIONS, ELEMENT_INFO, ALIGNMENT_INFO, REALM_INFO, ROLE_INFO,
-  type OracleInput, type OracleResult, type LText, type AlignmentId,
+  type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
 import type { ActivityCategory } from '../types/attributes';
 
 // ---------------------------------------------------------------------------
-// SoulmonOnboarding — o onboarding do Soulmon substitui a escolha do ovo:
-// o jogador responde nome/nascimento + um quiz (uma pergunta por página) e,
-// ao final, recebe SEU pet único com todas as evoluções já definidas.
-// (Fase 1: coleta + geração do perfil + revelação textual. As imagens da IA
-//  e a substituição do sprite vêm nas fases 2 e 3.)
+// SoulmonOnboarding — o ritual de nascimento do Soulmon: o jogador responde
+// nome/nascimento + um quiz (uma pergunta por página) e, ao final, recebe SEU
+// pet único com as 11 formas já definidas. O pet nasce direto Rookie — este
+// onboarding É o ovo + a incubação, condensados no ritual do oráculo.
 // ---------------------------------------------------------------------------
-
-type EggType = 'tapirmon' | 'veemon' | 'salamon';
-
-// Ponte temporária p/ o motor de jogo atual (Fase 3 troca a evolução inteira).
-const ALIGNMENT_TO_EGG: Record<AlignmentId, EggType> = {
-  poder: 'veemon',
-  harmonia: 'tapirmon',
-  benevolencia: 'salamon',
-};
 
 interface SoulmonOnboardingProps {
   onComplete: (data: {
     userName: string;
-    eggType: EggType;
+    oracleResult: OracleResult;
     initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
   }) => void;
 }
@@ -92,7 +82,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     if (!result) return;
     onComplete({
       userName: fullName.trim(),
-      eggType: ALIGNMENT_TO_EGG[result.dominantAlignment],
+      oracleResult: result,
       initialActivities: [],
     });
   };

@@ -7,7 +7,6 @@ export const STORAGE_KEYS = {
   USER_NAME: 'digiapp-user-name',
   EGG_TYPE: 'digiapp-egg-type',
   FIRST_TASK_POPUP_SHOWN: 'digiapp-first-task-popup-shown',
-  ROOKIE_POPUP_SHOWN: 'digiapp-rookie-popup-shown',
   NOTIFICATIONS_ENABLED: 'digiapp-notifications-enabled',
   PWA_INSTALL_DISMISSED: 'digiapp-pwa-install-dismissed',
   SCHEDULED_NOTIFICATIONS: 'digiapp-scheduled-notifications',

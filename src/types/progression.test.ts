@@ -1,73 +1,61 @@
 import { describe, it, expect } from 'vitest';
-import { getStageLevel, canSelectWeekdays, FORM_REQUIREMENTS, MAX_HP_BY_FORM } from './progression';
+import { getStageLevel, getStageBranch, canSelectWeekdays, FORM_REQUIREMENTS, MAX_HP_BY_FORM } from './progression';
 
 describe('getStageLevel', () => {
-  it('maps digiegg to digiegg', () => {
-    expect(getStageLevel('digiegg')).toBe('digiegg');
+  it('maps rookie', () => {
+    expect(getStageLevel('rookie')).toBe('rookie');
   });
 
-  it('maps baby-i stages correctly', () => {
-    expect(getStageLevel('pichimon')).toBe('baby-i');
-  });
-
-  it('maps baby-ii stages correctly', () => {
-    expect(getStageLevel('pukamon')).toBe('baby-ii');
-  });
-
-  it('maps rookie stages correctly', () => {
-    expect(getStageLevel('tapirmon')).toBe('rookie');
-  });
-
-  it('maps champion variants', () => {
-    expect(getStageLevel('monochromon')).toBe('champion');
-    expect(getStageLevel('tuskmon')).toBe('champion');
-    expect(getStageLevel('bakemon')).toBe('champion');
-  });
-
-  it('maps ultimate variants', () => {
-    expect(getStageLevel('gigadramon')).toBe('ultimate');
-    expect(getStageLevel('triceramon')).toBe('ultimate');
-    expect(getStageLevel('digitamamon')).toBe('ultimate');
-  });
-
-  it('maps mega variants', () => {
-    expect(getStageLevel('gaioumon')).toBe('mega');
-    expect(getStageLevel('ultimatebrachiomon')).toBe('mega');
-    expect(getStageLevel('titamon')).toBe('mega');
+  it('maps champion/ultimate/mega ids by prefix, regardless of branch', () => {
+    expect(getStageLevel('champion-virus')).toBe('champion');
+    expect(getStageLevel('champion-data')).toBe('champion');
+    expect(getStageLevel('champion-vaccine')).toBe('champion');
+    expect(getStageLevel('ultimate-virus')).toBe('ultimate');
+    expect(getStageLevel('mega-data')).toBe('mega');
   });
 
   it('maps ultra', () => {
+    expect(getStageLevel('ultra')).toBe('ultra');
+  });
+
+  it('classifies legacy static names (dungeon wild roster / sprite fallback)', () => {
+    expect(getStageLevel('tapirmon')).toBe('rookie');
+    expect(getStageLevel('tuskmon')).toBe('champion');
+    expect(getStageLevel('gigadramon')).toBe('ultimate');
+    expect(getStageLevel('gaioumon')).toBe('mega');
     expect(getStageLevel('gaioumon-itto')).toBe('ultra');
   });
 
-  it('falls back to digiegg for unknown stages', () => {
-    expect(getStageLevel('unknown-digimon')).toBe('digiegg');
+  it('falls back to rookie for unknown stages', () => {
+    expect(getStageLevel('unknown-creature')).toBe('rookie');
+  });
+});
+
+describe('getStageBranch', () => {
+  it('extracts the attribute embedded in the id', () => {
+    expect(getStageBranch('champion-virus')).toBe('virus');
+    expect(getStageBranch('mega-vaccine')).toBe('vaccine');
+  });
+
+  it('returns null when there is no branch (rookie/ultra/legacy names)', () => {
+    expect(getStageBranch('rookie')).toBeNull();
+    expect(getStageBranch('ultra')).toBeNull();
+    expect(getStageBranch('tapirmon')).toBeNull();
   });
 });
 
 describe('canSelectWeekdays', () => {
-  it('returns false for pre-rookie stages', () => {
-    expect(canSelectWeekdays('digiegg')).toBe(false);
-    expect(canSelectWeekdays('pichimon')).toBe(false);
-    expect(canSelectWeekdays('pukamon')).toBe(false);
-  });
-
-  it('returns true for rookie and above', () => {
-    expect(canSelectWeekdays('tapirmon')).toBe(true);
-    expect(canSelectWeekdays('monochromon')).toBe(true);
-    expect(canSelectWeekdays('gigadramon')).toBe(true);
-    expect(canSelectWeekdays('gaioumon')).toBe(true);
-    expect(canSelectWeekdays('gaioumon-itto')).toBe(true);
-  });
-
-  it('returns false for unknown stages', () => {
-    expect(canSelectWeekdays('unknown')).toBe(false);
+  it('is always true — the Soulmon tree starts at rookie, no pre-rookie stages', () => {
+    expect(canSelectWeekdays('rookie')).toBe(true);
+    expect(canSelectWeekdays('champion-virus')).toBe(true);
+    expect(canSelectWeekdays('ultra')).toBe(true);
   });
 });
 
 describe('FORM_REQUIREMENTS consistency', () => {
+  const order = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'] as const;
+
   it('required increases monotonically across stages', () => {
-    const order = ['digiegg', 'baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega', 'ultra'] as const;
     for (let i = 1; i < order.length; i++) {
       expect(FORM_REQUIREMENTS[order[i]].required).toBeGreaterThan(
         FORM_REQUIREMENTS[order[i - 1]].required,
@@ -76,7 +64,6 @@ describe('FORM_REQUIREMENTS consistency', () => {
   });
 
   it('cap increases monotonically across stages', () => {
-    const order = ['digiegg', 'baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega', 'ultra'] as const;
     for (let i = 1; i < order.length; i++) {
       expect(FORM_REQUIREMENTS[order[i]].cap).toBeGreaterThan(
         FORM_REQUIREMENTS[order[i - 1]].cap,

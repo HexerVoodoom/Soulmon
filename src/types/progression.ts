@@ -1,8 +1,8 @@
-// Progressão fixa por forma evolutiva
+// Progressão fixa por nível evolutivo. A árvore do Soulmon não tem mais
+// ovo/baby (o oráculo do onboarding já É o ritual de nascimento — o pet
+// nasce direto Rookie). Cada linha de evolução é ÚNICA por jogador (gerada
+// pelo oráculo, ver utils/oracle.ts); o que é fixo aqui é só o NÍVEL.
 export const FORM_REQUIREMENTS = {
-  digiegg: { required: 1, cap: 2, daysToEvolve: 1 },
-  'baby-i': { required: 2, cap: 3, daysToEvolve: 2 },
-  'baby-ii': { required: 3, cap: 5, daysToEvolve: 4 },
   rookie: { required: 4, cap: 6, daysToEvolve: 10 },
   champion: { required: 5, cap: 7, daysToEvolve: 20 },
   ultimate: { required: 6, cap: 8, daysToEvolve: 30 },
@@ -10,11 +10,8 @@ export const FORM_REQUIREMENTS = {
   ultra: { required: 8, cap: 10, daysToEvolve: 999 },
 } as const;
 
-// HP máximo por forma (corações)
+// HP máximo por nível (corações)
 export const MAX_HP_BY_FORM = {
-  digiegg: 1,
-  'baby-i': 1,
-  'baby-ii': 2,
   rookie: 3,
   champion: 3,
   ultimate: 3,
@@ -24,36 +21,34 @@ export const MAX_HP_BY_FORM = {
 
 export type EvolutionStage = keyof typeof FORM_REQUIREMENTS;
 
-// Estágios agrupados por nível, cobrindo as três linhas (Tapirmon, Veemon, Salamon)
-const STAGES_BY_LEVEL: Record<Exclude<EvolutionStage, 'digiegg'>, readonly string[]> = {
-  'baby-i': ['pichimon', 'chicomon', 'yukimibotamon'],
-  'baby-ii': ['pukamon', 'chibimon', 'nyaromon'],
+// ---------------------------------------------------------------------------
+// Esquema de IDs da árvore do Soulmon (ver utils/oracle.ts + App.tsx):
+//   'rookie' | '{champion|ultimate|mega}-{virus|data|vaccine}' | 'ultra'
+// getStageLevel lê o NÍVEL direto do prefixo do id — não precisa de nenhuma
+// tabela por espécie, porque cada jogador tem nomes únicos.
+// ---------------------------------------------------------------------------
+
+// Roster "selvagem" da masmorra (utils/dungeon.ts) + fallback de sprite
+// genérico (utils/sprites.ts): nomes ESTÁTICOS antigos, reaproveitados como
+// arte/monstros, sem relação com a árvore do jogador atual.
+export const LEGACY_FORM_TIERS: Record<Exclude<EvolutionStage, 'ultra'> | 'ultra', readonly string[]> = {
   rookie: [
     'tapirmon', 'veemon', 'plotmon',
-    // Rookie item digivolutions (minigame drops) — replace the line's rookie
     'agumon', 'gabumon', 'piyomon', 'tentomon', 'patamon', 'palmon',
   ],
   champion: [
-    // Tapirmon
     'monochromon', 'tuskmon', 'bakemon',
-    // Veemon
     'exveemon', 'veedramon', 'flamedramon',
-    // Salamon
     'gatomon', 'gatomon-black', 'mikemon',
-    // Item digivolutions (shop) — replace the branch form at this level
     'greymon', 'garurumon', 'meramon', 'devimon',
     'angemon', 'birdramon', 'kabuterimon', 'seadramon',
     'airdramon', 'ogremon', 'kuwagamon', 'numemon',
-    // Armor digivolution (Digimental of Friendship). Flamedramon (Courage) is
-    // already the veemon line's champion; Raidramon needs a champion-level
-    // alias since 'raidramon' is that line's ULTIMATE form.
-    'raidramon-armor',
+    'raidramon-armor', 'betamon',
   ],
   ultimate: [
     'gigadramon', 'triceramon', 'digitamamon',
     'paildramon', 'aeroveedramon', 'raidramon',
     'angewomon', 'ladydevimon', 'nefertimon',
-    // Item digivolutions (shop)
     'monzaemon', 'etemon', 'andromon',
     'megadramon', 'vademon', 'nanimon',
   ],
@@ -65,13 +60,25 @@ const STAGES_BY_LEVEL: Record<Exclude<EvolutionStage, 'digiegg'>, readonly strin
   ultra: ['gaioumon-itto', 'imperialdramon-paladin', 'mastemon'],
 };
 
-// Mapeia formas específicas para o nível base para determinar required/HP/cap
+const LEGACY_LEVEL_OF: Record<string, EvolutionStage> = Object.fromEntries(
+  (Object.entries(LEGACY_FORM_TIERS) as Array<[EvolutionStage, readonly string[]]>)
+    .flatMap(([level, names]) => names.map(name => [name, level])),
+);
+
+/** Nível do estágio: lê o prefixo do id ('champion-virus' → 'champion'),
+ *  com fallback pro roster legado (masmorra / sprite genérico). */
 export function getStageLevel(stage: string): EvolutionStage {
-  if (stage === 'digiegg') return 'digiegg';
-  for (const level of Object.keys(STAGES_BY_LEVEL) as Exclude<EvolutionStage, 'digiegg'>[]) {
-    if (STAGES_BY_LEVEL[level].includes(stage)) return level;
-  }
-  return 'digiegg';
+  if (stage === 'rookie') return 'rookie';
+  if (stage === 'ultra') return 'ultra';
+  const prefix = stage.split('-')[0];
+  if (prefix === 'champion' || prefix === 'ultimate' || prefix === 'mega') return prefix;
+  return LEGACY_LEVEL_OF[stage] ?? 'rookie';
+}
+
+/** Atributo (virus/data/vaccine) embutido no id, se houver. */
+export function getStageBranch(stage: string): 'virus' | 'data' | 'vaccine' | null {
+  const [, branch] = stage.split('-');
+  return branch === 'virus' || branch === 'data' || branch === 'vaccine' ? branch : null;
 }
 
 // Energy bars for a stage = the number of daily tasks required to earn an
@@ -80,8 +87,8 @@ export function getMaxEnergyForStage(stage: string): number {
   return FORM_REQUIREMENTS[getStageLevel(stage)].required;
 }
 
-// Verifica se a forma atual permite seleção de dias da semana (Rookie ou superior)
-const WEEKDAY_LEVELS: EvolutionStage[] = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
-export function canSelectWeekdays(stage: string): boolean {
-  return WEEKDAY_LEVELS.includes(getStageLevel(stage));
+// A árvore do Soulmon nasce direto Rookie — todo nível já permite escolher
+// os dias da semana das atividades (não existe mais fase de ovo/baby).
+export function canSelectWeekdays(_stage: string): boolean {
+  return true;
 }

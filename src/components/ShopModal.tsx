@@ -1,30 +1,26 @@
 import { useState } from 'react';
-import { SHOP_ITEMS, DROP_EVO_ITEMS, type ShopItem } from '../utils/shop';
+import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
-import { getSpriteForStage } from '../utils/sprites';
 import { bitsStyle } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
  * 🛒 8-bit shop — spend Bits (🪙) earned in the minigames.
- * Organized in TABS (Items / Digivolution / Backdrops / Missions).
- * Items can be LOCKED behind a first drop or a mission: they still render,
- * darkened with a padlock — tapping shows how to unlock. Chunky pixel
- * borders, scanlines, hard shadows: intentionally retro.
+ * Organized in TABS (Items / Backdrops / Missions).
+ * Items can be LOCKED behind a mission: they still render, darkened with a
+ * padlock — tapping shows how to unlock. Chunky pixel borders, scanlines,
+ * hard shadows: intentionally retro.
  */
-type ShopTab = 'items' | 'evo' | 'bg' | 'missions';
+type ShopTab = 'items' | 'bg' | 'missions';
 
-export function ShopModal({ language, points, ownedBackgrounds, equippedBackground, equippedEvoItem, missionProgress, droppedItems, onBuy, onEquip, onClose }: {
+export function ShopModal({ language, points, ownedBackgrounds, equippedBackground, missionProgress, onBuy, onEquip, onClose }: {
   language: Language;
   points: number;
   ownedBackgrounds: string[];
   equippedBackground: string | null;
-  equippedEvoItem: string | null;
   /** Progress per mission id (clamped to its target) — utils/missions.ts. */
   missionProgress: Record<string, number>;
-  /** Shop item ids that have EVER dropped (unlocks drop-gated purchases). */
-  droppedItems: string[];
   onBuy: (itemId: string) => boolean;
   onEquip: (id: string | null) => void;
   onClose: () => void;
@@ -54,8 +50,7 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
   // How to unlock a locked item (shown when the user taps it).
   const unlockHint = (item: ShopItem): string => {
     if (!item.unlock) return '';
-    if (item.unlock.kind === 'drop') return isPt ? item.unlock.hintPt : item.unlock.hintEn;
-    const m = MISSIONS.find(x => x.id === (item.unlock as { missionId: string }).missionId);
+    const m = MISSIONS.find(x => x.id === item.unlock!.missionId);
     if (!m) return '';
     const cur = missionProgress[m.id] ?? 0;
     const prog = m.target > 1 ? ` (${cur}/${m.target})` : '';
@@ -64,34 +59,26 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
 
   const TABS: { key: ShopTab; icon: string; pt: string; en: string }[] = [
     { key: 'items', icon: '🧪', pt: 'ITENS', en: 'ITEMS' },
-    { key: 'evo', icon: '🧬', pt: 'EVOLUÇÃO', en: 'EVOLUTION' },
     { key: 'bg', icon: '🖼️', pt: 'CENÁRIOS', en: 'BACKDROPS' },
     { key: 'missions', icon: '🏅', pt: 'MISSÕES', en: 'MISSIONS' },
   ];
 
   const TAB_ITEMS: Record<Exclude<ShopTab, 'missions'>, ShopItem[]> = {
     items: SHOP_ITEMS.filter(i => i.kind === 'chip' || i.kind === 'heart'),
-    evo: [...SHOP_ITEMS.filter(i => i.kind === 'evo'), ...DROP_EVO_ITEMS],
     bg: SHOP_ITEMS.filter(i => i.kind === 'bg'),
   };
 
   const renderItem = (item: ShopItem) => {
-    const unlocked = isShopItemUnlocked(item, droppedItems, missionProgress);
+    const unlocked = isShopItemUnlocked(item, missionProgress);
     const ownedBg = item.kind === 'bg' && ownedBackgrounds.includes(item.id);
     const equipped = ownedBg && equippedBackground === item.id;
-    const evoActive = item.kind === 'evo' && equippedEvoItem === item.id;
-    // Direct-equip evo items block each other; inventory-based ones don't.
-    const evoBlocked = item.kind === 'evo' && !item.inventoryEmoji && !!equippedEvoItem && !evoActive;
     const affordable = points >= item.price;
     const flashHere = flash?.id === item.id;
     const showHint = hintFor === item.id;
-    const canBuy = unlocked && affordable && !evoActive && !evoBlocked;
+    const canBuy = unlocked && affordable;
 
     const iconEl = item.kind === 'bg' ? (
       <div style={{ width: 44, height: 44, flexShrink: 0, border: '2px solid #000', background: PET_BACKGROUNDS[item.id]?.css, filter: unlocked ? 'none' : 'brightness(0.35) grayscale(0.6)' }} />
-    ) : item.kind === 'evo' && item.evoTarget ? (
-      <img src={getSpriteForStage(item.evoTarget)} alt={item.evoTarget}
-           style={{ width: 44, height: 44, flexShrink: 0, objectFit: 'contain', imageRendering: 'pixelated', filter: unlocked ? 'none' : 'brightness(0.3) grayscale(0.8)' }} />
     ) : (
       <span style={{ fontSize: '1.7rem', width: 44, textAlign: 'center', flexShrink: 0, filter: unlocked ? 'none' : 'brightness(0.4) grayscale(0.8)' }}>{item.icon}</span>
     );
@@ -118,11 +105,6 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
           <p style={{ ...px, color: unlocked ? '#9fb2d8' : '#5d729c', fontSize: '0.68rem' }}>
             {isPt ? item.descPt : item.descEn}
           </p>
-          {evoActive && (
-            <p style={{ ...px, color: '#facc15', fontSize: '0.66rem', fontWeight: 800 }}>
-              ★ {isPt ? 'EQUIPADO — aguardando evolução' : 'EQUIPPED — waiting for evolution'}
-            </p>
-          )}
         </div>
         {/* action */}
         {ownedBg ? (

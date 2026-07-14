@@ -29,9 +29,9 @@ export const en = {
     },
     care: {
         poop_warning: "Time to clean up!",
-        poop_desc: "Your Digimon made a mess! Clean up to keep them happy.",
+        poop_desc: "Your Soulmon made a mess! Clean up to keep them happy.",
         food_warning: "Hungry!",
-        food_desc: "Your Digimon is hungry! Feed them soon.",
+        food_desc: "Your Soulmon is hungry! Feed them soon.",
         clean_btn: "Clean",
         feed_btn: "Feed",
         poop_request: "I need to go to the bathroom! 💩 Complete a task!",

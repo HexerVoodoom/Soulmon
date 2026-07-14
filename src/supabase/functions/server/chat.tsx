@@ -1,4 +1,4 @@
-// Chat endpoint for AI-powered Digimon conversation
+// Chat endpoint for AI-powered Soulmon conversation
 import { Context } from "npm:hono";
 
 export async function handleChatRequest(c: Context) {
@@ -33,7 +33,7 @@ export async function handleChatRequest(c: Context) {
       return c.json({ error: "API key not configured" }, 500);
     }
 
-    // Build Digimon personality context based on branch, mood, and stage
+    // Build Soulmon personality context based on branch, mood, and stage
     const getBranchPersonality = () => {
       switch (dominantBranch) {
         case 'virus':
@@ -166,8 +166,8 @@ export async function handleChatRequest(c: Context) {
     
     const maxTokens = 120; // Fixed at 120 characters for optimal balance
 
-    // Enhanced system prompt for the Digimon with dynamic personality
-    const systemPrompt = `You are ${digimonName}, a digital companion (Digimon) in a gamified productivity app called DigiApp.
+    // Enhanced system prompt for the Soulmon with dynamic personality
+    const systemPrompt = `You are ${digimonName}, a digital companion (Soulmon) in a gamified productivity app called DigiApp.
 
 ═══════════════════════════════════════
 🎭 YOUR PERSONALITY

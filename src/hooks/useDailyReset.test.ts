@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from '../types/progression';
+import { getNextEvolution, getPreviousForm } from '../utils/dailyReset';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 
 // Replicate the performDailyReset state-updater logic for unit testing.
-// This mirrors the implementation in useDailyReset.ts exactly.
+// This mirrors the implementation in useDailyReset.ts exactly (including
+// using the real getNextEvolution/getPreviousForm from utils/dailyReset.ts).
 function simulateReset(prev: any): any {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -49,6 +51,7 @@ function simulateReset(prev: any): any {
   let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
   let wasDegeneratedByHP = false;
   let newMaxActivityCap = prev.maxActivityCap;
+  let newCurrentBranch = prev.currentBranch;
 
   // Proportional HP loss vs the same daily goal.
   const completionRatio = dailyGoal > 0 ? Math.min(1, dailyDone / dailyGoal) : 1;
@@ -81,9 +84,9 @@ function simulateReset(prev: any): any {
     if (newVirusPoints === dominantAttr) branch = 'virus';
     else if (newDataPoints === dominantAttr) branch = 'data';
     else if (newVaccinePoints === dominantAttr) branch = 'vaccine';
+    newCurrentBranch = branch;
 
-    if (prev.evolutionStage === 'digiegg') newEvolutionStage = 'pichimon';
-    else if (prev.evolutionStage === 'pichimon') newEvolutionStage = 'pukamon';
+    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions);
 
     const newStageLevel = getStageLevel(newEvolutionStage);
     newHP = MAX_HP_BY_FORM[newStageLevel];
@@ -96,8 +99,7 @@ function simulateReset(prev: any): any {
 
   if (newHP === 0) {
     wasDegeneratedByHP = true;
-    if (prev.evolutionStage === 'tapirmon') newEvolutionStage = 'pukamon';
-    else if (prev.evolutionStage === 'pichimon') newEvolutionStage = 'digiegg';
+    newEvolutionStage = getPreviousForm(prev.evolutionStage, newCurrentBranch);
     const degeneratedLevel = getStageLevel(newEvolutionStage);
     newHP = MAX_HP_BY_FORM[degeneratedLevel];
     const degReqs = FORM_REQUIREMENTS[degeneratedLevel];
@@ -125,6 +127,7 @@ function simulateReset(prev: any): any {
     dataPoints: newDataPoints,
     vaccinePoints: newVaccinePoints,
     evolutionStage: newEvolutionStage,
+    currentBranch: newCurrentBranch,
     unlockedEvolutions: finalUnlockedEvolutions,
     degeneratedByHP: wasDegeneratedByHP,
     lastDayWasPerfect: dayWasPerfect,
@@ -143,8 +146,8 @@ const baseState = () => ({
   virusPoints: 0,
   dataPoints: 0,
   vaccinePoints: 0,
-  evolutionStage: 'tapirmon',
-  unlockedEvolutions: ['digiegg', 'tapirmon'],
+  evolutionStage: 'rookie',
+  unlockedEvolutions: ['rookie'],
   currentBranch: 'data' as const,
   maxActivityCap: 6,
   lastResetDate: 'yesterday',
@@ -164,7 +167,7 @@ describe('performDailyReset — proportional HP loss', () => {
   });
 
   it('meeting the stage requirement is safe even with many registered tasks', () => {
-    // tapirmon requires 4; 10 registered but 4 done → goal met → no loss
+    // rookie requires 4; 10 registered but 4 done → goal met → no loss
     const tasks = Array.from({ length: 10 }, (_, i) => ({ id: `t${i}`, completed: i < 4 }));
     const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
     expect(result.healthPoints).toBe(3);
@@ -184,7 +187,7 @@ describe('performDailyReset — proportional HP loss', () => {
   });
 
   it('increments perfectDays and awards XP on a perfect day', () => {
-    // tapirmon requires 4; give 4 completed tasks + full energy (baseState)
+    // rookie requires 4; give 4 completed tasks + full energy (baseState)
     const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
     const result = simulateReset({ ...baseState(), tasks });
     expect(result.lastDayWasPerfect).toBe(true);
@@ -218,43 +221,52 @@ describe('performDailyReset — proportional HP loss', () => {
 
 describe('getMaxEnergyForStage — energy bars = task requirement', () => {
   it('matches the stage requirement for each form', () => {
-    expect(getMaxEnergyForStage('tapirmon')).toBe(FORM_REQUIREMENTS.rookie.required);   // 4
-    expect(getMaxEnergyForStage('tuskmon')).toBe(FORM_REQUIREMENTS.champion.required);   // 5
-    expect(getMaxEnergyForStage('digiegg')).toBe(FORM_REQUIREMENTS.digiegg.required);    // 1
+    expect(getMaxEnergyForStage('rookie')).toBe(FORM_REQUIREMENTS.rookie.required);           // 4
+    expect(getMaxEnergyForStage('champion-virus')).toBe(FORM_REQUIREMENTS.champion.required);  // 5
+    expect(getMaxEnergyForStage('ultra')).toBe(FORM_REQUIREMENTS.ultra.required);               // 8
   });
 
   it('can differ from the stage max HP (rookie: 4 energy bars, 3 hearts)', () => {
-    expect(getMaxEnergyForStage('tapirmon')).toBe(4);
+    expect(getMaxEnergyForStage('rookie')).toBe(4);
     expect(MAX_HP_BY_FORM.rookie).toBe(3);
   });
 });
 
+describe('performDailyReset — evolution', () => {
+  it('evolves rookie into a champion form after enough perfect days', () => {
+    let state = { ...baseState() };
+    for (let i = 0; i < FORM_REQUIREMENTS.rookie.required; i++) {
+      const tasks = Array.from({ length: 4 }, (_, j) => ({ id: `t${i}-${j}`, completed: true }));
+      state = simulateReset({ ...state, tasks });
+    }
+    expect(getStageLevel(state.evolutionStage)).toBe('champion');
+    expect(state.unlockedEvolutions).toContain(state.evolutionStage);
+  });
+});
+
 describe('performDailyReset — degeneration', () => {
-  it('degenerates tapirmon to pukamon when HP drops to 0', () => {
-    // 3 tasks, none done → lose all 3 hearts from 1 → 0 → degenerate
-    const tasks = Array.from({ length: 3 }, (_, i) => ({ id: `t${i}`, completed: false }));
-    const result = simulateReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'tapirmon' });
+  it('degenerates a champion form back to rookie when HP drops to 0', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = simulateReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'champion-virus', currentBranch: 'virus' });
     expect(result.degeneratedByHP).toBe(true);
-    expect(result.evolutionStage).toBe('pukamon');
+    expect(result.evolutionStage).toBe('rookie');
   });
 
   it('grants a half-requirement head start when degenerating by HP (recovery discount)', () => {
-    // rookie (tapirmon) with 1 HP, 3 tasks none done → loses the heart →
-    // degenerates back to baby-ii (pukamon). Re-climbing baby-ii→rookie normally
-    // needs baby-ii's requirement (3); the discount gives floor(3/2)=1 perfect
-    // day for free, so fewer are needed than a from-scratch climb. The formula is
-    // non-cumulative: always floor(required/2) of the new stage, so a second
-    // degeneration gets the same discount again.
-    const tasks = Array.from({ length: 3 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    // champion-virus with 1 HP, tasks all undone → loses the heart →
+    // degenerates back to rookie. The discount gives floor(required/2) perfect
+    // days for free. Non-cumulative — always floor(required/2) of the new
+    // (lower) stage, so a second degeneration gets the same discount again.
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
     const result = simulateReset({
       ...baseState(),
       tasks,
       healthPoints: 1,
-      evolutionStage: 'tapirmon',
+      evolutionStage: 'champion-virus',
+      currentBranch: 'virus',
     });
     expect(result.degeneratedByHP).toBe(true);
-    expect(result.evolutionStage).toBe('pukamon'); // rookie → baby-ii
-    // baby-ii.required = 3 → head start = floor(3/2) = 1
-    expect(result.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS['baby-ii'].required / 2));
+    expect(result.evolutionStage).toBe('rookie');
+    expect(result.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS.rookie.required / 2));
   });
 });

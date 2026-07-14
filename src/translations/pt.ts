@@ -29,9 +29,9 @@ export const pt = {
     },
     care: {
         poop_warning: "Hora de limpar!",
-        poop_desc: "Seu Digimon fez sujeira! Limpe para deixá-lo feliz.",
+        poop_desc: "Seu Soulmon fez sujeira! Limpe para deixá-lo feliz.",
         food_warning: "Fome!",
-        food_desc: "Seu Digimon está com fome! Alimente-o logo.",
+        food_desc: "Seu Soulmon está com fome! Alimente-o logo.",
         clean_btn: "Limpar",
         feed_btn: "Alimentar",
         poop_request: "Preciso ir ao banheiro! 💩 Complete uma tarefa!",

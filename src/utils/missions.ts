@@ -33,8 +33,7 @@ export interface Mission {
 
 // Numeric rank per stage level, to check "reached at least X".
 const LEVEL_RANK: Record<EvolutionStage, number> = {
-  digiegg: 0, 'baby-i': 1, 'baby-ii': 2, rookie: 3,
-  champion: 4, ultimate: 5, mega: 6, ultra: 7,
+  rookie: 0, champion: 1, ultimate: 2, mega: 3, ultra: 4,
 };
 
 /** 1 when the pet has EVER reached the given level (current or unlocked form). */
@@ -95,16 +94,13 @@ export function isMissionComplete(missionId: string, progress: Record<string, nu
 
 /**
  * Whether a shop item's purchase is unlocked. Locked items still render in
- * the shop (darkened + padlock) with a hint on how to unlock them.
- * - drop-gated: unlocked once the item has EVER dropped (droppedItems ids).
- * - mission-gated: unlocked once the mission is complete.
+ * the shop (darkened + padlock) with a hint on how to unlock them —
+ * mission-gated: unlocked once the mission is complete.
  */
 export function isShopItemUnlocked(
   item: ShopItem,
-  droppedItems: string[],
   missionProgress: Record<string, number>,
 ): boolean {
   if (!item.unlock) return true;
-  if (item.unlock.kind === 'drop') return droppedItems.includes(item.id);
   return isMissionComplete(item.unlock.missionId, missionProgress);
 }

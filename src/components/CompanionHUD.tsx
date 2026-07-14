@@ -15,7 +15,9 @@ interface CompanionHUDProps {
   energyLevel: number;
   message: string;
   currentStage: string;
-  evolutionStage: 'digiegg' | 'pichimon' | 'pukamon' | 'tapirmon' | 'tuskmon' | 'monochromon' | 'bakemon' | 'gigadramon' | 'triceramon' | 'digitamamon' | 'gaioumon' | 'ultimatebrachiomon' | 'titamon' | 'gaioumon-itto' | string;
+  evolutionStage: string;
+  /** Linha genérica de sprite (fallback visual até a Fase 2 assumir) — ver utils/sprites.ts. */
+  eggType?: 'tapirmon' | 'veemon' | 'salamon';
   healthPoints: number;
   maxHealthPoints: number;
   dominantBranch: 'virus' | 'data' | 'vaccine' | 'balanced';
@@ -60,9 +62,10 @@ export const CompanionHUD = memo(function CompanionHUD({
   companionMood, 
   energyLevel, 
   message, 
-  currentStage, 
-  evolutionStage, 
-  healthPoints, 
+  currentStage,
+  evolutionStage,
+  eggType = 'tapirmon',
+  healthPoints,
   maxHealthPoints, 
   dominantBranch, 
   currentXP, 
@@ -351,7 +354,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       .catch(() => {});
   };
 
-  const sprite = getSpriteForStage(evolutionStage);
+  const sprite = getSpriteForStage(evolutionStage, eggType);
 
 
   // Check if sprite should be flipped when walking left
