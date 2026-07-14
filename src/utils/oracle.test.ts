@@ -212,42 +212,45 @@ describe('generateOracle', () => {
       expect(s.name.length).toBeGreaterThan(2);
       expect(s.description.pt.length).toBeGreaterThan(20);
       expect(s.description.en.length).toBeGreaterThan(20);
-      // Template validado (o que funcionou no Nanobanana): estilo fixo,
-      // fundo preto, estética v-pet, sem outline/shading/anti-aliasing
-      expect(s.imagePrompt.startsWith('Generate image: Micro pixel art of ')).toBe(true);
-      expect(s.imagePrompt).toContain('16-bit retro RPG sprite style');
-      expect(s.imagePrompt).toContain('blocky pixels');
-      expect(s.imagePrompt).toContain('no black outlines');
+      // Template validado empiricamente: prompt CURTO estilo Tamagotchi, sem
+      // fundo, sem outline/shading/anti-aliasing (frases longas geram sprites
+      // piores — ver composeSpritePrompt).
+      expect(s.imagePrompt.startsWith('Tamagotchi-style v-pet sprite, 16x16 pixel art, no background')).toBe(true);
+      expect(s.imagePrompt).toContain('transparent background');
+      expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
-      expect(s.imagePrompt).toContain('solid black background');
-      expect(s.imagePrompt).toContain('vintage Tamagotchi or Digimon V-pet aesthetic');
-      // Bloco conceito no slot do subject: agora é rico (arquétipo+poder+efeito)
-      const conceptMatch = s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/);
+      // Bloco conceito no slot do subject: espécie curta + classe (+ adjetivo)
+      const conceptMatch = s.imagePrompt.match(/transparent background: (.+?)\. /);
       expect(conceptMatch).not.toBeNull();
-      expect(conceptMatch![1].length).toBeGreaterThan(20);
+      expect(conceptMatch![1].length).toBeGreaterThan(5);
       // Cláusula de consistência: prompts são independentes (a IA não vê os
       // outros estágios), então cada um precisa reforçar isso explicitamente
-      expect(s.imagePrompt).toContain('single fixed species');
+      expect(s.imagePrompt).toContain('other evolution stages');
     }
   });
 
-  it('conceito é rico (arquétipo humanoide + poder + efeito) e constante entre estágios', () => {
+  it('conceito é curto (espécie + classe definitiva) e constante entre estágios', () => {
     const r = generateOracle(INPUT, 42);
     // Mesmo conceito em todos os estágios (identidade da espécie)
-    const concepts = r.creature.stages.map(s => s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/)![1]);
+    const concepts = r.creature.stages.map(s => s.imagePrompt.match(/transparent background: (.+?)\. /)![1]);
     expect(new Set(concepts).size).toBe(1);
     const concept = concepts[0];
-    expect(concept.startsWith('a humanoid ')).toBe(true);
-    expect(concept).toContain('wielding');
-    expect(concept).toContain(', to ');
-    expect(concept.split(/\s+/).length).toBeGreaterThan(10); // bem mais rico que 6 palavras
+    // Curto de propósito: espécie + classe (+ adjetivo do elemento secundário)
+    expect(concept.split(/\s+/).length).toBeLessThan(10);
+    expect(concept).not.toContain('wielding');
   });
 
-  it('creature.bio traz uma descrição narrativa breve e legível', () => {
+  it('creature.bio traz uma descrição narrativa breve e legível (classe + linhagem)', () => {
     const r = generateOracle(INPUT, 42);
-    expect(r.creature.bio.pt.length).toBeGreaterThan(20);
-    expect(r.creature.bio.en.length).toBeGreaterThan(20);
-    expect(r.creature.bio.en).toContain('wielding');
+    expect(r.creature.bio.pt.length).toBeGreaterThan(5);
+    expect(r.creature.bio.en.length).toBeGreaterThan(5);
+    expect(r.creature.bio.pt).toContain('linhagem');
+  });
+
+  it('suporte+sombra+poder é sempre "Witch Doctor" (classe fixa pinada)', () => {
+    const r = generateOracle(INPUT, 42, { dominantRole: 'suporte', dominantAlignment: 'poder', dominantElement: 'sombra' });
+    const rookie = r.creature.stages.find(s => s.stage === 'rookie')!;
+    expect(rookie.imagePrompt).toContain('Witch Doctor');
   });
 
   it('formas de evolução vêm do pool sem repetir entre as 9 evoluções', () => {
@@ -302,18 +305,6 @@ describe('generateOracle', () => {
     // Prompts da mesma linha são todos diferentes
     const prompts = ['champion', 'perfeito', 'mega'].map(st => line(st).imagePrompt);
     expect(new Set([rookie.imagePrompt, ...prompts]).size).toBe(4);
-  });
-
-  it('blocos tipo/elemento/bioma vêm dos pools; elemento e bioma são constantes', () => {
-    const r = generateOracle(INPUT, 42);
-    // Elemento e bioma (identidade da espécie) iguais em todos os estágios;
-    // o bloco de tipo muda por linha. Extraímos o trecho de blocos (após o
-    // ". " que segue "aesthetic.").
-    const tail = (s: string) => s.split('aesthetic. ')[1];
-    const tails = r.creature.stages.map(s => tail(s.imagePrompt));
-    // Todos terminam com ", <type>, <element>, <biome>." — element+biome fixos
-    const lastTwo = tails.map(t => t.split(', ').slice(-2).join(', '));
-    expect(new Set(lastTwo).size).toBe(1); // elemento+bioma constantes
   });
 
   it('seeds diferentes variam a parte criativa mantendo o perfil', () => {
@@ -403,7 +394,7 @@ describe('generateOracle', () => {
     expect([r.creature.fusion.a.en, r.creature.fusion.b.en]).toContain('wolf');
     // A descrição do pet SUBSTITUI o conceito (no slot do subject) em TODOS
     for (const s of r.creature.stages) {
-      const concept = s.imagePrompt.match(/Micro pixel art of (.+?), 16-bit/)![1];
+      const concept = s.imagePrompt.match(/transparent background: (.+?)\. /)![1];
       expect(concept).toBe('um lobo de gelo protetor, calmo, com olhos azuis'.slice(0, 200));
     }
     // A bio também vira a descrição literal do dono (não a narrativa gerada)

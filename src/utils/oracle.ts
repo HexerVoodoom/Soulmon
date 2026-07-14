@@ -808,6 +808,61 @@ const ADJECTIVES_BY_ELEMENT: Record<ElementId, LText[]> = {
   industrial: [{ pt: 'cromado(a)', en: 'chrome-plated' }, { pt: 'incansável', en: 'tireless' }, { pt: 'engenhoso(a)', en: 'ingenious' }],
 };
 
+// Pool GRANDE de traços concretos por elemento — usado para o ELEMENTO
+// SECUNDÁRIO: vira só um adjetivo/material aplicado na criatura (nunca muda
+// a classe definitiva, ver CLASS_MATRIX). Propositalmente maior e mais
+// concreto que ADJECTIVES_BY_ELEMENT (que alimenta outros textos).
+const ELEMENT_FLAVOR_WORDS: Record<ElementId, LText[]> = {
+  agua: [
+    { pt: 'aquático', en: 'aquatic' }, { pt: 'translúcido', en: 'translucent' },
+    { pt: 'gelado', en: 'frosted' }, { pt: 'perolado', en: 'pearlescent' },
+    { pt: 'salgado', en: 'briny' }, { pt: 'abissal', en: 'abyssal' },
+    { pt: 'orvalhado', en: 'dew-kissed' }, { pt: 'de maré-viva', en: 'tidal' },
+  ],
+  fogo: [
+    { pt: 'flamejante', en: 'blazing' }, { pt: 'incandescente', en: 'incandescent' },
+    { pt: 'acinzentado', en: 'ashen' }, { pt: 'vulcânico', en: 'volcanic' },
+    { pt: 'em brasa', en: 'ember-lit' }, { pt: 'fumegante', en: 'smoldering' },
+    { pt: 'magmático', en: 'magmatic' }, { pt: 'chamuscado', en: 'scorched' },
+  ],
+  terra: [
+    { pt: 'rochoso', en: 'rocky' }, { pt: 'ancestral', en: 'ancient' },
+    { pt: 'argiloso', en: 'clay-formed' }, { pt: 'cristalino', en: 'crystalline' },
+    { pt: 'musgoso', en: 'mossy' }, { pt: 'fossilizado', en: 'fossilized' },
+    { pt: 'mineral', en: 'mineral-crusted' }, { pt: 'blindado', en: 'armored' },
+  ],
+  ar: [
+    { pt: 'etéreo', en: 'ethereal' }, { pt: 'emplumado', en: 'feathered' },
+    { pt: 'tempestuoso', en: 'stormy' }, { pt: 'veloz', en: 'swift' },
+    { pt: 'diáfano', en: 'gossamer' }, { pt: 'nebuloso', en: 'misty' },
+    { pt: 'eletrizado', en: 'static-charged' }, { pt: 'leve como o ar', en: 'airy' },
+  ],
+  sombra: [
+    { pt: 'sombrio', en: 'shadowy' }, { pt: 'espectral', en: 'spectral' },
+    { pt: 'enevoado', en: 'misty' }, { pt: 'sussurrante', en: 'whispering' },
+    { pt: 'umbrio', en: 'umbral' }, { pt: 'esfumaçado', en: 'smoky' },
+    { pt: 'encoberto', en: 'hidden' }, { pt: 'noturno', en: 'nocturnal' },
+  ],
+  luz: [
+    { pt: 'radiante', en: 'radiant' }, { pt: 'dourado', en: 'gilded' },
+    { pt: 'cintilante', en: 'shimmering' }, { pt: 'celestial', en: 'celestial' },
+    { pt: 'luminoso', en: 'glowing' }, { pt: 'resplandecente', en: 'resplendent' },
+    { pt: 'sagrado', en: 'sacred' }, { pt: 'brilhante', en: 'luminous' },
+  ],
+  planta: [
+    { pt: 'musgoso', en: 'mossy' }, { pt: 'florido', en: 'flowering' },
+    { pt: 'espinhoso', en: 'thorny' }, { pt: 'viçoso', en: 'verdant' },
+    { pt: 'raizudo', en: 'root-laced' }, { pt: 'fúngico', en: 'fungal' },
+    { pt: 'fotossintético', en: 'photosynthetic' }, { pt: 'silvestre', en: 'wild-grown' },
+  ],
+  industrial: [
+    { pt: 'robótico', en: 'robotic' }, { pt: 'ciborgue', en: 'cybernetic' },
+    { pt: 'mecânico', en: 'mechanical' }, { pt: 'enferrujado', en: 'rusted' },
+    { pt: 'feito de sucata', en: 'scrap-built' }, { pt: 'tipo marionete', en: 'puppet-like' },
+    { pt: 'poluído', en: 'polluted' }, { pt: 'cromado', en: 'chrome-plated' },
+  ],
+};
+
 // ---------------------------------------------------------------------------
 // 7. Criatura — bestiário de fusão, características e prompts
 // ---------------------------------------------------------------------------
@@ -1665,6 +1720,179 @@ const ROLE_ARCHETYPES: Record<RoleId, LText[]> = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// CLASSE DEFINITIVA — função × alinhamento × elemento DOMINANTE (5×3×8 = 120
+// combinações, FIXAS — não sorteadas). É o nome de classe estilo RPG que
+// aparece curto no prompt de imagem ("um polvo-sapo Druida, robótico") e na
+// bio. O elemento SECUNDÁRIO nunca entra aqui — vira só um adjetivo
+// (ELEMENT_FLAVOR_WORDS) aplicado na criatura, sem alterar a classe.
+// Onde um único substantivo já é icônico pra a combinação (Druida, Patrulheiro,
+// Caçador, Paladino, Curandeiro Bruxo/Witch Doctor, Berserker, Bruxo,
+// Tecnomante, Mago, Zelote...) ele é usado puro, sem prefixo de elemento.
+// ---------------------------------------------------------------------------
+const CLASS_MATRIX: Record<RoleId, Record<AlignmentId, Record<ElementId, LText>>> = {
+  suporte: {
+    poder: {
+      agua: { pt: 'Xamã da Maré', en: 'Tide Shaman' },
+      fogo: { pt: 'Xamã de Sangue', en: 'Blood Shaman' },
+      terra: { pt: 'Xamã de Ossos', en: 'Bone Shaman' },
+      ar: { pt: 'Xamã da Tempestade', en: 'Storm Shaman' },
+      sombra: { pt: 'Curandeiro Bruxo', en: 'Witch Doctor' },
+      luz: { pt: 'Xamã do Sol', en: 'Sun Shaman' },
+      planta: { pt: 'Xamã de Espinhos', en: 'Thorn Shaman' },
+      industrial: { pt: 'Xamã da Sucata', en: 'Scrap Shaman' },
+    },
+    harmonia: {
+      agua: { pt: 'Clérigo da Maré', en: 'Tide Cleric' },
+      fogo: { pt: 'Sábio da Lareira', en: 'Hearth Sage' },
+      terra: { pt: 'Sábio de Pedra', en: 'Stone Sage' },
+      ar: { pt: 'Clérigo do Céu', en: 'Sky Cleric' },
+      sombra: { pt: 'Sábio da Noite', en: 'Night Sage' },
+      luz: { pt: 'Clérigo', en: 'Cleric' },
+      planta: { pt: 'Herborista', en: 'Herbalist' },
+      industrial: { pt: 'Artífice', en: 'Artificer' },
+    },
+    benevolencia: {
+      agua: { pt: 'Sacerdotisa da Maré', en: 'Tide Priestess' },
+      fogo: { pt: 'Guardiã do Lar', en: 'Hearthkeeper' },
+      terra: { pt: 'Guardião da Vida', en: 'Life Warden' },
+      ar: { pt: 'Curandeira do Vento', en: 'Windsong Healer' },
+      sombra: { pt: 'Curandeira do Crepúsculo', en: 'Dusk Healer' },
+      luz: { pt: 'Sacerdote', en: 'Priest' },
+      planta: { pt: 'Guardiã da Flor', en: 'Bloomkeeper' },
+      industrial: { pt: 'Médica de Campo', en: 'Field Medic' },
+    },
+  },
+  tanque: {
+    poder: {
+      agua: { pt: 'Juggernaut das Marés', en: 'Tide Juggernaut' },
+      fogo: { pt: 'Juggernaut de Magma', en: 'Magma Juggernaut' },
+      terra: { pt: 'Colosso', en: 'Colossus' },
+      ar: { pt: 'Senhor da Tempestade', en: 'Storm Warlord' },
+      sombra: { pt: 'Portador da Guerra', en: 'Warbringer' },
+      luz: { pt: 'Cruzado', en: 'Crusader' },
+      planta: { pt: 'Juggernaut de Espinhos', en: 'Bramble Juggernaut' },
+      industrial: { pt: 'Máquina de Guerra', en: 'War Machine' },
+    },
+    harmonia: {
+      agua: { pt: 'Guardião da Maré', en: 'Tide Warden' },
+      fogo: { pt: 'Guardião da Forja', en: 'Forge Warden' },
+      terra: { pt: 'Guardião de Pedra', en: 'Stone Warden' },
+      ar: { pt: 'Sentinela do Céu', en: 'Sky Sentinel' },
+      sombra: { pt: 'Sentinela do Crepúsculo', en: 'Twilight Sentinel' },
+      luz: { pt: 'Sentinela da Alvorada', en: 'Dawn Sentinel' },
+      planta: { pt: 'Guardião das Raízes', en: 'Root Warden' },
+      industrial: { pt: 'Sentinela de Ferro', en: 'Iron Sentinel' },
+    },
+    benevolencia: {
+      agua: { pt: 'Protetor da Maré', en: 'Tide Protector' },
+      fogo: { pt: 'Guarda-Brasa', en: 'Emberguard' },
+      terra: { pt: 'Guarda-Terra', en: 'Earthguard' },
+      ar: { pt: 'Guarda-Céu', en: 'Skyguard' },
+      sombra: { pt: 'Guarda-Noturno', en: 'Nightguard' },
+      luz: { pt: 'Paladino', en: 'Paladin' },
+      planta: { pt: 'Guarda-Espinhos', en: 'Thornguard' },
+      industrial: { pt: 'Engenheiro-Égide', en: 'Aegis Engineer' },
+    },
+  },
+  fisico: {
+    poder: {
+      agua: { pt: 'Assolador da Maré', en: 'Tide Reaver' },
+      fogo: { pt: 'Berserker', en: 'Berserker' },
+      terra: { pt: 'Assolador de Pedra', en: 'Stone Reaver' },
+      ar: { pt: 'Assolador da Tempestade', en: 'Storm Reaver' },
+      sombra: { pt: 'Assolador de Sangue', en: 'Blood Reaver' },
+      luz: { pt: 'Zelote', en: 'Zealot' },
+      planta: { pt: 'Assolador de Espinhos', en: 'Thorn Reaver' },
+      industrial: { pt: 'Berserker Mecânico', en: 'Mechanized Berserker' },
+    },
+    harmonia: {
+      agua: { pt: 'Duelista da Maré', en: 'Tide Duelist' },
+      fogo: { pt: 'Duelista da Brasa', en: 'Ember Duelist' },
+      terra: { pt: 'Duelista de Pedra', en: 'Stone Duelist' },
+      ar: { pt: 'Mestre-Lâmina da Tempestade', en: 'Storm Blademaster' },
+      sombra: { pt: 'Mestre-Lâmina das Sombras', en: 'Shadow Blademaster' },
+      luz: { pt: 'Duelista da Lâmina Solar', en: 'Sunblade Duelist' },
+      planta: { pt: 'Duelista da Lâmina de Espinhos', en: 'Thornblade Duelist' },
+      industrial: { pt: 'Duelista da Lâmina de Engrenagens', en: 'Gearblade Duelist' },
+    },
+    benevolencia: {
+      agua: { pt: 'Monge da Maré', en: 'Tide Monk' },
+      fogo: { pt: 'Campeão da Brasa', en: 'Ember Champion' },
+      terra: { pt: 'Campeão de Pedra', en: 'Stone Champion' },
+      ar: { pt: 'Monge do Vento', en: 'Windmonk' },
+      sombra: { pt: 'Campeão do Crepúsculo', en: 'Dusk Champion' },
+      luz: { pt: 'Campeão Radiante', en: 'Radiant Champion' },
+      planta: { pt: 'Campeão da Flor', en: 'Bloom Champion' },
+      industrial: { pt: 'Monge de Ferro', en: 'Iron Monk' },
+    },
+  },
+  magico: {
+    poder: {
+      agua: { pt: 'Feiticeiro da Maré', en: 'Tide Sorcerer' },
+      fogo: { pt: 'Piromante', en: 'Pyromancer' },
+      terra: { pt: 'Bruxo de Pedra', en: 'Stone Warlock' },
+      ar: { pt: 'Feiticeiro da Tempestade', en: 'Storm Sorcerer' },
+      sombra: { pt: 'Bruxo', en: 'Warlock' },
+      luz: { pt: 'Feiticeiro do Sol', en: 'Sun Sorcerer' },
+      planta: { pt: 'Bruxo de Espinhos', en: 'Bramble Warlock' },
+      industrial: { pt: 'Tecnomante', en: 'Technomancer' },
+    },
+    harmonia: {
+      agua: { pt: 'Mago da Maré', en: 'Tide Mage' },
+      fogo: { pt: 'Arcanista da Brasa', en: 'Ember Arcanist' },
+      terra: { pt: 'Arcanista de Pedra', en: 'Stone Arcanist' },
+      ar: { pt: 'Arcanista da Tempestade', en: 'Storm Arcanist' },
+      sombra: { pt: 'Mago do Vazio', en: 'Void Mage' },
+      luz: { pt: 'Mago', en: 'Mage' },
+      planta: { pt: 'Arcanista Verdejante', en: 'Verdant Arcanist' },
+      industrial: { pt: 'Ferreiro de Runas', en: 'Runesmith' },
+    },
+    benevolencia: {
+      agua: { pt: 'Mística da Maré', en: 'Tide Mystic' },
+      fogo: { pt: 'Mística da Brasa', en: 'Ember Mystic' },
+      terra: { pt: 'Místico de Pedra', en: 'Stone Mystic' },
+      ar: { pt: 'Mística do Vento', en: 'Windsong Mystic' },
+      sombra: { pt: 'Mística do Crepúsculo', en: 'Dusk Mystic' },
+      luz: { pt: 'Tecelã da Luz', en: 'Lightweaver' },
+      planta: { pt: 'Druida', en: 'Druid' },
+      industrial: { pt: 'Mística de Relojoaria', en: 'Clockwork Mystic' },
+    },
+  },
+  alcance: {
+    poder: {
+      agua: { pt: 'Caçador da Maré', en: 'Tide Hunter' },
+      fogo: { pt: 'Caçador da Brasa', en: 'Ember Hunter' },
+      terra: { pt: 'Caçador de Pedra', en: 'Stone Hunter' },
+      ar: { pt: 'Caçador da Tempestade', en: 'Storm Hunter' },
+      sombra: { pt: 'Caçador das Sombras', en: 'Shadow Hunter' },
+      luz: { pt: 'Caçador Solar', en: 'Solar Hunter' },
+      planta: { pt: 'Caçador', en: 'Hunter' },
+      industrial: { pt: 'Caçador de Sucata', en: 'Scrap Hunter' },
+    },
+    harmonia: {
+      agua: { pt: 'Batedor da Maré', en: 'Tide Scout' },
+      fogo: { pt: 'Batedor da Brasa', en: 'Ember Scout' },
+      terra: { pt: 'Batedor de Pedra', en: 'Stone Scout' },
+      ar: { pt: 'Batedor da Tempestade', en: 'Storm Scout' },
+      sombra: { pt: 'Batedor das Sombras', en: 'Shadow Scout' },
+      luz: { pt: 'Batedor Solar', en: 'Sun Scout' },
+      planta: { pt: 'Batedor da Mata', en: 'Wildwood Scout' },
+      industrial: { pt: 'Batedor da Sucata', en: 'Scrapline Scout' },
+    },
+    benevolencia: {
+      agua: { pt: 'Patrulheiro da Maré', en: 'Tide Ranger' },
+      fogo: { pt: 'Patrulheiro da Brasa', en: 'Ember Ranger' },
+      terra: { pt: 'Patrulheiro de Pedra', en: 'Stone Ranger' },
+      ar: { pt: 'Patrulheiro do Céu', en: 'Sky Ranger' },
+      sombra: { pt: 'Patrulheiro do Crepúsculo', en: 'Dusk Ranger' },
+      luz: { pt: 'Patrulheiro da Alvorada', en: 'Dawn Ranger' },
+      planta: { pt: 'Patrulheiro', en: 'Ranger' },
+      industrial: { pt: 'Patrulheiro de Ferro', en: 'Ironline Ranger' },
+    },
+  },
+};
+
 // Poder empunhado por ELEMENTO (~10 cada) — o que completa "que empunha ___"
 const ELEMENT_POWERS: Record<ElementId, LText[]> = {
   agua: [
@@ -1965,23 +2193,21 @@ const ULTRA_LOOK: string[] = [
   'a transcendent triple-fusion form', 'a supreme combined silhouette',
 ];
 
-/** Junta os blocos num prompt. Estilo fixo + conceito + nível + tipo +
- *  elemento + bioma. Ordem pensada para o modelo (estilo primeiro). */
+/** Junta os blocos num prompt CURTO — lista de traços, não frase longa.
+ *  Testes empíricos: prompt estilo Tamagotchi, sem fundo, descrição bem
+ *  curta (espécie + classe + adjetivo) gera sprites melhores que frases
+ *  longas tipo "wielding X to Y" ou blocos extras de tipo/elemento/bioma. */
 function composeSpritePrompt(args: {
-  concept: string; colorDesc: string; accent: string;
-  levelBlock: string; typeLook: string; elementLook: string; biomeLook: string;
+  concept: string; colorDesc: string; accent: string; levelBlock: string;
 }): string {
   return (
-    `Generate image: Micro pixel art of ${args.concept}, 16-bit retro RPG sprite style, ` +
-    `extreme low resolution, blocky pixels, flat ${args.colorDesc} colors with ${args.accent} accents, ` +
-    `no black outlines, no shading, no anti-aliasing, solid black background, ` +
-    `vintage Tamagotchi or Digimon V-pet aesthetic. ${args.levelBlock}. ` +
-    `${args.typeLook}, ${args.elementLook}, ${args.biomeLook}. ` +
+    `Tamagotchi-style v-pet sprite, 16x16 pixel art, no background, transparent background: ` +
+    `${args.concept}. ${args.levelBlock}. ` +
+    `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
     // Cada prompt é gerado de forma INDEPENDENTE (a IA não vê os outros
-    // estágios) — por isso repetimos o conceito/paleta/traços VERBATIM em
-    // todos os 11 prompts e reforçamos explicitamente que é a mesma espécie.
-    `This exact character design, color palette and defining features must ` +
-    `stay recognizable — this is one evolution stage of a single fixed species.`
+    // estágios) — por isso repetimos o conceito/paleta VERBATIM em todos os
+    // 11 prompts e reforçamos que é a mesma espécie.
+    `Same character design and color palette as the species' other evolution stages.`
   );
 }
 
@@ -2523,11 +2749,15 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
   const fusionB = family.secondary.noun;
-  // Identidade da criatura p/ o conceito: mono = 1 bicho; senão híbrido
-  // (2ª família distinta OU objeto no 2º slot).
+  // Identidade CURTA da criatura (espécie): mono = 1 conceito só (ex.: "Cérberus");
+  // híbrido bicho+bicho = composto com hífen (ex.: "octopus-frog"); híbrido
+  // bicho+objeto = objeto qualificando o bicho (ex.: "hammer-crab" / "caranguejo
+  // de martelo"). Curta de propósito — prompts de sprite curtos funcionam melhor.
   const identity: LText = family.mono
     ? { pt: fusionA.pt, en: fusionA.en }
-    : { pt: `híbrido de ${fusionA.pt} e ${fusionB.pt}`, en: `${fusionA.en}-${fusionB.en} hybrid` };
+    : family.secondary.isObject
+      ? { pt: `${fusionA.pt} de ${fusionB.pt}`, en: `${fusionB.en}-${fusionA.en}` }
+      : { pt: `${fusionA.pt}-${fusionB.pt}`, en: `${fusionA.en}-${fusionB.en}` };
 
   // Características sorteadas dos POOLS (assinatura visual única).
   // Nota: em 16x16 não cabem textura/cauda/marcas — esses pools continuam
@@ -2573,27 +2803,29 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // ----- BLOCOS DO PROMPT -----
   // Cor base (paleta variada do pool, sem "color palette").
   const colorDesc = palette.replace(/\s*color palette\s*$/i, '');
-  // Bloco CONCEITO — rico: "um(a) <bicho> humanoide <arquétipo>, que empunha
-  // <poder>, para <efeito>". Escolhido UMA vez (constante nos 11 prompts —
-  // é a identidade fixa da espécie). A descrição livre do pet SUBSTITUI esse
-  // bloco inteiro (não soma).
-  const conceptArchetype = pick(rng, ROLE_ARCHETYPES[dominantRole]);
-  const conceptPower = pick(rng, ELEMENT_POWERS[dominantElement]);
-  const conceptEffect = pickAligned(rng, ROLE_EFFECTS[dominantRole], dominantAlignment);
-  const richConceptEn = `a humanoid ${identity.en} ${conceptArchetype.en}, wielding ${conceptPower.en}, to ${conceptEffect.en}`;
-  const richConceptPt = `um(a) ${identity.pt} humanoide na forma de ${conceptArchetype.pt}, que empunha ${conceptPower.pt}, para ${conceptEffect.pt}`;
+  // Classe DEFINITIVA (função × alinhamento × elemento dominante, ver
+  // CLASS_MATRIX) + elemento SECUNDÁRIO como adjetivo solto (nunca muda a
+  // classe). Escolhidos UMA vez — constantes nos 11 prompts, é a identidade
+  // fixa da espécie. A descrição livre do pet SUBSTITUI o bloco (não soma).
+  const dominantClass = CLASS_MATRIX[dominantRole][dominantAlignment][dominantElement];
+  const secondaryFlavor = secondaryElement ? pick(rng, ELEMENT_FLAVOR_WORDS[secondaryElement]) : null;
+  // Prompt de sprite CURTO — lista de traços, não frase longa (testes empíricos:
+  // "Tamagotchi style, sem fundo, descrição bem curta" gera sprites melhores
+  // que frases tipo "wielding X to Y").
+  const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en].filter(Boolean).join(', ');
+  const richConceptEn = `${identity.en}, ${dominantClass.en}`;
+  const richConceptPt = secondaryFlavor
+    ? `${dominantClass.pt} da linhagem ${identity.pt}, de traços ${secondaryFlavor.pt}`
+    : `${dominantClass.pt} da linhagem ${identity.pt}`;
   const petConceptRaw = input.petDescription?.trim()
     ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)
     : null;
-  const spriteConcept = petConceptRaw ?? richConceptEn;
+  const spriteConcept = petConceptRaw ?? spriteTraitsEn;
   // Bio: descrição breve e legível da criatura (não some no prompt, é exibida
   // na página/exportação). Se o dono descreveu o pet, essa descrição vale.
   const bio: LText = petConceptRaw
     ? { pt: petConceptRaw, en: petConceptRaw }
     : { pt: richConceptPt, en: richConceptEn };
-  // Blocos ELEMENTO e BIOMA — constantes (identidade da espécie), 1 sorteio.
-  const elementLook = pick(rng, ELEMENT_LOOK[dominantElement]);
-  const biomeLook = pick(rng, BIOME_LOOK[dominantRealm]);
 
   const stages: CreatureStage[] = [];
 
@@ -2610,8 +2842,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     imagePrompt: composeSpritePrompt({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
       levelBlock: rookieLevel,
-      typeLook: pick(rng, TYPE_LOOK[dominantAlignment]),
-      elementLook, biomeLook,
     }),
   });
 
@@ -2625,7 +2855,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     const bTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[branch]);
     const bManifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
-    const bTypeLook = pick(rng, TYPE_LOOK[branch]);
     const bAccent = ALIGNMENT_ACCENT[branch];
     const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes);
     const perfShape = pickShape(rng, PERFECT_SHAPES, branch, petElements, usedShapes);
@@ -2650,7 +2879,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
         levelBlock: `it has evolved into ${champShape.en}`,
-        typeLook: bTypeLook, elementLook, biomeLook,
       }),
     });
 
@@ -2666,7 +2894,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
         levelBlock: `it has transformed into ${perfShape.en}`,
-        typeLook: bTypeLook, elementLook, biomeLook,
       }),
     });
 
@@ -2682,7 +2909,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
         levelBlock: `in its final form, it is ${megaShape.en}`,
-        typeLook: bTypeLook, elementLook, biomeLook,
       }),
     });
   }
@@ -2700,8 +2926,6 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     imagePrompt: composeSpritePrompt({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
-      typeLook: pick(rng, TYPE_LOOK[dominantAlignment]),
-      elementLook, biomeLook,
     }),
   });
 
