@@ -66,7 +66,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/convert-to-webp.mjs",
+    "build": "vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
