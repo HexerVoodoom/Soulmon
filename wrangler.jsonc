@@ -4,6 +4,7 @@
   "main": "./dist/_worker.js/index.js",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
   }
 }
