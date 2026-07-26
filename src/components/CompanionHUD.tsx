@@ -699,6 +699,16 @@ export const CompanionHUD = memo(function CompanionHUD({
           )}
 
 
+          {/* Decoração ambiente: sparkles/corações flutuando devagar (só tema default) */}
+          {!isWin98 && !isGlitch && (
+            <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
+              <span className="sm-ambient-sparkle" style={{ top: '14%', left: '78%', animationDelay: '0s' }}>✦</span>
+              <span className="sm-ambient-sparkle" style={{ top: '68%', left: '14%', animationDelay: '1.1s' }}>✦</span>
+              <span className="sm-ambient-heart" style={{ top: '30%', left: '10%', animationDelay: '0.6s' }}>♥</span>
+              <span className="sm-ambient-heart" style={{ top: '76%', left: '84%', animationDelay: '1.6s' }}>♥</span>
+            </div>
+          )}
+
           {/* Care Event Sprite */}
           {careEvent && <CareSystem careEvent={careEvent} onCareEventComplete={onCareEventComplete || (() => {})} />}
 

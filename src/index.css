@@ -5042,3 +5042,16 @@ html {
   0%, 100% { transform: translateX(-50%) scale(1); }
   50%      { transform: translateX(-50%) scale(1.06); }
 }
+
+/* Decoração ambiente da área do pet: sparkles e corações flutuando devagar */
+.sm-ambient-sparkle, .sm-ambient-heart {
+  position: absolute;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  animation: sm-ambient-float 3.6s ease-in-out infinite;
+}
+.sm-ambient-heart { color: rgba(255, 182, 193, 0.65); font-size: 12px; }
+@keyframes sm-ambient-float {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
+  50%      { transform: translateY(-8px) scale(1.15); opacity: 0.9; }
+}

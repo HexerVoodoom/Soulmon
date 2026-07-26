@@ -1,16 +1,16 @@
 import { useState } from 'react';
+import { X, Gem, FlaskConical, Image as ImageIcon, Award, Lock, Check } from 'lucide-react';
 import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
-import { bitsStyle } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
- * 🛒 8-bit shop — spend Bits (🪙) earned in the minigames.
- * Organized in TABS (Items / Backdrops / Missions).
- * Items can be LOCKED behind a mission: they still render, darkened with a
- * padlock — tapping shows how to unlock. Chunky pixel borders, scanlines,
- * hard shadows: intentionally retro.
+ * Loja — gasta Bits ganhos nos minijogos. Organizada em abas (Itens /
+ * Cenários / Missões). Itens podem estar BLOQUEADOS por missão: renderizam
+ * escurecidos com cadeado; tocar mostra como desbloquear. Os emojis dos
+ * itens são conteúdo do jogo (o que cada item É), não ícones de navegação —
+ * mantidos como estão; o chrome do modal usa o design system sm-*.
  */
 type ShopTab = 'items' | 'bg' | 'missions';
 
@@ -30,15 +30,6 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
   const [flash, setFlash] = useState<{ id: string; ok: boolean } | null>(null);
   /** Item id whose unlock hint is expanded (tap a locked item to toggle). */
   const [hintFor, setHintFor] = useState<string | null>(null);
-  const px = { fontFamily: "'Courier New', monospace" as const };
-
-  // 8-bit building blocks
-  const pixelBox = (color = '#2b3a55'): React.CSSProperties => ({
-    background: '#0d1420',
-    border: `3px solid ${color}`,
-    boxShadow: `4px 4px 0 #000`,
-    borderRadius: 0,
-  });
 
   const buy = (item: ShopItem) => {
     const ok = onBuy(item.id);
@@ -57,10 +48,10 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
     return `${isPt ? 'Missão' : 'Mission'} ${m.icon} ${isPt ? m.namePt : m.nameEn}: ${isPt ? m.descPt : m.descEn}${prog}`;
   };
 
-  const TABS: { key: ShopTab; icon: string; pt: string; en: string }[] = [
-    { key: 'items', icon: '🧪', pt: 'ITENS', en: 'ITEMS' },
-    { key: 'bg', icon: '🖼️', pt: 'CENÁRIOS', en: 'BACKDROPS' },
-    { key: 'missions', icon: '🏅', pt: 'MISSÕES', en: 'MISSIONS' },
+  const TABS: { key: ShopTab; Icon: typeof FlaskConical; pt: string; en: string }[] = [
+    { key: 'items', Icon: FlaskConical, pt: 'Itens', en: 'Items' },
+    { key: 'bg', Icon: ImageIcon, pt: 'Cenários', en: 'Backdrops' },
+    { key: 'missions', Icon: Award, pt: 'Missões', en: 'Missions' },
   ];
 
   const TAB_ITEMS: Record<Exclude<ShopTab, 'missions'>, ShopItem[]> = {
@@ -78,31 +69,36 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
     const canBuy = unlocked && affordable;
 
     const iconEl = item.kind === 'bg' ? (
-      <div style={{ width: 44, height: 44, flexShrink: 0, border: '2px solid #000', background: PET_BACKGROUNDS[item.id]?.css, filter: unlocked ? 'none' : 'brightness(0.35) grayscale(0.6)' }} />
+      <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 12, background: PET_BACKGROUNDS[item.id]?.css, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }} />
     ) : (
-      <span style={{ fontSize: '1.7rem', width: 44, textAlign: 'center', flexShrink: 0, filter: unlocked ? 'none' : 'brightness(0.4) grayscale(0.8)' }}>{item.icon}</span>
+      <span style={{ fontSize: '1.6rem', width: 44, height: 44, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }}>{item.icon}</span>
     );
 
     return (
       <div
         key={item.id}
         onClick={() => { if (!unlocked) setHintFor(showHint ? null : item.id); }}
-        style={{ ...pixelBox(flashHere ? (flash!.ok ? '#4ade80' : '#f87171') : '#2b3a55'), padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', cursor: unlocked ? 'default' : 'pointer' }}
+        className="sm-card"
+        style={{
+          padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap',
+          cursor: unlocked ? 'default' : 'pointer',
+          borderColor: flashHere ? (flash!.ok ? '#22A900' : '#e03131') : undefined,
+        }}
       >
         {/* icon (darkened + padlock overlay when locked) */}
         <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
           {iconEl}
           {!unlocked && (
-            <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', textShadow: '0 1px 3px #000' }}>
-              🔒
+            <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.15)', borderRadius: 12 }}>
+              <Lock size={16} color="#fff" strokeWidth={2.4} />
             </span>
           )}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ ...px, color: unlocked ? '#e8eefc' : '#7c8db0', fontWeight: 800, fontSize: '0.8rem' }}>
+          <p style={{ color: unlocked ? 'var(--sm-ink)' : 'var(--sm-muted)', fontWeight: 700, fontSize: '0.85rem', margin: 0 }}>
             {isPt ? item.namePt : item.nameEn}
           </p>
-          <p style={{ ...px, color: unlocked ? '#9fb2d8' : '#5d729c', fontSize: '0.68rem' }}>
+          <p style={{ color: 'var(--sm-muted)', fontSize: '0.72rem', margin: 0 }}>
             {isPt ? item.descPt : item.descEn}
           </p>
         </div>
@@ -110,27 +106,23 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
         {ownedBg ? (
           <button
             onClick={e => { e.stopPropagation(); onEquip(equipped ? null : item.id); }}
-            style={{ ...px, ...pixelBox(equipped ? '#facc15' : '#60a5fa'), color: equipped ? '#facc15' : '#60a5fa', fontWeight: 800, fontSize: '0.66rem', padding: '6px 8px', cursor: 'pointer', flexShrink: 0 }}>
-            {equipped ? (isPt ? 'EQUIPADO ✓' : 'EQUIPPED ✓') : (isPt ? 'EQUIPAR' : 'EQUIP')}
+            className={equipped ? 'sm-btn sm-btn-gold' : 'sm-btn sm-btn-secondary'}
+            style={{ padding: '6px 12px', fontSize: '0.7rem' }}>
+            {equipped ? <><Check size={14} strokeWidth={3} /> {isPt ? 'Equipado' : 'Equipped'}</> : (isPt ? 'Equipar' : 'Equip')}
           </button>
         ) : (
           <button
             onClick={e => { e.stopPropagation(); if (unlocked) buy(item); else setHintFor(showHint ? null : item.id); }}
             disabled={unlocked && !canBuy}
-            style={{
-              ...px,
-              ...pixelBox(!unlocked ? '#374151' : canBuy ? '#4ade80' : '#374151'),
-              color: !unlocked ? '#6b7280' : canBuy ? '#4ade80' : '#6b7280',
-              fontWeight: 800, fontSize: '0.7rem', padding: '6px 8px',
-              cursor: !unlocked || canBuy ? 'pointer' : 'default', flexShrink: 0,
-            }}>
-            {unlocked ? item.price : '🔒'}
+            className="sm-btn"
+            style={{ padding: '6px 12px', fontSize: '0.7rem', flexShrink: 0 }}>
+            {unlocked ? <><Gem size={13} strokeWidth={2.4} /> {item.price}</> : <Lock size={14} strokeWidth={2.4} />}
           </button>
         )}
         {/* unlock hint "tooltip" — expands inside the card when tapped */}
         {!unlocked && showHint && (
-          <p style={{ ...px, width: '100%', margin: 0, padding: '6px 8px', background: '#101c14', border: '2px solid #facc15', color: '#facc15', fontSize: '0.66rem', fontWeight: 800 }}>
-            🔓 {isPt ? 'Como desbloquear:' : 'How to unlock:'} {unlockHint(item)}
+          <p style={{ width: '100%', margin: 0, padding: '8px 10px', background: 'var(--sm-gold-soft)', borderRadius: 10, color: '#8a6113', fontSize: '0.72rem', fontWeight: 600 }}>
+            {isPt ? 'Como desbloquear:' : 'How to unlock:'} {unlockHint(item)}
           </p>
         )}
       </div>
@@ -139,35 +131,35 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
 
   const renderMissions = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ ...px, color: '#9fb2d8', fontSize: '0.68rem', textAlign: 'center' }}>
+      <p style={{ color: 'var(--sm-muted)', fontSize: '0.72rem', textAlign: 'center', margin: 0 }}>
         {isPt
-          ? 'Complete missões para LIBERAR A COMPRA de itens exclusivos da loja.'
-          : 'Complete missions to UNLOCK the purchase of exclusive shop items.'}
+          ? 'Complete missões para liberar a compra de itens exclusivos da loja.'
+          : 'Complete missions to unlock the purchase of exclusive shop items.'}
       </p>
       {MISSIONS.map(m => {
         const cur = missionProgress[m.id] ?? 0;
         const done = cur >= m.target;
         const rewardItem = SHOP_ITEMS.find(i => i.id === m.bgReward);
         return (
-          <div key={m.id} style={{ ...pixelBox(done ? '#4ade80' : '#2b3a55'), padding: 10, display: 'flex', gap: 10, alignItems: 'center' }}>
-            <span style={{ fontSize: '1.7rem', width: 44, textAlign: 'center', flexShrink: 0 }}>{m.icon}</span>
+          <div key={m.id} className="sm-card" style={{ padding: 10, display: 'flex', gap: 10, alignItems: 'center', borderColor: done ? '#22A900' : undefined }}>
+            <span style={{ fontSize: '1.6rem', width: 44, height: 44, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{m.icon}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...px, color: '#e8eefc', fontWeight: 800, fontSize: '0.8rem' }}>
+              <p style={{ color: 'var(--sm-ink)', fontWeight: 700, fontSize: '0.85rem', margin: 0 }}>
                 {isPt ? m.namePt : m.nameEn}
               </p>
-              <p style={{ ...px, color: '#9fb2d8', fontSize: '0.68rem' }}>
+              <p style={{ color: 'var(--sm-muted)', fontSize: '0.72rem', margin: 0 }}>
                 {isPt ? m.descPt : m.descEn}
               </p>
-              <p style={{ ...px, color: '#60a5fa', fontSize: '0.64rem' }}>
-                🔓 {isPt ? 'Libera:' : 'Unlocks:'} {rewardItem ? (isPt ? rewardItem.namePt : rewardItem.nameEn) : m.bgReward} ({isPt ? 'aba Cenários' : 'Backdrops tab'})
+              <p style={{ color: 'var(--sm-primary)', fontSize: '0.68rem', margin: '2px 0 0', fontWeight: 600 }}>
+                {isPt ? 'Libera:' : 'Unlocks:'} {rewardItem ? (isPt ? rewardItem.namePt : rewardItem.nameEn) : m.bgReward} ({isPt ? 'aba Cenários' : 'Backdrops tab'})
               </p>
-              <div style={{ marginTop: 4, height: 8, background: '#131a26', border: '1px solid #2c3a52' }}>
-                <div style={{ width: `${Math.min(100, (cur / m.target) * 100)}%`, height: '100%', background: done ? '#4ade80' : '#60a5fa', transition: 'width 0.3s' }} />
+              <div style={{ marginTop: 4, height: 8, background: 'var(--sm-line)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ width: `${Math.min(100, (cur / m.target) * 100)}%`, height: '100%', background: done ? '#22A900' : 'var(--sm-primary)', transition: 'width 0.3s' }} />
               </div>
-              <p style={{ ...px, color: done ? '#4ade80' : '#5d729c', fontSize: '0.62rem', marginTop: 2, fontWeight: 800 }}>
+              <p style={{ color: done ? '#22A900' : 'var(--sm-muted)', fontSize: '0.66rem', marginTop: 2, marginBottom: 0, fontWeight: 700 }}>
                 {done
-                  ? (isPt ? 'CONCLUÍDA ✓ — item liberado na loja!' : 'DONE ✓ — item unlocked in the shop!')
-                  : m.target === 1 ? (isPt ? 'PENDENTE' : 'PENDING') : `${cur}/${m.target}`}
+                  ? (isPt ? 'Concluída — item liberado na loja!' : 'Done — item unlocked in the shop!')
+                  : m.target === 1 ? (isPt ? 'Pendente' : 'Pending') : `${cur}/${m.target}`}
               </p>
             </div>
           </div>
@@ -177,57 +169,54 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
   );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4,6,12,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-      <div style={{ ...pixelBox('#4ade80'), width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
-        {/* scanlines */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.18) 4px)' }} />
-
+    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+      <div className="sm-card" style={{ background: 'var(--sm-bg)', width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', borderBottom: '3px solid #4ade80', background: '#101c14' }}>
-          <span style={{ ...px, color: '#4ade80', fontWeight: 800, fontSize: '1rem', letterSpacing: 2, textShadow: '2px 2px 0 #000' }}>
-            🛒 {isPt ? 'LOJA' : 'SHOP'}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
+          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>
+            {isPt ? 'Loja' : 'Shop'}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ ...bitsStyle, fontSize: '0.9rem' }}>
-              {points} Bits
+            <span className="sm-card" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px' }}>
+              <Gem size={14} color="var(--sm-primary)" strokeWidth={2.4} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--sm-ink)' }}>{points}</span>
             </span>
-            <button onClick={onClose}
-              style={{ ...px, ...pixelBox('#f87171'), color: '#f87171', fontWeight: 800, padding: '2px 10px', cursor: 'pointer', fontSize: '0.85rem' }}>
-              X
+            <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
+              <X size={18} strokeWidth={2.4} />
             </button>
           </div>
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', borderBottom: '3px solid #2b3a55', background: '#0a111c' }}>
+        <div style={{ display: 'flex', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => { setTab(t.key); setHintFor(null); }}
               style={{
-                ...px, flex: 1, padding: '8px 2px', border: 'none', cursor: 'pointer',
-                background: tab === t.key ? '#14231a' : 'transparent',
-                borderBottom: tab === t.key ? '3px solid #4ade80' : '3px solid transparent',
-                marginBottom: -3,
-                color: tab === t.key ? '#4ade80' : '#5d729c',
-                fontWeight: 800, fontSize: '0.62rem', letterSpacing: 0.5,
+                flex: 1, padding: '10px 2px', border: 'none', cursor: 'pointer', background: 'transparent',
+                borderBottom: tab === t.key ? '2.5px solid var(--sm-primary)' : '2.5px solid transparent',
+                marginBottom: -1,
+                color: tab === t.key ? 'var(--sm-primary)' : 'var(--sm-muted)',
+                fontWeight: 700, fontSize: '0.72rem',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
               }}
             >
-              <span style={{ fontSize: '0.95rem', display: 'block' }}>{t.icon}</span>
+              <t.Icon size={17} strokeWidth={2.2} />
               {isPt ? t.pt : t.en}
             </button>
           ))}
         </div>
 
         {/* Content */}
-        <div style={{ overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {tab === 'missions'
             ? renderMissions()
             : TAB_ITEMS[tab].map(renderItem)}
-          <p style={{ ...px, color: '#5d729c', fontSize: '0.64rem', textAlign: 'center' }}>
+          <p style={{ color: 'var(--sm-muted)', fontSize: '0.68rem', textAlign: 'center', margin: 0 }}>
             {tab === 'missions'
               ? (isPt ? 'Progresso conta desde o início do jogo.' : 'Progress counts from the very start.')
-              : (isPt ? 'Ganhe Bits nos minijogos! Itens com 🔒: toque para ver como desbloquear.' : 'Earn Bits in the minigames! 🔒 items: tap to see how to unlock.')}
+              : (isPt ? 'Ganhe Bits nos minijogos! Itens bloqueados: toque para ver como desbloquear.' : 'Earn Bits in the minigames! Locked items: tap to see how to unlock.')}
           </p>
         </div>
       </div>

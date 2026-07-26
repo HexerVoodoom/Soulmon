@@ -41,7 +41,7 @@ export const TaskCard = memo(function TaskCard({
         {/* Checkbox */}
         <div
           onClick={() => { if (!completed) onToggleComplete(id); }}
-          className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all flex-shrink-0 ${
+          className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all flex-shrink-0 ${
             completed
               ? 'bg-[#22c55e] border-[#22c55e] cursor-default'
               : isWin98

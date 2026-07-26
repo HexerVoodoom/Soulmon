@@ -73,7 +73,7 @@ export const ActivityCard = memo(function ActivityCard({
           {totalSteps === 0 && (
             <div 
               onClick={isDisabled || isCompleted ? undefined : () => onToggleCompletion?.(id)}
-              className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all flex-shrink-0 ${
+              className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all flex-shrink-0 ${
                 isDisabled
                   ? 'opacity-50 cursor-not-allowed border-[#d1d5dc]'
                   : isCompleted
@@ -105,15 +105,36 @@ export const ActivityCard = memo(function ActivityCard({
             <p className={activityComplete ? 'text-[#9ca3af]' : 'text-[#a1a1a1]'} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.75rem' }}>
               {isSingleExecution ? (
                 t.main.singleExecution
-              ) : (
+              ) : isWin98 ? (
                 <span className="flex gap-2 items-center">
                   {daysLabels.map((label, index) => {
                     const isActive = weekDays.includes(index);
                     return (
-                      <span 
+                      <span
                         key={index}
                         className={isActive ? 'text-[#2d2d2d]' : 'text-[#8f8f8f]'}
                         style={{ fontWeight: isActive ? 'bold' : 'normal' }}
+                      >
+                        {label}
+                      </span>
+                    );
+                  })}
+                </span>
+              ) : (
+                <span className="flex gap-1 items-center flex-wrap">
+                  {daysLabels.map((label, index) => {
+                    const isActive = weekDays.includes(index);
+                    return (
+                      <span
+                        key={index}
+                        style={{
+                          fontSize: '0.625rem',
+                          fontWeight: 700,
+                          padding: '2px 6px',
+                          borderRadius: 8,
+                          background: isActive ? 'var(--sm-primary-soft)' : 'transparent',
+                          color: isActive ? 'var(--sm-primary)' : 'var(--sm-muted)',
+                        }}
                       >
                         {label}
                       </span>
