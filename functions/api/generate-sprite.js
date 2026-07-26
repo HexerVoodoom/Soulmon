@@ -1,6 +1,6 @@
 // Cloudflare Pages Function — gera 1 sprite de Soulmon.
 // Provedor primário: HIGGSFIELD (platform.higgsfield.ai, modelo Soul).
-//   Secrets: HF_KEY_ID + HF_KEY_SECRET (Pages → Settings → Environment vars).
+//   Secrets: HF_API_KEY + HF_SECRET (já configurados via `wrangler secret`).
 //   Suporta referência de imagem (cadeia de evolução: champion parte do
 //   rookie etc. — ver src/utils/spritePrompts.ts).
 // Fallback: Gemini (GEMINI_API_KEY, modelo gemini-2.5-flash-image), texto puro.
@@ -21,14 +21,14 @@ export async function onRequestOptions() {
 }
 
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
-  const auth = `Key ${env.HF_KEY_ID}:${env.HF_KEY_SECRET}`;
+  const auth = `Key ${env.HF_API_KEY}:${env.HF_SECRET}`;
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
   // Soul: texto puro; com referência usa o endpoint image2image do Soul.
   const path = hasRef ? '/v1/image2image/soul' : '/v1/text2image/soul';
   const params = {
     prompt,
     width_and_height: '1536x1536',
-    quality: 'basic',
+    quality: '720p',
     batch_size: 1,
     ...(hasRef ? { image_url: referenceImageUrls[0], image_urls: referenceImageUrls } : {}),
   };
@@ -93,21 +93,23 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
     }
 
-    if (env.HF_KEY_ID && env.HF_KEY_SECRET) {
+    let hfError = null;
+    if (env.HF_API_KEY && env.HF_SECRET) {
       try {
         const image = await generateHiggsfield(env, prompt, referenceImageUrls);
         return Response.json({ image, provider: 'higgsfield' }, { headers: CORS });
       } catch (err) {
+        hfError = err.message;
         console.error('Higgsfield falhou, tentando fallback:', err.message);
       }
     }
 
     if (env.GEMINI_API_KEY) {
       const image = await generateGemini(env, prompt);
-      return Response.json({ image, provider: 'gemini' }, { headers: CORS });
+      return Response.json({ image, provider: 'gemini', hfError }, { headers: CORS });
     }
 
-    return Response.json({ error: 'image generation not configured (HF_KEY_ID/HF_KEY_SECRET ou GEMINI_API_KEY)' }, { status: 503, headers: CORS });
+    return Response.json({ error: 'image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)', hfError }, { status: 503, headers: CORS });
   } catch (err) {
     console.error('generate-sprite error:', err);
     return Response.json({ error: 'internal error' }, { status: 500, headers: CORS });

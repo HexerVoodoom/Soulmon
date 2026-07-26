@@ -459,13 +459,13 @@ async function onRequestOptions4() {
 }
 __name(onRequestOptions4, "onRequestOptions");
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
-  const auth = `Key ${env.HF_KEY_ID}:${env.HF_KEY_SECRET}`;
+  const auth = `Key ${env.HF_API_KEY}:${env.HF_SECRET}`;
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
   const path = hasRef ? "/v1/image2image/soul" : "/v1/text2image/soul";
   const params = {
     prompt,
     width_and_height: "1536x1536",
-    quality: "basic",
+    quality: "720p",
     batch_size: 1,
     ...hasRef ? { image_url: referenceImageUrls[0], image_urls: referenceImageUrls } : {}
   };
@@ -527,19 +527,21 @@ async function onRequestPost3({ request, env }) {
     if (!prompt || typeof prompt !== "string") {
       return Response.json({ error: "prompt required" }, { status: 400, headers: CORS4 });
     }
-    if (env.HF_KEY_ID && env.HF_KEY_SECRET) {
+    let hfError = null;
+    if (env.HF_API_KEY && env.HF_SECRET) {
       try {
         const image = await generateHiggsfield(env, prompt, referenceImageUrls);
         return Response.json({ image, provider: "higgsfield" }, { headers: CORS4 });
       } catch (err) {
+        hfError = err.message;
         console.error("Higgsfield falhou, tentando fallback:", err.message);
       }
     }
     if (env.GEMINI_API_KEY) {
       const image = await generateGemini(env, prompt);
-      return Response.json({ image, provider: "gemini" }, { headers: CORS4 });
+      return Response.json({ image, provider: "gemini", hfError }, { headers: CORS4 });
     }
-    return Response.json({ error: "image generation not configured (HF_KEY_ID/HF_KEY_SECRET ou GEMINI_API_KEY)" }, { status: 503, headers: CORS4 });
+    return Response.json({ error: "image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)", hfError }, { status: 503, headers: CORS4 });
   } catch (err) {
     console.error("generate-sprite error:", err);
     return Response.json({ error: "internal error" }, { status: 500, headers: CORS4 });
@@ -672,7 +674,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-ITK7gw/functionsRoutes-0.9492619709173211.mjs
+// ../.wrangler/tmp/pages-2SNTbz/functionsRoutes-0.6741095975705249.mjs
 var routes = [
   {
     routePath: "/api/chat",

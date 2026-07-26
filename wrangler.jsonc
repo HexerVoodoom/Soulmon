@@ -6,5 +6,9 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  }
+  },
+  "kv_namespaces": [
+    { "binding": "DIGIAPP_SAVES", "id": "aed229e069fd40d8a141fb1124763d9d" },
+    { "binding": "PUSH_SUBSCRIPTIONS", "id": "12dd88d3282140e786a5b2c5b5b940cf" }
+  ]
 }
