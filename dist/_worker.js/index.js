@@ -95,16 +95,297 @@ async function onRequestPost({ request, env }) {
 }
 __name(onRequestPost, "onRequestPost");
 
-// api/fcm-subscribe.js
+// api/community.js
 var CORS2 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+var VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
+var MATCHES_PER_DAY = 5;
+var json = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS2 }), "json");
+var today = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
+var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
+function stagePower(stage) {
+  if (!stage) return 1;
+  const p = String(stage).split("-")[0];
+  return { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 }[p] ?? 1;
+}
+__name(stagePower, "stagePower");
+async function getProfile(env, id) {
+  const raw = await env.DIGIAPP_SAVES.get(`profile:${id}`);
+  return raw ? JSON.parse(raw) : null;
+}
+__name(getProfile, "getProfile");
+async function putProfile(env, id, profile) {
+  await env.DIGIAPP_SAVES.put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
+}
+__name(putProfile, "putProfile");
+async function getRank(env, season, id) {
+  const raw = await env.DIGIAPP_SAVES.get(`rank:${season}:${id}`);
+  return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today(), matchesToday: 0 };
+}
+__name(getRank, "getRank");
+async function putRank(env, season, id, rec) {
+  await env.DIGIAPP_SAVES.put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
+}
+__name(putRank, "putRank");
+async function listPrefix(env, prefix, limit = 100) {
+  const out = [];
+  let cursor;
+  do {
+    const page = await env.DIGIAPP_SAVES.list({ prefix, cursor, limit: 1e3 });
+    for (const k of page.keys) {
+      out.push(k.name);
+      if (out.length >= limit) return out;
+    }
+    cursor = page.list_complete ? void 0 : page.cursor;
+  } while (cursor);
+  return out;
+}
+__name(listPrefix, "listPrefix");
+async function onRequestOptions2() {
+  return new Response(null, { headers: CORS2 });
+}
+__name(onRequestOptions2, "onRequestOptions");
+async function onRequest({ request, env }) {
+  if (!env.DIGIAPP_SAVES) return json({ error: "Storage not bound" }, 500);
+  const url = new URL(request.url);
+  const action = url.searchParams.get("action");
+  const method = request.method;
+  const body = method === "POST" ? await request.json().catch(() => ({})) : {};
+  const id = body.id || url.searchParams.get("id");
+  if (action === "profile" && method === "POST") {
+    if (!VALID_ID.test(id || "")) return json({ error: "invalid id" }, 400);
+    const prev = await getProfile(env, id) || {};
+    const profile = {
+      id,
+      name: String(body.name || prev.name || "An\xF4nimo").slice(0, 24),
+      stage: String(body.stage || prev.stage || "rookie").slice(0, 40),
+      petName: String(body.petName || prev.petName || "").slice(0, 32),
+      unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : prev.unlockedStages || [],
+      pvpEnabled: !!body.pvpEnabled,
+      attrs: body.attrs && typeof body.attrs === "object" ? { virus: +body.attrs.virus || 0, data: +body.attrs.data || 0, vaccine: +body.attrs.vaccine || 0 } : prev.attrs || { virus: 0, data: 0, vaccine: 0 },
+      friends: prev.friends || [],
+      createdAt: prev.createdAt || Date.now(),
+      updatedAt: Date.now()
+    };
+    await putProfile(env, id, profile);
+    return json({ ok: true });
+  }
+  if (action === "players" && method === "GET") {
+    const search = (url.searchParams.get("search") || "").toLowerCase();
+    const keys = await listPrefix(env, "profile:", 300);
+    const season = currentSeason();
+    const players = [];
+    for (const k of keys) {
+      const raw = await env.DIGIAPP_SAVES.get(k);
+      if (!raw) continue;
+      const p = JSON.parse(raw);
+      if (search && !String(p.name).toLowerCase().includes(search)) continue;
+      const rank = await getRank(env, season, p.id);
+      players.push({
+        id: p.id,
+        name: p.name,
+        petName: p.petName,
+        stage: p.stage,
+        unlockedStages: p.unlockedStages,
+        pvpEnabled: p.pvpEnabled,
+        rankPoints: rank.points,
+        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1)
+      });
+      if (players.length >= 50) break;
+    }
+    players.sort((a, b) => b.rankPoints - a.rankPoints);
+    return json({ players });
+  }
+  if (action === "player" && method === "GET") {
+    const p = await getProfile(env, id);
+    if (!p) return json({ found: false });
+    const rank = await getRank(env, currentSeason(), id);
+    return json({
+      found: true,
+      player: {
+        id: p.id,
+        name: p.name,
+        petName: p.petName,
+        stage: p.stage,
+        unlockedStages: p.unlockedStages,
+        pvpEnabled: p.pvpEnabled,
+        friends: p.friends,
+        rankPoints: rank.points,
+        wins: rank.wins,
+        losses: rank.losses,
+        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1)
+      }
+    });
+  }
+  if (action === "opponents" && method === "GET") {
+    const keys = await listPrefix(env, "profile:", 300);
+    const me = id;
+    const pool = [];
+    for (const k of keys) {
+      const raw = await env.DIGIAPP_SAVES.get(k);
+      if (!raw) continue;
+      const p = JSON.parse(raw);
+      if (!p.pvpEnabled || p.id === me) continue;
+      pool.push({ id: p.id, name: p.name, petName: p.petName, stage: p.stage });
+    }
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const season = currentSeason();
+    const myRank = id ? await getRank(env, season, id) : null;
+    const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
+    return json({ opponents: pool.slice(0, 3), matchesLeft: Math.max(0, matchesLeft) });
+  }
+  if (action === "match" && method === "POST") {
+    const { opponentId } = body;
+    if (!VALID_ID.test(id || "") || !VALID_ID.test(opponentId || "")) return json({ error: "invalid id" }, 400);
+    const me = await getProfile(env, id);
+    const opp = await getProfile(env, opponentId);
+    if (!me?.pvpEnabled) return json({ error: "pvp disabled" }, 403);
+    if (!opp?.pvpEnabled) return json({ error: "opponent unavailable" }, 404);
+    const season = currentSeason();
+    const myRank = await getRank(env, season, id);
+    if (myRank.day !== today()) {
+      myRank.day = today();
+      myRank.matchesToday = 0;
+    }
+    if (myRank.matchesToday >= MATCHES_PER_DAY) {
+      return json({ error: "daily limit", matchesLeft: 0 }, 429);
+    }
+    const power = /* @__PURE__ */ __name((p) => stagePower(p.stage) * 10 + Math.min(20, ((p.attrs?.virus || 0) + (p.attrs?.data || 0) + (p.attrs?.vaccine || 0)) / 5) + Math.random() * 18, "power");
+    const myScore = power(me);
+    const oppScore = power(opp);
+    const won = myScore >= oppScore;
+    myRank.matchesToday += 1;
+    myRank.points = Math.max(0, myRank.points + (won ? 20 : -8));
+    if (won) myRank.wins += 1;
+    else myRank.losses += 1;
+    await putRank(env, season, id, myRank);
+    const oppRank = await getRank(env, season, opponentId);
+    oppRank.points = Math.max(0, oppRank.points + (won ? -4 : 10));
+    if (won) oppRank.losses += 1;
+    else oppRank.wins += 1;
+    await putRank(env, season, opponentId, oppRank);
+    return json({
+      won,
+      myScore: Math.round(myScore),
+      oppScore: Math.round(oppScore),
+      points: myRank.points,
+      matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
+      opponent: { name: opp.name, petName: opp.petName, stage: opp.stage }
+    });
+  }
+  if ((action === "rank" || action === "seasonResult") && method === "GET") {
+    const season = url.searchParams.get("season") || currentSeason();
+    if (!/^\d{4}-\d{2}$/.test(season)) return json({ error: "invalid season" }, 400);
+    const keys = await listPrefix(env, `rank:${season}:`, 300);
+    const rows = [];
+    for (const k of keys) {
+      const raw = await env.DIGIAPP_SAVES.get(k);
+      if (!raw) continue;
+      const rec = JSON.parse(raw);
+      const pid = k.slice(`rank:${season}:`.length);
+      const p = await getProfile(env, pid);
+      rows.push({ id: pid, name: p?.name || "An\xF4nimo", petName: p?.petName || "", stage: p?.stage || "rookie", points: rec.points, wins: rec.wins, losses: rec.losses });
+    }
+    rows.sort((a, b) => b.points - a.points);
+    if (action === "seasonResult") return json({ season, top3: rows.slice(0, 3) });
+    return json({ season, rank: rows.slice(0, 50) });
+  }
+  if (action === "closeSeason" && method === "POST") {
+    const { season, adminKey } = body;
+    if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json({ error: "unauthorized" }, 401);
+    if (!/^\d{4}-\d{2}$/.test(season || "")) return json({ error: "invalid season" }, 400);
+    const keys = await listPrefix(env, `rank:${season}:`, 300);
+    const rows = [];
+    for (const k of keys) {
+      const raw = await env.DIGIAPP_SAVES.get(k);
+      if (!raw) continue;
+      rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
+    }
+    rows.sort((a, b) => b.points - a.points);
+    const top3 = rows.slice(0, 3);
+    for (let i = 0; i < top3.length; i++) {
+      const p = await getProfile(env, top3[i].id);
+      if (!p) continue;
+      p.pendingTrophies = p.pendingTrophies || [];
+      p.pendingTrophies.push({ season, place: i + 1 });
+      await putProfile(env, top3[i].id, p);
+    }
+    return json({ ok: true, season, awarded: top3.length });
+  }
+  if (action === "trophies" && method === "GET") {
+    if (!VALID_ID.test(id || "")) return json({ error: "invalid id" }, 400);
+    const p = await getProfile(env, id);
+    const trophies = p?.pendingTrophies || [];
+    if (url.searchParams.get("claim") === "1" && trophies.length && p) {
+      p.pendingTrophies = [];
+      await putProfile(env, id, p);
+    }
+    return json({ trophies });
+  }
+  if (action === "friends" && method === "POST") {
+    const { friendId, remove } = body;
+    if (!VALID_ID.test(id || "") || !VALID_ID.test(friendId || "")) return json({ error: "invalid id" }, 400);
+    if (id === friendId) return json({ error: "cannot befriend yourself" }, 400);
+    const me = await getProfile(env, id);
+    if (!me) return json({ error: "profile not found" }, 404);
+    const friend = await getProfile(env, friendId);
+    if (!friend) return json({ error: "friend not found" }, 404);
+    me.friends = me.friends || [];
+    if (remove) {
+      me.friends = me.friends.filter((f) => f !== friendId);
+    } else {
+      if (me.friends.includes(friendId)) return json({ ok: true, friends: me.friends });
+      if (me.friends.length >= 5) return json({ error: "friend limit (5)" }, 400);
+      me.friends.push(friendId);
+    }
+    await putProfile(env, id, me);
+    return json({ ok: true, friends: me.friends });
+  }
+  if (action === "gift" && method === "POST") {
+    const { friendId } = body;
+    if (!VALID_ID.test(id || "") || !VALID_ID.test(friendId || "")) return json({ error: "invalid id" }, 400);
+    const me = await getProfile(env, id);
+    if (!me) return json({ error: "profile not found" }, 404);
+    if (!(me.friends || []).includes(friendId)) return json({ error: "not a friend" }, 403);
+    me.giftLog = me.giftLog || {};
+    if (me.giftLog[friendId] === today()) return json({ error: "already gifted today" }, 429);
+    me.giftLog[friendId] = today();
+    await putProfile(env, id, me);
+    const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendId}`);
+    const gifts = raw ? JSON.parse(raw) : [];
+    gifts.push({ from: me.name, bits: 20, at: Date.now() });
+    await env.DIGIAPP_SAVES.put(`gifts:${friendId}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+    return json({ ok: true });
+  }
+  if (action === "gifts" && method === "GET") {
+    if (!VALID_ID.test(id || "")) return json({ error: "invalid id" }, 400);
+    const raw = await env.DIGIAPP_SAVES.get(`gifts:${id}`);
+    const gifts = raw ? JSON.parse(raw) : [];
+    if (url.searchParams.get("claim") === "1" && gifts.length) {
+      await env.DIGIAPP_SAVES.delete(`gifts:${id}`);
+    }
+    return json({ gifts });
+  }
+  return json({ error: "unknown action" }, 400);
+}
+__name(onRequest, "onRequest");
+
+// api/fcm-subscribe.js
+var CORS3 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions2() {
-  return new Response(null, { status: 204, headers: CORS2 });
+async function onRequestOptions3() {
+  return new Response(null, { status: 204, headers: CORS3 });
 }
-__name(onRequestOptions2, "onRequestOptions");
+__name(onRequestOptions3, "onRequestOptions");
 async function onRequestPost2({ request, env }) {
   let body;
   try {
@@ -112,14 +393,14 @@ async function onRequestPost2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS2 }
+      headers: { "Content-Type": "application/json", ...CORS3 }
     });
   }
   const { token, digimonName, language } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS2 }
+      headers: { "Content-Type": "application/json", ...CORS3 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
@@ -130,7 +411,7 @@ async function onRequestPost2({ request, env }) {
   );
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS2 }
+    headers: { "Content-Type": "application/json", ...CORS3 }
   });
 }
 __name(onRequestPost2, "onRequestPost");
@@ -141,21 +422,21 @@ async function onRequestDelete({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS2 }
+      headers: { "Content-Type": "application/json", ...CORS3 }
     });
   }
   const { token } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS2 }
+      headers: { "Content-Type": "application/json", ...CORS3 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS2 }
+    headers: { "Content-Type": "application/json", ...CORS3 }
   });
 }
 __name(onRequestDelete, "onRequestDelete");
@@ -166,103 +447,151 @@ async function hashToken(token) {
 __name(hashToken, "hashToken");
 
 // api/generate-sprite.js
-var CORS3 = {
+var CORS4 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-var MODEL = "gemini-2.5-flash-image";
-async function onRequestOptions3() {
-  return new Response(null, { headers: CORS3 });
+var HF_BASE = "https://platform.higgsfield.ai";
+var GEMINI_MODEL = "gemini-2.5-flash-image";
+async function onRequestOptions4() {
+  return new Response(null, { headers: CORS4 });
 }
-__name(onRequestOptions3, "onRequestOptions");
+__name(onRequestOptions4, "onRequestOptions");
+async function generateHiggsfield(env, prompt, referenceImageUrls) {
+  const auth = `Key ${env.HF_KEY_ID}:${env.HF_KEY_SECRET}`;
+  const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
+  const path = hasRef ? "/v1/image2image/soul" : "/v1/text2image/soul";
+  const params = {
+    prompt,
+    width_and_height: "1536x1536",
+    quality: "basic",
+    batch_size: 1,
+    ...hasRef ? { image_url: referenceImageUrls[0], image_urls: referenceImageUrls } : {}
+  };
+  const createRes = await fetch(HF_BASE + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: auth },
+    body: JSON.stringify({ params })
+  });
+  if (!createRes.ok) {
+    throw new Error(`higgsfield create ${createRes.status}: ${(await createRes.text()).slice(0, 300)}`);
+  }
+  const jobSet = await createRes.json();
+  const jobSetId = jobSet.id || jobSet.job_set_id;
+  if (!jobSetId) throw new Error("higgsfield: no job set id");
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 2e3));
+    const st = await fetch(`${HF_BASE}/v1/job-sets/${jobSetId}`, {
+      headers: { Authorization: auth }
+    });
+    if (!st.ok) continue;
+    const data = await st.json();
+    const jobs = data.jobs || [];
+    if (jobs.some((j) => j.status === "failed" || j.status === "nsfw")) {
+      throw new Error("higgsfield: generation failed");
+    }
+    const doneJob = jobs.find((j) => j.status === "completed");
+    if (doneJob) {
+      const url = doneJob.results?.raw?.url || doneJob.results?.min?.url;
+      if (url) return url;
+      throw new Error("higgsfield: completed without url");
+    }
+  }
+  throw new Error("higgsfield: timeout");
+}
+__name(generateHiggsfield, "generateHiggsfield");
+async function generateGemini(env, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ["IMAGE"] }
+    })
+  });
+  if (!res.ok) throw new Error(`gemini ${res.status}`);
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts ?? [];
+  const imgPart = parts.find((p) => p.inlineData?.data || p.inline_data?.data);
+  const inline = imgPart?.inlineData || imgPart?.inline_data;
+  if (!inline?.data) throw new Error("gemini: no image");
+  const mime = inline.mimeType || inline.mime_type || "image/png";
+  return `data:${mime};base64,${inline.data}`;
+}
+__name(generateGemini, "generateGemini");
 async function onRequestPost3({ request, env }) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, referenceImageUrls } = await request.json();
     if (!prompt || typeof prompt !== "string") {
-      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS3 });
+      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS4 });
     }
-    const key = env.GEMINI_API_KEY;
-    if (!key) {
-      return Response.json({ error: "image generation not configured" }, { status: 503, headers: CORS3 });
+    if (env.HF_KEY_ID && env.HF_KEY_SECRET) {
+      try {
+        const image = await generateHiggsfield(env, prompt, referenceImageUrls);
+        return Response.json({ image, provider: "higgsfield" }, { headers: CORS4 });
+      } catch (err) {
+        console.error("Higgsfield falhou, tentando fallback:", err.message);
+      }
     }
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        // pede explicitamente imagem na resposta
-        generationConfig: { responseModalities: ["IMAGE"] }
-      })
-    });
-    if (!res.ok) {
-      const detail = await res.text();
-      console.error("Gemini image error:", res.status, detail);
-      return Response.json({ error: "image service error", status: res.status }, { status: 502, headers: CORS3 });
+    if (env.GEMINI_API_KEY) {
+      const image = await generateGemini(env, prompt);
+      return Response.json({ image, provider: "gemini" }, { headers: CORS4 });
     }
-    const data = await res.json();
-    const parts = data?.candidates?.[0]?.content?.parts ?? [];
-    const imgPart = parts.find((p) => p.inlineData?.data || p.inline_data?.data);
-    const inline = imgPart?.inlineData || imgPart?.inline_data;
-    if (!inline?.data) {
-      console.error("Gemini: no image in response", JSON.stringify(data).slice(0, 500));
-      return Response.json({ error: "no image returned" }, { status: 502, headers: CORS3 });
-    }
-    const mime = inline.mimeType || inline.mime_type || "image/png";
-    return Response.json({ image: `data:${mime};base64,${inline.data}` }, { headers: CORS3 });
+    return Response.json({ error: "image generation not configured (HF_KEY_ID/HF_KEY_SECRET ou GEMINI_API_KEY)" }, { status: 503, headers: CORS4 });
   } catch (err) {
     console.error("generate-sprite error:", err);
-    return Response.json({ error: "internal error" }, { status: 500, headers: CORS3 });
+    return Response.json({ error: "internal error" }, { status: 500, headers: CORS4 });
   }
 }
 __name(onRequestPost3, "onRequestPost");
 
 // api/save.js
-var CORS4 = {
+var CORS5 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-var VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
-async function onRequestOptions4() {
-  return new Response(null, { headers: CORS4 });
+var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
+async function onRequestOptions5() {
+  return new Response(null, { headers: CORS5 });
 }
-__name(onRequestOptions4, "onRequestOptions");
-async function onRequest({ request, env }) {
+__name(onRequestOptions5, "onRequestOptions");
+async function onRequest2({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get("id");
-  if (!saveId || !VALID_ID.test(saveId)) {
-    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS4 });
+  if (!saveId || !VALID_ID2.test(saveId)) {
+    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS5 });
   }
   if (!env.DIGIAPP_SAVES) {
-    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS4 });
+    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS5 });
   }
   if (request.method === "GET") {
     const raw = await env.DIGIAPP_SAVES.get(saveId);
-    if (!raw) return Response.json({ found: false }, { headers: CORS4 });
-    return Response.json({ found: true, state: JSON.parse(raw) }, { headers: CORS4 });
+    if (!raw) return Response.json({ found: false }, { headers: CORS5 });
+    return Response.json({ found: true, state: JSON.parse(raw) }, { headers: CORS5 });
   }
   if (request.method === "POST") {
     const body = await request.json().catch(() => null);
-    if (!body?.state) return Response.json({ error: "Missing state" }, { status: 400, headers: CORS4 });
+    if (!body?.state) return Response.json({ error: "Missing state" }, { status: 400, headers: CORS5 });
     await env.DIGIAPP_SAVES.put(saveId, JSON.stringify(body.state), { expirationTtl: 86400 * 365 });
-    return Response.json({ ok: true }, { headers: CORS4 });
+    return Response.json({ ok: true }, { headers: CORS5 });
   }
-  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS4 });
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS5 });
 }
-__name(onRequest, "onRequest");
+__name(onRequest2, "onRequest");
 
 // api/subscribe.js
-var CORS5 = {
+var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions5() {
-  return new Response(null, { status: 204, headers: CORS5 });
+async function onRequestOptions6() {
+  return new Response(null, { status: 204, headers: CORS6 });
 }
-__name(onRequestOptions5, "onRequestOptions");
+__name(onRequestOptions6, "onRequestOptions");
 async function onRequestPost4({ request, env }) {
   let body;
   try {
@@ -270,14 +599,14 @@ async function onRequestPost4({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const { endpoint, keys, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -288,7 +617,7 @@ async function onRequestPost4({ request, env }) {
   );
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS5 }
+    headers: { "Content-Type": "application/json", ...CORS6 }
   });
 }
 __name(onRequestPost4, "onRequestPost");
@@ -299,21 +628,21 @@ async function onRequestDelete2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const { endpoint } = body;
   if (!endpoint) {
     return new Response(JSON.stringify({ error: "Missing endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS5 }
+    headers: { "Content-Type": "application/json", ...CORS6 }
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
@@ -324,7 +653,7 @@ async function hashEndpoint(endpoint) {
 __name(hashEndpoint, "hashEndpoint");
 
 // .well-known/assetlinks.json.js
-async function onRequest2() {
+async function onRequest3() {
   return new Response(JSON.stringify([{
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
@@ -341,9 +670,9 @@ async function onRequest2() {
     }
   });
 }
-__name(onRequest2, "onRequest");
+__name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-eK34oF/functionsRoutes-0.30680622365961996.mjs
+// ../.wrangler/tmp/pages-ITK7gw/functionsRoutes-0.9492619709173211.mjs
 var routes = [
   {
     routePath: "/api/chat",
@@ -360,6 +689,13 @@ var routes = [
     modules: [onRequestPost]
   },
   {
+    routePath: "/api/community",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions2]
+  },
+  {
     routePath: "/api/fcm-subscribe",
     mountPath: "/api",
     method: "DELETE",
@@ -371,7 +707,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions2]
+    modules: [onRequestOptions3]
   },
   {
     routePath: "/api/fcm-subscribe",
@@ -385,7 +721,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions3]
+    modules: [onRequestOptions4]
   },
   {
     routePath: "/api/generate-sprite",
@@ -399,7 +735,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions4]
+    modules: [onRequestOptions5]
   },
   {
     routePath: "/api/subscribe",
@@ -413,7 +749,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions5]
+    modules: [onRequestOptions6]
   },
   {
     routePath: "/api/subscribe",
@@ -427,14 +763,21 @@ var routes = [
     mountPath: "/.well-known",
     method: "",
     middlewares: [],
-    modules: [onRequest2]
+    modules: [onRequest3]
+  },
+  {
+    routePath: "/api/community",
+    mountPath: "/api",
+    method: "",
+    middlewares: [],
+    modules: [onRequest]
   },
   {
     routePath: "/api/save",
     mountPath: "/api",
     method: "",
     middlewares: [],
-    modules: [onRequest]
+    modules: [onRequest2]
   }
 ];
 

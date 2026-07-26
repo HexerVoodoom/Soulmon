@@ -33,6 +33,7 @@ import { requestNotificationPermission, showNotification } from './utils/notific
 import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
+import { getGifts, getPendingTrophies } from './utils/community';
 
 const EVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -52,12 +53,20 @@ const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => 
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
 const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ default: m.OraclePage })));
+const TournamentPage = lazy(() => import('./components/TournamentPage').then(m => ({ default: m.TournamentPage })));
+const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ default: m.LibraryPage })));
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
   const [currentView, setCurrentView] = useState<ViewType>('main');
+  // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
+  const [saveId] = useState(() => {
+    let id = localStorage.getItem(STORAGE_KEYS.SAVE_ID);
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem(STORAGE_KEYS.SAVE_ID, id); }
+    return id;
+  });
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -138,6 +147,31 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.THEME, theme);
   }, [theme]);
+
+  // Presentes de amigos (Biblioteca): reivindica bits pendentes ao abrir o app.
+  useEffect(() => {
+    getGifts(saveId, true).then(({ gifts }) => {
+      if (!gifts.length) return;
+      const total = gifts.reduce((sum, g) => sum + g.bits, 0);
+      setGameState(prev => ({ ...prev, gamePoints: (prev.gamePoints ?? 0) + total }));
+      toast.success(
+        language === 'pt-BR'
+          ? `Você recebeu ${total} Bits de amigos!`
+          : `You received ${total} Bits from friends!`,
+      );
+    }).catch(() => {});
+    getPendingTrophies(saveId, true).then(({ trophies }) => {
+      if (!trophies.length) return;
+      setGameState(prev => ({ ...prev, trophies: [...(prev.trophies ?? []), ...trophies] }));
+      const place = trophies[0].place;
+      toast.success(
+        language === 'pt-BR'
+          ? `Torneio: você ficou em ${place}º lugar na season ${trophies[0].season}!`
+          : `Tournament: you placed #${place} in season ${trophies[0].season}!`,
+      );
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveId]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.AI_SETTINGS, JSON.stringify(aiSettings));
@@ -1345,6 +1379,9 @@ export default function App() {
                 virusPoints={gameState.virusPoints}
                 dataPoints={gameState.dataPoints}
                 vaccinePoints={gameState.vaccinePoints}
+                gamePoints={gameState.gamePoints}
+                totalXP={gameState.totalXP}
+                streakDays={gameState.totalPerfectDays ?? 0}
                 onNewActivity={() => setCreateModalOpen(true)}
                 theme={theme}
                 language={language}
@@ -1522,6 +1559,32 @@ export default function App() {
           {currentView === 'oracle' && (
             <Suspense fallback={null}>
               <OraclePage theme={theme} language={language} />
+            </Suspense>
+          )}
+
+          {currentView === 'tournament' && (
+            <Suspense fallback={null}>
+              <TournamentPage
+                saveId={saveId}
+                petStage={gameState.evolutionStage}
+                pvpEnabled={!!gameState.pvpEnabled}
+                onTogglePvp={(enabled) => setGameState(prev => ({ ...prev, pvpEnabled: enabled }))}
+                trophies={gameState.trophies ?? []}
+                language={language}
+              />
+            </Suspense>
+          )}
+
+          {currentView === 'library' && (
+            <Suspense fallback={null}>
+              <LibraryPage
+                saveId={saveId}
+                friends={gameState.friends ?? []}
+                canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
+                onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
+                onGiftSent={() => {}}
+                language={language}
+              />
             </Suspense>
           )}
 

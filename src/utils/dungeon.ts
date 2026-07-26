@@ -3,13 +3,14 @@
 // advances the "dungeon level" (wave): enemies then deal MORE damage and take
 // LESS. That level persists (resets monthly), plus a daily play limit, score
 // ranking and heart drops. Kept out of the component so the rules are testable.
-import { STAGE_SPRITES } from './sprites';
+import { STAGE_SPRITES, getDungeonEnemySprite } from './sprites';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from './storageKeys';
 
 export interface DungeonEnemy {
   name: string;
   stage: string;       // sprite key
+  sprite: string;       // sprite final (linha placeholder do Soulmon)
   hp: number;
   atk: number;
   speed: number;       // timing-bar sweeps per second (higher = harder)
@@ -85,9 +86,11 @@ export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[
     const pool = poolForTier(tier, petStage);
     const key = pool[Math.floor(Math.random() * pool.length)];
     const variance = 0.9 + Math.random() * 0.2;    // ±10% on HP
+    const picked = getDungeonEnemySprite(tier);
     return {
-      name: SPIRIT_NAMES[tier],
+      name: picked.name,
       stage: key,
+      sprite: picked.sprite,
       hp: Math.max(5, Math.round(base.hp * hpMult * variance)),
       atk: Math.max(2, Math.round(base.atk * atkMult)),
       speed: +(base.speed + speedBump).toFixed(2),

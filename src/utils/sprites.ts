@@ -14,6 +14,41 @@ import soulmonMegaVaccine from '../assets/soulmon/mega-vaccine.png';
 import soulmonUltra from '../assets/soulmon/ultra.png';
 export { default as DUNGEON_SPIRIT_SPRITE } from '../assets/soulmon/dungeon-spirit.png';
 
+// 3 linhas completas de Soulmon (placeholder, até o Higgsfield gerar as do
+// usuário) — usadas como inimigos "de verdade" na masmorra, uma por tier.
+import ignarRookie from '../assets/soulmon/lines/ignar-rookie.png';
+import ignarChampion from '../assets/soulmon/lines/ignar-champion.png';
+import ignarUltimate from '../assets/soulmon/lines/ignar-ultimate.png';
+import ignarMega from '../assets/soulmon/lines/ignar-mega.png';
+import lumelRookie from '../assets/soulmon/lines/lumel-rookie.png';
+import lumelChampion from '../assets/soulmon/lines/lumel-champion.png';
+import lumelUltimate from '../assets/soulmon/lines/lumel-ultimate.png';
+import lumelMega from '../assets/soulmon/lines/lumel-mega.png';
+import serahRookie from '../assets/soulmon/lines/serah-rookie.png';
+import serahChampion from '../assets/soulmon/lines/serah-champion.png';
+import serahUltimate from '../assets/soulmon/lines/serah-ultimate.png';
+import serahMega from '../assets/soulmon/lines/serah-mega.png';
+
+export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
+  ignar: { rookie: ignarRookie, champion: ignarChampion, ultimate: ignarUltimate, mega: ignarMega },
+  lumel: { rookie: lumelRookie, champion: lumelChampion, ultimate: lumelUltimate, mega: lumelMega },
+  serah: { rookie: serahRookie, champion: serahChampion, ultimate: serahUltimate, mega: serahMega },
+};
+const DUNGEON_LINE_NAMES: Record<string, string> = { ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah' };
+
+/** Sprite de inimigo de masmorra: sorteia uma das 3 linhas placeholder pelo
+ *  tier (baby-i/ii caem no rookie da linha; mega cobre ultimate também). */
+export function getDungeonEnemySprite(tier: string): { sprite: string; name: string } {
+  const lines = Object.keys(DUNGEON_LINE_SPRITES);
+  const line = lines[Math.floor(Math.random() * lines.length)];
+  const stage = tier === 'baby-i' || tier === 'baby-ii' ? 'rookie'
+    : tier === 'rookie' ? 'rookie'
+    : tier === 'champion' ? 'champion'
+    : tier === 'ultimate' ? 'ultimate'
+    : 'mega';
+  return { sprite: DUNGEON_LINE_SPRITES[line][stage], name: DUNGEON_LINE_NAMES[line] };
+}
+
 const SOULMON_SPRITES: Record<string, string> = {
   'rookie': soulmonRookie,
   'champion-virus': soulmonChampionVirus,

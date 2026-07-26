@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getSpriteForStage, DUNGEON_SPIRIT_SPRITE } from '../utils/sprites';
+import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import {
@@ -380,7 +380,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
             {hpBar(enemyHp, enemy.hp, '#f87171')}
           </div>
           <img
-            src={DUNGEON_SPIRIT_SPRITE}
+            src={enemy.sprite}
             alt={enemy.name}
             style={{
               position: 'absolute', top: '18%', right: '10%', width: 96, height: 96, objectFit: 'contain',

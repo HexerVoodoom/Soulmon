@@ -42,6 +42,20 @@ export const DUNGEON_SCENES: DungeonScene[] = [
 // Shop pet-box backgrounds doubling as dungeon floors (accent picked per bg).
 // Kept as ids into PET_BACKGROUNDS so the CSS lives in one place.
 import { PET_BACKGROUNDS } from './backgrounds';
+import dungeonBg1 from '../assets/soulmon/bg/dungeon-1.png';
+import dungeonBg2 from '../assets/soulmon/bg/dungeon-2.png';
+import dungeonBg3 from '../assets/soulmon/bg/dungeon-3.png';
+import dungeonBg4 from '../assets/soulmon/bg/dungeon-4.png';
+import dungeonBg5 from '../assets/soulmon/bg/dungeon-5.png';
+
+// Cenários espirituais (Soulmon) — cavernas geradas, uma paleta por "andar".
+const SPIRIT_BG_SCENES: DungeonScene[] = [
+  { namePt: 'Gruta Azul', nameEn: 'Blue Grotto', accent: '#4f8fd9', bg: `url(${dungeonBg1}) center/cover` },
+  { namePt: 'Caverna Verde', nameEn: 'Green Cavern', accent: '#3fae5a', bg: `url(${dungeonBg2}) center/cover` },
+  { namePt: 'Salão Dourado', nameEn: 'Golden Hall', accent: '#d9a441', bg: `url(${dungeonBg3}) center/cover` },
+  { namePt: 'Abismo Violeta', nameEn: 'Violet Abyss', accent: '#8f7fe8', bg: `url(${dungeonBg4}) center/cover` },
+  { namePt: 'Fenda Rósea', nameEn: 'Rose Rift', accent: '#d96a8a', bg: `url(${dungeonBg5}) center/cover` },
+];
 
 const SHOP_BG_ACCENTS: Record<string, string> = {
   'bg-forest': '#4ade80',
@@ -68,7 +82,7 @@ const SHOP_BG_SCENES: DungeonScene[] = Object.entries(SHOP_BG_ACCENTS)
  * retro scenes + the shop backgrounds. Every run looks different.
  */
 export function buildRunScenes(count = 5): DungeonScene[] {
-  const pool = [...DUNGEON_SCENES, ...SHOP_BG_SCENES];
+  const pool = [...SPIRIT_BG_SCENES, ...DUNGEON_SCENES, ...SHOP_BG_SCENES];
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];

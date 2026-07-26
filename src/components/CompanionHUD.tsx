@@ -601,20 +601,11 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   return (
     <div className={
-      isGlitch 
-        ? 'glitch-companion-window' 
-        : isWin98 
-          ? 'win98-companion-window' 
-          : 'rounded-[10px] p-3 relative'
-    }
-    style={
-      !isGlitch && !isWin98 
-        ? { 
-            backgroundColor: '#6A7282', 
-            border: '1.1px solid #1F2A39',
-            boxShadow: '0px 10px 15px -3px rgba(0,0,0,0.1), 0px 4px 6px -4px rgba(0,0,0,0.1)'
-          }
-        : undefined
+      isGlitch
+        ? 'glitch-companion-window'
+        : isWin98
+          ? 'win98-companion-window'
+          : 'sm-card p-3 relative'
     }>
       {/* Win98 Title Bar */}
       {isWin98 && (
@@ -630,6 +621,32 @@ export const CompanionHUD = memo(function CompanionHUD({
       {/* Main Container with Companion Area and Energy Bar */}
       <div className="relative">
       <div className={`flex gap-2 ${isWin98 ? 'p-2' : ''}`}>
+        {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
+        {!isGlitch && !isWin98 && (
+          <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 56 }}>
+            {([
+              !isEarlyStage && { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+              !isEarlyStage && { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+              { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
+            ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+              <button
+                key={a.key}
+                onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
+                disabled={a.key !== 'bath' && a.disabled}
+                className="sm-card relative flex flex-col items-center justify-center gap-0.5 py-2"
+                style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
+              >
+                {a.badge && (
+                  <span style={{ position: 'absolute', top: 4, right: 6, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444', border: '1px solid #fff' }} />
+                )}
+                <a.Icon size={19} strokeWidth={2.1} color="var(--sm-ink)" />
+                <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--sm-muted)' }}>
+                  {language === 'pt-BR' ? a.pt : a.en}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
         {/* Companion Display Area */}
         <div 
           className={`relative overflow-hidden p-3 flex-1 border ${ 
@@ -637,7 +654,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               ? 'border-2 border-[#00ffff]' 
               : isWin98 
                 ? 'win98-lcd-screen crt-effect' 
-                : 'border-[#596980]'
+                : 'border-[var(--sm-line)]'
           }`}
           style={{ 
             height: '185px',
@@ -865,55 +882,53 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
-          {/* Desktop icons — top-right of pet area */}
-          <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
-            {([
-              !isEarlyStage && { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-              !isEarlyStage && { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-              { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-            ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined; sub?: string }[]).map(a => (
-              <button
-                key={a.key}
-                onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
-                disabled={a.key !== 'bath' && a.disabled}
-                title={language === 'pt-BR' ? a.pt : a.en}
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  padding: '4px 8px 5px',
-                  cursor: a.disabled ? 'default' : 'pointer',
-                  opacity: a.disabled ? 0.4 : 1,
-                  background: 'transparent',
-                  border: 'none',
-                  userSelect: 'none',
-                }}
-              >
-                {a.badge && (
-                  <span style={{
-                    position: 'absolute',
-                    top: 0, right: 2,
-                    width: 8, height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: '#ef4444',
-                    border: '1px solid #000',
-                    zIndex: 10,
-                  }} />
-                )}
-                <a.Icon size={21} strokeWidth={2.1} style={{ color: '#fff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
-                <span style={{ fontFamily: 'monospace', fontSize: '0.62rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
-                  {language === 'pt-BR' ? a.pt : a.en}
-                </span>
-                {a.sub && (
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.62rem', color: '#ffd27f', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap', lineHeight: 1 }}>
-                    {a.sub}
+          {/* Desktop icons — top-right of pet area (win98/glitch apenas; no
+              tema default esses botões viraram a coluna à esquerda do frame) */}
+          {(isWin98 || isGlitch) && (
+            <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
+              {([
+                !isEarlyStage && { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+                !isEarlyStage && { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+                { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
+              ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+                <button
+                  key={a.key}
+                  onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
+                  disabled={a.key !== 'bath' && a.disabled}
+                  title={language === 'pt-BR' ? a.pt : a.en}
+                  style={{
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: '4px 8px 5px',
+                    cursor: a.disabled ? 'default' : 'pointer',
+                    opacity: a.disabled ? 0.4 : 1,
+                    background: 'transparent',
+                    border: 'none',
+                    userSelect: 'none',
+                  }}
+                >
+                  {a.badge && (
+                    <span style={{
+                      position: 'absolute',
+                      top: 0, right: 2,
+                      width: 8, height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: '#ef4444',
+                      border: '1px solid #000',
+                      zIndex: 10,
+                    }} />
+                  )}
+                  <a.Icon size={21} strokeWidth={2.1} style={{ color: '#fff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.62rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
+                    {language === 'pt-BR' ? a.pt : a.en}
                   </span>
-                )}
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Energy Bar - Vertical on Right Side */}
@@ -923,7 +938,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               ? 'bg-[#0a0a0a] border-2 border-[#00ffff]'
               : isWin98
                 ? 'win98-lcd-screen'
-                : 'bg-[#1F2A39]'
+                : 'sm-card'
           }`}
           style={{ height: '185px', width: '26px', padding: '11.998px 0', cursor: 'pointer' }}
           title={language === 'pt-BR'

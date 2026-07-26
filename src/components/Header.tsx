@@ -1,7 +1,7 @@
 import React from 'react';
-import { TestTube2, Home, Gamepad2, Sparkles, GitBranch, BarChart3, Settings } from 'lucide-react';
+import { TestTube2, Home, Gamepad2, Sparkles, GitBranch, BarChart3, Settings, Swords, Users } from 'lucide-react';
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
 
 interface HeaderProps {
   currentView: ViewType;
@@ -49,6 +49,8 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
   const items: { view: ViewType; label: string; Icon: typeof Home }[] = [
     { view: 'games', label: 'Atividades', Icon: Gamepad2 },
     { view: 'evolution', label: 'Evolução', Icon: GitBranch },
+    { view: 'tournament', label: 'Torneio', Icon: Swords },
+    { view: 'library', label: 'Biblioteca', Icon: Users },
     { view: 'stats', label: 'Estatísticas', Icon: BarChart3 },
     { view: 'settings', label: 'Configurações', Icon: Settings },
   ];

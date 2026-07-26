@@ -4933,7 +4933,11 @@ html {
   justify-content: space-between;
   width: 100%;
 }
-.sm-nav-group { display: flex; gap: 8px; align-items: center; }
+.sm-nav-group {
+  display: flex; gap: 6px; align-items: center;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+}
+.sm-nav-group::-webkit-scrollbar { display: none; }
 
 /* Botão de navegação: pill arredondada, estado ativo violeta suave */
 .sm-nav-btn {

@@ -1,11 +1,11 @@
-// Cloudflare Pages Function — gera 1 sprite via API de imagem do Gemini
-// ("Nano Banana" = modelo gemini-2.5-flash-image). O cliente orquestra as 11
-// chamadas (uma por forma) com barra de progresso; fazemos 1 imagem por
-// request para não estourar o tempo de CPU da Function.
+// Cloudflare Pages Function — gera 1 sprite de Soulmon.
+// Provedor primário: HIGGSFIELD (platform.higgsfield.ai, modelo Soul).
+//   Secrets: HF_KEY_ID + HF_KEY_SECRET (Pages → Settings → Environment vars).
+//   Suporta referência de imagem (cadeia de evolução: champion parte do
+//   rookie etc. — ver src/utils/spritePrompts.ts).
+// Fallback: Gemini (GEMINI_API_KEY, modelo gemini-2.5-flash-image), texto puro.
 //
-// Config: definir a secret GEMINI_API_KEY no Cloudflare (Pages → Settings →
-// Environment variables, marcando Production E Preview). A chave nunca é
-// exposta ao cliente.
+// POST { prompt, referenceImageUrls?: string[] } → { image: <url|dataURL> }
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -13,53 +13,101 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const MODEL = 'gemini-2.5-flash-image';
+const HF_BASE = 'https://platform.higgsfield.ai';
+const GEMINI_MODEL = 'gemini-2.5-flash-image';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
 
+async function generateHiggsfield(env, prompt, referenceImageUrls) {
+  const auth = `Key ${env.HF_KEY_ID}:${env.HF_KEY_SECRET}`;
+  const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
+  // Soul: texto puro; com referência usa o endpoint image2image do Soul.
+  const path = hasRef ? '/v1/image2image/soul' : '/v1/text2image/soul';
+  const params = {
+    prompt,
+    width_and_height: '1536x1536',
+    quality: 'basic',
+    batch_size: 1,
+    ...(hasRef ? { image_url: referenceImageUrls[0], image_urls: referenceImageUrls } : {}),
+  };
+  const createRes = await fetch(HF_BASE + path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: auth },
+    body: JSON.stringify({ params }),
+  });
+  if (!createRes.ok) {
+    throw new Error(`higgsfield create ${createRes.status}: ${(await createRes.text()).slice(0, 300)}`);
+  }
+  const jobSet = await createRes.json();
+  const jobSetId = jobSet.id || jobSet.job_set_id;
+  if (!jobSetId) throw new Error('higgsfield: no job set id');
+
+  // Poll até completar (limite ~80s)
+  for (let i = 0; i < 40; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const st = await fetch(`${HF_BASE}/v1/job-sets/${jobSetId}`, {
+      headers: { Authorization: auth },
+    });
+    if (!st.ok) continue;
+    const data = await st.json();
+    const jobs = data.jobs || [];
+    if (jobs.some(j => j.status === 'failed' || j.status === 'nsfw')) {
+      throw new Error('higgsfield: generation failed');
+    }
+    const doneJob = jobs.find(j => j.status === 'completed');
+    if (doneJob) {
+      const url = doneJob.results?.raw?.url || doneJob.results?.min?.url;
+      if (url) return url;
+      throw new Error('higgsfield: completed without url');
+    }
+  }
+  throw new Error('higgsfield: timeout');
+}
+
+async function generateGemini(env, prompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: { responseModalities: ['IMAGE'] },
+    }),
+  });
+  if (!res.ok) throw new Error(`gemini ${res.status}`);
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts ?? [];
+  const imgPart = parts.find(p => p.inlineData?.data || p.inline_data?.data);
+  const inline = imgPart?.inlineData || imgPart?.inline_data;
+  if (!inline?.data) throw new Error('gemini: no image');
+  const mime = inline.mimeType || inline.mime_type || 'image/png';
+  return `data:${mime};base64,${inline.data}`;
+}
+
 export async function onRequestPost({ request, env }) {
   try {
-    const { prompt } = await request.json();
+    const { prompt, referenceImageUrls } = await request.json();
     if (!prompt || typeof prompt !== 'string') {
       return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
     }
 
-    const key = env.GEMINI_API_KEY;
-    if (!key) {
-      return Response.json({ error: 'image generation not configured' }, { status: 503, headers: CORS });
+    if (env.HF_KEY_ID && env.HF_KEY_SECRET) {
+      try {
+        const image = await generateHiggsfield(env, prompt, referenceImageUrls);
+        return Response.json({ image, provider: 'higgsfield' }, { headers: CORS });
+      } catch (err) {
+        console.error('Higgsfield falhou, tentando fallback:', err.message);
+      }
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        // pede explicitamente imagem na resposta
-        generationConfig: { responseModalities: ['IMAGE'] },
-      }),
-    });
-
-    if (!res.ok) {
-      const detail = await res.text();
-      console.error('Gemini image error:', res.status, detail);
-      return Response.json({ error: 'image service error', status: res.status }, { status: 502, headers: CORS });
+    if (env.GEMINI_API_KEY) {
+      const image = await generateGemini(env, prompt);
+      return Response.json({ image, provider: 'gemini' }, { headers: CORS });
     }
 
-    const data = await res.json();
-    // Procura a parte com imagem inline (base64)
-    const parts = data?.candidates?.[0]?.content?.parts ?? [];
-    const imgPart = parts.find(p => p.inlineData?.data || p.inline_data?.data);
-    const inline = imgPart?.inlineData || imgPart?.inline_data;
-    if (!inline?.data) {
-      console.error('Gemini: no image in response', JSON.stringify(data).slice(0, 500));
-      return Response.json({ error: 'no image returned' }, { status: 502, headers: CORS });
-    }
-
-    const mime = inline.mimeType || inline.mime_type || 'image/png';
-    return Response.json({ image: `data:${mime};base64,${inline.data}` }, { headers: CORS });
+    return Response.json({ error: 'image generation not configured (HF_KEY_ID/HF_KEY_SECRET ou GEMINI_API_KEY)' }, { status: 503, headers: CORS });
   } catch (err) {
     console.error('generate-sprite error:', err);
     return Response.json({ error: 'internal error' }, { status: 500, headers: CORS });

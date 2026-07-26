@@ -3,6 +3,7 @@ import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { cloudSave } from '../utils/cloudSave';
+import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 
 export interface Step {
@@ -111,6 +112,12 @@ export interface GameState {
   equippedBackground: string | null;
   /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
   evolutionLocked?: boolean;
+  /** Tournament: opt-in para PvP assíncrono (aparece como oponente pra outros e pode desafiar). */
+  pvpEnabled?: boolean;
+  /** Troféus de season do Tournament (top 3 no fim de cada season). */
+  trophies?: Array<{ season: string; place: 1 | 2 | 3 }>;
+  /** Amigos aceitos (até 5) — ids de perfil público (mesmo id do cloud save). */
+  friends?: string[];
   /** Mission counters (lifetime, cloud-synced) — see utils/missions.ts. */
   dungeonKills?: number;
   dungeonRunsCompleted?: number;
@@ -182,6 +189,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         poopEventsShown: loadedState.poopEventsShown ?? [],
         poopPenaltyClockAt: loadedState.poopPenaltyClockAt ?? 0,
         gamePoints: loadedState.gamePoints ?? 0,
+        pvpEnabled: loadedState.pvpEnabled ?? false,
+        trophies: loadedState.trophies ?? [],
+        friends: loadedState.friends ?? [],
         ownedBackgrounds: loadedState.ownedBackgrounds ?? [],
         equippedBackground: loadedState.equippedBackground ?? null,
       } as GameState;
@@ -217,6 +227,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
       gamePoints: 0,
+      pvpEnabled: false,
+      trophies: [],
+      friends: [],
       ownedBackgrounds: [],
       equippedBackground: null,
     };
@@ -240,7 +253,18 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEYS.SAVE_ID, saveId);
     }
 
-    const timer = setTimeout(() => cloudSave(saveId!, gameState), 3000);
+    const timer = setTimeout(() => {
+      cloudSave(saveId!, gameState);
+      pushProfile({
+        id: saveId!,
+        name: localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Anônimo',
+        petName: gameState.soulmonMeta?.baseName || '',
+        stage: gameState.evolutionStage,
+        unlockedStages: gameState.unlockedEvolutions,
+        pvpEnabled: !!gameState.pvpEnabled,
+        attrs: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+      }).catch(() => {});
+    }, 3000);
     return () => clearTimeout(timer);
   }, [gameState]);
 

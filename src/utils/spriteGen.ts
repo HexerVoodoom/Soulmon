@@ -10,12 +10,14 @@ export interface SpriteGenOptions {
   scale?: number;         // ampliação do PNG final (default 16 → 256px em 16x16)
 }
 
-/** Chama o backend e devolve a imagem crua (data URL) gerada pela IA. */
-export async function requestSprite(prompt: string): Promise<string> {
+/** Chama o backend e devolve a imagem crua (URL/data URL) gerada pela IA.
+ *  referenceImageUrls: cadeia de evolução (Higgsfield image2image) — champion
+ *  parte do rookie, ultimate do champion, mega do ultimate, ultra das 3 megas. */
+export async function requestSprite(prompt: string, referenceImageUrls?: string[]): Promise<string> {
   const res = await fetch('/api/generate-sprite', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, referenceImageUrls }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
