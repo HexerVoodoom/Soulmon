@@ -40,7 +40,7 @@ export function ProgressInfo({
         ? 'glitch-activity-card' 
         : isWin98 
           ? 'win98-activity-card' 
-          : 'border border-[#e5e6e7] shadow-[0px_0px_0px_1px_rgba(229,231,235,0.5),0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+          : 'sm-card'
     }`}>
       <div className="space-y-3">
         {/* Progresso do Dia */}

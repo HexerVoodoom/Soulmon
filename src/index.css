@@ -4900,3 +4900,107 @@ html {
   70%  { opacity: 1; transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, 0px))) scale(0.95); }
   100% { opacity: 0; transform: translate(calc(-50% + var(--tx, 0px) * 1.15), calc(-50% + var(--ty, 0px) * 1.15)) scale(0.5); }
 }
+
+/* ============================================================
+   Soulmon Design System — moderno, minimalista, espiritual+digital
+   Inspiração Duolingo: formas arredondadas, botões "chunky" com
+   press-down 3D, cores calmas (índigo/violeta) + acento dourado.
+   ============================================================ */
+:root {
+  --sm-bg: #f7f6fb;            /* superfície geral, lavanda quase branca */
+  --sm-surface: #ffffff;
+  --sm-ink: #2a2440;           /* texto principal, índigo profundo */
+  --sm-muted: #8b86a3;
+  --sm-line: #e9e6f2;          /* bordas suaves */
+  --sm-primary: #6d5bd0;       /* violeta espiritual */
+  --sm-primary-deep: #55449f;  /* sombra 3D do botão primário */
+  --sm-primary-soft: #efecfb;
+  --sm-gold: #d9a441;          /* acento dourado (aura) */
+  --sm-gold-soft: #faf3e3;
+  --sm-radius: 16px;
+}
+
+.sm-app-bg { background: var(--sm-bg); }
+.sm-surface { background: var(--sm-surface); }
+
+/* Barra de navegação superior */
+.sm-nav {
+  background: var(--sm-surface);
+  border-bottom: 1px solid var(--sm-line);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.sm-nav-group { display: flex; gap: 8px; align-items: center; }
+
+/* Botão de navegação: pill arredondada, estado ativo violeta suave */
+.sm-nav-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--sm-muted);
+  border: 1px solid transparent;
+  transition: background .15s ease, color .15s ease, transform .1s ease;
+}
+.sm-nav-btn:hover { background: var(--sm-bg); }
+.sm-nav-btn:active { transform: scale(.94); }
+.sm-nav-btn.active {
+  background: var(--sm-primary-soft);
+  color: var(--sm-primary);
+}
+
+/* Botão chunky estilo Duolingo: face plana + "espessura" embaixo,
+   afunda ao pressionar. */
+.sm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--sm-radius);
+  font-weight: 700;
+  letter-spacing: .02em;
+  padding: 12px 20px;
+  background: var(--sm-primary);
+  color: #fff;
+  box-shadow: 0 4px 0 var(--sm-primary-deep);
+  transition: transform .08s ease, box-shadow .08s ease, filter .15s ease;
+  user-select: none;
+}
+.sm-btn:hover { filter: brightness(1.05); }
+.sm-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--sm-primary-deep); }
+.sm-btn:disabled { opacity: .45; box-shadow: none; transform: none; }
+
+.sm-btn-secondary {
+  background: var(--sm-surface);
+  color: var(--sm-primary);
+  border: 2px solid var(--sm-line);
+  box-shadow: 0 4px 0 var(--sm-line);
+}
+.sm-btn-secondary:active { transform: translateY(4px); box-shadow: 0 0 0 var(--sm-line); }
+
+.sm-btn-gold {
+  background: var(--sm-gold);
+  box-shadow: 0 4px 0 #b0812c;
+}
+.sm-btn-gold:active { transform: translateY(4px); box-shadow: 0 0 0 #b0812c; }
+
+/* Cartão limpo */
+.sm-card {
+  background: var(--sm-surface);
+  border: 1px solid var(--sm-line);
+  border-radius: var(--sm-radius);
+  box-shadow: 0 2px 8px rgba(42, 36, 64, .05);
+}
+
+/* Área do companheiro no rodapé: superfície elevada e limpa */
+.sm-hud {
+  background: var(--sm-surface);
+  border-top: 1px solid var(--sm-line);
+  box-shadow: 0 -6px 24px rgba(42, 36, 64, .07);
+}

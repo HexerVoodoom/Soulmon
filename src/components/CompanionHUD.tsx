@@ -321,7 +321,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     setBubbleText('');
   };
 
-  // Handle digimon click — show preset phrase immediately, then fire API update
+  // Handle Soulmon click — show preset phrase immediately, then fire API update
   const handleDigimonClick = () => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const ratio = maxEnergy > 0 ? energyPoints / maxEnergy : 0;
@@ -564,7 +564,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     const isPt = language === 'pt-BR';
 
     return (
-      <div title={isPt ? `${filledSegments}/${totalSegments} dias perfeitos para digivolução` : `${filledSegments}/${totalSegments} perfect days to digivolve`}>
+      <div title={isPt ? `${filledSegments}/${totalSegments} dias perfeitos para evolução` : `${filledSegments}/${totalSegments} perfect days to digivolve`}>
         <div className="flex gap-[2px]">
           {Array.from({ length: totalSegments }, (_, i) => (
             <div
@@ -660,7 +660,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
               <div className="absolute inset-0 bg-white/70 animate-pulse" />
               <span className="relative text-[#2bff95] font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', textShadow: '0 0 12px #2bff95' }}>
-                {language === 'pt-BR' ? '✨ DIGIVOLUÇÃO! ✨' : '✨ DIGIVOLVE! ✨'}
+                {language === 'pt-BR' ? '✨ EVOLUÇÃO! ✨' : '✨ EVOLVE! ✨'}
               </span>
             </div>
           )}
@@ -669,7 +669,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           {/* Care Event Sprite */}
           {careEvent && <CareSystem careEvent={careEvent} onCareEventComplete={onCareEventComplete || (() => {})} />}
 
-          {/* Digimon Sprite - Centered with walking animation */}
+          {/* Soulmon Sprite - Centered with walking animation */}
           <div className="absolute inset-0 flex items-center justify-center">
             {/* Burst of hearts exploding from the pet center and radiating out */}
             {rubHearts.map(h => (
@@ -717,7 +717,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               </span>
             )}
 
-            {/* Digimon Sprite with flip */}
+            {/* Soulmon Sprite with flip */}
             <div
               className="absolute transition-all duration-100 ease-linear cursor-pointer hover:scale-110 active:scale-95"
               style={{

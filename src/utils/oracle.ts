@@ -1,5 +1,5 @@
 // ============================================================================
-// Oráculo de Criaturas — motor místico do DigiApp (feature provisória)
+// Oráculo de Criaturas — motor místico do Soulmon (feature provisória)
 // ----------------------------------------------------------------------------
 // A partir de nome completo + data + hora + local de nascimento, calcula:
 //   1. Numerologia pitagórica (caminho de vida, expressão, motivação, impressão)
@@ -508,7 +508,7 @@ export const ROLE_INFO: Record<RoleId, { name: LText; emoji: string; profile: LT
   alcance: { name: { pt: 'Longo alcance', en: 'Long range' }, emoji: '🏹', profile: { pt: 'Perfil observador: age à distância, com precisão e timing.', en: 'Observer profile: acts from afar, with precision and timing.' } },
 };
 
-// Alinhamento = o "atributo" da criatura, equivalente direto ao Digimon:
+// Alinhamento = o "atributo" da criatura, equivalente direto ao Soulmon:
 // Poder ≈ Vírus · Harmonia ≈ Data · Benevolência ≈ Vacina. Tem MUITO peso
 // visual: define silhueta, olhos e viés de paleta em todos os estágios.
 export const ALIGNMENT_INFO: Record<AlignmentId, { name: LText; emoji: string; profile: LText; attribute: LText }> = {
@@ -928,7 +928,7 @@ const MEGA_STAGE_PREFIXES: Record<AlignmentId, string[]> = {
 
 // ---------------------------------------------------------------------------
 // POOL DE FORMAS DE EVOLUÇÃO por nível — arquétipos corporais no espírito dos
-// Digimon (e um pouco de Pokémon): shapes variados por estágio, com afinidade
+// Soulmon (e um pouco de Pokémon): shapes variados por estágio, com afinidade
 // de tipo (alignments) e de elemento (elements). Vazio = serve para qualquer.
 // A forma é sorteada por linha, sem repetir entre as 9 evoluções.
 // ---------------------------------------------------------------------------
@@ -2309,7 +2309,7 @@ const ELEMENT_MANIFESTS: Record<ElementId, Array<{ en: string; pt: string }>> = 
 };
 
 // Linguagem de design por alinhamento — entra CEDO no prompt e em TODOS os
-// estágios, como o atributo dos Digimon (Vírus/Data/Vacina). POOL grande por
+// estágios, como o atributo dos Soulmon (Vírus/Data/Vacina). POOL grande por
 // tipo: nem todo Vírus é demoníaco, mas é sempre mais feroz, voraz e
 // perspicaz; nem todo Vacina é angelical, mas é sempre nobre e protetor.
 const ALIGNMENT_DESIGNS: Record<AlignmentId, string[]> = {

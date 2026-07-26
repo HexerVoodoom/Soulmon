@@ -22,11 +22,11 @@ interface OnboardingScreenProps {
 const ispt = localStorage.getItem('digiapp-language') === 'pt-BR';
 
 const INTRO_TEXTS = ispt ? [
-  'Bem-vindo ao DigiApp! Em breve você vai conhecer seu parceiro digital que vai te ajudar a alcançar seus objetivos.',
+  'Bem-vindo ao Soulmon! Em breve você vai conhecer seu parceiro digital que vai te ajudar a alcançar seus objetivos.',
   'Conforme você completa tarefas e atividades, ele cresce com você. Suas escolhas impactam diretamente seu parceiro.',
   'Seu destino e o destino do seu parceiro estão nas suas mãos!',
 ] : [
-  'Welcome to DigiApp! Soon you will meet your digital partner who will help you achieve your goals.',
+  'Welcome to Soulmon! Soon you will meet your digital partner who will help you achieve your goals.',
   'As you complete tasks and activities, they will grow with you. Your choices directly impact your partner.',
   'Your destiny and your partner\'s destiny are in your hands!',
 ];
@@ -382,7 +382,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
               )}
               <div className="relative z-10 w-full h-full flex items-center justify-center">
                 <img
-                  alt="DigiEgg"
+                  alt="Egg"
                   className="object-contain pointer-events-none transition-all duration-300"
                   src={digiEggSprite}
                   style={{ imageRendering: 'pixelated', width: '110px', height: '110px', transform: `scaleY(${getSquashScale()})`, transformOrigin: 'center', filter: eggFilter }}

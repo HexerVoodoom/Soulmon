@@ -25,7 +25,7 @@ export const en = {
         low_hp: "I need your help! Complete tasks to keep me healthy!",
         time_until_reset: "Time until reset",
         stats: "Stats",
-        chat_placeholder: "Talk to your Digi..."
+        chat_placeholder: "Talk to your Soulmon..."
     },
     care: {
         poop_warning: "Time to clean up!",
@@ -144,11 +144,11 @@ export const en = {
         no_tasks: "No tasks completed yet.",
         recent_history: "Recent History",
         no_history: "No history yet.",
-        digivolve: "DIGIVOLVE",
+        digivolve: "EVOLVE",
         days: "DAYS"
     },
     egg_selection: {
-        title: "Choose your DigiEgg",
+        title: "Choose your Egg",
         subtitle: "Your journey begins here. Which egg will you hatch?",
         btn_start: "Hatch",
         pick_button: "Choose this egg",

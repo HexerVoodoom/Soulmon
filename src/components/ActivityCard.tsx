@@ -64,8 +64,8 @@ export const ActivityCard = memo(function ActivityCard({
           : isWin98 
             ? 'win98-activity-card'
             : activityComplete 
-              ? 'bg-[#f5f5f5] border-[#d1d5dc] shadow-[0px_0px_0px_1px_rgba(229,231,235,0.5),0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]' 
-              : 'bg-white border-[#c0c0c0] shadow-[0px_0px_0px_1px_rgba(229,231,235,0.5),0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+              ? 'sm-card opacity-70' 
+              : 'sm-card'
       }`}>
         {/* Header row: checkbox + nome + edit button */}
         <div className="flex items-center gap-3 mb-2">

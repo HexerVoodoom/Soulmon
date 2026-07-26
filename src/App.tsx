@@ -33,7 +33,7 @@ import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GL
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 
-const DIGIVOLVE_SEGMENTS: Record<string, number> = {
+const EVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
   rookie: 7, champion: 9, ultimate: 11, mega: 14, ultra: 999,
 };
@@ -714,7 +714,7 @@ export default function App() {
         newCurrentBranch,
         prev.unlockedEvolutions,
       );
-      newSegmentsNeeded = DIGIVOLVE_SEGMENTS[getStageLevel(newEvolutionStage)] ?? newSegmentsNeeded;
+      newSegmentsNeeded = EVOLVE_SEGMENTS[getStageLevel(newEvolutionStage)] ?? newSegmentsNeeded;
       newHP = getMaxHPForStage(newEvolutionStage);
 
       return {
@@ -1297,8 +1297,7 @@ export default function App() {
   }
 
   return (
-    <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'bg-gradient-to-br from-teal-50/60 via-cyan-50/50 to-emerald-50/60' : getOuterContainerClass()} ${theme === 'default' ? 'bg-gray-50' : getContainerClass()
-      }`}>
+    <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'sm-app-bg' : `${getOuterContainerClass()} ${getContainerClass()}`}`}>
         {/* Help Modal */}
         <HelpModal
           isOpen={showHelpModal}
@@ -1565,7 +1564,7 @@ export default function App() {
         )}
 
         {/* Companion HUD - fixo no rodapé como parte do flex */}
-        <div className={`flex-shrink-0 ${theme === 'win98' ? 'bg-[#c0c0c0] border-t-2 border-white px-6 pb-3 pt-3' : 'bg-gray-50 px-6 pb-3 pt-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]'}`}>
+        <div className={`flex-shrink-0 ${theme === 'win98' ? 'bg-[#c0c0c0] border-t-2 border-white px-6 pb-3 pt-3' : 'sm-hud px-6 pb-3 pt-3'}`}>
           <CompanionHUD
             companionMood={getCompanionMood()}
             energyLevel={progress}

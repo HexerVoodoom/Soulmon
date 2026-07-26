@@ -31,7 +31,7 @@ export function DigivolveTaskModal({
   const hasEnough = registeredTasks >= requiredTasks;
   const missing = Math.max(0, requiredTasks - registeredTasks);
 
-  const title = isPt ? 'Digievolução!' : 'Digivolution!';
+  const title = isPt ? 'Evolução!' : 'Evolution!';
 
   const intro = isPt
     ? `Seu parceiro evoluiu para ${stageName}!`

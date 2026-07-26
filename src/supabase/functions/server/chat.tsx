@@ -167,7 +167,7 @@ export async function handleChatRequest(c: Context) {
     const maxTokens = 120; // Fixed at 120 characters for optimal balance
 
     // Enhanced system prompt for the Soulmon with dynamic personality
-    const systemPrompt = `You are ${digimonName}, a digital companion (Soulmon) in a gamified productivity app called DigiApp.
+    const systemPrompt = `You are ${digimonName}, a digital companion (Soulmon) in a gamified productivity app called Soulmon.
 
 ═══════════════════════════════════════
 🎭 YOUR PERSONALITY

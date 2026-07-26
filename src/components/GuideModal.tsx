@@ -25,7 +25,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           <h2 className={`text-xl ${
             isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
           }`} style={{ fontFamily: 'Consolas, monospace' }}>
-            📖 DigiApp Guide
+            📖 Soulmon Guide
           </h2>
           <button
             onClick={onClose}

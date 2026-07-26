@@ -1,4 +1,5 @@
 import { Language } from '../utils/i18n';
+import { FolderOpen, ShowerHead, Moon, Sun, Info } from 'lucide-react';
 
 interface DigiActionsBarProps {
   onOpenItems: () => void;
@@ -27,7 +28,7 @@ export function DigiActionsBar({
 
   const actions = [
     {
-      icon: '📁',
+      Icon: FolderOpen,
       labelEn: 'Items',
       labelPt: 'Itens',
       onClick: onOpenItems,
@@ -35,7 +36,7 @@ export function DigiActionsBar({
       active: false,
     },
     {
-      icon: '🚿',
+      Icon: ShowerHead,
       labelEn: 'Bath',
       labelPt: 'Banho',
       onClick: onBath,
@@ -43,7 +44,7 @@ export function DigiActionsBar({
       active: false,
     },
     {
-      icon: isSleeping ? '☀️' : '💤',
+      Icon: isSleeping ? Sun : Moon,
       labelEn: isSleeping ? 'Wake' : 'Sleep',
       labelPt: isSleeping ? 'Acordar' : 'Dormir',
       onClick: onSleep,
@@ -51,7 +52,7 @@ export function DigiActionsBar({
       active: isSleeping,
     },
     {
-      icon: 'ℹ️',
+      Icon: Info,
       labelEn: 'Help',
       labelPt: 'Ajuda',
       onClick: onOpenHelp,
@@ -90,7 +91,11 @@ export function DigiActionsBar({
               : undefined
           }
         >
-          <span style={{ fontSize: '1.4rem', lineHeight: 1 }}>{action.icon}</span>
+          <action.Icon
+            size={22}
+            strokeWidth={2}
+            style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000' : 'rgba(255,255,255,0.85)' }}
+          />
           <span
             style={{
               fontFamily: 'monospace',

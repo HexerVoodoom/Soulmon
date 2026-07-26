@@ -12,7 +12,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     if (import.meta.env.DEV) {
-      console.error('[DigiApp] Render error:', error, info.componentStack);
+      console.error('[Soulmon] Render error:', error, info.componentStack);
     }
   }
 
@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🦖</div>
           <h2 style={{ margin: '0 0 8px' }}>Algo deu errado</h2>
           <p style={{ margin: '0 0 24px', color: '#aaa', fontSize: '14px' }}>
-            O DigiApp encontrou um erro inesperado.
+            O Soulmon encontrou um erro inesperado.
           </p>
           <button
             onClick={() => window.location.reload()}

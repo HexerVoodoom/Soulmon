@@ -50,7 +50,7 @@ export function DigivolutionGauge({ daysCompleted, maxDays, currentStage }: Digi
                 {currentStage && `Current: ${currentStage}`}
                 <br />
                 {daysCompleted === maxDays 
-                  ? 'Ready to digivolve!' 
+                  ? 'Ready to evolve!' 
                   : `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} needed at this stage`}
               </p>
             </TooltipContent>
@@ -75,7 +75,7 @@ export function DigivolutionGauge({ daysCompleted, maxDays, currentStage }: Digi
         }}
       >
         {daysCompleted === maxDays 
-          ? '⚡ READY TO DIGIVOLVE! ⚡' 
+          ? '⚡ READY TO EVOLVE! ⚡' 
           : `${daysRemaining} more day${daysRemaining !== 1 ? 's' : ''} to evolution`}
       </p>
     </div>

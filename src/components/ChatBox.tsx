@@ -48,7 +48,7 @@ export function ChatBox({
   const [isInputReadOnly, setIsInputReadOnly] = useState(true);
   const [randomName] = useState(`chat-${Math.random().toString(36).substring(7)}`);
 
-  // Digimon responses based on keywords and mood
+  // Soulmon responses based on keywords and mood
   const getDigimonResponse = (userMessage: string): string => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const category = detectMessageCategory(userMessage);

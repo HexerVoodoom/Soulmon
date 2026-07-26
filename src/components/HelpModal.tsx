@@ -30,15 +30,15 @@ const SECTIONS = [
     ],
   },
   {
-    titleEn: 'Digivolution',
-    titlePt: 'Digivolução',
+    titleEn: 'Evolution',
+    titlePt: 'Evolução',
     items: [
       {
         icon: '📊',
         labelEn: 'Perfect Days bar',
         labelPt: 'Barra de Dias Perfeitos',
-        descEn: 'Each day you complete the required number of activities earns a Perfect Day. Fill the bar to Digivolve!',
-        descPt: 'Cada dia em que você completa as atividades necessárias conta como Dia Perfeito. Encha a barra para Digivolucionar!',
+        descEn: 'Each day you complete the required number of activities earns a Perfect Day. Fill the bar to evolve!',
+        descPt: 'Cada dia em que você completa as atividades necessárias conta como Dia Perfeito. Encha a barra para Evoluir!',
       },
       {
         icon: '🦠',
@@ -51,8 +51,8 @@ const SECTIONS = [
         icon: '🔒',
         labelEn: 'Evolution padlock',
         labelPt: 'Cadeado de evolução',
-        descEn: 'On the Evolution page, tap your CURRENT Soulmon to lock/unlock digivolution. While locked it never evolves (perfect days still accumulate); unlock and it evolves at the next day turn.',
-        descPt: 'Na página de Evolução, toque no seu Soulmon ATUAL para travar/destravar a digievolução. Travado, ele nunca evolui (os dias perfeitos continuam contando); destrave e ele evolui na próxima virada de dia.',
+        descEn: 'On the Evolution page, tap your CURRENT Soulmon to lock/unlock evolution. While locked it never evolves (perfect days still accumulate); unlock and it evolves at the next day turn.',
+        descPt: 'Na página de Evolução, toque no seu Soulmon ATUAL para travar/destravar a evolução. Travado, ele nunca evolui (os dias perfeitos continuam contando); destrave e ele evolui na próxima virada de dia.',
       },
       {
         icon: '🌀',

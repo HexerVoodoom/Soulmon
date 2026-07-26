@@ -15,8 +15,8 @@ const TIPS = [
   },
   {
     icon: '📅',
-    en: { title: 'Perfect Days', body: 'Complete your daily activities every day to accumulate "perfect days". Fill the bar below the pet to digivolve!' },
-    pt: { title: 'Dias Perfeitos', body: 'Complete suas atividades todos os dias para acumular "dias perfeitos". Encha a barra abaixo do pet para digivolucionar!' },
+    en: { title: 'Perfect Days', body: 'Complete your daily activities every day to accumulate "perfect days". Fill the bar below the pet to evolve!' },
+    pt: { title: 'Dias Perfeitos', body: 'Complete suas atividades todos os dias para acumular "dias perfeitos". Encha a barra abaixo do pet para evoluir!' },
   },
   {
     icon: '🦠',

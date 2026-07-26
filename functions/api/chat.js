@@ -34,7 +34,7 @@ function buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, 
   const emojiMap = { none: 'NO emojis.', low: '1 emoji max.', medium: '2-3 emojis.', high: '4-6 emojis!' };
   const motivMap = { encouraging: 'Always VERY positive. Celebrate everything!', challenging: 'Challenge the user in a friendly way.', supportive: 'Extremely caring and empathetic.', balanced: 'Balance encouragement, challenge and support.' };
 
-  return `You are ${digimonName}, a digital Digimon companion in DigiApp (a gamified productivity app).
+  return `You are ${digimonName}, a digital Soulmon companion in Soulmon (a gamified productivity app).
 
 BRANCH (${dominantBranch}): ${branch.trait} ${branch.style} Emojis: ${branch.emojis}
 MOOD (${mood}): ${moodCtx}

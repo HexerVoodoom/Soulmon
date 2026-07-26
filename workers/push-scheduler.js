@@ -1,4 +1,4 @@
-// Cloudflare Worker — Scheduled push notifications for DigiApp
+// Cloudflare Worker — Scheduled push notifications for Soulmon
 // Cron triggers: 10h, 16h, 21h (task reminders) + 22h (goodnight) — BRT (UTC-3)
 //
 // Sends to BOTH channels stored in the same KV namespace: `push:` keys via Web

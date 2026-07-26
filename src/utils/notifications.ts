@@ -1,4 +1,4 @@
-// Notification utilities for DigiApp
+// Notification utilities for Soulmon
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
@@ -228,7 +228,7 @@ export const registerForPushNotifications = async (
       // app state. While the app is open, we get the payload here instead —
       // surface it however the caller wants (e.g. an in-app toast).
       PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        onForegroundNotification?.(notification.title ?? 'DigiApp', notification.body ?? '');
+        onForegroundNotification?.(notification.title ?? 'Soulmon', notification.body ?? '');
       });
     }
 

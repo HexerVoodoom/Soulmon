@@ -25,7 +25,7 @@ export const pt = {
         low_hp: "Preciso de sua ajuda! Complete tarefas para me manter saudável!",
         time_until_reset: "Tempo até o reset",
         stats: "Status",
-        chat_placeholder: "Fale com seu Digi..."
+        chat_placeholder: "Fale com seu Soulmon..."
     },
     care: {
         poop_warning: "Hora de limpar!",
@@ -148,7 +148,7 @@ export const pt = {
         days: "DIAS"
     },
     egg_selection: {
-        title: "Escolha seu DigiEgg",
+        title: "Escolha seu Ovo",
         subtitle: "Sua jornada começa aqui. Qual ovo você vai chocar?",
         btn_start: "Chocar",
         pick_button: "Escolher este ovo",

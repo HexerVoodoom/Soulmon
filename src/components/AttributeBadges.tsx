@@ -1,4 +1,5 @@
 import { Language, useTranslation } from '../utils/i18n';
+import { Plus } from 'lucide-react';
 
 interface AttributeBadgesProps {
   virusPoints: number;
@@ -22,7 +23,7 @@ export function AttributeBadges({ virusPoints, dataPoints, vaccinePoints, onNewA
           ? 'glitch-activity-card' 
           : isWin98 
             ? 'win98-activity-card' 
-            : 'border border-[#e5e6e7] shadow-[0px_0px_0px_1px_rgba(229,231,235,0.5),0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]'
+            : 'sm-card'
       }`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           {/* Virus Badge */}
@@ -65,16 +66,12 @@ export function AttributeBadges({ virusPoints, dataPoints, vaccinePoints, onNewA
             ? 'bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-black hover:opacity-90'
             : isWin98
               ? 'bg-[#c0c0c0] border-2 border-white hover:bg-[#d0d0d0] text-black'
-              : 'border border-[#6a7282] shadow-[0px_0.662px_1.987px_0px_rgba(0,0,0,0.1),0px_0.662px_1.325px_-0.662px_rgba(0,0,0,0.1)] hover:brightness-110 active:scale-95'
+              : 'sm-btn'
         }`}
-        style={
-          !isGlitch && !isWin98
-            ? { backgroundImage: 'linear-gradient(80.7988deg, rgb(62, 71, 83) 0.31929%, rgb(104, 121, 145) 99.681%)' }
-            : undefined
-        }
       >
-        <span className={`text-sm whitespace-nowrap ${isWin98 || isGlitch ? '' : 'text-white'}`} style={{ fontFamily: 'Consolas, monospace' }}>
-          + {t.activities.addNew}
+        {!isWin98 && !isGlitch && <Plus size={16} strokeWidth={3} />}
+        <span className={`text-sm whitespace-nowrap ${isWin98 || isGlitch ? '' : 'text-white'}`} style={isWin98 || isGlitch ? { fontFamily: 'Consolas, monospace' } : undefined}>
+          {isWin98 || isGlitch ? `+ ${t.activities.addNew}` : t.activities.addNew}
         </span>
       </button>
     </div>

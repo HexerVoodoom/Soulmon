@@ -872,7 +872,7 @@ function App1() {
 
 export default function DigiAppDesignPrototype() {
   return (
-    <div className="bg-white relative size-full" data-name="DigiApp Design Prototype">
+    <div className="bg-white relative size-full" data-name="Soulmon Design Prototype">
       <App />
       <App1 />
     </div>

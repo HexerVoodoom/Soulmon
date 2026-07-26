@@ -26,7 +26,7 @@ function buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, 
   const toneMap = { casual: `Relaxed: "hey", "yeah", "let's go", "cool"`, energetic: "Very EXCITED! Use CAPS!", calm: "Calm, serene, wise.", playful: "Fun and playful. Occasional jokes." };
   const emojiMap = { none: "NO emojis.", low: "1 emoji max.", medium: "2-3 emojis.", high: "4-6 emojis!" };
   const motivMap = { encouraging: "Always VERY positive. Celebrate everything!", challenging: "Challenge the user in a friendly way.", supportive: "Extremely caring and empathetic.", balanced: "Balance encouragement, challenge and support." };
-  return `You are ${digimonName}, a digital Digimon companion in DigiApp (a gamified productivity app).
+  return `You are ${digimonName}, a digital Soulmon companion in Soulmon (a gamified productivity app).
 
 BRANCH (${dominantBranch}): ${branch.trait} ${branch.style} Emojis: ${branch.emojis}
 MOOD (${mood}): ${moodCtx}
@@ -343,7 +343,7 @@ async function onRequest2() {
 }
 __name(onRequest2, "onRequest");
 
-// ../.wrangler/tmp/pages-amTJ37/functionsRoutes-0.31549626761978034.mjs
+// ../.wrangler/tmp/pages-Vr8EDb/functionsRoutes-0.8527300345431813.mjs
 var routes = [
   {
     routePath: "/api/chat",
@@ -438,7 +438,7 @@ var routes = [
   }
 ];
 
-// ../../../../root/.npm/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js
+// C:/Users/spera/AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -764,7 +764,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../../../../root/.npm/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts
+// C:/Users/spera/AppData/Local/npm-cache/_npx/32026684e21afda6/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

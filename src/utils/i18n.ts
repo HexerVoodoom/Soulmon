@@ -1,4 +1,4 @@
-// Internationalization (i18n) structure for DigiApp
+// Internationalization (i18n) structure for Soulmon
 
 export type Language = 'en-US' | 'pt-BR';
 
@@ -334,7 +334,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     onboarding: {
-      welcome: 'Welcome to DigiApp!',
+      welcome: 'Welcome to Soulmon!',
       enterName: 'Enter your name',
       namePlaceholder: 'Type your name here',
       start: 'Start Adventure',
@@ -472,7 +472,7 @@ export const translations: Record<Language, Translations> = {
       aiChatEnabled: 'AI Chat',
       keywordsOnly: 'Keywords Only',
       aiDescription: 'AI Settings',
-      aiDescriptionEnabled: 'Your digimon uses AI for personalized conversations',
+      aiDescriptionEnabled: 'Your Soulmon uses AI for personalized conversations',
       aiDescriptionDisabled: 'Messages based only on keywords',
       configureAI: 'Configure AI',
       about: 'About the App',
@@ -550,21 +550,21 @@ export const translations: Record<Language, Translations> = {
     },
 
     guide: {
-      title: 'DigiApp Guide',
+      title: 'Soulmon Guide',
       welcome: 'Welcome!',
-      welcomeText: 'DigiApp is a gamified productivity app where you complete real-life tasks to evolve your digital companion.',
+      welcomeText: 'Soulmon is a gamified productivity app where you complete real-life tasks to evolve your digital companion.',
       howItWorks: 'How It Works',
       howItWorksText: 'Complete daily activities to earn attribute points (Virus, Data, Vaccine). Each activity category contributes to a specific type of attribute.',
       evolutionSystem: 'Evolution System',
-      evolutionSystemText: 'Your digimon evolves through stages (Digiegg → Baby → In-Training → Rookie → Champion → Ultimate → Mega). Evolution depends on completing a specific number of "perfect days" where you reach your daily goal.',
+      evolutionSystemText: 'Your Soulmon evolves through stages (Egg → Baby → In-Training → Rookie → Champion → Ultimate → Mega). Evolution depends on completing a specific number of "perfect days" where you reach your daily goal.',
       perfectDays: 'Perfect Days',
       perfectDaysText: 'A perfect day is when you complete all the tasks needed to reach your daily goal. The number of required tasks increases with each evolutionary stage.',
       healthSystem: 'Health System (HP)',
-      healthSystemText: 'Your digimon starts with 1 heart and gains more with each evolution (maximum 5). Losing all hearts results in degeneration to the previous stage.',
+      healthSystemText: 'Your Soulmon starts with 1 heart and gains more with each evolution (maximum 5). Losing all hearts results in degeneration to the previous stage.',
       attributes: 'Attributes',
-      attributesText: 'Virus (green): Physical activities\nData (blue): Mental activities\nVaccine (yellow): Social and creative activities\n\nThe attributes you develop most determine your digimon\'s evolutionary path.',
+      attributesText: 'Virus (green): Physical activities\nData (blue): Mental activities\nVaccine (yellow): Social and creative activities\n\nThe attributes you develop most determine your Soulmon\'s evolutionary path.',
       tips: 'Tips',
-      tipsText: '• Complete tasks daily to keep your digimon healthy\n• Balance different types of activities for unique evolutions\n• Use AI chat for motivation and new task ideas\n• Track your statistics to see your progress',
+      tipsText: '• Complete tasks daily to keep your Soulmon healthy\n• Balance different types of activities for unique evolutions\n• Use AI chat for motivation and new task ideas\n• Track your statistics to see your progress',
     },
 
     confirm: {
@@ -573,7 +573,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     stages: {
-      digiegg: 'Digiegg',
+      digiegg: 'Egg',
       baby: 'Baby',
       inTraining: 'In-Training',
       rookie: 'Rookie',
@@ -629,7 +629,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     onboarding: {
-      welcome: 'Bem-vindo ao DigiApp!',
+      welcome: 'Bem-vindo ao Soulmon!',
       enterName: 'Digite seu nome',
       namePlaceholder: 'Digite seu nome aqui',
       start: 'Começar Aventura',
@@ -668,7 +668,7 @@ export const translations: Record<Language, Translations> = {
       dayFriday: 'Sexta-feira',
       daySaturday: 'Sábado',
       viewHome: 'Início',
-      viewEvolution: 'Caminho de Digievolução',
+      viewEvolution: 'Caminho de Evolução',
       viewStats: 'Estatísticas',
       viewSettings: 'Configurações',
     },
@@ -767,7 +767,7 @@ export const translations: Record<Language, Translations> = {
       aiChatEnabled: 'Chat com IA',
       keywordsOnly: 'Somente Palavras-chave',
       aiDescription: 'Configurações de IA',
-      aiDescriptionEnabled: 'Seu digimon usa IA para conversas personalizadas',
+      aiDescriptionEnabled: 'Seu Soulmon usa IA para conversas personalizadas',
       aiDescriptionDisabled: 'Mensagens baseadas apenas em palavras-chave',
       configureAI: 'Configurar IA',
       about: 'Sobre o App',
@@ -845,21 +845,21 @@ export const translations: Record<Language, Translations> = {
     },
 
     guide: {
-      title: 'Guia DigiApp',
+      title: 'Guia Soulmon',
       welcome: 'Bem-vindo!',
-      welcomeText: 'O DigiApp é um app de produtividade gamificado onde você conclui tarefas da vida real para evoluir seu companheiro digital.',
+      welcomeText: 'O Soulmon é um app de produtividade gamificado onde você conclui tarefas da vida real para evoluir seu companheiro digital.',
       howItWorks: 'Como Funciona',
       howItWorksText: 'Complete atividades diárias para ganhar pontos de atributo (Vírus, Dados, Vacina). Cada categoria de atividade contribui para um tipo específico de atributo.',
       evolutionSystem: 'Sistema de Evolução',
-      evolutionSystemText: 'Seu digimon evolui por estágios (DigiEgg → Baby → Em Treinamento → Rookie → Champion → Ultimate → Mega). A evolução depende de completar um número específico de "dias perfeitos" onde você atinge sua meta diária.',
+      evolutionSystemText: 'Seu Soulmon evolui por estágios (Ovo → Baby → Em Treinamento → Rookie → Champion → Ultimate → Mega). A evolução depende de completar um número específico de "dias perfeitos" onde você atinge sua meta diária.',
       perfectDays: 'Dias Perfeitos',
       perfectDaysText: 'Um dia perfeito é quando você completa todas as tarefas necessárias para atingir sua meta diária. O número de tarefas necessárias aumenta a cada estágio evolutivo.',
       healthSystem: 'Sistema de Saúde (HP)',
-      healthSystemText: 'Seu digimon começa com 1 coração e ganha mais a cada evolução (máximo 5). Perder todos os corações resulta em degeneração para o estágio anterior.',
+      healthSystemText: 'Seu Soulmon começa com 1 coração e ganha mais a cada evolução (máximo 5). Perder todos os corações resulta em degeneração para o estágio anterior.',
       attributes: 'Atributos',
-      attributesText: 'Vírus (verde): Atividades físicas\nDados (azul): Atividades mentais\nVacina (amarelo): Atividades sociais e criativas\n\nOs atributos que você mais desenvolve determinam o caminho evolutivo do seu digimon.',
+      attributesText: 'Vírus (verde): Atividades físicas\nDados (azul): Atividades mentais\nVacina (amarelo): Atividades sociais e criativas\n\nOs atributos que você mais desenvolve determinam o caminho evolutivo do seu Soulmon.',
       tips: 'Dicas',
-      tipsText: '• Complete tarefas diariamente para manter seu digimon saudável\n• Equilibre diferentes tipos de atividades para evoluções únicas\n• Use o chat com IA para motivação e novas ideias de tarefas\n• Acompanhe suas estatísticas para ver seu progresso',
+      tipsText: '• Complete tarefas diariamente para manter seu Soulmon saudável\n• Equilibre diferentes tipos de atividades para evoluções únicas\n• Use o chat com IA para motivação e novas ideias de tarefas\n• Acompanhe suas estatísticas para ver seu progresso',
     },
 
     confirm: {
@@ -868,7 +868,7 @@ export const translations: Record<Language, Translations> = {
     },
 
     stages: {
-      digiegg: 'DigiOvo',
+      digiegg: 'Ovo',
       baby: 'Bebê',
       inTraining: 'Em Treinamento',
       rookie: 'Iniciante',

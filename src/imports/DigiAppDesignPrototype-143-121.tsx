@@ -874,7 +874,7 @@ function Container27() {
 
 export default function DigiAppDesignPrototype() {
   return (
-    <div className="relative size-full" data-name="DigiApp Design Prototype" style={{ backgroundImage: "linear-gradient(114.732deg, rgba(240, 253, 250, 0.6) 0%, rgba(236, 254, 255, 0.5) 50%, rgba(236, 253, 245, 0.6) 100%), linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%)" }}>
+    <div className="relative size-full" data-name="Soulmon Design Prototype" style={{ backgroundImage: "linear-gradient(114.732deg, rgba(240, 253, 250, 0.6) 0%, rgba(236, 254, 255, 0.5) 50%, rgba(236, 253, 245, 0.6) 100%), linear-gradient(90deg, rgb(255, 255, 255) 0%, rgb(255, 255, 255) 100%)" }}>
       <Container27 />
     </div>
   );
