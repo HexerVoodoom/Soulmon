@@ -1387,6 +1387,89 @@ export default function App() {
                 language={language}
               />
 
+              {/* HP risk banner — dismissible strip acima do pet */}
+              {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl ${
+                  theme === 'win98'
+                    ? 'bg-[#800000] border border-[#ff0000] text-white'
+                    : theme === 'glitch'
+                    ? 'bg-[#200000] border border-[#ff0066]/60'
+                    : ''
+                }`} style={theme === 'default' ? { background: '#fde8e6', border: '1px solid #f3c6c1' } : undefined}>
+                  <span style={{ fontSize: '0.9rem' }}>⚠️</span>
+                  <p className={theme === 'default' ? 'flex-1 text-xs' : 'text-red-300 flex-1 text-xs'}
+                     style={{ fontFamily: theme === 'default' ? undefined : 'monospace', lineHeight: '1.3', color: theme === 'default' ? '#a4302a' : undefined }}>
+                    {language === 'pt-BR'
+                      ? `1 HP restante — complete ao menos ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) hoje para não regredir!`
+                      : `1 HP left — complete at least ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) today to avoid degeneration!`}
+                  </p>
+                  <button
+                    onClick={() => setHpBannerDismissed(true)}
+                    className="flex-shrink-0 px-1 text-sm leading-none"
+                    style={{ color: theme === 'default' ? '#a4302a' : undefined }}
+                    aria-label="Dismiss"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {/* Pet — acima, sem estar contido em uma caixa */}
+              <CompanionHUD
+                companionMood={getCompanionMood()}
+                energyLevel={progress}
+                message={_careMessageFn(getCompanionMessage())}
+                currentStage={getCurrentStageName()}
+                evolutionStage={gameState.evolutionStage}
+                eggType={gameState.eggType}
+                healthPoints={gameState.healthPoints}
+                maxHealthPoints={gameState.maxHealthPoints}
+                dominantBranch={getDominantBranch()}
+                currentXP={gameState.totalXP}
+                nextLevelXP={getNextLevelXP()}
+                triggerMessage={messageTrigger}
+                energyPoints={gameState.energyPoints}
+                maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
+                fullSignal={fullSignal}
+                digivolutionSegments={gameState.digivolutionSegments}
+                theme={theme}
+                digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}
+                perfectDays={gameState.perfectDays}
+                requiredDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
+                onDigivolve={handleDigivolve}
+                canEvolve={(() => {
+                  const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
+                  if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
+                  const b = getDominantBranch();
+                  const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
+                  return next !== gameState.evolutionStage;
+                })()}
+                onEvolveRequest={() => {
+                  const b = getDominantBranch();
+                  const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
+                  if (next !== gameState.evolutionStage) setEvolutionCeremony({ from: gameState.evolutionStage, to: next });
+                }}
+                careEvent={careEvent}
+                onCareEventComplete={handleCareEventComplete}
+                foodInventory={gameState.foodInventory}
+                onFeed={handleFeed}
+                onShower={handleShower}
+                hasNewItems={newItemsReady}
+                onOpenItems={handleOpenItems}
+                onSleep={handleSleep}
+                isSleeping={isSleeping}
+                onPet={handlePet}
+                healCapSignal={healCapSignal}
+                equippedBackground={gameState.equippedBackground ?? null}
+                useAI={useAI}
+                aiSettings={aiSettings}
+                onOpenAISettings={handleOpenAISettings}
+                onCreateActivity={handleAICreateActivity}
+                language={language}
+                evolutionFlash={evolutionFlash}
+                feedAnim={feedAnim}
+              />
+
               {gameState.tasks.length === 0 && gameState.activities.length === 0 ? (
                 <div className="flex items-center justify-center" style={{ minHeight: '300px' }}>
                   <p
@@ -1610,89 +1693,6 @@ export default function App() {
               />
             </Suspense>
           )}
-        </div>
-
-        {/* HP risk banner — dismissible strip above companion */}
-        {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
-          <div className={`flex-shrink-0 flex items-center gap-2 px-4 py-1.5 animate-pulse ${
-            theme === 'win98'
-              ? 'bg-[#800000] border-t border-[#ff0000] text-white'
-              : theme === 'glitch'
-              ? 'bg-[#200000] border-t border-[#ff0066]/60'
-              : 'bg-red-950 border-t border-red-500/50'
-          }`}>
-            <span style={{ fontSize: '0.75rem' }}>⚠️</span>
-            <p className="text-red-300 flex-1 text-xs" style={{ fontFamily: 'monospace', lineHeight: '1.3' }}>
-              {language === 'pt-BR'
-                ? `1 HP restante — complete ao menos ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) hoje para não regredir!`
-                : `1 HP left — complete at least ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) today to avoid degeneration!`}
-            </p>
-            <button
-              onClick={() => setHpBannerDismissed(true)}
-              className="text-red-400 hover:text-red-200 flex-shrink-0 px-1 text-sm leading-none"
-              aria-label="Dismiss"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Companion HUD - fixo no rodapé como parte do flex */}
-        <div className={`flex-shrink-0 ${theme === 'win98' ? 'bg-[#c0c0c0] border-t-2 border-white px-6 pb-3 pt-3' : 'sm-hud px-6 pb-3 pt-3'}`}>
-          <CompanionHUD
-            companionMood={getCompanionMood()}
-            energyLevel={progress}
-            message={_careMessageFn(getCompanionMessage())}
-            currentStage={getCurrentStageName()}
-            evolutionStage={gameState.evolutionStage}
-            eggType={gameState.eggType}
-            healthPoints={gameState.healthPoints}
-            maxHealthPoints={gameState.maxHealthPoints}
-            dominantBranch={getDominantBranch()}
-            currentXP={gameState.totalXP}
-            nextLevelXP={getNextLevelXP()}
-            triggerMessage={messageTrigger}
-            energyPoints={gameState.energyPoints}
-            maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
-            fullSignal={fullSignal}
-            digivolutionSegments={gameState.digivolutionSegments}
-            theme={theme}
-            digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}
-            perfectDays={gameState.perfectDays}
-            requiredDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
-            onDigivolve={handleDigivolve}
-            canEvolve={(() => {
-              const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
-              if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
-              const b = getDominantBranch();
-              const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
-              return next !== gameState.evolutionStage;
-            })()}
-            onEvolveRequest={() => {
-              const b = getDominantBranch();
-              const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
-              if (next !== gameState.evolutionStage) setEvolutionCeremony({ from: gameState.evolutionStage, to: next });
-            }}
-            careEvent={careEvent}
-            onCareEventComplete={handleCareEventComplete}
-            foodInventory={gameState.foodInventory}
-            onFeed={handleFeed}
-            onShower={handleShower}
-            hasNewItems={newItemsReady}
-            onOpenItems={handleOpenItems}
-            onSleep={handleSleep}
-            isSleeping={isSleeping}
-            onPet={handlePet}
-            healCapSignal={healCapSignal}
-            equippedBackground={gameState.equippedBackground ?? null}
-            useAI={useAI}
-            aiSettings={aiSettings}
-            onOpenAISettings={handleOpenAISettings}
-            onCreateActivity={handleAICreateActivity}
-            language={language}
-            evolutionFlash={evolutionFlash}
-            feedAnim={feedAnim}
-          />
         </div>
 
       {editModalOpen && (

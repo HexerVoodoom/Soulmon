@@ -605,7 +605,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         ? 'glitch-companion-window'
         : isWin98
           ? 'win98-companion-window'
-          : 'sm-card p-3 relative'
+          : 'relative'
     }>
       {/* Win98 Title Bar */}
       {isWin98 && (
@@ -649,15 +649,16 @@ export const CompanionHUD = memo(function CompanionHUD({
         )}
         {/* Companion Display Area */}
         <div 
-          className={`relative overflow-hidden p-3 flex-1 border ${ 
-            isGlitch 
-              ? 'border-2 border-[#00ffff]' 
-              : isWin98 
-                ? 'win98-lcd-screen crt-effect' 
-                : 'border-[var(--sm-line)]'
+          className={`relative overflow-hidden p-3 flex-1 ${
+            isGlitch
+              ? 'border-2 border-[#00ffff]'
+              : isWin98
+                ? 'win98-lcd-screen crt-effect border'
+                : ''
           }`}
-          style={{ 
-            height: '185px',
+          style={{
+            height: '230px',
+            borderRadius: isWin98 || isGlitch ? 0 : 28,
             backgroundImage: isWin98
               ? 'none'
               : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css) || 'linear-gradient(160deg, #dbe9ff 0%, #d6eee4 55%, #d9f2e3 100%)',
@@ -665,7 +666,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             imageRendering: 'pixelated',
-            borderWidth: '1.1px'
+            borderWidth: isWin98 || isGlitch ? '1.1px' : 0,
           }}
         >
           {isWin98 && <div className="scan-line" />}
