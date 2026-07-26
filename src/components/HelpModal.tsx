@@ -37,8 +37,8 @@ const SECTIONS = [
         icon: '📊',
         labelEn: 'Perfect Days bar',
         labelPt: 'Barra de Dias Perfeitos',
-        descEn: 'Each day you complete the required number of activities earns a Perfect Day. Fill the bar to evolve!',
-        descPt: 'Cada dia em que você completa as atividades necessárias conta como Dia Perfeito. Encha a barra para Evoluir!',
+        descEn: 'Each day you complete the required number of activities earns a Perfect Day. When the bar is full, an Evolve button appears over your pet — evolution only happens when you press it.',
+        descPt: 'Cada dia em que você completa as atividades necessárias conta como Dia Perfeito. Com a barra cheia, um botão Evoluir aparece sobre o pet — a evolução só acontece quando você aperta.',
       },
       {
         icon: '🦠',

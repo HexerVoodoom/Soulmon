@@ -1,4 +1,32 @@
 // Stage → sprite map, shared by CompanionHUD and the dungeon minigame.
+// Árvore jogável do Soulmon: sprites placeholder gerados
+// (scripts/gen-soulmon-placeholders.mjs) até a integração com o Higgsfield.
+import soulmonRookie from '../assets/soulmon/rookie.png';
+import soulmonChampionVirus from '../assets/soulmon/champion-virus.png';
+import soulmonChampionData from '../assets/soulmon/champion-data.png';
+import soulmonChampionVaccine from '../assets/soulmon/champion-vaccine.png';
+import soulmonUltimateVirus from '../assets/soulmon/ultimate-virus.png';
+import soulmonUltimateData from '../assets/soulmon/ultimate-data.png';
+import soulmonUltimateVaccine from '../assets/soulmon/ultimate-vaccine.png';
+import soulmonMegaVirus from '../assets/soulmon/mega-virus.png';
+import soulmonMegaData from '../assets/soulmon/mega-data.png';
+import soulmonMegaVaccine from '../assets/soulmon/mega-vaccine.png';
+import soulmonUltra from '../assets/soulmon/ultra.png';
+export { default as DUNGEON_SPIRIT_SPRITE } from '../assets/soulmon/dungeon-spirit.png';
+
+const SOULMON_SPRITES: Record<string, string> = {
+  'rookie': soulmonRookie,
+  'champion-virus': soulmonChampionVirus,
+  'champion-data': soulmonChampionData,
+  'champion-vaccine': soulmonChampionVaccine,
+  'ultimate-virus': soulmonUltimateVirus,
+  'ultimate-data': soulmonUltimateData,
+  'ultimate-vaccine': soulmonUltimateVaccine,
+  'mega-virus': soulmonMegaVirus,
+  'mega-data': soulmonMegaData,
+  'mega-vaccine': soulmonMegaVaccine,
+  'ultra': soulmonUltra,
+};
 import { getEvolutionLine, type EggType } from '../types/evolution-lines';
 import digiEggSprite from 'figma:asset/6479b687e03b8292ee02a4453bff2eb1a76cfecb.png';
 import pichimonSprite from 'figma:asset/99ff747d7f7ecc2424e131a43c54669bcba9a301.png';
@@ -162,7 +190,7 @@ function genericSpriteForStage(stageId: string, line: EggType): string {
 
 export function getSpriteForStage(stage: string, genericLine: EggType = 'tapirmon'): string {
   const key = stage.toLowerCase();
-  return STAGE_SPRITES[key] ?? genericSpriteForStage(key, genericLine);
+  return SOULMON_SPRITES[key] ?? STAGE_SPRITES[key] ?? genericSpriteForStage(key, genericLine);
 }
 
 /** Sprites drawn facing LEFT by default — flip them when they should face right. */

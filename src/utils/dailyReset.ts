@@ -1,4 +1,4 @@
-import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
+import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, clampBranch } from '../types/progression';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 
 // Tipos necessários para o reset
@@ -121,6 +121,7 @@ export function getNextEvolution(
   branch: Attr,
   unlockedEvolutions: string[],
 ): string {
+  branch = clampBranch(branch) as Attr;
   const level = getStageLevel(currentStage);
   if (level === 'rookie') return `champion-${branch}`;
   if (level === 'champion') return `ultimate-${branch}`;

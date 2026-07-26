@@ -12,6 +12,7 @@ import { AttributeBadges } from './components/AttributeBadges';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { DigivolveTaskModal } from './components/DigivolveTaskModal';
+import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
@@ -61,6 +62,8 @@ export default function App() {
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [digivolveModalStage, setDigivolveModalStage] = useState<string | null>(null);
+  // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
+  const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
@@ -693,6 +696,9 @@ export default function App() {
     setGameState(prev => {
       // Evolution padlock (Evolution page): while locked, never evolve.
       if (prev.evolutionLocked) return prev;
+      // Evolução manual: só evolui com a barra de dias perfeitos cheia.
+      const req = FORM_REQUIREMENTS[getStageLevel(prev.evolutionStage)].required;
+      if (prev.perfectDays < req) return prev;
       let newEvolutionStage = prev.evolutionStage;
       let newHP = prev.healthPoints;
       let newSegmentsNeeded = prev.digivolutionSegmentsNeeded;
@@ -725,6 +731,11 @@ export default function App() {
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
         digivolutionSegments: 0,
         digivolutionSegmentsNeeded: newSegmentsNeeded,
+        perfectDays: 0,
+        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+        unlockedEvolutions: prev.unlockedEvolutions.includes(newEvolutionStage)
+          ? prev.unlockedEvolutions
+          : [...prev.unlockedEvolutions, newEvolutionStage],
       };
     });
     playDigivolve();
@@ -1587,6 +1598,18 @@ export default function App() {
             perfectDays={gameState.perfectDays}
             requiredDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
             onDigivolve={handleDigivolve}
+            canEvolve={(() => {
+              const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
+              if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
+              const b = getDominantBranch();
+              const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
+              return next !== gameState.evolutionStage;
+            })()}
+            onEvolveRequest={() => {
+              const b = getDominantBranch();
+              const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
+              if (next !== gameState.evolutionStage) setEvolutionCeremony({ from: gameState.evolutionStage, to: next });
+            }}
             careEvent={careEvent}
             onCareEventComplete={handleCareEventComplete}
             foodInventory={gameState.foodInventory}
@@ -1740,6 +1763,17 @@ export default function App() {
         onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
         theme={theme}
       />
+
+      {evolutionCeremony && (
+        <EvolutionCeremony
+          fromStage={evolutionCeremony.from}
+          toStage={evolutionCeremony.to}
+          toName={getStageNameById(evolutionCeremony.to)}
+          language={language}
+          onEvolved={handleDigivolve}
+          onClose={() => setEvolutionCeremony(null)}
+        />
+      )}
 
       <DigivolveTaskModal
         isOpen={digivolveModalStage !== null}

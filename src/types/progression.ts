@@ -92,3 +92,14 @@ export function getMaxEnergyForStage(stage: string): number {
 export function canSelectWeekdays(_stage: string): boolean {
   return true;
 }
+
+// Branches de evolução disponíveis (reduza a lista para restringir).
+export const AVAILABLE_BRANCHES = ['virus', 'data', 'vaccine'] as const;
+export type AvailableBranch = (typeof AVAILABLE_BRANCHES)[number];
+export function clampBranch(b: 'virus' | 'data' | 'vaccine'): 'virus' | 'data' | 'vaccine' {
+  return (AVAILABLE_BRANCHES as readonly string[]).includes(b) ? b : AVAILABLE_BRANCHES[0];
+}
+
+// Evolução manual: quando true, a virada de dia NUNCA evolui sozinha — o
+// jogador dispara pelo botão sobre o pet (tela de cerimônia de evolução).
+export const MANUAL_EVOLUTION = true;

@@ -19,7 +19,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
           ? 'glitch-activity-card'
           : isWin98
           ? 'win98-activity-card'
-          : 'bg-white border border-[#e5e6e7] shadow-lg'
+          : 'sm-card'
       }`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-xl ${

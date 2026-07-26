@@ -84,7 +84,7 @@ export function TaskEditModal({
       <div className={`max-w-md w-full max-h-[90vh] overflow-y-auto ${
         isWin98 
           ? 'bg-[#c0c0c0] border-2 border-white shadow-[inset_1px_1px_0_rgba(255,255,255,0.8),inset_-1px_-1px_0_rgba(0,0,0,0.8)]' 
-          : 'bg-white rounded-2xl shadow-xl'
+          : 'sm-card rounded-2xl'
       }`}>
         {/* Header */}
         <div className={`flex items-center justify-between p-6 ${

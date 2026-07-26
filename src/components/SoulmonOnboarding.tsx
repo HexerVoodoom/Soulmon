@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { Sparkles, ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import {
-  generateOracle, ORACLE_QUESTIONS, ELEMENT_INFO, ALIGNMENT_INFO, REALM_INFO, ROLE_INFO,
+  generateOracle, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
 import type { ActivityCategory } from '../types/attributes';
@@ -9,8 +10,8 @@ import type { ActivityCategory } from '../types/attributes';
 // ---------------------------------------------------------------------------
 // SoulmonOnboarding — o ritual de nascimento do Soulmon: o jogador responde
 // nome/nascimento + um quiz (uma pergunta por página) e, ao final, recebe SEU
-// pet único com as 11 formas já definidas. O pet nasce direto Rookie — este
-// onboarding É o ovo + a incubação, condensados no ritual do oráculo.
+// pet único. O reveal mostra apenas o NOME e uma descrição breve de quem ele é.
+// Visual: Soulmon design system (claro, minimalista, espiritual+digital).
 // ---------------------------------------------------------------------------
 
 interface SoulmonOnboardingProps {
@@ -87,59 +88,53 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     });
   };
 
-  // --- estilos (dark, cósmico — identidade do Soulmon) ---
-  const card: React.CSSProperties = {
-    fontFamily: 'monospace', color: '#e8e0ff',
-  };
-  const btnPrimary: React.CSSProperties = {
-    fontFamily: 'monospace', background: 'linear-gradient(135deg,#7c3aed,#c026d3)',
-    color: '#fff', border: 'none', borderRadius: 12, padding: '12px 20px',
-    fontSize: 15, cursor: 'pointer', width: '100%',
-  };
-  const btnGhost: React.CSSProperties = {
-    fontFamily: 'monospace', background: 'transparent', color: '#b9a9e0',
-    border: '1px solid #4c3a6e', borderRadius: 12, padding: '10px 16px',
-    fontSize: 13, cursor: 'pointer',
-  };
   const input: React.CSSProperties = {
-    fontFamily: 'monospace', width: '100%', boxSizing: 'border-box',
-    background: 'rgba(20,10,40,0.6)', color: '#fff',
-    border: '1px solid #4c3a6e', borderRadius: 10, padding: '12px 14px', fontSize: 16,
+    width: '100%', boxSizing: 'border-box',
+    background: '#fff', color: 'var(--sm-ink)',
+    border: '2px solid var(--sm-line)', borderRadius: 14, padding: '13px 15px', fontSize: 16,
+    outline: 'none',
   };
   const optionBtn = (selected: boolean): React.CSSProperties => ({
-    fontFamily: 'monospace', textAlign: 'left', width: '100%', boxSizing: 'border-box',
-    background: selected ? 'rgba(124,58,237,0.25)' : 'rgba(20,10,40,0.5)',
-    color: selected ? '#fff' : '#cfc3ea',
-    border: selected ? '1.5px solid #a855f7' : '1px solid #3a2c56',
-    borderRadius: 12, padding: '12px 14px', fontSize: 14, cursor: 'pointer', marginBottom: 8,
+    textAlign: 'left', width: '100%', boxSizing: 'border-box',
+    background: selected ? 'var(--sm-primary-soft)' : '#fff',
+    color: selected ? 'var(--sm-primary)' : 'var(--sm-ink)',
+    border: selected ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
+    borderRadius: 14, padding: '13px 15px', fontSize: 14, cursor: 'pointer', marginBottom: 8,
+    fontWeight: selected ? 700 : 500,
+    transition: 'all .12s ease',
   });
 
   return (
-    <div style={{
+    <div className="sm-app-bg" style={{
       position: 'fixed', inset: 0, overflowY: 'auto',
-      background: 'radial-gradient(circle at 50% 20%, #2a1a4a 0%, #140a24 55%, #0a0616 100%)',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
+      color: 'var(--sm-ink)',
     }}>
-      <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px', ...card }}>
+      <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
         {/* Barra de progresso */}
         {step > 0 && step <= REVEAL && (
-          <div style={{ height: 4, background: '#2a1e44', borderRadius: 4, marginBottom: 24, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress * 100}%`, background: 'linear-gradient(90deg,#7c3aed,#c026d3)', transition: 'width .3s' }} />
+          <div style={{ height: 10, background: 'var(--sm-line)', borderRadius: 8, marginBottom: 24, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progress * 100}%`, background: 'var(--sm-primary)', borderRadius: 8, transition: 'width .3s' }} />
           </div>
         )}
 
         {/* 0 — Intro */}
         {step === 0 && (
           <div style={{ textAlign: 'center', paddingTop: 60 }}>
-            <div style={{ fontSize: 64, marginBottom: 12 }}>🔮</div>
-            <h1 style={{ fontSize: 30, margin: '0 0 8px', color: '#fff', letterSpacing: 1 }}>Soulmon</h1>
-            <p style={{ fontSize: 15, color: '#c3b6e6', lineHeight: 1.6, margin: '0 0 32px' }}>
+            <div style={{
+              width: 88, height: 88, margin: '0 auto 18px', borderRadius: 28,
+              background: 'var(--sm-primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Sparkles size={44} color="var(--sm-primary)" strokeWidth={1.8} />
+            </div>
+            <h1 style={{ fontSize: 32, margin: '0 0 8px', fontWeight: 800, letterSpacing: -0.5 }}>Soulmon</h1>
+            <p style={{ fontSize: 15, color: 'var(--sm-muted)', lineHeight: 1.6, margin: '0 0 32px' }}>
               {isPt
                 ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA — única, só sua, com todas as suas evoluções.'
                 : 'Every soul carries a creature. Answer a few questions and reveal YOURS — unique, yours alone, with all its evolutions.'}
             </p>
-            <button style={btnPrimary} onClick={() => setStep(1)}>
-              {isPt ? '✨ Começar' : '✨ Begin'}
+            <button className="sm-btn" style={{ width: '100%' }} onClick={() => setStep(1)}>
+              {isPt ? 'Começar' : 'Begin'}
             </button>
           </div>
         )}
@@ -212,70 +207,34 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
 
         {/* Gerando */}
         {step === GENERATING && (
-          <div style={{ textAlign: 'center', paddingTop: 80 }}>
-            <div style={{ fontSize: 56, marginBottom: 20, animation: 'soulspin 1.4s linear infinite' }}>🌀</div>
-            <p style={{ fontSize: 16, color: '#d8ccf5' }}>
+          <div style={{ textAlign: 'center', paddingTop: 90 }}>
+            <LoaderCircle size={52} color="var(--sm-primary)" strokeWidth={2}
+              style={{ animation: 'soulspin 1.1s linear infinite', marginBottom: 20 }} />
+            <p style={{ fontSize: 16, color: 'var(--sm-muted)' }}>
               {isPt ? 'Revelando a criatura da sua alma…' : 'Revealing your soul\'s creature…'}
             </p>
             <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
 
-        {/* Reveal */}
+        {/* Reveal — apenas nome + descrição breve */}
         {step === REVEAL && result && (
-          <div>
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 12, color: '#a99bd0', letterSpacing: 2 }}>
-                {isPt ? 'A CRIATURA DA SUA ALMA' : 'YOUR SOUL\'S CREATURE'}
-              </div>
-              <h1 style={{ fontSize: 32, margin: '6px 0 4px', color: '#fff' }}>{result.creature.baseName}</h1>
-              <div style={{ fontSize: 13, color: '#c9bdea' }}>
-                {ELEMENT_INFO[result.dominantElement].emoji} {L(ELEMENT_INFO[result.dominantElement].name)}
-                {' · '}{ALIGNMENT_INFO[result.dominantAlignment].emoji} {L(ALIGNMENT_INFO[result.dominantAlignment].name)}
-                {' · '}{ROLE_INFO[result.dominantRole].emoji} {L(ROLE_INFO[result.dominantRole].name)}
-                {' · '}{REALM_INFO[result.dominantRealm].emoji} {L(REALM_INFO[result.dominantRealm].name)}
-              </div>
+          <div style={{ textAlign: 'center', paddingTop: 40 }}>
+            <div style={{ fontSize: 12, color: 'var(--sm-muted)', letterSpacing: 2, fontWeight: 700 }}>
+              {isPt ? 'A CRIATURA DA SUA ALMA' : 'YOUR SOUL\'S CREATURE'}
+            </div>
+            <h1 style={{ fontSize: 36, margin: '10px 0 18px', fontWeight: 800, letterSpacing: -0.5 }}>
+              {result.creature.baseName}
+            </h1>
+
+            <div className="sm-card" style={{ padding: '18px 16px', marginBottom: 28 }}>
+              <p style={{ fontSize: 14, color: 'var(--sm-ink)', lineHeight: 1.7, margin: 0 }}>
+                {L(result.creature.bio)}
+              </p>
             </div>
 
-            <p style={{ fontSize: 12, color: '#c9bdea', textAlign: 'center', margin: '0 0 8px' }}>
-              🧬 {L(result.creature.family.primary.family)} ({L(result.creature.family.primary.subfamily)})
-              {!result.creature.family.mono && (
-                result.creature.family.secondary.isObject
-                  ? ` + 🗡️ ${L(result.creature.family.secondary.subfamily)}`
-                  : ` + ${L(result.creature.family.secondary.family)} (${L(result.creature.family.secondary.subfamily)})`
-              )}
-            </p>
-
-            <p style={{ fontSize: 13, fontStyle: 'italic', color: '#e0d6ff', textAlign: 'center',
-              lineHeight: 1.6, margin: '0 0 20px', padding: '0 4px' }}>
-              “{L(result.creature.bio)}”
-            </p>
-
-            <div style={{ fontSize: 11, color: '#a99bd0', letterSpacing: 1, marginBottom: 8 }}>
-              {isPt ? 'LINHA DE EVOLUÇÃO' : 'EVOLUTION LINE'}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 24 }}>
-              {result.creature.stages.map(s => (
-                <div key={`${s.stage}-${s.branch ?? 'base'}`}
-                  style={{ display: 'flex', justifyContent: 'space-between',
-                    background: 'rgba(20,10,40,0.5)', border: '1px solid #33254f',
-                    borderRadius: 10, padding: '8px 12px', fontSize: 12 }}>
-                  <span style={{ color: '#fff' }}>{s.name}</span>
-                  <span style={{ color: '#a99bd0' }}>
-                    {L(s.stageName)}{s.branch ? ` · ${L(ALIGNMENT_INFO[s.branch].attribute)}` : ''}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <p style={{ fontSize: 11, color: '#8a7cb0', textAlign: 'center', marginBottom: 14 }}>
-              {isPt
-                ? '🎨 Em breve: as imagens de cada forma serão geradas e instaladas como seu pet.'
-                : '🎨 Soon: each form\'s image will be generated and installed as your pet.'}
-            </p>
-
-            <button style={btnPrimary} onClick={finish}>
-              {isPt ? `🥚 Nascer ${result.creature.baseName}` : `🥚 Hatch ${result.creature.baseName}`}
+            <button className="sm-btn" style={{ width: '100%' }} onClick={finish}>
+              {isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`}
             </button>
           </div>
         )}
@@ -283,15 +242,20 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
         {/* Navegação (para passos com input manual) */}
         {step >= 1 && step <= 4 && (
           <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-            <button style={btnGhost} onClick={back}>← {isPt ? 'Voltar' : 'Back'}</button>
-            <button style={{ ...btnPrimary, opacity: canAdvance() ? 1 : 0.4, flex: 1 }}
-              onClick={next} disabled={!canAdvance()}>
-              {isPt ? 'Continuar →' : 'Continue →'}
+            <button className="sm-btn sm-btn-secondary" onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
+              <ArrowLeft size={18} strokeWidth={2.4} />
+            </button>
+            <button className="sm-btn" style={{ flex: 1 }} onClick={next} disabled={!canAdvance()}>
+              {isPt ? 'Continuar' : 'Continue'}
+              <ArrowRight size={18} strokeWidth={2.4} />
             </button>
           </div>
         )}
         {step >= QUIZ_START && step < QUIZ_END && step > QUIZ_START && (
-          <button style={{ ...btnGhost, marginTop: 8 }} onClick={back}>← {isPt ? 'Voltar' : 'Back'}</button>
+          <button className="sm-btn sm-btn-secondary" style={{ marginTop: 8 }} onClick={back}>
+            <ArrowLeft size={16} strokeWidth={2.4} />
+            {isPt ? 'Voltar' : 'Back'}
+          </button>
         )}
       </div>
     </div>
@@ -301,8 +265,8 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
 function StepShell({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ paddingTop: 20 }}>
-      <h2 style={{ fontSize: 20, color: '#fff', margin: '0 0 6px', lineHeight: 1.35 }}>{title}</h2>
-      {hint && <p style={{ fontSize: 12, color: '#a99bd0', margin: '0 0 20px' }}>{hint}</p>}
+      <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>{title}</h2>
+      {hint && <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 20px' }}>{hint}</p>}
       {children}
     </div>
   );

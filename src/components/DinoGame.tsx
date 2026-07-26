@@ -90,8 +90,11 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onEx
     let dead = false;
 
     // Draw an image horizontally mirrored (enemies face left; pet faces right)
+    // Arte em transição: sprites legados desenhados como silhueta.
+    const SILHOUETTE = 'brightness(0) opacity(0.85)';
     const drawFlipped = (img: HTMLImageElement, x: number, y: number, w: number, h: number) => {
       ctx.save();
+      ctx.filter = SILHOUETTE;
       ctx.translate(x + w, y);
       ctx.scale(-1, 1);
       ctx.drawImage(img, 0, 0, w, h);
@@ -148,7 +151,13 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onEx
       }
       const pet = petImgRef.current;
       if (pet?.complete) {
-        if (petNeedsFlip) drawFlipped(pet, DINO_X, GROUND - DINO_S - s.h, DINO_S, DINO_S);
+        if (petNeedsFlip) {
+          ctx.save();
+          ctx.translate(DINO_X + DINO_S, GROUND - DINO_S - s.h);
+          ctx.scale(-1, 1);
+          ctx.drawImage(pet, 0, 0, DINO_S, DINO_S);
+          ctx.restore();
+        }
         else ctx.drawImage(pet, DINO_X, GROUND - DINO_S - s.h, DINO_S, DINO_S);
       }
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));

@@ -5004,3 +5004,37 @@ html {
   border-top: 1px solid var(--sm-line);
   box-shadow: 0 -6px 24px rgba(42, 36, 64, .07);
 }
+
+/* Fase de transição de arte: sprites legados exibidos como silhueta
+   ("forma misteriosa") até os sprites definitivos do Soulmon chegarem. */
+.sprite-silhouette {
+  filter: brightness(0) opacity(0.82) drop-shadow(0 0 6px rgba(109, 91, 208, .45));
+}
+
+/* Cerimônia de evolução: fundo cósmico animado (placeholder de vídeo) */
+.evo-bg {
+  background:
+    radial-gradient(circle at 30% 30%, rgba(124, 92, 255, 0.35), transparent 55%),
+    radial-gradient(circle at 70% 65%, rgba(217, 164, 65, 0.22), transparent 50%),
+    radial-gradient(circle at 50% 50%, #241c46 0%, #120c28 60%, #080517 100%);
+  animation: evo-bg-drift 6s ease-in-out infinite alternate;
+}
+@keyframes evo-bg-drift {
+  0%   { background-position: 0 0, 0 0, 0 0; filter: hue-rotate(0deg); }
+  100% { background-position: 40px -30px, -50px 20px, 0 0; filter: hue-rotate(28deg); }
+}
+@keyframes evo-pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes evo-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Botão de evolução flutuante sobre o pet */
+@keyframes evo-btn-pulse {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50%      { transform: translateX(-50%) scale(1.06); }
+}

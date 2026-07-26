@@ -15,8 +15,8 @@ const TIPS = [
   },
   {
     icon: '📅',
-    en: { title: 'Perfect Days', body: 'Complete your daily activities every day to accumulate "perfect days". Fill the bar below the pet to evolve!' },
-    pt: { title: 'Dias Perfeitos', body: 'Complete suas atividades todos os dias para acumular "dias perfeitos". Encha a barra abaixo do pet para evoluir!' },
+    en: { title: 'Perfect Days', body: 'Complete your daily activities every day to accumulate "perfect days". When the bar is full, press the Evolve button that appears over your pet!' },
+    pt: { title: 'Dias Perfeitos', body: 'Complete suas atividades todos os dias para acumular "dias perfeitos". Com a barra cheia, aperte o botão Evoluir que aparece sobre o pet!' },
   },
   {
     icon: '🦠',

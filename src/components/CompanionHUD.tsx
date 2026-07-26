@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
-import bgCyberpunk from "figma:asset/7342065b1193c2befe599eb2d86ef8641f1a596c.png";
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
+import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
@@ -34,6 +34,9 @@ interface CompanionHUDProps {
   perfectDays?: number; // Dias perfeitos acumulados
   requiredDays?: number; // Dias necessários para evolução
   onDigivolve?: () => void;
+  /** Evolução manual: botão sobre o pet quando a barra está cheia. */
+  canEvolve?: boolean;
+  onEvolveRequest?: () => void;
   careEvent?: CareEvent | null;
   onCareEventComplete?: () => void;
   useAI: boolean;
@@ -81,6 +84,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   perfectDays = 0,
   requiredDays = 1,
   onDigivolve,
+  canEvolve = false,
+  onEvolveRequest,
   careEvent,
   onCareEventComplete,
   useAI,
@@ -638,7 +643,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             height: '185px',
             backgroundImage: isWin98
               ? 'none'
-              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css) || `url(${bgCyberpunk})`,
+              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css) || 'radial-gradient(circle at 50% 32%, #453a75 0%, #2b2352 55%, #1c1638 100%)',
             backgroundColor: isWin98 ? '#9cbd90' : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
@@ -654,6 +659,17 @@ export const CompanionHUD = memo(function CompanionHUD({
           >
             {renderHearts()}
           </div>
+
+          {/* Evolução manual: botão aparece SÓ quando pode evoluir */}
+          {canEvolve && !isSleeping && (
+            <button
+              onClick={onEvolveRequest}
+              className="sm-btn sm-btn-gold absolute left-1/2 z-30"
+              style={{ top: 10, transform: 'translateX(-50%)', padding: '8px 18px', fontSize: 14, animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
+            >
+              {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
+            </button>
+          )}
 
           {/* Evolution flash overlay */}
           {evolutionFlash && (
@@ -852,10 +868,10 @@ export const CompanionHUD = memo(function CompanionHUD({
           {/* Desktop icons — top-right of pet area */}
           <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
             {([
-              !isEarlyStage && { key: 'items', icon: '📁', en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-              !isEarlyStage && { key: 'bath', icon: '🚿', en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-              { key: 'sleep', icon: isSleeping ? '☀️' : '💤', en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-            ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined; sub?: string }[]).map(a => (
+              !isEarlyStage && { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+              !isEarlyStage && { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+              { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
+            ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined; sub?: string }[]).map(a => (
               <button
                 key={a.key}
                 onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
@@ -886,7 +902,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     zIndex: 10,
                   }} />
                 )}
-                <span style={{ fontSize: '1.35rem', lineHeight: 1 }}>{a.icon}</span>
+                <a.Icon size={21} strokeWidth={2.1} style={{ color: '#fff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
                 <span style={{ fontFamily: 'monospace', fontSize: '0.62rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
                   {language === 'pt-BR' ? a.pt : a.en}
                 </span>

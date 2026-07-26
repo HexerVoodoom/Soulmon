@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { DigivolutionProgress } from './DigivolutionProgress';
 import { getSpriteForStage } from '../utils/sprites';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
+import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
 
 type Attr = 'virus' | 'data' | 'vaccine';
 const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
@@ -50,7 +51,7 @@ export function EvolutionPath({
   const isPt = language === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions), [unlockedEvolutions]);
-  const [selectedBranch, setSelectedBranch] = useState<Attr>(currentBranch);
+  const [selectedBranch, setSelectedBranch] = useState<Attr>(clampBranch(currentBranch));
   const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean } | null>(null);
   // Locked evolutions are hidden behind a pixelated "?" (spoiler guard). The
   // user can reveal one (shown darkened) after confirming; this local set resets
@@ -153,7 +154,7 @@ export function EvolutionPath({
                     src={getSpriteForStage(stageId, eggType)}
                     alt={evolution.name}
                     className="w-12 h-12 object-contain"
-                    style={{ imageRendering: 'pixelated', filter: evolutionLocked ? 'grayscale(0.7) brightness(0.75)' : 'none' }}
+                    style={{ imageRendering: 'pixelated', opacity: evolutionLocked ? 0.55 : 1 }}
                   />
                   {evolutionLocked && (
                     <span
@@ -169,7 +170,7 @@ export function EvolutionPath({
                   src={getSpriteForStage(stageId, eggType)}
                   alt={isReached ? evolution.name : 'revealed evolution'}
                   className="w-12 h-12 object-contain"
-                  style={{ imageRendering: 'pixelated', filter: isReached ? 'none' : 'brightness(0.35) grayscale(0.35)' }}
+                  style={{ imageRendering: 'pixelated', opacity: isReached ? 1 : 0.45 }}
                 />
               )}
             </div>
@@ -352,41 +353,31 @@ export function EvolutionPath({
         <div className="h-px bg-gradient-to-r from-transparent via-gray-400 to-transparent flex-1" />
       </div>
 
-      {/* Branch Selector Buttons - Always visible and unlocked */}
+      {/* Seletor de branch — só os branches disponíveis (transição de arte) */}
       <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setSelectedBranch('virus')}
-          className={`flex-1 py-3 rounded-xl border transition-all ${
-            selectedBranch === 'virus'
-              ? 'bg-[#22A900] border-[#22A900] text-white shadow-sm'
-              : 'bg-white border-gray-200 text-[#22A900] hover:bg-[#22A900]/10'
-          }`}
-          style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-        >
-          🦠 VIRUS
-        </button>
-        <button
-          onClick={() => setSelectedBranch('data')}
-          className={`flex-1 py-3 rounded-xl border transition-all ${
-            selectedBranch === 'data'
-              ? 'bg-[#009ED8] border-[#009ED8] text-white shadow-sm'
-              : 'bg-white border-gray-200 text-[#009ED8] hover:bg-[#009ED8]/10'
-          }`}
-          style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-        >
-          💾 DATA
-        </button>
-        <button
-          onClick={() => setSelectedBranch('vaccine')}
-          className={`flex-1 py-3 rounded-xl border transition-all ${
-            selectedBranch === 'vaccine'
-              ? 'bg-[#E69600] border-[#E69600] text-white shadow-sm'
-              : 'bg-white border-gray-200 text-[#E69600] hover:bg-[#E69600]/10'
-          }`}
-          style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-        >
-          💉 VACCINE
-        </button>
+        {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
+          const cfg = {
+            virus:   { color: '#22A900', label: 'VIRUS' },
+            data:    { color: '#009ED8', label: 'DATA' },
+            vaccine: { color: '#E69600', label: 'VACCINE' },
+          }[b];
+          const active = selectedBranch === b;
+          return (
+            <button
+              key={b}
+              onClick={() => setSelectedBranch(b)}
+              className="flex-1 py-3 rounded-xl border transition-all"
+              style={{
+                fontFamily: 'monospace', fontSize: '0.75rem',
+                background: active ? cfg.color : '#fff',
+                borderColor: active ? cfg.color : '#e5e7eb',
+                color: active ? '#fff' : cfg.color,
+              }}
+            >
+              {cfg.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Branch-Specific Evolution Path - Always visible */}

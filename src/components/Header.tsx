@@ -48,7 +48,6 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
   // Tema padrão — Soulmon design system (moderno, minimalista)
   const items: { view: ViewType; label: string; Icon: typeof Home }[] = [
     { view: 'games', label: 'Atividades', Icon: Gamepad2 },
-    { view: 'oracle', label: 'Oráculo', Icon: Sparkles },
     { view: 'evolution', label: 'Evolução', Icon: GitBranch },
     { view: 'stats', label: 'Estatísticas', Icon: BarChart3 },
     { view: 'settings', label: 'Configurações', Icon: Settings },

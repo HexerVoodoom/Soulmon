@@ -36,10 +36,16 @@ const TIER_BASE: Record<EnemyTier, { hp: number; atk: number; speed: number; poi
   mega:       { hp: 28, atk: 8, speed: 1.6,  points: 13 },
 };
 
-// Pretty display name from a sprite key: 'gatomon-black' → 'Gatomon Black'.
-function prettyName(stage: string): string {
-  return stage.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-}
+// Nomes genéricos de espíritos por tier (os sprites legados foram ocultados;
+// inimigos usam o sprite espiritual placeholder até a arte final chegar).
+const SPIRIT_NAMES: Record<EnemyTier, string> = {
+  'baby-i': 'Faísca Errante',
+  'baby-ii': 'Vulto Tímido',
+  rookie: 'Espírito Errante',
+  champion: 'Espírito Voraz',
+  ultimate: 'Anima Sombria',
+  mega: 'Eidolon Ancestral',
+};
 
 // Extra dungeon-only enemies (not part of the pet's evolution tree). Their
 // sprites live in STAGE_SPRITES; this maps each to the tier it fights at.
@@ -80,7 +86,7 @@ export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[
     const key = pool[Math.floor(Math.random() * pool.length)];
     const variance = 0.9 + Math.random() * 0.2;    // ±10% on HP
     return {
-      name: prettyName(key),
+      name: SPIRIT_NAMES[tier],
       stage: key,
       hp: Math.max(5, Math.round(base.hp * hpMult * variance)),
       atk: Math.max(2, Math.round(base.atk * atkMult)),

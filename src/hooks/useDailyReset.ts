@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
+import { FORM_REQUIREMENTS, MANUAL_EVOLUTION, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays } from '../types/progression';
 import { getNextEvolution, getPreviousForm } from '../utils/dailyReset';
 
 interface Step { id: string; label: string; completed: boolean; }
@@ -120,7 +120,7 @@ export function useDailyReset({
       // Evolution check. The padlock on the Evolution page blocks it entirely:
       // perfect days keep accumulating, and unlocking makes the pet evolve on
       // the NEXT day turn (this same check passes then).
-      if (!prev.evolutionLocked && newPerfectDays >= requirements.required) {
+      if (!MANUAL_EVOLUTION && !prev.evolutionLocked && newPerfectDays >= requirements.required) {
         newPerfectDays = 0;
 
         // Use attributes accumulated since the last evolution for branch — not the
