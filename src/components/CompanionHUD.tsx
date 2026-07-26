@@ -660,7 +660,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             height: '185px',
             backgroundImage: isWin98
               ? 'none'
-              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css) || 'radial-gradient(circle at 50% 32%, #453a75 0%, #2b2352 55%, #1c1638 100%)',
+              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css) || 'linear-gradient(160deg, #dbe9ff 0%, #d6eee4 55%, #d9f2e3 100%)',
             backgroundColor: isWin98 ? '#9cbd90' : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
