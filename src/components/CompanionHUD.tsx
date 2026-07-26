@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { createPortal } from 'react-dom';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
@@ -657,11 +658,12 @@ export const CompanionHUD = memo(function CompanionHUD({
                 : ''
           }`}
           style={{
-            height: '230px',
+            height: '250px',
             borderRadius: isWin98 || isGlitch ? 0 : 28,
             backgroundImage: isWin98
               ? 'none'
-              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css) || 'linear-gradient(160deg, #dbe9ff 0%, #d6eee4 55%, #d9f2e3 100%)',
+              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css)
+                || 'radial-gradient(ellipse 68% 62% at 50% 52%, rgba(219,233,255,0.95) 0%, rgba(214,238,228,0.7) 45%, rgba(217,242,227,0.35) 68%, rgba(217,242,227,0) 88%)',
             backgroundColor: isWin98 ? '#9cbd90' : undefined,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
@@ -968,22 +970,25 @@ export const CompanionHUD = memo(function CompanionHUD({
 
       </div>
 
-      {/* Chat Box - Below Companion Area */}
-      <div className="mt-2">
-        <ChatBox 
-          digimonName={currentStage}
-          mood={companionMood}
-          evolutionStage={evolutionStage}
-          dominantBranch={dominantBranch}
-          useAI={useAI}
-          onSendMessage={handleChatMessage}
-          theme={theme}
-          aiSettings={aiSettings}
-          onOpenAISettings={onOpenAISettings}
-          onCreateActivity={onCreateActivity}
-          language={language}
-        />
-      </div>
+      {/* Chat Box — via portal, fixo no rodapé da tela (não rola com o conteúdo) */}
+      {typeof document !== 'undefined' && document.getElementById('chat-portal-root') && createPortal(
+        <div className={isWin98 || isGlitch ? '' : 'sm-chat-fixed'}>
+          <ChatBox
+            digimonName={currentStage}
+            mood={companionMood}
+            evolutionStage={evolutionStage}
+            dominantBranch={dominantBranch}
+            useAI={useAI}
+            onSendMessage={handleChatMessage}
+            theme={theme}
+            aiSettings={aiSettings}
+            onOpenAISettings={onOpenAISettings}
+            onCreateActivity={onCreateActivity}
+            language={language}
+          />
+        </div>,
+        document.getElementById('chat-portal-root')!,
+      )}
     </div>
   );
 });

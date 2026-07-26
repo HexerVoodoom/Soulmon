@@ -1372,7 +1372,7 @@ export default function App() {
         </div>
 
         {/* Scrollable Content - com padding bottom para não ficar atrás do companion */}
-        <div className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3' : 'px-6 pt-3'} pb-4`}>
+        <div className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : `px-6 pt-3 ${currentView === 'main' ? 'pb-24' : 'pb-4'}`}`}>
           {currentView === 'main' && (
             <div className="space-y-3">
               <AttributeBadges

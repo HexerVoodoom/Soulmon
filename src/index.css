@@ -4932,14 +4932,16 @@ html {
   padding: 10px 14px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.sm-nav::-webkit-scrollbar { display: none; }
 .sm-nav-group {
-  display: flex; gap: 6px; align-items: center;
-  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+  display: flex; gap: 8px; align-items: center;
 }
-.sm-nav-group::-webkit-scrollbar { display: none; }
 
 /* Botão de navegação: pill arredondada, estado ativo violeta suave */
 .sm-nav-btn {
@@ -5057,3 +5059,17 @@ html {
   0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
   50%      { transform: translateY(-8px) scale(1.15); opacity: 0.9; }
 }
+
+/* Barra de chat fixa no rodapé (portal a partir de #chat-portal-root em
+   index.html) — sempre visível na tela Home, independente do scroll. */
+.sm-chat-fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  padding: 8px 24px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(234,247,238,0) 0%, rgba(234,247,238,0.92) 35%, rgba(234,247,238,1) 100%);
+  pointer-events: none;
+}
+.sm-chat-fixed > * { pointer-events: auto; }
