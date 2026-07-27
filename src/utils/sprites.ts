@@ -28,13 +28,31 @@ import serahRookie from '../assets/soulmon/lines/serah-rookie.png';
 import serahChampion from '../assets/soulmon/lines/serah-champion.png';
 import serahUltimate from '../assets/soulmon/lines/serah-ultimate.png';
 import serahMega from '../assets/soulmon/lines/serah-mega.png';
+import kaelenRookie from '../assets/soulmon/lines/kaelen-rookie.png';
+import kaelenChampion from '../assets/soulmon/lines/kaelen-champion-virus.png';
+import kaelenUltimate from '../assets/soulmon/lines/kaelen-ultimate-virus.png';
+import kaelenMega from '../assets/soulmon/lines/kaelen-mega-virus.png';
+import orrinRookie from '../assets/soulmon/lines/orrin-rookie.png';
+import orrinChampion from '../assets/soulmon/lines/orrin-champion.png';
+import orrinUltimate from '../assets/soulmon/lines/orrin-ultimate.png';
+import orrinMega from '../assets/soulmon/lines/orrin-mega.png';
+import thalindraRookie from '../assets/soulmon/lines/thalindra-rookie.png';
+import thalindraChampion from '../assets/soulmon/lines/thalindra-champion.png';
+import thalindraUltimate from '../assets/soulmon/lines/thalindra-ultimate.png';
+import thalindraMega from '../assets/soulmon/lines/thalindra-mega.png';
 
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   ignar: { rookie: ignarRookie, champion: ignarChampion, ultimate: ignarUltimate, mega: ignarMega },
   lumel: { rookie: lumelRookie, champion: lumelChampion, ultimate: lumelUltimate, mega: lumelMega },
   serah: { rookie: serahRookie, champion: serahChampion, ultimate: serahUltimate, mega: serahMega },
+  kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
+  orrin: { rookie: orrinRookie, champion: orrinChampion, ultimate: orrinUltimate, mega: orrinMega },
+  thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
 };
-const DUNGEON_LINE_NAMES: Record<string, string> = { ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah' };
+const DUNGEON_LINE_NAMES: Record<string, string> = {
+  ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah',
+  kaelen: 'Pyrakamon', orrin: 'Akashaoimon', thalindra: 'Nimbratamon',
+};
 
 /** Sprite de inimigo de masmorra: sorteia uma das 3 linhas placeholder pelo
  *  tier (baby-i/ii caem no rookie da linha; mega cobre ultimate também). */
