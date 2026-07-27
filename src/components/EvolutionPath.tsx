@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { DigivolutionProgress } from './DigivolutionProgress';
+import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
@@ -15,7 +16,7 @@ const ATTR_LABEL: Record<Attr, LText> = {
   data: { pt: 'Harmonia', en: 'Harmony' },
   vaccine: { pt: 'Benevolência', en: 'Benevolence' },
 };
-const ATTR_EMOJI: Record<Attr, string> = { virus: '🔥', data: '🌊', vaccine: '✨' };
+const ATTR_ICON: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
 
 interface EvolutionPathProps {
   /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */
@@ -298,11 +299,15 @@ export function EvolutionPath({
           {isPt ? 'Alinhamento atual' : 'Current alignment'}
         </p>
         <div className="flex justify-between text-sm">
-          {ATTR_ORDER.map(a => (
-            <span key={a} style={{ fontWeight: 700, color: getBranchColor(a).hex, fontSize: '0.85rem' }}>
-              {ATTR_EMOJI[a]} {L(ATTR_LABEL[a])}: {a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints}
-            </span>
-          ))}
+          {ATTR_ORDER.map(a => {
+            const Icon = ATTR_ICON[a];
+            return (
+              <span key={a} className="flex items-center gap-1.5" style={{ fontWeight: 700, color: getBranchColor(a).hex, fontSize: '0.85rem' }}>
+                <Icon size={16} color={getBranchColor(a).hex} strokeWidth={2.2} />
+                {L(ATTR_LABEL[a])}: {a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints}
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -337,11 +342,12 @@ export function EvolutionPath({
         {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
           const hex = getBranchColor(b).hex;
           const active = selectedBranch === b;
+          const Icon = ATTR_ICON[b];
           return (
             <button
               key={b}
               onClick={() => setSelectedBranch(b)}
-              className="flex-1 py-2.5 rounded-xl border transition-all font-semibold"
+              className="flex-1 py-2.5 rounded-xl border transition-all font-semibold flex items-center justify-center gap-1.5"
               style={{
                 fontSize: '0.75rem',
                 background: active ? hex : 'var(--sm-surface)',
@@ -349,7 +355,8 @@ export function EvolutionPath({
                 color: active ? '#fff' : hex,
               }}
             >
-              {ATTR_EMOJI[b]} {L(ATTR_LABEL[b])}
+              <Icon size={16} color={active ? '#fff' : hex} strokeWidth={2.2} />
+              {L(ATTR_LABEL[b])}
             </button>
           );
         })}

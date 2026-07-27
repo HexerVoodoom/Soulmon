@@ -2218,7 +2218,7 @@ function composeSpritePrompt(args: {
   concept: string; colorDesc: string; accent: string; levelBlock: string;
 }): string {
   return (
-    `Generate this RPG creature inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Hello Kitty, Tamagotchi and World of Warcraft. ` +
+    `Generate this RPG creature inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. ` +
     `Tamagotchi-style v-pet sprite, 16x16 pixel art, no background, transparent background: ` +
     `${args.concept}. ${args.levelBlock}. ` +
     `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing.`
