@@ -69,6 +69,8 @@ export default function App() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  // Atalho de minijogo vindo do menu do Header — consumido assim que a ActivitiesPage abre.
+  const [pendingGame, setPendingGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
   const [digivolveModalStage, setDigivolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
@@ -1368,6 +1370,8 @@ export default function App() {
             onNavigate={setCurrentView}
             theme={theme}
             onResetOnboarding={handleResetOnboarding}
+            onOpenGame={(game) => { setPendingGame(game); setCurrentView('games'); }}
+            language={language}
           />
         </div>
 
@@ -1713,6 +1717,8 @@ export default function App() {
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}
                 onEquipBackground={handleEquipBackground}
+                initialGame={pendingGame}
+                onConsumeInitialGame={() => setPendingGame(null)}
               />
             </Suspense>
           )}

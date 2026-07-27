@@ -2218,13 +2218,10 @@ function composeSpritePrompt(args: {
   concept: string; colorDesc: string; accent: string; levelBlock: string;
 }): string {
   return (
+    `Generate this RPG creature inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Hello Kitty, Tamagotchi and World of Warcraft. ` +
     `Tamagotchi-style v-pet sprite, 16x16 pixel art, no background, transparent background: ` +
     `${args.concept}. ${args.levelBlock}. ` +
-    `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
-    // Cada prompt é gerado de forma INDEPENDENTE (a IA não vê os outros
-    // estágios) — por isso repetimos o conceito/paleta VERBATIM em todos os
-    // 11 prompts e reforçamos que é a mesma espécie.
-    `Same character design and color palette as the species' other evolution stages.`
+    `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing.`
   );
 }
 
@@ -2467,11 +2464,11 @@ const REALM_ACCENTS: Record<RealmId, string[]> = {
 };
 
 export const STAGE_NAMES: Record<StageId, LText> = {
-  rookie: { pt: 'Rookie', en: 'Rookie' },
-  champion: { pt: 'Champion', en: 'Champion' },
-  perfeito: { pt: 'Perfeito', en: 'Perfect' },
-  mega: { pt: 'Mega', en: 'Mega' },
-  ultra: { pt: 'Ultra', en: 'Ultra' },
+  rookie: { pt: 'Desperto', en: 'Awakened' },
+  champion: { pt: 'Ascendente', en: 'Ascendant' },
+  perfeito: { pt: 'Transcendente', en: 'Transcendent' },
+  mega: { pt: 'Apoteose', en: 'Apotheosis' },
+  ultra: { pt: 'Zênite', en: 'Zenith' },
 };
 
 // ---------------------------------------------------------------------------
