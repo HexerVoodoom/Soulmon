@@ -28,9 +28,10 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const isPt = localStorage.getItem(STORAGE_KEYS.LANGUAGE) === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
-  // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5..(5+N-1) quiz ·
-  //         then gerando · reveal
-  const QUIZ_START = 5;
+  // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
+  //         6..(6+N-1) quiz · then gerando · reveal
+  const FAVORITE_STEP = 5;
+  const QUIZ_START = FAVORITE_STEP + 1;
   const QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length; // primeiro passo pós-quiz
   const GENERATING = QUIZ_END;
   const REVEAL = QUIZ_END + 1;
@@ -41,6 +42,8 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const [birthDateText, setBirthDateText] = useState('');
   const [birthTime, setBirthTime] = useState('12:00');
   const [birthPlace, setBirthPlace] = useState('');
+  const [favoriteCreature, setFavoriteCreature] = useState('');
+  const [skipFavorite, setSkipFavorite] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<OracleResult | null>(null);
 
@@ -51,6 +54,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     if (step === 2) return !!birthDate;
     if (step === 3) return !!birthTime;
     if (step === 4) return birthPlace.trim().length >= 2;
+    // Criatura favorita é opcional — sempre dá pra avançar.
     if (step >= QUIZ_START && step < QUIZ_END) {
       return !!answers[ORACLE_QUESTIONS[step - QUIZ_START].id];
     }
@@ -60,6 +64,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const doGenerate = () => {
     const input: OracleInput = {
       fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(), answers,
+      favoriteCreature: skipFavorite ? undefined : (favoriteCreature.trim() || undefined),
     };
     const r = generateOracle(input);
     setResult(r);
@@ -204,7 +209,30 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
           </StepShell>
         )}
 
-        {/* 5..N — Quiz (uma pergunta por página) */}
+        {/* 5 — Criatura favorita (opcional) */}
+        {step === FAVORITE_STEP && (
+          <StepShell title={isPt ? 'Qual sua criatura favorita?' : "What's your favorite creature?"}
+            hint={isPt ? 'Opcional — até 2 palavras. Ela influencia a aparência da sua criatura.' : 'Optional — up to 2 words. It shapes how your creature looks.'}>
+            <input style={{ ...input, opacity: skipFavorite ? 0.5 : 1 }} type="text" value={favoriteCreature} autoFocus
+              disabled={skipFavorite}
+              onChange={e => setFavoriteCreature(e.target.value.split(/\s+/).slice(0, 2).join(' '))}
+              placeholder={isPt ? 'Ex.: axolote' : 'E.g.: axolotl'}
+              onKeyDown={e => e.key === 'Enter' && next()} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={skipFavorite}
+                onChange={e => setSkipFavorite(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>
+                {isPt ? 'Prefiro não influenciar o resultado' : "I'd rather not influence the result"}
+              </span>
+            </label>
+          </StepShell>
+        )}
+
+        {/* 6..N — Quiz (uma pergunta por página) */}
         {step >= QUIZ_START && step < QUIZ_END && (() => {
           const q = ORACLE_QUESTIONS[step - QUIZ_START];
           return (
@@ -267,7 +295,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
         )}
 
         {/* Navegação (para passos com input manual) */}
-        {step >= 1 && step <= 4 && (
+        {step >= 1 && step <= FAVORITE_STEP && (
           <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
             <button className="sm-btn sm-btn-secondary" onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
               <ArrowLeft size={18} strokeWidth={2.4} />
