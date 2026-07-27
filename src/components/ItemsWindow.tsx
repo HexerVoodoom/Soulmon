@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
+import { X } from 'lucide-react';
 import type { Language } from '../utils/i18n';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
@@ -9,6 +10,7 @@ interface ItemsWindowProps {
   onFeed: (emoji: string) => void;
   onClose: () => void;
   language?: Language;
+  theme?: 'default' | 'win98' | 'glitch';
 }
 
 const FOOD_NAMES: Record<string, { en: string; pt: string; descEn: string; descPt: string }> = {
@@ -56,364 +58,281 @@ function getFoodAttrs(emoji: string) {
   return CATEGORY_ATTRIBUTES[foodDef.category];
 }
 
-interface Popover {
-  emoji: string;
-  x: number;
-  y: number;
-}
-
 const ATTR_COLORS = {
   vaccine: '#22c55e',
   data: '#4F80E9',
   virus: '#E94F4F',
 };
 
-export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US' }: ItemsWindowProps) {
-  const [pos, setPos] = useState({ x: 40, y: -320 });
-  const [dragging, setDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ mx: 0, my: 0, px: 0, py: 0 });
-  const [justFed, setJustFed] = useState<string | null>(null);
-  const [popover, setPopover] = useState<Popover | null>(null);
-  const windowRef = useRef<HTMLDivElement>(null);
-
+export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US', theme = 'default' }: ItemsWindowProps) {
+  const isWin98 = theme === 'win98';
+  const isGlitch = theme === 'glitch';
   const isPt = language === 'pt-BR';
+  const [selected, setSelected] = useState<string | null>(null);
+  const [justFed, setJustFed] = useState<string | null>(null);
+
   const items = Object.entries(foodInventory).filter(([, c]) => c > 0);
-
-  const onTitleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setDragging(true);
-    setDragStart({ mx: e.clientX, my: e.clientY, px: pos.x, py: pos.y });
-  };
-
-  useEffect(() => {
-    if (!dragging) return;
-    const onMove = (e: MouseEvent) => {
-      setPos({
-        x: dragStart.px + (e.clientX - dragStart.mx),
-        y: dragStart.py + (e.clientY - dragStart.my),
-      });
-    };
-    const onUp = () => setDragging(false);
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
-    };
-  }, [dragging, dragStart]);
-
-  useEffect(() => {
-    if (!popover) return;
-    const handler = () => setPopover(null);
-    window.addEventListener('mousedown', handler);
-    return () => window.removeEventListener('mousedown', handler);
-  }, [popover]);
 
   const handleFeed = (emoji: string) => {
     onFeed(emoji);
     setJustFed(emoji);
-    setPopover(null);
+    setSelected(null);
     setTimeout(() => setJustFed(null), 600);
   };
 
-  const handleItemClick = (emoji: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (popover?.emoji === emoji) {
-      setPopover(null);
-      return;
-    }
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setPopover({
-      emoji,
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-    });
+  const handleItemClick = (emoji: string) => {
+    setSelected(prev => (prev === emoji ? null : emoji));
   };
 
+  const titleText = isPt ? 'Itens' : 'Items';
+  const countText = `${items.length} ${isPt ? (items.length === 1 ? 'item' : 'itens') : (items.length === 1 ? 'item' : 'items')}`;
+
+  const selectedDetail = selected ? (() => {
+    const name = getFoodName(selected, language);
+    const desc = getFoodDesc(selected, language);
+    const special = SPECIAL_ITEMS[selected];
+    const attrs = special ? null : getFoodAttrs(selected);
+    const attrEntries = attrs
+      ? (['vaccine', 'data', 'virus'] as const).filter(k => attrs[k] > 0)
+      : [];
+    return { name, desc, special, attrEntries, attrs };
+  })() : null;
+
   return (
-    <>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: isWin98 ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.45)' }}
+      onClick={onClose}
+    >
       <div
-        ref={windowRef}
-        className="fixed z-[200] select-none"
-        style={{ bottom: `calc(0px + ${-pos.y}px)`, left: pos.x, width: 260 }}
+        className={`w-full max-w-sm rounded-2xl overflow-hidden ${
+          isGlitch ? 'glitch-activity-card' : isWin98 ? 'win98-activity-card' : 'sm-card'
+        }`}
+        onClick={e => e.stopPropagation()}
       >
+        {/* Header */}
         <div
-          className="flex flex-col"
+          className={`flex items-center gap-2 px-4 py-3 ${isWin98 ? '' : 'border-b'}`}
           style={{
-            border: '2px solid',
-            borderColor: '#ffffff #808080 #808080 #ffffff',
-            backgroundColor: '#c0c0c0',
-            boxShadow: '2px 2px 0 #000',
+            borderColor: !isWin98 && !isGlitch ? 'var(--sm-line)' : undefined,
+            borderBottom: isGlitch ? '1px solid rgba(0,255,255,0.4)' : undefined,
+            background: isWin98 ? 'linear-gradient(to right, #000080, #1084d0)' : undefined,
           }}
         >
-          {/* Title bar */}
-          <div
-            className="flex items-center gap-1 px-1 py-0.5 cursor-move"
-            style={{ background: 'linear-gradient(to right, #000080, #1084d0)', userSelect: 'none' }}
-            onMouseDown={onTitleMouseDown}
-          >
-            <span style={{ fontSize: '0.7rem' }}>📁</span>
-            <span className="text-white flex-1 text-xs font-bold" style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>
-              {isPt ? 'Itens' : 'Items'}
-            </span>
-            <div className="flex gap-0.5">
-              {['_', '□'].map(label => (
-                <button
-                  key={label}
-                  className="flex items-center justify-center text-black font-bold leading-none"
-                  style={{
-                    width: 16, height: 14, fontSize: '0.6rem', fontFamily: 'monospace',
-                    backgroundColor: '#c0c0c0',
-                    border: '1.5px solid',
-                    borderColor: '#ffffff #808080 #808080 #ffffff',
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
-              <button
-                onClick={onClose}
-                className="flex items-center justify-center text-black font-bold leading-none hover:bg-red-600 hover:text-white"
-                style={{
-                  width: 16, height: 14, fontSize: '0.65rem', fontFamily: 'monospace',
-                  backgroundColor: '#c0c0c0',
-                  border: '1.5px solid',
-                  borderColor: '#ffffff #808080 #808080 #ffffff',
-                  transition: 'background 0.1s',
-                }}
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-
-          {/* Menu bar */}
-          <div
-            className="flex gap-3 px-2 py-0.5 border-b"
-            style={{ borderColor: '#808080', fontSize: '0.7rem', fontFamily: 'monospace' }}
-          >
-            {[isPt ? 'Arquivo' : 'File', isPt ? 'Editar' : 'Edit', isPt ? 'Ver' : 'View'].map(m => (
-              <span key={m} className="cursor-default hover:bg-[#000080] hover:text-white px-1">{m}</span>
-            ))}
-          </div>
-
-          {/* Toolbar */}
-          <div
-            className="flex items-center gap-1 px-2 py-1 border-b"
-            style={{ borderColor: '#808080' }}
-          >
-            <div
-              className="flex items-center gap-0.5 px-1"
-              style={{
-                border: '1.5px solid', borderColor: '#808080 #ffffff #ffffff #808080',
-                backgroundColor: '#c0c0c0', fontSize: '0.65rem', fontFamily: 'monospace',
-              }}
-            >
-              <span>📁</span>
-              <span>{isPt ? 'Itens' : 'Items'}</span>
-            </div>
-          </div>
-
-          {/* Content area */}
-          <div
-            className="p-2 overflow-y-auto"
+          <span style={{ fontSize: '1.1rem' }}>📁</span>
+          <span
+            className="flex-1 font-bold"
             style={{
-              minHeight: 100, maxHeight: 180,
-              backgroundColor: '#ffffff',
-              border: '1.5px solid', borderColor: '#808080 #ffffff #ffffff #808080',
+              fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+              fontSize: isWin98 ? '0.8rem' : '1rem',
+              color: isWin98 ? '#fff' : isGlitch ? '#00ffff' : 'var(--sm-ink)',
+              textShadow: isGlitch ? '0 0 8px rgba(0,255,255,0.6)' : undefined,
             }}
-            onMouseDown={() => setPopover(null)}
           >
-            {items.length === 0 ? (
-              <p className="text-gray-500 text-center py-4" style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>
-                {isPt ? '(sem itens)' : '(no items)'}
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-1 p-1">
-                {items.map(([emoji, count]) => {
-                  const isActive = popover?.emoji === emoji;
-                  const isFed = justFed === emoji;
-                  return (
-                    <button
-                      key={emoji}
-                      onMouseDown={e => { e.stopPropagation(); handleItemClick(emoji, e); }}
-                      className="flex flex-col items-center gap-0.5 p-1 rounded-none w-14 transition-none"
-                      style={{
-                        backgroundColor: isActive ? '#000080' : 'transparent',
-                        transform: isFed ? 'scale(0.92)' : 'none',
-                        cursor: 'default',
-                      }}
-                      title={getFoodName(emoji, language)}
-                    >
-                      <span style={{ fontSize: '1.5rem', imageRendering: 'pixelated', lineHeight: 1 }}>{emoji}</span>
-                      <span
-                        className="text-center leading-tight break-all"
-                        style={{
-                          fontFamily: 'monospace', fontSize: '0.6rem', lineHeight: '1.1',
-                          color: isActive ? '#fff' : '#000',
-                          maxWidth: 52,
-                        }}
-                      >
-                        {getFoodName(emoji, language)}
-                      </span>
-                      <span
-                        style={{
-                          fontFamily: 'monospace', fontSize: '0.6rem',
-                          color: isActive ? '#adf' : '#666',
-                        }}
-                      >
-                        ×{count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Status bar */}
-          <div
-            className="flex items-center px-2 py-0.5 gap-2"
-            style={{ borderTop: '1.5px solid #808080' }}
+            {titleText}
+          </span>
+          <button
+            onClick={onClose}
+            aria-label={isPt ? 'Fechar' : 'Close'}
+            className="flex items-center justify-center flex-shrink-0"
+            style={{
+              width: 26, height: 26, borderRadius: isWin98 ? 3 : 999,
+              color: isWin98 ? '#000' : isGlitch ? '#00ffff' : 'var(--sm-muted)',
+              background: isWin98 ? '#c0c0c0' : isGlitch ? 'rgba(0,255,255,0.08)' : 'var(--sm-bg)',
+              border: isWin98 ? '1.5px solid' : 'none',
+              borderColor: isWin98 ? '#ffffff #808080 #808080 #ffffff' : undefined,
+            }}
           >
-            <div
-              className="flex-1"
-              style={{
-                border: '1.5px solid', borderColor: '#808080 #ffffff #ffffff #808080',
-                padding: '1px 4px', fontSize: '0.65rem', fontFamily: 'monospace',
-              }}
-            >
-              {items.length} {isPt ? 'objeto(s)' : 'object(s)'}
-            </div>
-          </div>
+            <X size={15} />
+          </button>
         </div>
-      </div>
 
-      {/* Item detail popover */}
-      {popover && (() => {
-        const name = getFoodName(popover.emoji, language);
-        const desc = getFoodDesc(popover.emoji, language);
-        const special = SPECIAL_ITEMS[popover.emoji];
-        const attrs = special ? null : getFoodAttrs(popover.emoji);
-        const attrEntries = attrs
-          ? (['vaccine', 'data', 'virus'] as const).filter(k => attrs[k] > 0)
-          : [];
-
-        return (
-          <div
-            className="fixed z-[300]"
-            style={{
-              left: popover.x,
-              top: popover.y - 160,
-              transform: 'translateX(-50%)',
-              pointerEvents: 'auto',
-              width: 186,
-            }}
-            onMouseDown={e => e.stopPropagation()}
-          >
-            <div
+        {/* Content */}
+        <div
+          className="p-3 overflow-y-auto"
+          style={{
+            maxHeight: '50vh',
+            background: isWin98 ? '#fff' : undefined,
+          }}
+        >
+          {items.length === 0 ? (
+            <p
+              className="text-center py-8"
               style={{
-                border: '2px solid',
-                borderColor: '#ffffff #808080 #808080 #ffffff',
-                backgroundColor: '#c0c0c0',
-                boxShadow: '2px 2px 0 #000',
+                fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+                fontSize: '0.85rem',
+                color: isGlitch ? 'rgba(0,255,255,0.5)' : 'var(--sm-muted)',
               }}
             >
-              {/* Icon + name + description */}
-              <div style={{ padding: '6px 8px', display: 'flex', gap: 8, alignItems: 'flex-start', borderBottom: '1px solid #808080' }}>
-                <span style={{ fontSize: '1.75rem', lineHeight: 1, flexShrink: 0 }}>{popover.emoji}</span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: '0.7rem', fontWeight: 'bold', color: '#000' }}>{name}</div>
-                  {desc && (
-                    <div style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#666', marginTop: 2 }}>{desc}</div>
+              {isPt ? 'Sua pastinha está vazia.' : 'Your item folder is empty.'}
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {items.map(([emoji, count]) => {
+                const isActive = selected === emoji;
+                const isFed = justFed === emoji;
+                return (
+                  <button
+                    key={emoji}
+                    onClick={() => handleItemClick(emoji)}
+                    className="flex flex-col items-center gap-0.5 py-2 rounded-xl transition-transform"
+                    style={{
+                      background: isActive
+                        ? (isWin98 ? '#000080' : isGlitch ? 'rgba(0,255,255,0.15)' : 'var(--sm-primary-soft)')
+                        : (isWin98 ? 'transparent' : isGlitch ? 'rgba(255,255,255,0.03)' : 'var(--sm-bg)'),
+                      border: isGlitch ? '1px solid rgba(0,255,255,0.25)' : 'none',
+                      transform: isFed ? 'scale(0.92)' : 'none',
+                    }}
+                    title={getFoodName(emoji, language)}
+                  >
+                    <span style={{ fontSize: '1.7rem', lineHeight: 1 }}>{emoji}</span>
+                    <span
+                      className="text-center leading-tight break-words px-0.5"
+                      style={{
+                        fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+                        fontSize: '0.62rem',
+                        fontWeight: 600,
+                        color: isActive
+                          ? (isWin98 ? '#fff' : isGlitch ? '#00ffff' : 'var(--sm-primary)')
+                          : (isWin98 ? '#000' : isGlitch ? 'rgba(0,255,255,0.8)' : 'var(--sm-ink)'),
+                      }}
+                    >
+                      {getFoodName(emoji, language)}
+                    </span>
+                    <span
+                      style={{
+                        fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+                        fontSize: '0.65rem',
+                        color: isActive ? (isWin98 ? '#adf' : 'inherit') : 'var(--sm-muted)',
+                        opacity: isActive ? 0.85 : 1,
+                      }}
+                    >
+                      ×{count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Selected item detail — inline, no floating popover */}
+          {selectedDetail && (
+            <div
+              className="mt-3 rounded-xl p-3"
+              style={{
+                background: isWin98 ? '#c0c0c0' : isGlitch ? 'rgba(0,255,255,0.06)' : 'var(--sm-bg)',
+                border: isGlitch ? '1px solid rgba(0,255,255,0.3)' : isWin98 ? '1.5px solid' : '1px solid var(--sm-line)',
+                borderColor: isWin98 ? '#808080 #ffffff #ffffff #808080' : undefined,
+              }}
+            >
+              <div className="flex items-start gap-2">
+                <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{selected}</span>
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="font-bold"
+                    style={{
+                      fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+                      fontSize: '0.8rem',
+                      color: isGlitch ? '#00ffff' : isWin98 ? '#000' : 'var(--sm-ink)',
+                    }}
+                  >
+                    {selectedDetail.name}
+                  </div>
+                  {selectedDetail.desc && (
+                    <div
+                      style={{
+                        fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+                        fontSize: '0.7rem',
+                        color: isGlitch ? 'rgba(0,255,255,0.6)' : 'var(--sm-muted)',
+                        marginTop: 2,
+                      }}
+                    >
+                      {selectedDetail.desc}
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* Attribute points (food) */}
-              {attrEntries.length > 0 && (
-                <div style={{ padding: '4px 8px', display: 'flex', gap: 6, borderBottom: '1px solid #808080' }}>
-                  {attrEntries.map(k => (
-                    <span
-                      key={k}
-                      style={{
-                        fontFamily: 'monospace',
-                        fontSize: '0.6rem',
-                        color: ATTR_COLORS[k],
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      {k === 'vaccine' ? '💉' : k === 'data' ? '💾' : '🦠'}+{attrs![k]}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Special item effect (chip = attribute; heart = heal;
-                  glitchtama = perfect day) */}
-              {special && (
-                <div style={{ padding: '4px 8px', display: 'flex', gap: 6, borderBottom: '1px solid #808080' }}>
-                  {special.kind === 'chip' && special.attr ? (
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: ATTR_COLORS[special.attr], fontWeight: 'bold' }}>
-                      {special.attr === 'vaccine' ? '💉' : special.attr === 'data' ? '💾' : '🦠'}+{CHIP_BOOST}
-                    </span>
-                  ) : special.kind === 'glitchtama' ? (
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#8b5cf6', fontWeight: 'bold' }}>
-                      ⭐+1 {isPt ? 'dia perfeito' : 'perfect day'}
-                    </span>
-                  ) : (
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.6rem', color: '#E94F4F', fontWeight: 'bold' }}>
-                      ❤️+{HEART_HEAL}
-                    </span>
-                  )}
-                </div>
-              )}
+              {/* Effect tags */}
+              <div className="flex items-center gap-2 flex-wrap mt-2">
+                {selectedDetail.attrEntries.map(k => (
+                  <span
+                    key={k}
+                    style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: ATTR_COLORS[k], fontWeight: 'bold' }}
+                  >
+                    {k === 'vaccine' ? '💉' : k === 'data' ? '💾' : '🦠'}+{selectedDetail.attrs![k]}
+                  </span>
+                ))}
+                {selectedDetail.special?.kind === 'chip' && selectedDetail.special.attr && (
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: ATTR_COLORS[selectedDetail.special.attr], fontWeight: 'bold' }}>
+                    {selectedDetail.special.attr === 'vaccine' ? '💉' : selectedDetail.special.attr === 'data' ? '💾' : '🦠'}+{CHIP_BOOST}
+                  </span>
+                )}
+                {selectedDetail.special?.kind === 'glitchtama' && (
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#8b5cf6', fontWeight: 'bold' }}>
+                    ⭐+1 {isPt ? 'dia perfeito' : 'perfect day'}
+                  </span>
+                )}
+                {selectedDetail.special?.kind === 'heart' && (
+                  <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#E94F4F', fontWeight: 'bold' }}>
+                    ❤️+{HEART_HEAL}
+                  </span>
+                )}
+              </div>
 
               {/* Buttons */}
-              <div style={{ padding: '4px 6px', display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
+              <div className="flex justify-end gap-2 mt-3">
                 <button
-                  onClick={() => setPopover(null)}
+                  onClick={() => setSelected(null)}
+                  className={isWin98 ? '' : isGlitch ? '' : 'sm-btn-secondary sm-btn'}
                   style={{
-                    fontFamily: 'monospace', fontSize: '0.65rem',
-                    backgroundColor: '#c0c0c0', padding: '2px 8px',
-                    border: '1.5px solid',
-                    borderColor: '#ffffff #808080 #808080 #ffffff',
-                    cursor: 'default',
+                    fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+                    fontSize: '0.75rem',
+                    padding: isWin98 || isGlitch ? '4px 12px' : undefined,
+                    background: isWin98 ? '#c0c0c0' : isGlitch ? 'transparent' : undefined,
+                    border: isWin98 ? '1.5px solid' : isGlitch ? '1px solid rgba(0,255,255,0.4)' : undefined,
+                    borderColor: isWin98 ? '#ffffff #808080 #808080 #ffffff' : undefined,
+                    color: isGlitch ? '#00ffff' : isWin98 ? '#000' : undefined,
+                    borderRadius: isWin98 ? 3 : isGlitch ? 6 : undefined,
                   }}
-                  onMouseDown={e => e.stopPropagation()}
                 >
                   {isPt ? 'Cancelar' : 'Cancel'}
                 </button>
                 <button
-                  onClick={() => handleFeed(popover.emoji)}
+                  onClick={() => handleFeed(selected!)}
+                  className={isWin98 ? '' : isGlitch ? '' : 'sm-btn'}
                   style={{
-                    fontFamily: 'monospace', fontSize: '0.65rem',
-                    backgroundColor: '#c0c0c0', padding: '2px 8px',
-                    border: '1.5px solid',
-                    borderColor: '#ffffff #808080 #808080 #ffffff',
-                    cursor: 'default',
+                    fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+                    fontSize: '0.75rem',
                     fontWeight: 'bold',
+                    padding: isWin98 || isGlitch ? '4px 12px' : undefined,
+                    background: isWin98 ? '#c0c0c0' : isGlitch ? 'linear-gradient(to right, #ff00ff, #00ffff)' : undefined,
+                    border: isWin98 ? '1.5px solid' : 'none',
+                    borderColor: isWin98 ? '#ffffff #808080 #808080 #ffffff' : undefined,
+                    color: isGlitch ? '#000' : isWin98 ? '#000' : undefined,
+                    borderRadius: isWin98 ? 3 : isGlitch ? 6 : undefined,
                   }}
-                  onMouseDown={e => e.stopPropagation()}
                 >
                   {isPt ? 'Usar' : 'Use'}
                 </button>
               </div>
             </div>
+          )}
+        </div>
 
-            {/* Down-pointing caret */}
-            <div
-              style={{
-                width: 0, height: 0,
-                borderLeft: '6px solid transparent',
-                borderRight: '6px solid transparent',
-                borderTop: '6px solid #808080',
-                margin: '0 auto',
-              }}
-            />
-          </div>
-        );
-      })()}
-    </>
+        {/* Status bar */}
+        <div
+          className="px-4 py-1.5 text-right"
+          style={{
+            fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
+            fontSize: '0.65rem',
+            color: isGlitch ? 'rgba(0,255,255,0.5)' : 'var(--sm-muted)',
+            borderTop: isWin98 ? '1.5px solid #808080' : isGlitch ? '1px solid rgba(0,255,255,0.2)' : '1px solid var(--sm-line)',
+          }}
+        >
+          {countText}
+        </div>
+      </div>
+    </div>
   );
 }

@@ -38,6 +38,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const [step, setStep] = useState(0);
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [birthDateText, setBirthDateText] = useState('');
   const [birthTime, setBirthTime] = useState('12:00');
   const [birthPlace, setBirthPlace] = useState('');
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -78,6 +79,27 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     setStep(s => s + 1);
   };
   const back = () => setStep(s => Math.max(0, s - 1));
+
+  // Máscara DD/MM/AAAA: só dígitos, insere as barras sozinho enquanto digita.
+  const handleBirthDateChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, '').slice(0, 8);
+    let masked = digits;
+    if (digits.length > 4) masked = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    else if (digits.length > 2) masked = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    setBirthDateText(masked);
+
+    if (digits.length === 8) {
+      const day = Number(digits.slice(0, 2));
+      const month = Number(digits.slice(2, 4));
+      const year = Number(digits.slice(4, 8));
+      const valid = year >= 1900 && year <= new Date().getFullYear()
+        && month >= 1 && month <= 12
+        && day >= 1 && day <= new Date(year, month, 0).getDate();
+      setBirthDate(valid ? `${digits.slice(4, 8)}-${digits.slice(2, 4)}-${digits.slice(0, 2)}` : '');
+    } else {
+      setBirthDate('');
+    }
+  };
 
   const finish = () => {
     if (!result) return;
@@ -154,7 +176,12 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
         {step === 2 && (
           <StepShell title={isPt ? 'Quando você nasceu?' : 'When were you born?'}
             hint={isPt ? 'Define seus signos e elementos.' : 'Sets your signs and elements.'}>
-            <input style={input} type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+            <input style={input} type="text" inputMode="numeric" autoComplete="off"
+              value={birthDateText} autoFocus
+              placeholder={isPt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)'}
+              onChange={e => handleBirthDateChange(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && next()}
+              maxLength={10} />
           </StepShell>
         )}
 

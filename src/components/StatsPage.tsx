@@ -23,6 +23,12 @@ interface StatsPageProps {
   activityStats: ActivityStats;
   theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
+  gamePoints?: number;
+  totalXP?: number;
+  streakDays?: number;
+  virusPoints?: number;
+  dataPoints?: number;
+  vaccinePoints?: number;
 }
 
 export function StatsPage({
@@ -30,6 +36,12 @@ export function StatsPage({
   activityStats,
   theme = 'default',
   language = 'en-US',
+  gamePoints = 0,
+  totalXP = 0,
+  streakDays = 0,
+  virusPoints = 0,
+  dataPoints = 0,
+  vaccinePoints = 0,
 }: StatsPageProps) {
   const t = useTranslation(language);
   const isWin98 = theme === 'win98';
@@ -71,8 +83,55 @@ export function StatsPage({
     return date.toLocaleDateString(language, { day: '2-digit', month: 'short' });
   };
 
+  const isPt = language === 'pt-BR';
+
   return (
     <div className="space-y-6">
+      {/* Overview: Bits/XP/Streak + attribute points */}
+      <div
+        className={`rounded-2xl px-4 py-3 ${
+          isGlitch
+            ? 'glitch-activity-card'
+            : isWin98
+              ? 'win98-activity-card'
+              : 'sm-card'
+        }`}
+      >
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="flex items-center gap-1.5">
+            <span style={{ fontSize: '0.9rem' }}>💠</span>
+            <span className="text-xs font-semibold" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Bits</span>
+            <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{gamePoints}</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span style={{ fontSize: '0.9rem' }}>⚡</span>
+            <span className="text-xs font-semibold" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>XP</span>
+            <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{totalXP}</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span style={{ fontSize: '0.9rem' }}>🔥</span>
+            <span className="text-xs font-semibold" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>
+              {isPt ? 'Sequência (dias)' : 'Streak (Days)'}
+            </span>
+            <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{streakDays}</span>
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-2 flex-wrap mt-2 pt-2" style={{ borderTop: `1px solid ${isGlitch ? 'rgba(0,255,255,0.2)' : isWin98 ? '#808080' : 'var(--sm-line)'}` }}>
+          <div className="flex items-center gap-1">
+            <span className="text-xs" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Virus</span>
+            <span className="text-xs font-bold" style={{ color: '#22A900', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{virusPoints}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Data</span>
+            <span className="text-xs font-bold" style={{ color: '#009ED8', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{dataPoints}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Vaccine</span>
+            <span className="text-xs font-bold" style={{ color: '#E69600', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{vaccinePoints}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Activity Completions */}
       <div>
         <h3

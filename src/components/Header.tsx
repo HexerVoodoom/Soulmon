@@ -1,5 +1,5 @@
-import React from 'react';
-import { TestTube2, Home, Gamepad2, Sparkles, GitBranch, BarChart3, Settings, Swords, Users } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { TestTube2, Home, Gamepad2, GitBranch, BarChart3, Settings, Swords, Users, Menu } from 'lucide-react';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
 
@@ -11,6 +11,31 @@ interface HeaderProps {
 }
 
 export function Header({ currentView, onNavigate, theme = 'default', onResetOnboarding }: HeaderProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        menuBtnRef.current && !menuBtnRef.current.contains(e.target as Node)
+      ) setMenuOpen(false);
+    };
+    window.addEventListener('mousedown', handler);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
+  const toggleMenu = () => {
+    if (!menuOpen && menuBtnRef.current) {
+      const rect = menuBtnRef.current.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+    }
+    setMenuOpen(o => !o);
+  };
+
   // Win98 theme - mantém o layout antigo
   if (theme === 'win98') {
     return (
@@ -45,11 +70,13 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
     );
   }
 
-  // Tema padrão — Soulmon design system (moderno, minimalista). Cada ícone
-  // tem uma cor de identidade própria (como na referência), inclusive
-  // inativo — só o fundo ganha o tom mais forte quando está selecionado.
-  const items: { view: ViewType; label: string; Icon: typeof Home; color: string; bg: string }[] = [
+  // Tema padrão — Soulmon design system (moderno, minimalista). Home e
+  // Atividades ficam sempre visíveis (uso mais frequente); o resto vive
+  // agrupado atrás de um único ícone "Mais" que expande um painel.
+  const primaryItems: { view: ViewType; label: string; Icon: typeof Home; color: string; bg: string }[] = [
     { view: 'games', label: 'Atividades', Icon: Gamepad2, color: '#8b5cf6', bg: '#f3e8ff' },
+  ];
+  const groupedItems: { view: ViewType; label: string; Icon: typeof Home; color: string; bg: string }[] = [
     { view: 'evolution', label: 'Evolução', Icon: GitBranch, color: '#22A900', bg: '#eafbe6' },
     { view: 'tournament', label: 'Torneio', Icon: Swords, color: '#e0483e', bg: '#fde8e6' },
     { view: 'library', label: 'Biblioteca', Icon: Users, color: '#009ED8', bg: '#e3f4fc' },
@@ -57,9 +84,10 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
     { view: 'settings', label: 'Configurações', Icon: Settings, color: '#6b7280', bg: '#eef0f3' },
   ];
   const HOME_COLOR = '#e0483e', HOME_BG = '#fde8e6';
+  const isGroupedViewActive = groupedItems.some(i => i.view === currentView);
 
   return (
-    <nav className="sm-nav">
+    <nav className="sm-nav" style={{ position: 'relative' }}>
       <button
         onClick={() => onNavigate('main')}
         aria-label="Início"
@@ -73,20 +101,8 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
         <Home size={22} strokeWidth={2.2} />
       </button>
 
-      {onResetOnboarding && (
-        <button
-          onClick={onResetOnboarding}
-          aria-label="Modo Debug"
-          title="Debug Mode"
-          className="sm-nav-btn"
-          style={{ background: 'var(--sm-surface)', color: 'var(--sm-primary)', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}
-        >
-          <TestTube2 size={20} strokeWidth={2} />
-        </button>
-      )}
-
       <div className="sm-nav-group">
-        {items.map(({ view, label, Icon, color, bg }) => (
+        {primaryItems.map(({ view, label, Icon, color, bg }) => (
           <button
             key={view}
             onClick={() => onNavigate(view)}
@@ -101,6 +117,73 @@ export function Header({ currentView, onNavigate, theme = 'default', onResetOnbo
             <Icon size={22} strokeWidth={2.2} />
           </button>
         ))}
+      </div>
+
+      <div style={{ marginLeft: 'auto' }}>
+        <button
+          ref={menuBtnRef}
+          onClick={toggleMenu}
+          aria-label="Mais"
+          aria-expanded={menuOpen}
+          className="sm-nav-btn"
+          style={{
+            background: isGroupedViewActive || menuOpen ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
+            color: isGroupedViewActive || menuOpen ? 'var(--sm-primary)' : 'var(--sm-muted)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          }}
+        >
+          <Menu size={22} strokeWidth={2.2} />
+        </button>
+
+        {menuOpen && (
+          <div
+            ref={menuRef}
+            className="sm-card"
+            style={{
+              position: 'fixed',
+              top: menuPos.top,
+              right: menuPos.right,
+              zIndex: 50,
+              padding: 10,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 6,
+              width: 240,
+            }}
+          >
+            {groupedItems.map(({ view, label, Icon, color, bg }) => (
+              <button
+                key={view}
+                onClick={() => { onNavigate(view); setMenuOpen(false); }}
+                aria-label={label}
+                className="flex flex-col items-center justify-center gap-1 rounded-xl min-w-0"
+                style={{
+                  padding: '8px 4px',
+                  background: currentView === view ? bg : 'var(--sm-bg)',
+                  color,
+                }}
+              >
+                <Icon size={20} strokeWidth={2.2} />
+                <span className="break-words" style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--sm-ink)', lineHeight: 1.1, textAlign: 'center' }}>
+                  {label}
+                </span>
+              </button>
+            ))}
+            {onResetOnboarding && (
+              <button
+                onClick={() => { onResetOnboarding(); setMenuOpen(false); }}
+                aria-label="Debug"
+                className="flex flex-col items-center justify-center gap-1 rounded-xl min-w-0"
+                style={{ padding: '8px 4px', background: 'var(--sm-bg)', color: 'var(--sm-primary)' }}
+              >
+                <TestTube2 size={20} strokeWidth={2.2} />
+                <span className="break-words" style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--sm-ink)', lineHeight: 1.1 }}>
+                  Debug
+                </span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </nav>
   );
