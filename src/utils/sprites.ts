@@ -29,9 +29,9 @@ import serahChampion from '../assets/soulmon/lines/serah-champion.png';
 import serahUltimate from '../assets/soulmon/lines/serah-ultimate.png';
 import serahMega from '../assets/soulmon/lines/serah-mega.png';
 import kaelenRookie from '../assets/soulmon/lines/kaelen-rookie.png';
-import kaelenChampion from '../assets/soulmon/lines/kaelen-champion.png';
-import kaelenUltimate from '../assets/soulmon/lines/kaelen-ultimate.png';
-import kaelenMega from '../assets/soulmon/lines/kaelen-mega.png';
+import kaelenChampion from '../assets/soulmon/lines/kaelen-champion-virus.png';
+import kaelenUltimate from '../assets/soulmon/lines/kaelen-ultimate-virus.png';
+import kaelenMega from '../assets/soulmon/lines/kaelen-mega-virus.png';
 import orrinRookie from '../assets/soulmon/lines/orrin-rookie.png';
 import orrinChampion from '../assets/soulmon/lines/orrin-champion.png';
 import orrinUltimate from '../assets/soulmon/lines/orrin-ultimate.png';
@@ -51,7 +51,7 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
 };
 const DUNGEON_LINE_NAMES: Record<string, string> = {
   ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah',
-  kaelen: 'Akashakamon', orrin: 'Akashaoimon', thalindra: 'Nimbratamon',
+  kaelen: 'Pyrakamon', orrin: 'Akashaoimon', thalindra: 'Nimbratamon',
 };
 
 /** Sprite de inimigo de masmorra: sorteia uma das 3 linhas placeholder pelo
