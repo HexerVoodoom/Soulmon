@@ -8,7 +8,7 @@ SCRATCH="C:/Users/spera/AppData/Local/Temp/claude/D--Soulmon/28a8d95c-239c-4c1c-
 mkdir -p "$SCRATCH"
 LINE="$1"
 JSONFILE="$2"
-MODEL="nano_banana_2_lite"
+MODEL="gpt_image_2"
 
 prompt_for() {
   node -e "
@@ -49,7 +49,7 @@ for lvl_attr in champion ultimate mega; do
     process.stdout.write(row ? row.stage : '');
   ")
   P=$(prompt_for "$stage_id")
-  WRAPPED="Evolve the creature in the reference image into its next, more developed and powerful form — same species, same color palette and identity, just more advanced. $P"
+  WRAPPED="Evolve the creature in the reference image into its next, more developed and powerful form, just more advanced. $P"
   case "$lvl_attr" in
     champion) C=$(gen champion "$WRAPPED" "$R") ;;
     ultimate) U=$(gen ultimate "$WRAPPED" "$C") ;;

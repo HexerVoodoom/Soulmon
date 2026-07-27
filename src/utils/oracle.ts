@@ -52,6 +52,11 @@ export interface OracleInput {
   /** Descrição livre de como o usuário imagina o pet — pesa 50% (por
    *  palavras-chave) e é injetada no prompt de imagem. Opcional. */
   petDescription?: string;
+  /** "Qual sua criatura favorita?" (1-2 palavras, onboarding) — NÃO substitui
+   *  o conceito gerado (diferente de petDescription): só é injetada como
+   *  prefixo literal antes dele no prompt de imagem, em TODOS os 11
+   *  estágios. Opcional — o usuário pode optar por não influenciar. */
+  favoriteCreature?: string;
 }
 
 /**
@@ -2216,15 +2221,16 @@ const ULTRA_LOOK: string[] = [
  *  longas tipo "wielding X to Y" ou blocos extras de tipo/elemento/bioma. */
 function composeSpritePrompt(args: {
   concept: string; colorDesc: string; accent: string; levelBlock: string;
+  /** "Qual sua criatura favorita?" (1-2 palavras) — prefixo literal antes do
+   *  conceito, em todos os estágios (ver OracleInput.favoriteCreature). */
+  favoriteCreature?: string;
 }): string {
+  const concept = args.favoriteCreature ? `${args.favoriteCreature} ${args.concept}` : args.concept;
   return (
+    `Generate this RPG creature inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. ` +
     `Tamagotchi-style v-pet sprite, 16x16 pixel art, no background, transparent background: ` +
-    `${args.concept}. ${args.levelBlock}. ` +
-    `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
-    // Cada prompt é gerado de forma INDEPENDENTE (a IA não vê os outros
-    // estágios) — por isso repetimos o conceito/paleta VERBATIM em todos os
-    // 11 prompts e reforçamos que é a mesma espécie.
-    `Same character design and color palette as the species' other evolution stages.`
+    `${concept}. ${args.levelBlock}. ` +
+    `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing.`
   );
 }
 
@@ -2467,11 +2473,11 @@ const REALM_ACCENTS: Record<RealmId, string[]> = {
 };
 
 export const STAGE_NAMES: Record<StageId, LText> = {
-  rookie: { pt: 'Rookie', en: 'Rookie' },
-  champion: { pt: 'Champion', en: 'Champion' },
-  perfeito: { pt: 'Perfeito', en: 'Perfect' },
-  mega: { pt: 'Mega', en: 'Mega' },
-  ultra: { pt: 'Ultra', en: 'Ultra' },
+  rookie: { pt: 'Desperto', en: 'Awakened' },
+  champion: { pt: 'Ascendente', en: 'Ascendant' },
+  perfeito: { pt: 'Transcendente', en: 'Transcendent' },
+  mega: { pt: 'Apoteose', en: 'Apotheosis' },
+  ultra: { pt: 'Zênite', en: 'Zenith' },
 };
 
 // ---------------------------------------------------------------------------
@@ -2838,6 +2844,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)
     : null;
   const spriteConcept = petConceptRaw ?? spriteTraitsEn;
+  // "Qual sua criatura favorita?" — prefixo literal (1-2 palavras) injetado
+  // antes do conceito em TODOS os prompts de imagem (não substitui, só soma).
+  const favoriteCreature = input.favoriteCreature?.trim()
+    ? input.favoriteCreature.trim().replace(/\s+/g, ' ').split(' ').slice(0, 2).join(' ')
+    : undefined;
   // Bio: descrição breve e legível da criatura (não some no prompt, é exibida
   // na página/exportação). Se o dono descreveu o pet, essa descrição vale.
   const bio: LText = petConceptRaw
@@ -2858,6 +2869,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     imagePrompt: composeSpritePrompt({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
+      favoriteCreature,
       levelBlock: rookieLevel,
     }),
   });
@@ -2895,6 +2907,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
+        favoriteCreature,
         levelBlock: `it has evolved into ${champShape.en}`,
       }),
     });
@@ -2910,6 +2923,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
+        favoriteCreature,
         levelBlock: `it has transformed into ${perfShape.en}`,
       }),
     });
@@ -2925,6 +2939,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
+        favoriteCreature,
         levelBlock: `in its final form, it is ${megaShape.en}`,
       }),
     });
@@ -2942,6 +2957,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     imagePrompt: composeSpritePrompt({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
+      favoriteCreature,
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
     }),
   });

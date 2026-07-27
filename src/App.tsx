@@ -8,7 +8,6 @@ import { ActivityCard } from './components/ActivityCard';
 import { TaskCard } from './components/TaskCard';
 import { CompanionHUD } from './components/CompanionHUD';
 import { ConfirmDialog } from './components/ConfirmDialog';
-import { AttributeBadges } from './components/AttributeBadges';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { DigivolveTaskModal } from './components/DigivolveTaskModal';
@@ -70,6 +69,8 @@ export default function App() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  // Atalho de minijogo vindo do menu do Header — consumido assim que a ActivitiesPage abre.
+  const [pendingGame, setPendingGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
   const [digivolveModalStage, setDigivolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
@@ -1358,6 +1359,7 @@ export default function App() {
             onFeed={handleFeed}
             onClose={() => setShowItemsWindow(false)}
             language={language}
+            theme={theme}
           />
         )}
 
@@ -1368,25 +1370,44 @@ export default function App() {
             onNavigate={setCurrentView}
             theme={theme}
             onResetOnboarding={handleResetOnboarding}
+            onOpenGame={(game) => { setPendingGame(game); setCurrentView('games'); }}
+            language={language}
           />
         </div>
+
+        {/* Nova Atividade — FAB flutuante no canto inferior direito (só na tela principal) */}
+        {currentView === 'main' && (
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            aria-label={t.activities.addNew}
+            title={t.activities.addNew}
+            className="fixed flex items-center justify-center"
+            style={{
+              right: 18,
+              bottom: 'calc(74px + env(safe-area-inset-bottom, 0px))',
+              width: 52,
+              height: 52,
+              borderRadius: '50%',
+              background: theme === 'win98' ? '#c0c0c0' : theme === 'glitch' ? 'linear-gradient(135deg, #ff00ff, #00ffff)' : 'var(--sm-primary)',
+              color: theme === 'default' ? '#fff' : '#000',
+              border: theme === 'win98' ? '2px solid' : theme === 'glitch' ? '2px solid #00ffff' : 'none',
+              borderColor: theme === 'win98' ? '#ffffff #808080 #808080 #ffffff' : undefined,
+              boxShadow: theme === 'default'
+                ? '0 4px 0 var(--sm-primary-deep), 0 6px 14px rgba(42,36,64,0.25)'
+                : theme === 'glitch'
+                  ? '0 0 15px rgba(0,255,255,0.5)'
+                  : '2px 2px 0 #000',
+              zIndex: 30,
+            }}
+          >
+            <Plus size={26} strokeWidth={2.6} />
+          </button>
+        )}
 
         {/* Scrollable Content - com padding bottom para não ficar atrás do companion */}
         <div className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : `px-6 pt-3 ${currentView === 'main' ? 'pb-24' : 'pb-4'}`}`}>
           {currentView === 'main' && (
             <div className="space-y-3">
-              <AttributeBadges
-                virusPoints={gameState.virusPoints}
-                dataPoints={gameState.dataPoints}
-                vaccinePoints={gameState.vaccinePoints}
-                gamePoints={gameState.gamePoints}
-                totalXP={gameState.totalXP}
-                streakDays={gameState.totalPerfectDays ?? 0}
-                onNewActivity={() => setCreateModalOpen(true)}
-                theme={theme}
-                language={language}
-              />
-
               {/* HP risk banner — dismissible strip acima do pet */}
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl ${
@@ -1590,6 +1611,12 @@ export default function App() {
               activityStats={gameState.activityStats}
               theme={theme}
               language={language}
+              gamePoints={gameState.gamePoints}
+              totalXP={gameState.totalXP}
+              streakDays={gameState.totalPerfectDays ?? 0}
+              virusPoints={gameState.virusPoints}
+              dataPoints={gameState.dataPoints}
+              vaccinePoints={gameState.vaccinePoints}
             /></Suspense>
           )}
 
@@ -1690,6 +1717,8 @@ export default function App() {
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}
                 onEquipBackground={handleEquipBackground}
+                initialGame={pendingGame}
+                onConsumeInitialGame={() => setPendingGame(null)}
               />
             </Suspense>
           )}

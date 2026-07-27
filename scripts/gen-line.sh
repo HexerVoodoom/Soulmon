@@ -11,7 +11,7 @@ P_ROOKIE="$2"
 P_CHAMPION="$3"
 P_ULTIMATE="$4"
 P_MEGA="$5"
-MODEL="nano_banana_flash"
+MODEL="gpt_image_2"
 
 gen() {
   local stage="$1" prompt="$2" ref="$3"

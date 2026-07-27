@@ -215,7 +215,8 @@ describe('generateOracle', () => {
       // Template validado empiricamente: prompt CURTO estilo Tamagotchi, sem
       // fundo, sem outline/shading/anti-aliasing (frases longas geram sprites
       // piores — ver composeSpritePrompt).
-      expect(s.imagePrompt.startsWith('Tamagotchi-style v-pet sprite, 16x16 pixel art, no background')).toBe(true);
+      expect(s.imagePrompt.startsWith('Generate this RPG creature inspired by')).toBe(true);
+      expect(s.imagePrompt).toContain('Tamagotchi-style v-pet sprite, 16x16 pixel art, no background');
       expect(s.imagePrompt).toContain('transparent background');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
@@ -223,9 +224,6 @@ describe('generateOracle', () => {
       const conceptMatch = s.imagePrompt.match(/transparent background: (.+?)\. /);
       expect(conceptMatch).not.toBeNull();
       expect(conceptMatch![1].length).toBeGreaterThan(5);
-      // Cláusula de consistência: prompts são independentes (a IA não vê os
-      // outros estágios), então cada um precisa reforçar isso explicitamente
-      expect(s.imagePrompt).toContain('other evolution stages');
     }
   });
 

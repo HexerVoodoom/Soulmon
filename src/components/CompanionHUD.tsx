@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
-import { createPortal } from 'react-dom';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
@@ -970,25 +969,25 @@ export const CompanionHUD = memo(function CompanionHUD({
 
       </div>
 
-      {/* Chat Box — via portal, fixo no rodapé da tela (não rola com o conteúdo) */}
-      {typeof document !== 'undefined' && document.getElementById('chat-portal-root') && createPortal(
-        <div className={isWin98 || isGlitch ? '' : 'sm-chat-fixed'}>
-          <ChatBox
-            digimonName={currentStage}
-            mood={companionMood}
-            evolutionStage={evolutionStage}
-            dominantBranch={dominantBranch}
-            useAI={useAI}
-            onSendMessage={handleChatMessage}
-            theme={theme}
-            aiSettings={aiSettings}
-            onOpenAISettings={onOpenAISettings}
-            onCreateActivity={onCreateActivity}
-            language={language}
-          />
-        </div>,
-        document.getElementById('chat-portal-root')!,
-      )}
+      {/* Chat Box — fixo no rodapé da tela (não rola com o conteúdo), mas dentro
+          da mesma árvore/stacking context do app: assim modais (z-index maior)
+          conseguem ficar corretamente acima dela em vez de um portal externo
+          que sempre pintava por cima de tudo, modais inclusive. */}
+      <div className={isWin98 || isGlitch ? '' : 'sm-chat-fixed'}>
+        <ChatBox
+          digimonName={currentStage}
+          mood={companionMood}
+          evolutionStage={evolutionStage}
+          dominantBranch={dominantBranch}
+          useAI={useAI}
+          onSendMessage={handleChatMessage}
+          theme={theme}
+          aiSettings={aiSettings}
+          onOpenAISettings={onOpenAISettings}
+          onCreateActivity={onCreateActivity}
+          language={language}
+        />
+      </div>
     </div>
   );
 });

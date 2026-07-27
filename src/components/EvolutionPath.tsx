@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { DigivolutionProgress } from './DigivolutionProgress';
+import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
@@ -8,6 +9,14 @@ import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
 type Attr = 'virus' | 'data' | 'vaccine';
 const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
 const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
+// Nomenclatura do Soulmon (não mais Virus/Data/Vaccine) — o mesmo alinhamento
+// já usado pelo oráculo no onboarding, agora refletido de volta na UI.
+const ATTR_LABEL: Record<Attr, LText> = {
+  virus: { pt: 'Poder', en: 'Power' },
+  data: { pt: 'Harmonia', en: 'Harmony' },
+  vaccine: { pt: 'Benevolência', en: 'Benevolence' },
+};
+const ATTR_ICON: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
 
 interface EvolutionPathProps {
   /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */
@@ -113,31 +122,21 @@ export function EvolutionPath({
 
     return (
       <div key={stageId}>
-        <div className={`bg-white rounded-xl p-5 border transition-all ${
-          isCurrent
-            ? `${colors.border} shadow-md ${colors.aura}`
-            : isReached
-            ? 'border-gray-200'
-            : 'border-gray-100 opacity-50'
-        }`}>
+        <div
+          className={`sm-card p-4 transition-all ${isCurrent ? 'shadow-md' : !isReached ? 'opacity-50' : ''}`}
+          style={isCurrent ? { borderColor: colors.hex, boxShadow: `0 0 0 1.5px ${colors.hex}, 0 4px 14px ${colors.hex}33` } : undefined}
+        >
           <div className="flex items-center gap-3">
             {/* Sprite — locked evolutions are hidden behind a pixelated "?".
                 Tapping the CURRENT Soulmon toggles the evolution padlock. */}
-            <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${
-              isReached ? 'bg-gray-100' : 'bg-gray-200'
-            }`}>
+            <div className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--sm-bg)' }}>
               {hidden ? (
                 <button
                   onClick={() => setConfirmReveal(evolution)}
-                  aria-label="Reveal evolution (spoiler)"
-                  title="Reveal (spoiler)"
-                  className="w-12 h-12 flex items-center justify-center rounded-md hover:bg-gray-300 transition-colors"
-                  style={{
-                    fontFamily: 'monospace', fontWeight: 900, fontSize: '1.7rem',
-                    color: '#6b7280', lineHeight: 1, cursor: 'pointer',
-                    imageRendering: 'pixelated',
-                    textShadow: '2px 2px 0 #cbd5e1, 3px 3px 0 #e5e7eb',
-                  }}
+                  aria-label={isPt ? 'Revelar evolução (spoiler)' : 'Reveal evolution (spoiler)'}
+                  title={isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)'}
+                  className="w-12 h-12 flex items-center justify-center rounded-lg transition-colors"
+                  style={{ fontWeight: 900, fontSize: '1.5rem', color: 'var(--sm-muted)', cursor: 'pointer' }}
                 >
                   ?
                 </button>
@@ -148,7 +147,7 @@ export function EvolutionPath({
                   title={evolutionLocked
                     ? (isPt ? 'Destravar evolução' : 'Unlock evolution')
                     : (isPt ? 'Travar evolução' : 'Lock evolution')}
-                  className="relative w-12 h-12 flex items-center justify-center rounded-md cursor-pointer"
+                  className="relative w-12 h-12 flex items-center justify-center rounded-lg cursor-pointer"
                 >
                   <img
                     src={getSpriteForStage(stageId, eggType)}
@@ -168,7 +167,7 @@ export function EvolutionPath({
               ) : (
                 <img
                   src={getSpriteForStage(stageId, eggType)}
-                  alt={isReached ? evolution.name : 'revealed evolution'}
+                  alt={isReached ? evolution.name : (isPt ? 'evolução revelada' : 'revealed evolution')}
                   className="w-12 h-12 object-contain"
                   style={{ imageRendering: 'pixelated', opacity: isReached ? 1 : 0.45 }}
                 />
@@ -176,45 +175,45 @@ export function EvolutionPath({
             </div>
 
             {/* Info */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className={`${isReached ? 'text-gray-900' : 'text-gray-500'}`} style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: isReached ? 'var(--sm-ink)' : 'var(--sm-muted)' }}>
                   {hidden ? '???' : evolution.name}
                 </h3>
                 {!hidden && (
-                  <span className="text-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.7rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--sm-muted)' }}>
                     {L(evolution.stageName)}
                   </span>
                 )}
                 {isCurrent && (
-                  <span className={`${colors.bg} text-white text-xs px-2 py-0.5 rounded`} style={{ fontFamily: 'monospace' }}>
-                    CURRENT
+                  <span className="text-white text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: colors.hex, fontSize: '0.65rem' }}>
+                    {isPt ? 'ATUAL' : 'CURRENT'}
                   </span>
                 )}
                 {isCurrent && evolutionLocked && (
-                  <span className="bg-gray-800 text-white text-xs px-2 py-0.5 rounded" style={{ fontFamily: 'monospace' }}>
-                    🔒 {isPt ? 'EVOLUÇÃO TRAVADA' : 'EVOLUTION LOCKED'}
+                  <span className="text-white text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-muted)', fontSize: '0.65rem' }}>
+                    🔒 {isPt ? 'TRAVADA' : 'LOCKED'}
                   </span>
                 )}
                 {isUltraMode && (
-                  <span className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs px-2 py-0.5 rounded" style={{ fontFamily: 'monospace' }}>
-                    ULTRA
+                  <span className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-bold" style={{ fontSize: '0.65rem' }}>
+                    {isPt ? 'ZÊNITE' : 'ZENITH'}
                   </span>
                 )}
               </div>
             </div>
 
             {/* Status / Action Button */}
-            <div>
+            <div className="flex-shrink-0">
               {!isReached ? (
-                <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 text-xs">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: 'var(--sm-line)', color: 'var(--sm-muted)' }}>
                   🔒
                 </div>
               ) : isPreviousStage ? (
                 <button
                   onClick={() => handleDegenerateClick(evolution)}
-                  className="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs transition-colors"
-                  style={{ fontFamily: 'monospace' }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                  style={{ background: 'var(--sm-bg)', color: 'var(--sm-muted)' }}
                 >
                   {isPt ? 'Degenerar' : 'Degenerate'}
                 </button>
@@ -226,7 +225,7 @@ export function EvolutionPath({
         {/* Arrow */}
         {index < pathLength - 1 && (
           <div className="flex justify-center py-1">
-            <ChevronDown size={20} className={isReached ? colors.text : 'text-gray-400'} />
+            <ChevronDown size={18} color={isReached ? colors.hex : 'var(--sm-line)'} />
           </div>
         )}
       </div>
@@ -238,13 +237,13 @@ export function EvolutionPath({
       {/* Confirmation Dialog */}
       {confirmDegenerate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="text-lg mb-4" style={{ fontFamily: 'monospace' }}>
+          <div className="sm-card p-6 max-w-sm w-full">
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--sm-ink)', marginBottom: 16 }}>
               {confirmDegenerate.isSecondConfirm
-                ? (isPt ? '⚠️ AVISO FINAL!' : '⚠️ FINAL WARNING!')
-                : (isPt ? '⚠️ Confirmar degeneração' : '⚠️ Confirm Degeneration')}
+                ? (isPt ? '⚠️ Aviso final!' : '⚠️ Final warning!')
+                : (isPt ? '⚠️ Confirmar degeneração' : '⚠️ Confirm degeneration')}
             </h3>
-            <p className="text-gray-700 mb-6" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            <p style={{ color: 'var(--sm-muted)', fontSize: '0.875rem', marginBottom: 24 }}>
               {confirmDegenerate.isSecondConfirm
                 ? (isPt
                     ? `Tem CERTEZA ABSOLUTA que quer degenerar para ${confirmDegenerate.name}? Essa ação NÃO pode ser desfeita!`
@@ -255,21 +254,13 @@ export function EvolutionPath({
               }
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={handleDegenerateCancel}
-                className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-colors"
-                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
-              >
+              <button onClick={handleDegenerateCancel} className="sm-btn sm-btn-secondary flex-1">
                 {isPt ? 'Cancelar' : 'Cancel'}
               </button>
               <button
                 onClick={handleDegenerateConfirm}
-                className={`flex-1 py-2.5 ${
-                  confirmDegenerate.isSecondConfirm
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : 'bg-gray-800 hover:bg-gray-900'
-                } text-white rounded-xl transition-colors`}
-                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+                className="flex-1 py-2.5 rounded-2xl text-white font-bold transition-colors"
+                style={{ background: confirmDegenerate.isSecondConfirm ? '#e0483e' : 'var(--sm-ink)' }}
               >
                 {confirmDegenerate.isSecondConfirm ? (isPt ? 'SIM, DEGENERAR!' : 'YES, DEGENERATE!') : (isPt ? 'Confirmar' : 'Confirm')}
               </button>
@@ -281,28 +272,20 @@ export function EvolutionPath({
       {/* Reveal (spoiler) confirmation */}
       {confirmReveal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="text-lg mb-4" style={{ fontFamily: 'monospace' }}>
+          <div className="sm-card p-6 max-w-sm w-full">
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--sm-ink)', marginBottom: 16 }}>
               👁️ {isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
             </h3>
-            <p className="text-gray-700 mb-6" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            <p style={{ color: 'var(--sm-muted)', fontSize: '0.875rem', marginBottom: 24 }}>
               {isPt
                 ? 'Essa é uma evolução futura que você ainda não desbloqueou — espiar é spoiler! Ela vai aparecer escurecida e esconder de novo quando você sair dessa tela.'
                 : "This is a future evolution you haven't unlocked yet — peeking is a spoiler! It'll show up darkened, and hide again once you leave this screen."}
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setConfirmReveal(null)}
-                className="flex-1 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl transition-colors"
-                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
-              >
+              <button onClick={() => setConfirmReveal(null)} className="sm-btn sm-btn-secondary flex-1">
                 {isPt ? 'Cancelar' : 'Cancel'}
               </button>
-              <button
-                onClick={handleRevealConfirm}
-                className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-xl transition-colors"
-                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
-              >
+              <button onClick={handleRevealConfirm} className="sm-btn flex-1">
                 {isPt ? 'Sim, revelar' : 'Yes, reveal'}
               </button>
             </div>
@@ -311,20 +294,20 @@ export function EvolutionPath({
       )}
 
       {/* Attribute Balance */}
-      <div className="bg-white rounded-xl p-5 mb-4 border border-gray-200 shadow-sm">
-        <p className="text-gray-700 mb-2" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-          {isPt ? 'ATRIBUTOS ATUAIS' : 'CURRENT ATTRIBUTES'}
+      <div className="sm-card p-4 mb-4">
+        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--sm-muted)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 10 }}>
+          {isPt ? 'Alinhamento atual' : 'Current alignment'}
         </p>
-        <div className="flex justify-between text-sm" style={{ fontFamily: 'monospace' }}>
-          <span className="text-[#22A900]" style={{ fontWeight: '600' }}>
-            🦠 {isPt ? 'Vírus' : 'Virus'}: {virusPoints}
-          </span>
-          <span className="text-[#009ED8]" style={{ fontWeight: '600' }}>
-            💾 {isPt ? 'Dado' : 'Data'}: {dataPoints}
-          </span>
-          <span className="text-[#E69600]" style={{ fontWeight: '600' }}>
-            💉 {isPt ? 'Vacina' : 'Vaccine'}: {vaccinePoints}
-          </span>
+        <div className="flex justify-between text-sm">
+          {ATTR_ORDER.map(a => {
+            const Icon = ATTR_ICON[a];
+            return (
+              <span key={a} className="flex items-center gap-1.5" style={{ fontWeight: 700, color: getBranchColor(a).hex, fontSize: '0.85rem' }}>
+                <Icon size={16} color={getBranchColor(a).hex} strokeWidth={2.2} />
+                {L(ATTR_LABEL[a])}: {a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints}
+              </span>
+            );
+          })}
         </div>
       </div>
 
@@ -334,47 +317,46 @@ export function EvolutionPath({
           currentDays={digivolutionSegments}
           daysRequired={digivolutionSegmentsNeeded}
           theme={theme}
+          language={language}
         />
       </div>
 
-      {/* Rookie — Branching Point */}
+      {/* Rookie — Branching Point (cor neutra, não pertence a nenhum branch) */}
       {rookie && (
         <div className="mb-4">
-          {renderEvolutionCard(rookie, { bg: 'bg-teal-500', text: 'text-teal-600', border: 'border-teal-500', aura: 'shadow-teal-500/50' }, 0, 1)}
+          {renderEvolutionCard(rookie, { hex: '#14b8a6' }, 0, 1)}
         </div>
       )}
 
       {/* Branch Selector Divider */}
       <div className="my-4 flex items-center gap-3">
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-400 to-transparent flex-1" />
-        <span className="text-gray-500 text-xs" style={{ fontFamily: 'monospace' }}>
+        <div className="h-px flex-1" style={{ background: 'var(--sm-line)' }} />
+        <span style={{ color: 'var(--sm-muted)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.04em' }}>
           {isPt ? 'LINHAS DE EVOLUÇÃO' : 'EVOLUTION BRANCHES'}
         </span>
-        <div className="h-px bg-gradient-to-r from-transparent via-gray-400 to-transparent flex-1" />
+        <div className="h-px flex-1" style={{ background: 'var(--sm-line)' }} />
       </div>
 
       {/* Seletor de branch — só os branches disponíveis (transição de arte) */}
       <div className="flex gap-2 mb-4">
         {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
-          const cfg = {
-            virus:   { color: '#22A900', label: 'VIRUS' },
-            data:    { color: '#009ED8', label: 'DATA' },
-            vaccine: { color: '#E69600', label: 'VACCINE' },
-          }[b];
+          const hex = getBranchColor(b).hex;
           const active = selectedBranch === b;
+          const Icon = ATTR_ICON[b];
           return (
             <button
               key={b}
               onClick={() => setSelectedBranch(b)}
-              className="flex-1 py-3 rounded-xl border transition-all"
+              className="flex-1 py-2.5 rounded-xl border transition-all font-semibold flex items-center justify-center gap-1.5"
               style={{
-                fontFamily: 'monospace', fontSize: '0.75rem',
-                background: active ? cfg.color : '#fff',
-                borderColor: active ? cfg.color : '#e5e7eb',
-                color: active ? '#fff' : cfg.color,
+                fontSize: '0.75rem',
+                background: active ? hex : 'var(--sm-surface)',
+                borderColor: active ? hex : 'var(--sm-line)',
+                color: active ? '#fff' : hex,
               }}
             >
-              {cfg.label}
+              <Icon size={16} color={active ? '#fff' : hex} strokeWidth={2.2} />
+              {L(ATTR_LABEL[b])}
             </button>
           );
         })}
@@ -391,12 +373,12 @@ export function EvolutionPath({
   );
 }
 
-interface BranchColors { bg: string; text: string; border: string; aura: string }
+interface BranchColors { hex: string }
 
 function getBranchColor(branch: Attr): BranchColors {
   switch (branch) {
-    case 'virus': return { bg: 'bg-[#22A900]', text: 'text-[#22A900]', border: 'border-[#22A900]', aura: 'shadow-[#22A900]/50' };
-    case 'data': return { bg: 'bg-[#009ED8]', text: 'text-[#009ED8]', border: 'border-[#009ED8]', aura: 'shadow-[#009ED8]/50' };
-    case 'vaccine': return { bg: 'bg-[#E69600]', text: 'text-[#E69600]', border: 'border-[#E69600]', aura: 'shadow-[#E69600]/50' };
+    case 'virus': return { hex: '#22A900' };
+    case 'data': return { hex: '#009ED8' };
+    case 'vaccine': return { hex: '#E69600' };
   }
 }
