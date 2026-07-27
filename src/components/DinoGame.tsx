@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Rabbit, X, ArrowUp } from 'lucide-react';
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { playDegenerate, playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -40,7 +41,6 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onEx
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
   const [best, setBest] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.DINO_BEST)) || 0);
-  const mono = { fontFamily: 'monospace' as const };
 
   // The pet must FACE RIGHT while running; sprites in LEFT_FACING_STAGES are
   // drawn facing left by default (Tapirmon & friends), so mirror those.
@@ -143,7 +143,7 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onEx
 
       // Draw
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = '#3a4b68';
+      ctx.strokeStyle = '#453a63';
       ctx.beginPath(); ctx.moveTo(0, GROUND + 1); ctx.lineTo(canvas.width, GROUND + 1); ctx.stroke();
       for (const o of s.obstacles) {
         const img = tierImgsRef.current[o.tier];
@@ -189,47 +189,49 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onEx
   }, [phase, jump, onEarnPoints, onScore, petNeedsFlip]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0b0f17 0%, #16202f 100%)', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
-        <span style={{ ...mono, fontWeight: 800, fontSize: '0.95rem', letterSpacing: 1 }}>
-          🦖 {isPt ? 'CORRIDA DO DINO' : 'DINO RUNNER'}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0e1522 0%, #16213a 100%)', display: 'flex', flexDirection: 'column', color: '#eef2fb' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem' }}>
+          <Rabbit size={20} color="#4ade80" strokeWidth={2.3} />
+          {isPt ? 'Corrida do Dino' : 'Dino Runner'}
         </span>
-        <button onClick={onExit} style={{ ...mono, background: 'rgba(255,255,255,0.08)', border: '1px solid #2c3a52', color: '#e8eefc', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
-          {isPt ? 'Sair' : 'Exit'}
+        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 999, color: '#eef2fb', cursor: 'pointer' }}>
+          <X size={18} />
         </button>
       </div>
 
-      <div style={{ ...mono, display: 'flex', justifyContent: 'space-between', padding: '0 20px 6px', fontSize: '0.8rem', color: '#9fb2d8' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px 8px', fontSize: '0.82rem', color: '#93a3c9', fontWeight: 600 }}>
         <span>{isPt ? 'Recorde' : 'Best'}: {best}</span>
         <span>Score: <span ref={scoreElRef}>0</span></span>
       </div>
 
-      <div style={{ margin: '0 16px', borderRadius: 12, border: '1px solid #2c3a52', overflow: 'hidden', position: 'relative' }}>
+      <div style={{ margin: '0 16px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden', position: 'relative' }}>
         <canvas
           ref={canvasRef}
           onPointerDown={jump}
           style={{ display: 'block', width: '100%', height: 240, touchAction: 'manipulation' }}
         />
         {phase !== 'playing' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'rgba(11,15,23,0.82)' }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'rgba(14,21,34,0.85)' }}>
             {phase === 'over' && (
               <>
-                <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem' }}>💥 {isPt ? 'Fim de jogo!' : 'Game over!'}</p>
-                <p style={{ ...mono, fontSize: '0.85rem', color: '#9fb2d8' }}>
+                <p style={{ fontWeight: 800, fontSize: '1.1rem' }}>💥 {isPt ? 'Fim de jogo!' : 'Game over!'}</p>
+                <p style={{ fontSize: '0.85rem', color: '#93a3c9' }}>
                   Score: {finalScore} · +{earned} Bits
                 </p>
               </>
             )}
             {phase === 'ready' && (
-              <p style={{ ...mono, fontSize: '0.8rem', color: '#9fb2d8', padding: '0 20px', textAlign: 'center' }}>
+              <p style={{ fontSize: '0.82rem', color: '#93a3c9', padding: '0 20px', textAlign: 'center' }}>
                 {isPt
                   ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
                   : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
               </p>
             )}
             <button onClick={start}
-              style={{ ...mono, padding: '12px 28px', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
-              {phase === 'over' ? (isPt ? 'JOGAR DE NOVO' : 'PLAY AGAIN') : (isPt ? 'COMEÇAR' : 'START')}
+              style={{ padding: '13px 30px', borderRadius: 16, border: 'none', background: '#4ade80', color: '#0b1a10', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
+              {phase === 'over' ? (isPt ? 'Jogar de novo' : 'Play again') : (isPt ? 'Começar' : 'Start')}
             </button>
           </div>
         )}
@@ -241,15 +243,17 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onEx
           onPointerDown={jump}
           disabled={phase !== 'playing'}
           style={{
-            ...mono, width: '100%', padding: '22px 0', borderRadius: 12, border: 'none',
-            background: phase === 'playing' ? '#60a5fa' : '#1c2636',
-            color: phase === 'playing' ? '#0b0f17' : '#5d729c',
-            fontWeight: 800, fontSize: '1.1rem', letterSpacing: 2,
+            width: '100%', padding: '20px 0', borderRadius: 18, border: 'none',
+            background: phase === 'playing' ? '#60a5fa' : 'rgba(255,255,255,0.06)',
+            color: phase === 'playing' ? '#0b1a2e' : '#5d6f96',
+            fontWeight: 800, fontSize: '1.05rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             cursor: phase === 'playing' ? 'pointer' : 'default',
             touchAction: 'manipulation', userSelect: 'none',
           }}
         >
-          ⬆ {isPt ? 'PULAR' : 'JUMP'}
+          <ArrowUp size={20} strokeWidth={2.6} />
+          {isPt ? 'Pular' : 'Jump'}
         </button>
       </div>
     </div>

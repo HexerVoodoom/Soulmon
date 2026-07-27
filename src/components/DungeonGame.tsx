@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { Swords, X } from 'lucide-react';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
@@ -80,12 +81,11 @@ function TimingBar({ speed, color, label, onStop }: {
     onStop(1 - Math.abs(posRef.current - 0.5) * 2); // 1 = dead center
   };
 
-  const mono = { fontFamily: 'monospace' as const };
   return (
     <div style={{ width: '100%' }}>
       <div
         onPointerDown={stop}
-        style={{ position: 'relative', height: 34, borderRadius: 6, background: '#131a26', border: '1px solid #2c3a52', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
+        style={{ position: 'relative', height: 34, borderRadius: 10, background: '#131a26', border: '1px solid #2c3a52', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
       >
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: '30%', background: 'rgba(250, 204, 21, 0.22)' }} />
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: '46%', width: '8%', background: 'rgba(74, 222, 128, 0.45)' }} />
@@ -93,7 +93,7 @@ function TimingBar({ speed, color, label, onStop }: {
       </div>
       <button
         onPointerDown={stop}
-        style={{ ...mono, width: '100%', marginTop: 8, padding: '10px 0', borderRadius: 8, border: 'none', background: color, color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', letterSpacing: 1, cursor: 'pointer' }}
+        style={{ width: '100%', marginTop: 8, padding: '12px 0', borderRadius: 14, border: 'none', background: color, color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', letterSpacing: 0.5, cursor: 'pointer' }}
       >
         {label}
       </button>
@@ -144,7 +144,6 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
 
   const enemy = enemies[enemyIdx];
   const petSprite = getSpriteForStage(evolutionStage);
-  const mono = { fontFamily: 'monospace' as const };
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
   // Some shop backdrops are LIGHT — keep the in-scene labels readable on them.
@@ -354,29 +353,33 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#07090f', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
-        <span style={{ ...mono, fontWeight: 800, fontSize: '0.95rem', letterSpacing: 1 }}>
-          ⚔️ {isPt ? 'MASMORRA' : 'DUNGEON'}
-          <span style={{ color: scene.accent, marginLeft: 8, fontSize: '0.8rem' }}>
-            {isPt ? 'Andar' : 'Floor'} {floor}/{MAX_FLOORS} · {sceneName}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem' }}>
+            <Swords size={20} color="#f87171" strokeWidth={2.3} />
+            {isPt ? 'Masmorra' : 'Dungeon'}
           </span>
-          {inBattle ? <span style={{ color: '#9fb2d8', marginLeft: 8, fontSize: '0.8rem' }}>{enemyIdx + 1}/{ladderLen}</span> : null}
+          <span style={{ color: scene.accent, fontSize: '0.78rem' }}>
+            {isPt ? 'Andar' : 'Floor'} {floor}/{MAX_FLOORS} · {sceneName}
+            {inBattle ? <span style={{ color: '#9fb2d8', marginLeft: 6 }}>· {enemyIdx + 1}/{ladderLen}</span> : null}
+          </span>
         </span>
-        <button onClick={exitRun} style={{ ...mono, background: 'rgba(255,255,255,0.08)', border: '1px solid #2c3a52', color: '#e8eefc', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
-          {isPt ? 'Sair' : 'Exit'}
+        <button onClick={exitRun} aria-label={isPt ? 'Sair' : 'Exit'}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 999, color: '#e8eefc', cursor: 'pointer' }}>
+          <X size={18} />
         </button>
       </div>
 
       {/* Battlefield (only during a run) — per-floor retro scene + VHS overlay */}
       {inBattle && enemy && (
-        <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 12, border: `1px solid ${scene.accent}55`, background: scene.bg, overflow: 'hidden', boxShadow: `inset 0 0 60px rgba(0,0,0,0.6)` }}>
+        <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 20, border: `1px solid ${scene.accent}55`, background: scene.bg, overflow: 'hidden', boxShadow: `inset 0 0 60px rgba(0,0,0,0.6)` }}>
           {/* VHS scanline overlay */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px)', backgroundSize: '100% 6px', animation: 'dungeon-vhs 5s linear infinite', opacity: 0.55, mixBlendMode: 'overlay' }} />
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 40px ${scene.accent}22` }} />
 
           {/* Enemy (top-right) */}
           <div style={{ position: 'absolute', top: 14, right: 16, textAlign: 'right' }}>
-            <p style={{ ...mono, ...sceneLabel, fontSize: '0.8rem', marginBottom: 4 }}>{enemy.name}</p>
+            <p style={{ ...sceneLabel, fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>{enemy.name}</p>
             {hpBar(enemyHp, enemy.hp, '#f87171')}
           </div>
           <img
@@ -393,7 +396,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
           />
           {/* Pet (bottom-left) */}
           <div style={{ position: 'absolute', bottom: 'calc(6% + 96px)', left: 16 }}>
-            <p style={{ ...mono, ...sceneLabel, fontSize: '0.8rem', marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
+            <p style={{ ...sceneLabel, fontSize: '0.8rem', fontWeight: 700, marginBottom: 4 }}>{isPt ? 'Você' : 'You'}</p>
             {hpBar(playerHp, playerStats.hp, '#4ade80')}
           </div>
           <img
@@ -411,7 +414,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
           {/* Result popup — feedback beat between actions */}
           {popup && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
-              <div style={{ ...mono, textAlign: 'center', background: '#0e1522', border: `2px solid ${popup.color}`, borderRadius: 12, padding: '16px 26px', boxShadow: `0 0 24px ${popup.color}55` }}>
+              <div style={{ textAlign: 'center', background: '#0e1522', border: `2px solid ${popup.color}`, borderRadius: 18, padding: '16px 26px', boxShadow: `0 0 24px ${popup.color}55` }}>
                 <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{popup.icon}</div>
                 <p style={{ fontWeight: 800, fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
                 <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
@@ -424,18 +427,20 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
       {/* Intro / blocked title area */}
       {(phase === 'intro' || phase === 'blocked') && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem' }}>⚔️</div>
-          <div style={{ ...mono, display: 'flex', gap: 18, fontSize: '0.82rem', color: '#c6d4f2' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 20, background: 'rgba(248,113,113,0.12)' }}>
+            <Swords size={36} color="#f87171" strokeWidth={2} />
+          </div>
+          <div style={{ display: 'flex', gap: 18, fontSize: '0.82rem', color: '#c6d4f2' }}>
             <span>🏅 {isPt ? 'Recorde' : 'Best'}: <b style={{ color: '#facc15' }}>{best}</b></span>
             <span>🔥 {isPt ? 'Dificuldade base' : 'Base level'}: <b style={{ color: '#c084fc' }}>{baseLevel}</b></span>
           </div>
           {blocked ? (
-            <p style={{ ...mono, fontSize: '0.82rem', color: '#f87171', maxWidth: 300, fontWeight: 700 }}>
+            <p style={{ fontSize: '0.82rem', color: '#f87171', maxWidth: 300, fontWeight: 700 }}>
               {isPt ? '💔 Corações insuficientes! Perder custa 1 coração — recupere antes (não dá pra entrar com 1 ou meio coração).'
                     : '💔 Not enough hearts! Losing costs 1 heart — recover first (you can\'t enter with 1 or half a heart).'}
             </p>
           ) : (
-            <p style={{ ...mono, fontSize: '0.76rem', color: '#9fb2d8', maxWidth: 330 }}>
+            <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>
               {isPt
                 ? '5 andares, cada um com 6 inimigos e mais forte que o anterior. Andar 1 serve pra um rookie; alguns andares acima ficam brutais. Concluir a run inteira sobe a dificuldade (reset semanal). Perder custa 1 coração real!'
                 : '5 floors, each with 6 enemies and tougher than the last. Floor 1 suits a rookie; a few floors up gets brutal. Completing the whole run raises the difficulty (weekly reset). Losing costs 1 real heart!'}
@@ -444,13 +449,13 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
           <button
             onClick={blocked ? exitRun : startRun}
             style={{
-              ...mono, width: '100%', maxWidth: 320, padding: '12px 0', borderRadius: 8, border: 'none',
+              width: '100%', maxWidth: 320, padding: '14px 0', borderRadius: 16, border: 'none',
               background: blocked ? '#60a5fa' : '#4ade80', color: '#0b0f17',
               fontWeight: 800, fontSize: '1rem', cursor: 'pointer',
             }}>
             {blocked
-              ? (isPt ? 'VOLTAR' : 'BACK')
-              : (isPt ? 'ENTRAR NA MASMORRA' : 'ENTER THE DUNGEON')}
+              ? (isPt ? 'Voltar' : 'Back')
+              : (isPt ? 'Entrar na masmorra' : 'Enter the dungeon')}
           </button>
         </div>
       )}
@@ -460,102 +465,102 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
         <div style={{ padding: 16, minHeight: 150 }}>
           {phase === 'attack' && (
             <div>
-              <p style={{ ...mono, textAlign: 'center', fontSize: '0.78rem', color: '#9fb2d8', marginBottom: 6 }}>
+              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#9fb2d8', marginBottom: 6 }}>
                 {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
               </p>
-              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'ATACAR!' : 'ATTACK!'} onStop={handleAttack} />
+              <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'Atacar!' : 'Attack!'} onStop={handleAttack} />
             </div>
           )}
           {phase === 'defend' && (
             <div>
-              <p style={{ ...mono, textAlign: 'center', fontSize: '0.82rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
-                {isPt ? `${enemy.name} atacando — DESVIE!` : `${enemy.name} attacking — DODGE!`} ⏱ {defendTimeLeft.toFixed(1)}s
+              <p style={{ textAlign: 'center', fontSize: '0.84rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
+                {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`} ⏱ {defendTimeLeft.toFixed(1)}s
               </p>
-              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'DESVIAR!' : 'DODGE!'} onStop={a => handleDefend(a)} />
+              <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
             </div>
           )}
           {phase === 'result' && (
-            <p style={{ ...mono, textAlign: 'center', fontSize: '0.8rem', color: '#5d729c', paddingTop: 24 }}>…</p>
+            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#5d729c', paddingTop: 24 }}>…</p>
           )}
           {phase === 'enemy-down' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ ...mono, fontWeight: 800, marginBottom: 4 }}>
+              <p style={{ fontWeight: 800, marginBottom: 4 }}>
                 ✅ {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
               </p>
-              <p style={{ ...mono, fontSize: '0.82rem', color: '#facc15', marginBottom: 10 }}>{rewardMsg}</p>
+              <p style={{ fontSize: '0.82rem', color: '#facc15', marginBottom: 10 }}>{rewardMsg}</p>
               <button onClick={nextEnemy}
-                style={{ ...mono, width: '100%', padding: '12px 0', borderRadius: 8, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
+                style={{ width: '100%', padding: '14px 0', borderRadius: 16, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
                 {enemyIdx + 1 >= enemies.length
                   ? (floor >= MAX_FLOORS
-                      ? (isPt ? `CONCLUIR RUN (+${clearBonus(floor)} Bits + 🌀)` : `FINISH RUN (+${clearBonus(floor)} Bits + 🌀)`)
-                      : (isPt ? `LIMPAR ANDAR (+${clearBonus(floor)} Bits)` : `CLEAR FLOOR (+${clearBonus(floor)} Bits)`))
-                  : (isPt ? `DESAFIAR ${enemies[enemyIdx + 1].name.toUpperCase()} →` : `CHALLENGE ${enemies[enemyIdx + 1].name.toUpperCase()} →`)}
+                      ? (isPt ? `Concluir run (+${clearBonus(floor)} Bits + 🌀)` : `Finish run (+${clearBonus(floor)} Bits + 🌀)`)
+                      : (isPt ? `Limpar andar (+${clearBonus(floor)} Bits)` : `Clear floor (+${clearBonus(floor)} Bits)`))
+                  : (isPt ? `Desafiar ${enemies[enemyIdx + 1].name} →` : `Challenge ${enemies[enemyIdx + 1].name} →`)}
               </button>
             </div>
           )}
           {phase === 'floor-clear' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
+              <p style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
                 🚪 {isPt ? `Andar ${floor} concluído!` : `Floor ${floor} cleared!`}
               </p>
-              <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
+              <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
                 {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
               </p>
-              <p style={{ ...mono, fontSize: '0.74rem', color: '#4ade80', marginBottom: 10 }}>{rewardMsg}</p>
+              <p style={{ fontSize: '0.76rem', color: '#4ade80', marginBottom: 10 }}>{rewardMsg}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={nextFloor}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: (runScenes[floor] ?? DUNGEON_SCENES[0]).accent, color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? `ANDAR ${floor + 1} →` : `FLOOR ${floor + 1} →`}
+                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: (runScenes[floor] ?? DUNGEON_SCENES[0]).accent, color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? `Andar ${floor + 1} →` : `Floor ${floor + 1} →`}
                 </button>
                 <button onClick={exitRun}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'SAIR C/ PLACAR' : 'BANK & EXIT'}
+                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'Sair c/ placar' : 'Bank & exit'}
                 </button>
               </div>
             </div>
           )}
           {phase === 'run-complete' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 4, color: '#facc15' }}>
-                {isPt ? '🏆 RUN COMPLETA! Os 5 andares caíram!' : '🏆 RUN COMPLETE! All 5 floors down!'}
+              <p style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 4, color: '#facc15' }}>
+                {isPt ? '🏆 Run completa! Os 5 andares caíram!' : '🏆 Run complete! All 5 floors down!'}
               </p>
-              <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
+              <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
                 {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
               </p>
-              <p style={{ ...mono, fontSize: '0.78rem', color: '#4ade80', marginBottom: 2, fontWeight: 800 }}>
+              <p style={{ fontSize: '0.8rem', color: '#4ade80', marginBottom: 2, fontWeight: 800 }}>
                 🌀 {isPt ? 'Glitchtama obtido! (pastinha de itens)' : 'Glitchtama acquired! (Items folder)'}
               </p>
-              <p style={{ ...mono, fontSize: '0.74rem', color: '#c084fc', marginBottom: 10 }}>
+              <p style={{ fontSize: '0.76rem', color: '#c084fc', marginBottom: 10 }}>
                 {isPt ? 'A próxima run ficou mais difícil.' : 'The next run got harder.'}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={startRun}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'NOVA RUN' : 'NEW RUN'}
+                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'Nova run' : 'New run'}
                 </button>
                 <button onClick={onExit}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'SAIR' : 'EXIT'}
+                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'Sair' : 'Exit'}
                 </button>
               </div>
             </div>
           )}
           {phase === 'lost' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ ...mono, fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
+              <p style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
                 {isPt ? '💀 Você foi derrotado... (−1 ❤️)' : '💀 You were defeated... (−1 ❤️)'}
               </p>
-              <p style={{ ...mono, fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 10 }}>
+              <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 10 }}>
                 {isPt ? `Andar ${floor} · Placar: ${runScore} · Recorde: ${best}` : `Floor ${floor} · Score: ${runScore} · Best: ${best}`}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={startRun}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'JOGAR DE NOVO' : 'PLAY AGAIN'}
+                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'Jogar de novo' : 'Play again'}
                 </button>
                 <button onClick={onExit}
-                  style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'SAIR' : 'EXIT'}
+                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
+                  {isPt ? 'Sair' : 'Exit'}
                 </button>
               </div>
             </div>

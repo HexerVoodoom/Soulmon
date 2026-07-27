@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Scissors, X } from 'lucide-react';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
@@ -28,7 +29,6 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
   const [matchOver, setMatchOver] = useState<'won' | 'lost' | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
-  const mono = { fontFamily: 'monospace' as const };
 
   const play = (hand: Hand) => {
     if (thinking || matchOver) return;
@@ -75,30 +75,32 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0b0f17 0%, #1a1426 100%)', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
-        <span style={{ ...mono, fontWeight: 800, fontSize: '0.95rem', letterSpacing: 1 }}>
-          ✊ {isPt ? 'PEDRA · PAPEL · TESOURA' : 'ROCK · PAPER · SCISSORS'}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #14101f 0%, #241a38 100%)', display: 'flex', flexDirection: 'column', color: '#f1edfb' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem' }}>
+          <Scissors size={20} color="#f0abfc" strokeWidth={2.3} />
+          {isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
         </span>
-        <button onClick={onExit} style={{ ...mono, background: 'rgba(255,255,255,0.08)', border: '1px solid #2c3a52', color: '#e8eefc', borderRadius: 8, padding: '6px 12px', cursor: 'pointer' }}>
-          {isPt ? 'Sair' : 'Exit'}
+        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 999, color: '#f1edfb', cursor: 'pointer' }}>
+          <X size={18} />
         </button>
       </div>
 
       {/* Scoreboard */}
-      <p style={{ ...mono, textAlign: 'center', fontSize: '1rem', fontWeight: 800 }}>
+      <p style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 700 }}>
         {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
-        <span style={{ color: '#5d729c', fontSize: '0.7rem' }}> ({isPt ? 'melhor de 5' : 'first to 3'})</span>
+        <span style={{ color: '#a996d1', fontSize: '0.75rem', fontWeight: 500 }}> ({isPt ? 'melhor de 5' : 'first to 3'})</span>
       </p>
 
       {/* Arena */}
-      <div style={{ flex: 1, margin: 16, borderRadius: 12, border: '1px solid #2c3a52', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <div style={{ flex: 1, margin: 16, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <img src={getSpriteForStage(evolutionStage)} alt="pet"
              style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
         <div style={{ fontSize: '2.6rem', minHeight: 52, lineHeight: 1 }}>
           {thinking ? '💭' : petHand !== null ? HANDS[petHand] : ''}
         </div>
-        <p style={{ ...mono, fontSize: '0.9rem', fontWeight: 700, minHeight: 22 }}>
+        <p style={{ fontSize: '0.9rem', fontWeight: 700, minHeight: 22 }}>
           {matchOver === 'won' ? (isPt ? `🏆 Você venceu! +${MATCH_POINTS} Bits` : `🏆 You won! +${MATCH_POINTS} Bits`)
             : matchOver === 'lost' ? (isPt ? '💀 Seu Soulmon venceu a partida!' : '💀 Your Soulmon won the match!')
             : roundMsg}
@@ -109,23 +111,23 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
       </div>
 
       {/* Controls */}
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: '0 16px 16px' }}>
         {matchOver ? (
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={restart}
-              style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-              {isPt ? 'REVANCHE' : 'REMATCH'}
+              style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#c084fc', color: '#1a1225', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
+              {isPt ? 'Revanche' : 'Rematch'}
             </button>
             <button onClick={onExit}
-              style={{ ...mono, flex: 1, padding: '12px 0', borderRadius: 8, border: '1px solid #2c3a52', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-              {isPt ? 'SAIR' : 'EXIT'}
+              style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#f1edfb', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
+              {isPt ? 'Sair' : 'Exit'}
             </button>
           </div>
         ) : (
           <div style={{ display: 'flex', gap: 8 }}>
             {HANDS.map((h, i) => (
               <button key={h} onClick={() => play(i as Hand)} disabled={thinking}
-                style={{ flex: 1, padding: '14px 0', borderRadius: 10, border: '1px solid #2c3a52', background: thinking ? '#131a26' : '#1c2636', fontSize: '1.7rem', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '16px 0', borderRadius: 18, border: '1px solid rgba(255,255,255,0.1)', background: thinking ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.07)', fontSize: '1.8rem', cursor: thinking ? 'default' : 'pointer', transition: 'background .15s ease' }}>
                 {h}
               </button>
             ))}

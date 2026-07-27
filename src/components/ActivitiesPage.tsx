@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Gamepad2, Swords, Rabbit, Scissors, ShoppingBag, ChevronRight, Gem } from 'lucide-react';
 import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
@@ -12,7 +12,7 @@ import type { Language } from '../utils/i18n';
  * All games award 🪙 Bits (GameState.gamePoints), spent in the shop.
  * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onShopBuy, onEquipBackground, missionProgress, initialGame, onConsumeInitialGame }: {
+export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, ownedBackgrounds, equippedBackground, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onShopBuy, onEquipBackground, missionProgress }: {
   evolutionStage: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
@@ -29,22 +29,12 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   onShopBuy: (itemId: string) => boolean;
   onEquipBackground: (id: string | null) => void;
   missionProgress: Record<string, number>;
-  /** Abre um minijogo direto ao entrar na página (atalho vindo do menu do Header). */
-  initialGame?: 'dungeon' | 'dino' | 'rps' | null;
-  onConsumeInitialGame?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
   const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
   const [shopOpen, setShopOpen] = useState(false);
-
-  useEffect(() => {
-    if (!initialGame) return;
-    setOpenGame(initialGame);
-    onConsumeInitialGame?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialGame]);
   const mono = { fontFamily: 'monospace' as const };
 
   const cards: { key: 'dungeon' | 'dino' | 'rps'; Icon: typeof Swords; iconColor: string; iconBg: string; title: string; desc: string; pts: string }[] = [

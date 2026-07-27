@@ -4950,6 +4950,7 @@ html {
   --sm-gold: #d9a441;          /* acento dourado (aura) */
   --sm-gold-soft: #faf3e3;
   --sm-radius: 16px;
+  --sm-bottomnav-h: 60px;      /* altura de conteúdo da barra de navegação inferior */
 }
 
 .sm-app-bg {
@@ -4994,6 +4995,37 @@ html {
   background: var(--sm-primary-soft);
   color: var(--sm-primary);
 }
+
+/* Barra de navegação inferior: ícones abertos (sem menu colapsado), fixa no
+   rodapé, ABAIXO da barra de chat (que flutua logo acima dela). */
+.sm-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 45;
+  height: var(--sm-bottomnav-h);
+  padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: var(--sm-surface);
+  border-top: 1px solid var(--sm-line);
+  box-shadow: 0 -2px 10px rgba(42, 36, 64, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+}
+.sm-bottom-nav-btn {
+  flex: 1;
+  height: 100%;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--sm-muted);
+  transition: background .15s ease, color .15s ease, transform .1s ease;
+}
+.sm-bottom-nav-btn:active { transform: scale(.92); }
 
 /* Botão chunky estilo Duolingo: face plana + "espessura" embaixo,
    afunda ao pressionar. */
@@ -5098,9 +5130,9 @@ html {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px));
   z-index: 40;
-  padding: 8px 24px calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 24px 12px;
   background: linear-gradient(180deg, rgba(234,247,238,0) 0%, rgba(234,247,238,0.92) 35%, rgba(234,247,238,1) 100%);
   pointer-events: none;
 }

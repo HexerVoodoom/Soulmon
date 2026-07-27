@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
-import { Header } from './components/Header';
+import { BottomNav } from './components/BottomNav';
 import { ActivityCard } from './components/ActivityCard';
 import { TaskCard } from './components/TaskCard';
 import { CompanionHUD } from './components/CompanionHUD';
@@ -69,8 +69,6 @@ export default function App() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  // Atalho de minijogo vindo do menu do Header — consumido assim que a ActivitiesPage abre.
-  const [pendingGame, setPendingGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
   const [digivolveModalStage, setDigivolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
@@ -1363,17 +1361,14 @@ export default function App() {
           />
         )}
 
-        {/* Fixed Header */}
-        <div className="flex-shrink-0">
-          <Header
-            currentView={currentView}
-            onNavigate={setCurrentView}
-            theme={theme}
-            onResetOnboarding={handleResetOnboarding}
-            onOpenGame={(game) => { setPendingGame(game); setCurrentView('games'); }}
-            language={language}
-          />
-        </div>
+        {/* Navegação principal — barra fixa no rodapé (abaixo do chat), ícones abertos */}
+        <BottomNav
+          currentView={currentView}
+          onNavigate={setCurrentView}
+          theme={theme}
+          onResetOnboarding={handleResetOnboarding}
+          language={language}
+        />
 
         {/* Nova Atividade — FAB flutuante no canto inferior direito (só na tela principal) */}
         {currentView === 'main' && (
@@ -1384,7 +1379,9 @@ export default function App() {
             className="fixed flex items-center justify-center"
             style={{
               right: 18,
-              bottom: 'calc(74px + env(safe-area-inset-bottom, 0px))',
+              bottom: theme === 'default'
+                ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 90px)'
+                : 'calc(74px + env(safe-area-inset-bottom, 0px))',
               width: 52,
               height: 52,
               borderRadius: '50%',
@@ -1404,8 +1401,15 @@ export default function App() {
           </button>
         )}
 
-        {/* Scrollable Content - com padding bottom para não ficar atrás do companion */}
-        <div className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : `px-6 pt-3 ${currentView === 'main' ? 'pb-24' : 'pb-4'}`}`}>
+        {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
+        <div
+          className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : 'px-6 pt-3'}`}
+          style={theme === 'default' ? {
+            paddingBottom: currentView === 'main'
+              ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 100px)'
+              : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
+          } : undefined}
+        >
           {currentView === 'main' && (
             <div className="space-y-3">
               {/* HP risk banner — dismissible strip acima do pet */}
@@ -1717,8 +1721,6 @@ export default function App() {
                 onEarnPoints={handleEarnGamePoints}
                 onShopBuy={handleShopBuy}
                 onEquipBackground={handleEquipBackground}
-                initialGame={pendingGame}
-                onConsumeInitialGame={() => setPendingGame(null)}
               />
             </Suspense>
           )}
