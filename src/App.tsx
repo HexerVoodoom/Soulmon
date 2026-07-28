@@ -15,6 +15,7 @@ import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
+import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
@@ -1906,6 +1907,14 @@ export default function App() {
           onClose={handleCloseDailyReport}
           language={language}
           theme={theme}
+        />
+      )}
+      {!showDailyReport && (
+        <WelcomePromptModal
+          language={language}
+          theme={theme}
+          notificationsEnabled={notificationsEnabled}
+          onEnableNotifications={handleToggleNotifications}
         />
       )}
       <Toaster richColors position="top-right" />

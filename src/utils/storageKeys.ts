@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   FIRST_TASK_POPUP_SHOWN: 'digiapp-first-task-popup-shown',
   NOTIFICATIONS_ENABLED: 'digiapp-notifications-enabled',
   PWA_INSTALL_DISMISSED: 'digiapp-pwa-install-dismissed',
+  NOTIFICATION_PROMPT_DISMISSED: 'digiapp-notification-prompt-dismissed',
   SCHEDULED_NOTIFICATIONS: 'digiapp-scheduled-notifications',
   DAILY_NOTIFICATION_CHECK: 'digiapp-daily-notification-check',
   SAVE_ID: 'digiapp-save-id',
