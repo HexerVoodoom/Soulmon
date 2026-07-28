@@ -1,4 +1,5 @@
-import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, TestTube2 } from 'lucide-react';
+import { useState } from 'react';
+import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, Settings, TestTube2 } from 'lucide-react';
 import type { Language } from '../utils/i18n';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
@@ -14,10 +15,12 @@ interface BottomNavProps {
 }
 
 /** Navegação principal do app: barra de ícones fixa no rodapé (abaixo da
- *  barra de chat), todos os itens sempre visíveis — nada colapsado atrás de
- *  um menu único. No tema win98 mantém o menubar clássico no topo. */
+ *  barra de chat). No tema win98 mantém o menubar clássico no topo. Tema
+ *  padrão: 4 views à esquerda + Loja (ação) + menu sanduíche (Configurações
+ *  + Debug) sempre por último, à direita de tudo. */
 export function BottomNav({ currentView, onNavigate, theme = 'default', onResetOnboarding, onOpenShop, language = 'en-US' }: BottomNavProps) {
   const isPt = language === 'pt-BR';
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Win98 theme - mantém o layout antigo (menubar no topo)
   if (theme === 'win98') {
@@ -53,18 +56,17 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
     );
   }
 
-  // Tema padrão — Soulmon design system. Barra fixa no rodapé, todos os
-  // ícones abertos (sem menu colapsado atrás de um único ícone). Torneio
-  // mora dentro de Atividades (junto dos minigames); Estatísticas mora
-  // dentro de Evolução (aba interna — ver App.tsx); Loja não é uma view,
-  // abre como modal por cima da tela atual.
+  // Tema padrão — Soulmon design system. Torneio mora dentro de Atividades
+  // (junto dos minigames); Estatísticas mora dentro de Evolução (aba interna
+  // — ver App.tsx). Só views de verdade viram "abas" coloridas-quando-ativas;
+  // Loja e o menu sanduíche são AÇÕES (cor neutra fixa), agrupadas à direita.
   const items: { view: ViewType; label: string; Icon: typeof Home; color: string }[] = [
     { view: 'main', label: isPt ? 'Início' : 'Home', Icon: Home, color: '#e0483e' },
     { view: 'games', label: isPt ? 'Atividades' : 'Activities', Icon: Gamepad2, color: '#8b5cf6' },
     { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', Icon: GitBranch, color: '#22A900' },
     { view: 'library', label: isPt ? 'Biblioteca' : 'Library', Icon: Users, color: '#009ED8' },
-    { view: 'settings', label: isPt ? 'Configurações' : 'Settings', Icon: Menu, color: '#6b7280' },
   ];
+  const menuActive = menuOpen || currentView === 'settings';
 
   return (
     <nav className="sm-bottom-nav">
@@ -88,22 +90,67 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
           aria-label={isPt ? 'Loja' : 'Shop'}
           title={isPt ? 'Loja' : 'Shop'}
           className="sm-bottom-nav-btn"
-          style={{ color: '#d9a441' }}
+          style={{ color: 'var(--sm-muted)' }}
         >
-          <ShoppingBag size={22} strokeWidth={2.2} />
+          <ShoppingBag size={21} strokeWidth={2.2} />
         </button>
       )}
-      {onResetOnboarding && (
+
+      {/* Menu sanduíche — sempre por último (à direita de tudo). Agrega
+          Configurações + Debug num popover, em vez de dois botões soltos. */}
+      <div style={{ position: 'relative', flex: 1, display: 'flex', height: '100%' }}>
         <button
-          onClick={onResetOnboarding}
-          aria-label="Debug"
-          title="Debug Mode"
+          onClick={() => setMenuOpen(o => !o)}
+          aria-label={isPt ? 'Menu' : 'Menu'}
+          title={isPt ? 'Menu' : 'Menu'}
           className="sm-bottom-nav-btn"
-          style={{ color: 'var(--sm-primary)' }}
+          style={{ color: menuActive ? 'var(--sm-primary)' : 'var(--sm-muted)', background: menuActive ? 'var(--sm-bg)' : 'transparent', width: '100%' }}
         >
-          <TestTube2 size={20} strokeWidth={2.2} />
+          <Menu size={22} strokeWidth={2.2} />
         </button>
-      )}
+
+        {menuOpen && (
+          <>
+            {/* Backdrop transparente — fecha o popover ao tocar fora dele. */}
+            <div
+              onClick={() => setMenuOpen(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+            />
+            <div
+              style={{
+                position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
+                minWidth: 190, background: 'var(--sm-surface)', border: '1px solid var(--sm-line)',
+                borderRadius: 14, boxShadow: '0 10px 28px rgba(42,36,64,0.2)', overflow: 'hidden', zIndex: 61,
+              }}
+            >
+              <button
+                onClick={() => { onNavigate('settings'); setMenuOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px',
+                  background: currentView === 'settings' ? 'var(--sm-bg)' : 'transparent', border: 'none',
+                  color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                }}
+              >
+                <Settings size={17} strokeWidth={2.2} color="var(--sm-muted)" />
+                {isPt ? 'Configurações' : 'Settings'}
+              </button>
+              {onResetOnboarding && (
+                <button
+                  onClick={() => { onResetOnboarding(); setMenuOpen(false); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px',
+                    background: 'transparent', border: 'none', borderTop: '1px solid var(--sm-line)',
+                    color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <TestTube2 size={17} strokeWidth={2.2} color="var(--sm-muted)" />
+                  Debug
+                </button>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </nav>
   );
 }
