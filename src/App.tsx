@@ -15,6 +15,7 @@ import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
+import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { Plus, Edit2 } from 'lucide-react';
@@ -59,6 +60,7 @@ type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle'
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
+  const [showIntro, setShowIntro] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('main');
   // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
   const [saveId] = useState(() => {
@@ -1334,6 +1336,11 @@ export default function App() {
       setNotificationsEnabled(false);
     }
   };
+
+  // Splash de abertura — sempre exibido brevemente antes de tudo o mais.
+  if (showIntro) {
+    return <IntroScreen onFinish={() => setShowIntro(false)} />;
+  }
 
   // Show onboarding if not completed — Soulmon: quiz da alma no lugar do ovo
   if (!hasCompletedOnboarding) {
