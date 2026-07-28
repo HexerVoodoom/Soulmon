@@ -33,7 +33,17 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
   const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
   const mono = { fontFamily: 'monospace' as const };
 
-  const cards: { key: 'dungeon' | 'dino' | 'rps' | 'tournament'; Icon: typeof Swords; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
+  // Torneio fica ACIMA e separado dos minigames (seção própria) — não é mais
+  // só mais um card na mesma lista.
+  const tournamentCard = {
+    key: 'tournament' as const, Icon: Trophy, iconColor: '#d9a441', iconBg: '#fbf1dd',
+    title: isPt ? 'Torneio' : 'Tournament',
+    desc: isPt ? 'PvP assíncrono contra outros jogadores. Ranking mensal.' : 'Asynchronous PvP against other players. Monthly ranking.',
+    pts: isPt ? '5 partidas/dia' : '5 matches/day',
+    onClick: onOpenTournament,
+  };
+
+  const cards: { key: 'dungeon' | 'dino' | 'rps'; Icon: typeof Swords; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
     {
       key: 'dungeon', Icon: Swords, iconColor: '#8b5cf6', iconBg: '#f3e8ff',
       title: isPt ? 'Masmorra' : 'Dungeon',
@@ -57,14 +67,48 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       pts: isPt ? '5 Bits por vitória' : '5 Bits per match win',
       onClick: () => setOpenGame('rps'),
     },
-    {
-      key: 'tournament', Icon: Trophy, iconColor: '#d9a441', iconBg: '#fbf1dd',
-      title: isPt ? 'Torneio' : 'Tournament',
-      desc: isPt ? 'PvP assíncrono contra outros jogadores. Ranking mensal.' : 'Asynchronous PvP against other players. Monthly ranking.',
-      pts: isPt ? '5 partidas/dia' : '5 matches/day',
-      onClick: onOpenTournament,
-    },
   ];
+
+  const renderCard = (c: { key: string; Icon: typeof Swords; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }) => (
+    <button
+      key={c.key}
+      onClick={c.onClick}
+      className={`w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] ${
+        isGlitch
+          ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
+          : isWin98
+            ? 'win98-button bg-white'
+            : 'sm-card'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        {isWin98 || isGlitch ? null : (
+          <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 14, background: c.iconBg }}>
+            <c.Icon size={22} color={c.iconColor} strokeWidth={2.2} />
+          </div>
+        )}
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : ''}
+                  style={isWin98 || isGlitch ? { ...mono, fontSize: '0.9rem', fontWeight: 700 } : { fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
+              {c.title}
+            </span>
+            <span className={isGlitch ? 'bg-[#00ffff]/10 text-[#5fbcbc]' : isWin98 ? 'bg-gray-100 text-gray-500' : ''}
+                  style={isWin98 || isGlitch ? { ...mono, fontSize: '0.6rem', borderRadius: '9999px', padding: '2px 8px' } : { fontSize: '0.65rem', fontWeight: 600, color: 'var(--sm-muted)', background: 'var(--sm-bg)', borderRadius: 9999, padding: '2px 8px' }}>
+              {c.pts}
+            </span>
+          </div>
+          <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : ''}
+             style={isWin98 || isGlitch ? { ...mono, fontSize: '0.72rem', marginTop: 2 } : { fontSize: '0.75rem', marginTop: 2, color: 'var(--sm-muted)' }}>
+            {c.desc}
+          </p>
+        </div>
+        {isWin98 || isGlitch
+          ? <span className={isGlitch ? 'text-[#00ffff]' : 'text-gray-400'} style={{ fontSize: '1.1rem' }}>›</span>
+          : <ChevronRight size={18} color="var(--sm-muted)" strokeWidth={2.2} />}
+      </div>
+    </button>
+  );
 
   return (
     <div className="p-4 space-y-3">
@@ -96,46 +140,26 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
         {isPt ? 'Minijogos para se divertir e acumular pontos com seu Soulmon.' : 'Minigames to have fun and earn points with your Soulmon.'}
       </p>
 
-      {cards.map(c => (
-        <button
-          key={c.key}
-          onClick={c.onClick}
-          className={`w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] ${
-            isGlitch
-              ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
-              : isWin98
-                ? 'win98-button bg-white'
-                : 'sm-card'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            {isWin98 || isGlitch ? null : (
-              <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 14, background: c.iconBg }}>
-                <c.Icon size={22} color={c.iconColor} strokeWidth={2.2} />
-              </div>
-            )}
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : ''}
-                      style={isWin98 || isGlitch ? { ...mono, fontSize: '0.9rem', fontWeight: 700 } : { fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
-                  {c.title}
-                </span>
-                <span className={isGlitch ? 'bg-[#00ffff]/10 text-[#5fbcbc]' : isWin98 ? 'bg-gray-100 text-gray-500' : ''}
-                      style={isWin98 || isGlitch ? { ...mono, fontSize: '0.6rem', borderRadius: '9999px', padding: '2px 8px' } : { fontSize: '0.65rem', fontWeight: 600, color: 'var(--sm-muted)', background: 'var(--sm-bg)', borderRadius: 9999, padding: '2px 8px' }}>
-                  {c.pts}
-                </span>
-              </div>
-              <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : ''}
-                 style={isWin98 || isGlitch ? { ...mono, fontSize: '0.72rem', marginTop: 2 } : { fontSize: '0.75rem', marginTop: 2, color: 'var(--sm-muted)' }}>
-                {c.desc}
-              </p>
-            </div>
-            {isWin98 || isGlitch
-              ? <span className={isGlitch ? 'text-[#00ffff]' : 'text-gray-400'} style={{ fontSize: '1.1rem' }}>›</span>
-              : <ChevronRight size={18} color="var(--sm-muted)" strokeWidth={2.2} />}
-          </div>
-        </button>
-      ))}
+      {/* Torneio — separado, acima dos minigames */}
+      {renderCard(tournamentCard)}
+
+      <div
+        className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-500' : ''}
+        style={{
+          ...(isWin98 || isGlitch ? mono : {}),
+          fontSize: isWin98 || isGlitch ? '0.68rem' : '0.7rem',
+          fontWeight: 700,
+          color: isWin98 || isGlitch ? undefined : 'var(--sm-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.06em',
+          paddingTop: 4,
+          borderTop: isWin98 || isGlitch ? undefined : '1px solid var(--sm-line)',
+        }}
+      >
+        {isPt ? 'Minijogos' : 'Minigames'}
+      </div>
+
+      {cards.map(renderCard)}
 
       {openGame === 'dungeon' && (
         <DungeonGame

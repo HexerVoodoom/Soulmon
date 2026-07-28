@@ -1,4 +1,4 @@
-import { Home, Gamepad2, GitBranch, BarChart3, ShoppingBag, Users, TestTube2 } from 'lucide-react';
+import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, TestTube2 } from 'lucide-react';
 import type { Language } from '../utils/i18n';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
@@ -55,15 +55,15 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
 
   // Tema padrão — Soulmon design system. Barra fixa no rodapé, todos os
   // ícones abertos (sem menu colapsado atrás de um único ícone). Torneio
-  // mora dentro de Atividades (junto dos minigames); Loja e Configurações
-  // não são views — Loja abre por cima da tela atual, Configurações vira
-  // um ícone fixo no canto superior direito (ver App.tsx).
+  // mora dentro de Atividades (junto dos minigames); Estatísticas mora
+  // dentro de Evolução (aba interna — ver App.tsx); Loja não é uma view,
+  // abre como modal por cima da tela atual.
   const items: { view: ViewType; label: string; Icon: typeof Home; color: string }[] = [
     { view: 'main', label: isPt ? 'Início' : 'Home', Icon: Home, color: '#e0483e' },
     { view: 'games', label: isPt ? 'Atividades' : 'Activities', Icon: Gamepad2, color: '#8b5cf6' },
     { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', Icon: GitBranch, color: '#22A900' },
     { view: 'library', label: isPt ? 'Biblioteca' : 'Library', Icon: Users, color: '#009ED8' },
-    { view: 'stats', label: isPt ? 'Estatísticas' : 'Stats', Icon: BarChart3, color: '#d9a441' },
+    { view: 'settings', label: isPt ? 'Configurações' : 'Settings', Icon: Menu, color: '#6b7280' },
   ];
 
   return (

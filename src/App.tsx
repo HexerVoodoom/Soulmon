@@ -19,7 +19,7 @@ import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
-import { Plus, Edit2, Settings } from 'lucide-react';
+import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -1408,32 +1408,6 @@ export default function App() {
           language={language}
         />
 
-        {/* Configurações — ícone fixo no canto superior direito (fora da barra
-            inferior; win98 mantém seu próprio menubar no topo, então só
-            default/glitch precisam deste botão). */}
-        {theme !== 'win98' && currentView !== 'settings' && (
-          <button
-            onClick={() => setCurrentView('settings')}
-            aria-label={language === 'pt-BR' ? 'Configurações' : 'Settings'}
-            title={language === 'pt-BR' ? 'Configurações' : 'Settings'}
-            className="fixed flex items-center justify-center"
-            style={{
-              top: 'calc(12px + env(safe-area-inset-top, 0px))',
-              right: 14,
-              width: 38,
-              height: 38,
-              borderRadius: '50%',
-              background: theme === 'glitch' ? 'rgba(0,255,255,0.1)' : 'var(--sm-surface)',
-              color: theme === 'glitch' ? '#00ffff' : 'var(--sm-muted)',
-              border: theme === 'glitch' ? '1px solid rgba(0,255,255,0.4)' : '1px solid var(--sm-line)',
-              boxShadow: theme === 'glitch' ? 'none' : '0 2px 8px rgba(42,36,64,0.08)',
-              zIndex: 35,
-            }}
-          >
-            <Settings size={18} strokeWidth={2.2} />
-          </button>
-        )}
-
         {/* Loja — fora do minigame: modal próprio, acionado pela barra inferior. */}
         {shopOpen && (
           <Suspense fallback={null}>
@@ -1484,13 +1458,10 @@ export default function App() {
         {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
         <div
           className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : 'px-6 pt-3'}`}
-          style={theme !== 'win98' ? {
-            // Extra top clearance so page content (headers/badges are often
-            // top-right aligned) doesn't sit under the fixed Settings icon.
-            paddingTop: 'calc(52px + env(safe-area-inset-top, 0px))',
-            paddingBottom: theme === 'default' ? (currentView === 'main'
+          style={theme === 'default' ? {
+            paddingBottom: currentView === 'main'
               ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 100px)'
-              : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)') : undefined,
+              : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           } : undefined}
         >
           {currentView === 'main' && (
@@ -1669,6 +1640,31 @@ export default function App() {
                   })()}
                 </>
               )}
+            </div>
+          )}
+
+          {/* Evolução e Estatísticas dividem o mesmo ícone da barra inferior —
+              alternadas por essas abas em vez de dois botões separados. */}
+          {(currentView === 'evolution' || currentView === 'stats') && theme !== 'win98' && (
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => setCurrentView('evolution')}
+                className={theme === 'glitch'
+                  ? `flex-1 py-2 rounded-lg border-2 ${currentView === 'evolution' ? 'border-[#00ffff] text-[#00ffff]' : 'border-[#00ffff]/30 text-[#5fbcbc]'}`
+                  : `sm-btn ${currentView === 'evolution' ? '' : 'sm-btn-secondary'}`}
+                style={{ flex: 1, ...(theme === 'glitch' ? { fontFamily: 'monospace', fontSize: '0.8rem', background: 'transparent' } : {}) }}
+              >
+                {language === 'pt-BR' ? 'Evolução' : 'Evolution'}
+              </button>
+              <button
+                onClick={() => setCurrentView('stats')}
+                className={theme === 'glitch'
+                  ? `flex-1 py-2 rounded-lg border-2 ${currentView === 'stats' ? 'border-[#00ffff] text-[#00ffff]' : 'border-[#00ffff]/30 text-[#5fbcbc]'}`
+                  : `sm-btn ${currentView === 'stats' ? '' : 'sm-btn-secondary'}`}
+                style={{ flex: 1, ...(theme === 'glitch' ? { fontFamily: 'monospace', fontSize: '0.8rem', background: 'transparent' } : {}) }}
+              >
+                {language === 'pt-BR' ? 'Estatísticas' : 'Stats'}
+              </button>
             </div>
           )}
 
