@@ -11,15 +11,18 @@ import type { ActivityCategory } from '../types/attributes';
 // SoulmonOnboarding — o ritual de nascimento do Soulmon: o jogador responde
 // nome/nascimento + um quiz (uma pergunta por página) e, ao final, recebe SEU
 // pet único. O reveal mostra apenas o NOME e uma descrição breve de quem ele é.
+// Por último, um cadastro obrigatório de nickname (identidade pública na
+// Biblioteca/Torneio) + e-mail (sync na nuvem entre aparelhos).
 // Visual: Soulmon design system (claro, minimalista, espiritual+digital).
 // ---------------------------------------------------------------------------
 
 interface SoulmonOnboardingProps {
   onComplete: (data: {
     userName: string;
+    email: string;
     oracleResult: OracleResult;
     initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
-  }) => void;
+  }) => void | Promise<void>;
 }
 
 interface SavedProfile extends OracleInput { seed: number }
@@ -29,12 +32,13 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
-  //         6..(6+N-1) quiz · then gerando · reveal
+  //         6..(6+N-1) quiz · then gerando · reveal · register (nick+email, obrigatório)
   const FAVORITE_STEP = 5;
   const QUIZ_START = FAVORITE_STEP + 1;
   const QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length; // primeiro passo pós-quiz
   const GENERATING = QUIZ_END;
   const REVEAL = QUIZ_END + 1;
+  const REGISTER = REVEAL + 1;
 
   const [step, setStep] = useState(0);
   const [fullName, setFullName] = useState('');
@@ -46,8 +50,15 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const [skipFavorite, setSkipFavorite] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<OracleResult | null>(null);
+  const [nickname, setNickname] = useState('');
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const progress = Math.min(step, REVEAL) / REVEAL;
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
+  const canFinish = nickname.trim().length >= 2 && email.trim().length > 0 && !submitting;
+
+  const progress = Math.min(step, REGISTER) / REGISTER;
 
   const canAdvance = (): boolean => {
     if (step === 1) return fullName.trim().length >= 3;
@@ -106,13 +117,18 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     }
   };
 
-  const finish = () => {
-    if (!result) return;
-    onComplete({
-      userName: fullName.trim(),
+  const finish = async () => {
+    if (!result || !canFinish) return;
+    if (!isValidEmail(email)) { setEmailError(true); return; }
+    setSubmitting(true);
+    await onComplete({
+      userName: nickname.trim(),
+      email: email.trim().toLowerCase(),
       oracleResult: result,
       initialActivities: [],
     });
+    // Nota: o caminho feliz normalmente recarrega a página (troca de saveId
+    // pro derivado do e-mail) — não há necessidade de setSubmitting(false) aqui.
   };
 
   const input: React.CSSProperties = {
@@ -139,7 +155,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     }}>
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
         {/* Barra de progresso */}
-        {step > 0 && step <= REVEAL && (
+        {step > 0 && step <= REGISTER && (
           <div style={{ height: 10, background: 'var(--sm-line)', borderRadius: 8, marginBottom: 24, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress * 100}%`, background: 'var(--sm-primary)', borderRadius: 8, transition: 'width .3s' }} />
           </div>
@@ -288,9 +304,54 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
               </p>
             </div>
 
-            <button className="sm-btn" style={{ width: '100%' }} onClick={finish}>
-              {isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`}
+            <button className="sm-btn" style={{ width: '100%' }} onClick={() => setStep(REGISTER)}>
+              {isPt ? 'Continuar' : 'Continue'}
             </button>
+          </div>
+        )}
+
+        {/* Register — nickname (identidade pública) + e-mail (sync), obrigatórios */}
+        {step === REGISTER && result && (
+          <div style={{ paddingTop: 20 }}>
+            <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>
+              {isPt ? 'Últimos detalhes' : 'Last details'}
+            </h2>
+            <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 20px' }}>
+              {isPt
+                ? 'Isso identifica você na Biblioteca/Torneio e sincroniza seu progresso na nuvem.'
+                : 'This identifies you in the Library/Tournament and syncs your progress to the cloud.'}
+            </p>
+
+            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+              {isPt ? 'Seu nickname' : 'Your nickname'}
+            </label>
+            <input style={input} type="text" value={nickname} autoFocus maxLength={24}
+              onChange={e => setNickname(e.target.value)}
+              placeholder={isPt ? 'Ex.: Mateus' : 'E.g.: Matt'}
+              onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
+            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '6px 0 18px' }}>
+              {isPt ? 'Visível para outros jogadores na Biblioteca e no Torneio.' : 'Visible to other players in the Library and Tournament.'}
+            </p>
+
+            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+              {isPt ? 'Seu e-mail' : 'Your email'}
+            </label>
+            <input style={input} type="email" value={email} autoComplete="email"
+              onChange={e => { setEmail(e.target.value); setEmailError(false); }}
+              placeholder="voce@exemplo.com"
+              onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
+            <p style={{ fontSize: 11.5, color: emailError ? '#e0483e' : 'var(--sm-muted)', margin: '6px 0 0' }}>
+              {emailError
+                ? (isPt ? 'Digite um e-mail válido.' : 'Enter a valid email.')
+                : (isPt ? 'Obrigatório — garante que seu progresso não se perca ao trocar de aparelho.' : 'Required — makes sure your progress survives a device change.')}
+            </p>
+
+            <button className="sm-btn" style={{ width: '100%', marginTop: 24 }} onClick={finish} disabled={!canFinish}>
+              {submitting
+                ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
+                : (isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`)}
+            </button>
+            <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
 

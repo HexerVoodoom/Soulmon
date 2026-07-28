@@ -64,7 +64,10 @@ export default function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('main');
   // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
-  const [saveId] = useState(() => {
+  // Vira o hash do e-mail assim que o onboarding cadastra um (ver
+  // handleCompleteOnboarding) — daí o setter, ao contrário do resto do app
+  // que troca de identidade via reload.
+  const [saveId, setSaveId] = useState(() => {
     let id = localStorage.getItem(STORAGE_KEYS.SAVE_ID);
     if (!id) { id = crypto.randomUUID(); localStorage.setItem(STORAGE_KEYS.SAVE_ID, id); }
     return id;
@@ -1250,22 +1253,45 @@ export default function App() {
     }
   };
 
-  const handleCompleteOnboarding = (data: {
+  const handleCompleteOnboarding = async (data: {
     userName: string;
+    email: string;
     oracleResult: OracleResult;
     initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
   }) => {
+    // O e-mail (obrigatório desde o onboarding) vira a identidade de sync —
+    // mesmo mecanismo do login manual em Configurações (saveId = hash do e-mail).
+    const normalizedEmail = data.email.trim().toLowerCase();
+    const { emailToSaveId, cloudLoad } = await import('./utils/cloudSave');
+    const newSaveId = await emailToSaveId(normalizedEmail);
+
+    localStorage.setItem(STORAGE_KEYS.USER_EMAIL, normalizedEmail);
+    localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
+    localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
+    setUserName(data.userName);
+    setHasCompletedOnboarding(true);
+
+    // Esse e-mail já tem um Soulmon salvo na nuvem (reinstalação/outro
+    // aparelho) — adota o save existente em vez de sobrescrever com uma
+    // criatura nova. Precisa de reload: o gameState inteiro muda de baixo do
+    // GameStateProvider, o que setGameState não faz de forma segura.
+    const existing = await cloudLoad(newSaveId);
+    if (existing) {
+      localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
+      localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(existing));
+      window.location.reload();
+      return;
+    }
+
+    localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
+    setSaveId(newSaveId);
+
     // Linha de sprite GENÉRICA (visual provisório até a Fase 2 assumir) —
     // sorteada uma vez, determinística pela seed do oráculo. Não é mais uma
     // escolha do jogador; a árvore de verdade é a de soulmonStages.
     const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
     const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
-
-    localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
     localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
-    localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
-    setUserName(data.userName);
-    setHasCompletedOnboarding(true);
 
     const newActivities: Activity[] = data.initialActivities.map((item, i) => ({
       id: `${Date.now() + i}`,

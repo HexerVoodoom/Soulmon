@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Search, UserPlus, UserMinus, Gift, Loader2 } from 'lucide-react';
 import { getSpriteForStage } from '../utils/sprites';
 import { listPlayers, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
+import { LIBRARY_NPCS } from '../utils/libraryNpcs';
+import { PlayerDetailModal } from './PlayerDetailModal';
+import type { Language } from '../utils/i18n';
 
 interface LibraryPageProps {
   saveId: string;
@@ -9,8 +12,12 @@ interface LibraryPageProps {
   canGiftToday: boolean; // energia cheia
   onFriendsChange: (friends: string[]) => void;
   onGiftSent: (friendId: string) => void;
-  language: string;
+  language: Language;
 }
+
+// Entrada unificada da lista — jogador real ou NPC de teste (ver
+// utils/libraryNpcs.ts); isNpc/spriteUrl ficam undefined pros reais.
+type LibraryEntry = DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string };
 
 export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, language }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
@@ -19,10 +26,11 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tab, setTab] = useState<'directory' | 'friends'>('directory');
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
+  const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
 
   const load = () => {
     setPlayers(null);
-    listPlayers(search).then(r => setPlayers(r.players)).catch(() => setPlayers([]));
+    listPlayers(search).then(r => setPlayers(r.players ?? [])).catch(() => setPlayers([]));
   };
   useEffect(() => { const t = setTimeout(load, 300); return () => clearTimeout(t); }, [search]);
 
@@ -52,8 +60,11 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
     }
   };
 
-  const friendPlayers = (players ?? []).filter(p => friends.includes(p.id));
-  const list = tab === 'friends' ? friendPlayers : players;
+  const friendPlayers: LibraryEntry[] = (players ?? []).filter(p => friends.includes(p.id));
+  const searchLower = search.toLowerCase();
+  const npcMatches: LibraryEntry[] = LIBRARY_NPCS.filter(p => !searchLower || p.name.toLowerCase().includes(searchLower) || p.petName.toLowerCase().includes(searchLower));
+  const directoryList: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...npcMatches];
+  const list = tab === 'friends' ? friendPlayers : directoryList;
 
   return (
     <div style={{ padding: '4px 0 20px' }}>
@@ -89,39 +100,61 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {list?.map(p => {
+          const isNpc = !!p.isNpc;
           const isFriend = friends.includes(p.id);
           const gifted = giftedToday.has(p.id);
           return (
-            <div key={p.id} className="sm-card" style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <img src={getSpriteForStage(p.stage)} alt="" style={{ width: 44, height: 44, objectFit: 'contain', imageRendering: 'pixelated' }} />
+            <div
+              key={p.id} className="sm-card"
+              style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+              onClick={() => setSelectedPlayer(p)}
+            >
+              <img src={p.spriteUrl ?? getSpriteForStage(p.stage)} alt="" style={{ width: 44, height: 44, objectFit: 'contain', imageRendering: 'pixelated' }} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</p>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {p.name}
+                  {isNpc && (
+                    <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--sm-muted)', background: 'var(--sm-bg)', borderRadius: 999, padding: '1px 6px', flexShrink: 0 }}>
+                      NPC
+                    </span>
+                  )}
+                </p>
                 <p style={{ margin: 0, fontSize: 11, color: 'var(--sm-muted)' }}>
                   {isPt ? 'Rank' : 'Rank'} {p.rankPoints} · {isPt ? `${p.daysPlaying}d jogando` : `${p.daysPlaying}d playing`}
                 </p>
               </div>
-              {isFriend && (
+              {!isNpc && isFriend && (
                 <button
                   className="sm-btn sm-btn-gold" style={{ padding: '8px 10px' }}
                   disabled={!canGiftToday || gifted || busyId === p.id}
                   title={!canGiftToday ? (isPt ? 'Precisa de energia cheia' : 'Needs full energy') : gifted ? (isPt ? 'Já presenteado hoje' : 'Already gifted today') : (isPt ? 'Enviar 20 Bits' : 'Send 20 Bits')}
-                  onClick={() => gift(p.id)}
+                  onClick={e => { e.stopPropagation(); gift(p.id); }}
                 >
                   {busyId === p.id ? <Loader2 className="animate-spin" size={16} /> : <Gift size={16} strokeWidth={2.2} />}
                 </button>
               )}
-              <button
-                className="sm-btn sm-btn-secondary" style={{ padding: '8px 10px' }}
-                disabled={busyId === p.id || (!isFriend && friends.length >= 5)}
-                title={isFriend ? (isPt ? 'Remover amigo' : 'Remove friend') : (isPt ? 'Adicionar amigo' : 'Add friend')}
-                onClick={() => toggleFriend(p)}
-              >
-                {busyId === p.id ? <Loader2 className="animate-spin" size={16} /> : isFriend ? <UserMinus size={16} strokeWidth={2.2} /> : <UserPlus size={16} strokeWidth={2.2} />}
-              </button>
+              {!isNpc && (
+                <button
+                  className="sm-btn sm-btn-secondary" style={{ padding: '8px 10px' }}
+                  disabled={busyId === p.id || (!isFriend && friends.length >= 5)}
+                  title={isFriend ? (isPt ? 'Remover amigo' : 'Remove friend') : (isPt ? 'Adicionar amigo' : 'Add friend')}
+                  onClick={e => { e.stopPropagation(); toggleFriend(p); }}
+                >
+                  {busyId === p.id ? <Loader2 className="animate-spin" size={16} /> : isFriend ? <UserMinus size={16} strokeWidth={2.2} /> : <UserPlus size={16} strokeWidth={2.2} />}
+                </button>
+              )}
             </div>
           );
         })}
       </div>
+
+      {selectedPlayer && (
+        <PlayerDetailModal
+          player={selectedPlayer}
+          language={language}
+          onClose={() => setSelectedPlayer(null)}
+        />
+      )}
     </div>
   );
 }

@@ -166,6 +166,7 @@ async function onRequest({ request, env }) {
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled: !!body.pvpEnabled,
       attrs: body.attrs && typeof body.attrs === "object" ? { virus: +body.attrs.virus || 0, data: +body.attrs.data || 0, vaccine: +body.attrs.vaccine || 0 } : prev.attrs || { virus: 0, data: 0, vaccine: 0 },
+      tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : prev.tasksDone || 0,
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
       updatedAt: Date.now()
@@ -192,7 +193,8 @@ async function onRequest({ request, env }) {
         unlockedStages: p.unlockedStages,
         pvpEnabled: p.pvpEnabled,
         rankPoints: rank.points,
-        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1)
+        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1),
+        tasksDone: p.tasksDone || 0
       });
       if (players.length >= 50) break;
     }
@@ -216,7 +218,8 @@ async function onRequest({ request, env }) {
         rankPoints: rank.points,
         wins: rank.wins,
         losses: rank.losses,
-        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1)
+        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1),
+        tasksDone: p.tasksDone || 0
       }
     });
   }
@@ -674,7 +677,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-PHQOPD/functionsRoutes-0.941551992256406.mjs
+// ../.wrangler/tmp/pages-2DTVit/functionsRoutes-0.40956462863472987.mjs
 var routes = [
   {
     routePath: "/api/chat",

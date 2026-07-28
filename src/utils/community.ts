@@ -23,6 +23,7 @@ export interface PublicProfileInput {
   unlockedStages?: string[];
   pvpEnabled: boolean;
   attrs?: { virus: number; data: number; vaccine: number };
+  tasksDone?: number;
 }
 
 export const pushProfile = (p: PublicProfileInput) =>
@@ -31,6 +32,7 @@ export const pushProfile = (p: PublicProfileInput) =>
 export interface DirectoryPlayer {
   id: string; name: string; petName: string; stage: string;
   unlockedStages: string[]; pvpEnabled: boolean; rankPoints: number; daysPlaying: number;
+  tasksDone: number;
 }
 export const listPlayers = (search = '') =>
   call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });

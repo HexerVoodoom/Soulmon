@@ -263,6 +263,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         unlockedStages: gameState.unlockedEvolutions,
         pvpEnabled: !!gameState.pvpEnabled,
         attrs: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+        tasksDone: gameState.completedTasks?.length ?? 0,
       }).catch(() => {});
     }, 3000);
     return () => clearTimeout(timer);

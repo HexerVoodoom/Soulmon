@@ -92,6 +92,7 @@ export async function onRequest({ request, env }) {
       attrs: body.attrs && typeof body.attrs === 'object'
         ? { virus: +body.attrs.virus || 0, data: +body.attrs.data || 0, vaccine: +body.attrs.vaccine || 0 }
         : (prev.attrs || { virus: 0, data: 0, vaccine: 0 }),
+      tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : (prev.tasksDone || 0),
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
       updatedAt: Date.now(),
@@ -117,6 +118,7 @@ export async function onRequest({ request, env }) {
         unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
         rankPoints: rank.points,
         daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 86400000) + 1),
+        tasksDone: p.tasksDone || 0,
       });
       if (players.length >= 50) break;
     }
@@ -136,6 +138,7 @@ export async function onRequest({ request, env }) {
         friends: p.friends,
         rankPoints: rank.points, wins: rank.wins, losses: rank.losses,
         daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 86400000) + 1),
+        tasksDone: p.tasksDone || 0,
       },
     });
   }
