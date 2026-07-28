@@ -1,6 +1,6 @@
 // Purchasable pet-box backgrounds (pure CSS — no assets needed, 8-bit vibes).
-// Keyed by shop item id; CompanionHUD falls back to the default cyberpunk PNG
-// when nothing is equipped.
+// Keyed by shop item id; CompanionHUD is fully transparent when nothing is
+// equipped (see utils/shop.ts for prices — 'bg-room' is free/pre-owned).
 export interface PetBackground {
   namePt: string;
   nameEn: string;
@@ -9,6 +9,17 @@ export interface PetBackground {
 }
 
 export const PET_BACKGROUNDS: Record<string, PetBackground> = {
+  'bg-room': {
+    namePt: 'Quarto',
+    nameEn: 'Bedroom',
+    css: [
+      'radial-gradient(30px 38px at 74% 28%, #bae6fd 49%, transparent 51%)',
+      'linear-gradient(180deg, transparent 40%, #d8bd8f 40%, #d8bd8f 42%, transparent 42%)',
+      'linear-gradient(90deg, transparent 62%, #d8bd8f 62%, #d8bd8f 64%, transparent 64%)',
+      'linear-gradient(180deg, transparent 76%, #b98f5c 76%, #b98f5c 80%, #8a6a42 80%)',
+      'linear-gradient(180deg, #fdf1de 0%, #fbe6c6 60%, #f6d9a8 100%)',
+    ].join(', '),
+  },
   'bg-night': {
     namePt: 'Céu Noturno',
     nameEn: 'Night Sky',

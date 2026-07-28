@@ -192,7 +192,8 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         pvpEnabled: loadedState.pvpEnabled ?? false,
         trophies: loadedState.trophies ?? [],
         friends: loadedState.friends ?? [],
-        ownedBackgrounds: loadedState.ownedBackgrounds ?? [],
+        // 'bg-room' is free — always owned, even for saves from before it existed.
+        ownedBackgrounds: Array.from(new Set([...(loadedState.ownedBackgrounds ?? []), 'bg-room'])),
         equippedBackground: loadedState.equippedBackground ?? null,
       } as GameState;
     }
@@ -230,7 +231,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       pvpEnabled: false,
       trophies: [],
       friends: [],
-      ownedBackgrounds: [],
+      ownedBackgrounds: ['bg-room'],
       equippedBackground: null,
     };
   });

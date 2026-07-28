@@ -620,7 +620,29 @@ export const CompanionHUD = memo(function CompanionHUD({
       
       {/* Main Container with Companion Area and Energy Bar */}
       <div className="relative">
-      <div className={`flex gap-2 ${isWin98 ? 'p-2' : ''}`}>
+      {/* Equipped background — full-bleed edge-to-edge (breaks out of the page's
+          px-6/24px padding via negative margins) with a vertical fade at the top
+          and bottom. Default (nothing equipped) is fully transparent. Sits behind
+          the row below it via an explicit stacking context (z-index 0 vs 1). */}
+      {!isWin98 && !isGlitch && equippedBackground && PET_BACKGROUNDS[equippedBackground] && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 0, bottom: 0, left: -24, right: -24,
+            zIndex: 0,
+            pointerEvents: 'none',
+            backgroundImage: PET_BACKGROUNDS[equippedBackground].css,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            imageRendering: 'pixelated',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)',
+          }}
+        />
+      )}
+      <div className={`flex gap-2 ${isWin98 ? 'p-2' : ''}`} style={{ position: 'relative', zIndex: 1 }}>
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
         {!isGlitch && !isWin98 && (
           <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 56 }}>
@@ -659,13 +681,8 @@ export const CompanionHUD = memo(function CompanionHUD({
           style={{
             height: '250px',
             borderRadius: isWin98 || isGlitch ? 0 : 28,
-            backgroundImage: isWin98
-              ? 'none'
-              : (equippedBackground && PET_BACKGROUNDS[equippedBackground]?.css)
-                || 'radial-gradient(ellipse 68% 62% at 50% 52%, rgba(219,233,255,0.95) 0%, rgba(214,238,228,0.7) 45%, rgba(217,242,227,0.35) 68%, rgba(217,242,227,0) 88%)',
+            backgroundImage: isWin98 ? 'none' : undefined,
             backgroundColor: isWin98 ? '#9cbd90' : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
             imageRendering: 'pixelated',
             borderWidth: isWin98 || isGlitch ? '1.1px' : 0,
           }}

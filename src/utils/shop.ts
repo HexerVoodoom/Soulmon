@@ -101,6 +101,11 @@ export const SHOP_ITEMS: ShopItem[] = [
   // (Glitchtama is deliberately NOT sold — the only way to get one is
   // clearing all 5 dungeon floors.)
   // Pet-box backgrounds — permanent, equippable (css in utils/backgrounds.ts)
+  // bg-room is the FREE default option — pre-owned by everyone (see
+  // GameStateContext.tsx), so it always shows "Equip" instead of a price.
+  { id: 'bg-room', kind: 'bg', icon: '🛏️',
+    namePt: 'Quarto', nameEn: 'Bedroom',
+    descPt: 'Grátis — sempre disponível', descEn: 'Free — always available', price: 0 },
   { id: 'bg-night',  kind: 'bg', icon: '🌌',
     namePt: 'Céu Noturno',  nameEn: 'Night Sky',
     descPt: 'Cenário estrelado para o box do pet', descEn: 'Starry backdrop for the pet box', price: 150 },
