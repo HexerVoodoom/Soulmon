@@ -1,4 +1,4 @@
-import { Home, Gamepad2, GitBranch, BarChart3, Settings, Swords, Users, TestTube2 } from 'lucide-react';
+import { Home, Gamepad2, GitBranch, BarChart3, ShoppingBag, Users, TestTube2 } from 'lucide-react';
 import type { Language } from '../utils/i18n';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
@@ -8,13 +8,15 @@ interface BottomNavProps {
   onNavigate: (view: ViewType) => void;
   theme?: 'default' | 'win98' | 'glitch';
   onResetOnboarding?: () => void;
+  /** Loja — não é uma view (fica fora do minigame): abre como modal por cima da tela atual. */
+  onOpenShop?: () => void;
   language?: Language;
 }
 
 /** Navegação principal do app: barra de ícones fixa no rodapé (abaixo da
  *  barra de chat), todos os itens sempre visíveis — nada colapsado atrás de
  *  um menu único. No tema win98 mantém o menubar clássico no topo. */
-export function BottomNav({ currentView, onNavigate, theme = 'default', onResetOnboarding, language = 'en-US' }: BottomNavProps) {
+export function BottomNav({ currentView, onNavigate, theme = 'default', onResetOnboarding, onOpenShop, language = 'en-US' }: BottomNavProps) {
   const isPt = language === 'pt-BR';
 
   // Win98 theme - mantém o layout antigo (menubar no topo)
@@ -52,15 +54,16 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
   }
 
   // Tema padrão — Soulmon design system. Barra fixa no rodapé, todos os
-  // ícones abertos (sem menu colapsado atrás de um único ícone).
+  // ícones abertos (sem menu colapsado atrás de um único ícone). Torneio
+  // mora dentro de Atividades (junto dos minigames); Loja e Configurações
+  // não são views — Loja abre por cima da tela atual, Configurações vira
+  // um ícone fixo no canto superior direito (ver App.tsx).
   const items: { view: ViewType; label: string; Icon: typeof Home; color: string }[] = [
     { view: 'main', label: isPt ? 'Início' : 'Home', Icon: Home, color: '#e0483e' },
     { view: 'games', label: isPt ? 'Atividades' : 'Activities', Icon: Gamepad2, color: '#8b5cf6' },
     { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', Icon: GitBranch, color: '#22A900' },
-    { view: 'tournament', label: isPt ? 'Torneio' : 'Tournament', Icon: Swords, color: '#e0483e' },
     { view: 'library', label: isPt ? 'Biblioteca' : 'Library', Icon: Users, color: '#009ED8' },
     { view: 'stats', label: isPt ? 'Estatísticas' : 'Stats', Icon: BarChart3, color: '#d9a441' },
-    { view: 'settings', label: isPt ? 'Configurações' : 'Settings', Icon: Settings, color: '#6b7280' },
   ];
 
   return (
@@ -79,6 +82,17 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
           </button>
         );
       })}
+      {onOpenShop && (
+        <button
+          onClick={onOpenShop}
+          aria-label={isPt ? 'Loja' : 'Shop'}
+          title={isPt ? 'Loja' : 'Shop'}
+          className="sm-bottom-nav-btn"
+          style={{ color: '#d9a441' }}
+        >
+          <ShoppingBag size={22} strokeWidth={2.2} />
+        </button>
+      )}
       {onResetOnboarding && (
         <button
           onClick={onResetOnboarding}

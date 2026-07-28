@@ -621,9 +621,9 @@ export const CompanionHUD = memo(function CompanionHUD({
       {/* Main Container with Companion Area and Energy Bar */}
       <div className="relative">
       {/* Equipped background — full-bleed edge-to-edge (breaks out of the page's
-          px-6/24px padding via negative margins) with a vertical fade at the top
-          and bottom. Default (nothing equipped) is fully transparent. Sits behind
-          the row below it via an explicit stacking context (z-index 0 vs 1). */}
+          px-6/24px padding via negative margins). Default (nothing equipped) is
+          fully transparent. Sits behind the row below it via an explicit
+          stacking context (z-index 0 vs 1). */}
       {!isWin98 && !isGlitch && equippedBackground && PET_BACKGROUNDS[equippedBackground] && (
         <div
           aria-hidden="true"
@@ -637,8 +637,6 @@ export const CompanionHUD = memo(function CompanionHUD({
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
             imageRendering: 'pixelated',
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)',
-            maskImage: 'linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)',
           }}
         />
       )}

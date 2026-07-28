@@ -19,7 +19,7 @@ import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
-import { Plus, Edit2 } from 'lucide-react';
+import { Plus, Edit2, Settings } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -56,6 +56,7 @@ const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => 
 const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ default: m.OraclePage })));
 const TournamentPage = lazy(() => import('./components/TournamentPage').then(m => ({ default: m.TournamentPage })));
 const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ default: m.LibraryPage })));
+const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
 
@@ -80,6 +81,8 @@ export default function App() {
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [guideModalOpen, setGuideModalOpen] = useState(false);
+  // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
+  const [shopOpen, setShopOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
@@ -1401,8 +1404,51 @@ export default function App() {
           onNavigate={setCurrentView}
           theme={theme}
           onResetOnboarding={handleResetOnboarding}
+          onOpenShop={() => setShopOpen(true)}
           language={language}
         />
+
+        {/* Configurações — ícone fixo no canto superior direito (fora da barra
+            inferior; win98 mantém seu próprio menubar no topo, então só
+            default/glitch precisam deste botão). */}
+        {theme !== 'win98' && currentView !== 'settings' && (
+          <button
+            onClick={() => setCurrentView('settings')}
+            aria-label={language === 'pt-BR' ? 'Configurações' : 'Settings'}
+            title={language === 'pt-BR' ? 'Configurações' : 'Settings'}
+            className="fixed flex items-center justify-center"
+            style={{
+              top: 'calc(12px + env(safe-area-inset-top, 0px))',
+              right: 14,
+              width: 38,
+              height: 38,
+              borderRadius: '50%',
+              background: theme === 'glitch' ? 'rgba(0,255,255,0.1)' : 'var(--sm-surface)',
+              color: theme === 'glitch' ? '#00ffff' : 'var(--sm-muted)',
+              border: theme === 'glitch' ? '1px solid rgba(0,255,255,0.4)' : '1px solid var(--sm-line)',
+              boxShadow: theme === 'glitch' ? 'none' : '0 2px 8px rgba(42,36,64,0.08)',
+              zIndex: 35,
+            }}
+          >
+            <Settings size={18} strokeWidth={2.2} />
+          </button>
+        )}
+
+        {/* Loja — fora do minigame: modal próprio, acionado pela barra inferior. */}
+        {shopOpen && (
+          <Suspense fallback={null}>
+            <ShopModal
+              language={language}
+              points={gameState.gamePoints ?? 0}
+              ownedBackgrounds={gameState.ownedBackgrounds ?? []}
+              equippedBackground={gameState.equippedBackground ?? null}
+              missionProgress={missionProgress}
+              onBuy={handleShopBuy}
+              onEquip={handleEquipBackground}
+              onClose={() => setShopOpen(false)}
+            />
+          </Suspense>
+        )}
 
         {/* Nova Atividade — FAB flutuante no canto inferior direito (só na tela principal) */}
         {currentView === 'main' && (
@@ -1438,10 +1484,13 @@ export default function App() {
         {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
         <div
           className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : 'px-6 pt-3'}`}
-          style={theme === 'default' ? {
-            paddingBottom: currentView === 'main'
+          style={theme !== 'win98' ? {
+            // Extra top clearance so page content (headers/badges are often
+            // top-right aligned) doesn't sit under the fixed Settings icon.
+            paddingTop: 'calc(52px + env(safe-area-inset-top, 0px))',
+            paddingBottom: theme === 'default' ? (currentView === 'main'
               ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 100px)'
-              : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
+              : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)') : undefined,
           } : undefined}
         >
           {currentView === 'main' && (
@@ -1743,18 +1792,14 @@ export default function App() {
                 language={language}
                 theme={theme}
                 totalPoints={gameState.gamePoints ?? 0}
-                ownedBackgrounds={gameState.ownedBackgrounds ?? []}
-                equippedBackground={gameState.equippedBackground ?? null}
                 onDungeonEnter={handleDungeonEnter}
                 onDungeonLose={handleDungeonLose}
                 onDungeonHeartDrop={handleDungeonHeartDrop}
                 onGlitchtama={handleGlitchtama}
                 onDungeonEnemyDefeated={handleDungeonEnemyDefeated}
                 onDinoScore={handleDinoScore}
-                missionProgress={missionProgress}
                 onEarnPoints={handleEarnGamePoints}
-                onShopBuy={handleShopBuy}
-                onEquipBackground={handleEquipBackground}
+                onOpenTournament={() => setCurrentView('tournament')}
               />
             </Suspense>
           )}
