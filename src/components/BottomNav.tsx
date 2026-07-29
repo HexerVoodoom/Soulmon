@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, Settings, TestTube2 } from 'lucide-react';
+import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, Settings, TestTube2, Gem } from 'lucide-react';
 import type { Language } from '../utils/i18n';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
@@ -11,6 +11,8 @@ interface BottomNavProps {
   onResetOnboarding?: () => void;
   /** Loja — não é uma view (fica fora do minigame): abre como modal por cima da tela atual. */
   onOpenShop?: () => void;
+  /** Créditos (monetização) — modal próprio, dentro do menu sanduíche. */
+  onOpenCredits?: () => void;
   language?: Language;
 }
 
@@ -18,7 +20,7 @@ interface BottomNavProps {
  *  barra de chat). No tema win98 mantém o menubar clássico no topo. Tema
  *  padrão: 4 views à esquerda + Loja (ação) + menu sanduíche (Configurações
  *  + Debug) sempre por último, à direita de tudo. */
-export function BottomNav({ currentView, onNavigate, theme = 'default', onResetOnboarding, onOpenShop, language = 'en-US' }: BottomNavProps) {
+export function BottomNav({ currentView, onNavigate, theme = 'default', onResetOnboarding, onOpenShop, onOpenCredits, language = 'en-US' }: BottomNavProps) {
   const isPt = language === 'pt-BR';
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -123,11 +125,25 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
                 borderRadius: 14, boxShadow: '0 10px 28px rgba(42,36,64,0.2)', overflow: 'hidden', zIndex: 61,
               }}
             >
+              {onOpenCredits && (
+                <button
+                  onClick={() => { onOpenCredits(); setMenuOpen(false); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px',
+                    background: 'transparent', border: 'none',
+                    color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <Gem size={17} strokeWidth={2.2} color="var(--sm-muted)" />
+                  {isPt ? 'Créditos' : 'Credits'}
+                </button>
+              )}
               <button
                 onClick={() => { onNavigate('settings'); setMenuOpen(false); }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px',
                   background: currentView === 'settings' ? 'var(--sm-bg)' : 'transparent', border: 'none',
+                  borderTop: onOpenCredits ? '1px solid var(--sm-line)' : 'none',
                   color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
                 }}
               >

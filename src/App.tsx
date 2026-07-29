@@ -27,7 +27,8 @@ import { type Language, useTranslation } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
-import { hashString, creatureFormId, type OracleResult } from './utils/oracle';
+import { hashString, creatureFormId } from './utils/oracle';
+import type { OracleInput } from './utils/oracle';
 import { getNextEvolution } from './utils/dailyReset';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -35,6 +36,11 @@ import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GL
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
+import {
+  PREMADE_CHARACTERS, getDemoCreatureStages, canCreateDemoTaskToday, recordDemoCreation,
+  watchRewardedAd, AD_REWARD_CREDITS, purchaseCredits, REROLL_COST_CREDITS, HEART_COST_CREDITS,
+  type CreditPack,
+} from './utils/monetization';
 
 const EVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -42,8 +48,10 @@ const EVOLVE_SEGMENTS: Record<string, number> = {
 };
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
+import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
+const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
 const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -83,6 +91,8 @@ export default function App() {
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
   const [shopOpen, setShopOpen] = useState(false);
+  // Créditos (monetização) — modal próprio, aberto pelo menu sanduíche.
+  const [creditsOpen, setCreditsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
@@ -1070,6 +1080,7 @@ export default function App() {
     if (!isShopItemUnlocked(item, missionProgress)) return false;
     if ((gameState.gamePoints ?? 0) < item.price) return false;
     if (item.kind === 'bg' && (gameState.ownedBackgrounds ?? []).includes(item.id)) return false;
+    if (item.kind === 'furniture' && (gameState.ownedFurniture ?? []).includes(item.id)) return false;
 
     setGameState(prev => {
       const next = { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
@@ -1082,16 +1093,97 @@ export default function App() {
       } else if (item.kind === 'bg') {
         next.ownedBackgrounds = [...(prev.ownedBackgrounds ?? []), item.id];
         next.equippedBackground = item.id; // equip right away
+      } else if (item.kind === 'furniture') {
+        next.ownedFurniture = [...(prev.ownedFurniture ?? []), item.id];
+        next.equippedFurniture = item.id; // equip right away
       }
       return next;
     });
     playFeed();
     return true;
-  }, [gameState.gamePoints, gameState.ownedBackgrounds, missionProgress]);
+  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.ownedFurniture, missionProgress]);
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
   }, []);
+
+  const handleEquipFurniture = useCallback((id: string | null) => {
+    setGameState(prev => ({ ...prev, equippedFurniture: id }));
+  }, []);
+
+  // 💎 Créditos (monetização — utils/monetization.ts): anúncio recompensado,
+  // pacotes (placeholder), cura instantânea e reroll de personagem.
+  const handleWatchAd = useCallback(async (): Promise<boolean> => {
+    const ok = await watchRewardedAd();
+    if (ok) setGameState(prev => ({ ...prev, credits: (prev.credits ?? 0) + AD_REWARD_CREDITS }));
+    return ok;
+  }, []);
+
+  const handleBuyCreditPack = useCallback(async (pack: CreditPack): Promise<boolean> => {
+    const ok = await purchaseCredits(pack);
+    if (ok) setGameState(prev => ({ ...prev, credits: (prev.credits ?? 0) + pack.credits }));
+    return ok;
+  }, []);
+
+  const handleInstantHealWithCredits = useCallback((): boolean => {
+    if ((gameState.credits ?? 0) < HEART_COST_CREDITS) return false;
+    if (gameState.healthPoints >= gameState.maxHealthPoints) return false;
+    setGameState(prev => ({
+      ...prev,
+      credits: (prev.credits ?? 0) - HEART_COST_CREDITS,
+      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
+    }));
+    return true;
+  }, [gameState.credits, gameState.healthPoints, gameState.maxHealthPoints]);
+
+  // Reroll: regenera o personagem do oráculo com uma seed NOVA (mesmos dados
+  // de nascimento salvos no onboarding) — recomeça do Rookie, mantém
+  // atividades/tarefas e Bits. Só existe pra contas 'paid' (modo demo não tem
+  // perfil de oráculo salvo).
+  const handleRerollCharacter = useCallback(async (): Promise<boolean> => {
+    if ((gameState.credits ?? 0) < REROLL_COST_CREDITS) return false;
+    let saved: (OracleInput & { seed: number }) | null = null;
+    try {
+      saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOULMON_PROFILE) || 'null');
+    } catch {
+      saved = null;
+    }
+    if (!saved) return false;
+    const { generateOracle } = await import('./utils/oracle');
+    const newSeed = Math.floor(Math.random() * 2 ** 31);
+    const result = generateOracle(saved, newSeed);
+    localStorage.setItem(STORAGE_KEYS.SOULMON_PROFILE, JSON.stringify({ ...saved, seed: result.seed }));
+    const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
+    const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
+    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
+    setGameState(prev => ({
+      ...prev,
+      credits: (prev.credits ?? 0) - REROLL_COST_CREDITS,
+      eggType: genericLine,
+      evolutionStage: 'rookie',
+      unlockedEvolutions: ['rookie'],
+      healthPoints: getMaxHPForStage('rookie'),
+      maxHealthPoints: getMaxHPForStage('rookie'),
+      maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
+      digivolutionSegments: 0,
+      perfectDays: 0,
+      virusPoints: 0,
+      dataPoints: 0,
+      vaccinePoints: 0,
+      attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+      currentBranch: 'data',
+      degeneratedByHP: false,
+      soulmonStages: result.creature.stages,
+      soulmonMeta: {
+        seed: result.seed,
+        baseName: result.creature.baseName,
+        dominantElement: result.dominantElement,
+        dominantAlignment: result.dominantAlignment,
+        dominantRealm: result.dominantRealm,
+      },
+    }));
+    return true;
+  }, [gameState.credits]);
 
   // 🔒 Evolution padlock (Evolution page): tapping the current Soulmon toggles
   // it. While locked, the pet never evolves at the day turn; unlocking lets the
@@ -1256,12 +1348,7 @@ export default function App() {
     }
   };
 
-  const handleCompleteOnboarding = async (data: {
-    userName: string;
-    email: string;
-    oracleResult: OracleResult;
-    initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
-  }) => {
+  const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
     // O e-mail (obrigatório desde o onboarding) vira a identidade de sync —
     // mesmo mecanismo do login manual em Configurações (saveId = hash do e-mail).
     const normalizedEmail = data.email.trim().toLowerCase();
@@ -1289,13 +1376,6 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
     setSaveId(newSaveId);
 
-    // Linha de sprite GENÉRICA (visual provisório até a Fase 2 assumir) —
-    // sorteada uma vez, determinística pela seed do oráculo. Não é mais uma
-    // escolha do jogador; a árvore de verdade é a de soulmonStages.
-    const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
-    const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
-
     const newActivities: Activity[] = data.initialActivities.map((item, i) => ({
       id: `${Date.now() + i}`,
       name: item.name,
@@ -1304,6 +1384,37 @@ export default function App() {
       steps: [],
       weekDays: [0, 1, 2, 3, 4, 5, 6],
     }));
+
+    // Modo demo (utils/monetization.ts): personagem pré-pronto, sem árvore do
+    // oráculo — evolui num caminho ÚNICO (getSpriteForStage resolve o sprite
+    // via demoCharacterId, ver utils/sprites.ts).
+    if (data.mode === 'demo') {
+      const premade = PREMADE_CHARACTERS.find(c => c.id === data.demoCharacterId);
+      localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'tapirmon');
+      setGameState(prev => ({
+        ...prev,
+        activities: newActivities,
+        tasks: [],
+        eggType: 'tapirmon',
+        evolutionStage: 'rookie',
+        unlockedEvolutions: ['rookie'],
+        healthPoints: getMaxHPForStage('rookie'),
+        maxHealthPoints: getMaxHPForStage('rookie'),
+        maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
+        soulmonStages: premade ? getDemoCreatureStages(premade) : [],
+        soulmonMeta: premade ? { baseName: premade.name } : undefined,
+        accountTier: 'demo',
+        demoCharacterId: data.demoCharacterId,
+      }));
+      return;
+    }
+
+    // Linha de sprite GENÉRICA (visual provisório até a Fase 2 assumir) —
+    // sorteada uma vez, determinística pela seed do oráculo. Não é mais uma
+    // escolha do jogador; a árvore de verdade é a de soulmonStages.
+    const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
+    const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
+    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
 
     // O onboarding É o ritual de nascimento — o pet já nasce Rookie na SUA
     // forma única (sem ovo/baby).
@@ -1325,6 +1436,8 @@ export default function App() {
         dominantAlignment: data.oracleResult.dominantAlignment,
         dominantRealm: data.oracleResult.dominantRealm,
       },
+      accountTier: 'paid',
+      demoCharacterId: undefined,
     }));
   };
 
@@ -1405,6 +1518,7 @@ export default function App() {
           theme={theme}
           onResetOnboarding={handleResetOnboarding}
           onOpenShop={() => setShopOpen(true)}
+          onOpenCredits={() => setCreditsOpen(true)}
           language={language}
         />
 
@@ -1416,10 +1530,32 @@ export default function App() {
               points={gameState.gamePoints ?? 0}
               ownedBackgrounds={gameState.ownedBackgrounds ?? []}
               equippedBackground={gameState.equippedBackground ?? null}
+              ownedFurniture={gameState.ownedFurniture ?? []}
+              equippedFurniture={gameState.equippedFurniture ?? null}
               missionProgress={missionProgress}
               onBuy={handleShopBuy}
               onEquip={handleEquipBackground}
+              onEquipFurniture={handleEquipFurniture}
               onClose={() => setShopOpen(false)}
+            />
+          </Suspense>
+        )}
+
+        {/* Créditos (monetização) — modal próprio, aberto pelo menu sanduíche. */}
+        {creditsOpen && (
+          <Suspense fallback={null}>
+            <CreditsModal
+              language={language}
+              credits={gameState.credits ?? 0}
+              accountTier={gameState.accountTier ?? 'paid'}
+              healthPoints={gameState.healthPoints}
+              maxHealthPoints={gameState.maxHealthPoints}
+              canReroll={!!localStorage.getItem(STORAGE_KEYS.SOULMON_PROFILE)}
+              onWatchAd={handleWatchAd}
+              onBuyPack={handleBuyCreditPack}
+              onInstantHeal={handleInstantHealWithCredits}
+              onReroll={handleRerollCharacter}
+              onClose={() => setCreditsOpen(false)}
             />
           </Suspense>
         )}
@@ -1501,6 +1637,7 @@ export default function App() {
                 currentStage={getCurrentStageName()}
                 evolutionStage={gameState.evolutionStage}
                 eggType={gameState.eggType}
+                demoCharacterId={gameState.demoCharacterId}
                 healthPoints={gameState.healthPoints}
                 maxHealthPoints={gameState.maxHealthPoints}
                 dominantBranch={getDominantBranch()}
@@ -1509,6 +1646,7 @@ export default function App() {
                 triggerMessage={messageTrigger}
                 energyPoints={gameState.energyPoints}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
+                equippedFurniture={gameState.equippedFurniture ?? null}
                 fullSignal={fullSignal}
                 digivolutionSegments={gameState.digivolutionSegments}
                 theme={theme}
@@ -1681,6 +1819,7 @@ export default function App() {
               theme={theme}
               stages={gameState.soulmonStages ?? []}
               eggType={gameState.eggType}
+              demoCharacterId={gameState.demoCharacterId}
               unlockedEvolutions={gameState.unlockedEvolutions}
               evolutionLocked={gameState.evolutionLocked ?? false}
               onToggleEvolutionLock={handleToggleEvolutionLock}
@@ -1854,6 +1993,7 @@ export default function App() {
           evolutionStage={gameState.evolutionStage}
           activitiesCount={gameState.activities.length}
           activitiesCap={gameState.maxActivityCap}
+          demoLimitReached={gameState.accountTier === 'demo' && !canCreateDemoTaskToday()}
           onSaveTask={(data) => {
             const newTask: Task = {
               id: `task-${Date.now()}`,
@@ -1869,6 +2009,7 @@ export default function App() {
               ...prev,
               tasks: [...prev.tasks, newTask],
             }));
+            if (gameState.accountTier === 'demo') recordDemoCreation();
           }}
           onSaveActivity={(data) => {
             const newActivity: Activity = {
@@ -1884,6 +2025,7 @@ export default function App() {
               ...prev,
               activities: [...prev.activities, newActivity],
             }));
+            if (gameState.accountTier === 'demo') recordDemoCreation();
           }}
           theme={theme}
           language={language}

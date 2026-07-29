@@ -3,6 +3,7 @@ import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
+import { SHOP_ITEMS } from '../utils/shop';
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
@@ -18,6 +19,8 @@ interface CompanionHUDProps {
   evolutionStage: string;
   /** Linha genérica de sprite (fallback visual até a Fase 2 assumir) — ver utils/sprites.ts. */
   eggType?: 'tapirmon' | 'veemon' | 'salamon';
+  /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
+  demoCharacterId?: string;
   healthPoints: number;
   maxHealthPoints: number;
   dominantBranch: 'virus' | 'data' | 'vaccine' | 'balanced';
@@ -29,6 +32,7 @@ interface CompanionHUDProps {
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
   healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
   equippedBackground?: string | null; // shop backdrop id for the pet box
+  equippedFurniture?: string | null; // shop furniture id — small decor badge in the pet box
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
@@ -68,6 +72,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   currentStage,
   evolutionStage,
   eggType = 'tapirmon',
+  demoCharacterId,
   healthPoints,
   maxHealthPoints, 
   dominantBranch, 
@@ -79,6 +84,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   fullSignal = 0,
   healCapSignal = 0,
   equippedBackground = null,
+  equippedFurniture = null,
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   perfectDays = 0,
@@ -359,7 +365,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       .catch(() => {});
   };
 
-  const sprite = getSpriteForStage(evolutionStage, eggType);
+  const sprite = getSpriteForStage(evolutionStage, eggType, demoCharacterId);
 
 
   // Check if sprite should be flipped when walking left
@@ -640,6 +646,25 @@ export const CompanionHUD = memo(function CompanionHUD({
           }}
         />
       )}
+      {/* Mobília equipada — badge decorativo no canto do box (utils/shop.ts kind:'furniture'). */}
+      {!isWin98 && !isGlitch && equippedFurniture && (() => {
+        const furn = SHOP_ITEMS.find(i => i.id === equippedFurniture && i.kind === 'furniture');
+        if (!furn) return null;
+        const FurnIcon = furn.displayIcon;
+        return (
+          <div
+            className="sm-card"
+            title={language === 'pt-BR' ? furn.namePt : furn.nameEn}
+            style={{
+              position: 'absolute', bottom: 6, left: 6, zIndex: 1,
+              width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 0, pointerEvents: 'none',
+            }}
+          >
+            {FurnIcon ? <FurnIcon size={16} strokeWidth={2.2} color="var(--sm-ink)" /> : <span style={{ fontSize: '1rem' }}>{furn.icon}</span>}
+          </div>
+        );
+      })()}
       <div className={`flex gap-2 ${isWin98 ? 'p-2' : ''}`} style={{ position: 'relative', zIndex: 1 }}>
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
         {!isGlitch && !isWin98 && (

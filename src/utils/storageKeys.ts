@@ -32,4 +32,8 @@ export const STORAGE_KEYS = {
   ORACLE_FORM: 'digiapp-oracle-form',
   // Soulmon: perfil da alma gerado no onboarding (input + seed p/ regenerar)
   SOULMON_PROFILE: 'soulmon-profile',
+  // Monetização — anúncio recompensado (contagem diária, não precisa de sync)
+  AD_WATCHES_TODAY: 'soulmon-ad-watches-today',
+  // Monetização — cap diário de criação de atividade/tarefa no modo demo
+  DEMO_TASKS_CREATED_TODAY: 'soulmon-demo-tasks-created-today',
 } as const;

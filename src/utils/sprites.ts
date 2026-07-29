@@ -241,8 +241,16 @@ function genericSpriteForStage(stageId: string, line: EggType): string {
   return branchData.stages[idx]?.sprite ?? evoLine.rookie.sprite;
 }
 
-export function getSpriteForStage(stage: string, genericLine: EggType = 'tapirmon'): string {
+export function getSpriteForStage(stage: string, genericLine: EggType = 'tapirmon', demoCharacterId?: string): string {
   const key = stage.toLowerCase();
+  // Modo demo (utils/monetization.ts): personagem pré-pronto, sem branch —
+  // um sprite só por nível (rookie/champion/ultimate/mega; ultra reusa mega).
+  if (demoCharacterId && DUNGEON_LINE_SPRITES[demoCharacterId]) {
+    const levelRaw = key === 'rookie' || key === 'ultra' ? key : key.split('-')[0];
+    const level = (levelRaw === 'ultra' ? 'mega' : levelRaw) as 'rookie' | 'champion' | 'ultimate' | 'mega';
+    const line = DUNGEON_LINE_SPRITES[demoCharacterId];
+    return line[level] ?? line.rookie;
+  }
   return SOULMON_SPRITES[key] ?? STAGE_SPRITES[key] ?? genericSpriteForStage(key, genericLine);
 }
 

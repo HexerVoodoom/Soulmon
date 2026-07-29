@@ -1,7 +1,15 @@
 // 🛒 Shop catalog — bought with minigame points (gamePoints).
 // Effects are applied in App.tsx (handleShopBuy); see docs/SHOP-PLAN.md.
-export type ShopItemKind = 'chip' | 'heart' | 'bg';
+import type { ComponentType } from 'react';
+import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint } from 'lucide-react';
+import { PowerIcon, HarmonyIcon, BenevolenceIcon } from '../components/AlignmentIcons';
+
+export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture';
 export type Attr = 'virus' | 'data' | 'vaccine';
+
+/** Componente de ícone pro visual da loja — aceita tanto ícones lucide quanto
+ *  os ícones de alinhamento (AlignmentIcons.tsx), mesma assinatura de props. */
+export type ShopIconComponent = ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 
 /**
  * Purchase gate. Locked items still show in the shop — darkened, with a
@@ -13,7 +21,13 @@ export type UnlockReq = { kind: 'mission'; missionId: string };
 export interface ShopItem {
   id: string;
   kind: ShopItemKind;
+  /** Emoji — identidade do item no inventário (chip/heart usam isso como
+   *  CHAVE em foodInventory, ver App.tsx handleShopBuy/handleFeed). NUNCA
+   *  trocar por um componente — só o visual da loja usa displayIcon. */
   icon: string;
+  /** Ícone renderizado na loja (estilo lucide, igual ao resto do app) — só
+   *  visual, não afeta o inventário. Ausente em 'bg' (usa a prévia CSS). */
+  displayIcon?: ShopIconComponent;
   namePt: string;
   nameEn: string;
   descPt: string;
@@ -57,18 +71,18 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   },
   [CHIP_EMOJI.virus]: {
     emoji: CHIP_EMOJI.virus, kind: 'chip', attr: 'virus',
-    namePt: 'Chip de Vírus', nameEn: 'Virus Chip',
-    descPt: `Usar dá +${CHIP_BOOST} de vírus (não enche energia)`, descEn: `Use for +${CHIP_BOOST} virus (no energy)`,
+    namePt: 'Chip de Poder', nameEn: 'Power Chip',
+    descPt: `Usar dá +${CHIP_BOOST} de Poder (não enche energia)`, descEn: `Use for +${CHIP_BOOST} Power (no energy)`,
   },
   [CHIP_EMOJI.data]: {
     emoji: CHIP_EMOJI.data, kind: 'chip', attr: 'data',
-    namePt: 'Chip de Dado', nameEn: 'Data Chip',
-    descPt: `Usar dá +${CHIP_BOOST} de dado (não enche energia)`, descEn: `Use for +${CHIP_BOOST} data (no energy)`,
+    namePt: 'Chip de Harmonia', nameEn: 'Harmony Chip',
+    descPt: `Usar dá +${CHIP_BOOST} de Harmonia (não enche energia)`, descEn: `Use for +${CHIP_BOOST} Harmony (no energy)`,
   },
   [CHIP_EMOJI.vaccine]: {
     emoji: CHIP_EMOJI.vaccine, kind: 'chip', attr: 'vaccine',
-    namePt: 'Chip de Vacina', nameEn: 'Vaccine Chip',
-    descPt: `Usar dá +${CHIP_BOOST} de vacina (não enche energia)`, descEn: `Use for +${CHIP_BOOST} vaccine (no energy)`,
+    namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
+    descPt: `Usar dá +${CHIP_BOOST} de Benevolência (não enche energia)`, descEn: `Use for +${CHIP_BOOST} Benevolence (no energy)`,
   },
   [HEART_ITEM_EMOJI]: {
     emoji: HEART_ITEM_EMOJI, kind: 'heart',
@@ -83,23 +97,46 @@ export function isSpecialItem(emoji: string): boolean {
 
 export const SHOP_ITEMS: ShopItem[] = [
   // Attribute chips — bought here, then USED from the Items folder (they only
-  // raise the attribute, no energy). They steer the evolution branch.
-  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, attr: 'virus',
-    namePt: 'Chip de Vírus',  nameEn: 'Virus Chip',
-    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de vírus`, descEn: `Goes to Items; use for +${CHIP_BOOST} virus`, price: 120 },
-  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, attr: 'data',
-    namePt: 'Chip de Dado',   nameEn: 'Data Chip',
-    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de dado`, descEn: `Goes to Items; use for +${CHIP_BOOST} data`, price: 120 },
-  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, attr: 'vaccine',
-    namePt: 'Chip de Vacina', nameEn: 'Vaccine Chip',
-    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de vacina`, descEn: `Goes to Items; use for +${CHIP_BOOST} vaccine`, price: 120 },
+  // raise the attribute, no energy). They steer the evolution branch. Nomes
+  // e ícones seguem os 3 atributos do oráculo (ver EvolutionPath.tsx /
+  // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, não mais Vírus/Dado/Vacina.
+  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, displayIcon: PowerIcon, attr: 'virus',
+    namePt: 'Chip de Poder',  nameEn: 'Power Chip',
+    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Poder`, descEn: `Goes to Items; use for +${CHIP_BOOST} Power`, price: 120 },
+  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, displayIcon: HarmonyIcon, attr: 'data',
+    namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
+    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Harmonia`, descEn: `Goes to Items; use for +${CHIP_BOOST} Harmony`, price: 120 },
+  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, displayIcon: BenevolenceIcon, attr: 'vaccine',
+    namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
+    descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Benevolência`, descEn: `Goes to Items; use for +${CHIP_BOOST} Benevolence`, price: 120 },
   // Heart item — the ONLY buyable HP heal. Goes to the Items folder; using it
   // restores a heart. Also drops (rarely) in the dungeon.
-  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI,
+  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI, displayIcon: Heart,
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
     descPt: `Vai pra pastinha; usar cura ${HEART_HEAL} coração`, descEn: `Goes to Items; use to heal ${HEART_HEAL} heart`, price: 150 },
   // (Glitchtama is deliberately NOT sold — the only way to get one is
   // clearing all 5 dungeon floors.)
+  // Mobílias — decoração equipável no box do pet (mesmo padrão de
+  // owned/equip dos cenários, ver ownedFurniture/equippedFurniture). Puramente
+  // cosmético, não afeta atributos.
+  { id: 'furn-sofa', kind: 'furniture', icon: '🛋️', displayIcon: Sofa,
+    namePt: 'Sofá Pixel', nameEn: 'Pixel Sofa',
+    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 100 },
+  { id: 'furn-lamp', kind: 'furniture', icon: '💡', displayIcon: Lamp,
+    namePt: 'Luminária', nameEn: 'Lamp',
+    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 100 },
+  { id: 'furn-chair', kind: 'furniture', icon: '🪑', displayIcon: Armchair,
+    namePt: 'Poltrona', nameEn: 'Armchair',
+    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 120 },
+  { id: 'furn-books', kind: 'furniture', icon: '📚', displayIcon: BookOpen,
+    namePt: 'Estante de Livros', nameEn: 'Bookshelf',
+    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 120 },
+  { id: 'furn-plant', kind: 'furniture', icon: '🪴', displayIcon: Flower2,
+    namePt: 'Vaso de Planta', nameEn: 'Potted Plant',
+    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 100 },
+  { id: 'furn-rug', kind: 'furniture', icon: '🐾', displayIcon: PawPrint,
+    namePt: 'Tapete de Patinhas', nameEn: 'Paw Print Rug',
+    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 140 },
   // Pet-box backgrounds — permanent, equippable (css in utils/backgrounds.ts)
   // bg-room is the FREE default option — pre-owned by everyone (see
   // GameStateContext.tsx), so it always shows "Equip" instead of a price.

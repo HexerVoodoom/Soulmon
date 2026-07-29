@@ -90,11 +90,11 @@ export interface GameState {
   /** Metadados do oráculo usados fora da árvore (fallback de sprite genérico,
    *  telas de perfil etc.). */
   soulmonMeta?: {
-    seed: number;
+    seed?: number;
     baseName: string;
-    dominantElement: ElementId;
-    dominantAlignment: AlignmentId;
-    dominantRealm: RealmId;
+    dominantElement?: ElementId;
+    dominantAlignment?: AlignmentId;
+    dominantRealm?: RealmId;
   };
   /** Attribute points accumulated since the last evolution — drives branch selection */
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
@@ -110,6 +110,10 @@ export interface GameState {
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
   equippedBackground: string | null;
+  /** Shop: furniture (kind:'furniture') owned — purely cosmetic decoration for the pet box. */
+  ownedFurniture?: string[];
+  /** Shop: equipped furniture id, or null for none. */
+  equippedFurniture?: string | null;
   /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
   evolutionLocked?: boolean;
   /** Tournament: opt-in para PvP assíncrono (aparece como oponente pra outros e pode desafiar). */
@@ -137,6 +141,15 @@ export interface GameState {
     perfectDays: number;
     degenerated: boolean;
   };
+  /** Monetização (utils/monetization.ts) — 'demo': personagem pré-pronto,
+   *  1 atividade nova/dia; 'paid': jogo completo (compra única). Saves
+   *  antigos (antes desse campo existir) são adotados como 'paid'. */
+  accountTier?: 'demo' | 'paid';
+  /** Modo demo: qual personagem pré-pronto foi escolhido (utils/monetization.ts). */
+  demoCharacterId?: 'kaelen' | 'orrin' | 'thalindra';
+  /** Créditos (moeda premium, dinheiro real) — reroll de personagem, cura
+   *  instantânea de coração, itens/cenários da loja. */
+  credits?: number;
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
@@ -195,6 +208,14 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // 'bg-room' is free — always owned, even for saves from before it existed.
         ownedBackgrounds: Array.from(new Set([...(loadedState.ownedBackgrounds ?? []), 'bg-room'])),
         equippedBackground: loadedState.equippedBackground ?? null,
+        ownedFurniture: loadedState.ownedFurniture ?? [],
+        equippedFurniture: loadedState.equippedFurniture ?? null,
+        // Saves from before accountTier existed are grandfathered as 'paid' —
+        // they already have a real oracle character and full functionality,
+        // so they must never be retroactively downgraded to demo.
+        accountTier: loadedState.accountTier ?? 'paid',
+        demoCharacterId: loadedState.demoCharacterId,
+        credits: loadedState.credits ?? 0,
       } as GameState;
     }
     const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
@@ -233,6 +254,13 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       friends: [],
       ownedBackgrounds: ['bg-room'],
       equippedBackground: null,
+      ownedFurniture: [],
+      equippedFurniture: null,
+      // Fresh installs start in demo — the onboarding gate (SoulmonOnboarding)
+      // upgrades this to 'paid' once the (currently placeholder) one-time
+      // purchase completes.
+      accountTier: 'demo',
+      credits: 0,
     };
   });
 

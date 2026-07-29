@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Gem, FlaskConical, Image as ImageIcon, Award, Lock, Check } from 'lucide-react';
+import { X, Gem, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa } from 'lucide-react';
 import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
@@ -7,22 +7,28 @@ import type { Language } from '../utils/i18n';
 
 /**
  * Loja — gasta Bits ganhos nos minijogos. Organizada em abas (Itens /
- * Cenários / Missões). Itens podem estar BLOQUEADOS por missão: renderizam
- * escurecidos com cadeado; tocar mostra como desbloquear. Os emojis dos
- * itens são conteúdo do jogo (o que cada item É), não ícones de navegação —
- * mantidos como estão; o chrome do modal usa o design system sm-*.
+ * Cenários / Mobílias / Missões). Itens podem estar BLOQUEADOS por missão:
+ * renderizam escurecidos com cadeado; tocar mostra como desbloquear. Ícones
+ * seguem o estilo lucide do resto do app (item.displayIcon); o emoji em
+ * item.icon é só a CHAVE de inventário dos consumíveis — nunca é o visual.
  */
-type ShopTab = 'items' | 'bg' | 'missions';
+type ShopTab = 'items' | 'bg' | 'furniture' | 'missions';
 
-export function ShopModal({ language, points, ownedBackgrounds, equippedBackground, missionProgress, onBuy, onEquip, onClose }: {
+export function ShopModal({
+  language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedFurniture,
+  missionProgress, onBuy, onEquip, onEquipFurniture, onClose,
+}: {
   language: Language;
   points: number;
   ownedBackgrounds: string[];
   equippedBackground: string | null;
+  ownedFurniture: string[];
+  equippedFurniture: string | null;
   /** Progress per mission id (clamped to its target) — utils/missions.ts. */
   missionProgress: Record<string, number>;
   onBuy: (itemId: string) => boolean;
   onEquip: (id: string | null) => void;
+  onEquipFurniture: (id: string | null) => void;
   onClose: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -51,25 +57,35 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
   const TABS: { key: ShopTab; Icon: typeof FlaskConical; pt: string; en: string }[] = [
     { key: 'items', Icon: FlaskConical, pt: 'Itens', en: 'Items' },
     { key: 'bg', Icon: ImageIcon, pt: 'Cenários', en: 'Backdrops' },
+    { key: 'furniture', Icon: Sofa, pt: 'Mobílias', en: 'Furniture' },
     { key: 'missions', Icon: Award, pt: 'Missões', en: 'Missions' },
   ];
 
   const TAB_ITEMS: Record<Exclude<ShopTab, 'missions'>, ShopItem[]> = {
     items: SHOP_ITEMS.filter(i => i.kind === 'chip' || i.kind === 'heart'),
     bg: SHOP_ITEMS.filter(i => i.kind === 'bg'),
+    furniture: SHOP_ITEMS.filter(i => i.kind === 'furniture'),
   };
 
   const renderItem = (item: ShopItem) => {
     const unlocked = isShopItemUnlocked(item, missionProgress);
-    const ownedBg = item.kind === 'bg' && ownedBackgrounds.includes(item.id);
-    const equipped = ownedBg && equippedBackground === item.id;
+    const isEquippable = item.kind === 'bg' || item.kind === 'furniture';
+    const ownedList = item.kind === 'bg' ? ownedBackgrounds : item.kind === 'furniture' ? ownedFurniture : [];
+    const owned = isEquippable && ownedList.includes(item.id);
+    const equippedId = item.kind === 'bg' ? equippedBackground : item.kind === 'furniture' ? equippedFurniture : null;
+    const equipped = owned && equippedId === item.id;
     const affordable = points >= item.price;
     const flashHere = flash?.id === item.id;
     const showHint = hintFor === item.id;
     const canBuy = unlocked && affordable;
+    const Icon = item.displayIcon;
 
     const iconEl = item.kind === 'bg' ? (
       <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 12, background: PET_BACKGROUNDS[item.id]?.css, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }} />
+    ) : Icon ? (
+      <span style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }}>
+        <Icon size={20} strokeWidth={2.2} color="var(--sm-ink)" />
+      </span>
     ) : (
       <span style={{ fontSize: '1.6rem', width: 44, height: 44, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }}>{item.icon}</span>
     );
@@ -103,9 +119,13 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
           </p>
         </div>
         {/* action */}
-        {ownedBg ? (
+        {owned ? (
           <button
-            onClick={e => { e.stopPropagation(); onEquip(equipped ? null : item.id); }}
+            onClick={e => {
+              e.stopPropagation();
+              const equip = item.kind === 'bg' ? onEquip : onEquipFurniture;
+              equip(equipped ? null : item.id);
+            }}
             className={equipped ? 'sm-btn sm-btn-gold' : 'sm-btn sm-btn-secondary'}
             style={{ padding: '6px 12px', fontSize: '0.7rem' }}>
             {equipped ? <><Check size={14} strokeWidth={3} /> {isPt ? 'Equipado' : 'Equipped'}</> : (isPt ? 'Equipar' : 'Equip')}
@@ -140,6 +160,8 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
         const cur = missionProgress[m.id] ?? 0;
         const done = cur >= m.target;
         const rewardItem = SHOP_ITEMS.find(i => i.id === m.bgReward);
+        const rewardName = rewardItem ? (isPt ? rewardItem.namePt : rewardItem.nameEn) : m.bgReward;
+        const goToReward = () => { setTab('bg'); setHintFor(rewardItem?.id ?? null); };
         return (
           <div key={m.id} className="sm-card" style={{ padding: 10, display: 'flex', gap: 10, alignItems: 'center', borderColor: done ? '#22A900' : undefined }}>
             <span style={{ fontSize: '1.6rem', width: 44, height: 44, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{m.icon}</span>
@@ -150,15 +172,27 @@ export function ShopModal({ language, points, ownedBackgrounds, equippedBackgrou
               <p style={{ color: 'var(--sm-muted)', fontSize: '0.72rem', margin: 0 }}>
                 {isPt ? m.descPt : m.descEn}
               </p>
-              <p style={{ color: 'var(--sm-primary)', fontSize: '0.68rem', margin: '2px 0 0', fontWeight: 600 }}>
-                {isPt ? 'Libera:' : 'Unlocks:'} {rewardItem ? (isPt ? rewardItem.namePt : rewardItem.nameEn) : m.bgReward} ({isPt ? 'aba Cenários' : 'Backdrops tab'})
-              </p>
-              <div style={{ marginTop: 4, height: 8, background: 'var(--sm-line)', borderRadius: 4, overflow: 'hidden' }}>
+              {/* Recompensa — prévia visual do cenário + atalho pra ver na aba Cenários. */}
+              <button
+                onClick={goToReward}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, margin: '4px 0 0', padding: '4px 8px 4px 4px',
+                  background: 'var(--sm-primary-soft)', border: 'none', borderRadius: 10, cursor: 'pointer',
+                }}
+              >
+                {rewardItem && (
+                  <span style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, background: PET_BACKGROUNDS[rewardItem.id]?.css, backgroundSize: 'cover' }} />
+                )}
+                <span style={{ color: 'var(--sm-primary)', fontSize: '0.68rem', fontWeight: 700 }}>
+                  {isPt ? 'Libera:' : 'Unlocks:'} {rewardName}
+                </span>
+              </button>
+              <div style={{ marginTop: 6, height: 8, background: 'var(--sm-line)', borderRadius: 4, overflow: 'hidden' }}>
                 <div style={{ width: `${Math.min(100, (cur / m.target) * 100)}%`, height: '100%', background: done ? '#22A900' : 'var(--sm-primary)', transition: 'width 0.3s' }} />
               </div>
               <p style={{ color: done ? '#22A900' : 'var(--sm-muted)', fontSize: '0.66rem', marginTop: 2, marginBottom: 0, fontWeight: 700 }}>
                 {done
-                  ? (isPt ? 'Concluída — item liberado na loja!' : 'Done — item unlocked in the shop!')
+                  ? (isPt ? `Concluída — ${rewardName} liberado na loja!` : `Done — ${rewardName} unlocked in the shop!`)
                   : m.target === 1 ? (isPt ? 'Pendente' : 'Pending') : `${cur}/${m.target}`}
               </p>
             </div>

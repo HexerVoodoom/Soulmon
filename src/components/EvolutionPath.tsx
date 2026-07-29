@@ -33,6 +33,8 @@ interface EvolutionPathProps {
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
   eggType?: 'tapirmon' | 'veemon' | 'salamon';
+  /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
+  demoCharacterId?: string;
   unlockedEvolutions?: string[];
   /** Evolution padlock: tapping the CURRENT Soulmon toggles it. */
   evolutionLocked?: boolean;
@@ -52,6 +54,7 @@ export function EvolutionPath({
   theme,
   stages,
   eggType = 'tapirmon',
+  demoCharacterId,
   unlockedEvolutions = [],
   evolutionLocked = false,
   onToggleEvolutionLock,
@@ -150,7 +153,7 @@ export function EvolutionPath({
                   className="relative w-12 h-12 flex items-center justify-center rounded-lg cursor-pointer"
                 >
                   <img
-                    src={getSpriteForStage(stageId, eggType)}
+                    src={getSpriteForStage(stageId, eggType, demoCharacterId)}
                     alt={evolution.name}
                     className="w-12 h-12 object-contain"
                     style={{ imageRendering: 'pixelated', opacity: evolutionLocked ? 0.55 : 1 }}

@@ -33,6 +33,8 @@ interface CreateModalProps {
   evolutionStage?: string;
   activitiesCount?: number;
   activitiesCap?: number;
+  /** Monetização (utils/monetization.ts): modo demo já usou a criação de hoje. */
+  demoLimitReached?: boolean;
 }
 
 const CATEGORIES: ActivityCategory[] = [
@@ -50,7 +52,7 @@ const CATEGORIES: ActivityCategory[] = [
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', isOnboarding = false, evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2 }: CreateModalProps) {
+export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', isOnboarding = false, evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false }: CreateModalProps) {
   const isWin98 = theme === 'win98';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);
   const t = useTranslation(language);
@@ -78,6 +80,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
   } = useItemForm({ isOpen });
 
   const isAtCap = !isSingleExecution && activitiesCount >= activitiesCap;
+  const isBlocked = isAtCap || (demoLimitReached && !isOnboarding);
 
   const attributes = CATEGORY_ATTRIBUTES[category];
   const currentEmoji = CATEGORY_ICONS[category];
@@ -141,6 +144,10 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
     save: language === 'pt-BR' ? 'Salvar' : 'Save',
     createAndStart: language === 'pt-BR' ? 'Criar e Começar' : 'Create and Start',
     limitReached: language === 'pt-BR' ? 'Limite Atingido' : 'Limit Reached',
+    demoLimitReached: language === 'pt-BR' ? 'Limite diário do demo' : 'Demo daily limit',
+    demoLimitHint: language === 'pt-BR'
+      ? 'Modo demo: 1 atividade/tarefa nova por dia. Assine para criar sem limites.'
+      : 'Demo mode: 1 new activity/task per day. Subscribe to create without limits.',
   };
 
   return (
@@ -546,16 +553,16 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
           )}
           <button
             onClick={handleSave}
-            disabled={!name.trim() || (!isSingleExecution && showWeekdayGrid && weekDays.length === 0) || isAtCap}
+            disabled={!name.trim() || (!isSingleExecution && showWeekdayGrid && weekDays.length === 0) || isBlocked}
             className={`flex-1 py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
               isWin98
                 ? 'bg-[#000080] text-white hover:bg-[#000060]'
                 : 'bg-teal-500 text-white hover:bg-teal-600'
             }`}
             style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-            title={isAtCap ? `Limite de atividades atingido (${activitiesCap})` : ''}
+            title={isAtCap ? `Limite de atividades atingido (${activitiesCap})` : demoLimitReached && !isOnboarding ? txt.demoLimitHint : ''}
           >
-            {isOnboarding ? txt.createAndStart : isAtCap ? txt.limitReached : txt.save}
+            {isOnboarding ? txt.createAndStart : isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
           </button>
         </div>
       </div>

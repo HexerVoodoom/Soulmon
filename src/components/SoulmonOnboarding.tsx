@@ -5,6 +5,7 @@ import {
   generateOracle, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
+import { PREMADE_CHARACTERS, getDemoSprite, purchaseFullUnlock, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
 import type { ActivityCategory } from '../types/attributes';
 
 // ---------------------------------------------------------------------------
@@ -13,16 +14,25 @@ import type { ActivityCategory } from '../types/attributes';
 // pet único. O reveal mostra apenas o NOME e uma descrição breve de quem ele é.
 // Por último, um cadastro obrigatório de nickname (identidade pública na
 // Biblioteca/Torneio) + e-mail (sync na nuvem entre aparelhos).
+//
+// Dois caminhos a partir da intro (monetização — utils/monetization.ts):
+// 'oracle' = compra única (placeholder, ainda sem processador real) libera o
+// ritual completo (nome/nascimento/quiz → personagem ÚNICO); 'demo' = escolhe
+// um dos 3 personagens pré-prontos, pula o oráculo inteiro.
 // Visual: Soulmon design system (claro, minimalista, espiritual+digital).
 // ---------------------------------------------------------------------------
 
+export type OnboardingCompleteData = {
+  userName: string;
+  email: string;
+  initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
+} & (
+  | { mode: 'oracle'; oracleResult: OracleResult }
+  | { mode: 'demo'; demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' }
+);
+
 interface SoulmonOnboardingProps {
-  onComplete: (data: {
-    userName: string;
-    email: string;
-    oracleResult: OracleResult;
-    initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
-  }) => void | Promise<void>;
+  onComplete: (data: OnboardingCompleteData) => void | Promise<void>;
 }
 
 interface SavedProfile extends OracleInput { seed: number }
@@ -33,14 +43,21 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
 
   // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
   //         6..(6+N-1) quiz · then gerando · reveal · register (nick+email, obrigatório)
+  // DEMO_PICK é um passo à parte (fora dessa sequência numérica) — o caminho
+  // demo pula direto da intro pra lá, sem passar pelo oráculo.
   const FAVORITE_STEP = 5;
   const QUIZ_START = FAVORITE_STEP + 1;
   const QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length; // primeiro passo pós-quiz
   const GENERATING = QUIZ_END;
   const REVEAL = QUIZ_END + 1;
   const REGISTER = REVEAL + 1;
+  const DEMO_PICK = -1;
 
   const [step, setStep] = useState(0);
+  const [flow, setFlow] = useState<'oracle' | 'demo' | null>(null);
+  const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [birthDateText, setBirthDateText] = useState('');
@@ -57,6 +74,8 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
 
   const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
   const canFinish = nickname.trim().length >= 2 && email.trim().length > 0 && !submitting;
+  const demoChar = flow === 'demo' && demoCharacterId ? PREMADE_CHARACTERS.find(c => c.id === demoCharacterId) ?? null : null;
+  const registerDisplayName = demoChar?.name ?? result?.creature.baseName ?? '';
 
   const progress = Math.min(step, REGISTER) / REGISTER;
 
@@ -118,17 +137,45 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   };
 
   const finish = async () => {
-    if (!result || !canFinish) return;
+    if (!canFinish) return;
+    if (flow === 'demo' && !demoCharacterId) return;
+    if (flow === 'oracle' && !result) return;
     if (!isValidEmail(email)) { setEmailError(true); return; }
     setSubmitting(true);
-    await onComplete({
-      userName: nickname.trim(),
-      email: email.trim().toLowerCase(),
-      oracleResult: result,
-      initialActivities: [],
-    });
+    if (flow === 'demo' && demoCharacterId) {
+      await onComplete({
+        mode: 'demo',
+        userName: nickname.trim(),
+        email: email.trim().toLowerCase(),
+        demoCharacterId,
+        initialActivities: [],
+      });
+    } else if (result) {
+      await onComplete({
+        mode: 'oracle',
+        userName: nickname.trim(),
+        email: email.trim().toLowerCase(),
+        oracleResult: result,
+        initialActivities: [],
+      });
+    }
     // Nota: o caminho feliz normalmente recarrega a página (troca de saveId
     // pro derivado do e-mail) — não há necessidade de setSubmitting(false) aqui.
+  };
+
+  const handleUnlockFull = async () => {
+    setUnlockLoading(true);
+    setUnlockMessage(null);
+    const ok = await purchaseFullUnlock();
+    setUnlockLoading(false);
+    if (ok) {
+      setFlow('oracle');
+      setStep(1);
+    } else {
+      setUnlockMessage(isPt
+        ? 'Pagamentos ainda não estão disponíveis nesta versão — em breve! Enquanto isso, experimente o modo demo.'
+        : "Payments aren't available in this build yet — coming soon! Try the demo for now.");
+    }
   };
 
   const input: React.CSSProperties = {
@@ -176,8 +223,62 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
                 ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA — única, só sua, com todas as suas evoluções.'
                 : 'Every soul carries a creature. Answer a few questions and reveal YOURS — unique, yours alone, with all its evolutions.'}
             </p>
-            <button className="sm-btn" style={{ width: '100%' }} onClick={() => setStep(1)}>
-              {isPt ? 'Começar' : 'Begin'}
+            <button
+              className="sm-btn" style={{ width: '100%' }}
+              onClick={handleUnlockFull}
+              disabled={unlockLoading}
+            >
+              {unlockLoading
+                ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
+                : (isPt ? `Desbloquear completo — ${FULL_UNLOCK_PRICE_LABEL}` : `Unlock full game — ${FULL_UNLOCK_PRICE_LABEL}`)}
+            </button>
+            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '8px 0 18px' }}>
+              {isPt ? 'Compra única — seu próprio personagem, tarefas ilimitadas.' : 'One-time purchase — your own character, unlimited tasks.'}
+            </p>
+            <button
+              className="sm-btn sm-btn-secondary" style={{ width: '100%' }}
+              onClick={() => { setFlow('demo'); setStep(DEMO_PICK); }}
+            >
+              {isPt ? 'Experimentar grátis (demo)' : 'Try free (demo)'}
+            </button>
+            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '8px 0 0' }}>
+              {isPt ? 'Escolha um personagem pronto — 1 tarefa nova por dia.' : 'Pick a ready-made character — 1 new task per day.'}
+            </p>
+            {unlockMessage && (
+              <p style={{ fontSize: 12, color: '#e0483e', marginTop: 16, lineHeight: 1.5 }}>
+                {unlockMessage}
+              </p>
+            )}
+            <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
+          </div>
+        )}
+
+        {/* DEMO_PICK — escolha entre os 3 personagens pré-prontos (modo demo) */}
+        {step === DEMO_PICK && (
+          <div style={{ paddingTop: 20 }}>
+            <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>
+              {isPt ? 'Escolha seu Soulmon' : 'Choose your Soulmon'}
+            </h2>
+            <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 20px' }}>
+              {isPt ? 'No modo demo, seu Soulmon evolui até Mega — sem escolha de caminho.' : "In demo mode, your Soulmon evolves up to Mega — no path choice."}
+            </p>
+            {PREMADE_CHARACTERS.map(c => (
+              <button
+                key={c.id}
+                onClick={() => { setDemoCharacterId(c.id); setStep(REGISTER); }}
+                className="sm-card"
+                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10, cursor: 'pointer' }}
+              >
+                <img src={getDemoSprite(c.id, 'rookie')} alt="" style={{ width: 52, height: 52, objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.92rem', color: 'var(--sm-ink)' }}>{c.name}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: 'var(--sm-muted)', lineHeight: 1.4 }}>{isPt ? c.bioPt : c.bioEn}</p>
+                </div>
+              </button>
+            ))}
+            <button className="sm-btn sm-btn-secondary" style={{ width: '100%', marginTop: 4 }} onClick={() => { setFlow(null); setStep(0); }}>
+              <ArrowLeft size={16} strokeWidth={2.4} />
+              {isPt ? 'Voltar' : 'Back'}
             </button>
           </div>
         )}
@@ -311,7 +412,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
         )}
 
         {/* Register — nickname (identidade pública) + e-mail (sync), obrigatórios */}
-        {step === REGISTER && result && (
+        {step === REGISTER && (result || demoChar) && (
           <div style={{ paddingTop: 20 }}>
             <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>
               {isPt ? 'Últimos detalhes' : 'Last details'}
@@ -349,7 +450,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
             <button className="sm-btn" style={{ width: '100%', marginTop: 24 }} onClick={finish} disabled={!canFinish}>
               {submitting
                 ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
-                : (isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`)}
+                : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
             </button>
             <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
           </div>
