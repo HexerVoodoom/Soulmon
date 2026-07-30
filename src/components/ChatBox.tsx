@@ -377,7 +377,10 @@ export function ChatBox({
           }
           style={{
             fontFamily: 'Courier New, monospace',
-            fontSize: '12px',
+            // 16px é o mínimo pra evitar o auto-zoom do iOS Safari ao focar
+            // (fonte menor faz o navegador dar zoom no campo — some tudo
+            // menos o campo focado, já que o resto fica fora da área visível).
+            fontSize: '16px',
             textShadow: isGlitch ? '0 0 5px rgba(0, 255, 255, 0.6)' : undefined,
             border: !isGlitch && !isWin98 ? '1.1px solid #4a5565' : undefined
           }}
