@@ -1,13 +1,13 @@
-package com.digipartner.digiapp;
+package com.hexervoodoom.soulmon;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.os.Build;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
-import com.digipartner.digiapp.plugins.DigiWidgetPlugin;
-import com.digipartner.digiapp.plugins.DigiAlarmPlugin;
-import com.digipartner.digiapp.plugins.BillingPlugin;
+import com.hexervoodoom.soulmon.plugins.DigiWidgetPlugin;
+import com.hexervoodoom.soulmon.plugins.DigiAlarmPlugin;
+import com.hexervoodoom.soulmon.plugins.BillingPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override

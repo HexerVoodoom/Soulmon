@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Soulmon</string>
     <string name="title_activity_main">Soulmon</string>
-    <string name="package_name">com.digipartner.digiapp</string>
-    <string name="custom_url_scheme">com.digipartner.digiapp</string>
+    <string name="package_name">com.hexervoodoom.soulmon</string>
+    <string name="custom_url_scheme">com.hexervoodoom.soulmon</string>
     <string name="widget_description">Atalhos rápidos para o Soulmon</string>
 </resources>

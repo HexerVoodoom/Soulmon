@@ -1,4 +1,4 @@
-package com.digipartner.digiapp.plugins
+package com.hexervoodoom.soulmon.plugins
 
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient

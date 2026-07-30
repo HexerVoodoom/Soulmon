@@ -1,10 +1,10 @@
-package com.digipartner.digiapp.widget
+package com.hexervoodoom.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
-import com.digipartner.digiapp.R
+import com.hexervoodoom.soulmon.R
 
 // Variant A — horizontal: sprite on the left, info on the right.
 class DigiAppWidgetProvider : AppWidgetProvider() {
@@ -24,6 +24,6 @@ class DigiAppWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val PREFS_NAME = WidgetRenderer.PREFS_NAME
-        const val ACTION_UPDATE_WIDGET = "com.digipartner.digiapp.UPDATE_WIDGET"
+        const val ACTION_UPDATE_WIDGET = "com.hexervoodoom.soulmon.UPDATE_WIDGET"
     }
 }

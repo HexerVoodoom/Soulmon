@@ -3,6 +3,31 @@
 Guia do que precisa ser configurado FORA do código para o pagamento funcionar.
 O código já está pronto; falta credencial e configuração de conta.
 
+> ## 🚨 AÇÃO NECESSÁRIA: registrar o novo pacote no Firebase
+>
+> O `applicationId` mudou de `com.digipartner.digiapp` para
+> **`com.hexervoodoom.soulmon`**, porque o antigo já pertence ao DigiApp
+> publicado na Play — dois apps não podem dividir o mesmo package name
+> (o Soulmon entraria como *atualização* do DigiApp, substituindo-o para
+> todos os usuários dele).
+>
+> Consequência: **o build do Android vai FALHAR** com
+> `No matching client found for package name 'com.hexervoodoom.soulmon'`
+> até você fazer isto:
+>
+> 1. Firebase Console → seu projeto → **Adicionar app → Android**
+> 2. Package name: `com.hexervoodoom.soulmon`
+> 3. Baixar o `google-services.json` novo e substituir
+>    `android/app/google-services.json`
+> 4. Adicionar a impressão digital SHA-1/SHA-256 da chave de assinatura
+>
+> A falha é proposital — melhor o build parar do que gerar um APK com push
+> quebrado sem ninguém perceber.
+>
+> Se você também for configurar o Firebase Auth (login por e-mail), aproveite
+> a mesma visita ao Console: precisa registrar um app **Web** para pegar as
+> chaves do SDK JS.
+
 ## Como o dinheiro vira permissão (leia antes de mexer)
 
 ```
@@ -68,24 +93,16 @@ texto de UI e precisam ser atualizados à mão se o preço mudar.
 | Variável | Valor |
 |---|---|
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` | Conteúdo **inteiro** do JSON da conta de serviço (uma linha só) |
-| `ANDROID_PACKAGE_NAME` | O `applicationId` do app — hoje `com.digipartner.digiapp` |
+| `ANDROID_PACKAGE_NAME` | O `applicationId` do app — `com.hexervoodoom.soulmon` |
 | `ADMOB_SSV_ENABLED` | Deixe **ausente** por enquanto (ver 4b) |
 
 Sem essas duas, `/api/billing` responde **503** e **não concede nada** — é
 proposital: nunca conceder benefício sem conseguir verificar.
 
-> ⚠️ **Decisão a tomar ANTES do primeiro upload:** o `applicationId` em
-> `android/app/build.gradle` ainda é `com.digipartner.digiapp`, herdado do
-> produto antigo (DigiApp). O package name é a **identidade permanente** do app
-> na Play — depois do primeiro envio ele **nunca mais pode ser alterado**
-> (mudar significa publicar um app novo, do zero, sem os usuários nem as
-> compras). Se o produto vai se chamar Soulmon, renomeie agora para algo como
-> `com.hexervoodoom.soulmon` (exige atualizar `build.gradle`, os diretórios do
-> pacote Java/Kotlin, `google-services.json` e o `ANDROID_PACKAGE_NAME` aqui).
 
 ## 4. Plugin nativo de billing — JÁ IMPLEMENTADO
 
-`android/app/src/main/java/com/digipartner/digiapp/plugins/BillingPlugin.kt`
+`android/app/src/main/java/com/hexervoodoom/soulmon/plugins/BillingPlugin.kt`
 é um plugin Capacitor próprio, escrito direto sobre a Play Billing Library
 (`com.android.billingclient:billing-ktx`), registrado no `MainActivity.java`
 como `Billing`. Ele:
@@ -134,7 +151,7 @@ antes disso — ela é o único freio hoje.
 - [ ] 4 produtos criados no Play Console com os IDs exatos da tabela
 - [ ] Conta de serviço criada, com permissão financeira e API habilitada
 - [ ] `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` no Pages
-- [ ] Plugin de billing instalado e registrado como `Billing`
+- [ ] `google-services.json` novo, com o pacote `com.hexervoodoom.soulmon`
 - [ ] Compra testada com **licença de teste** (Play Console → Testes de
       licença) — não use cartão real para testar
 - [ ] "Restaurar compras" testado: reinstalar o app e confirmar que o

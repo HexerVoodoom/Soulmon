@@ -1,9 +1,9 @@
-package com.digipartner.digiapp.notifications
+package com.hexervoodoom.soulmon.notifications
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.digipartner.digiapp.plugins.DigiAlarmPlugin
+import com.hexervoodoom.soulmon.plugins.DigiAlarmPlugin
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

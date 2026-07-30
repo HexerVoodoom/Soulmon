@@ -1,14 +1,14 @@
-package com.digipartner.digiapp.widget
+package com.hexervoodoom.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import com.digipartner.digiapp.R
+import com.hexervoodoom.soulmon.R
 
-// Pet-screen widget: green grid + hearts + animated pet + energy bar.
-class DigiAppWidgetScreenProvider : AppWidgetProvider() {
+// Variant C — pet only: just the sprite, same footprint as the horizontal widget.
+class DigiAppWidgetPetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        for (id in appWidgetIds) WidgetRenderer.renderScreen(context, appWidgetManager, id, R.layout.widget_digiapp_screen)
+        for (id in appWidgetIds) WidgetRenderer.renderPet(context, appWidgetManager, id, R.layout.widget_digiapp_pet)
     }
 
     override fun onEnabled(context: Context) {

@@ -1,14 +1,14 @@
-package com.digipartner.digiapp.widget
+package com.hexervoodoom.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import com.digipartner.digiapp.R
+import com.hexervoodoom.soulmon.R
 
-// Variant B — vertical: sprite on top, info below.
-class DigiAppWidgetVerticalProvider : AppWidgetProvider() {
+// 4x2 widget: animated pet + auto-rotating phrases from the pet to the partner.
+class DigiAppWidgetChatProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        for (id in appWidgetIds) WidgetRenderer.renderFull(context, appWidgetManager, id, R.layout.widget_digiapp_vertical)
+        for (id in appWidgetIds) WidgetRenderer.renderChat(context, appWidgetManager, id, R.layout.widget_digiapp_chat)
     }
 
     override fun onEnabled(context: Context) {

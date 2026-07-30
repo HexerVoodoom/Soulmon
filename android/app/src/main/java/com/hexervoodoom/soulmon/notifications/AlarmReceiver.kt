@@ -1,4 +1,4 @@
-package com.digipartner.digiapp.notifications
+package com.hexervoodoom.soulmon.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.digipartner.digiapp.R
+import com.hexervoodoom.soulmon.R
 
 class AlarmReceiver : BroadcastReceiver() {
 

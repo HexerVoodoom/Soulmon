@@ -1,7 +1,7 @@
-package com.digipartner.digiapp.plugins
+package com.hexervoodoom.soulmon.plugins
 
 import android.content.Context
-import com.digipartner.digiapp.widget.WidgetRenderer
+import com.hexervoodoom.soulmon.widget.WidgetRenderer
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod

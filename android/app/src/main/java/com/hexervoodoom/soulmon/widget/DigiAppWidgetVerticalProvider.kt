@@ -1,14 +1,14 @@
-package com.digipartner.digiapp.widget
+package com.hexervoodoom.soulmon.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
-import com.digipartner.digiapp.R
+import com.hexervoodoom.soulmon.R
 
-// Variant C — pet only: just the sprite, same footprint as the horizontal widget.
-class DigiAppWidgetPetProvider : AppWidgetProvider() {
+// Variant B — vertical: sprite on top, info below.
+class DigiAppWidgetVerticalProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        for (id in appWidgetIds) WidgetRenderer.renderPet(context, appWidgetManager, id, R.layout.widget_digiapp_pet)
+        for (id in appWidgetIds) WidgetRenderer.renderFull(context, appWidgetManager, id, R.layout.widget_digiapp_vertical)
     }
 
     override fun onEnabled(context: Context) {

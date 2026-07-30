@@ -1,4 +1,4 @@
-package com.digipartner.digiapp.widget
+package com.hexervoodoom.soulmon.widget
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -6,7 +6,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
-import com.digipartner.digiapp.R
+import com.hexervoodoom.soulmon.R
 
 // Shared rendering for all DigiApp widget variants (horizontal, vertical, pet-only).
 object WidgetRenderer {

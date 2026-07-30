@@ -1,4 +1,4 @@
-package com.digipartner.digiapp.widget
+package com.hexervoodoom.soulmon.widget
 
 import android.content.Context
 import androidx.work.CoroutineWorker
