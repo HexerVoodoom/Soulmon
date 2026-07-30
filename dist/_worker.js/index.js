@@ -84,6 +84,89 @@ async function applyVerifiedPurchase(env, saveId, { orderId, grantTier, grantCre
 }
 __name(applyVerifiedPurchase, "applyVerifiedPurchase");
 
+// api/_auth.js
+var JWK_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
+var jwksCache = null;
+var jwksExpiry = 0;
+async function getJwks() {
+  const now = Date.now();
+  if (jwksCache && now < jwksExpiry) return jwksCache;
+  const res = await fetch(JWK_URL);
+  if (!res.ok) throw new Error(`jwks fetch failed: ${res.status}`);
+  const data = await res.json();
+  const cc = res.headers.get("cache-control") || "";
+  const maxAge = Number(/max-age=(\d+)/.exec(cc)?.[1] ?? 3600);
+  jwksCache = data.keys || [];
+  jwksExpiry = now + maxAge * 1e3;
+  return jwksCache;
+}
+__name(getJwks, "getJwks");
+function b64urlToBytes(s) {
+  const b64 = s.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = b64 + "=".repeat((4 - b64.length % 4) % 4);
+  const raw = atob(padded);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+__name(b64urlToBytes, "b64urlToBytes");
+async function verifyIdToken(idToken, projectId) {
+  try {
+    if (!idToken || !projectId) return null;
+    const parts = idToken.split(".");
+    if (parts.length !== 3) return null;
+    const dec = new TextDecoder();
+    const header = JSON.parse(dec.decode(b64urlToBytes(parts[0])));
+    const payload = JSON.parse(dec.decode(b64urlToBytes(parts[1])));
+    if (header.alg !== "RS256" || !header.kid) return null;
+    const now = Math.floor(Date.now() / 1e3);
+    if (payload.aud !== projectId) return null;
+    if (payload.iss !== `https://securetoken.google.com/${projectId}`) return null;
+    if (typeof payload.exp !== "number" || payload.exp <= now) return null;
+    if (typeof payload.iat !== "number" || payload.iat > now + 300) return null;
+    if (!payload.email || payload.email_verified !== true) return null;
+    const jwks = await getJwks();
+    const jwk = jwks.find((k) => k.kid === header.kid);
+    if (!jwk) return null;
+    const key = await crypto.subtle.importKey(
+      "jwk",
+      jwk,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["verify"]
+    );
+    const ok = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5",
+      key,
+      b64urlToBytes(parts[2]),
+      new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
+    );
+    if (!ok) return null;
+    return { email: String(payload.email).trim().toLowerCase() };
+  } catch {
+    return null;
+  }
+}
+__name(verifyIdToken, "verifyIdToken");
+async function emailToSaveId(email) {
+  const data = new TextEncoder().encode(`soulmon:${email.trim().toLowerCase()}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+}
+__name(emailToSaveId, "emailToSaveId");
+async function authorizeSaveAccess(request, env, saveId) {
+  const projectId = env.FIREBASE_PROJECT_ID;
+  if (!projectId) return { ok: true, enforced: false };
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+  const claims = await verifyIdToken(token, projectId);
+  if (!claims) return { ok: false, enforced: true, reason: "unauthenticated" };
+  const expected = await emailToSaveId(claims.email);
+  if (expected !== saveId) return { ok: false, enforced: true, reason: "forbidden" };
+  return { ok: true, enforced: true, email: claims.email };
+}
+__name(authorizeSaveAccess, "authorizeSaveAccess");
+
 // api/billing.js
 var CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -165,6 +248,8 @@ async function onRequestPost({ request, env }) {
   const productId = body?.productId;
   const purchaseToken = body?.purchaseToken;
   if (!saveId || !VALID_ID.test(saveId)) return json({ error: "Invalid save ID" }, 400);
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) return json({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   const product = PRODUCTS[productId];
   if (!product) return json({ error: "Unknown product" }, 400);
   if (!purchaseToken || typeof purchaseToken !== "string") return json({ error: "Missing purchaseToken" }, 400);
@@ -599,6 +684,8 @@ async function onRequestGet({ request, env }) {
   const saveId = url.searchParams.get("id");
   if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
   if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   const ent = await readEntitlement(env, saveId);
   return json3({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
@@ -610,6 +697,8 @@ async function onRequestPost3({ request, env }) {
   const body = await request.json().catch(() => null);
   const saveId = body?.id;
   if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   if (action === "spend") {
     const amount = Number(body?.amount);
     const ent = await spendCredits(env, saveId, amount);
@@ -821,6 +910,10 @@ async function onRequest2({ request, env }) {
   if (!env.DIGIAPP_SAVES) {
     return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS7 });
   }
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) {
+    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS7 });
+  }
   if (request.method === "GET") {
     const raw = await env.DIGIAPP_SAVES.get(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS7 });
@@ -1002,7 +1095,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-UrpLFs/functionsRoutes-0.10733623975340167.mjs
+// ../.wrangler/tmp/pages-ru441m/functionsRoutes-0.19011009851883598.mjs
 var routes = [
   {
     routePath: "/api/billing",

@@ -36,4 +36,7 @@ export const STORAGE_KEYS = {
   DEMO_TASKS_CREATED_TODAY: 'soulmon-demo-tasks-created-today',
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa
   TUTORIAL_COMPLETE: 'soulmon-tutorial-complete',
+  // Login por link de e-mail: o Firebase exige reconfirmar o e-mail ao
+  // completar o login, então ele fica guardado entre o envio e o retorno.
+  PENDING_LOGIN_EMAIL: 'soulmon-pending-login-email',
 } as const;

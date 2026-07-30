@@ -221,6 +221,27 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled ? 'true' : 'false');
   }, [notificationsEnabled]);
 
+  // Retorno do link de acesso por e-mail: se o app abriu a partir dele,
+  // conclui o login antes de qualquer chamada de API (as rotas de save e
+  // dinheiro passam a exigir o token). Ver src/utils/auth.ts.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { isAuthConfigured, isPendingLoginLink, completeLoginFromLink } = await import('./utils/auth');
+      if (!isAuthConfigured() || !(await isPendingLoginLink())) return;
+      const res = await completeLoginFromLink();
+      if (cancelled || !res.ok || !res.email) return;
+      // O saveId é derivado do e-mail agora COMPROVADO — realinha e recarrega
+      // para o estado inteiro vir da conta certa.
+      const { emailToSaveId } = await import('./utils/cloudSave');
+      const id = await emailToSaveId(res.email);
+      localStorage.setItem(STORAGE_KEYS.USER_EMAIL, res.email);
+      localStorage.setItem(STORAGE_KEYS.SAVE_ID, id);
+      window.location.reload();
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   // Sincroniza tier/créditos com o SERVIDOR ao abrir e ao trocar de save. O
   // que estiver no localStorage é só espelho — se alguém editou à mão, isto
   // sobrescreve com a verdade. Offline mantém o espelho (o servidor recusa

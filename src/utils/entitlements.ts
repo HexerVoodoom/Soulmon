@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from './storageKeys';
+import { authHeaders } from './auth';
 
 // Entitlements no CLIENTE — espelho somente-leitura do que o servidor decidiu.
 //
@@ -25,7 +26,9 @@ export async function fetchEntitlement(): Promise<Entitlement | null> {
   const id = currentSaveId();
   if (!id) return null;
   try {
-    const res = await fetch(`/api/entitlements?id=${encodeURIComponent(id)}`);
+    const res = await fetch(`/api/entitlements?id=${encodeURIComponent(id)}`, {
+      headers: await authHeaders(),
+    });
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -44,7 +47,7 @@ export async function spendCredits(amount: number, reason: string): Promise<Enti
   try {
     const res = await fetch('/api/entitlements?action=spend', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ id, amount, reason }),
     });
     if (!res.ok) return null;
@@ -62,7 +65,7 @@ export async function claimAdReward(): Promise<Entitlement | null> {
   try {
     const res = await fetch('/api/entitlements?action=ad', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ id }),
     });
     if (!res.ok) return null;
@@ -85,7 +88,7 @@ export async function verifyPurchase(productId: string, purchaseToken: string): 
   try {
     const res = await fetch('/api/billing?action=verify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ id, productId, purchaseToken }),
     });
     const data = await res.json().catch(() => ({}));

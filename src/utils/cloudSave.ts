@@ -9,6 +9,8 @@
 // with an email already used in DigiApp loaded DigiApp's (foreign-shaped)
 // save instead of creating a fresh Soulmon one. "soulmon:" makes the two
 // products derive different keys even while the raw KV storage is shared.
+import { authHeaders } from './auth';
+
 export async function emailToSaveId(email: string): Promise<string> {
   const norm = email.trim().toLowerCase();
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`soulmon:${norm}`));
@@ -19,7 +21,7 @@ export async function cloudSave(saveId: string, state: unknown): Promise<void> {
   try {
     await fetch(`/api/save?id=${saveId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ state }),
     });
     localStorage.setItem('digiapp-last-cloud-sync', new Date().toISOString());
@@ -30,7 +32,7 @@ export async function cloudSave(saveId: string, state: unknown): Promise<void> {
 
 export async function cloudLoad(saveId: string): Promise<unknown | null> {
   try {
-    const res = await fetch(`/api/save?id=${saveId}`);
+    const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
     if (!res.ok) return null;
     const data = await res.json();
     return data.found ? data.state : null;

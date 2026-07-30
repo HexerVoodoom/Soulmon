@@ -7,6 +7,7 @@ import {
 } from '../utils/oracle';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
+import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
 import type { ActivityCategory } from '../types/attributes';
 
 // ---------------------------------------------------------------------------
@@ -72,6 +73,8 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  /** Link de acesso enviado — a tela passa a pedir que o usuário abra o e-mail. */
+  const [linkSent, setLinkSent] = useState(false);
 
   const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
   const canFinish = nickname.trim().length >= 2 && email.trim().length > 0 && !submitting;
@@ -143,6 +146,24 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     if (flow === 'oracle' && !result) return;
     if (!isValidEmail(email)) { setEmailError(true); return; }
     setSubmitting(true);
+
+    // Com o login por e-mail ligado, é preciso PROVAR a posse do e-mail antes
+    // de criar o save — senão qualquer um poderia reivindicar o e-mail alheio
+    // (o saveId é derivado dele). Manda o link e aguarda o retorno; o resto do
+    // onboarding continua quando o app reabrir pelo link.
+    if (isAuthConfigured() && !(await getCurrentEmail())) {
+      const sent = await sendLoginLink(email.trim().toLowerCase());
+      setSubmitting(false);
+      setLinkSent(sent.ok);
+      if (!sent.ok) {
+        setEmailError(true);
+        setUnlockMessage(isPt
+          ? 'Não foi possível enviar o link de acesso. Confira o e-mail e tente de novo.'
+          : "Couldn't send the sign-in link. Check the address and try again.");
+      }
+      return;
+    }
+
     if (flow === 'demo' && demoCharacterId) {
       await onComplete({
         mode: 'demo',
@@ -460,11 +481,36 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
                 : (isPt ? 'Obrigatório — garante que seu progresso não se perca ao trocar de aparelho.' : 'Required — makes sure your progress survives a device change.')}
             </p>
 
-            <button className="sm-btn" style={{ width: '100%', marginTop: 24 }} onClick={finish} disabled={!canFinish}>
-              {submitting
-                ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
-                : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
-            </button>
+            {linkSent ? (
+              // Link enviado: o onboarding continua quando o usuário voltar
+              // pelo e-mail (App.tsx detecta o link e conclui o login).
+              <div className="sm-card" style={{ marginTop: 24, padding: 16, background: 'var(--sm-primary-soft)', border: 'none' }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--sm-primary)' }}>
+                  {isPt ? 'Confira seu e-mail 📬' : 'Check your email 📬'}
+                </p>
+                <p style={{ margin: '6px 0 0', fontSize: 12.5, color: 'var(--sm-ink)', lineHeight: 1.6 }}>
+                  {isPt
+                    ? `Mandamos um link de acesso para ${email.trim().toLowerCase()}. Abra o link NESTE aparelho para continuar — é assim que garantimos que o e-mail é seu.`
+                    : `We sent a sign-in link to ${email.trim().toLowerCase()}. Open it ON THIS DEVICE to continue — that's how we confirm the address is yours.`}
+                </p>
+                <button
+                  className="sm-btn sm-btn-secondary"
+                  style={{ width: '100%', marginTop: 14 }}
+                  onClick={() => { setLinkSent(false); setUnlockMessage(null); }}
+                >
+                  {isPt ? 'Usar outro e-mail' : 'Use a different email'}
+                </button>
+              </div>
+            ) : (
+              <button className="sm-btn" style={{ width: '100%', marginTop: 24 }} onClick={finish} disabled={!canFinish}>
+                {submitting
+                  ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
+                  : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
+              </button>
+            )}
+            {unlockMessage && !linkSent && (
+              <p style={{ fontSize: 12, color: '#e0483e', marginTop: 12, lineHeight: 1.5 }}>{unlockMessage}</p>
+            )}
             <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}

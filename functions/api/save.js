@@ -8,6 +8,7 @@
 // dar créditos infinitos.
 
 import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
+import { authorizeSaveAccess } from './_auth.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -32,6 +33,13 @@ export async function onRequest({ request, env }) {
 
   if (!env.DIGIAPP_SAVES) {
     return Response.json({ error: 'Storage not bound — add KV binding DIGIAPP_SAVES in Cloudflare dashboard' }, { status: 500, headers: CORS });
+  }
+
+  // Só o dono do e-mail que gerou este saveId pode ler ou escrever. Enquanto
+  // FIREBASE_PROJECT_ID não estiver configurado isto passa direto (ver _auth.js).
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) {
+    return Response.json({ error: auth.reason }, { status: auth.reason === 'forbidden' ? 403 : 401, headers: CORS });
   }
 
   if (request.method === 'GET') {

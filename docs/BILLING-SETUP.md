@@ -169,17 +169,55 @@ antes disso — ela é o único freio hoje.
    cobrar um gasto a menos. Para a escala atual é aceitável; se virar problema,
    migrar o registro de entitlement para Durable Objects (serializam por chave).
 
-2. **`saveId` é o hash do e-mail, sem autenticação.** Quem souber o e-mail de
-   alguém consegue ler/sobrescrever o save daquela pessoa.
+2. **Login por e-mail implementado, mas DESLIGADO até você configurar.** O
+   código já está pronto (ver seção 7); enquanto as variáveis não existirem, o
+   `saveId` continua sendo só o hash do e-mail e quem souber o e-mail de alguém
+   consegue sobrescrever o save daquela pessoa.
 
-   O que isso **não** permite: roubar a compra. A compra pertence à conta
-   Google, os entitlements ficam num registro que o cliente não escreve, e o
-   "restaurar compras" reconstrói o direito a partir da própria Play.
+   O que isso **não** permite, nem hoje: roubar a compra. A compra pertence à
+   conta Google, os entitlements ficam num registro que o cliente não escreve,
+   e o "restaurar compras" reconstrói o direito a partir da própria Play.
 
-   O que permite: bagunçar o progresso alheio (griefing).
+---
 
-   Corrigir exige prova de posse do e-mail — login de verdade (Firebase Auth
-   com e-mail link, ou Sign in with Google, que o projeto já tem meio caminho
-   andado por causa do FCM). **Recomendado antes de divulgar o app para um
-   público amplo.** Não foi feito aqui porque muda o fluxo de onboarding e é
-   uma decisão de produto, não só técnica.
+## 7. Login por e-mail (Firebase Auth) — código pronto, falta configurar
+
+Sem isso, o `saveId` é só o hash do e-mail: quem souber o seu consegue
+sobrescrever o seu save. Com isso, o cliente manda um ID token assinado pelo
+Google em toda chamada e o servidor confere a assinatura
+(`functions/api/_auth.js`) antes de aceitar.
+
+**Como ligar:**
+
+1. Firebase Console → **Authentication → Sign-in method** → habilitar
+   **Link de e-mail (login sem senha)**.
+2. Em **Authentication → Settings → Authorized domains**, adicionar o domínio
+   de produção do app.
+3. Firebase Console → **Adicionar app → Web** (se ainda não existir) e copiar
+   as chaves do SDK.
+4. Variáveis no Cloudflare Pages:
+
+| Variável | Onde é usada | Valor |
+|---|---|---|
+| `VITE_FIREBASE_API_KEY` | build do front | `apiKey` do app Web |
+| `VITE_FIREBASE_AUTH_DOMAIN` | build do front | `authDomain` |
+| `VITE_FIREBASE_PROJECT_ID` | build do front | `projectId` |
+| `VITE_FIREBASE_APP_ID` | build do front | `appId` (opcional) |
+| `FIREBASE_PROJECT_ID` | **servidor** | mesmo `projectId` |
+
+> As `VITE_*` entram no bundle no momento do build — precisa de um novo deploy
+> depois de defini-las. O `FIREBASE_PROJECT_ID` (sem prefixo) é o que **liga a
+> exigência de token no servidor**; enquanto ele não existir, as rotas aceitam
+> chamadas sem autenticação, de propósito, para não derrubar quem já usa.
+
+**Ordem segura para migrar** (evita expulsar usuários existentes):
+
+1. Definir só as `VITE_*` e publicar → novos cadastros passam a confirmar o
+   e-mail; quem já está dentro continua funcionando.
+2. Conferir que o login por link está funcionando de verdade.
+3. Só então definir `FIREBASE_PROJECT_ID` → o servidor passa a **exigir** o
+   token. Quem não tiver feito login precisará entrar pelo link.
+
+**Como se comporta hoje (nada configurado):** `isAuthConfigured()` é false, o
+onboarding segue igual ao de antes e nenhuma tela de login aparece. Verificado
+com o app rodando: fluxo completo até o tutorial, sem erros.

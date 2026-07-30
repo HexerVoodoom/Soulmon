@@ -21,7 +21,8 @@
 //   ANDROID_PACKAGE_NAME — ex.: com.hexervoodoom.soulmon
 // Sem eles a rota responde 503 e NUNCA concede nada (nunca finge cobrar).
 
-import { VALID_ID, readEntitlement, publicView, applyVerifiedPurchase } from './_entitlements.js';
+import { VALID_ID, publicView, applyVerifiedPurchase } from './_entitlements.js';
+import { authorizeSaveAccess } from './_auth.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -123,6 +124,11 @@ export async function onRequestPost({ request, env }) {
   const purchaseToken = body?.purchaseToken;
 
   if (!saveId || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
+
+  // Impede creditar a compra numa conta que não é a de quem está comprando.
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
+
   const product = PRODUCTS[productId];
   if (!product) return json({ error: 'Unknown product' }, 400);
   if (!purchaseToken || typeof purchaseToken !== 'string') return json({ error: 'Missing purchaseToken' }, 400);

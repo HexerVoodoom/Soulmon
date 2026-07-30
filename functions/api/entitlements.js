@@ -22,6 +22,7 @@
 import {
   VALID_ID, readEntitlement, publicView, spendCredits, grantAdReward,
 } from './_entitlements.js';
+import { authorizeSaveAccess } from './_auth.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -41,6 +42,9 @@ export async function onRequestGet({ request, env }) {
   if (!saveId || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
   if (!env.DIGIAPP_SAVES) return json({ error: 'Storage not bound' }, 500);
 
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
+
   const ent = await readEntitlement(env, saveId);
   return json({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }
@@ -53,6 +57,10 @@ export async function onRequestPost({ request, env }) {
   const body = await request.json().catch(() => null);
   const saveId = body?.id;
   if (!saveId || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
+
+  // Gastar crédito alheio seria vandalismo com custo real pro dono.
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
 
   if (action === 'spend') {
     const amount = Number(body?.amount);
