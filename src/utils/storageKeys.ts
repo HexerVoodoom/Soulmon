@@ -36,4 +36,6 @@ export const STORAGE_KEYS = {
   AD_WATCHES_TODAY: 'soulmon-ad-watches-today',
   // Monetização — cap diário de criação de atividade/tarefa no modo demo
   DEMO_TASKS_CREATED_TODAY: 'soulmon-demo-tasks-created-today',
+  // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa
+  TUTORIAL_COMPLETE: 'soulmon-tutorial-complete',
 } as const;

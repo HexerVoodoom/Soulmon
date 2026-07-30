@@ -52,6 +52,7 @@ import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
+const GameTutorialFlow = lazy(() => import('./components/GameTutorialFlow').then(m => ({ default: m.GameTutorialFlow })));
 const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -137,6 +138,11 @@ export default function App() {
   });
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE) === 'true';
+  });
+  // Segundo onboarding: tutorial do jogo (estilo RPG) + criação obrigatória
+  // da 1ª tarefa — mostrado uma vez, logo após o ritual de nascimento.
+  const [hasCompletedTutorial, setHasCompletedTutorial] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.TUTORIAL_COMPLETE) === 'true';
   });
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.USER_NAME) || '';
@@ -1441,6 +1447,25 @@ export default function App() {
     }));
   };
 
+  // Segundo onboarding (GameTutorialFlow): tarefas escolhidas na criação
+  // obrigatória da 1ª tarefa. Chega SEMPRE com >=1 item (o componente não
+  // deixa terminar sem selecionar nada).
+  const handleCompleteTutorial = (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => {
+    localStorage.setItem(STORAGE_KEYS.TUTORIAL_COMPLETE, 'true');
+    setHasCompletedTutorial(true);
+    const newActivities: Activity[] = activities.map((item, i) => ({
+      id: `${Date.now() + i}`,
+      name: item.name,
+      category: item.category,
+      emoji: item.emoji,
+      steps: [],
+      weekDays: [0, 1, 2, 3, 4, 5, 6],
+    }));
+    setGameState(prev => ({
+      ...prev,
+      activities: [...prev.activities, ...newActivities],
+    }));
+  };
 
 
   // Handle reset onboarding (DEBUG ONLY)
@@ -1488,6 +1513,12 @@ export default function App() {
   // Show onboarding if not completed — Soulmon: quiz da alma no lugar do ovo
   if (!hasCompletedOnboarding) {
     return <Suspense fallback={null}><SoulmonOnboarding onComplete={handleCompleteOnboarding} /></Suspense>;
+  }
+
+  // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa —
+  // mostrado uma vez, depois que o Soulmon já nasceu, antes de liberar o app.
+  if (!hasCompletedTutorial) {
+    return <Suspense fallback={null}><GameTutorialFlow language={language} onComplete={handleCompleteTutorial} /></Suspense>;
   }
 
   return (

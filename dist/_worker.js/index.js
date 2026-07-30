@@ -657,6 +657,76 @@ async function hashEndpoint(endpoint) {
 }
 __name(hashEndpoint, "hashEndpoint");
 
+// api/suggest-tasks.js
+var CORS7 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+var VALID_CATEGORIES = ["Health", "Creativity", "Discipline", "Study", "Work", "Social", "Wellness", "Fitness"];
+async function onRequestOptions7() {
+  return new Response(null, { headers: CORS7 });
+}
+__name(onRequestOptions7, "onRequestOptions");
+async function onRequestPost5({ request, env }) {
+  try {
+    const body = await request.json();
+    const goalText = (body.goalText || "").toString().trim().slice(0, 300);
+    const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
+    const isPt = body.language === "pt-BR";
+    if (!goalText && categories.length === 0) {
+      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS7 });
+    }
+    const groqKey = env.GROQ_API_KEY;
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS7 });
+    const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
+Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
+that would help achieve that goal. Each task name must be short (max 40 chars), action-oriented, and
+written in ${isPt ? "Brazilian Portuguese" : "English"}.
+Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation). Each item:
+{"name": string, "category": one of ${JSON.stringify(VALID_CATEGORIES)}}`;
+    const userMsg = [
+      goalText ? `Goal: ${goalText}` : "",
+      categories.length ? `Life-area tags: ${categories.join(", ")}` : ""
+    ].filter(Boolean).join("\n");
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMsg }
+        ],
+        max_tokens: 400,
+        temperature: 0.7
+      })
+    });
+    if (!groqRes.ok) {
+      console.error("Groq error:", await groqRes.text());
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS7 });
+    }
+    const data = await groqRes.json();
+    const raw = data.choices?.[0]?.message?.content ?? "[]";
+    let parsed;
+    try {
+      const match2 = raw.match(/\[[\s\S]*\]/);
+      parsed = JSON.parse(match2 ? match2[0] : raw);
+    } catch {
+      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS7 });
+    }
+    const suggestions = (Array.isArray(parsed) ? parsed : []).map((item) => ({
+      name: (item?.name || "").toString().trim().slice(0, 60),
+      category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
+    })).filter((item) => item.name.length > 0).slice(0, 6);
+    return Response.json({ suggestions }, { headers: CORS7 });
+  } catch (err) {
+    console.error("suggest-tasks error:", err);
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS7 });
+  }
+}
+__name(onRequestPost5, "onRequestPost");
+
 // .well-known/assetlinks.json.js
 async function onRequest3() {
   return new Response(JSON.stringify([{
@@ -677,7 +747,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-UvUgpn/functionsRoutes-0.5853140411261806.mjs
+// ../.wrangler/tmp/pages-NQ8hZx/functionsRoutes-0.5783580409532656.mjs
 var routes = [
   {
     routePath: "/api/chat",
@@ -762,6 +832,20 @@ var routes = [
     method: "POST",
     middlewares: [],
     modules: [onRequestPost4]
+  },
+  {
+    routePath: "/api/suggest-tasks",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions7]
+  },
+  {
+    routePath: "/api/suggest-tasks",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost5]
   },
   {
     routePath: "/.well-known/assetlinks.json",
