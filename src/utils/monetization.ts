@@ -76,74 +76,25 @@ export function getDemoCreatureStages(character: PremadeCharacter): CreatureStag
 export const REROLL_COST_CREDITS = 50;   // regenerar personagem (novo oráculo)
 export const HEART_COST_CREDITS = 10;    // curar 1 coração na hora
 
+/** Um pacote à venda. `id` é o SKU no Google Play Console (tem que bater
+ *  EXATAMENTE com PRODUCTS em functions/api/billing.js). O preço mostrado aqui
+ *  é só rótulo de UI — quem cobra e define o valor real é a Play. */
 export interface CreditPack { id: string; credits: number; priceLabel: string }
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: 'credits-60', credits: 60, priceLabel: 'R$ 4,90' },
-  { id: 'credits-150', credits: 150, priceLabel: 'R$ 9,90' },
-  { id: 'credits-400', credits: 400, priceLabel: 'R$ 19,90' },
+  { id: 'soulmon.credits.60', credits: 60, priceLabel: 'R$ 4,90' },
+  { id: 'soulmon.credits.150', credits: 150, priceLabel: 'R$ 9,90' },
+  { id: 'soulmon.credits.400', credits: 400, priceLabel: 'R$ 19,90' },
 ];
 
-/**
- * Compra de créditos com dinheiro real. AINDA NÃO CONECTADO a nenhum
- * processador de pagamento — sempre retorna false. Troque esta função pela
- * chamada real ao SDK de billing quando a conta estiver configurada.
- */
-export async function purchaseCredits(pack: CreditPack): Promise<boolean> {
-  console.warn(`[monetization] purchaseCredits(${pack.id}): nenhum provedor de pagamento conectado ainda.`);
-  return false;
-}
-
+/** SKU do desbloqueio completo (compra única, NÃO consumível). */
+export const FULL_UNLOCK_SKU = 'soulmon.unlock.full';
 export const FULL_UNLOCK_PRICE_LABEL = 'R$ 29,90';
 
-/**
- * Compra única que desbloqueia o jogo completo (personagem próprio via
- * oráculo, tarefas ilimitadas). Mesmo aviso: placeholder, sem cobrança real.
- */
-export async function purchaseFullUnlock(): Promise<boolean> {
-  console.warn('[monetization] purchaseFullUnlock: nenhum provedor de pagamento conectado ainda.');
-  return false;
-}
-
-// ── Anúncio recompensado — SIMULADO até existir um SDK real (AdMob) ─────────
+// ── Anúncio recompensado ────────────────────────────────────────────────────
+// Os valores abaixo espelham functions/api/_entitlements.js — o teto diário
+// que VALE é o do servidor; este aqui é só para a UI.
 export const AD_REWARD_CREDITS = 5;
 export const AD_DAILY_CAP = 3;
-
-interface AdWatchRecord { date: string; count: number }
-
-function readAdWatches(): AdWatchRecord {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.AD_WATCHES_TODAY) || 'null');
-    if (saved && saved.date === new Date().toDateString()) return saved;
-  } catch { /* fall through */ }
-  return { date: new Date().toDateString(), count: 0 };
-}
-
-export function getAdWatchesToday(): number {
-  return readAdWatches().count;
-}
-
-export function canWatchAdToday(): boolean {
-  return readAdWatches().count < AD_DAILY_CAP;
-}
-
-function recordAdWatch(): void {
-  const rec = readAdWatches();
-  rec.count += 1;
-  localStorage.setItem(STORAGE_KEYS.AD_WATCHES_TODAY, JSON.stringify(rec));
-}
-
-/**
- * Anúncio recompensado SIMULADO (só um delay) — NÃO é um SDK de anúncios
- * real. Troque por AdMob (ex.: @capacitor-community/admob) quando a conta de
- * anúncios existir; a assinatura (Promise<boolean>, respeita o cap diário)
- * já é compatível com uma implementação real.
- */
-export async function watchRewardedAd(): Promise<boolean> {
-  if (!canWatchAdToday()) return false;
-  await new Promise(resolve => setTimeout(resolve, 2500));
-  recordAdWatch();
-  return true;
-}
 
 // ── Modo demo: limite de criação de atividades ──────────────────────────────
 export const DEMO_ACTIVITY_DAILY_CAP = 1;

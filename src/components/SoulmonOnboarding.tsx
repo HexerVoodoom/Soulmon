@@ -5,7 +5,8 @@ import {
   generateOracle, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
-import { PREMADE_CHARACTERS, getDemoSprite, purchaseFullUnlock, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
+import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
+import { purchase, isBillingAvailable } from '../utils/playBilling';
 import type { ActivityCategory } from '../types/attributes';
 
 // ---------------------------------------------------------------------------
@@ -164,18 +165,30 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   };
 
   const handleUnlockFull = async () => {
+    // Compras digitais no Android têm que passar pela Google Play — no
+    // navegador/PWA não há como cobrar, então avisamos em vez de fingir.
+    if (!isBillingAvailable()) {
+      setUnlockMessage(isPt
+        ? 'A compra está disponível no app Android (Google Play). Enquanto isso, experimente o modo demo.'
+        : 'Purchases are available in the Android app (Google Play). Try the demo in the meantime.');
+      return;
+    }
     setUnlockLoading(true);
     setUnlockMessage(null);
-    const ok = await purchaseFullUnlock();
+    const result = await purchase(FULL_UNLOCK_SKU);
     setUnlockLoading(false);
-    if (ok) {
+    if (result.ok) {
       setFlow('oracle');
       setStep(1);
-    } else {
-      setUnlockMessage(isPt
-        ? 'Pagamentos ainda não estão disponíveis nesta versão — em breve! Enquanto isso, experimente o modo demo.'
-        : "Payments aren't available in this build yet — coming soon! Try the demo for now.");
+      return;
     }
+    setUnlockMessage(
+      result.reason === 'cancelled'
+        ? (isPt ? 'Compra cancelada.' : 'Purchase cancelled.')
+        : (isPt
+          ? 'Não foi possível concluir a compra agora. Tente de novo em instantes.'
+          : "Couldn't complete the purchase right now. Please try again shortly."),
+    );
   };
 
   const input: React.CSSProperties = {

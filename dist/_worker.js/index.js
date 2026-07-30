@@ -1,8 +1,212 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// api/chat.js
+// api/_entitlements.js
+var ENT_PREFIX = "ent:";
+var VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
+var AD_REWARD_CREDITS = 5;
+var AD_DAILY_CAP = 3;
+var today = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
+function emptyEntitlement() {
+  return {
+    tier: "demo",
+    credits: 0,
+    /** orderIds já creditados — impede reprocessar a mesma compra (replay). */
+    consumedOrders: [],
+    adDate: today(),
+    adCount: 0,
+    updatedAt: Date.now()
+  };
+}
+__name(emptyEntitlement, "emptyEntitlement");
+async function readEntitlement(env, saveId) {
+  const raw = await env.DIGIAPP_SAVES.get(ENT_PREFIX + saveId);
+  if (!raw) return emptyEntitlement();
+  try {
+    const parsed = JSON.parse(raw);
+    return { ...emptyEntitlement(), ...parsed };
+  } catch {
+    return emptyEntitlement();
+  }
+}
+__name(readEntitlement, "readEntitlement");
+async function writeEntitlement(env, saveId, ent) {
+  ent.updatedAt = Date.now();
+  await env.DIGIAPP_SAVES.put(ENT_PREFIX + saveId, JSON.stringify(ent));
+  return ent;
+}
+__name(writeEntitlement, "writeEntitlement");
+function publicView(ent) {
+  const sameDay = ent.adDate === today();
+  const used = sameDay ? ent.adCount : 0;
+  return {
+    tier: ent.tier,
+    credits: ent.credits,
+    adsLeft: Math.max(0, AD_DAILY_CAP - used)
+  };
+}
+__name(publicView, "publicView");
+async function spendCredits(env, saveId, amount) {
+  const ent = await readEntitlement(env, saveId);
+  if (!Number.isInteger(amount) || amount <= 0) return null;
+  if (ent.credits < amount) return null;
+  ent.credits -= amount;
+  await writeEntitlement(env, saveId, ent);
+  return ent;
+}
+__name(spendCredits, "spendCredits");
+async function grantAdReward(env, saveId) {
+  const ent = await readEntitlement(env, saveId);
+  if (ent.adDate !== today()) {
+    ent.adDate = today();
+    ent.adCount = 0;
+  }
+  if (ent.adCount >= AD_DAILY_CAP) return null;
+  ent.adCount += 1;
+  ent.credits += AD_REWARD_CREDITS;
+  await writeEntitlement(env, saveId, ent);
+  return ent;
+}
+__name(grantAdReward, "grantAdReward");
+async function applyVerifiedPurchase(env, saveId, { orderId, grantTier, grantCredits }) {
+  const ent = await readEntitlement(env, saveId);
+  if (orderId && ent.consumedOrders.includes(orderId)) {
+    return { ent, duplicate: true };
+  }
+  if (grantTier === "paid") ent.tier = "paid";
+  if (grantCredits > 0) ent.credits += grantCredits;
+  if (orderId) {
+    ent.consumedOrders.push(orderId);
+    if (ent.consumedOrders.length > 200) ent.consumedOrders = ent.consumedOrders.slice(-200);
+  }
+  await writeEntitlement(env, saveId, ent);
+  return { ent, duplicate: false };
+}
+__name(applyVerifiedPurchase, "applyVerifiedPurchase");
+
+// api/billing.js
 var CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+var json = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS }), "json");
+var PRODUCTS = {
+  "soulmon.unlock.full": { grantTier: "paid", grantCredits: 0, consumable: false },
+  "soulmon.credits.60": { grantTier: null, grantCredits: 60, consumable: true },
+  "soulmon.credits.150": { grantTier: null, grantCredits: 150, consumable: true },
+  "soulmon.credits.400": { grantTier: null, grantCredits: 400, consumable: true }
+};
+var enc = new TextEncoder();
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+__name(b64url, "b64url");
+function pemToArrayBuffer(pem) {
+  const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s+/g, "");
+  const raw = atob(b64);
+  const buf = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
+  return buf.buffer;
+}
+__name(pemToArrayBuffer, "pemToArrayBuffer");
+var cachedToken = null;
+var cachedExpiry = 0;
+async function getAccessToken(serviceAccount) {
+  const now = Math.floor(Date.now() / 1e3);
+  if (cachedToken && now < cachedExpiry - 60) return cachedToken;
+  const header = b64url(enc.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
+  const claims = b64url(enc.encode(JSON.stringify({
+    iss: serviceAccount.client_email,
+    scope: "https://www.googleapis.com/auth/androidpublisher",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600
+  })));
+  const key = await crypto.subtle.importKey(
+    "pkcs8",
+    pemToArrayBuffer(serviceAccount.private_key),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, enc.encode(`${header}.${claims}`));
+  const jwt = `${header}.${claims}.${b64url(sig)}`;
+  const res = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion: jwt
+    })
+  });
+  if (!res.ok) throw new Error(`Play token exchange failed: ${res.status} ${await res.text()}`);
+  const data = await res.json();
+  cachedToken = data.access_token;
+  cachedExpiry = now + (data.expires_in || 3600);
+  return cachedToken;
+}
+__name(getAccessToken, "getAccessToken");
+async function onRequestOptions() {
+  return new Response(null, { headers: CORS });
+}
+__name(onRequestOptions, "onRequestOptions");
+async function onRequestPost({ request, env }) {
+  const url = new URL(request.url);
+  if (url.searchParams.get("action") !== "verify") return json({ error: "Unknown action" }, 400);
+  if (!env.DIGIAPP_SAVES) return json({ error: "Storage not bound" }, 500);
+  const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+  const packageName = env.ANDROID_PACKAGE_NAME;
+  if (!rawAccount || !packageName) {
+    return json({ ok: false, reason: "billing-not-configured" }, 503);
+  }
+  const body = await request.json().catch(() => null);
+  const saveId = body?.id;
+  const productId = body?.productId;
+  const purchaseToken = body?.purchaseToken;
+  if (!saveId || !VALID_ID.test(saveId)) return json({ error: "Invalid save ID" }, 400);
+  const product = PRODUCTS[productId];
+  if (!product) return json({ error: "Unknown product" }, 400);
+  if (!purchaseToken || typeof purchaseToken !== "string") return json({ error: "Missing purchaseToken" }, 400);
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(rawAccount);
+  } catch {
+    return json({ ok: false, reason: "billing-misconfigured" }, 503);
+  }
+  let purchase;
+  try {
+    const token = await getAccessToken(serviceAccount);
+    const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+    const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      return json({ ok: false, reason: "invalid-purchase", status: res.status }, 402);
+    }
+    purchase = await res.json();
+  } catch (err) {
+    console.error("billing verify error:", err);
+    return json({ ok: false, reason: "verification-failed" }, 502);
+  }
+  if (purchase.purchaseState !== 0) {
+    return json({ ok: false, reason: "not-purchased", purchaseState: purchase.purchaseState }, 402);
+  }
+  const { ent, duplicate } = await applyVerifiedPurchase(env, saveId, {
+    orderId: purchase.orderId,
+    grantTier: product.grantTier,
+    grantCredits: product.grantCredits
+  });
+  return json({
+    ok: true,
+    duplicate,
+    ...publicView(ent),
+    // Consumíveis precisam ser consumidos na Play para poderem ser recomprados.
+    consumeToken: product.consumable ? purchaseToken : void 0
+  });
+}
+__name(onRequestPost, "onRequestPost");
+
+// api/chat.js
+var CORS2 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
@@ -43,17 +247,17 @@ ${s.customKeywords ? `- Custom: ${s.customKeywords}` : ""}
 DO NOT: write long responses, be generic/robotic, go off-topic.`;
 }
 __name(buildSystemPrompt, "buildSystemPrompt");
-async function onRequestOptions() {
-  return new Response(null, { headers: CORS });
+async function onRequestOptions2() {
+  return new Response(null, { headers: CORS2 });
 }
-__name(onRequestOptions, "onRequestOptions");
-async function onRequestPost({ request, env }) {
+__name(onRequestOptions2, "onRequestOptions");
+async function onRequestPost2({ request, env }) {
   try {
     const body = await request.json();
     const { message, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
-    if (!message) return Response.json({ error: "Message required" }, { status: 400, headers: CORS });
+    if (!message) return Response.json({ error: "Message required" }, { status: 400, headers: CORS2 });
     const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS2 });
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
@@ -69,7 +273,7 @@ async function onRequestPost({ request, env }) {
     });
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS });
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS2 });
     }
     const data = await groqRes.json();
     const response = data.choices?.[0]?.message?.content ?? "...";
@@ -85,26 +289,26 @@ async function onRequestPost({ request, env }) {
       else if (message.match(/friend|family|social/i)) category = "Social";
       else if (message.match(/clean|organi|plan/i)) category = "Discipline";
       else if (message.match(/health|doctor|medic/i)) category = "Health";
-      return Response.json({ response, action: { type: "create_activity", activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS });
+      return Response.json({ response, action: { type: "create_activity", activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS2 });
     }
-    return Response.json({ response }, { headers: CORS });
+    return Response.json({ response }, { headers: CORS2 });
   } catch (err) {
     console.error("Chat error:", err);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS2 });
   }
 }
-__name(onRequestPost, "onRequestPost");
+__name(onRequestPost2, "onRequestPost");
 
 // api/community.js
-var CORS2 = {
+var CORS3 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-var VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
+var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
 var MATCHES_PER_DAY = 5;
-var json = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS2 }), "json");
-var today = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
+var json2 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS3 }), "json");
+var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
 var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
 function stagePower(stage) {
   if (!stage) return 1;
@@ -123,7 +327,7 @@ async function putProfile(env, id, profile) {
 __name(putProfile, "putProfile");
 async function getRank(env, season, id) {
   const raw = await env.DIGIAPP_SAVES.get(`rank:${season}:${id}`);
-  return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today(), matchesToday: 0 };
+  return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today2(), matchesToday: 0 };
 }
 __name(getRank, "getRank");
 async function putRank(env, season, id, rec) {
@@ -144,19 +348,19 @@ async function listPrefix(env, prefix, limit = 100) {
   return out;
 }
 __name(listPrefix, "listPrefix");
-async function onRequestOptions2() {
-  return new Response(null, { headers: CORS2 });
+async function onRequestOptions3() {
+  return new Response(null, { headers: CORS3 });
 }
-__name(onRequestOptions2, "onRequestOptions");
+__name(onRequestOptions3, "onRequestOptions");
 async function onRequest({ request, env }) {
-  if (!env.DIGIAPP_SAVES) return json({ error: "Storage not bound" }, 500);
+  if (!env.DIGIAPP_SAVES) return json2({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
   const method = request.method;
   const body = method === "POST" ? await request.json().catch(() => ({})) : {};
   const id = body.id || url.searchParams.get("id");
   if (action === "profile" && method === "POST") {
-    if (!VALID_ID.test(id || "")) return json({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "")) return json2({ error: "invalid id" }, 400);
     const prev = await getProfile(env, id) || {};
     const profile = {
       id,
@@ -172,7 +376,7 @@ async function onRequest({ request, env }) {
       updatedAt: Date.now()
     };
     await putProfile(env, id, profile);
-    return json({ ok: true });
+    return json2({ ok: true });
   }
   if (action === "players" && method === "GET") {
     const search = (url.searchParams.get("search") || "").toLowerCase();
@@ -199,13 +403,13 @@ async function onRequest({ request, env }) {
       if (players.length >= 50) break;
     }
     players.sort((a, b) => b.rankPoints - a.rankPoints);
-    return json({ players });
+    return json2({ players });
   }
   if (action === "player" && method === "GET") {
     const p = await getProfile(env, id);
-    if (!p) return json({ found: false });
+    if (!p) return json2({ found: false });
     const rank = await getRank(env, currentSeason(), id);
-    return json({
+    return json2({
       found: true,
       player: {
         id: p.id,
@@ -240,24 +444,24 @@ async function onRequest({ request, env }) {
     }
     const season = currentSeason();
     const myRank = id ? await getRank(env, season, id) : null;
-    const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
-    return json({ opponents: pool.slice(0, 3), matchesLeft: Math.max(0, matchesLeft) });
+    const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
+    return json2({ opponents: pool.slice(0, 3), matchesLeft: Math.max(0, matchesLeft) });
   }
   if (action === "match" && method === "POST") {
     const { opponentId } = body;
-    if (!VALID_ID.test(id || "") || !VALID_ID.test(opponentId || "")) return json({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(opponentId || "")) return json2({ error: "invalid id" }, 400);
     const me = await getProfile(env, id);
     const opp = await getProfile(env, opponentId);
-    if (!me?.pvpEnabled) return json({ error: "pvp disabled" }, 403);
-    if (!opp?.pvpEnabled) return json({ error: "opponent unavailable" }, 404);
+    if (!me?.pvpEnabled) return json2({ error: "pvp disabled" }, 403);
+    if (!opp?.pvpEnabled) return json2({ error: "opponent unavailable" }, 404);
     const season = currentSeason();
     const myRank = await getRank(env, season, id);
-    if (myRank.day !== today()) {
-      myRank.day = today();
+    if (myRank.day !== today2()) {
+      myRank.day = today2();
       myRank.matchesToday = 0;
     }
     if (myRank.matchesToday >= MATCHES_PER_DAY) {
-      return json({ error: "daily limit", matchesLeft: 0 }, 429);
+      return json2({ error: "daily limit", matchesLeft: 0 }, 429);
     }
     const power = /* @__PURE__ */ __name((p) => stagePower(p.stage) * 10 + Math.min(20, ((p.attrs?.virus || 0) + (p.attrs?.data || 0) + (p.attrs?.vaccine || 0)) / 5) + Math.random() * 18, "power");
     const myScore = power(me);
@@ -273,7 +477,7 @@ async function onRequest({ request, env }) {
     if (won) oppRank.losses += 1;
     else oppRank.wins += 1;
     await putRank(env, season, opponentId, oppRank);
-    return json({
+    return json2({
       won,
       myScore: Math.round(myScore),
       oppScore: Math.round(oppScore),
@@ -284,7 +488,7 @@ async function onRequest({ request, env }) {
   }
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
     const season = url.searchParams.get("season") || currentSeason();
-    if (!/^\d{4}-\d{2}$/.test(season)) return json({ error: "invalid season" }, 400);
+    if (!/^\d{4}-\d{2}$/.test(season)) return json2({ error: "invalid season" }, 400);
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
@@ -296,13 +500,13 @@ async function onRequest({ request, env }) {
       rows.push({ id: pid, name: p?.name || "An\xF4nimo", petName: p?.petName || "", stage: p?.stage || "rookie", points: rec.points, wins: rec.wins, losses: rec.losses });
     }
     rows.sort((a, b) => b.points - a.points);
-    if (action === "seasonResult") return json({ season, top3: rows.slice(0, 3) });
-    return json({ season, rank: rows.slice(0, 50) });
+    if (action === "seasonResult") return json2({ season, top3: rows.slice(0, 3) });
+    return json2({ season, rank: rows.slice(0, 50) });
   }
   if (action === "closeSeason" && method === "POST") {
     const { season, adminKey } = body;
-    if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json({ error: "unauthorized" }, 401);
-    if (!/^\d{4}-\d{2}$/.test(season || "")) return json({ error: "invalid season" }, 400);
+    if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json2({ error: "unauthorized" }, 401);
+    if (!/^\d{4}-\d{2}$/.test(season || "")) return json2({ error: "invalid season" }, 400);
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
@@ -319,91 +523,133 @@ async function onRequest({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    return json({ ok: true, season, awarded: top3.length });
+    return json2({ ok: true, season, awarded: top3.length });
   }
   if (action === "trophies" && method === "GET") {
-    if (!VALID_ID.test(id || "")) return json({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "")) return json2({ error: "invalid id" }, 400);
     const p = await getProfile(env, id);
     const trophies = p?.pendingTrophies || [];
     if (url.searchParams.get("claim") === "1" && trophies.length && p) {
       p.pendingTrophies = [];
       await putProfile(env, id, p);
     }
-    return json({ trophies });
+    return json2({ trophies });
   }
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
-    if (!VALID_ID.test(id || "") || !VALID_ID.test(friendId || "")) return json({ error: "invalid id" }, 400);
-    if (id === friendId) return json({ error: "cannot befriend yourself" }, 400);
+    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
+    if (id === friendId) return json2({ error: "cannot befriend yourself" }, 400);
     const me = await getProfile(env, id);
-    if (!me) return json({ error: "profile not found" }, 404);
+    if (!me) return json2({ error: "profile not found" }, 404);
     const friend = await getProfile(env, friendId);
-    if (!friend) return json({ error: "friend not found" }, 404);
+    if (!friend) return json2({ error: "friend not found" }, 404);
     me.friends = me.friends || [];
     if (remove) {
       me.friends = me.friends.filter((f) => f !== friendId);
     } else {
-      if (me.friends.includes(friendId)) return json({ ok: true, friends: me.friends });
-      if (me.friends.length >= 5) return json({ error: "friend limit (5)" }, 400);
+      if (me.friends.includes(friendId)) return json2({ ok: true, friends: me.friends });
+      if (me.friends.length >= 5) return json2({ error: "friend limit (5)" }, 400);
       me.friends.push(friendId);
     }
     await putProfile(env, id, me);
-    return json({ ok: true, friends: me.friends });
+    return json2({ ok: true, friends: me.friends });
   }
   if (action === "gift" && method === "POST") {
     const { friendId } = body;
-    if (!VALID_ID.test(id || "") || !VALID_ID.test(friendId || "")) return json({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
     const me = await getProfile(env, id);
-    if (!me) return json({ error: "profile not found" }, 404);
-    if (!(me.friends || []).includes(friendId)) return json({ error: "not a friend" }, 403);
+    if (!me) return json2({ error: "profile not found" }, 404);
+    if (!(me.friends || []).includes(friendId)) return json2({ error: "not a friend" }, 403);
     me.giftLog = me.giftLog || {};
-    if (me.giftLog[friendId] === today()) return json({ error: "already gifted today" }, 429);
-    me.giftLog[friendId] = today();
+    if (me.giftLog[friendId] === today2()) return json2({ error: "already gifted today" }, 429);
+    me.giftLog[friendId] = today2();
     await putProfile(env, id, me);
     const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendId}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
     await env.DIGIAPP_SAVES.put(`gifts:${friendId}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
-    return json({ ok: true });
+    return json2({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
-    if (!VALID_ID.test(id || "")) return json({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "")) return json2({ error: "invalid id" }, 400);
     const raw = await env.DIGIAPP_SAVES.get(`gifts:${id}`);
     const gifts = raw ? JSON.parse(raw) : [];
     if (url.searchParams.get("claim") === "1" && gifts.length) {
       await env.DIGIAPP_SAVES.delete(`gifts:${id}`);
     }
-    return json({ gifts });
+    return json2({ gifts });
   }
-  return json({ error: "unknown action" }, 400);
+  return json2({ error: "unknown action" }, 400);
 }
 __name(onRequest, "onRequest");
 
+// api/entitlements.js
+var CORS4 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
+async function onRequestOptions4() {
+  return new Response(null, { headers: CORS4 });
+}
+__name(onRequestOptions4, "onRequestOptions");
+async function onRequestGet({ request, env }) {
+  const url = new URL(request.url);
+  const saveId = url.searchParams.get("id");
+  if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
+  if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
+  const ent = await readEntitlement(env, saveId);
+  return json3(publicView(ent));
+}
+__name(onRequestGet, "onRequestGet");
+async function onRequestPost3({ request, env }) {
+  const url = new URL(request.url);
+  const action = url.searchParams.get("action");
+  if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
+  const body = await request.json().catch(() => null);
+  const saveId = body?.id;
+  if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
+  if (action === "spend") {
+    const amount = Number(body?.amount);
+    const ent = await spendCredits(env, saveId, amount);
+    if (!ent) return json3({ ok: false, reason: "insufficient" }, 402);
+    return json3({ ok: true, ...publicView(ent) });
+  }
+  if (action === "ad") {
+    const ent = await grantAdReward(env, saveId);
+    if (!ent) return json3({ ok: false, reason: "daily-cap" }, 429);
+    return json3({ ok: true, ...publicView(ent) });
+  }
+  return json3({ error: "Unknown action" }, 400);
+}
+__name(onRequestPost3, "onRequestPost");
+
 // api/fcm-subscribe.js
-var CORS3 = {
+var CORS5 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions3() {
-  return new Response(null, { status: 204, headers: CORS3 });
+async function onRequestOptions5() {
+  return new Response(null, { status: 204, headers: CORS5 });
 }
-__name(onRequestOptions3, "onRequestOptions");
-async function onRequestPost2({ request, env }) {
+__name(onRequestOptions5, "onRequestOptions");
+async function onRequestPost4({ request, env }) {
   let body;
   try {
     body = await request.json();
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS3 }
+      headers: { "Content-Type": "application/json", ...CORS5 }
     });
   }
   const { token, digimonName, language } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS3 }
+      headers: { "Content-Type": "application/json", ...CORS5 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
@@ -414,10 +660,10 @@ async function onRequestPost2({ request, env }) {
   );
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS3 }
+    headers: { "Content-Type": "application/json", ...CORS5 }
   });
 }
-__name(onRequestPost2, "onRequestPost");
+__name(onRequestPost4, "onRequestPost");
 async function onRequestDelete({ request, env }) {
   let body;
   try {
@@ -425,21 +671,21 @@ async function onRequestDelete({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS3 }
+      headers: { "Content-Type": "application/json", ...CORS5 }
     });
   }
   const { token } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS3 }
+      headers: { "Content-Type": "application/json", ...CORS5 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS3 }
+    headers: { "Content-Type": "application/json", ...CORS5 }
   });
 }
 __name(onRequestDelete, "onRequestDelete");
@@ -450,17 +696,17 @@ async function hashToken(token) {
 __name(hashToken, "hashToken");
 
 // api/generate-sprite.js
-var CORS4 = {
+var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var HF_BASE = "https://platform.higgsfield.ai";
 var GEMINI_MODEL = "gemini-2.5-flash-image";
-async function onRequestOptions4() {
-  return new Response(null, { headers: CORS4 });
+async function onRequestOptions6() {
+  return new Response(null, { headers: CORS6 });
 }
-__name(onRequestOptions4, "onRequestOptions");
+__name(onRequestOptions6, "onRequestOptions");
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
   const auth = `Key ${env.HF_API_KEY}:${env.HF_SECRET}`;
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
@@ -524,17 +770,17 @@ async function generateGemini(env, prompt) {
   return `data:${mime};base64,${inline.data}`;
 }
 __name(generateGemini, "generateGemini");
-async function onRequestPost3({ request, env }) {
+async function onRequestPost5({ request, env }) {
   try {
     const { prompt, referenceImageUrls } = await request.json();
     if (!prompt || typeof prompt !== "string") {
-      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS4 });
+      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS6 });
     }
     let hfError = null;
     if (env.HF_API_KEY && env.HF_SECRET) {
       try {
         const image = await generateHiggsfield(env, prompt, referenceImageUrls);
-        return Response.json({ image, provider: "higgsfield" }, { headers: CORS4 });
+        return Response.json({ image, provider: "higgsfield" }, { headers: CORS6 });
       } catch (err) {
         hfError = err.message;
         console.error("Higgsfield falhou, tentando fallback:", err.message);
@@ -542,76 +788,82 @@ async function onRequestPost3({ request, env }) {
     }
     if (env.GEMINI_API_KEY) {
       const image = await generateGemini(env, prompt);
-      return Response.json({ image, provider: "gemini", hfError }, { headers: CORS4 });
+      return Response.json({ image, provider: "gemini", hfError }, { headers: CORS6 });
     }
-    return Response.json({ error: "image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)", hfError }, { status: 503, headers: CORS4 });
+    return Response.json({ error: "image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)", hfError }, { status: 503, headers: CORS6 });
   } catch (err) {
     console.error("generate-sprite error:", err);
-    return Response.json({ error: "internal error" }, { status: 500, headers: CORS4 });
+    return Response.json({ error: "internal error" }, { status: 500, headers: CORS6 });
   }
 }
-__name(onRequestPost3, "onRequestPost");
+__name(onRequestPost5, "onRequestPost");
 
 // api/save.js
-var CORS5 = {
+var CORS7 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
-async function onRequestOptions5() {
-  return new Response(null, { headers: CORS5 });
+var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
+async function onRequestOptions7() {
+  return new Response(null, { headers: CORS7 });
 }
-__name(onRequestOptions5, "onRequestOptions");
+__name(onRequestOptions7, "onRequestOptions");
 async function onRequest2({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get("id");
-  if (!saveId || !VALID_ID2.test(saveId)) {
-    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS5 });
+  if (!saveId || !VALID_ID.test(saveId)) {
+    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS7 });
   }
   if (!env.DIGIAPP_SAVES) {
-    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS5 });
+    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS7 });
   }
   if (request.method === "GET") {
     const raw = await env.DIGIAPP_SAVES.get(saveId);
-    if (!raw) return Response.json({ found: false }, { headers: CORS5 });
-    return Response.json({ found: true, state: JSON.parse(raw) }, { headers: CORS5 });
+    if (!raw) return Response.json({ found: false }, { headers: CORS7 });
+    const state = JSON.parse(raw);
+    const ent = publicView(await readEntitlement(env, saveId));
+    state.accountTier = ent.tier;
+    state.credits = ent.credits;
+    return Response.json({ found: true, state }, { headers: CORS7 });
   }
   if (request.method === "POST") {
     const body = await request.json().catch(() => null);
-    if (!body?.state) return Response.json({ error: "Missing state" }, { status: 400, headers: CORS5 });
-    await env.DIGIAPP_SAVES.put(saveId, JSON.stringify(body.state), { expirationTtl: 86400 * 365 });
-    return Response.json({ ok: true }, { headers: CORS5 });
+    if (!body?.state) return Response.json({ error: "Missing state" }, { status: 400, headers: CORS7 });
+    const state = { ...body.state };
+    for (const field of SERVER_OWNED_FIELDS) delete state[field];
+    await env.DIGIAPP_SAVES.put(saveId, JSON.stringify(state), { expirationTtl: 86400 * 365 });
+    return Response.json({ ok: true }, { headers: CORS7 });
   }
-  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS5 });
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS7 });
 }
 __name(onRequest2, "onRequest");
 
 // api/subscribe.js
-var CORS6 = {
+var CORS8 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions6() {
-  return new Response(null, { status: 204, headers: CORS6 });
+async function onRequestOptions8() {
+  return new Response(null, { status: 204, headers: CORS8 });
 }
-__name(onRequestOptions6, "onRequestOptions");
-async function onRequestPost4({ request, env }) {
+__name(onRequestOptions8, "onRequestOptions");
+async function onRequestPost6({ request, env }) {
   let body;
   try {
     body = await request.json();
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS8 }
     });
   }
   const { endpoint, keys, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS8 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -622,10 +874,10 @@ async function onRequestPost4({ request, env }) {
   );
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS6 }
+    headers: { "Content-Type": "application/json", ...CORS8 }
   });
 }
-__name(onRequestPost4, "onRequestPost");
+__name(onRequestPost6, "onRequestPost");
 async function onRequestDelete2({ request, env }) {
   let body;
   try {
@@ -633,21 +885,21 @@ async function onRequestDelete2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS8 }
     });
   }
   const { endpoint } = body;
   if (!endpoint) {
     return new Response(JSON.stringify({ error: "Missing endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS8 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS6 }
+    headers: { "Content-Type": "application/json", ...CORS8 }
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
@@ -658,27 +910,27 @@ async function hashEndpoint(endpoint) {
 __name(hashEndpoint, "hashEndpoint");
 
 // api/suggest-tasks.js
-var CORS7 = {
+var CORS9 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var VALID_CATEGORIES = ["Health", "Creativity", "Discipline", "Study", "Work", "Social", "Wellness", "Fitness"];
-async function onRequestOptions7() {
-  return new Response(null, { headers: CORS7 });
+async function onRequestOptions9() {
+  return new Response(null, { headers: CORS9 });
 }
-__name(onRequestOptions7, "onRequestOptions");
-async function onRequestPost5({ request, env }) {
+__name(onRequestOptions9, "onRequestOptions");
+async function onRequestPost7({ request, env }) {
   try {
     const body = await request.json();
     const goalText = (body.goalText || "").toString().trim().slice(0, 300);
     const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === "pt-BR";
     if (!goalText && categories.length === 0) {
-      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS7 });
+      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS9 });
     }
     const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS7 });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS9 });
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
 Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
 that would help achieve that goal. Each task name must be short (max 40 chars), action-oriented, and
@@ -704,7 +956,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     });
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS7 });
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS9 });
     }
     const data = await groqRes.json();
     const raw = data.choices?.[0]?.message?.content ?? "[]";
@@ -713,19 +965,19 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       const match2 = raw.match(/\[[\s\S]*\]/);
       parsed = JSON.parse(match2 ? match2[0] : raw);
     } catch {
-      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS7 });
+      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS9 });
     }
     const suggestions = (Array.isArray(parsed) ? parsed : []).map((item) => ({
       name: (item?.name || "").toString().trim().slice(0, 60),
       category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
     })).filter((item) => item.name.length > 0).slice(0, 6);
-    return Response.json({ suggestions }, { headers: CORS7 });
+    return Response.json({ suggestions }, { headers: CORS9 });
   } catch (err) {
     console.error("suggest-tasks error:", err);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS7 });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS9 });
   }
 }
-__name(onRequestPost5, "onRequestPost");
+__name(onRequestPost7, "onRequestPost");
 
 // .well-known/assetlinks.json.js
 async function onRequest3() {
@@ -747,28 +999,63 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-nS1Jxv/functionsRoutes-0.5350080160839616.mjs
+// ../.wrangler/tmp/pages-aeStwq/functionsRoutes-0.4080230095795059.mjs
 var routes = [
   {
-    routePath: "/api/chat",
+    routePath: "/api/billing",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
     modules: [onRequestOptions]
   },
   {
-    routePath: "/api/chat",
+    routePath: "/api/billing",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
     modules: [onRequestPost]
   },
   {
-    routePath: "/api/community",
+    routePath: "/api/chat",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
     modules: [onRequestOptions2]
+  },
+  {
+    routePath: "/api/chat",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost2]
+  },
+  {
+    routePath: "/api/community",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions3]
+  },
+  {
+    routePath: "/api/entitlements",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet]
+  },
+  {
+    routePath: "/api/entitlements",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions4]
+  },
+  {
+    routePath: "/api/entitlements",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost3]
   },
   {
     routePath: "/api/fcm-subscribe",
@@ -782,35 +1069,35 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions3]
+    modules: [onRequestOptions5]
   },
   {
     routePath: "/api/fcm-subscribe",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost2]
+    modules: [onRequestPost4]
   },
   {
     routePath: "/api/generate-sprite",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions4]
+    modules: [onRequestOptions6]
   },
   {
     routePath: "/api/generate-sprite",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost3]
+    modules: [onRequestPost5]
   },
   {
     routePath: "/api/save",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions5]
+    modules: [onRequestOptions7]
   },
   {
     routePath: "/api/subscribe",
@@ -824,28 +1111,28 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions6]
+    modules: [onRequestOptions8]
   },
   {
     routePath: "/api/subscribe",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost4]
+    modules: [onRequestPost6]
   },
   {
     routePath: "/api/suggest-tasks",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions7]
+    modules: [onRequestOptions9]
   },
   {
     routePath: "/api/suggest-tasks",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost5]
+    modules: [onRequestPost7]
   },
   {
     routePath: "/.well-known/assetlinks.json",

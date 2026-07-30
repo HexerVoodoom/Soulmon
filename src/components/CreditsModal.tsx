@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Gem, Play, ShoppingCart, Heart, Shuffle, Loader as LoaderIcon } from 'lucide-react';
 import {
   CREDIT_PACKS, type CreditPack, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
-  HEART_COST_CREDITS, getAdWatchesToday, canWatchAdToday, FULL_UNLOCK_PRICE_LABEL,
+  HEART_COST_CREDITS, FULL_UNLOCK_PRICE_LABEL,
 } from '../utils/monetization';
+import { fetchEntitlement } from '../utils/entitlements';
+import { isBillingAvailable } from '../utils/playBilling';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -24,7 +26,7 @@ interface CreditsModalProps {
   canReroll: boolean;
   onWatchAd: () => Promise<boolean>;
   onBuyPack: (pack: CreditPack) => Promise<boolean>;
-  onInstantHeal: () => boolean;
+  onInstantHeal: () => Promise<boolean>;
   onReroll: () => Promise<boolean>;
   onClose: () => void;
 }
@@ -40,33 +42,49 @@ export function CreditsModal({
   const [rerollLoading, setRerollLoading] = useState(false);
   const [confirmingReroll, setConfirmingReroll] = useState(false);
 
-  const adsLeft = Math.max(0, AD_DAILY_CAP - getAdWatchesToday());
+  // Quantos anúncios ainda cabem hoje — vem do SERVIDOR (o cap que vale é o
+  // dele). Enquanto não chega, assume o cheio só pra não piscar desabilitado.
+  const [adsLeft, setAdsLeft] = useState(AD_DAILY_CAP);
+  useEffect(() => {
+    let cancelled = false;
+    fetchEntitlement().then(ent => { if (!cancelled && ent) setAdsLeft(ent.adsLeft); });
+    return () => { cancelled = true; };
+  }, [credits]);
+
+  const billingAvailable = isBillingAvailable();
   const canHeal = credits >= HEART_COST_CREDITS && healthPoints < maxHealthPoints;
   const canAffordReroll = credits >= REROLL_COST_CREDITS;
 
   const flash = (msg: string) => { setMessage(msg); setTimeout(() => setMessage(null), 3200); };
 
   const handleWatchAd = async () => {
-    if (adLoading || !canWatchAdToday()) return;
+    if (adLoading || adsLeft === 0) return;
     setAdLoading(true);
     const ok = await onWatchAd();
     setAdLoading(false);
+    if (ok) setAdsLeft(n => Math.max(0, n - 1));
     flash(ok
       ? (isPt ? `+${AD_REWARD_CREDITS} créditos!` : `+${AD_REWARD_CREDITS} credits!`)
       : (isPt ? 'Limite diário de anúncios atingido.' : 'Daily ad limit reached.'));
   };
 
   const handleBuyPack = async (pack: CreditPack) => {
+    if (!billingAvailable) {
+      flash(isPt
+        ? 'Compras só no app Android (Google Play).'
+        : 'Purchases are only available in the Android app (Google Play).');
+      return;
+    }
     setPackLoading(pack.id);
     const ok = await onBuyPack(pack);
     setPackLoading(null);
     flash(ok
       ? (isPt ? `+${pack.credits} créditos!` : `+${pack.credits} credits!`)
-      : (isPt ? 'Pagamentos ainda não disponíveis nesta versão — em breve!' : "Payments aren't available in this build yet — coming soon!"));
+      : (isPt ? 'Compra não concluída.' : 'Purchase not completed.'));
   };
 
-  const handleHeal = () => {
-    const ok = onInstantHeal();
+  const handleHeal = async () => {
+    const ok = await onInstantHeal();
     flash(ok
       ? (isPt ? '+1 coração curado!' : '+1 heart healed!')
       : (isPt ? 'Não foi possível curar agora.' : 'Could not heal right now.'));

@@ -38,9 +38,11 @@ import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
 import {
   PREMADE_CHARACTERS, getDemoCreatureStages, canCreateDemoTaskToday, recordDemoCreation,
-  watchRewardedAd, AD_REWARD_CREDITS, purchaseCredits, REROLL_COST_CREDITS, HEART_COST_CREDITS,
+  REROLL_COST_CREDITS, HEART_COST_CREDITS,
   type CreditPack,
 } from './utils/monetization';
+import { fetchEntitlement, spendCredits, claimAdReward } from './utils/entitlements';
+import { purchase } from './utils/playBilling';
 
 const EVOLVE_SEGMENTS: Record<string, number> = {
   'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
@@ -218,6 +220,21 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled ? 'true' : 'false');
   }, [notificationsEnabled]);
+
+  // Sincroniza tier/créditos com o SERVIDOR ao abrir e ao trocar de save. O
+  // que estiver no localStorage é só espelho — se alguém editou à mão, isto
+  // sobrescreve com a verdade. Offline mantém o espelho (o servidor recusa
+  // qualquer gasto mesmo assim, então não dá pra gastar o que não existe).
+  useEffect(() => {
+    let cancelled = false;
+    fetchEntitlement().then(ent => {
+      if (cancelled || !ent) return;
+      setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
+        ? prev
+        : { ...prev, credits: ent.credits, accountTier: ent.tier });
+    });
+    return () => { cancelled = true; };
+  }, [saveId, setGameState]);
 
   // Detect when food items are added to inventory
   const prevInventoryTotalRef = useRef(
@@ -1131,44 +1148,56 @@ export default function App() {
     setGameState(prev => ({ ...prev, equippedFurniture: id }));
   }, []);
 
-  // 💎 Créditos (monetização — utils/monetization.ts): anúncio recompensado,
-  // pacotes (placeholder), cura instantânea e reroll de personagem.
-  const handleWatchAd = useCallback(async (): Promise<boolean> => {
-    const ok = await watchRewardedAd();
-    if (ok) setGameState(prev => ({ ...prev, credits: (prev.credits ?? 0) + AD_REWARD_CREDITS }));
-    return ok;
+  // 💎 Créditos (monetização) — TODA operação de saldo passa pelo SERVIDOR
+  // (utils/entitlements.ts). O `credits` do GameState é só espelho pra UI;
+  // quem decide é functions/api/_entitlements.js. Nunca aplique o efeito de
+  // uma compra sem o servidor ter confirmado.
+  const syncEntitlement = useCallback((ent: { tier: 'demo' | 'paid'; credits: number }) => {
+    setGameState(prev => ({ ...prev, credits: ent.credits, accountTier: ent.tier }));
   }, []);
+
+  const handleWatchAd = useCallback(async (): Promise<boolean> => {
+    const ent = await claimAdReward();
+    if (!ent) return false;
+    syncEntitlement(ent);
+    return true;
+  }, [syncEntitlement]);
 
   const handleBuyCreditPack = useCallback(async (pack: CreditPack): Promise<boolean> => {
-    const ok = await purchaseCredits(pack);
-    if (ok) setGameState(prev => ({ ...prev, credits: (prev.credits ?? 0) + pack.credits }));
-    return ok;
-  }, []);
+    const result = await purchase(pack.id);
+    if (!result.ok) return false;
+    syncEntitlement(result.ent);
+    return true;
+  }, [syncEntitlement]);
 
-  const handleInstantHealWithCredits = useCallback((): boolean => {
-    if ((gameState.credits ?? 0) < HEART_COST_CREDITS) return false;
+  const handleInstantHealWithCredits = useCallback(async (): Promise<boolean> => {
     if (gameState.healthPoints >= gameState.maxHealthPoints) return false;
+    const ent = await spendCredits(HEART_COST_CREDITS, 'instant-heal');
+    if (!ent) return false;
     setGameState(prev => ({
       ...prev,
-      credits: (prev.credits ?? 0) - HEART_COST_CREDITS,
+      credits: ent.credits,
+      accountTier: ent.tier,
       healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
     }));
     return true;
-  }, [gameState.credits, gameState.healthPoints, gameState.maxHealthPoints]);
+  }, [gameState.healthPoints, gameState.maxHealthPoints]);
 
   // Reroll: regenera o personagem do oráculo com uma seed NOVA (mesmos dados
   // de nascimento salvos no onboarding) — recomeça do Rookie, mantém
   // atividades/tarefas e Bits. Só existe pra contas 'paid' (modo demo não tem
   // perfil de oráculo salvo).
   const handleRerollCharacter = useCallback(async (): Promise<boolean> => {
-    if ((gameState.credits ?? 0) < REROLL_COST_CREDITS) return false;
     let saved: (OracleInput & { seed: number }) | null = null;
     try {
       saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOULMON_PROFILE) || 'null');
     } catch {
       saved = null;
     }
+    // Confere o perfil ANTES de cobrar — cobrar e depois falhar seria roubo.
     if (!saved) return false;
+    const ent = await spendCredits(REROLL_COST_CREDITS, 'reroll');
+    if (!ent) return false;
     const { generateOracle } = await import('./utils/oracle');
     const newSeed = Math.floor(Math.random() * 2 ** 31);
     const result = generateOracle(saved, newSeed);
@@ -1178,7 +1207,8 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
       ...prev,
-      credits: (prev.credits ?? 0) - REROLL_COST_CREDITS,
+      credits: ent.credits,
+      accountTier: ent.tier,
       eggType: genericLine,
       evolutionStage: 'rookie',
       unlockedEvolutions: ['rookie'],
@@ -1203,7 +1233,7 @@ export default function App() {
       },
     }));
     return true;
-  }, [gameState.credits]);
+  }, []);
 
   // 🔒 Evolution padlock (Evolution page): tapping the current Soulmon toggles
   // it. While locked, the pet never evolves at the day turn; unlocking lets the
