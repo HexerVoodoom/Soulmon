@@ -22,8 +22,10 @@ const OBSTACLE_TIERS = [
   { stage: 'titamon',    from: 75, size: 56 },
 ];
 
-export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onExit }: {
+export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit }: {
   evolutionStage: string;
+  /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
+  demoCharacterId?: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
   /** Mission counter: reports the final score of each run. */
@@ -51,14 +53,14 @@ export function DinoGame({ evolutionStage, language, onEarnPoints, onScore, onEx
 
   useEffect(() => {
     const pet = new Image();
-    pet.src = getSpriteForStage(evolutionStage);
+    pet.src = getSpriteForStage(evolutionStage, 'tapirmon', demoCharacterId);
     petImgRef.current = pet;
     tierImgsRef.current = OBSTACLE_TIERS.map(t => {
       const img = new Image();
       img.src = getSpriteForStage(t.stage);
       return img;
     });
-  }, [evolutionStage]);
+  }, [evolutionStage, demoCharacterId]);
 
   const jump = useCallback(() => {
     if (phaseRef.current !== 'playing') return;

@@ -13,8 +13,10 @@ const HANDS = ['✊', '✋', '✌️'];
 const MATCH_POINTS = 5;
 const WINS_NEEDED = 3;
 
-export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
+export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onExit }: {
   evolutionStage: string;
+  /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet. */
+  demoCharacterId?: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
   onExit: () => void;
@@ -95,7 +97,7 @@ export function RPSGame({ evolutionStage, language, onEarnPoints, onExit }: {
 
       {/* Arena */}
       <div style={{ flex: 1, margin: 16, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <img src={getSpriteForStage(evolutionStage)} alt="pet"
+        <img src={getSpriteForStage(evolutionStage, 'tapirmon', demoCharacterId)} alt="pet"
              style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
         <div style={{ fontSize: '2.6rem', minHeight: 52, lineHeight: 1 }}>
           {thinking ? '💭' : petHand !== null ? HANDS[petHand] : ''}

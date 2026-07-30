@@ -102,8 +102,10 @@ function TimingBar({ speed, color, label, onStop }: {
 }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit }: {
   evolutionStage: string;
+  /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
+  demoCharacterId?: string;
   language: Language;
   /** Start a run: gates on HP only. Returns the base level (floor 1's level). */
   onEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' };
@@ -143,7 +145,7 @@ export function DungeonGame({ evolutionStage, language, onEnter, onLose, onHeart
   const runScoreRef = useRef(0);
 
   const enemy = enemies[enemyIdx];
-  const petSprite = getSpriteForStage(evolutionStage);
+  const petSprite = getSpriteForStage(evolutionStage, 'tapirmon', demoCharacterId);
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
   // Some shop backdrops are LIGHT — keep the in-scene labels readable on them.

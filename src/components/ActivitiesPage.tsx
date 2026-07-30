@@ -13,8 +13,10 @@ import type { Language } from '../utils/i18n';
  * bottom-nav entry now — kept out of the minigames hub).
  * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, language, theme = 'default', totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
+export function ActivitiesPage({ evolutionStage, demoCharacterId, language, theme = 'default', totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
   evolutionStage: string;
+  /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet nos minijogos. */
+  demoCharacterId?: string;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
   totalPoints: number;
@@ -164,6 +166,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       {openGame === 'dungeon' && (
         <DungeonGame
           evolutionStage={evolutionStage}
+          demoCharacterId={demoCharacterId}
           language={language}
           onEnter={onDungeonEnter}
           onLose={onDungeonLose}
@@ -177,6 +180,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       {openGame === 'dino' && (
         <DinoGame
           evolutionStage={evolutionStage}
+          demoCharacterId={demoCharacterId}
           language={language}
           onEarnPoints={onEarnPoints}
           onScore={onDinoScore}
@@ -186,6 +190,7 @@ export function ActivitiesPage({ evolutionStage, language, theme = 'default', to
       {openGame === 'rps' && (
         <RPSGame
           evolutionStage={evolutionStage}
+          demoCharacterId={demoCharacterId}
           language={language}
           onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}

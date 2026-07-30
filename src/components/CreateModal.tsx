@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Plus, Trash2, Clock, Bell } from 'lucide-react';
 import { Input } from './ui/input';
-import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
+import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
@@ -28,7 +28,6 @@ interface CreateModalProps {
   }) => void;
   theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
-  isOnboarding?: boolean;
   evolutionStage?: string;
   activitiesCount?: number;
   activitiesCap?: number;
@@ -47,14 +46,12 @@ const CATEGORIES: ActivityCategory[] = [
   'Fitness',
 ];
 
-// Cores por atributo (mesmas do EvolutionPath.tsx getBranchColor / AlignmentIcons)
-const ATTR_COLOR = { virus: '#22A900', data: '#009ED8', vaccine: '#E69600' };
 
 // Weekday labels and names in English
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', isOnboarding = false, evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false }: CreateModalProps) {
+export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false }: CreateModalProps) {
   const isWin98 = theme === 'win98';
   const isPt = language === 'pt-BR';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);
@@ -82,7 +79,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
   } = useItemForm({ isOpen });
 
   const isAtCap = !isSingleExecution && activitiesCount >= activitiesCap;
-  const isBlocked = isAtCap || (demoLimitReached && !isOnboarding);
+  const isBlocked = isAtCap || demoLimitReached;
 
   const attributes = CATEGORY_ATTRIBUTES[category];
   const currentEmoji = CATEGORY_ICONS[category];
@@ -147,7 +144,6 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
     customTime: isPt ? 'Horário customizado' : 'Custom time',
     cancel: isPt ? 'Cancelar' : 'Cancel',
     save: isPt ? 'Salvar' : 'Save',
-    createAndStart: isPt ? 'Criar e Começar' : 'Create and Start',
     limitReached: isPt ? 'Limite Atingido' : 'Limit Reached',
     demoLimitReached: isPt ? 'Limite diário do demo' : 'Demo daily limit',
     demoLimitHint: isPt
@@ -161,13 +157,11 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
         <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-[#c0c0c0] border-2 border-white shadow-[inset_1px_1px_0_rgba(255,255,255,0.8),inset_-1px_-1px_0_rgba(0,0,0,0.8)]">
           <div className="flex items-center justify-between p-6 border-b-2 border-gray-400">
             <h2 className="text-black" style={{ fontFamily: 'monospace', fontSize: '1.125rem', fontWeight: 'bold' }}>
-              {isOnboarding ? `✨ ${isPt ? 'Crie sua primeira atividade' : 'Create your first activity'}` : `➕ ${t.createModal.newActivity}`}
+              {`➕ ${t.createModal.newActivity}`}
             </h2>
-            {!isOnboarding && (
-              <button onClick={onClose} className="p-1 rounded-lg transition-colors text-black hover:bg-gray-300">
-                <X size={20} />
-              </button>
-            )}
+            <button onClick={onClose} className="p-1 rounded-lg transition-colors text-black hover:bg-gray-300">
+              <X size={20} />
+            </button>
           </div>
           <div className="p-6 space-y-5 bg-[#c0c0c0]">
             <div>
@@ -289,14 +283,12 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
             </div>
           </div>
           <div className="flex gap-2 p-6 border-t bg-[#c0c0c0] border-gray-400">
-            {!isOnboarding && (
-              <button onClick={onClose} className="flex-1 py-2.5 px-4 rounded-xl transition-colors bg-white border-2 border-gray-400 text-black hover:bg-gray-200" style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{txt.cancel}</button>
-            )}
+            <button onClick={onClose} className="flex-1 py-2.5 px-4 rounded-xl transition-colors bg-white border-2 border-gray-400 text-black hover:bg-gray-200" style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{txt.cancel}</button>
             <button onClick={handleSave} disabled={!name.trim() || (!isSingleExecution && showWeekdayGrid && weekDays.length === 0) || isBlocked}
               className="flex-1 py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-[#000080] text-white hover:bg-[#000060]"
               style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-              title={isAtCap ? `Limite de atividades atingido (${activitiesCap})` : demoLimitReached && !isOnboarding ? txt.demoLimitHint : ''}>
-              {isOnboarding ? txt.createAndStart : isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
+              title={isAtCap ? `Limite de atividades atingido (${activitiesCap})` : demoLimitReached ? txt.demoLimitHint : ''}>
+              {isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
             </button>
           </div>
         </div>
@@ -326,13 +318,11 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
           <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>
-            {isOnboarding ? (isPt ? 'Crie sua primeira atividade' : 'Create your first activity') : (isPt ? 'Nova atividade' : t.createModal.newActivity)}
+            {isPt ? 'Nova atividade' : t.createModal.newActivity}
           </span>
-          {!isOnboarding && (
-            <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
-              <X size={18} strokeWidth={2.4} />
-            </button>
-          )}
+          <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
+            <X size={18} strokeWidth={2.4} />
+          </button>
         </div>
 
         {/* Content */}
@@ -491,16 +481,14 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
 
         {/* Footer */}
         <div style={{ display: 'flex', gap: 10, padding: 16, background: 'var(--sm-surface)', borderTop: '1px solid var(--sm-line)' }}>
-          {!isOnboarding && (
-            <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
-          )}
+          <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
           <button
             onClick={handleSave}
             disabled={!name.trim() || (!isSingleExecution && showWeekdayGrid && weekDays.length === 0) || isBlocked}
             className="sm-btn" style={{ flex: 1 }}
-            title={isAtCap ? `${txt.limitReached} (${activitiesCap})` : demoLimitReached && !isOnboarding ? txt.demoLimitHint : ''}
+            title={isAtCap ? `${txt.limitReached} (${activitiesCap})` : demoLimitReached ? txt.demoLimitHint : ''}
           >
-            {isOnboarding ? txt.createAndStart : isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
+            {isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
           </button>
         </div>
       </div>

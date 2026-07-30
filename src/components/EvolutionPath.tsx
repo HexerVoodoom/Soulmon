@@ -5,6 +5,7 @@ import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
+import { ATTR_COLOR } from '../types/attributes';
 
 type Attr = 'virus' | 'data' | 'vaccine';
 const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
@@ -379,9 +380,5 @@ export function EvolutionPath({
 interface BranchColors { hex: string }
 
 function getBranchColor(branch: Attr): BranchColors {
-  switch (branch) {
-    case 'virus': return { hex: '#22A900' };
-    case 'data': return { hex: '#009ED8' };
-    case 'vaccine': return { hex: '#E69600' };
-  }
+  return { hex: ATTR_COLOR[branch] };
 }

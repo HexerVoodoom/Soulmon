@@ -14,6 +14,8 @@ interface EvolutionCeremonyProps {
   toStage: string;
   toName: string;
   language: 'pt-BR' | 'en-US' | string;
+  /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe os sprites. */
+  demoCharacterId?: string;
   /** Chamado quando a animação termina (commit da evolução no estado). */
   onEvolved: () => void;
   /** Fecha a tela (depois do resultado). */
@@ -35,14 +37,14 @@ function buildSchedule(): number[] {
   return steps;
 }
 
-export function EvolutionCeremony({ fromStage, toStage, toName, language, onEvolved, onClose }: EvolutionCeremonyProps) {
+export function EvolutionCeremony({ fromStage, toStage, toName, language, demoCharacterId, onEvolved, onClose }: EvolutionCeremonyProps) {
   const isPt = language === 'pt-BR';
   const [showNext, setShowNext] = useState(false);
   const [done, setDone] = useState(false);
   const evolvedRef = useRef(false);
 
-  const fromSprite = getSpriteForStage(fromStage);
-  const toSprite = getSpriteForStage(toStage);
+  const fromSprite = getSpriteForStage(fromStage, 'tapirmon', demoCharacterId);
+  const toSprite = getSpriteForStage(toStage, 'tapirmon', demoCharacterId);
 
   useEffect(() => {
     const timers: number[] = [];

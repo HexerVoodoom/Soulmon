@@ -142,7 +142,21 @@ export default function App() {
   // Segundo onboarding: tutorial do jogo (estilo RPG) + criação obrigatória
   // da 1ª tarefa — mostrado uma vez, logo após o ritual de nascimento.
   const [hasCompletedTutorial, setHasCompletedTutorial] = useState(() => {
-    return localStorage.getItem(STORAGE_KEYS.TUTORIAL_COMPLETE) === 'true';
+    if (localStorage.getItem(STORAGE_KEYS.TUTORIAL_COMPLETE) === 'true') return true;
+    // Adoção automática pra quem já jogava antes desse gate existir — jamais
+    // interromper um jogador estabelecido com a tela de "crie sua 1ª tarefa".
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if ((s.activities?.length ?? 0) > 0 || (s.tasks?.length ?? 0) > 0
+          || (s.completedTasks?.length ?? 0) > 0 || (s.perfectDays ?? 0) > 0) {
+          localStorage.setItem(STORAGE_KEYS.TUTORIAL_COMPLETE, 'true');
+          return true;
+        }
+      }
+    } catch { /* ignore */ }
+    return false;
   });
   const [userName, setUserName] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.USER_NAME) || '';
@@ -1518,7 +1532,16 @@ export default function App() {
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa —
   // mostrado uma vez, depois que o Soulmon já nasceu, antes de liberar o app.
   if (!hasCompletedTutorial) {
-    return <Suspense fallback={null}><GameTutorialFlow language={language} onComplete={handleCompleteTutorial} /></Suspense>;
+    return (
+      <Suspense fallback={null}>
+        <GameTutorialFlow
+          language={language}
+          maxActivities={gameState.maxActivityCap}
+          existingActivitiesCount={gameState.activities.length}
+          onComplete={handleCompleteTutorial}
+        />
+      </Suspense>
+    );
   }
 
   return (
@@ -1955,6 +1978,7 @@ export default function App() {
             <Suspense fallback={null}>
               <ActivitiesPage
                 evolutionStage={gameState.evolutionStage}
+                demoCharacterId={gameState.demoCharacterId}
                 language={language}
                 theme={theme}
                 totalPoints={gameState.gamePoints ?? 0}
@@ -1988,6 +2012,7 @@ export default function App() {
             }
             canEditWeekdays={canSelectWeekdays(gameState.evolutionStage)}
             theme={theme}
+            language={language}
           />
         </Suspense>
       )}
@@ -2013,6 +2038,7 @@ export default function App() {
             }
             title={editingTask ? t.main.editTask : t.main.newTask}
             theme={theme}
+            language={language}
           />
         </Suspense>
       )}
@@ -2112,6 +2138,7 @@ export default function App() {
           toStage={evolutionCeremony.to}
           toName={getStageNameById(evolutionCeremony.to)}
           language={language}
+          demoCharacterId={gameState.demoCharacterId}
           onEvolved={handleDigivolve}
           onClose={() => setEvolutionCeremony(null)}
         />

@@ -67,10 +67,15 @@ const CATEGORIES: ActivityCategory[] = ['Health', 'Creativity', 'Discipline', 'S
 
 interface GameTutorialFlowProps {
   language: Language;
+  /** Teto de atividades do estágio atual (types/progression.ts FORM_REQUIREMENTS) — a
+   *  criação obrigatória da 1ª tarefa não pode ultrapassar o mesmo limite do CreateModal normal. */
+  maxActivities: number;
+  /** Atividades que o jogador já tem (normalmente 0 aqui — só por segurança). */
+  existingActivitiesCount?: number;
   onComplete: (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => void;
 }
 
-export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps) {
+export function GameTutorialFlow({ language, maxActivities, existingActivitiesCount = 0, onComplete }: GameTutorialFlowProps) {
   const isPt = language === 'pt-BR';
   const TASK_STEP = PAGES.length;
   const [step, setStep] = useState(0);
@@ -93,10 +98,22 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
   const customCategory = selectedCats.size > 0 ? [...selectedCats][0] : 'Wellness';
   const customKey = 'custom:' + goalText.trim();
 
-  const toggleSelected = (key: string) => {
+  // Contagem "de verdade" — só o que existe agora na tela (evita contar
+  // seleções antigas de uma geração anterior que já não aparecem mais).
+  const effectiveCount = (selected.has(customKey) && goalText.trim() ? 1 : 0)
+    + suggestions.filter(s => selected.has(s.name)).length;
+  const remaining = Math.max(0, maxActivities - existingActivitiesCount);
+  const atCap = effectiveCount >= remaining;
+
+  const toggleSelected = (key: string, alreadyCounted: boolean) => {
     setSelected(prev => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        if (!alreadyCounted && atCap) return prev; // teto do estágio atingido
+        next.add(key);
+      }
       return next;
     });
   };
@@ -107,11 +124,12 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
     const result = await suggestTasks(goalText.trim(), [...selectedCats], language);
     setSuggestions(result);
     setLoading(false);
-    // Auto-seleciona o objetivo digitado (se houver) pra facilitar sair com >=1.
-    if (goalText.trim()) setSelected(prev => new Set(prev).add(customKey));
+    // Reseta seleção a cada nova geração — evita "vazamento" de seleções de
+    // uma rodada anterior que não existem mais nesta lista.
+    setSelected(goalText.trim() ? new Set([customKey]) : new Set());
   };
 
-  const canFinish = selected.size > 0;
+  const canFinish = effectiveCount > 0;
 
   const handleFinish = () => {
     const activities: Array<{ name: string; category: ActivityCategory; emoji: string }> = [];
@@ -121,8 +139,16 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
     suggestions.forEach(s => {
       if (selected.has(s.name)) activities.push({ name: s.name, category: s.category, emoji: s.emoji });
     });
-    onComplete(activities);
+    onComplete(activities.slice(0, remaining));
   };
+
+  const triangleGlyph = (dir: 'left' | 'right', color = 'var(--sm-primary)') => (
+    <span style={{
+      display: 'inline-block', width: 0, height: 0,
+      borderTop: '7px solid transparent', borderBottom: '7px solid transparent',
+      ...(dir === 'right' ? { borderLeft: `10px solid ${color}` } : { borderRight: `10px solid ${color}` }),
+    }} />
+  );
 
   const triangle = (dir: 'left' | 'right', onClick: () => void, disabled: boolean) => (
     <button
@@ -136,13 +162,7 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
         opacity: disabled ? 0.35 : 1, flexShrink: 0,
       }}
     >
-      <span style={{
-        display: 'inline-block', width: 0, height: 0,
-        borderTop: '7px solid transparent', borderBottom: '7px solid transparent',
-        ...(dir === 'right'
-          ? { borderLeft: '10px solid var(--sm-primary)' }
-          : { borderRight: '10px solid var(--sm-primary)' }),
-      }} />
+      {triangleGlyph(dir)}
     </button>
   );
 
@@ -203,6 +223,13 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
         ) : (
           <>
             {/* Passo obrigatório: criar a 1ª tarefa */}
+            <button
+              onClick={() => setStep(TASK_STEP - 1)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--sm-muted)', fontSize: 12, margin: '0 0 10px', cursor: 'pointer', padding: 0 }}
+            >
+              {triangleGlyph('left', 'var(--sm-muted)')}
+              {isPt ? 'Rever tutorial' : 'Review tutorial'}
+            </button>
             <h1 style={{ fontSize: 21, margin: '8px 0 4px', fontWeight: 800 }}>
               {isPt ? 'Qual é o seu objetivo?' : "What's your goal?"}
             </h1>
@@ -235,6 +262,7 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
                   <button
                     key={cat}
                     onClick={() => toggleCat(cat)}
+                    aria-pressed={active}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
                       border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
@@ -263,50 +291,71 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
 
             {searched && !loading && (
               <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {goalText.trim() && (
-                  <button
-                    onClick={() => toggleSelected(customKey)}
-                    className="sm-card"
-                    style={{
-                      width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12, cursor: 'pointer',
-                      borderColor: selected.has(customKey) ? 'var(--sm-primary)' : undefined,
-                      background: selected.has(customKey) ? 'var(--sm-primary-soft)' : undefined,
-                    }}
-                  >
-                    <span style={{ fontSize: '1.3rem', width: 36, height: 36, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {CATEGORY_ICONS[customCategory]}
-                    </span>
-                    <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: 'var(--sm-ink)' }}>{goalText.trim()}</span>
-                    {selected.has(customKey) && <Check size={18} strokeWidth={3} color="var(--sm-primary)" />}
-                  </button>
-                )}
+                {goalText.trim() && (() => {
+                  const isSel = selected.has(customKey);
+                  const disabled = !isSel && atCap;
+                  return (
+                    <button
+                      onClick={() => toggleSelected(customKey, isSel)}
+                      aria-pressed={isSel}
+                      disabled={disabled}
+                      className="sm-card"
+                      style={{
+                        width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
+                        cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
+                        borderColor: isSel ? 'var(--sm-primary)' : undefined,
+                        background: isSel ? 'var(--sm-primary-soft)' : undefined,
+                      }}
+                    >
+                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {CATEGORY_ICONS[customCategory]}
+                      </span>
+                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: 'var(--sm-ink)' }}>{goalText.trim()}</span>
+                      {isSel && <Check size={18} strokeWidth={3} color="var(--sm-primary)" />}
+                    </button>
+                  );
+                })()}
                 {suggestions.length === 0 ? (
                   <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', textAlign: 'center', margin: '8px 0' }}>
                     {isPt
                       ? 'Não veio sugestão da IA agora — sem problema, use seu objetivo acima ou digite de novo.'
                       : 'No AI suggestions came back — no worries, use your goal above or try again.'}
                   </p>
-                ) : suggestions.map(s => (
-                  <button
-                    key={s.name}
-                    onClick={() => toggleSelected(s.name)}
-                    className="sm-card"
-                    style={{
-                      width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12, cursor: 'pointer',
-                      borderColor: selected.has(s.name) ? 'var(--sm-primary)' : undefined,
-                      background: selected.has(s.name) ? 'var(--sm-primary-soft)' : undefined,
-                    }}
-                  >
-                    <span style={{ fontSize: '1.3rem', width: 36, height: 36, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {s.emoji}
-                    </span>
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: 'var(--sm-ink)' }}>{s.name}</span>
-                      <span style={{ fontSize: 11, color: 'var(--sm-muted)' }}>{categoryLabel(s.category, isPt)}</span>
-                    </span>
-                    {selected.has(s.name) && <Check size={18} strokeWidth={3} color="var(--sm-primary)" />}
-                  </button>
-                ))}
+                ) : suggestions.map(s => {
+                  const isSel = selected.has(s.name);
+                  const disabled = !isSel && atCap;
+                  return (
+                    <button
+                      key={s.name}
+                      onClick={() => toggleSelected(s.name, isSel)}
+                      aria-pressed={isSel}
+                      disabled={disabled}
+                      className="sm-card"
+                      style={{
+                        width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
+                        cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
+                        borderColor: isSel ? 'var(--sm-primary)' : undefined,
+                        background: isSel ? 'var(--sm-primary-soft)' : undefined,
+                      }}
+                    >
+                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {s.emoji}
+                      </span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: 'var(--sm-ink)' }}>{s.name}</span>
+                        <span style={{ fontSize: 11, color: 'var(--sm-muted)' }}>{categoryLabel(s.category, isPt)}</span>
+                      </span>
+                      {isSel && <Check size={18} strokeWidth={3} color="var(--sm-primary)" />}
+                    </button>
+                  );
+                })}
+                {atCap && (
+                  <p style={{ fontSize: 11.5, color: 'var(--sm-gold)', textAlign: 'center', margin: '2px 0 0', fontWeight: 600 }}>
+                    {isPt
+                      ? `Limite de ${remaining} atividades do estágio atingido — desmarque algo pra trocar.`
+                      : `Stage limit of ${remaining} activities reached — unselect something to swap.`}
+                  </p>
+                )}
               </div>
             )}
 
@@ -319,7 +368,7 @@ export function GameTutorialFlow({ language, onComplete }: GameTutorialFlowProps
               onClick={handleFinish}
             >
               {canFinish
-                ? (isPt ? `Adicionar ${selected.size} e começar` : `Add ${selected.size} and start`)
+                ? (isPt ? `Adicionar ${effectiveCount} e começar` : `Add ${effectiveCount} and start`)
                 : (isPt ? 'Selecione pelo menos 1 tarefa' : 'Select at least 1 task')}
             </button>
           </>

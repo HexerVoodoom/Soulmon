@@ -38,6 +38,14 @@ export const XP_THRESHOLDS = {
 
 export type BranchType = 'virus' | 'data' | 'vaccine';
 
+/** Cor de cada atributo (Poder/Harmonia/Benevolência) — FONTE ÚNICA DA VERDADE.
+ *  Toda tela que pinta um atributo importa daqui; não redeclare localmente. */
+export const ATTR_COLOR: Record<BranchType, string> = {
+  virus: '#22A900',   // Poder
+  data: '#009ED8',    // Harmonia
+  vaccine: '#E69600', // Benevolência
+};
+
 export interface EvolutionBranch {
   type: BranchType;
   name: string;

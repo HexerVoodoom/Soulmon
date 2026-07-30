@@ -2,6 +2,7 @@ import { X, Clock, ListChecks, Trophy } from 'lucide-react';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { FORM_REQUIREMENTS, getStageBranch, getStageLevel } from '../types/progression';
 import { getSpriteForStage } from '../utils/sprites';
+import { ATTR_COLOR } from '../types/attributes';
 import type { DirectoryPlayer } from '../utils/community';
 import type { Language } from '../utils/i18n';
 
@@ -12,7 +13,6 @@ const ATTR_LABEL: Record<Attr, { pt: string; en: string }> = {
   vaccine: { pt: 'Benevolência', en: 'Benevolence' },
 };
 const ATTR_ICON: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
-const ATTR_COLOR: Record<Attr, string> = { virus: '#e0483e', data: '#009ED8', vaccine: '#d9a441' };
 
 const LEVEL_LABEL: Record<string, { pt: string; en: string }> = {
   rookie: { pt: 'Rookie', en: 'Rookie' },
