@@ -57,6 +57,9 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation "androidx.work:work-runtime-ktx:2.9.0"
+    // Google Play Billing — compras dentro do app (ver plugins/BillingPlugin.kt).
+    // Obrigatório pela Play para conteúdo digital; não dá para usar Stripe/Pix aqui.
+    implementation "com.android.billingclient:billing-ktx:6.2.1"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

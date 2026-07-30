@@ -11,6 +11,9 @@ export interface Entitlement {
   tier: 'demo' | 'paid';
   credits: number;
   adsLeft: number;
+  /** Anúncio recompensado só existe quando o servidor confirma que a
+   *  verificação do AdMob está configurada — ver functions/api/entitlements.js. */
+  adsEnabled?: boolean;
 }
 
 function currentSaveId(): string | null {

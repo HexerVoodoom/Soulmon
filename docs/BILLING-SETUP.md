@@ -69,6 +69,7 @@ texto de UI e precisam ser atualizados à mão se o preço mudar.
 |---|---|
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` | Conteúdo **inteiro** do JSON da conta de serviço (uma linha só) |
 | `ANDROID_PACKAGE_NAME` | O `applicationId` do app — hoje `com.digipartner.digiapp` |
+| `ADMOB_SSV_ENABLED` | Deixe **ausente** por enquanto (ver 4b) |
 
 Sem essas duas, `/api/billing` responde **503** e **não concede nada** — é
 proposital: nunca conceder benefício sem conseguir verificar.
@@ -82,23 +83,41 @@ proposital: nunca conceder benefício sem conseguir verificar.
 > `com.hexervoodoom.soulmon` (exige atualizar `build.gradle`, os diretórios do
 > pacote Java/Kotlin, `google-services.json` e o `ANDROID_PACKAGE_NAME` aqui).
 
-## 4. Plugin nativo de billing (única parte ainda pendente no código)
+## 4. Plugin nativo de billing — JÁ IMPLEMENTADO
 
-`src/utils/playBilling.ts` procura um plugin Capacitor registrado como
-`Billing`, com esta interface:
+`android/app/src/main/java/com/digipartner/digiapp/plugins/BillingPlugin.kt`
+é um plugin Capacitor próprio, escrito direto sobre a Play Billing Library
+(`com.android.billingclient:billing-ktx`), registrado no `MainActivity.java`
+como `Billing`. Ele:
 
-```ts
-purchase({ productId }): Promise<{ purchaseToken: string }>
-consume({ purchaseToken }): Promise<void>
-getPurchases?(): Promise<{ purchases: Array<{ productId, purchaseToken }> }>
-```
+- abre o fluxo de compra e devolve o `purchaseToken`;
+- **reconhece** (`acknowledge`) a compra — obrigatório, senão a Play estorna
+  automaticamente em 3 dias;
+- consome os pacotes de crédito (senão não dá para recomprar);
+- lista as compras da conta para o "restaurar compras".
 
-Enquanto o plugin não existir, `isBillingAvailable()` é `false` e a UI mostra
-"compra disponível no app Android" em vez de um botão morto. **Nada finge uma
-compra em nenhum momento.**
+Ele **nunca decide se o jogador ganhou algo** — só entrega o token; quem
+concede é o servidor depois de verificar com a Google.
 
-Para ativar: instalar um plugin de Play Billing, registrá-lo com o nome
-`Billing` (ou ajustar a chave em `getPlugin()`), e rodar `npx cap sync android`.
+No navegador/PWA o plugin não existe, então `isBillingAvailable()` é `false` e
+a UI diz "compra disponível no app Android". **Nada finge uma compra.**
+
+Depois de mexer em qualquer coisa do Android: `npx cap sync android`.
+
+## 4b. Anúncio recompensado — DESLIGADO por padrão
+
+O endpoint que credita anúncio (`/api/entitlements?action=ad`) só responde se
+`ADMOB_SSV_ENABLED === 'true'` nas variáveis do Pages. Sem isso ele devolve
+501 e a UI **esconde** a opção.
+
+Isso é proposital: um endpoint aberto que dá crédito porque o cliente pediu é
+farmável com um `curl` — o jogador ganharia a moeda sem gerar a receita de
+anúncio que deveria pagar por ela.
+
+Para ligar de verdade é preciso **Server-Side Verification do AdMob**: o
+Google chama uma URL nossa assinada quando o anúncio termina, e só essa
+chamada (com assinatura verificada) pode conceder crédito. Não ligue a flag
+antes disso — ela é o único freio hoje.
 
 ## 5. Regras da Play que afetam este app
 
@@ -127,18 +146,23 @@ Para ativar: instalar um plugin de Play Billing, registrá-lo com o nome
 
 ## Dívidas conhecidas (assumidas de propósito)
 
-1. **Anúncio recompensado sem SSV.** `/api/entitlements?action=ad` credita
-   confiando no cliente; a proteção é o teto diário aplicado no servidor. O
-   dano máximo é o mesmo que o jogador ganharia assistindo aos anúncios do dia.
-   Ao integrar o AdMob, trocar por Server-Side Verification.
+1. **KV não tem transação.** Dois gastos simultâneos podem, em tese, perder uma
+   escrita. Na prática exigiria o mesmo jogador tocando em dois botões de gasto
+   no mesmo instante, em aparelhos diferentes — e o prejuízo máximo é o app
+   cobrar um gasto a menos. Para a escala atual é aceitável; se virar problema,
+   migrar o registro de entitlement para Durable Objects (serializam por chave).
 
-2. **KV não tem transação.** Dois gastos simultâneos podem, em tese, perder uma
-   escrita. Para a escala atual é aceitável; se virar problema, migrar o
-   registro de entitlement para Durable Objects (serializam por chave).
+2. **`saveId` é o hash do e-mail, sem autenticação.** Quem souber o e-mail de
+   alguém consegue ler/sobrescrever o save daquela pessoa.
 
-3. **`saveId` é o hash do e-mail, sem autenticação.** Quem souber o e-mail de
-   alguém consegue ler/sobrescrever o save daquela pessoa. Isso **não** deixa
-   roubar a compra (a compra pertence à conta Google e o restore a traz de
-   volta), mas deixa bagunçar o progresso alheio. Corrigir exige login de
-   verdade (magic link / Sign in with Google) — recomendado antes de escalar a
-   base de usuários.
+   O que isso **não** permite: roubar a compra. A compra pertence à conta
+   Google, os entitlements ficam num registro que o cliente não escreve, e o
+   "restaurar compras" reconstrói o direito a partir da própria Play.
+
+   O que permite: bagunçar o progresso alheio (griefing).
+
+   Corrigir exige prova de posse do e-mail — login de verdade (Firebase Auth
+   com e-mail link, ou Sign in with Google, que o projeto já tem meio caminho
+   andado por causa do FCM). **Recomendado antes de divulgar o app para um
+   público amplo.** Não foi feito aqui porque muda o fluxo de onboarding e é
+   uma decisão de produto, não só técnica.

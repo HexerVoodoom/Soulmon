@@ -7,12 +7,17 @@
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
 //
-// NOTA sobre o /api/entitlements?action=ad: hoje ele credita a recompensa
-// confiando que o cliente realmente assistiu ao anúncio — a única proteção é
-// o teto diário aplicado NO SERVIDOR. Quando o AdMob entrar de verdade, troque
-// por Server-Side Verification (SSV): o próprio Google chama uma URL nossa
-// assinada, e só aí o crédito é concedido. Até lá o dano máximo é o mesmo
-// valor que o jogador ganharia assistindo aos anúncios do dia.
+// SOBRE O ANÚNCIO RECOMPENSADO (action=ad): um endpoint aberto que dá crédito
+// só porque o cliente pediu é farmável com um `curl` — o jogador ganharia a
+// moeda sem gerar receita de anúncio, que é justamente o que deveria pagar a
+// conta. Por isso ele fica DESLIGADO por padrão e só responde quando
+// ADMOB_SSV_ENABLED === 'true'.
+//
+// Para ligar de verdade é preciso Server-Side Verification do AdMob: o próprio
+// Google chama uma URL nossa assinada quando o anúncio termina, e só essa
+// chamada (verificada por assinatura) pode conceder crédito. Enquanto isso não
+// existir, a UI esconde a opção (o GET devolve `adsEnabled: false`) em vez de
+// mostrar um botão que não deveria funcionar.
 
 import {
   VALID_ID, readEntitlement, publicView, spendCredits, grantAdReward,
@@ -37,7 +42,7 @@ export async function onRequestGet({ request, env }) {
   if (!env.DIGIAPP_SAVES) return json({ error: 'Storage not bound' }, 500);
 
   const ent = await readEntitlement(env, saveId);
-  return json(publicView(ent));
+  return json({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }
 
 export async function onRequestPost({ request, env }) {
@@ -57,6 +62,11 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (action === 'ad') {
+    // Desligado enquanto não houver verificação real do AdMob — ver nota no
+    // topo. Sem isto, `curl` vira máquina de crédito grátis.
+    if (env.ADMOB_SSV_ENABLED !== 'true') {
+      return json({ ok: false, reason: 'ads-not-configured' }, 501);
+    }
     const ent = await grantAdReward(env, saveId);
     if (!ent) return json({ ok: false, reason: 'daily-cap' }, 429);
     return json({ ok: true, ...publicView(ent) });

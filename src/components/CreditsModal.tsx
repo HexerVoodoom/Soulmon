@@ -45,9 +45,17 @@ export function CreditsModal({
   // Quantos anúncios ainda cabem hoje — vem do SERVIDOR (o cap que vale é o
   // dele). Enquanto não chega, assume o cheio só pra não piscar desabilitado.
   const [adsLeft, setAdsLeft] = useState(AD_DAILY_CAP);
+  // O anúncio recompensado só aparece quando o servidor confirma que a
+  // verificação do AdMob está ligada — senão seria um botão que dá crédito
+  // sem anúncio nenhum. Começa escondido e só aparece se o servidor liberar.
+  const [adsEnabled, setAdsEnabled] = useState(false);
   useEffect(() => {
     let cancelled = false;
-    fetchEntitlement().then(ent => { if (!cancelled && ent) setAdsLeft(ent.adsLeft); });
+    fetchEntitlement().then(ent => {
+      if (cancelled || !ent) return;
+      setAdsLeft(ent.adsLeft);
+      setAdsEnabled(!!ent.adsEnabled);
+    });
     return () => { cancelled = true; };
   }, [credits]);
 
@@ -142,31 +150,33 @@ export function CreditsModal({
           {/* Ganhar créditos */}
           {sectionTitle(isPt ? 'Ganhar créditos' : 'Earn credits')}
 
-          <button
-            onClick={handleWatchAd}
-            disabled={adLoading || adsLeft === 0}
-            className="sm-card"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: 12, width: '100%', textAlign: 'left',
-              cursor: adsLeft === 0 ? 'default' : 'pointer', opacity: adsLeft === 0 ? 0.55 : 1, border: 'none',
-            }}
-          >
-            <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              {adLoading ? <LoaderIcon size={18} strokeWidth={2.2} style={{ animation: 'creditspin 1s linear infinite' }} /> : <Play size={18} strokeWidth={2.2} color="var(--sm-primary)" />}
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>
-                {isPt ? `Assistir anúncio (+${AD_REWARD_CREDITS})` : `Watch ad (+${AD_REWARD_CREDITS})`}
-              </p>
-              <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--sm-muted)' }}>
-                {adLoading
-                  ? (isPt ? 'Carregando anúncio simulado…' : 'Loading simulated ad…')
-                  : adsLeft === 0
-                    ? (isPt ? 'Limite diário atingido — volte amanhã.' : 'Daily limit reached — come back tomorrow.')
-                    : (isPt ? `${adsLeft} de ${AD_DAILY_CAP} restantes hoje` : `${adsLeft} of ${AD_DAILY_CAP} left today`)}
-              </p>
-            </div>
-          </button>
+          {adsEnabled && (
+            <button
+              onClick={handleWatchAd}
+              disabled={adLoading || adsLeft === 0}
+              className="sm-card"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: 12, width: '100%', textAlign: 'left',
+                cursor: adsLeft === 0 ? 'default' : 'pointer', opacity: adsLeft === 0 ? 0.55 : 1, border: 'none',
+              }}
+            >
+              <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {adLoading ? <LoaderIcon size={18} strokeWidth={2.2} style={{ animation: 'creditspin 1s linear infinite' }} /> : <Play size={18} strokeWidth={2.2} color="var(--sm-primary)" />}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>
+                  {isPt ? `Assistir anúncio (+${AD_REWARD_CREDITS})` : `Watch ad (+${AD_REWARD_CREDITS})`}
+                </p>
+                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--sm-muted)' }}>
+                  {adLoading
+                    ? (isPt ? 'Carregando anúncio…' : 'Loading ad…')
+                    : adsLeft === 0
+                      ? (isPt ? 'Limite diário atingido — volte amanhã.' : 'Daily limit reached — come back tomorrow.')
+                      : (isPt ? `${adsLeft} de ${AD_DAILY_CAP} restantes hoje` : `${adsLeft} of ${AD_DAILY_CAP} left today`)}
+                </p>
+              </div>
+            </button>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {CREDIT_PACKS.map(pack => (

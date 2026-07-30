@@ -7,12 +7,14 @@ import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
 import com.digipartner.digiapp.plugins.DigiWidgetPlugin;
 import com.digipartner.digiapp.plugins.DigiAlarmPlugin;
+import com.digipartner.digiapp.plugins.BillingPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(DigiWidgetPlugin.class);
         registerPlugin(DigiAlarmPlugin.class);
+        registerPlugin(BillingPlugin.class);
         super.onCreate(savedInstanceState);
         createPushNotificationChannel();
     }
@@ -25,10 +27,10 @@ public class MainActivity extends BridgeActivity {
             if (manager != null && manager.getNotificationChannel("digiapp_push") == null) {
                 NotificationChannel channel = new NotificationChannel(
                     "digiapp_push",
-                    "DigiApp Notifications",
+                    "Soulmon",
                     NotificationManager.IMPORTANCE_HIGH
                 );
-                channel.setDescription("Push notifications from DigiApp");
+                channel.setDescription("Notificações do Soulmon");
                 manager.createNotificationChannel(channel);
             }
         }

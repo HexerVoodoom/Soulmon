@@ -600,7 +600,7 @@ async function onRequestGet({ request, env }) {
   if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
   if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
   const ent = await readEntitlement(env, saveId);
-  return json3(publicView(ent));
+  return json3({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
 __name(onRequestGet, "onRequestGet");
 async function onRequestPost3({ request, env }) {
@@ -617,6 +617,9 @@ async function onRequestPost3({ request, env }) {
     return json3({ ok: true, ...publicView(ent) });
   }
   if (action === "ad") {
+    if (env.ADMOB_SSV_ENABLED !== "true") {
+      return json3({ ok: false, reason: "ads-not-configured" }, 501);
+    }
     const ent = await grantAdReward(env, saveId);
     if (!ent) return json3({ ok: false, reason: "daily-cap" }, 429);
     return json3({ ok: true, ...publicView(ent) });
@@ -999,7 +1002,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-aeStwq/functionsRoutes-0.4080230095795059.mjs
+// ../.wrangler/tmp/pages-UrpLFs/functionsRoutes-0.10733623975340167.mjs
 var routes = [
   {
     routePath: "/api/billing",
