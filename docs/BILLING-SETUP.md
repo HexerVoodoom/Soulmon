@@ -155,8 +155,9 @@ antes disso — ela é o único freio hoje.
 - [ ] Compra testada com **licença de teste** (Play Console → Testes de
       licença) — não use cartão real para testar
 - [ ] "Restaurar compras" testado: reinstalar o app e confirmar que o
-      desbloqueio volta (`restorePurchases()`)
-- [ ] Política de privacidade publicada e vinculada
+      desbloqueio volta (Configurações → Conta e compras)
+- [x] Política de privacidade escrita (`public/privacidade.html`, linkada em
+      Configurações → Sobre) — falta colar a URL no Play Console
 - [ ] Data safety form preenchido
 
 ---

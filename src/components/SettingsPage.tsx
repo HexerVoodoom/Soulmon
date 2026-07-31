@@ -3,6 +3,7 @@ import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
 import { Bell, BellOff, Copy, Check, Cloud, Bot, BookOpen, Moon, Globe, Info } from 'lucide-react';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
+import { AccountSection } from './AccountSection';
 import { InstallPrompt } from './InstallPrompt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { cloudLoad } from '../utils/cloudSave';
@@ -248,6 +249,9 @@ export function SettingsPage({
           </div>
         </div>
 
+        {/* Conta e compras — restaurar compras é exigência da Play */}
+        <AccountSection language={language} theme={theme} />
+
         {/* AI Settings */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
@@ -439,6 +443,17 @@ export function SettingsPage({
             <p style={bodyTextStyle}>
               {t.settings.aboutDescription}
             </p>
+            {/* Exigência da Play: a política precisa estar acessível no app. */}
+            <a
+              href="/privacidade.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={isGlitch || isWin98
+                ? { fontFamily: 'monospace', fontSize: '0.8rem', textDecoration: 'underline' }
+                : { fontSize: '0.8rem', color: 'var(--sm-primary)', fontWeight: 600, textDecoration: 'underline' }}
+            >
+              {language === 'pt-BR' ? 'Política de Privacidade' : 'Privacy Policy'}
+            </a>
           </div>
         </div>
       </div>
