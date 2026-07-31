@@ -1,0 +1,48 @@
+name: Desktop Windows Build
+
+on:
+  push:
+    branches: [main, 'claude/ui-layout-z-index-coth3e']
+    paths: ['desktop/**', 'src/utils/sprites.ts', 'src/assets/**', '.github/workflows/desktop-build.yml']
+  workflow_dispatch:
+
+# Precisa de contents:write pra electron-builder publicar/atualizar o GitHub
+# Release que o electron-updater usa como fonte do auto-update.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install
+
+      - name: Typecheck renderer
+        working-directory: desktop
+        run: npx tsc --noEmit
+
+      - name: Build, publish GitHub Release (auto-update source) + upload .exe
+        working-directory: desktop
+        run: npm run dist:publish
+        env:
+          # Sem certificado de assinatura — não tentar auto-descobrir um
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: soulmon-desktop-windows
+          path: |
+            desktop/release/*.exe
+          retention-days: 30

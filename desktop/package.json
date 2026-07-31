@@ -1,0 +1,54 @@
+{
+  "name": "soulmon-desktop",
+  "productName": "Soulmon",
+  "description": "Pet virtual do Soulmon como overlay na barra de tarefas do Windows",
+  "version": "0.1.0",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "build:renderer": "vite build",
+    "typecheck": "tsc --noEmit",
+    "dev": "vite build && electron .",
+    "start": "electron .",
+    "dist": "vite build && electron-builder --win",
+    "dist:publish": "vite build && electron-builder --win --publish always",
+    "dist:steam": "vite build && electron-builder --win --dir --publish never -c.extraMetadata.steamBuild=true"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.6.3",
+    "vite": "6.3.5"
+  },
+  "build": {
+    "appId": "com.hexervoodoom.soulmon.desktop",
+    "productName": "Soulmon",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "dist-renderer/**/*"
+    ],
+    "icon": "electron/assets/icon.png",
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "HexerVoodoom",
+      "repo": "Soulmon",
+      "releaseType": "release"
+    }
+  }
+}

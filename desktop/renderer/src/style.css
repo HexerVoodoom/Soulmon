@@ -1,0 +1,118 @@
+/* Overlay transparente: NADA de fundo no body — só pet, balão e menu pintam. */
+
+/* Paleta do Soulmon (espelha as custom props sm-* de src/index.css). Aqui
+   precisa ser cópia mesmo: o renderer do desktop não carrega o CSS do app. */
+:root {
+  --sm-bg: #f7f6fb;
+  --sm-surface: #ffffff;
+  --sm-ink: #2a2440;
+  --sm-muted: #8b86a3;
+  --sm-line: #e9e6f2;
+  --sm-primary: #6d5bd0;
+  --sm-primary-deep: #55449f;
+  --sm-primary-soft: #efecfb;
+  --sm-gold: #d9a441;
+  --sm-radius: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #stage {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ------------------------------------------------------------------ pet */
+#pet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 96px;
+  height: 96px;
+  cursor: pointer;
+  will-change: transform;
+}
+
+#pet-img {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.walking #pet-img { animation: pet-bob 0.5s steps(2) infinite; }
+@keyframes pet-bob {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -4px; }
+}
+
+#pet.sleeping #pet-img { opacity: 0.75; filter: saturate(0.6); }
+#pet-zzz { display: none; }
+#pet.sleeping #pet-zzz {
+  display: block;
+  position: absolute;
+  top: -18px;
+  right: 4px;
+  font-size: 18px;
+  animation: zzz-float 2.4s ease-in-out infinite;
+}
+@keyframes zzz-float {
+  0% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-8px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 0.4; }
+}
+
+/* efeitos (corações/bolhas/comida) subindo do pet */
+#pet-fx { position: absolute; inset: 0; pointer-events: none; }
+.fx {
+  position: absolute;
+  bottom: 30px;
+  font-size: 18px;
+  animation: fx-rise 1.4s ease-out forwards;
+}
+@keyframes fx-rise {
+  0% { transform: translateY(0) scale(0.7); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-70px) scale(1.2); opacity: 0; }
+}
+
+/* --------------------------------------------------------------- balão */
+#bubble {
+  position: absolute;
+  bottom: 108px;
+  max-width: 260px;
+  padding: 9px 12px;
+  background: var(--sm-surface);
+  color: var(--sm-ink);
+  border: 1px solid var(--sm-line);
+  border-radius: 14px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  display: none;
+  box-shadow: 0 6px 20px rgba(42, 36, 64, 0.18);
+}
+#bubble.open { display: block; }
+/* Rabicho: dois triângulos sobrepostos desenham a borda de 1px sob a ponta. */
+#bubble::before,
+#bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  border: 7px solid transparent;
+  border-bottom: none;
+}
+#bubble::before {
+  bottom: -8px;
+  margin-left: -7px;
+  border-top-color: var(--sm-line);
+}
+#bubble::after {
+  bottom: -6px;
+  margin-left: -7px;
+  border-top-color: var(--sm-surface);
+}
+

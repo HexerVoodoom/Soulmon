@@ -227,7 +227,12 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { isAuthConfigured, isPendingLoginLink, completeLoginFromLink } = await import('./utils/auth');
+      const {
+        isAuthConfigured, isPendingLoginLink, completeLoginFromLink, startDesktopAuthBridge,
+      } = await import('./utils/auth');
+      // Quando esta página roda dentro do app de desktop, ela é quem autentica
+      // o overlay da barra de tarefas (ver docs/PLANO-DESKTOP-STEAM.md, 2c).
+      void startDesktopAuthBridge();
       if (!isAuthConfigured() || !(await isPendingLoginLink())) return;
       const res = await completeLoginFromLink();
       if (cancelled || !res.ok || !res.email) return;

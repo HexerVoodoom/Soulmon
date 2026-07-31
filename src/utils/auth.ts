@@ -140,3 +140,50 @@ export async function signOut(): Promise<void> {
     await authMod.signOut(auth);
   } catch { /* noop */ }
 }
+
+// ---------------------------------------------------------------- desktop
+
+interface DesktopAuthBridge {
+  isDesktop: true;
+  publish(payload: { token: string | null; email?: string | null; expiresAt?: number }): void;
+}
+
+/** A ponte só existe quando esta página roda dentro do Electron do desktop. */
+function desktopBridge(): DesktopAuthBridge | undefined {
+  return (window as unknown as { soulmonDesktopAuth?: DesktopAuthBridge }).soulmonDesktopAuth;
+}
+
+/**
+ * Repassa o ID token para o app de desktop (overlay na barra de tarefas).
+ *
+ * O overlay é um processo Electron separado, sem SDK de auth: ele depende
+ * deste app para se autenticar (ver desktop/electron/auth-preload.js e
+ * docs/PLANO-DESKTOP-STEAM.md, fase 2c). `onIdTokenChanged` cobre login,
+ * logout **e** a renovação automática de hora em hora — sem ele o overlay
+ * pararia de sincronizar sozinho depois de 1h.
+ *
+ * No navegador comum não faz absolutamente nada.
+ */
+export async function startDesktopAuthBridge(): Promise<void> {
+  const bridge = desktopBridge();
+  if (!bridge || !isAuthConfigured()) return;
+  try {
+    const { auth, authMod } = await getAuth();
+    authMod.onIdTokenChanged(auth, async user => {
+      if (!user) {
+        bridge.publish({ token: null });
+        return;
+      }
+      try {
+        const result = await user.getIdTokenResult();
+        bridge.publish({
+          token: result.token,
+          email: user.email,
+          expiresAt: Date.parse(result.expirationTime),
+        });
+      } catch {
+        bridge.publish({ token: null });
+      }
+    });
+  } catch { /* noop */ }
+}
