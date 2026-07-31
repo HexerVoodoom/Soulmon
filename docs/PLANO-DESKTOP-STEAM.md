@@ -155,10 +155,14 @@ autenticar. Se inverter, o desktop quebra para todo mundo que já instalou.
 
 | Item | Por quê |
 |---|---|
-| Integração Steamworks (`steamworks.js`) | Necessária para 3 coisas: detectar que o app foi lançado pela Steam, verificar propriedade (= tier pago) e vender créditos por MicroTxn |
+| Integração Steamworks (`steamworks.js`) | O lado **cliente**: emitir o session ticket, chamar `InitTxn`/`FinalizeTxn`. Sem isso o servidor não tem o que verificar |
 | `steam_appid.txt` | Só em desenvolvimento; em produção a Steam injeta |
-| Provider `steam` no `/api/billing` | Verificar a transação junto à Valve antes de creditar |
+| ~~Provider `steam` no `/api/billing`~~ | ✅ feito — ver fase 4 |
 | Primeira impressão | Abrir a janela de menu automaticamente no primeiro lançamento — um usuário da Steam clica em "Jogar" e espera **ver** alguma coisa, não só um bicho na barra de tarefas |
+
+O provedor do servidor está pronto e desligado; o que falta é o cliente, e ele
+**depende do App ID real** para poder ser escrito e testado. É por isso que os
+itens 🟠 7-8 abaixo destravam esta parte.
 
 ### 3c. Conquistas / Steam Cloud
 
@@ -206,10 +210,26 @@ arquitetura cross-store:
 O `saveId` já é derivado do e-mail. Um jogador que loga com o mesmo e-mail no
 celular e no PC **é a mesma carteira**, sem nenhum trabalho adicional.
 
-O que muda no código: `functions/api/billing.js` ganha um segundo provedor.
-Hoje ele é `?action=verify` com token da Play; passa a ser
-`?action=verify&provider=play|steam`, cada um com sua verificação, gravando no
-**mesmo** entitlement e com a **mesma** proteção de replay (`consumedOrders`).
+**Estado: ✅ implementado.** `functions/api/billing.js` virou uma rota fina que
+despacha para provedores em `functions/api/_billing.js`:
+`?action=verify&provider=play|steam`. Cada um verifica com a sua loja e grava
+no **mesmo** entitlement, com a **mesma** proteção de replay (`consumedOrders`,
+agora com o `orderId` prefixado pela loja para os dois espaços de id nunca
+colidirem).
+
+Na Steam há dois caminhos:
+
+- `{ id, ticket }` → **tier pago**, a partir da posse do app
+  (`AuthenticateUserTicket` + `CheckAppOwnership`). A checagem usa o SteamID
+  **dono** da licença, não o de quem está jogando — senão Family Sharing daria
+  tier pago para contas que nunca compraram.
+- `{ id, orderId }` → **créditos**, via `ISteamMicroTxn/QueryTxn`, só quando o
+  status for `Succeeded`.
+
+⚠️ Fica **desligado** (503) enquanto `STEAM_PUBLISHER_KEY`/`STEAM_APP_ID` não
+existirem, e **nada disso foi testado contra a Valve** — não há App ID ainda.
+Os caminhos das interfaces precisam ser conferidos na documentação atual do
+Steamworks antes de ligar. Coberto por 17 testes em `_billing.test.js`.
 
 ### A decisão de produto que sobra 🙋
 
@@ -324,14 +344,15 @@ Ver `docs/BILLING-SETUP.md` para o passo a passo. Resumo:
 ## Ordem de execução recomendada
 
 ```
-1. Portar overlay (Fase 1)                    ← feito nesta leva
-2. Sync de leitura completa (2a)              ← eu executo
-3. Extrair regras puras + escrita (2b)        ← eu executo
-4. Login no desktop (2c)                      ← eu executo
-   └── só DEPOIS disso: ligar FIREBASE_PROJECT_ID
-5. Play Store no ar                           ← depende de 🔴
-6. Steamworks + provider steam no billing     ← depende de 🟠 7-8
-7. Steam no ar                                ← depende de 🟠 9-13
+1. Portar overlay (Fase 1)                    ✅ feito
+2. Sync de leitura completa (2a)              ✅ feito
+3. Login no desktop (2c)                      ✅ feito
+   └── só DEPOIS de publicar: ligar FIREBASE_PROJECT_ID
+4. Provider steam no /api/billing (Fase 4)    ✅ feito (desligado até ter credencial)
+5. Extrair regras puras + escrita (2b)        ← eu executo, próximo
+6. Play Store no ar                           ← depende de 🔴
+7. Cliente Steamworks no desktop              ← depende de 🟠 7-8 (precisa do App ID)
+8. Steam no ar                                ← depende de 🟠 9-13
 ```
 
 Steam **depois** da Play, de propósito: a Play já tem o código pronto e valida

@@ -49,10 +49,16 @@ Arquivos envolvidos:
 |---|---|
 | `functions/api/_entitlements.js` | Fonte da verdade (saldo, tier, replay-protection, cap de anúncio) |
 | `functions/api/entitlements.js` | Endpoint de leitura/gasto |
-| `functions/api/billing.js` | Verifica a compra junto à Google e concede |
+| `functions/api/_billing.js` | Catálogo + verificação **por loja** (Play e Steam) |
+| `functions/api/billing.js` | Rota: autentica, chama o provedor, concede |
 | `functions/api/save.js` | Remove campos de dinheiro do save do cliente |
 | `src/utils/entitlements.ts` | Cliente: lê saldo, pede gasto (nunca decide) |
 | `src/utils/playBilling.ts` | Ponte com o plugin nativo da Play |
+
+> **Carteira única.** O entitlement é por CONTA (e-mail → saveId), não por
+> loja: crédito comprado na Play vale na Steam e vice-versa. O que é por loja
+> é a **compra** — cada uma exige que o pagamento passe por ela. Ver
+> `docs/PLANO-DESKTOP-STEAM.md`, fase 4.
 
 ---
 
@@ -95,9 +101,39 @@ texto de UI e precisam ser atualizados à mão se o preço mudar.
 | `GOOGLE_PLAY_SERVICE_ACCOUNT` | Conteúdo **inteiro** do JSON da conta de serviço (uma linha só) |
 | `ANDROID_PACKAGE_NAME` | O `applicationId` do app — `com.hexervoodoom.soulmon` |
 | `ADMOB_SSV_ENABLED` | Deixe **ausente** por enquanto (ver 4b) |
+| `STEAM_PUBLISHER_KEY` | Só quando for publicar na Steam (ver 3b) |
+| `STEAM_APP_ID` | Idem |
 
-Sem essas duas, `/api/billing` responde **503** e **não concede nada** — é
-proposital: nunca conceder benefício sem conseguir verificar.
+Sem as duas primeiras, `/api/billing?provider=play` responde **503** e **não
+concede nada** — é proposital: nunca conceder benefício sem conseguir
+verificar. O provedor `steam` tem a mesma disciplina com as suas.
+
+## 3b. Steam (código pronto, desligado sem credencial)
+
+`POST /api/billing?action=verify&provider=steam` aceita duas formas:
+
+| Corpo | O que concede | Como é verificado |
+|---|---|---|
+| `{ id, ticket }` | Tier **pago** | Session ticket → `AuthenticateUserTicket`, depois `CheckAppOwnership` no SteamID **dono** da licença |
+| `{ id, orderId }` | Créditos | `ISteamMicroTxn/QueryTxn` — só credita se `status === 'Succeeded'` |
+
+Os `itemid` numéricos das microtransações estão em `STEAM_ITEMS`
+(`functions/api/_billing.js`) e precisam bater com os usados no `InitTxn`:
+
+| `itemid` | Produto |
+|---|---|
+| 101 | `soulmon.credits.60` |
+| 102 | `soulmon.credits.150` |
+| 103 | `soulmon.credits.400` |
+
+> **O desbloqueio completo não é vendido por microtransação na Steam** — lá a
+> própria loja cobra pelo app, então possuir o app já é o tier pago. Vender de
+> novo por dentro seria cobrar duas vezes pela mesma coisa. Há um teste que
+> trava isso.
+>
+> ⚠️ **Nada disso foi testado contra a Valve** — não existe App ID ainda. Os
+> caminhos e versões das interfaces (`/v1/`, `/v3/`) devem ser conferidos na
+> documentação atual do Steamworks antes de ligar. Ver `desktop/STEAM.md`.
 
 
 ## 4. Plugin nativo de billing — JÁ IMPLEMENTADO

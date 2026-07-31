@@ -167,18 +167,17 @@ async function authorizeSaveAccess(request, env, saveId) {
 }
 __name(authorizeSaveAccess, "authorizeSaveAccess");
 
-// api/billing.js
-var CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
-};
-var json = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS }), "json");
+// api/_billing.js
 var PRODUCTS = {
   "soulmon.unlock.full": { grantTier: "paid", grantCredits: 0, consumable: false },
   "soulmon.credits.60": { grantTier: null, grantCredits: 60, consumable: true },
   "soulmon.credits.150": { grantTier: null, grantCredits: 150, consumable: true },
   "soulmon.credits.400": { grantTier: null, grantCredits: 400, consumable: true }
+};
+var STEAM_ITEMS = {
+  101: "soulmon.credits.60",
+  102: "soulmon.credits.150",
+  103: "soulmon.credits.400"
 };
 var enc = new TextEncoder();
 function b64url(buf) {
@@ -230,34 +229,18 @@ async function getAccessToken(serviceAccount) {
   return cachedToken;
 }
 __name(getAccessToken, "getAccessToken");
-async function onRequestOptions() {
-  return new Response(null, { headers: CORS });
-}
-__name(onRequestOptions, "onRequestOptions");
-async function onRequestPost({ request, env }) {
-  const url = new URL(request.url);
-  if (url.searchParams.get("action") !== "verify") return json({ error: "Unknown action" }, 400);
-  if (!env.DIGIAPP_SAVES) return json({ error: "Storage not bound" }, 500);
+async function verifyPlayPurchase(env, { productId, purchaseToken }) {
   const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
   const packageName = env.ANDROID_PACKAGE_NAME;
-  if (!rawAccount || !packageName) {
-    return json({ ok: false, reason: "billing-not-configured" }, 503);
-  }
-  const body = await request.json().catch(() => null);
-  const saveId = body?.id;
-  const productId = body?.productId;
-  const purchaseToken = body?.purchaseToken;
-  if (!saveId || !VALID_ID.test(saveId)) return json({ error: "Invalid save ID" }, 400);
-  const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  if (!rawAccount || !packageName) return { ok: false, reason: "billing-not-configured" };
   const product = PRODUCTS[productId];
-  if (!product) return json({ error: "Unknown product" }, 400);
-  if (!purchaseToken || typeof purchaseToken !== "string") return json({ error: "Missing purchaseToken" }, 400);
+  if (!product) return { ok: false, reason: "unknown-product" };
+  if (!purchaseToken || typeof purchaseToken !== "string") return { ok: false, reason: "missing-token" };
   let serviceAccount;
   try {
     serviceAccount = JSON.parse(rawAccount);
   } catch {
-    return json({ ok: false, reason: "billing-misconfigured" }, 503);
+    return { ok: false, reason: "billing-misconfigured" };
   }
   let purchase;
   try {
@@ -265,27 +248,159 @@ async function onRequestPost({ request, env }) {
     const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
     const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) {
-      return json({ ok: false, reason: "invalid-purchase", status: res.status }, 402);
+      return { ok: false, reason: "invalid-purchase", status: res.status };
     }
     purchase = await res.json();
   } catch (err) {
-    console.error("billing verify error:", err);
-    return json({ ok: false, reason: "verification-failed" }, 502);
+    console.error("billing verify error (play):", err);
+    return { ok: false, reason: "verification-failed" };
   }
   if (purchase.purchaseState !== 0) {
-    return json({ ok: false, reason: "not-purchased", purchaseState: purchase.purchaseState }, 402);
+    return { ok: false, reason: "not-purchased", status: purchase.purchaseState };
+  }
+  return { ok: true, orderId: `play:${purchase.orderId}`, product };
+}
+__name(verifyPlayPurchase, "verifyPlayPurchase");
+var STEAM_PARTNER = "https://partner.steam-api.com";
+var STEAM_PUBLIC = "https://api.steampowered.com";
+function steamConfig(env) {
+  const key = env.STEAM_PUBLISHER_KEY;
+  const appId = env.STEAM_APP_ID;
+  return key && appId ? { key, appId } : null;
+}
+__name(steamConfig, "steamConfig");
+async function authenticateSteamTicket({ key, appId }, ticket) {
+  const url = `${STEAM_PARTNER}/ISteamUserAuth/AuthenticateUserTicket/v1/?key=${encodeURIComponent(key)}&appid=${encodeURIComponent(appId)}&ticket=${encodeURIComponent(ticket)}`;
+  const res = await fetch(url);
+  if (!res.ok) return { ok: false, reason: "steam-unreachable" };
+  const data = await res.json().catch(() => null);
+  const params = data?.response?.params;
+  if (data?.response?.error || !params || params.result !== "OK") {
+    return { ok: false, reason: "invalid-ticket" };
+  }
+  if (params.publisherbanned) return { ok: false, reason: "banned" };
+  return { ok: true, steamId: String(params.steamid), ownerSteamId: String(params.ownersteamid ?? params.steamid) };
+}
+__name(authenticateSteamTicket, "authenticateSteamTicket");
+async function verifySteamOwnership(env, { ticket }) {
+  const cfg = steamConfig(env);
+  if (!cfg) return { ok: false, reason: "billing-not-configured" };
+  if (!ticket || typeof ticket !== "string") return { ok: false, reason: "missing-token" };
+  let auth;
+  try {
+    auth = await authenticateSteamTicket(cfg, ticket);
+  } catch (err) {
+    console.error("billing verify error (steam ticket):", err);
+    return { ok: false, reason: "verification-failed" };
+  }
+  if (!auth.ok) return auth;
+  let owns = false;
+  try {
+    const url = `${STEAM_PUBLIC}/ISteamUser/CheckAppOwnership/v2/?key=${encodeURIComponent(cfg.key)}&steamid=${encodeURIComponent(auth.ownerSteamId)}&appid=${encodeURIComponent(cfg.appId)}`;
+    const res = await fetch(url);
+    if (!res.ok) return { ok: false, reason: "verification-failed" };
+    const data = await res.json().catch(() => null);
+    owns = data?.appownership?.ownsapp === true;
+  } catch (err) {
+    console.error("billing verify error (steam ownership):", err);
+    return { ok: false, reason: "verification-failed" };
+  }
+  if (!owns) return { ok: false, reason: "not-purchased" };
+  return {
+    ok: true,
+    orderId: `steam:own:${cfg.appId}:${auth.ownerSteamId}`,
+    product: PRODUCTS["soulmon.unlock.full"]
+  };
+}
+__name(verifySteamOwnership, "verifySteamOwnership");
+async function verifySteamPurchase(env, { orderId }) {
+  const cfg = steamConfig(env);
+  if (!cfg) return { ok: false, reason: "billing-not-configured" };
+  if (!orderId || !/^\d{1,32}$/.test(String(orderId))) return { ok: false, reason: "missing-token" };
+  let params;
+  try {
+    const url = `${STEAM_PARTNER}/ISteamMicroTxn/QueryTxn/v3/?key=${encodeURIComponent(cfg.key)}&appid=${encodeURIComponent(cfg.appId)}&orderid=${encodeURIComponent(orderId)}`;
+    const res = await fetch(url);
+    if (!res.ok) return { ok: false, reason: "invalid-purchase" };
+    const data = await res.json().catch(() => null);
+    params = data?.response?.params;
+  } catch (err) {
+    console.error("billing verify error (steam txn):", err);
+    return { ok: false, reason: "verification-failed" };
+  }
+  if (!params) return { ok: false, reason: "invalid-purchase" };
+  if (params.status !== "Succeeded") return { ok: false, reason: "not-purchased" };
+  const items = Array.isArray(params.items) ? params.items : [];
+  if (items.length !== 1) {
+    return { ok: false, reason: "unsupported-transaction" };
+  }
+  const productId = STEAM_ITEMS[Number(items[0].itemid)];
+  const product = productId ? PRODUCTS[productId] : void 0;
+  if (!product) return { ok: false, reason: "unknown-product" };
+  return { ok: true, orderId: `steam:txn:${params.orderid ?? orderId}`, product };
+}
+__name(verifySteamPurchase, "verifySteamPurchase");
+
+// api/billing.js
+var CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+var json = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS }), "json");
+var STATUS_BY_REASON = {
+  "billing-not-configured": 503,
+  "billing-misconfigured": 503,
+  "steam-unreachable": 502,
+  "verification-failed": 502,
+  "unknown-product": 400,
+  "missing-token": 400,
+  "unsupported-transaction": 400
+};
+async function onRequestOptions() {
+  return new Response(null, { headers: CORS });
+}
+__name(onRequestOptions, "onRequestOptions");
+async function onRequestPost({ request, env }) {
+  const url = new URL(request.url);
+  if (url.searchParams.get("action") !== "verify") return json({ error: "Unknown action" }, 400);
+  const provider = url.searchParams.get("provider") ?? "play";
+  if (provider !== "play" && provider !== "steam") return json({ error: "Unknown provider" }, 400);
+  if (!env.DIGIAPP_SAVES) return json({ error: "Storage not bound" }, 500);
+  const body = await request.json().catch(() => null);
+  const saveId = body?.id;
+  if (!saveId || !VALID_ID.test(saveId)) return json({ error: "Invalid save ID" }, 400);
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) return json({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  let result;
+  if (provider === "play") {
+    result = await verifyPlayPurchase(env, {
+      productId: body?.productId,
+      purchaseToken: body?.purchaseToken
+    });
+  } else if (body?.ticket) {
+    result = await verifySteamOwnership(env, { ticket: body.ticket });
+  } else {
+    result = await verifySteamPurchase(env, { orderId: body?.orderId });
+  }
+  if (!result.ok) {
+    return json(
+      { ok: false, reason: result.reason, status: result.status },
+      STATUS_BY_REASON[result.reason] ?? 402
+    );
   }
   const { ent, duplicate } = await applyVerifiedPurchase(env, saveId, {
-    orderId: purchase.orderId,
-    grantTier: product.grantTier,
-    grantCredits: product.grantCredits
+    orderId: result.orderId,
+    grantTier: result.product.grantTier,
+    grantCredits: result.product.grantCredits
   });
   return json({
     ok: true,
     duplicate,
     ...publicView(ent),
-    // Consumíveis precisam ser consumidos na Play para poderem ser recomprados.
-    consumeToken: product.consumable ? purchaseToken : void 0
+    // Consumíveis da Play precisam ser consumidos lá para poderem ser
+    // recomprados. Na Steam quem fecha a transação é o FinalizeTxn do cliente.
+    consumeToken: provider === "play" && result.product.consumable ? body.purchaseToken : void 0
   });
 }
 __name(onRequestPost, "onRequestPost");
@@ -1095,7 +1210,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-NvlITd/functionsRoutes-0.5503556269636376.mjs
+// ../.wrangler/tmp/pages-vIgzFj/functionsRoutes-0.5415911275365888.mjs
 var routes = [
   {
     routePath: "/api/billing",
