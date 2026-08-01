@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
+import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -311,11 +312,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       const contextMsg = p.language === 'pt-BR'
         ? `[ALEATÓRIO] Diga algo espontâneo em primeira pessoa como ${p.currentStage}. Máx 12 palavras. Sem emojis.`
         : `[RANDOM] Say something spontaneous in first person as ${p.currentStage}. Max 12 words. No emojis.`;
-      fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: contextMsg, digimonName: p.currentStage, mood: p.companionMood, evolutionStage: p.evolutionStage, dominantBranch: p.dominantBranch, language: p.language, aiSettings: p.aiSettings }),
-      })
+      aiFetch('/api/chat', { message: contextMsg, digimonName: p.currentStage, mood: p.companionMood, evolutionStage: p.evolutionStage, dominantBranch: p.dominantBranch, language: p.language, aiSettings: p.aiSettings })
         .then(r => r.ok ? r.json() : null)
         .then(data => { if (data?.response) speak(data.response, 5000); })
         .catch(() => {});
@@ -355,11 +352,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
       : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
 
-    fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: contextMsg, digimonName: currentStage, mood: companionMood, evolutionStage, dominantBranch, language, aiSettings }),
-    })
+    aiFetch('/api/chat', { message: contextMsg, digimonName: currentStage, mood: companionMood, evolutionStage, dominantBranch, language, aiSettings })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.response) speak(data.response, 5000); })
       .catch(() => {});

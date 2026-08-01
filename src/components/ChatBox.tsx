@@ -1,3 +1,4 @@
+import { aiFetch } from '../utils/aiClient';
 import { useState } from 'react';
 import { Send, Mic, Square } from 'lucide-react';
 import { toast } from 'sonner';
@@ -143,20 +144,15 @@ export function ChatBox({
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          digimonName,
-          mood,
-          evolutionStage,
-          dominantBranch,
-          language,
-          aiSettings,
-        }),
-        signal: controller.signal,
-      });
+      const response = await aiFetch('/api/chat', {
+        message: userMessage,
+        digimonName,
+        mood,
+        evolutionStage,
+        dominantBranch,
+        language,
+        aiSettings,
+      }, { signal: controller.signal });
 
       if (!response.ok) {
         if (import.meta.env.DEV) console.error('AI API error:', await response.text());

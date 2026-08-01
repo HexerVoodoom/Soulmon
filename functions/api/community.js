@@ -19,6 +19,7 @@
 //   POST gift      {id, friendId}      → 20 bits (1x/dia por amigo; grátis)
 //   GET  gifts     ?id=&claim=1        → lê (e zera) presentes pendentes
 
+import { authorizeSaveAccess } from './_auth.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -81,6 +82,10 @@ export async function onRequest({ request, env }) {
   // ── Perfil público (upsert; chamado junto do cloud save) ──────────────────
   if (action === 'profile' && method === 'POST') {
     if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
+    // Sem isto, qualquer um escreve o perfil público de qualquer conta —
+    // trocar o apelido e os atributos alheios na Biblioteca/Torneio.
+    const auth = await authorizeSaveAccess(request, env, id);
+    if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
     const prev = (await getProfile(env, id)) || {};
     const profile = {
       id,

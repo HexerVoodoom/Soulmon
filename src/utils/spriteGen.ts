@@ -2,6 +2,7 @@
 // e converte a imagem retornada em sprite v-pet DE VERDADE via o Pixelador,
 // sem o usuário precisar copiar prompt ou fazer upload.
 import { pixelizeBuffer } from './pixelizer';
+import { aiFetch } from './aiClient';
 
 export interface SpriteGenOptions {
   grid?: number;          // lado do grid final (default 16)
@@ -14,11 +15,9 @@ export interface SpriteGenOptions {
  *  referenceImageUrls: cadeia de evolução (Higgsfield image2image) — champion
  *  parte do rookie, ultimate do champion, mega do ultimate, ultra das 3 megas. */
 export async function requestSprite(prompt: string, referenceImageUrls?: string[]): Promise<string> {
-  const res = await fetch('/api/generate-sprite', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt, referenceImageUrls }),
-  });
+  // aiFetch acrescenta o saveId e o token — o servidor recusa sem eles
+  // (_aiGuard.js). Esta é a rota que custa dinheiro de verdade.
+  const res = await aiFetch('/api/generate-sprite', { prompt, referenceImageUrls });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `sprite generation failed (${res.status})`);

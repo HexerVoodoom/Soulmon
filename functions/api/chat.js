@@ -1,3 +1,5 @@
+import { guardAiRequest } from './_aiGuard.js';
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -61,6 +63,11 @@ export async function onRequestPost({ request, env }) {
     const { message, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
 
     if (!message) return Response.json({ error: 'Message required' }, { status: 400, headers: CORS });
+
+    // Sem portão, esta rota gasta a nossa cota do Groq para qualquer um com um
+    // `curl`. Ver functions/api/_aiGuard.js.
+    const gate = await guardAiRequest(request, env, 'chat', body.id);
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
 
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });

@@ -542,6 +542,44 @@ async function onRequestPost({ request, env }) {
 }
 __name(onRequestPost, "onRequestPost");
 
+// api/_aiGuard.js
+var AI_LIMITS = {
+  chat: { perAccount: 120, global: 2e4 },
+  suggest: { perAccount: 30, global: 3e3 },
+  sprite: { perAccount: 20, global: 400 }
+};
+var day = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "day");
+var TTL_SECONDS = 60 * 60 * 30;
+async function bump(env, key, limit) {
+  const raw = await env.DIGIAPP_SAVES.get(key);
+  const used = Number(raw) || 0;
+  if (used >= limit) return false;
+  await env.DIGIAPP_SAVES.put(key, String(used + 1), { expirationTtl: TTL_SECONDS });
+  return true;
+}
+__name(bump, "bump");
+async function guardAiRequest(request, env, bucket, saveId) {
+  if (!env.DIGIAPP_SAVES) return { ok: false, status: 500, reason: "storage-not-bound" };
+  const limits = AI_LIMITS[bucket];
+  if (!limits) return { ok: false, status: 500, reason: "unknown-bucket" };
+  if (!saveId || !VALID_ID.test(saveId)) {
+    return { ok: false, status: 400, reason: "missing-save-id" };
+  }
+  const auth = await authorizeSaveAccess(request, env, saveId);
+  if (!auth.ok) {
+    return { ok: false, status: auth.reason === "forbidden" ? 403 : 401, reason: auth.reason };
+  }
+  const today3 = day();
+  if (!await bump(env, `ai:${bucket}:@all:${today3}`, limits.global)) {
+    return { ok: false, status: 503, reason: "ai-daily-budget-reached" };
+  }
+  if (!await bump(env, `ai:${bucket}:${saveId}:${today3}`, limits.perAccount)) {
+    return { ok: false, status: 429, reason: "ai-daily-limit" };
+  }
+  return { ok: true };
+}
+__name(guardAiRequest, "guardAiRequest");
+
 // api/chat.js
 var CORS2 = {
   "Access-Control-Allow-Origin": "*",
@@ -593,6 +631,8 @@ async function onRequestPost2({ request, env }) {
     const body = await request.json();
     const { message, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
     if (!message) return Response.json({ error: "Message required" }, { status: 400, headers: CORS2 });
+    const gate = await guardAiRequest(request, env, "chat", body.id);
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS2 });
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS2 });
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -698,6 +738,8 @@ async function onRequest({ request, env }) {
   const id = body.id || url.searchParams.get("id");
   if (action === "profile" && method === "POST") {
     if (!VALID_ID2.test(id || "")) return json2({ error: "invalid id" }, 400);
+    const auth = await authorizeSaveAccess(request, env, id);
+    if (!auth.ok) return json2({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
     const prev = await getProfile(env, id) || {};
     const profile = {
       id,
@@ -1141,10 +1183,12 @@ async function generateGemini(env, prompt) {
 __name(generateGemini, "generateGemini");
 async function onRequestPost5({ request, env }) {
   try {
-    const { prompt, referenceImageUrls } = await request.json();
+    const { prompt, referenceImageUrls, id } = await request.json();
     if (!prompt || typeof prompt !== "string") {
       return Response.json({ error: "prompt required" }, { status: 400, headers: CORS7 });
     }
+    const gate = await guardAiRequest(request, env, "sprite", id);
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS7 });
     let hfError = null;
     if (env.HF_API_KEY && env.HF_SECRET) {
       try {
@@ -1302,6 +1346,8 @@ async function onRequestPost7({ request, env }) {
     if (!goalText && categories.length === 0) {
       return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS10 });
     }
+    const gate = await guardAiRequest(request, env, "suggest", body.id);
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS10 });
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS10 });
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
@@ -1372,7 +1418,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-RGVjrP/functionsRoutes-0.300776269529607.mjs
+// ../.wrangler/tmp/pages-Ohw4ya/functionsRoutes-0.2471931716612843.mjs
 var routes = [
   {
     routePath: "/api/billing",

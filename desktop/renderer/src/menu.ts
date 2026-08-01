@@ -50,6 +50,11 @@ function heartsLabel(): string {
   return '❤️'.repeat(full) + (half ? '💗' : '') + '🖤'.repeat(Math.max(0, state.maxHearts - full - (half ? 1 : 0)));
 }
 
+/**
+ * ⚠️ `label` é inserido como HTML (para caber o `<span class="badge">`), então
+ * só aceita texto NOSSO. Nada vindo do save ou digitado pelo usuário pode
+ * passar por aqui — use `textContent` num elemento próprio.
+ */
 function button(label: string, onClick: () => void, extraClass = ''): HTMLButtonElement {
   const b = document.createElement('button');
   b.className = `list-btn ${extraClass}`.trim();
@@ -91,8 +96,16 @@ function render() {
 function renderMain() {
   const header = document.createElement('div');
   header.className = 'panel-header';
-  header.innerHTML = `<span class="panel-title">${state.stageName}</span>` +
-    `<span class="panel-stats">${heartsLabel()} · ⚡${state.energy}/${state.maxEnergy} · 🍎×${foodCount(state.foodInventory)}</span>`;
+  // textContent, não innerHTML: `stageName` vem do save remoto. Com innerHTML,
+  // um save com HTML no nome executaria script DENTRO do renderer — que tem
+  // acesso a `soulmonDesktop.getAuth()` e poderia vazar o token da conta.
+  const title = document.createElement('span');
+  title.className = 'panel-title';
+  title.textContent = state.stageName;
+  const stats = document.createElement('span');
+  stats.className = 'panel-stats';
+  stats.textContent = `${heartsLabel()} · ⚡${state.energy}/${state.maxEnergy} · 🍎×${foodCount(state.foodInventory)}`;
+  header.append(title, stats);
   content.appendChild(header);
 
   const img = document.createElement('img');

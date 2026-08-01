@@ -7,6 +7,8 @@
 //
 // POST { prompt, referenceImageUrls?: string[] } → { image: <url|dataURL> }
 
+import { guardAiRequest } from './_aiGuard.js';
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -88,10 +90,15 @@ async function generateGemini(env, prompt) {
 
 export async function onRequestPost({ request, env }) {
   try {
-    const { prompt, referenceImageUrls } = await request.json();
+    const { prompt, referenceImageUrls, id } = await request.json();
     if (!prompt || typeof prompt !== 'string') {
       return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
     }
+
+    // A rota mais cara do app, e a única em que o PROMPT vem do cliente: sem
+    // portão, era geração de imagem ilimitada e livre na nossa conta.
+    const gate = await guardAiRequest(request, env, 'sprite', id);
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
 
     let hfError = null;
     if (env.HF_API_KEY && env.HF_SECRET) {

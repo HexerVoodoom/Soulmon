@@ -8,6 +8,8 @@
 // → { suggestions: [{ name, category }] }  (emoji é resolvido no cliente
 //   via CATEGORY_ICONS — não confiamos no modelo pra emoji consistente)
 
+import { guardAiRequest } from './_aiGuard.js';
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -30,6 +32,9 @@ export async function onRequestPost({ request, env }) {
     if (!goalText && categories.length === 0) {
       return Response.json({ error: 'goalText or categories required' }, { status: 400, headers: CORS });
     }
+
+    const gate = await guardAiRequest(request, env, 'suggest', body.id);
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
 
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });

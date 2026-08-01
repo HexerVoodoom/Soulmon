@@ -212,6 +212,32 @@ antes disso — ela é o único freio hoje.
 
 ---
 
+## Custo de IA — quem pode gastar
+
+`/api/chat`, `/api/suggest-tasks` e `/api/generate-sprite` gastam as nossas
+chaves de terceiros (Groq, Higgsfield, Gemini). Elas eram **abertas**: sem
+identificação, sem teto e com CORS `*` — um `curl` em loop gerava imagem e texto
+na nossa conta, que é justamente o custo que esta monetização existe para
+cobrir. O `generate-sprite` era o pior: o prompt vem do cliente, então também
+servia para alguém gerar o que quisesse em nosso nome.
+
+Agora passam por `functions/api/_aiGuard.js`, com duas travas:
+
+| Trava | Chave no KV | Para quê |
+|---|---|---|
+| Cota por conta | `ai:<bucket>:<saveId>:<dia>` | Impede um usuário de rodar em loop |
+| Teto global do dia | `ai:<bucket>:@all:<dia>` | Limita o PREJUÍZO máximo do dia |
+
+> ⚠️ **A cota por conta só vale de verdade com o login ligado.** Sem
+> `FIREBASE_PROJECT_ID`, o `saveId` é só um hash de e-mail: um atacante inventa
+> um novo a cada chamada e passa por baixo dela. O teto global é o disjuntor
+> enquanto isso — não é autenticação, é limite de fatura. Mais um motivo para
+> ligar o login antes de divulgar o app.
+
+Tetos atuais (em `AI_LIMITS`): chat 120/conta e 20.000/dia · sugestões 30 e
+3.000 · sprite 20 e **400**. Conservadores de propósito — é mais fácil afrouxar
+depois de ver o uso real do que explicar uma fatura inesperada.
+
 ## Reembolso — como funciona
 
 Quando a loja estorna uma compra, o benefício é desfeito: `paid` volta para

@@ -19,11 +19,8 @@ export async function suggestTasks(
   language: 'pt-BR' | 'en-US',
 ): Promise<SuggestedTask[]> {
   try {
-    const res = await fetch('/api/suggest-tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ goalText, categories, language }),
-    });
+    const { aiFetch } = await import('./aiClient');
+    const res = await aiFetch('/api/suggest-tasks', { goalText, categories, language });
     if (!res.ok) return [];
     const data = await res.json();
     const raw = Array.isArray(data.suggestions) ? data.suggestions : [];
