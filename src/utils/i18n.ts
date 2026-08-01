@@ -2,6 +2,22 @@
 
 export type Language = 'en-US' | 'pt-BR';
 
+/**
+ * Idioma inicial: o que o usuário escolheu, senão o do aparelho.
+ *
+ * Ponto ÚNICO dessa decisão. Antes o App e o onboarding decidiam cada um por
+ * si, e o onboarding caía sempre em inglês — a primeira tela que o usuário vê,
+ * a que precisa convencê-lo a ficar, abria no idioma errado para o público
+ * brasileiro.
+ *
+ * @param stored valor salvo em localStorage (STORAGE_KEYS.LANGUAGE)
+ */
+export function resolveLanguage(stored: string | null): Language {
+  if (stored === 'pt-BR' || stored === 'en-US') return stored;
+  const nav = typeof navigator !== 'undefined' ? (navigator.language || '') : '';
+  return nav.toLowerCase().startsWith('pt') ? 'pt-BR' : 'en-US';
+}
+
 export interface Translations {
   // Common
   common: {

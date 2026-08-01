@@ -8,6 +8,7 @@ import {
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
+import { resolveLanguage } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
 
 // ---------------------------------------------------------------------------
@@ -40,7 +41,7 @@ interface SoulmonOnboardingProps {
 interface SavedProfile extends OracleInput { seed: number }
 
 export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
-  const isPt = localStorage.getItem(STORAGE_KEYS.LANGUAGE) === 'pt-BR';
+  const isPt = resolveLanguage(localStorage.getItem(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
@@ -502,11 +503,22 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
                 </button>
               </div>
             ) : (
-              <button className="sm-btn" style={{ width: '100%', marginTop: 24 }} onClick={finish} disabled={!canFinish}>
-                {submitting
-                  ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
-                  : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
-              </button>
+              <>
+                <button className="sm-btn" style={{ width: '100%', marginTop: 24 }} onClick={finish} disabled={!canFinish}>
+                  {submitting
+                    ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
+                    : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
+                </button>
+                {/* Sem isto o botão só ficava apagado e o toque não fazia nada —
+                    o usuário não tinha como saber o que faltava. */}
+                {!canFinish && !submitting && (
+                  <p style={{ fontSize: 12, color: 'var(--sm-muted)', marginTop: 8, textAlign: 'center' }}>
+                    {nickname.trim().length < 2
+                      ? (isPt ? 'Escolha um apelido com pelo menos 2 letras.' : 'Pick a nickname with at least 2 letters.')
+                      : (isPt ? 'Falta o e-mail.' : 'Your email is missing.')}
+                  </p>
+                )}
+              </>
             )}
             {unlockMessage && !linkSent && (
               <p style={{ fontSize: 12, color: '#e0483e', marginTop: 12, lineHeight: 1.5 }}>{unlockMessage}</p>

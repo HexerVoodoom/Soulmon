@@ -23,7 +23,7 @@ import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
-import { type Language, useTranslation } from './utils/i18n';
+import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -138,10 +138,11 @@ export default function App() {
     const saved = localStorage.getItem(STORAGE_KEYS.THEME);
     return (saved as 'default' | 'win98' | 'glitch') || 'default';
   });
-  const [language, setLanguage] = useState<Language>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
-    return saved === 'pt-BR' ? 'pt-BR' : 'en-US';
-  });
+  // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
+  // onboarding, para as duas telas nunca discordarem).
+  const [language, setLanguage] = useState<Language>(
+    () => resolveLanguage(localStorage.getItem(STORAGE_KEYS.LANGUAGE)),
+  );
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE) === 'true';
   });
