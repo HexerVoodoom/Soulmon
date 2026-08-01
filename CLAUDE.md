@@ -86,6 +86,16 @@ Estágios/HP máx: digiegg,baby-i=1 · baby-ii=2 · rookie/champion/ultimate=3 �
   Console. Web Push continua ativo (cobre PWA/desktop); os dois convivem.
 - Widgets Android: `android/.../widget/WidgetRenderer.kt` + layouts. Dados via
   `DigiWidgetPlugin` (SharedPreferences). Testes: `npx vitest run` cobre lógica de reset.
+- **Desktop (`desktop/`)**: app Electron separado — o pet anda numa faixa
+  transparente na barra de tarefas do Windows. Build próprio
+  (`npx vite build -c desktop/vite.config.ts`), `package.json` próprio, NÃO
+  entra no bundle do app web. Lê o save por `/api/save` (só leitura, v1) e se
+  autentica pela janela do app web (`auth-preload.js`). Ver `desktop/README.md`
+  e `docs/PLANO-DESKTOP-STEAM.md`.
+- **Dinheiro** (`functions/api/_entitlements.js` + `_billing.js`): o cliente
+  nunca decide tier/créditos, e **um comprovante de compra vale para uma conta
+  só** (`claimOrder`). As duas regras têm testes; se algum cair, alguém ganha
+  benefício sem pagar. Ver `docs/BILLING-SETUP.md`.
 
 ## Footguns (aprendidos a dor — não repita)
 
@@ -109,6 +119,13 @@ Estágios/HP máx: digiegg,baby-i=1 · baby-ii=2 · rookie/champion/ultimate=3 �
    `/opt/node22/lib/node_modules/playwright/index.js`).
 8. Sprites: importados via alias `figma:asset/<hash>.png` (mapa no `vite.config.ts`)
    → arquivos reais em `src/assets/`. `assetsInlineLimit: 0` (nunca inline base64).
+9. **Regra copiada = regra que diverge em silêncio.** O renderer do desktop
+   reimplementa a derivação do `saveId` e as tabelas de HP/energia (é TS puro,
+   não carrega o bundle do jogo). Divergir não dá erro nenhum — o overlay lê um
+   save inexistente e mostra um bicho genérico. Já aconteceu: o código veio do
+   DigiApp com o salt `digiapp:`. `desktop/renderer/src/cloudSync.test.ts` é o
+   único lugar onde as duas cópias se encontram — se copiar mais alguma regra
+   pra lá, adicione o teste de paridade junto.
 
 ## Convenções
 

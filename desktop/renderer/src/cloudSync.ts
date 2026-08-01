@@ -31,6 +31,24 @@ function stageLevel(stage: string): string {
   return prefix === 'champion' || prefix === 'ultimate' || prefix === 'mega' ? prefix : 'rookie';
 }
 
+/**
+ * O servidor exige login? (`FIREBASE_PROJECT_ID` definido lá.)
+ *
+ * Em caso de dúvida responde `true`: é melhor pedir login à toa do que deixar
+ * o campo de e-mail livre num servidor que já exige token — aí o usuário
+ * levaria um 403 sem entender o motivo.
+ */
+export async function isAuthRequired(): Promise<boolean> {
+  try {
+    const res = await fetch(`${APP_URL}/api/config`);
+    if (!res.ok) return true;
+    const data = await res.json();
+    return data?.authRequired !== false;
+  } catch {
+    return true;
+  }
+}
+
 export async function emailToSaveId(email: string): Promise<string> {
   const norm = email.trim().toLowerCase();
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`soulmon:${norm}`));

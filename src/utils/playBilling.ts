@@ -89,24 +89,37 @@ export async function purchase(productId: string): Promise<PurchaseResult> {
   return { ok: true, ent: verified.ent };
 }
 
+export type RestoreResult =
+  | { ok: true; ent: Entitlement }
+  | { ok: false; reason: 'nothing-to-restore' | 'order-in-use' | string };
+
 /**
  * Restaurar compras — reenvia ao servidor tudo que a conta Google possui.
  * Necessário para o usuário que reinstalou o app ou trocou de aparelho
  * recuperar o desbloqueio completo (compra não consumível).
+ *
+ * `order-in-use` merece tratamento próprio na UI: significa que a compra é
+ * real, mas pertence a OUTRA conta Soulmon (o servidor amarra cada comprovante
+ * a uma conta — ver claimOrder em functions/api/_entitlements.js). É o caso do
+ * usuário que trocou de e-mail; sem uma mensagem específica ele acharia que
+ * simplesmente perdeu o que pagou.
  */
-export async function restorePurchases(): Promise<Entitlement | null> {
+export async function restorePurchases(): Promise<RestoreResult> {
   const plugin = getPlugin();
-  if (!plugin?.getPurchases) return null;
+  if (!plugin?.getPurchases) return { ok: false, reason: 'unavailable' };
   try {
     const { purchases } = await plugin.getPurchases();
     let latest: Entitlement | null = null;
+    let blocked: string | null = null;
     for (const p of purchases ?? []) {
       const verified = await verifyPurchase(p.productId, p.purchaseToken);
       if (verified.ok) latest = verified.ent;
+      else if (verified.reason === 'order-in-use') blocked = verified.reason;
     }
-    return latest;
+    if (latest) return { ok: true, ent: latest };
+    return { ok: false, reason: blocked ?? 'nothing-to-restore' };
   } catch (err) {
     if (import.meta.env.DEV) console.warn('[billing] restore failed:', err);
-    return null;
+    return { ok: false, reason: 'error' };
   }
 }

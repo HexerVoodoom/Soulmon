@@ -26,7 +26,7 @@
 //   Steam: STEAM_PUBLISHER_KEY, STEAM_APP_ID
 // Sem eles a rota da loja em questão responde 503 e NUNCA concede nada.
 
-import { VALID_ID, publicView, applyVerifiedPurchase } from './_entitlements.js';
+import { VALID_ID, publicView, applyVerifiedPurchase, claimOrder } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
 import { verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase } from './_billing.js';
 
@@ -49,6 +49,8 @@ const STATUS_BY_REASON = {
   'unknown-product': 400,
   'missing-token': 400,
   'unsupported-transaction': 400,
+  // 409: a compra é válida, mas já foi resgatada por outra conta Soulmon.
+  'order-in-use': 409,
 };
 
 export async function onRequestOptions() {
@@ -90,6 +92,14 @@ export async function onRequestPost({ request, env }) {
       { ok: false, reason: result.reason, status: result.status },
       STATUS_BY_REASON[result.reason] ?? 402,
     );
+  }
+
+  // Um comprovante vale para UMA conta, em qualquer loja. Sem isto, tanto o
+  // "restaurar compras" da Play quanto a posse do app na Steam poderiam ser
+  // resgatados em quantas contas o jogador quisesse (ver claimOrder).
+  const claim = await claimOrder(env, saveId, result.orderId);
+  if (!claim.ok) {
+    return json({ ok: false, reason: claim.reason }, STATUS_BY_REASON[claim.reason]);
   }
 
   const { ent, duplicate } = await applyVerifiedPurchase(env, saveId, {

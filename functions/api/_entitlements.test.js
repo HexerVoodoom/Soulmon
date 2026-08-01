@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   readEntitlement, spendCredits, grantAdReward, applyVerifiedPurchase,
-  publicView, AD_DAILY_CAP, AD_REWARD_CREDITS,
+  claimOrder, publicView, AD_DAILY_CAP, AD_REWARD_CREDITS,
 } from './_entitlements.js';
 
 // Estas regras são as que separam "jogador pagou" de "jogador não pagou".
@@ -117,5 +117,59 @@ describe('entitlements — visão pública', () => {
     const view = publicView(await readEntitlement(env, SAVE));
     expect(view).toEqual({ tier: 'paid', credits: 60, adsLeft: AD_DAILY_CAP });
     expect(JSON.stringify(view)).not.toContain('secret-order');
+  });
+});
+
+describe('comprovante de compra — uma compra, uma conta', () => {
+  // Vale para as DUAS lojas: o desbloqueio da Play é não consumível (o
+  // "restaurar compras" reenvia o mesmo orderId para sempre) e na Steam o
+  // benefício vem da posse do app, que é permanente. Sem esta trava, uma
+  // compra só viraria quantas contas pagas o jogador quisesse.
+  const PLAY_ORDER = 'play:GPA.1234-5678-9012-34567';
+  const STEAM_LICENSE = 'steam:own:480:7656119';
+
+  it('o primeiro que resgata fica com o comprovante', async () => {
+    const env = fakeEnv();
+    expect(await claimOrder(env, SAVE, PLAY_ORDER)).toEqual({ ok: true });
+  });
+
+  it('resgatar de novo NA MESMA conta é permitido (restaurar compras)', async () => {
+    const env = fakeEnv();
+    await claimOrder(env, SAVE, PLAY_ORDER);
+    expect(await claimOrder(env, SAVE, PLAY_ORDER)).toEqual({ ok: true });
+  });
+
+  it('Play: outra conta NÃO clona o desbloqueio pelo restaurar compras', async () => {
+    const env = fakeEnv();
+    await claimOrder(env, SAVE, PLAY_ORDER);
+    expect(await claimOrder(env, 'outraconta99', PLAY_ORDER))
+      .toEqual({ ok: false, reason: 'order-in-use' });
+  });
+
+  it('Steam: outra conta NÃO herda a licença do mesmo dono', async () => {
+    const env = fakeEnv();
+    await claimOrder(env, SAVE, STEAM_LICENSE);
+    expect(await claimOrder(env, 'outraconta99', STEAM_LICENSE))
+      .toEqual({ ok: false, reason: 'order-in-use' });
+  });
+
+  it('comprovantes diferentes não colidem entre si', async () => {
+    const env = fakeEnv();
+    await claimOrder(env, SAVE, PLAY_ORDER);
+    expect(await claimOrder(env, 'outraconta99', STEAM_LICENSE)).toEqual({ ok: true });
+  });
+
+  it('consumedOrders sozinho NÃO protegeria — o registro global é o que trava', async () => {
+    // Demonstra a causa raiz: a lista por conta acha que a compra é inédita.
+    const env = fakeEnv();
+    // Fluxo real da rota: reivindica e só então aplica.
+    await claimOrder(env, SAVE, PLAY_ORDER);
+    await applyVerifiedPurchase(env, SAVE, { orderId: PLAY_ORDER, grantTier: 'paid', grantCredits: 0 });
+    const outra = await applyVerifiedPurchase(env, 'outraconta99', {
+      orderId: PLAY_ORDER, grantTier: 'paid', grantCredits: 0,
+    });
+    expect(outra.duplicate).toBe(false);   // <- o furo, se nada mais existisse
+    expect(await claimOrder(env, 'outraconta99', PLAY_ORDER))
+      .toEqual({ ok: false, reason: 'order-in-use' });  // <- a trava que a rota aplica antes
   });
 });

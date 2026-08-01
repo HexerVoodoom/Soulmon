@@ -7,10 +7,20 @@ import {
   loadState, saveState, feedsLeft, todayKey, newTaskId,
   type DesktopState,
 } from './state';
-import { fetchRemoteSnapshot } from './cloudSync';
+import { fetchRemoteSnapshot, isAuthRequired } from './cloudSync';
 import { eventPhrase } from './phrases';
 
 const state: DesktopState = loadState();
+
+/**
+ * Sessão autenticada (vinda da janela do app web) e se o servidor a exige.
+ * Enquanto não sabemos, assumimos que exige — assim a UI nunca oferece o campo
+ * de e-mail livre por engano.
+ */
+let authRequired = true;
+let session: SoulmonAuthSession | null = null;
+/** Feedback da sincronização, mostrado no painel de Configurações. */
+let syncMessage: { text: string; error: boolean } | null = null;
 const persist = () => {
   saveState(state);
   window.soulmonDesktop?.notifyStateChanged();
@@ -181,6 +191,14 @@ function renderNewTask() {
   input.focus();
 }
 
+function lastSyncLabel(): string {
+  if (!state.lastSyncAt) return '';
+  return t(
+    `Última sincronização: ${new Date(state.lastSyncAt).toLocaleString('pt-BR')}`,
+    `Last sync: ${new Date(state.lastSyncAt).toLocaleString()}`,
+  );
+}
+
 function renderSettings() {
   addBackHeader(t('Configurações', 'Settings'));
 
@@ -189,35 +207,69 @@ function renderSettings() {
     () => { state.language = state.language === 'pt-BR' ? 'en' : 'pt-BR'; persist(); render(); },
   ));
 
-  // A criatura NÃO é escolhida aqui: cada jogador tem uma linha evolutiva
-  // única gerada pelo oráculo. Ela vem do save — por isso o e-mail é o
-  // controle central desta tela, não um extra.
+  // A criatura NÃO é escolhida aqui: cada jogador tem uma linha evolutiva única
+  // gerada pelo oráculo. Ela vem do save — a conta é o controle central desta
+  // tela, não um extra.
   const syncBox = document.createElement('div');
   syncBox.className = 'field-row';
   const label = document.createElement('div');
   label.className = 'panel-title';
   label.style.fontSize = '11px';
-  label.textContent = t('E-mail da sua conta Soulmon', 'Your Soulmon account email');
-  const emailInput = document.createElement('input');
-  emailInput.type = 'email';
-  emailInput.placeholder = 'voce@email.com';
-  emailInput.value = state.syncEmail ?? '';
-  const syncBtn = button(`🔄 ${t('Sincronizar agora', 'Sync now')}`, () => syncNow(emailInput.value));
   const hint = document.createElement('div');
   hint.className = 'field-hint';
-  hint.textContent = state.lastSyncAt
-    ? t(`Última sincronização: ${new Date(state.lastSyncAt).toLocaleString('pt-BR')}`, `Last sync: ${new Date(state.lastSyncAt).toLocaleString()}`)
-    : t('Use o mesmo e-mail do celular para ver a sua criatura aqui.', 'Use the same email as the phone to see your creature here.');
-  syncBox.append(label, emailInput, syncBtn, hint);
-  content.appendChild(syncBox);
 
+  if (authRequired && session) {
+    // Logado: o e-mail vem do token assinado, não é digitável.
+    label.textContent = t('Conta conectada', 'Connected account');
+    const who = document.createElement('div');
+    who.className = 'status-line';
+    who.textContent = session.email;
+    const syncBtn = button(`🔄 ${t('Sincronizar agora', 'Sync now')}`, () => syncNow(session!.email));
+    hint.textContent = lastSyncLabel()
+      || t('Puxe o seu progresso do celular.', 'Pull your progress from the phone.');
+    syncBox.append(label, who, syncBtn, hint);
+  } else if (authRequired) {
+    // Sem login não há o que sincronizar: o servidor recusaria a leitura.
+    // Digitar um e-mail aqui só produziria um 403 sem explicação.
+    label.textContent = t('Entre na sua conta', 'Sign in to your account');
+    const loginBtn = button(
+      `🔐 ${t('Entrar com e-mail', 'Sign in with email')}`,
+      () => window.soulmonDesktop?.openFullApp(),
+    );
+    hint.textContent = t(
+      'Abre o Soulmon completo para você entrar. Depois é só voltar aqui — a criatura do celular aparece sozinha.',
+      'Opens the full Soulmon so you can sign in. Then come back — your phone creature shows up automatically.',
+    );
+    syncBox.append(label, loginBtn, hint);
+  } else {
+    // Modo de migração (servidor sem FIREBASE_PROJECT_ID): ainda aceita e-mail
+    // digitado, porque é assim que o app web funciona hoje.
+    label.textContent = t('E-mail da sua conta Soulmon', 'Your Soulmon account email');
+    const emailInput = document.createElement('input');
+    emailInput.type = 'email';
+    emailInput.placeholder = 'voce@email.com';
+    emailInput.value = state.syncEmail ?? '';
+    const syncBtn = button(`🔄 ${t('Sincronizar agora', 'Sync now')}`, () => syncNow(emailInput.value));
+    hint.textContent = lastSyncLabel()
+      || t('Use o mesmo e-mail do celular para ver a sua criatura aqui.', 'Use the same email as the phone to see your creature here.');
+    syncBox.append(label, emailInput, syncBtn, hint);
+  }
+
+  // O resultado da última sincronização tem prioridade sobre o texto padrão.
+  if (syncMessage) {
+    hint.textContent = syncMessage.text;
+    hint.className = syncMessage.error ? 'field-hint error' : 'field-hint';
+  }
+
+  content.appendChild(syncBox);
   content.appendChild(button(`📱 ${t('Abrir Soulmon completo', 'Open full Soulmon')}`, () => window.soulmonDesktop?.openFullApp()));
 }
 
 async function syncNow(email: string) {
-  const hint = content.querySelector('.field-hint') as HTMLDivElement | null;
   const fail = (msg: string) => {
-    if (hint) { hint.textContent = msg; hint.className = 'field-hint error'; }
+    syncMessage = { text: msg, error: true };
+    panel = 'settings';
+    render();
   };
 
   const trimmed = email.trim();
@@ -225,13 +277,17 @@ async function syncNow(email: string) {
     fail(t('Digite um e-mail primeiro.', 'Type an email first.'));
     return;
   }
-  if (hint) { hint.textContent = t('Sincronizando...', 'Syncing...'); hint.className = 'field-hint'; }
+  syncMessage = { text: t('Sincronizando...', 'Syncing...'), error: false };
+  render();
 
   const result = await fetchRemoteSnapshot(trimmed);
   if (!result.ok) {
     if (result.reason === 'unauthenticated') {
       // O servidor exige login. Abrir o app completo resolve: é lá que o
       // Firebase Auth roda e devolve o token pro desktop (auth-preload.js).
+      // Também corrige o estado local: se chegamos aqui, o modo é "exige".
+      authRequired = true;
+      session = null;
       fail(t(
         'Precisa entrar na conta. Abrindo o Soulmon completo — faça login e volte aqui.',
         'Sign-in required. Opening the full Soulmon — log in there and come back.',
@@ -240,7 +296,7 @@ async function syncNow(email: string) {
       return;
     }
     fail(result.reason === 'not-found'
-      ? t('Nenhum save encontrado com esse e-mail ainda.', 'No save found for that email yet.')
+      ? t('Nenhum save encontrado com essa conta ainda.', 'No save found for that account yet.')
       : t('Falha de conexão — tente de novo.', 'Connection failed — try again.'));
     return;
   }
@@ -258,6 +314,7 @@ async function syncNow(email: string) {
   state.food = s.food;
   state.lastSyncAt = new Date().toISOString();
   persist();
+  syncMessage = null;
   panel = 'main';
   status = t('Sincronizado com sucesso!', 'Synced successfully!');
   render();
@@ -326,4 +383,31 @@ function toggleTask(id: string) {
   render();
 }
 
+// ------------------------------------------------------------------- boot
 render();
+
+(async () => {
+  [authRequired, session] = await Promise.all([
+    isAuthRequired(),
+    window.soulmonDesktop?.getAuth() ?? Promise.resolve(null),
+  ]);
+  // Já logado e nunca sincronizado: puxa o save do celular sem o usuário
+  // precisar pedir — é o comportamento que se espera de "mesma conta".
+  if (authRequired && session && !state.lastSyncAt) {
+    await syncNow(session.email);
+    return;
+  }
+  render();
+})();
+
+// O login acontece noutra janela (o app web). Quando ele conclui, o processo
+// principal avisa aqui — sem isto o usuário logaria e continuaria vendo a tela
+// pedindo login até reabrir o menu.
+window.soulmonDesktop?.onAuthChanged(async next => {
+  session = next ? await (window.soulmonDesktop?.getAuth() ?? Promise.resolve(null)) : null;
+  if (session && !state.lastSyncAt) {
+    await syncNow(session.email);
+    return;
+  }
+  render();
+});

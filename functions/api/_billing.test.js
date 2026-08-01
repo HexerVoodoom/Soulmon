@@ -145,19 +145,30 @@ describe('Steam — posse do app (tier pago)', () => {
       .toEqual({ ok: false, reason: 'not-purchased' });
   });
 
-  it('Family Sharing: a posse é checada no DONO da licença, não em quem joga', async () => {
-    // Sem isto, emprestar a biblioteca daria tier pago para contas que nunca
-    // compraram — e o orderId de cada uma seria diferente, multiplicando o
-    // benefício de uma compra só.
+  it('Family Sharing NÃO dá tier pago a quem pegou a licença emprestada', async () => {
+    // O tier é gravado na conta Soulmon de QUEM PEDIU. Se aceitássemos a posse
+    // do dono, cada amigo com acesso à biblioteca sairia com uma conta paga
+    // própria — uma compra virando N contas pagas.
     const fetchMock = mockSteam({
       AuthenticateUserTicket: okTicket('111_jogador', '999_dono'),
       CheckAppOwnership: ownership(true),
     });
     vi.stubGlobal('fetch', fetchMock);
-    const r = await verifySteamOwnership(STEAM_ENV, { ticket: 't' });
-    const ownershipUrl = fetchMock.mock.calls.map(c => String(c[0])).find(u => u.includes('CheckAppOwnership'));
-    expect(ownershipUrl).toContain('steamid=999_dono');
-    expect(r.orderId).toBe('steam:own:480:999_dono');
+    expect(await verifySteamOwnership(STEAM_ENV, { ticket: 't' }))
+      .toEqual({ ok: false, reason: 'family-shared' });
+    // Nem chega a consultar a posse — a recusa é anterior.
+    expect(fetchMock.mock.calls.map(c => String(c[0])).some(u => u.includes('CheckAppOwnership'))).toBe(false);
+  });
+
+  it('a posse é checada no SteamID de quem está jogando', async () => {
+    const fetchMock = mockSteam({
+      AuthenticateUserTicket: okTicket('7656119', '7656119'),
+      CheckAppOwnership: ownership(true),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    await verifySteamOwnership(STEAM_ENV, { ticket: 't' });
+    const url = fetchMock.mock.calls.map(c => String(c[0])).find(u => u.includes('CheckAppOwnership'));
+    expect(url).toContain('steamid=7656119');
   });
 
   it('recusa conta banida pelo publisher', async () => {

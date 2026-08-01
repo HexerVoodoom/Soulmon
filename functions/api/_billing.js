@@ -197,11 +197,24 @@ async function authenticateSteamTicket({ key, appId }, ticket) {
  * Posse do app na Steam → tier pago.
  *
  * Na Steam o "desbloqueio completo" não é uma microtransação: a própria loja
- * cobra pelo app. Quem tem o app é `paid`. Usa o SteamID DONO da licença, não
- * o de quem está jogando — senão Family Sharing viraria uma forma de dar o
- * tier pago para contas que nunca compraram.
+ * cobra pelo app. Quem tem o app é `paid`.
  *
- * @returns {Promise<{ ok: true, orderId: string, product: object }
+ * ## Family Sharing (a parte que importa)
+ *
+ * Em Family Sharing o ticket traz `steamid` (quem está jogando) DIFERENTE de
+ * `ownersteamid` (quem comprou). Checar a posse no dono e conceder mesmo assim
+ * seria um furo: o tier é gravado na conta Soulmon de QUEM PEDIU, então cada
+ * amigo com acesso à biblioteca ganharia uma conta paga própria a partir de
+ * uma compra só.
+ *
+ * Por isso exigimos `steamid === ownersteamid`: só o dono da licença ganha o
+ * tier. Quem pegou emprestado joga (a Steam permite), mas não herda a compra.
+ *
+ * Isso ainda não impede o DONO de logar com 10 e-mails diferentes e criar 10
+ * contas pagas — essa metade é resolvida em `claimSteamLicense`
+ * (_entitlements.js), que amarra a licença a uma conta só.
+ *
+ * @returns {Promise<{ ok: true, orderId: string, product: object, licenseKey: string }
  *                 | { ok: false, reason: string }>}
  */
 export async function verifySteamOwnership(env, { ticket }) {
@@ -218,10 +231,14 @@ export async function verifySteamOwnership(env, { ticket }) {
   }
   if (!auth.ok) return auth;
 
+  // Family Sharing: está jogando com a licença de outra pessoa. Pode jogar,
+  // mas não herda a compra (ver o bloco de doc acima).
+  if (auth.steamId !== auth.ownerSteamId) return { ok: false, reason: 'family-shared' };
+
   let owns = false;
   try {
     const url = `${STEAM_PUBLIC}/ISteamUser/CheckAppOwnership/v2/`
-      + `?key=${encodeURIComponent(cfg.key)}&steamid=${encodeURIComponent(auth.ownerSteamId)}&appid=${encodeURIComponent(cfg.appId)}`;
+      + `?key=${encodeURIComponent(cfg.key)}&steamid=${encodeURIComponent(auth.steamId)}&appid=${encodeURIComponent(cfg.appId)}`;
     const res = await fetch(url);
     if (!res.ok) return { ok: false, reason: 'verification-failed' };
     const data = await res.json().catch(() => null);
@@ -233,10 +250,13 @@ export async function verifySteamOwnership(env, { ticket }) {
   if (!owns) return { ok: false, reason: 'not-purchased' };
 
   // orderId estável por (dono, app): reprocessar é idempotente pelo mesmo
-  // mecanismo de replay das compras da Play.
+  // mecanismo de replay das compras da Play. `licenseKey` é o mesmo valor,
+  // usado para amarrar a licença a UMA conta Soulmon (claimSteamLicense).
+  const licenseKey = `steam:own:${cfg.appId}:${auth.steamId}`;
   return {
     ok: true,
-    orderId: `steam:own:${cfg.appId}:${auth.ownerSteamId}`,
+    orderId: licenseKey,
+    licenseKey,
     product: PRODUCTS['soulmon.unlock.full'],
   };
 }

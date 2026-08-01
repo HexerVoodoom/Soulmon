@@ -14,6 +14,8 @@
 // de entitlement para Durable Objects (que serializam por chave).
 
 export const ENT_PREFIX = 'ent:';
+/** Comprovante de compra → conta Soulmon que o resgatou (ver claimOrder). */
+export const ORDER_PREFIX = 'ord:';
 export const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 
 /** Recompensa por anúncio assistido e teto diário — espelham utils/monetization.ts. */
@@ -88,6 +90,42 @@ export async function grantAdReward(env, saveId) {
   ent.credits += AD_REWARD_CREDITS;
   await writeEntitlement(env, saveId, ent);
   return ent;
+}
+
+/**
+ * Amarra um comprovante de compra a UMA conta Soulmon — globalmente.
+ *
+ * ## Por que `consumedOrders` não basta
+ *
+ * A lista `consumedOrders` vive DENTRO de cada entitlement. Ela impede
+ * processar a mesma compra duas vezes *na mesma conta*, mas não vê nada fora
+ * dela: em toda conta nova o mesmo comprovante é "inédito". Isso abre o mesmo
+ * furo nas duas lojas:
+ *
+ *   • Play — o desbloqueio completo é NÃO consumível, então `getPurchases()`
+ *     devolve ele para sempre. Bastava sair, entrar com outro e-mail e tocar em
+ *     "Restaurar compras" para clonar a conta paga quantas vezes quisesse.
+ *   • Steam — o benefício vem da *posse do app*, um estado permanente e
+ *     reconsultável. Mesma história.
+ *
+ * Este registro é a trava que faltava: um comprovante pertence a exatamente uma
+ * conta. O primeiro que resgatar fica com ele; reprocessar na MESMA conta
+ * continua permitido (é o que faz o "restaurar compras" funcionar de verdade).
+ *
+ * Vale a mesma limitação de concorrência do resto do módulo: o KV não tem
+ * transação, então dois resgates simultâneos do mesmo comprovante em contas
+ * diferentes poderiam, em tese, passar os dois. Exige tempo de propagação na
+ * casa dos milissegundos e um atacante coordenando duas contas — se virar
+ * problema, é o mesmo caminho de migração para Durable Objects.
+ *
+ * @returns {Promise<{ ok: true } | { ok: false, reason: 'order-in-use' }>}
+ */
+export async function claimOrder(env, saveId, orderId) {
+  const key = ORDER_PREFIX + orderId;
+  const owner = await env.DIGIAPP_SAVES.get(key);
+  if (owner && owner !== saveId) return { ok: false, reason: 'order-in-use' };
+  if (!owner) await env.DIGIAPP_SAVES.put(key, saveId);
+  return { ok: true };
 }
 
 /**

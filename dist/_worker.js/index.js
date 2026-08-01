@@ -3,6 +3,7 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 
 // api/_entitlements.js
 var ENT_PREFIX = "ent:";
+var ORDER_PREFIX = "ord:";
 var VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 var AD_REWARD_CREDITS = 5;
 var AD_DAILY_CAP = 3;
@@ -68,6 +69,14 @@ async function grantAdReward(env, saveId) {
   return ent;
 }
 __name(grantAdReward, "grantAdReward");
+async function claimOrder(env, saveId, orderId) {
+  const key = ORDER_PREFIX + orderId;
+  const owner = await env.DIGIAPP_SAVES.get(key);
+  if (owner && owner !== saveId) return { ok: false, reason: "order-in-use" };
+  if (!owner) await env.DIGIAPP_SAVES.put(key, saveId);
+  return { ok: true };
+}
+__name(claimOrder, "claimOrder");
 async function applyVerifiedPurchase(env, saveId, { orderId, grantTier, grantCredits }) {
   const ent = await readEntitlement(env, saveId);
   if (orderId && ent.consumedOrders.includes(orderId)) {
@@ -294,9 +303,10 @@ async function verifySteamOwnership(env, { ticket }) {
     return { ok: false, reason: "verification-failed" };
   }
   if (!auth.ok) return auth;
+  if (auth.steamId !== auth.ownerSteamId) return { ok: false, reason: "family-shared" };
   let owns = false;
   try {
-    const url = `${STEAM_PUBLIC}/ISteamUser/CheckAppOwnership/v2/?key=${encodeURIComponent(cfg.key)}&steamid=${encodeURIComponent(auth.ownerSteamId)}&appid=${encodeURIComponent(cfg.appId)}`;
+    const url = `${STEAM_PUBLIC}/ISteamUser/CheckAppOwnership/v2/?key=${encodeURIComponent(cfg.key)}&steamid=${encodeURIComponent(auth.steamId)}&appid=${encodeURIComponent(cfg.appId)}`;
     const res = await fetch(url);
     if (!res.ok) return { ok: false, reason: "verification-failed" };
     const data = await res.json().catch(() => null);
@@ -306,9 +316,11 @@ async function verifySteamOwnership(env, { ticket }) {
     return { ok: false, reason: "verification-failed" };
   }
   if (!owns) return { ok: false, reason: "not-purchased" };
+  const licenseKey = `steam:own:${cfg.appId}:${auth.steamId}`;
   return {
     ok: true,
-    orderId: `steam:own:${cfg.appId}:${auth.ownerSteamId}`,
+    orderId: licenseKey,
+    licenseKey,
     product: PRODUCTS["soulmon.unlock.full"]
   };
 }
@@ -355,7 +367,9 @@ var STATUS_BY_REASON = {
   "verification-failed": 502,
   "unknown-product": 400,
   "missing-token": 400,
-  "unsupported-transaction": 400
+  "unsupported-transaction": 400,
+  // 409: a compra é válida, mas já foi resgatada por outra conta Soulmon.
+  "order-in-use": 409
 };
 async function onRequestOptions() {
   return new Response(null, { headers: CORS });
@@ -388,6 +402,10 @@ async function onRequestPost({ request, env }) {
       { ok: false, reason: result.reason, status: result.status },
       STATUS_BY_REASON[result.reason] ?? 402
     );
+  }
+  const claim = await claimOrder(env, saveId, result.orderId);
+  if (!claim.ok) {
+    return json({ ok: false, reason: claim.reason }, STATUS_BY_REASON[claim.reason]);
   }
   const { ent, duplicate } = await applyVerifiedPurchase(env, saveId, {
     orderId: result.orderId,
@@ -783,18 +801,38 @@ async function onRequest({ request, env }) {
 }
 __name(onRequest, "onRequest");
 
-// api/entitlements.js
+// api/config.js
 var CORS4 = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
 async function onRequestOptions4() {
   return new Response(null, { headers: CORS4 });
 }
 __name(onRequestOptions4, "onRequestOptions");
-async function onRequestGet({ request, env }) {
+async function onRequestGet({ env }) {
+  return Response.json({
+    // true = todas as rotas de save/dinheiro exigem ID token do Firebase.
+    authRequired: !!env.FIREBASE_PROJECT_ID
+  }, {
+    headers: { ...CORS4, "Cache-Control": "public, max-age=300" }
+  });
+}
+__name(onRequestGet, "onRequestGet");
+
+// api/entitlements.js
+var CORS5 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
+async function onRequestOptions5() {
+  return new Response(null, { headers: CORS5 });
+}
+__name(onRequestOptions5, "onRequestOptions");
+async function onRequestGet2({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get("id");
   if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
@@ -804,7 +842,7 @@ async function onRequestGet({ request, env }) {
   const ent = await readEntitlement(env, saveId);
   return json3({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
-__name(onRequestGet, "onRequestGet");
+__name(onRequestGet2, "onRequestGet");
 async function onRequestPost3({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
@@ -833,15 +871,15 @@ async function onRequestPost3({ request, env }) {
 __name(onRequestPost3, "onRequestPost");
 
 // api/fcm-subscribe.js
-var CORS5 = {
+var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions5() {
-  return new Response(null, { status: 204, headers: CORS5 });
+async function onRequestOptions6() {
+  return new Response(null, { status: 204, headers: CORS6 });
 }
-__name(onRequestOptions5, "onRequestOptions");
+__name(onRequestOptions6, "onRequestOptions");
 async function onRequestPost4({ request, env }) {
   let body;
   try {
@@ -849,14 +887,14 @@ async function onRequestPost4({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const { token, digimonName, language } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
@@ -867,7 +905,7 @@ async function onRequestPost4({ request, env }) {
   );
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS5 }
+    headers: { "Content-Type": "application/json", ...CORS6 }
   });
 }
 __name(onRequestPost4, "onRequestPost");
@@ -878,21 +916,21 @@ async function onRequestDelete({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const { token } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS5 }
+      headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS5 }
+    headers: { "Content-Type": "application/json", ...CORS6 }
   });
 }
 __name(onRequestDelete, "onRequestDelete");
@@ -903,17 +941,17 @@ async function hashToken(token) {
 __name(hashToken, "hashToken");
 
 // api/generate-sprite.js
-var CORS6 = {
+var CORS7 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var HF_BASE = "https://platform.higgsfield.ai";
 var GEMINI_MODEL = "gemini-2.5-flash-image";
-async function onRequestOptions6() {
-  return new Response(null, { headers: CORS6 });
+async function onRequestOptions7() {
+  return new Response(null, { headers: CORS7 });
 }
-__name(onRequestOptions6, "onRequestOptions");
+__name(onRequestOptions7, "onRequestOptions");
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
   const auth = `Key ${env.HF_API_KEY}:${env.HF_SECRET}`;
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
@@ -981,13 +1019,13 @@ async function onRequestPost5({ request, env }) {
   try {
     const { prompt, referenceImageUrls } = await request.json();
     if (!prompt || typeof prompt !== "string") {
-      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS6 });
+      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS7 });
     }
     let hfError = null;
     if (env.HF_API_KEY && env.HF_SECRET) {
       try {
         const image = await generateHiggsfield(env, prompt, referenceImageUrls);
-        return Response.json({ image, provider: "higgsfield" }, { headers: CORS6 });
+        return Response.json({ image, provider: "higgsfield" }, { headers: CORS7 });
       } catch (err) {
         hfError = err.message;
         console.error("Higgsfield falhou, tentando fallback:", err.message);
@@ -995,71 +1033,71 @@ async function onRequestPost5({ request, env }) {
     }
     if (env.GEMINI_API_KEY) {
       const image = await generateGemini(env, prompt);
-      return Response.json({ image, provider: "gemini", hfError }, { headers: CORS6 });
+      return Response.json({ image, provider: "gemini", hfError }, { headers: CORS7 });
     }
-    return Response.json({ error: "image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)", hfError }, { status: 503, headers: CORS6 });
+    return Response.json({ error: "image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)", hfError }, { status: 503, headers: CORS7 });
   } catch (err) {
     console.error("generate-sprite error:", err);
-    return Response.json({ error: "internal error" }, { status: 500, headers: CORS6 });
+    return Response.json({ error: "internal error" }, { status: 500, headers: CORS7 });
   }
 }
 __name(onRequestPost5, "onRequestPost");
 
 // api/save.js
-var CORS7 = {
+var CORS8 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
-async function onRequestOptions7() {
-  return new Response(null, { headers: CORS7 });
+async function onRequestOptions8() {
+  return new Response(null, { headers: CORS8 });
 }
-__name(onRequestOptions7, "onRequestOptions");
+__name(onRequestOptions8, "onRequestOptions");
 async function onRequest2({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get("id");
   if (!saveId || !VALID_ID.test(saveId)) {
-    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS7 });
+    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS8 });
   }
   if (!env.DIGIAPP_SAVES) {
-    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS7 });
+    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS8 });
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
-    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS7 });
+    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS8 });
   }
   if (request.method === "GET") {
     const raw = await env.DIGIAPP_SAVES.get(saveId);
-    if (!raw) return Response.json({ found: false }, { headers: CORS7 });
+    if (!raw) return Response.json({ found: false }, { headers: CORS8 });
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
     state.accountTier = ent.tier;
     state.credits = ent.credits;
-    return Response.json({ found: true, state }, { headers: CORS7 });
+    return Response.json({ found: true, state }, { headers: CORS8 });
   }
   if (request.method === "POST") {
     const body = await request.json().catch(() => null);
-    if (!body?.state) return Response.json({ error: "Missing state" }, { status: 400, headers: CORS7 });
+    if (!body?.state) return Response.json({ error: "Missing state" }, { status: 400, headers: CORS8 });
     const state = { ...body.state };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
     await env.DIGIAPP_SAVES.put(saveId, JSON.stringify(state), { expirationTtl: 86400 * 365 });
-    return Response.json({ ok: true }, { headers: CORS7 });
+    return Response.json({ ok: true }, { headers: CORS8 });
   }
-  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS7 });
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS8 });
 }
 __name(onRequest2, "onRequest");
 
 // api/subscribe.js
-var CORS8 = {
+var CORS9 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions8() {
-  return new Response(null, { status: 204, headers: CORS8 });
+async function onRequestOptions9() {
+  return new Response(null, { status: 204, headers: CORS9 });
 }
-__name(onRequestOptions8, "onRequestOptions");
+__name(onRequestOptions9, "onRequestOptions");
 async function onRequestPost6({ request, env }) {
   let body;
   try {
@@ -1067,14 +1105,14 @@ async function onRequestPost6({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS8 }
+      headers: { "Content-Type": "application/json", ...CORS9 }
     });
   }
   const { endpoint, keys, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS8 }
+      headers: { "Content-Type": "application/json", ...CORS9 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -1085,7 +1123,7 @@ async function onRequestPost6({ request, env }) {
   );
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS8 }
+    headers: { "Content-Type": "application/json", ...CORS9 }
   });
 }
 __name(onRequestPost6, "onRequestPost");
@@ -1096,21 +1134,21 @@ async function onRequestDelete2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS8 }
+      headers: { "Content-Type": "application/json", ...CORS9 }
     });
   }
   const { endpoint } = body;
   if (!endpoint) {
     return new Response(JSON.stringify({ error: "Missing endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS8 }
+      headers: { "Content-Type": "application/json", ...CORS9 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS8 }
+    headers: { "Content-Type": "application/json", ...CORS9 }
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
@@ -1121,16 +1159,16 @@ async function hashEndpoint(endpoint) {
 __name(hashEndpoint, "hashEndpoint");
 
 // api/suggest-tasks.js
-var CORS9 = {
+var CORS10 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var VALID_CATEGORIES = ["Health", "Creativity", "Discipline", "Study", "Work", "Social", "Wellness", "Fitness"];
-async function onRequestOptions9() {
-  return new Response(null, { headers: CORS9 });
+async function onRequestOptions10() {
+  return new Response(null, { headers: CORS10 });
 }
-__name(onRequestOptions9, "onRequestOptions");
+__name(onRequestOptions10, "onRequestOptions");
 async function onRequestPost7({ request, env }) {
   try {
     const body = await request.json();
@@ -1138,10 +1176,10 @@ async function onRequestPost7({ request, env }) {
     const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === "pt-BR";
     if (!goalText && categories.length === 0) {
-      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS9 });
+      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS10 });
     }
     const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS9 });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS10 });
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
 Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
 that would help achieve that goal. Each task name must be short (max 40 chars), action-oriented, and
@@ -1167,7 +1205,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     });
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS9 });
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS10 });
     }
     const data = await groqRes.json();
     const raw = data.choices?.[0]?.message?.content ?? "[]";
@@ -1176,16 +1214,16 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       const match2 = raw.match(/\[[\s\S]*\]/);
       parsed = JSON.parse(match2 ? match2[0] : raw);
     } catch {
-      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS9 });
+      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS10 });
     }
     const suggestions = (Array.isArray(parsed) ? parsed : []).map((item) => ({
       name: (item?.name || "").toString().trim().slice(0, 60),
       category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
     })).filter((item) => item.name.length > 0).slice(0, 6);
-    return Response.json({ suggestions }, { headers: CORS9 });
+    return Response.json({ suggestions }, { headers: CORS10 });
   } catch (err) {
     console.error("suggest-tasks error:", err);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS9 });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS10 });
   }
 }
 __name(onRequestPost7, "onRequestPost");
@@ -1210,7 +1248,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-vIgzFj/functionsRoutes-0.5415911275365888.mjs
+// ../.wrangler/tmp/pages-7Zfjru/functionsRoutes-0.471795731030735.mjs
 var routes = [
   {
     routePath: "/api/billing",
@@ -1248,18 +1286,32 @@ var routes = [
     modules: [onRequestOptions3]
   },
   {
-    routePath: "/api/entitlements",
+    routePath: "/api/config",
     mountPath: "/api",
     method: "GET",
     middlewares: [],
     modules: [onRequestGet]
   },
   {
-    routePath: "/api/entitlements",
+    routePath: "/api/config",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
     modules: [onRequestOptions4]
+  },
+  {
+    routePath: "/api/entitlements",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet2]
+  },
+  {
+    routePath: "/api/entitlements",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions5]
   },
   {
     routePath: "/api/entitlements",
@@ -1280,7 +1332,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions5]
+    modules: [onRequestOptions6]
   },
   {
     routePath: "/api/fcm-subscribe",
@@ -1294,7 +1346,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions6]
+    modules: [onRequestOptions7]
   },
   {
     routePath: "/api/generate-sprite",
@@ -1308,7 +1360,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions7]
+    modules: [onRequestOptions8]
   },
   {
     routePath: "/api/subscribe",
@@ -1322,7 +1374,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions8]
+    modules: [onRequestOptions9]
   },
   {
     routePath: "/api/subscribe",
@@ -1336,7 +1388,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions9]
+    modules: [onRequestOptions10]
   },
   {
     routePath: "/api/suggest-tasks",

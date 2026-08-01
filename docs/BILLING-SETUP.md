@@ -43,6 +43,14 @@ app Android → Play (usuário paga) → purchaseToken
 (`functions/api/save.js`) e servidos a partir do entitlement, que só o servidor
 escreve. Sem isso, bastaria editar o localStorage para virar assinante.
 
+**Segunda regra:** um comprovante de compra pertence a **uma conta Soulmon**
+(`claimOrder`, registro `ord:` no KV). Isso não é detalhe — o desbloqueio
+completo é NÃO consumível, então `getPurchases()` da Play devolve ele para
+sempre: sem a trava, bastava sair, entrar com outro e-mail e tocar em
+"Restaurar compras" para clonar a conta paga sem limite. Vale igual para a
+posse do app na Steam. Reprocessar na **mesma** conta continua permitido — é o
+que faz o restore funcionar.
+
 Arquivos envolvidos:
 
 | Arquivo | Papel |
@@ -114,8 +122,14 @@ verificar. O provedor `steam` tem a mesma disciplina com as suas.
 
 | Corpo | O que concede | Como é verificado |
 |---|---|---|
-| `{ id, ticket }` | Tier **pago** | Session ticket → `AuthenticateUserTicket`, depois `CheckAppOwnership` no SteamID **dono** da licença |
+| `{ id, ticket }` | Tier **pago** | Session ticket → `AuthenticateUserTicket` + `CheckAppOwnership` |
 | `{ id, orderId }` | Créditos | `ISteamMicroTxn/QueryTxn` — só credita se `status === 'Succeeded'` |
+
+> **Family Sharing.** O ticket traz `steamid` (quem joga) e `ownersteamid`
+> (quem comprou). Exigimos que sejam **iguais**: quem pegou a biblioteca
+> emprestada joga, mas não herda o tier pago. Aceitar a posse do dono seria um
+> furo — o tier é gravado na conta Soulmon de quem pediu, então cada amigo
+> sairia com uma conta paga própria de uma compra só.
 
 Os `itemid` numéricos das microtransações estão em `STEAM_ITEMS`
 (`functions/api/_billing.js`) e precisam bater com os usados no `InitTxn`:

@@ -46,17 +46,25 @@ export function AccountSection({ language, theme = 'default', onEntitlementChang
       return;
     }
     setRestoring(true);
-    const restored = await restorePurchases();
+    const result = await restorePurchases();
     setRestoring(false);
-    if (restored) {
-      setEnt(restored);
-      onEntitlementChange?.(restored);
+    if (result.ok) {
+      setEnt(result.ent);
+      onEntitlementChange?.(result.ent);
       flash(isPt ? 'Compras restauradas!' : 'Purchases restored!');
-    } else {
-      flash(isPt
-        ? 'Nenhuma compra encontrada nesta conta Google.'
-        : 'No purchases found on this Google account.');
+      return;
     }
+    if (result.reason === 'order-in-use') {
+      // Uma compra pertence a uma conta Soulmon só. Sem explicar isso, o
+      // usuário legítimo que trocou de e-mail acharia que perdeu o que pagou.
+      flash(isPt
+        ? 'Esta compra já está vinculada a outra conta Soulmon. Entre com o e-mail usado na compra, ou fale com o suporte.'
+        : 'This purchase is already linked to another Soulmon account. Sign in with the email used at purchase, or contact support.');
+      return;
+    }
+    flash(isPt
+      ? 'Nenhuma compra encontrada nesta conta Google.'
+      : 'No purchases found on this Google account.');
   };
 
   const handleSignOut = async () => {

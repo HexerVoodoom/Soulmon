@@ -116,7 +116,7 @@ de verdade, faltam três coisas, nesta ordem:
 > regras de jogo em TypeScript solto é exatamente o tipo de coisa que gera um
 > bug de "perdi meus corações" impossível de reproduzir.
 
-### 2c. Autenticação no desktop 🔧 — **bloqueador silencioso**
+### 2c. Autenticação no desktop ✅ — era um **bloqueador silencioso**
 
 ⚠️ Isto é importante e não é óbvio: quando você definir `FIREBASE_PROJECT_ID`
 no Cloudflare (último passo do `BILLING-SETUP.md`), **todas** as rotas passam a
@@ -124,18 +124,25 @@ exigir um ID token do Firebase. O desktop, do jeito que veio do DigiApp,
 **não faz login** — ele simplesmente pararia de sincronizar, com um erro 403
 genérico.
 
-Plano (sem trabalho extra pra você):
+Como ficou (sem trabalho extra pra você):
 
-- O overlay já sabe abrir o app web completo numa `BrowserWindow`.
-- Essa janela recebe um preload próprio que, depois do login por link de
-  e-mail, envia o ID token para o processo principal por IPC.
-- O processo principal guarda o token (e o refresh) e injeta o
+- "Abrir Soulmon completo" abre o app web numa `BrowserWindow` com preload
+  próprio e sessão persistente.
+- Depois do login por link de e-mail, o app publica o ID token por IPC via
+  `onIdTokenChanged` — cobrindo login, logout **e** a renovação de hora em hora.
+- O processo principal guarda o token só em memória e injeta o
   `Authorization: Bearer` nas chamadas de sync.
-- Enquanto `FIREBASE_PROJECT_ID` não existir, tudo segue funcionando sem token
-  (é o modo de migração que já está no `_auth.js`).
+- O desktop pergunta ao servidor (`GET /api/config`) se o login é exigido:
+  - **exigido + sem sessão** → some o campo de e-mail, aparece "Entrar com
+    e-mail". Deixar o campo livre só produziria um 403 sem explicação.
+  - **exigido + com sessão** → o e-mail vem do token assinado, não é digitável,
+    e a primeira sincronização acontece sozinha.
+  - **não exigido** (modo de migração) → o campo de e-mail continua, porque é
+    assim que o app web funciona hoje.
 
-**Ordem correta:** ligar o login no servidor **depois** que o desktop souber
-autenticar. Se inverter, o desktop quebra para todo mundo que já instalou.
+**Ordem correta:** ligar o login no servidor **depois** de publicar uma versão
+do desktop com isso. Se inverter, o overlay para de sincronizar para quem já
+instalou.
 
 ---
 
@@ -220,11 +227,24 @@ colidirem).
 Na Steam há dois caminhos:
 
 - `{ id, ticket }` → **tier pago**, a partir da posse do app
-  (`AuthenticateUserTicket` + `CheckAppOwnership`). A checagem usa o SteamID
-  **dono** da licença, não o de quem está jogando — senão Family Sharing daria
-  tier pago para contas que nunca compraram.
+  (`AuthenticateUserTicket` + `CheckAppOwnership`).
 - `{ id, orderId }` → **créditos**, via `ISteamMicroTxn/QueryTxn`, só quando o
   status for `Succeeded`.
+
+### Uma compra = uma conta (as duas travas)
+
+Family Sharing e o "restaurar compras" atacam o mesmo ponto fraco: o benefício
+é gravado na conta Soulmon de **quem pediu**, e a lista `consumedOrders` vive
+dentro de cada conta — então em toda conta nova a mesma compra parece inédita.
+Duas travas fecham isso:
+
+1. **`steamid === ownersteamid`** no ticket. Quem pegou a biblioteca emprestada
+   joga, mas não herda o tier pago.
+2. **`claimOrder`** (registro `ord:` no KV): um comprovante pertence a uma
+   conta só, globalmente. Isso vale para as duas lojas — o desbloqueio da Play
+   é não consumível, então sem essa trava bastava trocar de e-mail e restaurar
+   para clonar a conta paga sem limite. Reprocessar na mesma conta continua
+   permitido, senão o restore legítimo pararia de funcionar.
 
 ⚠️ Fica **desligado** (503) enquanto `STEAM_PUBLISHER_KEY`/`STEAM_APP_ID` não
 existirem, e **nada disso foi testado contra a Valve** — não há App ID ainda.
