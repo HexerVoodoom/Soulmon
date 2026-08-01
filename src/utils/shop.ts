@@ -1,7 +1,7 @@
 // 🛒 Shop catalog — bought with minigame points (gamePoints).
 // Effects are applied in App.tsx (handleShopBuy); see docs/SHOP-PLAN.md.
 import type { ComponentType } from 'react';
-import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint } from 'lucide-react';
+import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint, Trophy, Flag, Medal, Award } from 'lucide-react';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from '../components/AlignmentIcons';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
@@ -217,18 +217,48 @@ export const SHOP_ITEMS: ShopItem[] = [
  * Ficam numa lista à parte (e numa aba própria) porque a regra é justamente
  * que as moedas não se misturam: quem joga minijogo não chega aqui, e quem
  * ganha no torneio não usa Emblema na loja comum.
+ *
+ * REGRA QUE NÃO PODE CAIR: tudo aqui é COSMÉTICO (`bg` ou `furniture`).
+ * Emblemas moram no save do cliente, como os Bits — quem editar o
+ * localStorage se dá quantos quiser. Isso é aceitável enquanto a aba só
+ * vende enfeite; no dia em que um item de torneio der vantagem de jogo,
+ * os Emblemas têm que ir para o servidor junto dos Créditos (ver
+ * functions/api/_entitlements.js). Há teste travando isso.
+ *
+ * Escada de preços pensada para 3 Emblemas por vitória: o primeiro item sai
+ * em ~5 vitórias e o último em ~23.
  */
 export const TOURNAMENT_ITEMS: ShopItem[] = [
+  { id: 'furniture-champion-banner', kind: 'furniture', icon: '🎌', displayIcon: Flag, currency: 'emblems',
+    namePt: 'Estandarte do Campeão', nameEn: "Champion's Banner",
+    descPt: 'Para não deixar ninguém esquecer', descEn: 'So nobody forgets',
+    price: 15 },
+  { id: 'furniture-medal-wall', kind: 'furniture', icon: '🏅', displayIcon: Medal, currency: 'emblems',
+    namePt: 'Mural de Medalhas', nameEn: 'Medal Wall',
+    descPt: 'Uma medalha para cada luta que valeu a pena', descEn: 'One medal for every fight worth having',
+    price: 20 },
+  { id: 'furniture-trophy-shelf', kind: 'furniture', icon: '🏆', displayIcon: Trophy, currency: 'emblems',
+    namePt: 'Estante de Troféus', nameEn: 'Trophy Shelf',
+    descPt: 'Mostra as suas conquistas no cantinho do pet', descEn: 'Shows your wins in the pet corner',
+    price: 25 },
   { id: 'bg-arena-champion', kind: 'bg', icon: '🏟️', currency: 'emblems',
     namePt: 'Arena dos Campeões', nameEn: "Champions' Arena",
     descPt: 'O cenário de quem já subiu ao pódio', descEn: 'The backdrop of those who reached the podium',
     price: 40 },
-  { id: 'furniture-trophy-shelf', kind: 'furniture', icon: '🏆', currency: 'emblems',
-    namePt: 'Estante de Troféus', nameEn: 'Trophy Shelf',
-    descPt: 'Mostra as suas conquistas no cantinho do pet', descEn: 'Shows your wins in the pet corner',
-    price: 25 },
-  { id: 'furniture-champion-banner', kind: 'furniture', icon: '🎌', currency: 'emblems',
-    namePt: 'Estandarte do Campeão', nameEn: "Champion's Banner",
-    descPt: 'Para não deixar ninguém esquecer', descEn: 'So nobody forgets',
-    price: 15 },
+  { id: 'furniture-podium', kind: 'furniture', icon: '🥇', displayIcon: Award, currency: 'emblems',
+    namePt: 'Pódio', nameEn: 'Podium',
+    descPt: 'O degrau mais alto, montado no box do pet', descEn: 'The top step, set up in the pet box',
+    price: 55 },
+  { id: 'bg-arena-spotlight', kind: 'bg', icon: '🌟', currency: 'emblems',
+    namePt: 'Arena sob Holofotes', nameEn: 'Spotlight Arena',
+    descPt: 'A luta principal da noite — e o pet é a atração', descEn: 'The main event of the night — and the pet is the draw',
+    price: 70 },
 ];
+
+/**
+ * Catálogo inteiro (loja comum + torneio). Use SEMPRE isto para RESOLVER um
+ * item por id — procurar só em SHOP_ITEMS faz o item de torneio comprado
+ * sumir na hora de renderizar (aconteceu com a mobília do torneio, que era
+ * comprável e equipável mas não aparecia no box do pet).
+ */
+export const ALL_SHOP_ITEMS: ShopItem[] = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS];

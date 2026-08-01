@@ -29,7 +29,7 @@ import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { hashString, creatureFormId } from './utils/oracle';
-import type { OracleInput } from './utils/oracle';
+import type { OracleInput, OracleResult } from './utils/oracle';
 import { getNextEvolution } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
@@ -37,7 +37,7 @@ import {
 } from './utils/careRules';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { SHOP_ITEMS, TOURNAMENT_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
+import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
@@ -47,7 +47,7 @@ import {
   type CreditPack,
 } from './utils/monetization';
 import { BITS_EXCHANGE } from './utils/currencies';
-import { fetchEntitlement, spendCredits, claimAdReward } from './utils/entitlements';
+import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
 const EVOLVE_SEGMENTS: Record<string, number> = {
@@ -57,6 +57,7 @@ const EVOLVE_SEGMENTS: Record<string, number> = {
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
+import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
@@ -258,6 +259,13 @@ export default function App() {
   // perder. Quem não deu e-mail no onboarding joga local — sem isso, uma
   // reinstalação apagaria tudo em silêncio.
   const [protectPrompt, setProtectPrompt] = useState<'evolution' | 'streak' | null>(null);
+
+  // Desbloqueio completo DENTRO do jogo (ver UnlockAccountModal.tsx). Só abre
+  // por toque do usuário; `upgradeRitual` é o ritual do oráculo que roda
+  // DEPOIS da compra, para quem entrou pelo caminho grátis e agora tem direito
+  // à criatura própria.
+  const [unlockReason, setUnlockReason] = useState<UnlockReason | null>(null);
+  const [upgradeRitual, setUpgradeRitual] = useState(false);
   // Booleanos, e não os arrays: dependendo de `unlockedEvolutions`/
   // `completedTasks` o efeito re-rodava a cada setGameState (a identidade do
   // array muda sempre), reiniciando o timer abaixo antes de ele disparar — o
@@ -1170,7 +1178,7 @@ export default function App() {
   }, [language, setGameState]);
 
   const handleShopBuy = useCallback((itemId: string): boolean => {
-    const item = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS].find(i => i.id === itemId);
+    const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return false;
     if (!isShopItemUnlocked(item, missionProgress)) return false;
     // Cada item cobra na SUA moeda — Emblemas (torneio) e Bits (minijogos)
@@ -1297,6 +1305,42 @@ export default function App() {
       },
     }));
     return true;
+  }, []);
+
+  // Desbloqueio completo comprado NO MEIO do jogo (UnlockAccountModal.tsx).
+  // O servidor já confirmou a compra quando isto roda.
+  const handleAccountUnlocked = useCallback((ent: Entitlement) => {
+    syncEntitlement(ent);
+    setUnlockReason(null);
+    // A compra promete "uma criatura gerada só pra você" — o ritual do oráculo
+    // é o que entrega isso. Sem este passo o jogador pagaria e continuaria com
+    // o personagem de demonstração.
+    setUpgradeRitual(true);
+  }, [syncEntitlement]);
+
+  // Fim do ritual pós-compra: troca SÓ a criatura. Estágio, atividades,
+  // tarefas, Bits e histórico continuam de pé — mandar quem acabou de pagar de
+  // volta pro Rookie seria punir a compra (diferente do reroll, que é escolha
+  // explícita e avisa que reseta).
+  const handleUpgradeRevealed = useCallback((result: OracleResult) => {
+    setUpgradeRitual(false);
+    const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
+    const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
+    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
+    setGameState(prev => ({
+      ...prev,
+      accountTier: 'paid',
+      eggType: genericLine,
+      demoCharacterId: undefined,
+      soulmonStages: result.creature.stages,
+      soulmonMeta: {
+        seed: result.seed,
+        baseName: result.creature.baseName,
+        dominantElement: result.dominantElement,
+        dominantAlignment: result.dominantAlignment,
+        dominantRealm: result.dominantRealm,
+      },
+    }));
   }, []);
 
   // 🔒 Evolution padlock (Evolution page): tapping the current Soulmon toggles
@@ -1648,8 +1692,31 @@ export default function App() {
     );
   }
 
+  // Ritual do oráculo pós-compra — ocupa a tela inteira como o onboarding, mas
+  // sem intro nem cadastro (ver SoulmonOnboarding mode='upgrade').
+  if (upgradeRitual) {
+    return (
+      <Suspense fallback={null}>
+        <SoulmonOnboarding
+          mode="upgrade"
+          onComplete={handleCompleteOnboarding}
+          onRevealed={handleUpgradeRevealed}
+          onCancel={() => setUpgradeRitual(false)}
+        />
+      </Suspense>
+    );
+  }
+
   return (
     <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'sm-app-bg' : `${getOuterContainerClass()} ${getContainerClass()}`}`}>
+        {unlockReason && (
+          <UnlockAccountModal
+            language={language}
+            reason={unlockReason}
+            onUnlocked={handleAccountUnlocked}
+            onClose={() => setUnlockReason(null)}
+          />
+        )}
         {protectPrompt && (
           <ProtectProgressModal
             language={language}
@@ -1976,6 +2043,24 @@ export default function App() {
             </div>
           )}
 
+          {/* Ponto de conversão natural: quem está de frente para a árvore de
+              um personagem de demonstração (as 3 linhas iguais) é exatamente
+              quem entende o que a própria árvore significa. Só aqui e no
+              limite de criação — em nenhum outro lugar do jogo. */}
+          {currentView === 'evolution' && gameState.demoCharacterId && theme === 'default' && (
+            <div style={{ padding: '0 4px 10px' }}>
+              <UnlockNudge
+                language={language}
+                reason="evolution"
+                variant={gameState.accountTier === 'paid' ? 'reveal' : 'buy'}
+                onOpen={() => {
+                  if (gameState.accountTier === 'paid') setUpgradeRitual(true);
+                  else setUnlockReason('evolution');
+                }}
+              />
+            </div>
+          )}
+
           {currentView === 'evolution' && (
             <Suspense fallback={null}><EvolutionPath
               currentStageId={gameState.evolutionStage}
@@ -2169,6 +2254,7 @@ export default function App() {
           activitiesCount={gameState.activities.length}
           activitiesCap={gameState.maxActivityCap}
           demoLimitReached={gameState.accountTier === 'demo' && !canCreateDemoTaskToday()}
+          onUnlock={() => { setCreateModalOpen(false); setUnlockReason('task-limit'); }}
           onSaveTask={(data) => {
             const newTask: Task = {
               id: `task-${Date.now()}`,

@@ -36,11 +36,25 @@ export type OnboardingCompleteData = {
 
 interface SoulmonOnboardingProps {
   onComplete: (data: OnboardingCompleteData) => void | Promise<void>;
+  /**
+   * 'upgrade' = o MESMO ritual do oráculo, mas para quem já joga e acabou de
+   * comprar o desbloqueio no meio do jogo. Pula a intro (não há mais o que
+   * escolher), o caminho demo e o cadastro (nickname/e-mail já existem), e
+   * termina no reveal chamando `onRevealed` — quem chama decide o que fazer
+   * com o progresso atual. Reaproveitar este componente é de propósito: um
+   * segundo quiz copiado divergiria em silêncio do original.
+   */
+  mode?: 'onboarding' | 'upgrade';
+  /** Só em 'upgrade': entrega o resultado do oráculo e encerra. */
+  onRevealed?: (result: OracleResult) => void;
+  /** Só em 'upgrade': desistir e voltar ao jogo. */
+  onCancel?: () => void;
 }
 
 interface SavedProfile extends OracleInput { seed: number }
 
-export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
+export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel }: SoulmonOnboardingProps) {
+  const isUpgrade = mode === 'upgrade';
   const isPt = resolveLanguage(localStorage.getItem(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
@@ -56,8 +70,10 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const REGISTER = REVEAL + 1;
   const DEMO_PICK = -1;
 
-  const [step, setStep] = useState(0);
-  const [flow, setFlow] = useState<'oracle' | 'demo' | null>(null);
+  // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
+  // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
+  const [step, setStep] = useState(isUpgrade ? 1 : 0);
+  const [flow, setFlow] = useState<'oracle' | 'demo' | null>(isUpgrade ? 'oracle' : null);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
@@ -92,8 +108,10 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
 
   // O denominador inclui o tutorial que vem DEPOIS do onboarding: antes a
   // barra chegava a 100% aqui e ainda apareciam várias telas, dando a
-  // impressão de que o fluxo tinha acabado.
-  const progress = Math.min(step, REGISTER) / (REGISTER + 1);
+  // impressão de que o fluxo tinha acabado. No upgrade não há tutorial nem
+  // cadastro depois — o reveal É o fim, e a barra pode chegar a 100%.
+  const lastStep = isUpgrade ? REVEAL : REGISTER;
+  const progress = Math.min(step, lastStep) / (isUpgrade ? lastStep : REGISTER + 1);
 
   const canAdvance = (): boolean => {
     if (step === 1) return fullName.trim().length >= 3;
@@ -129,7 +147,12 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     }
     setStep(s => s + 1);
   };
-  const back = () => setStep(s => Math.max(0, s - 1));
+  // No upgrade não existe passo 0 (intro): voltar da primeira pergunta é
+  // desistir do ritual e voltar ao jogo.
+  const back = () => {
+    if (isUpgrade && step === 1) { onCancel?.(); return; }
+    setStep(s => Math.max(isUpgrade ? 1 : 0, s - 1));
+  };
 
   // Máscara DD/MM/AAAA: só dígitos, insere as barras sozinho enquanto digita.
   const handleBirthDateChange = (raw: string) => {
@@ -250,7 +273,7 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     }}>
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
         {/* Barra de progresso */}
-        {step > 0 && step <= REGISTER && (
+        {step > 0 && step <= lastStep && (
           <div style={{ height: 10, background: 'var(--sm-line)', borderRadius: 8, marginBottom: 24, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${progress * 100}%`, background: 'var(--sm-primary)', borderRadius: 8, transition: 'width .3s' }} />
           </div>
@@ -460,8 +483,13 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
               </p>
             </div>
 
-            <button className="sm-btn" style={{ width: '100%' }} onClick={() => setStep(REGISTER)}>
-              {isPt ? 'Continuar' : 'Continue'}
+            <button
+              className="sm-btn" style={{ width: '100%' }}
+              onClick={() => { if (isUpgrade) onRevealed?.(result); else setStep(REGISTER); }}
+            >
+              {isUpgrade
+                ? (isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`)
+                : (isPt ? 'Continuar' : 'Continue')}
             </button>
           </div>
         )}

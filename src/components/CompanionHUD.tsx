@@ -4,7 +4,7 @@ import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
-import { SHOP_ITEMS } from '../utils/shop';
+import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
@@ -641,7 +641,9 @@ export const CompanionHUD = memo(function CompanionHUD({
       )}
       {/* Mobília equipada — badge decorativo no canto do box (utils/shop.ts kind:'furniture'). */}
       {!isWin98 && !isGlitch && equippedFurniture && (() => {
-        const furn = SHOP_ITEMS.find(i => i.id === equippedFurniture && i.kind === 'furniture');
+        // ALL_SHOP_ITEMS (não SHOP_ITEMS): a mobília do torneio vive na outra
+        // lista — procurar só na loja comum a fazia sumir depois de equipada.
+        const furn = ALL_SHOP_ITEMS.find(i => i.id === equippedFurniture && i.kind === 'furniture');
         if (!furn) return null;
         const FurnIcon = furn.displayIcon;
         return (

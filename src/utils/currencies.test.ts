@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { CURRENCIES, CREDIT_TO_BITS, BITS_EXCHANGE, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS } from './currencies';
-import { SHOP_ITEMS, TOURNAMENT_ITEMS } from './shop';
+import { SHOP_ITEMS, TOURNAMENT_ITEMS, ALL_SHOP_ITEMS } from './shop';
+import { PET_BACKGROUNDS } from './backgrounds';
 
 // As três moedas se distinguem pela ORIGEM, e é isso que define o que cada uma
 // pode fazer. Estes testes travam as fronteiras: se caírem, alguém compra com a
@@ -79,5 +80,48 @@ describe('ganho de Emblemas no torneio', () => {
     // Senão a aba inteira sai na primeira luta e não há progressão nenhuma.
     const maisBarato = Math.min(...TOURNAMENT_ITEMS.map(i => i.price));
     expect(maisBarato).toBeGreaterThan(EMBLEMS_PER_WIN);
+  });
+
+  it('a escada de preços tem degraus de verdade', () => {
+    // Um catálogo de preço único não é progressão — é uma compra só, repetida.
+    const precos = new Set(TOURNAMENT_ITEMS.map(i => i.price));
+    expect(precos.size).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('o torneio só vende cosmético', () => {
+  it('nenhum item do torneio muda o jogo', () => {
+    // Emblemas moram no SAVE DO CLIENTE, como os Bits — quem editar o
+    // localStorage se dá quantos quiser. Isso é aceitável exatamente
+    // enquanto a aba vende enfeite. No dia em que um item de torneio der
+    // vantagem (cura, atributo, evolução), este teste cai — e a resposta
+    // certa NÃO é afrouxá-lo, é mover os Emblemas para o servidor, junto
+    // dos Créditos (functions/api/_entitlements.js).
+    for (const item of TOURNAMENT_ITEMS) {
+      expect(['bg', 'furniture']).toContain(item.kind);
+      expect(item.attr).toBeUndefined();
+    }
+  });
+});
+
+describe('todo item comprável é renderizável', () => {
+  it('todo cenário à venda tem CSS', () => {
+    for (const item of ALL_SHOP_ITEMS.filter(i => i.kind === 'bg')) {
+      expect(PET_BACKGROUNDS[item.id], `sem CSS: ${item.id}`).toBeDefined();
+    }
+  });
+
+  it('toda mobília equipada é encontrável pelo catálogo completo', () => {
+    // O CompanionHUD resolve a mobília equipada por id em ALL_SHOP_ITEMS.
+    // Procurar só em SHOP_ITEMS fazia a mobília do torneio sumir do box
+    // depois de comprada e equipada.
+    for (const item of TOURNAMENT_ITEMS.filter(i => i.kind === 'furniture')) {
+      expect(ALL_SHOP_ITEMS.find(i => i.id === item.id && i.kind === 'furniture')).toBeDefined();
+    }
+  });
+
+  it('não há id repetido no catálogo inteiro', () => {
+    const ids = ALL_SHOP_ITEMS.map(i => i.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

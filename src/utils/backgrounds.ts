@@ -20,6 +20,17 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'linear-gradient(180deg, #2b2140 0%, #4a3866 58%, #7a5a2a 58%)',
     ].join(','),
   },
+  'bg-arena-spotlight': {
+    namePt: 'Arena sob Holofotes',
+    nameEn: 'Spotlight Arena',
+    css: [
+      'radial-gradient(70px 34px at 50% 88%, rgba(255,246,200,0.75), transparent 72%)',
+      'repeating-linear-gradient(200deg, rgba(255,246,200,0.16) 0 7px, transparent 7px 32px)',
+      'repeating-linear-gradient(160deg, rgba(255,246,200,0.16) 0 7px, transparent 7px 32px)',
+      'linear-gradient(180deg, transparent 74%, #3a3450 74%, #3a3450 78%, transparent 78%)',
+      'linear-gradient(180deg, #0d0a18 0%, #1a1430 52%, #2a2140 78%)',
+    ].join(','),
+  },
   'bg-room': {
     namePt: 'Quarto',
     nameEn: 'Bedroom',

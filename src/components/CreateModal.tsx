@@ -6,6 +6,7 @@ import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
 import { useItemForm, type Step } from '../hooks/useItemForm';
+import { UnlockNudge } from './UnlockAccountModal';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -33,6 +34,9 @@ interface CreateModalProps {
   activitiesCap?: number;
   /** Monetização (utils/monetization.ts): modo demo já usou a criação de hoje. */
   demoLimitReached?: boolean;
+  /** Abre a oferta de desbloqueio (UnlockAccountModal). Só faz sentido junto
+   *  com demoLimitReached — é o momento em que o limite dói. */
+  onUnlock?: () => void;
 }
 
 const CATEGORIES: ActivityCategory[] = [
@@ -51,7 +55,7 @@ const CATEGORIES: ActivityCategory[] = [
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false }: CreateModalProps) {
+export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false, onUnlock }: CreateModalProps) {
   const isWin98 = theme === 'win98';
   const isPt = language === 'pt-BR';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);
@@ -480,7 +484,15 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', gap: 10, padding: 16, background: 'var(--sm-surface)', borderTop: '1px solid var(--sm-line)' }}>
+        <div style={{ padding: 16, background: 'var(--sm-surface)', borderTop: '1px solid var(--sm-line)' }}>
+          {/* O botão desabilitado explica o limite, mas não oferece a saída —
+              é aqui, com a tarefa já escrita, que a compra faz sentido. */}
+          {demoLimitReached && onUnlock && (
+            <div style={{ marginBottom: 10 }}>
+              <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
           <button
             onClick={handleSave}
@@ -490,6 +502,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
           >
             {isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
           </button>
+          </div>
         </div>
       </div>
     </div>
