@@ -78,11 +78,22 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
   const [linkSent, setLinkSent] = useState(false);
 
   const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
-  const canFinish = nickname.trim().length >= 2 && email.trim().length > 0 && !submitting;
+  // No caminho grátis o e-mail é OPCIONAL: pedir dado de contato antes de a
+  // pessoa ter visto o pet andar é o maior ponto de abandono de um onboarding.
+  // Ele é pedido depois, quando já existe progresso a proteger (ver
+  // ProtectProgressModal). No caminho pago continua obrigatório — a compra fica
+  // amarrada ao saveId derivado do e-mail, e perder isso é bem pior.
+  const emailRequired = flow !== 'demo';
+  const canFinish = nickname.trim().length >= 2
+    && (!emailRequired || email.trim().length > 0)
+    && !submitting;
   const demoChar = flow === 'demo' && demoCharacterId ? PREMADE_CHARACTERS.find(c => c.id === demoCharacterId) ?? null : null;
   const registerDisplayName = demoChar?.name ?? result?.creature.baseName ?? '';
 
-  const progress = Math.min(step, REGISTER) / REGISTER;
+  // O denominador inclui o tutorial que vem DEPOIS do onboarding: antes a
+  // barra chegava a 100% aqui e ainda apareciam várias telas, dando a
+  // impressão de que o fluxo tinha acabado.
+  const progress = Math.min(step, REGISTER) / (REGISTER + 1);
 
   const canAdvance = (): boolean => {
     if (step === 1) return fullName.trim().length >= 3;
@@ -145,14 +156,16 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
     if (!canFinish) return;
     if (flow === 'demo' && !demoCharacterId) return;
     if (flow === 'oracle' && !result) return;
-    if (!isValidEmail(email)) { setEmailError(true); return; }
+    // Vazio é permitido no caminho grátis; se digitou algo, tem que ser válido.
+    if (email.trim().length > 0 && !isValidEmail(email)) { setEmailError(true); return; }
+    if (emailRequired && !isValidEmail(email)) { setEmailError(true); return; }
     setSubmitting(true);
 
     // Com o login por e-mail ligado, é preciso PROVAR a posse do e-mail antes
     // de criar o save — senão qualquer um poderia reivindicar o e-mail alheio
     // (o saveId é derivado dele). Manda o link e aguarda o retorno; o resto do
     // onboarding continua quando o app reabrir pelo link.
-    if (isAuthConfigured() && !(await getCurrentEmail())) {
+    if (email.trim().length > 0 && isAuthConfigured() && !(await getCurrentEmail())) {
       const sent = await sendLoginLink(email.trim().toLowerCase());
       setSubmitting(false);
       setLinkSent(sent.ok);
@@ -258,26 +271,33 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
                 ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA — única, só sua, com todas as suas evoluções.'
                 : 'Every soul carries a creature. Answer a few questions and reveal YOURS — unique, yours alone, with all its evolutions.'}
             </p>
+            {/* Começar grátis é o caminho PRINCIPAL. Pedir R$ 29,90 de quem
+                ainda não viu o app funcionar é o jeito mais caro de perder o
+                usuário; quem gostar encontra a compra no app inteiro. */}
             <button
               className="sm-btn" style={{ width: '100%' }}
+              onClick={() => { setFlow('demo'); setStep(DEMO_PICK); }}
+            >
+              {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
+            </button>
+            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '8px 0 18px' }}>
+              {isPt
+                ? 'Escolha um personagem pronto e comece em menos de um minuto.'
+                : 'Pick a ready-made character and start in under a minute.'}
+            </p>
+            <button
+              className="sm-btn sm-btn-secondary" style={{ width: '100%' }}
               onClick={handleUnlockFull}
               disabled={unlockLoading}
             >
               {unlockLoading
                 ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
-                : (isPt ? `Desbloquear completo — ${FULL_UNLOCK_PRICE_LABEL}` : `Unlock full game — ${FULL_UNLOCK_PRICE_LABEL}`)}
-            </button>
-            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '8px 0 18px' }}>
-              {isPt ? 'Compra única — seu próprio personagem, tarefas ilimitadas.' : 'One-time purchase — your own character, unlimited tasks.'}
-            </p>
-            <button
-              className="sm-btn sm-btn-secondary" style={{ width: '100%' }}
-              onClick={() => { setFlow('demo'); setStep(DEMO_PICK); }}
-            >
-              {isPt ? 'Experimentar grátis (demo)' : 'Try free (demo)'}
+                : (isPt ? `Já quero o completo — ${FULL_UNLOCK_PRICE_LABEL}` : `Get the full game — ${FULL_UNLOCK_PRICE_LABEL}`)}
             </button>
             <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '8px 0 0' }}>
-              {isPt ? 'Escolha um personagem pronto — 1 tarefa nova por dia.' : 'Pick a ready-made character — 1 new task per day.'}
+              {isPt
+                ? 'Compra única: personagem gerado só pra você e tarefas ilimitadas.'
+                : 'One-time purchase: a character generated just for you, unlimited tasks.'}
             </p>
             {unlockMessage && (
               <p style={{ fontSize: 12, color: '#e0483e', marginTop: 16, lineHeight: 1.5 }}>
@@ -453,9 +473,13 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
               {isPt ? 'Últimos detalhes' : 'Last details'}
             </h2>
             <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 20px' }}>
-              {isPt
-                ? 'Isso identifica você na Biblioteca/Torneio e sincroniza seu progresso na nuvem.'
-                : 'This identifies you in the Library/Tournament and syncs your progress to the cloud.'}
+              {emailRequired
+                ? (isPt
+                  ? 'Isso identifica você na Biblioteca/Torneio e sincroniza seu progresso na nuvem.'
+                  : 'This identifies you in the Library/Tournament and syncs your progress to the cloud.')
+                : (isPt
+                  ? 'Só falta um apelido para o seu Soulmon te conhecer.'
+                  : 'Just a nickname left, so your Soulmon knows who you are.')}
             </p>
 
             <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
@@ -471,6 +495,11 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
 
             <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
               {isPt ? 'Seu e-mail' : 'Your email'}
+              {!emailRequired && (
+                <span style={{ fontWeight: 600, color: 'var(--sm-muted)' }}>
+                  {isPt ? ' (opcional)' : ' (optional)'}
+                </span>
+              )}
             </label>
             <input style={input} type="email" value={email} autoComplete="email"
               onChange={e => { setEmail(e.target.value); setEmailError(false); }}
@@ -479,7 +508,9 @@ export function SoulmonOnboarding({ onComplete }: SoulmonOnboardingProps) {
             <p style={{ fontSize: 11.5, color: emailError ? '#e0483e' : 'var(--sm-muted)', margin: '6px 0 0' }}>
               {emailError
                 ? (isPt ? 'Digite um e-mail válido.' : 'Enter a valid email.')
-                : (isPt ? 'Obrigatório — garante que seu progresso não se perca ao trocar de aparelho.' : 'Required — makes sure your progress survives a device change.')}
+                : emailRequired
+                  ? (isPt ? 'Obrigatório — garante que seu progresso não se perca ao trocar de aparelho.' : 'Required — makes sure your progress survives a device change.')
+                  : (isPt ? 'Só serve para não perder o progresso ao trocar de aparelho. Dá pra deixar em branco e informar depois.' : 'Only used so your progress survives a device change. You can leave it blank and add it later.')}
             </p>
 
             {linkSent ? (

@@ -19,6 +19,7 @@ import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
+import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { Plus, Edit2 } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
@@ -251,6 +252,62 @@ export default function App() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Pedido de e-mail adiado: só aparece quando já existe progresso que doeria
+  // perder. Quem não deu e-mail no onboarding joga local — sem isso, uma
+  // reinstalação apagaria tudo em silêncio.
+  const [protectPrompt, setProtectPrompt] = useState<'evolution' | 'streak' | null>(null);
+  // Booleanos, e não os arrays: dependendo de `unlockedEvolutions`/
+  // `completedTasks` o efeito re-rodava a cada setGameState (a identidade do
+  // array muda sempre), reiniciando o timer abaixo antes de ele disparar — o
+  // pedido nunca aparecia.
+  const jaEvoluiu = (gameState.unlockedEvolutions?.length ?? 0) > 1;
+  const jaEngajou = (gameState.completedTasks?.length ?? 0) >= 5;
+  useEffect(() => {
+    if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
+    if (localStorage.getItem(STORAGE_KEYS.USER_EMAIL)) return;   // já protegido
+    // Um pedido por semana, no máximo: insistir todo dia vira ruído.
+    const last = Number(localStorage.getItem(STORAGE_KEYS.PROTECT_PROMPT_AT)) || 0;
+    if (Date.now() - last < 7 * 24 * 3600_000) return;
+    if (!jaEvoluiu && !jaEngajou) return;
+
+    // Espera o app assentar antes de aparecer. Na abertura já disputam espaço o
+    // pedido de notificação e o relatório diário — dois modais empilhados é
+    // confuso, e o de cima rouba o clique do de baixo (visto em teste).
+    const t = window.setTimeout(() => {
+      if (localStorage.getItem(STORAGE_KEYS.USER_EMAIL)) return;
+      setProtectPrompt(jaEvoluiu ? 'evolution' : 'streak');
+    }, 15_000);
+    return () => window.clearTimeout(t);
+  }, [hasCompletedOnboarding, hasCompletedTutorial, jaEvoluiu, jaEngajou]);
+
+  const dismissProtectPrompt = useCallback(() => {
+    localStorage.setItem(STORAGE_KEYS.PROTECT_PROMPT_AT, String(Date.now()));
+    setProtectPrompt(null);
+  }, []);
+
+  /** Passa o save local para a identidade do e-mail e sobe pra nuvem. */
+  const handleProtectProgress = useCallback(async (email: string) => {
+    const { emailToSaveId, cloudLoad, cloudSave } = await import('./utils/cloudSave');
+    const newSaveId = await emailToSaveId(email);
+
+    // Já existe um Soulmon nesse e-mail (outro aparelho): adota em vez de
+    // sobrescrever — apagar o save antigo de alguém seria bem pior do que
+    // perder o progresso local recente.
+    const existing = await cloudLoad(newSaveId);
+    localStorage.setItem(STORAGE_KEYS.USER_EMAIL, email);
+    localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
+    localStorage.setItem(STORAGE_KEYS.PROTECT_PROMPT_AT, String(Date.now()));
+    if (existing) {
+      localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(existing));
+      window.location.reload();
+      return;
+    }
+    await cloudSave(newSaveId, gameState);
+    setSaveId(newSaveId);
+    setProtectPrompt(null);
+    toast(language === 'pt-BR' ? 'Progresso salvo na nuvem!' : 'Progress saved to the cloud!');
+  }, [gameState, language]);
 
   // Sincroniza tier/créditos com o SERVIDOR ao abrir e ao trocar de save. O
   // que estiver no localStorage é só espelho — se alguém editou à mão, isto
@@ -1379,32 +1436,39 @@ export default function App() {
   };
 
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
-    // O e-mail (obrigatório desde o onboarding) vira a identidade de sync —
-    // mesmo mecanismo do login manual em Configurações (saveId = hash do e-mail).
-    const normalizedEmail = data.email.trim().toLowerCase();
-    const { emailToSaveId, cloudLoad } = await import('./utils/cloudSave');
-    const newSaveId = await emailToSaveId(normalizedEmail);
-
-    localStorage.setItem(STORAGE_KEYS.USER_EMAIL, normalizedEmail);
     localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
     localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
     setUserName(data.userName);
     setHasCompletedOnboarding(true);
 
-    // Esse e-mail já tem um Soulmon salvo na nuvem (reinstalação/outro
-    // aparelho) — adota o save existente em vez de sobrescrever com uma
-    // criatura nova. Precisa de reload: o gameState inteiro muda de baixo do
-    // GameStateProvider, o que setGameState não faz de forma segura.
-    const existing = await cloudLoad(newSaveId);
-    if (existing) {
-      localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
-      localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(existing));
-      window.location.reload();
-      return;
-    }
+    // E-mail é OPCIONAL no caminho grátis (ver SoulmonOnboarding). Sem ele o
+    // jogo roda local, com o saveId aleatório que já existe — e o app pede o
+    // e-mail depois, quando houver progresso a perder (ProtectProgressModal).
+    const normalizedEmail = data.email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setHasCompletedOnboarding(true);
+    } else {
+      // O e-mail vira a identidade de sync — mesmo mecanismo do login manual em
+      // Configurações (saveId = hash do e-mail).
+      const { emailToSaveId, cloudLoad } = await import('./utils/cloudSave');
+      const newSaveId = await emailToSaveId(normalizedEmail);
+      localStorage.setItem(STORAGE_KEYS.USER_EMAIL, normalizedEmail);
 
-    localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
-    setSaveId(newSaveId);
+      // Esse e-mail já tem um Soulmon salvo na nuvem (reinstalação/outro
+      // aparelho) — adota o save existente em vez de sobrescrever com uma
+      // criatura nova. Precisa de reload: o gameState inteiro muda de baixo do
+      // GameStateProvider, o que setGameState não faz de forma segura.
+      const existing = await cloudLoad(newSaveId);
+      if (existing) {
+        localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
+        localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(existing));
+        window.location.reload();
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
+      setSaveId(newSaveId);
+    }
 
     const newActivities: Activity[] = data.initialActivities.map((item, i) => ({
       id: `${Date.now() + i}`,
@@ -1556,6 +1620,15 @@ export default function App() {
 
   return (
     <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'sm-app-bg' : `${getOuterContainerClass()} ${getContainerClass()}`}`}>
+        {protectPrompt && (
+          <ProtectProgressModal
+            language={language}
+            reason={protectPrompt}
+            onDismiss={dismissProtectPrompt}
+            onConfirm={handleProtectProgress}
+          />
+        )}
+
         {/* Help Modal */}
         <HelpModal
           isOpen={showHelpModal}

@@ -14,6 +14,8 @@ export const STORAGE_KEYS = {
   DAILY_NOTIFICATION_CHECK: 'digiapp-daily-notification-check',
   SAVE_ID: 'digiapp-save-id',
   USER_EMAIL: 'digiapp-user-email',
+  /** Última vez que o app pediu o e-mail para proteger o progresso (epoch ms). */
+  PROTECT_PROMPT_AT: 'soulmon-protect-prompt-at',
   IS_SLEEPING: 'digiapp-is-sleeping',
   FOOD_FEED_TIMES: 'digiapp-food-feed-times',
   RUB_HEAL_DAY: 'digiapp-rub-heal-day',

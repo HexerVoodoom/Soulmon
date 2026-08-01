@@ -368,10 +368,28 @@ export function EvolutionPath({
 
       {/* Branch-Specific Evolution Path - Always visible */}
       <div className="space-y-3">
-        {branchPath.map((evolution, index) =>
-          renderEvolutionCard(evolution, colors, index, branchPath.length + 1),
+        {branchPath.length === 0 && !ultra ? (
+          // Sem a árvore do oráculo (save antigo ou incompleto) não há o que
+          // desenhar. Antes ficava só um vazio enorme abaixo dos botões, e a
+          // tela parecia quebrada.
+          <div className="sm-card" style={{ padding: 20, textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--sm-ink)' }}>
+              {isPt ? 'Sua árvore ainda não foi revelada' : 'Your tree hasn’t been revealed yet'}
+            </p>
+            <p style={{ margin: '6px 0 0', fontSize: 12.5, lineHeight: 1.6, color: 'var(--sm-muted)' }}>
+              {isPt
+                ? 'Cuide do seu Soulmon e conclua as tarefas do dia — as próximas formas aparecem aqui conforme ele evolui.'
+                : 'Care for your Soulmon and finish today’s tasks — the next forms show up here as it evolves.'}
+            </p>
+          </div>
+        ) : (
+          <>
+            {branchPath.map((evolution, index) =>
+              renderEvolutionCard(evolution, colors, index, branchPath.length + 1),
+            )}
+            {ultra && renderEvolutionCard(ultra, colors, branchPath.length, branchPath.length + 1)}
+          </>
         )}
-        {ultra && renderEvolutionCard(ultra, colors, branchPath.length, branchPath.length + 1)}
       </div>
     </div>
   );
