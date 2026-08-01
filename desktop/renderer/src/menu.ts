@@ -7,7 +7,10 @@ import {
   loadState, saveState, feedsLeft, todayKey, newTaskId, foodCount, firstFood,
   type DesktopState,
 } from './state';
-import { fetchRemoteSnapshot, isAuthRequired, pushCareAction, type RemoteSnapshot } from './cloudSync';
+import {
+  fetchRemoteSnapshot, isAuthRequired, pushCareAction, fetchWallet,
+  type RemoteSnapshot, type Wallet,
+} from './cloudSync';
 // As regras vêm do app, não de uma cópia — é o motivo de careRules.ts existir.
 import { feedFood, rubHeal, foodForCompletedTask, type CareState } from '../../../src/utils/careRules';
 import { eventPhrase } from './phrases';
@@ -23,6 +26,8 @@ let authRequired = true;
 let session: SoulmonAuthSession | null = null;
 /** Feedback da sincronização, mostrado no painel de Configurações. */
 let syncMessage: { text: string; error: boolean } | null = null;
+/** Carteira (mesma de todas as plataformas) — só leitura, null enquanto carrega. */
+let wallet: Wallet | null = null;
 const persist = () => {
   saveState(state);
   window.soulmonDesktop?.notifyStateChanged();
@@ -266,6 +271,27 @@ function renderSettings() {
   }
 
   content.appendChild(syncBox);
+
+  if (wallet) {
+    const box = document.createElement('div');
+    box.className = 'field-row';
+    const title = document.createElement('div');
+    title.className = 'panel-title';
+    title.style.fontSize = '11px';
+    title.textContent = t('Conta', 'Account');
+    const line = document.createElement('div');
+    line.className = 'status-line';
+    line.textContent = `${wallet.tier === 'paid' ? t('Completa', 'Full') : 'Demo'} · 💎 ${wallet.credits}`;
+    const hint2 = document.createElement('div');
+    hint2.className = 'field-hint';
+    hint2.textContent = t(
+      'Mesmo saldo do celular. Compras só no app da loja.',
+      'Same balance as your phone. Purchases happen in the store app.',
+    );
+    box.append(title, line, hint2);
+    content.appendChild(box);
+  }
+
   content.appendChild(button(`📱 ${t('Abrir Soulmon completo', 'Open full Soulmon')}`, () => window.soulmonDesktop?.openFullApp()));
 }
 
@@ -319,6 +345,9 @@ async function syncNow(email: string) {
   state.lastSyncAt = new Date().toISOString();
   persist();
   syncMessage = null;
+  // Carteira em segundo plano: não atrasa a tela, e falhar aqui não é erro de
+  // sincronização (o save já veio).
+  void fetchWallet(trimmed).then(w => { if (w) { wallet = w; render(); } });
   panel = 'main';
   status = t('Sincronizado com sucesso!', 'Synced successfully!');
   render();

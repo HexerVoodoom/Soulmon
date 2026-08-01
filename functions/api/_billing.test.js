@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   PRODUCTS, STEAM_ITEMS,
-  verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase,
+  verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase, isSteamOwnershipVoided,
 } from './_billing.js';
 
 // Estes testes protegem o portão do dinheiro do lado da Steam. Se algum cair,
@@ -183,5 +183,37 @@ describe('Steam — posse do app (tier pago)', () => {
     vi.stubGlobal('fetch', mockSteam({ AuthenticateUserTicket: 'http-error' }));
     expect(await verifySteamOwnership(STEAM_ENV, { ticket: 't' }))
       .toEqual({ ok: false, reason: 'steam-unreachable' });
+  });
+});
+
+describe('reembolso do JOGO na Steam (posse do app)', () => {
+  const LICENSE = 'steam:own:480:7656119';
+
+  it('reembolsou o jogo → posse some → benefício é revogado', async () => {
+    // Não precisa de session ticket: o SteamID já está no próprio orderId.
+    const fetchMock = mockSteam({ CheckAppOwnership: ownership(false) });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await isSteamOwnershipVoided(STEAM_ENV, { orderId: LICENSE })).toBe(true);
+    expect(fetchMock.mock.calls.map(c => String(c[0]))[0]).toContain('steamid=7656119');
+  });
+
+  it('ainda possui o jogo → nada muda', async () => {
+    vi.stubGlobal('fetch', mockSteam({ CheckAppOwnership: ownership(true) }));
+    expect(await isSteamOwnershipVoided(STEAM_ENV, { orderId: LICENSE })).toBe(false);
+  });
+
+  it('Steam fora do ar → null (mantém o benefício)', async () => {
+    vi.stubGlobal('fetch', mockSteam({ CheckAppOwnership: 'http-error' }));
+    expect(await isSteamOwnershipVoided(STEAM_ENV, { orderId: LICENSE })).toBeNull();
+  });
+
+  it('ignora orderId que não é de posse (microtransação)', async () => {
+    expect(await isSteamOwnershipVoided(STEAM_ENV, { orderId: 'steam:txn:999' })).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('sem credencial não consulta nada', async () => {
+    expect(await isSteamOwnershipVoided({}, { orderId: LICENSE })).toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

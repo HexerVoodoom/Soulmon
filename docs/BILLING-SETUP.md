@@ -222,6 +222,14 @@ A conferência é **preguiçosa**, não tem cron: acontece no `GET
 têm compras. Isso evita um worker novo com deploy e secrets próprios, e
 resolve o caso que importa — quem usa o app é exatamente quem passa por ali.
 
+Cobre as três origens de benefício:
+
+| Origem | Como é conferida |
+|---|---|
+| Compra na Play | `purchaseState === 1` |
+| Microtransação Steam | status `Refunded`/`PartialRefund`/`Chargeback` |
+| Posse do app na Steam (tier pago) | `CheckAppOwnership` com o SteamID guardado no próprio `orderId` da licença — não precisa de session ticket |
+
 Duas decisões que valem saber:
 
 - **Se a loja não responder, o benefício é MANTIDO.** Tirar o que o jogador
@@ -236,11 +244,6 @@ Duas decisões que valem saber:
    no mesmo instante, em aparelhos diferentes — e o prejuízo máximo é o app
    cobrar um gasto a menos. Para a escala atual é aceitável; se virar problema,
    migrar o registro de entitlement para Durable Objects (serializam por chave).
-
-1b. **Reembolso do JOGO na Steam** (não da microtransação) ainda não revoga o
-   tier pago. O tier vem da posse do app, e reconsultar a posse exige o session
-   ticket, que só existe com o app aberto. O caminho é o cliente Steamworks
-   reenviar o ticket periodicamente — depende do App ID.
 
 2. **Login por e-mail implementado, mas DESLIGADO até você configurar.** O
    código já está pronto (ver seção 7); enquanto as variáveis não existirem, o

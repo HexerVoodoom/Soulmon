@@ -23,7 +23,7 @@ import {
   VALID_ID, publicView, spendCredits, grantAdReward, auditRefunds,
 } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
-import { isPlayPurchaseVoided, isSteamPurchaseVoided } from './_billing.js';
+import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -50,11 +50,16 @@ export async function onRequestGet({ request, env }) {
   // Fica aqui, e não num cron, porque é o único ponto por onde toda conta ativa
   // passa — e é justamente quem usa o app que precisa perder o benefício
   // reembolsado. Se a loja não responder, o benefício é MANTIDO.
-  const { ent } = await auditRefunds(env, saveId, order => (
-    order.provider === 'steam'
-      ? isSteamPurchaseVoided(env, { orderId: order.orderId })
-      : isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken })
-  ));
+  const { ent } = await auditRefunds(env, saveId, order => {
+    if (order.provider !== 'steam') {
+      return isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken });
+    }
+    // Na Steam há duas origens de benefício, com conferências diferentes:
+    // posse do app (tier pago) e microtransação (créditos).
+    return String(order.orderId).startsWith('steam:own:')
+      ? isSteamOwnershipVoided(env, { orderId: order.orderId })
+      : isSteamPurchaseVoided(env, { orderId: order.orderId });
+  });
 
   return json({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }

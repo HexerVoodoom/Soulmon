@@ -132,11 +132,11 @@ arte final precisa ser desenhada:
 - Faixa etária / classificação de conteúdo (formulário da Steam).
 - EULA, se quiser um custom.
 
-## Um heads-up de produto
+## Um heads-up de produto (já tratado)
 
 O Soulmon Desktop roda como uma criatura que anda na barra de tarefas, sem uma
-janela "principal" tradicional ao abrir — um usuário da Steam pode achar
-estranho não ver uma janela de jogo comum ao clicar em "Jogar". Isso não impede
-a publicação (existem vários apps assim na Steam), mas vale abrir a janela de
-menu automaticamente no primeiro lançamento. Está listado como pendência de
-código na fase 3b do plano.
+janela "principal" tradicional — um usuário da Steam poderia clicar em "Jogar"
+e achar que nada aconteceu. Por isso o **menu abre sozinho no primeiro
+lançamento** (marcador em `userData`; nas vezes seguintes o app volta a ser só
+o pet na barra). Continua valendo conferir a primeira impressão com alguém de
+fora antes de publicar.

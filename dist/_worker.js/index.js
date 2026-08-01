@@ -428,6 +428,26 @@ async function verifySteamPurchase(env, { orderId }) {
   return { ok: true, orderId: `steam:txn:${params.orderid ?? orderId}`, product, productId };
 }
 __name(verifySteamPurchase, "verifySteamPurchase");
+async function isSteamOwnershipVoided(env, { orderId }) {
+  const cfg = steamConfig(env);
+  const match2 = /^steam:own:(\d{1,32}):(\d{1,32})$/.exec(String(orderId ?? ""));
+  if (!cfg || !match2) return null;
+  const steamId = match2[2];
+  try {
+    const url = `${STEAM_PUBLIC}/ISteamUser/CheckAppOwnership/v2/?key=${encodeURIComponent(cfg.key)}&steamid=${encodeURIComponent(steamId)}&appid=${encodeURIComponent(cfg.appId)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const owns = data?.appownership?.ownsapp;
+    if (owns === true) return false;
+    if (owns === false) return true;
+    return null;
+  } catch (err) {
+    console.error("refund check error (steam ownership):", err);
+    return null;
+  }
+}
+__name(isSteamOwnershipVoided, "isSteamOwnershipVoided");
 async function isSteamPurchaseVoided(env, { orderId }) {
   const cfg = steamConfig(env);
   const raw = String(orderId ?? "").replace(/^steam:txn:/, "");
@@ -938,7 +958,12 @@ async function onRequestGet2({ request, env }) {
   if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
-  const { ent } = await auditRefunds(env, saveId, (order) => order.provider === "steam" ? isSteamPurchaseVoided(env, { orderId: order.orderId }) : isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken }));
+  const { ent } = await auditRefunds(env, saveId, (order) => {
+    if (order.provider !== "steam") {
+      return isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken });
+    }
+    return String(order.orderId).startsWith("steam:own:") ? isSteamOwnershipVoided(env, { orderId: order.orderId }) : isSteamPurchaseVoided(env, { orderId: order.orderId });
+  });
   return json3({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
 __name(onRequestGet2, "onRequestGet");
@@ -1347,7 +1372,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-ss2rC0/functionsRoutes-0.29328948439928504.mjs
+// ../.wrangler/tmp/pages-Se8XVq/functionsRoutes-0.49761394559258787.mjs
 var routes = [
   {
     routePath: "/api/billing",

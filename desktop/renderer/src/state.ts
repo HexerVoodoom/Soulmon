@@ -8,6 +8,7 @@
 // são um CACHE de leitura; os campos de ação local ficam claramente separados.
 import { STORAGE_KEY } from './config';
 import type { GenericLine } from './sprites';
+import { recentFeeds, feedsLeft as sharedFeedsLeft } from '../../../src/utils/careRules';
 
 export interface DesktopTask {
   id: string;
@@ -47,9 +48,11 @@ export interface DesktopState {
   lastSyncAt: string | null;
 }
 
-// Regras espelhadas do mobile (CLAUDE.md): 5 comidas/hora, carinho cura 1×/dia.
-export const FOOD_LIMIT_PER_HOUR = 5;
-const HOUR = 60 * 60 * 1000;
+// O limite de comidas/hora NÃO é redefinido aqui: vem da mesma fonte que o app
+// do celular usa (src/utils/careRules.ts). Uma constante própria voltaria a ser
+// uma segunda cópia da regra — se alguém mudasse o limite lá, esta tela
+// continuaria conferindo o número velho.
+export { FOOD_LIMIT_PER_HOUR } from '../../../src/utils/careRules';
 
 function defaults(): DesktopState {
   return {
@@ -97,10 +100,15 @@ export function todayKey(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Quantas comidas ainda cabem na janela de 1h. */
+/**
+ * Quantas comidas ainda cabem na janela de 1h.
+ *
+ * Também PODA os timestamps vencidos no estado (efeito colateral proposital:
+ * sem isso a lista cresceria para sempre no localStorage).
+ */
 export function feedsLeft(state: DesktopState, now = Date.now()): number {
-  state.feedTimes = state.feedTimes.filter(t => now - t < HOUR);
-  return Math.max(0, FOOD_LIMIT_PER_HOUR - state.feedTimes.length);
+  state.feedTimes = recentFeeds(state.feedTimes, now);
+  return sharedFeedsLeft(state.feedTimes, now);
 }
 
 /** Total de comidas no bolso — o que a UI mostra. */

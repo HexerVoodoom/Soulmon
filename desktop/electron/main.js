@@ -6,6 +6,7 @@
 // janela separada com o menu de ações.
 const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage } = require('electron');
 const path = require('node:path');
+const fs = require('node:fs');
 const { autoUpdater } = require('electron-updater');
 
 // Builds de Steam (ver `npm run dist:steam` + desktop/STEAM.md) marcam
@@ -56,11 +57,36 @@ if (!gotLock) {
     screen.on('display-added', positionOverlay);
     screen.on('display-removed', positionOverlay);
 
+    // Primeiro lançamento: abre o menu sozinho. Sem isso o app "não faz nada"
+    // ao abrir — o pet aparece numa faixa fina da barra de tarefas e o usuário
+    // não tem como adivinhar que precisa clicar nele. Na Steam isso é pior
+    // ainda: clicou em "Jogar" e nenhuma janela apareceu.
+    if (isFirstRun()) setTimeout(() => createMenuWindow(), 1200);
+
     if (app.isPackaged && !isSteamBuild) {
       checkForUpdates();
       setInterval(checkForUpdates, 4 * 60 * 60 * 1000); // a cada 4h
     }
   });
+}
+
+/**
+ * É a primeira vez que este app roda nesta máquina?
+ *
+ * Marca com um arquivo em `userData` (e não no localStorage) porque quem
+ * decide é o processo principal, antes de qualquer janela existir. Erro de
+ * escrita = trata como "não é primeira vez": abrir o menu à toa toda vez
+ * incomodaria mais do que não abrir.
+ */
+function isFirstRun() {
+  try {
+    const marker = path.join(app.getPath('userData'), 'first-run-done');
+    if (fs.existsSync(marker)) return false;
+    fs.writeFileSync(marker, new Date().toISOString());
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function checkForUpdates() {

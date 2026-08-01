@@ -140,6 +140,37 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
   };
 }
 
+// ──────────────────────────────────────────────────────────────── carteira
+
+export interface Wallet {
+  tier: 'demo' | 'paid';
+  credits: number;
+}
+
+/**
+ * Saldo e tipo de conta, lidos do servidor.
+ *
+ * A carteira é a MESMA das outras plataformas (o entitlement é por conta, não
+ * por loja — ver functions/api/_entitlements.js), então crédito comprado no
+ * celular aparece aqui. É só leitura: o desktop não gasta nem concede nada.
+ */
+export async function fetchWallet(email: string): Promise<Wallet | null> {
+  const saveId = await emailToSaveId(email);
+  const session = (await window.soulmonDesktop?.getAuth()) ?? null;
+  const headers: Record<string, string> = session ? { Authorization: `Bearer ${session.token}` } : {};
+  try {
+    const res = await fetch(`${APP_URL}/api/entitlements?id=${saveId}`, { headers });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      tier: data?.tier === 'paid' ? 'paid' : 'demo',
+      credits: Number(data?.credits) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ───────────────────────────────────────────────────────── escrita de volta
 
 export type PushResult =

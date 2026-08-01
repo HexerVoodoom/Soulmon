@@ -343,15 +343,43 @@ export async function verifySteamPurchase(env, { orderId }) {
 }
 
 /**
+ * O jogador ainda possui o app na Steam? Cobre o reembolso do JOGO (que é de
+ * onde vem o tier pago na Steam), não de uma microtransação.
+ *
+ * Não precisa de session ticket: o ticket só serve para DESCOBRIR o SteamID, e
+ * ele já está gravado no próprio `orderId` da licença
+ * (`steam:own:<appid>:<steamid>`, ver verifySteamOwnership). Com o SteamID em
+ * mãos, `CheckAppOwnership` responde a qualquer momento.
+ *
+ * @returns {Promise<boolean|null>} `true` = não possui mais (reembolsou).
+ */
+export async function isSteamOwnershipVoided(env, { orderId }) {
+  const cfg = steamConfig(env);
+  const match = /^steam:own:(\d{1,32}):(\d{1,32})$/.exec(String(orderId ?? ''));
+  if (!cfg || !match) return null;
+  const steamId = match[2];
+
+  try {
+    const url = `${STEAM_PUBLIC}/ISteamUser/CheckAppOwnership/v2/`
+      + `?key=${encodeURIComponent(cfg.key)}&steamid=${encodeURIComponent(steamId)}&appid=${encodeURIComponent(cfg.appId)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const owns = data?.appownership?.ownsapp;
+    if (owns === true) return false;
+    if (owns === false) return true;
+    return null;
+  } catch (err) {
+    console.error('refund check error (steam ownership):', err);
+    return null;
+  }
+}
+
+/**
  * A microtransação da Steam foi reembolsada? Reembolso na Steam muda o status
  * da transação (`Refunded` / `PartialRefund` / `Chargeback`).
  *
  * Devolve `null` quando não deu para saber — quem chama mantém o benefício.
- *
- * ⚠️ Não cobre o tier pago vindo da POSSE do app: se o jogador reembolsar o
- * jogo na Steam, a posse deixa de existir e a próxima conferência precisa
- * reconsultar `CheckAppOwnership`. Isso exige o session ticket, que só existe
- * com o app aberto — está registrado como pendência no plano.
  *
  * @returns {Promise<boolean|null>}
  */

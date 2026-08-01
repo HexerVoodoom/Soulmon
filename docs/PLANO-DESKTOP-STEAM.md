@@ -162,7 +162,7 @@ instalou.
 | Integração Steamworks (`steamworks.js`) | O lado **cliente**: emitir o session ticket, chamar `InitTxn`/`FinalizeTxn`. Sem isso o servidor não tem o que verificar |
 | `steam_appid.txt` | Só em desenvolvimento; em produção a Steam injeta |
 | ~~Provider `steam` no `/api/billing`~~ | ✅ feito — ver fase 4 |
-| Primeira impressão | Abrir a janela de menu automaticamente no primeiro lançamento — um usuário da Steam clica em "Jogar" e espera **ver** alguma coisa, não só um bicho na barra de tarefas |
+| ~~Primeira impressão~~ | ✅ feito — o menu abre sozinho no primeiro lançamento (marcador em `userData`) |
 
 O provedor do servidor está pronto e desligado; o que falta é o cliente, e ele
 **depende do App ID real** para poder ser escrito e testado. É por isso que os
@@ -278,10 +278,10 @@ Os preços não precisam ser iguais nas duas lojas (e provavelmente não devem).
 
 ### Dívidas conhecidas desta fase 🔧
 
-1. **Reembolso.** Se o jogador comprar 400 créditos, gastar e pedir reembolso,
-   hoje o saldo não é estornado. Play tem a *Voided Purchases API*; Steam
-   reporta reembolsos no relatório de transações. Precisa de um job que leia os
-   dois e debite. Não é bloqueador de lançamento, mas é dinheiro real vazando.
+1. ~~**Reembolso.**~~ ✅ Resolvido: a conferência roda na leitura do saldo (no
+   máximo 1×/dia por conta) e desfaz compra da Play, microtransação da Steam e
+   posse do app na Steam. Se a loja não responder, o benefício é mantido — ver
+   `docs/BILLING-SETUP.md`.
 2. **Duas carteiras se o jogador usar e-mails diferentes** em cada loja. É
    inerente ao modelo por e-mail. Mitigação: deixar isso muito claro na tela de
    login do desktop.
