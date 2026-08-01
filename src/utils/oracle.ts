@@ -2235,8 +2235,12 @@ function composeSpritePrompt(args: {
     // resultados quase monocromáticos (uma cor só em tons diferentes) —
     // principalmente com paletas do tipo "crimson and charcoal-smoke". Este
     // pedido é explícito de propósito.
-    `Use at least three clearly distinct hues: the result must NOT be monochromatic, ` +
-    `not a single-hue tint and not grayscale.`
+    //
+    // Escala de cinza é EXCEÇÃO PERMITIDA: preto e branco lê como escolha de
+    // arte, enquanto o bicho inteiro tingido de um vermelho só parece filtro.
+    // Por isso o veto é ao TINGIMENTO de matiz única, não à falta de cor.
+    `Do not tint the whole creature in a single hue — use clearly distinct colors. ` +
+    `Grayscale/black-and-white is acceptable.`
   );
 }
 

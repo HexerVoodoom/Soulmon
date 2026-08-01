@@ -220,10 +220,13 @@ describe('generateOracle', () => {
       expect(s.imagePrompt).toContain('transparent background');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
-      // O gerador entregava criaturas quase monocromáticas; o pedido de cor é
-      // explícito e vale para TODOS os estágios.
-      expect(s.imagePrompt).toContain('must NOT be monochromatic');
-      expect(s.imagePrompt).toContain('at least three clearly distinct hues');
+      // O gerador entregava criaturas quase monocromáticas; o veto ao
+      // tingimento de matiz única vale para TODOS os estágios.
+      expect(s.imagePrompt).toContain('Do not tint the whole creature in a single hue');
+      // Escala de cinza é exceção permitida — preto e branco é escolha de arte,
+      // não falta de cor. Se alguém reintroduzir o veto, isto quebra.
+      expect(s.imagePrompt).toContain('Grayscale/black-and-white is acceptable');
+      expect(s.imagePrompt).not.toMatch(/not grayscale/i);
       // Bloco conceito no slot do subject: espécie curta + classe (+ adjetivo)
       const conceptMatch = s.imagePrompt.match(/transparent background: (.+?)\. /);
       expect(conceptMatch).not.toBeNull();
