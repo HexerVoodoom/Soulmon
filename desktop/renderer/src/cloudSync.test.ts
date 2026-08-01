@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emailToSaveId } from './cloudSync';
+import { emailToSaveId, normalizeForRules, isSaneCareState } from './cloudSync';
 import { emailToSaveId as appEmailToSaveId } from '../../../src/utils/cloudSave';
 import { MAX_HP_BY_FORM, FORM_REQUIREMENTS, getStageLevel } from '../../../src/types/progression';
 
@@ -59,5 +59,44 @@ describe('tabelas copiadas continuam iguais às do jogo', () => {
     for (const stage of ['rookie', 'ultra', 'champion-virus', 'ultimate-data', 'mega-vaccine']) {
       expect(desktopStageLevel(stage)).toBe(getStageLevel(stage));
     }
+  });
+});
+
+describe('proteção da escrita de volta', () => {
+  it('completa maxHealthPoints a partir do estágio', () => {
+    // O app recalcula esse campo ao carregar o save, então ele pode faltar num
+    // save antigo. Sem completar, Math.min(undefined, x) vira NaN e
+    // JSON.stringify(NaN) grava `null` — o HP do jogador some.
+    const n = normalizeForRules({ evolutionStage: 'mega-virus', healthPoints: 2 });
+    expect(n.maxHealthPoints).toBe(4);
+  });
+
+  it('preserva campos que não são de cuidado', () => {
+    const n = normalizeForRules({ evolutionStage: 'rookie', perfectDays: 9, soulmonStages: [1] });
+    expect(n.perfectDays).toBe(9);
+    expect(n.soulmonStages).toEqual([1]);
+  });
+
+  it('recusa estado com número inválido', () => {
+    expect(isSaneCareState({
+      healthPoints: NaN, maxHealthPoints: 3, energyPoints: 0,
+      virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
+    })).toBe(false);
+  });
+
+  it('recusa inventário com quantidade negativa', () => {
+    expect(isSaneCareState({
+      healthPoints: 1, maxHealthPoints: 3, energyPoints: 0,
+      virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
+      foodInventory: { '🍎': -1 },
+    })).toBe(false);
+  });
+
+  it('aceita um estado íntegro', () => {
+    expect(isSaneCareState({
+      healthPoints: 1.5, maxHealthPoints: 3, energyPoints: 1,
+      virusPoints: 0, dataPoints: 3, vaccinePoints: 1, totalXP: 40,
+      foodInventory: { '🍎': 1 },
+    })).toBe(true);
   });
 });

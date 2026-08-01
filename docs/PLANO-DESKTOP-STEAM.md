@@ -95,26 +95,23 @@ ler também: `eggType` (linha genérica do sprite), `demoCharacterId`, `energy`,
 `foodInventory`, `activities`/`tasks` do dia, `isSleeping`. Assim o menu mostra
 o estado real, não um estado paralelo inventado.
 
-### 2b. Escrita de volta 🔧 — o pulo do gato
+### 2b. Escrita de volta ✅ (cuidado) / 🔧 (tarefas)
 
-Hoje as ações do menu mexem só num estado local (`soulmon_desktop_v1`), de
-propósito, para não corromper o save real. Para "mexeu num, continua no outro"
-de verdade, faltam três coisas, nesta ordem:
+**Feito para carinho e comida.** As regras saíram do `App.tsx` para
+`src/utils/careRules.ts` e são importadas pelos DOIS apps — não há mais duas
+implementações da mesma regra. O desktop **relê o save antes de escrever** (o
+KV é last-write-wins, então montar o estado a partir do cache apagaria o que o
+celular fez), e há uma rede de segurança que aborta a gravação se a mutação
+produzir número inválido: `JSON.stringify(NaN)` vira `null`, e gravar isso
+apagaria o HP do jogador em silêncio. Isso pegou um bug real durante o
+desenvolvimento — um save sem `maxHealthPoints` zerava o HP no carinho.
 
-1. **Extrair as regras para módulos puros.** Hoje alimentar/carinho/concluir
-   tarefa vivem dentro de `src/App.tsx` (React). Precisam virar funções puras
-   (`src/utils/careRules.ts`) que recebem `GameState` e devolvem `GameState`,
-   usadas **tanto** pelo app quanto pelo desktop. Sem isso, as duas
-   implementações divergem e o save fica inconsistente.
-2. **`POST /api/save` a partir do desktop**, com debounce, relendo o estado
-   antes de aplicar cada ação.
-3. **Conflito:** o KV é *last-write-wins*. Para o overlay basta reler antes de
-   escrever. Se um dia houver edição simultânea real, o caminho é campo
-   `updatedAt` + merge por seção (ou migrar o save para Durable Object).
+**Ainda local: as tarefas.** As do desktop são texto livre; as do app nascem de
+atividades com agenda e categoria. Ligar uma na outra é decisão de produto, não
+encanamento — a UI diz claramente o que vale nos dois lados.
 
-> **Decisão que tomei:** não vou ligar a escrita antes do passo 1. Duplicar as
-> regras de jogo em TypeScript solto é exatamente o tipo de coisa que gera um
-> bug de "perdi meus corações" impossível de reproduzir.
+**Conflitos:** last-write-wins do KV, mitigado pela releitura. Para edição
+simultânea de verdade, campo `updatedAt` + merge por seção.
 
 ### 2c. Autenticação no desktop ✅ — era um **bloqueador silencioso**
 
@@ -369,7 +366,7 @@ Ver `docs/BILLING-SETUP.md` para o passo a passo. Resumo:
 3. Login no desktop (2c)                      ✅ feito
    └── só DEPOIS de publicar: ligar FIREBASE_PROJECT_ID
 4. Provider steam no /api/billing (Fase 4)    ✅ feito (desligado até ter credencial)
-5. Extrair regras puras + escrita (2b)        ← eu executo, próximo
+5. Extrair regras puras + escrita (2b)        ✅ feito (cuidado; tarefas seguem locais)
 6. Play Store no ar                           ← depende de 🔴
 7. Cliente Steamworks no desktop              ← depende de 🟠 7-8 (precisa do App ID)
 8. Steam no ar                                ← depende de 🟠 9-13

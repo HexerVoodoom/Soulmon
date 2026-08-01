@@ -37,10 +37,11 @@ completo e sair.
    linha evolutiva única**, gerada pelo oráculo no onboarding — a forma vem do
    save sincronizado, sempre. Por isso o e-mail é o controle central das
    Configurações, não um extra.
-2. **As ações do menu ainda são locais.** Carinho/comida/tarefas mexem só no
-   `soulmon_desktop_v1`, **não** no save real — de propósito, para uma mutação
-   incompatível com as regras do jogo não corromper o progresso do celular. A
-   própria UI diz isso. Ver "Radar" abaixo.
+2. **Carinho e comida escrevem no save real; tarefas não.** As regras vêm de
+   `src/utils/careRules.ts`, importadas pelo app do celular E por aqui — não
+   existe uma segunda implementação. As tarefas do desktop são texto livre,
+   enquanto as do app nascem de atividades com agenda e categoria; ligar uma na
+   outra é decisão de produto. A UI diz o que vale nos dois lados.
 
 ## Rodar em desenvolvimento (Windows)
 
@@ -158,16 +159,21 @@ migração de `functions/api/_auth.js`).
 Ver `docs/PLANO-DESKTOP-STEAM.md` para o plano completo (inclui Steam e a
 carteira cross-store). Resumo do que falta aqui:
 
-### Escrita de volta (sincronização completa)
+### Escrita de volta
 
-1. **Extrair as regras para módulos puros.** Hoje alimentar/carinho/tarefa
-   concluída vivem dentro de `src/App.tsx` (React). Precisam virar funções
-   puras usadas pelos dois lados — sem isso as implementações divergem.
-2. **`POST /api/save` a partir do desktop**, com debounce, relendo o estado
-   antes de aplicar cada ação.
-3. **Conflitos**: o KV é last-write-wins; pro overlay basta reler antes de
-   escrever. Para edição simultânea de verdade, campo `updatedAt` + merge por
-   seção.
+Feito para as ações de cuidado (`pushCareAction` em `cloudSync.ts`): relê o save
+antes de escrever, aplica a regra compartilhada e grava. Duas proteções que não
+são opcionais:
+
+- **Reler antes de escrever.** O KV é last-write-wins; montar o estado a partir
+  do cache local apagaria o que o celular fez desde a última sincronização.
+- **`isSaneCareState` aborta a gravação** se a mutação gerar número inválido.
+  `JSON.stringify(NaN)` vira `null`, e gravar isso apaga o progresso em
+  silêncio — foi exatamente o que aconteceu num save sem `maxHealthPoints`
+  durante o desenvolvimento.
+
+Falta: tarefas (decisão de produto) e merge por seção, se um dia houver edição
+simultânea de verdade.
 
 ### Outras ideias
 

@@ -30,6 +30,10 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput } from './utils/oracle';
 import { getNextEvolution } from './utils/dailyReset';
+import {
+  feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, foodForCompletedTask,
+  FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
+} from './utils/careRules';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
@@ -757,10 +761,8 @@ export default function App() {
           if (isEarlyStage) {
             energyGain = 1;
           } else {
-            const food = FOOD_BY_CATEGORY[task.category as keyof typeof FOOD_BY_CATEGORY];
-            if (food) {
-              newFoodInventory = { ...prev.foodInventory, [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1 };
-            }
+            // Mesma regra usada pelo app de desktop (utils/careRules.ts).
+            newFoodInventory = foodForCompletedTask(prev.foodInventory, task.category);
           }
 
           return {
@@ -956,44 +958,28 @@ export default function App() {
       return;
     }
 
+    // Comida comum: a regra mora em utils/careRules.ts, compartilhada com o app
+    // de desktop. Aqui ficam só os efeitos (som, animação, fala do pet).
+    // Só a decisão de RECUSAR precisa acontecer fora do updater (ela dispara
+    // fala/animação, que são efeitos colaterais — e efeito dentro de updater
+    // roda 2× no StrictMode). A mutação em si vai no updater, sobre o `prev`.
     const now = Date.now();
-    const recent = feedTimesRef.current.filter(t => now - t < 3600000);
-    if (recent.length >= 5) {
+    const before = recentFeeds(feedTimesRef.current, now);
+    feedTimesRef.current = before;
+    if ((gameState.foodInventory[foodEmoji] ?? 0) <= 0) return;
+    if (before.length >= FOOD_LIMIT_PER_HOUR) {
+      localStorage.setItem(STORAGE_KEYS.FOOD_FEED_TIMES, JSON.stringify(before));
       setFullSignal(n => n + 1); // pet says "I'm full"
       return;
     }
-    const nextTimes = [...recent, now];
+    const nextTimes = [...before, now];
     feedTimesRef.current = nextTimes;
     localStorage.setItem(STORAGE_KEYS.FOOD_FEED_TIMES, JSON.stringify(nextTimes));
 
     playFeed();
-    setGameState(prev => {
-      const count = prev.foodInventory[foodEmoji] ?? 0;
-      if (count <= 0) return prev;
-
-      const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
-      if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
-
-      // Resolve category → attribute points from the food emoji
-      const foodDef = Object.values(FOOD_BY_CATEGORY).find(f => f.emoji === foodEmoji);
-      const attrs = foodDef ? CATEGORY_ATTRIBUTES[foodDef.category] : { virus: 0, data: 0, vaccine: 0 };
-
-      return {
-        ...prev,
-        // Energy gauge fills only by feeding, capped at the stage's energy bars
-        energyPoints: Math.min(getMaxEnergyForStage(prev.evolutionStage), (prev.energyPoints ?? 0) + 1),
-        foodInventory: newInventory,
-        virusPoints: prev.virusPoints + attrs.virus,
-        dataPoints: prev.dataPoints + attrs.data,
-        vaccinePoints: prev.vaccinePoints + attrs.vaccine,
-        totalXP: prev.totalXP + (attrs.virus + attrs.data + attrs.vaccine) * 10,
-        attributesSinceLastEvolution: {
-          virus: (prev.attributesSinceLastEvolution?.virus ?? 0) + attrs.virus,
-          data: (prev.attributesSinceLastEvolution?.data ?? 0) + attrs.data,
-          vaccine: (prev.attributesSinceLastEvolution?.vaccine ?? 0) + attrs.vaccine,
-        },
-      };
-    });
+    // `before` é a janela ANTES desta comida, então a regra horária aqui chega
+    // à mesma conclusão da checagem acima.
+    setGameState(prev => feedFood(prev, foodEmoji, before, now).state);
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.healthPoints, gameState.maxHealthPoints, language]);
 
@@ -1329,7 +1315,6 @@ export default function App() {
   // Carinho: the ONLY way to heal HP. Called by CompanionHUD after every ~2s of
   // rubbing — each grant restores half a heart, capped at 1 full heart PER DAY
   // (so rubbing can't trivialize the daily heart loss). Animation always plays.
-  const RUB_HEAL_CAP = 1; // hearts per day
   const rubHealRef = useRef<{ date: string; healed: number }>(
     (() => {
       try {
@@ -1343,20 +1328,24 @@ export default function App() {
   const [healCapSignal, setHealCapSignal] = useState(0);
 
   const handlePet = useCallback(() => {
-    if (gameState.healthPoints >= gameState.maxHealthPoints) return;
+    // Regra em utils/careRules.ts, compartilhada com o app de desktop. A
+    // checagem usa só HP (deps estreitas de propósito: CompanionHUD é memo(),
+    // e depender do gameState inteiro anularia o memo — footgun 5).
     const today = new Date().toDateString();
-    if (rubHealRef.current.date !== today) rubHealRef.current = { date: today, healed: 0 };
-    if (rubHealRef.current.healed >= RUB_HEAL_CAP) {
-      setHealCapSignal(n => n + 1);
+    rubHealRef.current = rubHealRecordFor(rubHealRef.current, today);
+    const refused = rubRefusal(
+      gameState.healthPoints, gameState.maxHealthPoints, rubHealRef.current, today,
+    );
+    if (refused) {
+      // "Já está cheio" é silencioso; "acabou o carinho de hoje" o pet comenta.
+      if (refused === 'daily-cap') setHealCapSignal(n => n + 1);
       return;
     }
-    rubHealRef.current = { date: today, healed: rubHealRef.current.healed + 0.5 };
+    rubHealRef.current = { date: today, healed: rubHealRef.current.healed + RUB_HEAL_STEP };
     localStorage.setItem(STORAGE_KEYS.RUB_HEAL_DAY, JSON.stringify(rubHealRef.current));
     playFeed();
-    setGameState(prev => ({
-      ...prev,
-      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 0.5),
-    }));
+    // O teto do dia já foi conferido acima; aqui só a cura é aplicada.
+    setGameState(prev => rubHeal(prev, { date: today, healed: 0 }, today).state);
   }, [gameState.healthPoints, gameState.maxHealthPoints]);
 
   // targetStage é sempre um ID da árvore ('rookie' | 'champion-virus' | ...),

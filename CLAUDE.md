@@ -89,9 +89,13 @@ Estágios/HP máx: digiegg,baby-i=1 · baby-ii=2 · rookie/champion/ultimate=3 �
 - **Desktop (`desktop/`)**: app Electron separado — o pet anda numa faixa
   transparente na barra de tarefas do Windows. Build próprio
   (`npx vite build -c desktop/vite.config.ts`), `package.json` próprio, NÃO
-  entra no bundle do app web. Lê o save por `/api/save` (só leitura, v1) e se
-  autentica pela janela do app web (`auth-preload.js`). Ver `desktop/README.md`
-  e `docs/PLANO-DESKTOP-STEAM.md`.
+  entra no bundle do app web. Lê E escreve o save por `/api/save` (carinho e
+  comida; tarefas seguem locais) e se autentica pela janela do app web
+  (`auth-preload.js`). Ver `desktop/README.md` e `docs/PLANO-DESKTOP-STEAM.md`.
+- **`src/utils/careRules.ts`**: regras de cuidado (alimentar, carinho, tarefa →
+  comida) como funções PURAS, usadas pelo `App.tsx` **e** pelo desktop. Ao mudar
+  uma regra de cuidado, mude AQUI — não dentro do handler do App, senão os dois
+  apps divergem.
 - **Dinheiro** (`functions/api/_entitlements.js` + `_billing.js`): o cliente
   nunca decide tier/créditos, e **um comprovante de compra vale para uma conta
   só** (`claimOrder`). As duas regras têm testes; se algum cair, alguém ganha

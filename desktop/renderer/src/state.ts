@@ -30,8 +30,8 @@ export interface DesktopState {
   maxHearts: number;
   energy: number;
   maxEnergy: number;
-  /** Comida no bolso: soma do `foodInventory` do save. */
-  food: number;
+  /** Pastinha de comida do save (emoji → quantidade). */
+  foodInventory: Record<string, number>;
 
   // --- só do desktop ---
   language: 'pt-BR' | 'en';
@@ -61,7 +61,7 @@ function defaults(): DesktopState {
     maxHearts: 3,
     energy: 0,
     maxEnergy: 4,
-    food: 0,
+    foodInventory: {},
     language: 'pt-BR',
     tasks: [],
     sleeping: false,
@@ -101,6 +101,16 @@ export function todayKey(): string {
 export function feedsLeft(state: DesktopState, now = Date.now()): number {
   state.feedTimes = state.feedTimes.filter(t => now - t < HOUR);
   return Math.max(0, FOOD_LIMIT_PER_HOUR - state.feedTimes.length);
+}
+
+/** Total de comidas no bolso — o que a UI mostra. */
+export function foodCount(inventory: Record<string, number>): number {
+  return Object.values(inventory).reduce((sum, n) => sum + (Number(n) || 0), 0);
+}
+
+/** Primeira comida disponível, ou null. O desktop não escolhe sabor. */
+export function firstFood(inventory: Record<string, number>): string | null {
+  return Object.keys(inventory).find(k => (inventory[k] ?? 0) > 0) ?? null;
 }
 
 export function newTaskId(): string {

@@ -4,10 +4,12 @@
 import './menu.css';
 import { petSprite } from './sprites';
 import {
-  loadState, saveState, feedsLeft, todayKey, newTaskId,
+  loadState, saveState, feedsLeft, todayKey, newTaskId, foodCount, firstFood,
   type DesktopState,
 } from './state';
-import { fetchRemoteSnapshot, isAuthRequired } from './cloudSync';
+import { fetchRemoteSnapshot, isAuthRequired, pushCareAction, type RemoteSnapshot } from './cloudSync';
+// As regras vêm do app, não de uma cópia — é o motivo de careRules.ts existir.
+import { feedFood, rubHeal, foodForCompletedTask, type CareState } from '../../../src/utils/careRules';
 import { eventPhrase } from './phrases';
 
 const state: DesktopState = loadState();
@@ -86,7 +88,7 @@ function renderMain() {
   const header = document.createElement('div');
   header.className = 'panel-header';
   header.innerHTML = `<span class="panel-title">${state.stageName}</span>` +
-    `<span class="panel-stats">${heartsLabel()} · ⚡${state.energy}/${state.maxEnergy} · 🍎×${state.food}</span>`;
+    `<span class="panel-stats">${heartsLabel()} · ⚡${state.energy}/${state.maxEnergy} · 🍎×${foodCount(state.foodInventory)}</span>`;
   content.appendChild(header);
 
   const img = document.createElement('img');
@@ -118,14 +120,16 @@ function renderMain() {
     button(`➕ ${t('Nova tarefa', 'New task')}`, () => { panel = 'newTask'; render(); }),
   );
 
-  // As ações acima ainda são LOCAIS (fase 2b do plano). Dizer isso é melhor do
-  // que deixar o usuário achar que marcou a tarefa no celular também.
+  // Carinho e comida escrevem no save real quando há conta; tarefas ainda não
+  // (as do desktop são livres, as do app vêm de atividades com agenda). Dizer
+  // qual é qual evita o usuário achar que marcou a tarefa no celular também.
   const note = document.createElement('div');
   note.className = 'field-hint';
-  note.textContent = t(
-    'As ações daqui ainda ficam só no desktop — o app do celular é a fonte oficial.',
-    'Actions here stay on the desktop for now — the phone app is the official source.',
-  );
+  note.textContent = state.syncEmail
+    ? t('Carinho e comida valem no celular também. As tarefas daqui são só do desktop.',
+      'Petting and feeding also count on your phone. Tasks here are desktop-only.')
+    : t('Sem conta conectada, tudo aqui fica só no desktop.',
+      'Without a connected account, everything here stays on the desktop.');
   content.appendChild(note);
 }
 
@@ -311,7 +315,7 @@ async function syncNow(email: string) {
   state.maxHearts = s.maxHearts;
   state.energy = s.energy;
   state.maxEnergy = s.maxEnergy;
-  state.food = s.food;
+  state.foodInventory = s.foodInventory;
   state.lastSyncAt = new Date().toISOString();
   persist();
   syncMessage = null;
@@ -323,22 +327,78 @@ async function syncNow(email: string) {
 // ----------------------------------------------------------------- ações
 // Cada ação também manda um "efeito" (emoji + fala) pro overlay: o pet
 // visível é a faixa que anda na barra de tarefas, não esta janela.
-function doPet() {
-  const day = todayKey();
-  if (state.rubHealDay !== day && state.hearts < state.maxHearts) {
-    state.hearts = Math.min(state.maxHearts, state.hearts + 0.5);
-    state.rubHealDay = day;
-    persist();
-    status = eventPhrase('petHealed', state.language);
-  } else {
-    status = eventPhrase('pet', state.language);
-  }
-  window.soulmonDesktop?.sendEffect('💗', status);
+//
+// As ações de CUIDADO (carinho/comida) escrevem no save real quando há conta
+// sincronizada — o desktop vira um controle remoto do celular, não um jogo
+// paralelo. Sem conta, ficam locais (é o único jeito de o app fazer algo).
+
+/** Espelha o snapshot devolvido pelo servidor no estado local. */
+function applySnapshot(s: RemoteSnapshot) {
+  state.stage = s.stage;
+  state.stageName = s.stageName;
+  state.genericLine = s.genericLine;
+  state.demoCharacterId = s.demoCharacterId;
+  state.hearts = s.hearts;
+  state.maxHearts = s.maxHearts;
+  state.energy = s.energy;
+  state.maxEnergy = s.maxEnergy;
+  state.foodInventory = s.foodInventory;
+  state.lastSyncAt = new Date().toISOString();
+}
+
+/** Erro de escrita → fala do pet, sem inventar sucesso. */
+function pushFailed(reason: string) {
+  status = reason === 'unauthenticated'
+    ? t('Precisa entrar na conta de novo.', 'You need to sign in again.')
+    : t('Não consegui falar com o servidor.', "Couldn't reach the server.");
   render();
 }
 
+function doPet() {
+  const day = todayKey();
+  const jaCurouHoje = state.rubHealDay === day;
+
+  if (!state.syncEmail) {
+    // Sem conta: cai no comportamento local de sempre.
+    if (!jaCurouHoje && state.hearts < state.maxHearts) {
+      state.hearts = Math.min(state.maxHearts, state.hearts + 0.5);
+      state.rubHealDay = day;
+      persist();
+      status = eventPhrase('petHealed', state.language);
+    } else {
+      status = eventPhrase('pet', state.language);
+    }
+    window.soulmonDesktop?.sendEffect('💗', status);
+    render();
+    return;
+  }
+
+  // A animação toca sempre — carinho nunca é "rejeitado" visualmente.
+  status = eventPhrase('pet', state.language);
+  window.soulmonDesktop?.sendEffect('💗', status);
+  if (jaCurouHoje) { render(); return; }
+
+  void pushCareAction(state.syncEmail, remote => {
+    const r = rubHeal(remote as unknown as CareState, { date: day, healed: 0 }, day);
+    return r.refused ? null : (r.state as unknown as Record<string, unknown>);
+  }).then(res => {
+    if (res.ok) {
+      applySnapshot(res.snapshot);
+      state.rubHealDay = day;
+      persist();
+      status = eventPhrase('petHealed', state.language);
+      render();
+    } else if (res.reason === 'refused') {
+      render(); // HP já estava cheio no save real — só a animação mesmo.
+    } else {
+      pushFailed(res.reason);
+    }
+  });
+}
+
 function doFeed() {
-  if (state.food <= 0) {
+  const emoji = firstFood(state.foodInventory);
+  if (!emoji) {
     status = eventPhrase('noFood', state.language);
     render();
     return;
@@ -348,13 +408,45 @@ function doFeed() {
     render();
     return;
   }
-  state.food -= 1;
-  state.feedTimes.push(Date.now());
-  state.energy = Math.min(state.maxEnergy, state.energy + 1);
-  persist();
-  status = eventPhrase('feed', state.language);
-  window.soulmonDesktop?.sendEffect('🍖', status);
-  render();
+
+  if (!state.syncEmail) {
+    const local = feedFood(state as unknown as CareState, emoji, state.feedTimes, Date.now());
+    if (local.refused) {
+      status = eventPhrase(local.refused === 'no-stock' ? 'noFood' : 'full', state.language);
+      render();
+      return;
+    }
+    state.foodInventory = local.state.foodInventory;
+    state.energy = Math.min(state.maxEnergy, state.energy + 1);
+    state.feedTimes = local.feedTimes;
+    persist();
+    status = eventPhrase('feed', state.language);
+    window.soulmonDesktop?.sendEffect('🍖', status);
+    render();
+    return;
+  }
+
+  const now = Date.now();
+  const before = state.feedTimes;
+  void pushCareAction(state.syncEmail, remote => {
+    const r = feedFood(remote as unknown as CareState, emoji, before, now);
+    return r.refused ? null : (r.state as unknown as Record<string, unknown>);
+  }).then(res => {
+    if (res.ok) {
+      applySnapshot(res.snapshot);
+      state.feedTimes = [...before, now];
+      persist();
+      status = eventPhrase('feed', state.language);
+      window.soulmonDesktop?.sendEffect('🍖', status);
+      render();
+    } else if (res.reason === 'refused') {
+      // O save real discorda do cache (comida acabou no celular).
+      status = eventPhrase('noFood', state.language);
+      render();
+    } else {
+      pushFailed(res.reason);
+    }
+  });
 }
 
 function doShower() {
@@ -375,7 +467,9 @@ function toggleTask(id: string) {
   if (!task) return;
   task.completed = !task.completed;
   if (task.completed) {
-    state.food += 1;
+    // Tarefa do desktop não tem categoria; usa Study (🍎), a mesma comida que
+    // o app dá — a regra em si vem de careRules.foodForCompletedTask.
+    state.foodInventory = foodForCompletedTask(state.foodInventory, 'Study');
     status = eventPhrase('taskDone', state.language);
     window.soulmonDesktop?.sendEffect('🍎', status);
   }

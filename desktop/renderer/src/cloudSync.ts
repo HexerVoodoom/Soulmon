@@ -5,9 +5,9 @@
 // src/utils/cloudSave.ts ou de functions/api/_auth.js, o desktop lê um save
 // que não existe e mostra um bicho genérico sem dar nenhum erro visível.
 //
-// v1 é SOMENTE LEITURA: mostramos o estado real, mas as ações do menu ainda
-// ficam no estado local (ver state.ts e a fase 2b do
-// docs/PLANO-DESKTOP-STEAM.md).
+// Leitura (fetchRemoteSnapshot) e ESCRITA de volta (pushCareAction) das ações
+// de cuidado. As regras aplicadas são as de src/utils/careRules.ts — as mesmas
+// do app do celular, não uma cópia. Tarefas continuam locais (ver menu.ts).
 import { APP_URL } from './config';
 import type { GenericLine } from './sprites';
 
@@ -64,7 +64,8 @@ export interface RemoteSnapshot {
   maxHearts: number;
   energy: number;
   maxEnergy: number;
-  food: number;
+  /** Pastinha de comida do save (emoji → quantidade). */
+  foodInventory: Record<string, number>;
 }
 
 export type SyncResult =
@@ -123,8 +124,6 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
   const rawLine = state.eggType;
   const genericLine: GenericLine =
     rawLine === 'veemon' || rawLine === 'salamon' || rawLine === 'tapirmon' ? rawLine : 'tapirmon';
-  const inventory = (state.foodInventory ?? {}) as Record<string, number>;
-
   return {
     ok: true,
     snapshot: {
@@ -136,7 +135,126 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
       maxHearts: MAX_HP_BY_LEVEL[level] ?? 3,
       energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
       maxEnergy: ENERGY_BY_LEVEL[level] ?? 4,
-      food: Object.values(inventory).reduce<number>((sum, n) => sum + (Number(n) || 0), 0),
+      foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
     },
+  };
+}
+
+// ───────────────────────────────────────────────────────── escrita de volta
+
+export type PushResult =
+  | { ok: true; snapshot: RemoteSnapshot }
+  | { ok: false; reason: 'not-found' | 'unauthenticated' | 'network' | 'refused' };
+
+/**
+ * Aplica uma ação de cuidado no save REAL (o mesmo do celular).
+ *
+ * Sempre **relê antes de escrever**: o KV é last-write-wins, então mandar um
+ * estado montado a partir do cache local apagaria o que o celular fez desde a
+ * última sincronização. Reler → mutar → gravar mantém a janela de conflito em
+ * uma ida e volta.
+ *
+ * `mutate` recebe o GameState inteiro e devolve o novo, ou `null` para
+ * desistir (ex.: acabou a comida entre a leitura e a ação). As regras vêm de
+ * `src/utils/careRules.ts` — as MESMAS do app do celular, não uma cópia.
+ */
+export async function pushCareAction(
+  email: string,
+  mutate: (state: Record<string, unknown>) => Record<string, unknown> | null,
+): Promise<PushResult> {
+  const saveId = await emailToSaveId(email);
+  const session = (await window.soulmonDesktop?.getAuth()) ?? null;
+  const authHeader: Record<string, string> = session ? { Authorization: `Bearer ${session.token}` } : {};
+
+  let current: Record<string, unknown>;
+  try {
+    const res = await fetch(`${APP_URL}/api/save?id=${saveId}`, { headers: authHeader });
+    if (res.status === 401 || res.status === 403) return { ok: false, reason: 'unauthenticated' };
+    if (!res.ok) return { ok: false, reason: 'network' };
+    const data = await res.json().catch(() => null);
+    if (!data?.found || !data.state) return { ok: false, reason: 'not-found' };
+    current = data.state as Record<string, unknown>;
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+
+  const next = mutate(normalizeForRules(current));
+  if (!next) return { ok: false, reason: 'refused' };
+  // Rede de segurança: uma regra aplicada sobre um save incompleto pode gerar
+  // NaN (ex.: Math.min(undefined, x)), e JSON.stringify(NaN) vira `null` —
+  // gravar isso destruiria o progresso do jogador em silêncio. Melhor desistir
+  // da ação do que salvar lixo.
+  if (!isSaneCareState(next)) {
+    console.error('desktop: mutação gerou estado inválido, escrita abortada');
+    return { ok: false, reason: 'refused' };
+  }
+
+  try {
+    const res = await fetch(`${APP_URL}/api/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeader },
+      // `accountTier`/`credits` são removidos pelo servidor de qualquer jeito
+      // (functions/api/save.js) — o cliente nunca decide dinheiro.
+      body: JSON.stringify({ id: saveId, state: next }),
+    });
+    if (res.status === 401 || res.status === 403) return { ok: false, reason: 'unauthenticated' };
+    if (!res.ok) return { ok: false, reason: 'network' };
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+
+  return { ok: true, snapshot: snapshotOf(next) };
+}
+
+/**
+ * Completa os campos derivados que as regras de cuidado leem.
+ *
+ * `maxHealthPoints` é DERIVADO do estágio — o próprio app o recalcula ao
+ * carregar o save (GameStateContext). Um save antigo, ou salvo por uma versão
+ * anterior, pode não ter o campo; sem isto `Math.min(undefined, …)` viraria NaN
+ * e apagaria o HP do jogador.
+ */
+export function normalizeForRules(state: Record<string, unknown>): Record<string, unknown> {
+  const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
+  const level = stageLevel(stage);
+  return {
+    ...state,
+    healthPoints: Number.isFinite(state.healthPoints as number) ? state.healthPoints : 1,
+    maxHealthPoints: MAX_HP_BY_LEVEL[level] ?? 3,
+    energyPoints: Number.isFinite(state.energyPoints as number) ? state.energyPoints : 0,
+    foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
+    virusPoints: Number(state.virusPoints) || 0,
+    dataPoints: Number(state.dataPoints) || 0,
+    vaccinePoints: Number(state.vaccinePoints) || 0,
+    totalXP: Number(state.totalXP) || 0,
+    attributesSinceLastEvolution: (state.attributesSinceLastEvolution
+      ?? { virus: 0, data: 0, vaccine: 0 }) as Record<string, number>,
+  };
+}
+
+/** Os números que acabamos de mexer continuam sendo números? */
+export function isSaneCareState(state: Record<string, unknown>): boolean {
+  const nums = ['healthPoints', 'maxHealthPoints', 'energyPoints', 'virusPoints', 'dataPoints', 'vaccinePoints', 'totalXP'];
+  if (!nums.every(k => Number.isFinite(state[k] as number))) return false;
+  const inv = state.foodInventory as Record<string, number> | undefined;
+  if (inv && Object.values(inv).some(n => !Number.isFinite(n) || n < 0)) return false;
+  return (state.healthPoints as number) >= 0;
+}
+
+/** Extrai o snapshot de exibição de um GameState já em mãos. */
+function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
+  const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
+  const level = stageLevel(stage);
+  const rawLine = state.eggType;
+  return {
+    stage,
+    stageName: stageDisplayName(state, stage),
+    genericLine: rawLine === 'veemon' || rawLine === 'salamon' || rawLine === 'tapirmon' ? rawLine : 'tapirmon',
+    demoCharacterId: typeof state.demoCharacterId === 'string' ? state.demoCharacterId : undefined,
+    hearts: typeof state.healthPoints === 'number' ? state.healthPoints : 1,
+    maxHearts: MAX_HP_BY_LEVEL[level] ?? 3,
+    energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
+    maxEnergy: ENERGY_BY_LEVEL[level] ?? 4,
+    foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
   };
 }
