@@ -66,6 +66,8 @@ export interface RemoteSnapshot {
   maxEnergy: number;
   /** Pastinha de comida do save (emoji → quantidade). */
   foodInventory: Record<string, number>;
+  /** Tarefas pendentes de hoje, como estão no app. */
+  tasks: Array<{ id: string; name: string; emoji: string }>;
 }
 
 export type SyncResult =
@@ -136,8 +138,22 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
       energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
       maxEnergy: ENERGY_BY_LEVEL[level] ?? 4,
       foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
+      tasks: pendingTasks(state),
     },
   };
+}
+
+/** Tarefas ainda não concluídas, no formato mínimo que o overlay mostra. */
+function pendingTasks(state: Record<string, unknown>): Array<{ id: string; name: string; emoji: string }> {
+  const raw = Array.isArray(state.tasks) ? state.tasks : [];
+  return raw
+    .filter((t): t is Record<string, unknown> => !!t && typeof t === 'object' && !(t as { completed?: boolean }).completed)
+    .map(t => ({
+      id: String(t.id ?? ''),
+      name: String(t.name ?? ''),
+      emoji: String(t.emoji ?? '✅'),
+    }))
+    .filter(t => t.id && t.name);
 }
 
 // ──────────────────────────────────────────────────────────────── carteira
@@ -287,5 +303,6 @@ function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
     energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
     maxEnergy: ENERGY_BY_LEVEL[level] ?? 4,
     foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
+    tasks: pendingTasks(state),
   };
 }

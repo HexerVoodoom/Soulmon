@@ -163,3 +163,56 @@ export function foodForCompletedTask(
   if (!food) return inventory;
   return { ...inventory, [food.emoji]: (inventory[food.emoji] ?? 0) + 1 };
 }
+
+/** Fatia do GameState que a conclusão de tarefa lê e escreve. */
+export interface TaskState extends CareState {
+  tasks: Array<{ id: string; name: string; category: ActivityCategory; emoji: string; completed?: boolean }>;
+  completedTasks: Array<{ id: string; name: string; category: ActivityCategory; emoji: string; completedAt: string }>;
+  activityStats: Record<string, {
+    name: string; emoji: string; category: ActivityCategory; completionCount: number;
+  }>;
+}
+
+/** Histórico é limitado: a UI mostra no máximo os últimos 50, e uma lista sem
+ *  teto incha todo save (localStorage e nuvem). */
+const COMPLETED_HISTORY_CAP = 200;
+
+/**
+ * Conclui uma tarefa: tira da lista, grava no histórico, conta na estatística
+ * e entrega a comida da categoria.
+ *
+ * Vive aqui, e não dentro do App, porque o app de desktop faz exatamente a
+ * mesma coisa ao marcar uma tarefa — e duas implementações divergiriam (foi
+ * assim que o histórico e a estatística ficariam de fora no desktop).
+ *
+ * Retorna `null` se a tarefa não existe ou já estava concluída — quem chama
+ * trata como "nada a fazer", sem gravar.
+ */
+export function completeTask<T extends TaskState>(state: T, taskId: string, now = new Date()): T | null {
+  const task = state.tasks.find(t => t.id === taskId);
+  if (!task || task.completed) return null;
+
+  const activityKey = `task-${task.name}-${task.category}`;
+  const stats = state.activityStats[activityKey]
+    ?? { name: task.name, emoji: task.emoji, category: task.category, completionCount: 0 };
+
+  return {
+    ...state,
+    tasks: state.tasks.filter(t => t.id !== taskId),
+    completedTasks: [
+      ...state.completedTasks,
+      {
+        id: taskId,
+        name: task.name,
+        category: task.category,
+        emoji: task.emoji,
+        completedAt: now.toISOString(),
+      },
+    ].slice(-COMPLETED_HISTORY_CAP),
+    activityStats: {
+      ...state.activityStats,
+      [activityKey]: { ...stats, completionCount: stats.completionCount + 1 },
+    },
+    foodInventory: foodForCompletedTask(state.foodInventory, task.category),
+  };
+}

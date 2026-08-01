@@ -10,11 +10,11 @@ import { STORAGE_KEY } from './config';
 import type { GenericLine } from './sprites';
 import { recentFeeds, feedsLeft as sharedFeedsLeft } from '../../../src/utils/careRules';
 
-export interface DesktopTask {
+/** Tarefa de hoje, vinda do save do app. O desktop NÃO cria tarefas. */
+export interface RemoteTask {
   id: string;
   name: string;
-  completed: boolean;
-  createdAt: string;
+  emoji: string;
 }
 
 export interface DesktopState {
@@ -36,7 +36,8 @@ export interface DesktopState {
 
   // --- só do desktop ---
   language: 'pt-BR' | 'en';
-  tasks: DesktopTask[];
+  /** Espelho das tarefas pendentes do save — a fonte é sempre o app. */
+  tasks: RemoteTask[];
   sleeping: boolean;
   /** Timestamps (ms) das últimas comidas — janela deslizante de 5/hora, igual ao mobile. */
   feedTimes: number[];
@@ -121,6 +122,3 @@ export function firstFood(inventory: Record<string, number>): string | null {
   return Object.keys(inventory).find(k => (inventory[k] ?? 0) > 0) ?? null;
 }
 
-export function newTaskId(): string {
-  return `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-}

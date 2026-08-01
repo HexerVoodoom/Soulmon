@@ -31,7 +31,7 @@ import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput } from './utils/oracle';
 import { getNextEvolution } from './utils/dailyReset';
 import {
-  feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, foodForCompletedTask,
+  feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
   FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
 } from './utils/careRules';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
@@ -743,51 +743,15 @@ export default function App() {
         }
       }
 
-      // After 3 seconds, save to history, remove from list, and generate food
-      // Version B: attribute points come from feeding, not from task completion
+      // Depois de 3s: sai da lista, entra no histórico e vira comida. A
+      // transição toda mora em utils/careRules.ts — o app de desktop marca
+      // tarefa exatamente igual, e duas implementações divergiriam.
+      //
+      // (O ramo antigo de "estágio inicial dá energia em vez de comida" saiu:
+      // a árvore do Soulmon não tem mais ovo/baby, então getStageLevel nunca
+      // devolvia esses níveis e o ramo era inalcançável.)
       setTimeout(() => {
-        setGameState(prev => {
-          const activityKey = `task-${task.name}-${task.category}`;
-          const currentStats = prev.activityStats[activityKey] || {
-            name: task.name,
-            emoji: task.emoji,
-            category: task.category,
-            completionCount: 0,
-          };
-
-          const isEarlyStage = ['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage));
-          let newFoodInventory = prev.foodInventory;
-          let energyGain = 0;
-          if (isEarlyStage) {
-            energyGain = 1;
-          } else {
-            // Mesma regra usada pelo app de desktop (utils/careRules.ts).
-            newFoodInventory = foodForCompletedTask(prev.foodInventory, task.category);
-          }
-
-          return {
-            ...prev,
-            tasks: prev.tasks.filter(t => t.id !== taskId),
-            // Keep only the most recent 200 — the UI shows at most the last 50,
-            // and an unbounded list bloats every localStorage/cloud save.
-            completedTasks: [
-              ...prev.completedTasks,
-              {
-                id: taskId,
-                name: task.name,
-                category: task.category,
-                emoji: task.emoji,
-                completedAt: new Date().toISOString(),
-              },
-            ].slice(-200),
-            activityStats: {
-              ...prev.activityStats,
-              [activityKey]: { ...currentStats, completionCount: currentStats.completionCount + 1 },
-            },
-            foodInventory: newFoodInventory,
-            ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, getMaxEnergyForStage(prev.evolutionStage)) }),
-          };
-        });
+        setGameState(prev => completeTask(prev, taskId) ?? prev);
       }, 3000);
     }
   };

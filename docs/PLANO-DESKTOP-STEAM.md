@@ -95,7 +95,7 @@ ler também: `eggType` (linha genérica do sprite), `demoCharacterId`, `energy`,
 `foodInventory`, `activities`/`tasks` do dia, `isSleeping`. Assim o menu mostra
 o estado real, não um estado paralelo inventado.
 
-### 2b. Escrita de volta ✅ (cuidado) / 🔧 (tarefas)
+### 2b. Escrita de volta ✅
 
 **Feito para carinho e comida.** As regras saíram do `App.tsx` para
 `src/utils/careRules.ts` e são importadas pelos DOIS apps — não há mais duas
@@ -106,9 +106,11 @@ produzir número inválido: `JSON.stringify(NaN)` vira `null`, e gravar isso
 apagaria o HP do jogador em silêncio. Isso pegou um bug real durante o
 desenvolvimento — um save sem `maxHealthPoints` zerava o HP no carinho.
 
-**Ainda local: as tarefas.** As do desktop são texto livre; as do app nascem de
-atividades com agenda e categoria. Ligar uma na outra é decisão de produto, não
-encanamento — a UI diz claramente o que vale nos dois lados.
+**Decisão de produto tomada:** o desktop é um **controle remoto**, não um
+segundo jogo. Ele lista as tarefas reais do save e deixa marcá-las como feitas;
+criar, editar e apagar continua só no app. Isso mantém a agenda como dona da
+lista e evita duas noções diferentes de "tarefa" — mais simples para o usuário
+e para nós.
 
 **Conflitos:** last-write-wins do KV, mitigado pela releitura. Para edição
 simultânea de verdade, campo `updatedAt` + merge por seção.
@@ -366,7 +368,7 @@ Ver `docs/BILLING-SETUP.md` para o passo a passo. Resumo:
 3. Login no desktop (2c)                      ✅ feito
    └── só DEPOIS de publicar: ligar FIREBASE_PROJECT_ID
 4. Provider steam no /api/billing (Fase 4)    ✅ feito (desligado até ter credencial)
-5. Extrair regras puras + escrita (2b)        ✅ feito (cuidado; tarefas seguem locais)
+5. Extrair regras puras + escrita (2b)        ✅ feito (cuidado + tarefas)
 6. Play Store no ar                           ← depende de 🔴
 7. Cliente Steamworks no desktop              ← depende de 🟠 7-8 (precisa do App ID)
 8. Steam no ar                                ← depende de 🟠 9-13

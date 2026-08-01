@@ -22,10 +22,10 @@ Clicar no pet abre uma **janela separada, ao lado dele** (`menu.html` +
 As 4 ações de cuidado ficam **numa fileira de ícones própria**, separada do
 resto — tarefas e configurações são outra categoria:
 
-- ✅ **Tarefas** — marcar como feita (**dá +1 comida**) / desmarcar / excluir
-- ➕ **Nova tarefa**
-- ⚙️ **Configurações** — e-mail da conta (sincronização), idioma PT/EN, abrir o
-  Soulmon completo
+- ✅ **Tarefas de hoje** — as tarefas reais do app; marcar como feita dá +1
+  comida, igual no celular. **Criar, editar e apagar é no app** (a agenda
+  continua sendo dona da lista).
+- ⚙️ **Configurações** — conta, saldo, idioma PT/EN, abrir o Soulmon completo
 
 Na bandeja do sistema: mostrar/ocultar o pet, abrir o menu, abrir o Soulmon
 completo e sair.
@@ -37,11 +37,10 @@ completo e sair.
    linha evolutiva única**, gerada pelo oráculo no onboarding — a forma vem do
    save sincronizado, sempre. Por isso o e-mail é o controle central das
    Configurações, não um extra.
-2. **Carinho e comida escrevem no save real; tarefas não.** As regras vêm de
-   `src/utils/careRules.ts`, importadas pelo app do celular E por aqui — não
-   existe uma segunda implementação. As tarefas do desktop são texto livre,
-   enquanto as do app nascem de atividades com agenda e categoria; ligar uma na
-   outra é decisão de produto. A UI diz o que vale nos dois lados.
+2. **O desktop é um controle remoto, não um segundo jogo.** Carinho, comida e
+   marcar tarefa escrevem no save real; criar/editar/apagar tarefa e tudo mais
+   é no app. As regras vêm de `src/utils/careRules.ts`, importadas pelo app do
+   celular E por aqui — não existe uma segunda implementação.
 
 ## Rodar em desenvolvimento (Windows)
 
@@ -172,8 +171,8 @@ são opcionais:
   silêncio — foi exatamente o que aconteceu num save sem `maxHealthPoints`
   durante o desenvolvimento.
 
-Falta: tarefas (decisão de produto) e merge por seção, se um dia houver edição
-simultânea de verdade.
+Cobre carinho, comida e conclusão de tarefa. Falta só merge por seção, se um
+dia houver edição simultânea de verdade.
 
 ### Outras ideias
 

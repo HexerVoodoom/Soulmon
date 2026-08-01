@@ -4,7 +4,7 @@
 import './menu.css';
 import { petSprite } from './sprites';
 import {
-  loadState, saveState, feedsLeft, todayKey, newTaskId, foodCount, firstFood,
+  loadState, saveState, feedsLeft, todayKey, foodCount, firstFood,
   type DesktopState,
 } from './state';
 import {
@@ -12,7 +12,7 @@ import {
   type RemoteSnapshot, type Wallet,
 } from './cloudSync';
 // As regras vêm do app, não de uma cópia — é o motivo de careRules.ts existir.
-import { feedFood, rubHeal, foodForCompletedTask, type CareState } from '../../../src/utils/careRules';
+import { feedFood, rubHeal, completeTask, type CareState, type TaskState } from '../../../src/utils/careRules';
 import { eventPhrase } from './phrases';
 
 const state: DesktopState = loadState();
@@ -40,7 +40,7 @@ document.getElementById('btn-settings')!.addEventListener('click', () => { panel
 document.getElementById('btn-minimize')!.addEventListener('click', () => window.soulmonDesktop?.minimizeMenu());
 document.getElementById('btn-close')!.addEventListener('click', () => window.soulmonDesktop?.quit());
 
-type Panel = 'main' | 'tasks' | 'newTask' | 'settings';
+type Panel = 'main' | 'tasks' | 'settings';
 let panel: Panel = state.syncEmail ? 'main' : 'settings';
 let status = '';
 
@@ -85,7 +85,6 @@ function render() {
   content.innerHTML = '';
   if (panel === 'main') renderMain();
   else if (panel === 'tasks') renderTasks();
-  else if (panel === 'newTask') renderNewTask();
   else renderSettings();
 }
 
@@ -119,10 +118,10 @@ function renderMain() {
   );
   content.appendChild(careRow);
 
-  const pending = state.tasks.filter(task => !task.completed).length;
+  const pending = state.tasks.length;
   content.append(
-    button(`✅ ${t('Tarefas', 'Tasks')}${pending ? ` <span class="badge">${pending}</span>` : ''}`, () => { panel = 'tasks'; render(); }),
-    button(`➕ ${t('Nova tarefa', 'New task')}`, () => { panel = 'newTask'; render(); }),
+    button(`✅ ${t('Tarefas de hoje', "Today's tasks")}${pending ? ` <span class="badge">${pending}</span>` : ''}`,
+      () => { panel = 'tasks'; render(); }),
   );
 
   // Carinho e comida escrevem no save real quando há conta; tarefas ainda não
@@ -131,73 +130,60 @@ function renderMain() {
   const note = document.createElement('div');
   note.className = 'field-hint';
   note.textContent = state.syncEmail
-    ? t('Carinho e comida valem no celular também. As tarefas daqui são só do desktop.',
-      'Petting and feeding also count on your phone. Tasks here are desktop-only.')
-    : t('Sem conta conectada, tudo aqui fica só no desktop.',
-      'Without a connected account, everything here stays on the desktop.');
+    ? t('Tudo aqui vale no celular também. Criar e editar tarefas é no app.',
+      'Everything here also counts on your phone. Creating and editing tasks happens in the app.')
+    : t('Conecte a sua conta para cuidar do pet e marcar tarefas daqui.',
+      'Connect your account to care for your pet and check off tasks from here.');
   content.appendChild(note);
 }
 
 function renderTasks() {
   addBackHeader(t('Tarefas de hoje', "Today's tasks"));
+
+  if (!state.syncEmail) {
+    const aviso = document.createElement('div');
+    aviso.className = 'field-hint';
+    aviso.textContent = t(
+      'Conecte a sua conta para ver as tarefas do app aqui.',
+      'Connect your account to see your app tasks here.',
+    );
+    content.appendChild(aviso);
+    return;
+  }
+
   const list = document.createElement('div');
   list.className = 'task-list';
   if (state.tasks.length === 0) {
     const empty = document.createElement('div');
     empty.className = 'task-empty';
-    empty.textContent = t('Nenhuma tarefa ainda.', 'No tasks yet.');
+    empty.textContent = t('Nada pendente por hoje!', 'Nothing left for today!');
     list.appendChild(empty);
   }
   for (const task of state.tasks) {
     const row = document.createElement('div');
-    row.className = `task-row${task.completed ? ' done' : ''}`;
+    row.className = 'task-row';
     const toggle = document.createElement('button');
     toggle.className = 'task-toggle';
-    toggle.textContent = task.completed ? '☑' : '☐';
-    toggle.addEventListener('click', () => toggleTask(task.id));
+    toggle.textContent = '☐';
+    toggle.disabled = completing !== null;
+    toggle.addEventListener('click', () => doCompleteTask(task.id));
     const name = document.createElement('span');
     name.className = 'task-name';
-    name.textContent = task.name;
-    const del = document.createElement('button');
-    del.className = 'task-del';
-    del.textContent = '✕';
-    del.title = t('Excluir', 'Delete');
-    del.addEventListener('click', () => {
-      state.tasks = state.tasks.filter(other => other.id !== task.id);
-      persist();
-      render();
-    });
-    row.append(toggle, name, del);
+    name.textContent = `${task.emoji} ${task.name}`;
+    // Sem botão de excluir: criar, editar e apagar tarefa é no app. Aqui só
+    // dá pra marcar como feita — a agenda continua sendo dona da lista.
+    row.append(toggle, name);
     list.appendChild(row);
   }
   content.appendChild(list);
-  content.appendChild(button(`➕ ${t('Nova tarefa', 'New task')}`, () => { panel = 'newTask'; render(); }));
-}
 
-function renderNewTask() {
-  addBackHeader(t('Nova tarefa', 'New task'));
-  const form = document.createElement('form');
-  form.className = 'field-row';
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.maxLength = 60;
-  input.placeholder = t('O que precisa fazer?', 'What needs doing?');
-  const submit = document.createElement('button');
-  submit.type = 'submit';
-  submit.className = 'list-btn';
-  submit.textContent = t('Criar', 'Create');
-  form.append(input, submit);
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const name = input.value.trim();
-    if (!name) return;
-    state.tasks.push({ id: newTaskId(), name, completed: false, createdAt: new Date().toISOString() });
-    persist();
-    panel = 'tasks';
-    render();
-  });
-  content.appendChild(form);
-  input.focus();
+  const nota = document.createElement('div');
+  nota.className = 'field-hint';
+  nota.textContent = t(
+    'Criar e editar tarefas é no app do celular.',
+    'Creating and editing tasks happens in the phone app.',
+  );
+  content.appendChild(nota);
 }
 
 function lastSyncLabel(): string {
@@ -342,6 +328,7 @@ async function syncNow(email: string) {
   state.energy = s.energy;
   state.maxEnergy = s.maxEnergy;
   state.foodInventory = s.foodInventory;
+  state.tasks = s.tasks;
   state.lastSyncAt = new Date().toISOString();
   persist();
   syncMessage = null;
@@ -372,6 +359,7 @@ function applySnapshot(s: RemoteSnapshot) {
   state.energy = s.energy;
   state.maxEnergy = s.maxEnergy;
   state.foodInventory = s.foodInventory;
+  state.tasks = s.tasks;
   state.lastSyncAt = new Date().toISOString();
 }
 
@@ -491,19 +479,37 @@ function doSleepToggle() {
   render();
 }
 
-function toggleTask(id: string) {
-  const task = state.tasks.find(other => other.id === id);
-  if (!task) return;
-  task.completed = !task.completed;
-  if (task.completed) {
-    // Tarefa do desktop não tem categoria; usa Study (🍎), a mesma comida que
-    // o app dá — a regra em si vem de careRules.foodForCompletedTask.
-    state.foodInventory = foodForCompletedTask(state.foodInventory, 'Study');
-    status = eventPhrase('taskDone', state.language);
-    window.soulmonDesktop?.sendEffect('🍎', status);
-  }
-  persist();
+/** id da tarefa sendo marcada (trava a lista durante a ida ao servidor). */
+let completing: string | null = null;
+
+function doCompleteTask(id: string) {
+  if (!state.syncEmail || completing) return;
+  completing = id;
   render();
+
+  void pushCareAction(state.syncEmail, remote => {
+    // Mesma transição do app: sai da lista, entra no histórico, conta na
+    // estatística e vira comida (utils/careRules.ts).
+    const next = completeTask(remote as unknown as TaskState, id);
+    return next ? (next as unknown as Record<string, unknown>) : null;
+  }).then(res => {
+    completing = null;
+    if (res.ok) {
+      applySnapshot(res.snapshot);
+      persist();
+      status = eventPhrase('taskDone', state.language);
+      window.soulmonDesktop?.sendEffect('🍎', status);
+      panel = 'main';
+    } else if (res.reason === 'refused') {
+      // Já tinha sido concluída no celular — só some da lista.
+      state.tasks = state.tasks.filter(t => t.id !== id);
+      persist();
+    } else {
+      pushFailed(res.reason);
+      return;
+    }
+    render();
+  });
 }
 
 // ------------------------------------------------------------------- boot

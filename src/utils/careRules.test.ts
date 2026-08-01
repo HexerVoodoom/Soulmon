@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  feedFood, rubHeal, feedsLeft, foodForCompletedTask,
-  FOOD_LIMIT_PER_HOUR, RUB_HEAL_DAILY_CAP, type CareState,
+  feedFood, rubHeal, feedsLeft, foodForCompletedTask, completeTask,
+  FOOD_LIMIT_PER_HOUR, RUB_HEAL_DAILY_CAP, type CareState, type TaskState,
 } from './careRules';
 
 // Estas regras agora rodam nos DOIS apps (celular e desktop). Antes viviam
@@ -141,5 +141,60 @@ describe('tarefa concluída vira comida', () => {
     const depois = foodForCompletedTask(antes.foodInventory, 'Study');
     expect(depois).not.toBe(antes.foodInventory);
     expect(antes.dataPoints).toBe(0);
+  });
+});
+
+describe('concluir tarefa', () => {
+  const base = (): TaskState & { perfectDays?: number } => ({
+    ...estado({ foodInventory: {} }),
+    tasks: [
+      { id: 't1', name: 'Estudar', category: 'Study' as const, emoji: '📚' },
+      { id: 't2', name: 'Correr', category: 'Fitness' as const, emoji: '🏃' },
+    ],
+    completedTasks: [] as TaskState['completedTasks'],
+    activityStats: {} as TaskState['activityStats'],
+  });
+
+  it('tira da lista, grava no histórico e entrega a comida da categoria', () => {
+    const r = completeTask(base(), 't1', new Date('2026-08-03T10:00:00Z'))!;
+    expect(r.tasks.map(t => t.id)).toEqual(['t2']);
+    expect(r.completedTasks).toHaveLength(1);
+    expect(r.completedTasks[0]).toMatchObject({ id: 't1', name: 'Estudar', category: 'Study' });
+    expect(r.foodInventory).toEqual({ '🍎': 1 }); // Study → maçã
+  });
+
+  it('conta na estatística da atividade', () => {
+    const r1 = completeTask(base(), 't1')!;
+    const comSegunda = { ...r1, tasks: [...r1.tasks, { id: 't3', name: 'Estudar', category: 'Study' as const, emoji: '📚' }] };
+    const r2 = completeTask(comSegunda, 't3')!;
+    expect(r2.activityStats['task-Estudar-Study'].completionCount).toBe(2);
+  });
+
+  it('não dá atributo nem energia — isso vem de alimentar', () => {
+    const r = completeTask(base(), 't1')!;
+    expect(r.dataPoints).toBe(0);
+    expect(r.energyPoints).toBe(0);
+    expect(r.totalXP).toBe(0);
+  });
+
+  it('devolve null para tarefa inexistente ou já concluída', () => {
+    expect(completeTask(base(), 'nao-existe')).toBeNull();
+    const jaFeita = { ...base(), tasks: [{ id: 't1', name: 'X', category: 'Study' as const, emoji: '📚', completed: true }] };
+    expect(completeTask(jaFeita, 't1')).toBeNull();
+  });
+
+  it('limita o histórico para o save não inchar sem fim', () => {
+    const antigos = Array.from({ length: 200 }, (_, i) => ({
+      id: `old${i}`, name: 'x', category: 'Study' as const, emoji: '📚', completedAt: '2026-01-01',
+    }));
+    const r = completeTask({ ...base(), completedTasks: antigos }, 't1')!;
+    expect(r.completedTasks).toHaveLength(200);
+    expect(r.completedTasks.at(-1)!.id).toBe('t1');   // o novo entrou
+    expect(r.completedTasks[0].id).toBe('old1');      // o mais velho saiu
+  });
+
+  it('não mexe em campos fora do escopo', () => {
+    const comExtras = { ...base(), perfectDays: 5 };
+    expect(completeTask(comExtras, 't1')!.perfectDays).toBe(5);
   });
 });
