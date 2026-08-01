@@ -1,0 +1,1 @@
+const o="#39ff14",e={fontFamily:"'Courier New', ui-monospace, monospace",color:o,textShadow:"0 0 6px rgba(57,255,20,0.75)",letterSpacing:"1.5px",fontWeight:700},t="#1b8f3a",a={fontFamily:"'Courier New', ui-monospace, monospace",color:t,letterSpacing:"1px",fontWeight:700};export{a,e as b};

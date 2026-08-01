@@ -3,7 +3,7 @@ import { Gamepad2, Swords, Rabbit, Scissors, Trophy, ChevronRight, Gem } from 'l
 import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
-import { bitsStyle } from '../utils/currency';
+import { bitsStyle, bitsStyleLight } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -131,9 +131,13 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
             {totalPoints} Bits
           </span>
         ) : (
-          <span className="sm-card flex items-center gap-1.5" style={{ padding: '6px 12px' }}>
-            <Gem size={15} color="var(--sm-primary)" strokeWidth={2.2} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--sm-ink)' }}>{totalPoints}</span>
+          <span
+            className="sm-card flex items-center"
+            style={{ padding: '6px 12px' }}
+            title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
+          >
+            {/* Sem 💎: aquele ícone é dos Créditos (dinheiro real). Ver utils/currency.ts. */}
+            <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{totalPoints} Bits</span>
           </span>
         )}
       </div>

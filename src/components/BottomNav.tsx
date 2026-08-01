@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, Settings, TestTube2, Gem } from 'lucide-react';
+import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, Settings, RotateCcw, Gem } from 'lucide-react';
 import type { Language } from '../utils/i18n';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
@@ -49,8 +49,8 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
           </button>
           {onResetOnboarding && (
             <button className="win98-menu-item" onClick={onResetOnboarding}>
-              <TestTube2 size={14} />
-              Debug
+              <RotateCcw size={14} />
+              {isPt ? 'Recomeçar' : 'Start over'}
             </button>
           )}
         </div>
@@ -99,7 +99,7 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
       )}
 
       {/* Menu sanduíche — sempre por último (à direita de tudo). Agrega
-          Configurações + Debug num popover, em vez de dois botões soltos. */}
+          Configurações + Recomeçar num popover, em vez de dois botões soltos. */}
       <div style={{ position: 'relative', flex: 1, display: 'flex', height: '100%' }}>
         <button
           onClick={() => setMenuOpen(o => !o)}
@@ -159,8 +159,8 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
                     color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  <TestTube2 size={17} strokeWidth={2.2} color="var(--sm-muted)" />
-                  Debug
+                  <RotateCcw size={17} strokeWidth={2.2} color="#e0483e" />
+                  {isPt ? 'Recomeçar do zero' : 'Start over'}
                 </button>
               )}
             </div>

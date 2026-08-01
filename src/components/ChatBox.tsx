@@ -415,7 +415,11 @@ export function ChatBox({
                   ? 'w-[50px] h-[36px] bg-[#c0c0c0] text-black hover:bg-[#d0d0d0] disabled:bg-gray-400 disabled:opacity-50 rounded-[4px] transition-colors flex items-center justify-center relative'
                   : `w-[50px] h-[36px] ${isRecording ? 'bg-red-500/20' : 'bg-transparent'} text-white hover:bg-gray-600/20 disabled:opacity-50 rounded-[4px] transition-all flex items-center justify-center relative`
             }
-            style={{ 
+            style={{
+              // flexShrink:0 porque `w-[50px]` é só a largura BASE: num flex row
+              // o botão encolhia até ~18px em telas de 320px, virando um alvo de
+              // toque inutilizável (medido com Playwright).
+              flexShrink: 0,
               border: isGlitch ? '2px solid transparent' : isWin98 ? '2px solid white' : isRecording ? '1.1px solid #ef4444' : '1.1px solid #4a5565'
             }}
             title={isRecording ? 'Stop recording' : 'Record message'}

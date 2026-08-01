@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Gem, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa } from 'lucide-react';
+import { bitsStyleLight } from '../utils/currency';
+import { X, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa } from 'lucide-react';
 import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
@@ -135,8 +136,8 @@ export function ShopModal({
             onClick={e => { e.stopPropagation(); if (unlocked) buy(item); else setHintFor(showHint ? null : item.id); }}
             disabled={unlocked && !canBuy}
             className="sm-btn"
-            style={{ padding: '6px 12px', fontSize: '0.7rem', flexShrink: 0 }}>
-            {unlocked ? <><Gem size={13} strokeWidth={2.4} /> {item.price}</> : <Lock size={14} strokeWidth={2.4} />}
+            style={{ padding: '9px 14px', fontSize: '0.72rem', flexShrink: 0, minHeight: 38 }}>
+            {unlocked ? <>{item.price} Bits</> : <Lock size={14} strokeWidth={2.4} />}
           </button>
         )}
         {/* unlock hint "tooltip" — expands inside the card when tapped */}
@@ -211,9 +212,14 @@ export function ShopModal({
             {isPt ? 'Loja' : 'Shop'}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="sm-card" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px' }}>
-              <Gem size={14} color="var(--sm-primary)" strokeWidth={2.4} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--sm-ink)' }}>{points}</span>
+            {/* Bits, não Créditos: sem 💎 (o gem é dos créditos comprados com
+                dinheiro real). Ver utils/currency.ts. */}
+            <span
+              className="sm-card"
+              style={{ display: 'flex', alignItems: 'center', padding: '5px 10px' }}
+              title={isPt ? 'Bits — ganhe nos minijogos' : 'Bits — earn them in the minigames'}
+            >
+              <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{points} Bits</span>
             </span>
             <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
               <X size={18} strokeWidth={2.4} />
