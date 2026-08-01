@@ -31,6 +31,15 @@ function emptyEntitlement() {
     credits: 0,
     /** orderIds já creditados — impede reprocessar a mesma compra (replay). */
     consumedOrders: [],
+    /**
+     * O que cada compra concedeu, para poder ser DESFEITO num reembolso.
+     * `consumedOrders` guarda só o id: sem estes detalhes o servidor sabe que
+     * a compra existiu, mas não quanto devolver. Ver auditRefunds.
+     * `{ orderId, provider, productId, purchaseToken, grantTier, grantCredits, voided? }`
+     */
+    orderDetails: [],
+    /** Epoch ms da última conferência de reembolso (0 = nunca). */
+    auditedAt: 0,
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now(),
@@ -129,11 +138,16 @@ export async function claimOrder(env, saveId, orderId) {
 }
 
 /**
- * Aplica uma compra JÁ VERIFICADA na Google Play. `orderId` vem da Play e é
- * único por transação — se já foi consumido, a chamada é ignorada (o cliente
- * pode reenviar o mesmo token em retries/restore sem duplicar crédito).
+ * Aplica uma compra JÁ VERIFICADA na loja. `orderId` é único por transação —
+ * se já foi consumido, a chamada é ignorada (o cliente pode reenviar o mesmo
+ * token em retries/restore sem duplicar crédito).
+ *
+ * `provider`/`productId`/`purchaseToken` são guardados só para o reembolso
+ * saber o que desfazer depois (ver auditRefunds).
  */
-export async function applyVerifiedPurchase(env, saveId, { orderId, grantTier, grantCredits }) {
+export async function applyVerifiedPurchase(env, saveId, {
+  orderId, grantTier, grantCredits, provider, productId, purchaseToken,
+}) {
   const ent = await readEntitlement(env, saveId);
   if (orderId && ent.consumedOrders.includes(orderId)) {
     return { ent, duplicate: true };
@@ -142,9 +156,73 @@ export async function applyVerifiedPurchase(env, saveId, { orderId, grantTier, g
   if (grantCredits > 0) ent.credits += grantCredits;
   if (orderId) {
     ent.consumedOrders.push(orderId);
-    // Mantém a lista limitada — só precisamos do histórico recente pra replay.
+    ent.orderDetails.push({
+      orderId, provider, productId, purchaseToken,
+      grantTier: grantTier ?? null,
+      grantCredits: grantCredits ?? 0,
+    });
+    // Mantém as listas limitadas — só precisamos do histórico recente.
     if (ent.consumedOrders.length > 200) ent.consumedOrders = ent.consumedOrders.slice(-200);
+    if (ent.orderDetails.length > 200) ent.orderDetails = ent.orderDetails.slice(-200);
   }
   await writeEntitlement(env, saveId, ent);
   return { ent, duplicate: false };
+}
+
+/** Quanto tempo entre duas conferências de reembolso da mesma conta. */
+export const AUDIT_INTERVAL_MS = 24 * 60 * 60 * 1000;
+/** Teto de compras conferidas por rodada — evita estourar a quota da loja. */
+const AUDIT_MAX_ORDERS = 20;
+
+/**
+ * Desfaz as compras que a loja passou a reportar como reembolsadas.
+ *
+ * ## Por que é preguiçoso (sem cron)
+ *
+ * A alternativa clássica é um job periódico lendo a Voided Purchases API. Isso
+ * exigiria um worker novo, com deploy e secrets próprios. Para a escala deste
+ * app, conferir na leitura do saldo — no máximo 1× por dia por conta — chega no
+ * mesmo lugar sem nada disso, e se auto-corrige: a conta reembolsada perde o
+ * benefício na primeira vez que abrir o app.
+ *
+ * O preço: quem reembolsa e nunca mais abre o app fica marcado como pago no
+ * banco. Como ele não abre o app, isso não vale nada para ele.
+ *
+ * @param {(order) => Promise<boolean|null>} isVoided Consulta a loja. `true` =
+ *   reembolsada/cancelada, `false` = válida, `null` = não deu para saber (a
+ *   compra é MANTIDA — na dúvida nunca se tira o que o jogador pagou).
+ * @returns {Promise<{ ent: object, revoked: string[] }>}
+ */
+export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
+  const ent = await readEntitlement(env, saveId);
+  if (now - (ent.auditedAt || 0) < AUDIT_INTERVAL_MS) return { ent, revoked: [] };
+
+  const pending = ent.orderDetails.filter(o => !o.voided).slice(-AUDIT_MAX_ORDERS);
+  // Nada a conferir: sai SEM gravar. Senão toda leitura de uma conta que nunca
+  // comprou criaria um registro no KV só para anotar a data da conferência.
+  if (pending.length === 0) return { ent, revoked: [] };
+
+  const revoked = [];
+
+  for (const order of pending) {
+    let voided;
+    try {
+      voided = await isVoided(order);
+    } catch {
+      voided = null;
+    }
+    if (voided !== true) continue;
+
+    order.voided = true;
+    revoked.push(order.orderId);
+    if (order.grantTier === 'paid') ent.tier = 'demo';
+    // Créditos já gastos não voltam do nada: o saldo nunca fica negativo.
+    // O jogador que reembolsa depois de gastar sai no lucro dessa diferença —
+    // cobrar dele um saldo que não existe mais só criaria uma conta travada.
+    if (order.grantCredits > 0) ent.credits = Math.max(0, ent.credits - order.grantCredits);
+  }
+
+  ent.auditedAt = now;
+  await writeEntitlement(env, saveId, ent);
+  return { ent, revoked };
 }

@@ -20,9 +20,10 @@
 // mostrar um botão que não deveria funcionar.
 
 import {
-  VALID_ID, readEntitlement, publicView, spendCredits, grantAdReward,
+  VALID_ID, publicView, spendCredits, grantAdReward, auditRefunds,
 } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
+import { isPlayPurchaseVoided, isSteamPurchaseVoided } from './_billing.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -45,7 +46,16 @@ export async function onRequestGet({ request, env }) {
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
 
-  const ent = await readEntitlement(env, saveId);
+  // Conferência de reembolso, no máximo 1×/dia por conta (auditRefunds decide).
+  // Fica aqui, e não num cron, porque é o único ponto por onde toda conta ativa
+  // passa — e é justamente quem usa o app que precisa perder o benefício
+  // reembolsado. Se a loja não responder, o benefício é MANTIDO.
+  const { ent } = await auditRefunds(env, saveId, order => (
+    order.provider === 'steam'
+      ? isSteamPurchaseVoided(env, { orderId: order.orderId })
+      : isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken })
+  ));
+
   return json({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }
 

@@ -153,6 +153,45 @@ export async function verifyPlayPurchase(env, { productId, purchaseToken }) {
   return { ok: true, orderId: `play:${purchase.orderId}`, product };
 }
 
+/**
+ * A compra foi reembolsada/cancelada? Usado pela conferência de reembolso.
+ *
+ * Devolve `null` quando NÃO DEU PARA SABER (sem credencial, rede fora, resposta
+ * estranha). Quem chama trata `null` como "mantém o benefício" — na dúvida
+ * nunca se tira o que o jogador pagou.
+ *
+ * @returns {Promise<boolean|null>}
+ */
+export async function isPlayPurchaseVoided(env, { productId, purchaseToken }) {
+  const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+  const packageName = env.ANDROID_PACKAGE_NAME;
+  if (!rawAccount || !packageName || !productId || !purchaseToken) return null;
+
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(rawAccount);
+  } catch {
+    return null;
+  }
+
+  try {
+    const token = await getAccessToken(serviceAccount);
+    const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+    const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+    // 404 = a Play não conhece mais esse token. Pode ser compra apagada, mas
+    // também pode ser mudança de produto/pacote — ambíguo demais para revogar.
+    if (!res.ok) return null;
+    const purchase = await res.json();
+    // purchaseState: 0 = comprado, 1 = cancelado/reembolsado, 2 = pendente.
+    if (purchase.purchaseState === 1) return true;
+    if (purchase.purchaseState === 0) return false;
+    return null;
+  } catch (err) {
+    console.error('refund check error (play):', err);
+    return null;
+  }
+}
+
 // ────────────────────────────────────────────────────────────────── Steam ──
 //
 // ⚠️ ANTES DE LIGAR: confira os nomes/versões das interfaces na documentação
@@ -300,5 +339,39 @@ export async function verifySteamPurchase(env, { orderId }) {
   const product = productId ? PRODUCTS[productId] : undefined;
   if (!product) return { ok: false, reason: 'unknown-product' };
 
-  return { ok: true, orderId: `steam:txn:${params.orderid ?? orderId}`, product };
+  return { ok: true, orderId: `steam:txn:${params.orderid ?? orderId}`, product, productId };
+}
+
+/**
+ * A microtransação da Steam foi reembolsada? Reembolso na Steam muda o status
+ * da transação (`Refunded` / `PartialRefund` / `Chargeback`).
+ *
+ * Devolve `null` quando não deu para saber — quem chama mantém o benefício.
+ *
+ * ⚠️ Não cobre o tier pago vindo da POSSE do app: se o jogador reembolsar o
+ * jogo na Steam, a posse deixa de existir e a próxima conferência precisa
+ * reconsultar `CheckAppOwnership`. Isso exige o session ticket, que só existe
+ * com o app aberto — está registrado como pendência no plano.
+ *
+ * @returns {Promise<boolean|null>}
+ */
+export async function isSteamPurchaseVoided(env, { orderId }) {
+  const cfg = steamConfig(env);
+  const raw = String(orderId ?? '').replace(/^steam:txn:/, '');
+  if (!cfg || !/^\d{1,32}$/.test(raw)) return null;
+
+  try {
+    const url = `${STEAM_PARTNER}/ISteamMicroTxn/QueryTxn/v3/`
+      + `?key=${encodeURIComponent(cfg.key)}&appid=${encodeURIComponent(cfg.appId)}&orderid=${encodeURIComponent(raw)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const status = data?.response?.params?.status;
+    if (!status) return null;
+    if (status === 'Succeeded') return false;
+    return ['Refunded', 'PartialRefund', 'Chargeback', 'Failed'].includes(status);
+  } catch (err) {
+    console.error('refund check error (steam):', err);
+    return null;
+  }
 }

@@ -14,6 +14,15 @@ function emptyEntitlement() {
     credits: 0,
     /** orderIds já creditados — impede reprocessar a mesma compra (replay). */
     consumedOrders: [],
+    /**
+     * O que cada compra concedeu, para poder ser DESFEITO num reembolso.
+     * `consumedOrders` guarda só o id: sem estes detalhes o servidor sabe que
+     * a compra existiu, mas não quanto devolver. Ver auditRefunds.
+     * `{ orderId, provider, productId, purchaseToken, grantTier, grantCredits, voided? }`
+     */
+    orderDetails: [],
+    /** Epoch ms da última conferência de reembolso (0 = nunca). */
+    auditedAt: 0,
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now()
@@ -77,7 +86,14 @@ async function claimOrder(env, saveId, orderId) {
   return { ok: true };
 }
 __name(claimOrder, "claimOrder");
-async function applyVerifiedPurchase(env, saveId, { orderId, grantTier, grantCredits }) {
+async function applyVerifiedPurchase(env, saveId, {
+  orderId,
+  grantTier,
+  grantCredits,
+  provider,
+  productId,
+  purchaseToken
+}) {
   const ent = await readEntitlement(env, saveId);
   if (orderId && ent.consumedOrders.includes(orderId)) {
     return { ent, duplicate: true };
@@ -86,12 +102,47 @@ async function applyVerifiedPurchase(env, saveId, { orderId, grantTier, grantCre
   if (grantCredits > 0) ent.credits += grantCredits;
   if (orderId) {
     ent.consumedOrders.push(orderId);
+    ent.orderDetails.push({
+      orderId,
+      provider,
+      productId,
+      purchaseToken,
+      grantTier: grantTier ?? null,
+      grantCredits: grantCredits ?? 0
+    });
     if (ent.consumedOrders.length > 200) ent.consumedOrders = ent.consumedOrders.slice(-200);
+    if (ent.orderDetails.length > 200) ent.orderDetails = ent.orderDetails.slice(-200);
   }
   await writeEntitlement(env, saveId, ent);
   return { ent, duplicate: false };
 }
 __name(applyVerifiedPurchase, "applyVerifiedPurchase");
+var AUDIT_INTERVAL_MS = 24 * 60 * 60 * 1e3;
+var AUDIT_MAX_ORDERS = 20;
+async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
+  const ent = await readEntitlement(env, saveId);
+  if (now - (ent.auditedAt || 0) < AUDIT_INTERVAL_MS) return { ent, revoked: [] };
+  const pending = ent.orderDetails.filter((o) => !o.voided).slice(-AUDIT_MAX_ORDERS);
+  if (pending.length === 0) return { ent, revoked: [] };
+  const revoked = [];
+  for (const order of pending) {
+    let voided;
+    try {
+      voided = await isVoided(order);
+    } catch {
+      voided = null;
+    }
+    if (voided !== true) continue;
+    order.voided = true;
+    revoked.push(order.orderId);
+    if (order.grantTier === "paid") ent.tier = "demo";
+    if (order.grantCredits > 0) ent.credits = Math.max(0, ent.credits - order.grantCredits);
+  }
+  ent.auditedAt = now;
+  await writeEntitlement(env, saveId, ent);
+  return { ent, revoked };
+}
+__name(auditRefunds, "auditRefunds");
 
 // api/_auth.js
 var JWK_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
@@ -270,6 +321,31 @@ async function verifyPlayPurchase(env, { productId, purchaseToken }) {
   return { ok: true, orderId: `play:${purchase.orderId}`, product };
 }
 __name(verifyPlayPurchase, "verifyPlayPurchase");
+async function isPlayPurchaseVoided(env, { productId, purchaseToken }) {
+  const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+  const packageName = env.ANDROID_PACKAGE_NAME;
+  if (!rawAccount || !packageName || !productId || !purchaseToken) return null;
+  let serviceAccount;
+  try {
+    serviceAccount = JSON.parse(rawAccount);
+  } catch {
+    return null;
+  }
+  try {
+    const token = await getAccessToken(serviceAccount);
+    const endpoint = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(packageName)}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+    const res = await fetch(endpoint, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return null;
+    const purchase = await res.json();
+    if (purchase.purchaseState === 1) return true;
+    if (purchase.purchaseState === 0) return false;
+    return null;
+  } catch (err) {
+    console.error("refund check error (play):", err);
+    return null;
+  }
+}
+__name(isPlayPurchaseVoided, "isPlayPurchaseVoided");
 var STEAM_PARTNER = "https://partner.steam-api.com";
 var STEAM_PUBLIC = "https://api.steampowered.com";
 function steamConfig(env) {
@@ -349,9 +425,28 @@ async function verifySteamPurchase(env, { orderId }) {
   const productId = STEAM_ITEMS[Number(items[0].itemid)];
   const product = productId ? PRODUCTS[productId] : void 0;
   if (!product) return { ok: false, reason: "unknown-product" };
-  return { ok: true, orderId: `steam:txn:${params.orderid ?? orderId}`, product };
+  return { ok: true, orderId: `steam:txn:${params.orderid ?? orderId}`, product, productId };
 }
 __name(verifySteamPurchase, "verifySteamPurchase");
+async function isSteamPurchaseVoided(env, { orderId }) {
+  const cfg = steamConfig(env);
+  const raw = String(orderId ?? "").replace(/^steam:txn:/, "");
+  if (!cfg || !/^\d{1,32}$/.test(raw)) return null;
+  try {
+    const url = `${STEAM_PARTNER}/ISteamMicroTxn/QueryTxn/v3/?key=${encodeURIComponent(cfg.key)}&appid=${encodeURIComponent(cfg.appId)}&orderid=${encodeURIComponent(raw)}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    const status = data?.response?.params?.status;
+    if (!status) return null;
+    if (status === "Succeeded") return false;
+    return ["Refunded", "PartialRefund", "Chargeback", "Failed"].includes(status);
+  } catch (err) {
+    console.error("refund check error (steam):", err);
+    return null;
+  }
+}
+__name(isSteamPurchaseVoided, "isSteamPurchaseVoided");
 
 // api/billing.js
 var CORS = {
@@ -410,7 +505,11 @@ async function onRequestPost({ request, env }) {
   const { ent, duplicate } = await applyVerifiedPurchase(env, saveId, {
     orderId: result.orderId,
     grantTier: result.product.grantTier,
-    grantCredits: result.product.grantCredits
+    grantCredits: result.product.grantCredits,
+    // Guardado para o reembolso saber o que desfazer depois (ver auditRefunds).
+    provider,
+    productId: provider === "play" ? body.productId : result.productId,
+    purchaseToken: provider === "play" ? body.purchaseToken : void 0
   });
   return json({
     ok: true,
@@ -839,7 +938,7 @@ async function onRequestGet2({ request, env }) {
   if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
-  const ent = await readEntitlement(env, saveId);
+  const { ent } = await auditRefunds(env, saveId, (order) => order.provider === "steam" ? isSteamPurchaseVoided(env, { orderId: order.orderId }) : isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken }));
   return json3({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
 __name(onRequestGet2, "onRequestGet");
@@ -1248,7 +1347,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-7Zfjru/functionsRoutes-0.471795731030735.mjs
+// ../.wrangler/tmp/pages-FBBshU/functionsRoutes-0.7347696326922606.mjs
 var routes = [
   {
     routePath: "/api/billing",

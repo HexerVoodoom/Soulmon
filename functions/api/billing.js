@@ -106,6 +106,10 @@ export async function onRequestPost({ request, env }) {
     orderId: result.orderId,
     grantTier: result.product.grantTier,
     grantCredits: result.product.grantCredits,
+    // Guardado para o reembolso saber o que desfazer depois (ver auditRefunds).
+    provider,
+    productId: provider === 'play' ? body.productId : result.productId,
+    purchaseToken: provider === 'play' ? body.purchaseToken : undefined,
   });
 
   return json({

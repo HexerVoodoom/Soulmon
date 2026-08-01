@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   readEntitlement, spendCredits, grantAdReward, applyVerifiedPurchase,
-  claimOrder, publicView, AD_DAILY_CAP, AD_REWARD_CREDITS,
+  claimOrder, auditRefunds, publicView, AD_DAILY_CAP, AD_REWARD_CREDITS,
 } from './_entitlements.js';
 
 // Estas regras são as que separam "jogador pagou" de "jogador não pagou".
@@ -171,5 +171,92 @@ describe('comprovante de compra — uma compra, uma conta', () => {
     expect(outra.duplicate).toBe(false);   // <- o furo, se nada mais existisse
     expect(await claimOrder(env, 'outraconta99', PLAY_ORDER))
       .toEqual({ ok: false, reason: 'order-in-use' });  // <- a trava que a rota aplica antes
+  });
+});
+
+describe('reembolso — desfaz o que a loja estornou', () => {
+  const PLAY_ORDER = 'play:GPA.1111';
+  const DIA = 24 * 60 * 60 * 1000;
+
+  /** Conta com uma compra aplicada, pronta para ser auditada. */
+  async function comCompra(grant) {
+    const env = fakeEnv();
+    await claimOrder(env, SAVE, PLAY_ORDER);
+    await applyVerifiedPurchase(env, SAVE, {
+      orderId: PLAY_ORDER, provider: 'play',
+      productId: 'soulmon.unlock.full', purchaseToken: 'tok',
+      ...grant,
+    });
+    return env;
+  }
+
+  it('compra estornada derruba o tier de volta para demo', async () => {
+    const env = await comCompra({ grantTier: 'paid', grantCredits: 0 });
+    const { ent, revoked } = await auditRefunds(env, SAVE, async () => true);
+    expect(ent.tier).toBe('demo');
+    expect(revoked).toEqual([PLAY_ORDER]);
+  });
+
+  it('pacote de créditos estornado é debitado', async () => {
+    const env = await comCompra({ grantTier: null, grantCredits: 150 });
+    const { ent } = await auditRefunds(env, SAVE, async () => true);
+    expect(ent.credits).toBe(0);
+  });
+
+  it('saldo nunca fica negativo se o jogador já gastou', async () => {
+    const env = await comCompra({ grantTier: null, grantCredits: 150 });
+    await spendCredits(env, SAVE, 120);
+    const { ent } = await auditRefunds(env, SAVE, async () => true);
+    expect(ent.credits).toBe(0);
+  });
+
+  it('compra válida não é mexida', async () => {
+    const env = await comCompra({ grantTier: 'paid', grantCredits: 0 });
+    const { ent, revoked } = await auditRefunds(env, SAVE, async () => false);
+    expect(ent.tier).toBe('paid');
+    expect(revoked).toEqual([]);
+  });
+
+  it('loja fora do ar NÃO tira o benefício de quem pagou', async () => {
+    // Na dúvida, mantém. O contrário puniria o cliente legítimo por uma falha
+    // de rede nossa.
+    const env = await comCompra({ grantTier: 'paid', grantCredits: 0 });
+    expect((await auditRefunds(env, SAVE, async () => null)).ent.tier).toBe('paid');
+    expect((await auditRefunds(env, SAVE, async () => { throw new Error('timeout'); })).ent.tier).toBe('paid');
+  });
+
+  it('não confere de novo antes de 24h', async () => {
+    const env = await comCompra({ grantTier: 'paid', grantCredits: 0 });
+    const t0 = Date.now();
+    await auditRefunds(env, SAVE, async () => false, t0);
+
+    let chamadas = 0;
+    await auditRefunds(env, SAVE, async () => { chamadas++; return true; }, t0 + DIA / 2);
+    expect(chamadas).toBe(0);
+
+    await auditRefunds(env, SAVE, async () => { chamadas++; return true; }, t0 + DIA + 1);
+    expect(chamadas).toBe(1);
+  });
+
+  it('não estorna a mesma compra duas vezes', async () => {
+    const env = await comCompra({ grantTier: null, grantCredits: 150 });
+    const t0 = Date.now();
+    await auditRefunds(env, SAVE, async () => true, t0);
+    // Créditos voltam por outra compra; a antiga já estornada não pode debitar de novo.
+    await claimOrder(env, SAVE, 'play:GPA.2222');
+    await applyVerifiedPurchase(env, SAVE, {
+      orderId: 'play:GPA.2222', provider: 'play', productId: 'soulmon.credits.60',
+      purchaseToken: 't2', grantTier: null, grantCredits: 60,
+    });
+    const { ent, revoked } = await auditRefunds(env, SAVE, async () => false, t0 + DIA + 1);
+    expect(revoked).toEqual([]);
+    expect(ent.credits).toBe(60);
+  });
+
+  it('conta sem compras não grava nada no KV', async () => {
+    // Senão toda leitura de saldo criaria um registro só pra anotar a data.
+    const env = fakeEnv();
+    await auditRefunds(env, SAVE, async () => true);
+    expect(env._store.size).toBe(0);
   });
 });

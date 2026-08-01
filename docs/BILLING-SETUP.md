@@ -212,6 +212,23 @@ antes disso — ela é o único freio hoje.
 
 ---
 
+## Reembolso — como funciona
+
+Quando a loja estorna uma compra, o benefício é desfeito: `paid` volta para
+`demo`, créditos são debitados (o saldo nunca fica negativo).
+
+A conferência é **preguiçosa**, não tem cron: acontece no `GET
+/api/entitlements`, no máximo **1× por dia por conta**, e só para contas que
+têm compras. Isso evita um worker novo com deploy e secrets próprios, e
+resolve o caso que importa — quem usa o app é exatamente quem passa por ali.
+
+Duas decisões que valem saber:
+
+- **Se a loja não responder, o benefício é MANTIDO.** Tirar o que o jogador
+  pagou por causa de uma falha de rede nossa seria pior que o prejuízo.
+- **Quem reembolsa e some fica marcado como pago no banco.** Como não abre o
+  app, isso não vale nada para ele.
+
 ## Dívidas conhecidas (assumidas de propósito)
 
 1. **KV não tem transação.** Dois gastos simultâneos podem, em tese, perder uma
@@ -219,6 +236,11 @@ antes disso — ela é o único freio hoje.
    no mesmo instante, em aparelhos diferentes — e o prejuízo máximo é o app
    cobrar um gasto a menos. Para a escala atual é aceitável; se virar problema,
    migrar o registro de entitlement para Durable Objects (serializam por chave).
+
+1b. **Reembolso do JOGO na Steam** (não da microtransação) ainda não revoga o
+   tier pago. O tier vem da posse do app, e reconsultar a posse exige o session
+   ticket, que só existe com o app aberto. O caminho é o cliente Steamworks
+   reenviar o ticket periodicamente — depende do App ID.
 
 2. **Login por e-mail implementado, mas DESLIGADO até você configurar.** O
    código já está pronto (ver seção 7); enquanto as variáveis não existirem, o
