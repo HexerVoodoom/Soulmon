@@ -37,7 +37,7 @@ import {
 } from './utils/careRules';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
+import { SHOP_ITEMS, TOURNAMENT_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
@@ -46,6 +46,7 @@ import {
   REROLL_COST_CREDITS, HEART_COST_CREDITS,
   type CreditPack,
 } from './utils/monetization';
+import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
@@ -1145,16 +1146,45 @@ export default function App() {
 
   // 🛒 Shop purchase — charges points and applies the item's effect. Items can
   // be locked behind a mission (utils/shop.ts `unlock`).
+  /**
+   * Troca Créditos por Bits. O gasto de Crédito é do SERVIDOR (é dinheiro
+   * real); os Bits só entram depois que ele confirma. A troca inversa não
+   * existe — ver utils/currencies.ts.
+   */
+  const handleExchangeCredits = useCallback(async (creditos: number): Promise<boolean> => {
+    const pack = BITS_EXCHANGE.find(p => p.credits === creditos);
+    if (!pack) return false;
+    const ent = await spendCredits(pack.credits, 'exchange-bits');
+    if (!ent) {
+      toast(language === 'pt-BR' ? 'Créditos insuficientes.' : 'Not enough credits.');
+      return false;
+    }
+    setGameState(prev => ({
+      ...prev,
+      gamePoints: (prev.gamePoints ?? 0) + pack.bits,
+      credits: ent.credits,
+      accountTier: ent.tier,
+    }));
+    toast(language === 'pt-BR' ? `+${pack.bits} Bits!` : `+${pack.bits} Bits!`);
+    return true;
+  }, [language, setGameState]);
+
   const handleShopBuy = useCallback((itemId: string): boolean => {
-    const item = SHOP_ITEMS.find(i => i.id === itemId);
+    const item = [...SHOP_ITEMS, ...TOURNAMENT_ITEMS].find(i => i.id === itemId);
     if (!item) return false;
     if (!isShopItemUnlocked(item, missionProgress)) return false;
-    if ((gameState.gamePoints ?? 0) < item.price) return false;
+    // Cada item cobra na SUA moeda — Emblemas (torneio) e Bits (minijogos)
+    // não se substituem (ver utils/currencies.ts).
+    const paysWithEmblems = item.currency === 'emblems';
+    const saldo = paysWithEmblems ? (gameState.emblems ?? 0) : (gameState.gamePoints ?? 0);
+    if (saldo < item.price) return false;
     if (item.kind === 'bg' && (gameState.ownedBackgrounds ?? []).includes(item.id)) return false;
     if (item.kind === 'furniture' && (gameState.ownedFurniture ?? []).includes(item.id)) return false;
 
     setGameState(prev => {
-      const next = { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
+      const next = paysWithEmblems
+        ? { ...prev, emblems: (prev.emblems ?? 0) - item.price }
+        : { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
       if (item.kind === 'chip' || item.kind === 'heart') {
         // Consumables go to the Items folder; their effect is applied on USE.
         next.foodInventory = {
@@ -1670,7 +1700,10 @@ export default function App() {
               ownedFurniture={gameState.ownedFurniture ?? []}
               equippedFurniture={gameState.equippedFurniture ?? null}
               missionProgress={missionProgress}
+              emblems={gameState.emblems ?? 0}
+              credits={gameState.credits ?? 0}
               onBuy={handleShopBuy}
+              onExchangeCredits={handleExchangeCredits}
               onEquip={handleEquipBackground}
               onEquipFurniture={handleEquipFurniture}
               onClose={() => setShopOpen(false)}
@@ -2040,6 +2073,8 @@ export default function App() {
                 onTogglePvp={(enabled) => setGameState(prev => ({ ...prev, pvpEnabled: enabled }))}
                 trophies={gameState.trophies ?? []}
                 language={language}
+                emblems={gameState.emblems ?? 0}
+                onEarnEmblems={amount => setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }))}
               />
             </Suspense>
           )}

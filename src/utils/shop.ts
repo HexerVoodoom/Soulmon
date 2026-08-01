@@ -4,7 +4,10 @@ import type { ComponentType } from 'react';
 import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint } from 'lucide-react';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from '../components/AlignmentIcons';
 
-export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture';
+export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
+
+/** Moeda que compra o item. Ausente = Bits (o padrão da loja). */
+export type ShopCurrency = 'bits' | 'emblems';
 export type Attr = 'virus' | 'data' | 'vaccine';
 
 /** Componente de ícone pro visual da loja — aceita tanto ícones lucide quanto
@@ -36,6 +39,9 @@ export interface ShopItem {
   attr?: Attr;
   /** When present, purchasing is locked until the requirement is met. */
   unlock?: UnlockReq;
+  /** Moeda do preço. Sem isto = Bits. Emblemas só compram itens da aba
+   *  Torneio — as moedas não se misturam (ver utils/currencies.ts). */
+  currency?: ShopCurrency;
 }
 
 export const CHIP_BOOST = 3;   // attribute points granted when a chip is USED
@@ -202,4 +208,27 @@ export const SHOP_ITEMS: ShopItem[] = [
     namePt: 'Aurora Digital', nameEn: 'Digital Aurora',
     descPt: 'Luzes dançando no céu polar', descEn: 'Lights dancing in the polar sky', price: 300,
     unlock: { kind: 'mission', missionId: 'mission-perfect-30' } },
+
+];
+
+/**
+ * Itens do TORNEIO — comprados só com Emblemas.
+ *
+ * Ficam numa lista à parte (e numa aba própria) porque a regra é justamente
+ * que as moedas não se misturam: quem joga minijogo não chega aqui, e quem
+ * ganha no torneio não usa Emblema na loja comum.
+ */
+export const TOURNAMENT_ITEMS: ShopItem[] = [
+  { id: 'bg-arena-champion', kind: 'bg', icon: '🏟️', currency: 'emblems',
+    namePt: 'Arena dos Campeões', nameEn: "Champions' Arena",
+    descPt: 'O cenário de quem já subiu ao pódio', descEn: 'The backdrop of those who reached the podium',
+    price: 40 },
+  { id: 'furniture-trophy-shelf', kind: 'furniture', icon: '🏆', currency: 'emblems',
+    namePt: 'Estante de Troféus', nameEn: 'Trophy Shelf',
+    descPt: 'Mostra as suas conquistas no cantinho do pet', descEn: 'Shows your wins in the pet corner',
+    price: 25 },
+  { id: 'furniture-champion-banner', kind: 'furniture', icon: '🎌', currency: 'emblems',
+    namePt: 'Estandarte do Campeão', nameEn: "Champion's Banner",
+    descPt: 'Para não deixar ninguém esquecer', descEn: 'So nobody forgets',
+    price: 15 },
 ];

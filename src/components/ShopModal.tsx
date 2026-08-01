@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { bitsStyleLight } from '../utils/currency';
-import { X, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa } from 'lucide-react';
-import { SHOP_ITEMS, type ShopItem } from '../utils/shop';
+import { bitsStyleLight, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../utils/currencies';
+import { X, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa, Swords, Gem } from 'lucide-react';
+import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
 import type { Language } from '../utils/i18n';
@@ -13,11 +13,11 @@ import type { Language } from '../utils/i18n';
  * seguem o estilo lucide do resto do app (item.displayIcon); o emoji em
  * item.icon é só a CHAVE de inventário dos consumíveis — nunca é o visual.
  */
-type ShopTab = 'items' | 'bg' | 'furniture' | 'missions';
+type ShopTab = 'items' | 'bg' | 'furniture' | 'tournament' | 'missions';
 
 export function ShopModal({
   language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedFurniture,
-  missionProgress, onBuy, onEquip, onEquipFurniture, onClose,
+  missionProgress, emblems, credits, onBuy, onExchangeCredits, onEquip, onEquipFurniture, onClose,
 }: {
   language: Language;
   points: number;
@@ -27,7 +27,12 @@ export function ShopModal({
   equippedFurniture: string | null;
   /** Progress per mission id (clamped to its target) — utils/missions.ts. */
   missionProgress: Record<string, number>;
+  /** Emblemas (moeda do Torneio) e Créditos (dinheiro real) — ver utils/currencies.ts. */
+  emblems: number;
+  credits: number;
   onBuy: (itemId: string) => boolean;
+  /** Troca Créditos por Bits. Devolve false se o servidor recusar o gasto. */
+  onExchangeCredits: (credits: number) => Promise<boolean>;
   onEquip: (id: string | null) => void;
   onEquipFurniture: (id: string | null) => void;
   onClose: () => void;
@@ -37,6 +42,7 @@ export function ShopModal({
   const [flash, setFlash] = useState<{ id: string; ok: boolean } | null>(null);
   /** Item id whose unlock hint is expanded (tap a locked item to toggle). */
   const [hintFor, setHintFor] = useState<string | null>(null);
+  const [exchanging, setExchanging] = useState(false);
 
   const buy = (item: ShopItem) => {
     const ok = onBuy(item.id);
@@ -59,6 +65,7 @@ export function ShopModal({
     { key: 'items', Icon: FlaskConical, pt: 'Itens', en: 'Items' },
     { key: 'bg', Icon: ImageIcon, pt: 'Cenários', en: 'Backdrops' },
     { key: 'furniture', Icon: Sofa, pt: 'Mobílias', en: 'Furniture' },
+    { key: 'tournament', Icon: Swords, pt: 'Torneio', en: 'Tournament' },
     { key: 'missions', Icon: Award, pt: 'Missões', en: 'Missions' },
   ];
 
@@ -66,7 +73,18 @@ export function ShopModal({
     items: SHOP_ITEMS.filter(i => i.kind === 'chip' || i.kind === 'heart'),
     bg: SHOP_ITEMS.filter(i => i.kind === 'bg'),
     furniture: SHOP_ITEMS.filter(i => i.kind === 'furniture'),
+    tournament: TOURNAMENT_ITEMS,
   };
+
+  /** Saldo da moeda que compra este item. */
+  const balanceFor = (item: ShopItem) => (item.currency === 'emblems' ? emblems : points);
+
+  /** Preço com a leitura da moeda certa — nunca o 💎, que é dos Créditos. */
+  // No botão primário (roxo) o preço vai em CLARO: o dourado do emblemStyle é
+  // escuro e sumia no fundo. A identidade dourada fica no ícone e no saldo.
+  const priceLabel = (item: ShopItem) => (item.currency === 'emblems'
+    ? <span style={{ ...emblemStyle, color: '#fff' }}>🎖️ {item.price}</span>
+    : <>{item.price} Bits</>);
 
   const renderItem = (item: ShopItem) => {
     const unlocked = isShopItemUnlocked(item, missionProgress);
@@ -75,7 +93,9 @@ export function ShopModal({
     const owned = isEquippable && ownedList.includes(item.id);
     const equippedId = item.kind === 'bg' ? equippedBackground : item.kind === 'furniture' ? equippedFurniture : null;
     const equipped = owned && equippedId === item.id;
-    const affordable = points >= item.price;
+    // Cada item cobra na SUA moeda — Emblemas não compram item de Bits nem
+    // o contrário (ver utils/currencies.ts).
+    const affordable = balanceFor(item) >= item.price;
     const flashHere = flash?.id === item.id;
     const showHint = hintFor === item.id;
     const canBuy = unlocked && affordable;
@@ -137,7 +157,7 @@ export function ShopModal({
             disabled={unlocked && !canBuy}
             className="sm-btn"
             style={{ padding: '9px 14px', fontSize: '0.72rem', flexShrink: 0, minHeight: 38 }}>
-            {unlocked ? <>{item.price} Bits</> : <Lock size={14} strokeWidth={2.4} />}
+            {unlocked ? priceLabel(item) : <Lock size={14} strokeWidth={2.4} />}
           </button>
         )}
         {/* unlock hint "tooltip" — expands inside the card when tapped */}
@@ -214,13 +234,24 @@ export function ShopModal({
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Bits, não Créditos: sem 💎 (o gem é dos créditos comprados com
                 dinheiro real). Ver utils/currency.ts. */}
-            <span
-              className="sm-card"
-              style={{ display: 'flex', alignItems: 'center', padding: '5px 10px' }}
-              title={isPt ? 'Bits — ganhe nos minijogos' : 'Bits — earn them in the minigames'}
-            >
-              <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{points} Bits</span>
-            </span>
+            {tab === 'tournament' ? (
+              <span
+                className="sm-card"
+                style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px' }}
+                title={isPt ? 'Emblemas — ganhe vencendo no Torneio' : 'Emblems — earn them by winning in the Tournament'}
+              >
+                <span style={{ fontSize: 13 }}>🎖️</span>
+                <span style={{ ...emblemStyle, fontSize: '0.85rem' }}>{emblems}</span>
+              </span>
+            ) : (
+              <span
+                className="sm-card"
+                style={{ display: 'flex', alignItems: 'center', padding: '5px 10px' }}
+                title={isPt ? 'Bits — ganhe nos minijogos' : 'Bits — earn them in the minigames'}
+              >
+                <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{points} Bits</span>
+              </span>
+            )}
             <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
               <X size={18} strokeWidth={2.4} />
             </button>
@@ -253,10 +284,48 @@ export function ShopModal({
           {tab === 'missions'
             ? renderMissions()
             : TAB_ITEMS[tab].map(renderItem)}
+
+          {/* Faltou Bit? Créditos (dinheiro real) viram Bits — nunca o
+              contrário, senão dava pra farmar em minijogo a moeda que só o
+              dinheiro real deveria abrir (ver utils/currencies.ts). */}
+          {tab === 'items' && (
+            <div className="sm-card" style={{ padding: 12, marginTop: 4 }}>
+              <p style={{ margin: '0 0 8px', fontSize: '0.74rem', fontWeight: 700, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Gem size={13} color={CREDIT_COLOR} strokeWidth={2.4} />
+                {isPt ? `Trocar Créditos por Bits (você tem ${credits})` : `Swap Credits for Bits (you have ${credits})`}
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {BITS_EXCHANGE.map(pack => (
+                  <button
+                    key={pack.credits}
+                    className="sm-btn sm-btn-secondary"
+                    disabled={credits < pack.credits || exchanging}
+                    onClick={async () => {
+                      setExchanging(true);
+                      const ok = await onExchangeCredits(pack.credits);
+                      setExchanging(false);
+                      setFlash({ id: `exch-${pack.credits}`, ok });
+                      setTimeout(() => setFlash(null), 900);
+                    }}
+                    style={{
+                      flex: 1, padding: '9px 6px', fontSize: '0.68rem', lineHeight: 1.35,
+                      opacity: credits < pack.credits || exchanging ? 0.5 : 1,
+                    }}
+                  >
+                    <span style={{ display: 'block', fontWeight: 700 }}>{pack.credits} 💎</span>
+                    <span style={{ ...bitsStyleLight, display: 'block', fontSize: '0.68rem' }}>→ {pack.bits} Bits</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <p style={{ color: 'var(--sm-muted)', fontSize: '0.68rem', textAlign: 'center', margin: 0 }}>
             {tab === 'missions'
               ? (isPt ? 'Progresso conta desde o início do jogo.' : 'Progress counts from the very start.')
-              : (isPt ? 'Ganhe Bits nos minijogos! Itens bloqueados: toque para ver como desbloquear.' : 'Earn Bits in the minigames! Locked items: tap to see how to unlock.')}
+              : tab === 'tournament'
+                ? (isPt ? 'Emblemas só vêm do Torneio — e só compram aqui.' : 'Emblems only come from the Tournament — and only buy here.')
+                : (isPt ? 'Ganhe Bits nos minijogos! Itens bloqueados: toque para ver como desbloquear.' : 'Earn Bits in the minigames! Locked items: tap to see how to unlock.')}
           </p>
         </div>
       </div>

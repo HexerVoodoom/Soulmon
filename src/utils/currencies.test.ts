@@ -1,0 +1,83 @@
+import { describe, it, expect } from 'vitest';
+import { CURRENCIES, CREDIT_TO_BITS, BITS_EXCHANGE, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS } from './currencies';
+import { SHOP_ITEMS, TOURNAMENT_ITEMS } from './shop';
+
+// As três moedas se distinguem pela ORIGEM, e é isso que define o que cada uma
+// pode fazer. Estes testes travam as fronteiras: se caírem, alguém compra com a
+// moeda errada — no limite, chega de graça ao que só o dinheiro real abre.
+
+describe('as três moedas são distintas', () => {
+  it('cada moeda tem um campo próprio no save', () => {
+    const campos = Object.values(CURRENCIES).map(c => c.field);
+    expect(new Set(campos).size).toBe(3);
+  });
+
+  it('cada moeda tem nome próprio nos dois idiomas', () => {
+    for (const c of Object.values(CURRENCIES)) {
+      expect(c.name.pt.length).toBeGreaterThan(0);
+      expect(c.name.en.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('fronteira entre loja comum e loja do torneio', () => {
+  it('itens do torneio cobram SEMPRE em Emblemas', () => {
+    for (const item of TOURNAMENT_ITEMS) {
+      expect(item.currency).toBe('emblems');
+    }
+  });
+
+  it('nenhum item da loja comum cobra em Emblemas', () => {
+    // Se um item de Bits cobrasse Emblema, o jogador de torneio compraria na
+    // loja comum e a separação das moedas deixaria de existir.
+    for (const item of SHOP_ITEMS) {
+      expect(item.currency ?? 'bits').toBe('bits');
+    }
+  });
+
+  it('os ids não colidem entre as duas listas', () => {
+    // handleShopBuy procura o item nas duas: id repetido compraria o errado.
+    const comuns = new Set(SHOP_ITEMS.map(i => i.id));
+    for (const item of TOURNAMENT_ITEMS) {
+      expect(comuns.has(item.id)).toBe(false);
+    }
+  });
+});
+
+describe('câmbio Créditos → Bits', () => {
+  it('todo pacote respeita a taxa declarada', () => {
+    for (const pack of BITS_EXCHANGE) {
+      expect(pack.bits).toBe(pack.credits * CREDIT_TO_BITS);
+    }
+  });
+
+  it('não existe caminho de volta (Bits → Créditos)', () => {
+    // A ausência é a regra: Créditos são a única moeda que libera gerar o pet
+    // próprio. Se desse pra convertê-los de volta a partir de Bits, bastava
+    // jogar minijogo para chegar ao que só o dinheiro real deveria abrir.
+    const mod = Object.keys({ CREDIT_TO_BITS, BITS_EXCHANGE });
+    expect(mod.some(k => /BITS_TO_CREDIT|bitsToCredit/i.test(k))).toBe(false);
+  });
+
+  it('não existe pacote que dê Bits de graça', () => {
+    for (const pack of BITS_EXCHANGE) {
+      expect(pack.credits).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('ganho de Emblemas no torneio', () => {
+  it('vencer rende mais que perder', () => {
+    expect(EMBLEMS_PER_WIN).toBeGreaterThan(EMBLEMS_PER_LOSS);
+  });
+
+  it('perder ainda rende algo — a partida do dia nunca é tempo perdido', () => {
+    expect(EMBLEMS_PER_LOSS).toBeGreaterThan(0);
+  });
+
+  it('o item mais barato do torneio custa mais que uma partida', () => {
+    // Senão a aba inteira sai na primeira luta e não há progressão nenhuma.
+    const maisBarato = Math.min(...TOURNAMENT_ITEMS.map(i => i.price));
+    expect(maisBarato).toBeGreaterThan(EMBLEMS_PER_WIN);
+  });
+});

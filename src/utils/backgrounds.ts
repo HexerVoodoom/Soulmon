@@ -9,6 +9,17 @@ export interface PetBackground {
 }
 
 export const PET_BACKGROUNDS: Record<string, PetBackground> = {
+  // Cenário comprado com Emblemas (aba Torneio da loja).
+  'bg-arena-champion': {
+    namePt: 'Arena dos Campeões',
+    nameEn: "Champions' Arena",
+    css: [
+      'radial-gradient(60px 22px at 50% 86%, rgba(255,215,120,0.55), transparent 70%)',
+      'linear-gradient(180deg, transparent 68%, #b98a3a 68%, #b98a3a 72%, transparent 72%)',
+      'repeating-linear-gradient(90deg, #7a5a2a 0 14px, #8b6832 14px 28px)',
+      'linear-gradient(180deg, #2b2140 0%, #4a3866 58%, #7a5a2a 58%)',
+    ].join(','),
+  },
   'bg-room': {
     namePt: 'Quarto',
     nameEn: 'Bedroom',

@@ -106,6 +106,9 @@ export interface GameState {
   poopPenaltyClockAt: number;
   /** Bits (🪙): minigame currency earned in the Activities games, spent in the shop. */
   gamePoints: number;
+  /** Emblemas: moeda do Torneio (utils/currencies.ts). Só compra itens da aba
+   *  de torneio da loja — não se mistura com Bits nem Créditos. */
+  emblems?: number;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
@@ -202,6 +205,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         poopEventsShown: loadedState.poopEventsShown ?? [],
         poopPenaltyClockAt: loadedState.poopPenaltyClockAt ?? 0,
         gamePoints: loadedState.gamePoints ?? 0,
+        emblems: loadedState.emblems ?? 0,
         pvpEnabled: loadedState.pvpEnabled ?? false,
         trophies: loadedState.trophies ?? [],
         friends: loadedState.friends ?? [],
@@ -249,6 +253,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
       gamePoints: 0,
+      emblems: 0,
       pvpEnabled: false,
       trophies: [],
       friends: [],

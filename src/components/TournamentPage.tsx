@@ -4,6 +4,7 @@ import { getSpriteForStage } from '../utils/sprites';
 import { getStageLevel } from '../types/progression';
 import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import tournamentBg from '../assets/soulmon/bg/tournament.png';
+import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 
 interface TournamentPageProps {
   saveId: string;
@@ -12,11 +13,15 @@ interface TournamentPageProps {
   onTogglePvp: (enabled: boolean) => void;
   trophies: Array<{ season: string; place: 1 | 2 | 3 }>;
   language: string;
+  /** Emblemas atuais (moeda do torneio) — só para exibir. */
+  emblems: number;
+  /** Chamado ao fim de cada partida com os Emblemas ganhos. */
+  onEarnEmblems: (amount: number) => void;
 }
 
 const PLACE_COLOR: Record<1 | 2 | 3, string> = { 1: '#e8c96a', 2: '#c7cad4', 3: '#c98a52' };
 
-export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language }: TournamentPageProps) {
+export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
   const [matchesLeft, setMatchesLeft] = useState(5);
@@ -41,6 +46,9 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
       const r = await playMatch(saveId, opp.id);
       setResult(r);
       setMatchesLeft(r.matchesLeft);
+      // Emblemas: moeda EXCLUSIVA do torneio (utils/currencies.ts). Perder
+      // também rende algo — a partida diária não pode virar tempo perdido.
+      onEarnEmblems(r.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS);
     } catch (err) {
       setResult(null);
       alert(err instanceof Error ? err.message : 'error');
@@ -56,6 +64,16 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <Swords size={22} strokeWidth={2.2} />
           <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>{isPt ? 'Torneio' : 'Tournament'}</h1>
+          <span
+            style={{
+              marginLeft: 'auto', background: 'rgba(255,255,255,0.92)', borderRadius: 999,
+              padding: '5px 11px', display: 'flex', alignItems: 'center', gap: 5,
+            }}
+            title={isPt ? 'Emblemas — só compram itens da aba Torneio na loja' : 'Emblems — only buy Tournament items in the shop'}
+          >
+            <span style={{ fontSize: 13 }}>🎖️</span>
+            <span style={{ ...emblemStyle, fontSize: 13.5 }}>{emblems}</span>
+          </span>
         </div>
         <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', margin: '0 0 16px' }}>
           {isPt ? 'PvP assíncrono — desafie os pets de outros jogadores.' : 'Asynchronous PvP — challenge other players\' pets.'}
