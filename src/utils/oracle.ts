@@ -2230,7 +2230,13 @@ function composeSpritePrompt(args: {
     `Generate this RPG creature inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. ` +
     `Tamagotchi-style v-pet sprite, 16x16 pixel art, no background, transparent background: ` +
     `${concept}. ${args.levelBlock}. ` +
-    `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing.`
+    `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
+    // As paletas do pool já citam 2–3 cores, mas o gerador ainda entrega
+    // resultados quase monocromáticos (uma cor só em tons diferentes) —
+    // principalmente com paletas do tipo "crimson and charcoal-smoke". Este
+    // pedido é explícito de propósito.
+    `Use at least three clearly distinct hues: the result must NOT be monochromatic, ` +
+    `not a single-hue tint and not grayscale.`
   );
 }
 

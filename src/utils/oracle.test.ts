@@ -220,6 +220,10 @@ describe('generateOracle', () => {
       expect(s.imagePrompt).toContain('transparent background');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
+      // O gerador entregava criaturas quase monocromáticas; o pedido de cor é
+      // explícito e vale para TODOS os estágios.
+      expect(s.imagePrompt).toContain('must NOT be monochromatic');
+      expect(s.imagePrompt).toContain('at least three clearly distinct hues');
       // Bloco conceito no slot do subject: espécie curta + classe (+ adjetivo)
       const conceptMatch = s.imagePrompt.match(/transparent background: (.+?)\. /);
       expect(conceptMatch).not.toBeNull();
