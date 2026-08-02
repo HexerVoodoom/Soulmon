@@ -92,7 +92,14 @@ Todo item `kind: 'furniture'` (`src/utils/shop.ts`) declara:
 - **`fits`** — em que tipo de cenário faz sentido: `indoor`, `outdoor` ou `any`.
 
 Equipar coloca o item no seu espaço e **substitui** quem estava lá — um espaço,
-um item, nunca empilha.
+um item, nunca empilha. Tocar de novo no botão **Equipado** desequipa e deixa o
+espaço vazio (e vazio é vazio: some sem deixar marcação).
+
+A regra vive em `applyDecorEquip` (`utils/petStage.ts`), função pura e testada.
+Ela exige o `slot` explicitamente, inclusive ao desequipar: com `itemId: null`
+não há item de onde deduzir o espaço. A primeira versão deduzia pelo id e, ao
+desequipar, não achava nada e devolvia o estado intocado — o botão "Equipado"
+simplesmente não fazia nada. Há teste de regressão.
 
 Um item equipado que não combina com o cenário atual **não é desenhado**, mas a
 loja diz isso na cara: *"Equipado, mas não aparece no cenário atual — troque de
@@ -133,6 +140,13 @@ declara. A migração é idempotente e `equippedFurniture` continua no tipo, mar
 como deprecated, só para isso.
 
 ---
+
+## Cocô e comida
+
+Os sprites de cuidado (`CareSystem.tsx`) também se apoiam na linha do chão, em
+x = 66 % — a faixa livre entre a vitrine (47 %) e o canto direito (84 %). Antes
+eram `bottom-3 right-3`, uma regra anterior ao palco que os deixava boiando
+abaixo do piso; com o resto da cena alinhada, isso ficou visível.
 
 ## Ainda falta (arte)
 

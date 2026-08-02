@@ -30,7 +30,7 @@ import { useGameState, getMaxHPForStage, type GameState, type Activity, type Tas
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
-import type { SlotId } from './utils/petStage';
+import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
 // objeto novo a cada render, anulando a memoização (footgun conhecido).
@@ -1230,15 +1230,8 @@ export default function App() {
    * outro lugar" — o espaço faz parte da identidade do item, porque a arte é
    * desenhada para aquela caixa (utils/petStage.ts).
    */
-  const handleEquipFurniture = useCallback((id: string | null, slot?: SlotId) => {
-    setGameState(prev => {
-      const next = { ...(prev.equippedDecor ?? {}) };
-      const target = slot ?? ALL_SHOP_ITEMS.find(i => i.id === id)?.slot;
-      if (!target) return prev;
-      if (id === null) delete next[target];
-      else next[target] = id;
-      return { ...prev, equippedDecor: next };
-    });
+  const handleEquipFurniture = useCallback((id: string | null, slot: SlotId) => {
+    setGameState(prev => ({ ...prev, equippedDecor: applyDecorEquip(prev.equippedDecor ?? {}, id, slot) }));
   }, []);
 
   // 💎 Créditos (monetização) — TODA operação de saldo passa pelo SERVIDOR

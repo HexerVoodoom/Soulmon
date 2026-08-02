@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  GROUND_Y, DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, slotBoxStyle, type SlotId,
+  GROUND_Y, DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, slotBoxStyle, applyDecorEquip, type SlotId,
 } from './petStage';
 import { PET_BACKGROUNDS } from './backgrounds';
 import { ALL_SHOP_ITEMS } from './shop';
@@ -165,5 +165,39 @@ describe('compatibilidade decoração × cenário', () => {
   it("'any' serve nos dois cenários reais", () => {
     expect(decorFitsSetting('any', 'indoor')).toBe(true);
     expect(decorFitsSetting('any', 'outdoor')).toBe(true);
+  });
+});
+
+describe('equipar e desequipar', () => {
+  it('equipar ocupa o espaço', () => {
+    expect(applyDecorEquip({}, 'furn-sofa', 'floor-left')).toEqual({ 'floor-left': 'furn-sofa' });
+  });
+
+  it('DESEQUIPAR limpa o espaço', () => {
+    // Regressão: a primeira versão deduzia o slot a partir do id do item e,
+    // ao desequipar (id null), não achava nada e devolvia o estado intocado —
+    // o botão "Equipado" simplesmente não fazia nada.
+    const antes = { 'floor-left': 'furn-sofa', trophy: 'furniture-podium' } as Partial<Record<SlotId, string>>;
+    expect(applyDecorEquip(antes, null, 'floor-left')).toEqual({ trophy: 'furniture-podium' });
+  });
+
+  it('desequipar um espaço não mexe nos outros', () => {
+    const antes = { rug: 'furn-rug', wall: 'furn-picture' } as Partial<Record<SlotId, string>>;
+    expect(applyDecorEquip(antes, null, 'rug')).toEqual({ wall: 'furn-picture' });
+  });
+
+  it('equipar no mesmo espaço SUBSTITUI — um espaço, um item', () => {
+    const antes = { 'floor-left': 'furn-sofa' } as Partial<Record<SlotId, string>>;
+    expect(applyDecorEquip(antes, 'furn-campfire', 'floor-left')).toEqual({ 'floor-left': 'furn-campfire' });
+  });
+
+  it('não muda o objeto original', () => {
+    const antes = { 'floor-left': 'furn-sofa' } as Partial<Record<SlotId, string>>;
+    applyDecorEquip(antes, null, 'floor-left');
+    expect(antes).toEqual({ 'floor-left': 'furn-sofa' });
+  });
+
+  it('desequipar um espaço já vazio não quebra', () => {
+    expect(applyDecorEquip({}, null, 'wall')).toEqual({});
   });
 });

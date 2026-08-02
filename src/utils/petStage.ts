@@ -138,3 +138,22 @@ export function slotBoxStyle(slot: DecorSlot): {
     marginTop,
   };
 }
+
+/**
+ * Aplica um equipar/desequipar sobre o mapa de decoração.
+ *
+ * `itemId` null LIMPA o espaço — e por isso `slot` é obrigatório: sem item não
+ * há de onde deduzir o espaço. A primeira versão disto deduzia o slot a partir
+ * do id e devolvia o estado intocado quando o id era null, ou seja, o botão
+ * "Equipado" não desequipava nada. Função pura para que isso seja testável.
+ */
+export function applyDecorEquip(
+  current: Partial<Record<SlotId, string>>,
+  itemId: string | null,
+  slot: SlotId,
+): Partial<Record<SlotId, string>> {
+  const next = { ...current };
+  if (itemId === null) delete next[slot];
+  else next[slot] = itemId;      // um espaço, um item: substitui quem estava lá
+  return next;
+}

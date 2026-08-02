@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { GROUND_Y } from '../utils/petStage';
 import poopSprite from 'figma:asset/9087038914d85d3c74c1b4c1fb6e2b91f486cbee.png';
 import foodSprite from 'figma:asset/90d2794255a0abd49ab9e2ca8c9f1c54b45d7cd0.png';
 
@@ -20,8 +21,16 @@ export function CareSystem({ careEvent, onCareEventComplete }: CareSystemProps) 
 
   const isPoop = careEvent.type === 'poop';
 
+  // Cocô/comida ficam APOIADOS no chão do palco, como toda a decoração
+  // (utils/petStage.ts). Antes eram `bottom-3 right-3` — uma regra anterior ao
+  // palco, que os deixava boiando abaixo da linha do piso. O x é 66%: a faixa
+  // livre entre a vitrine (47%) e o canto direito (84%).
+  const SIZE = 48;
   return (
-    <div className="absolute bottom-3 right-3 z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+    <div
+      className="absolute z-10 animate-in fade-in slide-in-from-bottom-2 duration-300"
+      style={{ left: '66%', top: `${GROUND_Y}%`, marginLeft: -SIZE / 2, marginTop: -SIZE }}
+    >
       <img
         src={isPoop ? poopSprite : foodSprite}
         alt={careEvent.type}

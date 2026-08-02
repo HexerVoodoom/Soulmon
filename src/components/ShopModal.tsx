@@ -36,7 +36,8 @@ export function ShopModal({
   /** Troca Créditos por Bits. Devolve false se o servidor recusar o gasto. */
   onExchangeCredits: (credits: number) => Promise<boolean>;
   onEquip: (id: string | null) => void;
-  onEquipFurniture: (id: string | null) => void;
+  /** `id` null limpa o espaço; o slot é sempre obrigatório. */
+  onEquipFurniture: (id: string | null, slot: SlotId) => void;
   onClose: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -154,8 +155,11 @@ export function ShopModal({
           <button
             onClick={e => {
               e.stopPropagation();
-              const equip = item.kind === 'bg' ? onEquip : onEquipFurniture;
-              equip(equipped ? null : item.id);
+              // Decoração precisa dizer QUAL espaço mexer: ao desequipar não
+              // há item de onde deduzir o slot (era o bug que fazia o botão
+              // "Equipado" não desequipar nada).
+              if (item.kind === 'bg') onEquip(equipped ? null : item.id);
+              else if (item.slot) onEquipFurniture(equipped ? null : item.id, item.slot);
             }}
             className={equipped ? 'sm-btn sm-btn-gold' : 'sm-btn sm-btn-secondary'}
             style={{ padding: '6px 12px', fontSize: '0.7rem' }}>
