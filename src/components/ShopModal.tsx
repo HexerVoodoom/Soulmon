@@ -4,6 +4,7 @@ import { X, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa, Swords, 
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
+import { decorFitsSetting, type SlotId } from '../utils/petStage';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -16,7 +17,7 @@ import type { Language } from '../utils/i18n';
 type ShopTab = 'items' | 'bg' | 'furniture' | 'tournament' | 'missions';
 
 export function ShopModal({
-  language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedFurniture,
+  language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor,
   missionProgress, emblems, credits, onBuy, onExchangeCredits, onEquip, onEquipFurniture, onClose,
 }: {
   language: Language;
@@ -24,7 +25,8 @@ export function ShopModal({
   ownedBackgrounds: string[];
   equippedBackground: string | null;
   ownedFurniture: string[];
-  equippedFurniture: string | null;
+  /** Decoração equipada por espaço do palco (utils/petStage.ts). */
+  equippedDecor: Partial<Record<SlotId, string>>;
   /** Progress per mission id (clamped to its target) — utils/missions.ts. */
   missionProgress: Record<string, number>;
   /** Emblemas (moeda do Torneio) e Créditos (dinheiro real) — ver utils/currencies.ts. */
@@ -91,8 +93,16 @@ export function ShopModal({
     const isEquippable = item.kind === 'bg' || item.kind === 'furniture';
     const ownedList = item.kind === 'bg' ? ownedBackgrounds : item.kind === 'furniture' ? ownedFurniture : [];
     const owned = isEquippable && ownedList.includes(item.id);
-    const equippedId = item.kind === 'bg' ? equippedBackground : item.kind === 'furniture' ? equippedFurniture : null;
+    const equippedId = item.kind === 'bg' ? equippedBackground
+      : item.kind === 'furniture' && item.slot ? (equippedDecor[item.slot] ?? null)
+      : null;
     const equipped = owned && equippedId === item.id;
+    // Decoração equipada num cenário onde ela não aparece: dizer isso é o que
+    // separa "não combina" de "o app engoliu meu item". O cenário atual manda.
+    const stageBg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
+    const showsHere = item.kind !== 'furniture' || !item.slot || !stageBg
+      ? true
+      : stageBg.slots.includes(item.slot) && decorFitsSetting(item.fits ?? 'any', stageBg.setting);
     // Cada item cobra na SUA moeda — Emblemas não compram item de Bits nem
     // o contrário (ver utils/currencies.ts).
     const affordable = balanceFor(item) >= item.price;
@@ -159,6 +169,14 @@ export function ShopModal({
             style={{ padding: '9px 14px', fontSize: '0.72rem', flexShrink: 0, minHeight: 38 }}>
             {unlocked ? priceLabel(item) : <Lock size={14} strokeWidth={2.4} />}
           </button>
+        )}
+        {/* Aviso de composição — só para o que está equipado e não aparece. */}
+        {equipped && !showsHere && (
+          <p style={{ width: '100%', margin: 0, padding: '8px 10px', background: 'var(--sm-gold-soft)', borderRadius: 10, color: '#8a6113', fontSize: '0.72rem', fontWeight: 600 }}>
+            {isPt
+              ? 'Equipado, mas não aparece no cenário atual — troque de cenário para vê-lo.'
+              : "Equipped, but it doesn't show in the current scene — switch scenes to see it."}
+          </p>
         )}
         {/* unlock hint "tooltip" — expands inside the card when tapped */}
         {!unlocked && showHint && (

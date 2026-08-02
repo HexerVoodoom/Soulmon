@@ -1,11 +1,42 @@
 // Purchasable pet-box backgrounds (pure CSS — no assets needed, 8-bit vibes).
 // Keyed by shop item id; CompanionHUD is fully transparent when nothing is
 // equipped (see utils/shop.ts for prices — 'bg-room' is free/pre-owned).
+//
+// COMPOSIÇÃO (utils/petStage.ts): cada cenário é um palco. A linha do chão de
+// TODOS eles fica em GROUND_Y (74%) — é onde os pés do pet caem e onde a
+// decoração se apoia. Cenário com o piso desenhado em outra altura faz a
+// decoração flutuar; por isso os gradientes abaixo foram alinhados a 74%, e
+// não o inverso. `setting` diz que tipo de decoração faz sentido ali e `slots`
+// diz quais espaços aquele cenário oferece (nem todo cenário tem parede).
+import { type SlotId, type StageSetting } from './petStage';
+
+/**
+ * Só chão — para cenas de céu aberto sem nenhuma superfície vertical (planície
+ * de neve, deserto, pico da montanha). Um estandarte pendurado no nada ali
+ * pareceria bug, não decoração.
+ */
+const GROUND_SLOTS: SlotId[] = ['rug', 'floor-left', 'trophy', 'floor-right'];
+/** Chão + o espaço suspenso (parede, mastro, galho) — o conjunto completo. */
+const FULL_SLOTS: SlotId[] = [...GROUND_SLOTS, 'wall'];
+
 export interface PetBackground {
   namePt: string;
   nameEn: string;
   /** CSS `background` shorthand value. */
   css: string;
+  /** Onde a cena se passa — define que decoração combina (ver petStage.ts). */
+  setting: StageSetting;
+  /** Espaços de decoração que ESTE cenário oferece. */
+  slots: SlotId[];
+  /**
+   * Altura (%) em que o CHÃO começa neste cenário — o horizonte. Tem que ser
+   * MENOR OU IGUAL a GROUND_Y, senão o pet e a decoração ficam apoiados no céu.
+   * É um número declarado, e não deduzido do CSS, porque o CSS de um cenário é
+   * uma pilha de gradientes onde "74%" tanto pode ser a linha do piso quanto a
+   * coordenada horizontal de uma estrela — foi exatamente assim que a primeira
+   * versão do teste passou sem verificar nada. Ausente em cenários 'void'.
+   */
+  horizonY?: number;
 }
 
 export const PET_BACKGROUNDS: Record<string, PetBackground> = {
@@ -15,10 +46,11 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     nameEn: "Champions' Arena",
     css: [
       'radial-gradient(60px 22px at 50% 86%, rgba(255,215,120,0.55), transparent 70%)',
-      'linear-gradient(180deg, transparent 68%, #b98a3a 68%, #b98a3a 72%, transparent 72%)',
+      'linear-gradient(180deg, transparent 70%, #b98a3a 70%, #b98a3a 74%, transparent 74%)',
       'repeating-linear-gradient(90deg, #7a5a2a 0 14px, #8b6832 14px 28px)',
       'linear-gradient(180deg, #2b2140 0%, #4a3866 58%, #7a5a2a 58%)',
-    ].join(','),
+    ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 58,
   },
   'bg-arena-spotlight': {
     namePt: 'Arena sob Holofotes',
@@ -28,8 +60,9 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'repeating-linear-gradient(200deg, rgba(255,246,200,0.16) 0 7px, transparent 7px 32px)',
       'repeating-linear-gradient(160deg, rgba(255,246,200,0.16) 0 7px, transparent 7px 32px)',
       'linear-gradient(180deg, transparent 74%, #3a3450 74%, #3a3450 78%, transparent 78%)',
-      'linear-gradient(180deg, #0d0a18 0%, #1a1430 52%, #2a2140 78%)',
-    ].join(','),
+      'linear-gradient(180deg, #0d0a18 0%, #1a1430 52%, #2a2140 74%)',
+    ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-room': {
     namePt: 'Quarto',
@@ -38,9 +71,10 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(30px 38px at 74% 28%, #bae6fd 49%, transparent 51%)',
       'linear-gradient(180deg, transparent 40%, #d8bd8f 40%, #d8bd8f 42%, transparent 42%)',
       'linear-gradient(90deg, transparent 62%, #d8bd8f 62%, #d8bd8f 64%, transparent 64%)',
-      'linear-gradient(180deg, transparent 76%, #b98f5c 76%, #b98f5c 80%, #8a6a42 80%)',
+      'linear-gradient(180deg, transparent 74%, #b98f5c 74%, #b98f5c 78%, #8a6a42 78%)',
       'linear-gradient(180deg, #fdf1de 0%, #fbe6c6 60%, #f6d9a8 100%)',
     ].join(', '),
+    setting: 'indoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-night': {
     namePt: 'Céu Noturno',
@@ -52,17 +86,20 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(1px 1px at 76% 14%, #fff 50%, transparent 51%)',
       'radial-gradient(1px 1px at 90% 40%, #fff 50%, transparent 51%)',
       'radial-gradient(1px 1px at 22% 48%, #fff 50%, transparent 51%)',
+      'linear-gradient(180deg, transparent 74%, #2a2550 74%, #2a2550 78%, #191436 78%)',
       'linear-gradient(180deg, #0b1026 0%, #1b2350 70%, #2c2a5e 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
   },
   'bg-desert': {
     namePt: 'Deserto Pixel',
     nameEn: 'Pixel Desert',
     css: [
       'radial-gradient(28px 28px at 78% 22%, #ffd75e 49%, transparent 51%)',
-      'linear-gradient(180deg, transparent 62%, #c98a4b 62%, #c98a4b 74%, #b0713a 74%)',
+      'linear-gradient(180deg, transparent 66%, #c98a4b 66%, #c98a4b 74%, #b0713a 74%)',
       'linear-gradient(180deg, #ff9a5c 0%, #ffb56b 55%, #e8a05c 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 66,   // céu aberto: nada onde pendurar
   },
   'bg-matrix': {
     namePt: 'Matriz Verde',
@@ -70,20 +107,23 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     css: [
       'repeating-linear-gradient(0deg, transparent, transparent 14px, rgba(43,255,149,0.16) 15px)',
       'repeating-linear-gradient(90deg, transparent, transparent 14px, rgba(43,255,149,0.16) 15px)',
+      'linear-gradient(180deg, transparent 74%, rgba(43,255,149,0.55) 74%, rgba(43,255,149,0.55) 75%, transparent 75%)',
       'linear-gradient(180deg, #01130a 0%, #03200f 100%)',
     ].join(', '),
+    setting: 'void', slots: [],
   },
   'bg-forest': {
     namePt: 'Floresta Nativa',
     nameEn: 'Native Forest',
     css: [
-      'radial-gradient(22px 30px at 18% 66%, #166534 49%, transparent 51%)',
-      'radial-gradient(26px 34px at 46% 64%, #15803d 49%, transparent 51%)',
-      'radial-gradient(22px 30px at 74% 67%, #166534 49%, transparent 51%)',
-      'radial-gradient(18px 26px at 95% 68%, #15803d 49%, transparent 51%)',
-      'linear-gradient(180deg, transparent 76%, #14532d 76%, #14532d 82%, #052e16 82%)',
+      'radial-gradient(22px 30px at 18% 62%, #166534 49%, transparent 51%)',
+      'radial-gradient(26px 34px at 46% 60%, #15803d 49%, transparent 51%)',
+      'radial-gradient(22px 30px at 74% 63%, #166534 49%, transparent 51%)',
+      'radial-gradient(18px 26px at 95% 64%, #15803d 49%, transparent 51%)',
+      'linear-gradient(180deg, transparent 74%, #14532d 74%, #14532d 80%, #052e16 80%)',
       'linear-gradient(180deg, #7dd3fc 0%, #bae6fd 55%, #86efac 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-ocean': {
     namePt: 'Fundo do Mar',
@@ -95,8 +135,10 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(2px 2px at 72% 58%, rgba(255,255,255,0.75) 50%, transparent 51%)',
       'radial-gradient(3px 3px at 78% 34%, rgba(255,255,255,0.6) 50%, transparent 51%)',
       'linear-gradient(115deg, transparent 42%, rgba(125,211,252,0.22) 50%, transparent 58%)',
+      'linear-gradient(180deg, transparent 74%, #0a3a56 74%, #0a3a56 80%, #062534 80%)',
       'linear-gradient(180deg, #075985 0%, #0c4a6e 55%, #082f49 100%)',
     ].join(', '),
+    setting: 'void', slots: [],
   },
   'bg-gameboy': {
     namePt: 'LCD Retrô',
@@ -104,8 +146,10 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     css: [
       'repeating-linear-gradient(0deg, rgba(15,56,15,0.10), rgba(15,56,15,0.10) 2px, transparent 2px, transparent 6px)',
       'repeating-linear-gradient(90deg, rgba(15,56,15,0.10), rgba(15,56,15,0.10) 2px, transparent 2px, transparent 6px)',
+      'linear-gradient(180deg, transparent 74%, #0f380f 74%, #0f380f 76%, transparent 76%)',
       'linear-gradient(180deg, #9bbc0f 0%, #8bac0f 100%)',
     ].join(', '),
+    setting: 'void', slots: [],
   },
   'bg-snow': {
     namePt: 'Terra Gelada',
@@ -120,6 +164,7 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'linear-gradient(180deg, transparent 74%, #e0f2fe 74%, #e0f2fe 82%, #bae6fd 82%)',
       'linear-gradient(180deg, #60a5fa 0%, #93c5fd 55%, #dbeafe 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
   },
   'bg-lava': {
     namePt: 'Montanha de Lava',
@@ -129,9 +174,10 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(2px 2px at 55% 56%, #fb923c 50%, transparent 51%)',
       'radial-gradient(3px 3px at 78% 68%, #fde047 50%, transparent 51%)',
       'radial-gradient(2px 2px at 42% 38%, #f97316 50%, transparent 51%)',
-      'linear-gradient(180deg, transparent 78%, #ea580c 78%, #f97316 84%, #7c2d12 84%)',
+      'linear-gradient(180deg, transparent 74%, #ea580c 74%, #f97316 80%, #7c2d12 80%)',
       'linear-gradient(180deg, #1c0a06 0%, #431407 60%, #7c2d12 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-sakura': {
     namePt: 'Cerejeira',
@@ -143,9 +189,10 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(2px 2px at 84% 20%, #f9a8d4 50%, transparent 51%)',
       'radial-gradient(3px 3px at 30% 52%, #ec4899 50%, transparent 51%)',
       'radial-gradient(2px 2px at 74% 58%, #f472b6 50%, transparent 51%)',
-      'linear-gradient(180deg, transparent 82%, #86efac 82%)',
+      'linear-gradient(180deg, transparent 74%, #86efac 74%)',
       'linear-gradient(180deg, #fdf2f8 0%, #fce7f3 55%, #fbcfe8 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-toytown': {
     namePt: 'Cidade dos Brinquedos',
@@ -154,9 +201,10 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(4px 4px at 20% 28%, #fff 50%, transparent 51%)',
       'radial-gradient(4px 4px at 55% 16%, #fff 50%, transparent 51%)',
       'radial-gradient(4px 4px at 82% 34%, #fff 50%, transparent 51%)',
-      'linear-gradient(180deg, transparent 70%, #f87171 70%, #f87171 78%, #fbbf24 78%, #fbbf24 86%, #34d399 86%)',
+      'linear-gradient(180deg, transparent 74%, #f87171 74%, #f87171 82%, #fbbf24 82%, #fbbf24 90%, #34d399 90%)',
       'linear-gradient(180deg, #a5f3fc 0%, #cffafe 60%, #fef9c3 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-synthwave': {
     namePt: 'Synthwave',
@@ -164,24 +212,26 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     css: [
       'radial-gradient(30px 30px at 50% 34%, #fbbf24 49%, transparent 51%)',
       'linear-gradient(180deg, transparent 33%, rgba(219,39,119,0.5) 34%, transparent 35%, transparent 40%, rgba(219,39,119,0.5) 41%, transparent 42%)',
-      'linear-gradient(180deg, transparent 58%, rgba(244,114,182,0.9) 58%, transparent 59.5%, transparent 68%, rgba(244,114,182,0.65) 68%, transparent 69.5%, transparent 80%, rgba(244,114,182,0.45) 80%, transparent 81.5%, transparent 92%, rgba(244,114,182,0.35) 92%, transparent 93.5%)',
-      'linear-gradient(180deg, #2e1065 0%, #6d28d9 40%, #db2777 56%, #1e1b4b 57%, #312e81 100%)',
+      'linear-gradient(180deg, transparent 74%, rgba(244,114,182,0.9) 74%, transparent 75.5%, transparent 82%, rgba(244,114,182,0.65) 82%, transparent 83.5%, transparent 90%, rgba(244,114,182,0.45) 90%, transparent 91.5%)',
+      'linear-gradient(180deg, #2e1065 0%, #6d28d9 40%, #db2777 72%, #1e1b4b 74%, #312e81 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // só a grade: nada onde pendurar
   },
   // ── Mission-exclusive backgrounds (utils/missions.ts) — never sold ─────────
   'bg-mission-filecity': {
     namePt: 'Cidade do Arquivo',
     nameEn: 'File City',
     css: [
-      'radial-gradient(10px 10px at 24% 68%, #f97316 49%, transparent 51%)',
-      'radial-gradient(12px 12px at 52% 66%, #ef4444 49%, transparent 51%)',
-      'radial-gradient(10px 10px at 78% 69%, #f97316 49%, transparent 51%)',
-      'radial-gradient(40px 22px at 25% 78%, #4ade80 49%, transparent 51%)',
-      'radial-gradient(48px 26px at 55% 80%, #22c55e 49%, transparent 51%)',
-      'radial-gradient(40px 22px at 82% 79%, #4ade80 49%, transparent 51%)',
-      'linear-gradient(180deg, transparent 82%, #15803d 82%)',
+      'radial-gradient(10px 10px at 24% 62%, #f97316 49%, transparent 51%)',
+      'radial-gradient(12px 12px at 52% 60%, #ef4444 49%, transparent 51%)',
+      'radial-gradient(10px 10px at 78% 63%, #f97316 49%, transparent 51%)',
+      'radial-gradient(40px 22px at 25% 70%, #4ade80 49%, transparent 51%)',
+      'radial-gradient(48px 26px at 55% 72%, #22c55e 49%, transparent 51%)',
+      'radial-gradient(40px 22px at 82% 71%, #4ade80 49%, transparent 51%)',
+      'linear-gradient(180deg, transparent 74%, #15803d 74%)',
       'linear-gradient(180deg, #7dd3fc 0%, #bae6fd 60%, #a7f3d0 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-mission-infinity': {
     namePt: 'Monte Infinito',
@@ -191,10 +241,12 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(2px 2px at 42% 10%, #e9d5ff 50%, transparent 51%)',
       'radial-gradient(2px 2px at 70% 22%, #fff 50%, transparent 51%)',
       'radial-gradient(2px 2px at 88% 12%, #e9d5ff 50%, transparent 51%)',
-      'radial-gradient(90px 70px at 50% 100%, #1e1b4b 49%, transparent 51%)',
-      'radial-gradient(50px 44px at 50% 88%, #312e81 49%, transparent 51%)',
+      'radial-gradient(90px 70px at 50% 96%, #1e1b4b 49%, transparent 51%)',
+      'radial-gradient(50px 44px at 50% 78%, #312e81 49%, transparent 51%)',
+      'linear-gradient(180deg, transparent 74%, #241a5c 74%, #241a5c 79%, #1a1145 79%)',
       'linear-gradient(180deg, #0f0428 0%, #2e1065 60%, #4c1d95 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
   },
   'bg-mission-coliseum': {
     namePt: 'Coliseu Digital',
@@ -205,9 +257,10 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(9px 12px at 62% 42%, #78350f 49%, transparent 51%)',
       'radial-gradient(9px 12px at 85% 42%, #78350f 49%, transparent 51%)',
       'linear-gradient(180deg, transparent 30%, #b45309 30%, #92400e 52%, transparent 52%)',
-      'linear-gradient(180deg, transparent 72%, #fbbf24 72%, #f59e0b 84%, #d97706 84%)',
+      'linear-gradient(180deg, transparent 74%, #fbbf24 74%, #f59e0b 84%, #d97706 84%)',
       'linear-gradient(180deg, #fde68a 0%, #fcd34d 55%, #fbbf24 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-mission-abyss': {
     namePt: 'Abismo da Masmorra',
@@ -218,20 +271,23 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(3px 3px at 82% 56%, #f87171 50%, transparent 51%)',
       'radial-gradient(120% 70% at 50% 110%, rgba(190,18,60,0.5), transparent 60%)',
       'repeating-linear-gradient(0deg, rgba(255,0,51,0.07) 0 2px, transparent 2px 6px)',
+      'linear-gradient(180deg, transparent 74%, #3a0713 74%, #3a0713 79%, #1b0208 79%)',
       'linear-gradient(180deg, #0c0104 0%, #1c0308 60%, #2c0510 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-mission-dinoland': {
     namePt: 'Vale dos Dinos',
     nameEn: 'Dino Valley',
     css: [
       'radial-gradient(26px 26px at 74% 30%, #fde047 49%, transparent 51%)',
-      'radial-gradient(70px 46px at 22% 96%, #14532d 49%, transparent 51%)',
-      'radial-gradient(56px 60px at 88% 92%, #713f12 49%, transparent 51%)',
-      'radial-gradient(4px 4px at 88% 62%, #f97316 50%, transparent 51%)',
-      'linear-gradient(180deg, transparent 84%, #365314 84%)',
-      'linear-gradient(180deg, #fb923c 0%, #f97316 45%, #c2410c 75%, #7c2d12 100%)',
+      'radial-gradient(70px 46px at 22% 84%, #14532d 49%, transparent 51%)',
+      'radial-gradient(56px 60px at 88% 80%, #713f12 49%, transparent 51%)',
+      'radial-gradient(4px 4px at 88% 56%, #f97316 50%, transparent 51%)',
+      'linear-gradient(180deg, transparent 74%, #365314 74%)',
+      'linear-gradient(180deg, #fb923c 0%, #f97316 45%, #c2410c 70%, #7c2d12 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-mission-aurora': {
     namePt: 'Aurora Digital',
@@ -242,8 +298,9 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'radial-gradient(2px 2px at 84% 34%, #fff 50%, transparent 51%)',
       'linear-gradient(115deg, transparent 30%, rgba(74,222,128,0.4) 40%, rgba(45,212,191,0.35) 50%, transparent 62%)',
       'linear-gradient(65deg, transparent 42%, rgba(167,139,250,0.35) 52%, transparent 64%)',
-      'linear-gradient(180deg, transparent 84%, #e0f2fe 84%)',
+      'linear-gradient(180deg, transparent 74%, #e0f2fe 74%)',
       'linear-gradient(180deg, #020617 0%, #0f172a 55%, #1e293b 100%)',
     ].join(', '),
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
   },
 };

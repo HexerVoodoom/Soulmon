@@ -30,6 +30,12 @@ import { useGameState, getMaxHPForStage, type GameState, type Activity, type Tas
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
+import type { SlotId } from './utils/petStage';
+
+// Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
+// objeto novo a cada render, anulando a memoização (footgun conhecido).
+const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
+const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
 import { getNextEvolution } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
@@ -1204,7 +1210,9 @@ export default function App() {
         next.equippedBackground = item.id; // equip right away
       } else if (item.kind === 'furniture') {
         next.ownedFurniture = [...(prev.ownedFurniture ?? []), item.id];
-        next.equippedFurniture = item.id; // equip right away
+        // Equipa na hora, no espaço do palco que o item declara — o que
+        // estava ali sai (um espaço, um item; ver utils/petStage.ts).
+        if (item.slot) next.equippedDecor = { ...(prev.equippedDecor ?? {}), [item.slot]: item.id };
       }
       return next;
     });
@@ -1216,8 +1224,21 @@ export default function App() {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
   }, []);
 
-  const handleEquipFurniture = useCallback((id: string | null) => {
-    setGameState(prev => ({ ...prev, equippedFurniture: id }));
+  /**
+   * Equipa/desequipa decoração. `id` null limpa o espaço; caso contrário o item
+   * ocupa o SEU espaço, substituindo quem estava lá. Não existe "equipar em
+   * outro lugar" — o espaço faz parte da identidade do item, porque a arte é
+   * desenhada para aquela caixa (utils/petStage.ts).
+   */
+  const handleEquipFurniture = useCallback((id: string | null, slot?: SlotId) => {
+    setGameState(prev => {
+      const next = { ...(prev.equippedDecor ?? {}) };
+      const target = slot ?? ALL_SHOP_ITEMS.find(i => i.id === id)?.slot;
+      if (!target) return prev;
+      if (id === null) delete next[target];
+      else next[target] = id;
+      return { ...prev, equippedDecor: next };
+    });
   }, []);
 
   // 💎 Créditos (monetização) — TODA operação de saldo passa pelo SERVIDOR
@@ -1765,7 +1786,7 @@ export default function App() {
               ownedBackgrounds={gameState.ownedBackgrounds ?? []}
               equippedBackground={gameState.equippedBackground ?? null}
               ownedFurniture={gameState.ownedFurniture ?? []}
-              equippedFurniture={gameState.equippedFurniture ?? null}
+              equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
               missionProgress={missionProgress}
               emblems={gameState.emblems ?? 0}
               credits={gameState.credits ?? 0}
@@ -1883,7 +1904,8 @@ export default function App() {
                 triggerMessage={messageTrigger}
                 energyPoints={gameState.energyPoints}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
-                equippedFurniture={gameState.equippedFurniture ?? null}
+                equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
+                trophies={gameState.trophies ?? EMPTY_TROPHIES}
                 fullSignal={fullSignal}
                 digivolutionSegments={gameState.digivolutionSegments}
                 theme={theme}

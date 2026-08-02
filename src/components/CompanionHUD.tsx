@@ -4,7 +4,8 @@ import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
 import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
-import { ALL_SHOP_ITEMS } from '../utils/shop';
+import { type SlotId } from '../utils/petStage';
+import { PetStageDecor } from './PetStageDecor';
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
@@ -33,7 +34,10 @@ interface CompanionHUDProps {
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
   healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
   equippedBackground?: string | null; // shop backdrop id for the pet box
-  equippedFurniture?: string | null; // shop furniture id — small decor badge in the pet box
+  /** Decoração equipada por espaço do palco (utils/petStage.ts). */
+  equippedDecor?: Partial<Record<SlotId, string>>;
+  /** Troféus de season ganhos no Torneio — exibidos na vitrine, se houver uma. */
+  trophies?: Array<{ season: string; place: 1 | 2 | 3 }>;
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
@@ -85,7 +89,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   fullSignal = 0,
   healCapSignal = 0,
   equippedBackground = null,
-  equippedFurniture = null,
+  equippedDecor = {},
+  trophies = [],
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   perfectDays = 0,
@@ -639,27 +644,6 @@ export const CompanionHUD = memo(function CompanionHUD({
           }}
         />
       )}
-      {/* Mobília equipada — badge decorativo no canto do box (utils/shop.ts kind:'furniture'). */}
-      {!isWin98 && !isGlitch && equippedFurniture && (() => {
-        // ALL_SHOP_ITEMS (não SHOP_ITEMS): a mobília do torneio vive na outra
-        // lista — procurar só na loja comum a fazia sumir depois de equipada.
-        const furn = ALL_SHOP_ITEMS.find(i => i.id === equippedFurniture && i.kind === 'furniture');
-        if (!furn) return null;
-        const FurnIcon = furn.displayIcon;
-        return (
-          <div
-            className="sm-card"
-            title={language === 'pt-BR' ? furn.namePt : furn.nameEn}
-            style={{
-              position: 'absolute', bottom: 6, left: 6, zIndex: 1,
-              width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 0, pointerEvents: 'none',
-            }}
-          >
-            {FurnIcon ? <FurnIcon size={16} strokeWidth={2.2} color="var(--sm-ink)" /> : <span style={{ fontSize: '1rem' }}>{furn.icon}</span>}
-          </div>
-        );
-      })()}
       <div className={`flex gap-2 ${isWin98 ? 'p-2' : ''}`} style={{ position: 'relative', zIndex: 1 }}>
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
         {!isGlitch && !isWin98 && (
@@ -744,6 +728,18 @@ export const CompanionHUD = memo(function CompanionHUD({
               <span className="sm-ambient-heart" style={{ top: '30%', left: '10%', animationDelay: '0.6s' }}>♥</span>
               <span className="sm-ambient-heart" style={{ top: '76%', left: '84%', animationDelay: '1.6s' }}>♥</span>
             </div>
+          )}
+
+          {/* Decoração do palco — apoiada na MESMA linha de chão dos pés do pet
+              (utils/petStage.ts). Vem antes do sprite no DOM de propósito: é
+              cenário, o pet anda na frente. */}
+          {!isWin98 && !isGlitch && (
+            <PetStageDecor
+              equippedDecor={equippedDecor}
+              equippedBackground={equippedBackground ?? null}
+              trophies={trophies}
+              language={language}
+            />
           )}
 
           {/* Care Event Sprite */}

@@ -1,8 +1,9 @@
 // 🛒 Shop catalog — bought with minigame points (gamePoints).
 // Effects are applied in App.tsx (handleShopBuy); see docs/SHOP-PLAN.md.
 import type { ComponentType } from 'react';
-import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint, Trophy, Flag, Medal, Award } from 'lucide-react';
+import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint, Trophy, Flag, Medal, Award, Image, Flame, Tent, Mountain } from 'lucide-react';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from '../components/AlignmentIcons';
+import type { SlotId, DecorFit } from './petStage';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -42,6 +43,12 @@ export interface ShopItem {
   /** Moeda do preço. Sem isto = Bits. Emblemas só compram itens da aba
    *  Torneio — as moedas não se misturam (ver utils/currencies.ts). */
   currency?: ShopCurrency;
+  /** Só em kind:'furniture'. ESPAÇO do palco que o item ocupa (utils/petStage.ts).
+   *  Equipar troca o que estava naquele espaço — não empilha. */
+  slot?: SlotId;
+  /** Só em kind:'furniture'. Em que tipo de cenário o item faz sentido. Um sofá
+   *  numa planície de neve não é charme, é erro de composição. */
+  fits?: DecorFit;
 }
 
 export const CHIP_BOOST = 3;   // attribute points granted when a chip is USED
@@ -122,27 +129,54 @@ export const SHOP_ITEMS: ShopItem[] = [
     descPt: `Vai pra pastinha; usar cura ${HEART_HEAL} coração`, descEn: `Goes to Items; use to heal ${HEART_HEAL} heart`, price: 150 },
   // (Glitchtama is deliberately NOT sold — the only way to get one is
   // clearing all 5 dungeon floors.)
-  // Mobílias — decoração equipável no box do pet (mesmo padrão de
-  // owned/equip dos cenários, ver ownedFurniture/equippedFurniture). Puramente
-  // cosmético, não afeta atributos.
+  // Decoração equipável no box do pet. Cada uma ocupa um ESPAÇO do palco
+  // (utils/petStage.ts) e só aparece em cenário compatível (`fits`) — equipar
+  // troca o que estava naquele espaço, nunca empilha.
+  //
+  // INTERIORES
   { id: 'furn-sofa', kind: 'furniture', icon: '🛋️', displayIcon: Sofa,
+    slot: 'floor-left', fits: 'indoor',
     namePt: 'Sofá Pixel', nameEn: 'Pixel Sofa',
-    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 100 },
-  { id: 'furn-lamp', kind: 'furniture', icon: '💡', displayIcon: Lamp,
-    namePt: 'Luminária', nameEn: 'Lamp',
-    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 100 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 100 },
   { id: 'furn-chair', kind: 'furniture', icon: '🪑', displayIcon: Armchair,
+    slot: 'floor-left', fits: 'indoor',
     namePt: 'Poltrona', nameEn: 'Armchair',
-    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 120 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 120 },
   { id: 'furn-books', kind: 'furniture', icon: '📚', displayIcon: BookOpen,
+    slot: 'floor-left', fits: 'indoor',
     namePt: 'Estante de Livros', nameEn: 'Bookshelf',
-    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 120 },
-  { id: 'furn-plant', kind: 'furniture', icon: '🪴', displayIcon: Flower2,
-    namePt: 'Vaso de Planta', nameEn: 'Potted Plant',
-    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 100 },
+    descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 120 },
+  { id: 'furn-lamp', kind: 'furniture', icon: '💡', displayIcon: Lamp,
+    slot: 'floor-right', fits: 'indoor',
+    namePt: 'Luminária', nameEn: 'Lamp',
+    descPt: 'Ocupa o canto direito — só em cenários de interior', descEn: 'Takes the right corner — indoor scenes only', price: 100 },
   { id: 'furn-rug', kind: 'furniture', icon: '🐾', displayIcon: PawPrint,
+    slot: 'rug', fits: 'indoor',
     namePt: 'Tapete de Patinhas', nameEn: 'Paw Print Rug',
-    descPt: 'Decoração para o box do pet', descEn: 'Decoration for the pet box', price: 140 },
+    descPt: 'Fica no chão, no centro — o pet anda por cima', descEn: 'Lies on the floor, centered — the pet walks over it', price: 140 },
+  // QUALQUER CENÁRIO
+  { id: 'furn-plant', kind: 'furniture', icon: '🪴', displayIcon: Flower2,
+    slot: 'floor-right', fits: 'any',
+    namePt: 'Vaso de Planta', nameEn: 'Potted Plant',
+    descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 100 },
+  { id: 'furn-picture', kind: 'furniture', icon: '🖼️', displayIcon: Image,
+    slot: 'wall', fits: 'any',
+    namePt: 'Quadro do Soulmon', nameEn: 'Soulmon Portrait',
+    descPt: 'Pendurado acima do pet — em cenários que tenham onde pendurar', descEn: 'Hangs above the pet — in scenes with somewhere to hang it', price: 130 },
+  // EXTERIORES — o pet passa a maior parte do tempo em cenários abertos, e até
+  // aqui não havia UM elemento pensado para eles (só móvel de sala).
+  { id: 'furn-campfire', kind: 'furniture', icon: '🔥', displayIcon: Flame,
+    slot: 'floor-left', fits: 'outdoor',
+    namePt: 'Fogueira', nameEn: 'Campfire',
+    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 120 },
+  { id: 'furn-tent', kind: 'furniture', icon: '⛺', displayIcon: Tent,
+    slot: 'floor-left', fits: 'outdoor',
+    namePt: 'Barraca', nameEn: 'Tent',
+    descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 140 },
+  { id: 'furn-rock', kind: 'furniture', icon: '🪨', displayIcon: Mountain,
+    slot: 'floor-right', fits: 'outdoor',
+    namePt: 'Pedra Musgosa', nameEn: 'Mossy Rock',
+    descPt: 'Ocupa o canto direito — só em cenários abertos', descEn: 'Takes the right corner — outdoor scenes only', price: 100 },
   // Pet-box backgrounds — permanent, equippable (css in utils/backgrounds.ts)
   // bg-room is the FREE default option — pre-owned by everyone (see
   // GameStateContext.tsx), so it always shows "Equip" instead of a price.
@@ -230,24 +264,28 @@ export const SHOP_ITEMS: ShopItem[] = [
  */
 export const TOURNAMENT_ITEMS: ShopItem[] = [
   { id: 'furniture-champion-banner', kind: 'furniture', icon: '🎌', displayIcon: Flag, currency: 'emblems',
+    slot: 'wall', fits: 'any',
     namePt: 'Estandarte do Campeão', nameEn: "Champion's Banner",
-    descPt: 'Para não deixar ninguém esquecer', descEn: 'So nobody forgets',
+    descPt: 'Pendurado acima do pet, em qualquer cenário', descEn: 'Hangs above the pet, in any scene',
     price: 15 },
   { id: 'furniture-medal-wall', kind: 'furniture', icon: '🏅', displayIcon: Medal, currency: 'emblems',
+    slot: 'wall', fits: 'any',
     namePt: 'Mural de Medalhas', nameEn: 'Medal Wall',
     descPt: 'Uma medalha para cada luta que valeu a pena', descEn: 'One medal for every fight worth having',
     price: 20 },
   { id: 'furniture-trophy-shelf', kind: 'furniture', icon: '🏆', displayIcon: Trophy, currency: 'emblems',
+    slot: 'trophy', fits: 'any',
     namePt: 'Estante de Troféus', nameEn: 'Trophy Shelf',
-    descPt: 'Mostra as suas conquistas no cantinho do pet', descEn: 'Shows your wins in the pet corner',
+    descPt: 'Vitrine — exibe os troféus que você ganhou de verdade', descEn: 'Display case — shows the trophies you actually won',
     price: 25 },
   { id: 'bg-arena-champion', kind: 'bg', icon: '🏟️', currency: 'emblems',
     namePt: 'Arena dos Campeões', nameEn: "Champions' Arena",
     descPt: 'O cenário de quem já subiu ao pódio', descEn: 'The backdrop of those who reached the podium',
     price: 40 },
   { id: 'furniture-podium', kind: 'furniture', icon: '🥇', displayIcon: Award, currency: 'emblems',
+    slot: 'trophy', fits: 'any',
     namePt: 'Pódio', nameEn: 'Podium',
-    descPt: 'O degrau mais alto, montado no box do pet', descEn: 'The top step, set up in the pet box',
+    descPt: 'Vitrine — exibe os troféus que você ganhou de verdade', descEn: 'Display case — shows the trophies you actually won',
     price: 55 },
   { id: 'bg-arena-spotlight', kind: 'bg', icon: '🌟', currency: 'emblems',
     namePt: 'Arena sob Holofotes', nameEn: 'Spotlight Arena',

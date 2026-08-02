@@ -5,6 +5,25 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { cloudSave } from '../utils/cloudSave';
 import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
+import type { SlotId } from '../utils/petStage';
+import { ALL_SHOP_ITEMS } from '../utils/shop';
+
+/**
+ * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
+ * badge no canto. Agora cada decoração ocupa um espaço do palco. A migração
+ * coloca o item antigo no espaço que ele declara — quem tinha um sofá continua
+ * com o sofá, agora apoiado no chão.
+ *
+ * Roda no load e é idempotente: se `equippedDecor` já existe, ela vence.
+ */
+function migrateDecor(loaded: Partial<GameState>): Partial<Record<SlotId, string>> {
+  if (loaded.equippedDecor && Object.keys(loaded.equippedDecor).length > 0) return loaded.equippedDecor;
+  const legacy = loaded.equippedFurniture;
+  if (!legacy) return {};
+  const item = ALL_SHOP_ITEMS.find(i => i.id === legacy);
+  if (!item?.slot) return {};
+  return { [item.slot]: legacy };
+}
 
 export interface Step {
   id: string;
@@ -115,7 +134,14 @@ export interface GameState {
   equippedBackground: string | null;
   /** Shop: furniture (kind:'furniture') owned — purely cosmetic decoration for the pet box. */
   ownedFurniture?: string[];
-  /** Shop: equipped furniture id, or null for none. */
+  /**
+   * Decoração equipada, UM item por espaço do palco (utils/petStage.ts):
+   * `{ 'floor-left': 'furn-sofa', trophy: 'furniture-podium', … }`.
+   * Substituiu `equippedFurniture` (um item só, num badge de canto); saves
+   * antigos são migrados no load — ver `migrateDecor`.
+   */
+  equippedDecor?: Partial<Record<SlotId, string>>;
+  /** @deprecated Só sobrevive para migrar saves antigos. Use `equippedDecor`. */
   equippedFurniture?: string | null;
   /** Evolution lock (padlock on the Evolution page): while true the pet never evolves at the day turn. */
   evolutionLocked?: boolean;
@@ -213,7 +239,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         ownedBackgrounds: Array.from(new Set([...(loadedState.ownedBackgrounds ?? []), 'bg-room'])),
         equippedBackground: loadedState.equippedBackground ?? null,
         ownedFurniture: loadedState.ownedFurniture ?? [],
-        equippedFurniture: loadedState.equippedFurniture ?? null,
+        equippedDecor: migrateDecor(loadedState),
         // Saves from before accountTier existed are grandfathered as 'paid' —
         // they already have a real oracle character and full functionality,
         // so they must never be retroactively downgraded to demo.
@@ -260,7 +286,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       ownedBackgrounds: ['bg-room'],
       equippedBackground: null,
       ownedFurniture: [],
-      equippedFurniture: null,
+      equippedDecor: {},
       // Fresh installs start in demo — the onboarding gate (SoulmonOnboarding)
       // upgrades this to 'paid' once the (currently placeholder) one-time
       // purchase completes.

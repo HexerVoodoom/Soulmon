@@ -1,0 +1,140 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// O PALCO do pet — a composição do box (CompanionHUD).
+//
+// Antes disto, "decoração" era um badge de 32px jogado no canto inferior
+// esquerdo: não compunha com o cenário, não tinha tamanho previsível e não dava
+// para desenhar arte pensando nela. Aqui o box vira um palco com geometria
+// fixa e ESPAÇOS (slots) definidos.
+//
+// As três regras que sustentam tudo:
+//
+//   1. TODO cenário compartilha a MESMA linha de chão (`GROUND_Y`). É onde os
+//      pés do pet caem hoje (o sprite é 80px centrado em 50% de um box de
+//      250px → base em 74%). Cenário que desenhar o chão em outra altura faz a
+//      decoração flutuar — por isso o CSS dos cenários foi alinhado a este
+//      valor, e não o contrário.
+//
+//   2. Cada slot tem TAMANHO FIXO em px. A arte é desenhada PARA a caixa; o
+//      renderizador não a redimensiona por conta própria. Mudar um tamanho aqui
+//      significa redesenhar a arte que ocupa o slot.
+//
+//   3. Slot vazio é VAZIO. Sem contorno tracejado, sem "+", sem marcação
+//      nenhuma — quem não tem decoração vê o cenário limpo, não um formulário
+//      pela metade.
+//
+// Coordenadas: `x`/`y` em % da ÁREA DO PET (a caixa arredondada de 250px de
+// altura à direita da coluna de botões), `w`/`h` em px.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Linha do chão, em % da altura do palco. Os pés do pet caem exatamente aqui. */
+export const GROUND_Y = 74;
+
+/** Altura do palco em px (CompanionHUD — área do pet). */
+export const STAGE_HEIGHT = 250;
+
+export type SlotId = 'rug' | 'floor-left' | 'trophy' | 'floor-right' | 'wall';
+
+/**
+ * Onde a decoração encosta:
+ * - 'ground' → a BASE da caixa fica na linha do chão (móvel apoiado no piso)
+ * - 'ground-flat' → a caixa fica DEITADA sobre a linha do chão (tapete)
+ * - 'hang' → a caixa é presa pelo topo, na altura declarada (parede)
+ */
+export type SlotAnchor = 'ground' | 'ground-flat' | 'hang';
+
+export interface DecorSlot {
+  id: SlotId;
+  /** Centro horizontal, em % da largura do palco. */
+  x: number;
+  /** Só para 'hang': topo da caixa, em % da altura do palco. */
+  y?: number;
+  /** Caixa da arte, em px. É o contrato com quem desenha. */
+  w: number;
+  h: number;
+  anchor: SlotAnchor;
+  namePt: string;
+  nameEn: string;
+}
+
+/**
+ * Os cinco espaços do palco, na ordem em que se lêem da esquerda para a
+ * direita. A distribuição é deliberada: nada no centro exato do chão, porque é
+ * onde o pet passa a maior parte do tempo, e nada colado nas bordas, que o box
+ * arredondado corta.
+ */
+export const DECOR_SLOTS: Record<SlotId, DecorSlot> = {
+  // Deitado no chão, atravessando o centro — o pet anda POR CIMA dele.
+  rug: {
+    id: 'rug', x: 50, w: 104, h: 16, anchor: 'ground-flat',
+    namePt: 'Chão', nameEn: 'Floor',
+  },
+  // Peça grande: sofá, estante, fogueira, barraca.
+  'floor-left': {
+    id: 'floor-left', x: 16, w: 56, h: 56, anchor: 'ground',
+    namePt: 'Canto esquerdo', nameEn: 'Left corner',
+  },
+  // Vitrine de conquistas — mostra os troféus REAIS ganhos no Torneio.
+  trophy: {
+    id: 'trophy', x: 47, w: 46, h: 50, anchor: 'ground',
+    namePt: 'Vitrine de troféus', nameEn: 'Trophy display',
+  },
+  // Peça pequena: luminária, planta, pedra.
+  'floor-right': {
+    id: 'floor-right', x: 84, w: 48, h: 52, anchor: 'ground',
+    namePt: 'Canto direito', nameEn: 'Right corner',
+  },
+  // Pendurado, acima da cabeça do pet (que ocupa de 42% a 74%). Fica logo
+  // abaixo do topo, e não colado nele, para ler como preso a alguma coisa —
+  // parede, mastro, galho — em vez de boiando no céu.
+  wall: {
+    id: 'wall', x: 68, y: 20, w: 56, h: 40, anchor: 'hang',
+    namePt: 'Parede', nameEn: 'Wall',
+  },
+};
+
+export const SLOT_ORDER: SlotId[] = ['rug', 'floor-left', 'trophy', 'floor-right', 'wall'];
+
+/**
+ * Onde o cenário se passa. Define que TIPO de elemento faz sentido nele — um
+ * sofá no fundo do mar não é charmoso, é erro de composição.
+ * - 'indoor'  → tem parede e piso (aceita mobília e coisas penduradas)
+ * - 'outdoor' → céu aberto e terreno (aceita fogueira, pedra, barraca…)
+ * - 'void'    → abstrato/sem chão legível (matriz, fundo do mar): sem decoração
+ */
+export type StageSetting = 'indoor' | 'outdoor' | 'void';
+
+/** O que um item de decoração aceita como cenário. */
+export type DecorFit = 'indoor' | 'outdoor' | 'any';
+
+/** Um item de decoração cabe no cenário? */
+export function decorFitsSetting(fit: DecorFit, setting: StageSetting): boolean {
+  if (setting === 'void') return false;   // cenário sem chão não recebe nada
+  return fit === 'any' || fit === setting;
+}
+
+/**
+ * Estilo absoluto da caixa de um slot, pronto para o `style` do elemento.
+ * Uma função só — se cada tela recalcular isso na mão, elas divergem e a
+ * decoração deixa de bater com o chão.
+ */
+export function slotBoxStyle(slot: DecorSlot): {
+  position: 'absolute'; left: string; top: string; width: number; height: number;
+  marginLeft: number; marginTop: number;
+} {
+  const topPct = slot.anchor === 'hang' ? (slot.y ?? 0) : GROUND_Y;
+  // 'ground' sobe a caixa inteira (base no chão); 'ground-flat' fica metade
+  // acima e metade abaixo da linha, como um tapete em perspectiva; 'hang'
+  // desce a partir do topo declarado.
+  const marginTop = slot.anchor === 'ground' ? -slot.h
+    : slot.anchor === 'ground-flat' ? -Math.round(slot.h / 2)
+    : 0;
+  return {
+    position: 'absolute',
+    left: `${slot.x}%`,
+    top: `${topPct}%`,
+    width: slot.w,
+    height: slot.h,
+    marginLeft: -Math.round(slot.w / 2),
+    marginTop,
+  };
+}
