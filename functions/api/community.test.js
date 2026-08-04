@@ -28,6 +28,11 @@ function fakeKV(seed = {}) {
   };
 }
 
+async function pidDeSync(saveId) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`soulmon-pub:${saveId}`));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
+}
+
 const perfil = (id, extra = {}) => JSON.stringify({
   id, name: `n-${id.slice(0, 4)}`, petName: 'pet', stage: 'rookie',
   pvpEnabled: true, attrs: { virus: 1, data: 1, vaccine: 1 },
@@ -133,11 +138,16 @@ describe('community — as ações destrutivas não destroem nada ao recusar', (
 });
 
 describe('community — o torneio não aceita partida contra si mesmo', () => {
-  it('recusa id === opponentId', async () => {
+  it('recusa desafiar a si mesmo, mesmo pelo próprio pid', async () => {
     // Sem isso, os dois getRank/putRank caem na mesma chave e a segunda
     // escrita sobrescreve a primeira, inclusive o contador de partidas do dia.
-    const env = { DIGIAPP_SAVES: fakeKV({ [`profile:${ATOR}`]: perfil(ATOR) }) }; // auth desligada
-    const res = await onRequest({ request: req('match', { method: 'POST', body: { id: ATOR, opponentId: ATOR } }), env });
+    // A checagem acontece DEPOIS de resolver o pid: o alvo é sempre público.
+    const meuPid = await pidDeSync(ATOR);
+    const env = { DIGIAPP_SAVES: fakeKV({
+      [`profile:${ATOR}`]: perfil(ATOR),
+      [`pid:${meuPid}`]: ATOR,
+    }) }; // auth desligada
+    const res = await onRequest({ request: req('match', { method: 'POST', body: { id: ATOR, opponentId: meuPid } }), env });
     expect(res.status).toBe(400);
   });
 });
@@ -162,5 +172,90 @@ describe('community — a lista de ações com ator está completa', () => {
       if (publicas.has(a) || admin.has(a)) continue;
       expect(declaradas.has(a), `ação '${a}' não está coberta pelo teste de autorização`).toBe(true);
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// O saveId É A CHAVE DO CLOUD SAVE. Publicá-lo no diretório entregava, sem
+// autenticação nenhuma, a chave de leitura E ESCRITA do save de todo mundo:
+// `GET /api/save?id=<saveId>` devolvia o save inteiro e `POST` o sobrescrevia.
+// A identidade social passou a ser um pid derivado (caminho só de ida).
+// ─────────────────────────────────────────────────────────────────────────────
+
+const pidDe = pidDeSync;
+
+describe('community — o saveId nunca sai em resposta pública', () => {
+  const LEITURAS_PUBLICAS = [
+    { action: 'players' },
+    { action: 'opponents', params: { id: ATOR } },
+    { action: 'rank' },
+    { action: 'seasonResult' },
+  ];
+
+  for (const caso of LEITURAS_PUBLICAS) {
+    it(`'${caso.action}' não contém nenhum saveId`, async () => {
+      const env = {
+        DIGIAPP_SAVES: fakeKV({
+          [`profile:${VITIMA}`]: perfil(VITIMA, { pid: await pidDe(VITIMA) }),
+          [`profile:${ATOR}`]: perfil(ATOR, { pid: await pidDe(ATOR) }),
+          [`rank:${new Date().toISOString().slice(0, 7)}:${VITIMA}`]:
+            JSON.stringify({ points: 30, wins: 3, losses: 1, day: '2026-01-01', matchesToday: 0 }),
+        }),
+      };
+      const res = await onRequest({ request: req(caso.action, caso), env });
+      const texto = await res.text();
+      expect(texto).not.toContain(VITIMA);
+      expect(texto).not.toContain(ATOR);
+    });
+  }
+
+  it('o diretório publica o pid, e ele é derivado do saveId', async () => {
+    const env = { DIGIAPP_SAVES: fakeKV({ [`profile:${VITIMA}`]: perfil(VITIMA) }) };
+    const res = await onRequest({ request: req('players'), env });
+    const { players } = await res.json();
+    expect(players[0].id).toBe(await pidDe(VITIMA));
+  });
+
+  it('o pid não permite voltar ao saveId sem o mapa do servidor', async () => {
+    // É um hash: a única forma de resolver um alvo é o índice `pid:` no KV.
+    const pid = await pidDe(VITIMA);
+    expect(pid).not.toContain(VITIMA);
+    expect(VITIMA).not.toContain(pid);
+  });
+});
+
+describe('community — alvos são endereçados por pid, não por saveId', () => {
+  it('não dá para virar amigo passando o saveId da vítima', async () => {
+    // Antes, `friendId` era o saveId — que o diretório entregava de graça.
+    const env = { DIGIAPP_SAVES: fakeKV({
+      [`profile:${ATOR}`]: perfil(ATOR),
+      [`profile:${VITIMA}`]: perfil(VITIMA),
+    }) };
+    const res = await onRequest({
+      request: req('friends', { method: 'POST', body: { id: ATOR, friendId: VITIMA } }),
+      env,
+    });
+    expect(res.status).toBe(404);
+    const depois = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`));
+    expect(depois.friends).toEqual([]);
+  });
+
+  it('com o pid indexado, a amizade funciona — e a resposta volta em pid', async () => {
+    const pidVitima = await pidDe(VITIMA);
+    const env = { DIGIAPP_SAVES: fakeKV({
+      [`profile:${ATOR}`]: perfil(ATOR),
+      [`profile:${VITIMA}`]: perfil(VITIMA),
+      [`pid:${pidVitima}`]: VITIMA,
+    }) };
+    const res = await onRequest({
+      request: req('friends', { method: 'POST', body: { id: ATOR, friendId: pidVitima } }),
+      env,
+    });
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.friends).toEqual([pidVitima]);
+    // internamente continua saveId — é o que permite escrever gifts:<saveId>
+    const depois = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`));
+    expect(depois.friends).toEqual([VITIMA]);
   });
 });

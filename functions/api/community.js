@@ -2,10 +2,16 @@
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
 // Usa o MESMO KV dos saves (DIGIAPP_SAVES) com prefixos:
 //   profile:<saveId>          → perfil público (nome, pet, formas, pvp, amigos…)
+//   pid:<pid>                 → índice reverso da identidade pública → saveId
 //   rank:<season>:<saveId>    → pontos de rank da season (season = YYYY-MM)
 //   gifts:<saveId>            → presentes de bits pendentes para o jogador
 //
 // Rotas (query ?action=):
+// IDENTIDADE: `id` de ENTRADA é sempre o saveId do PRÓPRIO dono (autenticado).
+// Alvos de outra pessoa (`friendId`, `opponentId`, e o `?id=` do `player`)
+// chegam como **pid público** e são resolvidos aqui pelo índice `pid:<pid>`.
+// Nenhuma resposta pública devolve saveId — há teste travando isso.
+//
 //   POST profile   {id, name, stage, unlockedStages[], pvpEnabled, createdAt?}
 //   GET  players   ?search=&limit=      → diretório público
 //   GET  player    ?id=                 → perfil detalhado
@@ -37,6 +43,53 @@ function stagePower(stage) {
   if (!stage) return 1;
   const p = String(stage).split('-')[0];
   return { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 }[p] ?? 1;
+}
+
+// ── Identidade pública ───────────────────────────────────────────────────────
+// O `saveId` É A CHAVE DO CLOUD SAVE. Publicá-lo no diretório entregava, sem
+// autenticação nenhuma, a chave de leitura e ESCRITA do save de todo mundo:
+// `GET /api/save?id=<saveId>` devolvia o save inteiro e `POST` o sobrescrevia.
+// Com `Access-Control-Allow-Origin: *`, isso funcionava até de uma página
+// aberta no navegador da vítima.
+//
+// A identidade social passa a ser um `pid` derivado — um caminho só de ida:
+// dá para calcular o pid a partir do saveId, nunca o contrário. O mapa reverso
+// (`pid:<pid>` → saveId) vive no servidor e é o único jeito de resolver um
+// alvo. Nada no cliente precisa saber disso: ele já tratava o id alheio como
+// um token opaco que devolve ao servidor.
+const PID_PREFIX = 'pid:';
+
+/** pid público a partir do saveId. Determinístico, então não precisa migração. */
+async function publicIdFor(saveId) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`soulmon-pub:${saveId}`));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
+}
+
+/** Grava o mapa reverso. Idempotente; roda a cada upsert de perfil. */
+async function indexPublicId(env, saveId, pid) {
+  await env.DIGIAPP_SAVES.put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
+}
+
+/** pid → saveId. `null` quando o alvo não existe (ou ainda não se registrou). */
+async function saveIdForPublicId(env, pid) {
+  if (!VALID_ID.test(pid || '')) return null;
+  return await env.DIGIAPP_SAVES.get(`${PID_PREFIX}${pid}`);
+}
+
+/**
+ * Versão pública de um perfil. É o ÚNICO lugar que monta o que sai daqui —
+ * assim não existe rota que devolva o saveId por esquecimento.
+ */
+async function publicProfile(env, p, extra = {}) {
+  const pid = p.pid || await publicIdFor(p.id);
+  return {
+    id: pid,
+    name: p.name, petName: p.petName, stage: p.stage,
+    unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
+    daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 86400000) + 1),
+    tasksDone: p.tasksDone || 0,
+    ...extra,
+  };
 }
 
 async function getProfile(env, id) {
@@ -121,9 +174,13 @@ export async function onRequest({ request, env }) {
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
       updatedAt: Date.now(),
+      // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
+      // mapa reverso conhece a correspondência.
+      pid: prev.pid || await publicIdFor(id),
     };
     await putProfile(env, id, profile);
-    return json({ ok: true });
+    await indexPublicId(env, id, profile.pid);
+    return json({ ok: true, id: profile.pid });
   }
 
   // ── Diretório / busca ─────────────────────────────────────────────────────
@@ -138,13 +195,7 @@ export async function onRequest({ request, env }) {
       const p = JSON.parse(raw);
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
       const rank = await getRank(env, season, p.id);
-      players.push({
-        id: p.id, name: p.name, petName: p.petName, stage: p.stage,
-        unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
-        rankPoints: rank.points,
-        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 86400000) + 1),
-        tasksDone: p.tasksDone || 0,
-      });
+      players.push(await publicProfile(env, p, { rankPoints: rank.points }));
       if (players.length >= 50) break;
     }
     players.sort((a, b) => b.rankPoints - a.rankPoints);
@@ -152,19 +203,21 @@ export async function onRequest({ request, env }) {
   }
 
   if (action === 'player' && method === 'GET') {
-    const p = await getProfile(env, id);
+    // `id` aqui é um pid (é o que o diretório publica). Aceita o saveId do
+    // próprio dono também, para o app conseguir consultar o próprio perfil.
+    const targetSave = (await saveIdForPublicId(env, id)) || id;
+    const p = await getProfile(env, targetSave);
     if (!p) return json({ found: false });
-    const rank = await getRank(env, currentSeason(), id);
+    const rank = await getRank(env, currentSeason(), targetSave);
+    // `friends` sai como pid: internamente são saveIds, e devolvê-los cru
+    // vazaria a chave do save de até 5 pessoas por consulta.
+    const friendPids = await Promise.all((p.friends || []).map(f => publicIdFor(f)));
     return json({
       found: true,
-      player: {
-        id: p.id, name: p.name, petName: p.petName, stage: p.stage,
-        unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
-        friends: p.friends,
+      player: await publicProfile(env, p, {
+        friends: friendPids,
         rankPoints: rank.points, wins: rank.wins, losses: rank.losses,
-        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 86400000) + 1),
-        tasksDone: p.tasksDone || 0,
-      },
+      }),
     });
   }
 
@@ -178,7 +231,7 @@ export async function onRequest({ request, env }) {
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
-      pool.push({ id: p.id, name: p.name, petName: p.petName, stage: p.stage });
+      pool.push(await publicProfile(env, p));
     }
     // embaralha e devolve até 3
     for (let i = pool.length - 1; i > 0; i--) {
@@ -202,9 +255,12 @@ export async function onRequest({ request, env }) {
     // vítima. Repetido, garante o 1º lugar da season sem jogar.
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    if (id === opponentId) return json({ error: 'cannot fight yourself' }, 400);
+    // O oponente chega como pid público — o saveId dele nunca sai daqui.
+    const oppSave = await saveIdForPublicId(env, opponentId);
+    if (!oppSave) return json({ error: 'opponent unavailable' }, 404);
+    if (id === oppSave) return json({ error: 'cannot fight yourself' }, 400);
     const me = await getProfile(env, id);
-    const opp = await getProfile(env, opponentId);
+    const opp = await getProfile(env, oppSave);
     if (!me?.pvpEnabled) return json({ error: 'pvp disabled' }, 403);
     if (!opp?.pvpEnabled) return json({ error: 'opponent unavailable' }, 404);
 
@@ -230,10 +286,10 @@ export async function onRequest({ request, env }) {
     if (won) myRank.wins += 1; else myRank.losses += 1;
     await putRank(env, season, id, myRank);
 
-    const oppRank = await getRank(env, season, opponentId);
+    const oppRank = await getRank(env, season, oppSave);
     oppRank.points = Math.max(0, oppRank.points + (won ? -4 : 10));
     if (won) oppRank.losses += 1; else oppRank.wins += 1;
-    await putRank(env, season, opponentId, oppRank);
+    await putRank(env, season, oppSave, oppRank);
 
     return json({
       won,
@@ -253,9 +309,15 @@ export async function onRequest({ request, env }) {
       const raw = await env.DIGIAPP_SAVES.get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
-      const pid = k.slice(`rank:${season}:`.length);
-      const p = await getProfile(env, pid);
-      rows.push({ id: pid, name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie', points: rec.points, wins: rec.wins, losses: rec.losses });
+      // Atenção: a chave do rank é o saveId. Esta variável já se chamou `pid`,
+      // o que ajudava a esconder que o ranking publicava a chave do save.
+      const ownerSave = k.slice(`rank:${season}:`.length);
+      const p = await getProfile(env, ownerSave);
+      rows.push({
+        id: p?.pid || await publicIdFor(ownerSave),
+        name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie',
+        points: rec.points, wins: rec.wins, losses: rec.losses,
+      });
     }
     rows.sort((a, b) => b.points - a.points);
     if (action === 'seasonResult') return json({ season, top3: rows.slice(0, 3) });
@@ -311,21 +373,22 @@ export async function onRequest({ request, env }) {
     // a lista da vítima.
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    if (id === friendId) return json({ error: 'cannot befriend yourself' }, 400);
+    // O alvo chega como pid público; só o servidor resolve para o saveId.
+    const friendSave = await saveIdForPublicId(env, friendId);
+    if (!friendSave) return json({ error: 'friend not found' }, 404);
+    if (id === friendSave) return json({ error: 'cannot befriend yourself' }, 400);
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
-    const friend = await getProfile(env, friendId);
-    if (!friend) return json({ error: 'friend not found' }, 404);
     me.friends = me.friends || [];
     if (remove) {
-      me.friends = me.friends.filter(f => f !== friendId);
-    } else {
-      if (me.friends.includes(friendId)) return json({ ok: true, friends: me.friends });
+      me.friends = me.friends.filter(f => f !== friendSave);
+    } else if (!me.friends.includes(friendSave)) {
       if (me.friends.length >= 5) return json({ error: 'friend limit (5)' }, 400);
-      me.friends.push(friendId);
+      me.friends.push(friendSave);
     }
     await putProfile(env, id, me);
-    return json({ ok: true, friends: me.friends });
+    // Devolve pids: a lista interna é de saveIds e não pode sair daqui.
+    return json({ ok: true, friends: await Promise.all(me.friends.map(f => publicIdFor(f))) });
   }
 
   // ── Presente de bits (grátis; exige energia cheia no cliente; 1x/dia/amigo)
@@ -336,18 +399,20 @@ export async function onRequest({ request, env }) {
     // outro jogador para a própria conta — 20 Bits por vítima por dia.
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
+    const friendSave = await saveIdForPublicId(env, friendId);
+    if (!friendSave) return json({ error: 'not a friend' }, 403);
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
-    if (!(me.friends || []).includes(friendId)) return json({ error: 'not a friend' }, 403);
+    if (!(me.friends || []).includes(friendSave)) return json({ error: 'not a friend' }, 403);
     me.giftLog = me.giftLog || {};
-    if (me.giftLog[friendId] === today()) return json({ error: 'already gifted today' }, 429);
-    me.giftLog[friendId] = today();
+    if (me.giftLog[friendSave] === today()) return json({ error: 'already gifted today' }, 429);
+    me.giftLog[friendSave] = today();
     await putProfile(env, id, me);
 
-    const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendId}`);
+    const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
-    await env.DIGIAPP_SAVES.put(`gifts:${friendId}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+    await env.DIGIAPP_SAVES.put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json({ ok: true });
   }
 

@@ -726,6 +726,36 @@ function stagePower(stage) {
   return { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 }[p] ?? 1;
 }
 __name(stagePower, "stagePower");
+var PID_PREFIX = "pid:";
+async function publicIdFor(saveId) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-pub:${saveId}`));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
+}
+__name(publicIdFor, "publicIdFor");
+async function indexPublicId(env, saveId, pid) {
+  await env.DIGIAPP_SAVES.put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
+}
+__name(indexPublicId, "indexPublicId");
+async function saveIdForPublicId(env, pid) {
+  if (!VALID_ID2.test(pid || "")) return null;
+  return await env.DIGIAPP_SAVES.get(`${PID_PREFIX}${pid}`);
+}
+__name(saveIdForPublicId, "saveIdForPublicId");
+async function publicProfile(env, p, extra = {}) {
+  const pid = p.pid || await publicIdFor(p.id);
+  return {
+    id: pid,
+    name: p.name,
+    petName: p.petName,
+    stage: p.stage,
+    unlockedStages: p.unlockedStages,
+    pvpEnabled: p.pvpEnabled,
+    daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1),
+    tasksDone: p.tasksDone || 0,
+    ...extra
+  };
+}
+__name(publicProfile, "publicProfile");
 async function getProfile(env, id) {
   const raw = await env.DIGIAPP_SAVES.get(`profile:${id}`);
   return raw ? JSON.parse(raw) : null;
@@ -790,10 +820,14 @@ async function onRequest({ request, env }) {
       tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : prev.tasksDone || 0,
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
-      updatedAt: Date.now()
+      updatedAt: Date.now(),
+      // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
+      // mapa reverso conhece a correspondência.
+      pid: prev.pid || await publicIdFor(id)
     };
     await putProfile(env, id, profile);
-    return json2({ ok: true });
+    await indexPublicId(env, id, profile.pid);
+    return json2({ ok: true, id: profile.pid });
   }
   if (action === "players" && method === "GET") {
     const search = (url.searchParams.get("search") || "").toLowerCase();
@@ -806,42 +840,26 @@ async function onRequest({ request, env }) {
       const p = JSON.parse(raw);
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
       const rank = await getRank(env, season, p.id);
-      players.push({
-        id: p.id,
-        name: p.name,
-        petName: p.petName,
-        stage: p.stage,
-        unlockedStages: p.unlockedStages,
-        pvpEnabled: p.pvpEnabled,
-        rankPoints: rank.points,
-        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1),
-        tasksDone: p.tasksDone || 0
-      });
+      players.push(await publicProfile(env, p, { rankPoints: rank.points }));
       if (players.length >= 50) break;
     }
     players.sort((a, b) => b.rankPoints - a.rankPoints);
     return json2({ players });
   }
   if (action === "player" && method === "GET") {
-    const p = await getProfile(env, id);
+    const targetSave = await saveIdForPublicId(env, id) || id;
+    const p = await getProfile(env, targetSave);
     if (!p) return json2({ found: false });
-    const rank = await getRank(env, currentSeason(), id);
+    const rank = await getRank(env, currentSeason(), targetSave);
+    const friendPids = await Promise.all((p.friends || []).map((f) => publicIdFor(f)));
     return json2({
       found: true,
-      player: {
-        id: p.id,
-        name: p.name,
-        petName: p.petName,
-        stage: p.stage,
-        unlockedStages: p.unlockedStages,
-        pvpEnabled: p.pvpEnabled,
-        friends: p.friends,
+      player: await publicProfile(env, p, {
+        friends: friendPids,
         rankPoints: rank.points,
         wins: rank.wins,
-        losses: rank.losses,
-        daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1),
-        tasksDone: p.tasksDone || 0
-      }
+        losses: rank.losses
+      })
     });
   }
   if (action === "opponents" && method === "GET") {
@@ -853,7 +871,7 @@ async function onRequest({ request, env }) {
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
-      pool.push({ id: p.id, name: p.name, petName: p.petName, stage: p.stage });
+      pool.push(await publicProfile(env, p));
     }
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -869,9 +887,11 @@ async function onRequest({ request, env }) {
     if (!VALID_ID2.test(id || "") || !VALID_ID2.test(opponentId || "")) return json2({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    if (id === opponentId) return json2({ error: "cannot fight yourself" }, 400);
+    const oppSave = await saveIdForPublicId(env, opponentId);
+    if (!oppSave) return json2({ error: "opponent unavailable" }, 404);
+    if (id === oppSave) return json2({ error: "cannot fight yourself" }, 400);
     const me = await getProfile(env, id);
-    const opp = await getProfile(env, opponentId);
+    const opp = await getProfile(env, oppSave);
     if (!me?.pvpEnabled) return json2({ error: "pvp disabled" }, 403);
     if (!opp?.pvpEnabled) return json2({ error: "opponent unavailable" }, 404);
     const season = currentSeason();
@@ -892,11 +912,11 @@ async function onRequest({ request, env }) {
     if (won) myRank.wins += 1;
     else myRank.losses += 1;
     await putRank(env, season, id, myRank);
-    const oppRank = await getRank(env, season, opponentId);
+    const oppRank = await getRank(env, season, oppSave);
     oppRank.points = Math.max(0, oppRank.points + (won ? -4 : 10));
     if (won) oppRank.losses += 1;
     else oppRank.wins += 1;
-    await putRank(env, season, opponentId, oppRank);
+    await putRank(env, season, oppSave, oppRank);
     return json2({
       won,
       myScore: Math.round(myScore),
@@ -915,9 +935,17 @@ async function onRequest({ request, env }) {
       const raw = await env.DIGIAPP_SAVES.get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
-      const pid = k.slice(`rank:${season}:`.length);
-      const p = await getProfile(env, pid);
-      rows.push({ id: pid, name: p?.name || "An\xF4nimo", petName: p?.petName || "", stage: p?.stage || "rookie", points: rec.points, wins: rec.wins, losses: rec.losses });
+      const ownerSave = k.slice(`rank:${season}:`.length);
+      const p = await getProfile(env, ownerSave);
+      rows.push({
+        id: p?.pid || await publicIdFor(ownerSave),
+        name: p?.name || "An\xF4nimo",
+        petName: p?.petName || "",
+        stage: p?.stage || "rookie",
+        points: rec.points,
+        wins: rec.wins,
+        losses: rec.losses
+      });
     }
     rows.sort((a, b) => b.points - a.points);
     if (action === "seasonResult") return json2({ season, top3: rows.slice(0, 3) });
@@ -961,38 +989,39 @@ async function onRequest({ request, env }) {
     if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    if (id === friendId) return json2({ error: "cannot befriend yourself" }, 400);
+    const friendSave = await saveIdForPublicId(env, friendId);
+    if (!friendSave) return json2({ error: "friend not found" }, 404);
+    if (id === friendSave) return json2({ error: "cannot befriend yourself" }, 400);
     const me = await getProfile(env, id);
     if (!me) return json2({ error: "profile not found" }, 404);
-    const friend = await getProfile(env, friendId);
-    if (!friend) return json2({ error: "friend not found" }, 404);
     me.friends = me.friends || [];
     if (remove) {
-      me.friends = me.friends.filter((f) => f !== friendId);
-    } else {
-      if (me.friends.includes(friendId)) return json2({ ok: true, friends: me.friends });
+      me.friends = me.friends.filter((f) => f !== friendSave);
+    } else if (!me.friends.includes(friendSave)) {
       if (me.friends.length >= 5) return json2({ error: "friend limit (5)" }, 400);
-      me.friends.push(friendId);
+      me.friends.push(friendSave);
     }
     await putProfile(env, id, me);
-    return json2({ ok: true, friends: me.friends });
+    return json2({ ok: true, friends: await Promise.all(me.friends.map((f) => publicIdFor(f))) });
   }
   if (action === "gift" && method === "POST") {
     const { friendId } = body;
     if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
+    const friendSave = await saveIdForPublicId(env, friendId);
+    if (!friendSave) return json2({ error: "not a friend" }, 403);
     const me = await getProfile(env, id);
     if (!me) return json2({ error: "profile not found" }, 404);
-    if (!(me.friends || []).includes(friendId)) return json2({ error: "not a friend" }, 403);
+    if (!(me.friends || []).includes(friendSave)) return json2({ error: "not a friend" }, 403);
     me.giftLog = me.giftLog || {};
-    if (me.giftLog[friendId] === today2()) return json2({ error: "already gifted today" }, 429);
-    me.giftLog[friendId] = today2();
+    if (me.giftLog[friendSave] === today2()) return json2({ error: "already gifted today" }, 429);
+    me.giftLog[friendSave] = today2();
     await putProfile(env, id, me);
-    const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendId}`);
+    const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
-    await env.DIGIAPP_SAVES.put(`gifts:${friendId}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+    await env.DIGIAPP_SAVES.put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json2({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
@@ -1499,7 +1528,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-mMc28U/functionsRoutes-0.5169077427923054.mjs
+// ../.wrangler/tmp/pages-bE7NWR/functionsRoutes-0.05178302984296401.mjs
 var routes = [
   {
     routePath: "/api/billing",

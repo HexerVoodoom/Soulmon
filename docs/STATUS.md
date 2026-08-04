@@ -24,7 +24,7 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 | # | Onde | O quê | Status |
 |---|---|---|---|
 | SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ✅ corrigido |
-| SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ⬜ |
+| SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ✅ corrigido |
 | SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido |
 
 **SEC-1 — o buraco central.** Só `action=profile` chama `authorizeSaveAccess`.
@@ -49,6 +49,15 @@ qualquer página aberta no navegador da vítima.
 > Isso muda a natureza do risco que estava documentado como aceito. O texto
 > antigo dizia "quem souber seu e-mail pode ler seu save". Na prática **ninguém
 > precisa saber e-mail nenhum** — é leitura e destruição em massa.
+
+**Correção aplicada.** A identidade social passou a ser um `pid` derivado
+(`SHA-256("soulmon-pub:" + saveId)`, 24 hex) — caminho só de ida. O índice
+reverso `pid:<pid>` → saveId vive no servidor e é o único jeito de resolver um
+alvo. Alvos (`friendId`, `opponentId`, `player?id=`) chegam como pid; a lista de
+amigos guarda saveId internamente e sai como pid. Nada mudou no cliente: ele já
+tratava o id alheio como token opaco. Como o pid é derivado, não houve migração
+de dados — o índice reverso se preenche sozinho no próximo salvamento de cada
+jogador.
 
 ### 1.2 Latente — arma no dia em que o billing for configurado
 
