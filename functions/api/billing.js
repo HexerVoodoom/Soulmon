@@ -80,11 +80,15 @@ export async function onRequestPost({ request, env }) {
       productId: body?.productId,
       purchaseToken: body?.purchaseToken,
     });
+  } else if (body?.orderId) {
+    // Steam: microtransação (pacote de créditos). Exige o MESMO ticket da posse
+    // — sem ele, um `orderid` adivinhado creditaria a compra de outra pessoa.
+    result = await verifySteamPurchase(env, { orderId: body.orderId, ticket: body?.ticket });
   } else if (body?.ticket) {
     // Steam: posse do app = desbloqueio completo (a loja já cobrou pelo jogo).
     result = await verifySteamOwnership(env, { ticket: body.ticket });
   } else {
-    result = await verifySteamPurchase(env, { orderId: body?.orderId });
+    result = { ok: false, reason: 'missing-token' };
   }
 
   if (!result.ok) {

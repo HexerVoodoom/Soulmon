@@ -308,10 +308,21 @@ export async function verifySteamOwnership(env, { ticket }) {
  * @returns {Promise<{ ok: true, orderId: string, product: object }
  *                 | { ok: false, reason: string }>}
  */
-export async function verifySteamPurchase(env, { orderId }) {
+export async function verifySteamPurchase(env, { orderId, ticket }) {
   const cfg = steamConfig(env);
   if (!cfg) return { ok: false, reason: 'billing-not-configured' };
   if (!orderId || !/^\d{1,32}$/.test(String(orderId))) return { ok: false, reason: 'missing-token' };
+  if (!ticket) return { ok: false, reason: 'missing-ticket' };
+
+  // O `orderid` NÃO é uma credencial: quem gera é o parceiro (contador ou
+  // timestamp), então ids vizinhos são adivinháveis. Sem amarrar a transação a
+  // quem está pedindo, dava para varrer o espaço de ids e resgatar a compra de
+  // outro jogador antes dele — ele pagava a Valve e não recebia nada.
+  //
+  // Mesma razão pela qual verifySteamOwnership exige ticket: o SteamID é
+  // público, o ticket é assinado pela Valve e só o dono da sessão produz.
+  const auth = await authenticateSteamTicket(cfg, ticket);
+  if (!auth.ok) return { ok: false, reason: auth.reason };
 
   let params;
   try {
@@ -327,6 +338,13 @@ export async function verifySteamPurchase(env, { orderId }) {
   }
   if (!params) return { ok: false, reason: 'invalid-purchase' };
   if (params.status !== 'Succeeded') return { ok: false, reason: 'not-purchased' };
+
+  // A trava: a transação tem que ser DESTA sessão. O QueryTxn já devolve de
+  // quem ela é — antes esse campo era lido para os itens e o dono era jogado
+  // fora.
+  if (String(params.steamid ?? '') !== auth.steamId) {
+    return { ok: false, reason: 'not-purchased' };
+  }
 
   const items = Array.isArray(params.items) ? params.items : [];
   if (items.length !== 1) {

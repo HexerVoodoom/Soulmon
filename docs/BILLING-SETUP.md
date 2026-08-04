@@ -123,7 +123,7 @@ verificar. O provedor `steam` tem a mesma disciplina com as suas.
 | Corpo | O que concede | Como é verificado |
 |---|---|---|
 | `{ id, ticket }` | Tier **pago** | Session ticket → `AuthenticateUserTicket` + `CheckAppOwnership` |
-| `{ id, orderId }` | Créditos | `ISteamMicroTxn/QueryTxn` — só credita se `status === 'Succeeded'` |
+| `{ id, orderId, ticket }` | Créditos | `ISteamMicroTxn/QueryTxn` — exige `status === 'Succeeded'` **e** que o `steamid` da transação seja o da sessão do ticket. Sem o ticket, um `orderid` adivinhado creditaria a compra de outra pessoa: quem gera o `orderid` é o parceiro (contador/timestamp), então ids vizinhos são previsíveis. |
 
 > **Family Sharing.** O ticket traz `steamid` (quem joga) e `ownersteamid`
 > (quem comprou). Exigimos que sejam **iguais**: quem pegou a biblioteca

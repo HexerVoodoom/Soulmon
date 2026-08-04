@@ -401,10 +401,13 @@ async function verifySteamOwnership(env, { ticket }) {
   };
 }
 __name(verifySteamOwnership, "verifySteamOwnership");
-async function verifySteamPurchase(env, { orderId }) {
+async function verifySteamPurchase(env, { orderId, ticket }) {
   const cfg = steamConfig(env);
   if (!cfg) return { ok: false, reason: "billing-not-configured" };
   if (!orderId || !/^\d{1,32}$/.test(String(orderId))) return { ok: false, reason: "missing-token" };
+  if (!ticket) return { ok: false, reason: "missing-ticket" };
+  const auth = await authenticateSteamTicket(cfg, ticket);
+  if (!auth.ok) return { ok: false, reason: auth.reason };
   let params;
   try {
     const url = `${STEAM_PARTNER}/ISteamMicroTxn/QueryTxn/v3/?key=${encodeURIComponent(cfg.key)}&appid=${encodeURIComponent(cfg.appId)}&orderid=${encodeURIComponent(orderId)}`;
@@ -418,6 +421,9 @@ async function verifySteamPurchase(env, { orderId }) {
   }
   if (!params) return { ok: false, reason: "invalid-purchase" };
   if (params.status !== "Succeeded") return { ok: false, reason: "not-purchased" };
+  if (String(params.steamid ?? "") !== auth.steamId) {
+    return { ok: false, reason: "not-purchased" };
+  }
   const items = Array.isArray(params.items) ? params.items : [];
   if (items.length !== 1) {
     return { ok: false, reason: "unsupported-transaction" };
@@ -507,10 +513,12 @@ async function onRequestPost({ request, env }) {
       productId: body?.productId,
       purchaseToken: body?.purchaseToken
     });
+  } else if (body?.orderId) {
+    result = await verifySteamPurchase(env, { orderId: body.orderId, ticket: body?.ticket });
   } else if (body?.ticket) {
     result = await verifySteamOwnership(env, { ticket: body.ticket });
   } else {
-    result = await verifySteamPurchase(env, { orderId: body?.orderId });
+    result = { ok: false, reason: "missing-token" };
   }
   if (!result.ok) {
     return json(
@@ -1466,7 +1474,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-yNQ1ht/functionsRoutes-0.08020563357139099.mjs
+// ../.wrangler/tmp/pages-c5SxYy/functionsRoutes-0.07441205411661378.mjs
 var routes = [
   {
     routePath: "/api/billing",

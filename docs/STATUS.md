@@ -55,7 +55,7 @@ qualquer página aberta no navegador da vítima.
 | # | Onde | O quê | Status |
 |---|---|---|---|
 | SEC-3 | `functions/api/_entitlements.js:132` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | ⬜ |
-| SEC-4 | `functions/api/_billing.js:311` | microtransação Steam sem vínculo com o dono | ⬜ |
+| SEC-4 | `functions/api/_billing.js:311` | microtransação Steam sem vínculo com o dono | ✅ corrigido |
 
 **SEC-3.** O comentário no código dizia que a corrida "exige tempo de propagação
 na casa dos milissegundos". **Está errado, e a estimativa era minha.** O Workers
@@ -170,7 +170,7 @@ decisão sua.
 | 🔴 | **App ID e Depot ID** (bloqueiam o cliente Steam) |
 | 🟠 | Arte da loja |
 | 🟠 | Subir build a partir de uma máquina Windows |
-| 🟡 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` — **só depois do SEC-4 corrigido** |
+| 🟡 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` (o SEC-4 já está corrigido; o cliente Steam precisa mandar o session ticket junto do `orderId`) |
 
 ### 3.4 Ordem que evita ficar fora do ar
 

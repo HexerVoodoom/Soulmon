@@ -51,7 +51,7 @@ describe('sem credencial configurada, nada é concedido', () => {
   });
 
   it('Steam — microtransação', async () => {
-    const r = await verifySteamPurchase({}, { orderId: '123' });
+    const r = await verifySteamPurchase({}, { orderId: '123', ticket: 't' });
     expect(r).toEqual({ ok: false, reason: 'billing-not-configured' });
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -64,11 +64,19 @@ describe('sem credencial configurada, nada é concedido', () => {
 });
 
 describe('Steam — microtransação (créditos)', () => {
-  it('credita quando a Valve confirma Succeeded', async () => {
+  // A microtransação exige o MESMO ticket assinado que a posse do app: o
+  // `orderid` é gerado pelo parceiro (contador/timestamp), então ids vizinhos
+  // são adivinháveis e sozinhos não provam nada.
+  const DONO = '76561190000000001';
+  const OUTRO = '76561190000000002';
+  const txn = (params) => ({ response: { params: { orderid: '999', ...params } } });
+
+  it('credita quando a Valve confirma Succeeded e a transação é desta sessão', async () => {
     vi.stubGlobal('fetch', mockSteam({
-      QueryTxn: { response: { params: { status: 'Succeeded', orderid: '999', items: [{ itemid: 102 }] } } },
+      AuthenticateUserTicket: okTicket(DONO, DONO),
+      QueryTxn: txn({ status: 'Succeeded', steamid: DONO, items: [{ itemid: 102 }] }),
     }));
-    const r = await verifySteamPurchase(STEAM_ENV, { orderId: '999' });
+    const r = await verifySteamPurchase(STEAM_ENV, { orderId: '999', ticket: 't' });
     expect(r.ok).toBe(true);
     expect(r.product).toEqual(PRODUCTS['soulmon.credits.150']);
     // orderId com namespace da loja — não pode colidir com um orderId da Play.
@@ -77,30 +85,75 @@ describe('Steam — microtransação (créditos)', () => {
 
   it('recusa transação que não foi paga', async () => {
     vi.stubGlobal('fetch', mockSteam({
-      QueryTxn: { response: { params: { status: 'Failed', items: [{ itemid: 102 }] } } },
+      AuthenticateUserTicket: okTicket(DONO, DONO),
+      QueryTxn: txn({ status: 'Failed', steamid: DONO, items: [{ itemid: 102 }] }),
     }));
-    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1' }))
+    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1', ticket: 't' }))
       .toEqual({ ok: false, reason: 'not-purchased' });
+  });
+
+  it('RECUSA a transação paga por OUTRA pessoa', async () => {
+    // O achado: `orderid` sozinho não prova posse. Varrendo ids vizinhos dava
+    // para resgatar a compra de outro jogador antes dele — a vítima pagava a
+    // Valve e não recebia nada.
+    vi.stubGlobal('fetch', mockSteam({
+      AuthenticateUserTicket: okTicket(OUTRO, OUTRO),
+      QueryTxn: txn({ status: 'Succeeded', steamid: DONO, items: [{ itemid: 102 }] }),
+    }));
+    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '999', ticket: 't-do-atacante' }))
+      .toEqual({ ok: false, reason: 'not-purchased' });
+  });
+
+  it('recusa sem ticket, sem sequer perguntar à Valve', async () => {
+    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '999' }))
+      .toEqual({ ok: false, reason: 'missing-ticket' });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('recusa ticket inválido', async () => {
+    vi.stubGlobal('fetch', mockSteam({
+      AuthenticateUserTicket: { response: { params: { result: 'Falha' } } },
+    }));
+    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '999', ticket: 'forjado' }))
+      .toEqual({ ok: false, reason: 'invalid-ticket' });
+  });
+
+  it('a recusa de transação alheia é INDISTINGUÍVEL de transação inexistente', async () => {
+    // Senão o endpoint vira oráculo: `not-purchased` vs `order-in-use` diria ao
+    // atacante quais ids são compras reais ainda não resgatadas.
+    vi.stubGlobal('fetch', mockSteam({
+      AuthenticateUserTicket: okTicket(OUTRO, OUTRO),
+      QueryTxn: txn({ status: 'Succeeded', steamid: DONO, items: [{ itemid: 102 }] }),
+    }));
+    const alheia = await verifySteamPurchase(STEAM_ENV, { orderId: '999', ticket: 't' });
+    vi.stubGlobal('fetch', mockSteam({
+      AuthenticateUserTicket: okTicket(OUTRO, OUTRO),
+      QueryTxn: txn({ status: 'Failed', steamid: OUTRO, items: [{ itemid: 102 }] }),
+    }));
+    const inexistente = await verifySteamPurchase(STEAM_ENV, { orderId: '998', ticket: 't' });
+    expect(alheia).toEqual(inexistente);
   });
 
   it('recusa item que não está no catálogo', async () => {
     vi.stubGlobal('fetch', mockSteam({
-      QueryTxn: { response: { params: { status: 'Succeeded', items: [{ itemid: 9999 }] } } },
+      AuthenticateUserTicket: okTicket(DONO, DONO),
+      QueryTxn: txn({ status: 'Succeeded', steamid: DONO, items: [{ itemid: 9999 }] }),
     }));
-    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1' }))
+    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1', ticket: 't' }))
       .toEqual({ ok: false, reason: 'unknown-product' });
   });
 
   it('recusa transação com mais de um item em vez de adivinhar', async () => {
     vi.stubGlobal('fetch', mockSteam({
-      QueryTxn: { response: { params: { status: 'Succeeded', items: [{ itemid: 101 }, { itemid: 102 }] } } },
+      AuthenticateUserTicket: okTicket(DONO, DONO),
+      QueryTxn: txn({ status: 'Succeeded', steamid: DONO, items: [{ itemid: 101 }, { itemid: 102 }] }),
     }));
-    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1' }))
+    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1', ticket: 't' }))
       .toEqual({ ok: false, reason: 'unsupported-transaction' });
   });
 
   it('recusa orderId que não é numérico sem chamar a Valve', async () => {
-    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1 OR 1=1' }))
+    expect(await verifySteamPurchase(STEAM_ENV, { orderId: '1 OR 1=1', ticket: 't' }))
       .toEqual({ ok: false, reason: 'missing-token' });
     expect(fetch).not.toHaveBeenCalled();
   });
