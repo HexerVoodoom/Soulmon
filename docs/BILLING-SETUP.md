@@ -323,3 +323,58 @@ Google em toda chamada e o servidor confere a assinatura
 **Como se comporta hoje (nada configurado):** `isAuthConfigured()` é false, o
 onboarding segue igual ao de antes e nenhuma tela de login aparece. Verificado
 com o app rodando: fluxo completo até o tutorial, sem erros.
+
+---
+
+## Vínculo do recibo com a conta (obrigatório antes de vender)
+
+Um recibo da Play vale para **uma** conta Soulmon. Havia duas defesas previstas,
+e só uma delas realmente funciona sozinha:
+
+| Defesa | Vale? |
+|---|---|
+| `claimOrder` — registro global `ord:<orderId>` no KV | ⚠️ **best-effort**. O Workers KV é eventualmente consistente (janela de até ~60s, com cache de borda inclusive para chave inexistente). Duas contas em regiões diferentes conseguem reivindicar o mesmo recibo. |
+| `obfuscatedExternalAccountId` — a Google diz de quem é a compra | ✅ **é a trava de verdade.** Independe de timing e de região. |
+
+### O que o cliente tem que fazer
+
+Ao abrir o fluxo de compra, o plugin de billing precisa chamar
+`setObfuscatedAccountId(saveId)` (o `saveId` já é um hash, então serve como o
+identificador ofuscado que a Google pede). Sem isso o campo volta vazio.
+
+### Como ligar a exigência
+
+1. Publique a versão do app que manda o `obfuscatedAccountId`.
+2. Espere a base migrar (compras antigas não têm o campo).
+3. Só então defina no projeto Pages:
+
+   ```
+   PLAY_REQUIRE_ACCOUNT_BINDING = true
+   ```
+
+   A partir daí, compra sem vínculo é recusada com `account-mismatch` (403).
+
+### Opcional: resgate atômico com D1
+
+Para o `claimOrder` deixar de ser best-effort, crie um banco D1 e vincule como
+`DB` no projeto Pages:
+
+```sql
+CREATE TABLE order_claims (
+  order_id   TEXT PRIMARY KEY,
+  save_id    TEXT NOT NULL,
+  claimed_at INTEGER NOT NULL
+);
+```
+
+Com o binding presente, `claimOrder` passa a usar `INSERT` — a PRIMARY KEY
+resolve a corrida e só um dono é possível. Sem o binding, continua no KV com a
+limitação acima. Não é obrigatório se o vínculo por conta estiver ligado, mas é
+defesa em profundidade barata.
+
+### Steam
+
+Na Steam o equivalente é o **session ticket**, e ele é obrigatório nos dois
+caminhos (posse do app e microtransação). A microtransação também confere que o
+`steamid` da transação é o da sessão — sem isso, um `orderid` adivinhado
+creditaria a compra de outro jogador.

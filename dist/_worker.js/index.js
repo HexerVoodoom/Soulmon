@@ -79,6 +79,7 @@ async function grantAdReward(env, saveId) {
 }
 __name(grantAdReward, "grantAdReward");
 async function claimOrder(env, saveId, orderId) {
+  if (env.DB) return claimOrderAtomic(env, saveId, orderId);
   const key = ORDER_PREFIX + orderId;
   const owner = await env.DIGIAPP_SAVES.get(key);
   if (owner && owner !== saveId) return { ok: false, reason: "order-in-use" };
@@ -86,6 +87,17 @@ async function claimOrder(env, saveId, orderId) {
   return { ok: true };
 }
 __name(claimOrder, "claimOrder");
+async function claimOrderAtomic(env, saveId, orderId) {
+  try {
+    await env.DB.prepare("INSERT INTO order_claims (order_id, save_id, claimed_at) VALUES (?, ?, ?)").bind(orderId, saveId, Date.now()).run();
+    return { ok: true };
+  } catch {
+    const row = await env.DB.prepare("SELECT save_id FROM order_claims WHERE order_id = ?").bind(orderId).first();
+    if (row?.save_id === saveId) return { ok: true };
+    return { ok: false, reason: "order-in-use" };
+  }
+}
+__name(claimOrderAtomic, "claimOrderAtomic");
 async function applyVerifiedPurchase(env, saveId, {
   orderId,
   grantTier,
@@ -289,7 +301,7 @@ async function getAccessToken(serviceAccount) {
   return cachedToken;
 }
 __name(getAccessToken, "getAccessToken");
-async function verifyPlayPurchase(env, { productId, purchaseToken }) {
+async function verifyPlayPurchase(env, { productId, purchaseToken, saveId }) {
   const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
   const packageName = env.ANDROID_PACKAGE_NAME;
   if (!rawAccount || !packageName) return { ok: false, reason: "billing-not-configured" };
@@ -318,9 +330,18 @@ async function verifyPlayPurchase(env, { productId, purchaseToken }) {
   if (purchase.purchaseState !== 0) {
     return { ok: false, reason: "not-purchased", status: purchase.purchaseState };
   }
+  if (!isPlayPurchaseBoundTo(purchase, saveId, env)) {
+    return { ok: false, reason: "account-mismatch" };
+  }
   return { ok: true, orderId: `play:${purchase.orderId}`, product };
 }
 __name(verifyPlayPurchase, "verifyPlayPurchase");
+function isPlayPurchaseBoundTo(purchase, saveId, env = {}) {
+  const bound = purchase?.obfuscatedExternalAccountId;
+  if (bound) return !!saveId && String(bound) === String(saveId);
+  return env.PLAY_REQUIRE_ACCOUNT_BINDING !== "true";
+}
+__name(isPlayPurchaseBoundTo, "isPlayPurchaseBoundTo");
 async function isPlayPurchaseVoided(env, { productId, purchaseToken }) {
   const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
   const packageName = env.ANDROID_PACKAGE_NAME;
@@ -490,7 +511,8 @@ var STATUS_BY_REASON = {
   "missing-token": 400,
   "unsupported-transaction": 400,
   // 409: a compra é válida, mas já foi resgatada por outra conta Soulmon.
-  "order-in-use": 409
+  "order-in-use": 409,
+  "account-mismatch": 403
 };
 async function onRequestOptions() {
   return new Response(null, { headers: CORS });
@@ -511,7 +533,10 @@ async function onRequestPost({ request, env }) {
   if (provider === "play") {
     result = await verifyPlayPurchase(env, {
       productId: body?.productId,
-      purchaseToken: body?.purchaseToken
+      purchaseToken: body?.purchaseToken,
+      // A Google devolve de quem é a compra; sem isto, um recibo real de outra
+      // conta seria aceito aqui (ver verifyPlayPurchase).
+      saveId
     });
   } else if (body?.orderId) {
     result = await verifySteamPurchase(env, { orderId: body.orderId, ticket: body?.ticket });
@@ -1474,7 +1499,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-c5SxYy/functionsRoutes-0.07441205411661378.mjs
+// ../.wrangler/tmp/pages-mMc28U/functionsRoutes-0.5169077427923054.mjs
 var routes = [
   {
     routePath: "/api/billing",

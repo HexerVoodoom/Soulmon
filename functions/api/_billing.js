@@ -115,7 +115,7 @@ export function _resetPlayTokenCache() {
  * @returns {Promise<{ ok: true, orderId: string, product: object }
  *                 | { ok: false, reason: string, status?: number }>}
  */
-export async function verifyPlayPurchase(env, { productId, purchaseToken }) {
+export async function verifyPlayPurchase(env, { productId, purchaseToken, saveId }) {
   const rawAccount = env.GOOGLE_PLAY_SERVICE_ACCOUNT;
   const packageName = env.ANDROID_PACKAGE_NAME;
   if (!rawAccount || !packageName) return { ok: false, reason: 'billing-not-configured' };
@@ -150,7 +150,36 @@ export async function verifyPlayPurchase(env, { productId, purchaseToken }) {
   if (purchase.purchaseState !== 0) {
     return { ok: false, reason: 'not-purchased', status: purchase.purchaseState };
   }
+
+  if (!isPlayPurchaseBoundTo(purchase, saveId, env)) {
+    return { ok: false, reason: 'account-mismatch' };
+  }
+
   return { ok: true, orderId: `play:${purchase.orderId}`, product };
+}
+
+/**
+ * A compra da Play pertence a ESTA conta?
+ *
+ * É a trava que realmente mata a clonagem de conta paga. O registro global de
+ * comprovantes (`claimOrder`) é best-effort — o KV é eventualmente consistente
+ * e deixa passar o mesmo recibo em contas diferentes. Aqui quem diz de quem é
+ * a compra é a própria Google: recibo alheio não vale em conta nenhuma, e isso
+ * independe de timing, de região e de o Firebase estar ligado.
+ *
+ * O cliente tem que chamar `setObfuscatedAccountId(saveId)` ao abrir o fluxo de
+ * compra (ver docs/BILLING-SETUP.md). Enquanto o plugin de billing não fizer
+ * isso, o campo vem vazio — e aí a recusa só acontece com
+ * `PLAY_REQUIRE_ACCOUNT_BINDING === 'true'`, para não derrubar a compra de quem
+ * está num app antigo. **Ligue a flag assim que a versão nova estiver no ar.**
+ *
+ * Função separada e exportada porque `verifyPlayPurchase` precisa de credencial
+ * de serviço real para rodar: sem isto, a regra ficaria sem teste.
+ */
+export function isPlayPurchaseBoundTo(purchase, saveId, env = {}) {
+  const bound = purchase?.obfuscatedExternalAccountId;
+  if (bound) return !!saveId && String(bound) === String(saveId);
+  return env.PLAY_REQUIRE_ACCOUNT_BINDING !== 'true';
 }
 
 /**

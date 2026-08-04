@@ -260,3 +260,82 @@ describe('reembolso — desfaz o que a loja estornou', () => {
     expect(env._store.size).toBe(0);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// A atomicidade do resgate.
+//
+// O `fakeEnv` acima usa um Map, que é FORTEMENTE consistente — e por isso dava
+// falsa segurança: nenhum teste conseguia reproduzir o modo de falha real do
+// Workers KV, que é eventualmente consistente com janela de até ~60s e cache de
+// borda inclusive para chave inexistente.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** KV que NUNCA enxerga a própria escrita — o pior caso real, e não um exagero:
+ *  é o que um colo que ainda não recebeu a propagação devolve. */
+function fakeEnvStaleKV() {
+  const store = new Map();
+  return {
+    DIGIAPP_SAVES: {
+      get: async () => null,               // leitura obsoleta
+      put: async (k, v) => { store.set(k, v); },
+    },
+    _store: store,
+  };
+}
+
+/** D1 falso com a restrição que importa: order_id é PRIMARY KEY. */
+function fakeEnvD1() {
+  const rows = new Map();
+  const db = {
+    prepare: (sql) => ({
+      bind: (...args) => ({
+        async run() {
+          if (!/^INSERT/.test(sql)) throw new Error('sql inesperado');
+          const [orderId, saveId, at] = args;
+          if (rows.has(orderId)) throw new Error('UNIQUE constraint failed');
+          rows.set(orderId, { save_id: saveId, claimed_at: at });
+          return { success: true };
+        },
+        async first() {
+          return rows.get(args[0]) ?? null;
+        },
+      }),
+    }),
+  };
+  return { DIGIAPP_SAVES: { get: async () => null, put: async () => {} }, DB: db, _rows: rows };
+}
+
+describe('resgate de comprovante — atomicidade', () => {
+  const ORDER = 'play:GPA.0000-1111-2222-33333';
+
+  it('SEM D1, o KV não segura a corrida — limitação conhecida e assumida', async () => {
+    // Este teste documenta a fraqueza em vez de fingir que ela não existe: com
+    // leitura obsoleta, duas contas diferentes conseguem reivindicar o mesmo
+    // recibo. É por isso que a defesa real é o vínculo do recibo com a conta na
+    // origem (obfuscatedExternalAccountId na Play, ticket na Steam).
+    const env = fakeEnvStaleKV();
+    expect(await claimOrder(env, 'contaA12345', ORDER)).toEqual({ ok: true });
+    expect(await claimOrder(env, 'contaB12345', ORDER)).toEqual({ ok: true });
+  });
+
+  it('COM D1, a corrida é resolvida pelo banco: só um vencedor', async () => {
+    const env = fakeEnvD1();
+    expect(await claimOrder(env, 'contaA12345', ORDER)).toEqual({ ok: true });
+    expect(await claimOrder(env, 'contaB12345', ORDER))
+      .toEqual({ ok: false, reason: 'order-in-use' });
+  });
+
+  it('COM D1, reprocessar na MESMA conta continua valendo (restaurar compras)', async () => {
+    const env = fakeEnvD1();
+    await claimOrder(env, 'contaA12345', ORDER);
+    expect(await claimOrder(env, 'contaA12345', ORDER)).toEqual({ ok: true });
+  });
+
+  it('COM D1, dez tentativas simultâneas produzem exatamente um dono', async () => {
+    const env = fakeEnvD1();
+    const contas = Array.from({ length: 10 }, (_, i) => `conta${i}12345`);
+    const res = await Promise.all(contas.map(c => claimOrder(env, c, ORDER)));
+    expect(res.filter(r => r.ok)).toHaveLength(1);
+    expect(env._rows.size).toBe(1);
+  });
+});

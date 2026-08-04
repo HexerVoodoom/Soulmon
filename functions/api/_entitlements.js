@@ -121,20 +121,60 @@ export async function grantAdReward(env, saveId) {
  * conta. O primeiro que resgatar fica com ele; reprocessar na MESMA conta
  * continua permitido (é o que faz o "restaurar compras" funcionar de verdade).
  *
- * Vale a mesma limitação de concorrência do resto do módulo: o KV não tem
- * transação, então dois resgates simultâneos do mesmo comprovante em contas
- * diferentes poderiam, em tese, passar os dois. Exige tempo de propagação na
- * casa dos milissegundos e um atacante coordenando duas contas — se virar
- * problema, é o mesmo caminho de migração para Durable Objects.
+ * ## Sobre a atomicidade — leia antes de confiar nisto sozinho
+ *
+ * O caminho do KV é **best-effort, não uma trava**. Uma versão anterior deste
+ * comentário dizia que a corrida "exige tempo de propagação na casa dos
+ * milissegundos". Está errado: o Workers KV é eventualmente consistente, com
+ * janela de propagação de até ~60 segundos, e o `get()` mantém cache de borda
+ * por 60s **inclusive para chave inexistente**. Não é preciso simultaneidade
+ * nenhuma — basta as requisições caírem em colos que ainda não viram a
+ * escrita. Um recibo vira N contas pagas com um laço de `curl` por N proxies
+ * regionais.
+ *
+ * Por isso a defesa REAL é o vínculo do recibo com a conta na origem
+ * (`obfuscatedExternalAccountId` na Play, session ticket na Steam — ver
+ * `_billing.js`): lá a própria loja diz de quem é a compra, e recibo alheio
+ * não vale em conta nenhuma.
+ *
+ * Aqui, quando existe um binding **D1** (`env.DB`), a reivindicação passa a ser
+ * de verdade atômica: `INSERT` com `order_id` como PRIMARY KEY falha se outra
+ * conta chegou primeiro, e o banco resolve a corrida. Sem D1, cai no KV com a
+ * limitação acima. Ver `docs/BILLING-SETUP.md` para criar a tabela.
  *
  * @returns {Promise<{ ok: true } | { ok: false, reason: 'order-in-use' }>}
  */
 export async function claimOrder(env, saveId, orderId) {
+  if (env.DB) return claimOrderAtomic(env, saveId, orderId);
+
   const key = ORDER_PREFIX + orderId;
   const owner = await env.DIGIAPP_SAVES.get(key);
   if (owner && owner !== saveId) return { ok: false, reason: 'order-in-use' };
   if (!owner) await env.DIGIAPP_SAVES.put(key, saveId);
   return { ok: true };
+}
+
+/**
+ * Reivindicação atômica via D1. O `INSERT` é a própria disputa: só um vencedor
+ * é possível, porque `order_id` é PRIMARY KEY. Reprocessar na MESMA conta
+ * continua valendo (é o que faz o "restaurar compras" funcionar).
+ */
+async function claimOrderAtomic(env, saveId, orderId) {
+  try {
+    await env.DB
+      .prepare('INSERT INTO order_claims (order_id, save_id, claimed_at) VALUES (?, ?, ?)')
+      .bind(orderId, saveId, Date.now())
+      .run();
+    return { ok: true };
+  } catch {
+    // Violou a PRIMARY KEY: alguém já reivindicou. Quem?
+    const row = await env.DB
+      .prepare('SELECT save_id FROM order_claims WHERE order_id = ?')
+      .bind(orderId)
+      .first();
+    if (row?.save_id === saveId) return { ok: true };
+    return { ok: false, reason: 'order-in-use' };
+  }
 }
 
 /**

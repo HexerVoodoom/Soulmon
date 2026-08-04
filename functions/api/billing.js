@@ -51,6 +51,7 @@ const STATUS_BY_REASON = {
   'unsupported-transaction': 400,
   // 409: a compra é válida, mas já foi resgatada por outra conta Soulmon.
   'order-in-use': 409,
+  'account-mismatch': 403,
 };
 
 export async function onRequestOptions() {
@@ -79,6 +80,9 @@ export async function onRequestPost({ request, env }) {
     result = await verifyPlayPurchase(env, {
       productId: body?.productId,
       purchaseToken: body?.purchaseToken,
+      // A Google devolve de quem é a compra; sem isto, um recibo real de outra
+      // conta seria aceito aqui (ver verifyPlayPurchase).
+      saveId,
     });
   } else if (body?.orderId) {
     // Steam: microtransação (pacote de créditos). Exige o MESMO ticket da posse

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   PRODUCTS, STEAM_ITEMS,
   verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase, isSteamOwnershipVoided,
+  isPlayPurchaseBoundTo,
 } from './_billing.js';
 
 // Estes testes protegem o portão do dinheiro do lado da Steam. Se algum cair,
@@ -268,5 +269,38 @@ describe('reembolso do JOGO na Steam (posse do app)', () => {
   it('sem credencial não consulta nada', async () => {
     expect(await isSteamOwnershipVoided({}, { orderId: LICENSE })).toBeNull();
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('Play — o recibo pertence a UMA conta', () => {
+  // A trava que realmente mata a clonagem de conta paga: quem diz de quem é a
+  // compra é a Google, não o cliente. Testado na função pura porque
+  // verifyPlayPurchase precisa de credencial de serviço real para rodar.
+  const MINHA = 'a'.repeat(32);
+  const OUTRA = 'b'.repeat(32);
+  const compra = (bound) => ({ purchaseState: 0, orderId: 'GPA.1', obfuscatedExternalAccountId: bound });
+
+  it('aceita quando a compra está vinculada a esta conta', () => {
+    expect(isPlayPurchaseBoundTo(compra(MINHA), MINHA)).toBe(true);
+  });
+
+  it('RECUSA recibo real vinculado a OUTRA conta', () => {
+    // Era o cerne do achado: o mesmo purchaseToken servia para N contas, porque
+    // a Google valida o token para qualquer chamador que o apresente.
+    expect(isPlayPurchaseBoundTo(compra(OUTRA), MINHA)).toBe(false);
+  });
+
+  it('recusa quando o vínculo existe mas a requisição não diz a conta', () => {
+    expect(isPlayPurchaseBoundTo(compra(MINHA), undefined)).toBe(false);
+  });
+
+  it('sem vínculo, aceita por padrão — para não quebrar cliente antigo', () => {
+    expect(isPlayPurchaseBoundTo(compra(undefined), MINHA)).toBe(true);
+  });
+
+  it('com PLAY_REQUIRE_ACCOUNT_BINDING, compra sem vínculo é recusada', () => {
+    // A flag para ligar depois que o app com setObfuscatedAccountId estiver no
+    // ar. Sem ela, um cliente antigo (sem o campo) continuaria clonável.
+    expect(isPlayPurchaseBoundTo(compra(undefined), MINHA, { PLAY_REQUIRE_ACCOUNT_BINDING: 'true' })).toBe(false);
   });
 });

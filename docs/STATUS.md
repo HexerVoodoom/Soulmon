@@ -54,7 +54,7 @@ qualquer página aberta no navegador da vítima.
 
 | # | Onde | O quê | Status |
 |---|---|---|---|
-| SEC-3 | `functions/api/_entitlements.js:132` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | ⬜ |
+| SEC-3 | `functions/api/_entitlements.js:132` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | ✅ corrigido |
 | SEC-4 | `functions/api/_billing.js:311` | microtransação Steam sem vínculo com o dono | ✅ corrigido |
 
 **SEC-3.** O comentário no código dizia que a corrida "exige tempo de propagação
@@ -156,6 +156,8 @@ decisão sua.
 | 🔴 | Registrar o pacote no Firebase + baixar `google-services.json` |
 | 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
 | 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
+| 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
+| 🟡 | Opcional: banco **D1** vinculado como `DB` + tabela `order_claims`, para o resgate de comprovante ser atômico em vez de best-effort |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
 | 🟠 | `VITE_FIREBASE_*` no projeto Pages (e o `FIREBASE_PROJECT_ID` **por último**) |
 | 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim, mas `capacitor.config.json` ainda aponta o APK para `digiapp-a5e.pages.dev` |
