@@ -136,8 +136,17 @@ equippedDecor?: Partial<Record<SlotId, string>>
 Substituiu o antigo `equippedFurniture` (um item só, desenhado como badge de
 32 px no canto). Saves antigos são migrados no load (`migrateDecor` em
 `GameStateContext.tsx`): o item que estava equipado vai para o espaço que ele
-declara. A migração é idempotente e `equippedFurniture` continua no tipo, marcado
-como deprecated, só para isso.
+declara, e o campo antigo é **apagado do estado na mesma hora** — some do save
+no próximo gravar. `equippedFurniture` continua no tipo, marcado como
+deprecated, só para conseguir ler saves velhos.
+
+Duas coisas que a migração tem que acertar, ambas com teste:
+
+- **Rodar uma vez só.** Enquanto o campo antigo sobrevivia no save, a migração
+  reaparecia a cada carga.
+- **`equippedDecor` vazio (`{}`) é decisão do jogador**, não ausência de
+  migração. Tratar os dois como a mesma coisa fazia com que quem tinha save
+  antigo desequipasse o item, recarregasse e ele voltasse sozinho.
 
 ---
 

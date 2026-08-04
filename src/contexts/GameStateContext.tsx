@@ -14,10 +14,17 @@ import { ALL_SHOP_ITEMS } from '../utils/shop';
  * coloca o item antigo no espaço que ele declara — quem tinha um sofá continua
  * com o sofá, agora apoiado no chão.
  *
- * Roda no load e é idempotente: se `equippedDecor` já existe, ela vence.
+ * Roda uma vez, no load. O campo antigo é APAGADO do estado logo em seguida
+ * (ver o `equippedFurniture: undefined` abaixo), senão ele fica no save para
+ * sempre e a migração reaparece.
+ *
+ * A checagem é pela PRESENÇA de `equippedDecor`, não por ele estar cheio: um
+ * mapa vazio é uma decisão do jogador ("desequipei tudo"), não ausência de
+ * migração. Confundir os dois foi um bug real — quem tinha save antigo
+ * desequipava o item, recarregava e ele voltava sozinho.
  */
-function migrateDecor(loaded: Partial<GameState>): Partial<Record<SlotId, string>> {
-  if (loaded.equippedDecor && Object.keys(loaded.equippedDecor).length > 0) return loaded.equippedDecor;
+export function migrateDecor(loaded: Partial<GameState>): Partial<Record<SlotId, string>> {
+  if (loaded.equippedDecor !== undefined) return loaded.equippedDecor;
   const legacy = loaded.equippedFurniture;
   if (!legacy) return {};
   const item = ALL_SHOP_ITEMS.find(i => i.id === legacy);
@@ -240,6 +247,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         equippedBackground: loadedState.equippedBackground ?? null,
         ownedFurniture: loadedState.ownedFurniture ?? [],
         equippedDecor: migrateDecor(loadedState),
+        // Campo antigo some do save no próximo gravar (JSON.stringify descarta
+        // undefined). Sem isto ele sobreviveria para sempre e voltaria a
+        // reequipar o item toda vez que o jogador desequipasse tudo.
+        equippedFurniture: undefined,
         // Saves from before accountTier existed are grandfathered as 'paid' —
         // they already have a real oracle character and full functionality,
         // so they must never be retroactively downgraded to demo.
