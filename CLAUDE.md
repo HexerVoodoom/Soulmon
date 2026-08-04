@@ -14,6 +14,10 @@ via `language === 'pt-BR'`).
 > localStorage) são mantidos **de propósito**, porque renomear quebraria o
 > save de quem já joga.
 
+> **`docs/STATUS.md` é o registro vivo do projeto**: achados de segurança em
+> aberto, o que já foi corrigido e a lista do que depende do dono. Leia no
+> começo da sessão e **atualize ao terminar qualquer coisa relevante**.
+
 ## Comandos (rode ANTES de todo commit)
 
 ```bash

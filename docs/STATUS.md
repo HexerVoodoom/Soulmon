@@ -1,0 +1,200 @@
+# Status do Soulmon — registro vivo
+
+Documento único de acompanhamento. **Se algo importante for decidido, descoberto
+ou concluído, registre aqui**, senão se perde entre sessões.
+
+- Estado do código e do que está no ar → seções 1 e 2
+- **O que depende de você (dono do projeto)** → seção 3
+- Dívidas conhecidas que ainda não valem o custo → seção 4
+
+Última atualização: auditoria de segurança multi-agente (3 agentes, escopo
+dinheiro / auth+dados / IA+push+segredos).
+
+---
+
+## 1. Segurança — auditoria de 2026-08
+
+Rodada com o motor do `/security-review` da Anthropic, dividida em três frentes
+paralelas. Cada achado abaixo foi **verificado à mão no código** antes de
+entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
+"falta de hardening" e sem race teórica.
+
+### 1.1 Explorável AGORA, em produção
+
+| # | Onde | O quê | Status |
+|---|---|---|---|
+| SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ⬜ |
+| SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ⬜ |
+| SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ⬜ |
+
+**SEC-1 — o buraco central.** Só `action=profile` chama `authorizeSaveAccess`.
+`friends`, `gift`, `match`, `trophies?claim=1` e `gifts?claim=1` pegam o ator do
+`body.id`/`?id=` e escrevem no registro daquela conta sem prova de posse.
+Agravante: **isso não fecha quando o `FIREBASE_PROJECT_ID` for ligado** — ao
+contrário do `save.js`/`billing.js`, essas ações não consultam autenticação em
+ponto nenhum.
+
+Impacto concreto: roubar 20 Bits/vítima/dia emitindo presente em nome dela;
+reescrever a lista de amigos de qualquer um; forjar o campeonato inteiro
+(+10 pontos e +1 vitória por chamada, queimando a partida diária da vítima →
+1º lugar e troféu 🥇 sem jogar); e **apagar permanentemente** troféus de season
+e presentes alheios, sem caminho de reemissão.
+
+**SEC-2 — por que o SEC-1 vira catástrofe.** `action=players` devolve `p.id`, que
+**é a chave do cloud save**. Sem conta e sem autenticação dá para listar a chave
+de até 300 jogadores e então `GET /api/save?id=…` (lê o save inteiro) ou
+`POST` (sobrescreve). Com `Access-Control-Allow-Origin: *` isso funciona de
+qualquer página aberta no navegador da vítima.
+
+> Isso muda a natureza do risco que estava documentado como aceito. O texto
+> antigo dizia "quem souber seu e-mail pode ler seu save". Na prática **ninguém
+> precisa saber e-mail nenhum** — é leitura e destruição em massa.
+
+### 1.2 Latente — arma no dia em que o billing for configurado
+
+| # | Onde | O quê | Status |
+|---|---|---|---|
+| SEC-3 | `functions/api/_entitlements.js:132` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | ⬜ |
+| SEC-4 | `functions/api/_billing.js:311` | microtransação Steam sem vínculo com o dono | ⬜ |
+
+**SEC-3.** O comentário no código dizia que a corrida "exige tempo de propagação
+na casa dos milissegundos". **Está errado, e a estimativa era minha.** O Workers
+KV é eventualmente consistente com janela de até ~60s, e o `get()` mantém cache
+de borda por 60s **inclusive para chave inexistente**. Não é preciso
+simultaneidade: basta as requisições caírem em colos que ainda não viram a
+escrita. Um recibo de R$ 29,90 vira N contas `paid` com um `for` em `curl` por N
+proxies regionais. Não é consertado ligando o Firebase — cada conta clonada
+autentica legitimamente, e o `purchaseToken` nunca é vinculado a uma identidade.
+
+O teste também dava falsa segurança: usava um `Map` em memória, que é fortemente
+consistente e nunca reproduz a leitura obsoleta.
+
+**SEC-4.** `verifySteamPurchase` credita com base num `orderId` decimal vindo do
+cliente, sem ticket e sem comparar o `steamid` que a própria Valve devolve. A
+função irmã `verifySteamOwnership` exige ticket assinado *exatamente porque* o
+SteamID é público — a assimetria é o indício. Como o `orderid` é gerado pelo
+parceiro (contador/timestamp) e as respostas distinguem `not-purchased` de
+`order-in-use`, o endpoint vira oráculo de enumeração: dá para varrer ids
+vizinhos e resgatar a compra de outro jogador antes dele — ele paga a Valve e
+não recebe nada.
+
+### 1.3 Auditado e considerado SEGURO
+
+Vale registrar para não reauditar à toa:
+
+- **`_auth.js` — verificação de token Firebase está correta.** `alg` fixado em
+  RS256, `aud` e `iss` ambos checados, `exp` e `iat` com tolerância limitada,
+  JWKS por `kid` com TTL do `Cache-Control`, falha fechado em rotação,
+  `email_verified === true` exigido. Era o achado mais temido e não existe.
+- **Chave da Groq não vaza.** Host e modelo são fixos; corpo de erro upstream
+  nunca volta ao cliente. Sem SSRF (nem host nem protocolo são controláveis).
+- **Prompt injection sem consequência privilegiada** — nada do que o modelo
+  responde vira escrita no servidor ou chamada de ferramenta.
+- **PII do oráculo fica no cliente.** Nome completo, data, hora e local de
+  nascimento vivem só no `localStorage` (`SOULMON_PROFILE`) e são consumidos
+  por `generateOracle`. **Não** entram no `GameState`, não vão para `/api/save`
+  nem para o perfil público. **Manter assim.**
+- **`save.js`** remove `accountTier`/`credits` do POST do cliente e os reserve do
+  registro `ent:` do servidor.
+- **`spendCredits`** valida `Number.isInteger(amount) && amount > 0` — não dá
+  para cunhar crédito com valor negativo.
+- **`grantAdReward`** fica atrás de `ADMOB_SSV_ENABLED !== 'true'` → 501.
+- **`closeSeason`** falha fechado sem `SEASON_ADMIN_KEY`.
+- **Steam Family Sharing** já é recusado (`steamId !== ownerSteamId`).
+- **Sem segredos na árvore de trabalho.** A chave anon do Supabase em
+  `src/utils/supabase/` é pública por desenho (RLS) e o app não passa mais por
+  lá. Todo `VITE_*` em uso é config web do Firebase, pública por desenho.
+
+### 1.4 Segredos no histórico do git ⚠️
+
+O commit `c47776e5` removeu `bubblewrap_build/`, que continha:
+
+```
+bubblewrap_build/android.keystore
+bubblewrap_build/signing.keystore
+bubblewrap_build/app-release-signed.apk
+bubblewrap_build/app-release-aligned.apk
+```
+
+Remover do HEAD **não tira do histórico** — quem clonar ainda recupera. Ver
+seção 3.
+
+---
+
+## 2. Estado do produto
+
+- **Palco do pet** (composição, 5 espaços, decoração) — pronto. Contrato de arte
+  em `docs/PALCO-E-DECORACAO.md`. Falta só a arte de verdade (hoje são emoji).
+- **Torneio** — 6 itens na aba, escada 15/20/25/40/55/70 Emblemas. A vitrine
+  exibe os troféus de season realmente ganhos.
+- **Compra dentro do jogo** — `UnlockAccountModal` nos dois momentos em que a
+  falta é sentida (limite de criação do grátis; árvore de demonstração na página
+  de Evolução), mais ritual do oráculo pós-compra que troca só a criatura.
+- **Desktop (Electron)** — overlay funcional, é um controle remoto do app.
+  Ver `docs/PLANO-DESKTOP-STEAM.md`.
+- **Separação do DigiApp** — inventário e ordem segura em
+  `docs/SEPARACAO-DIGIAPP.md`. Limpeza de herança morta já feita.
+
+---
+
+## 3. Depende de você
+
+Nada nesta seção pode ser feito por mim — precisa de conta, cartão, painel ou
+decisão sua.
+
+### 3.1 Segurança — urgente
+
+| # | O quê | Por quê |
+|---|---|---|
+| 🔴 | **Decidir sobre as keystores no histórico do git** | Se o repositório for público, ou se essas chaves ainda assinam algo na Play Store: rotacionar a chave de upload no Play Console e/ou limpar o histórico com `git filter-repo` (reescreve todos os commits, exige force push e quebra clones). Posso preparar o comando; a decisão de reescrever histórico é sua. |
+| 🟠 | **Ligar o `FIREBASE_PROJECT_ID`** | É o que fecha `save.js`, `billing.js` e `entitlements.js`. **Só depois** que `VITE_FIREBASE_*` estiver configurado e o build do desktop com login tiver saído — ligar antes derruba o login de todo mundo. |
+
+### 3.2 Lançamento
+
+| # | O quê |
+|---|---|
+| 🔴 | Registrar o pacote no Firebase + baixar `google-services.json` |
+| 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
+| 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
+| 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
+| 🟠 | `VITE_FIREBASE_*` no projeto Pages (e o `FIREBASE_PROJECT_ID` **por último**) |
+| 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim, mas `capacitor.config.json` ainda aponta o APK para `digiapp-a5e.pages.dev` |
+| 🟡 | Endereço de contato do VAPID (`workers/push-scheduler.js` → `CONTACT`) — hoje é `contact@digiapp.app`; precisa ser um que você controle |
+| 🟡 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages (fingerprint sai do Play Console → Integridade do app) |
+
+### 3.3 Steam
+
+| # | O quê |
+|---|---|
+| 🔴 | Conta Steamworks + US$ 100 |
+| 🔴 | **App ID e Depot ID** (bloqueiam o cliente Steam) |
+| 🟠 | Arte da loja |
+| 🟠 | Subir build a partir de uma máquina Windows |
+| 🟡 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` — **só depois do SEC-4 corrigido** |
+
+### 3.4 Ordem que evita ficar fora do ar
+
+1. Projeto Pages novo + KV novo + variáveis → conferir pela URL `*.pages.dev` do
+   projeto novo, sem mexer no que está no ar.
+2. Publicar o domínio próprio.
+3. Só então atualizar `capacitor.config.json`, gerar APK novo e publicar.
+4. Por último, aposentar o Pages antigo.
+
+Fazer na ordem inversa (mexer no `server.url` antes de o destino existir) quebra
+o app de todo mundo que já tem o APK instalado.
+
+---
+
+## 4. Dívidas conhecidas (aceitas por ora)
+
+- **Emblemas ficam no save do cliente**, como os Bits — farmáveis por quem editar
+  o `localStorage`. Aceitável **enquanto a aba Torneio vender só cosmético**. Há
+  teste travando isso: se algum item de torneio virar vantagem de jogo, o teste
+  cai, e a resposta certa é mover Emblemas para o servidor, não afrouxar o teste.
+- **Corrida no `spendCredits`** (read-modify-write) — limitada a cobrar a menos
+  do jogador, nunca a cunhar crédito. Cai junto se o SEC-3 migrar o módulo para
+  Durable Objects.
+- **Arte da decoração são emoji.** A estrutura já aceita PNG; ver
+  `docs/PALCO-E-DECORACAO.md`.
+- **Sprite do cocô** (`src/assets/9087038…png`) é um blob escuro pouco legível.
+  Anterior a este trabalho.
