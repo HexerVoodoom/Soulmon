@@ -25,7 +25,7 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 |---|---|---|---|
 | SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ✅ corrigido |
 | SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ⬜ |
-| SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ⬜ |
+| SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido |
 
 **SEC-1 — o buraco central.** Só `action=profile` chama `authorizeSaveAccess`.
 `friends`, `gift`, `match`, `trophies?claim=1` e `gifts?claim=1` pegam o ator do

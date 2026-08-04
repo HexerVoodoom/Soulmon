@@ -1,6 +1,8 @@
 // POST   /api/subscribe  — save a push subscription
 // DELETE /api/subscribe  — remove a push subscription
 
+import { isAllowedPushEndpoint } from './_pushTargets.js';
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, DELETE, OPTIONS',
@@ -25,6 +27,16 @@ export async function onRequestPost({ request, env }) {
   const { endpoint, keys, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS },
+    });
+  }
+
+  // Sem esta checagem, o `endpoint` era gravado como veio e o worker de push
+  // passava a fazer `fetch()` nele 4×/dia por um ano — um SSRF com JWT VAPID
+  // assinado pela chave de produção no cabeçalho.
+  if (!isAllowedPushEndpoint(endpoint)) {
+    return new Response(JSON.stringify({ error: 'Unsupported push endpoint' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', ...CORS },
     });

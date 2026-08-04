@@ -1270,6 +1270,32 @@ async function onRequest2({ request, env }) {
 }
 __name(onRequest2, "onRequest");
 
+// api/_pushTargets.js
+var PUSH_HOST_SUFFIXES = [
+  "googleapis.com",
+  // FCM / Chrome
+  "push.services.mozilla.com",
+  // Firefox
+  "notify.windows.com",
+  // Edge / Windows
+  "push.apple.com"
+  // Safari
+];
+function isAllowedPushEndpoint(endpoint) {
+  if (typeof endpoint !== "string" || endpoint.length > 2048) return false;
+  let url;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  if (url.port && url.port !== "443") return false;
+  const host = url.hostname.toLowerCase();
+  return PUSH_HOST_SUFFIXES.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
+}
+__name(isAllowedPushEndpoint, "isAllowedPushEndpoint");
+
 // api/subscribe.js
 var CORS9 = {
   "Access-Control-Allow-Origin": "*",
@@ -1293,6 +1319,12 @@ async function onRequestPost6({ request, env }) {
   const { endpoint, keys, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json", ...CORS9 }
+    });
+  }
+  if (!isAllowedPushEndpoint(endpoint)) {
+    return new Response(JSON.stringify({ error: "Unsupported push endpoint" }), {
       status: 400,
       headers: { "Content-Type": "application/json", ...CORS9 }
     });
@@ -1434,7 +1466,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-RI7m98/functionsRoutes-0.042281113153451066.mjs
+// ../.wrangler/tmp/pages-yNQ1ht/functionsRoutes-0.08020563357139099.mjs
 var routes = [
   {
     routePath: "/api/billing",

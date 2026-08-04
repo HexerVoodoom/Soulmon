@@ -14,6 +14,7 @@
 //                              accounts → Generate new private key)
 
 import { sendWebPush } from './webpush.js';
+import { isAllowedPushEndpoint } from '../functions/api/_pushTargets.js';
 import { getFcmAccessToken, sendFcmPush } from './fcm.js';
 
 const VAPID_PUBLIC_KEY = 'BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY';
@@ -101,6 +102,13 @@ export default {
 
     if (vapidJWK) {
       await drainPrefix(env, 'push:', async (sub, name) => {
+        // Revalidação na SAÍDA: as linhas gravadas antes da allowlist entrar em
+        // functions/api/subscribe.js continuam no KV com TTL de um ano. Sem
+        // isto, elas seguiriam sendo alvo de fetch a cada disparo do cron.
+        if (!isAllowedPushEndpoint(sub.endpoint)) {
+          await env.PUSH_SUBSCRIPTIONS.delete(name);
+          return 'removed';
+        }
         const notif = getNotification(brtHour, sub.digimonName, sub.language);
         const result = await sendWebPush(
           { endpoint: sub.endpoint, keys: sub.keys },
