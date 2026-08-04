@@ -87,11 +87,48 @@ Se criar um projeto novo:
 4. Refazer a chave do FCM e o secret `FIREBASE_SERVICE_ACCOUNT` do worker de
    push (`workers/`).
 
-### 5. Limpeza opcional
+### 5. Limpeza
 
-- `bubblewrap_build/` — artefato de um build TWA antigo, não usado pelo
-  Capacitor. Pode ser removido do repo inteiro.
-- `src/imports/` — protótipos do Figma, não referenciados em produção.
+- ✅ `bubblewrap_build/` — **removido** (49 MB, 560 arquivos rastreados). Era o
+  artefato de um build TWA do DigiApp, sem uso desde a migração para Capacitor.
+  Está no `.gitignore` para não voltar.
+- ✅ `src/imports/` — **removido** (41 arquivos de protótipo do Figma, nenhum
+  referenciado). Conferido com typecheck, testes e build depois da remoção.
+- ✅ `package.json` / `package-lock.json` — `name` era `DigiApp Design
+  Prototype`, virou `soulmon`. Campo inerte (nada lê), só cosmético.
+
+### 6. Digital Asset Links
+
+`functions/.well-known/assetlinks.json.js` declarava o pacote e o fingerprint do
+**DigiApp** direto no código. Continua servindo esses valores por padrão — é o
+que o domínio compartilhado exige hoje —, mas agora eles vêm de variáveis do
+projeto Pages:
+
+| Variável | Valor do Soulmon |
+|---|---|
+| `ASSETLINKS_PACKAGE_NAME` | `com.hexervoodoom.soulmon` |
+| `ASSETLINKS_SHA256` | SHA-256 do certificado de assinatura do release |
+
+O fingerprint sai do Play Console → **Configuração → Integridade do app →
+Certificado da chave de assinatura do app**. Sem as variáveis, o endpoint
+responde exatamente como respondia antes.
+
+### 7. Sobras que precisam de decisão sua
+
+- `workers/push-scheduler.js` → `CONTACT = 'mailto:contact@digiapp.app'`. É o
+  endereço de contato do VAPID, enviado aos serviços de push. Não troquei porque
+  precisa ser um endereço que você controle de verdade — inventar um é pior que
+  manter o antigo.
+- `wrangler.jsonc` diz `"name": "soulmon"`, mas `capacitor.config.json` aponta o
+  APK para `digiapp-a5e.pages.dev`. Ou já existe um projeto Pages `soulmon` (e aí
+  falta só o passo 3 abaixo), ou o nome do wrangler está adiantado. **Confira no
+  painel do Cloudflare antes de mexer no `server.url`.**
+
+Ao trocar a URL de produção, são **três** arquivos, e todos de uma vez:
+
+- `capacitor.config.json` → `server.url`
+- `desktop/renderer/src/config.ts` → `APP_URL`
+- `desktop/electron/main.js` → `FULL_APP_URL` (já aceita `SOULMON_APP_URL`)
 
 ---
 

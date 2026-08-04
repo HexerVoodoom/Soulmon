@@ -1399,15 +1399,17 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
 __name(onRequestPost7, "onRequestPost");
 
 // .well-known/assetlinks.json.js
-async function onRequest3() {
+var DEFAULT_PACKAGE = "com.digipartner.digiapp";
+var DEFAULT_SHA256 = "F5:10:2B:09:7B:B3:5C:81:FA:DC:FE:AB:A9:32:E6:8D:7F:F8:50:FB:1C:71:F0:7B:29:95:CC:86:A4:AA:7B:84";
+async function onRequest3({ env }) {
+  const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
+  const fingerprint = env?.ASSETLINKS_SHA256 || DEFAULT_SHA256;
   return new Response(JSON.stringify([{
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-      "namespace": "android_app",
-      "package_name": "com.digipartner.digiapp",
-      "sha256_cert_fingerprints": [
-        "F5:10:2B:09:7B:B3:5C:81:FA:DC:FE:AB:A9:32:E6:8D:7F:F8:50:FB:1C:71:F0:7B:29:95:CC:86:A4:AA:7B:84"
-      ]
+    relation: ["delegate_permission/common.handle_all_urls"],
+    target: {
+      namespace: "android_app",
+      package_name: packageName,
+      sha256_cert_fingerprints: [fingerprint]
     }
   }]), {
     headers: {
@@ -1418,7 +1420,7 @@ async function onRequest3() {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-ypKyY5/functionsRoutes-0.8423289726901295.mjs
+// ../.wrangler/tmp/pages-aALdj9/functionsRoutes-0.8005169096743932.mjs
 var routes = [
   {
     routePath: "/api/billing",
