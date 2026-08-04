@@ -79,13 +79,33 @@ export async function onRequest({ request, env }) {
   const body = method === 'POST' ? await request.json().catch(() => ({})) : {};
   const id = body.id || url.searchParams.get('id');
 
+  /**
+   * Autoriza o ATOR da requisição.
+   *
+   * Toda ação que lê ou escreve "em nome de `id`" tem que passar por aqui.
+   * Durante muito tempo só `action=profile` chamava — e as outras aceitavam o
+   * ator direto do corpo da requisição. Dava para: emitir presente em nome de
+   * outro jogador, reescrever a lista de amigos dele, forjar partidas do
+   * torneio creditando os dois lados, e APAGAR troféus e presentes alheios (o
+   * `claim=1` é destrutivo e não tem reemissão). Nada disso fechava ao ligar o
+   * `FIREBASE_PROJECT_ID`, porque essas ações não consultavam autenticação em
+   * ponto nenhum.
+   *
+   * Devolve `null` quando está tudo certo, ou a Response de erro pronta.
+   */
+  const denyUnlessOwner = async (actorId) => {
+    if (!VALID_ID.test(actorId || '')) return json({ error: 'invalid id' }, 400);
+    const auth = await authorizeSaveAccess(request, env, actorId);
+    if (auth.ok) return null;
+    return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
+  };
+
   // ── Perfil público (upsert; chamado junto do cloud save) ──────────────────
   if (action === 'profile' && method === 'POST') {
-    if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
     // Sem isto, qualquer um escreve o perfil público de qualquer conta —
     // trocar o apelido e os atributos alheios na Biblioteca/Torneio.
-    const auth = await authorizeSaveAccess(request, env, id);
-    if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const prev = (await getProfile(env, id)) || {};
     const profile = {
       id,
@@ -176,6 +196,13 @@ export async function onRequest({ request, env }) {
   if (action === 'match' && method === 'POST') {
     const { opponentId } = body;
     if (!VALID_ID.test(id || '') || !VALID_ID.test(opponentId || '')) return json({ error: 'invalid id' }, 400);
+    // A partida credita OS DOIS lados e consome a cota diária de `id`. Sem
+    // autorizar o ator, dava para nomear a vítima como `id` e a si mesmo como
+    // oponente: +10 pontos e +1 vitória por chamada, queimando a partida da
+    // vítima. Repetido, garante o 1º lugar da season sem jogar.
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (id === opponentId) return json({ error: 'cannot fight yourself' }, 400);
     const me = await getProfile(env, id);
     const opp = await getProfile(env, opponentId);
     if (!me?.pvpEnabled) return json({ error: 'pvp disabled' }, 403);
@@ -262,7 +289,10 @@ export async function onRequest({ request, env }) {
   }
 
   if (action === 'trophies' && method === 'GET') {
-    if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
+    // `claim=1` é DESTRUTIVO e não tem reemissão: quem lesse o troféu alheio
+    // apagava a conquista da pessoa para sempre.
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const p = await getProfile(env, id);
     const trophies = p?.pendingTrophies || [];
     if (url.searchParams.get('claim') === '1' && trophies.length && p) {
@@ -276,6 +306,11 @@ export async function onRequest({ request, env }) {
   if (action === 'friends' && method === 'POST') {
     const { friendId, remove } = body;
     if (!VALID_ID.test(id || '') || !VALID_ID.test(friendId || '')) return json({ error: 'invalid id' }, 400);
+    // Escreve o perfil de `id`. Sem autorizar, qualquer um inseria a si mesmo
+    // na lista de amigos alheia (passo 1 do roubo de presentes) ou esvaziava
+    // a lista da vítima.
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     if (id === friendId) return json({ error: 'cannot befriend yourself' }, 400);
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
@@ -297,6 +332,10 @@ export async function onRequest({ request, env }) {
   if (action === 'gift' && method === 'POST') {
     const { friendId } = body;
     if (!VALID_ID.test(id || '') || !VALID_ID.test(friendId || '')) return json({ error: 'invalid id' }, 400);
+    // O remetente é `id`. Sem autorizar, dava para emitir presente EM NOME de
+    // outro jogador para a própria conta — 20 Bits por vítima por dia.
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
     if (!(me.friends || []).includes(friendId)) return json({ error: 'not a friend' }, 403);
@@ -313,7 +352,9 @@ export async function onRequest({ request, env }) {
   }
 
   if (action === 'gifts' && method === 'GET') {
-    if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
+    // Mesmo caso do `trophies`: `claim=1` apaga a fila do jogador.
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const raw = await env.DIGIAPP_SAVES.get(`gifts:${id}`);
     const gifts = raw ? JSON.parse(raw) : [];
     if (url.searchParams.get('claim') === '1' && gifts.length) {

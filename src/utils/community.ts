@@ -1,13 +1,20 @@
 // Cliente da API de comunidade (functions/api/community.js): perfil público,
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
+import { authHeaders } from './auth';
+
 const BASE = '/api/community';
 
+// TODA chamada leva o token — inclusive as GET. O servidor autoriza o ATOR de
+// `friends`/`gift`/`match`/`trophies`/`gifts` (o `claim=1` das duas últimas é
+// destrutivo), e não só o `profile`. Sem o header aqui, essas rotas passam a
+// responder 401 no instante em que o FIREBASE_PROJECT_ID for ligado.
 async function call<T>(action: string, opts: { method?: 'GET' | 'POST'; params?: Record<string, string>; body?: unknown } = {}): Promise<T> {
   const method = opts.method ?? 'GET';
   const qs = new URLSearchParams({ action, ...(opts.params ?? {}) });
+  const auth = await authHeaders();
   const res = await fetch(`${BASE}?${qs.toString()}`, {
     method,
-    headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+    headers: method === 'POST' ? { 'Content-Type': 'application/json', ...auth } : auth,
     body: method === 'POST' ? JSON.stringify(opts.body ?? {}) : undefined,
   });
   const data = await res.json().catch(() => ({}));

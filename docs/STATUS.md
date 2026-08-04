@@ -23,7 +23,7 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 
 | # | Onde | O quê | Status |
 |---|---|---|---|
-| SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ⬜ |
+| SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ✅ corrigido |
 | SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ⬜ |
 | SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ⬜ |
 

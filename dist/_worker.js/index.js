@@ -736,10 +736,15 @@ async function onRequest({ request, env }) {
   const method = request.method;
   const body = method === "POST" ? await request.json().catch(() => ({})) : {};
   const id = body.id || url.searchParams.get("id");
+  const denyUnlessOwner = /* @__PURE__ */ __name(async (actorId) => {
+    if (!VALID_ID2.test(actorId || "")) return json2({ error: "invalid id" }, 400);
+    const auth = await authorizeSaveAccess(request, env, actorId);
+    if (auth.ok) return null;
+    return json2({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  }, "denyUnlessOwner");
   if (action === "profile" && method === "POST") {
-    if (!VALID_ID2.test(id || "")) return json2({ error: "invalid id" }, 400);
-    const auth = await authorizeSaveAccess(request, env, id);
-    if (!auth.ok) return json2({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const prev = await getProfile(env, id) || {};
     const profile = {
       id,
@@ -829,6 +834,9 @@ async function onRequest({ request, env }) {
   if (action === "match" && method === "POST") {
     const { opponentId } = body;
     if (!VALID_ID2.test(id || "") || !VALID_ID2.test(opponentId || "")) return json2({ error: "invalid id" }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (id === opponentId) return json2({ error: "cannot fight yourself" }, 400);
     const me = await getProfile(env, id);
     const opp = await getProfile(env, opponentId);
     if (!me?.pvpEnabled) return json2({ error: "pvp disabled" }, 403);
@@ -905,7 +913,8 @@ async function onRequest({ request, env }) {
     return json2({ ok: true, season, awarded: top3.length });
   }
   if (action === "trophies" && method === "GET") {
-    if (!VALID_ID2.test(id || "")) return json2({ error: "invalid id" }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const p = await getProfile(env, id);
     const trophies = p?.pendingTrophies || [];
     if (url.searchParams.get("claim") === "1" && trophies.length && p) {
@@ -917,6 +926,8 @@ async function onRequest({ request, env }) {
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
     if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     if (id === friendId) return json2({ error: "cannot befriend yourself" }, 400);
     const me = await getProfile(env, id);
     if (!me) return json2({ error: "profile not found" }, 404);
@@ -936,6 +947,8 @@ async function onRequest({ request, env }) {
   if (action === "gift" && method === "POST") {
     const { friendId } = body;
     if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const me = await getProfile(env, id);
     if (!me) return json2({ error: "profile not found" }, 404);
     if (!(me.friends || []).includes(friendId)) return json2({ error: "not a friend" }, 403);
@@ -950,7 +963,8 @@ async function onRequest({ request, env }) {
     return json2({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
-    if (!VALID_ID2.test(id || "")) return json2({ error: "invalid id" }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
     const raw = await env.DIGIAPP_SAVES.get(`gifts:${id}`);
     const gifts = raw ? JSON.parse(raw) : [];
     if (url.searchParams.get("claim") === "1" && gifts.length) {
@@ -1420,7 +1434,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-aALdj9/functionsRoutes-0.8005169096743932.mjs
+// ../.wrangler/tmp/pages-RI7m98/functionsRoutes-0.042281113153451066.mjs
 var routes = [
   {
     routePath: "/api/billing",
