@@ -1,8 +1,18 @@
-# DigiApp — Guia para agentes
+# Soulmon — Guia para agentes
 
 App de produtividade gamificado (bichinho virtual estilo Digimon/Tamagotchi).
-React 18 + TypeScript + Vite 6 (web) e Capacitor 8.4 (APK Android).
-UI/textos do app em PT-BR e EN (sempre os dois, via `language === 'pt-BR'`).
+React 18 + TypeScript + Vite 6 (web), Capacitor 8.4 (APK Android) e um overlay
+Electron separado (`desktop/`). UI/textos do app em PT-BR e EN (sempre os dois,
+via `language === 'pt-BR'`).
+
+> O Soulmon nasceu de um **fork do DigiApp** e ainda divide infraestrutura com
+> ele (URL de produção, namespace KV, projeto Firebase). O inventário do que é
+> compartilhado, o risco de cada item e a ordem segura de separar estão em
+> `docs/SEPARACAO-DIGIAPP.md` — leia antes de mexer em qualquer coisa de
+> deploy. É por isso que sobram nomes com "digiapp" pelo código: alguns são
+> herança cosmética, outros (o binding `DIGIAPP_SAVES`, as chaves de
+> localStorage) são mantidos **de propósito**, porque renomear quebraria o
+> save de quem já joga.
 
 ## Comandos (rode ANTES de todo commit)
 
@@ -12,18 +22,31 @@ npx vitest run       # testes — todos devem passar
 npm run build        # vite build + conversão PNG→WebP (dist/ é commitado!)
 ```
 
-## Deploy (regra combinada com o dono do projeto)
+## Deploy
 
-- **Toda alteração** → commit → push para os TRÊS branches: `main`, `version-b`,
-  `claude/digiapp-code-improvements-q44ol2` (mesmo commit nos três).
-- `main` é o branch de produção do **Cloudflare Pages** (`digiapp-a5e.pages.dev`) —
-  o push publica sozinho em ~2 min. `dist/` é commitado (o CF também builda).
-- O **APK carrega a URL de produção** (`capacitor.config.json > server.url`), então
-  mudança web NÃO precisa de APK novo. Só mudanças em `android/` precisam — o
-  GitHub Actions (`android-build.yml`) builda no push; o artefato fica em
-  `github.com/HexerVoodoom/DigiApp/actions/runs/<id>`.
+Repositório: `HexerVoodoom/Soulmon`.
+
+- **Fluxo**: desenvolva na branch de trabalho combinada na sessão → commit →
+  push → merge **ff-only** em `main` → push da `main` → volte para a branch de
+  trabalho. (Não existem `version-b` nem `claude/digiapp-code-improvements-*`
+  aqui — eram do DigiApp.)
+- `main` é a branch de produção do **Cloudflare Pages**; o push publica sozinho
+  em ~2 min. `dist/` **é commitado** (o CF também builda, mas o commit é o que
+  garante o conteúdo).
+- ⚠️ A URL de produção ainda é a do DigiApp (`digiapp-a5e.pages.dev`), apontada
+  em `capacitor.config.json > server.url`, `desktop/renderer/src/config.ts` e
+  `desktop/electron/main.js`. **Não troque isso sozinho**: só depois que
+  existir um projeto Pages próprio com TODAS as variáveis reconfiguradas
+  (passo 1 de `docs/SEPARACAO-DIGIAPP.md`) — trocar antes derruba o app.
+- O **APK carrega a URL de produção**, então mudança web NÃO precisa de APK
+  novo. Só mudanças em `android/` precisam — o GitHub Actions
+  (`android-build.yml`) builda no push e o artefato fica em
+  `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`. O app Electron tem o
+  próprio workflow (`desktop-build.yml`).
+- O worker de push (`workers/`) **não** é uma Pages Function: não builda no
+  push da `main`. Deploy manual com `wrangler deploy` dentro de `workers/`.
 - Ao mudar assets estáticos/HTML de forma incompatível, **bump `CACHE_VERSION`**
-  em `public/sw.js` (v14 atual) — senão usuários ficam presos em cache velho.
+  em `public/sw.js` (v24 atual) — senão usuários ficam presos em cache velho.
 
 ## Regras do jogo (fonte da verdade — NÃO reinventar)
 
@@ -146,9 +169,16 @@ Estágios/HP máx: digiegg,baby-i=1 · baby-ii=2 · rookie/champion/ultimate=3 �
 5. `handleX = useCallback` com deps certas — CompanionHUD é `memo()`; lambda inline
    nas props dele anula o memo.
 6. Side effects NUNCA dentro de updater do setGameState (StrictMode invoca 2×).
-7. O sandbox de dev **não acessa** `digiapp-a5e.pages.dev` (proxy 403) — teste local
+7. O sandbox de dev **não acessa** a URL de produção (proxy 403) — teste local
    com `npx vite preview` + Playwright (`/opt/pw-browsers/chromium`, import
-   `/opt/node22/lib/node_modules/playwright/index.js`).
+   `/opt/node22/lib/node_modules/playwright/index.js`, com interop CJS:
+   `import pkg from …; const { chromium } = pkg;`). Dois detalhes que custam
+   tempo: (a) `vite.config.ts` tem `open: true`, e sem navegador o preview
+   **morre** com `spawn xdg-open ENOENT` — ponha um `xdg-open` falso no PATH;
+   (b) semeie o `localStorage` com `page.addInitScript` e **não** com
+   `page.evaluate` + `reload`: o app já rodou na primeira carga e sobrescreve
+   o que você acabou de gravar (foi assim que um teste "passou" lendo um
+   estado que não era o semeado).
 8. Sprites: importados via alias `figma:asset/<hash>.png` (mapa no `vite.config.ts`)
    → arquivos reais em `src/assets/`. `assetsInlineLimit: 0` (nunca inline base64).
 9. **Regra copiada = regra que diverge em silêncio.** O renderer do desktop
