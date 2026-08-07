@@ -20,7 +20,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
   totalPoints: number;
-  onDungeonEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' };
+  onDungeonEnter: () => { ok: true; level: number; best: number };
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
   onGlitchtama: () => void;
@@ -50,8 +50,8 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
       key: 'dungeon', Icon: Swords, iconColor: '#8b5cf6', iconBg: '#f3e8ff',
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
-        ? '5 andares retrô, cada um com 6 inimigos e mais forte. Perder custa 1 coração! Reset semanal.'
-        : '5 retro floors, each with 6 tougher enemies. Losing costs 1 heart! Weekly reset.',
+        ? '5 andares retrô, cada um com 6 inimigos e mais forte. Perder custa a run, nunca seus corações. Reset semanal.'
+        : '5 retro floors, each with 6 tougher enemies. Losing costs you the run, never your hearts. Weekly reset.',
       pts: isPt ? 'Bits por inimigo + ranking' : 'Bits per enemy + ranking',
       onClick: () => setOpenGame('dungeon'),
     },

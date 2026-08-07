@@ -1,139 +1,24 @@
 import { describe, it, expect } from 'vitest';
-import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from '../types/progression';
-import { getNextEvolution, getPreviousForm } from '../utils/dailyReset';
-import { CATEGORY_ATTRIBUTES } from '../types/attributes';
+import { FORM_REQUIREMENTS, MAX_HP_BY_FORM, getStageLevel, getMaxEnergyForStage } from '../types/progression';
+import {
+  computeDailyReset,
+  MAX_HEARTS_LOST_PER_DAY,
+  ABSENCE_FORGIVENESS_DAYS,
+  WEEKLY_RELIEF_HEARTS,
+} from '../utils/dailyReset';
 
-// Replicate the performDailyReset state-updater logic for unit testing.
-// This mirrors the implementation in useDailyReset.ts exactly (including
-// using the real getNextEvolution/getPreviousForm from utils/dailyReset.ts).
-function simulateReset(prev: any): any {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayString = yesterday.toDateString();
-  const yesterdayWeekDay = yesterday.getDay();
+// Estes testes exercitam O MESMO computeDailyReset que o hook usa em produção.
+// Antes este arquivo reimplementava a virada do dia numa cópia local, então
+// podia passar com o app quebrado — o footgun de "regra copiada" que o
+// CLAUDE.md alerta. Se precisar de um novo cenário, monte o estado e chame
+// runReset; não recrie a lógica aqui.
 
-  const currentLevel = getStageLevel(prev.evolutionStage);
-  const requirements = FORM_REQUIREMENTS[currentLevel];
-  const requiredToday = requirements.required;
+// Quarta-feira: fora do alívio semanal de segunda, para os testes de tarefa não
+// dependerem do dia em que a suíte roda.
+const WEDNESDAY = new Date('2026-08-05T12:00:00');
+const MONDAY = new Date('2026-08-03T12:00:00');
 
-  let dailyDone = 0;
-  const availableActivities = !canSelectWeekdays(prev.evolutionStage)
-    ? prev.activities
-    : prev.activities.filter((a: any) => a.weekDays?.includes(yesterdayWeekDay));
-
-  availableActivities.forEach((activity: any) => {
-    let isComplete = false;
-    if (activity.steps.length > 0) {
-      isComplete = activity.steps.every((s: any) => s.completed);
-    } else {
-      isComplete = !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
-    }
-    if (isComplete) dailyDone++;
-  });
-
-  dailyDone += prev.tasks.filter((t: any) => t.completed).length;
-
-  // Daily goal = min(registered, requirement); perfect day = goal met (with at
-  // least 1 task registered) AND full energy at day's end
-  const totalTasks = availableActivities.length + prev.tasks.length;
-  const dailyGoal = Math.min(totalTasks, requiredToday);
-  // Energy bars = the stage's task requirement (requiredToday), not maxHP.
-  const energyWasFull = (prev.energyPoints ?? 0) >= requiredToday;
-  const dayWasPerfect = totalTasks > 0 && dailyDone >= dailyGoal && energyWasFull;
-
-  let newHP = prev.healthPoints;
-  let newPerfectDays = prev.perfectDays;
-  let newXP = prev.totalXP;
-  let newVirusPoints = prev.virusPoints;
-  let newDataPoints = prev.dataPoints;
-  let newVaccinePoints = prev.vaccinePoints;
-  let newEvolutionStage = prev.evolutionStage;
-  let finalUnlockedEvolutions = [...prev.unlockedEvolutions];
-  let wasDegeneratedByHP = false;
-  let newMaxActivityCap = prev.maxActivityCap;
-  let newCurrentBranch = prev.currentBranch;
-
-  // Proportional HP loss vs the same daily goal.
-  const completionRatio = dailyGoal > 0 ? Math.min(1, dailyDone / dailyGoal) : 1;
-  const heartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
-  if (heartsLost > 0) {
-    newHP = Math.max(0, prev.healthPoints - heartsLost);
-  }
-
-  if (dayWasPerfect) {
-    newPerfectDays++;
-    let dailyVirus = 0, dailyData = 0, dailyVaccine = 0;
-    availableActivities.forEach((activity: any) => {
-      const attrs = (CATEGORY_ATTRIBUTES as any)[activity.category];
-      if (attrs) {
-        dailyVirus += attrs.virus;
-        dailyData += attrs.data;
-        dailyVaccine += attrs.vaccine;
-      }
-    });
-    newVirusPoints += dailyVirus;
-    newDataPoints += dailyData;
-    newVaccinePoints += dailyVaccine;
-    newXP += (dailyVirus + dailyData + dailyVaccine) * 10;
-  }
-
-  if (newPerfectDays >= requirements.required) {
-    newPerfectDays = 0;
-    const dominantAttr = Math.max(newVirusPoints, newDataPoints, newVaccinePoints);
-    let branch = prev.currentBranch as 'virus' | 'data' | 'vaccine';
-    if (newVirusPoints === dominantAttr) branch = 'virus';
-    else if (newDataPoints === dominantAttr) branch = 'data';
-    else if (newVaccinePoints === dominantAttr) branch = 'vaccine';
-    newCurrentBranch = branch;
-
-    newEvolutionStage = getNextEvolution(prev.evolutionStage, branch, prev.unlockedEvolutions);
-
-    const newStageLevel = getStageLevel(newEvolutionStage);
-    newHP = MAX_HP_BY_FORM[newStageLevel];
-    const newCap = FORM_REQUIREMENTS[newStageLevel].cap;
-    if (newCap > newMaxActivityCap) newMaxActivityCap = newCap;
-    if (!finalUnlockedEvolutions.includes(newEvolutionStage)) {
-      finalUnlockedEvolutions.push(newEvolutionStage);
-    }
-  }
-
-  if (newHP === 0) {
-    wasDegeneratedByHP = true;
-    newEvolutionStage = getPreviousForm(prev.evolutionStage, newCurrentBranch);
-    const degeneratedLevel = getStageLevel(newEvolutionStage);
-    newHP = MAX_HP_BY_FORM[degeneratedLevel];
-    const degReqs = FORM_REQUIREMENTS[degeneratedLevel];
-    newPerfectDays = Math.floor(degReqs.required / 2);
-  }
-
-  const resetActivities = prev.activities.map((a: any) => ({
-    ...a,
-    steps: a.steps.map((s: any) => ({ ...s, completed: false })),
-    completedToday: false,
-  }));
-  const resetTasks = prev.tasks.map((t: any) => ({ ...t, completed: false }));
-  const finalStageLevel = getStageLevel(newEvolutionStage);
-  const newMaxHP = MAX_HP_BY_FORM[finalStageLevel];
-
-  return {
-    ...prev,
-    activities: resetActivities,
-    tasks: resetTasks,
-    healthPoints: newHP,
-    maxHealthPoints: newMaxHP,
-    perfectDays: newPerfectDays,
-    totalXP: newXP,
-    virusPoints: newVirusPoints,
-    dataPoints: newDataPoints,
-    vaccinePoints: newVaccinePoints,
-    evolutionStage: newEvolutionStage,
-    currentBranch: newCurrentBranch,
-    unlockedEvolutions: finalUnlockedEvolutions,
-    degeneratedByHP: wasDegeneratedByHP,
-    lastDayWasPerfect: dayWasPerfect,
-    maxActivityCap: newMaxActivityCap,
-  };
-}
+const runReset = (prev: any, now: Date = WEDNESDAY) => computeDailyReset(prev, { now });
 
 const baseState = () => ({
   activities: [],
@@ -150,46 +35,48 @@ const baseState = () => ({
   unlockedEvolutions: ['rookie'],
   currentBranch: 'data' as const,
   maxActivityCap: 6,
-  lastResetDate: 'yesterday',
+  // Terça — véspera do WEDNESDAY usado nos testes: virada normal de 1 dia.
+  lastResetDate: new Date('2026-08-04T12:00:00').toDateString(),
 });
 
 describe('performDailyReset — proportional HP loss', () => {
   it('no penalty when there were no tasks to do', () => {
-    const result = simulateReset({ ...baseState(), healthPoints: 3 });
+    const result = runReset({ ...baseState(), healthPoints: 3 });
     expect(result.healthPoints).toBe(3);
     expect(result.lastDayWasPerfect).toBe(false);
   });
 
   it('no penalty when all tasks were completed', () => {
     const tasks = [{ id: 't1', completed: true }, { id: 't2', completed: true }];
-    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
+    const result = runReset({ ...baseState(), tasks, healthPoints: 3 });
     expect(result.healthPoints).toBe(3);
   });
 
   it('meeting the stage requirement is safe even with many registered tasks', () => {
     // rookie requires 4; 10 registered but 4 done → goal met → no loss
     const tasks = Array.from({ length: 10 }, (_, i) => ({ id: `t${i}`, completed: i < 4 }));
-    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
+    const result = runReset({ ...baseState(), tasks, healthPoints: 3 });
     expect(result.healthPoints).toBe(3);
   });
 
-  it('doing 1 of the required 4 loses 2 hearts (floor(0.75*3))', () => {
+  it('doing 1 of the required 4 loses only 1 heart (teto diário)', () => {
+    // A proporção diria floor(0.75*3) = 2, mas o teto diário limita a 1.
     const tasks = Array.from({ length: 10 }, (_, i) => ({ id: `t${i}`, completed: i < 1 }));
-    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
-    expect(result.healthPoints).toBe(1);
+    const result = runReset({ ...baseState(), tasks, healthPoints: 3 });
+    expect(result.healthPoints).toBe(3 - MAX_HEARTS_LOST_PER_DAY);
     expect(result.lastDayWasPerfect).toBe(false);
   });
 
   it('50% done with 3 hearts loses 1 heart (floor(0.5*3))', () => {
     const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: i < 2 }));
-    const result = simulateReset({ ...baseState(), tasks, healthPoints: 3 });
+    const result = runReset({ ...baseState(), tasks, healthPoints: 3 });
     expect(result.healthPoints).toBe(2);
   });
 
   it('increments perfectDays and awards XP on a perfect day', () => {
     // rookie requires 4; give 4 completed tasks + full energy (baseState)
     const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
-    const result = simulateReset({ ...baseState(), tasks });
+    const result = runReset({ ...baseState(), tasks });
     expect(result.lastDayWasPerfect).toBe(true);
     expect(result.perfectDays).toBeGreaterThanOrEqual(1);
   });
@@ -197,14 +84,14 @@ describe('performDailyReset — proportional HP loss', () => {
   it('doing ALL registered tasks (fewer than the requirement) + full energy = perfect day', () => {
     // rookie requires 4, but only 3 registered — all 3 done, energy full
     const tasks = Array.from({ length: 3 }, (_, i) => ({ id: `t${i}`, completed: true }));
-    const result = simulateReset({ ...baseState(), tasks });
+    const result = runReset({ ...baseState(), tasks });
     expect(result.lastDayWasPerfect).toBe(true);
     expect(result.healthPoints).toBe(3);
   });
 
   it('tasks met but energy NOT full → day is not perfect', () => {
     const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
-    const result = simulateReset({ ...baseState(), tasks, energyPoints: 1 });
+    const result = runReset({ ...baseState(), tasks, energyPoints: 1 });
     expect(result.lastDayWasPerfect).toBe(false);
     // No heart loss either — tasks were all done
     expect(result.healthPoints).toBe(3);
@@ -213,7 +100,7 @@ describe('performDailyReset — proportional HP loss', () => {
   it('resets activities and tasks to incomplete', () => {
     const tasks = [{ id: 't1', completed: true }];
     const acts = [{ id: 'a1', category: 'Health', steps: [{ id: 's1', label: 'x', completed: true }], weekDays: [0,1,2,3,4,5,6] }];
-    const result = simulateReset({ ...baseState(), tasks, activities: acts });
+    const result = runReset({ ...baseState(), tasks, activities: acts });
     expect(result.tasks[0].completed).toBe(false);
     expect(result.activities[0].steps[0].completed).toBe(false);
   });
@@ -232,22 +119,28 @@ describe('getMaxEnergyForStage — energy bars = task requirement', () => {
   });
 });
 
-describe('performDailyReset — evolution', () => {
-  it('evolves rookie into a champion form after enough perfect days', () => {
-    let state = { ...baseState() };
-    for (let i = 0; i < FORM_REQUIREMENTS.rookie.required; i++) {
+describe('computeDailyReset — evolução é MANUAL', () => {
+  // MANUAL_EVOLUTION = true: a virada do dia nunca evolui sozinha; quem dispara
+  // é o jogador, na cerimônia de evolução. O teste antigo afirmava que a virada
+  // evoluía o pet — afirmação que só passava porque ele exercitava uma CÓPIA da
+  // lógica que não checava a flag. Este é o comportamento real.
+  it('acumula dias perfeitos além do requisito sem evoluir sozinho', () => {
+    let state: any = { ...baseState() };
+    for (let i = 0; i < FORM_REQUIREMENTS.rookie.required + 2; i++) {
       const tasks = Array.from({ length: 4 }, (_, j) => ({ id: `t${i}-${j}`, completed: true }));
-      state = simulateReset({ ...state, tasks });
+      // A energia zera em toda virada e volta ao comer — reabastecer aqui é o
+      // equivalente a ter alimentado o pet ao longo do dia.
+      state = runReset({ ...state, tasks, energyPoints: 10 });
     }
-    expect(getStageLevel(state.evolutionStage)).toBe('champion');
-    expect(state.unlockedEvolutions).toContain(state.evolutionStage);
+    expect(state.evolutionStage).toBe('rookie');
+    expect(state.perfectDays).toBeGreaterThanOrEqual(FORM_REQUIREMENTS.rookie.required);
   });
 });
 
 describe('performDailyReset — degeneration', () => {
   it('degenerates a champion form back to rookie when HP drops to 0', () => {
     const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
-    const result = simulateReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'champion-virus', currentBranch: 'virus' });
+    const result = runReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'champion-virus', currentBranch: 'virus' });
     expect(result.degeneratedByHP).toBe(true);
     expect(result.evolutionStage).toBe('rookie');
   });
@@ -258,7 +151,7 @@ describe('performDailyReset — degeneration', () => {
     // days for free. Non-cumulative — always floor(required/2) of the new
     // (lower) stage, so a second degeneration gets the same discount again.
     const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
-    const result = simulateReset({
+    const result = runReset({
       ...baseState(),
       tasks,
       healthPoints: 1,
@@ -268,5 +161,96 @@ describe('performDailyReset — degeneration', () => {
     expect(result.degeneratedByHP).toBe(true);
     expect(result.evolutionStage).toBe('rookie');
     expect(result.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS.rookie.required / 2));
+  });
+});
+
+describe('computeDailyReset — teto de perda diária', () => {
+  it('nunca tira mais que MAX_HEARTS_LOST_PER_DAY, mesmo zerando o dia', () => {
+    // mega tem 4 corações: a proporção diria 4, o teto diz 1.
+    const tasks = Array.from({ length: 7 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = runReset({
+      ...baseState(), tasks,
+      evolutionStage: 'mega-data', healthPoints: 4, maxHealthPoints: 4,
+    });
+    expect(result.healthPoints).toBe(4 - MAX_HEARTS_LOST_PER_DAY);
+    expect(result.degeneratedByHP).toBe(false);
+  });
+
+  it('um único dia ruim nunca degenera um pet de vida cheia', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = runReset({
+      ...baseState(), tasks,
+      evolutionStage: 'champion-virus', healthPoints: 3, maxHealthPoints: 3,
+    });
+    expect(result.degeneratedByHP).toBe(false);
+    expect(result.evolutionStage).toBe('champion-virus');
+  });
+});
+
+describe('computeDailyReset — perdão de ausência', () => {
+  it('quem some por vários dias não perde HP ao voltar', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const longAgo = new Date('2026-07-28T12:00:00').toDateString(); // 8 dias antes
+    const result = runReset({ ...baseState(), tasks, lastResetDate: longAgo, healthPoints: 3 });
+    expect(result.healthPoints).toBe(3);
+    expect(result.lastDayReport.heartsLost).toBe(0);
+    expect(result.lastDayReport.welcomeBack).toBe(true);
+    expect(result.lastDayReport.daysAway).toBeGreaterThanOrEqual(ABSENCE_FORGIVENESS_DAYS);
+  });
+
+  it('a virada normal de 1 dia continua cobrando', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = runReset({ ...baseState(), tasks, healthPoints: 3 });
+    expect(result.lastDayReport.heartsLost).toBe(MAX_HEARTS_LOST_PER_DAY);
+    expect(result.lastDayReport.welcomeBack).toBe(false);
+  });
+
+  it('voltar depois de sumir nunca degenera', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const longAgo = new Date('2026-07-20T12:00:00').toDateString();
+    const result = runReset({
+      ...baseState(), tasks, lastResetDate: longAgo,
+      healthPoints: 1, evolutionStage: 'champion-virus',
+    });
+    expect(result.degeneratedByHP).toBe(false);
+    expect(result.evolutionStage).toBe('champion-virus');
+  });
+});
+
+describe('computeDailyReset — perfectDays acumulam', () => {
+  it('um dia não-perfeito NÃO tira dias perfeitos já conquistados', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = runReset({ ...baseState(), tasks, perfectDays: 2 });
+    expect(result.lastDayWasPerfect).toBe(false);
+    expect(result.perfectDays).toBe(2);
+  });
+
+  it('dias perfeitos acumulados sobrevivem a um dia ruim', () => {
+    const bad = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const result = runReset({ ...baseState(), tasks: bad, perfectDays: 6 });
+    expect(result.perfectDays).toBe(6);
+  });
+});
+
+describe('computeDailyReset — alívio semanal de segunda', () => {
+  it('devolve meio coração na virada de segunda', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const sunday = new Date('2026-08-02T12:00:00').toDateString();
+    const result = runReset({ ...baseState(), tasks, lastResetDate: sunday, healthPoints: 3 }, MONDAY);
+    // Perde 1 pelo dia zerado e recebe 0.5 de volta pela semana nova.
+    expect(result.healthPoints).toBe(3 - MAX_HEARTS_LOST_PER_DAY + WEEKLY_RELIEF_HEARTS);
+    expect(result.lastDayReport.weeklyRelief).toBe(true);
+  });
+
+  it('não estoura o máximo do estágio', () => {
+    const sunday = new Date('2026-08-02T12:00:00').toDateString();
+    const result = runReset({ ...baseState(), lastResetDate: sunday, healthPoints: 3 }, MONDAY);
+    expect(result.healthPoints).toBe(3);
+  });
+
+  it('não acontece nos outros dias', () => {
+    const result = runReset({ ...baseState(), healthPoints: 2 });
+    expect(result.healthPoints).toBe(2);
+    expect(result.lastDayReport.weeklyRelief).toBe(false);
   });
 });

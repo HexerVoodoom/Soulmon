@@ -79,11 +79,15 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               <li>
                 <strong>❤️ Hearts (HP)</strong> — Lost in proportion to what you leave undone,
                 measured against your stage's <strong>daily requirement</strong>: meet the
-                requirement (or finish everything you registered) and you're safe. Uncleaned
-                <strong> poop</strong> also drains <strong>1 heart every 6 hours</strong>.
-                Hearts are healed by <strong>rubbing your Soulmon</strong> (up to
-                <strong> 1 heart per day</strong>) or by using a <strong>Little Heart</strong> item
-                (bought in the shop or dropped in the dungeon). If HP hits 0, your Soulmon degenerates.
+                requirement (or finish everything you registered) and you're safe. You never
+                lose <strong>more than 1 heart per day</strong>, so a single bad day can't
+                undo your Soulmon. Uncleaned <strong>poop</strong> also drains
+                <strong> 1 heart every 6 hours</strong>. Hearts are healed by
+                <strong> rubbing your Soulmon</strong> (up to <strong>1 heart per day</strong>)
+                or by using a <strong>Little Heart</strong> item (bought in the shop or dropped
+                in the dungeon). Every <strong>Monday</strong> your Soulmon gets
+                <strong> half a heart back</strong> — a new week starts with breathing room.
+                If HP hits 0, your Soulmon degenerates.
               </li>
               <li>
                 <strong>⚡ Energy</strong> — The number of energy bars equals your stage's
@@ -164,9 +168,16 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             <p className="mb-2">
               At the end of each day you lose hearts <strong>in proportion to what you left undone</strong>,
               measured against min(registered, stage requirement):
-              lost hearts = ⌊(1 − done/goal) × maxHearts⌋. Meeting the stage requirement — or finishing
-              everything you registered — means <strong>no loss</strong>, and registering extra activities
-              never adds risk.
+              lost hearts = min(⌊(1 − done/goal) × maxHearts⌋, <strong>1</strong>). Meeting the stage
+              requirement — or finishing everything you registered — means <strong>no loss</strong>, and
+              registering extra activities never adds risk. The daily cap of <strong>1 heart</strong> means
+              a bad day is a nudge, never a wipe.
+            </p>
+            <p className="mb-2">
+              If you're away for <strong>two days or more</strong>, coming back costs you
+              <strong> nothing</strong> — your Soulmon just missed you. And on every
+              <strong> Monday</strong> it recovers <strong>half a heart</strong>, so one rough week
+              never bleeds into the next.
             </p>
             <p className="mb-2">
               Uncleaned <strong>poop</strong> drains an extra <strong>1 heart every 6 hours</strong> until you

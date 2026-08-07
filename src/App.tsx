@@ -1099,16 +1099,23 @@ export default function App() {
   // Dungeon: no daily cap — entry is blocked only at ≤1 heart (a loss costs a
   // real heart, so the player must be able to afford it). As long as HP allows,
   // they can go as often as they like. Returns the monthly difficulty + best.
-  const handleDungeonEnter = useCallback((): { ok: true; level: number; best: number } | { ok: false; reason: 'hp' } => {
-    if (gameState.healthPoints <= 1) return { ok: false, reason: 'hp' };
+  // A masmorra NÃO é mais gated por HP. Antes, perder custava 1 coração real e
+  // não dava pra entrar com ≤1 coração — o que trancava fora do conteúdo
+  // divertido justamente quem tinha tido uma semana ruim, e cada tentativa
+  // aprofundava o buraco. É a mesma estrutura do encarecimento dos Remote Raid
+  // Passes que custou jogadores ao Pokémon GO em 2023.
+  //
+  // O jogo nunca deve cobrar da barra que representa o cuidado que o usuário
+  // teve consigo mesmo. O que está em jogo aqui é a própria run: perder custa os
+  // bônus de andar, o Glitchtama e o placar. Se farmar Bits virar problema, a
+  // alavanca é um custo de ENTRADA em Bits — não o retorno do custo em corações.
+  const handleDungeonEnter = useCallback((): { ok: true; level: number; best: number } => {
     return { ok: true, level: getDungeonDifficulty(), best: getDungeonBest() };
-  }, [gameState.healthPoints]);
-
-  // Losing the dungeon costs one real heart. (Score/difficulty bookkeeping lives
-  // in the game component via utils/dungeon.)
-  const handleDungeonLose = useCallback(() => {
-    setGameState(prev => ({ ...prev, healthPoints: Math.max(0, prev.healthPoints - 1) }));
   }, []);
+
+  // Perder encerra a run e não toca no HP. (A contabilidade de placar/dificuldade
+  // vive no componente do jogo, via utils/dungeon.)
+  const handleDungeonLose = useCallback(() => {}, []);
 
   // Heart item can drop in the dungeon (capped per day). Adds it to the Items
   // folder and returns whether one dropped. The dungeon no longer drops food.

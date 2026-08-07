@@ -132,6 +132,14 @@ seção 3.
 
 ## 2. Estado do produto
 
+- **Benchmark + Fase 1 do plano de evolução (ago/2026)** — `docs/PLANO-EVOLUCAO.md`.
+  Duas rodadas de pesquisa (apps de produtividade gamificada + franquias/hardware
+  Digimon, Pokémon e Palworld) viraram um plano em 5 fases. A **Fase 1 está no ar**:
+  teto de 1 coração perdido por dia, perdão de ausência ≥2 dias, alívio de meio
+  coração toda segunda, `perfectDays` param de decrementar, e a **masmorra não cobra
+  mais da barra de HP** (nem bloqueia entrada). A virada do dia virou função pura
+  (`computeDailyReset`) que o hook e o teste compartilham — antes o teste testava
+  uma cópia e afirmava uma evolução automática que `MANUAL_EVOLUTION` impede.
 - **Palco do pet** (composição, 5 espaços, decoração) — pronto. Contrato de arte
   em `docs/PALCO-E-DECORACAO.md`. Falta só a arte de verdade (hoje são emoji).
 - **Torneio** — 6 itens na aba, escada 15/20/25/40/55/70 Emblemas. A vitrine
@@ -151,10 +159,12 @@ seção 3.
 Nada nesta seção pode ser feito por mim — precisa de conta, cartão, painel ou
 decisão sua.
 
-### 3.1 Segurança — urgente
+### 3.1 Segurança e direitos — urgente
 
 | # | O quê | Por quê |
 |---|---|---|
+| 🔴 | **Licença dos sprites DMC e uso dos nomes Digimon** | `docs/Attributions.md` registra o item em detalhe. Os sprites vêm de `furudbat/wayland-vpets` (arte da Bandai) e o jogo usa dezenas de nomes que são marcas registradas. O caso Nintendo × Pocketpair mostra que **IP é território muito mais forte que patente** — a Nintendo processou por patente e vem perdendo, enquanto a Pokémon Company falava de IP. Decidir entre licenciar, substituir por arte/nomes originais, ou assumir o risco conscientemente. Não é aconselhamento jurídico. |
+| 🟠 | **Reroll por Créditos = resultado aleatório pago com dinheiro real** | `monetization.ts:76` + `oracle.ts` (`Math.random()`). Atenuante forte: todo pet gerado é mecanicamente equivalente — é identidade, não poder. Mas a Lei 15.211/2025 (ECA Digital) vale desde 17/03/2026, houve condenação de R$ 333M em jun/2026, e o Pokémon GO teve incubadoras removidas no Brasil. Pode bastar deixar explícito que os resultados são equivalentes. |
 | 🔴 | **Decidir sobre as keystores no histórico do git** | Se o repositório for público, ou se essas chaves ainda assinam algo na Play Store: rotacionar a chave de upload no Play Console e/ou limpar o histórico com `git filter-repo` (reescreve todos os commits, exige force push e quebra clones). Posso preparar o comando; a decisão de reescrever histórico é sua. |
 | 🟠 | **Ligar o `FIREBASE_PROJECT_ID`** | É o que fecha `save.js`, `billing.js` e `entitlements.js`. **Só depois** que `VITE_FIREBASE_*` estiver configurado e o build do desktop com login tiver saído — ligar antes derruba o login de todo mundo. |
 
@@ -207,5 +217,11 @@ o app de todo mundo que já tem o APK instalado.
   Durable Objects.
 - **Arte da decoração são emoji.** A estrutura já aceita PNG; ver
   `docs/PALCO-E-DECORACAO.md`.
+- **`GuideModal.tsx` é só em inglês.** O `HelpModal` tem PT+EN, o guia não —
+  viola a convenção de UI bilíngue do `CLAUDE.md`. Anterior a este trabalho.
+- **Cura instantânea por Créditos** é, na prática, pagar para pular o cuidado — a
+  mesma crítica que Kotaku e Digital Trends fizeram ao Premium Pass do Pokémon
+  Sleep. Sugestão em `docs/PLANO-EVOLUCAO.md`: reposicionar como perdão pontual
+  com teto. É decisão de produto, não técnica.
 - **Sprite do cocô** (`src/assets/9087038…png`) é um blob escuro pouco legível.
   Anterior a este trabalho.

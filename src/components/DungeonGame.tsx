@@ -25,8 +25,9 @@ import type { Language } from '../utils/i18n';
  *
  * Attack: stop the sweeping marker near CENTER for more damage (≥92% = crit).
  * Defense: same bar, timed — center dodges, a perfect stop dodges + counters.
- * No daily cap — entry is gated only by HP: LOSING costs one real heart, so you
- * can't enter with ≤1 heart. Hearts (rarely) drop; the run score feeds a ranking.
+ * Sem limite diário e SEM gate de entrada: a masmorra não cobra da barra de
+ * cuidado do pet (perder custa a run — bônus de andar, Glitchtama e placar —
+ * nunca corações). Coraçõezinhos (raramente) dropam; o placar alimenta o ranking.
  */
 
 const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
@@ -46,7 +47,7 @@ const POPUP_MS = 1400;     // how long result popups stay before the next phase
 // Bits for clearing a floor — scales with how deep you are (10/15/20/25/30).
 const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
 
-type Phase = 'intro' | 'blocked' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
+type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 interface Popup { icon: string; title: string; detail: string; color: string }
 
 // ── Timing bar ─────────────────────────────────────────────────────────────
@@ -107,9 +108,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
   language: Language;
-  /** Start a run: gates on HP only. Returns the base level (floor 1's level). */
-  onEnter: () => { ok: true; level: number; best: number } | { ok: false; reason: 'hp' };
-  /** Losing costs 1 real heart. */
+  /** Inicia a run. Sem gate: a masmorra não cobra da barra de cuidado. */
+  onEnter: () => { ok: true; level: number; best: number };
+  /** Perder encerra a run — não custa HP. */
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
   onHeartDrop: () => boolean;
@@ -137,7 +138,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const [floor, setFloor] = useState(1);
   const [best, setBest] = useState(() => getDungeonBest());
   const [runScore, setRunScore] = useState(0);
-  const [blocked, setBlocked] = useState(false);
   // 5 scenes drawn per run from the classic pool + the shop backdrops.
   const [runScenes, setRunScenes] = useState<DungeonScene[]>(() => buildRunScenes());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -173,14 +173,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     onExit();
   };
 
-  // Begin a run at floor 1 (level = persisted base); gated only by HP.
+  // Começa a run no andar 1 (level = base persistida). Sem gate de entrada.
   const startRun = () => {
     const res = onEnter();
-    if (!res.ok) {
-      setBlocked(true);
-      setPhase('blocked');
-      return;
-    }
     const list = buildDungeonWave(res.level, evolutionStage);
     setRunScenes(buildRunScenes());
     setBaseLevel(res.level);
@@ -194,7 +189,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     setRunScore(0);
     setRewardMsg('');
     setPopup(null);
-    setBlocked(false);
     setPhase('attack');
   };
 
@@ -426,8 +420,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
         </div>
       )}
 
-      {/* Intro / blocked title area */}
-      {(phase === 'intro' || phase === 'blocked') && (
+      {/* Intro */}
+      {phase === 'intro' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 20, background: 'rgba(248,113,113,0.12)' }}>
             <Swords size={36} color="#f87171" strokeWidth={2} />
@@ -436,28 +430,19 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
             <span>🏅 {isPt ? 'Recorde' : 'Best'}: <b style={{ color: '#facc15' }}>{best}</b></span>
             <span>🔥 {isPt ? 'Dificuldade base' : 'Base level'}: <b style={{ color: '#c084fc' }}>{baseLevel}</b></span>
           </div>
-          {blocked ? (
-            <p style={{ fontSize: '0.82rem', color: '#f87171', maxWidth: 300, fontWeight: 700 }}>
-              {isPt ? '💔 Corações insuficientes! Perder custa 1 coração — recupere antes (não dá pra entrar com 1 ou meio coração).'
-                    : '💔 Not enough hearts! Losing costs 1 heart — recover first (you can\'t enter with 1 or half a heart).'}
-            </p>
-          ) : (
-            <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>
-              {isPt
-                ? '5 andares, cada um com 6 inimigos e mais forte que o anterior. Andar 1 serve pra um rookie; alguns andares acima ficam brutais. Concluir a run inteira sobe a dificuldade (reset semanal). Perder custa 1 coração real!'
-                : '5 floors, each with 6 enemies and tougher than the last. Floor 1 suits a rookie; a few floors up gets brutal. Completing the whole run raises the difficulty (weekly reset). Losing costs 1 real heart!'}
-            </p>
-          )}
+          <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>
+            {isPt
+              ? '5 andares, cada um com 6 inimigos e mais forte que o anterior. Andar 1 serve pra um rookie; alguns andares acima ficam brutais. Concluir a run inteira sobe a dificuldade (reset semanal). Perder custa a run — nunca os seus corações.'
+              : '5 floors, each with 6 enemies and tougher than the last. Floor 1 suits a rookie; a few floors up gets brutal. Completing the whole run raises the difficulty (weekly reset). Losing costs you the run — never your hearts.'}
+          </p>
           <button
-            onClick={blocked ? exitRun : startRun}
+            onClick={startRun}
             style={{
               width: '100%', maxWidth: 320, padding: '14px 0', borderRadius: 16, border: 'none',
-              background: blocked ? '#60a5fa' : '#4ade80', color: '#0b0f17',
+              background: '#4ade80', color: '#0b0f17',
               fontWeight: 800, fontSize: '1rem', cursor: 'pointer',
             }}>
-            {blocked
-              ? (isPt ? 'Voltar' : 'Back')
-              : (isPt ? 'Entrar na masmorra' : 'Enter the dungeon')}
+            {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
           </button>
         </div>
       )}
