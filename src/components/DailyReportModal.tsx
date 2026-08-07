@@ -10,6 +10,8 @@ interface DailyReportModalProps {
   /** O "porquê" que o usuário escreveu no onboarding. O pet devolve isso em
    *  momentos-chave — é o que separa "app que mede" de "avatar que acompanha". */
   soulGoal?: string;
+  /** "Eu fiz, só esqueci de marcar": devolve os corações cobrados na virada. */
+  onRecoverHearts?: () => void;
 }
 
 /**
@@ -17,12 +19,14 @@ interface DailyReportModalProps {
  * Layout uses INLINE styles — several Tailwind utilities (px-5, py-4, max-w-xs)
  * don't exist in the precompiled index.css (see CLAUDE.md footgun #1).
  */
-export function DailyReportModal({ report, onClose, language, theme = 'default', soulGoal }: DailyReportModalProps) {
+export function DailyReportModal({ report, onClose, language, theme = 'default', soulGoal, onRecoverHearts }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
   // retorno depois de uma ausência tem que ser um abraço, não uma fatura.
   const welcome = !!report.welcomeBack;
+  // Só faz sentido oferecer quando houve cobrança e ela ainda não foi desfeita.
+  const canRecover = !welcome && report.heartsLost > 0 && !report.heartsRecovered && !!onRecoverHearts;
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
   const mono = { fontFamily: 'monospace' as const };
@@ -100,6 +104,11 @@ export function DailyReportModal({ report, onClose, language, theme = 'default',
       ? 'Faça carinho nele para recuperar meio coração — e nunca se perde mais que um por dia.'
       : 'Rub your pet to restore half a heart — and you never lose more than one a day.');
   }
+  if (report.heartsRecovered) {
+    notes.push(isPt
+      ? 'Corações devolvidos. Da próxima vez marque no dia — seu Soulmon gosta de acompanhar de perto.'
+      : 'Hearts restored. Next time log it the same day — your Soulmon likes following along.');
+  }
   if (soulGoal && (report.wasPerfect || welcome)) {
     notes.push(isPt
       ? `Lembra por que você começou: "${soulGoal}".`
@@ -134,7 +143,13 @@ export function DailyReportModal({ report, onClose, language, theme = 'default',
               <p key={i} style={{ ...mono, fontSize: '0.7rem', color: palette.sub, paddingTop: 6 }}>{n}</p>
             ))}
           </div>
-          <div style={{ padding: '14px 20px 18px' }}>
+          <div style={{ padding: '14px 20px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {canRecover && (
+              <button onClick={onRecoverHearts}
+                style={{ ...mono, width: '100%', padding: '11px 0', borderRadius: 0, border: '2px outset #ffffff', background: '#c0c0c0', color: '#000000', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
+                {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
+              </button>
+            )}
             <button onClick={onClose}
               style={{ ...mono, width: '100%', padding: '11px 0', borderRadius: 0, border: '2px outset #ffffff', background: isGlitch ? '#00ffff' : '#c0c0c0', color: isGlitch ? '#0a0a0a' : '#000000', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}>
               OK
@@ -184,8 +199,20 @@ export function DailyReportModal({ report, onClose, language, theme = 'default',
           ))}
         </div>
 
-        {/* OK */}
-        <div style={{ padding: '14px 20px 20px' }}>
+        {/* Ações */}
+        <div style={{ padding: '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {canRecover && (
+            <>
+              <button onClick={onRecoverHearts} className="sm-btn sm-btn-secondary" style={{ width: '100%' }}>
+                {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
+              </button>
+              <p style={{ fontSize: '0.7rem', color: 'var(--sm-muted)', textAlign: 'center', margin: 0, lineHeight: 1.4 }}>
+                {isPt
+                  ? 'Devolve os corações. O dia perfeito não volta — esse já passou.'
+                  : 'Gives the hearts back. The perfect day doesn’t return — that one’s gone.'}
+              </p>
+            </>
+          )}
           <button onClick={onClose} className="sm-btn" style={{ width: '100%' }}>
             OK
           </button>

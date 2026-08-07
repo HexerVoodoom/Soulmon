@@ -148,9 +148,9 @@ O núcleo da essência. Nada aqui é mecânica de jogo: é **tom e escuta**.
 | 2.1 ✅ | **Onboarding pergunta o "porquê"** — duas perguntas abertas ("o que você quer melhorar?", "o que mais te atrapalha?") antes do ritual do oráculo | `SoulmonOnboarding`, `GameState` | Ponto de maior consenso entre pesquisa de mercado (Habitica, Finch) e psicologia (Goal-Setting Theory + autonomia da SDT). A razão pra mudar tem que vir da pessoa |
 | 2.2 ✅ | **O pet lembra do que a pessoa disse** — a resposta do onboarding volta em pontos de decisão (relatório diário, página de evolução) | `DailyReportModal`, `EvolutionPage` | É o que transforma "app que mede" em "avatar que acompanha" |
 | 2.3 ✅ | **Tom sem culpa no relatório diário** — revisar toda redação que possa soar como acusação; modo boas-vindas já existe no dado (`welcomeBack`), falta a UI | `DailyReportModal` | O elogio mais repetido ao Finch não é "é bonito", é "não me faz sentir culpado" |
-| 2.4 | **Check-in de humor** curto e opcional (3–5 carinhas) | novo, junto do carinho | Elemento de menor custo e maior retorno emocional de toda a pesquisa |
-| 2.5 | **Marcação retroativa** — marcar a tarefa de ontem até X horas depois da virada recupera o HP, mas **não** o dia perfeito | `careRules.ts` + UI | Retro-tracking do Pokémon Sleep: recupera o dano, não a glória |
-| 2.6 | **Sugestão de tarefa mínima** no cadastro — se o usuário digitar algo grande, sugerir gentilmente a versão de 2 minutos | `taskSuggestions.ts` | Fogg: Habilidade é o gargalo, não Motivação |
+| 2.4 ⬜ | **Check-in de humor** curto e opcional (3–5 carinhas) | novo, junto do carinho | Elemento de menor custo e maior retorno emocional de toda a pesquisa |
+| 2.5 ✅ | **Marcação retroativa** — marcar a tarefa de ontem até X horas depois da virada recupera o HP, mas **não** o dia perfeito | `careRules.ts` + UI | Retro-tracking do Pokémon Sleep: recupera o dano, não a glória |
+| 2.6 ✅ | **Sugestão de tarefa mínima** no cadastro — se o usuário digitar algo grande, sugerir gentilmente a versão de 2 minutos | `taskSuggestions.ts` | Fogg: Habilidade é o gargalo, não Motivação |
 
 ---
 
@@ -161,14 +161,14 @@ Onde o V-Pet de 97 e o Vital Bracelet têm mais a ensinar.
 | # | O quê | Por quê |
 |---|---|---|
 | 3.1 ✅ | **JÁ EXISTIA.** A verificação no código mostrou que a categoria da tarefa já dirige o galho: tarefa concluída → comida da MESMA categoria (`FOOD_BY_CATEGORY`) → atributos daquela categoria (`CATEGORY_ATTRIBUTES`) → branch, e o `BranchForecast` já mostra a projeção. Somar atributos de novo na conclusão da tarefa só inflacionaria. A crítica da pesquisa partia de leitura incompleta | Vital Bracelet separa Vital Values (quanto) de PP/HP/AP/BP (o quê). *Se só existir "mais", o único gameplay possível é grind* |
-| 3.2 | **Padrão de cuidado como seletor** — regularidade vs. rajada produzem linhagens diferentes, **nenhuma melhor que a outra** | V-Pet 97: 0 care mistakes → Agumon; 3 → Betamon. Não é castigo, é um retrato de como você cuidou |
+| 3.2 ⬜ | **Padrão de cuidado como seletor** — regularidade vs. rajada produzem linhagens diferentes, **nenhuma melhor que a outra** | V-Pet 97: 0 care mistakes → Agumon; 3 → Betamon. Não é castigo, é um retrato de como você cuidou |
 | 3.3 ✅ | **Passiva única sorteada no nascimento** ("Guloso: comida dá +1 atributo", "Madrugador: cocô nunca antes das 10h") | Melhor retorno por esforço das duas pesquisas — um campo novo no `GameState` transforma "meu bichinho" em *o meu* bichinho |
 | 3.4 ✅ | **Achatar a escada no topo** — hoje cada estágio pede mais tarefas/dia, indefinidamente. No topo o eixo deveria virar **consistência ao longo de semanas** | É o erro que fez a maioria dos donos de Vital Bracelet parar nos estágios médios |
-| 3.5 | **Vitrine de coleção / dex de estados** — registro do que aquele pet já viveu, sem valor competitivo | Sleep Style Dex: colecionar a *variação*, não a nota. Antídoto contra ansiedade de performance |
+| 3.5 ⬜ | **Vitrine de coleção / dex de estados** — registro do que aquele pet já viveu, sem valor competitivo | Sleep Style Dex: colecionar a *variação*, não a nota. Antídoto contra ansiedade de performance |
 
 ---
 
-## Fase 4 — Ritual e social
+## Fase 4 — Ritual e social ⬜ NÃO INICIADA
 
 O estudo do BMJ sobre Pokémon GO é inequívoco: o efeito da novidade sobre
 comportamento **morre em ~6 semanas**. Depois disso, só ritual e vínculo seguram.
@@ -179,17 +179,56 @@ comportamento **morre em ~6 semanas**. Depois disso, só ritual e vínculo segur
 | 4.2 | **Faixas/tiers em vez de ranking global cru** | Em ambientes só-de-leaderboard, 31,3% relataram efeito psicológico negativo de comparação |
 | 4.3 | **Modo cooperativo leve** (2–4 treinadores, meta coletiva) | Cooperação tem evidência mais forte que competição para adesão a hábito. Precisa de saída limpa do grupo, sem penalidade |
 | 4.4 | **Uma ação, várias barras** — concluir uma tarefa deve alimentar visivelmente energia + comida + evolução + missão numa animação só | Um km no Pokémon GO avança ovo, candy, missão e recompensa semanal ao mesmo tempo |
-| 4.5 | **Auditar a carga diária** — cocô 2×/dia + comida 5/h + carinho + banho + sono + masmorra: cabe em ~3 aberturas de app por dia? | "Cheque a cada 2h" é um segundo emprego |
+| 4.5 ✅ | **Auditar a carga diária** (resultado abaixo) — cocô 2×/dia + comida 5/h + carinho + banho + sono + masmorra: cabe em ~3 aberturas de app por dia? | "Cheque a cada 2h" é um segundo emprego |
 
 ---
 
-## Fase 5 — Visual
+## Fase 5 — Visual ⬜ NÃO INICIADA
 
 | # | O quê | Por quê |
 |---|---|---|
 | 5.1 | **Arte real de decoração** (hoje são emoji; a estrutura de `PALCO-E-DECORACAO.md` já aceita PNG) | Maior retorno visual disponível. "Casa que cresce" é o diferencial citado do Catzy |
 | 5.2 | **Tela de jornada** — registro visual persistente de estágios vividos, cenários visitados, itens obtidos | Catzy usa biomas como forma espacial do progresso; mais forte que um número subindo |
 | 5.3 | **Separação visual das três moedas** (já é regra travada por teste) — manter | É a clareza que os Tamagotchis modernos não têm e que gera desconfiança |
+
+---
+
+## Auditoria da carga diária (4.5)
+
+Quantas vezes o app precisa ser aberto num dia normal, hoje:
+
+| Momento | O que acontece |
+|---|---|
+| Manhã | Relatório do dia anterior (1×/dia) + marcar as primeiras tarefas |
+| Tarde | Cocô aparece (até 2×/dia) → banho; alimentar para subir energia |
+| Noite | Fechar as tarefas do dia e completar a energia antes da virada |
+
+**Resultado: cabe em ~3 aberturas.** Os limites que existem são de RITMO, não de
+cobrança — 5 comidas/hora é uma janela deslizante generosa (encher a energia
+exige 4 a 6 comidas no dia todo), o carinho é 1×/dia e o cocô é agendado, não
+reativo. Nada aqui pede "cheque a cada 2 horas", que foi a queixa central do
+Pokémon Sleep.
+
+**O que vigiar:** qualquer feature nova que exija uma quarta visita programada
+ao app. O Soulmon quer sessões curtas e recorrentes por meses; "o usuário passou
+muito tempo no app" continua sendo antipadrão.
+
+---
+
+## O que ficou de fora, e por quê
+
+Escopo entregue de forma consciente — estes itens seguem planejados, não
+esquecidos:
+
+| Item | Por que não foi feito agora |
+|---|---|
+| 2.4 Check-in de humor | Precisa de decisão de produto antes do código: onde entra na rotina sem virar uma quarta visita diária (ver auditoria acima), e o que o app faz com o dado. Coletar humor e não devolver nada é pior que não perguntar |
+| 3.2 Padrão de cuidado como seletor | É a mudança de regra mais delicada do plano: mexe em qual criatura o jogador recebe. Merece desenho próprio (quais padrões, quais galhos) antes de virar código, senão vira aleatoriedade disfarçada de significado |
+| 3.5 / 5.2 Vitrine de coleção e tela de jornada | Tela nova inteira. Alto valor, mas é trabalho de UI que não cabia junto do resto sem cair a qualidade da verificação |
+| 4.1 / 4.2 Janela e faixas do Torneio | Mexe no serviço de PvP e no ranking (`functions/api/`), não só no cliente — exige pensar migração de quem já tem pontuação |
+| 4.3 Modo cooperativo | **Precisa de backend**: grupos, estado compartilhado e moderação. É a única do plano que não é implementável só no cliente |
+| 4.4 Uma ação, várias barras | Polimento de animação; depende da arte da Fase 5 para valer a pena |
+| 5.1 Arte da decoração | **Não é código.** A estrutura (`docs/PALCO-E-DECORACAO.md`) já aceita PNG com tamanhos fixos por espaço; falta a arte, que precisa ser desenhada PARA a caixa |
 
 ---
 

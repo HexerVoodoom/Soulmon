@@ -7,6 +7,7 @@ import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
 import { useItemForm, type Step } from '../hooks/useItemForm';
 import { UnlockNudge } from './UnlockAccountModal';
+import { minimumViableHint } from '../utils/taskSuggestions';
 
 interface CreateModalProps {
   isOpen: boolean;
@@ -81,6 +82,10 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
     buildAlarm,
     buildDeadline,
   } = useItemForm({ isOpen });
+
+  // Nudge de tarefa mínima (utils/taskSuggestions.ts): o gargalo do modelo de
+  // Fogg é Habilidade, não Motivação.
+  const minHint = minimumViableHint(name, isPt ? 'pt-BR' : 'en-US');
 
   const isAtCap = !isSingleExecution && activitiesCount >= activitiesCap;
   const isBlocked = isAtCap || demoLimitReached;
@@ -172,6 +177,9 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
               <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.name}</label>
               <Input type="text" autoComplete="new-password" value={name} onChange={(e) => setName(e.target.value)} placeholder={txt.namePlaceholder} maxLength={60}
                 className="bg-white border-2 border-gray-400 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
+              {minHint && (
+                <p style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#444', marginTop: 6, lineHeight: 1.4 }}>💡 {minHint}</p>
+              )}
             </div>
             <div>
               <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.category}</label>
@@ -336,6 +344,11 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
             <label style={labelStyle}>{txt.name}</label>
             <Input type="text" autoComplete="new-password" value={name} onChange={(e) => setName(e.target.value)}
               placeholder={txt.namePlaceholder} maxLength={60} style={inputStyle} />
+            {/* Convite, não correção: some se o usuário ignorar, e a meta segue
+                sendo dele (autonomia da SDT). */}
+            {minHint && (
+              <p style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', marginTop: 6, lineHeight: 1.45 }}>💡 {minHint}</p>
+            )}
           </div>
 
           {/* Category — chips (mesmo estilo do resto do app) */}

@@ -182,6 +182,8 @@ export interface GameState {
     daysAway?: number;
     /** Virada de segunda: ganhou o meio coração do alívio semanal. */
     weeklyRelief?: boolean;
+    /** Já usou o "esqueci de marcar" deste relatório (1× por dia). */
+    heartsRecovered?: boolean;
   };
   /**
    * O "porquê" do usuário, respondido no onboarding ANTES de qualquer mecânica

@@ -1387,6 +1387,27 @@ export default function App() {
     setShowDailyReport(true);
   }, [gameState.lastDayReport]);
 
+  /**
+   * "Eu fiz, só esqueci de marcar." Devolve os corações que a virada cobrou —
+   * mas NÃO o dia perfeito, que já passou. É o retro-tracking do Pokémon Sleep:
+   * recupera o dano, não a glória.
+   *
+   * Dá para usar isso para não perder coração nunca. É de propósito: num app de
+   * produtividade pessoal quem mente só engana a si mesmo, e o atrito de um
+   * antifraude custaria mais aos honestos do que o benefício.
+   */
+  const handleRecoverHearts = useCallback(() => {
+    setGameState(prev => {
+      const report = prev.lastDayReport;
+      if (!report || report.heartsRecovered || report.heartsLost <= 0) return prev;
+      return {
+        ...prev,
+        healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + report.heartsLost),
+        lastDayReport: { ...report, heartsRecovered: true },
+      };
+    });
+  }, []);
+
   const handleCloseDailyReport = useCallback(() => {
     if (gameState.lastDayReport) {
       localStorage.setItem(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date);
@@ -2407,6 +2428,7 @@ export default function App() {
         <DailyReportModal
           report={gameState.lastDayReport}
           onClose={handleCloseDailyReport}
+          onRecoverHearts={handleRecoverHearts}
           language={language}
           theme={theme}
           soulGoal={gameState.soulGoal}
