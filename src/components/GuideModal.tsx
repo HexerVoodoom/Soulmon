@@ -122,16 +122,23 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
             }`}>3. Requirements per Form</h3>
+            <p className="mb-2">
+              Your Soulmon is born a <strong>Rookie</strong> — there are no egg or baby stages.
+              Each form needs a number of <strong>perfect days</strong> to evolve, and a number of
+              <strong> tasks per day</strong> to call a day perfect:
+            </p>
             <ul className="space-y-1 ml-4 list-disc">
-              <li>Digiegg → Baby I: 1 perfect day</li>
-              <li>Baby I → Baby II: 2 perfect days</li>
-              <li>Baby II → Rookie: 3 perfect days</li>
-              <li>Rookie → Champion: 7 perfect days</li>
-              <li>Champion → Ultimate: 14 perfect days</li>
-              <li>Ultimate → Mega: 21 perfect days</li>
-              <li>Mega → Ultra: 30 perfect days (requires unlocking all 3 Megas)</li>
-              <li>Ultra → Itto Mode: 45 perfect days</li>
+              <li>Rookie → Champion: <strong>10</strong> perfect days · 4 tasks/day</li>
+              <li>Champion → Ultimate: <strong>20</strong> perfect days · 5 tasks/day</li>
+              <li>Ultimate → Mega: <strong>30</strong> perfect days · 5 tasks/day</li>
+              <li>Mega → Ultra: <strong>40</strong> perfect days · 6 tasks/day (requires unlocking all 3 Megas)</li>
+              <li>Ultra: the top of the tree · 6 tasks/day</li>
             </ul>
+            <p className="mt-2">
+              Notice the daily load <strong>flattens</strong> near the top while the perfect days keep
+              growing. What the late game asks for is <strong>consistency across weeks</strong>, not
+              more tasks crammed into one day.
+            </p>
           </section>
 
           <section>
@@ -139,10 +146,12 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
             }`}>4. Activity Cap</h3>
             <p>
-              Each form has a limit on activities you can register = <strong>2× the number of perfect days required</strong>.
+              Each form caps how many activities you can keep registered: <strong>6</strong> at Rookie,
+              then 7, 8, 9 and <strong>10</strong> at Ultra.
             </p>
             <p className="mt-2">
-              Example: Rookie needs 7 perfect days, so the cap is 14 activities.
+              The cap is always above the daily requirement on purpose — you can register more than
+              you need to do, and the extra never counts against you.
             </p>
           </section>
 
@@ -150,14 +159,10 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
             <h3 className={`font-bold mb-2 ${
               isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
             }`}>5. Weekday Selection</h3>
-            <p className="mb-2">
-              <strong>Before Rookie</strong> (Digiegg, Baby I, Baby II): 
-              No weekday selection. All activities are considered daily.
-            </p>
             <p>
-              <strong>From Rookie onwards</strong>: 
-              You can choose which days of the week each activity will be available. 
-              By default, all days are checked when creating an activity.
+              You can choose which days of the week each activity is available, at every stage.
+              By default, all days are checked when creating an activity — and an activity that
+              isn't scheduled for today never counts against your daily goal.
             </p>
           </section>
 
@@ -183,6 +188,11 @@ export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalPro
               Uncleaned <strong>poop</strong> drains an extra <strong>1 heart every 6 hours</strong> until you
               give a bath. Hearts are healed <strong>only by rubbing your Soulmon</strong> — every ~2 seconds
               of rubbing restores half a heart, up to <strong>1 heart per day</strong>.
+            </p>
+            <p className="mb-2">
+              Every Soulmon is born with one <strong>trait</strong> — Foodie, Cuddly, Stubborn,
+              Lucky or Early Bird — visible in Stats. It nudges one small everyday detail, and
+              every trait is an upside: none of them is a handicap.
             </p>
             <p>
               Maximum HP per form:

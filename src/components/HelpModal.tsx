@@ -55,6 +55,13 @@ const SECTIONS = [
         descPt: 'Na página de Evolução, toque no seu Soulmon ATUAL para travar/destravar a evolução. Travado, ele nunca evolui (os dias perfeitos continuam contando); destrave e ele evolui na próxima virada de dia.',
       },
       {
+        icon: '✨',
+        labelEn: 'Birth trait',
+        labelPt: 'Traço de nascimento',
+        descEn: 'Every Soulmon is born with one trait (see it in Stats). It tweaks a small everyday detail — meals, cuddles, a rough day, dungeon luck or poop timing. Every trait is an upside: none of them is a handicap.',
+        descPt: 'Todo Soulmon nasce com um traço (veja em Estatísticas). Ele muda um detalhe pequeno do dia a dia — refeições, carinho, um dia ruim, sorte na masmorra ou a hora do cocô. Todo traço é positivo: nenhum é desvantagem.',
+      },
+      {
         icon: '🌀',
         labelEn: 'Glitchtama',
         labelPt: 'Glitchtama',

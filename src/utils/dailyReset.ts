@@ -1,5 +1,6 @@
 import { FORM_REQUIREMENTS, MANUAL_EVOLUTION, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, clampBranch } from '../types/progression';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
+import { heartLossCap } from './passives';
 
 // Tipos necessários para o reset
 interface Activity {
@@ -257,7 +258,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // e limitada a MAX_HEARTS_LOST_PER_DAY. Sem tarefas cadastradas, nada a falhar.
   const completionRatio = dailyGoal > 0 ? Math.min(1, dailyDone / dailyGoal) : 1;
   const rawHeartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
-  const heartsLost = wasAway ? 0 : Math.min(rawHeartsLost, MAX_HEARTS_LOST_PER_DAY);
+  // Teimoso (utils/passives.ts) aguenta melhor um dia ruim.
+  const lossCap = heartLossCap(prev.petPassive, MAX_HEARTS_LOST_PER_DAY);
+  const heartsLost = wasAway ? 0 : Math.min(rawHeartsLost, lossCap);
   if (heartsLost > 0) {
     newHP = Math.max(0, prev.healthPoints - heartsLost);
   }

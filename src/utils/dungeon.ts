@@ -142,7 +142,7 @@ export function recordDungeonScore(score: number): number {
 
 // ── Heart drops ──────────────────────────────────────────────────────────────
 /** Roll for a heart drop (capped per day). Returns true when one dropped. */
-export function rollDungeonHeartDrop(): boolean {
+export function rollDungeonHeartDrop(bonusChance = 0): boolean {
   const today = new Date().toDateString();
   let rec = { date: today, count: 0 };
   try {
@@ -150,7 +150,7 @@ export function rollDungeonHeartDrop(): boolean {
     if (saved?.date === today) rec = saved;
   } catch { /* fresh */ }
   if (rec.count >= HEART_DROP_DAILY_CAP) return false;
-  if (Math.random() > HEART_DROP_CHANCE) return false;
+  if (Math.random() > HEART_DROP_CHANCE + bonusChance) return false;
   localStorage.setItem(STORAGE_KEYS.DUNGEON_HEART_DROPS, JSON.stringify({ date: today, count: rec.count + 1 }));
   return true;
 }

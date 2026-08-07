@@ -36,7 +36,7 @@ describe('tabelas copiadas continuam iguais às do jogo', () => {
     rookie: 3, champion: 3, ultimate: 3, mega: 4, ultra: 5,
   };
   const DESKTOP_ENERGY: Record<string, number> = {
-    rookie: 4, champion: 5, ultimate: 6, mega: 7, ultra: 8,
+    rookie: 4, champion: 5, ultimate: 5, mega: 6, ultra: 6,
   };
 
   it('HP máximo por nível', () => {

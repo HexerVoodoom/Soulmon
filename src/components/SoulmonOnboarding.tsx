@@ -29,6 +29,9 @@ export type OnboardingCompleteData = {
   userName: string;
   email: string;
   initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
+  /** O "porquê" do usuário, perguntado ANTES de qualquer mecânica de jogo. */
+  soulGoal: string;
+  soulStruggle: string;
 } & (
   | { mode: 'oracle'; oracleResult: OracleResult }
   | { mode: 'demo'; demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' }
@@ -69,6 +72,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const REVEAL = QUIZ_END + 1;
   const REGISTER = REVEAL + 1;
   const DEMO_PICK = -1;
+  // O "porquê" vem ANTES de nome, data e quiz: a razão para mudar precisa vir
+  // da pessoa, não do app (Goal-Setting Theory + autonomia da SDT), e nenhuma
+  // mecânica de jogo aparece antes dela. Ids negativos, como DEMO_PICK, para
+  // não renumerar a sequência do ritual.
+  const GOAL_STEP = -2;
+  const STRUGGLE_STEP = -3;
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
@@ -77,6 +86,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
+  const [soulGoal, setSoulGoal] = useState('');
+  const [soulStruggle, setSoulStruggle] = useState('');
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [birthDateText, setBirthDateText] = useState('');
@@ -138,6 +149,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   };
 
   const next = () => {
+    if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
+    if (step === STRUGGLE_STEP) { setStep(flow === 'demo' ? DEMO_PICK : 1); return; }
     if (!canAdvance()) return;
     if (step === QUIZ_END - 1) {
       // última pergunta respondida → tela de geração e gera
@@ -151,6 +164,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // desistir do ritual e voltar ao jogo.
   const back = () => {
     if (isUpgrade && step === 1) { onCancel?.(); return; }
+    if (step === GOAL_STEP) { setStep(0); return; }
+    if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
+    if (step === DEMO_PICK) { setStep(STRUGGLE_STEP); return; }
+    if (step === 1 && !isUpgrade) { setStep(STRUGGLE_STEP); return; }
     setStep(s => Math.max(isUpgrade ? 1 : 0, s - 1));
   };
 
@@ -208,6 +225,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         email: email.trim().toLowerCase(),
         demoCharacterId,
         initialActivities: [],
+        soulGoal: soulGoal.trim(),
+        soulStruggle: soulStruggle.trim(),
       });
     } else if (result) {
       await onComplete({
@@ -216,6 +235,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         email: email.trim().toLowerCase(),
         oracleResult: result,
         initialActivities: [],
+        soulGoal: soulGoal.trim(),
+        soulStruggle: soulStruggle.trim(),
       });
     }
     // Nota: o caminho feliz normalmente recarrega a página (troca de saveId
@@ -237,7 +258,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setUnlockLoading(false);
     if (result.ok) {
       setFlow('oracle');
-      setStep(1);
+      setStep(GOAL_STEP);
       return;
     }
     setUnlockMessage(
@@ -299,7 +320,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 usuário; quem gostar encontra a compra no app inteiro. */}
             <button
               className="sm-btn" style={{ width: '100%' }}
-              onClick={() => { setFlow('demo'); setStep(DEMO_PICK); }}
+              onClick={() => { setFlow('demo'); setStep(GOAL_STEP); }}
             >
               {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
             </button>
@@ -332,6 +353,51 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         )}
 
         {/* DEMO_PICK — escolha entre os 3 personagens pré-prontos (modo demo) */}
+        {(step === GOAL_STEP || step === STRUGGLE_STEP) && (
+          <div style={{ paddingTop: 28 }}>
+            <p style={{ fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--sm-primary)', fontWeight: 700, margin: '0 0 10px' }}>
+              {step === GOAL_STEP
+                ? (isPt ? 'Antes de tudo' : 'First things first')
+                : (isPt ? 'Mais uma' : 'One more')}
+            </p>
+            <h2 style={{ fontSize: 23, fontWeight: 800, margin: '0 0 10px', lineHeight: 1.25 }}>
+              {step === GOAL_STEP
+                ? (isPt ? 'O que você quer melhorar na sua vida?' : 'What do you want to improve in your life?')
+                : (isPt ? 'E o que mais te atrapalha hoje?' : 'And what gets in your way the most?')}
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--sm-muted)', lineHeight: 1.55, margin: '0 0 18px' }}>
+              {step === GOAL_STEP
+                ? (isPt
+                    ? 'Escreva do seu jeito. Seu Soulmon vai lembrar disso quando você precisar — e nada aqui vira nota ou cobrança.'
+                    : 'In your own words. Your Soulmon will remember it when you need it — none of this becomes a score.')
+                : (isPt
+                    ? 'Saber onde costuma travar ajuda seu Soulmon a te encontrar nos dias difíceis.'
+                    : 'Knowing where you tend to get stuck helps your Soulmon meet you on the hard days.')}
+            </p>
+            <textarea
+              rows={4}
+              autoFocus
+              style={{ ...input, resize: 'none', lineHeight: 1.5, fontFamily: 'inherit' }}
+              value={step === GOAL_STEP ? soulGoal : soulStruggle}
+              onChange={e => (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(e.target.value.slice(0, 280))}
+              placeholder={step === GOAL_STEP
+                ? (isPt ? 'Ex.: quero voltar a estudar sem me cobrar tanto' : 'e.g. get back to studying without beating myself up')
+                : (isPt ? 'Ex.: começo animado e largo na segunda semana' : 'e.g. I start strong and quit in week two')}
+            />
+            <button className="sm-btn" style={{ width: '100%', marginTop: 16 }} onClick={next}>
+              {isPt ? 'Continuar' : 'Continue'}
+            </button>
+            {/* Pular é de propósito: obrigar a escrever antes de ver o app é o
+                jeito mais rápido de perder alguém logo na primeira tela. */}
+            <button
+              className="sm-btn sm-btn-secondary" style={{ width: '100%', marginTop: 8 }}
+              onClick={() => { (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(''); next(); }}
+            >
+              {isPt ? 'Prefiro não responder agora' : 'I’d rather not say right now'}
+            </button>
+          </div>
+        )}
+
         {step === DEMO_PICK && (
           <div style={{ paddingTop: 20 }}>
             <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>

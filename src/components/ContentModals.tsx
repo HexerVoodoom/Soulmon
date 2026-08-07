@@ -27,6 +27,7 @@ interface ContentModalsProps {
   onCloseStats: () => void;
   completedTasks: CompletedTask[];
   activityStats: ActivityStats;
+  petPassive?: string;
   guideModalOpen: boolean;
   onCloseGuide: () => void;
   theme: 'default' | 'win98' | 'glitch';
@@ -38,6 +39,7 @@ export function ContentModals({
   onCloseStats,
   completedTasks,
   activityStats,
+  petPassive,
   guideModalOpen,
   onCloseGuide,
   theme,
@@ -53,6 +55,7 @@ export function ContentModals({
             onClose={onCloseStats}
             completedTasks={completedTasks}
             activityStats={activityStats}
+            petPassive={petPassive}
             theme={theme}
             language={language}
           />

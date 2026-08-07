@@ -55,10 +55,32 @@ describe('canSelectWeekdays', () => {
 describe('FORM_REQUIREMENTS consistency', () => {
   const order = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'] as const;
 
-  it('required increases monotonically across stages', () => {
+  // A carga DIÁRIA nunca diminui, mas achata no topo de propósito: o que deve
+  // crescer nos estágios finais é a consistência ao longo de semanas
+  // (daysToEvolve), não quantas tarefas cabem num dia. Exigência diária que
+  // sobe sem parar é o que faz o jogador desistir no terço final.
+  it('required nunca diminui de um estágio para o outro', () => {
     for (let i = 1; i < order.length; i++) {
-      expect(FORM_REQUIREMENTS[order[i]].required).toBeGreaterThan(
+      expect(FORM_REQUIREMENTS[order[i]].required).toBeGreaterThanOrEqual(
         FORM_REQUIREMENTS[order[i - 1]].required,
+      );
+    }
+  });
+
+  it('a carga diária achata no topo em vez de escalar indefinidamente', () => {
+    const primeiroPasso = FORM_REQUIREMENTS.champion.required - FORM_REQUIREMENTS.rookie.required;
+    const ultimoPasso = FORM_REQUIREMENTS.ultra.required - FORM_REQUIREMENTS.mega.required;
+    expect(ultimoPasso).toBeLessThan(primeiroPasso);
+    // Teto duro: nenhum estágio pode exigir mais que 6 tarefas por dia.
+    for (const level of order) {
+      expect(FORM_REQUIREMENTS[level].required).toBeLessThanOrEqual(6);
+    }
+  });
+
+  it('a consistência ao longo de semanas é o que escala no topo', () => {
+    for (let i = 1; i < order.length - 1; i++) {
+      expect(FORM_REQUIREMENTS[order[i]].daysToEvolve).toBeGreaterThan(
+        FORM_REQUIREMENTS[order[i - 1]].daysToEvolve,
       );
     }
   });

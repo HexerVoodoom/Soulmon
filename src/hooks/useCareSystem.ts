@@ -3,6 +3,7 @@ import { CareEvent, getCareMessage } from '../components/CareSystem';
 import { showNotification } from '../utils/notifications';
 import type { Language } from '../utils/i18n';
 import { getStageLevel } from '../types/progression';
+import { earliestPoopHour } from '../utils/passives';
 
 interface CareGameState {
   lastResetDate: string;
@@ -12,6 +13,8 @@ interface CareGameState {
   evolutionStage: string;
   maxHealthPoints: number;
   energyPoints: number;
+  /** Traço de nascimento — Madrugador atrasa o primeiro cocô (utils/passives.ts). */
+  petPassive?: string;
 }
 
 interface UseCareSystemProps {
@@ -45,15 +48,17 @@ export function useCareSystem({
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const startOfDay = today.getTime();
-      // First poop somewhere between 07:00 and 15:00 — leaves room for the
-      // second (8-10h later) to still land within the same day.
-      const firstPoopHour = 7 + Math.random() * 8;
+      // Primeiro cocô entre 07:00 e 15:00 — deixa espaço para o segundo (8-10h
+      // depois) ainda cair no mesmo dia. O traço Madrugador (utils/passives.ts)
+      // empurra o início para as 10h.
+      const earliest = earliestPoopHour(gameState.petPassive, 7);
+      const firstPoopHour = earliest + Math.random() * (15 - earliest);
       setGameState(prev => ({
         ...prev,
         poopEventsScheduled: [startOfDay + firstPoopHour * 3600000],
       }));
     }
-  }, [gameState.lastResetDate, gameState.poopEventsScheduled, gameState.evolutionStage]);
+  }, [gameState.lastResetDate, gameState.poopEventsScheduled, gameState.evolutionStage, gameState.petPassive]);
 
   // Check care events and trigger them
   useEffect(() => {

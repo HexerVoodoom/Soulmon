@@ -7,6 +7,7 @@ import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
+import { rollPetPassive } from '../utils/passives';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -176,7 +177,31 @@ export interface GameState {
     energyWasFull?: boolean;
     perfectDays: number;
     degenerated: boolean;
+    /** Voltou depois de ≥ABSENCE_FORGIVENESS_DAYS fora: relatório em modo acolhida. */
+    welcomeBack?: boolean;
+    daysAway?: number;
+    /** Virada de segunda: ganhou o meio coração do alívio semanal. */
+    weeklyRelief?: boolean;
   };
+  /**
+   * O "porquê" do usuário, respondido no onboarding ANTES de qualquer mecânica
+   * de jogo (Goal-Setting Theory + autonomia da SDT: a razão para mudar precisa
+   * vir da pessoa, não do app). O pet devolve isso em momentos-chave, que é o
+   * que separa "app que mede" de "avatar que acompanha".
+   */
+  soulGoal?: string;
+  soulStruggle?: string;
+  /**
+   * Check-in de humor, opcional e curto. Só o histórico recente é guardado —
+   * é registro de acompanhamento, NUNCA insumo de pontuação ou de penalidade.
+   */
+  moodLog?: Array<{ date: string; mood: 1 | 2 | 3 | 4 | 5 }>;
+  /**
+   * Traço único sorteado no nascimento do pet (utils/passives.ts). É o que
+   * transforma "meu bichinho" em *o meu* bichinho — dois Soulmon do mesmo
+   * estágio se comportam de um jeito ligeiramente diferente.
+   */
+  petPassive?: string;
   /** Monetização (utils/monetization.ts) — 'demo': personagem pré-pronto,
    *  1 atividade nova/dia; 'paid': jogo completo (compra única). Saves
    *  antigos (antes desse campo existir) são adotados como 'paid'. */
@@ -247,6 +272,11 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         equippedBackground: loadedState.equippedBackground ?? null,
         ownedFurniture: loadedState.ownedFurniture ?? [],
         equippedDecor: migrateDecor(loadedState),
+        // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
+        soulGoal: loadedState.soulGoal ?? '',
+        soulStruggle: loadedState.soulStruggle ?? '',
+        moodLog: loadedState.moodLog ?? [],
+        petPassive: loadedState.petPassive ?? rollPetPassive(),
         // Campo antigo some do save no próximo gravar (JSON.stringify descarta
         // undefined). Sem isto ele sobreviveria para sempre e voltaria a
         // reequipar o item toda vez que o jogador desequipasse tudo.
@@ -298,6 +328,10 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       equippedBackground: null,
       ownedFurniture: [],
       equippedDecor: {},
+      soulGoal: '',
+      soulStruggle: '',
+      moodLog: [],
+      petPassive: rollPetPassive(),
       // Fresh installs start in demo — the onboarding gate (SoulmonOnboarding)
       // upgrades this to 'paid' once the (currently placeholder) one-time
       // purchase completes.

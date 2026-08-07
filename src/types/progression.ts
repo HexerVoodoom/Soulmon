@@ -2,12 +2,21 @@
 // ovo/baby (o oráculo do onboarding já É o ritual de nascimento — o pet
 // nasce direto Rookie). Cada linha de evolução é ÚNICA por jogador (gerada
 // pelo oráculo, ver utils/oracle.ts); o que é fixo aqui é só o NÍVEL.
+// `required` = tarefas por dia (e barras de energia). `daysToEvolve` = dias
+// perfeitos acumulados até a próxima forma.
+//
+// A escada diária ACHATA no topo de propósito. Antes ela subia 4→5→6→7→8, e a
+// exigência diária crescia sem parar junto com a vida do jogador — foi o que fez
+// a maioria dos donos de Vital Bracelet parar nos estágios médios: o custo real
+// ultrapassa a vontade justamente no terço final. No topo, o que deve escalar é
+// a CONSISTÊNCIA ao longo de semanas (`daysToEvolve`), que é o único recurso que
+// não cresce indefinidamente, e não quantas tarefas cabem num dia.
 export const FORM_REQUIREMENTS = {
   rookie: { required: 4, cap: 6, daysToEvolve: 10 },
   champion: { required: 5, cap: 7, daysToEvolve: 20 },
-  ultimate: { required: 6, cap: 8, daysToEvolve: 30 },
-  mega: { required: 7, cap: 9, daysToEvolve: 30 },
-  ultra: { required: 8, cap: 10, daysToEvolve: 999 },
+  ultimate: { required: 5, cap: 8, daysToEvolve: 30 },
+  mega: { required: 6, cap: 9, daysToEvolve: 40 },
+  ultra: { required: 6, cap: 10, daysToEvolve: 999 },
 } as const;
 
 // HP máximo por nível (corações)

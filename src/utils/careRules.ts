@@ -2,6 +2,7 @@ import type { ActivityCategory } from '../types/attributes';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { getMaxEnergyForStage } from '../types/progression';
+import { GULOSO_BONUS_ATTR, hasPassive, rubDailyCap } from './passives';
 
 // Regras de cuidado como funções PURAS.
 //
@@ -28,6 +29,10 @@ export interface CareState {
   vaccinePoints: number;
   totalXP: number;
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  /** Traço de nascimento (utils/passives.ts). Fica no ESTADO, e não num
+   *  parâmetro novo, para o app de desktop herdar o efeito sem uma segunda
+   *  implementação — é o mesmo motivo pelo qual este arquivo existe. */
+  petPassive?: string;
 }
 
 /** Máximo de comidas por hora (janela deslizante). */
@@ -77,9 +82,19 @@ export function feedFood<T extends CareState>(
   if (foodInventory[foodEmoji] === 0) delete foodInventory[foodEmoji];
 
   const foodDef = Object.values(FOOD_BY_CATEGORY).find(f => f.emoji === foodEmoji);
-  const attrs = foodDef
+  const base = foodDef
     ? CATEGORY_ATTRIBUTES[foodDef.category]
     : { virus: 0, data: 0, vaccine: 0 };
+
+  // Guloso: cada refeição rende um ponto a mais, no atributo que a comida já
+  // favorece (empate vai pro dado, que é o meio-termo da árvore).
+  const attrs = { ...base };
+  if (hasPassive(state.petPassive, 'guloso') && foodDef) {
+    const top = Math.max(base.virus, base.data, base.vaccine);
+    if (base.virus === top) attrs.virus += GULOSO_BONUS_ATTR;
+    else if (base.data === top) attrs.data += GULOSO_BONUS_ATTR;
+    else attrs.vaccine += GULOSO_BONUS_ATTR;
+  }
 
   return {
     feedTimes: [...recent, now],
@@ -121,9 +136,11 @@ export function rubRefusal(
   maxHealthPoints: number,
   record: RubHealRecord | null,
   todayKey: string,
+  petPassive?: string,
 ): RubRefusal | undefined {
   if (healthPoints >= maxHealthPoints) return 'already-full';
-  if (rubHealRecordFor(record, todayKey).healed >= RUB_HEAL_DAILY_CAP) return 'daily-cap';
+  const cap = rubDailyCap(petPassive, RUB_HEAL_DAILY_CAP);
+  if (rubHealRecordFor(record, todayKey).healed >= cap) return 'daily-cap';
   return undefined;
 }
 
@@ -138,7 +155,7 @@ export function rubHeal<T extends CareState>(
   todayKey: string,
 ): { state: T; record: RubHealRecord; refused?: RubRefusal } {
   const today = rubHealRecordFor(record, todayKey);
-  const refused = rubRefusal(state.healthPoints, state.maxHealthPoints, today, todayKey);
+  const refused = rubRefusal(state.healthPoints, state.maxHealthPoints, today, todayKey, state.petPassive);
   if (refused) return { state, record: today, refused };
   return {
     record: { date: todayKey, healed: today.healed + RUB_HEAL_STEP },

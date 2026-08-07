@@ -1,4 +1,4 @@
-import { X, ListChecks, Heart, Star, Sun, CloudRain, HeartCrack } from 'lucide-react';
+import { X, ListChecks, Heart, Star, Sun, CloudRain, HeartCrack, HeartHandshake } from 'lucide-react';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
 
@@ -7,6 +7,9 @@ interface DailyReportModalProps {
   onClose: () => void;
   language: Language;
   theme?: 'default' | 'win98' | 'glitch';
+  /** O "porquê" que o usuário escreveu no onboarding. O pet devolve isso em
+   *  momentos-chave — é o que separa "app que mede" de "avatar que acompanha". */
+  soulGoal?: string;
 }
 
 /**
@@ -14,50 +17,100 @@ interface DailyReportModalProps {
  * Layout uses INLINE styles — several Tailwind utilities (px-5, py-4, max-w-xs)
  * don't exist in the precompiled index.css (see CLAUDE.md footgun #1).
  */
-export function DailyReportModal({ report, onClose, language, theme = 'default' }: DailyReportModalProps) {
+export function DailyReportModal({ report, onClose, language, theme = 'default', soulGoal }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
+  // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
+  // relatório vira "que bom que você voltou", e os números de falha somem — o
+  // retorno depois de uma ausência tem que ser um abraço, não uma fatura.
+  const welcome = !!report.welcomeBack;
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
   const mono = { fontFamily: 'monospace' as const };
 
-  const rows: { Icon: typeof Heart; label: string; value: string; highlight?: 'good' | 'bad' }[] = [
-    {
-      Icon: ListChecks,
-      label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
-      value: `${report.done}/${report.total}`,
-      highlight: report.wasPerfect ? 'good' : undefined,
-    },
-    {
-      Icon: Heart,
-      label: isPt ? 'Corações perdidos' : 'Hearts lost',
-      value: report.heartsLost > 0 ? `-${report.heartsLost} ❤️` : (isPt ? 'nenhum!' : 'none!'),
-      highlight: report.heartsLost > 0 ? 'bad' : 'good',
-    },
-    {
-      Icon: Star,
-      label: isPt ? 'Dias perfeitos' : 'Perfect days',
-      value: `${report.perfectDays}`,
-      highlight: report.wasPerfect ? 'good' : undefined,
-    },
-  ];
+  const rows: { Icon: typeof Heart; label: string; value: string; highlight?: 'good' | 'bad' }[] = welcome
+    ? [
+        {
+          Icon: Heart,
+          label: isPt ? 'Corações' : 'Hearts',
+          value: isPt ? 'intactos' : 'untouched',
+          highlight: 'good',
+        },
+        {
+          Icon: Star,
+          label: isPt ? 'Dias perfeitos guardados' : 'Perfect days saved',
+          value: `${report.perfectDays}`,
+          highlight: 'good',
+        },
+      ]
+    : [
+        {
+          Icon: ListChecks,
+          label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
+          value: `${report.done}/${report.total}`,
+          highlight: report.wasPerfect ? 'good' : undefined,
+        },
+        {
+          Icon: Heart,
+          label: isPt ? 'Corações' : 'Hearts',
+          value: report.heartsLost > 0 ? `-${report.heartsLost} ❤️` : (isPt ? 'inteiros!' : 'all there!'),
+          highlight: report.heartsLost > 0 ? 'bad' : 'good',
+        },
+        {
+          Icon: Star,
+          label: isPt ? 'Dias perfeitos' : 'Perfect days',
+          value: `${report.perfectDays}`,
+          highlight: report.wasPerfect ? 'good' : undefined,
+        },
+      ];
 
-  const HeadIcon = report.degenerated ? HeartCrack : report.wasPerfect ? Star : report.heartsLost > 0 ? CloudRain : Sun;
-  const headColor = report.degenerated ? '#e0483e' : report.wasPerfect ? '#d9a441' : report.heartsLost > 0 ? '#6b7280' : '#f0a500';
-  const headBg = report.degenerated ? '#fde8e6' : report.wasPerfect ? '#fbf1dd' : report.heartsLost > 0 ? '#eef0f3' : '#fff4e0';
+  const HeadIcon = welcome ? HeartHandshake : report.degenerated ? HeartCrack : report.wasPerfect ? Star : report.heartsLost > 0 ? CloudRain : Sun;
+  const headColor = welcome ? '#22A900' : report.degenerated ? '#e0483e' : report.wasPerfect ? '#d9a441' : report.heartsLost > 0 ? '#6b7280' : '#f0a500';
+  const headBg = welcome ? '#e6f6e2' : report.degenerated ? '#fde8e6' : report.wasPerfect ? '#fbf1dd' : report.heartsLost > 0 ? '#eef0f3' : '#fff4e0';
 
-  const headline = report.degenerated
-    ? (isPt ? 'Seu Soulmon regrediu...' : 'Your Soulmon degenerated...')
-    : report.wasPerfect
-      ? (isPt ? 'Dia perfeito!' : 'Perfect day!')
-      : report.heartsLost > 0
-        ? (isPt ? 'Dia difícil...' : 'Rough day...')
-        : (isPt ? 'Novo dia!' : 'New day!');
+  const headline = welcome
+    ? (isPt ? 'Que saudade!' : 'I missed you!')
+    : report.degenerated
+      ? (isPt ? 'Seu Soulmon regrediu...' : 'Your Soulmon degenerated...')
+      : report.wasPerfect
+        ? (isPt ? 'Dia perfeito!' : 'Perfect day!')
+        : report.heartsLost > 0
+          ? (isPt ? 'Um dia mais devagar' : 'A slower day')
+          : (isPt ? 'Novo dia!' : 'New day!');
+
+  // Frases de rodapé. Nenhuma delas cobra — a mais "dura" apenas conta o que
+  // aconteceu e oferece o caminho de volta.
+  const notes: string[] = [];
+  if (welcome) {
+    notes.push(isPt
+      ? `Você ficou ${report.daysAway} dias fora e seu Soulmon não perdeu nada esperando. Ele só estava com saudade. Comece de onde parou.`
+      : `You were away ${report.daysAway} days and your Soulmon lost nothing waiting. It just missed you. Pick up where you left off.`);
+  }
+  if (report.weeklyRelief) {
+    notes.push(isPt
+      ? 'Semana nova: seu Soulmon recuperou meio coração. O que passou, passou.'
+      : 'New week: your Soulmon recovered half a heart. Last week stays behind.');
+  }
+  if (!welcome && report.done >= report.required && report.energyWasFull === false) {
+    notes.push(isPt
+      ? 'Tarefas em dia! Faltou só encher a energia antes do fim do dia para o dia perfeito.'
+      : 'Tasks done! Only the energy bar was short of full for a perfect day.');
+  }
+  if (!welcome && report.heartsLost > 0 && !report.degenerated) {
+    notes.push(isPt
+      ? 'Faça carinho nele para recuperar meio coração — e nunca se perde mais que um por dia.'
+      : 'Rub your pet to restore half a heart — and you never lose more than one a day.');
+  }
+  if (soulGoal && (report.wasPerfect || welcome)) {
+    notes.push(isPt
+      ? `Lembra por que você começou: "${soulGoal}".`
+      : `Remember why you started: "${soulGoal}".`);
+  }
 
   if (isWin98 || isGlitch) {
     const palette = isGlitch
       ? { bg: '#0a0a0a', border: '2px solid #00ffff', text: '#00ffff', sub: '#5fbcbc', headBg: '#0a0a0a' }
       : { bg: '#c0c0c0', border: '2px solid #000080', text: '#000000', sub: '#444444', headBg: '#000080' };
-    const emojiHeadline = report.degenerated ? `💔 ${headline}` : report.wasPerfect ? `⭐ ${headline}` : report.heartsLost > 0 ? `😟 ${headline}` : `☀️ ${headline}`;
+    const emojiHeadline = welcome ? `🫂 ${headline}` : report.degenerated ? `💔 ${headline}` : report.wasPerfect ? `⭐ ${headline}` : report.heartsLost > 0 ? `😟 ${headline}` : `☀️ ${headline}`;
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
         <div style={{ width: '100%', maxWidth: 320, background: palette.bg, border: palette.border, borderRadius: 0, boxShadow: '0 12px 32px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
@@ -77,18 +130,9 @@ export function DailyReportModal({ report, onClose, language, theme = 'default' 
                 </span>
               </div>
             ))}
-            {report.done >= report.required && report.energyWasFull === false && (
-              <p style={{ ...mono, fontSize: '0.7rem', color: palette.sub, paddingTop: 6 }}>
-                {isPt
-                  ? 'Tarefas ok, mas a energia não estava cheia — alimente até encher antes do fim do dia para o dia perfeito!'
-                  : 'Tasks done, but energy was not full — feed to full before the day ends for a perfect day!'}
-              </p>
-            )}
-            {report.heartsLost > 0 && !report.degenerated && (
-              <p style={{ ...mono, fontSize: '0.7rem', color: palette.sub, paddingTop: 6 }}>
-                {isPt ? 'Dica: faça carinho (esfregue o pet) para recuperar meio coração.' : 'Tip: rub your pet to restore half a heart.'}
-              </p>
-            )}
+            {notes.map((n, i) => (
+              <p key={i} style={{ ...mono, fontSize: '0.7rem', color: palette.sub, paddingTop: 6 }}>{n}</p>
+            ))}
           </div>
           <div style={{ padding: '14px 20px 18px' }}>
             <button onClick={onClose}
@@ -135,18 +179,9 @@ export function DailyReportModal({ report, onClose, language, theme = 'default' 
               </span>
             </div>
           ))}
-          {report.done >= report.required && report.energyWasFull === false && (
-            <p style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', paddingTop: 8, lineHeight: 1.4 }}>
-              {isPt
-                ? 'Tarefas ok, mas a energia não estava cheia — alimente até encher antes do fim do dia para o dia perfeito!'
-                : 'Tasks done, but energy was not full — feed to full before the day ends for a perfect day!'}
-            </p>
-          )}
-          {report.heartsLost > 0 && !report.degenerated && (
-            <p style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', paddingTop: 8, lineHeight: 1.4 }}>
-              {isPt ? 'Dica: faça carinho (esfregue o pet) para recuperar meio coração.' : 'Tip: rub your pet to restore half a heart.'}
-            </p>
-          )}
+          {notes.map((n, i) => (
+            <p key={i} style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', paddingTop: 8, lineHeight: 1.4 }}>{n}</p>
+          ))}
         </div>
 
         {/* OK */}

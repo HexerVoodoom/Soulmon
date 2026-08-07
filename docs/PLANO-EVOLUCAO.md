@@ -139,31 +139,31 @@ Store.
 
 ---
 
-## Fase 2 — O avatar que encoraja
+## Fase 2 — O avatar que encoraja ◐ PARCIAL
 
 O núcleo da essência. Nada aqui é mecânica de jogo: é **tom e escuta**.
 
 | # | O quê | Onde | Por quê |
 |---|---|---|---|
-| 2.1 | **Onboarding pergunta o "porquê"** — duas perguntas abertas ("o que você quer melhorar?", "o que mais te atrapalha?") antes do ritual do oráculo | `SoulmonOnboarding`, `GameState` | Ponto de maior consenso entre pesquisa de mercado (Habitica, Finch) e psicologia (Goal-Setting Theory + autonomia da SDT). A razão pra mudar tem que vir da pessoa |
-| 2.2 | **O pet lembra do que a pessoa disse** — a resposta do onboarding volta em pontos de decisão (relatório diário, página de evolução) | `DailyReportModal`, `EvolutionPage` | É o que transforma "app que mede" em "avatar que acompanha" |
-| 2.3 | **Tom sem culpa no relatório diário** — revisar toda redação que possa soar como acusação; modo boas-vindas já existe no dado (`welcomeBack`), falta a UI | `DailyReportModal` | O elogio mais repetido ao Finch não é "é bonito", é "não me faz sentir culpado" |
+| 2.1 ✅ | **Onboarding pergunta o "porquê"** — duas perguntas abertas ("o que você quer melhorar?", "o que mais te atrapalha?") antes do ritual do oráculo | `SoulmonOnboarding`, `GameState` | Ponto de maior consenso entre pesquisa de mercado (Habitica, Finch) e psicologia (Goal-Setting Theory + autonomia da SDT). A razão pra mudar tem que vir da pessoa |
+| 2.2 ✅ | **O pet lembra do que a pessoa disse** — a resposta do onboarding volta em pontos de decisão (relatório diário, página de evolução) | `DailyReportModal`, `EvolutionPage` | É o que transforma "app que mede" em "avatar que acompanha" |
+| 2.3 ✅ | **Tom sem culpa no relatório diário** — revisar toda redação que possa soar como acusação; modo boas-vindas já existe no dado (`welcomeBack`), falta a UI | `DailyReportModal` | O elogio mais repetido ao Finch não é "é bonito", é "não me faz sentir culpado" |
 | 2.4 | **Check-in de humor** curto e opcional (3–5 carinhas) | novo, junto do carinho | Elemento de menor custo e maior retorno emocional de toda a pesquisa |
 | 2.5 | **Marcação retroativa** — marcar a tarefa de ontem até X horas depois da virada recupera o HP, mas **não** o dia perfeito | `careRules.ts` + UI | Retro-tracking do Pokémon Sleep: recupera o dano, não a glória |
 | 2.6 | **Sugestão de tarefa mínima** no cadastro — se o usuário digitar algo grande, sugerir gentilmente a versão de 2 minutos | `taskSuggestions.ts` | Fogg: Habilidade é o gargalo, não Motivação |
 
 ---
 
-## Fase 3 — Profundidade de jogo
+## Fase 3 — Profundidade de jogo ◐ PARCIAL
 
 Onde o V-Pet de 97 e o Vital Bracelet têm mais a ensinar.
 
 | # | O quê | Por quê |
 |---|---|---|
-| 3.1 | **Segundo eixo: categoria da tarefa → galho de evolução.** Hoje o branch vem da comida, que vem das tarefas — é volume disfarçado de direção | Vital Bracelet separa Vital Values (quanto) de PP/HP/AP/BP (o quê). *Se só existir "mais", o único gameplay possível é grind* |
+| 3.1 ✅ | **JÁ EXISTIA.** A verificação no código mostrou que a categoria da tarefa já dirige o galho: tarefa concluída → comida da MESMA categoria (`FOOD_BY_CATEGORY`) → atributos daquela categoria (`CATEGORY_ATTRIBUTES`) → branch, e o `BranchForecast` já mostra a projeção. Somar atributos de novo na conclusão da tarefa só inflacionaria. A crítica da pesquisa partia de leitura incompleta | Vital Bracelet separa Vital Values (quanto) de PP/HP/AP/BP (o quê). *Se só existir "mais", o único gameplay possível é grind* |
 | 3.2 | **Padrão de cuidado como seletor** — regularidade vs. rajada produzem linhagens diferentes, **nenhuma melhor que a outra** | V-Pet 97: 0 care mistakes → Agumon; 3 → Betamon. Não é castigo, é um retrato de como você cuidou |
-| 3.3 | **Passiva única sorteada no nascimento** ("Guloso: comida dá +1 atributo", "Madrugador: cocô nunca antes das 10h") | Melhor retorno por esforço das duas pesquisas — um campo novo no `GameState` transforma "meu bichinho" em *o meu* bichinho |
-| 3.4 | **Achatar a escada no topo** — hoje cada estágio pede mais tarefas/dia, indefinidamente. No topo o eixo deveria virar **consistência ao longo de semanas** | É o erro que fez a maioria dos donos de Vital Bracelet parar nos estágios médios |
+| 3.3 ✅ | **Passiva única sorteada no nascimento** ("Guloso: comida dá +1 atributo", "Madrugador: cocô nunca antes das 10h") | Melhor retorno por esforço das duas pesquisas — um campo novo no `GameState` transforma "meu bichinho" em *o meu* bichinho |
+| 3.4 ✅ | **Achatar a escada no topo** — hoje cada estágio pede mais tarefas/dia, indefinidamente. No topo o eixo deveria virar **consistência ao longo de semanas** | É o erro que fez a maioria dos donos de Vital Bracelet parar nos estágios médios |
 | 3.5 | **Vitrine de coleção / dex de estados** — registro do que aquele pet já viveu, sem valor competitivo | Sleep Style Dex: colecionar a *variação*, não a nota. Antídoto contra ansiedade de performance |
 
 ---

@@ -45,6 +45,7 @@ import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigiv
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
+import { heartDropBonus, rollPetPassive } from './utils/passives';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
 import {
@@ -1120,13 +1121,14 @@ export default function App() {
   // Heart item can drop in the dungeon (capped per day). Adds it to the Items
   // folder and returns whether one dropped. The dungeon no longer drops food.
   const handleDungeonHeartDrop = useCallback((): boolean => {
-    if (!rollDungeonHeartDrop()) return false;
+    // Sortudo (utils/passives.ts) acha coraçãozinho com mais frequência.
+    if (!rollDungeonHeartDrop(heartDropBonus(gameState.petPassive))) return false;
     setGameState(prev => ({
       ...prev,
       foodInventory: { ...prev.foodInventory, [HEART_ITEM_EMOJI]: (prev.foodInventory[HEART_ITEM_EMOJI] ?? 0) + 1 },
     }));
     return true;
-  }, []);
+  }, [gameState.petPassive]);
 
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
@@ -1594,6 +1596,9 @@ export default function App() {
         soulmonMeta: premade ? { baseName: premade.name } : undefined,
         accountTier: 'demo',
         demoCharacterId: data.demoCharacterId,
+        soulGoal: data.soulGoal,
+        soulStruggle: data.soulStruggle,
+        petPassive: rollPetPassive(),
       }));
       return;
     }
@@ -1627,6 +1632,9 @@ export default function App() {
       },
       accountTier: 'paid',
       demoCharacterId: undefined,
+      soulGoal: data.soulGoal,
+      soulStruggle: data.soulStruggle,
+      petPassive: rollPetPassive(),
     }));
   };
 
@@ -2343,6 +2351,7 @@ export default function App() {
 
       <ContentModals
         statsModalOpen={statsModalOpen}
+        petPassive={gameState.petPassive}
         onCloseStats={() => setStatsModalOpen(false)}
         completedTasks={gameState.completedTasks}
         activityStats={gameState.activityStats}
@@ -2400,6 +2409,7 @@ export default function App() {
           onClose={handleCloseDailyReport}
           language={language}
           theme={theme}
+          soulGoal={gameState.soulGoal}
         />
       )}
       {!showDailyReport && (

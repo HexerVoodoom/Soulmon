@@ -17,7 +17,7 @@ const MAX_HP_BY_LEVEL: Record<string, number> = {
 };
 /** Espelha FORM_REQUIREMENTS[].required — barras de energia = tarefas exigidas. */
 const ENERGY_BY_LEVEL: Record<string, number> = {
-  rookie: 4, champion: 5, ultimate: 6, mega: 7, ultra: 8,
+  rookie: 4, champion: 5, ultimate: 5, mega: 6, ultra: 6,
 };
 
 /**
