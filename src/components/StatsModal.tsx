@@ -1,7 +1,6 @@
 import { X } from 'lucide-react';
 import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
-import { getPassive } from '../utils/passives';
 
 interface CompletedTask {
   id: string;
@@ -27,8 +26,6 @@ interface StatsModalProps {
   activityStats: ActivityStats;
   theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
-  /** Traço de nascimento do pet (utils/passives.ts). */
-  petPassive?: string;
 }
 
 export function StatsModal({
@@ -38,14 +35,10 @@ export function StatsModal({
   activityStats,
   theme = 'default',
   language = 'en-US',
-  petPassive,
 }: StatsModalProps) {
   if (!isOpen) return null;
 
   const t = useTranslation(language);
-
-  const passive = getPassive(petPassive);
-  const isPt = language === 'pt-BR';
 
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
@@ -127,32 +120,6 @@ export function StatsModal({
 
         {/* Content - Scrollable */}
         <div className="p-6 space-y-6 overflow-y-auto flex-1">
-          {/* Traço de nascimento — o que faz este Soulmon ser ESTE Soulmon.
-              Fica no topo porque é identidade, não estatística. */}
-          {passive && (
-            <div style={{
-              display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 12,
-              background: isGlitch ? 'rgba(0,255,255,0.08)' : isWin98 ? '#c0c0c0' : 'var(--sm-bg)',
-              border: isWin98 ? '2px inset #ffffff' : 'none',
-            }}>
-              <span style={{ fontSize: 26, lineHeight: 1 }}>{passive.emoji}</span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{
-                  margin: 0, fontWeight: 800, fontSize: '0.9rem',
-                  color: isGlitch ? '#00ffff' : isWin98 ? '#000000' : 'var(--sm-ink)',
-                }}>
-                  {isPt ? passive.namePt : passive.nameEn}
-                </p>
-                <p style={{
-                  margin: '2px 0 0', fontSize: '0.76rem', lineHeight: 1.45,
-                  color: isGlitch ? '#5fbcbc' : isWin98 ? '#444444' : 'var(--sm-muted)',
-                }}>
-                  {isPt ? passive.descPt : passive.descEn}
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Activity Completions */}
           <div>
             <h3

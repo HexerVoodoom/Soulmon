@@ -5,6 +5,7 @@ import { getStageLevel } from '../types/progression';
 import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import tournamentBg from '../assets/soulmon/bg/tournament.png';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
+import { getTierStanding } from '../utils/tournamentTiers';
 
 interface TournamentPageProps {
   saveId: string;
@@ -28,6 +29,9 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   const [rank, setRank] = useState<RankRow[] | null>(null);
   const [fighting, setFighting] = useState<string | null>(null);
   const [result, setResult] = useState<MatchResult | null>(null);
+  // Pontos do próprio jogador, lidos da linha dele no ranking.
+  const myPoints = rank?.find(r => r.id === saveId)?.points ?? 0;
+  const standing = rank === null ? null : getTierStanding(myPoints);
   const [tab, setTab] = useState<'arena' | 'rank'>('arena');
 
   const loadOpponents = () => {
@@ -158,6 +162,43 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
         {tab === 'rank' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {rank === null && <Loader2 className="animate-spin" size={24} style={{ margin: '20px auto', display: 'block' }} />}
+
+            {/* A FAIXA vem primeiro e o ranking global depois, de propósito: a
+                posição absoluta é a leitura que a pesquisa associa a comparação
+                tóxica, e a faixa mede o jogador contra ele mesmo — ela sobe com
+                o que ele acumula e nunca desce porque outra pessoa jogou mais. */}
+            {standing && (
+              <div className="sm-card" style={{ background: 'rgba(20,15,40,0.6)', border: '1px solid rgba(255,255,255,0.14)', padding: '14px 16px', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 30, lineHeight: 1 }}>{standing.tier.emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 11, letterSpacing: 1, color: 'rgba(255,255,255,0.55)', fontWeight: 700 }}>
+                      {isPt ? 'SUA FAIXA' : 'YOUR TIER'}
+                    </p>
+                    <p style={{ margin: '1px 0 0', fontSize: 17, fontWeight: 800 }}>
+                      {isPt ? standing.tier.namePt : standing.tier.nameEn}
+                    </p>
+                  </div>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>{myPoints} pts</span>
+                </div>
+                <div style={{ height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.12)', marginTop: 10, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${Math.round(standing.progress * 100)}%`, background: '#a78bfa', borderRadius: 999 }} />
+                </div>
+                <p style={{ margin: '7px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.45 }}>
+                  {standing.next
+                    ? (isPt
+                        ? `Faltam ${standing.pointsToNext} pts para ${standing.next.namePt}. Sua faixa só sobe — ninguém te tira dela.`
+                        : `${standing.pointsToNext} pts to ${standing.next.nameEn}. Your tier only climbs — nobody can knock you down.`)
+                    : (isPt ? 'Faixa máxima. Daqui é só jogar por gosto.' : 'Top tier. From here it’s just for the love of it.')}
+                </p>
+              </div>
+            )}
+
+            {rank && rank.length > 0 && (
+              <p style={{ fontSize: 11, letterSpacing: 1, color: 'rgba(255,255,255,0.45)', fontWeight: 700, margin: '8px 0 2px' }}>
+                {isPt ? 'RANKING DA SEASON' : 'SEASON RANKING'}
+              </p>
+            )}
             {rank?.map((r, i) => (
               <div key={r.id} className="sm-card" style={{ background: 'rgba(20,15,40,0.6)', border: '1px solid rgba(255,255,255,0.1)', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ width: 22, textAlign: 'center', fontWeight: 800, color: i < 3 ? PLACE_COLOR[(i + 1) as 1 | 2 | 3] : 'rgba(255,255,255,0.5)' }}>{i + 1}</span>

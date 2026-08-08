@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
 import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
@@ -46,6 +46,8 @@ import { requestNotificationPermission, showNotification } from './utils/notific
 import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { heartDropBonus, rollPetPassive } from './utils/passives';
+import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
+import { computeCarePattern, resolveBranch } from './utils/carePattern';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
 import {
@@ -105,6 +107,13 @@ export default function App() {
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
+  // Leitura do ritmo de cuidado (utils/carePattern.ts): alimenta a vitrine em
+  // Estatísticas e desempata o galho na evolução. useMemo porque percorre o
+  // histórico e o CompanionHUD é memo().
+  const carePatternReading = useMemo(
+    () => computeCarePattern(gameState.completedTasks),
+    [gameState.completedTasks],
+  );
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
   const [shopOpen, setShopOpen] = useState(false);
@@ -858,17 +867,17 @@ export default function App() {
       let newHP = prev.healthPoints;
       let newSegmentsNeeded = prev.digivolutionSegmentsNeeded;
 
-      // Determine evolution based on current stage and dominant attribute
-      const dominantAttr = Math.max(prev.virusPoints, prev.dataPoints, prev.vaccinePoints);
-      const isVirus = prev.virusPoints === dominantAttr && prev.virusPoints > 0;
-      const isData = prev.dataPoints === dominantAttr && prev.dataPoints > 0;
-      const isVaccine = prev.vaccinePoints === dominantAttr && prev.vaccinePoints > 0;
-
-      // Determine new branch for state persistence
-      let newCurrentBranch: 'virus' | 'data' | 'vaccine' = prev.currentBranch;
-      if (isVirus) newCurrentBranch = 'virus';
-      else if (isVaccine) newCurrentBranch = 'vaccine';
-      else if (isData) newCurrentBranch = 'data';
+      // O galho vem dos atributos (que vêm da comida, e portanto da CATEGORIA
+      // das tarefas). No EMPATE, quem decide é o padrão de cuidado do jogador —
+      // antes isso era resolvido por uma ordem fixa no código (vírus, vacina,
+      // dado), sem significado nenhum. É a ideia dos care mistakes do v-pet de
+      // 97: o jeito como você cuidou define quem seu bicho vira, e nenhum jeito
+      // é melhor que o outro. Ver utils/carePattern.ts.
+      const newCurrentBranch = resolveBranch(
+        { virus: prev.virusPoints, data: prev.dataPoints, vaccine: prev.vaccinePoints },
+        computeCarePattern(prev.completedTasks),
+        prev.currentBranch,
+      );
 
       newEvolutionStage = getNextEvolution(
         prev.evolutionStage,
@@ -1406,6 +1415,17 @@ export default function App() {
         lastDayReport: { ...report, heartsRecovered: true },
       };
     });
+  }, []);
+
+  /**
+   * Check-in de humor. É opcional, e o dado NUNCA entra em pontuação — nem em
+   * dia perfeito, nem em HP, nem em evolução (há teste travando isso em
+   * utils/mood.test.ts). Se virasse insumo de score, a pessoa passaria a
+   * responder o que rende mais ponto em vez do que sente.
+   */
+  const handlePickMood = useCallback((mood: MoodValue) => {
+    const today = new Date().toDateString();
+    setGameState(prev => ({ ...prev, moodLog: recordMood(prev.moodLog, today, mood) }));
   }, []);
 
   const handleCloseDailyReport = useCallback(() => {
@@ -2145,6 +2165,18 @@ export default function App() {
               virusPoints={gameState.virusPoints}
               dataPoints={gameState.dataPoints}
               vaccinePoints={gameState.vaccinePoints}
+              petPassive={gameState.petPassive}
+              carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              journey={{
+                unlockedEvolutions: gameState.unlockedEvolutions,
+                soulmonStages: gameState.soulmonStages,
+                totalPerfectDays: gameState.totalPerfectDays,
+                dungeonKills: gameState.dungeonKills,
+                dungeonRunsCompleted: gameState.dungeonRunsCompleted,
+                dinoBest: gameState.dinoBest,
+                droppedItems: gameState.droppedItems,
+                soulGoal: gameState.soulGoal,
+              }}
             /></Suspense>
           )}
 
@@ -2372,7 +2404,6 @@ export default function App() {
 
       <ContentModals
         statsModalOpen={statsModalOpen}
-        petPassive={gameState.petPassive}
         onCloseStats={() => setStatsModalOpen(false)}
         completedTasks={gameState.completedTasks}
         activityStats={gameState.activityStats}
@@ -2429,6 +2460,9 @@ export default function App() {
           report={gameState.lastDayReport}
           onClose={handleCloseDailyReport}
           onRecoverHearts={handleRecoverHearts}
+          moodToday={moodFor(gameState.moodLog, new Date().toDateString())}
+          onPickMood={handlePickMood}
+          moodNote={moodSummary(gameState.moodLog, language === 'pt-BR' ? 'pt-BR' : 'en-US')}
           language={language}
           theme={theme}
           soulGoal={gameState.soulGoal}

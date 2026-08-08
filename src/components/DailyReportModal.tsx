@@ -1,4 +1,5 @@
 import { X, ListChecks, Heart, Star, Sun, CloudRain, HeartCrack, HeartHandshake } from 'lucide-react';
+import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
 
@@ -12,6 +13,10 @@ interface DailyReportModalProps {
   soulGoal?: string;
   /** "Eu fiz, só esqueci de marcar": devolve os corações cobrados na virada. */
   onRecoverHearts?: () => void;
+  /** Check-in de humor: opcional, e NUNCA entra em pontuação (utils/mood.ts). */
+  moodToday?: MoodValue | null;
+  onPickMood?: (mood: MoodValue) => void;
+  moodNote?: string | null;
 }
 
 /**
@@ -19,7 +24,7 @@ interface DailyReportModalProps {
  * Layout uses INLINE styles — several Tailwind utilities (px-5, py-4, max-w-xs)
  * don't exist in the precompiled index.css (see CLAUDE.md footgun #1).
  */
-export function DailyReportModal({ report, onClose, language, theme = 'default', soulGoal, onRecoverHearts }: DailyReportModalProps) {
+export function DailyReportModal({ report, onClose, language, theme = 'default', soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
@@ -143,6 +148,27 @@ export function DailyReportModal({ report, onClose, language, theme = 'default',
               <p key={i} style={{ ...mono, fontSize: '0.7rem', color: palette.sub, paddingTop: 6 }}>{n}</p>
             ))}
           </div>
+          {onPickMood && (
+            <div style={{ padding: '4px 20px 0' }}>
+              <p style={{ ...mono, fontSize: '0.72rem', color: palette.sub, margin: '0 0 6px' }}>
+                {isPt ? 'E você, como está hoje?' : 'And how are you today?'}
+              </p>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {MOOD_OPTIONS.map(m => (
+                  <button key={m.value} onClick={() => onPickMood(m.value)}
+                    aria-label={isPt ? m.labelPt : m.labelEn}
+                    style={{
+                      flex: 1, padding: '6px 0', fontSize: 17, cursor: 'pointer', lineHeight: 1,
+                      background: moodToday === m.value ? '#ffffff' : 'transparent',
+                      border: moodToday === m.value ? '2px inset #ffffff' : '2px outset #ffffff',
+                    }}>
+                    {m.emoji}
+                  </button>
+                ))}
+              </div>
+              {moodNote && <p style={{ ...mono, fontSize: '0.68rem', color: palette.sub, margin: '6px 0 0' }}>{moodNote}</p>}
+            </div>
+          )}
           <div style={{ padding: '14px 20px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             {canRecover && (
               <button onClick={onRecoverHearts}
@@ -198,6 +224,41 @@ export function DailyReportModal({ report, onClose, language, theme = 'default',
             <p key={i} style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', paddingTop: 8, lineHeight: 1.4 }}>{n}</p>
           ))}
         </div>
+
+        {/* Check-in de humor. Fica aqui porque o relatório já aparece 1×/dia:
+            não custa uma abertura a mais do app. É opcional e não vale ponto. */}
+        {onPickMood && (
+          <div style={{ padding: '10px 20px 0' }}>
+            <p style={{ fontSize: '0.78rem', color: 'var(--sm-muted)', margin: '0 0 8px' }}>
+              {isPt ? 'E você, como está hoje?' : 'And how are you today?'}
+            </p>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {MOOD_OPTIONS.map(m => {
+                const active = moodToday === m.value;
+                return (
+                  <button
+                    key={m.value}
+                    onClick={() => onPickMood(m.value)}
+                    aria-label={isPt ? m.labelPt : m.labelEn}
+                    title={isPt ? m.labelPt : m.labelEn}
+                    style={{
+                      flex: 1, padding: '8px 0', borderRadius: 12, cursor: 'pointer', fontSize: 20, lineHeight: 1,
+                      background: active ? 'var(--sm-primary-soft)' : 'var(--sm-bg)',
+                      border: active ? '2px solid var(--sm-primary)' : '2px solid transparent',
+                    }}
+                  >
+                    {m.emoji}
+                  </button>
+                );
+              })}
+            </div>
+            {moodNote && (
+              <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>
+                {moodNote}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Ações */}
         <div style={{ padding: '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
