@@ -34,6 +34,10 @@ import { applyDecorEquip, type SlotId } from './utils/petStage';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
 // objeto novo a cada render, anulando a memoização (footgun conhecido).
+/** Teto do log de conclusões de atividade — registro de ritmo, não arquivo.
+ *  A leitura do ritmo olha 14 dias; 90 entradas cobrem isso com folga sem
+ *  inchar o save (localStorage e nuvem). */
+const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
 import { getNextEvolution } from './utils/dailyReset';
@@ -110,8 +114,14 @@ export default function App() {
   // Estatísticas e desempata o galho na evolução. useMemo porque percorre o
   // histórico e o CompanionHUD é memo().
   const carePatternReading = useMemo(
-    () => computeCarePattern(gameState.completedTasks),
-    [gameState.completedTasks],
+    () => computeCarePattern([
+      ...(gameState.completedTasks ?? []),
+      // Atividades recorrentes entram pelo log próprio: `completedTasks` só
+      // recebe tarefas avulsas, e sem isto o ritmo ficava cego justamente para
+      // o mecanismo principal de hábito do app.
+      ...(gameState.activityLog ?? []).map(completedAt => ({ completedAt })),
+    ]),
+    [gameState.completedTasks, gameState.activityLog],
   );
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
@@ -505,6 +515,12 @@ export default function App() {
     // Completed steps cannot be unchecked — only daily reset restores them
     if (step?.completed) return;
 
+    // Esta etapa fecha a atividade? Calculado FORA do updater, para o resumo de
+    // ganhos não depender de ler estado de dentro dele (StrictMode roda o
+    // updater 2×).
+    const justFinishedActivity =
+      activity && activity.steps.every(s => s.completed || s.id === stepId) ? activity : null;
+
     // Allow checking without confirmation
     setGameState(prev => {
         const updatedActivities = prev.activities.map(act =>
@@ -542,21 +558,19 @@ export default function App() {
           };
         }
 
-        // Version B: early stages gain energy directly; baby-ii+ generate food
+        // Concluir a última etapa rende a comida da categoria. (Ramo morto de
+        // "estágio inicial ganha energia" removido — a árvore nasce em rookie.)
         let newFoodInventory = prev.foodInventory;
-        let energyGain = 0;
+        let newActivityLog = prev.activityLog ?? [];
         if (isFullyCompleted && updatedActivity) {
-          if (['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage))) {
-            energyGain = 1;
-          } else {
-            const food = FOOD_BY_CATEGORY[updatedActivity.category as keyof typeof FOOD_BY_CATEGORY];
-            if (food) {
-              newFoodInventory = {
-                ...prev.foodInventory,
-                [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-              };
-            }
+          const food = FOOD_BY_CATEGORY[updatedActivity.category as keyof typeof FOOD_BY_CATEGORY];
+          if (food) {
+            newFoodInventory = {
+              ...prev.foodInventory,
+              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+            };
           }
+          newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
         }
 
         return {
@@ -564,11 +578,14 @@ export default function App() {
           activities: updatedActivities,
           activityStats: newActivityStats,
           foodInventory: newFoodInventory,
-          ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, getMaxEnergyForStage(prev.evolutionStage)) }),
+          activityLog: newActivityLog,
         };
       });
 
       playTaskComplete();
+      if (justFinishedActivity) {
+        queueMicrotask(() => announceTaskGains(gameState, justFinishedActivity.category));
+      }
 
       // Check if this is the first task/step ever completed and show popup
       if (!hasShownFirstTaskPopup) {
@@ -634,21 +651,24 @@ export default function App() {
         };
       }
 
-      // Version B: early stages gain energy directly; baby-ii+ generate food
+      // Concluir atividade rende a comida da categoria. (O ramo antigo de
+      // "estágio inicial ganha energia direto" saiu: a árvore nasce em rookie,
+      // então getStageLevel nunca devolvia digiegg/baby-i e ele era inalcançável
+      // — o mesmo ramo morto que já tinha sido removido do caminho das tarefas.)
       let newFoodInventory = prev.foodInventory;
-      let energyGain = 0;
+      let newActivityLog = prev.activityLog ?? [];
       if (newCompletedState && activity) {
-        if (['digiegg', 'baby-i'].includes(getStageLevel(prev.evolutionStage))) {
-          energyGain = 1;
-        } else {
-          const food = FOOD_BY_CATEGORY[activity.category as keyof typeof FOOD_BY_CATEGORY];
-          if (food) {
-            newFoodInventory = {
-              ...prev.foodInventory,
-              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
-            };
-          }
+        const food = FOOD_BY_CATEGORY[activity.category as keyof typeof FOOD_BY_CATEGORY];
+        if (food) {
+          newFoodInventory = {
+            ...prev.foodInventory,
+            [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+          };
         }
+        // Registra a conclusão para o ritmo de cuidado enxergar atividades —
+        // `completedTasks` só recebe tarefas avulsas, e `lastCompletedDate`
+        // some na virada do dia.
+        newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
       }
 
       return {
@@ -656,9 +676,13 @@ export default function App() {
         activities: updatedActivities,
         activityStats: newActivityStats,
         foodInventory: newFoodInventory,
-        ...(energyGain > 0 && { energyPoints: Math.min((prev.energyPoints ?? 0) + energyGain, getMaxEnergyForStage(prev.evolutionStage)) }),
+        activityLog: newActivityLog,
       };
     });
+
+    // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
+    // efeito colateral dentro de setGameState roda 2× no StrictMode.
+    if (activity) queueMicrotask(() => announceTaskGains(gameState, activity.category));
 
     // Check if this is the first task ever completed and show popup
     if (!hasShownFirstTaskPopup) {
@@ -2183,6 +2207,12 @@ export default function App() {
               evolutionLocked={gameState.evolutionLocked ?? false}
               onToggleEvolutionLock={handleToggleEvolutionLock}
               language={language}
+              carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              forecastBranch={resolveBranch(
+                { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                carePatternReading,
+                gameState.currentBranch,
+              )}
             /></Suspense>
           )}
 

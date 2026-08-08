@@ -41,6 +41,10 @@ interface EvolutionPathProps {
   evolutionLocked?: boolean;
   onToggleEvolutionLock?: () => void;
   language?: 'pt-BR' | 'en-US';
+  /** Ritmo de cuidado — desempata o galho quando os atributos empatam. */
+  carePattern?: { emoji: string; namePt: string; nameEn: string } | null;
+  /** Galho que a próxima evolução vai seguir, já resolvido. */
+  forecastBranch?: Attr;
 }
 
 export function EvolutionPath({
@@ -60,8 +64,14 @@ export function EvolutionPath({
   evolutionLocked = false,
   onToggleEvolutionLock,
   language = 'en-US',
+  carePattern,
+  forecastBranch,
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
+  // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
+  const topAttr = Math.max(virusPoints, dataPoints, vaccinePoints);
+  const isTie = topAttr > 0
+    && [virusPoints, dataPoints, vaccinePoints].filter(v => v === topAttr).length > 1;
   const L = (t: LText) => (isPt ? t.pt : t.en);
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions), [unlockedEvolutions]);
   const [selectedBranch, setSelectedBranch] = useState<Attr>(clampBranch(currentBranch));
@@ -313,6 +323,27 @@ export function EvolutionPath({
             );
           })}
         </div>
+
+        {/* Os números sozinhos não dizem PARA ONDE o pet está indo — o jogador
+            tinha que inferir. Esta linha fecha a alça: mostra o galho previsto
+            e, no empate, quem decide. */}
+        {forecastBranch && (
+          <p style={{ fontSize: '0.76rem', color: 'var(--sm-muted)', marginTop: 10, lineHeight: 1.45 }}>
+            {isPt ? 'Seguindo para ' : 'Heading toward '}
+            <strong style={{ color: getBranchColor(forecastBranch).hex }}>{L(ATTR_LABEL[forecastBranch])}</strong>
+            {isTie
+              ? (carePattern
+                  ? (isPt
+                      ? ` — empate nos atributos, e o seu ritmo ${carePattern.emoji} ${carePattern.namePt} desempata.`
+                      : ` — attributes are tied, and your ${carePattern.emoji} ${carePattern.nameEn} rhythm breaks it.`)
+                  : (isPt
+                      ? ' — empate nos atributos; cumprir mais tarefas de uma categoria decide.'
+                      : ' — attributes are tied; completing more tasks of one category decides.'))
+              : (isPt
+                  ? '. Muda cumprindo mais tarefas de outra categoria.'
+                  : '. Change it by completing more tasks of another category.')}
+          </p>
+        )}
       </div>
 
       {/* Digivolution Progress */}

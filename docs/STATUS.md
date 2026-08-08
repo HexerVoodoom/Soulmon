@@ -132,6 +132,19 @@ seção 3.
 
 ## 2. Estado do produto
 
+- **Rodada de auditoria (ago/2026)** — quatro achados, todos corrigidos:
+  (1) o **ritmo de cuidado era cego a atividades recorrentes**, porque
+  `completedTasks` só recebe tarefas avulsas e `lastCompletedDate` some na
+  virada; agora existe `activityLog` (teto de 90). (2) O **galho previsto não
+  era dito** — a página de Evolução mostrava os três atributos, mas o jogador
+  tinha que inferir para onde ia; agora há uma linha com o galho e, no empate,
+  quem desempata. (3) O resumo de "uma ação, várias barras" **só existia para
+  tarefas**, não para atividades. (4) Dois **ramos mortos** de `digiegg/baby-i`
+  na conclusão de atividade (a árvore nasce em rookie).
+- **Limpeza:** 10 componentes órfãos removidos (nenhum era importado em lugar
+  nenhum, nem por lazy import) e `wasDayPerfect`/`countCompletedYesterday`
+  apagados — eram uma SEGUNDA cópia da regra do dia perfeito, sem nenhum
+  chamador em produção mas com testes verdes, dando falsa cobertura.
 - **Bug corrigido: concluir tarefa não dava nada.** `completeTask` recusava
   tarefa com `completed: true`, mas o `App` marca a tarefa no clique e só chama
   a função 3s depois — então ela SEMPRE recusava. Resultado: a tarefa não saía

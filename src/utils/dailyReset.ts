@@ -41,73 +41,14 @@ export interface GameState {
   [key: string]: any;
 }
 
-// Calcula se o dia anterior foi perfeito (antes de resetar)
-export function wasDayPerfect(prev: GameState): boolean {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayString = yesterday.toDateString();
-  const yesterdayWeekDay = yesterday.getDay();
-  
-  let totalTasks = 0;
-  let completedTasks = 0;
-  
-  // Filtra atividades disponíveis para ontem
-  const availableActivities = !canSelectWeekdays(prev.evolutionStage)
-    ? prev.activities
-    : prev.activities.filter(a => a.weekDays?.includes(yesterdayWeekDay));
-  
-  availableActivities.forEach(activity => {
-    totalTasks++;
-    
-    let isComplete = false;
-    if (activity.steps.length > 0) {
-      isComplete = activity.steps.every(s => s.completed);
-    } else {
-      isComplete = !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
-    }
-    
-    if (isComplete) {
-      completedTasks++;
-    }
-  });
-  
-  // Adiciona tasks
-  totalTasks += prev.tasks.length;
-  completedTasks += prev.tasks.filter(t => t.completed).length;
-  
-  return totalTasks > 0 && completedTasks === totalTasks;
-}
-
-// Conta quantas tarefas foram concluídas ontem (para verificar se perdeu HP)
-export function countCompletedYesterday(prev: GameState): number {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayString = yesterday.toDateString();
-  const yesterdayWeekDay = yesterday.getDay();
-  
-  let completed = 0;
-  
-  const availableActivities = !canSelectWeekdays(prev.evolutionStage)
-    ? prev.activities
-    : prev.activities.filter(a => a.weekDays?.includes(yesterdayWeekDay));
-  
-  availableActivities.forEach(activity => {
-    let isComplete = false;
-    if (activity.steps.length > 0) {
-      isComplete = activity.steps.every(s => s.completed);
-    } else {
-      isComplete = !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
-    }
-    
-    if (isComplete) {
-      completed++;
-    }
-  });
-  
-  completed += prev.tasks.filter(t => t.completed).length;
-  
-  return completed;
-}
+// NOTA: aqui viviam `wasDayPerfect` e `countCompletedYesterday`, que
+// reimplementavam a regra do dia perfeito e a contagem de conclusões — as
+// MESMAS que `computeDailyReset` faz mais abaixo. Nada em produção as chamava;
+// só os testes delas. Era o pior formato de código morto: uma segunda cópia de
+// uma regra viva, com testes verdes dando a impressão de que a regra estava
+// coberta. Mudar a regra em `computeDailyReset` as deixaria divergentes em
+// silêncio, exatamente o footgun 9 do CLAUDE.md. Se precisar da resposta
+// "o dia foi perfeito?", leia `lastDayReport.wasPerfect` do estado.
 
 type Attr = 'virus' | 'data' | 'vaccine';
 const ALL_ATTRS: Attr[] = ['virus', 'data', 'vaccine'];

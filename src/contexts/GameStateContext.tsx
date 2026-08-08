@@ -199,6 +199,14 @@ export interface GameState {
    */
   moodLog?: Array<{ date: string; mood: 1 | 2 | 3 | 4 | 5 }>;
   /**
+   * Timestamps ISO das ATIVIDADES concluídas. Existe porque `completedTasks` só
+   * recebe tarefas avulsas — atividades recorrentes guardam `completedToday` e
+   * `lastCompletedDate`, que somem na virada do dia. Sem isto, o ritmo de
+   * cuidado (utils/carePattern.ts) ficava cego justamente para o mecanismo
+   * principal de hábito do app.
+   */
+  activityLog?: string[];
+  /**
    * Traço único sorteado no nascimento do pet (utils/passives.ts). É o que
    * transforma "meu bichinho" em *o meu* bichinho — dois Soulmon do mesmo
    * estágio se comportam de um jeito ligeiramente diferente.
@@ -278,6 +286,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         soulGoal: loadedState.soulGoal ?? '',
         soulStruggle: loadedState.soulStruggle ?? '',
         moodLog: loadedState.moodLog ?? [],
+        activityLog: loadedState.activityLog ?? [],
         petPassive: loadedState.petPassive ?? rollPetPassive(),
         // Campo antigo some do save no próximo gravar (JSON.stringify descarta
         // undefined). Sem isto ele sobreviveria para sempre e voltaria a
@@ -333,6 +342,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       soulGoal: '',
       soulStruggle: '',
       moodLog: [],
+      activityLog: [],
       petPassive: rollPetPassive(),
       // Fresh installs start in demo — the onboarding gate (SoulmonOnboarding)
       // upgrades this to 'paid' once the (currently placeholder) one-time
