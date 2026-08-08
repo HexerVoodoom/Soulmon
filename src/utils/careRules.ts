@@ -202,12 +202,22 @@ const COMPLETED_HISTORY_CAP = 200;
  * mesma coisa ao marcar uma tarefa — e duas implementações divergiriam (foi
  * assim que o histórico e a estatística ficariam de fora no desktop).
  *
- * Retorna `null` se a tarefa não existe ou já estava concluída — quem chama
- * trata como "nada a fazer", sem gravar.
+ * Retorna `null` se a tarefa não está mais na lista — quem chama trata como
+ * "nada a fazer", sem gravar. É isso que torna a chamada idempotente: depois da
+ * primeira vez a tarefa saiu de `tasks`, então uma segunda chamada não acha
+ * nada e não duplica histórico.
+ *
+ * ATENÇÃO: NÃO recusar uma tarefa que já está com `completed: true`. Esse é o
+ * fluxo NORMAL — o app marca a tarefa na hora do clique (para o check aparecer
+ * na hora) e só chama esta função 3s depois, na animação de saída. Enquanto a
+ * função recusava esse caso, concluir tarefa não entregava a comida, não
+ * gravava no histórico e não contava na estatística: o laço central de
+ * recompensa do jogo ficava sem efeito. A duplicidade é barrada pela remoção
+ * da lista, não por esta flag.
  */
 export function completeTask<T extends TaskState>(state: T, taskId: string, now = new Date()): T | null {
   const task = state.tasks.find(t => t.id === taskId);
-  if (!task || task.completed) return null;
+  if (!task) return null;
 
   const activityKey = `task-${task.name}-${task.category}`;
   const stats = state.activityStats[activityKey]

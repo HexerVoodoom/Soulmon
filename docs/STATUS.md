@@ -132,7 +132,13 @@ seção 3.
 
 ## 2. Estado do produto
 
-- **Benchmark + Fase 1 do plano de evolução (ago/2026)** — `docs/PLANO-EVOLUCAO.md`.
+- **Bug corrigido: concluir tarefa não dava nada.** `completeTask` recusava
+  tarefa com `completed: true`, mas o `App` marca a tarefa no clique e só chama
+  a função 3s depois — então ela SEMPRE recusava. Resultado: a tarefa não saía
+  da lista, não entrava no histórico, não contava na estatística e **não rendia
+  a comida**. O laço central de recompensa do jogo estava sem efeito. Anterior a
+  este trabalho (presente no backup). Há teste de regressão.
+- **Benchmark + Fases 1 a 4 do plano de evolução (ago/2026)** — `docs/PLANO-EVOLUCAO.md`.
   Duas rodadas de pesquisa (apps de produtividade gamificada + franquias/hardware
   Digimon, Pokémon e Palworld) viraram um plano em 5 fases. A **Fase 1 está no ar**:
   teto de 1 coração perdido por dia, perdão de ausência ≥2 dias, alívio de meio
@@ -140,6 +146,11 @@ seção 3.
   mais da barra de HP** (nem bloqueia entrada). A virada do dia virou função pura
   (`computeDailyReset`) que o hook e o teste compartilham — antes o teste testava
   uma cópia e afirmava uma evolução automática que `MANUAL_EVOLUTION` impede.
+  Depois vieram: onboarding perguntando o "porquê", relatório em modo acolhida,
+  "esqueci de marcar", check-in de humor, traço de nascimento, ritmo de cuidado
+  desempatando o galho, faixas e rodada semanal do Torneio, e a vitrine da
+  jornada. Abertos só o modo cooperativo (precisa de backend novo) e a arte da
+  decoração (não é código). Ver `docs/PLANO-EVOLUCAO.md`.
 - **Palco do pet** (composição, 5 espaços, decoração) — pronto. Contrato de arte
   em `docs/PALCO-E-DECORACAO.md`. Falta só a arte de verdade (hoje são emoji).
 - **Torneio** — 6 itens na aba, escada 15/20/25/40/55/70 Emblemas. A vitrine
@@ -217,6 +228,9 @@ o app de todo mundo que já tem o APK instalado.
   Durable Objects.
 - **Arte da decoração são emoji.** A estrutura já aceita PNG; ver
   `docs/PALCO-E-DECORACAO.md`.
+- **`StatsModal.tsx` é código morto**: `setStatsModalOpen(true)` não é chamado
+  em lugar nenhum. A tela viva é a `StatsPage` (aba dentro de Evolução). Vale
+  apagar o modal, mas isso é limpeza, não urgência.
 - **`GuideModal.tsx` é só em inglês.** O `HelpModal` tem PT+EN, o guia não —
   viola a convenção de UI bilíngue do `CLAUDE.md`. Anterior a este trabalho.
 - **Cura instantânea por Créditos** é, na prática, pagar para pular o cuidado — a

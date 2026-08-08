@@ -177,10 +177,13 @@ describe('concluir tarefa', () => {
     expect(r.totalXP).toBe(0);
   });
 
-  it('devolve null para tarefa inexistente ou já concluída', () => {
+  it('devolve null só para tarefa que não está mais na lista', () => {
     expect(completeTask(base(), 'nao-existe')).toBeNull();
+    // Tarefa JÁ MARCADA não é recusada: é o fluxo normal do app, que marca no
+    // clique e só chama esta função na animação de saída. Ver o bloco de
+    // regressão no fim deste arquivo.
     const jaFeita = { ...base(), tasks: [{ id: 't1', name: 'X', category: 'Study' as const, emoji: '📚', completed: true }] };
-    expect(completeTask(jaFeita, 't1')).toBeNull();
+    expect(completeTask(jaFeita, 't1')).not.toBeNull();
   });
 
   it('limita o histórico para o save não inchar sem fim', () => {
@@ -196,5 +199,39 @@ describe('concluir tarefa', () => {
   it('não mexe em campos fora do escopo', () => {
     const comExtras = { ...base(), perfectDays: 5 };
     expect(completeTask(comExtras, 't1')!.perfectDays).toBe(5);
+  });
+});
+
+describe('completeTask — a tarefa já marcada é o fluxo NORMAL', () => {
+  // Regressão: o app marca `completed: true` no clique (para o check aparecer
+  // na hora) e só chama completeTask 3s depois. Enquanto a função recusava
+  // tarefa já marcada, concluir tarefa não dava comida, não entrava no
+  // histórico e não contava na estatística — o laço central de recompensa
+  // ficava sem efeito nenhum.
+  const marcada = (): TaskState => ({
+    healthPoints: 3, maxHealthPoints: 3, energyPoints: 0, evolutionStage: 'rookie',
+    foodInventory: {}, virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+    tasks: [{ id: 't1', name: 'Estudar', category: 'Study', emoji: '📚', completed: true }],
+    completedTasks: [], activityStats: {},
+  });
+
+  it('entrega a comida mesmo com a tarefa já marcada', () => {
+    const r = completeTask(marcada(), 't1');
+    expect(r).not.toBeNull();
+    expect(r!.foodInventory).toEqual({ '🍎': 1 });
+    expect(r!.completedTasks).toHaveLength(1);
+    expect(r!.tasks).toHaveLength(0);
+    expect(r!.activityStats['task-Estudar-Study'].completionCount).toBe(1);
+  });
+
+  it('chamar duas vezes não duplica — a remoção da lista é que protege', () => {
+    const primeira = completeTask(marcada(), 't1')!;
+    expect(completeTask(primeira, 't1')).toBeNull();
+    expect(primeira.completedTasks).toHaveLength(1);
+  });
+
+  it('tarefa inexistente continua sendo "nada a fazer"', () => {
+    expect(completeTask(marcada(), 'nao-existe')).toBeNull();
   });
 });

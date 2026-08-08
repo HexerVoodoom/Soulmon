@@ -834,10 +834,44 @@ export default function App() {
       // a árvore do Soulmon não tem mais ovo/baby, então getStageLevel nunca
       // devolvia esses níveis e o ramo era inalcançável.)
       setTimeout(() => {
-        setGameState(prev => completeTask(prev, taskId) ?? prev);
+        setGameState(prev => {
+          const next = completeTask(prev, taskId) ?? prev;
+          if (next !== prev) queueMicrotask(() => announceTaskGains(prev, task.category));
+          return next;
+        });
       }, 3000);
     }
   };
+
+  /**
+   * "Uma ação, várias barras": concluir UMA tarefa avança várias coisas ao mesmo
+   * tempo, e o jogador precisa VER isso num lugar só. É o que faz um km no
+   * Pokémon GO valer a pena — ele avança ovo, companheiro, missão e recompensa
+   * semanal de uma vez, e o jogo mostra tudo junto.
+   *
+   * Fica fora do updater de propósito: efeito colateral dentro de setGameState
+   * roda 2× no StrictMode (footgun 6).
+   */
+  const announceTaskGains = useCallback((prev: GameState, category: ActivityCategory) => {
+    const isPt = language === 'pt-BR';
+    const req = FORM_REQUIREMENTS[getStageLevel(prev.evolutionStage)].required;
+    const registered = prev.activities.length + prev.tasks.length;
+    const goal = Math.min(registered, req);
+    const doneNow = prev.tasks.filter(t => t.completed).length
+      + prev.activities.filter(a => a.completedToday).length;
+
+    const food = FOOD_BY_CATEGORY[category];
+    const parts = [
+      isPt ? `${food?.emoji ?? '🍎'} +1 comida` : `${food?.emoji ?? '🍎'} +1 food`,
+    ];
+    if (goal > 0) {
+      parts.push(isPt ? `📋 ${Math.min(doneNow, goal)}/${goal} do dia` : `📋 ${Math.min(doneNow, goal)}/${goal} today`);
+    }
+    if (goal > 0 && doneNow >= goal) {
+      parts.push(isPt ? '⚡ falta encher a energia' : '⚡ energy left to fill');
+    }
+    toast(parts.join('  ·  '));
+  }, [language]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setGameState(prev => ({

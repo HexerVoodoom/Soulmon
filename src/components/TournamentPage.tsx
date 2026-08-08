@@ -6,6 +6,7 @@ import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type
 import tournamentBg from '../assets/soulmon/bg/tournament.png';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { getTierStanding } from '../utils/tournamentTiers';
+import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 
 interface TournamentPageProps {
   saveId: string;
@@ -32,6 +33,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   // Pontos do próprio jogador, lidos da linha dele no ranking.
   const myPoints = rank?.find(r => r.id === saveId)?.points ?? 0;
   const standing = rank === null ? null : getTierStanding(myPoints);
+  const round = getTournamentWindow();
   const [tab, setTab] = useState<'arena' | 'rank'>('arena');
 
   const loadOpponents = () => {
@@ -113,6 +115,21 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             }}>
             <span style={{ position: 'absolute', top: 3, left: pvpEnabled ? 23 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
           </button>
+        </div>
+
+        {/* A rodada semanal é RITUAL, não tranca: fora dela o Torneio continua
+            inteiro disponível. Trancar conteúdo fora de um horário é o erro dos
+            Remote Raid Passes de 2023 — quem não consegue estar lá na hora
+            combinada não se esforça mais, sai. Ver utils/tournamentSeason.ts. */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12, padding: '9px 12px',
+          borderRadius: 12, background: round.isOpen ? 'rgba(250,204,21,0.14)' : 'rgba(255,255,255,0.07)',
+          border: round.isOpen ? '1px solid rgba(250,204,21,0.4)' : '1px solid rgba(255,255,255,0.1)',
+        }}>
+          <span style={{ fontSize: 17, lineHeight: 1 }}>{round.isOpen ? '🎪' : '📅'}</span>
+          <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.45, color: round.isOpen ? '#facc15' : 'rgba(255,255,255,0.6)' }}>
+            {tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}
+          </p>
         </div>
 
         {/* Tabs */}
