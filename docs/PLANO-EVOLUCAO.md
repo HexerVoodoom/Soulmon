@@ -222,7 +222,7 @@ Só dois itens do plano seguem abertos, e nenhum dos dois é "faltou tempo":
 | Item | Por que não foi feito |
 |---|---|
 | **4.3 Modo cooperativo** | É a única entrada do plano que **não é implementável só no cliente**. Existe backend social (`functions/api/community.js`: perfis, amigos, presentes, ranking, partidas), mas um modo cooperativo pede endpoint novo, esquema de grupo no KV e uma decisão de moderação/abuso que é do dono. Subir superfície multiplayer nova direto em produção sem isso definido seria imprudente |
-| **5.1 Arte da decoração** | **Não é código.** O contrato em `docs/PALCO-E-DECORACAO.md` pede arte desenhada PARA a caixa, em tamanho fixo por espaço e casando com o estilo dos sprites. Arte gerada fora desse contrato ficaria pior que os emoji atuais, e ainda pesaria no repositório (que versiona `dist/`) |
+| **5.1 Arte da decoração** | **Não é código**, mas está PRONTA PARA COMEÇAR: `docs/BRIEF-ARTE-DECORACAO.md` lista as 14 peças com a caixa em px de cada uma, a direção de arte e o prompt-base. Falta só o acesso ao gerador de imagem |
 
 ---
 

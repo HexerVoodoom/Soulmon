@@ -228,11 +228,8 @@ o app de todo mundo que já tem o APK instalado.
   Durable Objects.
 - **Arte da decoração são emoji.** A estrutura já aceita PNG; ver
   `docs/PALCO-E-DECORACAO.md`.
-- **`StatsModal.tsx` é código morto**: `setStatsModalOpen(true)` não é chamado
-  em lugar nenhum. A tela viva é a `StatsPage` (aba dentro de Evolução). Vale
-  apagar o modal, mas isso é limpeza, não urgência.
-- **`GuideModal.tsx` é só em inglês.** O `HelpModal` tem PT+EN, o guia não —
-  viola a convenção de UI bilíngue do `CLAUDE.md`. Anterior a este trabalho.
+- **Arte da decoração** ainda é emoji, mas o brief de produção está pronto em
+  `docs/BRIEF-ARTE-DECORACAO.md` (14 peças, caixa em px, prompt-base).
 - **Cura instantânea por Créditos** é, na prática, pagar para pular o cuidado — a
   mesma crítica que Kotaku e Digital Trends fizeram ao Premium Pass do Pokémon
   Sleep. Sugestão em `docs/PLANO-EVOLUCAO.md`: reposicionar como perdão pontual

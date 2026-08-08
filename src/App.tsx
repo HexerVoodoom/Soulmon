@@ -106,7 +106,6 @@ export default function App() {
   const [digivolveModalStage, setDigivolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
-  const [statsModalOpen, setStatsModalOpen] = useState(false);
   // Leitura do ritmo de cuidado (utils/carePattern.ts): alimenta a vitrine em
   // Estatísticas e desempata o galho na evolução. useMemo porque percorre o
   // histórico e o CompanionHUD é memo().
@@ -2437,10 +2436,6 @@ export default function App() {
       )}
 
       <ContentModals
-        statsModalOpen={statsModalOpen}
-        onCloseStats={() => setStatsModalOpen(false)}
-        completedTasks={gameState.completedTasks}
-        activityStats={gameState.activityStats}
         guideModalOpen={guideModalOpen}
         onCloseGuide={() => setGuideModalOpen(false)}
         theme={theme}

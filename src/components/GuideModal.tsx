@@ -1,249 +1,274 @@
 import { X } from 'lucide-react';
+import type { Language } from '../utils/i18n';
+import { FORM_REQUIREMENTS } from '../types/progression';
+import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
 
 interface GuideModalProps {
   isOpen: boolean;
   onClose: () => void;
   theme?: 'default' | 'win98' | 'glitch';
+  language?: Language;
 }
 
-export function GuideModal({ isOpen, onClose, theme = 'default' }: GuideModalProps) {
+/**
+ * Guia do jogo. Bilíngue PT/EN como todo texto de UI (convenção do CLAUDE.md) —
+ * antes era só em inglês, o que deixava o guia inteiro ilegível para o público
+ * principal do app.
+ *
+ * Os números vêm das CONSTANTES, não de texto escrito à mão: era assim que o
+ * guia tinha ficado prometendo estágios de ovo/bebê e requisitos que não
+ * existiam mais.
+ */
+export function GuideModal({ isOpen, onClose, theme = 'default', language = 'en-US' }: GuideModalProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
+  const isPt = language === 'pt-BR';
+  /** Escolhe o texto do idioma atual. */
+  const L = (pt: string, en: string) => (isPt ? pt : en);
 
   if (!isOpen) return null;
+
+  const headClass = isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]';
+  const R = FORM_REQUIREMENTS;
+
+  const Section = ({ n, title, children }: { n: number; title: string; children: React.ReactNode }) => (
+    <section>
+      <h3 className={`font-bold mb-2 ${headClass}`}>{n}. {title}</h3>
+      {children}
+    </section>
+  );
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className={`w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto ${
-        isGlitch
-          ? 'glitch-activity-card'
-          : isWin98
-          ? 'win98-activity-card'
-          : 'sm-card'
+        isGlitch ? 'glitch-activity-card' : isWin98 ? 'win98-activity-card' : 'sm-card'
       }`}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-xl ${
-            isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-          }`} style={{ fontFamily: 'Consolas, monospace' }}>
-            📖 Soulmon Guide
+          <h2 className={`text-xl ${headClass}`} style={{ fontFamily: 'Consolas, monospace' }}>
+            📖 {L('Guia do Soulmon', 'Soulmon Guide')}
           </h2>
           <button
             onClick={onClose}
+            aria-label={L('Fechar', 'Close')}
             className={`p-2 rounded-lg transition-all ${
-              isGlitch
-                ? 'glitch-button'
-                : isWin98
-                ? 'win98-button'
-                : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
+              isGlitch ? 'glitch-button' : isWin98 ? 'win98-button' : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
             }`}
           >
             <X size={20} strokeWidth={1.5} />
           </button>
         </div>
 
-        <div className={`space-y-4 ${
-          isGlitch ? 'text-[#00ff00]' : isWin98 ? 'text-black' : 'text-[#4d5461]'
-        }`} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', lineHeight: '1.5' }}>
-          
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>1. Evolution System</h3>
+        <div className={`space-y-4 ${isGlitch ? 'text-[#00ff00]' : isWin98 ? 'text-black' : 'text-[#4d5461]'}`}
+          style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', lineHeight: '1.5' }}>
+
+          <Section n={1} title={L('Como seu Soulmon evolui', 'How your Soulmon evolves')}>
             <p className="mb-2">
-              Your Soulmon evolves through <strong>perfect days</strong>.
-              A day is perfect when you complete your <strong>daily goal</strong> — everything
-              you registered, up to the stage requirement — AND your Soulmon's
-              <strong> energy is full at the end of the day</strong> (feed it!).
+              {L(
+                'Ele evolui com dias perfeitos. Um dia é perfeito quando você cumpre a meta do dia — tudo o que você cadastrou, até o requisito do estágio — E a energia dele está cheia no fim do dia (é só alimentar).',
+                'It evolves through perfect days. A day is perfect when you meet your daily goal — everything you registered, up to the stage requirement — AND its energy is full at the end of the day (just feed it).',
+              )}
             </p>
             <p className="mb-2">
-              Each evolution form requires a fixed number of perfect days to evolve to the next one.
+              {L(
+                'Dias perfeitos só acumulam: um dia ruim nunca tira os que você já conquistou.',
+                'Perfect days only accumulate: a bad day never takes away the ones you already earned.',
+              )}
             </p>
             <p>
-              Don't want to evolve yet? On the <strong>Evolution page</strong>, tap your
-              <strong> current Soulmon</strong> to toggle a <strong>🔒 padlock</strong>: while
-              locked it never evolves (perfect days still accumulate), and after unlocking it
-              evolves at the <strong>next day turn</strong>. Rare items can also shape evolution:
-              the <strong>🌀 Glitchtama</strong> (clear all 5 dungeon floors) grants a perfect day
-              when used; <strong>Digimentals</strong> (ultra-rare dungeon drops, never consumed)
-              turn your champion into <strong>Flamedramon</strong> or <strong>Raidramon</strong>;
-              and <strong>rookie items</strong> (rare Dino Run / RPS drops, consumed on use) pick
-              which rookie your Baby II becomes.
+              {L('A evolução é sua: toque no seu Soulmon na página de Evolução para ', 'Evolution is yours to trigger: tap your Soulmon on the Evolution page to ')}
+              <strong>{L('travar ou destravar o cadeado 🔒', 'toggle the 🔒 padlock')}</strong>
+              {L('. Travado ele nunca evolui (os dias seguem acumulando). Itens raros também moldam a evolução: o ', '. While locked it never evolves (perfect days keep piling up). Rare items also shape evolution: the ')}
+              <strong>🌀 Glitchtama</strong>
+              {L(' (concluir os 5 andares da masmorra) vale um dia perfeito, e as ', ' (clear all 5 dungeon floors) grants a perfect day, and ')}
+              <strong>{L('Digimentais', 'Digimentals')}</strong>
+              {L(' (drops raríssimos, nunca consumidos) mudam a forma de campeão.', ' (ultra-rare drops, never consumed) change your champion form.')}
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>2. What Each Action Does</h3>
+          <Section n={2} title={L('O que cada ação faz', 'What each action does')}>
             <ul className="space-y-2 ml-4 list-disc">
               <li>
-                <strong>❤️ Hearts (HP)</strong> — Lost in proportion to what you leave undone,
-                measured against your stage's <strong>daily requirement</strong>: meet the
-                requirement (or finish everything you registered) and you're safe. You never
-                lose <strong>more than 1 heart per day</strong>, so a single bad day can't
-                undo your Soulmon. Uncleaned <strong>poop</strong> also drains
-                <strong> 1 heart every 6 hours</strong>. Hearts are healed by
-                <strong> rubbing your Soulmon</strong> (up to <strong>1 heart per day</strong>)
-                or by using a <strong>Little Heart</strong> item (bought in the shop or dropped
-                in the dungeon). Every <strong>Monday</strong> your Soulmon gets
-                <strong> half a heart back</strong> — a new week starts with breathing room.
-                If HP hits 0, your Soulmon degenerates.
+                <strong>❤️ {L('Corações (HP)', 'Hearts (HP)')}</strong>
+                {L(
+                  ' — Perdidos em proporção ao que ficou por fazer, medido contra o requisito do estágio: cumpriu o requisito (ou tudo o que cadastrou) e está seguro. Detalhes na seção 6.',
+                  ' — Lost in proportion to what you leave undone, measured against your stage requirement: meet it (or finish everything you registered) and you are safe. Details in section 6.',
+                )}
               </li>
               <li>
-                <strong>⚡ Energy</strong> — The number of energy bars equals your stage's
-                <strong> daily task requirement</strong> (e.g. Rookie needs 4 tasks → 4 bars).
-                Fills only by <strong>feeding</strong> and resets daily. It must be
-                <strong> full at the end of the day</strong> for the day to count as perfect.
+                <strong>⚡ {L('Energia', 'Energy')}</strong>
+                {L(
+                  ` — O número de barras é igual ao requisito de tarefas do estágio (Rookie precisa de ${R.rookie.required} tarefas → ${R.rookie.required} barras). Enche só comendo e zera todo dia. Precisa estar cheia no fim do dia para o dia contar como perfeito.`,
+                  ` — The number of bars equals your stage's task requirement (Rookie needs ${R.rookie.required} tasks → ${R.rookie.required} bars). Fills only by feeding and resets daily. It must be full at day's end for the day to count as perfect.`,
+                )}
               </li>
               <li>
-                <strong>🍎 Food (Feed)</strong> — Refills energy and grants attribute points
-                (which steer your evolution branch). <strong>It does not heal hearts.</strong>
-                You can feed up to <strong>5 times per hour</strong>; once full, the pet just
-                says it's full.
+                <strong>🍎 {L('Comida', 'Food')}</strong>
+                {L(
+                  ' — Enche energia e dá pontos de atributo (que definem o galho da evolução). NÃO cura corações. Dá para alimentar até 5 vezes por hora; cheio, ele avisa que está satisfeito. Cada tarefa concluída rende uma comida da categoria dela.',
+                  ' — Refills energy and grants attribute points (which steer your evolution branch). It does NOT heal hearts. You can feed up to 5 times per hour; once full, it just says so. Every completed task yields one food of its category.',
+                )}
               </li>
               <li>
-                <strong>🚿 Bath</strong> — Cleans up <strong>poop</strong> and washes your
-                Soulmon. Always available.
+                <strong>🚿 {L('Banho', 'Bath')}</strong>
+                {L(' — Limpa o cocô e lava seu Soulmon. Sempre disponível.', ' — Cleans up poop and washes your Soulmon. Always available.')}
               </li>
               <li>
-                <strong>🫶 Affection (Rub)</strong> — <strong>Rub your Soulmon</strong> (press and
-                drag over it) to make little hearts pop out. This is the <strong>only way to
-                heal HP</strong>: every ~2 seconds of rubbing restores half a heart, up to
-                <strong> 1 full heart per day</strong>.
+                <strong>🫶 {L('Carinho', 'Affection')}</strong>
+                {L(
+                  ' — Segure e esfregue sobre ele para soltar coraçõezinhos. É o único jeito de curar HP: cada ~2 segundos devolve meio coração, até 1 coração por dia.',
+                  ' — Press and drag over it to make little hearts pop. This is the only way to heal HP: every ~2 seconds restores half a heart, up to 1 heart a day.',
+                )}
               </li>
               <li>
-                <strong>💤 Sleep</strong> — Your Soulmon rests. It won't poop while asleep,
-                so sleeping through the night protects it from overnight penalties.
+                <strong>💤 {L('Dormir', 'Sleep')}</strong>
+                {L(
+                  ' — Ele descansa. Não faz cocô dormindo, então dormir a noite toda o protege.',
+                  " — It rests. It won't poop while asleep, so sleeping through the night protects it.",
+                )}
               </li>
             </ul>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>3. Requirements per Form</h3>
+          <Section n={3} title={L('Requisitos por forma', 'Requirements per form')}>
             <p className="mb-2">
-              Your Soulmon is born a <strong>Rookie</strong> — there are no egg or baby stages.
-              Each form needs a number of <strong>perfect days</strong> to evolve, and a number of
-              <strong> tasks per day</strong> to call a day perfect:
+              {L(
+                'Seu Soulmon nasce Rookie — não existem estágios de ovo ou bebê. Cada forma pede dias perfeitos para evoluir, e um número de tarefas por dia para o dia contar:',
+                'Your Soulmon is born a Rookie — there are no egg or baby stages. Each form needs perfect days to evolve, and a number of tasks per day for a day to count:',
+              )}
             </p>
             <ul className="space-y-1 ml-4 list-disc">
-              <li>Rookie → Champion: <strong>10</strong> perfect days · 4 tasks/day</li>
-              <li>Champion → Ultimate: <strong>20</strong> perfect days · 5 tasks/day</li>
-              <li>Ultimate → Mega: <strong>30</strong> perfect days · 5 tasks/day</li>
-              <li>Mega → Ultra: <strong>40</strong> perfect days · 6 tasks/day (requires unlocking all 3 Megas)</li>
-              <li>Ultra: the top of the tree · 6 tasks/day</li>
+              <li>Rookie → Champion: <strong>{R.rookie.daysToEvolve}</strong> {L('dias perfeitos', 'perfect days')} · {R.rookie.required} {L('tarefas/dia', 'tasks/day')}</li>
+              <li>Champion → Ultimate: <strong>{R.champion.daysToEvolve}</strong> {L('dias perfeitos', 'perfect days')} · {R.champion.required} {L('tarefas/dia', 'tasks/day')}</li>
+              <li>Ultimate → Mega: <strong>{R.ultimate.daysToEvolve}</strong> {L('dias perfeitos', 'perfect days')} · {R.ultimate.required} {L('tarefas/dia', 'tasks/day')}</li>
+              <li>Mega → Ultra: <strong>{R.mega.daysToEvolve}</strong> {L('dias perfeitos', 'perfect days')} · {R.mega.required} {L('tarefas/dia', 'tasks/day')} {L('(exige desbloquear os 3 Megas)', '(requires unlocking all 3 Megas)')}</li>
+              <li>Ultra: {L('o topo da árvore', 'the top of the tree')} · {R.ultra.required} {L('tarefas/dia', 'tasks/day')}</li>
             </ul>
             <p className="mt-2">
-              Notice the daily load <strong>flattens</strong> near the top while the perfect days keep
-              growing. What the late game asks for is <strong>consistency across weeks</strong>, not
-              more tasks crammed into one day.
+              {L(
+                'Repare que a carga diária achata perto do topo enquanto os dias perfeitos continuam subindo. O fim do jogo pede consistência ao longo de semanas, não mais tarefas espremidas num dia só.',
+                'Notice the daily load flattens near the top while perfect days keep growing. The late game asks for consistency across weeks, not more tasks crammed into one day.',
+              )}
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>4. Activity Cap</h3>
+          <Section n={4} title={L('Limite de atividades', 'Activity cap')}>
             <p>
-              Each form caps how many activities you can keep registered: <strong>6</strong> at Rookie,
-              then 7, 8, 9 and <strong>10</strong> at Ultra.
+              {L(
+                `Cada forma limita quantas atividades você mantém cadastradas: ${R.rookie.cap} no Rookie, subindo até ${R.ultra.cap} no Ultra.`,
+                `Each form caps how many activities you keep registered: ${R.rookie.cap} at Rookie, rising to ${R.ultra.cap} at Ultra.`,
+              )}
             </p>
             <p className="mt-2">
-              The cap is always above the daily requirement on purpose — you can register more than
-              you need to do, and the extra never counts against you.
+              {L(
+                'O limite fica sempre acima do requisito diário de propósito — dá para cadastrar mais do que você precisa fazer, e o excedente nunca conta contra você.',
+                'The cap always sits above the daily requirement on purpose — you can register more than you need to do, and the extra never counts against you.',
+              )}
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>5. Weekday Selection</h3>
+          <Section n={5} title={L('Dias da semana', 'Weekday selection')}>
             <p>
-              You can choose which days of the week each activity is available, at every stage.
-              By default, all days are checked when creating an activity — and an activity that
-              isn't scheduled for today never counts against your daily goal.
+              {L(
+                'Você escolhe em quais dias cada atividade fica disponível, em qualquer estágio. Por padrão todos vêm marcados — e uma atividade que não é de hoje nunca conta contra a meta do dia.',
+                "You choose which days each activity is available, at every stage. All days come checked by default — and an activity that isn't scheduled for today never counts against your daily goal.",
+              )}
             </p>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>6. HP System (Hearts)</h3>
+          <Section n={6} title={L('Corações, em detalhe', 'Hearts, in detail')}>
             <p className="mb-2">
-              At the end of each day you lose hearts <strong>in proportion to what you left undone</strong>,
-              measured against min(registered, stage requirement):
-              lost hearts = min(⌊(1 − done/goal) × maxHearts⌋, <strong>1</strong>). Meeting the stage
-              requirement — or finishing everything you registered — means <strong>no loss</strong>, and
-              registering extra activities never adds risk. The daily cap of <strong>1 heart</strong> means
-              a bad day is a nudge, never a wipe.
+              {L(
+                `Na virada do dia você perde corações em proporção ao que ficou por fazer, contra min(cadastradas, requisito do estágio) — e nunca mais que ${MAX_HEARTS_LOST_PER_DAY} coração por dia. Um dia ruim é um empurrãozinho, nunca um apagão.`,
+                `At the day turn you lose hearts in proportion to what you left undone, against min(registered, stage requirement) — and never more than ${MAX_HEARTS_LOST_PER_DAY} heart a day. A bad day is a nudge, never a wipe.`,
+              )}
             </p>
             <p className="mb-2">
-              If you're away for <strong>two days or more</strong>, coming back costs you
-              <strong> nothing</strong> — your Soulmon just missed you. And on every
-              <strong> Monday</strong> it recovers <strong>half a heart</strong>, so one rough week
-              never bleeds into the next.
+              {L(
+                `Sumiu por ${ABSENCE_FORGIVENESS_DAYS} dias ou mais? Voltar não custa nada — ele só estava com saudade. E toda segunda ele recupera ${WEEKLY_RELIEF_HEARTS} coração, então uma semana ruim nunca vaza para a seguinte.`,
+                `Away for ${ABSENCE_FORGIVENESS_DAYS} days or more? Coming back costs nothing — it just missed you. And every Monday it recovers ${WEEKLY_RELIEF_HEARTS} of a heart, so one rough week never bleeds into the next.`,
+              )}
             </p>
             <p className="mb-2">
-              Uncleaned <strong>poop</strong> drains an extra <strong>1 heart every 6 hours</strong> until you
-              give a bath. Hearts are healed <strong>only by rubbing your Soulmon</strong> — every ~2 seconds
-              of rubbing restores half a heart, up to <strong>1 heart per day</strong>.
+              {L(
+                'Esqueceu de marcar algo que você fez? O relatório do dia tem um botão que devolve os corações cobrados. O dia perfeito não volta — esse já passou.',
+                "Forgot to log something you actually did? The daily report has a button that gives the hearts back. The perfect day doesn't return — that one's gone.",
+              )}
             </p>
             <p className="mb-2">
-              Every Soulmon is born with one <strong>trait</strong> — Foodie, Cuddly, Stubborn,
-              Lucky or Early Bird — visible in Stats. It nudges one small everyday detail, and
-              every trait is an upside: none of them is a handicap.
+              {L(
+                'Cocô não limpo drena 1 coração a cada 6 horas até você dar banho. Se o HP zerar, seu Soulmon regride uma forma — e volta com metade dos dias perfeitos já adiantados.',
+                'Uncleaned poop drains 1 heart every 6 hours until you give a bath. If HP hits 0, your Soulmon degenerates one form — and comes back with half the perfect days already banked.',
+              )}
             </p>
-            <p>
-              Maximum HP per form:
-            </p>
+            <p>{L('HP máximo por forma:', 'Maximum HP per form:')}</p>
             <ul className="space-y-1 ml-4 list-disc mt-2">
-              <li>Digiegg and Baby I: 1 heart</li>
-              <li>Baby II: 2 hearts</li>
-              <li>Rookie, Champion, Ultimate: 3 hearts</li>
-              <li>Megas: 4 hearts</li>
-              <li>Ultra: 5 hearts</li>
+              <li>Rookie, Champion, Ultimate: 3 {L('corações', 'hearts')}</li>
+              <li>Mega: 4 {L('corações', 'hearts')}</li>
+              <li>Ultra: 5 {L('corações', 'hearts')}</li>
             </ul>
-            <p className="mt-2">
-              <strong>If HP reaches 0:</strong> Your Soulmon degenerates to the previous form.
-              Climbing back is easier: you keep a head start of half the perfect days
-              needed for that stage (e.g. Rookie → Champion needs 4, but after a
-              degeneration only 2 more are required). This discount doesn't stack —
-              it's always half again if you degenerate a second time.
-            </p>
-          </section>
+          </Section>
 
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>7. Branches (Evolution Lines)</h3>
-            <p className="mb-2">
-              From Rookie onwards, there are 3 branches available:
-            </p>
+          <Section n={7} title={L('Galhos e o seu ritmo', 'Branches and your rhythm')}>
+            <p className="mb-2">{L('A partir do Rookie existem 3 galhos:', 'From Rookie onwards there are 3 branches:')}</p>
             <ul className="space-y-1 ml-4 list-disc">
-              <li><span className="text-[#22A900]">Virus</span> (green)</li>
-              <li><span className="text-[#009ED8]">Data</span> (blue)</li>
-              <li><span className="text-[#E69600]">Vaccine</span> (yellow/orange)</li>
+              <li><span className="text-[#22A900]">{L('Vírus', 'Virus')}</span> ({L('verde', 'green')})</li>
+              <li><span className="text-[#009ED8]">{L('Dado', 'Data')}</span> ({L('azul', 'blue')})</li>
+              <li><span className="text-[#E69600]">{L('Vacina', 'Vaccine')}</span> ({L('amarelo', 'yellow')})</li>
             </ul>
-            <p className="mt-2">
-              The dominant line is determined by the attribute points you accumulate completing activities.
-              <strong> Perfect day requirements are the same for all lines.</strong>
+            <p className="mt-2 mb-2">
+              {L(
+                'O galho vem dos pontos de atributo, que vêm da categoria das tarefas que você cumpre (a tarefa vira comida da mesma categoria, e a comida dá os pontos).',
+                'The branch comes from attribute points, which come from the category of the tasks you complete (a task yields food of the same category, and food grants the points).',
+              )}
+              <strong> {L('Os requisitos são iguais em todos os galhos.', 'Requirements are identical across all branches.')}</strong>
             </p>
-          </section>
-
-          <section>
-            <h3 className={`font-bold mb-2 ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]'
-            }`}>8. Ultra and Itto Mode</h3>
             <p>
-              To reach Ultra form, you need to unlock the <strong>3 Megas</strong> (one from each branch).
-              After unlocking Ultra, continue accumulating perfect days to reach the final Itto Mode.
+              {L(
+                'No empate, quem decide é o seu ritmo de cuidado — Constante, Explosivo ou Equilibrado, lido do seu histórico e visível em Estatísticas. Nenhum ritmo é melhor que outro: cada um simplesmente puxa para um lado.',
+                'On a tie, your care rhythm decides — Steady, Burst or Balanced, read from your history and shown in Stats. No rhythm is better than another: each simply pulls a different way.',
+              )}
             </p>
-          </section>
+          </Section>
+
+          <Section n={8} title={L('Traço de nascimento', 'Birth trait')}>
+            <p>
+              {L(
+                'Todo Soulmon nasce com um traço — Guloso, Carinhoso, Teimoso, Sortudo ou Madrugador — visível em Estatísticas. Ele muda um detalhe pequeno do dia a dia, e todo traço é positivo: nenhum é desvantagem.',
+                'Every Soulmon is born with one trait — Foodie, Cuddly, Stubborn, Lucky or Early Bird — shown in Stats. It nudges one small everyday detail, and every trait is an upside: none is a handicap.',
+              )}
+            </p>
+          </Section>
+
+          <Section n={9} title={L('Masmorra e Torneio', 'Dungeon and Tournament')}>
+            <p className="mb-2">
+              {L(
+                'Nenhum dos dois cobra dos seus corações. Na masmorra, perder custa a run — os bônus de andar, o Glitchtama e o placar — e a entrada nunca é bloqueada.',
+                'Neither costs you hearts. In the dungeon, losing costs you the run — floor bonuses, the Glitchtama and the score — and entry is never blocked.',
+              )}
+            </p>
+            <p>
+              {L(
+                'O Torneio tem uma rodada toda semana, de sexta a domingo. É só um convite: fora dela dá para lutar do mesmo jeito. Sua faixa (Semente → Broto → Guardião → Ancião → Lendário) mede você contra você mesmo e nunca desce porque outra pessoa jogou mais.',
+                'The Tournament has a weekly round, Friday through Sunday. It is only an invitation: you can still battle outside it. Your tier (Seedling → Sprout → Guardian → Elder → Legend) measures you against yourself and never drops because someone else played more.',
+              )}
+            </p>
+          </Section>
+
+          <Section n={10} title={L('Como você está', 'How you are')}>
+            <p>
+              {L(
+                'O relatório diário pergunta como foi o seu dia, com cinco carinhas. É opcional, não vale ponto nenhum e não entra em nada do jogo — é só para você acompanhar, e para o app devolver uma leitura dos últimos dias.',
+                "The daily report asks how your day went, with five faces. It is optional, worth no points, and feeds nothing in the game — it's just for you to follow along, and for the app to reflect the last few days back to you.",
+              )}
+            </p>
+          </Section>
 
           <section className="border-t pt-4 mt-4" style={{ borderColor: isGlitch ? '#00ffff' : isWin98 ? '#000080' : '#e5e6e7' }}>
             <p className="text-center italic">
-              Tip: Focus on completing 100% of daily tasks to evolve faster and keep your Soulmon strong! 💪
+              {L(
+                'Seu Soulmon cresce junto com você. Nos dias em que não der, ele continua aqui. 💜',
+                'Your Soulmon grows alongside you. On the days you can\'t, it stays right here. 💜',
+              )}
             </p>
           </section>
         </div>

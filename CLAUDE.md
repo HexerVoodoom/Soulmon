@@ -213,6 +213,7 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
 - Commits em PT-BR, `tipo(escopo): resumo` (feat/fix/refactor/style/chore).
 - Textos de UI sempre PT-BR + EN. Falas do pet: curtas, fofas, sem emoji nas
   frases faladas (o `speak()` remove emojis; `speakRaw()` preserva).
-- Ao mudar regra de jogo: atualizar `GuideModal.tsx` (guia) E `HelpModal.tsx`
-  (glossário PT/EN) E os testes em `src/hooks/useDailyReset.test.ts`.
+- Ao mudar regra de jogo: atualizar `GuideModal.tsx` (guia, PT/EN — os números
+  saem das CONSTANTES, não de texto à mão) E `HelpModal.tsx` (glossário PT/EN)
+  E os testes em `src/hooks/useDailyReset.test.ts`.
 - Verificação visual: screenshot via Playwright antes de declarar UI pronta.
