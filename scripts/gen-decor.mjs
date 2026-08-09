@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Gera as 14 peças de decoração do palco pelo CLI da Higgsfield.
+// Gera as 14 peças de decoração do palco pela Higgsfield.
 //
 // A lista e a direção de arte vêm de docs/BRIEF-ARTE-DECORACAO.md; o contrato
 // de tamanho/slot vem de src/utils/petStage.ts (docs/PALCO-E-DECORACAO.md).
@@ -9,21 +9,30 @@
 //   node scripts/gen-decor.mjs              → gera as 14
 //   node scripts/gen-decor.mjs furn-sofa    → gera só uma
 //   node scripts/gen-decor.mjs --dry-run    → imprime os prompts e sai
+//   node scripts/gen-decor.mjs --check      → só testa credencial e rede
 //
-// Pré-requisito: `npx --yes @higgsfield/cli auth login` (interativo, uma vez).
+// ── Dois caminhos, nesta ordem ─────────────────────────────────────────────
+// 1. API de plataforma (PREFERIDO): exige HF_API_KEY + HF_SECRET no ambiente.
+//    É o MESMO contrato de functions/api/generate-sprite.js — se um mudar, o
+//    outro tem que mudar junto (é regra copiada; ver footgun 9 do CLAUDE.md).
+//    Não precisa de login de navegador, então roda headless.
+// 2. CLI `@higgsfield/cli`: usado só quando as duas variáveis faltam. Exige
+//    `npx --yes @higgsfield/cli auth login` (interativo, uma vez).
 //
-// ⚠️ NÃO roda dentro do sandbox de agente: a política de rede do ambiente
-// responde 403 no CONNECT para higgsfield.ai. Rode na máquina do dono.
+// ⚠️ Rede: `platform.higgsfield.ai` precisa estar liberado na política de
+// egresso do ambiente. Sem isso, tudo aqui morre em 403 no CONNECT, e o erro
+// NÃO é de credencial. `--check` diz qual dos dois é.
 
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const exec = promisify(execFile);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT_DIR = path.join(ROOT, 'src/assets/decor');
+const HF_BASE = 'https://platform.higgsfield.ai';
 
 /** Peças. `box` é a caixa EXATA do slot — a arte é desenhada PARA ela, nada é
  *  redimensionado depois (ver DECOR_SLOTS em src/utils/petStage.ts). */
@@ -63,22 +72,109 @@ function buildPrompt({ art, box, flat }) {
   ].filter(Boolean).join(' ');
 }
 
+// ── Caminho 1: API de plataforma ───────────────────────────────────────────
+const hasPlatformCreds = Boolean(process.env.HF_API_KEY && process.env.HF_SECRET);
+const authHeader = () => `Key ${process.env.HF_API_KEY}:${process.env.HF_SECRET}`;
+
+/** Gera pela API e devolve a URL do resultado. Mesmo contrato de
+ *  functions/api/generate-sprite.js — mudou lá, muda aqui. */
+async function generateViaPlatform(prompt) {
+  // 1536x1536 é o tamanho conhecido-bom do endpoint (o mesmo que a Function de
+  // produção usa). O recorte para a caixa do slot é passo posterior, manual —
+  // ver "Depois de gerar" no brief. Não invente string de dimensão aqui: valor
+  // não suportado volta como erro de request e parece falha de credencial.
+  const res = await fetch(`${HF_BASE}/v1/text2image/soul`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: authHeader() },
+    body: JSON.stringify({
+      params: { prompt, width_and_height: '1536x1536', quality: '720p', batch_size: 1 },
+    }),
+  });
+  if (!res.ok) throw new Error(`create ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const jobSet = await res.json();
+  const jobSetId = jobSet.id || jobSet.job_set_id;
+  if (!jobSetId) throw new Error('resposta sem job set id');
+
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const st = await fetch(`${HF_BASE}/v1/job-sets/${jobSetId}`, { headers: { Authorization: authHeader() } });
+    if (!st.ok) continue;
+    const jobs = (await st.json()).jobs || [];
+    if (jobs.some(j => j.status === 'failed' || j.status === 'nsfw')) throw new Error('geração recusada (failed/nsfw)');
+    const done = jobs.find(j => j.status === 'completed');
+    if (done) {
+      const url = done.results?.raw?.url || done.results?.min?.url;
+      if (url) return url;
+      throw new Error('completou sem url');
+    }
+  }
+  throw new Error('timeout esperando o job');
+}
+
+/** A URL do resultado vive num CDN de storage cujo host é decidido em tempo de
+ *  execução — ele também precisa estar liberado na política de egresso, e é o
+ *  403 que costuma aparecer DEPOIS de a geração dar certo. */
+async function download(url, dest) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`download ${res.status} (host: ${new URL(url).host})`);
+  await writeFile(dest, Buffer.from(await res.arrayBuffer()));
+}
+
+// ── Caminho 2: CLI ─────────────────────────────────────────────────────────
+async function generateViaCli(prompt, out) {
+  await exec('npx', ['--yes', '@higgsfield/cli', 'generate', 'create',
+    '--prompt', prompt, '--wait', '--output', out], { maxBuffer: 32 * 1024 * 1024 });
+}
+
 async function generate(piece) {
   const prompt = buildPrompt(piece);
   const out = path.join(OUT_DIR, `${piece.id}.png`);
-  const { stdout } = await exec('npx', [
-    '--yes', '@higgsfield/cli', 'generate', 'create',
-    '--prompt', prompt,
-    '--wait',
-    '--output', out,
-  ], { maxBuffer: 32 * 1024 * 1024 });
-  return { out, stdout: stdout.trim() };
+  if (hasPlatformCreds) {
+    const url = await generateViaPlatform(prompt);
+    await download(url, out);
+  } else {
+    await generateViaCli(prompt, out);
+  }
+  return out;
 }
 
+// ── CLI deste script ───────────────────────────────────────────────────────
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const check = args.includes('--check');
 const only = args.filter(a => !a.startsWith('--'));
 const todo = only.length ? PIECES.filter(p => only.includes(p.id)) : PIECES;
+
+if (check) {
+  console.log(`credenciais de plataforma: ${hasPlatformCreds ? 'HF_API_KEY + HF_SECRET presentes' : 'AUSENTES (cairia no CLI)'}`);
+  try {
+    const res = await fetch(`${HF_BASE}/v1/job-sets/ping-connectivity-probe`, {
+      headers: hasPlatformCreds ? { Authorization: authHeader() } : {},
+    });
+    const body = (await res.text()).slice(0, 300);
+    // CUIDADO: "recebeu um HTTP de volta" NÃO prova que a rede passou. Num
+    // ambiente com allowlist de egresso, o filtro responde ele mesmo um 403
+    // com esta mensagem — que é indistinguível de um 403 de credencial se a
+    // gente olhar só o status. Esta checagem já mentiu uma vez dizendo "rede
+    // liberada" para um host bloqueado; por isso olha o CORPO.
+    if (res.status === 403 && /not in allowlist/i.test(body)) {
+      console.log(`rede até ${HF_BASE}: BLOQUEADA pela política de egresso do ambiente`);
+      console.log(`→ ${body}`);
+      console.log('→ NÃO é problema de credencial. Libere o host nas configurações de rede do ambiente.');
+      process.exit(1);
+    }
+    console.log(`rede até ${HF_BASE}: OK (HTTP ${res.status} — resposta da API)`);
+    if (res.status === 401 || res.status === 403) {
+      console.log(`→ rede liberada, mas a credencial foi recusada: ${body}`);
+      process.exit(1);
+    }
+  } catch (err) {
+    console.log(`rede até ${HF_BASE}: BLOQUEADA — ${err.message}`);
+    console.log('→ política de egresso do ambiente. Libere o host; não é problema de credencial.');
+    process.exit(1);
+  }
+  process.exit(0);
+}
 
 if (!todo.length) {
   console.error(`Nenhuma peça casou com: ${only.join(', ')}`);
@@ -92,11 +188,12 @@ if (dryRun) {
 }
 
 await mkdir(OUT_DIR, { recursive: true });
+console.log(`Gerando ${todo.length} peça(s) via ${hasPlatformCreds ? 'API de plataforma' : 'CLI'}…\n`);
 let ok = 0;
 for (const piece of todo) {
   process.stdout.write(`${piece.id} … `);
   try {
-    const { out } = await generate(piece);
+    const out = await generate(piece);
     console.log(`ok → ${path.relative(ROOT, out)}`);
     ok++;
   } catch (err) {
@@ -105,4 +202,4 @@ for (const piece of todo) {
   }
 }
 console.log(`\n${ok}/${todo.length} geradas em ${path.relative(ROOT, OUT_DIR)}/`);
-console.log('Próximo passo: recortar para a caixa exata do slot e conferir sobre um cenário claro E um escuro (ver docs/BRIEF-ARTE-DECORACAO.md).');
+if (ok) console.log('Próximo passo: recortar para a caixa exata do slot e conferir sobre um cenário claro E um escuro (ver docs/BRIEF-ARTE-DECORACAO.md).');
