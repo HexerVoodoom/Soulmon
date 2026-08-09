@@ -226,9 +226,9 @@ export function StatsPage({
             <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{totalXP}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span style={{ fontSize: '0.9rem' }}>🔥</span>
+            <span style={{ fontSize: '0.9rem' }}>⭐</span>
             <span className="text-xs font-semibold" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>
-              {isPt ? 'Sequência (dias)' : 'Streak (Days)'}
+              {isPt ? 'Dias perfeitos (total)' : 'Perfect days (total)'}
             </span>
             <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{streakDays}</span>
           </span>

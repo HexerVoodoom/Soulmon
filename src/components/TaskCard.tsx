@@ -39,23 +39,39 @@ export const TaskCard = memo(function TaskCard({
     >
       <div className="flex items-center gap-3">
         {/* Checkbox */}
-        <div
+        {/* Marcar como concluída é a AÇÃO CENTRAL do app. Era uma <div> com
+            onClick: não recebia foco de teclado nem era anunciada por leitor de
+            tela, ou seja, quem não usa o toque simplesmente não conseguia usar
+            o app. Agora é um <button> com role de checkbox. */}
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={completed}
+          aria-label={completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}
+          disabled={completed}
           onClick={() => { if (!completed) onToggleComplete(id); }}
-          className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all flex-shrink-0 ${
-            completed
-              ? 'bg-[#22c55e] border-[#22c55e] cursor-default'
-              : isWin98
-              ? 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
-              : 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
-          }`}
+          /* 44×44 de área de toque com o círculo de 28px desenhado dentro.
+             w-7/h-7 NÃO existem no index.css pré-compilado — o alvo vinha
+             saindo com 2px, praticamente invisível e impossível de acertar. */
+          style={{ width: 44, height: 44, padding: 8, background: 'none', border: 'none' }}
+          className="flex items-center justify-center flex-shrink-0 cursor-pointer"
         >
-          {completed && (
-            <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 14 14">
-              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="currentColor" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </div>
-
+          <span
+            aria-hidden="true"
+            style={{
+              width: 28, height: 28, borderRadius: 999, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              background: completed ? '#22c55e' : '#ffffff',
+              border: `1px solid ${completed ? '#22c55e' : '#d1d5dc'}`,
+            }}
+          >
+            {completed && (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </span>
+        </button>
         {/* Task content */}
         <div className="flex-1">
           <p
@@ -77,12 +93,16 @@ export const TaskCard = memo(function TaskCard({
         {/* Edit Button */}
         <button
           onClick={() => onEdit(id)}
-          className={`p-2 rounded-lg transition-all flex-shrink-0 ${
+          className={`flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${
             isWin98
               ? 'win98-button'
               : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
           }`}
           aria-label="Editar tarefa"
+          /* 44×44 é o alvo de toque mínimo confortável; o padding do Tailwind
+             dava 32×32. Inline porque min-w-11 não existe no index.css
+             pré-compilado (footgun 1). */
+          style={{ minWidth: 44, minHeight: 44 }}
         >
           <Edit2 size={16} strokeWidth={1.5} color={isWin98 ? '#000000' : undefined} />
         </button>

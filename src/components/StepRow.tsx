@@ -16,28 +16,43 @@ export function StepRow({ id, label, completed, onToggle, theme = 'default', dis
         ? `win98-step ${completed ? 'completed' : ''}`
         : completed ? 'bg-[#e8e8e8]' : 'bg-[#f3f4f6] hover:bg-gray-100'
     }`}>
-      {/* Custom Checkbox */}
-      <div
+      {/* Checkbox de etapa — <button> e não <div>, para receber foco de teclado
+          e ser anunciado por leitor de tela. */}
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={completed}
+        aria-label={`${completed ? 'Etapa concluída' : 'Marcar etapa como concluída'}: ${label}`}
+        disabled={disabled || completed}
         onClick={disabled || completed ? undefined : () => onToggle(id)}
-        className={`w-5 h-5 rounded-lg border flex items-center justify-center transition-all flex-shrink-0 ${
-          disabled
-            ? 'opacity-50 cursor-not-allowed border-[#d1d5dc]'
-            : completed
-            ? 'bg-[#22c55e] border-[#22c55e] cursor-default'
-            : isWin98
-            ? 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
-            : 'border-[#d1d5dc] bg-white hover:bg-gray-50 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] cursor-pointer'
-        }`}
+        /* 40×40 de toque com o quadradinho de 20px dentro (etapa é item
+           secundário e mora numa linha mais baixa). w-5/h-5 existem no CSS,
+           mas o alvo de 20px é pequeno demais para o dedo. */
+        style={{ width: 40, height: 40, padding: 10, background: 'none', border: 'none', opacity: disabled ? 0.5 : 1 }}
+        className="flex items-center justify-center flex-shrink-0"
       >
-        {completed && (
-          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 14 14">
-            <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="currentColor" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-      </div>
+        <span
+          aria-hidden="true"
+          style={{
+            width: 20, height: 20, borderRadius: 8, display: 'flex',
+            alignItems: 'center', justifyContent: 'center',
+            background: completed ? '#22c55e' : '#ffffff',
+            border: `1px solid ${completed ? '#22c55e' : '#d1d5dc'}`,
+          }}
+        >
+          {completed && (
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </span>
+      </button>
 
-      <label
+      {/* O rótulo também dispara: alvo de toque maior. Sem foco próprio para
+          não duplicar a parada de teclado — o botão acima já é o alvo. */}
+      <span
         onClick={disabled || completed ? undefined : () => onToggle(id)}
+        aria-hidden="true"
         className={`select-none flex-1 ${
           disabled ? 'cursor-not-allowed opacity-50' : completed ? 'cursor-default' : 'cursor-pointer'
         } ${
@@ -46,7 +61,7 @@ export function StepRow({ id, label, completed, onToggle, theme = 'default', dis
         style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
       >
         {label}
-      </label>
+      </span>
     </div>
   );
 }

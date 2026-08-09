@@ -5045,6 +5045,23 @@ html {
   user-select: none;
 }
 .sm-btn:hover { filter: brightness(1.05); }
+/* Foco visível: o design system tinha :hover, :active e :disabled, mas nenhum
+   estado de foco — navegar por teclado era invisível de ponta a ponta. */
+.sm-btn:focus-visible,
+.sm-btn-secondary:focus-visible,
+.sm-btn-gold:focus-visible,
+button:focus-visible,
+[role="checkbox"]:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--sm-primary);
+  outline-offset: 2px;
+}
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sm-primary) 45%, transparent);
+}
 .sm-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--sm-primary-deep); }
 .sm-btn:disabled { opacity: .45; box-shadow: none; transform: none; }
 

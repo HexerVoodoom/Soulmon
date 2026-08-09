@@ -4,15 +4,24 @@ interface FirstTaskCompletedPopupProps {
   isOpen: boolean;
   onClose: () => void;
   theme?: 'default' | 'win98' | 'glitch';
+  language?: 'pt-BR' | 'en-US';
 }
 
+/**
+ * Aparece na PRIMEIRA tarefa concluída na vida do jogador — o maior momento de
+ * reforço positivo do produto. Antes ele era em inglês e, em vez de celebrar,
+ * emitia uma condição ("complete TODAS as atividades do dia"), que além de tudo
+ * era falsa: a meta é min(cadastradas, requisito).
+ */
 export function FirstTaskCompletedPopup({ 
   isOpen, 
   onClose,
-  theme = 'default' 
+  theme = 'default',
+  language = 'en-US',
 }: FirstTaskCompletedPopupProps) {
   const isWin98 = theme === 'win98';
   const isGlitch = theme === 'glitch';
+  const isPt = language === 'pt-BR';
 
   if (!isOpen) return null;
 
@@ -44,7 +53,7 @@ export function FirstTaskCompletedPopup({
                 ? 'text-black hover:bg-gray-300'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
           }`}
-          aria-label="Close"
+          aria-label={isPt ? 'Fechar' : 'Close'}
         >
           <X size={20} />
         </button>
@@ -63,7 +72,7 @@ export function FirstTaskCompletedPopup({
             }`}
             style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold' }}
           >
-            First Task Complete!
+            {isPt ? 'Primeira tarefa feita!' : 'First task done!'}
           </h2>
 
           {/* Message */}
@@ -73,7 +82,9 @@ export function FirstTaskCompletedPopup({
             }`}
             style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
           >
-            Your partner grows as you grow. Complete all of the day's activities to keep them healthy and strong enough to evolve.
+            {isPt
+              ? 'Ele cresceu um pouquinho agora. É assim mesmo: uma coisa de cada vez, no seu ritmo.'
+              : 'It grew a little just now. That’s how it works — one thing at a time, at your pace.'}
           </p>
 
           {/* Button */}
@@ -88,7 +99,7 @@ export function FirstTaskCompletedPopup({
             }`}
             style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold' }}
           >
-            Got it!
+            {isPt ? 'Entendi' : 'Got it'}
           </button>
         </div>
       </div>

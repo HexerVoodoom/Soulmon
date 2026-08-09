@@ -132,6 +132,24 @@ seção 3.
 
 ## 2. Estado do produto
 
+- **Rodada de check-up com personas (ago/2026)** — teste dirigindo o app no
+  navegador com 5 personas do público (adolescente com TDAH que some e volta,
+  pai com 3 min/dia, perfeccionista após um dia ruim, usuário 58+ com foco em
+  acessibilidade, gamer buscando profundidade). Achado mais grave: **o checkbox
+  de concluir tarefa renderizava com 2px** — as classes `w-7`/`h-7` não existem
+  no `index.css` pré-compilado (footgun 1), então a ação central do app era
+  praticamente invisível e impossível de acertar no dedo. Agora é um
+  `<button role="checkbox">` de 44px com o círculo de 28px dentro, em tarefa,
+  atividade e etapa. Junto: foco visível em todo o design system (não havia
+  `:focus-visible` em lugar nenhum), notificações reescritas, e o popup da
+  primeira tarefa traduzido e reescrito.
+- **Notificações cobravam quem já tinha cumprido a meta.** `totalRequired` era o
+  requisito do estágio, não `min(cadastradas, requisito)` — um rookie com 2
+  atividades cumpria a própria meta e mesmo assim levava 3 avisos por dia
+  dizendo que faltavam tarefas. Corrigido para a mesma meta de
+  `computeDailyReset`. O aviso das 21h ("está preocupado! ainda dá tempo!") foi
+  removido, e o das 20h parou de prometer que "metade das tarefas" evita a
+  perda — o que era falso.
 - **Rodada de auditoria (ago/2026)** — quatro achados, todos corrigidos:
   (1) o **ritmo de cuidado era cego a atividades recorrentes**, porque
   `completedTasks` só recebe tarefas avulsas e `lastCompletedDate` some na

@@ -49,7 +49,6 @@ export function NotificationManager({
   const lastEveningWarnDate = useRef<string>('');
   const lastNudge10Date = useRef<string>('');
   const lastNudge16Date = useRef<string>('');
-  const lastNudge21Date = useRef<string>('');
   const lastGoodnightDate = useRef<string>('');
 
   // Push subscription — register/unregister when notifications toggle. Native
@@ -108,18 +107,21 @@ export function NotificationManager({
       if (hh !== 20 || mm !== 0) return;
       if (lastEveningWarnDate.current === today) return;
 
-      const halfRequired = Math.ceil(totalRequired / 2);
-      const atRisk = healthPoints <= 1 && healthPoints > 0 && completedSteps < halfRequired;
+      // Antes isto prometia que "metade das tarefas" evitava a perda, o que é
+      // falso (a perda zera só acima de 2/3 da meta), e chamava de "perigo" um
+      // dia que custa no máximo 1 coração. Avisa sem ameaçar e sem inventar
+      // número: quem quiser o detalhe abre o app.
+      const atRisk = healthPoints <= 1 && healthPoints > 0 && completedSteps < totalRequired;
 
       if (atRisk) {
         lastEveningWarnDate.current = today;
         const ispt = language === 'pt-BR';
         showNotification(
-          ispt ? '⚠️ Seu Soulmon está em perigo!' : '⚠️ Your Soulmon is in danger!',
+          ispt ? `${digimonName} está meio pra baixo` : `${digimonName} is a bit low`,
           {
             body: ispt
-              ? `Complete ao menos ${halfRequired} tarefa(s) hoje ou seu parceiro vai regredir amanhã!`
-              : `Complete at least ${halfRequired} task(s) today or your partner will degenerate tomorrow!`,
+              ? 'Se der, marque o que você já fez hoje. Se não der, amanhã ele ainda vai estar aqui.'
+              : "If you can, log what you did today. If not, it'll still be here tomorrow.",
             tag: 'hp-critical-evening',
           },
         );
@@ -148,13 +150,16 @@ export function NotificationManager({
     // Native Android: schedule via AlarmManager so they fire even with app closed
     if (Capacitor.isNativePlatform()) {
       const ispt = language === 'pt-BR';
-      const nudgeTitle = ispt ? `📋 ${digimonName} está te lembrando!` : `📋 ${digimonName} is reminding you!`;
-      const nudgeBody = ispt ? 'Você ainda tem tarefas pendentes hoje! Vamos lá! 💪' : 'You still have pending tasks today! Let\'s go! 💪';
+      const nudgeTitle = ispt ? `${digimonName} passou pra dizer oi` : `${digimonName} stopped by to say hi`;
+      const nudgeBody = ispt ? 'Tem algo do seu dia que você já fez?' : 'Anything from your day you already did?';
 
+      // O nudge das 21h saiu: a auditoria de carga do plano conclui que nada
+      // deve pedir uma quarta visita ao app, e cobrar tarefa na hora de dormir
+      // é o oposto de um companheiro.
       if (completedSteps < totalRequired) {
         DigiAlarm.scheduleAlarm({ id: 'pet-nudge-10', title: nudgeTitle, body: nudgeBody, scheduledTime: '10:00' }).catch(() => {});
         DigiAlarm.scheduleAlarm({ id: 'pet-nudge-16', title: nudgeTitle, body: nudgeBody, scheduledTime: '16:00' }).catch(() => {});
-        DigiAlarm.scheduleAlarm({ id: 'pet-nudge-21', title: nudgeTitle, body: nudgeBody, scheduledTime: '21:00' }).catch(() => {});
+        DigiAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
       } else {
         DigiAlarm.cancelAlarm({ id: 'pet-nudge-10' }).catch(() => {});
         DigiAlarm.cancelAlarm({ id: 'pet-nudge-16' }).catch(() => {});
@@ -163,8 +168,8 @@ export function NotificationManager({
 
       DigiAlarm.scheduleAlarm({
         id: 'pet-goodnight',
-        title: `🌙 ${digimonName} está desejando boa noite`,
-        body: ispt ? 'Durma bem! Até amanhã! 😴' : 'Sleep well! See you tomorrow! 😴',
+        title: ispt ? `🌙 ${digimonName} está indo dormir` : `🌙 ${digimonName} is going to sleep`,
+        body: ispt ? 'Boa noite. O que ficou pra trás fica pra amanhã. 😴' : "Good night. What's left can wait for tomorrow. 😴",
         scheduledTime: '22:00',
       }).catch(() => {});
     }
@@ -184,8 +189,8 @@ export function NotificationManager({
       if (hh === 10 && completedSteps < totalRequired && lastNudge10Date.current !== today) {
         lastNudge10Date.current = today;
         showNotification(
-          ispt ? `📋 ${digimonName} está te lembrando!` : `📋 ${digimonName} is reminding you!`,
-          { body: ispt ? 'Você ainda tem tarefas pendentes hoje! Vamos lá! 💪' : 'You still have pending tasks today! Let\'s go! 💪', tag: 'pet-nudge-10' },
+          ispt ? `${digimonName} passou pra dizer oi` : `${digimonName} stopped by to say hi`,
+          { body: ispt ? 'Tem algo do seu dia que você já fez?' : 'Anything from your day you already did?', tag: 'pet-nudge-10' },
         );
       }
 
@@ -193,17 +198,8 @@ export function NotificationManager({
       if (hh === 16 && completedSteps < totalRequired && lastNudge16Date.current !== today) {
         lastNudge16Date.current = today;
         showNotification(
-          ispt ? `📋 ${digimonName} está te lembrando!` : `📋 ${digimonName} is reminding you!`,
-          { body: ispt ? 'Suas tarefas ainda estão esperando! 🎯' : 'Your tasks are still waiting! 🎯', tag: 'pet-nudge-16' },
-        );
-      }
-
-      // 21:00 — incomplete tasks nudge (more urgent)
-      if (hh === 21 && completedSteps < totalRequired && lastNudge21Date.current !== today) {
-        lastNudge21Date.current = today;
-        showNotification(
-          ispt ? `⏰ ${digimonName} está preocupado!` : `⏰ ${digimonName} is worried!`,
-          { body: ispt ? 'Ainda dá tempo! Complete suas tarefas antes de dormir. 🌙' : 'Still time! Complete your tasks before bed. 🌙', tag: 'pet-nudge-21' },
+          ispt ? `${digimonName} pensou em você` : `${digimonName} thought of you`,
+          { body: ispt ? 'Se sobrar um minuto hoje, ele adora companhia.' : 'If you get a minute today, it loves the company.', tag: 'pet-nudge-16' },
         );
       }
 
@@ -211,8 +207,8 @@ export function NotificationManager({
       if (hh === 22 && lastGoodnightDate.current !== today) {
         lastGoodnightDate.current = today;
         showNotification(
-          `🌙 ${digimonName} está desejando boa noite`,
-          { body: ispt ? 'Durma bem! Até amanhã! 😴' : 'Sleep well! See you tomorrow! 😴', tag: 'pet-goodnight' },
+          ispt ? `🌙 ${digimonName} está indo dormir` : `🌙 ${digimonName} is going to sleep`,
+          { body: ispt ? 'Boa noite. O que ficou pra trás fica pra amanhã. 😴' : "Good night. What's left can wait for tomorrow. 😴", tag: 'pet-goodnight' },
         );
       }
     };

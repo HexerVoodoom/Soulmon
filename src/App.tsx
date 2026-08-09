@@ -2476,6 +2476,7 @@ export default function App() {
         showFirstTaskPopup={showFirstTaskPopup}
         onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
         theme={theme}
+        language={language}
       />
 
       {evolutionCeremony && (
@@ -2512,7 +2513,15 @@ export default function App() {
         healthPoints={gameState.healthPoints}
         maxHealthPoints={gameState.maxHealthPoints}
         completedSteps={dailyDone}
-        totalRequired={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
+        /* A meta é min(cadastradas, requisito do estágio) — a MESMA de
+           computeDailyReset. Passar o requisito puro fazia as notificações
+           cobrarem quem já tinha cumprido a própria meta: um rookie com 2
+           atividades tem meta 2, mas levava 3 cobranças por dia por "faltar"
+           até 4. O app nota justamente quem foi bem. */
+        totalRequired={Math.min(
+          gameState.activities.length + gameState.tasks.length,
+          FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required,
+        )}
       />
       {showDailyReport && gameState.lastDayReport && (
         <DailyReportModal

@@ -71,24 +71,34 @@ export const ActivityCard = memo(function ActivityCard({
         <div className="flex items-center gap-3 mb-2">
           {/* Checkbox - sempre presente quando NÃO tem steps */}
           {totalSteps === 0 && (
-            <div 
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={isCompleted}
+              aria-label={isCompleted ? 'Atividade concluída' : 'Marcar atividade como concluída'}
+              disabled={isDisabled || isCompleted}
               onClick={isDisabled || isCompleted ? undefined : () => onToggleCompletion?.(id)}
-              className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all flex-shrink-0 ${
-                isDisabled
-                  ? 'opacity-50 cursor-not-allowed border-[#d1d5dc]'
-                  : isCompleted
-                  ? 'bg-[#22c55e] border-[#22c55e] cursor-default'
-                  : isWin98
-                  ? 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
-                  : 'border-[#d1d5dc] bg-white hover:bg-gray-50 cursor-pointer'
-              }`}
+              /* 44×44 de toque, círculo de 28px dentro. As classes w-7/h-7 não
+                 existem no index.css pré-compilado e o alvo saía com 2px. */
+              style={{ width: 44, height: 44, padding: 8, background: 'none', border: 'none', opacity: isDisabled ? 0.5 : 1 }}
+              className="flex items-center justify-center flex-shrink-0"
             >
-              {isCompleted && (
-                <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 14 14">
-                  <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="currentColor" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              )}
-            </div>
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 28, height: 28, borderRadius: 999, display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  background: isCompleted ? '#22c55e' : '#ffffff',
+                  border: `1px solid ${isCompleted ? '#22c55e' : '#d1d5dc'}`,
+                }}
+              >
+                {isCompleted && (
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </span>
+            </button>
           )}
 
           {/* Nome da atividade */}
@@ -148,12 +158,15 @@ export const ActivityCard = memo(function ActivityCard({
           {/* Edit button */}
           <button
             onClick={() => onEditActivity(id)}
-            className={`p-2 rounded-lg transition-all flex-shrink-0 ${
+            className={`flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${
               isWin98 
                 ? 'win98-button'
                 : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
             }`}
             aria-label="Editar atividade"
+            /* 44×44: alvo de toque mínimo. Inline porque a classe utilitária
+               correspondente não existe no index.css pré-compilado. */
+            style={{ minWidth: 44, minHeight: 44 }}
           >
             <Edit2 size={16} strokeWidth={1.5} color={isWin98 ? '#000000' : undefined} />
           </button>
