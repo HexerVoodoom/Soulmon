@@ -7,8 +7,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: auditoria de segurança multi-agente (3 agentes, escopo
-dinheiro / auth+dados / IA+push+segredos).
+Última atualização: análise e direção do **mascote principal da franquia**
+(`docs/MASCOTE-PRINCIPAL.md`) — benchmark Pokémon/Digimon/Atlus/Tamagotchi +
+arquétipos junguianos do Persona.
 
 ---
 
@@ -220,6 +221,7 @@ decisão sua.
 | 🟠 | **Reroll por Créditos = resultado aleatório pago com dinheiro real** | `monetization.ts:76` + `oracle.ts` (`Math.random()`). Atenuante forte: todo pet gerado é mecanicamente equivalente — é identidade, não poder. Mas a Lei 15.211/2025 (ECA Digital) vale desde 17/03/2026, houve condenação de R$ 333M em jun/2026, e o Pokémon GO teve incubadoras removidas no Brasil. Pode bastar deixar explícito que os resultados são equivalentes. |
 | 🔴 | **Decidir sobre as keystores no histórico do git** | Se o repositório for público, ou se essas chaves ainda assinam algo na Play Store: rotacionar a chave de upload no Play Console e/ou limpar o histórico com `git filter-repo` (reescreve todos os commits, exige force push e quebra clones). Posso preparar o comando; a decisão de reescrever histórico é sua. |
 | 🟠 | **Ligar o `FIREBASE_PROJECT_ID`** | É o que fecha `save.js`, `billing.js` e `entitlements.js`. **Só depois** que `VITE_FIREBASE_*` estiver configurado e o build do desktop com login tiver saído — ligar antes derruba o login de todo mundo. |
+| 🟠 | **Nome do mascote principal + busca de marca registrada** | A análise e a direção estão fechadas em `docs/MASCOTE-PRINCIPAL.md` (recomendação: **Nima**). As buscas feitas não acharam colisão com personagem de Pokémon/Digimon, mas **isso não é busca de marca** — a verificação formal antes de uso comercial é sua. Sem nome escolhido, a arte e o teste de fronteira não têm o que travar. |
 
 ### 3.2 Lançamento
 
