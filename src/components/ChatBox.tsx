@@ -53,88 +53,69 @@ export function ChatBox({
   const getDigimonResponse = (userMessage: string): string => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const category = detectMessageCategory(userMessage);
+    // Respostas locais bilíngues. Antes só existiam em inglês, então TODO
+    // usuário brasileiro conversava com um pet que respondia noutro idioma.
+    const pt = language === 'pt-BR';
 
     switch (category) {
       case 'greeting':
-        return pick([
-          `Hello! How are you today?`,
-          `Hey! Ready to complete tasks?`,
-          `Hi! Good to see you!`,
-          `Hello, partner! Let's evolve together?`,
-          `What's up! All good?`,
-          `Yo! What are we doing today?`,
-          `Hey there! You showed up!`,
-        ]);
+        return pt
+          ? pick([`Oi! Como você tá hoje?`, `Ei! Que bom te ver!`, `Olá! Tudo bem por aí?`, `Oi, parceiro!`, `Opa! Você apareceu!`, `Eaí! Como foi o dia?`])
+          : pick([`Hello! How are you today?`, `Hey! Good to see you!`, `Hi! All good over there?`, `Hello, partner!`, `Yo! You showed up!`, `Hey! How was your day?`]);
       case 'farewell':
-        return pick([
-          `See you later! Come back soon!`,
-          `Goodbye! I'll be waiting!`,
-          `See you, partner!`,
-          `Later! Don't disappear!`,
-          `See you soon!`,
-          `Bye! Keep being amazing!`,
-        ]);
+        // Sem "não suma!": culpa por ir embora contradiz o perdão de ausência.
+        return pt
+          ? pick([`Até mais!`, `Tchau! Vou ficar por aqui.`, `Até logo, parceiro!`, `Vai com calma!`, `Volta quando der.`])
+          : pick([`See you!`, `Bye! I'll be around.`, `Later, partner!`, `Take it easy!`, `Come back whenever.`]);
       case 'feeling':
-        if (mood === 'happy')
-          return pick([`Very happy!`, `Amazing!`, `Feeling great!`, `So happy!`, `Radiant!`]);
-        if (mood === 'tired')
-          return pick([`A bit tired...`, `*yawn*`, `Need energy!`, `Let's do something?`]);
-        return pick([`I'm good!`, `Normal!`, `Chill!`, `Ready!`, `Always ready!`]);
+        if (mood === 'happy') return pt ? pick([`Muito bem!`, `Ótimo!`, `Tô radiante!`, `Feliz demais!`]) : pick([`Very happy!`, `Great!`, `Feeling amazing!`, `So happy!`]);
+        if (mood === 'tired') return pt ? pick([`Meio cansado...`, `*bocejo*`, `Preciso de energia!`]) : pick([`A bit tired...`, `*yawn*`, `Need some energy!`]);
+        return pt ? pick([`Tô bem!`, `Tranquilo!`, `De boa!`, `Por aqui, tudo certo.`]) : pick([`I'm good!`, `All chill!`, `Doing fine!`, `All good here.`]);
       case 'encouragement':
-        return pick([`Let's go!`, `Come on!`, `Yes!`, `Sure!`, `That's it!`, `You bet!`, `Let's!`]);
+        return pt ? pick([`Bora!`, `Isso!`, `Tamo junto!`, `Vai dar certo!`]) : pick([`Let's go!`, `That's it!`, `We're in this together!`, `It'll work out!`]);
       case 'compliment':
-        return pick([`Thank you!`, `How sweet!`, `Aww!`, `Thanks!`, `Hehe!`, `Thank you so much!`, `Awesome!`]);
+        return pt ? pick([`Obrigado!`, `Que fofo!`, `Aww!`, `Você também!`, `Hehe!`]) : pick([`Thank you!`, `How sweet!`, `Aww!`, `You too!`, `Hehe!`]);
       case 'affection':
-        return pick([`Love you!`, `Me too!`, `So much love!`, `I adore you!`, `Aww!`, `You're the best!`]);
+        return pt ? pick([`Também te amo!`, `Eu também!`, `Aww!`, `Você é o melhor!`]) : pick([`Love you too!`, `Me too!`, `Aww!`, `You're the best!`]);
       case 'food':
-        return pick([`Complete tasks!`, `Hungry for achievements!`, `Let's do something?`, `Tasks give energy!`, `Let's get energy!`, `Need tasks!`]);
+        // Antes respondia "Complete tasks!" — o pet transformava conversa
+        // casual em cobrança de produtividade.
+        return pt ? pick([`Também tô com fominha!`, `Comida é a melhor parte.`, `Adoro a hora do lanche.`, `Que fome, hein!`]) : pick([`I'm peckish too!`, `Food is the best part.`, `I love snack time.`, `Hungry, huh!`]);
       case 'evolution':
-        return pick([`I'll evolve soon!`, `Can't wait!`, `I feel it coming!`, `I'll get stronger!`, `It'll be amazing!`, `Let's do this!`]);
+        return pt ? pick([`Ainda não, mas tô chegando lá!`, `Mal posso esperar!`, `Sinto que tá vindo!`, `No tempo dele.`]) : pick([`Not yet, but I'm getting there!`, `Can't wait!`, `I feel it coming!`, `In its own time.`]);
       case 'name':
-        return pick([`I'm ${digimonName}!`, `${digimonName}!`, `I am ${digimonName}!`, `${digimonName}, at your service!`]);
+        return pt ? pick([`Sou o ${digimonName}!`, `${digimonName}!`, `${digimonName}, ao seu dispor!`]) : pick([`I'm ${digimonName}!`, `${digimonName}!`, `${digimonName}, at your service!`]);
       case 'task':
-        return pick([`Let's go!`, `Love tasks!`, `How many today?`, `Let's go!`, `Victory!`, `Let's!`]);
+        return pt ? pick([`Uma de cada vez.`, `No seu ritmo.`, `Adoro te ver fazendo as suas coisas.`, `O que der hoje, tá bom.`]) : pick([`One at a time.`, `At your pace.`, `I love watching you do your thing.`, `Whatever fits today is fine.`]);
       case 'time':
-        return pick([`New chance!`, `Eternal partnership!`, `Enjoy!`, `Great day!`, `Time flies!`, `New adventure!`]);
+        return pt ? pick([`Dia novo!`, `O tempo voa!`, `Aproveita!`, `Mais uma volta juntos.`]) : pick([`A new day!`, `Time flies!`, `Enjoy it!`, `Another round together.`]);
       case 'help':
-        return pick([`I'm here!`, `Together!`, `Count on me!`, `We'll solve it!`, `Don't give up!`, `Side by side!`]);
+        return pt ? pick([`Tô aqui.`, `A gente resolve.`, `Conta comigo.`, `Lado a lado.`]) : pick([`I'm here.`, `We'll figure it out.`, `Count on me.`, `Side by side.`]);
       case 'sad':
-        return pick([`It'll be okay!`, `Don't be sad!`, `You're strong!`, `I'm listening!`, `Cheer up!`, `Count on me!`]);
+        // O pool antigo respondia "Don't be sad!", "Cheer up!", "You're
+        // strong!" — invalidação direta do sentimento. O mesmo registro que
+        // utils/mood.test.ts já proíbe no resumo de humor.
+        return pt ? pick([`Tô aqui.`, `Pode falar.`, `Não precisa estar bem agora.`, `Fico com você.`, `Sinto muito.`]) : pick([`I'm here.`, `You can talk.`, `You don't have to be okay right now.`, `I'll stay with you.`, `I'm sorry.`]);
       case 'happy':
-        return pick([`I'm happy too!`, `Such energy!`, `Motivates me!`, `Keep going!`, `That's it!`, `I'm smiling too!`]);
+        return pt ? pick([`Fico feliz também!`, `Que energia boa!`, `Adorei ouvir isso.`, `Tô sorrindo aqui.`]) : pick([`That makes me happy too!`, `What good energy!`, `Love hearing that.`, `I'm smiling here.`]);
       case 'yes':
-        return pick([`That's it!`, `Great!`, `Good!`, `I knew it!`, `Wonderful!`, `Deal!`]);
+        return pt ? pick([`Isso!`, `Boa!`, `Sabia!`, `Combinado!`]) : pick([`That's it!`, `Nice!`, `I knew it!`, `Deal!`]);
       case 'no':
-        return pick([`Alright!`, `I understand!`, `No problem!`, `Okay!`, `Cool!`, `Got it!`]);
+        return pt ? pick([`Tudo bem!`, `Entendi.`, `Sem problema.`, `Beleza.`]) : pick([`That's alright!`, `I understand.`, `No problem.`, `Okay.`]);
       case 'question':
-        return pick([
-          `Good question!`,
-          `Let me think... Hmm...`,
-          `Interesting! Never thought about that!`,
-          `I don't know much about that, but I can learn!`,
-          `What do you think? Tell me!`,
-          `That's a tough one! Shall we find out together?`,
-        ]);
+        return pt
+          ? pick([`Boa pergunta!`, `Deixa eu pensar... hmm...`, `Nunca tinha pensado nisso!`, `Não sei muito disso, mas quero aprender!`, `O que você acha?`])
+          : pick([`Good question!`, `Let me think... hmm...`, `Never thought about that!`, `I don't know much about it, but I want to learn!`, `What do you think?`]);
       default: {
         if (Math.random() < 0.25) {
-          return pick([
-            `And you?`,
-            `Did you do tasks?`,
-            `What shall we do?`,
-            `Are you okay?`,
-            `Your goal today?`,
-            `Shall we evolve?`,
-            `Are you excited?`,
-            `Need help?`,
-            `Which activity?`,
-            `Are you happy?`,
-          ]);
+          // Sem "fez as tarefas?": o pet parava a conversa para interrogar.
+          return pt
+            ? pick([`E você?`, `Como tá indo?`, `Me conta mais.`, `Tá tudo bem?`, `Quer conversar?`])
+            : pick([`And you?`, `How's it going?`, `Tell me more.`, `Are you okay?`, `Want to talk?`]);
         }
-        if (mood === 'happy')
-          return pick([`Loving it!`, `Cool!`, `Awesome!`, `Hehe!`, `Wow!`, `Great!`, `Good!`, `Nice!`]);
-        if (mood === 'tired')
-          return pick([`Hmm...`, `Okay...`, `Zzz...`, `Slowly...`, `No energy...`]);
-        return pick([`I see!`, `Hmm...`, `Tell me more!`, `Cool!`, `I understand!`, `Listening!`, `Nice!`, `Got it!`, `Speak!`]);
+        if (mood === 'happy') return pt ? pick([`Adorei!`, `Legal!`, `Hehe!`, `Que bom!`, `Massa!`]) : pick([`Love it!`, `Cool!`, `Hehe!`, `That's good!`, `Nice!`]);
+        if (mood === 'tired') return pt ? pick([`Hmm...`, `Tá...`, `Zzz...`, `Devagarinho...`]) : pick([`Hmm...`, `Okay...`, `Zzz...`, `Slowly...`]);
+        return pt ? pick([`Entendi!`, `Hmm...`, `Me conta mais!`, `Tô ouvindo!`, `Saquei!`, `Fala aí!`]) : pick([`I see!`, `Hmm...`, `Tell me more!`, `I'm listening!`, `Got it!`, `Go on!`]);
       }
     }
   };
@@ -156,7 +137,7 @@ export function ChatBox({
 
       if (!response.ok) {
         if (import.meta.env.DEV) console.error('AI API error:', await response.text());
-        toast.warning('AI unavailable, using local responses');
+        toast.warning(language === 'pt-BR' ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses');
         return getDigimonResponse(userMessage);
       }
 
@@ -173,7 +154,7 @@ export function ChatBox({
         toast.warning('AI response timed out, using local responses');
       } else {
         if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
-        toast.warning('AI unavailable, using local responses');
+        toast.warning(language === 'pt-BR' ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses');
       }
       return getDigimonResponse(userMessage);
     } finally {
@@ -203,7 +184,7 @@ export function ChatBox({
       onSendMessage(response);
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error sending message:', error);
-      onSendMessage('Oops... something went wrong!');
+      onSendMessage(language === 'pt-BR' ? 'Ops... deu algo errado aqui!' : 'Oops... something went wrong!');
     } finally {
       setIsLoading(false);
     }
@@ -396,7 +377,8 @@ export function ChatBox({
                   : 'px-4 py-2 bg-neon-green text-white border-neon-green/80 hover:bg-gray-600 hover:text-white disabled:bg-gray-600 disabled:opacity-50 rounded border-2 disabled:border-gray-500 transition-all flex items-center gap-1.5'
             }
             style={{ fontFamily: 'Courier New, monospace', fontSize: '0.75rem', fontWeight: 'bold' }}
-            title="Send message"
+            title={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
+            aria-label={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
           >
             {isLoading ? (
               <div className={`w-4 h-4 border-2 ${isGlitch || isWin98 ? 'border-black' : 'border-white'} border-t-transparent rounded-full animate-spin`} />

@@ -18,6 +18,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      // A tela de erro é a única superfície que pode aparecer antes de o app
+      // montar, então lê o idioma direto do localStorage.
+      const isPt = (() => {
+        try { return (localStorage.getItem('digiapp-language') ?? 'pt-BR') === 'pt-BR'; }
+        catch { return true; }
+      })();
       return (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -25,9 +31,9 @@ export class ErrorBoundary extends Component<Props, State> {
           fontFamily: 'monospace', textAlign: 'center', background: '#1a1a2e', color: '#2BFF95'
         }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🦖</div>
-          <h2 style={{ margin: '0 0 8px' }}>Algo deu errado</h2>
+          <h2 style={{ margin: '0 0 8px' }}>{isPt ? 'Algo deu errado' : 'Something went wrong'}</h2>
           <p style={{ margin: '0 0 24px', color: '#aaa', fontSize: '14px' }}>
-            O Soulmon encontrou um erro inesperado.
+            {isPt ? 'O Soulmon encontrou um erro inesperado.' : 'Soulmon hit an unexpected error.'}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -37,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
               fontFamily: 'monospace', fontWeight: 'bold'
             }}
           >
-            Recarregar
+            {isPt ? 'Recarregar' : 'Reload'}
           </button>
           {import.meta.env.DEV && this.state.error && (
             <pre style={{

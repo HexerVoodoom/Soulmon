@@ -18,9 +18,11 @@ describe('detectMessageCategory', () => {
   it('detects feeling inquiry', () => {
     // Feeling pattern: how|are|you|doing|feeling|feel
     expect(detectMessageCategory('how are you doing')).toBe('feeling');
-    expect(detectMessageCategory('you good')).toBe('feeling');
-    // Note: many messages with 'you' or 'are' will match 'feeling' before other categories
     expect(detectMessageCategory('doing alright?')).toBe('feeling');
+    // 'you good' virava 'feeling' só porque a palavra solta "you" estava no
+    // padrão — o teste antigo documentava essa imprecisão como se fosse regra.
+    // Hoje mensagens ambíguas caem no default, que é o comportamento correto.
+    expect(detectMessageCategory('you good')).toBeNull();
   });
 
   it('detects encouragement (no feeling-pattern words)', () => {
@@ -45,6 +47,7 @@ describe('detectMessageCategory', () => {
     expect(detectMessageCategory('I am hungry')).toBe('food');
     expect(detectMessageCategory('need to eat')).toBe('food');
     expect(detectMessageCategory('I am weak')).toBe('food');
+    expect(detectMessageCategory('estou com fome')).toBe('food');
   });
 
   it('detects evolution (no feeling-pattern words)', () => {
@@ -56,7 +59,7 @@ describe('detectMessageCategory', () => {
   it('detects name inquiry (no feeling-pattern words)', () => {
     expect(detectMessageCategory('what is my name')).toBe('name');
     expect(detectMessageCategory('what is this called')).toBe('name');
-    expect(detectMessageCategory('tell me who this is')).toBe('name');
+    expect(detectMessageCategory('qual é o seu nome')).toBe('name');
   });
 
   it('detects task/activity keywords (no feeling-pattern words)', () => {
@@ -124,11 +127,28 @@ describe('detectMessageCategory', () => {
     expect(detectMessageCategory('SAD')).toBe('sad');
   });
 
-  it('feeling pattern takes priority over later patterns when words overlap', () => {
-    // 'you' and 'are' are in the feeling regex, so these match 'feeling' before other checks
-    expect(detectMessageCategory('I love you')).toBe('feeling');   // 'you' matches feeling
-    expect(detectMessageCategory('who are you')).toBe('feeling');  // 'are'+'you' match feeling
-    expect(detectMessageCategory('feeling down')).toBe('feeling'); // 'feeling' matches before 'sad'
-    expect(detectMessageCategory('I feel sad')).toBe('feeling');   // 'feel' matches before 'sad'
+  it('tristeza tem prioridade sobre o papo de status', () => {
+    // Este teste documentava o contrário: como "feel"/"you"/"are" estavam no
+    // padrão de 'feeling', quem escrevia "I feel sad" era classificado como
+    // pergunta de status e recebia a resposta errada. Num app cujo princípio é
+    // acolher quem está mal, essa era a classificação que mais importava acertar.
+    expect(detectMessageCategory('I feel sad')).toBe('sad');
+    expect(detectMessageCategory('feeling down')).toBe('sad');
+    expect(detectMessageCategory('tô muito triste hoje')).toBe('sad');
+    expect(detectMessageCategory('estou pra baixo')).toBe('sad');
+    // E cada intenção cai na sua categoria, em vez de tudo virar 'feeling'.
+    expect(detectMessageCategory('I love you')).toBe('affection');
+    expect(detectMessageCategory('who are you')).toBe('name');
+    expect(detectMessageCategory('como você está?')).toBe('feeling');
+  });
+
+  it('entende português', () => {
+    expect(detectMessageCategory('oi')).toBe('greeting');
+    expect(detectMessageCategory('bom dia')).toBe('greeting');
+    expect(detectMessageCategory('tchau')).toBe('farewell');
+    expect(detectMessageCategory('me ajuda')).toBe('help');
+    expect(detectMessageCategory('te amo')).toBe('affection');
+    expect(detectMessageCategory('você é muito fofo')).toBe('compliment');
+    expect(detectMessageCategory('quando você evolui?')).toBe('evolution');
   });
 });

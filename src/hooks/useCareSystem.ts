@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CareEvent, getCareMessage } from '../components/CareSystem';
+import { CareEvent } from '../components/CareSystem';
 import { showNotification } from '../utils/notifications';
 import type { Language } from '../utils/i18n';
 import { getStageLevel } from '../types/progression';
@@ -119,12 +119,9 @@ export function useCareSystem({
     isSleeping,
   ]);
 
-  const getCompanionMessageWithCare = (fallbackMessage: string): string => {
-    if (careEvent) {
-      return getCareMessage(careEvent.type);
-    }
-    return fallbackMessage;
-  };
-
-  return { getCompanionMessageWithCare };
+  // Antes isto trocava a fala do pet por "Complete a task!" sempre que havia
+  // cocô ou comida na tela — cobrança, e errada (o cocô é agendado por tempo,
+  // não por tarefa). O retorno nunca era renderizado, mas a função existia
+  // esperando para voltar a viver.
+  return {};
 }

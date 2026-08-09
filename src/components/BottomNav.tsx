@@ -50,7 +50,7 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
           {onResetOnboarding && (
             <button className="win98-menu-item" onClick={onResetOnboarding}>
               <RotateCcw size={14} />
-              {isPt ? 'Recomeçar' : 'Start over'}
+              {isPt ? 'Recomeçar' : 'Redo the ritual'}
             </button>
           )}
         </div>
@@ -160,7 +160,7 @@ export function BottomNav({ currentView, onNavigate, theme = 'default', onResetO
                   }}
                 >
                   <RotateCcw size={17} strokeWidth={2.2} color="#e0483e" />
-                  {isPt ? 'Recomeçar do zero' : 'Start over'}
+                  {isPt ? 'Refazer o ritual' : 'Redo the ritual'}
                 </button>
               )}
             </div>

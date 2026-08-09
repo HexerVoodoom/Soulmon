@@ -12,9 +12,11 @@ export interface CareEvent {
 interface CareSystemProps {
   careEvent: CareEvent | null;
   onCareEventComplete: () => void;
+  language?: 'pt-BR' | 'en-US';
 }
 
-export function CareSystem({ careEvent, onCareEventComplete }: CareSystemProps) {
+export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' }: CareSystemProps) {
+  const isPt = language === 'pt-BR';
   if (!careEvent || !careEvent.showSprite) {
     return null;
   }
@@ -33,22 +35,19 @@ export function CareSystem({ careEvent, onCareEventComplete }: CareSystemProps) 
     >
       <img
         src={isPoop ? poopSprite : foodSprite}
-        alt={careEvent.type}
+        alt={isPoop ? (isPt ? 'Cocô para limpar' : 'Poop to clean') : (isPt ? 'Comida' : 'Food')}
         onClick={isPoop ? undefined : onCareEventComplete}
         className={`w-12 h-12 object-contain transition-transform ${isPoop ? 'cursor-default' : 'cursor-pointer hover:scale-110 active:scale-95'}`}
-        title={isPoop ? '🚿 Use shower to clean' : 'Feed'}
+        title={isPoop ? (isPt ? '🚿 Dê um banho para limpar' : '🚿 Use the shower to clean') : (isPt ? 'Alimentar' : 'Feed')}
         style={{ imageRendering: 'pixelated' }}
       />
     </div>
   );
 }
 
-export function getCareMessage(type: 'poop' | 'food'): string {
-  if (type === 'poop') {
-    return "I need to go to the bathroom! 💩 Complete a task!";
-  }
-  return "I'm hungry! 🍖 Complete a task to feed me!";
-}
+// getCareMessage foi removida: devolvia "Complete a task!" como resposta a
+// fome e cocô — cobrança, e factualmente errada (o cocô é agendado por tempo).
+// Não era renderizada em lugar nenhum, mas voltaria a viver com uma linha.
 
 export function scheduleCareEvents(
   lastResetDate: string,

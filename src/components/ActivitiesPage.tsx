@@ -40,7 +40,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
   const tournamentCard = {
     key: 'tournament' as const, Icon: Trophy, iconColor: '#d9a441', iconBg: '#fbf1dd',
     title: isPt ? 'Torneio' : 'Tournament',
-    desc: isPt ? 'PvP assíncrono contra outros jogadores. Ranking mensal.' : 'Asynchronous PvP against other players. Monthly ranking.',
+    desc: isPt ? 'PvP assíncrono contra outros jogadores. Rodada toda semana.' : 'Asynchronous PvP against other players. A round every week.',
     pts: isPt ? '5 partidas/dia' : '5 matches/day',
     onClick: onOpenTournament,
   };
@@ -65,7 +65,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
     {
       key: 'rps', Icon: Scissors, iconColor: '#E69600', iconBg: '#fff4e0',
       title: isPt ? 'Pedra, Papel e Tesoura' : 'Rock, Paper, Scissors',
-      desc: isPt ? 'Clássico duelo contra o seu Soulmon. Melhor de 5.' : 'The classic duel against your Soulmon. First to 3.',
+      desc: isPt ? 'Clássico duelo contra o seu Soulmon. Primeiro a 3 vitórias.' : 'The classic duel against your Soulmon. First to 3.',
       pts: isPt ? '5 Bits por vitória' : '5 Bits per match win',
       onClick: () => setOpenGame('rps'),
     },

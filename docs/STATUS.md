@@ -132,6 +132,17 @@ seção 3.
 
 ## 2. Estado do produto
 
+- **Auditoria de tom e paridade executada (ago/2026).** O chat de fallback
+  passou a entender e responder em PT (antes um usuário escrevendo "tô triste"
+  recebia "Cheer up!" em inglês), e o pool de tristeza deixou de invalidar o
+  sentimento. O prompt da IA ganhou um piso de tom inegociável e passou a
+  chavear personalidade por NÍVEL — antes usava nomes do DigiApp, nenhum casava,
+  e todo pet falava como "guide and mentor". O tutorial ganhou fallback local de
+  tarefas (sem ele, uma falha de rede prendia o usuário numa tela obrigatória
+  sem nada selecionável) e parou de ensinar HP só pelo lado da punição.
+  `--sm-muted` subiu de 3,48:1 para ~4,6:1 de contraste. Confirmação do
+  "Recomeçar do zero" agora diz a verdade (não apaga progresso) e virou
+  "Refazer o ritual".
 - **Rodada de check-up com personas (ago/2026)** — teste dirigindo o app no
   navegador com 5 personas do público (adolescente com TDAH que some e volta,
   pai com 3 min/dia, perfeccionista após um dia ruim, usuário 58+ com foco em

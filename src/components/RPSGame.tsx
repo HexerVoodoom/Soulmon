@@ -92,7 +92,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       {/* Scoreboard */}
       <p style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 700 }}>
         {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
-        <span style={{ color: '#a996d1', fontSize: '0.75rem', fontWeight: 500 }}> ({isPt ? 'melhor de 5' : 'first to 3'})</span>
+        <span style={{ color: '#a996d1', fontSize: '0.75rem', fontWeight: 500 }}> ({isPt ? 'primeiro a 3' : 'first to 3'})</span>
       </p>
 
       {/* Arena */}

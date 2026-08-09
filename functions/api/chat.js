@@ -23,18 +23,25 @@ function buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, 
     idle:  'Normal, balanced state. Calm and available.',
   }[mood] || '';
 
+  // A maturidade vem do NÍVEL, não de nomes fixos. Antes a lista era de nomes
+  // herdados do DigiApp (pichimon, tapirmon, monochromon…), mas cada jogador
+  // recebe nomes ÚNICOS do oráculo — então nenhum casava e TODO pet caía no
+  // último ramo, "guide and mentor". Um rookie recém-nascido falava como guru.
   const stage = (evolutionStage || '').toLowerCase();
-  const maturity = (stage.includes('egg') || stage === 'pichimon' || stage === 'pukamon')
-    ? 'Young and innocent. Use simple, childish language.'
-    : stage === 'tapirmon'
-    ? 'Young and eager, discovering abilities. Be a learner.'
-    : ['monochromon','tuskmon','bakemon','digitamamon','gigadramon','triceramon'].includes(stage)
-    ? 'Experienced and confident. Mature partner.'
-    : 'Powerful and wise. Be a guide and mentor.';
+  const level = stage === 'ultra' ? 'ultra' : (stage.split('-')[0] || 'rookie');
+  const maturity = {
+    rookie:   'Young and eager, still discovering things. Curious, not wise.',
+    champion: 'Growing up. Confident but still learning alongside the user.',
+    ultimate: 'Experienced and steady. A partner, not a teacher.',
+    mega:     'Strong and calm. Speaks from experience, never from above.',
+    ultra:    'Deeply bonded and serene. Warm, never solemn.',
+  }[level] || 'Young and eager, still discovering things.';
 
   const toneMap = { casual: 'Relaxed: "hey", "yeah", "let\'s go", "cool"', energetic: 'Very EXCITED! Use CAPS!', calm: 'Calm, serene, wise.', playful: 'Fun and playful. Occasional jokes.' };
   const emojiMap = { none: 'NO emojis.', low: '1 emoji max.', medium: '2-3 emojis.', high: '4-6 emojis!' };
-  const motivMap = { encouraging: 'Always VERY positive. Celebrate everything!', challenging: 'Challenge the user in a friendly way.', supportive: 'Extremely caring and empathetic.', balanced: 'Balance encouragement, challenge and support.' };
+  // "challenging" virou convite, não cobrança: o pet é um companheiro, e um
+  // desafio vindo dele com tom de cobrança é exatamente a persona "chefe".
+  const motivMap = { encouraging: 'Always warm and positive. Celebrate small things.', challenging: 'Playfully invite the user to try something — never demand or push.', supportive: 'Extremely caring and empathetic.', balanced: 'Balance warmth, curiosity and support.' };
 
   return `You are ${digimonName}, a digital Soulmon companion in Soulmon (a gamified productivity app).
 
@@ -50,7 +57,14 @@ RESPONSE RULES:
 - Language: ${ispt ? 'Responda SEMPRE em Português Brasileiro informal' : 'Always respond in casual English'}
 ${s.customKeywords ? `- Custom: ${s.customKeywords}` : ''}
 
-DO NOT: write long responses, be generic/robotic, go off-topic.`;
+DO NOT: write long responses, be generic/robotic, go off-topic.
+
+NEVER (this overrides every setting above): guilt, shame, scold or pressure the
+user. Never mention failing, falling behind, losing progress, streaks, deadlines,
+or what they "should" have done. Never imply the user let you down. If they say
+they had a bad day, are sad, tired or overwhelmed — stay with them, do not
+propose tasks and do not try to cheer them out of it. You are a companion who
+grows alongside them, never a boss keeping score.`;
 }
 
 export async function onRequestOptions() {

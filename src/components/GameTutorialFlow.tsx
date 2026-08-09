@@ -34,8 +34,8 @@ const PAGES: TutorialPage[] = [
   {
     Icon: Heart,
     titlePt: 'Corações (HP)', titleEn: 'Hearts (HP)',
-    bodyPt: 'Se você não cumprir suas tarefas do dia, seu Soulmon perde corações na virada da noite. Esfregue nele com carinho ou dê um Coraçãozinho pra curar.',
-    bodyEn: "If you don't finish your tasks for the day, your Soulmon loses hearts overnight. Rub it gently or give it a Little Heart to heal.",
+    bodyPt: 'Nos dias em que não der, ele fica meio pra baixo — no máximo um coração, nunca mais que isso. Esfregue nele com carinho, ou marque depois o que você fez: os corações voltam. Se você sumir por uns dias, voltar não custa nada.',
+    bodyEn: "On the days you can't, it gets a little low — at most one heart, never more. Rub it gently, or log later what you did: the hearts come back. And if you disappear for a few days, coming back costs nothing.",
   },
   {
     Icon: Utensils,
@@ -52,8 +52,8 @@ const PAGES: TutorialPage[] = [
   {
     Icon: ShowerHead,
     titlePt: 'Cocô, banho & sono', titleEn: 'Poop, bath & sleep',
-    bodyPt: 'De vez em quando aparece um cocôzinho — limpe no banho ou os corações começam a drenar. Dormir pausa tudo isso até você acordá-lo.',
-    bodyEn: "Every so often a little poop shows up — clean it in the bath or hearts start draining. Sleep pauses all of that until you wake it up.",
+    bodyPt: 'De vez em quando aparece um cocôzinho — dê um banho quando aparecer — ele fica bem melhor limpinho. Dormir pausa tudo isso até você acordá-lo.',
+    bodyEn: "Every so often a little poop shows up — give it a bath when it does, it feels much better clean. Sleep pauses all of that until you wake it up.",
   },
   {
     Icon: ShoppingBag,
@@ -64,6 +64,31 @@ const PAGES: TutorialPage[] = [
 ];
 
 const CATEGORIES: ActivityCategory[] = ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'];
+
+/**
+ * Tarefas locais para quando a IA não responde. Todas são versões de dois
+ * minutos de propósito: o gargalo do modelo de Fogg é Habilidade, não
+ * Motivação, e a primeira tarefa da vida do usuário é onde isso mais importa.
+ */
+const FALLBACK_BY_CATEGORY: Record<ActivityCategory, { pt: string; en: string }> = {
+  Health:     { pt: 'Beber um copo de água', en: 'Drink a glass of water' },
+  Creativity: { pt: 'Rabiscar por 2 minutos', en: 'Doodle for 2 minutes' },
+  Discipline: { pt: 'Arrumar a cama', en: 'Make the bed' },
+  Study:      { pt: 'Ler 1 página', en: 'Read 1 page' },
+  Work:       { pt: 'Escrever a primeira linha', en: 'Write the first line' },
+  Social:     { pt: 'Mandar uma mensagem pra alguém', en: 'Text someone' },
+  Wellness:   { pt: 'Respirar fundo 3 vezes', en: 'Take 3 deep breaths' },
+  Fitness:    { pt: 'Alongar por 2 minutos', en: 'Stretch for 2 minutes' },
+};
+
+function fallbackTasks(cats: ActivityCategory[], isPt: boolean): SuggestedTask[] {
+  const usadas = cats.length > 0 ? cats : (['Health', 'Study', 'Wellness'] as ActivityCategory[]);
+  return usadas.slice(0, 4).map(category => ({
+    name: isPt ? FALLBACK_BY_CATEGORY[category].pt : FALLBACK_BY_CATEGORY[category].en,
+    category,
+    emoji: CATEGORY_ICONS[category] ?? '✨',
+  }));
+}
 
 interface GameTutorialFlowProps {
   language: Language;
@@ -122,7 +147,12 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
     setLoading(true);
     setSearched(true);
     const result = await suggestTasks(goalText.trim(), [...selectedCats], language);
-    setSuggestions(result);
+    // A IA devolve [] em QUALQUER falha (rede, provedor fora, resposta
+    // inválida). Sem um fallback local, quem digitasse só categorias ficava
+    // numa tela sem nada selecionável — e o passo é obrigatório, então não
+    // havia como entrar no app. Isso quebrava o princípio de o jogo continuar
+    // íntegro com o backend morto.
+    setSuggestions(result.length > 0 ? result : fallbackTasks([...selectedCats], isPt));
     setLoading(false);
     // Reseta seleção a cada nova geração — evita "vazamento" de seleções de
     // uma rodada anterior que não existem mais nesta lista.

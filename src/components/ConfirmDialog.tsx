@@ -7,9 +7,12 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   title: string;
   message: string;
+  /** Rótulos dos botões. Sem eles o diálogo saía em inglês fixo. */
+  confirmLabel?: string;
+  cancelLabel?: string;
 }
 
-export function ConfirmDialog({ isOpen, onClose, onConfirm, title, message }: ConfirmDialogProps) {
+export function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, confirmLabel, cancelLabel }: ConfirmDialogProps) {
   if (!isOpen) return null;
 
   return (

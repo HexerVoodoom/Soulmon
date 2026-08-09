@@ -368,7 +368,7 @@ export default function App() {
     prevInventoryTotalRef.current = total;
   }, [gameState.foodInventory]);
 
-  const { getCompanionMessageWithCare: _careMessageFn } = useCareSystem({
+  useCareSystem({
     gameState,
     careEvent,
     setCareEvent,
@@ -1997,7 +1997,7 @@ export default function App() {
               <CompanionHUD
                 companionMood={getCompanionMood()}
                 energyLevel={progress}
-                message={_careMessageFn(getCompanionMessage())}
+                message={getCompanionMessage()}
                 currentStage={getCurrentStageName()}
                 evolutionStage={gameState.evolutionStage}
                 eggType={gameState.eggType}
@@ -2443,8 +2443,16 @@ export default function App() {
         isOpen={resetOnboardingOpen}
         onClose={() => setResetOnboardingOpen(false)}
         onConfirm={handleConfirmResetOnboarding}
-        title="Reset Onboarding"
-        message="This will clear your name and egg choice. Continue?"
+        /* O botão dizia "Recomeçar do zero", o diálogo falava em inglês de
+           "egg choice" (estágio que não existe mais) e o código só limpa nome e
+           linha de sprite — o save de jogo continua inteiro. Os três agora
+           dizem a mesma coisa, e ela é verdade. */
+        title={language === 'pt-BR' ? 'Refazer o ritual' : 'Redo the ritual'}
+        message={language === 'pt-BR'
+          ? 'Você vai responder o ritual de novo e escolher seu nome outra vez. Seu Soulmon, suas atividades, seus Bits e todo o progresso continuam como estão.'
+          : 'You will go through the ritual again and pick your name once more. Your Soulmon, activities, Bits and all progress stay exactly as they are.'}
+        confirmLabel={language === 'pt-BR' ? 'Refazer' : 'Redo'}
+        cancelLabel={language === 'pt-BR' ? 'Cancelar' : 'Cancel'}
       />
 
       {settingsOpen && (

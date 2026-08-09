@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Swords, Trophy, Loader2 } from 'lucide-react';
 import { getSpriteForStage } from '../utils/sprites';
 import { getStageLevel } from '../types/progression';
@@ -236,8 +237,13 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             <h2 style={{ fontSize: 24, fontWeight: 800, margin: '6px 0 14px', color: result.won ? '#3fae5a' : '#d9534f' }}>
               {result.myScore} × {result.oppScore}
             </h2>
-            <p style={{ fontSize: 13, color: 'var(--sm-ink)', margin: '0 0 18px' }}>
+            <p style={{ fontSize: 13, color: 'var(--sm-ink)', margin: '0 0 6px' }}>
               {isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`} · {result.points} pts
+            </p>
+            {/* Perder também rende Emblemas, mas a UI nunca dizia isso — a
+                partida virava tempo perdido aos olhos de quem perdeu. */}
+            <p style={{ fontSize: 14, fontWeight: 800, margin: '0 0 18px', ...emblemStyle }}>
+              +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS} {isPt ? 'Emblemas' : 'Emblems'}
             </p>
             <button className="sm-btn" style={{ width: '100%' }} onClick={() => { setResult(null); loadOpponents(); }}>
               {isPt ? 'Continuar' : 'Continue'}
