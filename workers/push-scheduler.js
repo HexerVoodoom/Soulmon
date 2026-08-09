@@ -20,13 +20,15 @@ import { getFcmAccessToken, sendFcmPush } from './fcm.js';
 const VAPID_PUBLIC_KEY = 'BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY';
 const CONTACT = 'mailto:contact@digiapp.app';
 
-function getNotification(brtHour, digimonName, language) {
+function getNotification(brtHour, petName, language) {
   const ispt = language === 'pt-BR';
-  const name = digimonName || 'DigiMon';
+  const name = petName || 'Soulmon';
 
   if (brtHour === 22) {
     return {
-      title: `🌙 ${name} está desejando boa noite`,
+      // O título vinha em PT para todo mundo — quem escolheu inglês recebia
+      // "está desejando boa noite" com o corpo em inglês logo abaixo.
+      title: ispt ? `🌙 ${name} está desejando boa noite` : `🌙 ${name} is saying goodnight`,
       body: ispt ? 'Durma bem! Até amanhã 😴' : 'Sleep well! See you tomorrow 😴',
       tag: 'pet-goodnight',
     };
@@ -109,7 +111,7 @@ export default {
           await env.PUSH_SUBSCRIPTIONS.delete(name);
           return 'removed';
         }
-        const notif = getNotification(brtHour, sub.digimonName, sub.language);
+        const notif = getNotification(brtHour, sub.petName || sub.digimonName, sub.language);
         const result = await sendWebPush(
           { endpoint: sub.endpoint, keys: sub.keys },
           notif,
@@ -137,7 +139,7 @@ export default {
     if (serviceAccount) {
       const accessToken = await getFcmAccessToken(serviceAccount);
       await drainPrefix(env, 'fcm:', async (sub, name) => {
-        const notif = getNotification(brtHour, sub.digimonName, sub.language);
+        const notif = getNotification(brtHour, sub.petName || sub.digimonName, sub.language);
         const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
         if (result.ok) return 'sent';
         if (result.error === 'UNREGISTERED') {

@@ -6,12 +6,16 @@ export async function handleChatRequest(c: Context) {
     const body = await c.req.json();
     const { 
       message, 
+      // `digimonName` é o nome antigo do campo — clientes já publicados ainda
+      // mandam ele. Aceita os dois enquanto houver APK velho na rua.
+      petName: petNameRaw, 
       digimonName, 
       mood, 
       evolutionStage, 
       dominantBranch,
       aiSettings 
     } = body;
+    const petName = petNameRaw || digimonName;
     
     // Default AI settings if not provided
     const settings = aiSettings || {
@@ -91,27 +95,19 @@ export async function handleChatRequest(c: Context) {
     };
 
     const getStageMaturity = () => {
-      const stage = evolutionStage.toLowerCase();
-      // In-training / baby forms across all three lines
-      const young = ['pichimon', 'pukamon', 'chicomon', 'chibimon', 'yukimibotamon', 'nyaromon'];
-      // Rookies
-      const rookies = ['tapirmon', 'veemon', 'plotmon'];
-      // Champions + Ultimates across all lines
-      const experienced = [
-        'monochromon', 'tuskmon', 'bakemon', 'gigadramon', 'triceramon', 'digitamamon',
-        'exveemon', 'veedramon', 'flamedramon', 'paildramon', 'aeroveedramon', 'raidramon',
-        'gatomon', 'gatomon-black', 'mikemon', 'angewomon', 'ladydevimon', 'nefertimon',
-      ];
-
-      if (stage.includes('egg') || young.includes(stage)) {
-        return 'You are young and innocent, curious about the world. Use simple and childish language.';
-      } else if (rookies.includes(stage)) {
-        return 'You are young and excited, starting to discover your abilities. Be eager and a learner.';
-      } else if (experienced.includes(stage)) {
-        return 'You are experienced and confident. Be a mature and balanced partner.';
-      } else {
-        // Megas + Ultras
-        return 'You are powerful and wise, with a deep connection with your partner. Be a guide and mentor.';
+      // O nível vem do PREFIXO do id ('champion-virus' → champion), como em
+      // src/types/progression.ts. Antes eram listas de espécies fixas: nenhum id
+      // da árvore atual batia, então TODO pet caía no último ramo e falava como
+      // "guide and mentor" — inclusive um rookie recém-nascido.
+      const level = evolutionStage.toLowerCase().split('-')[0];
+      switch (level) {
+        case 'rookie':
+          return 'You are young and excited, starting to discover your abilities. Be eager and a learner.';
+        case 'champion':
+        case 'ultimate':
+          return 'You are experienced and confident. Be a mature and balanced partner.';
+        default:
+          return 'You are powerful and wise, with a deep connection with your partner. Be a guide and mentor.';
       }
     };
 
@@ -167,7 +163,7 @@ export async function handleChatRequest(c: Context) {
     const maxTokens = 120; // Fixed at 120 characters for optimal balance
 
     // Enhanced system prompt for the Soulmon with dynamic personality
-    const systemPrompt = `You are ${digimonName}, a digital companion (Soulmon) in a gamified productivity app called Soulmon.
+    const systemPrompt = `You are ${petName}, a digital companion (Soulmon) in a gamified productivity app called Soulmon.
 
 ═══════════════════════════════════════
 🎭 YOUR PERSONALITY
@@ -227,7 +223,7 @@ ESSENTIAL RULES:
 
 ═══════════════════════════════════════
 
-Now respond as ${digimonName} would to the user's message, being true to your ${dominantBranch} personality and your ${mood} mood.`;
+Now respond as ${petName} would to the user's message, being true to your ${dominantBranch} personality and your ${mood} mood.`;
 
 
     // Call Groq API

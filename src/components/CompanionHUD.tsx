@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import { aiFetch } from '../utils/aiClient';
-import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
+import { getSpriteForStage } from '../utils/sprites';
 import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { type SlotId } from '../utils/petStage';
@@ -42,7 +42,7 @@ interface CompanionHUDProps {
   digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
   requiredDays?: number; // Dias necessários para evolução
-  onDigivolve?: () => void;
+  onEvolve?: () => void;
   /** Evolução manual: botão sobre o pet quando a barra está cheia. */
   canEvolve?: boolean;
   onEvolveRequest?: () => void;
@@ -95,7 +95,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   digivolutionSegmentsNeeded,
   perfectDays = 0,
   requiredDays = 1,
-  onDigivolve,
+  onEvolve,
   canEvolve = false,
   onEvolveRequest,
   careEvent,
@@ -238,7 +238,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   }, [healthPoints, maxHealthPoints]);
 
 
-  const isEarlyStage = ['digiegg', 'baby-i'].includes(getStageLevel(evolutionStage));
 
   // Walking animation
   useEffect(() => {
@@ -317,7 +316,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       const contextMsg = p.language === 'pt-BR'
         ? `[ALEATÓRIO] Diga algo espontâneo em primeira pessoa como ${p.currentStage}. Máx 12 palavras. Sem emojis.`
         : `[RANDOM] Say something spontaneous in first person as ${p.currentStage}. Max 12 words. No emojis.`;
-      aiFetch('/api/chat', { message: contextMsg, digimonName: p.currentStage, mood: p.companionMood, evolutionStage: p.evolutionStage, dominantBranch: p.dominantBranch, language: p.language, aiSettings: p.aiSettings })
+      aiFetch('/api/chat', { message: contextMsg, petName: p.currentStage, mood: p.companionMood, evolutionStage: p.evolutionStage, dominantBranch: p.dominantBranch, language: p.language, aiSettings: p.aiSettings })
         .then(r => r.ok ? r.json() : null)
         .then(data => { if (data?.response) speak(data.response, 5000); })
         .catch(() => {});
@@ -335,7 +334,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   };
 
   // Handle Soulmon click — show preset phrase immediately, then fire API update
-  const handleDigimonClick = () => {
+  const handlePetClick = () => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const ratio = maxEnergy > 0 ? energyPoints / maxEnergy : 0;
     const hpRatio = maxHealthPoints > 0 ? healthPoints / maxHealthPoints : 0;
@@ -357,43 +356,19 @@ export const CompanionHUD = memo(function CompanionHUD({
       ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
       : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
 
-    aiFetch('/api/chat', { message: contextMsg, digimonName: currentStage, mood: companionMood, evolutionStage, dominantBranch, language, aiSettings })
+    aiFetch('/api/chat', { message: contextMsg, petName: currentStage, mood: companionMood, evolutionStage, dominantBranch, language, aiSettings })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.response) speak(data.response, 5000); })
       .catch(() => {});
   };
 
-  const sprite = getSpriteForStage(evolutionStage, eggType, demoCharacterId);
+  const sprite = getSpriteForStage(evolutionStage, demoCharacterId);
 
 
-  // Check if sprite should be flipped when walking left
-  const shouldFlipOnLeft = () => {
-    const noFlipStages = ['digiegg']; // Stages that look wrong when flipped
-    return !noFlipStages.includes(evolutionStage.toLowerCase());
-  };
-
-  // Check if sprite is flipped by default and needs correction
-  const isFlippedByDefault = () => {
-    return LEFT_FACING_STAGES.includes(evolutionStage.toLowerCase());
-  };
-
-  // Get the correct horizontal flip for the sprite
-  const getHorizontalFlip = () => {
-    const stage = evolutionStage.toLowerCase();
-    
-    // Pichimon is flipped by default, so we need to invert the logic
-    if (isFlippedByDefault()) {
-      return direction === 'right' ? 'scaleX(-1)' : 'scaleX(1)';
-    }
-    
-    // DigiEgg never flips
-    if (stage === 'digiegg') {
-      return 'scaleX(1)';
-    }
-    
-    // All other sprites flip when going left
-    return direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)';
-  };
+  // Sprites da nossa arte são desenhados olhando pra DIREITA — a única regra
+  // de flip que restou é virar quando o pet anda pra esquerda. (Antes havia
+  // exceções por espécie, todas de sprites emprestados que saíram do bundle.)
+  const getHorizontalFlip = () => (direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)');
 
   // Get squash/stretch scale (10% total variation: 90% to 100%)
   const getSquashScale = () => {
@@ -567,13 +542,13 @@ export const CompanionHUD = memo(function CompanionHUD({
   };
 
   // Render segmented Digivolution bar using perfect days
-  const renderDigivolutionBar = () => {
+  const renderEvolutionBar = () => {
     const totalSegments = requiredDays;
     const filledSegments = perfectDays;
     const isPt = language === 'pt-BR';
 
     return (
-      <div title={isPt ? `${filledSegments}/${totalSegments} dias perfeitos para evolução` : `${filledSegments}/${totalSegments} perfect days to digivolve`}>
+      <div title={isPt ? `${filledSegments}/${totalSegments} dias perfeitos para evolução` : `${filledSegments}/${totalSegments} perfect days to evolve`}>
         <div className="flex gap-[2px]">
           {Array.from({ length: totalSegments }, (_, i) => (
             <div
@@ -649,8 +624,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         {!isGlitch && !isWin98 && (
           <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 56 }}>
             {([
-              !isEarlyStage && { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-              !isEarlyStage && { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+              { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+              { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
               { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
             ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
               <button
@@ -804,7 +779,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 transition: 'left 0.1s ease-linear, transform 0.1s ease-linear',
                 touchAction: 'none', // let the rub gesture own the pointer
               }}
-              onClick={() => { if (rubMovedRef.current) { rubMovedRef.current = false; return; } handleDigimonClick(); }}
+              onClick={() => { if (rubMovedRef.current) { rubMovedRef.current = false; return; } handlePetClick(); }}
               onPointerDown={startRub}
               onPointerMove={moveRub}
               onPointerUp={endRub}
@@ -930,8 +905,8 @@ export const CompanionHUD = memo(function CompanionHUD({
           {(isWin98 || isGlitch) && (
             <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
               {([
-                !isEarlyStage && { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-                !isEarlyStage && { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+                { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+                { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
                 { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
               ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
                 <button
@@ -1006,7 +981,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           que sempre pintava por cima de tudo, modais inclusive. */}
       <div className={isWin98 || isGlitch ? '' : 'sm-chat-fixed'}>
         <ChatBox
-          digimonName={currentStage}
+          petName={currentStage}
           mood={companionMood}
           evolutionStage={evolutionStage}
           dominantBranch={dominantBranch}

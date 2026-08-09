@@ -46,7 +46,7 @@ export const PREMADE_CHARACTERS: PremadeCharacter[] = [
  *  tela de escolha do onboarding. getSpriteForStage já sabe resolver isso
  *  quando um demoCharacterId é passado (ver utils/sprites.ts). */
 export function getDemoSprite(characterId: string, stage: string): string {
-  return getSpriteForStage(stage, 'tapirmon', characterId);
+  return getSpriteForStage(stage, characterId);
 }
 
 const DEMO_BRANCH_ALIGNMENTS: AlignmentId[] = ['poder', 'harmonia', 'benevolencia'];

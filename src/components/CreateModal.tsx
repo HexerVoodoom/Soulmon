@@ -56,7 +56,7 @@ const CATEGORIES: ActivityCategory[] = [
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', evolutionStage = 'digiegg', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false, onUnlock }: CreateModalProps) {
+export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false, onUnlock }: CreateModalProps) {
   const isWin98 = theme === 'win98';
   const isPt = language === 'pt-BR';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);

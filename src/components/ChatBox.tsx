@@ -7,7 +7,7 @@ import { type Language } from '../utils/i18n';
 import { detectMessageCategory } from '../utils/chatKeywords';
 
 interface ChatBoxProps {
-  digimonName: string;
+  petName: string;
   mood: 'idle' | 'happy' | 'tired';
   evolutionStage: string;
   dominantBranch?: string;
@@ -25,7 +25,7 @@ interface ChatBoxProps {
 }
 
 export function ChatBox({
-  digimonName,
+  petName,
   mood,
   evolutionStage,
   dominantBranch,
@@ -50,7 +50,7 @@ export function ChatBox({
   const [randomName] = useState(`chat-${Math.random().toString(36).substring(7)}`);
 
   // Soulmon responses based on keywords and mood
-  const getDigimonResponse = (userMessage: string): string => {
+  const getPetResponse = (userMessage: string): string => {
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const category = detectMessageCategory(userMessage);
     // Respostas locais bilíngues. Antes só existiam em inglês, então TODO
@@ -84,7 +84,7 @@ export function ChatBox({
       case 'evolution':
         return pt ? pick([`Ainda não, mas tô chegando lá!`, `Mal posso esperar!`, `Sinto que tá vindo!`, `No tempo dele.`]) : pick([`Not yet, but I'm getting there!`, `Can't wait!`, `I feel it coming!`, `In its own time.`]);
       case 'name':
-        return pt ? pick([`Sou o ${digimonName}!`, `${digimonName}!`, `${digimonName}, ao seu dispor!`]) : pick([`I'm ${digimonName}!`, `${digimonName}!`, `${digimonName}, at your service!`]);
+        return pt ? pick([`Sou o ${petName}!`, `${petName}!`, `${petName}, ao seu dispor!`]) : pick([`I'm ${petName}!`, `${petName}!`, `${petName}, at your service!`]);
       case 'task':
         return pt ? pick([`Uma de cada vez.`, `No seu ritmo.`, `Adoro te ver fazendo as suas coisas.`, `O que der hoje, tá bom.`]) : pick([`One at a time.`, `At your pace.`, `I love watching you do your thing.`, `Whatever fits today is fine.`]);
       case 'time':
@@ -127,7 +127,7 @@ export function ChatBox({
     try {
       const response = await aiFetch('/api/chat', {
         message: userMessage,
-        digimonName,
+        petName,
         mood,
         evolutionStage,
         dominantBranch,
@@ -138,7 +138,7 @@ export function ChatBox({
       if (!response.ok) {
         if (import.meta.env.DEV) console.error('AI API error:', await response.text());
         toast.warning(language === 'pt-BR' ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses');
-        return getDigimonResponse(userMessage);
+        return getPetResponse(userMessage);
       }
 
       const data = await response.json();
@@ -156,7 +156,7 @@ export function ChatBox({
         if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
         toast.warning(language === 'pt-BR' ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses');
       }
-      return getDigimonResponse(userMessage);
+      return getPetResponse(userMessage);
     } finally {
       clearTimeout(timeout);
     }
@@ -178,7 +178,7 @@ export function ChatBox({
       } else {
         // Use keyword-based response
         await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-        response = getDigimonResponse(userMessage);
+        response = getPetResponse(userMessage);
       }
 
       onSendMessage(response);

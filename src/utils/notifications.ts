@@ -128,7 +128,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 }
 
 export const subscribeToPush = async (
-  digimonName: string,
+  petName: string,
   language: 'pt-BR' | 'en-US'
 ): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
@@ -147,7 +147,7 @@ export const subscribeToPush = async (
 
     const body = {
       ...sub.toJSON(),
-      digimonName,
+      petName,
       language,
     };
 
@@ -193,7 +193,7 @@ export const unsubscribeFromPush = async (): Promise<void> => {
 let fcmListenersBound = false;
 
 export const registerForPushNotifications = async (
-  digimonName: string,
+  petName: string,
   language: 'pt-BR' | 'en-US',
   onForegroundNotification?: (title: string, body: string) => void,
 ): Promise<boolean> => {
@@ -216,7 +216,7 @@ export const registerForPushNotifications = async (
         fetch('/api/fcm-subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: token.value, digimonName, language }),
+          body: JSON.stringify({ token: token.value, petName, language }),
         }).catch((err) => console.error('FCM token upload failed:', err));
       });
 

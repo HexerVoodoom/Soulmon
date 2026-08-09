@@ -290,7 +290,6 @@ export interface Translations {
 
   // Evolution Stages
   stages: {
-    digiegg: string;
     baby: string;
     inTraining: string;
     rookie: string;
@@ -589,7 +588,6 @@ export const translations: Record<Language, Translations> = {
     },
 
     stages: {
-      digiegg: 'Egg',
       baby: 'Baby',
       inTraining: 'In-Training',
       rookie: 'Rookie',
@@ -884,7 +882,6 @@ export const translations: Record<Language, Translations> = {
     },
 
     stages: {
-      digiegg: 'Ovo',
       baby: 'Bebê',
       inTraining: 'Em Treinamento',
       rookie: 'Iniciante',

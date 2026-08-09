@@ -26,10 +26,6 @@ export const CATEGORY_ATTRIBUTES: Record<ActivityCategory, AttributePoints> = {
 };
 
 export const XP_THRESHOLDS = {
-  digiegg: 0,         // Egg (Start)
-  pichimon: 50,       // Egg → Baby I (1 day)
-  pukamon: 150,       // Baby I → Baby II (2 days)
-  tapirmon: 300,      // Baby II → Rookie (4 days)
   champion: 600,      // Rookie → Champion (7 days)
   ultimate: 1000,     // Champion → Ultimate (9 days)
   mega: 1500,         // Ultimate → Mega (11 days)

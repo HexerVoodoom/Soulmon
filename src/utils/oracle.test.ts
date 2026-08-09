@@ -212,11 +212,16 @@ describe('generateOracle', () => {
       expect(s.name.length).toBeGreaterThan(2);
       expect(s.description.pt.length).toBeGreaterThan(20);
       expect(s.description.en.length).toBeGreaterThan(20);
-      // Template validado empiricamente: prompt CURTO estilo Tamagotchi, sem
-      // fundo, sem outline/shading/anti-aliasing (frases longas geram sprites
-      // piores — ver composeSpritePrompt).
-      expect(s.imagePrompt.startsWith('Generate this RPG creature inspired by')).toBe(true);
-      expect(s.imagePrompt).toContain('Tamagotchi-style v-pet sprite, 16x16 pixel art, no background');
+      // Template validado empiricamente: prompt CURTO estilo v-pet, sem fundo,
+      // sem outline/shading/anti-aliasing (frases longas geram sprites piores —
+      // ver composeSpritePrompt).
+      expect(s.imagePrompt.startsWith('Generate an original creature')).toBe(true);
+      expect(s.imagePrompt).toContain('Retro virtual-pet sprite, 16x16 pixel art, no background');
+      // Nenhum nome de franquia no prompt: o sprite vai pro app de um usuário
+      // real, e pedir "inspirado em X" convida cópia de personagem registrado.
+      for (const trademark of ['Digimon', 'Pok', 'Tamagotchi', 'Palworld', 'Final Fantasy', 'Warhammer', 'Hello Kitty']) {
+        expect(s.imagePrompt).not.toContain(trademark);
+      }
       expect(s.imagePrompt).toContain('transparent background');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');

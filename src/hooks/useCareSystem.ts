@@ -41,7 +41,6 @@ export function useCareSystem({
   // The second poop is scheduled only once the first actually appears (see the
   // polling loop below), so the ≥8h gap counts from the first poop's appearance.
   useEffect(() => {
-    if (['digiegg', 'baby-i'].includes(getStageLevel(gameState.evolutionStage))) return;
     if (gameState.lastResetDate !== new Date().toDateString()) return;
 
     if (!gameState.poopEventsScheduled || gameState.poopEventsScheduled.length === 0) {
@@ -70,11 +69,7 @@ export function useCareSystem({
       // Sleeping holds poop back entirely, so an overnight sleep shields the
       // user from the day-turn penalty. Must run before the food early-return
       // below, which would otherwise block poop when there are no pending tasks.
-      if (
-        !isSleeping &&
-        !['digiegg', 'baby-i'].includes(getStageLevel(gameState.evolutionStage)) &&
-        !careEvent
-      ) {
+      if (!isSleeping && !careEvent) {
         const scheduled = gameState.poopEventsScheduled || [];
         const shown = gameState.poopEventsShown || [];
         for (let index = 0; index < scheduled.length; index++) {

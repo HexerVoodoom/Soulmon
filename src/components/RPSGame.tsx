@@ -97,7 +97,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
 
       {/* Arena */}
       <div style={{ flex: 1, margin: 16, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        <img src={getSpriteForStage(evolutionStage, 'tapirmon', demoCharacterId)} alt="pet"
+        <img src={getSpriteForStage(evolutionStage, demoCharacterId)} alt="pet"
              style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
         <div style={{ fontSize: '2.6rem', minHeight: 52, lineHeight: 1 }}>
           {thinking ? '💭' : petHand !== null ? HANDS[petHand] : ''}

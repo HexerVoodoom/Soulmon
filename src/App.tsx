@@ -10,7 +10,7 @@ import { CompanionHUD } from './components/CompanionHUD';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
-import { DigivolveTaskModal } from './components/DigivolveTaskModal';
+import { EvolveTaskModal } from './components/EvolveTaskModal';
 import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
@@ -45,7 +45,7 @@ import {
   feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
   FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
 } from './utils/careRules';
-import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playDigivolve, playDegenerate, playSleep } from './utils/sounds';
+import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
@@ -64,8 +64,16 @@ import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from 
 import { purchase } from './utils/playBilling';
 
 const EVOLVE_SEGMENTS: Record<string, number> = {
-  'digiegg': 1, 'baby-i': 2, 'baby-ii': 4,
   rookie: 7, champion: 9, ultimate: 11, mega: 14, ultra: 999,
+};
+
+/** XP alvo do próximo nível, por nível atual (ver getNextLevelXP). */
+const XP_BY_LEVEL: Record<string, number> = {
+  rookie: XP_THRESHOLDS.champion,
+  champion: XP_THRESHOLDS.ultimate,
+  ultimate: XP_THRESHOLDS.mega,
+  mega: XP_THRESHOLDS.itto,
+  ultra: XP_THRESHOLDS.itto,
 };
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
@@ -79,7 +87,6 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ActivitiesPage = lazy(() => import('./components/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
-const OnboardingScreen = lazy(() => import('./components/OnboardingScreen').then(m => ({ default: m.OnboardingScreen })));
 const SoulmonOnboarding = lazy(() => import('./components/SoulmonOnboarding').then(m => ({ default: m.SoulmonOnboarding })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
@@ -107,7 +114,7 @@ export default function App() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [digivolveModalStage, setDigivolveModalStage] = useState<string | null>(null);
+  const [evolveModalStage, setEvolveModalStage] = useState<string | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string } | null>(null);
   // Leitura do ritmo de cuidado (utils/carePattern.ts): alimenta a vitrine em
@@ -399,15 +406,19 @@ export default function App() {
       const leveledUp =
         FORM_REQUIREMENTS[currentLevel].required > FORM_REQUIREMENTS[prevLevel].required;
       prevStageLevelRef.current = currentLevel;
-      if (leveledUp) setDigivolveModalStage(gameState.evolutionStage);
+      if (leveledUp) setEvolveModalStage(gameState.evolutionStage);
     }
   }, [gameState.evolutionStage]);
 
   // Sync game state to Android home screen widget
   useEffect(() => {
-    const digimonName = gameState.evolutionStage.charAt(0).toUpperCase() + gameState.evolutionStage.slice(1);
+    const petName = gameState.evolutionStage.charAt(0).toUpperCase() + gameState.evolutionStage.slice(1);
     DigiWidget.updateWidgetData({
-      digimonName,
+      // Chave do bridge nativo, NÃO renomeada de propósito (mesma lógica das
+      // chaves `digiapp_*` do localStorage): o APK instalado lê `digimonName`
+      // no Kotlin, e o app carrega a URL de produção — trocar aqui quebraria o
+      // widget de quem não atualizasse o APK.
+      digimonName: petName,
       currentStage: gameState.evolutionStage,
       eggType: gameState.eggType ?? 'tapirmon',
       branchType: gameState.currentBranch,
@@ -479,33 +490,13 @@ export default function App() {
     return 'balanced';
   };
 
+  // Limiar de XP do próximo nível. O switch anterior listava espécies que não
+  // existem mais na árvore (a árvore nasce em rookie e os ids carregam o nível
+  // no prefixo), então TODO estágio caía no default — a barra mostrava sempre o
+  // mesmo alvo. Agora o alvo sai do nível de verdade.
   const getNextLevelXP = (): number => {
-    switch (gameState.evolutionStage) {
-      case 'digiegg':
-        return XP_THRESHOLDS.pichimon;
-      case 'pichimon':
-        return XP_THRESHOLDS.pukamon;
-      case 'pukamon':
-        return XP_THRESHOLDS.tapirmon;
-      case 'tapirmon':
-        return XP_THRESHOLDS.champion;
-      case 'tuskmon':
-      case 'monochromon':
-      case 'bakemon':
-        return XP_THRESHOLDS.ultimate;
-      case 'gigadramon':
-      case 'triceramon':
-      case 'digitamamon':
-        return XP_THRESHOLDS.mega;
-      case 'gaioumon':
-      case 'ultimatebrachiomon':
-      case 'titamon':
-        return XP_THRESHOLDS.itto;
-      case 'gaioumon-itto':
-        return XP_THRESHOLDS.itto;
-      default:
-        return XP_THRESHOLDS.tapirmon;
-    }
+    const level = getStageLevel(gameState.evolutionStage);
+    return XP_BY_LEVEL[level];
   };
 
   const handleUpdateStep = (activityId: string, stepId: string) => {
@@ -653,7 +644,7 @@ export default function App() {
 
       // Concluir atividade rende a comida da categoria. (O ramo antigo de
       // "estágio inicial ganha energia direto" saiu: a árvore nasce em rookie,
-      // então getStageLevel nunca devolvia digiegg/baby-i e ele era inalcançável
+      // então getStageLevel nunca devolvia os estágios de ovo/bebê e ele era inalcançável
       // — o mesmo ramo morto que já tinha sido removido do caminho das tarefas.)
       let newFoodInventory = prev.foodInventory;
       let newActivityLog = prev.activityLog ?? [];
@@ -913,7 +904,7 @@ export default function App() {
     setEditModalOpen(true);
   }, []);
 
-  const handleDigivolve = useCallback(() => {
+  const handleEvolve = useCallback(() => {
     setGameState(prev => {
       // Evolution padlock (Evolution page): while locked, never evolve.
       if (prev.evolutionLocked) return prev;
@@ -959,7 +950,7 @@ export default function App() {
           : [...prev.unlockedEvolutions, newEvolutionStage],
       };
     });
-    playDigivolve();
+    playEvolve();
     setEvolutionFlash(true);
     setTimeout(() => setEvolutionFlash(false), 2000);
     setMessageTrigger(prev => prev + 1);
@@ -1000,7 +991,7 @@ export default function App() {
     if (special) {
       // 🌀 Glitchtama: using it grants 1 perfect day (evolution point).
       if (special.kind === 'glitchtama') {
-        playDigivolve();
+        playEvolve();
         setGameState(prev => {
           const count = prev.foodInventory[foodEmoji] ?? 0;
           if (count <= 0) return prev;
@@ -2018,7 +2009,7 @@ export default function App() {
                 digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}
                 perfectDays={gameState.perfectDays}
                 requiredDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
-                onDigivolve={handleDigivolve}
+                onEvolve={handleEvolve}
                 canEvolve={(() => {
                   const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
                   if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
@@ -2494,18 +2485,18 @@ export default function App() {
           toName={getStageNameById(evolutionCeremony.to)}
           language={language}
           demoCharacterId={gameState.demoCharacterId}
-          onEvolved={handleDigivolve}
+          onEvolved={handleEvolve}
           onClose={() => setEvolutionCeremony(null)}
         />
       )}
 
-      <DigivolveTaskModal
-        isOpen={digivolveModalStage !== null}
-        onClose={() => setDigivolveModalStage(null)}
-        onCreateTask={() => { setDigivolveModalStage(null); setCreateModalOpen(true); }}
-        requiredTasks={FORM_REQUIREMENTS[getStageLevel(digivolveModalStage ?? gameState.evolutionStage)].required}
+      <EvolveTaskModal
+        isOpen={evolveModalStage !== null}
+        onClose={() => setEvolveModalStage(null)}
+        onCreateTask={() => { setEvolveModalStage(null); setCreateModalOpen(true); }}
+        requiredTasks={FORM_REQUIREMENTS[getStageLevel(evolveModalStage ?? gameState.evolutionStage)].required}
         registeredTasks={gameState.activities.length + gameState.tasks.length}
-        stageName={digivolveModalStage ? getStageNameById(digivolveModalStage) : ''}
+        stageName={evolveModalStage ? getStageNameById(evolveModalStage) : ''}
         theme={theme}
         language={language}
       />
@@ -2515,7 +2506,7 @@ export default function App() {
         activities={gameState.activities}
         tasks={gameState.tasks}
         userName={userName}
-        digimonName={getCurrentStageName()}
+        petName={getCurrentStageName()}
         language={language}
         enabled={notificationsEnabled}
         healthPoints={gameState.healthPoints}

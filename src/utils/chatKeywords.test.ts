@@ -53,7 +53,8 @@ describe('detectMessageCategory', () => {
   it('detects evolution (no feeling-pattern words)', () => {
     expect(detectMessageCategory('time to evolve')).toBe('evolution');
     expect(detectMessageCategory('next level up')).toBe('evolution');
-    expect(detectMessageCategory('digivolve now')).toBe('evolution');
+    expect(detectMessageCategory('ready to transform')).toBe('evolution');
+    expect(detectMessageCategory('when do you grow up')).toBe('evolution');
   });
 
   it('detects name inquiry (no feeling-pattern words)', () => {

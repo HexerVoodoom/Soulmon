@@ -43,8 +43,8 @@ export function EvolutionCeremony({ fromStage, toStage, toName, language, demoCh
   const [done, setDone] = useState(false);
   const evolvedRef = useRef(false);
 
-  const fromSprite = getSpriteForStage(fromStage, 'tapirmon', demoCharacterId);
-  const toSprite = getSpriteForStage(toStage, 'tapirmon', demoCharacterId);
+  const fromSprite = getSpriteForStage(fromStage, demoCharacterId);
+  const toSprite = getSpriteForStage(toStage, demoCharacterId);
 
   useEffect(() => {
     const timers: number[] = [];

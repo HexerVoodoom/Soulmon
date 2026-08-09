@@ -3,7 +3,7 @@
 // advances the "dungeon level" (wave): enemies then deal MORE damage and take
 // LESS. That level persists (resets monthly), plus a daily play limit, score
 // ranking and heart drops. Kept out of the component so the rules are testable.
-import { STAGE_SPRITES, getDungeonEnemySprite } from './sprites';
+import { getDungeonEnemySprite } from './sprites';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from './storageKeys';
 
@@ -37,31 +37,13 @@ const TIER_BASE: Record<EnemyTier, { hp: number; atk: number; speed: number; poi
   mega:       { hp: 28, atk: 8, speed: 1.6,  points: 13 },
 };
 
-// Nomes genéricos de espíritos por tier (os sprites legados foram ocultados;
-// inimigos usam o sprite espiritual placeholder até a arte final chegar).
-const SPIRIT_NAMES: Record<EnemyTier, string> = {
-  'baby-i': 'Faísca Errante',
-  'baby-ii': 'Vulto Tímido',
-  rookie: 'Espírito Errante',
-  champion: 'Espírito Voraz',
-  ultimate: 'Anima Sombria',
-  mega: 'Eidolon Ancestral',
-};
-
-// Extra dungeon-only enemies (not part of the pet's evolution tree). Their
-// sprites live in STAGE_SPRITES; this maps each to the tier it fights at.
-// (Nearly all extras became item-evolution forms — they're in STAGES_BY_LEVEL,
-// so getStageLevel already tiers them. Only Betamon remains dungeon-only.)
-const DUNGEON_ENEMY_TIERS: Record<string, EnemyTier> = {
-  betamon: 'rookie',
-};
-
-// Sprite keys that fight at a given tier — the pet's own evolution forms (via
-// getStageLevel) plus the extra dungeon-only enemies above.
-function poolForTier(tier: EnemyTier, exclude: string): string[] {
-  const atTier = (k: string) => getStageLevel(k) === tier || DUNGEON_ENEMY_TIERS[k] === tier;
-  const pool = Object.keys(STAGE_SPRITES).filter(k => atTier(k) && k !== exclude);
-  return pool.length > 0 ? pool : Object.keys(STAGE_SPRITES).filter(atTier);
+// Enemy identity comes from OUR OWN creature lines (utils/sprites.ts): the
+// roster used to be a list of borrowed species names backed by borrowed art,
+// and both are gone. `getDungeonEnemySprite` picks the line and the name; this
+// only records which line was drawn, so the same enemy is never the mirror of
+// the player's current form.
+function enemyKey(tier: EnemyTier, line: string): string {
+  return `${line}-${tier}`;
 }
 
 /**
@@ -83,13 +65,11 @@ export function buildDungeonWave(level: number, petStage: string): DungeonEnemy[
 
   return LADDER_TIERS.map(tier => {
     const base = TIER_BASE[tier];
-    const pool = poolForTier(tier, petStage);
-    const key = pool[Math.floor(Math.random() * pool.length)];
     const variance = 0.9 + Math.random() * 0.2;    // ±10% on HP
-    const picked = getDungeonEnemySprite(tier);
+    const picked = getDungeonEnemySprite(tier, petStage);
     return {
       name: picked.name,
-      stage: key,
+      stage: enemyKey(tier, picked.line),
       sprite: picked.sprite,
       hp: Math.max(5, Math.round(base.hp * hpMult * variance)),
       atk: Math.max(2, Math.round(base.atk * atkMult)),

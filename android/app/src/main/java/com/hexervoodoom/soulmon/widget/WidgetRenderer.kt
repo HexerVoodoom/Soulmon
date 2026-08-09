@@ -16,7 +16,7 @@ object WidgetRenderer {
     // share the same view IDs, so they reuse this renderer with a different layout resource.
     fun renderFull(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val digimonName = prefs.getString("digimon_name", "DigiEgg") ?: "DigiEgg"
+        val digimonName = prefs.getString("digimon_name", "Soulmon") ?: "Soulmon"
         val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
         val completedTasks = prefs.getInt("completed_tasks", 0)
         val totalTasks = prefs.getInt("total_tasks", 0)
@@ -76,7 +76,7 @@ object WidgetRenderer {
     // Chat widget (4x2): animated sprite + auto-rotating phrases.
     fun renderChat(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val digimonName = prefs.getString("digimon_name", "DigiEgg") ?: "DigiEgg"
+        val digimonName = prefs.getString("digimon_name", "Soulmon") ?: "Soulmon"
         val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
         val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
         val branchType = prefs.getString("branch_type", "data") ?: "data"

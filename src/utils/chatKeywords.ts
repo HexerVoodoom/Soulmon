@@ -45,7 +45,7 @@ export function detectMessageCategory(message: string): MessageCategory {
   if (m.match(/\b(cool|nice|awesome|great|amazing|wonderful|beautiful|cute|legal|lindo|linda|fofo|fofa|massa|maneiro|incrivel)\b/)) return 'compliment';
   if (m.match(/\b(love|adore|dear|friend|amo|adoro|te amo|amigo|amiga|querid)\b/)) return 'affection';
   if (m.match(/\b(eat|food|hungry|weak|no energy|comer|comida|fome|faminto|lanche|fraco|sem energia)\b/)) return 'food';
-  if (m.match(/\b(evolve|digivolve|transform|level up|next level|evolui|evoluir|evolucao|digievolu|proxima forma|subir de nivel)\b/)) return 'evolution';
+  if (m.match(/\b(evolve|evolution|transform|grow up|level up|next level|evolui|evoluir|evolucao|proxima forma|subir de nivel)\b/)) return 'evolution';
   if (m.match(/\b(name|called|who are you|nome|quem e voce|quem eh voce)\b/)) return 'name';
   if (m.match(/\b(task|activity|mission|goal|work|tarefa|atividade|missao|meta|afazer|trabalho|trabalhar)\b/)) return 'task';
   if (m.match(/\b(day|night|morning|afternoon|today|tomorrow|dia|noite|manha|tarde|hoje|amanha)\b/)) return 'time';

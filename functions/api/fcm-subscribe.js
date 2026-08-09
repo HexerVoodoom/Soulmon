@@ -28,7 +28,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { token, digimonName, language } = body;
+  const { token, petName, digimonName, language } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: 'Missing token' }), {
       status: 400,
@@ -39,7 +39,7 @@ export async function onRequestPost({ request, env }) {
   const kvKey = `fcm:${await hashToken(token)}`;
   await env.PUSH_SUBSCRIPTIONS.put(
     kvKey,
-    JSON.stringify({ token, digimonName: digimonName || 'DigiMon', language: language || 'pt-BR' }),
+    JSON.stringify({ token, petName: petName || digimonName || 'Soulmon', language: language || 'en-US' }),
     { expirationTtl: 60 * 60 * 24 * 365 },
   );
 

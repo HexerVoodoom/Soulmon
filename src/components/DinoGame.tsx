@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Rabbit, X, ArrowUp } from 'lucide-react';
-import { getSpriteForStage, LEFT_FACING_STAGES } from '../utils/sprites';
+import { getSpriteForStage } from '../utils/sprites';
 import { playDegenerate, playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { Language } from '../utils/i18n';
@@ -44,16 +44,16 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const [earned, setEarned] = useState(0);
   const [best, setBest] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.DINO_BEST)) || 0);
 
-  // The pet must FACE RIGHT while running; sprites in LEFT_FACING_STAGES are
-  // drawn facing left by default (Tapirmon & friends), so mirror those.
-  const petNeedsFlip = LEFT_FACING_STAGES.includes(evolutionStage.toLowerCase());
+  // Nossa arte é sempre desenhada olhando pra DIREITA, que é o sentido da
+  // corrida — não existe mais lista de exceções (era só de sprite emprestado).
+  const petNeedsFlip = false;
 
   // Physics/game state lives in a ref — the loop never re-renders React.
   const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number }[], speed: 0, t: 0, spawnIn: 0, score: 0 });
 
   useEffect(() => {
     const pet = new Image();
-    pet.src = getSpriteForStage(evolutionStage, 'tapirmon', demoCharacterId);
+    pet.src = getSpriteForStage(evolutionStage, demoCharacterId);
     petImgRef.current = pet;
     tierImgsRef.current = OBSTACLE_TIERS.map(t => {
       const img = new Image();

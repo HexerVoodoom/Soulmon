@@ -25,7 +25,7 @@ interface NotificationManagerProps {
   activities: Activity[];
   tasks: Task[];
   userName: string;
-  digimonName: string;
+  petName: string;
   language: 'pt-BR' | 'en-US';
   enabled: boolean;
   healthPoints: number;
@@ -38,7 +38,7 @@ export function NotificationManager({
   activities,
   tasks,
   userName,
-  digimonName,
+  petName,
   language,
   enabled,
   healthPoints,
@@ -59,11 +59,11 @@ export function NotificationManager({
 
     if (enabled) {
       if (isNativeAndroid) {
-        registerForPushNotifications(digimonName, language, (title, body) => {
+        registerForPushNotifications(petName, language, (title, body) => {
           toast(title, { description: body });
         });
       } else {
-        subscribeToPush(digimonName, language);
+        subscribeToPush(petName, language);
       }
     } else {
       if (isNativeAndroid) {
@@ -72,7 +72,7 @@ export function NotificationManager({
         unsubscribeFromPush();
       }
     }
-  }, [enabled, digimonName, language]);
+  }, [enabled, petName, language]);
 
   // Sync alarms when activities or tasks change
   useEffect(() => {
@@ -117,7 +117,7 @@ export function NotificationManager({
         lastEveningWarnDate.current = today;
         const ispt = language === 'pt-BR';
         showNotification(
-          ispt ? `${digimonName} está meio pra baixo` : `${digimonName} is a bit low`,
+          ispt ? `${petName} está meio pra baixo` : `${petName} is a bit low`,
           {
             body: ispt
               ? 'Se der, marque o que você já fez hoje. Se não der, amanhã ele ainda vai estar aqui.'
@@ -150,7 +150,7 @@ export function NotificationManager({
     // Native Android: schedule via AlarmManager so they fire even with app closed
     if (Capacitor.isNativePlatform()) {
       const ispt = language === 'pt-BR';
-      const nudgeTitle = ispt ? `${digimonName} passou pra dizer oi` : `${digimonName} stopped by to say hi`;
+      const nudgeTitle = ispt ? `${petName} passou pra dizer oi` : `${petName} stopped by to say hi`;
       const nudgeBody = ispt ? 'Tem algo do seu dia que você já fez?' : 'Anything from your day you already did?';
 
       // O nudge das 21h saiu: a auditoria de carga do plano conclui que nada
@@ -168,7 +168,7 @@ export function NotificationManager({
 
       DigiAlarm.scheduleAlarm({
         id: 'pet-goodnight',
-        title: ispt ? `🌙 ${digimonName} está indo dormir` : `🌙 ${digimonName} is going to sleep`,
+        title: ispt ? `🌙 ${petName} está indo dormir` : `🌙 ${petName} is going to sleep`,
         body: ispt ? 'Boa noite. O que ficou pra trás fica pra amanhã. 😴' : "Good night. What's left can wait for tomorrow. 😴",
         scheduledTime: '22:00',
       }).catch(() => {});
@@ -189,7 +189,7 @@ export function NotificationManager({
       if (hh === 10 && completedSteps < totalRequired && lastNudge10Date.current !== today) {
         lastNudge10Date.current = today;
         showNotification(
-          ispt ? `${digimonName} passou pra dizer oi` : `${digimonName} stopped by to say hi`,
+          ispt ? `${petName} passou pra dizer oi` : `${petName} stopped by to say hi`,
           { body: ispt ? 'Tem algo do seu dia que você já fez?' : 'Anything from your day you already did?', tag: 'pet-nudge-10' },
         );
       }
@@ -198,7 +198,7 @@ export function NotificationManager({
       if (hh === 16 && completedSteps < totalRequired && lastNudge16Date.current !== today) {
         lastNudge16Date.current = today;
         showNotification(
-          ispt ? `${digimonName} pensou em você` : `${digimonName} thought of you`,
+          ispt ? `${petName} pensou em você` : `${petName} thought of you`,
           { body: ispt ? 'Se sobrar um minuto hoje, ele adora companhia.' : 'If you get a minute today, it loves the company.', tag: 'pet-nudge-16' },
         );
       }
@@ -207,7 +207,7 @@ export function NotificationManager({
       if (hh === 22 && lastGoodnightDate.current !== today) {
         lastGoodnightDate.current = today;
         showNotification(
-          ispt ? `🌙 ${digimonName} está indo dormir` : `🌙 ${digimonName} is going to sleep`,
+          ispt ? `🌙 ${petName} está indo dormir` : `🌙 ${petName} is going to sleep`,
           { body: ispt ? 'Boa noite. O que ficou pra trás fica pra amanhã. 😴' : "Good night. What's left can wait for tomorrow. 😴", tag: 'pet-goodnight' },
         );
       }
@@ -216,7 +216,7 @@ export function NotificationManager({
     checkPetNotifications();
     const interval = setInterval(checkPetNotifications, 60000);
     return () => clearInterval(interval);
-  }, [enabled, digimonName, language, completedSteps, totalRequired]);
+  }, [enabled, petName, language, completedSteps, totalRequired]);
 
   return null;
 }

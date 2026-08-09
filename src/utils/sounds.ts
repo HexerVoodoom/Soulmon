@@ -99,7 +99,7 @@ export function playShower(): void {
 }
 
 /** Dramatic power-up sweep + two high notes */
-export function playDigivolve(): void {
+export function playEvolve(): void {
   play(ctx => {
     const osc = ctx.createOscillator();
     const vol = ctx.createGain();

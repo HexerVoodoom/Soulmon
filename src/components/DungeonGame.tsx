@@ -31,7 +31,6 @@ import type { Language } from '../utils/i18n';
  */
 
 const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
-  digiegg:  { hp: 10, dmg: 3 },
   'baby-i': { hp: 10, dmg: 3 },
   'baby-ii':{ hp: 11, dmg: 3 },
   rookie:   { hp: 12, dmg: 4 },
@@ -145,7 +144,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const runScoreRef = useRef(0);
 
   const enemy = enemies[enemyIdx];
-  const petSprite = getSpriteForStage(evolutionStage, 'tapirmon', demoCharacterId);
+  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId);
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[floor - 1] ?? DUNGEON_SCENES[0];
   // Some shop backdrops are LIGHT — keep the in-scene labels readable on them.

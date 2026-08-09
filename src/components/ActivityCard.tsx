@@ -46,6 +46,7 @@ export const ActivityCard = memo(function ActivityCard({
 }: ActivityCardProps) {
   const isWin98 = theme === 'win98';
   const t = useTranslation(language);
+  const isPt = language === 'pt-BR';
   const completedSteps = steps.filter(s => s.completed).length;
   const totalSteps = steps.length;
   const progressPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
@@ -75,7 +76,7 @@ export const ActivityCard = memo(function ActivityCard({
               type="button"
               role="checkbox"
               aria-checked={isCompleted}
-              aria-label={isCompleted ? 'Atividade concluída' : 'Marcar atividade como concluída'}
+              aria-label={isPt ? (isCompleted ? 'Atividade concluída' : 'Marcar atividade como concluída') : (isCompleted ? 'Activity completed' : 'Mark activity as completed')}
               disabled={isDisabled || isCompleted}
               onClick={isDisabled || isCompleted ? undefined : () => onToggleCompletion?.(id)}
               /* 44×44 de toque, círculo de 28px dentro. As classes w-7/h-7 não
@@ -163,7 +164,7 @@ export const ActivityCard = memo(function ActivityCard({
                 ? 'win98-button'
                 : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
             }`}
-            aria-label="Editar atividade"
+            aria-label={isPt ? 'Editar atividade' : 'Edit activity'}
             /* 44×44: alvo de toque mínimo. Inline porque a classe utilitária
                correspondente não existe no index.css pré-compilado. */
             style={{ minWidth: 44, minHeight: 44 }}
@@ -198,6 +199,7 @@ export const ActivityCard = memo(function ActivityCard({
                   onToggle={isDisabled ? () => {} : (stepId) => onUpdateStep(id, stepId)}
                   theme={theme}
                   disabled={isDisabled}
+                  language={language}
                 />
               ))}
             </div>

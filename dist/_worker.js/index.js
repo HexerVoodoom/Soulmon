@@ -619,7 +619,7 @@ var CORS2 = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-function buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) {
+function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, language, aiSettings }) {
   const s = aiSettings || { tone: "casual", emojiIntensity: "medium", motivationStyle: "balanced", customKeywords: "", temperature: 0.85 };
   const ispt = language === "pt-BR";
   const branch = {
@@ -645,7 +645,7 @@ function buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, 
   const toneMap = { casual: `Relaxed: "hey", "yeah", "let's go", "cool"`, energetic: "Very EXCITED! Use CAPS!", calm: "Calm, serene, wise.", playful: "Fun and playful. Occasional jokes." };
   const emojiMap = { none: "NO emojis.", low: "1 emoji max.", medium: "2-3 emojis.", high: "4-6 emojis!" };
   const motivMap = { encouraging: "Always warm and positive. Celebrate small things.", challenging: "Playfully invite the user to try something \u2014 never demand or push.", supportive: "Extremely caring and empathetic.", balanced: "Balance warmth, curiosity and support." };
-  return `You are ${digimonName}, a digital Soulmon companion in Soulmon (a gamified productivity app).
+  return `You are ${petName}, a digital Soulmon companion in Soulmon (a gamified productivity app).
 
 BRANCH (${dominantBranch}): ${branch.trait} ${branch.style} Emojis: ${branch.emojis}
 MOOD (${mood}): ${moodCtx}
@@ -676,7 +676,7 @@ __name(onRequestOptions2, "onRequestOptions");
 async function onRequestPost2({ request, env }) {
   try {
     const body = await request.json();
-    const { message, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
+    const { message, petName: petNameRaw, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
     if (!message) return Response.json({ error: "Message required" }, { status: 400, headers: CORS2 });
     const gate = await guardAiRequest(request, env, "chat", body.id);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS2 });
@@ -688,7 +688,7 @@ async function onRequestPost2({ request, env }) {
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
         messages: [
-          { role: "system", content: buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) },
+          { role: "system", content: buildSystemPrompt({ petName: petNameRaw || digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) },
           { role: "user", content: message }
         ],
         max_tokens: 120,
@@ -1146,7 +1146,7 @@ async function onRequestPost4({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS6 }
     });
   }
-  const { token, digimonName, language } = body;
+  const { token, petName, digimonName, language } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
@@ -1156,7 +1156,7 @@ async function onRequestPost4({ request, env }) {
   const kvKey = `fcm:${await hashToken(token)}`;
   await env.PUSH_SUBSCRIPTIONS.put(
     kvKey,
-    JSON.stringify({ token, digimonName: digimonName || "DigiMon", language: language || "pt-BR" }),
+    JSON.stringify({ token, petName: petName || digimonName || "Soulmon", language: language || "en-US" }),
     { expirationTtl: 60 * 60 * 24 * 365 }
   );
   return new Response(JSON.stringify({ ok: true }), {
@@ -1392,7 +1392,7 @@ async function onRequestPost6({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS9 }
     });
   }
-  const { endpoint, keys, digimonName, language } = body;
+  const { endpoint, keys, petName, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
@@ -1408,7 +1408,7 @@ async function onRequestPost6({ request, env }) {
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   await env.PUSH_SUBSCRIPTIONS.put(
     kvKey,
-    JSON.stringify({ endpoint, keys, digimonName: digimonName || "DigiMon", language: language || "pt-BR" }),
+    JSON.stringify({ endpoint, keys, petName: petName || digimonName || "Soulmon", language: language || "en-US" }),
     { expirationTtl: 60 * 60 * 24 * 365 }
   );
   return new Response(JSON.stringify({ ok: true }), {
@@ -1542,7 +1542,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-DVPyGE/functionsRoutes-0.6089156732700525.mjs
+// ../.wrangler/tmp/pages-ZTJYX1/functionsRoutes-0.8118495365405567.mjs
 var routes = [
   {
     routePath: "/api/billing",

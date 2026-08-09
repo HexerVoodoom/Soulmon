@@ -6,7 +6,7 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-function buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) {
+function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, language, aiSettings }) {
   const s = aiSettings || { tone: 'casual', emojiIntensity: 'medium', motivationStyle: 'balanced', customKeywords: '', temperature: 0.85 };
   const ispt = language === 'pt-BR';
 
@@ -43,7 +43,7 @@ function buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, 
   // desafio vindo dele com tom de cobrança é exatamente a persona "chefe".
   const motivMap = { encouraging: 'Always warm and positive. Celebrate small things.', challenging: 'Playfully invite the user to try something — never demand or push.', supportive: 'Extremely caring and empathetic.', balanced: 'Balance warmth, curiosity and support.' };
 
-  return `You are ${digimonName}, a digital Soulmon companion in Soulmon (a gamified productivity app).
+  return `You are ${petName}, a digital Soulmon companion in Soulmon (a gamified productivity app).
 
 BRANCH (${dominantBranch}): ${branch.trait} ${branch.style} Emojis: ${branch.emojis}
 MOOD (${mood}): ${moodCtx}
@@ -74,7 +74,7 @@ export async function onRequestOptions() {
 export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
-    const { message, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
+    const { message, petName: petNameRaw, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
 
     if (!message) return Response.json({ error: 'Message required' }, { status: 400, headers: CORS });
 
@@ -92,7 +92,7 @@ export async function onRequestPost({ request, env }) {
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         messages: [
-          { role: 'system', content: buildSystemPrompt({ digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) },
+          { role: 'system', content: buildSystemPrompt({ petName: petNameRaw || digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) },
           { role: 'user', content: message },
         ],
         max_tokens: 120,

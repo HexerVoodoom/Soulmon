@@ -1,3 +1,5 @@
+import type { Language } from '../utils/i18n';
+
 interface StepRowProps {
   id: string;
   label: string;
@@ -5,10 +7,12 @@ interface StepRowProps {
   onToggle: (id: string) => void;
   theme?: 'default' | 'win98' | 'glitch';
   disabled?: boolean;
+  language?: Language;
 }
 
-export function StepRow({ id, label, completed, onToggle, theme = 'default', disabled = false }: StepRowProps) {
+export function StepRow({ id, label, completed, onToggle, theme = 'default', disabled = false, language = 'en-US' }: StepRowProps) {
   const isWin98 = theme === 'win98';
+  const isPt = language === 'pt-BR';
   
   return (
     <div className={`flex items-center gap-3 py-2.5 px-3 rounded-2xl transition-all ${
@@ -22,7 +26,7 @@ export function StepRow({ id, label, completed, onToggle, theme = 'default', dis
         type="button"
         role="checkbox"
         aria-checked={completed}
-        aria-label={`${completed ? 'Etapa concluída' : 'Marcar etapa como concluída'}: ${label}`}
+        aria-label={`${isPt ? (completed ? 'Etapa concluída' : 'Marcar etapa como concluída') : (completed ? 'Step completed' : 'Mark step as completed')}: ${label}`}
         disabled={disabled || completed}
         onClick={disabled || completed ? undefined : () => onToggle(id)}
         /* 40×40 de toque com o quadradinho de 20px dentro (etapa é item

@@ -2227,8 +2227,13 @@ function composeSpritePrompt(args: {
 }): string {
   const concept = args.favoriteCreature ? `${args.favoriteCreature} ${args.concept}` : args.concept;
   return (
-    `Generate this RPG creature inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. ` +
-    `Tamagotchi-style v-pet sprite, 16x16 pixel art, no background, transparent background: ` +
+    // Sem nomes de franquia no prompt: pedir "inspirado em Digimon/Pokémon"
+    // convida o gerador a devolver algo perto DEMAIS de personagem registrado,
+    // e o sprite vai pro app de um usuário real. O estilo é descrito por
+    // atributos visuais — que é o que a gente quer de verdade.
+    `Generate an original creature for a monster-raising RPG. Do not copy any ` +
+    `existing franchise character. ` +
+    `Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: ` +
     `${concept}. ${args.levelBlock}. ` +
     `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
     // As paletas do pool já citam 2–3 cores, mas o gerador ainda entrega

@@ -164,7 +164,7 @@ export function EvolutionPath({
                   className="relative w-12 h-12 flex items-center justify-center rounded-lg cursor-pointer"
                 >
                   <img
-                    src={getSpriteForStage(stageId, eggType, demoCharacterId)}
+                    src={getSpriteForStage(stageId, demoCharacterId)}
                     alt={evolution.name}
                     className="w-12 h-12 object-contain"
                     style={{ imageRendering: 'pixelated', opacity: evolutionLocked ? 0.55 : 1 }}
@@ -180,7 +180,7 @@ export function EvolutionPath({
                 </button>
               ) : (
                 <img
-                  src={getSpriteForStage(stageId, eggType)}
+                  src={getSpriteForStage(stageId)}
                   alt={isReached ? evolution.name : (isPt ? 'evolução revelada' : 'revealed evolution')}
                   className="w-12 h-12 object-contain"
                   style={{ imageRendering: 'pixelated', opacity: isReached ? 1 : 0.45 }}

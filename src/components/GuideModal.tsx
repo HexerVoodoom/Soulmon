@@ -77,11 +77,9 @@ export function GuideModal({ isOpen, onClose, theme = 'default', language = 'en-
             <p>
               {L('A evolução é sua: toque no seu Soulmon na página de Evolução para ', 'Evolution is yours to trigger: tap your Soulmon on the Evolution page to ')}
               <strong>{L('travar ou destravar o cadeado 🔒', 'toggle the 🔒 padlock')}</strong>
-              {L('. Travado ele nunca evolui (os dias seguem acumulando). Itens raros também moldam a evolução: o ', '. While locked it never evolves (perfect days keep piling up). Rare items also shape evolution: the ')}
+              {L('. Travado ele nunca evolui (os dias seguem acumulando). Um item raro também ajuda: o ', '. While locked it never evolves (perfect days keep piling up). One rare item also helps: the ')}
               <strong>🌀 Glitchtama</strong>
-              {L(' (concluir os 5 andares da masmorra) vale um dia perfeito, e as ', ' (clear all 5 dungeon floors) grants a perfect day, and ')}
-              <strong>{L('Digimentais', 'Digimentals')}</strong>
-              {L(' (drops raríssimos, nunca consumidos) mudam a forma de campeão.', ' (ultra-rare drops, never consumed) change your champion form.')}
+              {L(' (concluir os 5 andares da masmorra) vale um dia perfeito.', ' (clear all 5 dungeon floors) grants a perfect day.')}
             </p>
           </Section>
 

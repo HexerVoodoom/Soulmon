@@ -26,6 +26,7 @@ export const TaskCard = memo(function TaskCard({
 }: TaskCardProps) {
   const isWin98 = theme === 'win98';
   const t = useTranslation(language);
+  const isPt = language === 'pt-BR';
 
   return (
     <div
@@ -47,7 +48,7 @@ export const TaskCard = memo(function TaskCard({
           type="button"
           role="checkbox"
           aria-checked={completed}
-          aria-label={completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}
+          aria-label={isPt ? (completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída') : (completed ? 'Task completed' : 'Mark task as completed')}
           disabled={completed}
           onClick={() => { if (!completed) onToggleComplete(id); }}
           /* 44×44 de área de toque com o círculo de 28px desenhado dentro.
@@ -98,7 +99,7 @@ export const TaskCard = memo(function TaskCard({
               ? 'win98-button'
               : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
           }`}
-          aria-label="Editar tarefa"
+          aria-label={isPt ? 'Editar tarefa' : 'Edit task'}
           /* 44×44 é o alvo de toque mínimo confortável; o padding do Tailwind
              dava 32×32. Inline porque min-w-11 não existe no index.css
              pré-compilado (footgun 1). */
