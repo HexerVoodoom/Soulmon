@@ -216,7 +216,7 @@ decisão sua.
 
 | # | O quê | Por quê |
 |---|---|---|
-| 🔴 | **Licença dos sprites DMC e uso dos nomes Digimon** | `docs/Attributions.md` registra o item em detalhe. Os sprites vêm de `furudbat/wayland-vpets` (arte da Bandai) e o jogo usa dezenas de nomes que são marcas registradas. O caso Nintendo × Pocketpair mostra que **IP é território muito mais forte que patente** — a Nintendo processou por patente e vem perdendo, enquanto a Pokémon Company falava de IP. Decidir entre licenciar, substituir por arte/nomes originais, ou assumir o risco conscientemente. Não é aconselhamento jurídico. |
+| ✅ | **Licença dos sprites DMC e uso dos nomes Digimon** — RESOLVIDO em 09/08/2026. Foi a opção (b): substituir por arte e nomenclatura originais. Saíram do repositório os 25 `*_dmc.png` (arte da Bandai, via `furudbat/wayland-vpets`) e os 49 `figma:asset/*` das linhas Tapirmon/Veemon/Salamon, junto com os itens de digievolução da loja, os Digimentais e o roster nominal da masmorra. `getSpriteForStage` responde sempre com arte de `src/assets/soulmon/`; save antigo cai num fallback determinístico que também usa arte nossa. Os nomes de franquia saíram até do prompt do gerador (`utils/oracle.ts`), com teste travando a ausência. Detalhes em `docs/Attributions.md`. |
 | 🟠 | **Reroll por Créditos = resultado aleatório pago com dinheiro real** | `monetization.ts:76` + `oracle.ts` (`Math.random()`). Atenuante forte: todo pet gerado é mecanicamente equivalente — é identidade, não poder. Mas a Lei 15.211/2025 (ECA Digital) vale desde 17/03/2026, houve condenação de R$ 333M em jun/2026, e o Pokémon GO teve incubadoras removidas no Brasil. Pode bastar deixar explícito que os resultados são equivalentes. |
 | 🔴 | **Decidir sobre as keystores no histórico do git** | Se o repositório for público, ou se essas chaves ainda assinam algo na Play Store: rotacionar a chave de upload no Play Console e/ou limpar o histórico com `git filter-repo` (reescreve todos os commits, exige force push e quebra clones). Posso preparar o comando; a decisão de reescrever histórico é sua. |
 | 🟠 | **Ligar o `FIREBASE_PROJECT_ID`** | É o que fecha `save.js`, `billing.js` e `entitlements.js`. **Só depois** que `VITE_FIREBASE_*` estiver configurado e o build do desktop com login tiver saído — ligar antes derruba o login de todo mundo. |
@@ -270,7 +270,11 @@ o app de todo mundo que já tem o APK instalado.
   Durable Objects.
 - **Arte da decoração são emoji.** A estrutura já aceita PNG; ver
   `docs/PALCO-E-DECORACAO.md`.
-- **Arte da decoração** ainda é emoji, mas o brief de produção está pronto em
+- **Arte da decoração** ainda é emoji. O brief de produção está pronto e a
+  geração virou um comando (`node scripts/gen-decor.mjs`, 14 peças) — falta só
+  rodar num lugar com acesso a `higgsfield.ai`: a política de rede do sandbox de
+  agente responde **403 no CONNECT** para esse host, então não dá pra gerar de
+  dentro de uma sessão. Brief em
   `docs/BRIEF-ARTE-DECORACAO.md` (14 peças, caixa em px, prompt-base).
 - **Cura instantânea por Créditos** é, na prática, pagar para pular o cuidado — a
   mesma crítica que Kotaku e Digital Trends fizeram ao Premium Pass do Pokémon

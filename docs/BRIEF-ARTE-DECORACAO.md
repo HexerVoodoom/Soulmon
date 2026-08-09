@@ -38,8 +38,11 @@ Nada fica no centro exato do chão (é por onde o pet anda) nem colado nas borda
 
 ## Estilo
 
-Referência viva: os sprites `src/assets/*_dmc.png` — pixel art de v-pet, 128×128,
-paleta limitada, contorno escuro.
+Referência viva: os sprites em `src/assets/soulmon/` — pixel art de v-pet,
+paleta limitada, contorno escuro. (A referência anterior eram os `*_dmc.png`,
+arte de terceiro que **saiu do repositório**; ver `docs/Attributions.md`. Não
+use arte de franquia como referência de estilo aqui — o resultado vai parecer
+com ela.)
 
 - **Pixel art**, com pixels legíveis no tamanho final. Nada de anti-aliasing
   suave: a peça vai aparecer em 48–56px e precisa ler nesse tamanho.
@@ -110,6 +113,25 @@ Para o tapete (`furn-rug`), acrescentar ao prompt:
 Extreme foreshortening: the object is lying flat on the ground, seen at a
 shallow angle, occupying a very wide and short area.
 ```
+
+---
+
+## Como gerar
+
+`scripts/gen-decor.mjs` já carrega as 14 peças com o prompt-base montado e
+dispara tudo pelo CLI da Higgsfield:
+
+```bash
+npx --yes @higgsfield/cli auth login     # uma vez, interativo
+node scripts/gen-decor.mjs               # gera as 14 em src/assets/decor/
+node scripts/gen-decor.mjs furn-sofa     # ou só uma peça
+node scripts/gen-decor.mjs --dry-run     # imprime os prompts, não gera
+```
+
+> ⚠️ Isto **não roda dentro do sandbox de agente**: a política de rede do
+> ambiente responde 403 no CONNECT para `higgsfield.ai`. Rode na máquina do
+> dono, ou libere o host na configuração de rede do ambiente
+> (https://code.claude.com/docs/en/claude-code-on-the-web).
 
 ---
 
