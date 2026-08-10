@@ -15,14 +15,12 @@ import { isAuthConfigured, getCurrentEmail, signOut } from '../utils/auth';
  */
 interface AccountSectionProps {
   language: Language;
-  theme?: 'default' | 'win98' | 'glitch';
   /** Chamado quando a restauração muda tier/saldo, para a UI principal atualizar. */
   onEntitlementChange?: (ent: Entitlement) => void;
 }
 
-export function AccountSection({ language, theme = 'default', onEntitlementChange }: AccountSectionProps) {
+export function AccountSection({ language, onEntitlementChange }: AccountSectionProps) {
   const isPt = language === 'pt-BR';
-  const isPlain = theme === 'default';
 
   const [ent, setEnt] = useState<Entitlement | null>(null);
   const [authEmail, setAuthEmail] = useState<string | null>(null);
@@ -73,17 +71,14 @@ export function AccountSection({ language, theme = 'default', onEntitlementChang
     flash(isPt ? 'Você saiu da conta.' : 'Signed out.');
   };
 
-  // Nos temas retrô o visual do resto da tela é outro — mantém simples.
-  const cardStyle: React.CSSProperties = isPlain
-    ? { background: 'var(--sm-surface)', border: '1px solid var(--sm-line)', borderRadius: 'var(--sm-radius)', padding: 16 }
-    : { padding: 16 };
+  const cardStyle: React.CSSProperties = { background: 'var(--sm-surface)', border: '1px solid var(--sm-line)', borderRadius: 'var(--sm-radius)', padding: 16 };
 
   const rowBtn: React.CSSProperties = {
     display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
     padding: '11px 12px', borderRadius: 12, cursor: 'pointer', marginTop: 8,
-    border: isPlain ? '1px solid var(--sm-line)' : '1px solid currentColor',
-    background: isPlain ? 'var(--sm-bg)' : 'transparent',
-    color: isPlain ? 'var(--sm-ink)' : 'inherit',
+    border: '1px solid var(--sm-line)',
+    background: 'var(--sm-bg)',
+    color: 'var(--sm-ink)',
     fontSize: 13.5, fontWeight: 600,
   };
 
@@ -92,9 +87,9 @@ export function AccountSection({ language, theme = 'default', onEntitlementChang
     : (isPt ? 'Demo' : 'Demo');
 
   return (
-    <div className={isPlain ? '' : 'win98-panel'} style={cardStyle}>
+    <div style={cardStyle}>
       <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', fontWeight: 700, fontSize: '0.95rem' }}>
-        <ShieldCheck size={18} strokeWidth={2.2} color={isPlain ? 'var(--sm-primary)' : undefined} />
+        <ShieldCheck size={18} strokeWidth={2.2} color="var(--sm-primary)" />
         {isPt ? 'Conta e compras' : 'Account & purchases'}
       </h3>
 
@@ -139,8 +134,8 @@ export function AccountSection({ language, theme = 'default', onEntitlementChang
       {message && (
         <p style={{
           fontSize: 12, fontWeight: 600, marginTop: 10, padding: '8px 10px', borderRadius: 10,
-          background: isPlain ? 'var(--sm-primary-soft)' : 'transparent',
-          color: isPlain ? 'var(--sm-primary)' : 'inherit',
+          background: 'var(--sm-primary-soft)',
+          color: 'var(--sm-primary)',
         }}>
           {message}
         </p>

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
+import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { DigivolutionProgress } from './DigivolutionProgress';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
@@ -29,7 +30,6 @@ interface EvolutionPathProps {
   digivolutionSegments: number;
   digivolutionSegmentsNeeded: number;
   onDegenerate?: (targetStageId: string) => void;
-  theme?: 'default' | 'win98' | 'glitch';
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
@@ -56,7 +56,6 @@ export function EvolutionPath({
   digivolutionSegments,
   digivolutionSegmentsNeeded,
   onDegenerate,
-  theme,
   stages,
   eggType = 'tapirmon',
   demoCharacterId,
@@ -351,7 +350,6 @@ export function EvolutionPath({
         <DigivolutionProgress
           currentDays={digivolutionSegments}
           daysRequired={digivolutionSegmentsNeeded}
-          theme={theme}
           language={language}
         />
       </div>
@@ -404,6 +402,7 @@ export function EvolutionPath({
           // desenhar. Antes ficava só um vazio enorme abaixo dos botões, e a
           // tela parecia quebrada.
           <div className="sm-card" style={{ padding: 20, textAlign: 'center' }}>
+            <img src={ravenMascot} alt="" width={52} height={52} style={{ objectFit: 'contain', margin: '0 auto 10px', opacity: 0.85 }} />
             <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--sm-ink)' }}>
               {isPt ? 'Sua árvore ainda não foi revelada' : 'Your tree hasn’t been revealed yet'}
             </p>

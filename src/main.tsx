@@ -4,11 +4,14 @@
   import "./index.css";
   import { ErrorBoundary } from './components/ErrorBoundary';
   import { GameStateProvider } from './contexts/GameStateContext';
+  import { ThemeProvider } from './contexts/ThemeContext';
 
   createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>
-      <GameStateProvider>
-        <App />
-      </GameStateProvider>
+      <ThemeProvider>
+        <GameStateProvider>
+          <App />
+        </GameStateProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );

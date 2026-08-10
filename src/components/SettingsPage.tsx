@@ -1,20 +1,19 @@
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
-import { Bell, BellOff, Copy, Check, Cloud, Bot, BookOpen, Moon, Globe, Info } from 'lucide-react';
+import { Bell, BellOff, Copy, Check, Cloud, Bot, BookOpen, Moon, Sun, Globe, Info } from 'lucide-react';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
 import { AccountSection } from './AccountSection';
 import { InstallPrompt } from './InstallPrompt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { cloudLoad } from '../utils/cloudSave';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface SettingsPageProps {
   useAI: boolean;
   onToggleAI: () => void;
   aiSettings: AISettings;
   onSaveAISettings: (settings: AISettings) => void;
-  theme: 'default' | 'win98' | 'glitch';
-  onChangeTheme: (theme: 'default' | 'win98' | 'glitch') => void;
   language: Language;
   onChangeLanguage: (lang: Language) => void;
   onOpenGuide: () => void;
@@ -29,7 +28,6 @@ export function SettingsPage({
   onToggleAI,
   aiSettings,
   onSaveAISettings,
-  theme,
   onChangeLanguage,
   language,
   onOpenGuide,
@@ -50,6 +48,8 @@ export function SettingsPage({
   const [autoSleepEnd, setAutoSleepEnd] = useState(() => localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
   const [loginStatus, setLoginStatus] = useState<'idle' | 'loading' | 'loaded' | 'created' | 'err'>('idle');
   const savedEmail = localStorage.getItem(STORAGE_KEYS.USER_EMAIL) ?? null;
+  const { mode: themeMode, resolvedTheme, setMode: setThemeMode } = useTheme();
+  const isDark = resolvedTheme === 'dark';
 
   const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
@@ -64,8 +64,6 @@ export function SettingsPage({
       setLoginStatus('err');
     }
   };
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
   const t = useTranslation(language);
   const saveId = localStorage.getItem(STORAGE_KEYS.SAVE_ID) ?? null;
   const lastSyncRaw = localStorage.getItem(STORAGE_KEYS.LAST_CLOUD_SYNC);
@@ -90,51 +88,32 @@ export function SettingsPage({
     if (!ok) setTimeout(() => setRestoreStatus('idle'), 3000);
   };
 
-  // Estilos compartilhados do tema padrão (sm-* design system)
-  const cardClass = isGlitch ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30 p-6 rounded-2xl' : isWin98 ? 'win98-button bg-white p-6 rounded-2xl' : 'sm-card p-6';
-  const headingStyle: React.CSSProperties = isGlitch
-    ? { fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: 500, color: '#00ffff' }
-    : isWin98
-      ? { fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: 500, color: '#000' }
-      : { fontSize: '1rem', fontWeight: 700, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 };
-  const bodyTextStyle: React.CSSProperties = isGlitch
-    ? { fontFamily: 'monospace', color: 'rgba(0,255,255,0.6)' }
-    : isWin98
-      ? { fontFamily: 'monospace', color: '#808080' }
-      : { color: 'var(--sm-muted)', fontSize: '0.8125rem' };
-  const inputClass = isGlitch
-    ? 'bg-[#001a00] text-[#00ffff] border border-[#00ffff]/30'
-    : isWin98
-      ? 'border border-gray-400 bg-white'
-      : 'border';
-  const inputStyle: React.CSSProperties = isGlitch || isWin98
-    ? { fontFamily: 'monospace' }
-    : { background: 'var(--sm-bg)', borderColor: 'var(--sm-line)', color: 'var(--sm-ink)' };
-  const primaryBtnClass = isGlitch
-    ? 'bg-[#00ffff] text-[#0a0a0a]'
-    : isWin98
-      ? 'win98-button'
-      : 'sm-btn';
-  const toggleOnBg = isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-primary)';
-  const toggleOffBg = isGlitch ? 'rgba(255,0,102,0.3)' : isWin98 ? '#808080' : 'var(--sm-line)';
+  // Estilos compartilhados do design system (sm-*)
+  const cardClass = 'sm-card p-6';
+  const headingStyle: React.CSSProperties = { fontSize: '1rem', fontWeight: 700, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 };
+  const bodyTextStyle: React.CSSProperties = { color: 'var(--sm-muted)', fontSize: '0.8125rem' };
+  const inputClass = 'border';
+  const inputStyle: React.CSSProperties = { background: 'var(--sm-bg)', borderColor: 'var(--sm-line)', color: 'var(--sm-ink)' };
+  const primaryBtnClass = 'sm-btn';
+  const toggleOnBg = 'var(--sm-primary)';
+  const toggleOffBg = 'var(--sm-line)';
 
-  const iconWrap = (Icon: typeof Bell, color: string, bg: string) =>
-    !isGlitch && !isWin98 ? (
-      <span style={{ width: 28, height: 28, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon size={16} color={color} strokeWidth={2.2} />
-      </span>
-    ) : null;
+  const iconWrap = (Icon: typeof Bell, color: string, bg: string) => (
+    <span style={{ width: 28, height: 28, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <Icon size={16} color={color} strokeWidth={2.2} />
+    </span>
+  );
 
   return (
     <>
       <div className="space-y-4">
         {/* PWA Install */}
-        <InstallPrompt theme={theme} language={language} />
+        <InstallPrompt language={language} />
 
         {/* Cloud Save */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isGlitch || isWin98 ? '☁️ ' : iconWrap(Cloud, '#009ED8', '#e3f4fc')}
+            {iconWrap(Cloud, '#009ED8', '#e3f4fc')}
             {language === 'pt-BR' ? 'Backup na nuvem' : 'Cloud backup'}
           </h3>
           <p className="mb-4" style={bodyTextStyle}>
@@ -146,8 +125,7 @@ export function SettingsPage({
           {/* Email login — same email = same save everywhere */}
           <div className="mb-5">
             {savedEmail && (
-              <p className={`mb-1 text-[11px] ${isGlitch ? 'text-[#00ffff]/70' : isWin98 ? 'text-[#000080]' : ''}`}
-                 style={isGlitch || isWin98 ? { fontFamily: 'monospace' } : { color: 'var(--sm-primary)' }}>
+              <p className="mb-1 text-[11px]" style={{ color: 'var(--sm-primary)' }}>
                 {language === 'pt-BR' ? `conectado: ${savedEmail}` : `signed in: ${savedEmail}`}
               </p>
             )}
@@ -165,7 +143,6 @@ export function SettingsPage({
               onClick={handleLogin}
               disabled={!emailInput.trim() || loginStatus === 'loading'}
               className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-60 ${primaryBtnClass}`}
-              style={isGlitch || isWin98 ? { fontFamily: 'monospace' } : undefined}
             >
               {loginStatus === 'loading'
                 ? (language === 'pt-BR' ? 'sincronizando...' : 'syncing...')
@@ -188,7 +165,7 @@ export function SettingsPage({
             )}
           </div>
 
-          <p className="mb-3 text-xs" style={isGlitch ? { fontFamily: 'monospace', color: 'rgba(0,255,255,0.4)' } : isWin98 ? { fontFamily: 'monospace', color: '#808080' } : { color: 'var(--sm-muted)' }}>
+          <p className="mb-3 text-xs" style={{ color: 'var(--sm-muted)' }}>
             {language === 'pt-BR'
               ? 'Ou use o código de recuperação manual abaixo.'
               : 'Or use the manual recovery code below.'}
@@ -197,22 +174,22 @@ export function SettingsPage({
           {saveId && (
             <div className="mb-4">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs" style={isGlitch || isWin98 ? { fontFamily: 'monospace', color: isGlitch ? 'rgba(0,255,255,0.5)' : '#808080' } : { color: 'var(--sm-muted)' }}>
+                <p className="text-xs" style={{ color: 'var(--sm-muted)' }}>
                   {language === 'pt-BR' ? 'Código de recuperação:' : 'Recovery code:'}
                 </p>
                 {lastSyncLabel && (
-                  <p className="text-[10px]" style={isGlitch || isWin98 ? { fontFamily: 'monospace', color: isGlitch ? 'rgba(0,255,255,0.4)' : '#808080' } : { color: 'var(--sm-muted)' }}>
+                  <p className="text-[10px]" style={{ color: 'var(--sm-muted)' }}>
                     {language === 'pt-BR' ? `sync: ${lastSyncLabel}` : `synced: ${lastSyncLabel}`}
                   </p>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <code className={`flex-1 text-xs px-3 py-2 rounded-xl break-all ${isGlitch ? 'bg-[#001a00] text-[#00ffff]' : isWin98 ? 'bg-[#c0c0c0] text-black border border-gray-400' : ''}`}
-                      style={isGlitch || isWin98 ? { fontFamily: 'monospace' } : { background: 'var(--sm-bg)', color: 'var(--sm-ink)' }}>
+                <code className="flex-1 text-xs px-3 py-2 rounded-xl break-all"
+                      style={{ background: 'var(--sm-bg)', color: 'var(--sm-ink)' }}>
                   {saveId}
                 </code>
-                <button onClick={handleCopy} className={`flex-shrink-0 p-2 rounded-xl transition-colors ${isGlitch ? 'text-[#00ffff] hover:bg-[#00ffff]/10' : isWin98 ? 'win98-button' : ''}`}
-                        style={!isGlitch && !isWin98 ? { color: 'var(--sm-muted)', background: 'var(--sm-bg)' } : undefined} aria-label="Copy">
+                <button onClick={handleCopy} className="flex-shrink-0 p-2 rounded-xl transition-colors"
+                        style={{ color: 'var(--sm-muted)', background: 'var(--sm-bg)' }} aria-label="Copy">
                   {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                 </button>
               </div>
@@ -220,7 +197,7 @@ export function SettingsPage({
           )}
 
           <div className="space-y-2">
-            <p className="text-xs" style={isGlitch || isWin98 ? { fontFamily: 'monospace', color: isGlitch ? 'rgba(0,255,255,0.5)' : '#808080' } : { color: 'var(--sm-muted)' }}>
+            <p className="text-xs" style={{ color: 'var(--sm-muted)' }}>
               {language === 'pt-BR' ? 'Restaurar a partir de um código:' : 'Restore from a code:'}
             </p>
             <div className="flex gap-2">
@@ -236,7 +213,6 @@ export function SettingsPage({
                 onClick={handleRestore}
                 disabled={!restoreInput.trim() || restoreStatus === 'loading'}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-40 ${primaryBtnClass}`}
-                style={isGlitch || isWin98 ? { fontFamily: 'monospace' } : undefined}
               >
                 {restoreStatus === 'loading' ? '...' : restoreStatus === 'ok' ? '✓' : restoreStatus === 'err' ? '✗' : language === 'pt-BR' ? 'restaurar' : 'restore'}
               </button>
@@ -250,18 +226,18 @@ export function SettingsPage({
         </div>
 
         {/* Conta e compras — restaurar compras é exigência da Play */}
-        <AccountSection language={language} theme={theme} />
+        <AccountSection language={language} />
 
         {/* AI Settings */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isGlitch || isWin98 ? '🤖 ' : iconWrap(Bot, '#6d5bd0', '#efecfb')}
+            {iconWrap(Bot, '#6d5bd0', '#efecfb')}
             {t.settings.ai}
           </h3>
 
           <div className="mb-5">
             <label className="flex items-center justify-between cursor-pointer">
-              <span style={isGlitch || isWin98 ? { fontFamily: 'monospace', fontSize: '0.875rem', color: isGlitch ? '#00ffff' : '#000' } : { fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
                 {useAI ? t.settings.aiChatEnabled : t.settings.keywordsOnly}
               </span>
               <div
@@ -280,9 +256,8 @@ export function SettingsPage({
           <button
             onClick={() => setShowAISettings(true)}
             className={`w-full py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${primaryBtnClass}`}
-            style={isGlitch || isWin98 ? { fontFamily: 'monospace', fontWeight: 500 } : { fontWeight: 700 }}
+            style={{ fontWeight: 700 }}
           >
-            {(isGlitch || isWin98) && <span>⚙️</span>}
             <span>{t.settings.configureAI}</span>
           </button>
         </div>
@@ -290,7 +265,7 @@ export function SettingsPage({
         {/* Guide */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isGlitch || isWin98 ? '📖 ' : iconWrap(BookOpen, '#d9a441', '#fbf1dd')}
+            {iconWrap(BookOpen, '#d9a441', '#fbf1dd')}
             {t.settings.guide}
           </h3>
 
@@ -301,9 +276,8 @@ export function SettingsPage({
           <button
             onClick={onOpenGuide}
             className={`w-full py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${primaryBtnClass}`}
-            style={isGlitch || isWin98 ? { fontFamily: 'monospace', fontWeight: 500 } : { fontWeight: 700 }}
+            style={{ fontWeight: 700 }}
           >
-            {(isGlitch || isWin98) && <span>📚</span>}
             <span>{t.settings.openGuide}</span>
           </button>
         </div>
@@ -311,7 +285,7 @@ export function SettingsPage({
         {/* Notifications */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isGlitch || isWin98 ? '🔔 ' : iconWrap(notificationsEnabled ? Bell : BellOff, '#e0483e', '#fde8e6')}
+            {iconWrap(notificationsEnabled ? Bell : BellOff, '#e0483e', '#fde8e6')}
             {t.settings.notifications}
           </h3>
 
@@ -320,7 +294,7 @@ export function SettingsPage({
           </p>
 
           <div className="flex items-center justify-between cursor-pointer">
-            <span style={isGlitch || isWin98 ? { fontFamily: 'monospace', fontSize: '0.875rem', color: isGlitch ? '#00ffff' : '#000' } : { fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
+            <span style={{ fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
               {notificationsEnabled ? t.settings.notificationsEnabled : t.settings.notificationsDisabled}
             </span>
             <div
@@ -336,7 +310,7 @@ export function SettingsPage({
         {/* Auto-sleep schedule */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isGlitch || isWin98 ? '💤 ' : iconWrap(Moon, '#6b7280', '#eef0f3')}
+            {iconWrap(Moon, '#6b7280', '#eef0f3')}
             {language === 'pt-BR' ? 'Sono automático' : 'Auto sleep'}
           </h3>
           <p className="mb-5" style={bodyTextStyle}>
@@ -345,7 +319,7 @@ export function SettingsPage({
               : 'The pet sleeps and wakes on this schedule. It never poops while asleep.'}
           </p>
           <div className="flex items-center justify-between mb-4">
-            <span style={isGlitch || isWin98 ? { fontFamily: 'monospace', fontSize: '0.875rem', color: isGlitch ? '#00ffff' : '#000' } : { fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
+            <span style={{ fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
               {autoSleepEnabled
                 ? (language === 'pt-BR' ? 'Ativado' : 'Enabled')
                 : (language === 'pt-BR' ? 'Desativado' : 'Disabled')}
@@ -371,15 +345,15 @@ export function SettingsPage({
                 { label: language === 'pt-BR' ? 'Acordar' : 'Wake', value: autoSleepEnd, set: setAutoSleepEnd, key: STORAGE_KEYS.AUTO_SLEEP_END },
               ] as const).map(f => (
                 <label key={f.label} className="flex items-center gap-2">
-                  <span className="text-xs" style={isGlitch || isWin98 ? { fontFamily: 'monospace', color: isGlitch ? 'rgba(0,255,255,0.7)' : '#000' } : { color: 'var(--sm-muted)' }}>
+                  <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>
                     {f.label}
                   </span>
                   <input
                     type="time"
                     value={f.value}
                     onChange={e => { f.set(e.target.value); localStorage.setItem(f.key, e.target.value); }}
-                    className={`px-2 py-1 rounded-lg border text-sm ${isGlitch ? 'bg-[#0f0f0f] border-[#1f3a3a] text-[#00ffff]' : isWin98 ? 'bg-white border-gray-400 text-black' : ''}`}
-                    style={isGlitch || isWin98 ? { fontFamily: 'monospace' } : { background: 'var(--sm-bg)', borderColor: 'var(--sm-line)', color: 'var(--sm-ink)' }}
+                    className="px-2 py-1 rounded-lg border text-sm"
+                    style={{ background: 'var(--sm-bg)', borderColor: 'var(--sm-line)', color: 'var(--sm-ink)' }}
                   />
                 </label>
               ))}
@@ -387,10 +361,44 @@ export function SettingsPage({
           )}
         </div>
 
+        {/* Appearance — light/dark/system */}
+        <div className={cardClass}>
+          <h3 className="mb-3" style={headingStyle}>
+            {isDark ? iconWrap(Moon, '#6b7280', '#eef0f3') : iconWrap(Sun, '#e69600', '#fff4e0')}
+            {language === 'pt-BR' ? 'Aparência' : 'Appearance'}
+          </h3>
+          <p className="mb-4" style={bodyTextStyle}>
+            {language === 'pt-BR'
+              ? 'Tema claro, escuro, ou o mesmo do aparelho.'
+              : 'Light theme, dark theme, or match your device.'}
+          </p>
+          <div className="flex gap-2">
+            {([
+              { value: 'light' as const, label: language === 'pt-BR' ? 'Claro' : 'Light' },
+              { value: 'dark' as const, label: language === 'pt-BR' ? 'Escuro' : 'Dark' },
+              { value: 'system' as const, label: language === 'pt-BR' ? 'Sistema' : 'System' },
+            ]).map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setThemeMode(opt.value)}
+                className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all"
+                style={
+                  themeMode === opt.value
+                    ? { background: 'var(--sm-primary)', color: '#fff' }
+                    : { background: 'var(--sm-bg)', color: 'var(--sm-muted)' }
+                }
+                aria-pressed={themeMode === opt.value}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Language */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isGlitch || isWin98 ? '🌐 ' : iconWrap(Globe, '#009ED8', '#e3f4fc')}
+            {iconWrap(Globe, '#009ED8', '#e3f4fc')}
             {t.settings.language}
           </h3>
           <p className="mb-4" style={bodyTextStyle}>
@@ -401,25 +409,11 @@ export function SettingsPage({
               <button
                 key={lang}
                 onClick={() => onChangeLanguage(lang)}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-                  language === lang
-                    ? isGlitch
-                      ? 'bg-[#00ffff] text-[#0a0a0a] border-2 border-[#00ffff]'
-                      : isWin98
-                      ? 'bg-[#000080] text-white border-2 border-[#000080]'
-                      : ''
-                    : isGlitch
-                    ? 'bg-transparent text-[#00ffff]/60 border border-[#00ffff]/30 hover:border-[#00ffff]/60'
-                    : isWin98
-                    ? 'win98-button bg-[#c0c0c0] text-black'
-                    : ''
-                }`}
+                className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
                 style={
-                  isGlitch || isWin98
-                    ? { fontFamily: 'monospace' }
-                    : language === lang
-                      ? { background: 'var(--sm-primary)', color: '#fff' }
-                      : { background: 'var(--sm-bg)', color: 'var(--sm-muted)' }
+                  language === lang
+                    ? { background: 'var(--sm-primary)', color: '#fff' }
+                    : { background: 'var(--sm-bg)', color: 'var(--sm-muted)' }
                 }
                 aria-pressed={language === lang}
               >
@@ -433,11 +427,11 @@ export function SettingsPage({
         {/* App Info */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isGlitch || isWin98 ? 'ℹ️ ' : iconWrap(Info, '#8b86a3', '#eef0f3')}
+            {iconWrap(Info, '#8b86a3', '#eef0f3')}
             {t.settings.about}
           </h3>
           <div className="space-y-2">
-            <p style={isGlitch || isWin98 ? { fontFamily: 'monospace', fontSize: '0.875rem', color: isGlitch ? 'rgba(0,255,255,0.8)' : '#000' } : { fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
+            <p style={{ fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
               <strong>Soulmon</strong> v1.0.2
             </p>
             <p style={bodyTextStyle}>
@@ -448,9 +442,7 @@ export function SettingsPage({
               href="/privacidade.html"
               target="_blank"
               rel="noopener noreferrer"
-              style={isGlitch || isWin98
-                ? { fontFamily: 'monospace', fontSize: '0.8rem', textDecoration: 'underline' }
-                : { fontSize: '0.8rem', color: 'var(--sm-primary)', fontWeight: 600, textDecoration: 'underline' }}
+              style={{ fontSize: '0.8rem', color: 'var(--sm-primary)', fontWeight: 600, textDecoration: 'underline' }}
             >
               {language === 'pt-BR' ? 'Política de Privacidade' : 'Privacy Policy'}
             </a>
@@ -467,7 +459,6 @@ export function SettingsPage({
           onSaveAISettings(settings);
           setShowAISettings(false);
         }}
-        theme={theme}
       />
     </>
   );

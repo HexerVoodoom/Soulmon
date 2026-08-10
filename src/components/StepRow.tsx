@@ -5,20 +5,16 @@ interface StepRowProps {
   label: string;
   completed: boolean;
   onToggle: (id: string) => void;
-  theme?: 'default' | 'win98' | 'glitch';
   disabled?: boolean;
   language?: Language;
 }
 
-export function StepRow({ id, label, completed, onToggle, theme = 'default', disabled = false, language = 'en-US' }: StepRowProps) {
-  const isWin98 = theme === 'win98';
+export function StepRow({ id, label, completed, onToggle, disabled = false, language = 'en-US' }: StepRowProps) {
   const isPt = language === 'pt-BR';
-  
+
   return (
     <div className={`flex items-center gap-3 py-2.5 px-3 rounded-2xl transition-all ${
-      isWin98 
-        ? `win98-step ${completed ? 'completed' : ''}`
-        : completed ? 'bg-[#e8e8e8]' : 'bg-[#f3f4f6] hover:bg-gray-100'
+      completed ? 'bg-[#e8e8e8]' : 'bg-[#f3f4f6] hover:bg-gray-100'
     }`}>
       {/* Checkbox de etapa — <button> e não <div>, para receber foco de teclado
           e ser anunciado por leitor de tela. */}
@@ -60,7 +56,7 @@ export function StepRow({ id, label, completed, onToggle, theme = 'default', dis
         className={`select-none flex-1 ${
           disabled ? 'cursor-not-allowed opacity-50' : completed ? 'cursor-default' : 'cursor-pointer'
         } ${
-          isWin98 ? 'text-[#4d5461]' : completed ? 'text-[#6b7280]' : 'text-[#4d5461]'
+          completed ? 'text-[#6b7280]' : 'text-[#4d5461]'
         }`}
         style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
       >

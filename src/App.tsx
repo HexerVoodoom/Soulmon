@@ -169,10 +169,6 @@ export default function App() {
       temperature: 0.85
     };
   });
-  const [theme, setTheme] = useState<'default' | 'win98' | 'glitch'>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.THEME);
-    return (saved as 'default' | 'win98' | 'glitch') || 'default';
-  });
   // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
   // onboarding, para as duas telas nunca discordarem).
   const [language, setLanguage] = useState<Language>(
@@ -223,10 +219,6 @@ export default function App() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
     return localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'true';
   });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.THEME, theme);
-  }, [theme]);
 
   // Presentes de amigos (Biblioteca): reivindica bits pendentes ao abrir o app.
   useEffect(() => {
@@ -1603,24 +1595,6 @@ export default function App() {
 
   const handleOpenAISettings = useCallback(() => setSettingsOpen(true), []);
 
-  const getOuterContainerClass = () => {
-    switch (theme) {
-      case 'win98':
-        return 'win98-outer-container';
-      default:
-        return 'modern-outer-container';
-    }
-  };
-
-  const getContainerClass = () => {
-    switch (theme) {
-      case 'win98':
-        return 'win98-container rounded-none';
-      default:
-        return 'modern-container rounded-2xl';
-    }
-  };
-
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
     localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
     localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
@@ -1826,7 +1800,7 @@ export default function App() {
   }
 
   return (
-    <div className={`fixed inset-0 overflow-hidden flex flex-col ${theme === 'default' ? 'sm-app-bg' : `${getOuterContainerClass()} ${getContainerClass()}`}`}>
+    <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
         {unlockReason && (
           <UnlockAccountModal
             language={language}
@@ -1849,7 +1823,6 @@ export default function App() {
           isOpen={showHelpModal}
           onClose={() => setShowHelpModal(false)}
           language={language}
-          theme={theme}
         />
 
         {/* Floating Items Window */}
@@ -1859,7 +1832,6 @@ export default function App() {
             onFeed={handleFeed}
             onClose={() => setShowItemsWindow(false)}
             language={language}
-            theme={theme}
           />
         )}
 
@@ -1867,7 +1839,6 @@ export default function App() {
         <BottomNav
           currentView={currentView}
           onNavigate={setCurrentView}
-          theme={theme}
           onResetOnboarding={handleResetOnboarding}
           onOpenShop={() => setShopOpen(true)}
           onOpenCredits={() => setCreditsOpen(true)}
@@ -1924,21 +1895,14 @@ export default function App() {
             className="fixed flex items-center justify-center"
             style={{
               right: 18,
-              bottom: theme === 'default'
-                ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 90px)'
-                : 'calc(74px + env(safe-area-inset-bottom, 0px))',
+              bottom: 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 90px)',
               width: 52,
               height: 52,
               borderRadius: '50%',
-              background: theme === 'win98' ? '#c0c0c0' : theme === 'glitch' ? 'linear-gradient(135deg, #ff00ff, #00ffff)' : 'var(--sm-primary)',
-              color: theme === 'default' ? '#fff' : '#000',
-              border: theme === 'win98' ? '2px solid' : theme === 'glitch' ? '2px solid #00ffff' : 'none',
-              borderColor: theme === 'win98' ? '#ffffff #808080 #808080 #ffffff' : undefined,
-              boxShadow: theme === 'default'
-                ? '0 4px 0 var(--sm-primary-deep), 0 6px 14px rgba(42,36,64,0.25)'
-                : theme === 'glitch'
-                  ? '0 0 15px rgba(0,255,255,0.5)'
-                  : '2px 2px 0 #000',
+              background: 'var(--sm-primary)',
+              color: '#fff',
+              border: 'none',
+              boxShadow: '0 4px 0 var(--sm-primary-deep), 0 6px 14px rgba(42,36,64,0.25)',
               zIndex: 30,
             }}
           >
@@ -1948,27 +1912,20 @@ export default function App() {
 
         {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
         <div
-          className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : 'px-6 pt-3'}`}
-          style={theme === 'default' ? {
+          className="flex-1 overflow-y-auto px-6 pt-3"
+          style={{
             paddingBottom: currentView === 'main'
               ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 100px)'
               : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
-          } : undefined}
+          }}
         >
           {currentView === 'main' && (
             <div className="space-y-3">
               {/* HP risk banner — dismissible strip acima do pet */}
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl ${
-                  theme === 'win98'
-                    ? 'bg-[#800000] border border-[#ff0000] text-white'
-                    : theme === 'glitch'
-                    ? 'bg-[#200000] border border-[#ff0066]/60'
-                    : ''
-                }`} style={theme === 'default' ? { background: '#fde8e6', border: '1px solid #f3c6c1' } : undefined}>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'var(--sm-danger-soft)', border: '1px solid var(--sm-danger)' }}>
                   <span style={{ fontSize: '0.9rem' }}>⚠️</span>
-                  <p className={theme === 'default' ? 'flex-1 text-xs' : 'text-red-300 flex-1 text-xs'}
-                     style={{ fontFamily: theme === 'default' ? undefined : 'monospace', lineHeight: '1.3', color: theme === 'default' ? '#a4302a' : undefined }}>
+                  <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: 'var(--sm-danger)' }}>
                     {language === 'pt-BR'
                       ? `1 HP restante — complete ao menos ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) hoje para não regredir!`
                       : `1 HP left — complete at least ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) today to avoid degeneration!`}
@@ -1976,7 +1933,7 @@ export default function App() {
                   <button
                     onClick={() => setHpBannerDismissed(true)}
                     className="flex-shrink-0 px-1 text-sm leading-none"
-                    style={{ color: theme === 'default' ? '#a4302a' : undefined }}
+                    style={{ color: 'var(--sm-danger)' }}
                     aria-label="Dismiss"
                   >
                     ✕
@@ -2005,7 +1962,6 @@ export default function App() {
                 trophies={gameState.trophies ?? EMPTY_TROPHIES}
                 fullSignal={fullSignal}
                 digivolutionSegments={gameState.digivolutionSegments}
-                theme={theme}
                 digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}
                 perfectDays={gameState.perfectDays}
                 requiredDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
@@ -2046,8 +2002,7 @@ export default function App() {
               {gameState.tasks.length === 0 && gameState.activities.length === 0 ? (
                 <div className="flex items-center justify-center" style={{ minHeight: '300px' }}>
                   <p
-                    className="text-gray-400"
-                    style={{ fontFamily: 'monospace', fontSize: '1.25rem' }}
+                    style={{ fontFamily: 'monospace', fontSize: '1.25rem', color: 'var(--sm-muted)' }}
                   >
                     {t.main.noActivityRegistered}
                   </p>
@@ -2070,7 +2025,6 @@ export default function App() {
                         completed={task.completed}
                         onToggleComplete={handleToggleTask}
                         onEdit={handleEditTask}
-                        theme={theme}
                       />
                     ))}
 
@@ -2094,13 +2048,13 @@ export default function App() {
                     if (allActivities.length === 0 && gameState.tasks.length > 0) {
                       return (
                         <div key="no-activities" className="flex flex-col items-center justify-center py-8 gap-2">
-                          <p className={`text-sm ${theme === 'glitch' ? 'text-[#00ffff]/50' : 'text-gray-400'}`}
-                            style={{ fontFamily: 'monospace' }}>
+                          <p className="text-sm"
+                            style={{ fontFamily: 'monospace', color: 'var(--sm-muted)' }}>
                             {t.main.noActivityRegistered}
                           </p>
                           <button
                             onClick={handleAddNewActivity}
-                            className={`text-xs px-3 py-1 rounded-lg transition-colors ${theme === 'glitch' ? 'text-[#00ffff] border border-[#00ffff]/40 hover:bg-[#00ffff]/10' : theme === 'win98' ? 'win98-button text-black' : 'text-teal-600 border border-teal-200 hover:bg-teal-50'}`}
+                            className="text-xs px-3 py-1 rounded-lg transition-colors text-teal-600 border border-teal-200 hover:bg-teal-50"
                             style={{ fontFamily: 'monospace' }}>
                             + {t.activities.addNew}
                           </button>
@@ -2126,7 +2080,6 @@ export default function App() {
                           isCompleted={activity.isComplete}
                           isDisabled={!isAvailable}
                           isSingleExecution={!activity.weekDays || activity.weekDays.length === 0}
-                          theme={theme}
                           language={language}
                         />
                       );
@@ -2139,23 +2092,19 @@ export default function App() {
 
           {/* Evolução e Estatísticas dividem o mesmo ícone da barra inferior —
               alternadas por essas abas em vez de dois botões separados. */}
-          {(currentView === 'evolution' || currentView === 'stats') && theme !== 'win98' && (
+          {(currentView === 'evolution' || currentView === 'stats') && (
             <div className="flex gap-2 mb-3">
               <button
                 onClick={() => setCurrentView('evolution')}
-                className={theme === 'glitch'
-                  ? `flex-1 py-2 rounded-lg border-2 ${currentView === 'evolution' ? 'border-[#00ffff] text-[#00ffff]' : 'border-[#00ffff]/30 text-[#5fbcbc]'}`
-                  : `sm-btn ${currentView === 'evolution' ? '' : 'sm-btn-secondary'}`}
-                style={{ flex: 1, ...(theme === 'glitch' ? { fontFamily: 'monospace', fontSize: '0.8rem', background: 'transparent' } : {}) }}
+                className={`sm-btn ${currentView === 'evolution' ? '' : 'sm-btn-secondary'}`}
+                style={{ flex: 1 }}
               >
                 {language === 'pt-BR' ? 'Evolução' : 'Evolution'}
               </button>
               <button
                 onClick={() => setCurrentView('stats')}
-                className={theme === 'glitch'
-                  ? `flex-1 py-2 rounded-lg border-2 ${currentView === 'stats' ? 'border-[#00ffff] text-[#00ffff]' : 'border-[#00ffff]/30 text-[#5fbcbc]'}`
-                  : `sm-btn ${currentView === 'stats' ? '' : 'sm-btn-secondary'}`}
-                style={{ flex: 1, ...(theme === 'glitch' ? { fontFamily: 'monospace', fontSize: '0.8rem', background: 'transparent' } : {}) }}
+                className={`sm-btn ${currentView === 'stats' ? '' : 'sm-btn-secondary'}`}
+                style={{ flex: 1 }}
               >
                 {language === 'pt-BR' ? 'Estatísticas' : 'Stats'}
               </button>
@@ -2166,7 +2115,7 @@ export default function App() {
               um personagem de demonstração (as 3 linhas iguais) é exatamente
               quem entende o que a própria árvore significa. Só aqui e no
               limite de criação — em nenhum outro lugar do jogo. */}
-          {currentView === 'evolution' && gameState.demoCharacterId && theme === 'default' && (
+          {currentView === 'evolution' && gameState.demoCharacterId && (
             <div style={{ padding: '0 4px 10px' }}>
               <UnlockNudge
                 language={language}
@@ -2190,7 +2139,6 @@ export default function App() {
               digivolutionSegments={gameState.perfectDays}
               digivolutionSegmentsNeeded={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].daysToEvolve}
               onDegenerate={handleDegenerate}
-              theme={theme}
               stages={gameState.soulmonStages ?? []}
               eggType={gameState.eggType}
               demoCharacterId={gameState.demoCharacterId}
@@ -2211,7 +2159,6 @@ export default function App() {
             <Suspense fallback={null}><StatsPage
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
-              theme={theme}
               language={language}
               gamePoints={gameState.gamePoints}
               totalXP={gameState.totalXP}
@@ -2242,8 +2189,6 @@ export default function App() {
               onSaveAISettings={(settings) => {
                 setAiSettings(settings);
               }}
-              theme={theme}
-              onChangeTheme={setTheme}
               language={language}
               onChangeLanguage={(lang) => {
                 setLanguage(lang);
@@ -2282,7 +2227,7 @@ export default function App() {
 
           {currentView === 'oracle' && (
             <Suspense fallback={null}>
-              <OraclePage theme={theme} language={language} />
+              <OraclePage language={language} />
             </Suspense>
           )}
 
@@ -2320,7 +2265,6 @@ export default function App() {
                 evolutionStage={gameState.evolutionStage}
                 demoCharacterId={gameState.demoCharacterId}
                 language={language}
-                theme={theme}
                 totalPoints={gameState.gamePoints ?? 0}
                 onDungeonEnter={handleDungeonEnter}
                 onDungeonLose={handleDungeonLose}
@@ -2351,7 +2295,6 @@ export default function App() {
                 : undefined
             }
             canEditWeekdays={canSelectWeekdays(gameState.evolutionStage)}
-            theme={theme}
             language={language}
           />
         </Suspense>
@@ -2377,7 +2320,6 @@ export default function App() {
                 : undefined
             }
             title={editingTask ? t.main.editTask : t.main.newTask}
-            theme={theme}
             language={language}
           />
         </Suspense>
@@ -2425,7 +2367,6 @@ export default function App() {
             }));
             if (gameState.accountTier === 'demo') recordDemoCreation();
           }}
-          theme={theme}
           language={language}
         /></Suspense>
       )}
@@ -2459,7 +2400,6 @@ export default function App() {
             onSaveAISettings={(settings) => {
               setAiSettings(settings);
             }}
-            theme={theme}
           />
         </Suspense>
       )}
@@ -2467,14 +2407,12 @@ export default function App() {
       <ContentModals
         guideModalOpen={guideModalOpen}
         onCloseGuide={() => setGuideModalOpen(false)}
-        theme={theme}
         language={language}
       />
 
       <GamePopups
         showFirstTaskPopup={showFirstTaskPopup}
         onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
-        theme={theme}
         language={language}
       />
 
@@ -2497,7 +2435,6 @@ export default function App() {
         requiredTasks={FORM_REQUIREMENTS[getStageLevel(evolveModalStage ?? gameState.evolutionStage)].required}
         registeredTasks={gameState.activities.length + gameState.tasks.length}
         stageName={evolveModalStage ? getStageNameById(evolveModalStage) : ''}
-        theme={theme}
         language={language}
       />
 
@@ -2531,14 +2468,12 @@ export default function App() {
           onPickMood={handlePickMood}
           moodNote={moodSummary(gameState.moodLog, language === 'pt-BR' ? 'pt-BR' : 'en-US')}
           language={language}
-          theme={theme}
           soulGoal={gameState.soulGoal}
         />
       )}
       {!showDailyReport && (
         <WelcomePromptModal
           language={language}
-          theme={theme}
           notificationsEnabled={notificationsEnabled}
           onEnableNotifications={handleToggleNotifications}
         />

@@ -31,7 +31,6 @@ interface EditModalProps {
     weekDays?: number[];
     alarm?: { time: string };
   };
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
   canEditWeekdays?: boolean; // Se a atividade foi criada quando podia selecionar dias
 }
@@ -42,8 +41,7 @@ const CATEGORIES: ActivityCategory[] = [
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, theme = 'default', language = 'en-US', canEditWeekdays = true }: EditModalProps) {
-  const isWin98 = theme === 'win98';
+export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, language = 'en-US', canEditWeekdays = true }: EditModalProps) {
   const isPt = language === 'pt-BR';
 
   const [name, setName] = useState('');
@@ -104,94 +102,6 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, them
     delete: isPt ? 'Excluir' : 'Delete',
   };
 
-  if (isWin98) {
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-[#c0c0c0] border-2 border-white shadow-[inset_1px_1px_0_rgba(255,255,255,0.8),inset_-1px_-1px_0_rgba(0,0,0,0.8)]">
-          <div className="flex items-center justify-between p-6 border-b-2 border-gray-400">
-            <h2 className="text-black" style={{ fontFamily: 'monospace', fontSize: '1.125rem', fontWeight: 'bold' }}>✏️ {txt.title}</h2>
-            <button onClick={onClose} className="p-1 rounded-lg transition-colors text-black hover:bg-gray-300"><X size={20} /></button>
-          </div>
-          <div className="p-6 space-y-5 bg-[#c0c0c0]">
-            <div>
-              <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.name}</label>
-              <Input type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} className="bg-white border-2 border-gray-400 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-            </div>
-            <div>
-              <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.category}</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value as ActivityCategory)}
-                className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 bg-white border-2 border-gray-400 text-black focus:ring-blue-500"
-                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                {CATEGORIES.map((cat) => <option key={cat} value={cat}>{CATEGORY_ICONS[cat]} {cat}</option>)}
-              </select>
-            </div>
-            <div className="p-4 rounded-lg bg-white border-2 border-gray-400">
-              <div className="mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: '500' }}>{txt.attributesLabel}</div>
-              <div className="flex gap-3">
-                {(['virus', 'data', 'vaccine'] as const).map(a => (
-                  <div key={a} className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ background: ATTR_COLOR[a] }} />
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: ATTR_COLOR[a], fontWeight: 'bold' }}>+{attributes[a]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.steps} <span className="text-xs ml-1 opacity-60">{txt.optional}</span></label>
-                <button onClick={handleAddStep} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors bg-[#000080] text-white hover:bg-[#000060]" style={{ fontFamily: 'monospace', fontWeight: 'bold' }}><Plus size={14} />{txt.add}</button>
-              </div>
-              {steps.length > 0 && (
-                <div className="space-y-2">
-                  {steps.map((step, index) => (
-                    <div key={step.id} className="flex items-center gap-2">
-                      <span className="text-xs text-black" style={{ fontFamily: 'monospace' }}>{index + 1}.</span>
-                      <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)} placeholder={`Step ${index + 1}`}
-                        className="flex-1 bg-white border-2 border-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-                      <button onClick={() => handleDeleteStep(step.id)} className="p-2 rounded-lg transition-colors text-black hover:bg-gray-300"><Trash2 size={16} /></button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {canEditWeekdays && (
-              <div>
-                <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.weekdays} <span className="text-red-500">*</span></label>
-                <div className="grid grid-cols-7 gap-2">
-                  {WEEKDAY_LABELS.map((label, index) => (
-                    <button key={index} onClick={() => toggleWeekDay(index)}
-                      className={`py-2 rounded-lg transition-all ${weekDays.includes(index) ? 'bg-[#000080] text-white border-2 border-white' : 'bg-white border-2 border-gray-400 text-black hover:bg-gray-200'}`}
-                      style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 'bold' }} title={WEEKDAY_FULL[index]}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2 mb-3 text-black"><Bell size={16} /><span style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.time} <span className="text-xs opacity-60">{txt.optional}</span></span></div>
-              <div className="ml-7">
-                <Input type="time" value={alarmTime} onChange={(e) => setAlarmTime(e.target.value)} className="bg-white border-2 border-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-              </div>
-            </div>
-          </div>
-          <div className="p-6 border-t bg-[#c0c0c0] border-gray-400">
-            <div className="flex gap-2 mb-3">
-              <button onClick={onClose} className="flex-1 py-2.5 px-4 rounded-xl transition-colors bg-white border-2 border-gray-400 text-black hover:bg-gray-200" style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{txt.cancel}</button>
-              <button onClick={handleSave} disabled={!name.trim() || weekDays.length === 0}
-                className="flex-1 py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-[#000080] text-white hover:bg-[#000060]"
-                style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{txt.save}</button>
-            </div>
-            {onDelete && (
-              <button onClick={onDelete} className="w-full py-2 text-red-500 hover:text-red-700 transition-colors" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: 'bold' }}>{txt.delete}</button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ---- Tema padrão (Soulmon design system, sm-*) ----
   const inputStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
     background: '#fff', color: 'var(--sm-ink)',

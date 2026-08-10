@@ -12,7 +12,6 @@ import {
 } from '../utils/oracle';
 
 interface OraclePageProps {
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
 }
 
@@ -41,10 +40,8 @@ function formComplete(f: SavedOracleForm | null): f is SavedOracleForm {
     && allQuestionsAnswered(f.answers ?? {});
 }
 
-export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePageProps) {
+export function OraclePage({ language = 'en-US' }: OraclePageProps) {
   const isPt = language === 'pt-BR';
-  const isGlitch = theme === 'glitch';
-  const isWin98 = theme === 'win98';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   const saved = loadSavedForm();
@@ -183,39 +180,15 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
   };
 
   // --- estilos base (inline p/ cores críticas; classes fora do index.css não aplicam)
-  const cardCls = isGlitch
-    ? 'border border-[#00ffff]/40 bg-black/40 rounded-lg p-3'
-    : isWin98
-      ? 'win98-panel p-3'
-      : 'border border-[#c0c0c0] bg-white rounded-xl p-3';
-  const titleCls = isGlitch ? 'text-[#00ffff]' : 'text-gray-900';
-  const mutedCls = isGlitch ? 'text-[#00ffff]/60' : 'text-gray-500';
-  const inputCls = isGlitch
-    ? 'w-full rounded-md border border-[#00ffff]/40 bg-black/60 text-[#00ffff] px-2 py-1.5'
-    : isWin98
-      ? 'w-full win98-input px-2 py-1.5 text-black'
-      : 'w-full rounded-md border border-[#c0c0c0] bg-white text-gray-900 px-2 py-1.5';
-  const btnCls = isGlitch
-    ? 'px-3 py-2 rounded-md border border-[#00ffff] text-[#00ffff] hover:bg-[#00ffff]/10 transition-colors'
-    : isWin98
-      ? 'win98-button px-3 py-2 text-black'
-      : 'px-3 py-2 rounded-md transition-colors';
-  const btnStyle = (!isGlitch && !isWin98)
-    ? { background: '#0d9488', color: '#ffffff' }
-    : {};
-  const smallBtnCls = isGlitch
-    ? 'text-xs px-2 py-1 rounded border border-[#00ffff]/50 text-[#00ffff] hover:bg-[#00ffff]/10'
-    : isWin98
-      ? 'win98-button text-xs px-2 py-1 text-black'
-      : 'text-xs px-2 py-1 rounded';
-  const smallBtnStyle = (!isGlitch && !isWin98)
-    ? { border: '1px solid #5eead4', color: '#0f766e' }
-    : {};
-  const selectCls = isGlitch
-    ? 'rounded border border-[#00ffff]/40 bg-black/60 text-[#00ffff] px-1.5 py-1 text-xs'
-    : isWin98
-      ? 'win98-input px-1.5 py-1 text-xs text-black'
-      : 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
+  const cardCls = 'border border-[#c0c0c0] bg-white rounded-xl p-3';
+  const titleCls = 'text-gray-900';
+  const mutedCls = 'text-gray-500';
+  const inputCls = 'w-full rounded-md border border-[#c0c0c0] bg-white text-gray-900 px-2 py-1.5';
+  const btnCls = 'px-3 py-2 rounded-md transition-colors';
+  const btnStyle = { background: '#0d9488', color: '#ffffff' };
+  const smallBtnCls = 'text-xs px-2 py-1 rounded';
+  const smallBtnStyle = { border: '1px solid #5eead4', color: '#0f766e' };
+  const selectCls = 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
   const mono = { fontFamily: 'monospace' } as const;
 
   const maxElementScore = profile ? Math.max(...ELEMENT_ORDER.map(e => profile.elementScores[e]), 1) : 1;
@@ -304,11 +277,9 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                           className="text-xs px-2 py-1 rounded-lg transition-colors"
                           style={{
                             ...mono,
-                            border: selected
-                              ? (isGlitch ? '1px solid #00ffff' : '1px solid #0d9488')
-                              : (isGlitch ? '1px solid #00ffff44' : '1px solid #c0c0c0'),
-                            background: selected ? (isGlitch ? '#00ffff22' : '#ccfbf1') : 'transparent',
-                            color: isGlitch ? '#00ffff' : (selected ? '#0f766e' : '#6b7280'),
+                            border: selected ? '1px solid #0d9488' : '1px solid #c0c0c0',
+                            background: selected ? '#ccfbf1' : 'transparent',
+                            color: selected ? '#0f766e' : '#6b7280',
                           }}
                         >
                           {L(opt.text)}
@@ -470,12 +441,12 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                       <span className={`w-20 ${isTop ? titleCls : mutedCls}`} style={isTop ? { fontWeight: 700 } : undefined}>
                         {L(info.name)}
                       </span>
-                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: isGlitch ? '#0a2a2a' : '#e5e7eb' }}>
+                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: '#e5e7eb' }}>
                         <div
                           className="h-full rounded"
                           style={{
                             width: `${(score / maxElementScore) * 100}%`,
-                            background: isTop ? (isGlitch ? '#00ffff' : '#0d9488') : (isGlitch ? '#00ffff55' : '#99f6e4'),
+                            background: isTop ? '#0d9488' : '#99f6e4',
                           }}
                         />
                       </div>
@@ -540,12 +511,12 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                       <span className={`w-28 ${isTop ? titleCls : mutedCls}`} style={isTop ? { fontWeight: 700 } : undefined}>
                         {L(info.name)}
                       </span>
-                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: isGlitch ? '#0a2a2a' : '#e5e7eb' }}>
+                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: '#e5e7eb' }}>
                         <div
                           className="h-full rounded"
                           style={{
                             width: `${(score / maxRoleScore) * 100}%`,
-                            background: isTop ? (isGlitch ? '#ff00ff' : '#7c3aed') : (isGlitch ? '#ff00ff55' : '#ddd6fe'),
+                            background: isTop ? '#7c3aed' : '#ddd6fe',
                           }}
                         />
                       </div>
@@ -588,12 +559,12 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                       <span className={`w-28 ${isTop ? titleCls : mutedCls}`} style={isTop ? { fontWeight: 700 } : undefined}>
                         {L(info.name)}
                       </span>
-                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: isGlitch ? '#0a2a2a' : '#e5e7eb' }}>
+                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: '#e5e7eb' }}>
                         <div
                           className="h-full rounded"
                           style={{
                             width: `${(score / maxAlignScore) * 100}%`,
-                            background: isTop ? (isGlitch ? '#ffcc00' : '#d97706') : (isGlitch ? '#ffcc0055' : '#fde68a'),
+                            background: isTop ? '#d97706' : '#fde68a',
                           }}
                         />
                       </div>
@@ -649,12 +620,12 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                       <span className={`w-36 ${isTop ? titleCls : mutedCls}`} style={isTop ? { fontWeight: 700 } : undefined}>
                         {L(info.name)}
                       </span>
-                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: isGlitch ? '#0a2a2a' : '#e5e7eb' }}>
+                      <div className="flex-1 h-2 rounded overflow-hidden" style={{ background: '#e5e7eb' }}>
                         <div
                           className="h-full rounded"
                           style={{
                             width: `${(score / maxRealmScore) * 100}%`,
-                            background: isTop ? (isGlitch ? '#00ff88' : '#059669') : (isGlitch ? '#00ff8855' : '#a7f3d0'),
+                            background: isTop ? '#059669' : '#a7f3d0',
                           }}
                         />
                       </div>
@@ -758,7 +729,7 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
                 <div
                   key={`${stage.stage}-${stage.branch ?? 'base'}`}
                   className="rounded-lg p-2"
-                  style={{ border: isGlitch ? '1px dashed #00ffff66' : '1px dashed #c0c0c0' }}
+                  style={{ border: '1px dashed #c0c0c0' }}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className={`text-xs ${titleCls} flex items-center gap-2`} style={{ fontWeight: 700 }}>
@@ -806,7 +777,7 @@ export function OraclePage({ theme = 'default', language = 'en-US' }: OraclePage
       )}
 
       {/* Pixelador — converte a imagem gerada pela IA em sprite v-pet real */}
-      <PixelizerCard theme={theme} language={language} />
+      <PixelizerCard language={language} />
     </div>
   );
 }

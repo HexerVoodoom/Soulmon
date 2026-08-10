@@ -12,7 +12,6 @@ interface BeforeInstallPromptEvent extends Event {
 
 interface WelcomePromptModalProps {
   language: Language;
-  theme?: 'default' | 'win98' | 'glitch';
   notificationsEnabled: boolean;
   onEnableNotifications: () => void | Promise<void>;
 }
@@ -24,10 +23,8 @@ interface WelcomePromptModalProps {
  * applies (already installed/native app, permission already granted/denied,
  * or the player dismissed it before — tracked in localStorage).
  */
-export function WelcomePromptModal({ language, theme = 'default', notificationsEnabled, onEnableNotifications }: WelcomePromptModalProps) {
+export function WelcomePromptModal({ language, notificationsEnabled, onEnableNotifications }: WelcomePromptModalProps) {
   const isPt = language === 'pt-BR';
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
   const isNative = Capacitor.isNativePlatform();
 
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -128,39 +125,6 @@ export function WelcomePromptModal({ language, theme = 'default', notificationsE
         onPrimary: handleEnableNotif,
         onSecondary: handleDismissNotif,
       };
-
-  if (isWin98 || isGlitch) {
-    const palette = isGlitch
-      ? { bg: '#0a0a0a', border: '2px solid #00ffff', text: '#00ffff', sub: '#5fbcbc', headBg: '#0a0a0a' }
-      : { bg: '#c0c0c0', border: '2px solid #000080', text: '#000000', sub: '#444444', headBg: '#000080' };
-    const mono = { fontFamily: 'monospace' as const };
-    return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div style={{ width: '100%', maxWidth: 320, background: palette.bg, border: palette.border, boxShadow: '0 12px 32px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
-          <div style={{ position: 'relative', padding: '14px 44px 12px 14px', background: palette.headBg }}>
-            <span style={{ ...mono, fontSize: '0.95rem', fontWeight: 700, color: '#ffffff' }}>{content.title}</span>
-            <button onClick={content.onSecondary} aria-label={isPt ? 'Fechar' : 'Close'}
-              style={{ ...mono, position: 'absolute', top: 8, right: 8, width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: '#ffffff' }}>
-              ✕
-            </button>
-          </div>
-          <div style={{ padding: '14px 16px 6px' }}>
-            <p style={{ ...mono, fontSize: '0.78rem', color: palette.text }}>{content.desc}</p>
-          </div>
-          <div style={{ padding: '14px 16px 16px', display: 'flex', gap: 8 }}>
-            <button onClick={content.onPrimary}
-              style={{ ...mono, flex: 1, padding: '10px 0', border: '2px outset #ffffff', background: isGlitch ? '#00ffff' : '#c0c0c0', color: '#000000', fontWeight: 700, cursor: 'pointer' }}>
-              {content.primary}
-            </button>
-            <button onClick={content.onSecondary}
-              style={{ ...mono, flex: 1, padding: '10px 0', border: '2px outset #ffffff', background: isGlitch ? '#0a0a0a' : '#c0c0c0', color: isGlitch ? '#00ffff' : '#000000', fontWeight: 700, cursor: 'pointer' }}>
-              {content.secondary}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(42,36,64,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>

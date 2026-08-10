@@ -4,7 +4,6 @@ import type { Language } from '../utils/i18n';
 import { pixelizeBuffer } from '../utils/pixelizer';
 
 interface PixelizerCardProps {
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
 }
 
@@ -16,10 +15,8 @@ const DOWNLOAD_SCALE = 20;  // fator de ampliação do PNG baixado (16 → 320px
  * sprite v-pet DE VERDADE — reduz ao grid, quantiza a paleta e devolve
  * pixels duros. Garante o resultado 16x16/4 cores que o prompt pede.
  */
-export function PixelizerCard({ theme = 'default', language = 'en-US' }: PixelizerCardProps) {
+export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
   const isPt = language === 'pt-BR';
-  const isGlitch = theme === 'glitch';
-  const isWin98 = theme === 'win98';
 
   const [source, setSource] = useState<HTMLImageElement | null>(null);
   const [grid, setGrid] = useState(16);
@@ -29,24 +26,12 @@ export function PixelizerCard({ theme = 'default', language = 'en-US' }: Pixeliz
   const previewRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const cardCls = isGlitch
-    ? 'border border-[#00ffff]/40 bg-black/40 rounded-lg p-3'
-    : isWin98
-      ? 'win98-panel p-3'
-      : 'border border-[#c0c0c0] bg-white rounded-xl p-3';
-  const titleCls = isGlitch ? 'text-[#00ffff]' : 'text-gray-900';
-  const mutedCls = isGlitch ? 'text-[#00ffff]/60' : 'text-gray-500';
-  const selectCls = isGlitch
-    ? 'rounded border border-[#00ffff]/40 bg-black/60 text-[#00ffff] px-1.5 py-1 text-xs'
-    : isWin98
-      ? 'win98-input px-1.5 py-1 text-xs text-black'
-      : 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
-  const btnCls = isGlitch
-    ? 'text-xs px-2 py-1 rounded border border-[#00ffff]/50 text-[#00ffff] hover:bg-[#00ffff]/10'
-    : isWin98
-      ? 'win98-button text-xs px-2 py-1 text-black'
-      : 'text-xs px-2 py-1 rounded';
-  const btnStyle = (!isGlitch && !isWin98) ? { border: '1px solid #5eead4', color: '#0f766e' } : {};
+  const cardCls = 'border border-[#c0c0c0] bg-white rounded-xl p-3';
+  const titleCls = 'text-gray-900';
+  const mutedCls = 'text-gray-500';
+  const selectCls = 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
+  const btnCls = 'text-xs px-2 py-1 rounded';
+  const btnStyle = { border: '1px solid #5eead4', color: '#0f766e' };
   const mono = { fontFamily: 'monospace' } as const;
 
   const loadImageFile = useCallback((file: File | Blob) => {

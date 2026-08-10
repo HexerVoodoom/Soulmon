@@ -7,7 +7,6 @@ type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle'
 interface BottomNavProps {
   currentView: ViewType;
   onNavigate: (view: ViewType) => void;
-  theme?: 'default' | 'win98' | 'glitch';
   onResetOnboarding?: () => void;
   /** Loja — não é uma view (fica fora do minigame): abre como modal por cima da tela atual. */
   onOpenShop?: () => void;
@@ -17,48 +16,13 @@ interface BottomNavProps {
 }
 
 /** Navegação principal do app: barra de ícones fixa no rodapé (abaixo da
- *  barra de chat). No tema win98 mantém o menubar clássico no topo. Tema
- *  padrão: 4 views à esquerda + Loja (ação) + menu sanduíche (Configurações
- *  + Debug) sempre por último, à direita de tudo. */
-export function BottomNav({ currentView, onNavigate, theme = 'default', onResetOnboarding, onOpenShop, onOpenCredits, language = 'en-US' }: BottomNavProps) {
+ *  barra de chat). 4 views à esquerda + Loja (ação) + menu sanduíche
+ *  (Configurações + Debug) sempre por último, à direita de tudo. */
+export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenShop, onOpenCredits, language = 'en-US' }: BottomNavProps) {
   const isPt = language === 'pt-BR';
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Win98 theme - mantém o layout antigo (menubar no topo)
-  if (theme === 'win98') {
-    return (
-      <div className="win98-header">
-        <div className="win98-menubar">
-          <button className={`win98-menu-item ${currentView === 'main' ? 'active' : ''}`} onClick={() => onNavigate('main')}>
-            Home
-          </button>
-          <button className={`win98-menu-item ${currentView === 'evolution' ? 'active' : ''}`} onClick={() => onNavigate('evolution')}>
-            Evolution
-          </button>
-          <button className={`win98-menu-item ${currentView === 'stats' ? 'active' : ''}`} onClick={() => onNavigate('stats')}>
-            Stats
-          </button>
-          <button className={`win98-menu-item ${currentView === 'games' ? 'active' : ''}`} onClick={() => onNavigate('games')}>
-            Games
-          </button>
-          <button className={`win98-menu-item ${currentView === 'oracle' ? 'active' : ''}`} onClick={() => onNavigate('oracle')}>
-            Oracle
-          </button>
-          <button className={`win98-menu-item ${currentView === 'settings' ? 'active' : ''}`} onClick={() => onNavigate('settings')}>
-            Settings
-          </button>
-          {onResetOnboarding && (
-            <button className="win98-menu-item" onClick={onResetOnboarding}>
-              <RotateCcw size={14} />
-              {isPt ? 'Recomeçar' : 'Redo the ritual'}
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Tema padrão — Soulmon design system. Torneio mora dentro de Atividades
+  // Torneio mora dentro de Atividades
   // (junto dos minigames); Estatísticas mora dentro de Evolução (aba interna
   // — ver App.tsx). Só views de verdade viram "abas" coloridas-quando-ativas;
   // Loja e o menu sanduíche são AÇÕES (cor neutra fixa), agrupadas à direita.

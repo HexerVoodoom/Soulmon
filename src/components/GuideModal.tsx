@@ -6,7 +6,6 @@ import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS
 interface GuideModalProps {
   isOpen: boolean;
   onClose: () => void;
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
 }
 
@@ -19,16 +18,14 @@ interface GuideModalProps {
  * guia tinha ficado prometendo estágios de ovo/bebê e requisitos que não
  * existiam mais.
  */
-export function GuideModal({ isOpen, onClose, theme = 'default', language = 'en-US' }: GuideModalProps) {
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
+export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalProps) {
   const isPt = language === 'pt-BR';
   /** Escolhe o texto do idioma atual. */
   const L = (pt: string, en: string) => (isPt ? pt : en);
 
   if (!isOpen) return null;
 
-  const headClass = isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000080]' : 'text-[#101828]';
+  const headClass = 'text-[#101828]';
   const R = FORM_REQUIREMENTS;
 
   const Section = ({ n, title, children }: { n: number; title: string; children: React.ReactNode }) => (
@@ -40,9 +37,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default', language = 'en-
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className={`w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto ${
-        isGlitch ? 'glitch-activity-card' : isWin98 ? 'win98-activity-card' : 'sm-card'
-      }`}>
+      <div className="w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto sm-card">
         <div className="flex items-center justify-between mb-4">
           <h2 className={`text-xl ${headClass}`} style={{ fontFamily: 'Consolas, monospace' }}>
             📖 {L('Guia do Soulmon', 'Soulmon Guide')}
@@ -50,15 +45,13 @@ export function GuideModal({ isOpen, onClose, theme = 'default', language = 'en-
           <button
             onClick={onClose}
             aria-label={L('Fechar', 'Close')}
-            className={`p-2 rounded-lg transition-all ${
-              isGlitch ? 'glitch-button' : isWin98 ? 'win98-button' : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
-            }`}
+            className="p-2 rounded-lg transition-all bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]"
           >
             <X size={20} strokeWidth={1.5} />
           </button>
         </div>
 
-        <div className={`space-y-4 ${isGlitch ? 'text-[#00ff00]' : isWin98 ? 'text-black' : 'text-[#4d5461]'}`}
+        <div className="space-y-4 text-[#4d5461]"
           style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', lineHeight: '1.5' }}>
 
           <Section n={1} title={L('Como seu Soulmon evolui', 'How your Soulmon evolves')}>
@@ -261,7 +254,7 @@ export function GuideModal({ isOpen, onClose, theme = 'default', language = 'en-
             </p>
           </Section>
 
-          <section className="border-t pt-4 mt-4" style={{ borderColor: isGlitch ? '#00ffff' : isWin98 ? '#000080' : '#e5e6e7' }}>
+          <section className="border-t pt-4 mt-4" style={{ borderColor: '#e5e6e7' }}>
             <p className="text-center italic">
               {L(
                 'Seu Soulmon cresce junto com você. Nos dias em que não der, ele continua aqui. 💜',

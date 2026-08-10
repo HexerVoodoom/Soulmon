@@ -18,14 +18,14 @@ export function EnergyBar({ totalSegments, filledSegments }: EnergyBarProps) {
           <>
             {/* Blur/glow effect layer */}
             <div
-              className="absolute inset-0 bg-[#08e610] blur-[2px]"
-              style={{ filter: 'blur(2px)' }}
+              className="absolute inset-0"
+              style={{ background: 'var(--sm-energy)', filter: 'blur(2px)' }}
             />
             {/* Solid layer on top */}
-            <div className="absolute inset-0 bg-[#08e610]" />
+            <div className="absolute inset-0" style={{ background: 'var(--sm-energy)' }} />
           </>
         ) : (
-          <div className="absolute inset-0 bg-[#364153]" />
+          <div className="absolute inset-0" style={{ background: 'var(--sm-energy-track)' }} />
         )}
       </div>
     );

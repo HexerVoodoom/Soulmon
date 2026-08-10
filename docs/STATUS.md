@@ -132,6 +132,24 @@ seção 3.
 
 ## 2. Estado do produto
 
+- **Reskin visual + tema claro/escuro (ago/2026).** Paleta trocou de roxo pra
+  teal/cobre (`--sm-*` em `src/index.css`, agora com variante
+  `[data-theme="light"]`/`[data-theme="dark"]`). Novo `src/contexts/ThemeContext.tsx`
+  (persistido em `digiapp-theme`, reaproveitando a chave do antigo seletor de
+  skin) + script inline em `index.html` que aplica o tema antes do primeiro
+  paint (evita FOUC) + seletor "Aparência" em Configurações. Os skins
+  `win98`/`glitch` — mortos, sem nenhum botão que os ligasse — foram
+  **removidos por completo** (código e CSS, ~950 linhas), não só desligados.
+  Novo mascote da franquia: um corvo de cartola em pixel-art
+  (`src/assets/soulmon/mascot-raven.png`, arte fornecida pelo dono, fundo
+  originalmente com checkerboard opaco — removido via flood-fill antes de
+  virar asset), usado no ícone do app (favicon/PWA/Android/Electron, todos
+  regenerados) e como mascote em loading/onboarding/erro/estados vazios. A
+  **mecânica do pet do jogador não mudou em nada** — continua gerado pelo
+  oráculo por usuário; o corvo é só identidade de marca. Cobertura de temas é
+  por prioridade: fundação + ~15 telas de maior uso migraram pros tokens
+  novos agora (ver commit); telas secundárias (minigames, alguns painéis
+  fundos) ainda têm cor fixa e migram depois.
 - **Auditoria de tom e paridade executada (ago/2026).** O chat de fallback
   passou a entender e responder em PT (antes um usuário escrevendo "tô triste"
   recebia "Cheer up!" em inglês), e o pool de tristeza deixou de invalidar o
