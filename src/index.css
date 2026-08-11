@@ -4003,24 +4003,31 @@ html {
 }
 .sm-bottom-nav-btn:active { transform: scale(.92); }
 
-/* Botão chunky estilo Duolingo: face plana + "espessura" embaixo,
-   afunda ao pressionar. */
+/* Botão primário: moldura pixel art (cobre/ciano) gerada pra combinar com o
+   kit de UI — ver src/assets/soulmon/buttons/. border-image em vez de
+   background+border-radius porque o canto arredondado já está desenhado
+   NO pixel (é "chamfer" em pixel art, não CSS radius); border-image-slice
+   usa os valores medidos do PNG (button-normal-large.png, 899×272px). */
 .sm-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: var(--sm-radius);
   font-weight: 700;
   letter-spacing: .02em;
-  padding: 12px 20px;
-  background: var(--sm-primary);
-  color: #fff;
-  box-shadow: 0 4px 0 var(--sm-primary-deep);
-  transition: transform .08s ease, box-shadow .08s ease, filter .15s ease;
+  padding: 14px 22px;
+  color: #eafffb;
+  text-shadow: 0 1px 2px rgba(0,0,0,.5);
+  border-style: solid;
+  border-width: 14px;
+  border-image-source: url(./assets/soulmon/buttons/button-normal-large.png);
+  border-image-slice: 51 64 63 63 fill;
+  border-image-width: 14px;
+  border-image-repeat: stretch;
+  transition: transform .08s ease, filter .15s ease;
   user-select: none;
 }
-.sm-btn:hover { filter: brightness(1.05); }
+.sm-btn:hover { filter: brightness(1.15); }
 /* Foco visível: o design system tinha :hover, :active e :disabled, mas nenhum
    estado de foco — navegar por teclado era invisível de ponta a ponta. */
 .sm-btn:focus-visible,
@@ -4038,8 +4045,8 @@ select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--sm-primary) 45%, transparent);
 }
-.sm-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--sm-primary-deep); }
-.sm-btn:disabled { opacity: .45; box-shadow: none; transform: none; }
+.sm-btn:active { transform: scale(.96); filter: brightness(.92); }
+.sm-btn:disabled { filter: grayscale(1) brightness(.75); transform: none; cursor: not-allowed; }
 
 .sm-btn-secondary {
   background: var(--sm-surface);
