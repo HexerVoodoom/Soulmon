@@ -26,13 +26,16 @@ export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
   const previewRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const cardCls = 'border border-[#c0c0c0] bg-white rounded-xl p-3';
-  const titleCls = 'text-gray-900';
-  const mutedCls = 'text-gray-500';
-  const selectCls = 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
+  const cardCls = 'sm-card rounded-xl p-3';
+  const titleCls = '';
+  const mutedCls = '';
+  const selectCls = 'rounded px-1.5 py-1 text-xs';
+  const selectStyle = { background: 'var(--sm-bg)', border: '1px solid var(--sm-line)', color: 'var(--sm-ink)' };
   const btnCls = 'text-xs px-2 py-1 rounded';
   const btnStyle = { border: '1px solid #5eead4', color: '#0f766e' };
   const mono = { fontFamily: 'monospace' } as const;
+  const titleStyle = { color: 'var(--sm-ink)' };
+  const mutedStyle = { color: 'var(--sm-muted)' };
 
   const loadImageFile = useCallback((file: File | Blob) => {
     const url = URL.createObjectURL(file);
@@ -108,8 +111,8 @@ export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
 
   return (
     <div className={cardCls} style={mono}>
-      <h3 className={`mb-1 ${titleCls}`}>🕹️ {isPt ? 'Pixelador v-pet' : 'V-pet Pixelizer'}</h3>
-      <p className={`text-xs mb-2 ${mutedCls}`}>
+      <h3 className={`mb-1 ${titleCls}`} style={titleStyle}>🕹️ {isPt ? 'Pixelador v-pet' : 'V-pet Pixelizer'}</h3>
+      <p className={`text-xs mb-2 ${mutedCls}`} style={mutedStyle}>
         {isPt
           ? 'Cole (Ctrl+V) ou envie a imagem gerada pela IA — o app converte em sprite 16x16 de verdade, com paleta limitada e fundo transparente.'
           : 'Paste (Ctrl+V) or upload the AI-generated image — the app converts it into a REAL 16x16 sprite with a limited palette and transparent background.'}
@@ -126,13 +129,13 @@ export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
           style={{ display: 'none' }}
           onChange={e => { const f = e.target.files?.[0]; if (f) loadImageFile(f); e.target.value = ''; }}
         />
-        <select className={selectCls} style={mono} value={grid} onChange={e => setGrid(Number(e.target.value))}>
+        <select className={selectCls} style={{ ...mono, ...selectStyle }} value={grid} onChange={e => setGrid(Number(e.target.value))}>
           {[16, 24, 32, 48].map(g => <option key={g} value={g}>{g}×{g}</option>)}
         </select>
-        <select className={selectCls} style={mono} value={colors} onChange={e => setColors(Number(e.target.value))}>
+        <select className={selectCls} style={{ ...mono, ...selectStyle }} value={colors} onChange={e => setColors(Number(e.target.value))}>
           {[2, 4, 6, 8].map(c => <option key={c} value={c}>{c} {isPt ? 'cores' : 'colors'}</option>)}
         </select>
-        <label className={`flex items-center gap-1 ${mutedCls}`} style={mono}>
+        <label className={`flex items-center gap-1 ${mutedCls}`} style={{ ...mono, ...mutedStyle }}>
           <input type="checkbox" checked={transparentBg} onChange={e => setTransparentBg(e.target.checked)} />
           {isPt ? 'fundo transparente' : 'transparent bg'}
         </label>
@@ -141,15 +144,15 @@ export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
       {source ? (
         <div className="flex items-end gap-3 flex-wrap">
           <div>
-            <p className={`text-[10px] mb-1 ${mutedCls}`}>{isPt ? 'Original' : 'Original'}</p>
+            <p className={`text-[10px] mb-1 ${mutedCls}`} style={mutedStyle}>{isPt ? 'Original' : 'Original'}</p>
             <img
               src={source.src}
               alt=""
-              style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid #c0c0c0' }}
+              style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--sm-line)' }}
             />
           </div>
           <div>
-            <p className={`text-[10px] mb-1 ${mutedCls}`}>{isPt ? `Sprite ${grid}×${grid}` : `${grid}×${grid} sprite`}</p>
+            <p className={`text-[10px] mb-1 ${mutedCls}`} style={mutedStyle}>{isPt ? `Sprite ${grid}×${grid}` : `${grid}×${grid} sprite`}</p>
             <canvas
               ref={previewRef}
               style={{
@@ -157,7 +160,7 @@ export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
                 height: PREVIEW_SIZE,
                 imageRendering: 'pixelated',
                 borderRadius: 8,
-                border: '1px solid #c0c0c0',
+                border: '1px solid var(--sm-line)',
                 // xadrez para enxergar a transparência
                 background: 'repeating-conic-gradient(#e5e7eb 0% 25%, #ffffff 0% 50%) 0 0 / 16px 16px',
               }}
@@ -175,7 +178,7 @@ export function PixelizerCard({ language = 'en-US' }: PixelizerCardProps) {
           )}
         </div>
       ) : (
-        <p className={`text-[10px] ${mutedCls}`}>
+        <p className={`text-[10px] ${mutedCls}`} style={mutedStyle}>
           {isPt ? 'Nenhuma imagem ainda — gere no Nanobanana, copie e cole aqui.' : 'No image yet — generate it, copy and paste it here.'}
         </p>
       )}

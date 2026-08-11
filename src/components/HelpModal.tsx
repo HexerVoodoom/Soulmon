@@ -140,7 +140,7 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
   return (
     <div className="fixed inset-0 z-[300] flex items-end justify-center p-0">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-md max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200 bg-[#1a2230] text-white rounded-t-2xl">
+      <div className="relative w-full max-w-md max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200 text-white rounded-t-2xl" style={{ background: '#1a2230' }}>
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-white/10">
           <span
@@ -162,8 +162,8 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
           {SECTIONS.map(section => (
             <div key={section.titleEn}>
               <p
-                className="text-xs font-bold mb-2 uppercase tracking-wider text-[#2bff95]"
-                style={{ fontFamily: 'monospace' }}
+                className="text-xs font-bold mb-2 uppercase tracking-wider"
+                style={{ fontFamily: 'monospace', color: '#2dd4bf' }}
               >
                 {isPt ? section.titlePt : section.titleEn}
               </p>

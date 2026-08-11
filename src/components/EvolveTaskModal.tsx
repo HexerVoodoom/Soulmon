@@ -54,7 +54,7 @@ export function EvolveTaskModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl p-6 shadow-2xl bg-white">
+      <div className="relative w-full max-w-md rounded-2xl p-6 shadow-2xl sm-card">
         {/* Content */}
         <div className="space-y-4">
           {/* Icon */}
@@ -64,24 +64,24 @@ export function EvolveTaskModal({
 
           {/* Title */}
           <h2
-            className="text-center text-gray-900"
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold' }}
+            className="text-center"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--sm-ink)' }}
           >
             {title}
           </h2>
 
           {/* Intro */}
           <p
-            className="text-center leading-relaxed text-gray-700"
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
+            className="text-center leading-relaxed"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {intro}
           </p>
 
           {/* Goal */}
           <p
-            className="text-center leading-relaxed text-gray-700"
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
+            className="text-center leading-relaxed"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {goal}
           </p>
@@ -99,20 +99,16 @@ export function EvolveTaskModal({
             {!hasEnough && (
               <button
                 onClick={onCreateTask}
-                className="w-full py-3 px-4 rounded-xl transition-all bg-[#101828] text-white hover:bg-[#1f2937]"
-                style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold' }}
+                className="sm-btn w-full"
+                style={{ fontFamily: 'Consolas, monospace' }}
               >
                 Create new task
               </button>
             )}
             <button
               onClick={onClose}
-              className={`w-full py-3 px-4 rounded-xl transition-all ${
-                hasEnough
-                  ? 'bg-[#101828] text-white hover:bg-[#1f2937]'
-                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
-              }`}
-              style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold' }}
+              className={`w-full ${hasEnough ? 'sm-btn' : 'sm-btn-secondary sm-btn'}`}
+              style={{ fontFamily: 'Consolas, monospace' }}
             >
               Got it
             </button>

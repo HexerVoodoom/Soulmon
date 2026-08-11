@@ -30,11 +30,12 @@ export function FirstTaskCompletedPopup({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl p-6 shadow-2xl bg-white">
+      <div className="relative w-full max-w-md rounded-2xl p-6 shadow-2xl sm-card">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-lg transition-all text-gray-400 hover:text-gray-600 hover:bg-gray-100"
+          className="absolute right-4 top-4 p-2 rounded-lg transition-all"
+          style={{ color: 'var(--sm-muted)' }}
           aria-label={isPt ? 'Fechar' : 'Close'}
         >
           <X size={20} />
@@ -49,16 +50,16 @@ export function FirstTaskCompletedPopup({
 
           {/* Title */}
           <h2
-            className="text-center text-gray-900"
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold' }}
+            className="text-center"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--sm-ink)' }}
           >
             {isPt ? 'Primeira tarefa feita!' : 'First task done!'}
           </h2>
 
           {/* Message */}
           <p
-            className="text-center leading-relaxed text-gray-700"
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
+            className="text-center leading-relaxed"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {isPt
               ? 'Ele cresceu um pouquinho agora. É assim mesmo: uma coisa de cada vez, no seu ritmo.'
@@ -68,8 +69,8 @@ export function FirstTaskCompletedPopup({
           {/* Button */}
           <button
             onClick={onClose}
-            className="w-full py-3 px-4 rounded-xl transition-all bg-[#101828] text-white hover:bg-[#1f2937]"
-            style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold' }}
+            className="sm-btn w-full"
+            style={{ fontFamily: 'Consolas, monospace' }}
           >
             {isPt ? 'Entendi' : 'Got it'}
           </button>

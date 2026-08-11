@@ -68,23 +68,23 @@ export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
     : 'Install Soulmon for quick access, offline support and notifications.';
 
   return (
-    <div className="p-6 rounded-2xl bg-white shadow-sm ring-1 ring-gray-200/50">
+    <div className="p-6 rounded-2xl sm-card">
       <h3
-        className="mb-3 text-gray-900"
-        style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}
+        className="mb-3"
+        style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
       >
         {label}
       </h3>
       <p
-        className="mb-5 text-xs text-gray-500"
-        style={{ fontFamily: 'monospace' }}
+        className="mb-5 text-xs"
+        style={{ fontFamily: 'monospace', color: 'var(--sm-muted)' }}
       >
         {description}
       </p>
       <div className="flex gap-2">
         <button
           onClick={handleInstall}
-          className="flex-1 py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 bg-gray-900 text-white hover:bg-gray-800 shadow-sm"
+          className="sm-btn flex-1 flex items-center justify-center gap-2"
           style={{ fontFamily: 'monospace', fontWeight: '500' }}
         >
           <Download size={14} />
@@ -92,8 +92,8 @@ export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
         </button>
         <button
           onClick={handleDismiss}
-          className="py-3 px-4 rounded-xl transition-all text-xs bg-gray-100 text-gray-500 hover:bg-gray-200"
-          style={{ fontFamily: 'monospace' }}
+          className="py-3 px-4 rounded-xl transition-all text-xs"
+          style={{ fontFamily: 'monospace', background: 'var(--sm-bg)', color: 'var(--sm-muted)' }}
         >
           {dismissBtn}
         </button>

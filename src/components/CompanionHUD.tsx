@@ -549,9 +549,10 @@ export const CompanionHUD = memo(function CompanionHUD({
           {Array.from({ length: totalSegments }, (_, i) => (
             <div
               key={i}
-              className={`h-3 flex-1 transition-colors duration-300 ${i < filledSegments ? 'bg-gradient-to-r from-[#2bff95] to-teal-400' : 'bg-gray-600'}`}
+              className={`h-3 flex-1 transition-colors duration-300 ${i < filledSegments ? '' : 'bg-gray-600'}`}
               style={{
                 minWidth: '8px',
+                background: i < filledSegments ? 'linear-gradient(to right, #2dd4bf, #5eead4)' : undefined,
                 boxShadow: i < filledSegments ? '0 0 6px rgba(192, 132, 252, 0.6)' : 'none'
               }}
             />
@@ -648,7 +649,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           {evolutionFlash && (
             <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
               <div className="absolute inset-0 bg-white/70 animate-pulse" />
-              <span className="relative text-[#2bff95] font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', textShadow: '0 0 12px #2bff95' }}>
+              <span className="relative font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', color: '#2dd4bf', textShadow: '0 0 12px #2dd4bf' }}>
                 {language === 'pt-BR' ? '✨ EVOLUÇÃO! ✨' : '✨ EVOLVE! ✨'}
               </span>
             </div>
