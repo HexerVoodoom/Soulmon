@@ -596,7 +596,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       )}
       <div className="flex gap-2" style={{ position: 'relative', zIndex: 1 }}>
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 56 }}>
+        <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 72 }}>
           {([
             { key: 'items', icon: iconItems, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
             { key: 'bath', icon: iconBath, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
@@ -606,13 +606,13 @@ export const CompanionHUD = memo(function CompanionHUD({
               key={a.key}
               onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
               disabled={a.key !== 'bath' && a.disabled}
-              className="sm-card relative flex flex-col items-center justify-center gap-0.5 py-2"
+              className="sm-card relative flex flex-col items-center justify-center gap-0.5 py-2.5"
               style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
             >
               {a.badge && (
                 <span style={{ position: 'absolute', top: 4, right: 6, width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--sm-danger)', border: '1px solid var(--sm-surface)' }} />
               )}
-              <img src={a.icon} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <img src={a.icon} alt="" width={36} height={36} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--sm-muted)' }}>
                 {language === 'pt-BR' ? a.pt : a.en}
               </span>
@@ -735,7 +735,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 left: `${position}%`,
                 transform: getHorizontalFlip(),
                 top: '50%',
-                marginTop: '-20px',
+                marginTop: '-38px',
                 transition: 'left 0.1s ease-linear, transform 0.1s ease-linear',
                 touchAction: 'none', // let the rub gesture own the pointer
               }}
@@ -749,8 +749,9 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <img
                   src={sprite}
                   alt={currentStage}
-                  className={`w-20 h-20 object-contain ${getCompanionFilter()}`}
+                  className={`object-contain ${getCompanionFilter()}`}
                   style={{
+                    width: 152, height: 152,
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
@@ -764,9 +765,9 @@ export const CompanionHUD = memo(function CompanionHUD({
                   }}
                 />
               ) : (
-                <div 
-                  className="w-20 h-20 flex items-center justify-center bg-gray-700 rounded border-2 border-gray-600"
-                  style={{ fontFamily: 'monospace' }}
+                <div
+                  className="flex items-center justify-center bg-gray-700 rounded border-2 border-gray-600"
+                  style={{ width: 152, height: 152, fontFamily: 'monospace' }}
                 >
                   <span className="text-white" style={{ fontSize: '3rem', fontWeight: 'bold' }}>?</span>
                 </div>

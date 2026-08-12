@@ -26,7 +26,7 @@ interface BottomNavProps {
 /** Ícone-imagem (gerado no Higgsfield, kit bronze/cobre) no lugar do
  *  lucide-react. Sem `color` de SVG pra recolorir por aba — o destaque da
  *  aba ativa vem do halo (glow) + fundo, não de tingir o ícone. */
-function NavIcon({ src, alt, active, size = 22 }: { src: string; alt: string; active?: boolean; size?: number }) {
+function NavIcon({ src, alt, active, size = 34 }: { src: string; alt: string; active?: boolean; size?: number }) {
   return (
     <img
       src={src}
@@ -86,7 +86,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
           title={isPt ? 'Loja' : 'Shop'}
           className="sm-bottom-nav-btn"
         >
-          <NavIcon src={iconCoin} alt={isPt ? 'Loja' : 'Shop'} size={21} />
+          <NavIcon src={iconCoin} alt={isPt ? 'Loja' : 'Shop'} size={32} />
         </button>
       )}
 

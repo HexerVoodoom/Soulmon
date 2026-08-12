@@ -3906,7 +3906,7 @@ html {
   --sm-energy: #16a34a;
   --sm-energy-track: #e3ece9;
   --sm-radius: 16px;
-  --sm-bottomnav-h: 60px;       /* altura de conteúdo da barra de navegação inferior */
+  --sm-bottomnav-h: 68px;       /* altura de conteúdo da barra de navegação inferior */
 }
 
 [data-theme="dark"] {
