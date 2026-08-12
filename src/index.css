@@ -4003,12 +4003,16 @@ html {
 }
 .sm-bottom-nav-btn:active { transform: scale(.92); }
 
-/* Botão primário: moldura pixel art (cobre/ciano) gerada pra combinar com o
-   kit de UI — ver src/assets/soulmon/buttons/. border-image em vez de
-   background+border-radius porque o canto arredondado já está desenhado
-   NO pixel (é "chamfer" em pixel art, não CSS radius); border-image-slice
-   usa os valores medidos do PNG (button-normal-large.png, 899×272px). */
+/* Botão primário: moldura pixel art em CSS puro (sem PNG) — cantos chanfrados
+   via clip-path (o "chamfer" pixel-art, não border-radius), borda escura +
+   friso claro em cima via box-shadow em camadas, barra 3D embaixo que some
+   no :active (press-down). --sm-btn-fill/--sm-btn-deep são a ÚNICA
+   diferença entre .sm-btn e .sm-btn-secondary — o secundário é literalmente
+   o mesmo botão, só sem cor (ver abaixo), nunca um modelo/tamanho à parte. */
 .sm-btn {
+  --sm-btn-fill: var(--sm-primary);
+  --sm-btn-deep: var(--sm-primary-deep);
+  --sm-btn-edge: color-mix(in srgb, var(--sm-btn-deep) 60%, black);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4018,16 +4022,23 @@ html {
   padding: 14px 22px;
   color: #eafffb;
   text-shadow: 0 1px 2px rgba(0,0,0,.5);
-  border-style: solid;
-  border-width: 14px;
-  border-image-source: url(./assets/soulmon/buttons/button-normal-large.png);
-  border-image-slice: 51 64 63 63 fill;
-  border-image-width: 14px;
-  border-image-repeat: stretch;
-  transition: transform .08s ease, filter .15s ease;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sm-btn-fill) 85%, white) 0%, var(--sm-btn-fill) 35%, var(--sm-btn-fill) 100%);
+  border: none;
+  clip-path: polygon(
+    0 8px, 8px 8px, 8px 0,
+    calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
+    100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%,
+    8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px)
+  );
+  box-shadow:
+    0 4px 0 var(--sm-btn-deep),
+    0 6px 10px rgba(0,0,0,.25),
+    inset 0 3px 0 rgba(255,255,255,.28),
+    inset 0 -4px 0 var(--sm-btn-edge);
+  transition: transform .08s ease, filter .15s ease, box-shadow .08s ease;
   user-select: none;
 }
-.sm-btn:hover { filter: brightness(1.15); }
+.sm-btn:hover { filter: brightness(1.1); }
 /* Foco visível: o design system tinha :hover, :active e :disabled, mas nenhum
    estado de foco — navegar por teclado era invisível de ponta a ponta. */
 .sm-btn:focus-visible,
@@ -4045,22 +4056,24 @@ select:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--sm-primary) 45%, transparent);
 }
-.sm-btn:active { transform: scale(.96); filter: brightness(.92); }
+.sm-btn:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 0 0 var(--sm-btn-deep),
+    inset 0 3px 0 rgba(255,255,255,.2),
+    inset 0 -4px 0 var(--sm-btn-edge);
+}
 .sm-btn:disabled { filter: grayscale(1) brightness(.75); transform: none; cursor: not-allowed; }
 
-/* Botão secundário/inativo: mesma técnica do .sm-btn (moldura pixel art via
-   border-image) em vez do retângulo vazado (só borda CSS) que existia antes —
-   ver src/assets/soulmon/buttons/button-inactive-frame.png (400×148px). */
+/* Botão secundário/inativo: o MESMO .sm-btn (mesmo tamanho, mesma forma),
+   só trocando as duas variáveis de cor pro cinza neutro do tema — nunca foi
+   pra ser um componente diferente, era exatamente esse o bug que o dono
+   apontou (o "inativo" vinha de um PNG à parte, maior que o ativo). */
 .sm-btn-secondary {
-  color: var(--sm-primary);
-  border-style: solid;
-  border-width: 12px;
-  border-image-source: url(./assets/soulmon/buttons/button-inactive-frame.png);
-  border-image-slice: 30 32 30 32 fill;
-  border-image-width: 12px;
-  border-image-repeat: stretch;
+  --sm-btn-fill: var(--sm-muted);
+  --sm-btn-deep: color-mix(in srgb, var(--sm-muted) 70%, black);
+  color: var(--sm-surface);
 }
-.sm-btn-secondary:active { transform: translateY(2px); }
 
 .sm-btn-gold {
   background: var(--sm-gold);

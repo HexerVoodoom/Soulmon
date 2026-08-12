@@ -21,6 +21,10 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
     doneTimerRef.current = setTimeout(onFinish, totalMs);
   };
 
+  // Toque/clique no vídeo: pula direto pro app, com o mesmo fade de saída
+  // (400ms) que o fim natural do vídeo já usa — sem esperar o resto tocar.
+  const skip = () => scheduleFinish(400);
+
   useEffect(() => {
     // Fallback timing (used if the video fails, or as a safety net if
     // `loadedmetadata`/`ended` never fire). Video duration takes over once known.
@@ -57,10 +61,12 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
           }}
           onEnded={onFinish}
           onError={() => { setVideoFailed(true); scheduleFinish(1500); }}
+          onClick={skip}
           style={{
             position: 'absolute', inset: 0,
             width: '100%', height: '100%',
             objectFit: 'cover',
+            cursor: 'pointer',
           }}
         />
       ) : (
