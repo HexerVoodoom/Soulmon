@@ -36,13 +36,15 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
           style={{
             width: 20, height: 20, borderRadius: 8, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            background: completed ? '#22c55e' : '#ffffff',
-            border: `1px solid ${completed ? '#22c55e' : '#d1d5dc'}`,
+            background: 'var(--sm-surface)',
+            border: `2px solid ${completed ? 'var(--sm-primary)' : 'var(--sm-gold)'}`,
+            boxShadow: completed ? '0 0 6px color-mix(in srgb, var(--sm-primary) 65%, transparent)' : 'none',
+            transition: 'box-shadow .15s ease, border-color .15s ease',
           }}
         >
           {completed && (
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
         </span>

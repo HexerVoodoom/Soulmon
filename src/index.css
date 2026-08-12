@@ -4003,42 +4003,34 @@ html {
 }
 .sm-bottom-nav-btn:active { transform: scale(.92); }
 
-/* Botão primário: moldura pixel art em CSS puro (sem PNG) — cantos chanfrados
-   via clip-path (o "chamfer" pixel-art, não border-radius), borda escura +
-   friso claro em cima via box-shadow em camadas, barra 3D embaixo que some
-   no :active (press-down). --sm-btn-fill/--sm-btn-deep são a ÚNICA
-   diferença entre .sm-btn e .sm-btn-secondary — o secundário é literalmente
-   o mesmo botão, só sem cor (ver abaixo), nunca um modelo/tamanho à parte. */
+/* Botão primário: inspiração Duolingo (forma arredondada, cor chapada,
+   barra 3D embaixo que "afunda" no :active) ajustada pro nosso estilo —
+   borda cobre de 2px (mesma linguagem do .sm-card) em vez do contorno
+   escuro genérico do Duolingo, tipografia em bold/caps leve. Nada de PNG.
+   --sm-btn-fill/--sm-btn-deep são a ÚNICA diferença entre .sm-btn e
+   .sm-btn-secondary — o secundário é literalmente o mesmo botão, só sem
+   cor (ver abaixo), nunca um componente ou tamanho à parte. */
 .sm-btn {
   --sm-btn-fill: var(--sm-primary);
   --sm-btn-deep: var(--sm-primary-deep);
-  --sm-btn-edge: color-mix(in srgb, var(--sm-btn-deep) 60%, black);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-weight: 700;
-  letter-spacing: .02em;
+  font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
   padding: 14px 22px;
-  color: #eafffb;
-  text-shadow: 0 1px 2px rgba(0,0,0,.5);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--sm-btn-fill) 85%, white) 0%, var(--sm-btn-fill) 35%, var(--sm-btn-fill) 100%);
-  border: none;
-  clip-path: polygon(
-    0 8px, 8px 8px, 8px 0,
-    calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px,
-    100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%,
-    8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px)
-  );
-  box-shadow:
-    0 4px 0 var(--sm-btn-deep),
-    0 6px 10px rgba(0,0,0,.25),
-    inset 0 3px 0 rgba(255,255,255,.28),
-    inset 0 -4px 0 var(--sm-btn-edge);
+  color: #ffffff;
+  background: var(--sm-btn-fill);
+  border: 2px solid var(--sm-gold);
+  border-radius: 14px;
+  box-shadow: 0 4px 0 var(--sm-btn-deep);
   transition: transform .08s ease, filter .15s ease, box-shadow .08s ease;
   user-select: none;
 }
-.sm-btn:hover { filter: brightness(1.1); }
+.sm-btn:hover { filter: brightness(1.08); }
 /* Foco visível: o design system tinha :hover, :active e :disabled, mas nenhum
    estado de foco — navegar por teclado era invisível de ponta a ponta. */
 .sm-btn:focus-visible,
@@ -4058,10 +4050,7 @@ select:focus-visible {
 }
 .sm-btn:active {
   transform: translateY(4px);
-  box-shadow:
-    0 0 0 var(--sm-btn-deep),
-    inset 0 3px 0 rgba(255,255,255,.2),
-    inset 0 -4px 0 var(--sm-btn-edge);
+  box-shadow: 0 0 0 var(--sm-btn-deep);
 }
 .sm-btn:disabled { filter: grayscale(1) brightness(.75); transform: none; cursor: not-allowed; }
 
@@ -4076,10 +4065,10 @@ select:focus-visible {
 }
 
 .sm-btn-gold {
-  background: var(--sm-gold);
-  box-shadow: 0 4px 0 #b0812c;
+  --sm-btn-fill: var(--sm-gold);
+  --sm-btn-deep: #96602c;
+  border-color: color-mix(in srgb, var(--sm-gold) 60%, black);
 }
-.sm-btn-gold:active { transform: translateY(4px); box-shadow: 0 0 0 #b0812c; }
 
 /* Cartão limpo */
 .sm-card {

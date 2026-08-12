@@ -55,13 +55,15 @@ export const TaskCard = memo(function TaskCard({
             style={{
               width: 28, height: 28, borderRadius: 999, display: 'flex',
               alignItems: 'center', justifyContent: 'center',
-              background: completed ? '#22c55e' : '#ffffff',
-              border: `1px solid ${completed ? '#22c55e' : '#d1d5dc'}`,
+              background: completed ? 'var(--sm-surface)' : 'var(--sm-surface)',
+              border: `2px solid ${completed ? 'var(--sm-primary)' : 'var(--sm-gold)'}`,
+              boxShadow: completed ? '0 0 8px color-mix(in srgb, var(--sm-primary) 65%, transparent), 0 0 2px var(--sm-primary)' : 'none',
+              transition: 'box-shadow .15s ease, border-color .15s ease',
             }}
           >
             {completed && (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
           </span>
