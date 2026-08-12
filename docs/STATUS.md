@@ -275,9 +275,22 @@ decisão sua.
 Fazer na ordem inversa (mexer no `server.url` antes de o destino existir) quebra
 o app de todo mundo que já tem o APK instalado.
 
----
+### 3.5 Geração de assets via Higgsfield — bloqueado por política de rede
 
-## 4. Dívidas conhecidas (aceitas por ora)
+Rodada 2 do reskin pixel-art (ícones de navegação, barras de progresso vazias
+para preenchimento dinâmico) ficou parada porque `higgsfield.ai`,
+`api.higgsfield.ai` e `cli.higgsfield.ai` são **rejeitados pelo proxy de rede
+da sessão** (`CONNECT` → 403, "policy denial", confirmado em
+`$HTTPS_PROXY/__agentproxy/status`) — mesmo bloqueio do ambiente padrão, não
+algo específico de OAuth/aprovação humana. Uma sessão anterior travou ~18h
+esperando aprovação de OAuth achando que o problema era esse; na verdade nem
+chega a alcançar o host para autenticar. Nenhuma tentativa de contornar foi
+feita (o proxy instrui explicitamente a não tentar rotear em volta de uma
+negação de política). Duas saídas: (1) liberar `higgsfield.ai` na política de
+rede do ambiente (Configurações do ambiente em
+https://code.claude.com/docs/en/claude-code-on-the-web), ou (2) gerar os PNGs
+fora daqui (localmente, ou numa sessão com política de rede diferente) e
+depois só pedir para eu integrar/commitar os arquivos prontos.
 
 - **Emblemas ficam no save do cliente**, como os Bits — farmáveis por quem editar
   o `localStorage`. Aceitável **enquanto a aba Torneio vender só cosmético**. Há
