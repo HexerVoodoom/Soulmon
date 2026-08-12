@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Download, Bell, X } from 'lucide-react';
+import { Download, Bell } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { checkNotificationPermission } from '../utils/notifications';
@@ -135,7 +136,7 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
             aria-label={isPt ? 'Fechar' : 'Close'}
             style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--sm-bg)', border: 'none', borderRadius: 999, color: 'var(--sm-muted)', cursor: 'pointer' }}
           >
-            <X size={16} strokeWidth={2.2} />
+            <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
           <div style={{ width: 56, height: 56, margin: '0 auto 10px', borderRadius: 18, background: content.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <content.Icon size={28} color={content.iconColor} strokeWidth={2} />

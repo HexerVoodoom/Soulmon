@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CloudUpload, X } from 'lucide-react';
+import { CloudUpload } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import type { Language } from '../utils/i18n';
 
 // Pedido de e-mail DEPOIS do onboarding.
@@ -67,7 +68,7 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
             border: 'none', cursor: 'pointer', color: 'var(--sm-muted)', padding: 6,
           }}
         >
-          <X size={18} strokeWidth={2.4} />
+          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
 
         <div style={{

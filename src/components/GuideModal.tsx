@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import type { Language } from '../utils/i18n';
 import { FORM_REQUIREMENTS } from '../types/progression';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
@@ -47,7 +47,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             aria-label={L('Fechar', 'Close')}
             className="p-2 rounded-lg transition-all bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]"
           >
-            <X size={20} strokeWidth={1.5} />
+            <img src={iconClose} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 

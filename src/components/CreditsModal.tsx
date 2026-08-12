@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Gem, Play, ShoppingCart, Heart, Shuffle, Loader as LoaderIcon } from 'lucide-react';
+import { Gem, Play, ShoppingCart, Heart, Shuffle, Loader as LoaderIcon } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import {
   CREDIT_PACKS, type CreditPack, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
   HEART_COST_CREDITS, FULL_UNLOCK_PRICE_LABEL,
@@ -128,7 +129,7 @@ export function CreditsModal({
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--sm-ink)' }}>{credits}</span>
             </span>
             <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
-              <X size={18} strokeWidth={2.4} />
+              <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             </button>
           </div>
         </div>

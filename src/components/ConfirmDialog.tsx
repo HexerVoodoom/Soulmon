@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Button } from './ui/button';
 
 interface ConfirmDialogProps {
@@ -23,7 +23,7 @@ export function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, conf
           className="absolute top-3 right-3 p-1 rounded transition-colors"
           style={{ color: 'var(--sm-muted)' }}
         >
-          <X size={20} />
+          <img src={iconClose} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
 
         <h2 className="mb-3" style={{ color: 'var(--sm-ink)' }}>{title}</h2>

@@ -1,4 +1,5 @@
-import { X, ListChecks, Heart, Star, Sun, CloudRain, HeartCrack, HeartHandshake } from 'lucide-react';
+import { ListChecks, Heart, Star, Sun, CloudRain, HeartCrack, HeartHandshake } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
@@ -127,7 +128,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
             aria-label={isPt ? 'Fechar' : 'Close'}
             style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--sm-bg)', border: 'none', borderRadius: 999, color: 'var(--sm-muted)', cursor: 'pointer' }}
           >
-            <X size={16} strokeWidth={2.2} />
+            <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
           <div style={{ position: 'relative', width: 56, height: 56, margin: '0 auto 10px' }}>
             {report.wasPerfect && (

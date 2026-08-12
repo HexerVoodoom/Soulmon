@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Plus, Trash2, Clock, Bell } from 'lucide-react';
+import { Plus, Trash2, Clock, Bell } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
@@ -182,7 +183,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
             {isPt ? 'Nova atividade' : t.createModal.newActivity}
           </span>
           <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
-            <X size={18} strokeWidth={2.4} />
+            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 

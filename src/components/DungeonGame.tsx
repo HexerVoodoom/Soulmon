@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Swords, X } from 'lucide-react';
+import { Swords } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
@@ -361,7 +362,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
         </span>
         <button onClick={exitRun} aria-label={isPt ? 'Sair' : 'Exit'}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 999, color: '#e8eefc', cursor: 'pointer' }}>
-          <X size={18} />
+          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
 

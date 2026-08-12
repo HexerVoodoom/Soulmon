@@ -1,4 +1,5 @@
-import { X, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { useState, useEffect } from 'react';
 
 interface AISettings {
@@ -71,7 +72,7 @@ export function AISettingsModal({
             </h2>
           </div>
           <button onClick={onClose} className="p-1.5 rounded-md transition-colors" style={{ color: 'var(--sm-muted)' }}>
-            <X size={16} />
+            <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 

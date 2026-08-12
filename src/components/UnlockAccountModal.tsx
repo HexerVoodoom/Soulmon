@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Sparkles, Infinity as InfinityIcon, Shuffle, LoaderCircle } from 'lucide-react';
+import { Sparkles, Infinity as InfinityIcon, Shuffle, LoaderCircle } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_DAILY_CAP } from '../utils/monetization';
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
 import type { Entitlement } from '../utils/entitlements';
@@ -105,7 +106,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             {isPt ? 'Soulmon completo' : 'Full Soulmon'}
           </span>
           <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
-            <X size={18} strokeWidth={2.4} />
+            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 

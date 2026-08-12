@@ -1,4 +1,5 @@
-import { X, Clock, ListChecks, Trophy } from 'lucide-react';
+import { Clock, ListChecks, Trophy } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { FORM_REQUIREMENTS, getStageBranch, getStageLevel } from '../types/progression';
 import { getSpriteForStage } from '../utils/sprites';
@@ -64,7 +65,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
             aria-label={isPt ? 'Fechar' : 'Close'}
             style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--sm-bg)', border: 'none', borderRadius: 999, color: 'var(--sm-muted)', cursor: 'pointer' }}
           >
-            <X size={16} strokeWidth={2.2} />
+            <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
           <img
             src={player.spriteUrl ?? getSpriteForStage(player.stage)}

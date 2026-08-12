@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 
 interface FirstTaskCompletedPopupProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ export function FirstTaskCompletedPopup({
           style={{ color: 'var(--sm-muted)' }}
           aria-label={isPt ? 'Fechar' : 'Close'}
         >
-          <X size={20} />
+          <img src={iconClose} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
 
         {/* Content */}

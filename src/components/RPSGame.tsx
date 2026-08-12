@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Scissors, X } from 'lucide-react';
+import { Scissors } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
@@ -85,7 +86,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         </span>
         <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'}
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 999, color: '#f1edfb', cursor: 'pointer' }}>
-          <X size={18} />
+          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
 

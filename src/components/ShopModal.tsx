@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { bitsStyleLight, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../utils/currencies';
-import { X, FlaskConical, Image as ImageIcon, Award, Check, Sofa, Swords, Gem } from 'lucide-react';
+import { FlaskConical, Image as ImageIcon, Award, Check, Sofa, Swords, Gem } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import iconLock from '../assets/soulmon/icons/icon-lock.png';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -311,7 +312,7 @@ export function ShopModal({
             )}
             {!asPage && (
               <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
-                <X size={18} strokeWidth={2.4} />
+                <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               </button>
             )}
           </div>

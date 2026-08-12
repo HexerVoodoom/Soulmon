@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Language } from '../utils/i18n';
 
 interface HelpModalProps {
@@ -153,7 +153,7 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
             onClick={onClose}
             className="p-1 text-white/60 hover:text-white"
           >
-            <X size={16} />
+            <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 

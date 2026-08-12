@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import type { Language } from '../utils/i18n';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
@@ -140,7 +140,7 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
             className="flex items-center justify-center flex-shrink-0"
             style={{ width: 26, height: 26, borderRadius: 999, color: 'var(--sm-muted)', background: 'var(--sm-bg)', border: 'none' }}
           >
-            <X size={15} />
+            <img src={iconClose} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 

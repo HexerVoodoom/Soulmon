@@ -1,4 +1,5 @@
-import { X, Plus, Trash2, Clock, Bell } from 'lucide-react';
+import { Plus, Trash2, Clock, Bell } from 'lucide-react';
+import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
@@ -121,7 +122,7 @@ export function TaskEditModal({
       <div className="sm-card" style={{ background: 'var(--sm-bg)', width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
           <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>{txt.title}</span>
-          <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}><X size={18} strokeWidth={2.4} /></button>
+          <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}><img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /></button>
         </div>
 
         <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
