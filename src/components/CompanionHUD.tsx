@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
-import { FolderOpen, ShowerHead, Moon, Sun } from 'lucide-react';
+import iconItems from '../assets/soulmon/icons/icon-items.png';
+import iconBath from '../assets/soulmon/icons/icon-bath.png';
+import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
+import iconWake from '../assets/soulmon/icons/icon-wake.png';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { type SlotId } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
@@ -595,10 +598,10 @@ export const CompanionHUD = memo(function CompanionHUD({
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
         <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 56 }}>
           {([
-            { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-            { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-            { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-          ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+            { key: 'items', icon: iconItems, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+            { key: 'bath', icon: iconBath, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+            { key: 'sleep', icon: isSleeping ? iconWake : iconSleep, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
+          ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
             <button
               key={a.key}
               onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
@@ -609,7 +612,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               {a.badge && (
                 <span style={{ position: 'absolute', top: 4, right: 6, width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--sm-danger)', border: '1px solid var(--sm-surface)' }} />
               )}
-              <a.Icon size={19} strokeWidth={2.1} color="var(--sm-ink)" />
+              <img src={a.icon} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--sm-muted)' }}>
                 {language === 'pt-BR' ? a.pt : a.en}
               </span>

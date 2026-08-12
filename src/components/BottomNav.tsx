@@ -1,6 +1,14 @@
 import { useState } from 'react';
-import { Home, Gamepad2, GitBranch, Menu, ShoppingBag, Users, Settings, RotateCcw, Gem } from 'lucide-react';
 import type { Language } from '../utils/i18n';
+import iconHome from '../assets/soulmon/icons/icon-home.png';
+import iconActivities from '../assets/soulmon/icons/icon-activities.png';
+import iconEvolution from '../assets/soulmon/icons/icon-evolution.png';
+import iconBook from '../assets/soulmon/icons/icon-book.png';
+import iconCoin from '../assets/soulmon/icons/icon-coin.png';
+import iconMenu from '../assets/soulmon/icons/icon-menu.png';
+import iconGem from '../assets/soulmon/icons/icon-gem.png';
+import iconGear from '../assets/soulmon/icons/icon-gear.png';
+import iconReset from '../assets/soulmon/icons/icon-reset.png';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
 
@@ -15,6 +23,27 @@ interface BottomNavProps {
   language?: Language;
 }
 
+/** Ícone-imagem (gerado no Higgsfield, kit bronze/cobre) no lugar do
+ *  lucide-react. Sem `color` de SVG pra recolorir por aba — o destaque da
+ *  aba ativa vem do halo (glow) + fundo, não de tingir o ícone. */
+function NavIcon({ src, alt, active, size = 22 }: { src: string; alt: string; active?: boolean; size?: number }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      width={size}
+      height={size}
+      style={{
+        objectFit: 'contain',
+        imageRendering: 'pixelated',
+        opacity: active ? 1 : 0.62,
+        filter: active ? 'drop-shadow(0 0 5px rgba(93,240,224,0.55))' : 'none',
+        transition: 'opacity 0.15s ease, filter 0.15s ease',
+      }}
+    />
+  );
+}
+
 /** Navegação principal do app: barra de ícones fixa no rodapé (abaixo da
  *  barra de chat). 4 views à esquerda + Loja (ação) + menu sanduíche
  *  (Configurações + Debug) sempre por último, à direita de tudo. */
@@ -26,17 +55,17 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
   // (junto dos minigames); Estatísticas mora dentro de Evolução (aba interna
   // — ver App.tsx). Só views de verdade viram "abas" coloridas-quando-ativas;
   // Loja e o menu sanduíche são AÇÕES (cor neutra fixa), agrupadas à direita.
-  const items: { view: ViewType; label: string; Icon: typeof Home; color: string }[] = [
-    { view: 'main', label: isPt ? 'Início' : 'Home', Icon: Home, color: '#e0483e' },
-    { view: 'games', label: isPt ? 'Atividades' : 'Activities', Icon: Gamepad2, color: '#8b5cf6' },
-    { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', Icon: GitBranch, color: '#22A900' },
-    { view: 'library', label: isPt ? 'Biblioteca' : 'Library', Icon: Users, color: '#009ED8' },
+  const items: { view: ViewType; label: string; icon: string }[] = [
+    { view: 'main', label: isPt ? 'Início' : 'Home', icon: iconHome },
+    { view: 'games', label: isPt ? 'Atividades' : 'Activities', icon: iconActivities },
+    { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', icon: iconEvolution },
+    { view: 'library', label: isPt ? 'Biblioteca' : 'Library', icon: iconBook },
   ];
   const menuActive = menuOpen || currentView === 'settings';
 
   return (
     <nav className="sm-bottom-nav">
-      {items.map(({ view, label, Icon, color }) => {
+      {items.map(({ view, label, icon }) => {
         const active = currentView === view;
         return (
           <button
@@ -44,9 +73,9 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
             onClick={() => onNavigate(view)}
             aria-label={label}
             className="sm-bottom-nav-btn"
-            style={{ color: active ? color : 'var(--sm-muted)', background: active ? 'var(--sm-bg)' : 'transparent' }}
+            style={{ background: active ? 'var(--sm-bg)' : 'transparent' }}
           >
-            <Icon size={22} strokeWidth={2.2} />
+            <NavIcon src={icon} alt={label} active={active} />
           </button>
         );
       })}
@@ -56,9 +85,8 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
           aria-label={isPt ? 'Loja' : 'Shop'}
           title={isPt ? 'Loja' : 'Shop'}
           className="sm-bottom-nav-btn"
-          style={{ color: 'var(--sm-muted)' }}
         >
-          <ShoppingBag size={21} strokeWidth={2.2} />
+          <NavIcon src={iconCoin} alt={isPt ? 'Loja' : 'Shop'} size={21} />
         </button>
       )}
 
@@ -70,9 +98,9 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
           aria-label={isPt ? 'Menu' : 'Menu'}
           title={isPt ? 'Menu' : 'Menu'}
           className="sm-bottom-nav-btn"
-          style={{ color: menuActive ? 'var(--sm-primary)' : 'var(--sm-muted)', background: menuActive ? 'var(--sm-bg)' : 'transparent', width: '100%' }}
+          style={{ background: menuActive ? 'var(--sm-bg)' : 'transparent', width: '100%' }}
         >
-          <Menu size={22} strokeWidth={2.2} />
+          <NavIcon src={iconMenu} alt={isPt ? 'Menu' : 'Menu'} active={menuActive} />
         </button>
 
         {menuOpen && (
@@ -98,7 +126,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
                     color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  <Gem size={17} strokeWidth={2.2} color="var(--sm-muted)" />
+                  <img src={iconGem} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   {isPt ? 'Créditos' : 'Credits'}
                 </button>
               )}
@@ -111,7 +139,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
                   color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
                 }}
               >
-                <Settings size={17} strokeWidth={2.2} color="var(--sm-muted)" />
+                <img src={iconGear} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                 {isPt ? 'Configurações' : 'Settings'}
               </button>
               {onResetOnboarding && (
@@ -123,7 +151,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
                     color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
                   }}
                 >
-                  <RotateCcw size={17} strokeWidth={2.2} color="#e0483e" />
+                  <img src={iconReset} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   {isPt ? 'Refazer o ritual' : 'Redo the ritual'}
                 </button>
               )}

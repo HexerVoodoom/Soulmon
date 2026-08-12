@@ -1,6 +1,6 @@
 import { memo } from 'react';
-import { Edit2 } from 'lucide-react';
 import { Language, useTranslation } from '../utils/i18n';
+import iconEdit from '../assets/soulmon/icons/icon-edit.png';
 
 interface TaskCardProps {
   id: string;
@@ -94,7 +94,7 @@ export const TaskCard = memo(function TaskCard({
              pré-compilado (footgun 1). */
           style={{ minWidth: 44, minHeight: 44 }}
         >
-          <Edit2 size={16} strokeWidth={1.5} />
+          <img src={iconEdit} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
     </div>
