@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
-import { Bell, BellOff, Copy, Check, Cloud, Bot, BookOpen, Moon, Sun, Globe, Info } from 'lucide-react';
+import { Bell, BellOff, Copy, Check, Cloud, Bot, Globe, Info } from 'lucide-react';
+import { RowIcon } from './RowIcon';
+import iconBook from '../assets/soulmon/icons/icon-book.png';
+import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
+import iconWake from '../assets/soulmon/icons/icon-wake.png';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
 import { AccountSection } from './AccountSection';
 import { InstallPrompt } from './InstallPrompt';
@@ -98,9 +102,9 @@ export function SettingsPage({
   const toggleOnBg = 'var(--sm-primary)';
   const toggleOffBg = 'var(--sm-line)';
 
-  const iconWrap = (Icon: typeof Bell, color: string, bg: string) => (
+  const iconWrap = (icon: typeof Bell | string, color: string, bg: string) => (
     <span style={{ width: 28, height: 28, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <Icon size={16} color={color} strokeWidth={2.2} />
+      <RowIcon icon={icon} size={16} color={color} />
     </span>
   );
 
@@ -265,7 +269,7 @@ export function SettingsPage({
         {/* Guide */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(BookOpen, '#d9a441', '#fbf1dd')}
+            {iconWrap(iconBook, '#d9a441', '#fbf1dd')}
             {t.settings.guide}
           </h3>
 
@@ -310,7 +314,7 @@ export function SettingsPage({
         {/* Auto-sleep schedule */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(Moon, '#6b7280', '#eef0f3')}
+            {iconWrap(iconSleep, '#6b7280', '#eef0f3')}
             {language === 'pt-BR' ? 'Sono automático' : 'Auto sleep'}
           </h3>
           <p className="mb-5" style={bodyTextStyle}>
@@ -364,7 +368,7 @@ export function SettingsPage({
         {/* Appearance — light/dark/system */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {isDark ? iconWrap(Moon, '#6b7280', '#eef0f3') : iconWrap(Sun, '#e69600', '#fff4e0')}
+            {isDark ? iconWrap(iconSleep, '#6b7280', '#eef0f3') : iconWrap(iconWake, '#e69600', '#fff4e0')}
             {language === 'pt-BR' ? 'Aparência' : 'Appearance'}
           </h3>
           <p className="mb-4" style={bodyTextStyle}>

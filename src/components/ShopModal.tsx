@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { bitsStyleLight, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../utils/currencies';
-import { FlaskConical, Image as ImageIcon, Award, Check, Sofa, Swords, Gem } from 'lucide-react';
+import { Image as ImageIcon, Check, Sofa } from 'lucide-react';
+import { RowIcon } from './RowIcon';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import iconLock from '../assets/soulmon/icons/icon-lock.png';
+import iconPotion from '../assets/soulmon/icons/icon-potion.png';
+import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
+import iconShield from '../assets/soulmon/icons/icon-shield.png';
+import iconGem from '../assets/soulmon/icons/icon-gem.png';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_ART } from '../utils/decorArt';
@@ -73,12 +78,12 @@ export function ShopModal({
     return `${isPt ? 'Missão' : 'Mission'} ${m.icon} ${isPt ? m.namePt : m.nameEn}: ${isPt ? m.descPt : m.descEn}${prog}`;
   };
 
-  const TABS: { key: ShopTab; Icon: typeof FlaskConical; pt: string; en: string }[] = [
-    { key: 'items', Icon: FlaskConical, pt: 'Itens', en: 'Items' },
-    { key: 'bg', Icon: ImageIcon, pt: 'Cenários', en: 'Backdrops' },
-    { key: 'furniture', Icon: Sofa, pt: 'Mobílias', en: 'Furniture' },
-    { key: 'tournament', Icon: Swords, pt: 'Torneio', en: 'Tournament' },
-    { key: 'missions', Icon: Award, pt: 'Missões', en: 'Missions' },
+  const TABS: { key: ShopTab; icon: typeof ImageIcon | string; pt: string; en: string }[] = [
+    { key: 'items', icon: iconPotion, pt: 'Itens', en: 'Items' },
+    { key: 'bg', icon: ImageIcon, pt: 'Cenários', en: 'Backdrops' },
+    { key: 'furniture', icon: Sofa, pt: 'Mobílias', en: 'Furniture' },
+    { key: 'tournament', icon: iconSwords, pt: 'Torneio', en: 'Tournament' },
+    { key: 'missions', icon: iconShield, pt: 'Missões', en: 'Missions' },
   ];
 
   const TAB_ITEMS: Record<Exclude<ShopTab, 'missions'>, ShopItem[]> = {
@@ -333,7 +338,7 @@ export function ShopModal({
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
               }}
             >
-              <t.Icon size={17} strokeWidth={2.2} />
+              <RowIcon icon={t.icon} size={17} />
               {isPt ? t.pt : t.en}
             </button>
           ))}
@@ -351,7 +356,7 @@ export function ShopModal({
           {tab === 'items' && (
             <div className="sm-card" style={{ padding: 12, marginTop: 4 }}>
               <p style={{ margin: '0 0 8px', fontSize: '0.74rem', fontWeight: 700, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Gem size={13} color={CREDIT_COLOR} strokeWidth={2.4} />
+                <img src={iconGem} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                 {isPt ? `Trocar Créditos por Bits (você tem ${credits})` : `Swap Credits for Bits (you have ${credits})`}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>

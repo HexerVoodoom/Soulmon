@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Swords, Trophy, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
+import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { getStageLevel } from '../types/progression';
 import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
@@ -69,7 +71,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tournamentBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
       <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px 24px', color: '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <Swords size={22} strokeWidth={2.2} />
+          <img src={iconSwords} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>{isPt ? 'Torneio' : 'Tournament'}</h1>
           <span
             style={{
@@ -92,7 +94,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             {trophies.map((t, i) => (
               <div key={i} title={`${t.season} — ${isPt ? 'lugar' : 'place'} ${t.place}`}
                 style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(0,0,0,0.35)', borderRadius: 10, padding: '4px 8px' }}>
-                <Trophy size={14} color={PLACE_COLOR[t.place]} />
+                <img src={iconTrophy} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                 <span style={{ fontSize: 11, fontWeight: 700 }}>{t.season}</span>
               </div>
             ))}

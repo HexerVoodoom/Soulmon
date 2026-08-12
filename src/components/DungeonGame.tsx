@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Swords } from 'lucide-react';
+import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
@@ -352,7 +352,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem' }}>
-            <Swords size={20} color="#f87171" strokeWidth={2.3} />
+            <img src={iconSwords} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             {isPt ? 'Masmorra' : 'Dungeon'}
           </span>
           <span style={{ color: scene.accent, fontSize: '0.78rem' }}>
@@ -424,7 +424,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
       {phase === 'intro' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 20, background: 'rgba(248,113,113,0.12)' }}>
-            <Swords size={36} color="#f87171" strokeWidth={2} />
+            <img src={iconSwords} alt="" width={40} height={40} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </div>
           <div style={{ display: 'flex', gap: 18, fontSize: '0.82rem', color: '#c6d4f2' }}>
             <span>🏅 {isPt ? 'Recorde' : 'Best'}: <b style={{ color: '#facc15' }}>{best}</b></span>

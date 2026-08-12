@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ShieldCheck, RotateCcw, LogOut, Gem } from 'lucide-react';
+import iconShield from '../assets/soulmon/icons/icon-shield.png';
+import iconReset from '../assets/soulmon/icons/icon-reset.png';
+import iconExit from '../assets/soulmon/icons/icon-exit.png';
+import iconGem from '../assets/soulmon/icons/icon-gem.png';
 import type { Language } from '../utils/i18n';
 import { fetchEntitlement, type Entitlement } from '../utils/entitlements';
 import { isBillingAvailable, restorePurchases } from '../utils/playBilling';
@@ -89,7 +92,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
   return (
     <div style={cardStyle}>
       <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', fontWeight: 700, fontSize: '0.95rem' }}>
-        <ShieldCheck size={18} strokeWidth={2.2} color="var(--sm-primary)" />
+        <img src={iconShield} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         {isPt ? 'Conta e compras' : 'Account & purchases'}
       </h3>
 
@@ -103,7 +106,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4 }}>
         <span style={{ fontSize: 12.5, opacity: 0.85 }}>{isPt ? 'Créditos' : 'Credits'}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, fontWeight: 700 }}>
-          <Gem size={13} strokeWidth={2.4} color="#a855f7" />{ent?.credits ?? 0}
+          <img src={iconGem} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />{ent?.credits ?? 0}
         </span>
       </div>
       {authEmail && (
@@ -113,7 +116,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
       )}
 
       <button onClick={handleRestore} disabled={restoring} style={{ ...rowBtn, opacity: restoring ? 0.6 : 1 }}>
-        <RotateCcw size={16} strokeWidth={2.2} />
+        <img src={iconReset} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         {restoring
           ? (isPt ? 'Restaurando…' : 'Restoring…')
           : (isPt ? 'Restaurar compras' : 'Restore purchases')}
@@ -126,7 +129,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
 
       {isAuthConfigured() && authEmail && (
         <button onClick={handleSignOut} style={{ ...rowBtn, color: '#e0483e' }}>
-          <LogOut size={16} strokeWidth={2.2} />
+          <img src={iconExit} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           {isPt ? 'Sair da conta' : 'Sign out'}
         </button>
       )}

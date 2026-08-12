@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Sparkles, Infinity as InfinityIcon, Shuffle, LoaderCircle } from 'lucide-react';
+import { Sparkles, Infinity as InfinityIcon, LoaderCircle } from 'lucide-react';
+import { RowIcon } from './RowIcon';
+import iconReset from '../assets/soulmon/icons/icon-reset.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_DAILY_CAP } from '../utils/monetization';
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
@@ -74,13 +76,13 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
         : (isPt ? 'Não foi possível restaurar agora.' : 'Could not restore right now.'));
   };
 
-  const perk = (Icon: typeof Sparkles, title: string, desc: string) => (
+  const perk = (icon: typeof Sparkles | string, title: string, desc: string) => (
     <div className="sm-card" style={{ padding: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
       <span style={{
         width: 38, height: 38, borderRadius: 12, background: 'var(--sm-primary-soft)', flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Icon size={18} strokeWidth={2.2} color="var(--sm-primary)" />
+        <RowIcon icon={icon} size={18} color="var(--sm-primary)" />
       </span>
       <div style={{ minWidth: 0 }}>
         <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>{title}</p>
@@ -127,7 +129,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
           {perk(InfinityIcon,
             isPt ? 'Atividades sem limite' : 'Unlimited activities',
             isPt ? 'Cadastre quantas rotinas quiser, todo dia' : 'Add as many routines as you like, every day')}
-          {perk(Shuffle,
+          {perk(iconReset,
             isPt ? 'Reroll liberado' : 'Reroll unlocked',
             isPt ? 'Dá para gerar uma criatura nova quando quiser (custa Créditos)' : 'Generate a brand-new creature whenever you want (costs Credits)')}
 

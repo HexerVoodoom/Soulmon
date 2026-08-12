@@ -17,25 +17,40 @@ export interface IconEntry {
   license?: string;
 }
 
-/** Ícones do kit Higgsfield já gerados mas ainda soltos — ligados aqui pra
- *  virarem o resto do app aos poucos, sem precisar gerar de novo. */
+/** Ícones do kit Higgsfield já gerados mas AINDA soltos (sem componente
+ *  ligado) — candidatos óbvios pra próxima rodada, sem precisar gerar de
+ *  novo. `bolt` fica de fora de propósito: tem um badge neon quadrado
+ *  embutido na própria arte, destoa do resto (flat, sem moldura). */
 export const HIGGSFIELD_UNUSED = {
-  close: '../assets/soulmon/icons/icon-close.png',
   profile: '../assets/soulmon/icons/icon-profile.png',
-  shield: '../assets/soulmon/icons/icon-shield.png',
-  gearGold: '../assets/soulmon/icons/icon-gear-gold.png',
   flame: '../assets/soulmon/icons/icon-flame.png',
   map: '../assets/soulmon/icons/icon-map.png',
   plant: '../assets/soulmon/icons/icon-plant.png',
-  potion: '../assets/soulmon/icons/icon-potion.png',
   torch: '../assets/soulmon/icons/icon-torch.png',
   spellbook: '../assets/soulmon/icons/icon-spellbook.png',
   shard: '../assets/soulmon/icons/icon-shard.png',
   skull: '../assets/soulmon/icons/icon-skull.png',
-  bolt: '../assets/soulmon/icons/icon-bolt.png',
   target: '../assets/soulmon/icons/icon-target.png',
-  exit: '../assets/soulmon/icons/icon-exit.png',
 } as const;
+
+/**
+ * Ícones sem NENHUM equivalente no kit ainda — nem gerado nem baixado.
+ * Ficam como lucide-react por ora porque o crédito do Higgsfield está baixo
+ * (ver docs de status) e não achei pack CC0/CC-BY web que batesse com o
+ * nosso estilo pixel-art detalhado pra esses conceitos específicos.
+ * DailyReportModal.tsx usa RowIcon (aceita string OU componente lucide)
+ * pra já deixar o slot pronto — trocar um item aqui não exige mexer no JSX
+ * de novo, só passar a string da imagem no lugar do componente.
+ */
+export const STILL_LUCIDE_NO_MATCH = [
+  'Star (dia perfeito)',
+  'CloudRain / HeartCrack / HeartHandshake (humor do relatório diário)',
+  'Bell / BellOff (notificações)',
+  'Clock (tempo de jogo)',
+  'Trash2 (excluir tarefa)',
+  'Search (buscar jogador)',
+  'Globe / Info / Bot / Cloud (configurações diversas)',
+] as const;
 
 /**
  * Ícones baixados da web como placeholder — QUALQUER ícone marcado aqui é

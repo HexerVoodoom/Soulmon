@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Gem, Play, ShoppingCart, Heart, Shuffle, Loader as LoaderIcon } from 'lucide-react';
+import { Play, ShoppingCart, Loader as LoaderIcon } from 'lucide-react';
+import iconGem from '../assets/soulmon/icons/icon-gem.png';
+import iconHeart from '../assets/icons/icon-heart-item.png';
+import iconReset from '../assets/soulmon/icons/icon-reset.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import {
   CREDIT_PACKS, type CreditPack, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
@@ -125,7 +128,7 @@ export function CreditsModal({
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className="sm-card" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px' }}>
-              <Gem size={14} color="#a855f7" strokeWidth={2.4} />
+              <img src={iconGem} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--sm-ink)' }}>{credits}</span>
             </span>
             <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
@@ -187,7 +190,7 @@ export function CreditsModal({
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <Gem size={13} color="#a855f7" strokeWidth={2.4} /> {pack.credits}
+                    <img src={iconGem} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> {pack.credits}
                   </p>
                   <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--sm-muted)' }}>{pack.priceLabel}</p>
                 </div>
@@ -215,7 +218,7 @@ export function CreditsModal({
             style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, width: '100%', textAlign: 'left', border: 'none', cursor: canHeal ? 'pointer' : 'default', opacity: canHeal ? 1 : 0.55 }}
           >
             <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Heart size={18} strokeWidth={2.2} color="#e0483e" />
+              <img src={iconHeart} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>
@@ -237,7 +240,7 @@ export function CreditsModal({
               style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, width: '100%', textAlign: 'left', border: 'none', cursor: canAffordReroll ? 'pointer' : 'default', opacity: canAffordReroll ? 1 : 0.55 }}
             >
               <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {rerollLoading ? <LoaderIcon size={18} strokeWidth={2.2} style={{ animation: 'creditspin 1s linear infinite' }} /> : <Shuffle size={18} strokeWidth={2.2} color="#8b5cf6" />}
+                {rerollLoading ? <LoaderIcon size={18} strokeWidth={2.2} style={{ animation: 'creditspin 1s linear infinite' }} /> : <img src={iconReset} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />}
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>

@@ -1,4 +1,5 @@
-import { Settings, Sparkles, Zap, Volume2, VolumeX } from 'lucide-react';
+import { Sparkles, Zap, Volume2, VolumeX } from 'lucide-react';
+import iconGearGold from '../assets/soulmon/icons/icon-gear-gold.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
@@ -38,9 +39,9 @@ export function SettingsModal({
           {/* Header */}
           <div className="flex items-center justify-between p-4" style={{ borderBottom: '1px solid var(--sm-line)' }}>
             <div className="flex items-center gap-2">
-              <Settings size={20} style={{ color: 'var(--sm-primary)' }} />
+              <img src={iconGearGold} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               <h2 style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: 18, color: 'var(--sm-ink)' }}>
-                ⚙️ Settings
+                Settings
               </h2>
             </div>
             <button

@@ -1,5 +1,9 @@
-import { ListChecks, Heart, Star, Sun, CloudRain, HeartCrack, HeartHandshake } from 'lucide-react';
+import { Star, CloudRain, HeartCrack, HeartHandshake } from 'lucide-react';
+import { RowIcon } from './RowIcon';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
+import iconActivities from '../assets/soulmon/icons/icon-activities.png';
+import iconHeart from '../assets/icons/icon-heart-item.png';
+import iconWake from '../assets/soulmon/icons/icon-wake.png';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
@@ -34,16 +38,16 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   // Só faz sentido oferecer quando houve cobrança e ela ainda não foi desfeita.
   const canRecover = !welcome && report.heartsLost > 0 && !report.heartsRecovered && !!onRecoverHearts;
 
-  const rows: { Icon: typeof Heart; label: string; value: string; highlight?: 'good' | 'bad' }[] = welcome
+  const rows: { icon: string | typeof Star; label: string; value: string; highlight?: 'good' | 'bad' }[] = welcome
     ? [
         {
-          Icon: Heart,
+          icon: iconHeart,
           label: isPt ? 'Corações' : 'Hearts',
           value: isPt ? 'intactos' : 'untouched',
           highlight: 'good',
         },
         {
-          Icon: Star,
+          icon: Star,
           label: isPt ? 'Dias perfeitos guardados' : 'Perfect days saved',
           value: `${report.perfectDays}`,
           highlight: 'good',
@@ -51,26 +55,26 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
       ]
     : [
         {
-          Icon: ListChecks,
+          icon: iconActivities,
           label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
           value: `${report.done}/${report.total}`,
           highlight: report.wasPerfect ? 'good' : undefined,
         },
         {
-          Icon: Heart,
+          icon: iconHeart,
           label: isPt ? 'Corações' : 'Hearts',
           value: report.heartsLost > 0 ? `-${report.heartsLost} ❤️` : (isPt ? 'inteiros!' : 'all there!'),
           highlight: report.heartsLost > 0 ? 'bad' : 'good',
         },
         {
-          Icon: Star,
+          icon: Star,
           label: isPt ? 'Dias perfeitos' : 'Perfect days',
           value: `${report.perfectDays}`,
           highlight: report.wasPerfect ? 'good' : undefined,
         },
       ];
 
-  const HeadIcon = welcome ? HeartHandshake : report.degenerated ? HeartCrack : report.wasPerfect ? Star : report.heartsLost > 0 ? CloudRain : Sun;
+  const headIcon: string | typeof Star = welcome ? HeartHandshake : report.degenerated ? HeartCrack : report.wasPerfect ? Star : report.heartsLost > 0 ? CloudRain : iconWake;
   const headColor = welcome ? '#22A900' : report.degenerated ? '#e0483e' : report.wasPerfect ? '#d9a441' : report.heartsLost > 0 ? '#6b7280' : '#f0a500';
   const headBg = welcome ? '#e6f6e2' : report.degenerated ? '#fde8e6' : report.wasPerfect ? '#fbf1dd' : report.heartsLost > 0 ? '#eef0f3' : '#fff4e0';
 
@@ -143,7 +147,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
               />
             )}
             <div style={{ position: 'relative', width: 56, height: 56, borderRadius: 18, background: headBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <HeadIcon size={28} color={headColor} strokeWidth={2} />
+              <RowIcon icon={headIcon} size={28} color={headColor} />
             </div>
           </div>
           <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)', margin: 0 }}>{headline}</p>
@@ -154,7 +158,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
           {rows.map(r => (
             <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
               <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <r.Icon size={16} color="var(--sm-muted)" strokeWidth={2.2} />
+                <RowIcon icon={r.icon} size={16} color="var(--sm-muted)" />
               </span>
               <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>{r.label}</span>
               <span style={{
