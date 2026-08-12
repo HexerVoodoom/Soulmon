@@ -5,7 +5,6 @@ interface HelpModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: Language;
-  theme?: 'default' | 'win98' | 'glitch';
 }
 
 const SECTIONS = [
@@ -133,44 +132,26 @@ const SECTIONS = [
   },
 ];
 
-export function HelpModal({ isOpen, onClose, language, theme = 'default' }: HelpModalProps) {
+export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
   if (!isOpen) return null;
 
   const isPt = language === 'pt-BR';
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
 
   return (
     <div className="fixed inset-0 z-[300] flex items-end justify-center p-0">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div
-        className={`relative w-full max-w-md max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200 ${
-          isGlitch
-            ? 'bg-[#0a0a0a] border-t-2 border-[#00ffff] text-[#00ffff]'
-            : isWin98
-            ? 'bg-[#c0c0c0] border-t-2 border-white'
-            : 'bg-[#1a2230] text-white rounded-t-2xl'
-        }`}
-      >
+      <div className="relative w-full max-w-md max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200 text-white rounded-t-2xl" style={{ background: '#1a2230' }}>
         {/* Header */}
-        <div
-          className={`flex items-center justify-between px-4 py-3 flex-shrink-0 ${
-            isWin98
-              ? 'bg-[linear-gradient(to_right,#000080,#1084d0)]'
-              : isGlitch
-              ? 'border-b border-[#00ffff]/30'
-              : 'border-b border-white/10'
-          }`}
-        >
+        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-white/10">
           <span
-            className={`font-bold ${isWin98 ? 'text-white' : isGlitch ? 'text-[#00ffff]' : 'text-white'}`}
+            className="font-bold text-white"
             style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
           >
             {isPt ? 'ℹ️ Ajuda' : 'ℹ️ Help'}
           </span>
           <button
             onClick={onClose}
-            className={`p-1 ${isWin98 ? 'text-white hover:bg-[#000060]' : isGlitch ? 'text-[#00ffff] hover:bg-[#00ffff]/10' : 'text-white/60 hover:text-white'}`}
+            className="p-1 text-white/60 hover:text-white"
           >
             <X size={16} />
           </button>
@@ -181,10 +162,8 @@ export function HelpModal({ isOpen, onClose, language, theme = 'default' }: Help
           {SECTIONS.map(section => (
             <div key={section.titleEn}>
               <p
-                className={`text-xs font-bold mb-2 uppercase tracking-wider ${
-                  isGlitch ? 'text-[#ff00ff]' : isWin98 ? 'text-[#000080]' : 'text-[#2bff95]'
-                }`}
-                style={{ fontFamily: 'monospace' }}
+                className="text-xs font-bold mb-2 uppercase tracking-wider"
+                style={{ fontFamily: 'monospace', color: '#2dd4bf' }}
               >
                 {isPt ? section.titlePt : section.titleEn}
               </p>
@@ -192,24 +171,18 @@ export function HelpModal({ isOpen, onClose, language, theme = 'default' }: Help
                 {section.items.map(item => (
                   <div
                     key={item.labelEn}
-                    className={`flex gap-3 p-2 rounded ${
-                      isGlitch
-                        ? 'bg-[#00ffff]/5 border border-[#00ffff]/20'
-                        : isWin98
-                        ? 'bg-white border border-[#808080]'
-                        : 'bg-white/5'
-                    }`}
+                    className="flex gap-3 p-2 rounded bg-white/5"
                   >
                     <span style={{ fontSize: '1.2rem', flexShrink: 0, lineHeight: 1.4 }}>{item.icon}</span>
                     <div>
                       <p
-                        className={`font-bold text-xs ${isWin98 ? 'text-black' : isGlitch ? 'text-[#00ffff]' : 'text-white'}`}
+                        className="font-bold text-xs text-white"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {isPt ? item.labelPt : item.labelEn}
                       </p>
                       <p
-                        className={`text-xs mt-0.5 leading-snug ${isWin98 ? 'text-gray-700' : isGlitch ? 'text-[#00ff00]/80' : 'text-white/60'}`}
+                        className="text-xs mt-0.5 leading-snug text-white/60"
                         style={{ fontFamily: 'monospace' }}
                       >
                         {isPt ? item.descPt : item.descEn}
@@ -223,16 +196,10 @@ export function HelpModal({ isOpen, onClose, language, theme = 'default' }: Help
         </div>
 
         {/* Footer close button */}
-        <div className={`flex-shrink-0 p-3 ${isWin98 ? 'border-t border-[#808080]' : 'border-t border-white/10'}`}>
+        <div className="flex-shrink-0 p-3 border-t border-white/10">
           <button
             onClick={onClose}
-            className={`w-full py-2 text-xs font-bold rounded ${
-              isGlitch
-                ? 'bg-[#00ffff] text-black'
-                : isWin98
-                ? 'bg-[#000080] text-white border-2 border-white'
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
+            className="w-full py-2 text-xs font-bold rounded bg-white/10 text-white hover:bg-white/20"
             style={{ fontFamily: 'monospace' }}
           >
             {isPt ? 'Fechar' : 'Close'}

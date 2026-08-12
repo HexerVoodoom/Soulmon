@@ -6,14 +6,12 @@ const GuideModal = lazy(() => import('./GuideModal').then(m => ({ default: m.Gui
 interface ContentModalsProps {
   guideModalOpen: boolean;
   onCloseGuide: () => void;
-  theme: 'default' | 'win98' | 'glitch';
   language: Language;
 }
 
 export function ContentModals({
   guideModalOpen,
   onCloseGuide,
-  theme,
   language,
 }: ContentModalsProps) {
   return (
@@ -24,7 +22,6 @@ export function ContentModals({
           <GuideModal
             isOpen={guideModalOpen}
             onClose={onCloseGuide}
-            theme={theme}
             language={language}
           />
         </Suspense>

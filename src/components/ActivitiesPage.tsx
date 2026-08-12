@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Gamepad2, Swords, Rabbit, Scissors, Trophy, ChevronRight, Gem } from 'lucide-react';
+import { Gamepad2, Swords, Rabbit, Scissors, Trophy, ChevronRight } from 'lucide-react';
 import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
-import { bitsStyle, bitsStyleLight } from '../utils/currency';
+import { bitsStyleLight } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -13,12 +13,11 @@ import type { Language } from '../utils/i18n';
  * bottom-nav entry now — kept out of the minigames hub).
  * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, demoCharacterId, language, theme = 'default', totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
+export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet nos minijogos. */
   demoCharacterId?: string;
   language: Language;
-  theme?: 'default' | 'win98' | 'glitch';
   totalPoints: number;
   onDungeonEnter: () => { ok: true; level: number; best: number };
   onDungeonLose: () => void;
@@ -30,10 +29,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
   onOpenTournament: () => void;
 }) {
   const isPt = language === 'pt-BR';
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
   const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
-  const mono = { fontFamily: 'monospace' as const };
 
   // Torneio fica ACIMA e separado dos minigames (seção própria) — não é mais
   // só mais um card na mesma lista.
@@ -75,39 +71,26 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
     <button
       key={c.key}
       onClick={c.onClick}
-      className={`w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] ${
-        isGlitch
-          ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
-          : isWin98
-            ? 'win98-button bg-white'
-            : 'sm-card'
-      }`}
+      className="w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] sm-card"
     >
       <div className="flex items-center gap-3">
-        {isWin98 || isGlitch ? null : (
-          <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 14, background: c.iconBg }}>
-            <c.Icon size={22} color={c.iconColor} strokeWidth={2.2} />
-          </div>
-        )}
+        <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 14, background: c.iconBg }}>
+          <c.Icon size={22} color={c.iconColor} strokeWidth={2.2} />
+        </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : ''}
-                  style={isWin98 || isGlitch ? { ...mono, fontSize: '0.9rem', fontWeight: 700 } : { fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
+            <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
               {c.title}
             </span>
-            <span className={isGlitch ? 'bg-[#00ffff]/10 text-[#5fbcbc]' : isWin98 ? 'bg-gray-100 text-gray-500' : ''}
-                  style={isWin98 || isGlitch ? { ...mono, fontSize: '0.6rem', borderRadius: '9999px', padding: '2px 8px' } : { fontSize: '0.65rem', fontWeight: 600, color: 'var(--sm-muted)', background: 'var(--sm-bg)', borderRadius: 9999, padding: '2px 8px' }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--sm-muted)', background: 'var(--sm-bg)', borderRadius: 9999, padding: '2px 8px' }}>
               {c.pts}
             </span>
           </div>
-          <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : ''}
-             style={isWin98 || isGlitch ? { ...mono, fontSize: '0.72rem', marginTop: 2 } : { fontSize: '0.75rem', marginTop: 2, color: 'var(--sm-muted)' }}>
+          <p style={{ fontSize: '0.75rem', marginTop: 2, color: 'var(--sm-muted)' }}>
             {c.desc}
           </p>
         </div>
-        {isWin98 || isGlitch
-          ? <span className={isGlitch ? 'text-[#00ffff]' : 'text-gray-400'} style={{ fontSize: '1.1rem' }}>›</span>
-          : <ChevronRight size={18} color="var(--sm-muted)" strokeWidth={2.2} />}
+        <ChevronRight size={18} color="var(--sm-muted)" strokeWidth={2.2} />
       </div>
     </button>
   );
@@ -115,34 +98,20 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
   return (
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h2
-          className={isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : ''}
-          style={isWin98 || isGlitch ? { ...mono, fontSize: '1.05rem', fontWeight: 700 } : { fontSize: '1.15rem', fontWeight: 800, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          {!isWin98 && !isGlitch && <Gamepad2 size={22} color="var(--sm-primary)" strokeWidth={2.2} />}
-          {isWin98 || isGlitch ? '🎮 ' : ''}{isPt ? 'Atividades' : 'Activities'}
+        <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Gamepad2 size={22} color="var(--sm-primary)" strokeWidth={2.2} />
+          {isPt ? 'Atividades' : 'Activities'}
         </h2>
-        {(isWin98 || isGlitch) ? (
-          <span
-            className="px-3 py-1 rounded-md"
-            style={{ ...bitsStyle, fontSize: '0.85rem', background: '#0a1408', border: '1px solid rgba(57,255,20,0.4)' }}
-            title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
-          >
-            {totalPoints} Bits
-          </span>
-        ) : (
-          <span
-            className="sm-card flex items-center"
-            style={{ padding: '6px 12px' }}
-            title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
-          >
-            {/* Sem 💎: aquele ícone é dos Créditos (dinheiro real). Ver utils/currency.ts. */}
-            <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{totalPoints} Bits</span>
-          </span>
-        )}
+        <span
+          className="sm-card flex items-center"
+          style={{ padding: '6px 12px' }}
+          title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
+        >
+          {/* Sem 💎: aquele ícone é dos Créditos (dinheiro real). Ver utils/currency.ts. */}
+          <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{totalPoints} Bits</span>
+        </span>
       </div>
-      <p className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-700' : ''}
-         style={isWin98 || isGlitch ? { ...mono, fontSize: '0.78rem' } : { fontSize: '0.8rem', color: 'var(--sm-muted)' }}>
+      <p style={{ fontSize: '0.8rem', color: 'var(--sm-muted)' }}>
         {isPt ? 'Minijogos para se divertir e acumular pontos com seu Soulmon.' : 'Minigames to have fun and earn points with your Soulmon.'}
       </p>
 
@@ -150,16 +119,14 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, them
       {renderCard(tournamentCard)}
 
       <div
-        className={isGlitch ? 'text-[#5fbcbc]' : isWin98 ? 'text-gray-500' : ''}
         style={{
-          ...(isWin98 || isGlitch ? mono : {}),
-          fontSize: isWin98 || isGlitch ? '0.68rem' : '0.7rem',
+          fontSize: '0.7rem',
           fontWeight: 700,
-          color: isWin98 || isGlitch ? undefined : 'var(--sm-muted)',
+          color: 'var(--sm-muted)',
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           paddingTop: 4,
-          borderTop: isWin98 || isGlitch ? undefined : '1px solid var(--sm-line)',
+          borderTop: '1px solid var(--sm-line)',
         }}
       >
         {isPt ? 'Minijogos' : 'Minigames'}

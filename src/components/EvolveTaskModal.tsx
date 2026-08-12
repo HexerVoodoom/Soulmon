@@ -8,7 +8,6 @@ interface EvolveTaskModalProps {
   registeredTasks: number;
   /** Display name of the new stage/form. */
   stageName: string;
-  theme?: 'default' | 'win98' | 'glitch';
   language?: 'pt-BR' | 'en-US';
 }
 
@@ -19,11 +18,8 @@ export function EvolveTaskModal({
   requiredTasks,
   registeredTasks,
   stageName,
-  theme = 'default',
   language = 'en-US',
 }: EvolveTaskModalProps) {
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
   const isPt = language === 'pt-BR';
 
   if (!isOpen) return null;
@@ -58,15 +54,7 @@ export function EvolveTaskModal({
       />
 
       {/* Modal */}
-      <div
-        className={`relative w-full max-w-md rounded-2xl p-6 shadow-2xl ${
-          isGlitch
-            ? 'bg-[#0a0a0a] border-2 border-[#00ffff]'
-            : isWin98
-              ? 'win98-button bg-[#c0c0c0]'
-              : 'bg-white'
-        }`}
-      >
+      <div className="relative w-full max-w-md rounded-2xl p-6 shadow-2xl sm-card">
         {/* Content */}
         <div className="space-y-4">
           {/* Icon */}
@@ -76,41 +64,31 @@ export function EvolveTaskModal({
 
           {/* Title */}
           <h2
-            className={`text-center ${
-              isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-black' : 'text-gray-900'
-            }`}
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold' }}
+            className="text-center"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--sm-ink)' }}
           >
             {title}
           </h2>
 
           {/* Intro */}
           <p
-            className={`text-center leading-relaxed ${
-              isGlitch ? 'text-[#00ffff]/80' : isWin98 ? 'text-black' : 'text-gray-700'
-            }`}
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
+            className="text-center leading-relaxed"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {intro}
           </p>
 
           {/* Goal */}
           <p
-            className={`text-center leading-relaxed ${
-              isGlitch ? 'text-[#00ffff]/80' : isWin98 ? 'text-black' : 'text-gray-700'
-            }`}
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
+            className="text-center leading-relaxed"
+            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {goal}
           </p>
 
           {/* Task count status */}
           <p
-            className={`text-center leading-relaxed ${
-              hasEnough
-                ? isGlitch ? 'text-[#00ff9c]' : 'text-emerald-600'
-                : isGlitch ? 'text-[#ff5c5c]' : 'text-amber-600'
-            }`}
+            className={`text-center leading-relaxed ${hasEnough ? 'text-emerald-600' : 'text-amber-600'}`}
             style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', fontWeight: 'bold' }}
           >
             {hasEnough ? statusOk : statusMissing}
@@ -121,34 +99,16 @@ export function EvolveTaskModal({
             {!hasEnough && (
               <button
                 onClick={onCreateTask}
-                className={`w-full py-3 px-4 rounded-xl transition-all ${
-                  isGlitch
-                    ? 'bg-[#00ffff] text-black hover:bg-[#00ffff]/90'
-                    : isWin98
-                      ? 'win98-button bg-[#000080] text-white'
-                      : 'bg-[#101828] text-white hover:bg-[#1f2937]'
-                }`}
-                style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold' }}
+                className="sm-btn w-full"
+                style={{ fontFamily: 'Consolas, monospace' }}
               >
                 Create new task
               </button>
             )}
             <button
               onClick={onClose}
-              className={`w-full py-3 px-4 rounded-xl transition-all ${
-                hasEnough
-                  ? isGlitch
-                    ? 'bg-[#00ffff] text-black hover:bg-[#00ffff]/90'
-                    : isWin98
-                      ? 'win98-button bg-[#000080] text-white'
-                      : 'bg-[#101828] text-white hover:bg-[#1f2937]'
-                  : isGlitch
-                    ? 'border border-[#00ffff]/40 text-[#00ffff] hover:bg-[#00ffff]/10'
-                    : isWin98
-                      ? 'win98-button bg-[#c0c0c0] text-black'
-                      : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
-              }`}
-              style={{ fontFamily: 'Consolas, monospace', fontWeight: 'bold' }}
+              className={`w-full ${hasEnough ? 'sm-btn' : 'sm-btn-secondary sm-btn'}`}
+              style={{ fontFamily: 'Consolas, monospace' }}
             >
               Got it
             </button>

@@ -10,7 +10,6 @@ interface TaskCardProps {
   completed: boolean;
   onToggleComplete: (id: string) => void;
   onEdit: (id: string) => void;
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
 }
 
@@ -21,21 +20,15 @@ export const TaskCard = memo(function TaskCard({
   completed,
   onToggleComplete,
   onEdit,
-  theme = 'default',
   language = 'en-US',
 }: TaskCardProps) {
-  const isWin98 = theme === 'win98';
   const t = useTranslation(language);
   const isPt = language === 'pt-BR';
 
   return (
     <div
       className={`rounded-2xl p-4 transition-all w-full border ${
-        isWin98
-          ? 'win98-activity-card'
-          : completed
-          ? 'sm-card opacity-70'
-          : 'sm-card'
+        completed ? 'sm-card opacity-70' : 'sm-card'
       }`}
     >
       <div className="flex items-center gap-3">
@@ -94,18 +87,14 @@ export const TaskCard = memo(function TaskCard({
         {/* Edit Button */}
         <button
           onClick={() => onEdit(id)}
-          className={`flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${
-            isWin98
-              ? 'win98-button'
-              : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
-          }`}
+          className="flex items-center justify-center rounded-lg transition-all flex-shrink-0 bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]"
           aria-label={isPt ? 'Editar tarefa' : 'Edit task'}
           /* 44×44 é o alvo de toque mínimo confortável; o padding do Tailwind
              dava 32×32. Inline porque min-w-11 não existe no index.css
              pré-compilado (footgun 1). */
           style={{ minWidth: 44, minHeight: 44 }}
         >
-          <Edit2 size={16} strokeWidth={1.5} color={isWin98 ? '#000000' : undefined} />
+          <Edit2 size={16} strokeWidth={1.5} />
         </button>
       </div>
     </div>

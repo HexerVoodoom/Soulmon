@@ -23,7 +23,6 @@ interface ActivityStats {
 interface StatsPageProps {
   completedTasks: CompletedTask[];
   activityStats: ActivityStats;
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
   gamePoints?: number;
   totalXP?: number;
@@ -51,7 +50,6 @@ interface StatsPageProps {
 export function StatsPage({
   completedTasks,
   activityStats,
-  theme = 'default',
   language = 'en-US',
   gamePoints = 0,
   totalXP = 0,
@@ -65,8 +63,6 @@ export function StatsPage({
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
   const t = useTranslation(language);
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
 
   // Sort activities by completion count
   const sortedActivityStats = Object.entries(activityStats)
@@ -80,10 +76,10 @@ export function StatsPage({
 
   const getCategoryColor = (category: ActivityCategory) => {
     switch (category) {
-      case 'Health': return isGlitch ? 'text-[#ff0066]' : 'text-red-600';
-      case 'Study': return isGlitch ? 'text-[#00ffff]' : 'text-blue-600';
-      case 'Social': return isGlitch ? 'text-[#00ff00]' : 'text-green-600';
-      case 'Creativity': return isGlitch ? 'text-[#ff00ff]' : 'text-teal-600';
+      case 'Health': return 'text-red-600';
+      case 'Study': return 'text-blue-600';
+      case 'Social': return 'text-green-600';
+      case 'Creativity': return 'text-teal-600';
       default: return 'text-gray-600';
     }
   };
@@ -112,14 +108,13 @@ export function StatsPage({
       key={title}
       style={{
         display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 14,
-        background: isGlitch ? 'rgba(0,255,255,0.08)' : isWin98 ? '#c0c0c0' : 'var(--sm-bg)',
-        border: isWin98 ? '2px inset #ffffff' : 'none',
+        background: 'var(--sm-bg)',
       }}
     >
       <span style={{ fontSize: 26, lineHeight: 1 }}>{emoji}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: isGlitch ? '#00ffff' : isWin98 ? '#000000' : 'var(--sm-ink)' }}>{title}</p>
-        <p style={{ margin: '2px 0 0', fontSize: '0.76rem', lineHeight: 1.45, color: isGlitch ? '#5fbcbc' : isWin98 ? '#444444' : 'var(--sm-muted)' }}>{desc}</p>
+        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: 'var(--sm-ink)' }}>{title}</p>
+        <p style={{ margin: '2px 0 0', fontSize: '0.76rem', lineHeight: 1.45, color: 'var(--sm-muted)' }}>{desc}</p>
       </div>
     </div>
   );
@@ -141,12 +136,10 @@ export function StatsPage({
 
       {/* A jornada — memória, não placar. Nada aqui vale ponto. */}
       {journey && (
-        <div
-          className={`rounded-2xl px-4 py-3 ${isGlitch ? 'glitch-activity-card' : isWin98 ? 'win98-activity-card' : 'sm-card'}`}
-        >
+        <div className="rounded-2xl px-4 py-3 sm-card">
           <p style={{
             fontSize: '0.72rem', letterSpacing: 1, fontWeight: 800, margin: '0 0 10px',
-            color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-muted)',
+            color: 'var(--sm-muted)',
           }}>
             {isPt ? 'A JORNADA DESTE SOULMON' : "THIS SOULMON'S JOURNEY"}
           </p>
@@ -160,8 +153,8 @@ export function StatsPage({
                 return (
                   <span key={id} style={{
                     fontSize: '0.72rem', padding: '4px 9px', borderRadius: 999, fontWeight: 700,
-                    background: isGlitch ? 'rgba(0,255,255,0.12)' : isWin98 ? '#ffffff' : 'var(--sm-primary-soft)',
-                    color: isGlitch ? '#00ffff' : isWin98 ? '#000000' : 'var(--sm-primary)',
+                    background: 'var(--sm-primary-soft)',
+                    color: 'var(--sm-primary)',
                   }}>
                     {form?.name ?? id}
                   </span>
@@ -180,13 +173,12 @@ export function StatsPage({
             ].map(row => (
               <div key={row.label} style={{
                 padding: '9px 11px', borderRadius: 10,
-                background: isGlitch ? 'rgba(0,255,255,0.06)' : isWin98 ? '#c0c0c0' : 'var(--sm-bg)',
-                border: isWin98 ? '2px inset #ffffff' : 'none',
+                background: 'var(--sm-bg)',
               }}>
-                <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: isGlitch ? '#00ffff' : isWin98 ? '#000000' : 'var(--sm-ink)' }}>
+                <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: 'var(--sm-ink)' }}>
                   {row.value}
                 </p>
-                <p style={{ margin: 0, fontSize: '0.68rem', lineHeight: 1.3, color: isGlitch ? '#5fbcbc' : isWin98 ? '#444444' : 'var(--sm-muted)' }}>
+                <p style={{ margin: 0, fontSize: '0.68rem', lineHeight: 1.3, color: 'var(--sm-muted)' }}>
                   {row.label}
                 </p>
               </div>
@@ -196,7 +188,7 @@ export function StatsPage({
           {journey.soulGoal && (
             <p style={{
               margin: '12px 0 0', fontSize: '0.76rem', lineHeight: 1.5, fontStyle: 'italic',
-              color: isGlitch ? '#5fbcbc' : isWin98 ? '#444444' : 'var(--sm-muted)',
+              color: 'var(--sm-muted)',
             }}>
               {isPt ? 'Começou por: ' : 'Started for: '}“{journey.soulGoal}”
             </p>
@@ -205,46 +197,38 @@ export function StatsPage({
       )}
 
       {/* Overview: Bits/XP/Streak + attribute points */}
-      <div
-        className={`rounded-2xl px-4 py-3 ${
-          isGlitch
-            ? 'glitch-activity-card'
-            : isWin98
-              ? 'win98-activity-card'
-              : 'sm-card'
-        }`}
-      >
+      <div className="rounded-2xl px-4 py-3 sm-card">
         <div className="flex items-center gap-4 flex-wrap">
           <span className="flex items-center gap-1.5">
             <span style={{ fontSize: '0.9rem' }}>💠</span>
-            <span className="text-xs font-semibold" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Bits</span>
-            <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{gamePoints}</span>
+            <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>Bits</span>
+            <span className="text-sm font-bold" style={{ color: 'var(--sm-ink)' }}>{gamePoints}</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span style={{ fontSize: '0.9rem' }}>⚡</span>
-            <span className="text-xs font-semibold" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>XP</span>
-            <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{totalXP}</span>
+            <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>XP</span>
+            <span className="text-sm font-bold" style={{ color: 'var(--sm-ink)' }}>{totalXP}</span>
           </span>
           <span className="flex items-center gap-1.5">
             <span style={{ fontSize: '0.9rem' }}>⭐</span>
-            <span className="text-xs font-semibold" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>
+            <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>
               {isPt ? 'Dias perfeitos (total)' : 'Perfect days (total)'}
             </span>
-            <span className="text-sm font-bold" style={{ color: isGlitch ? '#00ffff' : isWin98 ? '#000080' : 'var(--sm-ink)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{streakDays}</span>
+            <span className="text-sm font-bold" style={{ color: 'var(--sm-ink)' }}>{streakDays}</span>
           </span>
         </div>
-        <div className="flex items-center justify-between gap-2 flex-wrap mt-2 pt-2" style={{ borderTop: `1px solid ${isGlitch ? 'rgba(0,255,255,0.2)' : isWin98 ? '#808080' : 'var(--sm-line)'}` }}>
+        <div className="flex items-center justify-between gap-2 flex-wrap mt-2 pt-2" style={{ borderTop: '1px solid var(--sm-line)' }}>
           <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Virus</span>
-            <span className="text-xs font-bold" style={{ color: '#22A900', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{virusPoints}</span>
+            <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>Virus</span>
+            <span className="text-xs font-bold" style={{ color: '#22A900' }}>{virusPoints}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Data</span>
-            <span className="text-xs font-bold" style={{ color: '#009ED8', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{dataPoints}</span>
+            <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>Data</span>
+            <span className="text-xs font-bold" style={{ color: '#009ED8' }}>{dataPoints}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: isGlitch ? 'rgba(0,255,255,0.7)' : isWin98 ? '#000' : 'var(--sm-muted)', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>Vaccine</span>
-            <span className="text-xs font-bold" style={{ color: '#E69600', fontFamily: isGlitch || isWin98 ? 'monospace' : undefined }}>{vaccinePoints}</span>
+            <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>Vaccine</span>
+            <span className="text-xs font-bold" style={{ color: '#E69600' }}>{vaccinePoints}</span>
           </div>
         </div>
       </div>
@@ -252,17 +236,15 @@ export function StatsPage({
       {/* Activity Completions */}
       <div>
         <h3
-          className={`mb-3 ${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
-            }`}
-          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}
+          className="mb-3"
+          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
         >
           {t.evolution.completed_activities}
         </h3>
         {sortedActivityStats.length === 0 ? (
           <p
-            className={`text-center py-8 ${isGlitch ? 'text-[#00ffff]/50' : isWin98 ? 'text-[#808080]' : 'text-gray-400'
-              }`}
-            style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+            className="text-center py-8"
+            style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {t.evolution.no_activities}
           </p>
@@ -271,20 +253,13 @@ export function StatsPage({
             {sortedActivityStats.map(([key, stat]) => (
               <div
                 key={key}
-                className={`p-4 rounded-xl flex items-center justify-between ${isGlitch
-                  ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
-                  : isWin98
-                    ? 'win98-button bg-white'
-                    : 'bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/50'
-                  }`}
+                className="p-4 rounded-xl flex items-center justify-between sm-card"
               >
                 <div className="flex items-center gap-3">
                   <span style={{ fontSize: '1.5rem' }}>{stat.emoji}</span>
                   <div>
                     <p
-                      className={`${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
-                        }`}
-                      style={{ fontFamily: 'monospace', fontSize: '0.9375rem' }}
+                      style={{ fontFamily: 'monospace', fontSize: '0.9375rem', color: 'var(--sm-ink)' }}
                     >
                       {stat.name}
                     </p>
@@ -297,12 +272,7 @@ export function StatsPage({
                   </div>
                 </div>
                 <div
-                  className={`px-4 py-2 rounded-lg ${isGlitch
-                    ? 'bg-[#00ffff]/20 text-[#00ffff]'
-                    : isWin98
-                      ? 'bg-[#000080] text-white'
-                      : 'bg-gradient-to-r from-[#2bff95]/20 to-teal-100 text-teal-700'
-                    }`}
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#2bff95]/20 to-teal-100 text-teal-700"
                   style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600' }}
                 >
                   {stat.completionCount}×
@@ -316,17 +286,15 @@ export function StatsPage({
       {/* Task Completions */}
       <div>
         <h3
-          className={`mb-3 ${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
-            }`}
-          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}
+          className="mb-3"
+          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
         >
           {t.evolution.completed_tasks}
         </h3>
         {sortedTaskStats.length === 0 ? (
           <p
-            className={`text-center py-8 ${isGlitch ? 'text-[#00ffff]/50' : isWin98 ? 'text-[#808080]' : 'text-gray-400'
-              }`}
-            style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+            className="text-center py-8"
+            style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {t.evolution.no_tasks}
           </p>
@@ -335,20 +303,13 @@ export function StatsPage({
             {sortedTaskStats.map(([key, stat]) => (
               <div
                 key={key}
-                className={`p-4 rounded-xl flex items-center justify-between ${isGlitch
-                  ? 'bg-[#0a0a0a] border-2 border-[#00ffff]/30'
-                  : isWin98
-                    ? 'win98-button bg-white'
-                    : 'bg-white rounded-2xl shadow-sm ring-1 ring-gray-200/50'
-                  }`}
+                className="p-4 rounded-xl flex items-center justify-between sm-card"
               >
                 <div className="flex items-center gap-3">
                   <span style={{ fontSize: '1.5rem' }}>{stat.emoji}</span>
                   <div>
                     <p
-                      className={`${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
-                        }`}
-                      style={{ fontFamily: 'monospace', fontSize: '0.9375rem' }}
+                      style={{ fontFamily: 'monospace', fontSize: '0.9375rem', color: 'var(--sm-ink)' }}
                     >
                       {stat.name}
                     </p>
@@ -361,12 +322,7 @@ export function StatsPage({
                   </div>
                 </div>
                 <div
-                  className={`px-4 py-2 rounded-lg ${isGlitch
-                    ? 'bg-[#00ff00]/20 text-[#00ff00]'
-                    : isWin98
-                      ? 'bg-[#008000] text-white'
-                      : 'bg-green-100 text-green-700'
-                    }`}
+                  className="px-4 py-2 rounded-lg bg-green-100 text-green-700"
                   style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600' }}
                 >
                   {stat.completionCount}×
@@ -380,17 +336,15 @@ export function StatsPage({
       {/* Recent Completed Tasks History */}
       <div>
         <h3
-          className={`mb-3 ${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
-            }`}
-          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500' }}
+          className="mb-3"
+          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
         >
           {t.evolution.recent_history}
         </h3>
         {completedTasks.length === 0 ? (
           <p
-            className={`text-center py-8 ${isGlitch ? 'text-[#00ffff]/50' : isWin98 ? 'text-[#808080]' : 'text-gray-400'
-              }`}
-            style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+            className="text-center py-8"
+            style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
           >
             {t.evolution.no_history}
           </p>
@@ -399,20 +353,14 @@ export function StatsPage({
             {completedTasks.slice(-50).reverse().map((task) => (
               <div
                 key={task.id}
-                className={`p-3 rounded-xl flex items-center justify-between ${isGlitch
-                  ? 'bg-[#0a0a0a] border border-[#00ffff]/20'
-                  : isWin98
-                    ? 'win98-inset bg-white'
-                    : 'bg-white border border-gray-100'
-                  }`}
+                className="p-3 rounded-xl flex items-center justify-between sm-card"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <span style={{ fontSize: '1.25rem' }}>{task.emoji}</span>
                   <div className="flex-1 min-w-0">
                     <p
-                      className={`truncate ${isGlitch ? 'text-[#00ffff]' : isWin98 ? 'text-[#000000]' : 'text-gray-900'
-                        }`}
-                      style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+                      className="truncate"
+                      style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-ink)' }}
                     >
                       {task.name}
                     </p>
@@ -425,9 +373,8 @@ export function StatsPage({
                   </div>
                 </div>
                 <p
-                  className={`text-xs ml-3 whitespace-nowrap ${isGlitch ? 'text-[#00ffff]/60' : isWin98 ? 'text-[#808080]' : 'text-gray-400'
-                    }`}
-                  style={{ fontFamily: 'monospace' }}
+                  className="text-xs ml-3 whitespace-nowrap"
+                  style={{ fontFamily: 'monospace', color: 'var(--sm-muted)' }}
                 >
                   {formatDate(task.completedAt)}
                 </p>

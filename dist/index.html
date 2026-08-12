@@ -6,13 +6,26 @@
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Soulmon</title>
       <link rel="manifest" href="/manifest.json" />
-      <meta name="theme-color" content="#6d5bd0" />
+      <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0d9488" />
+      <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c1c1a" />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
       <link rel="apple-touch-icon" href="/favicon-192x192.png" />
-      <script type="module" crossorigin src="/assets/index-N8KPcBIY.js"></script>
+      <script>
+        (function () {
+          try {
+            var stored = localStorage.getItem('digiapp-theme');
+            var mode = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'system';
+            var resolved = mode === 'system'
+              ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+              : mode;
+            document.documentElement.dataset.theme = resolved;
+          } catch (e) {}
+        })();
+      </script>
+      <script type="module" crossorigin src="/assets/index-DjeezwSo.js"></script>
       <link rel="modulepreload" crossorigin href="/assets/vendor-DDxydHEc.js">
-      <link rel="stylesheet" crossorigin href="/assets/index-BLviE3WY.css">
+      <link rel="stylesheet" crossorigin href="/assets/index-SvR2VGup.css">
     </head>
 
     <body>

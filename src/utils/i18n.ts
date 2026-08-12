@@ -176,7 +176,6 @@ export interface Translations {
     title: string;
     language: string;
     languageDescription: string;
-    theme: string;
     ai: string;
     aiToggle: string;
     aiChatEnabled: string;
@@ -320,13 +319,6 @@ export interface Translations {
     dataSaved: string;
     dataLoaded: string;
     appReset: string;
-  };
-
-  // Themes
-  themes: {
-    default: string;
-    win98: string;
-    glitch: string;
   };
 }
 
@@ -481,7 +473,6 @@ export const translations: Record<Language, Translations> = {
       title: 'Settings',
       language: 'Language',
       languageDescription: 'Select the application language',
-      theme: 'Theme',
       ai: 'Artificial Intelligence',
       aiToggle: 'AI Enabled',
       aiChatEnabled: 'AI Chat',
@@ -616,12 +607,6 @@ export const translations: Record<Language, Translations> = {
       dataSaved: 'Data saved successfully',
       dataLoaded: 'Data loaded successfully',
       appReset: 'App reset successfully',
-    },
-
-    themes: {
-      default: 'Default',
-      win98: 'Windows 98',
-      glitch: 'Glitch',
     },
   },
 
@@ -775,7 +760,6 @@ export const translations: Record<Language, Translations> = {
       title: 'Configurações',
       language: 'Idioma',
       languageDescription: 'Selecione o idioma do aplicativo',
-      theme: 'Tema',
       ai: 'Inteligência Artificial',
       aiToggle: 'IA Habilitada',
       aiChatEnabled: 'Chat com IA',
@@ -910,12 +894,6 @@ export const translations: Record<Language, Translations> = {
       dataSaved: 'Dados salvos com sucesso',
       dataLoaded: 'Dados carregados com sucesso',
       appReset: 'App resetado com sucesso',
-    },
-
-    themes: {
-      default: 'Padrão',
-      win98: 'Windows 98',
-      glitch: 'Glitch',
     },
   },
 };

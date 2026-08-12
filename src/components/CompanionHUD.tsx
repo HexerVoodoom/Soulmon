@@ -49,7 +49,6 @@ interface CompanionHUDProps {
   careEvent?: CareEvent | null;
   onCareEventComplete?: () => void;
   useAI: boolean;
-  theme?: 'default' | 'win98' | 'glitch';
   aiSettings?: any;
   onOpenAISettings?: () => void;
   onCreateActivity?: (activity: {
@@ -101,7 +100,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   careEvent,
   onCareEventComplete,
   useAI,
-  theme = 'default',
   aiSettings,
   onOpenAISettings,
   onCreateActivity,
@@ -117,8 +115,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   evolutionFlash = false,
   feedAnim = null,
 }: CompanionHUDProps) {
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
   // Energy bars = the stage's daily task requirement (falls back to HP max for
   // older callers that don't pass it).
   const maxEnergy = maxEnergyPoints ?? maxHealthPoints;
@@ -553,23 +549,16 @@ export const CompanionHUD = memo(function CompanionHUD({
           {Array.from({ length: totalSegments }, (_, i) => (
             <div
               key={i}
-              className={`h-3 flex-1 transition-colors duration-300 ${
-                isWin98
-                  ? (i < filledSegments ? 'bg-[#000080]' : 'bg-[#808080]')
-                  : (i < filledSegments ? 'bg-gradient-to-r from-[#2bff95] to-teal-400' : 'bg-gray-600')
-              }`}
+              className={`h-3 flex-1 transition-colors duration-300 ${i < filledSegments ? '' : 'bg-gray-600'}`}
               style={{
                 minWidth: '8px',
-                boxShadow: isWin98
-                  ? (i < filledSegments
-                    ? 'inset 1px 1px 0 #000000, inset -1px -1px 0 #1084d0'
-                    : 'inset -1px -1px 0 #ffffff, inset 1px 1px 0 #808080')
-                  : (i < filledSegments ? '0 0 6px rgba(192, 132, 252, 0.6)' : 'none')
+                background: i < filledSegments ? 'linear-gradient(to right, #2dd4bf, #5eead4)' : undefined,
+                boxShadow: i < filledSegments ? '0 0 6px rgba(192, 132, 252, 0.6)' : 'none'
               }}
             />
           ))}
         </div>
-        <p className={`text-[9px] mt-0.5 text-right ${isWin98 ? 'text-[#000080]' : 'text-gray-300'}`} style={{ fontFamily: 'monospace' }}>
+        <p className="text-[9px] mt-0.5 text-right text-gray-300" style={{ fontFamily: 'monospace' }}>
           {filledSegments}/{totalSegments} {isPt ? 'dias' : 'days'}
         </p>
       </div>
@@ -579,31 +568,14 @@ export const CompanionHUD = memo(function CompanionHUD({
 
 
   return (
-    <div className={
-      isGlitch
-        ? 'glitch-companion-window'
-        : isWin98
-          ? 'win98-companion-window'
-          : 'relative'
-    }>
-      {/* Win98 Title Bar */}
-      {isWin98 && (
-        <div className="win98-titlebar">
-          <span className="win98-titlebar-text">{evolutionStage}.exe</span>
-          <div className="win98-titlebar-buttons">
-            <button className="win98-titlebar-button">_</button>
-            <button className="win98-titlebar-button">✕</button>
-          </div>
-        </div>
-      )}
-      
+    <div className="relative">
       {/* Main Container with Companion Area and Energy Bar */}
       <div className="relative">
       {/* Equipped background — full-bleed edge-to-edge (breaks out of the page's
           px-6/24px padding via negative margins). Default (nothing equipped) is
           fully transparent. Sits behind the row below it via an explicit
           stacking context (z-index 0 vs 1). */}
-      {!isWin98 && !isGlitch && equippedBackground && PET_BACKGROUNDS[equippedBackground] && (
+      {equippedBackground && PET_BACKGROUNDS[equippedBackground] && (
         <div
           aria-hidden="true"
           style={{
@@ -619,52 +591,41 @@ export const CompanionHUD = memo(function CompanionHUD({
           }}
         />
       )}
-      <div className={`flex gap-2 ${isWin98 ? 'p-2' : ''}`} style={{ position: 'relative', zIndex: 1 }}>
+      <div className="flex gap-2" style={{ position: 'relative', zIndex: 1 }}>
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
-        {!isGlitch && !isWin98 && (
-          <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 56 }}>
-            {([
-              { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-              { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-              { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-            ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
-              <button
-                key={a.key}
-                onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
-                disabled={a.key !== 'bath' && a.disabled}
-                className="sm-card relative flex flex-col items-center justify-center gap-0.5 py-2"
-                style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
-              >
-                {a.badge && (
-                  <span style={{ position: 'absolute', top: 4, right: 6, width: 8, height: 8, borderRadius: '50%', backgroundColor: '#ef4444', border: '1px solid #fff' }} />
-                )}
-                <a.Icon size={19} strokeWidth={2.1} color="var(--sm-ink)" />
-                <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--sm-muted)' }}>
-                  {language === 'pt-BR' ? a.pt : a.en}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 56 }}>
+          {([
+            { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+            { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+            { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
+          ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+            <button
+              key={a.key}
+              onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
+              disabled={a.key !== 'bath' && a.disabled}
+              className="sm-card relative flex flex-col items-center justify-center gap-0.5 py-2"
+              style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
+            >
+              {a.badge && (
+                <span style={{ position: 'absolute', top: 4, right: 6, width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--sm-danger)', border: '1px solid var(--sm-surface)' }} />
+              )}
+              <a.Icon size={19} strokeWidth={2.1} color="var(--sm-ink)" />
+              <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--sm-muted)' }}>
+                {language === 'pt-BR' ? a.pt : a.en}
+              </span>
+            </button>
+          ))}
+        </div>
         {/* Companion Display Area */}
-        <div 
-          className={`relative overflow-hidden p-3 flex-1 ${
-            isGlitch
-              ? 'border-2 border-[#00ffff]'
-              : isWin98
-                ? 'win98-lcd-screen crt-effect border'
-                : ''
-          }`}
+        <div
+          className="relative overflow-hidden p-3 flex-1"
           style={{
             height: '250px',
-            borderRadius: isWin98 || isGlitch ? 0 : 28,
-            backgroundImage: isWin98 ? 'none' : undefined,
-            backgroundColor: isWin98 ? '#9cbd90' : undefined,
+            borderRadius: 28,
             imageRendering: 'pixelated',
-            borderWidth: isWin98 || isGlitch ? '1.1px' : 0,
+            borderWidth: 0,
           }}
         >
-          {isWin98 && <div className="scan-line" />}
           {/* HP Hearts - Top Left Corner */}
           <div
             className="absolute top-2 left-2 flex items-center gap-1 flex-wrap z-10"
@@ -688,34 +649,30 @@ export const CompanionHUD = memo(function CompanionHUD({
           {evolutionFlash && (
             <div className="absolute inset-0 z-40 flex flex-col items-center justify-center pointer-events-none animate-in fade-in duration-200">
               <div className="absolute inset-0 bg-white/70 animate-pulse" />
-              <span className="relative text-[#2bff95] font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', textShadow: '0 0 12px #2bff95' }}>
+              <span className="relative font-bold drop-shadow-lg text-center" style={{ fontFamily: 'monospace', fontSize: '1rem', color: '#2dd4bf', textShadow: '0 0 12px #2dd4bf' }}>
                 {language === 'pt-BR' ? '✨ EVOLUÇÃO! ✨' : '✨ EVOLVE! ✨'}
               </span>
             </div>
           )}
 
 
-          {/* Decoração ambiente: sparkles/corações flutuando devagar (só tema default) */}
-          {!isWin98 && !isGlitch && (
-            <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
-              <span className="sm-ambient-sparkle" style={{ top: '14%', left: '78%', animationDelay: '0s' }}>✦</span>
-              <span className="sm-ambient-sparkle" style={{ top: '68%', left: '14%', animationDelay: '1.1s' }}>✦</span>
-              <span className="sm-ambient-heart" style={{ top: '30%', left: '10%', animationDelay: '0.6s' }}>♥</span>
-              <span className="sm-ambient-heart" style={{ top: '76%', left: '84%', animationDelay: '1.6s' }}>♥</span>
-            </div>
-          )}
+          {/* Decoração ambiente: sparkles/corações flutuando devagar */}
+          <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
+            <span className="sm-ambient-sparkle" style={{ top: '14%', left: '78%', animationDelay: '0s' }}>✦</span>
+            <span className="sm-ambient-sparkle" style={{ top: '68%', left: '14%', animationDelay: '1.1s' }}>✦</span>
+            <span className="sm-ambient-heart" style={{ top: '30%', left: '10%', animationDelay: '0.6s' }}>♥</span>
+            <span className="sm-ambient-heart" style={{ top: '76%', left: '84%', animationDelay: '1.6s' }}>♥</span>
+          </div>
 
           {/* Decoração do palco — apoiada na MESMA linha de chão dos pés do pet
               (utils/petStage.ts). Vem antes do sprite no DOM de propósito: é
               cenário, o pet anda na frente. */}
-          {!isWin98 && !isGlitch && (
-            <PetStageDecor
-              equippedDecor={equippedDecor}
-              equippedBackground={equippedBackground ?? null}
-              trophies={trophies}
-              language={language}
-            />
-          )}
+          <PetStageDecor
+            equippedDecor={equippedDecor}
+            equippedBackground={equippedBackground ?? null}
+            trophies={trophies}
+            language={language}
+          />
 
           {/* Care Event Sprite */}
           {careEvent && <CareSystem careEvent={careEvent} onCareEventComplete={onCareEventComplete || (() => {})} language={language} />}
@@ -867,22 +824,13 @@ export const CompanionHUD = memo(function CompanionHUD({
               className="absolute bottom-0 left-0 right-0 z-[45] px-2 pb-1 pointer-events-auto"
               onClick={handleBubbleClick}
             >
-              <div
-                className={`relative px-3 py-1.5 cursor-pointer ${
-                  isGlitch
-                    ? 'glitch-activity-card'
-                    : isWin98
-                      ? 'win98-activity-card'
-                      : 'bg-white rounded-xl shadow-lg'
-                }`}
-              >
+              <div className="relative px-3 py-1.5 cursor-pointer bg-white rounded-xl shadow-lg">
                 <p
-                  className={isWin98 ? 'text-white text-center break-words' : 'text-gray-800 text-center break-words'}
+                  className="text-gray-800 text-center break-words"
                   style={{
-                    fontFamily: isWin98 ? 'Courier New, monospace' : 'monospace',
+                    fontFamily: 'monospace',
                     fontSize: '0.68rem',
                     lineHeight: '1.3',
-                    textShadow: isWin98 ? '0 0 10px rgba(0,255,255,0.8)' : undefined,
                   }}
                 >
                   {bubbleText}
@@ -893,71 +841,18 @@ export const CompanionHUD = memo(function CompanionHUD({
                   style={{
                     borderLeft: '6px solid transparent',
                     borderRight: '6px solid transparent',
-                    borderBottom: isWin98 ? '6px solid #003' : '6px solid white',
+                    borderBottom: '6px solid white',
                   }}
                 />
               </div>
             </div>
           )}
 
-          {/* Desktop icons — top-right of pet area (win98/glitch apenas; no
-              tema default esses botões viraram a coluna à esquerda do frame) */}
-          {(isWin98 || isGlitch) && (
-            <div style={{ position: 'absolute', top: 0, right: 0, zIndex: 30, display: 'flex', gap: '2px' }}>
-              {([
-                { key: 'items', Icon: FolderOpen, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-                { key: 'bath', Icon: ShowerHead, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-                { key: 'sleep', Icon: isSleeping ? Sun : Moon, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-              ].filter(Boolean) as { key: string; Icon: typeof FolderOpen; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
-                <button
-                  key={a.key}
-                  onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
-                  disabled={a.key !== 'bath' && a.disabled}
-                  title={language === 'pt-BR' ? a.pt : a.en}
-                  style={{
-                    position: 'relative',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '2px',
-                    padding: '4px 8px 5px',
-                    cursor: a.disabled ? 'default' : 'pointer',
-                    opacity: a.disabled ? 0.4 : 1,
-                    background: 'transparent',
-                    border: 'none',
-                    userSelect: 'none',
-                  }}
-                >
-                  {a.badge && (
-                    <span style={{
-                      position: 'absolute',
-                      top: 0, right: 2,
-                      width: 8, height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: '#ef4444',
-                      border: '1px solid #000',
-                      zIndex: 10,
-                    }} />
-                  )}
-                  <a.Icon size={21} strokeWidth={2.1} style={{ color: '#fff', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }} />
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.62rem', color: '#fff', textShadow: '1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000', whiteSpace: 'nowrap' }}>
-                    {language === 'pt-BR' ? a.pt : a.en}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Energy Bar - Vertical on Right Side */}
         <div
-          className={`flex flex-col-reverse items-center justify-end gap-1 rounded-[4px] ${
-            isGlitch
-              ? 'bg-[#0a0a0a] border-2 border-[#00ffff]'
-              : isWin98
-                ? 'win98-lcd-screen'
-                : 'sm-card'
-          }`}
+          className="flex flex-col-reverse items-center justify-end gap-1 rounded-[4px] sm-card"
           style={{ height: '185px', width: '26px', padding: '11.998px 0', cursor: 'pointer' }}
           title={language === 'pt-BR'
             ? `Energia: ${energyPoints}/${maxEnergy} — sobe comendo; cheia no fim do dia = ponto de evolução`
@@ -979,7 +874,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           da mesma árvore/stacking context do app: assim modais (z-index maior)
           conseguem ficar corretamente acima dela em vez de um portal externo
           que sempre pintava por cima de tudo, modais inclusive. */}
-      <div className={isWin98 || isGlitch ? '' : 'sm-chat-fixed'}>
+      <div className="sm-chat-fixed">
         <ChatBox
           petName={currentStage}
           mood={companionMood}
@@ -987,7 +882,6 @@ export const CompanionHUD = memo(function CompanionHUD({
           dominantBranch={dominantBranch}
           useAI={useAI}
           onSendMessage={handleChatMessage}
-          theme={theme}
           aiSettings={aiSettings}
           onOpenAISettings={onOpenAISettings}
           onCreateActivity={onCreateActivity}

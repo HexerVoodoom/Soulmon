@@ -1,4 +1,5 @@
 import { Component, ReactNode, ErrorInfo } from 'react';
+import ravenMascot from '../assets/soulmon/mascot-raven.png';
 
 interface Props { children: ReactNode; }
 interface State { hasError: boolean; error: Error | null; }
@@ -28,17 +29,17 @@ export class ErrorBoundary extends Component<Props, State> {
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: 'center', height: '100vh', padding: '24px',
-          fontFamily: 'monospace', textAlign: 'center', background: '#1a1a2e', color: '#2BFF95'
+          fontFamily: 'monospace', textAlign: 'center', background: '#0c1c1a', color: '#2dd4bf'
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🦖</div>
+          <img src={ravenMascot} alt="" width={72} height={72} style={{ marginBottom: '16px', objectFit: 'contain' }} />
           <h2 style={{ margin: '0 0 8px' }}>{isPt ? 'Algo deu errado' : 'Something went wrong'}</h2>
-          <p style={{ margin: '0 0 24px', color: '#aaa', fontSize: '14px' }}>
+          <p style={{ margin: '0 0 24px', color: '#8fb0a8', fontSize: '14px' }}>
             {isPt ? 'O Soulmon encontrou um erro inesperado.' : 'Soulmon hit an unexpected error.'}
           </p>
           <button
             onClick={() => window.location.reload()}
             style={{
-              background: '#2BFF95', color: '#000', border: 'none',
+              background: '#2dd4bf', color: '#0c1c1a', border: 'none',
               padding: '10px 24px', borderRadius: '8px', cursor: 'pointer',
               fontFamily: 'monospace', fontWeight: 'bold'
             }}

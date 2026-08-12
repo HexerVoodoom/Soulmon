@@ -230,7 +230,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 
       {result && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(8,5,20,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div className="sm-card" style={{ maxWidth: 340, width: '100%', padding: 24, textAlign: 'center', background: '#fff' }}>
+          <div className="sm-card" style={{ maxWidth: 340, width: '100%', padding: 24, textAlign: 'center' }}>
             <p style={{ fontSize: 13, color: 'var(--sm-muted)', fontWeight: 700, letterSpacing: 1, margin: 0 }}>
               {result.won ? (isPt ? 'VITÓRIA' : 'VICTORY') : (isPt ? 'DERROTA' : 'DEFEAT')}
             </p>

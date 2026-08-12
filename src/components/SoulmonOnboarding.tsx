@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Sparkles, ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
+import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import {
   generateOracle, ORACLE_QUESTIONS,
@@ -272,13 +273,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const input: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    background: '#fff', color: 'var(--sm-ink)',
+    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
     border: '2px solid var(--sm-line)', borderRadius: 14, padding: '13px 15px', fontSize: 16,
     outline: 'none',
   };
   const optionBtn = (selected: boolean): React.CSSProperties => ({
     textAlign: 'left', width: '100%', boxSizing: 'border-box',
-    background: selected ? 'var(--sm-primary-soft)' : '#fff',
+    background: selected ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
     color: selected ? 'var(--sm-primary)' : 'var(--sm-ink)',
     border: selected ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
     borderRadius: 14, padding: '13px 15px', fontSize: 14, cursor: 'pointer', marginBottom: 8,
@@ -307,7 +308,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               width: 88, height: 88, margin: '0 auto 18px', borderRadius: 28,
               background: 'var(--sm-primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Sparkles size={44} color="var(--sm-primary)" strokeWidth={1.8} />
+              <img src={ravenMascot} alt="" width={58} height={58} style={{ objectFit: 'contain' }} />
             </div>
             <h1 style={{ fontSize: 32, margin: '0 0 8px', fontWeight: 800, letterSpacing: -0.5 }}>Soulmon</h1>
             <p style={{ fontSize: 15, color: 'var(--sm-muted)', lineHeight: 1.6, margin: '0 0 32px' }}>
@@ -524,8 +525,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* Gerando */}
         {step === GENERATING && (
           <div style={{ textAlign: 'center', paddingTop: 90 }}>
-            <LoaderCircle size={52} color="var(--sm-primary)" strokeWidth={2}
-              style={{ animation: 'soulspin 1.1s linear infinite', marginBottom: 20 }} />
+            <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
+              <img src={ravenMascot} alt="" width={64} height={64}
+                style={{ position: 'absolute', inset: 0, margin: 'auto', objectFit: 'contain' }} />
+              <LoaderCircle size={88} color="var(--sm-primary)" strokeWidth={1.6}
+                style={{ animation: 'soulspin 1.1s linear infinite' }} />
+            </div>
             <p style={{ fontSize: 16, color: 'var(--sm-muted)' }}>
               {isPt ? 'Revelando a criatura da sua alma…' : 'Revealing your soul\'s creature…'}
             </p>

@@ -7,7 +7,6 @@ interface DailyReportModalProps {
   report: NonNullable<GameState['lastDayReport']>;
   onClose: () => void;
   language: Language;
-  theme?: 'default' | 'win98' | 'glitch';
   /** O "porquê" que o usuário escreveu no onboarding. O pet devolve isso em
    *  momentos-chave — é o que separa "app que mede" de "avatar que acompanha". */
   soulGoal?: string;
@@ -24,7 +23,7 @@ interface DailyReportModalProps {
  * Layout uses INLINE styles — several Tailwind utilities (px-5, py-4, max-w-xs)
  * don't exist in the precompiled index.css (see CLAUDE.md footgun #1).
  */
-export function DailyReportModal({ report, onClose, language, theme = 'default', soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote }: DailyReportModalProps) {
+export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
@@ -32,9 +31,6 @@ export function DailyReportModal({ report, onClose, language, theme = 'default',
   const welcome = !!report.welcomeBack;
   // Só faz sentido oferecer quando houve cobrança e ela ainda não foi desfeita.
   const canRecover = !welcome && report.heartsLost > 0 && !report.heartsRecovered && !!onRecoverHearts;
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
-  const mono = { fontFamily: 'monospace' as const };
 
   const rows: { Icon: typeof Heart; label: string; value: string; highlight?: 'good' | 'bad' }[] = welcome
     ? [
@@ -118,72 +114,6 @@ export function DailyReportModal({ report, onClose, language, theme = 'default',
     notes.push(isPt
       ? `Lembra por que você começou: "${soulGoal}".`
       : `Remember why you started: "${soulGoal}".`);
-  }
-
-  if (isWin98 || isGlitch) {
-    const palette = isGlitch
-      ? { bg: '#0a0a0a', border: '2px solid #00ffff', text: '#00ffff', sub: '#5fbcbc', headBg: '#0a0a0a' }
-      : { bg: '#c0c0c0', border: '2px solid #000080', text: '#000000', sub: '#444444', headBg: '#000080' };
-    const emojiHeadline = welcome ? `🫂 ${headline}` : report.degenerated ? `💔 ${headline}` : report.wasPerfect ? `⭐ ${headline}` : report.heartsLost > 0 ? `😟 ${headline}` : `☀️ ${headline}`;
-    return (
-      <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div style={{ width: '100%', maxWidth: 320, background: palette.bg, border: palette.border, borderRadius: 0, boxShadow: '0 12px 32px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
-          <div style={{ position: 'relative', padding: '18px 44px 14px 20px', background: palette.headBg, textAlign: 'center' }}>
-            <span style={{ ...mono, fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>{emojiHeadline}</span>
-            <button onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}
-              style={{ ...mono, position: 'absolute', top: 10, right: 10, width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1rem', fontWeight: 700, color: '#ffffff' }}>
-              ✕
-            </button>
-          </div>
-          <div style={{ padding: '16px 20px 6px' }}>
-            {rows.map(r => (
-              <div key={r.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0' }}>
-                <span style={{ ...mono, fontSize: '0.78rem', color: palette.sub }}>{r.label}</span>
-                <span style={{ ...mono, fontSize: '0.88rem', fontWeight: 700, color: r.highlight === 'good' ? '#16a34a' : r.highlight === 'bad' ? '#ef4444' : palette.text }}>
-                  {r.value}
-                </span>
-              </div>
-            ))}
-            {notes.map((n, i) => (
-              <p key={i} style={{ ...mono, fontSize: '0.7rem', color: palette.sub, paddingTop: 6 }}>{n}</p>
-            ))}
-          </div>
-          {onPickMood && (
-            <div style={{ padding: '4px 20px 0' }}>
-              <p style={{ ...mono, fontSize: '0.72rem', color: palette.sub, margin: '0 0 6px' }}>
-                {isPt ? 'E você, como está hoje?' : 'And how are you today?'}
-              </p>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {MOOD_OPTIONS.map(m => (
-                  <button key={m.value} onClick={() => onPickMood(m.value)}
-                    aria-label={isPt ? m.labelPt : m.labelEn}
-                    style={{
-                      flex: 1, padding: '6px 0', fontSize: 17, cursor: 'pointer', lineHeight: 1,
-                      background: moodToday === m.value ? '#ffffff' : 'transparent',
-                      border: moodToday === m.value ? '2px inset #ffffff' : '2px outset #ffffff',
-                    }}>
-                    {m.emoji}
-                  </button>
-                ))}
-              </div>
-              {moodNote && <p style={{ ...mono, fontSize: '0.68rem', color: palette.sub, margin: '6px 0 0' }}>{moodNote}</p>}
-            </div>
-          )}
-          <div style={{ padding: '14px 20px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {canRecover && (
-              <button onClick={onRecoverHearts}
-                style={{ ...mono, width: '100%', padding: '11px 0', borderRadius: 0, border: '2px outset #ffffff', background: '#c0c0c0', color: '#000000', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
-                {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
-              </button>
-            )}
-            <button onClick={onClose}
-              style={{ ...mono, width: '100%', padding: '11px 0', borderRadius: 0, border: '2px outset #ffffff', background: isGlitch ? '#00ffff' : '#c0c0c0', color: isGlitch ? '#0a0a0a' : '#000000', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer' }}>
-              OK
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return (

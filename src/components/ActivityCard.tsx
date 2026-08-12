@@ -24,7 +24,6 @@ interface ActivityCardProps {
   isCompleted?: boolean;
   isDisabled?: boolean;
   isSingleExecution?: boolean; // Se é execução única
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
 }
 
@@ -41,10 +40,8 @@ export const ActivityCard = memo(function ActivityCard({
   isCompleted = false,
   isDisabled = false,
   isSingleExecution = false,
-  theme = 'default',
   language = 'en-US',
 }: ActivityCardProps) {
-  const isWin98 = theme === 'win98';
   const t = useTranslation(language);
   const isPt = language === 'pt-BR';
   const completedSteps = steps.filter(s => s.completed).length;
@@ -62,11 +59,9 @@ export const ActivityCard = memo(function ActivityCard({
       <div className={`rounded-2xl p-4 transition-all w-full overflow-hidden border ${
         isDisabled
           ? 'bg-gray-100 border-gray-300 opacity-50'
-          : isWin98 
-            ? 'win98-activity-card'
-            : activityComplete 
-              ? 'sm-card opacity-70' 
-              : 'sm-card'
+          : activityComplete
+            ? 'sm-card opacity-70'
+            : 'sm-card'
       }`}>
         {/* Header row: checkbox + nome + edit button */}
         <div className="flex items-center gap-3 mb-2">
@@ -116,21 +111,6 @@ export const ActivityCard = memo(function ActivityCard({
             <p className={activityComplete ? 'text-[#9ca3af]' : 'text-[#a1a1a1]'} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.75rem' }}>
               {isSingleExecution ? (
                 t.main.singleExecution
-              ) : isWin98 ? (
-                <span className="flex gap-2 items-center">
-                  {daysLabels.map((label, index) => {
-                    const isActive = weekDays.includes(index);
-                    return (
-                      <span
-                        key={index}
-                        className={isActive ? 'text-[#2d2d2d]' : 'text-[#8f8f8f]'}
-                        style={{ fontWeight: isActive ? 'bold' : 'normal' }}
-                      >
-                        {label}
-                      </span>
-                    );
-                  })}
-                </span>
               ) : (
                 <span className="flex gap-1 items-center flex-wrap">
                   {daysLabels.map((label, index) => {
@@ -159,17 +139,13 @@ export const ActivityCard = memo(function ActivityCard({
           {/* Edit button */}
           <button
             onClick={() => onEditActivity(id)}
-            className={`flex items-center justify-center rounded-lg transition-all flex-shrink-0 ${
-              isWin98 
-                ? 'win98-button'
-                : 'bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]'
-            }`}
+            className="flex items-center justify-center rounded-lg transition-all flex-shrink-0 bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]"
             aria-label={isPt ? 'Editar atividade' : 'Edit activity'}
             /* 44×44: alvo de toque mínimo. Inline porque a classe utilitária
                correspondente não existe no index.css pré-compilado. */
             style={{ minWidth: 44, minHeight: 44 }}
           >
-            <Edit2 size={16} strokeWidth={1.5} color={isWin98 ? '#000000' : undefined} />
+            <Edit2 size={16} strokeWidth={1.5} />
           </button>
         </div>
 
@@ -178,13 +154,13 @@ export const ActivityCard = memo(function ActivityCard({
           <>
             <div className="mb-3 flex items-center gap-3">
               <div className="flex-1">
-                <Progress 
-                  value={progressPercentage} 
-                  className={isWin98 ? 'h-2 bg-[#404040]' : 'h-2 bg-[#f3f4f6]'}
-                  indicatorClassName={isWin98 ? 'bg-[#00ff41]' : 'bg-[#101828]'}
+                <Progress
+                  value={progressPercentage}
+                  className="h-2 bg-[#f3f4f6]"
+                  indicatorClassName="bg-[#101828]"
                 />
               </div>
-              <span className={isWin98 ? 'text-[#00ff41]' : 'text-[#6a7282]'} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.8125rem' }}>
+              <span className="text-[#6a7282]" style={{ fontFamily: 'Consolas, monospace', fontSize: '0.8125rem' }}>
                 {completedSteps}/{totalSteps}
               </span>
             </div>
@@ -197,7 +173,6 @@ export const ActivityCard = memo(function ActivityCard({
                   label={step.label}
                   completed={step.completed}
                   onToggle={isDisabled ? () => {} : (stepId) => onUpdateStep(id, stepId)}
-                  theme={theme}
                   disabled={isDisabled}
                   language={language}
                 />

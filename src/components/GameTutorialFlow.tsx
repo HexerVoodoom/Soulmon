@@ -277,7 +277,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               maxLength={300}
               style={{
                 width: '100%', boxSizing: 'border-box', resize: 'none',
-                background: '#fff', color: 'var(--sm-ink)', border: '2px solid var(--sm-line)',
+                background: 'var(--sm-surface)', color: 'var(--sm-ink)', border: '2px solid var(--sm-line)',
                 borderRadius: 14, padding: '12px 14px', fontSize: 14, outline: 'none', fontFamily: 'inherit',
               }}
             />
@@ -296,7 +296,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
                       border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                      background: active ? 'var(--sm-primary-soft)' : '#fff',
+                      background: active ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
                       color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
                       fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                     }}

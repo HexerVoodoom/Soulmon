@@ -13,7 +13,6 @@ interface ChatBoxProps {
   dominantBranch?: string;
   useAI: boolean;
   onSendMessage: (response: string) => void;
-  theme?: 'default' | 'win98' | 'glitch';
   aiSettings?: AISettings;
   onOpenAISettings?: () => void;
   language?: Language;
@@ -31,14 +30,11 @@ export function ChatBox({
   dominantBranch,
   useAI,
   onSendMessage,
-  theme = 'default',
   aiSettings,
   onOpenAISettings,
   onCreateActivity,
   language = 'en-US',
 }: ChatBoxProps) {
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -314,20 +310,8 @@ export function ChatBox({
   };
 
   return (
-    <div className={
-      isGlitch
-        ? 'bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] border-2 border-[#00ffff] px-3 py-2.5 shadow-[0_0_15px_rgba(0,255,255,0.3)] rounded-[10px]'
-        : isWin98 
-          ? 'bg-[#c0c0c0] border-2 border-white px-3 py-2.5 shadow-[inset_1px_1px_0_rgba(255,255,255,0.8)] rounded-[10px]'
-          : 'bg-[rgba(30,41,57,0.9)] rounded-[10px] px-3 py-2.5'
-    }
-    style={
-      !isGlitch && !isWin98
-        ? {
-            border: '1.1px solid #364153'
-          }
-        : undefined
-    }>
+    <div className="bg-[rgba(30,41,57,0.9)] rounded-[10px] px-3 py-2.5"
+    style={{ border: '1.1px solid #364153' }}>
       <div className="flex gap-2">
         <input
           type="text"
@@ -345,21 +329,14 @@ export function ChatBox({
           autoCapitalize="off"
           name={randomName}
           id={randomName}
-          className={
-            isGlitch
-              ? 'flex-1 px-3 py-2 bg-[#0a0a0a] border-2 border-[#00ffff] rounded-[4px] text-[#00ffff] placeholder-[#00ffff]/40 focus:outline-none focus:border-[#ff00ff] disabled:opacity-50 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]'
-              : isWin98
-                ? 'flex-1 px-3 py-2 bg-white border-2 border-gray-400 rounded-[4px] text-black placeholder-gray-500 focus:outline-none focus:border-[#000080] disabled:opacity-50'
-                : 'flex-1 px-3 py-2 bg-[#364153] rounded-[4px] text-white placeholder-[#99a1af] focus:outline-none focus:border-[#4a5565] disabled:opacity-50'
-          }
+          className="flex-1 px-3 py-2 bg-[#364153] rounded-[4px] text-white placeholder-[#99a1af] focus:outline-none focus:border-[#4a5565] disabled:opacity-50"
           style={{
             fontFamily: 'Courier New, monospace',
             // 16px é o mínimo pra evitar o auto-zoom do iOS Safari ao focar
             // (fonte menor faz o navegador dar zoom no campo — some tudo
             // menos o campo focado, já que o resto fica fora da área visível).
             fontSize: '16px',
-            textShadow: isGlitch ? '0 0 5px rgba(0, 255, 255, 0.6)' : undefined,
-            border: !isGlitch && !isWin98 ? '1.1px solid #4a5565' : undefined
+            border: '1.1px solid #4a5565'
           }}
           maxLength={200}
         />
@@ -369,19 +346,13 @@ export function ChatBox({
           <button
             onClick={handleSendMessage}
             disabled={isLoading}
-            className={
-              isGlitch
-                ? 'px-4 py-2 bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-black shadow-[0_0_15px_rgba(0,255,255,0.5)] hover:opacity-90 disabled:bg-gray-600 disabled:opacity-50 border-2 disabled:border-gray-500 transition-all flex items-center gap-1.5'
-                : isWin98
-                  ? 'px-4 py-2 bg-[#c0c0c0] text-black hover:bg-[#d0d0d0] disabled:bg-gray-400 disabled:opacity-50 border-2 border-white disabled:border-gray-500 transition-colors flex items-center gap-1.5'
-                  : 'px-4 py-2 bg-neon-green text-white border-neon-green/80 hover:bg-gray-600 hover:text-white disabled:bg-gray-600 disabled:opacity-50 rounded border-2 disabled:border-gray-500 transition-all flex items-center gap-1.5'
-            }
+            className="px-4 py-2 bg-neon-green text-white border-neon-green/80 hover:bg-gray-600 hover:text-white disabled:bg-gray-600 disabled:opacity-50 rounded border-2 disabled:border-gray-500 transition-all flex items-center gap-1.5"
             style={{ fontFamily: 'Courier New, monospace', fontSize: '0.75rem', fontWeight: 'bold' }}
             title={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
             aria-label={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
           >
             {isLoading ? (
-              <div className={`w-4 h-4 border-2 ${isGlitch || isWin98 ? 'border-black' : 'border-white'} border-t-transparent rounded-full animate-spin`} />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <Send className="w-4 h-4" />
             )}
@@ -390,26 +361,20 @@ export function ChatBox({
           <button
             onClick={handleMicClick}
             disabled={isLoading}
-            className={
-              isGlitch
-                ? 'w-[50px] h-[36px] bg-gradient-to-r from-[#ff00ff] to-[#00ffff] text-black shadow-[0_0_15px_rgba(0,255,255,0.5)] hover:opacity-90 disabled:bg-gray-600 disabled:opacity-50 rounded-[4px] transition-all flex items-center justify-center relative'
-                : isWin98
-                  ? 'w-[50px] h-[36px] bg-[#c0c0c0] text-black hover:bg-[#d0d0d0] disabled:bg-gray-400 disabled:opacity-50 rounded-[4px] transition-colors flex items-center justify-center relative'
-                  : `w-[50px] h-[36px] ${isRecording ? 'bg-red-500/20' : 'bg-transparent'} text-white hover:bg-gray-600/20 disabled:opacity-50 rounded-[4px] transition-all flex items-center justify-center relative`
-            }
+            className={`w-[50px] h-[36px] ${isRecording ? 'bg-red-500/20' : 'bg-transparent'} text-white hover:bg-gray-600/20 disabled:opacity-50 rounded-[4px] transition-all flex items-center justify-center relative`}
             style={{
               // flexShrink:0 porque `w-[50px]` é só a largura BASE: num flex row
               // o botão encolhia até ~18px em telas de 320px, virando um alvo de
               // toque inutilizável (medido com Playwright).
               flexShrink: 0,
-              border: isGlitch ? '2px solid transparent' : isWin98 ? '2px solid white' : isRecording ? '1.1px solid #ef4444' : '1.1px solid #4a5565'
+              border: isRecording ? '1.1px solid #ef4444' : '1.1px solid #4a5565'
             }}
             title={isRecording ? 'Stop recording' : 'Record message'}
           >
             {isRecording ? (
               <Square className="w-4 h-4 fill-red-500 text-red-500" />
             ) : isLoading ? (
-              <div className={`w-4 h-4 border-2 ${isGlitch || isWin98 ? 'border-black' : 'border-white'} border-t-transparent rounded-full animate-spin`} />
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <Mic className="w-4 h-4" />
             )}

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import introVideo from '../assets/brand/intro.mp4';
 
 /**
  * Splash screen shown briefly on every cold start, before the onboarding
  * gate / main app render. Purely cosmetic — self-dismisses via onFinish.
- * Plays the brand intro video; falls back to the plain wordmark if the
- * video fails to load (e.g. unsupported format on an old WebView).
+ * Plays the brand intro video; falls back to the raven/gradient wordmark
+ * if the video fails to load (e.g. unsupported format on an old WebView).
  */
 export function IntroScreen({ onFinish }: { onFinish: () => void }) {
   const [leaving, setLeaving] = useState(false);
@@ -36,7 +36,7 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
     <div
       style={{
         position: 'fixed', inset: 0, zIndex: 500,
-        background: '#0b0d16',
+        background: videoFailed ? 'linear-gradient(160deg, #2dd4bf 0%, #0d9488 45%, #0f766e 100%)' : '#0b0d16',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         color: '#ffffff',
         opacity: leaving ? 0 : 1,
@@ -64,20 +64,14 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
           }}
         />
       ) : (
-        <div
-          style={{
-            position: 'absolute', inset: 0,
-            background: 'linear-gradient(160deg, #8b7ae0 0%, #6d5bd0 45%, #55449f 100%)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
+        <>
           <div style={{
             width: 96, height: 96, borderRadius: 28,
             background: 'rgba(255,255,255,0.16)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             animation: 'sm-intro-logo-in 0.6s cubic-bezier(.2,.9,.3,1.3)',
           }}>
-            <Sparkles size={52} color="#ffffff" strokeWidth={1.6} />
+            <img src={ravenMascot} alt="" width={64} height={64} style={{ objectFit: 'contain' }} />
           </div>
           <h1 style={{
             fontSize: 30, fontWeight: 800, letterSpacing: -0.5, margin: '18px 0 0',
@@ -85,7 +79,7 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
           }}>
             Soulmon
           </h1>
-        </div>
+        </>
       )}
     </div>
   );

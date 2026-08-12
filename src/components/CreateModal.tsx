@@ -28,7 +28,6 @@ interface CreateModalProps {
     weekDays: number[];
     alarm?: { time: string };
   }) => void;
-  theme?: 'default' | 'win98' | 'glitch';
   language?: Language;
   evolutionStage?: string;
   activitiesCount?: number;
@@ -56,8 +55,7 @@ const CATEGORIES: ActivityCategory[] = [
 const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme = 'default', language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false, onUnlock }: CreateModalProps) {
-  const isWin98 = theme === 'win98';
+export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false, onUnlock }: CreateModalProps) {
   const isPt = language === 'pt-BR';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);
   const t = useTranslation(language);
@@ -160,158 +158,9 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
       : 'Demo mode: 1 new activity/task per day. Subscribe to create without limits.',
   };
 
-  if (isWin98) {
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="max-w-md w-full max-h-[90vh] overflow-y-auto bg-[#c0c0c0] border-2 border-white shadow-[inset_1px_1px_0_rgba(255,255,255,0.8),inset_-1px_-1px_0_rgba(0,0,0,0.8)]">
-          <div className="flex items-center justify-between p-6 border-b-2 border-gray-400">
-            <h2 className="text-black" style={{ fontFamily: 'monospace', fontSize: '1.125rem', fontWeight: 'bold' }}>
-              {`➕ ${t.createModal.newActivity}`}
-            </h2>
-            <button onClick={onClose} className="p-1 rounded-lg transition-colors text-black hover:bg-gray-300">
-              <X size={20} />
-            </button>
-          </div>
-          <div className="p-6 space-y-5 bg-[#c0c0c0]">
-            <div>
-              <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.name}</label>
-              <Input type="text" autoComplete="new-password" value={name} onChange={(e) => setName(e.target.value)} placeholder={txt.namePlaceholder} maxLength={60}
-                className="bg-white border-2 border-gray-400 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-              {minHint && (
-                <p style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#444', marginTop: 6, lineHeight: 1.4 }}>💡 {minHint}</p>
-              )}
-            </div>
-            <div>
-              <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.category}</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value as ActivityCategory)}
-                className="w-full px-4 py-2.5 rounded-lg border focus:outline-none focus:ring-2 bg-white border-2 border-gray-400 text-black focus:ring-blue-500"
-                style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>{CATEGORY_ICONS[cat]} {cat}</option>
-                ))}
-              </select>
-            </div>
-            <div className="p-4 rounded-lg bg-white border-2 border-gray-400">
-              <div className="mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: '500' }}>{txt.attributesLabel}</div>
-              <div className="flex gap-3">
-                {(['virus', 'data', 'vaccine'] as const).map(a => (
-                  <div key={a} className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full" style={{ background: ATTR_COLOR[a] }} />
-                    <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: ATTR_COLOR[a], fontWeight: 'bold' }}>+{attributes[a]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>
-                  {txt.steps} <span className="text-xs ml-1 opacity-60">{txt.stepsOptional}</span>
-                </label>
-                <button onClick={handleAddStep} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs transition-colors bg-[#000080] text-white hover:bg-[#000060]" style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                  <Plus size={14} />{txt.addButton}
-                </button>
-              </div>
-              {steps.length > 0 && (
-                <div className="space-y-2">
-                  {steps.map((step, index) => (
-                    <div key={step.id} className="flex items-center gap-2">
-                      <span className="text-xs text-black" style={{ fontFamily: 'monospace' }}>{index + 1}.</span>
-                      <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)} placeholder={`Step ${index + 1}`}
-                        className="flex-1 bg-white border-2 border-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-                      <button onClick={() => handleDeleteStep(step.id)} className="p-2 rounded-lg transition-colors text-black hover:bg-gray-300"><Trash2 size={16} /></button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={isSingleExecution} onChange={(e) => setIsSingleExecution(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
-                <span className="text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{txt.executeOnce}</span>
-              </label>
-            </div>
-            {!isSingleExecution && showWeekdayGrid && (
-              <div>
-                <label className="block mb-2 text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{txt.weekdays} <span className="text-red-500">*</span></label>
-                <div className="grid grid-cols-7 gap-2">
-                  {WEEKDAY_LABELS.map((label, index) => (
-                    <button key={index} onClick={() => toggleWeekDay(index)}
-                      className={`py-2 rounded-lg transition-all ${weekDays.includes(index) ? 'bg-[#000080] text-white border-2 border-white' : 'bg-white border-2 border-gray-400 text-black hover:bg-gray-200'}`}
-                      style={{ fontFamily: 'monospace', fontSize: '0.75rem', fontWeight: 'bold' }} title={WEEKDAY_FULL[index]}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {isSingleExecution && (
-              <div>
-                <label className="flex items-center gap-3 cursor-pointer mb-3">
-                  <input type="checkbox" checked={hasDeadline} onChange={(e) => setHasDeadline(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500" />
-                  <Clock size={16} className="text-black" />
-                  <span className="text-black" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{txt.defineDeadline}</span>
-                </label>
-                {hasDeadline && (
-                  <div className="ml-7 space-y-3">
-                    <div className="flex gap-3">
-                      <div className="flex-1">
-                        <label className="block mb-1 text-xs text-black" style={{ fontFamily: 'monospace' }}>{txt.date}</label>
-                        <Input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="bg-white border-2 border-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-                      </div>
-                      <div className="flex-1">
-                        <label className="block mb-1 text-xs text-black" style={{ fontFamily: 'monospace' }}>{txt.time}</label>
-                        <Input type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} className="bg-white border-2 border-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2 mb-3 text-black">
-                <Bell size={16} />
-                <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '500' }}>{isSingleExecution ? txt.alarm : txt.schedule} <span className="text-xs opacity-60">{txt.optional}</span></span>
-              </div>
-              <div className="ml-7 space-y-3">
-                {isSingleExecution && hasDeadline && (
-                  <div>
-                    <label className="block mb-2 text-xs text-black" style={{ fontFamily: 'monospace' }}>{txt.quickOptions}:</label>
-                    <div className="flex gap-2">
-                      {(['2h', '1h', '30min'] as const).map(preset => (
-                        <button key={preset} type="button" onClick={() => handlePresetClick(preset)}
-                          className={`flex-1 py-2 px-3 rounded-lg text-xs transition-all ${selectedPreset === preset ? 'bg-[#000080] text-white border-2 border-white' : 'bg-white border-2 border-gray-400 text-black hover:bg-gray-200'}`}
-                          style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                          {preset} {txt.before}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <label className="block mb-1 text-xs text-black" style={{ fontFamily: 'monospace' }}>{txt.customTime}:</label>
-                  <Input type="time" value={customAlarmTime} onChange={(e) => handleCustomTimeChange(e.target.value)} className="bg-white border-2 border-gray-400" style={{ fontFamily: 'monospace', fontSize: '0.875rem' }} />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-2 p-6 border-t bg-[#c0c0c0] border-gray-400">
-            <button onClick={onClose} className="flex-1 py-2.5 px-4 rounded-xl transition-colors bg-white border-2 border-gray-400 text-black hover:bg-gray-200" style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{txt.cancel}</button>
-            <button onClick={handleSave} disabled={!name.trim() || (!isSingleExecution && showWeekdayGrid && weekDays.length === 0) || isBlocked}
-              className="flex-1 py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-[#000080] text-white hover:bg-[#000060]"
-              style={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-              title={isAtCap ? `Limite de atividades atingido (${activitiesCap})` : demoLimitReached ? txt.demoLimitHint : ''}>
-              {isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ---- Tema padrão (Soulmon design system, sm-*) ----
   const inputStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    background: '#fff', color: 'var(--sm-ink)',
+    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
     border: '2px solid var(--sm-line)', borderRadius: 14, padding: '10px 13px', fontSize: 14,
     outline: 'none',
   };
@@ -319,7 +168,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
   const chip = (active: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
     border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-    background: active ? 'var(--sm-primary-soft)' : '#fff',
+    background: active ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
     color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
     fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
   });
@@ -423,7 +272,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
                       style={{
                         padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                         border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                        background: active ? 'var(--sm-primary)' : '#fff',
+                        background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
                         color: active ? '#fff' : 'var(--sm-ink)',
                       }}>
                       {label}
@@ -478,7 +327,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, theme
                           style={{
                             flex: 1, padding: '8px 4px', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
                             border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                            background: active ? 'var(--sm-primary)' : '#fff',
+                            background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
                             color: active ? '#fff' : 'var(--sm-ink)',
                           }}>
                           {preset} {txt.before}

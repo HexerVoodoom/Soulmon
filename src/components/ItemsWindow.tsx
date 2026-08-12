@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import type { Language } from '../utils/i18n';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
@@ -10,7 +11,6 @@ interface ItemsWindowProps {
   onFeed: (emoji: string) => void;
   onClose: () => void;
   language?: Language;
-  theme?: 'default' | 'win98' | 'glitch';
 }
 
 const FOOD_NAMES: Record<string, { en: string; pt: string; descEn: string; descPt: string }> = {
@@ -64,9 +64,7 @@ const ATTR_COLORS = {
   virus: '#E94F4F',
 };
 
-export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US', theme = 'default' }: ItemsWindowProps) {
-  const isWin98 = theme === 'win98';
-  const isGlitch = theme === 'glitch';
+export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US' }: ItemsWindowProps) {
   const isPt = language === 'pt-BR';
   const [selected, setSelected] = useState<string | null>(null);
   const [justFed, setJustFed] = useState<string | null>(null);
@@ -101,33 +99,22 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: isWin98 ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.45)' }}
+      style={{ background: 'rgba(0,0,0,0.45)' }}
       onClick={onClose}
     >
       <div
-        className={`w-full max-w-sm rounded-2xl overflow-hidden ${
-          isGlitch ? 'glitch-activity-card' : isWin98 ? 'win98-activity-card' : 'sm-card'
-        }`}
+        className="w-full max-w-sm rounded-2xl overflow-hidden sm-card"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div
-          className={`flex items-center gap-2 px-4 py-3 ${isWin98 ? '' : 'border-b'}`}
-          style={{
-            borderColor: !isWin98 && !isGlitch ? 'var(--sm-line)' : undefined,
-            borderBottom: isGlitch ? '1px solid rgba(0,255,255,0.4)' : undefined,
-            background: isWin98 ? 'linear-gradient(to right, #000080, #1084d0)' : undefined,
-          }}
+          className="flex items-center gap-2 px-4 py-3 border-b"
+          style={{ borderColor: 'var(--sm-line)' }}
         >
           <span style={{ fontSize: '1.1rem' }}>📁</span>
           <span
             className="flex-1 font-bold"
-            style={{
-              fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
-              fontSize: isWin98 ? '0.8rem' : '1rem',
-              color: isWin98 ? '#fff' : isGlitch ? '#00ffff' : 'var(--sm-ink)',
-              textShadow: isGlitch ? '0 0 8px rgba(0,255,255,0.6)' : undefined,
-            }}
+            style={{ fontSize: '1rem', color: 'var(--sm-ink)' }}
           >
             {titleText}
           </span>
@@ -135,37 +122,21 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
             onClick={onClose}
             aria-label={isPt ? 'Fechar' : 'Close'}
             className="flex items-center justify-center flex-shrink-0"
-            style={{
-              width: 26, height: 26, borderRadius: isWin98 ? 3 : 999,
-              color: isWin98 ? '#000' : isGlitch ? '#00ffff' : 'var(--sm-muted)',
-              background: isWin98 ? '#c0c0c0' : isGlitch ? 'rgba(0,255,255,0.08)' : 'var(--sm-bg)',
-              border: isWin98 ? '1.5px solid' : 'none',
-              borderColor: isWin98 ? '#ffffff #808080 #808080 #ffffff' : undefined,
-            }}
+            style={{ width: 26, height: 26, borderRadius: 999, color: 'var(--sm-muted)', background: 'var(--sm-bg)', border: 'none' }}
           >
             <X size={15} />
           </button>
         </div>
 
         {/* Content */}
-        <div
-          className="p-3 overflow-y-auto"
-          style={{
-            maxHeight: '50vh',
-            background: isWin98 ? '#fff' : undefined,
-          }}
-        >
+        <div className="p-3 overflow-y-auto" style={{ maxHeight: '50vh' }}>
           {items.length === 0 ? (
-            <p
-              className="text-center py-8"
-              style={{
-                fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
-                fontSize: '0.85rem',
-                color: isGlitch ? 'rgba(0,255,255,0.5)' : 'var(--sm-muted)',
-              }}
-            >
-              {isPt ? 'Sua pastinha está vazia.' : 'Your item folder is empty.'}
-            </p>
+            <div className="flex flex-col items-center py-6 gap-2">
+              <img src={ravenMascot} alt="" width={56} height={56} style={{ objectFit: 'contain', opacity: 0.85 }} />
+              <p className="text-center" style={{ fontSize: '0.85rem', color: 'var(--sm-muted)' }}>
+                {isPt ? 'Sua pastinha está vazia.' : 'Your item folder is empty.'}
+              </p>
+            </div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {items.map(([emoji, count]) => {
@@ -177,10 +148,8 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                     onClick={() => handleItemClick(emoji)}
                     className="flex flex-col items-center gap-0.5 py-2 rounded-xl transition-transform"
                     style={{
-                      background: isActive
-                        ? (isWin98 ? '#000080' : isGlitch ? 'rgba(0,255,255,0.15)' : 'var(--sm-primary-soft)')
-                        : (isWin98 ? 'transparent' : isGlitch ? 'rgba(255,255,255,0.03)' : 'var(--sm-bg)'),
-                      border: isGlitch ? '1px solid rgba(0,255,255,0.25)' : 'none',
+                      background: isActive ? 'var(--sm-primary-soft)' : 'var(--sm-bg)',
+                      border: 'none',
                       transform: isFed ? 'scale(0.92)' : 'none',
                     }}
                     title={getFoodName(emoji, language)}
@@ -189,21 +158,17 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                     <span
                       className="text-center leading-tight break-words px-0.5"
                       style={{
-                        fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
                         fontSize: '0.62rem',
                         fontWeight: 600,
-                        color: isActive
-                          ? (isWin98 ? '#fff' : isGlitch ? '#00ffff' : 'var(--sm-primary)')
-                          : (isWin98 ? '#000' : isGlitch ? 'rgba(0,255,255,0.8)' : 'var(--sm-ink)'),
+                        color: isActive ? 'var(--sm-primary)' : 'var(--sm-ink)',
                       }}
                     >
                       {getFoodName(emoji, language)}
                     </span>
                     <span
                       style={{
-                        fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
                         fontSize: '0.65rem',
-                        color: isActive ? (isWin98 ? '#adf' : 'inherit') : 'var(--sm-muted)',
+                        color: isActive ? 'inherit' : 'var(--sm-muted)',
                         opacity: isActive ? 0.85 : 1,
                       }}
                     >
@@ -219,34 +184,16 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
           {selectedDetail && (
             <div
               className="mt-3 rounded-xl p-3"
-              style={{
-                background: isWin98 ? '#c0c0c0' : isGlitch ? 'rgba(0,255,255,0.06)' : 'var(--sm-bg)',
-                border: isGlitch ? '1px solid rgba(0,255,255,0.3)' : isWin98 ? '1.5px solid' : '1px solid var(--sm-line)',
-                borderColor: isWin98 ? '#808080 #ffffff #ffffff #808080' : undefined,
-              }}
+              style={{ background: 'var(--sm-bg)', border: '1px solid var(--sm-line)' }}
             >
               <div className="flex items-start gap-2">
                 <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{selected}</span>
                 <div className="min-w-0 flex-1">
-                  <div
-                    className="font-bold"
-                    style={{
-                      fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
-                      fontSize: '0.8rem',
-                      color: isGlitch ? '#00ffff' : isWin98 ? '#000' : 'var(--sm-ink)',
-                    }}
-                  >
+                  <div className="font-bold" style={{ fontSize: '0.8rem', color: 'var(--sm-ink)' }}>
                     {selectedDetail.name}
                   </div>
                   {selectedDetail.desc && (
-                    <div
-                      style={{
-                        fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
-                        fontSize: '0.7rem',
-                        color: isGlitch ? 'rgba(0,255,255,0.6)' : 'var(--sm-muted)',
-                        marginTop: 2,
-                      }}
-                    >
+                    <div style={{ fontSize: '0.7rem', color: 'var(--sm-muted)', marginTop: 2 }}>
                       {selectedDetail.desc}
                     </div>
                   )}
@@ -284,34 +231,15 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
               <div className="flex justify-end gap-2 mt-3">
                 <button
                   onClick={() => setSelected(null)}
-                  className={isWin98 ? '' : isGlitch ? '' : 'sm-btn-secondary sm-btn'}
-                  style={{
-                    fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
-                    fontSize: '0.75rem',
-                    padding: isWin98 || isGlitch ? '4px 12px' : undefined,
-                    background: isWin98 ? '#c0c0c0' : isGlitch ? 'transparent' : undefined,
-                    border: isWin98 ? '1.5px solid' : isGlitch ? '1px solid rgba(0,255,255,0.4)' : undefined,
-                    borderColor: isWin98 ? '#ffffff #808080 #808080 #ffffff' : undefined,
-                    color: isGlitch ? '#00ffff' : isWin98 ? '#000' : undefined,
-                    borderRadius: isWin98 ? 3 : isGlitch ? 6 : undefined,
-                  }}
+                  className="sm-btn-secondary sm-btn"
+                  style={{ fontSize: '0.75rem' }}
                 >
                   {isPt ? 'Cancelar' : 'Cancel'}
                 </button>
                 <button
                   onClick={() => handleFeed(selected!)}
-                  className={isWin98 ? '' : isGlitch ? '' : 'sm-btn'}
-                  style={{
-                    fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold',
-                    padding: isWin98 || isGlitch ? '4px 12px' : undefined,
-                    background: isWin98 ? '#c0c0c0' : isGlitch ? 'linear-gradient(to right, #ff00ff, #00ffff)' : undefined,
-                    border: isWin98 ? '1.5px solid' : 'none',
-                    borderColor: isWin98 ? '#ffffff #808080 #808080 #ffffff' : undefined,
-                    color: isGlitch ? '#000' : isWin98 ? '#000' : undefined,
-                    borderRadius: isWin98 ? 3 : isGlitch ? 6 : undefined,
-                  }}
+                  className="sm-btn"
+                  style={{ fontSize: '0.75rem', fontWeight: 'bold' }}
                 >
                   {isPt ? 'Usar' : 'Use'}
                 </button>
@@ -323,12 +251,7 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
         {/* Status bar */}
         <div
           className="px-4 py-1.5 text-right"
-          style={{
-            fontFamily: isWin98 || isGlitch ? 'monospace' : undefined,
-            fontSize: '0.65rem',
-            color: isGlitch ? 'rgba(0,255,255,0.5)' : 'var(--sm-muted)',
-            borderTop: isWin98 ? '1.5px solid #808080' : isGlitch ? '1px solid rgba(0,255,255,0.2)' : '1px solid var(--sm-line)',
-          }}
+          style={{ fontSize: '0.65rem', color: 'var(--sm-muted)', borderTop: '1px solid var(--sm-line)' }}
         >
           {countText}
         </div>
