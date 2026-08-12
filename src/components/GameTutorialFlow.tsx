@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import type { Language } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
-import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
+import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
 import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
 
 // ---------------------------------------------------------------------------
@@ -301,7 +301,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                       fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
                     }}
                   >
-                    <span>{CATEGORY_ICONS[cat]}</span>
+                    <img src={CATEGORY_ICON_IMG[cat]} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                     {categoryLabel(cat, isPt)}
                   </button>
                 );

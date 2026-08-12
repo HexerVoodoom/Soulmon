@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { Gamepad2, Swords, Rabbit, Scissors, Trophy, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import iconGamepad from '../assets/soulmon/icons/games/icon-game-activities.png';
+import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
+import iconDino from '../assets/soulmon/icons/games/icon-game-dino.png';
+import iconScissors from '../assets/soulmon/icons/games/icon-game-rps.png';
+import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
@@ -34,16 +39,16 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   // Torneio fica ACIMA e separado dos minigames (seção própria) — não é mais
   // só mais um card na mesma lista.
   const tournamentCard = {
-    key: 'tournament' as const, Icon: Trophy, iconColor: '#d9a441', iconBg: '#fbf1dd',
+    key: 'tournament' as const, icon: iconTrophy, iconColor: '#d9a441', iconBg: '#fbf1dd',
     title: isPt ? 'Torneio' : 'Tournament',
     desc: isPt ? 'PvP assíncrono contra outros jogadores. Rodada toda semana.' : 'Asynchronous PvP against other players. A round every week.',
     pts: isPt ? '5 partidas/dia' : '5 matches/day',
     onClick: onOpenTournament,
   };
 
-  const cards: { key: 'dungeon' | 'dino' | 'rps'; Icon: typeof Swords; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
+  const cards: { key: 'dungeon' | 'dino' | 'rps'; icon: string; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
     {
-      key: 'dungeon', Icon: Swords, iconColor: '#8b5cf6', iconBg: '#f3e8ff',
+      key: 'dungeon', icon: iconSwords, iconColor: '#8b5cf6', iconBg: '#f3e8ff',
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
         ? '5 andares retrô, cada um com 6 inimigos e mais forte. Perder custa a run, nunca seus corações. Reset semanal.'
@@ -52,14 +57,14 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
       onClick: () => setOpenGame('dungeon'),
     },
     {
-      key: 'dino', Icon: Rabbit, iconColor: '#22A900', iconBg: '#eafbe6',
+      key: 'dino', icon: iconDino, iconColor: '#22A900', iconBg: '#eafbe6',
       title: isPt ? 'Corrida do Dino' : 'Dino Runner',
       desc: isPt ? 'Pule os obstáculos e corra o máximo que conseguir.' : 'Jump the obstacles and run as far as you can.',
       pts: isPt ? '1 Bit a cada 100 de score' : '1 Bit per 100 score',
       onClick: () => setOpenGame('dino'),
     },
     {
-      key: 'rps', Icon: Scissors, iconColor: '#E69600', iconBg: '#fff4e0',
+      key: 'rps', icon: iconScissors, iconColor: '#E69600', iconBg: '#fff4e0',
       title: isPt ? 'Pedra, Papel e Tesoura' : 'Rock, Paper, Scissors',
       desc: isPt ? 'Clássico duelo contra o seu Soulmon. Primeiro a 3 vitórias.' : 'The classic duel against your Soulmon. First to 3.',
       pts: isPt ? '5 Bits por vitória' : '5 Bits per match win',
@@ -67,7 +72,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
     },
   ];
 
-  const renderCard = (c: { key: string; Icon: typeof Swords; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }) => (
+  const renderCard = (c: { key: string; icon: string; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }) => (
     <button
       key={c.key}
       onClick={c.onClick}
@@ -75,7 +80,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
     >
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 14, background: c.iconBg }}>
-          <c.Icon size={22} color={c.iconColor} strokeWidth={2.2} />
+          <img src={c.icon} alt="" width={28} height={28} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
@@ -99,7 +104,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Gamepad2 size={22} color="var(--sm-primary)" strokeWidth={2.2} />
+          <img src={iconGamepad} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           {isPt ? 'Atividades' : 'Activities'}
         </h2>
         <span

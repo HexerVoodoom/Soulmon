@@ -19,8 +19,12 @@ function readStoredMode(): ThemeMode {
   return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
 }
 
+/** O visual do jogo (moldura cobre, teal escuro — ver as 4 referências do
+ *  "Soul Mon UI Design Kit") só existe pensado pro tema escuro. Sem
+ *  preferência salva pelo usuário, o padrão é escuro — não segue o SO, que
+ *  faria a metade dos aparelhos abrir no tema claro que ninguém desenhou. */
 function resolveSystemPreference(): ResolvedTheme {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'dark';
 }
 
 function resolve(mode: ThemeMode): ResolvedTheme {

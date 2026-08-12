@@ -3910,8 +3910,8 @@ html {
 }
 
 [data-theme="dark"] {
-  --sm-bg: #0c1c1a;
-  --sm-surface: #132824;
+  --sm-bg: #0e2323;
+  --sm-surface: #173a37;
   --sm-ink: #eaf5f2;
   --sm-muted: #8fb0a8;
   --sm-line: #1f3733;
@@ -3930,7 +3930,7 @@ html {
   background: linear-gradient(180deg, #eef8f6 0%, #eaf7f0 55%, #e6f7ea 100%);
 }
 [data-theme="dark"] .sm-app-bg {
-  background: linear-gradient(180deg, #0c1c1a 0%, #0e211d 55%, #0f2420 100%);
+  background: linear-gradient(180deg, #0e2323 0%, #123030 55%, #0e2323 100%);
 }
 .sm-surface { background: var(--sm-surface); }
 
@@ -4071,9 +4071,9 @@ select:focus-visible {
 /* Cartão limpo */
 .sm-card {
   background: var(--sm-surface);
-  border: 1px solid var(--sm-line);
+  border: 2px solid var(--sm-gold);
   border-radius: var(--sm-radius);
-  box-shadow: 0 2px 8px rgba(42, 36, 64, .05);
+  box-shadow: 0 2px 8px rgba(42, 36, 64, .05), inset 0 0 0 1px rgba(0,0,0,0.12);
 }
 
 /* Área do companheiro no rodapé: superfície elevada e limpa */

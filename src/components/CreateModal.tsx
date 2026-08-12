@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Plus, Trash2, Clock, Bell } from 'lucide-react';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
-import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
+import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
 import { useItemForm, type Step } from '../hooks/useItemForm';
@@ -206,7 +206,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {CATEGORIES.map(cat => (
                 <button key={cat} type="button" onClick={() => setCategory(cat)} style={chip(category === cat)}>
-                  <span>{CATEGORY_ICONS[cat]}</span>{categoryLabel(cat, isPt)}
+                  <img src={CATEGORY_ICON_IMG[cat]} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />{categoryLabel(cat, isPt)}
                 </button>
               ))}
             </div>
