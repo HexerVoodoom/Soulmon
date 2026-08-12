@@ -1,1 +1,0 @@
-const t={Health:"🏥",Creativity:"🎨",Discipline:"⚡",Study:"📚",Work:"💼",Social:"👥",Wellness:"🧘",Fitness:"💪"},s={Health:"Saúde",Creativity:"Criatividade",Discipline:"Disciplina",Study:"Estudos",Work:"Trabalho",Social:"Social",Wellness:"Bem-estar",Fitness:"Fitness"};function a(i,e){return e?s[i]:i}export{t as C,a as c};

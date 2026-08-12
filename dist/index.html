@@ -16,16 +16,16 @@
           try {
             var stored = localStorage.getItem('digiapp-theme');
             var mode = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'system';
-            var resolved = mode === 'system'
-              ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-              : mode;
+            // O visual do jogo (moldura cobre, teal escuro) só existe no tema
+            // escuro — sem preferência salva, o padrão é escuro, não o SO.
+            var resolved = mode === 'system' ? 'dark' : mode;
             document.documentElement.dataset.theme = resolved;
           } catch (e) {}
         })();
       </script>
-      <script type="module" crossorigin src="/assets/index-Bt5gM392.js"></script>
+      <script type="module" crossorigin src="/assets/index-Cu_nHUx4.js"></script>
       <link rel="modulepreload" crossorigin href="/assets/vendor-DDxydHEc.js">
-      <link rel="stylesheet" crossorigin href="/assets/index-pBgjTeJC.css">
+      <link rel="stylesheet" crossorigin href="/assets/index-Bta-wjTA.css">
     </head>
 
     <body>
