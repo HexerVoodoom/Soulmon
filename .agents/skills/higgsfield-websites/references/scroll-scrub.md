@@ -1,8 +1,9 @@
-# scroll-scrub — the animated website: seam-locked camera journeys (`--type website` only)
+# scroll-scrub — the animated website (`--type website` only)
 
 This is the **animated website** — the DEFAULT Tier-1 experience for every
-`--type website` build. The visitor's scroll flies the page through several
-connected generated scenes as one continuous camera journey. Follow this
+`--type website` build. The visitor's scroll plays a generated film while the
+page's semantic chapters read over it. By default that is ONE continuous film
+(`single-shot`); a multi-scene seam-locked chain is opt-in. Follow this
 reference for every website unless the user EXPLICITLY asked for a different
 treatment (in which case pick a technique from `references/wow-catalog.md`
 instead). It is also the reference for any brief that asks for a scrollable
@@ -29,23 +30,43 @@ the design brief.
 This is the journey block that `Animation mode: animated-website` obligates (see
 `references/website-flow.md` Phase 0). The brief is INCOMPLETE — a hard stop —
 until these decisions are written into `app/design-brief.md`; the Phase 5 gate
-(item 9f) checks that the Journey and Camera architecture are present. Write:
+(item 9f) checks that the Journey shape and Journey are present. Write:
 
-- **Journey:** order 4–7 scenes as a real narrative or value chain. Give each
-  scene a physical subject, one focal point, one short headline, one sentence,
+#### Journey shape — pick ONE (this is the big cost lever)
+
+- **`single-shot` — the DEFAULT.** ONE continuous ~15s film, generated in ONE
+  call, scrubbed end to end. No seams, because there is only one clip. The
+  chapters are HTML that read over it. Choose this for a brand, a product, a
+  service, a portfolio, a launch — anything whose story is one subject seen
+  ever more closely. **When in doubt, single-shot.**
+- **`multi-leg` — opt in only when the brief genuinely needs several WORLDS.**
+  4–7 distinct places the visitor travels between, where each destination is a
+  different environment rather than a closer look at the same one. Costs one
+  generation per leg, strictly sequential (each leg starts from the previous
+  leg's real last frame), plus a per-leg encode and inspection. Budget several
+  extra minutes PER LEG and say so before choosing it.
+
+"It would look cooler with more scenes" is NOT a reason for `multi-leg`. A
+tighter single-shot film beats a loosely-seamed chain, and it reaches the user
+far sooner.
+
+- **Journey:** for `single-shot`, 3–6 chapters mapped to moments of the one
+  film; for `multi-leg`, 4–7 scenes as a real narrative or value chain. Give
+  each a physical subject, one focal point, one short headline, one sentence,
   and at most 0–3 proof tags. Keep the existing eyebrow ration; do not turn
   every scene label into an eyebrow.
 - **World grammar:** lock one byte-identical style preamble, perspective,
   palette, light direction, surface finish, and background behavior across all
   scene prompts. Change only the scene subject and focal action.
-- **Camera architecture:** choose A or B below. Default to A for grounded,
+- **Camera architecture** (`multi-leg` only): choose A or B below. Default to A for grounded,
   realistic, architectural, product, and first-person work. Use B only when
   the world is explicitly miniature, isometric, map-like, or toy-like.
 - **Mobile framing:** include mobile by default, without another question.
   Keep every focal point inside the center-safe area and plan lighter mobile
   encodes. Use a separately generated portrait source only when center-safe
   composition cannot preserve a critical scene.
-- **Cost shape:** record one entry image plus `N` sequential video legs for A,
+- **Cost shape:** for `single-shot`, one storyboard image plus ONE film. For
+  `multi-leg`, record one entry image plus `N` sequential video legs for A,
   or `N` scene images plus `N` dives and `N-1` connectors for B. The per-scene
   Phase 1 boards already art-direct A's destinations; do not buy unused
   destination stills that cannot participate in its exact-frame handoff. This
@@ -53,6 +74,37 @@ until these decisions are written into `app/design-brief.md`; the Phase 5 gate
 - **Delivery budget:** record an aggregate byte budget in the brief. Start at
   ≤32 MiB for all desktop clips and ≤16 MiB for all mobile clips; shorten or
   re-encode before relaxing it.
+
+## The footage contract — what makes a scrub look expensive
+
+The page plays the film forward AND backward at the speed of the user's scroll,
+and holds any single frame as a still whenever they pause. That dictates the
+footage. Direct it like a high-end product film, and obey these or the scrub
+looks broken regardless of how good the render is:
+
+- **One continuous move — no hard cuts.** A cut becomes a jarring jump
+  mid-scrub. Stage it as a single unbroken camera move (slow orbit, push-in,
+  rise, fly-through) or one continuous transformation of the subject.
+- **One hero subject, kept centered, with clean negative space** around it —
+  that space is where the chapter copy sits. The video fills the viewport and
+  crops the edges (`cover`), so keep the subject center-safe.
+- **A background the copy can survive.** Dark, seamless, low-detail (studio
+  black/charcoal, a soft gradient, the subject emerging from darkness) is the
+  reliable choice. A bright, busy, full-frame environment behind body copy is
+  the single most common reason a beautiful film reads as unusable.
+- **Slow, steady motion** — constant speed, gentle ease only at the very start
+  and end. The scroll supplies the pacing.
+- **Locked exposure and white balance, no flicker; minimal motion blur.** Every
+  frame is shown as a still, so exposure pumping shimmers and heavy blur smears.
+- **Resolves at both ends:** the first frame reads as the establishing shot, the
+  last as the closing beauty state. START state ≠ END state, or the scrub has no
+  payoff.
+- **No on-screen text, logos, or watermarks** — all type is HTML over the video.
+
+Subjects that scrub beautifully: a product slowly orbiting on black; an
+exploded-view assembly; a macro detail traveling along a surface; a
+transformation or morph; a hero object emerging from darkness. Avoid: cuts,
+fast pans, handheld shake, busy bright backgrounds, and colour/exposure flicker.
 
 ### Phase 1 — make each board a world chapter
 
@@ -67,9 +119,50 @@ away from the far left/right edges because the full-viewport video deliberately
 uses `cover` on portrait screens. Generate a separate portrait source only for a
 scene whose story cannot survive that crop.
 
-### Phase 2 — build the seam-locked media chain
+**`single-shot` uses ONE storyboard instead of per-scene boards.** Generate a
+single 16:9 image laying the film out as **6 keyframes of one continuous move,
+in a 6-panel grid** — it pins palette, look, lens, and camera progression for
+the price of one image, before you spend on video. Prompt it explicitly as one
+continuous move ("NOT six different scenes") and with no text anywhere in the
+image. Show it to the user (its result URL) as you keep working; do NOT block
+the build waiting for a reply — and do NOT download it or vision-inspect it
+yourself: you just generated it from your own prompt, and re-viewing your own
+render tells you nothing the prompt didn't. The user is the reviewer. Budget 2
+re-rolls.
 
-Use the Higgsfield CLI already used by the website flow:
+### Phase 2 — generate the film
+
+Use the Higgsfield CLI already used by the website flow.
+
+#### `single-shot` (the default) — ONE film, no chain
+
+1. Run `higgsfield model list` / `higgsfield model get <job_type>` for the
+   current video schema and its media roles.
+2. Submit ONE `higgsfield generate create <video_job_type> ...` job. Drive the
+   model at its highest quality with the approved storyboard as a **style/look
+   reference**, and put the continuous move in the PROMPT:
+   - Pass the storyboard with the model's GENERIC image/reference role — **not
+     a start-frame role**. As a start frame it becomes the literal first frame,
+     so the page opens on a static storyboard for a second or two before motion
+     begins.
+   - Ask for the longest single take the model supports (~15s), 16:9, highest
+     resolution, and audio off — the page scrubs frames, not sound.
+   - Name the grade and the hexes; restate "no cuts, no camera shake, slow
+     steady motion only, locked exposure, no on-screen text".
+3. **In the SAME beat as submitting the film, start the launch cover/OG —
+   exactly ONCE** (`references/app-cover.md`) — it renders concurrently with the
+   film instead of serializing a second wait at the end. This is its single
+   start point: starting it any earlier, before the look is locked, is what
+   makes a build render the cover twice and abandon the first one. Never restart
+   it just because `app-meta.json` still looks empty — finish the run you have. Build the
+   page (scenes data, chapters, copy, styles) WHILE both render, then
+   `higgsfield generate wait <job_id>` ONCE per job, at the moment its output
+   is the next input. Download, encode (below), and wire the files in. Do NOT
+   vision-inspect the film, its frames, or its posters — single-shot has no
+   seams to verify, and the footage contract was enforced by the prompt. That
+   is the whole media chain — there are no seams to lock.
+
+#### `multi-leg` — the seam-locked chain
 
 1. Run `higgsfield model list` and `higgsfield model get <job_type>` for the
    current image/video schemas. Require the exact media roles the chosen
@@ -241,9 +334,9 @@ forward direction is still broken.
 
 Complete all normal Phase 5 checks, then verify:
 
-Run the interactive A4 checks against local preview BEFORE the one final deploy.
-They are pre-delivery build QA, not permission for a second deploy or a
-post-deploy production browsing pass.
+Verify by READING the code and the encoded assets. There is no browsing step:
+the sandbox browser cannot reach a local preview, and this flow does no
+post-deploy visual review.
 
 - Every seam uses an actual rendered boundary frame; inspect just before and
   after the seam in both scroll directions.

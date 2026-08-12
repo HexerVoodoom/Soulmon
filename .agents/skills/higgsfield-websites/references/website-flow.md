@@ -236,6 +236,10 @@ deploy with a failing item.
 
 ### Phase 6 — Deploy
 
+0. `bun run typecheck` once, from `app/` — ~15s locally vs a failed deploy
+   round-trip plus a fix-and-redeploy loop. Fix what it finds, then deploy.
+   This is the ONE pre-deploy local check; do not also run `bun run build`
+   unless typecheck passed and the deploy still failed.
 1. `higgsfield website deploy <website_id>` — this ships the live public site
    immediately; there is no preview stage.
 2. Report: live URL (from `higgsfield website status`) — "Your site is live:

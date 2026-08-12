@@ -104,7 +104,8 @@ Check each item; fix every hit before deploying.
       - the scroll-scrub component exists —
         `ls app/src/components/scroll-scrub/scroll-scrub.tsx` succeeds — and is
         actually imported/rendered by a route (grep for its import);
-      - real scene media shipped — at least 2 clips under
+      - real film shipped — at least ONE clip (`single-shot` ships exactly
+        one; a `multi-leg` journey ships one per leg) under
         `app/public/assets/**/*.mp4` (the seam-locked chain), each with a
         first-frame poster (item 9e);
       - the brief carries the journey block (Journey scenes + Camera

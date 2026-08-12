@@ -44,6 +44,7 @@ Preferred defaults for examples and quick-start guidance in this repo:
 |---|---|---|
 | Gemini Omni Flash | Google | **Fast multimodal reference-to-video.** Use for prompt-guided video generation from image references and optionally one video reference, especially when the brief benefits from Google's Gemini/Veo-style understanding without making it the default over Seedance 2.0. |
 | Seedance 2.0 | Bytedance | **SOTA all-purpose video up to 4K.** Crisp, consistent identity, multi-shot capable. The default for any serious motion / cinematic / production brief. |
+| Seedance 2.5 | Bytedance | **Reference-driven video, editing and extension.** Modes `t2v` / `omni_reference` / `video_edit` / `video_extension`, with image/video/audio reference arrays. A different tool from Seedance 2.0, not a newer one — it caps at **720p**, so 1080p/4K work stays on 2.0. |
 | Kling 3.0 | Kling | **Cheaper Seedance 2.0 substitute** for single-plane scenes that don't need heavy motion. Multi-shot, audio sync, motion transfer. |
 | Kling 3.0 Turbo | Kling | **Fast Kling option for simple motion.** Text-to-video and single start-frame animation when the user explicitly wants speed, lower cost, or a quick Kling 3.0 variant. |
 | Seedance 1.5 Pro | Bytedance | A budget-friendly Seedance for clean single-take shots. |

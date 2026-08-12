@@ -184,8 +184,11 @@ brand property they now own.
 - **Submit early, never idle.** All kit jobs go in right after the boards are
   chosen; poll between build steps. A build that waits on renders is
   mis-sequenced.
-- **Coherence check:** when the kit lands, view the assets together (read the
-  images). Any piece whose grade/palette fights the boards gets re-generated
+- **Coherence check — ONE batched vision pass, maximum.** When the kit lands,
+  view the assets TOGETHER in one pass — never one look per asset, never
+  re-inspecting something already viewed. The storyboard and the scroll-scrub
+  film are EXEMPT: you authored their prompts and the user reviews the
+  storyboard. Any piece whose grade/palette fights the boards gets re-generated
   with the hexes named harder. A mixed-grade asset kit reads cheaper than no
   assets. **Off-grade video budget: ONE re-roll.** If the re-roll drifts
   scene/composition (video models often do), keep the better take and
