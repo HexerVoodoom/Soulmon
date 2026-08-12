@@ -292,6 +292,22 @@ https://code.claude.com/docs/en/claude-code-on-the-web), ou (2) gerar os PNGs
 fora daqui (localmente, ou numa sessão com política de rede diferente) e
 depois só pedir para eu integrar/commitar os arquivos prontos.
 
+**Atualização (sessão separada, com acesso a `higgsfield.ai`):** rodada 2
+gerada e commitada nesta branch — `src/assets/soulmon/nav/` (6 ícones,
+home/community/shop × active/inactive), `src/assets/soulmon/rituals/`
+(meditation, water-drop, checklist, checkbox checked/unchecked) e
+`src/assets/soulmon/windows/window-card-panel.png` (moldura de painel
+genérica, vazia, pro estilo do card "Daily Rituals"). As barras de progresso
+(`src/assets/soulmon/progress/bar-hp-combo.png`, `bar-blue-smooth.png`,
+`bar-xp-smooth.png`) foram trocadas por recorte direto de `ref-logo.png` com
+alpha real (canal A verificado, não checkerboard cozido no pixel) — a
+primeira tentativa de recorte direto (revertida no commit `1a7e14cf`) tinha
+esse defeito exato (RGB sem alpha + fragmentos de ícone/número vazando na
+borda); esta versão corrige os dois problemas via flood-fill a partir das
+bordas da imagem + limpeza morfológica de ruído de textura do painel. Ainda
+sem integração no código — só os PNGs prontos pra quem for ligar isso nos
+componentes.
+
 - **Emblemas ficam no save do cliente**, como os Bits — farmáveis por quem editar
   o `localStorage`. Aceitável **enquanto a aba Torneio vender só cosmético**. Há
   teste travando isso: se algum item de torneio virar vantagem de jogo, o teste
