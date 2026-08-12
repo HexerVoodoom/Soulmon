@@ -141,13 +141,13 @@ export const ActivityCard = memo(function ActivityCard({
           {/* Edit button */}
           <button
             onClick={() => onEditActivity(id)}
-            className="flex items-center justify-center rounded-lg transition-all flex-shrink-0 bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]"
+            className="flex items-center justify-center transition-all flex-shrink-0"
             aria-label={isPt ? 'Editar atividade' : 'Edit activity'}
             /* 44×44: alvo de toque mínimo. Inline porque a classe utilitária
                correspondente não existe no index.css pré-compilado. */
-            style={{ minWidth: 44, minHeight: 44 }}
+            style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none' }}
           >
-            <img src={iconEdit} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            <img src={iconEdit} alt="" width={26} height={26} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 

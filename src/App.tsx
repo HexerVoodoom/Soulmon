@@ -32,6 +32,7 @@ import { STORAGE_KEYS } from './utils/storageKeys';
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
+import { PET_BACKGROUNDS } from './utils/backgrounds';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
 // objeto novo a cada render, anulando a memoização (footgun conhecido).
@@ -1887,10 +1888,32 @@ export default function App() {
           </button>
         )}
 
+        {/* Fundo da Home cheio, atrás de tudo (barra de chat/nav ficam por
+            cima) — antes era só um retângulo dentro do CompanionHUD, restrito
+            à altura da área do pet. Sem cenário equipado, cai no teal escuro
+            do tema (--sm-bg) em vez de um cinza neutro genérico. */}
+        {currentView === 'main' && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
+              backgroundImage: gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground]
+                ? PET_BACKGROUNDS[gameState.equippedBackground].css
+                : undefined,
+              backgroundColor: 'var(--sm-bg)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              imageRendering: 'pixelated',
+            }}
+          />
+        )}
+
         {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
         <div
           className="flex-1 overflow-y-auto px-6 pt-3"
           style={{
+            position: 'relative', zIndex: 1,
             paddingBottom: currentView === 'main'
               ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 100px)'
               : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',

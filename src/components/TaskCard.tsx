@@ -89,14 +89,14 @@ export const TaskCard = memo(function TaskCard({
         {/* Edit Button */}
         <button
           onClick={() => onEdit(id)}
-          className="flex items-center justify-center rounded-lg transition-all flex-shrink-0 bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]"
+          className="flex items-center justify-center transition-all flex-shrink-0"
           aria-label={isPt ? 'Editar tarefa' : 'Edit task'}
           /* 44×44 é o alvo de toque mínimo confortável; o padding do Tailwind
              dava 32×32. Inline porque min-w-11 não existe no index.css
              pré-compilado (footgun 1). */
-          style={{ minWidth: 44, minHeight: 44 }}
+          style={{ minWidth: 44, minHeight: 44, background: 'none', border: 'none' }}
         >
-          <img src={iconEdit} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          <img src={iconEdit} alt="" width={26} height={26} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
     </div>

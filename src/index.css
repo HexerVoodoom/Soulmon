@@ -4013,6 +4013,7 @@ html {
 .sm-btn {
   --sm-btn-fill: var(--sm-primary);
   --sm-btn-deep: var(--sm-primary-deep);
+  --sm-btn-border: var(--sm-gold);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4024,9 +4025,13 @@ html {
   padding: 14px 22px;
   color: #ffffff;
   background: var(--sm-btn-fill);
-  border: 2px solid var(--sm-gold);
+  border: 2px solid var(--sm-btn-border);
   border-radius: 14px;
-  box-shadow: 0 4px 0 var(--sm-btn-deep);
+  /* A barra 3D (0 4px) é só o "degrau" de baixo — sem a segunda camada (com
+     spread) ela ficava sem contorno, como se a borda bronze estivesse só na
+     tampa e não no volume inteiro. A segunda camada, maior, espia por trás
+     da primeira e fecha a borda nos 4 lados do bloco. */
+  box-shadow: 0 4px 0 0 var(--sm-btn-deep), 0 4px 0 2px var(--sm-btn-border);
   transition: transform .08s ease, filter .15s ease, box-shadow .08s ease;
   user-select: none;
 }
@@ -4050,7 +4055,7 @@ select:focus-visible {
 }
 .sm-btn:active {
   transform: translateY(4px);
-  box-shadow: 0 0 0 var(--sm-btn-deep);
+  box-shadow: 0 0 0 0 var(--sm-btn-deep), 0 0 0 2px var(--sm-btn-border);
 }
 .sm-btn:disabled { filter: grayscale(1) brightness(.75); transform: none; cursor: not-allowed; }
 
@@ -4067,7 +4072,7 @@ select:focus-visible {
 .sm-btn-gold {
   --sm-btn-fill: var(--sm-gold);
   --sm-btn-deep: #96602c;
-  border-color: color-mix(in srgb, var(--sm-gold) 60%, black);
+  --sm-btn-border: color-mix(in srgb, var(--sm-gold) 60%, black);
 }
 
 /* Cartão limpo */

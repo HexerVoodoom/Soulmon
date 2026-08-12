@@ -4,6 +4,7 @@ import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { DigivolutionProgress } from './DigivolutionProgress';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
+import { WalkingPetStrip } from './WalkingPetStrip';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
 import { ATTR_COLOR } from '../types/attributes';
@@ -305,6 +306,8 @@ export function EvolutionPath({
           </div>
         </div>
       )}
+
+      <WalkingPetStrip stageId={currentStageId} demoCharacterId={demoCharacterId} />
 
       {/* Attribute Balance */}
       <div className="sm-card p-4 mb-4">

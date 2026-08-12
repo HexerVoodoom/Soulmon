@@ -79,8 +79,8 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
       className="w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] sm-card"
     >
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 14, background: c.iconBg }}>
-          <img src={c.icon} alt="" width={28} height={28} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+        <div className="flex items-center justify-center flex-shrink-0" style={{ width: 52, height: 52 }}>
+          <img src={c.icon} alt="" width={48} height={48} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">

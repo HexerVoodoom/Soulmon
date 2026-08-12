@@ -3,10 +3,10 @@ import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import iconItems from '../assets/soulmon/icons/icon-items.png';
+import nestBase from '../assets/soulmon/nest-base.png';
 import iconBath from '../assets/soulmon/icons/icon-bath.png';
 import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
 import iconWake from '../assets/soulmon/icons/icon-wake.png';
-import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { type SlotId } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { EnergyBar } from './EnergyBar';
@@ -121,8 +121,10 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Energy bars = the stage's daily task requirement (falls back to HP max for
   // older callers that don't pass it).
   const maxEnergy = maxEnergyPoints ?? maxHealthPoints;
-  const [position, setPosition] = useState(10);
-  const [direction, setDirection] = useState<'right' | 'left'>('right');
+  // Parado no centro — o passeio lateral saiu da Home (o dono pediu o pet
+  // parado ali) e agora só existe na tela de Evolução (WalkingPetStrip).
+  const [position] = useState(50);
+  const [direction] = useState<'right' | 'left'>('right');
   const [showBubble, setShowBubble] = useState(false);
   const [squashFrame, setSquashFrame] = useState(0);
   const [bubbleText, setBubbleText] = useState('');
@@ -238,29 +240,6 @@ export const CompanionHUD = memo(function CompanionHUD({
 
 
 
-  // Walking animation
-  useEffect(() => {
-    const speed = companionMood === 'happy' ? 0.5 : companionMood === 'tired' ? 0.15 : 0.3;
-    const interval = setInterval(() => {
-      if (isSleeping || isShowering || isMunching || isRubbing) return;
-      setPosition(prev => {
-        const newPos = direction === 'right' ? prev + speed : prev - speed;
-
-        // Reverse direction at boundaries (10 to 90 to prevent edge clipping)
-        if (newPos >= 90) {
-          setDirection('left');
-          return 90;
-        } else if (newPos <= 10) {
-          setDirection('right');
-          return 10;
-        }
-
-        return newPos;
-      });
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [direction, companionMood, isSleeping, isShowering, isMunching, isRubbing]);
 
   // Squash and stretch animation (10% height variation)
   useEffect(() => {
@@ -574,26 +553,9 @@ export const CompanionHUD = memo(function CompanionHUD({
     <div className="relative">
       {/* Main Container with Companion Area and Energy Bar */}
       <div className="relative">
-      {/* Equipped background — full-bleed edge-to-edge (breaks out of the page's
-          px-6/24px padding via negative margins). Default (nothing equipped) is
-          fully transparent. Sits behind the row below it via an explicit
-          stacking context (z-index 0 vs 1). */}
-      {equippedBackground && PET_BACKGROUNDS[equippedBackground] && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: 0, bottom: 0, left: -24, right: -24,
-            zIndex: 0,
-            pointerEvents: 'none',
-            backgroundImage: PET_BACKGROUNDS[equippedBackground].css,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            imageRendering: 'pixelated',
-          }}
-        />
-      )}
+      {/* O fundo de cenário equipado agora é pintado em App.tsx, cobrindo a
+          Home inteira (era só esse retângulo, do tamanho do CompanionHUD —
+          o dono pediu o fundo "no todo", não restrito a essa caixa). */}
       <div className="flex gap-2" style={{ position: 'relative', zIndex: 1 }}>
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
         <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 72 }}>
@@ -728,6 +690,27 @@ export const CompanionHUD = memo(function CompanionHUD({
               </span>
             )}
 
+            {/* Ninho — mobília base, sempre presente embaixo do pet
+                (independente do cenário equipado). Futuramente troca por
+                outros tipos de ninho/mobília; por ora é só este. */}
+            <img
+              src={nestBase}
+              alt=""
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: `${position}%`,
+                top: '50%',
+                marginTop: 14,
+                width: 148, height: 'auto',
+                transform: 'translateX(-50%)',
+                objectFit: 'contain',
+                imageRendering: 'pixelated',
+                pointerEvents: 'none',
+                zIndex: 0,
+              }}
+            />
+
             {/* Soulmon Sprite with flip */}
             <div
               className="absolute transition-all duration-100 ease-linear cursor-pointer hover:scale-110 active:scale-95"
@@ -736,6 +719,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 transform: getHorizontalFlip(),
                 top: '50%',
                 marginTop: '-38px',
+                zIndex: 1,
                 transition: 'left 0.1s ease-linear, transform 0.1s ease-linear',
                 touchAction: 'none', // let the rub gesture own the pointer
               }}
