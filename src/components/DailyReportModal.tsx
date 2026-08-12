@@ -2,6 +2,7 @@ import { X, ListChecks, Heart, Star, Sun, CloudRain, HeartCrack, HeartHandshake 
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
+import confettiBurst from '../assets/icons/confetti-burst.png';
 
 interface DailyReportModalProps {
   report: NonNullable<GameState['lastDayReport']>;
@@ -128,8 +129,21 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
           >
             <X size={16} strokeWidth={2.2} />
           </button>
-          <div style={{ width: 56, height: 56, margin: '0 auto 10px', borderRadius: 18, background: headBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <HeadIcon size={28} color={headColor} strokeWidth={2} />
+          <div style={{ position: 'relative', width: 56, height: 56, margin: '0 auto 10px' }}>
+            {report.wasPerfect && (
+              <img
+                src={confettiBurst}
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                  width: 140, height: 140, maxWidth: 'none', pointerEvents: 'none', imageRendering: 'pixelated',
+                }}
+              />
+            )}
+            <div style={{ position: 'relative', width: 56, height: 56, borderRadius: 18, background: headBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <HeadIcon size={28} color={headColor} strokeWidth={2} />
+            </div>
           </div>
           <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)', margin: 0 }}>{headline}</p>
         </div>

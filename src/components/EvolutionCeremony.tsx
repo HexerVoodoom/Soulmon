@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
+import evolutionBgVideo from '../assets/video/evolution-bg.mp4';
+import evolutionBgThumb from '../assets/video/evolution-bg-thumb.webp';
 
 // ---------------------------------------------------------------------------
 // EvolutionCeremony — tela dedicada da evolução manual.
 // Efeito: os sprites da forma ATUAL e da PRÓXIMA intercalam em velocidade
 // progressiva (cada vez mais rápido) por ~3s, 100% BRANCOS, até estabilizar
 // na forma evoluída — aí a cor volta e o processo conclui.
-// Fundo: "vídeo" cósmico animado em CSS (placeholder até termos vídeo real).
+// Fundo: vídeo cósmico em loop (src/assets/video/evolution-bg.mp4).
 // ---------------------------------------------------------------------------
 
 interface EvolutionCeremonyProps {
@@ -65,8 +67,14 @@ export function EvolutionCeremony({ fromStage, toStage, toName, language, demoCh
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 500, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-      {/* Fundo cósmico animado (placeholder de vídeo) */}
-      <div className="evo-bg" style={{ position: 'absolute', inset: 0 }} />
+      {/* Fundo cósmico animado */}
+      <video
+        autoPlay loop muted playsInline
+        poster={evolutionBgThumb}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+      >
+        <source src={evolutionBgVideo} type="video/mp4" />
+      </video>
 
       {/* Sprite: branco durante a intercalação, cor ao concluir */}
       <div style={{ position: 'relative', zIndex: 2, textAlign: 'center' }}>

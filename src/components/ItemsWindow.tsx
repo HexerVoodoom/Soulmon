@@ -4,7 +4,23 @@ import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import type { Language } from '../utils/i18n';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
-import { SPECIAL_ITEMS, CHIP_BOOST, HEART_HEAL } from '../utils/shop';
+import { SPECIAL_ITEMS, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI } from '../utils/shop';
+import iconHeartItem from '../assets/icons/icon-heart-item.png';
+import iconChipVirus from '../assets/icons/icon-chip-virus.png';
+import iconChipData from '../assets/icons/icon-chip-data.png';
+import iconChipVaccine from '../assets/icons/icon-chip-vaccine.png';
+
+// Emoji continua sendo a CHAVE de inventário (ver utils/shop.ts) — este mapa
+// é só o visual pixel-art que substitui o emoji nativo do SO nesses 4 itens.
+const SPECIAL_ITEM_IMG: Record<string, string> = {
+  [HEART_ITEM_EMOJI]: iconHeartItem,
+  [CHIP_EMOJI.virus]: iconChipVirus,
+  [CHIP_EMOJI.data]: iconChipData,
+  [CHIP_EMOJI.vaccine]: iconChipVaccine,
+};
+const ATTR_IMG: Record<'virus' | 'data' | 'vaccine', string> = {
+  virus: iconChipVirus, data: iconChipData, vaccine: iconChipVaccine,
+};
 
 interface ItemsWindowProps {
   foodInventory: Record<string, number>;
@@ -154,7 +170,11 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                     }}
                     title={getFoodName(emoji, language)}
                   >
-                    <span style={{ fontSize: '1.7rem', lineHeight: 1 }}>{emoji}</span>
+                    {SPECIAL_ITEM_IMG[emoji] ? (
+                      <img src={SPECIAL_ITEM_IMG[emoji]} alt="" style={{ width: '1.7rem', height: '1.7rem', imageRendering: 'pixelated' }} />
+                    ) : (
+                      <span style={{ fontSize: '1.7rem', lineHeight: 1 }}>{emoji}</span>
+                    )}
                     <span
                       className="text-center leading-tight break-words px-0.5"
                       style={{
@@ -187,7 +207,11 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
               style={{ background: 'var(--sm-bg)', border: '1px solid var(--sm-line)' }}
             >
               <div className="flex items-start gap-2">
-                <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{selected}</span>
+                {selected && SPECIAL_ITEM_IMG[selected] ? (
+                  <img src={SPECIAL_ITEM_IMG[selected]} alt="" style={{ width: '1.6rem', height: '1.6rem', imageRendering: 'pixelated' }} />
+                ) : (
+                  <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{selected}</span>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="font-bold" style={{ fontSize: '0.8rem', color: 'var(--sm-ink)' }}>
                     {selectedDetail.name}
@@ -205,14 +229,18 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                 {selectedDetail.attrEntries.map(k => (
                   <span
                     key={k}
+                    className="flex items-center gap-0.5"
                     style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: ATTR_COLORS[k], fontWeight: 'bold' }}
                   >
-                    {k === 'vaccine' ? '💉' : k === 'data' ? '💾' : '🦠'}+{selectedDetail.attrs![k]}
+                    <img src={ATTR_IMG[k]} alt="" style={{ width: 12, height: 12, imageRendering: 'pixelated' }} />+{selectedDetail.attrs![k]}
                   </span>
                 ))}
                 {selectedDetail.special?.kind === 'chip' && selectedDetail.special.attr && (
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: ATTR_COLORS[selectedDetail.special.attr], fontWeight: 'bold' }}>
-                    {selectedDetail.special.attr === 'vaccine' ? '💉' : selectedDetail.special.attr === 'data' ? '💾' : '🦠'}+{CHIP_BOOST}
+                  <span
+                    className="flex items-center gap-0.5"
+                    style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: ATTR_COLORS[selectedDetail.special.attr], fontWeight: 'bold' }}
+                  >
+                    <img src={ATTR_IMG[selectedDetail.special.attr]} alt="" style={{ width: 12, height: 12, imageRendering: 'pixelated' }} />+{CHIP_BOOST}
                   </span>
                 )}
                 {selectedDetail.special?.kind === 'glitchtama' && (
@@ -221,8 +249,8 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                   </span>
                 )}
                 {selectedDetail.special?.kind === 'heart' && (
-                  <span style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#E94F4F', fontWeight: 'bold' }}>
-                    ❤️+{HEART_HEAL}
+                  <span className="flex items-center gap-0.5" style={{ fontFamily: 'monospace', fontSize: '0.68rem', color: '#E94F4F', fontWeight: 'bold' }}>
+                    <img src={iconHeartItem} alt="" style={{ width: 12, height: 12, imageRendering: 'pixelated' }} />+{HEART_HEAL}
                   </span>
                 )}
               </div>

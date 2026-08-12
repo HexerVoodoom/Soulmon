@@ -1,6 +1,10 @@
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, slotBoxStyle, type SlotId } from '../utils/petStage';
+import { DECOR_ART } from '../utils/decorArt';
+import iconTrophyGold from '../assets/icons/icon-trophy-gold.png';
+import iconTrophySilver from '../assets/icons/icon-trophy-silver.png';
+import iconTrophyBronze from '../assets/icons/icon-trophy-bronze.png';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // A decoração do palco (utils/petStage.ts) desenhada dentro da área do pet.
@@ -15,9 +19,9 @@ import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, slotBoxStyle, type SlotId } 
 //     some em silêncio.
 //   · Tudo fica ATRÁS do pet: é cenário, o pet anda na frente.
 //
-// A arte de verdade ainda não existe (os itens são emoji). Enquanto isso, o
-// emoji é escalado para a caixa do slot, com sombra de contato no chão para não
-// parecer colado por cima da imagem.
+// Arte real em utils/decorArt.ts, desenhada PARA a caixa de cada slot — só é
+// posicionada aqui, nunca redimensionada de forma não-uniforme. Item sem arte
+// mapeada (não deveria acontecer, mas por segurança) cai de volta pro emoji.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface PetStageDecorProps {
@@ -28,7 +32,7 @@ interface PetStageDecorProps {
   language: string;
 }
 
-const PLACE_MEDAL: Record<1 | 2 | 3, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
+const PLACE_MEDAL_IMG: Record<1 | 2 | 3, string> = { 1: iconTrophyGold, 2: iconTrophySilver, 3: iconTrophyBronze };
 
 export function PetStageDecor({ equippedDecor, equippedBackground, trophies, language }: PetStageDecorProps) {
   const bg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
@@ -51,25 +55,30 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
         const slot = DECOR_SLOTS[slotId];
         const box = slotBoxStyle(slot);
         const label = isPt ? item.namePt : item.nameEn;
+        const art = DECOR_ART[item.id];
 
-        // Tapete: a caixa é larga e baixa, então o emoji não serve de arte —
-        // vira uma elipse em perspectiva com o motivo repetido por cima.
+        // Tapete: caixa larga e baixa, arte já desenhada em perspectiva rasa
+        // (foreshortening) exatamente para esse formato — ver utils/decorArt.ts.
         if (slot.anchor === 'ground-flat') {
           return (
             <div key={slotId} style={{ ...box }} title={label}>
-              <div style={{
-                width: '100%', height: '100%', borderRadius: '50%',
-                background: 'radial-gradient(closest-side, rgba(60,45,40,0.30), rgba(60,45,40,0.12))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                fontSize: 9, lineHeight: 1, opacity: 0.95,
-              }}>
-                <span>{item.icon}</span><span>{item.icon}</span><span>{item.icon}</span>
-              </div>
+              {art ? (
+                <img src={art} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />
+              ) : (
+                <div style={{
+                  width: '100%', height: '100%', borderRadius: '50%',
+                  background: 'radial-gradient(closest-side, rgba(60,45,40,0.30), rgba(60,45,40,0.12))',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  fontSize: 9, lineHeight: 1, opacity: 0.95,
+                }}>
+                  <span>{item.icon}</span><span>{item.icon}</span><span>{item.icon}</span>
+                </div>
+              )}
             </div>
           );
         }
 
-        const art = Math.round(Math.min(slot.w, slot.h) * 0.78);
+        const emojiSize = Math.round(Math.min(slot.w, slot.h) * 0.78);
         return (
           <div key={slotId} style={{ ...box, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} title={label}>
             {/* Sombra de contato — só para o que está apoiado no chão. */}
@@ -80,12 +89,22 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                 background: 'rgba(0,0,0,0.28)', filter: 'blur(2px)',
               }} />
             )}
-            <span style={{
-              position: 'relative', fontSize: art, lineHeight: 1,
-              filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
-            }}>
-              {item.icon}
-            </span>
+            {art ? (
+              <img
+                src={art} alt=""
+                style={{
+                  position: 'relative', width: '100%', height: '100%', objectFit: 'contain',
+                  imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
+                }}
+              />
+            ) : (
+              <span style={{
+                position: 'relative', fontSize: emojiSize, lineHeight: 1,
+                filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
+              }}>
+                {item.icon}
+              </span>
+            )}
 
             {/* A vitrine exibe as conquistas REAIS: até 3 medalhas de season
                 sobre o móvel. Sem troféus ganhos, só o móvel — a vitrine vazia
@@ -97,7 +116,7 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
                 filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.4))',
               }}>
                 {trophies.slice(-3).map((t, i) => (
-                  <span key={`${t.season}-${i}`}>{PLACE_MEDAL[t.place]}</span>
+                  <img key={`${t.season}-${i}`} src={PLACE_MEDAL_IMG[t.place]} alt="" style={{ width: 13, height: 13, imageRendering: 'pixelated' }} />
                 ))}
               </span>
             )}

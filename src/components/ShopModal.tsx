@@ -3,6 +3,7 @@ import { bitsStyleLight, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../uti
 import { X, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa, Swords, Gem } from 'lucide-react';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
+import { DECOR_ART } from '../utils/decorArt';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
 import { decorFitsSetting, type SlotId } from '../utils/petStage';
 import type { Language } from '../utils/i18n';
@@ -11,8 +12,9 @@ import type { Language } from '../utils/i18n';
  * Loja — gasta Bits ganhos nos minijogos. Organizada em abas (Itens /
  * Cenários / Mobílias / Missões). Itens podem estar BLOQUEADOS por missão:
  * renderizam escurecidos com cadeado; tocar mostra como desbloquear. Ícones
- * seguem o estilo lucide do resto do app (item.displayIcon); o emoji em
- * item.icon é só a CHAVE de inventário dos consumíveis — nunca é o visual.
+ * seguem o estilo lucide do resto do app (item.displayIcon), exceto mobílias
+ * (arte pixel real, utils/decorArt.ts) e cenários (thumb do próprio bg); o
+ * emoji em item.icon é só a CHAVE de inventário dos consumíveis, nunca visual.
  */
 type ShopTab = 'items' | 'bg' | 'furniture' | 'tournament' | 'missions';
 
@@ -113,7 +115,15 @@ export function ShopModal({
     const Icon = item.displayIcon;
 
     const iconEl = item.kind === 'bg' ? (
-      <div style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 12, background: PET_BACKGROUNDS[item.id]?.css, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }} />
+      <div style={{
+        width: 44, height: 44, flexShrink: 0, borderRadius: 12,
+        backgroundImage: PET_BACKGROUNDS[item.id]?.css, backgroundSize: 'cover', backgroundPosition: 'center',
+        filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)',
+      }} />
+    ) : item.kind === 'furniture' && DECOR_ART[item.id] ? (
+      <span style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }}>
+        <img src={DECOR_ART[item.id]} alt="" style={{ width: '78%', height: '78%', objectFit: 'contain', imageRendering: 'pixelated' }} />
+      </span>
     ) : Icon ? (
       <span style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, filter: unlocked ? 'none' : 'grayscale(0.7) brightness(0.85)' }}>
         <Icon size={20} strokeWidth={2.2} color="var(--sm-ink)" />

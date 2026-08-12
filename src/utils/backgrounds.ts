@@ -9,6 +9,9 @@
 // não o inverso. `setting` diz que tipo de decoração faz sentido ali e `slots`
 // diz quais espaços aquele cenário oferece (nem todo cenário tem parede).
 import { type SlotId, type StageSetting } from './petStage';
+import bgMatrixImg from '../assets/backgrounds/bg-matrix.png';
+import bgOceanImg from '../assets/backgrounds/bg-ocean.png';
+import bgGameboyImg from '../assets/backgrounds/bg-gameboy.png';
 
 /**
  * Só chão — para cenas de céu aberto sem nenhuma superfície vertical (planície
@@ -104,12 +107,7 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   'bg-matrix': {
     namePt: 'Matriz Verde',
     nameEn: 'Green Matrix',
-    css: [
-      'repeating-linear-gradient(0deg, transparent, transparent 14px, rgba(43,255,149,0.16) 15px)',
-      'repeating-linear-gradient(90deg, transparent, transparent 14px, rgba(43,255,149,0.16) 15px)',
-      'linear-gradient(180deg, transparent 74%, rgba(43,255,149,0.55) 74%, rgba(43,255,149,0.55) 75%, transparent 75%)',
-      'linear-gradient(180deg, #01130a 0%, #03200f 100%)',
-    ].join(', '),
+    css: `url(${bgMatrixImg})`,
     setting: 'void', slots: [],
   },
   'bg-forest': {
@@ -128,27 +126,13 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
   'bg-ocean': {
     namePt: 'Fundo do Mar',
     nameEn: 'Deep Sea',
-    css: [
-      'radial-gradient(2px 2px at 22% 66%, rgba(255,255,255,0.9) 50%, transparent 51%)',
-      'radial-gradient(3px 3px at 27% 44%, rgba(255,255,255,0.7) 50%, transparent 51%)',
-      'radial-gradient(2px 2px at 33% 26%, rgba(255,255,255,0.8) 50%, transparent 51%)',
-      'radial-gradient(2px 2px at 72% 58%, rgba(255,255,255,0.75) 50%, transparent 51%)',
-      'radial-gradient(3px 3px at 78% 34%, rgba(255,255,255,0.6) 50%, transparent 51%)',
-      'linear-gradient(115deg, transparent 42%, rgba(125,211,252,0.22) 50%, transparent 58%)',
-      'linear-gradient(180deg, transparent 74%, #0a3a56 74%, #0a3a56 80%, #062534 80%)',
-      'linear-gradient(180deg, #075985 0%, #0c4a6e 55%, #082f49 100%)',
-    ].join(', '),
+    css: `url(${bgOceanImg})`,
     setting: 'void', slots: [],
   },
   'bg-gameboy': {
     namePt: 'LCD Retrô',
     nameEn: 'Retro LCD',
-    css: [
-      'repeating-linear-gradient(0deg, rgba(15,56,15,0.10), rgba(15,56,15,0.10) 2px, transparent 2px, transparent 6px)',
-      'repeating-linear-gradient(90deg, rgba(15,56,15,0.10), rgba(15,56,15,0.10) 2px, transparent 2px, transparent 6px)',
-      'linear-gradient(180deg, transparent 74%, #0f380f 74%, #0f380f 76%, transparent 76%)',
-      'linear-gradient(180deg, #9bbc0f 0%, #8bac0f 100%)',
-    ].join(', '),
+    css: `url(${bgGameboyImg})`,
     setting: 'void', slots: [],
   },
   'bg-snow': {
