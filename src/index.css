@@ -4048,13 +4048,19 @@ select:focus-visible {
 .sm-btn:active { transform: scale(.96); filter: brightness(.92); }
 .sm-btn:disabled { filter: grayscale(1) brightness(.75); transform: none; cursor: not-allowed; }
 
+/* Botão secundário/inativo: mesma técnica do .sm-btn (moldura pixel art via
+   border-image) em vez do retângulo vazado (só borda CSS) que existia antes —
+   ver src/assets/soulmon/buttons/button-inactive-frame.png (400×148px). */
 .sm-btn-secondary {
-  background: var(--sm-surface);
   color: var(--sm-primary);
-  border: 2px solid var(--sm-line);
-  box-shadow: 0 4px 0 var(--sm-line);
+  border-style: solid;
+  border-width: 12px;
+  border-image-source: url(./assets/soulmon/buttons/button-inactive-frame.png);
+  border-image-slice: 30 32 30 32 fill;
+  border-image-width: 12px;
+  border-image-repeat: stretch;
 }
-.sm-btn-secondary:active { transform: translateY(4px); box-shadow: 0 0 0 var(--sm-line); }
+.sm-btn-secondary:active { transform: translateY(2px); }
 
 .sm-btn-gold {
   background: var(--sm-gold);
@@ -4148,3 +4154,15 @@ select:focus-visible {
   pointer-events: none;
 }
 .sm-chat-fixed > * { pointer-events: auto; }
+
+/* Ícone de ação "solto" (sem caixa/borda) — usado nos botões de
+   Itens/Banho/Dormir e em qualquer outro ícone que só deve reagir com
+   brilho + leve aumento ao tocar, sem fundo. */
+.sm-icon-action-btn { background: transparent; border: none; }
+.sm-icon-action-btn img { transition: filter 0.15s ease, transform 0.15s ease; }
+.sm-icon-action-btn:hover img,
+.sm-icon-action-btn:active img {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(93,240,224,0.75)) drop-shadow(0 0 12px rgba(93,240,224,0.35));
+}
+.sm-icon-action-btn:disabled img { transform: none; filter: none; }

@@ -606,7 +606,7 @@ export const CompanionHUD = memo(function CompanionHUD({
               key={a.key}
               onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
               disabled={a.key !== 'bath' && a.disabled}
-              className="sm-card relative flex flex-col items-center justify-center gap-0.5 py-2.5"
+              className="sm-icon-action-btn relative flex flex-col items-center justify-center gap-0.5 py-2.5"
               style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
             >
               {a.badge && (

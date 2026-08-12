@@ -1,6 +1,8 @@
 import { aiFetch } from '../utils/aiClient';
 import { useState } from 'react';
-import { Send, Mic, Square } from 'lucide-react';
+import { Square } from 'lucide-react';
+import iconSend from '../assets/soulmon/icons/icon-send.png';
+import iconMic from '../assets/soulmon/icons/icon-mic.png';
 import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
 import { type Language } from '../utils/i18n';
@@ -354,7 +356,7 @@ export function ChatBox({
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <img src={iconSend} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             )}
           </button>
         ) : (
@@ -376,7 +378,7 @@ export function ChatBox({
             ) : isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Mic className="w-4 h-4" />
+              <img src={iconMic} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             )}
           </button>
         )}

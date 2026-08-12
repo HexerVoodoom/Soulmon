@@ -21,6 +21,7 @@ import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { Plus, Edit2 } from 'lucide-react';
+import iconWarning from './assets/soulmon/icons/icon-warning.png';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -96,7 +97,7 @@ const TournamentPage = lazy(() => import('./components/TournamentPage').then(m =
 const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ default: m.LibraryPage })));
 const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
@@ -132,7 +133,6 @@ export default function App() {
   );
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
-  const [shopOpen, setShopOpen] = useState(false);
   // Créditos (monetização) — modal próprio, aberto pelo menu sanduíche.
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
@@ -1840,32 +1840,9 @@ export default function App() {
           currentView={currentView}
           onNavigate={setCurrentView}
           onResetOnboarding={handleResetOnboarding}
-          onOpenShop={() => setShopOpen(true)}
           onOpenCredits={() => setCreditsOpen(true)}
           language={language}
         />
-
-        {/* Loja — fora do minigame: modal próprio, acionado pela barra inferior. */}
-        {shopOpen && (
-          <Suspense fallback={null}>
-            <ShopModal
-              language={language}
-              points={gameState.gamePoints ?? 0}
-              ownedBackgrounds={gameState.ownedBackgrounds ?? []}
-              equippedBackground={gameState.equippedBackground ?? null}
-              ownedFurniture={gameState.ownedFurniture ?? []}
-              equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
-              missionProgress={missionProgress}
-              emblems={gameState.emblems ?? 0}
-              credits={gameState.credits ?? 0}
-              onBuy={handleShopBuy}
-              onExchangeCredits={handleExchangeCredits}
-              onEquip={handleEquipBackground}
-              onEquipFurniture={handleEquipFurniture}
-              onClose={() => setShopOpen(false)}
-            />
-          </Suspense>
-        )}
 
         {/* Créditos (monetização) — modal próprio, aberto pelo menu sanduíche. */}
         {creditsOpen && (
@@ -1924,7 +1901,7 @@ export default function App() {
               {/* HP risk banner — dismissible strip acima do pet */}
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'var(--sm-danger-soft)', border: '1px solid var(--sm-danger)' }}>
-                  <span style={{ fontSize: '0.9rem' }}>⚠️</span>
+                  <img src={iconWarning} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
                   <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: 'var(--sm-danger)' }}>
                     {language === 'pt-BR'
                       ? `1 HP restante — complete ao menos ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) hoje para não regredir!`
@@ -2255,6 +2232,28 @@ export default function App() {
                 onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
                 onGiftSent={() => {}}
                 language={language}
+              />
+            </Suspense>
+          )}
+
+          {currentView === 'shop' && (
+            <Suspense fallback={null}>
+              <ShopModal
+                asPage
+                language={language}
+                points={gameState.gamePoints ?? 0}
+                ownedBackgrounds={gameState.ownedBackgrounds ?? []}
+                equippedBackground={gameState.equippedBackground ?? null}
+                ownedFurniture={gameState.ownedFurniture ?? []}
+                equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
+                missionProgress={missionProgress}
+                emblems={gameState.emblems ?? 0}
+                credits={gameState.credits ?? 0}
+                onBuy={handleShopBuy}
+                onExchangeCredits={handleExchangeCredits}
+                onEquip={handleEquipBackground}
+                onEquipFurniture={handleEquipFurniture}
+                onClose={() => setCurrentView('main')}
               />
             </Suspense>
           )}

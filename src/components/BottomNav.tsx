@@ -10,14 +10,12 @@ import iconGem from '../assets/soulmon/icons/icon-gem.png';
 import iconGear from '../assets/soulmon/icons/icon-gear.png';
 import iconReset from '../assets/soulmon/icons/icon-reset.png';
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library';
+type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
 
 interface BottomNavProps {
   currentView: ViewType;
   onNavigate: (view: ViewType) => void;
   onResetOnboarding?: () => void;
-  /** Loja — não é uma view (fica fora do minigame): abre como modal por cima da tela atual. */
-  onOpenShop?: () => void;
   /** Créditos (monetização) — modal próprio, dentro do menu sanduíche. */
   onOpenCredits?: () => void;
   language?: Language;
@@ -26,7 +24,7 @@ interface BottomNavProps {
 /** Ícone-imagem (gerado no Higgsfield, kit bronze/cobre) no lugar do
  *  lucide-react. Sem `color` de SVG pra recolorir por aba — o destaque da
  *  aba ativa vem do halo (glow) + fundo, não de tingir o ícone. */
-function NavIcon({ src, alt, active, size = 34 }: { src: string; alt: string; active?: boolean; size?: number }) {
+function NavIcon({ src, alt, active, size = 32 }: { src: string; alt: string; active?: boolean; size?: number }) {
   return (
     <img
       src={src}
@@ -37,8 +35,9 @@ function NavIcon({ src, alt, active, size = 34 }: { src: string; alt: string; ac
         objectFit: 'contain',
         imageRendering: 'pixelated',
         opacity: active ? 1 : 0.62,
-        filter: active ? 'drop-shadow(0 0 5px rgba(93,240,224,0.55))' : 'none',
-        transition: 'opacity 0.15s ease, filter 0.15s ease',
+        transform: active ? 'scale(1.22)' : 'scale(1)',
+        filter: active ? 'drop-shadow(0 0 7px rgba(93,240,224,0.85)) drop-shadow(0 0 14px rgba(93,240,224,0.4))' : 'none',
+        transition: 'opacity 0.15s ease, filter 0.15s ease, transform 0.15s ease',
       }}
     />
   );
@@ -47,7 +46,7 @@ function NavIcon({ src, alt, active, size = 34 }: { src: string; alt: string; ac
 /** Navegação principal do app: barra de ícones fixa no rodapé (abaixo da
  *  barra de chat). 4 views à esquerda + Loja (ação) + menu sanduíche
  *  (Configurações + Debug) sempre por último, à direita de tudo. */
-export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenShop, onOpenCredits, language = 'en-US' }: BottomNavProps) {
+export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCredits, language = 'en-US' }: BottomNavProps) {
   const isPt = language === 'pt-BR';
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -73,22 +72,19 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
             onClick={() => onNavigate(view)}
             aria-label={label}
             className="sm-bottom-nav-btn"
-            style={{ background: active ? 'var(--sm-bg)' : 'transparent' }}
           >
             <NavIcon src={icon} alt={label} active={active} />
           </button>
         );
       })}
-      {onOpenShop && (
-        <button
-          onClick={onOpenShop}
-          aria-label={isPt ? 'Loja' : 'Shop'}
-          title={isPt ? 'Loja' : 'Shop'}
-          className="sm-bottom-nav-btn"
-        >
-          <NavIcon src={iconCoin} alt={isPt ? 'Loja' : 'Shop'} size={32} />
-        </button>
-      )}
+      <button
+        onClick={() => onNavigate('shop')}
+        aria-label={isPt ? 'Loja' : 'Shop'}
+        title={isPt ? 'Loja' : 'Shop'}
+        className="sm-bottom-nav-btn"
+      >
+        <NavIcon src={iconCoin} alt={isPt ? 'Loja' : 'Shop'} active={currentView === 'shop'} />
+      </button>
 
       {/* Menu sanduíche — sempre por último (à direita de tudo). Agrega
           Configurações + Recomeçar num popover, em vez de dois botões soltos. */}
@@ -98,7 +94,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenSh
           aria-label={isPt ? 'Menu' : 'Menu'}
           title={isPt ? 'Menu' : 'Menu'}
           className="sm-bottom-nav-btn"
-          style={{ background: menuActive ? 'var(--sm-bg)' : 'transparent', width: '100%' }}
+          style={{ width: '100%' }}
         >
           <NavIcon src={iconMenu} alt={isPt ? 'Menu' : 'Menu'} active={menuActive} />
         </button>

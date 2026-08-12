@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { bitsStyleLight, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../utils/currencies';
-import { X, FlaskConical, Image as ImageIcon, Award, Lock, Check, Sofa, Swords, Gem } from 'lucide-react';
+import { X, FlaskConical, Image as ImageIcon, Award, Check, Sofa, Swords, Gem } from 'lucide-react';
+import iconLock from '../assets/soulmon/icons/icon-lock.png';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_ART } from '../utils/decorArt';
@@ -21,6 +22,7 @@ type ShopTab = 'items' | 'bg' | 'furniture' | 'tournament' | 'missions';
 export function ShopModal({
   language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor,
   missionProgress, emblems, credits, onBuy, onExchangeCredits, onEquip, onEquipFurniture, onClose,
+  asPage = false,
 }: {
   language: Language;
   points: number;
@@ -41,6 +43,10 @@ export function ShopModal({
   /** `id` null limpa o espaço; o slot é sempre obrigatório. */
   onEquipFurniture: (id: string | null, slot: SlotId) => void;
   onClose: () => void;
+  /** Renderiza como página cheia dentro do fluxo normal (BottomNav → Loja
+   *  virou view de verdade, não modal por cima da tela atual) em vez de
+   *  overlay fixo centralizado. */
+  asPage?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<ShopTab>('items');
@@ -148,7 +154,7 @@ export function ShopModal({
           {iconEl}
           {!unlocked && (
             <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.15)', borderRadius: 12 }}>
-              <Lock size={16} color="#fff" strokeWidth={2.4} />
+              <img src={iconLock} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             </span>
           )}
         </div>
@@ -181,7 +187,7 @@ export function ShopModal({
             disabled={unlocked && !canBuy}
             className="sm-btn"
             style={{ padding: '9px 14px', fontSize: '0.72rem', flexShrink: 0, minHeight: 38 }}>
-            {unlocked ? priceLabel(item) : <Lock size={14} strokeWidth={2.4} />}
+            {unlocked ? priceLabel(item) : <img src={iconLock} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />}
           </button>
         )}
         {/* Aviso de composição — só para o que está equipado e não aparece. */}
@@ -255,14 +261,33 @@ export function ShopModal({
     </div>
   );
 
+  const Wrapper = asPage
+    ? ({ children }: { children: React.ReactNode }) => <>{children}</>
+    : ({ children }: { children: React.ReactNode }) => (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+          {children}
+        </div>
+      );
+
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-      <div className="sm-card" style={{ background: 'var(--sm-bg)', width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
-          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>
-            {isPt ? 'Loja' : 'Shop'}
-          </span>
+    <Wrapper>
+      <div
+        className={asPage ? undefined : 'sm-card'}
+        style={asPage
+          ? { display: 'flex', flexDirection: 'column' }
+          : { background: 'var(--sm-bg)', width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      >
+        {/* Header — em modo página, sem título repetido nem X (a navegação já
+            é a barra inferior) e sem fundo/borda própria (a página herda o
+            visual do conteúdo ao redor). */}
+        <div style={asPage
+          ? { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 10 }
+          : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
+          {!asPage && (
+            <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>
+              {isPt ? 'Loja' : 'Shop'}
+            </span>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Bits, não Créditos: sem 💎 (o gem é dos créditos comprados com
                 dinheiro real). Ver utils/currency.ts. */}
@@ -284,9 +309,11 @@ export function ShopModal({
                 <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{points} Bits</span>
               </span>
             )}
-            <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
-              <X size={18} strokeWidth={2.4} />
-            </button>
+            {!asPage && (
+              <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
+                <X size={18} strokeWidth={2.4} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -361,6 +388,6 @@ export function ShopModal({
           </p>
         </div>
       </div>
-    </div>
+    </Wrapper>
   );
 }
