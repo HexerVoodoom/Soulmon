@@ -5165,3 +5165,92 @@ select:focus-visible {
   pointer-events: none;
 }
 .sm-chat-fixed > * { pointer-events: auto; }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Home "Soul" skin — dark teal + copper HUD frame, scoped to the home
+   scroll container only (bottom nav, modals and other views are siblings
+   and never inherit this). Referência: mockups "SOUL MON" (ago/2026).
+   ──────────────────────────────────────────────────────────────────────── */
+.sm-home-shell {
+  background:
+    radial-gradient(ellipse 480px 260px at 50% 0%, rgba(45,220,205,0.10) 0%, rgba(45,220,205,0) 70%),
+    #0e2323;
+  margin: 0 -24px;
+  padding: 12px 24px 0;
+}
+
+.sm-home-panel {
+  position: relative;
+  margin-top: 14px;
+  border-radius: 18px;
+  border: 2px solid #3a6b5e;
+  background: linear-gradient(180deg, #123030 0%, #0f2929 100%);
+  box-shadow:
+    0 0 0 1px rgba(45,220,205,0.15) inset,
+    0 6px 18px rgba(0,0,0,0.35);
+  padding: 34px 12px 14px;
+}
+.sm-home-panel::before,
+.sm-home-panel::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: #b6813f;
+  box-shadow: 0 0 6px rgba(182,129,63,0.7);
+}
+.sm-home-panel::before { left: 8px; }
+.sm-home-panel::after { right: 8px; }
+
+.sm-home-panel-title {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 16px;
+  border-radius: 999px;
+  background: #0a1e1e;
+  border: 1.5px solid #b6813f;
+  color: #5df0e0;
+  font-family: monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(93,240,224,0.7);
+  white-space: nowrap;
+}
+
+.sm-home-panel-body {
+  border-radius: 12px;
+  background: rgba(247,246,251,0.97);
+  padding: 10px;
+}
+.sm-home-panel-body > * + * { margin-top: 8px; }
+
+/* Cápsulas de status no topo da Home (Bits etc.) — mesmo enquadramento
+   copper/ciano, sem tocar na aparência PRÓPRIA de cada moeda
+   (utils/currencies.ts define isso e há teste travando as fronteiras). */
+.sm-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #0a1e1e;
+  border: 1.5px solid #3a6b5e;
+  box-shadow: 0 0 0 1px rgba(45,220,205,0.12) inset;
+}
+.sm-stat-pill-label {
+  font-family: monospace;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #5df0e0;
+  opacity: 0.85;
+}

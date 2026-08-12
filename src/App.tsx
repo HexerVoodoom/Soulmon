@@ -20,7 +20,7 @@ import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
-import { Plus, Edit2 } from 'lucide-react';
+import { Plus, Edit2, Sparkles } from 'lucide-react';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -59,7 +59,7 @@ import {
   REROLL_COST_CREDITS, HEART_COST_CREDITS,
   type CreditPack,
 } from './utils/monetization';
-import { BITS_EXCHANGE } from './utils/currencies';
+import { BITS_EXCHANGE, bitsStyle } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
@@ -1948,7 +1948,7 @@ export default function App() {
 
         {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
         <div
-          className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : 'px-6 pt-3'}`}
+          className={`flex-1 overflow-y-auto ${theme === 'win98' ? 'bg-[#c0c0c0] px-6 pt-3 pb-4' : 'px-6 pt-3'} ${theme === 'default' && currentView === 'main' ? 'sm-home-shell' : ''}`}
           style={theme === 'default' ? {
             paddingBottom: currentView === 'main'
               ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 100px)'
@@ -1957,6 +1957,19 @@ export default function App() {
         >
           {currentView === 'main' && (
             <div className="space-y-3">
+              {theme === 'default' && (
+                <div className="flex items-center justify-center gap-2" style={{ paddingTop: 2 }}>
+                  <span className="sm-stat-pill">
+                    <span className="sm-stat-pill-label">{language === 'pt-BR' ? 'Bits' : 'Bits'}</span>
+                    <span style={bitsStyle}>{gameState.gamePoints ?? 0}</span>
+                  </span>
+                  <span className="sm-stat-pill">
+                    <span className="sm-stat-pill-label">{language === 'pt-BR' ? 'Dia perfeito' : 'Perfect days'}</span>
+                    <span style={{ color: '#5df0e0', fontFamily: 'monospace', fontWeight: 700 }}>{gameState.perfectDays}</span>
+                  </span>
+                </div>
+              )}
+
               {/* HP risk banner — dismissible strip acima do pet */}
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl ${
@@ -2043,6 +2056,20 @@ export default function App() {
                 feedAnim={feedAnim}
               />
 
+              {(() => {
+                const Frame = theme === 'default'
+                  ? ({ children }: { children: React.ReactNode }) => (
+                      <div className="sm-home-panel">
+                        <span className="sm-home-panel-title">
+                          <Sparkles size={12} strokeWidth={2.4} />
+                          {language === 'pt-BR' ? 'Rituais Diários' : 'Daily Rituals'}
+                        </span>
+                        <div className="sm-home-panel-body">{children}</div>
+                      </div>
+                    )
+                  : ({ children }: { children: React.ReactNode }) => <>{children}</>;
+                return (
+              <Frame>
               {gameState.tasks.length === 0 && gameState.activities.length === 0 ? (
                 <div className="flex items-center justify-center" style={{ minHeight: '300px' }}>
                   <p
@@ -2134,6 +2161,9 @@ export default function App() {
                   })()}
                 </>
               )}
+              </Frame>
+                );
+              })()}
             </div>
           )}
 
