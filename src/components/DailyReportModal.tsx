@@ -150,7 +150,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
               <RowIcon icon={headIcon} size={28} color={headColor} />
             </div>
           </div>
-          <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)', margin: 0 }}>{headline}</p>
+          <p className="sm-display" style={{ fontSize: '1rem', margin: 0, WebkitTextStroke: '1px var(--sm-ink)' }}>{headline}</p>
         </div>
 
         {/* Rows */}

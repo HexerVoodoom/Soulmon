@@ -79,10 +79,14 @@ export function IntroScreen({ onFinish }: { onFinish: () => void }) {
           }}>
             <img src={ravenMascot} alt="" width={64} height={64} style={{ objectFit: 'contain' }} />
           </div>
-          <h1 style={{
-            fontSize: 30, fontWeight: 800, letterSpacing: -0.5, margin: '18px 0 0',
-            animation: 'sm-intro-wordmark-in 0.5s ease 0.25s both',
-          }}>
+          <h1
+            className="sm-display"
+            style={{
+              fontSize: 28, margin: '18px 0 0',
+              animation: 'sm-intro-wordmark-in 0.5s ease 0.25s both',
+              color: '#ffffff', WebkitTextStroke: '1.5px #0f766e',
+            }}
+          >
             Soulmon
           </h1>
         </>

@@ -4173,3 +4173,40 @@ select:focus-visible {
   filter: drop-shadow(0 0 6px rgba(93,240,224,0.75)) drop-shadow(0 0 12px rgba(93,240,224,0.35));
 }
 .sm-icon-action-btn:disabled img { transform: none; filter: none; }
+
+/* ────────────────────────────────────────────────────────────────────────
+   Fonte de display (Silkscreen, SIL OFL — self-hosted, funciona offline
+   como o resto do app) — usada em títulos/números "grandes", nunca em
+   texto corrido (é toda maiúscula/monoespaçada, ilegível em frase longa).
+   Referência: bronze/ciano com contorno grosso — reproduzido aqui via
+   -webkit-text-stroke + text-shadow em camada, já que a fonte em si só
+   define a FORMA da letra, não o contorno/glow do mockup.
+   ──────────────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Silkscreen';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./assets/fonts/Silkscreen-Regular.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Silkscreen';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(./assets/fonts/Silkscreen-Bold.ttf) format('truetype');
+}
+.sm-display {
+  font-family: 'Silkscreen', ui-monospace, monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sm-primary);
+  -webkit-text-stroke: 1.5px var(--sm-ink);
+  text-shadow: 0 2px 0 var(--sm-ink), 0 0 10px color-mix(in srgb, var(--sm-primary) 60%, transparent);
+}
+/* Variante cobre (para números/labels que usam o acento dourado em vez do teal). */
+.sm-display-gold {
+  color: var(--sm-gold);
+  text-shadow: 0 2px 0 var(--sm-ink), 0 0 10px color-mix(in srgb, var(--sm-gold) 60%, transparent);
+}
