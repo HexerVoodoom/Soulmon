@@ -273,13 +273,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const input: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    background: '#fff', color: 'var(--sm-ink)',
+    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
     border: '2px solid var(--sm-line)', borderRadius: 14, padding: '13px 15px', fontSize: 16,
     outline: 'none',
   };
   const optionBtn = (selected: boolean): React.CSSProperties => ({
     textAlign: 'left', width: '100%', boxSizing: 'border-box',
-    background: selected ? 'var(--sm-primary-soft)' : '#fff',
+    background: selected ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
     color: selected ? 'var(--sm-primary)' : 'var(--sm-ink)',
     border: selected ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
     borderRadius: 14, padding: '13px 15px', fontSize: 14, cursor: 'pointer', marginBottom: 8,

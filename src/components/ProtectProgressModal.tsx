@@ -94,7 +94,7 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
           onKeyDown={e => e.key === 'Enter' && submit()}
           placeholder="voce@exemplo.com"
           style={{
-            width: '100%', boxSizing: 'border-box', background: '#fff', color: 'var(--sm-ink)',
+            width: '100%', boxSizing: 'border-box', background: 'var(--sm-surface)', color: 'var(--sm-ink)',
             border: '2px solid var(--sm-line)', borderRadius: 14, padding: '13px 15px',
             // 16px evita o zoom automático do Safari em iOS ao focar o campo.
             fontSize: 16, outline: 'none',

@@ -103,7 +103,7 @@ export function TaskEditModal({
 
   const inputStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    background: '#fff', color: 'var(--sm-ink)',
+    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
     border: '2px solid var(--sm-line)', borderRadius: 14, padding: '10px 13px', fontSize: 14,
     outline: 'none',
   };
@@ -111,7 +111,7 @@ export function TaskEditModal({
   const chip = (active: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
     border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-    background: active ? 'var(--sm-primary-soft)' : '#fff',
+    background: active ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
     color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
     fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
   });
@@ -212,7 +212,7 @@ export function TaskEditModal({
                             style={{
                               flex: 1, padding: '8px 4px', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
                               border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                              background: active ? 'var(--sm-primary)' : '#fff',
+                              background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
                               color: active ? '#fff' : 'var(--sm-ink)',
                             }}>
                             {preset} {txt.before}

@@ -104,7 +104,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
 
   const inputStyle: React.CSSProperties = {
     width: '100%', boxSizing: 'border-box',
-    background: '#fff', color: 'var(--sm-ink)',
+    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
     border: '2px solid var(--sm-line)', borderRadius: 14, padding: '10px 13px', fontSize: 14,
     outline: 'none',
   };
@@ -112,7 +112,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
   const chip = (active: boolean): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
     border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-    background: active ? 'var(--sm-primary-soft)' : '#fff',
+    background: active ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
     color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
     fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
   });
@@ -185,7 +185,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
                       style={{
                         padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                         border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                        background: active ? 'var(--sm-primary)' : '#fff',
+                        background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
                         color: active ? '#fff' : 'var(--sm-ink)',
                       }}>
                       {label}
