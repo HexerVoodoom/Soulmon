@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emailToSaveId, normalizeForRules, isSaneCareState } from './cloudSync';
+import { emailToSaveId, normalizeForRules, isSaneCareState, MAX_HP_BY_LEVEL, ENERGY_BY_LEVEL } from './cloudSync';
 import { emailToSaveId as appEmailToSaveId } from '../../../src/utils/cloudSave';
 import { MAX_HP_BY_FORM, FORM_REQUIREMENTS, getStageLevel } from '../../../src/types/progression';
 
@@ -29,25 +29,42 @@ describe('saveId do desktop bate com o do app', () => {
   });
 });
 
-// As tabelas do cloudSync são privadas; reproduzimos a mesma leitura que ele
-// faz para garantir que os números continuam iguais aos do jogo.
+// As tabelas do cloudSync são COMPARADAS DIRETO com as do jogo.
+//
+// Até esta rodada este bloco declarava uma TERCEIRA cópia dos números dentro do
+// próprio teste e comparava ELA com o jogo — então uma divergência escrita em
+// `cloudSync.ts` passava verde. Medido: trocar `champion: 5` por `9` na tabela
+// de energia do cloudSync não quebrava um único teste. Era o footgun 9 do
+// CLAUDE.md acontecendo dentro do guard que existe para pegar o footgun 9.
 describe('tabelas copiadas continuam iguais às do jogo', () => {
-  const DESKTOP_MAX_HP: Record<string, number> = {
-    rookie: 3, champion: 3, ultimate: 3, mega: 4, ultra: 5,
-  };
-  const DESKTOP_ENERGY: Record<string, number> = {
-    rookie: 4, champion: 5, ultimate: 5, mega: 6, ultra: 6,
-  };
-
-  it('HP máximo por nível', () => {
-    expect(DESKTOP_MAX_HP).toEqual({ ...MAX_HP_BY_FORM });
+  it('HP máximo por nível — a tabela REAL do cloudSync', () => {
+    expect(MAX_HP_BY_LEVEL).toEqual({ ...MAX_HP_BY_FORM });
   });
 
-  it('barras de energia por nível', () => {
-    const fromGame = Object.fromEntries(
+  it('barras de energia por nível — a tabela REAL do cloudSync', () => {
+    const doJogo = Object.fromEntries(
       Object.entries(FORM_REQUIREMENTS).map(([level, r]) => [level, r.required]),
     );
-    expect(DESKTOP_ENERGY).toEqual(fromGame);
+    expect(ENERGY_BY_LEVEL).toEqual(doJogo);
+  });
+
+  it('AUTOVERIFICAÇÃO: uma tabela divergente seria reprovada', () => {
+    // Sem este caso, um `toEqual` contra um objeto vazio dos dois lados passaria.
+    expect({ ...MAX_HP_BY_LEVEL, mega: 9 }).not.toEqual({ ...MAX_HP_BY_FORM });
+    expect({ ...ENERGY_BY_LEVEL, champion: 9 }).not.toEqual(
+      Object.fromEntries(Object.entries(FORM_REQUIREMENTS).map(([l, r]) => [l, r.required])),
+    );
+    expect(Object.keys(MAX_HP_BY_LEVEL).length).toBeGreaterThan(0);
+  });
+
+  it('todo nível do jogo existe nas duas tabelas do desktop', () => {
+    // O `?? 3` / `?? 4` dos call sites transforma nível FALTANDO em número
+    // plausível e errado, sem erro nenhum. Um nível novo em FORM_REQUIREMENTS
+    // sem par aqui é exatamente essa falha silenciosa.
+    for (const level of Object.keys(FORM_REQUIREMENTS)) {
+      expect(MAX_HP_BY_LEVEL[level], `HP de ${level}`).toBeTypeOf('number');
+      expect(ENERGY_BY_LEVEL[level], `energia de ${level}`).toBeTypeOf('number');
+    }
   });
 
   it('a regra de prefixo do estágio casa com getStageLevel', () => {

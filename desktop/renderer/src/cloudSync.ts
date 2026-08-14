@@ -11,12 +11,17 @@
 import { APP_URL } from './config';
 import type { GenericLine } from './sprites';
 
-/** Espelha MAX_HP_BY_FORM (src/types/progression.ts). */
-const MAX_HP_BY_LEVEL: Record<string, number> = {
+/** Espelha MAX_HP_BY_FORM (src/types/progression.ts).
+ *  EXPORTADA só para o teste de paridade: enquanto era privada, o teste
+ *  comparava uma TERCEIRA cópia (escrita dentro dele) contra o jogo, e uma
+ *  divergência escrita AQUI passava verde — footgun 9 dentro do próprio guard.
+ *  Medido: trocar `champion: 5` por `9` na tabela de energia não quebrava nada. */
+export const MAX_HP_BY_LEVEL: Record<string, number> = {
   rookie: 3, champion: 3, ultimate: 3, mega: 4, ultra: 5,
 };
-/** Espelha FORM_REQUIREMENTS[].required — barras de energia = tarefas exigidas. */
-const ENERGY_BY_LEVEL: Record<string, number> = {
+/** Espelha FORM_REQUIREMENTS[].required — barras de energia = tarefas exigidas.
+ *  Exportada pelo mesmo motivo de `MAX_HP_BY_LEVEL` (paridade sob teste). */
+export const ENERGY_BY_LEVEL: Record<string, number> = {
   rookie: 4, champion: 5, ultimate: 5, mega: 6, ultra: 6,
 };
 

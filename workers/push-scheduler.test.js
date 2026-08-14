@@ -202,13 +202,24 @@ describe('push-scheduler — IDIOMA da notificação (o bug que já aconteceu)',
     return msg?.notification ?? msg?.data ?? msg;
   }
 
+  // 21h saiu da lista porque a notificação das 21h deixou de existir — a
+  // auditoria de tom a removeu do cliente e ela tinha ficado viva só aqui
+  // (ver `workers/pushCopy.parity.test.js`, que trava as três árvores). O caso
+  // não foi afrouxado: a ausência às 21h virou asserção no teste abaixo.
   it('quem escolheu EN recebe TÍTULO e corpo em inglês (incl. as 22h)', async () => {
-    for (const hour of [10, 16, 21, 22]) {
+    for (const hour of [10, 16, 22]) {
       const n = await tituloPara({ hour, language: 'en-US' });
       const texto = JSON.stringify(n);
       expect(texto, `hora ${hour}`).not.toMatch(/[áàâãéêíóôõúçÁÂÃÉÊÍÓÔÕÚÇ]/);
       expect(texto).toContain('Bito');
     }
+  });
+
+  it('às 21h NADA é enviado por nenhum dos dois canais', async () => {
+    // Antes o worker mandava "⏰ está preocupado! Ainda dá tempo! Complete suas
+    // tarefas antes de dormir 🌙" — incondicionalmente, inclusive para quem já
+    // tinha cumprido a meta. O cliente já não mandava; só esta árvore mandava.
+    expect(await tituloPara({ hour: 21, language: 'pt-BR' })).toBeUndefined();
   });
 
   it('quem escolheu PT recebe em português', async () => {

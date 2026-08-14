@@ -1,5 +1,10 @@
 // Cloudflare Worker — Scheduled push notifications for Soulmon
-// Cron triggers: 10h, 16h, 21h (task reminders) + 22h (goodnight) — BRT (UTC-3)
+// Cron triggers: 10h, 16h + 22h (goodnight) — BRT (UTC-3)
+//
+// ⚠️ O TEXTO e as HORAS não moram aqui: são de `functions/api/_pushCopy.js`,
+// que é o dono único das três árvores (cliente, worker, cron). Este arquivo é
+// deploy MANUAL (`wrangler deploy`) e o cliente sobe sozinho — foi assim que o
+// nudge das 21h ficou vivo aqui depois de ter sido removido do cliente.
 //
 // Sends to BOTH channels stored in the same KV namespace: `push:` keys via Web
 // Push (browsers/PWA installs) and `fcm:` keys via Firebase Cloud Messaging
@@ -16,45 +21,10 @@
 import { sendWebPush } from './webpush.js';
 import { isAllowedPushEndpoint } from '../functions/api/_pushTargets.js';
 import { getFcmAccessToken, sendFcmPush } from './fcm.js';
+import { pushCopy } from '../functions/api/_pushCopy.js';
 
 const VAPID_PUBLIC_KEY = 'BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY';
 const CONTACT = 'mailto:contact@digiapp.app';
-
-function getNotification(brtHour, petName, language) {
-  const ispt = language === 'pt-BR';
-  const name = petName || 'Soulmon';
-
-  if (brtHour === 22) {
-    return {
-      // O título vinha em PT para todo mundo — quem escolheu inglês recebia
-      // "está desejando boa noite" com o corpo em inglês logo abaixo.
-      title: ispt ? `🌙 ${name} está desejando boa noite` : `🌙 ${name} is saying goodnight`,
-      body: ispt ? 'Durma bem! Até amanhã 😴' : 'Sleep well! See you tomorrow 😴',
-      tag: 'pet-goodnight',
-    };
-  }
-  if (brtHour === 21) {
-    return {
-      title: ispt ? `⏰ ${name} está preocupado!` : `⏰ ${name} is worried!`,
-      body: ispt
-        ? 'Ainda dá tempo! Complete suas tarefas antes de dormir 🌙'
-        : "Still time! Complete your tasks before bed 🌙",
-      tag: 'pet-nudge-21',
-    };
-  }
-  if (brtHour === 16) {
-    return {
-      title: ispt ? `📋 ${name} está te lembrando!` : `📋 ${name} is reminding you!`,
-      body: ispt ? 'Suas tarefas ainda estão esperando! 🎯' : 'Your tasks are still waiting! 🎯',
-      tag: 'pet-nudge-16',
-    };
-  }
-  return {
-    title: ispt ? `☀️ ${name} diz bom dia!` : `☀️ ${name} says good morning!`,
-    body: ispt ? 'Vamos começar o dia com foco! 💪' : "Let's start the day focused! 💪",
-    tag: 'pet-nudge-10',
-  };
-}
 
 // Drains every key under `prefix`, running `handle(sub, name)` for each —
 // `handle` returns 'sent' | 'failed' | 'removed' (and deletes the KV entry
@@ -90,6 +60,14 @@ export default {
     const date = new Date(event.scheduledTime);
     const brtHour = (date.getUTCHours() - 3 + 24) % 24;
 
+    // Hora sem notificação declarada em `_pushCopy.js` (ex.: um cron das 21h
+    // que ficou para trás no dashboard depois do deploy) não vira mensagem
+    // genérica: sai sem tocar no KV nem mintar token de FCM.
+    if (!pushCopy(brtHour, 'x', 'en-US')) {
+      console.log(`[BRT ${brtHour}h] sem notificação declarada — nada enviado`);
+      return;
+    }
+
     const webPushCounts = { sent: 0, failed: 0, removed: 0 };
     const fcmCounts = { sent: 0, failed: 0, removed: 0 };
 
@@ -111,7 +89,8 @@ export default {
           await env.PUSH_SUBSCRIPTIONS.delete(name);
           return 'removed';
         }
-        const notif = getNotification(brtHour, sub.petName || sub.digimonName, sub.language);
+        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language);
+        if (!notif) return 'skipped';
         const result = await sendWebPush(
           { endpoint: sub.endpoint, keys: sub.keys },
           notif,
@@ -139,7 +118,8 @@ export default {
     if (serviceAccount) {
       const accessToken = await getFcmAccessToken(serviceAccount);
       await drainPrefix(env, 'fcm:', async (sub, name) => {
-        const notif = getNotification(brtHour, sub.petName || sub.digimonName, sub.language);
+        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language);
+        if (!notif) return 'skipped';
         const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
         if (result.ok) return 'sent';
         if (result.error === 'UNREGISTERED') {

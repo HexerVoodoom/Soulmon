@@ -3,9 +3,14 @@ main = "push-scheduler.js"
 compatibility_date = "2024-09-23"
 
 # Cron triggers (UTC) — all times are BRT (UTC-3) + 3h
-# 10h BRT = 13h UTC, 16h BRT = 19h UTC, 21h BRT = 00h UTC next day, 22h BRT = 01h UTC
+# 10h BRT = 13h UTC, 16h BRT = 19h UTC, 22h BRT = 01h UTC
+#
+# ⚠️ As horas são derivadas de PUSH_HOURS_BRT em `functions/api/_pushCopy.js`.
+# `workers/pushCopy.parity.test.js` trava esta lista contra o módulo — o cron
+# das 21h ("0 0 * * *") saiu junto com o nudge das 21h, que a auditoria de tom
+# tinha removido só do cliente.
 [triggers]
-crons = ["0 13 * * *", "0 19 * * *", "0 0 * * *", "0 1 * * *"]
+crons = ["0 1 * * *", "0 13 * * *", "0 19 * * *"]
 
 [[kv_namespaces]]
 binding = "PUSH_SUBSCRIPTIONS"
