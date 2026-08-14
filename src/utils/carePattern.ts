@@ -113,6 +113,26 @@ export function computeCarePattern(
   return { pattern: CARE_PATTERNS[id], activeDays, total, concentration, confident };
 }
 
+/**
+ * Histórico COMPLETO de cuidado de um save: tarefas avulsas (`completedTasks`)
+ * **mais** atividades recorrentes (`activityLog`).
+ *
+ * Existe como função única porque a lista já foi montada em dois lugares e eles
+ * divergiram: a página de Evolução previa o galho com o log de atividades e a
+ * cerimônia decidia sem ele, então o app prometia um galho e entregava outro
+ * para quem cumpre hábito por atividade recorrente — o mecanismo principal.
+ * Footgun nº 9 (`CLAUDE.md`): regra copiada é regra que diverge em silêncio.
+ */
+export function careHistory(state: {
+  completedTasks?: Array<{ completedAt: string }>;
+  activityLog?: string[];
+}): Array<{ completedAt: string }> {
+  return [
+    ...(state.completedTasks ?? []),
+    ...(state.activityLog ?? []).map(completedAt => ({ completedAt })),
+  ];
+}
+
 /** O galho que cada padrão puxa. Nenhum é mais forte — são rumos diferentes. */
 export function patternBranch(id: CarePatternId): 'virus' | 'data' | 'vaccine' {
   if (id === 'constante') return 'vaccine';

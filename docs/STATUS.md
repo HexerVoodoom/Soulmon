@@ -401,6 +401,30 @@ dentro dele e continuará abrindo o DigiApp até ser substituído pelo build do
 próximo run do CI. ✅ Confirmado pelo dono em aparelho real: o APK novo abre o
 Soulmon.
 
+### Rodada 4 — a correção virou a fronteira nova
+
+`product/soulmon-01/sweeper/round4-audit.md`. Três defeitos, **dois deles no
+código que as rodadas 1–3 acabaram de escrever**, e ambos do mesmo subtipo:
+**fix aplicado por ARQUIVO em vez de por REGRA**.
+
+| sev | defeito | fronteira |
+|---|---|---|
+| 🔴 | A página de Evolução previa o galho com `completedTasks + activityLog`; a cerimônia decidia só com `completedTasks`. Quem cumpre hábito por atividade recorrente via "Harmonia" e evoluía para "Vírus" — e evolução não se desfaz pela via normal | `App.tsx:2173` ↔ `App.tsx:924`, duas chamadas da mesma regra, uma atualizada |
+| 🟠 | Adotar save da nuvem gravava `SAVE_ID` **antes** de `GAME_STATE`, com `setItem` cru. Storage cheio = identidade trocada sem o dado, sem reload e sem aviso; o cloud save seguinte subia o estado local antigo por cima do save do outro aparelho | os 4 call sites que substituem o save inteiro ↔ o `safeStorage` da rodada 3, que parou no provider |
+| 🟠 | O teto por IP rodava **antes** do cache de borda: acerto de cache custa ~zero KV e mesmo assim gastava uma das 20 varreduras/min. Sob CGNAT/escola, 30 jogadores reais num IP levavam 429 na resposta mais barata da rota | teto de custo ↔ cache, em `community.js` |
+
+Corrigidos, com regressão travada e **verificação nas duas pontas**
+(`careHistory.contract.test.ts`, `adoptCloudSave.test.ts`, `costCeiling.test.js`).
+Suíte: 662 → **685 testes**, 0 falhas.
+
+**Fechado com número:** o crescimento do `localStorage` **não é risco** —
+`completedTasks` (a única estrutura sem teto) custa ~190 kB/ano para um usuário
+de 4 tarefas/dia, contra ~5 MB de cota. Mais de uma década.
+
+**Continuam ABERTOS:** last-write-wins do cloud save entre dois aparelhos
+(recomendação registrada no §6 do relatório: `savedAt` + 409 no `save.js`),
+"usuário com SW antigo recebe deploy novo", e a deriva `workers/` ↔ `functions/`.
+
 ### 🔴 ABERTO — `minSdkVersion = 24` é uma promessa que o app não cumpre
 
 Descoberto porque o smoke do APK falhou e o diagnóstico mostrou

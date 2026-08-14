@@ -144,9 +144,18 @@ export async function onRequestOptions() {
 
 /**
  * Portão de custo à frente do roteador. Ordem de propósito:
- *   1. teto por IP  — barato, e é o que impede o abuso de pagar zero;
- *   2. cache de borda — devolve sem tocar no KV;
+ *   1. cache de borda — se acertar, a resposta NÃO custa leitura de KV;
+ *   2. teto por IP — o teto PESADO só é cobrado de quem vai mesmo varrer o KV;
  *   3. handler real.
+ *
+ * ⚠️ A ordem já foi a inversa (teto antes do cache) e isso era um falso positivo
+ * de graça: um acerto de cache custa ~zero e mesmo assim gastava uma das 20
+ * varreduras/min do IP. Sob CGNAT, escola ou empresa — dezenas de jogadores
+ * REAIS atrás de um IP só — isso barrava justamente a resposta mais barata que
+ * a rota tem (o ranking, igual para todo mundo). Um teto de CUSTO que recusa
+ * requisição sem custo só produz dano. Um acerto de cache passa a gastar o teto
+ * LEVE, que continua impedindo tráfego infinito.
+ *
  * A autorização continua onde estava (dentro do handler): nada aqui autoriza
  * ninguém, e o cache só guarda resposta de ação pública.
  */
@@ -156,26 +165,27 @@ export async function onRequest(context) {
   const action = url.searchParams.get('action');
 
   const ip = clientKey(request);
-  const gate = takeToken(
-    'community',
-    ip,
-    HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT,
-  );
-  if (!gate.ok) {
-    console.warn('[community] rate limited', { action, retryAfter: gate.retryAfter });
-    return tooManyRequests(gate.retryAfter, CORS);
-  }
-
   const cacheable =
     request.method === 'GET' &&
     CACHEABLE_ACTIONS.has(action) &&
     typeof caches !== 'undefined' &&
     caches.default;
 
-  if (cacheable) {
-    const hit = await caches.default.match(request).catch(() => null);
-    if (hit) return hit;
+  let hit = null;
+  if (cacheable) hit = await caches.default.match(request).catch(() => null);
+
+  // Acerto de cache = teto leve; qualquer coisa que chegue ao KV = teto da ação.
+  const gate = takeToken(
+    'community',
+    ip,
+    hit ? LIGHT_LIMIT : (HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT),
+  );
+  if (!gate.ok) {
+    console.warn('[community] rate limited', { action, cached: !!hit, retryAfter: gate.retryAfter });
+    return tooManyRequests(gate.retryAfter, CORS);
   }
+
+  if (hit) return hit;
 
   const res = await handleCommunity(context);
 

@@ -905,20 +905,19 @@ async function onRequest(context) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
   const ip = clientKey(request);
+  const cacheable = request.method === "GET" && CACHEABLE_ACTIONS.has(action) && typeof caches !== "undefined" && caches.default;
+  let hit = null;
+  if (cacheable) hit = await caches.default.match(request).catch(() => null);
   const gate = takeToken(
     "community",
     ip,
-    HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT
+    hit ? LIGHT_LIMIT : HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT
   );
   if (!gate.ok) {
-    console.warn("[community] rate limited", { action, retryAfter: gate.retryAfter });
+    console.warn("[community] rate limited", { action, cached: !!hit, retryAfter: gate.retryAfter });
     return tooManyRequests(gate.retryAfter, CORS3);
   }
-  const cacheable = request.method === "GET" && CACHEABLE_ACTIONS.has(action) && typeof caches !== "undefined" && caches.default;
-  if (cacheable) {
-    const hit = await caches.default.match(request).catch(() => null);
-    if (hit) return hit;
-  }
+  if (hit) return hit;
   const res = await handleCommunity(context);
   if (cacheable && res.status === 200) {
     const cached = new Response(res.body, res);
@@ -1731,7 +1730,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-ilU5XO/functionsRoutes-0.4444352728654303.mjs
+// ../.wrangler/tmp/pages-sjNxxw/functionsRoutes-0.5228819320818755.mjs
 var routes = [
   {
     routePath: "/api/billing",

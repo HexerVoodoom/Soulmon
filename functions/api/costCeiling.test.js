@@ -183,3 +183,59 @@ describe('subscribe: escrita sem teto era custo de KV + fetch do cron por 1 ano'
     expect((await subscribeDelete({ request: del(), env })).status).toBe(429);
   });
 });
+
+// ---------------------------------------------------------------------------
+// ORDEM cache→teto. Achado da rodada 4: o teto rodava ANTES do cache, então um
+// acerto de cache (custo ~zero) gastava uma das 20 varreduras/min do IP. Sob
+// CGNAT / escola / empresa, dezenas de jogadores REAIS dividem um IP e eram
+// barrados exatamente na resposta mais barata da rota. Teto de custo que recusa
+// requisição sem custo só produz dano.
+// ---------------------------------------------------------------------------
+describe('community: acerto de cache não gasta o teto PESADO (falso positivo sob CGNAT)', () => {
+  /** Cache de borda falso, sempre com acerto. */
+  function cacheSempreAcerta() {
+    const resposta = () => new Response(JSON.stringify({ players: [], cached: true }), {
+      status: 200, headers: { 'Content-Type': 'application/json' },
+    });
+    return { default: { match: async () => resposta(), put: async () => {} } };
+  }
+
+  it('AUTOVERIFICAÇÃO: o cache falso realmente responde sem tocar no KV', async () => {
+    vi.stubGlobal('caches', cacheSempreAcerta());
+    const kv = fakeKV(seedComPerfis(5));
+    const res = await community({ request: get('action=players'), env: { DIGIAPP_SAVES: kv } });
+    expect(res.status).toBe(200);
+    expect((await res.json()).cached).toBe(true);
+    expect(kv.counts.list + kv.counts.get).toBe(0);
+  });
+
+  it('50 acertos de cache no mesmo minuto continuam 200 (o teto pesado é 20)', async () => {
+    vi.stubGlobal('caches', cacheSempreAcerta());
+    const kv = fakeKV(seedComPerfis(5));
+    for (let i = 0; i < 50; i++) {
+      const res = await community({ request: get('action=players'), env: { DIGIAPP_SAVES: kv } });
+      expect(res.status).toBe(200);
+    }
+    expect(kv.counts.list).toBe(0);
+  });
+
+  it('mas o teto LEVE continua valendo — cache não é passe livre infinito', async () => {
+    vi.stubGlobal('caches', cacheSempreAcerta());
+    const kv = fakeKV(seedComPerfis(5));
+    let barrados = 0;
+    for (let i = 0; i < 130; i++) {
+      const res = await community({ request: get('action=players'), env: { DIGIAPP_SAVES: kv } });
+      if (res.status === 429) barrados++;
+    }
+    expect(barrados).toBeGreaterThan(0);
+  });
+
+  it('sem cache, a 21ª varredura continua 429 (a proteção de KV não afrouxou)', async () => {
+    vi.stubGlobal('caches', undefined);
+    const kv = fakeKV(seedComPerfis(5));
+    for (let i = 0; i < 20; i++) {
+      expect((await community({ request: get('action=players'), env: { DIGIAPP_SAVES: kv } })).status).toBe(200);
+    }
+    expect((await community({ request: get('action=players'), env: { DIGIAPP_SAVES: kv } })).status).toBe(429);
+  });
+});

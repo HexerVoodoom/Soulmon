@@ -31,6 +31,7 @@ import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { writeLocal } from './utils/safeStorage';
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
@@ -55,7 +56,7 @@ import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { heartDropBonus, rollPetPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
-import { computeCarePattern, resolveBranch } from './utils/carePattern';
+import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
 import {
@@ -125,13 +126,11 @@ export default function App() {
   // Estatísticas e desempata o galho na evolução. useMemo porque percorre o
   // histórico e o CompanionHUD é memo().
   const carePatternReading = useMemo(
-    () => computeCarePattern([
-      ...(gameState.completedTasks ?? []),
-      // Atividades recorrentes entram pelo log próprio: `completedTasks` só
-      // recebe tarefas avulsas, e sem isto o ritmo ficava cego justamente para
-      // o mecanismo principal de hábito do app.
-      ...(gameState.activityLog ?? []).map(completedAt => ({ completedAt })),
-    ]),
+    // `careHistory` junta tarefas avulsas + atividades recorrentes: sem o log
+    // de atividades o ritmo fica cego justamente para o mecanismo principal de
+    // hábito do app. É a MESMA função usada pela cerimônia de evolução — a
+    // previsão e a decisão não podem ler históricos diferentes.
+    () => computeCarePattern(careHistory(gameState)),
     [gameState.completedTasks, gameState.activityLog],
   );
   const [guideModalOpen, setGuideModalOpen] = useState(false);
@@ -324,21 +323,30 @@ export default function App() {
 
   /** Passa o save local para a identidade do e-mail e sobe pra nuvem. */
   const handleProtectProgress = useCallback(async (email: string) => {
-    const { emailToSaveId, cloudLoad, cloudSave } = await import('./utils/cloudSave');
+    const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave } = await import('./utils/cloudSave');
     const newSaveId = await emailToSaveId(email);
 
     // Já existe um Soulmon nesse e-mail (outro aparelho): adota em vez de
     // sobrescrever — apagar o save antigo de alguém seria bem pior do que
     // perder o progresso local recente.
     const existing = await cloudLoad(newSaveId);
-    localStorage.setItem(STORAGE_KEYS.USER_EMAIL, email);
-    localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
-    localStorage.setItem(STORAGE_KEYS.PROTECT_PROMPT_AT, String(Date.now()));
     if (existing) {
-      localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(existing));
+      // `adoptCloudSave` grava o SAVE antes da identidade e nunca lança: com o
+      // storage cheio, trocar o id sem o dado faria o próximo cloud save subir
+      // o estado local antigo por cima do save do outro aparelho.
+      if (adoptCloudSave(newSaveId, existing, email) !== 'ok') {
+        toast.error(language === 'pt-BR'
+          ? 'Não consegui carregar o progresso deste e-mail neste aparelho. Nada foi alterado.'
+          : "Couldn't load this email's progress on this device. Nothing was changed.");
+        return;
+      }
+      writeLocal(STORAGE_KEYS.PROTECT_PROMPT_AT, String(Date.now()));
       window.location.reload();
       return;
     }
+    writeLocal(STORAGE_KEYS.USER_EMAIL, email);
+    writeLocal(STORAGE_KEYS.SAVE_ID, newSaveId);
+    writeLocal(STORAGE_KEYS.PROTECT_PROMPT_AT, String(Date.now()));
     await cloudSave(newSaveId, gameState);
     setSaveId(newSaveId);
     setProtectPrompt(null);
@@ -918,7 +926,10 @@ export default function App() {
       // é melhor que o outro. Ver utils/carePattern.ts.
       const newCurrentBranch = resolveBranch(
         { virus: prev.virusPoints, data: prev.dataPoints, vaccine: prev.vaccinePoints },
-        computeCarePattern(prev.completedTasks),
+        // `careHistory(prev)`, não `prev.completedTasks`: a página de Evolução
+        // prevê o galho com tarefas + activityLog, e ler só as tarefas aqui
+        // fazia a cerimônia entregar um galho diferente do prometido.
+        computeCarePattern(careHistory(prev)),
         prev.currentBranch,
       );
 
@@ -1613,23 +1624,24 @@ export default function App() {
     } else {
       // O e-mail vira a identidade de sync — mesmo mecanismo do login manual em
       // Configurações (saveId = hash do e-mail).
-      const { emailToSaveId, cloudLoad } = await import('./utils/cloudSave');
+      const { emailToSaveId, cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
       const newSaveId = await emailToSaveId(normalizedEmail);
-      localStorage.setItem(STORAGE_KEYS.USER_EMAIL, normalizedEmail);
+      writeLocal(STORAGE_KEYS.USER_EMAIL, normalizedEmail);
 
       // Esse e-mail já tem um Soulmon salvo na nuvem (reinstalação/outro
       // aparelho) — adota o save existente em vez de sobrescrever com uma
       // criatura nova. Precisa de reload: o gameState inteiro muda de baixo do
       // GameStateProvider, o que setGameState não faz de forma segura.
       const existing = await cloudLoad(newSaveId);
-      if (existing) {
-        localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
-        localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(existing));
+      // Só recarrega se o save da nuvem REALMENTE ficou gravado. Falhou =
+      // segue o ritual normal com o progresso local, em vez de recarregar num
+      // id que não tem dado nenhum por trás.
+      if (existing && adoptCloudSave(newSaveId, existing, normalizedEmail) === 'ok') {
         window.location.reload();
         return;
       }
 
-      localStorage.setItem(STORAGE_KEYS.SAVE_ID, newSaveId);
+      writeLocal(STORAGE_KEYS.SAVE_ID, newSaveId);
       setSaveId(newSaveId);
     }
 
@@ -2217,24 +2229,33 @@ export default function App() {
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
               onRestoreFromCloud={async (id) => {
-                const { cloudLoad } = await import('./utils/cloudSave');
+                const { cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
                 const state = await cloudLoad(id);
                 if (!state) return false;
-                localStorage.setItem(STORAGE_KEYS.SAVE_ID, id);
-                localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(state));
+                // `false` (e não um reload cego) quando a gravação local falha:
+                // a UI já trata isso como "não deu" e o save antigo continua.
+                if (adoptCloudSave(id, state) !== 'ok') return false;
                 window.location.reload();
                 return true;
               }}
               onLoginWithEmail={async (email) => {
-                const { emailToSaveId, cloudLoad, cloudSave } = await import('./utils/cloudSave');
+                const { emailToSaveId, cloudLoad, cloudSave, adoptCloudSave } = await import('./utils/cloudSave');
                 const id = await emailToSaveId(email);
                 const state = await cloudLoad(id);
-                localStorage.setItem(STORAGE_KEYS.SAVE_ID, id);
-                localStorage.setItem(STORAGE_KEYS.USER_EMAIL, email.trim().toLowerCase());
                 if (state) {
-                  // Existing account on this email — adopt its cloud progress
-                  localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(state));
+                  // Existing account on this email — adopt its cloud progress.
+                  // Dado primeiro, identidade depois: trocar o `saveId` sem o
+                  // save gravado faz o próximo cloud save subir o estado LOCAL
+                  // por cima do save do outro aparelho.
+                  // Lançar aqui é de propósito: o `catch` do SettingsPage já
+                  // mostra o estado de erro, e é melhor do que recarregar num
+                  // `saveId` sem save por trás.
+                  if (adoptCloudSave(id, state, email) !== 'ok') {
+                    throw new Error('adoptCloudSave falhou');
+                  }
                 } else {
+                  writeLocal(STORAGE_KEYS.SAVE_ID, id);
+                  writeLocal(STORAGE_KEYS.USER_EMAIL, email.trim().toLowerCase());
                   // First login for this email — claim it with the current progress
                   await cloudSave(id, gameState);
                 }
