@@ -425,6 +425,27 @@ de 4 tarefas/dia, contra ~5 MB de cota. Mais de uma década.
 (recomendação registrada no §6 do relatório: `savedAt` + 409 no `save.js`),
 "usuário com SW antigo recebe deploy novo", e a deriva `workers/` ↔ `functions/`.
 
+### Rodada 6 — fuzzing: a fixture que certificava uma tela branca
+
+`product/soulmon-01/sweeper/round6-fuzz.md`. Instrumento: **teste de propriedade
+sobre estado de save hostil**, e o consumidor REAL do estado em vez de um espião.
+
+| sev | defeito | situação |
+|---|---|---|
+| 🔴 | Todo save que não traz `activities` (ou traz `tasks` não-array etc.) é **tela branca permanente**: `hydrateSave` só fazia `?? padrão` — não cobria `activities`/`healthPoints`/`totalXP`/atributos e não garantia TIPO nenhum. A virada do dia, que roda no mount, lançava dentro do updater. Alcançável por `adoptCloudSave`, que grava qualquer objeto simples vindo de `/api/save` | **corrigido** (`arr()`/`num()` em `hydrateSave`) |
+| 🟠 | `resolveBranch` devolvia **`undefined`** (fora do próprio tipo) quando um atributo era não-finito: `Math.max` → `NaN` → lista de líderes vazia. Galho previsto indefinido na página de Evolução e `currentBranch: undefined` no save | **corrigido** (`carePattern.ts`) |
+| 🟠 | **Em rookie, degenerar é ganho puro**: HP volta cheio *e* `perfectDays` é SETADO em 2 (de 4). Quem abandona o pet 3 dias progride mais que quem cumpre a rotina. Contraria "perfectDays só acumulam" | **ABERTO — decisão do dono.** Travado por teste existente que diz "for free". Fix de 3 linhas no §4 do relatório, não afrouxa nada |
+
+**Achado sobre o aparato:** `GameStateContext.hostile.test.tsx` (rodada 2) monta
+um espião que só serializa o estado — **nunca monta `useDailyReset`**. A fixture
+dele, `{ perfectDays: 10 }`, passava há três rodadas certificando exatamente o
+🔴 acima. É o segundo guard cego em duas rodadas (o primeiro foi
+`cloudSync.test.ts`, rodada 5). Suíte: 766 → **829 testes**, 0 falhas.
+
+**Próximo instrumento proposto: mutation testing** — o único que mede o
+*detector* em vez do *detectado*, e o único que teria pego os três guards cegos
+(este, o da rodada 5 e o `simulateReset` do footgun 9) de uma vez.
+
 ### 🔴 ABERTO — `minSdkVersion = 24` é uma promessa que o app não cumpre
 
 Descoberto porque o smoke do APK falhou e o diagnóstico mostrou

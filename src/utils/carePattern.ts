@@ -154,10 +154,21 @@ export function resolveBranch(
   reading: CareReading,
   fallback: 'virus' | 'data' | 'vaccine' = 'data',
 ): 'virus' | 'data' | 'vaccine' {
-  const max = Math.max(points.virus, points.data, points.vaccine);
+  // Ponto NÃO-FINITO vira 0. Sem isto, um `virusPoints` ausente/NaN no save
+  // fazia `Math.max` dar NaN, `NaN <= 0` ser false, a lista de líderes ficar
+  // VAZIA (nada é === NaN) e a função devolver `leaders[0]` — ou seja,
+  // **`undefined`**, um valor fora do próprio tipo de retorno. O galho previsto
+  // na página de Evolução ficava indefinido e `currentBranch: undefined` era
+  // gravado no save. Achado por fuzzing na rodada 6.
+  const safe = {
+    virus: Number.isFinite(points?.virus) ? points.virus : 0,
+    data: Number.isFinite(points?.data) ? points.data : 0,
+    vaccine: Number.isFinite(points?.vaccine) ? points.vaccine : 0,
+  };
+  const max = Math.max(safe.virus, safe.data, safe.vaccine);
   if (max <= 0) return reading.confident ? patternBranch(reading.pattern.id) : fallback;
 
-  const leaders = (['virus', 'data', 'vaccine'] as const).filter(k => points[k] === max);
+  const leaders = (['virus', 'data', 'vaccine'] as const).filter(k => safe[k] === max);
   if (leaders.length === 1) return leaders[0];
 
   // Empate: o jeito como a pessoa cuidou decide, se houver leitura confiável.

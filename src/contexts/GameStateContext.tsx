@@ -243,24 +243,60 @@ interface GameStateContextType {
 const GameStateContext = createContext<GameStateContextType | null>(null);
 
 /**
+ * `?? padrão` só corrige AUSÊNCIA. O save vem do localStorage E da nuvem, e
+ * `/api/save` valida apenas que `state` é um objeto — o TIPO de cada campo é
+ * dado não confiável. Um `tasks: {}` ou um `activities: 3` passa direto por
+ * `??` e só explode lá na frente, dentro do updater da virada do dia (que roda
+ * no mount): a árvore do React desmonta e o usuário fica na tela branca
+ * PERMANENTE, porque toda carga seguinte lê o mesmo save.
+ *
+ * Estes dois helpers fazem o que o `??` não faz: garantem o TIPO.
+ */
+const arr = <T,>(v: unknown, fallback: T[] = []): T[] => (Array.isArray(v) ? (v as T[]) : fallback);
+const num = (v: unknown, fallback: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+
+/**
  * Migra/completa um save carregado. Isolada da leitura de propósito: o
  * inicializador precisa poder cair para o estado novo se QUALQUER coisa aqui
  * lançar, e para isso o corpo tem que ser uma expressão que ele possa embrulhar.
+ *
+ * ATENÇÃO: todo campo NÃO-opcional de `GameState` precisa de linha aqui. Faltou
+ * `activities` e `healthPoints` por muito tempo, e o resultado era literalmente
+ * a tela branca acima para qualquer save que não os trouxesse — inclusive um
+ * `{}` adotado da nuvem (`adoptCloudSave` grava qualquer objeto simples).
+ * Há guard travando isso em `GameStateContext.hydrate.fuzz.test.tsx`.
  */
 function hydrateSave(loadedState: Partial<GameState>): GameState {
   const savedEggType = readLocal(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
+  const maxHP = getMaxHPForStage(loadedState.evolutionStage ?? 'rookie');
   return {
         ...loadedState,
-        tasks: loadedState.tasks ?? [],
-        completedTasks: loadedState.completedTasks ?? [],
-        activityStats: loadedState.activityStats ?? {},
-        maxHealthPoints: getMaxHPForStage(loadedState.evolutionStage ?? 'rookie'),
-        energyPoints: loadedState.energyPoints ?? 0,
-        perfectDays: loadedState.perfectDays ?? 0,
+        activities: arr(loadedState.activities),
+        tasks: arr(loadedState.tasks),
+        completedTasks: arr(loadedState.completedTasks),
+        activityStats: (loadedState.activityStats && typeof loadedState.activityStats === 'object'
+          && !Array.isArray(loadedState.activityStats)) ? loadedState.activityStats : {},
+        maxHealthPoints: maxHP,
+        // Save sem HP é save corrompido, não save de quem estava mal: começa
+        // cheio. O oposto (0) degeneraria o pet na primeira virada por causa de
+        // um campo ausente.
+        healthPoints: Math.min(maxHP, Math.max(0, num(loadedState.healthPoints, maxHP))),
+        totalXP: num(loadedState.totalXP, 0),
+        virusPoints: num(loadedState.virusPoints, 0),
+        dataPoints: num(loadedState.dataPoints, 0),
+        vaccinePoints: num(loadedState.vaccinePoints, 0),
+        digivolutionSegments: num(loadedState.digivolutionSegments, 0),
+        digivolutionSegmentsNeeded: num(loadedState.digivolutionSegmentsNeeded, 999),
+        lastResetDate: typeof loadedState.lastResetDate === 'string'
+          ? loadedState.lastResetDate : new Date().toDateString(),
+        evolutionStage: typeof loadedState.evolutionStage === 'string'
+          ? loadedState.evolutionStage : 'rookie',
+        energyPoints: num(loadedState.energyPoints, 0),
+        perfectDays: num(loadedState.perfectDays, 0),
         lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
-        poopEventsScheduled: loadedState.poopEventsScheduled ?? [],
-        poopEventsCompleted: loadedState.poopEventsCompleted ?? [],
-        unlockedEvolutions: loadedState.unlockedEvolutions ?? ['rookie'],
+        poopEventsScheduled: arr(loadedState.poopEventsScheduled),
+        poopEventsCompleted: arr(loadedState.poopEventsCompleted),
+        unlockedEvolutions: arr(loadedState.unlockedEvolutions, ['rookie']),
         degeneratedByHP: loadedState.degeneratedByHP ?? false,
         currentBranch: loadedState.currentBranch ?? 'data',
         maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'rookie')].cap,
@@ -271,25 +307,33 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           (savedEggType as string) === 'agumon' ? 'tapirmon'
           : savedEggType
         ) ?? 'tapirmon',
-        attributesSinceLastEvolution: loadedState.attributesSinceLastEvolution ?? { virus: 0, data: 0, vaccine: 0 },
-        foodInventory: loadedState.foodInventory ?? {},
-        poopEventsShown: loadedState.poopEventsShown ?? [],
-        poopPenaltyClockAt: loadedState.poopPenaltyClockAt ?? 0,
-        gamePoints: loadedState.gamePoints ?? 0,
-        emblems: loadedState.emblems ?? 0,
+        attributesSinceLastEvolution: {
+          virus: num(loadedState.attributesSinceLastEvolution?.virus, 0),
+          data: num(loadedState.attributesSinceLastEvolution?.data, 0),
+          vaccine: num(loadedState.attributesSinceLastEvolution?.vaccine, 0),
+        },
+        foodInventory: (loadedState.foodInventory && typeof loadedState.foodInventory === 'object'
+          && !Array.isArray(loadedState.foodInventory)) ? loadedState.foodInventory : {},
+        poopEventsShown: arr(loadedState.poopEventsShown),
+        poopPenaltyClockAt: num(loadedState.poopPenaltyClockAt, 0),
+        gamePoints: num(loadedState.gamePoints, 0),
+        emblems: num(loadedState.emblems, 0),
         pvpEnabled: loadedState.pvpEnabled ?? false,
-        trophies: loadedState.trophies ?? [],
-        friends: loadedState.friends ?? [],
+        trophies: arr(loadedState.trophies),
+        friends: arr(loadedState.friends),
         // 'bg-room' is free — always owned, even for saves from before it existed.
-        ownedBackgrounds: Array.from(new Set([...(loadedState.ownedBackgrounds ?? []), 'bg-room'])),
+        // `arr()` e não `?? []`: um `ownedBackgrounds` NÃO-array fazia o spread
+        // LANÇAR, o try/catch do inicializador caía para `freshGameState()` e o
+        // jogador perdia o save inteiro em silêncio.
+        ownedBackgrounds: Array.from(new Set([...arr<string>(loadedState.ownedBackgrounds), 'bg-room'])),
         equippedBackground: loadedState.equippedBackground ?? null,
-        ownedFurniture: loadedState.ownedFurniture ?? [],
+        ownedFurniture: arr(loadedState.ownedFurniture),
         equippedDecor: migrateDecor(loadedState),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
         soulGoal: loadedState.soulGoal ?? '',
         soulStruggle: loadedState.soulStruggle ?? '',
-        moodLog: loadedState.moodLog ?? [],
-        activityLog: loadedState.activityLog ?? [],
+        moodLog: arr(loadedState.moodLog),
+        activityLog: arr(loadedState.activityLog),
         petPassive: loadedState.petPassive ?? rollPetPassive(),
         // Campo antigo some do save no próximo gravar (JSON.stringify descarta
         // undefined). Sem isto ele sobreviveria para sempre e voltaria a
