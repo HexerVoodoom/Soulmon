@@ -13,9 +13,13 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
   const isPt = language === 'pt-BR';
 
   return (
+    /* G8: era `rounded-2xl` com `--sm-primary-soft` no concluido — pilula de
+       outro design system, e no tema claro o "soft" quase nao se distinguia do
+       fundo. A moldura chanfrada do kit e a mesma peca do resto do painel; a
+       etapa CONCLUIDA e a unica preenchida, como toda selecao desta rodada. */
     <div
-      className="flex items-center gap-3 py-3 px-3 rounded-2xl transition-all"
-      style={{ background: completed ? 'var(--sm-primary-soft)' : 'var(--sm-bg)' }}
+      className={completed ? 'sm-px-card sm-px-card-ok' : 'sm-px-card'}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 10px', background: 'var(--sm-bg)' }}
     >
       {/* Checkbox de etapa — <button> e não <div>, para receber foco de teclado
           e ser anunciado por leitor de tela. */}
@@ -37,17 +41,17 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
           style={{
             /* Quadrado, não círculo: casa com o checkbox de cobre da
                referência e com o PixelCheckbox das linhas principais. */
-            width: 22, height: 22, borderRadius: 4, display: 'flex',
+            width: 22, height: 22, borderRadius: 0, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             background: 'var(--sm-surface)',
-            border: `2px solid ${completed ? 'var(--sm-primary)' : 'var(--sm-gold)'}`,
-            boxShadow: completed ? '0 0 6px color-mix(in srgb, var(--sm-primary) 65%, transparent)' : 'none',
+            border: `2px solid ${completed ? 'var(--sm-px-copper)' : 'var(--sm-gold)'}`,
+            boxShadow: completed ? '0 0 6px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' : 'none',
             transition: 'box-shadow .15s ease, border-color .15s ease',
           }}
         >
           {completed && (
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm-primary)" strokeWidth="2.2" strokeLinecap="square" strokeLinejoin="miter" />
             </svg>
           )}
         </span>

@@ -9,6 +9,7 @@ import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
 import { bitsStyle } from '../utils/currency';
+import { PixelChip, PixelTag } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -76,7 +77,8 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
     <button
       key={c.key}
       onClick={c.onClick}
-      className="w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] sm-card"
+      className="w-full text-left sm-px-card sm-px-card-tap"
+      style={{ padding: 14 }}
     >
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center shrink-0" style={{ width: 52, height: 52 }}>
@@ -87,9 +89,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
             <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
               {c.title}
             </span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--sm-muted)', background: 'var(--sm-bg)', borderRadius: 9999, padding: '2px 8px' }}>
-              {c.pts}
-            </span>
+            <PixelTag>{c.pts}</PixelTag>
           </div>
           <p style={{ fontSize: '0.75rem', marginTop: 2, color: 'var(--sm-muted)' }}>
             {c.desc}
@@ -110,14 +110,14 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
           <img src={iconGamepad} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           {isPt ? 'Atividades' : 'Activities'}
         </h2>
-        <span
-          className="sm-card flex items-center"
-          style={{ padding: '6px 12px' }}
+        {/* Sem gem: aquele icone e dos Creditos (dinheiro real). O valor
+            mantem a fonte de calculadora obrigatoria dos Bits; so o rotulo
+            da capsula e bitmap. Ver utils/currencies.ts. */}
+        <PixelChip
+          label="Bits"
           title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
-        >
-          {/* Sem 💎: aquele ícone é dos Créditos (dinheiro real). Ver utils/currency.ts. */}
-          <span style={{ ...bitsStyle, fontSize: '0.85rem' }}>{totalPoints} Bits</span>
-        </span>
+          value={<span style={{ ...bitsStyle, fontSize: '0.85rem' }}>{totalPoints}</span>}
+        />
       </div>
       <p style={{ fontSize: '0.8rem', color: 'var(--sm-muted)' }}>
         {isPt ? 'Minijogos para se divertir e acumular pontos com seu Soulmon.' : 'Minigames to have fun and earn points with your Soulmon.'}

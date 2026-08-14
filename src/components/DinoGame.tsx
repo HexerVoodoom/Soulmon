@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Rabbit, ArrowUp } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
+import iconDino from '../assets/soulmon/icons/games/icon-game-dino.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { playDegenerate, playTaskComplete } from '../utils/sounds';
@@ -194,27 +195,30 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   }, [phase, jump, onEarnPoints, onScore, petNeedsFlip]);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0e1522 0%, #16213a 100%)', display: 'flex', flexDirection: 'column', color: '#eef2fb' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem' }}>
-          <Rabbit size={20} color="#4ade80" strokeWidth={2.3} />
+    <div className="sm-px-dark-ctx" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0e1522 0%, #16213a 100%)', display: 'flex', flexDirection: 'column', color: '#eef2fb' }}>
+      {/* Cabecalho de arcade: mesma peca do Torneio e da Masmorra. O circulo
+          de 34px do botao de sair virou quadrado chanfrado de 44px — era o
+          ultimo controle redondo da tela (portao T2). */}
+      <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
+        <img src={iconDino} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+        <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
           {isPt ? 'Corrida do Dino' : 'Dino Runner'}
         </span>
-        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'}
-          /* 44x44 de area de toque com o circulo de 34px dentro (WCAG 2.2 AA 2.5.8). */
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, padding: 5, background: 'none', border: 'none', cursor: 'pointer' }}>
-          <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          </span>
+        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
+          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px 8px', fontSize: '0.82rem', color: '#93a3c9', fontWeight: 600 }}>
-        <span>{isPt ? 'Recorde' : 'Best'}: {best}</span>
-        <span>Score: <span ref={scoreElRef}>0</span></span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 20px 8px' }}>
+        <span className="sm-px-arcade-label">
+          {isPt ? 'Recorde' : 'Best'} <span className="sm-px-arcade-value">{best}</span>
+        </span>
+        <span className="sm-px-arcade-label">
+          Score <span className="sm-px-arcade-value" ref={scoreElRef}>0</span>
+        </span>
       </div>
 
-      <div style={{ margin: '0 16px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden', position: 'relative' }}>
+      <div className="sm-px-card" style={{ margin: '0 16px', overflow: 'hidden', position: 'relative', background: 'transparent' }}>
         <canvas
           ref={canvasRef}
           onPointerDown={jump}
@@ -224,7 +228,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, background: 'rgba(14,21,34,0.85)' }}>
             {phase === 'over' && (
               <>
-                <p style={{ fontWeight: 800, fontSize: '1.1rem' }}>💥 {isPt ? 'Fim de jogo!' : 'Game over!'}</p>
+                <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem' }}>{isPt ? 'Fim de jogo!' : 'Game over!'}</p>
                 <p style={{ fontSize: '0.85rem', color: '#93a3c9' }}>
                   Score: {finalScore} · +{earned} Bits
                 </p>

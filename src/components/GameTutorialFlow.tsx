@@ -3,6 +3,7 @@ import {
   Heart, Utensils, Zap, Sparkles, ShowerHead, ShoppingBag,
   LoaderCircle, Check, Wand2,
 } from 'lucide-react';
+import { PixelChoiceChip } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
@@ -306,21 +307,14 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               {CATEGORIES.map(cat => {
                 const active = selectedCats.has(cat);
                 return (
-                  <button
+                  <PixelChoiceChip
                     key={cat}
-                    onClick={() => toggleCat(cat)}
-                    aria-pressed={active}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
-                      border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                      background: active ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
-                      color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
-                      fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-                    }}
+                    selected={active}
+                    onToggle={() => toggleCat(cat)}
+                    icon={CATEGORY_ICON_IMG[cat]}
                   >
-                    <img src={CATEGORY_ICON_IMG[cat]} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                     {categoryLabel(cat, isPt)}
-                  </button>
+                  </PixelChoiceChip>
                 );
               })}
             </div>
