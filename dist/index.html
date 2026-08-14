@@ -29,7 +29,75 @@
     </head>
 
     <body>
-      <div id="root"></div>
+      <div id="root"></div>
+      <script>
+        // AVISO DE WEBVIEW ANTIGO — roda ANTES do bundle, de propósito.
+        //
+        // O app usa oklch(), color-mix() e aninhamento de CSS, e builda com
+        // target 'esnext' (sem transpilar). Num navegador antigo o bundle morre
+        // no parse e o usuário fica com TELA BRANCA, sem explicação. Foi assim
+        // que ele se comportou no emulador da API 30 (WebView 83, de 2020).
+        //
+        // Isso não é hipótese de laboratório: no Android o WebView se atualiza
+        // SEPARADO do sistema, então um aparelho novo com WebView travado
+        // quebra igual — e `minSdkVersion = 24` faz a Play Store oferecer o app
+        // para exatamente esse público.
+        //
+        // Este bloco não conserta a incompatibilidade: troca uma tela branca
+        // por uma frase acionável. Se o bundle carregar, o React substitui
+        // este conteúdo e nada disto aparece.
+        (function () {
+          try {
+            var ok =
+              typeof CSS !== 'undefined' &&
+              CSS.supports &&
+              CSS.supports('color', 'oklch(0 0 0)') &&
+              CSS.supports('color', 'color-mix(in srgb, red, blue)');
+            if (ok) return;
+
+            var pt = (navigator.language || '').toLowerCase().indexOf('pt') === 0;
+            var titulo = pt ? 'Precisamos de uma atualização' : 'An update is needed';
+            var corpo = pt
+              ? 'O componente que desenha páginas no seu aparelho (Android System WebView) está desatualizado e não consegue abrir o Soulmon.'
+              : 'The component that renders pages on your device (Android System WebView) is out of date and cannot open Soulmon.';
+            var comoT = pt ? 'Como resolver' : 'How to fix it';
+            var como = pt
+              ? 'Abra a Play Store, procure por "Android System WebView" e por "Google Chrome", atualize os dois e abra o Soulmon de novo.'
+              : 'Open the Play Store, search for "Android System WebView" and "Google Chrome", update both, then open Soulmon again.';
+
+            // Montado com createElement + textContent, não com concatenação de
+            // HTML. O user agent é dado de fora; filtrar caractere depois de
+            // concatenar é o padrão que produz XSS quando alguém acrescenta o
+            // próximo campo ao lado. Aqui não existe caminho de injeção.
+            var raiz = document.getElementById('root');
+            var fundo = document.createElement('div');
+            fundo.setAttribute(
+              'style',
+              'min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;' +
+                'background:#0c1c1a;color:#e6f4f1;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;'
+            );
+            var caixa = document.createElement('div');
+            caixa.setAttribute('style', 'max-width:34rem;line-height:1.55');
+
+            function linha(tag, texto, estilo) {
+              var el = document.createElement(tag);
+              el.textContent = texto;
+              el.setAttribute('style', estilo);
+              caixa.appendChild(el);
+            }
+
+            linha('h1', titulo, 'font-size:1.35rem;margin:0 0 12px;color:#5eead4');
+            linha('p', corpo, 'margin:0 0 16px');
+            linha('h2', comoT, 'font-size:1rem;margin:0 0 8px;color:#5eead4');
+            linha('p', como, 'margin:0 0 20px');
+            linha('p', 'WebView: ' + (navigator.userAgent || ''), 'margin:0;font-size:.8rem;opacity:.6');
+
+            fundo.appendChild(caixa);
+            raiz.innerHTML = '';
+            raiz.appendChild(fundo);
+          } catch (e) {}
+        })();
+      </script>
       <script>
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', () => {
