@@ -19,7 +19,12 @@
  * `endsWith` na string crua (`evil-fcm.googleapis.com.attacker.net` passaria).
  */
 export const PUSH_HOST_SUFFIXES = [
-  'googleapis.com',              // FCM / Chrome
+  // `fcm.googleapis.com`, NÃO `googleapis.com`: o sufixo largo aceitava
+  // `storage.googleapis.com`, `firebasestorage.googleapis.com` e qualquer
+  // outro serviço do Google como alvo do fetch do worker — relay/amplificação
+  // a partir da nossa infra, com JWT VAPID de produção no cabeçalho. O
+  // endpoint real do Chrome é só este.
+  'fcm.googleapis.com',          // FCM / Chrome
   'push.services.mozilla.com',   // Firefox
   'notify.windows.com',          // Edge / Windows
   'push.apple.com',              // Safari

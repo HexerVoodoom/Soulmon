@@ -2,6 +2,19 @@
 // DELETE /api/subscribe  — remove a push subscription
 
 import { isAllowedPushEndpoint } from './_pushTargets.js';
+import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+
+// Esta rota ESCREVE em KV sem custo para quem chama, e cada linha gravada vira
+// 4 `fetch` por dia no cron por até um ano. Um laço de shell aqui compra
+// tráfego de saída pago por nós. Ver `_rateLimit.js` para o que este teto não é.
+const SUB_LIMIT = { limit: 10, windowMs: 60_000 };
+
+function costGate(request) {
+  const gate = takeToken('subscribe', clientKey(request), SUB_LIMIT);
+  if (gate.ok) return null;
+  console.warn('[subscribe] rate limited', { retryAfter: gate.retryAfter });
+  return tooManyRequests(gate.retryAfter, CORS);
+}
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +27,9 @@ export async function onRequestOptions() {
 }
 
 export async function onRequestPost({ request, env }) {
+  const limited = costGate(request);
+  if (limited) return limited;
+
   let body;
   try {
     body = await request.json();
@@ -43,11 +59,42 @@ export async function onRequestPost({ request, env }) {
   }
 
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
-  await env.PUSH_SUBSCRIPTIONS.put(
-    kvKey,
-    JSON.stringify({ endpoint, keys, petName: petName || digimonName || 'Soulmon', language: language || 'en-US' }),
-    { expirationTtl: 60 * 60 * 24 * 365 },
-  );
+  const record = {
+    endpoint,
+    keys,
+    petName: petName || digimonName || 'Soulmon',
+    language: language || 'en-US',
+  };
+
+  // A chave é o hash do endpoint, então reenviar a MESMA inscrição já era
+  // idempotente — mas ainda custava uma ESCRITA de KV por chamada, e o cliente
+  // reenvia a cada abertura do app. Escrever só quando mudou troca a escrita
+  // (cara) por uma leitura (barata e cacheada na borda).
+  //
+  // O TTL é de 1 ano e só renova na escrita: se a comparação sozinha decidisse,
+  // um jogador ativo com a inscrição inalterada perderia o push exatamente no
+  // aniversário dela — silenciosamente, que é o pior modo de falha deste canal.
+  // Por isso a gravação também acontece quando o registro está velho.
+  const REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
+  let previous = null;
+  try {
+    previous = JSON.parse((await env.PUSH_SUBSCRIPTIONS.get(kvKey)) || 'null');
+  } catch {
+    previous = null;
+  }
+  const unchanged =
+    previous &&
+    JSON.stringify({ ...previous, refreshedAt: undefined }) ===
+      JSON.stringify({ ...record, refreshedAt: undefined });
+  const stale = !previous?.refreshedAt || Date.now() - previous.refreshedAt > REFRESH_AFTER_MS;
+
+  if (!unchanged || stale) {
+    await env.PUSH_SUBSCRIPTIONS.put(
+      kvKey,
+      JSON.stringify({ ...record, refreshedAt: Date.now() }),
+      { expirationTtl: 60 * 60 * 24 * 365 },
+    );
+  }
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
@@ -56,6 +103,9 @@ export async function onRequestPost({ request, env }) {
 }
 
 export async function onRequestDelete({ request, env }) {
+  const limited = costGate(request);
+  if (limited) return limited;
+
   let body;
   try {
     body = await request.json();

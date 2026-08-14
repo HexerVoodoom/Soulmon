@@ -42,6 +42,25 @@ export const ATTR_COLOR: Record<BranchType, string> = {
   vaccine: '#E69600', // Benevolência
 };
 
+/**
+ * A mesma cor de `ATTR_COLOR`, mas na luminosidade que passa 4,5:1 como
+ * TEXTO — por tema, via variável CSS (o tema é resolvido no CSS, e prender
+ * isto a um hook faria cada tela repetir a decisão).
+ *
+ * Regra: preenchimento, ícone e linha usam `ATTR_COLOR`; TEXTO usa isto.
+ * Os valores e as razões medidas estão em `src/index.css` (bloco
+ * "Tinta de TEXTO dos três atributos").
+ */
+export const ATTR_INK: Record<BranchType, string> = {
+  virus: 'var(--sm-attr-virus-ink)',
+  data: 'var(--sm-attr-data-ink)',
+  vaccine: 'var(--sm-attr-vaccine-ink)',
+};
+
+/** Tinta escura para texto POR CIMA de um preenchimento de atributo.
+ *  Branco sobre eles mede 2,4–3,1:1; esta mede 5,4–7,0:1. */
+export const ATTR_ON_FILL_INK = '#04211f';
+
 export interface EvolutionBranch {
   type: BranchType;
   name: string;

@@ -1106,7 +1106,7 @@
     flex: 1;
   }
 
-  .flex-shrink-0, .shrink-0 {
+  .shrink-0 {
     flex-shrink: 0;
   }
 
@@ -2424,8 +2424,8 @@
     color: #4a5568;
   }
 
-  .placeholder-\[\#99a1af\]::placeholder {
-    color: #99a1af;
+  .placeholder-\[\#99a1af\] {
+    &::placeholder { color: #99a1af; }
   }
 
   .placeholder-gray-500::placeholder {
@@ -2778,11 +2778,13 @@
   }
 
   @media (hover: hover) {
-    .hover\:scale-110:hover {
-      --tw-scale-x: 110%;
-      --tw-scale-y: 110%;
-      --tw-scale-z: 110%;
-      scale: var(--tw-scale-x) var(--tw-scale-y);
+    .hover\:scale-110 {
+      &:hover {
+        --tw-scale-x: 110%;
+        --tw-scale-y: 110%;
+        --tw-scale-z: 110%;
+        scale: var(--tw-scale-x) var(--tw-scale-y);
+      }
     }
   }
 
@@ -2895,19 +2897,17 @@
   }
 
   @media (hover: hover) {
-    .hover\:bg-gray-600:hover {
-      background-color: var(--color-gray-600);
+    .hover\:bg-gray-600 {
+      &:hover { background-color: var(--color-gray-600); }
     }
   }
 
   @media (hover: hover) {
-    .hover\:bg-gray-600\/20:hover {
-      background-color: color-mix(in srgb, oklch(.446 .03 256.802) 20%, transparent);
-    }
+    .hover\:bg-gray-600\/20 {
+      &:hover { background-color: color-mix(in srgb, oklch(.446 .03 256.802) 20%, transparent); }
 
-    @supports (color: color-mix(in lab, red, red)) {
-      .hover\:bg-gray-600\/20:hover {
-        background-color: color-mix(in oklab, var(--color-gray-600) 20%, transparent);
+      @supports (color: color-mix(in lab, red, red)) {
+        &:hover { background-color: color-mix(in oklab, var(--color-gray-600) 20%, transparent); }
       }
     }
   }
@@ -2999,8 +2999,8 @@
   }
 
   @media (hover: hover) {
-    .hover\:text-white:hover {
-      color: var(--color-white);
+    .hover\:text-white {
+      &:hover { color: var(--color-white); }
     }
   }
 
@@ -3030,8 +3030,8 @@
     }
   }
 
-  .focus\:border-\[\#4a5565\]:focus {
-    border-color: #4a5565;
+  .focus\:border-\[\#4a5565\] {
+    &:focus { border-color: #4a5565; }
   }
 
   .focus\:border-\[\#000080\]:focus {
@@ -3059,9 +3059,11 @@
     --tw-ring-color: var(--color-teal-500);
   }
 
-  .focus\:outline-none:focus {
-    --tw-outline-style: none;
-    outline-style: none;
+  .focus\:outline-none {
+    &:focus {
+      --tw-outline-style: none;
+      outline-style: none;
+    }
   }
 
   .focus-visible\:border-ring:focus-visible {
@@ -3093,11 +3095,13 @@
     }
   }
 
-  .active\:scale-95:active {
-    --tw-scale-x: 95%;
-    --tw-scale-y: 95%;
-    --tw-scale-z: 95%;
-    scale: var(--tw-scale-x) var(--tw-scale-y);
+  .active\:scale-95 {
+    &:active {
+      --tw-scale-x: 95%;
+      --tw-scale-y: 95%;
+      --tw-scale-z: 95%;
+      scale: var(--tw-scale-x) var(--tw-scale-y);
+    }
   }
 
   .disabled\:pointer-events-none:disabled {
@@ -3108,24 +3112,24 @@
     cursor: not-allowed;
   }
 
-  .disabled\:border-gray-500:disabled {
-    border-color: var(--color-gray-500);
+  .disabled\:border-gray-500 {
+    &:disabled { border-color: var(--color-gray-500); }
   }
 
   .disabled\:bg-gray-400:disabled {
     background-color: var(--color-gray-400);
   }
 
-  .disabled\:bg-gray-600:disabled {
-    background-color: var(--color-gray-600);
+  .disabled\:bg-gray-600 {
+    &:disabled { background-color: var(--color-gray-600); }
   }
 
   .disabled\:opacity-30:disabled {
     opacity: .3;
   }
 
-  .disabled\:opacity-50:disabled {
-    opacity: .5;
+  .disabled\:opacity-50 {
+    &:disabled { opacity: .5; }
   }
 
   .has-\[\>svg\]\:px-2\.5:has( > svg) {
@@ -3894,10 +3898,18 @@ html {
   --sm-bg: #f3f9f8;             /* superfície geral, verde-água quase branco */
   --sm-surface: #ffffff;
   --sm-ink: #142e2a;            /* texto principal, teal profundo */
-  --sm-muted: #5c7d76;
+  /* Contraste MEDIDO (rodada 3): #5c7d76 dava 4,10:1 sobre --sm-bg — abaixo
+     dos 4,5 de texto normal, e este token pinta rótulo de ação, subtítulo de
+     ficha e título de seção. #54736c mede 4,71:1 sobre --sm-bg e 5,19:1 sobre
+     --sm-surface. */
+  --sm-muted: #54736c;
   --sm-line: #e0ece9;           /* bordas suaves */
-  --sm-primary: #0d9488;        /* teal */
-  --sm-primary-deep: #0f766e;   /* sombra 3D do botão primário */
+  /* #0d9488 media 3,74:1 com o BRANCO do .sm-btn em cima e 3,74:1 como texto
+     sobre superfície — o botão primário do app inteiro reprovava nos dois
+     papéis. #0f766e (que já era o `deep`) mede 5,47:1 nos dois. A sombra 3D
+     desceu um degrau junto, para o botão não perder o volume. */
+  --sm-primary: #0f766e;        /* teal */
+  --sm-primary-deep: #0b6b64;   /* sombra 3D do botão primário */
   --sm-primary-soft: #ccfbf1;
   --sm-gold: #b6733f;           /* acento cobre */
   --sm-gold-soft: #f5e6da;
@@ -4142,13 +4154,18 @@ select:focus-visible {
 }
 
 /* Decoração ambiente da área do pet: sparkles e corações flutuando devagar */
-.sm-ambient-sparkle, .sm-ambient-heart {
+.sm-ambient-sparkle {
   position: absolute;
   font-size: 14px;
   color: rgba(109, 91, 208, 0.4);
   animation: sm-ambient-float 3.6s ease-in-out infinite;
 }
-.sm-ambient-heart { color: rgba(217, 118, 148, 0.5); font-size: 12px; }
+.sm-ambient-heart {
+  position: absolute;
+  font-size: 12px;
+  color: rgba(217, 118, 148, 0.5);
+  animation: sm-ambient-float 3.6s ease-in-out infinite;
+}
 @keyframes sm-ambient-float {
   0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
   50%      { transform: translateY(-8px) scale(1.15); opacity: 0.9; }
@@ -4187,21 +4204,13 @@ select:focus-visible {
    Referência: bronze/ciano com contorno grosso — reproduzido aqui via
    -webkit-text-stroke + text-shadow em camada, já que a fonte em si só
    define a FORMA da letra, não o contorno/glow do mockup.
+
+   O @font-face NÃO está mais aqui: veio para `@fontsource/silkscreen`
+   (npm, SIL OFL 1.1), importado em `src/main.tsx` — subset `latin` em
+   woff2 (8,4 + 7,5 kB) no lugar dos dois TTF de 30 kB que estavam em
+   `src/assets/fonts/`. Mesma fonte, mesmo nome de família, ~45 kB a menos
+   de transferência, e a licença passa a ser rastreada pelo package.json.
    ──────────────────────────────────────────────────────────────────────── */
-@font-face {
-  font-family: 'Silkscreen';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(./assets/fonts/Silkscreen-Regular.ttf) format('truetype');
-}
-@font-face {
-  font-family: 'Silkscreen';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url(./assets/fonts/Silkscreen-Bold.ttf) format('truetype');
-}
 .sm-display {
   font-family: 'Silkscreen', ui-monospace, monospace;
   font-weight: 700;
@@ -4216,3 +4225,760 @@ select:focus-visible {
   color: var(--sm-gold);
   text-shadow: 0 2px 0 var(--sm-ink), 0 0 10px color-mix(in srgb, var(--sm-gold) 60%, transparent);
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Utilitários que faltavam no compilado (footgun 1)
+   ─────────────────────────────────────────────────────────────────────────────
+   Este arquivo é Tailwind v4 PRÉ-COMPILADO e NÃO há plugin do Tailwind no Vite:
+   classe usada no JSX que não está aqui não aplica NADA, em silêncio. A varredura
+   do sweeper achou 130 usos de classes fantasma; as que são genuinamente
+   reutilizáveis (escala de espaçamento, tipografia, cores de token) foram
+   escritas aqui, no mesmo formato do compilado, para o próximo uso já funcionar.
+   Geometria de peça única (as setas dos balões) virou `style={{}}` inline.
+
+   Variantes (`hover:`, `disabled:`, …) são escritas com ANINHAMENTO (`&:hover`).
+   Isso não é estilo: o guard de `src/index.css.contract.test.ts` lê o seletor até
+   o primeiro caractere fora do nome da classe, e `.hover\:x:hover` seria lido
+   como a classe "hover:x:hover" — ou seja, uma regra escrita no formato plano
+   fica INVISÍVEL para o guard e volta a ser reportada como fantasma. O aninhado
+   é rebaixado pelo esbuild no build para exatamente o mesmo seletor.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Espaçamento */
+.-mt-2  { margin-top: calc(var(--spacing) * -2); }
+.mt-3   { margin-top: calc(var(--spacing) * 3); }
+.pt-1   { padding-top: calc(var(--spacing) * 1); }
+.pb-1   { padding-bottom: calc(var(--spacing) * 1); }
+.p-0    { padding: calc(var(--spacing) * 0); }
+.p-1\.5 { padding: calc(var(--spacing) * 1.5); }
+.px-0\.5 { padding-inline: calc(var(--spacing) * .5); }
+.px-1   { padding-inline: calc(var(--spacing) * 1); }
+.px-5   { padding-inline: calc(var(--spacing) * 5); }
+.py-4   { padding-block: calc(var(--spacing) * 4); }
+.py-5   { padding-block: calc(var(--spacing) * 5); }
+.py-6   { padding-block: calc(var(--spacing) * 6); }
+.gap-0\.5 { gap: calc(var(--spacing) * .5); }
+.gap-4  { gap: calc(var(--spacing) * 4); }
+:where(.space-y-1\.5 > :not(:last-child)) {
+  --tw-space-y-reverse: 0;
+  margin-block-start: calc(calc(var(--spacing) * 1.5) * var(--tw-space-y-reverse));
+  margin-block-end: calc(calc(var(--spacing) * 1.5) * calc(1 - var(--tw-space-y-reverse)));
+}
+
+/* Tamanho e posição */
+.w-28 { width: calc(var(--spacing) * 28); }
+.w-36 { width: calc(var(--spacing) * 36); }
+.max-w-lg { max-width: var(--container-lg, 32rem); }
+.bottom-0 { bottom: calc(var(--spacing) * 0); }
+.pointer-events-auto { pointer-events: auto; }
+.items-end { align-items: flex-end; }
+
+/* Tipografia */
+.font-semibold  { --tw-font-weight: 600; font-weight: 600; }
+.uppercase      { text-transform: uppercase; }
+.tracking-wider { --tw-tracking: .05em; letter-spacing: .05em; }
+.leading-none   { --tw-leading: 1; line-height: 1; }
+.leading-snug   { --tw-leading: 1.375; line-height: 1.375; }
+.leading-tight  { --tw-leading: 1.25; line-height: 1.25; }
+.text-right     { text-align: right; }
+.break-all      { word-break: break-all; }
+.text-\[9px\]   { font-size: 9px; }
+
+/* Cores — sempre de token, nunca hex solto */
+.text-gray-300  { color: var(--color-gray-300); }
+.text-green-500 { color: var(--color-green-500, #22c55e); }
+.text-white\/60 { color: color-mix(in srgb, #fff 60%, transparent); }
+.bg-white\/5    { background-color: color-mix(in srgb, #fff 5%, transparent); }
+.bg-white\/10   { background-color: color-mix(in srgb, #fff 10%, transparent); }
+.bg-white\/70   { background-color: color-mix(in srgb, #fff 70%, transparent); }
+.bg-black\/40   { background-color: color-mix(in srgb, #000 40%, transparent); }
+.bg-teal-600    { background-color: var(--color-teal-600); }
+.border-white\/10 { border-color: color-mix(in srgb, #fff 10%, transparent); }
+.accent-teal-500  { accent-color: var(--color-teal-500); }
+/* "neon-green" nunca existiu como token: o botão de ENVIAR do chat — a ação
+   primária da barra — estava sem preenchimento nenhum. Resolvido para o teal
+   primário do tema em vez de inventar um verde novo. */
+.bg-neon-green      { background-color: var(--sm-primary); }
+.border-neon-green\/80 { border-color: color-mix(in srgb, var(--sm-primary) 80%, transparent); }
+
+/* Efeitos e animação */
+.shadow {
+  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+.rounded-t-2xl { border-top-left-radius: var(--radius-2xl); border-top-right-radius: var(--radius-2xl); }
+.duration-150 { --tw-duration: .15s; transition-duration: .15s; }
+.duration-200 { --tw-duration: .2s; transition-duration: .2s; }
+.zoom-in-75   { --tw-enter-scale: .75; }
+.slide-in-from-bottom-4 { --tw-enter-translate-y: calc(4 * var(--spacing)); }
+
+/* Variantes (ver nota sobre aninhamento no topo do bloco) */
+.active\:scale-\[0\.99\] { &:active { scale: .99; } }
+.disabled\:opacity-40 { &:disabled { opacity: .4; } }
+.disabled\:opacity-60 { &:disabled { opacity: .6; } }
+.focus\:border-teal-400 { &:focus { border-color: var(--color-teal-400); } }
+.hover\:bg-teal-700 { @media (hover: hover) { &:hover { background-color: var(--color-teal-700); } } }
+.hover\:bg-white\/20 { @media (hover: hover) { &:hover { background-color: color-mix(in srgb, #fff 20%, transparent); } } }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   KIT PIXEL — primitivos (rodada 1)
+   ══════════════════════════════════════════════════════════════════════════
+   Regras desta seção (não repita os erros já pagos):
+   · Toda VARIANTE tem que ser ANINHADA (`&:hover`, `&:disabled`). A forma
+     plana (`.x:hover{}`) é invisível para src/index.css.contract.test.ts e
+     volta a acusar classe fantasma na regra recém-criada.
+   · A arte 9-slice entra por `--sm-px-src` (url do import do Vite, setada
+     inline no componente) — assim o hash do asset continua sendo do bundler.
+   · Cor SEMPRE de token. Nada de hex solto fora dos tokens declarados aqui.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Tokens do kit. O painel/botão pixel é uma PEÇA ESCURA por natureza (a arte
+     é cobre sobre teal profundo); no tema claro ele vira um objeto escuro sobre
+     página clara — de propósito, não é o tema virando escuro. O texto dentro
+     dele é sempre claro, então o contraste passa AA nos dois temas. */
+  --sm-px-ink: #eaf5f2;         /* tinta dentro de peça escura */
+  --sm-px-cyan: #5df0e0;        /* neon do kit (destaque/aceso) */
+  --sm-px-copper: #c68642;      /* cobre do kit (moldura/borda fina) */
+  --sm-px-track: #16283d;       /* trilho escuro da barra segmentada */
+  --sm-px-track-line: #0a1422;
+  --sm-px-panel-bg: var(--sm-surface);
+  --sm-px-panel-ink: var(--sm-ink);
+  --sm-px-chip-bg: #10373a;
+  --sm-px-red: #ff5d5d;
+}
+[data-theme="dark"] {
+  --sm-px-panel-bg: #10312f;
+  --sm-px-panel-ink: var(--sm-ink);
+}
+
+/* ── Botão 9-slice ─────────────────────────────────────────────────────────
+   `--sm-px-src` = arte; `--sm-px-slice` = fatia no PNG de ORIGEM (px medidos
+   na arte: a espessura da moldura até o preenchimento teal); `--sm-px-bw` =
+   espessura RENDERIZADA da moldura. `fill` mantém o miolo teal da arte. */
+.sm-px-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--sm-px-ink);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+  image-rendering: pixelated;
+  border-style: solid;
+  border-width: var(--sm-px-bw, 12px);
+  border-image-source: var(--sm-px-src);
+  border-image-slice: var(--sm-px-slice, 68) fill;
+  border-image-repeat: stretch;
+  border-image-width: var(--sm-px-bw, 12px);
+  transition: filter .12s ease, transform .08s ease;
+  &:hover { filter: brightness(1.12) drop-shadow(0 0 6px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)); }
+  &:active { transform: translateY(2px); filter: brightness(1.28) drop-shadow(0 0 9px color-mix(in srgb, var(--sm-px-cyan) 75%, transparent)); }
+  /* Sem `opacity`: opacidade mistura TEXTO e FUNDO com a tela e esmaga a
+     razão de contraste (foi o que reprovou o .sm-btn desabilitado, medido na
+     rodada 3). Dessaturar + escurecer já lê como inativo e preserva a razão
+     entre a tinta e o miolo da arte. */
+  &:disabled { filter: grayscale(.88) brightness(.8); cursor: default; transform: none; }
+}
+/* Ação primária: mesmo corpo, miolo aceso em ciano (o "active" da referência
+   virou o estado de DESTAQUE, não um PNG à parte — ver relatório). */
+/* O miolo aceso é um ::before, NÃO um box-shadow inset: `border-image: … fill`
+   pinta o centro DEPOIS do background e de qualquer sombra interna, então o
+   inset simplesmente não aparecia (verificado em screenshot). O ::before cai
+   sobre a caixa de padding — exatamente a área do fill — e o conteúdo sobe
+   junto pelo <span> com z-index do componente. */
+.sm-px-btn-primary {
+  color: #04211f;
+  text-shadow: 0 1px 0 color-mix(in srgb, #ffffff 35%, transparent);
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--sm-px-cyan);
+    opacity: .9;
+  }
+}
+.sm-px-btn-sm { --sm-px-slice: 82; --sm-px-bw: 11px; min-height: 44px; padding: 4px 14px; font-size: 12px; }
+.sm-px-btn-md { --sm-px-slice: 66; --sm-px-bw: 12px; min-height: 48px; padding: 6px 20px; font-size: 14px; }
+.sm-px-btn-lg { --sm-px-slice: 43; --sm-px-bw: 12px; min-height: 56px; padding: 8px 26px; font-size: 15px; width: 100%; }
+
+/* ── Painel emoldurado ─────────────────────────────────────────────────────
+   Sem `fill`: o miolo é o token de superfície do TEMA, então o tema claro
+   continua claro e só a moldura de cobre é arte. */
+.sm-px-panel {
+  position: relative;
+  box-sizing: border-box;
+  background: var(--sm-px-panel-bg);
+  color: var(--sm-px-panel-ink);
+  image-rendering: pixelated;
+  border-style: solid;
+  border-width: var(--sm-px-bw, 12px);
+  border-image-source: var(--sm-px-src);
+  border-image-slice: var(--sm-px-slice, 43);
+  border-image-repeat: stretch;
+  border-image-width: var(--sm-px-bw, 12px);
+}
+.sm-px-panel-body { padding: 14px 16px; }
+.sm-px-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sm-primary);
+  padding: 10px 16px 0;
+}
+
+/* ── Barra segmentada ──────────────────────────────────────────────────────
+   Desenhada em DOM, não no PNG: o PNG do kit é uma barra fixa (9 blocos
+   cheios) e não sabe representar 3/7. Mesma leitura visual, valor real. */
+.sm-px-bar {
+  display: flex;
+  gap: 2px;
+  box-sizing: border-box;
+  padding: 2px;
+  background: var(--sm-px-track);
+  border: 2px solid var(--sm-px-track-line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sm-px-bar-seg {
+  flex: 1 1 0;
+  min-width: 3px;
+  background: color-mix(in srgb, var(--sm-px-track-line) 70%, transparent);
+  transition: background .15s ease, box-shadow .15s ease;
+}
+.sm-px-bar-seg-on {
+  background: var(--sm-px-bar-tone, var(--sm-px-cyan));
+  box-shadow: inset 0 -3px 0 color-mix(in srgb, var(--sm-px-bar-tone, var(--sm-px-cyan)) 55%, #000);
+}
+
+/* ── Checkbox de cobre ─────────────────────────────────────────────────────
+   44×44 de ALVO com o quadrado de 26px desenhado dentro (o alvo não encolhe
+   junto com a arte — foi assim que o checkbox virou 2px em produção). */
+.sm-px-check {
+  width: 44px;
+  height: 44px;
+  padding: 9px;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  &:disabled { cursor: default; }
+}
+.sm-px-check-box {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background: var(--sm-surface);
+  border: 2px solid var(--sm-gold);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.sm-px-check-on {
+  border-color: var(--sm-primary);
+  background: color-mix(in srgb, var(--sm-primary) 16%, var(--sm-surface));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--sm-primary) 65%, transparent);
+}
+
+/* ── Cápsula de HUD ────────────────────────────────────────────────────────
+   Rótulo + valor com moldura fina de cobre. NÃO carrega ícone por conta
+   própria: quem passa o ícone é a chamada, porque as três moedas têm
+   identidade visual obrigatoriamente distinta (utils/currencies.ts). */
+.sm-px-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 34px;
+  padding: 4px 10px;
+  background: var(--sm-px-chip-bg);
+  border: 2px solid var(--sm-px-copper);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+.sm-px-chip-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  color: color-mix(in srgb, var(--sm-px-cyan) 75%, #ffffff);
+}
+.sm-px-chip-value {
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--sm-px-ink);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   KIT PIXEL — rodada 2: tipografia bitmap, FAB e barra de chat
+   ═════════════════════════════════════════════════════════════════════════
+   Regras deste arquivo (footgun 1 + guard de `index.css.contract.test.ts`):
+   toda variante é ANINHADA (`&:hover`), nunca plana.
+
+   TIPOGRAFIA — a decisão é HIERARQUIA, não "trocar a fonte do app".
+   Silkscreen é bitmap de caixa alta: ótima em rótulo, número, botão e
+   título; péssima em parágrafo — e em português é pior ainda, porque os
+   acentos (ã õ ê) empilham em cima de uma caixa de 8px e o olho perde a
+   palavra. Então:
+     • ENTRA em: botão do kit, título de painel, cápsula de HUD, marca,
+       título de seção/página, números de HUD.
+     • NÃO ENTRA em: nome de tarefa, falas do pet, guia, glossário,
+       relatório diário, qualquer texto de leitura corrida.
+   `--sm-font-pixel` é o ponto único: quem quiser a fonte usa o token ou a
+   classe `.sm-px-font`, ninguém repete o nome da família. */
+:root {
+  --sm-font-pixel: 'Silkscreen', ui-monospace, 'Courier New', monospace;
+}
+
+.sm-px-font {
+  font-family: var(--sm-font-pixel);
+  letter-spacing: 0.02em;
+  /* Silkscreen tem desenho de 1px: alisar mata a nitidez do bitmap. */
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+}
+
+/* Título de seção/página em bitmap. `line-height` folgado de propósito: os
+   acentos do PT-BR ocupam a linha inteira acima da caixa maiúscula e, com
+   1.1, "Evolução" encostava no texto de cima. */
+.sm-px-heading {
+  font-family: var(--sm-font-pixel);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: var(--sm-primary);
+}
+
+/* Sobrescritas dos primitivos da rodada 1 (mesma especificidade, vencem por
+   ordem de origem — não editei o bloco anterior). */
+.sm-px-btn {
+  font-family: var(--sm-font-pixel);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.45;
+  -webkit-font-smoothing: none;
+}
+/* Silkscreen desenha ~15% menor que a sans no mesmo `font-size`; sem esta
+   compensação os botões pareciam ter encolhido de tamanho. */
+.sm-px-btn-sm { font-size: 11px; }
+.sm-px-btn-md { font-size: 13px; }
+.sm-px-btn-lg { font-size: 14px; }
+
+.sm-px-panel-title {
+  font-family: var(--sm-font-pixel);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  -webkit-font-smoothing: none;
+}
+.sm-px-chip-label {
+  font-family: var(--sm-font-pixel);
+  font-weight: 400;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  -webkit-font-smoothing: none;
+}
+.sm-px-chip-value {
+  font-family: var(--sm-font-pixel);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.4;
+  -webkit-font-smoothing: none;
+}
+
+/* ── Ícone de categoria emoldurado ────────────────────────────────────────
+   Substitui o emoji (📚 🧘 📖) na ficha de tarefa/atividade pelo ícone do
+   kit, que já vem com a moldura de cobre desenhada na arte. Tamanho fixo em
+   px (não em `em`) porque a arte é pixel-art: escalar por fonte produziria
+   meio-pixel e o ícone ficaria borrado. */
+.sm-px-cat-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  object-fit: contain;
+  image-rendering: pixelated;
+  vertical-align: -6px;
+}
+
+/* ── FAB "Nova atividade" ─────────────────────────────────────────────────
+   Era um círculo teal chapado — a única peça redonda e sem moldura da tela.
+   Vira o mesmo objeto do resto do kit: cantos chanfrados, moldura de cobre,
+   miolo ciano, sombra dura de 1 bloco (nada de blur suave). 52×52 continua
+   acima dos 44 de alvo mínimo. */
+.sm-px-fab {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: 3px solid var(--sm-px-copper);
+  background: var(--sm-px-cyan);
+  /* Tinta ESCURA sobre o miolo ciano — o mesmo `#04211f` do
+     `.sm-px-btn-primary`. `--sm-px-ink` é a tinta clara das peças escuras;
+     usá-la aqui daria claro-sobre-ciano, que não passa AA. */
+  color: #04211f;
+  cursor: pointer;
+  clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 9px), 0 9px);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sm-px-ink) 55%, transparent),
+              0 0 14px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent);
+  transition: filter .12s ease, transform .12s ease;
+  &:hover { filter: brightness(1.12); }
+  &:active { transform: translateY(2px); }
+  &:focus-visible {
+    outline: 3px solid var(--sm-px-copper);
+    outline-offset: 3px;
+  }
+}
+
+/* ── Barra de chat ────────────────────────────────────────────────────────
+   Era um retângulo `rounded-[10px]` com cinza-ardósia cru (#1e2939/#364153)
+   — cor fora da paleta e a única borda arredondada sobrando na tela. Agora é
+   moldura de cobre chanfrada nos dois temas, com o MIOLO no token de
+   superfície do tema (o claro continua claro, como o painel da rodada 1). */
+.sm-px-chatbar {
+  box-sizing: border-box;
+  padding: 8px 10px;
+  /* Miolo no token de superfície do TEMA (mesma decisão do PixelPanel da
+     rodada 1): a barra ocupa a largura toda da tela, então deixá-la escura
+     no tema claro faria o claro parecer um escuro mal resolvido. */
+  background: var(--sm-px-panel-bg);
+  border: 2px solid var(--sm-px-copper);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+}
+.sm-px-chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  background: var(--sm-bg);
+  color: var(--sm-ink);
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 70%, transparent);
+  border-radius: 0;
+  /* 16px é o mínimo que evita o auto-zoom do iOS Safari ao focar o campo.
+     A fonte aqui é MONOSPACE, não Silkscreen: é onde o usuário digita texto
+     livre em português, exatamente o caso que a bitmap não atende. */
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 16px;
+  &::placeholder { color: var(--sm-muted); }
+  &:focus { outline: 2px solid var(--sm-px-cyan); outline-offset: -2px; }
+  &:disabled { opacity: 0.55; }
+}
+.sm-px-chat-btn {
+  width: 50px;
+  min-height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  background: transparent;
+  color: var(--sm-ink);
+  border: 2px solid var(--sm-px-copper);
+  cursor: pointer;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  transition: background .12s ease, filter .12s ease;
+  &:hover { background: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+.sm-px-chat-btn-send {
+  background: var(--sm-px-cyan);
+  /* MEDIDO na rodada 3: `--sm-px-ink` (#eaf5f2) sobre o ciano #5df0e0 dá
+     1,29:1 — o ícone de enviar sumia dentro do próprio botão. A tinta escura
+     do kit dá 12,2:1. É exatamente a armadilha que a nota do `.sm-px-fab`
+     já descrevia, e que passou aqui. */
+  color: #04211f;
+  &:hover { filter: brightness(1.12); background: var(--sm-px-cyan); }
+}
+.sm-px-chat-btn-rec {
+  border-color: var(--sm-px-red);
+  background: color-mix(in srgb, var(--sm-px-red) 20%, transparent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RODADA 3 — ÁRVORE DE EVOLUÇÃO COMO GRAFO (Ref C)
+   ═══════════════════════════════════════════════════════════════════════════
+   A referência mostra a progressão como uma COLUNA VERTICAL de nós losangulares
+   de cristal ligados por linhas: futuros escurecidos, atual com anel ciano e o
+   pet pousado nele, fundo com circuito ciano tênue.
+
+   O DESENHO do nó não mora aqui — mora em `components/evolution/nodeArt.tsx`,
+   que é a fronteira única para trocar SVG por PNG. O que está neste bloco é o
+   GRAFO: trilho, linha de conexão, anel, placa e fundo.
+
+   Regras da casa respeitadas: arquivo pré-compilado (regra nova no FIM),
+   variante sempre ANINHADA (`&:hover`), tokens `--sm-*`/`--sm-px-*` em vez de
+   cor crua, e alvo de toque ≥44px. */
+
+.sm-px-tree {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 2px 4px;
+  /* Circuito ciano tênue do fundo (Ref C). Duas grades de linhas finas em
+     opacidade baixa — decorativo, e por isso não carrega informação. */
+  background-image:
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--sm-primary) 9%, transparent) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, color-mix(in srgb, var(--sm-primary) 7%, transparent) 0 1px, transparent 1px 34px);
+}
+
+.sm-px-tree-row {
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* Trilho: o nó no topo e a linha descendo até o próximo nó. */
+.sm-px-tree-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 56px;
+}
+
+/* Linha de conexão. NUNCA é o único portador de informação: o estado de cada
+   nó também está escrito no `aria-label` e numa etiqueta de texto na placa. */
+.sm-px-tree-link {
+  flex: 1 1 auto;
+  width: 4px;
+  min-height: 18px;
+  margin: 2px 0;
+  background: repeating-linear-gradient(180deg, var(--sm-line) 0 4px, transparent 4px 8px);
+}
+.sm-px-tree-link-on {
+  background: repeating-linear-gradient(180deg,
+    var(--sm-px-link-tone, var(--sm-primary)) 0 5px,
+    color-mix(in srgb, var(--sm-px-link-tone, var(--sm-primary)) 35%, transparent) 5px 8px);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sm-px-cyan) 45%, transparent);
+}
+
+/* Placa do nó: nome + estágio + etiquetas de situação. */
+.sm-px-tree-plate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: var(--sm-surface);
+  border: 2px solid var(--sm-line);
+  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+}
+.sm-px-tree-plate-current {
+  border-color: var(--sm-px-copper);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--sm-px-cyan) 30%, transparent);
+}
+/* Nó futuro: escurecido, como na referência. Fica em 0.75 e não em 0.5 —
+   abaixo disso o texto da placa deixa de passar em AA, e "escuro" não pode
+   custar legibilidade. */
+.sm-px-tree-plate-locked { opacity: 0.75; }
+
+.sm-px-tree-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+.sm-px-tree-tag-forecast {
+  background: var(--sm-bg);
+  color: var(--sm-ink);
+  border-color: var(--sm-primary);
+}
+.sm-px-tree-tag-locked {
+  background: transparent;
+  color: var(--sm-ink);
+  border-color: var(--sm-line);
+}
+
+/* Degenerar continua sendo uma ação de verdade: alvo de 44px. */
+.sm-px-tree-degen {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--sm-bg);
+  color: var(--sm-ink);
+  border: 2px solid var(--sm-line);
+  cursor: pointer;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  &:hover { border-color: var(--sm-px-copper); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+}
+
+/* ── O nó ─────────────────────────────────────────────────────────────────
+   O cristal desenhado tem 48px; a CAIXA tem 48×48 com padding para alcançar
+   os 44 mínimos de alvo (e sobra). O `position: relative` é a âncora do anel
+   e do sprite pousado. */
+.sm-px-node {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+button.sm-px-node {
+  cursor: pointer;
+  &:hover .sm-px-node-art { filter: brightness(1.15); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 3px; }
+}
+.sm-px-node-art {
+  position: relative;
+  display: block;
+}
+/* Anel ciano do nó atual (Ref C). Losango, não círculo — o anel acompanha a
+   silhueta do cristal. */
+.sm-px-node-ring {
+  position: absolute;
+  inset: -7px;
+  background: var(--sm-px-cyan);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  opacity: 0.35;
+  animation: sm-px-node-pulse 1.9s ease-in-out infinite;
+  pointer-events: none;
+}
+/* O pet pousado no nó atual. Decorativo: o nome da forma está na placa. */
+.sm-px-node-sprite {
+  position: absolute;
+  left: 50%;
+  bottom: 46%;
+  transform: translateX(-50%);
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+}
+
+@keyframes sm-px-node-pulse {
+  0%, 100% { opacity: 0.22; transform: scale(1); }
+  50%      { opacity: 0.5;  transform: scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-px-node-ring { animation: none; opacity: 0.4; }
+}
+
+/* ── HelpModal (glossário) ────────────────────────────────────────────────
+   Era a tela nunca fotografada em três rodadas, e desenhada em cor crua
+   (`#1a2230` + `text-white/60`) — o que no tema claro virava uma lâmina
+   escura e, no escuro, o pior contraste do app. Agora usa os tokens do tema.
+
+   `--sm-help-accent` existe porque o `#2dd4bf` que estava assado no JSX é o
+   teal do tema ESCURO: sobre a superfície branca do tema claro ele fica em
+   ~1,9:1. O par abaixo é medido — ver a tabela do relatório da rodada 3. */
+:root, [data-theme="light"] {
+  --sm-help-accent: #0f766e;   /* sobre --sm-surface #ffffff */
+  --sm-help-item-bg: #f3f9f8;
+}
+[data-theme="dark"] {
+  --sm-help-accent: #5df0e0;   /* sobre --sm-surface #173a37 */
+  /* 0.06 media 4,40:1 para o texto muted por cima; 0.03 mede 4,82:1. */
+  --sm-help-item-bg: rgba(255, 255, 255, 0.03);
+}
+.sm-px-help-item {
+  background: var(--sm-help-item-bg);
+  border: 1px solid var(--sm-line);
+}
+/* Fechar é a saída de emergência da UI: 44×44 mesmo com o ícone de 18px. */
+.sm-px-help-x {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--sm-muted);
+  cursor: pointer;
+  &:hover { color: var(--sm-ink); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: -3px; }
+}
+
+/* ── Tinta de TEXTO dos três atributos ────────────────────────────────────
+   `ATTR_COLOR` (src/types/attributes.ts) continua a fonte única da IDENTIDADE
+   de cada atributo — é a cor do ícone, do preenchimento e da linha do grafo,
+   onde o mínimo é 3:1 (elemento de interface) e ela passa.
+
+   Como TEXTO ela reprovava nos dois temas (medido na rodada 3):
+     #22A900 sobre branco 3,11:1 · #009ED8 3,05:1 · #E69600 2,41:1
+     no escuro, sobre --sm-surface: 3,97 / 4,06 / 5,14
+   Estes pares são a MESMA matiz, só com a luminosidade ajustada até passar
+   4,5:1 — não é cor nova na paleta, é a mesma cor legível. */
+:root, [data-theme="light"] {
+  --sm-attr-virus-ink: #1a7d00;    /* Poder — 5,28:1 sobre branco */
+  --sm-attr-data-ink: #00699a;     /* Harmonia — 6,02:1 */
+  --sm-attr-vaccine-ink: #8a5a00;  /* Benevolência — 5,93:1 */
+}
+[data-theme="dark"] {
+  --sm-attr-virus-ink: #5fdc3a;    /* 6,95:1 sobre --sm-surface */
+  --sm-attr-data-ink: #5ac8f5;     /* 6,49:1 */
+  --sm-attr-vaccine-ink: #f0b64d;  /* 6,78:1 */
+}
+
+/* ── Botão desabilitado ───────────────────────────────────────────────────
+   MEDIDO na rodada 3: "Entrar / Sincronizar" desabilitado saía a 1,81:1 no
+   claro e 2,51:1 no escuro, e "restaurar" a 1,29:1 — praticamente invisível.
+   A causa é somar DUAS atenuações: `filter: brightness(.75)` daqui e o
+   utilitário `disabled:opacity-60` do JSX. Opacidade mistura texto E fundo
+   com a tela, e é isso que esmaga a razão (não basta escurecer os dois).
+
+   A WCAG 1.4.3 isenta componente desabilitado, mas "isento" não é motivo pra
+   ficar ilegível: um botão que o usuário não consegue LER também não consegue
+   entender por que não funciona. O estado passa a ser desenhado — preenchido
+   com o cinza de linha do tema e tinta muted — em vez de apagado por
+   opacidade. Fica claramente inativo (sem cor de ação, sem volume 3D) e ainda
+   mede ≥4,2:1 nos dois temas. */
+.sm-btn:disabled {
+  filter: none;
+  opacity: 1;
+  background: var(--sm-line);
+  /* Puxado em direção à TINTA do tema (não ao preto): no claro escurece, no
+     escuro clareia — o mesmo ajuste serve nos dois. `--sm-muted` puro media
+     4,29:1 sobre `--sm-line` no tema claro. */
+  color: color-mix(in srgb, var(--sm-muted) 78%, var(--sm-ink));
+  border-color: color-mix(in srgb, var(--sm-muted) 35%, transparent);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* ── Coração de HP vazio ──────────────────────────────────────────────────
+   O vazio é INFORMAÇÃO (quanto HP faltou), não decoração. O filtro estava
+   inline como `brightness(0.2) saturate(0)`: silhueta quase preta, que lê bem
+   sobre o fundo claro e DESAPARECE no tema escuro (fundo #0e2323). Par por
+   tema: escuro vira fantasma claro em vez de mancha preta. */
+.sm-hp-empty { filter: brightness(0.2) saturate(0); }
+[data-theme="dark"] .sm-hp-empty { filter: saturate(0) brightness(2.4) opacity(0.42); }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 e anteriores (android:fullBackupContent).
+
+  O jogo roda dentro de um WebView, então TODO o localStorage — save e também o
+  `soulmon-profile`, que guarda nome completo, data, HORA e LOCAL de nascimento
+  (PII do ritual do oráculo) — vive em `app_webview/`. Com o Auto Backup ligado
+  e sem regra, esse diretório inteiro sobe para o Google Drive do usuário, e sai
+  do aparelho com `adb backup` sem root. Isso derruba, no APK, a garantia de
+  privacidade que docs/STATUS.md §1.3 afirma.
+
+  Por que EXCLUIR em vez de desligar o backup inteiro (allowBackup="false"):
+  desligar mataria também as SharedPreferences (ponte dos widgets), e o backup
+  segue útil para elas. E por que não é perda de save: o backup só é RESTAURADO
+  em instalação nova; quem já joga tem o save no aparelho (intocado por esta
+  mudança) e na nuvem, recuperável pelo e-mail (saveId = SHA-256 do e-mail,
+  functions/api/save.js). O caminho de recuperação continua existindo — o que
+  deixa de existir é a cópia da PII no Drive.
+-->
+<full-backup-content>
+    <exclude domain="root" path="app_webview" />
+</full-backup-content>

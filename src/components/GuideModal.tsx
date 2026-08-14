@@ -1,6 +1,7 @@
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import type { Language } from '../utils/i18n';
 import { FORM_REQUIREMENTS } from '../types/progression';
+import { ATTR_INK } from '../types/attributes';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
 
 interface GuideModalProps {
@@ -202,9 +203,11 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           <Section n={7} title={L('Galhos e o seu ritmo', 'Branches and your rhythm')}>
             <p className="mb-2">{L('A partir do Rookie existem 3 galhos:', 'From Rookie onwards there are 3 branches:')}</p>
             <ul className="space-y-1 ml-4 list-disc">
-              <li><span className="text-[#22A900]">{L('Vírus', 'Virus')}</span> ({L('verde', 'green')})</li>
-              <li><span className="text-[#009ED8]">{L('Dado', 'Data')}</span> ({L('azul', 'blue')})</li>
-              <li><span className="text-[#E69600]">{L('Vacina', 'Vaccine')}</span> ({L('amarelo', 'yellow')})</li>
+              {/* Cor de atributo como TEXTO usa `ATTR_INK` — medido: as cores
+                  cruas davam 2,41–3,11:1 no claro e 3,97–4,06:1 no escuro. */}
+              <li><span style={{ color: ATTR_INK.virus }}>{L('Vírus', 'Virus')}</span> ({L('verde', 'green')})</li>
+              <li><span style={{ color: ATTR_INK.data }}>{L('Dado', 'Data')}</span> ({L('azul', 'blue')})</li>
+              <li><span style={{ color: ATTR_INK.vaccine }}>{L('Vacina', 'Vaccine')}</span> ({L('amarelo', 'yellow')})</li>
             </ul>
             <p className="mt-2 mb-2">
               {L(

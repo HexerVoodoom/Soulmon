@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { ChevronDown } from 'lucide-react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
+import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import iconLock from '../assets/soulmon/icons/icon-lock.png';
 import { DigivolutionProgress } from './DigivolutionProgress';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
@@ -8,7 +8,7 @@ import { getSpriteForStage } from '../utils/sprites';
 import { WalkingPetStrip } from './WalkingPetStrip';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
-import { ATTR_COLOR } from '../types/attributes';
+import { ATTR_COLOR, ATTR_INK, ATTR_ON_FILL_INK } from '../types/attributes';
 
 type Attr = 'virus' | 'data' | 'vaccine';
 const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
@@ -99,6 +99,18 @@ export function EvolutionPath({
   const branchPath = getBranchPath(selectedBranch);
   const colors = getBranchColor(selectedBranch);
 
+  /**
+   * O nó que a página JÁ dizia em texto ("Seguindo para Harmonia"), agora
+   * marcado também no grafo. Reapresentação: `forecastBranch` vem pronto de
+   * quem chama; aqui só se acha o primeiro nó ainda não alcançado do galho
+   * previsto — e só quando o galho exibido É o previsto.
+   */
+  const forecastStageId = forecastBranch && selectedBranch === forecastBranch
+    ? (branchPath
+        .map(s => creatureFormId(s))
+        .find(id => id !== currentStageId && !unlockedSet.has(id)) ?? null)
+    : null;
+
   const handleDegenerateClick = (evolution: CreatureStage) => {
     setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false });
   };
@@ -114,6 +126,13 @@ export function EvolutionPath({
 
   const handleDegenerateCancel = () => setConfirmDegenerate(null);
 
+  /**
+   * Um nó do grafo (Ref C: coluna vertical de losangos ligados por linhas).
+   *
+   * NÃO existe regra nova aqui — `isCurrent`, `isReached`, `hidden`,
+   * `isPreviousStage` e o galho previsto são exatamente os mesmos cálculos que
+   * a página já fazia; o que mudou é a apresentação (lista de fichas → grafo).
+   */
   const renderEvolutionCard = (evolution: CreatureStage, colors: BranchColors, index: number, pathLength: number) => {
     const stageId = creatureFormId(evolution);
     const isCurrent = stageId === currentStageId;
@@ -135,111 +154,105 @@ export function EvolutionPath({
       ? ALIGN_TO_ATTR[evolution.branch] === currentBranch
       : false;
 
+    const isForecast = !isReached && stageId === forecastStageId;
+    const visual: SoulNodeVisual = isCurrent
+      ? 'current'
+      : isReached ? 'reached'
+      : isForecast ? 'forecast'
+      : 'locked';
+
+    // Situação em PALAVRAS: a cor e a posição do nó não podem ser o único
+    // portador da informação (WCAG 1.4.1).
+    const situacao = isCurrent
+      ? (isPt ? 'forma atual' : 'current form')
+      : isReached ? (isPt ? 'já alcançada' : 'already reached')
+      : isForecast ? (isPt ? 'próxima prevista, ainda bloqueada' : 'next forecast, still locked')
+      : (isPt ? 'bloqueada' : 'locked');
+    const nome = hidden ? (isPt ? 'Evolução oculta' : 'Hidden evolution') : evolution.name;
+    const nodeLabel = hidden
+      ? `${nome} — ${situacao}. ${isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)'}`
+      : isCurrent && onToggleEvolutionLock
+        ? `${nome} — ${situacao}. ${evolutionLocked
+            ? (isPt ? 'Evolução travada, toque para destravar' : 'Evolution locked, tap to unlock')
+            : (isPt ? 'Evolução destravada, toque para travar' : 'Evolution unlocked, tap to lock')}`
+        : `${nome} — ${situacao}`;
+
     return (
-      <div key={stageId}>
-        <div
-          className={`sm-card p-4 transition-all ${isCurrent ? 'shadow-md' : !isReached ? 'opacity-50' : ''}`}
-          style={isCurrent ? { borderColor: colors.hex, boxShadow: `0 0 0 1.5px ${colors.hex}, 0 4px 14px ${colors.hex}33` } : undefined}
-        >
-          <div className="flex items-center gap-3">
-            {/* Sprite — locked evolutions are hidden behind a pixelated "?".
-                Tapping the CURRENT Soulmon toggles the evolution padlock. */}
-            <div className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'var(--sm-bg)' }}>
-              {hidden ? (
-                <button
-                  onClick={() => setConfirmReveal(evolution)}
-                  aria-label={isPt ? 'Revelar evolução (spoiler)' : 'Reveal evolution (spoiler)'}
-                  title={isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)'}
-                  className="w-12 h-12 flex items-center justify-center rounded-lg transition-colors"
-                  style={{ fontWeight: 900, fontSize: '1.5rem', color: 'var(--sm-muted)', cursor: 'pointer' }}
-                >
-                  ?
-                </button>
-              ) : isCurrent && onToggleEvolutionLock ? (
-                <button
-                  onClick={onToggleEvolutionLock}
-                  aria-label={isPt ? 'Alternar cadeado de evolução' : 'Toggle evolution padlock'}
-                  title={evolutionLocked
-                    ? (isPt ? 'Destravar evolução' : 'Unlock evolution')
-                    : (isPt ? 'Travar evolução' : 'Lock evolution')}
-                  className="relative w-12 h-12 flex items-center justify-center rounded-lg cursor-pointer"
-                >
-                  <img
-                    src={getSpriteForStage(stageId, demoCharacterId)}
-                    alt={evolution.name}
-                    className="w-12 h-12 object-contain"
-                    style={{ imageRendering: 'pixelated', opacity: evolutionLocked ? 0.55 : 1 }}
-                  />
-                  {evolutionLocked && (
-                    <span className="absolute inset-0 flex items-center justify-center">
-                      <img src={iconLock} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }} />
-                    </span>
-                  )}
-                </button>
-              ) : (
-                <img
-                  src={getSpriteForStage(stageId)}
-                  alt={isReached ? evolution.name : (isPt ? 'evolução revelada' : 'revealed evolution')}
-                  className="w-12 h-12 object-contain"
-                  style={{ imageRendering: 'pixelated', opacity: isReached ? 1 : 0.45 }}
-                />
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: isReached ? 'var(--sm-ink)' : 'var(--sm-muted)' }}>
-                  {hidden ? '???' : evolution.name}
-                </h3>
-                {!hidden && (
-                  <span style={{ fontSize: '0.7rem', color: 'var(--sm-muted)' }}>
-                    {L(evolution.stageName)}
-                  </span>
-                )}
-                {isCurrent && (
-                  <span className="text-white text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: colors.hex, fontSize: '0.65rem' }}>
-                    {isPt ? 'ATUAL' : 'CURRENT'}
-                  </span>
-                )}
-                {isCurrent && evolutionLocked && (
-                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-muted)', color: 'var(--sm-bg)', fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                    <img src={iconLock} alt="" width={10} height={10} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> {isPt ? 'TRAVADA' : 'LOCKED'}
-                  </span>
-                )}
-                {isUltraMode && (
-                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-gold)', color: 'var(--sm-bg)', fontSize: '0.65rem' }}>
-                    {isPt ? 'ZÊNITE' : 'ZENITH'}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Status / Action Button */}
-            <div className="flex-shrink-0">
-              {!isReached ? (
-                <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'var(--sm-line)' }}>
-                  <img src={iconLock} alt="" width={14} height={14} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                </div>
-              ) : isPreviousStage ? (
-                <button
-                  onClick={() => handleDegenerateClick(evolution)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-                  style={{ background: 'var(--sm-bg)', color: 'var(--sm-muted)' }}
-                >
-                  {isPt ? 'Degenerar' : 'Degenerate'}
-                </button>
-              ) : null}
-            </div>
-          </div>
+      <div key={stageId} className="sm-px-tree-row">
+        {/* Trilho do grafo: o nó e a linha que desce até o próximo. */}
+        <div className="sm-px-tree-rail">
+          <SoulNode
+            visual={visual}
+            size={48}
+            tone={isReached && !isCurrent ? colors.hex : undefined}
+            ring={isCurrent}
+            sprite={hidden ? undefined : getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined)}
+            label={nodeLabel}
+            title={hidden
+              ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)')
+              : isCurrent && onToggleEvolutionLock
+                ? (evolutionLocked ? (isPt ? 'Destravar evolução' : 'Unlock evolution') : (isPt ? 'Travar evolução' : 'Lock evolution'))
+                : nome}
+            onClick={hidden
+              ? () => setConfirmReveal(evolution)
+              : isCurrent && onToggleEvolutionLock ? onToggleEvolutionLock : undefined}
+          />
+          {index < pathLength - 1 && (
+            <span
+              className={`sm-px-tree-link${isReached ? ' sm-px-tree-link-on' : ''}`}
+              aria-hidden="true"
+              style={isReached ? { ['--sm-px-link-tone' as string]: colors.hex } : undefined}
+            />
+          )}
         </div>
 
-        {/* Arrow */}
-        {index < pathLength - 1 && (
-          <div className="flex justify-center py-1">
-            <ChevronDown size={18} color={isReached ? colors.hex : 'var(--sm-line)'} />
+        {/* Placa do nó: nome, estágio e situação. */}
+        <div className={`sm-px-tree-plate${isCurrent ? ' sm-px-tree-plate-current' : ''}${!isReached ? ' sm-px-tree-plate-locked' : ''}`}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: isReached ? 'var(--sm-ink)' : 'var(--sm-muted)' }}>
+              {hidden ? '???' : evolution.name}
+            </h3>
+            {!hidden && (
+              <span style={{ fontSize: '0.7rem', color: 'var(--sm-muted)' }}>
+                {L(evolution.stageName)}
+              </span>
+            )}
+            {isCurrent && (
+              <span className="sm-px-tree-tag" style={{ background: colors.hex, color: ATTR_ON_FILL_INK }}>
+                {isPt ? 'ATUAL' : 'CURRENT'}
+              </span>
+            )}
+            {isForecast && (
+              <span className="sm-px-tree-tag sm-px-tree-tag-forecast">
+                {isPt ? 'PREVISTA' : 'FORECAST'}
+              </span>
+            )}
+            {isCurrent && evolutionLocked && (
+              <span className="sm-px-tree-tag" style={{ background: 'var(--sm-ink)', color: 'var(--sm-bg)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <img src={iconLock} alt="" width={10} height={10} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> {isPt ? 'TRAVADA' : 'LOCKED'}
+              </span>
+            )}
+            {isUltraMode && (
+              <span className="sm-px-tree-tag" style={{ background: 'var(--sm-gold)', color: 'var(--sm-bg)' }}>
+                {isPt ? 'ZÊNITE' : 'ZENITH'}
+              </span>
+            )}
+            {!isReached && (
+              <span className="sm-px-tree-tag sm-px-tree-tag-locked">
+                <img src={iconLock} alt="" width={10} height={10} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                {isPt ? 'BLOQUEADA' : 'LOCKED'}
+              </span>
+            )}
           </div>
-        )}
+          {isPreviousStage && (
+            <button
+              onClick={() => handleDegenerateClick(evolution)}
+              className="sm-px-tree-degen"
+            >
+              {isPt ? 'Degenerar' : 'Degenerate'}
+            </button>
+          )}
+        </div>
       </div>
     );
   };
@@ -316,7 +329,9 @@ export function EvolutionPath({
           {ATTR_ORDER.map(a => {
             const Icon = ATTR_ICON[a];
             return (
-              <span key={a} className="flex items-center gap-1.5" style={{ fontWeight: 700, color: getBranchColor(a).hex, fontSize: '0.85rem' }}>
+              // TEXTO na tinta legível; o ÍCONE segue a cor de identidade
+              // (elemento de interface, mínimo 3:1, que ela cumpre).
+              <span key={a} className="flex items-center gap-1.5" style={{ fontWeight: 700, color: ATTR_INK[a], fontSize: '0.85rem' }}>
                 <Icon size={16} color={getBranchColor(a).hex} strokeWidth={2.2} />
                 {L(ATTR_LABEL[a])}: {a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints}
               </span>
@@ -330,7 +345,7 @@ export function EvolutionPath({
         {forecastBranch && (
           <p style={{ fontSize: '0.76rem', color: 'var(--sm-muted)', marginTop: 10, lineHeight: 1.45 }}>
             {isPt ? 'Seguindo para ' : 'Heading toward '}
-            <strong style={{ color: getBranchColor(forecastBranch).hex }}>{L(ATTR_LABEL[forecastBranch])}</strong>
+            <strong style={{ color: ATTR_INK[forecastBranch] }}>{L(ATTR_LABEL[forecastBranch])}</strong>
             {isTie
               ? (carePattern
                   ? (isPt
@@ -354,13 +369,6 @@ export function EvolutionPath({
           language={language}
         />
       </div>
-
-      {/* Rookie — Branching Point (cor neutra, não pertence a nenhum branch) */}
-      {rookie && (
-        <div className="mb-4">
-          {renderEvolutionCard(rookie, { hex: '#14b8a6' }, 0, 1)}
-        </div>
-      )}
 
       {/* Branch Selector Divider */}
       <div className="my-4 flex items-center gap-3">
@@ -386,18 +394,22 @@ export function EvolutionPath({
                 fontSize: '0.75rem',
                 background: active ? hex : 'var(--sm-surface)',
                 borderColor: active ? hex : 'var(--sm-line)',
-                color: active ? '#fff' : hex,
+                // Branco sobre os três preenchimentos media 2,4–3,1:1 (medido);
+                // a tinta escura mede 5,4–7,0:1.
+                color: active ? ATTR_ON_FILL_INK : ATTR_INK[b],
               }}
             >
-              <Icon size={16} color={active ? '#fff' : hex} strokeWidth={2.2} />
+              <Icon size={16} color={active ? ATTR_ON_FILL_INK : hex} strokeWidth={2.2} />
               {L(ATTR_LABEL[b])}
             </button>
           );
         })}
       </div>
 
-      {/* Branch-Specific Evolution Path - Always visible */}
-      <div className="space-y-3">
+      {/* Grafo da árvore (Ref C): coluna vertical de nós de cristal ligados
+          por linhas. O Rookie é o TRONCO — mesmo nó para os três galhos —,
+          por isso encabeça a coluna em vez de morar numa ficha à parte. */}
+      <div className="sm-px-tree">
         {branchPath.length === 0 && !ultra ? (
           // Sem a árvore do oráculo (save antigo ou incompleto) não há o que
           // desenhar. Antes ficava só um vazio enorme abaixo dos botões, e a
@@ -414,12 +426,18 @@ export function EvolutionPath({
             </p>
           </div>
         ) : (
-          <>
-            {branchPath.map((evolution, index) =>
-              renderEvolutionCard(evolution, colors, index, branchPath.length + 1),
-            )}
-            {ultra && renderEvolutionCard(ultra, colors, branchPath.length, branchPath.length + 1)}
-          </>
+          (() => {
+            // Uma coluna só: tronco (rookie) → galho escolhido → ultra.
+            const total = (rookie ? 1 : 0) + branchPath.length + (ultra ? 1 : 0);
+            let i = 0;
+            return (
+              <>
+                {rookie && renderEvolutionCard(rookie, { hex: '#14b8a6' }, i++, total)}
+                {branchPath.map(evolution => renderEvolutionCard(evolution, colors, i++, total))}
+                {ultra && renderEvolutionCard(ultra, colors, i++, total)}
+              </>
+            );
+          })()
         )}
       </div>
     </div>

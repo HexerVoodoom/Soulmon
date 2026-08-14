@@ -2,8 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hexervoodoom.soulmon">
 
+    <!-- Backup: mantido LIGADO (não quebra quem já joga), mas com regra de
+         exclusão do diretório do WebView, onde vive o localStorage — o save e,
+         principalmente, `soulmon-profile` (nome completo, data, hora e local de
+         nascimento). Sem essas regras o Auto Backup exportava essa PII para o
+         Google Drive. Ver os comentários em res/xml/backup_rules.xml. -->
     <application
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"

@@ -77,6 +77,12 @@ const LEGACY_LEVEL_OF: Record<string, EvolutionStage> = Object.fromEntries(
 /** Nível do estágio: lê o prefixo do id ('champion-virus' → 'champion'),
  *  com fallback pro roster legado (masmorra / sprite genérico). */
 export function getStageLevel(stage: string): EvolutionStage {
+  // O save vem do localStorage E da nuvem — os dois são dado NÃO confiável, e
+  // `/api/save` só valida que `state` é um objeto, não o tipo de cada campo.
+  // Um `evolutionStage` que não é string fazia `stage.split` lançar dentro do
+  // inicializador do GameStateProvider: tela branca permanente, sem caminho de
+  // recuperação pela UI. Cai no estágio inicial em vez de derrubar o app.
+  if (typeof stage !== 'string') return 'rookie';
   if (stage === 'rookie') return 'rookie';
   if (stage === 'ultra') return 'ultra';
   const prefix = stage.split('-')[0];
@@ -86,6 +92,7 @@ export function getStageLevel(stage: string): EvolutionStage {
 
 /** Atributo (virus/data/vaccine) embutido no id, se houver. */
 export function getStageBranch(stage: string): 'virus' | 'data' | 'vaccine' | null {
+  if (typeof stage !== 'string') return null; // mesma razão de getStageLevel
   const [, branch] = stage.split('-');
   return branch === 'virus' || branch === 'data' || branch === 'vaccine' ? branch : null;
 }

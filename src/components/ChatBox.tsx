@@ -312,8 +312,9 @@ export function ChatBox({
   };
 
   return (
-    <div className="bg-[rgba(30,41,57,0.9)] rounded-[10px] px-3 py-2.5"
-    style={{ border: '1.1px solid #364153' }}>
+    /* Moldura de cobre chanfrada do kit no lugar do retângulo arredondado
+       cinza-ardósia (#1e2939/#364153 eram cores cruas, fora dos tokens). */
+    <div className="sm-px-chatbar">
       <div className="flex gap-2">
         <input
           type="text"
@@ -331,15 +332,11 @@ export function ChatBox({
           autoCapitalize="off"
           name={randomName}
           id={randomName}
-          className="flex-1 px-3 py-2 bg-[#364153] rounded-[4px] text-white placeholder-[#99a1af] focus:outline-none focus:border-[#4a5565] disabled:opacity-50"
-          style={{
-            fontFamily: 'Courier New, monospace',
-            // 16px é o mínimo pra evitar o auto-zoom do iOS Safari ao focar
-            // (fonte menor faz o navegador dar zoom no campo — some tudo
-            // menos o campo focado, já que o resto fica fora da área visível).
-            fontSize: '16px',
-            border: '1.1px solid #4a5565'
-          }}
+          /* Cor, borda, foco e o mínimo de 16px (anti auto-zoom do iOS
+             Safari) vivem em `.sm-px-chat-input` no index.css. A fonte do
+             campo continua MONOESPAÇADA, não a bitmap: é onde se digita
+             frase livre em português, com acento. */
+          className="sm-px-chat-input"
           maxLength={200}
         />
 
@@ -348,8 +345,7 @@ export function ChatBox({
           <button
             onClick={handleSendMessage}
             disabled={isLoading}
-            className="px-4 py-2 bg-neon-green text-white border-neon-green/80 hover:bg-gray-600 hover:text-white disabled:bg-gray-600 disabled:opacity-50 rounded border-2 disabled:border-gray-500 transition-all flex items-center gap-1.5"
-            style={{ fontFamily: 'Courier New, monospace', fontSize: '0.75rem', fontWeight: 'bold' }}
+            className="sm-px-chat-btn sm-px-chat-btn-send"
             title={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
             aria-label={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
           >
@@ -363,15 +359,12 @@ export function ChatBox({
           <button
             onClick={handleMicClick}
             disabled={isLoading}
-            className={`w-[50px] h-[36px] ${isRecording ? 'bg-red-500/20' : 'bg-transparent'} text-white hover:bg-gray-600/20 disabled:opacity-50 rounded-[4px] transition-all flex items-center justify-center relative`}
-            style={{
-              // flexShrink:0 porque `w-[50px]` é só a largura BASE: num flex row
-              // o botão encolhia até ~18px em telas de 320px, virando um alvo de
-              // toque inutilizável (medido com Playwright).
-              flexShrink: 0,
-              border: isRecording ? '1.1px solid #ef4444' : '1.1px solid #4a5565'
-            }}
-            title={isRecording ? 'Stop recording' : 'Record message'}
+            /* `flex-shrink: 0` e o mínimo de 44px de altura vivem em
+               `.sm-px-chat-btn`: sem eles o botão encolhia até ~18px num
+               flex row de 320px (medido com Playwright). */
+            className={`sm-px-chat-btn${isRecording ? ' sm-px-chat-btn-rec' : ''}`}
+            title={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
+            aria-label={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
           >
             {isRecording ? (
               <Square className="w-4 h-4 fill-red-500 text-red-500" />

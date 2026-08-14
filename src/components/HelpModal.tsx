@@ -1,4 +1,5 @@
 import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { PixelButton } from './pixel/PixelKit';
 import { Language } from '../utils/i18n';
 
 interface HelpModalProps {
@@ -140,20 +141,30 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
   return (
     <div className="fixed inset-0 z-[300] flex items-end justify-center p-0">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="relative w-full max-w-md max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200 text-white rounded-t-2xl" style={{ background: '#1a2230' }}>
+      {/* Este modal era o único da tela desenhado em cor CRUA (`#1a2230`,
+          cinza-ardósia fora da paleta) com texto branco fixo: no tema claro
+          ele virava uma lâmina escura, e `text-white/60` sobre esse fundo era
+          o pior contraste do app. Agora ele usa os tokens do tema, como o
+          resto do kit. */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={isPt ? 'Ajuda' : 'Help'}
+        className="relative w-full max-w-md max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-4 duration-200"
+        style={{ background: 'var(--sm-surface)', color: 'var(--sm-ink)', borderTop: '3px solid var(--sm-px-copper)' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 flex-shrink-0 border-b border-white/10">
-          <span
-            className="font-bold text-white"
-            style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
-          >
-            {isPt ? 'ℹ️ Ajuda' : 'ℹ️ Help'}
+        <div className="flex items-center justify-between px-4 py-2 shrink-0" style={{ borderBottom: '2px solid var(--sm-line)' }}>
+          <span className="sm-px-font" style={{ fontSize: '0.8rem', color: 'var(--sm-ink)' }}>
+            {isPt ? 'ℹ️ AJUDA' : 'ℹ️ HELP'}
           </span>
           <button
             onClick={onClose}
-            className="p-1 text-white/60 hover:text-white"
+            aria-label={isPt ? 'Fechar ajuda' : 'Close help'}
+            title={isPt ? 'Fechar' : 'Close'}
+            className="sm-px-help-x"
           >
-            <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 
@@ -162,29 +173,22 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
           {SECTIONS.map(section => (
             <div key={section.titleEn}>
               <p
-                className="text-xs font-bold mb-2 uppercase tracking-wider"
-                style={{ fontFamily: 'monospace', color: '#2dd4bf' }}
+                className="sm-px-font text-xs mb-2 uppercase tracking-wider"
+                style={{ color: 'var(--sm-help-accent)' }}
               >
                 {isPt ? section.titlePt : section.titleEn}
               </p>
               <div className="space-y-2">
                 {section.items.map(item => (
-                  <div
-                    key={item.labelEn}
-                    className="flex gap-3 p-2 rounded bg-white/5"
-                  >
+                  <div key={item.labelEn} className="flex gap-3 p-2 sm-px-help-item">
                     <span style={{ fontSize: '1.2rem', flexShrink: 0, lineHeight: 1.4 }}>{item.icon}</span>
                     <div>
-                      <p
-                        className="font-bold text-xs text-white"
-                        style={{ fontFamily: 'monospace' }}
-                      >
+                      <p className="font-bold text-xs" style={{ fontFamily: 'ui-monospace, monospace', color: 'var(--sm-ink)' }}>
                         {isPt ? item.labelPt : item.labelEn}
                       </p>
-                      <p
-                        className="text-xs mt-0.5 leading-snug text-white/60"
-                        style={{ fontFamily: 'monospace' }}
-                      >
+                      {/* Texto corrido (e em PT-BR com acento): monoespaçada de
+                          leitura, nunca a bitmap — mesma decisão da rodada 2. */}
+                      <p className="text-xs mt-0.5 leading-snug" style={{ fontFamily: 'ui-monospace, monospace', color: 'var(--sm-muted)' }}>
                         {isPt ? item.descPt : item.descEn}
                       </p>
                     </div>
@@ -196,14 +200,10 @@ export function HelpModal({ isOpen, onClose, language }: HelpModalProps) {
         </div>
 
         {/* Footer close button */}
-        <div className="flex-shrink-0 p-3 border-t border-white/10">
-          <button
-            onClick={onClose}
-            className="w-full py-2 text-xs font-bold rounded bg-white/10 text-white hover:bg-white/20"
-            style={{ fontFamily: 'monospace' }}
-          >
+        <div className="shrink-0 p-3" style={{ borderTop: '2px solid var(--sm-line)' }}>
+          <PixelButton size="sm" onClick={onClose} style={{ width: '100%' }}>
             {isPt ? 'Fechar' : 'Close'}
-          </button>
+          </PixelButton>
         </div>
       </div>
     </div>

@@ -237,7 +237,12 @@ export async function pushCareAction(
   }
 
   try {
-    const res = await fetch(`${APP_URL}/api/save`, {
+    // O `?id=` na URL é o contrato de `functions/api/save.js` — ele lê o id do
+    // query string. Sem isto o POST devolvia 400 e TODA ação de cuidado do
+    // overlay (carinho, comida, tarefa) se perdia como "erro de rede".
+    // O `id` segue no corpo por compatibilidade com o fallback do servidor;
+    // os dois têm que ser iguais, senão o servidor recusa.
+    const res = await fetch(`${APP_URL}/api/save?id=${encodeURIComponent(saveId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeader },
       // `accountTier`/`credits` são removidos pelo servidor de qualquer jeito

@@ -1,4 +1,5 @@
 import { guardAiRequest } from './_aiGuard.js';
+import { minimizeForAi, redactionCount } from './_redact.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -86,14 +87,33 @@ export async function onRequestPost({ request, env }) {
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });
 
+    // N-3: minimização na fronteira. O que o usuário digita para o pet é a
+    // maior superfície de texto livre do produto e sai daqui para um processador
+    // nos EUA. Identificadores diretos não têm nenhuma utilidade para a resposta
+    // do modelo — então não saem. Ver `_redact.js`.
+    const min = minimizeForAi(message, 500);
+    const safeMessage = min.text;
+    const removed = redactionCount(min.redactions);
+    if (removed || min.truncated) {
+      // Só CONTAGEM. O conteúdo nunca entra em log.
+      console.log('[chat] entrada minimizada', {
+        redactions: min.redactions,
+        truncated: min.truncated,
+      });
+    }
+    // `customKeywords` também é texto livre do usuário e entra no system prompt.
+    const safeSettings = aiSettings
+      ? { ...aiSettings, customKeywords: minimizeForAi(aiSettings.customKeywords, 120).text }
+      : aiSettings;
+
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         messages: [
-          { role: 'system', content: buildSystemPrompt({ petName: petNameRaw || digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) },
-          { role: 'user', content: message },
+          { role: 'system', content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || 'Soulmon').slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings: safeSettings }) },
+          { role: 'user', content: safeMessage },
         ],
         max_tokens: 120,
         temperature: aiSettings?.temperature ?? 0.85,
@@ -109,20 +129,20 @@ export async function onRequestPost({ request, env }) {
     const response = data.choices?.[0]?.message?.content ?? '...';
 
     // Activity creation detection (same logic as Supabase version)
-    const shouldCreate = message.toLowerCase().match(/create|add|new|make.*(activity|task|habit)/i)
-      && !message.toLowerCase().match(/don't|not|no/i);
+    const shouldCreate = safeMessage.toLowerCase().match(/create|add|new|make.*(activity|task|habit)/i)
+      && !safeMessage.toLowerCase().match(/don't|not|no/i);
 
     if (shouldCreate) {
-      const nameMatch = message.match(/(?:create|add|new|make)\s+(?:an?\s+)?(?:activity|task|habit)?\s*(?:to\s+)?(.+)/i);
+      const nameMatch = safeMessage.match(/(?:create|add|new|make)\s+(?:an?\s+)?(?:activity|task|habit)?\s*(?:to\s+)?(.+)/i);
       const activityName = nameMatch?.[1]?.trim() || 'New Activity';
       let category = 'Wellness';
-      if (message.match(/exercise|workout|run|gym/i)) category = 'Fitness';
-      else if (message.match(/study|read|learn|course/i)) category = 'Study';
-      else if (message.match(/work|project|meeting/i)) category = 'Work';
-      else if (message.match(/draw|paint|write|creat/i)) category = 'Creativity';
-      else if (message.match(/friend|family|social/i)) category = 'Social';
-      else if (message.match(/clean|organi|plan/i)) category = 'Discipline';
-      else if (message.match(/health|doctor|medic/i)) category = 'Health';
+      if (safeMessage.match(/exercise|workout|run|gym/i)) category = 'Fitness';
+      else if (safeMessage.match(/study|read|learn|course/i)) category = 'Study';
+      else if (safeMessage.match(/work|project|meeting/i)) category = 'Work';
+      else if (safeMessage.match(/draw|paint|write|creat/i)) category = 'Creativity';
+      else if (safeMessage.match(/friend|family|social/i)) category = 'Social';
+      else if (safeMessage.match(/clean|organi|plan/i)) category = 'Discipline';
+      else if (safeMessage.match(/health|doctor|medic/i)) category = 'Health';
       return Response.json({ response, action: { type: 'create_activity', activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS });
     }
 

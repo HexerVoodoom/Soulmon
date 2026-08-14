@@ -8,6 +8,14 @@ import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/or
 import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
+import { resolveLanguage } from '../utils/i18n';
+import {
+  readLocal,
+  writeLocal,
+  onStorageDegraded,
+  storageDegradedMessage,
+} from '../utils/safeStorage';
+import { toast } from 'sonner';
 
 /**
  * Save antigo guardava UMA decoração (`equippedFurniture`) que aparecia como
@@ -234,19 +242,14 @@ interface GameStateContextType {
 
 const GameStateContext = createContext<GameStateContextType | null>(null);
 
-export function GameStateProvider({ children }: { children: ReactNode }) {
-  const [gameState, setGameState] = useState<GameState>(() => {
-    // A corrupted save must never white-screen the app — fall back to a fresh state.
-    let loadedState: Partial<GameState> | null = null;
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
-      if (saved) loadedState = JSON.parse(saved) as Partial<GameState>;
-    } catch {
-      loadedState = null;
-    }
-    if (loadedState) {
-      const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
-      return {
+/**
+ * Migra/completa um save carregado. Isolada da leitura de propósito: o
+ * inicializador precisa poder cair para o estado novo se QUALQUER coisa aqui
+ * lançar, e para isso o corpo tem que ser uma expressão que ele possa embrulhar.
+ */
+function hydrateSave(loadedState: Partial<GameState>): GameState {
+  const savedEggType = readLocal(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
+  return {
         ...loadedState,
         tasks: loadedState.tasks ?? [],
         completedTasks: loadedState.completedTasks ?? [],
@@ -299,9 +302,12 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         demoCharacterId: loadedState.demoCharacterId,
         credits: loadedState.credits ?? 0,
       } as GameState;
-    }
-    const savedEggType = localStorage.getItem(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
-    return {
+}
+
+/** Estado de instalação nova. Também é o fallback de qualquer falha de carga. */
+function freshGameState(): GameState {
+  const savedEggType = readLocal(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
+  return {
       activities: [],
       tasks: [],
       completedTasks: [],
@@ -349,13 +355,62 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       // purchase completes.
       accountTier: 'demo',
       credits: 0,
-    };
+  };
+}
+
+export function GameStateProvider({ children }: { children: ReactNode }) {
+  // Um aviso por sessão, com par PT/EN. O idioma é lido pelo mesmo caminho
+  // defensivo — num storage bloqueado, `readLocal` devolve null e cai no padrão.
+  useEffect(() => {
+    onStorageDegraded((kind) => {
+      const language = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE));
+      toast.warning(storageDegradedMessage(kind, language), { duration: 10000 });
+    });
+    return () => onStorageDegraded(null);
+  }, []);
+
+  const [gameState, setGameState] = useState<GameState>(() => {
+    // Nada aqui pode lançar. Um save corrompido, um storage bloqueado
+    // (`SecurityError` do Safari em modo privado) ou um campo com tipo hostil
+    // vindo da nuvem precisam degradar para estado novo — nunca virar a tela
+    // branca permanente que este provider já produziu uma vez.
+    let loadedState: Partial<GameState> | null = null;
+    const saved = readLocal(STORAGE_KEYS.GAME_STATE);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        // Save tem que ser um OBJETO. Array/primitivo viram `{...}` vazio e o
+        // jogador perde tudo em silêncio — recusar é o comportamento certo.
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          loadedState = parsed as Partial<GameState>;
+        } else {
+          console.warn('[GameState] save ignorado: não é objeto', { type: typeof parsed });
+        }
+      } catch (err) {
+        console.warn('[GameState] save ilegível, começando do zero', {
+          error: (err as Error)?.name,
+        });
+      }
+    }
+    if (loadedState) {
+      try {
+        return hydrateSave(loadedState);
+      } catch (err) {
+        console.error('[GameState] falha ao migrar o save; caindo para estado novo', {
+          error: (err as Error)?.name,
+          message: (err as Error)?.message,
+        });
+      }
+    }
+    return freshGameState();
   });
 
   const isFirstRender = useRef(true);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState));
+    // Storage cheio (`QuotaExceededError`) OU bloqueado não pode derrubar a
+    // árvore do React: o jogo segue em memória e o usuário é avisado uma vez.
+    writeLocal(STORAGE_KEYS.GAME_STATE, JSON.stringify(gameState));
 
     // Skip cloud backup on first render (initial load from localStorage)
     if (isFirstRender.current) {
@@ -364,17 +419,23 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     }
 
     // Generate save ID on first use
-    let saveId = localStorage.getItem(STORAGE_KEYS.SAVE_ID);
+    let saveId = readLocal(STORAGE_KEYS.SAVE_ID);
     if (!saveId) {
       saveId = crypto.randomUUID();
-      localStorage.setItem(STORAGE_KEYS.SAVE_ID, saveId);
+      // Sem storage, o id vive só nesta sessão: o cloud save ainda acontece,
+      // mas na próxima abertura o id é outro. Melhor que não salvar nada.
+      writeLocal(STORAGE_KEYS.SAVE_ID, saveId);
     }
 
     const timer = setTimeout(() => {
       cloudSave(saveId!, gameState);
       pushProfile({
         id: saveId!,
-        name: localStorage.getItem(STORAGE_KEYS.USER_NAME) || 'Anônimo',
+        // O nome vai para o ranking da COMUNIDADE, onde outros jogadores leem.
+        // O padrão precisa do par EN/PT como todo texto de UI: em inglês,
+        // "Anônimo" aparecia para quem nunca escolheu português.
+        name: readLocal(STORAGE_KEYS.USER_NAME)
+          || (resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR' ? 'Anônimo' : 'Anonymous'),
         petName: gameState.soulmonMeta?.baseName || '',
         stage: gameState.evolutionStage,
         unlockedStages: gameState.unlockedEvolutions,

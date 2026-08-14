@@ -613,6 +613,36 @@ async function guardAiRequest(request, env, bucket, saveId) {
 }
 __name(guardAiRequest, "guardAiRequest");
 
+// api/_redact.js
+var RULES = [
+  { kind: "email", re: /[\w.+-]+@[\w-]+\.[\w.-]+/g, tag: "[email]" },
+  { kind: "url", re: /\b(?:https?:\/\/|www\.)\S+/gi, tag: "[link]" },
+  { kind: "cpf", re: /\b\d{3}\.\d{3}\.\d{3}-\d{2}\b/g, tag: "[documento]" },
+  { kind: "cnpj", re: /\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g, tag: "[documento]" },
+  { kind: "phone", re: /(?:\+?\d{1,3}[\s.-]?)?(?:\(\d{2,3}\)[\s.-]?|\b\d{2,3}[\s.-])\d{4,5}[\s.-]?\d{4}\b/g, tag: "[telefone]" },
+  { kind: "digits", re: /\b\d[\d\s.-]{9,}\d\b/g, tag: "[n\xFAmero]" },
+  { kind: "handle", re: /(^|\s)@[A-Za-z0-9_.]{2,}/g, tag: "$1[perfil]" }
+];
+function minimizeForAi(input, maxLength = 500) {
+  const original = (input ?? "").toString();
+  let text = original;
+  const redactions = {};
+  for (const { kind, re, tag } of RULES) {
+    text = text.replace(re, (match2, ...rest) => {
+      redactions[kind] = (redactions[kind] || 0) + 1;
+      return tag.includes("$1") ? `${rest[0] ?? ""}${tag.replace("$1", "")}` : tag;
+    });
+  }
+  const truncated = text.length > maxLength;
+  if (truncated) text = text.slice(0, maxLength);
+  return { text, redactions, truncated };
+}
+__name(minimizeForAi, "minimizeForAi");
+function redactionCount(redactions) {
+  return Object.values(redactions).reduce((a, b) => a + b, 0);
+}
+__name(redactionCount, "redactionCount");
+
 // api/chat.js
 var CORS2 = {
   "Access-Control-Allow-Origin": "*",
@@ -682,14 +712,24 @@ async function onRequestPost2({ request, env }) {
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS2 });
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS2 });
+    const min = minimizeForAi(message, 500);
+    const safeMessage = min.text;
+    const removed = redactionCount(min.redactions);
+    if (removed || min.truncated) {
+      console.log("[chat] entrada minimizada", {
+        redactions: min.redactions,
+        truncated: min.truncated
+      });
+    }
+    const safeSettings = aiSettings ? { ...aiSettings, customKeywords: minimizeForAi(aiSettings.customKeywords, 120).text } : aiSettings;
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${groqKey}` },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
         messages: [
-          { role: "system", content: buildSystemPrompt({ petName: petNameRaw || digimonName, mood, evolutionStage, dominantBranch, language, aiSettings }) },
-          { role: "user", content: message }
+          { role: "system", content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || "Soulmon").slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings: safeSettings }) },
+          { role: "user", content: safeMessage }
         ],
         max_tokens: 120,
         temperature: aiSettings?.temperature ?? 0.85
@@ -701,18 +741,18 @@ async function onRequestPost2({ request, env }) {
     }
     const data = await groqRes.json();
     const response = data.choices?.[0]?.message?.content ?? "...";
-    const shouldCreate = message.toLowerCase().match(/create|add|new|make.*(activity|task|habit)/i) && !message.toLowerCase().match(/don't|not|no/i);
+    const shouldCreate = safeMessage.toLowerCase().match(/create|add|new|make.*(activity|task|habit)/i) && !safeMessage.toLowerCase().match(/don't|not|no/i);
     if (shouldCreate) {
-      const nameMatch = message.match(/(?:create|add|new|make)\s+(?:an?\s+)?(?:activity|task|habit)?\s*(?:to\s+)?(.+)/i);
+      const nameMatch = safeMessage.match(/(?:create|add|new|make)\s+(?:an?\s+)?(?:activity|task|habit)?\s*(?:to\s+)?(.+)/i);
       const activityName = nameMatch?.[1]?.trim() || "New Activity";
       let category = "Wellness";
-      if (message.match(/exercise|workout|run|gym/i)) category = "Fitness";
-      else if (message.match(/study|read|learn|course/i)) category = "Study";
-      else if (message.match(/work|project|meeting/i)) category = "Work";
-      else if (message.match(/draw|paint|write|creat/i)) category = "Creativity";
-      else if (message.match(/friend|family|social/i)) category = "Social";
-      else if (message.match(/clean|organi|plan/i)) category = "Discipline";
-      else if (message.match(/health|doctor|medic/i)) category = "Health";
+      if (safeMessage.match(/exercise|workout|run|gym/i)) category = "Fitness";
+      else if (safeMessage.match(/study|read|learn|course/i)) category = "Study";
+      else if (safeMessage.match(/work|project|meeting/i)) category = "Work";
+      else if (safeMessage.match(/draw|paint|write|creat/i)) category = "Creativity";
+      else if (safeMessage.match(/friend|family|social/i)) category = "Social";
+      else if (safeMessage.match(/clean|organi|plan/i)) category = "Discipline";
+      else if (safeMessage.match(/health|doctor|medic/i)) category = "Health";
       return Response.json({ response, action: { type: "create_activity", activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS2 });
     }
     return Response.json({ response }, { headers: CORS2 });
@@ -723,15 +763,69 @@ async function onRequestPost2({ request, env }) {
 }
 __name(onRequestPost2, "onRequestPost");
 
+// api/_rateLimit.js
+var buckets = /* @__PURE__ */ new Map();
+var MAX_TRACKED = 5e3;
+function clientKey(request) {
+  return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() || null;
+}
+__name(clientKey, "clientKey");
+function takeToken(bucket, key, { limit, windowMs }, now = Date.now()) {
+  if (!key) return { ok: true, remaining: limit, retryAfter: 0 };
+  const id = `${bucket}|${key}`;
+  let hits = buckets.get(id);
+  if (!hits) {
+    if (buckets.size >= MAX_TRACKED) sweep(now, windowMs);
+    if (buckets.size >= MAX_TRACKED) return { ok: true, remaining: limit, retryAfter: 0 };
+    hits = [];
+    buckets.set(id, hits);
+  }
+  const cutoff = now - windowMs;
+  while (hits.length && hits[0] <= cutoff) hits.shift();
+  if (hits.length >= limit) {
+    const retryAfter = Math.max(1, Math.ceil((hits[0] + windowMs - now) / 1e3));
+    return { ok: false, remaining: 0, retryAfter };
+  }
+  hits.push(now);
+  return { ok: true, remaining: limit - hits.length, retryAfter: 0 };
+}
+__name(takeToken, "takeToken");
+function sweep(now, windowMs) {
+  const cutoff = now - windowMs;
+  for (const [id, hits] of buckets) {
+    while (hits.length && hits[0] <= cutoff) hits.shift();
+    if (hits.length === 0) buckets.delete(id);
+  }
+}
+__name(sweep, "sweep");
+function tooManyRequests(retryAfter, cors = {}) {
+  return new Response(JSON.stringify({ error: "rate limited", retryAfter }), {
+    status: 429,
+    headers: {
+      "Content-Type": "application/json",
+      "Retry-After": String(retryAfter),
+      ...cors
+    }
+  });
+}
+__name(tooManyRequests, "tooManyRequests");
+
 // api/community.js
 var CORS3 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  // `Authorization` é obrigatório nas 6 ações que passam por denyUnlessOwner.
+  // Ver comentário igual em save.js: sem isto o preflight cross-origin morre.
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
 var MATCHES_PER_DAY = 5;
 var json2 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS3 }), "json");
+var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult"]);
+var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
+var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
+var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult"]);
+var EDGE_TTL_SECONDS = 60;
 var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
 var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
 function stagePower(stage) {
@@ -806,7 +900,39 @@ async function onRequestOptions3() {
   return new Response(null, { headers: CORS3 });
 }
 __name(onRequestOptions3, "onRequestOptions");
-async function onRequest({ request, env }) {
+async function onRequest(context) {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const action = url.searchParams.get("action");
+  const ip = clientKey(request);
+  const gate = takeToken(
+    "community",
+    ip,
+    HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT
+  );
+  if (!gate.ok) {
+    console.warn("[community] rate limited", { action, retryAfter: gate.retryAfter });
+    return tooManyRequests(gate.retryAfter, CORS3);
+  }
+  const cacheable = request.method === "GET" && CACHEABLE_ACTIONS.has(action) && typeof caches !== "undefined" && caches.default;
+  if (cacheable) {
+    const hit = await caches.default.match(request).catch(() => null);
+    if (hit) return hit;
+  }
+  const res = await handleCommunity(context);
+  if (cacheable && res.status === 200) {
+    const cached = new Response(res.body, res);
+    cached.headers.set("Cache-Control", `public, max-age=${EDGE_TTL_SECONDS}`);
+    const copy = cached.clone();
+    const put = caches.default.put(request, cached).catch(() => {
+    });
+    if (typeof context.waitUntil === "function") context.waitUntil(put);
+    return copy;
+  }
+  return res;
+}
+__name(onRequest, "onRequest");
+async function handleCommunity({ request, env }) {
   if (!env.DIGIAPP_SAVES) return json2({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
@@ -1050,7 +1176,7 @@ async function onRequest({ request, env }) {
   }
   return json2({ error: "unknown action" }, 400);
 }
-__name(onRequest, "onRequest");
+__name(handleCommunity, "handleCommunity");
 
 // api/config.js
 var CORS4 = {
@@ -1076,7 +1202,10 @@ __name(onRequestGet, "onRequestGet");
 var CORS5 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  // `Authorization` é obrigatório aqui (authorizeSaveAccess). Sem anunciá-lo, o
+  // preflight de qualquer chamada cross-origin (overlay Electron em `file://`)
+  // é bloqueado pelo navegador e a falha aparece como erro de rede.
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
 async function onRequestOptions5() {
@@ -1305,16 +1434,27 @@ __name(onRequestPost5, "onRequestPost");
 var CORS8 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
+  // `Authorization` PRECISA estar aqui: o cliente manda `Bearer <idToken>` e o
+  // overlay Electron chama esta URL de OUTRA origem (`file://`), o que dispara
+  // preflight. Sem anunciar o header, o navegador bloqueia a chamada antes de
+  // ela sair e a falha chega no app como "erro de rede", não como 401.
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
 var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
+var MAX_STATE_BYTES = 5 * 1024 * 1024;
 async function onRequestOptions8() {
   return new Response(null, { headers: CORS8 });
 }
 __name(onRequestOptions8, "onRequestOptions");
 async function onRequest2({ request, env }) {
   const url = new URL(request.url);
-  const saveId = url.searchParams.get("id");
+  const body = request.method === "POST" ? await request.json().catch(() => null) : null;
+  const queryId = url.searchParams.get("id");
+  const bodyId = typeof body?.id === "string" ? body.id : null;
+  if (queryId && bodyId && queryId !== bodyId) {
+    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS8 });
+  }
+  const saveId = queryId || bodyId;
   if (!saveId || !VALID_ID.test(saveId)) {
     return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS8 });
   }
@@ -1335,11 +1475,19 @@ async function onRequest2({ request, env }) {
     return Response.json({ found: true, state }, { headers: CORS8 });
   }
   if (request.method === "POST") {
-    const body = await request.json().catch(() => null);
-    if (!body?.state) return Response.json({ error: "Missing state" }, { status: 400, headers: CORS8 });
-    const state = { ...body.state };
+    const incoming = body?.state;
+    if (typeof incoming !== "object" || incoming === null || Array.isArray(incoming)) {
+      console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveId, tipo: Array.isArray(incoming) ? "array" : typeof incoming });
+      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS8 });
+    }
+    const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
-    await env.DIGIAPP_SAVES.put(saveId, JSON.stringify(state), { expirationTtl: 86400 * 365 });
+    const serialized = JSON.stringify(state);
+    if (serialized.length > MAX_STATE_BYTES) {
+      console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS8 });
+    }
+    await env.DIGIAPP_SAVES.put(saveId, serialized, { expirationTtl: 86400 * 365 });
     return Response.json({ ok: true }, { headers: CORS8 });
   }
   return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS8 });
@@ -1348,7 +1496,12 @@ __name(onRequest2, "onRequest");
 
 // api/_pushTargets.js
 var PUSH_HOST_SUFFIXES = [
-  "googleapis.com",
+  // `fcm.googleapis.com`, NÃO `googleapis.com`: o sufixo largo aceitava
+  // `storage.googleapis.com`, `firebasestorage.googleapis.com` e qualquer
+  // outro serviço do Google como alvo do fetch do worker — relay/amplificação
+  // a partir da nossa infra, com JWT VAPID de produção no cabeçalho. O
+  // endpoint real do Chrome é só este.
+  "fcm.googleapis.com",
   // FCM / Chrome
   "push.services.mozilla.com",
   // Firefox
@@ -1373,6 +1526,14 @@ function isAllowedPushEndpoint(endpoint) {
 __name(isAllowedPushEndpoint, "isAllowedPushEndpoint");
 
 // api/subscribe.js
+var SUB_LIMIT = { limit: 10, windowMs: 6e4 };
+function costGate(request) {
+  const gate = takeToken("subscribe", clientKey(request), SUB_LIMIT);
+  if (gate.ok) return null;
+  console.warn("[subscribe] rate limited", { retryAfter: gate.retryAfter });
+  return tooManyRequests(gate.retryAfter, CORS9);
+}
+__name(costGate, "costGate");
 var CORS9 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
@@ -1383,6 +1544,8 @@ async function onRequestOptions9() {
 }
 __name(onRequestOptions9, "onRequestOptions");
 async function onRequestPost6({ request, env }) {
+  const limited = costGate(request);
+  if (limited) return limited;
   let body;
   try {
     body = await request.json();
@@ -1406,11 +1569,28 @@ async function onRequestPost6({ request, env }) {
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
-  await env.PUSH_SUBSCRIPTIONS.put(
-    kvKey,
-    JSON.stringify({ endpoint, keys, petName: petName || digimonName || "Soulmon", language: language || "en-US" }),
-    { expirationTtl: 60 * 60 * 24 * 365 }
-  );
+  const record = {
+    endpoint,
+    keys,
+    petName: petName || digimonName || "Soulmon",
+    language: language || "en-US"
+  };
+  const REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1e3;
+  let previous = null;
+  try {
+    previous = JSON.parse(await env.PUSH_SUBSCRIPTIONS.get(kvKey) || "null");
+  } catch {
+    previous = null;
+  }
+  const unchanged = previous && JSON.stringify({ ...previous, refreshedAt: void 0 }) === JSON.stringify({ ...record, refreshedAt: void 0 });
+  const stale = !previous?.refreshedAt || Date.now() - previous.refreshedAt > REFRESH_AFTER_MS;
+  if (!unchanged || stale) {
+    await env.PUSH_SUBSCRIPTIONS.put(
+      kvKey,
+      JSON.stringify({ ...record, refreshedAt: Date.now() }),
+      { expirationTtl: 60 * 60 * 24 * 365 }
+    );
+  }
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
     headers: { "Content-Type": "application/json", ...CORS9 }
@@ -1418,6 +1598,8 @@ async function onRequestPost6({ request, env }) {
 }
 __name(onRequestPost6, "onRequestPost");
 async function onRequestDelete2({ request, env }) {
+  const limited = costGate(request);
+  if (limited) return limited;
   let body;
   try {
     body = await request.json();
@@ -1462,7 +1644,14 @@ __name(onRequestOptions10, "onRequestOptions");
 async function onRequestPost7({ request, env }) {
   try {
     const body = await request.json();
-    const goalText = (body.goalText || "").toString().trim().slice(0, 300);
+    const goalMin = minimizeForAi((body.goalText || "").toString().trim(), 300);
+    const goalText = goalMin.text;
+    if (redactionCount(goalMin.redactions) || goalMin.truncated) {
+      console.log("[suggest-tasks] entrada minimizada", {
+        redactions: goalMin.redactions,
+        truncated: goalMin.truncated
+      });
+    }
     const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === "pt-BR";
     if (!goalText && categories.length === 0) {
@@ -1542,7 +1731,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-hwWKAe/functionsRoutes-0.386134454352856.mjs
+// ../.wrangler/tmp/pages-fG2UgN/functionsRoutes-0.47833370635984374.mjs
 var routes = [
   {
     routePath: "/api/billing",

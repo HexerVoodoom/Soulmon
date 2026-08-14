@@ -185,14 +185,22 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
       onClick={onClick}
       disabled={disabled}
       aria-label={dir === 'left' ? (isPt ? 'Voltar' : 'Back') : (isPt ? 'Avançar' : 'Next')}
+      /* 44x44 de area de toque com o quadrado de 34px dentro (WCAG 2.2 AA 2.5.8):
+         avancar/voltar e a unica navegacao do tutorial. */
       style={{
-        width: 34, height: 34, borderRadius: 10, border: 'none', cursor: disabled ? 'default' : 'pointer',
-        background: disabled ? 'var(--sm-bg)' : 'var(--sm-primary-soft)',
+        width: 44, height: 44, padding: 5, border: 'none', background: 'none',
+        cursor: disabled ? 'default' : 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         opacity: disabled ? 0.35 : 1, flexShrink: 0,
       }}
     >
-      {triangleGlyph(dir)}
+      <span aria-hidden="true" style={{
+        width: 34, height: 34, borderRadius: 10,
+        background: disabled ? 'var(--sm-bg)' : 'var(--sm-primary-soft)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {triangleGlyph(dir)}
+      </span>
     </button>
   );
 
@@ -209,8 +217,13 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
             <div
               className="sm-card"
               style={{
-                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-                padding: '36px 24px', marginTop: 40,
+                /* `flex: 1` faz o cartão ocupar a altura toda; sem
+                   `justifyContent` o conteúdo grudava no topo e sobravam ~700px
+                   de vazio embaixo (visto no screenshot da rodada 3 — a
+                   PRIMEIRA tela que o jogador novo vê). Centralizar resolve sem
+                   mudar a moldura. */
+                flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+                padding: '36px 24px', marginTop: 40, marginBottom: 4,
                 border: '3px solid var(--sm-gold)',
                 boxShadow: '0 0 0 4px var(--sm-gold-soft), 0 8px 24px rgba(42,36,64,.12)',
               }}
@@ -245,7 +258,11 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
 
             <button
               onClick={() => setStep(TASK_STEP)}
-              style={{ background: 'none', border: 'none', color: 'var(--sm-muted)', fontSize: 12.5, margin: '18px auto 0', cursor: 'pointer', textDecoration: 'underline' }}
+              /* Medido na rodada 3: saía 71×19 — bem abaixo dos 44 do WCAG
+                 2.2 AA (2.5.8). É a saída de quem não quer o tutorial; um
+                 alvo desse tamanho prende a pessoa na tela. O sublinhado
+                 continua no texto, o alvo é a caixa inteira. */
+              style={{ background: 'none', border: 'none', color: 'var(--sm-muted)', fontSize: 12.5, minHeight: 44, padding: '0 16px', margin: '10px auto 0', cursor: 'pointer', textDecoration: 'underline' }}
             >
               {isPt ? 'Pular tutorial' : 'Skip tutorial'}
             </button>

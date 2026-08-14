@@ -2,6 +2,7 @@ import { useState } from 'react';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import type { Language } from '../utils/i18n';
+import { PixelButton, PixelPanel } from './pixel/PixelKit';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { SPECIAL_ITEMS, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI } from '../utils/shop';
@@ -118,10 +119,11 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
       style={{ background: 'rgba(0,0,0,0.45)' }}
       onClick={onClose}
     >
-      <div
-        className="w-full max-w-sm rounded-2xl overflow-hidden sm-card"
-        onClick={e => e.stopPropagation()}
-      >
+      {/* Moldura de janela do kit (Ref B, "Windows & Dialogues"): cano de cobre
+          9-slice em volta do modal. O miolo segue o token de superfície do
+          tema, então o tema claro continua claro. */}
+      <div className="w-full max-w-sm" onClick={e => e.stopPropagation()}>
+      <PixelPanel padded={false}>
         {/* Header */}
         <div
           className="flex items-center gap-2 px-4 py-3 border-b"
@@ -137,10 +139,13 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
           <button
             onClick={onClose}
             aria-label={isPt ? 'Fechar' : 'Close'}
-            className="flex items-center justify-center flex-shrink-0"
-            style={{ width: 26, height: 26, borderRadius: 999, color: 'var(--sm-muted)', background: 'var(--sm-bg)', border: 'none' }}
+            className="flex items-center justify-center shrink-0"
+            /* 44x44 de area de toque com o circulo de 26px dentro (WCAG 2.2 AA 2.5.8). */
+            style={{ width: 44, height: 44, padding: 9, background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <img src={iconClose} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            <span aria-hidden="true" style={{ width: 26, height: 26, borderRadius: 999, color: 'var(--sm-muted)', background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={iconClose} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            </span>
           </button>
         </div>
 
@@ -257,20 +262,12 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
 
               {/* Buttons */}
               <div className="flex justify-end gap-2 mt-3">
-                <button
-                  onClick={() => setSelected(null)}
-                  className="sm-btn-secondary sm-btn"
-                  style={{ fontSize: '0.75rem' }}
-                >
+                <PixelButton size="sm" onClick={() => setSelected(null)}>
                   {isPt ? 'Cancelar' : 'Cancel'}
-                </button>
-                <button
-                  onClick={() => handleFeed(selected!)}
-                  className="sm-btn"
-                  style={{ fontSize: '0.75rem', fontWeight: 'bold' }}
-                >
+                </PixelButton>
+                <PixelButton size="sm" variant="primary" onClick={() => handleFeed(selected!)}>
                   {isPt ? 'Usar' : 'Use'}
-                </button>
+                </PixelButton>
               </div>
             </div>
           )}
@@ -283,6 +280,7 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
         >
           {countText}
         </div>
+      </PixelPanel>
       </div>
     </div>
   );

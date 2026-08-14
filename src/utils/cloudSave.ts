@@ -17,16 +17,31 @@ export async function emailToSaveId(email: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }
 
-export async function cloudSave(saveId: string, state: unknown): Promise<void> {
+/**
+ * Envia o save para a nuvem. Devolve `true` só quando o SERVIDOR confirmou.
+ *
+ * O carimbo `digiapp-last-cloud-sync` é o que o app mostra como "sincronizado":
+ * gravá-lo sem checar `res.ok` fazia o app afirmar que o progresso estava na
+ * nuvem depois de um 401 (token expirado), 403 ou 500 — o jogador trocava de
+ * aparelho confiando nisso e perdia tudo. Falhou = não carimba, e quem chama
+ * recebe `false` para reagendar/avisar.
+ */
+export async function cloudSave(saveId: string, state: unknown): Promise<boolean> {
   try {
-    await fetch(`/api/save?id=${saveId}`, {
+    const res = await fetch(`/api/save?id=${saveId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
       body: JSON.stringify({ state }),
     });
+    if (!res.ok) {
+      console.warn('cloudSave: servidor recusou o save', { status: res.status });
+      return false;
+    }
     localStorage.setItem('digiapp-last-cloud-sync', new Date().toISOString());
+    return true;
   } catch {
     // Silent — local save already persisted
+    return false;
   }
 }
 

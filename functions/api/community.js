@@ -26,15 +26,33 @@
 //   GET  gifts     ?id=&claim=1        → lê (e zera) presentes pendentes
 
 import { authorizeSaveAccess } from './_auth.js';
+import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  // `Authorization` é obrigatório nas 6 ações que passam por denyUnlessOwner.
+  // Ver comentário igual em save.js: sem isto o preflight cross-origin morre.
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 const MATCHES_PER_DAY = 5;
 
 const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });
+
+// ── Teto de custo ────────────────────────────────────────────────────────────
+// Duas classes, porque o custo delas é diferente em uma ordem de grandeza:
+// `players`/`opponents`/`rank` varrem até 300 chaves do KV por chamada; as
+// demais leem uma ou duas. Ver `_rateLimit.js` para o que este teto NÃO é.
+const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult']);
+const HEAVY_LIMIT = { limit: 20, windowMs: 60_000 };   // 20 varreduras/min/IP
+const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
+
+// Respostas públicas e iguais para todo mundo — cacheáveis na borda. Cada acerto
+// de cache é uma varredura de 300 chaves de KV que NÃO acontece. `opponents` e
+// `player` ficam de fora: o primeiro é aleatório por chamada, o segundo é por
+// alvo e tem cardinalidade alta demais para valer cache.
+const CACHEABLE_ACTIONS = new Set(['players', 'rank', 'seasonResult']);
+const EDGE_TTL_SECONDS = 60;
 const today = () => new Date().toISOString().slice(0, 10);
 const currentSeason = () => new Date().toISOString().slice(0, 7); // YYYY-MM
 
@@ -124,7 +142,55 @@ export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
 
-export async function onRequest({ request, env }) {
+/**
+ * Portão de custo à frente do roteador. Ordem de propósito:
+ *   1. teto por IP  — barato, e é o que impede o abuso de pagar zero;
+ *   2. cache de borda — devolve sem tocar no KV;
+ *   3. handler real.
+ * A autorização continua onde estava (dentro do handler): nada aqui autoriza
+ * ninguém, e o cache só guarda resposta de ação pública.
+ */
+export async function onRequest(context) {
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const action = url.searchParams.get('action');
+
+  const ip = clientKey(request);
+  const gate = takeToken(
+    'community',
+    ip,
+    HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT,
+  );
+  if (!gate.ok) {
+    console.warn('[community] rate limited', { action, retryAfter: gate.retryAfter });
+    return tooManyRequests(gate.retryAfter, CORS);
+  }
+
+  const cacheable =
+    request.method === 'GET' &&
+    CACHEABLE_ACTIONS.has(action) &&
+    typeof caches !== 'undefined' &&
+    caches.default;
+
+  if (cacheable) {
+    const hit = await caches.default.match(request).catch(() => null);
+    if (hit) return hit;
+  }
+
+  const res = await handleCommunity(context);
+
+  if (cacheable && res.status === 200) {
+    const cached = new Response(res.body, res);
+    cached.headers.set('Cache-Control', `public, max-age=${EDGE_TTL_SECONDS}`);
+    const copy = cached.clone();
+    const put = caches.default.put(request, cached).catch(() => {});
+    if (typeof context.waitUntil === 'function') context.waitUntil(put);
+    return copy;
+  }
+  return res;
+}
+
+async function handleCommunity({ request, env }) {
   if (!env.DIGIAPP_SAVES) return json({ error: 'Storage not bound' }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get('action');

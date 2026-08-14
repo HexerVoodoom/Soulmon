@@ -2,7 +2,9 @@ import { memo } from 'react';
 import { StepRow } from './StepRow';
 import iconEdit from '../assets/soulmon/icons/icon-edit.png';
 import { Language } from '../utils/i18n';
+import { PixelCheckbox, PixelPanel, PixelSegmentedBar } from './pixel/PixelKit';
 import type { ActivityCategory } from '../types/attributes';
+import { categoryIconImg } from '../types/category-icons';
 
 interface Step {
   id: string;
@@ -13,6 +15,8 @@ interface Step {
 interface ActivityCardProps {
   id: string;
   name: string;
+  /** Emoji gravado na atividade — fallback quando a categoria não tem ícone. */
+  emoji?: string;
   category?: ActivityCategory;
   steps: Step[];
   weekDays?: number[]; // 0-6 (domingo a sábado)
@@ -29,6 +33,7 @@ interface ActivityCardProps {
 export const ActivityCard = memo(function ActivityCard({
   id,
   name,
+  emoji,
   category,
   steps,
   weekDays = [],
@@ -42,65 +47,45 @@ export const ActivityCard = memo(function ActivityCard({
   language = 'en-US',
 }: ActivityCardProps) {
   const isPt = language === 'pt-BR';
+  // Ícone emoldurado do kit no lugar do emoji do sistema (ver TaskCard).
+  const catIcon = categoryIconImg(category);
   const completedSteps = steps.filter(s => s.completed).length;
   const totalSteps = steps.length;
-  const progressPercentage = totalSteps > 0 ? (completedSteps / totalSteps) * 100 : 0;
   const activityComplete = totalSteps > 0 
     ? completedSteps === totalSteps 
     : isCompleted;
 
-  // Weekday labels
-  const daysLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // Weekday labels — nasce em EN com par PT-BR, como todo texto de UI.
+  const daysLabels = isPt
+    ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+    : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <div>
-      <div className={`rounded-2xl p-5 transition-all w-full overflow-hidden border ${
-        isDisabled
-          ? 'bg-gray-100 border-gray-300 opacity-50'
-          : activityComplete
-            ? 'sm-card opacity-70'
-            : 'sm-card'
-      }`}>
+      <PixelPanel style={isDisabled ? { opacity: 0.5 } : activityComplete ? { opacity: 0.72 } : undefined}>
         {/* Header row: checkbox + nome + edit button */}
         <div className="flex items-center gap-4 mb-3">
           {/* Checkbox - sempre presente quando NÃO tem steps */}
           {totalSteps === 0 && (
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={isCompleted}
-              aria-label={isPt ? (isCompleted ? 'Atividade concluída' : 'Marcar atividade como concluída') : (isCompleted ? 'Activity completed' : 'Mark activity as completed')}
+            /* Quadrado de cobre da referência; o alvo de 44×44 e o
+               <button role="checkbox"> continuam dentro do primitivo. */
+            <PixelCheckbox
+              checked={isCompleted}
               disabled={isDisabled || isCompleted}
-              onClick={isDisabled || isCompleted ? undefined : () => onToggleCompletion?.(id)}
-              /* 44×44 de toque, círculo de 28px dentro. As classes w-7/h-7 não
-                 existem no index.css pré-compilado e o alvo saía com 2px. */
-              style={{ width: 44, height: 44, padding: 8, background: 'none', border: 'none', opacity: isDisabled ? 0.5 : 1 }}
-              className="flex items-center justify-center flex-shrink-0"
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 28, height: 28, borderRadius: 999, display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                  background: 'var(--sm-surface)',
-                  border: `2px solid ${isCompleted ? 'var(--sm-primary)' : 'var(--sm-gold)'}`,
-                  boxShadow: isCompleted ? '0 0 8px color-mix(in srgb, var(--sm-primary) 65%, transparent), 0 0 2px var(--sm-primary)' : 'none',
-                  transition: 'box-shadow .15s ease, border-color .15s ease',
-                }}
-              >
-                {isCompleted && (
-                  <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                    <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </span>
-            </button>
+              onToggle={() => onToggleCompletion?.(id)}
+              language={language}
+              labelPt={isCompleted ? 'Atividade concluída' : 'Marcar atividade como concluída'}
+              labelEn={isCompleted ? 'Activity completed' : 'Mark activity as completed'}
+            />
           )}
 
           {/* Nome da atividade */}
           <div className="flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
               <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: activityComplete ? 'var(--sm-muted)' : 'var(--sm-ink)' }}>
+                {catIcon
+                  ? <img src={catIcon} alt="" className="sm-px-cat-icon" style={{ display: 'inline-block', marginRight: 8 }} />
+                  : emoji ? <>{emoji} </> : null}
                 {name}
               </h3>
             </div>
@@ -137,7 +122,7 @@ export const ActivityCard = memo(function ActivityCard({
           {/* Edit button */}
           <button
             onClick={() => onEditActivity(id)}
-            className="flex items-center justify-center transition-all flex-shrink-0"
+            className="flex items-center justify-center transition-all shrink-0"
             aria-label={isPt ? 'Editar atividade' : 'Edit activity'}
             /* 44×44: alvo de toque mínimo. Inline porque a classe utilitária
                correspondente não existe no index.css pré-compilado. */
@@ -151,8 +136,17 @@ export const ActivityCard = memo(function ActivityCard({
         {isExpanded && totalSteps > 0 && (
           <>
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex-1" style={{ height: 8, borderRadius: 999, background: 'var(--sm-bg)', overflow: 'hidden' }}>
-                <div style={{ width: `${progressPercentage}%`, height: '100%', background: 'var(--sm-primary)', borderRadius: 999, transition: 'width .2s ease' }} />
+              {/* Barra SEGMENTADA (um bloco por etapa) no lugar da barra lisa —
+                  é a leitura do v-pet da referência, e além de estética ela diz
+                  quantas etapas faltam sem precisar ler o "3/5" ao lado. */}
+              <div className="flex-1">
+                <PixelSegmentedBar
+                  value={completedSteps}
+                  max={totalSteps}
+                  segments={totalSteps}
+                  height={12}
+                  label={isPt ? 'Progresso das etapas' : 'Step progress'}
+                />
               </div>
               <span style={{ fontSize: '0.8125rem', color: 'var(--sm-muted)', fontWeight: 600 }}>
                 {completedSteps}/{totalSteps}
@@ -174,7 +168,7 @@ export const ActivityCard = memo(function ActivityCard({
             </div>
           </>
         )}
-      </div>
+      </PixelPanel>
     </div>
   );
 });

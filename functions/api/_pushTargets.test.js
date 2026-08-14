@@ -12,7 +12,6 @@ describe('endpoints de push aceitos', () => {
       'https://updates.push.services.mozilla.com/wpush/v2/gAAA',
       'https://wns2-by3p.notify.windows.com/w/?token=xyz',
       'https://web.push.apple.com/QABC123',
-      'https://googleapis.com/qualquer',
     ]) {
       expect(isAllowedPushEndpoint(url), url).toBe(true);
     }
@@ -32,6 +31,18 @@ describe('endpoints recusados', () => {
 
   it('recusa porta explícita — alvo interno disfarçado', () => {
     expect(isAllowedPushEndpoint('https://fcm.googleapis.com:8080/x')).toBe(false);
+  });
+
+  it('recusa outros serviços do googleapis.com — só fcm. é endpoint de push', () => {
+    // O sufixo era `googleapis.com` inteiro, então estes passavam e viravam
+    // alvo de 4 POSTs/dia por um ano, com JWT VAPID de produção no cabeçalho.
+    for (const url of [
+      'https://googleapis.com/qualquer',
+      'https://storage.googleapis.com/bucket/objeto',
+      'https://firebasestorage.googleapis.com/v0/b/x/o',
+    ]) {
+      expect(isAllowedPushEndpoint(url), url).toBe(false);
+    }
   });
 
   it('recusa sufixo colado, não domínio de verdade', () => {

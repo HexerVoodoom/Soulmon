@@ -106,6 +106,10 @@ export async function sendWebPush(sub, payload, vapidJWK, vapidPublicKey, contac
 
   const res = await fetch(sub.endpoint, {
     method: 'POST',
+    // Um 302 vindo de um host permitido levaria a requisição — com o JWT VAPID
+    // no cabeçalho — para fora da allowlist. `manual` faz o redirect voltar
+    // como resposta 3xx normal (ok:false) em vez de ser seguido.
+    redirect: 'manual',
     headers: {
       'Content-Type': 'application/octet-stream',
       'Content-Encoding': 'aes128gcm',

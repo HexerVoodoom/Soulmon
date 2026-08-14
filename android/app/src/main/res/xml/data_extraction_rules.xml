@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (android:dataExtractionRules). Mesma regra do backup_rules.xml:
+  o diretório do WebView (localStorage — save E a PII do oráculo:
+  `soulmon-profile` com nome completo, data, hora e local de nascimento) não
+  sai do aparelho, nem por backup na nuvem nem por transferência device-to-device.
+
+  O save continua recuperável pelo e-mail (cloud save do produto), que é o
+  caminho suportado — e o único onde o usuário consente explicitamente.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="app_webview" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="app_webview" />
+    </device-transfer>
+</data-extraction-rules>

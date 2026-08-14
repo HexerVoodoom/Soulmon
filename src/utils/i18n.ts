@@ -190,6 +190,7 @@ export interface Translations {
     guide: string;
     guideDescription: string;
     openGuide: string;
+    openGlossary: string;
     saveData: string;
     loadData: string;
     resetApp: string;
@@ -487,6 +488,7 @@ export const translations: Record<Language, Translations> = {
       guide: 'Guide',
       guideDescription: 'Learn how the evolution system, perfect days, HP and more work.',
       openGuide: 'Open Guide',
+      openGlossary: 'Open Glossary',
       saveData: 'Save Data',
       loadData: 'Load Data',
       resetApp: 'Reset App',
@@ -774,6 +776,7 @@ export const translations: Record<Language, Translations> = {
       guide: 'Guia',
       guideDescription: 'Aprenda como funcionam o sistema de evolução, dias perfeitos, HP e mais.',
       openGuide: 'Abrir Guia',
+      openGlossary: 'Abrir Glossário',
       saveData: 'Salvar Dados',
       loadData: 'Carregar Dados',
       resetApp: 'Resetar App',

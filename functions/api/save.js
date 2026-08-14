@@ -13,11 +13,22 @@ import { authorizeSaveAccess } from './_auth.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  // `Authorization` PRECISA estar aqui: o cliente manda `Bearer <idToken>` e o
+  // overlay Electron chama esta URL de OUTRA origem (`file://`), o que dispara
+  // preflight. Sem anunciar o header, o navegador bloqueia a chamada antes de
+  // ela sair e a falha chega no app como "erro de rede", não como 401.
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 /** Campos que o cliente NUNCA define — sempre vêm do entitlement do servidor. */
 const SERVER_OWNED_FIELDS = ['accountTier', 'credits'];
+
+/**
+ * Teto do save serializado. O KV aceita 25 MB por chave; sem teto nenhum, um
+ * cliente com bug (ou alguém mal-intencionado) enche o namespace de graça.
+ * 5 MB é ~50× o maior save real observado e ainda cabe sprite embutido.
+ */
+const MAX_STATE_BYTES = 5 * 1024 * 1024;
 
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
@@ -25,7 +36,23 @@ export async function onRequestOptions() {
 
 export async function onRequest({ request, env }) {
   const url = new URL(request.url);
-  const saveId = url.searchParams.get('id');
+  // Só o POST tem corpo. Lemos antes de resolver o id porque o id pode vir
+  // dele (ver abaixo).
+  const body = request.method === 'POST' ? await request.json().catch(() => null) : null;
+
+  // O contrato canônico é `?id=` no query string. Aceitamos também `body.id` no
+  // POST por RETROCOMPATIBILIDADE: existem builds já instaladas (o overlay de
+  // desktop, e potencialmente APKs antigos) que mandam o id só no corpo. Um
+  // servidor que só conserta o cliente deixa essas builds quebradas até o
+  // usuário atualizar — e no desktop/Steam isso é "o app nunca salvou".
+  // A superfície não aumenta: o id passa pelo MESMO VALID_ID e pela MESMA
+  // autorização; e se vierem os dois divergentes, recusamos em vez de escolher.
+  const queryId = url.searchParams.get('id');
+  const bodyId = typeof body?.id === 'string' ? body.id : null;
+  if (queryId && bodyId && queryId !== bodyId) {
+    return Response.json({ error: 'Conflicting save ID' }, { status: 400, headers: CORS });
+  }
+  const saveId = queryId || bodyId;
 
   if (!saveId || !VALID_ID.test(saveId)) {
     return Response.json({ error: 'Invalid save ID' }, { status: 400, headers: CORS });
@@ -55,11 +82,23 @@ export async function onRequest({ request, env }) {
   }
 
   if (request.method === 'POST') {
-    const body = await request.json().catch(() => null);
-    if (!body?.state) return Response.json({ error: 'Missing state' }, { status: 400, headers: CORS });
-    const state = { ...body.state };
+    // `!body?.state` só barrava falsy. `state: 1` passava e `{ ...1 }` é `{}`:
+    // o save inteiro do jogador (dias perfeitos, árvore, inventário) virava um
+    // objeto vazio, sem erro nenhum. `state: "oi"` gravava {"0":"o","1":"i"}.
+    // Um save é um OBJETO — array e primitivo são recusados, não convertidos.
+    const incoming = body?.state;
+    if (typeof incoming !== 'object' || incoming === null || Array.isArray(incoming)) {
+      console.warn('save: POST recusado, state não é objeto', { saveId, tipo: Array.isArray(incoming) ? 'array' : typeof incoming });
+      return Response.json({ error: 'Missing or invalid state' }, { status: 400, headers: CORS });
+    }
+    const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
-    await env.DIGIAPP_SAVES.put(saveId, JSON.stringify(state), { expirationTtl: 86400 * 365 });
+    const serialized = JSON.stringify(state);
+    if (serialized.length > MAX_STATE_BYTES) {
+      console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });
+      return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
+    }
+    await env.DIGIAPP_SAVES.put(saveId, serialized, { expirationTtl: 86400 * 365 });
     return Response.json({ ok: true }, { headers: CORS });
   }
 

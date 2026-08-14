@@ -7,6 +7,8 @@ import { BottomNav } from './components/BottomNav';
 import { ActivityCard } from './components/ActivityCard';
 import { TaskCard } from './components/TaskCard';
 import { CompanionHUD } from './components/CompanionHUD';
+import { HomeHud } from './components/pixel/HomeHud';
+import { PixelButton } from './components/pixel/PixelKit';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
@@ -20,7 +22,7 @@ import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
-import { Plus, Edit2 } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import iconWarning from './assets/soulmon/icons/icon-warning.png';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
@@ -1870,21 +1872,22 @@ export default function App() {
             onClick={() => setCreateModalOpen(true)}
             aria-label={t.activities.addNew}
             title={t.activities.addNew}
-            className="fixed flex items-center justify-center"
+            /* Peça do kit pixel (chanfro + moldura de cobre), não mais um
+               círculo teal chapado — era o único objeto redondo e sem
+               moldura da tela. Geometria/posição seguem inline (footgun 1). */
+            className="fixed sm-px-fab"
             style={{
               right: 18,
               bottom: 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 90px)',
-              width: 52,
-              height: 52,
-              borderRadius: '50%',
-              background: 'var(--sm-primary)',
-              color: '#fff',
-              border: 'none',
-              boxShadow: '0 4px 0 var(--sm-primary-deep), 0 6px 14px rgba(42,36,64,0.25)',
               zIndex: 30,
             }}
           >
-            <Plus size={26} strokeWidth={2.6} />
+            {/* "+" desenhado em blocos retos: o glifo do lucide tem ponta
+                arredondada e destoava no meio de uma peça pixel-art. */}
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <rect x="10" y="3" width="4" height="18" fill="currentColor" />
+              <rect x="3" y="10" width="18" height="4" fill="currentColor" />
+            </svg>
           </button>
         )}
 
@@ -1921,6 +1924,17 @@ export default function App() {
         >
           {currentView === 'main' && (
             <div className="space-y-4">
+              {/* HUD do topo (Ref C): marca + medidores em cápsula de cobre.
+                  Ver components/pixel/HomeHud.tsx para a nota sobre o rótulo
+                  da moeda ("SOUL CRYSTAL" da referência vs. Créditos). */}
+              <HomeHud
+                energyPoints={gameState.energyPoints}
+                maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
+                credits={gameState.credits ?? 0}
+                language={language}
+                onOpenCredits={() => setCreditsOpen(true)}
+              />
+
               {/* HP risk banner — dismissible strip acima do pet */}
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'var(--sm-danger-soft)', border: '1px solid var(--sm-danger)' }}>
@@ -1932,9 +1946,10 @@ export default function App() {
                   </p>
                   <button
                     onClick={() => setHpBannerDismissed(true)}
-                    className="flex-shrink-0 px-1 text-sm leading-none"
-                    style={{ color: 'var(--sm-danger)' }}
-                    aria-label="Dismiss"
+                    className="shrink-0 text-sm leading-none flex items-center justify-center"
+                    /* 44x44 de área de toque (WCAG 2.2 AA 2.5.8); o ✕ continua pequeno. */
+                    style={{ width: 44, height: 44, background: 'none', border: 'none', color: 'var(--sm-danger)' }}
+                    aria-label={language === 'pt-BR' ? 'Dispensar' : 'Dismiss'}
                   >
                     ✕
                   </button>
@@ -2052,12 +2067,11 @@ export default function App() {
                             style={{ fontFamily: 'monospace', color: 'var(--sm-muted)' }}>
                             {t.main.noActivityRegistered}
                           </p>
-                          <button
-                            onClick={handleAddNewActivity}
-                            className="text-xs px-3 py-1 rounded-lg transition-colors"
-                            style={{ fontFamily: 'monospace', color: 'var(--sm-primary)', border: '1px solid var(--sm-primary-deep)' }}>
+                          {/* Ação primária do estado vazio → botão do kit
+                              (moldura de cobre 9-slice, alvo ≥44px). */}
+                          <PixelButton size="sm" variant="primary" onClick={handleAddNewActivity}>
                             + {t.activities.addNew}
-                          </button>
+                          </PixelButton>
                         </div>
                       );
                     }
@@ -2069,7 +2083,11 @@ export default function App() {
                         <ActivityCard
                           key={activity.id}
                           id={activity.id}
-                          name={`${activity.emoji} ${activity.name}`}
+                          /* O emoji SAIU do nome: virou prop própria para o
+                             card poder trocá-lo pelo ícone emoldurado do kit
+                             (e cair no emoji só quando não houver ícone). */
+                          name={activity.name}
+                          emoji={activity.emoji}
                           category={activity.category as ActivityCategory}
                           steps={activity.steps}
                           weekDays={activity.weekDays}
@@ -2195,6 +2213,7 @@ export default function App() {
                 localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
               }}
               onOpenGuide={() => setGuideModalOpen(true)}
+              onOpenGlossary={() => setShowHelpModal(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
               onRestoreFromCloud={async (id) => {

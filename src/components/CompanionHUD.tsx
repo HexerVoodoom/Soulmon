@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
+import { PixelButton } from './pixel/PixelKit';
 import iconItems from '../assets/soulmon/icons/icon-items.png';
 import nestBase from '../assets/soulmon/nest-base.png';
 import iconBath from '../assets/soulmon/icons/icon-bath.png';
@@ -490,16 +491,17 @@ export const CompanionHUD = memo(function CompanionHUD({
       const isHalf = i === fullHearts && hasHalf;
 
       hearts.push(
-        <div key={i} className="relative h-[22px] w-[23px] flex-shrink-0">
+        <div key={i} className="relative h-[22px] w-[23px] shrink-0">
           {/* Base heart: red when full, dark when empty/half */}
           <img
             alt=""
-            className="absolute inset-0 max-w-none object-cover pointer-events-none size-full"
+            className={`absolute inset-0 max-w-none object-cover pointer-events-none size-full${isFull ? '' : ' sm-hp-empty'}`}
             src={imgHeartSprite}
-            style={{
-              imageRendering: 'pixelated',
-              filter: isFull ? 'none' : 'brightness(0.2) saturate(0)',
-            }}
+            /* O coração VAZIO carrega informação (quanto HP faltou), e
+               `brightness(0.2)` é uma silhueta quase preta: no tema claro
+               funciona, no ESCURO ela some no fundo. O filtro virou classe
+               com par por tema — ver `.sm-hp-empty` no index.css. */
+            style={{ imageRendering: 'pixelated' }}
           />
           {/* Half overlay: red left 50% over the dark base */}
           {isHalf && (
@@ -558,7 +560,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           o dono pediu o fundo "no todo", não restrito a essa caixa). */}
       <div className="flex gap-2" style={{ position: 'relative', zIndex: 1 }}>
         {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0" style={{ width: 72 }}>
+        <div className="flex flex-col gap-1.5 shrink-0" style={{ width: 72 }}>
           {([
             { key: 'items', icon: iconItems, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
             { key: 'bath', icon: iconBath, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
@@ -575,7 +577,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <span style={{ position: 'absolute', top: 4, right: 6, width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--sm-danger)', border: '1px solid var(--sm-surface)' }} />
               )}
               <img src={a.icon} alt="" width={36} height={36} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--sm-muted)' }}>
+              {/* Rótulo curto de AÇÃO — cabe na bitmap sem prejuízo de
+                  leitura (é uma palavra, não frase). "Acordar"/"Dormir" não
+                  têm acento; se um dia tiverem, o subset latin da Silkscreen
+                  cobre (conferido no cmap). */}
+              <span className="sm-px-font" style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', lineHeight: 1.5, color: 'var(--sm-muted)' }}>
                 {language === 'pt-BR' ? a.pt : a.en}
               </span>
             </button>
@@ -601,13 +607,18 @@ export const CompanionHUD = memo(function CompanionHUD({
 
           {/* Evolução manual: botão aparece SÓ quando pode evoluir */}
           {canEvolve && !isSleeping && (
-            <button
+            /* Botão do kit pixel (moldura de cobre, miolo aceso em ciano).
+               `left`/`transform` seguem INLINE: `left-1/2` não existe no
+               index.css pré-compilado (footgun 1) e sem ele o botão caía na
+               posição estática, fora do centro do palco. */
+            <PixelButton
+              size="sm"
+              variant="primary"
               onClick={onEvolveRequest}
-              className="sm-btn sm-btn-gold absolute left-1/2 z-30"
-              style={{ top: 10, transform: 'translateX(-50%)', padding: '8px 18px', fontSize: 14, animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
+              style={{ position: 'absolute', zIndex: 30, left: '50%', top: 10, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
             >
               {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
-            </button>
+            </PixelButton>
           )}
 
           {/* Evolution flash overlay */}
@@ -666,11 +677,27 @@ export const CompanionHUD = memo(function CompanionHUD({
             {hugBalloon && (
               <div
                 className="absolute z-25 pointer-events-none animate-in fade-in zoom-in-75 duration-150"
-                style={{ left: `${position}%`, top: 'calc(50% - 78px)', transform: 'translateX(-50%)' }}
+                /* O botão "Evoluir" mora em `top: 10` no centro do palco: com o
+                   balão a -78px do meio os dois se sobrepunham e o 🤗 ficava
+                   ESCONDIDO atrás do botão (visto no screenshot da rodada 3).
+                   Quando o botão está na tela, o balão desce. */
+                style={{ left: `${position}%`, top: canEvolve && !isSleeping ? 'calc(50% - 46px)' : 'calc(50% - 78px)', transform: 'translateX(-50%)' }}
               >
                 <div className="relative bg-white rounded-full px-2 py-0.5 shadow text-lg leading-none">
                   🤗
-                  <span className="absolute left-1/2 -bottom-[5px] -translate-x-1/2 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[5px] border-t-white" />
+                  {/* Rabinho do balão: geometria de peça única (triângulo por
+                      borda), toda inline — nenhuma dessas classes existe no
+                      index.css pré-compilado e não vale virar utilitário. */}
+                  <span
+                    className="absolute"
+                    style={{
+                      left: '50%', bottom: -5, transform: 'translateX(-50%)',
+                      width: 0, height: 0,
+                      borderLeft: '5px solid transparent',
+                      borderRight: '5px solid transparent',
+                      borderTop: '5px solid #fff',
+                    }}
+                  />
                 </div>
               </div>
             )}
@@ -825,8 +852,10 @@ export const CompanionHUD = memo(function CompanionHUD({
                 </p>
                 {/* Bubble tail pointing up */}
                 <span
-                  className="absolute -top-[6px] left-1/2 -translate-x-1/2 w-0 h-0"
+                  className="absolute"
                   style={{
+                    top: -6, left: '50%', transform: 'translateX(-50%)',
+                    width: 0, height: 0,
                     borderLeft: '6px solid transparent',
                     borderRight: '6px solid transparent',
                     borderBottom: '6px solid white',

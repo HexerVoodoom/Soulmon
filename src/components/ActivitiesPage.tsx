@@ -79,7 +79,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
       className="w-full text-left rounded-2xl p-4 transition-all cursor-pointer active:scale-[0.99] sm-card"
     >
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center flex-shrink-0" style={{ width: 52, height: 52 }}>
+        <div className="flex items-center justify-center shrink-0" style={{ width: 52, height: 52 }}>
           <img src={c.icon} alt="" width={48} height={48} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </div>
         <div className="flex-1">
@@ -103,7 +103,10 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   return (
     <div className="p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Título de página em bitmap (0.95rem, não 1.15: a Silkscreen é
+            bem mais larga e "Atividades" quebrava a linha ao lado da cápsula
+            de Bits). O PARÁGRAFO abaixo continua sans — é texto de leitura. */}
+        <h2 className="sm-px-heading" style={{ fontSize: '0.95rem', color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <img src={iconGamepad} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           {isPt ? 'Atividades' : 'Activities'}
         </h2>
@@ -124,13 +127,11 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
       {renderCard(tournamentCard)}
 
       <div
+        className="sm-px-heading"
         style={{
-          fontSize: '0.7rem',
-          fontWeight: 700,
+          fontSize: '0.62rem',
           color: 'var(--sm-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          paddingTop: 4,
+          paddingTop: 6,
           borderTop: '1px solid var(--sm-line)',
         }}
       >

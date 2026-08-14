@@ -28,7 +28,10 @@ import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } f
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  // `Authorization` é obrigatório aqui (authorizeSaveAccess). Sem anunciá-lo, o
+  // preflight de qualquer chamada cross-origin (overlay Electron em `file://`)
+  // é bloqueado pelo navegador e a falha aparece como erro de rede.
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });

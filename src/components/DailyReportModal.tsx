@@ -133,9 +133,15 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
           <button
             onClick={onClose}
             aria-label={isPt ? 'Fechar' : 'Close'}
-            style={{ position: 'absolute', top: 12, right: 12, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--sm-bg)', border: 'none', borderRadius: 999, color: 'var(--sm-muted)', cursor: 'pointer' }}
+            /* 44x44 de area de toque (WCAG 2.2 AA 2.5.8) com o circulo de 30px
+               desenhado dentro; top/right recuados em 7px para o circulo ficar
+               exatamente onde estava. Fechar um modal e a saida de emergencia
+               da UI — e o pior lugar para um alvo pequeno. */
+            style={{ position: 'absolute', top: 5, right: 5, width: 44, height: 44, padding: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            </span>
           </button>
           <div style={{ position: 'relative', width: 56, height: 56, margin: '0 auto 10px' }}>
             {report.wasPerfect && (

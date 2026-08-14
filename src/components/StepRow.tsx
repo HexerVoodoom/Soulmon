@@ -26,16 +26,18 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
         aria-label={`${isPt ? (completed ? 'Etapa concluída' : 'Marcar etapa como concluída') : (completed ? 'Step completed' : 'Mark step as completed')}: ${label}`}
         disabled={disabled || completed}
         onClick={disabled || completed ? undefined : () => onToggle(id)}
-        /* 40×40 de toque com o quadradinho de 20px dentro (etapa é item
-           secundário e mora numa linha mais baixa). w-5/h-5 existem no CSS,
-           mas o alvo de 20px é pequeno demais para o dedo. */
-        style={{ width: 40, height: 40, padding: 10, background: 'none', border: 'none', opacity: disabled ? 0.5 : 1 }}
-        className="flex items-center justify-center flex-shrink-0"
+        /* 44×44 de toque com o quadrado de 22px dentro. A etapa é item
+           secundário, mas o alvo segue o mesmo piso das outras ações do app
+           — 40 passava no WCAG AA (24px) e ficava abaixo do padrão daqui. */
+        style={{ width: 44, height: 44, padding: 11, background: 'none', border: 'none', opacity: disabled ? 0.5 : 1 }}
+        className="flex items-center justify-center shrink-0"
       >
         <span
           aria-hidden="true"
           style={{
-            width: 20, height: 20, borderRadius: 8, display: 'flex',
+            /* Quadrado, não círculo: casa com o checkbox de cobre da
+               referência e com o PixelCheckbox das linhas principais. */
+            width: 22, height: 22, borderRadius: 4, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
             background: 'var(--sm-surface)',
             border: `2px solid ${completed ? 'var(--sm-primary)' : 'var(--sm-gold)'}`,

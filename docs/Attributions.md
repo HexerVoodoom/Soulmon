@@ -48,3 +48,19 @@ criatura, sem nunca tocar em arte de terceiro.
 
 *Nada aqui é aconselhamento jurídico — é o registro de um item que estava em
 aberto no benchmark de agosto/2026 (`docs/PLANO-EVOLUCAO.md`) e foi fechado.*
+
+## Tipografia
+
+- **Silkscreen** — Jason Kottke, licença **SIL Open Font License 1.1** (livre
+  para uso comercial, inclusive embarcada em app pago). Entra pelo npm
+  (`@fontsource/silkscreen`, `OFL-1.1`), não por download avulso, para que a
+  origem e a licença fiquem rastreadas no `package.json` e o texto da licença
+  viaje junto em `node_modules/@fontsource/silkscreen/LICENSE`.
+- Só os subsets `latin` 400/700 são importados (`src/main.tsx`). O subset
+  `latin-ext` desta fonte tem 18 glifos e nenhum acento do PT-BR; os acentos
+  (á à â ã é ê í ó ô õ ú ü ç e as maiúsculas) estão todos no `latin`,
+  conferidos no `cmap` do arquivo antes de adotar.
+- **Onde a fonte é usada**: títulos, rótulos, números, botões e HUD. **Nunca**
+  em texto corrido (guia, glossário, relatório diário, falas do pet) — bitmap
+  em caixa alta destrói legibilidade em parágrafo, e em português os acentos
+  ficam colados no teto da caixa.

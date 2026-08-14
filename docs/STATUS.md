@@ -7,7 +7,12 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: auditoria de segurança multi-agente (3 agentes, escopo
+Última atualização: **loop de QA multi-agente (ago/2026)** — 3 rodadas, suíte de
+379 → 600 testes, mais uma frente de aplicação da UI pixel-art. Ver
+`product/soulmon-01/` para os relatórios de cada rodada. O achado estrutural
+está resumido na seção 5 abaixo e é o que vale ler primeiro.
+
+Antes disso: auditoria de segurança multi-agente (3 agentes, escopo
 dinheiro / auth+dados / IA+push+segredos).
 
 ---
@@ -218,8 +223,20 @@ seção 3.
 - **Compra dentro do jogo** — `UnlockAccountModal` nos dois momentos em que a
   falta é sentida (limite de criação do grátis; árvore de demonstração na página
   de Evolução), mais ritual do oráculo pós-compra que troca só a criatura.
-- **Desktop (Electron)** — overlay funcional, é um controle remoto do app.
+- **Desktop (Electron)** — overlay é um controle remoto do app.
   Ver `docs/PLANO-DESKTOP-STEAM.md`.
+  > ⚠️ **Correção de registro (ago/2026).** Esta linha dizia "overlay
+  > **funcional**" e isso era falso desde sempre: `cloudSync.ts` mandava o `id`
+  > no CORPO do `POST /api/save`, e `save.js` lia o id só da query — 400 em
+  > 100% das chamadas, que o cliente traduzia para `reason: 'network'`. As três
+  > únicas ações do overlay (carinho, comida, marcar tarefa) **nunca gravaram
+  > nada**. Ou seja: ninguém jamais usou o overlay de ponta a ponta, e mesmo
+  > assim ele estava registrado como pronto aqui e tem plano de Steam escrito.
+  > Corrigido nos dois lados (cliente manda `?id=`, servidor aceita `body.id`
+  > como fallback retrocompatível para as builds já instaladas), com teste
+  > ligando o cliente no `onRequest` real — `desktop/renderer/src/pushCareAction.test.ts`.
+  > A lição que fica não é o bug de 1 linha: é que o registro vivo afirmou
+  > "funcional" sem nada nunca ter exercido o caminho.
 - **Separação do DigiApp** — inventário e ordem segura em
   `docs/SEPARACAO-DIGIAPP.md`. Limpeza de herança morta já feita.
 
@@ -300,3 +317,55 @@ o app de todo mundo que já tem o APK instalado.
   com teto. É decisão de produto, não técnica.
 - **Sprite do cocô** (`src/assets/9087038…png`) é um blob escuro pouco legível.
   Anterior a este trabalho.
+
+---
+
+## 5. O achado estrutural do loop de QA (ago/2026)
+
+Três rodadas de auditoria acharam 5 defeitos reais, e **nenhum era erro de
+lógica**. Todos eram **fronteiras sem dono** — um lado supondo algo do outro,
+com nada forçando o encontro:
+
+| defeito | fronteira |
+|---|---|
+| Checkbox de 2px (`w-7`/`h-7` inexistentes) | JSX ↔ CSS pré-compilado |
+| Overlay que nunca gravou (id no corpo vs. query) | cliente desktop ↔ handler HTTP |
+| `save.js` sem nenhum teste | código ↔ medidor de cobertura |
+| Xadrez assado em `nest-base.png` e `icon-reset.png` | asset ↔ renderer |
+| Página HTML salva como `.png` | download ↔ árvore de assets |
+
+O diagnóstico em uma frase: **a suíte media intenção, não efeito.** A prova
+mecânica cabia numa linha — `vitest.config.ts` fixava `environment: 'node'`, e
+**não existia um único teste que montasse um componente**. O checkbox de 2px não
+"escapou" da suíte: ela era estruturalmente incapaz de vê-lo. O motivo de nunca
+ter existido teste de componente também não era preguiça — os aliases
+`figma:asset/*` só existiam no `vite.config.ts`, então **nenhum componente era
+importável em teste**.
+
+**O que passou a existir, e é isto que precisa ser mantido:**
+
+- `src/test/renderEnv.tsx` — monta componente com o `index.css` REAL e mede
+  estilo computado. `renderEnv.selfcheck.test.tsx` prova que o instrumento
+  enxerga: `w-7`/`h-7` computam `width: auto`, `w-11` não.
+- `src/index.css.contract.test.ts` — classe usada no JSX que não existe no CSS.
+  ⚠️ **Variante nova precisa ser escrita aninhada (`&:hover`)**; a forma plana
+  passa despercebida pelo guard.
+- `src/assets/assets.contract.test.ts` — xadrez assado, arquivo não
+  decodificável, pixel fora da paleta. Tem quarentena com regra de honestidade
+  (o defeito precisa continuar existindo **e** o arquivo não pode estar
+  importado) para a lista não virar cemitério.
+- `desktop/renderer/src/pushCareAction.test.ts` — **o modelo a replicar**: liga
+  o cliente no `onRequest` real, não num mock que devolve 200.
+
+**Regra que sai disso:** todo guard novo precisa de **casos de
+autoverificação** que provem que ele enxerga. Sem isso, um guard passa sempre —
+pelo motivo errado. Aconteceu duas vezes nesta rodada: o guard de CSS nasceu com
+13 falsos positivos (lia `,` e `:` como parte do nome da classe, e por isso
+acusou `flex-shrink-0`, que nunca esteve quebrado), e uma limpeza de magenta se
+declarou completa usando um critério mais frouxo que o do próprio teste.
+
+**Previsão registrada** (`product/soulmon-01/sweeper/skeptic-review.md`): os
+próximos defeitos reais serão fronteiras sem dono, não lógica em `utils/`. A
+aposta nº 1 é a **ponte Capacitor↔web do APK**, que segue sem ninguém olhando —
+o CI builda o APK e nada o exercita. Se o próximo bug real for lógica dentro de
+`utils/`, a previsão está errada e foi azar; vale registrar qual dos dois foi.

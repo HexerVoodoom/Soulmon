@@ -199,8 +199,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           {isPt ? 'Corrida do Dino' : 'Dino Runner'}
         </span>
         <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: 999, color: '#eef2fb', cursor: 'pointer' }}>
-          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          /* 44x44 de area de toque com o circulo de 34px dentro (WCAG 2.2 AA 2.5.8). */
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, padding: 5, background: 'none', border: 'none', cursor: 'pointer' }}>
+          <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          </span>
         </button>
       </div>
 

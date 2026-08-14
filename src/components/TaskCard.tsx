@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { Language } from '../utils/i18n';
 import iconEdit from '../assets/soulmon/icons/icon-edit.png';
+import { PixelCheckbox, PixelPanel } from './pixel/PixelKit';
+import { categoryIconImg } from '../types/category-icons';
 
 interface TaskCardProps {
   id: string;
@@ -16,6 +18,7 @@ interface TaskCardProps {
 export const TaskCard = memo(function TaskCard({
   id,
   name,
+  category,
   emoji,
   completed,
   onToggleComplete,
@@ -23,64 +26,49 @@ export const TaskCard = memo(function TaskCard({
   language = 'en-US',
 }: TaskCardProps) {
   const isPt = language === 'pt-BR';
+  // Ícone emoldurado do kit no lugar do emoji do sistema (📚 🧘 📖): o emoji
+  // é desenho de OUTRA linguagem visual — colorido, arredondado, e diferente
+  // em cada plataforma. O emoji continua sendo o dado gravado na tarefa e é o
+  // fallback quando a categoria não tem ícone (save antigo, categoria vazia).
+  const catIcon = categoryIconImg(category);
 
   return (
-    <div
-      className={`rounded-2xl p-5 transition-all w-full border ${
-        completed ? 'sm-card opacity-70' : 'sm-card'
-      }`}
-    >
+    /* Moldura de cobre 9-slice no lugar do card arredondado neutro: é a
+       linguagem da Ref C ("DAILY RITUALS"). O miolo continua sendo o token de
+       superfície do TEMA, então o tema claro segue claro. */
+    <PixelPanel style={completed ? { opacity: 0.72 } : undefined}>
       <div className="flex items-center gap-4">
         {/* Checkbox */}
         {/* Marcar como concluída é a AÇÃO CENTRAL do app. Era uma <div> com
             onClick: não recebia foco de teclado nem era anunciada por leitor de
             tela, ou seja, quem não usa o toque simplesmente não conseguia usar
-            o app. Agora é um <button> com role de checkbox. */}
-        <button
-          type="button"
-          role="checkbox"
-          aria-checked={completed}
-          aria-label={isPt ? (completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída') : (completed ? 'Task completed' : 'Mark task as completed')}
+            o app. Hoje é o PixelCheckbox (quadrado de cobre da referência),
+            que mantém o <button role="checkbox"> e os 44×44 de alvo. */}
+        <PixelCheckbox
+          checked={completed}
           disabled={completed}
-          onClick={() => { if (!completed) onToggleComplete(id); }}
-          /* 44×44 de área de toque com o círculo de 28px desenhado dentro.
-             w-7/h-7 NÃO existem no index.css pré-compilado — o alvo vinha
-             saindo com 2px, praticamente invisível e impossível de acertar. */
-          style={{ width: 44, height: 44, padding: 8, background: 'none', border: 'none' }}
-          className="flex items-center justify-center flex-shrink-0 cursor-pointer"
-        >
-          <span
-            aria-hidden="true"
-            style={{
-              width: 28, height: 28, borderRadius: 999, display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-              background: completed ? 'var(--sm-surface)' : 'var(--sm-surface)',
-              border: `2px solid ${completed ? 'var(--sm-primary)' : 'var(--sm-gold)'}`,
-              boxShadow: completed ? '0 0 8px color-mix(in srgb, var(--sm-primary) 65%, transparent), 0 0 2px var(--sm-primary)' : 'none',
-              transition: 'box-shadow .15s ease, border-color .15s ease',
-            }}
-          >
-            {completed && (
-              <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm-primary)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </span>
-        </button>
+          onToggle={() => { if (!completed) onToggleComplete(id); }}
+          language={language}
+          labelPt={completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}
+          labelEn={completed ? 'Task completed' : 'Mark task as completed'}
+        />
         {/* Task content — sem a legenda "realização única" repetida em toda
             ficha: era a mesma frase em CADA card dessa lista (todo item aqui
             é de execução única por definição), zero informação nova por
             card. O nome já carrega o essencial. */}
         <div className="flex-1">
           <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: completed ? 'var(--sm-muted)' : 'var(--sm-ink)' }}>
-            {emoji} {name}
+            {catIcon
+              ? <img src={catIcon} alt="" className="sm-px-cat-icon" style={{ display: 'inline-block', marginRight: 8 }} />
+              : <>{emoji} </>}
+            {name}
           </p>
         </div>
 
         {/* Edit Button */}
         <button
           onClick={() => onEdit(id)}
-          className="flex items-center justify-center transition-all flex-shrink-0"
+          className="flex items-center justify-center transition-all shrink-0"
           aria-label={isPt ? 'Editar tarefa' : 'Edit task'}
           /* 44×44 é o alvo de toque mínimo confortável; o padding do Tailwind
              dava 32×32. Inline porque min-w-11 não existe no index.css
@@ -90,6 +78,6 @@ export const TaskCard = memo(function TaskCard({
           <img src={iconEdit} alt="" width={26} height={26} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
-    </div>
+    </PixelPanel>
   );
 });

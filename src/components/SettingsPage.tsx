@@ -25,6 +25,8 @@ interface SettingsPageProps {
   language: Language;
   onChangeLanguage: (lang: Language) => void;
   onOpenGuide: () => void;
+  /** Glossário (HelpModal) — ver a nota no botão. */
+  onOpenGlossary: () => void;
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
   onRestoreFromCloud: (saveId: string) => Promise<boolean>;
@@ -39,6 +41,7 @@ export function SettingsPage({
   onChangeLanguage,
   language,
   onOpenGuide,
+  onOpenGlossary,
   notificationsEnabled,
   onToggleNotifications,
   onRestoreFromCloud,
@@ -199,7 +202,7 @@ export function SettingsPage({
                       style={{ background: 'var(--sm-bg)', color: 'var(--sm-ink)' }}>
                   {saveId}
                 </code>
-                <button onClick={handleCopy} className="flex-shrink-0 p-2 rounded-xl transition-colors"
+                <button onClick={handleCopy} className="shrink-0 p-2 rounded-xl transition-colors"
                         style={{ color: 'var(--sm-muted)', background: 'var(--sm-bg)' }} aria-label="Copy">
                   {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
                 </button>
@@ -290,6 +293,19 @@ export function SettingsPage({
             style={{ fontWeight: 700 }}
           >
             <span>{t.settings.openGuide}</span>
+          </button>
+
+          {/* O glossário (HelpModal) existia no código, com 12 regras de CSS
+              próprias, e NENHUM caminho o abria: `showHelpModal` nunca era
+              posto em `true`. Era tela morta — e é a que o CLAUDE.md manda
+              atualizar a cada mudança de regra. Entra aqui, ao lado do Guia,
+              que é o mesmo assunto. */}
+          <button
+            onClick={onOpenGlossary}
+            className="w-full py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 sm-btn sm-btn-secondary"
+            style={{ fontWeight: 700, marginTop: 10 }}
+          >
+            <span>{t.settings.openGlossary}</span>
           </button>
         </div>
 

@@ -62,7 +62,7 @@ export function AISettingsModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="w-full max-w-lg max-h-[88vh] overflow-y-auto rounded-xl shadow-2xl sm-card">
+      <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-xl shadow-2xl sm-card">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--sm-line)' }}>
           <div className="flex items-center gap-2">

@@ -11,7 +11,28 @@
   Cache-Control: no-cache, no-store, must-revalidate
 
 # Security headers for all pages
+#
+# N-7 do relatório de segurança. O app renderiza texto de LLM E texto do próprio
+# usuário; hoje o React escapa, mas o `dangerouslySetInnerHTML` de
+# `src/components/ui/chart.tsx:83` prova que isso não é garantido por construção.
+# Sem CSP, UM XSS lê o ID token do Firebase e o `SOULMON_PROFILE` (nome completo,
+# data, hora e local de nascimento) do localStorage. Isso importa mais aqui do
+# que no site médio porque a origem é COMPARTILHADA com o DigiApp (N-6).
+#
+# Os dois `sha256-` são os DOIS <script> inline do `index.html` (tema antes da
+# primeira pintura e registro do service worker). Não use 'unsafe-inline' para
+# resolver isso — seria devolver exatamente o que a política existe para tirar.
+# `src/security/csp.test.ts` recalcula os hashes a partir do HTML e falha se
+# alguém editar um script inline sem atualizar esta linha.
+#
+# `style-src` precisa de 'unsafe-inline': o app usa `style={{}}` inline de
+# propósito (footgun nº 1 — não existe geração de classe Tailwind aqui) e o
+# `sonner` injeta <style>. Atributo de estilo não executa script.
+# `img-src https:` cobre o sprite gerado pelo Higgsfield, que volta como URL
+# externa. `connect-src` cobre o próprio worker (self) + Firebase Auth.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-aqX/OLUjckiwmTl42drowEB7qW3kNXbVxMRvhwLS3E8=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com

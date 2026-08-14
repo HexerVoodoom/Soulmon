@@ -9,6 +9,7 @@
 //   via CATEGORY_ICONS — não confiamos no modelo pra emoji consistente)
 
 import { guardAiRequest } from './_aiGuard.js';
+import { minimizeForAi, redactionCount } from './_redact.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -25,7 +26,16 @@ export async function onRequestOptions() {
 export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
-    const goalText = (body.goalText || '').toString().trim().slice(0, 300);
+    // N-3: o objetivo é texto livre do usuário e sai para um processador nos
+    // EUA. Identificadores diretos não ajudam a sugerir hábito — não saem daqui.
+    const goalMin = minimizeForAi((body.goalText || '').toString().trim(), 300);
+    const goalText = goalMin.text;
+    if (redactionCount(goalMin.redactions) || goalMin.truncated) {
+      console.log('[suggest-tasks] entrada minimizada', {
+        redactions: goalMin.redactions,
+        truncated: goalMin.truncated,
+      });
+    }
     const categories = Array.isArray(body.categories) ? body.categories.filter(c => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === 'pt-BR';
 

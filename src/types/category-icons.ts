@@ -23,6 +23,19 @@ export const CATEGORY_ICON_IMG: Record<ActivityCategory, string> = {
   Fitness: iconFitness,
 };
 
+/**
+ * Ícone emoldurado do kit para uma categoria vinda do ESTADO — que nem sempre
+ * é uma `ActivityCategory` válida: saves antigos e dados semeados gravaram a
+ * categoria em caixa baixa (`'study'`), e há tarefa sem categoria nenhuma.
+ * Devolve `undefined` nesses casos, para quem chama cair de volta no emoji
+ * em vez de renderizar uma imagem quebrada.
+ */
+export function categoryIconImg(category?: string): string | undefined {
+  if (!category) return undefined;
+  const key = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  return CATEGORY_ICON_IMG[key as ActivityCategory];
+}
+
 // Mapeamento fixo de ícones por categoria
 export const CATEGORY_ICONS: Record<ActivityCategory, string> = {
   Health: '🏥',
