@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 
 /**
  * FRONTEIRA: casca nativa ↔ deploy.
@@ -28,12 +29,22 @@ const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const PROIBIDOS = ['digiapp-a5e.pages.dev'];
 
 /** Os quatro lugares que precisam concordar sobre onde o Soulmon vive. */
+/**
+ * `android/app/src/main/assets/capacitor.config.json` é GERADO por
+ * `npx cap sync` e está no `.gitignore` (android/.gitignore:98). Ele NÃO entra
+ * na lista de fontes obrigatórias.
+ *
+ * A primeira versão deste guard o tratava como fonte fixa — e passava, porque
+ * existia como resíduo local na máquina de quem o escreveu. Num checkout limpo
+ * (worktree novo, CI, outro dev) os 4 casos quebravam com ENOENT. Guard que
+ * depende de artefato não-versionado passa por motivo ambiental, que é
+ * exatamente a família de defeito que este arquivo existe para pegar.
+ */
+const GERADO_ANDROID = 'android/app/src/main/assets/capacitor.config.json';
+const temGeradoAndroid = fs.existsSync(path.join(ROOT, GERADO_ANDROID));
+
 const FONTES = [
   { arquivo: 'capacitor.config.json', extrai: (s: string) => JSON.parse(s).server?.url },
-  {
-    arquivo: 'android/app/src/main/assets/capacitor.config.json',
-    extrai: (s: string) => JSON.parse(s).server?.url,
-  },
   {
     arquivo: 'desktop/renderer/src/config.ts',
     extrai: (s: string) => s.match(/APP_URL\s*=\s*['"]([^'"]+)['"]/)?.[1],
@@ -75,14 +86,27 @@ describe('fronteira casca nativa ↔ deploy', () => {
     ).toHaveLength(1);
   });
 
-  it('a config do Android é cópia fiel da raiz (cap sync não pode ter ficado para trás)', () => {
-    // `android/.../assets/capacitor.config.json` é GERADO por `npx cap sync` e
-    // commitado. Se alguém edita a raiz e esquece o sync, o APK continua indo
-    // para o endereço velho — e o build passa.
-    const raiz = JSON.parse(read('capacitor.config.json'));
-    const android = JSON.parse(read('android/app/src/main/assets/capacitor.config.json'));
-    expect(android.server?.url).toBe(raiz.server?.url);
-    expect(android.appId).toBe(raiz.appId);
-    expect(android.appName).toBe(raiz.appName);
+  it('o artefato do cap sync não é versionado (senão vira uma quinta fonte da verdade)', () => {
+    // Se alguém commitar este arquivo, ele passa a poder DIVERGIR da raiz e o
+    // APK vai para o endereço velho com o build verde. A garantia é que ele
+    // não exista no índice do git — regenerado a cada build, sempre da raiz.
+    const rastreado = execSync('git ls-files -- ' + GERADO_ANDROID, { cwd: ROOT })
+      .toString()
+      .trim();
+    expect(rastreado, `${GERADO_ANDROID} foi versionado — remova do índice`).toBe('');
   });
+
+  it.skipIf(!temGeradoAndroid)(
+    'se o cap sync já rodou aqui, a cópia gerada bate com a raiz',
+    () => {
+      // Só roda onde o artefato existe (máquina de dev que já buildou). No CI e
+      // em checkout limpo é pulado de propósito — e o caso acima garante que
+      // pular é seguro, porque o arquivo é sempre regenerado da raiz.
+      const raiz = JSON.parse(read('capacitor.config.json'));
+      const android = JSON.parse(read(GERADO_ANDROID));
+      expect(android.server?.url).toBe(raiz.server?.url);
+      expect(android.appId).toBe(raiz.appId);
+      expect(android.appName).toBe(raiz.appName);
+    },
+  );
 });

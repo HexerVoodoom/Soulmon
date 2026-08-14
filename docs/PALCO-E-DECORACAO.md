@@ -164,3 +164,40 @@ está pronta para arte de verdade: quando os PNGs existirem, o que muda é o
 render de `PetStageDecor.tsx` (trocar o `<span>` do emoji por `<img>`) — as
 caixas, as posições e a linha do chão continuam iguais. Desenhe nos tamanhos da
 tabela acima, em 2× (112×112 para uma peça de 56×56) para telas retina.
+
+---
+
+## A mobília base (o berço) — `BASE_SLOTS`
+
+Além dos cinco espaços de decoração, existe **um espaço que o app preenche
+sempre**, sem passar pela loja: a mobília debaixo do pet. Hoje é o berço.
+
+| Espaço | x | Caixa (px) | Origem vertical |
+|---|---|---|---|
+| `nest` | 50 % | **148 × 83** | `top: 50%` da área do pet + `yPx` |
+
+Por que ele **não** é um `SlotId`:
+
+- os cinco espaços são o catálogo do jogador — a loja vende para eles,
+  `equippedDecor` os grava no save, e há teste exigindo que todo `SlotId` tenha
+  ao menos um item à venda. O berço não é comprado nem equipado;
+- pôr o berço no `rug` roubaria do jogador o espaço do tapete que ele comprou.
+
+**A arte entra por fora.** `src/components/nestArt.ts` é a fronteira de troca —
+o único arquivo que sabe *com que PNG* o espaço é desenhado, no mesmo contrato
+do `components/evolution/nodeArt.tsx`. Trocar o berço por outra mobília é: pôr o
+PNG em `src/assets/soulmon/`, acrescentar uma entrada em `NEST_ART`, e mudar
+qual id o `CompanionHUD` pede. Nenhuma outra linha muda, e nenhuma geometria se
+mexe.
+
+### ⚠️ `GROUND_Y` está defasado
+
+O berço **não** é posicionado por `GROUND_Y`. Os 74 % foram medidos quando o
+sprite do pet tinha 80 px; hoje ele tem **152 px** (`PET_BOX`) e a renderização
+real deixou de bater com a tabela do começo deste documento. Enquanto a conta do
+palco não for refeita, pet e berço dividem uma origem única e declarada
+(`PET_TOP_OFFSET` e `BASE_SLOTS.nest.yPx`, em `utils/petStage.ts`).
+
+Enquanto isso valer, a decoração dos cinco espaços continua ancorada em
+`GROUND_Y` — ou seja, **ela e o pet não estão exatamente na mesma linha de
+chão**. Refazer essa conta é trabalho próprio, e está registrado como pendência.

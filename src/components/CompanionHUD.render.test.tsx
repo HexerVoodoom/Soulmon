@@ -12,6 +12,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { CompanionHUD } from './CompanionHUD';
+import { BASE_SLOTS } from '../utils/petStage';
 
 const base = {
   companionMood: 'idle' as const,
@@ -95,12 +96,33 @@ describe('CompanionHUD', () => {
     expect(screen.getByRole('button', { name: 'Evolve' })).toBeTruthy();
   });
 
-  it('o ninho e o sprite do pet são arte NOSSA (src/assets/soulmon)', () => {
+  it('o berço e o sprite do pet são arte NOSSA (src/assets/soulmon)', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);
     const srcs = Array.from(container.querySelectorAll('img')).map(i => i.getAttribute('src') ?? '');
     expect(srcs.some(s => /nest-base/.test(s))).toBe(true);
     // nenhuma arte de terceiro embarcada (docs/Attributions.md)
     expect(srcs.some(s => /_dmc\.png/.test(s))).toBe(false);
+  });
+
+  /* O berço só normaliza um sprite imprevisível se o pet estiver DENTRO dele.
+     O defeito era mudo: o berço tinha `translateX(-50%)` e o pet não, então o
+     pet nascia 62px à direita — nada quebrava, só ficava errado. Estes dois
+     casos travam a composição (mesmo eixo, mesma origem vertical declarada). */
+  it('pet e berço compartilham o eixo horizontal (o pet está NO berço)', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    const nest = container.querySelector('[data-nest]') as HTMLElement;
+    const pet = container.querySelector('img[alt]:not([alt=""])')?.parentElement as HTMLElement;
+    expect(nest.style.left).toBe(pet.style.left);
+    expect(nest.style.transform).toContain('translateX(-50%)');
+    expect(pet.style.transform).toContain('translateX(-50%)');
+  });
+
+  it('a geometria do berço vem do palco, não de número mágico no JSX', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    const nest = container.querySelector('[data-nest]') as HTMLImageElement;
+    expect(nest.style.width).toBe(`${BASE_SLOTS.nest.w}px`);
+    expect(nest.style.height).toBe(`${BASE_SLOTS.nest.h}px`);
+    expect(nest.style.marginTop).toBe(`${BASE_SLOTS.nest.yPx}px`);
   });
 
   it('HP 0 continua renderizando a cena (degeneração não pode quebrar a tela)', () => {

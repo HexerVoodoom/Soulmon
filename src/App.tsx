@@ -4,11 +4,12 @@ import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
 import { BottomNav } from './components/BottomNav';
-import { ActivityCard } from './components/ActivityCard';
-import { TaskCard } from './components/TaskCard';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
-import { PixelButton } from './components/pixel/PixelKit';
+import { RitualPanel, RitualRow } from './components/pixel/RitualPanel';
+import { StepRow } from './components/StepRow';
+import { categoryIconImg, categoryLabel } from './types/category-icons';
+import iconTarget from './assets/soulmon/icons/icon-target.png';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
@@ -145,6 +146,10 @@ export default function App() {
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
+  /* Etapas na Home nascem RECOLHIDAS (G1): uma atividade de 4 etapas ocupava 5
+     linhas e comia sozinha a dobra. Estado de VISTA, não de jogo — de propósito
+     fora do GameState, para não virar cloud save a cada toque. */
+  const [expandedRituals, setExpandedRituals] = useState<Record<string, boolean>>({});
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [feedAnim, setFeedAnim] = useState<{ emoji: string; n: number } | null>(null);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
@@ -1894,30 +1899,14 @@ export default function App() {
           </Suspense>
         )}
 
-        {/* Nova Atividade — FAB flutuante no canto inferior direito (só na tela principal) */}
-        {currentView === 'main' && (
-          <button
-            onClick={() => setCreateModalOpen(true)}
-            aria-label={t.activities.addNew}
-            title={t.activities.addNew}
-            /* Peça do kit pixel (chanfro + moldura de cobre), não mais um
-               círculo teal chapado — era o único objeto redondo e sem
-               moldura da tela. Geometria/posição seguem inline (footgun 1). */
-            className="fixed sm-px-fab"
-            style={{
-              right: 18,
-              bottom: 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 90px)',
-              zIndex: 30,
-            }}
-          >
-            {/* "+" desenhado em blocos retos: o glifo do lucide tem ponta
-                arredondada e destoava no meio de uma peça pixel-art. */}
-            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <rect x="10" y="3" width="4" height="18" fill="currentColor" />
-              <rect x="3" y="10" width="18" height="4" fill="currentColor" />
-            </svg>
-          </button>
-        )}
+        {/* O FAB "Nova Atividade" SAIU da Home (G1/G8). Ele flutuava sobre a
+            lista e, em 412×915, cobria exatamente a última linha visível — o
+            controle de criar tapava o conteúdo que ele cria. A referência não
+            tem FAB: tem CTA largo no fim do painel, que é onde a lista termina
+            e onde o gesto de "adicionar mais um" nasce. Ver
+            `RitualPanel`/`ctaLabel`. A regra `.sm-px-fab` ficou no index.css
+            SEM consumidor — é peça de kit, e apagá-la só criaria trabalho se
+            outra tela precisar de um flutuante. */}
 
         {/* Fundo da Home cheio, atrás de tudo (barra de chat/nav ficam por
             cima) — antes era só um retângulo dentro do CompanionHUD, restrito
@@ -2048,97 +2037,119 @@ export default function App() {
                 feedAnim={feedAnim}
               />
 
-              {gameState.tasks.length === 0 && gameState.activities.length === 0 ? (
-                <div className="flex items-center justify-center" style={{ minHeight: '300px' }}>
-                  <p
-                    style={{ fontFamily: 'monospace', fontSize: '1.25rem', color: 'var(--sm-muted)' }}
+              {/* ── G1: UM painel de rituais, linhas de ~72px ────────────────
+                  Antes: um `PixelPanel` de ~200px por item, três estourando a
+                  dobra e o quarto cortado pelo dock de chat. A composição e as
+                  decisões (coluna única em retrato, truncamento por PT-BR,
+                  etapas recolhidas, fallback sem emoji) estão documentadas em
+                  components/pixel/RitualPanel.tsx. */}
+              {(() => {
+                const isPt = language === 'pt-BR';
+                const today = new Date().getDay(); // 0 = domingo, 6 = sábado
+                const todayString = new Date().toDateString();
+                const diasCurtos = isPt
+                  ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+                  : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+                const tarefas = [...gameState.tasks].sort(
+                  (a, b) => Number(a.completed) - Number(b.completed),
+                );
+
+                const atividades = [
+                  ...gameState.activities.filter(a => a.weekDays?.includes(today)),
+                  ...gameState.activities.filter(a => !a.weekDays?.includes(today)),
+                ].map(activity => ({
+                  ...activity,
+                  isComplete: activity.steps.length > 0
+                    ? activity.steps.every(s => s.completed)
+                    : !!(activity.completedToday && activity.lastCompletedDate === todayString),
+                })).sort((a, b) => Number(a.isComplete) - Number(b.isComplete));
+
+                const total = tarefas.length + atividades.length;
+                const feitos = tarefas.filter(t2 => t2.completed).length
+                  + atividades.filter(a => a.isComplete).length;
+
+                return (
+                  <RitualPanel
+                    done={feitos}
+                    total={total}
+                    titleIcon={iconTarget}
+                    language={language}
+                    ctaLabel={`+ ${t.activities.addNew}`}
+                    onCta={handleAddNewActivity}
+                    emptyMessage={total === 0 ? t.main.noActivityRegistered : undefined}
                   >
-                    {t.main.noActivityRegistered}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {/* Sort tasks: incomplete first, completed last */}
-                  {[...gameState.tasks]
-                    .sort((a, b) => {
-                      if (a.completed === b.completed) return 0;
-                      return a.completed ? 1 : -1;
-                    })
-                    .map(task => (
-                      <TaskCard
+                    {tarefas.map(task => (
+                      <RitualRow
                         key={task.id}
-                        id={task.id}
+                        icon={categoryIconImg(task.category)}
                         name={task.name}
-                        category={task.category}
-                        emoji={task.emoji}
-                        completed={task.completed}
-                        onToggleComplete={handleToggleTask}
-                        onEdit={handleEditTask}
+                        subtitle={task.category
+                          ? categoryLabel(task.category as ActivityCategory, isPt)
+                          : (isPt ? 'Tarefa avulsa' : 'One-off task')}
+                        value={task.completed ? 1 : 0}
+                        max={1}
+                        done={task.completed}
+                        onToggle={() => { if (!task.completed) handleToggleTask(task.id); }}
+                        onEdit={() => handleEditTask(task.id)}
+                        language={language}
+                        toggleLabelPt={task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}
+                        toggleLabelEn={task.completed ? 'Task completed' : 'Mark task as completed'}
                       />
                     ))}
 
-                  {(() => {
-                    const today = new Date().getDay(); // 0 = Sunday, 6 = Saturday
-                    const todayString = new Date().toDateString();
-                    const availableActivities = gameState.activities.filter(a => a.weekDays?.includes(today));
-                    const unavailableActivities = gameState.activities.filter(a => !a.weekDays?.includes(today));
-
-                    // Combine and sort: incomplete first, completed last
-                    const allActivities = [...availableActivities, ...unavailableActivities].map(activity => {
-                      const isComplete = activity.steps.length > 0
-                        ? activity.steps.every(s => s.completed)
-                        : (activity.completedToday && activity.lastCompletedDate === todayString);
-                      return { ...activity, isComplete };
-                    }).sort((a, b) => {
-                      if (a.isComplete === b.isComplete) return 0;
-                      return a.isComplete ? 1 : -1;
-                    });
-
-                    if (allActivities.length === 0 && gameState.tasks.length > 0) {
-                      return (
-                        <div key="no-activities" className="flex flex-col items-center justify-center py-8 gap-2">
-                          <p className="text-sm"
-                            style={{ fontFamily: 'monospace', color: 'var(--sm-muted)' }}>
-                            {t.main.noActivityRegistered}
-                          </p>
-                          {/* Ação primária do estado vazio → botão do kit
-                              (moldura de cobre 9-slice, alvo ≥44px). */}
-                          <PixelButton size="sm" variant="primary" onClick={handleAddNewActivity}>
-                            + {t.activities.addNew}
-                          </PixelButton>
-                        </div>
-                      );
-                    }
-
-                    return allActivities.map(activity => {
-                      const isAvailable = activity.weekDays?.includes(today);
+                    {atividades.map(activity => {
+                      const disponivelHoje = !!activity.weekDays?.includes(today);
+                      const etapas = activity.steps ?? [];
+                      const feitasEtapas = etapas.filter(s => s.completed).length;
+                      const dias = activity.weekDays ?? [];
+                      const freq = dias.length === 7
+                        ? (isPt ? 'Todo dia' : 'Every day')
+                        : dias.length === 0
+                          ? (isPt ? 'Avulsa' : 'One-off')
+                          : dias.map(d => diasCurtos[d]).join(' · ');
+                      const subtitulo = etapas.length > 0
+                        ? `${freq} · ${feitasEtapas}/${etapas.length} ${isPt ? 'etapas' : 'steps'}`
+                        : freq;
 
                       return (
-                        <ActivityCard
+                        <RitualRow
                           key={activity.id}
-                          id={activity.id}
-                          /* O emoji SAIU do nome: virou prop própria para o
-                             card poder trocá-lo pelo ícone emoldurado do kit
-                             (e cair no emoji só quando não houver ícone). */
+                          icon={categoryIconImg(activity.category)}
                           name={activity.name}
-                          emoji={activity.emoji}
-                          category={activity.category as ActivityCategory}
-                          steps={activity.steps}
-                          weekDays={activity.weekDays}
-                          onUpdateStep={handleUpdateStep}
-                          onToggleCompletion={handleToggleActivityCompletion}
-                          onEditActivity={handleEditActivity}
-                          isExpanded={true}
-                          isCompleted={activity.isComplete}
-                          isDisabled={!isAvailable}
-                          isSingleExecution={!activity.weekDays || activity.weekDays.length === 0}
+                          subtitle={subtitulo}
+                          value={etapas.length > 0 ? feitasEtapas : (activity.isComplete ? 1 : 0)}
+                          max={etapas.length > 0 ? etapas.length : 1}
+                          done={activity.isComplete}
+                          dimmed={!disponivelHoje}
+                          onEdit={() => handleEditActivity(activity.id)}
+                          expandable={etapas.length > 0}
+                          expanded={!!expandedRituals[activity.id]}
+                          onExpand={() => setExpandedRituals(prev => ({
+                            ...prev, [activity.id]: !prev[activity.id],
+                          }))}
+                          onToggle={etapas.length > 0 ? undefined : () => handleToggleActivityCompletion(activity.id)}
                           language={language}
-                        />
+                          toggleLabelPt={activity.isComplete ? 'Atividade concluída' : 'Marcar atividade como concluída'}
+                          toggleLabelEn={activity.isComplete ? 'Activity completed' : 'Mark activity as completed'}
+                        >
+                          {etapas.map(step => (
+                            <StepRow
+                              key={step.id}
+                              id={step.id}
+                              label={step.label}
+                              completed={step.completed}
+                              onToggle={disponivelHoje ? (stepId) => handleUpdateStep(activity.id, stepId) : () => {}}
+                              disabled={!disponivelHoje}
+                              language={language}
+                            />
+                          ))}
+                        </RitualRow>
                       );
-                    });
-                  })()}
-                </>
-              )}
+                    })}
+                  </RitualPanel>
+                );
+              })()}
             </div>
           )}
 
