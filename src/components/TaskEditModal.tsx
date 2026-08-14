@@ -217,7 +217,7 @@ export function TaskEditModal({
                               flex: 1, padding: '8px 4px', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
                               border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
                               background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
-                              color: active ? '#fff' : 'var(--sm-ink)',
+                              color: active ? 'var(--sm-btn-text)' : 'var(--sm-ink)',
                             }}>
                             {preset} {txt.before}
                           </button>

@@ -395,7 +395,7 @@ export function SettingsPage({
                 className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all"
                 style={
                   themeMode === opt.value
-                    ? { background: 'var(--sm-primary)', color: '#fff' }
+                    ? { background: 'var(--sm-primary)', color: 'var(--sm-btn-text)' }
                     : { background: 'var(--sm-bg)', color: 'var(--sm-muted)' }
                 }
                 aria-pressed={themeMode === opt.value}
@@ -423,7 +423,7 @@ export function SettingsPage({
                 className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
                 style={
                   language === lang
-                    ? { background: 'var(--sm-primary)', color: '#fff' }
+                    ? { background: 'var(--sm-primary)', color: 'var(--sm-btn-text)' }
                     : { background: 'var(--sm-bg)', color: 'var(--sm-muted)' }
                 }
                 aria-pressed={language === lang}

@@ -66,6 +66,11 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
 
   const [isSingleExecution, setIsSingleExecution] = useState(false);
   const [weekDays, setWeekDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  // Passos e alarme são opcionais e raramente usados na criação — escondidos
+  // atrás de um accordion pra tela padrão não vir com tudo desdobrado de uma
+  // vez (era a maior fonte da poluição visual: 2 seções inteiras sempre
+  // abertas mesmo vazias).
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const {
     name, setName,
@@ -143,6 +148,10 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
     stepsOptional: isPt ? '(opcional)' : '(optional)',
     addButton: isPt ? 'Adicionar' : 'Add',
     executeOnce: isPt ? 'Executar apenas uma vez' : 'Execute only once',
+    frequency: isPt ? 'Frequência' : 'Frequency',
+    recurring: isPt ? 'Recorrente' : 'Recurring',
+    oneTime: isPt ? 'Uma vez' : 'One-time',
+    moreOptions: isPt ? 'Passos e alarme' : 'Steps and alarm',
     weekdays: isPt ? 'Dias da semana' : 'Weekdays',
     defineDeadline: isPt ? 'Definir deadline' : 'Set deadline',
     date: isPt ? 'Data' : 'Date',
@@ -176,6 +185,13 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
     color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
     fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
   });
+  const segment = (active: boolean): React.CSSProperties => ({
+    flex: 1, padding: '10px 0', borderRadius: 12, textAlign: 'center', cursor: 'pointer',
+    border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
+    background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
+    color: active ? 'var(--sm-btn-text)' : 'var(--sm-ink)',
+    fontSize: 13, fontWeight: 700,
+  });
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
@@ -191,7 +207,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
         </div>
 
         {/* Content */}
-        <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Name */}
           <div>
             <label style={labelStyle}>{txt.name}</label>
@@ -204,7 +220,9 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
             )}
           </div>
 
-          {/* Category — chips (mesmo estilo do resto do app) */}
+          {/* Category — chips (mesmo estilo do resto do app), com o preview
+              de atributo grudado embaixo em vez de virar um card à parte:
+              é informação secundária, não merece seção própria. */}
           <div>
             <label style={labelStyle}>{txt.category}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -214,55 +232,29 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Attribute Preview */}
-          <div className="sm-card" style={{ padding: 12, background: 'var(--sm-surface)' }}>
-            <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--sm-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-              {txt.attributesLabel}
-            </p>
-            <div style={{ display: 'flex', gap: 14 }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
               {(['virus', 'data', 'vaccine'] as const).map(a => (
-                <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700, color: ATTR_COLOR[a] }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: ATTR_COLOR[a] }} />
+                <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: ATTR_COLOR[a] }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: ATTR_COLOR[a] }} />
                   +{attributes[a]}
                 </span>
               ))}
             </div>
           </div>
 
-          {/* Steps */}
+          {/* Frequência — controle único (recorrente/uma vez) em vez de
+              checkbox solto; mesma decisão, forma mais fácil de escanear. */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }}>
-                {txt.steps} <span style={{ opacity: 0.7, fontWeight: 500 }}>{txt.stepsOptional}</span>
-              </label>
-              <button onClick={handleAddStep} className="sm-btn sm-btn-secondary" style={{ padding: '6px 12px', fontSize: 12 }}>
-                <Plus size={14} strokeWidth={2.4} />{txt.addButton}
+            <label style={labelStyle}>{txt.frequency}</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="button" onClick={() => setIsSingleExecution(false)} style={segment(!isSingleExecution)}>
+                {txt.recurring}
+              </button>
+              <button type="button" onClick={() => setIsSingleExecution(true)} style={segment(isSingleExecution)}>
+                {txt.oneTime}
               </button>
             </div>
-            {steps.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {steps.map((step, index) => (
-                  <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: 'var(--sm-muted)', flexShrink: 0 }}>{index + 1}.</span>
-                    <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
-                      placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} style={{ ...inputStyle, padding: '8px 11px' }} />
-                    <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
-                      <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-
-          {/* Single Execution Checkbox */}
-          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-            <input type="checkbox" checked={isSingleExecution} onChange={(e) => setIsSingleExecution(e.target.checked)}
-              style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }} />
-            <span style={{ fontSize: 13.5, color: 'var(--sm-ink)', fontWeight: 600 }}>{txt.executeOnce}</span>
-          </label>
 
           {/* Week Days */}
           {!isSingleExecution && showWeekdayGrid && (
@@ -277,7 +269,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
                         padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer',
                         border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
                         background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
-                        color: active ? '#fff' : 'var(--sm-ink)',
+                        color: active ? 'var(--sm-btn-text)' : 'var(--sm-ink)',
                       }}>
                       {label}
                     </button>
@@ -311,41 +303,82 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
             </div>
           )}
 
-          {/* Timer/Alarm */}
+          {/* Passos e alarme — accordion. As duas seções mais raramente
+              usadas na criação (a maioria das tarefas não precisa de nenhuma
+              das duas) não vêm mais abertas por padrão. */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <img src={iconBell} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--sm-muted)' }}>
-                {isSingleExecution ? txt.alarm : txt.schedule} <span style={{ opacity: 0.75, fontWeight: 500 }}>{txt.optional}</span>
-              </span>
-            </div>
-            <div style={{ marginLeft: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {isSingleExecution && hasDeadline && (
+            <button type="button" onClick={() => setShowAdvanced(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--sm-primary)', fontSize: 13, fontWeight: 700 }}>
+              <span style={{ display: 'inline-block', transition: 'transform .15s ease', transform: showAdvanced ? 'rotate(90deg)' : 'none' }}>▸</span>
+              {txt.moreOptions}
+            </button>
+
+            {showAdvanced && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 14 }}>
+                {/* Steps */}
                 <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{txt.quickOptions}</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {(['2h', '1h', '30min'] as const).map(preset => {
-                      const active = selectedPreset === preset;
-                      return (
-                        <button key={preset} type="button" onClick={() => handlePresetClick(preset)}
-                          style={{
-                            flex: 1, padding: '8px 4px', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
-                            border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                            background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
-                            color: active ? '#fff' : 'var(--sm-ink)',
-                          }}>
-                          {preset} {txt.before}
-                        </button>
-                      );
-                    })}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>
+                      {txt.steps} <span style={{ opacity: 0.7, fontWeight: 500 }}>{txt.stepsOptional}</span>
+                    </label>
+                    <button onClick={handleAddStep} className="sm-btn sm-btn-secondary" style={{ padding: '6px 12px', fontSize: 12 }}>
+                      <Plus size={14} strokeWidth={2.4} />{txt.addButton}
+                    </button>
+                  </div>
+                  {steps.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {steps.map((step, index) => (
+                        <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 12, color: 'var(--sm-muted)', flexShrink: 0 }}>{index + 1}.</span>
+                          <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
+                            placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} style={{ ...inputStyle, padding: '8px 11px' }} />
+                          <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
+                            <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Timer/Alarm */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <img src={iconBell} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--sm-muted)' }}>
+                      {isSingleExecution ? txt.alarm : txt.schedule}
+                    </span>
+                  </div>
+                  <div style={{ marginLeft: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {isSingleExecution && hasDeadline && (
+                      <div>
+                        <label style={{ ...labelStyle, fontSize: 11 }}>{txt.quickOptions}</label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {(['2h', '1h', '30min'] as const).map(preset => {
+                            const active = selectedPreset === preset;
+                            return (
+                              <button key={preset} type="button" onClick={() => handlePresetClick(preset)}
+                                style={{
+                                  flex: 1, padding: '8px 4px', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                                  border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
+                                  background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
+                                  color: active ? 'var(--sm-btn-text)' : 'var(--sm-ink)',
+                                }}>
+                                {preset} {txt.before}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: 11 }}>{txt.customTime}</label>
+                      <Input type="time" value={customAlarmTime} onChange={(e) => handleCustomTimeChange(e.target.value)} style={inputStyle} />
+                    </div>
                   </div>
                 </div>
-              )}
-              <div>
-                <label style={{ ...labelStyle, fontSize: 11 }}>{txt.customTime}</label>
-                <Input type="time" value={customAlarmTime} onChange={(e) => handleCustomTimeChange(e.target.value)} style={inputStyle} />
               </div>
-            </div>
+            )}
           </div>
         </div>
 

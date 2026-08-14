@@ -3907,6 +3907,11 @@ html {
   --sm-energy-track: #e3ece9;
   --sm-radius: 16px;
   --sm-bottomnav-h: 68px;       /* altura de conteúdo da barra de navegação inferior */
+  /* Texto do .sm-btn: branco funciona no tema claro (fill escuro), mas no
+     escuro --sm-primary/--sm-gold viram tons CLAROS (contraste no fundo
+     escuro) — texto branco em cima ficava quase ilegível. Token separado
+     em vez de cor fixa. */
+  --sm-btn-text: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -3924,6 +3929,7 @@ html {
   --sm-danger-soft: rgba(248,113,113,0.16);
   --sm-energy: #4ade80;
   --sm-energy-track: #1f332e;
+  --sm-btn-text: var(--sm-bg);  /* tinta quase-preta — fill claro no escuro precisa de texto escuro */
 }
 
 .sm-app-bg {
@@ -4023,7 +4029,7 @@ html {
   text-transform: uppercase;
   font-size: 0.85rem;
   padding: 14px 22px;
-  color: #ffffff;
+  color: var(--sm-btn-text);
   background: var(--sm-btn-fill);
   border: 2px solid var(--sm-btn-border);
   border-radius: 14px;
