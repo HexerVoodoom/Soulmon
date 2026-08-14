@@ -118,6 +118,19 @@ export const ABSENCE_FORGIVENESS_DAYS = 2;
 /** Meio coração de volta na virada de domingo→segunda: o teto do estrago é 7 dias. */
 export const WEEKLY_RELIEF_HEARTS = 0.5;
 
+/**
+ * Quantos dias perfeitos custa uma degeneração REAL (queda de estágio).
+ *
+ * O piso continua sendo `floor(required/2)` do estágio novo, então quem tinha
+ * pouco não fica negativo. Este número é o que a queda tira de quem tinha
+ * muito — antes ela zerava tudo, o que contradizia "um dia ruim é um sinal,
+ * não uma sentença" num evento que já exige três dias ruins seguidos.
+ *
+ * Ajuste de balanceamento: mexer aqui muda o peso da degeneração para jogador
+ * avançado, e só para ele.
+ */
+export const DEGENERATION_PERFECT_DAYS_COST = 5;
+
 /** Quantos dias se passaram desde a última virada. 1 = virada normal de ontem. */
 export function daysSinceLastReset(lastResetDate: string | undefined, now: Date): number {
   if (!lastResetDate) return 1;
@@ -388,16 +401,49 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
 
   // Degeneração por HP zerado.
   if (newHP <= 0) {
-    wasDegeneratedByHP = true;
-    newEvolutionStage = getPreviousForm(prev.evolutionStage, newCurrentBranch);
+    const previousForm = getPreviousForm(prev.evolutionStage, newCurrentBranch);
+    const caiuDeEstagio = previousForm !== prev.evolutionStage;
 
-    const degeneratedLevel = getStageLevel(newEvolutionStage);
-    newHP = MAX_HP_BY_FORM[degeneratedLevel];
-    // Desconto de recuperação: voltar ao estágio de onde caiu custa metade dos
-    // dias perfeitos. Não é cumulativo — é sempre metade do requisito do estágio
-    // NOVO (mais baixo), então uma segunda queda ganha o mesmo desconto.
-    newPerfectDays = Math.floor(FORM_REQUIREMENTS[degeneratedLevel].required / 2);
-    newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
+    if (caiuDeEstagio) {
+      wasDegeneratedByHP = true;
+      newEvolutionStage = previousForm;
+
+      const degeneratedLevel = getStageLevel(newEvolutionStage);
+      newHP = MAX_HP_BY_FORM[degeneratedLevel];
+
+      // Desconto de recuperação: quem cai reaparece já na metade do requisito
+      // do estágio novo. É misericórdia deliberada — você caiu, mas não
+      // recomeça do zero.
+      //
+      // Mudou de ATRIBUIÇÃO para PISO + CUSTO FIXO. Antes era `=`, e isso
+      // deixava a regra inconsistente na direção: quem tinha MENOS que o
+      // desconto ganhava, e quem tinha MAIS perdia tudo — um jogador com 39
+      // dias em mega, a um dia do ultra, reaparecia com 2. Três dias ruins
+      // seguidos (o mínimo para zerar o HP com o teto de 1/dia) apagavam três
+      // meses. Agora a queda custa DEGENERATION_PERFECT_DAYS_COST dias, e o
+      // desconto é o chão — nunca um prêmio.
+      newPerfectDays = Math.max(
+        Math.floor(FORM_REQUIREMENTS[degeneratedLevel].required / 2),
+        prev.perfectDays - DEGENERATION_PERFECT_DAYS_COST,
+      );
+      newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
+    } else {
+      // RAIZ da árvore (rookie): não existe forma abaixo, então `getPreviousForm`
+      // devolve o próprio estágio e nada degenera de fato.
+      //
+      // O bloco acima rodava aqui do mesmo jeito e entregava HP CHEIO e
+      // `perfectDays = 2` a quem simplesmente não fez nada. Medido: rookie com
+      // HP 1 que não fazia nada terminava com HP 3 e perfectDays 0→2, enquanto
+      // o que FAZIA TUDO terminava com HP 1 e perfectDays 0. Negligenciar
+      // rendia mais progressão que cuidar — o oposto exato da essência
+      // declarada do produto.
+      //
+      // Volta com UM coração: o suficiente para continuar jogando (senão o
+      // jogador fica presoem HP 0 para sempre), sem presente e sem custo extra
+      // — cobrar dias de quem ainda nem tem estágio abaixo seria punir
+      // justamente quem o produto diz que não quer punir.
+      newHP = 1;
+    }
   }
 
   const resetActivities = prev.activities.map((activity: any) => ({

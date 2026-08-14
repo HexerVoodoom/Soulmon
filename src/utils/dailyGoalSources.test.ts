@@ -129,10 +129,21 @@ describe('o número que o banner de 1 coração promete é o número que salva',
       tasks: [1, 2, 3, 4].map(i => ({ id: `t${i}`, completed: i <= 2 })),
     };
     const depois: any = computeDailyReset(comDuas as any, { now: VIRADA });
-    // O HP volta a 3 porque a DEGENERAÇÃO já aconteceu e reencheu o estágio —
-    // é justamente o desfecho que o banner prometia evitar com 2 itens.
+    // A TESE deste caso — com 2 de 4 o coração cai mesmo assim, e era isso que
+    // o banner prometia evitar — continua sendo esta linha:
     expect(depois.lastDayReport.heartsLost).toBe(1);
-    expect(depois.degeneratedByHP).toBe(true);
+
+    // As duas linhas abaixo mudaram junto com a regra, e o caso ficou MAIS
+    // apertado, não mais frouxo. Antes afirmavam `degeneratedByHP === true` e
+    // HP de volta a 3: o rookie "degenerava" para si mesmo (é a raiz da
+    // árvore, `getPreviousForm` devolve o próprio estágio) e ganhava HP cheio
+    // + `perfectDays = 2` de brinde. Medido na época: quem NÃO fazia nada
+    // terminava melhor que quem fazia tudo.
+    // Agora, na raiz, não há degeneração nenhuma — só um coração de volta,
+    // para o jogador não ficar preso em HP 0.
+    expect(depois.degeneratedByHP).toBe(false);
+    expect(depois.healthPoints).toBe(1);
+    expect(depois.perfectDays).toBe(comDuas.perfectDays ?? 0);
   });
 
   it('e com 3 de 4 o coração NÃO cai — o número novo é o número certo', () => {

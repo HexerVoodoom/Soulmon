@@ -44,6 +44,24 @@ describe('entitlements — saldo e gasto', () => {
     expect(ent.credits).toBe(10);
   });
 
+  it('gastar 1 crédito é um gasto VÁLIDO (troca por Bits)', async () => {
+    // O guard é `amount <= 0`. Trocá-lo por `<= 1` recusava exatamente o gasto
+    // de 1 crédito — que é o caminho real do BITS_EXCHANGE (1 Crédito = 10
+    // Bits, CLAUDE.md) — e nenhum teste percebia, porque todos gastavam 50+.
+    await applyVerifiedPurchase(env, SAVE, { orderId: 'o1', grantTier: null, grantCredits: 10 });
+    const ent = await spendCredits(env, SAVE, 1);
+    expect(ent).not.toBeNull();
+    expect(ent.credits).toBe(9);
+  });
+
+  it('gastar exatamente o saldo inteiro é permitido e zera a conta', async () => {
+    // Fronteira do `ent.credits < amount`.
+    await applyVerifiedPurchase(env, SAVE, { orderId: 'o1', grantTier: null, grantCredits: 10 });
+    const ent = await spendCredits(env, SAVE, 10);
+    expect(ent).not.toBeNull();
+    expect(ent.credits).toBe(0);
+  });
+
   it('recusa valores inválidos (zero, negativo, fracionário)', async () => {
     await applyVerifiedPurchase(env, SAVE, { orderId: 'o1', grantTier: null, grantCredits: 100 });
     expect(await spendCredits(env, SAVE, 0)).toBeNull();
@@ -71,6 +89,15 @@ describe('entitlements — compras verificadas', () => {
     expect(second.ent.credits).toBe(60);
   });
 
+  it('uma compra de 1 crédito TAMBÉM credita', async () => {
+    // O guard é `if (grantCredits > 0)`. Trocar o `0` por `1` engolia em
+    // silêncio a menor compra possível: o jogador paga e não recebe nada.
+    const { ent } = await applyVerifiedPurchase(env, SAVE, {
+      orderId: 'menor', grantTier: null, grantCredits: 1,
+    });
+    expect(ent.credits).toBe(1);
+  });
+
   it('orderIds diferentes acumulam normalmente', async () => {
     await applyVerifiedPurchase(env, SAVE, { orderId: 'a', grantTier: null, grantCredits: 60 });
     const { ent } = await applyVerifiedPurchase(env, SAVE, { orderId: 'b', grantTier: null, grantCredits: 150 });
@@ -82,10 +109,22 @@ describe('entitlements — anúncio recompensado', () => {
   let env;
   beforeEach(() => { env = fakeEnv(); });
 
+  // Os NÚMEROS da recompensa são crus de propósito. Estas duas afirmações já
+  // foram `toBe(AD_REWARD_CREDITS)` e `toBe(AD_REWARD_CREDITS * AD_DAILY_CAP)`
+  // — expectativa derivada da própria constante auditada, que é a doença dos
+  // guards cegos das rodadas anteriores. Medido na rodada 7: zerar
+  // `AD_REWARD_CREDITS` deixava os 829 testes verdes, num número que é DINHEIRO
+  // (é o que o jogador recebe por assistir anúncio, e espelha
+  // `utils/monetization.ts`).
+  it('a recompensa por anúncio vale 5 créditos, e o teto é 3 por dia', () => {
+    expect(AD_REWARD_CREDITS).toBe(5);
+    expect(AD_DAILY_CAP).toBe(3);
+  });
+
   it('credita a recompensa e desconta do teto do dia', async () => {
     const ent = await grantAdReward(env, SAVE);
-    expect(ent.credits).toBe(AD_REWARD_CREDITS);
-    expect(publicView(ent).adsLeft).toBe(AD_DAILY_CAP - 1);
+    expect(ent.credits).toBe(5);
+    expect(publicView(ent).adsLeft).toBe(2);
   });
 
   it('bloqueia depois do teto diário — não dá pra farmar', async () => {
@@ -94,7 +133,8 @@ describe('entitlements — anúncio recompensado', () => {
     }
     expect(await grantAdReward(env, SAVE)).toBeNull();
     const ent = await readEntitlement(env, SAVE);
-    expect(ent.credits).toBe(AD_REWARD_CREDITS * AD_DAILY_CAP);
+    expect(ent.credits).toBe(15); // 5 × 3, cru: ver o comentário acima
+    expect(publicView(ent).adsLeft).toBe(0);
   });
 
   it('o teto reseta na virada do dia', async () => {
@@ -248,9 +288,39 @@ describe('reembolso — desfaz o que a loja estornou', () => {
       orderId: 'play:GPA.2222', provider: 'play', productId: 'soulmon.credits.60',
       purchaseToken: 't2', grantTier: null, grantCredits: 60,
     });
-    const { ent, revoked } = await auditRefunds(env, SAVE, async () => false, t0 + DIA + 1);
+    // A segunda conferência responde `true` PARA A COMPRA ANTIGA de novo — é
+    // exatamente isso que a loja faz, já que o estorno é permanente. Quem
+    // impede o débito duplo é a marca `order.voided = true` gravada na
+    // primeira rodada (o `pending` filtra por `!o.voided`).
+    //
+    // Antes esta segunda chamada respondia `false` para tudo, então ela não
+    // exercia a marca coisa nenhuma: a rodada 7 trocou `order.voided = true`
+    // por `false` e a suíte inteira continuou verde — com o mutante vivo, esta
+    // conta perderia 150 créditos a cada leitura de saldo, para sempre.
+    const { ent, revoked } = await auditRefunds(
+      env, SAVE, async (o) => o.orderId === PLAY_ORDER, t0 + DIA + 1,
+    );
     expect(revoked).toEqual([]);
     expect(ent.credits).toBe(60);
+  });
+
+  it('confere no máximo 20 compras por rodada (quota da loja)', async () => {
+    // `AUDIT_MAX_ORDERS = 20` com `.slice(-20)`. Zerar a constante vira
+    // `.slice(-0)`, que em JS é a lista INTEIRA — o teto silenciosamente deixa
+    // de existir e uma conta com histórico longo dispara uma consulta à loja
+    // por compra, a cada 24h.
+    const env = fakeEnv();
+    for (let i = 0; i < 25; i++) {
+      const id = `play:GPA.bulk${i}`;
+      await claimOrder(env, SAVE, id);
+      await applyVerifiedPurchase(env, SAVE, {
+        orderId: id, provider: 'play', productId: 'soulmon.credits.60',
+        purchaseToken: `tok${i}`, grantTier: null, grantCredits: 60,
+      });
+    }
+    let consultas = 0;
+    await auditRefunds(env, SAVE, async () => { consultas++; return false; });
+    expect(consultas).toBe(20);
   });
 
   it('conta sem compras não grava nada no KV', async () => {

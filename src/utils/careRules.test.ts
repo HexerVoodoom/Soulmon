@@ -85,6 +85,92 @@ describe('alimentar', () => {
     expect(feedsLeft([0, 1, 2], 2 * HORA)).toBe(FOOD_LIMIT_PER_HOUR);
   });
 
+  // -------------------------------------------------------------------------
+  // O que a rodada 7 (mutation testing) achou aqui: os testes acima usam SÓ a
+  // 🍎 (Study = { virus: 0, data: 3, vaccine: 1 }). Como o virus dela é ZERO,
+  // trocar `state.virusPoints + attrs.virus` por `-` não mudava nada — a coluna
+  // virus inteira estava sem guard. E `totalXP` não era afirmado em lugar
+  // nenhum: dava para trocar o `+` por `-` e o `* 10` por `* 0` sem um único
+  // teste vermelho, num campo que é o progresso visível do jogador.
+  // -------------------------------------------------------------------------
+  it('soma nas TRÊS colunas de atributo, inclusive virus', () => {
+    // 🍭 = Creativity → { virus: 3, data: 1, vaccine: 0 }
+    const r = feedFood(estado({ foodInventory: { '🍭': 1 } }), '🍭', [], 0);
+    expect(r.refused).toBeUndefined();
+    expect(r.state.virusPoints).toBe(3);
+    expect(r.state.dataPoints).toBe(1);
+    expect(r.state.vaccinePoints).toBe(0);
+  });
+
+  it('soma sobre o saldo que já existia (não sobrescreve, não subtrai)', () => {
+    const r = feedFood(
+      estado({ foodInventory: { '🍭': 1 }, virusPoints: 10, dataPoints: 20, vaccinePoints: 30 }),
+      '🍭', [], 0,
+    );
+    expect(r.state.virusPoints).toBe(13);
+    expect(r.state.dataPoints).toBe(21);
+    expect(r.state.vaccinePoints).toBe(30);
+  });
+
+  it('totalXP cresce 10 por ponto de atributo ganho', () => {
+    // 🥩 = Fitness → { virus: 2, data: 1, vaccine: 1 }: as TRÊS colunas são
+    // diferentes de zero de propósito. Com uma comida de vaccine 0 (como a 🍭),
+    // trocar o `+` por `-` dentro da soma `virus + data + vaccine` dá o mesmo
+    // resultado, e o teste passa sem enxergar nada.
+    const r = feedFood(estado({ foodInventory: { '🥩': 1 }, totalXP: 100 }), '🥩', [], 0);
+    expect(r.state.virusPoints).toBe(2);
+    expect(r.state.dataPoints).toBe(1);
+    expect(r.state.vaccinePoints).toBe(1);
+    expect(r.state.totalXP).toBe(140); // 100 + (2+1+1) × 10
+  });
+
+  it('save ANTIGO sem attributesSinceLastEvolution começa do zero', () => {
+    // O campo é opcional (`?.` + `?? 0`) porque saves antigos não o têm. Sem
+    // este caso, tanto o `?.` quanto o padrão `0` podiam ser trocados à vontade.
+    const antigo: any = estado({ foodInventory: { '🍭': 1 } });
+    delete antigo.attributesSinceLastEvolution;
+    const r = feedFood(antigo, '🍭', [], 0);
+    expect(r.state.attributesSinceLastEvolution).toEqual({ virus: 3, data: 1, vaccine: 0 });
+  });
+
+  it('acumula em attributesSinceLastEvolution sobre o que já havia', () => {
+    const r = feedFood(
+      estado({ foodInventory: { '🍭': 1 }, attributesSinceLastEvolution: { virus: 2, data: 5, vaccine: 7 } }),
+      '🍭', [], 0,
+    );
+    expect(r.state.attributesSinceLastEvolution).toEqual({ virus: 5, data: 6, vaccine: 7 });
+  });
+
+  it('Guloso põe o ponto extra no atributo que a comida JÁ favorece', () => {
+    // O bloco escolhe o topo com Math.max e desempata na ordem virus→data→
+    // vaccine. Trocar `Math.max` por `Math.min`, ou os `===` por `!==`, passava
+    // batido porque nenhum teste olhava para QUAL coluna recebeu o bônus.
+    const guloso = { petPassive: 'guloso' };
+
+    // 🍭 Creativity { 3,1,0 } → topo é virus
+    const doce = feedFood(estado({ ...guloso, foodInventory: { '🍭': 1 } }), '🍭', [], 0);
+    expect(doce.state.virusPoints).toBe(4);
+    expect(doce.state.dataPoints).toBe(1);
+    expect(doce.state.vaccinePoints).toBe(0);
+
+    // 🍎 Study { 0,3,1 } → topo é data
+    const maca = feedFood(estado({ ...guloso, foodInventory: { '🍎': 1 } }), '🍎', [], 0);
+    expect(maca.state.virusPoints).toBe(0);
+    expect(maca.state.dataPoints).toBe(4);
+    expect(maca.state.vaccinePoints).toBe(1);
+
+    // 🍚 Discipline { 0,1,3 } → topo é vaccine (o ramo `else` final)
+    const arroz = feedFood(estado({ ...guloso, foodInventory: { '🍚': 1 } }), '🍚', [], 0);
+    expect(arroz.state.virusPoints).toBe(0);
+    expect(arroz.state.dataPoints).toBe(1);
+    expect(arroz.state.vaccinePoints).toBe(4);
+  });
+
+  it('sem o traço Guloso não existe ponto extra', () => {
+    const r = feedFood(estado({ foodInventory: { '🍭': 1 } }), '🍭', [], 0);
+    expect(r.state.virusPoints).toBe(3);
+  });
+
   it('não mexe em campos fora da fatia de cuidado', () => {
     const comExtras = { ...estado(), perfectDays: 7, gamePoints: 42 };
     const r = feedFood(comExtras, '🍎', [], 0);

@@ -5,6 +5,7 @@ import {
   MAX_HEARTS_LOST_PER_DAY,
   ABSENCE_FORGIVENESS_DAYS,
   WEEKLY_RELIEF_HEARTS,
+  DEGENERATION_PERFECT_DAYS_COST,
 } from '../utils/dailyReset';
 
 // Estes testes exercitam O MESMO computeDailyReset que o hook usa em produção.
@@ -103,6 +104,173 @@ describe('performDailyReset — proportional HP loss', () => {
     const result = runReset({ ...baseState(), tasks, activities: acts });
     expect(result.tasks[0].completed).toBe(false);
     expect(result.activities[0].steps[0].completed).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ATIVIDADES RECORRENTES NA VIRADA — o buraco que a rodada 7 encontrou.
+//
+// Todo teste acima monta o dia com `tasks` (tarefas avulsas). O ramo que conta
+// ATIVIDADE recorrente concluída (`availableActivities.forEach` em
+// `computeDailyReset`) nunca era medido: dava para trocar `isComplete = false`
+// por `true`, `steps.length > 0` por `> 1` e o `&&` do ramo sem passos por
+// `||` — três mutações, zero testes vermelhos. Atividade recorrente é o
+// mecanismo PRINCIPAL de hábito do app (CLAUDE.md), então "o dia foi cumprido?"
+// estava sem guard justamente onde mais importa.
+// ---------------------------------------------------------------------------
+describe('computeDailyReset — atividades recorrentes contam no dia', () => {
+  const ONTEM = new Date('2026-08-04T12:00:00'); // terça, véspera de WEDNESDAY
+  const ontemStr = ONTEM.toDateString();
+  const TODOS_OS_DIAS = [0, 1, 2, 3, 4, 5, 6];
+
+  /** Atividade COM passos: completa quando todos os passos estão marcados. */
+  const comPassos = (id: string, passosFeitos: boolean) => ({
+    id, category: 'Health', emoji: '🏃', weekDays: TODOS_OS_DIAS,
+    steps: [
+      { id: `${id}-s1`, label: 'a', completed: passosFeitos },
+      { id: `${id}-s2`, label: 'b', completed: passosFeitos },
+    ],
+  });
+
+  /** Atividade SEM passos: completa via `completedToday` + a data de ontem. */
+  const semPassos = (id: string, feita: boolean) => ({
+    id, category: 'Health', emoji: '🏃', weekDays: TODOS_OS_DIAS, steps: [],
+    completedToday: feita,
+    lastCompletedDate: feita ? ontemStr : undefined,
+  });
+
+  it('4 atividades COM passos, todas concluídas + energia cheia = dia perfeito', () => {
+    const activities = [0, 1, 2, 3].map(i => comPassos(`a${i}`, true));
+    const result = runReset({ ...baseState(), activities });
+    expect(result.lastDayWasPerfect).toBe(true);
+    expect(result.healthPoints).toBe(3);
+    expect(result.lastDayReport.done).toBe(4);
+  });
+
+  it('atividade com passos PELA METADE não conta como concluída', () => {
+    const activities = [
+      comPassos('a0', true),
+      // um passo marcado, o outro não → incompleta
+      { ...comPassos('a1', false), steps: [
+        { id: 'a1-s1', label: 'a', completed: true },
+        { id: 'a1-s2', label: 'b', completed: false },
+      ] },
+      comPassos('a2', false),
+      comPassos('a3', false),
+    ];
+    const result = runReset({ ...baseState(), activities, healthPoints: 3 });
+    expect(result.lastDayReport.done).toBe(1);
+    expect(result.lastDayWasPerfect).toBe(false);
+    expect(result.healthPoints).toBe(2); // cobrou o dia
+  });
+
+  it('atividade de UM ÚNICO passo usa o ramo dos passos', () => {
+    // O ramo é `activity.steps.length > 0`. Trocar por `> 1` manda a atividade
+    // de um passo só — a forma mais comum no app — para o ramo do
+    // `completedToday`, e o passo marcado deixa de contar.
+    const umPasso = {
+      id: 'solo', category: 'Health', emoji: '🏃', weekDays: TODOS_OS_DIAS,
+      steps: [{ id: 'solo-s1', label: 'único', completed: true }],
+      // de propósito SEM completedToday: quem responde tem que ser o passo
+      completedToday: false,
+    };
+    const result = runReset({ ...baseState(), activities: [umPasso], healthPoints: 3 });
+    expect(result.lastDayReport.done).toBe(1);
+    expect(result.lastDayWasPerfect).toBe(true); // 1 cadastrada, 1 feita, energia cheia
+  });
+
+  it('atividade SEM passos exige completedToday E a data de ONTEM', () => {
+    // O ramo é `!!completedToday && lastCompletedDate === yesterdayString`.
+    // Com `||`, uma atividade marcada há um mês (ou marcada hoje sem data)
+    // contaria de novo todo dia — o dia perfeito viraria automático.
+    const feitaOntem = semPassos('ok', true);
+    const marcadaSemData = { ...semPassos('sem-data', false), completedToday: true };
+    const dataVelha = {
+      ...semPassos('velha', false),
+      completedToday: true,
+      lastCompletedDate: new Date('2026-07-01T12:00:00').toDateString(),
+    };
+    const naoFeita = semPassos('nao', false);
+
+    const result = runReset({
+      ...baseState(),
+      activities: [feitaOntem, marcadaSemData, dataVelha, naoFeita],
+      healthPoints: 3,
+    });
+    expect(result.lastDayReport.done).toBe(1);   // só a de ontem
+    expect(result.lastDayReport.total).toBe(4);
+    expect(result.lastDayWasPerfect).toBe(false);
+  });
+
+  it('nenhuma atividade concluída não vira dia cumprido por acidente', () => {
+    // Guard direto contra `let isComplete = false` virar `true`: com 4
+    // atividades cadastradas e ZERO feitas, o dia tem que cobrar.
+    const activities = [0, 1, 2, 3].map(i => comPassos(`a${i}`, false));
+    const result = runReset({ ...baseState(), activities, healthPoints: 3 });
+    expect(result.lastDayReport.done).toBe(0);
+    expect(result.lastDayWasPerfect).toBe(false);
+    expect(result.healthPoints).toBe(2);
+  });
+
+  it('a virada LIMPA completedToday — senão o dia seguinte nasce cumprido', () => {
+    const result = runReset({ ...baseState(), activities: [semPassos('a0', true)] });
+    expect(result.activities[0].completedToday).toBe(false);
+  });
+
+  it('a virada zera o relógio do cocô e as listas do dia', () => {
+    // `poopPenaltyClockAt` é o relógio do dreno de −1 coração a cada 6h. Se ele
+    // atravessasse a virada, o pet começaria o dia já devendo — e nenhum teste
+    // olhava para este campo depois do reset.
+    const result = runReset({
+      ...baseState(),
+      poopPenaltyClockAt: 1_754_000_000_000,
+      poopEventsScheduled: [1, 2], poopEventsCompleted: [1], poopEventsShown: [1],
+    });
+    expect(result.poopPenaltyClockAt).toBe(0);
+    expect(result.poopEventsScheduled).toEqual([]);
+    expect(result.poopEventsCompleted).toEqual([]);
+    expect(result.poopEventsShown).toEqual([]);
+  });
+});
+
+describe('computeDailyReset — dia perfeito exige pelo menos 1 cadastrada', () => {
+  it('UMA única tarefa cadastrada e feita já é dia perfeito', () => {
+    // A regra é `totalTasks > 0`. Trocar por `> 1` (rodada 7) só quebra no caso
+    // de exatamente uma cadastrada — que nenhum teste usava. Quem tem uma única
+    // atividade no app é justamente quem está começando.
+    const result = runReset({ ...baseState(), tasks: [{ id: 't1', completed: true }] });
+    expect(result.lastDayReport.total).toBe(1);
+    expect(result.lastDayWasPerfect).toBe(true);
+    expect(result.perfectDays).toBe(1);
+  });
+
+  it('dia sem NADA cadastrado não é perfeito (e não cobra)', () => {
+    const result = runReset({ ...baseState() });
+    expect(result.lastDayReport.total).toBe(0);
+    expect(result.lastDayWasPerfect).toBe(false);
+    expect(result.healthPoints).toBe(3);
+  });
+});
+
+describe('computeDailyReset — totalPerfectDays (contador vitalício das missões)', () => {
+  it('soma exatamente 1 no dia perfeito e nada no dia ruim', () => {
+    // `(prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0)`. A missão de
+    // "30 dias perfeitos TOTAIS" (utils/missions.ts) depende deste número, e
+    // zerar o `1` deixava a missão inalcançável sem quebrar teste nenhum.
+    const bons = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
+    const perfeito = runReset({ ...baseState(), tasks: bons, totalPerfectDays: 7 });
+    expect(perfeito.totalPerfectDays).toBe(8);
+
+    const ruins = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const ruim = runReset({ ...baseState(), tasks: ruins, totalPerfectDays: 7 });
+    expect(ruim.totalPerfectDays).toBe(7);
+  });
+
+  it('save antigo SEM o campo começa do zero, não do um', () => {
+    const bons = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
+    const semCampo: any = { ...baseState(), tasks: bons };
+    delete semCampo.totalPerfectDays;
+    expect(runReset(semCampo).totalPerfectDays).toBe(1);
   });
 });
 
@@ -205,6 +373,31 @@ describe('computeDailyReset — perdão de ausência', () => {
     expect(result.lastDayReport.welcomeBack).toBe(false);
   });
 
+  it('a FRONTEIRA exata do perdão: 2 dias perdoa, 1 dia cobra', () => {
+    // `wasAway = daysAway >= ABSENCE_FORGIVENESS_DAYS`. Trocar `>=` por `>`
+    // (rodada 7) passava despercebido porque o teste de perdão usava 8 dias e o
+    // de cobrança usava 1 — ninguém tocava no 2, que é o valor da constante.
+    expect(ABSENCE_FORGIVENESS_DAYS).toBe(2);
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+
+    // Exatamente 2 dias de ausência (segunda 03/08 → quarta 05/08): PERDOA.
+    const doisDias = new Date('2026-08-03T12:00:00').toDateString();
+    const naFronteira = runReset({ ...baseState(), tasks, lastResetDate: doisDias, healthPoints: 3 });
+    expect(naFronteira.lastDayReport.daysAway).toBe(2);
+    expect(naFronteira.lastDayReport.heartsLost).toBe(0);
+    expect(naFronteira.healthPoints).toBe(3);
+
+    // Um dia antes da fronteira: COBRA.
+    const umDia = new Date('2026-08-04T12:00:00').toDateString();
+    const antes = runReset({ ...baseState(), tasks, lastResetDate: umDia, healthPoints: 3 });
+    // `daysAway` no relatório é zerado quando NÃO houve ausência (`wasAway ?
+    // daysAway : 0`) — quem marca a diferença aqui é `welcomeBack`.
+    expect(antes.lastDayReport.welcomeBack).toBe(false);
+    expect(antes.lastDayReport.daysAway).toBe(0); // sem ausência, o relatório zera o campo
+    expect(antes.lastDayReport.heartsLost).toBe(1);
+    expect(antes.healthPoints).toBe(2);
+  });
+
   it('voltar depois de sumir nunca degenera', () => {
     const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
     const longAgo = new Date('2026-07-20T12:00:00').toDateString();
@@ -238,8 +431,41 @@ describe('computeDailyReset — alívio semanal de segunda', () => {
     const sunday = new Date('2026-08-02T12:00:00').toDateString();
     const result = runReset({ ...baseState(), tasks, lastResetDate: sunday, healthPoints: 3 }, MONDAY);
     // Perde 1 pelo dia zerado e recebe 0.5 de volta pela semana nova.
-    expect(result.healthPoints).toBe(3 - MAX_HEARTS_LOST_PER_DAY + WEEKLY_RELIEF_HEARTS);
+    //
+    // O NÚMERO É CRU DE PROPÓSITO. Esta linha já foi
+    // `toBe(3 - MAX_HEARTS_LOST_PER_DAY + WEEKLY_RELIEF_HEARTS)`, ou seja,
+    // calculava a expectativa a partir das MESMAS constantes que ela deveria
+    // estar auditando — a doença dos três guards cegos anteriores
+    // (`simulateReset`, `cloudSync.test.ts`, `hostile.test.tsx`). Medido na
+    // rodada 7: zerar `WEEKLY_RELIEF_HEARTS` deixava os 829 testes verdes, e um
+    // teste chamado "devolve meio coração" não afirmava nada sobre meio coração.
+    expect(result.healthPoints).toBe(2.5);
     expect(result.lastDayReport.weeklyRelief).toBe(true);
+  });
+
+  it('o alívio é de MEIO coração — nem zero, nem um inteiro', () => {
+    // Segunda com o dia cumprido: nenhuma perda, só o alívio. Isola o valor.
+    const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
+    const sunday = new Date('2026-08-02T12:00:00').toDateString();
+    const result = runReset({ ...baseState(), tasks, lastResetDate: sunday, healthPoints: 2 }, MONDAY);
+    expect(result.healthPoints).toBe(2.5);
+    expect(WEEKLY_RELIEF_HEARTS).toBe(0.5);
+  });
+
+  it('NÃO ressuscita um pet que chegou a zero coração', () => {
+    // O guard é `newHP > 0`. Com `>=`, a segunda-feira devolveria meio coração
+    // para um pet já degenerado e a degeneração por HP 0 deixaria de acontecer
+    // justamente na virada de semana. A rodada 7 trocou `>` por `>=` aqui e
+    // nenhum teste reclamou.
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const sunday = new Date('2026-08-02T12:00:00').toDateString();
+    const result = runReset({
+      ...baseState(), tasks, lastResetDate: sunday,
+      healthPoints: 1, evolutionStage: 'champion-virus', currentBranch: 'virus',
+    }, MONDAY);
+    // Perde o único coração → zera → degenera (e o alívio NÃO impede isso).
+    expect(result.degeneratedByHP).toBe(true);
+    expect(result.evolutionStage).toBe('rookie');
   });
 
   it('não estoura o máximo do estágio', () => {
@@ -252,5 +478,60 @@ describe('computeDailyReset — alívio semanal de segunda', () => {
     const result = runReset({ ...baseState(), healthPoints: 2 });
     expect(result.healthPoints).toBe(2);
     expect(result.lastDayReport.weeklyRelief).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BALANCEAMENTO DA DEGENERAÇÃO (decisão do dono, ago/2026)
+//
+// Duas regras diferentes moravam no mesmo bloco e se confundiam:
+//   1. quem CAI de estágio ganha meio requisito de vantagem (misericórdia);
+//   2. quem já está na RAIZ não cai — mas recebia a vantagem do mesmo jeito.
+// O efeito medido era perverso: rookie que não fazia nada terminava com HP
+// cheio e +2 dias perfeitos; o que fazia tudo terminava com HP 1 e 0.
+// ---------------------------------------------------------------------------
+describe('degeneração — piso, custo e a raiz da árvore', () => {
+  it('na RAIZ (rookie) não degenera: 1 coração, sem presente de perfectDays', () => {
+    const tasks = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const r = runReset({ ...baseState(), tasks, healthPoints: 1, evolutionStage: 'rookie', perfectDays: 0 });
+    expect(r.degeneratedByHP).toBe(false);
+    expect(r.evolutionStage).toBe('rookie');
+    expect(r.healthPoints).toBe(1);
+    expect(r.perfectDays).toBe(0);
+  });
+
+  it('negligenciar NUNCA rende mais que cuidar (a regra que estava invertida)', () => {
+    const mk = (feitas: number) => ({
+      ...baseState(),
+      healthPoints: 1,
+      evolutionStage: 'rookie',
+      perfectDays: 0,
+      tasks: Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: i < feitas })),
+    });
+    const naoFez = runReset(mk(0));
+    const fezTudo = runReset(mk(4));
+    expect(fezTudo.perfectDays).toBeGreaterThanOrEqual(naoFez.perfectDays);
+    expect(fezTudo.healthPoints).toBeGreaterThanOrEqual(naoFez.healthPoints);
+  });
+
+  it('quem CAI de estágio paga um custo fixo em vez de perder tudo', () => {
+    const tasks = Array.from({ length: 6 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const r = runReset({
+      ...baseState(), tasks, healthPoints: 1,
+      evolutionStage: 'mega-virus', currentBranch: 'virus', perfectDays: 39,
+    });
+    expect(r.degeneratedByHP).toBe(true);
+    // 39 − 5 = 34. Antes desta regra o jogador reaparecia com 2 (perdia 37).
+    expect(r.perfectDays).toBe(39 - DEGENERATION_PERFECT_DAYS_COST);
+  });
+
+  it('o piso de misericórdia continua valendo para quem tinha pouco', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const r = runReset({
+      ...baseState(), tasks, healthPoints: 1,
+      evolutionStage: 'champion-virus', currentBranch: 'virus', perfectDays: 0,
+    });
+    // 0 − 5 seria negativo; o piso é floor(required do rookie / 2) = 2.
+    expect(r.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS.rookie.required / 2));
   });
 });
