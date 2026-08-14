@@ -17,9 +17,30 @@ mkdir -p "$OUT"
 
 fail() { echo "::error::SMOKE: $*"; dump; exit 1; }
 
+# O diagnóstico precisa aparecer NA PÁGINA DO RUN, não só num artefato que
+# exige login para baixar. Na primeira falha deste script não deu para saber o
+# motivo sem baixar `apk-smoke-<sha>.zip` — o que torna o alarme quase inútil
+# para quem só olha a lista de runs.
 dump() {
   adb logcat -d > "$OUT/logcat-full.txt" 2>/dev/null || true
   adb exec-out screencap -p > "$OUT/tela.png" 2>/dev/null || true
+
+  echo "::group::diagnóstico: estado do device"
+  adb devices -l 2>&1 || true
+  adb shell getprop sys.boot_completed 2>&1 || true
+  echo "pacotes instalados que casam com o nosso id:"
+  adb shell pm list packages 2>/dev/null | grep -i "soulmon\|digiapp" || echo "  (nenhum)"
+  echo "processo vivo? -> $(adb shell pidof "$PKG" 2>/dev/null | tr -d '\r' || echo 'não')"
+  echo "::endgroup::"
+
+  echo "::group::diagnóstico: últimas 120 linhas do logcat"
+  tail -n 120 "$OUT/logcat-full.txt" 2>/dev/null || echo "  (logcat vazio)"
+  echo "::endgroup::"
+
+  echo "::group::diagnóstico: linhas de erro/Capacitor/WebView"
+  grep -iE "FATAL|AndroidRuntime|ANR |Capacitor|WebView|net::ERR|ERR_|chromium" \
+    "$OUT/logcat-full.txt" 2>/dev/null | tail -n 60 || echo "  (nada)"
+  echo "::endgroup::"
 }
 
 echo "== 1. instalando =="
@@ -57,11 +78,21 @@ echo "== 6. a ponte RESPONDEU? (JS -> Capacitor -> Kotlin -> SharedPreferences) 
 # `DigiWidgetPrefs.xml` só existe se o Kotlin de DigiWidgetPlugin.updateWidgetData
 # tiver rodado, e ele só roda porque o JS o chamou (src/App.tsx:411). É a única
 # asserção deste arquivo que atravessa as duas linguagens.
+# Espera generosa DE PROPÓSITO: a WebView precisa baixar a URL de produção
+# dentro do runner, e o custo de esperar demais é um minuto de CI, enquanto o
+# custo de esperar de menos é um alarme falso — e alarme falso mata o alarme.
 PREFS=""
-for i in $(seq 1 12); do
+for i in $(seq 1 24); do
   PREFS="$(adb shell run-as "$PKG" cat shared_prefs/DigiWidgetPrefs.xml 2>/dev/null | tr -d '\r')"
   [ -n "$PREFS" ] && break
-  echo "  ... ainda não (tentativa $i/12)"
+  if [ "$i" = "6" ] || [ "$i" = "18" ]; then
+    # Mostra o que existe: distingue "o app nem criou shared_prefs" (não
+    # chegou a montar) de "criou outros arquivos mas não este" (o plugin não
+    # rodou), e isso muda completamente onde procurar.
+    echo "  conteúdo de shared_prefs neste momento:"
+    adb shell run-as "$PKG" ls -1 shared_prefs 2>/dev/null | sed 's/^/    /' || echo "    (não consegui ler)"
+  fi
+  echo "  ... ainda não (tentativa $i/24)"
   sleep 5
 done
 
