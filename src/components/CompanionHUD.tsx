@@ -4,11 +4,11 @@ import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { PixelButton } from './pixel/PixelKit';
 import iconItems from '../assets/soulmon/icons/icon-items.png';
-import nestBase from '../assets/soulmon/nest-base.png';
+import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import iconBath from '../assets/soulmon/icons/icon-bath.png';
 import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
 import iconWake from '../assets/soulmon/icons/icon-wake.png';
-import { type SlotId } from '../utils/petStage';
+import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
@@ -720,19 +720,23 @@ export const CompanionHUD = memo(function CompanionHUD({
               </span>
             )}
 
-            {/* Ninho — mobília base, sempre presente embaixo do pet
-                (independente do cenário equipado). Futuramente troca por
-                outros tipos de ninho/mobília; por ora é só este. */}
+            {/* Berço — mobília BASE do espaço `nest` (utils/petStage.ts).
+                A caixa vem do palco e a arte vem de `nestArt.ts`: aqui não há
+                import de PNG nem número mágico, é o mesmo contrato do
+                `nodeArt.tsx`. Trocar a peça é mudar o id pedido abaixo. */}
             <img
-              src={nestBase}
+              src={NEST_ART[DEFAULT_NEST]}
               alt=""
               aria-hidden="true"
+              data-nest
               style={{
                 position: 'absolute',
                 left: `${position}%`,
                 top: '50%',
-                marginTop: 14,
-                width: 148, height: 'auto',
+                marginTop: BASE_SLOTS.nest.yPx,
+                width: BASE_SLOTS.nest.w, height: BASE_SLOTS.nest.h,
+                /* `translateX(-50%)` centra a caixa no MESMO eixo do pet —
+                   ver a nota do sprite logo abaixo. */
                 transform: 'translateX(-50%)',
                 objectFit: 'contain',
                 imageRendering: 'pixelated',
@@ -746,9 +750,15 @@ export const CompanionHUD = memo(function CompanionHUD({
               className="absolute transition-all duration-100 ease-linear cursor-pointer hover:scale-110 active:scale-95"
               style={{
                 left: `${position}%`,
-                transform: getHorizontalFlip(),
+                /* O `translateX(-50%)` é o que CENTRA o pet no berço. Sem ele
+                   o sprite começava no eixo (borda esquerda em 50%) enquanto o
+                   berço ficava centrado nele — 62px de desencontro, que era o
+                   "duas imagens sobrepostas por acaso". A ordem importa: o
+                   translate antes do `scaleX(-1)` do espelhamento, senão virar
+                   para a esquerda joga o pet para fora do berço. */
+                transform: `translateX(-50%) ${getHorizontalFlip()}`,
                 top: '50%',
-                marginTop: '-38px',
+                marginTop: PET_TOP_OFFSET,
                 zIndex: 1,
                 transition: 'left 0.1s ease-linear, transform 0.1s ease-linear',
                 touchAction: 'none', // let the rub gesture own the pointer
@@ -765,7 +775,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   alt={currentStage}
                   className={`object-contain ${getCompanionFilter()}`}
                   style={{
-                    width: 152, height: 152,
+                    width: PET_BOX, height: PET_BOX,
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',

@@ -35,6 +35,25 @@ export const STAGE_HEIGHT = 250;
 export type SlotId = 'rug' | 'floor-left' | 'trophy' | 'floor-right' | 'wall';
 
 /**
+ * Espaços da MOBÍLIA BASE — a peça que fica debaixo do pet (hoje: o berço).
+ *
+ * Por que NÃO é um `SlotId`: os cinco espaços acima são o catálogo de
+ * decoração do jogador — a loja vende para eles, `equippedDecor` os grava no
+ * save e há teste exigindo que **todo** `SlotId` tenha ao menos um item à
+ * venda. O berço não é comprado nem equipado: é a mobília que o app põe
+ * sempre, para NORMALIZAR um sprite imprevisível (o pet é gerado pelo
+ * usuário). Enfiá-lo em `SlotId` quebraria as duas regras de uma vez, e
+ * enfiá-lo no `rug` roubaria do jogador o espaço do tapete que ele comprou.
+ *
+ * O que ele compartilha com os outros espaços é o que importa: **caixa de
+ * tamanho fixo em px e arte que entra por FORA**. A arte mora em
+ * `components/nestArt.ts` (a fronteira de troca), não aqui — trocar o berço
+ * por outra mobília é acrescentar uma entrada lá e mudar qual `BaseSlotId` o
+ * `CompanionHUD` pede, sem tocar em geometria.
+ */
+export type BaseSlotId = 'nest';
+
+/**
  * Onde a decoração encosta:
  * - 'ground' → a BASE da caixa fica na linha do chão (móvel apoiado no piso)
  * - 'ground-flat' → a caixa fica DEITADA sobre a linha do chão (tapete)
@@ -43,7 +62,7 @@ export type SlotId = 'rug' | 'floor-left' | 'trophy' | 'floor-right' | 'wall';
 export type SlotAnchor = 'ground' | 'ground-flat' | 'hang';
 
 export interface DecorSlot {
-  id: SlotId;
+  id: SlotId | BaseSlotId;
   /** Centro horizontal, em % da largura do palco. */
   x: number;
   /** Só para 'hang': topo da caixa, em % da altura do palco. */
@@ -93,6 +112,41 @@ export const DECOR_SLOTS: Record<SlotId, DecorSlot> = {
 };
 
 export const SLOT_ORDER: SlotId[] = ['rug', 'floor-left', 'trophy', 'floor-right', 'wall'];
+
+// ── Mobília base: o berço ────────────────────────────────────────────────────
+
+/**
+ * Deslocamento vertical do PET dentro da área, em px a partir de `top: 50%`.
+ * É o topo da caixa do sprite (152×152, com a arte contida e centrada nela).
+ *
+ * ⚠️ Isto **não** sai de `GROUND_Y`, e é de propósito: `GROUND_Y` foi medido
+ * quando o sprite tinha 80px e o documento (`docs/PALCO-E-DECORACAO.md`) ainda
+ * descreve essa conta. O sprite virou 152px e a renderização real deixou de
+ * bater com os 74%. Deduzir a posição do berço de um `GROUND_Y` defasado
+ * colocaria a mobília num chão que não existe mais. Enquanto a conta do palco
+ * não for refeita, berço e pet dividem ESTA origem — uma só, declarada aqui.
+ */
+export const PET_TOP_OFFSET = -38;
+
+/** Lado da caixa do sprite do pet, em px (a arte é contida e centrada nela). */
+export const PET_BOX = 152;
+
+/**
+ * A caixa do berço. Ancorada ao PET (não à linha do chão, ver acima): `y` é o
+ * topo da caixa em px a partir de `top: 50%`, o mesmo zero de
+ * `PET_TOP_OFFSET`. O valor foi escolhido para que os pés do sprite caiam a
+ * ~⅔ da altura do berço — que é o que faz ler como "o pet ESTÁ no berço" em
+ * vez de duas imagens sobrepostas por acaso.
+ *
+ * Como todo espaço do palco: **a arte é desenhada PARA esta caixa** e o app
+ * não a redimensiona por conta própria.
+ */
+export const BASE_SLOTS: Record<BaseSlotId, DecorSlot & { yPx: number }> = {
+  nest: {
+    id: 'nest', x: 50, w: 148, h: 83, yPx: 17, anchor: 'ground',
+    namePt: 'Berço', nameEn: 'Nest',
+  },
+};
 
 /**
  * Onde o cenário se passa. Define que TIPO de elemento faz sentido nele — um

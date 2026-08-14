@@ -1730,7 +1730,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-9PduKf/functionsRoutes-0.20460921833811663.mjs
+// ../.wrangler/tmp/pages-4cTLr6/functionsRoutes-0.842800381294856.mjs
 var routes = [
   {
     routePath: "/api/billing",

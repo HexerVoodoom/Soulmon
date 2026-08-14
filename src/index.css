@@ -4982,3 +4982,136 @@ button.sm-px-node {
    tema: escuro vira fantasma claro em vez de mancha preta. */
 .sm-hp-empty { filter: brightness(0.2) saturate(0); }
 [data-theme="dark"] .sm-hp-empty { filter: saturate(0) brightness(2.4) opacity(0.42); }
+
+/* ── Linha de ritual da Home (G1) ─────────────────────────────────────────
+   Densidade: a Home tinha um painel emoldurado por tarefa (~200px cada) e
+   cabiam 1,5 unidades de ação acima da dobra em 412×915. Aqui é UM painel com
+   linhas de ~72px, e cabem ≥3 + o CTA.
+
+   Tudo em px e em regra própria porque `src/index.css` é Tailwind v4
+   PRÉ-COMPILADO (footgun 1): classe utilitária ausente não aplica nada. Toda
+   variante fica ANINHADA (`&:hover`, `&:focus-visible`), como o resto do kit.
+   Cor sempre de token — nenhum hex solto. */
+.sm-px-ritual-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.sm-px-ritual {
+  border-top: 1px solid color-mix(in srgb, var(--sm-px-copper) 38%, transparent);
+  &:first-child { border-top: 0; }
+}
+.sm-px-ritual-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  min-height: 72px;
+  box-sizing: border-box;
+}
+/* Concluído: dessaturado + tinta muted, NUNCA `opacity` — opacidade mistura
+   texto E fundo com a tela e esmaga a razão de contraste (a mesma armadilha
+   medida no `.sm-btn:disabled`). */
+.sm-px-ritual-done .sm-px-ritual-name { color: var(--sm-muted); text-decoration: line-through; }
+.sm-px-ritual-done .sm-px-ritual-icon { filter: grayscale(.75); }
+.sm-px-ritual-dim .sm-px-ritual-name { color: var(--sm-muted); }
+.sm-px-ritual-dim .sm-px-ritual-icon { filter: grayscale(.75); }
+
+/* Casa do ícone: 40×40 fixos. Com ícone ou sem, o quadro de cobre existe —
+   é ele que substitui o emoji do sistema e o que alinha a coluna de texto. */
+.sm-px-ritual-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--sm-px-copper) 12%, transparent);
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 75%, transparent);
+  /* Canto chanfrado de 1 bloco: a mesma geometria do resto do kit. */
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+  image-rendering: pixelated;
+}
+
+/* Coluna de texto = botão de editar. `min-width: 0` é o que permite o
+   truncamento funcionar dentro de um flex container. */
+.sm-px-ritual-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  min-height: 44px;
+  padding: 4px 2px;
+  background: none;
+  border: 0;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+}
+/* Nome escrito pelo USUÁRIO, sem limite de tamanho e ~25% mais longo em
+   PT-BR: trunca em uma linha (o `title` no JSX carrega o texto inteiro).
+   Sans, não bitmap — Silkscreen não tem acentuação confortável e o nome é
+   texto de leitura, não rótulo. */
+.sm-px-ritual-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--sm-ink);
+}
+.sm-px-ritual-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--sm-muted);
+}
+
+/* Expansor das etapas — ocupa a MESMA casa do checkbox (44×44), então a
+   coluna da direita fica alinhada em toda a lista, com ou sem etapas. */
+.sm-px-ritual-expand {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  background: none;
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 70%, transparent);
+  color: var(--sm-px-copper);
+  cursor: pointer;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+  &:hover { border-color: var(--sm-px-copper); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+}
+.sm-px-ritual-slot {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+}
+.sm-px-ritual-steps {
+  padding: 0 12px 12px 62px;
+}
+.sm-px-ritual-empty {
+  padding: 18px 16px 6px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--sm-muted);
+}
+/* CTA largo no fim do painel: é ele que aposenta o FAB flutuante (que era um
+   forasteiro de outro design system e ainda cobria a última linha da lista). */
+.sm-px-ritual-cta {
+  padding: 10px 12px 12px;
+}
