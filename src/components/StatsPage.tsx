@@ -74,13 +74,17 @@ export function StatsPage({
     .filter(([key]) => key.startsWith('task-'))
     .sort((a, b) => b[1].completionCount - a[1].completionCount);
 
+  // Cores explícitas (não classes Tailwind pré-compiladas): os tons *-600/700
+  // do Tailwind são calibrados para tema claro e ficam ilegíveis (baixo
+  // contraste) sobre --sm-bg escuro (#0e2323). Usamos hex vibrantes o
+  // suficiente para o fundo escuro forçado do app.
   const getCategoryColor = (category: ActivityCategory) => {
     switch (category) {
-      case 'Health': return 'text-red-600';
-      case 'Study': return 'text-blue-600';
-      case 'Social': return 'text-green-600';
-      case 'Creativity': return 'text-teal-600';
-      default: return 'text-gray-600';
+      case 'Health': return '#ff8a8a';
+      case 'Study': return '#7cb0ff';
+      case 'Social': return '#4ade80';
+      case 'Creativity': return 'var(--sm-primary)';
+      default: return 'var(--sm-muted)';
     }
   };
 
@@ -264,16 +268,19 @@ export function StatsPage({
                       {stat.name}
                     </p>
                     <p
-                      className={`text-xs ${getCategoryColor(stat.category)}`}
-                      style={{ fontFamily: 'monospace' }}
+                      className="text-xs"
+                      style={{ fontFamily: 'monospace', color: getCategoryColor(stat.category) }}
                     >
                       {stat.category}
                     </p>
                   </div>
                 </div>
                 <div
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#2bff95]/20 to-teal-100 text-teal-700"
-                  style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600' }}
+                  className="px-4 py-2 rounded-lg"
+                  style={{
+                    fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600',
+                    background: 'var(--sm-primary-soft)', color: 'var(--sm-primary)',
+                  }}
                 >
                   {stat.completionCount}×
                 </div>
@@ -314,16 +321,19 @@ export function StatsPage({
                       {stat.name}
                     </p>
                     <p
-                      className={`text-xs ${getCategoryColor(stat.category)}`}
-                      style={{ fontFamily: 'monospace' }}
+                      className="text-xs"
+                      style={{ fontFamily: 'monospace', color: getCategoryColor(stat.category) }}
                     >
                       {stat.category}
                     </p>
                   </div>
                 </div>
                 <div
-                  className="px-4 py-2 rounded-lg bg-green-100 text-green-700"
-                  style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600' }}
+                  className="px-4 py-2 rounded-lg"
+                  style={{
+                    fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600',
+                    background: 'rgba(74,222,128,0.16)', color: '#4ade80',
+                  }}
                 >
                   {stat.completionCount}×
                 </div>
@@ -365,8 +375,8 @@ export function StatsPage({
                       {task.name}
                     </p>
                     <p
-                      className={`text-xs ${getCategoryColor(task.category)}`}
-                      style={{ fontFamily: 'monospace' }}
+                      className="text-xs"
+                      style={{ fontFamily: 'monospace', color: getCategoryColor(task.category) }}
                     >
                       {task.category}
                     </p>

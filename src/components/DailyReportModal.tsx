@@ -1,9 +1,12 @@
-import { Star, CloudRain, HeartCrack, HeartHandshake } from 'lucide-react';
 import { RowIcon } from './RowIcon';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import iconActivities from '../assets/soulmon/icons/icon-activities.png';
 import iconHeart from '../assets/icons/icon-heart-item.png';
 import iconWake from '../assets/soulmon/icons/icon-wake.png';
+import iconStar from '../assets/soulmon/icons/icon-star.png';
+import iconCloudRain from '../assets/soulmon/icons/icon-cloud-rain.png';
+import iconHeartCrack from '../assets/soulmon/icons/icon-heart-crack.png';
+import iconHeartHandshake from '../assets/soulmon/icons/icon-heart-handshake.png';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
@@ -38,7 +41,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   // Só faz sentido oferecer quando houve cobrança e ela ainda não foi desfeita.
   const canRecover = !welcome && report.heartsLost > 0 && !report.heartsRecovered && !!onRecoverHearts;
 
-  const rows: { icon: string | typeof Star; label: string; value: string; highlight?: 'good' | 'bad' }[] = welcome
+  const rows: { icon: string; label: string; value: string; highlight?: 'good' | 'bad' }[] = welcome
     ? [
         {
           icon: iconHeart,
@@ -47,7 +50,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
           highlight: 'good',
         },
         {
-          icon: Star,
+          icon: iconStar,
           label: isPt ? 'Dias perfeitos guardados' : 'Perfect days saved',
           value: `${report.perfectDays}`,
           highlight: 'good',
@@ -67,14 +70,14 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
           highlight: report.heartsLost > 0 ? 'bad' : 'good',
         },
         {
-          icon: Star,
+          icon: iconStar,
           label: isPt ? 'Dias perfeitos' : 'Perfect days',
           value: `${report.perfectDays}`,
           highlight: report.wasPerfect ? 'good' : undefined,
         },
       ];
 
-  const headIcon: string | typeof Star = welcome ? HeartHandshake : report.degenerated ? HeartCrack : report.wasPerfect ? Star : report.heartsLost > 0 ? CloudRain : iconWake;
+  const headIcon: string = welcome ? iconHeartHandshake : report.degenerated ? iconHeartCrack : report.wasPerfect ? iconStar : report.heartsLost > 0 ? iconCloudRain : iconWake;
   const headColor = welcome ? '#22A900' : report.degenerated ? '#e0483e' : report.wasPerfect ? '#d9a441' : report.heartsLost > 0 ? '#6b7280' : '#f0a500';
   const headBg = welcome ? '#e6f6e2' : report.degenerated ? '#fde8e6' : report.wasPerfect ? '#fbf1dd' : report.heartsLost > 0 ? '#eef0f3' : '#fff4e0';
 

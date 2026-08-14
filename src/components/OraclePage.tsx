@@ -200,10 +200,11 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
 
   return (
     <div className="space-y-4" style={mono}>
-      {/* Cabeçalho */}
+      {/* Cabeçalho — fica direto sobre o fundo escuro da página, fora dos cards brancos,
+          então usa as vars do tema escuro em vez de titleCls/mutedCls (que assumem card branco) */}
       <div>
-        <h2 className={`text-lg ${titleCls}`}>🔮 {isPt ? 'Oráculo de Criaturas' : 'Creature Oracle'}</h2>
-        <p className={`text-xs ${mutedCls}`}>
+        <h2 className="text-lg" style={{ color: 'var(--sm-ink)' }}>🔮 {isPt ? 'Oráculo de Criaturas' : 'Creature Oracle'}</h2>
+        <p className="text-xs" style={{ color: 'var(--sm-muted)' }}>
           {isPt
             ? '1) Revele a leitura → 2) ajuste o que quiser → 3) gere a criatura e os prompts.'
             : '1) Reveal the reading → 2) adjust anything → 3) generate the creature and prompts.'}
@@ -663,7 +664,7 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
               : (isPt ? '👾 Gerar criatura e prompts' : '👾 Generate creature and prompts')}
           </button>
           {!creature && (
-            <p className={`text-[10px] -mt-2 ${mutedCls}`}>
+            <p className="text-[10px] -mt-2" style={{ color: 'var(--sm-muted)' }}>
               {isPt
                 ? 'Os prompts de imagem só aparecem depois de gerar. Ajustou algum valor? Ele será respeitado.'
                 : 'Image prompts only appear after generating. Adjusted a value? It will be respected.'}

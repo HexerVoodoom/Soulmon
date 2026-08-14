@@ -1,4 +1,7 @@
-import { Plus, Trash2, Clock, Bell } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import iconTrash from '../assets/soulmon/icons/icon-trash.png';
+import iconClock from '../assets/soulmon/icons/icon-clock.png';
+import iconBell from '../assets/soulmon/icons/icon-bell.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
@@ -166,7 +169,7 @@ export function TaskEditModal({
                     <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
                       placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} style={{ ...inputStyle, padding: '8px 11px' }} />
                     <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
-                      <Trash2 size={16} strokeWidth={2.2} />
+                      <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                     </button>
                   </div>
                 ))}
@@ -177,7 +180,7 @@ export function TaskEditModal({
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: hasDeadline ? 10 : 0 }}>
               <input type="checkbox" checked={hasDeadline} onChange={(e) => setHasDeadline(e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }} />
-              <Clock size={16} strokeWidth={2.2} color="var(--sm-muted)" />
+              <img src={iconClock} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               <span style={{ fontSize: 13.5, color: 'var(--sm-ink)', fontWeight: 600 }}>{txt.setDeadline}</span>
             </label>
             {hasDeadline && (
@@ -197,7 +200,7 @@ export function TaskEditModal({
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: hasAlarm ? 10 : 0 }}>
               <input type="checkbox" checked={hasAlarm} onChange={(e) => setHasAlarm(e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }} />
-              <Bell size={16} strokeWidth={2.2} color="var(--sm-muted)" />
+              <img src={iconBell} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               <span style={{ fontSize: 13.5, color: 'var(--sm-ink)', fontWeight: 600 }}>{txt.alarm}</span>
             </label>
             {hasAlarm && (

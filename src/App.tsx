@@ -2054,8 +2054,8 @@ export default function App() {
                           </p>
                           <button
                             onClick={handleAddNewActivity}
-                            className="text-xs px-3 py-1 rounded-lg transition-colors text-teal-600 border border-teal-200 hover:bg-teal-50"
-                            style={{ fontFamily: 'monospace' }}>
+                            className="text-xs px-3 py-1 rounded-lg transition-colors"
+                            style={{ fontFamily: 'monospace', color: 'var(--sm-primary)', border: '1px solid var(--sm-primary-deep)' }}>
                             + {t.activities.addNew}
                           </button>
                         </div>

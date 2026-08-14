@@ -8,7 +8,7 @@ import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
-import { bitsStyleLight } from '../utils/currency';
+import { bitsStyle } from '../utils/currency';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -113,7 +113,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
           title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
         >
           {/* Sem 💎: aquele ícone é dos Créditos (dinheiro real). Ver utils/currency.ts. */}
-          <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{totalPoints} Bits</span>
+          <span style={{ ...bitsStyle, fontSize: '0.85rem' }}>{totalPoints} Bits</span>
         </span>
       </div>
       <p style={{ fontSize: '0.8rem', color: 'var(--sm-muted)' }}>

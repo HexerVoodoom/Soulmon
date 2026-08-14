@@ -205,7 +205,7 @@ export function EvolutionPath({
                   </span>
                 )}
                 {isCurrent && evolutionLocked && (
-                  <span className="text-white text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-muted)', fontSize: '0.65rem' }}>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-muted)', color: 'var(--sm-bg)', fontSize: '0.65rem' }}>
                     🔒 {isPt ? 'TRAVADA' : 'LOCKED'}
                   </span>
                 )}

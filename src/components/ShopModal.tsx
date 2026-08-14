@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { bitsStyleLight, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../utils/currencies';
+import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR } from '../utils/currencies';
 import { Image as ImageIcon, Check, Sofa } from 'lucide-react';
 import { RowIcon } from './RowIcon';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
@@ -198,7 +198,7 @@ export function ShopModal({
         )}
         {/* Aviso de composição — só para o que está equipado e não aparece. */}
         {equipped && !showsHere && (
-          <p style={{ width: '100%', margin: 0, padding: '8px 10px', background: 'var(--sm-gold-soft)', borderRadius: 10, color: '#8a6113', fontSize: '0.72rem', fontWeight: 600 }}>
+          <p style={{ width: '100%', margin: 0, padding: '8px 10px', background: 'var(--sm-gold-soft)', borderRadius: 10, color: 'color-mix(in srgb, var(--sm-gold) 65%, white)', fontSize: '0.72rem', fontWeight: 600 }}>
             {isPt
               ? 'Equipado, mas não aparece no cenário atual — troque de cenário para vê-lo.'
               : "Equipped, but it doesn't show in the current scene — switch scenes to see it."}
@@ -206,7 +206,7 @@ export function ShopModal({
         )}
         {/* unlock hint "tooltip" — expands inside the card when tapped */}
         {!unlocked && showHint && (
-          <p style={{ width: '100%', margin: 0, padding: '8px 10px', background: 'var(--sm-gold-soft)', borderRadius: 10, color: '#8a6113', fontSize: '0.72rem', fontWeight: 600 }}>
+          <p style={{ width: '100%', margin: 0, padding: '8px 10px', background: 'var(--sm-gold-soft)', borderRadius: 10, color: 'color-mix(in srgb, var(--sm-gold) 65%, white)', fontSize: '0.72rem', fontWeight: 600 }}>
             {isPt ? 'Como desbloquear:' : 'How to unlock:'} {unlockHint(item)}
           </p>
         )}
@@ -304,7 +304,7 @@ export function ShopModal({
                 title={isPt ? 'Emblemas — ganhe vencendo no Torneio' : 'Emblems — earn them by winning in the Tournament'}
               >
                 <span style={{ fontSize: 13 }}>🎖️</span>
-                <span style={{ ...emblemStyle, fontSize: '0.85rem' }}>{emblems}</span>
+                <span style={{ ...emblemStyle, color: 'color-mix(in srgb, var(--sm-gold) 70%, white)', fontSize: '0.85rem' }}>{emblems}</span>
               </span>
             ) : (
               <span
@@ -312,7 +312,7 @@ export function ShopModal({
                 style={{ display: 'flex', alignItems: 'center', padding: '5px 10px' }}
                 title={isPt ? 'Bits — ganhe nos minijogos' : 'Bits — earn them in the minigames'}
               >
-                <span style={{ ...bitsStyleLight, fontSize: '0.85rem' }}>{points} Bits</span>
+                <span style={{ ...bitsStyle, fontSize: '0.85rem' }}>{points} Bits</span>
               </span>
             )}
             {!asPage && (
@@ -378,7 +378,7 @@ export function ShopModal({
                     }}
                   >
                     <span style={{ display: 'block', fontWeight: 700 }}>{pack.credits} 💎</span>
-                    <span style={{ ...bitsStyleLight, display: 'block', fontSize: '0.68rem' }}>→ {pack.bits} Bits</span>
+                    <span style={{ ...bitsStyle, display: 'block', fontSize: '0.68rem' }}>→ {pack.bits} Bits</span>
                   </button>
                 ))}
               </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Search, UserPlus, UserMinus, Gift, Loader2 } from 'lucide-react';
+import { UserPlus, UserMinus, Gift, Loader2 } from 'lucide-react';
+import iconSearch from '../assets/soulmon/icons/icon-search.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { listPlayers, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
@@ -74,11 +75,11 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       </p>
 
       <div style={{ position: 'relative', marginBottom: 12 }}>
-        <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--sm-muted)' }} />
+        <img src={iconSearch} alt="" width={16} height={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', objectFit: 'contain', imageRendering: 'pixelated' }} />
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder={isPt ? 'Buscar por nome…' : 'Search by name…'}
-          style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px 10px 36px', borderRadius: 14, border: '2px solid var(--sm-line)', fontSize: 14, outline: 'none' }}
+          style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px 10px 36px', borderRadius: 14, border: '2px solid var(--sm-line)', fontSize: 14, outline: 'none', background: 'var(--sm-surface)', color: 'var(--sm-ink)' }}
         />
       </div>
 

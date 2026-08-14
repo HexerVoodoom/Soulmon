@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
-import { Bell, BellOff, Copy, Check, Cloud, Bot, Globe, Info } from 'lucide-react';
+import { Copy, Check, Cloud, Bot, Info } from 'lucide-react';
 import { RowIcon } from './RowIcon';
 import iconBook from '../assets/soulmon/icons/icon-book.png';
 import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
 import iconWake from '../assets/soulmon/icons/icon-wake.png';
+import iconBell from '../assets/soulmon/icons/icon-bell.png';
+import iconBellOff from '../assets/soulmon/icons/icon-bell-off.png';
+import iconGlobe from '../assets/soulmon/icons/icon-globe.png';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
 import { AccountSection } from './AccountSection';
 import { InstallPrompt } from './InstallPrompt';
@@ -102,7 +105,7 @@ export function SettingsPage({
   const toggleOnBg = 'var(--sm-primary)';
   const toggleOffBg = 'var(--sm-line)';
 
-  const iconWrap = (icon: typeof Bell | string, color: string, bg: string) => (
+  const iconWrap = (icon: typeof Cloud | string, color: string, bg: string) => (
     <span style={{ width: 28, height: 28, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
       <RowIcon icon={icon} size={16} color={color} />
     </span>
@@ -129,7 +132,7 @@ export function SettingsPage({
           {/* Email login — same email = same save everywhere */}
           <div className="mb-5">
             {savedEmail && (
-              <p className="mb-1 text-[11px]" style={{ color: 'var(--sm-primary)' }}>
+              <p className="mb-1" style={{ color: 'var(--sm-primary)', fontSize: '0.6875rem' }}>
                 {language === 'pt-BR' ? `conectado: ${savedEmail}` : `signed in: ${savedEmail}`}
               </p>
             )}
@@ -158,12 +161,12 @@ export function SettingsPage({
               </p>
             )}
             {loginStatus === 'created' && (
-              <p className="text-green-500 text-xs mt-1">
+              <p className="text-xs mt-1" style={{ color: 'var(--sm-primary)' }}>
                 {language === 'pt-BR' ? 'Conta criada — progresso atual salvo neste e-mail.' : 'Account created — current progress saved to this email.'}
               </p>
             )}
             {loginStatus === 'loaded' && (
-              <p className="text-green-500 text-xs mt-1">
+              <p className="text-xs mt-1" style={{ color: 'var(--sm-primary)' }}>
                 {language === 'pt-BR' ? 'Progresso carregado deste e-mail!' : 'Progress loaded from this email!'}
               </p>
             )}
@@ -182,7 +185,7 @@ export function SettingsPage({
                   {language === 'pt-BR' ? 'Código de recuperação:' : 'Recovery code:'}
                 </p>
                 {lastSyncLabel && (
-                  <p className="text-[10px]" style={{ color: 'var(--sm-muted)' }}>
+                  <p style={{ color: 'var(--sm-muted)', fontSize: '0.625rem' }}>
                     {language === 'pt-BR' ? `sync: ${lastSyncLabel}` : `synced: ${lastSyncLabel}`}
                   </p>
                 )}
@@ -289,7 +292,7 @@ export function SettingsPage({
         {/* Notifications */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(notificationsEnabled ? Bell : BellOff, '#e0483e', '#fde8e6')}
+            {iconWrap(notificationsEnabled ? iconBell : iconBellOff, '#e0483e', '#fde8e6')}
             {t.settings.notifications}
           </h3>
 
@@ -402,7 +405,7 @@ export function SettingsPage({
         {/* Language */}
         <div className={cardClass}>
           <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(Globe, '#009ED8', '#e3f4fc')}
+            {iconWrap(iconGlobe, '#009ED8', '#e3f4fc')}
             {t.settings.language}
           </h3>
           <p className="mb-4" style={bodyTextStyle}>

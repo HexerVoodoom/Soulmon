@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Clock, Bell } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import iconTrash from '../assets/soulmon/icons/icon-trash.png';
+import iconBell from '../assets/soulmon/icons/icon-bell.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
@@ -167,7 +169,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
                     <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
                       placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} style={{ ...inputStyle, padding: '8px 11px' }} />
                     <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
-                      <Trash2 size={16} strokeWidth={2.2} />
+                      <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                     </button>
                   </div>
                 ))}
@@ -199,7 +201,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <Bell size={16} strokeWidth={2.2} color="var(--sm-muted)" />
+              <img src={iconBell} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--sm-muted)' }}>{txt.time} <span style={{ opacity: 0.75, fontWeight: 500 }}>{txt.optional}</span></span>
             </div>
             <div style={{ marginLeft: 24 }}>

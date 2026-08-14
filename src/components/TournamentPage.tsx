@@ -84,7 +84,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             <span style={{ ...emblemStyle, fontSize: 13.5 }}>{emblems}</span>
           </span>
         </div>
-        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.75)', margin: '0 0 16px' }}>
+        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.85)', margin: '0 0 16px' }}>
           {isPt ? 'PvP assíncrono — desafie os pets de outros jogadores.' : 'Asynchronous PvP — challenge other players\' pets.'}
         </p>
 
@@ -192,7 +192,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span style={{ fontSize: 30, lineHeight: 1 }}>{standing.tier.emoji}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 11, letterSpacing: 1, color: 'rgba(255,255,255,0.55)', fontWeight: 700 }}>
+                    <p style={{ margin: 0, fontSize: 11, letterSpacing: 1, color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>
                       {isPt ? 'SUA FAIXA' : 'YOUR TIER'}
                     </p>
                     <p style={{ margin: '1px 0 0', fontSize: 17, fontWeight: 800 }}>
@@ -215,13 +215,13 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             )}
 
             {rank && rank.length > 0 && (
-              <p style={{ fontSize: 11, letterSpacing: 1, color: 'rgba(255,255,255,0.45)', fontWeight: 700, margin: '8px 0 2px' }}>
+              <p style={{ fontSize: 11, letterSpacing: 1, color: 'rgba(255,255,255,0.68)', fontWeight: 700, margin: '8px 0 2px' }}>
                 {isPt ? 'RANKING DA SEASON' : 'SEASON RANKING'}
               </p>
             )}
             {rank?.map((r, i) => (
               <div key={r.id} className="sm-card" style={{ background: 'rgba(20,15,40,0.6)', border: '1px solid rgba(255,255,255,0.1)', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 22, textAlign: 'center', fontWeight: 800, color: i < 3 ? PLACE_COLOR[(i + 1) as 1 | 2 | 3] : 'rgba(255,255,255,0.5)' }}>{i + 1}</span>
+                <span style={{ width: 22, textAlign: 'center', fontWeight: 800, color: i < 3 ? PLACE_COLOR[(i + 1) as 1 | 2 | 3] : 'rgba(255,255,255,0.68)' }}>{i + 1}</span>
                 <span style={{ flex: 1, fontSize: 13, fontWeight: 600 }}>{r.name}</span>
                 <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>{r.points} pts</span>
               </div>

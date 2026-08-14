@@ -42,14 +42,15 @@ export const HIGGSFIELD_UNUSED = {
  * pra já deixar o slot pronto — trocar um item aqui não exige mexer no JSX
  * de novo, só passar a string da imagem no lugar do componente.
  */
+/**
+ * Star / CloudRain / HeartCrack / HeartHandshake / Bell / BellOff / Clock /
+ * Trash2 / Search / Globe já foram trocados por PNGs próprios (gerados no
+ * Gemini, estilo bronze/turquoise batendo com o resto do app — ver
+ * `src/assets/soulmon/icons/icon-{star,cloud-rain,heart-crack,
+ * heart-handshake,bell,bell-off,clock,trash,search,globe}.png`).
+ */
 export const STILL_LUCIDE_NO_MATCH = [
-  'Star (dia perfeito)',
-  'CloudRain / HeartCrack / HeartHandshake (humor do relatório diário)',
-  'Bell / BellOff (notificações)',
-  'Clock (tempo de jogo)',
-  'Trash2 (excluir tarefa)',
-  'Search (buscar jogador)',
-  'Globe / Info / Bot / Cloud (configurações diversas)',
+  'Info / Bot / Cloud (configurações diversas)',
 ] as const;
 
 /**
