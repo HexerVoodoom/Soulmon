@@ -23,7 +23,7 @@ const PET_SIZE = 96; // mesma constante do renderer (main.ts)
 // URL do app web completo. Ainda aponta pro Pages compartilhado — trocar
 // junto com capacitor.config.json quando o domínio próprio existir
 // (docs/SEPARACAO-DIGIAPP.md). O renderer lê o mesmo valor de config.ts.
-const FULL_APP_URL = process.env.SOULMON_APP_URL || 'https://digiapp-a5e.pages.dev';
+const FULL_APP_URL = process.env.SOULMON_APP_URL || 'https://soulmon.mateus-sprnd.workers.dev';
 const MENU_SIZE = { width: 340, height: 520 };
 
 /** @type {BrowserWindow | null} */

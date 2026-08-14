@@ -366,6 +366,36 @@ declarou completa usando um critério mais frouxo que o do próprio teste.
 
 **Previsão registrada** (`product/soulmon-01/sweeper/skeptic-review.md`): os
 próximos defeitos reais serão fronteiras sem dono, não lógica em `utils/`. A
-aposta nº 1 é a **ponte Capacitor↔web do APK**, que segue sem ninguém olhando —
-o CI builda o APK e nada o exercita. Se o próximo bug real for lógica dentro de
-`utils/`, a previsão está errada e foi azar; vale registrar qual dos dois foi.
+aposta nº 1 era o **APK**.
+
+### ✅ A previsão se confirmou no primeiro APK — e em minutos
+
+O dono instalou o artefato do CI logo depois deste deploy. Nome certo, ícone
+certo, `appId` certo (`com.hexervoodoom.soulmon`) — e **abriu o DigiApp**.
+
+Causa: o APK **não embarca o app**, carrega uma URL remota, e
+`capacitor.config.json > server.url` apontava para `digiapp-a5e.pages.dev`, o
+projeto Pages do repositório antigo. A mesma URL estava em mais **três**
+arquivos, incluindo os dois do desktop — ou seja, **o overlay Electron lia o
+save do outro projeto**. Quatro arquivos, uma verdade, e nada que os obrigasse
+a concordar.
+
+Nenhum dos 653 testes olhava para isso: cobriam o app rodando, não onde a casca
+vai buscá-lo. Fronteira sem dono, exatamente a assinatura das outras cinco.
+
+**Corrigido** para `https://soulmon.mateus-sprnd.workers.dev`, depois de
+verificar no ar que o destino serve o Soulmon com o build atual
+(`index-C_r_Y4yT.js`), que `/api/save` valida (400 em id inválido), que o KV
+responde, que `/api/community` já devolve `pid` derivado (SEC-2 valendo) e que
+o header de CSP é o novo. Era a condição que o `CLAUDE.md` exigia para
+autorizar a troca.
+
+**Travado por `src/deploy/appUrl.contract.test.ts`**, que exige as quatro
+fontes concordando, proíbe endereço de outro produto, e confere que a config
+gerada por `npx cap sync` não ficou para trás da raiz — o caso em que alguém
+edita a raiz, esquece o sync e o build passa mesmo assim. Verificado nas duas
+pontas: vermelho com a URL antiga, verde com a nova.
+
+**Ainda é preciso um APK novo.** O APK já instalado tem a URL velha assada
+dentro dele e continuará abrindo o DigiApp até ser substituído pelo build do
+próximo run do CI.

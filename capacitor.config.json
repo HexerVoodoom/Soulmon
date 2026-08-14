@@ -3,7 +3,7 @@
   "appName": "Soulmon",
   "webDir": "dist",
   "server": {
-    "url": "https://digiapp-a5e.pages.dev",
+    "url": "https://soulmon.mateus-sprnd.workers.dev",
     "cleartext": false
   }
 }
