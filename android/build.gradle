@@ -48,19 +48,17 @@ allprojects {
         }
     }
 
-    // Fix 3: cap sync generates capacitor-cordova-android-plugins with VERSION_21
-    // which breaks builds on Java 17. Override to Java 17 for all subprojects.
-    plugins.withId('com.android.library') {
-        android {
-            compileOptions {
-                sourceCompatibility JavaVersion.VERSION_17
-                targetCompatibility JavaVersion.VERSION_17
-            }
-        }
-    }
-    plugins.withId('com.android.application') {
-        android {
-            compileOptions {
+    // Fix 3: alguns módulos gerados/trazidos pelo `cap sync` (ex.: o próprio
+    // node_modules/@capacitor/android, não só o capacitor-cordova-android-plugins
+    // que este bloco mirava antes) fixam sourceCompatibility VERSION_21 no PRÓPRIO
+    // build.gradle deles — e como esse valor é lido DEPOIS que este bloco roda
+    // (plugins.withId dispara na hora que o plugin é aplicado, cedo demais),
+    // o valor do módulo ganhava por último e quebrava build em javac < 21.
+    // afterEvaluate garante que rodamos por ÚLTIMO, depois de qualquer
+    // build.gradle de módulo já ter setado (errado) o próprio compileOptions.
+    afterEvaluate { proj ->
+        if (proj.hasProperty('android')) {
+            proj.android.compileOptions {
                 sourceCompatibility JavaVersion.VERSION_17
                 targetCompatibility JavaVersion.VERSION_17
             }

@@ -80,11 +80,25 @@ android {
     }
 }
 
+// google-services.json existir não basta: se ele vem de outro app do MESMO
+// projeto Firebase (compartilhado com o DigiApp, ver CLAUDE.md) sem um
+// client pro NOSSO applicationId, o plugin falha o build inteiro em vez de
+// só avisar (foi o que quebrou toda build de CI por um bom tempo). Valida
+// o conteúdo, não só a existência do arquivo.
 try {
     def servicesJSON = file('google-services.json')
+    def hasMatchingClient = false
     if (servicesJSON.text) {
+        def parsed = new groovy.json.JsonSlurper().parseText(servicesJSON.text)
+        hasMatchingClient = parsed.client?.any { c ->
+            c.client_info?.android_client_info?.package_name == android.defaultConfig.applicationId
+        }
+    }
+    if (hasMatchingClient) {
         apply plugin: 'com.google.gms.google-services'
+    } else {
+        logger.warn("google-services.json não tem client pra '${android.defaultConfig.applicationId}' — plugin não aplicado, FCM push não funciona até alguém registrar o app no Firebase Console.")
     }
 } catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+    logger.info("google-services.json não encontrado/inválido, google-services plugin não aplicado. Push Notifications won't work")
 }
