@@ -160,8 +160,8 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
         <div style={{ padding: '4px 20px 6px' }}>
           {rows.map(r => (
             <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
-              <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <RowIcon icon={r.icon} size={16} color="var(--sm-muted)" />
+              <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <RowIcon icon={r.icon} size={22} color="var(--sm-muted)" />
               </span>
               <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>{r.label}</span>
               <span style={{

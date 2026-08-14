@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
+import iconLock from '../assets/soulmon/icons/icon-lock.png';
 import { DigivolutionProgress } from './DigivolutionProgress';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
@@ -170,11 +171,8 @@ export function EvolutionPath({
                     style={{ imageRendering: 'pixelated', opacity: evolutionLocked ? 0.55 : 1 }}
                   />
                   {evolutionLocked && (
-                    <span
-                      className="absolute inset-0 flex items-center justify-center"
-                      style={{ fontSize: '1.5rem', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}
-                    >
-                      🔒
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <img src={iconLock} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))' }} />
                     </span>
                   )}
                 </button>
@@ -205,12 +203,12 @@ export function EvolutionPath({
                   </span>
                 )}
                 {isCurrent && evolutionLocked && (
-                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-muted)', color: 'var(--sm-bg)', fontSize: '0.65rem' }}>
-                    🔒 {isPt ? 'TRAVADA' : 'LOCKED'}
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-muted)', color: 'var(--sm-bg)', fontSize: '0.65rem', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                    <img src={iconLock} alt="" width={10} height={10} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> {isPt ? 'TRAVADA' : 'LOCKED'}
                   </span>
                 )}
                 {isUltraMode && (
-                  <span className="bg-gradient-to-r from-yellow-400 to-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-bold" style={{ fontSize: '0.65rem' }}>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--sm-gold)', color: 'var(--sm-bg)', fontSize: '0.65rem' }}>
                     {isPt ? 'ZÊNITE' : 'ZENITH'}
                   </span>
                 )}
@@ -220,8 +218,8 @@ export function EvolutionPath({
             {/* Status / Action Button */}
             <div className="flex-shrink-0">
               {!isReached ? (
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs" style={{ background: 'var(--sm-line)', color: 'var(--sm-muted)' }}>
-                  🔒
+                <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: 'var(--sm-line)' }}>
+                  <img src={iconLock} alt="" width={14} height={14} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                 </div>
               ) : isPreviousStage ? (
                 <button

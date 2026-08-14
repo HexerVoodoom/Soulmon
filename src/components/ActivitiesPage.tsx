@@ -39,16 +39,16 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   // Torneio fica ACIMA e separado dos minigames (seção própria) — não é mais
   // só mais um card na mesma lista.
   const tournamentCard = {
-    key: 'tournament' as const, icon: iconTrophy, iconColor: '#d9a441', iconBg: '#fbf1dd',
+    key: 'tournament' as const, icon: iconTrophy,
     title: isPt ? 'Torneio' : 'Tournament',
     desc: isPt ? 'PvP assíncrono contra outros jogadores. Rodada toda semana.' : 'Asynchronous PvP against other players. A round every week.',
     pts: isPt ? '5 partidas/dia' : '5 matches/day',
     onClick: onOpenTournament,
   };
 
-  const cards: { key: 'dungeon' | 'dino' | 'rps'; icon: string; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
+  const cards: { key: 'dungeon' | 'dino' | 'rps'; icon: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
     {
-      key: 'dungeon', icon: iconSwords, iconColor: '#8b5cf6', iconBg: '#f3e8ff',
+      key: 'dungeon', icon: iconSwords,
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
         ? '5 andares retrô, cada um com 6 inimigos e mais forte. Perder custa a run, nunca seus corações. Reset semanal.'
@@ -57,14 +57,14 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
       onClick: () => setOpenGame('dungeon'),
     },
     {
-      key: 'dino', icon: iconDino, iconColor: '#22A900', iconBg: '#eafbe6',
+      key: 'dino', icon: iconDino,
       title: isPt ? 'Corrida do Dino' : 'Dino Runner',
       desc: isPt ? 'Pule os obstáculos e corra o máximo que conseguir.' : 'Jump the obstacles and run as far as you can.',
       pts: isPt ? '1 Bit a cada 100 de score' : '1 Bit per 100 score',
       onClick: () => setOpenGame('dino'),
     },
     {
-      key: 'rps', icon: iconScissors, iconColor: '#E69600', iconBg: '#fff4e0',
+      key: 'rps', icon: iconScissors,
       title: isPt ? 'Pedra, Papel e Tesoura' : 'Rock, Paper, Scissors',
       desc: isPt ? 'Clássico duelo contra o seu Soulmon. Primeiro a 3 vitórias.' : 'The classic duel against your Soulmon. First to 3.',
       pts: isPt ? '5 Bits por vitória' : '5 Bits per match win',
@@ -72,7 +72,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
     },
   ];
 
-  const renderCard = (c: { key: string; icon: string; iconColor: string; iconBg: string; title: string; desc: string; pts: string; onClick: () => void }) => (
+  const renderCard = (c: { key: string; icon: string; title: string; desc: string; pts: string; onClick: () => void }) => (
     <button
       key={c.key}
       onClick={c.onClick}

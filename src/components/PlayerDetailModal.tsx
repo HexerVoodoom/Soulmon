@@ -1,6 +1,6 @@
-import { Clock } from 'lucide-react';
 import { RowIcon } from './RowIcon';
 import iconActivities from '../assets/soulmon/icons/icon-activities.png';
+import iconClock from '../assets/soulmon/icons/icon-clock.png';
 import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
@@ -50,8 +50,8 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
     .filter(s => s === 'rookie' || getStageBranch(s) === branch)
     .sort((a, b) => LEVEL_ORDER.indexOf(getStageLevel(a)) - LEVEL_ORDER.indexOf(getStageLevel(b)));
 
-  const rows: { icon: typeof Clock | string; label: string; value: string }[] = [
-    { icon: Clock, label: isPt ? 'Tempo de jogo' : 'Playtime', value: isPt ? `${player.daysPlaying} dias` : `${player.daysPlaying} days` },
+  const rows: { icon: string; label: string; value: string }[] = [
+    { icon: iconClock, label: isPt ? 'Tempo de jogo' : 'Playtime', value: isPt ? `${player.daysPlaying} dias` : `${player.daysPlaying} days` },
     { icon: iconActivities, label: isPt ? 'Tarefas feitas' : 'Tasks done', value: `${player.tasksDone}` },
     { icon: iconTrophy, label: isPt ? 'Rank' : 'Rank', value: `${player.rankPoints}` },
   ];
@@ -89,8 +89,8 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
         <div style={{ padding: '4px 20px 6px' }}>
           {rows.map(r => (
             <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
-              <span style={{ width: 30, height: 30, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <RowIcon icon={r.icon} size={16} color="var(--sm-muted)" />
+              <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <RowIcon icon={r.icon} size={22} color="var(--sm-muted)" />
               </span>
               <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>{r.label}</span>
               <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--sm-ink)' }}>{r.value}</span>
