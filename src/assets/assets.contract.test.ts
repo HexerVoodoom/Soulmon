@@ -308,6 +308,83 @@ describe('guard de asset — xadrez de transparência assado', () => {
   });
 });
 
+/**
+ * TERCEIRA classe de asset sujo, e a que mais aparecia para o usuário: ruído
+ * pontilhado assado no sprite. `lumel-rookie.png` tinha **961 ilhas** de 1–2
+ * pixels espalhadas pela tela — resto de um fundo mal removido — e o pet do
+ * jogador aparecia dentro de uma nuvem de sujeira na Home.
+ *
+ * Os dois guards anteriores NÃO pegavam: o de xadrez exige transparência quase
+ * zero (aqui a imagem é quase toda transparente) e o de paleta olha cor, não
+ * geometria. Cada instrumento novo achou uma safra nova — é o padrão da sessão
+ * inteira (docs/STATUS.md §5).
+ *
+ * O critério é ESTRUTURAL, não de cor: arte de pixel é feita de regiões
+ * conectadas. Ilha minúscula e solta no meio do nada é ruído.
+ */
+describe('guard de asset — ruído pontilhado (fundo mal removido)', () => {
+  /** % de pixels visíveis que vivem em ilhas menores que `minIlha`. */
+  async function ruidoPct(buf: Buffer | string, minIlha = 24) {
+    const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const W = info.width, H = info.height;
+    const on = (i: number) => data[i * 4 + 3] > 25;
+    const comp = new Int32Array(W * H).fill(-1);
+    const tam: number[] = [];
+    for (let k = 0; k < W * H; k++) {
+      if (comp[k] !== -1 || !on(k)) continue;
+      const id = tam.length; let n = 0; const st = [k]; comp[k] = id;
+      while (st.length) {
+        const c = st.pop()!; n++;
+        const cx = c % W, cy = (c - cx) / W;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const nx = cx + dx, ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+          const kk = ny * W + nx;
+          if (comp[kk] !== -1 || !on(kk)) continue;
+          comp[kk] = id; st.push(kk);
+        }
+      }
+      tam.push(n);
+    }
+    let vis = 0, ruido = 0;
+    for (let k = 0; k < W * H; k++) {
+      if (comp[k] === -1) continue;
+      vis++;
+      if (tam[comp[k]] < minIlha) ruido++;
+    }
+    return (100 * ruido) / Math.max(vis, 1);
+  }
+
+  it('ACUSA ruído espalhado e NÃO acusa arte sólida (autoverificação)', async () => {
+    // Sujo: um quadrado sólido + 400 pontos isolados espalhados.
+    const sujo = await synth(64, 64, (x, y) => {
+      if (x > 20 && x < 44 && y > 20 && y < 44) return [45, 212, 191, 255];
+      return (x * 7 + y * 13) % 23 === 0 ? [30, 30, 30, 255] : [0, 0, 0, 0];
+    });
+    expect(await ruidoPct(sujo)).toBeGreaterThan(10);
+
+    // Limpo: o mesmo quadrado, sem os pontos.
+    const limpo = await synth(64, 64, (x, y) =>
+      x > 20 && x < 44 && y > 20 && y < 44 ? [45, 212, 191, 255] : [0, 0, 0, 0],
+    );
+    expect(await ruidoPct(limpo)).toBe(0);
+  });
+
+  it('nenhum sprite de criatura tem nuvem de ruído', async () => {
+    const linhas = [...referenced].filter(f => /soulmon[\\/]lines[\\/]/.test(rel(f)));
+    expect(linhas.length, 'escopo vazio — o guard passaria por omissão').toBeGreaterThan(10);
+    const sujos: string[] = [];
+    for (const f of linhas) {
+      const p = await ruidoPct(f);
+      // Medido depois da limpeza: o pior sprite limpo fica em 0,9%. 3% dá folga
+      // para detalhe legítimo (brilho de olho, partícula) sem deixar passar a
+      // nuvem — o `lumel-rookie` sujo media 12,5%.
+      if (p > 3) sujos.push(`${rel(f)} (${p.toFixed(1)}% em ilhas soltas)`);
+    }
+    expect(sujos).toEqual([]);
+  });
+});
+
 describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
   it('os PNGs contaminados continuam contaminados E continuam fora do bundle', async () => {
     const referenciados = new Set([...referenced].map(rel));

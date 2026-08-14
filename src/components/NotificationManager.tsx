@@ -111,11 +111,23 @@ export function NotificationManager({
       // falso (a perda zera só acima de 2/3 da meta), e chamava de "perigo" um
       // dia que custa no máximo 1 coração. Avisa sem ameaçar e sem inventar
       // número: quem quiser o detalhe abre o app.
-      const atRisk = healthPoints <= 1 && healthPoints > 0 && completedSteps < totalRequired;
+      //
+      // A CONDIÇÃO é a meta do dia, não o HP. Antes o lembrete geral exigia
+      // `healthPoints < maxHealthPoints`, então quem estava com o pet de HP
+      // cheio e não tinha feito nada NÃO recebia nada — justamente quem o
+      // lembrete ajudaria. E quem já cumpriu a meta não recebe nada, aqui nem
+      // em lugar nenhum: é o que separa lembrete de cobrança, e é por isso que
+      // este aviso vive no CLIENTE — o worker não sabe se a meta foi cumprida
+      // (a assinatura de push guarda só endpoint, chaves, nome e idioma), e foi
+      // exatamente assim que o nudge das 21h passou a cobrar quem já tinha
+      // feito tudo. Ver `functions/api/_pushCopy.js`.
+      if (completedSteps >= totalRequired) return;
 
-      if (atRisk) {
-        lastEveningWarnDate.current = today;
-        const ispt = language === 'pt-BR';
+      const ispt = language === 'pt-BR';
+      const hpBaixo = healthPoints <= 1 && healthPoints > 0;
+      lastEveningWarnDate.current = today;
+
+      if (hpBaixo) {
         showNotification(
           ispt ? `${petName} está meio pra baixo` : `${petName} is a bit low`,
           {
@@ -125,15 +137,16 @@ export function NotificationManager({
             tag: 'hp-critical-evening',
           },
         );
-      } else if (!atRisk && healthPoints < maxHealthPoints) {
-        lastEveningWarnDate.current = today;
-        const ispt = language === 'pt-BR';
+      } else {
+        // Diz O QUE fazer, e diz a regra de verdade: energia cheia é condição
+        // do dia perfeito, e energia só enche comendo. Sem isso o lembrete
+        // manda "abra o app" sem dizer para quê.
         showNotification(
-          ispt ? '🌙 Fim do dia!' : '🌙 End of day!',
+          ispt ? `🌙 ${petName} está te esperando` : `🌙 ${petName} is waiting for you`,
           {
             body: ispt
-              ? `Você tem ${completedSteps}/${totalRequired} tarefas. Continue assim!`
-              : `You have ${completedSteps}/${totalRequired} tasks done. Keep it up!`,
+              ? 'Marque o que você fez hoje e dê uma comidinha pra ele — energia cheia fecha o dia perfeito.'
+              : 'Log what you did today and feed it — a full energy bar completes a perfect day.',
             tag: 'evening-reminder',
           },
         );
