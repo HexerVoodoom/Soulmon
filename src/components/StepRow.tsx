@@ -13,9 +13,10 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
   const isPt = language === 'pt-BR';
 
   return (
-    <div className={`flex items-center gap-3 py-2.5 px-3 rounded-2xl transition-all ${
-      completed ? 'bg-[#e8e8e8]' : 'bg-[#f3f4f6] hover:bg-gray-100'
-    }`}>
+    <div
+      className="flex items-center gap-3 py-3 px-3 rounded-2xl transition-all"
+      style={{ background: completed ? 'var(--sm-primary-soft)' : 'var(--sm-bg)' }}
+    >
       {/* Checkbox de etapa — <button> e não <div>, para receber foco de teclado
           e ser anunciado por leitor de tela. */}
       <button
@@ -57,10 +58,12 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
         aria-hidden="true"
         className={`select-none flex-1 ${
           disabled ? 'cursor-not-allowed opacity-50' : completed ? 'cursor-default' : 'cursor-pointer'
-        } ${
-          completed ? 'text-[#6b7280]' : 'text-[#4d5461]'
         }`}
-        style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem' }}
+        style={{
+          fontSize: '0.875rem',
+          color: completed ? 'var(--sm-muted)' : 'var(--sm-ink)',
+          textDecoration: completed ? 'line-through' : 'none',
+        }}
       >
         {label}
       </span>

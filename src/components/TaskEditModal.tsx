@@ -236,7 +236,7 @@ export function TaskEditModal({
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 16, background: 'var(--sm-surface)', borderTop: '1px solid var(--sm-line)' }}>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 14 }}>
             <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
             <button onClick={handleSave} disabled={!name.trim()} className="sm-btn" style={{ flex: 1 }}>{txt.save}</button>
           </div>

@@ -1920,7 +1920,7 @@ export default function App() {
           }}
         >
           {currentView === 'main' && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* HP risk banner — dismissible strip acima do pet */}
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'var(--sm-danger-soft)', border: '1px solid var(--sm-danger)' }}>
@@ -2093,7 +2093,7 @@ export default function App() {
           {/* Evolução e Estatísticas dividem o mesmo ícone da barra inferior —
               alternadas por essas abas em vez de dois botões separados. */}
           {(currentView === 'evolution' || currentView === 'stats') && (
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-3 mb-4">
               <button
                 onClick={() => setCurrentView('evolution')}
                 className={`sm-btn ${currentView === 'evolution' ? '' : 'sm-btn-secondary'}`}

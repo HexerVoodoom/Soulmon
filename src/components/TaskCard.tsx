@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Language, useTranslation } from '../utils/i18n';
+import { Language } from '../utils/i18n';
 import iconEdit from '../assets/soulmon/icons/icon-edit.png';
 
 interface TaskCardProps {
@@ -22,16 +22,15 @@ export const TaskCard = memo(function TaskCard({
   onEdit,
   language = 'en-US',
 }: TaskCardProps) {
-  const t = useTranslation(language);
   const isPt = language === 'pt-BR';
 
   return (
     <div
-      className={`rounded-2xl p-4 transition-all w-full border ${
+      className={`rounded-2xl p-5 transition-all w-full border ${
         completed ? 'sm-card opacity-70' : 'sm-card'
       }`}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {/* Checkbox */}
         {/* Marcar como concluída é a AÇÃO CENTRAL do app. Era uma <div> com
             onClick: não recebia foco de teclado nem era anunciada por leitor de
@@ -68,21 +67,13 @@ export const TaskCard = memo(function TaskCard({
             )}
           </span>
         </button>
-        {/* Task content */}
+        {/* Task content — sem a legenda "realização única" repetida em toda
+            ficha: era a mesma frase em CADA card dessa lista (todo item aqui
+            é de execução única por definição), zero informação nova por
+            card. O nome já carrega o essencial. */}
         <div className="flex-1">
-          <p
-            className={`${
-              completed ? 'text-[#6b7280]' : 'text-[#101828]'
-            }`}
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.9375rem', fontWeight: '400' }}
-          >
+          <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: completed ? 'var(--sm-muted)' : 'var(--sm-ink)' }}>
             {emoji} {name}
-          </p>
-          <p
-            className={completed ? 'text-[#9ca3af]' : 'text-[#a1a1a1]'}
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.75rem' }}
-          >
-            {t.main.singleExecution}
           </p>
         </div>
 

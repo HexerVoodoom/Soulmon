@@ -1,8 +1,7 @@
 import { memo } from 'react';
 import { StepRow } from './StepRow';
 import iconEdit from '../assets/soulmon/icons/icon-edit.png';
-import { Progress } from './ui/progress';
-import { Language, useTranslation } from '../utils/i18n';
+import { Language } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
 
 interface Step {
@@ -42,7 +41,6 @@ export const ActivityCard = memo(function ActivityCard({
   isSingleExecution = false,
   language = 'en-US',
 }: ActivityCardProps) {
-  const t = useTranslation(language);
   const isPt = language === 'pt-BR';
   const completedSteps = steps.filter(s => s.completed).length;
   const totalSteps = steps.length;
@@ -56,7 +54,7 @@ export const ActivityCard = memo(function ActivityCard({
 
   return (
     <div>
-      <div className={`rounded-2xl p-4 transition-all w-full overflow-hidden border ${
+      <div className={`rounded-2xl p-5 transition-all w-full overflow-hidden border ${
         isDisabled
           ? 'bg-gray-100 border-gray-300 opacity-50'
           : activityComplete
@@ -64,7 +62,7 @@ export const ActivityCard = memo(function ActivityCard({
             : 'sm-card'
       }`}>
         {/* Header row: checkbox + nome + edit button */}
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-4 mb-3">
           {/* Checkbox - sempre presente quando NÃO tem steps */}
           {totalSteps === 0 && (
             <button
@@ -102,40 +100,38 @@ export const ActivityCard = memo(function ActivityCard({
           {/* Nome da atividade */}
           <div className="flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className={`${
-                activityComplete ? 'text-[#6b7280]' : 'text-[#101828]'
-              }`} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.9375rem', fontWeight: '400' }}>
+              <h3 style={{ fontSize: '0.9375rem', fontWeight: 600, color: activityComplete ? 'var(--sm-muted)' : 'var(--sm-ink)' }}>
                 {name}
               </h3>
             </div>
 
-            {/* Descritor de frequência */}
-            <p className={activityComplete ? 'text-[#9ca3af]' : 'text-[#a1a1a1]'} style={{ fontFamily: 'Consolas, monospace', fontSize: '0.75rem' }}>
-              {isSingleExecution ? (
-                t.main.singleExecution
-              ) : (
-                <span className="flex gap-1 items-center flex-wrap">
-                  {daysLabels.map((label, index) => {
-                    const isActive = weekDays.includes(index);
-                    return (
-                      <span
-                        key={index}
-                        style={{
-                          fontSize: '0.625rem',
-                          fontWeight: 700,
-                          padding: '2px 6px',
-                          borderRadius: 8,
-                          background: isActive ? 'var(--sm-primary-soft)' : 'transparent',
-                          color: isActive ? 'var(--sm-primary)' : 'var(--sm-muted)',
-                        }}
-                      >
-                        {label}
-                      </span>
-                    );
-                  })}
-                </span>
-              )}
-            </p>
+            {/* Descritor de frequência — só aparece pra atividades
+                RECORRENTES (chips de dia), que carregam informação nova por
+                card. Pra atividades avulsas ("realização única") a rotulagem
+                embaixo de CADA card era ruído puro: toda ficha ali tem o
+                mesmo texto. */}
+            {!isSingleExecution && (
+              <div className="flex gap-1 items-center flex-wrap" style={{ marginTop: 4 }}>
+                {daysLabels.map((label, index) => {
+                  const isActive = weekDays.includes(index);
+                  return (
+                    <span
+                      key={index}
+                      style={{
+                        fontSize: '0.625rem',
+                        fontWeight: 700,
+                        padding: '2px 6px',
+                        borderRadius: 8,
+                        background: isActive ? 'var(--sm-primary-soft)' : 'transparent',
+                        color: isActive ? 'var(--sm-primary)' : 'var(--sm-muted)',
+                      }}
+                    >
+                      {label}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Edit button */}
@@ -154,15 +150,11 @@ export const ActivityCard = memo(function ActivityCard({
         {/* Steps section */}
         {isExpanded && totalSteps > 0 && (
           <>
-            <div className="mb-3 flex items-center gap-3">
-              <div className="flex-1">
-                <Progress
-                  value={progressPercentage}
-                  className="h-2 bg-[#f3f4f6]"
-                  indicatorClassName="bg-[#101828]"
-                />
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex-1" style={{ height: 8, borderRadius: 999, background: 'var(--sm-bg)', overflow: 'hidden' }}>
+                <div style={{ width: `${progressPercentage}%`, height: '100%', background: 'var(--sm-primary)', borderRadius: 999, transition: 'width .2s ease' }} />
               </div>
-              <span className="text-[#6a7282]" style={{ fontFamily: 'Consolas, monospace', fontSize: '0.8125rem' }}>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--sm-muted)', fontWeight: 600 }}>
                 {completedSteps}/{totalSteps}
               </span>
             </div>

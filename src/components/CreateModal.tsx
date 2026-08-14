@@ -246,7 +246,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
               checkbox solto; mesma decisão, forma mais fácil de escanear. */}
           <div>
             <label style={labelStyle}>{txt.frequency}</label>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 12 }}>
               <button type="button" onClick={() => setIsSingleExecution(false)} style={segment(!isSingleExecution)}>
                 {txt.recurring}
               </button>
@@ -391,7 +391,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
               <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />
             </div>
           )}
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 14 }}>
           <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
           <button
             onClick={handleSave}

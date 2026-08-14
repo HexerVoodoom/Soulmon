@@ -25,12 +25,11 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
 
   if (!isOpen) return null;
 
-  const headClass = 'text-[#101828]';
   const R = FORM_REQUIREMENTS;
 
   const Section = ({ n, title, children }: { n: number; title: string; children: React.ReactNode }) => (
     <section>
-      <h3 className={`font-bold mb-2 ${headClass}`}>{n}. {title}</h3>
+      <h3 className="font-bold mb-2" style={{ color: 'var(--sm-ink)' }}>{n}. {title}</h3>
       {children}
     </section>
   );
@@ -39,20 +38,21 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="w-full max-w-2xl rounded-2xl p-6 max-h-[85vh] overflow-y-auto sm-card">
         <div className="flex items-center justify-between mb-4">
-          <h2 className={`text-xl ${headClass}`} style={{ fontFamily: 'Consolas, monospace' }}>
+          <h2 className="text-xl" style={{ color: 'var(--sm-ink)' }}>
             📖 {L('Guia do Soulmon', 'Soulmon Guide')}
           </h2>
           <button
             onClick={onClose}
             aria-label={L('Fechar', 'Close')}
-            className="p-2 rounded-lg transition-all bg-[#f3f4f6] hover:bg-gray-200 text-[#4a5565]"
+            className="p-2 rounded-lg transition-all"
+            style={{ background: 'var(--sm-bg)', color: 'var(--sm-muted)' }}
           >
             <img src={iconClose} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
         </div>
 
-        <div className="space-y-4 text-[#4d5461]"
-          style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', lineHeight: '1.5' }}>
+        <div className="space-y-4"
+          style={{ fontSize: '0.875rem', lineHeight: '1.5', color: 'var(--sm-muted)' }}>
 
           <Section n={1} title={L('Como seu Soulmon evolui', 'How your Soulmon evolves')}>
             <p className="mb-2">

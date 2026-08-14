@@ -83,7 +83,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         />
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
         <button className={`sm-btn ${tab === 'directory' ? '' : 'sm-btn-secondary'}`} style={{ flex: 1, padding: '9px 0' }} onClick={() => setTab('directory')}>
           {isPt ? 'Todos' : 'All'}
         </button>
