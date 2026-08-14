@@ -1,3 +1,7 @@
+import attrPoder from '../assets/soulmon/icons/icon-attr-poder.png';
+import attrHarmonia from '../assets/soulmon/icons/icon-attr-harmonia.png';
+import attrBenevolencia from '../assets/soulmon/icons/icon-attr-benevolencia.png';
+
 export interface AttributePoints {
   virus: number;
   data: number;
@@ -40,6 +44,31 @@ export const ATTR_COLOR: Record<BranchType, string> = {
   virus: '#22A900',   // Poder
   data: '#009ED8',    // Harmonia
   vaccine: '#E69600', // Benevolência
+};
+
+/**
+ * NOME que o jogador vê — FONTE ÚNICA DA VERDADE, pelo mesmo motivo da cor.
+ *
+ * `virus`/`data`/`vaccine` são identificadores INTERNOS, herdados do DigiApp e
+ * mantidos de propósito (aparecem em save de quem já joga). Eles NUNCA devem
+ * chegar à tela: o jogador conhece Poder, Harmonia e Benevolência.
+ *
+ * Este mapa estava DUPLICADO em `EvolutionPath.tsx` e `PlayerDetailModal.tsx`,
+ * e a `StatsPage` não usava nenhum dos dois — mostrava "Virus / Data / Vaccine"
+ * cru, e só em inglês. É o mesmo padrão de "regra copiada diverge em silêncio"
+ * do footgun 9 do CLAUDE.md, e é por isso que ele vive aqui agora.
+ */
+export const ATTR_LABEL: Record<BranchType, { pt: string; en: string }> = {
+  virus: { pt: 'Poder', en: 'Power' },
+  data: { pt: 'Harmonia', en: 'Harmony' },
+  vaccine: { pt: 'Benevolência', en: 'Benevolence' },
+};
+
+/** Ícone pixel-art de cada atributo (kit da referência v1.2). */
+export const ATTR_ICON: Record<BranchType, string> = {
+  virus: attrPoder,
+  data: attrHarmonia,
+  vaccine: attrBenevolencia,
 };
 
 /**

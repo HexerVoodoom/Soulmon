@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readLocal, writeLocal } from '../utils/safeStorage';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -13,7 +14,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function readStoredMode(): ThemeMode {
-  const raw = localStorage.getItem(STORAGE_KEYS.THEME);
+  const raw = readLocal(STORAGE_KEYS.THEME);
   // Chave reaproveitada do antigo seletor de skin (default/win98/glitch,
   // removido) — qualquer valor que não seja um modo válido vira 'system'.
   return raw === 'light' || raw === 'dark' || raw === 'system' ? raw : 'system';
@@ -55,7 +56,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   const setMode = useCallback((next: ThemeMode) => {
-    localStorage.setItem(STORAGE_KEYS.THEME, next);
+    // Preferência cosmética: falhar aqui volta ao tema padrão na próxima
+    // sessão. Não gasta o aviso único do usuário.
+    writeLocal(STORAGE_KEYS.THEME, next, { silent: true });
     setModeState(next);
   }, []);
 

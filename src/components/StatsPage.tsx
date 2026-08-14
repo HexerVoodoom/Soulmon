@@ -1,4 +1,4 @@
-import { ActivityCategory } from '../types/attributes';
+import { ActivityCategory, ATTR_ICON, ATTR_INK, ATTR_LABEL } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import type { CarePattern } from '../utils/carePattern';
@@ -222,18 +222,30 @@ export function StatsPage({
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 flex-wrap mt-2 pt-2" style={{ borderTop: '1px solid var(--sm-line)' }}>
-          <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>Virus</span>
-            <span className="text-xs font-bold" style={{ color: '#22A900' }}>{virusPoints}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>Data</span>
-            <span className="text-xs font-bold" style={{ color: '#009ED8' }}>{dataPoints}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>Vaccine</span>
-            <span className="text-xs font-bold" style={{ color: '#E69600' }}>{vaccinePoints}</span>
-          </div>
+          {/* Nomes internos (`virus`/`data`/`vaccine`) NUNCA vão à tela: o
+              jogador conhece Poder, Harmonia e Benevolência. Rótulo, cor de
+              texto e ícone saem todos de `types/attributes.ts`, que é a fonte
+              única — antes esta tela repetia os hex à mão e escrevia os nomes
+              internos, em inglês, sem par PT-BR. */}
+          {([
+            ['virus', virusPoints],
+            ['data', dataPoints],
+            ['vaccine', vaccinePoints],
+          ] as const).map(([attr, pontos]) => (
+            <div key={attr} className="flex items-center gap-1.5">
+              <img
+                src={ATTR_ICON[attr]}
+                alt=""
+                width={20}
+                height={20}
+                style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
+              />
+              <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>
+                {isPt ? ATTR_LABEL[attr].pt : ATTR_LABEL[attr].en}
+              </span>
+              <span className="text-xs font-bold" style={{ color: ATTR_INK[attr] }}>{pontos}</span>
+            </div>
+          ))}
         </div>
       </div>
 

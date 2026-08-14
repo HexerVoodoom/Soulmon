@@ -6,6 +6,7 @@
 // pra dar pra testar o loop de recompensa fim-a-fim — troque por AdMob (ou
 // equivalente) quando a conta de anúncios existir; a assinatura já serve.
 import { STORAGE_KEYS } from './storageKeys';
+import { readJson, writeJson } from './safeStorage';
 import { getSpriteForStage } from './sprites';
 import { STAGE_NAMES, type CreatureStage, type StageId, type AlignmentId } from './oracle';
 
@@ -102,10 +103,8 @@ export const DEMO_ACTIVITY_DAILY_CAP = 1;
 interface DemoCreationRecord { date: string; count: number }
 
 function readDemoCreations(): DemoCreationRecord {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.DEMO_TASKS_CREATED_TODAY) || 'null');
-    if (saved && saved.date === new Date().toDateString()) return saved;
-  } catch { /* fall through */ }
+  const saved = readJson<DemoCreationRecord | null>(STORAGE_KEYS.DEMO_TASKS_CREATED_TODAY, null);
+  if (saved && saved.date === new Date().toDateString()) return saved;
   return { date: new Date().toDateString(), count: 0 };
 }
 
@@ -121,5 +120,7 @@ export function canCreateDemoTaskToday(): boolean {
 export function recordDemoCreation(): void {
   const rec = readDemoCreations();
   rec.count += 1;
-  localStorage.setItem(STORAGE_KEYS.DEMO_TASKS_CREATED_TODAY, JSON.stringify(rec));
+  // Limite do modo grátis: se não gravar, o cap do dia some. É regra de
+  // monetização — a falha AVISA (e o app segue permitindo, nunca bloqueando).
+  writeJson(STORAGE_KEYS.DEMO_TASKS_CREATED_TODAY, rec);
 }

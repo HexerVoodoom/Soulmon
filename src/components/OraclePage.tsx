@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readLocal, writeJson } from '../utils/safeStorage';
 import { PixelizerCard } from './PixelizerCard';
 import { generateAllSprites } from '../utils/spriteGen';
 import {
@@ -28,7 +29,7 @@ const ATTRIBUTE_EMOJI: Record<AlignmentId, string> = { poder: '🦠', harmonia: 
 
 function loadSavedForm(): SavedOracleForm | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEYS.ORACLE_FORM);
+    const raw = readLocal(STORAGE_KEYS.ORACLE_FORM);
     return raw ? (JSON.parse(raw) as SavedOracleForm) : null;
   } catch {
     return null;
@@ -86,7 +87,8 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
       seed: creature?.seed,
       overrides: profile ? overrides : undefined,
     };
-    localStorage.setItem(STORAGE_KEYS.ORACLE_FORM, JSON.stringify(form));
+    // Rascunho do formulário: conveniência, não progresso.
+    writeJson(STORAGE_KEYS.ORACLE_FORM, form, { silent: true });
   }, [fullName, birthDate, birthTime, birthPlace, answers, prefs, petDescription, creature?.seed, overrides, profile]);
 
   const canReveal = formComplete({ fullName, birthDate, birthTime, birthPlace, answers });

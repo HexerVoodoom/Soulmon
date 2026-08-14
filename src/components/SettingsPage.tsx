@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
 import { Copy, Check, Bot, Info } from 'lucide-react';
+import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { RowIcon } from './RowIcon';
 import iconBook from '../assets/soulmon/icons/icon-book.png';
 import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
@@ -54,11 +55,11 @@ export function SettingsPage({
   const [emailInput, setEmailInput] = useState('');
   // Auto-sleep schedule (self-contained: read/written straight to localStorage;
   // the App-level effect picks changes up on its next minute tick)
-  const [autoSleepEnabled, setAutoSleepEnabled] = useState(() => localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED) === 'true');
-  const [autoSleepStart, setAutoSleepStart] = useState(() => localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00');
-  const [autoSleepEnd, setAutoSleepEnd] = useState(() => localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
+  const [autoSleepEnabled, setAutoSleepEnabled] = useState(() => readFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED));
+  const [autoSleepStart, setAutoSleepStart] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_START) || '23:00');
+  const [autoSleepEnd, setAutoSleepEnd] = useState(() => readLocal(STORAGE_KEYS.AUTO_SLEEP_END) || '07:00');
   const [loginStatus, setLoginStatus] = useState<'idle' | 'loading' | 'loaded' | 'created' | 'err'>('idle');
-  const savedEmail = localStorage.getItem(STORAGE_KEYS.USER_EMAIL) ?? null;
+  const savedEmail = readLocal(STORAGE_KEYS.USER_EMAIL);
   const { mode: themeMode, resolvedTheme, setMode: setThemeMode } = useTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -76,8 +77,8 @@ export function SettingsPage({
     }
   };
   const t = useTranslation(language);
-  const saveId = localStorage.getItem(STORAGE_KEYS.SAVE_ID) ?? null;
-  const lastSyncRaw = localStorage.getItem(STORAGE_KEYS.LAST_CLOUD_SYNC);
+  const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
+  const lastSyncRaw = readLocal(STORAGE_KEYS.LAST_CLOUD_SYNC);
   const lastSyncLabel = lastSyncRaw
     ? new Date(lastSyncRaw).toLocaleString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })
     : null;
@@ -355,11 +356,11 @@ export function SettingsPage({
               className="relative w-12 h-6 rounded-full transition-colors cursor-pointer"
               style={{ background: autoSleepEnabled ? toggleOnBg : toggleOffBg }}
               onClick={() => {
-                setAutoSleepEnabled(prev => {
-                  const next = !prev;
-                  localStorage.setItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED, next ? 'true' : 'false');
-                  return next;
-                });
+                // Gravar FORA do updater: no StrictMode o updater roda 2x
+                // (footgun 6). Horario do sono e preferencia - silencioso.
+                const next = !autoSleepEnabled;
+                writeFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED, next, { silent: true });
+                setAutoSleepEnabled(next);
               }}
             >
               <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${autoSleepEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -378,7 +379,7 @@ export function SettingsPage({
                   <input
                     type="time"
                     value={f.value}
-                    onChange={e => { f.set(e.target.value); localStorage.setItem(f.key, e.target.value); }}
+                    onChange={e => { f.set(e.target.value); writeLocal(f.key, e.target.value, { silent: true }); }}
                     className="px-2 py-1 rounded-lg border text-sm"
                     style={{ background: 'var(--sm-bg)', borderColor: 'var(--sm-line)', color: 'var(--sm-ink)' }}
                   />

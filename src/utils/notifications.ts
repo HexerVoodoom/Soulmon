@@ -4,6 +4,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
 import { VAPID_PUBLIC_KEY } from './vapid';
 import { STORAGE_KEYS } from './storageKeys';
+import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeStorage';
 
 export interface NotificationPermissionState {
   granted: boolean;
@@ -81,12 +82,8 @@ const STORAGE_KEY = STORAGE_KEYS.SCHEDULED_NOTIFICATIONS;
 const DAILY_CHECK_KEY = STORAGE_KEYS.DAILY_NOTIFICATION_CHECK;
 
 export const getScheduledNotifications = (): ScheduledNotification[] => {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
+  const stored = readJson<ScheduledNotification[]>(STORAGE_KEY, []);
+  return Array.isArray(stored) ? stored : [];
 };
 
 export const scheduleNotification = (notification: ScheduledNotification) => {
@@ -98,19 +95,21 @@ export const scheduleNotification = (notification: ScheduledNotification) => {
     return true;
   });
   filtered.push(notification);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+  // Lembrete que o usuário PEDIU: perder o agendamento em silêncio é o app
+  // deixando de avisar sem dizer que deixou. Avisa.
+  writeJson(STORAGE_KEY, filtered);
 };
 
 export const removeScheduledNotification = (id: string) => {
   const stored = getScheduledNotifications();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(stored.filter(n => n.id !== id)));
+  writeJson(STORAGE_KEY, stored.filter(n => n.id !== id));
   if (Capacitor.isNativePlatform()) {
     DigiAlarm.cancelAlarm({ id }).catch(() => {});
   }
 };
 
 export const clearScheduledNotifications = () => {
-  localStorage.removeItem(STORAGE_KEY);
+  removeLocal(STORAGE_KEY);
 };
 
 // ── Web Push subscription (PWA / browser) ─────────────────────────────────
@@ -212,7 +211,8 @@ export const registerForPushNotifications = async (
       fcmListenersBound = true;
 
       PushNotifications.addListener('registration', (token) => {
-        localStorage.setItem(STORAGE_KEYS.FCM_TOKEN, token.value);
+        // Token de push: falhar aqui só faz o app reenviar na próxima abertura.
+        writeLocal(STORAGE_KEYS.FCM_TOKEN, token.value, { silent: true });
         fetch('/api/fcm-subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -243,8 +243,8 @@ export const registerForPushNotifications = async (
 export const unregisterFromPushNotifications = async (): Promise<void> => {
   if (Capacitor.getPlatform() !== 'android') return;
 
-  const token = localStorage.getItem(STORAGE_KEYS.FCM_TOKEN);
-  localStorage.removeItem(STORAGE_KEYS.FCM_TOKEN);
+  const token = readLocal(STORAGE_KEYS.FCM_TOKEN);
+  removeLocal(STORAGE_KEYS.FCM_TOKEN, { silent: true });
   if (!token) return;
 
   try {
@@ -271,7 +271,7 @@ export const checkAndShowNotifications = (
   const today = now.toDateString();
 
   // Daily 12:00 reminder — fires once per day
-  const lastDailyCheck = localStorage.getItem(DAILY_CHECK_KEY);
+  const lastDailyCheck = readLocal(DAILY_CHECK_KEY);
   if (currentTime === '12:00' && lastDailyCheck !== today) {
     const title = language === 'pt-BR'
       ? '🦖 Seu Soulmon está chamando!'
@@ -281,7 +281,8 @@ export const checkAndShowNotifications = (
       : `Hi ${userName}! Don't forget to check your activities today! 💪`;
 
     showNotification(title, { body, tag: 'daily-reminder' });
-    localStorage.setItem(DAILY_CHECK_KEY, today);
+    // Marca de "já lembrei hoje": no pior caso o lembrete repete. Cosmético.
+    writeLocal(DAILY_CHECK_KEY, today, { silent: true });
   }
 
   // Alarm notifications scheduled for this exact minute (web/PWA path)
@@ -313,7 +314,7 @@ export const syncActivityAlarms = (
   // Replace old activity alarms with fresh set
   const stored = getScheduledNotifications();
   const nonActivity = stored.filter(n => !n.activityId);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nonActivity));
+  writeJson(STORAGE_KEY, nonActivity);
 
   activities.forEach(activity => {
     if (!activity.alarm?.time) return;
@@ -347,7 +348,7 @@ export const syncTaskAlarms = (
   // Replace old task alarms with fresh set
   const stored = getScheduledNotifications();
   const nonTask = stored.filter(n => !n.taskId);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nonTask));
+  writeJson(STORAGE_KEY, nonTask);
 
   tasks.forEach(task => {
     if (!task.alarm || !task.deadline) return;

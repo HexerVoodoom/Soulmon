@@ -4,6 +4,7 @@ import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { playDegenerate, playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -43,7 +44,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   phaseRef.current = phase;
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
-  const [best, setBest] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.DINO_BEST)) || 0);
+  const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
 
   // Nossa arte é sempre desenhada olhando pra DIREITA, que é o sentido da
   // corrida — não existe mais lista de exceções (era só de sprite emprestado).
@@ -176,7 +177,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       onScore(score);
       setBest(prev => {
         const nb = Math.max(prev, score);
-        localStorage.setItem(STORAGE_KEYS.DINO_BEST, String(nb));
+        // Recorde do jogador: é progresso, a falha AVISA.
+        writeLocal(STORAGE_KEYS.DINO_BEST, String(nb));
         return nb;
       });
       try { navigator.vibrate?.(60); } catch { /* noop */ }

@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from './storageKeys';
 import { authHeaders } from './auth';
+import { readLocal } from './safeStorage';
 
 // Único caminho do cliente para as rotas de IA que custam dinheiro
 // (`/api/chat`, `/api/suggest-tasks`, `/api/generate-sprite`).
@@ -18,7 +19,7 @@ export async function aiFetch(
   return fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-    body: JSON.stringify({ ...body, id: localStorage.getItem(STORAGE_KEYS.SAVE_ID) }),
+    body: JSON.stringify({ ...body, id: readLocal(STORAGE_KEYS.SAVE_ID) }),
     signal: init.signal,
   });
 }

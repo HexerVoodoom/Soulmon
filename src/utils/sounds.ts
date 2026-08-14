@@ -1,11 +1,16 @@
-const MUTED_KEY = 'digiapp-sound-muted';
+import { readFlag, writeFlag } from './safeStorage';
+import { STORAGE_KEYS } from './storageKeys';
+
+const MUTED_KEY = STORAGE_KEYS.SOUND_MUTED;
 
 export function isMuted(): boolean {
-  return localStorage.getItem(MUTED_KEY) === 'true';
+  return readFlag(MUTED_KEY);
 }
 
 export function setMuted(v: boolean): void {
-  localStorage.setItem(MUTED_KEY, v ? 'true' : 'false');
+  // Preferência cosmética: se não persistir, o som volta na próxima sessão.
+  // Não vale gastar o aviso único do usuário.
+  writeFlag(MUTED_KEY, v, { silent: true });
 }
 
 function play(fn: (ctx: AudioContext) => void): void {

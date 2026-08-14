@@ -128,6 +128,130 @@ export function daysSinceLastReset(lastResetDate: string | undefined, now: Date)
   return Math.max(1, Math.round((a - b) / 86400000));
 }
 
+// ---------------------------------------------------------------------------
+// META DO DIA — dono único da regra `min(cadastradas, requisito do estágio)`.
+//
+// A regra tem DOIS componentes, e o segundo é o que já divergiu duas vezes:
+//   (a) o teto: `FORM_REQUIREMENTS[nível].required`;
+//   (b) a FONTE do "cadastradas": atividades **do dia da semana** + tarefas.
+//
+// Cadastrar uma atividade só de seg–sex não pode aumentar a meta de sábado.
+// `computeDailyReset` sempre filtrou por dia da semana; os call sites que
+// copiaram a fórmula usavam `activities.length` cru e, no fim de semana,
+// cobravam uma meta que a virada do dia não cobra. É a mesma classe do achado
+// 🔴 da rodada 4 (dois lugares calculando a mesma coisa a partir de fontes de
+// dados DIFERENTES), e a mesma classe do bug já corrigido nas notificações —
+// que na época só corrigiu o componente (a), não o (b).
+//
+// NÃO reescreva `Math.min(... , FORM_REQUIREMENTS[...].required)` em lugar
+// nenhum: chame `dailyGoalFor`. Há guard travando isso
+// (`src/utils/dailyGoal.contract.test.ts`).
+// ---------------------------------------------------------------------------
+
+/** Fatia do estado que a meta do dia lê. */
+export interface DailyGoalState {
+  evolutionStage: string;
+  activities: Array<{ weekDays?: number[] }>;
+  tasks: unknown[];
+}
+
+/** Atividades que valem PARA ESTE dia da semana (0 = domingo). */
+export function activitiesForWeekDay<A extends { weekDays?: number[] }>(
+  state: { evolutionStage: string; activities: A[] },
+  weekDay: number,
+): A[] {
+  if (!canSelectWeekdays(state.evolutionStage)) return state.activities;
+  return state.activities.filter(a => a.weekDays?.includes(weekDay));
+}
+
+/**
+ * Tarefas avulsas CONCLUÍDAS num dia (`dayKey` = `new Date().toDateString()`).
+ *
+ * Existe porque `completeTask` (utils/careRules.ts) **remove** a tarefa de
+ * `tasks` e a move para `completedTasks`. Quem contar só `tasks` está contando
+ * uma lista que a outra regra esvazia: a tarefa some do total E do concluído,
+ * e um dia em que a pessoa fez TUDO fica indistinguível de um dia em que ela
+ * não cadastrou nada.
+ */
+export function tasksCompletedOn(
+  state: { completedTasks?: Array<{ completedAt?: string }> },
+  dayKey: string,
+): number {
+  return (state.completedTasks ?? []).filter(t => {
+    if (!t?.completedAt) return false;
+    const d = new Date(t.completedAt);
+    return !Number.isNaN(d.getTime()) && d.toDateString() === dayKey;
+  }).length;
+}
+
+/**
+ * Quantos itens estão cadastrados PARA ESTE dia: atividades do dia + tarefas
+ * ainda na lista + tarefas do dia que já saíram da lista por terem sido feitas.
+ */
+export function registeredForDay(state: DailyGoalState, weekDay: number, dayKey?: string): number {
+  return activitiesForWeekDay(state, weekDay).length
+    + state.tasks.length
+    + (dayKey ? tasksCompletedOn(state as any, dayKey) : 0);
+}
+
+/** Meta do dia = `min(cadastradas no dia, requisito do estágio)`. */
+export function dailyGoalFor(state: DailyGoalState, weekDay: number, dayKey?: string): number {
+  // Escrita inline de propósito: é a ÚNICA ocorrência autorizada desta forma no
+  // projeto, e o guard de origem usa esta linha como âncora — se ela sumir, o
+  // guard percebe que virou decoração em vez de passar vazio.
+  return Math.min(
+    registeredForDay(state, weekDay, dayKey),
+    FORM_REQUIREMENTS[getStageLevel(state.evolutionStage)].required,
+  );
+}
+
+/**
+ * Corações perdidos ANTES do teto diário: proporcional ao que não foi feito.
+ * Dono único da fórmula — `computeDailyReset` e `tasksToAvoidHeartLoss` (a
+ * resposta que a UI dá) chamam esta mesma função, para o número prometido não
+ * poder divergir do número cobrado nem por arredondamento.
+ */
+export function rawHeartsLostFor(done: number, goal: number, maxHP: number): number {
+  const completionRatio = goal > 0 ? Math.min(1, done / goal) : 1;
+  return Math.floor((1 - completionRatio) * maxHP);
+}
+
+/**
+ * Quantos itens PRECISAM estar concluídos hoje para a virada não tirar coração
+ * nenhum. Dono único da resposta que a UI dá quando o jogador pergunta
+ * "quanto falta para eu não regredir?".
+ *
+ * Deriva da MESMA fórmula da perda (`floor((1 − feitas/meta) × maxHP)`, mais
+ * abaixo): a perda zera quando `feitas/meta > 1 − 1/maxHP`. Para um rookie com
+ * meta 4 e 3 corações isso dá **3** itens — e não 2.
+ *
+ * Existe porque "metade das tarefas" já foi dito ao jogador como se bastasse.
+ * A auditoria de tom corrigiu isso no aviso das 20h (STATUS §2: "parou de
+ * prometer que 'metade das tarefas' evita a perda — o que era falso") e o
+ * banner de 1 coração continuou com `Math.ceil(required / 2)`, prometendo o
+ * mesmo número falso no momento de maior consequência do jogo.
+ */
+export function tasksToAvoidHeartLoss(
+  state: DailyGoalState & { maxHealthPoints?: number },
+  weekDay: number,
+  dayKey?: string,
+): number {
+  const goal = dailyGoalFor(state, weekDay, dayKey);
+  const maxHP = state.maxHealthPoints ?? 3;
+  if (goal <= 0 || maxHP <= 0) return 0;
+  // Procurado PELA PRÓPRIA fórmula da perda, e não por álgebra equivalente.
+  // Um `floor(goal × (1 − 1/maxHP)) + 1` fechado é "o mesmo cálculo" no papel e
+  // diverge na prática: em ultra (meta 5, maxHP 5) com 4 feitas, o ponto
+  // flutuante faz `(1 − 4/5) × 5` valer 0,9999999999999998 e a perda ser ZERO,
+  // enquanto a álgebra exigiria 5. Derivar da função é o que garante que o
+  // número prometido é o número que o jogo cobra. (Guard diferencial em
+  // `dailyGoalSources.test.ts` roda os dois lado a lado.)
+  for (let feitas = 0; feitas <= goal; feitas++) {
+    if (rawHeartsLostFor(feitas, goal, maxHP) === 0) return feitas;
+  }
+  return goal;
+}
+
 export interface DailyResetOptions {
   /** Injetável para teste; usa a data real por padrão. */
   now?: Date;
@@ -149,9 +273,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const requiredToday = requirements.required;
 
   let dailyDone = 0;
-  const availableActivities = !canSelectWeekdays(prev.evolutionStage)
-    ? prev.activities
-    : prev.activities.filter((a: any) => a.weekDays?.includes(yesterdayWeekDay));
+  const availableActivities = activitiesForWeekDay(prev as any, yesterdayWeekDay) as any[];
 
   availableActivities.forEach((activity: any) => {
     let isComplete = false;
@@ -163,14 +285,24 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     if (isComplete) dailyDone++;
   });
 
-  dailyDone += prev.tasks.filter((t: any) => t.completed).length;
+  // Tarefas avulsas: as que ainda estão na lista marcadas (janela de 3s entre o
+  // clique e a saída da lista) MAIS as que já saíram para `completedTasks`.
+  // Contar só `prev.tasks` era contar uma lista que `completeTask` esvazia:
+  // quem fez TODAS as tarefas do dia caía em `totalTasks === 0` e a virada
+  // NEGAVA o dia perfeito — o dia em que a pessoa fez tudo ficava idêntico ao
+  // dia em que ela não cadastrou nada, e o progresso para a evolução travava
+  // sem nenhum aviso, com a barra da tela marcando 100%.
+  dailyDone += prev.tasks.filter((t: any) => t.completed).length
+    + tasksCompletedOn(prev as any, yesterdayString);
 
   // Meta do dia = min(cadastradas, requisito do estágio). Cumprir o que você
   // mesmo se comprometeu a fazer basta; cadastrar MAIS nunca aumenta o risco.
   // É o análogo exato da fórmula do Vital Bracelet, que mede o esforço pelo
   // delta do SEU próprio batimento de base — o jogo compara você com você.
-  const totalTasks = availableActivities.length + prev.tasks.length;
-  const dailyGoal = Math.min(totalTasks, requiredToday);
+  // Fórmula em `dailyGoalFor` (acima) — é a MESMA que a UI e as notificações
+  // chamam, para a meta anunciada não poder divergir da meta cobrada.
+  const totalTasks = registeredForDay(prev as any, yesterdayWeekDay, yesterdayString);
+  const dailyGoal = dailyGoalFor(prev as any, yesterdayWeekDay, yesterdayString);
 
   // Barras de energia = requisito de tarefas do estágio.
   const energyWasFull = (prev.energyPoints ?? 0) >= requiredToday;
@@ -197,8 +329,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
 
   // Perda de HP: proporcional ao que NÃO foi feito, medido contra a mesma meta,
   // e limitada a MAX_HEARTS_LOST_PER_DAY. Sem tarefas cadastradas, nada a falhar.
-  const completionRatio = dailyGoal > 0 ? Math.min(1, dailyDone / dailyGoal) : 1;
-  const rawHeartsLost = Math.floor((1 - completionRatio) * prev.maxHealthPoints);
+  const rawHeartsLost = rawHeartsLostFor(dailyDone, dailyGoal, prev.maxHealthPoints);
   // Teimoso (utils/passives.ts) aguenta melhor um dia ruim.
   const lossCap = heartLossCap(prev.petPassive, MAX_HEARTS_LOST_PER_DAY);
   const heartsLost = wasAway ? 0 : Math.min(rawHeartsLost, lossCap);

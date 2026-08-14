@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readLocal, writeJson } from '../utils/safeStorage';
 import {
   generateOracle, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
@@ -59,7 +60,7 @@ interface SavedProfile extends OracleInput { seed: number }
 
 export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel }: SoulmonOnboardingProps) {
   const isUpgrade = mode === 'upgrade';
-  const isPt = resolveLanguage(localStorage.getItem(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+  const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
@@ -145,7 +146,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     const r = generateOracle(input);
     setResult(r);
     const profile: SavedProfile = { ...input, seed: r.seed };
-    localStorage.setItem(STORAGE_KEYS.SOULMON_PROFILE, JSON.stringify(profile));
+    // Perfil da alma = semente para REGERAR a criatura. Perder isso tira do
+    // jogador o reroll pelo qual ele pode ter pagado. AVISA.
+    writeJson(STORAGE_KEYS.SOULMON_PROFILE, profile);
     setStep(REVEAL);
   };
 

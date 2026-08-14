@@ -16,6 +16,8 @@ import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
 import { playShower } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
+import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readFlag, writeFlag } from '../utils/safeStorage';
 
 interface CompanionHUDProps {
   companionMood: 'idle' | 'happy' | 'tired';
@@ -225,8 +227,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   // is hurt (it's the only way to heal, and gestures aren't discoverable).
   useEffect(() => {
     if (healthPoints >= maxHealthPoints) return;
-    if (localStorage.getItem('digiapp-rub-hint-shown') === 'true') return;
-    localStorage.setItem('digiapp-rub-hint-shown', 'true');
+    if (readFlag(STORAGE_KEYS.RUB_HINT_SHOWN)) return;
+    // "já mostrei a dica": no pior caso a dica reaparece. Cosmético.
+    writeFlag(STORAGE_KEYS.RUB_HINT_SHOWN, true, { silent: true });
     const isPt = language === 'pt-BR';
     const t = setTimeout(() => {
       speak(

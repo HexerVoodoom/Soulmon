@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { en } from '../translations/en';
 import { pt } from '../translations/pt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readLocal, writeLocal } from '../utils/safeStorage';
 
 type Language = 'en' | 'pt';
 
@@ -17,7 +18,7 @@ const translations = { en, pt };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] = useState<Language>(() => {
-        const saved = localStorage.getItem(STORAGE_KEYS.LANGUAGE);
+        const saved = readLocal(STORAGE_KEYS.LANGUAGE);
         if (saved === 'en' || saved === 'pt') return saved;
 
         // Default to Portuguese based on original app state
@@ -26,7 +27,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     const setLanguage = (lang: Language) => {
         setLanguageState(lang);
-        localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
+        writeLocal(STORAGE_KEYS.LANGUAGE, lang, { silent: true });
     };
 
     const t = (key: string): string => {

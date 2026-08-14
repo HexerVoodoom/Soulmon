@@ -3,20 +3,16 @@ import iconActivities from '../assets/soulmon/icons/icon-activities.png';
 import iconClock from '../assets/soulmon/icons/icon-clock.png';
 import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
-import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { FORM_REQUIREMENTS, getStageBranch, getStageLevel } from '../types/progression';
 import { getSpriteForStage } from '../utils/sprites';
-import { ATTR_COLOR } from '../types/attributes';
+import { ATTR_COLOR, ATTR_ICON, ATTR_LABEL } from '../types/attributes';
 import type { DirectoryPlayer } from '../utils/community';
 import type { Language } from '../utils/i18n';
 
-type Attr = 'virus' | 'data' | 'vaccine';
-const ATTR_LABEL: Record<Attr, { pt: string; en: string }> = {
-  virus: { pt: 'Poder', en: 'Power' },
-  data: { pt: 'Harmonia', en: 'Harmony' },
-  vaccine: { pt: 'Benevolência', en: 'Benevolence' },
-};
-const ATTR_ICON: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
+// Rótulo e ícone vêm de `types/attributes.ts`. Este arquivo mantinha uma
+// SEGUNDA cópia do mapa de rótulos, idêntica à de `EvolutionPath` — e enquanto
+// as duas concordavam, a `StatsPage` não usava nenhuma e mostrava o nome
+// interno cru. Duas cópias que concordam ainda são duas cópias.
 
 const LEVEL_LABEL: Record<string, { pt: string; en: string }> = {
   rookie: { pt: 'Rookie', en: 'Rookie' },
@@ -42,7 +38,7 @@ interface PlayerDetailModalProps {
 export function PlayerDetailModal({ player, language, onClose }: PlayerDetailModalProps) {
   const isPt = language === 'pt-BR';
   const branch = getStageBranch(player.stage);
-  const BranchIcon = branch ? ATTR_ICON[branch] : null;
+  const branchIcon = branch ? ATTR_ICON[branch] : null;
 
   // Todos os estágios desbloqueados NO branch atual (rookie é o tronco
   // comum, sem branch, sempre incluído), ordenados por nível.
@@ -107,7 +103,9 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           <div style={{ padding: '8px 0 4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <span style={{ width: 30, height: 30, borderRadius: 10, background: branch ? `${ATTR_COLOR[branch]}22` : 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {BranchIcon ? <BranchIcon size={16} color={ATTR_COLOR[branch!]} strokeWidth={2.2} /> : <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>?</span>}
+                {branchIcon
+                  ? <img src={branchIcon} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                  : <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>?</span>}
               </span>
               <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>
                 {isPt ? 'Caminho do pet' : "Pet's path"}

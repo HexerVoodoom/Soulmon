@@ -31,7 +31,9 @@ import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
-import { writeLocal } from './utils/safeStorage';
+import {
+  readFlag, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
+} from './utils/safeStorage';
 import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
@@ -45,7 +47,7 @@ import { PET_BACKGROUNDS } from './utils/backgrounds';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, tasksToAvoidHeartLoss } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
   FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
@@ -112,8 +114,10 @@ export default function App() {
   // handleCompleteOnboarding) — daí o setter, ao contrário do resto do app
   // que troca de identidade via reload.
   const [saveId, setSaveId] = useState(() => {
-    let id = localStorage.getItem(STORAGE_KEYS.SAVE_ID);
-    if (!id) { id = crypto.randomUUID(); localStorage.setItem(STORAGE_KEYS.SAVE_ID, id); }
+    let id = readLocal(STORAGE_KEYS.SAVE_ID);
+    // Identidade do save: se nao persistir, o jogador vira outra pessoa a cada
+    // abertura. E o caso mais grave que existe - a falha AVISA.
+    if (!id) { id = crypto.randomUUID(); writeLocal(STORAGE_KEYS.SAVE_ID, id); }
     return id;
   });
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -152,74 +156,65 @@ export default function App() {
   const [showItemsWindow, setShowItemsWindow] = useState(false);
   const [newItemsReady, setNewItemsReady] = useState(false);
   // Sleep state persists across app close/reopen — the pet stays asleep until woken.
-  const [isSleeping, setIsSleeping] = useState(() => localStorage.getItem(STORAGE_KEYS.IS_SLEEPING) === 'true');
+  const [isSleeping, setIsSleeping] = useState(() => readFlag(STORAGE_KEYS.IS_SLEEPING));
   // Feeding is limited to 5 per rolling hour; timestamps persist across app close.
   const feedTimesRef = useRef<number[]>(
-    (() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.FOOD_FEED_TIMES) || '[]'); } catch { return []; } })()
+    readJson<number[]>(STORAGE_KEYS.FOOD_FEED_TIMES, [])
   );
   // Bumped when a feed is refused for being full → pet says it's full.
   const [fullSignal, setFullSignal] = useState(0);
   // Daily report: shown once per day, on the first open after the reset ran.
   const [showDailyReport, setShowDailyReport] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.AI_SETTINGS);
-    return saved ? JSON.parse(saved) : {
+    return readJson<AISettings>(STORAGE_KEYS.AI_SETTINGS, {
       tone: 'casual',
       emojiIntensity: 'medium',
       motivationStyle: 'balanced',
       customKeywords: '',
-      temperature: 0.85
-    };
+      temperature: 0.85,
+    });
   });
   // Idioma inicial resolvido em utils/i18n.ts (mesma função usada no
   // onboarding, para as duas telas nunca discordarem).
   const [language, setLanguage] = useState<Language>(
-    () => resolveLanguage(localStorage.getItem(STORAGE_KEYS.LANGUAGE)),
+    () => resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)),
   );
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
-    return localStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETE) === 'true';
+    return readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE);
   });
   // Segundo onboarding: tutorial do jogo (estilo RPG) + criação obrigatória
   // da 1ª tarefa — mostrado uma vez, logo após o ritual de nascimento.
   const [hasCompletedTutorial, setHasCompletedTutorial] = useState(() => {
-    if (localStorage.getItem(STORAGE_KEYS.TUTORIAL_COMPLETE) === 'true') return true;
+    if (readFlag(STORAGE_KEYS.TUTORIAL_COMPLETE)) return true;
     // Adoção automática pra quem já jogava antes desse gate existir — jamais
     // interromper um jogador estabelecido com a tela de "crie sua 1ª tarefa".
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
-      if (raw) {
-        const s = JSON.parse(raw);
-        if ((s.activities?.length ?? 0) > 0 || (s.tasks?.length ?? 0) > 0
-          || (s.completedTasks?.length ?? 0) > 0 || (s.perfectDays ?? 0) > 0) {
-          localStorage.setItem(STORAGE_KEYS.TUTORIAL_COMPLETE, 'true');
-          return true;
-        }
-      }
-    } catch { /* ignore */ }
+    const saveAntigo = readJson<Record<string, any> | null>(STORAGE_KEYS.GAME_STATE, null);
+    if (saveAntigo && ((saveAntigo.activities?.length ?? 0) > 0 || (saveAntigo.tasks?.length ?? 0) > 0
+      || (saveAntigo.completedTasks?.length ?? 0) > 0 || (saveAntigo.perfectDays ?? 0) > 0)) {
+      // Marca de "ja passou pelo tutorial": no pior caso ele reaparece uma vez.
+      writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
+      return true;
+    }
     return false;
   });
   const [userName, setUserName] = useState(() => {
-    return localStorage.getItem(STORAGE_KEYS.USER_NAME) || '';
+    return readLocal(STORAGE_KEYS.USER_NAME) || '';
   });
   const [showFirstTaskPopup, setShowFirstTaskPopup] = useState(false);
   const [hasShownFirstTaskPopup, setHasShownFirstTaskPopup] = useState(() => {
-    if (localStorage.getItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN) === 'true') return true;
+    if (readFlag(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN)) return true;
     // Auto-mark for established users (have completed-task history or activity stats)
-    try {
-      const raw = localStorage.getItem(STORAGE_KEYS.GAME_STATE);
-      if (raw) {
-        const s = JSON.parse(raw);
-        if ((s.completedTasks?.length ?? 0) > 0 || Object.keys(s.activityStats ?? {}).length > 0 || (s.perfectDays ?? 0) > 0) {
-          localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
-          return true;
-        }
-      }
-    } catch { /* ignore */ }
+    const saveAntigo = readJson<Record<string, any> | null>(STORAGE_KEYS.GAME_STATE, null);
+    if (saveAntigo && ((saveAntigo.completedTasks?.length ?? 0) > 0
+      || Object.keys(saveAntigo.activityStats ?? {}).length > 0 || (saveAntigo.perfectDays ?? 0) > 0)) {
+      writeFlag(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, true, { silent: true });
+      return true;
+    }
     return false;
   });
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
-    return localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) === 'true';
+    return readFlag(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
   });
 
   // Presentes de amigos (Biblioteca): reivindica bits pendentes ao abrir o app.
@@ -248,11 +243,12 @@ export default function App() {
   }, [saveId]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.AI_SETTINGS, JSON.stringify(aiSettings));
+    // Personalidade da IA: preferencia. Falhar reverte ao padrao. Silencioso.
+    writeJson(STORAGE_KEYS.AI_SETTINGS, aiSettings, { silent: true });
   }, [aiSettings]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled ? 'true' : 'false');
+    writeFlag(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled, { silent: true });
   }, [notificationsEnabled]);
 
   // Retorno do link de acesso por e-mail: se o app abriu a partir dele,
@@ -272,10 +268,23 @@ export default function App() {
       if (cancelled || !res.ok || !res.email) return;
       // O saveId é derivado do e-mail agora COMPROVADO — realinha e recarrega
       // para o estado inteiro vir da conta certa.
-      const { emailToSaveId } = await import('./utils/cloudSave');
+      const { emailToSaveId, cloudLoad, adoptCloudSave } = await import('./utils/cloudSave');
       const id = await emailToSaveId(res.email);
-      localStorage.setItem(STORAGE_KEYS.USER_EMAIL, res.email);
-      localStorage.setItem(STORAGE_KEYS.SAVE_ID, id);
+      // Se já existe save nesse e-mail, `adoptCloudSave` grava o DADO antes da
+      // identidade — a ordem inversa (identidade primeiro) com storage cheio
+      // deixava o app apontado para um save que nunca chegou, e o próximo
+      // cloud save subia o estado local antigo por cima do save do outro
+      // aparelho (rodada 4, §3). Este call site tinha escapado daquele fix.
+      const existente = await cloudLoad(id);
+      if (cancelled) return;
+      if (existente) {
+        if (adoptCloudSave(id, existente, res.email) !== 'ok') return;
+      } else {
+        // Conta nova: o save local é que vai subir. Só troca a identidade se
+        // ela realmente persistiu; senão o reload voltaria ao id antigo.
+        if (!writeLocal(STORAGE_KEYS.SAVE_ID, id)) return;
+        writeLocal(STORAGE_KEYS.USER_EMAIL, res.email);
+      }
       window.location.reload();
     })();
     return () => { cancelled = true; };
@@ -300,9 +309,9 @@ export default function App() {
   const jaEngajou = (gameState.completedTasks?.length ?? 0) >= 5;
   useEffect(() => {
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
-    if (localStorage.getItem(STORAGE_KEYS.USER_EMAIL)) return;   // já protegido
+    if (readLocal(STORAGE_KEYS.USER_EMAIL)) return;   // já protegido
     // Um pedido por semana, no máximo: insistir todo dia vira ruído.
-    const last = Number(localStorage.getItem(STORAGE_KEYS.PROTECT_PROMPT_AT)) || 0;
+    const last = readNumber(STORAGE_KEYS.PROTECT_PROMPT_AT, 0);
     if (Date.now() - last < 7 * 24 * 3600_000) return;
     if (!jaEvoluiu && !jaEngajou) return;
 
@@ -310,14 +319,15 @@ export default function App() {
     // pedido de notificação e o relatório diário — dois modais empilhados é
     // confuso, e o de cima rouba o clique do de baixo (visto em teste).
     const t = window.setTimeout(() => {
-      if (localStorage.getItem(STORAGE_KEYS.USER_EMAIL)) return;
+      if (readLocal(STORAGE_KEYS.USER_EMAIL)) return;
       setProtectPrompt(jaEvoluiu ? 'evolution' : 'streak');
     }, 15_000);
     return () => window.clearTimeout(t);
   }, [hasCompletedOnboarding, hasCompletedTutorial, jaEvoluiu, jaEngajou]);
 
   const dismissProtectPrompt = useCallback(() => {
-    localStorage.setItem(STORAGE_KEYS.PROTECT_PROMPT_AT, String(Date.now()));
+    // So adia o proximo pedido; falhar faz o pedido voltar antes. Silencioso.
+    writeLocal(STORAGE_KEYS.PROTECT_PROMPT_AT, String(Date.now()), { silent: true });
     setProtectPrompt(null);
   }, []);
 
@@ -394,6 +404,9 @@ export default function App() {
   });
 
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
+  // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
+  // `utils/dailyReset.ts`, derivada da própria fórmula da perda.
+  const hpSafeToday = tasksToAvoidHeartLoss(gameState, new Date().getDay(), new Date().toDateString());
 
   const t = useTranslation(language);
 
@@ -591,7 +604,7 @@ export default function App() {
         if (!anyStepCompleted) {
           setShowFirstTaskPopup(true);
           setHasShownFirstTaskPopup(true);
-          localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
+          writeFlag(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, true, { silent: true });
         }
       }
 
@@ -687,7 +700,7 @@ export default function App() {
       if (!anyTaskCompleted) {
         setShowFirstTaskPopup(true);
         setHasShownFirstTaskPopup(true);
-        localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
+        writeFlag(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, true, { silent: true });
       }
     }
 
@@ -839,7 +852,7 @@ export default function App() {
         if (!anyStepCompleted) {
           setShowFirstTaskPopup(true);
           setHasShownFirstTaskPopup(true);
-          localStorage.setItem(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, 'true');
+          writeFlag(STORAGE_KEYS.FIRST_TASK_POPUP_SHOWN, true, { silent: true });
         }
       }
 
@@ -871,9 +884,11 @@ export default function App() {
    */
   const announceTaskGains = useCallback((prev: GameState, category: ActivityCategory) => {
     const isPt = language === 'pt-BR';
-    const req = FORM_REQUIREMENTS[getStageLevel(prev.evolutionStage)].required;
-    const registered = prev.activities.length + prev.tasks.length;
-    const goal = Math.min(registered, req);
+    // Meta do dia: `dailyGoalFor`, nunca uma cópia da fórmula. Antes era
+    // `min(activities.length + tasks.length, required)` — sem o filtro de dia
+    // da semana que `computeDailyReset` aplica, então num sábado o toast
+    // anunciava "2/4 do dia" para quem já tinha cumprido a meta real (2).
+    const goal = dailyGoalFor(prev, new Date().getDay());
     const doneNow = prev.tasks.filter(t => t.completed).length
       + prev.activities.filter(a => a.completedToday).length;
 
@@ -1069,13 +1084,14 @@ export default function App() {
     feedTimesRef.current = before;
     if ((gameState.foodInventory[foodEmoji] ?? 0) <= 0) return;
     if (before.length >= FOOD_LIMIT_PER_HOUR) {
-      localStorage.setItem(STORAGE_KEYS.FOOD_FEED_TIMES, JSON.stringify(before));
+      writeJson(STORAGE_KEYS.FOOD_FEED_TIMES, before);
       setFullSignal(n => n + 1); // pet says "I'm full"
       return;
     }
     const nextTimes = [...before, now];
     feedTimesRef.current = nextTimes;
-    localStorage.setItem(STORAGE_KEYS.FOOD_FEED_TIMES, JSON.stringify(nextTimes));
+    // Janela de 5 comidas/hora: regra de economia do jogo - a falha AVISA.
+    writeJson(STORAGE_KEYS.FOOD_FEED_TIMES, nextTimes);
 
     playFeed();
     // `before` é a janela ANTES desta comida, então a regra horária aqui chega
@@ -1154,7 +1170,7 @@ export default function App() {
   const handleSleep = useCallback(() => {
     setIsSleeping(prev => {
       const next = !prev;
-      localStorage.setItem(STORAGE_KEYS.IS_SLEEPING, next ? 'true' : 'false');
+      writeFlag(STORAGE_KEYS.IS_SLEEPING, next, { silent: true });
       return next;
     });
     playSleep();
@@ -1219,7 +1235,7 @@ export default function App() {
     unlockedEvolutions: gameState.unlockedEvolutions,
     dungeonKills: gameState.dungeonKills ?? 0,
     dungeonRunsCompleted: gameState.dungeonRunsCompleted ?? 0,
-    dinoBest: Math.max(gameState.dinoBest ?? 0, Number(localStorage.getItem(STORAGE_KEYS.DINO_BEST)) || 0),
+    dinoBest: Math.max(gameState.dinoBest ?? 0, readNumber(STORAGE_KEYS.DINO_BEST, 0)),
     totalPerfectDays: gameState.totalPerfectDays ?? 0,
   };
   const missionProgress = getMissionProgress(missionState);
@@ -1346,12 +1362,8 @@ export default function App() {
   // atividades/tarefas e Bits. Só existe pra contas 'paid' (modo demo não tem
   // perfil de oráculo salvo).
   const handleRerollCharacter = useCallback(async (): Promise<boolean> => {
-    let saved: (OracleInput & { seed: number }) | null = null;
-    try {
-      saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.SOULMON_PROFILE) || 'null');
-    } catch {
-      saved = null;
-    }
+    const saved = readJson<(OracleInput & { seed: number }) | null>(
+      STORAGE_KEYS.SOULMON_PROFILE, null);
     // Confere o perfil ANTES de cobrar — cobrar e depois falhar seria roubo.
     if (!saved) return false;
     const ent = await spendCredits(REROLL_COST_CREDITS, 'reroll');
@@ -1359,10 +1371,12 @@ export default function App() {
     const { generateOracle } = await import('./utils/oracle');
     const newSeed = Math.floor(Math.random() * 2 ** 31);
     const result = generateOracle(saved, newSeed);
-    localStorage.setItem(STORAGE_KEYS.SOULMON_PROFILE, JSON.stringify({ ...saved, seed: result.seed }));
+    // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
+    // perder o que a pessoa pagou. AVISA.
+    writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed });
     const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
+    writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
       ...prev,
       credits: ent.credits,
@@ -1412,7 +1426,7 @@ export default function App() {
     setUpgradeRitual(false);
     const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
+    writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
       ...prev,
       accountTier: 'paid',
@@ -1446,7 +1460,7 @@ export default function App() {
   useEffect(() => {
     const report = gameState.lastDayReport;
     if (!report) return;
-    if (localStorage.getItem(STORAGE_KEYS.DAILY_REPORT_SHOWN) === report.date) return;
+    if (readLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN) === report.date) return;
     setShowDailyReport(true);
   }, [gameState.lastDayReport]);
 
@@ -1484,7 +1498,8 @@ export default function App() {
 
   const handleCloseDailyReport = useCallback(() => {
     if (gameState.lastDayReport) {
-      localStorage.setItem(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date);
+      // "ja mostrei o relatorio hoje": no pior caso ele reabre. Silencioso.
+      writeLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date, { silent: true });
     }
     setShowDailyReport(false);
   }, [gameState.lastDayReport]);
@@ -1499,12 +1514,12 @@ export default function App() {
       return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
     };
     const check = () => {
-      if (localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_ENABLED) !== 'true') {
+      if (!readFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED)) {
         autoSleepPrevInWindowRef.current = null;
         return;
       }
-      const start = parseHM(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_START), '23:00');
-      const end = parseHM(localStorage.getItem(STORAGE_KEYS.AUTO_SLEEP_END), '07:00');
+      const start = parseHM(readLocal(STORAGE_KEYS.AUTO_SLEEP_START), '23:00');
+      const end = parseHM(readLocal(STORAGE_KEYS.AUTO_SLEEP_END), '07:00');
       const nowD = new Date();
       const cur = nowD.getHours() * 60 + nowD.getMinutes();
       // Window may cross midnight (e.g. 23:00–07:00)
@@ -1517,7 +1532,7 @@ export default function App() {
       if (!shouldAct) return;
       setIsSleeping(sleeping => {
         if (inWindow === sleeping) return sleeping;
-        localStorage.setItem(STORAGE_KEYS.IS_SLEEPING, inWindow ? 'true' : 'false');
+        writeFlag(STORAGE_KEYS.IS_SLEEPING, inWindow, { silent: true });
         return inWindow;
       });
     };
@@ -1531,10 +1546,9 @@ export default function App() {
   // (so rubbing can't trivialize the daily heart loss). Animation always plays.
   const rubHealRef = useRef<{ date: string; healed: number }>(
     (() => {
-      try {
-        const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.RUB_HEAL_DAY) || 'null');
-        if (saved && saved.date === new Date().toDateString()) return saved;
-      } catch { /* fall through */ }
+      const saved = readJson<{ date: string; healed: number } | null>(
+        STORAGE_KEYS.RUB_HEAL_DAY, null);
+      if (saved && saved.date === new Date().toDateString()) return saved;
       return { date: new Date().toDateString(), healed: 0 };
     })()
   );
@@ -1556,7 +1570,8 @@ export default function App() {
       return;
     }
     rubHealRef.current = { date: today, healed: rubHealRef.current.healed + RUB_HEAL_STEP };
-    localStorage.setItem(STORAGE_KEYS.RUB_HEAL_DAY, JSON.stringify(rubHealRef.current));
+    // Teto de cura por carinho: sem persistir, o teto do dia some. AVISA.
+    writeJson(STORAGE_KEYS.RUB_HEAL_DAY, rubHealRef.current);
     playFeed();
     // O teto do dia já foi conferido acima; aqui só a cura é aplicada.
     setGameState(prev => rubHeal(prev, { date: today, healed: 0 }, today).state);
@@ -1610,8 +1625,9 @@ export default function App() {
   const handleOpenAISettings = useCallback(() => setSettingsOpen(true), []);
 
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
-    localStorage.setItem(STORAGE_KEYS.USER_NAME, data.userName);
-    localStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, 'true');
+    // Fim do onboarding: perder isto refaz o ritual do zero. AVISA.
+    writeLocal(STORAGE_KEYS.USER_NAME, data.userName);
+    writeFlag(STORAGE_KEYS.ONBOARDING_COMPLETE, true);
     setUserName(data.userName);
     setHasCompletedOnboarding(true);
 
@@ -1659,7 +1675,7 @@ export default function App() {
     // via demoCharacterId, ver utils/sprites.ts).
     if (data.mode === 'demo') {
       const premade = PREMADE_CHARACTERS.find(c => c.id === data.demoCharacterId);
-      localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'tapirmon');
+      writeLocal(STORAGE_KEYS.EGG_TYPE, 'tapirmon');
       setGameState(prev => ({
         ...prev,
         activities: newActivities,
@@ -1686,7 +1702,7 @@ export default function App() {
     // escolha do jogador; a árvore de verdade é a de soulmonStages.
     const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
     const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, genericLine);
+    writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
 
     // O onboarding É o ritual de nascimento — o pet já nasce Rookie na SUA
     // forma única (sem ovo/baby).
@@ -1720,7 +1736,7 @@ export default function App() {
   // obrigatória da 1ª tarefa. Chega SEMPRE com >=1 item (o componente não
   // deixa terminar sem selecionar nada).
   const handleCompleteTutorial = (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => {
-    localStorage.setItem(STORAGE_KEYS.TUTORIAL_COMPLETE, 'true');
+    writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
     setHasCompletedTutorial(true);
     const newActivities: Activity[] = activities.map((item, i) => ({
       id: `${Date.now() + i}`,
@@ -1740,9 +1756,9 @@ export default function App() {
   // Handle reset onboarding (DEBUG ONLY)
   const handleResetOnboarding = () => setResetOnboardingOpen(true);
   const handleConfirmResetOnboarding = () => {
-    localStorage.removeItem(STORAGE_KEYS.ONBOARDING_COMPLETE);
-    localStorage.removeItem(STORAGE_KEYS.USER_NAME);
-    localStorage.removeItem(STORAGE_KEYS.EGG_TYPE);
+    removeLocal(STORAGE_KEYS.ONBOARDING_COMPLETE);
+    removeLocal(STORAGE_KEYS.USER_NAME);
+    removeLocal(STORAGE_KEYS.EGG_TYPE);
     window.location.reload();
   };
 
@@ -1868,7 +1884,7 @@ export default function App() {
               accountTier={gameState.accountTier ?? 'paid'}
               healthPoints={gameState.healthPoints}
               maxHealthPoints={gameState.maxHealthPoints}
-              canReroll={!!localStorage.getItem(STORAGE_KEYS.SOULMON_PROFILE)}
+              canReroll={!!readLocal(STORAGE_KEYS.SOULMON_PROFILE)}
               onWatchAd={handleWatchAd}
               onBuyPack={handleBuyCreditPack}
               onInstantHeal={handleInstantHealWithCredits}
@@ -1947,14 +1963,20 @@ export default function App() {
                 onOpenCredits={() => setCreditsOpen(true)}
               />
 
-              {/* HP risk banner — dismissible strip acima do pet */}
-              {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2) && !hpBannerDismissed && (
+              {/* HP risk banner — dismissible strip acima do pet.
+                  O número vem de `tasksToAvoidHeartLoss`, dono da regra. Era
+                  `ceil(required / 2)`, que prometia que METADE das tarefas
+                  evitava a perda — falso: a perda só zera acima de 1 − 1/maxHP
+                  da meta (rookie: 3 de 4, não 2). A mesma promessa falsa já
+                  tinha sido removida do aviso das 20h e ficou aqui, que é o
+                  momento de maior consequência do jogo. */}
+              {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < hpSafeToday && !hpBannerDismissed && (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'var(--sm-danger-soft)', border: '1px solid var(--sm-danger)' }}>
                   <img src={iconWarning} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
                   <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: 'var(--sm-danger)' }}>
                     {language === 'pt-BR'
-                      ? `1 HP restante — complete ao menos ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) hoje para não regredir!`
-                      : `1 HP left — complete at least ${Math.ceil(FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required / 2)} item(s) today to avoid degeneration!`}
+                      ? `1 HP restante — complete ao menos ${hpSafeToday} item(s) hoje para não regredir!`
+                      : `1 HP left — complete at least ${hpSafeToday} item(s) today to avoid degeneration!`}
                   </p>
                   <button
                     onClick={() => setHpBannerDismissed(true)}
@@ -2222,7 +2244,7 @@ export default function App() {
               language={language}
               onChangeLanguage={(lang) => {
                 setLanguage(lang);
-                localStorage.setItem(STORAGE_KEYS.LANGUAGE, lang);
+                writeLocal(STORAGE_KEYS.LANGUAGE, lang, { silent: true });
               }}
               onOpenGuide={() => setGuideModalOpen(true)}
               onOpenGlossary={() => setShowHelpModal(true)}
@@ -2512,14 +2534,14 @@ export default function App() {
         maxHealthPoints={gameState.maxHealthPoints}
         completedSteps={dailyDone}
         /* A meta é min(cadastradas, requisito do estágio) — a MESMA de
-           computeDailyReset. Passar o requisito puro fazia as notificações
+           computeDailyReset, e por isso vem de `dailyGoalFor` em vez de uma
+           cópia da fórmula. Passar o requisito puro fazia as notificações
            cobrarem quem já tinha cumprido a própria meta: um rookie com 2
            atividades tem meta 2, mas levava 3 cobranças por dia por "faltar"
-           até 4. O app nota justamente quem foi bem. */
-        totalRequired={Math.min(
-          gameState.activities.length + gameState.tasks.length,
-          FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required,
-        )}
+           até 4. A correção da época consertou o TETO e deixou a FONTE: com
+           `activities.length` cru, uma atividade de seg–sex ainda contava na
+           meta de sábado, e a cobrança voltava exatamente no fim de semana. */
+        totalRequired={dailyGoalFor(gameState, new Date().getDay())}
       />
       {showDailyReport && gameState.lastDayReport && (
         <DailyReportModal

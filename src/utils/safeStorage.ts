@@ -71,7 +71,33 @@ function isQuota(err: unknown): boolean {
   return /quota/i.test(name) || /quota/i.test(msg) || name === 'NS_ERROR_DOM_QUOTA_REACHED';
 }
 
-function report(kind: StorageFailureKind, key: string, err: unknown): void {
+/**
+ * Opções de gravação.
+ *
+ * `silent: true` = **a falha é cosmética**. O valor continua sendo registrado no
+ * console (quem depura precisa ver), mas NÃO gasta o único aviso ao usuário.
+ * O aviso é um recurso escasso de propósito (`notified` é global e só dispara
+ * uma vez); se um toggle de tema queimasse esse aviso, a falha que realmente
+ * importa — o save, o progresso, a compra — chegaria em silêncio depois.
+ *
+ * Critério usado na migração:
+ *  - **avisa** (padrão): save/estado do jogo, identidade (`SAVE_ID`/`USER_EMAIL`),
+ *    progresso e limites que valem dinheiro ou tempo (placares, recordes,
+ *    limites diários, inventário, dia perfeito).
+ *  - **silent**: preferência cosmética ou de conveniência — tema, idioma, mudo,
+ *    dispensar banner, "já mostrei essa dica", horário do sono automático,
+ *    rascunho de formulário. Falhar aqui degrada configuração, não progresso.
+ */
+export interface WriteOptions {
+  silent?: boolean;
+}
+
+function report(
+  kind: StorageFailureKind,
+  key: string,
+  err: unknown,
+  opts?: WriteOptions,
+): void {
   const tag = `${kind}:${key}`;
   if (!warned.has(tag)) {
     warned.add(tag);
@@ -83,6 +109,7 @@ function report(kind: StorageFailureKind, key: string, err: unknown): void {
       error: (err as { name?: string } | null)?.name ?? String(err),
     });
   }
+  if (opts?.silent) return;
   if (notified) return;
   notified = true;
   if (!listener) {
@@ -107,25 +134,91 @@ export function readLocal(key: string): string | null {
 }
 
 /** Grava. Devolve `false` quando não deu — nunca lança. */
-export function writeLocal(key: string, value: string): boolean {
+export function writeLocal(key: string, value: string, opts?: WriteOptions): boolean {
   try {
     globalThis.localStorage?.setItem(key, value);
     return true;
   } catch (err) {
-    report(isQuota(err) ? 'quota' : 'write', key, err);
+    report(isQuota(err) ? 'quota' : 'write', key, err, opts);
     return false;
   }
 }
 
 /** Apaga. Devolve `false` quando não deu — nunca lança. */
-export function removeLocal(key: string): boolean {
+export function removeLocal(key: string, opts?: WriteOptions): boolean {
   try {
     globalThis.localStorage?.removeItem(key);
     return true;
   } catch (err) {
-    report('write', key, err);
+    report('write', key, err, opts);
     return false;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Formas derivadas.
+//
+// Elas existem porque, sem elas, cada call site reimplementaria o try/catch em
+// volta do `JSON.parse` — e foi assim que 122 chamadas cruas de `localStorage`
+// sobreviveram à criação desta camada: a API só cobria o caso mais simples.
+// Se um dia faltar uma forma aqui, ESTENDA — não volte à chamada crua.
+// ---------------------------------------------------------------------------
+
+/**
+ * Lê JSON. Devolve `fallback` quando não há valor, quando o storage falha **ou
+ * quando o conteúdo está corrompido** — nunca lança.
+ *
+ * JSON inválido NÃO é falha de plataforma: registra no console, mas não gasta o
+ * aviso ao usuário (não há nada que ele possa fazer sobre bytes tortos).
+ */
+export function readJson<T>(key: string, fallback: T): T {
+  const raw = readLocal(key);
+  if (raw === null) return fallback;
+  try {
+    const parsed = JSON.parse(raw) as T;
+    return parsed === null || parsed === undefined ? fallback : parsed;
+  } catch (err) {
+    const tag = `parse:${key}`;
+    if (!warned.has(tag)) {
+      warned.add(tag);
+      console.warn('[safeStorage] JSON inválido no localStorage', {
+        key,
+        error: (err as { name?: string } | null)?.name ?? String(err),
+      });
+    }
+    return fallback;
+  }
+}
+
+/** Grava JSON. Devolve `false` quando não deu — nunca lança. */
+export function writeJson(key: string, value: unknown, opts?: WriteOptions): boolean {
+  let raw: string;
+  try {
+    raw = JSON.stringify(value);
+  } catch {
+    // Ciclo/BigInt: erro de programação, não de storage. Não vira aviso.
+    console.warn('[safeStorage] valor não serializável', { key });
+    return false;
+  }
+  return writeLocal(key, raw, opts);
+}
+
+/** Lê um booleano no formato do app (`'true'`/qualquer outra coisa). */
+export function readFlag(key: string): boolean {
+  return readLocal(key) === 'true';
+}
+
+/** Grava um booleano no formato do app. */
+export function writeFlag(key: string, on: boolean, opts?: WriteOptions): boolean {
+  return writeLocal(key, on ? 'true' : 'false', opts);
+}
+
+/** Lê um número. `fallback` quando ausente, ilegível ou não numérico. */
+export function readNumber(key: string, fallback = 0): number {
+  const raw = readLocal(key);
+  if (raw === null || raw.trim() === '') return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : fallback;
 }
 
 /** Mensagem do aviso ao usuário. Par PT/EN como todo texto de UI. */

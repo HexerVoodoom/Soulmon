@@ -4,6 +4,7 @@ import { Download, Bell } from 'lucide-react';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readFlag, writeFlag } from '../utils/safeStorage';
 import { checkNotificationPermission } from '../utils/notifications';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -32,10 +33,10 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
   const [ready, setReady] = useState(false);
   const [installed, setInstalled] = useState(false);
   const [installDismissed, setInstallDismissed] = useState(
-    () => localStorage.getItem(STORAGE_KEYS.PWA_INSTALL_DISMISSED) === 'true'
+    () => readFlag(STORAGE_KEYS.PWA_INSTALL_DISMISSED)
   );
   const [notifDismissed, setNotifDismissed] = useState(
-    () => localStorage.getItem(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED) === 'true'
+    () => readFlag(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED)
   );
   const [step, setStep] = useState<'install' | 'notif' | null>(null);
 
@@ -86,7 +87,7 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
 
   const handleDismissInstall = () => {
     setInstallDismissed(true);
-    localStorage.setItem(STORAGE_KEYS.PWA_INSTALL_DISMISSED, 'true');
+    writeFlag(STORAGE_KEYS.PWA_INSTALL_DISMISSED, true, { silent: true });
     advanceFromInstall();
   };
 
@@ -97,7 +98,7 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
 
   const handleDismissNotif = () => {
     setNotifDismissed(true);
-    localStorage.setItem(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED, 'true');
+    writeFlag(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED, true, { silent: true });
     setStep(null);
   };
 

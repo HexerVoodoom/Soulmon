@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 import { type Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { readFlag, writeFlag } from '../utils/safeStorage';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -17,7 +18,7 @@ const DISMISSED_KEY = STORAGE_KEYS.PWA_INSTALL_DISMISSED;
 export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(
-    () => localStorage.getItem(DISMISSED_KEY) === 'true'
+    () => readFlag(DISMISSED_KEY)
   );
   const [installed, setInstalled] = useState(false);
 
@@ -55,7 +56,8 @@ export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
 
   const handleDismiss = () => {
     setDismissed(true);
-    localStorage.setItem(DISMISSED_KEY, 'true');
+    // Dispensar banner: reaparecer é o pior caso. Cosmético.
+    writeFlag(DISMISSED_KEY, true, { silent: true });
   };
 
   const label = language === 'pt-BR'

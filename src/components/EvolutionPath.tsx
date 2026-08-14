@@ -8,19 +8,27 @@ import { getSpriteForStage } from '../utils/sprites';
 import { WalkingPetStrip } from './WalkingPetStrip';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
-import { ATTR_COLOR, ATTR_INK, ATTR_ON_FILL_INK } from '../types/attributes';
+import { ATTR_COLOR, ATTR_ICON, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
 
 type Attr = 'virus' | 'data' | 'vaccine';
 const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
 const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
-// Nomenclatura do Soulmon (não mais Virus/Data/Vaccine) — o mesmo alinhamento
-// já usado pelo oráculo no onboarding, agora refletido de volta na UI.
-const ATTR_LABEL: Record<Attr, LText> = {
-  virus: { pt: 'Poder', en: 'Power' },
-  data: { pt: 'Harmonia', en: 'Harmony' },
-  vaccine: { pt: 'Benevolência', en: 'Benevolence' },
-};
-const ATTR_ICON: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
+
+/**
+ * DOIS jogos de ícone, de propósito:
+ *
+ * - `ATTR_ICON` (PNG pixel-art, de `types/attributes.ts`) onde o fundo é
+ *   NEUTRO. É a arte da referência e o que o jogador deve reconhecer.
+ * - `ATTR_ICON_SVG` onde a cor INVERTE — no seletor de galho o botão ativo
+ *   pinta o fundo com a cor do atributo, e o ícone precisa virar tinta clara
+ *   para continuar legível. PNG não recolore; um pixel-art ciano/cobre sobre
+ *   preenchimento verde/azul/laranja fica ilegível.
+ *
+ * O rótulo NÃO é duplicado aqui: vem de `types/attributes.ts`. Este mapa já
+ * existiu em duas cópias (aqui e em `PlayerDetailModal`), enquanto a
+ * `StatsPage` não usava nenhuma e mostrava "Virus/Data/Vaccine" cru.
+ */
+const ATTR_ICON_SVG: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
 
 interface EvolutionPathProps {
   /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */
@@ -326,17 +334,20 @@ export function EvolutionPath({
           {isPt ? 'Alinhamento atual' : 'Current alignment'}
         </p>
         <div className="flex justify-between text-sm">
-          {ATTR_ORDER.map(a => {
-            const Icon = ATTR_ICON[a];
-            return (
-              // TEXTO na tinta legível; o ÍCONE segue a cor de identidade
-              // (elemento de interface, mínimo 3:1, que ela cumpre).
-              <span key={a} className="flex items-center gap-1.5" style={{ fontWeight: 700, color: ATTR_INK[a], fontSize: '0.85rem' }}>
-                <Icon size={16} color={getBranchColor(a).hex} strokeWidth={2.2} />
-                {L(ATTR_LABEL[a])}: {a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints}
-              </span>
-            );
-          })}
+          {ATTR_ORDER.map(a => (
+            // Fundo neutro aqui: entra o pixel-art da referência.
+            // TEXTO na tinta legível (o ícone é elemento de interface, 3:1).
+            <span key={a} className="flex items-center gap-1.5" style={{ fontWeight: 700, color: ATTR_INK[a], fontSize: '0.85rem' }}>
+              <img
+                src={ATTR_ICON[a]}
+                alt=""
+                width={20}
+                height={20}
+                style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
+              />
+              {L(ATTR_LABEL[a])}: {a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints}
+            </span>
+          ))}
         </div>
 
         {/* Os números sozinhos não dizem PARA ONDE o pet está indo — o jogador
@@ -384,7 +395,7 @@ export function EvolutionPath({
         {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
           const hex = getBranchColor(b).hex;
           const active = selectedBranch === b;
-          const Icon = ATTR_ICON[b];
+          const Icon = ATTR_ICON_SVG[b];
           return (
             <button
               key={b}

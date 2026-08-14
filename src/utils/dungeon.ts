@@ -6,6 +6,7 @@
 import { getDungeonEnemySprite } from './sprites';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from './storageKeys';
+import { readJson, readNumber, writeJson, writeLocal } from './safeStorage';
 
 export interface DungeonEnemy {
   name: string;
@@ -92,31 +93,31 @@ function weekKey(d = new Date()): string {
 /** Base dungeon level (floor 1's difficulty). Resets to 1 each week. */
 export function getDungeonDifficulty(): number {
   const week = weekKey();
-  try {
-    const rec = JSON.parse(localStorage.getItem(STORAGE_KEYS.DUNGEON_DIFFICULTY) || 'null');
-    if (rec?.week === week && typeof rec.level === 'number') return rec.level;
-  } catch { /* fall through to reset */ }
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ week, level: 1 }));
+  const rec = readJson<{ week?: string; level?: unknown } | null>(
+    STORAGE_KEYS.DUNGEON_DIFFICULTY, null);
+  if (rec?.week === week && typeof rec.level === 'number') return rec.level;
+  writeJson(STORAGE_KEYS.DUNGEON_DIFFICULTY, { week, level: 1 });
   return 1;
 }
 
 /** Raise the persisted base level to at least `level` (called on run completion). */
 export function setDungeonDifficultyAtLeast(level: number): number {
   const next = Math.max(getDungeonDifficulty(), level);
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_DIFFICULTY, JSON.stringify({ week: weekKey(), level: next }));
+  // Progresso de verdade (a base semanal da masmorra): perder isso rebaixa a
+  // dificuldade conquistada, então a falha AVISA.
+  writeJson(STORAGE_KEYS.DUNGEON_DIFFICULTY, { week: weekKey(), level: next });
   return next;
 }
 
 // ── Best score (ranking) ─────────────────────────────────────────────────────
 export function getDungeonBest(): number {
-  const v = Number(localStorage.getItem(STORAGE_KEYS.DUNGEON_BEST) || '0');
-  return Number.isFinite(v) ? v : 0;
+  return readNumber(STORAGE_KEYS.DUNGEON_BEST, 0);
 }
 
 /** Record a run's score; returns the (possibly new) best. */
 export function recordDungeonScore(score: number): number {
   const best = Math.max(getDungeonBest(), score);
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_BEST, String(best));
+  writeLocal(STORAGE_KEYS.DUNGEON_BEST, String(best));
   return best;
 }
 
@@ -125,12 +126,13 @@ export function recordDungeonScore(score: number): number {
 export function rollDungeonHeartDrop(bonusChance = 0): boolean {
   const today = new Date().toDateString();
   let rec = { date: today, count: 0 };
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.DUNGEON_HEART_DROPS) || 'null');
-    if (saved?.date === today) rec = saved;
-  } catch { /* fresh */ }
+  const saved = readJson<{ date?: string; count?: number } | null>(
+    STORAGE_KEYS.DUNGEON_HEART_DROPS, null);
+  if (saved?.date === today) rec = { date: today, count: Number(saved.count) || 0 };
   if (rec.count >= HEART_DROP_DAILY_CAP) return false;
   if (Math.random() > HEART_DROP_CHANCE + bonusChance) return false;
-  localStorage.setItem(STORAGE_KEYS.DUNGEON_HEART_DROPS, JSON.stringify({ date: today, count: rec.count + 1 }));
+  // Teto diário de cura: se não persistir, o jogador ganha itens acima do teto.
+  // É regra de economia — a falha AVISA.
+  writeJson(STORAGE_KEYS.DUNGEON_HEART_DROPS, { date: today, count: rec.count + 1 });
   return true;
 }

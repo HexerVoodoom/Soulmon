@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from './storageKeys';
+import { writeLocal, readLocal, removeLocal } from './safeStorage';
 
 // Login por link de e-mail (Firebase Auth).
 //
@@ -55,11 +56,16 @@ export async function sendLoginLink(email: string): Promise<{ ok: boolean; error
   if (!isAuthConfigured()) return { ok: false, error: 'not-configured' };
   try {
     const { auth, authMod } = await getAuth();
+    // Grava ANTES de mandar o link: sem o e-mail guardado, o retorno cai em
+    // `missing-email` e o link vira um beco sem saída. Mesma lição do
+    // `adoptCloudSave` — persistir o que o passo seguinte depende, primeiro.
+    if (!writeLocal(STORAGE_KEYS.PENDING_LOGIN_EMAIL, email.trim().toLowerCase())) {
+      return { ok: false, error: 'storage' };
+    }
     await authMod.sendSignInLinkToEmail(auth, email, {
       url: window.location.origin,
       handleCodeInApp: true,
     });
-    localStorage.setItem(STORAGE_KEYS.PENDING_LOGIN_EMAIL, email.trim().toLowerCase());
     return { ok: true };
   } catch (err) {
     if (import.meta.env.DEV) console.warn('[auth] sendLoginLink failed:', err);
@@ -86,11 +92,11 @@ export async function completeLoginFromLink(): Promise<{ ok: boolean; email?: st
     if (!authMod.isSignInWithEmailLink(auth, window.location.href)) {
       return { ok: false, error: 'not-a-link' };
     }
-    const email = localStorage.getItem(STORAGE_KEYS.PENDING_LOGIN_EMAIL);
+    const email = readLocal(STORAGE_KEYS.PENDING_LOGIN_EMAIL);
     if (!email) return { ok: false, error: 'missing-email' };
 
     const result = await authMod.signInWithEmailLink(auth, email, window.location.href);
-    localStorage.removeItem(STORAGE_KEYS.PENDING_LOGIN_EMAIL);
+    removeLocal(STORAGE_KEYS.PENDING_LOGIN_EMAIL, { silent: true });
     // Limpa os parâmetros do link da barra de endereço.
     window.history.replaceState({}, '', window.location.origin + window.location.pathname);
     return { ok: true, email: result.user.email ?? email };

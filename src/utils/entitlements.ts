@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from './storageKeys';
 import { authHeaders } from './auth';
+import { readLocal } from './safeStorage';
 
 // Entitlements no CLIENTE — espelho somente-leitura do que o servidor decidiu.
 //
@@ -18,7 +19,7 @@ export interface Entitlement {
 }
 
 function currentSaveId(): string | null {
-  return localStorage.getItem(STORAGE_KEYS.SAVE_ID);
+  return readLocal(STORAGE_KEYS.SAVE_ID);
 }
 
 /** Lê o saldo real do servidor. Retorna null se não der (offline, sem saveId). */
