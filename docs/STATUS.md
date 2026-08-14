@@ -398,4 +398,50 @@ pontas: vermelho com a URL antiga, verde com a nova.
 
 **Ainda é preciso um APK novo.** O APK já instalado tem a URL velha assada
 dentro dele e continuará abrindo o DigiApp até ser substituído pelo build do
-próximo run do CI.
+próximo run do CI. ✅ Confirmado pelo dono em aparelho real: o APK novo abre o
+Soulmon.
+
+### 🔴 ABERTO — `minSdkVersion = 24` é uma promessa que o app não cumpre
+
+Descoberto porque o smoke do APK falhou e o diagnóstico mostrou
+`WebViewFactory: Loading com.google.android.webview version 83.0.4103.106`.
+A imagem do emulador da API 30 traz WebView 83 (Chromium de meados de 2020).
+Nele o Capacitor registrou os plugins, carregou a URL certa e logou
+"App started" — e o JS morreu no parse. Tela em branco, ponte nunca chamada.
+
+**O smoke não estava com defeito: ele reproduziu um usuário real de WebView
+velho.** O CI passou para API 35 para deixar de testar isso por acidente, mas o
+problema de produto continua:
+
+| recurso | usos | exige |
+|---|---|---|
+| `oklch()` | 87 | Chromium 111+ |
+| `color-mix()` | 97 | Chromium 111+ |
+| aninhamento `&:hover` | 18 | Chromium 112+ |
+| `vite.config.ts` `build.target` | `'esnext'` | sem transpilação nenhuma |
+
+`android/variables.gradle` declara `minSdkVersion = 24` (Android 7.0). Quem
+instalar num aparelho com WebView desatualizado — Android 7/8/9 que não
+atualiza, ROM sem Play Store, aparelho corporativo travado — **instala e vê
+tela branca**, sem mensagem nenhuma. A Play Store usa o `minSdk` para decidir
+quem pode instalar, então hoje ela oferece o app para gente que não consegue
+usá-lo.
+
+Três saídas, e a escolha é do dono porque muda alcance de loja:
+
+1. **Subir o `minSdk`** para ~30 e aceitar perder aparelhos antigos. Não resolve
+   sozinho: o WebView é atualizável independentemente da versão do Android, então
+   um Android 11 com WebView velho continua quebrando.
+2. **Tela de aviso por detecção de recurso** — um `CSS.supports('color','oklch(0 0 0)')`
+   no `index.html`, antes do bundle, mostrando "seu navegador do sistema está
+   desatualizado, atualize o Android System WebView" em vez de tela branca.
+   É a única que cobre o caso real (WebView velho em Android novo). ⚠️ Mexe nos
+   scripts inline e portanto nos hashes da CSP — `src/security/csp.test.ts`
+   recalcula e vai acusar se esquecerem.
+3. **Transpilar de verdade**: `build.target` para algo como `chrome87` e trocar
+   `oklch`/`color-mix`/aninhamento por equivalentes. Recupera o alcance completo,
+   e é de longe a mais cara — a paleta inteira está em `oklch`.
+
+Recomendação: **(2) agora** (barata, honesta com o usuário) e (1) junto, com o
+`minSdk` refletindo o que o app realmente aguenta. (3) só se houver dado de que
+o público de aparelho antigo importa.

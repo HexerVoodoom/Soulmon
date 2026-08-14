@@ -121,7 +121,21 @@ jobs:
       - name: Boot emulator and run smoke
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          # API 35, não 30. A imagem da API 30 embarca **WebView 83** (Chromium
+          # de meados de 2020) e o app não roda nela: `src/index.css` usa
+          # `oklch()` (87×), `color-mix()` (97×) e aninhamento `&:hover` (18×),
+          # que pedem Chromium 111–112+, e `vite.config.ts` builda com
+          # `target: 'esnext'`, sem transpilar nada.
+          #
+          # A primeira falha deste job foi exatamente isso: Capacitor registrou
+          # os plugins, carregou a URL certa, "App started" — e o JS morreu no
+          # parse, então a ponte nunca foi chamada. O smoke não errou; ele
+          # reproduziu com fidelidade um usuário de WebView velho.
+          #
+          # Isso deixou à mostra um problema REAL de produto, registrado em
+          # docs/STATUS.md: `minSdkVersion = 24` promete Android 7+, e o app
+          # não entrega nisso.
+          api-level: 35
           target: google_apis          # WebView e Play Services do sistema
           arch: x86_64
           profile: pixel_2
