@@ -4,9 +4,14 @@ import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeJson } from '../utils/safeStorage';
 import {
-  generateOracle, ORACLE_QUESTIONS,
+  generateOracle,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
+import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
+import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/types';
+import { cityLabel, type City } from '../utils/soulProfile/cities';
+import { CityPicker } from './CityPicker';
+import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
@@ -69,7 +74,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // demo pula direto da intro pra lá, sem passar pelo oráculo.
   const FAVORITE_STEP = 5;
   const QUIZ_START = FAVORITE_STEP + 1;
-  const QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length; // primeiro passo pós-quiz
+  const QUIZ_END = QUIZ_START + SOUL_TEST_ITEMS.length; // primeiro passo pós-quiz
   const GENERATING = QUIZ_END;
   const REVEAL = QUIZ_END + 1;
   const REGISTER = REVEAL + 1;
@@ -94,10 +99,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [birthDate, setBirthDate] = useState('');
   const [birthDateText, setBirthDateText] = useState('');
   const [birthTime, setBirthTime] = useState('12:00');
-  const [birthPlace, setBirthPlace] = useState('');
+  // O local vira CIDADE da tabela (lat/lon/fuso IANA) em vez de texto livre: o
+  // mapa astral precisa dos três, e o fuso é o que carrega o horário de verão
+  // histórico. `birthPlace` continua existindo porque é o campo que o
+  // `OracleInput` sempre teve (e o que os perfis já salvos guardam) — passa a
+  // ser o rótulo legível da cidade escolhida.
+  const [birthCity, setBirthCity] = useState<City | null>(null);
+  const birthPlace = birthCity ? cityLabel(birthCity) : '';
+  const [timeUnknown, setTimeUnknown] = useState(false);
   const [favoriteCreature, setFavoriteCreature] = useState('');
   const [skipFavorite, setSkipFavorite] = useState(false);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<SoulAnswers>({});
   const [result, setResult] = useState<OracleResult | null>(null);
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
@@ -129,19 +141,51 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const canAdvance = (): boolean => {
     if (step === 1) return fullName.trim().length >= 3;
     if (step === 2) return !!birthDate;
-    if (step === 3) return !!birthTime;
-    if (step === 4) return birthPlace.trim().length >= 2;
+    if (step === 3) return timeUnknown || !!birthTime;
+    if (step === 4) return !!birthCity;
     // Criatura favorita é opcional — sempre dá pra avançar.
     if (step >= QUIZ_START && step < QUIZ_END) {
-      return !!answers[ORACLE_QUESTIONS[step - QUIZ_START].id];
+      return !!answers[SOUL_TEST_ITEMS[step - QUIZ_START].id];
     }
     return true;
   };
 
-  const doGenerate = () => {
+  const [generateError, setGenerateError] = useState(false);
+
+  /** Dispara a geração e, se ela falhar, devolve o usuário à última pergunta
+   *  com um aviso — travar na animação de "revelando" para sempre é o pior
+   *  final possível para um ritual que a pessoa acabou de responder inteiro. */
+  const runGenerate = () => {
+    setGenerateError(false);
+    void doGenerate().catch(() => {
+      setGenerateError(true);
+      setStep(QUIZ_END - 1);
+    });
+  };
+
+  const doGenerate = async () => {
+    // O motor da leitura (utils/soulProfile/) puxa a engine de efemérides e é
+    // pesado — vem por import DINÂMICO, aqui na tela de geração, que é o único
+    // momento do app em que ele é necessário e o único em que já existe uma
+    // animação cobrindo a espera.
+    const { buildSoulProfile } = await import('../utils/soulProfile');
+    const soulProfile = birthCity
+      ? buildSoulProfile({
+        fullName: fullName.trim(),
+        birthDate,
+        birthTime,
+        timeUnknown,
+        placeLabel: birthPlace,
+        latitude: birthCity.latitude,
+        longitude: birthCity.longitude,
+        timeZone: birthCity.timeZone,
+      }, answers)
+      : undefined;
+
     const input: OracleInput = {
-      fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(), answers,
+      fullName: fullName.trim(), birthDate, birthTime, birthPlace,
       favoriteCreature: skipFavorite ? undefined : (favoriteCreature.trim() || undefined),
+      soulProfile,
     };
     const r = generateOracle(input);
     setResult(r);
@@ -159,7 +203,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === QUIZ_END - 1) {
       // última pergunta respondida → tela de geração e gera
       setStep(GENERATING);
-      setTimeout(doGenerate, 1400); // deixa a animação respirar
+      setTimeout(runGenerate, 1400); // deixa a animação respirar
       return;
     }
     setStep(s => s + 1);
@@ -455,22 +499,47 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </StepShell>
         )}
 
-        {/* 3 — Hora */}
+        {/* 3 — Hora (com saída honesta para quem não sabe) */}
         {step === 3 && (
           <StepShell title={isPt ? 'A que horas?' : 'At what time?'}
-            hint={isPt ? 'A hora afina o ascendente e o tom da criatura.' : 'The hour tunes the ascendant and the creature\'s tone.'}>
-            <input style={input} type="time" value={birthTime} onChange={e => setBirthTime(e.target.value)} />
+            hint={isPt
+              ? 'A hora define o Ascendente e as casas do seu mapa.'
+              : 'The hour sets the Ascendant and the houses of your chart.'}>
+            <input style={{ ...input, opacity: timeUnknown ? 0.5 : 1 }} type="time" value={birthTime}
+              disabled={timeUnknown}
+              onChange={e => setBirthTime(e.target.value)} />
+            {/* Sem hora, o mapa NÃO inventa Ascendente — ele desliga o cálculo
+                e avisa. Obrigar um palpite seria pedir para a pessoa mentir
+                num dado que desloca o mapa inteiro. */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={timeUnknown}
+                onChange={e => setTimeUnknown(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>
+                {isPt ? 'Não sei a hora que nasci' : "I don't know my birth time"}
+              </span>
+            </label>
+            {timeUnknown && (
+              <p style={{ fontSize: 12, color: 'var(--sm-muted)', margin: '10px 2px 0', lineHeight: 1.5 }}>
+                {isPt
+                  ? 'Sem problema: usamos meio-dia e o mapa fica sem Ascendente e sem casas, em vez de fingir uma precisão que não existe.'
+                  : 'No problem: we use noon and the chart goes without Ascendant and houses, instead of faking a precision it does not have.'}
+              </p>
+            )}
           </StepShell>
         )}
 
-        {/* 4 — Local */}
+        {/* 4 — Local (cidade da tabela: lat/lon + fuso IANA) */}
         {step === 4 && (
           <StepShell title={isPt ? 'Onde você nasceu?' : 'Where were you born?'}
-            hint={isPt ? 'O lugar deixa seu eco no reino de origem.' : 'The place leaves its echo on the home realm.'}>
-            <input style={input} type="text" value={birthPlace} autoFocus
-              onChange={e => setBirthPlace(e.target.value)}
-              placeholder={isPt ? 'Ex.: São Paulo, Brasil' : 'E.g.: London, UK'}
-              onKeyDown={e => e.key === 'Enter' && next()} />
+            hint={isPt
+              ? 'O lugar posiciona o céu do seu nascimento — e o fuso certo.'
+              : 'The place positions the sky at your birth — and the right timezone.'}>
+            <CityPicker value={birthCity} onChange={setBirthCity} isPt={isPt}
+              inputStyle={input} optionStyle={optionBtn} />
           </StepShell>
         )}
 
@@ -497,30 +566,33 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </StepShell>
         )}
 
-        {/* 6..N — Quiz (uma pergunta por página) */}
+        {/* 6..N — Teste de personalidade (um item por página) */}
         {step >= QUIZ_START && step < QUIZ_END && (() => {
-          const q = ORACLE_QUESTIONS[step - QUIZ_START];
+          const item = SOUL_TEST_ITEMS[step - QUIZ_START];
+          const index = step - QUIZ_START;
           return (
-            <StepShell title={L(q.text)}
-              hint={isPt ? `Pergunta ${step - QUIZ_START + 1} de ${ORACLE_QUESTIONS.length}` : `Question ${step - QUIZ_START + 1} of ${ORACLE_QUESTIONS.length}`}>
-              <div>
-                {q.options.map(opt => {
-                  const selected = answers[q.id] === opt.id;
-                  return (
-                    <button key={opt.id} style={optionBtn(selected)}
-                      onClick={() => {
-                        setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
-                        // avança sozinho após escolher (fluido)
-                        setTimeout(() => {
-                          if (step === QUIZ_END - 1) { setStep(GENERATING); setTimeout(doGenerate, 1400); }
-                          else setStep(s => s + 1);
-                        }, 180);
-                      }}>
-                      {L(opt.text)}
-                    </button>
-                  );
-                })}
-              </div>
+            <StepShell title={L(itemPrompt(item))} hint={itemHint(item, index, SOUL_TEST_ITEMS.length, isPt)}>
+              <SoulTestItem
+                item={item}
+                answer={answers[item.id]}
+                isPt={isPt}
+                optionStyle={optionBtn}
+                onAnswer={answer => {
+                  setAnswers(prev => ({ ...prev, [item.id]: answer }));
+                  // avança sozinho após escolher (fluido)
+                  setTimeout(() => {
+                    if (step === QUIZ_END - 1) { setStep(GENERATING); setTimeout(runGenerate, 1400); }
+                    else setStep(s => s + 1);
+                  }, 180);
+                }}
+              />
+              {generateError && index === SOUL_TEST_ITEMS.length - 1 && (
+                <p style={{ fontSize: 12.5, color: 'var(--sm-danger, #c0392b)', margin: '14px 2px 0', lineHeight: 1.5 }}>
+                  {isPt
+                    ? 'Não foi possível revelar sua criatura agora. Toque na resposta de novo para tentar outra vez.'
+                    : "We couldn't reveal your creature just now. Tap your answer again to retry."}
+                </p>
+              )}
             </StepShell>
           );
         })()}

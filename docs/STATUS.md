@@ -7,7 +7,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **loop de QA multi-agente (ago/2026)** — 3 rodadas, suíte de
+Última atualização: **novo motor do oráculo (ago/2026)** — o teste de
+personalidade do repositório `teste-personalidade` virou a LEITURA do oráculo do
+Soulmon (`src/utils/soulProfile/`), no lugar do signo por faixa de datas, do
+ascendente chutado de 2 em 2 horas e das 6 perguntas do quiz antigo. A metade
+criativa (`utils/oracle.ts`: arquétipo, famílias, as 11 formas, prompts de
+sprite) não foi tocada, e o caminho legado segue inteiro para quem já tinha
+perfil salvo. Detalhes e o porquê de cada decisão em `docs/ORACULO.md`.
+
+Antes disso: **loop de QA multi-agente (ago/2026)** — 3 rodadas, suíte de
 379 → 600 testes, mais uma frente de aplicação da UI pixel-art. Ver
 `product/soulmon-01/` para os relatórios de cada rodada. O achado estrutural
 está resumido na seção 5 abaixo e é o que vale ler primeiro.

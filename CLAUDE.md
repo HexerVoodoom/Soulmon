@@ -161,6 +161,22 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   sem "+"). Item equipado que não combina com o cenário não é desenhado, mas a
   loja explica em vez de sumir em silêncio. Estado: `equippedDecor`
   (um item por espaço), migrado do antigo `equippedFurniture` no load.
+- **Oráculo** (`src/utils/oracle.ts` + `src/utils/soulProfile/` +
+  `docs/ORACULO.md`): tem DUAS metades. A **leitura** (soulProfile/) transforma
+  quem a pessoa é em 4 eixos — elemento/papel/alinhamento/reino; a **criação**
+  (oracle.ts) transforma esses eixos na criatura — arquétipo, família, fusão,
+  as 11 formas, prompts de sprite. Só a leitura foi trocada: hoje ela é 20
+  itens psicométricos (Big Five + Honestidade-Humildade + eixos junguianos),
+  mapa astral REAL (efemérides, casas Placidus, fuso IANA com horário de verão
+  histórico) e numerologia completa, no lugar do signo por faixa de datas, do
+  ascendente chutado de 2 em 2 horas e das 6 perguntas do quiz antigo.
+  `OracleInput.soulProfile` é opcional: sem ele o caminho legado roda inteiro,
+  que é o que mantém o reroll de quem jogou antes da troca. O motor é **pesado**
+  (astronomy-engine) e só entra por import DINÂMICO — o `oracle.ts` importa dele
+  só tipos, e é isso que o mantém fora do bundle inicial. Os coeficientes de
+  `soulProfile/axes.ts` foram calibrados por simulação para que nenhum
+  elemento/papel/reino tenha vantagem estrutural: **mexer num deles sem refazer
+  a simulação reabre o buraco que ele fechou**.
 - **Desbloqueio no meio do jogo** (`src/components/UnlockAccountModal.tsx`): a
   compra também existe DENTRO do app, não só na tela inicial (que o usuário vê
   uma vez). `UnlockNudge` só aparece em dois lugares — ao bater o limite de

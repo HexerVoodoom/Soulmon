@@ -267,7 +267,7 @@ test("todo item do teste existe em PT e EN", () => {
       check(item.prompt, item.id);
       check(item.a.text, `${item.id}.a`);
       check(item.b.text, `${item.id}.b`);
-    } else {
+    } else if (item.kind === "scenario") {
       check(item.situation, item.id);
       for (const o of item.options) check(o.text, `${item.id}.${o.id}`);
     }
