@@ -98,7 +98,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           {/* Caminho do pet — TODO o branch já desbloqueado, não só o nível atual */}
           <div style={{ padding: '8px 0 4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span className="sm-px-slot" style={{ width: 30, height: 30, background: branch ? `${ATTR_COLOR[branch]}22` : undefined }}>
+              <span className="sm-px-slot" style={{ width: 30, height: 30, backgroundColor: branch ? `${ATTR_COLOR[branch]}22` : undefined }}>
                 {branchIcon
                   ? <img src={branchIcon} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   : <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>?</span>}

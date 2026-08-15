@@ -371,7 +371,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
 
       {/* Battlefield (only during a run) — per-floor retro scene + VHS overlay */}
       {inBattle && enemy && (
-        <div className="sm-px-card" style={{ flex: 1, position: 'relative', margin: '0 16px', borderColor: scene.accent, background: scene.bg, overflow: 'hidden', boxShadow: 'inset 0 0 60px rgba(0,0,0,0.6)' }}>
+        <div className="sm-px-card" style={{ flex: 1, position: 'relative', margin: '0 16px', borderColor: scene.accent, ['--sm-cham-line' as string]: scene.accent, backgroundColor: scene.bg, overflow: 'hidden', boxShadow: 'inset 0 0 60px rgba(0,0,0,0.6)' }}>
           {/* VHS scanline overlay */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px)', backgroundSize: '100% 6px', animation: 'dungeon-vhs 5s linear infinite', opacity: 0.55, mixBlendMode: 'overlay' }} />
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 40px ${scene.accent}22` }} />
@@ -413,7 +413,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           {/* Result popup — feedback beat between actions */}
           {popup && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
-              <div className="sm-px-card" style={{ textAlign: 'center', background: '#0e1522', borderColor: popup.color, padding: '16px 26px' }}>
+              <div className="sm-px-card" style={{ textAlign: 'center', backgroundColor: '#0e1522', borderColor: popup.color, ['--sm-cham-line' as string]: popup.color, padding: '16px 26px' }}>
                 <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{popup.icon}</div>
                 <p className="sm-px-arcade-value" style={{ fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
                 <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>

@@ -7,8 +7,9 @@ import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import iconBath from '../assets/soulmon/icons/icon-bath.png';
 import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
 import iconWake from '../assets/soulmon/icons/icon-wake.png';
-import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX } from '../utils/petStage';
+import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
+import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
@@ -483,22 +484,62 @@ export const CompanionHUD = memo(function CompanionHUD({
 
 
 
+  /* RODADA 4 — a área do pet é FIXA (direção do dono).
+     Ela rolava junto com a lista e sumia quando o jogador descia; o pet tem
+     que estar sempre visível.
+
+     É `position: sticky` (regra `.sm-pet-sticky`), não `position: fixed`, e a
+     diferença importa:
+      · sticky continua NO FLUXO, então a lista não precisa de nenhum
+        `padding-top` mágico para não nascer embaixo do pet;
+      · o elemento gruda no topo do scroller, e a lista rola POR BAIXO dele.
+     Para o sticky funcionar, este `<div>` precisa ser filho DIRETO do
+     contêiner que tem a altura toda do conteúdo (o `.space-y-4` da Home): um
+     sticky só viaja dentro da caixa do pai. Se alguém envolver o
+     `<CompanionHUD/>` num wrapper de altura própria, o pet volta a rolar
+     embora nada quebre — é o footgun desta mudança.
+
+     O fundo: a Home pinta um cenário `position: fixed` cobrindo a tela
+     (App.tsx). A área fixa repete esse mesmo fundo com
+     `background-attachment: fixed`, que ancora no viewport — assim ela é
+     opaca (a lista não aparece por trás) e casa pixel a pixel com o cenário
+     de baixo, em vez de virar uma tarja de cor chapada por cima dele. */
+  const cenario = equippedBackground && PET_BACKGROUNDS[equippedBackground]
+    ? PET_BACKGROUNDS[equippedBackground].css
+    : undefined;
+
   return (
-    <div className="relative">
+    <div className="relative sm-pet-sticky" style={{ '--sm-pet-scene': cenario ?? 'none' } as React.CSSProperties}>
       {/* Main Container with Companion Area and Energy Bar */}
       <div className="relative">
       {/* O fundo de cenário equipado agora é pintado em App.tsx, cobrindo a
           Home inteira (era só esse retângulo, do tamanho do CompanionHUD —
           o dono pediu o fundo "no todo", não restrito a essa caixa). */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Companion Display Area — agora ocupa a largura inteira: as ações
-            saíram da coluna esquerda para a fileira emoldurada logo abaixo
-            (B1), e o palco deixou de dividir a linha com controles soltos. */}
+        {/* RODADA 4 — a JANELA do palco.
+            Com a área do pet fixa, cada pixel do palco é um pixel a menos de
+            lista, e o palco de 250px tinha ~87px de ar acima do sprite. Mas
+            encolher o palco NÃO pode ser encolher a composição: tudo lá dentro
+            (sprite, berço, decoração, `GROUND_Y`) é ancorado no centro dos
+            250px, então um palco de 158px cortava o pet pelos pés — medido em
+            412×700 antes desta janela existir.
+
+            Então: a COMPOSIÇÃO continua com `STAGE_HEIGHT` (250px) e é ancorada
+            ao FUNDO; quem encolhe é a janela por cima dela, que corta pelo
+            TOPO — exatamente onde estava o ar. Nada em `utils/petStage.ts`
+            muda, e o pet nunca aparece cortado. */}
         <div
-          className="relative overflow-hidden p-3"
+          className="relative overflow-hidden"
+          style={{ height: 'var(--sm-petstage-h)', borderRadius: 28 }}
+        >
+        <div
+          className="p-3"
           style={{
-            height: '250px',
-            borderRadius: 28,
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: STAGE_HEIGHT,
             imageRendering: 'pixelated',
             borderWidth: 0,
           }}
@@ -513,12 +554,19 @@ export const CompanionHUD = memo(function CompanionHUD({
             /* Botão do kit pixel (moldura de cobre, miolo aceso em ciano).
                `left`/`transform` seguem INLINE: `left-1/2` não existe no
                index.css pré-compilado (footgun 1) e sem ele o botão caía na
-               posição estática, fora do centro do palco. */
+               posição estática, fora do centro do palco.
+
+               RODADA 4 — `bottom: 6`, não `top: 10`. A janela do palco corta
+               pelo TOPO em tela baixa, e CONTROLE cortado é defeito funcional,
+               não estético: em 412×700 o botão de evoluir sumiria da tela.
+               Ancorado no rodapé ele existe em qualquer altura de janela — e
+               de quebra deixa de disputar a faixa acima do pet com o balão de
+               abraço (que era o motivo do `top` variável do balão, abaixo). */
             <PixelButton
               size="sm"
               variant="primary"
               onClick={onEvolveRequest}
-              style={{ position: 'absolute', zIndex: 30, left: '50%', top: 10, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
+              style={{ position: 'absolute', zIndex: 30, left: '50%', bottom: 6, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
             >
               {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
             </PixelButton>
@@ -776,6 +824,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
+        </div>
         </div>
 
         {/* ── B1: fileira EMOLDURADA de ações, rente ao palco ────────────────

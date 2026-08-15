@@ -219,7 +219,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         </span>
       </div>
 
-      <div className="sm-px-card" style={{ margin: '0 16px', overflow: 'hidden', position: 'relative', background: 'transparent' }}>
+      <div className="sm-px-card" style={{ margin: '0 16px', overflow: 'hidden', position: 'relative', backgroundColor: 'transparent' }}>
         <canvas
           ref={canvasRef}
           onPointerDown={jump}

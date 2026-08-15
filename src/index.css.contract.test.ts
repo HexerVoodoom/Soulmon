@@ -149,3 +149,95 @@ describe('[BUG] classes utilitárias usadas no JSX que não existem no index.css
     expect(usos.map(u => `${u.arquivo}:${u.linha}`)).toEqual([]);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RODADA 4 — trava mecânica da QUINA.
+//
+// O defeito que isto impede de voltar: toda peça do kit é `border: Npx solid`
+// + `clip-path` de octógono, e o clip corta a borda nas quatro quinas. Sem a
+// banda de 45° que fecha o chanfro, a moldura para a N px do canto — e ninguém
+// vê isso em review, só em recorte ampliado de pixel.
+//
+// Duas coisas são verificadas, porque as duas já quebraram na prática:
+//   1. toda classe com `clip-path: polygon(Npx 0, …)` está na regra das bandas;
+//   2. o chanfro declarado na banda (`--sm-cham-c`) é o MESMO do `clip-path` —
+//      se divergirem, a banda nasce fora da diagonal e fica um degrau.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('a moldura chanfrada FECHA na quina', () => {
+  /** `.classe` → chanfro em px declarado no `clip-path` daquela regra. */
+  function chanfrosDeclarados(): Map<string, number> {
+    const m = new Map<string, number>();
+    // Uma regra por vez: seletor (uma classe simples) + corpo até o `clip-path`.
+    const re = /\.([a-z0-9-]+)\s*\{([^}]*?)clip-path:\s*polygon\((\d+)px 0,/g;
+    let x: RegExpExecArray | null;
+    while ((x = re.exec(cssRaw))) {
+      // O losango do `.sm-px-*` que não é octógono (polygon(50% 0, …)) não casa
+      // com o regex — é o que se quer: ele não tem quina para fechar.
+      m.set(x[1], Number(x[3]));
+    }
+    return m;
+  }
+
+  /** Seletores cobertos pela regra das bandas de quina. */
+  function classesComBanda(): Set<string> {
+    const bloco = cssRaw.slice(cssRaw.indexOf('RODADA 4 — A QUINA FECHA'));
+    const i = bloco.indexOf('--sm-cham-c: 5px;');
+    const seletores = bloco.slice(0, i);
+    return new Set([...seletores.matchAll(/\.([a-z0-9-]+)[,\s]*\{?\s*$/gm)].map(m => m[1]));
+  }
+
+  /** `--sm-cham-c` efetivo por classe (o padrão da regra base é 5px). */
+  function chanfrosDaBanda(): Map<string, number> {
+    const m = new Map<string, number>();
+    for (const c of classesComBanda()) m.set(c, 5);
+    const re = /\.([a-z0-9-]+)\s*\{[^}]*?--sm-cham-c:\s*(\d+)px/g;
+    let x: RegExpExecArray | null;
+    while ((x = re.exec(cssRaw))) m.set(x[1], Number(x[2]));
+    return m;
+  }
+
+  it('a regra das bandas existe e cobre o kit inteiro', () => {
+    expect(cssRaw).toContain('RODADA 4 — A QUINA FECHA');
+    expect(classesComBanda().size).toBeGreaterThan(15);
+  });
+
+  it('nenhuma peça chanfrada ficou sem banda de quina', () => {
+    const comBanda = classesComBanda();
+    // `.sm-px-ritual-icon` perdeu a moldura nesta mesma rodada (direção do
+    // dono): sem borda não há quina para fechar. Se um dia voltar a ter
+    // moldura, some daqui e entra na regra das bandas.
+    const semMoldura = new Set(['sm-px-ritual-icon']);
+    const faltando = [...chanfrosDeclarados().keys()]
+      .filter(c => !comBanda.has(c) && !semMoldura.has(c));
+    expect(faltando, `peças com clip-path chanfrado e SEM banda de quina: ${faltando.join(', ')}`).toEqual([]);
+  });
+
+  it('o chanfro da banda é o mesmo do clip-path, peça por peça', () => {
+    const clip = chanfrosDeclarados();
+    const banda = chanfrosDaBanda();
+    const divergentes: string[] = [];
+    for (const [classe, c] of clip) {
+      if (!banda.has(classe)) continue;
+      if (banda.get(classe) !== c) divergentes.push(`${classe}: clip ${c}px vs banda ${banda.get(classe)}px`);
+    }
+    expect(divergentes, `chanfro divergente:\n${divergentes.join('\n')}`).toEqual([]);
+  });
+
+  it('nenhuma variante usa o atalho `background:` numa peça com banda', () => {
+    // O atalho zera `background-image` — é a única forma de a quina sumir de
+    // novo sem ninguém mexer na regra das bandas. Foi o que aconteceu no
+    // `:hover` de 5 peças e no `:disabled` do `.sm-px-jump`.
+    const comBanda = classesComBanda();
+    const ofensores: string[] = [];
+    const re = /\.([a-z0-9-]+)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g;
+    let x: RegExpExecArray | null;
+    while ((x = re.exec(cssRaw))) {
+      if (!comBanda.has(x[1])) continue;
+      const variantes = x[2].match(/&:[a-z-]+(?:\([^)]*\))?\s*\{[^}]*\}/g) ?? [];
+      for (const v of variantes) {
+        if (/(?:^|[;{\s])background:\s/.test(v)) ofensores.push(`${x[1]} → ${v.slice(0, 60)}`);
+      }
+    }
+    expect(ofensores, `use background-color:\n${ofensores.join('\n')}`).toEqual([]);
+  });
+});

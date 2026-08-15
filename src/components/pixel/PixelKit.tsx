@@ -116,7 +116,22 @@ export function PixelPanel({ children, title, titleIcon, padded = true, classNam
   return (
     <div
       className={`sm-px-panel${className ? ` ${className}` : ''}`}
-      style={{ ...artVar(btnLg), '--sm-px-slice': 43, '--sm-px-bw': '10px', ...style } as CSSProperties}
+      /* RODADA 4 — a quina do painel.
+         Era `slice 43 / bw 10px`, e os dois números estavam errados:
+
+         · SLICE. Medido no `btn-lg.png` (amostragem de pixel, borda de cima):
+           contorno escuro 0–11, cobre 12–29, contorno interno 30–39, MIOLO
+           TEAL a partir de 40. Com slice 43 os 3px de teal do miolo entravam
+           na fatia da borda e vazavam como um risco escuro dentro da moldura
+           (visível no recorte ampliado do canto). A moldura tem 40 px de arte,
+           então a fatia é 40.
+         · LARGURA. O ladrilho de QUINA é `slice × slice` e é espremido em
+           `bw`: 43px de arte em 10px de tela colapsavam o chanfro do desenho
+           num tarugo escuro de ~10px — o "bloco escuro na quina". Em 14px a
+           quina desenha o chanfro da arte na proporção certa e FECHA.
+
+         Custo: +4px de moldura por lado. É o preço de a peça de canto existir. */
+      style={{ ...artVar(btnLg), '--sm-px-slice': 40, '--sm-px-bw': '14px', ...style } as CSSProperties}
     >
       {title && (
         <div className="sm-px-panel-title">

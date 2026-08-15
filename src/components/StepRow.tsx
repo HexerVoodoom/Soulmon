@@ -19,7 +19,7 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
        etapa CONCLUIDA e a unica preenchida, como toda selecao desta rodada. */
     <div
       className={completed ? 'sm-px-card sm-px-card-ok' : 'sm-px-card'}
-      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 10px', background: 'var(--sm-bg)' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 10px', backgroundColor: 'var(--sm-bg)' }}
     >
       {/* Checkbox de etapa — <button> e não <div>, para receber foco de teclado
           e ser anunciado por leitor de tela. */}

@@ -1931,9 +1931,16 @@ export default function App() {
 
         {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
         <div
-          className="flex-1 overflow-y-auto px-6 pt-3"
+          className="flex-1 overflow-y-auto px-6"
           style={{
             position: 'relative', zIndex: 1,
+            /* RODADA 4: o `pt-3` virou TOKEN porque a área fixa do pet precisa
+               cancelar exatamente este padding no `top` do sticky. Com os dois
+               valores cravados em lugares diferentes, sobrava uma fresta de
+               12px em que a lista aparecia rolando ACIMA do pet (visto em
+               screenshot, 412×700) — e divergiriam na primeira vez que alguém
+               mexesse num deles. */
+            paddingTop: 'var(--sm-scroll-pt)',
             /* B5: `--sm-chatdock-h` (altura real do dock) + 16px de folga,
                no lugar do `100px` mágico. Ver o token no index.css. */
             paddingBottom: currentView === 'main'
@@ -1966,7 +1973,15 @@ export default function App() {
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < hpSafeToday && !hpBannerDismissed && (
                 /* Chanfro do kit em vez do `rounded-2xl` do sistema antigo:
                    era o último raio Material que sobrava na Home (B1). */
-                <div className="flex items-center gap-2 px-4 py-2 sm-px-card" style={{ background: 'var(--sm-danger-soft)', borderColor: 'var(--sm-danger)' }}>
+                /* `backgroundColor` (nunca o atalho `background`, que zeraria as
+                   bandas de quina) e `--sm-cham-line` junto de `borderColor`: quem
+                   repinta a moldura de uma peça do kit repinta a QUINA também, senão
+                   a quina sai cobre e a borda vermelha. Ver "RODADA 4 — A QUINA
+                   FECHA" no index.css. */
+                <div
+                  className="flex items-center gap-2 px-4 py-2 sm-px-card"
+                  style={{ backgroundColor: 'var(--sm-danger-soft)', borderColor: 'var(--sm-danger)', '--sm-cham-line': 'var(--sm-danger)' } as React.CSSProperties}
+                >
                   <img src={iconWarning} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
                   <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: 'var(--sm-danger)' }}>
                     {language === 'pt-BR'

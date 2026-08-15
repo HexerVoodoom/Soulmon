@@ -91,14 +91,28 @@ describe('RitualRow — sobreviver ao texto PT-BR (N3 da análise de gap)', () =
   });
 });
 
-describe('RitualRow — ícone (G2): quadro vazio, NUNCA emoji', () => {
-  it('sem ícone de categoria, a casa existe e continua vazia', () => {
+describe('RitualRow — ícone SEM MOLDURA (rodada 4), e NUNCA emoji', () => {
+  it('sem ícone de categoria, a linha começa no TEXTO — sem casa reservada', () => {
+    // Era o contrário: a casa existia sempre e ficava vazia (o "quadro de
+    // cobre vazio" do G2). Tirada a moldura por direção do dono, um quadro
+    // vazio vira 40px de NADA no meio de uma tela de 412px — então a casa
+    // deixa de existir e a linha começa no texto.
     const { container } = renderWithCss(<ul>{linha({ icon: undefined })}</ul>);
+    expect(container.querySelector('.sm-px-ritual-icon')).toBeNull();
+  });
+
+  it('a casa do ícone não tem moldura própria', () => {
+    // A regra da rodada 3 ("controle interativo sem superfície = 0") vale para
+    // CONTROLE. Esta casa é decorativa (`aria-hidden`); o checkbox e a coluna
+    // de texto da linha continuam com superfície e alvo próprios.
+    const { container } = renderWithCss(<ul>{linha({ icon: '/icone-fake.png' })}</ul>);
     const casa = container.querySelector('.sm-px-ritual-icon') as HTMLElement;
-    expect(casa).toBeTruthy();
-    expect(casa.querySelector('img')).toBeNull();
-    // A casa é fixa em 40px: é ela que alinha a coluna de texto entre linhas.
     expect(computed(casa, 'width')).toBe('40px');
+    // `border-style`, não `border-width`: sem estilo a borda não desenha, e o
+    // jsdom devolve o *keyword* `medium` para a largura inicial — asserção
+    // sobre a largura passaria a medir o jsdom, não a regra.
+    expect(computed(casa, 'border-top-style') || 'none').toBe('none');
+    expect(computed(casa, 'clip-path') || 'none').toBe('none');
   });
 
   it('nenhum emoji do sistema sobra no conteúdo da linha', () => {

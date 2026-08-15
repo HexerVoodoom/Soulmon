@@ -98,7 +98,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       </p>
 
       {/* Arena */}
-      <div className="sm-px-card" style={{ flex: 1, margin: 16, background: 'rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <div className="sm-px-card" style={{ flex: 1, margin: 16, backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <img src={getSpriteForStage(evolutionStage, demoCharacterId)} alt="pet"
              style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
         {/* Os tres EMOJIS DE MAO sao as PECAS do jogo, nao decoracao: o kit

@@ -21,10 +21,11 @@
  *    nenhum. A linha é dimensionada para SOBREVIVER a 40+ caracteres: o nome
  *    trunca com `…` e leva `title` com o texto inteiro. Nada de altura que
  *    depende do texto caber.
- * 3. **Fallback do ícone é quadro de cobre VAZIO, nunca emoji.** Emoji do
- *    sistema ao lado de moldura pixelada é o gap mais gritante do tema claro
- *    (duas eras gráficas na mesma linha). Sem ícone de categoria, fica o
- *    quadro vazio — que lê como "sem categoria", não como defeito.
+ * 3. **O ícone não mora em caixa, e sem ícone não sobra caixa** (rodada 4).
+ *    O quadro de cobre em volta do ícone saiu por direção do dono; o fallback
+ *    da linha sem categoria, que era esse mesmo quadro VAZIO, virou ausência —
+ *    a linha começa no texto. Emoji do sistema continua proibido (era o gap
+ *    mais gritante do tema claro: duas eras gráficas na mesma linha).
  * 4. **Etapas nascem RECOLHIDAS.** Uma atividade de 4 etapas ocupava 5 linhas
  *    e comia sozinha a dobra. A barra segmentada já diz `2/4` de relance; quem
  *    quiser marcar etapa abre. O expansor ocupa a mesma casa do checkbox, que
@@ -42,19 +43,34 @@ import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { PixelCheckbox, PixelPanel, PixelSegmentedBar, PixelButton } from './PixelKit';
 
-// ───────────────────────────────────────────────────────────── quadro do ícone
+// ─────────────────────────────────────────────────────────── o ícone (sem caixa)
 
 /**
- * Casa fixa de 40×40 para o ícone da linha. Sempre desenhada, mesmo sem
- * ícone: é o "quadro de cobre vazio" que substitui o emoji do sistema, e é o
- * que mantém o alinhamento vertical da coluna de texto entre linhas.
+ * Casa de 40×40 para o ícone da linha — SEM MOLDURA (rodada 4, direção do dono).
+ *
+ * Era um quadro de cobre chanfrado em volta do ícone. Duas consequências de
+ * tirá-lo:
+ *
+ *  · sem moldura o ícone ocupa a casa inteira: 28 → 32px;
+ *  · sem moldura o "quadro vazio" do fallback vira 40px de NADA — largura
+ *    reservada para uma coisa que não existe. Então a linha sem categoria não
+ *    renderiza a casa: ela **começa no texto**. A leitura ("esta linha não tem
+ *    categoria") passa a vir da ausência, e não de um quadro vazio que parecia
+ *    ícone quebrado — sem gastar 50px dos 412px da tela em nada.
+ *
+ * O que NÃO mudou: emoji do sistema continua proibido aqui (era o gap mais
+ * gritante do tema claro — duas eras gráficas na mesma linha).
+ *
+ * O que isto NÃO é: violação da regra da rodada 3 ("controle interativo sem
+ * superfície = 0". Este `<span>` é `aria-hidden` e decorativo; os controles da
+ * linha (coluna de texto, checkbox, expansor) continuam todos com superfície
+ * e alvo próprios.
  */
 export function RitualIcon({ src }: { src?: string }) {
+  if (!src) return null;
   return (
     <span className="sm-px-ritual-icon" aria-hidden="true">
-      {src && (
-        <img src={src} alt="" width={28} height={28} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-      )}
+      <img src={src} alt="" width={32} height={32} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
     </span>
   );
 }
@@ -62,7 +78,8 @@ export function RitualIcon({ src }: { src?: string }) {
 // ───────────────────────────────────────────────────────────────────── a linha
 
 export interface RitualRowProps {
-  /** Ícone emoldurado do kit. Ausente = quadro vazio (NUNCA emoji). */
+  /** Ícone do kit, solto na linha (sem moldura). Ausente = a linha começa no
+   *  texto, sem casa reservada. NUNCA emoji do sistema. */
   icon?: string;
   name: string;
   /** Uma linha curta: categoria, frequência, "3/5 etapas". */

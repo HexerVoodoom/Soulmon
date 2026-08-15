@@ -214,7 +214,7 @@ export function ShopModal({
         )}
         {/* Aviso de composição — só para o que está equipado e não aparece. */}
         {equipped && !showsHere && (
-          <p className="sm-px-card" style={{ width: '100%', margin: 0, padding: '8px 10px', fontSize: '0.72rem', fontWeight: 600, background: 'var(--sm-gold-soft)', color: 'var(--sm-ink)' }}>
+          <p className="sm-px-card" style={{ width: '100%', margin: 0, padding: '8px 10px', fontSize: '0.72rem', fontWeight: 600, backgroundColor: 'var(--sm-gold-soft)', color: 'var(--sm-ink)' }}>
             {isPt
               ? 'Equipado, mas não aparece no cenário atual — troque de cenário para vê-lo.'
               : "Equipped, but it doesn't show in the current scene — switch scenes to see it."}
@@ -222,7 +222,7 @@ export function ShopModal({
         )}
         {/* unlock hint "tooltip" — expands inside the card when tapped */}
         {!unlocked && showHint && (
-          <p className="sm-px-card" style={{ width: '100%', margin: 0, padding: '8px 10px', fontSize: '0.72rem', fontWeight: 600, background: 'var(--sm-gold-soft)', color: 'var(--sm-ink)' }}>
+          <p className="sm-px-card" style={{ width: '100%', margin: 0, padding: '8px 10px', fontSize: '0.72rem', fontWeight: 600, backgroundColor: 'var(--sm-gold-soft)', color: 'var(--sm-ink)' }}>
             {isPt ? 'Como desbloquear:' : 'How to unlock:'} {unlockHint(item)}
           </p>
         )}

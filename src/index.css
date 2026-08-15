@@ -4755,7 +4755,7 @@ select:focus-visible {
   cursor: pointer;
   clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
   transition: background .12s ease, filter .12s ease;
-  &:hover { background: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
+  &:hover { background-color: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
   &:disabled { opacity: 0.5; cursor: default; }
 }
 .sm-px-chat-btn-send {
@@ -4765,7 +4765,7 @@ select:focus-visible {
      do kit dá 12,2:1. É exatamente a armadilha que a nota do `.sm-px-fab`
      já descrevia, e que passou aqui. */
   color: #04211f;
-  &:hover { filter: brightness(1.12); background: var(--sm-px-cyan); }
+  &:hover { filter: brightness(1.12); background-color: var(--sm-px-cyan); }
 }
 .sm-px-chat-btn-rec {
   border-color: var(--sm-px-red);
@@ -5075,8 +5075,19 @@ button.sm-px-node {
 .sm-px-ritual-dim .sm-px-ritual-name { color: var(--sm-muted); }
 .sm-px-ritual-dim .sm-px-ritual-icon { filter: grayscale(.75); }
 
-/* Casa do ícone: 40×40 fixos. Com ícone ou sem, o quadro de cobre existe —
-   é ele que substitui o emoji do sistema e o que alinha a coluna de texto. */
+/* Casa do ícone: 40×40, SEM MOLDURA (rodada 4, direção do dono).
+   Era um quadro de cobre chanfrado em volta de cada ícone; o dono não quer
+   item dentro de caixa. O ícone fica solto na linha.
+
+   Isto NÃO viola a regra da rodada 3 ("controle interativo sem superfície =
+   0"): esta casa é um `<span aria-hidden>` DECORATIVO. Quem é controle na
+   linha continua com superfície própria — a coluna de texto (`.sm-px-ritual-main`,
+   44px de altura mínima e `:focus-visible`), o checkbox de cobre
+   (`.sm-px-check-box`, 44×44) e o expansor (`.sm-px-ritual-expand`, emoldurado).
+
+   O FALLBACK mudou junto: a linha sem categoria mostrava um quadro de cobre
+   VAZIO, que sem a moldura vira 40px de nada. Agora `RitualIcon` não renderiza
+   nada nesse caso (ver RitualPanel.tsx) e a linha simplesmente começa no texto. */
 .sm-px-ritual-icon {
   display: flex;
   align-items: center;
@@ -5085,10 +5096,6 @@ button.sm-px-node {
   width: 40px;
   height: 40px;
   box-sizing: border-box;
-  background: color-mix(in srgb, var(--sm-px-copper) 12%, transparent);
-  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 75%, transparent);
-  /* Canto chanfrado de 1 bloco: a mesma geometria do resto do kit. */
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
   image-rendering: pixelated;
 }
 
@@ -5323,7 +5330,7 @@ button.sm-px-node {
   background: var(--sm-px-sel-bg);
   color: var(--sm-px-sel-ink);
   border-color: var(--sm-px-sel-edge);
-  &:hover { background: var(--sm-px-sel-bg); }
+  &:hover { background-color: var(--sm-px-sel-bg); }
 }
 
 /* ── Chip de escolha (dias da semana, categoria) — G8 ─────────────────────
@@ -5358,7 +5365,7 @@ button.sm-px-node {
   background: var(--sm-px-sel-bg);
   color: var(--sm-px-sel-ink);
   border-color: var(--sm-px-sel-edge);
-  &:hover { background: var(--sm-px-sel-bg); }
+  &:hover { background-color: var(--sm-px-sel-bg); }
 }
 /* Chip de dia da semana: caixa estreita, rótulo de 3 letras em bitmap (é
    RÓTULO, não texto corrido — cabe na regra de dois níveis do G5). O
@@ -5487,7 +5494,7 @@ button.sm-px-node {
   color: var(--sm-px-ink);
   border: 2px solid var(--sm-px-copper);
   clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
-  &:hover { background: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
+  &:hover { background-color: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
   &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
 }
 /* Rótulo/valor de HUD de arcade (SCORE, ANDAR, RECORDE). */
@@ -5609,8 +5616,8 @@ button.sm-px-node {
      painel de rituais. Sem ela, três botões colados leem como um só. */
   border-left: 2px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent);
   &:first-child { border-left: none; }
-  &:hover { background: color-mix(in srgb, var(--sm-px-cyan) 12%, transparent); }
-  &:active { background: color-mix(in srgb, var(--sm-px-cyan) 20%, transparent); }
+  &:hover { background-color: color-mix(in srgb, var(--sm-px-cyan) 12%, transparent); }
+  &:active { background-color: color-mix(in srgb, var(--sm-px-cyan) 20%, transparent); }
   &:focus-visible { outline: 3px solid var(--sm-px-cyan); outline-offset: -3px; }
 }
 .sm-px-action-label {
@@ -5680,7 +5687,11 @@ button.sm-px-node {
   user-select: none;
   clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
   &:disabled {
-    background: color-mix(in srgb, var(--sm-px-copper) 18%, transparent);
+    /* `background-color`, NUNCA o atalho: o atalho zera `background-image` e
+       apaga as bandas de quina (ver "RODADA 4 — A QUINA FECHA", fim do arquivo).
+       Como a variante tem especificidade maior que a regra base, o atalho
+       ganharia dela — e a moldura voltaria a abrir só no estado desabilitado. */
+    background-color: color-mix(in srgb, var(--sm-px-copper) 18%, transparent);
     color: color-mix(in srgb, #ffffff 45%, transparent);
     cursor: default;
   }
@@ -5761,4 +5772,201 @@ button.sm-px-node {
   &:hover { border-color: var(--sm-px-copper); }
   &:focus-visible { outline: 3px solid var(--sm-px-cyan); outline-offset: -3px; }
   &:disabled { cursor: default; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RODADA 4 — A QUINA FECHA
+   ═══════════════════════════════════════════════════════════════════════════
+   O DEFEITO (medido no pixel, `E:/pw/shots/r4-antes-*-quina-*.png`): todas as
+   peças do kit são `border: Npx solid X` + `clip-path` de octógono. A borda é
+   desenhada como RETÂNGULO; o clip corta as quatro quinas POR CIMA dela. O que
+   sobra é um trilho de cobre que para a N px do canto e um chanfro DESCOBERTO
+   — a moldura não fecha. Na cápsula VIDA/ENERGIA dava para contar os pixels do
+   buraco.
+
+   O CONSERTO: a borda passa a acompanhar o chanfro. Em cada quina entra uma
+   BANDA de 45° da mesma cor e da mesma espessura da borda, desenhada como
+   camada de `background-image` do próprio elemento.
+
+   Por que `background-image` e NÃO um `::before`:
+     · `::before` exigiria `position: relative` em ~20 classes, e isso mudaria
+       o bloco contenedor de qualquer descendente absoluto que hoje se ancora
+       num avô (regressão silenciosa, do tipo que ninguém vê em review);
+     · o `clip-path` do elemento já recorta o próprio background, então a banda
+       nasce recortada exatamente na diagonal do chanfro — sem duplicar a
+       geometria em dois lugares que podem divergir.
+
+   A GEOMETRIA (é exata, não é aproximação):
+     · a peça tem chanfro `--sm-cham-c` e borda `--sm-cham-bw`;
+     · cada quina recebe um ladrilho de `c × c` com um gradiente a 45°;
+     · num ladrilho QUADRADO, a posição 50% do gradiente cai exatamente sobre a
+       reta do chanfro, e as posições em px medem distância PERPENDICULAR a
+       ela. Logo `50% → calc(50% + bw)` é uma banda de espessura `bw` colada
+       por dentro do chanfro;
+     · essa banda encosta na borda reta: a banda cobre `x + y ∈ [c, c+bw·√2]` e
+       a borda de cima cobre `y ≤ bw ∧ x + y ≥ c` — os dois se sobrepõem a
+       partir de `x = c − bw`. Sem fresta, sem meia-quina.
+
+   ⚠️ CUIDADO AO MEXER (o footgun desta regra): quem usa estas classes NÃO pode
+   escrever `background:` (o atalho zera `background-image` e apaga as quinas).
+   Use `backgroundColor`. Vale para style inline no TSX também — foi por isso
+   que `App.tsx`, `ShopModal`, `StepRow`, `DungeonGame`, `RPSGame`, `DinoGame` e
+   `PlayerDetailModal` trocaram `background:` por `backgroundColor:` nesta
+   rodada. Regra nova sempre no FIM do arquivo, variante sempre ANINHADA.
+   ───────────────────────────────────────────────────────────────────────── */
+.sm-bottom-nav-btn-on,
+.sm-px-check-box,
+.sm-px-chip,
+.sm-px-fab,
+.sm-px-chatbar,
+.sm-px-chat-btn,
+.sm-px-tree-plate,
+.sm-px-tree-degen,
+.sm-px-ritual-expand,
+.sm-px-card,
+.sm-px-slot,
+.sm-px-tab,
+.sm-px-chip-btn,
+.sm-px-tag,
+.sm-px-switch,
+.sm-px-arcade-bar,
+.sm-px-arcade-close,
+.sm-px-actionbar,
+.sm-px-jump,
+.sm-px-code,
+.sm-px-row-btn {
+  /* Padrão do kit: chanfro de 5px, borda de 2px, cobre. Cada peça sobrescreve
+     só o que diverge, logo abaixo. `--sm-cham-line` acompanha a `border-color`
+     da peça — inclusive nos estados (selecionado, ok, falha). */
+  --sm-cham-c: 5px;
+  --sm-cham-bw: 2px;
+  --sm-cham-line: var(--sm-px-copper);
+  background-image:
+    linear-gradient(to bottom right, transparent 50%, var(--sm-cham-line) 50%, var(--sm-cham-line) calc(50% + var(--sm-cham-bw)), transparent calc(50% + var(--sm-cham-bw))),
+    linear-gradient(to bottom left,  transparent 50%, var(--sm-cham-line) 50%, var(--sm-cham-line) calc(50% + var(--sm-cham-bw)), transparent calc(50% + var(--sm-cham-bw))),
+    linear-gradient(to top right,    transparent 50%, var(--sm-cham-line) 50%, var(--sm-cham-line) calc(50% + var(--sm-cham-bw)), transparent calc(50% + var(--sm-cham-bw))),
+    linear-gradient(to top left,     transparent 50%, var(--sm-cham-line) 50%, var(--sm-cham-line) calc(50% + var(--sm-cham-bw)), transparent calc(50% + var(--sm-cham-bw)));
+  background-repeat: no-repeat;
+  background-size: var(--sm-cham-c) var(--sm-cham-c);
+  /* `border-box` nos dois: o `clip-path` mede pela caixa de BORDA, e o padrão
+     do background é `padding-box` — sem isto o ladrilho nasce deslocado de
+     `bw` e a banda fica meio pixel fora da diagonal. */
+  background-origin: border-box;
+  background-clip: border-box;
+  background-position: 0 0, 100% 0, 0 100%, 100% 100%;
+}
+
+/* Chanfro por peça — o mesmo número do `clip-path` de cada uma. */
+.sm-bottom-nav-btn-on { --sm-cham-c: 6px; }
+.sm-px-chip { --sm-cham-c: 6px; }
+.sm-px-fab { --sm-cham-c: 9px; --sm-cham-bw: 3px; }
+.sm-px-chatbar { --sm-cham-c: 8px; }
+.sm-px-chat-btn { --sm-cham-c: 6px; }
+.sm-px-tree-plate { --sm-cham-c: 7px; --sm-cham-line: var(--sm-line); }
+.sm-px-tree-plate-current { --sm-cham-line: var(--sm-px-copper); }
+.sm-px-tree-degen { --sm-cham-c: 6px; --sm-cham-line: var(--sm-line); }
+.sm-px-ritual-expand { --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 70%, transparent); }
+.sm-px-card { --sm-cham-c: 8px; }
+.sm-px-card-ok { --sm-cham-line: #3fae5a; }
+.sm-px-card-fail { --sm-cham-line: #d9534f; }
+.sm-px-slot { --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 60%, transparent); }
+.sm-px-tab { --sm-cham-c: 6px; --sm-cham-line: var(--sm-px-off-edge); }
+.sm-px-tab-on { --sm-cham-line: var(--sm-px-sel-edge); }
+.sm-px-chip-btn { --sm-cham-line: var(--sm-px-off-edge); }
+.sm-px-chip-on { --sm-cham-line: var(--sm-px-sel-edge); }
+.sm-px-tag { --sm-cham-c: 4px; --sm-cham-line: var(--sm-px-off-edge); }
+.sm-px-tag-on { --sm-cham-line: var(--sm-px-sel-edge); }
+.sm-px-switch { --sm-cham-line: var(--sm-px-off-edge); }
+.sm-px-switch-on { --sm-cham-line: var(--sm-px-sel-edge); }
+.sm-px-arcade-bar { --sm-cham-c: 8px; }
+.sm-px-actionbar { --sm-cham-c: 8px; }
+.sm-px-jump { --sm-cham-c: 8px; }
+.sm-px-code { --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 45%, transparent); }
+.sm-px-row-btn { --sm-cham-c: 6px; --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 60%, transparent); }
+/* O checkbox é o único que muda de cor de moldura ao ser marcado — e é o
+   controle mais importante da Home, então a quina dele tem que fechar nos
+   DOIS estados. */
+.sm-px-check-box { --sm-cham-line: var(--sm-gold); }
+.sm-px-check-on { --sm-cham-line: var(--sm-primary); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RODADA 4 — A ÁREA DO PET NÃO ROLA PARA FORA DA TELA
+   ═══════════════════════════════════════════════════════════════════════════
+   Direção do dono: o pet fica SEMPRE visível; só a lista de rituais rola.
+
+   `position: sticky`, não `fixed`. Sticky continua no fluxo, então a lista não
+   precisa de `padding-top` mágico para não nascer embaixo do pet, e o cálculo
+   de densidade continua sendo o cálculo normal de layout. (`fixed` exigiria
+   duplicar a altura da área em px — exatamente o número mágico que o
+   `--sm-chatdock-h` aposentou na rodada 3.)
+
+   Pré-requisito estrutural: um sticky só viaja dentro da caixa do PAI. O
+   `<CompanionHUD/>` é filho direto do `.space-y-4` da Home, que tem a altura do
+   conteúdo inteiro — por isso funciona. Envolvê-lo num wrapper de altura
+   própria faz o pet voltar a rolar SEM quebrar nada (footgun).
+
+   `margin-inline: -24px` + `padding-inline: 24px`: o scroller da Home tem
+   `px-6`. Sem a sangria, 24px de cada lado ficariam transparentes e a lista
+   apareceria rolando ATRÁS do pet nas laterais.
+
+   ⚠️ Nada de `transform`, `filter` ou `backdrop-filter` aqui: qualquer um dos
+   três faria deste elemento o bloco contenedor do `.sm-chat-fixed`, que é
+   descendente — o dock de chat sairia do rodapé da tela. */
+/* Padding-top do scroller da Home (App.tsx consome o mesmo token). O sticky
+   ancora no padding do scrollport, não no topo dele: com `top: 0` sobrava uma
+   fresta de 12px por onde a lista aparecia rolando ACIMA do pet — medido em
+   412×700. O `top` negativo cancela o padding e cola a área no topo da tela. */
+:root { --sm-scroll-pt: 12px; }
+.sm-pet-sticky {
+  position: sticky;
+  top: calc(var(--sm-scroll-pt) * -1);
+  z-index: 5;
+  margin-inline: -24px;
+  /* Padding vertical no mínimo: aqui cada pixel sai da lista. Medido: 6px em
+     cima custavam uma unidade de ação inteira acima da dobra em 412×915. */
+  padding: 0 24px;
+  /* Opacidade: sem fundo, a lista rolaria VISÍVEL por trás do pet. O fundo
+     repetido aqui é o MESMO da Home (App.tsx pinta um cenário `fixed` cobrindo
+     a tela), e `background-attachment: fixed` ancora no viewport — então esta
+     faixa casa pixel a pixel com o cenário de baixo em vez de virar uma tarja
+     chapada por cima dele. `--sm-pet-scene` vem do componente (é o `css` do
+     cenário equipado, ou `none`). */
+  background-color: var(--sm-bg);
+  background-image: var(--sm-pet-scene, none);
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+/* Altura da JANELA do palco. Não é a altura da composição: a composição
+   continua com os 250px do `STAGE_HEIGHT` e é ancorada ao FUNDO da janela, que
+   corta pelo topo (ver CompanionHUD). Com a área do pet fixa, cada pixel de
+   janela é um pixel A MENOS de lista visível — e o que sobrava no topo dos
+   250px era ar: o sprite só começa a 87px.
+
+   Medido, unidades de ação INTEIRAS acima da dobra útil (a dobra útil é o topo
+   do dock de chat, não o fim da tela):
+     412×915 — antes 3, depois 4
+     412×700 — antes 0, depois 2
+
+   215 (em vez de 250) devolve uma unidade inteira em 915 sem chegar perto do
+   sprite. */
+:root { --sm-petstage-h: 215px; }
+/* PISO da janela: o sprite começa a 87px do topo da composição, então uma
+   janela abaixo de ~165px passa a cortar o pet pela cabeça. 175 deixa 12px de
+   folga. Abaixo disto não se encolhe mais — se a lista ainda não couber, a
+   conversa é sobre O QUE SAI DA TELA (o dock de chat? a marca no HUD?), não
+   sobre espremer o pet. */
+@media (max-height: 800px) { :root { --sm-petstage-h: 175px; } }
+
+/* Tela baixa: a linha de ritual aperta de 72 para 64px. Com a área do pet
+   fixa, a lista perde altura útil — e 8px por linha é o único corte que
+   devolve uma unidade inteira acima da dobra sem mexer em alvo de toque: o
+   checkbox continua 44×44 e a coluna de texto continua com `min-height: 44px`
+   (WCAG 2.2 AA 2.5.8 intacto). */
+@media (max-height: 800px) {
+  .sm-px-ritual-row { min-height: 64px; padding: 6px 12px; }
+  .sm-px-panel-title { padding: 6px 16px 0; }
 }
