@@ -107,10 +107,8 @@ export function TaskEditModal({
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box',
-    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
-    border: '2px solid var(--sm-line)', borderRadius: 14, padding: '10px 13px', fontSize: 14,
-    outline: 'none',
+    /* Visual mora em .sm-px-field (kit); aqui só layout. */
+    width: '100%', boxSizing: 'border-box', outline: 'none',
   };
   const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--sm-muted)' };
 
@@ -125,7 +123,7 @@ export function TaskEditModal({
         <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label style={labelStyle}>{txt.name}</label>
-            <Input type="text" autoComplete="new-password" value={name} onChange={(e) => setName(e.target.value)} style={inputStyle} />
+            <Input type="text" autoComplete="new-password" value={name} onChange={(e) => setName(e.target.value)} className="sm-px-field" style={inputStyle} />
           </div>
 
           <div>
@@ -166,7 +164,7 @@ export function TaskEditModal({
                   <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 12, color: 'var(--sm-muted)', flexShrink: 0 }}>{index + 1}.</span>
                     <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
-                      placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} style={{ ...inputStyle, padding: '8px 11px' }} />
+                      placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} className="sm-px-field" style={{ ...inputStyle, padding: '8px 11px' }} />
                     <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
                       <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                     </button>
@@ -186,11 +184,11 @@ export function TaskEditModal({
               <div style={{ display: 'flex', gap: 10, marginLeft: 28 }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ ...labelStyle, fontSize: 11 }}>{txt.date}</label>
-                  <Input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} style={inputStyle} />
+                  <Input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="sm-px-field" style={inputStyle} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ ...labelStyle, fontSize: 11 }}>{txt.time}</label>
-                  <Input type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} style={inputStyle} />
+                  <Input type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} className="sm-px-field" style={inputStyle} />
                 </div>
               </div>
             )}
@@ -227,7 +225,7 @@ export function TaskEditModal({
                 )}
                 <div>
                   <label style={{ ...labelStyle, fontSize: 11 }}>{txt.customTime}</label>
-                  <Input type="time" value={customAlarmTime} onChange={(e) => handleCustomTimeChange(e.target.value)} style={inputStyle} />
+                  <Input type="time" value={customAlarmTime} onChange={(e) => handleCustomTimeChange(e.target.value)} className="sm-px-field" style={inputStyle} />
                 </div>
               </div>
             )}

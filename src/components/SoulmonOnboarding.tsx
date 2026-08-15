@@ -394,7 +394,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* Barra de progresso */}
         {step > 0 && step <= lastStep && (
           <div style={{ height: 10, backgroundColor: 'var(--sm-line)', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', marginBottom: 24, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress * 100}%`, backgroundColor: 'var(--sm-px-cyan)', transition: 'width .3s' }} />
+            <div style={{
+              height: '100%', width: `${progress * 100}%`, backgroundColor: 'var(--sm-px-cyan)', transition: 'width .3s',
+              /* Blocos discretos (barra SEGMENTADA do kit) sem asset: faixas
+                 de sombra a cada 10px sobre o preenchimento ciano. */
+              backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 10px, rgba(4,18,20,0.45) 10px 12px)',
+            }} />
           </div>
         )}
 

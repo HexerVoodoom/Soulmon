@@ -139,7 +139,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
                da UI — e o pior lugar para um alvo pequeno. */
             style={{ position: 'absolute', top: 5, right: 5, width: 44, height: 44, padding: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span aria-hidden="true" style={{ width: 30, height: 30, backgroundColor: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             </span>
           </button>
@@ -155,7 +155,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
                 }}
               />
             )}
-            <div style={{ position: 'relative', width: 56, height: 56, borderRadius: 18, background: headBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', width: 56, height: 56, backgroundColor: headBg, border: '1px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <RowIcon icon={headIcon} size={28} color={headColor} />
             </div>
           </div>
@@ -200,9 +200,9 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
                     aria-label={isPt ? m.labelPt : m.labelEn}
                     title={isPt ? m.labelPt : m.labelEn}
                     style={{
-                      flex: 1, padding: '8px 0', borderRadius: 12, cursor: 'pointer', fontSize: 20, lineHeight: 1,
-                      background: active ? 'var(--sm-primary-soft)' : 'var(--sm-bg)',
-                      border: active ? '2px solid var(--sm-primary)' : '2px solid transparent',
+                      flex: 1, padding: '8px 0', cursor: 'pointer', fontSize: 20, lineHeight: 1,
+                      backgroundColor: active ? 'var(--sm-primary-soft)' : 'var(--sm-bg)',
+                      border: active ? '2px solid var(--sm-px-cyan)' : '2px solid color-mix(in srgb, var(--sm-px-copper) 30%, transparent)',
                     }}
                   >
                     {m.emoji}

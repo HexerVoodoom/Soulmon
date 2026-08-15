@@ -3,6 +3,10 @@ import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import type { CarePattern } from '../utils/carePattern';
 import { PixelTag } from './pixel/PixelKit';
+import { useTheme } from '../contexts/ThemeContext';
+import { bitsStyle, bitsStyleLight } from '../utils/currencies';
+import iconBolt from '../assets/soulmon/icons/icon-bolt.png';
+import iconStar from '../assets/soulmon/icons/icon-star.png';
 
 interface CompletedTask {
   id: string;
@@ -106,14 +110,16 @@ export function StatsPage({
   };
 
   const isPt = language === 'pt-BR';
+  const { resolvedTheme } = useTheme();
 
   // Cartão de identidade/ritmo: mesmo visual para traço e padrão de cuidado.
   const traitCard = (emoji: string, title: string, desc: string) => (
     <div
       key={title}
       style={{
-        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 14,
-        background: 'var(--sm-bg)',
+        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 14px',
+        backgroundColor: 'var(--sm-bg)',
+        border: '1px solid color-mix(in srgb, var(--sm-px-copper) 40%, transparent)',
       }}
     >
       <span style={{ fontSize: 26, lineHeight: 1 }}>{emoji}</span>
@@ -172,8 +178,9 @@ export function StatsPage({
               { label: isPt ? 'Itens raros achados' : 'Rare items found', value: journey.droppedItems?.length ?? 0 },
             ].map(row => (
               <div key={row.label} style={{
-                padding: '9px 11px', borderRadius: 10,
-                background: 'var(--sm-bg)',
+                padding: '9px 11px',
+                backgroundColor: 'var(--sm-bg)',
+                border: '1px solid color-mix(in srgb, var(--sm-px-copper) 30%, transparent)',
               }}>
                 <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: 'var(--sm-ink)' }}>
                   {row.value}
@@ -199,18 +206,20 @@ export function StatsPage({
       {/* Overview: Bits/XP/Streak + attribute points */}
       <div className="rounded-2xl px-4 py-3 sm-card">
         <div className="flex items-center gap-4 flex-wrap">
+          {/* Guardrail das moedas: Bits NUNCA têm ícone — só o número na
+              fonte de calculadora (utils/currencies.ts). O 💠 daqui era a
+              exata confusão visual que a regra proíbe. */}
           <span className="flex items-center gap-1.5">
-            <span style={{ fontSize: '0.9rem' }}>💠</span>
             <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>Bits</span>
-            <span className="text-sm font-bold" style={{ color: 'var(--sm-ink)' }}>{gamePoints}</span>
+            <span className="text-sm" style={resolvedTheme === 'light' ? bitsStyleLight : bitsStyle}>{gamePoints}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span style={{ fontSize: '0.9rem' }}>⚡</span>
+            <img src={iconBolt} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>XP</span>
             <span className="text-sm font-bold" style={{ color: 'var(--sm-ink)' }}>{totalXP}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span style={{ fontSize: '0.9rem' }}>⭐</span>
+            <img src={iconStar} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>
               {isPt ? 'Dias perfeitos (total)' : 'Perfect days (total)'}
             </span>

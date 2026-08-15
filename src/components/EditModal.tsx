@@ -106,10 +106,8 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
   };
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box',
-    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
-    border: '2px solid var(--sm-line)', borderRadius: 14, padding: '10px 13px', fontSize: 14,
-    outline: 'none',
+    /* Visual mora em .sm-px-field (kit); aqui só layout. */
+    width: '100%', boxSizing: 'border-box', outline: 'none',
   };
   const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--sm-muted)' };
 
@@ -124,7 +122,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
         <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
             <label style={labelStyle}>{txt.name}</label>
-            <Input type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} style={inputStyle} />
+            <Input type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} className="sm-px-field" style={inputStyle} />
           </div>
 
           <div>
@@ -165,7 +163,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
                   <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 12, color: 'var(--sm-muted)', flexShrink: 0 }}>{index + 1}.</span>
                     <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
-                      placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} style={{ ...inputStyle, padding: '8px 11px' }} />
+                      placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} className="sm-px-field" style={{ ...inputStyle, padding: '8px 11px' }} />
                     <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
                       <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                     </button>
@@ -201,7 +199,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--sm-muted)' }}>{txt.time} <span style={{ opacity: 0.75, fontWeight: 500 }}>{txt.optional}</span></span>
             </div>
             <div style={{ marginLeft: 24 }}>
-              <Input type="time" value={alarmTime} onChange={(e) => setAlarmTime(e.target.value)} style={inputStyle} />
+              <Input type="time" value={alarmTime} onChange={(e) => setAlarmTime(e.target.value)} className="sm-px-field" style={inputStyle} />
             </div>
           </div>
         </div>

@@ -228,6 +228,37 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > STRICT palette: cyan #6EFFF8 at low opacity only. NO magenta, purple,
   > violet or pink. Transparent PNG.
 
+### A15 · Ícones dos traços de nascimento (hoje emoji do sistema)
+- **Destino:** `src/assets/soulmon/icons/traits/trait-{guloso,carinhoso,teimoso,sortudo,madrugador}.png` (64×64)
+- **Uso:** `utils/passives.ts` → cartão de identidade em Estatísticas (hoje
+  mostra 🍖 🫶 🪨 🍀 🌅 do sistema) e o mesmo emoji no relatório/HUD.
+- **Anexar:** `REF-kit-v12.png` (bloco "Icons & Items")
+- **Prompt (um por traço, trocando o símbolo):**
+  > Pixel-art icon, 64×64, fully transparent background: SÍMBOLO, crisp
+  > 16-bit pixel art, near-black outline, hard edges, no frame. STRICT
+  > palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D plus natural accent tones.
+  > NO magenta, purple, violet or pink. Transparent PNG.
+  > - **Guloso** → `a roasted meat drumstick`
+  > - **Carinhoso** → `two hands cupping a small glowing heart`
+  > - **Teimoso** → `a small sturdy rock with a determined face`
+  > - **Sortudo** → `a four-leaf clover with a tiny sparkle`
+  > - **Madrugador** → `a rising sun over a horizon line`
+
+### A16 · Ícones do relatório diário (cabeçalho por tipo de dia)
+- **Destino:** `src/assets/soulmon/icons/report/report-{perfect,good,slow,return}.png` (96×96)
+- **Uso:** `DailyReportModal.tsx` (`headIcon` via `RowIcon` — hoje line-art
+  da lucide: estrela/sol/nuvem, o último line-art de destaque que sobrou).
+- **Anexar:** `REF-kit-v12.png`
+- **Prompt (um por tipo):**
+  > Pixel-art icon, 96×96, fully transparent background: SÍMBOLO with a soft
+  > cyan glow, crisp 16-bit pixel art, near-black outline, hard edges.
+  > STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D plus warm gold.
+  > NO magenta, purple, violet or pink. Transparent PNG.
+  > - **Dia perfeito** → `a big shining star with small sparks`
+  > - **Dia bom** → `a bright sun with straight pixel rays`
+  > - **Dia mais devagar** → `a small rain cloud with two cyan drops`
+  > - **Retorno** → `a sunrise with an upward arrow`
+
 ## P2 — melhoram, não destravam
 
 ### A4 · Nós do Soul Link (grafo de evolução)

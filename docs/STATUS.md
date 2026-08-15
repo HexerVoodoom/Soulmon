@@ -7,7 +7,14 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **UI rodada 5 (15/ago/2026)** — os primitivos legados
+Última atualização: **UI rodada 6 (15/ago/2026)** — cinco passadas de QA de
+design sobre a rodada 5: guardrail de moeda restaurado em Estatísticas (Bits
+sem ícone, fonte de calculadora), relatório diário/modais de tarefa/batalha da
+Masmorra no kit, Dino sem vazio, barra do ritual segmentada, varredura do tema
+claro e closeup das quinas. Relatório: `product/soulmon-01/ui/align-round6.md`;
+prompts de arte ganharam A15–A16.
+
+Antes disso: **UI rodada 5 (15/ago/2026)** — os primitivos legados
 `.sm-btn`/`.sm-card` passaram a desenhar o kit pixel (chanfro + cobre + banda
 de quina), o que converteu de uma vez onboarding, tutorial, modais, popover do
 menu e o topo da Evolução; backdrops roxos viraram teal, os vazamentos de roxo
