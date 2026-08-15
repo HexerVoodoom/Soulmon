@@ -60,6 +60,14 @@ export default defineConfig({
     // JS parse cost and the service worker can serve their WebP variants.
     assetsInlineLimit: 0,
     rollupOptions: {
+      // TEMPORÁRIO (remover antes do merge em `main`): segunda entrada de build
+      // com o ritual do oráculo acessível pela web, para revisão no preview da
+      // branch. No app real o ritual fica atrás da compra única, que não existe
+      // fora do APK — ver `ritual.html`.
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        ritual: path.resolve(__dirname, 'ritual.html'),
+      },
       output: {
         manualChunks: {
           // Long-term-cacheable vendor chunk — app changes don't invalidate it.
