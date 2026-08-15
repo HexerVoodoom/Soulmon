@@ -446,6 +446,44 @@ dele, `{ perfectDays: 10 }`, passava há três rodadas certificando exatamente o
 *detector* em vez do *detectado*, e o único que teria pego os três guards cegos
 (este, o da rodada 5 e o `simulateReset` do footgun 9) de uma vez.
 
+### Rodadas 7 e 8 — mutation testing: medindo o detector
+
+`product/soulmon-01/sweeper/round7-mutation.md` e `round8-save-content.md`.
+Instrumento: **`scripts/mutation-sweep.mjs`** (versionado, sem dependência
+nova). Aplica uma mutação mecânica numa linha de produção, roda a suíte e
+reverte; mutante que não deixou nada vermelho **sobreviveu** — ali o teste é
+cego, ou a mutação é equivalente.
+
+**Rodada 7** mediu **51% de sobrevivência** em 720 mutantes e corrigiu 36 —
+entre eles um teste chamado *"devolve meio coração na virada de segunda"* que
+não afirmava nada sobre meio coração (a expectativa era calculada com a própria
+constante auditada), `AD_REWARD_CREDITS` na mesma armadilha (**dinheiro real**),
+`amount <= 0` recusando gastar 1 crédito, e compra estornada nunca marcada
+(debitada de novo a cada leitura de saldo, para sempre). Suíte: 829 → **863**.
+
+**Rodada 8** atacou os dois arquivos que leem/gravam o save do jogador, onde um
+defeito não dá erro — devolve um jogador **plausível e errado**:
+
+| arquivo | antes | **depois** | sobreviventes cegos |
+|---|---:|---:|---:|
+| `src/contexts/GameStateContext.tsx` | 22,6 % | **83,3 %** | **0** (14 equivalentes) |
+| `desktop/renderer/src/cloudSync.ts` | 27,4 % | **91,1 %** | **0** (12 equivalentes) |
+
+A causa era uma só, e vale como regra: **carregar não é conter, montar não é
+afirmar.** Os testes existentes perguntavam *"é array? é número finito? o app
+sobreviveu?"* — nenhum perguntava **qual número**. Sobreviviam todos os padrões
+da hidratação (um Crédito de graça por save, PvP ligado sem opt-in, pet
+degenerado ressuscitando ao recarregar) e o arquivo inteiro do overlay
+(`401` virando "sem conexão", `{ok:false}` virando `{ok:true}` em 8 lugares,
+save sem HP mostrando **pet morto**). Suíte: 863 → **981 testes**. Nenhuma linha
+de produção alterada; nenhum teste afrouxado.
+
+**Onde o loop continua:** `functions/api/_billing.js` (40%, e é dinheiro:
+compra PENDENTE pode virar válida) — o instrumento certo ali **não é mais
+mutação**, é um fake do endpoint da loja no molde de `pushCareAction.test.ts`;
+depois `carePattern.ts` (51%, tabela de limiares sem teste de limiar) e
+`save.js` (63,9%).
+
 ### 🔴 ABERTO — `minSdkVersion = 24` é uma promessa que o app não cumpre
 
 Descoberto porque o smoke do APK falhou e o diagnóstico mostrou

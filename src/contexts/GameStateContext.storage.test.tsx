@@ -26,9 +26,15 @@ import {
 } from '../utils/safeStorage';
 
 const avisos: string[] = [];
+// As OPÇÕES do toast também são conteúdo: um aviso com `duration: 0` some da
+// tela antes de ser lido, e nenhum teste notaria (medido na rodada 8 — o
+// mutante `10000 -> 0` sobrevivia).
+const opcoes: Array<Record<string, unknown> | undefined> = [];
 vi.mock('sonner', () => ({
   toast: {
-    warning: (msg: string) => { avisos.push(String(msg)); },
+    warning: (msg: string, opts?: Record<string, unknown>) => {
+      avisos.push(String(msg)); opcoes.push(opts);
+    },
     error: () => {}, success: () => {}, info: () => {}, message: () => {},
   },
 }));
@@ -53,6 +59,7 @@ beforeEach(() => {
   installDomGlobals();
   localStorage.clear();
   avisos.length = 0;
+  opcoes.length = 0;
   resetStorageNotice();
   onStorageDegraded(null);
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('rede proibida no teste'))));
@@ -147,6 +154,9 @@ describe('GameStateProvider com storage hostil', () => {
     expect(depois.gamePoints).toBe(13);
     expect(avisos).toHaveLength(1);
     expect(avisos[0]).toMatch(/salvo|saved/i);
+    // 10s: tempo de LER. O padrão do sonner (4s) já é curto para um texto de
+    // duas linhas, e 0 faria o aviso piscar e sumir.
+    expect(opcoes[0]?.duration).toBe(10000);
   });
 
   it('storage BLOQUEADO: monta com estado novo e avisa (não é queda nem silêncio)', () => {

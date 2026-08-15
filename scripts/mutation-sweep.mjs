@@ -67,6 +67,7 @@ const TARGETS = [
   {
     file: 'src/contexts/GameStateContext.tsx',
     tests: ['src/contexts/GameStateContext.hostile.test.tsx',
+      'src/contexts/GameStateContext.saveContent.test.tsx',
       'src/contexts/GameStateContext.hydrate.fuzz.test.tsx',
       'src/contexts/GameStateContext.legacySave.test.tsx',
       'src/contexts/GameStateContext.storage.test.tsx',
@@ -90,6 +91,7 @@ const TARGETS = [
   {
     file: 'desktop/renderer/src/cloudSync.ts',
     tests: ['desktop/renderer/src/cloudSync.test.ts',
+      'desktop/renderer/src/cloudSync.snapshot.test.ts',
       'desktop/renderer/src/pushCareAction.test.ts',
       'functions/api/saveId.parity.test.js'],
   },
