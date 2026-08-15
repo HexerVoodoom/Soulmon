@@ -2769,6 +2769,34 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     replace(roleScores, roleBreakdown, ROLE_ORDER, axes.roles);
     replace(alignmentScores, alignmentBreakdown, ALIGNMENT_ORDER, axes.alignments);
     for (const realm of REALM_ORDER) realmScores[realm] = axes.realms[realm];
+
+    // As 6 perguntas do ritual entram DE NOVO, por cima dos eixos do motor.
+    // Elas fazem parte da leitura nos DOIS caminhos, e para quem não responde
+    // o teste de 20 elas são o ÚNICO sinal de personalidade que existe — o
+    // resto é céu de nascimento e nome. Substituir os eixos sem reaplicá-las
+    // fazia o ritual inteiro não contar para nada.
+    //
+    // Escala: os eixos vêm normalizados para somar 100, então a média de cada
+    // chave é 100/N (12,5 num elemento, 20 num papel, 33 num alinhamento, 11
+    // num reino). Os efeitos do quiz são inteiros de 1 a 4, ou seja, um efeito
+    // forte move um elemento em ~⅓ da média — mexe de verdade sem apagar o
+    // mapa e o teste. O reino NÃO leva o ×3 do caminho legado: lá os escores
+    // eram somas de peso×pontos (números grandes), aqui são shares de ~11, e
+    // ×3 faria uma única resposta decidir o bioma sozinha.
+    for (const fx of questionEffects) {
+      for (const [el, pts] of Object.entries(fx.elements ?? {}) as Array<[ElementId, number]>) {
+        addScore(elementScores, elementBreakdown, el, pts, answerSource);
+      }
+      for (const [role, pts] of Object.entries(fx.roles ?? {}) as Array<[RoleId, number]>) {
+        addScore(roleScores, roleBreakdown, role, pts, answerSource);
+      }
+      for (const [al, pts] of Object.entries(fx.alignments ?? {}) as Array<[AlignmentId, number]>) {
+        addScore(alignmentScores, alignmentBreakdown, al, pts, answerSource);
+      }
+      for (const realm of REALM_ORDER) {
+        realmScores[realm] += fx.realms?.[realm] ?? 0;
+      }
+    }
   }
 
   // ----- Combinação de pesos: leitura + preferências (25%) + descrição (50%) -----

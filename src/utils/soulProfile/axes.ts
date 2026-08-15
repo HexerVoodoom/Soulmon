@@ -57,6 +57,31 @@ function facet(inputs: OracleAxesInput, dimension: string, name: string, fallbac
   return inputs.facets?.[`${dimension}:${name}`] ?? fallback;
 }
 
+/**
+ * Encolhe um eixo junguiano na direção do meio.
+ *
+ * Cada eixo (EI/SN/TF/JP) é medido por UM único item de escolha forçada, então
+ * o escore nunca é um meio-termo: é exatamente 0 ou 100. Os coeficientes das
+ * fórmulas abaixo foram calibrados assumindo variação contínua, como a dos
+ * traços — com um insumo binário, o mesmo coeficiente vira um interruptor que
+ * move o eixo em dezenas de pontos por causa de uma pergunta só.
+ *
+ * Medido: `alcance` (que carrega `jung.TF * 0.3`) e `magico` (que carrega dois
+ * termos junguianos) venciam juntos 66% dos perfis numa simulação de 400,
+ * contra 40% de linha de base para dois papéis entre cinco — pior que o
+ * oráculo LEGADO, que ficava em 34%.
+ *
+ * Encolher pela metade preserva a MÉDIA do termo (o valor esperado de um
+ * binário 0/100 continua 50) e corta o salto pela metade. O sinal continua
+ * valendo; ele só para de decidir sozinho. Quando um formulário mais longo
+ * tiver vários itens por eixo, o escore volta a ser contínuo e este
+ * amortecedor pode subir para 1.
+ */
+const JUNG_DAMPING = 0.5;
+function soft(axisScore: number): number {
+  return 50 + (axisScore - 50) * JUNG_DAMPING;
+}
+
 /** Reescala um registro para que os valores somem 100, preservando zeros. */
 function toShare<K extends string>(record: Record<K, number>, order: K[]): Record<K, number> {
   const total = order.reduce((sum, k) => sum + Math.max(0, record[k]), 0);
@@ -130,7 +155,7 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     // independente) espalha esse peso por duas fontes não correlacionadas em
     // vez de contar a mesma duas vezes.
     industrial: facet(inputs, 'conscientiousness', 'organização', traits.conscientiousness) * 0.5 +
-      jung.JP * 0.25,
+      soft(jung.JP) * 0.25,
   };
   // Bônus primário/secundário da numerologia, espelhando o próprio
   // `addScore(primary, pts); addScore(secondary, 1)` do oracle.ts — dar +6 aos
@@ -166,12 +191,12 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     // média fica bem abaixo do próprio máximo por ser dividida em 4) — então
     // seus 3 termos independentes somavam peso cheio (1.0) e superavam
     // estruturalmente todos os outros papéis na média.
-    magico: traits.openness * 0.4 + (100 - jung.SN) * 0.22 + (100 - jung.JP) * 0.13,
+    magico: traits.openness * 0.4 + soft(100 - jung.SN) * 0.22 + soft(100 - jung.JP) * 0.13,
     // O termo astro_ar do alcance compõe com o próprio bônus de ar na tabela
     // de elementos, e ar é o alvo primário/secundário mais frequente da
     // numerologia — então alcance pegava carona nesse mesmo sinal correlato.
     alcance: facet(inputs, 'conscientiousness', 'prudência', traits.conscientiousness) * 0.4 +
-      jung.TF * 0.3 + (astrologyElements.ar / astroTotal) * 25,
+      soft(jung.TF) * 0.3 + (astrologyElements.ar / astroTotal) * 25,
   };
   for (const n of numerologyNumbers) {
     roles[NUMBER_ROLES[n]] += 4;
@@ -229,7 +254,7 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   const classElements: Record<ClassElementId, number> = {
     fogo: elements.fogo, agua: elements.agua, terra: elements.terra, ar: elements.ar,
     sombra: elements.sombra, luz: elements.luz,
-    eletricidade: 5, arcano: traits.openness * 0.15 + (100 - jung.SN) * 0.1,
+    eletricidade: 5, arcano: traits.openness * 0.15 + soft(100 - jung.SN) * 0.1,
     vileza: (100 - traits.honestyHumility) * 0.15, morte: traits.neuroticism * 0.1,
     vida: traits.agreeableness * 0.15, vigor: traits.conscientiousness * 0.1,
     marcial: facet(inputs, 'extraversion', 'assertividade', traits.extraversion) * 0.15,

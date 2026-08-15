@@ -4,7 +4,7 @@ import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeJson } from '../utils/safeStorage';
 import {
-  generateOracle,
+  generateOracle, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
 import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
@@ -69,14 +69,26 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
-  //         6..(6+N-1) quiz · then gerando · reveal · register (nick+email, obrigatório)
+  //         6..11 as 6 perguntas do ritual · 12 a bifurcação do refinamento ·
+  //         13..32 os 20 itens (SÓ para quem aceitar) · gerando · reveal ·
+  //         register (nick+email, obrigatório)
   // DEMO_PICK é um passo à parte (fora dessa sequência numérica) — o caminho
   // demo pula direto da intro pra lá, sem passar pelo oráculo.
+  //
+  // O ritual continua sendo as 6 perguntas: é o que praticamente todo mundo vai
+  // responder, e 20 itens psicométricos como porta de entrada obrigatória são
+  // um formulário, não um ritual. O teste longo vira uma ESCOLHA oferecida
+  // depois delas — e ANTES do reveal, de propósito: assim a criatura nasce uma
+  // vez só, já com a leitura que a pessoa escolheu. Oferecer depois do reveal
+  // significaria trocar por outra a criatura que ela acabou de conhecer.
   const FAVORITE_STEP = 5;
   const QUIZ_START = FAVORITE_STEP + 1;
-  const QUIZ_END = QUIZ_START + SOUL_TEST_ITEMS.length; // primeiro passo pós-quiz
-  const GENERATING = QUIZ_END;
-  const REVEAL = QUIZ_END + 1;
+  const QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length; // primeiro passo pós-quiz
+  const REFINE_OFFER = QUIZ_END;
+  const DEEP_START = REFINE_OFFER + 1;
+  const DEEP_END = DEEP_START + SOUL_TEST_ITEMS.length;
+  const GENERATING = DEEP_END;
+  const REVEAL = GENERATING + 1;
   const REGISTER = REVEAL + 1;
   const DEMO_PICK = -1;
   // O "porquê" vem ANTES de nome, data e quiz: a razão para mudar precisa vir
@@ -109,7 +121,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [timeUnknown, setTimeUnknown] = useState(false);
   const [favoriteCreature, setFavoriteCreature] = useState('');
   const [skipFavorite, setSkipFavorite] = useState(false);
-  const [answers, setAnswers] = useState<SoulAnswers>({});
+  /** As 6 perguntas do ritual — todo mundo responde. */
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  /** Os 20 itens psicométricos — só de quem aceitou refinar. */
+  const [testAnswers, setTestAnswers] = useState<SoulAnswers>({});
+  /** null = ainda não decidiu. É uma decisão SEM VOLTA, por escolha de
+   *  produto: não existe caminho para responder o teste depois. */
+  const [refine, setRefine] = useState<boolean | null>(null);
   const [result, setResult] = useState<OracleResult | null>(null);
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
@@ -136,7 +154,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // impressão de que o fluxo tinha acabado. No upgrade não há tutorial nem
   // cadastro depois — o reveal É o fim, e a barra pode chegar a 100%.
   const lastStep = isUpgrade ? REVEAL : REGISTER;
-  const progress = Math.min(step, lastStep) / (isUpgrade ? lastStep : REGISTER + 1);
+  // Quem recusa o teste longo pula 20 passos de uma vez. Sem descontar esse
+  // bloco, a barra daria um salto de ~60% e depois diria que falta muito — a
+  // barra tem que medir o caminho QUE A PESSOA escolheu, não o mais longo
+  // possível.
+  const deepBlock = SOUL_TEST_ITEMS.length;
+  const skipDeep = refine === false;
+  const shrink = (n: number) => (skipDeep && n > REFINE_OFFER ? n - deepBlock : n);
+  const progress = Math.min(shrink(step), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
 
   const canAdvance = (): boolean => {
     if (step === 1) return fullName.trim().length >= 3;
@@ -145,7 +170,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === 4) return !!birthCity;
     // Criatura favorita é opcional — sempre dá pra avançar.
     if (step >= QUIZ_START && step < QUIZ_END) {
-      return !!answers[SOUL_TEST_ITEMS[step - QUIZ_START].id];
+      return !!answers[ORACLE_QUESTIONS[step - QUIZ_START].id];
+    }
+    // A bifurcação não tem "Continuar": as duas saídas são os próprios botões.
+    if (step === REFINE_OFFER) return false;
+    if (step >= DEEP_START && step < DEEP_END) {
+      return !!testAnswers[SOUL_TEST_ITEMS[step - DEEP_START].id];
     }
     return true;
   };
@@ -159,7 +189,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setGenerateError(false);
     void doGenerate().catch(() => {
       setGenerateError(true);
-      setStep(QUIZ_END - 1);
+      // Volta para a bifurcação, que é onde os dois caminhos se encontram —
+      // mandar de volta para "a última pergunta" só funcionaria para quem fez
+      // o teste longo, e deixaria quem recusou preso na animação.
+      setRefine(null);
+      setStep(REFINE_OFFER);
     });
   };
 
@@ -169,6 +203,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // momento do app em que ele é necessário e o único em que já existe uma
     // animação cobrindo a espera.
     const { buildSoulProfile } = await import('../utils/soulProfile');
+    // O perfil de alma é montado NOS DOIS caminhos: mesmo sem o teste longo,
+    // ele traz o mapa astral REAL e a numerologia completa, que já são melhores
+    // que o ascendente estimado do motor antigo. O que muda é a camada
+    // psicométrica: com as 20 respostas ela existe; sem elas, os traços ficam
+    // neutros e quem decide são o céu de nascimento, o nome e as 6 respostas.
     const soulProfile = birthCity
       ? buildSoulProfile({
         fullName: fullName.trim(),
@@ -179,11 +218,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         latitude: birthCity.latitude,
         longitude: birthCity.longitude,
         timeZone: birthCity.timeZone,
-      }, answers)
+      }, refine ? testAnswers : {})
       : undefined;
 
     const input: OracleInput = {
       fullName: fullName.trim(), birthDate, birthTime, birthPlace,
+      // As 6 do ritual entram na leitura sempre — são o único sinal de
+      // personalidade de quem não faz o teste longo.
+      answers,
       favoriteCreature: skipFavorite ? undefined : (favoriteCreature.trim() || undefined),
       soulProfile,
     };
@@ -200,13 +242,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(flow === 'demo' ? DEMO_PICK : 1); return; }
     if (!canAdvance()) return;
-    if (step === QUIZ_END - 1) {
-      // última pergunta respondida → tela de geração e gera
+    if (step === DEEP_END - 1) {
+      // último item do teste longo respondido → tela de geração e gera
       setStep(GENERATING);
       setTimeout(runGenerate, 1400); // deixa a animação respirar
       return;
     }
     setStep(s => s + 1);
+  };
+
+  /** Saídas da bifurcação. Escolher aqui é definitivo — ver `refine`. */
+  const chooseRefine = (yes: boolean) => {
+    setRefine(yes);
+    if (yes) { setStep(DEEP_START); return; }
+    setStep(GENERATING);
+    setTimeout(runGenerate, 1400);
   };
   // No upgrade não existe passo 0 (intro): voltar da primeira pergunta é
   // desistir do ritual e voltar ao jogo.
@@ -216,6 +266,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
     if (step === DEMO_PICK) { setStep(STRUGGLE_STEP); return; }
     if (step === 1 && !isUpgrade) { setStep(STRUGGLE_STEP); return; }
+    // Voltar de dentro do teste longo devolve a escolha: quem entrou sem
+    // querer não fica preso em 20 perguntas.
+    if (step === DEEP_START) { setRefine(null); setStep(REFINE_OFFER); return; }
     setStep(s => Math.max(isUpgrade ? 1 : 0, s - 1));
   };
 
@@ -566,33 +619,82 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </StepShell>
         )}
 
-        {/* 6..N — Teste de personalidade (um item por página) */}
+        {/* 6..11 — As 6 perguntas do ritual (uma por página) */}
         {step >= QUIZ_START && step < QUIZ_END && (() => {
-          const item = SOUL_TEST_ITEMS[step - QUIZ_START];
-          const index = step - QUIZ_START;
+          const q = ORACLE_QUESTIONS[step - QUIZ_START];
+          return (
+            <StepShell title={L(q.text)}
+              hint={isPt
+                ? `Pergunta ${step - QUIZ_START + 1} de ${ORACLE_QUESTIONS.length}`
+                : `Question ${step - QUIZ_START + 1} of ${ORACLE_QUESTIONS.length}`}>
+              <div>
+                {q.options.map(opt => {
+                  const selected = answers[q.id] === opt.id;
+                  return (
+                    <button key={opt.id} style={optionBtn(selected)}
+                      onClick={() => {
+                        setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
+                        // avança sozinho após escolher (fluido)
+                        setTimeout(() => setStep(s => s + 1), 180);
+                      }}>
+                      {L(opt.text)}
+                    </button>
+                  );
+                })}
+              </div>
+            </StepShell>
+          );
+        })()}
+
+        {/* 12 — A bifurcação. Decisão SEM VOLTA, e a tela diz isso. */}
+        {step === REFINE_OFFER && (
+          <StepShell
+            title={isPt ? 'Quer afinar a leitura?' : 'Want to sharpen the reading?'}
+            hint={isPt
+              ? 'Esta escolha não tem volta — não dá para responder o teste depois.'
+              : "This choice is final — there's no answering the test later."}>
+            <p style={{ fontSize: 13.5, color: 'var(--sm-muted)', lineHeight: 1.65, margin: '0 0 18px' }}>
+              {isPt
+                ? 'Seu Soulmon já pode nascer agora, do seu nome, do céu do seu nascimento e das 6 respostas que você deu. Se quiser, dá para responder mais 20 perguntas sobre você — elas afinam quem ele vai ser.'
+                : 'Your Soulmon can be born right now, from your name, the sky at your birth and the 6 answers you gave. If you like, you can answer 20 more questions about yourself — they sharpen who he turns out to be.'}
+            </p>
+            <button className="sm-btn" style={{ width: '100%', marginBottom: 10 }}
+              onClick={() => chooseRefine(true)}>
+              {isPt ? `Responder mais ${SOUL_TEST_ITEMS.length} perguntas` : `Answer ${SOUL_TEST_ITEMS.length} more questions`}
+            </button>
+            <button className="sm-btn sm-btn-secondary" style={{ width: '100%' }}
+              onClick={() => chooseRefine(false)}>
+              {isPt ? 'Revelar meu Soulmon agora' : 'Reveal my Soulmon now'}
+            </button>
+            {generateError && (
+              <p style={{ fontSize: 12.5, color: 'var(--sm-danger, #c0392b)', margin: '14px 2px 0', lineHeight: 1.5 }}>
+                {isPt
+                  ? 'Não foi possível revelar sua criatura agora. Escolha de novo para tentar outra vez.'
+                  : "We couldn't reveal your creature just now. Choose again to retry."}
+              </p>
+            )}
+          </StepShell>
+        )}
+
+        {/* 13..32 — O teste longo, só para quem aceitou (um item por página) */}
+        {step >= DEEP_START && step < DEEP_END && (() => {
+          const item = SOUL_TEST_ITEMS[step - DEEP_START];
+          const index = step - DEEP_START;
           return (
             <StepShell title={L(itemPrompt(item))} hint={itemHint(item, index, SOUL_TEST_ITEMS.length, isPt)}>
               <SoulTestItem
                 item={item}
-                answer={answers[item.id]}
+                answer={testAnswers[item.id]}
                 isPt={isPt}
                 optionStyle={optionBtn}
                 onAnswer={answer => {
-                  setAnswers(prev => ({ ...prev, [item.id]: answer }));
-                  // avança sozinho após escolher (fluido)
+                  setTestAnswers(prev => ({ ...prev, [item.id]: answer }));
                   setTimeout(() => {
-                    if (step === QUIZ_END - 1) { setStep(GENERATING); setTimeout(runGenerate, 1400); }
+                    if (step === DEEP_END - 1) { setStep(GENERATING); setTimeout(runGenerate, 1400); }
                     else setStep(s => s + 1);
                   }, 180);
                 }}
               />
-              {generateError && index === SOUL_TEST_ITEMS.length - 1 && (
-                <p style={{ fontSize: 12.5, color: 'var(--sm-danger, #c0392b)', margin: '14px 2px 0', lineHeight: 1.5 }}>
-                  {isPt
-                    ? 'Não foi possível revelar sua criatura agora. Toque na resposta de novo para tentar outra vez.'
-                    : "We couldn't reveal your creature just now. Tap your answer again to retry."}
-                </p>
-              )}
             </StepShell>
           );
         })()}
@@ -744,7 +846,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             </button>
           </div>
         )}
-        {step >= QUIZ_START && step < QUIZ_END && step > QUIZ_START && (
+        {/* Passos que avançam sozinhos ao escolher: só precisam de "voltar".
+            Cobre as 6 do ritual (da 2ª em diante) E os 20 itens do teste — do
+            PRIMEIRO item em diante, porque voltar de lá devolve a bifurcação
+            para quem entrou no teste longo sem querer. */}
+        {((step > QUIZ_START && step < QUIZ_END) || (step >= DEEP_START && step < DEEP_END)) && (
           <button className="sm-btn sm-btn-secondary" style={{ marginTop: 8 }} onClick={back}>
             <ArrowLeft size={16} strokeWidth={2.4} />
             {isPt ? 'Voltar' : 'Back'}

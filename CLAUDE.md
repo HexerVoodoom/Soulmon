@@ -170,6 +170,13 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   mapa astral REAL (efemérides, casas Placidus, fuso IANA com horário de verão
   histórico) e numerologia completa, no lugar do signo por faixa de datas, do
   ascendente chutado de 2 em 2 horas e das 6 perguntas do quiz antigo.
+  **O ritual continua sendo as 6 perguntas** (`ORACLE_QUESTIONS`); os 20 itens
+  são uma bifurcação oferecida depois delas e **antes do reveal**, declarada na
+  tela como decisão SEM VOLTA (não existe caminho para responder o teste
+  depois). As 6 respostas entram na leitura nos DOIS caminhos — para quem não
+  faz o teste longo elas são o único sinal de personalidade que existe. O
+  jogador vê só nome e descrição: pontuação de eixo e prompt de sprite vivem na
+  `OraclePage`, que é ferramenta de criação e não tem entrada na navegação.
   `OracleInput.soulProfile` é opcional: sem ele o caminho legado roda inteiro,
   que é o que mantém o reroll de quem jogou antes da troca. O motor é **pesado**
   (astronomy-engine) e só entra por import DINÂMICO — o `oracle.ts` importa dele

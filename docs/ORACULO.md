@@ -130,6 +130,43 @@ somam 6. Antes o oceano somava 4 e picos/floresta/gelo/campina somavam 5 contra
 
 ---
 
+## O fluxo: 6 perguntas para todo mundo, 20 para quem quiser
+
+O ritual de nascimento continua sendo **6 perguntas**. Vinte itens
+psicométricos como porta de entrada obrigatória seriam um formulário, não um
+ritual — e o ritual é a primeira coisa que a pessoa faz no app.
+
+Depois delas vem uma **bifurcação**, e ela é oferecida **antes do reveal**:
+
+- *Revelar meu Soulmon agora* → a leitura é o mapa astral real + a numerologia
+  completa + as 6 respostas. A camada psicométrica fica vazia (traços neutros).
+- *Responder mais 20 perguntas* → a mesma leitura, com a camada psicométrica
+  preenchida, que passa a ser o sinal mais forte.
+
+Duas decisões de produto que o código precisa respeitar:
+
+1. **A escolha é antes do reveal, e isso é o desenho.** Se o convite viesse
+   depois, refinar significaria trocar por outra a criatura que a pessoa acabou
+   de conhecer. Aqui ela nasce **uma vez só**, já com a leitura escolhida.
+2. **A escolha não tem volta.** Não existe caminho para responder o teste
+   depois — e a tela diz isso, com essas palavras, antes de a pessoa escolher.
+   Uma porta de mão única que se apresenta como reversível é a pior versão
+   possível dessa tela.
+
+As 6 respostas entram na leitura nos **dois** caminhos. Isso não é detalhe de
+implementação: para quem não faz o teste longo, elas são o **único** sinal de
+personalidade que existe — o resto é céu de nascimento e nome. Os eixos do
+motor novo são substituídos e os efeitos do quiz reaplicados por cima; na
+escala normalizada (cada eixo soma 100), um efeito forte move um elemento em
+cerca de ⅓ da média. O reino **não** leva o ×3 do caminho legado, senão uma
+resposta só decidiria o bioma sozinha.
+
+### O que a pessoa vê do resultado
+
+Nome e uma descrição breve. **Não** vê pontuação de eixo, barra de elemento nem
+prompt de sprite. A `OraclePage` — que mostra tudo isso, mais geração de imagem
+— é ferramenta de criação e **não tem entrada na navegação do app**.
+
 ## Onde as duas metades se encontram
 
 `OracleInput` ganhou um campo opcional: `soulProfile`.
@@ -153,6 +190,48 @@ importa dele **só tipos** — que somem na compilação. Resultado: a engine de
 efemérides fica fora do bundle inicial, num chunk próprio que só é baixado na
 tela de geração. O `SoulProfile` resultante é JSON puro, serializável, e vai
 para o `SOULMON_PROFILE` no localStorage junto com a seed.
+
+---
+
+## Equilíbrio medido (e a dívida conhecida)
+
+Simulação de 400 perfis sintéticos por caminho (nomes, datas, horas e cidades
+sorteadas; respostas sorteadas uniformemente), comparando com o oráculo
+**legado** como linha de base. Distribuição do vencedor de cada eixo:
+
+| Eixo (linha de base) | Legado | Só as 6 | 6 + 20 |
+|---|---|---|---|
+| elemento (12,5%) | 21,3% … **1,3%** | 19,5% … 4,5% | 17,8% … 6,3% |
+| papel (20%) | 28,5% … 14,5% | 28,2% … 9,5% | **31,3% … 10,5%** |
+| alinhamento (33%) | 54,3 / 28,7 / 17,0 | 50,7 / 30,8 / 18,5 | 49,5 / 26,8 / 23,8 |
+| reino (11%) | 18,5% … 1,5% | 22,8% … **0,5%** | 22,5% … 1,0% |
+
+O que melhorou em relação ao legado: **elemento** (planta e industrial eram
+praticamente inalcançáveis, 2,0% e 1,3%) e **alinhamento** (harmonia dominava
+54% dos perfis).
+
+O que **piorou, e é dívida conhecida**:
+
+- **Papel**: `magico` e `alcance` juntos vencem ~62% dos perfis no caminho
+  longo, contra 40% de linha de base para dois papéis entre cinco. Causa
+  identificada: cada eixo junguiano é medido por **um único item de escolha
+  forçada**, então o escore é sempre exatamente 0 ou 100 — nunca um meio-termo
+  — e os coeficientes foram calibrados assumindo variação contínua. O
+  amortecedor `JUNG_DAMPING` (`axes.ts`) corta esse salto pela metade
+  preservando a média, e levou o par de 66% para 62%. **Não fecha o buraco**:
+  fechar exige recalibrar os coeficientes de papel contra uma simulação que
+  sorteie RESPOSTAS (não traços), que é o que o app realmente recebe.
+- **Reino**: `akasha` cai para 0,5% no caminho das 6 (era 16,5% no legado). No
+  legado, sombra e luz ganhavam pontos fortes do yin/yang chinês e do
+  nascimento noturno; no motor novo, sem camada psicométrica, os dois ficam
+  presos num termo de traço constante e `akasha` (`{luz:3, sombra:3}`) some.
+  `pantano` fica em ~1,5% nos três caminhos — esse é **pré-existente**, não
+  entrou com a troca.
+
+Nenhum eixo é inalcançável em nenhum caminho, e nenhum passa de 32%. A
+simulação que produziu esta tabela não está commitada; ela é reconstruível a
+partir desta descrição, e vale reconstruí-la antes de mexer em qualquer
+coeficiente.
 
 ---
 

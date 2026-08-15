@@ -137,6 +137,77 @@ describe('oráculo: leitura nova (perfil de alma)', () => {
   });
 });
 
+describe('oráculo: caminho de quem responde SÓ as 6 perguntas', () => {
+  // É o caminho padrão do ritual — o teste de 20 itens é opt-in. Aqui o perfil
+  // de alma existe (mapa astral real + numerologia completa), mas a camada
+  // psicométrica está vazia: os traços ficam neutros e quem carrega o sinal de
+  // personalidade são as 6 respostas.
+  const semTeste = (quiz: Record<string, string>): OracleInput => ({
+    fullName: 'Maria Aparecida da Silva',
+    birthDate: '1994-07-23',
+    birthTime: '14:35',
+    birthPlace: SAO_PAULO.placeLabel,
+    answers: quiz,
+    soulProfile: buildSoulProfile(onboarding(), {}, REFERENCE_DAY),
+  });
+
+  it('gera criatura completa sem nenhuma resposta do teste longo', () => {
+    const r = generateOracle(semTeste({ grupo: 'protege', objetivo: 'conquistar' }), 3);
+    expect(r.creature.stages).toHaveLength(11);
+    expect(r.creature.baseName.length).toBeGreaterThan(0);
+  });
+
+  it('ainda usa o mapa astral REAL — é o ganho que vale mesmo sem o teste', () => {
+    const input = semTeste({ grupo: 'protege' });
+    const r = generateOracle(input, 3);
+    expect(r.western.ascendant.name.pt).toBe(input.soulProfile!.astrology.bigThree.ascendant);
+  });
+
+  it('AS 6 RESPOSTAS MUDAM O RESULTADO — senão o ritual inteiro não conta', () => {
+    // Regressão real: ao trocar os eixos pelo motor novo, os efeitos do quiz
+    // eram descartados. Para quem não faz o teste longo isso significaria um
+    // ritual de 6 perguntas que não influencia nada.
+    const protetor = generateOracle(semTeste({
+      grupo: 'protege', objetivo: 'cuidar', pressao: 'firme',
+    }), 5);
+    const agressivo = generateOracle(semTeste({
+      grupo: 'ataca', objetivo: 'conquistar', pressao: 'explode',
+    }), 5);
+    const mudou = protetor.dominantElement !== agressivo.dominantElement
+      || protetor.dominantRole !== agressivo.dominantRole
+      || protetor.dominantAlignment !== agressivo.dominantAlignment
+      || protetor.dominantRealm !== agressivo.dominantRealm;
+    expect(mudou).toBe(true);
+  });
+
+  it('responder as 20 muda a leitura — é o que a pessoa ganha por responder', () => {
+    // O contrato é sobre a LEITURA (os escores), não sobre o vencedor de cada
+    // eixo: refinar pode deixar o mesmo elemento no topo e ainda assim mudar o
+    // quanto ele domina. Exigir que algum argmax vire seria exigir que o teste
+    // CONTRADIGA a pessoa, que não é o que ele existe para fazer.
+    const quiz = { grupo: 'protege', objetivo: 'cuidar', pressao: 'firme' };
+    const so6 = generateOracle(semTeste(quiz), 5);
+    const com20 = generateOracle({
+      ...semTeste(quiz),
+      soulProfile: buildSoulProfile(onboarding(), answersFor(5, 'a', 'a'), REFERENCE_DAY),
+    }, 5);
+    expect(ELEMENT_ORDER.map(e => so6.elementScores[e]))
+      .not.toEqual(ELEMENT_ORDER.map(e => com20.elementScores[e]));
+    expect(ROLE_ORDER.map(r => so6.roleScores[r]))
+      .not.toEqual(ROLE_ORDER.map(r => com20.roleScores[r]));
+  });
+
+  it('duas pessoas iguais, uma refinando e outra não, não recebem a mesma criatura', () => {
+    const quiz = { grupo: 'protege', objetivo: 'cuidar', pressao: 'firme' };
+    const so6 = generateOracle(semTeste(quiz), 5);
+    const com20 = generateOracle({
+      ...semTeste(quiz),
+      soulProfile: buildSoulProfile(onboarding(), answersFor(1, 'b', 'd'), REFERENCE_DAY),
+    }, 5);
+    expect(so6.creature.baseName).not.toBe(com20.creature.baseName);
+  });
+});
+
 describe('oráculo: caminho legado (sem perfil de alma)', () => {
   // Quem jogou antes da troca tem um `SOULMON_PROFILE` salvo SEM soulProfile.
   // Se este teste cair, o reroll dessas pessoas — que pode ter sido pago em
