@@ -138,6 +138,39 @@ describe('a meta que a UI anuncia é a que a virada do dia cobra', () => {
 });
 
 // ---------------------------------------------------------------------------
+// 2b. O MODAL DE EVOLUÇÃO conta o que existe HOJE
+// ---------------------------------------------------------------------------
+describe('"você já tem tarefas suficientes" é sobre HOJE, não sobre o cadastro inteiro', () => {
+  // Jogador que acabou de virar mega (requisito 6) e abre o app num SÁBADO.
+  // Ele tem 6 atividades — todas de seg–sex — e nenhuma tarefa para hoje.
+  const SABADO = 6;
+  const QUARTA = 3;
+  const save = {
+    evolutionStage: 'mega-data',
+    activities: Array.from({ length: 6 }, (_, i) => ativ(`a${i}`, SEG_A_SEX)),
+    tasks: [] as unknown[],
+  };
+
+  it('no sábado o modal vê 0 cadastradas e convida a criar — não diz que já basta', () => {
+    expect(registeredForDay(save, SABADO)).toBe(0);
+    // A fonte crua diria 6 e o modal se calaria num dia em que não há nada.
+    expect(save.activities.length + save.tasks.length).toBe(6);
+  });
+
+  it('AUTOVERIFICAÇÃO: numa quarta ele realmente vê as 6 (o filtro não zera tudo)', () => {
+    expect(registeredForDay(save, QUARTA)).toBe(6);
+  });
+
+  it('tarefa avulsa JÁ CONCLUÍDA hoje continua contando como cadastrada', () => {
+    // `completeTask` tira a tarefa de `tasks`; sem `tasksCompletedOn` o dia em
+    // que a pessoa fez tudo ficaria idêntico ao dia em que não cadastrou nada.
+    const hoje = new Date('2026-08-15T12:00:00').toDateString();
+    const comFeita = { ...save, completedTasks: [{ completedAt: '2026-08-15T09:00:00' }] };
+    expect(registeredForDay(comFeita as any, SABADO, hoje)).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // 3. ORIGEM — nenhum call site reescreve a fórmula
 // ---------------------------------------------------------------------------
 /** Guard que lê comentário é guard que se auto-satisfaz: o comentário que
@@ -204,11 +237,35 @@ describe('guard de origem — a fórmula da meta só existe no dono', () => {
 
   it('quem calcula "cadastradas" no App.tsx passa pelo dono', () => {
     const app = semComentarios(readFileSync(resolve(__dirname, '../App.tsx'), 'utf8'));
-    // `activities.length + tasks.length` é a FONTE ERRADA para a meta do dia
-    // (ignora o dia da semana). Sobra UM uso legítimo: `registeredTasks` do
-    // EvolveTaskModal, que conta o cadastro TOTAL — pergunta diferente.
-    // A contagem fica travada para o guard virar vermelho se um novo aparecer.
+    // `activities.length + tasks.length` é a FONTE ERRADA para "cadastradas do
+    // dia" (ignora o dia da semana E as tarefas já concluídas, que `completeTask`
+    // tira da lista). O ÚLTIMO sobrevivente era `registeredTasks` do
+    // EvolveTaskModal — que perguntava "cadastro total" onde o jogador lia
+    // "o que tenho para hoje", e por isso dizia "você já tem tarefas
+    // suficientes" num sábado vazio para quem só cadastrou coisa de seg–sex.
+    // Agora ele chama `registeredForDay`. A lista fica VAZIA e travada: qualquer
+    // reintrodução da fonte crua deixa este guard vermelho.
     const usos = app.match(/activities\.length\s*\+\s*[a-zA-Z.]*tasks\.length/g) ?? [];
+    expect(usos).toEqual([]);
+  });
+
+  it('AUTOVERIFICAÇÃO: o guard de "cadastradas" enxerga a fonte crua se ela voltar', () => {
+    // Sem isto, o `toEqual([])` acima passaria para sempre inclusive se a regex
+    // tivesse sido quebrada por alguém — um guard verde pelo motivo errado.
+    const reintroduzido = 'registeredTasks={gameState.activities.length + gameState.tasks.length}';
+    const usos = reintroduzido.match(/activities\.length\s*\+\s*[a-zA-Z.]*tasks\.length/g) ?? [];
     expect(usos).toEqual(['activities.length + gameState.tasks.length']);
+  });
+
+  it('o hook de progresso pergunta a meta ao dono, e não ao cadastro cru', () => {
+    // BUG-1/BUG-2: o denominador que vai para o widget Android e para o humor
+    // do pet era o cadastro inteiro. O guard de forma (regex de `Math.min`) não
+    // pegava, porque o hook não reescrevia a fórmula — ele escrevia OUTRA coisa.
+    const hook = semComentarios(
+      readFileSync(resolve(__dirname, '../hooks/useProgressTracking.ts'), 'utf8'),
+    );
+    expect(hook).toContain('dailyGoalFor(');
+    // E a soma crua não pode voltar como denominador exibido.
+    expect(hook).not.toMatch(/availableActivities\.length\s*\+/);
   });
 });

@@ -48,7 +48,7 @@ import { PET_BACKGROUNDS } from './utils/backgrounds';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, tasksToAvoidHeartLoss } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, registeredForDay, tasksToAvoidHeartLoss } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
   FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
@@ -2528,7 +2528,11 @@ export default function App() {
         onClose={() => setEvolveModalStage(null)}
         onCreateTask={() => { setEvolveModalStage(null); setCreateModalOpen(true); }}
         requiredTasks={FORM_REQUIREMENTS[getStageLevel(evolveModalStage ?? gameState.evolutionStage)].required}
-        registeredTasks={gameState.activities.length + gameState.tasks.length}
+        /* Cadastradas PARA HOJE (dia da semana + tarefas já concluídas hoje),
+           via o dono da regra. Com `activities.length` cru, o modal de evolução
+           contava atividades de seg–sex para quem estava olhando aquilo num
+           sábado e dizia "você já tem tarefas suficientes" sobre um dia vazio. */
+        registeredTasks={registeredForDay(gameState, new Date().getDay(), new Date().toDateString())}
         stageName={evolveModalStage ? getStageNameById(evolveModalStage) : ''}
         language={language}
       />
@@ -2552,7 +2556,11 @@ export default function App() {
            até 4. A correção da época consertou o TETO e deixou a FONTE: com
            `activities.length` cru, uma atividade de seg–sex ainda contava na
            meta de sábado, e a cobrança voltava exatamente no fim de semana. */
-        totalRequired={dailyGoalFor(gameState, new Date().getDay())}
+        /* Com o `dayKey`: `completedSteps` (dailyDone) JÁ conta as tarefas que
+           saíram da lista ao serem concluídas; sem o dayKey aqui o denominador
+           ignorava essas mesmas tarefas e as duas props do mesmo componente
+           passavam a medir populações diferentes. */
+        totalRequired={dailyGoalFor(gameState, new Date().getDay(), new Date().toDateString())}
       />
       {showDailyReport && gameState.lastDayReport && (
         <DailyReportModal

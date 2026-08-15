@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { canSelectWeekdays } from '../types/progression';
+import { dailyGoalFor } from '../utils/dailyReset';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 
 interface Step {
@@ -48,12 +49,23 @@ export function useProgressTracking(gameState: ProgressState) {
     return gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
   }, [gameState.activities, gameState.evolutionStage, todayWeekDay]);
 
+  // DENOMINADOR EXIBIDO = META DO DIA, e nunca o cadastro cru.
+  //
+  // Era `availableActivities.length + tasks.length + tasksCompletedToday.length`
+  // — o cadastro inteiro. Esse número vai para o widget Android (App.tsx →
+  // DigiWidgetPlugin → WidgetRenderer: "$completedTasks/$totalTasks" e a
+  // mensagem contextual). Um mega com meta 6 e 9 itens cadastrados que fizesse
+  // 6 CUMPRIU a meta, não perde nada e ganha o dia perfeito — e mesmo assim via
+  // "6/9" e "💪 Quase lá!" na tela de bloqueio o dia inteiro. O jogo não cobra;
+  // a tela cobrava por ele, no canal que o usuário nem pediu para abrir.
+  //
+  // A meta vem do dono da regra (`dailyGoalFor`), NUNCA de uma cópia da fórmula.
   const dailyTotal = useMemo(
-    () => availableActivities.length + gameState.tasks.length + tasksCompletedToday.length,
-    [availableActivities, gameState.tasks, tasksCompletedToday],
+    () => dailyGoalFor(gameState, todayWeekDay, today),
+    [gameState, todayWeekDay, today],
   );
 
-  const dailyDone = useMemo(() => {
+  const dailyDoneRaw = useMemo(() => {
     let count = 0;
 
     availableActivities.forEach(activity => {
@@ -71,30 +83,35 @@ export function useProgressTracking(gameState: ProgressState) {
     return count;
   }, [availableActivities, gameState.tasks, tasksCompletedToday, today]);
 
-  const isDayPerfect = dailyTotal > 0 && dailyDone === dailyTotal;
+  // Concluídas, com TETO NA META. Quem fez 8 de uma meta 6 fez a meta — não
+  // existe "mais que 100%", e o widget não deve exibir "8/6".
+  //
+  // NOTA: aqui vivia `isDayPerfect = dailyTotal > 0 && dailyDone === dailyTotal`
+  // — uma SEGUNDA definição de dia perfeito, que exigia fazer TUDO o que estava
+  // cadastrado, dormindo no repositório sem um único consumidor. A regra real
+  // vive em `computeDailyReset` e a resposta pronta em `lastDayReport.wasPerfect`.
+  // Não recrie: duas definições da mesma regra divergem em silêncio (footgun 9).
+  const dailyDone = useMemo(
+    () => Math.min(dailyDoneRaw, dailyTotal),
+    [dailyDoneRaw, dailyTotal],
+  );
 
-  const progress = useMemo(() => {
-    const weekActivities = gameState.activities.filter(a => a.weekDays?.includes(todayWeekDay));
-    let totalItems = 0;
-    let completedItems = 0;
-
-    weekActivities.forEach(activity => {
-      if (activity.steps.length > 0) {
-        totalItems += activity.steps.length;
-        completedItems += activity.steps.filter(s => s.completed).length;
-      } else {
-        totalItems += 1;
-        if (activity.completedToday && activity.lastCompletedDate === today) completedItems += 1;
-      }
-    });
-
-    totalItems += gameState.tasks.length;
-    completedItems += gameState.tasks.filter(t => t.completed).length;
-    totalItems += tasksCompletedToday.length;
-    completedItems += tasksCompletedToday.length;
-
-    return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
-  }, [gameState.activities, gameState.tasks, tasksCompletedToday, today, todayWeekDay]);
+  // BARRA/HUMOR DO PET = a mesma meta que o jogo cobra.
+  //
+  // Antes o denominador daqui era cru E contava SUB-PASSOS: uma atividade
+  // quebrada em 5 passos valia 5 no denominador da barra e 1 na meta. Efeito
+  // medido: quem quebra tarefa grande em passos pequenos — a técnica de mudança
+  // de comportamento que o app tem componente próprio para suportar (StepRow) —
+  // via o pet ficar `tired` (progress <= 15) por MAIS tempo que quem não quebra.
+  // O app punia visualmente exatamente a prática que deveria premiar.
+  //
+  // Passo agora conta como o resto do jogo já contava (`dailyDone`): a atividade
+  // vale 1 quando TODOS os passos fecham. Avanço parcial de passos, se um dia
+  // for exibido, é barra secundária dentro do card — nunca o humor do pet.
+  const progress = useMemo(
+    () => (dailyTotal > 0 ? Math.round(Math.min(1, dailyDone / dailyTotal) * 100) : 0),
+    [dailyDone, dailyTotal],
+  );
 
   const todayAttributes = useMemo(() => {
     let virus = 0;
@@ -118,5 +135,5 @@ export function useProgressTracking(gameState: ProgressState) {
     return { virus, data, vaccine };
   }, [gameState.activities, today]);
 
-  return { dailyTotal, dailyDone, isDayPerfect, progress, todayAttributes };
+  return { dailyTotal, dailyDone, progress, todayAttributes };
 }

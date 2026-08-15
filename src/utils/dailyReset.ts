@@ -317,8 +317,19 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const totalTasks = registeredForDay(prev as any, yesterdayWeekDay, yesterdayString);
   const dailyGoal = dailyGoalFor(prev as any, yesterdayWeekDay, yesterdayString);
 
-  // Barras de energia = requisito de tarefas do estágio.
-  const energyWasFull = (prev.energyPoints ?? 0) >= requiredToday;
+  // Energia do dia perfeito medida contra a META DO DIA, não contra o requisito
+  // cru do estágio. As barras exibidas continuam sendo `requiredToday`
+  // (getMaxEnergyForStage) — o que mudou é o que o dia perfeito COBRA.
+  //
+  // Por que: comida se ganha 1 por conclusão (careRules.foodForCompletedTask) e
+  // energia só enche comendo. Se a meta do dia é 2 (mega no sábado, com as
+  // atividades cadastradas só para seg–sex), o jogador que faz as 2 ganha 2
+  // comidas e a energia MÁXIMA possível dele naquele dia é 2. Cobrar 6 ali era
+  // negar o dia perfeito a quem fez 100% da própria meta, sem uma linha de
+  // aviso. A mesma linha misturava as duas réguas: tarefas contra `dailyGoal`
+  // (min) e energia contra o requisito cru — a Fase 1 do fix de
+  // `tasksCompletedOn` repetida no outro eixo.
+  const energyWasFull = (prev.energyPoints ?? 0) >= dailyGoal;
   const dayWasPerfect = totalTasks > 0 && dailyDone >= dailyGoal && energyWasFull;
 
   // Ausência: se o app ficou dias sem abrir, não há o que cobrar — as tarefas

@@ -3,6 +3,7 @@ import {
   feedFood, rubHeal, feedsLeft, foodForCompletedTask, completeTask,
   FOOD_LIMIT_PER_HOUR, RUB_HEAL_DAILY_CAP, type CareState, type TaskState,
 } from './careRules';
+import { FORM_REQUIREMENTS, getMaxEnergyForStage } from '../types/progression';
 
 // Estas regras agora rodam nos DOIS apps (celular e desktop). Antes viviam
 // dentro do App.tsx e o desktop tinha a sua própria cópia — divergir significa
@@ -67,7 +68,10 @@ describe('alimentar', () => {
     // Senão a lista cresceria para sempre no localStorage.
     const agora = 2 * HORA;
     const velhas = [0, 1000];                                    // > 1h atrás
-    const recentes = [1, 2, 3, 4, 5].map(i => agora - i * 1000);  // dentro da hora
+    // Exatamente o teto de comidas da janela, derivado da constante (o literal
+    // `5` daqui virou falso quando o teto passou a derivar do requisito máximo
+    // da escada — o teste deixava de exercitar a recusa em silêncio).
+    const recentes = Array.from({ length: FOOD_LIMIT_PER_HOUR }, (_, i) => agora - (i + 1) * 1000);
     const r = feedFood(estado(), '🍎', [...velhas, ...recentes], agora);
     expect(r.refused).toBe('hourly-limit');
     expect(r.feedTimes).toEqual(recentes);
@@ -319,5 +323,58 @@ describe('completeTask — a tarefa já marcada é o fluxo NORMAL', () => {
 
   it('tarefa inexistente continua sendo "nada a fazer"', () => {
     expect(completeTask(marcada(), 'nao-existe')).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 🍎 O TETO DE COMIDA NUNCA PODE FICAR ABAIXO DO QUE O JOGO PEDE NUM DIA
+//
+// Cenário do jogador que criou este teste: mega (requisito 6) que fecha as 6
+// tarefas numa única sessão à noite — o padrão de quem trabalha. Cada conclusão
+// rende 1 comida, e energia SÓ enche comendo; energia cheia é condição do dia
+// perfeito. Com o teto em 5 ele conseguia dar 5 comidas, a 6ª barra ficava
+// esperando a janela de 60 min deslizar e, se ele fechou o dia às 23h10, o dia
+// perfeito não acontecia. Ele fez 100% e o jogo disse que não.
+//
+// Por isso a constante é DERIVADA (`MAX_STAGE_REQUIREMENT`) e não um literal:
+// eram dois números que precisavam concordar, mantidos à mão, em arquivos
+// diferentes — o footgun 9 do CLAUDE.md.
+// ---------------------------------------------------------------------------
+describe('teto de comida × requisito do estágio', () => {
+  it('o teto por hora nunca é menor que o maior requisito diário da escada', () => {
+    // Mensagem nomeando o nível: se a escada mudar e alguém baixar o teto, o
+    // erro diz QUAL estágio ficou impossível, não só "5 < 6".
+    const abaixo = Object.entries(FORM_REQUIREMENTS)
+      .filter(([, req]) => FOOD_LIMIT_PER_HOUR < req.required)
+      .map(([nivel, req]) => `${nivel} pede ${req.required}, teto ${FOOD_LIMIT_PER_HOUR}`);
+    expect(abaixo).toEqual([]);
+  });
+
+  it('mega que fecha as 6 tarefas numa sessão só consegue encher a energia', () => {
+    const agora = Date.now();
+    let st = estado({
+      evolutionStage: 'mega-data',           // 6 barras de energia
+      energyPoints: 0,
+      foodInventory: { '🍎': FORM_REQUIREMENTS.mega.required },
+    });
+    let times: number[] = [];
+    for (let i = 0; i < FORM_REQUIREMENTS.mega.required; i++) {
+      // Tudo dentro do MESMO minuto: uma sessão noturna, nada de esperar a hora.
+      const r = feedFood(st, '🍎', times, agora + i * 1000);
+      expect(`comida ${i + 1}: ${r.refused ?? 'aceita'}`).toBe(`comida ${i + 1}: aceita`);
+      st = r.state;
+      times = r.feedTimes;
+    }
+    expect(st.energyPoints).toBe(getMaxEnergyForStage('mega-data'));
+  });
+
+  it('AUTOVERIFICAÇÃO: o teto continua existindo — a comida seguinte é recusada', () => {
+    // O limite protege contra farm de atributo. Ele só parou de barrar o
+    // próprio dia do jogador; não sumiu.
+    const agora = Date.now();
+    const cheio = Array.from({ length: FOOD_LIMIT_PER_HOUR }, (_, i) => agora - i * 1000);
+    const r = feedFood(estado({ foodInventory: { '🍎': 3 } }), '🍎', cheio, agora);
+    expect(r.refused).toBe('hourly-limit');
+    expect(feedsLeft(cheio, agora)).toBe(0);
   });
 });

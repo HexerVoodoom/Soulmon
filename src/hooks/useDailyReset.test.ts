@@ -535,3 +535,89 @@ describe('degeneração — piso, custo e a raiz da árvore', () => {
     expect(r.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS.rookie.required / 2));
   });
 });
+
+// ---------------------------------------------------------------------------
+// ⚡ ENERGIA DO DIA PERFEITO — medida contra a META DO DIA, não contra o
+// requisito cru do estágio.
+//
+// A linha do `dayWasPerfect` misturava as duas réguas: tarefas contra
+// `dailyGoal` (que já é `min(cadastradas, requisito)`) e energia contra
+// `FORM_REQUIREMENTS[...].required`. Como comida vem de CONCLUIR tarefa (1 por
+// conclusão) e energia só enche comendo, o jogador cuja meta do dia era menor
+// que o requisito NÃO TINHA COMO encher a barra — o dia perfeito era negado a
+// quem fez 100% do que se comprometeu a fazer, sem uma linha de aviso.
+// ---------------------------------------------------------------------------
+describe('dia perfeito: a energia é cobrada contra a meta do dia', () => {
+  // Domingo de madrugada fecha o dia de SÁBADO (weekDay 6).
+  const DOMINGO = new Date('2026-08-16T04:00:00');
+  const SABADO_STR = new Date('2026-08-15T12:00:00').toDateString();
+  const SEG_A_SEX = [1, 2, 3, 4, 5];
+
+  /** Mega (requisito 6) com a rotina toda em dias úteis e 2 tarefas no sábado. */
+  const megaNoSabado = (feitas: number, energia: number) => ({
+    ...baseState(),
+    evolutionStage: 'mega-data',
+    maxHealthPoints: 4,
+    healthPoints: 4,
+    lastResetDate: SABADO_STR,
+    activities: [1, 2, 3, 4].map(i => ({
+      id: `a${i}`, category: 'Health', steps: [], weekDays: SEG_A_SEX,
+    })),
+    tasks: [
+      { id: 't1', completed: feitas >= 1 },
+      { id: 't2', completed: feitas >= 2 },
+    ],
+    energyPoints: energia,
+  });
+
+  it('mega no sábado com meta 2 faz as 2, ganha 2 comidas e GANHA o dia perfeito', () => {
+    // 2 conclusões = 2 comidas = energia máxima possível 2. O requisito do
+    // estágio (6) era inalcançável naquele dia por construção.
+    const r = runReset(megaNoSabado(2, 2), DOMINGO);
+    expect(r.lastDayWasPerfect).toBe(true);
+    expect(r.lastDayReport.energyWasFull).toBe(true);
+    expect(r.perfectDays).toBe(1);
+    expect(r.healthPoints).toBe(4); // e não perdeu coração nenhum
+  });
+
+  it('AUTOVERIFICAÇÃO: quem fez a meta e NÃO comeu continua sem dia perfeito', () => {
+    // Sem este caso, a energia teria virado decoração — bastaria fazer as
+    // tarefas e o "cuidar do bicho" sairia da conta.
+    const r = runReset(megaNoSabado(2, 0), DOMINGO);
+    expect(r.lastDayWasPerfect).toBe(false);
+    expect(r.lastDayReport.energyWasFull).toBe(false);
+  });
+
+  it('AUTOVERIFICAÇÃO: quem NÃO fez a meta não ganha o dia por ter energia', () => {
+    const r = runReset(megaNoSabado(1, 6), DOMINGO);
+    expect(r.lastDayWasPerfect).toBe(false);
+  });
+
+  it('num dia cheio nada afrouxou: mega com 6 itens ainda precisa de 6 de energia', () => {
+    const seisItens = (energia: number) => ({
+      ...baseState(),
+      evolutionStage: 'mega-data',
+      maxHealthPoints: 4,
+      healthPoints: 4,
+      tasks: Array.from({ length: 6 }, (_, i) => ({ id: `t${i}`, completed: true })),
+      energyPoints: energia,
+    });
+    expect(runReset(seisItens(5)).lastDayWasPerfect).toBe(false);
+    expect(runReset(seisItens(FORM_REQUIREMENTS.mega.required)).lastDayWasPerfect).toBe(true);
+  });
+
+  it('a energia exigida NUNCA passa das barras que o estágio tem', () => {
+    // Invariante estrutural: a barra cheia é `getMaxEnergyForStage`, e a meta do
+    // dia é `min(cadastradas, required)` — logo a exigência é sempre alcançável.
+    for (const stage of ['rookie', 'champion-data', 'ultimate-data', 'mega-data', 'ultra']) {
+      const nItens = 20; // cadastro grande de propósito: meta = requisito cheio
+      const st = {
+        ...baseState(),
+        evolutionStage: stage,
+        tasks: Array.from({ length: nItens }, (_, i) => ({ id: `t${i}`, completed: true })),
+        energyPoints: getMaxEnergyForStage(stage),
+      };
+      expect(`${stage}: ${runReset(st).lastDayWasPerfect}`).toBe(`${stage}: true`);
+    }
+  });
+});

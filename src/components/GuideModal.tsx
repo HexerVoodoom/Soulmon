@@ -1,3 +1,4 @@
+import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import type { Language } from '../utils/i18n';
 import { FORM_REQUIREMENTS } from '../types/progression';
@@ -95,9 +96,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               </li>
               <li>
                 <strong>🍎 {L('Comida', 'Food')}</strong>
+                {/* O número sai da CONSTANTE, não de texto à mão — a regra do
+                    CLAUDE.md ("os números saem das constantes"). Estas duas
+                    frases diziam "5 por hora" enquanto o teto virava 6, e o
+                    guia passou a mentir em uma unidade no exato dia em que o
+                    limite foi corrigido. */}
                 {L(
-                  ' — Enche energia e dá pontos de atributo (que definem o galho da evolução). NÃO cura corações. Dá para alimentar até 5 vezes por hora; cheio, ele avisa que está satisfeito. Cada tarefa concluída rende uma comida da categoria dela.',
-                  ' — Refills energy and grants attribute points (which steer your evolution branch). It does NOT heal hearts. You can feed up to 5 times per hour; once full, it just says so. Every completed task yields one food of its category.',
+                  ` — Enche energia e dá pontos de atributo (que definem o galho da evolução). NÃO cura corações. Dá para alimentar até ${FOOD_LIMIT_PER_HOUR} vezes por hora; cheio, ele avisa que está satisfeito. Cada tarefa concluída rende uma comida da categoria dela.`,
+                  ` — Refills energy and grants attribute points (which steer your evolution branch). It does NOT heal hearts. You can feed up to ${FOOD_LIMIT_PER_HOUR} times per hour; once full, it just says so. Every completed task yields one food of its category.`,
                 )}
               </li>
               <li>

@@ -1,7 +1,7 @@
 import type { ActivityCategory } from '../types/attributes';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
-import { getMaxEnergyForStage } from '../types/progression';
+import { getMaxEnergyForStage, MAX_STAGE_REQUIREMENT } from '../types/progression';
 import { GULOSO_BONUS_ATTR, hasPassive, rubDailyCap } from './passives';
 
 // Regras de cuidado como funções PURAS.
@@ -13,7 +13,8 @@ import { GULOSO_BONUS_ATTR, hasPassive, rubDailyCap } from './passives';
 // Aqui elas recebem estado e devolvem estado, sem tocar em React nem em
 // localStorage; quem chama cuida dos efeitos colaterais e da persistência.
 //
-// As regras em si continuam sendo as do CLAUDE.md (5 comidas/hora, carinho cura
+// As regras em si continuam sendo as do CLAUDE.md (teto de comidas/hora derivado
+// do maior requisito da escada — hoje 6 —, carinho cura
 // meio coração até 1/dia). Este arquivo NÃO decide nada novo — só é o lugar
 // onde a decisão passou a morar uma vez só.
 
@@ -35,8 +36,22 @@ export interface CareState {
   petPassive?: string;
 }
 
-/** Máximo de comidas por hora (janela deslizante). */
-export const FOOD_LIMIT_PER_HOUR = 5;
+/**
+ * Máximo de comidas por hora (janela deslizante).
+ *
+ * DERIVADO do maior requisito diário da escada (`MAX_STAGE_REQUIREMENT`), e não
+ * um literal, porque o limite de ritmo NUNCA pode ficar abaixo do que o jogo
+ * pede num dia: comida se ganha concluindo tarefa, energia só enche comendo e
+ * energia cheia é condição do dia perfeito. Com o literal `5` e mega/ultra
+ * pedindo 6, o jogador que fechava as 6 tarefas numa sessão só (o padrão de
+ * quem trabalha) dava 5 comidas, batia no teto e **perdia o dia perfeito tendo
+ * feito 100% da própria meta** — punido por ritmo, não por esforço.
+ *
+ * O limite continua existindo e continua barrando farm de atributo: ele só
+ * deixou de barrar o próprio dia do jogador. Se a escada mudar, este número
+ * acompanha sozinho (guard em `careRules.test.ts`).
+ */
+export const FOOD_LIMIT_PER_HOUR = MAX_STAGE_REQUIREMENT;
 const HOUR_MS = 60 * 60 * 1000;
 
 /** Cura do carinho por gesto, e o teto diário. */

@@ -30,6 +30,23 @@ export const MAX_HP_BY_FORM = {
 
 export type EvolutionStage = keyof typeof FORM_REQUIREMENTS;
 
+/**
+ * O MAIOR requisito diário da escada (hoje 6, de mega/ultra).
+ *
+ * Existe para que nenhum outro teto do jogo possa ficar ABAIXO do que o jogo
+ * pede num dia. O caso concreto que criou esta constante: `FOOD_LIMIT_PER_HOUR`
+ * era o literal `5` enquanto mega/ultra pedem 6 tarefas — e como energia só
+ * enche comendo e comida só vem de concluir tarefa, quem fechava as 6 numa
+ * sessão só de noite conseguia dar 5 comidas e via o **dia perfeito negado
+ * tendo feito 100%**. Dois números soltos que precisavam concordar e não
+ * concordavam: o footgun 9 do CLAUDE.md em forma de constante.
+ *
+ * Derive daqui — não escreva o número de novo em lugar nenhum.
+ */
+export const MAX_STAGE_REQUIREMENT: number = Math.max(
+  ...Object.values(FORM_REQUIREMENTS).map(f => f.required),
+);
+
 // ---------------------------------------------------------------------------
 // Esquema de IDs da árvore do Soulmon (ver utils/oracle.ts + App.tsx):
 //   'rookie' | '{champion|ultimate|mega}-{virus|data|vaccine}' | 'ultra'

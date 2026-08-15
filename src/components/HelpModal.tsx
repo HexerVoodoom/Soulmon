@@ -1,3 +1,4 @@
+import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { PixelButton } from './pixel/PixelKit';
 import { Language } from '../utils/i18n';
@@ -85,8 +86,9 @@ const SECTIONS = [
         icon: '📁',
         labelEn: 'Items',
         labelPt: 'Itens',
-        descEn: 'Your inventory. Food refills energy + attribute points (up to 5/hour). Shop items also live here: chips give ONLY attribute points (no energy), and Little Hearts heal 1 HP — neither counts against the food limit.',
-        descPt: 'Seu inventário. Comida enche energia + atributos (até 5/hora). Itens da loja também ficam aqui: chips dão SÓ atributo (sem energia) e Coraçõezinhos curam 1 HP — nenhum conta no limite de comida.',
+        // Número da CONSTANTE, não à mão: dizia "5/hora" enquanto o teto virava 6.
+        descEn: `Your inventory. Food refills energy + attribute points (up to ${FOOD_LIMIT_PER_HOUR}/hour). Shop items also live here: chips give ONLY attribute points (no energy), and Little Hearts heal 1 HP — neither counts against the food limit.`,
+        descPt: `Seu inventário. Comida enche energia + atributos (até ${FOOD_LIMIT_PER_HOUR}/hora). Itens da loja também ficam aqui: chips dão SÓ atributo (sem energia) e Coraçõezinhos curam 1 HP — nenhum conta no limite de comida.`,
       },
       {
         icon: '🚿',

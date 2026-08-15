@@ -1,115 +1,207 @@
-import { describe, it, expect } from 'vitest';
+// @vitest-environment jsdom
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { renderHook } from '@testing-library/react';
 import { CATEGORY_ATTRIBUTES } from '../types/attributes';
+import { useProgressTracking } from './useProgressTracking';
 
-// Pure logic extracted from useProgressTracking for unit testing.
-// `today` is fixed so tests are deterministic.
-const today = new Date().toDateString();
+// ===========================================================================
+// Este arquivo TESTAVA UMA CÓPIA.
+//
+// Antes ele reimplementava `computeProgress` e `computeTodayAttributes` no topo
+// do próprio teste e afirmava coisas sobre a cópia — inclusive que uma atividade
+// com 2 passos e 1 feito valia 50%, que é justamente o defeito (BUG-2). Ou seja:
+// o teste ficava verde descrevendo o bug, enquanto o hook de verdade não era
+// exercitado por linha nenhuma. É o footgun 9 do CLAUDE.md dentro do teste, o
+// mesmo formato que `simulateReset` já tinha criado em `useDailyReset.test.ts`.
+//
+// Agora renderiza O HOOK. Nada aqui reimplementa regra: o denominador vem de
+// `dailyGoalFor` (dono da meta do dia), como no app.
+// ===========================================================================
 
-function computeProgress(state: {
-  activities: { steps: { completed: boolean }[]; completedToday?: boolean; lastCompletedDate?: string }[];
-  tasks: { completed: boolean }[];
-  completedTasks: { completedAt: string }[];
-}): number {
-  const tasksCompletedToday = state.completedTasks.filter(
-    ct => new Date(ct.completedAt).toDateString() === today,
-  );
-  let totalItems = 0;
-  let completedItems = 0;
-  state.activities.forEach(a => {
-    if (a.steps.length > 0) {
-      totalItems += a.steps.length;
-      completedItems += a.steps.filter(s => s.completed).length;
-    } else {
-      totalItems += 1;
-      if (a.completedToday && a.lastCompletedDate === today) completedItems += 1;
-    }
-  });
-  totalItems += state.tasks.length;
-  completedItems += state.tasks.filter(t => t.completed).length;
-  totalItems += tasksCompletedToday.length;
-  completedItems += tasksCompletedToday.length;
-  return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+const QUARTA = new Date('2026-08-12T12:00:00'); // quarta-feira
+const SABADO = new Date('2026-08-15T12:00:00'); // sábado
+const TODO_DIA = [0, 1, 2, 3, 4, 5, 6];
+const SEG_A_SEX = [1, 2, 3, 4, 5];
+
+type Passo = { id: string; label: string; completed: boolean };
+
+function ativ(
+  id: string,
+  opts: { weekDays?: number[]; feita?: boolean; passos?: boolean[]; categoria?: keyof typeof CATEGORY_ATTRIBUTES } = {},
+) {
+  const passos: Passo[] = (opts.passos ?? []).map((c, i) => ({ id: `${id}-${i}`, label: `p${i}`, completed: c }));
+  return {
+    id,
+    category: (opts.categoria ?? 'Health') as any,
+    steps: passos,
+    weekDays: opts.weekDays ?? TODO_DIA,
+    completedToday: !!opts.feita,
+    lastCompletedDate: opts.feita ? new Date().toDateString() : undefined,
+  };
 }
 
-function computeTodayAttributes(
-  activities: { category: keyof typeof CATEGORY_ATTRIBUTES; steps: { completed: boolean }[]; completedToday?: boolean; lastCompletedDate?: string }[],
-): { virus: number; data: number; vaccine: number } {
-  let virus = 0, data = 0, vaccine = 0;
-  activities.forEach(activity => {
-    const isComplete =
-      activity.steps.length > 0
-        ? activity.steps.every(s => s.completed)
-        : !!activity.completedToday && activity.lastCompletedDate === today;
-    if (isComplete) {
-      const attrs = CATEGORY_ATTRIBUTES[activity.category];
-      virus += attrs.virus;
-      data += attrs.data;
-      vaccine += attrs.vaccine;
-    }
-  });
-  return { virus, data, vaccine };
+function estado(over: Partial<Parameters<typeof useProgressTracking>[0]> = {}) {
+  return {
+    evolutionStage: 'mega-data',
+    activities: [],
+    tasks: [],
+    completedTasks: [],
+    ...over,
+  } as Parameters<typeof useProgressTracking>[0];
 }
 
-describe('useProgressTracking — progress %', () => {
-  it('returns 0 when nothing exists', () => {
-    expect(computeProgress({ activities: [], tasks: [], completedTasks: [] })).toBe(0);
+function ver(state: Parameters<typeof useProgressTracking>[0]) {
+  return renderHook(() => useProgressTracking(state)).result.current;
+}
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(QUARTA);
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+// ---------------------------------------------------------------------------
+// BUG-1 — o número que aparece na tela de bloqueio do celular
+// ---------------------------------------------------------------------------
+describe('o widget mostra a META DO DIA, não o cadastro inteiro', () => {
+  // Jogador mega: requisito 6. Ele cadastrou 9 coisas para hoje porque
+  // cadastrar muito é comportamento saudável e a regra que COBRA já perdoa
+  // (`min(cadastradas, requisito)`).
+  const noveCadastradas = (feitas: number) =>
+    estado({
+      activities: Array.from({ length: 9 }, (_, i) => ativ(`a${i}`, { feita: i < feitas })),
+    });
+
+  it('mega com 9 cadastradas que fez 6 vê 6/6 — e não "6/9" com "quase lá" o dia inteiro', () => {
+    const r = ver(noveCadastradas(6));
+    expect(r.dailyTotal).toBe(6);
+    expect(r.dailyDone).toBe(6);
+    expect(r.progress).toBe(100); // o widget lê ratio 1 → "dia perfeito", não "💪 quase lá"
   });
 
-  it('returns 100 when all tasks completed', () => {
-    const tasks = [{ completed: true }, { completed: true }];
-    expect(computeProgress({ activities: [], tasks, completedTasks: [] })).toBe(100);
+  it('quem passou da meta não vira "8/6": o excedente não é dívida nem sobra', () => {
+    const r = ver(noveCadastradas(8));
+    expect(r.dailyDone).toBe(6);
+    expect(r.dailyTotal).toBe(6);
   });
 
-  it('returns 50 when half tasks done', () => {
-    const tasks = [{ completed: true }, { completed: false }];
-    expect(computeProgress({ activities: [], tasks, completedTasks: [] })).toBe(50);
+  it('AUTOVERIFICAÇÃO: o denominador não virou uma constante 6 — meta pequena continua pequena', () => {
+    // Sem este caso, um `dailyTotal = 6` fixo passaria nos dois testes acima.
+    const r = ver(estado({ activities: [ativ('unica')] }));
+    expect(r.dailyTotal).toBe(1);
   });
 
-  it('counts step-activity completion by step ratio', () => {
-    const activities = [{ steps: [{ completed: true }, { completed: false }] }];
-    const pct = computeProgress({ activities, tasks: [], completedTasks: [] });
-    expect(pct).toBe(50);
-  });
-
-  it('counts stepless activity as complete when completedToday + today date', () => {
-    const activities = [{ steps: [], completedToday: true, lastCompletedDate: today }];
-    expect(computeProgress({ activities, tasks: [], completedTasks: [] })).toBe(100);
-  });
-
-  it('counts stepless activity as incomplete when date mismatch', () => {
-    const activities = [{ steps: [], completedToday: true, lastCompletedDate: 'Mon Jan 01 2024' }];
-    expect(computeProgress({ activities, tasks: [], completedTasks: [] })).toBe(0);
+  it('sábado de quem só cadastrou seg–sex: a tela não cobra um dia que o jogo não cobra', () => {
+    vi.setSystemTime(SABADO);
+    const r = ver(
+      estado({
+        activities: [
+          ativ('academia', { weekDays: SEG_A_SEX }),
+          ativ('estudo', { weekDays: SEG_A_SEX }),
+          ativ('remedio', { weekDays: TODO_DIA, feita: true }),
+        ],
+      }),
+    );
+    expect(r.dailyTotal).toBe(1);
+    expect(r.dailyDone).toBe(1);
+    expect(r.progress).toBe(100);
   });
 });
 
+// ---------------------------------------------------------------------------
+// BUG-2 — o humor do pet punia quem quebra tarefa em passos
+// ---------------------------------------------------------------------------
+describe('quebrar a tarefa em passos não deixa o pet triste por mais tempo', () => {
+  // `getCompanionMood` (App.tsx) usa `tired` em progress <= 15 e `happy` em
+  // >= 60; por isso o número abaixo é humor, não enfeite.
+  const mega = (comPassos: boolean) =>
+    estado({
+      activities: [
+        ativ('a1', { feita: true }),
+        ativ('a2', { feita: true }),
+        ativ('a3', { feita: true }),
+        // A sexta atividade é a mesma coisa nos dois saves; só muda se o
+        // jogador a escreveu em 5 passos ou como um item só.
+        comPassos ? ativ('a4', { passos: [false, false, false, false, false] }) : ativ('a4'),
+      ],
+    });
+
+  it('mesmo progresso com e sem passos: o app para de punir a técnica que ele oferece', () => {
+    expect(ver(mega(true)).progress).toBe(ver(mega(false)).progress);
+    expect(ver(mega(true)).progress).toBe(75); // 3 de 4 itens
+  });
+
+  it('atividade em passos só conta quando TODOS os passos fecham', () => {
+    const meio = estado({ activities: [ativ('a', { passos: [true, true, false] })] });
+    const tudo = estado({ activities: [ativ('a', { passos: [true, true, true] })] });
+    expect(ver(meio).progress).toBe(0);   // antes marcava 67% "de graça"
+    expect(ver(tudo).progress).toBe(100);
+  });
+
+  it('início do dia: quem quebrou em passos não começa mais fundo no vermelho', () => {
+    const semPassos = estado({ activities: [ativ('a1'), ativ('a2')] });
+    const comPassos = estado({ activities: [ativ('a1', { passos: [false, false, false, false, false] }), ativ('a2')] });
+    expect(ver(comPassos).progress).toBe(ver(semPassos).progress);
+  });
+
+  it('AUTOVERIFICAÇÃO: progress realmente se move (não é sempre o mesmo número)', () => {
+    const nenhuma = estado({ activities: [ativ('a1'), ativ('a2')] });
+    const uma = estado({ activities: [ativ('a1', { feita: true }), ativ('a2')] });
+    expect(ver(nenhuma).progress).toBe(0);
+    expect(ver(uma).progress).toBe(50);
+  });
+
+  it('progress nunca passa de 100 nem fica negativo', () => {
+    const demais = estado({ activities: Array.from({ length: 9 }, (_, i) => ativ(`a${i}`, { feita: true })) });
+    expect(ver(demais).progress).toBe(100);
+    expect(ver(estado()).progress).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-5 — a segunda definição de "dia perfeito" não pode voltar
+// ---------------------------------------------------------------------------
+describe('o hook não responde "o dia foi perfeito?"', () => {
+  it('não existe `isDayPerfect` aqui — a resposta é `lastDayReport.wasPerfect`', () => {
+    // A definição que morava aqui exigia `dailyDone === dailyTotal` (fazer TUDO
+    // o que estava cadastrado), enquanto a regra viva exige a META. Duas
+    // definições da mesma regra divergem em silêncio; esta ficou anos sem
+    // consumidor, pronta para o primeiro dev que precisasse do dado na UI.
+    expect(Object.keys(ver(estado()))).not.toContain('isDayPerfect');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Atributos do dia (sem regressão)
+// ---------------------------------------------------------------------------
 describe('useProgressTracking — todayAttributes', () => {
-  it('returns zero attributes when no activities', () => {
-    expect(computeTodayAttributes([])).toEqual({ virus: 0, data: 0, vaccine: 0 });
+  it('sem atividades, nenhum atributo', () => {
+    expect(ver(estado()).todayAttributes).toEqual({ virus: 0, data: 0, vaccine: 0 });
   });
 
-  it('accumulates attributes for completed step-activities', () => {
-    const activities = [
-      { category: 'Health' as const, steps: [{ completed: true }] },
-    ];
-    const attrs = computeTodayAttributes(activities);
-    expect(attrs).toEqual(CATEGORY_ATTRIBUTES['Health']);
+  it('acumula os atributos das atividades concluídas', () => {
+    const r = ver(estado({ activities: [ativ('a', { passos: [true], categoria: 'Health' })] }));
+    expect(r.todayAttributes).toEqual(CATEGORY_ATTRIBUTES['Health']);
   });
 
-  it('does not include incomplete activities in attributes', () => {
-    const activities = [
-      { category: 'Study' as const, steps: [{ completed: false }] },
-    ];
-    expect(computeTodayAttributes(activities)).toEqual({ virus: 0, data: 0, vaccine: 0 });
+  it('atividade incompleta não rende atributo', () => {
+    const r = ver(estado({ activities: [ativ('a', { passos: [false], categoria: 'Study' })] }));
+    expect(r.todayAttributes).toEqual({ virus: 0, data: 0, vaccine: 0 });
   });
 
-  it('sums attributes across multiple completed activities', () => {
-    const activities = [
-      { category: 'Health' as const, steps: [{ completed: true }] },
-      { category: 'Study' as const, steps: [{ completed: true }] },
-    ];
-    const { virus, data, vaccine } = computeTodayAttributes(activities);
-    expect(virus).toBe(CATEGORY_ATTRIBUTES.Health.virus + CATEGORY_ATTRIBUTES.Study.virus);
-    expect(data).toBe(CATEGORY_ATTRIBUTES.Health.data + CATEGORY_ATTRIBUTES.Study.data);
-    expect(vaccine).toBe(CATEGORY_ATTRIBUTES.Health.vaccine + CATEGORY_ATTRIBUTES.Study.vaccine);
+  it('soma atributos de categorias diferentes', () => {
+    const r = ver(
+      estado({
+        activities: [
+          ativ('a', { passos: [true], categoria: 'Health' }),
+          ativ('b', { passos: [true], categoria: 'Study' }),
+        ],
+      }),
+    );
+    expect(r.todayAttributes.virus).toBe(CATEGORY_ATTRIBUTES.Health.virus + CATEGORY_ATTRIBUTES.Study.virus);
+    expect(r.todayAttributes.data).toBe(CATEGORY_ATTRIBUTES.Health.data + CATEGORY_ATTRIBUTES.Study.data);
+    expect(r.todayAttributes.vaccine).toBe(CATEGORY_ATTRIBUTES.Health.vaccine + CATEGORY_ATTRIBUTES.Study.vaccine);
   });
 });

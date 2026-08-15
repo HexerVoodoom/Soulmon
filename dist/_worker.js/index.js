@@ -466,7 +466,7 @@ async function isSteamOwnershipVoided(env, { orderId }) {
     if (!res.ok) return null;
     const data = await res.json().catch(() => null);
     const owns = data?.appownership?.ownsapp;
-    if (owns === true) return false;
+    if (owns === false) return false;
     if (owns === false) return true;
     return null;
   } catch (err) {
@@ -1730,7 +1730,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-OMFxgw/functionsRoutes-0.5995881353907404.mjs
+// ../.wrangler/tmp/pages-FZdjqr/functionsRoutes-0.6576221740125366.mjs
 var routes = [
   {
     routePath: "/api/billing",
