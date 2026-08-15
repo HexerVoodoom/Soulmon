@@ -90,6 +90,32 @@ atividades). Recomendação: `getMaxHPForStage('rookie')` nos dois campos.
 Os valores atuais estão **travados por teste** para que mudar seja decisão, não
 acidente. **Achado na rodada 8.**
 
+### 6b. Balanceamento da carga diária — 4 propostas esperando seu sim/não
+Vem do **seu teste com usuários** ("nem todo dia consigo fazer as 6 tarefas";
+"tenho preguiça de planejar"; "cadastro mais e sou penalizado"). Diagnóstico
+completo em `product/soulmon-01/balance/carga-diaria.md`.
+
+**Os BUGS já foram corrigidos por mim** (a queixa 3 era defeito, não desenho —
+três denominadores crus na UI mostravam "faça tudo" enquanto a regra cobrava
+`min(cadastradas, requisito)`). **Estas quatro mudam REGRA para quem já joga, e
+por isso são suas:**
+
+| # | proposta | número exato |
+|---|---|---|
+| P1 | Separar meta mínima (coração) de meta ideal (dia perfeito), como Dailies vs. Habits do Habitica | `HEART_GOAL_RATIO = 0,6` → mega não perde ♥ com **4 de 6** em vez de 5 de 6 |
+| P2 | 1 dia de folga por semana, recarregado na segunda, **consumido automaticamente na virada** | não ganha nem perde o dia (padrão Pokémon Sleep). A lição do Duolingo: quem precisou da folga não abriu o app para usá-la |
+| P3 | Alívio adaptativo: meta de coração **cai 1 após 2 dias falhos**, piso 2 | ⚠️ adaptar **para cima** foi recusado — é a esteira do Vital Bracelet |
+| P4 | Presets de rotina de 1 toque + botão "Equilibrar minha semana" | **zero mudança de regra**, maior retorno por esforço. A pesquisa foi conclusiva: ninguém planeja a semana num app de hábito |
+
+**Recomendação do time:** comece por **P4** (não mexe em regra) e teste com 5
+usuários **antes** de decidir P1–P3. Há uma hipótese barata e desconfortável na
+mesa: **só os bugs corrigidos podem resolver 60% da queixa 1 e 100% da queixa 3**
+— nesse caso, mexer no balanceamento seria consertar o que já não está quebrado.
+
+**Recusados de propósito** (contrariam a essência "encoraja, nunca cobra"):
+streak visível · folga vendável · notificação nova de cobrança · meta que sobe ·
+reduzir o teto de atividades · humor alimentando meta.
+
 ### 7. TTL de 365 dias no save
 Colide com o guardrail nº 1 do produto ("quem volta encontra saudade, não
 fatura"): quem some por mais de um ano perde o save. Precisa de um "sim, é isso
