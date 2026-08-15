@@ -17,6 +17,15 @@
 // hash(input) XOR salt — mesmo salt = mesmo resultado; salt novo = variação.
 // ============================================================================
 
+// O perfil de alma é o motor NOVO da leitura (utils/soulProfile/) — 20 itens
+// psicométricos + mapa astral real + numerologia completa. Importado só como
+// TIPO de propósito: o tipo some na compilação, então a `astronomy-engine`
+// não entra no bundle por este arquivo. Quem calcula o perfil é a UI, por
+// import dinâmico, e passa o resultado pronto (JSON puro) aqui dentro.
+import type { SoulProfile } from './soulProfile/profile';
+
+export type { SoulProfile };
+
 export type ElementId =
   | 'agua' | 'fogo' | 'terra' | 'ar'
   | 'sombra' | 'luz' | 'planta' | 'industrial';
@@ -57,6 +66,20 @@ export interface OracleInput {
    *  prefixo literal antes dele no prompt de imagem, em TODOS os 11
    *  estágios. Opcional — o usuário pode optar por não influenciar. */
   favoriteCreature?: string;
+  /**
+   * Leitura ROBUSTA (utils/soulProfile/). Quando presente, ela SUBSTITUI a
+   * leitura antiga — signo solar, ascendente aproximado pela hora, horóscopo
+   * chinês, rashi védico, 4 números e as 6 perguntas do `ORACLE_QUESTIONS` —
+   * como origem dos 4 eixos. Ausente = caminho legado, que continua valendo
+   * para os perfis já salvos no aparelho de quem jogou antes desta troca
+   * (o reroll relê o mesmo `SOULMON_PROFILE` gravado no onboarding).
+   *
+   * O que ela NÃO muda: nada da máquina criativa daqui pra baixo. Preferências,
+   * descrição do pet, overrides, arquétipo, famílias e as 11 formas continuam
+   * exatamente iguais — a criatura de um mesmo par (eixos, seed) sai idêntica
+   * pelos dois caminhos.
+   */
+  soulProfile?: SoulProfile;
 }
 
 /**
@@ -378,6 +401,18 @@ const SIGNS: SignDef[] = [
   ] },
 ];
 
+/**
+ * Signo (nome PT do mapa astral, ex.: "Escorpião") → SignInfo do jogo.
+ *
+ * O `SignInfo` carrega as falas que alimentam o resumo de personalidade, e o
+ * mapa astral real devolve só o nome do signo. Este é o único ponto de
+ * costura entre os dois — as tabelas de traços continuam morando aqui.
+ */
+export function signInfoByName(namePt: string): SignInfo | null {
+  const s = SIGNS.find(sign => sign.name.pt === namePt);
+  return s ? { id: s.id, name: s.name, element: s.element, modality: s.modality, traits: s.traits } : null;
+}
+
 export function westernSunSign(month: number, day: number): SignInfo {
   // Método direto por faixas (evita ambiguidade do wrap de ano).
   const ranges: Array<[number, number, number, number, number]> = [
@@ -586,13 +621,13 @@ export const ALIGNMENT_ORDER: AlignmentId[] = ['poder', 'harmonia', 'benevolenci
 export const REALM_ORDER: RealmId[] = ['deserto', 'picos', 'oceano', 'pantano', 'floresta', 'cavernas', 'gelo', 'campina', 'akasha'];
 
 // Afinidades da numerologia
-const NUMBER_ELEMENTS: Record<number, ElementId[]> = {
+export const NUMBER_ELEMENTS: Record<number, ElementId[]> = {
   1: ['fogo', 'luz'], 2: ['agua', 'luz'], 3: ['ar', 'luz'], 4: ['terra', 'industrial'],
   5: ['ar', 'fogo'], 6: ['planta', 'agua'], 7: ['sombra', 'agua'], 8: ['industrial', 'terra'],
   9: ['luz', 'fogo'], 11: ['luz', 'ar'], 22: ['industrial', 'terra'], 33: ['luz', 'planta'],
 };
 
-const NUMBER_ROLES: Record<number, RoleId> = {
+export const NUMBER_ROLES: Record<number, RoleId> = {
   1: 'fisico', 2: 'suporte', 3: 'alcance', 4: 'tanque', 5: 'alcance', 6: 'suporte',
   7: 'magico', 8: 'tanque', 9: 'magico', 11: 'magico', 22: 'tanque', 33: 'suporte',
 };
@@ -713,7 +748,7 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
 
 // ----- Alinhamento (poder / harmonia / benevolência) -----
 
-const NUMBER_ALIGNMENT: Record<number, AlignmentId> = {
+export const NUMBER_ALIGNMENT: Record<number, AlignmentId> = {
   1: 'poder', 2: 'harmonia', 3: 'harmonia', 4: 'poder', 5: 'harmonia', 6: 'benevolencia',
   7: 'harmonia', 8: 'poder', 9: 'benevolencia', 11: 'harmonia', 22: 'poder', 33: 'benevolencia',
 };
@@ -728,7 +763,7 @@ const CHINESE_ANIMAL_ALIGNMENT: AlignmentId[] = [
   'poder', 'benevolencia', 'harmonia', 'poder', 'benevolencia', 'benevolencia',
 ];
 
-const ROLE_ALIGNMENT: Record<RoleId, AlignmentId> = {
+export const ROLE_ALIGNMENT: Record<RoleId, AlignmentId> = {
   fisico: 'poder', tanque: 'benevolencia', suporte: 'benevolencia',
   magico: 'harmonia', alcance: 'harmonia',
 };
@@ -737,15 +772,23 @@ const ROLE_ALIGNMENT: Record<RoleId, AlignmentId> = {
 // realmScore = Σ (peso × pontos do elemento) + bônus de alinhamento + jitter
 // determinístico do input (desempate único por pessoa).
 
-const REALM_WEIGHTS: Record<RealmId, Partial<Record<ElementId, number>>> = {
+// Os pesos de CADA reino somam 6. Antes não somavam: deserto/pantano/
+// cavernas/akasha somavam 6 e picos/floresta/gelo/campina somavam 5 (oceano,
+// o pior, somava 4) — um teto estruturalmente menor que o dos concorrentes,
+// independente da pessoa. Em simulação isso deixava o oceano literalmente
+// inalcançável (0 de 2000 perfis) e os outros quatro muito atrás. Com todos
+// somando 6, nenhum reino leva vantagem embutida na tabela; a diferença de
+// frequência passa a vir de quão comuns são os elementos que ele pede, que é
+// o que a tabela deveria estar dizendo.
+export const REALM_WEIGHTS: Record<RealmId, Partial<Record<ElementId, number>>> = {
   deserto: { fogo: 3, terra: 2, industrial: 1 },
-  picos: { ar: 3, fogo: 1, industrial: 1 },
-  oceano: { agua: 3, sombra: 1 },
+  picos: { ar: 3, fogo: 2, industrial: 1 },
+  oceano: { agua: 4, sombra: 2 },
   pantano: { agua: 2, sombra: 2, planta: 2 },
-  floresta: { planta: 3, terra: 1, agua: 1 },
+  floresta: { planta: 3, terra: 2, agua: 1 },
   cavernas: { terra: 3, sombra: 2, industrial: 1 },
-  gelo: { agua: 2, ar: 2, luz: 1 },
-  campina: { luz: 2, planta: 2, ar: 1 },
+  gelo: { agua: 3, ar: 2, luz: 1 },
+  campina: { luz: 2, planta: 2, ar: 2 },
   akasha: { luz: 3, sombra: 3 },
 };
 
@@ -2514,9 +2557,22 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const [year, month, day] = input.birthDate.split('-').map(Number);
   const [hour, minute] = (input.birthTime || '12:00').split(':').map(Number);
 
+  const soul = input.soulProfile;
+
   const numerology = computeNumerology(input.fullName, input.birthDate);
-  const sun = westernSunSign(month, day);
-  const ascendant = approximateAscendant(sun.id, hour, minute);
+  // Com o perfil de alma, o Sol e o Ascendente vêm do mapa astral REAL
+  // (efemérides + casas), não da faixa de datas e do palpite de 1 signo a cada
+  // 2h a partir das 6h que `approximateAscendant` faz. Quando a pessoa não
+  // soube a hora de nascimento, o mapa se recusa a dar Ascendente (e diz isso
+  // em `astrology.warnings`) — aí a aproximação antiga volta, porque um
+  // ascendente lúdico declarado como lúdico é melhor do que campo vazio no
+  // resumo de personalidade.
+  const chartSun = soul ? signInfoByName(soul.astrology.bigThree.sun) : null;
+  const chartAsc = soul?.astrology.bigThree.ascendant
+    ? signInfoByName(soul.astrology.bigThree.ascendant)
+    : null;
+  const sun = chartSun ?? westernSunSign(month, day);
+  const ascendant = chartAsc ?? approximateAscendant(sun.id, hour, minute);
   const chinese = computeChinese(year, month, day);
   const vedic = computeVedic(month, day);
 
@@ -2658,6 +2714,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     input.birthPlace.trim().toLowerCase(),
     JSON.stringify(input.answers ?? {}), JSON.stringify(input.preferences ?? {}),
     (input.petDescription ?? '').trim().toLowerCase(),
+    // Duas pessoas de mesmo nome/nascimento e respostas DIFERENTES precisam de
+    // fluxos de RNG diferentes, senão saem com a mesma criatura. No caminho
+    // legado quem garantia isso era `input.answers`; no caminho novo são os
+    // escores do teste, que é onde as respostas viram número.
+    JSON.stringify(input.soulProfile?.psychometric.traitPoints ?? {}),
   ].join('|');
   const realmScores = Object.fromEntries(REALM_ORDER.map(r => [r, 0])) as Record<RealmId, number>;
   for (const realm of REALM_ORDER) {
@@ -2671,6 +2732,43 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     }
     score += hashString(`${inputKey}|${realm}`) % 4; // 0–3: assinatura pessoal
     realmScores[realm] = score;
+  }
+
+  // ----- Troca do MOTOR da leitura (utils/soulProfile/) -----
+  // Tendo perfil de alma, os quatro eixos acima são SUBSTITUÍDOS pelos que o
+  // motor novo calculou. O que veio antes vira leitura descartada — de
+  // propósito: é mais barato deixar o caminho legado rodar do que espalhar um
+  // `if` por 150 linhas de pontuação, e a diferença é imperceptível ao lado do
+  // mapa astral que a UI já calculou.
+  //
+  // A escala não importa daqui pra frente: `combineAxis` normaliza cada eixo
+  // pelo próprio total, então shares que somam 100 e pontos crus de 0 a 20
+  // produzem exatamente a mesma mistura com preferências e descrição.
+  if (soul) {
+    const axes = soul.oracle;
+    // O detalhamento por fonte fica GROSSO neste caminho, e isso é honesto: o
+    // motor novo é uma soma ponderada contínua de dezenas de termos das três
+    // camadas, não uma pilha de "+3 por causa do signo". Rachar o resultado em
+    // três números por eixo seria inventar uma atribuição que a fórmula não
+    // faz. Quem quiser o porquê fino tem a leitura inteira em `soulProfile`
+    // (traços, facetas, mapa e números), que vai junto no OracleResult.
+    const soulSource: LText = {
+      pt: 'Perfil de alma (teste + mapa astral + numerologia)',
+      en: 'Soul profile (test + natal chart + numerology)',
+    };
+    const replace = <K extends string>(
+      scores: Record<K, number>, breakdown: Record<K, ScoreEntry[]>,
+      order: K[], next: Record<K, number>,
+    ) => {
+      for (const k of order) {
+        scores[k] = next[k];
+        breakdown[k] = [{ source: soulSource, points: Math.round(next[k]) }];
+      }
+    };
+    replace(elementScores, elementBreakdown, ELEMENT_ORDER, axes.elements);
+    replace(roleScores, roleBreakdown, ROLE_ORDER, axes.roles);
+    replace(alignmentScores, alignmentBreakdown, ALIGNMENT_ORDER, axes.alignments);
+    for (const realm of REALM_ORDER) realmScores[realm] = axes.realms[realm];
   }
 
   // ----- Combinação de pesos: leitura + preferências (25%) + descrição (50%) -----
