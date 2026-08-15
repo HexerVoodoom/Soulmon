@@ -60,6 +60,39 @@ describe('HomeHud', () => {
     expect(screen.getByRole('progressbar')).toBeTruthy();
   });
 
+  // ── B1 (rodada 3): o HP saiu de "3 corações no ar" sobre o palco e virou
+  // cápsula emoldurada. O que o teste protege não é a moldura — é o par
+  // "medidor tem superfície" + "o número continua legível como número".
+  it('B1: o HP é uma cápsula com moldura, não corações soltos', () => {
+    const { container } = renderWithCss(
+      <HomeHud {...base} healthPoints={2} maxHealthPoints={3} language="pt-BR" />,
+    );
+    const chips = Array.from(container.querySelectorAll('.sm-px-chip'));
+    // duas cápsulas na fileira de medidores (Vida, Energia) + Créditos
+    expect(chips.length).toBe(3);
+    const vida = chips.find(c => c.textContent?.includes('Vida'))!;
+    expect(vida).toBeTruthy();
+    expect(vida.textContent).toContain('2/3');
+    expect(vida.querySelectorAll('img').length).toBe(3); // 3 corações
+  });
+
+  it('meio coração (cura por carinho) continua desenhado', () => {
+    const { container } = renderWithCss(
+      <HomeHud {...base} healthPoints={1.5} maxHealthPoints={3} language="en-US" />,
+    );
+    const vida = Array.from(container.querySelectorAll('.sm-px-chip'))
+      .find(c => c.textContent?.includes('Health'))!;
+    // 3 corações-base + 1 sobreposição de metade
+    expect(vida.querySelectorAll('img').length).toBe(4);
+    expect(vida.querySelectorAll('.sm-hp-empty').length).toBe(2);
+  });
+
+  it('sem HP declarado (chamador antigo) o HUD não inventa uma cápsula vazia', () => {
+    const { container } = renderWithCss(<HomeHud {...base} />);
+    expect(container.textContent).not.toMatch(/Health|Vida/);
+    expect(container.querySelectorAll('.sm-px-chip').length).toBe(2);
+  });
+
   it('créditos negativos (estado corrompido) não travam a render', () => {
     renderWithCss(<HomeHud {...base} credits={-3} language="en-US" />);
     expect(screen.getByRole('button', { name: 'Credits: -3' })).toBeTruthy();

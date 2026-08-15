@@ -3919,6 +3919,12 @@ html {
   --sm-energy-track: #e3ece9;
   --sm-radius: 16px;
   --sm-bottomnav-h: 68px;       /* altura de conteúdo da barra de navegação inferior */
+  /* B5 (rodada 3): altura MEDIDA do dock de chat (`.sm-chat-fixed`), que
+     flutua entre a nav e o conteúdo. Era um `+ 100px` mágico no App.tsx, e
+     o CTA largo do fim do painel de rituais — a peça que substituiu o FAB —
+     ficava ocluído. Como token, o scroller e o dock passam a se mover
+     juntos: mexer no padding do dock não deixa mais um CTA meio comido. */
+  --sm-chatdock-h: 82px;
   /* Texto do .sm-btn: branco funciona no tema claro (fill escuro), mas no
      escuro --sm-primary/--sm-gold viram tons CLAROS (contraste no fundo
      escuro) — texto branco em cima ficava quase ilegível. Token separado
@@ -4011,18 +4017,67 @@ html {
   justify-content: space-between;
   gap: 2px;
 }
+/* B7 (rodada 3): a célula da nav virou ícone + RÓTULO. Coluna, não linha —
+   e o raio 12 do sistema antigo saiu junto: a placa do item ativo usa o
+   chanfro do kit, como toda superfície do app. */
 .sm-bottom-nav-btn {
   flex: 1;
+  min-width: 0;
   height: 100%;
-  border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 3px;
+  padding: 2px 1px;
+  box-sizing: border-box;
   background: transparent;
+  border: 2px solid transparent;
   color: var(--sm-muted);
-  transition: background .15s ease, color .15s ease, transform .1s ease;
+  transition: background .15s ease, color .15s ease;
+  &:active { transform: scale(.96); }
+  &:focus-visible { outline: 3px solid var(--sm-px-cyan); outline-offset: -3px; }
 }
-.sm-bottom-nav-btn:active { transform: scale(.92); }
+/* SELEÇÃO PELO PREENCHIMENTO (regra da rodada 2, agora também na nav): o
+   destino ativo é o ÚNICO bloco sólido da fileira, e o inativo nunca é
+   preenchido. Por ser uma comparação absoluta e não relativa, não inverte
+   quando o tema inverte. O brilho do ícone e a cor do rótulo são reforço. */
+.sm-bottom-nav-btn-on {
+  /* O fill usa o PAR DE TOKENS da rodada 2 (`--sm-px-sel-*`) e não uma cor
+     escolhida aqui. Medido: um `color-mix(cyan 16%, surface)` ficava quase
+     branco no tema claro — o "único bloco sólido" deixava de ser sólido, e
+     o rótulo em `--sm-px-ink` (tinta de peça ESCURA, fixa) saía branco sobre
+     branco. É o mesmo erro de contexto do `.sm-px-dark-ctx` da rodada 2. */
+  background: var(--sm-px-sel-bg);
+  border-color: var(--sm-px-copper);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+/* Rótulo persistente. 8px na Silkscreen com `letter-spacing: 0` — o
+   espaçamento de 0.06em usado no resto do kit é o que estourava
+   "ATIVIDADES"/"BIBLIOTECA" (10 caracteres, pior caso em PT-BR) na célula
+   de ~63px. `overflow: hidden` é rede de segurança para um idioma futuro:
+   nenhum rótulo atual chega perto de precisar dele. */
+.sm-bottom-nav-label {
+  font-family: var(--sm-font-pixel);
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.3;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 100%;
+  -webkit-font-smoothing: none;
+  /* `--sm-ink` (tinta da PÁGINA), não `--sm-px-ink`: a nav fica sobre
+     `--sm-surface`, que segue o tema. */
+  color: var(--sm-muted);
+}
+/* SEM `font-weight: 700` aqui, e isso foi MEDIDO: o rótulo mais largo em
+   PT-BR ("Atividades") mede 53px numa célula de 64,7px; a placa do ativo
+   consome 4px em borda, e o negrito da Silkscreen empurrava o texto para
+   ~60px — "ATIVIDADES" saía cortado em "ATIVIDADE". É também a regra da
+   rodada 2: quem carrega a seleção é o preenchimento, e só ele. */
+.sm-bottom-nav-btn-on .sm-bottom-nav-label { color: var(--sm-px-sel-ink); }
 
 /* Botão primário: inspiração Duolingo (forma arredondada, cor chapada,
    barra 3D embaixo que "afunda" no :active) ajustada pro nosso estilo —
@@ -5203,14 +5258,35 @@ button.sm-px-node {
    Chip emoldurado, não sublinhado. `overflow-x` porque a Loja tem 5 abas e
    em PT-BR ("Cenários", "Mobílias", "Missões") elas não cabem em 412px sem
    espremer o rótulo até virar reticências. */
+/* B3 (rodada 3): a fileira rola, mas rolava SEM PISTA. Na Loja, 2 de 5 abas
+   (Torneio e Missões) ficavam fora da tela e nada dizia que existiam — a
+   última aba visível terminava rente à margem, que é exatamente o desenho
+   que Material e HIG proíbem: o padrão manda cortar a última aba NO MEIO ou
+   marcar a borda.
+
+   Aqui a pista é uma máscara de desvanecimento na borda direita, ligada
+   apenas quando há conteúdo rolável (`animation-timeline: scroll()` não tem
+   suporte suficiente, então o gatilho é `mask` estático + `scroll-padding`:
+   a aba cortada aparece esmaecida em vez de sumir na margem). Como é
+   `mask-image`, não pinta cor nenhuma — funciona igual nos dois temas, sobre
+   qualquer fundo, e não precisa saber a cor de trás. */
 .sm-px-tabs {
   display: flex;
   gap: 6px;
   align-items: stretch;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
   padding-bottom: 2px;
+  scroll-padding-inline: 12px;
   &::-webkit-scrollbar { display: none; }
+  /* A máscara só existe quando HÁ corte — o estado vem do componente
+     (`data-cut`), medido no scroll/resize. Aplicá-la incondicionalmente
+     esmaeceria a última aba de uma fileira que cabe inteira (Aparência,
+     Idioma, Biblioteca, Torneio), inventando um corte que não existe. */
+  &[data-cut="end"] { mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%); }
+  &[data-cut="start"] { mask-image: linear-gradient(to right, transparent 0, #000 28px); }
+  &[data-cut="both"] { mask-image: linear-gradient(to right, transparent 0, #000 28px, #000 calc(100% - 28px), transparent 100%); }
 }
 .sm-px-tab {
   flex: 1 0 auto;
@@ -5477,4 +5553,212 @@ button.sm-px-node {
      como no tema escuro: a seleção continua sendo o único bloco sólido. */
   --sm-px-sel-bg: var(--sm-px-cyan);
   --sm-px-sel-ink: #04211f;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   RODADA 3 — B1: emoldurar a Home FORA do painel de rituais
+   ═════════════════════════════════════════════════════════════════════════
+   O diagnóstico da crítica R2: fora do painel havia SEIS grupos em superfície
+   nenhuma (3 ações soltas, 3 corações no ar, uma barra vertical vazia colada
+   na margem, partículas). Nenhuma métrica anterior via isso porque todas
+   mediam INVENTÁRIO (emoji, pílula, sombra) e nenhuma media COMPOSIÇÃO.
+   A métrica nova é uma frase: *todo controle interativo mora numa moldura.*
+
+   As regras abaixo são as duas superfícies que faltavam. Variante sempre
+   ANINHADA (footgun do index.css pré-compilado). */
+
+/* Fileira de medidores do HUD (HP + Energia). Duas cápsulas de peso igual,
+   porque são a MESMA classe de informação: um número sobre N. */
+.sm-px-hud { display: flex; flex-direction: column; gap: 8px; }
+.sm-px-hud-meters { display: flex; align-items: stretch; gap: 8px; }
+/* Cápsula clicável: a MOLDURA é o botão (ver a nota em `PixelChip`). */
+.sm-px-chip-tap {
+  cursor: pointer;
+  text-align: left;
+  &:hover { filter: brightness(1.1); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 3px; }
+}
+
+/* Fileira de ações do pet, rente ao palco. É a peça que a referência resolve
+   com "uma coisa só" no mesmo espaço, e é o padrão do gênero: o cuidado do
+   bicho mora numa fila emoldurada embaixo dele. A moldura é a MESMA do
+   `.sm-px-card` (borda de cobre + chanfro) — não inventa uma sexta. */
+.sm-px-actionbar {
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  background: var(--sm-px-chip-bg);
+  border: 2px solid var(--sm-px-copper);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+}
+.sm-px-action {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  /* 60px > 44px do alvo mínimo (WCAG 2.2 AA 2.5.8) COM o rótulo dentro. */
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  background: transparent;
+  border: none;
+  /* Divisor entre ações: a MESMA linha de cobre que separa as linhas do
+     painel de rituais. Sem ela, três botões colados leem como um só. */
+  border-left: 2px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent);
+  &:first-child { border-left: none; }
+  &:hover { background: color-mix(in srgb, var(--sm-px-cyan) 12%, transparent); }
+  &:active { background: color-mix(in srgb, var(--sm-px-cyan) 20%, transparent); }
+  &:focus-visible { outline: 3px solid var(--sm-px-cyan); outline-offset: -3px; }
+}
+.sm-px-action-label {
+  font-family: var(--sm-font-pixel);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  color: var(--sm-px-ink);
+}
+/* Marcador de "tem coisa nova" — quadrado, não bolinha: círculo de 8px era o
+   último raio do sistema Material que sobrava na Home. */
+.sm-px-action-dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--sm-danger);
+  border: 1px solid var(--sm-px-copper);
+}
+
+/* ── B2: raiz de minijogo que não é comida pela nav ───────────────────────
+   Os três minijogos abrem como `position: fixed; inset: 0` e empilham
+   cabeçalho / arena `flex: 1` / controles. A nav inferior é `fixed` e mora
+   num contexto de empilhamento que ganha do overlay: o resultado é que os
+   ÚNICOS controles do jogo (as três mãos do Pedra-Papel-Tesoura) ficavam
+   71% cobertos pela barra de navegação. Controle primário inalcançável é
+   dead-end, não estética.
+
+   A correção é reservar a faixa da nav no próprio overlay, num lugar só,
+   em vez de três `paddingBottom` copiados. A nav continua visível e
+   utilizável — sair do jogo pelo Início é um caminho legítimo. */
+.sm-px-arcade-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Botão de PULAR do Dino — alvo gigante de `onPointerDown`, na linguagem do
+   kit. Não vira `PixelButton` porque o kit não expõe `onPointerDown`, e
+   esperar o `click` num jogo de reflexo é defeito funcional. */
+.sm-px-jump {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--sm-font-pixel);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  background: var(--sm-px-cyan);
+  color: #04211f;
+  border: 2px solid var(--sm-px-copper);
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  &:disabled {
+    background: color-mix(in srgb, var(--sm-px-copper) 18%, transparent);
+    color: color-mix(in srgb, #ffffff 45%, transparent);
+    cursor: default;
+  }
+  &:active:not(:disabled) { filter: brightness(0.9); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+}
+
+/* ── B8: as peças que faltavam para Configurações falar a mesma língua ────
+   Nada aqui é uma forma nova: é o `.sm-px-card` (chanfro + cobre) aplicado a
+   campo de texto, cabeçalho de seção, bloco de código e botão de linha —
+   os quatro moldes que a tela reinventava em Material. */
+
+/* Campo de texto de formulário. Irmão do `.sm-px-chat-input` (mesma moldura,
+   mesma monoespaçada, mesmos 16px que evitam o auto-zoom do iOS), mas em
+   bloco: o do chat é `flex: 1 1 auto` e só funciona dentro daquela fileira. */
+.sm-px-field {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  /* 44px de alvo (WCAG 2.2 AA 2.5.8) — o campo-cápsula anterior media 38px. */
+  min-height: 44px;
+  padding: 10px 12px;
+  background: var(--sm-bg);
+  color: var(--sm-ink);
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 70%, transparent);
+  border-radius: 0;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 16px;
+  &::placeholder { color: var(--sm-muted); }
+  &:focus { outline: 2px solid var(--sm-px-cyan); outline-offset: -2px; }
+  &:disabled { opacity: 0.55; }
+}
+
+/* Cabeçalho de seção: ícone do kit + título na bitmap. Substitui o
+   `fontSize: 1rem / fontWeight: 700` em sans que cada card repetia. */
+.sm-px-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sm-font-pixel);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+  color: var(--sm-ink);
+}
+
+/* Bloco de código (o ID de save). Era `rounded-xl`; agora é a mesma caixa
+   chanfrada dos campos, para o par "código + botão" ler como uma peça só. */
+.sm-px-code {
+  background: var(--sm-bg);
+  color: var(--sm-ink);
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+}
+
+/* Botão de linha (ícone + rótulo alinhados à esquerda, largura total) —
+   "Restaurar compras", "Sair da conta". */
+.sm-px-row-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 11px 12px;
+  text-align: left;
+  background: var(--sm-bg);
+  color: var(--sm-ink);
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 60%, transparent);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  &:hover { border-color: var(--sm-px-copper); }
+  &:focus-visible { outline: 3px solid var(--sm-px-cyan); outline-offset: -3px; }
+  &:disabled { cursor: default; }
 }

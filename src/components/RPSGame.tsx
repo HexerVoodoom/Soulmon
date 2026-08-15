@@ -80,7 +80,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
   };
 
   return (
-    <div className="sm-px-dark-ctx" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #14101f 0%, #241a38 100%)', display: 'flex', flexDirection: 'column', color: '#f1edfb' }}>
+    <div className="sm-px-dark-ctx sm-px-arcade-root" style={{ background: 'linear-gradient(180deg, #14101f 0%, #241a38 100%)', color: '#f1edfb' }}>
       <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
         <img src={iconRps} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>

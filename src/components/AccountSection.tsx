@@ -74,24 +74,19 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
     flash(isPt ? 'Você saiu da conta.' : 'Signed out.');
   };
 
-  const cardStyle: React.CSSProperties = { background: 'var(--sm-surface)', border: '1px solid var(--sm-line)', borderRadius: 'var(--sm-radius)', padding: 16 };
-
-  const rowBtn: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left',
-    padding: '11px 12px', borderRadius: 12, cursor: 'pointer', marginTop: 8,
-    border: '1px solid var(--sm-line)',
-    background: 'var(--sm-bg)',
-    color: 'var(--sm-ink)',
-    fontSize: 13.5, fontWeight: 600,
-  };
+  // B8: o card era `borderRadius: var(--sm-radius)` (16px) com borda de 1px -
+  // o cartao do sistema anterior, dentro da unica tela que ainda tinha um.
+  // Vira `.sm-px-card` como todo o resto; o botao de linha vira `.sm-px-row-btn`
+  // (chanfro + borda de cobre + alvo de 44px, que o `padding: 11px` nao dava).
+  const cardStyle: React.CSSProperties = { padding: 16 };
 
   const tierLabel = ent?.tier === 'paid'
     ? (isPt ? 'Completa' : 'Full')
     : (isPt ? 'Demo' : 'Demo');
 
   return (
-    <div style={cardStyle}>
-      <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', fontWeight: 700, fontSize: '0.95rem' }}>
+    <div className="sm-px-card" style={cardStyle}>
+      <h3 className="sm-px-section-title" style={{ margin: '0 0 12px' }}>
         <img src={iconShield} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         {isPt ? 'Conta e compras' : 'Account & purchases'}
       </h3>
@@ -115,7 +110,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
         </p>
       )}
 
-      <button onClick={handleRestore} disabled={restoring} style={{ ...rowBtn, opacity: restoring ? 0.6 : 1 }}>
+      <button onClick={handleRestore} disabled={restoring} className="sm-px-row-btn" style={{ opacity: restoring ? 0.6 : 1 }}>
         <img src={iconReset} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         {restoring
           ? (isPt ? 'Restaurando…' : 'Restoring…')
@@ -128,7 +123,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
       </p>
 
       {isAuthConfigured() && authEmail && (
-        <button onClick={handleSignOut} style={{ ...rowBtn, color: '#e0483e' }}>
+        <button onClick={handleSignOut} className="sm-px-row-btn" style={{ color: '#e0483e' }}>
           <img src={iconExit} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           {isPt ? 'Sair da conta' : 'Sign out'}
         </button>
@@ -136,7 +131,7 @@ export function AccountSection({ language, onEntitlementChange }: AccountSection
 
       {message && (
         <p style={{
-          fontSize: 12, fontWeight: 600, marginTop: 10, padding: '8px 10px', borderRadius: 10,
+          fontSize: 12, fontWeight: 600, marginTop: 10, padding: '8px 10px',
           background: 'var(--sm-primary-soft)',
           color: 'var(--sm-primary)',
         }}>

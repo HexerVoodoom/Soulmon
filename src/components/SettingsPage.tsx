@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AISettingsModal, type AISettings } from './AISettingsModal';
 import { Language, useTranslation, getLanguageName, getLanguageFlag } from '../utils/i18n';
-import { Copy, Check, Bot, Info } from 'lucide-react';
+import { PixelButton, PixelSwitch, PixelTabs } from './pixel/PixelKit';
 import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { RowIcon } from './RowIcon';
 import iconBook from '../assets/soulmon/icons/icon-book.png';
@@ -11,6 +11,8 @@ import iconBell from '../assets/soulmon/icons/icon-bell.png';
 import iconBellOff from '../assets/soulmon/icons/icon-bell-off.png';
 import iconGlobe from '../assets/soulmon/icons/icon-globe.png';
 import iconCloudRain from '../assets/soulmon/icons/icon-cloud-rain.png';
+import iconSpellbook from '../assets/soulmon/icons/icon-spellbook.png';
+import iconStar from '../assets/soulmon/icons/icon-star.png';
 import { requestNotificationPermission, checkNotificationPermission } from '../utils/notifications';
 import { AccountSection } from './AccountSection';
 import { InstallPrompt } from './InstallPrompt';
@@ -100,23 +102,24 @@ export function SettingsPage({
     if (!ok) setTimeout(() => setRestoreStatus('idle'), 3000);
   };
 
-  // Estilos compartilhados do design system (sm-*)
-  const cardClass = 'sm-card p-6';
-  const headingStyle: React.CSSProperties = { fontSize: '1rem', fontWeight: 700, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 };
+  // B8 (rodada 3): esta tela era a ULTIMA com um design system inteiro
+  // dentro dela - card branco com sombra Material, campo-capsula, botao
+  // cinza, interruptor pill+bolinha, icone line-art da lucide e bandeira em
+  // emoji. Os cinco inventarios do T2 reprovavam aqui, sozinha. Nada abaixo
+  // e peca nova: `.sm-px-card`, `PixelButton`, `PixelSwitch`, `PixelTabs` e
+  // os icones do kit ja existiam desde a rodada 2 - foi a mesma varredura do
+  // G4, aplicada na tela que ficou de fora.
+  const cardClass = 'sm-px-card p-6';
   const bodyTextStyle: React.CSSProperties = { color: 'var(--sm-muted)', fontSize: '0.8125rem' };
-  const inputClass = 'border';
-  const inputStyle: React.CSSProperties = { background: 'var(--sm-bg)', borderColor: 'var(--sm-line)', color: 'var(--sm-ink)' };
-  const primaryBtnClass = 'sm-btn';
-  const toggleOnBg = 'var(--sm-primary)';
-  const toggleOffBg = 'var(--sm-line)';
 
-  // Ícones direto na linha, sem caixa/círculo de fundo — todos no mesmo
-  // tamanho (22px) pra alinhar PNGs pixel-art e os poucos lucide restantes
-  // (Bot/Info, que ainda não têm equivalente pixel-art).
-  const iconWrap = (icon: typeof Bot | string, color: string) => (
-    <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <RowIcon icon={icon} size={22} color={color} />
-    </span>
+  // Cabecalho de secao: icone do kit + titulo. `Bot` e `Info` (lucide) sairam
+  // - o kit tem `icon-spellbook` e `icon-star`, e um traco vetorial de 1,5px
+  // ao lado de sprites de 22px era o contraste mais visivel da tela.
+  const heading = (icon: string, texto: string) => (
+    <h3 className="mb-3 sm-px-section-title">
+      <img src={icon} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+      {texto}
+    </h3>
   );
 
   return (
@@ -127,10 +130,7 @@ export function SettingsPage({
 
         {/* Cloud Save */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(iconCloudRain, '#009ED8')}
-            {language === 'pt-BR' ? 'Backup na nuvem' : 'Cloud backup'}
-          </h3>
+          {heading(iconCloudRain, language === 'pt-BR' ? 'Backup na nuvem' : 'Cloud backup')}
           <p className="mb-4" style={bodyTextStyle}>
             {language === 'pt-BR'
               ? 'Entre com seu e-mail para sincronizar o mesmo progresso em qualquer dispositivo (navegador e app).'
@@ -151,18 +151,19 @@ export function SettingsPage({
               value={emailInput}
               onChange={e => { setEmailInput(e.target.value); if (loginStatus === 'err') setLoginStatus('idle'); }}
               placeholder={savedEmail ?? (language === 'pt-BR' ? 'seu@email.com' : 'your@email.com')}
-              className={`w-full text-sm px-3 py-2.5 rounded-xl outline-none mb-2 ${inputClass}`}
-              style={inputStyle}
+              className="sm-px-field mb-2"
+              aria-label={language === 'pt-BR' ? 'Seu e-mail' : 'Your email'}
             />
-            <button
+            <PixelButton
+              size="lg"
+              variant="primary"
               onClick={handleLogin}
               disabled={!emailInput.trim() || loginStatus === 'loading'}
-              className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-60 ${primaryBtnClass}`}
             >
               {loginStatus === 'loading'
-                ? (language === 'pt-BR' ? 'sincronizando...' : 'syncing...')
+                ? (language === 'pt-BR' ? 'Sincronizando...' : 'Syncing...')
                 : (language === 'pt-BR' ? 'Entrar / Sincronizar' : 'Sign in / Sync')}
-            </button>
+            </PixelButton>
             {loginStatus === 'err' && (
               <p className="text-red-500 text-xs mt-1">
                 {language === 'pt-BR' ? 'E-mail inválido ou falha ao sincronizar.' : 'Invalid email or sync failed.'}
@@ -199,14 +200,21 @@ export function SettingsPage({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <code className="flex-1 text-xs px-3 py-2 rounded-xl break-all"
-                      style={{ background: 'var(--sm-bg)', color: 'var(--sm-ink)' }}>
+                <code className="flex-1 text-xs px-3 py-2 break-all sm-px-code">
                   {saveId}
                 </code>
-                <button onClick={handleCopy} className="shrink-0 p-2 rounded-xl transition-colors"
-                        style={{ color: 'var(--sm-muted)', background: 'var(--sm-bg)' }} aria-label="Copy">
-                  {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
-                </button>
+                {/* Era um par de icones lucide (`Copy`/`Check`) num quadrado
+                    de 32px: line-art fora do kit E alvo abaixo dos 44px. Vira
+                    botao com PALAVRA - o estado "copiado" passa a existir
+                    para quem usa leitor de tela, que era invisivel quando a
+                    confirmacao era so um sinal verde. */}
+                <span style={{ flexShrink: 0 }}>
+                  <PixelButton size="sm" onClick={handleCopy}>
+                    {copied
+                      ? (language === 'pt-BR' ? 'Copiado' : 'Copied')
+                      : (language === 'pt-BR' ? 'Copiar' : 'Copy')}
+                  </PixelButton>
+                </span>
               </div>
             </div>
           )}
@@ -221,16 +229,24 @@ export function SettingsPage({
                 value={restoreInput}
                 onChange={e => setRestoreInput(e.target.value)}
                 placeholder={language === 'pt-BR' ? 'cole o código aqui' : 'paste code here'}
-                className={`flex-1 text-xs px-3 py-2 rounded-xl outline-none ${inputClass}`}
-                style={inputStyle}
+                className="sm-px-field"
+                aria-label={language === 'pt-BR' ? 'Codigo de recuperacao' : 'Recovery code'}
               />
-              <button
-                onClick={handleRestore}
-                disabled={!restoreInput.trim() || restoreStatus === 'loading'}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-40 ${primaryBtnClass}`}
-              >
-                {restoreStatus === 'loading' ? '...' : restoreStatus === 'ok' ? '✓' : restoreStatus === 'err' ? '✗' : language === 'pt-BR' ? 'restaurar' : 'restore'}
-              </button>
+              {/* O estado era um par de glifos do sistema fazendo o trabalho
+                  de uma palavra, e mudos no leitor de tela. */}
+              <span style={{ flexShrink: 0 }}>
+                <PixelButton
+                  size="sm"
+                  onClick={handleRestore}
+                  disabled={!restoreInput.trim() || restoreStatus === 'loading'}
+                >
+                  {restoreStatus === 'loading'
+                    ? '...'
+                    : restoreStatus === 'ok'
+                      ? (language === 'pt-BR' ? 'Pronto' : 'Done')
+                      : (language === 'pt-BR' ? 'Restaurar' : 'Restore')}
+                </PixelButton>
+              </span>
             </div>
             {restoreStatus === 'err' && (
               <p className="text-red-500 text-xs">
@@ -245,102 +261,75 @@ export function SettingsPage({
 
         {/* AI Settings */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(Bot, '#6d5bd0')}
-            {t.settings.ai}
-          </h3>
+          {heading(iconSpellbook, t.settings.ai)}
 
           <div className="mb-5">
-            <label className="flex items-center justify-between cursor-pointer">
+            {/* Era `<div onClick>` com bolinha branca: pill Material E um
+                controle sem papel, sem foco de teclado e sem estado para
+                leitor de tela. `PixelSwitch` e `role="switch"` de verdade. */}
+            <div className="flex items-center justify-between gap-3">
               <span style={{ fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
                 {useAI ? t.settings.aiChatEnabled : t.settings.keywordsOnly}
               </span>
-              <div
-                className="relative w-12 h-6 rounded-full transition-colors"
-                style={{ background: useAI ? toggleOnBg : toggleOffBg }}
-                onClick={onToggleAI}
-              >
-                <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${useAI ? 'translate-x-6' : 'translate-x-0'}`} />
-              </div>
-            </label>
+              <PixelSwitch checked={useAI} onToggle={onToggleAI} ariaLabel={t.settings.ai} />
+            </div>
             <p className="text-xs mt-2" style={bodyTextStyle}>
               {useAI ? t.settings.aiDescriptionEnabled : t.settings.aiDescriptionDisabled}
             </p>
           </div>
 
-          <button
-            onClick={() => setShowAISettings(true)}
-            className={`w-full py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${primaryBtnClass}`}
-            style={{ fontWeight: 700 }}
-          >
-            <span>{t.settings.configureAI}</span>
-          </button>
+          <PixelButton size="lg" variant="primary" onClick={() => setShowAISettings(true)}>
+            {t.settings.configureAI}
+          </PixelButton>
         </div>
 
         {/* Guide */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(iconBook, '#d9a441')}
-            {t.settings.guide}
-          </h3>
+          {heading(iconBook, t.settings.guide)}
 
           <p className="mb-5" style={bodyTextStyle}>
             {t.settings.guideDescription}
           </p>
 
-          <button
-            onClick={onOpenGuide}
-            className={`w-full py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 ${primaryBtnClass}`}
-            style={{ fontWeight: 700 }}
-          >
-            <span>{t.settings.openGuide}</span>
-          </button>
+          <PixelButton size="lg" variant="primary" onClick={onOpenGuide}>
+            {t.settings.openGuide}
+          </PixelButton>
 
           {/* O glossário (HelpModal) existia no código, com 12 regras de CSS
               próprias, e NENHUM caminho o abria: `showHelpModal` nunca era
               posto em `true`. Era tela morta — e é a que o CLAUDE.md manda
               atualizar a cada mudança de regra. Entra aqui, ao lado do Guia,
               que é o mesmo assunto. */}
-          <button
-            onClick={onOpenGlossary}
-            className="w-full py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 sm-btn sm-btn-secondary"
-            style={{ fontWeight: 700, marginTop: 10 }}
-          >
-            <span>{t.settings.openGlossary}</span>
-          </button>
+          <div style={{ marginTop: 10 }}>
+            <PixelButton size="lg" onClick={onOpenGlossary}>
+              {t.settings.openGlossary}
+            </PixelButton>
+          </div>
         </div>
 
         {/* Notifications */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(notificationsEnabled ? iconBell : iconBellOff, '#e0483e')}
-            {t.settings.notifications}
-          </h3>
+          {heading(notificationsEnabled ? iconBell : iconBellOff, t.settings.notifications)}
 
           <p className="mb-5" style={bodyTextStyle}>
             {t.settings.notificationsDescription}
           </p>
 
-          <div className="flex items-center justify-between cursor-pointer">
+          <div className="flex items-center justify-between gap-3">
             <span style={{ fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
               {notificationsEnabled ? t.settings.notificationsEnabled : t.settings.notificationsDisabled}
             </span>
-            <div
-              className="relative w-12 h-6 rounded-full transition-colors"
-              style={{ background: notificationsEnabled ? toggleOnBg : toggleOffBg }}
-              onClick={onToggleNotifications}
-            >
-              <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${notificationsEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
-            </div>
+            <PixelSwitch
+              checked={notificationsEnabled}
+              onToggle={onToggleNotifications}
+              ariaLabel={t.settings.notifications}
+            />
           </div>
         </div>
 
         {/* Auto-sleep schedule */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(iconSleep, '#6b7280')}
-            {language === 'pt-BR' ? 'Sono automático' : 'Auto sleep'}
-          </h3>
+          {heading(iconSleep, language === 'pt-BR' ? 'Sono automático' : 'Auto sleep')}
           <p className="mb-5" style={bodyTextStyle}>
             {language === 'pt-BR'
               ? 'O pet dorme e acorda sozinho nesse horário. Dormindo, ele não faz cocô.'
@@ -352,19 +341,17 @@ export function SettingsPage({
                 ? (language === 'pt-BR' ? 'Ativado' : 'Enabled')
                 : (language === 'pt-BR' ? 'Desativado' : 'Disabled')}
             </span>
-            <div
-              className="relative w-12 h-6 rounded-full transition-colors cursor-pointer"
-              style={{ background: autoSleepEnabled ? toggleOnBg : toggleOffBg }}
-              onClick={() => {
+            <PixelSwitch
+              checked={autoSleepEnabled}
+              ariaLabel={language === 'pt-BR' ? 'Sono automático' : 'Auto sleep'}
+              onToggle={() => {
                 // Gravar FORA do updater: no StrictMode o updater roda 2x
                 // (footgun 6). Horario do sono e preferencia - silencioso.
                 const next = !autoSleepEnabled;
                 writeFlag(STORAGE_KEYS.AUTO_SLEEP_ENABLED, next, { silent: true });
                 setAutoSleepEnabled(next);
               }}
-            >
-              <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${autoSleepEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
-            </div>
+            />
           </div>
           {autoSleepEnabled && (
             <div className="flex items-center gap-3">
@@ -380,8 +367,8 @@ export function SettingsPage({
                     type="time"
                     value={f.value}
                     onChange={e => { f.set(e.target.value); writeLocal(f.key, e.target.value, { silent: true }); }}
-                    className="px-2 py-1 rounded-lg border text-sm"
-                    style={{ background: 'var(--sm-bg)', borderColor: 'var(--sm-line)', color: 'var(--sm-ink)' }}
+                    className="sm-px-field"
+                    style={{ width: 116 }}
                   />
                 </label>
               ))}
@@ -391,73 +378,50 @@ export function SettingsPage({
 
         {/* Appearance — light/dark/system */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {isDark ? iconWrap(iconSleep, '#6b7280') : iconWrap(iconWake, '#e69600')}
-            {language === 'pt-BR' ? 'Aparência' : 'Appearance'}
-          </h3>
+          {heading(isDark ? iconSleep : iconWake, language === 'pt-BR' ? 'Aparência' : 'Appearance')}
           <p className="mb-4" style={bodyTextStyle}>
             {language === 'pt-BR'
               ? 'Tema claro, escuro, ou o mesmo do aparelho.'
               : 'Light theme, dark theme, or match your device.'}
           </p>
-          <div className="flex gap-2">
-            {([
-              { value: 'light' as const, label: language === 'pt-BR' ? 'Claro' : 'Light' },
-              { value: 'dark' as const, label: language === 'pt-BR' ? 'Escuro' : 'Dark' },
-              { value: 'system' as const, label: language === 'pt-BR' ? 'Sistema' : 'System' },
-            ]).map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setThemeMode(opt.value)}
-                className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all"
-                style={
-                  themeMode === opt.value
-                    ? { background: 'var(--sm-primary)', color: 'var(--sm-btn-text)' }
-                    : { background: 'var(--sm-bg)', color: 'var(--sm-muted)' }
-                }
-                aria-pressed={themeMode === opt.value}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+          {/* A escolha exclusiva vira `PixelTabs`: a SELECAO CARREGA NO
+              PREENCHIMENTO (regra da rodada 2). Antes o nao-selecionado tinha
+              fundo `--sm-bg` - solido - e o selecionado tinha `--sm-primary`:
+              dois blocos preenchidos disputando na mesma fileira, que e
+              exatamente a inversao que o G9 consertou nas outras telas. */}
+          <PixelTabs
+            ariaLabel={language === 'pt-BR' ? 'Tema' : 'Theme'}
+            value={themeMode}
+            onChange={setThemeMode}
+            items={[
+              { key: 'light' as const, label: language === 'pt-BR' ? 'Claro' : 'Light' },
+              { key: 'dark' as const, label: language === 'pt-BR' ? 'Escuro' : 'Dark' },
+              { key: 'system' as const, label: language === 'pt-BR' ? 'Sistema' : 'System' },
+            ]}
+          />
         </div>
 
         {/* Language */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(iconGlobe, '#009ED8')}
-            {t.settings.language}
-          </h3>
+          {heading(iconGlobe, t.settings.language)}
           <p className="mb-4" style={bodyTextStyle}>
             {t.settings.languageDescription}
           </p>
-          <div className="flex gap-2">
-            {(['en-US', 'pt-BR'] as Language[]).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => onChangeLanguage(lang)}
-                className="flex-1 py-2.5 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
-                style={
-                  language === lang
-                    ? { background: 'var(--sm-primary)', color: 'var(--sm-btn-text)' }
-                    : { background: 'var(--sm-bg)', color: 'var(--sm-muted)' }
-                }
-                aria-pressed={language === lang}
-              >
-                <span>{getLanguageFlag(lang)}</span>
-                <span>{getLanguageName(lang)}</span>
-              </button>
-            ))}
-          </div>
+          {/* A BANDEIRA saiu: sao emoji do sistema (renderizados pela fonte
+              do aparelho, fora da paleta e fora do estilo), e bandeira como
+              rotulo de idioma e errado de todo jeito - ingles nao e
+              propriedade dos EUA. Fica o nome do idioma, que e o dado. */}
+          <PixelTabs
+            ariaLabel={t.settings.language}
+            value={language}
+            onChange={onChangeLanguage}
+            items={(['en-US', 'pt-BR'] as Language[]).map(lang => ({ key: lang, label: getLanguageName(lang) }))}
+          />
         </div>
 
         {/* App Info */}
         <div className={cardClass}>
-          <h3 className="mb-3" style={headingStyle}>
-            {iconWrap(Info, '#8b86a3')}
-            {t.settings.about}
-          </h3>
+          {heading(iconStar, t.settings.about)}
           <div className="space-y-2">
             <p style={{ fontSize: '0.875rem', color: 'var(--sm-ink)' }}>
               <strong>Soulmon</strong> v1.0.2

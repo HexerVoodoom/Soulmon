@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
 import iconGamepad from '../assets/soulmon/icons/games/icon-game-activities.png';
 import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
 import iconDino from '../assets/soulmon/icons/games/icon-game-dino.png';
@@ -84,18 +83,34 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
         <div className="flex items-center justify-center shrink-0" style={{ width: 52, height: 52 }}>
           <img src={c.icon} alt="" width={48} height={48} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </div>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
-              {c.title}
-            </span>
+        {/* P2: a etiqueta ("+5 Bits", "5 partidas/dia") dividia a LINHA do
+            título — em PT-BR os nomes longos quebravam em duas linhas por
+            causa dela. A etiqueta desce para a linha da descrição, que é
+            onde mora o resto do metadado; o título passa a ter a largura
+            inteira, e `minWidth: 0` deixa o flex encolher em vez de vazar. */}
+        <div className="flex-1" style={{ minWidth: 0 }}>
+          <span style={{ display: 'block', fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
+            {c.title}
+          </span>
+          <div className="flex items-center gap-2" style={{ marginTop: 3 }}>
             <PixelTag>{c.pts}</PixelTag>
+            <p style={{ fontSize: '0.75rem', margin: 0, color: 'var(--sm-muted)', minWidth: 0 }}>
+              {c.desc}
+            </p>
           </div>
-          <p style={{ fontSize: '0.75rem', marginTop: 2, color: 'var(--sm-muted)' }}>
-            {c.desc}
-          </p>
         </div>
-        <ChevronRight size={18} color="var(--sm-muted)" strokeWidth={2.2} />
+        {/* P1: a setinha era `ChevronRight` da lucide — traço vetorial de
+            2,2px ao lado de sprites pixelados de 48px, e o único line-art que
+            sobrava na tela. O kit não tem "seta", e esta rodada não gera
+            arte: vira o mesmo glifo em BITMAP, que é a fonte de display do
+            app. `aria-hidden` porque o card inteiro já é o botão. */}
+        <span
+          aria-hidden="true"
+          className="sm-px-font"
+          style={{ flexShrink: 0, fontSize: 14, lineHeight: 1, color: 'var(--sm-muted)' }}
+        >
+          &gt;
+        </span>
       </div>
     </button>
   );

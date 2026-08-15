@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
-import imgHeartSprite from "figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png";
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { PixelButton } from './pixel/PixelKit';
@@ -10,7 +9,6 @@ import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
 import iconWake from '../assets/soulmon/icons/icon-wake.png';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
-import { EnergyBar } from './EnergyBar';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
@@ -482,75 +480,6 @@ export const CompanionHUD = memo(function CompanionHUD({
     }
   };
 
-  // Render pixel hearts for HP (supports half hearts from "carinho")
-  const renderHearts = () => {
-    const hearts = [];
-    const totalHearts = maxHealthPoints;
-    const fullHearts = Math.floor(healthPoints);
-    const hasHalf = healthPoints - fullHearts >= 0.5;
-
-    for (let i = 0; i < totalHearts; i++) {
-      const isFull = i < fullHearts;
-      const isHalf = i === fullHearts && hasHalf;
-
-      hearts.push(
-        <div key={i} className="relative h-[22px] w-[23px] shrink-0">
-          {/* Base heart: red when full, dark when empty/half */}
-          <img
-            alt=""
-            className={`absolute inset-0 max-w-none object-cover pointer-events-none size-full${isFull ? '' : ' sm-hp-empty'}`}
-            src={imgHeartSprite}
-            /* O coração VAZIO carrega informação (quanto HP faltou), e
-               `brightness(0.2)` é uma silhueta quase preta: no tema claro
-               funciona, no ESCURO ela some no fundo. O filtro virou classe
-               com par por tema — ver `.sm-hp-empty` no index.css. */
-            style={{ imageRendering: 'pixelated' }}
-          />
-          {/* Half overlay: red left 50% over the dark base */}
-          {isHalf && (
-            <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: '50%' }}>
-              <img
-                alt=""
-                className="max-w-none"
-                src={imgHeartSprite}
-                style={{ imageRendering: 'pixelated', width: '23px', height: '22px' }}
-              />
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return hearts;
-  };
-
-  // Render segmented Digivolution bar using perfect days
-  const renderEvolutionBar = () => {
-    const totalSegments = requiredDays;
-    const filledSegments = perfectDays;
-    const isPt = language === 'pt-BR';
-
-    return (
-      <div title={isPt ? `${filledSegments}/${totalSegments} dias perfeitos para evolução` : `${filledSegments}/${totalSegments} perfect days to evolve`}>
-        <div className="flex gap-[2px]">
-          {Array.from({ length: totalSegments }, (_, i) => (
-            <div
-              key={i}
-              className={`h-3 flex-1 transition-colors duration-300 ${i < filledSegments ? '' : 'bg-gray-600'}`}
-              style={{
-                minWidth: '8px',
-                background: i < filledSegments ? 'linear-gradient(to right, #2dd4bf, #5eead4)' : undefined,
-                boxShadow: i < filledSegments ? '0 0 6px rgba(192, 132, 252, 0.6)' : 'none'
-              }}
-            />
-          ))}
-        </div>
-        <p className="text-[9px] mt-0.5 text-right text-gray-300" style={{ fontFamily: 'monospace' }}>
-          {filledSegments}/{totalSegments} {isPt ? 'dias' : 'days'}
-        </p>
-      </div>
-    );
-  };
 
 
 
@@ -561,38 +490,12 @@ export const CompanionHUD = memo(function CompanionHUD({
       {/* O fundo de cenário equipado agora é pintado em App.tsx, cobrindo a
           Home inteira (era só esse retângulo, do tamanho do CompanionHUD —
           o dono pediu o fundo "no todo", não restrito a essa caixa). */}
-      <div className="flex gap-2" style={{ position: 'relative', zIndex: 1 }}>
-        {/* Ações (Itens/Banho/Dormir) — coluna à esquerda do frame, estilo Duolingo */}
-        <div className="flex flex-col gap-1.5 shrink-0" style={{ width: 72 }}>
-          {([
-            { key: 'items', icon: iconItems, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-            { key: 'bath', icon: iconBath, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-            { key: 'sleep', icon: isSleeping ? iconWake : iconSleep, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-          ].filter(Boolean) as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
-            <button
-              key={a.key}
-              onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
-              disabled={a.key !== 'bath' && a.disabled}
-              className="sm-icon-action-btn relative flex flex-col items-center justify-center gap-0.5 py-2.5"
-              style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
-            >
-              {a.badge && (
-                <span style={{ position: 'absolute', top: 4, right: 6, width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--sm-danger)', border: '1px solid var(--sm-surface)' }} />
-              )}
-              <img src={a.icon} alt="" width={36} height={36} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              {/* Rótulo curto de AÇÃO — cabe na bitmap sem prejuízo de
-                  leitura (é uma palavra, não frase). "Acordar"/"Dormir" não
-                  têm acento; se um dia tiverem, o subset latin da Silkscreen
-                  cobre (conferido no cmap). */}
-              <span className="sm-px-font" style={{ fontSize: '0.55rem', fontWeight: 700, textTransform: 'uppercase', lineHeight: 1.5, color: 'var(--sm-muted)' }}>
-                {language === 'pt-BR' ? a.pt : a.en}
-              </span>
-            </button>
-          ))}
-        </div>
-        {/* Companion Display Area */}
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* Companion Display Area — agora ocupa a largura inteira: as ações
+            saíram da coluna esquerda para a fileira emoldurada logo abaixo
+            (B1), e o palco deixou de dividir a linha com controles soltos. */}
         <div
-          className="relative overflow-hidden p-3 flex-1"
+          className="relative overflow-hidden p-3"
           style={{
             height: '250px',
             borderRadius: 28,
@@ -600,13 +503,10 @@ export const CompanionHUD = memo(function CompanionHUD({
             borderWidth: 0,
           }}
         >
-          {/* HP Hearts - Top Left Corner */}
-          <div
-            className="absolute top-2 left-2 flex items-center gap-1 flex-wrap z-10"
-            title={language === 'pt-BR' ? `HP: ${healthPoints}/${maxHealthPoints} — cai quando você perde cuidados` : `HP: ${healthPoints}/${maxHealthPoints} — drops when care events are missed`}
-          >
-            {renderHearts()}
-          </div>
+          {/* Os corações de HP saíram daqui (rodada 3 / B1): viraram cápsula
+              emoldurada no HUD do topo, ao lado de ENERGIA. Eram o único
+              medidor do app desenhado sem superfície — e o T1 os citava como
+              "3 corações no ar". Ver components/pixel/HomeHud.tsx. */}
 
           {/* Evolução manual: botão aparece SÓ quando pode evoluir */}
           {canEvolve && !isSleeping && (
@@ -635,13 +535,11 @@ export const CompanionHUD = memo(function CompanionHUD({
           )}
 
 
-          {/* Decoração ambiente: sparkles/corações flutuando devagar */}
-          <div className="absolute inset-0 pointer-events-none z-0" aria-hidden="true">
-            <span className="sm-ambient-sparkle" style={{ top: '14%', left: '78%', animationDelay: '0s' }}>✦</span>
-            <span className="sm-ambient-sparkle" style={{ top: '68%', left: '14%', animationDelay: '1.1s' }}>✦</span>
-            <span className="sm-ambient-heart" style={{ top: '30%', left: '10%', animationDelay: '0.6s' }}>♥</span>
-            <span className="sm-ambient-heart" style={{ top: '76%', left: '84%', animationDelay: '1.6s' }}>♥</span>
-          </div>
+          {/* As partículas ambiente (✦ ✦ ♥ ♥ em glifo do sistema) saíram na
+              rodada 3: eram o SEXTO grupo solto do T1 da Home e os dois
+              únicos caracteres de emoji que sobravam na tela. O que dá vida
+              ao palco é o pet (respiração, carinho, banho) e a decoração
+              equipada — não confete tipográfico. */}
 
           {/* Decoração do palco — apoiada na MESMA linha de chão dos pés do pet
               (utils/petStage.ts). Vem antes do sprite no DOM de propósito: é
@@ -880,24 +778,54 @@ export const CompanionHUD = memo(function CompanionHUD({
 
         </div>
 
-        {/* Energy Bar - Vertical on Right Side */}
-        <div
-          /* `.sm-card` vencia o `rounded-[4px]` e devolvia o raio de 18px do
-             sistema antigo: numa caixa de 26px de largura isso e uma CAPSULA,
-             e era o unico controle arredondado que sobrava na Home (T2). */
-          className="flex flex-col-reverse items-center justify-end gap-1 sm-px-card"
-          style={{ height: '185px', width: '26px', padding: '11.998px 0', cursor: 'pointer' }}
-          title={language === 'pt-BR'
-            ? `Energia: ${energyPoints}/${maxEnergy} — sobe comendo; cheia no fim do dia = ponto de evolução`
-            : `Energy: ${energyPoints}/${maxEnergy} — fills by eating; full at day's end = evolution point`}
-          onClick={() => speak(
-            language === 'pt-BR'
-              ? `Minha energia: ${energyPoints}/${maxEnergy}! Enche comendo — se estiver cheia no fim do dia, o dia conta pra evolução!`
-              : `My energy: ${energyPoints}/${maxEnergy}! Fills by eating — full at day's end makes the day count for evolution!`,
-            5000,
-          )}
-        >
-          <EnergyBar totalSegments={maxEnergy} filledSegments={energyPoints} />
+        {/* ── B1: fileira EMOLDURADA de ações, rente ao palco ────────────────
+            A barra vertical de energia que morava aqui à direita foi REMOVIDA:
+            ela era um segundo desenho do MESMO número que a cápsula ENERGIA do
+            HUD já mostra (`HomeHud`), 26px de largura colados na margem, sem
+            rótulo — o T1 a citava como "barra vertical vazia". Duplicar um
+            medidor em duas linguagens é pior que não ter a segunda.
+
+            No lugar entra o padrão do gênero (Tamagotchi, Neko Atsume,
+            Habitica): o cuidado do pet mora numa fileira de ações ancorada
+            embaixo do palco. Zero arte nova — os mesmos três ícones do kit,
+            os mesmos três rótulos, agora dentro de uma superfície com alvo
+            visível de 60px de altura. */}
+        <div className="sm-px-actionbar" role="group" aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}>
+          {([
+            { key: 'items', icon: iconItems, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+            { key: 'bath', icon: iconBath, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+            { key: 'sleep', icon: isSleeping ? iconWake : iconSleep, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
+          ] as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+            <button
+              key={a.key}
+              type="button"
+              /* "Banho" nunca fica realmente desabilitado: o `disabled` dele é
+                 só um cooldown de 5s, e o handler já ignora o clique repetido.
+                 Desabilitar de verdade tiraria o botão da ordem de tabulação
+                 no meio do uso. */
+              onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
+              disabled={a.key !== 'bath' && a.disabled}
+              className="sm-px-action"
+              aria-label={language === 'pt-BR' ? a.pt : a.en}
+              style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
+            >
+              {a.badge && (
+                <span
+                  className="sm-px-action-dot"
+                  aria-label={language === 'pt-BR' ? 'Novidade' : 'New'}
+                  role="img"
+                />
+              )}
+              <img src={a.icon} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              {/* Rótulo curto de AÇÃO — cabe na bitmap sem prejuízo de
+                  leitura (é uma palavra, não frase). "Acordar"/"Dormir" não
+                  têm acento; se um dia tiverem, o subset latin da Silkscreen
+                  cobre (conferido no cmap). */}
+              <span className="sm-px-action-label">
+                {language === 'pt-BR' ? a.pt : a.en}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
