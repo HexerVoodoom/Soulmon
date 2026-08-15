@@ -83,6 +83,17 @@ autentica legitimamente, e o `purchaseToken` nunca é vinculado a uma identidade
 O teste também dava falsa segurança: usava um `Map` em memória, que é fortemente
 consistente e nunca reproduz a leitura obsoleta.
 
+> ⚠️ **ISSO CONTINUA VALENDO — o ✅ acima é otimista** (rodada 9 de QA,
+> ago/2026). O `Map` em memória segue sendo o dublê do KV, **inclusive nos
+> testes escritos depois**. Ou seja: **o SEC-3 está marcado como corrigido com
+> base num teste que não consegue reproduzir o ataque.** A atomicidade real
+> depende do D1 `order_claims`, que **não existe** (ver
+> `docs/DEPENDE-DE-VOCE.md` §3).
+>
+> E nenhum mutante encontra isto: mutação mede o código, não a semântica do
+> armazenamento. O instrumento certo é um **KV falso com janela de consistência
+> eventual configurável**. É o maior risco de dinheiro que sobrou.
+
 **SEC-4.** `verifySteamPurchase` credita com base num `orderId` decimal vindo do
 cliente, sem ticket e sem comparar o `steamid` que a própria Valve devolve. A
 função irmã `verifySteamOwnership` exige ticket assinado *exatamente porque* o

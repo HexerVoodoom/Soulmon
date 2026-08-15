@@ -40,7 +40,15 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 ## P1 — desbloqueiam coisa que está feia hoje
 
-### A1 · Berço do pet (regerar limpo)
+### A1 · Berço do pet (regerar limpo) — ✅ feito 14/08/2026, Gemini Pro (navegador)
+> Regerado com a `ref-asset-sheet-v1.png` anexada, **com a fumacinha de volta**.
+> O Gemini não entrega alfa real (assa o xadrez e ele mesmo avisa) — a saída
+> pedida foi **fundo verde chapado #00FF00** e o recorte foi feito por
+> algoritmo (chroma-key + despill + descarte de ilhas <24px + recorte da bbox +
+> reescala nearest para 360×201, ancorado embaixo). Guard verde: 0,0% de xadrez,
+> 0,00% de magenta, 67,8% transparente. **Receita reaproveitável para os
+> próximos itens** — pedir fundo verde é o único jeito de sair com alfa honesto.
+
 - **Destino:** `src/assets/soulmon/nest-base.png` (360×201, alfa real)
 - **Uso:** base sob o pet na Home (`components/nestArt.ts` → `BASE_SLOTS.nest`)
 - **Anexar:** `ref-asset-sheet-v1.png` (bloco "Pet Cradle & Soul Elements")

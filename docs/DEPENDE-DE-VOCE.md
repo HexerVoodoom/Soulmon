@@ -53,6 +53,14 @@ precisa de simultaneidade, basta as requisições caírem em colos diferentes.
 O backend **recusou implementar um paliativo de propósito** — nenhum é atômico, e
 um remendo desmarcaria este item do checklist de lançamento, que é o risco real.
 
+⚠️ **Piorou de status na rodada 9 (não de fato, mas de conhecimento):** o
+`docs/STATUS.md` §1.2 marca o SEC-3 como ✅ corrigido — **e o teste que sustenta
+esse ✅ usa um `Map` em memória**, que é fortemente consistente e por construção
+**não consegue reproduzir o ataque**. Isso vale também para os testes escritos
+depois. Ou seja, a correção **nunca foi provada** sob a condição em que o ataque
+acontece. Mutation testing não acha isso — mede código, não semântica de
+armazenamento.
+
 **Não configure nenhuma chave de billing antes disto.**
 
 ---

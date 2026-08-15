@@ -427,7 +427,13 @@ async function verifySteamPurchase(env, { orderId, ticket }) {
   if (!cfg) return { ok: false, reason: "billing-not-configured" };
   if (!orderId || !/^\d{1,32}$/.test(String(orderId))) return { ok: false, reason: "missing-token" };
   if (!ticket) return { ok: false, reason: "missing-ticket" };
-  const auth = await authenticateSteamTicket(cfg, ticket);
+  let auth;
+  try {
+    auth = await authenticateSteamTicket(cfg, ticket);
+  } catch (err) {
+    console.error("billing verify error (steam ticket):", err);
+    return { ok: false, reason: "verification-failed" };
+  }
   if (!auth.ok) return { ok: false, reason: auth.reason };
   let params;
   try {
@@ -438,7 +444,7 @@ async function verifySteamPurchase(env, { orderId, ticket }) {
     params = data?.response?.params;
   } catch (err) {
     console.error("billing verify error (steam txn):", err);
-    return { ok: true, reason: "verification-failed" };
+    return { ok: false, reason: "verification-failed" };
   }
   if (!params) return { ok: false, reason: "invalid-purchase" };
   if (params.status !== "Succeeded") return { ok: false, reason: "not-purchased" };
@@ -1730,7 +1736,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-AXiz1T/functionsRoutes-0.624107461505668.mjs
+// ../.wrangler/tmp/pages-50PwsL/functionsRoutes-0.09567231157270983.mjs
 var routes = [
   {
     routePath: "/api/billing",

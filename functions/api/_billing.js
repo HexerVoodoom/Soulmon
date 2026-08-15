@@ -350,7 +350,19 @@ export async function verifySteamPurchase(env, { orderId, ticket }) {
   //
   // Mesma razão pela qual verifySteamOwnership exige ticket: o SteamID é
   // público, o ticket é assinado pela Valve e só o dono da sessão produz.
-  const auth = await authenticateSteamTicket(cfg, ticket);
+  // O try/catch é o MESMO de verifySteamOwnership, e a ausência dele aqui era
+  // uma assimetria com consequência: `authenticateSteamTicket` faz `fetch`, e
+  // com a Valve inalcançável (DNS, TLS, timeout) a exceção subia por esta
+  // função até `onRequestPost` — que não tem try/catch. O jogador recebia um
+  // 500 cru da Cloudflare em vez de `502 verification-failed`. Falha fechado
+  // nos dois casos (nada é concedido), mas o irmão já sabia responder direito.
+  let auth;
+  try {
+    auth = await authenticateSteamTicket(cfg, ticket);
+  } catch (err) {
+    console.error('billing verify error (steam ticket):', err);
+    return { ok: false, reason: 'verification-failed' };
+  }
   if (!auth.ok) return { ok: false, reason: auth.reason };
 
   let params;

@@ -54,8 +54,8 @@ const TARGETS = [
   },
   {
     file: 'src/utils/carePattern.ts',
-    tests: ['src/utils/carePattern.test.ts', 'src/utils/careHistory.contract.test.ts',
-      'src/utils/gameRules.fuzz.test.ts'],
+    tests: ['src/utils/carePattern.test.ts', 'src/utils/carePattern.threshold.test.ts',
+      'src/utils/careHistory.contract.test.ts', 'src/utils/gameRules.fuzz.test.ts'],
   },
   {
     file: 'src/types/progression.ts',
@@ -81,7 +81,8 @@ const TARGETS = [
   },
   {
     file: 'functions/api/_billing.js',
-    tests: ['functions/api/_billing.test.js', 'functions/api/billing.test.js'],
+    tests: ['functions/api/_billing.test.js', 'functions/api/billing.test.js',
+      'functions/api/billing.play.test.js', 'functions/api/_billing.steamRefund.test.js'],
   },
   {
     file: 'functions/api/save.js',
