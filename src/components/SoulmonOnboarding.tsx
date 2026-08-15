@@ -371,18 +371,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     );
   };
 
+  /* RODADA 5: o visual (fundo, moldura chanfrada, estados) mora nas classes
+     do kit `.sm-px-field` e `.sm-px-choice` em index.css — aqui fica só o que
+     é layout. `background`/`border` inline apagariam a banda de quina. */
   const input: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box',
-    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
-    border: '2px solid var(--sm-line)', borderRadius: 14, padding: '13px 15px', fontSize: 16,
-    outline: 'none',
+    width: '100%', boxSizing: 'border-box', outline: 'none',
   };
   const optionBtn = (selected: boolean): React.CSSProperties => ({
-    textAlign: 'left', width: '100%', boxSizing: 'border-box',
-    background: selected ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
-    color: selected ? 'var(--sm-primary)' : 'var(--sm-ink)',
-    border: selected ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-    borderRadius: 14, padding: '13px 15px', fontSize: 14, cursor: 'pointer', marginBottom: 8,
+    width: '100%', boxSizing: 'border-box',
+    padding: '13px 15px', fontSize: 14, marginBottom: 8,
     fontWeight: selected ? 700 : 500,
     transition: 'all .12s ease',
   });
@@ -396,8 +393,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
         {/* Barra de progresso */}
         {step > 0 && step <= lastStep && (
-          <div style={{ height: 10, background: 'var(--sm-line)', borderRadius: 8, marginBottom: 24, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress * 100}%`, background: 'var(--sm-primary)', borderRadius: 8, transition: 'width .3s' }} />
+          <div style={{ height: 10, backgroundColor: 'var(--sm-line)', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', marginBottom: 24, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${progress * 100}%`, backgroundColor: 'var(--sm-px-cyan)', transition: 'width .3s' }} />
           </div>
         )}
 
@@ -405,12 +402,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === 0 && (
           <div style={{ textAlign: 'center', paddingTop: 60 }}>
             <div style={{
-              width: 88, height: 88, margin: '0 auto 18px', borderRadius: 28,
-              background: 'var(--sm-primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 88, height: 88, margin: '0 auto 18px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <img src={ravenMascot} alt="" width={58} height={58} style={{ objectFit: 'contain' }} />
+              <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             </div>
-            <h1 style={{ fontSize: 32, margin: '0 0 8px', fontWeight: 800, letterSpacing: -0.5 }}>Soulmon</h1>
+            <h1 style={{ fontFamily: 'var(--sm-font-pixel)', fontSize: 26, margin: '0 0 8px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan)', textShadow: '0 0 12px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' }}>Soulmon</h1>
             <p style={{ fontSize: 15, color: 'var(--sm-muted)', lineHeight: 1.6, margin: '0 0 32px' }}>
               {isPt
                 ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA — única, só sua, com todas as suas evoluções.'
@@ -478,6 +475,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <textarea
               rows={4}
               autoFocus
+              className="sm-px-field"
               style={{ ...input, resize: 'none', lineHeight: 1.5, fontFamily: 'inherit' }}
               value={step === GOAL_STEP ? soulGoal : soulStruggle}
               onChange={e => (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(e.target.value.slice(0, 280))}
@@ -532,7 +530,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === 1 && (
           <StepShell title={isPt ? 'Qual é o seu nome completo?' : 'What is your full name?'}
             hint={isPt ? 'Seu nome molda a numerologia da sua criatura.' : 'Your name shapes your creature\'s numerology.'}>
-            <input style={input} type="text" value={fullName} autoFocus
+            <input className="sm-px-field" style={input} type="text" value={fullName} autoFocus
               onChange={e => setFullName(e.target.value)}
               placeholder={isPt ? 'Ex.: Maria da Silva' : 'E.g.: Jane Doe'}
               onKeyDown={e => e.key === 'Enter' && next()} />
@@ -543,7 +541,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === 2 && (
           <StepShell title={isPt ? 'Quando você nasceu?' : 'When were you born?'}
             hint={isPt ? 'Define seus signos e elementos.' : 'Sets your signs and elements.'}>
-            <input style={input} type="text" inputMode="numeric" autoComplete="off"
+            <input className="sm-px-field" style={input} type="text" inputMode="numeric" autoComplete="off"
               value={birthDateText} autoFocus
               placeholder={isPt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)'}
               onChange={e => handleBirthDateChange(e.target.value)}
@@ -558,7 +556,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'A hora define o Ascendente e as casas do seu mapa.'
               : 'The hour sets the Ascendant and the houses of your chart.'}>
-            <input style={{ ...input, opacity: timeUnknown ? 0.5 : 1 }} type="time" value={birthTime}
+            <input className="sm-px-field" style={{ ...input, opacity: timeUnknown ? 0.5 : 1 }} type="time" value={birthTime}
               disabled={timeUnknown}
               onChange={e => setBirthTime(e.target.value)} />
             {/* Sem hora, o mapa NÃO inventa Ascendente — ele desliga o cálculo
@@ -600,7 +598,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === FAVORITE_STEP && (
           <StepShell title={isPt ? 'Qual sua criatura favorita?' : "What's your favorite creature?"}
             hint={isPt ? 'Opcional — até 2 palavras. Ela influencia a aparência da sua criatura.' : 'Optional — up to 2 words. It shapes how your creature looks.'}>
-            <input style={{ ...input, opacity: skipFavorite ? 0.5 : 1 }} type="text" value={favoriteCreature} autoFocus
+            <input className="sm-px-field" style={{ ...input, opacity: skipFavorite ? 0.5 : 1 }} type="text" value={favoriteCreature} autoFocus
               disabled={skipFavorite}
               onChange={e => setFavoriteCreature(e.target.value.split(/\s+/).slice(0, 2).join(' '))}
               placeholder={isPt ? 'Ex.: axolote' : 'E.g.: axolotl'}
@@ -631,7 +629,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 {q.options.map(opt => {
                   const selected = answers[q.id] === opt.id;
                   return (
-                    <button key={opt.id} style={optionBtn(selected)}
+                    <button key={opt.id} className="sm-px-choice" aria-pressed={selected} style={optionBtn(selected)}
                       onClick={() => {
                         setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
                         // avança sozinho após escolher (fluido)
@@ -761,7 +759,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
               {isPt ? 'Seu nickname' : 'Your nickname'}
             </label>
-            <input style={input} type="text" value={nickname} autoFocus maxLength={24}
+            <input className="sm-px-field" style={input} type="text" value={nickname} autoFocus maxLength={24}
               onChange={e => setNickname(e.target.value)}
               placeholder={isPt ? 'Ex.: Mateus' : 'E.g.: Matt'}
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
@@ -777,7 +775,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 </span>
               )}
             </label>
-            <input style={input} type="email" value={email} autoComplete="email"
+            <input className="sm-px-field" style={input} type="email" value={email} autoComplete="email"
               onChange={e => { setEmail(e.target.value); setEmailError(false); }}
               placeholder="voce@exemplo.com"
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
@@ -792,7 +790,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             {linkSent ? (
               // Link enviado: o onboarding continua quando o usuário voltar
               // pelo e-mail (App.tsx detecta o link e conclui o login).
-              <div className="sm-card" style={{ marginTop: 24, padding: 16, background: 'var(--sm-primary-soft)', border: 'none' }}>
+              <div className="sm-card" style={{ marginTop: 24, padding: 16, backgroundColor: 'var(--sm-primary-soft)', border: 'none', ['--sm-cham-line' as string]: 'transparent' } as React.CSSProperties}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--sm-primary)' }}>
                   {isPt ? 'Confira seu e-mail 📬' : 'Check your email 📬'}
                 </p>

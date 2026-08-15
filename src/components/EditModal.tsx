@@ -114,8 +114,8 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
   const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--sm-muted)' };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-      <div className="sm-card" style={{ background: 'var(--sm-bg)', width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4, 18, 20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+      <div className="sm-card" style={{ backgroundColor: 'var(--sm-bg)', width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
           <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>{txt.title}</span>
           <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}><img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /></button>
@@ -143,7 +143,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
             </div>
           </div>
 
-          <div className="sm-card" style={{ padding: 12, background: 'var(--sm-surface)' }}>
+          <div className="sm-card" style={{ padding: 12, backgroundColor: 'var(--sm-surface)' }}>
             <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--sm-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{txt.attributesLabel}</p>
             <div style={{ display: 'flex', gap: 14 }}>
               {(['virus', 'data', 'vaccine'] as const).map(a => (

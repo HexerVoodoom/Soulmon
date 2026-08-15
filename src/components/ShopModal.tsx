@@ -290,7 +290,7 @@ export function ShopModal({
   const Wrapper = asPage
     ? ({ children }: { children: React.ReactNode }) => <>{children}</>
     : ({ children }: { children: React.ReactNode }) => (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4, 18, 20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
           {children}
         </div>
       );

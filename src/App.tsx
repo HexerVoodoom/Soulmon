@@ -1915,6 +1915,10 @@ export default function App() {
         {currentView === 'main' && (
           <div
             aria-hidden="true"
+            /* G10 (Ref C): sem cenário equipado, o teal padrão ganha a grade
+               de circuito ciano tênue. Cenário equipado sobrescreve por style
+               inline — a grade só existe no fundo padrão. */
+            className={gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground] ? undefined : 'sm-circuit-bg'}
             style={{
               position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
               backgroundImage: gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground]

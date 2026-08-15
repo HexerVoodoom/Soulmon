@@ -120,7 +120,11 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
         clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)',
       }}
     >
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tournamentBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+      {/* RODADA 5 — a arte de fundo saiu ROXA do gerador (paleta antiga do
+          projeto; o kit proíbe roxo/magenta). Enquanto a regeração em teal não
+          chega (item no BACKLOG-ARTE-GERAR), o hue-rotate leva o violeta
+          (~270°) para o teal do kit (~175°) sem arte nova. */}
+      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tournamentBg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'hue-rotate(265deg) saturate(0.75)' }} />
       {/* B4 — véu de legibilidade. A "decoração desenhada por cima do texto"
           nunca esteve por cima: o anel dourado é parte da ARTE DE FUNDO
           (`tournamentBg`), e é o título que estava por cima dele, sem placa.
@@ -136,7 +140,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
         aria-hidden="true"
         style={{
           position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'linear-gradient(180deg, rgba(20,10,40,0.82) 0%, rgba(20,10,40,0.72) 26%, rgba(20,10,40,0.18) 52%, rgba(20,10,40,0.10) 100%)',
+          background: 'linear-gradient(180deg, rgba(6,22,24,0.82) 0%, rgba(6,22,24,0.72) 26%, rgba(6,22,24,0.18) 52%, rgba(6,22,24,0.10) 100%)',
         }}
       />
       <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px 24px', color: '#fff' }}>

@@ -687,6 +687,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                 objectFit: 'contain',
                 imageRendering: 'pixelated',
                 pointerEvents: 'none',
+                /* RODADA 5, tentado e revertido: aro na frente (zIndex 2)
+                   esconde o corpo do pet — o berço de 148px cobre o meio do
+                   sprite de 200px. O "sentado na bacia" da Ref C precisa de
+                   ARTE (berço mais largo/raso), não de z-index — item no
+                   BACKLOG-ARTE-GERAR. */
                 zIndex: 0,
               }}
             />

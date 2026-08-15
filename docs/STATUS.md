@@ -7,7 +7,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **novo motor do oráculo (ago/2026)** — o teste de
+Última atualização: **UI rodada 5 (15/ago/2026)** — os primitivos legados
+`.sm-btn`/`.sm-card` passaram a desenhar o kit pixel (chanfro + cobre + banda
+de quina), o que converteu de uma vez onboarding, tutorial, modais, popover do
+menu e o topo da Evolução; backdrops roxos viraram teal, os vazamentos de roxo
+de Torneio/PPT/Masmorra saíram, e o fundo de circuito da Ref C entrou por CSS.
+Relatório: `product/soulmon-01/ui/align-round5.md`. O que falta é ARTE —
+prompts prontos em `docs/BACKLOG-ARTE-GERAR.md` (itens A9–A14 novos).
+⚠️ Registro de ambiente: os 6 testes de `GameStateContext.storage.test.tsx`
+falham em sandbox Linux (o mock de storage cheio não dispara quota no jsdom de
+lá) — **pré-existente**, falha idêntica no commit base; nos ambientes das
+rodadas anteriores passavam.
+
+Antes disso: **novo motor do oráculo (ago/2026)** — o teste de
 personalidade do repositório `teste-personalidade` virou a LEITURA do oráculo do
 Soulmon (`src/utils/soulProfile/`), no lugar do signo por faixa de datas, do
 ascendente chutado de 2 em 2 horas e das 6 perguntas do quiz antigo. A metade

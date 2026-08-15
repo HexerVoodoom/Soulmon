@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { Download, Bell } from 'lucide-react';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
+import iconBell from '../assets/soulmon/icons/icon-bell.png';
+import iconHome from '../assets/soulmon/icons/icon-home.png';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
@@ -104,8 +105,7 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
 
   const content = step === 'install'
     ? {
-        Icon: Download,
-        iconColor: '#22A900', iconBg: '#eafbe6',
+        icon: iconHome,
         title: isPt ? 'Instalar o Soulmon?' : 'Install Soulmon?',
         desc: isPt
           ? 'Adicione à tela inicial para acesso rápido e uso offline.'
@@ -116,8 +116,7 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
         onSecondary: handleDismissInstall,
       }
     : {
-        Icon: Bell,
-        iconColor: '#e0483e', iconBg: '#fde8e6',
+        icon: iconBell,
         title: isPt ? 'Ativar notificações?' : 'Enable notifications?',
         desc: isPt
           ? 'Receba lembretes de tarefas e avisos do seu Soulmon.'
@@ -129,7 +128,7 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
       };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(42,36,64,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="sm-card" style={{ width: '100%', maxWidth: 320, padding: 0, overflow: 'hidden' }}>
         <div style={{ position: 'relative', padding: '24px 20px 16px', textAlign: 'center' }}>
           <button
@@ -141,12 +140,15 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
                da UI — e o pior lugar para um alvo pequeno. */
             style={{ position: 'absolute', top: 5, right: 5, width: 44, height: 44, padding: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span aria-hidden="true" style={{ width: 30, height: 30, backgroundColor: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             </span>
           </button>
-          <div style={{ width: 56, height: 56, margin: '0 auto 10px', borderRadius: 18, background: content.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <content.Icon size={28} color={content.iconColor} strokeWidth={2} />
+          {/* Ícone do kit (moldura de cobre já desenhada na arte) no lugar do
+              quadrado pastel arredondado com line-art — era a última peça
+              Material deste modal. */}
+          <div style={{ width: 56, height: 56, margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={content.icon} alt="" width={52} height={52} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </div>
           <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)', margin: '0 0 6px' }}>{content.title}</p>
           <p style={{ fontSize: '0.82rem', color: 'var(--sm-muted)', margin: 0, lineHeight: 1.4 }}>{content.desc}</p>
@@ -157,7 +159,7 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
           </button>
           <button
             onClick={content.onSecondary}
-            style={{ width: '100%', padding: '11px 0', borderRadius: 12, border: 'none', background: 'transparent', color: 'var(--sm-muted)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
+            style={{ width: '100%', padding: '11px 0', border: 'none', background: 'transparent', color: 'var(--sm-muted)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
           >
             {content.secondary}
           </button>

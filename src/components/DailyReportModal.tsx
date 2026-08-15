@@ -126,7 +126,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(42,36,64,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div className="sm-card" style={{ width: '100%', maxWidth: 320, padding: 0, overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ position: 'relative', padding: '24px 20px 16px', textAlign: 'center' }}>

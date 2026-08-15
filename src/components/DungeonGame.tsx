@@ -436,7 +436,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
               {isPt ? 'Recorde' : 'Best'} <b className="sm-px-arcade-value" style={{ color: '#facc15' }}>{best}</b>
             </span>
             <span className="sm-px-arcade-label">
-              {isPt ? 'Dificuldade base' : 'Base level'} <b className="sm-px-arcade-value" style={{ color: '#c084fc' }}>{baseLevel}</b>
+              {isPt ? 'Dificuldade base' : 'Base level'} <b className="sm-px-arcade-value" style={{ color: 'var(--sm-px-cyan)' }}>{baseLevel}</b>
             </span>
           </div>
           <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>

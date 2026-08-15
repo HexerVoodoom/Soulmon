@@ -1,4 +1,4 @@
-import{bb as q1,aB as P0,bc as p1,bd as H1,aD as B0,be as k1,bf as B1,bg as Y1,aC as f1,aA as h1}from"./index-BHRNbECg.js";import{s as $1}from"./labels-B2IQfhRe.js";import{J as h3,T as g3,b as v3,c as S3,i as M3,j as y3,t as b3,a as x3}from"./labels-B2IQfhRe.js";import{d as A3,c as E3,i as _3,l as w3,s as N3}from"./SoulTestItem-D7Na0w6U.js";import"./vendor-DDxydHEc.js";/**
+import{bb as q1,aB as P0,bc as p1,bd as H1,aD as B0,be as k1,bf as B1,bg as Y1,aC as f1,aA as h1}from"./index-5Yle2CRK.js";import{s as $1}from"./labels-DdaS6h5y.js";import{J as h3,T as g3,b as v3,c as S3,i as M3,j as y3,t as b3,a as x3}from"./labels-DdaS6h5y.js";import{d as A3,c as E3,i as _3,l as w3,s as N3}from"./SoulTestItem-CvGU04Li.js";import"./vendor-DDxydHEc.js";/**
     @preserve
 
     Astronomy library for JavaScript (browser and Node.js).

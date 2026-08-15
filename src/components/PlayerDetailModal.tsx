@@ -55,7 +55,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(42,36,64,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
       onClick={onClose}
     >
       <div className="sm-px-card" style={{ width: '100%', maxWidth: 320, padding: 0 }} onClick={e => e.stopPropagation()}>
