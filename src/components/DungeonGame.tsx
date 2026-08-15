@@ -351,7 +351,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     /* Tela de arcade: peça escura nos dois temas, então declara o contexto —
        senão os tokens de estado (`--sm-px-off-ink`) leem o tema da PÁGINA e o
        rótulo não selecionado some no tema claro. */
-    <div className="sm-px-dark-ctx" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#07090f', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
+    <div className="sm-px-dark-ctx sm-px-arcade-root" style={{ background: '#07090f', color: '#e8eefc' }}>
       {/* Top bar */}
       <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>

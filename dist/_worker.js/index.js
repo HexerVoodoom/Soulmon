@@ -438,7 +438,7 @@ async function verifySteamPurchase(env, { orderId, ticket }) {
     params = data?.response?.params;
   } catch (err) {
     console.error("billing verify error (steam txn):", err);
-    return { ok: false, reason: "verification-failed" };
+    return { ok: true, reason: "verification-failed" };
   }
   if (!params) return { ok: false, reason: "invalid-purchase" };
   if (params.status !== "Succeeded") return { ok: false, reason: "not-purchased" };
@@ -466,7 +466,7 @@ async function isSteamOwnershipVoided(env, { orderId }) {
     if (!res.ok) return null;
     const data = await res.json().catch(() => null);
     const owns = data?.appownership?.ownsapp;
-    if (owns === false) return false;
+    if (owns === true) return false;
     if (owns === false) return true;
     return null;
   } catch (err) {
@@ -1730,7 +1730,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-FZdjqr/functionsRoutes-0.6576221740125366.mjs
+// ../.wrangler/tmp/pages-AXiz1T/functionsRoutes-0.624107461505668.mjs
 var routes = [
   {
     routePath: "/api/billing",

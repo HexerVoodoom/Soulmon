@@ -1,9 +1,14 @@
 // @vitest-environment jsdom
 /**
- * Teste de render do `BottomNav` — a navegação inteira do app é ícone puro,
- * sem rótulo visível. Isso torna o `aria-label` a ÚNICA forma de saber para
- * onde cada botão leva: um rótulo faltando ou só-em-PT não é detalhe estético,
- * é a barra de navegação ficando ilegível para leitor de tela.
+ * Teste de render do `BottomNav`.
+ *
+ * Rodada 3 / B7: a barra deixou de ser ícone puro. Material e HIG convergem em
+ * 3–5 destinos com RÓTULO PERSISTENTE, e o app tinha 6 destinos e nenhum nome
+ * — o `aria-label` existia, mas nada aparecia na tela para quem enxerga.
+ *
+ * Por isso este arquivo trava duas coisas agora, não uma: o rótulo acessível
+ * (que já valia) e o rótulo VISÍVEL, com o mesmo texto — se um dia divergirem,
+ * a barra volta a ser adivinhação para metade dos usuários.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
@@ -42,18 +47,43 @@ describe('BottomNav', () => {
     expect(parseFloat(token)).toBeGreaterThanOrEqual(44);
   });
 
-  it('a aba ativa é distinguível no DOM (halo), não só na intenção', () => {
+  it('B7: todo destino mostra o rótulo NA TELA, igual ao rótulo acessível', () => {
+    const { container } = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} language="pt-BR" />);
+    const btns = Array.from(container.querySelectorAll('button'));
+    const visiveis = btns.map(b => b.querySelector('.sm-bottom-nav-label')?.textContent ?? '');
+    expect(visiveis).toEqual(['Início', 'Atividades', 'Evolução', 'Biblioteca', 'Loja', 'Menu']);
+    expect(visiveis).toEqual(btns.map(b => b.getAttribute('aria-label')));
+  });
+
+  it('o ícone é decorativo: o nome não pode ser anunciado duas vezes', () => {
+    const { container } = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} />);
+    for (const img of Array.from(container.querySelectorAll('.sm-bottom-nav-btn img'))) {
+      expect(img.getAttribute('alt')).toBe('');
+    }
+  });
+
+  it('a seleção carrega no PREENCHIMENTO: um bloco sólido só na fileira', () => {
     const { container } = renderWithCss(<BottomNav currentView="evolution" onNavigate={() => {}} />);
-    const imgs = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
-    const glowing = imgs.filter(i => i.style.filter && i.style.filter !== 'none');
-    expect(glowing).toHaveLength(1);
-    expect(glowing[0].getAttribute('alt')).toBe('Evolution');
+    const cheios = Array.from(container.querySelectorAll('.sm-bottom-nav-btn-on'));
+    expect(cheios).toHaveLength(1);
+    expect(cheios[0].getAttribute('aria-label')).toBe('Evolution');
+    // e o estado existe para quem não vê o fill
+    expect(cheios[0].getAttribute('aria-current')).toBe('page');
+  });
+
+  it('Loja e Menu são AÇÕES, não destinos: nunca recebem aria-current', () => {
+    const { container } = renderWithCss(<BottomNav currentView="shop" onNavigate={() => {}} />);
+    const loja = screen.getByRole('button', { name: 'Shop' });
+    expect(loja.className).toContain('sm-bottom-nav-btn-on');
+    expect(loja.getAttribute('aria-current')).toBeNull();
+    expect(container.querySelectorAll('[aria-current="page"]')).toHaveLength(0);
   });
 
   it('nenhuma aba ativa quando a view não é da barra: nada acende falso', () => {
     const { container } = renderWithCss(<BottomNav currentView="oracle" onNavigate={() => {}} />);
     const imgs = Array.from(container.querySelectorAll('img')) as HTMLImageElement[];
     expect(imgs.filter(i => i.style.filter && i.style.filter !== 'none')).toHaveLength(0);
+    expect(container.querySelectorAll('.sm-bottom-nav-btn-on')).toHaveLength(0);
   });
 
   it('navegar dispara com a view certa', () => {

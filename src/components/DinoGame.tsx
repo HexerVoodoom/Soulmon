@@ -7,6 +7,7 @@ import { playDegenerate, playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
+import { PixelButton } from './pixel/PixelKit';
 
 /**
  * Dino Runner — endless runner starring the pet.
@@ -195,7 +196,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   }, [phase, jump, onEarnPoints, onScore, petNeedsFlip]);
 
   return (
-    <div className="sm-px-dark-ctx" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #0e1522 0%, #16213a 100%)', display: 'flex', flexDirection: 'column', color: '#eef2fb' }}>
+    <div className="sm-px-dark-ctx sm-px-arcade-root" style={{ background: 'linear-gradient(180deg, #0e1522 0%, #16213a 100%)', color: '#eef2fb' }}>
       {/* Cabecalho de arcade: mesma peca do Torneio e da Masmorra. O circulo
           de 34px do botao de sair virou quadrado chanfrado de 44px — era o
           ultimo controle redondo da tela (portao T2). */}
@@ -241,28 +242,30 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
                   : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
               </p>
             )}
-            <button onClick={start}
-              style={{ padding: '13px 30px', borderRadius: 16, border: 'none', background: '#4ade80', color: '#0b1a10', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
+            {/* Era uma cápsula verde `#4ade80` com raio 16 e sans bold — o
+                último botão Material vivo fora de Configurações, e num jogo
+                que a crítica R2 tinha dado como "alinhado" (o veredito veio
+                do hub de Atividades, não de dentro do jogo). Agora é o botão
+                do kit, como em Masmorra e no PPT. */}
+            <PixelButton size="md" variant="primary" onClick={start}>
               {phase === 'over' ? (isPt ? 'Jogar de novo' : 'Play again') : (isPt ? 'Começar' : 'Start')}
-            </button>
+            </PixelButton>
           </div>
         )}
       </div>
 
       {/* Big jump button OUTSIDE the game box — thumb never covers the action */}
       <div style={{ padding: 16 }}>
+        {/* Continua sendo um `<button>` cru e não um `PixelButton`: a ação é
+            `onPointerDown` (pular no toque, sem esperar o `click`), que é
+            requisito do jogo e o kit não expõe. O que mudou é a LINGUAGEM —
+            chanfro + borda de cobre + ciano, em vez do raio 18 e do azul
+            `#60a5fa` fora da paleta. */}
         <button
           onPointerDown={jump}
           disabled={phase !== 'playing'}
-          style={{
-            width: '100%', padding: '20px 0', borderRadius: 18, border: 'none',
-            background: phase === 'playing' ? '#60a5fa' : 'rgba(255,255,255,0.06)',
-            color: phase === 'playing' ? '#0b1a2e' : '#5d6f96',
-            fontWeight: 800, fontSize: '1.05rem',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            cursor: phase === 'playing' ? 'pointer' : 'default',
-            touchAction: 'manipulation', userSelect: 'none',
-          }}
+          className="sm-px-jump"
+          aria-label={isPt ? 'Pular' : 'Jump'}
         >
           <ArrowUp size={20} strokeWidth={2.6} />
           {isPt ? 'Pular' : 'Jump'}

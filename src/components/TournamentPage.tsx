@@ -121,6 +121,24 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
       }}
     >
       <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tournamentBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+      {/* B4 — véu de legibilidade. A "decoração desenhada por cima do texto"
+          nunca esteve por cima: o anel dourado é parte da ARTE DE FUNDO
+          (`tournamentBg`), e é o título que estava por cima dele, sem placa.
+          Um `z-index` menor não resolveria nada (o fundo já é o de baixo);
+          o que faltava era separar as duas camadas por contraste.
+
+          O véu é um gradiente vertical: forte onde mora o texto (topo, onde
+          o anel cruza "TORNEIO" e a linha de PvP) e some no meio da peça,
+          para a arte continuar aparecendo onde ela não disputa leitura.
+          Zero arte nova, e vale nos dois temas — o painel é escuro em ambos,
+          então o véu não pode inverter. */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'linear-gradient(180deg, rgba(20,10,40,0.82) 0%, rgba(20,10,40,0.72) 26%, rgba(20,10,40,0.18) 52%, rgba(20,10,40,0.10) 100%)',
+        }}
+      />
       <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px 24px', color: '#fff' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
           <img src={iconSwords} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />

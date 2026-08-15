@@ -1934,8 +1934,10 @@ export default function App() {
           className="flex-1 overflow-y-auto px-6 pt-3"
           style={{
             position: 'relative', zIndex: 1,
+            /* B5: `--sm-chatdock-h` (altura real do dock) + 16px de folga,
+               no lugar do `100px` mágico. Ver o token no index.css. */
             paddingBottom: currentView === 'main'
-              ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 100px)'
+              ? 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + var(--sm-chatdock-h) + 16px)'
               : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           }}
         >
@@ -1948,6 +1950,8 @@ export default function App() {
                 energyPoints={gameState.energyPoints}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
                 credits={gameState.credits ?? 0}
+                healthPoints={gameState.healthPoints}
+                maxHealthPoints={gameState.maxHealthPoints}
                 language={language}
                 onOpenCredits={() => setCreditsOpen(true)}
               />
@@ -1960,7 +1964,9 @@ export default function App() {
                   tinha sido removida do aviso das 20h e ficou aqui, que é o
                   momento de maior consequência do jogo. */}
               {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < hpSafeToday && !hpBannerDismissed && (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-2xl" style={{ background: 'var(--sm-danger-soft)', border: '1px solid var(--sm-danger)' }}>
+                /* Chanfro do kit em vez do `rounded-2xl` do sistema antigo:
+                   era o último raio Material que sobrava na Home (B1). */
+                <div className="flex items-center gap-2 px-4 py-2 sm-px-card" style={{ background: 'var(--sm-danger-soft)', borderColor: 'var(--sm-danger)' }}>
                   <img src={iconWarning} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
                   <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: 'var(--sm-danger)' }}>
                     {language === 'pt-BR'

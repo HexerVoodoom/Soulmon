@@ -27,6 +27,7 @@
  * 4. **Texto sempre nasce em EN com par PT-BR** — os componentes que têm texto
  *    próprio (só o `aria-label` do checkbox) recebem `language`.
  */
+import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import btnSm from '../../assets/soulmon/ui/btn-sm.png';
@@ -250,8 +251,43 @@ export interface PixelTabsProps<K extends string> {
  * de tela.
  */
 export function PixelTabs<K extends string>({ items, value, onChange, ariaLabel, style }: PixelTabsProps<K>) {
+  // ── B3 (rodada 3): a fileira SEMPRE rolou; o que faltava era a pista.
+  // Na Loja, 2 de 5 abas (Torneio, Missões) ficavam fora da tela e a última
+  // aba visível terminava rente à margem — o desenho que Material e HIG
+  // proíbem, porque nada distingue "acabou" de "tem mais".
+  //
+  // O estado tem de ser medido, não presumido: uma máscara fixa esmaeceria a
+  // última aba das fileiras que CABEM inteiras (Aparência, Idioma, Torneio,
+  // Biblioteca), inventando um corte inexistente. Daí o `data-cut`.
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [cut, setCut] = useState<'none' | 'start' | 'end' | 'both'>('none');
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const medir = () => {
+      const inicio = el.scrollLeft > 2;
+      const fim = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+      setCut(inicio && fim ? 'both' : fim ? 'end' : inicio ? 'start' : 'none');
+    };
+    medir();
+    el.addEventListener('scroll', medir, { passive: true });
+    // `ResizeObserver` e não `window.resize`: a fileira também muda de
+    // largura quando o PAI muda (abrir teclado, girar, painel colapsar).
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(medir) : null;
+    ro?.observe(el);
+    return () => { el.removeEventListener('scroll', medir); ro?.disconnect(); };
+    // Reavalia quando o conjunto de abas muda (5 abas da Loja vs. 2 do Idioma).
+  }, [items.length]);
+
   return (
-    <div className="sm-px-tabs" role="tablist" aria-label={ariaLabel} style={style}>
+    <div
+      ref={ref}
+      className="sm-px-tabs"
+      role="tablist"
+      aria-label={ariaLabel}
+      data-cut={cut === 'none' ? undefined : cut}
+      style={style}
+    >
       {items.map(t => {
         const on = t.key === value;
         return (
@@ -439,11 +475,30 @@ export interface PixelChipProps {
   icon?: string;
   title?: string;
   style?: CSSProperties;
+  /**
+   * Cápsula CLICÁVEL — a moldura vira o próprio `<button>`.
+   *
+   * Rodada 3 (B1): a cápsula de Créditos era um `<button>` transparente
+   * envolvendo uma cápsula. Funcionava, mas o CONTROLE (o que recebe foco, o
+   * que o dedo acerta, o que a métrica lê) era a caixa sem superfície, e a
+   * moldura era um filho decorativo. Era o último "controle interativo sem
+   * moldura" da Home depois do B1 — e a diferença aparece de verdade no
+   * `:focus-visible`, que antes desenhava um anel em volta do nada.
+   */
+  onClick?: () => void;
+  /** Obrigatório quando `onClick` existe: o valor sozinho não diz a ação. */
+  ariaLabel?: string;
 }
 
-export function PixelChip({ label, value, icon, title, style }: PixelChipProps) {
+export function PixelChip({ label, value, icon, title, style, onClick, ariaLabel }: PixelChipProps) {
+  const Tag = onClick ? 'button' : 'div';
   return (
-    <div className="sm-px-chip" title={title} style={style}>
+    <Tag
+      className={onClick ? 'sm-px-chip sm-px-chip-tap' : 'sm-px-chip'}
+      title={title}
+      style={style}
+      {...(onClick ? { type: 'button' as const, onClick, 'aria-label': ariaLabel } : {})}
+    >
       {icon && (
         <img src={icon} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
       )}
@@ -451,6 +506,6 @@ export function PixelChip({ label, value, icon, title, style }: PixelChipProps) 
         <span className="sm-px-chip-label">{label}</span>
         <span className="sm-px-chip-value">{value}</span>
       </span>
-    </div>
+    </Tag>
   );
 }

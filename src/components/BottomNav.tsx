@@ -24,7 +24,7 @@ interface BottomNavProps {
 /** Ícone-imagem (gerado no Higgsfield, kit bronze/cobre) no lugar do
  *  lucide-react. Sem `color` de SVG pra recolorir por aba — o destaque da
  *  aba ativa vem do halo (glow) + fundo, não de tingir o ícone. */
-function NavIcon({ src, alt, active, size = 32 }: { src: string; alt: string; active?: boolean; size?: number }) {
+function NavIcon({ src, alt, active, size = 26 }: { src: string; alt: string; active?: boolean; size?: number }) {
   return (
     <img
       src={src}
@@ -35,11 +35,50 @@ function NavIcon({ src, alt, active, size = 32 }: { src: string; alt: string; ac
         objectFit: 'contain',
         imageRendering: 'pixelated',
         opacity: active ? 1 : 0.62,
-        transform: active ? 'scale(1.22)' : 'scale(1)',
+        /* O `scale(1.22)` saiu junto com a chegada do rótulo (B7): com texto
+           embaixo, aumentar o ícone empurrava a linha de base e a fileira
+           deixava de ter um ritmo só. O destaque agora é o preenchimento da
+           placa + o rótulo aceso. */
         filter: active ? 'drop-shadow(0 0 7px rgba(93,240,224,0.85)) drop-shadow(0 0 14px rgba(93,240,224,0.4))' : 'none',
-        transition: 'opacity 0.15s ease, filter 0.15s ease, transform 0.15s ease',
+        transition: 'opacity 0.15s ease, filter 0.15s ease',
       }}
     />
+  );
+}
+
+/**
+ * Um destino da nav: ícone + RÓTULO PERSISTENTE (B7).
+ *
+ * Material e HIG convergem: barra inferior tem 3–5 destinos **com nome**. O
+ * app tinha 6 destinos e nenhum nome — o ícone sozinho é adivinhação, e para
+ * leitor de tela o `aria-label` existia mas nada aparecia na tela.
+ *
+ * Por que o rótulo cabe: 412px / 6 = 68px por célula; a Silkscreen a 8px sem
+ * espaçamento extra mede ~4,8px de avanço por caractere, então "ATIVIDADES"
+ * (10, o pior caso em PT-BR) mede ~48px dentro de 62px úteis — MEDIDO no
+ * navegador, não estimado (ver `align-round3.md`).
+ *
+ * A seleção segue a regra da rodada 2 — **o preenchimento carrega**: o item
+ * ativo é o único bloco sólido da fileira, e o inativo nunca é preenchido.
+ * Isso é invariante de tema; brilho e cor de rótulo são reforço, não a
+ * informação.
+ */
+function NavItem({ icon, label, active, onClick, current }: {
+  icon: string; label: string; active?: boolean; onClick: () => void;
+  /** `aria-current="page"` só para destinos de verdade, não para ações. */
+  current?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      aria-current={current && active ? 'page' : undefined}
+      className={active ? 'sm-bottom-nav-btn sm-bottom-nav-btn-on' : 'sm-bottom-nav-btn'}
+      title={label}
+    >
+      <NavIcon src={icon} alt="" active={active} />
+      <span className="sm-bottom-nav-label">{label}</span>
+    </button>
   );
 }
 
@@ -64,40 +103,32 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
 
   return (
     <nav className="sm-bottom-nav">
-      {items.map(({ view, label, icon }) => {
-        const active = currentView === view;
-        return (
-          <button
-            key={view}
-            onClick={() => onNavigate(view)}
-            aria-label={label}
-            className="sm-bottom-nav-btn"
-          >
-            <NavIcon src={icon} alt={label} active={active} />
-          </button>
-        );
-      })}
-      <button
+      {items.map(({ view, label, icon }) => (
+        <NavItem
+          key={view}
+          icon={icon}
+          label={label}
+          active={currentView === view}
+          current
+          onClick={() => onNavigate(view)}
+        />
+      ))}
+      <NavItem
+        icon={iconCoin}
+        label={isPt ? 'Loja' : 'Shop'}
+        active={currentView === 'shop'}
         onClick={() => onNavigate('shop')}
-        aria-label={isPt ? 'Loja' : 'Shop'}
-        title={isPt ? 'Loja' : 'Shop'}
-        className="sm-bottom-nav-btn"
-      >
-        <NavIcon src={iconCoin} alt={isPt ? 'Loja' : 'Shop'} active={currentView === 'shop'} />
-      </button>
+      />
 
       {/* Menu sanduíche — sempre por último (à direita de tudo). Agrega
           Configurações + Recomeçar num popover, em vez de dois botões soltos. */}
       <div style={{ position: 'relative', flex: 1, display: 'flex', height: '100%' }}>
-        <button
+        <NavItem
+          icon={iconMenu}
+          label={isPt ? 'Menu' : 'Menu'}
+          active={menuActive}
           onClick={() => setMenuOpen(o => !o)}
-          aria-label={isPt ? 'Menu' : 'Menu'}
-          title={isPt ? 'Menu' : 'Menu'}
-          className="sm-bottom-nav-btn"
-          style={{ width: '100%' }}
-        >
-          <NavIcon src={iconMenu} alt={isPt ? 'Menu' : 'Menu'} active={menuActive} />
-        </button>
+        />
 
         {menuOpen && (
           <>
