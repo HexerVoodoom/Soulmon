@@ -1,6 +1,6 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v47';
+const CACHE_VERSION = 'v48';
 const STATIC_CACHE = `digiapp-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `digiapp-runtime-${CACHE_VERSION}`;
 
