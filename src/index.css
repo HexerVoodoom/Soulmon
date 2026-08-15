@@ -4001,8 +4001,11 @@ html {
   height: var(--sm-bottomnav-h);
   padding: 6px 10px calc(6px + env(safe-area-inset-bottom, 0px));
   background: var(--sm-surface);
-  border-top: 1px solid var(--sm-line);
-  box-shadow: 0 -2px 10px rgba(42, 36, 64, 0.06);
+  /* Rodada 2 (T2): a sombra difusa (`0 -2px 10px rgba(42,36,64,.06)`) era a
+     ULTIMA sombra Material do app, e por estar na nav aparecia em TODA tela —
+     um unico item do inventario contaminando o portao inteiro. A separacao
+     agora e a linha de cobre, que e a mesma que separa qualquer peca do kit. */
+  border-top: 2px solid var(--sm-px-copper);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -5114,4 +5117,364 @@ button.sm-px-node {
    forasteiro de outro design system e ainda cobria a última linha da lista). */
 .sm-px-ritual-cta {
   padding: 10px 12px 12px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RODADA 2 — G4 (telas nunca tocadas) · G8 (forasteiros) · G9 (estados)
+   ═══════════════════════════════════════════════════════════════════════════
+   Regras da seção (footgun 1 + guard de `index.css.contract.test.ts`):
+   variante SEMPRE aninhada (`&:hover`), cor sempre de token, regra nova no fim.
+
+   G9 é a razão de existir da metade destas regras. O defeito era este: a aba
+   selecionada se anunciava por COR DE TEXTO + sublinhado, e a não-selecionada
+   ficava com o fundo da superfície. No tema claro a superfície é branca e a
+   cor de seleção era clara também, então a inativa (branca, sólida, opaca)
+   pesava MAIS na tela do que a ativa — e no escuro invertia. A regra nova é
+   uma só, e vale para aba, chip de dia e chip de categoria:
+
+     **o PREENCHIMENTO carrega a seleção; o não-selecionado nunca é preenchido.**
+
+   Isso é invariante de tema porque não depende de qual cor é mais clara: o
+   selecionado é sempre o único bloco sólido da fileira. A COR do fill muda
+   por tema (teal profundo no claro, ciano no escuro) só para o contraste do
+   rótulo passar dos dois lados — a HIERARQUIA não muda.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Fill da seleção. No tema CLARO é o teal profundo do kit: o ciano do kit
+     mede ~1,4:1 sobre branco (N6 da análise de gap) e não pode carregar
+     seleção sozinho numa página clara. */
+  --sm-px-sel-bg: #0d3b39;
+  --sm-px-sel-ink: #f2fbf9;
+  --sm-px-sel-edge: var(--sm-px-copper);
+  /* Peça NÃO selecionada: sem fill, herda o que estiver atrás. */
+  --sm-px-off-bg: transparent;
+  --sm-px-off-ink: var(--sm-ink);
+  --sm-px-off-edge: color-mix(in srgb, var(--sm-px-copper) 45%, transparent);
+}
+[data-theme="dark"] {
+  --sm-px-sel-bg: #5df0e0;
+  --sm-px-sel-ink: #04211f;
+}
+
+/* ── Card emoldurado ──────────────────────────────────────────────────────
+   Substituto de `.sm-card` nas telas do G4. `.sm-card` é do sistema anterior:
+   canto arredondado + `box-shadow: 0 2px 8px rgba(42,36,64,.05)`, que é sombra
+   Material — item explícito do portão T2. Aqui a profundidade vem do chanfro e
+   da borda de cobre, como na folha de referência. */
+.sm-px-card {
+  box-sizing: border-box;
+  background: var(--sm-surface);
+  color: var(--sm-ink);
+  border: 2px solid var(--sm-px-copper);
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+}
+/* Card de item clicável (linha da loja, linha da biblioteca). */
+.sm-px-card-tap {
+  cursor: pointer;
+  transition: filter .12s ease;
+  &:hover { filter: brightness(1.06); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+}
+/* Feedback de compra — verde/vermelho de sinal, não de marca. */
+.sm-px-card-ok { border-color: #3fae5a; }
+.sm-px-card-fail { border-color: #d9534f; }
+
+/* Moldura de 44px onde mora o ícone de um item (loja, pastinha, missão).
+   O FALLBACK é o quadro vazio, nunca o emoji do sistema — mesma decisão da
+   rodada 1 no painel de rituais (G2). */
+.sm-px-slot {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--sm-px-copper) 12%, var(--sm-bg));
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 60%, transparent);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+}
+.sm-px-slot-locked { filter: grayscale(0.8) brightness(0.8); }
+
+/* ── Fileira de abas (G4 + G9) ────────────────────────────────────────────
+   Chip emoldurado, não sublinhado. `overflow-x` porque a Loja tem 5 abas e
+   em PT-BR ("Cenários", "Mobílias", "Missões") elas não cabem em 412px sem
+   espremer o rótulo até virar reticências. */
+.sm-px-tabs {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  &::-webkit-scrollbar { display: none; }
+}
+.sm-px-tab {
+  flex: 1 0 auto;
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: var(--sm-font-pixel);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  -webkit-font-smoothing: none;
+  /* ESTADO 1 — normal (não selecionado): sem fill. */
+  background: var(--sm-px-off-bg);
+  color: var(--sm-px-off-ink);
+  border: 2px solid var(--sm-px-off-edge);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+  /* ESTADO 2 — hover: só a borda acende. Nunca o fill, senão o hover imita a
+     seleção e o defeito do G9 volta por outra porta. */
+  &:hover { border-color: var(--sm-px-copper); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+  /* ESTADO 4 — desabilitado. */
+  &:disabled { opacity: 0.45; cursor: default; }
+}
+/* ESTADO 3 — selecionado: o ÚNICO bloco sólido da fileira, nos dois temas. */
+.sm-px-tab-on {
+  background: var(--sm-px-sel-bg);
+  color: var(--sm-px-sel-ink);
+  border-color: var(--sm-px-sel-edge);
+  &:hover { background: var(--sm-px-sel-bg); }
+}
+
+/* ── Chip de escolha (dias da semana, categoria) — G8 ─────────────────────
+   Eram pílulas `border-radius: 999px` com `--sm-primary-soft` no ativo: forma
+   de outro design system E o mesmo G9 do parágrafo de cima (no claro, o
+   "soft" quase não se distinguia do branco de fundo). Mesmos 4 estados da
+   aba, caixa menor. NÃO herda de `.sm-px-tab` de propósito: aba é navegação
+   (uma escolhida por vez), chip é seleção múltipla, e amarrar as duas faria
+   qualquer ajuste de aba mexer no formulário de tarefa. */
+.sm-px-chip-btn {
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  background: var(--sm-px-off-bg);
+  color: var(--sm-px-off-ink);
+  border: 2px solid var(--sm-px-off-edge);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+  &:hover { border-color: var(--sm-px-copper); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+  &:disabled { opacity: 0.45; cursor: default; }
+}
+.sm-px-chip-on {
+  background: var(--sm-px-sel-bg);
+  color: var(--sm-px-sel-ink);
+  border-color: var(--sm-px-sel-edge);
+  &:hover { background: var(--sm-px-sel-bg); }
+}
+/* Chip de dia da semana: caixa estreita, rótulo de 3 letras em bitmap (é
+   RÓTULO, não texto corrido — cabe na regra de dois níveis do G5). O
+   `min-width` existe porque em PT-BR os dias não têm largura igual e sem ele
+   a fileira ficava com sete larguras diferentes. */
+.sm-px-chip-day {
+  min-width: 46px;
+  padding: 6px 8px;
+  font-family: var(--sm-font-pixel);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  -webkit-font-smoothing: none;
+}
+
+/* ── Etiqueta estática (NPC, "5 partidas/dia", faixa) ─────────────────────
+   Não é botão: não recebe hover nem foco. Mesma moldura chanfrada, para não
+   sobrar pílula nenhuma na tela (T2). */
+.sm-px-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-sizing: border-box;
+  padding: 3px 8px;
+  font-family: var(--sm-font-pixel);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  -webkit-font-smoothing: none;
+  color: var(--sm-px-off-ink);
+  border: 2px solid var(--sm-px-off-edge);
+  background: transparent;
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+}
+.sm-px-tag-on {
+  background: var(--sm-px-sel-bg);
+  color: var(--sm-px-sel-ink);
+  border-color: var(--sm-px-sel-edge);
+}
+
+/* ── Interruptor emoldurado ───────────────────────────────────────────────
+   O toggle do PvP era o pill+bolinha do Material (`border-radius: 999px` +
+   círculo branco deslizando). Aqui a chave é uma caixa com o cursor em dois
+   quadros — mesma leitura, forma do kit, e o estado ligado é de novo o fill. */
+.sm-px-switch {
+  width: 56px;
+  height: 30px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+  background: var(--sm-px-off-bg);
+  border: 2px solid var(--sm-px-off-edge);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+  transition: background .12s ease, border-color .12s ease;
+  &:hover { border-color: var(--sm-px-copper); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 3px; }
+}
+.sm-px-switch-on {
+  background: var(--sm-px-sel-bg);
+  border-color: var(--sm-px-sel-edge);
+}
+.sm-px-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 20px;
+  background: var(--sm-px-copper);
+  transition: left .12s ease, background .12s ease;
+}
+.sm-px-switch-on .sm-px-switch-knob {
+  left: 27px;
+  background: var(--sm-px-sel-ink);
+}
+
+/* ── Trilho de progresso liso (faixa do Torneio, missão) ──────────────────
+   Onde a barra é uma PROPORÇÃO contínua e não uma contagem, o segmentado
+   mentiria (dá a entender que existem N passos discretos). Fica lisa, mas com
+   o mesmo trilho quadrado da barra segmentada — nada de `border-radius: 999px`. */
+.sm-px-meter {
+  box-sizing: border-box;
+  height: 12px;
+  overflow: hidden;
+  background: var(--sm-px-track);
+  border: 2px solid var(--sm-px-track-line);
+}
+.sm-px-meter-fill {
+  height: 100%;
+  background: var(--sm-px-bar-tone, var(--sm-px-cyan));
+  transition: width .3s ease;
+}
+
+/* ── Cabeçalho de tela de jogo (Dino/Masmorra/PPT/Torneio) ────────────────
+   Essas telas pintam o próprio fundo (cenário retrô/arte), então NÃO usam o
+   token de superfície do tema: a barra de cima é uma peça escura sobre a arte,
+   nos dois temas, e isso é de propósito — a tela é um gabinete de arcade, não
+   uma página do app. O que muda aqui é a FORMA (chanfro + cobre) e a fonte,
+   que estavam em Material. */
+.sm-px-arcade-bar {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(6, 20, 20, 0.82);
+  color: var(--sm-px-ink);
+  border: 2px solid var(--sm-px-copper);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+}
+/* Botão de sair/fechar de tela de jogo: quadrado de 44px, não círculo. */
+.sm-px-arcade-close {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  color: var(--sm-px-ink);
+  border: 2px solid var(--sm-px-copper);
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px);
+  &:hover { background: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
+  &:focus-visible { outline: 3px solid var(--sm-px-copper); outline-offset: 2px; }
+}
+/* Rótulo/valor de HUD de arcade (SCORE, ANDAR, RECORDE). */
+.sm-px-arcade-label {
+  font-family: var(--sm-font-pixel);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  -webkit-font-smoothing: none;
+  color: color-mix(in srgb, var(--sm-px-cyan) 75%, #ffffff);
+}
+.sm-px-arcade-value {
+  font-family: var(--sm-font-pixel);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  -webkit-font-smoothing: none;
+  color: var(--sm-px-ink);
+}
+
+/* Rótulo de seção/linha em bitmap dentro de card claro (Loja, Biblioteca,
+   detalhe de jogador). Difere de `.sm-px-arcade-label` só pela tinta: aqui o
+   fundo é a superfície do TEMA, então o ciano do kit não serve no claro. */
+.sm-px-label {
+  font-family: var(--sm-font-pixel);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  -webkit-font-smoothing: none;
+  color: var(--sm-muted);
+}
+/* Número/valor em bitmap na superfície do tema. */
+.sm-px-value {
+  font-family: var(--sm-font-pixel);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  -webkit-font-smoothing: none;
+  color: var(--sm-ink);
+}
+
+/* ── Contexto de peça escura ──────────────────────────────────────────────
+   MEDIDO na verificação da rodada 2, e é um defeito que eu mesmo criei:
+   `--sm-px-off-ink` é `var(--sm-ink)`, ou seja, segue o tema da PÁGINA. Numa
+   fileira de abas em cima do painel de arcade do Torneio — que é escuro nos
+   dois temas —, o tema claro pintava o rótulo da aba não selecionada com a
+   tinta escura da página, sobre fundo escuro: a aba "Rank" ficava ilegível.
+
+   É o G9 de novo, pelo avesso: o token certo, lido no contexto errado. A
+   correção não é hard-code de cor no componente, e sim declarar o CONTEXTO —
+   quem envolve o conteúdo diz "aqui dentro o fundo é escuro", e os tokens de
+   estado se reapontam para toda a subárvore. Vale para aba, chip, etiqueta e
+   interruptor de uma vez. */
+.sm-px-dark-ctx {
+  --sm-px-off-ink: var(--sm-px-ink);
+  --sm-px-off-edge: color-mix(in srgb, var(--sm-px-copper) 70%, transparent);
+  /* No claro, o fill de seleção é o teal profundo — que sobre uma peça já
+     escura desapareceria. Dentro do contexto escuro o fill é sempre o ciano,
+     como no tema escuro: a seleção continua sendo o único bloco sólido. */
+  --sm-px-sel-bg: var(--sm-px-cyan);
+  --sm-px-sel-ink: #04211f;
 }

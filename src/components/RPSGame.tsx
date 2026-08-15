@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Scissors } from 'lucide-react';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import iconRps from '../assets/soulmon/icons/games/icon-game-rps.png';
+import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
+import iconSkull from '../assets/soulmon/icons/icon-skull.png';
+import { PixelButton } from './pixel/PixelKit';import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
@@ -78,38 +80,47 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #14101f 0%, #241a38 100%)', display: 'flex', flexDirection: 'column', color: '#f1edfb' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem' }}>
-          <Scissors size={20} color="#f0abfc" strokeWidth={2.3} />
+    <div className="sm-px-dark-ctx" style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'linear-gradient(180deg, #14101f 0%, #241a38 100%)', display: 'flex', flexDirection: 'column', color: '#f1edfb' }}>
+      <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
+        <img src={iconRps} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+        <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
           {isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
         </span>
-        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'}
-          /* 44x44 de area de toque com o circulo de 34px dentro (WCAG 2.2 AA 2.5.8). */
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, padding: 5, background: 'none', border: 'none', cursor: 'pointer' }}>
-          <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#f1edfb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          </span>
+        <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
+          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
 
-      {/* Scoreboard */}
-      <p style={{ textAlign: 'center', fontSize: '1rem', fontWeight: 700 }}>
+      {/* Placar */}
+      <p className="sm-px-arcade-value" style={{ textAlign: 'center', fontSize: '1rem' }}>
         {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
-        <span style={{ color: '#a996d1', fontSize: '0.75rem', fontWeight: 500 }}> ({isPt ? 'primeiro a 3' : 'first to 3'})</span>
+        <span className="sm-px-arcade-label" style={{ display: 'block' }}>{isPt ? 'primeiro a 3' : 'first to 3'}</span>
       </p>
 
       {/* Arena */}
-      <div style={{ flex: 1, margin: 16, borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <div className="sm-px-card" style={{ flex: 1, margin: 16, background: 'rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <img src={getSpriteForStage(evolutionStage, demoCharacterId)} alt="pet"
              style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
+        {/* Os tres EMOJIS DE MAO sao as PECAS do jogo, nao decoracao: o kit
+            nao tem pedra/papel/tesoura e esta rodada nao gera arte. Ficam, e
+            estao contados no relatorio como divida de arte nomeada. O que saiu
+            foi o emoji ACESSORIO (balao de pensamento, trofeu, caveira) —
+            esse sim era decoracao, e tem par no kit. */}
         <div style={{ fontSize: '2.6rem', minHeight: 52, lineHeight: 1 }}>
-          {thinking ? '💭' : petHand !== null ? HANDS[petHand] : ''}
+          {thinking ? <span className="sm-px-arcade-value" style={{ fontSize: 20 }}>. . .</span> : petHand !== null ? HANDS[petHand] : ''}
         </div>
-        <p style={{ fontSize: '0.9rem', fontWeight: 700, minHeight: 22 }}>
-          {matchOver === 'won' ? (isPt ? `🏆 Você venceu! +${MATCH_POINTS} Bits` : `🏆 You won! +${MATCH_POINTS} Bits`)
-            : matchOver === 'lost' ? (isPt ? '💀 Seu Soulmon venceu a partida!' : '💀 Your Soulmon won the match!')
-            : roundMsg}
+        <p style={{ fontSize: '0.9rem', fontWeight: 700, minHeight: 22, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {matchOver === 'won' ? (
+            <>
+              <img src={iconTrophy} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              {isPt ? `Você venceu! +${MATCH_POINTS} Bits` : `You won! +${MATCH_POINTS} Bits`}
+            </>
+          ) : matchOver === 'lost' ? (
+            <>
+              <img src={iconSkull} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              {isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!'}
+            </>
+          ) : roundMsg}
         </p>
         <div style={{ fontSize: '2.2rem', minHeight: 44, lineHeight: 1 }}>
           {playerHand !== null ? HANDS[playerHand] : ''}
@@ -120,20 +131,19 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       <div style={{ padding: '0 16px 16px' }}>
         {matchOver ? (
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={restart}
-              style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#c084fc', color: '#1a1225', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
-              {isPt ? 'Revanche' : 'Rematch'}
-            </button>
-            <button onClick={onExit}
-              style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#f1edfb', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
-              {isPt ? 'Sair' : 'Exit'}
-            </button>
+            <span style={{ flex: 1 }}>
+              <PixelButton size="lg" variant="primary" onClick={restart}>{isPt ? 'Revanche' : 'Rematch'}</PixelButton>
+            </span>
+            <span style={{ flex: 1 }}>
+              <PixelButton size="lg" onClick={onExit}>{isPt ? 'Sair' : 'Exit'}</PixelButton>
+            </span>
           </div>
         ) : (
           <div style={{ display: 'flex', gap: 8 }}>
             {HANDS.map((h, i) => (
               <button key={h} onClick={() => play(i as Hand)} disabled={thinking}
-                style={{ flex: 1, padding: '16px 0', borderRadius: 18, border: '1px solid rgba(255,255,255,0.1)', background: thinking ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.07)', fontSize: '1.8rem', cursor: thinking ? 'default' : 'pointer', transition: 'background .15s ease' }}>
+                className="sm-px-chip-btn"
+                style={{ flex: 1, padding: '16px 0', fontSize: '1.8rem', color: '#f1edfb' }}>
                 {h}
               </button>
             ))}

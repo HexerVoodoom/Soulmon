@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { PixelButton } from './pixel/PixelKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
@@ -347,31 +348,30 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   const sceneName = isPt ? scene.namePt : scene.nameEn;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#07090f', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
+    /* Tela de arcade: peça escura nos dois temas, então declara o contexto —
+       senão os tokens de estado (`--sm-px-off-ink`) leem o tema da PÁGINA e o
+       rótulo não selecionado some no tema claro. */
+    <div className="sm-px-dark-ctx" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#07090f', display: 'flex', flexDirection: 'column', color: '#e8eefc' }}>
       {/* Top bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 18px' }}>
-        <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: '1.05rem' }}>
+      <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+          <span className="sm-px-arcade-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <img src={iconSwords} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             {isPt ? 'Masmorra' : 'Dungeon'}
           </span>
-          <span style={{ color: scene.accent, fontSize: '0.78rem' }}>
+          <span className="sm-px-arcade-label" style={{ color: scene.accent }}>
             {isPt ? 'Andar' : 'Floor'} {floor}/{MAX_FLOORS} · {sceneName}
             {inBattle ? <span style={{ color: '#9fb2d8', marginLeft: 6 }}>· {enemyIdx + 1}/{ladderLen}</span> : null}
           </span>
         </span>
-        <button onClick={exitRun} aria-label={isPt ? 'Sair' : 'Exit'}
-          /* 44x44 de area de toque com o circulo de 34px dentro (WCAG 2.2 AA 2.5.8). */
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, padding: 5, background: 'none', border: 'none', cursor: 'pointer' }}>
-          <span aria-hidden="true" style={{ width: 34, height: 34, borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#e8eefc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          </span>
+        <button onClick={exitRun} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
+          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
         </button>
       </div>
 
       {/* Battlefield (only during a run) — per-floor retro scene + VHS overlay */}
       {inBattle && enemy && (
-        <div style={{ flex: 1, position: 'relative', margin: '0 16px', borderRadius: 20, border: `1px solid ${scene.accent}55`, background: scene.bg, overflow: 'hidden', boxShadow: `inset 0 0 60px rgba(0,0,0,0.6)` }}>
+        <div className="sm-px-card" style={{ flex: 1, position: 'relative', margin: '0 16px', borderColor: scene.accent, background: scene.bg, overflow: 'hidden', boxShadow: 'inset 0 0 60px rgba(0,0,0,0.6)' }}>
           {/* VHS scanline overlay */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px)', backgroundSize: '100% 6px', animation: 'dungeon-vhs 5s linear infinite', opacity: 0.55, mixBlendMode: 'overlay' }} />
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 40px ${scene.accent}22` }} />
@@ -413,9 +413,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           {/* Result popup — feedback beat between actions */}
           {popup && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
-              <div style={{ textAlign: 'center', background: '#0e1522', border: `2px solid ${popup.color}`, borderRadius: 18, padding: '16px 26px', boxShadow: `0 0 24px ${popup.color}55` }}>
+              <div className="sm-px-card" style={{ textAlign: 'center', background: '#0e1522', borderColor: popup.color, padding: '16px 26px' }}>
                 <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{popup.icon}</div>
-                <p style={{ fontWeight: 800, fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
+                <p className="sm-px-arcade-value" style={{ fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
                 <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
               </div>
             </div>
@@ -426,27 +426,29 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
       {/* Intro */}
       {phase === 'intro' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 72, height: 72, borderRadius: 20, background: 'rgba(248,113,113,0.12)' }}>
+          <div className="sm-px-slot" style={{ width: 72, height: 72 }}>
             <img src={iconSwords} alt="" width={40} height={40} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </div>
-          <div style={{ display: 'flex', gap: 18, fontSize: '0.82rem', color: '#c6d4f2' }}>
-            <span>🏅 {isPt ? 'Recorde' : 'Best'}: <b style={{ color: '#facc15' }}>{best}</b></span>
-            <span>🔥 {isPt ? 'Dificuldade base' : 'Base level'}: <b style={{ color: '#c084fc' }}>{baseLevel}</b></span>
+          {/* Os dois emojis (medalha/fogo) sairam: rotulo em bitmap ja diz o
+              que cada numero e, e emoji do sistema em conteudo conta no T2. */}
+          <div style={{ display: 'flex', gap: 18 }}>
+            <span className="sm-px-arcade-label">
+              {isPt ? 'Recorde' : 'Best'} <b className="sm-px-arcade-value" style={{ color: '#facc15' }}>{best}</b>
+            </span>
+            <span className="sm-px-arcade-label">
+              {isPt ? 'Dificuldade base' : 'Base level'} <b className="sm-px-arcade-value" style={{ color: '#c084fc' }}>{baseLevel}</b>
+            </span>
           </div>
           <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>
             {isPt
               ? '5 andares, cada um com 6 inimigos e mais forte que o anterior. Andar 1 serve pra um rookie; alguns andares acima ficam brutais. Concluir a run inteira sobe a dificuldade (reset semanal). Perder custa a run — nunca os seus corações.'
               : '5 floors, each with 6 enemies and tougher than the last. Floor 1 suits a rookie; a few floors up gets brutal. Completing the whole run raises the difficulty (weekly reset). Losing costs you the run — never your hearts.'}
           </p>
-          <button
-            onClick={startRun}
-            style={{
-              width: '100%', maxWidth: 320, padding: '14px 0', borderRadius: 16, border: 'none',
-              background: '#4ade80', color: '#0b0f17',
-              fontWeight: 800, fontSize: '1rem', cursor: 'pointer',
-            }}>
-            {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
-          </button>
+          <span style={{ width: '100%', maxWidth: 320 }}>
+            <PixelButton size="lg" variant="primary" onClick={startRun}>
+              {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
+            </PixelButton>
+          </span>
         </div>
       )}
 
@@ -455,7 +457,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
         <div style={{ padding: 16, minHeight: 150 }}>
           {phase === 'attack' && (
             <div>
-              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#9fb2d8', marginBottom: 6 }}>
+              <p className="sm-px-arcade-label" style={{ textAlign: 'center', marginBottom: 6 }}>
                 {isPt ? 'Seu turno — mire no centro!' : 'Your turn — aim for the center!'}
               </p>
               <TimingBar key={`atk-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed} color="#4ade80" label={isPt ? 'Atacar!' : 'Attack!'} onStop={handleAttack} />
@@ -464,7 +466,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           {phase === 'defend' && (
             <div>
               <p style={{ textAlign: 'center', fontSize: '0.84rem', fontWeight: 800, color: defendTimeLeft <= 1 ? '#f87171' : '#facc15', marginBottom: 6 }}>
-                {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`} ⏱ {defendTimeLeft.toFixed(1)}s
+                {isPt ? `${enemy.name} atacando — desvie!` : `${enemy.name} attacking — dodge!`} {defendTimeLeft.toFixed(1)}s
               </p>
               <TimingBar key={`def-${floor}-${enemyIdx}-${enemyHp}-${playerHp}`} speed={enemy.speed * 1.2} color="#60a5fa" label={isPt ? 'Desviar!' : 'Dodge!'} onStop={a => handleDefend(a)} />
             </div>
@@ -474,84 +476,79 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           )}
           {phase === 'enemy-down' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontWeight: 800, marginBottom: 4 }}>
-                ✅ {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
+              <p className="sm-px-arcade-value" style={{ marginBottom: 4 }}>
+                {isPt ? `${enemy.name} derrotado!` : `${enemy.name} defeated!`}
               </p>
               <p style={{ fontSize: '0.82rem', color: '#facc15', marginBottom: 10 }}>{rewardMsg}</p>
-              <button onClick={nextEnemy}
-                style={{ width: '100%', padding: '14px 0', borderRadius: 16, border: 'none', background: '#facc15', color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer' }}>
+              <PixelButton size="lg" variant="primary" onClick={nextEnemy}>
                 {enemyIdx + 1 >= enemies.length
                   ? (floor >= MAX_FLOORS
-                      ? (isPt ? `Concluir run (+${clearBonus(floor)} Bits + 🌀)` : `Finish run (+${clearBonus(floor)} Bits + 🌀)`)
+                      ? (isPt ? `Concluir run (+${clearBonus(floor)} Bits + Glitchtama)` : `Finish run (+${clearBonus(floor)} Bits + Glitchtama)`)
                       : (isPt ? `Limpar andar (+${clearBonus(floor)} Bits)` : `Clear floor (+${clearBonus(floor)} Bits)`))
-                  : (isPt ? `Desafiar ${enemies[enemyIdx + 1].name} →` : `Challenge ${enemies[enemyIdx + 1].name} →`)}
-              </button>
+                  : (isPt ? `Desafiar ${enemies[enemyIdx + 1].name}` : `Challenge ${enemies[enemyIdx + 1].name}`)}
+              </PixelButton>
             </div>
           )}
           {phase === 'floor-clear' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
-                🚪 {isPt ? `Andar ${floor} concluído!` : `Floor ${floor} cleared!`}
+              <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem', marginBottom: 4 }}>
+                {isPt ? `Andar ${floor} concluído!` : `Floor ${floor} cleared!`}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
                 {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
               </p>
               <p style={{ fontSize: '0.76rem', color: '#4ade80', marginBottom: 10 }}>{rewardMsg}</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={nextFloor}
-                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: (runScenes[floor] ?? DUNGEON_SCENES[0]).accent, color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? `Andar ${floor + 1} →` : `Floor ${floor + 1} →`}
-                </button>
-                <button onClick={exitRun}
-                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'Sair c/ placar' : 'Bank & exit'}
-                </button>
+                <span style={{ flex: 1 }}>
+                  <PixelButton size="lg" variant="primary" onClick={nextFloor}>
+                    {isPt ? `Andar ${floor + 1}` : `Floor ${floor + 1}`}
+                  </PixelButton>
+                </span>
+                <span style={{ flex: 1 }}>
+                  <PixelButton size="lg" onClick={exitRun}>{isPt ? 'Sair c/ placar' : 'Bank & exit'}</PixelButton>
+                </span>
               </div>
             </div>
           )}
           {phase === 'run-complete' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 4, color: '#facc15' }}>
-                {isPt ? '🏆 Run completa! Os 5 andares caíram!' : '🏆 Run complete! All 5 floors down!'}
+              <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem', marginBottom: 4, color: '#facc15' }}>
+                {isPt ? 'Run completa! Os 5 andares caíram!' : 'Run complete! All 5 floors down!'}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 2 }}>
                 {isPt ? `Placar: ${runScore} · Recorde: ${best}` : `Score: ${runScore} · Best: ${best}`}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#4ade80', marginBottom: 2, fontWeight: 800 }}>
-                🌀 {isPt ? 'Glitchtama obtido! (pastinha de itens)' : 'Glitchtama acquired! (Items folder)'}
+                {isPt ? 'Glitchtama obtido! (pastinha de itens)' : 'Glitchtama acquired! (Items folder)'}
               </p>
               <p style={{ fontSize: '0.76rem', color: '#c084fc', marginBottom: 10 }}>
                 {isPt ? 'A próxima run ficou mais difícil.' : 'The next run got harder.'}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={startRun}
-                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'Nova run' : 'New run'}
-                </button>
-                <button onClick={onExit}
-                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'Sair' : 'Exit'}
-                </button>
+                <span style={{ flex: 1 }}>
+                  <PixelButton size="lg" variant="primary" onClick={startRun}>{isPt ? 'Nova run' : 'New run'}</PixelButton>
+                </span>
+                <span style={{ flex: 1 }}>
+                  <PixelButton size="lg" onClick={onExit}>{isPt ? 'Sair' : 'Exit'}</PixelButton>
+                </span>
               </div>
             </div>
           )}
           {phase === 'lost' && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontWeight: 800, fontSize: '1.05rem', marginBottom: 4 }}>
-                {isPt ? '💀 Você foi derrotado... (−1 ❤️)' : '💀 You were defeated... (−1 ❤️)'}
+              <p className="sm-px-arcade-value" style={{ fontSize: '1.05rem', marginBottom: 4 }}>
+                {isPt ? 'Você foi derrotado — seus corações continuam intactos.' : 'You were defeated — your hearts are untouched.'}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#c6d4f2', marginBottom: 10 }}>
                 {isPt ? `Andar ${floor} · Placar: ${runScore} · Recorde: ${best}` : `Floor ${floor} · Score: ${runScore} · Best: ${best}`}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={startRun}
-                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: 'none', background: '#4ade80', color: '#0b0f17', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'Jogar de novo' : 'Play again'}
-                </button>
-                <button onClick={onExit}
-                  style={{ flex: 1, padding: '14px 0', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#e8eefc', fontWeight: 800, cursor: 'pointer' }}>
-                  {isPt ? 'Sair' : 'Exit'}
-                </button>
+                <span style={{ flex: 1 }}>
+                  <PixelButton size="lg" variant="primary" onClick={startRun}>{isPt ? 'Jogar de novo' : 'Play again'}</PixelButton>
+                </span>
+                <span style={{ flex: 1 }}>
+                  <PixelButton size="lg" onClick={onExit}>{isPt ? 'Sair' : 'Exit'}</PixelButton>
+                </span>
               </div>
             </div>
           )}

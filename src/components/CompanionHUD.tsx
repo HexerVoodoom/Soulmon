@@ -882,7 +882,10 @@ export const CompanionHUD = memo(function CompanionHUD({
 
         {/* Energy Bar - Vertical on Right Side */}
         <div
-          className="flex flex-col-reverse items-center justify-end gap-1 rounded-[4px] sm-card"
+          /* `.sm-card` vencia o `rounded-[4px]` e devolvia o raio de 18px do
+             sistema antigo: numa caixa de 26px de largura isso e uma CAPSULA,
+             e era o unico controle arredondado que sobrava na Home (T2). */
+          className="flex flex-col-reverse items-center justify-end gap-1 sm-px-card"
           style={{ height: '185px', width: '26px', padding: '11.998px 0', cursor: 'pointer' }}
           title={language === 'pt-BR'
             ? `Energia: ${energyPoints}/${maxEnergy} — sobe comendo; cheia no fim do dia = ponto de evolução`

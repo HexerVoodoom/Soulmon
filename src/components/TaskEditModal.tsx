@@ -5,9 +5,10 @@ import iconBell from '../assets/soulmon/icons/icon-bell.png';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
-import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
+import { CATEGORY_ICON_IMG, CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
 import { useItemForm } from '../hooks/useItemForm';
 import type { Language } from '../utils/i18n';
+import { PixelChoiceChip } from './pixel/PixelKit';
 
 interface TaskEditModalProps {
   isOpen: boolean;
@@ -112,13 +113,6 @@ export function TaskEditModal({
     outline: 'none',
   };
   const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--sm-muted)' };
-  const chip = (active: boolean): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
-    border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-    background: active ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
-    color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
-    fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-  });
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
@@ -138,9 +132,14 @@ export function TaskEditModal({
             <label style={labelStyle}>{txt.category}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {CATEGORIES.map(cat => (
-                <button key={cat} type="button" onClick={() => setCategory(cat)} style={chip(category === cat)}>
-                  <span>{CATEGORY_ICONS[cat]}</span>{categoryLabel(cat, isPt)}
-                </button>
+                <PixelChoiceChip
+                  key={cat}
+                  selected={category === cat}
+                  onToggle={() => setCategory(cat)}
+                  icon={CATEGORY_ICON_IMG[cat]}
+                >
+                  {categoryLabel(cat, isPt)}
+                </PixelChoiceChip>
               ))}
             </div>
           </div>

@@ -2,6 +2,7 @@ import { ActivityCategory, ATTR_ICON, ATTR_INK, ATTR_LABEL } from '../types/attr
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import type { CarePattern } from '../utils/carePattern';
+import { PixelTag } from './pixel/PixelKit';
 
 interface CompletedTask {
   id: string;
@@ -155,13 +156,8 @@ export function StatsPage({
                   st => (st.branch ? `${st.stage}-${st.branch}` : st.stage) === id,
                 );
                 return (
-                  <span key={id} style={{
-                    fontSize: '0.72rem', padding: '4px 9px', borderRadius: 999, fontWeight: 700,
-                    background: 'var(--sm-primary-soft)',
-                    color: 'var(--sm-primary)',
-                  }}>
-                    {form?.name ?? id}
-                  </span>
+                  /* Pilula -> etiqueta emoldurada do kit (portao T2). */
+                  <PixelTag key={id}>{form?.name ?? id}</PixelTag>
                 );
               })}
             </div>

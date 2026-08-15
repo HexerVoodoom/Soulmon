@@ -9,6 +9,8 @@ import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attr
 import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
+import { WEEKDAY_INDEXES, weekdayFull, weekdayShort } from '../utils/weekdays';
+import { PixelChoiceChip } from './pixel/PixelKit';
 import { useItemForm, type Step } from '../hooks/useItemForm';
 import { UnlockNudge } from './UnlockAccountModal';
 import { minimumViableHint } from '../utils/taskSuggestions';
@@ -56,8 +58,6 @@ const CATEGORIES: ActivityCategory[] = [
 
 
 // Weekday labels and names in English
-const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false, onUnlock }: CreateModalProps) {
   const isPt = language === 'pt-BR';
@@ -178,13 +178,6 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
     outline: 'none',
   };
   const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--sm-muted)' };
-  const chip = (active: boolean): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 999,
-    border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-    background: active ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
-    color: active ? 'var(--sm-primary)' : 'var(--sm-ink)',
-    fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-  });
   const segment = (active: boolean): React.CSSProperties => ({
     flex: 1, padding: '10px 0', borderRadius: 12, textAlign: 'center', cursor: 'pointer',
     border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
@@ -227,9 +220,14 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
             <label style={labelStyle}>{txt.category}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {CATEGORIES.map(cat => (
-                <button key={cat} type="button" onClick={() => setCategory(cat)} style={chip(category === cat)}>
-                  <img src={CATEGORY_ICON_IMG[cat]} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />{categoryLabel(cat, isPt)}
-                </button>
+                <PixelChoiceChip
+                  key={cat}
+                  selected={category === cat}
+                  onToggle={() => setCategory(cat)}
+                  icon={CATEGORY_ICON_IMG[cat]}
+                >
+                  {categoryLabel(cat, isPt)}
+                </PixelChoiceChip>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
@@ -261,20 +259,18 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
             <div>
               <label style={labelStyle}>{txt.weekdays} <span style={{ color: '#e0483e' }}>*</span></label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-                {WEEKDAY_LABELS.map((label, index) => {
-                  const active = weekDays.includes(index);
-                  return (
-                    <button key={index} onClick={() => toggleWeekDay(index)} title={WEEKDAY_FULL[index]}
-                      style={{
-                        padding: '8px 0', borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                        border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                        background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
-                        color: active ? 'var(--sm-btn-text)' : 'var(--sm-ink)',
-                      }}>
-                      {label}
-                    </button>
-                  );
-                })}
+                {WEEKDAY_INDEXES.map(index => (
+                  <PixelChoiceChip
+                    key={index}
+                    shape="day"
+                    selected={weekDays.includes(index)}
+                    onToggle={() => toggleWeekDay(index)}
+                    title={weekdayFull(index, language)}
+                    ariaLabel={weekdayFull(index, language)}
+                  >
+                    {weekdayShort(index, language)}
+                  </PixelChoiceChip>
+                ))}
               </div>
             </div>
           )}

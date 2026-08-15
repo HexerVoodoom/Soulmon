@@ -6,6 +6,7 @@ import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { FORM_REQUIREMENTS, getStageBranch, getStageLevel } from '../types/progression';
 import { getSpriteForStage } from '../utils/sprites';
 import { ATTR_COLOR, ATTR_ICON, ATTR_LABEL } from '../types/attributes';
+import { PixelButton, PixelTag } from './pixel/PixelKit';
 import type { DirectoryPlayer } from '../utils/community';
 import type { Language } from '../utils/i18n';
 
@@ -57,7 +58,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
       style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(42,36,64,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
       onClick={onClose}
     >
-      <div className="sm-card" style={{ width: '100%', maxWidth: 320, padding: 0, overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+      <div className="sm-px-card" style={{ width: '100%', maxWidth: 320, padding: 0 }} onClick={e => e.stopPropagation()}>
         <div style={{ position: 'relative', padding: '24px 20px 16px', textAlign: 'center' }}>
           <button
             onClick={onClose}
@@ -66,11 +67,10 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
                desenhado dentro; top/right recuados em 7px para o circulo ficar
                exatamente onde estava. Fechar um modal e a saida de emergencia
                da UI — e o pior lugar para um alvo pequeno. */
-            style={{ position: 'absolute', top: 5, right: 5, width: 44, height: 44, padding: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
+            className="sm-px-arcade-close"
+            style={{ position: 'absolute', top: 8, right: 8, color: 'var(--sm-ink)' }}
           >
-            <span aria-hidden="true" style={{ width: 30, height: 30, borderRadius: 999, background: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            </span>
+            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
           </button>
           <img
             src={player.spriteUrl ?? getSpriteForStage(player.stage)}
@@ -79,11 +79,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           />
           <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
             {player.name}
-            {player.isNpc && (
-              <span style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--sm-muted)', background: 'var(--sm-bg)', borderRadius: 999, padding: '2px 7px' }}>
-                NPC
-              </span>
-            )}
+            {player.isNpc && <PixelTag>NPC</PixelTag>}
           </p>
           {player.petName && <p style={{ fontSize: '0.8rem', color: 'var(--sm-muted)', margin: '2px 0 0' }}>{player.petName}</p>}
         </div>
@@ -94,15 +90,15 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
               <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <RowIcon icon={r.icon} size={22} color="var(--sm-muted)" />
               </span>
-              <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>{r.label}</span>
-              <span style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--sm-ink)' }}>{r.value}</span>
+              <span className="sm-px-label" style={{ flex: 1 }}>{r.label}</span>
+              <span className="sm-px-value">{r.value}</span>
             </div>
           ))}
 
           {/* Caminho do pet — TODO o branch já desbloqueado, não só o nível atual */}
           <div style={{ padding: '8px 0 4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ width: 30, height: 30, borderRadius: 10, background: branch ? `${ATTR_COLOR[branch]}22` : 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span className="sm-px-slot" style={{ width: 30, height: 30, background: branch ? `${ATTR_COLOR[branch]}22` : undefined }}>
                 {branchIcon
                   ? <img src={branchIcon} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   : <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>?</span>}
@@ -119,17 +115,13 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
                 const level = getStageLevel(stage);
                 const isCurrent = stage === player.stage;
                 return (
-                  <span
-                    key={stage}
-                    style={{
-                      fontSize: '0.74rem', fontWeight: isCurrent ? 800 : 600,
-                      padding: '4px 10px', borderRadius: 999,
-                      background: isCurrent ? (branch ? ATTR_COLOR[branch] : 'var(--sm-primary)') : 'var(--sm-bg)',
-                      color: isCurrent ? '#fff' : 'var(--sm-ink)',
-                    }}
-                  >
+                  /* Mesma regra do G9 aqui: o estagio ATUAL e o unico
+                     preenchido, e nunca o contrario — as pilulas anteriores
+                     davam ao nao-atual um fundo solido (`--sm-bg`) que no tema
+                     claro chamava tanto quanto o atual. */
+                  <PixelTag key={stage} filled={isCurrent}>
                     {isPt ? LEVEL_LABEL[level].pt : LEVEL_LABEL[level].en}
-                  </span>
+                  </PixelTag>
                 );
               })}
             </div>
@@ -137,9 +129,9 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
         </div>
 
         <div style={{ padding: '14px 20px 20px' }}>
-          <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ width: '100%' }}>
+          <PixelButton size="lg" onClick={onClose}>
             {isPt ? 'Fechar' : 'Close'}
-          </button>
+          </PixelButton>
         </div>
       </div>
     </div>

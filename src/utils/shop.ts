@@ -4,6 +4,12 @@ import type { ComponentType } from 'react';
 import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint, Trophy, Flag, Medal, Award, Image, Flame, Tent, Mountain } from 'lucide-react';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from '../components/AlignmentIcons';
 import type { SlotId, DecorFit } from './petStage';
+// Arte EMOLDURADA do kit para os poucos itens que não têm arte própria.
+// Mobílias já vêm de `utils/decorArt.ts` e cenários da própria prévia CSS —
+// então isto cobre só os 3 chips e o coraçãozinho, que caíam no ícone
+// vetorial line-art (o forasteiro que o G4 aponta) ou no emoji.
+import { ATTR_ICON } from '../types/attributes';
+import iconPotion from '../assets/soulmon/icons/icon-potion.png';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -29,9 +35,12 @@ export interface ShopItem {
    *  CHAVE em foodInventory, ver App.tsx handleShopBuy/handleFeed). NUNCA
    *  trocar por um componente — só o visual da loja usa displayIcon. */
   icon: string;
-  /** Ícone renderizado na loja (estilo lucide, igual ao resto do app) — só
-   *  visual, não afeta o inventário. Ausente em 'bg' (usa a prévia CSS). */
+  /** LEGADO: ícone vetorial lucide. Continua no modelo porque `PetStageDecor`
+   *  e o palco ainda o consomem; a LOJA não desenha mais a partir dele. */
   displayIcon?: ShopIconComponent;
+  /** Arte emoldurada do kit — é isto que a loja desenha quando o item não tem
+   *  arte própria (decoração) nem prévia (cenário). */
+  iconImg?: string;
   namePt: string;
   nameEn: string;
   descPt: string;
@@ -113,18 +122,18 @@ export const SHOP_ITEMS: ShopItem[] = [
   // raise the attribute, no energy). They steer the evolution branch. Nomes
   // e ícones seguem os 3 atributos do oráculo (ver EvolutionPath.tsx /
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, não mais Vírus/Dado/Vacina.
-  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, displayIcon: PowerIcon, attr: 'virus',
+  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, displayIcon: PowerIcon, iconImg: ATTR_ICON.virus, attr: 'virus',
     namePt: 'Chip de Poder',  nameEn: 'Power Chip',
     descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Poder`, descEn: `Goes to Items; use for +${CHIP_BOOST} Power`, price: 120 },
-  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, displayIcon: HarmonyIcon, attr: 'data',
+  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, displayIcon: HarmonyIcon, iconImg: ATTR_ICON.data, attr: 'data',
     namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
     descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Harmonia`, descEn: `Goes to Items; use for +${CHIP_BOOST} Harmony`, price: 120 },
-  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, displayIcon: BenevolenceIcon, attr: 'vaccine',
+  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, displayIcon: BenevolenceIcon, iconImg: ATTR_ICON.vaccine, attr: 'vaccine',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
     descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Benevolência`, descEn: `Goes to Items; use for +${CHIP_BOOST} Benevolence`, price: 120 },
   // Heart item — the ONLY buyable HP heal. Goes to the Items folder; using it
   // restores a heart. Also drops (rarely) in the dungeon.
-  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI, displayIcon: Heart,
+  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI, displayIcon: Heart, iconImg: iconPotion,
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
     descPt: `Vai pra pastinha; usar cura ${HEART_HEAL} coração`, descEn: `Goes to Items; use to heal ${HEART_HEAL} heart`, price: 150 },
   // (Glitchtama is deliberately NOT sold — the only way to get one is

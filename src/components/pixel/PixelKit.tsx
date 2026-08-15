@@ -212,6 +212,224 @@ export function PixelCheckbox({
   );
 }
 
+// ──────────────────────────────────────────────────────── abas emolduradas
+
+export interface PixelTabItem<K extends string> {
+  key: K;
+  label: string;
+  /** Ícone do kit (url do import). Fallback = sem ícone, NUNCA emoji. */
+  icon?: string;
+}
+
+export interface PixelTabsProps<K extends string> {
+  items: readonly PixelTabItem<K>[];
+  value: K;
+  onChange: (key: K) => void;
+  /** Rótulo acessível da fileira (já vem com par PT/EN de quem chama). */
+  ariaLabel?: string;
+  style?: CSSProperties;
+}
+
+/**
+ * Fileira de abas — o conserto do **G9**.
+ *
+ * O que estava errado não era a cor: era *o que carregava a seleção*. Loja e
+ * Torneio anunciavam a aba ativa por cor de texto + sublinhado de 2,5px,
+ * deixando o preenchimento igual nas cinco. No tema claro, a superfície branca
+ * dos itens não-selecionados pesava mais que o texto colorido do selecionado —
+ * e quem olhava a tela lia a aba errada como ativa. No escuro invertia.
+ *
+ * Aqui a seleção é o **fill**, e só ela: hover mexe na borda, foco mexe no
+ * outline, desabilitado mexe na opacidade. Nenhum dos outros três estados pode
+ * produzir um bloco sólido, então nenhum deles pode ser confundido com o
+ * selecionado — em nenhum dos dois temas. Os tokens estão em `index.css`
+ * (`--sm-px-sel-*` / `--sm-px-off-*`).
+ *
+ * `role="tablist"`/`role="tab"` com `aria-selected`: o estado precisa existir
+ * para quem não vê o fill, senão trocamos um defeito visual por um de leitor
+ * de tela.
+ */
+export function PixelTabs<K extends string>({ items, value, onChange, ariaLabel, style }: PixelTabsProps<K>) {
+  return (
+    <div className="sm-px-tabs" role="tablist" aria-label={ariaLabel} style={style}>
+      {items.map(t => {
+        const on = t.key === value;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={on}
+            onClick={() => onChange(t.key)}
+            className={on ? 'sm-px-tab sm-px-tab-on' : 'sm-px-tab'}
+          >
+            {t.icon && (
+              <img src={t.icon} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+            )}
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────── chip de escolha (G8/G9)
+
+export interface PixelChoiceChipProps {
+  children: ReactNode;
+  selected: boolean;
+  onToggle: () => void;
+  /** Ícone do kit à esquerda. */
+  icon?: string;
+  /** `day` aperta a caixa e usa bitmap — rótulo de 3 letras. */
+  shape?: 'default' | 'day';
+  disabled?: boolean;
+  title?: string;
+  ariaLabel?: string;
+}
+
+/**
+ * Chip de seleção múltipla (dias da semana, categoria da tarefa).
+ *
+ * Era pílula `border-radius: 999px` repetida em quatro arquivos
+ * (`CreateModal`, `EditModal`, `TaskEditModal`, `GameTutorialFlow`), cada um
+ * com a sua cópia do objeto de estilo. Além da forma errada (T2 conta pílulas),
+ * o ativo usava `--sm-primary-soft`, que no tema claro é quase o branco do
+ * fundo: a mesma inversão do G9, num controle de formulário.
+ *
+ * `role="checkbox"` e não `button`: são escolhas independentes, e sem
+ * `aria-checked` o estado só existia na cor.
+ */
+export function PixelChoiceChip({
+  children, selected, onToggle, icon, shape = 'default', disabled = false, title, ariaLabel,
+}: PixelChoiceChipProps) {
+  const cls = ['sm-px-chip-btn'];
+  if (shape === 'day') cls.push('sm-px-chip-day');
+  if (selected) cls.push('sm-px-chip-on');
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={selected}
+      aria-label={ariaLabel}
+      title={title}
+      disabled={disabled}
+      onClick={disabled ? undefined : onToggle}
+      className={cls.join(' ')}
+    >
+      {icon && (
+        <img src={icon} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+      )}
+      {children}
+    </button>
+  );
+}
+
+// ────────────────────────────────────────────────────── etiqueta estática
+
+export interface PixelTagProps {
+  children: ReactNode;
+  /** Etiqueta preenchida (mesmo fill da seleção) — use para "concluída". */
+  filled?: boolean;
+  title?: string;
+  style?: CSSProperties;
+}
+
+/** Etiqueta que só informa (NPC, "5 partidas/dia"). Não é botão: sem hover. */
+export function PixelTag({ children, filled = false, title, style }: PixelTagProps) {
+  return (
+    <span className={filled ? 'sm-px-tag sm-px-tag-on' : 'sm-px-tag'} title={title} style={style}>
+      {children}
+    </span>
+  );
+}
+
+// ───────────────────────────────────────────────── interruptor emoldurado
+
+export interface PixelSwitchProps {
+  checked: boolean;
+  onToggle: () => void;
+  /** Obrigatório: um interruptor sem rótulo acessível é um botão mudo. */
+  ariaLabel: string;
+  disabled?: boolean;
+}
+
+/** Chave liga/desliga na forma do kit (o pill+bolinha era Material puro). */
+export function PixelSwitch({ checked, onToggle, ariaLabel, disabled = false }: PixelSwitchProps) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      onClick={disabled ? undefined : onToggle}
+      className={checked ? 'sm-px-switch sm-px-switch-on' : 'sm-px-switch'}
+    >
+      <span aria-hidden="true" className="sm-px-switch-knob" />
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────── trilho de proporção contínua
+
+export interface PixelMeterProps {
+  /** 0..1. Proporção CONTÍNUA — para contagem discreta use PixelSegmentedBar. */
+  ratio: number;
+  tone?: 'cyan' | 'red' | 'gold';
+  height?: number;
+  label?: string;
+  style?: CSSProperties;
+}
+
+export function PixelMeter({ ratio, tone = 'cyan', height = 12, label, style }: PixelMeterProps) {
+  const pct = Math.round(Math.min(1, Math.max(0, ratio)) * 100);
+  return (
+    <div
+      className="sm-px-meter"
+      role="progressbar"
+      aria-valuenow={pct}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label}
+      style={{ height, '--sm-px-bar-tone': TONE[tone], ...style } as CSSProperties}
+    >
+      <div className="sm-px-meter-fill" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────── moldura de ícone de item 44px
+
+export interface PixelSlotProps {
+  /** Url de arte (ícone do kit, thumb de cenário, decoração). */
+  src?: string;
+  /** Fundo CSS puro (thumbnail de cenário) quando não há PNG. */
+  background?: string;
+  locked?: boolean;
+  /** Sobreposição (cadeado). */
+  overlay?: ReactNode;
+  alt?: string;
+}
+
+/**
+ * Casa de 44px de um item. **O fallback é o quadro vazio, nunca o emoji do
+ * sistema** — mesma decisão da rodada 1 (G2). A casa é desenhada mesmo sem
+ * arte, porque é ela que alinha a coluna de texto entre as linhas da lista.
+ */
+export function PixelSlot({ src, background, locked = false, overlay, alt = '' }: PixelSlotProps) {
+  return (
+    <span className={locked ? 'sm-px-slot sm-px-slot-locked' : 'sm-px-slot'} style={{ position: 'relative' }}>
+      {background && <span aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: background, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
+      {src && (
+        <img src={src} alt={alt} style={{ position: 'relative', width: '76%', height: '76%', objectFit: 'contain', imageRendering: 'pixelated' }} />
+      )}
+      {overlay}
+    </span>
+  );
+}
+
 // ─────────────────────────────────────────────────────────── cápsula HUD
 
 export interface PixelChipProps {
