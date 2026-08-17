@@ -1372,20 +1372,29 @@ export default function App() {
       STORAGE_KEYS.SOULMON_PROFILE, null);
     // Confere o perfil ANTES de cobrar — cobrar e depois falhar seria roubo.
     if (!saved) return false;
-    const ent = await spendCredits(REROLL_COST_CREDITS, 'reroll');
-    if (!ent) return false;
     const newSeed = Math.floor(Math.random() * 2 ** 31);
+    // GERA ANTES DE COBRAR. Conferir só a existência do perfil não bastava: um
+    // perfil salvo corrompido (sem `oracle.classElements`, sem `psychometric`,
+    // sem `astrology`) faz a geração lançar — e a ordem antiga já tinha
+    // debitado os 50 Créditos de DINHEIRO REAL. Cobrar e falhar seria roubo,
+    // e o comentário acima só valia para metade dos modos de falha.
     // Perfil novo (tem soulProfile) → pipeline completo: o reroll re-sorteia
     // também a criatura-inspiração do bestiário, não só a parte criativa.
     // Perfil de antes da troca de motor → caminho legado, intacto.
     let result: OracleResult;
-    if (saved.soulProfile) {
-      const { generateOracleComplete } = await import('./utils/soulProfile');
-      result = generateOracleComplete(saved, newSeed).result;
-    } else {
-      const { generateOracle } = await import('./utils/oracle');
-      result = generateOracle(saved, newSeed);
+    try {
+      if (saved.soulProfile) {
+        const { generateOracleComplete } = await import('./utils/soulProfile');
+        result = generateOracleComplete(saved, newSeed).result;
+      } else {
+        const { generateOracle } = await import('./utils/oracle');
+        result = generateOracle(saved, newSeed);
+      }
+    } catch {
+      return false; // nada foi cobrado
     }
+    const ent = await spendCredits(REROLL_COST_CREDITS, 'reroll');
+    if (!ent) return false;
     // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
     // perder o que a pessoa pagou. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed });
@@ -1461,6 +1470,13 @@ export default function App() {
   // 🔒 Evolution padlock (Evolution page): tapping the current Soulmon toggles
   // it. While locked, the pet never evolves at the day turn; unlocking lets the
   // (already met) criteria trigger the evolution on the NEXT day turn.
+  // Cache das skills no save: a página do Pet recomputa do perfil local e
+  // devolve aqui, para o conteúdo sobreviver a um aparelho novo (o perfil do
+  // oráculo não sobe para a nuvem, as skills agora sim).
+  const handleSkillsComputed = useCallback((skills: NonNullable<GameState['soulmonSkills']>) => {
+    setGameState(prev => (prev.soulmonSkills ? prev : { ...prev, soulmonSkills: skills }));
+  }, [setGameState]);
+
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
   }, []);
@@ -2193,28 +2209,26 @@ export default function App() {
               (a barra tem 6 botões travados por teste). A página do Pet é a
               ficha viva: formas desbloqueadas, descrições e habilidades. */}
           {(currentView === 'evolution' || currentView === 'stats' || currentView === 'pet') && (
-            <div className="flex gap-3 mb-4">
-              <button
-                onClick={() => setCurrentView('evolution')}
-                className={`sm-btn ${currentView === 'evolution' ? '' : 'sm-btn-secondary'}`}
-                style={{ flex: 1 }}
-              >
-                {language === 'pt-BR' ? 'Evolução' : 'Evolution'}
-              </button>
-              <button
-                onClick={() => setCurrentView('pet')}
-                className={`sm-btn ${currentView === 'pet' ? '' : 'sm-btn-secondary'}`}
-                style={{ flex: 1 }}
-              >
-                Pet
-              </button>
-              <button
-                onClick={() => setCurrentView('stats')}
-                className={`sm-btn ${currentView === 'stats' ? '' : 'sm-btn-secondary'}`}
-                style={{ flex: 1 }}
-              >
-                {language === 'pt-BR' ? 'Estatísticas' : 'Stats'}
-              </button>
+            <div className="flex gap-2 mb-4">
+              {/* `minWidth: 0` + fonte menor são obrigatórios aqui: "Estatísticas"
+                  é uma palavra só (min-content ~168px) e `flex:1` com o
+                  `min-width:auto` padrão NÃO encolhe — com a chegada do chip
+                  "Pet" a fileira passou de 323 para 412px num viewport de 390 e
+                  o terceiro rótulo era cortado no meio ("ESTATÍSTIC"). */}
+              {([
+                { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
+                { view: 'pet' as const, label: 'Pet' },
+                { view: 'stats' as const, label: language === 'pt-BR' ? 'Estatísticas' : 'Stats' },
+              ]).map(({ view, label }) => (
+                <button
+                  key={view}
+                  onClick={() => setCurrentView(view)}
+                  className={`sm-btn ${currentView === view ? '' : 'sm-btn-secondary'}`}
+                  style={{ flex: 1, minWidth: 0, fontSize: '0.72rem', padding: '10px 6px', whiteSpace: 'nowrap' }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           )}
 
@@ -2269,6 +2283,8 @@ export default function App() {
               currentStageId={gameState.evolutionStage}
               demoCharacterId={gameState.demoCharacterId}
               petName={gameState.soulmonMeta?.baseName}
+              savedSkills={gameState.soulmonSkills}
+              onSkillsComputed={handleSkillsComputed}
               language={language}
             /></Suspense>
           )}

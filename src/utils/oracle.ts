@@ -287,6 +287,12 @@ export function normalizeName(name: string): string {
 }
 
 /** Reduz a um dígito, preservando números mestres 11/22/33. */
+/** Primeira letra maiúscula — para trechos concatenados DEPOIS de um ponto
+ *  final (a apoteose do mega saía "…armadura negra. apoteose de monarca…"). */
+export function upperFirstText(t: string): string {
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export function reduceNumber(n: number): number {
   while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
     n = String(n).split('').reduce((acc, d) => acc + Number(d), 0);
@@ -294,11 +300,28 @@ export function reduceNumber(n: number): number {
   return n;
 }
 
+/**
+ * Soma pitagórica das letras. NUNCA devolve 0 — as tabelas de leitura
+ * (NUMBER_ELEMENTS/ROLES/ALIGNMENT) são indexadas de 1 a 9, e um 0 estourava
+ * a geração inteira com "undefined is not iterable".
+ *
+ * Isso não era teórico: `normalizeName` só preserva A–Z, então TODO nome
+ * escrito em cirílico, CJK, árabe ou grego somava 0 — e a pessoa ficava presa
+ * no ritual, sem conseguir criar personagem nenhum (o app é vendido em EN).
+ * Nomes latinos só de vogais ("Aia") zeravam o número de personalidade pelo
+ * mesmo caminho. Quando não há letra latina que conte, o número vem do HASH
+ * do nome original: o nome continua influenciando a leitura (é o ponto da
+ * numerologia) em vez de virar uma constante ou um crash.
+ */
 function sumLetters(name: string, filter?: (letter: string) => boolean): number {
   let total = 0;
   for (const ch of normalizeName(name)) {
     if (filter && !filter(ch)) continue;
     total += PYTHAGOREAN[ch] ?? 0;
+  }
+  if (total === 0) {
+    const marca = filter ? (filter('A') ? 'vogais' : 'consoantes') : 'expressao';
+    return (hashString(`${name}|${marca}`) % 9) + 1;
   }
   return reduceNumber(total);
 }
@@ -320,7 +343,11 @@ const NUMBER_MEANINGS: Record<number, LText> = {
 
 export function computeNumerology(fullName: string, birthDate: string): NumerologyResult {
   const [y, m, d] = birthDate.split('-').map(Number);
-  const lifePath = reduceNumber(reduceNumber(d) + reduceNumber(m) + reduceNumber(y));
+  // data inválida/vazia (NaN) também não pode zerar: mesmo motivo do sumLetters
+  const somaData = reduceNumber(d) + reduceNumber(m) + reduceNumber(y);
+  const lifePath = Number.isFinite(somaData) && somaData > 0
+    ? reduceNumber(somaData)
+    : (hashString(`${birthDate}|lifepath`) % 9) + 1;
   const expression = sumLetters(fullName);
   const soulUrge = sumLetters(fullName, ch => VOWELS.has(ch));
   const personality = sumLetters(fullName, ch => !VOWELS.has(ch));
@@ -852,36 +879,36 @@ const NOUNS_BY_ELEMENT: Record<ElementId, Array<{ pt: string; en: string }>> = {
 // funcionam razoavelmente com os substantivos do banco; ajuste fino é estético).
 const ADJECTIVES_BY_ROLE: Record<RoleId, LText[]> = {
   suporte: [
-    { pt: 'acolhedor(a)', en: 'nurturing' }, { pt: 'gentil', en: 'gentle' }, { pt: 'devotado(a)', en: 'devoted' },
-    { pt: 'curador(a)', en: 'healing' }, { pt: 'leal', en: 'loyal' },
+    { pt: 'acolhedor', en: 'nurturing' }, { pt: 'gentil', en: 'gentle' }, { pt: 'devotado', en: 'devoted' },
+    { pt: 'curador', en: 'healing' }, { pt: 'leal', en: 'loyal' },
   ],
   tanque: [
-    { pt: 'inabalável', en: 'unshakable' }, { pt: 'protetor(a)', en: 'protective' }, { pt: 'colossal', en: 'colossal' },
-    { pt: 'firme', en: 'steadfast' }, { pt: 'blindado(a)', en: 'armored' },
+    { pt: 'inabalável', en: 'unshakable' }, { pt: 'protetor', en: 'protective' }, { pt: 'colossal', en: 'colossal' },
+    { pt: 'firme', en: 'steadfast' }, { pt: 'blindado', en: 'armored' },
   ],
   fisico: [
     { pt: 'feroz', en: 'fierce' }, { pt: 'indomável', en: 'untamable' }, { pt: 'veloz', en: 'swift' },
     { pt: 'implacável', en: 'relentless' }, { pt: 'valente', en: 'valiant' },
   ],
   magico: [
-    { pt: 'arcano(a)', en: 'arcane' }, { pt: 'enigmático(a)', en: 'enigmatic' }, { pt: 'hipnótico(a)', en: 'hypnotic' },
-    { pt: 'visionário(a)', en: 'visionary' }, { pt: 'etéreo(a)', en: 'ethereal' },
+    { pt: 'arcano', en: 'arcane' }, { pt: 'enigmático', en: 'enigmatic' }, { pt: 'hipnótico', en: 'hypnotic' },
+    { pt: 'visionário', en: 'visionary' }, { pt: 'etéreo', en: 'ethereal' },
   ],
   alcance: [
-    { pt: 'certeiro(a)', en: 'sharp-eyed' }, { pt: 'paciente', en: 'patient' }, { pt: 'vigilante', en: 'watchful' },
-    { pt: 'astuto(a)', en: 'cunning' }, { pt: 'preciso(a)', en: 'precise' },
+    { pt: 'certeiro', en: 'sharp-eyed' }, { pt: 'paciente', en: 'patient' }, { pt: 'vigilante', en: 'watchful' },
+    { pt: 'astuto', en: 'cunning' }, { pt: 'preciso', en: 'precise' },
   ],
 };
 
 const ADJECTIVES_BY_ELEMENT: Record<ElementId, LText[]> = {
-  agua: [{ pt: 'profundo(a)', en: 'deep' }, { pt: 'sereno(a)', en: 'serene' }, { pt: 'fluido(a)', en: 'flowing' }],
-  fogo: [{ pt: 'ardente', en: 'blazing' }, { pt: 'incandescente', en: 'incandescent' }, { pt: 'fervoroso(a)', en: 'fervent' }],
-  terra: [{ pt: 'ancestral', en: 'ancient' }, { pt: 'sólido(a)', en: 'solid' }, { pt: 'fértil', en: 'fertile' }],
-  ar: [{ pt: 'ligeiro(a)', en: 'nimble' }, { pt: 'etéreo(a)', en: 'airy' }, { pt: 'imprevisível', en: 'unpredictable' }],
-  sombra: [{ pt: 'noturno(a)', en: 'nocturnal' }, { pt: 'oculto(a)', en: 'hidden' }, { pt: 'insondável', en: 'unfathomable' }],
+  agua: [{ pt: 'profundo', en: 'deep' }, { pt: 'sereno', en: 'serene' }, { pt: 'fluido', en: 'flowing' }],
+  fogo: [{ pt: 'ardente', en: 'blazing' }, { pt: 'incandescente', en: 'incandescent' }, { pt: 'fervoroso', en: 'fervent' }],
+  terra: [{ pt: 'ancestral', en: 'ancient' }, { pt: 'sólido', en: 'solid' }, { pt: 'fértil', en: 'fertile' }],
+  ar: [{ pt: 'ligeiro', en: 'nimble' }, { pt: 'etéreo', en: 'airy' }, { pt: 'imprevisível', en: 'unpredictable' }],
+  sombra: [{ pt: 'noturno', en: 'nocturnal' }, { pt: 'oculto', en: 'hidden' }, { pt: 'insondável', en: 'unfathomable' }],
   luz: [{ pt: 'radiante', en: 'radiant' }, { pt: 'cintilante', en: 'shimmering' }, { pt: 'benevolente', en: 'benevolent' }],
   planta: [{ pt: 'florescente', en: 'blooming' }, { pt: 'perene', en: 'evergreen' }, { pt: 'silvestre', en: 'wild-grown' }],
-  industrial: [{ pt: 'cromado(a)', en: 'chrome-plated' }, { pt: 'incansável', en: 'tireless' }, { pt: 'engenhoso(a)', en: 'ingenious' }],
+  industrial: [{ pt: 'cromado', en: 'chrome-plated' }, { pt: 'incansável', en: 'tireless' }, { pt: 'engenhoso', en: 'ingenious' }],
 };
 
 // Pool GRANDE de traços concretos por elemento — usado para o ELEMENTO
@@ -3044,10 +3071,21 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // "Tamagotchi style, sem fundo, descrição bem curta" gera sprites melhores
   // que frases tipo "wielding X to Y").
   const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en].filter(Boolean).join(', ');
-  const richConceptEn = `${identity.en}, ${dominantClass.en}`;
+  // A bio é o ÚNICO texto descritivo do reveal — o momento mais importante do
+  // ritual. Era um fragmento em EN ("angel-seraph, Sky Cleric": minúscula, sem
+  // verbo, sem ponto, e o traço secundário sumia) e uma frase truncada em PT
+  // ("de traços cintilante", sem concordância nem ponto). Agora é frase de
+  // verdade nos dois idiomas, com o traço secundário presente em ambos.
+  const upperFirst = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+  // "marcado por algo X" evita o problema de concordância: os flavors vêm em
+  // formatos diferentes (adjetivo "aquático", locução "de maré-viva") e
+  // "de traços cintilante" saía sem plural nem gênero.
+  const richConceptEn = secondaryFlavor
+    ? `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline, marked by something ${secondaryFlavor.en}.`
+    : `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline.`;
   const richConceptPt = secondaryFlavor
-    ? `${dominantClass.pt} da linhagem ${identity.pt}, de traços ${secondaryFlavor.pt}`
-    : `${dominantClass.pt} da linhagem ${identity.pt}`;
+    ? `${upperFirst(dominantClass.pt)} da linhagem ${identity.pt}, marcado por algo ${secondaryFlavor.pt}.`
+    : `${upperFirst(dominantClass.pt)} da linhagem ${identity.pt}.`;
   const petConceptRaw = input.petDescription?.trim()
     ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)
     : null;
@@ -3126,7 +3164,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       stageName: STAGE_NAMES.perfeito,
       name: perfName,
       description: {
-        pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
+        pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
         en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest.`,
       },
       imagePrompt: composeSpritePrompt({
@@ -3143,7 +3181,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       name: megaName,
       description: {
         pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo.`,
-        en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${bRegalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en}.`,
+        en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${upperFirstText(bRegalia.en.split(':')[0])}. Its body partially transmutes into living ${elName.en}.`,
       },
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,

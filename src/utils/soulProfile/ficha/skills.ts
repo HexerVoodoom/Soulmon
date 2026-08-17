@@ -134,7 +134,14 @@ function escolaDominante(ficha: Ficha): EscolaId {
  * empatam em peso, a variedade vem do sorteio de substantivo, não do
  * elemento — identidade primeiro).
  */
-export function buildStageSkills(ficha: Ficha, stage: FichaStage, seedKey: string): StageSkills {
+export function buildStageSkills(
+  ficha: Ficha,
+  stage: FichaStage,
+  seedKey: string,
+  /** Substantivos já usados nos estágios anteriores — a jornada não pode
+   *  mostrar "Investida de Ar" em três cards seguidos. Mutado ao gerar. */
+  usados?: Set<string>,
+): StageSkills {
   const ranked = rankElementos(ficha);
   const topBase = ranked.find(r => BASE_SET.has(r.id))?.id ?? CLASS_ELEMENT_ORDER[0];
   const topGeral = ranked[0]?.id ?? topBase;
@@ -152,7 +159,13 @@ export function buildStageSkills(ficha: Ficha, stage: FichaStage, seedKey: strin
 
   const montar = (tipo: 'basica' | 'especial', elementoId: string): StageSkill => {
     const el = elementoNomeDe(elementoId);
-    const substantivo = pick(rng, NOMES[escola][tipo]);
+    // evita repetir o mesmo substantivo em estágios diferentes: a ficha
+    // escala mantendo a identidade (mesmo elemento dominante), então sem isto
+    // a página do Pet mostrava o mesmo nome de skill em 3 formas seguidas.
+    const banco = NOMES[escola][tipo];
+    const livres = usados ? banco.filter(n => !usados.has(n.pt)) : banco;
+    const substantivo = pick(rng, livres.length > 0 ? livres : banco);
+    usados?.add(substantivo.pt);
     return {
       tipo,
       nome: { pt: `${substantivo.pt} ${el.pt}`, en: `${el.en} ${substantivo.en}` },
@@ -174,8 +187,9 @@ export function buildAllStageSkills(
   seedKey: string,
 ): Record<FichaStage, StageSkills> {
   const saida = {} as Record<FichaStage, StageSkills>;
+  const usados = new Set<string>();
   for (const stage of Object.keys(fichaByStage) as FichaStage[]) {
-    saida[stage] = buildStageSkills(fichaByStage[stage], stage, seedKey);
+    saida[stage] = buildStageSkills(fichaByStage[stage], stage, seedKey, usados);
   }
   return saida;
 }

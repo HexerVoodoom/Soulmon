@@ -16,14 +16,16 @@
 // aparece em prompt de imagem nem em texto visível — há teste travando.
 // ---------------------------------------------------------------------------
 
-import { generateOracle, hashString, normalizeName } from '../oracle';
+import { generateOracle } from '../oracle';
 import type { OracleInput, OracleResult } from '../oracle';
 import type { SoulProfile } from './profile';
-import { buildFicha } from './ficha/buildSheet';
+import { buildFichaESkills } from './ficha/fromInput';
 import { selectCompanion, type CapturaAvaliacao } from './ficha/capture';
 import { FICHA_STAGE_ORDER, type Ficha, type FichaStage } from './ficha/types';
 import { selectBestiaryLineage, type BestiaryPick } from './bestiary/select';
-import { buildAllStageSkills, type StageSkills } from './ficha/skills';
+import type { StageSkills } from './ficha/skills';
+import { applyRitualAnswers } from './ritualAnswers';
+import { identityKey } from './identity';
 
 export interface OracleComplete {
   result: OracleResult;
@@ -44,15 +46,6 @@ export interface OracleComplete {
   stageSkills: Record<FichaStage, StageSkills>;
 }
 
-/** Identidade estável da pessoa — mesma pessoa, mesma ficha, com ou sem
- *  reroll. NÃO inclui o salt de propósito. */
-function identityKey(input: OracleInput): string {
-  return [
-    normalizeName(input.fullName), input.birthDate, input.birthTime,
-    input.birthPlace.trim().toLowerCase(),
-    JSON.stringify(input.soulProfile?.psychometric.traitPoints ?? input.answers ?? {}),
-  ].join('|');
-}
 
 /**
  * Gera o oráculo COMPLETO — exige `input.soulProfile` (o caminho legado, sem
@@ -65,16 +58,19 @@ export function generateOracleComplete(input: OracleInput, seed?: number): Oracl
   const idKey = identityKey(input);
   const salt = seed ?? Math.floor(Math.random() * 0xffffffff);
 
-  const fichaByStage = Object.fromEntries(
-    FICHA_STAGE_ORDER.map(stage => [stage, buildFicha(input.fullName, soul.oracle, stage, idKey)])
-  ) as Record<FichaStage, Ficha>;
+  // Os eixos que alimentam TUDO o que vem daqui já levam as 6 respostas do
+  // ritual — é a mesma leitura que o `generateOracle` usa para criar a
+  // criatura. Sem isso, ficha, companheiro, skills e bestiário ficavam surdos
+  // ao ritual (medido: respostas opostas davam resultado idêntico).
+  const oracleAxes = applyRitualAnswers(soul.oracle, input.answers);
+
+  // ficha + skills pela fonte única (a página do Pet consome a MESMA função)
+  const { fichaByStage, stageSkills } = buildFichaESkills(input, idKey);
 
   const companion = selectCompanion(fichaByStage.rookie, idKey);
 
-  const stageSkills = buildAllStageSkills(fichaByStage, idKey);
-
   const bestiaryLineage = selectBestiaryLineage(
-    soul.oracle, `${idKey}|${salt}`, FICHA_STAGE_ORDER,
+    oracleAxes, `${idKey}|${salt}`, FICHA_STAGE_ORDER,
   ) as Record<FichaStage, BestiaryPick>;
   const bestiaryPick = bestiaryLineage[FICHA_STAGE_ORDER[0]];
 
