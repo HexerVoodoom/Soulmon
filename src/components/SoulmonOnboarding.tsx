@@ -238,7 +238,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       // captura o companheiro e busca a criatura-inspiração no bestiário —
       // a geração da criatura já sai alinhada com tudo isso.
       const { generateOracleComplete, essenceLabel, CLASS_DATA, PROFISSAO_EN } = await import('../utils/soulProfile');
-      const complete = generateOracleComplete(input);
+      const complete = await generateOracleComplete(input);
       r = complete.result;
       const dominant = soulProfile.oracle.dominantClassElements[0];
       const profId = Object.keys(complete.fichaByStage.rookie.profissoes)[0];

@@ -547,3 +547,44 @@ fantasia). O Ultra trocou o prefixo `Omni` (que sozinho já cola demais no
 personagem específico) por `Triune` ("três em um" — descreve o MESMO
 conceito de fusão dos 3 Megas sem o nome emprestado). Teste que fixava
 `ultra.name.startsWith('Omni')` atualizado para `'Triune'`.
+
+## Classe real como 4º traço do prompt de sprite (ago/2026, rodada 9)
+
+Depois de ver um prompt de exemplo, o dono achou que ficou "mais genérico
+do que antes" e pediu pra somar mais detalhe — a classe, mas **só no prompt,
+nunca em texto que o jogador vê**. A causa da "genericidade" era variância
+normal (o prompt já tinha 3 traços — `identity, dominantClass,
+secondaryFlavor` — mas o 3º só existe quando há elemento SECUNDÁRIO; um
+perfil de elemento puro caía pra 2), não regressão de nenhuma mudança
+recente. Mas o pedido em si — usar a classe REAL (arquétipo do
+class-system, `ficha/classTitle.ts`) como ingrediente do prompt — é uma
+melhoria genuína: mais um traço, sempre presente, sempre específico.
+
+**Problema de arquitetura**: `computeClassTitle` chama o motor real por
+import dinâmico (`async`), mas `generateOracle` (quem monta o prompt) é
+**síncrono** e tem dezenas de call sites, muitos em caminhos que não podem
+virar `async` sem uma reforma grande. Cogitado e descartado: sincronizar os
+79 arquétipos num snapshot e reimplementar o casamento de condição aqui —
+mas o casamento de verdade lê `niveisEfetivos` (elementos DERIVADOS, com
+receita mínima por componente), que só o motor real deriva direito;
+reimplementar isso seria exatamente o footgun 9 que as outras integrações
+(`realSkillPower.ts`, `classTitle.ts`) tomaram cuidado de evitar.
+
+**Solução adotada**: `pipeline.ts` — que já teria o `fichaByStage` pronto
+ANTES de chamar `generateOracle` — virou `async` (só ele; `generateOracle`
+continua 100% síncrono, intocado, e o caminho legado/`OraclePage` nem sabe
+que isso existe). Computa `computeClassTitle(fichaByStage.ultra)` (ficha
+ultra: mede 100% de arquétipo pleno, é a mais concentrada — e o traço fica
+CONSTANTE nos 11 prompts, mesmo tratamento que `identity`/`dominantClass`
+já tinham) e passa o nome EN como `OracleInput.promptClassFlavor` — um
+campo novo, documentado como "só entra no prompt de sprite, nunca em nome/
+bio/descrição", só preenchido pelo pipeline. Só entra quando a origem é
+`'arquetipo'` (pleno) — o fallback genérico não acrescentaria nada que
+`dominantClass` já não desse.
+
+Os 2 call sites reais (`SoulmonOnboarding.tsx`, `App.tsx`) já rodavam
+dentro de `await import(...)`, então só ganharam mais um `await`. Os ~20
+call sites de `pipeline.test.ts` viraram `async`/`await` mecanicamente.
+Teste novo confere as duas pontas: a palavra da classe aparece no
+`imagePrompt` de toda forma e NÃO aparece em `description`/`bio` nenhuma.
+

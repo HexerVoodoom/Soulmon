@@ -76,6 +76,19 @@ export interface OracleInput {
    */
   bestiaryInspiration?: { texto: string; familia: string | null; biologia: string[] };
   /**
+   * Classe REAL da criatura — arquétipo do class-system (`ficha/classTitle.ts`,
+   * motor real, `calcularProgressao`), calculada a partir da ficha ULTRA (a
+   * mais concentrada — 100% de arquétipo pleno medido lá) e constante nos 11
+   * prompts, mesmo tratamento de `identity`/`dominantClass` logo abaixo. Só
+   * ENTRA NO PROMPT de sprite como um traço a mais (mais detalhe = sprite
+   * mais específico) — NUNCA em nome, bio ou descrição por forma; o dono
+   * pediu explicitamente que a classe não apareça pro jogador em lugar
+   * nenhum da UI. Só o pipeline (soulProfile/pipeline.ts) preenche isto —
+   * generateOracle sozinho (caminho legado, OraclePage) nunca tem acesso ao
+   * motor pesado, que só é alcançado por import dinâmico.
+   */
+  promptClassFlavor?: string; // EN, curto (ex.: "Volcanologist")
+  /**
    * Leitura ROBUSTA (utils/soulProfile/). Quando presente, ela SUBSTITUI a
    * leitura antiga — signo solar, ascendente aproximado pela hora, horóscopo
    * chinês, rashi védico, 4 números e as 6 perguntas do `ORACLE_QUESTIONS` —
@@ -3086,8 +3099,12 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const secondaryFlavor = secondaryElement ? pick(rng, ELEMENT_FLAVOR_WORDS[secondaryElement]) : null;
   // Prompt de sprite CURTO — lista de traços, não frase longa (testes empíricos:
   // "Tamagotchi style, sem fundo, descrição bem curta" gera sprites melhores
-  // que frases tipo "wielding X to Y").
-  const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en].filter(Boolean).join(', ');
+  // que frases tipo "wielding X to Y"). `promptClassFlavor` é o 4º traço,
+  // OPCIONAL — só quando o pipeline calculou um arquétipo pleno de verdade
+  // (não o fallback genérico "Adept of X"); dá o mesmo detalhe extra que o
+  // reveal já tinha antes de virar mais genérico, mas só na imagem.
+  const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en, input.promptClassFlavor]
+    .filter(Boolean).join(', ');
   // A bio é o ÚNICO texto descritivo do reveal — o momento mais importante do
   // ritual. Era um fragmento em EN ("angel-seraph, Sky Cleric": minúscula, sem
   // verbo, sem ponto, e o traço secundário sumia) e uma frase truncada em PT
