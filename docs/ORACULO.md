@@ -482,3 +482,41 @@ app nunca aplica. `body { color: var(--foreground) }` ficava preso no valor
 claro (quase preto) mesmo com o tema escuro ativo, e qualquer texto sem
 `color` próprio (nome/descrição/skill na página do Pet — nenhum deles setava
 `color` explícito) herdava esse preto. Ver footgun 10 em `CLAUDE.md`.
+
+## Classe da criatura (ago/2026, rodada 7)
+
+Pedido do dono: "senti falta de ter também a classe da criatura, gerada a
+partir do que ela faz, suas skills, talvez talentos e também de seus
+elementos". O class-system já TEM esse conceito — não precisou inventar
+nada: **arquétipos** (`registry/arquetipos.ts`, 79 no total) são identidades
+que EMERGEM da distribuição de pontos (elemento + escola + recurso — a
+MESMA ficha que já gera as skills), nunca escolhidas à mão, exatamente como
+"a classe é gerada a partir do que ela faz e de seus elementos" pede.
+`calcularProgressao` (motor real, mesmo import dinâmico das skills) já
+devolve `arquetipos` (condição plena) e `arquetiposDiluidos` (meia-
+identidade — combinações amplas que só bateram PARTE da exigência de um
+arquétipo).
+
+`ficha/classTitle.ts` escolhe, por estágio: o arquétipo pleno mais
+ESPECÍFICO (mais dimensões de exigência + limiares mais altos, quando mais
+de um bate ao mesmo tempo) → senão o diluído mais específico, rotulado
+"Aspirante a X" → senão um fallback genérico pelo elemento BASE dominante da
+ficha ("Adepto de Fogo"). Medido em 24 perfis: rookie NUNCA bate um
+arquétipo pleno (a ficha ainda não concentrou); mega e ultra bateram em
+100% dos perfis — a mesma escada "só bases → quase destravando → destrava"
+que a cascata de pares já tinha, sem precisar recalibrar nada.
+
+Nome PT vem AO VIVO do motor (`ArquetipoDef.nome`) — zero cópia, o que
+elimina o risco de divergir se o class-system renomear um arquétipo
+(footgun 9). O EN é tradução própria do Soulmon (`CLASS_TITLE_EN`),
+indexada pelo `id` do arquétipo (a parte ESTÁVEL — a prosa do `nome` muda
+com mais frequência que o id); teste de paridade (`classTitle.test.ts`)
+garante que os 79 ids do registro têm tradução e que nenhuma tradução ficou
+órfã. A `descricao` do arquétipo NÃO é usada — só o nome vira classe; copiar
+a prosa acoplaria o app ao texto de lá pra sempre.
+
+`ficha/realEngine.ts` extrai a construção do `Personagem` real e a chamada
+de `calcularProgressao`, compartilhada agora entre `realSkillPower.ts` (poder
+da skill) e `classTitle.ts` (classe) — regra copiada é regra que diverge.
+Persistida no save (`soulmonClassTitles`), mesmo padrão de cache que
+`soulmonSkills`.
