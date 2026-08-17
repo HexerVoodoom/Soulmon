@@ -1,0 +1,1001 @@
+{
+ "_provenance": {
+  "repo": "https://github.com/HexerVoodoom/Class-System",
+  "ref": "main",
+  "sha": "b94398c98983b20cc2b9ba5c8dff3433e7ccbe66",
+  "syncedAt": "2026-08-17T00:57:26.552Z",
+  "script": "scripts/sync-oracle-data.mjs"
+ },
+ "escolas": {
+  "combate_fisico": {
+   "nome": "Combate Físico"
+  },
+  "longo_alcance": {
+   "nome": "Longo Alcance"
+  },
+  "evocacao": {
+   "nome": "Evocação"
+  },
+  "conjuracao": {
+   "nome": "Conjuração"
+  },
+  "benca": {
+   "nome": "Bênção (Buff)"
+  },
+  "maldicao": {
+   "nome": "Maldição (Debuff)"
+  }
+ },
+ "recursos": {
+  "mana": {
+   "nome": "Mana"
+  },
+  "fe": {
+   "nome": "Fé"
+  },
+  "furia": {
+   "nome": "Fúria"
+  },
+  "soullink": {
+   "nome": "Soullink"
+  },
+  "ressonancia": {
+   "nome": "Ressonância"
+  }
+ },
+ "profissoes": {
+  "ferreiro": {
+   "nome": "Ferreiro",
+   "fatoresElementos": {
+    "vigor": 0.5,
+    "marcial": 0.5,
+    "fogo": 0.4,
+    "terra": 0.4
+   },
+   "fatoresEscolas": {
+    "combate_fisico": 0.3
+   }
+  },
+  "tecelao": {
+   "nome": "Tecelão",
+   "fatoresElementos": {
+    "arcano": 0.5,
+    "ar": 0.4,
+    "som": 0.4,
+    "luz": 0.3
+   },
+   "fatoresEscolas": {
+    "benca": 0.3
+   }
+  },
+  "artesao": {
+   "nome": "Artesão",
+   "fatoresElementos": {
+    "arcano": 0.5,
+    "eletricidade": 0.4,
+    "gravidade": 0.4,
+    "espaco": 0.4
+   },
+   "fatoresEscolas": {
+    "conjuracao": 0.3
+   }
+  },
+  "joalheiro": {
+   "nome": "Joalheiro",
+   "fatoresElementos": {
+    "luz": 0.5,
+    "arcano": 0.5,
+    "cristal": 0.5,
+    "tempo": 0.3
+   }
+  },
+  "alquimista": {
+   "nome": "Alquimista",
+   "fatoresElementos": {
+    "agua": 0.5,
+    "vida": 0.4,
+    "morte": 0.4,
+    "vileza": 0.4
+   },
+   "fatoresEscolas": {
+    "maldicao": 0.3,
+    "benca": 0.2
+   }
+  },
+  "curtidor": {
+   "nome": "Curtidor",
+   "fatoresElementos": {
+    "vida": 0.5,
+    "vigor": 0.4,
+    "sombra": 0.4,
+    "terra": 0.3
+   },
+   "fatoresEscolas": {
+    "evocacao": 0.2
+   }
+  },
+  "encantador": {
+   "nome": "Encantador",
+   "fatoresElementos": {
+    "arcano": 0.6,
+    "luz": 0.35,
+    "sombra": 0.35,
+    "espaco": 0.3
+   },
+   "fatoresEscolas": {
+    "benca": 0.3,
+    "conjuracao": 0.2
+   }
+  },
+  "escriba": {
+   "nome": "Escriba",
+   "fatoresElementos": {
+    "arcano": 0.5,
+    "tempo": 0.45,
+    "luz": 0.35,
+    "vileza": 0.3
+   },
+   "fatoresEscolas": {
+    "maldicao": 0.25,
+    "benca": 0.25
+   }
+  },
+  "cozinheiro": {
+   "nome": "Cozinheiro",
+   "fatoresElementos": {
+    "vida": 0.55,
+    "fogo": 0.4,
+    "agua": 0.35,
+    "vigor": 0.3
+   },
+   "fatoresEscolas": {
+    "benca": 0.35
+   }
+  },
+  "luthier": {
+   "nome": "Luthier",
+   "fatoresElementos": {
+    "som": 0.65,
+    "ar": 0.35,
+    "vida": 0.3,
+    "marcial": 0.25
+   },
+   "fatoresEscolas": {
+    "benca": 0.3
+   }
+  },
+  "cartografo": {
+   "nome": "Cartógrafo",
+   "fatoresElementos": {
+    "espaco": 0.6,
+    "tempo": 0.45,
+    "gravidade": 0.35,
+    "luz": 0.25
+   },
+   "fatoresEscolas": {
+    "conjuracao": 0.25
+   }
+  }
+ },
+ "talentos": {
+  "area_ampliada": {
+   "nome": "Área Ampliada",
+   "ranksMaximos": 5
+  },
+  "conjuracao_rapida": {
+   "nome": "Conjuração Rápida",
+   "ranksMaximos": 5
+  },
+  "alcance_estendido": {
+   "nome": "Alcance Estendido",
+   "ranksMaximos": 5
+  },
+  "canalizacao_profunda": {
+   "nome": "Canalização Profunda",
+   "ranksMaximos": 5
+  },
+  "economia_de_recurso": {
+   "nome": "Economia de Recurso",
+   "ranksMaximos": 5
+  },
+  "persistencia": {
+   "nome": "Persistência",
+   "ranksMaximos": 3
+  },
+  "impacto_imediato": {
+   "nome": "Impacto Imediato",
+   "ranksMaximos": 3,
+   "exclusivoCom": [
+    "dano_ao_longo_do_tempo"
+   ]
+  },
+  "dano_ao_longo_do_tempo": {
+   "nome": "Dano ao Longo do Tempo",
+   "ranksMaximos": 3,
+   "exclusivoCom": [
+    "impacto_imediato"
+   ]
+  },
+  "perfuracao": {
+   "nome": "Perfuração",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "conjuracao",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "estilhaco"
+   ]
+  },
+  "estilhaco": {
+   "nome": "Estilhaço",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "conjuracao",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "perfuracao"
+   ]
+  },
+  "eco_arcano": {
+   "nome": "Eco Arcano",
+   "ranksMaximos": 2,
+   "requisito": {
+    "escola": "conjuracao",
+    "nivelMinimo": 10
+   }
+  },
+  "enxame": {
+   "nome": "Enxame",
+   "ranksMaximos": 4,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "colosso"
+   ]
+  },
+  "colosso": {
+   "nome": "Colosso",
+   "ranksMaximos": 4,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "enxame"
+   ]
+  },
+  "vinculo_marcial": {
+   "nome": "Vínculo Marcial",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 5
+   }
+  },
+  "simbiose": {
+   "nome": "Simbiose",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 8
+   }
+  },
+  "autonomia": {
+   "nome": "Autonomia",
+   "ranksMaximos": 2,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 10
+   },
+   "exclusivoCom": [
+    "comando"
+   ]
+  },
+  "comando": {
+   "nome": "Comando",
+   "ranksMaximos": 2,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 10
+   },
+   "exclusivoCom": [
+    "autonomia"
+   ]
+  },
+  "instinto_de_caca": {
+   "nome": "Instinto de Caça",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 5
+   }
+  },
+  "vinculo_primal": {
+   "nome": "Vínculo Primal",
+   "ranksMaximos": 1,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 8
+   }
+  },
+  "matilha_domada": {
+   "nome": "Matilha Domada",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 10
+   },
+   "exclusivoCom": [
+    "fera_alfa"
+   ]
+  },
+  "fera_alfa": {
+   "nome": "Fera Alfa",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 10
+   },
+   "exclusivoCom": [
+    "matilha_domada"
+   ]
+  },
+  "evolucao_da_fera": {
+   "nome": "Evolução da Fera",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 10
+   }
+  },
+  "sincronia_de_combate": {
+   "nome": "Sincronia de Combate",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 5
+   }
+  },
+  "assalto_coordenado": {
+   "nome": "Assalto Coordenado",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 8
+   }
+  },
+  "guarda_da_fera": {
+   "nome": "Guarda da Fera",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 8
+   }
+  },
+  "montaria": {
+   "nome": "Montaria",
+   "ranksMaximos": 1,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 5
+   }
+  },
+  "carga_montada": {
+   "nome": "Carga Montada",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "evocacao",
+    "nivelMinimo": 10
+   }
+  },
+  "metamagia_gemea": {
+   "nome": "Metamagia Gêmea",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "conjuracao",
+    "nivelMinimo": 10
+   }
+  },
+  "auto_feitico": {
+   "nome": "Auto-Feitiço",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 8
+   }
+  },
+  "cancao_persistente": {
+   "nome": "Canção Persistente",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "benca",
+    "nivelMinimo": 8
+   }
+  },
+  "salto": {
+   "nome": "Salto",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 8
+   }
+  },
+  "endossar_elemento": {
+   "nome": "Endossar Elemento",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 5
+   }
+  },
+  "contagio": {
+   "nome": "Contágio",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "maldicao",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "aflicao_profunda"
+   ]
+  },
+  "aflicao_profunda": {
+   "nome": "Aflição Profunda",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "maldicao",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "contagio"
+   ]
+  },
+  "egide": {
+   "nome": "Égide",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "benca",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "exaltacao"
+   ]
+  },
+  "exaltacao": {
+   "nome": "Exaltação",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "benca",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "egide"
+   ]
+  },
+  "vinculo_de_grupo": {
+   "nome": "Vínculo de Grupo",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "benca",
+    "nivelMinimo": 8
+   }
+  },
+  "sequencia_marcial": {
+   "nome": "Sequência Marcial",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "golpe_devastador"
+   ]
+  },
+  "golpe_devastador": {
+   "nome": "Golpe Devastador",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "sequencia_marcial"
+   ]
+  },
+  "postura_inabalavel": {
+   "nome": "Postura Inabalável",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 8
+   }
+  },
+  "olho_de_aguia": {
+   "nome": "Olho de Águia",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "longo_alcance",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "rajada"
+   ]
+  },
+  "rajada": {
+   "nome": "Rajada",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "longo_alcance",
+    "nivelMinimo": 5
+   },
+   "exclusivoCom": [
+    "olho_de_aguia"
+   ]
+  },
+  "devocao": {
+   "nome": "Devoção",
+   "ranksMaximos": 3,
+   "requisito": {
+    "recurso": "fe",
+    "nivelMinimo": 5
+   }
+  },
+  "fluxo_constante": {
+   "nome": "Fluxo Constante",
+   "ranksMaximos": 3,
+   "requisito": {
+    "recurso": "mana",
+    "nivelMinimo": 5
+   }
+  },
+  "sede_de_batalha": {
+   "nome": "Sede de Batalha",
+   "ranksMaximos": 3,
+   "requisito": {
+    "recurso": "furia",
+    "nivelMinimo": 5
+   }
+  },
+  "elo_profundo": {
+   "nome": "Elo Profundo",
+   "ranksMaximos": 3,
+   "requisito": {
+    "recurso": "soullink",
+    "nivelMinimo": 5
+   }
+  },
+  "afinacao": {
+   "nome": "Afinação",
+   "ranksMaximos": 3,
+   "requisito": {
+    "recurso": "ressonancia",
+    "nivelMinimo": 5
+   }
+  },
+  "engenho_de_skill": {
+   "nome": "Engenho de Skill",
+   "ranksMaximos": 3
+  },
+  "arte_da_fusao": {
+   "nome": "Arte da Fusão",
+   "ranksMaximos": 3
+  },
+  "catalisador": {
+   "nome": "Catalisador",
+   "ranksMaximos": 3,
+   "exclusivoCom": [
+    "estabilizador"
+   ]
+  },
+  "estabilizador": {
+   "nome": "Estabilizador",
+   "ranksMaximos": 3,
+   "exclusivoCom": [
+    "catalisador"
+   ]
+  },
+  "prisma_interior": {
+   "nome": "Prisma Interior",
+   "ranksMaximos": 2,
+   "requisito": {
+    "escola": "conjuracao",
+    "nivelMinimo": 12
+   }
+  },
+  "sintonia_de_receita": {
+   "nome": "Sintonia de Receita",
+   "ranksMaximos": 4
+  },
+  "convergencia_elemental": {
+   "nome": "Convergência Elemental",
+   "ranksMaximos": 3
+  },
+  "leitor_de_constelacao": {
+   "nome": "Leitor de Constelação",
+   "ranksMaximos": 3
+  },
+  "transbordo_ampliado": {
+   "nome": "Transbordo Ampliado",
+   "ranksMaximos": 3
+  },
+  "maestria_paradoxal": {
+   "nome": "Maestria Paradoxal",
+   "ranksMaximos": 3
+  },
+  "mao_de_mestre": {
+   "nome": "Mão de Mestre",
+   "ranksMaximos": 3
+  },
+  "olho_de_materiais": {
+   "nome": "Olho de Materiais",
+   "ranksMaximos": 3
+  },
+  "assinatura_do_artesao": {
+   "nome": "Assinatura do Artesão",
+   "ranksMaximos": 2
+  },
+  "linha_de_producao": {
+   "nome": "Linha de Produção",
+   "ranksMaximos": 3
+  },
+  "duplo_chaveamento": {
+   "nome": "Duplo Chaveamento",
+   "ranksMaximos": 3
+  },
+  "ritmo_de_guerra": {
+   "nome": "Ritmo de Guerra",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "combate_fisico",
+    "nivelMinimo": 10
+   }
+  },
+  "pacto_de_sangue": {
+   "nome": "Pacto de Sangue",
+   "ranksMaximos": 3,
+   "requisito": {
+    "recurso": "soullink",
+    "nivelMinimo": 8
+   }
+  },
+  "eco_de_batalha": {
+   "nome": "Eco de Batalha",
+   "ranksMaximos": 3,
+   "requisito": {
+    "escola": "conjuracao",
+    "nivelMinimo": 15
+   }
+  }
+ },
+ "criaturas": {
+  "lobo": {
+   "nome": "Lobo Cinzento",
+   "familia": "besta",
+   "afinidades": [
+    "vida",
+    "vigor"
+   ],
+   "poderBase": 24
+  },
+  "urso": {
+   "nome": "Urso das Cavernas",
+   "familia": "besta",
+   "afinidades": [
+    "vida",
+    "vigor"
+   ],
+   "poderBase": 42
+  },
+  "felino": {
+   "nome": "Pantera Sombria",
+   "familia": "besta",
+   "afinidades": [
+    "vida",
+    "sombra"
+   ],
+   "poderBase": 38
+  },
+  "javali": {
+   "nome": "Javali de Presa",
+   "familia": "besta",
+   "afinidades": [
+    "vigor",
+    "terra"
+   ],
+   "poderBase": 30
+  },
+  "falcao": {
+   "nome": "Falcão Real",
+   "familia": "ave",
+   "afinidades": [
+    "ar",
+    "vida"
+   ],
+   "poderBase": 26
+  },
+  "coruja": {
+   "nome": "Coruja Arcana",
+   "familia": "ave",
+   "afinidades": [
+    "ar",
+    "arcano"
+   ],
+   "poderBase": 34
+  },
+  "serpente_marinha": {
+   "nome": "Serpente Marinha",
+   "familia": "aquatica",
+   "afinidades": [
+    "agua"
+   ],
+   "poderBase": 48
+  },
+  "tubarao": {
+   "nome": "Tubarão Abissal",
+   "familia": "aquatica",
+   "afinidades": [
+    "agua",
+    "sombra"
+   ],
+   "poderBase": 52
+  },
+  "salamandra": {
+   "nome": "Salamandra",
+   "familia": "ignea",
+   "afinidades": [
+    "fogo"
+   ],
+   "poderBase": 30
+  },
+  "cao_de_lava": {
+   "nome": "Cão de Lava",
+   "familia": "ignea",
+   "afinidades": [
+    "fogo",
+    "terra"
+   ],
+   "poderBase": 46
+  },
+  "fenix_menor": {
+   "nome": "Fênix Menor",
+   "familia": "ignea",
+   "afinidades": [
+    "fogo",
+    "vida"
+   ],
+   "poderBase": 72
+  },
+  "ghoul": {
+   "nome": "Ghoul",
+   "familia": "morto_vivo",
+   "afinidades": [
+    "morte"
+   ],
+   "poderBase": 28
+  },
+  "cavaleiro_morto": {
+   "nome": "Cavaleiro Morto",
+   "familia": "morto_vivo",
+   "afinidades": [
+    "morte",
+    "marcial"
+   ],
+   "poderBase": 58
+  },
+  "sombra_rastejante": {
+   "nome": "Sombra Rastejante",
+   "familia": "aberracao",
+   "afinidades": [
+    "sombra"
+   ],
+   "poderBase": 32
+  },
+  "olho_vil": {
+   "nome": "Olho Vil",
+   "familia": "aberracao",
+   "afinidades": [
+    "vileza",
+    "arcano"
+   ],
+   "poderBase": 50
+  },
+  "trevo_carnivoro": {
+   "nome": "Trevo Carnívoro",
+   "familia": "planta",
+   "afinidades": [
+    "vida",
+    "terra"
+   ],
+   "poderBase": 22
+  },
+  "ent": {
+   "nome": "Ent Ancião",
+   "familia": "planta",
+   "afinidades": [
+    "vida",
+    "terra"
+   ],
+   "poderBase": 64
+  },
+  "fada": {
+   "nome": "Fada Cintilante",
+   "familia": "espirito",
+   "afinidades": [
+    "arcano",
+    "luz"
+   ],
+   "poderBase": 26
+  },
+  "anjo_menor": {
+   "nome": "Anjo Menor",
+   "familia": "espirito",
+   "afinidades": [
+    "luz"
+   ],
+   "poderBase": 68
+  },
+  "espectro": {
+   "nome": "Espectro Errante",
+   "familia": "espirito",
+   "afinidades": [
+    "morte",
+    "arcano"
+   ],
+   "poderBase": 44
+  },
+  "golem_pedra": {
+   "nome": "Golem de Pedra",
+   "familia": "construto",
+   "afinidades": [
+    "terra"
+   ],
+   "poderBase": 54
+  },
+  "automato": {
+   "nome": "Autômato Voltaico",
+   "familia": "construto",
+   "afinidades": [
+    "eletricidade",
+    "marcial"
+   ],
+   "poderBase": 60
+  },
+  "imp": {
+   "nome": "Imp",
+   "familia": "demonio",
+   "afinidades": [
+    "vileza"
+   ],
+   "poderBase": 30
+  },
+  "demonio_maior": {
+   "nome": "Demônio Maior",
+   "familia": "demonio",
+   "afinidades": [
+    "vileza",
+    "fogo"
+   ],
+   "poderBase": 80
+  },
+  "wyvern": {
+   "nome": "Wyvern",
+   "familia": "draconico",
+   "afinidades": [
+    "ar",
+    "fogo"
+   ],
+   "poderBase": 90
+  },
+  "dragao_jovem": {
+   "nome": "Dragão Jovem",
+   "familia": "draconico",
+   "afinidades": [
+    "fogo",
+    "arcano"
+   ],
+   "poderBase": 120
+  },
+  "troll_montanhes": {
+   "nome": "Troll Montanhês",
+   "familia": "gigante",
+   "afinidades": [
+    "vigor",
+    "terra"
+   ],
+   "poderBase": 56
+  },
+  "ciclope_forjador": {
+   "nome": "Ciclope Forjador",
+   "familia": "gigante",
+   "afinidades": [
+    "vigor",
+    "fogo"
+   ],
+   "poderBase": 74
+  },
+  "gosma_acida": {
+   "nome": "Gosma Ácida",
+   "familia": "geleia",
+   "afinidades": [
+    "agua",
+    "vileza"
+   ],
+   "poderBase": 26
+  },
+  "slime_cristalino": {
+   "nome": "Slime Cristalino",
+   "familia": "geleia",
+   "afinidades": [
+    "terra",
+    "agua"
+   ],
+   "poderBase": 40
+  },
+  "batedor_orc": {
+   "nome": "Batedor Orc",
+   "familia": "humanoide",
+   "afinidades": [
+    "marcial",
+    "vigor"
+   ],
+   "poderBase": 32
+  },
+  "arauto_elfico": {
+   "nome": "Arauto Élfico",
+   "familia": "humanoide",
+   "afinidades": [
+    "arcano",
+    "ar"
+   ],
+   "poderBase": 46
+  }
+ },
+ "familias": {
+  "besta": {
+   "nome": "Besta"
+  },
+  "ave": {
+   "nome": "Ave"
+  },
+  "aquatica": {
+   "nome": "Aquática"
+  },
+  "ignea": {
+   "nome": "Ígnea"
+  },
+  "morto_vivo": {
+   "nome": "Morto-vivo"
+  },
+  "aberracao": {
+   "nome": "Aberração"
+  },
+  "planta": {
+   "nome": "Planta"
+  },
+  "espirito": {
+   "nome": "Espírito"
+  },
+  "construto": {
+   "nome": "Construto"
+  },
+  "demonio": {
+   "nome": "Demônio"
+  },
+  "draconico": {
+   "nome": "Dracônico"
+  },
+  "gigante": {
+   "nome": "Gigante/Titã"
+  },
+  "geleia": {
+   "nome": "Geleia/Slime"
+  },
+  "humanoide": {
+   "nome": "Humanoide"
+  }
+ }
+}

@@ -129,6 +129,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  produto: não existe caminho para responder o teste depois. */
   const [refine, setRefine] = useState<boolean | null>(null);
   const [result, setResult] = useState<OracleResult | null>(null);
+  /** Essência do class-system + ofício, calculados pelo pipeline completo —
+   *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
+  const [essence, setEssence] = useState<{ pt: string; en: string } | null>(null);
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
@@ -229,7 +232,25 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       favoriteCreature: skipFavorite ? undefined : (favoriteCreature.trim() || undefined),
       soulProfile,
     };
-    const r = generateOracle(input);
+    let r: OracleResult;
+    if (soulProfile) {
+      // Pipeline completo: distribui os pontos na ficha do class-system,
+      // captura o companheiro e busca a criatura-inspiração no bestiário —
+      // a geração da criatura já sai alinhada com tudo isso.
+      const { generateOracleComplete, essenceLabel, CLASS_DATA, PROFISSAO_EN } = await import('../utils/soulProfile');
+      const complete = generateOracleComplete(input);
+      r = complete.result;
+      const dominant = soulProfile.oracle.dominantClassElements[0];
+      const profId = Object.keys(complete.fichaByStage.rookie.profissoes)[0];
+      const profPt = CLASS_DATA.profissoes[profId as keyof typeof CLASS_DATA.profissoes]?.nome ?? profId;
+      setEssence({
+        pt: `Essência ${essenceLabel(dominant, true)} · Ofício ${profPt}`,
+        en: `${essenceLabel(dominant, false)} essence · ${PROFISSAO_EN[profId] ?? profId}`,
+      });
+    } else {
+      r = generateOracle(input);
+      setEssence(null);
+    }
     setResult(r);
     const profile: SavedProfile = { ...input, seed: r.seed };
     // Perfil da alma = semente para REGERAR a criatura. Perder isso tira do
@@ -721,9 +742,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <div style={{ fontSize: 12, color: 'var(--sm-muted)', letterSpacing: 2, fontWeight: 700 }}>
               {isPt ? 'A CRIATURA DA SUA ALMA' : 'YOUR SOUL\'S CREATURE'}
             </div>
-            <h1 style={{ fontSize: 36, margin: '10px 0 18px', fontWeight: 800, letterSpacing: -0.5 }}>
+            <h1 style={{ fontSize: 36, margin: '10px 0 10px', fontWeight: 800, letterSpacing: -0.5 }}>
               {result.creature.baseName}
             </h1>
+
+            {essence && (
+              <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', letterSpacing: 0.6, fontWeight: 700, margin: '0 0 16px' }}>
+                {isPt ? essence.pt : essence.en}
+              </p>
+            )}
 
             <div className="sm-card" style={{ padding: '18px 16px', marginBottom: 28 }}>
               <p style={{ fontSize: 14, color: 'var(--sm-ink)', lineHeight: 1.7, margin: 0 }}>

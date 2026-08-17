@@ -60,3 +60,14 @@ export type { DominantElementCandidate } from './derivedElements';
 
 export { CLASS_ELEMENT_ORDER } from './types';
 export type { ClassElementId, OracleAxes } from './types';
+
+// --- pipeline completo: ficha + companheiro + bestiário + criatura ---
+export { generateOracleComplete } from './pipeline';
+export type { OracleComplete } from './pipeline';
+export { buildFicha, CLASS_DATA, ROOKIE_BUDGET, STAGE_MULTIPLIER } from './ficha/buildSheet';
+export { poderCaptura, avaliarCaptura, capturableCreatures, selectCompanion } from './ficha/capture';
+export type { Ficha, FichaStage } from './ficha/types';
+export { FICHA_STAGE_ORDER } from './ficha/types';
+export { selectBestiaryCreature, BESTIARY_POOL, BESTIARY_PROVENANCE } from './bestiary/select';
+export type { BestiaryCreature, BestiaryPick } from './bestiary/select';
+export { essenceLabel, baseElementLabel, PROFISSAO_EN } from './essenceLabels';

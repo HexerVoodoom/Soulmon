@@ -235,6 +235,60 @@ coeficiente.
 
 ---
 
+## A fusão: ficha, bestiário e a constelação (ago/2026, rodada 2)
+
+O oráculo deixou de parar nos 4 eixos. Com os três repositórios ligados, o
+pipeline completo é:
+
+```
+leitura (soulProfile)
+  → ficha do class-system nos 5 estágios     [soulProfile/ficha/]
+  → companheiro capturável (mecânica real)   [ficha/capture.ts]
+  → criatura-inspiração do bestiário         [soulProfile/bestiary/]
+  → geração da criatura                      [oracle.ts]
+```
+
+**Dados sincronizados, nunca copiados à mão** (`scripts/sync-oracle-data.mjs`):
+snapshots com procedência (repo + SHA + data) — `ficha/classSystem.data.json`
+(65 talentos, 11 profissões, 32 criaturas, 14 famílias) e `bestiary/pool.json`
+(2.000 criaturas ÚNICAS, amostra estratificada do corpus canônico de 6.709
+elegíveis do Besti-rio-). Atualizar = `npm run sync:oracle-data` com os clones
+irmãos. ⚠️ O pool aponta para a branch `claude/canonical-classification` do
+Besti-rio- até a classificação canônica ser mergeada na main de lá.
+
+**A constelação ancora os 11 elementos órfãos** (`astrology/prominence.ts` +
+`axes.ts`): proeminência planetária real (aspectos pesados por orbe + casas
+angulares) via a associação clássica — Marte→marcial, Saturno→tempo,
+Urano→eletricidade, Plutão→morte/vileza, Mercúrio→som, Vênus→vida,
+Júpiter→espaço, Lua+Saturno→gravidade, Netuno→arcano. O sinal está no DESVIO
+do neutro (shares reais: p50 9,9 · p99 18,6), amplificado por
+`ANCHOR_GAIN` — um elemento cósmico só domina quando o planeta domina o mapa.
+
+**Cobertura TOTAL, medida em simulação com mapas reais (800 perfis)** — a
+regra é "todo elemento, talento, profissão e criatura alcançável":
+
+| O quê | Cobertura |
+|---|---|
+| 17 elementos como dominante | 17/17 (piso: vileza ~0,1% — gangorra com morte, mesmo planeta) |
+| combos derivados distintos | 88 |
+| 65 talentos (43 com pré-requisito) | 65/65 — alocação ciente de pré-requisito |
+| 11 profissões | 11/11 (5,6%–19,1%) |
+| 32 criaturas do class-system | 32/32 capturáveis no ultra (12 como companheiro rookie) |
+| 2.000 criaturas do pool | 2.000/2.000 alcançáveis por faixa |
+
+**A inspiração nunca vaza**: o bestiário tem nomes de franquia, e a decisão do
+dono é que tudo bem PORQUE o nome não sai no prompt final. O texto da criatura
+(sem o nome) alimenta só a ESCOLHA de família da máquina criativa; bio,
+conceito e prompts continuam saindo dos bancos próprios. Há teste travando
+nome-fora-de-prompt em `pipeline.test.ts`.
+
+**Estabilidade**: a ficha e o companheiro são funções da IDENTIDADE (nome +
+nascimento + respostas) — reroll troca a criatura e a inspiração, nunca a
+ficha. O jogador vê UMA linha nova no reveal ("Essência Crepúsculo · Ofício
+Joalheiro", PT+EN via `essenceLabels.ts`); pontuações continuam invisíveis.
+
+---
+
 ## Relação com o repositório `teste-personalidade`
 
 Este motor foi **prototipado** em `HexerVoodoom/teste-personalidade` e migrado

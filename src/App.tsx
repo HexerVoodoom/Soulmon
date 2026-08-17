@@ -1373,9 +1373,18 @@ export default function App() {
     if (!saved) return false;
     const ent = await spendCredits(REROLL_COST_CREDITS, 'reroll');
     if (!ent) return false;
-    const { generateOracle } = await import('./utils/oracle');
     const newSeed = Math.floor(Math.random() * 2 ** 31);
-    const result = generateOracle(saved, newSeed);
+    // Perfil novo (tem soulProfile) → pipeline completo: o reroll re-sorteia
+    // também a criatura-inspiração do bestiário, não só a parte criativa.
+    // Perfil de antes da troca de motor → caminho legado, intacto.
+    let result: OracleResult;
+    if (saved.soulProfile) {
+      const { generateOracleComplete } = await import('./utils/soulProfile');
+      result = generateOracleComplete(saved, newSeed).result;
+    } else {
+      const { generateOracle } = await import('./utils/oracle');
+      result = generateOracle(saved, newSeed);
+    }
     // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
     // perder o que a pessoa pagou. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed });

@@ -7,7 +7,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **novo motor do oráculo (ago/2026)** — o teste de
+Última atualização: **fusão class-system + bestiário no oráculo (ago/2026)** —
+o pipeline completo agora distribui os pontos do usuário na ficha do
+class-system (constelação ancorando os 17 elementos, 65 talentos cientes de
+pré-requisito, 11 profissões), captura o companheiro pela mecânica real e
+busca a criatura-inspiração num pool de 2.000 do corpus canônico do
+Besti-rio- — com cobertura TOTAL travada por simulação e o nome da inspiração
+proibido em prompt por teste. Dados por snapshot com SHA
+(`npm run sync:oracle-data`). Pendência do dono: mergear
+`claude/canonical-classification` na main do Besti-rio- (o pool aponta para a
+branch até lá). Ver `docs/ORACULO.md`.
+
+Antes disso: **novo motor do oráculo (ago/2026)** — o teste de
 personalidade do repositório `teste-personalidade` virou a LEITURA do oráculo do
 Soulmon (`src/utils/soulProfile/`), no lugar do signo por faixa de datas, do
 ascendente chutado de 2 em 2 horas e das 6 perguntas do quiz antigo. A metade

@@ -26,6 +26,7 @@
 // ---------------------------------------------------------------------------
 
 import { computeNatalChart } from './astrology/chart';
+import { planetProminence } from './astrology/prominence';
 import type { NatalChart } from './astrology/types';
 import { computeNumerology, type NumerologyMap } from './numerology';
 import { generateOracleAxes } from './axes';
@@ -107,6 +108,7 @@ export function buildSoulProfile(
     },
     astrologyElements: astrology.distribution.elements,
     astrologyPolarities: astrology.distribution.polarities,
+    planetProminence: planetProminence(astrology),
     numerologyNumbers: [
       numerology.lifePath.value,
       numerology.expression.value,

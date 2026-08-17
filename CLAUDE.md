@@ -183,7 +183,15 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   só tipos, e é isso que o mantém fora do bundle inicial. Os coeficientes de
   `soulProfile/axes.ts` foram calibrados por simulação para que nenhum
   elemento/papel/reino tenha vantagem estrutural: **mexer num deles sem refazer
-  a simulação reabre o buraco que ele fechou**.
+  a simulação reabre o buraco que ele fechou**. A leitura também alimenta o
+  PIPELINE COMPLETO (`soulProfile/pipeline.ts`): ficha do class-system nos 5
+  estágios + companheiro capturável + criatura-inspiração do bestiário → só
+  então a criatura é gerada. Dados dos outros repos entram por SNAPSHOT com
+  procedência (`npm run sync:oracle-data`, clones irmãos) — nunca cópia à mão.
+  Cobertura travada por simulação: 17/17 elementos, 65/65 talentos, 11/11
+  profissões, 32/32 criaturas do class-system, pool inteiro do bestiário. O
+  nome da criatura-inspiração NUNCA entra em prompt (teste em
+  `pipeline.test.ts`); o jogador vê só a linha de essência no reveal.
 - **Desbloqueio no meio do jogo** (`src/components/UnlockAccountModal.tsx`): a
   compra também existe DENTRO do app, não só na tela inicial (que o usuário vê
   uma vez). `UnlockNudge` só aparece em dois lugares — ao bater o limite de

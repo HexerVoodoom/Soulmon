@@ -51,6 +51,11 @@ export interface OracleAxesInput {
    *  alinhamento (caminho de vida, expressão, motivação, impressão, dia
    *  natalício, maturidade). */
   numerologyNumbers: number[];
+  /** Proeminência planetária do mapa (shares somando 100 nos 10 corpos —
+   *  `astrology/prominence.ts`). É a CONSTELAÇÃO ancorando os 11 elementos do
+   *  class-system que não têm sinal psicométrico. Opcional: sem mapa, todo
+   *  planeta vale 10 (neutro) e nenhum dos 11 ganha ou perde. */
+  planetProminence?: Record<string, number>;
 }
 
 function facet(inputs: OracleAxesInput, dimension: string, name: string, fallback: number): number {
@@ -251,14 +256,43 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // copiados direto; os outros 11 não têm sinal ancorado nos dados e ficam num
   // piso pequeno, para que quem consome consiga distinguir "não modelado"
   // (isto) de "modelado e pontuou zero" sem divisão por zero.
+  // Os 11 elementos sem nome compartilhado deixam de ser piso fixo: a
+  // CONSTELAÇÃO os ancora, pela proeminência planetária do mapa
+  // (astrology/prominence.ts) e pela associação clássica planeta→elemento —
+  // Marte→marcial, Saturno→tempo, Urano→eletricidade, Plutão→morte,
+  // Mercúrio→som, Vênus→vida, Júpiter→espaço, Lua+Saturno→gravidade (maré e
+  // peso), Netuno→arcano. Sem mapa (perfil legado), proeminência neutra (10)
+  // e os 11 ficam no BASE — presentes, nunca dominantes.
+  //
+  // O que carrega sinal é o DESVIO do neutro, não o share cru: em 800 mapas
+  // reais os shares grudam na média (p50 9,9 · p90 15,4 · p99 18,6 · máx
+  // ~23), então escalar o valor mal separa um mapa marcante de um comum.
+  // GAIN amplifica o desvio: planeta mediano → elemento ≈ BASE; planeta no
+  // p99 → BASE+36, competindo com os 6 compartilhados (25-55) SÓ nos mapas
+  // em que ele realmente domina — que é a semântica pretendida. Calibrado
+  // por simulação com mapas REAIS, como os demais coeficientes.
+  const P = (body: string) => inputs.planetProminence?.[body] ?? 10;
+  const dev = (body: string) => P(body) - 10;
+  const ANCHOR_BASE = 15;
+  const ANCHOR_GAIN = 4.2;
+  const anchored = (d: number, extra: number) => Math.max(0, ANCHOR_BASE + d * ANCHOR_GAIN + extra);
+  const assertividade = facet(inputs, 'extraversion', 'assertividade', traits.extraversion);
   const classElements: Record<ClassElementId, number> = {
     fogo: elements.fogo, agua: elements.agua, terra: elements.terra, ar: elements.ar,
     sombra: elements.sombra, luz: elements.luz,
-    eletricidade: 5, arcano: traits.openness * 0.15 + soft(100 - jung.SN) * 0.1,
-    vileza: (100 - traits.honestyHumility) * 0.15, morte: traits.neuroticism * 0.1,
-    vida: traits.agreeableness * 0.15, vigor: traits.conscientiousness * 0.1,
-    marcial: facet(inputs, 'extraversion', 'assertividade', traits.extraversion) * 0.15,
-    tempo: 5, som: 5, gravidade: 5, espaco: 5,
+    eletricidade: anchored(dev('Urano'), traits.extraversion * 0.06),
+    arcano: anchored(dev('Netuno'), traits.openness * 0.1 + soft(100 - jung.SN) * 0.06),
+    // vileza e morte dividem Plutão; o desvio menor + o termo de
+    // Honestidade-Humildade baixa é o que separa "sombrio" de "vil".
+    vileza: anchored(dev('Plutão') * 0.9, (100 - traits.honestyHumility) * 0.12),
+    morte: anchored(dev('Plutão'), traits.neuroticism * 0.12),
+    vida: anchored(dev('Vênus'), traits.agreeableness * 0.08),
+    vigor: anchored(dev('Marte') * 0.65 + dev('Sol') * 0.65, traits.conscientiousness * 0.05),
+    marcial: anchored(dev('Marte'), assertividade * 0.08),
+    tempo: anchored(dev('Saturno'), soft(jung.JP) * 0.06),
+    som: anchored(dev('Mercúrio'), traits.extraversion * 0.06),
+    gravidade: anchored(dev('Lua') * 0.65 + dev('Saturno') * 0.65, 0),
+    espaco: anchored(dev('Júpiter') * 0.85 + dev('Urano') * 0.4, 0),
   };
 
   const sharedClassElements = toShare(classElements, CLASS_ELEMENT_ORDER);

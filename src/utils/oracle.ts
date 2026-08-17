@@ -67,6 +67,15 @@ export interface OracleInput {
    *  estágios. Opcional — o usuário pode optar por não influenciar. */
   favoriteCreature?: string;
   /**
+   * Inspiração vinda do bestiário (utils/soulProfile/bestiary/select.ts):
+   * a DESCRIÇÃO da criatura escolhida (sem o nome), cuja função é uma só —
+   * alimentar a máquina de famílias com as menções de bicho que ela sabe
+   * ler. NÃO substitui a descrição do usuário (petDescription vence), NÃO
+   * entra na bio e NÃO entra em prompt de imagem. Só o pipeline
+   * (soulProfile/pipeline.ts) preenche isto.
+   */
+  bestiaryInspiration?: { texto: string; familia: string | null; biologia: string[] };
+  /**
    * Leitura ROBUSTA (utils/soulProfile/). Quando presente, ela SUBSTITUI a
    * leitura antiga — signo solar, ascendente aproximado pela hora, horóscopo
    * chinês, rashi védico, 4 números e as 6 perguntas do `ORACLE_QUESTIONS` —
@@ -229,7 +238,9 @@ export function hashString(s: string): number {
 }
 
 /** mulberry32 — RNG determinístico pequeno. */
-function mulberry32(seed: number): () => number {
+/** Exportado para os módulos do soulProfile (ficha/bestiário) usarem o MESMO
+ *  RNG semeado — segunda cópia divergiria em silêncio (footgun 9). */
+export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;
@@ -239,7 +250,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function pick<T>(rng: () => number, arr: T[]): T {
+export function pick<T>(rng: () => number, arr: T[]): T {
   return arr[Math.floor(rng() * arr.length) % arr.length];
 }
 
@@ -2909,7 +2920,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // Slot 1 dominante + slot 2 (menor impacto, quase sempre a mesma família;
   // raramente 2ª família distinta; mais raro ainda, um OBJETO). Descrição do
   // pet citando um bicho tem prioridade. O horóscopo NUNCA aparece no corpo.
-  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, descText);
+  // Dica de família: a descrição do USUÁRIO manda; sem ela, a inspiração do
+  // bestiário guia a escolha de família/subfamília (por menção textual aos
+  // substantivos internos — o nome da criatura já foi removido antes de
+  // chegar aqui). Só a ESCOLHA de família lê este texto: bio, conceito e
+  // prompts continuam saindo dos bancos de palavras próprios.
+  const familyHintText = descText || (input.bestiaryInspiration ? normalizeText(input.bestiaryInspiration.texto) : '');
+  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, familyHintText);
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
   const fusionB = family.secondary.noun;

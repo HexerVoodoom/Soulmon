@@ -72,6 +72,7 @@
     "wrangler": "^4.114.0"
   },
   "scripts": {
+    "sync:oracle-data": "node scripts/sync-oracle-data.mjs",
     "dev": "vite",
     "build": "vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
     "test": "vitest run",

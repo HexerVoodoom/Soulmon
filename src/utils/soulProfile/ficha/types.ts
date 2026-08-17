@@ -1,0 +1,73 @@
+// ---------------------------------------------------------------------------
+// Ficha do class-system — vocabulário.
+//
+// Os DADOS (profissões, talentos, criaturas, famílias) vêm do snapshot
+// `classSystem.data.json`, gerado por `scripts/sync-oracle-data.mjs` a partir
+// do repositório real `HexerVoodoom/Class-System` — com procedência (SHA)
+// gravada no próprio arquivo. Estes tipos descrevem o snapshot e a `Ficha`
+// que a distribuição de pontos monta; os ids batem 1:1 com o class-system,
+// então uma Ficha daqui é um `Personagem` válido lá.
+// ---------------------------------------------------------------------------
+
+import type { ClassElementId } from '../types';
+
+export type ElementoBaseId = ClassElementId;
+
+export type EscolaId =
+  | 'combate_fisico' | 'longo_alcance' | 'evocacao' | 'conjuracao' | 'benca' | 'maldicao';
+
+export type RecursoId = 'mana' | 'fe' | 'furia' | 'soullink' | 'ressonancia';
+
+export type ProfissaoId =
+  | 'ferreiro' | 'tecelao' | 'artesao' | 'joalheiro' | 'alquimista' | 'curtidor'
+  | 'encantador' | 'escriba' | 'cozinheiro' | 'luthier' | 'cartografo';
+
+export interface TalentoSnapshot {
+  nome: string;
+  ranksMaximos: number;
+  requisito?: { escola?: EscolaId; recurso?: RecursoId; nivelMinimo: number };
+  exclusivoCom?: string[];
+}
+
+export interface ProfissaoSnapshot {
+  nome: string;
+  fatoresElementos: Partial<Record<string, number>>;
+  fatoresEscolas?: Partial<Record<EscolaId, number>>;
+}
+
+export interface CriaturaSnapshot {
+  nome: string;
+  familia: string;
+  afinidades: ElementoBaseId[];
+  poderBase: number;
+}
+
+export interface ClassSystemSnapshot {
+  _provenance: { repo: string; ref: string; sha: string; syncedAt: string };
+  escolas: Record<EscolaId, { nome: string }>;
+  recursos: Record<RecursoId, { nome: string }>;
+  profissoes: Record<ProfissaoId, ProfissaoSnapshot>;
+  talentos: Record<string, TalentoSnapshot>;
+  criaturas: Record<string, CriaturaSnapshot>;
+  familias: Record<string, { nome: string }>;
+}
+
+/** A ficha de personagem que a distribuição monta para UM estágio. */
+export interface Ficha {
+  nome: string;
+  elementos: Partial<Record<ElementoBaseId, number>>;
+  escolas: Partial<Record<EscolaId, number>>;
+  recursos: Partial<Record<RecursoId, number>>;
+  talentos: Partial<Record<string, number>>;
+  profissoes: Partial<Record<ProfissaoId, number>>;
+  totals: {
+    elementos: number;
+    escolas: number;
+    recursos: number;
+    talentos: number;
+    profissoes: number;
+  };
+}
+
+export type FichaStage = 'rookie' | 'champion' | 'ultimate' | 'mega' | 'ultra';
+export const FICHA_STAGE_ORDER: FichaStage[] = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
