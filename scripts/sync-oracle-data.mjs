@@ -80,9 +80,40 @@ const recursos = Object.fromEntries(Object.entries(RECURSOS).map(([id, r]) => [i
 console.log(JSON.stringify({ escolas, recursos, profissoes, talentos, criaturas, familias }));
 `;
 const classData = JSON.parse(sh(CLASS_DIR, 'npx', ['tsx', '-e', extract]));
+
+// Fixtures de PARIDADE da cascata geracional: o MOTOR REAL calcula os casos
+// de referência e o Soulmon confere a réplica mínima de `ficha/cascata.ts`
+// contra eles (`cascata.parity.test.ts`). Se o class-system mudar um dial
+// (divisor, limiar), o próximo sync regenera isto e o teste acusa.
+const parityExtract = `
+import { calcularCascata, ELEMENTOS } from './src/index';
+const ehPar = (id) => ELEMENTOS[id]?.receita?.length === 2;
+const casos = [
+  { fogo: 5, agua: 5 },
+  { fogo: 4, agua: 5 },
+  { fogo: 20, agua: 5 },
+  { fogo: 50, agua: 50 },
+  { fogo: 49, agua: 50 },
+  { fogo: 88, terra: 57, tempo: 55 },
+  { ar: 51, terra: 34, luz: 32 },
+];
+const saida = casos.map((diretos) => {
+  const c = calcularCascata(diretos);
+  const pares = {};
+  for (const [id, passivos] of c.passivos) {
+    if (!ehPar(id)) continue; // a réplica do Soulmon modela só gen-2
+    if ((passivos ?? 0) > 0) pares[id] = { passivos, destravado: c.destravados.has(id) };
+  }
+  return { diretos, pares };
+});
+console.log(JSON.stringify(saida));
+`;
+const cascataFixtures = JSON.parse(sh(CLASS_DIR, 'npx', ['tsx', '-e', parityExtract]));
+
 const classOut = {
   _provenance: provenance(CLASS_DIR),
   ...classData,
+  cascataFixtures,
 };
 const fichaDir = path.join(ROOT, 'src/utils/soulProfile/ficha');
 mkdirSync(fichaDir, { recursive: true });

@@ -140,12 +140,85 @@ export interface BestiaryPick {
  * nova (reroll) = outra criatura coerente com a mesma leitura.
  */
 export function selectBestiaryCreature(axes: OracleAxes, seedKey: string): BestiaryPick {
-  const scored = BESTIARY_POOL.map(creature => ({ creature, score: scoreCreature(creature, axes) }));
+  return selectFromPool(axes, `${seedKey}|bestiario`, null, new Set());
+}
+
+// ---------------------------------------------------------------------------
+// Continuidade de espécie: a linhagem de inspirações através dos estágios.
+//
+// A evolução não deve saltar para uma espécie sem parentesco: um dragão tende
+// a evoluir para outro dragão — a MENOS que outra criatura compartilhe muitos
+// outros aspectos (biologia, tamanho, elementos), caso em que a travessia de
+// família é legítima (dragão → mamífero com forte sobreposição). O termo de
+// proximidade abaixo codifica exatamente isso: família pesa mais que qualquer
+// aspecto isolado, mas a SOMA dos outros aspectos pode superá-la.
+// ---------------------------------------------------------------------------
+
+const TAMANHO_ORDER = ['miudo', 'pequeno', 'medio', 'grande', 'enorme', 'colossal'];
+
+function tamanhoIndex(t: string): number {
+  const norm = t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return TAMANHO_ORDER.indexOf(norm);
+}
+
+/** Quanto `c` é "da mesma linhagem" que `prev`. Família domina (+4), mas
+ *  biologia (até +4,5), elementos base em comum (até +2) e tamanho vizinho
+ *  (+1) somados podem passá-la — é o que permite a travessia rara. */
+export function speciesProximity(prev: BestiaryCreature, c: BestiaryCreature): number {
+  let bonus = 0;
+  if (prev.familia && c.familia && prev.familia === c.familia) bonus += 4;
+  const bioOverlap = c.biologia.filter(b => prev.biologia.includes(b)).length;
+  bonus += Math.min(bioOverlap, 3) * 1.5;
+  const prevBases = new Set(baseElements(prev.elementos));
+  const sharedBases = baseElements(c.elementos).filter(e => prevBases.has(e)).length;
+  bonus += Math.min(sharedBases, 2);
+  const ti = tamanhoIndex(prev.tamanho); const tj = tamanhoIndex(c.tamanho);
+  if (ti >= 0 && tj >= 0 && Math.abs(ti - tj) <= 1) bonus += 1;
+  return bonus;
+}
+
+function selectFromPool(
+  axes: OracleAxes,
+  seedString: string,
+  prev: BestiaryCreature | null,
+  exclude: Set<string>,
+): BestiaryPick {
+  const scored = BESTIARY_POOL
+    .filter(c => !exclude.has(c.nome))
+    .map(creature => ({
+      creature,
+      score: scoreCreature(creature, axes) + (prev ? speciesProximity(prev, creature) : 0),
+    }));
   scored.sort((a, b) => b.score - a.score);
   const top = scored[0].score;
   let band = scored.filter(s => s.score >= top - BAND_WIDTH);
   if (band.length < MIN_BAND) band = scored.slice(0, MIN_BAND);
-  const rng = mulberry32(hashString(`${seedKey}|bestiario`));
+  const rng = mulberry32(hashString(seedString));
   const chosen = pick(rng, band);
   return { creature: chosen.creature, score: chosen.score, bandSize: band.length };
+}
+
+/**
+ * Linhagem completa de inspirações, um pick por estágio, em ordem de
+ * evolução. O primeiro estágio usa EXATAMENTE a seleção clássica (mesma seed
+ * `|bestiario` — a linhagem não muda a inspiração que já alimenta a geração);
+ * cada estágio seguinte pontua o pool com o termo de proximidade ao pick
+ * anterior e exclui os nomes já usados (evoluir é virar outra criatura).
+ */
+export function selectBestiaryLineage(
+  axes: OracleAxes,
+  seedKey: string,
+  stages: readonly string[],
+): Record<string, BestiaryPick> {
+  const lineage: Record<string, BestiaryPick> = {};
+  const used = new Set<string>();
+  let prev: BestiaryCreature | null = null;
+  for (const [i, stage] of stages.entries()) {
+    const seedString = i === 0 ? `${seedKey}|bestiario` : `${seedKey}|bestiario|${stage}`;
+    const pickForStage = selectFromPool(axes, seedString, prev, used);
+    lineage[stage] = pickForStage;
+    used.add(pickForStage.creature.nome);
+    prev = pickForStage.creature;
+  }
+  return lineage;
 }

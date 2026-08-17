@@ -299,3 +299,46 @@ não é do Soulmon.
 
 Regra prática: mudou regra do oráculo, muda **aqui**. Regra copiada é regra que
 diverge em silêncio.
+
+## Alocação geracional, linhagem e skills (ago/2026, rodada 3)
+
+Pedido do dono, implementado nos dois lados:
+
+**Class-system (PR #5 de lá):** ponto direto nasce restrito aos 17 base; a
+CASCATA rende pontos passivos nos derivados (5+5→1 no par; divisores 5/4/3 por
+aridade), 10 passivos destravam a alocação direta (limiares 10/6/4), e o peso
+de geração entra como CUSTO de orçamento {1,3,10,30} — não multiplicador
+(a potência por aridade já existia). Duas contabilidades convivem: o nível
+efetivo antigo (skills/arquétipos intocados) e a cascata (destrave + alimento
+da geração seguinte).
+
+**Soulmon:** a ficha distribui por essa regra com orçamento PRÓPRIO de
+elementos (`ELEMENT_ORCAMENTO_BY_STAGE` 30/60/120/300/500) e especialização
+progressiva (`FOCUS_EXPONENT` — evoluir é focar). A escada medida em 120
+perfis reais: rookie–ultimate só bases · mega chega "quase destravando" (a
+antecipação é conteúdo) · ultra destrava e compra o par em ~73% dos perfis
+(23 pares distintos). A réplica da regra é gen-2 SÓ (a linguagem de essência
+do pet); paridade travada por fixtures que o `sync:oracle-data` gera rodando
+o MOTOR REAL via tsx (`cascata.parity.test.ts` — antídoto do footgun 9).
+
+**Linhagem do bestiário:** uma inspiração POR estágio, encadeada por
+proximidade de espécie (família +4 · biologia até +4,5 · elementos até +2 ·
+tamanho vizinho +1 — família domina, a soma pode vencê-la). Medido: 86,8% das
+transições preservam a família; travessias (dragão→mamífero) acontecem só com
+forte sobreposição. O 1º estágio é BIT A BIT o pick clássico que alimenta a
+geração; nenhuma criatura se repete na linhagem.
+
+**Skills por forma:** cada estágio ganha o par básica (custo baixo, frequente)
+/ especial (custo alto, rara), derivado da ficha — elemento dominante com peso
+por geração (par comprado ×3), escola distribuída dominante, recurso da ficha.
+A especial do ultra herda o PAR comprado ("Fúria de Prisma"). Custo é
+QUALITATIVO por desenho: o motor de skills do class-system é validador, não
+gerador, e portar a fórmula de custo acoplaria o app ao balanceamento de lá.
+Nomes/descrições EN+PT de léxico próprio. Skills são função da IDENTIDADE
+(reroll não troca).
+
+**Página do Pet** (`PetPage.tsx`, chip Evolução | Pet | Estatísticas): as
+formas já desbloqueadas (nunca as futuras), com a `description` por forma que
+o save sempre teve e nunca renderizou, e as duas skills. As skills são
+recomputadas sob demanda do `SOULMON_PROFILE` (determinístico) — zero campo
+novo no save; saves legados só não mostram a seção.

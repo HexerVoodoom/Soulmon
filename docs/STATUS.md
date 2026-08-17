@@ -7,7 +7,26 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **fusão class-system + bestiário no oráculo (ago/2026)** —
+Última atualização: **alocação geracional + página do Pet (17/ago/2026)** —
+rodada 2 da fusão, a pedido do dono: (1) o class-system ganhou a CASCATA
+geracional (PR HexerVoodoom/Class-System#5 — ponto direto só em base; 5+5→1
+passivo no par; 10 passivos destravam alocação direta; peso de geração como
+CUSTO {1,3,10,30}, não multiplicador); (2) a ficha do Soulmon distribui por
+essa regra com orçamento próprio de elementos (30/60/120/300/500) e
+especialização progressiva — medido: rookie–ultimate só bases, mega chega
+"quase destravando", ultra compra o par em ~73% dos perfis (réplica gen-2 com
+teste de PARIDADE contra fixtures do motor real, gerados no sync); (3) o
+bestiário ganhou LINHAGEM com continuidade de espécie (uma inspiração por
+estágio; 86,8% das transições preservam a família, travessia rara por
+sobreposição); (4) cada estágio ganhou o par de skills básica/especial
+derivado da ficha (a especial do ultra usa o PAR comprado — ex.: "Fúria de
+Prisma"); (5) página nova do **Pet** (chip Evolução | Pet | Estatísticas):
+formas já desbloqueadas (nunca futuras), a descrição por forma que existia no
+save e nunca era renderizada, e as duas skills — verificada com Playwright em
+PT e EN. Decisão de arquitetura confirmada pelo dono: dados por SNAPSHOT
+embarcado (não API).
+
+Antes disso: **fusão class-system + bestiário no oráculo (ago/2026)** —
 o pipeline completo agora distribui os pontos do usuário na ficha do
 class-system (constelação ancorando os 17 elementos, 65 talentos cientes de
 pré-requisito, 11 profissões), captura o companheiro pela mecânica real e

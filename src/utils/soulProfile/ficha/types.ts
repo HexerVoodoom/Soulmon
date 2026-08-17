@@ -55,12 +55,17 @@ export interface ClassSystemSnapshot {
 /** A ficha de personagem que a distribuição monta para UM estágio. */
 export interface Ficha {
   nome: string;
-  elementos: Partial<Record<ElementoBaseId, number>>;
+  /** Pontos diretos por elemento. Chaves são ids BASE e, nos estágios altos,
+   *  ids de PAR destravado pela cascata geracional (ex.: `vapor`) — exatamente
+   *  como um `Personagem` do class-system pós-destrave. */
+  elementos: Partial<Record<string, number>>;
   escolas: Partial<Record<EscolaId, number>>;
   recursos: Partial<Record<RecursoId, number>>;
   talentos: Partial<Record<string, number>>;
   profissoes: Partial<Record<ProfissaoId, number>>;
   totals: {
+    /** Em pontos de ORÇAMENTO: base custa 1, par destravado custa 3
+     *  (`CUSTO_PONTO_PAR`) — o peso econômico da geração. */
     elementos: number;
     escolas: number;
     recursos: number;

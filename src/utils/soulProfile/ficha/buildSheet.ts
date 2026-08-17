@@ -24,6 +24,7 @@ import type {
 } from './types';
 import snapshotJson from './classSystem.data.json';
 import type { ClassSystemSnapshot } from './types';
+import { cascataDosPares, CUSTO_PONTO_BASE, CUSTO_PONTO_PAR } from './cascata';
 
 export const CLASS_DATA = snapshotJson as unknown as ClassSystemSnapshot;
 
@@ -51,6 +52,40 @@ export const ROOKIE_BUDGET: Budget = {
  *  como as curvas de poder do gênero costumam ler. */
 export const STAGE_MULTIPLIER: Record<FichaStage, number> = {
   rookie: 1, champion: 1.8, ultimate: 3, mega: 5, ultra: 8,
+};
+
+/**
+ * ORÇAMENTO DE ELEMENTOS por estágio — curva própria, mais funda que o
+ * multiplicador geral, porque é ela que faz a CASCATA geracional acontecer:
+ * destravar um par exige ~50 pontos em cada componente (marco de 100 de
+ * orçamento do class-system), e só perfis concentrados de mega/ultra chegam
+ * lá — "só as criaturas de estágio avançado alcançam os elementos avançados".
+ * Base custa 1; ponto direto em par destravado custa `CUSTO_PONTO_PAR` (3).
+ */
+export const ELEMENT_ORCAMENTO_BY_STAGE: Record<FichaStage, number> = {
+  rookie: 30, champion: 60, ultimate: 120, mega: 300, ultra: 500,
+};
+
+/** Fração do orçamento de elementos desviada para pontos DIRETOS no melhor
+ *  par destravado (especialização — o resto continua alargando as bases). */
+const DERIVED_SPEND_FRACTION = 0.2;
+
+/**
+ * ESPECIALIZAÇÃO PROGRESSIVA: expoente aplicado às afinidades antes da
+ * distribuição — evoluir é focar. Rookie fica em 1 (largura total; profissão
+ * e captura leem a ficha rookie e não mudam); nos estágios altos o expoente
+ * concentra o orçamento nos elementos dominantes, que é o que permite à
+ * cascata destravar pares de verdade (sem isso, espalhar 500 pontos por 17
+ * elementos deixava o segundo colocado abaixo dos ~50 do marco de destrave —
+ * medido: 3 fichas com par em 120 no ultra; com o foco, 88/120).
+ *
+ * A ESCADA medida (120 perfis reais): rookie–ultimate só bases · mega chega
+ * com passivos altos ("quase destravando" — a antecipação é conteúdo) ·
+ * ultra destrava e COMPRA o par em ~73% dos perfis (23 pares distintos).
+ * Só o topo alcança os elementos avançados, como pedido.
+ */
+const FOCUS_EXPONENT: Record<FichaStage, number> = {
+  rookie: 1, champion: 1.1, ultimate: 1.25, mega: 1.55, ultra: 1.7,
 };
 
 function budgetForStage(stage: FichaStage): Budget {
@@ -111,6 +146,59 @@ function apportion<K extends string>(shares: Record<K, number>, order: K[], tota
   return out;
 }
 
+/**
+ * Distribui o orçamento de elementos pela ALOCAÇÃO GERACIONAL, como um
+ * jogador jogaria: primeiro tudo nas bases (proporcional às afinidades da
+ * leitura); se a cascata destravar algum par, o passe 2 reserva
+ * `DERIVED_SPEND_FRACTION` do orçamento para pontos diretos no MELHOR par
+ * destravado (o mais equilibrado nas afinidades) e devolve o resto às bases.
+ * Duas passadas, sem realimentação — determinístico.
+ */
+function allocateElementos(
+  shares: Record<ElementoBaseId, number>,
+  orcamento: number,
+): Partial<Record<string, number>> {
+  const passe1 = apportion(shares, CLASS_ELEMENT_ORDER, orcamento);
+  const destravados = cascataDosPares(passe1).filter(c => c.destravado);
+  if (destravados.length === 0) {
+    for (const el of CLASS_ELEMENT_ORDER) if (passe1[el] === 0) delete passe1[el];
+    return passe1;
+  }
+  // melhor par: o mais EQUILIBRADO nas afinidades (min dos componentes),
+  // desempate por id — mesma leitura, mesmo par, sempre.
+  const melhor = [...destravados].sort((x, y) => {
+    const mx = Math.min(shares[x.def.componentes[0]], shares[x.def.componentes[1]]);
+    const my = Math.min(shares[y.def.componentes[0]], shares[y.def.componentes[1]]);
+    return my - mx || x.def.id.localeCompare(y.def.id);
+  })[0];
+  const pontosPar = Math.floor((orcamento * DERIVED_SPEND_FRACTION) / CUSTO_PONTO_PAR);
+  const orcamentoBases = orcamento - pontosPar * CUSTO_PONTO_PAR;
+  const bases = apportion(shares, CLASS_ELEMENT_ORDER, orcamentoBases);
+  // o passe 2 precisa MANTER o destrave: se o corte de orçamento das bases
+  // derrubasse os passivos abaixo do limiar, o ponto direto seria ilegal no
+  // class-system — nesse caso o par não é comprado (volta ao passe 1).
+  const aindaDestravado = cascataDosPares(bases).some(
+    c => c.destravado && c.def.id === melhor.def.id,
+  );
+  if (!aindaDestravado || pontosPar <= 0) {
+    for (const el of CLASS_ELEMENT_ORDER) if (passe1[el] === 0) delete passe1[el];
+    return passe1;
+  }
+  const saida: Partial<Record<string, number>> = { ...bases, [melhor.def.id]: pontosPar };
+  for (const el of CLASS_ELEMENT_ORDER) if (saida[el] === 0) delete saida[el];
+  return saida;
+}
+
+/** Custo em orçamento de um mapa de elementos (base 1 · par 3). */
+function custoElementos(elementos: Partial<Record<string, number>>): number {
+  let total = 0;
+  for (const [id, pts] of Object.entries(elementos)) {
+    const base = (CLASS_ELEMENT_ORDER as readonly string[]).includes(id);
+    total += (pts ?? 0) * (base ? CUSTO_PONTO_BASE : CUSTO_PONTO_PAR);
+  }
+  return total;
+}
+
 /** Ficha de UM estágio a partir dos eixos. Determinística por `seedKey`. */
 export function buildFicha(nome: string, oracle: OracleAxes, stage: FichaStage = 'rookie', seedKey: string = nome): Ficha {
   const budget = budgetForStage(stage);
@@ -118,10 +206,10 @@ export function buildFicha(nome: string, oracle: OracleAxes, stage: FichaStage =
   const elementoShares = Object.fromEntries(
     CLASS_ELEMENT_ORDER.map(id => [id, oracle.classElements[id]])
   ) as Record<ElementoBaseId, number>;
-  const elementos = apportion(elementoShares, CLASS_ELEMENT_ORDER, budget.elementos);
-  // Zero = "investiu e não ganhou nada" — o próprio investirElemento do
-  // class-system proíbe; some do registro.
-  for (const el of CLASS_ELEMENT_ORDER) if (elementos[el] === 0) delete elementos[el];
+  const focoShares = Object.fromEntries(
+    CLASS_ELEMENT_ORDER.map(id => [id, Math.pow(Math.max(0, elementoShares[id]), FOCUS_EXPONENT[stage])])
+  ) as Record<ElementoBaseId, number>;
+  const elementos = allocateElementos(focoShares, ELEMENT_ORCAMENTO_BY_STAGE[stage]);
 
   const DISTRIBUTED_ESCOLAS = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'] as const;
   const roleEscolaShares = { combate_fisico: 0, longo_alcance: 0, conjuracao: 0, benca: 0, maldicao: 0 } as Record<(typeof DISTRIBUTED_ESCOLAS)[number], number>;
@@ -155,7 +243,7 @@ export function buildFicha(nome: string, oracle: OracleAxes, stage: FichaStage =
   // reusada em todo estágio — os insumos maiores dos estágios altos faziam a
   // profissão "re-rolar" em 35% dos perfis (medido no laboratório).
   const rookieBudget = stage === 'rookie' ? budget : budgetForStage('rookie');
-  const rookieElementos = stage === 'rookie' ? elementos : apportion(elementoShares, CLASS_ELEMENT_ORDER, rookieBudget.elementos);
+  const rookieElementos = stage === 'rookie' ? elementos : allocateElementos(elementoShares, ELEMENT_ORCAMENTO_BY_STAGE.rookie);
   const rookieDistributed = stage === 'rookie' ? distributedEscolas : apportion(roleEscolaShares, [...DISTRIBUTED_ESCOLAS], rookieBudget.escolasDistribuidas);
   const rookieEscolas: Partial<Record<EscolaId, number>> = { evocacao: rookieBudget.evocacaoFixo, ...rookieDistributed };
   const rookieRecursos: Partial<Record<RecursoId, number>> = { [ROLE_TO_RECURSO[dominantRole]]: rookieBudget.recursos };
@@ -167,7 +255,7 @@ export function buildFicha(nome: string, oracle: OracleAxes, stage: FichaStage =
   return {
     nome, elementos, escolas, recursos, talentos, profissoes,
     totals: {
-      elementos: sum(elementos), escolas: sum(escolas), recursos: sum(recursos),
+      elementos: custoElementos(elementos), escolas: sum(escolas), recursos: sum(recursos),
       talentos: sum(talentos), profissoes: sum(profissoes),
     },
   };

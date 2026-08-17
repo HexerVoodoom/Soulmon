@@ -10,7 +10,7 @@ import iconGem from '../assets/soulmon/icons/icon-gem.png';
 import iconGear from '../assets/soulmon/icons/icon-gear.png';
 import iconReset from '../assets/soulmon/icons/icon-reset.png';
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
+type ViewType = 'main' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
 
 interface BottomNavProps {
   currentView: ViewType;

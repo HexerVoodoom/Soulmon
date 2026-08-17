@@ -22,7 +22,8 @@ import type { SoulProfile } from './profile';
 import { buildFicha } from './ficha/buildSheet';
 import { selectCompanion, type CapturaAvaliacao } from './ficha/capture';
 import { FICHA_STAGE_ORDER, type Ficha, type FichaStage } from './ficha/types';
-import { selectBestiaryCreature, type BestiaryPick } from './bestiary/select';
+import { selectBestiaryLineage, type BestiaryPick } from './bestiary/select';
+import { buildAllStageSkills, type StageSkills } from './ficha/skills';
 
 export interface OracleComplete {
   result: OracleResult;
@@ -31,8 +32,16 @@ export interface OracleComplete {
   /** Companheiro que a ficha rookie captura de verdade (ou null se nenhuma
    *  captura é legal — não acontece na prática, a simulação cobre). */
   companion: CapturaAvaliacao | null;
-  /** A criatura do bestiário que inspirou a geração. */
+  /** A criatura do bestiário que inspirou a geração (= linhagem no 1º estágio). */
   bestiaryPick: BestiaryPick;
+  /** Uma inspiração por estágio, encadeada por PROXIMIDADE DE ESPÉCIE: cada
+   *  estágio pontua o pool com bônus de parentesco ao pick anterior (família,
+   *  biologia, elementos, tamanho) — dragão tende a dragão, e a travessia só
+   *  acontece com forte sobreposição dos outros aspectos. */
+  bestiaryLineage: Record<FichaStage, BestiaryPick>;
+  /** O par básica/especial de cada estágio, derivado da ficha (função da
+   *  IDENTIDADE, como a ficha — reroll não troca as skills). */
+  stageSkills: Record<FichaStage, StageSkills>;
 }
 
 /** Identidade estável da pessoa — mesma pessoa, mesma ficha, com ou sem
@@ -62,7 +71,12 @@ export function generateOracleComplete(input: OracleInput, seed?: number): Oracl
 
   const companion = selectCompanion(fichaByStage.rookie, idKey);
 
-  const bestiaryPick = selectBestiaryCreature(soul.oracle, `${idKey}|${salt}`);
+  const stageSkills = buildAllStageSkills(fichaByStage, idKey);
+
+  const bestiaryLineage = selectBestiaryLineage(
+    soul.oracle, `${idKey}|${salt}`, FICHA_STAGE_ORDER,
+  ) as Record<FichaStage, BestiaryPick>;
+  const bestiaryPick = bestiaryLineage[FICHA_STAGE_ORDER[0]];
 
   // O texto de inspiração é a DESCRIÇÃO com o nome da criatura removido —
   // o que sobra são as menções de bicho/matéria que a máquina de famílias
@@ -81,5 +95,5 @@ export function generateOracleComplete(input: OracleInput, seed?: number): Oracl
     },
   }, salt);
 
-  return { result, fichaByStage, companion, bestiaryPick };
+  return { result, fichaByStage, companion, bestiaryPick, bestiaryLineage, stageSkills };
 }

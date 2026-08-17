@@ -6,7 +6,9 @@
 import { describe, expect, it } from 'vitest';
 import { generateOracleComplete } from './pipeline';
 import { buildSoulProfile } from './profile';
-import { CLASS_DATA, STAGE_MULTIPLIER, ROOKIE_BUDGET } from './ficha/buildSheet';
+import { CLASS_DATA, STAGE_MULTIPLIER, ROOKIE_BUDGET, ELEMENT_ORCAMENTO_BY_STAGE } from './ficha/buildSheet';
+import { cascataDosPares } from './ficha/cascata';
+import { CLASS_ELEMENT_ORDER } from './types';
 import { FICHA_STAGE_ORDER } from './ficha/types';
 import { poderCaptura } from './ficha/capture';
 import { BESTIARY_POOL, BESTIARY_PROVENANCE } from './bestiary/select';
@@ -76,10 +78,35 @@ describe('pipeline completo do oráculo', () => {
     for (const stage of FICHA_STAGE_ORDER) {
       const m = STAGE_MULTIPLIER[stage];
       const f = fichaByStage[stage];
-      expect(f.totals.elementos).toBe(Math.round(ROOKIE_BUDGET.elementos * m));
+      // elementos agora são medidos em ORÇAMENTO (base 1 · par destravado 3),
+      // com curva própria — é ela que faz a cascata geracional acontecer.
+      expect(f.totals.elementos).toBe(ELEMENT_ORCAMENTO_BY_STAGE[stage]);
       expect(f.totals.escolas).toBe(Math.round(ROOKIE_BUDGET.escolasDistribuidas * m) + Math.round(ROOKIE_BUDGET.evocacaoFixo * m));
       expect(f.totals.recursos).toBe(Math.round(ROOKIE_BUDGET.recursos * m));
       expect(f.totals.profissoes).toBe(Math.round(ROOKIE_BUDGET.profissao * m));
+    }
+  });
+
+  it('alocação geracional: ponto direto em par SÓ destravado (10 passivos), e nunca nos estágios baixos', () => {
+    const baseIds = new Set<string>(CLASS_ELEMENT_ORDER);
+    for (const seed of [5, 21, 77]) {
+      const input = makeInput(`Gera Cascata ${seed}`, QUIZ, seed % 2 === 1);
+      const { fichaByStage } = generateOracleComplete(input, seed);
+      for (const stage of FICHA_STAGE_ORDER) {
+        const f = fichaByStage[stage];
+        const pares = Object.keys(f.elementos).filter(id => !baseIds.has(id));
+        // rookie/champion nunca alcançam o destrave (orçamento 30/60 < marco 100)
+        if (stage === 'rookie' || stage === 'champion') expect(pares).toEqual([]);
+        for (const par of pares) {
+          const soDiretosBase = Object.fromEntries(
+            Object.entries(f.elementos).filter(([id]) => baseIds.has(id))
+          ) as Partial<Record<(typeof CLASS_ELEMENT_ORDER)[number], number>>;
+          const destravado = cascataDosPares(soDiretosBase).some(
+            c => c.def.id === par && c.destravado,
+          );
+          expect(destravado, `${par} comprado sem destrave no ${stage}`).toBe(true);
+        }
+      }
     }
   });
 
@@ -110,6 +137,62 @@ describe('pipeline completo do oráculo', () => {
     expect(companion).not.toBeNull();
     const poder = poderCaptura(fichaByStage.rookie, companion!.criatura);
     expect(poder).toBeGreaterThanOrEqual(companion!.criatura.poderBase);
+  });
+
+  it('a linhagem do bestiário tem um pick por estágio, sem repetir criatura, e o 1º É o bestiaryPick', () => {
+    const input = makeInput('Elisa Linhagem', QUIZ, true);
+    const { bestiaryPick, bestiaryLineage } = generateOracleComplete(input, 7);
+    expect(Object.keys(bestiaryLineage)).toEqual([...FICHA_STAGE_ORDER]);
+    expect(bestiaryLineage.rookie.creature.nome).toBe(bestiaryPick.creature.nome);
+    const nomes = FICHA_STAGE_ORDER.map(s => bestiaryLineage[s].creature.nome);
+    expect(new Set(nomes).size).toBe(nomes.length);
+  });
+
+  it('a evolução tende a ficar na mesma espécie: maioria das transições preserva a família', () => {
+    // "Dragão tende a ir para dragão" — mede sobre vários perfis: quando o
+    // estágio anterior TEM família, a transição mantém a família na maioria
+    // dos casos. A travessia existe (proximidade somada pode vencer), mas é
+    // exceção, não regra.
+    let same = 0; let total = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const input = makeInput(`Perfil Especie ${seed}`, QUIZ, seed % 2 === 0);
+      const { bestiaryLineage } = generateOracleComplete(input, seed);
+      for (let i = 1; i < FICHA_STAGE_ORDER.length; i++) {
+        const prev = bestiaryLineage[FICHA_STAGE_ORDER[i - 1]].creature;
+        const next = bestiaryLineage[FICHA_STAGE_ORDER[i]].creature;
+        if (!prev.familia) continue;
+        total++;
+        if (next.familia === prev.familia) same++;
+      }
+    }
+    expect(total).toBeGreaterThan(0);
+    expect(same / total).toBeGreaterThan(0.5);
+  });
+
+  it('skills por forma: básica/especial em todo estágio, PT+EN, estáveis no reroll', () => {
+    const input = makeInput('Fabio Skills', QUIZ, true);
+    const a = generateOracleComplete(input, 4);
+    const b = generateOracleComplete(input, 5);
+    const baseIds = new Set<string>(CLASS_ELEMENT_ORDER);
+    for (const stage of FICHA_STAGE_ORDER) {
+      const s = a.stageSkills[stage];
+      expect(s.basica.custo).toBe('baixo');
+      expect(s.especial.custo).toBe('alto');
+      for (const skill of [s.basica, s.especial]) {
+        expect(skill.nome.pt.length).toBeGreaterThan(3);
+        expect(skill.nome.en.length).toBeGreaterThan(3);
+        expect(skill.descricao.pt).not.toBe(skill.descricao.en);
+      }
+      // a básica fala a língua de todo dia: sempre elemento BASE
+      expect(baseIds.has(s.basica.elementoId)).toBe(true);
+      // skills são função da identidade — reroll não as troca
+      expect(b.stageSkills[stage]).toEqual(s);
+    }
+    // quando a ficha ultra comprou um par, a especial do ultra É do par
+    const paresUltra = Object.keys(a.fichaByStage.ultra.elementos).filter(id => !baseIds.has(id));
+    if (paresUltra.length > 0) {
+      expect(paresUltra).toContain(a.stageSkills.ultra.especial.elementoId);
+    }
   });
 
   it('sobrevive a JSON — perfil salvo gera a mesma criatura no reroll', () => {

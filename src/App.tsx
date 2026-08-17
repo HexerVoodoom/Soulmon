@@ -103,8 +103,9 @@ const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ def
 const TournamentPage = lazy(() => import('./components/TournamentPage').then(m => ({ default: m.TournamentPage })));
 const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ default: m.LibraryPage })));
 const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
+const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
+type ViewType = 'main' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
@@ -2187,9 +2188,11 @@ export default function App() {
             </div>
           )}
 
-          {/* Evolução e Estatísticas dividem o mesmo ícone da barra inferior —
-              alternadas por essas abas em vez de dois botões separados. */}
-          {(currentView === 'evolution' || currentView === 'stats') && (
+          {/* Evolução, Pet e Estatísticas dividem o mesmo ícone da barra
+              inferior — alternadas por essas abas em vez de botões separados
+              (a barra tem 6 botões travados por teste). A página do Pet é a
+              ficha viva: formas desbloqueadas, descrições e habilidades. */}
+          {(currentView === 'evolution' || currentView === 'stats' || currentView === 'pet') && (
             <div className="flex gap-3 mb-4">
               <button
                 onClick={() => setCurrentView('evolution')}
@@ -2197,6 +2200,13 @@ export default function App() {
                 style={{ flex: 1 }}
               >
                 {language === 'pt-BR' ? 'Evolução' : 'Evolution'}
+              </button>
+              <button
+                onClick={() => setCurrentView('pet')}
+                className={`sm-btn ${currentView === 'pet' ? '' : 'sm-btn-secondary'}`}
+                style={{ flex: 1 }}
+              >
+                Pet
               </button>
               <button
                 onClick={() => setCurrentView('stats')}
@@ -2249,6 +2259,17 @@ export default function App() {
                 carePatternReading,
                 gameState.currentBranch,
               )}
+            /></Suspense>
+          )}
+
+          {currentView === 'pet' && (
+            <Suspense fallback={null}><PetPage
+              stages={gameState.soulmonStages ?? []}
+              unlockedEvolutions={gameState.unlockedEvolutions}
+              currentStageId={gameState.evolutionStage}
+              demoCharacterId={gameState.demoCharacterId}
+              petName={gameState.soulmonMeta?.baseName}
+              language={language}
             /></Suspense>
           )}
 
