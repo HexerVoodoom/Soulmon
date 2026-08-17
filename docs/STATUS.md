@@ -20,8 +20,10 @@ perfis: rookie nunca bate arquétipo pleno, mega e ultra batem em 100% —
 mesma escada da cascata de pares. Nome PT vem AO VIVO do motor (zero cópia);
 EN é tradução própria por id, com teste de paridade contra os 79 ids reais.
 Extraído `ficha/realEngine.ts` (Personagem + progressão real), compartilhado
-entre poder de skill e classe. Persistido no save (`soulmonClassTitles`),
-mostrado na página do Pet como um rótulo dourado abaixo do nome da forma. Ver
+entre poder de skill e classe. Persistido no save (`soulmonClassTitles`).
+**Decisão do dono no mesmo dia: não aparece pro jogador** — `PetPage.tsx`
+computa e cacheia a classe, mas não renderiza o rótulo; infraestrutura fica
+pronta pra um dia mostrar, sem custo de exibir nada agora. Ver
 `docs/ORACULO.md` (rodada 7).
 
 Antes disso: **contraste do tema escuro (17/ago/2026, noite)** —

@@ -169,7 +169,6 @@ export function PetPage({
         const stageKey = getStageLevel(formId) as FichaStage;
         const isCurrent = formId === currentStageId;
         const stageSkills = skills?.[stageKey];
-        const classTitle = classTitles?.[stageKey];
         return (
           <div key={formId} className="sm-card" style={{ padding: 12, boxShadow: isCurrent ? 'inset 0 0 0 2px var(--sm-ink)' : undefined }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -187,11 +186,6 @@ export function PetPage({
                   <PixelTag>{L(form.stageName)}</PixelTag>
                   {isCurrent && <PixelTag>{isPt ? 'atual' : 'current'}</PixelTag>}
                 </div>
-                {classTitle && (
-                  <div className="text-xs" style={{ color: 'var(--sm-gold)', fontWeight: 700, marginTop: 2 }}>
-                    {L(classTitle.nome)}
-                  </div>
-                )}
               </div>
             </div>
             <p style={{ fontSize: 12.5, lineHeight: 1.45, margin: '8px 0 0' }}>

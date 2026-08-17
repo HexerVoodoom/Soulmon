@@ -520,3 +520,8 @@ de `calcularProgressao`, compartilhada agora entre `realSkillPower.ts` (poder
 da skill) e `classTitle.ts` (classe) — regra copiada é regra que diverge.
 Persistida no save (`soulmonClassTitles`), mesmo padrão de cache que
 `soulmonSkills`.
+
+**Decisão do dono (mesmo dia): não aparece pro jogador.** A classe continua
+sendo computada e cacheada no save — infraestrutura reaproveitável, testada,
+sem custo de exibir nada — mas `PetPage.tsx` não renderiza o rótulo. Se um
+dia isso mudar, o dado já está pronto; só falta o JSX.
