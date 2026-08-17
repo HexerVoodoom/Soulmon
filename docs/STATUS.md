@@ -7,7 +7,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **classe da criatura (17/ago/2026, noite)** — pedido do
+Última atualização: **sufixo "-mon" removido dos nomes (17/ago/2026, noite)**
+— o dono pediu um exemplo real de ponta a ponta e notou: toda criatura
+terminava em "-mon" (`rookieName` etc. em `oracle.ts`). Achado ao investigar:
+combinado com os prefixos de linha (War/Chaos/Zeed no Vírus, Omega no Mega
+Vírus, Omni no Ultra), isso soletrava nomes REAIS de outra franquia —
+WarGreymon, e o pior, Omegamon/Omnimon (a fusão dos 3 Megas, exatamente o
+conceito do Ultra aqui). Mesmo tipo de risco que já tirou os 74 sprites da
+Bandai do projeto, só que na camada de TEXTO. Corrigido: nenhum sufixo fixo
+em nenhum estágio; `Omni` (Ultra) virou `Triune` ("três em um", mesmo
+conceito, sem o nome emprestado). Teste que fixava o prefixo antigo
+atualizado. Ver `docs/ORACULO.md` (rodada 8).
+
+Antes disso: **classe da criatura (17/ago/2026, noite)** — pedido do
 dono: "senti falta de ter também a classe da criatura, gerada a partir do que
 ela faz, suas skills, talvez talentos e também de seus elementos". Achado:
 o class-system já tem exatamente esse conceito — **arquétipos** (79 no
