@@ -7,7 +7,7 @@
 //
 //   passivos(par) = min(floor(a/5), floor(b/5))   — 5 fogo + 5 água → 1 vapor
 //   destravado(par) = passivos >= 10              — aceita ponto direto
-//   custo do ponto direto num par = 3 de orçamento (base = 1)
+//   custo do ponto direto num par = 2 de orçamento (base = 1)
 //
 // O Soulmon modela DE PROPÓSITO só as gerações 1 e 2: a linguagem de essência
 // do pet são os 17 base + 136 pares (essenceLabels PT+EN); triplas/quádruplas
@@ -15,7 +15,11 @@
 // ficha exportada para lá. Footgun 9 (regra copiada): o teste de paridade em
 // `cascata.parity.test.ts` compara esta réplica com fixtures calculados pelo
 // MOTOR REAL no sync (`npm run sync:oracle-data`) — se o class-system mudar o
-// dial, o sync regenera os fixtures e o teste acusa a divergência.
+// dial, o sync regenera os fixtures e o teste acusa a divergência. Os quatro
+// diais abaixo são afirmados um a um contra o bloco `geracoes` do snapshot
+// (copiado do `taxonomy.json` v2 do class-system): fixture de comportamento
+// não pega PREÇO, e `CUSTO_PONTO_PAR` sobrevivia a qualquer mutação sem
+// derrubar um único teste.
 // ---------------------------------------------------------------------------
 
 import type { ClassElementId } from '../types';

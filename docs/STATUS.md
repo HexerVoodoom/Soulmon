@@ -26,6 +26,20 @@ Besti-rio- ganhou superfície de máquina (PR #3 — export canônico com
 procedência + AGENTS.md; uso principal = servir este pipeline). Custo do
 par espelhado no Soulmon (CUSTO_PONTO_PAR 3→2) e snapshot re-sincronizado.
 
+**QA rodada 2 (17/ago/2026)** — dois buracos medidos e fechados. (1)
+**Paridade dos diais**: mutar `CUSTO_PONTO_PAR` de 2 para 3 não derrubava
+NENHUM teste (1253/1253 verdes) — os fixtures da cascata medem comportamento
+(passivos/destrave) e preço não entra em cascata nenhuma, então o dial podia
+divergir do class-system em silêncio (footgun 9). O sync agora copia o bloco
+`geracoes` do `taxonomy.json` v2 para o snapshot e `cascata.parity.test.ts`
+afirma os QUATRO diais (divisor, limiar, custo base, custo do par) contra ele;
+verificado por mutação: cada um dos 4 agora mata teste. (2) No Class-System,
+**a armadilha de retrancar**: com a lava destravada, investir 1 ponto direto e
+depois baixar um componente retrancava o par — o ponto continuava cobrando
+orçamento e não sobrava nenhum `−` na tela (só "Resetar", que apaga a build).
+Agora existe `desinvestirElemento` no motor e a tabela lista `alocaveis` ∪
+{derivados com ponto direto}, os travados só com `−`.
+
 Antes disso: **alocação geracional + página do Pet (17/ago/2026)** —
 rodada 2 da fusão, a pedido do dono: (1) o class-system ganhou a CASCATA
 geracional (PR HexerVoodoom/Class-System#5 — ponto direto só em base; 5+5→1

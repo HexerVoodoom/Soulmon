@@ -27,9 +27,17 @@ interface CityPickerProps {
   isPt: boolean;
   inputStyle: React.CSSProperties;
   optionStyle: (selected: boolean) => React.CSSProperties;
+  /**
+   * Classes do kit. O onboarding passa `sm-px-field`/`sm-px-choice` — as
+   * MESMAS do passo do nome e das 6 perguntas. Sem elas este passo era o único
+   * do ritual com canto quadrado, outline nativo do browser e sugestões como
+   * texto solto. A `OraclePage` (tema claro, fora da navegação) não passa nada.
+   */
+  inputClass?: string;
+  optionClass?: string;
 }
 
-export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle }: CityPickerProps) {
+export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle, inputClass, optionClass }: CityPickerProps) {
   const [query, setQuery] = useState(value ? cityLabel(value) : '');
   const [touched, setTouched] = useState(false);
 
@@ -39,6 +47,7 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle }: C
   return (
     <div>
       <input
+        className={inputClass}
         style={inputStyle}
         type="text"
         value={query}
@@ -64,6 +73,8 @@ export function CityPicker({ value, onChange, isPt, inputStyle, optionStyle }: C
             matches.map(city => (
               <button
                 key={`${city.name}-${city.region}-${city.country}`}
+                className={optionClass}
+                aria-pressed={false}
                 style={optionStyle(false)}
                 onClick={() => {
                   onChange(city);

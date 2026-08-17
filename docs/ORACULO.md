@@ -405,3 +405,27 @@ integração cruzada, UX real com Playwright). Os achados que viraram correção
   localStorage e não sobe para a nuvem. Agora as skills entram no save
   (`soulmonSkills`), preenchidas pela própria página do Pet quando ela
   consegue recomputar.
+
+## QA rodada 2 (ago/2026)
+
+- **Paridade dos diais fechada.** Mutar `CUSTO_PONTO_PAR` de 2 para 3 na
+  réplica gen-2 do Soulmon **não quebrava nenhum teste** (1253/1253 passavam):
+  os fixtures do sync mediam só COMPORTAMENTO (passivos/destrave), e o dial
+  ECONÔMICO — justamente o que o class-system já mudou uma vez — podia divergir
+  em silêncio. Agora o `taxonomy.json` v2 leva o bloco `geracoes` para dentro
+  do snapshot e o teste de paridade afirma os QUATRO diais contra a fonte;
+  cada uma das 4 mutações foi verificada falhando.
+- **Skills repetiam ao longo da jornada**: o banco de substantivos tinha 2 por
+  (escola, tipo) para 5 estágios, então o anti-repetição esgotava no 3º e
+  rookie e ultimate saíam com o MESMO nome, custo e descrição. São 6 agora,
+  com teste travando a não-repetição nos 5 estágios.
+- **Estilo**: os 20 itens do teste e o seletor de cidade eram texto puro
+  (`SoulTestItem` sem `className`, input sem `sm-px-field`) logo depois de 6
+  telas com botões chanfrados — o jogador não percebia que eram clicáveis.
+  Agora usam o mesmo `sm-px-choice` + `aria-pressed` do ritual.
+- **Rótulo de linhagem duplicava radical** ("urso-urso polar"): a fusão de
+  nomes agora mantém só o mais específico quando um contém o outro.
+- Re-verificado com Playwright em PT e EN: a fileira de chips não corta mais
+  (foi preciso zerar o `letter-spacing` além do `minWidth`), as formas passadas
+  do demo usam a linha certa, o realce `inset` aparece, e a bio do reveal é
+  frase completa nos dois idiomas.

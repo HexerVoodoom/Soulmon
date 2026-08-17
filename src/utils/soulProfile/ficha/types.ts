@@ -42,6 +42,17 @@ export interface CriaturaSnapshot {
   poderBase: number;
 }
 
+/** Diais da alocação geracional, copiados do `taxonomy.json` v2 do
+ *  class-system (que os gera de `src/registry/geracoes.ts`). Chaves = ARIDADE
+ *  em texto ('1' = base, '2' = par, '3' = tripla, '4' = quádrupla) — o
+ *  Soulmon só replica 1 e 2, mas o bloco vem inteiro para que uma mudança lá
+ *  chegue aqui sem outro round de sync. */
+export interface GeracoesSnapshot {
+  divisorCascata: Record<string, number>;
+  limiarDestravamento: Record<string, number>;
+  custoPontoAlocacao: Record<string, number>;
+}
+
 export interface ClassSystemSnapshot {
   _provenance: { repo: string; ref: string; sha: string; syncedAt: string };
   escolas: Record<EscolaId, { nome: string }>;
@@ -50,6 +61,7 @@ export interface ClassSystemSnapshot {
   talentos: Record<string, TalentoSnapshot>;
   criaturas: Record<string, CriaturaSnapshot>;
   familias: Record<string, { nome: string }>;
+  geracoes: GeracoesSnapshot;
 }
 
 /** A ficha de personagem que a distribuição monta para UM estágio. */
@@ -64,7 +76,7 @@ export interface Ficha {
   talentos: Partial<Record<string, number>>;
   profissoes: Partial<Record<ProfissaoId, number>>;
   totals: {
-    /** Em pontos de ORÇAMENTO: base custa 1, par destravado custa 3
+    /** Em pontos de ORÇAMENTO: base custa 1, par destravado custa 2
      *  (`CUSTO_PONTO_PAR`) — o peso econômico da geração. */
     elementos: number;
     escolas: number;

@@ -2,8 +2,8 @@
  "_provenance": {
   "repo": "https://github.com/HexerVoodoom/Class-System",
   "ref": "claude/oracle-teste-personalidade-soulmon-dohefw",
-  "sha": "2e6ce5abe6b87f01e04903bdf1dc01ee5b0287d6",
-  "syncedAt": "2026-08-17T11:57:01.790Z",
+  "sha": "1025012c676fb15ff763fea3c68435bd019eca95",
+  "syncedAt": "2026-08-17T14:12:59.845Z",
   "script": "scripts/sync-oracle-data.mjs"
  },
  "escolas": {
@@ -996,6 +996,26 @@
   },
   "humanoide": {
    "nome": "Humanoide"
+  }
+ },
+ "geracoes": {
+  "divisorCascata": {
+   "1": 0,
+   "2": 5,
+   "3": 4,
+   "4": 3
+  },
+  "limiarDestravamento": {
+   "1": 0,
+   "2": 10,
+   "3": 6,
+   "4": 4
+  },
+  "custoPontoAlocacao": {
+   "1": 1,
+   "2": 2,
+   "3": 3,
+   "4": 4
   }
  },
  "cascataFixtures": [

@@ -2976,11 +2976,21 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // híbrido bicho+bicho = composto com hífen (ex.: "octopus-frog"); híbrido
   // bicho+objeto = objeto qualificando o bicho (ex.: "hammer-crab" / "caranguejo
   // de martelo"). Curta de propósito — prompts de sprite curtos funcionam melhor.
+  /** Funde dois rótulos sem repetir radical: quando um contém o outro (dois
+   *  bichos da mesma família, tipo "urso" + "urso polar"), o composto saía
+   *  "urso-urso polar". Fica só o mais específico. */
+  const fundir = (a: string, b: string, sep: string): string => {
+    const na = a.trim().toLowerCase(); const nb = b.trim().toLowerCase();
+    if (na === nb) return a;
+    if (nb.includes(na)) return b;
+    if (na.includes(nb)) return a;
+    return `${a}${sep}${b}`;
+  };
   const identity: LText = family.mono
     ? { pt: fusionA.pt, en: fusionA.en }
     : family.secondary.isObject
-      ? { pt: `${fusionA.pt} de ${fusionB.pt}`, en: `${fusionB.en}-${fusionA.en}` }
-      : { pt: `${fusionA.pt}-${fusionB.pt}`, en: `${fusionA.en}-${fusionB.en}` };
+      ? { pt: fundir(fusionA.pt, fusionB.pt, ' de '), en: fundir(fusionB.en, fusionA.en, '-') }
+      : { pt: fundir(fusionA.pt, fusionB.pt, '-'), en: fundir(fusionA.en, fusionB.en, '-') };
 
   // Características sorteadas dos POOLS (assinatura visual única).
   // Nota: em 16x16 não cabem textura/cauda/marcas — esses pools continuam
