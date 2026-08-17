@@ -24,6 +24,7 @@ import { selectCompanion, type CapturaAvaliacao } from './ficha/capture';
 import { FICHA_STAGE_ORDER, type Ficha, type FichaStage } from './ficha/types';
 import { selectBestiaryLineage, type BestiaryPick } from './bestiary/select';
 import type { StageSkills } from './ficha/skills';
+import { computeClassTitle } from './ficha/classTitle';
 import { applyRitualAnswers } from './ritualAnswers';
 import { identityKey } from './identity';
 
@@ -49,9 +50,13 @@ export interface OracleComplete {
 
 /**
  * Gera o oráculo COMPLETO — exige `input.soulProfile` (o caminho legado, sem
- * perfil, continua sendo `generateOracle` puro e não passa por aqui).
+ * perfil, continua sendo `generateOracle` puro e não passa por aqui). Async
+ * por causa da classe (`ficha/classTitle.ts` chama o motor real do
+ * class-system por import dinâmico) — os dois call sites reais já rodam
+ * dentro de `await import('../utils/soulProfile')`, então só ganham um
+ * `await` a mais.
  */
-export function generateOracleComplete(input: OracleInput, seed?: number): OracleComplete {
+export async function generateOracleComplete(input: OracleInput, seed?: number): Promise<OracleComplete> {
   const soul: SoulProfile | undefined = input.soulProfile;
   if (!soul) throw new Error('generateOracleComplete exige soulProfile — use generateOracle para o caminho legado');
 
@@ -82,6 +87,20 @@ export function generateOracleComplete(input: OracleInput, seed?: number): Oracl
     .split(new RegExp(nome.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'))
     .join(' ');
 
+  // Classe REAL só como ingrediente extra do prompt de sprite — nunca em
+  // texto que o jogador vê (nome/bio/descrição por forma continuam sem
+  // tocar nisso). Usa a ficha ULTRA (a mais concentrada; mede 100% de
+  // arquétipo pleno) e só entra quando o arquétipo é PLENO — o fallback
+  // genérico ("Adept of X") não acrescenta nada que `dominantClass` já não
+  // desse. Falha aqui nunca pode derrubar a geração inteira.
+  let promptClassFlavor: string | undefined;
+  try {
+    const classe = await computeClassTitle(fichaByStage.ultra);
+    if (classe.origem === 'arquetipo') promptClassFlavor = classe.nome.en;
+  } catch {
+    // sem o traço extra — o prompt de 3 traços já funcionava sozinho
+  }
+
   const result = generateOracle({
     ...input,
     bestiaryInspiration: {
@@ -89,6 +108,7 @@ export function generateOracleComplete(input: OracleInput, seed?: number): Oracl
       familia: bestiaryPick.creature.familia,
       biologia: bestiaryPick.creature.biologia,
     },
+    promptClassFlavor,
   }, salt);
 
   return { result, fichaByStage, companion, bestiaryPick, bestiaryLineage, stageSkills };

@@ -7,7 +7,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **sufixo "-mon" removido dos nomes (17/ago/2026, noite)**
+Última atualização: **classe real no prompt de sprite (17/ago/2026, noite)**
+— o dono achou um prompt de exemplo mais genérico que o anterior e pediu
+mais detalhe: a classe (arquétipo do class-system), mas SÓ no prompt de
+imagem, nunca em texto que o jogador vê. `pipeline.ts` virou `async` (só
+ele — `generateOracle` continua síncrono) pra computar
+`computeClassTitle(fichaByStage.ultra)` — constante nos 11 prompts, mesmo
+tratamento que os outros traços de identidade — e passar o nome EN como um
+4º traço do prompt (`OracleInput.promptClassFlavor`, novo campo, só o
+pipeline preenche). Cogitado e descartado: sincronizar os arquétipos num
+snapshot pra evitar o `async` — o casamento de condição real depende de
+`niveisEfetivos` de elementos DERIVADOS, que só o motor real deriva certo;
+reimplementar seria o footgun 9 que as outras integrações evitaram. Teste
+novo confere as duas pontas: a palavra da classe aparece no `imagePrompt`
+de toda forma, nunca em `description`/`bio`. Ver `docs/ORACULO.md`
+(rodada 9).
+
+Antes disso: **sufixo "-mon" removido dos nomes (17/ago/2026, noite)**
 — o dono pediu um exemplo real de ponta a ponta e notou: toda criatura
 terminava em "-mon" (`rookieName` etc. em `oracle.ts`). Achado ao investigar:
 combinado com os prefixos de linha (War/Chaos/Zeed no Vírus, Omega no Mega

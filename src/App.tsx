@@ -1385,7 +1385,7 @@ export default function App() {
     try {
       if (saved.soulProfile) {
         const { generateOracleComplete } = await import('./utils/soulProfile');
-        result = generateOracleComplete(saved, newSeed).result;
+        result = (await generateOracleComplete(saved, newSeed)).result;
       } else {
         const { generateOracle } = await import('./utils/oracle');
         result = generateOracle(saved, newSeed);

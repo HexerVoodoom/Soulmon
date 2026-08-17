@@ -14,6 +14,7 @@ import { poderCaptura } from './ficha/capture';
 import { BESTIARY_POOL, BESTIARY_PROVENANCE } from './bestiary/select';
 import { DERIVED_ELEMENT_PAIRS, BASE_ELEMENT_LABELS } from './derivedElements';
 import { essenceHasEn, PROFISSAO_EN } from './essenceLabels';
+import { computeClassTitle } from './ficha/classTitle';
 import type { OracleInput } from '../oracle';
 import type { Answers } from './personality/types';
 import { items } from './personality/questions';
@@ -39,30 +40,30 @@ function makeInput(nome: string, quiz: Record<string, string>, comTeste = false)
 const QUIZ = { grupo: 'protege', objetivo: 'cuidar', pressao: 'firme' };
 
 describe('pipeline completo do oráculo', () => {
-  it('é determinístico: mesma entrada e seed = mesma ficha, mesmo bicho, mesma inspiração', () => {
+  it('é determinístico: mesma entrada e seed = mesma ficha, mesmo bicho, mesma inspiração', async () => {
     const input = makeInput('Mateus Sperandio', QUIZ, true);
-    const a = generateOracleComplete(input, 77);
-    const b = generateOracleComplete(input, 77);
+    const a = await generateOracleComplete(input, 77);
+    const b = await generateOracleComplete(input, 77);
     expect(a.result.creature.baseName).toBe(b.result.creature.baseName);
     expect(a.bestiaryPick.creature.nome).toBe(b.bestiaryPick.creature.nome);
     expect(a.fichaByStage.ultra).toEqual(b.fichaByStage.ultra);
   });
 
-  it('reroll (seed nova) troca a criatura, NUNCA a ficha — a ficha é quem a pessoa é', () => {
+  it('reroll (seed nova) troca a criatura, NUNCA a ficha — a ficha é quem a pessoa é', async () => {
     const input = makeInput('Mateus Sperandio', QUIZ, true);
-    const a = generateOracleComplete(input, 1);
-    const b = generateOracleComplete(input, 2);
+    const a = await generateOracleComplete(input, 1);
+    const b = await generateOracleComplete(input, 2);
     expect(a.fichaByStage.rookie).toEqual(b.fichaByStage.rookie);
     expect(a.fichaByStage.ultra).toEqual(b.fichaByStage.ultra);
     expect(a.companion?.id).toBe(b.companion?.id);
   });
 
-  it('o NOME da criatura do bestiário nunca aparece em prompt, nome ou bio', () => {
+  it('o NOME da criatura do bestiário nunca aparece em prompt, nome ou bio', async () => {
     // A inspiração é interna. O corpus tem nomes de franquia (o dono decidiu
     // que tudo bem PORQUE não sai no prompt final) — este teste é essa regra.
     for (const seed of [3, 14, 62, 240]) {
       const input = makeInput(`Pessoa Teste ${seed}`, QUIZ, seed % 2 === 0);
-      const { result, bestiaryPick } = generateOracleComplete(input, seed);
+      const { result, bestiaryPick } = await generateOracleComplete(input, seed);
       const nome = bestiaryPick.creature.nome.toLowerCase();
       expect(result.creature.baseName.toLowerCase()).not.toContain(nome);
       const bioTudo = `${result.creature.bio.pt} ${result.creature.bio.en}`.toLowerCase();
@@ -73,8 +74,8 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
-  it('a ficha de cada estágio gasta exatamente o orçamento do estágio', () => {
-    const { fichaByStage } = generateOracleComplete(makeInput('Ana Orcamento', QUIZ), 5);
+  it('a ficha de cada estágio gasta exatamente o orçamento do estágio', async () => {
+    const { fichaByStage } = await generateOracleComplete(makeInput('Ana Orcamento', QUIZ), 5);
     for (const stage of FICHA_STAGE_ORDER) {
       const m = STAGE_MULTIPLIER[stage];
       const f = fichaByStage[stage];
@@ -87,11 +88,11 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
-  it('alocação geracional: ponto direto em par SÓ destravado (10 passivos), e nunca nos estágios baixos', () => {
+  it('alocação geracional: ponto direto em par SÓ destravado (10 passivos), e nunca nos estágios baixos', async () => {
     const baseIds = new Set<string>(CLASS_ELEMENT_ORDER);
     for (const seed of [5, 21, 77]) {
       const input = makeInput(`Gera Cascata ${seed}`, QUIZ, seed % 2 === 1);
-      const { fichaByStage } = generateOracleComplete(input, seed);
+      const { fichaByStage } = await generateOracleComplete(input, seed);
       for (const stage of FICHA_STAGE_ORDER) {
         const f = fichaByStage[stage];
         const pares = Object.keys(f.elementos).filter(id => !baseIds.has(id));
@@ -110,8 +111,8 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
-  it('talentos respeitam ranksMaximos, exclusivoCom e pré-requisito de verdade', () => {
-    const { fichaByStage } = generateOracleComplete(makeInput('Bruno Talento', QUIZ, true), 9);
+  it('talentos respeitam ranksMaximos, exclusivoCom e pré-requisito de verdade', async () => {
+    const { fichaByStage } = await generateOracleComplete(makeInput('Bruno Talento', QUIZ, true), 9);
     for (const stage of FICHA_STAGE_ORDER) {
       const f = fichaByStage[stage];
       const owned = Object.keys(f.talentos);
@@ -132,23 +133,23 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
-  it('o companheiro é uma captura LEGAL da ficha rookie (mecânica, não flavor)', () => {
-    const { fichaByStage, companion } = generateOracleComplete(makeInput('Carla Captura', QUIZ), 11);
+  it('o companheiro é uma captura LEGAL da ficha rookie (mecânica, não flavor)', async () => {
+    const { fichaByStage, companion } = await generateOracleComplete(makeInput('Carla Captura', QUIZ), 11);
     expect(companion).not.toBeNull();
     const poder = poderCaptura(fichaByStage.rookie, companion!.criatura);
     expect(poder).toBeGreaterThanOrEqual(companion!.criatura.poderBase);
   });
 
-  it('a linhagem do bestiário tem um pick por estágio, sem repetir criatura, e o 1º É o bestiaryPick', () => {
+  it('a linhagem do bestiário tem um pick por estágio, sem repetir criatura, e o 1º É o bestiaryPick', async () => {
     const input = makeInput('Elisa Linhagem', QUIZ, true);
-    const { bestiaryPick, bestiaryLineage } = generateOracleComplete(input, 7);
+    const { bestiaryPick, bestiaryLineage } = await generateOracleComplete(input, 7);
     expect(Object.keys(bestiaryLineage)).toEqual([...FICHA_STAGE_ORDER]);
     expect(bestiaryLineage.rookie.creature.nome).toBe(bestiaryPick.creature.nome);
     const nomes = FICHA_STAGE_ORDER.map(s => bestiaryLineage[s].creature.nome);
     expect(new Set(nomes).size).toBe(nomes.length);
   });
 
-  it('a evolução tende a ficar na mesma espécie: maioria das transições preserva a família', () => {
+  it('a evolução tende a ficar na mesma espécie: maioria das transições preserva a família', async () => {
     // "Dragão tende a ir para dragão" — mede sobre vários perfis: quando o
     // estágio anterior TEM família, a transição mantém a família na maioria
     // dos casos. A travessia existe (proximidade somada pode vencer), mas é
@@ -156,7 +157,7 @@ describe('pipeline completo do oráculo', () => {
     let same = 0; let total = 0;
     for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
       const input = makeInput(`Perfil Especie ${seed}`, QUIZ, seed % 2 === 0);
-      const { bestiaryLineage } = generateOracleComplete(input, seed);
+      const { bestiaryLineage } = await generateOracleComplete(input, seed);
       for (let i = 1; i < FICHA_STAGE_ORDER.length; i++) {
         const prev = bestiaryLineage[FICHA_STAGE_ORDER[i - 1]].creature;
         const next = bestiaryLineage[FICHA_STAGE_ORDER[i]].creature;
@@ -169,10 +170,10 @@ describe('pipeline completo do oráculo', () => {
     expect(same / total).toBeGreaterThan(0.5);
   });
 
-  it('skills por forma: básica/especial em todo estágio, PT+EN, estáveis no reroll', () => {
+  it('skills por forma: básica/especial em todo estágio, PT+EN, estáveis no reroll', async () => {
     const input = makeInput('Fabio Skills', QUIZ, true);
-    const a = generateOracleComplete(input, 4);
-    const b = generateOracleComplete(input, 5);
+    const a = await generateOracleComplete(input, 4);
+    const b = await generateOracleComplete(input, 5);
     const baseIds = new Set<string>(CLASS_ELEMENT_ORDER);
     for (const stage of FICHA_STAGE_ORDER) {
       const s = a.stageSkills[stage];
@@ -195,7 +196,7 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
-  it('as 6 respostas do RITUAL alcançam ficha, skills, companheiro e bestiário', () => {
+  it('as 6 respostas do RITUAL alcançam ficha, skills, companheiro e bestiário', async () => {
     // Regressão medida: tudo que o pipeline deriva lia `soul.oracle` cru, e o
     // quiz só era aplicado nas cópias locais do generateOracle. Resultado: duas
     // pessoas com o mesmo nascimento e respostas OPOSTAS recebiam ficha,
@@ -203,19 +204,19 @@ describe('pipeline completo do oráculo', () => {
     // pula o teste de 20 as 6 respostas são o único sinal de personalidade.
     const cuidar = makeInput('Gemeo Ritual', { grupo: 'protege', objetivo: 'cuidar', pressao: 'firme' });
     const vencer = makeInput('Gemeo Ritual', { grupo: 'lidera', objetivo: 'vencer', pressao: 'ataca' });
-    const a = generateOracleComplete(cuidar, 777);
-    const b = generateOracleComplete(vencer, 777);
+    const a = await generateOracleComplete(cuidar, 777);
+    const b = await generateOracleComplete(vencer, 777);
     expect(a.fichaByStage.rookie).not.toEqual(b.fichaByStage.rookie);
     expect(a.stageSkills.ultra.especial.nome.pt).not.toBe(b.stageSkills.ultra.especial.nome.pt);
     expect(a.bestiaryPick.creature.nome).not.toBe(b.bestiaryPick.creature.nome);
   });
 
-  it('as skills NÃO repetem nome ao longo da jornada dos 5 estágios', () => {
+  it('as skills NÃO repetem nome ao longo da jornada dos 5 estágios', async () => {
     // A jornada tem 5 estágios; o banco de substantivos por (escola, tipo)
     // tinha 2 e o anti-repetição esgotava no 3º — rookie e ultimate saíam com
     // "Golpe de Água" idêntico (nome, custo E descrição). Agora são 6.
     for (const seed of [4, 33, 108]) {
-      const { stageSkills } = generateOracleComplete(makeInput(`Jornada ${seed}`, QUIZ, seed % 2 === 0), seed);
+      const { stageSkills } = await generateOracleComplete(makeInput(`Jornada ${seed}`, QUIZ, seed % 2 === 0), seed);
       for (const tipo of ['basica', 'especial'] as const) {
         const nomes = FICHA_STAGE_ORDER.map(stage => stageSkills[stage][tipo].nome.pt);
         expect(new Set(nomes).size, `${tipo} repetiu: ${nomes.join(' / ')}`).toBe(nomes.length);
@@ -223,10 +224,31 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
-  it('sobrevive a JSON — perfil salvo gera a mesma criatura no reroll', () => {
+  it('a classe REAL entra só no prompt de sprite — nunca no nome, bio ou descrição por forma', async () => {
+    // Pedido do dono: mais detalhe no prompt (classe do class-system), mas
+    // JAMAIS visível pro jogador em texto nenhum. `archetype.phrase`/
+    // "arquétipo" já existiam ANTES disso (sistema de frase-identidade
+    // próprio do oracle.ts, sem relação com o class-system) — não dá pra
+    // banir a palavra, então o teste confere a PALAVRA REAL que
+    // `computeClassTitle` calculou pra essa ficha.
+    const input = makeInput('Helena Classe', QUIZ, true);
+    const { result, fichaByStage } = await generateOracleComplete(input, 321);
+    const classe = await computeClassTitle(fichaByStage.ultra);
+    expect(classe.origem).toBe('arquetipo'); // ultra sempre bate pleno (medido)
+    const palavraClasse = classe.nome.en.toLowerCase();
+    for (const stage of result.creature.stages) {
+      expect(stage.description.pt.toLowerCase()).not.toContain(palavraClasse);
+      expect(stage.description.en.toLowerCase()).not.toContain(palavraClasse);
+      // mas o prompt de sprite TEM que carregar o detalhe extra
+      expect(stage.imagePrompt.toLowerCase()).toContain(palavraClasse);
+    }
+    expect(`${result.creature.bio.pt} ${result.creature.bio.en}`.toLowerCase()).not.toContain(palavraClasse);
+  });
+
+  it('sobrevive a JSON — perfil salvo gera a mesma criatura no reroll', async () => {
     const input = makeInput('Diego Persistencia', QUIZ, true);
-    const direto = generateOracleComplete(input, 42);
-    const roundTrip = generateOracleComplete(JSON.parse(JSON.stringify(input)) as OracleInput, 42);
+    const direto = await generateOracleComplete(input, 42);
+    const roundTrip = await generateOracleComplete(JSON.parse(JSON.stringify(input)) as OracleInput, 42);
     expect(roundTrip.result.creature.baseName).toBe(direto.result.creature.baseName);
     expect(roundTrip.bestiaryPick.creature.nome).toBe(direto.bestiaryPick.creature.nome);
   });
