@@ -7,7 +7,24 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **contraste do tema escuro (17/ago/2026, noite)** —
+Última atualização: **classe da criatura (17/ago/2026, noite)** — pedido do
+dono: "senti falta de ter também a classe da criatura, gerada a partir do que
+ela faz, suas skills, talvez talentos e também de seus elementos". Achado:
+o class-system já tem exatamente esse conceito — **arquétipos** (79 no
+registro, `registry/arquetipos.ts`), identidades que EMERGEM de elemento +
+escola + recurso, nunca escolhidas. `ficha/classTitle.ts` chama o motor real
+(`calcularProgressao`, mesmo import dinâmico das skills) e escolhe o
+arquétipo mais específico entre os que a ficha desbloqueou (pleno → diluído
+"Aspirante a X" → fallback genérico pelo elemento dominante). Medido em 24
+perfis: rookie nunca bate arquétipo pleno, mega e ultra batem em 100% —
+mesma escada da cascata de pares. Nome PT vem AO VIVO do motor (zero cópia);
+EN é tradução própria por id, com teste de paridade contra os 79 ids reais.
+Extraído `ficha/realEngine.ts` (Personagem + progressão real), compartilhado
+entre poder de skill e classe. Persistido no save (`soulmonClassTitles`),
+mostrado na página do Pet como um rótulo dourado abaixo do nome da forma. Ver
+`docs/ORACULO.md` (rodada 7).
+
+Antes disso: **contraste do tema escuro (17/ago/2026, noite)** —
 feedback ao vivo do dono: "troca o nome pet por Soulmon e olha esse
 contraste aí, em fundo escuro tem que ser texto branco". (1) A aba "Pet" virou
 "Soulmon" (`App.tsx`). (2) O contraste era um bug REAL, não só percepção: o

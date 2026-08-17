@@ -1477,6 +1477,10 @@ export default function App() {
     setGameState(prev => (prev.soulmonSkills ? prev : { ...prev, soulmonSkills: skills }));
   }, [setGameState]);
 
+  const handleClassTitlesComputed = useCallback((titles: NonNullable<GameState['soulmonClassTitles']>) => {
+    setGameState(prev => (prev.soulmonClassTitles ? prev : { ...prev, soulmonClassTitles: titles }));
+  }, [setGameState]);
+
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
   }, []);
@@ -2291,6 +2295,8 @@ export default function App() {
               petName={gameState.soulmonMeta?.baseName}
               savedSkills={gameState.soulmonSkills}
               onSkillsComputed={handleSkillsComputed}
+              savedClassTitles={gameState.soulmonClassTitles}
+              onClassTitlesComputed={handleClassTitlesComputed}
               language={language}
             /></Suspense>
           )}

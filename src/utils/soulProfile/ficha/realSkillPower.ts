@@ -18,6 +18,7 @@
 
 import type { Ficha, EscolaId, RecursoId } from './types';
 import type { StageSkill, StageSkills } from './skills';
+import { buildRealPersonagem } from './realEngine';
 
 /** Alcance-base por escola — a fórmula do motor cobra uma taxa por metro,
  *  então a escolha entra no custo real, não só no sabor da descrição. */
@@ -73,18 +74,7 @@ async function poderDeUmaSkill(
  * pesado só para rotular custo baixo/alto.
  */
 export async function withRealPower(ficha: Ficha, skills: StageSkills): Promise<StageSkills> {
-  const engine = await import('class-system');
-  const personagem = {
-    nome: ficha.nome,
-    elementos: ficha.elementos,
-    escolas: ficha.escolas,
-    recursos: ficha.recursos,
-    talentos: ficha.talentos,
-    profissoes: ficha.profissoes,
-    bestiario: [],
-  };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const prog = engine.calcularProgressao(personagem as any);
+  const { engine, personagem, prog } = await buildRealPersonagem(ficha);
 
   const aplicar = async (skill: StageSkill, fracaoEnergia: number, fracaoTempo: number): Promise<StageSkill> => {
     try {

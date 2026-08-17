@@ -22,6 +22,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readJson } from '../utils/safeStorage';
 import { FICHA_STAGE_ORDER, type FichaStage } from '../utils/soulProfile/ficha/types';
 import type { StageSkills, StageSkill } from '../utils/soulProfile/ficha/skills';
+import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import { PixelTag } from './pixel/PixelKit';
 
 interface PetPageProps {
@@ -32,6 +33,10 @@ interface PetPageProps {
    *  é assim que o cache do save se preenche sozinho, sem tocar nos pontos de
    *  criação/reroll/upgrade. */
   onSkillsComputed?: (skills: Record<FichaStage, StageSkills>) => void;
+  /** Classe por estágio (arquétipo real do class-system), mesmo padrão de
+   *  cache de `savedSkills`/`onSkillsComputed`. */
+  savedClassTitles?: Record<FichaStage, ClassTitle>;
+  onClassTitlesComputed?: (titles: Record<FichaStage, ClassTitle>) => void;
   unlockedEvolutions: string[];
   currentStageId: string;
   demoCharacterId?: string;
@@ -61,11 +66,15 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
   );
 }
 
-export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharacterId, petName, savedSkills, onSkillsComputed, language = 'pt-BR' }: PetPageProps) {
+export function PetPage({
+  stages, unlockedEvolutions, currentStageId, demoCharacterId, petName,
+  savedSkills, onSkillsComputed, savedClassTitles, onClassTitlesComputed, language = 'pt-BR',
+}: PetPageProps) {
   const isPt = language === 'pt-BR';
   const L = (t: { pt: string; en: string }) => (isPt ? t.pt : t.en);
 
   const [skills, setSkills] = useState<Record<FichaStage, StageSkills> | null>(savedSkills ?? null);
+  const [classTitles, setClassTitles] = useState<Record<FichaStage, ClassTitle> | null>(savedClassTitles ?? null);
   useEffect(() => {
     let vivo = true;
     (async () => {
@@ -105,12 +114,24 @@ export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharac
         } catch {
           // fica com o par qualitativo — nunca some skill nenhuma por causa disto
         }
+
+        // Classe por estágio — mesmo motor, mesma ficha, mesmo cuidado: falhar
+        // aqui nunca pode tirar formas/skills da tela.
+        try {
+          const { computeClassTitlesAllStages } = await import('../utils/soulProfile/ficha/classTitle');
+          const titulos = await computeClassTitlesAllStages(fichaByStage);
+          if (!vivo) return;
+          setClassTitles(titulos as Record<FichaStage, ClassTitle>);
+          onClassTitlesComputed?.(titulos as Record<FichaStage, ClassTitle>);
+        } catch {
+          // sem classe é melhor que sem página
+        }
       } catch {
         // segue com o que veio do save (se veio) — as formas continuam na tela
       }
     })();
     return () => { vivo = false; };
-  }, [onSkillsComputed]);
+  }, [onSkillsComputed, onClassTitlesComputed]);
 
   // Só as formas JÁ desbloqueadas, em ordem de estágio — nunca as futuras.
   const formas = useMemo(() => {
@@ -148,6 +169,7 @@ export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharac
         const stageKey = getStageLevel(formId) as FichaStage;
         const isCurrent = formId === currentStageId;
         const stageSkills = skills?.[stageKey];
+        const classTitle = classTitles?.[stageKey];
         return (
           <div key={formId} className="sm-card" style={{ padding: 12, boxShadow: isCurrent ? 'inset 0 0 0 2px var(--sm-ink)' : undefined }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -165,6 +187,11 @@ export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharac
                   <PixelTag>{L(form.stageName)}</PixelTag>
                   {isCurrent && <PixelTag>{isPt ? 'atual' : 'current'}</PixelTag>}
                 </div>
+                {classTitle && (
+                  <div className="text-xs" style={{ color: 'var(--sm-gold)', fontWeight: 700, marginTop: 2 }}>
+                    {L(classTitle.nome)}
+                  </div>
+                )}
               </div>
             </div>
             <p style={{ fontSize: 12.5, lineHeight: 1.45, margin: '8px 0 0' }}>
