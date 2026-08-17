@@ -525,3 +525,25 @@ Persistida no save (`soulmonClassTitles`), mesmo padrão de cache que
 sendo computada e cacheada no save — infraestrutura reaproveitável, testada,
 sem custo de exibir nada — mas `PetPage.tsx` não renderiza o rótulo. Se um
 dia isso mudar, o dado já está pronto; só falta o JSX.
+
+## Sufixo "-mon" removido da geração de nomes (ago/2026, rodada 8)
+
+Achado do dono testando um exemplo real: `rookieName`/`champName`/
+`perfName`/`megaName`/`ultraName` em `oracle.ts` sufixavam `mon`
+MECANICAMENTE em toda criatura — e combinado com os prefixos de linha
+(`War`/`Chaos`/`Zeed`… no Vírus, `Omega` no Mega Vírus, `Omni` no Ultra),
+isso soletrava nomes REAIS de outra franquia (WarGreymon, Omegamon/Omnimon
+— a própria fusão dos três Megas, que é exatamente o que o Ultra representa
+aqui). O mesmo tipo de risco que já tirou os 74 sprites da Bandai do
+projeto (ver "Arte e nomes" no `CLAUDE.md`), só que na CAMADA DE TEXTO em
+vez da visual.
+
+Correção: nenhum estágio leva sufixo fixo. `rookieName` é só o `baseName`
+(já próprio, gerado por radical de elemento/reino + sílaba do nome — nunca
+mudou). Champion/Perfeito/Mega continuam `{prefixo}{baseName}` (prefixos
+como War/Chaos/Omega sozinhos, sem o sufixo, não são especificamente
+identificáveis com nenhuma franquia — são palavras genéricas do gênero
+fantasia). O Ultra trocou o prefixo `Omni` (que sozinho já cola demais no
+personagem específico) por `Triune` ("três em um" — descreve o MESMO
+conceito de fusão dos 3 Megas sem o nome emprestado). Teste que fixava
+`ultra.name.startsWith('Omni')` atualizado para `'Triune'`.

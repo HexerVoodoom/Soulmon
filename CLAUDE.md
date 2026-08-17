@@ -232,6 +232,12 @@ ficam valendo:
   demais de personagem registrado — e o sprite vai pro app de um usuário real.
   Há teste travando a ausência desses nomes.
 - **Rookie/champion/ultimate/mega ficam**: vocabulário genérico do gênero.
+- **Nenhum nome de criatura leva sufixo fixo tipo "-mon"** (`rookieName` etc.
+  em `oracle.ts`). Prefixo de linha + sufixo mecânico é o que soletrava nomes
+  reais de outra franquia (`War` + `_mon` = WarGreymon; `Omni` + `_mon` =
+  Omnimon, a própria fusão dos 3 Megas — exatamente o conceito do Ultra
+  aqui). Prefixos sozinhos (War/Chaos/Omega…) são genéricos e ficam; o que
+  NÃO pode voltar é o sufixo fixo somado a eles.
 - **`digimonName` (bridge do widget) e as chaves `digiapp_*` ficam**, pelo mesmo
   motivo de sempre: são internos, nunca aparecem pro usuário, e renomear
   quebraria o widget/save de quem já joga. O servidor de chat e de push aceita

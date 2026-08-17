@@ -1010,7 +1010,9 @@ const NAME_TAILS = ['n', 'r', 's', 'l', 'x', 'a', 'o', 'u'];
 
 // Prefixos de nome por LINHA de evolução (uma linha por tipo) — o nome conta
 // a história: Fang→War→Zeed (Vírus), Sage→Meta→Aeon (Data), Holy→Arch→Seraph
-// (Vacina), e o Ultra é sempre Omni_.
+// (Vacina), e o Ultra é sempre Triune_. NENHUM nome de estágio leva sufixo
+// fixo (ver `rookieName`/`ultraName`) — combinar prefixo + sufixo mecânico
+// é o que soletrava nomes de outra franquia.
 const CHAMPION_PREFIXES: Record<AlignmentId, string[]> = {
   poder: ['Fang', 'Dark', 'Rage', 'Grim'],
   harmonia: ['Sage', 'Rune', 'Gale', 'Echo'],
@@ -3051,7 +3053,12 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   }
   const baseName = rawName.replace(/(.)\1+/g, '$1');
 
-  const rookieName = `${baseName}mon`;
+  // Nome sem sufixo mecânico: um "-mon" fixo em toda criatura, combinado com
+  // prefixos de linha (War/Omega/Omni…), soletrava nomes reais do Digimon
+  // (WarGreymon, Omegamon/Omnimon) — o mesmo tipo de risco que já tirou os
+  // 74 sprites da Bandai daqui (ver "Arte e nomes" no CLAUDE.md). O radical
+  // (`baseName`) já é próprio e único; ele é o nome inteiro do rookie.
+  const rookieName = baseName;
 
   const elName = ELEMENT_INFO[dominantElement].name;
   const el2Name = secondaryElement ? ELEMENT_INFO[secondaryElement].name : null;
@@ -3157,9 +3164,9 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     const megaShape = pickShape(rng, MEGA_SHAPES, branch, petElements, usedShapes);
     megaShapeByBranch[branch] = megaShape;
 
-    const champName = `${pick(rng, CHAMPION_PREFIXES[branch])}${baseName}mon`;
-    const perfName = `${pick(rng, PERFECT_STAGE_PREFIXES[branch])}${baseName}mon`;
-    const megaName = `${pick(rng, MEGA_STAGE_PREFIXES[branch])}${baseName}mon`;
+    const champName = `${pick(rng, CHAMPION_PREFIXES[branch])}${baseName}`;
+    const perfName = `${pick(rng, PERFECT_STAGE_PREFIXES[branch])}${baseName}`;
+    const megaName = `${pick(rng, MEGA_STAGE_PREFIXES[branch])}${baseName}`;
     const linePt = `linha ${bInfo.name.pt} (${bInfo.attribute.pt})`;
     const lineEn = `${bInfo.name.en} (${bInfo.attribute.en}) line`;
 
@@ -3213,7 +3220,10 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   }
 
   // ----- Ultra: a fusão dos 3 Megas (o ápice absoluto) -----
-  const ultraName = `Omni${baseName}mon`;
+  // "Triune" (três-em-um), não "Omni_mon" — o prefixo antigo + o sufixo
+  // fixo juntos soletravam demais um fusão bem específica e famosa de outra
+  // franquia. Ver nota do `baseName`/`rookieName` acima.
+  const ultraName = `Triune${baseName}`;
   stages.push({
     stage: 'ultra',
     stageName: STAGE_NAMES.ultra,
