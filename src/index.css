@@ -415,9 +415,19 @@
     }
   }
 
+  /* `--background`/`--foreground` são tokens do scaffold shadcn importado
+     do Figma — só trocam de valor sob a classe `.dark`, que este app NUNCA
+     aplica (o tema real alterna via `[data-theme]` no `<html>`, ver
+     `--sm-*` mais abaixo). Resultado: qualquer texto sem `color` próprio
+     herdava `--foreground` sempre no valor CLARO (`oklch(.145 0 0)`, quase
+     preto) mesmo com o tema escuro ativo — nome da criatura, descrição por
+     forma e nome da skill na página do Pet ficavam quase pretos sobre o
+     card verde-escuro. O `body` usa os tokens de verdade, que JÁ respondem
+     a `[data-theme="dark"]`; `--background`/`--foreground` continuam intactos
+     para quem os usa via `.bg-background`/`.text-foreground` explícito. */
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: var(--sm-bg);
+    color: var(--sm-ink);
   }
 
   :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) h1 {

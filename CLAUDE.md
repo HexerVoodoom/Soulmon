@@ -281,6 +281,22 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
    DigiApp com o salt `digiapp:`. `desktop/renderer/src/cloudSync.test.ts` é o
    único lugar onde as duas cópias se encontram — se copiar mais alguma regra
    pra lá, adicione o teste de paridade junto.
+10. **Dois sistemas de tema no mesmo CSS.** O app real alterna
+    `[data-theme="light"|"dark"]` no `<html>` e define `--sm-*` para os dois. O
+    `index.css` TAMBÉM carrega o scaffold shadcn importado do Figma
+    (`--background`/`--foreground`/`.dark`), que só muda de valor sob a classe
+    `.dark` — nunca aplicada por este app. Texto sem `color` próprio herda
+    `body { color: var(--foreground) }`, que fica PRESO no valor claro
+    (`oklch(.145 0 0)`, quase preto) mesmo com `[data-theme="dark"]` ativo —
+    achado assim na página do Pet (nome/descrição/skill quase pretos sobre
+    card verde-escuro). `body` foi trocado para `--sm-bg`/`--sm-ink` (que
+    respondem ao tema de verdade); NÃO reintroduza `var(--foreground)` /
+    `var(--background)` em texto novo — são só para os componentes de
+    `components/ui/` que os usam explicitamente via `.text-foreground` /
+    `.bg-background`. Para checar contraste de verdade, não confie só no
+    screenshot pequeno (o cinza quase-preto sobre fundo bem escuro ainda
+    "parece" legível): amostre o PIXEL renderizado (ex.: `PIL`/`Pillow` lendo
+    o PNG do Playwright) ou leia `getComputedStyle(el).color` — ambos batem.
 
 ## Convenções
 

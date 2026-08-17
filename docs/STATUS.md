@@ -7,7 +7,25 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **descrição por forma + poder real da skill (17/ago/2026,
+Última atualização: **contraste do tema escuro (17/ago/2026, noite)** —
+feedback ao vivo do dono: "troca o nome pet por Soulmon e olha esse
+contraste aí, em fundo escuro tem que ser texto branco". (1) A aba "Pet" virou
+"Soulmon" (`App.tsx`). (2) O contraste era um bug REAL, não só percepção: o
+scaffold shadcn importado do Figma define `body { color: var(--foreground) }`,
+e `--foreground` só troca de valor sob a classe `.dark` — que este app NUNCA
+aplica (o tema alterna via `[data-theme]` no `<html>`). Resultado: todo texto
+sem `color` próprio herdava `--foreground` sempre no valor CLARO
+(`oklch(.145 0 0)`, quase preto) mesmo com o tema escuro ativo. Pego por
+amostragem de PIXEL na página do Pet (não só `getComputedStyle` — o preview
+visual enganava, o cinza quase-preto sobre o verde bem escuro do card ainda
+parecia "vagamente legível" no screenshot pequeno): nome da criatura, descrição
+por forma e nome da skill renderizavam em `rgb(10,10,10)` sobre
+`rgb(23,58,55)`. `body` agora usa os tokens de verdade (`--sm-bg`/`--sm-ink`),
+que já respondem a `[data-theme="dark"]` — `--background`/`--foreground`
+continuam intactos para quem os usa via `.bg-background`/`.text-foreground`
+explícito (alguns modais em `components/ui/`). Ver footgun 10 em "Footguns".
+
+Antes disso: **descrição por forma + poder real da skill (17/ago/2026,
 noite)** — feedback ao vivo do dono testando o app: (1) a descrição por forma
 só falava do FÍSICO, faltava o comportamento ("o que ele faz") — agora soma
 uma frase real do papel+alinhamento dominante (`behaviorSentence`, extraída do
