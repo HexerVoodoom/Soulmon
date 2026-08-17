@@ -107,6 +107,158 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 ---
 
+---
+
+## P1½ — achados da rodada 5 (auditoria visual de 15/08/2026)
+
+> Rodada que converteu onboarding/tutorial/modais/menu/Evolução para o kit via
+> CSS. O que sobrou abaixo é o que SÓ arte resolve — cada item foi visto em
+> screenshot antes de entrar aqui.
+
+### A9 · Fundo do Torneio em TEAL (regerar — hoje é roxo com hue-rotate)
+- **Destino:** `src/assets/soulmon/bg/tournament.png` (substitui)
+- **Uso:** `TournamentPage.tsx` (fundo da página inteira)
+- **Anexar:** `REF-kit-v12.png` + o `tournament.png` atual (composição serve)
+- **Por quê:** a arte saiu ROXA (paleta antiga). O código aplica
+  `hue-rotate(265deg) saturate(0.75)` como paliativo — funciona, mas achata o
+  contraste e o anel dourado vira cinza-arroxeado. Ao trocar o PNG, **remova o
+  `filter` em `TournamentPage.tsx`** (comentário "RODADA 5" marca o lugar).
+- **Prompt:**
+  > Pixel-art background for a tournament screen, portrait 3:4: a dark DEEP
+  > TEAL arena under a starry sky, a large ornate GOLDEN ring floating above
+  > the horizon as a stage, thin neon-cyan light lines across the floor,
+  > subtle copper pipe details on the edges. Crisp 16-bit pixel art, hard
+  > pixel edges, no blur. STRICT palette: deep teal #0B3A40, neon cyan
+  > #6EFFF8, copper #C68642, gold accents, near-black #0D0D0D. Absolutely NO
+  > magenta, purple, violet or pink anywhere — not in sky, glows or shadows.
+
+### A10 · Ícones BANHO e DORMIR em pixel (hoje são vetor chapado)
+- **Destino:** `src/assets/soulmon/icons/icon-bath.png` e `icon-sleep.png`
+  (substituem; manter também `icon-wake.png` no mesmo estilo)
+- **Uso:** fileira de ações da Home (`CompanionHUD.tsx`) — ao lado do
+  `icon-items.png`, que JÁ é pixel (a mochila): a diferença de era gráfica na
+  mesma fileira é o que denuncia.
+- **Anexar:** `REF-kit-v12.png` (bloco "Icons & Items") + `icon-items.png`
+- **Prompt (um por ícone, trocando o símbolo):**
+  > Pixel-art icon, 128×128, fully transparent background: SÍMBOLO in crisp
+  > 16-bit pixel art with a near-black outline, subtle copper/teal shading,
+  > hard pixel edges, no blur, no frame around it. STRICT palette: #0B3A40,
+  > #6EFFF8, #C68642, #0D0D0D plus natural accent tones. NO magenta, purple,
+  > violet or pink. Transparent PNG, no baked checkerboard.
+  > - **Banho** → `a water droplet with a small shine, cyan-blue`
+  > - **Dormir** → `a crescent moon with two tiny sparkles, pale gold`
+  > - **Acordar** → `a rising sun over a horizon line, warm gold`
+
+### A11 · Mãos do Pedra-Papel-Tesoura (hoje são emoji do sistema)
+- **Destino:** `src/assets/soulmon/icons/games/hand-{rock,paper,scissors}.png`
+- **Uso:** `RPSGame.tsx` — os 3 botões de jogada usam ✊ ✋ ✌️ (`HANDS`).
+  São os CONTROLES PRIMÁRIOS do minijogo em emoji de sistema — a maior peça
+  fora do kit que sobrou num jogo.
+- **Anexar:** `REF-kit-v12.png`
+- **Prompt:**
+  > Three pixel-art hand icons on a fully transparent background, in a row:
+  > (1) a closed fist (rock), (2) an open palm facing forward (paper), (3) a
+  > fist with index and middle finger extended in a V (scissors). Copper-toned
+  > skin with near-black outlines, crisp 16-bit pixel art, hard edges, no
+  > blur. STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D. NO magenta,
+  > purple, violet or pink. Transparent PNG.
+
+### A12 · Berço "sentável" (mais largo e raso — Ref C)
+- **Destino:** `src/assets/soulmon/nest-base.png` (substitui; manter ~360×~160
+  de fonte, reescala nearest)
+- **Uso:** Home — base sob o pet (`CompanionHUD.tsx` + `BASE_SLOTS.nest`)
+- **Anexar:** `REF-home.png` (o grifo POUSADO no berço) + o `nest-base.png` atual
+- **Por quê:** o berço atual (148×83) some INTEIRO atrás de sprites de 200px.
+  Foi tentado trazer o aro para a frente por z-index na rodada 5 e revertido:
+  a bacia cobria o corpo do pet. A Ref C resolve com ARTE: bacia mais LARGA
+  (uns 220px em tela) e mais RASA, com o aro baixo — o pet senta com o corpo
+  inteiro visível. Depois de trocar a arte, ajustar `BASE_SLOTS.nest`
+  (`utils/petStage.ts`) para `w: 220, h: 70` (aprox.) e, se ficar bom, retomar
+  o z-index 2 do aro (comentário "RODADA 5" em `CompanionHUD.tsx`).
+- **Prompt:**
+  > Pixel-art item on a fully transparent background: a WIDE and SHALLOW
+  > ornate copper basin / cradle seen from the front — clearly wider than it
+  > is tall, low rim, engraved filigree, small chains on both ends, a glowing
+  > cyan crystal at the front center with a soft wisp of cyan smoke. The
+  > center of the basin is OPEN so a creature can sit inside it. Crisp 16-bit
+  > pixel art, hard edges, light top-left. STRICT palette: #0B3A40, #6EFFF8,
+  > #C68642, #0D0D0D. NO magenta, purple, violet or pink. Transparent PNG.
+
+### A13 · Splash / tela de carregamento (Ref A — nada disso existe)
+- **Destino:** `src/assets/soulmon/splash/` —
+  `logo-soulmon.png` (wordmark) · `frame-pipes.png` (moldura completa 9:16
+  com vinhas, para usar como IMAGEM DE FUNDO da splash, não como 9-slice) ·
+  `crystals-pedestal.png` (os 3 cristais acorrentados do rodapé)
+- **Uso:** `IntroScreen.tsx` (hoje: vídeo/fade simples). A splash é a ÚNICA
+  tela onde a moldura de cano na borda não briga com rolagem — o veto N4 do
+  design-critic vale para telas roláveis, não aqui.
+- **Anexar:** `REF-splash.png`
+- **Prompt (wordmark):**
+  > Pixel-art game logo on a fully transparent background: the word "SOUL" in
+  > hollow letters with a glowing NEON CYAN outline, and the word "MON" in
+  > solid COPPER with a dark outline, side by side, with a small cyan flame
+  > rising behind the letters and thin circuit traces dripping below like
+  > data rain. Crisp 16-bit pixel art, hard edges. STRICT palette: #0B3A40,
+  > #6EFFF8, #C68642, #0D0D0D. NO magenta, purple, violet or pink.
+- **Prompt (moldura 9:16):**
+  > Full-screen pixel-art frame, portrait 9:16, on a fully transparent
+  > background: an ornate COPPER PIPE border running along all four edges,
+  > with elbow joints and glowing cyan crystals at the corners, and green
+  > vines with small leaves wrapped asymmetrically around the pipes (denser
+  > at the top corners). The CENTER IS EMPTY/transparent. Crisp 16-bit pixel
+  > art, hard edges. STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D plus
+  > muted green vines. NO magenta, purple, violet or pink.
+- **Prompt (cristais):**
+  > Pixel-art element on a fully transparent background: three large glowing
+  > cyan crystals on small stone pedestals, connected to each other by
+  > hanging copper chains, front view. Crisp 16-bit pixel art, hard edges.
+  > STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D. NO magenta, purple,
+  > violet or pink.
+
+### A14 · Textura de circuito (opcional — o CSS já cobre)
+- **Estado:** a rodada 5 aplicou a grade de circuito por CSS
+  (`.sm-circuit-bg`) no fundo padrão da Home. Uma TEXTURA de arte (traços de
+  circuito orgânicos, nós, pontos de solda como na Ref C) ficaria mais rica —
+  mas é refinamento, não lacuna.
+- **Prompt (se um dia valer):**
+  > Seamless tileable pixel-art texture, 256×256: faint neon-cyan circuit
+  > board traces (thin lines, right angles, small solder dots and diamond
+  > nodes) over PURE TRANSPARENCY, very low contrast, meant as a subtle
+  > overlay on a dark teal background. Crisp pixels, no blur, no glow blobs.
+  > STRICT palette: cyan #6EFFF8 at low opacity only. NO magenta, purple,
+  > violet or pink. Transparent PNG.
+
+### A15 · Ícones dos traços de nascimento (hoje emoji do sistema)
+- **Destino:** `src/assets/soulmon/icons/traits/trait-{guloso,carinhoso,teimoso,sortudo,madrugador}.png` (64×64)
+- **Uso:** `utils/passives.ts` → cartão de identidade em Estatísticas (hoje
+  mostra 🍖 🫶 🪨 🍀 🌅 do sistema) e o mesmo emoji no relatório/HUD.
+- **Anexar:** `REF-kit-v12.png` (bloco "Icons & Items")
+- **Prompt (um por traço, trocando o símbolo):**
+  > Pixel-art icon, 64×64, fully transparent background: SÍMBOLO, crisp
+  > 16-bit pixel art, near-black outline, hard edges, no frame. STRICT
+  > palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D plus natural accent tones.
+  > NO magenta, purple, violet or pink. Transparent PNG.
+  > - **Guloso** → `a roasted meat drumstick`
+  > - **Carinhoso** → `two hands cupping a small glowing heart`
+  > - **Teimoso** → `a small sturdy rock with a determined face`
+  > - **Sortudo** → `a four-leaf clover with a tiny sparkle`
+  > - **Madrugador** → `a rising sun over a horizon line`
+
+### A16 · Ícones do relatório diário (cabeçalho por tipo de dia)
+- **Destino:** `src/assets/soulmon/icons/report/report-{perfect,good,slow,return}.png` (96×96)
+- **Uso:** `DailyReportModal.tsx` (`headIcon` via `RowIcon` — hoje line-art
+  da lucide: estrela/sol/nuvem, o último line-art de destaque que sobrou).
+- **Anexar:** `REF-kit-v12.png`
+- **Prompt (um por tipo):**
+  > Pixel-art icon, 96×96, fully transparent background: SÍMBOLO with a soft
+  > cyan glow, crisp 16-bit pixel art, near-black outline, hard edges.
+  > STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D plus warm gold.
+  > NO magenta, purple, violet or pink. Transparent PNG.
+  > - **Dia perfeito** → `a big shining star with small sparks`
+  > - **Dia bom** → `a bright sun with straight pixel rays`
+  > - **Dia mais devagar** → `a small rain cloud with two cyan drops`
+  > - **Retorno** → `a sunrise with an upward arrow`
+
 ## P2 — melhoram, não destravam
 
 ### A4 · Nós do Soul Link (grafo de evolução)
@@ -183,7 +335,8 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 ## Estado da conta de geração (atualizar ao usar)
 
 - **Higgsfield CLI:** `mateus.sprnd@gmail.com`, plano pro — **1,5 crédito**
-  (14/08/2026). Custo `gpt_image_2` 1k: low 0,5 · medium 2 · high 4.
+  (14/08/2026; conferido 15/08 — o sandbox desta sessão não alcança o gerador,
+  então a rodada 5 só escreveu prompts, não gerou). Custo `gpt_image_2` 1k: low 0,5 · medium 2 · high 4.
   Rode `higgsfield generate cost <job> --quality X --prompt "..."` antes de
   lotes grandes. Limite de **4 jobs concorrentes** no plano — disparar mais
   derruba TODOS com `rate_limit_reached`, inclusive os que caberiam.

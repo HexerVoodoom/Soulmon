@@ -5022,7 +5022,9 @@ button.sm-px-node {
 .sm-btn:disabled {
   filter: none;
   opacity: 1;
-  background: var(--sm-line);
+  /* `background-color`, NUNCA o atalho: o atalho zera `background-image` e
+     apaga as bandas de quina da RODADA 5 (mesma regra da rodada 4). */
+  background-color: var(--sm-line);
   /* Puxado em direção à TINTA do tema (não ao preto): no claro escurece, no
      escuro clareia — o mesmo ajuste serve nos dois. `--sm-muted` puro media
      4,29:1 sobre `--sm-line` no tema claro. */
@@ -5815,6 +5817,11 @@ button.sm-px-node {
    rodada. Regra nova sempre no FIM do arquivo, variante sempre ANINHADA.
    ───────────────────────────────────────────────────────────────────────── */
 .sm-bottom-nav-btn-on,
+.sm-btn,
+.sm-card,
+.sm-px-pop,
+.sm-px-field,
+.sm-px-choice,
 .sm-px-check-box,
 .sm-px-chip,
 .sm-px-fab,
@@ -5932,7 +5939,13 @@ button.sm-px-node {
      chapada por cima dele. `--sm-pet-scene` vem do componente (é o `css` do
      cenário equipado, ou `none`). */
   background-color: var(--sm-bg);
-  background-image: var(--sm-pet-scene, none);
+  /* Fallback = a MESMA grade de circuito do `.sm-circuit-bg` (G10): com
+     `background-attachment: fixed` as duas camadas ancoram no viewport e a
+     faixa do pet casa pixel a pixel com o fundo padrão da Home. */
+  background-image: var(--sm-pet-scene,
+    repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in srgb, var(--sm-px-cyan) 6%, transparent) 47px 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in srgb, var(--sm-px-cyan) 6%, transparent) 47px 48px),
+    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--sm-px-cyan) 9%, transparent), transparent 55%));
   background-attachment: fixed;
   background-size: cover;
   background-position: center;
@@ -5969,4 +5982,140 @@ button.sm-px-node {
 @media (max-height: 800px) {
   .sm-px-ritual-row { min-height: 64px; padding: 6px 12px; }
   .sm-px-panel-title { padding: 6px 16px 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RODADA 5 — O LEGADO FALA A LÍNGUA DO KIT
+   ═══════════════════════════════════════════════════════════════════════════
+   O achado da auditoria desta rodada (screenshots em viewport 412×915, os
+   dois temas): as telas que NUNCA passaram por rodada de kit — onboarding,
+   tutorial, topo da Evolução, modais legados, popover do menu — ainda falavam
+   Material (cantos arredondados, sombra difusa, botão Duolingo com glow
+   laranja). Todas usam os DOIS primitivos legados `.sm-btn` e `.sm-card`.
+   Em vez de converter tela a tela, os primitivos passam a desenhar o kit:
+   chanfro de octógono, moldura de cobre, banda de quina (regra da rodada 4 —
+   as classes novas estão registradas lá). Nenhum call-site muda de nome.
+
+   As MESMAS regras de sempre: variante ANINHADA, `background-color` (nunca o
+   atalho `background:`, que apaga a banda), `--sm-cham-c` igual ao chanfro do
+   `clip-path`, declarações antes das variantes (o contract test lê o corpo
+   até a primeira chave interna). */
+.sm-btn {
+  --sm-cham-c: 8px;
+  --sm-cham-line: var(--sm-px-copper);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  border-radius: 0;
+  border: 2px solid var(--sm-px-copper);
+  /* Miolo aceso em ciano = o "active" da referência virou o estado de
+     DESTAQUE do CTA, o mesmo contrato do .sm-px-btn-primary/.sm-px-jump. */
+  background-color: var(--sm-px-cyan);
+  color: #04211f;
+  box-shadow: none;
+  font-family: var(--sm-font-pixel);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  -webkit-font-smoothing: none;
+  min-height: 48px;
+  padding: 10px 20px;
+  text-shadow: none;
+  &:hover { filter: brightness(1.1); box-shadow: none; }
+  &:active { transform: translateY(2px); box-shadow: none; filter: brightness(1.18); }
+  &:disabled {
+    /* Mesma tese da regra antiga (legibilidade > opacidade), agora sem o
+       volume 3D: preenchido com o cinza de linha do tema e tinta muted. */
+    background-color: var(--sm-line);
+    color: color-mix(in srgb, var(--sm-muted) 78%, var(--sm-ink));
+    border-color: color-mix(in srgb, var(--sm-muted) 45%, transparent);
+    --sm-cham-line: color-mix(in srgb, var(--sm-muted) 45%, transparent);
+    transform: none;
+    filter: none;
+  }
+}
+/* Secundário: o "normal" da referência — miolo na superfície do tema, moldura
+   de cobre esmaecida, tinta do tema. Mesmo corpo, só cor. */
+.sm-btn-secondary {
+  background-color: var(--sm-surface);
+  color: var(--sm-ink);
+  border-color: color-mix(in srgb, var(--sm-px-copper) 75%, transparent);
+  --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 75%, transparent);
+}
+.sm-btn-gold {
+  background-color: var(--sm-gold);
+  color: #241505;
+  border-color: color-mix(in srgb, var(--sm-gold) 55%, black);
+  --sm-cham-line: color-mix(in srgb, var(--sm-gold) 55%, black);
+}
+
+/* Cartão legado: moldura chanfrada de cobre no lugar do canto arredondado +
+   sombra Material. Sombra difusa NÃO existe no kit — profundidade vem da
+   moldura. (Sombra externa seria cortada pelo clip-path de qualquer forma.) */
+.sm-card {
+  --sm-cham-c: 8px;
+  --sm-cham-line: var(--sm-gold);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Popover do menu (nav inferior): a única superfície flutuante do app que
+   ainda era Material puro. `filter: drop-shadow` e não `box-shadow`, porque
+   sombra de caixa é recortada pelo clip-path e drop-shadow segue o contorno. */
+.sm-px-pop {
+  --sm-cham-c: 8px;
+  --sm-cham-line: var(--sm-px-copper);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  background-color: var(--sm-surface);
+  border: 2px solid var(--sm-px-copper);
+  filter: drop-shadow(0 8px 16px rgba(4, 16, 15, 0.45));
+}
+
+/* Campo de texto do kit (onboarding/tutorial): chanfro menor (6px) porque o
+   campo é mais raso que um cartão. 16px de fonte é anti auto-zoom do iOS. */
+.sm-px-field {
+  --sm-cham-c: 6px;
+  --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 75%, transparent);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  background-color: var(--sm-surface);
+  color: var(--sm-ink);
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 75%, transparent);
+  border-radius: 0;
+  font-size: 16px;
+  padding: 12px 14px;
+  &:focus {
+    border-color: var(--sm-px-cyan);
+    --sm-cham-line: var(--sm-px-cyan);
+  }
+}
+
+/* Opção selecionável do onboarding/tutorial (quiz, espécies, sugestões de
+   tarefa): superfície chanfrada que acende em ciano quando selecionada. O
+   call-site marca seleção com aria-pressed — a cor acompanha o atributo, não
+   uma classe à parte, para o estado visível e o acessível nunca divergirem. */
+.sm-px-choice {
+  --sm-cham-c: 6px;
+  --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 65%, transparent);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  background-color: var(--sm-surface);
+  color: var(--sm-ink);
+  border: 2px solid color-mix(in srgb, var(--sm-px-copper) 65%, transparent);
+  border-radius: 0;
+  cursor: pointer;
+  text-align: left;
+  &[aria-pressed="true"] {
+    background-color: color-mix(in srgb, var(--sm-px-cyan) 18%, var(--sm-surface));
+    border-color: var(--sm-px-cyan);
+    --sm-cham-line: var(--sm-px-cyan);
+  }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+/* Fundo de circuito tênue (G10 da rodada 2, nunca aplicado): a grade ciana
+   quase invisível que dá profundidade à Ref C. Camada de background em quem
+   pinta o fundo da Home sem cenário equipado — cenário equipado sobrescreve
+   por style inline, então a grade só aparece no teal padrão. */
+.sm-circuit-bg {
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 47px, color-mix(in srgb, var(--sm-px-cyan) 6%, transparent) 47px 48px),
+    repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in srgb, var(--sm-px-cyan) 6%, transparent) 47px 48px),
+    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--sm-px-cyan) 9%, transparent), transparent 55%);
 }

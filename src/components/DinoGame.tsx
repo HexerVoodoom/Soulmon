@@ -219,7 +219,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         </span>
       </div>
 
-      <div className="sm-px-card" style={{ margin: '0 16px', overflow: 'hidden', position: 'relative', backgroundColor: 'transparent' }}>
+      <div className="sm-px-card" style={{ margin: 'auto 16px 0', overflow: 'hidden', position: 'relative', backgroundColor: 'transparent' }}>
         <canvas
           ref={canvasRef}
           onPointerDown={jump}
@@ -255,7 +255,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       </div>
 
       {/* Big jump button OUTSIDE the game box — thumb never covers the action */}
-      <div style={{ padding: 16 }}>
+      <div style={{ padding: 16, marginBottom: 'auto' }}>
         {/* Continua sendo um `<button>` cru e não um `PixelButton`: a ação é
             `onPointerDown` (pular no toque, sem esperar o `click`), que é
             requisito do jogo e o kit não expõe. O que mudou é a LINGUAGEM —

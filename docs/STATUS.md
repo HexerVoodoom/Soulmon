@@ -18,6 +18,25 @@ proibido em prompt por teste. Dados por snapshot com SHA
 `claude/canonical-classification` na main do Besti-rio- (o pool aponta para a
 branch até lá). Ver `docs/ORACULO.md`.
 
+Antes disso: **UI rodada 6 (15/ago/2026)** — cinco passadas de QA de
+design sobre a rodada 5: guardrail de moeda restaurado em Estatísticas (Bits
+sem ícone, fonte de calculadora), relatório diário/modais de tarefa/batalha da
+Masmorra no kit, Dino sem vazio, barra do ritual segmentada, varredura do tema
+claro e closeup das quinas. Relatório: `product/soulmon-01/ui/align-round6.md`;
+prompts de arte ganharam A15–A16.
+
+Antes disso: **UI rodada 5 (15/ago/2026)** — os primitivos legados
+`.sm-btn`/`.sm-card` passaram a desenhar o kit pixel (chanfro + cobre + banda
+de quina), o que converteu de uma vez onboarding, tutorial, modais, popover do
+menu e o topo da Evolução; backdrops roxos viraram teal, os vazamentos de roxo
+de Torneio/PPT/Masmorra saíram, e o fundo de circuito da Ref C entrou por CSS.
+Relatório: `product/soulmon-01/ui/align-round5.md`. O que falta é ARTE —
+prompts prontos em `docs/BACKLOG-ARTE-GERAR.md` (itens A9–A14 novos).
+⚠️ Registro de ambiente: os 6 testes de `GameStateContext.storage.test.tsx`
+falham em sandbox Linux (o mock de storage cheio não dispara quota no jsdom de
+lá) — **pré-existente**, falha idêntica no commit base; nos ambientes das
+rodadas anteriores passavam.
+
 Antes disso: **novo motor do oráculo (ago/2026)** — o teste de
 personalidade do repositório `teste-personalidade` virou a LEITURA do oráculo do
 Soulmon (`src/utils/soulProfile/`), no lugar do signo por faixa de datas, do

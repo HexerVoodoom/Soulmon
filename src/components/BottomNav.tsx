@@ -138,19 +138,19 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
               style={{ position: 'fixed', inset: 0, zIndex: 60 }}
             />
             <div
+              className="sm-px-pop"
               style={{
                 position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
-                minWidth: 190, background: 'var(--sm-surface)', border: '1px solid var(--sm-line)',
-                borderRadius: 14, boxShadow: '0 10px 28px rgba(42,36,64,0.2)', overflow: 'hidden', zIndex: 61,
+                minWidth: 200, overflow: 'hidden', zIndex: 61,
               }}
             >
               {onOpenCredits && (
                 <button
                   onClick={() => { onOpenCredits(); setMenuOpen(false); }}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px',
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 14px',
                     background: 'transparent', border: 'none',
-                    color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                    color: 'var(--sm-ink)', fontFamily: 'var(--sm-font-pixel)', fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', textAlign: 'left',
                   }}
                 >
                   <img src={iconGem} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
@@ -160,10 +160,10 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
               <button
                 onClick={() => { onNavigate('settings'); setMenuOpen(false); }}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px',
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 14px',
                   background: currentView === 'settings' ? 'var(--sm-bg)' : 'transparent', border: 'none',
-                  borderTop: onOpenCredits ? '1px solid var(--sm-line)' : 'none',
-                  color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                  borderTop: onOpenCredits ? '1px solid color-mix(in srgb, var(--sm-px-copper) 40%, transparent)' : 'none',
+                  color: 'var(--sm-ink)', fontFamily: 'var(--sm-font-pixel)', fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', textAlign: 'left',
                 }}
               >
                 <img src={iconGear} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
@@ -173,9 +173,9 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
                 <button
                   onClick={() => { onResetOnboarding(); setMenuOpen(false); }}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 14px',
-                    background: 'transparent', border: 'none', borderTop: '1px solid var(--sm-line)',
-                    color: 'var(--sm-ink)', fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 14px',
+                    background: 'transparent', border: 'none', borderTop: '1px solid color-mix(in srgb, var(--sm-px-copper) 40%, transparent)',
+                    color: 'var(--sm-ink)', fontFamily: 'var(--sm-font-pixel)', fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', textAlign: 'left',
                   }}
                 >
                   <img src={iconReset} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />

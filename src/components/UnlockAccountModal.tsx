@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { Sparkles, Infinity as InfinityIcon, LoaderCircle } from 'lucide-react';
 import { RowIcon } from './RowIcon';
 import iconReset from '../assets/soulmon/icons/icon-reset.png';
@@ -93,7 +93,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 140, background: 'rgba(20,15,40,0.55)',
+      position: 'fixed', inset: 0, zIndex: 140, background: 'rgba(4, 18, 20,0.55)',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12,
     }}>
       <div className="sm-card" style={{
@@ -183,8 +183,9 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
         className="sm-card"
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-          textAlign: 'left', border: 'none', cursor: 'pointer', background: 'var(--sm-primary-soft)',
-        }}
+          textAlign: 'left', border: 'none', cursor: 'pointer', backgroundColor: 'var(--sm-primary-soft)',
+          ['--sm-cham-line' as string]: 'transparent',
+        } as CSSProperties}
       >
         <Sparkles size={16} strokeWidth={2.2} color="var(--sm-primary)" style={{ flexShrink: 0 }} />
         <span style={{ flex: 1, minWidth: 0 }}>
@@ -206,8 +207,9 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
       className="sm-card"
       style={{
         width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-        textAlign: 'left', border: 'none', cursor: 'pointer', background: 'var(--sm-primary-soft)',
-      }}
+        textAlign: 'left', border: 'none', cursor: 'pointer', backgroundColor: 'var(--sm-primary-soft)',
+        ['--sm-cham-line' as string]: 'transparent',
+      } as CSSProperties}
     >
       <Sparkles size={16} strokeWidth={2.2} color="var(--sm-primary)" style={{ flexShrink: 0 }} />
       <span style={{ flex: 1, minWidth: 0 }}>

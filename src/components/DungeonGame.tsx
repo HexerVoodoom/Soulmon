@@ -87,15 +87,16 @@ function TimingBar({ speed, color, label, onStop }: {
     <div style={{ width: '100%' }}>
       <div
         onPointerDown={stop}
-        style={{ position: 'relative', height: 34, borderRadius: 10, background: '#131a26', border: '1px solid #2c3a52', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
+        style={{ position: 'relative', height: 34, background: '#131a26', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
       >
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: '30%', background: 'rgba(250, 204, 21, 0.22)' }} />
         <div style={{ position: 'absolute', top: 0, bottom: 0, left: '46%', width: '8%', background: 'rgba(74, 222, 128, 0.45)' }} />
-        <div style={{ position: 'absolute', top: 2, bottom: 2, left: `calc(${pos * 100}% - 3px)`, width: 6, borderRadius: 2, background: color, boxShadow: `0 0 8px ${color}` }} />
+        <div style={{ position: 'absolute', top: 2, bottom: 2, left: `calc(${pos * 100}% - 3px)`, width: 6, background: color, boxShadow: `0 0 8px ${color}` }} />
       </div>
       <button
         onPointerDown={stop}
-        style={{ width: '100%', marginTop: 8, padding: '12px 0', borderRadius: 14, border: 'none', background: color, color: '#0b0f17', fontWeight: 800, fontSize: '0.95rem', letterSpacing: 0.5, cursor: 'pointer' }}
+        className="sm-btn"
+        style={{ width: '100%', marginTop: 8, backgroundColor: color, borderColor: 'color-mix(in srgb, ' + color + ' 55%, black)', ['--sm-cham-line' as string]: 'color-mix(in srgb, ' + color + ' 55%, black)', color: '#0b0f17' } as React.CSSProperties}
       >
         {label}
       </button>
@@ -339,7 +340,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   };
 
   const hpBar = (cur: number, max: number, color: string) => (
-    <div style={{ width: 110, height: 10, borderRadius: 5, background: '#1c2636', border: '1px solid #2c3a52', overflow: 'hidden' }}>
+    <div style={{ width: 110, height: 10, background: '#1c2636', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', overflow: 'hidden' }}>
       <div style={{ width: `${(cur / max) * 100}%`, height: '100%', background: color, transition: 'width 0.3s' }} />
     </div>
   );
@@ -436,7 +437,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
               {isPt ? 'Recorde' : 'Best'} <b className="sm-px-arcade-value" style={{ color: '#facc15' }}>{best}</b>
             </span>
             <span className="sm-px-arcade-label">
-              {isPt ? 'Dificuldade base' : 'Base level'} <b className="sm-px-arcade-value" style={{ color: '#c084fc' }}>{baseLevel}</b>
+              {isPt ? 'Dificuldade base' : 'Base level'} <b className="sm-px-arcade-value" style={{ color: 'var(--sm-px-cyan)' }}>{baseLevel}</b>
             </span>
           </div>
           <p style={{ fontSize: '0.8rem', color: '#9fb2d8', maxWidth: 330 }}>
