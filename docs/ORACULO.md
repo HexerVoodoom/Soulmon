@@ -455,3 +455,21 @@ testes usam sem precisar do motor pesado. Testado: `poder` da especial > da
 básica em todo estágio, e cresce do rookie ao ultra (`realSkillPower.test.ts`).
 Saves com skills salvas antes desta mudança simplesmente não mostram o número
 até a página recomputar — mesmo padrão de todo campo novo aqui.
+
+## Nome da aba + contraste do tema escuro (ago/2026, rodada 6)
+
+Mesma sessão de teste ao vivo, duas frases: "troca o nome pet por Soulmon" e
+"olha esse contraste aí, em fundo escuro tem que ser texto branco". (1) A aba
+`Pet` (`App.tsx`) virou `Soulmon` — era o único rótulo da navegação sem PT/EN
+porque funciona igual nos dois idiomas (nome próprio). (2) O contraste era um
+bug de verdade, achado por amostragem de PIXEL na página do Pet (não só
+`getComputedStyle` — o screenshot pequeno enganava o olho): nome da criatura,
+descrição por forma e nome da skill renderizavam quase pretos
+(`rgb(10,10,10)`) sobre o card verde-escuro (`rgb(23,58,55)`). Causa: dois
+sistemas de tema convivem no mesmo `index.css` — o app alterna
+`[data-theme]` no `<html>` e usa `--sm-*`; o scaffold shadcn do Figma também
+define `--background`/`--foreground`, mas só sob a classe `.dark`, que este
+app nunca aplica. `body { color: var(--foreground) }` ficava preso no valor
+claro (quase preto) mesmo com o tema escuro ativo, e qualquer texto sem
+`color` próprio (nome/descrição/skill na página do Pet — nenhum deles setava
+`color` explícito) herdava esse preto. Ver footgun 10 em `CLAUDE.md`.

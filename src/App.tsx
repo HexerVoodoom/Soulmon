@@ -2223,7 +2223,7 @@ export default function App() {
                   glifos) e apertar o padding para 4px devolve ~6px de sobra. */}
               {([
                 { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
-                { view: 'pet' as const, label: 'Pet' },
+                { view: 'pet' as const, label: 'Soulmon' },
                 { view: 'stats' as const, label: language === 'pt-BR' ? 'Estatísticas' : 'Stats' },
               ]).map(({ view, label }) => (
                 <button
