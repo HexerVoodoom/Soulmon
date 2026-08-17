@@ -51,6 +51,11 @@ export interface OracleAxesInput {
    *  alinhamento (caminho de vida, expressão, motivação, impressão, dia
    *  natalício, maturidade). */
   numerologyNumbers: number[];
+  /** Proeminência planetária do mapa (shares somando 100 nos 10 corpos —
+   *  `astrology/prominence.ts`). É a CONSTELAÇÃO ancorando os 11 elementos do
+   *  class-system que não têm sinal psicométrico. Opcional: sem mapa, todo
+   *  planeta vale 10 (neutro) e nenhum dos 11 ganha ou perde. */
+  planetProminence?: Record<string, number>;
 }
 
 function facet(inputs: OracleAxesInput, dimension: string, name: string, fallback: number): number {
@@ -133,7 +138,12 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // puxava ar acima de terra na simulação. Compensado nos coeficientes de
   // traço, não mexendo na tabela de numerologia.
   const elements: Record<ElementId, number> = {
-    agua: (astrologyElements['água'] / astroTotal) * 60 + traits.agreeableness * 0.4,
+    // agua e fogo tinham o mesmo 0.4, mas o quiz do ritual (reaplicado por
+    // cima destes eixos) empurra fogo mais que agua (~1,25 vs ~0,97 esperado
+    // por perfil) e a amabilidade se dilui entre agua/planta/luz — no agregado
+    // de 200 perfis agua raspava o piso de 4% de dominância. 0.4→0.44 devolve
+    // a paridade efetiva sem tocar a direção (amabilidade→agua segue).
+    agua: (astrologyElements['água'] / astroTotal) * 60 + traits.agreeableness * 0.44,
     fogo: (astrologyElements.fogo / astroTotal) * 60 + traits.extraversion * 0.4,
     terra: (astrologyElements.terra / astroTotal) * 60 + traits.conscientiousness * 0.47,
     ar: (astrologyElements.ar / astroTotal) * 60 + traits.openness * 0.35,
@@ -154,8 +164,13 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     // o mesmo sinal organizado/metódico, mas insumo genuinamente
     // independente) espalha esse peso por duas fontes não correlacionadas em
     // vez de contar a mesma duas vezes.
+    // O 0.25 do JP deixava o industrial com a menor média neutra depois do ar
+    // e, sem astro nem numerologia fortes por ele, ele caía a 3,5% do agregado
+    // em parte das simulações de 200 perfis (meta: todo elemento ≥4%).
+    // 0.25→0.29 devolve ~2 pontos de média neutra pela fonte INDEPENDENTE
+    // (jung), sem reabrir a dupla contagem de conscienciosidade descrita acima.
     industrial: facet(inputs, 'conscientiousness', 'organização', traits.conscientiousness) * 0.5 +
-      soft(jung.JP) * 0.25,
+      soft(jung.JP) * 0.29,
   };
   // Bônus primário/secundário da numerologia, espelhando o próprio
   // `addScore(primary, pts); addScore(secondary, 1)` do oracle.ts — dar +6 aos
@@ -180,7 +195,13 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // fazia vencer o argmax muito acima da linha de base de 1 em 5 (suporte
   // ~29%, tanque ~25%, magico ~9,5%). Nenhum termo primário passa de ~0.45.
   const roles: Record<RoleId, number> = {
-    suporte: traits.agreeableness * 0.45 + (astrologyElements['água'] / astroTotal) * 30 +
+    // No caminho só-6-perguntas todo traço fica em 50, então quem decide é a
+    // MÉDIA NEUTRA de cada fórmula — e a do suporte era a menor das cinco
+    // (22,5 + água·30 + 5), enquanto o quiz do ritual é quem menos o empurra
+    // (1 opção primária, contra ~5 perguntas que tocam alcance). Medido em 200
+    // perfis: suporte dominava 8% do caminho curto. Amabilidade 0.45→0.52
+    // sobe a média neutra sem mudar a direção do sinal.
+    suporte: traits.agreeableness * 0.52 + (astrologyElements['água'] / astroTotal) * 30 +
       (100 - traits.honestyHumility) * 0.1,
     tanque: facet(inputs, 'conscientiousness', 'prudência', traits.conscientiousness) * 0.35 +
       (100 - traits.neuroticism) * 0.3 + (astrologyElements.terra / astroTotal) * 20,
@@ -195,8 +216,12 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     // O termo astro_ar do alcance compõe com o próprio bônus de ar na tabela
     // de elementos, e ar é o alvo primário/secundário mais frequente da
     // numerologia — então alcance pegava carona nesse mesmo sinal correlato.
-    alcance: facet(inputs, 'conscientiousness', 'prudência', traits.conscientiousness) * 0.4 +
-      soft(jung.TF) * 0.3 + (astrologyElements.ar / astroTotal) * 25,
+    // Além disso a média neutra dele era a MAIOR das cinco (20 + 15 + ar·25),
+    // e é nela que o caminho só-6 inteiro se apoia — com o empurrão extra do
+    // quiz, alcance dominava 31-46% do caminho curto. Prudência 0.4→0.33 e
+    // TF 0.3→0.25 nivelam a média neutra; os sinais seguem os mesmos.
+    alcance: facet(inputs, 'conscientiousness', 'prudência', traits.conscientiousness) * 0.33 +
+      soft(jung.TF) * 0.25 + (astrologyElements.ar / astroTotal) * 25,
   };
   for (const n of numerologyNumbers) {
     roles[NUMBER_ROLES[n]] += 4;
@@ -236,6 +261,23 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // mundo cujos escores de elemento caem num formato parecido (comum, já que
   // vários reinos compartilham elementos) converge para o MESMO reino sempre;
   // a assinatura quebra isso sem tornar o resultado menos determinístico.
+  // Piso estrutural por reino: a pergunta "lugar" do ritual (ORACLE_QUESTIONS,
+  // reaplicada por cima destes eixos no generateOracle) dá +4 CONCENTRADO a
+  // oceano/picos/floresta/campina, mas as opções guarda-chuva dividem o mesmo
+  // orçamento — "extremos" racha 2/2 (deserto/gelo) e "oculto" racha 2/1/1
+  // (cavernas/pantano/akasha). Numa escala em que o share médio de reino é ~11,
+  // +1 contra +4 é estrutural, não gosto: medido em 200 perfis, pantano ficava
+  // em 2% e akasha em 1,5% do agregado (fantasmas). A pergunta é vocabulário do
+  // ritual (oracle.ts), então a compensação vive AQUI, como piso na escala crua
+  // (~220/reino) pré-normalização — calibrado por simulação até todo reino
+  // passar de 3% sem derrubar os concentrados.
+  // gelo divide o +2 de "extremos" com o deserto, mas o deserto ainda soma o
+  // bônus de alinhamento poder e elementos fortes (fogo/terra) — o gelo não
+  // tem nada disso e oscilava em 2,5-4% no agregado; o piso menor reflete o
+  // racha 2/2 (metade do buraco dos 2/1/1).
+  const REALM_SPLIT_COMPENSATION: Partial<Record<RealmId, number>> = {
+    pantano: 28, akasha: 28, gelo: 15,
+  };
   const inputKey = JSON.stringify(inputs);
   const realms: Record<RealmId, number> = Object.fromEntries(
     REALM_ORDER.map((realm) => {
@@ -243,7 +285,7 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
         (sum, [el, weight]) => sum + (weight ?? 0) * elements[el as ElementId],
         0
       );
-      return [realm, score + (hashString(`${inputKey}|${realm}`) % 4)];
+      return [realm, score + (REALM_SPLIT_COMPENSATION[realm] ?? 0) + (hashString(`${inputKey}|${realm}`) % 4)];
     })
   ) as Record<RealmId, number>;
 
@@ -251,14 +293,43 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // copiados direto; os outros 11 não têm sinal ancorado nos dados e ficam num
   // piso pequeno, para que quem consome consiga distinguir "não modelado"
   // (isto) de "modelado e pontuou zero" sem divisão por zero.
+  // Os 11 elementos sem nome compartilhado deixam de ser piso fixo: a
+  // CONSTELAÇÃO os ancora, pela proeminência planetária do mapa
+  // (astrology/prominence.ts) e pela associação clássica planeta→elemento —
+  // Marte→marcial, Saturno→tempo, Urano→eletricidade, Plutão→morte,
+  // Mercúrio→som, Vênus→vida, Júpiter→espaço, Lua+Saturno→gravidade (maré e
+  // peso), Netuno→arcano. Sem mapa (perfil legado), proeminência neutra (10)
+  // e os 11 ficam no BASE — presentes, nunca dominantes.
+  //
+  // O que carrega sinal é o DESVIO do neutro, não o share cru: em 800 mapas
+  // reais os shares grudam na média (p50 9,9 · p90 15,4 · p99 18,6 · máx
+  // ~23), então escalar o valor mal separa um mapa marcante de um comum.
+  // GAIN amplifica o desvio: planeta mediano → elemento ≈ BASE; planeta no
+  // p99 → BASE+36, competindo com os 6 compartilhados (25-55) SÓ nos mapas
+  // em que ele realmente domina — que é a semântica pretendida. Calibrado
+  // por simulação com mapas REAIS, como os demais coeficientes.
+  const P = (body: string) => inputs.planetProminence?.[body] ?? 10;
+  const dev = (body: string) => P(body) - 10;
+  const ANCHOR_BASE = 15;
+  const ANCHOR_GAIN = 4.2;
+  const anchored = (d: number, extra: number) => Math.max(0, ANCHOR_BASE + d * ANCHOR_GAIN + extra);
+  const assertividade = facet(inputs, 'extraversion', 'assertividade', traits.extraversion);
   const classElements: Record<ClassElementId, number> = {
     fogo: elements.fogo, agua: elements.agua, terra: elements.terra, ar: elements.ar,
     sombra: elements.sombra, luz: elements.luz,
-    eletricidade: 5, arcano: traits.openness * 0.15 + soft(100 - jung.SN) * 0.1,
-    vileza: (100 - traits.honestyHumility) * 0.15, morte: traits.neuroticism * 0.1,
-    vida: traits.agreeableness * 0.15, vigor: traits.conscientiousness * 0.1,
-    marcial: facet(inputs, 'extraversion', 'assertividade', traits.extraversion) * 0.15,
-    tempo: 5, som: 5, gravidade: 5, espaco: 5,
+    eletricidade: anchored(dev('Urano'), traits.extraversion * 0.06),
+    arcano: anchored(dev('Netuno'), traits.openness * 0.1 + soft(100 - jung.SN) * 0.06),
+    // vileza e morte dividem Plutão; o desvio menor + o termo de
+    // Honestidade-Humildade baixa é o que separa "sombrio" de "vil".
+    vileza: anchored(dev('Plutão') * 0.9, (100 - traits.honestyHumility) * 0.12),
+    morte: anchored(dev('Plutão'), traits.neuroticism * 0.12),
+    vida: anchored(dev('Vênus'), traits.agreeableness * 0.08),
+    vigor: anchored(dev('Marte') * 0.65 + dev('Sol') * 0.65, traits.conscientiousness * 0.05),
+    marcial: anchored(dev('Marte'), assertividade * 0.08),
+    tempo: anchored(dev('Saturno'), soft(jung.JP) * 0.06),
+    som: anchored(dev('Mercúrio'), traits.extraversion * 0.06),
+    gravidade: anchored(dev('Lua') * 0.65 + dev('Saturno') * 0.65, 0),
+    espaco: anchored(dev('Júpiter') * 0.85 + dev('Urano') * 0.4, 0),
   };
 
   const sharedClassElements = toShare(classElements, CLASS_ELEMENT_ORDER);

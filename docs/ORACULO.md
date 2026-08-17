@@ -235,6 +235,60 @@ coeficiente.
 
 ---
 
+## A fusão: ficha, bestiário e a constelação (ago/2026, rodada 2)
+
+O oráculo deixou de parar nos 4 eixos. Com os três repositórios ligados, o
+pipeline completo é:
+
+```
+leitura (soulProfile)
+  → ficha do class-system nos 5 estágios     [soulProfile/ficha/]
+  → companheiro capturável (mecânica real)   [ficha/capture.ts]
+  → criatura-inspiração do bestiário         [soulProfile/bestiary/]
+  → geração da criatura                      [oracle.ts]
+```
+
+**Dados sincronizados, nunca copiados à mão** (`scripts/sync-oracle-data.mjs`):
+snapshots com procedência (repo + SHA + data) — `ficha/classSystem.data.json`
+(65 talentos, 11 profissões, 32 criaturas, 14 famílias) e `bestiary/pool.json`
+(2.000 criaturas ÚNICAS, amostra estratificada do corpus canônico de 6.709
+elegíveis do Besti-rio-). Atualizar = `npm run sync:oracle-data` com os clones
+irmãos. ⚠️ O pool aponta para a branch `claude/canonical-classification` do
+Besti-rio- até a classificação canônica ser mergeada na main de lá.
+
+**A constelação ancora os 11 elementos órfãos** (`astrology/prominence.ts` +
+`axes.ts`): proeminência planetária real (aspectos pesados por orbe + casas
+angulares) via a associação clássica — Marte→marcial, Saturno→tempo,
+Urano→eletricidade, Plutão→morte/vileza, Mercúrio→som, Vênus→vida,
+Júpiter→espaço, Lua+Saturno→gravidade, Netuno→arcano. O sinal está no DESVIO
+do neutro (shares reais: p50 9,9 · p99 18,6), amplificado por
+`ANCHOR_GAIN` — um elemento cósmico só domina quando o planeta domina o mapa.
+
+**Cobertura TOTAL, medida em simulação com mapas reais (800 perfis)** — a
+regra é "todo elemento, talento, profissão e criatura alcançável":
+
+| O quê | Cobertura |
+|---|---|
+| 17 elementos como dominante | 17/17 (piso: vileza ~0,1% — gangorra com morte, mesmo planeta) |
+| combos derivados distintos | 88 |
+| 65 talentos (43 com pré-requisito) | 65/65 — alocação ciente de pré-requisito |
+| 11 profissões | 11/11 (5,6%–19,1%) |
+| 32 criaturas do class-system | 32/32 capturáveis no ultra (12 como companheiro rookie) |
+| 2.000 criaturas do pool | 2.000/2.000 alcançáveis por faixa |
+
+**A inspiração nunca vaza**: o bestiário tem nomes de franquia, e a decisão do
+dono é que tudo bem PORQUE o nome não sai no prompt final. O texto da criatura
+(sem o nome) alimenta só a ESCOLHA de família da máquina criativa; bio,
+conceito e prompts continuam saindo dos bancos próprios. Há teste travando
+nome-fora-de-prompt em `pipeline.test.ts`.
+
+**Estabilidade**: a ficha e o companheiro são funções da IDENTIDADE (nome +
+nascimento + respostas) — reroll troca a criatura e a inspiração, nunca a
+ficha. O jogador vê UMA linha nova no reveal ("Essência Crepúsculo · Ofício
+Joalheiro", PT+EN via `essenceLabels.ts`); pontuações continuam invisíveis.
+
+---
+
 ## Relação com o repositório `teste-personalidade`
 
 Este motor foi **prototipado** em `HexerVoodoom/teste-personalidade` e migrado
@@ -245,3 +299,73 @@ não é do Soulmon.
 
 Regra prática: mudou regra do oráculo, muda **aqui**. Regra copiada é regra que
 diverge em silêncio.
+
+## Alocação geracional, linhagem e skills (ago/2026, rodada 3)
+
+Pedido do dono, implementado nos dois lados:
+
+**Class-system (PR #5 de lá):** ponto direto nasce restrito aos 17 base; a
+CASCATA rende pontos passivos nos derivados (5+5→1 no par; divisores 5/4/3 por
+aridade), 10 passivos destravam a alocação direta (limiares 10/6/4), e o peso
+de geração entra como CUSTO de orçamento {1,3,10,30} — não multiplicador
+(a potência por aridade já existia). Duas contabilidades convivem: o nível
+efetivo antigo (skills/arquétipos intocados) e a cascata (destrave + alimento
+da geração seguinte).
+
+**Soulmon:** a ficha distribui por essa regra com orçamento PRÓPRIO de
+elementos (`ELEMENT_ORCAMENTO_BY_STAGE` 30/60/120/300/500) e especialização
+progressiva (`FOCUS_EXPONENT` — evoluir é focar). A escada medida em 120
+perfis reais: rookie–ultimate só bases · mega chega "quase destravando" (a
+antecipação é conteúdo) · ultra destrava e compra o par em ~73% dos perfis
+(23 pares distintos). A réplica da regra é gen-2 SÓ (a linguagem de essência
+do pet); paridade travada por fixtures que o `sync:oracle-data` gera rodando
+o MOTOR REAL via tsx (`cascata.parity.test.ts` — antídoto do footgun 9).
+
+**Linhagem do bestiário:** uma inspiração POR estágio, encadeada por
+proximidade de espécie (família +4 · biologia até +4,5 · elementos até +2 ·
+tamanho vizinho +1 — família domina, a soma pode vencê-la). Medido: 86,8% das
+transições preservam a família; travessias (dragão→mamífero) acontecem só com
+forte sobreposição. O 1º estágio é BIT A BIT o pick clássico que alimenta a
+geração; nenhuma criatura se repete na linhagem.
+
+**Skills por forma:** cada estágio ganha o par básica (custo baixo, frequente)
+/ especial (custo alto, rara), derivado da ficha — elemento dominante com peso
+por geração (par comprado ×3), escola distribuída dominante, recurso da ficha.
+A especial do ultra herda o PAR comprado ("Fúria de Prisma"). Custo é
+QUALITATIVO por desenho: o motor de skills do class-system é validador, não
+gerador, e portar a fórmula de custo acoplaria o app ao balanceamento de lá.
+Nomes/descrições EN+PT de léxico próprio. Skills são função da IDENTIDADE
+(reroll não troca).
+
+**Página do Pet** (`PetPage.tsx`, chip Evolução | Pet | Estatísticas): as
+formas já desbloqueadas (nunca as futuras), com a `description` por forma que
+o save sempre teve e nunca renderizou, e as duas skills. As skills são
+recomputadas sob demanda do `SOULMON_PROFILE` (determinístico) — zero campo
+novo no save; saves legados só não mostram a seção.
+
+## Revisão de unicidade e fidelidade (ago/2026, rodada 4)
+
+Medição com 200 perfis reais (metade só-6, metade com os 20 itens), pedida
+pelo dono. O que estava forte: fidelidade (respostas opostas mudam a tupla de
+identidade 10/10; os 6 traços movem elemento/papel/alinhamento em direções
+semanticamente coerentes), bestiário sem concentração (top-10 = 10,5%),
+gap de diversidade entre os dois caminhos zerado (98% vs 98% de tuplas
+distintas). O que estava quebrado e foi corrigido:
+
+- **Nomes** (`oracle.ts`): 20,5% de colisão de baseName → **1,5%**. A tupla
+  de identidade era 96,5% única, mas o funil de nomes jogava essa unicidade
+  fora (sílaba pessoal = 1ª letra+1ª vogal; bancos pequenos). Agora: todas as
+  sílabas do nome inteiro são candidatas, RNG dedicado (`|nome`), bancos
+  dobrados (8 radicais/elemento, 6/reino), 4 padrões de composição com a
+  sílaba do elemento em posição variável. Estilo preservado.
+- **Papéis no só-6** (`axes.ts`): alcance 46%→12–22%, suporte 5%→18–22%
+  (nivelamento das constantes neutras: alcance tinha a maior média em traços
+  50 E o quiz o empurrava em ~5 das 6 perguntas). Validado em 3 seeds.
+- **Identidades fantasma** (`axes.ts`): sombra 2,5%→≥10%, água 7%→≥7,5%,
+  pântano 0,5%→6,5–9%, akasha→≥3,5%, gelo→≥5% — piso
+  `REALM_SPLIT_COMPENSATION` compensando o racha estrutural das perguntas de
+  reino (+4 concentrado vs +1 rachado), sem tocar no ritual.
+
+Direções de fidelidade re-verificadas depois de cada mudança (hi/lo por
+traço). Regra de sempre: mexer em coeficiente de `axes.ts` sem refazer a
+simulação reabre o buraco que ela fechou.

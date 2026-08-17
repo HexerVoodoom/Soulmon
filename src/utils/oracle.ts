@@ -67,6 +67,15 @@ export interface OracleInput {
    *  estágios. Opcional — o usuário pode optar por não influenciar. */
   favoriteCreature?: string;
   /**
+   * Inspiração vinda do bestiário (utils/soulProfile/bestiary/select.ts):
+   * a DESCRIÇÃO da criatura escolhida (sem o nome), cuja função é uma só —
+   * alimentar a máquina de famílias com as menções de bicho que ela sabe
+   * ler. NÃO substitui a descrição do usuário (petDescription vence), NÃO
+   * entra na bio e NÃO entra em prompt de imagem. Só o pipeline
+   * (soulProfile/pipeline.ts) preenche isto.
+   */
+  bestiaryInspiration?: { texto: string; familia: string | null; biologia: string[] };
+  /**
    * Leitura ROBUSTA (utils/soulProfile/). Quando presente, ela SUBSTITUI a
    * leitura antiga — signo solar, ascendente aproximado pela hora, horóscopo
    * chinês, rashi védico, 4 números e as 6 perguntas do `ORACLE_QUESTIONS` —
@@ -229,7 +238,9 @@ export function hashString(s: string): number {
 }
 
 /** mulberry32 — RNG determinístico pequeno. */
-function mulberry32(seed: number): () => number {
+/** Exportado para os módulos do soulProfile (ficha/bestiário) usarem o MESMO
+ *  RNG semeado — segunda cópia divergiria em silêncio (footgun 9). */
+export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;
@@ -239,7 +250,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function pick<T>(rng: () => number, arr: T[]): T {
+export function pick<T>(rng: () => number, arr: T[]): T {
   return arr[Math.floor(rng() * arr.length) % arr.length];
 }
 
@@ -932,28 +943,43 @@ const ELEMENT_FLAVOR_WORDS: Record<ElementId, LText[]> = {
 // 7. Criatura — bestiário de fusão, características e prompts
 // ---------------------------------------------------------------------------
 
+// Bancos AMPLOS de propósito: a máquina de nomes era o gargalo de entropia do
+// pipeline (identidade ~96% única virava ~89% de nomes únicos). Regras dos
+// bancos: radical curto (4-7 letras), pronunciável, com sabor do elemento/
+// reino; NUNCA nome de franquia; evitar quase-gêmeos entre bancos (foi o
+// 'Sylvo' da floresta colidindo com o 'Sylva' da planta — Sylvafa/Sylvofa
+// eram perceptivelmente o mesmo nome).
 const ELEMENT_NAME_STEMS: Record<ElementId, string[]> = {
-  agua: ['Aqua', 'Hydro', 'Maris', 'Nixa'],
-  fogo: ['Pyra', 'Igni', 'Flare', 'Vulko'],
-  terra: ['Terra', 'Gaio', 'Rocko', 'Petra'],
-  ar: ['Aero', 'Zephy', 'Venti', 'Skye'],
-  sombra: ['Umbra', 'Nykta', 'Noxi', 'Krow'],
-  luz: ['Lumi', 'Solari', 'Astra', 'Helio'],
-  planta: ['Flora', 'Verdi', 'Sylva', 'Thorn'],
-  industrial: ['Mecha', 'Gear', 'Volta', 'Ferro'],
+  agua: ['Aqua', 'Hydro', 'Maris', 'Nixa', 'Undi', 'Coral', 'Naia', 'Torren'],
+  fogo: ['Pyra', 'Igni', 'Flare', 'Vulko', 'Faiska', 'Chama', 'Ardo', 'Forna'],
+  terra: ['Terra', 'Gaio', 'Rocko', 'Petra', 'Grani', 'Argil', 'Basal', 'Monti'],
+  ar: ['Aero', 'Zephy', 'Venti', 'Skye', 'Brisa', 'Nimbo', 'Alize', 'Zonda'],
+  sombra: ['Umbra', 'Nykta', 'Noxi', 'Krow', 'Duska', 'Vespra', 'Morvo', 'Onyra'],
+  luz: ['Lumi', 'Solari', 'Astra', 'Helio', 'Luxa', 'Fulgo', 'Alba', 'Prisma'],
+  planta: ['Flora', 'Verdi', 'Sylva', 'Thorn', 'Bromia', 'Cipo', 'Musgo', 'Germi'],
+  industrial: ['Mecha', 'Gear', 'Volta', 'Ferro', 'Servo', 'Dyna', 'Cobre', 'Zinco'],
 };
 
 const REALM_NAME_STEMS: Record<RealmId, string[]> = {
-  deserto: ['Duna', 'Sahar', 'Mira'],
-  picos: ['Zeka', 'Tromu', 'Raiku'],
-  oceano: ['Abyssa', 'Nauti', 'Mareo'],
-  pantano: ['Boggu', 'Mirena', 'Sludge'],
-  floresta: ['Sylvo', 'Bruma', 'Kodama'],
-  cavernas: ['Grotta', 'Stalag', 'Ekko'],
-  gelo: ['Kriona', 'Frosta', 'Boreal'],
-  campina: ['Prado', 'Leana', 'Solis'],
-  akasha: ['Akasha', 'Aetheri', 'Nimbra'],
+  deserto: ['Duna', 'Sahar', 'Mira', 'Oasi', 'Cacta', 'Siro'],
+  picos: ['Zeka', 'Tromu', 'Raiku', 'Cume', 'Alpi', 'Cerro'],
+  oceano: ['Abyssa', 'Nauti', 'Mareo', 'Ondra', 'Salso', 'Batia'],
+  pantano: ['Boggu', 'Mirena', 'Sludge', 'Brejo', 'Lodra', 'Charko'],
+  floresta: ['Bosco', 'Bruma', 'Kodama', 'Cerne', 'Rama', 'Fronda'],
+  cavernas: ['Grotta', 'Stalag', 'Ekko', 'Kripta', 'Geoda', 'Cavra'],
+  gelo: ['Kriona', 'Frosta', 'Boreal', 'Neva', 'Iglu', 'Polara'],
+  campina: ['Prado', 'Leana', 'Solis', 'Trigo', 'Relva', 'Savan'],
+  akasha: ['Akasha', 'Aetheri', 'Nimbra', 'Mantra', 'Orbe', 'Anima'],
 };
+
+// Codas de nome: sempre alternam com o fim do radical (radical terminando em
+// vogal ganha coda que começa em consoante e vice-versa) — é o que mantém o
+// resultado pronunciável em qualquer combinação.
+const NAME_CODAS_AFTER_VOWEL = ['ris', 'nix', 'del', 'lyn', 'mor', 'gus', 'dal', 'vio', 'zar', 'lis', 'don', 'rex'];
+const NAME_CODAS_AFTER_CONSONANT = ['is', 'ix', 'ar', 'el', 'yn', 'ia', 'or', 'us', 'eo', 'ax', 'on', 'ura'];
+// Cauda curta do padrão radical+sílaba+cauda (a sílaba pessoal termina em
+// vogal, então a cauda é 1 consoante ou vogal fechando: Flaredin, Flaredis…).
+const NAME_TAILS = ['n', 'r', 's', 'l', 'x', 'a', 'o', 'u'];
 
 // Prefixos de nome por LINHA de evolução (uma linha por tipo) — o nome conta
 // a história: Fang→War→Zeed (Vírus), Sage→Meta→Aeon (Data), Holy→Arch→Seraph
@@ -2909,7 +2935,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // Slot 1 dominante + slot 2 (menor impacto, quase sempre a mesma família;
   // raramente 2ª família distinta; mais raro ainda, um OBJETO). Descrição do
   // pet citando um bicho tem prioridade. O horóscopo NUNCA aparece no corpo.
-  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, descText);
+  // Dica de família: a descrição do USUÁRIO manda; sem ela, a inspiração do
+  // bestiário guia a escolha de família/subfamília (por menção textual aos
+  // substantivos internos — o nome da criatura já foi removido antes de
+  // chegar aqui). Só a ESCOLHA de família lê este texto: bio, conceito e
+  // prompts continuam saindo dos bancos de palavras próprios.
+  const familyHintText = descText || (input.bestiaryInspiration ? normalizeText(input.bestiaryInspiration.texto) : '');
+  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, familyHintText);
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
   const fusionB = family.secondary.noun;
@@ -2934,18 +2966,53 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const realmInfo = REALM_INFO[dominantRealm];
   const emblem = pick(rng, REALM_EMBLEMS[dominantRealm]);
 
-  // Nome: radical de elemento(s) OU de reino + sílaba pessoal
+  // Nome: radical de elemento(s) OU de reino combinado com sílaba pessoal,
+  // em PADRÕES variados. RNG dedicado ao nome (mesmos bits de identidade +
+  // salt, stream decorrelacionado do principal): o pipeline entrega uma
+  // identidade ~96% única e a máquina de nomes não pode jogar isso fora.
+  // Antes: radical + (1ª letra + 1ª vogal do nome) — as sílabas pessoais
+  // colapsavam em "ma/ca/jo/pe" e ~11% dos nomes colidiam em N=200. Agora:
+  // bancos maiores, TODAS as sílabas CV do nome como candidatas, e 4 padrões
+  // de composição (a posição variável da sílaba do elemento é o que separa
+  // pares quase-iguais tipo Sylvafa/Sylvofa). Estilo preservado: curto,
+  // pronunciável, com sabor de elemento.
   const stemPool = [
     ...ELEMENT_NAME_STEMS[dominantElement],
     ...(secondaryElement ? ELEMENT_NAME_STEMS[secondaryElement] : []),
     ...REALM_NAME_STEMS[dominantRealm],
   ];
-  const stem = pick(rng, stemPool);
+  const nameRng = mulberry32((hashString(`${inputKey}|nome`) ^ salt) >>> 0);
+  const stem = pick(nameRng, stemPool);
   const nameLetters = normalizeName(input.fullName);
-  const nameSyllable = nameLetters
-    ? (nameLetters[0] + (nameLetters.slice(1).match(/[AEIOU]/)?.[0] ?? 'a')).toLowerCase()
-    : 'mo';
-  const baseName = (stem + nameSyllable).replace(/(.)\1+/g, '$1');
+  // Sílabas consoante+vogal extraídas do nome INTEIRO (não só a inicial):
+  // "MATEUSSPERANDIO" → ma/te/pe/ra/di… — mais bits da identidade na escolha.
+  const cvSyllables: string[] = [];
+  for (let i = 0; i + 1 < nameLetters.length; i++) {
+    if (!VOWELS.has(nameLetters[i]) && VOWELS.has(nameLetters[i + 1])) {
+      cvSyllables.push((nameLetters[i] + nameLetters[i + 1]).toLowerCase());
+    }
+  }
+  const nameSyllable = cvSyllables.length
+    ? pick(nameRng, cvSyllables)
+    : nameLetters
+      ? (nameLetters[0] + (nameLetters.slice(1).match(/[AEIOU]/)?.[0] ?? 'a')).toLowerCase()
+      : 'mo';
+  const stemEndsInVowel = /[aeiou]$/i.test(stem);
+  const coda = pick(nameRng, stemEndsInVowel ? NAME_CODAS_AFTER_VOWEL : NAME_CODAS_AFTER_CONSONANT);
+  const tail = pick(nameRng, NAME_TAILS);
+  const patternRoll = nameRng();
+  let rawName: string;
+  if (patternRoll < 0.4) {
+    rawName = stem + nameSyllable; // clássico: Flaredi
+  } else if (patternRoll < 0.6) {
+    // sílaba pessoal na FRENTE, elemento atrás: Diflare
+    rawName = nameSyllable[0].toUpperCase() + nameSyllable.slice(1) + stem.toLowerCase();
+  } else if (patternRoll < 0.8) {
+    rawName = stem + coda; // radical + coda: Aquaris, Thornix
+  } else {
+    rawName = stem + nameSyllable + tail; // Flaredin, Flaredis
+  }
+  const baseName = rawName.replace(/(.)\1+/g, '$1');
 
   const rookieName = `${baseName}mon`;
 
