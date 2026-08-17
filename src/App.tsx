@@ -2214,7 +2214,13 @@ export default function App() {
                   é uma palavra só (min-content ~168px) e `flex:1` com o
                   `min-width:auto` padrão NÃO encolhe — com a chegada do chip
                   "Pet" a fileira passou de 323 para 412px num viewport de 390 e
-                  o terceiro rótulo era cortado no meio ("ESTATÍSTIC"). */}
+                  o terceiro rótulo era cortado no meio ("ESTATÍSTIC").
+                  A fileira parou de estourar a página, mas o rótulo continuava
+                  4px maior que o próprio chip (medido em 390px: scrollWidth 109
+                  contra clientWidth 105) e o "S" final morria no chanfro. Os
+                  4px vêm do `letter-spacing: .03em` do `.sm-btn` somado a 12px
+                  de padding: zerar o espaçamento (a bitmap já tem folga entre
+                  glifos) e apertar o padding para 4px devolve ~6px de sobra. */}
               {([
                 { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
                 { view: 'pet' as const, label: 'Pet' },
@@ -2224,7 +2230,7 @@ export default function App() {
                   key={view}
                   onClick={() => setCurrentView(view)}
                   className={`sm-btn ${currentView === view ? '' : 'sm-btn-secondary'}`}
-                  style={{ flex: 1, minWidth: 0, fontSize: '0.72rem', padding: '10px 6px', whiteSpace: 'nowrap' }}
+                  style={{ flex: 1, minWidth: 0, fontSize: '0.72rem', padding: '10px 4px', letterSpacing: 0, whiteSpace: 'nowrap' }}
                 >
                   {label}
                 </button>

@@ -60,7 +60,7 @@ export const STAGE_MULTIPLIER: Record<FichaStage, number> = {
  * destravar um par exige ~50 pontos em cada componente (marco de 100 de
  * orçamento do class-system), e só perfis concentrados de mega/ultra chegam
  * lá — "só as criaturas de estágio avançado alcançam os elementos avançados".
- * Base custa 1; ponto direto em par destravado custa `CUSTO_PONTO_PAR` (3).
+ * Base custa 1; ponto direto em par destravado custa `CUSTO_PONTO_PAR` (2).
  */
 export const ELEMENT_ORCAMENTO_BY_STAGE: Record<FichaStage, number> = {
   rookie: 30, champion: 60, ultimate: 120, mega: 300, ultra: 500,

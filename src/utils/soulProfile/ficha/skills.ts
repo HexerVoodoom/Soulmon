@@ -63,29 +63,45 @@ const NOMES: Record<EscolaId, {
   basica: Array<{ pt: string; en: string }>;
   especial: Array<{ pt: string; en: string }>;
 }> = {
+  // SEIS por (escola, tipo), não dois: a jornada tem 5 estágios e o
+  // anti-repetição da rodada 1 esgotava o banco no 3º, voltando a mostrar
+  // "Golpe de Água" idêntico em rookie e ultimate. Com 6, os 5 estágios
+  // sempre cabem sem repetir.
   combate_fisico: {
-    basica: [{ pt: 'Golpe de', en: 'Strike' }, { pt: 'Investida de', en: 'Rush' }],
-    especial: [{ pt: 'Fúria de', en: 'Fury' }, { pt: 'Avalanche de', en: 'Avalanche' }],
+    basica: [{ pt: 'Golpe de', en: 'Strike' }, { pt: 'Investida de', en: 'Rush' }, { pt: 'Corte de', en: 'Slash' },
+      { pt: 'Impacto de', en: 'Impact' }, { pt: 'Pancada de', en: 'Smash' }, { pt: 'Estocada de', en: 'Thrust' }],
+    especial: [{ pt: 'Fúria de', en: 'Fury' }, { pt: 'Avalanche de', en: 'Avalanche' }, { pt: 'Devastação de', en: 'Devastation' },
+      { pt: 'Carnificina de', en: 'Onslaught' }, { pt: 'Colosso de', en: 'Colossus' }, { pt: 'Ruína de', en: 'Ruin' }],
   },
   longo_alcance: {
-    basica: [{ pt: 'Disparo de', en: 'Shot' }, { pt: 'Flecha de', en: 'Arrow' }],
-    especial: [{ pt: 'Chuva de', en: 'Barrage' }, { pt: 'Salva de', en: 'Volley' }],
+    basica: [{ pt: 'Disparo de', en: 'Shot' }, { pt: 'Flecha de', en: 'Arrow' }, { pt: 'Dardo de', en: 'Dart' },
+      { pt: 'Míssil de', en: 'Missile' }, { pt: 'Lança de', en: 'Lance' }, { pt: 'Estilhaço de', en: 'Shard' }],
+    especial: [{ pt: 'Chuva de', en: 'Barrage' }, { pt: 'Salva de', en: 'Volley' }, { pt: 'Dilúvio de', en: 'Deluge' },
+      { pt: 'Tempestade de', en: 'Storm' }, { pt: 'Enxame de', en: 'Swarm' }, { pt: 'Julgamento de', en: 'Judgement' }],
   },
   conjuracao: {
-    basica: [{ pt: 'Lampejo de', en: 'Spark' }, { pt: 'Rajada de', en: 'Bolt' }],
-    especial: [{ pt: 'Tormenta de', en: 'Tempest' }, { pt: 'Cataclismo de', en: 'Cataclysm' }],
+    basica: [{ pt: 'Lampejo de', en: 'Spark' }, { pt: 'Rajada de', en: 'Bolt' }, { pt: 'Selo de', en: 'Sigil' },
+      { pt: 'Fagulha de', en: 'Ember' }, { pt: 'Trama de', en: 'Weave' }, { pt: 'Pulso de', en: 'Pulse' }],
+    especial: [{ pt: 'Tormenta de', en: 'Tempest' }, { pt: 'Cataclismo de', en: 'Cataclysm' }, { pt: 'Vórtice de', en: 'Vortex' },
+      { pt: 'Nova de', en: 'Nova' }, { pt: 'Singularidade de', en: 'Singularity' }, { pt: 'Apocalipse de', en: 'Apocalypse' }],
   },
   benca: {
-    basica: [{ pt: 'Toque de', en: 'Touch' }, { pt: 'Sopro de', en: 'Breath' }],
-    especial: [{ pt: 'Êxtase de', en: 'Rapture' }, { pt: 'Aurora de', en: 'Halo' }],
+    basica: [{ pt: 'Toque de', en: 'Touch' }, { pt: 'Sopro de', en: 'Breath' }, { pt: 'Bênção de', en: 'Blessing' },
+      { pt: 'Carícia de', en: 'Caress' }, { pt: 'Orvalho de', en: 'Dew' }, { pt: 'Abrigo de', en: 'Shelter' }],
+    especial: [{ pt: 'Êxtase de', en: 'Rapture' }, { pt: 'Aurora de', en: 'Halo' }, { pt: 'Milagre de', en: 'Miracle' },
+      { pt: 'Renascer de', en: 'Rebirth' }, { pt: 'Santuário de', en: 'Sanctuary' }, { pt: 'Coral de', en: 'Choir' }],
   },
   maldicao: {
-    basica: [{ pt: 'Marca de', en: 'Mark' }, { pt: 'Aflição de', en: 'Bane' }],
-    especial: [{ pt: 'Sentença de', en: 'Doom' }, { pt: 'Eclipse de', en: 'Eclipse' }],
+    basica: [{ pt: 'Marca de', en: 'Mark' }, { pt: 'Aflição de', en: 'Bane' }, { pt: 'Praga de', en: 'Blight' },
+      { pt: 'Sussurro de', en: 'Whisper' }, { pt: 'Mordida de', en: 'Bite' }, { pt: 'Grilhão de', en: 'Shackle' }],
+    especial: [{ pt: 'Sentença de', en: 'Doom' }, { pt: 'Eclipse de', en: 'Eclipse' }, { pt: 'Maldição de', en: 'Curse' },
+      { pt: 'Réquiem de', en: 'Requiem' }, { pt: 'Devorar de', en: 'Devouring' }, { pt: 'Colapso de', en: 'Collapse' }],
   },
   evocacao: {
-    basica: [{ pt: 'Chamado de', en: 'Call' }, { pt: 'Eco de', en: 'Echo' }],
-    especial: [{ pt: 'Convocação de', en: 'Summoning' }, { pt: 'Legião de', en: 'Legion' }],
+    basica: [{ pt: 'Chamado de', en: 'Call' }, { pt: 'Eco de', en: 'Echo' }, { pt: 'Vulto de', en: 'Wisp' },
+      { pt: 'Aceno de', en: 'Beckon' }, { pt: 'Presságio de', en: 'Omen' }, { pt: 'Rastro de', en: 'Trail' }],
+    especial: [{ pt: 'Convocação de', en: 'Summoning' }, { pt: 'Legião de', en: 'Legion' }, { pt: 'Alcateia de', en: 'Pack' },
+      { pt: 'Aparição de', en: 'Apparition' }, { pt: 'Coroa de', en: 'Crown' }, { pt: 'Dinastia de', en: 'Dynasty' }],
   },
 };
 

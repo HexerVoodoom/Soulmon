@@ -210,6 +210,19 @@ describe('pipeline completo do oráculo', () => {
     expect(a.bestiaryPick.creature.nome).not.toBe(b.bestiaryPick.creature.nome);
   });
 
+  it('as skills NÃO repetem nome ao longo da jornada dos 5 estágios', () => {
+    // A jornada tem 5 estágios; o banco de substantivos por (escola, tipo)
+    // tinha 2 e o anti-repetição esgotava no 3º — rookie e ultimate saíam com
+    // "Golpe de Água" idêntico (nome, custo E descrição). Agora são 6.
+    for (const seed of [4, 33, 108]) {
+      const { stageSkills } = generateOracleComplete(makeInput(`Jornada ${seed}`, QUIZ, seed % 2 === 0), seed);
+      for (const tipo of ['basica', 'especial'] as const) {
+        const nomes = FICHA_STAGE_ORDER.map(stage => stageSkills[stage][tipo].nome.pt);
+        expect(new Set(nomes).size, `${tipo} repetiu: ${nomes.join(' / ')}`).toBe(nomes.length);
+      }
+    }
+  });
+
   it('sobrevive a JSON — perfil salvo gera a mesma criatura no reroll', () => {
     const input = makeInput('Diego Persistencia', QUIZ, true);
     const direto = generateOracleComplete(input, 42);

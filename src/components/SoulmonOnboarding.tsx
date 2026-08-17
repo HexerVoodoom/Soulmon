@@ -616,7 +616,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               ? 'O lugar posiciona o céu do seu nascimento — e o fuso certo.'
               : 'The place positions the sky at your birth — and the right timezone.'}>
             <CityPicker value={birthCity} onChange={setBirthCity} isPt={isPt}
-              inputStyle={input} optionStyle={optionBtn} />
+              inputStyle={input} optionStyle={optionBtn}
+              inputClass="sm-px-field" optionClass="sm-px-choice" />
           </StepShell>
         )}
 
@@ -711,6 +712,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 answer={testAnswers[item.id]}
                 isPt={isPt}
                 optionStyle={optionBtn}
+                optionClass="sm-px-choice"
                 onAnswer={answer => {
                   setTestAnswers(prev => ({ ...prev, [item.id]: answer }));
                   setTimeout(() => {

@@ -22,7 +22,7 @@
 // ---------------------------------------------------------------------------
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -110,15 +110,41 @@ console.log(JSON.stringify(saida));
 `;
 const cascataFixtures = JSON.parse(sh(CLASS_DIR, 'npx', ['tsx', '-e', parityExtract]));
 
+// Diais da alocação geracional, lidos do CONTRATO DE MÁQUINA do class-system
+// (`taxonomy.json` v2, gerado por `npm run export:taxonomy` a partir de
+// `src/registry/geracoes.ts` e travado por teste lá). Os fixtures acima pegam
+// divisor e limiar (mudar um deles muda passivos/destrave), mas NÃO pegam o
+// preço do ponto: `CUSTO_PONTO_PAR` é econômico, não entra em nenhuma cascata,
+// e por isso sobrevivia a qualquer mutação — footgun 9 em estado puro. Com os
+// diais no snapshot, `cascata.parity.test.ts` afirma os QUATRO contra a fonte.
+const taxonomyPath = path.join(CLASS_DIR, 'taxonomy.json');
+if (!existsSync(taxonomyPath)) {
+  throw new Error(`taxonomy.json não encontrado em ${CLASS_DIR} — rode \`npm run export:taxonomy\` lá.`);
+}
+const taxonomy = JSON.parse(readFileSync(taxonomyPath, 'utf8'));
+const g = taxonomy.geracoes;
+for (const campo of ['divisorCascata', 'limiarDestravamento', 'custoPontoAlocacao']) {
+  if (!g?.[campo] || typeof g[campo]['1'] !== 'number' || typeof g[campo]['2'] !== 'number') {
+    throw new Error(`taxonomy.json sem geracoes.${campo} por aridade — o export do class-system mudou de forma.`);
+  }
+}
+const geracoes = {
+  divisorCascata: g.divisorCascata,
+  limiarDestravamento: g.limiarDestravamento,
+  custoPontoAlocacao: g.custoPontoAlocacao,
+};
+
 const classOut = {
   _provenance: provenance(CLASS_DIR),
   ...classData,
+  geracoes,
   cascataFixtures,
 };
 const fichaDir = path.join(ROOT, 'src/utils/soulProfile/ficha');
 mkdirSync(fichaDir, { recursive: true });
 writeFileSync(path.join(fichaDir, 'classSystem.data.json'), JSON.stringify(classOut, null, 1) + '\n');
 console.log(`class-system: ${Object.keys(classData.talentos).length} talentos · ${Object.keys(classData.profissoes).length} profissões · ${Object.keys(classData.criaturas).length} criaturas · ${Object.keys(classData.familias).length} famílias @ ${classOut._provenance.sha.slice(0, 8)}`);
+console.log(`  diais gen-2: divisor ${geracoes.divisorCascata['2']} · limiar ${geracoes.limiarDestravamento['2']} · custo direto ${geracoes.custoPontoAlocacao['2']} (base ${geracoes.custoPontoAlocacao['1']})`);
 
 // ---------------------------------------------------------------------------
 // 2. Besti-rio- — corpus canônico lido por `git show` na ref pinada; amostra

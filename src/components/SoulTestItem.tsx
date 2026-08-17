@@ -62,9 +62,17 @@ interface SoulTestItemProps {
   onAnswer: (answer: Answer) => void;
   isPt: boolean;
   optionStyle: (selected: boolean) => React.CSSProperties;
+  /**
+   * Classe do kit aplicada a CADA opção. O onboarding passa `sm-px-choice`, a
+   * mesma classe das 6 perguntas do ritual — sem ela as 20 telas seguintes
+   * viravam parágrafos centrados sem moldura e ninguém percebia que dava para
+   * tocar. A `OraclePage` (ferramenta de criação, tema claro, fora da
+   * navegação) não passa nada e segue com o próprio visual inline.
+   */
+  optionClass?: string;
 }
 
-export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle }: SoulTestItemProps) {
+export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle, optionClass }: SoulTestItemProps) {
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   if (item.kind === 'likert' || item.kind === 'frequency') {
@@ -77,6 +85,8 @@ export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle }: Soul
           return (
             <button
               key={value}
+              className={optionClass}
+              aria-pressed={current === value}
               style={optionStyle(current === value)}
               onClick={() => onAnswer({ kind: 'likert', value })}
             >
@@ -95,6 +105,8 @@ export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle }: Soul
         {(['a', 'b'] as const).map(choice => (
           <button
             key={choice}
+            className={optionClass}
+            aria-pressed={current === choice}
             style={optionStyle(current === choice)}
             onClick={() => onAnswer({ kind: 'forced-choice', choice })}
           >
@@ -112,6 +124,8 @@ export function SoulTestItem({ item, answer, onAnswer, isPt, optionStyle }: Soul
       {item.options.map(option => (
         <button
           key={option.id}
+          className={optionClass}
+          aria-pressed={current === option.id}
           style={optionStyle(current === option.id)}
           onClick={() => onAnswer({ kind: 'scenario', optionId: option.id })}
         >
