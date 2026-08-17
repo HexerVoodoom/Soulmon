@@ -3113,6 +3113,17 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
 
   const stages: CreatureStage[] = [];
 
+  // COMPORTAMENTO — a metade que faltava na descrição por forma. Reusa sinal
+  // REAL já computado (papel + alinhamento dominantes), em vez de inventar
+  // texto — as mesmas frases que hoje só apareciam na OraclePage interna
+  // (`personalitySummary`), nunca para o jogador. Uma frase só, plana, sem
+  // termos de jogo (nada de "alinhamento X" ou pontuação) — pura descrição de
+  // COMO ele age, igual em toda a espécie (é o traço nascido junto com ela).
+  const behaviorSentence: LText = {
+    pt: `${ROLE_INFO[dominantRole].profile.pt} ${ALIGNMENT_INFO[dominantAlignment].profile.pt}`,
+    en: `${ROLE_INFO[dominantRole].profile.en} ${ALIGNMENT_INFO[dominantAlignment].profile.en}`,
+  };
+
   // ----- Rookie: forma base ÚNICA (usa o tipo dominante da leitura) -----
   const rookieLevel = pick(rng, ROOKIE_LOOK);
   stages.push({
@@ -3120,8 +3131,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     stageName: STAGE_NAMES.rookie,
     name: rookieName,
     description: {
-      pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que ${family.mono ? `a família ${fusionA.pt}` : `a mistura de ${fusionA.pt} e ${fusionB.pt}`} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
-      en: `${rookieName} is the base form: a small, simple little monster where ${family.mono ? `the ${fusionA.en} family` : `the ${fusionA.en}-${fusionB.en} blend`} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
+      pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que ${family.mono ? `a família ${fusionA.pt}` : `a mistura de ${fusionA.pt} e ${fusionB.pt}`} já aparece, ${alignTrait.pt}. Todas as 3 linhas de evolução partem daqui. ${behaviorSentence.pt}`,
+      en: `${rookieName} is the base form: a small, simple little monster where ${family.mono ? `the ${fusionA.en} family` : `the ${fusionA.en}-${fusionB.en} blend`} already shows, ${alignTrait.en}. All 3 evolution lines branch from here. ${behaviorSentence.en}`,
     },
     imagePrompt: composeSpritePrompt({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
@@ -3158,8 +3169,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       stageName: STAGE_NAMES.champion,
       name: champName,
       description: {
-        pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista.`,
-        en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest.`,
+        pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista. ${behaviorSentence.pt}`,
+        en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest. ${behaviorSentence.en}`,
       },
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
@@ -3174,8 +3185,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       stageName: STAGE_NAMES.perfeito,
       name: perfName,
       description: {
-        pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
-        en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest.`,
+        pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista. ${behaviorSentence.pt}`,
+        en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest. ${behaviorSentence.en}`,
       },
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
@@ -3190,8 +3201,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       stageName: STAGE_NAMES.mega,
       name: megaName,
       description: {
-        pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo.`,
-        en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${upperFirstText(bRegalia.en.split(':')[0])}. Its body partially transmutes into living ${elName.en}.`,
+        pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo. ${behaviorSentence.pt}`,
+        en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${upperFirstText(bRegalia.en.split(':')[0])}. Its body partially transmutes into living ${elName.en}. ${behaviorSentence.en}`,
       },
       imagePrompt: composeSpritePrompt({
         concept: spriteConcept, colorDesc, accent: bAccent,
@@ -3208,8 +3219,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     stageName: STAGE_NAMES.ultra,
     name: ultraName,
     description: {
-      pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}".`,
-      en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}".`,
+      pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}". ${behaviorSentence.pt}`,
+      en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}". ${behaviorSentence.en}`,
     },
     imagePrompt: composeSpritePrompt({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',

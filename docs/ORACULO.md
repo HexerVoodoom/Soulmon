@@ -429,3 +429,29 @@ integração cruzada, UX real com Playwright). Os achados que viraram correção
   (foi preciso zerar o `letter-spacing` além do `minWidth`), as formas passadas
   do demo usam a linha certa, o realce `inset` aparece, e a bio do reveal é
   frase completa nos dois idiomas.
+
+## Descrição por forma + poder real da skill (ago/2026, rodada 5)
+
+Pedido do dono, testando o app ao vivo: (1) a descrição por forma só cobria a
+metade FÍSICA (forma, elemento, marca do reino); a metade de COMPORTAMENTO
+("o que ele faz") não existia pro jogador. Já havia sinal real pra isso —
+`personalitySummary` (papel + alinhamento dominantes) só aparecia na
+`OraclePage` interna, nunca no jogo. Virou `behaviorSentence` (mesmo texto,
+extraído de `ROLE_INFO`/`ALIGNMENT_INFO`), somado como frase final às 5
+templates de `description` em `oracle.ts`. (2) O custo básica/especial das
+skills era só um RÓTULO fixo por tipo (`custo: tipo === 'basica' ? 'baixo' :
+'alto'`) — a rodada 3 já tinha decidido não portar a fórmula do motor pra não
+acoplar o app ao balanceamento de lá (footgun 9). A saída que faltava: chamar
+o motor DE VERDADE em vez de copiar a fórmula dele. `ficha/realSkillPower.ts`
+monta um `Personagem` real a partir da `Ficha` (são o mesmo formato — ver
+`ficha/types.ts`), chama `calcularLimites` + `calcularSkill` do `class-system`
+(import dinâmico, só quando a página do Pet precisa) com energia como fração
+do teto da escola (básica ~18%, especial ~85% — perto do teto que JÁ escala
+com o nível da escola, então o reajuste por forma pedido pelo dono vem de
+graça da progressão real) e devolve `poder` = impacto total calculado pelo
+motor. Mostrado como um número relativo ao lado do rótulo baixo/alto — nunca
+substitui o par qualitativo, que continua sendo a fonte que `pipeline.ts` e os
+testes usam sem precisar do motor pesado. Testado: `poder` da especial > da
+básica em todo estágio, e cresce do rookie ao ultra (`realSkillPower.test.ts`).
+Saves com skills salvas antes desta mudança simplesmente não mostram o número
+até a página recomputar — mesmo padrão de todo campo novo aqui.

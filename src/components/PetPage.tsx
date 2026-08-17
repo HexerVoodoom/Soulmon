@@ -50,6 +50,11 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
         <PixelTag>{tipo}</PixelTag>
         <span style={{ fontWeight: 700 }}>{nome}</span>
         <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>· {custo}</span>
+        {typeof skill.poder === 'number' && (
+          <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>
+            · {isPt ? 'poder' : 'power'} {skill.poder}
+          </span>
+        )}
       </div>
       <div className="text-xs" style={{ color: 'var(--sm-muted)', lineHeight: 1.35 }}>{desc}</div>
     </div>
@@ -79,13 +84,27 @@ export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharac
           import('../utils/soulProfile/ficha/fromInput'),
           import('../utils/soulProfile/identity'),
         ]);
-        const calculadas = buildFichaESkills(saved, identityKey(saved)).stageSkills;
+        const { fichaByStage, stageSkills } = buildFichaESkills(saved, identityKey(saved));
         if (!vivo) return;
-        setSkills(calculadas);
+        setSkills(stageSkills);
         // guarda no save: o perfil do oráculo vive só no localStorage e não
         // sobe para a nuvem, então sem este cache um aparelho novo (ou um save
         // restaurado) mostrava as formas e perdia as habilidades em silêncio.
-        onSkillsComputed?.(calculadas);
+        onSkillsComputed?.(stageSkills);
+
+        // Poder REAL via `calcularSkill` do motor — puxa o registro completo
+        // do class-system, por isso vem DEPOIS e não bloqueia a primeira
+        // pintura da tela. Se falhar (import, ficha degenerada), a página
+        // segue com o par qualitativo que já está na tela.
+        try {
+          const { withRealPowerAllStages } = await import('../utils/soulProfile/ficha/realSkillPower');
+          const comPoder = await withRealPowerAllStages(fichaByStage, stageSkills);
+          if (!vivo) return;
+          setSkills(comPoder as Record<FichaStage, StageSkills>);
+          onSkillsComputed?.(comPoder as Record<FichaStage, StageSkills>);
+        } catch {
+          // fica com o par qualitativo — nunca some skill nenhuma por causa disto
+        }
       } catch {
         // segue com o que veio do save (se veio) — as formas continuam na tela
       }
