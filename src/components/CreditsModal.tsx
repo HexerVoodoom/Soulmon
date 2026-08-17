@@ -105,8 +105,15 @@ export function CreditsModal({
   const handleRerollConfirm = async () => {
     setConfirmingReroll(false);
     setRerollLoading(true);
-    const ok = await onReroll();
-    setRerollLoading(false);
+    // try/finally: sem ele, uma exceção deixava o botão preso em "carregando"
+    // para sempre — e como o reroll custa Créditos (dinheiro real), a pessoa
+    // ficava olhando um spinner sem saber se pagou ou não.
+    let ok = false;
+    try {
+      ok = await onReroll();
+    } finally {
+      setRerollLoading(false);
+    }
     flash(ok
       ? (isPt ? 'Novo personagem gerado — você voltou pra Rookie!' : 'New character generated — back to Rookie!')
       : (isPt ? 'Não foi possível fazer o reroll agora.' : 'Could not reroll right now.'));

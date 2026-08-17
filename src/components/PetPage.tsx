@@ -26,6 +26,12 @@ import { PixelTag } from './pixel/PixelKit';
 
 interface PetPageProps {
   stages: CreatureStage[];
+  /** Skills já persistidas no save (vêm da nuvem). */
+  savedSkills?: Record<FichaStage, StageSkills>;
+  /** Chamado quando a página recomputa as skills a partir do perfil local —
+   *  é assim que o cache do save se preenche sozinho, sem tocar nos pontos de
+   *  criação/reroll/upgrade. */
+  onSkillsComputed?: (skills: Record<FichaStage, StageSkills>) => void;
   unlockedEvolutions: string[];
   currentStageId: string;
   demoCharacterId?: string;
@@ -50,22 +56,42 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
   );
 }
 
-export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharacterId, petName, language = 'pt-BR' }: PetPageProps) {
+export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharacterId, petName, savedSkills, onSkillsComputed, language = 'pt-BR' }: PetPageProps) {
   const isPt = language === 'pt-BR';
   const L = (t: { pt: string; en: string }) => (isPt ? t.pt : t.en);
 
-  const [skills, setSkills] = useState<Record<FichaStage, StageSkills> | null>(null);
+  const [skills, setSkills] = useState<Record<FichaStage, StageSkills> | null>(savedSkills ?? null);
   useEffect(() => {
     let vivo = true;
     (async () => {
-      const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
-      if (!saved?.soulProfile) return;
-      const { generateOracleComplete } = await import('../utils/soulProfile');
-      const complete = generateOracleComplete(saved, saved.seed);
-      if (vivo) setSkills(complete.stageSkills);
+      // try/catch obrigatório: um perfil salvo corrompido faria isto virar
+      // unhandled rejection e a seção de skills sumiria sem sinal nenhum.
+      // A página tem que ficar de pé mostrando as formas — as skills são o
+      // extra, não o conteúdo principal.
+      try {
+        const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+        if (!saved?.soulProfile) return;
+        // Importa só o que a página precisa (ficha → skills). Puxar o barril
+        // `soulProfile` inteiro arrastava a astronomy-engine e o pool de 2.000
+        // criaturas do bestiário — ~144 KB gzip e ~18 ms de linhagem — para
+        // renderizar duas skills que custam 0,06 ms e dependem só da ficha.
+        const [{ buildFichaESkills }, { identityKey }] = await Promise.all([
+          import('../utils/soulProfile/ficha/fromInput'),
+          import('../utils/soulProfile/identity'),
+        ]);
+        const calculadas = buildFichaESkills(saved, identityKey(saved)).stageSkills;
+        if (!vivo) return;
+        setSkills(calculadas);
+        // guarda no save: o perfil do oráculo vive só no localStorage e não
+        // sobe para a nuvem, então sem este cache um aparelho novo (ou um save
+        // restaurado) mostrava as formas e perdia as habilidades em silêncio.
+        onSkillsComputed?.(calculadas);
+      } catch {
+        // segue com o que veio do save (se veio) — as formas continuam na tela
+      }
     })();
     return () => { vivo = false; };
-  }, []);
+  }, [onSkillsComputed]);
 
   // Só as formas JÁ desbloqueadas, em ordem de estágio — nunca as futuras.
   const formas = useMemo(() => {
@@ -104,10 +130,13 @@ export function PetPage({ stages, unlockedEvolutions, currentStageId, demoCharac
         const isCurrent = formId === currentStageId;
         const stageSkills = skills?.[stageKey];
         return (
-          <div key={formId} className="sm-card" style={{ padding: 12, boxShadow: isCurrent ? '0 0 0 2px var(--sm-ink)' : undefined }}>
+          <div key={formId} className="sm-card" style={{ padding: 12, boxShadow: isCurrent ? 'inset 0 0 0 2px var(--sm-ink)' : undefined }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <img
-                src={getSpriteForStage(formId, isCurrent ? demoCharacterId : undefined)}
+                // a linha demo vale para TODAS as formas da jornada: passar o id só na
+                // forma atual desenhava um bicho na atual e o placeholder genérico
+                // nas anteriores — duas criaturas diferentes na mesma "jornada"
+                src={getSpriteForStage(formId, demoCharacterId)}
                 alt={form.name}
                 style={{ width: 56, height: 56, imageRendering: 'pixelated', objectFit: 'contain' }}
               />

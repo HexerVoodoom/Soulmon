@@ -63,6 +63,9 @@ export type { ClassElementId, OracleAxes } from './types';
 
 // --- pipeline completo: ficha + companheiro + bestiário + criatura ---
 export { generateOracleComplete } from './pipeline';
+export { identityKey } from './identity';
+export { applyRitualAnswers } from './ritualAnswers';
+export { buildFichaESkills } from './ficha/fromInput';
 export type { OracleComplete } from './pipeline';
 export { buildFicha, CLASS_DATA, ROOKIE_BUDGET, STAGE_MULTIPLIER, ELEMENT_ORCAMENTO_BY_STAGE } from './ficha/buildSheet';
 export { cascataDosPares, DIVISOR_CASCATA_PAR, LIMIAR_DESTRAVAMENTO_PAR, CUSTO_PONTO_PAR } from './ficha/cascata';

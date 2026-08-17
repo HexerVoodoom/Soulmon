@@ -195,6 +195,21 @@ describe('pipeline completo do oráculo', () => {
     }
   });
 
+  it('as 6 respostas do RITUAL alcançam ficha, skills, companheiro e bestiário', () => {
+    // Regressão medida: tudo que o pipeline deriva lia `soul.oracle` cru, e o
+    // quiz só era aplicado nas cópias locais do generateOracle. Resultado: duas
+    // pessoas com o mesmo nascimento e respostas OPOSTAS recebiam ficha,
+    // ofício, essência, companheiro, skills e bestiário idênticos — e para quem
+    // pula o teste de 20 as 6 respostas são o único sinal de personalidade.
+    const cuidar = makeInput('Gemeo Ritual', { grupo: 'protege', objetivo: 'cuidar', pressao: 'firme' });
+    const vencer = makeInput('Gemeo Ritual', { grupo: 'lidera', objetivo: 'vencer', pressao: 'ataca' });
+    const a = generateOracleComplete(cuidar, 777);
+    const b = generateOracleComplete(vencer, 777);
+    expect(a.fichaByStage.rookie).not.toEqual(b.fichaByStage.rookie);
+    expect(a.stageSkills.ultra.especial.nome.pt).not.toBe(b.stageSkills.ultra.especial.nome.pt);
+    expect(a.bestiaryPick.creature.nome).not.toBe(b.bestiaryPick.creature.nome);
+  });
+
   it('sobrevive a JSON — perfil salvo gera a mesma criatura no reroll', () => {
     const input = makeInput('Diego Persistencia', QUIZ, true);
     const direto = generateOracleComplete(input, 42);

@@ -369,3 +369,39 @@ distintas). O que estava quebrado e foi corrigido:
 Direções de fidelidade re-verificadas depois de cada mudança (hi/lo por
 traço). Regra de sempre: mexer em coeficiente de `axes.ts` sem refazer a
 simulação reabre o buraco que ela fechou.
+
+## QA rodada 1 pós-merge (ago/2026): o que a auditoria achou
+
+Quatro auditorias paralelas (regra de investimento, pipeline end-to-end,
+integração cruzada, UX real com Playwright). Os achados que viraram correção:
+
+- **P0 — nome sem letra latina derrubava a geração inteira.** `normalizeName`
+  só preserva A–Z, então cirílico/CJK/árabe/grego somavam 0 e
+  `NUMBER_ELEMENTS[0]` estourava com "undefined is not iterable". A pessoa
+  ficava presa no ritual, sem conseguir criar personagem nenhum — e o app é
+  vendido em EN. Agora `sumLetters` nunca devolve 0: sem letra latina, o número
+  vem do HASH do nome (o nome continua influenciando a leitura). O mesmo vale
+  para data inválida no `lifePath`.
+- **P1 — as 6 respostas do ritual não alcançavam metade do resultado.** Ficha,
+  companheiro, skills e bestiário liam `soul.oracle` cru; o quiz só era
+  aplicado nas cópias locais do `generateOracle`. Medido: mesmo nascimento com
+  respostas OPOSTAS dava ficha, ofício, essência, companheiro, skills e
+  criatura do bestiário IDÊNTICOS. `ritualAnswers.ts` é a fonte única que
+  aplica o ritual sobre os eixos, e o `identityKey` passou a incluir as
+  respostas SEMPRE. Cobertura re-medida depois: 11/11 profissões, 65/65
+  talentos, 9 reinos, 5 papéis.
+- **P2 — o reroll cobrava 50 Créditos (dinheiro real) e podia falhar depois.**
+  Um perfil salvo corrompido fazia a geração lançar DEPOIS do débito. Agora
+  gera antes de cobrar, e o modal tem `try/finally` (o botão ficava preso em
+  "carregando" para sempre).
+- **UX**: chip "Estatísticas" cortado no viewport de celular (a fileira foi de
+  323 para 412px quando o chip "Pet" entrou); sprite genérico nas formas
+  passadas do jogador demo; realce da forma atual invisível (sombra externa é
+  recortada pelo `clip-path` do `.sm-card`); skills repetidas entre estágios;
+  bio do reveal que em EN era um fragmento sem verbo ("angel-seraph, Sky
+  Cleric") e em PT tinha erro de concordância; "do reino Reino de Akasha";
+  parênteses de gênero ("hipnótico(a)") em texto de jogador.
+- **Skills sumiam num aparelho novo**: o perfil do oráculo vive só no
+  localStorage e não sobe para a nuvem. Agora as skills entram no save
+  (`soulmonSkills`), preenchidas pela própria página do Pet quando ela
+  consegue recomputar.

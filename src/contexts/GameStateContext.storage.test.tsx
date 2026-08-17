@@ -1,3 +1,10 @@
+// NOTA (jsdom 29): os spies têm que ir em `Storage.prototype`, não na
+// INSTÂNCIA `globalThis.localStorage`. O Storage do jsdom 29 é um Proxy cujo
+// trap `defineProperty` grava um ITEM de storage em vez de definir a
+// propriedade — `vi.spyOn(localStorage, 'setItem')` virava
+// `localStorage.setItem('setItem', fn)` e o método real continuava intacto,
+// então estes 6 testes NUNCA exercitavam o caminho de falha e ficaram
+// vermelhos por meses, documentados como "falha de ambiente".
 // @vitest-environment jsdom
 /**
  * B-2 / B-3 — resiliência de storage.
@@ -73,7 +80,7 @@ afterEach(() => {
 
 /** Faz `setItem` lançar o erro de cota que o navegador lança de verdade. */
 function encherOStorage() {
-  vi.spyOn(globalThis.localStorage, 'setItem').mockImplementation(() => {
+  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
     const err = new Error('The quota has been exceeded.');
     err.name = 'QuotaExceededError';
     throw err;
@@ -83,7 +90,7 @@ function encherOStorage() {
 // ── A camada, isolada ───────────────────────────────────────────────────────
 describe('safeStorage: a camada nunca lança', () => {
   it('readLocal devolve null quando o storage está bloqueado', () => {
-    vi.spyOn(globalThis.localStorage, 'getItem').mockImplementation(() => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('SecurityError');
     });
     expect(() => readLocal('qualquer')).not.toThrow();
@@ -98,7 +105,7 @@ describe('safeStorage: a camada nunca lança', () => {
   });
 
   it('removeLocal também não lança', () => {
-    vi.spyOn(globalThis.localStorage, 'removeItem').mockImplementation(() => {
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
       throw new Error('SecurityError');
     });
     expect(removeLocal('k')).toBe(false);
@@ -160,7 +167,7 @@ describe('GameStateProvider com storage hostil', () => {
   });
 
   it('storage BLOQUEADO: monta com estado novo e avisa (não é queda nem silêncio)', () => {
-    vi.spyOn(globalThis.localStorage, 'getItem').mockImplementation(() => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('SecurityError: storage bloqueado');
     });
     const s = montar();
