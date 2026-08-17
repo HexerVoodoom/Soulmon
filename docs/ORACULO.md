@@ -5,10 +5,19 @@ troca possível sem quebrar nada:
 
 | Metade | Onde mora | O que faz |
 |---|---|---|
-| **Leitura** | `src/utils/soulProfile/` | transforma quem a pessoa é em 4 eixos: elemento, papel, alinhamento, reino |
-| **Criação** | `src/utils/oracle.ts` | transforma esses 4 eixos numa criatura: arquétipo, família, fusão, nome, bio, as 11 formas e os prompts de sprite |
+| **Leitura** | `src/utils/soulProfile/` (núcleo: `personality/`, `astrology/`, `numerology.ts`, `axes.ts`) | transforma quem a pessoa é em 4 eixos: elemento, papel, alinhamento, reino |
+| **Criação** | `src/utils/oracle.ts` (criatura visual) + `soulProfile/ficha/`, `soulProfile/bestiary/`, `pipeline.ts` (ficha, companheiro, inspiração, skills) | transforma esses 4 eixos em TUDO que o jogador recebe: arquétipo, família, fusão, nome, bio, as 11 formas e prompts de sprite — **e também** a ficha do class-system nos 5 estágios, o companheiro capturável, a linhagem de inspiração do bestiário e as skills por forma |
 
-A criação **não mudou**. O que mudou foi o motor da leitura.
+A leitura só devolve 4 números (os eixos). Tudo o que vem depois disso —
+tanto a criatura visual quanto a ficha/companheiro/bestiário/skills — é
+**criação**, não uma terceira etapa à parte. A separação que importa é só
+essa: **leitura** (quem a pessoa é) vs. **criação** (o que isso vira no jogo).
+
+Historicamente, a geração visual da criatura (`oracle.ts`) já existia antes
+da troca do motor de leitura e não mudou nessa troca — só passou a receber
+eixos de uma fonte melhor. O resto da criação (ficha, companheiro, bestiário,
+skills) é mais novo: entrou na "fusão" (rodada 2, ver abaixo) e desde então
+faz parte do mesmo pipeline de criação, não de um sistema separado.
 
 ---
 
