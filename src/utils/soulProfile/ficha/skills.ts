@@ -43,6 +43,13 @@ export interface StageSkill {
   recursoId: RecursoId;
   /** Custo qualitativo por desenho: básica é frequente, especial é rara. */
   custo: 'baixo' | 'alto';
+  /** Impacto REAL calculado pelo motor do class-system (`calcularSkill`),
+   *  preenchido sob demanda por `realSkillPower.ts` — ausente até lá (e em
+   *  skills persistidas de antes desta mudança). Não normalizado: lido em
+   *  RELATIVO (básica vs. especial, forma vs. forma), como todo "poder" de
+   *  jogo — o dono pediu que o custo fosse "balanceado quando tá criando a
+   *  skill" pelo motor de verdade, não por um rótulo fixo. */
+  poder?: number;
 }
 
 export interface StageSkills { basica: StageSkill; especial: StageSkill }

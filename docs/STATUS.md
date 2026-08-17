@@ -7,7 +7,22 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **revisão profunda do oráculo (17/ago/2026, tarde)** — a
+Última atualização: **descrição por forma + poder real da skill (17/ago/2026,
+noite)** — feedback ao vivo do dono testando o app: (1) a descrição por forma
+só falava do FÍSICO, faltava o comportamento ("o que ele faz") — agora soma
+uma frase real do papel+alinhamento dominante (`behaviorSentence`, extraída do
+`personalitySummary` que já existia só na ferramenta interna); (2) o custo das
+skills era um rótulo fixo por tipo — `ficha/realSkillPower.ts` chama o motor
+DE VERDADE do class-system (`calcularSkill`, import dinâmico) e mostra um
+`poder` real ao lado, verificado crescendo do rookie ao ultra e da básica pra
+especial. Também no Class-System (PR #8 de lá): sinergia de alvo único
+(fogo→vileza etc.) agora alimenta a cascata de destravamento — sinergia de
+LEQUE (vida→5 primais) fica de fora de propósito, senão reabria o exploit que
+a rodada 2 fechou — e a lista de investimento mostra os derivados "em
+progresso" (passivos acumulando, ainda sem poder pontuar direto). Ver
+`docs/ORACULO.md` (rodada 5).
+
+Antes disso: **revisão profunda do oráculo (17/ago/2026, tarde)** — a
 pedido do dono ("cada usuário com personagem único, interessante e fiel").
 Medição com 200 perfis reais achou e as correções fecharam: (1) NOMES — a
 colisão de baseName caiu de 20,5% para **1,5%** (mais bits da identidade,
