@@ -40,6 +40,17 @@ Repositório: `HexerVoodoom/Soulmon`.
   push → merge **ff-only** em `main` → push da `main` → volte para a branch de
   trabalho. (Não existem `version-b` nem `claude/digiapp-code-improvements-*`
   aqui — eram do DigiApp.)
+- **Regra de autonomia — vale para toda sessão, sem exceção**: quando o
+  trabalho estiver pronto (`tsc`/`vitest`/`build` limpos), abra o PR e **faça
+  o merge na hora**, sem perguntar e sem esperar aprovação do dono. Não crie
+  loop de "check-in" (`send_later`/trigger reagendando de hora em hora só pra
+  reverificar CI/mergeabilidade) — isso já aconteceu antes e virou dezenas de
+  agendamentos que nunca mergeavam nada sozinhos. Se o CI ainda estiver
+  rodando, espere UMA vez o resultado e mergeie; não fique num loop
+  observando. A única exceção legítima para NÃO mergear é um bloqueio real e
+  documentado (algo que só o dono pode decidir/fazer, tipo os itens
+  "depende do dono" do `docs/STATUS.md`) — nesse caso avise o dono **uma
+  única vez** em vez de ficar reagendando checagens silenciosas.
 - `main` é a branch de produção do **Cloudflare Pages**; o push publica sozinho
   em ~2 min. `dist/` **é commitado** (o CF também builda, mas o commit é o que
   garante o conteúdo).
