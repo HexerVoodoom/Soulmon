@@ -7,7 +7,26 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **alocação geracional + página do Pet (17/ago/2026)** —
+Última atualização: **revisão profunda do oráculo (17/ago/2026, tarde)** — a
+pedido do dono ("cada usuário com personagem único, interessante e fiel").
+Medição com 200 perfis reais achou e as correções fecharam: (1) NOMES — a
+colisão de baseName caiu de 20,5% para **1,5%** (mais bits da identidade,
+RNG dedicado, bancos dobrados, 4 padrões de composição; estilo intocado);
+(2) PAPÉIS no caminho só-6 — alcance caiu de 46% para 12–22% e suporte subiu
+de 5% para 18–22% (recalibração validada em 3 seeds, direções de fidelidade
+intactas); (3) IDENTIDADES FANTASMA — sombra/água/pântano/akasha/gelo agora
+todos ≥3–4% (piso compensando o racha das perguntas de reino). Fidelidade
+confirmada forte: respostas opostas mudam a identidade 10/10, todos os 6
+traços movem eixos em direções coerentes; bestiário sem concentração
+(top-10 = 10,5%). No Class-System, auditoria adversarial da cascata rendeu
+9 achados corrigidos (PR #5 — medidor de orçamento cobrava pontos crus,
+custo em paridade com os pais {1,2,3,4}, invariantes de aridade/pressa
+refechados na curva inteira, taxonomy.json v2 como contrato de máquina). O
+Besti-rio- ganhou superfície de máquina (PR #3 — export canônico com
+procedência + AGENTS.md; uso principal = servir este pipeline). Custo do
+par espelhado no Soulmon (CUSTO_PONTO_PAR 3→2) e snapshot re-sincronizado.
+
+Antes disso: **alocação geracional + página do Pet (17/ago/2026)** —
 rodada 2 da fusão, a pedido do dono: (1) o class-system ganhou a CASCATA
 geracional (PR HexerVoodoom/Class-System#5 — ponto direto só em base; 5+5→1
 passivo no par; 10 passivos destravam alocação direta; peso de geração como

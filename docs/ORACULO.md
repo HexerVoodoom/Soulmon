@@ -342,3 +342,30 @@ formas já desbloqueadas (nunca as futuras), com a `description` por forma que
 o save sempre teve e nunca renderizou, e as duas skills. As skills são
 recomputadas sob demanda do `SOULMON_PROFILE` (determinístico) — zero campo
 novo no save; saves legados só não mostram a seção.
+
+## Revisão de unicidade e fidelidade (ago/2026, rodada 4)
+
+Medição com 200 perfis reais (metade só-6, metade com os 20 itens), pedida
+pelo dono. O que estava forte: fidelidade (respostas opostas mudam a tupla de
+identidade 10/10; os 6 traços movem elemento/papel/alinhamento em direções
+semanticamente coerentes), bestiário sem concentração (top-10 = 10,5%),
+gap de diversidade entre os dois caminhos zerado (98% vs 98% de tuplas
+distintas). O que estava quebrado e foi corrigido:
+
+- **Nomes** (`oracle.ts`): 20,5% de colisão de baseName → **1,5%**. A tupla
+  de identidade era 96,5% única, mas o funil de nomes jogava essa unicidade
+  fora (sílaba pessoal = 1ª letra+1ª vogal; bancos pequenos). Agora: todas as
+  sílabas do nome inteiro são candidatas, RNG dedicado (`|nome`), bancos
+  dobrados (8 radicais/elemento, 6/reino), 4 padrões de composição com a
+  sílaba do elemento em posição variável. Estilo preservado.
+- **Papéis no só-6** (`axes.ts`): alcance 46%→12–22%, suporte 5%→18–22%
+  (nivelamento das constantes neutras: alcance tinha a maior média em traços
+  50 E o quiz o empurrava em ~5 das 6 perguntas). Validado em 3 seeds.
+- **Identidades fantasma** (`axes.ts`): sombra 2,5%→≥10%, água 7%→≥7,5%,
+  pântano 0,5%→6,5–9%, akasha→≥3,5%, gelo→≥5% — piso
+  `REALM_SPLIT_COMPENSATION` compensando o racha estrutural das perguntas de
+  reino (+4 concentrado vs +1 rachado), sem tocar no ritual.
+
+Direções de fidelidade re-verificadas depois de cada mudança (hi/lo por
+traço). Regra de sempre: mexer em coeficiente de `axes.ts` sem refazer a
+simulação reabre o buraco que ela fechou.

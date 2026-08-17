@@ -25,7 +25,9 @@ import { DERIVED_ELEMENT_PAIRS, type DerivedElementDef } from '../derivedElement
 export const DIVISOR_CASCATA_PAR = 5;
 export const LIMIAR_DESTRAVAMENTO_PAR = 10;
 export const CUSTO_PONTO_BASE = 1;
-export const CUSTO_PONTO_PAR = 3;
+/** Paridade com os pais ({1,2,3,4} no class-system pós-auditoria): +1 nível
+ *  no par via direto custa o mesmo que +1 em cada componente. */
+export const CUSTO_PONTO_PAR = 2;
 
 export interface CascataPar {
   def: DerivedElementDef;

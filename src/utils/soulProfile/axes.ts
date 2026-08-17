@@ -138,7 +138,12 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // puxava ar acima de terra na simulação. Compensado nos coeficientes de
   // traço, não mexendo na tabela de numerologia.
   const elements: Record<ElementId, number> = {
-    agua: (astrologyElements['água'] / astroTotal) * 60 + traits.agreeableness * 0.4,
+    // agua e fogo tinham o mesmo 0.4, mas o quiz do ritual (reaplicado por
+    // cima destes eixos) empurra fogo mais que agua (~1,25 vs ~0,97 esperado
+    // por perfil) e a amabilidade se dilui entre agua/planta/luz — no agregado
+    // de 200 perfis agua raspava o piso de 4% de dominância. 0.4→0.44 devolve
+    // a paridade efetiva sem tocar a direção (amabilidade→agua segue).
+    agua: (astrologyElements['água'] / astroTotal) * 60 + traits.agreeableness * 0.44,
     fogo: (astrologyElements.fogo / astroTotal) * 60 + traits.extraversion * 0.4,
     terra: (astrologyElements.terra / astroTotal) * 60 + traits.conscientiousness * 0.47,
     ar: (astrologyElements.ar / astroTotal) * 60 + traits.openness * 0.35,
@@ -159,8 +164,13 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     // o mesmo sinal organizado/metódico, mas insumo genuinamente
     // independente) espalha esse peso por duas fontes não correlacionadas em
     // vez de contar a mesma duas vezes.
+    // O 0.25 do JP deixava o industrial com a menor média neutra depois do ar
+    // e, sem astro nem numerologia fortes por ele, ele caía a 3,5% do agregado
+    // em parte das simulações de 200 perfis (meta: todo elemento ≥4%).
+    // 0.25→0.29 devolve ~2 pontos de média neutra pela fonte INDEPENDENTE
+    // (jung), sem reabrir a dupla contagem de conscienciosidade descrita acima.
     industrial: facet(inputs, 'conscientiousness', 'organização', traits.conscientiousness) * 0.5 +
-      soft(jung.JP) * 0.25,
+      soft(jung.JP) * 0.29,
   };
   // Bônus primário/secundário da numerologia, espelhando o próprio
   // `addScore(primary, pts); addScore(secondary, 1)` do oracle.ts — dar +6 aos
@@ -185,7 +195,13 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // fazia vencer o argmax muito acima da linha de base de 1 em 5 (suporte
   // ~29%, tanque ~25%, magico ~9,5%). Nenhum termo primário passa de ~0.45.
   const roles: Record<RoleId, number> = {
-    suporte: traits.agreeableness * 0.45 + (astrologyElements['água'] / astroTotal) * 30 +
+    // No caminho só-6-perguntas todo traço fica em 50, então quem decide é a
+    // MÉDIA NEUTRA de cada fórmula — e a do suporte era a menor das cinco
+    // (22,5 + água·30 + 5), enquanto o quiz do ritual é quem menos o empurra
+    // (1 opção primária, contra ~5 perguntas que tocam alcance). Medido em 200
+    // perfis: suporte dominava 8% do caminho curto. Amabilidade 0.45→0.52
+    // sobe a média neutra sem mudar a direção do sinal.
+    suporte: traits.agreeableness * 0.52 + (astrologyElements['água'] / astroTotal) * 30 +
       (100 - traits.honestyHumility) * 0.1,
     tanque: facet(inputs, 'conscientiousness', 'prudência', traits.conscientiousness) * 0.35 +
       (100 - traits.neuroticism) * 0.3 + (astrologyElements.terra / astroTotal) * 20,
@@ -200,8 +216,12 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     // O termo astro_ar do alcance compõe com o próprio bônus de ar na tabela
     // de elementos, e ar é o alvo primário/secundário mais frequente da
     // numerologia — então alcance pegava carona nesse mesmo sinal correlato.
-    alcance: facet(inputs, 'conscientiousness', 'prudência', traits.conscientiousness) * 0.4 +
-      soft(jung.TF) * 0.3 + (astrologyElements.ar / astroTotal) * 25,
+    // Além disso a média neutra dele era a MAIOR das cinco (20 + 15 + ar·25),
+    // e é nela que o caminho só-6 inteiro se apoia — com o empurrão extra do
+    // quiz, alcance dominava 31-46% do caminho curto. Prudência 0.4→0.33 e
+    // TF 0.3→0.25 nivelam a média neutra; os sinais seguem os mesmos.
+    alcance: facet(inputs, 'conscientiousness', 'prudência', traits.conscientiousness) * 0.33 +
+      soft(jung.TF) * 0.25 + (astrologyElements.ar / astroTotal) * 25,
   };
   for (const n of numerologyNumbers) {
     roles[NUMBER_ROLES[n]] += 4;
@@ -241,6 +261,23 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   // mundo cujos escores de elemento caem num formato parecido (comum, já que
   // vários reinos compartilham elementos) converge para o MESMO reino sempre;
   // a assinatura quebra isso sem tornar o resultado menos determinístico.
+  // Piso estrutural por reino: a pergunta "lugar" do ritual (ORACLE_QUESTIONS,
+  // reaplicada por cima destes eixos no generateOracle) dá +4 CONCENTRADO a
+  // oceano/picos/floresta/campina, mas as opções guarda-chuva dividem o mesmo
+  // orçamento — "extremos" racha 2/2 (deserto/gelo) e "oculto" racha 2/1/1
+  // (cavernas/pantano/akasha). Numa escala em que o share médio de reino é ~11,
+  // +1 contra +4 é estrutural, não gosto: medido em 200 perfis, pantano ficava
+  // em 2% e akasha em 1,5% do agregado (fantasmas). A pergunta é vocabulário do
+  // ritual (oracle.ts), então a compensação vive AQUI, como piso na escala crua
+  // (~220/reino) pré-normalização — calibrado por simulação até todo reino
+  // passar de 3% sem derrubar os concentrados.
+  // gelo divide o +2 de "extremos" com o deserto, mas o deserto ainda soma o
+  // bônus de alinhamento poder e elementos fortes (fogo/terra) — o gelo não
+  // tem nada disso e oscilava em 2,5-4% no agregado; o piso menor reflete o
+  // racha 2/2 (metade do buraco dos 2/1/1).
+  const REALM_SPLIT_COMPENSATION: Partial<Record<RealmId, number>> = {
+    pantano: 28, akasha: 28, gelo: 15,
+  };
   const inputKey = JSON.stringify(inputs);
   const realms: Record<RealmId, number> = Object.fromEntries(
     REALM_ORDER.map((realm) => {
@@ -248,7 +285,7 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
         (sum, [el, weight]) => sum + (weight ?? 0) * elements[el as ElementId],
         0
       );
-      return [realm, score + (hashString(`${inputKey}|${realm}`) % 4)];
+      return [realm, score + (REALM_SPLIT_COMPENSATION[realm] ?? 0) + (hashString(`${inputKey}|${realm}`) % 4)];
     })
   ) as Record<RealmId, number>;
 

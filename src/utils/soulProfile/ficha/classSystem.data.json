@@ -2,8 +2,8 @@
  "_provenance": {
   "repo": "https://github.com/HexerVoodoom/Class-System",
   "ref": "claude/oracle-teste-personalidade-soulmon-dohefw",
-  "sha": "8c48b9170ee5caca34bb899a22c1099f1f4ceb8e",
-  "syncedAt": "2026-08-17T11:22:26.927Z",
+  "sha": "2e6ce5abe6b87f01e04903bdf1dc01ee5b0287d6",
+  "syncedAt": "2026-08-17T11:57:01.790Z",
   "script": "scripts/sync-oracle-data.mjs"
  },
  "escolas": {
