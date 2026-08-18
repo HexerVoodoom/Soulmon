@@ -27,7 +27,7 @@ import { Edit2 } from 'lucide-react';
 import iconWarning from './assets/soulmon/icons/icon-warning.png';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
-import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
+import { FORM_REQUIREMENTS, getStageLevel, getStageBranch, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
@@ -88,6 +88,7 @@ import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
 import { PixelFrame } from './components/PixelFrame';
+import { EvoTrail } from './components/EvoTrail';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
@@ -2126,7 +2127,31 @@ export default function App() {
                 const feitos = tarefas.filter(t2 => t2.completed).length
                   + atividades.filter(a => a.isComplete).length;
 
+                /* Trilha de evolução na Home (referência: caminho de nós ao
+                   lado dos Daily Rituals). O galho é o que o pet JÁ está
+                   seguindo; em rookie (sem galho) é o previsto — o MESMO
+                   resolveBranch da página de Evolução, nada recalculado. */
+                const trailBranch = getStageBranch(gameState.evolutionStage)
+                  ?? resolveBranch(
+                    { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                    carePatternReading,
+                    gameState.currentBranch,
+                  );
+
                 return (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  {(gameState.soulmonStages?.length ?? 0) > 0 && (
+                    <EvoTrail
+                      stages={gameState.soulmonStages ?? []}
+                      currentStageId={gameState.evolutionStage}
+                      unlockedEvolutions={gameState.unlockedEvolutions}
+                      branch={trailBranch}
+                      demoCharacterId={gameState.demoCharacterId}
+                      onOpen={() => setCurrentView('evolution')}
+                      language={language}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                   <RitualPanel
                     done={feitos}
                     total={total}
@@ -2205,6 +2230,8 @@ export default function App() {
                       );
                     })}
                   </RitualPanel>
+                  </div>
+                  </div>
                 );
               })()}
             </div>

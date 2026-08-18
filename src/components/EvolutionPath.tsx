@@ -8,10 +8,11 @@ import { getSpriteForStage } from '../utils/sprites';
 import { WalkingPetStrip } from './WalkingPetStrip';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
-import { ATTR_COLOR, ATTR_ICON, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
+import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_ICON, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
 
 type Attr = 'virus' | 'data' | 'vaccine';
-const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
+// ALIGN_TO_ATTR mudou para types/attributes.ts quando o EvoTrail da Home
+// passou a precisar do mesmo mapa (footgun 9: cópia diverge em silêncio).
 const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
 
 /**

@@ -5156,11 +5156,15 @@ button.sm-px-node {
    PT-BR: trunca em uma linha (o `title` no JSX carrega o texto inteiro).
    Sans, não bitmap — Silkscreen não tem acentuação confortável e o nome é
    texto de leitura, não rótulo. */
+/* RODADA 5: uma linha com ellipsis virou CLAMP DE 2 LINHAS — com o trilho de
+   evolução ao lado do painel, "Meditation" virava "Medita…" já no primeiro
+   ritual; a referência mostra o nome quebrando em duas linhas, não sumindo. */
 .sm-px-ritual-name {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-size: 15px;
   font-weight: 600;
   line-height: 1.25;
