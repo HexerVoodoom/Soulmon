@@ -7,7 +7,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **o gesto oculto virou o LOGO inteiro (18/ago/2026,
+Última atualização: **regra "ícone nunca dentro de box" (18/ago/2026,
+madrugada)** — direção do dono, vale no app INTEIRO (registrada no
+CLAUDE.md): nada de moldura/placa/chanfro em volta de ícone; o ícone aparece
+GRANDE e pelado. Aplicado em: nav inferior (26→36px, placa preenchida do
+ativo virou SUBLINHADO ciano — barra não é caixa, e mantém uma pista de
+seleção que não é só cor), fileira Itens/Banho/Dormir (moldura da actionbar
+saiu, 30→42px), botões do chat (moldura saiu, 20→30px). A barra inferior
+subiu 68→80px pra caber o ícone grande com rótulo (token
+`--sm-bottomnav-h`, o dock do chat acompanha sozinho). Confirmado no mesmo
+passe: `.sm-pet-sticky` (pet fixo, só a lista rola) segue funcionando — o
+dono pediu de novo, mas já estava no ar; harness de screenshot novo em
+`scratchpad/shot.mjs` mede o sticky em vez de confiar no olho.
+
+Antes disso: **o gesto oculto virou o LOGO inteiro (18/ago/2026,
 madrugada)** — o dono pediu ("mergeia esse toggle com o corvo no título"):
 corvo + wordmark "SOULMON" agora são um wrapper único, e é ele o alvo do
 long-press. Alvo maior acerta mais fácil no dedo. Como o alvo passou a

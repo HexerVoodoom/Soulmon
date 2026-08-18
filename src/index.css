@@ -3928,7 +3928,11 @@ html {
   --sm-energy: #16a34a;
   --sm-energy-track: #e3ece9;
   --sm-radius: 16px;
-  --sm-bottomnav-h: 68px;       /* altura de conteúdo da barra de navegação inferior */
+  /* 68px → 80px na rodada 5: com o ícone grande (36px) da regra "ícone nunca
+     dentro de box", o rótulo passava do fim da barra e saía cortado na borda
+     da tela. O token é consumido também pelo `.sm-chat-fixed` (bottom), então
+     subir aqui reposiciona o dock junto — por isso é token e não número solto. */
+  --sm-bottomnav-h: 80px;       /* altura de conteúdo da barra de navegação inferior */
   /* B5 (rodada 3): altura MEDIDA do dock de chat (`.sm-chat-fixed`), que
      flutua entre a nav e o conteúdo. Era um `+ 100px` mágico no App.tsx, e
      o CTA largo do fim do painel de rituais — a peça que substituiu o FAB —
@@ -4052,15 +4056,28 @@ html {
    destino ativo é o ÚNICO bloco sólido da fileira, e o inativo nunca é
    preenchido. Por ser uma comparação absoluta e não relativa, não inverte
    quando o tema inverte. O brilho do ícone e a cor do rótulo são reforço. */
+/* RODADA 5 — ÍCONE NUNCA DENTRO DE BOX (regra do dono, vale no app INTEIRO).
+   A placa preenchida do item ativo SAIU: era literalmente um box em volta do
+   ícone. Trocada por ícone GRANDE + sublinhado.
+
+   O sublinhado não é decoração: a regra da rodada 2 dizia que a seleção tem
+   que ser carregada por algo que NÃO seja só cor (daltonismo, tema invertido,
+   modo alto-contraste). Sem a placa, sobrava só "ciano vs cinza" — cor pura.
+   A barra devolve uma pista de FORMA, e uma barra não é uma caixa em volta do
+   ícone, então respeita a regra nova sem reabrir o buraco de acessibilidade
+   que a placa fechava. */
 .sm-bottom-nav-btn-on {
-  /* O fill usa o PAR DE TOKENS da rodada 2 (`--sm-px-sel-*`) e não uma cor
-     escolhida aqui. Medido: um `color-mix(cyan 16%, surface)` ficava quase
-     branco no tema claro — o "único bloco sólido" deixava de ser sólido, e
-     o rótulo em `--sm-px-ink` (tinta de peça ESCURA, fixa) saía branco sobre
-     branco. É o mesmo erro de contexto do `.sm-px-dark-ctx` da rodada 2. */
-  background: var(--sm-px-sel-bg);
-  border-color: var(--sm-px-copper);
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 22%;
+    right: 22%;
+    bottom: 0;
+    height: 3px;
+    background: var(--sm-px-cyan);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--sm-px-cyan) 70%, transparent);
+  }
 }
 /* Rótulo persistente. 8px na Silkscreen com `letter-spacing: 0` — o
    espaçamento de 0.06em usado no resto do kit é o que estourava
@@ -4087,7 +4104,11 @@ html {
    consome 4px em borda, e o negrito da Silkscreen empurrava o texto para
    ~60px — "ATIVIDADES" saía cortado em "ATIVIDADE". É também a regra da
    rodada 2: quem carrega a seleção é o preenchimento, e só ele. */
-.sm-bottom-nav-btn-on .sm-bottom-nav-label { color: var(--sm-px-sel-ink); }
+/* Sem a placa, `--sm-px-sel-ink` (tinta PARA a placa) não tem mais fundo que
+   a justifique — sobre `--sm-surface` ela sairia clara-sobre-clara no tema
+   claro, o mesmo erro de contexto que o comentário acima descreve. O rótulo
+   ativo passa a ser o ciano do kit, que é legível nos dois temas. */
+.sm-bottom-nav-btn-on .sm-bottom-nav-label { color: var(--sm-px-cyan); }
 
 /* Botão primário: inspiração Duolingo (forma arredondada, cor chapada,
    barra 3D embaixo que "afunda" no :active) ajustada pro nosso estilo —
@@ -4750,6 +4771,9 @@ select:focus-visible {
   &:focus { outline: 2px solid var(--sm-px-cyan); outline-offset: -2px; }
   &:disabled { opacity: 0.55; }
 }
+/* RODADA 5 — sem box em volta de ícone (regra do dono): a moldura de cobre e
+   o chanfro saíram; o botão do chat é o ícone pelado, com o MESMO alvo de
+   50×44 (o hover ainda acende a área, então o alvo continua se anunciando). */
 .sm-px-chat-btn {
   width: 50px;
   min-height: 44px;
@@ -4761,9 +4785,8 @@ select:focus-visible {
   padding: 0;
   background: transparent;
   color: var(--sm-ink);
-  border: 2px solid var(--sm-px-copper);
+  border: none;
   cursor: pointer;
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
   transition: background .12s ease, filter .12s ease;
   &:hover { background-color: color-mix(in srgb, var(--sm-px-cyan) 16%, transparent); }
   &:disabled { opacity: 0.5; cursor: default; }
@@ -5602,13 +5625,17 @@ button.sm-px-node {
    com "uma coisa só" no mesmo espaço, e é o padrão do gênero: o cuidado do
    bicho mora numa fila emoldurada embaixo dele. A moldura é a MESMA do
    `.sm-px-card` (borda de cobre + chanfro) — não inventa uma sexta. */
+/* RODADA 5 — sem box em volta de ícone (regra do dono, vale no app inteiro).
+   Era uma peça emoldurada (fundo + borda de cobre + chanfro) com três ícones
+   pequenos dentro. A moldura saiu; o que separa as três ações agora é o
+   ESPAÇO, e o que as torna tocáveis é o ícone grande + rótulo. O alvo de
+   60px de altura não mudou, então a regra 2.5.8 do WCAG segue paga. */
 .sm-px-actionbar {
   display: flex;
   align-items: stretch;
   box-sizing: border-box;
-  background: var(--sm-px-chip-bg);
-  border: 2px solid var(--sm-px-copper);
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  background: transparent;
+  border: none;
 }
 .sm-px-action {
   position: relative;
@@ -5624,10 +5651,9 @@ button.sm-px-node {
   padding: 8px 4px;
   background: transparent;
   border: none;
-  /* Divisor entre ações: a MESMA linha de cobre que separa as linhas do
-     painel de rituais. Sem ela, três botões colados leem como um só. */
-  border-left: 2px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent);
-  &:first-child { border-left: none; }
+  /* Sem divisor: ele existia porque três botões colados DENTRO de uma moldura
+     liam como um bloco só. Sem a moldura, o espaço já separa, e uma linha de
+     cobre solta no meio do nada viraria ruído. */
   &:hover { background-color: color-mix(in srgb, var(--sm-px-cyan) 12%, transparent); }
   &:active { background-color: color-mix(in srgb, var(--sm-px-cyan) 20%, transparent); }
   &:focus-visible { outline: 3px solid var(--sm-px-cyan); outline-offset: -3px; }
@@ -5826,7 +5852,6 @@ button.sm-px-node {
    `PlayerDetailModal` trocaram `background:` por `backgroundColor:` nesta
    rodada. Regra nova sempre no FIM do arquivo, variante sempre ANINHADA.
    ───────────────────────────────────────────────────────────────────────── */
-.sm-bottom-nav-btn-on,
 .sm-btn,
 .sm-card,
 .sm-px-pop,
@@ -5836,7 +5861,6 @@ button.sm-px-node {
 .sm-px-chip,
 .sm-px-fab,
 .sm-px-chatbar,
-.sm-px-chat-btn,
 .sm-px-tree-plate,
 .sm-px-tree-degen,
 .sm-px-ritual-expand,
@@ -5848,7 +5872,6 @@ button.sm-px-node {
 .sm-px-switch,
 .sm-px-arcade-bar,
 .sm-px-arcade-close,
-.sm-px-actionbar,
 .sm-px-jump,
 .sm-px-code,
 .sm-px-row-btn {
@@ -5874,11 +5897,9 @@ button.sm-px-node {
 }
 
 /* Chanfro por peça — o mesmo número do `clip-path` de cada uma. */
-.sm-bottom-nav-btn-on { --sm-cham-c: 6px; }
 .sm-px-chip { --sm-cham-c: 6px; }
 .sm-px-fab { --sm-cham-c: 9px; --sm-cham-bw: 3px; }
 .sm-px-chatbar { --sm-cham-c: 8px; }
-.sm-px-chat-btn { --sm-cham-c: 6px; }
 .sm-px-tree-plate { --sm-cham-c: 7px; --sm-cham-line: var(--sm-line); }
 .sm-px-tree-plate-current { --sm-cham-line: var(--sm-px-copper); }
 .sm-px-tree-degen { --sm-cham-c: 6px; --sm-cham-line: var(--sm-line); }
@@ -5896,7 +5917,6 @@ button.sm-px-node {
 .sm-px-switch { --sm-cham-line: var(--sm-px-off-edge); }
 .sm-px-switch-on { --sm-cham-line: var(--sm-px-sel-edge); }
 .sm-px-arcade-bar { --sm-cham-c: 8px; }
-.sm-px-actionbar { --sm-cham-c: 8px; }
 .sm-px-jump { --sm-cham-c: 8px; }
 .sm-px-code { --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 45%, transparent); }
 .sm-px-row-btn { --sm-cham-c: 6px; --sm-cham-line: color-mix(in srgb, var(--sm-px-copper) 60%, transparent); }

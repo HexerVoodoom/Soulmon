@@ -352,7 +352,7 @@ export function ChatBox({
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <img src={iconSend} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <img src={iconSend} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             )}
           </button>
         ) : (
@@ -371,7 +371,7 @@ export function ChatBox({
             ) : isLoading ? (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <img src={iconMic} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <img src={iconMic} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             )}
           </button>
         )}

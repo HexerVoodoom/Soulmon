@@ -24,7 +24,7 @@ interface BottomNavProps {
 /** Ícone-imagem (gerado no Higgsfield, kit bronze/cobre) no lugar do
  *  lucide-react. Sem `color` de SVG pra recolorir por aba — o destaque da
  *  aba ativa vem do halo (glow) + fundo, não de tingir o ícone. */
-function NavIcon({ src, alt, active, size = 26 }: { src: string; alt: string; active?: boolean; size?: number }) {
+function NavIcon({ src, alt, active, size = 36 }: { src: string; alt: string; active?: boolean; size?: number }) {
   return (
     <img
       src={src}
@@ -34,7 +34,7 @@ function NavIcon({ src, alt, active, size = 26 }: { src: string; alt: string; ac
       style={{
         objectFit: 'contain',
         imageRendering: 'pixelated',
-        opacity: active ? 1 : 0.62,
+        opacity: active ? 1 : 0.55,
         /* O `scale(1.22)` saiu junto com a chegada do rótulo (B7): com texto
            embaixo, aumentar o ícone empurrava a linha de base e a fileira
            deixava de ter um ritmo só. O destaque agora é o preenchimento da
