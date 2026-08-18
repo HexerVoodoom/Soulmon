@@ -7,7 +7,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **trilha de evolução na Home (18/ago/2026, madrugada)**
+Última atualização: **fechamento do redesign noturno (18/ago/2026,
+madrugada)** — sweep final de QA (Playwright, claro+escuro, todas as views
+principais) achou e corrigiu 1 regressão da rodada 5: rótulos
+Itens/Banho/Dormir invisíveis no tema claro (`--sm-px-ink` fixo sobre fundo
+claro → `--sm-ink` do tema). Estado entregue da noite, tudo mergeado na
+main: regra "ícone nunca dentro de box" aplicada (nav/ações/chat),
+`.sm-pet-sticky` confirmado, moldura de canos (`PixelFrame`), splash
+SOUL_LINK no index.html, trilha de evolução na Home (`EvoTrail`), clamp de
+2 linhas no nome do ritual. O que NÃO foi feito e por quê: recorte de
+assets das 4 imagens de referência (chegaram como imagem no chat, não como
+arquivo — sem os bytes não há o que recortar) e geração de imagem nova
+(chaves Higgsfield/Gemini são secrets do Cloudflare, ilegíveis do sandbox;
+login de navegador é do dono). Se o dono commitar as imagens + a pasta
+`icones` do desktop dele, dá pra substituir as aproximações CSS/SVG por
+recortes reais.
+
+Antes disso: **trilha de evolução na Home (18/ago/2026, madrugada)**
 — terceiro item do redesign: o caminho de nós da referência agora mora na
 Home, à esquerda do painel de rituais (`EvoTrail.tsx`). É RESUMO, não a
 árvore: linha rookie→…→ultra do galho atual/previsto, nós `SoulNode`
