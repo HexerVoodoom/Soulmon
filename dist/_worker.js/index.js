@@ -1342,6 +1342,17 @@ async function onRequestOptions7() {
   return new Response(null, { headers: CORS7 });
 }
 __name(onRequestOptions7, "onRequestOptions");
+var REFUSAL_WORDS = /nsfw|safety|policy|polic[ií]|moderation|blocked|prohibited|content[_ -]filter|copyright|trademark|intellectual property|recitation/i;
+function isRefusal(err) {
+  return Boolean(err?.refusal) || REFUSAL_WORDS.test(err?.message || "");
+}
+__name(isRefusal, "isRefusal");
+function refusalError(message) {
+  const err = new Error(message);
+  err.refusal = true;
+  return err;
+}
+__name(refusalError, "refusalError");
 async function generateHiggsfield(env, prompt, referenceImageUrls) {
   const auth = `Key ${env.HF_API_KEY}:${env.HF_SECRET}`;
   const hasRef = Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0;
@@ -1359,7 +1370,10 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
     body: JSON.stringify({ params })
   });
   if (!createRes.ok) {
-    throw new Error(`higgsfield create ${createRes.status}: ${(await createRes.text()).slice(0, 300)}`);
+    const body = (await createRes.text()).slice(0, 300);
+    const msg = `higgsfield create ${createRes.status}: ${body}`;
+    if (createRes.status === 400 || createRes.status === 422) throw refusalError(msg);
+    throw new Error(msg);
   }
   const jobSet = await createRes.json();
   const jobSetId = jobSet.id || jobSet.job_set_id;
@@ -1372,7 +1386,10 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
     if (!st.ok) continue;
     const data = await st.json();
     const jobs = data.jobs || [];
-    if (jobs.some((j) => j.status === "failed" || j.status === "nsfw")) {
+    if (jobs.some((j) => j.status === "nsfw")) {
+      throw refusalError("higgsfield: nsfw/policy rejection");
+    }
+    if (jobs.some((j) => j.status === "failed")) {
       throw new Error("higgsfield: generation failed");
     }
     const doneJob = jobs.find((j) => j.status === "completed");
@@ -1395,39 +1412,78 @@ async function generateGemini(env, prompt) {
       generationConfig: { responseModalities: ["IMAGE"] }
     })
   });
-  if (!res.ok) throw new Error(`gemini ${res.status}`);
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 300);
+    if (res.status === 400) throw refusalError(`gemini 400: ${body}`);
+    throw new Error(`gemini ${res.status}: ${body}`);
+  }
   const data = await res.json();
+  const blockReason = data?.promptFeedback?.blockReason;
+  if (blockReason) throw refusalError(`gemini blocked: ${blockReason}`);
+  const finish = data?.candidates?.[0]?.finishReason;
   const parts = data?.candidates?.[0]?.content?.parts ?? [];
   const imgPart = parts.find((p) => p.inlineData?.data || p.inline_data?.data);
   const inline = imgPart?.inlineData || imgPart?.inline_data;
-  if (!inline?.data) throw new Error("gemini: no image");
+  if (!inline?.data) {
+    if (finish && finish !== "STOP") throw refusalError(`gemini: no image (${finish})`);
+    throw new Error("gemini: no image");
+  }
   const mime = inline.mimeType || inline.mime_type || "image/png";
   return `data:${mime};base64,${inline.data}`;
 }
 __name(generateGemini, "generateGemini");
+async function generateWithProviders(env, prompt, referenceImageUrls) {
+  let hfError = null;
+  let hfRefusal = false;
+  if (env.HF_API_KEY && env.HF_SECRET) {
+    try {
+      const image = await generateHiggsfield(env, prompt, referenceImageUrls);
+      return { image, provider: "higgsfield", hfError: null };
+    } catch (err2) {
+      hfError = err2.message;
+      hfRefusal = isRefusal(err2);
+      console.error("Higgsfield falhou, tentando fallback de provedor:", err2.message);
+    }
+  }
+  if (env.GEMINI_API_KEY) {
+    try {
+      const image = await generateGemini(env, prompt);
+      return { image, provider: "gemini", hfError };
+    } catch (err2) {
+      if (isRefusal(err2) || hfRefusal) throw refusalError(err2.message);
+      throw err2;
+    }
+  }
+  if (hfRefusal) throw refusalError(hfError);
+  if (hfError) throw new Error(hfError);
+  const err = new Error("image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)");
+  err.notConfigured = true;
+  throw err;
+}
+__name(generateWithProviders, "generateWithProviders");
 async function onRequestPost5({ request, env }) {
   try {
-    const { prompt, referenceImageUrls, id } = await request.json();
+    const { prompt, promptFallback, referenceImageUrls, id } = await request.json();
     if (!prompt || typeof prompt !== "string") {
       return Response.json({ error: "prompt required" }, { status: 400, headers: CORS7 });
     }
     const gate = await guardAiRequest(request, env, "sprite", id);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS7 });
-    let hfError = null;
-    if (env.HF_API_KEY && env.HF_SECRET) {
-      try {
-        const image = await generateHiggsfield(env, prompt, referenceImageUrls);
-        return Response.json({ image, provider: "higgsfield" }, { headers: CORS7 });
-      } catch (err) {
-        hfError = err.message;
-        console.error("Higgsfield falhou, tentando fallback:", err.message);
+    try {
+      const out = await generateWithProviders(env, prompt, referenceImageUrls);
+      return Response.json(out, { headers: CORS7 });
+    } catch (err) {
+      const canRetry = typeof promptFallback === "string" && promptFallback.length > 0 && promptFallback !== prompt;
+      if (!canRetry || !isRefusal(err)) {
+        if (err.notConfigured) {
+          return Response.json({ error: err.message }, { status: 503, headers: CORS7 });
+        }
+        throw err;
       }
+      console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err.message);
+      const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
+      return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS7 });
     }
-    if (env.GEMINI_API_KEY) {
-      const image = await generateGemini(env, prompt);
-      return Response.json({ image, provider: "gemini", hfError }, { headers: CORS7 });
-    }
-    return Response.json({ error: "image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)", hfError }, { status: 503, headers: CORS7 });
   } catch (err) {
     console.error("generate-sprite error:", err);
     return Response.json({ error: "internal error" }, { status: 500, headers: CORS7 });
@@ -1736,7 +1792,7 @@ async function onRequest3({ env }) {
 }
 __name(onRequest3, "onRequest");
 
-// ../.wrangler/tmp/pages-C2Xk8L/functionsRoutes-0.22404839782942876.mjs
+// ../.wrangler/tmp/pages-gWDFFh/functionsRoutes-0.14871362590837955.mjs
 var routes = [
   {
     routePath: "/api/billing",

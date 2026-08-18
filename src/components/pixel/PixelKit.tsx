@@ -9,13 +9,19 @@
  *
  * Decisões que valem registro (detalhe no relatório da rodada):
  *
- * 1. **Só o PNG `normal` é usado como 9-slice.** Os PNGs `hover`/`active` do
- *    kit trazem um halo MAGENTA/ROXO assado na arte — resíduo da paleta antiga
- *    (o reskin de ago/2026 trocou roxo por teal/cobre). Ligar aqueles arquivos
- *    reintroduziria roxo na UI. Hover/active/disabled são derivados por filtro
- *    em cima do `normal`, dentro da paleta. O `disabled` PNG, além disso, tem
- *    enquadramento diferente dos outros (bbox até a borda do canvas), o que
- *    quebraria a fatia.
+ * 1. **Cada estado tem seu PNG, e os quatro dividem a MESMA geometria.**
+ *    Os `hover`/`active` antigos do kit traziam halo MAGENTA/ROXO assado
+ *    (resíduo da paleta anterior ao reskin de ago/2026) e o `disabled` vinha
+ *    com enquadramento diferente — por isso só o `normal` era usado, com os
+ *    estados derivados por filtro CSS. Substituídos em 18/08/2026 por arte
+ *    DERIVADA do próprio `normal` (`E:\Soulmon-assets\gen_button_states.py`):
+ *    cada pixel é classificado em cobre/teal pela relação entre os canais e só
+ *    então recebe o ajuste, então o contorno e o fio ciano ficam intactos.
+ *    Derivar em vez de redesenhar é o que garante que as fatias medidas abaixo
+ *    (82/66/43) continuem valendo para os quatro estados — fatia que não bate
+ *    faz a moldura PULAR no hover, justamente o frame em que o olho está no
+ *    botão. O resíduo ameixa do arquivo de origem foi apagado por inpainting
+ *    no caminho: os nove arquivos medem 0,0000% de magenta.
  * 2. **A arte foi RECORTADA, não redesenhada.** Os PNGs originais têm margem
  *    transparente irregular (17px aqui, 21px ali), e `border-image` fatia o
  *    canvas inteiro — margem transparente dentro da fatia = moldura fina com
@@ -33,12 +39,21 @@ import type { Language } from '../../utils/i18n';
 import btnSm from '../../assets/soulmon/ui/btn-sm.png';
 import btnMd from '../../assets/soulmon/ui/btn-md.png';
 import btnLg from '../../assets/soulmon/ui/btn-lg.png';
+import btnSmHover from '../../assets/soulmon/buttons/button-hover-small.png';
+import btnMdHover from '../../assets/soulmon/buttons/button-hover-medium.png';
+import btnLgHover from '../../assets/soulmon/buttons/button-hover-large.png';
+import btnSmActive from '../../assets/soulmon/buttons/button-active-small.png';
+import btnMdActive from '../../assets/soulmon/buttons/button-active-medium.png';
+import btnLgActive from '../../assets/soulmon/buttons/button-active-large.png';
+import btnSmOff from '../../assets/soulmon/buttons/button-disabled-small.png';
+import btnMdOff from '../../assets/soulmon/buttons/button-disabled-medium.png';
+import btnLgOff from '../../assets/soulmon/buttons/button-disabled-large.png';
 
 /** Fatia (px na arte de origem) medida até onde o preenchimento teal começa. */
 const BTN_ART = {
-  sm: { src: btnSm, cls: 'sm-px-btn-sm' },
-  md: { src: btnMd, cls: 'sm-px-btn-md' },
-  lg: { src: btnLg, cls: 'sm-px-btn-lg' },
+  sm: { src: btnSm, hover: btnSmHover, active: btnSmActive, off: btnSmOff, cls: 'sm-px-btn-sm' },
+  md: { src: btnMd, hover: btnMdHover, active: btnMdActive, off: btnMdOff, cls: 'sm-px-btn-md' },
+  lg: { src: btnLg, hover: btnLgHover, active: btnLgActive, off: btnLgOff, cls: 'sm-px-btn-lg' },
 } as const;
 
 export type PixelSize = 'sm' | 'md' | 'lg';
@@ -46,6 +61,21 @@ export type PixelSize = 'sm' | 'md' | 'lg';
 /** `--sm-px-src` é lido pelas regras `.sm-px-btn` / `.sm-px-panel`. */
 function artVar(src: string): CSSProperties {
   return { '--sm-px-src': `url(${src})` } as CSSProperties;
+}
+
+/**
+ * As quatro artes do botão. O CSS troca qual delas alimenta `--sm-px-src` em
+ * `:hover` / `:active` / `:disabled` — a escolha do estado é do NAVEGADOR, e
+ * não de estado do React, senão teclado e toque precisariam de tratamento
+ * próprio para chegar no mesmo lugar.
+ */
+function btnArtVars(a: (typeof BTN_ART)[PixelSize]): CSSProperties {
+  return {
+    '--sm-px-src': `url(${a.src})`,
+    '--sm-px-src-hover': `url(${a.hover})`,
+    '--sm-px-src-active': `url(${a.active})`,
+    '--sm-px-src-off': `url(${a.off})`,
+  } as CSSProperties;
 }
 
 // ───────────────────────────────────────────────────────────────── botão
@@ -79,7 +109,7 @@ export function PixelButton({
       title={title}
       aria-label={ariaLabel}
       className={`sm-px-btn ${art.cls}${variant === 'primary' ? ' sm-px-btn-primary' : ''}`}
-      style={{ ...artVar(art.src), ...style }}
+      style={{ ...btnArtVars(art), ...style }}
     >
       {/* O conteúdo sobe acima do miolo aceso da variante primary (ver a nota
           sobre `border-image … fill` em .sm-px-btn-primary no index.css). */}

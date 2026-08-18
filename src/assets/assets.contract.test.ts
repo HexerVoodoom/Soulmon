@@ -163,14 +163,16 @@ const QUARANTINE = {
   // para os importados — que é o que teria pego este arquivo no dia em que
   // ele entrou.
   unreadable: [] as string[],
-  magenta: [
-    'soulmon/buttons/button-hover-small.png',
-    'soulmon/buttons/button-hover-medium.png',
-    'soulmon/buttons/button-hover-large.png',
-    'soulmon/buttons/button-active-small.png',
-    'soulmon/buttons/button-active-medium.png',
-    'soulmon/buttons/button-active-large.png',
-  ],
+  /**
+   * Esvaziada em 18/08/2026, e a regra da própria quarentena é quem mandou
+   * esvaziar: "cada entrada é verificada duas vezes — o defeito ainda precisa
+   * estar lá E o arquivo não pode estar importado". Os seis `hover`/`active`
+   * foram REESCRITOS a partir do `normal` (derivação por faixa de cor +
+   * inpainting do resíduo ameixa, ver o cabeçalho do `PixelKit.tsx`), medem
+   * 0,0000% de magenta e agora estão no bundle. Manter a lista faria o teste
+   * exigir que continuassem quebrados.
+   */
+  magenta: [] as string[],
 };
 
 const allAssets = walk(ASSETS, /\.(png|jpe?g|webp)$/i);
@@ -289,8 +291,15 @@ describe('guard de asset — xadrez de transparência assado', () => {
    * PADRÃO e não só a cor, o guard sobrevive fora do próprio escopo — este caso
    * prova isso com arquivos reais do repositório, não sintéticos.
    */
+  /**
+   * `button-disabled-small.png` saiu desta lista em 18/08/2026: a arte foi
+   * reescrita e o novo desabilitado dessatura na direção do cinza-TEAL do tema
+   * (2,2% de cinza neutro), não do cinza puro de antes (9,7%) — deixou de ser
+   * um exemplo válido de "arte legitimamente cinza". O troféu de prata sozinho
+   * sustenta o caso, e continua sendo arquivo real do repositório.
+   */
   it('não acusa arte que é legitimamente cinza (dessaturada, prata)', async () => {
-    for (const q of ['soulmon/buttons/button-disabled-small.png', 'icons/icon-trophy-silver.png']) {
+    for (const q of ['icons/icon-trophy-silver.png']) {
       const abs = path.join(ASSETS, q);
       if (!fs.existsSync(abs)) continue;
       const m = await metricsOf(abs);
@@ -434,6 +443,32 @@ describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
       const teto = TETO_MAGENTA[rel(f)] ?? 0.01;
       expect(m.magentaPct, `${rel(f)} tem ${m.magentaPct.toFixed(2)}% de magenta (teto ${teto}%)`)
         .toBeLessThanOrEqual(teto);
+    }
+  });
+
+  /**
+   * O invariante que faz os estados do botão funcionarem, e que NÃO é óbvio
+   * olhando os arquivos: as fatias 9-slice (`--sm-px-slice`: 82/66/43) foram
+   * medidas na arte `normal` e são aplicadas aos QUATRO estados. Se um estado
+   * tiver dimensão diferente, a mesma fatia cai noutro ponto do desenho e a
+   * moldura pula no hover — que é exatamente o frame em que o olho está no
+   * botão. Foi por isso que os PNGs antigos não podiam ser ligados: além do
+   * magenta, o `disabled` tinha enquadramento próprio.
+   *
+   * Derivar do `normal` garante isso por construção; este caso é quem impede
+   * que alguém volte a soltar arte desenhada à parte na pasta.
+   */
+  it('os quatro estados do botão dividem a mesma geometria (a fatia é uma só)', async () => {
+    for (const [tam, curto] of [['small', 'sm'], ['medium', 'md'], ['large', 'lg']] as const) {
+      const base = await sharp(path.join(ASSETS, `soulmon/ui/btn-${curto}.png`)).metadata();
+      for (const estado of ['hover', 'active', 'disabled']) {
+        const p = `soulmon/buttons/button-${estado}-${tam}.png`;
+        const m = await sharp(path.join(ASSETS, p)).metadata();
+        expect(
+          { w: m.width, h: m.height },
+          `${p} tem ${m.width}×${m.height} e o normal tem ${base.width}×${base.height} — a fatia 9-slice não serve para os dois`,
+        ).toEqual({ w: base.width, h: base.height });
+      }
     }
   });
 

@@ -217,11 +217,21 @@ describe('generateOracle', () => {
       // ver composeSpritePrompt).
       expect(s.imagePrompt.startsWith('Generate an original creature')).toBe(true);
       expect(s.imagePrompt).toContain('Retro virtual-pet sprite, 16x16 pixel art, no background');
-      // Nenhum nome de franquia no prompt: o sprite vai pro app de um usuário
-      // real, e pedir "inspirado em X" convida cópia de personagem registrado.
-      for (const trademark of ['Digimon', 'Pok', 'Tamagotchi', 'Palworld', 'Final Fantasy', 'Warhammer', 'Hello Kitty']) {
-        expect(s.imagePrompt).not.toContain(trademark);
+      // Duas variantes por forma: a 1ª tentativa CITA as referências de gênero
+      // (decisão do dono: puxa resultado melhor) e o fallback não cita ninguém.
+      // Se o provedor recusar a primeira, generate-sprite.js refaz com a
+      // segunda — por isso o fallback tem que continuar limpo.
+      const TRADEMARKS = ['Digimon', 'Pok', 'Tamagotchi', 'Palworld', 'Final Fantasy', 'Warhammer', 'Hello Kitty'];
+      for (const trademark of TRADEMARKS) {
+        expect(s.imagePrompt).toContain(trademark);
+        expect(s.imagePromptFallback).not.toContain(trademark);
       }
+      // O pedido de originalidade vale nas DUAS: citar inspiração não é licença
+      // para devolver personagem registrado.
+      expect(s.imagePrompt).toContain('Do not copy any existing franchise character');
+      expect(s.imagePromptFallback).toContain('Do not copy any existing franchise character');
+      // Fora as referências, os dois prompts pedem exatamente a mesma criatura.
+      expect(s.imagePromptFallback).toContain(`transparent background: ${s.imagePrompt.split('transparent background: ')[1]}`.trim());
       expect(s.imagePrompt).toContain('transparent background');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');

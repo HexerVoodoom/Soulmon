@@ -185,10 +185,16 @@ ficam valendo:
 - **`LEGACY_FORM_TIERS` (`types/progression.ts`) é só compatibilidade de save** —
   mapeia id antigo → nível, pra um save em `gaioumon` continuar mega em vez de
   virar rookie. Não é roster de nada. Não acrescente nomes ali.
-- **Nenhum nome de franquia no prompt do gerador** (`utils/oracle.ts`). Pedir
-  "inspirado em Digimon/Pokémon/Palworld" convida o gerador a devolver algo perto
-  demais de personagem registrado — e o sprite vai pro app de um usuário real.
-  Há teste travando a ausência desses nomes.
+- **Prompt do gerador tem DUAS variantes** (`utils/oracle.ts`, `composeSpritePrompts`):
+  `imagePrompt` **cita** as referências de gênero (Digimon/Pokémon/Palworld/…)
+  porque o resultado sai visivelmente melhor, e `imagePromptFallback` é o mesmo
+  pedido sem citar ninguém. **Toda criação começa pela variante com referências**;
+  se o provedor recusar por política de conteúdo, `functions/api/generate-sprite.js`
+  refaz sozinho com o fallback (`isRefusal` decide; erro que não é recusa não
+  refaz, pra não dobrar custo à toa). As duas variantes mantêm
+  "Do not copy any existing franchise character" — citar inspiração não é licença
+  pra devolver personagem registrado, e o sprite vai pro app de um usuário real.
+  Há teste travando os dois lados (referências presentes na 1ª, ausentes no fallback).
 - **Rookie/champion/ultimate/mega ficam**: vocabulário genérico do gênero.
 - **`digimonName` (bridge do widget) e as chaves `digiapp_*` ficam**, pelo mesmo
   motivo de sempre: são internos, nunca aparecem pro usuário, e renomear

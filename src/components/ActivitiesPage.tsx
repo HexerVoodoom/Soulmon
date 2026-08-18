@@ -10,6 +10,7 @@ import { RPSGame } from './RPSGame';
 import { bitsStyle } from '../utils/currency';
 import { PixelChip, PixelTag } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
+import iconChevronRight from '../assets/soulmon/icons/icon-chevron-right.png';
 
 /**
  * "Atividades" page — interactive minigames hub (+ Tournament, which lives
@@ -101,16 +102,18 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
         </div>
         {/* P1: a setinha era `ChevronRight` da lucide — traço vetorial de
             2,2px ao lado de sprites pixelados de 48px, e o único line-art que
-            sobrava na tela. O kit não tem "seta", e esta rodada não gera
-            arte: vira o mesmo glifo em BITMAP, que é a fonte de display do
-            app. `aria-hidden` porque o card inteiro já é o botão. */}
-        <span
+            sobrava na tela. Virou o caractere `>` da fonte bitmap como
+            paliativo, porque o kit não tinha "seta". Agora tem: chevron
+            desenhado na grade do kit (18/08/2026), que é a mesma linguagem dos
+            sprites ao lado. `aria-hidden` porque o card inteiro já é o botão. */}
+        <img
+          src={iconChevronRight}
+          alt=""
           aria-hidden="true"
-          className="sm-px-font"
-          style={{ flexShrink: 0, fontSize: 14, lineHeight: 1, color: 'var(--sm-muted)' }}
-        >
-          &gt;
-        </span>
+          width={14}
+          height={14}
+          style={{ flexShrink: 0, imageRendering: 'pixelated', opacity: 0.75 }}
+        />
       </div>
     </button>
   );

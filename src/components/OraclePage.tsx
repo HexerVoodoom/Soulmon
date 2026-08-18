@@ -144,7 +144,9 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
     if (!creature) return;
     const header = `# ${creature.creature.baseName}\n${L(creature.creature.bio)}\n`;
     const all = creature.creature.stages
-      .map(s => `## ${s.name} (${L(s.stageName)})\n${s.imagePrompt}`)
+      // Os dois prompts: o principal (com referências) e o de reserva, para
+      // quem for gerar à mão ter o mesmo fallback que o servidor usa.
+      .map(s => `## ${s.name} (${L(s.stageName)})\n${s.imagePrompt}\n\n### ${isPt ? 'Sem referências (reserva)' : 'No references (fallback)'}\n${s.imagePromptFallback}`)
       .join('\n\n');
     copyText(`${header}\n${all}`, isPt ? 'Todos os prompts copiados!' : 'All prompts copied!');
   };
@@ -161,7 +163,9 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
     setGenBusy(true);
     setGenSprites({});
     setGenProgress({ done: 0, total: creature.creature.stages.length });
-    const stages = creature.creature.stages.map(s => ({ key: stageKey(s), prompt: s.imagePrompt }));
+    const stages = creature.creature.stages.map(s => ({
+      key: stageKey(s), prompt: s.imagePrompt, promptFallback: s.imagePromptFallback,
+    }));
     const { sprites, errors } = await generateAllSprites(stages, {
       onProgress: (done, total) => setGenProgress({ done, total }),
     });

@@ -14,10 +14,16 @@ export interface SpriteGenOptions {
 /** Chama o backend e devolve a imagem crua (URL/data URL) gerada pela IA.
  *  referenceImageUrls: cadeia de evolução (Higgsfield image2image) — champion
  *  parte do rookie, ultimate do champion, mega do ultimate, ultra das 3 megas. */
-export async function requestSprite(prompt: string, referenceImageUrls?: string[]): Promise<string> {
+export async function requestSprite(
+  prompt: string,
+  referenceImageUrls?: string[],
+  /** Prompt SEM as referências de gênero. O servidor só usa este se a primeira
+   *  tentativa (com referências) for RECUSADA — ver generate-sprite.js. */
+  promptFallback?: string,
+): Promise<string> {
   // aiFetch acrescenta o saveId e o token — o servidor recusa sem eles
   // (_aiGuard.js). Esta é a rota que custa dinheiro de verdade.
-  const res = await aiFetch('/api/generate-sprite', { prompt, referenceImageUrls });
+  const res = await aiFetch('/api/generate-sprite', { prompt, referenceImageUrls, promptFallback });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || `sprite generation failed (${res.status})`);
@@ -76,12 +82,16 @@ export async function pixelizeDataUrl(dataUrl: string, opts: SpriteGenOptions = 
 }
 
 /** Gera + pixeliza um único prompt. Devolve o sprite final (data URL). */
-export async function generateSprite(prompt: string, opts?: SpriteGenOptions): Promise<string> {
-  const raw = await requestSprite(prompt);
+export async function generateSprite(
+  prompt: string,
+  opts?: SpriteGenOptions,
+  promptFallback?: string,
+): Promise<string> {
+  const raw = await requestSprite(prompt, undefined, promptFallback);
   return pixelizeDataUrl(raw, opts);
 }
 
-export interface StagePrompt { key: string; prompt: string }
+export interface StagePrompt { key: string; prompt: string; promptFallback?: string }
 export interface StageSprite { key: string; sprite: string }
 
 /**
@@ -96,9 +106,9 @@ export async function generateAllSprites(
   const sprites: StageSprite[] = [];
   const errors: Array<{ key: string; message: string }> = [];
   for (let i = 0; i < stages.length; i++) {
-    const { key, prompt } = stages[i];
+    const { key, prompt, promptFallback } = stages[i];
     try {
-      const sprite = await generateSprite(prompt, opts);
+      const sprite = await generateSprite(prompt, opts, promptFallback);
       sprites.push({ key, sprite });
     } catch (err) {
       errors.push({ key, message: err instanceof Error ? err.message : String(err) });

@@ -7,7 +7,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **loop de QA multi-agente (ago/2026)** — 3 rodadas, suíte de
+Última atualização: **kit de UI pixel — rodada de arte (18/08/2026)**. 142 PNGs
+gerados (Gemini no navegador + desenho determinístico quando a cota travou),
+recortados por algoritmo e medidos contra o guard de asset. Três itens do
+`docs/BACKLOG-ARTE-GERAR.md` saíram: **A4** (nós da árvore de evolução, SVG →
+PNG), **A2** (estados do botão — a quarentena de magenta ficou VAZIA pela
+primeira vez) e a setinha de line-art da Activities, que era a última lucide
+solta no meio dos sprites. Suíte 1143 → 1149. Detalhe de cada um nos ✅ do
+backlog de arte; o kit completo (incl. o que ainda não foi ligado) está
+indexado no fim de `src/utils/iconRegistry.ts`.
+
+Antes disso: **loop de QA multi-agente (ago/2026)** — 3 rodadas, suíte de
 379 → 600 testes, mais uma frente de aplicação da UI pixel-art. Ver
 `product/soulmon-01/` para os relatórios de cada rodada. O achado estrutural
 está resumido na seção 5 abaixo e é o que vale ler primeiro.

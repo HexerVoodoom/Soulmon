@@ -61,3 +61,28 @@ export const STILL_LUCIDE_NO_MATCH = [
 export const WEB_PLACEHOLDER_ICONS: Record<string, IconEntry> = {
   // (preenchido conforme cada ícone web for efetivamente ligado)
 };
+
+/**
+ * Kit de UI gerado em 18/08/2026 e ainda FORA do repositório, guardado em
+ * `E:\Soulmon-assets\out` (142 PNGs, recortados e medidos contra o guard de
+ * `src/assets/assets.contract.test.ts`). A política daqui continua valendo —
+ * **asset só entra no repo quando alguém o liga** —, então isto é um índice do
+ * que existe pronto, não um convite a copiar tudo:
+ *
+ *   glyphs/      chevrons (4 direções), +/− em botão de cobre, refresh, share,
+ *                editar, lixeira, filtro, menu 3-pontos, hambúrguer, sparkle
+ *   icons/       45 ícones em tile (armas, baú, caveira, troféu, ampulheta,
+ *                calendário, sino, cadeado…) + 15 de hábito (lótus, halteres,
+ *                tênis, lua, maçã, sol, diário, música, streak)
+ *   controls/    nav bar (3 destinos × ativo/inativo), chips de recurso,
+ *                checkbox e radio em 3 estados, toggle, moldura de avatar
+ *   bars/        moldura vazia + preenchimentos ciano/HP/mana + barra XP fina
+ *   window/      janela de diálogo, slot de inventário (normal e selecionado),
+ *                fechar, minimizar, placa de título, divisor
+ *   logo/        marca do app (2 variantes), ícone de app, chama e cristal
+ *   scenery/     fundo de circuito TILEÁVEL, balão de fala, tooltip
+ *   evolution-fx/ 6 frames de efeito de evolução
+ *
+ * Já ligados: os 4 nós da árvore (`soulmon/evolution/`), os 9 estados de botão
+ * (`soulmon/buttons/`) e `icon-chevron-right.png`.
+ */

@@ -63,11 +63,11 @@ const DEMO_BRANCH_ALIGNMENTS: AlignmentId[] = ['poder', 'harmonia', 'benevolenci
 export function getDemoCreatureStages(character: PremadeCharacter): CreatureStage[] {
   const description = { pt: character.bioPt, en: character.bioEn };
   const stages: CreatureStage[] = [
-    { stage: 'rookie', stageName: STAGE_NAMES.rookie, name: character.name, description, imagePrompt: '' },
+    { stage: 'rookie', stageName: STAGE_NAMES.rookie, name: character.name, description, imagePrompt: '', imagePromptFallback: '' },
   ];
   (['champion', 'perfeito', 'mega'] as StageId[]).forEach(stage => {
     DEMO_BRANCH_ALIGNMENTS.forEach(branch => {
-      stages.push({ stage, branch, stageName: STAGE_NAMES[stage], name: character.name, description, imagePrompt: '' });
+      stages.push({ stage, branch, stageName: STAGE_NAMES[stage], name: character.name, description, imagePrompt: '', imagePromptFallback: '' });
     });
   });
   return stages;

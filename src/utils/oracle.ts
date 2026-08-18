@@ -121,7 +121,12 @@ export interface CreatureStage {
   stageName: LText;
   name: string;                // nome da forma (ex.: "FangPyramon")
   description: LText;
-  imagePrompt: string;         // EN — prompt pronto p/ gerador de imagem
+  /** EN — prompt pronto p/ gerador de imagem. É a PRIMEIRA tentativa e cita as
+   *  referências de gênero (ver composeSpritePrompts). */
+  imagePrompt: string;
+  /** EN — mesmo prompt SEM as referências de franquia. Segunda tentativa,
+   *  usada quando o gerador RECUSA a primeira por política de conteúdo. */
+  imagePromptFallback: string;
 }
 
 /**
@@ -2219,20 +2224,32 @@ const ULTRA_LOOK: string[] = [
  *  Testes empíricos: prompt estilo Tamagotchi, sem fundo, descrição bem
  *  curta (espécie + classe + adjetivo) gera sprites melhores que frases
  *  longas tipo "wielding X to Y" ou blocos extras de tipo/elemento/bioma. */
+/** Referências de gênero citadas na PRIMEIRA tentativa. Decisão do dono do
+ *  projeto: citar as inspirações puxa um resultado visivelmente melhor, então
+ *  toda criação começa por aqui. O risco (o gerador chegar perto demais de um
+ *  personagem registrado) fica contido por dois lados: a frase "original
+ *  creature / do not copy any existing franchise character" continua no prompt,
+ *  e quando o provedor RECUSA por política de conteúdo a geração cai
+ *  automaticamente no `imagePromptFallback`, que não cita ninguém. */
+const GENRE_REFERENCES =
+  'Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, ' +
+  'Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft';
+
 function composeSpritePrompt(args: {
   concept: string; colorDesc: string; accent: string; levelBlock: string;
   /** "Qual sua criatura favorita?" (1-2 palavras) — prefixo literal antes do
    *  conceito, em todos os estágios (ver OracleInput.favoriteCreature). */
   favoriteCreature?: string;
+  /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
+  withReferences: boolean;
 }): string {
   const concept = args.favoriteCreature ? `${args.favoriteCreature} ${args.concept}` : args.concept;
   return (
-    // Sem nomes de franquia no prompt: pedir "inspirado em Digimon/Pokémon"
-    // convida o gerador a devolver algo perto DEMAIS de personagem registrado,
-    // e o sprite vai pro app de um usuário real. O estilo é descrito por
-    // atributos visuais — que é o que a gente quer de verdade.
-    `Generate an original creature for a monster-raising RPG. Do not copy any ` +
-    `existing franchise character. ` +
+    `Generate an original creature for a monster-raising RPG` +
+    (args.withReferences ? ` inspired by ${GENRE_REFERENCES}` : '') + `. ` +
+    // Vale nas DUAS variantes: mesmo citando inspirações, o que sai não pode ser
+    // um personagem registrado — o sprite vai pro app de um usuário real.
+    `Do not copy any existing franchise character. ` +
     `Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: ` +
     `${concept}. ${args.levelBlock}. ` +
     `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
@@ -2247,6 +2264,18 @@ function composeSpritePrompt(args: {
     `Do not tint the whole creature in a single hue — use clearly distinct colors. ` +
     `Grayscale/black-and-white is acceptable.`
   );
+}
+
+/** Par de prompts de uma forma: o COM referências (sempre a 1ª tentativa) e o
+ *  limpo (2ª tentativa, para quando o provedor recusa). Quem gera a imagem
+ *  manda os dois — ver `requestSprite` e `functions/api/generate-sprite.js`. */
+function composeSpritePrompts(
+  args: Omit<Parameters<typeof composeSpritePrompt>[0], 'withReferences'>,
+): { imagePrompt: string; imagePromptFallback: string } {
+  return {
+    imagePrompt: composeSpritePrompt({ ...args, withReferences: true }),
+    imagePromptFallback: composeSpritePrompt({ ...args, withReferences: false }),
+  };
 }
 
 const BODY_PLANS: Array<{ en: string; pt: string }> = [
@@ -2882,7 +2911,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que ${family.mono ? `a família ${fusionA.pt}` : `a mistura de ${fusionA.pt} e ${fusionB.pt}`} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
       en: `${rookieName} is the base form: a small, simple little monster where ${family.mono ? `the ${fusionA.en} family` : `the ${fusionA.en}-${fusionB.en} blend`} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
     },
-    imagePrompt: composeSpritePrompt({
+    ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
       favoriteCreature,
       levelBlock: rookieLevel,
@@ -2920,7 +2949,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista.`,
         en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest.`,
       },
-      imagePrompt: composeSpritePrompt({
+      ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
         favoriteCreature,
         levelBlock: `it has evolved into ${champShape.en}`,
@@ -2936,7 +2965,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
         en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest.`,
       },
-      imagePrompt: composeSpritePrompt({
+      ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
         favoriteCreature,
         levelBlock: `it has transformed into ${perfShape.en}`,
@@ -2952,7 +2981,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
         pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo.`,
         en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${bRegalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en}.`,
       },
-      imagePrompt: composeSpritePrompt({
+      ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
         favoriteCreature,
         levelBlock: `in its final form, it is ${megaShape.en}`,
@@ -2970,7 +2999,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}".`,
       en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}".`,
     },
-    imagePrompt: composeSpritePrompt({
+    ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
       favoriteCreature,
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,

@@ -4435,13 +4435,30 @@ select:focus-visible {
   border-image-repeat: stretch;
   border-image-width: var(--sm-px-bw, 12px);
   transition: filter .12s ease, transform .08s ease;
-  &:hover { filter: brightness(1.12) drop-shadow(0 0 6px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)); }
-  &:active { transform: translateY(2px); filter: brightness(1.28) drop-shadow(0 0 9px color-mix(in srgb, var(--sm-px-cyan) 75%, transparent)); }
+  /* Cada estado troca a ARTE, não um filtro sobre a arte (18/08/2026). Os
+     quatro PNGs são derivados do mesmo `normal`, então a fatia 9-slice é a
+     mesma e a moldura não pula na troca. O `drop-shadow` continua por CSS de
+     propósito: brilho externo assado no PNG vira franja quando a arte é
+     recortada, e é justamente o defeito que o guard de asset persegue. */
+  &:hover {
+    --sm-px-src: var(--sm-px-src-hover, var(--sm-px-src));
+    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent));
+  }
+  &:active {
+    --sm-px-src: var(--sm-px-src-active, var(--sm-px-src));
+    transform: translateY(2px);
+    filter: drop-shadow(0 0 9px color-mix(in srgb, var(--sm-px-cyan) 75%, transparent));
+  }
   /* Sem `opacity`: opacidade mistura TEXTO e FUNDO com a tela e esmaga a
      razão de contraste (foi o que reprovou o .sm-btn desabilitado, medido na
-     rodada 3). Dessaturar + escurecer já lê como inativo e preserva a razão
-     entre a tinta e o miolo da arte. */
-  &:disabled { filter: grayscale(.88) brightness(.8); cursor: default; transform: none; }
+     rodada 3). A arte desabilitada já nasce dessaturada na direção do
+     cinza-teal do tema, então aqui não sobra filtro nenhum sobre o texto. */
+  &:disabled {
+    --sm-px-src: var(--sm-px-src-off, var(--sm-px-src));
+    filter: none;
+    cursor: default;
+    transform: none;
+  }
 }
 /* Ação primária: mesmo corpo, miolo aceso em ciano (o "active" da referência
    virou o estado de DESTAQUE, não um PNG à parte — ver relatório). */

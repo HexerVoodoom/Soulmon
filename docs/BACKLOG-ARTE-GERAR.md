@@ -66,7 +66,19 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > anywhere — not in glows, halos, rims or anti-aliasing. Transparent PNG,
   > no checkerboard pattern baked into the image, no background rectangle.
 
-### A2 · Botões — estados hover e active (sem magenta)
+### A2 · Botões — estados hover e active (sem magenta) — ✅ feito 18/08/2026, DERIVADO
+> Resolvido sem gerar arte nova, e de propósito. O botão é 9-slice e as fatias
+> (`--sm-px-slice`: 82/66/43) foram medidas na arte `normal`; arte desenhada à
+> parte tem geometria um pouco diferente, e fatia que não bate faz a moldura
+> PULAR no hover — o frame em que o olho está no botão. Os três estados saem
+> agora do PRÓPRIO `normal` (`gen_button_states.py`): cada pixel é classificado
+> em cobre/teal pela relação entre os canais e só então recebe o ajuste, então
+> contorno e fio ciano ficam intactos. O resíduo ameixa do arquivo de origem
+> foi apagado por inpainting no caminho — os nove medem 0,0000% de magenta
+> (antes: quarentena inteira). `PixelKit` passa as quatro artes por CSS var e o
+> `index.css` troca `--sm-px-src` em `:hover`/`:active`/`:disabled`, no lugar
+> dos filtros `brightness`/`grayscale`. O `drop-shadow` continua em CSS: brilho
+> assado no PNG viraria franja no recorte. Guard novo trava a geometria comum.
 - **Destino:** `src/assets/soulmon/buttons/button-{hover,active}-{small,medium,large}.png`
   (6 arquivos; substituem os que estão em quarentena)
 - **Uso:** `PixelButton` (`components/pixel/PixelKit.tsx`). Hoje os estados são
@@ -109,8 +121,21 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 ## P2 — melhoram, não destravam
 
-### A4 · Nós do Soul Link (grafo de evolução)
-- **Destino:** `src/assets/soulmon/nodes/node-{lit,dim,active}.png` (128×128)
+### A4 · Nós do Soul Link (grafo de evolução) — ✅ feito 18/08/2026, Gemini (navegador)
+> Gerados na rodada de UI do Gemini e recortados por algoritmo (o Gemini assa o
+> xadrez no PNG; o recorte detecta os dois tons do xadrez pela borda, varre as
+> costuras de anti-aliasing e faz trim — ferramentas em `E:\Soulmon-assets`).
+> Saíram **4** estados em vez dos 3 previstos, porque `NodeArt` sempre teve
+> quatro: `locked` (cristal morto) · `forecast` (shard aceso) · `reached` (gema
+> cheia) · `current` (gema com raios). A hierarquia é de PRESENÇA visual
+> crescente, que é o que carrega o significado sem depender de cor.
+> Guard (`assets.contract.test.ts`): 0,00% de magenta, 0,6–2,2% de cinza
+> (teto 5%), 12–23% de transparência real. `nodeArt.tsx` trocou de SVG para
+> PNG e ganhou teste de render (`nodeArt.render.test.tsx`) travando o contrato
+> que antes só existia no comentário do topo. `SoulNode.tsx` e
+> `EvolutionPath.tsx` não mudaram uma linha, como o arquivo prometia.
+
+- **Destino (real):** `src/assets/soulmon/evolution/node-{current,reached,forecast,locked}.png` (128×128)
 - **Uso:** `components/evolution/nodeArt.tsx` — **a fronteira de troca já está
   pronta**: só esse arquivo sabe com o que o nó é desenhado; `SoulNode.tsx` e
   `EvolutionPath.tsx` não mudam uma linha.
