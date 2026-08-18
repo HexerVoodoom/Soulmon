@@ -5670,7 +5670,11 @@ button.sm-px-node {
   line-height: 1.4;
   text-transform: uppercase;
   -webkit-font-smoothing: none;
-  color: var(--sm-px-ink);
+  /* `--sm-ink` (tinta da PÁGINA), não `--sm-px-ink`: quando a actionbar tinha
+     fundo escuro próprio, a tinta fixa de peça escura servia; sem a moldura
+     (rodada 5) o rótulo fica direto sobre o fundo do tema, e no claro a tinta
+     clara sumia — ITEMS/BATH/SLEEP invisíveis, achado no sweep de tema. */
+  color: var(--sm-ink);
 }
 /* Marcador de "tem coisa nova" — quadrado, não bolinha: círculo de 8px era o
    último raio do sistema Material que sobrava na Home. */
