@@ -7,7 +7,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **atalho oculto pro modo debug (18/ago/2026, madrugada)**
+Última atualização: **o gesto oculto virou o LOGO inteiro (18/ago/2026,
+madrugada)** — o dono pediu ("mergeia esse toggle com o corvo no título"):
+corvo + wordmark "SOULMON" agora são um wrapper único, e é ele o alvo do
+long-press. Alvo maior acerta mais fácil no dedo. Como o alvo passou a
+incluir texto, entrou `userSelect: none` + `WebkitTouchCallout: none` (segurar
+texto no mobile abriria seleção/menu e comeria o gesto). Achado ao testar, e
+anotado em `docs/ORACULO.md`: a intro tem animação de entrada e, antes de
+assentar, o logo fica em OUTRA posição com `pointer-events: none` — medir
+cedo faz o teste reprovar um gesto que funciona (`document.fonts.ready` não
+basta; espere ~3s).
+
+Antes disso: **atalho oculto pro modo debug (18/ago/2026, madrugada)**
 — o dono perguntou onde ficava o checkbox de modo debug e, ao saber que
 `OraclePage.tsx` não tem NENHUM ponto de entrada no app real, pediu um jeito
 de chegar lá pela tela de intro que aparece na captura que ele mandou. Como

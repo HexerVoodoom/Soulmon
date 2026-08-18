@@ -624,10 +624,16 @@ aparecer pro usuário") e pro próprio motivo de `OraclePage` não ter nav.
 Perguntado ao dono antes de implementar: a resposta foi que o atalho é só
 pra ele, escondido do jogador comum.
 
-**Implementação — gesto, não controle visível:** segurar o mascote
-(`ravenMascot`) da intro por ~1.8s (`onPointerDown`/`onPointerUp`/
-`onPointerLeave`/`onPointerCancel` com `setTimeout`, `SoulmonOnboarding.tsx`)
-abre a `OraclePage` por cima da intro, com um botão "Fechar" pra voltar.
+**Implementação — gesto, não controle visível:** segurar o **logo** da intro
+por ~1.8s (`onPointerDown`/`onPointerUp`/`onPointerLeave`/`onPointerCancel`
+com `setTimeout`, `SoulmonOnboarding.tsx`) abre a `OraclePage` por cima da
+intro, com um botão "Fechar" pra voltar. O logo é o corvo (`ravenMascot`) e
+o wordmark "SOULMON" num wrapper ÚNICO — pedido do dono numa segunda rodada
+("mergeia esse toggle com o corvo no título"), e o alvo maior também acerta
+mais fácil no dedo. Como o alvo passou a incluir TEXTO, o wrapper precisa de
+`userSelect: none` + `WebkitTouchCallout: none`: segurar texto no mobile abre
+seleção e menu de contexto, que comeriam o gesto (a `<img>` sozinha não tinha
+esse problema).
 Nenhum indício visual do gesto existe na tela — quem não sabe que ele
 existe não vai descobrir por acidente (toque curto, o normal pra quem só
 está olhando o app, não faz nada).
@@ -639,7 +645,16 @@ vez); o uso normal via `App.tsx` (`currentView === 'oracle'`, que continua
 sem gatilho nenhum) não passa a prop e mantém o default `false`.
 
 Verificado com Playwright (`npx vite preview` + hold simulado via
-`page.mouse.down()`/`waitForTimeout(2100)`/`page.mouse.up()`): segurar abre
-a `OraclePage`, um toque de 400ms não abre nada, e "Fechar" volta pra intro
-limpa.
+`page.mouse.down()`/`waitForTimeout(2100)`/`page.mouse.up()`): segurar no
+wordmark E no corvo abre a `OraclePage`, um toque de 400ms não abre nada,
+"Fechar" volta pra intro limpa, e o botão "Começar agora" continua navegando
+(o gesto não rouba o clique).
+
+⚠️ **Armadilha ao testar a intro com Playwright:** ela tem animação de
+entrada. Antes de a animação assentar, o bloco do logo está numa posição
+DIFERENTE (medido: y≈457 contra y=190 no fim) e com `pointer-events: none`.
+Medir o `boundingBox()` cedo faz o clique cair noutro elemento e o teste
+"reprova" um gesto que funciona — foi exatamente o que aconteceu aqui, e
+`document.fonts.ready` + `networkidle` NÃO são suficientes. Espere ~3s (ou
+faça polling até `pointer-events` virar `auto`) antes de medir.
 
