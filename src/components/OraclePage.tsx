@@ -23,6 +23,10 @@ import { SoulTestItem, itemPrompt } from './SoulTestItem';
 
 interface OraclePageProps {
   language?: Language;
+  /** Semeia o checkbox "Modo debug" já ligado — usado pelo atalho oculto da
+   *  tela de intro (SoulmonOnboarding), que abre esta página direto no modo
+   *  sem custo em vez de deixar o dono procurar o checkbox. */
+  initialDebugMode?: boolean;
 }
 
 interface SavedOracleForm extends OracleInput {
@@ -54,7 +58,7 @@ function formComplete(f: SavedOracleForm | null): f is SavedOracleForm {
   return !!f && f.fullName.trim().length >= 3 && !!f.birthDate && !!f.soulProfile;
 }
 
-export function OraclePage({ language = 'en-US' }: OraclePageProps) {
+export function OraclePage({ language = 'en-US', initialDebugMode = false }: OraclePageProps) {
   const isPt = language === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
@@ -196,7 +200,7 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
   // só entrega os prompts, igual ao botão "Prompts" já fazia. Serve pra
   // iterar em nome/ficha/prompt sem gastar a cota de 20/dia por conta nem a
   // global de 400/dia (AI_LIMITS.sprite em functions/api/_aiGuard.js).
-  const [debugMode, setDebugMode] = useState(false);
+  const [debugMode, setDebugMode] = useState(initialDebugMode);
 
   const stageKey = (s: OracleResult['creature']['stages'][number]) => `${s.stage}-${s.branch ?? 'base'}`;
 

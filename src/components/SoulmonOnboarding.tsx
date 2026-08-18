@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, lazy, Suspense } from 'react';
 import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -17,6 +17,10 @@ import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
+
+// Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
+// motivo do lazy() em App.tsx).
+const OraclePage = lazy(() => import('./OraclePage').then(m => ({ default: m.OraclePage })));
 
 // ---------------------------------------------------------------------------
 // SoulmonOnboarding — o ritual de nascimento do Soulmon: o jogador responde
@@ -67,6 +71,23 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const isUpgrade = mode === 'upgrade';
   const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
+
+  // Atalho oculto pro dono: segurar o mascote na intro (~1.8s) abre a
+  // OraclePage (ferramenta de dev, sem entrada na navegação) já no modo
+  // debug. Nenhum indício visual pro jogador comum — sem esse gesto,
+  // ninguém encontra isso por acidente.
+  const [oracleDebugOpen, setOracleDebugOpen] = useState(false);
+  const oracleDebugHoldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startOracleDebugHold = () => {
+    if (oracleDebugHoldTimer.current) clearTimeout(oracleDebugHoldTimer.current);
+    oracleDebugHoldTimer.current = setTimeout(() => setOracleDebugOpen(true), 1800);
+  };
+  const cancelOracleDebugHold = () => {
+    if (oracleDebugHoldTimer.current) {
+      clearTimeout(oracleDebugHoldTimer.current);
+      oracleDebugHoldTimer.current = null;
+    }
+  };
 
   // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
   //         6..11 as 6 perguntas do ritual · 12 a bifurcação do refinamento ·
@@ -411,6 +432,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       color: 'var(--sm-ink)',
     }}>
+      {oracleDebugOpen ? (
+        <Suspense fallback={null}>
+          <div style={{ width: '100%', maxWidth: 440, padding: '20px 20px 40px' }}>
+            <button
+              className="sm-btn sm-btn-secondary"
+              style={{ marginBottom: 12 }}
+              onClick={() => setOracleDebugOpen(false)}
+            >
+              <ArrowLeft size={16} strokeWidth={2.4} />
+              {isPt ? 'Fechar' : 'Close'}
+            </button>
+            <OraclePage language={isPt ? 'pt-BR' : 'en-US'} initialDebugMode />
+          </div>
+        </Suspense>
+      ) : (
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
         {/* Barra de progresso */}
         {step > 0 && step <= lastStep && (
@@ -427,10 +463,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* 0 — Intro */}
         {step === 0 && (
           <div style={{ textAlign: 'center', paddingTop: 60 }}>
-            <div style={{
-              width: 88, height: 88, margin: '0 auto 18px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+            <div
+              style={{
+                width: 88, height: 88, margin: '0 auto 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+              onPointerDown={startOracleDebugHold}
+              onPointerUp={cancelOracleDebugHold}
+              onPointerLeave={cancelOracleDebugHold}
+              onPointerCancel={cancelOracleDebugHold}
+            >
               <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
             </div>
             <h1 style={{ fontFamily: 'var(--sm-font-pixel)', fontSize: 26, margin: '0 0 8px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan)', textShadow: '0 0 12px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' }}>Soulmon</h1>
@@ -889,6 +931,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </button>
         )}
       </div>
+      )}
     </div>
   );
 }

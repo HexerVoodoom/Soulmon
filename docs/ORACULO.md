@@ -608,3 +608,38 @@ simplesmente não acontece), não por um limite que ainda bateria na API.
 Default desligado — preserva o comportamento de sempre pra quem já usa o
 botão pra gerar de verdade.
 
+## Atalho oculto pro modo debug (ago/2026, rodada 11)
+
+A rodada 10 resolveu o CUSTO, mas deixou de fora o problema que a rodada 8
+(footnote: `OraclePage` "não tem entrada na navegação do app") sempre
+implicou — pra usar o checkbox era preciso editar `currentView` no código.
+O dono perguntou onde ficava o toggle e pediu pra colocá-lo na tela de
+intro do onboarding (`SoulmonOnboarding.tsx`, step 0 — "Soulmon / Começar
+agora — é grátis / Já quero o completo").
+
+**Essa tela é a primeira coisa que todo jogador real vê.** Um checkbox de
+verdade ali seria visível pra qualquer um que abrisse o app — quebraria a
+mesma regra que já vale pra classe da criatura (rodada 7: "não precisa
+aparecer pro usuário") e pro próprio motivo de `OraclePage` não ter nav.
+Perguntado ao dono antes de implementar: a resposta foi que o atalho é só
+pra ele, escondido do jogador comum.
+
+**Implementação — gesto, não controle visível:** segurar o mascote
+(`ravenMascot`) da intro por ~1.8s (`onPointerDown`/`onPointerUp`/
+`onPointerLeave`/`onPointerCancel` com `setTimeout`, `SoulmonOnboarding.tsx`)
+abre a `OraclePage` por cima da intro, com um botão "Fechar" pra voltar.
+Nenhum indício visual do gesto existe na tela — quem não sabe que ele
+existe não vai descobrir por acidente (toque curto, o normal pra quem só
+está olhando o app, não faz nada).
+
+`OraclePage` ganhou a prop `initialDebugMode?: boolean`, que só semeia o
+`useState` do checkbox (`useState(initialDebugMode)`) — o atalho passa
+`initialDebugMode` (chega já marcado, sem precisar lembrar de marcar toda
+vez); o uso normal via `App.tsx` (`currentView === 'oracle'`, que continua
+sem gatilho nenhum) não passa a prop e mantém o default `false`.
+
+Verificado com Playwright (`npx vite preview` + hold simulado via
+`page.mouse.down()`/`waitForTimeout(2100)`/`page.mouse.up()`): segurar abre
+a `OraclePage`, um toque de 400ms não abre nada, e "Fechar" volta pra intro
+limpa.
+
