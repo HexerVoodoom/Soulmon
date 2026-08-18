@@ -23,13 +23,93 @@
           } catch (e) {}
         })();
       </script>
-      <script type="module" crossorigin src="/assets/index-BAuUeunx.js"></script>
+      <script type="module" crossorigin src="/assets/index-Depbl2oC.js"></script>
       <link rel="modulepreload" crossorigin href="/assets/vendor-DDxydHEc.js">
-      <link rel="stylesheet" crossorigin href="/assets/index-CVZNMD0P.css">
+      <link rel="stylesheet" crossorigin href="/assets/index-JbykLdB-.css">
     </head>
+
+    <style>
+      /* SPLASH — estática de propósito: aparece ANTES do bundle carregar
+         (é uma tela de loading de verdade, não um timer artificial). O React
+         a remove com fade no primeiro frame (main.tsx); se o bundle nem
+         parsear, o aviso de WebView antigo a remove também, senão ela
+         cobriria o aviso. Fontes do sistema (monospace): a Silkscreen chega
+         só com o bundle, e é exatamente a espera que esta tela cobre. */
+      #splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 18px; text-align: center;
+        background:
+          radial-gradient(circle at 50% -10%, rgba(93,240,224,.09), transparent 55%),
+          repeating-linear-gradient(0deg, transparent 0 47px, rgba(93,240,224,.05) 47px 48px),
+          repeating-linear-gradient(90deg, transparent 0 47px, rgba(93,240,224,.05) 47px 48px),
+          linear-gradient(180deg, #0e2323 0%, #123030 55%, #0e2323 100%);
+        box-shadow: inset 0 0 0 1px #241507, inset 0 0 0 3px #c68642, inset 0 0 0 4px #241507;
+        font-family: ui-monospace, 'Courier New', monospace;
+        color: #eaf5f2;
+        transition: opacity .45s ease;
+      }
+      #splash.done { opacity: 0; pointer-events: none; }
+      #splash .sp-flame {
+        width: 48px; height: 64px; image-rendering: pixelated;
+        filter: drop-shadow(0 0 10px rgba(93,240,224,.8)) drop-shadow(0 0 26px rgba(93,240,224,.4));
+        animation: sp-flick 1.15s ease-in-out infinite;
+      }
+      @keyframes sp-flick {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(1.14) translateY(-1px); }
+      }
+      #splash .sp-title {
+        margin: 0; font-size: 30px; font-weight: 700; letter-spacing: .18em;
+        text-transform: uppercase; color: #5df0e0;
+        text-shadow: 0 0 12px rgba(93,240,224,.55);
+      }
+      #splash .sp-loading { font-size: 12px; letter-spacing: .22em; color: #9fc6c0; }
+      #splash .sp-bar {
+        width: 220px; height: 16px; padding: 2px; box-sizing: border-box;
+        background: #16283d; border: 2px solid #0a1422; display: flex; gap: 2px;
+      }
+      #splash .sp-bar i {
+        flex: 1; background: #5df0e0; opacity: .15; animation: sp-seg 1.6s linear infinite;
+      }
+      @keyframes sp-seg { 0%, 20% { opacity: .15; } 30%, 70% { opacity: .95; } 80%, 100% { opacity: .15; } }
+      #splash .sp-link {
+        font-size: 11px; letter-spacing: .2em; color: #5df0e0;
+        border: 2px solid #c68642; padding: 7px 14px; background: rgba(4,18,20,.55);
+      }
+      #splash .sp-crystals { display: flex; gap: 26px; margin-top: 6px; }
+      #splash .sp-crystal {
+        width: 14px; height: 26px;
+        background: linear-gradient(160deg, #b9fff5 0%, #5df0e0 45%, #17847a 100%);
+        clip-path: polygon(50% 0, 100% 30%, 78% 100%, 22% 100%, 0 30%);
+        box-shadow: 0 0 12px rgba(93,240,224,.6);
+        animation: sp-flick 1.6s ease-in-out infinite;
+      }
+      #splash .sp-crystal:nth-child(2) { height: 34px; width: 17px; animation-delay: .3s; }
+      #splash .sp-crystal:nth-child(3) { animation-delay: .6s; }
+    </style>
 
     <body>
       <div id="root"></div>
+      <div id="splash" aria-hidden="true">
+        <svg class="sp-flame" viewBox="0 0 12 16" aria-hidden="true" style="shape-rendering:crispEdges"><rect x="4" y="0" width="1" height="1" fill="#5df0e0"/><rect x="5" y="0" width="1" height="1" fill="#5df0e0"/><rect x="4" y="1" width="1" height="1" fill="#5df0e0"/><rect x="5" y="1" width="1" height="1" fill="#5df0e0"/><rect x="6" y="1" width="1" height="1" fill="#5df0e0"/><rect x="3" y="2" width="1" height="1" fill="#5df0e0"/><rect x="4" y="2" width="1" height="1" fill="#5df0e0"/><rect x="5" y="2" width="1" height="1" fill="#5df0e0"/><rect x="6" y="2" width="1" height="1" fill="#5df0e0"/><rect x="3" y="3" width="1" height="1" fill="#5df0e0"/><rect x="4" y="3" width="1" height="1" fill="#5df0e0"/><rect x="5" y="3" width="1" height="1" fill="#5df0e0"/><rect x="6" y="3" width="1" height="1" fill="#5df0e0"/><rect x="7" y="3" width="1" height="1" fill="#5df0e0"/><rect x="2" y="4" width="1" height="1" fill="#5df0e0"/><rect x="3" y="4" width="1" height="1" fill="#5df0e0"/><rect x="4" y="4" width="1" height="1" fill="#5df0e0"/><rect x="5" y="4" width="1" height="1" fill="#5df0e0"/><rect x="6" y="4" width="1" height="1" fill="#5df0e0"/><rect x="7" y="4" width="1" height="1" fill="#5df0e0"/><rect x="2" y="5" width="1" height="1" fill="#5df0e0"/><rect x="3" y="5" width="1" height="1" fill="#5df0e0"/><rect x="4" y="5" width="1" height="1" fill="#5df0e0"/><rect x="5" y="5" width="1" height="1" fill="#5df0e0"/><rect x="6" y="5" width="1" height="1" fill="#5df0e0"/><rect x="7" y="5" width="1" height="1" fill="#5df0e0"/><rect x="8" y="5" width="1" height="1" fill="#5df0e0"/><rect x="1" y="6" width="1" height="1" fill="#5df0e0"/><rect x="2" y="6" width="1" height="1" fill="#5df0e0"/><rect x="3" y="6" width="1" height="1" fill="#5df0e0"/><rect x="4" y="6" width="1" height="1" fill="#d8fffa"/><rect x="5" y="6" width="1" height="1" fill="#d8fffa"/><rect x="6" y="6" width="1" height="1" fill="#5df0e0"/><rect x="7" y="6" width="1" height="1" fill="#5df0e0"/><rect x="8" y="6" width="1" height="1" fill="#5df0e0"/><rect x="9" y="6" width="1" height="1" fill="#5df0e0"/><rect x="1" y="7" width="1" height="1" fill="#5df0e0"/><rect x="2" y="7" width="1" height="1" fill="#5df0e0"/><rect x="3" y="7" width="1" height="1" fill="#d8fffa"/><rect x="4" y="7" width="1" height="1" fill="#d8fffa"/><rect x="5" y="7" width="1" height="1" fill="#d8fffa"/><rect x="6" y="7" width="1" height="1" fill="#d8fffa"/><rect x="7" y="7" width="1" height="1" fill="#5df0e0"/><rect x="8" y="7" width="1" height="1" fill="#5df0e0"/><rect x="9" y="7" width="1" height="1" fill="#5df0e0"/><rect x="1" y="8" width="1" height="1" fill="#5df0e0"/><rect x="2" y="8" width="1" height="1" fill="#5df0e0"/><rect x="3" y="8" width="1" height="1" fill="#d8fffa"/><rect x="4" y="8" width="1" height="1" fill="#d8fffa"/><rect x="5" y="8" width="1" height="1" fill="#d8fffa"/><rect x="6" y="8" width="1" height="1" fill="#d8fffa"/><rect x="7" y="8" width="1" height="1" fill="#5df0e0"/><rect x="8" y="8" width="1" height="1" fill="#5df0e0"/><rect x="9" y="8" width="1" height="1" fill="#5df0e0"/><rect x="0" y="9" width="1" height="1" fill="#5df0e0"/><rect x="1" y="9" width="1" height="1" fill="#5df0e0"/><rect x="2" y="9" width="1" height="1" fill="#5df0e0"/><rect x="3" y="9" width="1" height="1" fill="#d8fffa"/><rect x="4" y="9" width="1" height="1" fill="#d8fffa"/><rect x="5" y="9" width="1" height="1" fill="#d8fffa"/><rect x="6" y="9" width="1" height="1" fill="#d8fffa"/><rect x="7" y="9" width="1" height="1" fill="#d8fffa"/><rect x="8" y="9" width="1" height="1" fill="#5df0e0"/><rect x="9" y="9" width="1" height="1" fill="#5df0e0"/><rect x="10" y="9" width="1" height="1" fill="#5df0e0"/><rect x="0" y="10" width="1" height="1" fill="#5df0e0"/><rect x="1" y="10" width="1" height="1" fill="#5df0e0"/><rect x="2" y="10" width="1" height="1" fill="#5df0e0"/><rect x="3" y="10" width="1" height="1" fill="#d8fffa"/><rect x="4" y="10" width="1" height="1" fill="#d8fffa"/><rect x="5" y="10" width="1" height="1" fill="#d8fffa"/><rect x="6" y="10" width="1" height="1" fill="#d8fffa"/><rect x="7" y="10" width="1" height="1" fill="#d8fffa"/><rect x="8" y="10" width="1" height="1" fill="#5df0e0"/><rect x="9" y="10" width="1" height="1" fill="#5df0e0"/><rect x="10" y="10" width="1" height="1" fill="#5df0e0"/><rect x="1" y="11" width="1" height="1" fill="#5df0e0"/><rect x="2" y="11" width="1" height="1" fill="#5df0e0"/><rect x="3" y="11" width="1" height="1" fill="#5df0e0"/><rect x="4" y="11" width="1" height="1" fill="#d8fffa"/><rect x="5" y="11" width="1" height="1" fill="#d8fffa"/><rect x="6" y="11" width="1" height="1" fill="#d8fffa"/><rect x="7" y="11" width="1" height="1" fill="#d8fffa"/><rect x="8" y="11" width="1" height="1" fill="#5df0e0"/><rect x="9" y="11" width="1" height="1" fill="#5df0e0"/><rect x="1" y="12" width="1" height="1" fill="#5df0e0"/><rect x="2" y="12" width="1" height="1" fill="#5df0e0"/><rect x="3" y="12" width="1" height="1" fill="#5df0e0"/><rect x="4" y="12" width="1" height="1" fill="#5df0e0"/><rect x="5" y="12" width="1" height="1" fill="#d8fffa"/><rect x="6" y="12" width="1" height="1" fill="#d8fffa"/><rect x="7" y="12" width="1" height="1" fill="#5df0e0"/><rect x="8" y="12" width="1" height="1" fill="#5df0e0"/><rect x="9" y="12" width="1" height="1" fill="#5df0e0"/><rect x="2" y="13" width="1" height="1" fill="#5df0e0"/><rect x="3" y="13" width="1" height="1" fill="#5df0e0"/><rect x="4" y="13" width="1" height="1" fill="#5df0e0"/><rect x="5" y="13" width="1" height="1" fill="#5df0e0"/><rect x="6" y="13" width="1" height="1" fill="#5df0e0"/><rect x="7" y="13" width="1" height="1" fill="#5df0e0"/><rect x="8" y="13" width="1" height="1" fill="#5df0e0"/><rect x="3" y="14" width="1" height="1" fill="#5df0e0"/><rect x="4" y="14" width="1" height="1" fill="#5df0e0"/><rect x="5" y="14" width="1" height="1" fill="#5df0e0"/><rect x="6" y="14" width="1" height="1" fill="#5df0e0"/><rect x="7" y="14" width="1" height="1" fill="#5df0e0"/><rect x="4" y="15" width="1" height="1" fill="#5df0e0"/><rect x="5" y="15" width="1" height="1" fill="#5df0e0"/><rect x="6" y="15" width="1" height="1" fill="#5df0e0"/></svg>
+        <h1 class="sp-title">Soulmon</h1>
+        <div class="sp-loading" id="sp-loading">LOADING DATA...</div>
+        <div class="sp-bar" aria-hidden="true"><i style="animation-delay:0s"></i><i style="animation-delay:.14s"></i><i style="animation-delay:.28s"></i><i style="animation-delay:.42s"></i><i style="animation-delay:.56s"></i><i style="animation-delay:.7s"></i><i style="animation-delay:.84s"></i><i style="animation-delay:.98s"></i></div>
+        <div class="sp-link" id="sp-link">SOUL_LINK ESTABLISHED</div>
+        <div class="sp-crystals" aria-hidden="true"><div class="sp-crystal"></div><div class="sp-crystal"></div><div class="sp-crystal"></div></div>
+      </div>
+      <script>
+        // Localiza a splash sem esperar o bundle (regra do app: PT-BR + EN).
+        (function () {
+          try {
+            if ((navigator.language || '').toLowerCase().indexOf('pt') === 0) {
+              document.getElementById('sp-loading').textContent = 'CARREGANDO DADOS...';
+              document.getElementById('sp-link').textContent = 'SOUL_LINK ESTABELECIDO';
+            }
+          } catch (e) {}
+        })();
+      </script>
       <script>
         // AVISO DE WEBVIEW ANTIGO — roda ANTES do bundle, de propósito.
         //
@@ -95,6 +175,11 @@
             fundo.appendChild(caixa);
             raiz.innerHTML = '';
             raiz.appendChild(fundo);
+            // A splash fica ACIMA do #root: sem esta linha, o aviso que este
+            // bloco acabou de montar ficaria escondido atrás dela pra sempre
+            // (o bundle que a removeria é justamente o que não vai carregar).
+            var sp = document.getElementById('splash');
+            if (sp && sp.parentNode) sp.parentNode.removeChild(sp);
           } catch (e) {}
         })();
       </script>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, lazy, Suspense } from 'react';
 import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -7,11 +7,21 @@ import {
   generateOracle, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
 } from '../utils/oracle';
+import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
+import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/types';
+import { cityLabel, type City } from '../utils/soulProfile/cities';
+import { CityPicker } from './CityPicker';
+import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
+import { PixelFrame } from './PixelFrame';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
+
+// Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
+// motivo do lazy() em App.tsx).
+const OraclePage = lazy(() => import('./OraclePage').then(m => ({ default: m.OraclePage })));
 
 // ---------------------------------------------------------------------------
 // SoulmonOnboarding — o ritual de nascimento do Soulmon: o jogador responde
@@ -63,15 +73,44 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
+  // Atalho oculto pro dono: segurar o mascote na intro (~1.8s) abre a
+  // OraclePage (ferramenta de dev, sem entrada na navegação) já no modo
+  // debug. Nenhum indício visual pro jogador comum — sem esse gesto,
+  // ninguém encontra isso por acidente.
+  const [oracleDebugOpen, setOracleDebugOpen] = useState(false);
+  const oracleDebugHoldTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startOracleDebugHold = () => {
+    if (oracleDebugHoldTimer.current) clearTimeout(oracleDebugHoldTimer.current);
+    oracleDebugHoldTimer.current = setTimeout(() => setOracleDebugOpen(true), 1800);
+  };
+  const cancelOracleDebugHold = () => {
+    if (oracleDebugHoldTimer.current) {
+      clearTimeout(oracleDebugHoldTimer.current);
+      oracleDebugHoldTimer.current = null;
+    }
+  };
+
   // Passos: 0 intro · 1 nome · 2 data · 3 hora · 4 local · 5 criatura favorita ·
-  //         6..(6+N-1) quiz · then gerando · reveal · register (nick+email, obrigatório)
+  //         6..11 as 6 perguntas do ritual · 12 a bifurcação do refinamento ·
+  //         13..32 os 20 itens (SÓ para quem aceitar) · gerando · reveal ·
+  //         register (nick+email, obrigatório)
   // DEMO_PICK é um passo à parte (fora dessa sequência numérica) — o caminho
   // demo pula direto da intro pra lá, sem passar pelo oráculo.
+  //
+  // O ritual continua sendo as 6 perguntas: é o que praticamente todo mundo vai
+  // responder, e 20 itens psicométricos como porta de entrada obrigatória são
+  // um formulário, não um ritual. O teste longo vira uma ESCOLHA oferecida
+  // depois delas — e ANTES do reveal, de propósito: assim a criatura nasce uma
+  // vez só, já com a leitura que a pessoa escolheu. Oferecer depois do reveal
+  // significaria trocar por outra a criatura que ela acabou de conhecer.
   const FAVORITE_STEP = 5;
   const QUIZ_START = FAVORITE_STEP + 1;
   const QUIZ_END = QUIZ_START + ORACLE_QUESTIONS.length; // primeiro passo pós-quiz
-  const GENERATING = QUIZ_END;
-  const REVEAL = QUIZ_END + 1;
+  const REFINE_OFFER = QUIZ_END;
+  const DEEP_START = REFINE_OFFER + 1;
+  const DEEP_END = DEEP_START + SOUL_TEST_ITEMS.length;
+  const GENERATING = DEEP_END;
+  const REVEAL = GENERATING + 1;
   const REGISTER = REVEAL + 1;
   const DEMO_PICK = -1;
   // O "porquê" vem ANTES de nome, data e quiz: a razão para mudar precisa vir
@@ -94,11 +133,27 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [birthDate, setBirthDate] = useState('');
   const [birthDateText, setBirthDateText] = useState('');
   const [birthTime, setBirthTime] = useState('12:00');
-  const [birthPlace, setBirthPlace] = useState('');
+  // O local vira CIDADE da tabela (lat/lon/fuso IANA) em vez de texto livre: o
+  // mapa astral precisa dos três, e o fuso é o que carrega o horário de verão
+  // histórico. `birthPlace` continua existindo porque é o campo que o
+  // `OracleInput` sempre teve (e o que os perfis já salvos guardam) — passa a
+  // ser o rótulo legível da cidade escolhida.
+  const [birthCity, setBirthCity] = useState<City | null>(null);
+  const birthPlace = birthCity ? cityLabel(birthCity) : '';
+  const [timeUnknown, setTimeUnknown] = useState(false);
   const [favoriteCreature, setFavoriteCreature] = useState('');
   const [skipFavorite, setSkipFavorite] = useState(false);
+  /** As 6 perguntas do ritual — todo mundo responde. */
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  /** Os 20 itens psicométricos — só de quem aceitou refinar. */
+  const [testAnswers, setTestAnswers] = useState<SoulAnswers>({});
+  /** null = ainda não decidiu. É uma decisão SEM VOLTA, por escolha de
+   *  produto: não existe caminho para responder o teste depois. */
+  const [refine, setRefine] = useState<boolean | null>(null);
   const [result, setResult] = useState<OracleResult | null>(null);
+  /** Essência do class-system + ofício, calculados pelo pipeline completo —
+   *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
+  const [essence, setEssence] = useState<{ pt: string; en: string } | null>(null);
   const [nickname, setNickname] = useState('');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
@@ -124,26 +179,103 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // impressão de que o fluxo tinha acabado. No upgrade não há tutorial nem
   // cadastro depois — o reveal É o fim, e a barra pode chegar a 100%.
   const lastStep = isUpgrade ? REVEAL : REGISTER;
-  const progress = Math.min(step, lastStep) / (isUpgrade ? lastStep : REGISTER + 1);
+  // Quem recusa o teste longo pula 20 passos de uma vez. Sem descontar esse
+  // bloco, a barra daria um salto de ~60% e depois diria que falta muito — a
+  // barra tem que medir o caminho QUE A PESSOA escolheu, não o mais longo
+  // possível.
+  const deepBlock = SOUL_TEST_ITEMS.length;
+  const skipDeep = refine === false;
+  const shrink = (n: number) => (skipDeep && n > REFINE_OFFER ? n - deepBlock : n);
+  const progress = Math.min(shrink(step), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
 
   const canAdvance = (): boolean => {
     if (step === 1) return fullName.trim().length >= 3;
     if (step === 2) return !!birthDate;
-    if (step === 3) return !!birthTime;
-    if (step === 4) return birthPlace.trim().length >= 2;
+    if (step === 3) return timeUnknown || !!birthTime;
+    if (step === 4) return !!birthCity;
     // Criatura favorita é opcional — sempre dá pra avançar.
     if (step >= QUIZ_START && step < QUIZ_END) {
       return !!answers[ORACLE_QUESTIONS[step - QUIZ_START].id];
     }
+    // A bifurcação não tem "Continuar": as duas saídas são os próprios botões.
+    if (step === REFINE_OFFER) return false;
+    if (step >= DEEP_START && step < DEEP_END) {
+      return !!testAnswers[SOUL_TEST_ITEMS[step - DEEP_START].id];
+    }
     return true;
   };
 
-  const doGenerate = () => {
+  const [generateError, setGenerateError] = useState(false);
+
+  /** Dispara a geração e, se ela falhar, devolve o usuário à última pergunta
+   *  com um aviso — travar na animação de "revelando" para sempre é o pior
+   *  final possível para um ritual que a pessoa acabou de responder inteiro. */
+  const runGenerate = (finalTest?: SoulAnswers) => {
+    setGenerateError(false);
+    void doGenerate(finalTest).catch(() => {
+      setGenerateError(true);
+      // Volta para a bifurcação, que é onde os dois caminhos se encontram —
+      // mandar de volta para "a última pergunta" só funcionaria para quem fez
+      // o teste longo, e deixaria quem recusou preso na animação.
+      setRefine(null);
+      setStep(REFINE_OFFER);
+    });
+  };
+
+  // `finalTest` existe porque o último item do teste dispara a geração no MESMO
+  // clique que o responde: o `testAnswers` do estado ainda é o anterior nesse
+  // instante, e sem isso a 20ª resposta nunca chegava ao perfil de alma.
+  const doGenerate = async (finalTest: SoulAnswers = testAnswers) => {
+    // O motor da leitura (utils/soulProfile/) puxa a engine de efemérides e é
+    // pesado — vem por import DINÂMICO, aqui na tela de geração, que é o único
+    // momento do app em que ele é necessário e o único em que já existe uma
+    // animação cobrindo a espera.
+    const { buildSoulProfile } = await import('../utils/soulProfile');
+    // O perfil de alma é montado NOS DOIS caminhos: mesmo sem o teste longo,
+    // ele traz o mapa astral REAL e a numerologia completa, que já são melhores
+    // que o ascendente estimado do motor antigo. O que muda é a camada
+    // psicométrica: com as 20 respostas ela existe; sem elas, os traços ficam
+    // neutros e quem decide são o céu de nascimento, o nome e as 6 respostas.
+    const soulProfile = birthCity
+      ? buildSoulProfile({
+        fullName: fullName.trim(),
+        birthDate,
+        birthTime,
+        timeUnknown,
+        placeLabel: birthPlace,
+        latitude: birthCity.latitude,
+        longitude: birthCity.longitude,
+        timeZone: birthCity.timeZone,
+      }, refine ? finalTest : {})
+      : undefined;
+
     const input: OracleInput = {
-      fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(), answers,
+      fullName: fullName.trim(), birthDate, birthTime, birthPlace,
+      // As 6 do ritual entram na leitura sempre — são o único sinal de
+      // personalidade de quem não faz o teste longo.
+      answers,
       favoriteCreature: skipFavorite ? undefined : (favoriteCreature.trim() || undefined),
+      soulProfile,
     };
-    const r = generateOracle(input);
+    let r: OracleResult;
+    if (soulProfile) {
+      // Pipeline completo: distribui os pontos na ficha do class-system,
+      // captura o companheiro e busca a criatura-inspiração no bestiário —
+      // a geração da criatura já sai alinhada com tudo isso.
+      const { generateOracleComplete, essenceLabel, CLASS_DATA, PROFISSAO_EN } = await import('../utils/soulProfile');
+      const complete = await generateOracleComplete(input);
+      r = complete.result;
+      const dominant = soulProfile.oracle.dominantClassElements[0];
+      const profId = Object.keys(complete.fichaByStage.rookie.profissoes)[0];
+      const profPt = CLASS_DATA.profissoes[profId as keyof typeof CLASS_DATA.profissoes]?.nome ?? profId;
+      setEssence({
+        pt: `Essência ${essenceLabel(dominant, true)} · Ofício ${profPt}`,
+        en: `${essenceLabel(dominant, false)} essence · ${PROFISSAO_EN[profId] ?? profId}`,
+      });
+    } else {
+      r = generateOracle(input);
+      setEssence(null);
+    }
     setResult(r);
     const profile: SavedProfile = { ...input, seed: r.seed };
     // Perfil da alma = semente para REGERAR a criatura. Perder isso tira do
@@ -156,13 +288,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(flow === 'demo' ? DEMO_PICK : 1); return; }
     if (!canAdvance()) return;
-    if (step === QUIZ_END - 1) {
-      // última pergunta respondida → tela de geração e gera
+    if (step === DEEP_END - 1) {
+      // último item do teste longo respondido → tela de geração e gera
       setStep(GENERATING);
-      setTimeout(doGenerate, 1400); // deixa a animação respirar
+      setTimeout(runGenerate, 1400); // deixa a animação respirar
       return;
     }
     setStep(s => s + 1);
+  };
+
+  /** Saídas da bifurcação. Escolher aqui é definitivo — ver `refine`. */
+  const chooseRefine = (yes: boolean) => {
+    setRefine(yes);
+    if (yes) { setStep(DEEP_START); return; }
+    setStep(GENERATING);
+    setTimeout(runGenerate, 1400);
   };
   // No upgrade não existe passo 0 (intro): voltar da primeira pergunta é
   // desistir do ritual e voltar ao jogo.
@@ -172,6 +312,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
     if (step === DEMO_PICK) { setStep(STRUGGLE_STEP); return; }
     if (step === 1 && !isUpgrade) { setStep(STRUGGLE_STEP); return; }
+    // Voltar de dentro do teste longo devolve a escolha: quem entrou sem
+    // querer não fica preso em 20 perguntas.
+    if (step === DEEP_START) { setRefine(null); setStep(REFINE_OFFER); return; }
     setStep(s => Math.max(isUpgrade ? 1 : 0, s - 1));
   };
 
@@ -274,18 +417,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     );
   };
 
+  /* RODADA 5: o visual (fundo, moldura chanfrada, estados) mora nas classes
+     do kit `.sm-px-field` e `.sm-px-choice` em index.css — aqui fica só o que
+     é layout. `background`/`border` inline apagariam a banda de quina. */
   const input: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box',
-    background: 'var(--sm-surface)', color: 'var(--sm-ink)',
-    border: '2px solid var(--sm-line)', borderRadius: 14, padding: '13px 15px', fontSize: 16,
-    outline: 'none',
+    width: '100%', boxSizing: 'border-box', outline: 'none',
   };
   const optionBtn = (selected: boolean): React.CSSProperties => ({
-    textAlign: 'left', width: '100%', boxSizing: 'border-box',
-    background: selected ? 'var(--sm-primary-soft)' : 'var(--sm-surface)',
-    color: selected ? 'var(--sm-primary)' : 'var(--sm-ink)',
-    border: selected ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-    borderRadius: 14, padding: '13px 15px', fontSize: 14, cursor: 'pointer', marginBottom: 8,
+    width: '100%', boxSizing: 'border-box',
+    padding: '13px 15px', fontSize: 14, marginBottom: 8,
     fontWeight: selected ? 700 : 500,
     transition: 'all .12s ease',
   });
@@ -296,24 +436,63 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       color: 'var(--sm-ink)',
     }}>
+      <PixelFrame />
+      {oracleDebugOpen ? (
+        <Suspense fallback={null}>
+          <div style={{ width: '100%', maxWidth: 440, padding: '20px 20px 40px' }}>
+            <button
+              className="sm-btn sm-btn-secondary"
+              style={{ marginBottom: 12 }}
+              onClick={() => setOracleDebugOpen(false)}
+            >
+              <ArrowLeft size={16} strokeWidth={2.4} />
+              {isPt ? 'Fechar' : 'Close'}
+            </button>
+            <OraclePage language={isPt ? 'pt-BR' : 'en-US'} initialDebugMode />
+          </div>
+        </Suspense>
+      ) : (
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
         {/* Barra de progresso */}
         {step > 0 && step <= lastStep && (
-          <div style={{ height: 10, background: 'var(--sm-line)', borderRadius: 8, marginBottom: 24, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress * 100}%`, background: 'var(--sm-primary)', borderRadius: 8, transition: 'width .3s' }} />
+          <div style={{ height: 10, backgroundColor: 'var(--sm-line)', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', marginBottom: 24, overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', width: `${progress * 100}%`, backgroundColor: 'var(--sm-px-cyan)', transition: 'width .3s',
+              /* Blocos discretos (barra SEGMENTADA do kit) sem asset: faixas
+                 de sombra a cada 10px sobre o preenchimento ciano. */
+              backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 10px, rgba(4,18,20,0.45) 10px 12px)',
+            }} />
           </div>
         )}
 
         {/* 0 — Intro */}
         {step === 0 && (
           <div style={{ textAlign: 'center', paddingTop: 60 }}>
-            <div style={{
-              width: 88, height: 88, margin: '0 auto 18px', borderRadius: 28,
-              background: 'var(--sm-primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <img src={ravenMascot} alt="" width={58} height={58} style={{ objectFit: 'contain' }} />
+            {/* Corvo + wordmark são UM logo só, e é ele o alvo do gesto oculto
+                (segurar ~1.8s abre a OraclePage em modo debug). Como agora o
+                alvo inclui TEXTO, `userSelect`/`touchCallout` precisam sair:
+                segurar em texto no mobile abre seleção e menu de contexto, que
+                comeriam o gesto. `touchAction: manipulation` mata o atraso de
+                duplo-toque sem bloquear o scroll da página. */}
+            <div
+              style={{
+                display: 'inline-block',
+                userSelect: 'none', WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none', touchAction: 'manipulation',
+              }}
+              onPointerDown={startOracleDebugHold}
+              onPointerUp={cancelOracleDebugHold}
+              onPointerLeave={cancelOracleDebugHold}
+              onPointerCancel={cancelOracleDebugHold}
+            >
+              <div style={{
+                width: 88, height: 88, margin: '0 auto 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} draggable={false} />
+              </div>
+              <h1 style={{ fontFamily: 'var(--sm-font-pixel)', fontSize: 26, margin: '0 0 8px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan)', textShadow: '0 0 12px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' }}>Soulmon</h1>
             </div>
-            <h1 style={{ fontSize: 32, margin: '0 0 8px', fontWeight: 800, letterSpacing: -0.5 }}>Soulmon</h1>
             <p style={{ fontSize: 15, color: 'var(--sm-muted)', lineHeight: 1.6, margin: '0 0 32px' }}>
               {isPt
                 ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA — única, só sua, com todas as suas evoluções.'
@@ -381,6 +560,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <textarea
               rows={4}
               autoFocus
+              className="sm-px-field"
               style={{ ...input, resize: 'none', lineHeight: 1.5, fontFamily: 'inherit' }}
               value={step === GOAL_STEP ? soulGoal : soulStruggle}
               onChange={e => (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(e.target.value.slice(0, 280))}
@@ -435,7 +615,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === 1 && (
           <StepShell title={isPt ? 'Qual é o seu nome completo?' : 'What is your full name?'}
             hint={isPt ? 'Seu nome molda a numerologia da sua criatura.' : 'Your name shapes your creature\'s numerology.'}>
-            <input style={input} type="text" value={fullName} autoFocus
+            <input className="sm-px-field" style={input} type="text" value={fullName} autoFocus
               onChange={e => setFullName(e.target.value)}
               placeholder={isPt ? 'Ex.: Maria da Silva' : 'E.g.: Jane Doe'}
               onKeyDown={e => e.key === 'Enter' && next()} />
@@ -446,7 +626,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === 2 && (
           <StepShell title={isPt ? 'Quando você nasceu?' : 'When were you born?'}
             hint={isPt ? 'Define seus signos e elementos.' : 'Sets your signs and elements.'}>
-            <input style={input} type="text" inputMode="numeric" autoComplete="off"
+            <input className="sm-px-field" style={input} type="text" inputMode="numeric" autoComplete="off"
               value={birthDateText} autoFocus
               placeholder={isPt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)'}
               onChange={e => handleBirthDateChange(e.target.value)}
@@ -455,22 +635,48 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </StepShell>
         )}
 
-        {/* 3 — Hora */}
+        {/* 3 — Hora (com saída honesta para quem não sabe) */}
         {step === 3 && (
           <StepShell title={isPt ? 'A que horas?' : 'At what time?'}
-            hint={isPt ? 'A hora afina o ascendente e o tom da criatura.' : 'The hour tunes the ascendant and the creature\'s tone.'}>
-            <input style={input} type="time" value={birthTime} onChange={e => setBirthTime(e.target.value)} />
+            hint={isPt
+              ? 'A hora define o Ascendente e as casas do seu mapa.'
+              : 'The hour sets the Ascendant and the houses of your chart.'}>
+            <input className="sm-px-field" style={{ ...input, opacity: timeUnknown ? 0.5 : 1 }} type="time" value={birthTime}
+              disabled={timeUnknown}
+              onChange={e => setBirthTime(e.target.value)} />
+            {/* Sem hora, o mapa NÃO inventa Ascendente — ele desliga o cálculo
+                e avisa. Obrigar um palpite seria pedir para a pessoa mentir
+                num dado que desloca o mapa inteiro. */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={timeUnknown}
+                onChange={e => setTimeUnknown(e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>
+                {isPt ? 'Não sei a hora que nasci' : "I don't know my birth time"}
+              </span>
+            </label>
+            {timeUnknown && (
+              <p style={{ fontSize: 12, color: 'var(--sm-muted)', margin: '10px 2px 0', lineHeight: 1.5 }}>
+                {isPt
+                  ? 'Sem problema: usamos meio-dia e o mapa fica sem Ascendente e sem casas, em vez de fingir uma precisão que não existe.'
+                  : 'No problem: we use noon and the chart goes without Ascendant and houses, instead of faking a precision it does not have.'}
+              </p>
+            )}
           </StepShell>
         )}
 
-        {/* 4 — Local */}
+        {/* 4 — Local (cidade da tabela: lat/lon + fuso IANA) */}
         {step === 4 && (
           <StepShell title={isPt ? 'Onde você nasceu?' : 'Where were you born?'}
-            hint={isPt ? 'O lugar deixa seu eco no reino de origem.' : 'The place leaves its echo on the home realm.'}>
-            <input style={input} type="text" value={birthPlace} autoFocus
-              onChange={e => setBirthPlace(e.target.value)}
-              placeholder={isPt ? 'Ex.: São Paulo, Brasil' : 'E.g.: London, UK'}
-              onKeyDown={e => e.key === 'Enter' && next()} />
+            hint={isPt
+              ? 'O lugar posiciona o céu do seu nascimento — e o fuso certo.'
+              : 'The place positions the sky at your birth — and the right timezone.'}>
+            <CityPicker value={birthCity} onChange={setBirthCity} isPt={isPt}
+              inputStyle={input} optionStyle={optionBtn}
+              inputClass="sm-px-field" optionClass="sm-px-choice" />
           </StepShell>
         )}
 
@@ -478,7 +684,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === FAVORITE_STEP && (
           <StepShell title={isPt ? 'Qual sua criatura favorita?' : "What's your favorite creature?"}
             hint={isPt ? 'Opcional — até 2 palavras. Ela influencia a aparência da sua criatura.' : 'Optional — up to 2 words. It shapes how your creature looks.'}>
-            <input style={{ ...input, opacity: skipFavorite ? 0.5 : 1 }} type="text" value={favoriteCreature} autoFocus
+            <input className="sm-px-field" style={{ ...input, opacity: skipFavorite ? 0.5 : 1 }} type="text" value={favoriteCreature} autoFocus
               disabled={skipFavorite}
               onChange={e => setFavoriteCreature(e.target.value.split(/\s+/).slice(0, 2).join(' '))}
               placeholder={isPt ? 'Ex.: axolote' : 'E.g.: axolotl'}
@@ -497,30 +703,84 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </StepShell>
         )}
 
-        {/* 6..N — Quiz (uma pergunta por página) */}
+        {/* 6..11 — As 6 perguntas do ritual (uma por página) */}
         {step >= QUIZ_START && step < QUIZ_END && (() => {
           const q = ORACLE_QUESTIONS[step - QUIZ_START];
           return (
             <StepShell title={L(q.text)}
-              hint={isPt ? `Pergunta ${step - QUIZ_START + 1} de ${ORACLE_QUESTIONS.length}` : `Question ${step - QUIZ_START + 1} of ${ORACLE_QUESTIONS.length}`}>
+              hint={isPt
+                ? `Pergunta ${step - QUIZ_START + 1} de ${ORACLE_QUESTIONS.length}`
+                : `Question ${step - QUIZ_START + 1} of ${ORACLE_QUESTIONS.length}`}>
               <div>
                 {q.options.map(opt => {
                   const selected = answers[q.id] === opt.id;
                   return (
-                    <button key={opt.id} style={optionBtn(selected)}
+                    <button key={opt.id} className="sm-px-choice" aria-pressed={selected} style={optionBtn(selected)}
                       onClick={() => {
                         setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
                         // avança sozinho após escolher (fluido)
-                        setTimeout(() => {
-                          if (step === QUIZ_END - 1) { setStep(GENERATING); setTimeout(doGenerate, 1400); }
-                          else setStep(s => s + 1);
-                        }, 180);
+                        setTimeout(() => setStep(s => s + 1), 180);
                       }}>
                       {L(opt.text)}
                     </button>
                   );
                 })}
               </div>
+            </StepShell>
+          );
+        })()}
+
+        {/* 12 — A bifurcação. Decisão SEM VOLTA, e a tela diz isso. */}
+        {step === REFINE_OFFER && (
+          <StepShell
+            title={isPt ? 'Quer afinar a leitura?' : 'Want to sharpen the reading?'}
+            hint={isPt
+              ? 'Esta escolha não tem volta — não dá para responder o teste depois.'
+              : "This choice is final — there's no answering the test later."}>
+            <p style={{ fontSize: 13.5, color: 'var(--sm-muted)', lineHeight: 1.65, margin: '0 0 18px' }}>
+              {isPt
+                ? 'Seu Soulmon já pode nascer agora, do seu nome, do céu do seu nascimento e das 6 respostas que você deu. Se quiser, dá para responder mais 20 perguntas sobre você — elas afinam quem ele vai ser.'
+                : 'Your Soulmon can be born right now, from your name, the sky at your birth and the 6 answers you gave. If you like, you can answer 20 more questions about yourself — they sharpen who he turns out to be.'}
+            </p>
+            <button className="sm-btn" style={{ width: '100%', marginBottom: 10 }}
+              onClick={() => chooseRefine(true)}>
+              {isPt ? `Responder mais ${SOUL_TEST_ITEMS.length} perguntas` : `Answer ${SOUL_TEST_ITEMS.length} more questions`}
+            </button>
+            <button className="sm-btn sm-btn-secondary" style={{ width: '100%' }}
+              onClick={() => chooseRefine(false)}>
+              {isPt ? 'Revelar meu Soulmon agora' : 'Reveal my Soulmon now'}
+            </button>
+            {generateError && (
+              <p style={{ fontSize: 12.5, color: 'var(--sm-danger, #c0392b)', margin: '14px 2px 0', lineHeight: 1.5 }}>
+                {isPt
+                  ? 'Não foi possível revelar sua criatura agora. Escolha de novo para tentar outra vez.'
+                  : "We couldn't reveal your creature just now. Choose again to retry."}
+              </p>
+            )}
+          </StepShell>
+        )}
+
+        {/* 13..32 — O teste longo, só para quem aceitou (um item por página) */}
+        {step >= DEEP_START && step < DEEP_END && (() => {
+          const item = SOUL_TEST_ITEMS[step - DEEP_START];
+          const index = step - DEEP_START;
+          return (
+            <StepShell title={L(itemPrompt(item))} hint={itemHint(item, index, SOUL_TEST_ITEMS.length, isPt)}>
+              <SoulTestItem
+                item={item}
+                answer={testAnswers[item.id]}
+                isPt={isPt}
+                optionStyle={optionBtn}
+                optionClass="sm-px-choice"
+                onAnswer={answer => {
+                  const nextTest = { ...testAnswers, [item.id]: answer };
+                  setTestAnswers(nextTest);
+                  setTimeout(() => {
+                    if (step === DEEP_END - 1) { setStep(GENERATING); setTimeout(() => runGenerate(nextTest), 1400); }
+                    else setStep(s => s + 1);
+                  }, 180);
+                }}
+              />
             </StepShell>
           );
         })()}
@@ -547,9 +807,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <div style={{ fontSize: 12, color: 'var(--sm-muted)', letterSpacing: 2, fontWeight: 700 }}>
               {isPt ? 'A CRIATURA DA SUA ALMA' : 'YOUR SOUL\'S CREATURE'}
             </div>
-            <h1 style={{ fontSize: 36, margin: '10px 0 18px', fontWeight: 800, letterSpacing: -0.5 }}>
+            <h1 style={{ fontSize: 36, margin: '10px 0 10px', fontWeight: 800, letterSpacing: -0.5 }}>
               {result.creature.baseName}
             </h1>
+
+            {essence && (
+              <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', letterSpacing: 0.6, fontWeight: 700, margin: '0 0 16px' }}>
+                {isPt ? essence.pt : essence.en}
+              </p>
+            )}
 
             <div className="sm-card" style={{ padding: '18px 16px', marginBottom: 28 }}>
               <p style={{ fontSize: 14, color: 'var(--sm-ink)', lineHeight: 1.7, margin: 0 }}>
@@ -587,7 +853,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
               {isPt ? 'Seu nickname' : 'Your nickname'}
             </label>
-            <input style={input} type="text" value={nickname} autoFocus maxLength={24}
+            <input className="sm-px-field" style={input} type="text" value={nickname} autoFocus maxLength={24}
               onChange={e => setNickname(e.target.value)}
               placeholder={isPt ? 'Ex.: Mateus' : 'E.g.: Matt'}
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
@@ -603,7 +869,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 </span>
               )}
             </label>
-            <input style={input} type="email" value={email} autoComplete="email"
+            <input className="sm-px-field" style={input} type="email" value={email} autoComplete="email"
               onChange={e => { setEmail(e.target.value); setEmailError(false); }}
               placeholder="voce@exemplo.com"
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
@@ -618,7 +884,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             {linkSent ? (
               // Link enviado: o onboarding continua quando o usuário voltar
               // pelo e-mail (App.tsx detecta o link e conclui o login).
-              <div className="sm-card" style={{ marginTop: 24, padding: 16, background: 'var(--sm-primary-soft)', border: 'none' }}>
+              <div className="sm-card" style={{ marginTop: 24, padding: 16, backgroundColor: 'var(--sm-primary-soft)', border: 'none', ['--sm-cham-line' as string]: 'transparent' } as React.CSSProperties}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--sm-primary)' }}>
                   {isPt ? 'Confira seu e-mail 📬' : 'Check your email 📬'}
                 </p>
@@ -672,13 +938,18 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             </button>
           </div>
         )}
-        {step >= QUIZ_START && step < QUIZ_END && step > QUIZ_START && (
+        {/* Passos que avançam sozinhos ao escolher: só precisam de "voltar".
+            Cobre as 6 do ritual (da 2ª em diante) E os 20 itens do teste — do
+            PRIMEIRO item em diante, porque voltar de lá devolve a bifurcação
+            para quem entrou no teste longo sem querer. */}
+        {((step > QUIZ_START && step < QUIZ_END) || (step >= DEEP_START && step < DEEP_END)) && (
           <button className="sm-btn sm-btn-secondary" style={{ marginTop: 8 }} onClick={back}>
             <ArrowLeft size={16} strokeWidth={2.4} />
             {isPt ? 'Voltar' : 'Back'}
           </button>
         )}
       </div>
+      )}
     </div>
   );
 }

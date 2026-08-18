@@ -40,6 +40,17 @@ Repositório: `HexerVoodoom/Soulmon`.
   push → merge **ff-only** em `main` → push da `main` → volte para a branch de
   trabalho. (Não existem `version-b` nem `claude/digiapp-code-improvements-*`
   aqui — eram do DigiApp.)
+- **Regra de autonomia — vale para toda sessão, sem exceção**: quando o
+  trabalho estiver pronto (`tsc`/`vitest`/`build` limpos), abra o PR e **faça
+  o merge na hora**, sem perguntar e sem esperar aprovação do dono. Não crie
+  loop de "check-in" (`send_later`/trigger reagendando de hora em hora só pra
+  reverificar CI/mergeabilidade) — isso já aconteceu antes e virou dezenas de
+  agendamentos que nunca mergeavam nada sozinhos. Se o CI ainda estiver
+  rodando, espere UMA vez o resultado e mergeie; não fique num loop
+  observando. A única exceção legítima para NÃO mergear é um bloqueio real e
+  documentado (algo que só o dono pode decidir/fazer, tipo os itens
+  "depende do dono" do `docs/STATUS.md`) — nesse caso avise o dono **uma
+  única vez** em vez de ficar reagendando checagens silenciosas.
 - `main` é a branch de produção do **Cloudflare Pages**; o push publica sozinho
   em ~2 min. `dist/` **é commitado** (o CF também builda, mas o commit é o que
   garante o conteúdo).
@@ -161,6 +172,37 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   sem "+"). Item equipado que não combina com o cenário não é desenhado, mas a
   loja explica em vez de sumir em silêncio. Estado: `equippedDecor`
   (um item por espaço), migrado do antigo `equippedFurniture` no load.
+- **Oráculo** (`src/utils/oracle.ts` + `src/utils/soulProfile/` +
+  `docs/ORACULO.md`): tem DUAS metades. A **leitura** (soulProfile/) transforma
+  quem a pessoa é em 4 eixos — elemento/papel/alinhamento/reino; a **criação**
+  (oracle.ts) transforma esses eixos na criatura — arquétipo, família, fusão,
+  as 11 formas, prompts de sprite. Só a leitura foi trocada: hoje ela é 20
+  itens psicométricos (Big Five + Honestidade-Humildade + eixos junguianos),
+  mapa astral REAL (efemérides, casas Placidus, fuso IANA com horário de verão
+  histórico) e numerologia completa, no lugar do signo por faixa de datas, do
+  ascendente chutado de 2 em 2 horas e das 6 perguntas do quiz antigo.
+  **O ritual continua sendo as 6 perguntas** (`ORACLE_QUESTIONS`); os 20 itens
+  são uma bifurcação oferecida depois delas e **antes do reveal**, declarada na
+  tela como decisão SEM VOLTA (não existe caminho para responder o teste
+  depois). As 6 respostas entram na leitura nos DOIS caminhos — para quem não
+  faz o teste longo elas são o único sinal de personalidade que existe. O
+  jogador vê só nome e descrição: pontuação de eixo e prompt de sprite vivem na
+  `OraclePage`, que é ferramenta de criação e não tem entrada na navegação.
+  `OracleInput.soulProfile` é opcional: sem ele o caminho legado roda inteiro,
+  que é o que mantém o reroll de quem jogou antes da troca. O motor é **pesado**
+  (astronomy-engine) e só entra por import DINÂMICO — o `oracle.ts` importa dele
+  só tipos, e é isso que o mantém fora do bundle inicial. Os coeficientes de
+  `soulProfile/axes.ts` foram calibrados por simulação para que nenhum
+  elemento/papel/reino tenha vantagem estrutural: **mexer num deles sem refazer
+  a simulação reabre o buraco que ele fechou**. A leitura também alimenta o
+  PIPELINE COMPLETO (`soulProfile/pipeline.ts`): ficha do class-system nos 5
+  estágios + companheiro capturável + criatura-inspiração do bestiário → só
+  então a criatura é gerada. Dados dos outros repos entram por SNAPSHOT com
+  procedência (`npm run sync:oracle-data`, clones irmãos) — nunca cópia à mão.
+  Cobertura travada por simulação: 17/17 elementos, 65/65 talentos, 11/11
+  profissões, 32/32 criaturas do class-system, pool inteiro do bestiário. O
+  nome da criatura-inspiração NUNCA entra em prompt (teste em
+  `pipeline.test.ts`); o jogador vê só a linha de essência no reveal.
 - **Desbloqueio no meio do jogo** (`src/components/UnlockAccountModal.tsx`): a
   compra também existe DENTRO do app, não só na tela inicial (que o usuário vê
   uma vez). `UnlockNudge` só aparece em dois lugares — ao bater o limite de
@@ -196,10 +238,27 @@ ficam valendo:
   pra devolver personagem registrado, e o sprite vai pro app de um usuário real.
   Há teste travando os dois lados (referências presentes na 1ª, ausentes no fallback).
 - **Rookie/champion/ultimate/mega ficam**: vocabulário genérico do gênero.
+- **Nenhum nome de criatura leva sufixo fixo tipo "-mon"** (`rookieName` etc.
+  em `oracle.ts`). Prefixo de linha + sufixo mecânico é o que soletrava nomes
+  reais de outra franquia (`War` + `_mon` = WarGreymon; `Omni` + `_mon` =
+  Omnimon, a própria fusão dos 3 Megas — exatamente o conceito do Ultra
+  aqui). Prefixos sozinhos (War/Chaos/Omega…) são genéricos e ficam; o que
+  NÃO pode voltar é o sufixo fixo somado a eles.
 - **`digimonName` (bridge do widget) e as chaves `digiapp_*` ficam**, pelo mesmo
   motivo de sempre: são internos, nunca aparecem pro usuário, e renomear
   quebraria o widget/save de quem já joga. O servidor de chat e de push aceita
   `petName` **e** `digimonName` justamente por causa dos APKs já instalados.
+
+## UI: regras visuais do dono (não regredir)
+
+- **Ícone NUNCA dentro de box** — vale no app inteiro (18/ago/2026). Nada de
+  moldura, placa, chanfro ou fundo em volta de um ícone: o ícone aparece
+  GRANDE e pelado (nav inferior 36px, ações do pet 42px, chat 30px). Seleção
+  na nav = sublinhado ciano (uma barra não é uma caixa), nunca a placa
+  preenchida antiga. Peças com moldura continuam existindo para PAINÉIS e
+  BOTÕES DE TEXTO — a regra é sobre ícones.
+- **A área do pet não rola para fora da tela** — `.sm-pet-sticky` (rodada 4);
+  o scroll acontece só na lista de atividades abaixo dela.
 
 ## Idioma: inglês é a base, PT-BR é localização
 
@@ -245,6 +304,22 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
    DigiApp com o salt `digiapp:`. `desktop/renderer/src/cloudSync.test.ts` é o
    único lugar onde as duas cópias se encontram — se copiar mais alguma regra
    pra lá, adicione o teste de paridade junto.
+10. **Dois sistemas de tema no mesmo CSS.** O app real alterna
+    `[data-theme="light"|"dark"]` no `<html>` e define `--sm-*` para os dois. O
+    `index.css` TAMBÉM carrega o scaffold shadcn importado do Figma
+    (`--background`/`--foreground`/`.dark`), que só muda de valor sob a classe
+    `.dark` — nunca aplicada por este app. Texto sem `color` próprio herda
+    `body { color: var(--foreground) }`, que fica PRESO no valor claro
+    (`oklch(.145 0 0)`, quase preto) mesmo com `[data-theme="dark"]` ativo —
+    achado assim na página do Pet (nome/descrição/skill quase pretos sobre
+    card verde-escuro). `body` foi trocado para `--sm-bg`/`--sm-ink` (que
+    respondem ao tema de verdade); NÃO reintroduza `var(--foreground)` /
+    `var(--background)` em texto novo — são só para os componentes de
+    `components/ui/` que os usam explicitamente via `.text-foreground` /
+    `.bg-background`. Para checar contraste de verdade, não confie só no
+    screenshot pequeno (o cinza quase-preto sobre fundo bem escuro ainda
+    "parece" legível): amostre o PIXEL renderizado (ex.: `PIL`/`Pillow` lendo
+    o PNG do Playwright) ou leia `getComputedStyle(el).color` — ambos batem.
 
 ## Convenções
 

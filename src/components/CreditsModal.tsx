@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Play, ShoppingCart, Loader as LoaderIcon } from 'lucide-react';
 import iconGem from '../assets/soulmon/icons/icon-gem.png';
 import iconHeart from '../assets/icons/icon-heart-item.png';
@@ -105,8 +105,15 @@ export function CreditsModal({
   const handleRerollConfirm = async () => {
     setConfirmingReroll(false);
     setRerollLoading(true);
-    const ok = await onReroll();
-    setRerollLoading(false);
+    // try/finally: sem ele, uma exceção deixava o botão preso em "carregando"
+    // para sempre — e como o reroll custa Créditos (dinheiro real), a pessoa
+    // ficava olhando um spinner sem saber se pagou ou não.
+    let ok = false;
+    try {
+      ok = await onReroll();
+    } finally {
+      setRerollLoading(false);
+    }
     flash(ok
       ? (isPt ? 'Novo personagem gerado — você voltou pra Rookie!' : 'New character generated — back to Rookie!')
       : (isPt ? 'Não foi possível fazer o reroll agora.' : 'Could not reroll right now.'));
@@ -119,8 +126,8 @@ export function CreditsModal({
   );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(20,15,40,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-      <div className="sm-card" style={{ background: 'var(--sm-bg)', width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4, 18, 20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
+      <div className="sm-card" style={{ backgroundColor: 'var(--sm-bg)', width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
           <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>
@@ -146,7 +153,7 @@ export function CreditsModal({
           </p>
 
           {message && (
-            <div className="sm-card" style={{ padding: '8px 12px', background: 'var(--sm-primary-soft)', border: 'none' }}>
+            <div className="sm-card" style={{ padding: '8px 12px', backgroundColor: 'var(--sm-primary-soft)', border: 'none', ['--sm-cham-line' as string]: 'transparent' } as CSSProperties}>
               <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--sm-primary)', fontWeight: 600 }}>{message}</p>
             </div>
           )}

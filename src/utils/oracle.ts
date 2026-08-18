@@ -17,6 +17,15 @@
 // hash(input) XOR salt — mesmo salt = mesmo resultado; salt novo = variação.
 // ============================================================================
 
+// O perfil de alma é o motor NOVO da leitura (utils/soulProfile/) — 20 itens
+// psicométricos + mapa astral real + numerologia completa. Importado só como
+// TIPO de propósito: o tipo some na compilação, então a `astronomy-engine`
+// não entra no bundle por este arquivo. Quem calcula o perfil é a UI, por
+// import dinâmico, e passa o resultado pronto (JSON puro) aqui dentro.
+import type { SoulProfile } from './soulProfile/profile';
+
+export type { SoulProfile };
+
 export type ElementId =
   | 'agua' | 'fogo' | 'terra' | 'ar'
   | 'sombra' | 'luz' | 'planta' | 'industrial';
@@ -57,6 +66,42 @@ export interface OracleInput {
    *  prefixo literal antes dele no prompt de imagem, em TODOS os 11
    *  estágios. Opcional — o usuário pode optar por não influenciar. */
   favoriteCreature?: string;
+  /**
+   * Inspiração vinda do bestiário (utils/soulProfile/bestiary/select.ts):
+   * a DESCRIÇÃO da criatura escolhida (sem o nome), cuja função é uma só —
+   * alimentar a máquina de famílias com as menções de bicho que ela sabe
+   * ler. NÃO substitui a descrição do usuário (petDescription vence), NÃO
+   * entra na bio e NÃO entra em prompt de imagem. Só o pipeline
+   * (soulProfile/pipeline.ts) preenche isto.
+   */
+  bestiaryInspiration?: { texto: string; familia: string | null; biologia: string[] };
+  /**
+   * Classe REAL da criatura — arquétipo do class-system (`ficha/classTitle.ts`,
+   * motor real, `calcularProgressao`), calculada a partir da ficha ULTRA (a
+   * mais concentrada — 100% de arquétipo pleno medido lá) e constante nos 11
+   * prompts, mesmo tratamento de `identity`/`dominantClass` logo abaixo. Só
+   * ENTRA NO PROMPT de sprite como um traço a mais (mais detalhe = sprite
+   * mais específico) — NUNCA em nome, bio ou descrição por forma; o dono
+   * pediu explicitamente que a classe não apareça pro jogador em lugar
+   * nenhum da UI. Só o pipeline (soulProfile/pipeline.ts) preenche isto —
+   * generateOracle sozinho (caminho legado, OraclePage) nunca tem acesso ao
+   * motor pesado, que só é alcançado por import dinâmico.
+   */
+  promptClassFlavor?: string; // EN, curto (ex.: "Volcanologist")
+  /**
+   * Leitura ROBUSTA (utils/soulProfile/). Quando presente, ela SUBSTITUI a
+   * leitura antiga — signo solar, ascendente aproximado pela hora, horóscopo
+   * chinês, rashi védico, 4 números e as 6 perguntas do `ORACLE_QUESTIONS` —
+   * como origem dos 4 eixos. Ausente = caminho legado, que continua valendo
+   * para os perfis já salvos no aparelho de quem jogou antes desta troca
+   * (o reroll relê o mesmo `SOULMON_PROFILE` gravado no onboarding).
+   *
+   * O que ela NÃO muda: nada da máquina criativa daqui pra baixo. Preferências,
+   * descrição do pet, overrides, arquétipo, famílias e as 11 formas continuam
+   * exatamente iguais — a criatura de um mesmo par (eixos, seed) sai idêntica
+   * pelos dois caminhos.
+   */
+  soulProfile?: SoulProfile;
 }
 
 /**
@@ -211,7 +256,9 @@ export function hashString(s: string): number {
 }
 
 /** mulberry32 — RNG determinístico pequeno. */
-function mulberry32(seed: number): () => number {
+/** Exportado para os módulos do soulProfile (ficha/bestiário) usarem o MESMO
+ *  RNG semeado — segunda cópia divergiria em silêncio (footgun 9). */
+export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
     a |= 0; a = (a + 0x6d2b79f5) | 0;
@@ -221,7 +268,7 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-function pick<T>(rng: () => number, arr: T[]): T {
+export function pick<T>(rng: () => number, arr: T[]): T {
   return arr[Math.floor(rng() * arr.length) % arr.length];
 }
 
@@ -258,6 +305,12 @@ export function normalizeName(name: string): string {
 }
 
 /** Reduz a um dígito, preservando números mestres 11/22/33. */
+/** Primeira letra maiúscula — para trechos concatenados DEPOIS de um ponto
+ *  final (a apoteose do mega saía "…armadura negra. apoteose de monarca…"). */
+export function upperFirstText(t: string): string {
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
 export function reduceNumber(n: number): number {
   while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
     n = String(n).split('').reduce((acc, d) => acc + Number(d), 0);
@@ -265,11 +318,28 @@ export function reduceNumber(n: number): number {
   return n;
 }
 
+/**
+ * Soma pitagórica das letras. NUNCA devolve 0 — as tabelas de leitura
+ * (NUMBER_ELEMENTS/ROLES/ALIGNMENT) são indexadas de 1 a 9, e um 0 estourava
+ * a geração inteira com "undefined is not iterable".
+ *
+ * Isso não era teórico: `normalizeName` só preserva A–Z, então TODO nome
+ * escrito em cirílico, CJK, árabe ou grego somava 0 — e a pessoa ficava presa
+ * no ritual, sem conseguir criar personagem nenhum (o app é vendido em EN).
+ * Nomes latinos só de vogais ("Aia") zeravam o número de personalidade pelo
+ * mesmo caminho. Quando não há letra latina que conte, o número vem do HASH
+ * do nome original: o nome continua influenciando a leitura (é o ponto da
+ * numerologia) em vez de virar uma constante ou um crash.
+ */
 function sumLetters(name: string, filter?: (letter: string) => boolean): number {
   let total = 0;
   for (const ch of normalizeName(name)) {
     if (filter && !filter(ch)) continue;
     total += PYTHAGOREAN[ch] ?? 0;
+  }
+  if (total === 0) {
+    const marca = filter ? (filter('A') ? 'vogais' : 'consoantes') : 'expressao';
+    return (hashString(`${name}|${marca}`) % 9) + 1;
   }
   return reduceNumber(total);
 }
@@ -291,7 +361,11 @@ const NUMBER_MEANINGS: Record<number, LText> = {
 
 export function computeNumerology(fullName: string, birthDate: string): NumerologyResult {
   const [y, m, d] = birthDate.split('-').map(Number);
-  const lifePath = reduceNumber(reduceNumber(d) + reduceNumber(m) + reduceNumber(y));
+  // data inválida/vazia (NaN) também não pode zerar: mesmo motivo do sumLetters
+  const somaData = reduceNumber(d) + reduceNumber(m) + reduceNumber(y);
+  const lifePath = Number.isFinite(somaData) && somaData > 0
+    ? reduceNumber(somaData)
+    : (hashString(`${birthDate}|lifepath`) % 9) + 1;
   const expression = sumLetters(fullName);
   const soulUrge = sumLetters(fullName, ch => VOWELS.has(ch));
   const personality = sumLetters(fullName, ch => !VOWELS.has(ch));
@@ -382,6 +456,18 @@ const SIGNS: SignDef[] = [
     { pt: 'imaginação sem margens', en: 'boundless imagination' },
   ] },
 ];
+
+/**
+ * Signo (nome PT do mapa astral, ex.: "Escorpião") → SignInfo do jogo.
+ *
+ * O `SignInfo` carrega as falas que alimentam o resumo de personalidade, e o
+ * mapa astral real devolve só o nome do signo. Este é o único ponto de
+ * costura entre os dois — as tabelas de traços continuam morando aqui.
+ */
+export function signInfoByName(namePt: string): SignInfo | null {
+  const s = SIGNS.find(sign => sign.name.pt === namePt);
+  return s ? { id: s.id, name: s.name, element: s.element, modality: s.modality, traits: s.traits } : null;
+}
 
 export function westernSunSign(month: number, day: number): SignInfo {
   // Método direto por faixas (evita ambiguidade do wrap de ano).
@@ -591,13 +677,13 @@ export const ALIGNMENT_ORDER: AlignmentId[] = ['poder', 'harmonia', 'benevolenci
 export const REALM_ORDER: RealmId[] = ['deserto', 'picos', 'oceano', 'pantano', 'floresta', 'cavernas', 'gelo', 'campina', 'akasha'];
 
 // Afinidades da numerologia
-const NUMBER_ELEMENTS: Record<number, ElementId[]> = {
+export const NUMBER_ELEMENTS: Record<number, ElementId[]> = {
   1: ['fogo', 'luz'], 2: ['agua', 'luz'], 3: ['ar', 'luz'], 4: ['terra', 'industrial'],
   5: ['ar', 'fogo'], 6: ['planta', 'agua'], 7: ['sombra', 'agua'], 8: ['industrial', 'terra'],
   9: ['luz', 'fogo'], 11: ['luz', 'ar'], 22: ['industrial', 'terra'], 33: ['luz', 'planta'],
 };
 
-const NUMBER_ROLES: Record<number, RoleId> = {
+export const NUMBER_ROLES: Record<number, RoleId> = {
   1: 'fisico', 2: 'suporte', 3: 'alcance', 4: 'tanque', 5: 'alcance', 6: 'suporte',
   7: 'magico', 8: 'tanque', 9: 'magico', 11: 'magico', 22: 'tanque', 33: 'suporte',
 };
@@ -718,7 +804,7 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
 
 // ----- Alinhamento (poder / harmonia / benevolência) -----
 
-const NUMBER_ALIGNMENT: Record<number, AlignmentId> = {
+export const NUMBER_ALIGNMENT: Record<number, AlignmentId> = {
   1: 'poder', 2: 'harmonia', 3: 'harmonia', 4: 'poder', 5: 'harmonia', 6: 'benevolencia',
   7: 'harmonia', 8: 'poder', 9: 'benevolencia', 11: 'harmonia', 22: 'poder', 33: 'benevolencia',
 };
@@ -733,7 +819,7 @@ const CHINESE_ANIMAL_ALIGNMENT: AlignmentId[] = [
   'poder', 'benevolencia', 'harmonia', 'poder', 'benevolencia', 'benevolencia',
 ];
 
-const ROLE_ALIGNMENT: Record<RoleId, AlignmentId> = {
+export const ROLE_ALIGNMENT: Record<RoleId, AlignmentId> = {
   fisico: 'poder', tanque: 'benevolencia', suporte: 'benevolencia',
   magico: 'harmonia', alcance: 'harmonia',
 };
@@ -742,15 +828,23 @@ const ROLE_ALIGNMENT: Record<RoleId, AlignmentId> = {
 // realmScore = Σ (peso × pontos do elemento) + bônus de alinhamento + jitter
 // determinístico do input (desempate único por pessoa).
 
-const REALM_WEIGHTS: Record<RealmId, Partial<Record<ElementId, number>>> = {
+// Os pesos de CADA reino somam 6. Antes não somavam: deserto/pantano/
+// cavernas/akasha somavam 6 e picos/floresta/gelo/campina somavam 5 (oceano,
+// o pior, somava 4) — um teto estruturalmente menor que o dos concorrentes,
+// independente da pessoa. Em simulação isso deixava o oceano literalmente
+// inalcançável (0 de 2000 perfis) e os outros quatro muito atrás. Com todos
+// somando 6, nenhum reino leva vantagem embutida na tabela; a diferença de
+// frequência passa a vir de quão comuns são os elementos que ele pede, que é
+// o que a tabela deveria estar dizendo.
+export const REALM_WEIGHTS: Record<RealmId, Partial<Record<ElementId, number>>> = {
   deserto: { fogo: 3, terra: 2, industrial: 1 },
-  picos: { ar: 3, fogo: 1, industrial: 1 },
-  oceano: { agua: 3, sombra: 1 },
+  picos: { ar: 3, fogo: 2, industrial: 1 },
+  oceano: { agua: 4, sombra: 2 },
   pantano: { agua: 2, sombra: 2, planta: 2 },
-  floresta: { planta: 3, terra: 1, agua: 1 },
+  floresta: { planta: 3, terra: 2, agua: 1 },
   cavernas: { terra: 3, sombra: 2, industrial: 1 },
-  gelo: { agua: 2, ar: 2, luz: 1 },
-  campina: { luz: 2, planta: 2, ar: 1 },
+  gelo: { agua: 3, ar: 2, luz: 1 },
+  campina: { luz: 2, planta: 2, ar: 2 },
   akasha: { luz: 3, sombra: 3 },
 };
 
@@ -803,36 +897,36 @@ const NOUNS_BY_ELEMENT: Record<ElementId, Array<{ pt: string; en: string }>> = {
 // funcionam razoavelmente com os substantivos do banco; ajuste fino é estético).
 const ADJECTIVES_BY_ROLE: Record<RoleId, LText[]> = {
   suporte: [
-    { pt: 'acolhedor(a)', en: 'nurturing' }, { pt: 'gentil', en: 'gentle' }, { pt: 'devotado(a)', en: 'devoted' },
-    { pt: 'curador(a)', en: 'healing' }, { pt: 'leal', en: 'loyal' },
+    { pt: 'acolhedor', en: 'nurturing' }, { pt: 'gentil', en: 'gentle' }, { pt: 'devotado', en: 'devoted' },
+    { pt: 'curador', en: 'healing' }, { pt: 'leal', en: 'loyal' },
   ],
   tanque: [
-    { pt: 'inabalável', en: 'unshakable' }, { pt: 'protetor(a)', en: 'protective' }, { pt: 'colossal', en: 'colossal' },
-    { pt: 'firme', en: 'steadfast' }, { pt: 'blindado(a)', en: 'armored' },
+    { pt: 'inabalável', en: 'unshakable' }, { pt: 'protetor', en: 'protective' }, { pt: 'colossal', en: 'colossal' },
+    { pt: 'firme', en: 'steadfast' }, { pt: 'blindado', en: 'armored' },
   ],
   fisico: [
     { pt: 'feroz', en: 'fierce' }, { pt: 'indomável', en: 'untamable' }, { pt: 'veloz', en: 'swift' },
     { pt: 'implacável', en: 'relentless' }, { pt: 'valente', en: 'valiant' },
   ],
   magico: [
-    { pt: 'arcano(a)', en: 'arcane' }, { pt: 'enigmático(a)', en: 'enigmatic' }, { pt: 'hipnótico(a)', en: 'hypnotic' },
-    { pt: 'visionário(a)', en: 'visionary' }, { pt: 'etéreo(a)', en: 'ethereal' },
+    { pt: 'arcano', en: 'arcane' }, { pt: 'enigmático', en: 'enigmatic' }, { pt: 'hipnótico', en: 'hypnotic' },
+    { pt: 'visionário', en: 'visionary' }, { pt: 'etéreo', en: 'ethereal' },
   ],
   alcance: [
-    { pt: 'certeiro(a)', en: 'sharp-eyed' }, { pt: 'paciente', en: 'patient' }, { pt: 'vigilante', en: 'watchful' },
-    { pt: 'astuto(a)', en: 'cunning' }, { pt: 'preciso(a)', en: 'precise' },
+    { pt: 'certeiro', en: 'sharp-eyed' }, { pt: 'paciente', en: 'patient' }, { pt: 'vigilante', en: 'watchful' },
+    { pt: 'astuto', en: 'cunning' }, { pt: 'preciso', en: 'precise' },
   ],
 };
 
 const ADJECTIVES_BY_ELEMENT: Record<ElementId, LText[]> = {
-  agua: [{ pt: 'profundo(a)', en: 'deep' }, { pt: 'sereno(a)', en: 'serene' }, { pt: 'fluido(a)', en: 'flowing' }],
-  fogo: [{ pt: 'ardente', en: 'blazing' }, { pt: 'incandescente', en: 'incandescent' }, { pt: 'fervoroso(a)', en: 'fervent' }],
-  terra: [{ pt: 'ancestral', en: 'ancient' }, { pt: 'sólido(a)', en: 'solid' }, { pt: 'fértil', en: 'fertile' }],
-  ar: [{ pt: 'ligeiro(a)', en: 'nimble' }, { pt: 'etéreo(a)', en: 'airy' }, { pt: 'imprevisível', en: 'unpredictable' }],
-  sombra: [{ pt: 'noturno(a)', en: 'nocturnal' }, { pt: 'oculto(a)', en: 'hidden' }, { pt: 'insondável', en: 'unfathomable' }],
+  agua: [{ pt: 'profundo', en: 'deep' }, { pt: 'sereno', en: 'serene' }, { pt: 'fluido', en: 'flowing' }],
+  fogo: [{ pt: 'ardente', en: 'blazing' }, { pt: 'incandescente', en: 'incandescent' }, { pt: 'fervoroso', en: 'fervent' }],
+  terra: [{ pt: 'ancestral', en: 'ancient' }, { pt: 'sólido', en: 'solid' }, { pt: 'fértil', en: 'fertile' }],
+  ar: [{ pt: 'ligeiro', en: 'nimble' }, { pt: 'etéreo', en: 'airy' }, { pt: 'imprevisível', en: 'unpredictable' }],
+  sombra: [{ pt: 'noturno', en: 'nocturnal' }, { pt: 'oculto', en: 'hidden' }, { pt: 'insondável', en: 'unfathomable' }],
   luz: [{ pt: 'radiante', en: 'radiant' }, { pt: 'cintilante', en: 'shimmering' }, { pt: 'benevolente', en: 'benevolent' }],
   planta: [{ pt: 'florescente', en: 'blooming' }, { pt: 'perene', en: 'evergreen' }, { pt: 'silvestre', en: 'wild-grown' }],
-  industrial: [{ pt: 'cromado(a)', en: 'chrome-plated' }, { pt: 'incansável', en: 'tireless' }, { pt: 'engenhoso(a)', en: 'ingenious' }],
+  industrial: [{ pt: 'cromado', en: 'chrome-plated' }, { pt: 'incansável', en: 'tireless' }, { pt: 'engenhoso', en: 'ingenious' }],
 };
 
 // Pool GRANDE de traços concretos por elemento — usado para o ELEMENTO
@@ -894,32 +988,49 @@ const ELEMENT_FLAVOR_WORDS: Record<ElementId, LText[]> = {
 // 7. Criatura — bestiário de fusão, características e prompts
 // ---------------------------------------------------------------------------
 
+// Bancos AMPLOS de propósito: a máquina de nomes era o gargalo de entropia do
+// pipeline (identidade ~96% única virava ~89% de nomes únicos). Regras dos
+// bancos: radical curto (4-7 letras), pronunciável, com sabor do elemento/
+// reino; NUNCA nome de franquia; evitar quase-gêmeos entre bancos (foi o
+// 'Sylvo' da floresta colidindo com o 'Sylva' da planta — Sylvafa/Sylvofa
+// eram perceptivelmente o mesmo nome).
 const ELEMENT_NAME_STEMS: Record<ElementId, string[]> = {
-  agua: ['Aqua', 'Hydro', 'Maris', 'Nixa'],
-  fogo: ['Pyra', 'Igni', 'Flare', 'Vulko'],
-  terra: ['Terra', 'Gaio', 'Rocko', 'Petra'],
-  ar: ['Aero', 'Zephy', 'Venti', 'Skye'],
-  sombra: ['Umbra', 'Nykta', 'Noxi', 'Krow'],
-  luz: ['Lumi', 'Solari', 'Astra', 'Helio'],
-  planta: ['Flora', 'Verdi', 'Sylva', 'Thorn'],
-  industrial: ['Mecha', 'Gear', 'Volta', 'Ferro'],
+  agua: ['Aqua', 'Hydro', 'Maris', 'Nixa', 'Undi', 'Coral', 'Naia', 'Torren'],
+  fogo: ['Pyra', 'Igni', 'Flare', 'Vulko', 'Faiska', 'Chama', 'Ardo', 'Forna'],
+  terra: ['Terra', 'Gaio', 'Rocko', 'Petra', 'Grani', 'Argil', 'Basal', 'Monti'],
+  ar: ['Aero', 'Zephy', 'Venti', 'Skye', 'Brisa', 'Nimbo', 'Alize', 'Zonda'],
+  sombra: ['Umbra', 'Nykta', 'Noxi', 'Krow', 'Duska', 'Vespra', 'Morvo', 'Onyra'],
+  luz: ['Lumi', 'Solari', 'Astra', 'Helio', 'Luxa', 'Fulgo', 'Alba', 'Prisma'],
+  planta: ['Flora', 'Verdi', 'Sylva', 'Thorn', 'Bromia', 'Cipo', 'Musgo', 'Germi'],
+  industrial: ['Mecha', 'Gear', 'Volta', 'Ferro', 'Servo', 'Dyna', 'Cobre', 'Zinco'],
 };
 
 const REALM_NAME_STEMS: Record<RealmId, string[]> = {
-  deserto: ['Duna', 'Sahar', 'Mira'],
-  picos: ['Zeka', 'Tromu', 'Raiku'],
-  oceano: ['Abyssa', 'Nauti', 'Mareo'],
-  pantano: ['Boggu', 'Mirena', 'Sludge'],
-  floresta: ['Sylvo', 'Bruma', 'Kodama'],
-  cavernas: ['Grotta', 'Stalag', 'Ekko'],
-  gelo: ['Kriona', 'Frosta', 'Boreal'],
-  campina: ['Prado', 'Leana', 'Solis'],
-  akasha: ['Akasha', 'Aetheri', 'Nimbra'],
+  deserto: ['Duna', 'Sahar', 'Mira', 'Oasi', 'Cacta', 'Siro'],
+  picos: ['Zeka', 'Tromu', 'Raiku', 'Cume', 'Alpi', 'Cerro'],
+  oceano: ['Abyssa', 'Nauti', 'Mareo', 'Ondra', 'Salso', 'Batia'],
+  pantano: ['Boggu', 'Mirena', 'Sludge', 'Brejo', 'Lodra', 'Charko'],
+  floresta: ['Bosco', 'Bruma', 'Kodama', 'Cerne', 'Rama', 'Fronda'],
+  cavernas: ['Grotta', 'Stalag', 'Ekko', 'Kripta', 'Geoda', 'Cavra'],
+  gelo: ['Kriona', 'Frosta', 'Boreal', 'Neva', 'Iglu', 'Polara'],
+  campina: ['Prado', 'Leana', 'Solis', 'Trigo', 'Relva', 'Savan'],
+  akasha: ['Akasha', 'Aetheri', 'Nimbra', 'Mantra', 'Orbe', 'Anima'],
 };
+
+// Codas de nome: sempre alternam com o fim do radical (radical terminando em
+// vogal ganha coda que começa em consoante e vice-versa) — é o que mantém o
+// resultado pronunciável em qualquer combinação.
+const NAME_CODAS_AFTER_VOWEL = ['ris', 'nix', 'del', 'lyn', 'mor', 'gus', 'dal', 'vio', 'zar', 'lis', 'don', 'rex'];
+const NAME_CODAS_AFTER_CONSONANT = ['is', 'ix', 'ar', 'el', 'yn', 'ia', 'or', 'us', 'eo', 'ax', 'on', 'ura'];
+// Cauda curta do padrão radical+sílaba+cauda (a sílaba pessoal termina em
+// vogal, então a cauda é 1 consoante ou vogal fechando: Flaredin, Flaredis…).
+const NAME_TAILS = ['n', 'r', 's', 'l', 'x', 'a', 'o', 'u'];
 
 // Prefixos de nome por LINHA de evolução (uma linha por tipo) — o nome conta
 // a história: Fang→War→Zeed (Vírus), Sage→Meta→Aeon (Data), Holy→Arch→Seraph
-// (Vacina), e o Ultra é sempre Omni_.
+// (Vacina), e o Ultra é sempre Triune_. NENHUM nome de estágio leva sufixo
+// fixo (ver `rookieName`/`ultraName`) — combinar prefixo + sufixo mecânico
+// é o que soletrava nomes de outra franquia.
 const CHAMPION_PREFIXES: Record<AlignmentId, string[]> = {
   poder: ['Fang', 'Dark', 'Rage', 'Grim'],
   harmonia: ['Sage', 'Rune', 'Gale', 'Echo'],
@@ -2543,9 +2654,22 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const [year, month, day] = input.birthDate.split('-').map(Number);
   const [hour, minute] = (input.birthTime || '12:00').split(':').map(Number);
 
+  const soul = input.soulProfile;
+
   const numerology = computeNumerology(input.fullName, input.birthDate);
-  const sun = westernSunSign(month, day);
-  const ascendant = approximateAscendant(sun.id, hour, minute);
+  // Com o perfil de alma, o Sol e o Ascendente vêm do mapa astral REAL
+  // (efemérides + casas), não da faixa de datas e do palpite de 1 signo a cada
+  // 2h a partir das 6h que `approximateAscendant` faz. Quando a pessoa não
+  // soube a hora de nascimento, o mapa se recusa a dar Ascendente (e diz isso
+  // em `astrology.warnings`) — aí a aproximação antiga volta, porque um
+  // ascendente lúdico declarado como lúdico é melhor do que campo vazio no
+  // resumo de personalidade.
+  const chartSun = soul ? signInfoByName(soul.astrology.bigThree.sun) : null;
+  const chartAsc = soul?.astrology.bigThree.ascendant
+    ? signInfoByName(soul.astrology.bigThree.ascendant)
+    : null;
+  const sun = chartSun ?? westernSunSign(month, day);
+  const ascendant = chartAsc ?? approximateAscendant(sun.id, hour, minute);
   const chinese = computeChinese(year, month, day);
   const vedic = computeVedic(month, day);
 
@@ -2687,6 +2811,11 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     input.birthPlace.trim().toLowerCase(),
     JSON.stringify(input.answers ?? {}), JSON.stringify(input.preferences ?? {}),
     (input.petDescription ?? '').trim().toLowerCase(),
+    // Duas pessoas de mesmo nome/nascimento e respostas DIFERENTES precisam de
+    // fluxos de RNG diferentes, senão saem com a mesma criatura. No caminho
+    // legado quem garantia isso era `input.answers`; no caminho novo são os
+    // escores do teste, que é onde as respostas viram número.
+    JSON.stringify(input.soulProfile?.psychometric.traitPoints ?? {}),
   ].join('|');
   const realmScores = Object.fromEntries(REALM_ORDER.map(r => [r, 0])) as Record<RealmId, number>;
   for (const realm of REALM_ORDER) {
@@ -2700,6 +2829,71 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     }
     score += hashString(`${inputKey}|${realm}`) % 4; // 0–3: assinatura pessoal
     realmScores[realm] = score;
+  }
+
+  // ----- Troca do MOTOR da leitura (utils/soulProfile/) -----
+  // Tendo perfil de alma, os quatro eixos acima são SUBSTITUÍDOS pelos que o
+  // motor novo calculou. O que veio antes vira leitura descartada — de
+  // propósito: é mais barato deixar o caminho legado rodar do que espalhar um
+  // `if` por 150 linhas de pontuação, e a diferença é imperceptível ao lado do
+  // mapa astral que a UI já calculou.
+  //
+  // A escala não importa daqui pra frente: `combineAxis` normaliza cada eixo
+  // pelo próprio total, então shares que somam 100 e pontos crus de 0 a 20
+  // produzem exatamente a mesma mistura com preferências e descrição.
+  if (soul) {
+    const axes = soul.oracle;
+    // O detalhamento por fonte fica GROSSO neste caminho, e isso é honesto: o
+    // motor novo é uma soma ponderada contínua de dezenas de termos das três
+    // camadas, não uma pilha de "+3 por causa do signo". Rachar o resultado em
+    // três números por eixo seria inventar uma atribuição que a fórmula não
+    // faz. Quem quiser o porquê fino tem a leitura inteira em `soulProfile`
+    // (traços, facetas, mapa e números), que vai junto no OracleResult.
+    const soulSource: LText = {
+      pt: 'Perfil de alma (teste + mapa astral + numerologia)',
+      en: 'Soul profile (test + natal chart + numerology)',
+    };
+    const replace = <K extends string>(
+      scores: Record<K, number>, breakdown: Record<K, ScoreEntry[]>,
+      order: K[], next: Record<K, number>,
+    ) => {
+      for (const k of order) {
+        scores[k] = next[k];
+        breakdown[k] = [{ source: soulSource, points: Math.round(next[k]) }];
+      }
+    };
+    replace(elementScores, elementBreakdown, ELEMENT_ORDER, axes.elements);
+    replace(roleScores, roleBreakdown, ROLE_ORDER, axes.roles);
+    replace(alignmentScores, alignmentBreakdown, ALIGNMENT_ORDER, axes.alignments);
+    for (const realm of REALM_ORDER) realmScores[realm] = axes.realms[realm];
+
+    // As 6 perguntas do ritual entram DE NOVO, por cima dos eixos do motor.
+    // Elas fazem parte da leitura nos DOIS caminhos, e para quem não responde
+    // o teste de 20 elas são o ÚNICO sinal de personalidade que existe — o
+    // resto é céu de nascimento e nome. Substituir os eixos sem reaplicá-las
+    // fazia o ritual inteiro não contar para nada.
+    //
+    // Escala: os eixos vêm normalizados para somar 100, então a média de cada
+    // chave é 100/N (12,5 num elemento, 20 num papel, 33 num alinhamento, 11
+    // num reino). Os efeitos do quiz são inteiros de 1 a 4, ou seja, um efeito
+    // forte move um elemento em ~⅓ da média — mexe de verdade sem apagar o
+    // mapa e o teste. O reino NÃO leva o ×3 do caminho legado: lá os escores
+    // eram somas de peso×pontos (números grandes), aqui são shares de ~11, e
+    // ×3 faria uma única resposta decidir o bioma sozinha.
+    for (const fx of questionEffects) {
+      for (const [el, pts] of Object.entries(fx.elements ?? {}) as Array<[ElementId, number]>) {
+        addScore(elementScores, elementBreakdown, el, pts, answerSource);
+      }
+      for (const [role, pts] of Object.entries(fx.roles ?? {}) as Array<[RoleId, number]>) {
+        addScore(roleScores, roleBreakdown, role, pts, answerSource);
+      }
+      for (const [al, pts] of Object.entries(fx.alignments ?? {}) as Array<[AlignmentId, number]>) {
+        addScore(alignmentScores, alignmentBreakdown, al, pts, answerSource);
+      }
+      for (const realm of REALM_ORDER) {
+        realmScores[realm] += fx.realms?.[realm] ?? 0;
+      }
+    }
   }
 
   // ----- Combinação de pesos: leitura + preferências (25%) + descrição (50%) -----
@@ -2812,7 +3006,13 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // Slot 1 dominante + slot 2 (menor impacto, quase sempre a mesma família;
   // raramente 2ª família distinta; mais raro ainda, um OBJETO). Descrição do
   // pet citando um bicho tem prioridade. O horóscopo NUNCA aparece no corpo.
-  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, descText);
+  // Dica de família: a descrição do USUÁRIO manda; sem ela, a inspiração do
+  // bestiário guia a escolha de família/subfamília (por menção textual aos
+  // substantivos internos — o nome da criatura já foi removido antes de
+  // chegar aqui). Só a ESCOLHA de família lê este texto: bio, conceito e
+  // prompts continuam saindo dos bancos de palavras próprios.
+  const familyHintText = descText || (input.bestiaryInspiration ? normalizeText(input.bestiaryInspiration.texto) : '');
+  const family = pickFamilies(rng, dominantElement, secondaryElement, dominantRealm, familyHintText);
   // fusionA/fusionB = substantivos concretos dos dois slots (compat + conceito)
   const fusionA = family.primary.noun;
   const fusionB = family.secondary.noun;
@@ -2820,11 +3020,21 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   // híbrido bicho+bicho = composto com hífen (ex.: "octopus-frog"); híbrido
   // bicho+objeto = objeto qualificando o bicho (ex.: "hammer-crab" / "caranguejo
   // de martelo"). Curta de propósito — prompts de sprite curtos funcionam melhor.
+  /** Funde dois rótulos sem repetir radical: quando um contém o outro (dois
+   *  bichos da mesma família, tipo "urso" + "urso polar"), o composto saía
+   *  "urso-urso polar". Fica só o mais específico. */
+  const fundir = (a: string, b: string, sep: string): string => {
+    const na = a.trim().toLowerCase(); const nb = b.trim().toLowerCase();
+    if (na === nb) return a;
+    if (nb.includes(na)) return b;
+    if (na.includes(nb)) return a;
+    return `${a}${sep}${b}`;
+  };
   const identity: LText = family.mono
     ? { pt: fusionA.pt, en: fusionA.en }
     : family.secondary.isObject
-      ? { pt: `${fusionA.pt} de ${fusionB.pt}`, en: `${fusionB.en}-${fusionA.en}` }
-      : { pt: `${fusionA.pt}-${fusionB.pt}`, en: `${fusionA.en}-${fusionB.en}` };
+      ? { pt: fundir(fusionA.pt, fusionB.pt, ' de '), en: fundir(fusionB.en, fusionA.en, '-') }
+      : { pt: fundir(fusionA.pt, fusionB.pt, '-'), en: fundir(fusionA.en, fusionB.en, '-') };
 
   // Características sorteadas dos POOLS (assinatura visual única).
   // Nota: em 16x16 não cabem textura/cauda/marcas — esses pools continuam
@@ -2837,20 +3047,60 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const realmInfo = REALM_INFO[dominantRealm];
   const emblem = pick(rng, REALM_EMBLEMS[dominantRealm]);
 
-  // Nome: radical de elemento(s) OU de reino + sílaba pessoal
+  // Nome: radical de elemento(s) OU de reino combinado com sílaba pessoal,
+  // em PADRÕES variados. RNG dedicado ao nome (mesmos bits de identidade +
+  // salt, stream decorrelacionado do principal): o pipeline entrega uma
+  // identidade ~96% única e a máquina de nomes não pode jogar isso fora.
+  // Antes: radical + (1ª letra + 1ª vogal do nome) — as sílabas pessoais
+  // colapsavam em "ma/ca/jo/pe" e ~11% dos nomes colidiam em N=200. Agora:
+  // bancos maiores, TODAS as sílabas CV do nome como candidatas, e 4 padrões
+  // de composição (a posição variável da sílaba do elemento é o que separa
+  // pares quase-iguais tipo Sylvafa/Sylvofa). Estilo preservado: curto,
+  // pronunciável, com sabor de elemento.
   const stemPool = [
     ...ELEMENT_NAME_STEMS[dominantElement],
     ...(secondaryElement ? ELEMENT_NAME_STEMS[secondaryElement] : []),
     ...REALM_NAME_STEMS[dominantRealm],
   ];
-  const stem = pick(rng, stemPool);
+  const nameRng = mulberry32((hashString(`${inputKey}|nome`) ^ salt) >>> 0);
+  const stem = pick(nameRng, stemPool);
   const nameLetters = normalizeName(input.fullName);
-  const nameSyllable = nameLetters
-    ? (nameLetters[0] + (nameLetters.slice(1).match(/[AEIOU]/)?.[0] ?? 'a')).toLowerCase()
-    : 'mo';
-  const baseName = (stem + nameSyllable).replace(/(.)\1+/g, '$1');
+  // Sílabas consoante+vogal extraídas do nome INTEIRO (não só a inicial):
+  // "MATEUSSPERANDIO" → ma/te/pe/ra/di… — mais bits da identidade na escolha.
+  const cvSyllables: string[] = [];
+  for (let i = 0; i + 1 < nameLetters.length; i++) {
+    if (!VOWELS.has(nameLetters[i]) && VOWELS.has(nameLetters[i + 1])) {
+      cvSyllables.push((nameLetters[i] + nameLetters[i + 1]).toLowerCase());
+    }
+  }
+  const nameSyllable = cvSyllables.length
+    ? pick(nameRng, cvSyllables)
+    : nameLetters
+      ? (nameLetters[0] + (nameLetters.slice(1).match(/[AEIOU]/)?.[0] ?? 'a')).toLowerCase()
+      : 'mo';
+  const stemEndsInVowel = /[aeiou]$/i.test(stem);
+  const coda = pick(nameRng, stemEndsInVowel ? NAME_CODAS_AFTER_VOWEL : NAME_CODAS_AFTER_CONSONANT);
+  const tail = pick(nameRng, NAME_TAILS);
+  const patternRoll = nameRng();
+  let rawName: string;
+  if (patternRoll < 0.4) {
+    rawName = stem + nameSyllable; // clássico: Flaredi
+  } else if (patternRoll < 0.6) {
+    // sílaba pessoal na FRENTE, elemento atrás: Diflare
+    rawName = nameSyllable[0].toUpperCase() + nameSyllable.slice(1) + stem.toLowerCase();
+  } else if (patternRoll < 0.8) {
+    rawName = stem + coda; // radical + coda: Aquaris, Thornix
+  } else {
+    rawName = stem + nameSyllable + tail; // Flaredin, Flaredis
+  }
+  const baseName = rawName.replace(/(.)\1+/g, '$1');
 
-  const rookieName = `${baseName}mon`;
+  // Nome sem sufixo mecânico: um "-mon" fixo em toda criatura, combinado com
+  // prefixos de linha (War/Omega/Omni…), soletrava nomes reais do Digimon
+  // (WarGreymon, Omegamon/Omnimon) — o mesmo tipo de risco que já tirou os
+  // 74 sprites da Bandai daqui (ver "Arte e nomes" no CLAUDE.md). O radical
+  // (`baseName`) já é próprio e único; ele é o nome inteiro do rookie.
+  const rookieName = baseName;
 
   const elName = ELEMENT_INFO[dominantElement].name;
   const el2Name = secondaryElement ? ELEMENT_INFO[secondaryElement].name : null;
@@ -2878,12 +3128,27 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const secondaryFlavor = secondaryElement ? pick(rng, ELEMENT_FLAVOR_WORDS[secondaryElement]) : null;
   // Prompt de sprite CURTO — lista de traços, não frase longa (testes empíricos:
   // "Tamagotchi style, sem fundo, descrição bem curta" gera sprites melhores
-  // que frases tipo "wielding X to Y").
-  const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en].filter(Boolean).join(', ');
-  const richConceptEn = `${identity.en}, ${dominantClass.en}`;
+  // que frases tipo "wielding X to Y"). `promptClassFlavor` é o 4º traço,
+  // OPCIONAL — só quando o pipeline calculou um arquétipo pleno de verdade
+  // (não o fallback genérico "Adept of X"); dá o mesmo detalhe extra que o
+  // reveal já tinha antes de virar mais genérico, mas só na imagem.
+  const spriteTraitsEn = [identity.en, dominantClass.en, secondaryFlavor?.en, input.promptClassFlavor]
+    .filter(Boolean).join(', ');
+  // A bio é o ÚNICO texto descritivo do reveal — o momento mais importante do
+  // ritual. Era um fragmento em EN ("angel-seraph, Sky Cleric": minúscula, sem
+  // verbo, sem ponto, e o traço secundário sumia) e uma frase truncada em PT
+  // ("de traços cintilante", sem concordância nem ponto). Agora é frase de
+  // verdade nos dois idiomas, com o traço secundário presente em ambos.
+  const upperFirst = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+  // "marcado por algo X" evita o problema de concordância: os flavors vêm em
+  // formatos diferentes (adjetivo "aquático", locução "de maré-viva") e
+  // "de traços cintilante" saía sem plural nem gênero.
+  const richConceptEn = secondaryFlavor
+    ? `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline, marked by something ${secondaryFlavor.en}.`
+    : `${upperFirst(dominantClass.en)} of the ${identity.en} bloodline.`;
   const richConceptPt = secondaryFlavor
-    ? `${dominantClass.pt} da linhagem ${identity.pt}, de traços ${secondaryFlavor.pt}`
-    : `${dominantClass.pt} da linhagem ${identity.pt}`;
+    ? `${upperFirst(dominantClass.pt)} da linhagem ${identity.pt}, marcado por algo ${secondaryFlavor.pt}.`
+    : `${upperFirst(dominantClass.pt)} da linhagem ${identity.pt}.`;
   const petConceptRaw = input.petDescription?.trim()
     ? input.petDescription.trim().replace(/\s+/g, ' ').slice(0, 200)
     : null;
@@ -2901,6 +3166,17 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
 
   const stages: CreatureStage[] = [];
 
+  // COMPORTAMENTO — a metade que faltava na descrição por forma. Reusa sinal
+  // REAL já computado (papel + alinhamento dominantes), em vez de inventar
+  // texto — as mesmas frases que hoje só apareciam na OraclePage interna
+  // (`personalitySummary`), nunca para o jogador. Uma frase só, plana, sem
+  // termos de jogo (nada de "alinhamento X" ou pontuação) — pura descrição de
+  // COMO ele age, igual em toda a espécie (é o traço nascido junto com ela).
+  const behaviorSentence: LText = {
+    pt: `${ROLE_INFO[dominantRole].profile.pt} ${ALIGNMENT_INFO[dominantAlignment].profile.pt}`,
+    en: `${ROLE_INFO[dominantRole].profile.en} ${ALIGNMENT_INFO[dominantAlignment].profile.en}`,
+  };
+
   // ----- Rookie: forma base ÚNICA (usa o tipo dominante da leitura) -----
   const rookieLevel = pick(rng, ROOKIE_LOOK);
   stages.push({
@@ -2908,8 +3184,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     stageName: STAGE_NAMES.rookie,
     name: rookieName,
     description: {
-      pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que ${family.mono ? `a família ${fusionA.pt}` : `a mistura de ${fusionA.pt} e ${fusionB.pt}`} já aparece — ${alignTrait.pt}, ${adjRole.pt} desde o primeiro dia. Todas as 3 linhas de evolução partem daqui.`,
-      en: `${rookieName} is the base form: a small, simple little monster where ${family.mono ? `the ${fusionA.en} family` : `the ${fusionA.en}-${fusionB.en} blend`} already shows — ${alignTrait.en}, ${adjRole.en} from day one. All 3 evolution lines branch from here.`,
+      pt: `${rookieName} é a forma base: um monstrinho pequeno e simples em que ${family.mono ? `a família ${fusionA.pt}` : `a mistura de ${fusionA.pt} e ${fusionB.pt}`} já aparece, ${alignTrait.pt}. Todas as 3 linhas de evolução partem daqui. ${behaviorSentence.pt}`,
+      en: `${rookieName} is the base form: a small, simple little monster where ${family.mono ? `the ${fusionA.en} family` : `the ${fusionA.en}-${fusionB.en} blend`} already shows, ${alignTrait.en}. All 3 evolution lines branch from here. ${behaviorSentence.en}`,
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
@@ -2934,9 +3210,9 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     const megaShape = pickShape(rng, MEGA_SHAPES, branch, petElements, usedShapes);
     megaShapeByBranch[branch] = megaShape;
 
-    const champName = `${pick(rng, CHAMPION_PREFIXES[branch])}${baseName}mon`;
-    const perfName = `${pick(rng, PERFECT_STAGE_PREFIXES[branch])}${baseName}mon`;
-    const megaName = `${pick(rng, MEGA_STAGE_PREFIXES[branch])}${baseName}mon`;
+    const champName = `${pick(rng, CHAMPION_PREFIXES[branch])}${baseName}`;
+    const perfName = `${pick(rng, PERFECT_STAGE_PREFIXES[branch])}${baseName}`;
+    const megaName = `${pick(rng, MEGA_STAGE_PREFIXES[branch])}${baseName}`;
     const linePt = `linha ${bInfo.name.pt} (${bInfo.attribute.pt})`;
     const lineEn = `${bInfo.name.en} (${bInfo.attribute.en}) line`;
 
@@ -2946,8 +3222,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       stageName: STAGE_NAMES.champion,
       name: champName,
       description: {
-        pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista.`,
-        en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest.`,
+        pt: `${champName} — Champion da ${linePt}: ${rookieName} evolui para ${champShape.pt}, ${bTrait.pt}. Maior e mais selvagem, mas com o mesmo rosto e a mesma crista. ${behaviorSentence.pt}`,
+        en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
@@ -2962,8 +3238,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       stageName: STAGE_NAMES.perfeito,
       name: perfName,
       description: {
-        pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do reino ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista.`,
-        en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest.`,
+        pt: `${perfName} — Perfeito da ${linePt}: metamorfose completa — vira ${perfShape.pt}. Seu elemento se materializa (${bManifest.pt}) e ${emblem.pt} do ${realmInfo.name.pt} marca o corpo. Mesmo rosto, mesma crista. ${behaviorSentence.pt}`,
+        en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
@@ -2978,8 +3254,8 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       stageName: STAGE_NAMES.mega,
       name: megaName,
       description: {
-        pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo.`,
-        en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${bRegalia.en.split(':')[0]}. Its body partially transmutes into living ${elName.en}.`,
+        pt: `${megaName} — Mega da ${linePt}: a apoteose — ascende como ${megaShape.pt}. ${bRegalia.pt}. O corpo se transmuta parcialmente em ${elName.pt} vivo. ${behaviorSentence.pt}`,
+        en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${upperFirstText(bRegalia.en.split(':')[0])}. Its body partially transmutes into living ${elName.en}. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
@@ -2990,14 +3266,17 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   }
 
   // ----- Ultra: a fusão dos 3 Megas (o ápice absoluto) -----
-  const ultraName = `Omni${baseName}mon`;
+  // "Triune" (três-em-um), não "Omni_mon" — o prefixo antigo + o sufixo
+  // fixo juntos soletravam demais um fusão bem específica e famosa de outra
+  // franquia. Ver nota do `baseName`/`rookieName` acima.
+  const ultraName = `Triune${baseName}`;
   stages.push({
     stage: 'ultra',
     stageName: STAGE_NAMES.ultra,
     name: ultraName,
     description: {
-      pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}".`,
-      en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}".`,
+      pt: `${ultraName} é o Ultra: a fusão dos três Megas — ${megaShapeByBranch.poder.pt}, ${megaShapeByBranch.harmonia.pt} e ${megaShapeByBranch.benevolencia.pt} — em um único ser transcendente que une a ferocidade do Vírus, o equilíbrio do Data e a nobreza da Vacina. O ápice absoluto do arquétipo "${archetype.phrase.pt}". ${behaviorSentence.pt}`,
+      en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting Virus ferocity, Data balance and Vaccine nobility. The absolute apex of the archetype "${archetype.phrase.en}". ${behaviorSentence.en}`,
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',

@@ -5,6 +5,9 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { cloudSave } from '../utils/cloudSave';
 import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
+import type { StageSkills } from '../utils/soulProfile/ficha/skills';
+import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
+import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
@@ -122,6 +125,14 @@ export interface GameState {
    *  (utils/oracle.ts generateOracle().creature.stages) e congelada — nomes,
    *  descrições e prompts de imagem de cada forma. */
   soulmonStages?: CreatureStage[];
+  /** As duas skills de cada estágio. Persistidas junto das formas porque o
+   *  perfil do oráculo (`soulmon-profile`) vive só no localStorage e NÃO vai
+   *  na nuvem: num aparelho novo a página do Pet perdia metade do conteúdo
+   *  em silêncio. Determinísticas — recomputáveis, mas não a partir de nada. */
+  soulmonSkills?: Record<FichaStage, StageSkills>;
+  /** A classe de cada estágio — arquétipo REAL do class-system (emergido da
+   *  ficha, nunca escolhido), mesmo motivo de cache que `soulmonSkills`. */
+  soulmonClassTitles?: Record<FichaStage, ClassTitle>;
   /** Metadados do oráculo usados fora da árvore (fallback de sprite genérico,
    *  telas de perfil etc.). */
   soulmonMeta?: {

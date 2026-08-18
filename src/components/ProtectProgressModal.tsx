@@ -51,7 +51,7 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
       style={{
         position: 'fixed', inset: 0, zIndex: 200, display: 'flex',
         alignItems: 'center', justifyContent: 'center', padding: 20,
-        background: 'rgba(42,36,64,0.45)',
+        background: 'rgba(6, 24, 26,0.45)',
       }}
       onClick={onDismiss}
     >

@@ -7,41 +7,80 @@ import { PixelizerCard } from './PixelizerCard';
 import { generateAllSprites } from '../utils/spriteGen';
 import {
   generateOracle, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
-  ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER, ORACLE_QUESTIONS,
+  ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER,
   type OracleInput, type OracleResult, type OracleOverrides, type OraclePreferences, type LText,
   type ElementId, type RoleId, type AlignmentId, type RealmId,
 } from '../utils/oracle';
+import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/questions';
+import { isComplete as testComplete } from '../utils/soulProfile/personality/scoring';
+import { traitLabels, traitLevelLabels, jungAxisLabels } from '../utils/soulProfile/personality/labels';
+import { TRAIT_DIMENSIONS, JUNG_AXES } from '../utils/soulProfile/personality/types';
+import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/types';
+import { cityLabel, type City } from '../utils/soulProfile/cities';
+import type { SoulProfile } from '../utils/soulProfile/profile';
+import { CityPicker } from './CityPicker';
+import { SoulTestItem, itemPrompt } from './SoulTestItem';
 
 interface OraclePageProps {
   language?: Language;
+  /** Semeia o checkbox "Modo debug" já ligado — usado pelo atalho oculto da
+   *  tela de intro (SoulmonOnboarding), que abre esta página direto no modo
+   *  sem custo em vez de deixar o dono procurar o checkbox. */
+  initialDebugMode?: boolean;
 }
 
 interface SavedOracleForm extends OracleInput {
   seed?: number;
   overrides?: OracleOverrides;
-}
-
-function allQuestionsAnswered(answers: Record<string, string>): boolean {
-  return ORACLE_QUESTIONS.every(q => !!answers[q.id]);
+  /** Respostas do teste + cidade escolhida, para recarregar a página sem
+   *  perder o que foi digitado. O `soulProfile` já vai no OracleInput. */
+  testAnswers?: SoulAnswers;
+  city?: City | null;
+  timeUnknown?: boolean;
 }
 
 const ATTRIBUTE_EMOJI: Record<AlignmentId, string> = { poder: '🦠', harmonia: '💾', benevolencia: '💉' };
 
+/**
+ * Controles diretos DESLIGADOS por decisão do dono (ago/2026): elemento
+ * favorito, bioma/reino e a descrição livre de 50% de impacto. A criatura
+ * passa a vir da LEITURA (mapa astral + teste + as 6 perguntas) em vez de o
+ * usuário escolher o resultado a dedo. "Se os usuários pedirem mais controle
+ * no futuro nós reativamos" — por isso é uma flag, não código deletado:
+ * virar `true` devolve os três de uma vez.
+ *
+ * `alignment` (Tipo) NÃO estava na lista do dono e continua valendo.
+ */
+const DIRECT_CONTROLS_ENABLED = false;
+
 function loadSavedForm(): SavedOracleForm | null {
   try {
     const raw = readLocal(STORAGE_KEYS.ORACLE_FORM);
-    return raw ? (JSON.parse(raw) as SavedOracleForm) : null;
+    if (!raw) return null;
+    const form = JSON.parse(raw) as SavedOracleForm;
+    if (DIRECT_CONTROLS_ENABLED) return form;
+    /* Sanitiza NA CARGA, e não só no JSX. Os inicializadores de `useState`
+       abaixo chamam `generateOracle(s, …)` com este objeto DIRETO — sem esta
+       poda, um rascunho gravado antes do desligamento continuaria mandando
+       elemento/bioma/descrição para o gerador, invisível na tela e ativo no
+       resultado. É o pior tipo de bug: some da UI e segue valendo. */
+    const { element: _el, realm: _rl, ...prefsMantidas } = form.preferences ?? {};
+    void _el; void _rl;
+    return { ...form, preferences: prefsMantidas, petDescription: undefined };
   } catch {
     return null;
   }
 }
 
+// Uma leitura só é reconstruível se o perfil de alma dela foi salvo junto: o
+// motor novo precisa do mapa astral inteiro, e recalculá-lo aqui exigiria
+// import dinâmico dentro de um inicializador de useState (síncrono). Rascunho
+// sem perfil = formulário preenchido, não leitura pronta.
 function formComplete(f: SavedOracleForm | null): f is SavedOracleForm {
-  return !!f && f.fullName.trim().length >= 3 && !!f.birthDate && !!f.birthTime && f.birthPlace.trim().length >= 2
-    && allQuestionsAnswered(f.answers ?? {});
+  return !!f && f.fullName.trim().length >= 3 && !!f.birthDate && !!f.soulProfile;
 }
 
-export function OraclePage({ language = 'en-US' }: OraclePageProps) {
+export function OraclePage({ language = 'en-US', initialDebugMode = false }: OraclePageProps) {
   const isPt = language === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
@@ -49,8 +88,12 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
   const [fullName, setFullName] = useState(saved?.fullName ?? '');
   const [birthDate, setBirthDate] = useState(saved?.birthDate ?? '');
   const [birthTime, setBirthTime] = useState(saved?.birthTime ?? '12:00');
-  const [birthPlace, setBirthPlace] = useState(saved?.birthPlace ?? '');
-  const [answers, setAnswers] = useState<Record<string, string>>(saved?.answers ?? {});
+  const [birthCity, setBirthCity] = useState<City | null>(saved?.city ?? null);
+  const [timeUnknown, setTimeUnknown] = useState(saved?.timeUnknown ?? false);
+  const [answers, setAnswers] = useState<SoulAnswers>(saved?.testAnswers ?? {});
+  const [soulProfile, setSoulProfile] = useState<SoulProfile | undefined>(saved?.soulProfile);
+  const [revealing, setRevealing] = useState(false);
+  const birthPlace = birthCity ? cityLabel(birthCity) : (saved?.birthPlace ?? '');
   const [prefs, setPrefs] = useState<OraclePreferences>(saved?.preferences ?? {});
   const [petDescription, setPetDescription] = useState(saved?.petDescription ?? '');
 
@@ -83,29 +126,59 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
   useEffect(() => {
     const form: SavedOracleForm = {
       fullName, birthDate, birthTime, birthPlace,
-      answers, preferences: prefs, petDescription,
+      preferences: prefs, petDescription,
+      soulProfile,
+      testAnswers: answers, city: birthCity, timeUnknown,
       seed: creature?.seed,
       overrides: profile ? overrides : undefined,
     };
     // Rascunho do formulário: conveniência, não progresso.
     writeJson(STORAGE_KEYS.ORACLE_FORM, form, { silent: true });
-  }, [fullName, birthDate, birthTime, birthPlace, answers, prefs, petDescription, creature?.seed, overrides, profile]);
+  }, [fullName, birthDate, birthTime, birthPlace, answers, birthCity, timeUnknown, soulProfile, prefs, petDescription, creature?.seed, overrides, profile]);
 
-  const canReveal = formComplete({ fullName, birthDate, birthTime, birthPlace, answers });
+  const canReveal = fullName.trim().length >= 3 && !!birthDate && !!birthCity
+    && (timeUnknown || !!birthTime) && testComplete(answers) && !revealing;
 
-  const input = (): OracleInput => ({
-    fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(),
-    answers,
-    preferences: (prefs.element || prefs.realm || prefs.alignment) ? prefs : undefined,
-    petDescription: petDescription.trim() || undefined,
-  });
+  /* Segunda barreira (a primeira é a poda em `loadSavedForm`): aqui o gate
+     pega o estado VIVO, caso alguém reative um campo no JSX e esqueça deste
+     caminho. */
+  const input = (soul = soulProfile): OracleInput => {
+    // `alignment` (Tipo) NÃO entrou na lista do dono e continua valendo.
+    const prefsAtivas: OraclePreferences = DIRECT_CONTROLS_ENABLED
+      ? prefs
+      : (prefs.alignment ? { alignment: prefs.alignment } : {});
+    return {
+      fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(),
+      preferences: (prefsAtivas.element || prefsAtivas.realm || prefsAtivas.alignment) ? prefsAtivas : undefined,
+      petDescription: DIRECT_CONTROLS_ENABLED ? (petDescription.trim() || undefined) : undefined,
+      soulProfile: soul,
+    };
+  };
 
-  const handleReveal = () => {
-    if (!canReveal) {
+  const handleReveal = async () => {
+    if (!canReveal || !birthCity) {
       toast.error(isPt ? 'Preencha todos os campos!' : 'Fill in all fields!');
       return;
     }
-    const p = generateOracle(input(), 0);
+    setRevealing(true);
+    // Import dinâmico: o motor puxa a engine de efemérides e não deve pesar no
+    // bundle inicial de quem nunca abre esta página.
+    let soul: SoulProfile;
+    try {
+      const { buildSoulProfile } = await import('../utils/soulProfile');
+      soul = buildSoulProfile({
+        fullName: fullName.trim(), birthDate, birthTime, timeUnknown,
+        placeLabel: birthPlace,
+        latitude: birthCity.latitude, longitude: birthCity.longitude, timeZone: birthCity.timeZone,
+      }, answers);
+    } catch {
+      setRevealing(false);
+      toast.error(isPt ? 'Não consegui calcular seu mapa agora.' : "Couldn't compute your chart right now.");
+      return;
+    }
+    setSoulProfile(soul);
+    setRevealing(false);
+    const p = generateOracle(input(soul), 0);
     setProfile(p);
     setOverrides({
       dominantElement: p.dominantElement, secondaryElement: p.secondaryElement,
@@ -155,11 +228,28 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
   const [genSprites, setGenSprites] = useState<Record<string, string>>({});
   const [genBusy, setGenBusy] = useState(false);
   const [genProgress, setGenProgress] = useState({ done: 0, total: 0 });
+  // Modo debug: o botão "Gerar imagens" NUNCA chama /api/generate-sprite
+  // (Higgsfield/Gemini, dinheiro de verdade + cota diária de _aiGuard.js) —
+  // só entrega os prompts, igual ao botão "Prompts" já fazia. Serve pra
+  // iterar em nome/ficha/prompt sem gastar a cota de 20/dia por conta nem a
+  // global de 400/dia (AI_LIMITS.sprite em functions/api/_aiGuard.js).
+  const [debugMode, setDebugMode] = useState(initialDebugMode);
 
   const stageKey = (s: OracleResult['creature']['stages'][number]) => `${s.stage}-${s.branch ?? 'base'}`;
 
   const handleGenerateImages = async () => {
     if (!creature || genBusy) return;
+    if (debugMode) {
+      // Zero chamada de rede — custo R$0 garantido pela ausência da
+      // chamada, não por um limite que ainda assim bateria na API.
+      copyAllPrompts();
+      toast.success(
+        isPt
+          ? 'Modo debug: nenhuma imagem foi gerada (custo R$0) — prompts copiados.'
+          : 'Debug mode: no image was generated ($0 cost) — prompts copied.',
+      );
+      return;
+    }
     setGenBusy(true);
     setGenSprites({});
     setGenProgress({ done: 0, total: creature.creature.stages.length });
@@ -186,16 +276,23 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
   };
 
   // --- estilos base (inline p/ cores críticas; classes fora do index.css não aplicam)
-  const cardCls = 'border border-[#c0c0c0] bg-white rounded-xl p-3';
-  const titleCls = 'text-gray-900';
-  const mutedCls = 'text-gray-500';
-  const inputCls = 'w-full rounded-md border border-[#c0c0c0] bg-white text-gray-900 px-2 py-1.5';
-  const btnCls = 'px-3 py-2 rounded-md transition-colors';
-  const btnStyle = { background: '#0d9488', color: '#ffffff' };
-  const smallBtnCls = 'text-xs px-2 py-1 rounded';
-  const smallBtnStyle = { border: '1px solid #5eead4', color: '#0f766e' };
-  const selectCls = 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
-  const mono = { fontFamily: 'monospace' } as const;
+  /* RODADA 5 — a página estava FORA da UI do app (direção do dono).
+     Era um card BRANCO com inputs e botões cinza cravado dentro de um app
+     pixel-art escuro: o teste de personalidade, que é o mesmo componente do
+     onboarding, aqui renderizava sem nenhuma peça do kit. Agora usa as
+     mesmas classes do resto do app (`sm-card`, `sm-px-field`, `sm-px-choice`)
+     e os tokens de tema — nada de hex solto, que era justamente o que
+     prendia a página no tema claro. */
+  const cardCls = 'sm-card p-3';
+  const titleCls = 'text-[color:var(--sm-ink)]';
+  const mutedCls = 'text-[color:var(--sm-muted)]';
+  const inputCls = 'sm-px-field w-full px-2 py-1.5';
+  const btnCls = 'sm-btn';
+  const btnStyle = {};
+  const smallBtnCls = 'sm-btn sm-btn-secondary text-xs px-2 py-1';
+  const smallBtnStyle = {};
+  const selectCls = 'sm-px-field px-1.5 py-1 text-xs';
+  const mono = { fontFamily: 'var(--sm-font-pixel)' } as const;
 
   const maxElementScore = profile ? Math.max(...ELEMENT_ORDER.map(e => profile.elementScores[e]), 1) : 1;
   const maxRoleScore = profile ? Math.max(...ROLE_ORDER.map(r => profile.roleScores[r]), 1) : 1;
@@ -233,67 +330,90 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
               style={mono}
             />
           </div>
+          {/* `minWidth: 0` nos dois: `flex-1` sozinho não encolhe abaixo do
+              min-content, e com a fonte PIXEL (mais larga que a monoespaçada
+              anterior) o campo de hora vazava para fora do painel. */}
           <div className="flex gap-2">
-            <div className="flex-1">
+            <div className="flex-1" style={{ minWidth: 0 }}>
               <label className={`block text-xs mb-1 ${mutedCls}`}>
                 {isPt ? 'Data de nascimento' : 'Birth date'}
               </label>
               <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className={inputCls} style={mono} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1" style={{ minWidth: 0 }}>
               <label className={`block text-xs mb-1 ${mutedCls}`}>
                 {isPt ? 'Horário' : 'Birth time'}
               </label>
-              <input type="time" value={birthTime} onChange={e => setBirthTime(e.target.value)} className={inputCls} style={mono} />
+              <input type="time" value={birthTime} disabled={timeUnknown}
+                onChange={e => { setBirthTime(e.target.value); setSoulProfile(undefined); }}
+                className={inputCls} style={{ ...mono, opacity: timeUnknown ? 0.5 : 1 }} />
             </div>
           </div>
+          <label className={`flex items-center gap-2 text-xs ${mutedCls}`}>
+            <input type="checkbox" checked={timeUnknown}
+              onChange={e => { setTimeUnknown(e.target.checked); setSoulProfile(undefined); }} />
+            {isPt
+              ? 'Não sei a hora — o mapa fica sem Ascendente e sem casas'
+              : "I don't know the time — the chart goes without Ascendant and houses"}
+          </label>
           <div>
             <label className={`block text-xs mb-1 ${mutedCls}`}>
-              {isPt ? 'Local de nascimento' : 'Birth place'}
+              {isPt ? 'Cidade de nascimento' : 'Birth city'}
             </label>
-            <input
-              type="text"
-              value={birthPlace}
-              onChange={e => setBirthPlace(e.target.value)}
-              placeholder={isPt ? 'Ex.: São Paulo, Brasil' : 'E.g.: London, UK'}
-              className={inputCls}
-              style={mono}
+            {/* Cidade da tabela, não texto livre: o mapa precisa de lat/lon e do
+                fuso IANA (que carrega o horário de verão histórico). */}
+            <CityPicker
+              value={birthCity}
+              onChange={c => { setBirthCity(c); setSoulProfile(undefined); }}
+              isPt={isPt}
+              /* Classes do kit, iguais às do onboarding: sem elas este campo
+                 ficava BRANCO no meio da página escura (o `#fff` inline abaixo
+                 é que prendia). Cor e moldura vêm do kit; aqui só layout. */
+              inputClass="sm-px-field"
+              optionClass="sm-px-choice"
+              inputStyle={{ width: '100%', boxSizing: 'border-box', padding: '6px 8px', fontFamily: 'var(--sm-font-pixel)', fontSize: 13 }}
+              optionStyle={() => ({
+                width: '100%', boxSizing: 'border-box', fontSize: 12,
+                padding: '7px 9px', marginBottom: 5,
+              })}
             />
           </div>
 
-          {/* Quiz de personalidade (obrigatório — soma na leitura) */}
+          {/* Teste de personalidade — 20 itens (obrigatório: é a base da leitura) */}
           <div className="pt-2">
             <p className={`text-xs mb-2 ${titleCls}`}>
-              🧠 {isPt ? 'Sobre você' : 'About you'}
-              <span className={mutedCls}> — {isPt ? 'suas respostas entram na leitura' : 'your answers feed the reading'}</span>
+              🧠 {isPt ? 'Teste de personalidade' : 'Personality test'}
+              <span className={mutedCls}>
+                {' '}— {isPt
+                  ? `${Object.keys(answers).length}/${SOUL_TEST_ITEMS.length} respondidos · Big Five + Honestidade-Humildade`
+                  : `${Object.keys(answers).length}/${SOUL_TEST_ITEMS.length} answered · Big Five + Honesty-Humility`}
+              </span>
             </p>
             <div className="space-y-3">
-              {ORACLE_QUESTIONS.map(q => (
-                <div key={q.id}>
-                  <p className={`text-xs mb-1 ${mutedCls}`}>{L(q.text)}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {q.options.map(opt => {
-                      const selected = answers[q.id] === opt.id;
-                      return (
-                        <button
-                          key={opt.id}
-                          onClick={() => {
-                            setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
-                            setCreature(null);
-                          }}
-                          className="text-xs px-2 py-1 rounded-lg transition-colors"
-                          style={{
-                            ...mono,
-                            border: selected ? '1px solid #0d9488' : '1px solid #c0c0c0',
-                            background: selected ? '#ccfbf1' : 'transparent',
-                            color: selected ? '#0f766e' : '#6b7280',
-                          }}
-                        >
-                          {L(opt.text)}
-                        </button>
-                      );
+              {SOUL_TEST_ITEMS.map(item => (
+                <div key={item.id}>
+                  <p className={`text-xs mb-1 ${mutedCls}`}>{L(itemPrompt(item))}</p>
+                  <SoulTestItem
+                    item={item}
+                    answer={answers[item.id]}
+                    isPt={isPt}
+                    /* Mesma classe do kit que o ONBOARDING passa: o teste é o
+                       mesmo componente nos dois lugares e agora tem a mesma
+                       cara. Cor/borda/estado selecionado vêm de `.sm-px-choice`
+                       (tokens de tema) — aqui fica só o layout. */
+                    optionClass="sm-px-choice"
+                    optionStyle={() => ({
+                      width: '100%', boxSizing: 'border-box',
+                      fontSize: 12, padding: '7px 9px', marginBottom: 5,
                     })}
-                  </div>
+                    onAnswer={answer => {
+                      setAnswers(prev => ({ ...prev, [item.id]: answer }));
+                      // Resposta nova invalida a leitura E a criatura: o perfil
+                      // inteiro é recalculado no próximo "Revelar".
+                      setSoulProfile(undefined);
+                      setCreature(null);
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -304,9 +424,19 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
             <p className={`text-xs mb-1 ${titleCls}`}>
               ⭐ {isPt ? 'Preferências diretas' : 'Direct preferences'}
               <span className={mutedCls}> — {isPt ? 'opcional, 25% de peso' : 'optional, 25% weight'}</span>
+              {/* Sem esta nota o bloco mente por omissão: o título continua no
+                  plural e sobrou UM controle, então quem abrir a página vai
+                  procurar elemento/bioma achando que sumiram por bug. */}
+              {!DIRECT_CONTROLS_ENABLED && (
+                <span className={`block ${mutedCls}`}>
+                  {isPt
+                    ? 'Elemento, bioma e descrição livre estão desligados — a criatura vem da leitura.'
+                    : 'Element, biome and free description are off — the creature comes from the reading.'}
+                </span>
+              )}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              <select
+              {DIRECT_CONTROLS_ENABLED && <select
                 className={selectCls}
                 style={mono}
                 value={prefs.element ?? ''}
@@ -316,7 +446,7 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                 {ELEMENT_ORDER.map(el => (
                   <option key={el} value={el}>{ELEMENT_INFO[el].emoji} {L(ELEMENT_INFO[el].name)}</option>
                 ))}
-              </select>
+              </select>}
               <select
                 className={selectCls}
                 style={mono}
@@ -328,7 +458,7 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                   <option key={al} value={al}>{ALIGNMENT_INFO[al].emoji} {L(ALIGNMENT_INFO[al].name)} ({L(ALIGNMENT_INFO[al].attribute)})</option>
                 ))}
               </select>
-              <select
+              {DIRECT_CONTROLS_ENABLED && <select
                 className={selectCls}
                 style={mono}
                 value={prefs.realm ?? ''}
@@ -338,12 +468,12 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                 {REALM_ORDER.map(realm => (
                   <option key={realm} value={realm}>{REALM_INFO[realm].emoji} {L(REALM_INFO[realm].name)}</option>
                 ))}
-              </select>
+              </select>}
             </div>
           </div>
 
           {/* Descrição livre do pet (opcional — 50% de peso) */}
-          <div className="pt-2">
+          {DIRECT_CONTROLS_ENABLED && <div className="pt-2">
             <p className={`text-xs mb-1 ${titleCls}`}>
               💭 {isPt ? 'Como você imagina seu pet?' : 'How do you imagine your pet?'}
               <span className={mutedCls}> — {isPt ? 'opcional, 50% de peso' : 'optional, 50% weight'}</span>
@@ -364,7 +494,7 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                 ? 'Deixe em branco para 100% leitura (nome, nascimento e respostas).'
                 : 'Leave empty for 100% reading (name, birth and answers).'}
             </p>
-          </div>
+          </div>}
 
           <div className="flex gap-2 pt-1">
             <button
@@ -386,6 +516,54 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
 
       {profile && (
         <>
+          {/* Perfil psicométrico — a ÚNICA camada da leitura com evidência
+              empírica, e por isso a primeira. Astrologia e numerologia vêm
+              depois, declaradas como o que são: geradores simbólicos. */}
+          {soulProfile && (
+            <div className={cardCls}>
+              <h3 className={`mb-2 ${titleCls}`}>🧠 {isPt ? 'Perfil psicométrico' : 'Psychometric profile'}</h3>
+              <div className="space-y-1.5">
+                {TRAIT_DIMENSIONS.map(dim => {
+                  const trait = soulProfile.psychometric.traits[dim];
+                  return (
+                    <div key={dim}>
+                      <div className="flex justify-between text-xs">
+                        <span className={titleCls}>{L(traitLabels[dim].name)}</span>
+                        <span className={mutedCls}>{trait.score} — {L(traitLevelLabels[trait.level])}</span>
+                      </div>
+                      <div style={{ height: 6, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${trait.score}%`, background: '#0d9488' }} />
+                      </div>
+                      <p className="text-[10px]" style={{ color: '#9ca3af' }}>
+                        {L(traitLabels[dim].low)} ↔ {L(traitLabels[dim].high)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className={`text-xs mt-2 ${titleCls}`}>
+                {isPt ? 'Tipo junguiano' : 'Jungian type'}: <strong>{soulProfile.psychometric.jung.code}</strong>
+                <span className={mutedCls}>
+                  {' '}({JUNG_AXES.map(a => `${L(jungAxisLabels[a].name)} ${soulProfile.psychometric.jung.axes[a].pole}`).join(' · ')})
+                </span>
+              </p>
+              {/* Índices de validade: não medem personalidade, medem se o
+                  protocolo PODE ser lido como um resultado de personalidade. */}
+              {!soulProfile.psychometric.validity.trustworthy && (
+                <div className="mt-2" style={{ color: '#b45309', fontSize: 11 }}>
+                  {soulProfile.psychometric.validity.flags.map((f, i) => (
+                    <p key={i} style={{ margin: 0 }}>⚠️ {L(f)}</p>
+                  ))}
+                </div>
+              )}
+              <p className="text-[10px] mt-2" style={{ color: '#9ca3af' }}>
+                {isPt
+                  ? '* Teste construído segundo princípios psicométricos, mas NÃO validado: os itens nunca passaram por análise fatorial ou normatização. Não serve para uso clínico nem para decisão sobre ninguém.'
+                  : '* Test built according to psychometric principles, but NOT validated: the items never went through factor analysis or norming. Not for clinical use or decisions about anyone.'}
+              </p>
+            </div>
+          )}
+
           {/* Numerologia */}
           <div className={cardCls}>
             <h3 className={`mb-2 ${titleCls}`}>🔢 {isPt ? 'Numerologia do nome' : 'Name numerology'}</h3>
@@ -413,7 +591,9 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                 <span className={mutedCls}> — {L(profile.western.sun.traits[0])}</span>
               </div>
               <div className={titleCls}>
-                🌅 {isPt ? 'Ascendente (aprox.) em' : 'Ascendant (approx.) in'} <strong>{L(profile.western.ascendant.name)}</strong>
+                🌅 {soulProfile?.astrology.bigThree.ascendant
+                  ? (isPt ? 'Ascendente em' : 'Ascendant in')
+                  : (isPt ? 'Ascendente (aprox.) em' : 'Ascendant (approx.) in')} <strong>{L(profile.western.ascendant.name)}</strong>
                 <span className={mutedCls}> — {L(profile.western.ascendant.traits[0])}</span>
               </div>
               <div className={titleCls}>
@@ -424,11 +604,37 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                 🕉️ {isPt ? 'Védico' : 'Vedic'}: <strong>{profile.vedic.rashi}</strong> ({L(profile.vedic.equivalent)})
                 <span className={mutedCls}> — {L(profile.vedic.traits[0])}</span>
               </div>
-              <p className={`text-[10px] ${mutedCls}`}>
-                {isPt
-                  ? '* Ascendente estimado pela hora (método solar simplificado), não substitui um mapa astral completo.'
-                  : '* Ascendant estimated from birth time (simplified solar method), not a full birth chart.'}
-              </p>
+              {soulProfile ? (
+                <>
+                  {/* Com o motor novo o mapa é REAL: efemérides, Ascendente por
+                      fórmula fechada e casas Placidus. O bloco acima (chinês,
+                      védico) continua sendo leitura simbólica extra. */}
+                  {/* A Lua é o terceiro do "big three" e só o mapa real tem —
+                      Sol e Ascendente já aparecem acima. */}
+                  <div className={titleCls}>
+                    🌙 {isPt ? 'Lua em' : 'Moon in'} <strong>{soulProfile.astrology.bigThree.moon}</strong>
+                  </div>
+                  <div className={mutedCls}>
+                    {isPt ? 'Casas' : 'Houses'}: {soulProfile.astrology.houseSystem === 'placidus' ? 'Placidus' : (isPt ? 'Signos Inteiros' : 'Whole Sign')}
+                    {' · '}{soulProfile.astrology.aspects.length} {isPt ? 'aspectos' : 'aspects'}
+                    {' · '}{soulProfile.onboarding.timeZone}
+                  </div>
+                  {soulProfile.astrology.warnings.map((w, i) => (
+                    <p key={i} className="text-[10px]" style={{ color: '#b45309' }}>⚠️ {L(w)}</p>
+                  ))}
+                  <p className={`text-[10px] ${mutedCls}`}>
+                    {isPt
+                      ? '* Posições geocêntricas reais (VSOP87/ELP) na eclíptica verdadeira da data. O cálculo é verificável; a interpretação astrológica não tem validade preditiva demonstrada.'
+                      : '* Real geocentric positions (VSOP87/ELP) on the true ecliptic of date. The computation is verifiable; the astrological interpretation has no demonstrated predictive validity.'}
+                  </p>
+                </>
+              ) : (
+                <p className={`text-[10px] ${mutedCls}`}>
+                  {isPt
+                    ? '* Ascendente estimado pela hora (método solar simplificado), não substitui um mapa astral completo.'
+                    : '* Ascendant estimated from birth time (simplified solar method), not a full birth chart.'}
+                </p>
+              )}
             </div>
           </div>
 
@@ -694,7 +900,20 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
           <div className={cardCls}>
             <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
               <h3 className={titleCls}>👾 {creature.creature.baseName}</h3>
-              <div className="flex gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <label
+                  className={`text-[10px] flex items-center gap-1 ${mutedCls}`}
+                  title={isPt
+                    ? 'Com o modo debug ligado, "Gerar imagens" nunca chama a API paga — só copia os prompts.'
+                    : 'With debug mode on, "Generate images" never calls the paid API — it just copies the prompts.'}
+                >
+                  <input
+                    type="checkbox"
+                    checked={debugMode}
+                    onChange={e => setDebugMode(e.target.checked)}
+                  />
+                  🐛 {isPt ? 'Modo debug (custo R$0)' : 'Debug mode ($0 cost)'}
+                </label>
                 <button
                   onClick={handleGenerateImages}
                   disabled={genBusy}
@@ -703,7 +922,9 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                 >
                   {genBusy
                     ? `⏳ ${genProgress.done}/${genProgress.total}`
-                    : `🎨 ${isPt ? 'Gerar imagens' : 'Generate images'}`}
+                    : debugMode
+                      ? `📋 ${isPt ? 'Gerar (debug)' : 'Generate (debug)'}`
+                      : `🎨 ${isPt ? 'Gerar imagens' : 'Generate images'}`}
                 </button>
                 <button onClick={copyAllPrompts} className={smallBtnCls} style={{ ...mono, ...smallBtnStyle }}>
                   📋 {isPt ? 'Prompts' : 'Prompts'}

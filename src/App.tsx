@@ -27,7 +27,7 @@ import { Edit2 } from 'lucide-react';
 import iconWarning from './assets/soulmon/icons/icon-warning.png';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
-import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
+import { FORM_REQUIREMENTS, getStageLevel, getStageBranch, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { DigiWidget } from './plugins/DigiWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
@@ -87,6 +87,8 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
+import { PixelFrame } from './components/PixelFrame';
+import { EvoTrail } from './components/EvoTrail';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
@@ -103,8 +105,9 @@ const OraclePage = lazy(() => import('./components/OraclePage').then(m => ({ def
 const TournamentPage = lazy(() => import('./components/TournamentPage').then(m => ({ default: m.TournamentPage })));
 const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ default: m.LibraryPage })));
 const ShopModal = lazy(() => import('./components/ShopModal').then(m => ({ default: m.ShopModal })));
+const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
 
-type ViewType = 'main' | 'evolution' | 'stats' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
+type ViewType = 'main' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
 
 export default function App() {
   const { gameState, setGameState } = useGameState();
@@ -1371,11 +1374,29 @@ export default function App() {
       STORAGE_KEYS.SOULMON_PROFILE, null);
     // Confere o perfil ANTES de cobrar — cobrar e depois falhar seria roubo.
     if (!saved) return false;
+    const newSeed = Math.floor(Math.random() * 2 ** 31);
+    // GERA ANTES DE COBRAR. Conferir só a existência do perfil não bastava: um
+    // perfil salvo corrompido (sem `oracle.classElements`, sem `psychometric`,
+    // sem `astrology`) faz a geração lançar — e a ordem antiga já tinha
+    // debitado os 50 Créditos de DINHEIRO REAL. Cobrar e falhar seria roubo,
+    // e o comentário acima só valia para metade dos modos de falha.
+    // Perfil novo (tem soulProfile) → pipeline completo: o reroll re-sorteia
+    // também a criatura-inspiração do bestiário, não só a parte criativa.
+    // Perfil de antes da troca de motor → caminho legado, intacto.
+    let result: OracleResult;
+    try {
+      if (saved.soulProfile) {
+        const { generateOracleComplete } = await import('./utils/soulProfile');
+        result = (await generateOracleComplete(saved, newSeed)).result;
+      } else {
+        const { generateOracle } = await import('./utils/oracle');
+        result = generateOracle(saved, newSeed);
+      }
+    } catch {
+      return false; // nada foi cobrado
+    }
     const ent = await spendCredits(REROLL_COST_CREDITS, 'reroll');
     if (!ent) return false;
-    const { generateOracle } = await import('./utils/oracle');
-    const newSeed = Math.floor(Math.random() * 2 ** 31);
-    const result = generateOracle(saved, newSeed);
     // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
     // perder o que a pessoa pagou. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed });
@@ -1451,6 +1472,17 @@ export default function App() {
   // 🔒 Evolution padlock (Evolution page): tapping the current Soulmon toggles
   // it. While locked, the pet never evolves at the day turn; unlocking lets the
   // (already met) criteria trigger the evolution on the NEXT day turn.
+  // Cache das skills no save: a página do Pet recomputa do perfil local e
+  // devolve aqui, para o conteúdo sobreviver a um aparelho novo (o perfil do
+  // oráculo não sobe para a nuvem, as skills agora sim).
+  const handleSkillsComputed = useCallback((skills: NonNullable<GameState['soulmonSkills']>) => {
+    setGameState(prev => (prev.soulmonSkills ? prev : { ...prev, soulmonSkills: skills }));
+  }, [setGameState]);
+
+  const handleClassTitlesComputed = useCallback((titles: NonNullable<GameState['soulmonClassTitles']>) => {
+    setGameState(prev => (prev.soulmonClassTitles ? prev : { ...prev, soulmonClassTitles: titles }));
+  }, [setGameState]);
+
   const handleToggleEvolutionLock = useCallback(() => {
     setGameState(prev => ({ ...prev, evolutionLocked: !(prev.evolutionLocked ?? false) }));
   }, []);
@@ -1837,6 +1869,7 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
+        <PixelFrame />
         {unlockReason && (
           <UnlockAccountModal
             language={language}
@@ -1915,6 +1948,10 @@ export default function App() {
         {currentView === 'main' && (
           <div
             aria-hidden="true"
+            /* G10 (Ref C): sem cenário equipado, o teal padrão ganha a grade
+               de circuito ciano tênue. Cenário equipado sobrescreve por style
+               inline — a grade só existe no fundo padrão. */
+            className={gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground] ? undefined : 'sm-circuit-bg'}
             style={{
               position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
               backgroundImage: gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground]
@@ -2090,7 +2127,31 @@ export default function App() {
                 const feitos = tarefas.filter(t2 => t2.completed).length
                   + atividades.filter(a => a.isComplete).length;
 
+                /* Trilha de evolução na Home (referência: caminho de nós ao
+                   lado dos Daily Rituals). O galho é o que o pet JÁ está
+                   seguindo; em rookie (sem galho) é o previsto — o MESMO
+                   resolveBranch da página de Evolução, nada recalculado. */
+                const trailBranch = getStageBranch(gameState.evolutionStage)
+                  ?? resolveBranch(
+                    { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                    carePatternReading,
+                    gameState.currentBranch,
+                  );
+
                 return (
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  {(gameState.soulmonStages?.length ?? 0) > 0 && (
+                    <EvoTrail
+                      stages={gameState.soulmonStages ?? []}
+                      currentStageId={gameState.evolutionStage}
+                      unlockedEvolutions={gameState.unlockedEvolutions}
+                      branch={trailBranch}
+                      demoCharacterId={gameState.demoCharacterId}
+                      onOpen={() => setCurrentView('evolution')}
+                      language={language}
+                    />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                   <RitualPanel
                     done={feitos}
                     total={total}
@@ -2169,29 +2230,44 @@ export default function App() {
                       );
                     })}
                   </RitualPanel>
+                  </div>
+                  </div>
                 );
               })()}
             </div>
           )}
 
-          {/* Evolução e Estatísticas dividem o mesmo ícone da barra inferior —
-              alternadas por essas abas em vez de dois botões separados. */}
-          {(currentView === 'evolution' || currentView === 'stats') && (
-            <div className="flex gap-3 mb-4">
-              <button
-                onClick={() => setCurrentView('evolution')}
-                className={`sm-btn ${currentView === 'evolution' ? '' : 'sm-btn-secondary'}`}
-                style={{ flex: 1 }}
-              >
-                {language === 'pt-BR' ? 'Evolução' : 'Evolution'}
-              </button>
-              <button
-                onClick={() => setCurrentView('stats')}
-                className={`sm-btn ${currentView === 'stats' ? '' : 'sm-btn-secondary'}`}
-                style={{ flex: 1 }}
-              >
-                {language === 'pt-BR' ? 'Estatísticas' : 'Stats'}
-              </button>
+          {/* Evolução, Pet e Estatísticas dividem o mesmo ícone da barra
+              inferior — alternadas por essas abas em vez de botões separados
+              (a barra tem 6 botões travados por teste). A página do Pet é a
+              ficha viva: formas desbloqueadas, descrições e habilidades. */}
+          {(currentView === 'evolution' || currentView === 'stats' || currentView === 'pet') && (
+            <div className="flex gap-2 mb-4">
+              {/* `minWidth: 0` + fonte menor são obrigatórios aqui: "Estatísticas"
+                  é uma palavra só (min-content ~168px) e `flex:1` com o
+                  `min-width:auto` padrão NÃO encolhe — com a chegada do chip
+                  "Pet" a fileira passou de 323 para 412px num viewport de 390 e
+                  o terceiro rótulo era cortado no meio ("ESTATÍSTIC").
+                  A fileira parou de estourar a página, mas o rótulo continuava
+                  4px maior que o próprio chip (medido em 390px: scrollWidth 109
+                  contra clientWidth 105) e o "S" final morria no chanfro. Os
+                  4px vêm do `letter-spacing: .03em` do `.sm-btn` somado a 12px
+                  de padding: zerar o espaçamento (a bitmap já tem folga entre
+                  glifos) e apertar o padding para 4px devolve ~6px de sobra. */}
+              {([
+                { view: 'evolution' as const, label: language === 'pt-BR' ? 'Evolução' : 'Evolution' },
+                { view: 'pet' as const, label: 'Soulmon' },
+                { view: 'stats' as const, label: language === 'pt-BR' ? 'Estatísticas' : 'Stats' },
+              ]).map(({ view, label }) => (
+                <button
+                  key={view}
+                  onClick={() => setCurrentView(view)}
+                  className={`sm-btn ${currentView === view ? '' : 'sm-btn-secondary'}`}
+                  style={{ flex: 1, minWidth: 0, fontSize: '0.72rem', padding: '10px 4px', letterSpacing: 0, whiteSpace: 'nowrap' }}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           )}
 
@@ -2236,6 +2312,21 @@ export default function App() {
                 carePatternReading,
                 gameState.currentBranch,
               )}
+            /></Suspense>
+          )}
+
+          {currentView === 'pet' && (
+            <Suspense fallback={null}><PetPage
+              stages={gameState.soulmonStages ?? []}
+              unlockedEvolutions={gameState.unlockedEvolutions}
+              currentStageId={gameState.evolutionStage}
+              demoCharacterId={gameState.demoCharacterId}
+              petName={gameState.soulmonMeta?.baseName}
+              savedSkills={gameState.soulmonSkills}
+              onSkillsComputed={handleSkillsComputed}
+              savedClassTitles={gameState.soulmonClassTitles}
+              onClassTitlesComputed={handleClassTitlesComputed}
+              language={language}
             /></Suspense>
           )}
 

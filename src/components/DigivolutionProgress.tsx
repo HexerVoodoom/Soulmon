@@ -13,7 +13,7 @@ export function DigivolutionProgress({
   const progress = Math.min((currentDays / daysRequired) * 100, 100);
 
   return (
-    <div className="rounded-xl overflow-hidden sm-card">
+    <div className="overflow-hidden sm-card">
       <div className="flex flex-col gap-1.5 p-3">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -26,12 +26,14 @@ export function DigivolutionProgress({
         </div>
 
         {/* Progress Bar */}
-        <div className="h-3 w-full rounded-full overflow-hidden" style={{ background: 'var(--sm-line)' }}>
+        {/* Trilho quadrado (pixel) no lugar da pílula Material — mesma
+            linguagem das barras do kit. */}
+        <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--sm-line)', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)' }}>
           <div
-            className="h-full transition-all duration-500 rounded-full"
+            className="h-full transition-all duration-500"
             style={{
               width: `${progress}%`,
-              background: 'var(--sm-primary)',
+              backgroundColor: 'var(--sm-px-cyan)',
             }}
           />
         </div>

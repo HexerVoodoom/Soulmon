@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type CSSProperties } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import iconLock from '../assets/soulmon/icons/icon-lock.png';
@@ -8,10 +8,11 @@ import { getSpriteForStage } from '../utils/sprites';
 import { WalkingPetStrip } from './WalkingPetStrip';
 import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
-import { ATTR_COLOR, ATTR_ICON, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
+import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_ICON, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
 
 type Attr = 'virus' | 'data' | 'vaccine';
-const ALIGN_TO_ATTR: Record<AlignmentId, Attr> = { poder: 'virus', harmonia: 'data', benevolencia: 'vaccine' };
+// ALIGN_TO_ATTR mudou para types/attributes.ts quando o EvoTrail da Home
+// passou a precisar do mesmo mapa (footgun 9: cópia diverge em silêncio).
 const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
 
 /**
@@ -292,8 +293,11 @@ export function EvolutionPath({
               </button>
               <button
                 onClick={handleDegenerateConfirm}
-                className="flex-1 py-2.5 rounded-2xl text-white font-bold transition-colors"
-                style={{ background: confirmDegenerate.isSecondConfirm ? '#e0483e' : 'var(--sm-ink)' }}
+                className="sm-btn flex-1"
+                style={{
+                  backgroundColor: confirmDegenerate.isSecondConfirm ? '#e0483e' : 'var(--sm-ink)',
+                  color: '#fff',
+                }}
               >
                 {confirmDegenerate.isSecondConfirm ? (isPt ? 'SIM, DEGENERAR!' : 'YES, DEGENERATE!') : (isPt ? 'Confirmar' : 'Confirm')}
               </button>
@@ -400,15 +404,16 @@ export function EvolutionPath({
             <button
               key={b}
               onClick={() => setSelectedBranch(b)}
-              className="flex-1 py-2.5 rounded-xl border transition-all font-semibold flex items-center justify-center gap-1.5"
+              className="sm-px-chip-btn flex-1"
               style={{
                 fontSize: '0.75rem',
-                background: active ? hex : 'var(--sm-surface)',
+                backgroundColor: active ? hex : 'var(--sm-surface)',
                 borderColor: active ? hex : 'var(--sm-line)',
+                ['--sm-cham-line' as string]: active ? hex : 'var(--sm-line)',
                 // Branco sobre os três preenchimentos media 2,4–3,1:1 (medido);
                 // a tinta escura mede 5,4–7,0:1.
                 color: active ? ATTR_ON_FILL_INK : ATTR_INK[b],
-              }}
+              } as CSSProperties}
             >
               <Icon size={16} color={active ? ATTR_ON_FILL_INK : hex} strokeWidth={2.2} />
               {L(ATTR_LABEL[b])}

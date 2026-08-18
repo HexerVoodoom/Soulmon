@@ -290,7 +290,7 @@ describe('generateOracle', () => {
     const r = generateOracle(INPUT, 42);
     const ultra = r.creature.stages.find(s => s.stage === 'ultra')!;
     const megas = r.creature.stages.filter(s => s.stage === 'mega');
-    expect(ultra.name.startsWith('Omni')).toBe(true);
+    expect(ultra.name.startsWith('Triune')).toBe(true);
     expect(ultra.imagePrompt).toContain('ultra fusion of its three mega forms');
     // As três formas mega são citadas nas DESCRIÇÕES; o prompt do ultra
     // carrega o bloco de nível ultra

@@ -35,6 +35,7 @@
     "@radix-ui/react-toggle": "^1.1.2",
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
+    "astronomy-engine": "^2.1.19",
     "class-variance-authority": "^0.7.1",
     "clsx": "*",
     "cmdk": "^1.1.1",
@@ -52,7 +53,8 @@
     "recharts": "^2.15.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "*",
-    "vaul": "^1.1.2"
+    "vaul": "^1.1.2",
+    "class-system": "github:HexerVoodoom/Class-System"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
@@ -71,6 +73,7 @@
     "wrangler": "^4.114.0"
   },
   "scripts": {
+    "sync:oracle-data": "node scripts/sync-oracle-data.mjs",
     "dev": "vite",
     "build": "vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
     "test": "vitest run",

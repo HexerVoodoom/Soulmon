@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import {
   Heart, Utensils, Zap, Sparkles, ShowerHead, ShoppingBag,
   LoaderCircle, Check, Wand2,
@@ -226,7 +226,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
                 padding: '36px 24px', marginTop: 40, marginBottom: 4,
                 border: '3px solid var(--sm-gold)',
-                boxShadow: '0 0 0 4px var(--sm-gold-soft), 0 8px 24px rgba(42,36,64,.12)',
+                boxShadow: '0 0 0 4px var(--sm-gold-soft), 0 8px 24px rgba(6, 24, 26,.12)',
               }}
             >
               <div style={{
@@ -293,11 +293,8 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               placeholder={isPt ? 'Ex.: Quero ficar mais em forma e menos ansioso' : 'E.g.: I want to get fitter and less anxious'}
               rows={3}
               maxLength={300}
-              style={{
-                width: '100%', boxSizing: 'border-box', resize: 'none',
-                background: 'var(--sm-surface)', color: 'var(--sm-ink)', border: '2px solid var(--sm-line)',
-                borderRadius: 14, padding: '12px 14px', fontSize: 14, outline: 'none', fontFamily: 'inherit',
-              }}
+              className="sm-px-field"
+              style={{ width: '100%', boxSizing: 'border-box', resize: 'none', outline: 'none', fontFamily: 'inherit' }}
             />
 
             <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--sm-muted)', margin: '14px 0 8px' }}>
@@ -345,10 +342,11 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                         width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
                         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
                         borderColor: isSel ? 'var(--sm-primary)' : undefined,
-                        background: isSel ? 'var(--sm-primary-soft)' : undefined,
-                      }}
+                        backgroundColor: isSel ? 'var(--sm-primary-soft)' : undefined,
+                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm-primary)' } : null),
+                      } as CSSProperties}
                     >
-                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {CATEGORY_ICONS[customCategory]}
                       </span>
                       <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: 'var(--sm-ink)' }}>{goalText.trim()}</span>
@@ -376,10 +374,11 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                         width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
                         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
                         borderColor: isSel ? 'var(--sm-primary)' : undefined,
-                        background: isSel ? 'var(--sm-primary-soft)' : undefined,
-                      }}
+                        backgroundColor: isSel ? 'var(--sm-primary-soft)' : undefined,
+                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm-primary)' } : null),
+                      } as CSSProperties}
                     >
-                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, borderRadius: 10, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {s.emoji}
                       </span>
                       <span style={{ flex: 1, minWidth: 0 }}>

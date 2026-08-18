@@ -73,13 +73,18 @@ describe('RitualRow — a ação central continua acessível na composição den
 });
 
 describe('RitualRow — sobreviver ao texto PT-BR (N3 da análise de gap)', () => {
-  it('nome longo TRUNCA e leva `title` com o texto inteiro', () => {
+  /* RODADA 5: o mecanismo mudou de ellipsis-de-1-linha para CLAMP DE 2
+     LINHAS (com o trilho de evolução ao lado, "Meditation" virava "Medita…"
+     já no primeiro ritual; a referência quebra o nome em duas linhas). O
+     PROPÓSITO do teste é o mesmo: texto longo não pode vazar da linha, e o
+     `title` leva o texto inteiro. */
+  it('nome longo é CONTIDO (clamp de 2 linhas) e leva `title` com o texto inteiro', () => {
     const { container } = renderWithCss(<ul>{linha({ name: NOME_LONGO })}</ul>);
     const nome = container.querySelector('.sm-px-ritual-name') as HTMLElement;
     expect(nome.getAttribute('title')).toBe(NOME_LONGO);
-    expect(computed(nome, 'text-overflow')).toBe('ellipsis');
-    expect(computed(nome, 'white-space')).toBe('nowrap');
     expect(computed(nome, 'overflow')).toBe('hidden');
+    expect(computed(nome, '-webkit-line-clamp')).toBe('2');
+    expect(computed(nome, '-webkit-box-orient')).toBe('vertical');
   });
 
   it('a altura mínima da linha não depende do tamanho do nome', () => {

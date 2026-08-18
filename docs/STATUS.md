@@ -17,6 +17,294 @@ solta no meio dos sprites. Suíte 1143 → 1149. Detalhe de cada um nos ✅ do
 backlog de arte; o kit completo (incl. o que ainda não foi ligado) está
 indexado no fim de `src/utils/iconRegistry.ts`.
 
+> ⚠️ Achado ao mesclar (18/08/2026): `GameStateContext.storage.test.tsx` falha
+> nos 6 casos **em Node 25** e passa em Node anterior. Não é regressão de
+> código e não afeta o navegador: o Node 25 traz `localStorage` NATIVO, então
+> `globalThis.localStorage` deixa de ser o do jsdom e espiar
+> `Storage.prototype` (que é o que o arquivo faz, e explica na nota do topo)
+> não intercepta mais a escrita. É a mesma armadilha que a nota do teste já
+> descreve, numa encarnação nova. Quem for consertar: ou espiar a instância em
+> uso, ou fixar a versão do Node do projeto — decidir antes de mexer, porque
+> mudar o alvo do spy foi justamente o que a nota diz que NÃO funciona no
+> jsdom 29.
+
+Antes disso: **oráculo dentro da UI + controles diretos desligados
+(18/ago/2026)** — duas direções do dono. (1) A `OraclePage` (e o teste de
+personalidade dentro dela) estava FORA da UI: card branco com botões cinza
+dentro do app pixel escuro. Passou a usar as MESMAS classes do kit que o
+onboarding já passava ao `SoulTestItem`/`CityPicker` (`sm-px-choice`,
+`sm-px-field`) + tokens de tema no lugar de hex solto. (2)
+`DIRECT_CONTROLS_ENABLED = false`: elemento favorito, bioma/reino e a
+descrição livre de 50% saíram — a criatura vem da leitura. É flag, não
+deleção (o dono pediu para reativar se usuários pedirem mais controle);
+`alignment` não estava na lista e ficou. Achado ao implementar: o gate não
+podia ficar só no JSX — os inicializadores chamam `generateOracle` com o
+rascunho do localStorage direto, então um formulário salvo antes seguiria
+influenciando a criatura de forma invisível; a poda ficou em
+`loadSavedForm()`. Ver `docs/ORACULO.md` (rodada 12).
+
+Antes disso: **fechamento do redesign noturno (18/ago/2026,
+madrugada)** — sweep final de QA (Playwright, claro+escuro, todas as views
+principais) achou e corrigiu 1 regressão da rodada 5: rótulos
+Itens/Banho/Dormir invisíveis no tema claro (`--sm-px-ink` fixo sobre fundo
+claro → `--sm-ink` do tema). Estado entregue da noite, tudo mergeado na
+main: regra "ícone nunca dentro de box" aplicada (nav/ações/chat),
+`.sm-pet-sticky` confirmado, moldura de canos (`PixelFrame`), splash
+SOUL_LINK no index.html, trilha de evolução na Home (`EvoTrail`), clamp de
+2 linhas no nome do ritual. O que NÃO foi feito e por quê: recorte de
+assets das 4 imagens de referência (chegaram como imagem no chat, não como
+arquivo — sem os bytes não há o que recortar) e geração de imagem nova
+(chaves Higgsfield/Gemini são secrets do Cloudflare, ilegíveis do sandbox;
+login de navegador é do dono). Se o dono commitar as imagens + a pasta
+`icones` do desktop dele, dá pra substituir as aproximações CSS/SVG por
+recortes reais.
+
+Antes disso: **trilha de evolução na Home (18/ago/2026, madrugada)**
+— terceiro item do redesign: o caminho de nós da referência agora mora na
+Home, à esquerda do painel de rituais (`EvoTrail.tsx`). É RESUMO, não a
+árvore: linha rookie→…→ultra do galho atual/previsto, nós `SoulNode`
+reaproveitados (cristal verde = alcançado, pet pousado + anel = atual,
+escuro = trancado), tocar abre a página de Evolução. Zero regra nova:
+galho vem de `getStageBranch` ?? `resolveBranch` (o MESMO da página),
+`ALIGN_TO_ATTR` mudou de cópia local do EvolutionPath para
+`types/attributes.ts` (footgun 9). Nome de forma trancada NÃO aparece nem
+em aria-label (spoiler guard preservado). Junto: `.sm-px-ritual-name`
+virou clamp de 2 linhas (com o trilho ao lado, "Meditation" truncava em
+"Medita…"; a referência quebra o nome em 2 linhas) — teste do RitualPanel
+atualizado pro mecanismo novo, propósito mantido.
+
+Antes disso: **moldura da tela + splash (18/ago/2026, madrugada)** —
+os dois primeiros itens do redesign guiado pelas 4 imagens de referência que
+o dono mandou (kit "SOUL MON"). (1) `PixelFrame.tsx`: moldura fixa nas
+bordas — linhas de cobre via box-shadow inset + 4 cantos em PIXEL ART
+programática (grid de chars → rects SVG, `crispEdges`): cano de cobre,
+junta aparafusada, trepadeira e nó de cristal ciano. `pointer-events: none`
+(nunca captura toque), z-index 80 (é o "bezel" do aparelho), zero PNG novo.
+Montada no App e no onboarding. (2) Splash "SOUL_LINK ESTABLISHED" no
+`index.html`: ESTÁTICA de propósito — aparece antes do bundle carregar
+(loading de verdade, sem timer artificial), chama pixel + wordmark + barra
+segmentada animada + selo + cristais, PT/EN por `navigator.language`. O
+React a remove com fade no primeiro frame (main.tsx); o aviso de WebView
+antigo também a remove (senão cobriria o próprio aviso). CSP: o script
+inline novo e o do aviso (editado) entraram no `_headers` com hash
+recalculado — o `csp.test.ts` pegou, como desenhado.
+
+Antes disso: **regra "ícone nunca dentro de box" (18/ago/2026,
+madrugada)** — direção do dono, vale no app INTEIRO (registrada no
+CLAUDE.md): nada de moldura/placa/chanfro em volta de ícone; o ícone aparece
+GRANDE e pelado. Aplicado em: nav inferior (26→36px, placa preenchida do
+ativo virou SUBLINHADO ciano — barra não é caixa, e mantém uma pista de
+seleção que não é só cor), fileira Itens/Banho/Dormir (moldura da actionbar
+saiu, 30→42px), botões do chat (moldura saiu, 20→30px). A barra inferior
+subiu 68→80px pra caber o ícone grande com rótulo (token
+`--sm-bottomnav-h`, o dock do chat acompanha sozinho). Confirmado no mesmo
+passe: `.sm-pet-sticky` (pet fixo, só a lista rola) segue funcionando — o
+dono pediu de novo, mas já estava no ar; harness de screenshot novo em
+`scratchpad/shot.mjs` mede o sticky em vez de confiar no olho.
+
+Antes disso: **o gesto oculto virou o LOGO inteiro (18/ago/2026,
+madrugada)** — o dono pediu ("mergeia esse toggle com o corvo no título"):
+corvo + wordmark "SOULMON" agora são um wrapper único, e é ele o alvo do
+long-press. Alvo maior acerta mais fácil no dedo. Como o alvo passou a
+incluir texto, entrou `userSelect: none` + `WebkitTouchCallout: none` (segurar
+texto no mobile abriria seleção/menu e comeria o gesto). Achado ao testar, e
+anotado em `docs/ORACULO.md`: a intro tem animação de entrada e, antes de
+assentar, o logo fica em OUTRA posição com `pointer-events: none` — medir
+cedo faz o teste reprovar um gesto que funciona (`document.fonts.ready` não
+basta; espere ~3s).
+
+Antes disso: **atalho oculto pro modo debug (18/ago/2026, madrugada)**
+— o dono perguntou onde ficava o checkbox de modo debug e, ao saber que
+`OraclePage.tsx` não tem NENHUM ponto de entrada no app real, pediu um jeito
+de chegar lá pela tela de intro que aparece na captura que ele mandou. Como
+essa tela é a primeira coisa que todo jogador real vê, perguntei antes de
+mexer: o dono confirmou que queria um atalho ESCONDIDO só pra ele, não um
+controle visível pra qualquer um. Implementado como gesto: segurar o mascote
+da intro por ~1.8s (`SoulmonOnboarding.tsx`) abre a `OraclePage` por cima,
+já com o checkbox de modo debug pré-marcado (`initialDebugMode`, prop nova),
+com um botão "Fechar" pra voltar. Toque curto (< 1.8s) não faz nada — testado
+com Playwright (hold abre, toque curto não abre, Fechar volta pra intro).
+Ver `docs/ORACULO.md` (rodada 11).
+
+Antes disso: **modo debug na geração de imagem (17/ago/2026,
+madrugada)** — pedido do dono: uma versão com "custo 0" que entrega o prompt
+em vez de gerar sozinho no Higgsfield. `OraclePage.tsx` (ferramenta interna,
+sem nav) já tinha um botão "Prompts" sem custo separado do "Gerar imagens"
+(que chama a API paga); agora tem um checkbox "🐛 Modo debug" que faz o
+PRÓPRIO botão de gerar nunca chamar a API quando ligado — zero chamada de
+rede, não um limite que ainda bateria nela. Ver `docs/ORACULO.md`
+(rodada 10).
+
+Antes disso: **classe real no prompt de sprite (17/ago/2026, noite)**
+— o dono achou um prompt de exemplo mais genérico que o anterior e pediu
+mais detalhe: a classe (arquétipo do class-system), mas SÓ no prompt de
+imagem, nunca em texto que o jogador vê. `pipeline.ts` virou `async` (só
+ele — `generateOracle` continua síncrono) pra computar
+`computeClassTitle(fichaByStage.ultra)` — constante nos 11 prompts, mesmo
+tratamento que os outros traços de identidade — e passar o nome EN como um
+4º traço do prompt (`OracleInput.promptClassFlavor`, novo campo, só o
+pipeline preenche). Cogitado e descartado: sincronizar os arquétipos num
+snapshot pra evitar o `async` — o casamento de condição real depende de
+`niveisEfetivos` de elementos DERIVADOS, que só o motor real deriva certo;
+reimplementar seria o footgun 9 que as outras integrações evitaram. Teste
+novo confere as duas pontas: a palavra da classe aparece no `imagePrompt`
+de toda forma, nunca em `description`/`bio`. Ver `docs/ORACULO.md`
+(rodada 9).
+
+Antes disso: **sufixo "-mon" removido dos nomes (17/ago/2026, noite)**
+— o dono pediu um exemplo real de ponta a ponta e notou: toda criatura
+terminava em "-mon" (`rookieName` etc. em `oracle.ts`). Achado ao investigar:
+combinado com os prefixos de linha (War/Chaos/Zeed no Vírus, Omega no Mega
+Vírus, Omni no Ultra), isso soletrava nomes REAIS de outra franquia —
+WarGreymon, e o pior, Omegamon/Omnimon (a fusão dos 3 Megas, exatamente o
+conceito do Ultra aqui). Mesmo tipo de risco que já tirou os 74 sprites da
+Bandai do projeto, só que na camada de TEXTO. Corrigido: nenhum sufixo fixo
+em nenhum estágio; `Omni` (Ultra) virou `Triune` ("três em um", mesmo
+conceito, sem o nome emprestado). Teste que fixava o prefixo antigo
+atualizado. Ver `docs/ORACULO.md` (rodada 8).
+
+Antes disso: **classe da criatura (17/ago/2026, noite)** — pedido do
+dono: "senti falta de ter também a classe da criatura, gerada a partir do que
+ela faz, suas skills, talvez talentos e também de seus elementos". Achado:
+o class-system já tem exatamente esse conceito — **arquétipos** (79 no
+registro, `registry/arquetipos.ts`), identidades que EMERGEM de elemento +
+escola + recurso, nunca escolhidas. `ficha/classTitle.ts` chama o motor real
+(`calcularProgressao`, mesmo import dinâmico das skills) e escolhe o
+arquétipo mais específico entre os que a ficha desbloqueou (pleno → diluído
+"Aspirante a X" → fallback genérico pelo elemento dominante). Medido em 24
+perfis: rookie nunca bate arquétipo pleno, mega e ultra batem em 100% —
+mesma escada da cascata de pares. Nome PT vem AO VIVO do motor (zero cópia);
+EN é tradução própria por id, com teste de paridade contra os 79 ids reais.
+Extraído `ficha/realEngine.ts` (Personagem + progressão real), compartilhado
+entre poder de skill e classe. Persistido no save (`soulmonClassTitles`).
+**Decisão do dono no mesmo dia: não aparece pro jogador** — `PetPage.tsx`
+computa e cacheia a classe, mas não renderiza o rótulo; infraestrutura fica
+pronta pra um dia mostrar, sem custo de exibir nada agora. Ver
+`docs/ORACULO.md` (rodada 7).
+
+Antes disso: **contraste do tema escuro (17/ago/2026, noite)** —
+feedback ao vivo do dono: "troca o nome pet por Soulmon e olha esse
+contraste aí, em fundo escuro tem que ser texto branco". (1) A aba "Pet" virou
+"Soulmon" (`App.tsx`). (2) O contraste era um bug REAL, não só percepção: o
+scaffold shadcn importado do Figma define `body { color: var(--foreground) }`,
+e `--foreground` só troca de valor sob a classe `.dark` — que este app NUNCA
+aplica (o tema alterna via `[data-theme]` no `<html>`). Resultado: todo texto
+sem `color` próprio herdava `--foreground` sempre no valor CLARO
+(`oklch(.145 0 0)`, quase preto) mesmo com o tema escuro ativo. Pego por
+amostragem de PIXEL na página do Pet (não só `getComputedStyle` — o preview
+visual enganava, o cinza quase-preto sobre o verde bem escuro do card ainda
+parecia "vagamente legível" no screenshot pequeno): nome da criatura, descrição
+por forma e nome da skill renderizavam em `rgb(10,10,10)` sobre
+`rgb(23,58,55)`. `body` agora usa os tokens de verdade (`--sm-bg`/`--sm-ink`),
+que já respondem a `[data-theme="dark"]` — `--background`/`--foreground`
+continuam intactos para quem os usa via `.bg-background`/`.text-foreground`
+explícito (alguns modais em `components/ui/`). Ver footgun 10 em "Footguns".
+
+Antes disso: **descrição por forma + poder real da skill (17/ago/2026,
+noite)** — feedback ao vivo do dono testando o app: (1) a descrição por forma
+só falava do FÍSICO, faltava o comportamento ("o que ele faz") — agora soma
+uma frase real do papel+alinhamento dominante (`behaviorSentence`, extraída do
+`personalitySummary` que já existia só na ferramenta interna); (2) o custo das
+skills era um rótulo fixo por tipo — `ficha/realSkillPower.ts` chama o motor
+DE VERDADE do class-system (`calcularSkill`, import dinâmico) e mostra um
+`poder` real ao lado, verificado crescendo do rookie ao ultra e da básica pra
+especial. Também no Class-System (PR #8 de lá): sinergia de alvo único
+(fogo→vileza etc.) agora alimenta a cascata de destravamento — sinergia de
+LEQUE (vida→5 primais) fica de fora de propósito, senão reabria o exploit que
+a rodada 2 fechou — e a lista de investimento mostra os derivados "em
+progresso" (passivos acumulando, ainda sem poder pontuar direto). Ver
+`docs/ORACULO.md` (rodada 5).
+
+Antes disso: **revisão profunda do oráculo (17/ago/2026, tarde)** — a
+pedido do dono ("cada usuário com personagem único, interessante e fiel").
+Medição com 200 perfis reais achou e as correções fecharam: (1) NOMES — a
+colisão de baseName caiu de 20,5% para **1,5%** (mais bits da identidade,
+RNG dedicado, bancos dobrados, 4 padrões de composição; estilo intocado);
+(2) PAPÉIS no caminho só-6 — alcance caiu de 46% para 12–22% e suporte subiu
+de 5% para 18–22% (recalibração validada em 3 seeds, direções de fidelidade
+intactas); (3) IDENTIDADES FANTASMA — sombra/água/pântano/akasha/gelo agora
+todos ≥3–4% (piso compensando o racha das perguntas de reino). Fidelidade
+confirmada forte: respostas opostas mudam a identidade 10/10, todos os 6
+traços movem eixos em direções coerentes; bestiário sem concentração
+(top-10 = 10,5%). No Class-System, auditoria adversarial da cascata rendeu
+9 achados corrigidos (PR #5 — medidor de orçamento cobrava pontos crus,
+custo em paridade com os pais {1,2,3,4}, invariantes de aridade/pressa
+refechados na curva inteira, taxonomy.json v2 como contrato de máquina). O
+Besti-rio- ganhou superfície de máquina (PR #3 — export canônico com
+procedência + AGENTS.md; uso principal = servir este pipeline). Custo do
+par espelhado no Soulmon (CUSTO_PONTO_PAR 3→2) e snapshot re-sincronizado.
+
+**QA rodada 2 (17/ago/2026)** — dois buracos medidos e fechados. (1)
+**Paridade dos diais**: mutar `CUSTO_PONTO_PAR` de 2 para 3 não derrubava
+NENHUM teste (1253/1253 verdes) — os fixtures da cascata medem comportamento
+(passivos/destrave) e preço não entra em cascata nenhuma, então o dial podia
+divergir do class-system em silêncio (footgun 9). O sync agora copia o bloco
+`geracoes` do `taxonomy.json` v2 para o snapshot e `cascata.parity.test.ts`
+afirma os QUATRO diais (divisor, limiar, custo base, custo do par) contra ele;
+verificado por mutação: cada um dos 4 agora mata teste. (2) No Class-System,
+**a armadilha de retrancar**: com a lava destravada, investir 1 ponto direto e
+depois baixar um componente retrancava o par — o ponto continuava cobrando
+orçamento e não sobrava nenhum `−` na tela (só "Resetar", que apaga a build).
+Agora existe `desinvestirElemento` no motor e a tabela lista `alocaveis` ∪
+{derivados com ponto direto}, os travados só com `−`.
+
+Antes disso: **alocação geracional + página do Pet (17/ago/2026)** —
+rodada 2 da fusão, a pedido do dono: (1) o class-system ganhou a CASCATA
+geracional (PR HexerVoodoom/Class-System#5 — ponto direto só em base; 5+5→1
+passivo no par; 10 passivos destravam alocação direta; peso de geração como
+CUSTO {1,3,10,30}, não multiplicador); (2) a ficha do Soulmon distribui por
+essa regra com orçamento próprio de elementos (30/60/120/300/500) e
+especialização progressiva — medido: rookie–ultimate só bases, mega chega
+"quase destravando", ultra compra o par em ~73% dos perfis (réplica gen-2 com
+teste de PARIDADE contra fixtures do motor real, gerados no sync); (3) o
+bestiário ganhou LINHAGEM com continuidade de espécie (uma inspiração por
+estágio; 86,8% das transições preservam a família, travessia rara por
+sobreposição); (4) cada estágio ganhou o par de skills básica/especial
+derivado da ficha (a especial do ultra usa o PAR comprado — ex.: "Fúria de
+Prisma"); (5) página nova do **Pet** (chip Evolução | Pet | Estatísticas):
+formas já desbloqueadas (nunca futuras), a descrição por forma que existia no
+save e nunca era renderizada, e as duas skills — verificada com Playwright em
+PT e EN. Decisão de arquitetura confirmada pelo dono: dados por SNAPSHOT
+embarcado (não API).
+
+Antes disso: **fusão class-system + bestiário no oráculo (ago/2026)** —
+o pipeline completo agora distribui os pontos do usuário na ficha do
+class-system (constelação ancorando os 17 elementos, 65 talentos cientes de
+pré-requisito, 11 profissões), captura o companheiro pela mecânica real e
+busca a criatura-inspiração num pool de 2.000 do corpus canônico do
+Besti-rio- — com cobertura TOTAL travada por simulação e o nome da inspiração
+proibido em prompt por teste. Dados por snapshot com SHA
+(`npm run sync:oracle-data`). Pendência do dono: mergear
+`claude/canonical-classification` na main do Besti-rio- (o pool aponta para a
+branch até lá). Ver `docs/ORACULO.md`.
+
+Antes disso: **UI rodada 6 (15/ago/2026)** — cinco passadas de QA de
+design sobre a rodada 5: guardrail de moeda restaurado em Estatísticas (Bits
+sem ícone, fonte de calculadora), relatório diário/modais de tarefa/batalha da
+Masmorra no kit, Dino sem vazio, barra do ritual segmentada, varredura do tema
+claro e closeup das quinas. Relatório: `product/soulmon-01/ui/align-round6.md`;
+prompts de arte ganharam A15–A16.
+
+Antes disso: **UI rodada 5 (15/ago/2026)** — os primitivos legados
+`.sm-btn`/`.sm-card` passaram a desenhar o kit pixel (chanfro + cobre + banda
+de quina), o que converteu de uma vez onboarding, tutorial, modais, popover do
+menu e o topo da Evolução; backdrops roxos viraram teal, os vazamentos de roxo
+de Torneio/PPT/Masmorra saíram, e o fundo de circuito da Ref C entrou por CSS.
+Relatório: `product/soulmon-01/ui/align-round5.md`. O que falta é ARTE —
+prompts prontos em `docs/BACKLOG-ARTE-GERAR.md` (itens A9–A14 novos).
+⚠️ Registro de ambiente: os 6 testes de `GameStateContext.storage.test.tsx`
+falham em sandbox Linux (o mock de storage cheio não dispara quota no jsdom de
+lá) — **pré-existente**, falha idêntica no commit base; nos ambientes das
+rodadas anteriores passavam.
+
+Antes disso: **novo motor do oráculo (ago/2026)** — o teste de
+personalidade do repositório `teste-personalidade` virou a LEITURA do oráculo do
+Soulmon (`src/utils/soulProfile/`), no lugar do signo por faixa de datas, do
+ascendente chutado de 2 em 2 horas e das 6 perguntas do quiz antigo. A metade
+criativa (`utils/oracle.ts`: arquétipo, famílias, as 11 formas, prompts de
+sprite) não foi tocada, e o caminho legado segue inteiro para quem já tinha
+perfil salvo. Detalhes e o porquê de cada decisão em `docs/ORACULO.md`.
+
 Antes disso: **loop de QA multi-agente (ago/2026)** — 3 rodadas, suíte de
 379 → 600 testes, mais uma frente de aplicação da UI pixel-art. Ver
 `product/soulmon-01/` para os relatórios de cada rodada. O achado estrutural

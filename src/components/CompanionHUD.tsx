@@ -687,6 +687,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                 objectFit: 'contain',
                 imageRendering: 'pixelated',
                 pointerEvents: 'none',
+                /* RODADA 5, tentado e revertido: aro na frente (zIndex 2)
+                   esconde o corpo do pet — o berço de 148px cobre o meio do
+                   sprite de 200px. O "sentado na bacia" da Ref C precisa de
+                   ARTE (berço mais largo/raso), não de z-index — item no
+                   BACKLOG-ARTE-GERAR. */
                 zIndex: 0,
               }}
             />
@@ -865,7 +870,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   role="img"
                 />
               )}
-              <img src={a.icon} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <img src={a.icon} alt="" width={42} height={42} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               {/* Rótulo curto de AÇÃO — cabe na bitmap sem prejuízo de
                   leitura (é uma palavra, não frase). "Acordar"/"Dormir" não
                   têm acento; se um dia tiverem, o subset latin da Silkscreen
