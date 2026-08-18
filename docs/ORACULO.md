@@ -608,6 +608,39 @@ simplesmente não acontece), não por um limite que ainda bateria na API.
 Default desligado — preserva o comportamento de sempre pra quem já usa o
 botão pra gerar de verdade.
 
+## Controles diretos desligados + página dentro da UI (ago/2026, rodada 12)
+
+Duas direções do dono no mesmo passe.
+
+**1) A `OraclePage` estava FORA da UI do app.** Era um card BRANCO com
+inputs e botões cinza cravado dentro de um app pixel-art escuro — e o teste
+de personalidade, que é o MESMO componente do onboarding
+(`SoulTestItem`), renderizava ali sem nenhuma peça do kit. A causa estava
+documentada no próprio componente: `SoulTestItem` e `CityPicker` recebem
+`optionClass`/`inputClass` do onboarding (`sm-px-choice`/`sm-px-field`) e a
+`OraclePage` "não passa nada e segue com o próprio visual inline". Agora
+passa. As constantes de estilo da página (`cardCls`, `inputCls`,
+`selectCls`…) trocaram hex solto por classes do kit e tokens de tema — era
+o hex que a prendia no tema claro. Dois ajustes que vieram junto: `minWidth:
+0` na dupla data/hora (a fonte pixel é mais larga que a monoespaçada e o
+campo de hora vazava do painel) e o `#fff` inline do `CityPicker`, que
+deixava só aquele campo branco.
+
+**2) Controles diretos desligados** (`DIRECT_CONTROLS_ENABLED = false`):
+elemento favorito, bioma/reino e a descrição livre de 50% de impacto. A
+criatura passa a vir da LEITURA, não de o usuário escolher o resultado a
+dedo. É **flag, não deleção** — "se os usuários pedirem mais controle no
+futuro nós reativamos" é a direção literal, então virar `true` devolve os
+três de uma vez. `alignment` (Tipo) não estava na lista e continua valendo.
+
+⚠️ **O gate NÃO pode viver só no JSX.** Os inicializadores de `useState`
+chamam `generateOracle(s, …)` com o rascunho do `localStorage`
+(`ORACLE_FORM`) DIRETO — esconder os campos sem podar o rascunho deixaria
+um formulário salvo antes do desligamento continuar mandando
+elemento/bioma/descrição para o gerador: invisível na tela e ativo no
+resultado. A poda vive em `loadSavedForm()` (ponto único de carga) e há uma
+segunda barreira em `input()`, que lê o estado vivo.
+
 ## Atalho oculto pro modo debug (ago/2026, rodada 11)
 
 A rodada 10 resolveu o CUSTO, mas deixou de fora o problema que a rodada 8
