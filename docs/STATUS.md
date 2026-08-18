@@ -7,7 +7,21 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **moldura da tela + splash (18/ago/2026, madrugada)** —
+Última atualização: **trilha de evolução na Home (18/ago/2026, madrugada)**
+— terceiro item do redesign: o caminho de nós da referência agora mora na
+Home, à esquerda do painel de rituais (`EvoTrail.tsx`). É RESUMO, não a
+árvore: linha rookie→…→ultra do galho atual/previsto, nós `SoulNode`
+reaproveitados (cristal verde = alcançado, pet pousado + anel = atual,
+escuro = trancado), tocar abre a página de Evolução. Zero regra nova:
+galho vem de `getStageBranch` ?? `resolveBranch` (o MESMO da página),
+`ALIGN_TO_ATTR` mudou de cópia local do EvolutionPath para
+`types/attributes.ts` (footgun 9). Nome de forma trancada NÃO aparece nem
+em aria-label (spoiler guard preservado). Junto: `.sm-px-ritual-name`
+virou clamp de 2 linhas (com o trilho ao lado, "Meditation" truncava em
+"Medita…"; a referência quebra o nome em 2 linhas) — teste do RitualPanel
+atualizado pro mecanismo novo, propósito mantido.
+
+Antes disso: **moldura da tela + splash (18/ago/2026, madrugada)** —
 os dois primeiros itens do redesign guiado pelas 4 imagens de referência que
 o dono mandou (kit "SOUL MON"). (1) `PixelFrame.tsx`: moldura fixa nas
 bordas — linhas de cobre via box-shadow inset + 4 cantos em PIXEL ART

@@ -18,6 +18,17 @@ export type ActivityCategory =
   | 'Wellness' 
   | 'Fitness';
 
+/** Alinhamento do oráculo → galho de evolução. Era um mapa LOCAL do
+ *  `EvolutionPath`; virou compartilhado quando o `EvoTrail` da Home passou a
+ *  precisar dele — duas cópias divergiriam em silêncio (footgun 9). Chaves em
+ *  união literal (e não `AlignmentId` de utils/oracle) de propósito: evita
+ *  import de módulo de lógica num módulo de dados, e o TS estrutural aceita. */
+export const ALIGN_TO_ATTR: Record<'poder' | 'harmonia' | 'benevolencia', 'virus' | 'data' | 'vaccine'> = {
+  poder: 'virus',
+  harmonia: 'data',
+  benevolencia: 'vaccine',
+};
+
 export const CATEGORY_ATTRIBUTES: Record<ActivityCategory, AttributePoints> = {
   Health: { virus: 1, data: 1, vaccine: 2 },
   Creativity: { virus: 3, data: 1, vaccine: 0 },
