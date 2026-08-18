@@ -7,7 +7,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **modo debug na geração de imagem (17/ago/2026,
+Última atualização: **atalho oculto pro modo debug (18/ago/2026, madrugada)**
+— o dono perguntou onde ficava o checkbox de modo debug e, ao saber que
+`OraclePage.tsx` não tem NENHUM ponto de entrada no app real, pediu um jeito
+de chegar lá pela tela de intro que aparece na captura que ele mandou. Como
+essa tela é a primeira coisa que todo jogador real vê, perguntei antes de
+mexer: o dono confirmou que queria um atalho ESCONDIDO só pra ele, não um
+controle visível pra qualquer um. Implementado como gesto: segurar o mascote
+da intro por ~1.8s (`SoulmonOnboarding.tsx`) abre a `OraclePage` por cima,
+já com o checkbox de modo debug pré-marcado (`initialDebugMode`, prop nova),
+com um botão "Fechar" pra voltar. Toque curto (< 1.8s) não faz nada — testado
+com Playwright (hold abre, toque curto não abre, Fechar volta pra intro).
+Ver `docs/ORACULO.md` (rodada 11).
+
+Antes disso: **modo debug na geração de imagem (17/ago/2026,
 madrugada)** — pedido do dono: uma versão com "custo 0" que entrega o prompt
 em vez de gerar sozinho no Higgsfield. `OraclePage.tsx` (ferramenta interna,
 sem nav) já tinha um botão "Prompts" sem custo separado do "Gerar imagens"
