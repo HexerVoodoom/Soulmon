@@ -191,11 +191,28 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
   const [genSprites, setGenSprites] = useState<Record<string, string>>({});
   const [genBusy, setGenBusy] = useState(false);
   const [genProgress, setGenProgress] = useState({ done: 0, total: 0 });
+  // Modo debug: o botão "Gerar imagens" NUNCA chama /api/generate-sprite
+  // (Higgsfield/Gemini, dinheiro de verdade + cota diária de _aiGuard.js) —
+  // só entrega os prompts, igual ao botão "Prompts" já fazia. Serve pra
+  // iterar em nome/ficha/prompt sem gastar a cota de 20/dia por conta nem a
+  // global de 400/dia (AI_LIMITS.sprite em functions/api/_aiGuard.js).
+  const [debugMode, setDebugMode] = useState(false);
 
   const stageKey = (s: OracleResult['creature']['stages'][number]) => `${s.stage}-${s.branch ?? 'base'}`;
 
   const handleGenerateImages = async () => {
     if (!creature || genBusy) return;
+    if (debugMode) {
+      // Zero chamada de rede — custo R$0 garantido pela ausência da
+      // chamada, não por um limite que ainda assim bateria na API.
+      copyAllPrompts();
+      toast.success(
+        isPt
+          ? 'Modo debug: nenhuma imagem foi gerada (custo R$0) — prompts copiados.'
+          : 'Debug mode: no image was generated ($0 cost) — prompts copied.',
+      );
+      return;
+    }
     setGenBusy(true);
     setGenSprites({});
     setGenProgress({ done: 0, total: creature.creature.stages.length });
@@ -820,7 +837,20 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
           <div className={cardCls}>
             <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
               <h3 className={titleCls}>👾 {creature.creature.baseName}</h3>
-              <div className="flex gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <label
+                  className={`text-[10px] flex items-center gap-1 ${mutedCls}`}
+                  title={isPt
+                    ? 'Com o modo debug ligado, "Gerar imagens" nunca chama a API paga — só copia os prompts.'
+                    : 'With debug mode on, "Generate images" never calls the paid API — it just copies the prompts.'}
+                >
+                  <input
+                    type="checkbox"
+                    checked={debugMode}
+                    onChange={e => setDebugMode(e.target.checked)}
+                  />
+                  🐛 {isPt ? 'Modo debug (custo R$0)' : 'Debug mode ($0 cost)'}
+                </label>
                 <button
                   onClick={handleGenerateImages}
                   disabled={genBusy}
@@ -829,7 +859,9 @@ export function OraclePage({ language = 'en-US' }: OraclePageProps) {
                 >
                   {genBusy
                     ? `⏳ ${genProgress.done}/${genProgress.total}`
-                    : `🎨 ${isPt ? 'Gerar imagens' : 'Generate images'}`}
+                    : debugMode
+                      ? `📋 ${isPt ? 'Gerar (debug)' : 'Generate (debug)'}`
+                      : `🎨 ${isPt ? 'Gerar imagens' : 'Generate images'}`}
                 </button>
                 <button onClick={copyAllPrompts} className={smallBtnCls} style={{ ...mono, ...smallBtnStyle }}>
                   📋 {isPt ? 'Prompts' : 'Prompts'}
