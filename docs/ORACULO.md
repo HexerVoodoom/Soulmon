@@ -588,3 +588,23 @@ call sites de `pipeline.test.ts` viraram `async`/`await` mecanicamente.
 Teste novo confere as duas pontas: a palavra da classe aparece no
 `imagePrompt` de toda forma e NÃO aparece em `description`/`bio` nenhuma.
 
+## Modo debug na geração de imagem (ago/2026, rodada 10)
+
+Pedido do dono: uma versão em que "o custo fica 0" e, em vez de gerar
+sozinho no Higgsfield, entrega o prompt. `OraclePage.tsx` (ferramenta de
+criação interna, sem entrada na navegação do app — só chega quem edita
+`currentView` localmente) já tinha DOIS botões separados: "🎨 Gerar
+imagens" (chama `/api/generate-sprite` → Higgsfield/Gemini, dinheiro de
+verdade, sob a cota de `AI_LIMITS.sprite` em `_aiGuard.js` — 20/dia por
+conta, 400/dia global) e "📋 Prompts" (só copia o texto, zero chamada de
+rede). O que faltava era um jeito de usar o MESMO botão de gerar sem correr
+o risco de esquecer e disparar a chamada paga.
+
+Adicionado checkbox "🐛 Modo debug (custo R$0)" em `OraclePage.tsx`: com
+ele ligado, `handleGenerateImages` NUNCA chama `generateAllSprites` —
+retorna cedo, chama `copyAllPrompts()` e mostra um toast confirmando que
+nenhuma imagem foi gerada. Custo zero por CONSTRUÇÃO (a chamada de rede
+simplesmente não acontece), não por um limite que ainda bateria na API.
+Default desligado — preserva o comportamento de sempre pra quem já usa o
+botão pra gerar de verdade.
+

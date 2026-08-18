@@ -7,7 +7,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **classe real no prompt de sprite (17/ago/2026, noite)**
+Última atualização: **modo debug na geração de imagem (17/ago/2026,
+madrugada)** — pedido do dono: uma versão com "custo 0" que entrega o prompt
+em vez de gerar sozinho no Higgsfield. `OraclePage.tsx` (ferramenta interna,
+sem nav) já tinha um botão "Prompts" sem custo separado do "Gerar imagens"
+(que chama a API paga); agora tem um checkbox "🐛 Modo debug" que faz o
+PRÓPRIO botão de gerar nunca chamar a API quando ligado — zero chamada de
+rede, não um limite que ainda bateria nela. Ver `docs/ORACULO.md`
+(rodada 10).
+
+Antes disso: **classe real no prompt de sprite (17/ago/2026, noite)**
 — o dono achou um prompt de exemplo mais genérico que o anterior e pediu
 mais detalhe: a classe (arquétipo do class-system), mas SÓ no prompt de
 imagem, nunca em texto que o jogador vê. `pipeline.ts` virou `async` (só
