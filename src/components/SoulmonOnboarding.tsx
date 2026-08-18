@@ -463,19 +463,31 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* 0 — Intro */}
         {step === 0 && (
           <div style={{ textAlign: 'center', paddingTop: 60 }}>
+            {/* Corvo + wordmark são UM logo só, e é ele o alvo do gesto oculto
+                (segurar ~1.8s abre a OraclePage em modo debug). Como agora o
+                alvo inclui TEXTO, `userSelect`/`touchCallout` precisam sair:
+                segurar em texto no mobile abre seleção e menu de contexto, que
+                comeriam o gesto. `touchAction: manipulation` mata o atraso de
+                duplo-toque sem bloquear o scroll da página. */}
             <div
               style={{
-                width: 88, height: 88, margin: '0 auto 18px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'inline-block',
+                userSelect: 'none', WebkitUserSelect: 'none',
+                WebkitTouchCallout: 'none', touchAction: 'manipulation',
               }}
               onPointerDown={startOracleDebugHold}
               onPointerUp={cancelOracleDebugHold}
               onPointerLeave={cancelOracleDebugHold}
               onPointerCancel={cancelOracleDebugHold}
             >
-              <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <div style={{
+                width: 88, height: 88, margin: '0 auto 18px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} draggable={false} />
+              </div>
+              <h1 style={{ fontFamily: 'var(--sm-font-pixel)', fontSize: 26, margin: '0 0 8px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan)', textShadow: '0 0 12px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' }}>Soulmon</h1>
             </div>
-            <h1 style={{ fontFamily: 'var(--sm-font-pixel)', fontSize: 26, margin: '0 0 8px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan)', textShadow: '0 0 12px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' }}>Soulmon</h1>
             <p style={{ fontSize: 15, color: 'var(--sm-muted)', lineHeight: 1.6, margin: '0 0 32px' }}>
               {isPt
                 ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA — única, só sua, com todas as suas evoluções.'
