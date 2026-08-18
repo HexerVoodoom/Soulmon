@@ -7,7 +7,22 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **fechamento do redesign noturno (18/ago/2026,
+Última atualização: **oráculo dentro da UI + controles diretos desligados
+(18/ago/2026)** — duas direções do dono. (1) A `OraclePage` (e o teste de
+personalidade dentro dela) estava FORA da UI: card branco com botões cinza
+dentro do app pixel escuro. Passou a usar as MESMAS classes do kit que o
+onboarding já passava ao `SoulTestItem`/`CityPicker` (`sm-px-choice`,
+`sm-px-field`) + tokens de tema no lugar de hex solto. (2)
+`DIRECT_CONTROLS_ENABLED = false`: elemento favorito, bioma/reino e a
+descrição livre de 50% saíram — a criatura vem da leitura. É flag, não
+deleção (o dono pediu para reativar se usuários pedirem mais controle);
+`alignment` não estava na lista e ficou. Achado ao implementar: o gate não
+podia ficar só no JSX — os inicializadores chamam `generateOracle` com o
+rascunho do localStorage direto, então um formulário salvo antes seguiria
+influenciando a criatura de forma invisível; a poda ficou em
+`loadSavedForm()`. Ver `docs/ORACULO.md` (rodada 12).
+
+Antes disso: **fechamento do redesign noturno (18/ago/2026,
 madrugada)** — sweep final de QA (Playwright, claro+escuro, todas as views
 principais) achou e corrigiu 1 regressão da rodada 5: rótulos
 Itens/Banho/Dormir invisíveis no tema claro (`--sm-px-ink` fixo sobre fundo

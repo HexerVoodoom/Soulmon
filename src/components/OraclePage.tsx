@@ -41,10 +41,32 @@ interface SavedOracleForm extends OracleInput {
 
 const ATTRIBUTE_EMOJI: Record<AlignmentId, string> = { poder: '🦠', harmonia: '💾', benevolencia: '💉' };
 
+/**
+ * Controles diretos DESLIGADOS por decisão do dono (ago/2026): elemento
+ * favorito, bioma/reino e a descrição livre de 50% de impacto. A criatura
+ * passa a vir da LEITURA (mapa astral + teste + as 6 perguntas) em vez de o
+ * usuário escolher o resultado a dedo. "Se os usuários pedirem mais controle
+ * no futuro nós reativamos" — por isso é uma flag, não código deletado:
+ * virar `true` devolve os três de uma vez.
+ *
+ * `alignment` (Tipo) NÃO estava na lista do dono e continua valendo.
+ */
+const DIRECT_CONTROLS_ENABLED = false;
+
 function loadSavedForm(): SavedOracleForm | null {
   try {
     const raw = readLocal(STORAGE_KEYS.ORACLE_FORM);
-    return raw ? (JSON.parse(raw) as SavedOracleForm) : null;
+    if (!raw) return null;
+    const form = JSON.parse(raw) as SavedOracleForm;
+    if (DIRECT_CONTROLS_ENABLED) return form;
+    /* Sanitiza NA CARGA, e não só no JSX. Os inicializadores de `useState`
+       abaixo chamam `generateOracle(s, …)` com este objeto DIRETO — sem esta
+       poda, um rascunho gravado antes do desligamento continuaria mandando
+       elemento/bioma/descrição para o gerador, invisível na tela e ativo no
+       resultado. É o pior tipo de bug: some da UI e segue valendo. */
+    const { element: _el, realm: _rl, ...prefsMantidas } = form.preferences ?? {};
+    void _el; void _rl;
+    return { ...form, preferences: prefsMantidas, petDescription: undefined };
   } catch {
     return null;
   }
@@ -117,12 +139,21 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
   const canReveal = fullName.trim().length >= 3 && !!birthDate && !!birthCity
     && (timeUnknown || !!birthTime) && testComplete(answers) && !revealing;
 
-  const input = (soul = soulProfile): OracleInput => ({
-    fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(),
-    preferences: (prefs.element || prefs.realm || prefs.alignment) ? prefs : undefined,
-    petDescription: petDescription.trim() || undefined,
-    soulProfile: soul,
-  });
+  /* Segunda barreira (a primeira é a poda em `loadSavedForm`): aqui o gate
+     pega o estado VIVO, caso alguém reative um campo no JSX e esqueça deste
+     caminho. */
+  const input = (soul = soulProfile): OracleInput => {
+    // `alignment` (Tipo) NÃO entrou na lista do dono e continua valendo.
+    const prefsAtivas: OraclePreferences = DIRECT_CONTROLS_ENABLED
+      ? prefs
+      : (prefs.alignment ? { alignment: prefs.alignment } : {});
+    return {
+      fullName: fullName.trim(), birthDate, birthTime, birthPlace: birthPlace.trim(),
+      preferences: (prefsAtivas.element || prefsAtivas.realm || prefsAtivas.alignment) ? prefsAtivas : undefined,
+      petDescription: DIRECT_CONTROLS_ENABLED ? (petDescription.trim() || undefined) : undefined,
+      soulProfile: soul,
+    };
+  };
 
   const handleReveal = async () => {
     if (!canReveal || !birthCity) {
@@ -241,16 +272,23 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
   };
 
   // --- estilos base (inline p/ cores críticas; classes fora do index.css não aplicam)
-  const cardCls = 'border border-[#c0c0c0] bg-white rounded-xl p-3';
-  const titleCls = 'text-gray-900';
-  const mutedCls = 'text-gray-500';
-  const inputCls = 'w-full rounded-md border border-[#c0c0c0] bg-white text-gray-900 px-2 py-1.5';
-  const btnCls = 'px-3 py-2 rounded-md transition-colors';
-  const btnStyle = { background: '#0d9488', color: '#ffffff' };
-  const smallBtnCls = 'text-xs px-2 py-1 rounded';
-  const smallBtnStyle = { border: '1px solid #5eead4', color: '#0f766e' };
-  const selectCls = 'rounded border border-[#c0c0c0] bg-white text-gray-900 px-1.5 py-1 text-xs';
-  const mono = { fontFamily: 'monospace' } as const;
+  /* RODADA 5 — a página estava FORA da UI do app (direção do dono).
+     Era um card BRANCO com inputs e botões cinza cravado dentro de um app
+     pixel-art escuro: o teste de personalidade, que é o mesmo componente do
+     onboarding, aqui renderizava sem nenhuma peça do kit. Agora usa as
+     mesmas classes do resto do app (`sm-card`, `sm-px-field`, `sm-px-choice`)
+     e os tokens de tema — nada de hex solto, que era justamente o que
+     prendia a página no tema claro. */
+  const cardCls = 'sm-card p-3';
+  const titleCls = 'text-[color:var(--sm-ink)]';
+  const mutedCls = 'text-[color:var(--sm-muted)]';
+  const inputCls = 'sm-px-field w-full px-2 py-1.5';
+  const btnCls = 'sm-btn';
+  const btnStyle = {};
+  const smallBtnCls = 'sm-btn sm-btn-secondary text-xs px-2 py-1';
+  const smallBtnStyle = {};
+  const selectCls = 'sm-px-field px-1.5 py-1 text-xs';
+  const mono = { fontFamily: 'var(--sm-font-pixel)' } as const;
 
   const maxElementScore = profile ? Math.max(...ELEMENT_ORDER.map(e => profile.elementScores[e]), 1) : 1;
   const maxRoleScore = profile ? Math.max(...ROLE_ORDER.map(r => profile.roleScores[r]), 1) : 1;
@@ -288,14 +326,17 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
               style={mono}
             />
           </div>
+          {/* `minWidth: 0` nos dois: `flex-1` sozinho não encolhe abaixo do
+              min-content, e com a fonte PIXEL (mais larga que a monoespaçada
+              anterior) o campo de hora vazava para fora do painel. */}
           <div className="flex gap-2">
-            <div className="flex-1">
+            <div className="flex-1" style={{ minWidth: 0 }}>
               <label className={`block text-xs mb-1 ${mutedCls}`}>
                 {isPt ? 'Data de nascimento' : 'Birth date'}
               </label>
               <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} className={inputCls} style={mono} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1" style={{ minWidth: 0 }}>
               <label className={`block text-xs mb-1 ${mutedCls}`}>
                 {isPt ? 'Horário' : 'Birth time'}
               </label>
@@ -304,7 +345,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                 className={inputCls} style={{ ...mono, opacity: timeUnknown ? 0.5 : 1 }} />
             </div>
           </div>
-          <label className="flex items-center gap-2 text-xs" style={{ color: '#6b7280' }}>
+          <label className={`flex items-center gap-2 text-xs ${mutedCls}`}>
             <input type="checkbox" checked={timeUnknown}
               onChange={e => { setTimeUnknown(e.target.checked); setSoulProfile(undefined); }} />
             {isPt
@@ -321,12 +362,15 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
               value={birthCity}
               onChange={c => { setBirthCity(c); setSoulProfile(undefined); }}
               isPt={isPt}
-              inputStyle={{ width: '100%', boxSizing: 'border-box', border: '1px solid #c0c0c0', borderRadius: 6, background: '#fff', color: '#111827', padding: '6px 8px', fontFamily: 'monospace', fontSize: 13 }}
-              optionStyle={selected => ({
-                width: '100%', textAlign: 'left', boxSizing: 'border-box', fontFamily: 'monospace', fontSize: 12,
-                border: selected ? '1px solid #0d9488' : '1px solid #c0c0c0',
-                background: selected ? '#ccfbf1' : '#fff', color: selected ? '#0f766e' : '#374151',
-                borderRadius: 6, padding: '6px 8px', marginBottom: 4, cursor: 'pointer',
+              /* Classes do kit, iguais às do onboarding: sem elas este campo
+                 ficava BRANCO no meio da página escura (o `#fff` inline abaixo
+                 é que prendia). Cor e moldura vêm do kit; aqui só layout. */
+              inputClass="sm-px-field"
+              optionClass="sm-px-choice"
+              inputStyle={{ width: '100%', boxSizing: 'border-box', padding: '6px 8px', fontFamily: 'var(--sm-font-pixel)', fontSize: 13 }}
+              optionStyle={() => ({
+                width: '100%', boxSizing: 'border-box', fontSize: 12,
+                padding: '7px 9px', marginBottom: 5,
               })}
             />
           </div>
@@ -349,13 +393,14 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                     item={item}
                     answer={answers[item.id]}
                     isPt={isPt}
-                    optionStyle={selected => ({
-                      width: '100%', textAlign: 'left', boxSizing: 'border-box',
-                      fontFamily: 'monospace', fontSize: 12,
-                      border: selected ? '1px solid #0d9488' : '1px solid #c0c0c0',
-                      background: selected ? '#ccfbf1' : 'transparent',
-                      color: selected ? '#0f766e' : '#6b7280',
-                      borderRadius: 8, padding: '5px 8px', marginBottom: 4, cursor: 'pointer',
+                    /* Mesma classe do kit que o ONBOARDING passa: o teste é o
+                       mesmo componente nos dois lugares e agora tem a mesma
+                       cara. Cor/borda/estado selecionado vêm de `.sm-px-choice`
+                       (tokens de tema) — aqui fica só o layout. */
+                    optionClass="sm-px-choice"
+                    optionStyle={() => ({
+                      width: '100%', boxSizing: 'border-box',
+                      fontSize: 12, padding: '7px 9px', marginBottom: 5,
                     })}
                     onAnswer={answer => {
                       setAnswers(prev => ({ ...prev, [item.id]: answer }));
@@ -375,9 +420,19 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
             <p className={`text-xs mb-1 ${titleCls}`}>
               ⭐ {isPt ? 'Preferências diretas' : 'Direct preferences'}
               <span className={mutedCls}> — {isPt ? 'opcional, 25% de peso' : 'optional, 25% weight'}</span>
+              {/* Sem esta nota o bloco mente por omissão: o título continua no
+                  plural e sobrou UM controle, então quem abrir a página vai
+                  procurar elemento/bioma achando que sumiram por bug. */}
+              {!DIRECT_CONTROLS_ENABLED && (
+                <span className={`block ${mutedCls}`}>
+                  {isPt
+                    ? 'Elemento, bioma e descrição livre estão desligados — a criatura vem da leitura.'
+                    : 'Element, biome and free description are off — the creature comes from the reading.'}
+                </span>
+              )}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              <select
+              {DIRECT_CONTROLS_ENABLED && <select
                 className={selectCls}
                 style={mono}
                 value={prefs.element ?? ''}
@@ -387,7 +442,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                 {ELEMENT_ORDER.map(el => (
                   <option key={el} value={el}>{ELEMENT_INFO[el].emoji} {L(ELEMENT_INFO[el].name)}</option>
                 ))}
-              </select>
+              </select>}
               <select
                 className={selectCls}
                 style={mono}
@@ -399,7 +454,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                   <option key={al} value={al}>{ALIGNMENT_INFO[al].emoji} {L(ALIGNMENT_INFO[al].name)} ({L(ALIGNMENT_INFO[al].attribute)})</option>
                 ))}
               </select>
-              <select
+              {DIRECT_CONTROLS_ENABLED && <select
                 className={selectCls}
                 style={mono}
                 value={prefs.realm ?? ''}
@@ -409,12 +464,12 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                 {REALM_ORDER.map(realm => (
                   <option key={realm} value={realm}>{REALM_INFO[realm].emoji} {L(REALM_INFO[realm].name)}</option>
                 ))}
-              </select>
+              </select>}
             </div>
           </div>
 
           {/* Descrição livre do pet (opcional — 50% de peso) */}
-          <div className="pt-2">
+          {DIRECT_CONTROLS_ENABLED && <div className="pt-2">
             <p className={`text-xs mb-1 ${titleCls}`}>
               💭 {isPt ? 'Como você imagina seu pet?' : 'How do you imagine your pet?'}
               <span className={mutedCls}> — {isPt ? 'opcional, 50% de peso' : 'optional, 50% weight'}</span>
@@ -435,7 +490,7 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                 ? 'Deixe em branco para 100% leitura (nome, nascimento e respostas).'
                 : 'Leave empty for 100% reading (name, birth and answers).'}
             </p>
-          </div>
+          </div>}
 
           <div className="flex gap-2 pt-1">
             <button
