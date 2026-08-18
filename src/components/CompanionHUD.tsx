@@ -870,7 +870,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   role="img"
                 />
               )}
-              <img src={a.icon} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <img src={a.icon} alt="" width={42} height={42} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               {/* Rótulo curto de AÇÃO — cabe na bitmap sem prejuízo de
                   leitura (é uma palavra, não frase). "Acordar"/"Dormir" não
                   têm acento; se um dia tiverem, o subset latin da Silkscreen

@@ -243,6 +243,17 @@ ficam valendo:
   quebraria o widget/save de quem já joga. O servidor de chat e de push aceita
   `petName` **e** `digimonName` justamente por causa dos APKs já instalados.
 
+## UI: regras visuais do dono (não regredir)
+
+- **Ícone NUNCA dentro de box** — vale no app inteiro (18/ago/2026). Nada de
+  moldura, placa, chanfro ou fundo em volta de um ícone: o ícone aparece
+  GRANDE e pelado (nav inferior 36px, ações do pet 42px, chat 30px). Seleção
+  na nav = sublinhado ciano (uma barra não é uma caixa), nunca a placa
+  preenchida antiga. Peças com moldura continuam existindo para PAINÉIS e
+  BOTÕES DE TEXTO — a regra é sobre ícones.
+- **A área do pet não rola para fora da tela** — `.sm-pet-sticky` (rodada 4);
+  o scroll acontece só na lista de atividades abaixo dela.
+
 ## Idioma: inglês é a base, PT-BR é localização
 
 Todo texto de UI nasce **em inglês**; o par PT-BR vem junto pelo padrão
