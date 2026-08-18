@@ -210,9 +210,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** Dispara a geração e, se ela falhar, devolve o usuário à última pergunta
    *  com um aviso — travar na animação de "revelando" para sempre é o pior
    *  final possível para um ritual que a pessoa acabou de responder inteiro. */
-  const runGenerate = () => {
+  const runGenerate = (finalTest?: SoulAnswers) => {
     setGenerateError(false);
-    void doGenerate().catch(() => {
+    void doGenerate(finalTest).catch(() => {
       setGenerateError(true);
       // Volta para a bifurcação, que é onde os dois caminhos se encontram —
       // mandar de volta para "a última pergunta" só funcionaria para quem fez
@@ -222,7 +222,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     });
   };
 
-  const doGenerate = async () => {
+  // `finalTest` existe porque o último item do teste dispara a geração no MESMO
+  // clique que o responde: o `testAnswers` do estado ainda é o anterior nesse
+  // instante, e sem isso a 20ª resposta nunca chegava ao perfil de alma.
+  const doGenerate = async (finalTest: SoulAnswers = testAnswers) => {
     // O motor da leitura (utils/soulProfile/) puxa a engine de efemérides e é
     // pesado — vem por import DINÂMICO, aqui na tela de geração, que é o único
     // momento do app em que ele é necessário e o único em que já existe uma
@@ -243,7 +246,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         latitude: birthCity.latitude,
         longitude: birthCity.longitude,
         timeZone: birthCity.timeZone,
-      }, refine ? testAnswers : {})
+      }, refine ? finalTest : {})
       : undefined;
 
     const input: OracleInput = {
@@ -770,9 +773,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 optionStyle={optionBtn}
                 optionClass="sm-px-choice"
                 onAnswer={answer => {
-                  setTestAnswers(prev => ({ ...prev, [item.id]: answer }));
+                  const nextTest = { ...testAnswers, [item.id]: answer };
+                  setTestAnswers(nextTest);
                   setTimeout(() => {
-                    if (step === DEEP_END - 1) { setStep(GENERATING); setTimeout(runGenerate, 1400); }
+                    if (step === DEEP_END - 1) { setStep(GENERATING); setTimeout(() => runGenerate(nextTest), 1400); }
                     else setStep(s => s + 1);
                   }, 180);
                 }}
