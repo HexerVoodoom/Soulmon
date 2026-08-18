@@ -6149,3 +6149,36 @@ button.sm-px-node {
     repeating-linear-gradient(90deg, transparent 0 47px, color-mix(in srgb, var(--sm-px-cyan) 6%, transparent) 47px 48px),
     radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--sm-px-cyan) 9%, transparent), transparent 55%);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RODADA 5 — MOLDURA DA TELA (canos + trepadeira, referência do kit)
+   ═══════════════════════════════════════════════════════════════════════════
+   Overlay fixo, `pointer-events: none` — NUNCA captura toque; cliques passam.
+   As linhas finas das bordas longas são box-shadow inset AQUI; os 4 cantos
+   (pixel art de cano/junta/folha/cristal) vêm do componente `PixelFrame`.
+
+   z-index 80: acima da nav (45) e do dock do chat — a moldura é o "bezel" do
+   aparelho, então cobre a beirada de tudo, como na referência. Modais ficam
+   visualmente dentro dela também; como nada aqui recebe evento, nenhum botão
+   fica inalcançável. A banda tem 2+1px: fina o bastante pra nunca cobrir
+   texto (todo conteúdo do app tem ≥12px de padding lateral). */
+.sm-screen-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px #241507,
+    inset 0 0 0 3px var(--sm-px-copper),
+    inset 0 0 0 4px #241507;
+}
+.sm-screen-frame-corner {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+.sm-screen-frame-tl { top: 0; left: 0; }
+.sm-screen-frame-tr { top: 0; right: 0; }
+.sm-screen-frame-bl { bottom: 0; left: 0; }
+.sm-screen-frame-br { bottom: 0; right: 0; }

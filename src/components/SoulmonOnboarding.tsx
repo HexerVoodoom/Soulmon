@@ -12,6 +12,7 @@ import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/ty
 import { cityLabel, type City } from '../utils/soulProfile/cities';
 import { CityPicker } from './CityPicker';
 import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
+import { PixelFrame } from './PixelFrame';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
@@ -432,6 +433,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       color: 'var(--sm-ink)',
     }}>
+      <PixelFrame />
       {oracleDebugOpen ? (
         <Suspense fallback={null}>
           <div style={{ width: '100%', maxWidth: 440, padding: '20px 20px 40px' }}>

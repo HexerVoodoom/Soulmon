@@ -23,3 +23,17 @@
       </ThemeProvider>
     </ErrorBoundary>
   );
+
+  // Splash estática do index.html: some com fade assim que o app pinta o
+  // primeiro frame (2× rAF = depois do primeiro paint de verdade). Sem timer
+  // artificial — a splash dura exatamente o que o carregamento durar. O nó
+  // sai do DOM no fim da transição pra não ficar um overlay morto por cima
+  // de tudo (mesmo invisível, é um fixed inset-0 no topo do stacking).
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const sp = document.getElementById('splash');
+    if (!sp) return;
+    sp.classList.add('done');
+    sp.addEventListener('transitionend', () => sp.remove(), { once: true });
+    // rede de segurança: se transitionend não vier (aba em background), remove.
+    window.setTimeout(() => sp.remove(), 1200);
+  }));

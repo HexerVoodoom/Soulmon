@@ -87,6 +87,7 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
+import { PixelFrame } from './components/PixelFrame';
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
@@ -1867,6 +1868,7 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
+        <PixelFrame />
         {unlockReason && (
           <UnlockAccountModal
             language={language}

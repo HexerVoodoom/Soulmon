@@ -7,7 +7,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **regra "ícone nunca dentro de box" (18/ago/2026,
+Última atualização: **moldura da tela + splash (18/ago/2026, madrugada)** —
+os dois primeiros itens do redesign guiado pelas 4 imagens de referência que
+o dono mandou (kit "SOUL MON"). (1) `PixelFrame.tsx`: moldura fixa nas
+bordas — linhas de cobre via box-shadow inset + 4 cantos em PIXEL ART
+programática (grid de chars → rects SVG, `crispEdges`): cano de cobre,
+junta aparafusada, trepadeira e nó de cristal ciano. `pointer-events: none`
+(nunca captura toque), z-index 80 (é o "bezel" do aparelho), zero PNG novo.
+Montada no App e no onboarding. (2) Splash "SOUL_LINK ESTABLISHED" no
+`index.html`: ESTÁTICA de propósito — aparece antes do bundle carregar
+(loading de verdade, sem timer artificial), chama pixel + wordmark + barra
+segmentada animada + selo + cristais, PT/EN por `navigator.language`. O
+React a remove com fade no primeiro frame (main.tsx); o aviso de WebView
+antigo também a remove (senão cobriria o próprio aviso). CSP: o script
+inline novo e o do aviso (editado) entraram no `_headers` com hash
+recalculado — o `csp.test.ts` pegou, como desenhado.
+
+Antes disso: **regra "ícone nunca dentro de box" (18/ago/2026,
 madrugada)** — direção do dono, vale no app INTEIRO (registrada no
 CLAUDE.md): nada de moldura/placa/chanfro em volta de ícone; o ícone aparece
 GRANDE e pelado. Aplicado em: nav inferior (26→36px, placa preenchida do
