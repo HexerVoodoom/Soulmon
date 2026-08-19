@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { Icon } from './ui/Icon';
+import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2TitleStyle } from './form/FormKit';
 import { type Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
@@ -15,6 +16,11 @@ interface InstallPromptProps {
 
 const DISMISSED_KEY = STORAGE_KEYS.PWA_INSTALL_DISMISSED;
 
+/**
+ * Cartão de instalação da PWA dentro das Configurações. Não é modal: nasce
+ * numa lista de opções e não interrompe nada — por isso continua card, e não
+ * `ModalSheet`.
+ */
 export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(
@@ -60,46 +66,36 @@ export function InstallPrompt({ language = 'en-US' }: InstallPromptProps) {
     writeFlag(DISMISSED_KEY, true, { silent: true });
   };
 
-  const label = language === 'pt-BR'
-    ? '📱 Adicionar à tela inicial'
-    : '📱 Add to home screen';
-  const installBtn = language === 'pt-BR' ? 'Instalar' : 'Install';
-  const dismissBtn = language === 'pt-BR' ? 'Não, obrigado' : 'No thanks';
-  const description = language === 'pt-BR'
-    ? 'Instale o Soulmon para acesso rápido, funcionamento offline e notificações.'
-    : 'Install Soulmon for quick access, offline support and notifications.';
+  const isPt = language === 'pt-BR';
 
   return (
-    <div className="p-6 rounded-2xl sm-card">
-      <h3
-        className="mb-3"
-        style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
-      >
-        {label}
-      </h3>
-      <p
-        className="mb-5 text-xs"
-        style={{ fontFamily: 'monospace', color: 'var(--sm-muted)' }}
-      >
-        {description}
-      </p>
-      <div className="flex gap-2">
-        <button
-          onClick={handleInstall}
-          className="sm-btn flex-1 flex items-center justify-center gap-2"
-          style={{ fontFamily: 'monospace', fontWeight: '500' }}
-        >
-          <Download size={14} />
-          {installBtn}
-        </button>
-        <button
-          onClick={handleDismiss}
-          className="py-3 px-4 rounded-xl transition-all text-xs"
-          style={{ fontFamily: 'monospace', background: 'var(--sm-bg)', color: 'var(--sm-muted)' }}
-        >
-          {dismissBtn}
-        </button>
+    <div
+      style={{
+        padding: 18,
+        borderRadius: 12,
+        backgroundColor: 'var(--sm2-surface)',
+        border: '1px solid var(--sm2-line)',
+        boxShadow: SM2_SHADOW_CARD,
+        display: 'flex', flexDirection: 'column', gap: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Icon name="download" size={24} tone="primary" />
+        <h3 className="sm2-title" style={{ ...sm2TitleStyle, fontSize: 'var(--sm2-text-md)' }}>
+          {isPt ? 'Instalar o Soulmon' : 'Install Soulmon'}
+        </h3>
       </div>
+      <p style={sm2Hint}>
+        {isPt
+          ? 'Acesso rápido pela tela inicial e funcionamento offline.'
+          : 'Quick access from your home screen, and it works offline.'}
+      </p>
+      <button type="button" onClick={handleInstall} style={{ ...sm2Button('primary'), width: '100%' }}>
+        {isPt ? 'Instalar' : 'Install'}
+      </button>
+      <button type="button" onClick={handleDismiss} style={{ ...sm2Button('quiet'), width: '100%' }}>
+        {isPt ? 'Agora não' : 'Not now'}
+      </button>
     </div>
   );
 }

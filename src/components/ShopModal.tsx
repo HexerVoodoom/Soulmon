@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE } from '../utils/currencies';
-import { PixelButton, PixelChip, PixelMeter, PixelSlot, PixelTabs, type PixelTabItem } from './pixel/PixelKit';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
-// Ícones das abas saem do kit existente — ZERO arte nova nesta rodada. Onde
-// não havia ícone exato (não existe "sofá" nem "moldura" no kit), o mais
-// próximo semanticamente: mapa = cenário, casa = mobília.
-import iconMap from '../assets/soulmon/icons/icon-map.png';
-import iconHome from '../assets/soulmon/icons/icon-home.png';
-import iconLock from '../assets/soulmon/icons/icon-lock.png';
-import iconPotion from '../assets/soulmon/icons/icon-potion.png';
-import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
-import iconShield from '../assets/soulmon/icons/icon-shield.png';
-import iconGem from '../assets/soulmon/icons/icon-gem.png';
+import { Icon } from './ui/Icon';
+import { ModalSheet, Segment, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_ART } from '../utils/decorArt';
@@ -20,27 +10,53 @@ import { decorFitsSetting, type SlotId } from '../utils/petStage';
 import type { Language } from '../utils/i18n';
 
 /**
- * Loja — gasta Bits ganhos nos minijogos. Organizada em abas (Itens /
- * Cenários / Mobílias / Torneio / Missões). Itens podem estar BLOQUEADOS por
- * missão: renderizam escurecidos com cadeado; tocar mostra como desbloquear.
+ * LOJA — revamp minimalista (Pokémon Sleep / Duolingo).
  *
- * ─── Rodada 2 do alinhamento visual (G4) ──────────────────────────────────
- * Esta tela era o exemplo citado na análise de gap: fundo claro, cards
- * brancos com sombra Material, abas com sublinhado e ícones em line-art
- * vetorial (lucide). Nenhuma arte nova entrou; o que mudou foi a LIGAÇÃO:
+ * ─── O que foi CORTADO, e por quê ──────────────────────────────────────────
  *
- *  · card  → `.sm-px-card` (moldura de cobre chanfrada, sem sombra)
- *  · aba   → `PixelTabs` — o conserto do G9: a seleção passa a ser o
- *            PREENCHIMENTO, que é a única leitura que não inverte entre temas
- *  · botão → `PixelButton`
- *  · ícone → `PixelSlot` com arte do kit; **o fallback é o quadro VAZIO,
- *            nunca o emoji do sistema** (portão T2)
- *  · barra de missão → `PixelMeter` (trilho quadrado, não pílula)
+ * 1. **As 5 abas viraram 2 segmentos.** A única troca de contexto real numa
+ *    loja é a MOEDA: Bits e Emblemas não se misturam (regra de produto), então
+ *    "Loja" e "Torneio" são coisas diferentes de verdade. Itens / Cenários /
+ *    Mobílias não são: são o mesmo gesto (comprar com Bits) fatiado em três
+ *    cliques. Viraram SEÇÕES de um scroll vertical único — o padrão do Pokémon
+ *    Sleep. Aba que só filtra a mesma moeda é navegação cobrando pedágio.
  *
- * O emoji em `item.icon` continua sendo a CHAVE de inventário dos
- * consumíveis (App.tsx `handleShopBuy`/`handleFeed`) — nunca visual.
+ * 2. **A aba Missões morreu.** Ela existia para explicar por que 6 cenários
+ *    estavam com cadeado — e explicava LONGE do cadeado, com o card da missão
+ *    ainda carregando um botão "Libera: X" que levava de volta para a aba de
+ *    Cenários. Agora o próprio card bloqueado diz a missão e o progresso
+ *    (`3/100`) na linha de baixo. A lista de missões É a lista dos 6 cadeados,
+ *    no lugar onde a recompensa importa. Some junto o estado `hintFor` (tocar
+ *    para revelar): informação que decide a compra não pode depender de um
+ *    toque exploratório.
+ *
+ * 3. **Toda a arte de ícone de interface.** 8 PNGs do kit + os 15 símbolos
+ *    vetoriais de terceiro que `utils/shop.ts` importava. O card mostra o que o item É: prévia CSS
+ *    do cenário, arte pixel da decoração, emoji do consumível (que é CONTEÚDO
+ *    da pastinha, não ícone de sistema). Item sem arte não ganha um ícone
+ *    decorativo — ganha espaço.
+ *
+ * ─── AS TRÊS MOEDAS (regra de produto, com teste travando) ─────────────────
+ *
+ *   Bits      → número em fonte de calculadora, **sem ícone nenhum**. A
+ *               ausência de ícone É a distinção; é o que torna impossível
+ *               repetir o bug do gem compartilhado.
+ *   Emblemas  → `military_tech` em ouro + número com serifa.
+ *   Créditos  → `diamond`, tom primário. UM desenho no app inteiro: o emoji
+ *               de gem e o `icon-gem.png` que conviviam NESTA tela morreram aqui.
+ *
+ * A cor dos números saiu de `#39ff14`/`#b8860b` (hardcoded em currencies.ts,
+ * ambos reprovados em AA sobre uma das superfícies) para os tokens de TINTA.
+ * A identidade continua na FAMÍLIA tipográfica, que é o que currencies.ts
+ * possui — e que continua sendo a fonte da verdade.
  */
-type ShopTab = 'items' | 'bg' | 'furniture' | 'tournament' | 'missions';
+
+type ShopSegment = 'shop' | 'tournament';
+
+/** Bits: calculadora, mas em tinta legível nos dois temas. */
+const bitsNum = { ...bitsStyle, color: 'var(--sm2-ink)', textShadow: 'none' } as const;
+/** Emblemas: serifa de medalha, em ouro-TINTA (nunca o `*-fill`). */
+const emblemNum = { ...emblemStyle, color: 'var(--sm2-gold-ink)' } as const;
 
 export function ShopModal({
   language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor,
@@ -66,64 +82,67 @@ export function ShopModal({
   /** `id` null limpa o espaço; o slot é sempre obrigatório. */
   onEquipFurniture: (id: string | null, slot: SlotId) => void;
   onClose: () => void;
-  /** Renderiza como página cheia dentro do fluxo normal (BottomNav → Loja
-   *  virou view de verdade, não modal por cima da tela atual) em vez de
-   *  overlay fixo centralizado. */
+  /** Renderiza como página cheia dentro do fluxo normal em vez de folha. */
   asPage?: boolean;
 }) {
   const isPt = language === 'pt-BR';
-  const [tab, setTab] = useState<ShopTab>('items');
-  const [flash, setFlash] = useState<{ id: string; ok: boolean } | null>(null);
-  /** Item id whose unlock hint is expanded (tap a locked item to toggle). */
-  const [hintFor, setHintFor] = useState<string | null>(null);
-  const [exchanging, setExchanging] = useState(false);
+  const [seg, setSeg] = useState<ShopSegment>('shop');
+  /** Última compra/troca: alimenta a região `aria-live` e o realce do card. */
+  const [flash, setFlash] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
+  const [exchanging, setExchanging] = useState<number | null>(null);
 
-  const buy = (item: ShopItem) => {
-    const ok = onBuy(item.id);
-    setFlash({ id: item.id, ok });
-    setTimeout(() => setFlash(null), 900);
+  const say = (id: string, ok: boolean, msg: string) => {
+    setFlash({ id, ok, msg });
+    setTimeout(() => setFlash(f => (f && f.id === id ? null : f)), 2600);
     try { navigator.vibrate?.(ok ? 25 : 60); } catch { /* noop */ }
   };
 
-  // How to unlock a locked item (shown when the user taps it).
-  const unlockHint = (item: ShopItem): string => {
-    if (!item.unlock) return '';
-    const m = MISSIONS.find(x => x.id === item.unlock!.missionId);
+  const buy = (item: ShopItem) => {
+    const name = isPt ? item.namePt : item.nameEn;
+    const ok = onBuy(item.id);
+    say(item.id, ok, ok
+      ? (isPt ? `${name} comprado.` : `${name} purchased.`)
+      : (isPt ? `Saldo insuficiente para ${name}.` : `Not enough to buy ${name}.`));
+  };
+
+  /** Missão que destrava o item + progresso, na LINHA do item. */
+  const lockLine = (item: ShopItem): string => {
+    const m = MISSIONS.find(x => x.id === item.unlock?.missionId);
     if (!m) return '';
-    const cur = missionProgress[m.id] ?? 0;
-    const prog = m.target > 1 ? ` (${cur}/${m.target})` : '';
-    // Sem o emoji da missão aqui: a dica é FRASE, e emoji do sistema no meio
-    // de conteúdo é o que o portão T2 conta. O nome já identifica a missão.
-    return `${isPt ? 'Missão' : 'Mission'} ${isPt ? m.namePt : m.nameEn}: ${isPt ? m.descPt : m.descEn}${prog}`;
+    const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
+    const prog = m.target > 1 ? ` · ${cur}/${m.target}` : '';
+    return `${isPt ? m.descPt : m.descEn}${prog}`;
   };
 
-  const TABS: readonly PixelTabItem<ShopTab>[] = [
-    { key: 'items', icon: iconPotion, label: isPt ? 'Itens' : 'Items' },
-    { key: 'bg', icon: iconMap, label: isPt ? 'Cenários' : 'Backdrops' },
-    { key: 'furniture', icon: iconHome, label: isPt ? 'Mobílias' : 'Furniture' },
-    { key: 'tournament', icon: iconSwords, label: isPt ? 'Torneio' : 'Tournament' },
-    { key: 'missions', icon: iconShield, label: isPt ? 'Missões' : 'Missions' },
-  ];
+  const sections: { key: string; title: string; items: ShopItem[] }[] = seg === 'tournament'
+    ? [{ key: 'tournament', title: isPt ? 'Prêmios do Torneio' : 'Tournament rewards', items: TOURNAMENT_ITEMS }]
+    : [
+        { key: 'items', title: isPt ? 'Itens' : 'Items', items: SHOP_ITEMS.filter(i => i.kind === 'chip' || i.kind === 'heart') },
+        { key: 'bg', title: isPt ? 'Cenários' : 'Backdrops', items: SHOP_ITEMS.filter(i => i.kind === 'bg') },
+        { key: 'furniture', title: isPt ? 'Mobílias' : 'Furniture', items: SHOP_ITEMS.filter(i => i.kind === 'furniture') },
+      ];
 
-  const TAB_ITEMS: Record<Exclude<ShopTab, 'missions'>, ShopItem[]> = {
-    items: SHOP_ITEMS.filter(i => i.kind === 'chip' || i.kind === 'heart'),
-    bg: SHOP_ITEMS.filter(i => i.kind === 'bg'),
-    furniture: SHOP_ITEMS.filter(i => i.kind === 'furniture'),
-    tournament: TOURNAMENT_ITEMS,
+  /** A arte do item É o item: prévia do cenário, pixel da decoração, ou o
+   *  emoji do consumível (conteúdo da pastinha). Nunca um ícone decorativo. */
+  const art = (item: ShopItem, dim: boolean) => {
+    const css = item.kind === 'bg' ? PET_BACKGROUNDS[item.id]?.css : undefined;
+    const png = DECOR_ART[item.id];
+    return (
+      <span
+        aria-hidden="true"
+        style={{
+          width: 56, height: 56, flexShrink: 0, borderRadius: 12, overflow: 'hidden',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: css ?? 'var(--sm2-surface-2)', backgroundSize: 'cover',
+          opacity: dim ? 0.4 : 1, fontSize: 28, lineHeight: 1,
+        }}
+      >
+        {png
+          ? <img src={png} alt="" width={48} height={48} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          : css ? null : item.icon}
+      </span>
+    );
   };
-
-  /** Saldo da moeda que compra este item. */
-  const balanceFor = (item: ShopItem) => (item.currency === 'emblems' ? emblems : points);
-
-  /** Preço com a leitura da moeda certa — nunca o 💎, que é dos Créditos. */
-  // No botão primário (roxo) o preço vai em CLARO: o dourado do emblemStyle é
-  // escuro e sumia no fundo. A identidade dourada fica no ícone e no saldo.
-  // Emblemas: dourado com serifa, e agora sobre o fill do botão do kit (peça
-  // escura), então o dourado do token volta a ser legível — não precisa mais
-  // ser branqueado como no botão roxo do sistema antigo.
-  const priceLabel = (item: ShopItem) => (item.currency === 'emblems'
-    ? <span style={{ ...emblemStyle, color: 'color-mix(in srgb, var(--sm-gold) 45%, white)' }}>{item.price}</span>
-    : <>{item.price} Bits</>);
 
   const renderItem = (item: ShopItem) => {
     const unlocked = isShopItemUnlocked(item, missionProgress);
@@ -135,274 +154,178 @@ export function ShopModal({
       : null;
     const equipped = owned && equippedId === item.id;
     // Decoração equipada num cenário onde ela não aparece: dizer isso é o que
-    // separa "não combina" de "o app engoliu meu item". O cenário atual manda.
+    // separa "não combina" de "o app engoliu meu item".
     const stageBg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
     const showsHere = item.kind !== 'furniture' || !item.slot || !stageBg
       ? true
       : stageBg.slots.includes(item.slot) && decorFitsSetting(item.fits ?? 'any', stageBg.setting);
-    // Cada item cobra na SUA moeda — Emblemas não compram item de Bits nem
-    // o contrário (ver utils/currencies.ts).
-    const affordable = balanceFor(item) >= item.price;
-    const flashHere = flash?.id === item.id;
-    const showHint = hintFor === item.id;
-    const canBuy = unlocked && affordable;
+    // Cada item cobra na SUA moeda — Emblemas não compram item de Bits nem o
+    // contrário (ver utils/currencies.ts).
+    const isEmblem = item.currency === 'emblems';
+    const affordable = (isEmblem ? emblems : points) >= item.price;
+    const name = isPt ? item.namePt : item.nameEn;
+    const failing = flash?.id === item.id && !flash.ok;
 
-    // Ordem da arte, sempre a mesma: prévia do cenário → arte da decoração →
-    // ícone do kit → QUADRO VAZIO. O emoji do sistema não é mais o último
-    // degrau — o quadro vazio é. Sem isso, um item sem arte reintroduzia
-    // sozinho o gap G2 numa tela inteira (portão T2).
-    const iconEl = (
-      <PixelSlot
-        background={item.kind === 'bg' ? PET_BACKGROUNDS[item.id]?.css : undefined}
-        src={item.kind === 'bg' ? undefined : (DECOR_ART[item.id] ?? item.iconImg)}
-        locked={!unlocked}
-        overlay={!unlocked ? (
-          <span aria-hidden="true" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.28)' }}>
-            <img src={iconLock} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          </span>
-        ) : undefined}
-      />
-    );
+    // O CARD INTEIRO é o alvo (régua 5) — não um botão de 60px no canto.
+    const action = owned
+      ? () => { if (item.kind === 'bg') onEquip(equipped ? null : item.id); else if (item.slot) onEquipFurniture(equipped ? null : item.id, item.slot); }
+      : unlocked ? () => buy(item) : undefined;
 
-    const cardCls = ['sm-px-card'];
-    if (!unlocked) cardCls.push('sm-px-card-tap');
-    if (flashHere) cardCls.push(flash!.ok ? 'sm-px-card-ok' : 'sm-px-card-fail');
+    const status = owned
+      ? (equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip'))
+      : null;
+
+    const sub = !unlocked ? lockLine(item)
+      : equipped && !showsHere ? (isPt ? 'Não aparece no cenário atual' : "Doesn't show in the current scene")
+      : (isPt ? item.descPt : item.descEn);
 
     return (
-      <div
+      <button
         key={item.id}
-        onClick={() => { if (!unlocked) setHintFor(showHint ? null : item.id); }}
-        className={cardCls.join(' ')}
-        style={{ padding: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}
+        type="button"
+        onClick={action}
+        disabled={!action}
+        aria-label={unlocked
+          ? `${name} — ${owned ? status : `${item.price} ${isEmblem ? (isPt ? 'Emblemas' : 'Emblems') : 'Bits'}`}`
+          : `${name} — ${isPt ? 'bloqueado' : 'locked'}: ${lockLine(item)}`}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+          minHeight: 76, padding: 12, textAlign: 'left',
+          border: failing ? '1px solid var(--sm2-danger-ink)' : '1px solid transparent',
+          borderRadius: 16,
+          backgroundColor: 'var(--sm2-surface)',
+          cursor: action ? 'pointer' : 'default',
+          transition: 'border-color var(--sm2-dur-tap) var(--sm2-ease)',
+        }}
       >
-        {iconEl}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Nome e descrição continuam em SANS: são frase de leitura, e a
-              regra de dois níveis do G5 manda bitmap só em rótulo/número. */}
-          <p style={{ color: unlocked ? 'var(--sm-ink)' : 'var(--sm-muted)', fontWeight: 700, fontSize: '0.85rem', margin: 0 }}>
-            {isPt ? item.namePt : item.nameEn}
-          </p>
-          <p style={{ color: 'var(--sm-muted)', fontSize: '0.72rem', margin: 0 }}>
-            {isPt ? item.descPt : item.descEn}
-          </p>
-        </div>
-        {/* action */}
-        {owned ? (
-          <PixelButton
-            size="sm"
-            variant={equipped ? 'primary' : 'default'}
-            onClick={() => {
-              // Decoração precisa dizer QUAL espaço mexer: ao desequipar não
-              // há item de onde deduzir o slot (era o bug que fazia o botão
-              // "Equipado" não desequipar nada).
-              if (item.kind === 'bg') onEquip(equipped ? null : item.id);
-              else if (item.slot) onEquipFurniture(equipped ? null : item.id, item.slot);
-            }}
-          >
-            {equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip')}
-          </PixelButton>
-        ) : (
-          <PixelButton
-            size="sm"
-            disabled={unlocked && !canBuy}
-            icon={unlocked ? undefined : iconLock}
-            ariaLabel={unlocked ? undefined : (isPt ? 'Bloqueado — toque para ver como desbloquear' : 'Locked — tap to see how to unlock')}
-            onClick={() => { if (unlocked) buy(item); else setHintFor(showHint ? null : item.id); }}
-          >
-            {unlocked ? priceLabel(item) : ''}
-          </PixelButton>
-        )}
-        {/* Aviso de composição — só para o que está equipado e não aparece. */}
-        {equipped && !showsHere && (
-          <p className="sm-px-card" style={{ width: '100%', margin: 0, padding: '8px 10px', fontSize: '0.72rem', fontWeight: 600, backgroundColor: 'var(--sm-gold-soft)', color: 'var(--sm-ink)' }}>
-            {isPt
-              ? 'Equipado, mas não aparece no cenário atual — troque de cenário para vê-lo.'
-              : "Equipped, but it doesn't show in the current scene — switch scenes to see it."}
-          </p>
-        )}
-        {/* unlock hint "tooltip" — expands inside the card when tapped */}
-        {!unlocked && showHint && (
-          <p className="sm-px-card" style={{ width: '100%', margin: 0, padding: '8px 10px', fontSize: '0.72rem', fontWeight: 600, backgroundColor: 'var(--sm-gold-soft)', color: 'var(--sm-ink)' }}>
-            {isPt ? 'Como desbloquear:' : 'How to unlock:'} {unlockHint(item)}
-          </p>
-        )}
-      </div>
+        {art(item, !unlocked)}
+
+        <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ ...sm2Text, fontWeight: 500, color: unlocked ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>{name}</span>
+          {sub && <span style={{ ...sm2Hint, color: failing ? 'var(--sm2-danger-ink)' : 'var(--sm2-muted)' }}>{sub}</span>}
+        </span>
+
+        {/* Ação/preço. Ícone pelado, nunca dentro de caixa. */}
+        <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {!unlocked ? (
+            <Icon name="lock" size={22} tone="muted" />
+          ) : owned ? (
+            equipped
+              ? <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'Equipado' : 'Equipped'} />
+              : <span style={{ ...sm2Text, color: 'var(--sm2-primary-ink)', fontWeight: 500 }}>{status}</span>
+          ) : isEmblem ? (
+            <>
+              <Icon name="military_tech" size={20} tone="gold" />
+              <span className="sm2-num" style={{ ...emblemNum, opacity: affordable ? 1 : 0.5 }}>{item.price}</span>
+            </>
+          ) : (
+            <span className="sm2-num" style={{ ...bitsNum, opacity: affordable ? 1 : 0.5 }}>{item.price}</span>
+          )}
+        </span>
+      </button>
     );
   };
 
-  const renderMissions = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ color: 'var(--sm-muted)', fontSize: '0.72rem', textAlign: 'center', margin: 0 }}>
-        {isPt
-          ? 'Complete missões para liberar a compra de itens exclusivos da loja.'
-          : 'Complete missions to unlock the purchase of exclusive shop items.'}
-      </p>
-      {MISSIONS.map(m => {
-        const cur = missionProgress[m.id] ?? 0;
-        const done = cur >= m.target;
-        const rewardItem = SHOP_ITEMS.find(i => i.id === m.bgReward);
-        const rewardName = rewardItem ? (isPt ? rewardItem.namePt : rewardItem.nameEn) : m.bgReward;
-        const goToReward = () => { setTab('bg'); setHintFor(rewardItem?.id ?? null); };
-        return (
-          <div key={m.id} className={done ? 'sm-px-card sm-px-card-ok' : 'sm-px-card'} style={{ padding: 10, display: 'flex', gap: 10, alignItems: 'center' }}>
-            <PixelSlot src={m.iconImg} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ color: 'var(--sm-ink)', fontWeight: 700, fontSize: '0.85rem', margin: 0 }}>
-                {isPt ? m.namePt : m.nameEn}
-              </p>
-              <p style={{ color: 'var(--sm-muted)', fontSize: '0.72rem', margin: 0 }}>
-                {isPt ? m.descPt : m.descEn}
-              </p>
-              {/* Recompensa — prévia visual do cenário + atalho pra ver na aba Cenários. */}
-              <button
-                onClick={goToReward}
-                className="sm-px-chip-btn"
-                style={{ margin: '6px 0 0', minHeight: 34, fontSize: '0.68rem' }}
-              >
-                {rewardItem && (
-                  <span aria-hidden="true" style={{ width: 18, height: 18, flexShrink: 0, background: PET_BACKGROUNDS[rewardItem.id]?.css, backgroundSize: 'cover' }} />
-                )}
-                {isPt ? 'Libera:' : 'Unlocks:'} {rewardName}
-              </button>
-              {/* Progresso de missão é PROPORÇÃO (100 kills, 1000 de score),
-                  não contagem curta: segmentar em blocos daria a entender que
-                  existem N passos. Por isso `PixelMeter` e não a barra
-                  segmentada — mas o trilho é o mesmo, quadrado. */}
-              <PixelMeter
-                ratio={cur / m.target}
-                tone={done ? 'gold' : 'cyan'}
-                height={10}
-                style={{ marginTop: 6 }}
-                label={isPt ? m.namePt : m.nameEn}
-              />
-              <p className="sm-px-label" style={{ color: done ? 'var(--sm-gold)' : 'var(--sm-muted)', marginTop: 4, marginBottom: 0 }}>
-                {done
-                  ? (isPt ? `Concluída — ${rewardName} liberado!` : `Done — ${rewardName} unlocked!`)
-                  : m.target === 1 ? (isPt ? 'Pendente' : 'Pending') : `${cur}/${m.target}`}
-              </p>
-            </div>
-          </div>
-        );
-      })}
+  /** Saldo — uma leitura só, a da moeda que compra o que está na tela. */
+  const balance = seg === 'tournament' ? (
+    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <Icon name="military_tech" size={22} tone="gold" label={isPt ? 'Emblemas' : 'Emblems'} />
+      <span className="sm2-num" style={emblemNum}>{emblems}</span>
+    </span>
+  ) : (
+    <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+      <span className="sm2-num" style={bitsNum}>{points}</span>
+      <span style={{ ...sm2Hint, fontWeight: 500 }}>Bits</span>
+    </span>
+  );
+
+  const exchange = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4 }}>
+      <span style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Icon name="diamond" size={18} tone="primary" label={isPt ? 'Créditos' : 'Credits'} />
+        {isPt ? `Trocar Créditos por Bits — você tem ${credits}` : `Swap Credits for Bits — you have ${credits}`}
+      </span>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {BITS_EXCHANGE.map(pack => {
+          const busy = exchanging === pack.credits;
+          const can = credits >= pack.credits && exchanging === null;
+          return (
+            <button
+              key={pack.credits}
+              type="button"
+              disabled={!can}
+              aria-label={isPt ? `Trocar ${pack.credits} Créditos por ${pack.bits} Bits` : `Swap ${pack.credits} Credits for ${pack.bits} Bits`}
+              onClick={async () => {
+                setExchanging(pack.credits);
+                let ok = false;
+                try { ok = await onExchangeCredits(pack.credits); } finally { setExchanging(null); }
+                say(`exch-${pack.credits}`, ok, ok
+                  ? (isPt ? `+${pack.bits} Bits.` : `+${pack.bits} Bits.`)
+                  : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The swap did not go through. Try again.'));
+              }}
+              style={{ ...sm2Button(can ? 'ghost' : 'ghost', !can), flex: 1, gap: 4 }}
+            >
+              <Icon name={busy ? 'sync' : 'diamond'} size={16} tone={can ? 'primary' : 'muted'} />
+              <span className="sm2-num">{pack.credits}</span>
+              <Icon name="arrow_forward" size={14} tone="muted" />
+              <span className="sm2-num" style={{ ...bitsNum, fontSize: 'var(--sm2-text-xs)' }}>{pack.bits}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 
-  const Wrapper = asPage
-    ? ({ children }: { children: React.ReactNode }) => <>{children}</>
-    : ({ children }: { children: React.ReactNode }) => (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4, 18, 20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-          {children}
-        </div>
-      );
+  const body = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Uma ação dominante: comprar. O segmento troca a MOEDA, e só isso. */}
+      <div role="radiogroup" aria-label={isPt ? 'Moeda da loja' : 'Shop currency'} style={{ display: 'flex', gap: 8 }}>
+        <Segment selected={seg === 'shop'} onSelect={() => setSeg('shop')} label={isPt ? 'Loja' : 'Shop'} />
+        <Segment selected={seg === 'tournament'} onSelect={() => setSeg('tournament')} label={isPt ? 'Torneio' : 'Tournament'} />
+      </div>
+
+      {/* Estado de compra/troca. Existe sempre no DOM: região viva que aparece
+          vazia não é anunciada quando o texto chega em alguns leitores. */}
+      <p
+        role="status"
+        aria-live="polite"
+        style={{
+          ...sm2Hint, minHeight: 18, margin: 0,
+          color: flash ? (flash.ok ? 'var(--sm2-primary-ink)' : 'var(--sm2-danger-ink)') : 'var(--sm2-muted)',
+        }}
+      >
+        {flash ? flash.msg : (seg === 'tournament'
+          ? (isPt ? 'Emblemas só vêm do Torneio — e só compram aqui.' : 'Emblems only come from the Tournament — and only buy here.')
+          : (isPt ? 'Ganhe Bits nos minijogos.' : 'Earn Bits in the minigames.'))}
+      </p>
+
+      {sections.map(sec => (
+        <section key={sec.key} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2 className="sm2-title" style={sm2TitleStyle}>{sec.title}</h2>
+          {sec.items.length === 0
+            ? <p style={sm2Hint}>{isPt ? 'Nada por aqui ainda.' : 'Nothing here yet.'}</p>
+            : sec.items.map(renderItem)}
+        </section>
+      ))}
+
+      {seg === 'shop' && exchange}
+    </div>
+  );
+
+  if (asPage) return <div style={{ paddingBottom: 24 }}>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: 44 }}>{balance}</div>
+    {body}
+  </div>;
 
   return (
-    <Wrapper>
-      <div
-        className={asPage ? undefined : 'sm-px-card'}
-        style={asPage
-          ? { display: 'flex', flexDirection: 'column' }
-          : { background: 'var(--sm-bg)', width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
-      >
-        {/* Header — em modo página, sem título repetido nem X (a navegação já
-            é a barra inferior) e sem fundo/borda própria (a página herda o
-            visual do conteúdo ao redor). */}
-        <div style={asPage
-          ? { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 10 }
-          : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
-          {!asPage && (
-            <span className="sm-px-heading" style={{ fontSize: '0.95rem', color: 'var(--sm-ink)' }}>
-              {isPt ? 'Loja' : 'Shop'}
-            </span>
-          )}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* As TRÊS moedas nunca se confundem (utils/currencies.ts): a
-                cápsula do kit é a mesma, mas o VALOR mantém o estilo próprio —
-                serifa dourada nos Emblemas, calculadora neon nos Bits. Só o
-                rótulo é bitmap, e ele diz o nome da moeda em letras. */}
-            {tab === 'tournament' ? (
-              <PixelChip
-                label={isPt ? 'Emblemas' : 'Emblems'}
-                title={isPt ? 'Emblemas — ganhe vencendo no Torneio' : 'Emblems — earn them by winning in the Tournament'}
-                value={<span style={{ ...emblemStyle, color: 'color-mix(in srgb, var(--sm-gold) 40%, white)', fontSize: '0.85rem' }}>{emblems}</span>}
-              />
-            ) : (
-              <PixelChip
-                label="Bits"
-                title={isPt ? 'Bits — ganhe nos minijogos' : 'Bits — earn them in the minigames'}
-                value={<span style={{ ...bitsStyle, fontSize: '0.85rem' }}>{points}</span>}
-              />
-            )}
-            {!asPage && (
-              <button onClick={onClose} className="sm-px-arcade-close" aria-label={isPt ? 'Fechar' : 'Close'}>
-                <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Abas — conserto do G9: a seleção é o PREENCHIMENTO, e é a mesma
-            leitura nos dois temas. O sublinhado de 2,5px saiu. */}
-        <PixelTabs
-          items={TABS}
-          value={tab}
-          onChange={k => { setTab(k); setHintFor(null); }}
-          ariaLabel={isPt ? 'Seções da loja' : 'Shop sections'}
-          style={{ marginBottom: 10 }}
-        />
-
-        {/* Content */}
-        <div style={{ overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {tab === 'missions'
-            ? renderMissions()
-            : TAB_ITEMS[tab].map(renderItem)}
-
-          {/* Faltou Bit? Créditos (dinheiro real) viram Bits — nunca o
-              contrário, senão dava pra farmar em minijogo a moeda que só o
-              dinheiro real deveria abrir (ver utils/currencies.ts). */}
-          {tab === 'items' && (
-            <div className="sm-px-card" style={{ padding: 12, marginTop: 4 }}>
-              <p style={{ margin: '0 0 8px', fontSize: '0.74rem', fontWeight: 700, color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <img src={iconGem} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                {isPt ? `Trocar Créditos por Bits (você tem ${credits})` : `Swap Credits for Bits (you have ${credits})`}
-              </p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {BITS_EXCHANGE.map(pack => (
-                  <button
-                    key={pack.credits}
-                    className="sm-px-chip-btn"
-                    disabled={credits < pack.credits || exchanging}
-                    onClick={async () => {
-                      setExchanging(true);
-                      const ok = await onExchangeCredits(pack.credits);
-                      setExchanging(false);
-                      setFlash({ id: `exch-${pack.credits}`, ok });
-                      setTimeout(() => setFlash(null), 900);
-                    }}
-                    style={{ flex: 1, flexDirection: 'column', gap: 2, padding: '8px 6px', lineHeight: 1.3 }}
-                  >
-                    {/* O 💎 aqui é ÍCONE DE MOEDA, não emoji decorativo: os
-                        Créditos são a única das três que ainda não tem cápsula
-                        própria, e trocar o gem por um quadro vazio apagaria a
-                        distinção que existe justamente para o jogador não
-                        confundir dinheiro real com Bits. Fica anotado como
-                        dívida no relatório. */}
-                    <span className="sm-px-value" style={{ fontSize: 12 }}>{pack.credits} 💎</span>
-                    <span style={{ ...bitsStyle, fontSize: '0.68rem' }}>{'→'} {pack.bits} Bits</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <p style={{ color: 'var(--sm-muted)', fontSize: '0.68rem', textAlign: 'center', margin: 0 }}>
-            {tab === 'missions'
-              ? (isPt ? 'Progresso conta desde o início do jogo.' : 'Progress counts from the very start.')
-              : tab === 'tournament'
-                ? (isPt ? 'Emblemas só vêm do Torneio — e só compram aqui.' : 'Emblems only come from the Tournament — and only buy here.')
-                : (isPt ? 'Ganhe Bits nos minijogos! Itens bloqueados: toque para ver como desbloquear.' : 'Earn Bits in the minigames! Locked items: tap to see how to unlock.')}
-          </p>
-        </div>
-      </div>
-    </Wrapper>
+    <ModalSheet
+      open
+      title={isPt ? 'Loja' : 'Shop'}
+      onClose={onClose}
+      language={language}
+      footer={<div style={{ display: 'flex', justifyContent: 'flex-end' }}>{balance}</div>}
+    >
+      {body}
+    </ModalSheet>
   );
 }

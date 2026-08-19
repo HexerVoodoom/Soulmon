@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
-import iconBell from '../assets/soulmon/icons/icon-bell.png';
-import iconHome from '../assets/soulmon/icons/icon-home.png';
+import { Icon } from './ui/Icon';
+import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
@@ -20,11 +19,14 @@ interface WelcomePromptModalProps {
 }
 
 /**
- * Asks, once per pending item, whether the player wants to (1) install the
- * PWA and (2) authorize notifications — shown right after the app opens
- * (post-intro, post-onboarding). Each half is skipped once it no longer
- * applies (already installed/native app, permission already granted/denied,
- * or the player dismissed it before — tracked in localStorage).
+ * Pergunta, uma vez por item pendente, se o jogador quer (1) instalar a PWA e
+ * (2) autorizar notificações. Cada metade some quando deixa de se aplicar
+ * (já instalado/app nativo, permissão concedida/negada, ou já dispensado).
+ *
+ * O comportamento é o mesmo de antes; o que mudou é a forma: sheet de baixo
+ * (o polegar chega lá), UMA ação dominante e "Agora não" em voz baixa. Saiu o
+ * X próprio — o do `ModalSheet` já dispensa, e dois jeitos de dizer "não"
+ * no mesmo canto era um deles a mais.
  */
 export function WelcomePromptModal({ language, notificationsEnabled, onEnableNotifications }: WelcomePromptModalProps) {
   const isPt = language === 'pt-BR';
@@ -105,66 +107,52 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
 
   const content = step === 'install'
     ? {
-        icon: iconHome,
+        icon: 'download',
         title: isPt ? 'Instalar o Soulmon?' : 'Install Soulmon?',
         desc: isPt
-          ? 'Adicione à tela inicial para acesso rápido e uso offline.'
-          : 'Add it to your home screen for quick access and offline use.',
+          ? 'Acesso rápido pela tela inicial e funcionamento offline.'
+          : 'Quick access from your home screen, and it works offline.',
         primary: isPt ? 'Instalar' : 'Install',
-        secondary: isPt ? 'Agora não' : 'Not now',
         onPrimary: handleInstall,
         onSecondary: handleDismissInstall,
       }
     : {
-        icon: iconBell,
+        // `schedule` e não um sininho: NÃO existe ícone de sino no subset da
+        // fonte (inventário em `src/styles/tokens.md`), e nome fora dele
+        // renderiza um `<span>` vazio, sem erro nenhum. Lembrete é hora.
+        icon: 'schedule',
         title: isPt ? 'Ativar notificações?' : 'Enable notifications?',
         desc: isPt
-          ? 'Receba lembretes de tarefas e avisos do seu Soulmon.'
-          : "Get task reminders and updates from your Soulmon.",
+          ? 'Lembretes das suas tarefas e recados do seu Soulmon.'
+          : 'Reminders for your tasks and messages from your Soulmon.',
         primary: isPt ? 'Ativar' : 'Enable',
-        secondary: isPt ? 'Agora não' : 'Not now',
         onPrimary: handleEnableNotif,
         onSecondary: handleDismissNotif,
       };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div className="sm-card" style={{ width: '100%', maxWidth: 320, padding: 0, overflow: 'hidden' }}>
-        <div style={{ position: 'relative', padding: '24px 20px 16px', textAlign: 'center' }}>
-          <button
-            onClick={content.onSecondary}
-            aria-label={isPt ? 'Fechar' : 'Close'}
-            /* 44x44 de area de toque (WCAG 2.2 AA 2.5.8) com o circulo de 30px
-               desenhado dentro; top/right recuados em 7px para o circulo ficar
-               exatamente onde estava. Fechar um modal e a saida de emergencia
-               da UI — e o pior lugar para um alvo pequeno. */
-            style={{ position: 'absolute', top: 5, right: 5, width: 44, height: 44, padding: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            <span aria-hidden="true" style={{ width: 30, height: 30, backgroundColor: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            </span>
-          </button>
-          {/* Ícone do kit (moldura de cobre já desenhada na arte) no lugar do
-              quadrado pastel arredondado com line-art — era a última peça
-              Material deste modal. */}
-          <div style={{ width: 56, height: 56, margin: '0 auto 10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img src={content.icon} alt="" width={52} height={52} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          </div>
-          <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)', margin: '0 0 6px' }}>{content.title}</p>
-          <p style={{ fontSize: '0.82rem', color: 'var(--sm-muted)', margin: 0, lineHeight: 1.4 }}>{content.desc}</p>
-        </div>
-        <div style={{ padding: '4px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button onClick={content.onPrimary} className="sm-btn" style={{ width: '100%' }}>
+    <ModalSheet
+      open
+      onClose={content.onSecondary}
+      language={language}
+      title={content.title}
+      maxWidth={420}
+      footer={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <button type="button" onClick={content.onPrimary} style={{ ...sm2Button('primary'), width: '100%' }}>
             {content.primary}
           </button>
-          <button
-            onClick={content.onSecondary}
-            style={{ width: '100%', padding: '11px 0', border: 'none', background: 'transparent', color: 'var(--sm-muted)', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer' }}
-          >
-            {content.secondary}
+          <button type="button" onClick={content.onSecondary} style={{ ...sm2Button('quiet'), width: '100%' }}>
+            {isPt ? 'Agora não' : 'Not now'}
           </button>
         </div>
+      }
+    >
+      {/* Ícone pelado, sem placa nem moldura (regra do dono). */}
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <Icon name={content.icon} size={48} tone="primary" />
       </div>
-    </div>
+      <p style={{ ...sm2Text, textAlign: 'center', margin: 0 }}>{content.desc}</p>
+    </ModalSheet>
   );
 }

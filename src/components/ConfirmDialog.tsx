@@ -1,5 +1,7 @@
-import iconClose from '../assets/soulmon/icons/icon-close.png';
-import { Button } from './ui/button';
+import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
+import { resolveLanguage, type Language } from '../utils/i18n';
+import { readLocal } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -10,44 +12,48 @@ interface ConfirmDialogProps {
   /** Rótulos dos botões. Sem eles o diálogo saía em inglês fixo. */
   confirmLabel?: string;
   cancelLabel?: string;
+  /**
+   * Idioma do chrome do diálogo (o "Fechar" do sheet). Opcional porque o
+   * único call-site passa os rótulos já traduzidos; o padrão lê o idioma
+   * escolhido, e não um inglês fixo.
+   */
+  language?: Language;
+  /**
+   * `true` só quando a ação DESTRÓI algo de verdade (apagar save, perder
+   * progresso). O vermelho de perigo é a coisa mais barulhenta da paleta e
+   * gasta a própria força quando enfeita uma confirmação inofensiva — o
+   * call-site de hoje ("refazer o ritual") preserva tudo, então é primário.
+   */
+  destructive?: boolean;
 }
 
-export function ConfirmDialog({ isOpen, onClose, onConfirm, title, message, confirmLabel, cancelLabel }: ConfirmDialogProps) {
-  if (!isOpen) return null;
+export function ConfirmDialog({
+  isOpen, onClose, onConfirm, title, message, confirmLabel, cancelLabel,
+  language, destructive = false,
+}: ConfirmDialogProps) {
+  const lang = language ?? resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE));
+  const isPt = lang === 'pt-BR';
+
+  const primary = sm2Button('primary');
+  const confirmStyle = destructive
+    ? { ...primary, backgroundColor: 'var(--sm2-danger-fill)', color: 'var(--sm2-on-danger)' }
+    : primary;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="sm-card rounded-lg p-6 max-w-sm w-full relative">
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 p-1 rounded transition-colors"
-          style={{ color: 'var(--sm-muted)' }}
-        >
-          <img src={iconClose} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-        </button>
-
-        <h2 className="mb-3" style={{ color: 'var(--sm-ink)' }}>{title}</h2>
-        <p className="mb-6" style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}>
-          {message}
-        </p>
-
-        <div className="flex gap-2">
-          <Button
-            onClick={onClose}
-            variant="outline"
-            className="flex-1"
-          >
-            {cancelLabel ?? 'Cancel'}
-          </Button>
-          <Button
-            onClick={onConfirm}
-            className="flex-1 text-white"
-            style={{ background: 'var(--sm-danger)' }}
-          >
-            {confirmLabel ?? 'Confirm'}
-          </Button>
+    <ModalSheet open={isOpen} onClose={onClose} language={lang} title={title} maxWidth={420}
+      footer={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* Uma ação domina; a saída sussurra logo abaixo, em `quiet`. */}
+          <button type="button" onClick={onConfirm} style={{ ...confirmStyle, width: '100%' }}>
+            {confirmLabel ?? (isPt ? 'Confirmar' : 'Confirm')}
+          </button>
+          <button type="button" onClick={onClose} style={{ ...sm2Button('quiet'), width: '100%' }}>
+            {cancelLabel ?? (isPt ? 'Cancelar' : 'Cancel')}
+          </button>
         </div>
-      </div>
-    </div>
+      }
+    >
+      <p style={{ ...sm2Text, margin: 0 }}>{message}</p>
+    </ModalSheet>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { CloudUpload } from 'lucide-react';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { Icon } from './ui/Icon';
+import { Field, ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
 // Pedido de e-mail DEPOIS do onboarding.
@@ -47,84 +47,62 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 200, display: 'flex',
-        alignItems: 'center', justifyContent: 'center', padding: 20,
-        background: 'rgba(6, 24, 26,0.45)',
-      }}
-      onClick={onDismiss}
-    >
-      <div
-        className="sm-card"
-        style={{ width: '100%', maxWidth: 380, padding: 22, position: 'relative' }}
-        onClick={e => e.stopPropagation()}
-      >
-        <button
-          onClick={onDismiss}
-          aria-label={isPt ? 'Fechar' : 'Close'}
-          style={{
-            position: 'absolute', top: 12, right: 12, background: 'transparent',
-            border: 'none', cursor: 'pointer', color: 'var(--sm-muted)', padding: 6,
-          }}
-        >
-          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-        </button>
-
-        <div style={{
-          width: 52, height: 52, borderRadius: 18, marginBottom: 14,
-          background: 'var(--sm-primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <CloudUpload size={26} color="var(--sm-primary)" strokeWidth={2} />
+    <ModalSheet
+      open
+      onClose={onDismiss}
+      language={language}
+      title={motivo}
+      maxWidth={420}
+      footer={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <button
+            type="button"
+            onClick={submit}
+            disabled={!valid || saving}
+            style={{ ...sm2Button('primary', !valid || saving), width: '100%' }}
+          >
+            {saving && <Icon name="sync" size={20} className="animate-spin" />}
+            {saving
+              ? (isPt ? 'Salvando…' : 'Saving…')
+              : (isPt ? 'Salvar meu progresso' : 'Save my progress')}
+          </button>
+          <button type="button" onClick={onDismiss} style={{ ...sm2Button('quiet'), width: '100%' }}>
+            {isPt ? 'Agora não' : 'Not now'}
+          </button>
         </div>
+      }
+    >
+      <p style={{ ...sm2Text, margin: 0 }}>
+        {isPt
+          ? 'Seu progresso está só neste aparelho. Deixe um e-mail para não perder o seu Soulmon se trocar de celular.'
+          : 'Your progress lives only on this device. Leave an email so you don’t lose your Soulmon if you switch phones.'}
+      </p>
 
-        <h3 style={{ margin: '0 0 6px', fontSize: 18, fontWeight: 800, color: 'var(--sm-ink)' }}>
-          {motivo}
-        </h3>
-        <p style={{ margin: '0 0 16px', fontSize: 13, lineHeight: 1.6, color: 'var(--sm-muted)' }}>
-          {isPt
-            ? 'Seu progresso está só neste aparelho. Deixe um e-mail para não perder o seu Soulmon se trocar de celular ou reinstalar o app.'
-            : 'Your progress lives only on this device. Leave an email so you don’t lose your Soulmon if you switch phones or reinstall.'}
-        </p>
-
-        <input
+      <div>
+        <label htmlFor="protect-email" style={{ ...sm2Hint, display: 'block', marginBottom: 6, fontWeight: 500 }}>
+          {isPt ? 'Seu e-mail' : 'Your email'}
+        </label>
+        <Field
+          id="protect-email"
           type="email"
           autoComplete="email"
           value={email}
           onChange={e => { setEmail(e.target.value); setError(null); }}
-          onKeyDown={e => e.key === 'Enter' && submit()}
+          onKeyDown={e => { if (e.key === 'Enter') void submit(); }}
           placeholder="voce@exemplo.com"
-          style={{
-            width: '100%', boxSizing: 'border-box', background: 'var(--sm-surface)', color: 'var(--sm-ink)',
-            border: '2px solid var(--sm-line)', borderRadius: 14, padding: '13px 15px',
-            // 16px evita o zoom automático do Safari em iOS ao focar o campo.
-            fontSize: 16, outline: 'none',
-          }}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? 'protect-email-error' : undefined}
+          // 16px evita o zoom automático do Safari em iOS ao focar o campo.
+          style={{ fontSize: 16 }}
         />
+        {/* Estado de erro: falha de rede é o caso comum aqui, e ele fala em
+            tom de "tente de novo", não de alarme. `danger-ink` é TINTA. */}
         {error && (
-          <p style={{ fontSize: 12, color: '#e0483e', margin: '8px 0 0' }}>{error}</p>
+          <p id="protect-email-error" role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 8 }}>
+            {error}
+          </p>
         )}
-
-        <button
-          className="sm-btn"
-          style={{ width: '100%', marginTop: 14, opacity: valid && !saving ? 1 : 0.55 }}
-          disabled={!valid || saving}
-          onClick={submit}
-        >
-          {saving
-            ? (isPt ? 'Salvando…' : 'Saving…')
-            : (isPt ? 'Salvar meu progresso' : 'Save my progress')}
-        </button>
-        <button
-          onClick={onDismiss}
-          style={{
-            width: '100%', marginTop: 8, background: 'transparent', border: 'none',
-            color: 'var(--sm-muted)', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', padding: 8,
-          }}
-        >
-          {isPt ? 'Agora não' : 'Not now'}
-        </button>
       </div>
-    </div>
+    </ModalSheet>
   );
 }

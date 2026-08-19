@@ -1,12 +1,25 @@
-import { RowIcon } from './RowIcon';
-import iconActivities from '../assets/soulmon/icons/icon-activities.png';
-import iconClock from '../assets/soulmon/icons/icon-clock.png';
-import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+/**
+ * Perfil resumido de outro jogador (Biblioteca) — nick, tempo de jogo,
+ * tarefas feitas, rank e o branch ATUAL do pet com TODO o progresso já
+ * desbloqueado nele (não só o nível atual) — sempre derivado do próprio
+ * `unlockedStages`, então nunca vaza forma além da já alcançada.
+ *
+ * REVAMP: o Soulmon do outro jogador é a heroína do cartão e mora dentro do
+ * `<Viewport>`, em escala inteira. As três linhas de ícone+rótulo+valor viraram
+ * UMA frase — ninguém decide nada com "Tempo de jogo: 47 dias" empilhado em
+ * cima de "Rank: 340", e três ícones para três números era exatamente o tipo de
+ * mobília que o revamp corta.
+ *
+ * A superfície é o `ModalSheet` do kit (`form/FormKit`): ele traz foco preso,
+ * Escape e devolução de foco — o modal artesanal daqui não tinha nenhum dos
+ * três, e ele era focável por cima da página inteira.
+ */
 import { FORM_REQUIREMENTS, getStageBranch, getStageLevel } from '../types/progression';
 import { getSpriteForStage } from '../utils/sprites';
-import { ATTR_COLOR, ATTR_ICON, ATTR_LABEL } from '../types/attributes';
-import { PixelButton, PixelTag } from './pixel/PixelKit';
+import { ATTR_COLOR, ATTR_INK, ATTR_LABEL } from '../types/attributes';
+import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
+import { Viewport } from './ui/Viewport';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import type { DirectoryPlayer } from '../utils/community';
 import type { Language } from '../utils/i18n';
 
@@ -24,22 +37,19 @@ const LEVEL_LABEL: Record<string, { pt: string; en: string }> = {
 };
 const LEVEL_ORDER = Object.keys(FORM_REQUIREMENTS);
 
+/** O mesmo jogo de ícone de atributo da Evolução — vetor, e um só no app. */
+const ATTR_GLYPH = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon } as const;
+
 interface PlayerDetailModalProps {
   player: DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string };
   language: Language;
   onClose: () => void;
 }
 
-/**
- * Perfil resumido de outro jogador (Biblioteca) — nick, tempo de jogo,
- * tarefas feitas, rank e o branch ATUAL do pet com TODO o progresso já
- * desbloqueado nele (não só o nível atual) — sempre derivado do próprio
- * `unlockedStages`, então nunca vaza forma além da já alcançada.
- */
 export function PlayerDetailModal({ player, language, onClose }: PlayerDetailModalProps) {
   const isPt = language === 'pt-BR';
   const branch = getStageBranch(player.stage);
-  const branchIcon = branch ? ATTR_ICON[branch] : null;
+  const Glyph = branch ? ATTR_GLYPH[branch] : null;
 
   // Todos os estágios desbloqueados NO branch atual (rookie é o tronco
   // comum, sem branch, sempre incluído), ordenados por nível.
@@ -47,93 +57,97 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
     .filter(s => s === 'rookie' || getStageBranch(s) === branch)
     .sort((a, b) => LEVEL_ORDER.indexOf(getStageLevel(a)) - LEVEL_ORDER.indexOf(getStageLevel(b)));
 
-  const rows: { icon: string; label: string; value: string }[] = [
-    { icon: iconClock, label: isPt ? 'Tempo de jogo' : 'Playtime', value: isPt ? `${player.daysPlaying} dias` : `${player.daysPlaying} days` },
-    { icon: iconActivities, label: isPt ? 'Tarefas feitas' : 'Tasks done', value: `${player.tasksDone}` },
-    { icon: iconTrophy, label: isPt ? 'Rank' : 'Rank', value: `${player.rankPoints}` },
-  ];
-
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-      onClick={onClose}
+    <ModalSheet
+      open
+      onClose={onClose}
+      language={language}
+      title={player.name}
+      footer={
+        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+          {isPt ? 'Fechar' : 'Close'}
+        </button>
+      }
     >
-      <div className="sm-px-card" style={{ width: '100%', maxWidth: 320, padding: 0 }} onClick={e => e.stopPropagation()}>
-        <div style={{ position: 'relative', padding: '24px 20px 16px', textAlign: 'center' }}>
-          <button
-            onClick={onClose}
-            aria-label={isPt ? 'Fechar' : 'Close'}
-            /* 44x44 de area de toque (WCAG 2.2 AA 2.5.8) com o circulo de 30px
-               desenhado dentro; top/right recuados em 7px para o circulo ficar
-               exatamente onde estava. Fechar um modal e a saida de emergencia
-               da UI — e o pior lugar para um alvo pequeno. */
-            className="sm-px-arcade-close"
-            style={{ position: 'absolute', top: 8, right: 8, color: 'var(--sm-ink)' }}
-          >
-            <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          </button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <Viewport
+          width={48}
+          height={48}
+          scale={2}
+          breathing={false}
+          label={isPt ? `Soulmon de ${player.name}` : `${player.name}'s Soulmon`}
+          screenStyle={{ position: 'relative' }}
+        >
           <img
             src={player.spriteUrl ?? getSpriteForStage(player.stage)}
             alt=""
-            style={{ width: 64, height: 64, objectFit: 'contain', imageRendering: 'pixelated', margin: '0 auto 8px', display: 'block' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }}
           />
-          <p style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            {player.name}
-            {player.isNpc && <PixelTag>NPC</PixelTag>}
+        </Viewport>
+
+        <div style={{ textAlign: 'center' }}>
+          {player.petName && (
+            <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{player.petName}</p>
+          )}
+          {player.isNpc && (
+            <p style={{ ...sm2Hint, marginTop: 2 }}>
+              {isPt ? 'Personagem de demonstração' : 'Demo character'}
+            </p>
+          )}
+          {/* Os três números numa frase só, com `tabular-nums`. */}
+          <p className="sm2-num" style={{ ...sm2Hint, marginTop: 6 }}>
+            {isPt
+              ? `${player.daysPlaying} dias jogando · ${player.tasksDone} tarefas feitas · rank ${player.rankPoints}`
+              : `${player.daysPlaying} days playing · ${player.tasksDone} tasks done · rank ${player.rankPoints}`}
           </p>
-          {player.petName && <p style={{ fontSize: '0.8rem', color: 'var(--sm-muted)', margin: '2px 0 0' }}>{player.petName}</p>}
-        </div>
-
-        <div style={{ padding: '4px 20px 6px' }}>
-          {rows.map(r => (
-            <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
-              <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <RowIcon icon={r.icon} size={22} color="var(--sm-muted)" />
-              </span>
-              <span className="sm-px-label" style={{ flex: 1 }}>{r.label}</span>
-              <span className="sm-px-value">{r.value}</span>
-            </div>
-          ))}
-
-          {/* Caminho do pet — TODO o branch já desbloqueado, não só o nível atual */}
-          <div style={{ padding: '8px 0 4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span className="sm-px-slot" style={{ width: 30, height: 30, backgroundColor: branch ? `${ATTR_COLOR[branch]}22` : undefined }}>
-                {branchIcon
-                  ? <img src={branchIcon} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  : <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>?</span>}
-              </span>
-              <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>
-                {isPt ? 'Caminho do pet' : "Pet's path"}
-                {branch && <> · <span style={{ color: ATTR_COLOR[branch], fontWeight: 700 }}>{isPt ? ATTR_LABEL[branch].pt : ATTR_LABEL[branch].en}</span></>}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingLeft: 40 }}>
-              {branchLevels.length === 0 ? (
-                <span style={{ fontSize: '0.8rem', color: 'var(--sm-muted)' }}>{isPt ? 'Ainda não escolhido' : 'Not chosen yet'}</span>
-              ) : branchLevels.map(stage => {
-                const level = getStageLevel(stage);
-                const isCurrent = stage === player.stage;
-                return (
-                  /* Mesma regra do G9 aqui: o estagio ATUAL e o unico
-                     preenchido, e nunca o contrario — as pilulas anteriores
-                     davam ao nao-atual um fundo solido (`--sm-bg`) que no tema
-                     claro chamava tanto quanto o atual. */
-                  <PixelTag key={stage} filled={isCurrent}>
-                    {isPt ? LEVEL_LABEL[level].pt : LEVEL_LABEL[level].en}
-                  </PixelTag>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ padding: '14px 20px 20px' }}>
-          <PixelButton size="lg" onClick={onClose}>
-            {isPt ? 'Fechar' : 'Close'}
-          </PixelButton>
         </div>
       </div>
-    </div>
+
+      {/* Caminho do pet — TODO o branch já desbloqueado, não só o nível atual */}
+      <div>
+        <p style={{ ...sm2Hint, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>
+          {isPt ? 'Caminho do pet' : "Pet's path"}
+        </p>
+
+        {branch && Glyph && (
+          <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 10px' }}>
+            <Glyph size={18} color={ATTR_COLOR[branch]} strokeWidth={2.2} />
+            <span style={{ color: ATTR_INK[branch], fontWeight: 500 }}>
+              {isPt ? ATTR_LABEL[branch].pt : ATTR_LABEL[branch].en}
+            </span>
+          </p>
+        )}
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {branchLevels.length === 0 ? (
+            <span style={sm2Hint}>{isPt ? 'Ainda não escolhido' : 'Not chosen yet'}</span>
+          ) : branchLevels.map(stage => {
+            const level = getStageLevel(stage);
+            const isCurrent = stage === player.stage;
+            return (
+              /* O estágio ATUAL é o único preenchido, e nunca o contrário — as
+                 pílulas anteriores davam ao não-atual um fundo sólido que no
+                 tema claro chamava tanto quanto o atual. */
+              <span
+                key={stage}
+                style={{
+                  fontFamily: 'var(--sm2-font-text)',
+                  fontSize: 'var(--sm2-text-xs)',
+                  fontWeight: 500,
+                  padding: '4px 10px',
+                  borderRadius: 999,
+                  ...(isCurrent
+                    ? { backgroundColor: 'var(--sm2-primary-fill)', color: 'var(--sm2-on-primary)', border: '1px solid transparent' }
+                    : { border: '1px solid var(--sm2-line)', color: 'var(--sm2-muted)' }),
+                }}
+              >
+                {isPt ? LEVEL_LABEL[level].pt : LEVEL_LABEL[level].en}
+                {isCurrent && ` · ${isPt ? 'atual' : 'current'}`}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    </ModalSheet>
   );
 }

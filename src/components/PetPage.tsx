@@ -1,19 +1,25 @@
 /**
  * Página do PET — a ficha viva da criatura, forma a forma.
  *
- * Mostra TODAS as formas já desbloqueadas (nunca as futuras): sprite, nome,
- * estágio, a descrição gerada pelo oráculo (personalidade, hábitos e poderes
- * — o campo `description` de cada forma existia no save desde a geração e
- * nunca tinha sido renderizado) e as DUAS habilidades do estágio, derivadas
- * da ficha do class-system: a básica (custo baixo, frequente) e a especial
- * (custo alto, rara).
+ * REVAMP: **a criatura é a heroína da tela.** Antes ela aparecia como uma
+ * miniatura de 56px empilhada dentro de cartões iguais, sem hierarquia nenhuma;
+ * agora a forma ATUAL abre a página dentro do `<Viewport>` — o elemento de
+ * marca, a fronteira entre o pixel (dentro) e o vetor (fora) — em escala
+ * INTEIRA, e tudo o mais é legenda dela.
+ *
+ * O que a página mostra (a lógica é a mesma de antes, nada foi inventado):
+ * TODAS as formas já desbloqueadas (nunca as futuras), a descrição gerada pelo
+ * oráculo e as DUAS habilidades do estágio (básica e especial). A CLASSE do
+ * estágio (`classTitle`) já era computada aqui e nunca era renderizada — agora
+ * ela aparece, porque é exatamente o tipo de dado que esta tela deveria dar:
+ * uma PALAVRA nomeada, não um número.
  *
  * As skills são recomputadas sob demanda do perfil salvo (SOULMON_PROFILE =
  * OracleInput + seed) pelo pipeline completo — determinístico, mesma
  * identidade = mesmas skills, sem campo novo no save. Saves legados (sem
  * soulProfile) simplesmente não mostram a seção de habilidades.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { CreatureStage, OracleInput } from '../utils/oracle';
 import { creatureFormId } from '../utils/oracle';
 import { getSpriteForStage } from '../utils/sprites';
@@ -23,7 +29,9 @@ import { readJson } from '../utils/safeStorage';
 import { FICHA_STAGE_ORDER, type FichaStage } from '../utils/soulProfile/ficha/types';
 import type { StageSkills, StageSkill } from '../utils/soulProfile/ficha/skills';
 import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
-import { PixelTag } from './pixel/PixelKit';
+import { Viewport } from './ui/Viewport';
+import { Icon } from './ui/Icon';
+import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
 interface PetPageProps {
   stages: CreatureStage[];
@@ -44,24 +52,55 @@ interface PetPageProps {
   language?: 'pt-BR' | 'en-US';
 }
 
+const card: CSSProperties = {
+  backgroundColor: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 12,
+  boxShadow: SM2_SHADOW_CARD,
+  padding: 16,
+};
+
+/** O sprite dentro do visor: escala inteira e nada de suavização. */
+const spriteInScreen: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
+  imageRendering: 'pixelated',
+};
+
+/**
+ * Uma habilidade. `basica`/`especial` viram PALAVRA ("Básica · custo baixo") e
+ * o poder — quando o motor devolve um — segue como número com `tabular-nums`,
+ * porque ali o número É a informação (dois ataques se comparam por ele).
+ */
 function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
   const nome = isPt ? skill.nome.pt : skill.nome.en;
   const desc = isPt ? skill.descricao.pt : skill.descricao.en;
-  const tipo = skill.tipo === 'basica' ? (isPt ? 'Básica' : 'Basic') : (isPt ? 'Especial' : 'Special');
+  const especial = skill.tipo !== 'basica';
+  const tipo = especial ? (isPt ? 'Especial' : 'Special') : (isPt ? 'Básica' : 'Basic');
   const custo = skill.custo === 'baixo' ? (isPt ? 'custo baixo' : 'low cost') : (isPt ? 'custo alto' : 'high cost');
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '6px 0' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-        <PixelTag>{tipo}</PixelTag>
-        <span style={{ fontWeight: 700 }}>{nome}</span>
-        <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>· {custo}</span>
-        {typeof skill.poder === 'number' && (
-          <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>
-            · {isPt ? 'poder' : 'power'} {skill.poder}
-          </span>
-        )}
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <Icon
+        name={especial ? 'auto_awesome' : 'bolt'}
+        size={24}
+        fill={especial ? 1 : 0}
+        tone={especial ? 'gold' : 'primary'}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>
+          {nome}
+          {typeof skill.poder === 'number' && (
+            <span className="sm2-num" style={{ ...sm2Hint, marginLeft: 8 }}>
+              {isPt ? `poder ${skill.poder}` : `power ${skill.poder}`}
+            </span>
+          )}
+        </p>
+        <p style={{ ...sm2Hint, marginTop: 2 }}>{`${tipo} · ${custo}`}</p>
+        <p style={{ ...sm2Hint, marginTop: 4 }}>{desc}</p>
       </div>
-      <div className="text-xs" style={{ color: 'var(--sm-muted)', lineHeight: 1.35 }}>{desc}</div>
     </div>
   );
 }
@@ -143,63 +182,132 @@ export function PetPage({
         FICHA_STAGE_ORDER.indexOf(getStageLevel(creatureFormId(b)) as FichaStage));
   }, [stages, unlockedEvolutions]);
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 12 }}>
-      <div className="sm-card" style={{ padding: 12 }}>
-        <div style={{ fontWeight: 800, fontSize: 15 }}>
-          {petName ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
-        </div>
-        <div className="text-xs" style={{ color: 'var(--sm-muted)', marginTop: 2 }}>
-          {isPt
-            ? 'A jornada até aqui: cada forma que vocês já alcançaram, com o jeito e os poderes dela.'
-            : 'The journey so far: every form you have reached, with its ways and its powers.'}
-        </div>
-      </div>
+  // A heroína: a forma ATUAL. Se o save aponta para uma forma que não está na
+  // lista desbloqueada (save antigo), cai na última alcançada — a tela nunca
+  // fica sem protagonista.
+  const atual = formas.find(f => creatureFormId(f) === currentStageId) ?? formas[formas.length - 1] ?? null;
+  const anteriores = formas.filter(f => f !== atual).reverse();
 
-      {formas.length === 0 && (
-        <div className="sm-card" style={{ padding: 14, textAlign: 'center' }}>
-          <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>
+  const nome = petName ?? (isPt ? 'Seu Soulmon' : 'Your Soulmon');
+  const classeAtual = atual ? classTitles?.[getStageLevel(creatureFormId(atual)) as FichaStage] : undefined;
+  const skillsAtuais = atual ? skills?.[getStageLevel(creatureFormId(atual)) as FichaStage] : undefined;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
+
+      {/* ─────────── A HEROÍNA ─────────── */}
+      {atual ? (
+        <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <Viewport
+            width={64}
+            height={64}
+            scale={3}
+            label={isPt ? `${nome}, forma atual` : `${nome}, current form`}
+            screenStyle={{ position: 'relative' }}
+          >
+            <img src={getSpriteForStage(creatureFormId(atual), demoCharacterId)} alt="" style={spriteInScreen} />
+          </Viewport>
+
+          <div style={{ textAlign: 'center', maxWidth: 420 }}>
+            <h1
+              style={{
+                fontFamily: 'var(--sm2-font-display)',
+                fontSize: 'var(--sm2-text-xl)',
+                fontWeight: 600,
+                lineHeight: 'var(--sm2-leading-title)',
+                color: 'var(--sm2-ink)',
+                margin: 0,
+              }}
+            >
+              {atual.name}
+            </h1>
+            {/* Estágio e CLASSE: duas palavras nomeadas, e nenhum número. */}
+            <p style={{ ...sm2Hint, marginTop: 4 }}>
+              {L(atual.stageName)}
+              {classeAtual ? ` · ${L(classeAtual.nome)}` : ''}
+            </p>
+            <p style={{ ...sm2Text, marginTop: 12 }}>{L(atual.description)}</p>
+          </div>
+        </section>
+      ) : (
+        <section style={{ ...card, textAlign: 'center' }}>
+          <Icon name="egg" size={40} tone="muted" />
+          <p style={{ ...sm2Text, marginTop: 8 }}>
             {isPt ? 'Nenhuma forma revelada ainda.' : 'No form revealed yet.'}
-          </span>
-        </div>
+          </p>
+          <p style={{ ...sm2Hint, marginTop: 4 }}>
+            {isPt
+              ? 'Cuide do seu Soulmon: a primeira forma aparece aqui assim que ele evoluir.'
+              : 'Care for your Soulmon: the first form shows up here as soon as it evolves.'}
+          </p>
+        </section>
       )}
 
-      {formas.map(form => {
-        const formId = creatureFormId(form);
-        const stageKey = getStageLevel(formId) as FichaStage;
-        const isCurrent = formId === currentStageId;
-        const stageSkills = skills?.[stageKey];
-        return (
-          <div key={formId} className="sm-card" style={{ padding: 12, boxShadow: isCurrent ? 'inset 0 0 0 2px var(--sm-ink)' : undefined }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <img
-                // a linha demo vale para TODAS as formas da jornada: passar o id só na
-                // forma atual desenhava um bicho na atual e o placeholder genérico
-                // nas anteriores — duas criaturas diferentes na mesma "jornada"
-                src={getSpriteForStage(formId, demoCharacterId)}
-                alt={form.name}
-                style={{ width: 56, height: 56, imageRendering: 'pixelated', objectFit: 'contain' }}
-              />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontWeight: 800 }}>{form.name}</span>
-                  <PixelTag>{L(form.stageName)}</PixelTag>
-                  {isCurrent && <PixelTag>{isPt ? 'atual' : 'current'}</PixelTag>}
-                </div>
-              </div>
-            </div>
-            <p style={{ fontSize: 12.5, lineHeight: 1.45, margin: '8px 0 0' }}>
-              {L(form.description)}
-            </p>
-            {stageSkills && (
-              <div style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.12)' }}>
-                <SkillRow skill={stageSkills.basica} isPt={isPt} />
-                <SkillRow skill={stageSkills.especial} isPt={isPt} />
-              </div>
-            )}
+      {/* ─────────── O que ela sabe fazer ─────────── */}
+      {skillsAtuais && (
+        <section style={card}>
+          <h2
+            style={{
+              fontFamily: 'var(--sm2-font-display)',
+              fontSize: 'var(--sm2-text-md)',
+              fontWeight: 600,
+              lineHeight: 'var(--sm2-leading-title)',
+              color: 'var(--sm2-ink)',
+              margin: '0 0 14px',
+            }}
+          >
+            {isPt ? 'O que ela sabe fazer' : 'What they can do'}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <SkillRow skill={skillsAtuais.basica} isPt={isPt} />
+            <SkillRow skill={skillsAtuais.especial} isPt={isPt} />
           </div>
-        );
-      })}
+        </section>
+      )}
+
+      {/* ─────────── As formas anteriores ─────────── */}
+      {anteriores.length > 0 && (
+        <section>
+          <h2
+            style={{
+              fontFamily: 'var(--sm2-font-display)',
+              fontSize: 'var(--sm2-text-md)',
+              fontWeight: 600,
+              lineHeight: 'var(--sm2-leading-title)',
+              color: 'var(--sm2-ink)',
+              margin: '0 0 12px',
+            }}
+          >
+            {isPt ? 'Quem ela já foi' : 'Who they used to be'}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {anteriores.map(form => {
+              const formId = creatureFormId(form);
+              const stageKey = getStageLevel(formId) as FichaStage;
+              const classe = classTitles?.[stageKey];
+              return (
+                <article key={formId} style={{ ...card, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  <img
+                    // a linha demo vale para TODAS as formas da jornada: passar o id só na
+                    // forma atual desenhava um bicho na atual e o placeholder genérico
+                    // nas anteriores — duas criaturas diferentes na mesma "jornada"
+                    src={getSpriteForStage(formId, demoCharacterId)}
+                    alt=""
+                    style={{ width: 48, height: 48, flexShrink: 0, imageRendering: 'pixelated', objectFit: 'contain' }}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{form.name}</p>
+                    <p style={{ ...sm2Hint, marginTop: 2 }}>
+                      {L(form.stageName)}{classe ? ` · ${L(classe.nome)}` : ''}
+                    </p>
+                    <p style={{ ...sm2Hint, marginTop: 6 }}>{L(form.description)}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

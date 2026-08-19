@@ -1,9 +1,6 @@
-import { useState, useEffect, type CSSProperties } from 'react';
-import { Play, ShoppingCart, Loader as LoaderIcon } from 'lucide-react';
-import iconGem from '../assets/soulmon/icons/icon-gem.png';
-import iconHeart from '../assets/icons/icon-heart-item.png';
-import iconReset from '../assets/soulmon/icons/icon-reset.png';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { useState, useEffect } from 'react';
+import { Icon } from './ui/Icon';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
 import {
   CREDIT_PACKS, type CreditPack, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
   HEART_COST_CREDITS, FULL_UNLOCK_PRICE_LABEL,
@@ -13,13 +10,29 @@ import { isBillingAvailable } from '../utils/playBilling';
 import type { Language } from '../utils/i18n';
 
 /**
- * Créditos — moeda premium (dinheiro real), separada dos Bits (moeda dos
- * minijogos). Gasta em: reroll de personagem, cura instantânea de coração,
- * itens/cenários da loja (mesmos preços em Bits também funcionam lá — os
- * créditos são um jeito ALTERNATIVO de conseguir, via dinheiro real ou anúncio).
- * SCAFFOLD: compra de pacotes é placeholder (utils/monetization.ts nunca
- * cobra de verdade ainda); anúncio recompensado é simulado (delay, sem SDK).
+ * CRÉDITOS — a moeda de DINHEIRO REAL, e a única das três que vive no
+ * servidor (`ent:<saveId>`). Revamp minimalista.
+ *
+ * ─── O desenho ÚNICO dos Créditos ─────────────────────────────────────────
+ * `Icon name="diamond"` com tom primário, e **nada mais** — nem `icon-gem.png`,
+ * nem o emoji de gem, que antes conviviam com este modal e com a loja na mesma
+ * sessão. Bits continuam sem ícone; Emblemas são `military_tech` em ouro.
+ * Três moedas, três leituras que não se confundem (regra de produto, com
+ * teste travando as fronteiras).
+ *
+ * ─── O que foi CORTADO ────────────────────────────────────────────────────
+ * · Os 3 ícones vetoriais de terceiro (Play, ShoppingCart, Loader) e 4 PNGs.
+ * · **O quadrado de 40px atrás de cada ícone** — ícone nunca dentro de box
+ *   (regra do dono). O ícone fica pelado; o alvo de 44px é da LINHA.
+ * · **A roda de carregamento** e o `@keyframes` inline que a movia. Botão que
+ *   está trabalhando DIZ que está trabalhando; um disco girando não informa
+ *   nada que a palavra não informe, e custava uma animação por modal.
+ * · **O overlay de confirmação do reroll.** Ação destrutiva continua exigindo
+ *   confirmação — mas ela acontece NA LINHA, sem uma segunda camada por cima
+ *   de um modal que já é uma camada.
+ * · O parágrafo que explicava o que são Créditos: a tela inteira é isso.
  */
+
 interface CreditsModalProps {
   language: Language;
   credits: number;
@@ -40,18 +53,17 @@ export function CreditsModal({
   onWatchAd, onBuyPack, onInstantHeal, onReroll, onClose,
 }: CreditsModalProps) {
   const isPt = language === 'pt-BR';
-  const [adLoading, setAdLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [packLoading, setPackLoading] = useState<string | null>(null);
-  const [rerollLoading, setRerollLoading] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [confirmingReroll, setConfirmingReroll] = useState(false);
 
   // Quantos anúncios ainda cabem hoje — vem do SERVIDOR (o cap que vale é o
   // dele). Enquanto não chega, assume o cheio só pra não piscar desabilitado.
   const [adsLeft, setAdsLeft] = useState(AD_DAILY_CAP);
   // O anúncio recompensado só aparece quando o servidor confirma que a
-  // verificação do AdMob está ligada — senão seria um botão que dá crédito
-  // sem anúncio nenhum. Começa escondido e só aparece se o servidor liberar.
+  // verificação do AdMob está ligada — senão seria um botão que dá crédito sem
+  // anúncio nenhum. Começa escondido e só aparece se o servidor liberar (é
+  // também o comportamento certo offline: some, em vez de prometer e falhar).
   const [adsEnabled, setAdsEnabled] = useState(false);
   useEffect(() => {
     let cancelled = false;
@@ -67,234 +79,183 @@ export function CreditsModal({
   const canHeal = credits >= HEART_COST_CREDITS && healthPoints < maxHealthPoints;
   const canAffordReroll = credits >= REROLL_COST_CREDITS;
 
-  const flash = (msg: string) => { setMessage(msg); setTimeout(() => setMessage(null), 3200); };
-
-  const handleWatchAd = async () => {
-    if (adLoading || adsLeft === 0) return;
-    setAdLoading(true);
-    const ok = await onWatchAd();
-    setAdLoading(false);
-    if (ok) setAdsLeft(n => Math.max(0, n - 1));
-    flash(ok
-      ? (isPt ? `+${AD_REWARD_CREDITS} créditos!` : `+${AD_REWARD_CREDITS} credits!`)
-      : (isPt ? 'Limite diário de anúncios atingido.' : 'Daily ad limit reached.'));
+  const flash = (text: string, ok: boolean) => {
+    setMessage({ text, ok });
+    setTimeout(() => setMessage(null), 3200);
   };
 
-  const handleBuyPack = async (pack: CreditPack) => {
-    if (!billingAvailable) {
-      flash(isPt
-        ? 'Compras só no app Android (Google Play).'
-        : 'Purchases are only available in the Android app (Google Play).');
-      return;
-    }
-    setPackLoading(pack.id);
-    const ok = await onBuyPack(pack);
-    setPackLoading(null);
-    flash(ok
-      ? (isPt ? `+${pack.credits} créditos!` : `+${pack.credits} credits!`)
-      : (isPt ? 'Compra não concluída.' : 'Purchase not completed.'));
-  };
-
-  const handleHeal = async () => {
-    const ok = await onInstantHeal();
-    flash(ok
-      ? (isPt ? '+1 coração curado!' : '+1 heart healed!')
-      : (isPt ? 'Não foi possível curar agora.' : 'Could not heal right now.'));
-  };
-
-  const handleRerollConfirm = async () => {
-    setConfirmingReroll(false);
-    setRerollLoading(true);
-    // try/finally: sem ele, uma exceção deixava o botão preso em "carregando"
-    // para sempre — e como o reroll custa Créditos (dinheiro real), a pessoa
-    // ficava olhando um spinner sem saber se pagou ou não.
+  /** Toda ação que fala com o servidor passa por aqui: um só dono do estado
+   *  "trabalhando", e `finally` sempre — sem ele uma exceção deixava o botão
+   *  preso para sempre numa tela que cobra dinheiro real. */
+  const run = async (key: string, fn: () => Promise<boolean>, okMsg: string, failMsg: string) => {
+    if (busy) return;
+    setBusy(key);
     let ok = false;
-    try {
-      ok = await onReroll();
-    } finally {
-      setRerollLoading(false);
-    }
-    flash(ok
-      ? (isPt ? 'Novo personagem gerado — você voltou pra Rookie!' : 'New character generated — back to Rookie!')
-      : (isPt ? 'Não foi possível fazer o reroll agora.' : 'Could not reroll right now.'));
+    try { ok = await fn(); } finally { setBusy(null); }
+    flash(ok ? okMsg : failMsg, ok);
+    return ok;
   };
+
+  /** Uma linha de ação. O ícone é pelado; a LINHA inteira é o alvo de 44px+. */
+  const Row = ({ icon, tone, title, hint, disabled, onClick }: {
+    icon: string;
+    tone: 'primary' | 'gold' | 'danger' | 'muted';
+    title: string;
+    hint: string;
+    disabled?: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14, width: '100%',
+        minHeight: 64, padding: 12, borderRadius: 16, textAlign: 'left',
+        border: '1px solid transparent', backgroundColor: 'var(--sm2-surface-2)',
+        cursor: disabled ? 'default' : 'pointer',
+        opacity: disabled ? 0.55 : 1,
+      }}
+    >
+      <Icon name={icon} size={26} tone={disabled ? 'muted' : tone} />
+      <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <span style={{ ...sm2Text, fontWeight: 500 }}>{title}</span>
+        <span style={sm2Hint}>{hint}</span>
+      </span>
+    </button>
+  );
 
   const sectionTitle = (text: string) => (
-    <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--sm-muted)', letterSpacing: '0.04em', textTransform: 'uppercase', margin: '4px 0 8px' }}>
-      {text}
-    </p>
+    <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginTop: 4 }}>{text}</h2>
   );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4, 18, 20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-      <div className="sm-card" style={{ backgroundColor: 'var(--sm-bg)', width: '100%', maxWidth: 420, maxHeight: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
-          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>
-            {isPt ? 'Créditos' : 'Credits'}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="sm-card" style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px' }}>
-              <img src={iconGem} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--sm-ink)' }}>{credits}</span>
-            </span>
-            <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}>
-              <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            </button>
-          </div>
+    <ModalSheet
+      open
+      title={isPt ? 'Créditos' : 'Credits'}
+      onClose={onClose}
+      language={language}
+      footer={
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon name="diamond" size={22} tone="primary" label={isPt ? 'Créditos' : 'Credits'} />
+          <span className="sm2-num" style={{ ...sm2Text, fontWeight: 500 }}>{credits}</span>
         </div>
+      }
+    >
+      {/* Estado da última ação — sempre no DOM, para o leitor de tela anunciar. */}
+      <p
+        role="status"
+        aria-live="polite"
+        style={{
+          ...sm2Hint, minHeight: 18, margin: 0,
+          color: message ? (message.ok ? 'var(--sm2-primary-ink)' : 'var(--sm2-danger-ink)') : 'var(--sm2-muted)',
+        }}
+      >
+        {message?.text ?? (billingAvailable
+          ? ''
+          : (isPt ? 'Compras só no app Android (Google Play).' : 'Purchases are only available in the Android app (Google Play).'))}
+      </p>
 
-        {/* Content */}
-        <div style={{ overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p style={{ fontSize: '0.76rem', color: 'var(--sm-muted)', lineHeight: 1.5, margin: '0 0 4px' }}>
+      {sectionTitle(isPt ? 'Ganhar' : 'Earn')}
+
+      {adsEnabled && (
+        <Row
+          icon="play_arrow"
+          tone="primary"
+          disabled={busy === 'ad' || adsLeft === 0}
+          onClick={() => run('ad', onWatchAd,
+            isPt ? `+${AD_REWARD_CREDITS} créditos.` : `+${AD_REWARD_CREDITS} credits.`,
+            isPt ? 'Limite diário de anúncios atingido.' : 'Daily ad limit reached.')
+            .then(ok => { if (ok) setAdsLeft(n => Math.max(0, n - 1)); })}
+          title={isPt ? `Assistir anúncio (+${AD_REWARD_CREDITS})` : `Watch ad (+${AD_REWARD_CREDITS})`}
+          hint={busy === 'ad'
+            ? (isPt ? 'Carregando anúncio…' : 'Loading ad…')
+            : adsLeft === 0
+              ? (isPt ? 'Limite de hoje atingido — volte amanhã.' : 'Today\'s limit reached — come back tomorrow.')
+              : (isPt ? `${adsLeft} de ${AD_DAILY_CAP} restantes hoje` : `${adsLeft} of ${AD_DAILY_CAP} left today`)}
+        />
+      )}
+
+      {CREDIT_PACKS.map(pack => (
+        <Row
+          key={pack.id}
+          icon="diamond"
+          tone="primary"
+          disabled={busy !== null || !billingAvailable}
+          onClick={() => run(pack.id, () => onBuyPack(pack),
+            isPt ? `+${pack.credits} créditos.` : `+${pack.credits} credits.`,
+            isPt ? 'Compra não concluída.' : 'Purchase not completed.')}
+          title={`${pack.credits} ${isPt ? 'Créditos' : 'Credits'}`}
+          hint={busy === pack.id ? (isPt ? 'Processando…' : 'Processing…') : pack.priceLabel}
+        />
+      ))}
+
+      {sectionTitle(isPt ? 'Gastar' : 'Spend')}
+
+      <Row
+        icon="favorite"
+        tone="danger"
+        disabled={!canHeal || busy !== null}
+        onClick={() => run('heal', onInstantHeal,
+          isPt ? '+1 coração curado.' : '+1 heart healed.',
+          isPt ? 'Não foi possível curar agora.' : 'Could not heal right now.')}
+        title={isPt ? 'Curar 1 coração agora' : 'Heal 1 heart now'}
+        hint={healthPoints >= maxHealthPoints
+          ? (isPt ? 'Coração já está cheio.' : 'Heart is already full.')
+          : (isPt ? `${HEART_COST_CREDITS} créditos` : `${HEART_COST_CREDITS} credits`)}
+      />
+
+      {accountTier === 'paid' && canReroll && !confirmingReroll && (
+        <Row
+          icon="replay"
+          tone="gold"
+          disabled={!canAffordReroll || busy !== null}
+          onClick={() => setConfirmingReroll(true)}
+          title={isPt ? 'Reroll de personagem' : 'Character reroll'}
+          hint={isPt
+            ? `${REROLL_COST_CREDITS} créditos — volta pra Rookie com um Soulmon novo`
+            : `${REROLL_COST_CREDITS} credits — resets to Rookie with a brand-new Soulmon`}
+        />
+      )}
+
+      {/* Confirmação NA LINHA: ação destrutiva continua confirmada, sem abrir
+          uma segunda camada por cima de uma camada. */}
+      {confirmingReroll && (
+        <div style={{ padding: 12, borderRadius: 16, backgroundColor: 'var(--sm2-surface-2)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ ...sm2Text, margin: 0, display: 'flex', gap: 10 }}>
+            <Icon name="warning" size={22} tone="danger" />
             {isPt
-              ? 'Moeda premium (separada dos Bits dos minijogos) — reroll de personagem, cura instantânea e ajuda extra na loja.'
-              : "Premium currency (separate from minigame Bits) — character reroll, instant healing, and extra help in the shop."}
+              ? `Troca seu Soulmon por um NOVO e reseta a evolução pra Rookie. Atividades, tarefas e Bits continuam. Custa ${REROLL_COST_CREDITS} créditos.`
+              : `Swaps your Soulmon for a brand-new one and resets evolution to Rookie. Activities, tasks and Bits stay. Costs ${REROLL_COST_CREDITS} credits.`}
           </p>
-
-          {message && (
-            <div className="sm-card" style={{ padding: '8px 12px', backgroundColor: 'var(--sm-primary-soft)', border: 'none', ['--sm-cham-line' as string]: 'transparent' } as CSSProperties}>
-              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--sm-primary)', fontWeight: 600 }}>{message}</p>
-            </div>
-          )}
-
-          {/* Ganhar créditos */}
-          {sectionTitle(isPt ? 'Ganhar créditos' : 'Earn credits')}
-
-          {adsEnabled && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" style={{ ...sm2Button('ghost'), flex: 1 }} onClick={() => setConfirmingReroll(false)}>
+              {isPt ? 'Cancelar' : 'Cancel'}
+            </button>
             <button
-              onClick={handleWatchAd}
-              disabled={adLoading || adsLeft === 0}
-              className="sm-card"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: 12, width: '100%', textAlign: 'left',
-                cursor: adsLeft === 0 ? 'default' : 'pointer', opacity: adsLeft === 0 ? 0.55 : 1, border: 'none',
+              type="button"
+              style={{ ...sm2Button('primary', busy === 'reroll'), flex: 1 }}
+              disabled={busy === 'reroll'}
+              onClick={() => {
+                setConfirmingReroll(false);
+                void run('reroll', onReroll,
+                  isPt ? 'Novo personagem gerado — você voltou pra Rookie.' : 'New character generated — back to Rookie.',
+                  isPt ? 'Não foi possível fazer o reroll agora.' : 'Could not reroll right now.');
               }}
             >
-              <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {adLoading ? <LoaderIcon size={18} strokeWidth={2.2} style={{ animation: 'creditspin 1s linear infinite' }} /> : <Play size={18} strokeWidth={2.2} color="var(--sm-primary)" />}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>
-                  {isPt ? `Assistir anúncio (+${AD_REWARD_CREDITS})` : `Watch ad (+${AD_REWARD_CREDITS})`}
-                </p>
-                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--sm-muted)' }}>
-                  {adLoading
-                    ? (isPt ? 'Carregando anúncio…' : 'Loading ad…')
-                    : adsLeft === 0
-                      ? (isPt ? 'Limite diário atingido — volte amanhã.' : 'Daily limit reached — come back tomorrow.')
-                      : (isPt ? `${adsLeft} de ${AD_DAILY_CAP} restantes hoje` : `${adsLeft} of ${AD_DAILY_CAP} left today`)}
-                </p>
-              </div>
+              {busy === 'reroll' ? (isPt ? 'Gerando…' : 'Generating…') : (isPt ? 'Sim, fazer reroll' : 'Yes, reroll')}
             </button>
-          )}
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {CREDIT_PACKS.map(pack => (
-              <div key={pack.id} className="sm-card" style={{ padding: 10, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <ShoppingCart size={17} strokeWidth={2.2} color="var(--sm-muted)" />
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <img src={iconGem} alt="" width={15} height={15} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> {pack.credits}
-                  </p>
-                  <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--sm-muted)' }}>{pack.priceLabel}</p>
-                </div>
-                <button
-                  onClick={() => handleBuyPack(pack)}
-                  disabled={packLoading === pack.id}
-                  className="sm-btn sm-btn-secondary"
-                  style={{ padding: '6px 12px', fontSize: '0.72rem', flexShrink: 0 }}
-                >
-                  {packLoading === pack.id
-                    ? <LoaderIcon size={14} strokeWidth={2.4} style={{ animation: 'creditspin 1s linear infinite' }} />
-                    : (isPt ? 'Comprar' : 'Buy')}
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Gastar créditos */}
-          {sectionTitle(isPt ? 'Gastar créditos' : 'Spend credits')}
-
-          <button
-            onClick={handleHeal}
-            disabled={!canHeal}
-            className="sm-card"
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, width: '100%', textAlign: 'left', border: 'none', cursor: canHeal ? 'pointer' : 'default', opacity: canHeal ? 1 : 0.55 }}
-          >
-            <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <img src={iconHeart} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>
-                {isPt ? 'Curar 1 coração agora' : 'Heal 1 heart now'}
-              </p>
-              <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--sm-muted)' }}>
-                {healthPoints >= maxHealthPoints
-                  ? (isPt ? 'Coração já está cheio.' : 'Heart is already full.')
-                  : (isPt ? `Custa ${HEART_COST_CREDITS} créditos` : `Costs ${HEART_COST_CREDITS} credits`)}
-              </p>
-            </div>
-          </button>
-
-          {accountTier === 'paid' && canReroll && (
-            <button
-              onClick={() => setConfirmingReroll(true)}
-              disabled={!canAffordReroll || rerollLoading}
-              className="sm-card"
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12, width: '100%', textAlign: 'left', border: 'none', cursor: canAffordReroll ? 'pointer' : 'default', opacity: canAffordReroll ? 1 : 0.55 }}
-            >
-              <span style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {rerollLoading ? <LoaderIcon size={18} strokeWidth={2.2} style={{ animation: 'creditspin 1s linear infinite' }} /> : <img src={iconReset} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.85rem', color: 'var(--sm-ink)' }}>
-                  {isPt ? 'Reroll de personagem' : 'Character reroll'}
-                </p>
-                <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--sm-muted)' }}>
-                  {isPt ? `Custa ${REROLL_COST_CREDITS} créditos — volta pra Rookie com um Soulmon novo` : `Costs ${REROLL_COST_CREDITS} credits — resets to Rookie with a brand-new Soulmon`}
-                </p>
-              </div>
-            </button>
-          )}
-
-          {accountTier === 'demo' && (
-            <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', textAlign: 'center', margin: '4px 0 0', lineHeight: 1.5 }}>
-              {isPt
-                ? `Reroll é exclusivo de contas completas — desbloqueie por ${FULL_UNLOCK_PRICE_LABEL}.`
-                : `Reroll is exclusive to unlocked accounts — unlock for ${FULL_UNLOCK_PRICE_LABEL}.`}
-            </p>
-          )}
-        </div>
-
-        <style>{`@keyframes creditspin{to{transform:rotate(360deg)}}`}</style>
-      </div>
-
-      {/* Confirmação de reroll — ação destrutiva (reseta evolução pro Rookie) */}
-      {confirmingReroll && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" style={{ zIndex: 130 }}>
-          <div className="sm-card p-6 max-w-sm w-full">
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--sm-ink)', marginBottom: 16 }}>
-              {isPt ? '⚠️ Confirmar reroll' : '⚠️ Confirm reroll'}
-            </h3>
-            <p style={{ color: 'var(--sm-muted)', fontSize: '0.875rem', marginBottom: 24 }}>
-              {isPt
-                ? `Isso troca seu Soulmon por um personagem NOVO e reseta sua evolução pra Rookie. Suas atividades, tarefas e Bits continuam. Custa ${REROLL_COST_CREDITS} créditos. Continuar?`
-                : `This swaps your Soulmon for a brand-new character and resets your evolution to Rookie. Your activities, tasks, and Bits stay. Costs ${REROLL_COST_CREDITS} credits. Continue?`}
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmingReroll(false)} className="sm-btn sm-btn-secondary flex-1">
-                {isPt ? 'Cancelar' : 'Cancel'}
-              </button>
-              <button onClick={handleRerollConfirm} className="sm-btn flex-1">
-                {isPt ? 'Sim, fazer reroll' : 'Yes, reroll'}
-              </button>
-            </div>
           </div>
         </div>
       )}
-    </div>
+
+      {accountTier === 'demo' && (
+        <p style={{ ...sm2Hint, textAlign: 'center' }}>
+          {isPt
+            ? `Reroll é exclusivo de contas completas — desbloqueie por ${FULL_UNLOCK_PRICE_LABEL}.`
+            : `Reroll is exclusive to unlocked accounts — unlock for ${FULL_UNLOCK_PRICE_LABEL}.`}
+        </p>
+      )}
+    </ModalSheet>
   );
 }

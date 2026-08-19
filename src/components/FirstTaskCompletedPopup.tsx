@@ -1,4 +1,4 @@
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
 
 interface FirstTaskCompletedPopupProps {
   isOpen: boolean;
@@ -8,9 +8,11 @@ interface FirstTaskCompletedPopupProps {
 
 /**
  * Aparece na PRIMEIRA tarefa concluída na vida do jogador — o maior momento de
- * reforço positivo do produto. Antes ele era em inglês e, em vez de celebrar,
- * emitia uma condição ("complete TODAS as atividades do dia"), que além de tudo
- * era falsa: a meta é min(cadastradas, requisito).
+ * reforço positivo do produto.
+ *
+ * Uma frase e UM botão. O que foi cortado: a segunda frase explicativa (a
+ * pessoa acabou de fazer a coisa; explicar a mecânica agora é roubar a
+ * comemoração dela) e o X próprio (o `ModalSheet` já traz um, acessível).
  */
 export function FirstTaskCompletedPopup({
   isOpen,
@@ -19,63 +21,25 @@ export function FirstTaskCompletedPopup({
 }: FirstTaskCompletedPopupProps) {
   const isPt = language === 'pt-BR';
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl p-6 shadow-2xl sm-card">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 p-2 rounded-lg transition-all"
-          style={{ color: 'var(--sm-muted)' }}
-          aria-label={isPt ? 'Fechar' : 'Close'}
-        >
-          <img src={iconClose} alt="" width={20} height={20} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+    <ModalSheet
+      open={isOpen}
+      onClose={onClose}
+      language={language}
+      title={isPt ? 'Primeira tarefa feita!' : 'First task done!'}
+      maxWidth={420}
+      footer={
+        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+          {isPt ? 'Entendi' : 'Got it'}
         </button>
-
-        {/* Content */}
-        <div className="space-y-4">
-          {/* Icon */}
-          <div className="text-center">
-            <span className="text-5xl">🌱</span>
-          </div>
-
-          {/* Title */}
-          <h2
-            className="text-center"
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--sm-ink)' }}
-          >
-            {isPt ? 'Primeira tarefa feita!' : 'First task done!'}
-          </h2>
-
-          {/* Message */}
-          <p
-            className="text-center leading-relaxed"
-            style={{ fontFamily: 'Consolas, monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
-          >
-            {isPt
-              ? 'Ele cresceu um pouquinho agora. É assim mesmo: uma coisa de cada vez, no seu ritmo.'
-              : 'It grew a little just now. That’s how it works — one thing at a time, at your pace.'}
-          </p>
-
-          {/* Button */}
-          <button
-            onClick={onClose}
-            className="sm-btn w-full"
-            style={{ fontFamily: 'Consolas, monospace' }}
-          >
-            {isPt ? 'Entendi' : 'Got it'}
-          </button>
-        </div>
-      </div>
-    </div>
+      }
+    >
+      <div style={{ textAlign: 'center', fontSize: 56, lineHeight: 1 }} aria-hidden="true">🌱</div>
+      <p style={{ ...sm2Text, textAlign: 'center', margin: 0 }}>
+        {isPt
+          ? 'Ele cresceu um pouquinho agora. Uma coisa de cada vez, no seu ritmo.'
+          : 'It grew a little just now. One thing at a time, at your pace.'}
+      </p>
+    </ModalSheet>
   );
 }

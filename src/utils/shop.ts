@@ -1,25 +1,12 @@
 // 🛒 Shop catalog — bought with minigame points (gamePoints).
 // Effects are applied in App.tsx (handleShopBuy); see docs/SHOP-PLAN.md.
-import type { ComponentType } from 'react';
-import { Heart, Sofa, Lamp, Armchair, BookOpen, Flower2, PawPrint, Trophy, Flag, Medal, Award, Image, Flame, Tent, Mountain } from 'lucide-react';
-import { PowerIcon, HarmonyIcon, BenevolenceIcon } from '../components/AlignmentIcons';
 import type { SlotId, DecorFit } from './petStage';
-// Arte EMOLDURADA do kit para os poucos itens que não têm arte própria.
-// Mobílias já vêm de `utils/decorArt.ts` e cenários da própria prévia CSS —
-// então isto cobre só os 3 chips e o coraçãozinho, que caíam no ícone
-// vetorial line-art (o forasteiro que o G4 aponta) ou no emoji.
-import { ATTR_ICON } from '../types/attributes';
-import iconPotion from '../assets/soulmon/icons/icon-potion.png';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
 /** Moeda que compra o item. Ausente = Bits (o padrão da loja). */
 export type ShopCurrency = 'bits' | 'emblems';
 export type Attr = 'virus' | 'data' | 'vaccine';
-
-/** Componente de ícone pro visual da loja — aceita tanto ícones lucide quanto
- *  os ícones de alinhamento (AlignmentIcons.tsx), mesma assinatura de props. */
-export type ShopIconComponent = ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
 
 /**
  * Purchase gate. Locked items still show in the shop — darkened, with a
@@ -32,15 +19,13 @@ export interface ShopItem {
   id: string;
   kind: ShopItemKind;
   /** Emoji — identidade do item no inventário (chip/heart usam isso como
-   *  CHAVE em foodInventory, ver App.tsx handleShopBuy/handleFeed). NUNCA
-   *  trocar por um componente — só o visual da loja usa displayIcon. */
+   *  CHAVE em foodInventory, ver App.tsx handleShopBuy/handleFeed), e também
+   *  o que a loja DESENHA nos consumíveis: item da pastinha é CONTEÚDO, não
+   *  ícone de sistema. Cenário desenha a prévia CSS (utils/backgrounds.ts) e
+   *  decoração desenha a arte pixel (utils/decorArt.ts) — por isso nenhum
+   *  item precisa de ícone vetorial, e os 15 símbolos de terceiro que moravam
+   *  aqui (`displayIcon`) saíram sem substituto: eram ícone decorativo. */
   icon: string;
-  /** LEGADO: ícone vetorial lucide. Continua no modelo porque `PetStageDecor`
-   *  e o palco ainda o consomem; a LOJA não desenha mais a partir dele. */
-  displayIcon?: ShopIconComponent;
-  /** Arte emoldurada do kit — é isto que a loja desenha quando o item não tem
-   *  arte própria (decoração) nem prévia (cenário). */
-  iconImg?: string;
   namePt: string;
   nameEn: string;
   descPt: string;
@@ -122,18 +107,18 @@ export const SHOP_ITEMS: ShopItem[] = [
   // raise the attribute, no energy). They steer the evolution branch. Nomes
   // e ícones seguem os 3 atributos do oráculo (ver EvolutionPath.tsx /
   // AlignmentIcons.tsx) — Poder/Harmonia/Benevolência, não mais Vírus/Dado/Vacina.
-  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, displayIcon: PowerIcon, iconImg: ATTR_ICON.virus, attr: 'virus',
+  { id: 'chip-virus',   kind: 'chip', icon: CHIP_EMOJI.virus, attr: 'virus',
     namePt: 'Chip de Poder',  nameEn: 'Power Chip',
     descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Poder`, descEn: `Goes to Items; use for +${CHIP_BOOST} Power`, price: 120 },
-  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, displayIcon: HarmonyIcon, iconImg: ATTR_ICON.data, attr: 'data',
+  { id: 'chip-data',    kind: 'chip', icon: CHIP_EMOJI.data, attr: 'data',
     namePt: 'Chip de Harmonia',   nameEn: 'Harmony Chip',
     descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Harmonia`, descEn: `Goes to Items; use for +${CHIP_BOOST} Harmony`, price: 120 },
-  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, displayIcon: BenevolenceIcon, iconImg: ATTR_ICON.vaccine, attr: 'vaccine',
+  { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, attr: 'vaccine',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
     descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Benevolência`, descEn: `Goes to Items; use for +${CHIP_BOOST} Benevolence`, price: 120 },
   // Heart item — the ONLY buyable HP heal. Goes to the Items folder; using it
   // restores a heart. Also drops (rarely) in the dungeon.
-  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI, displayIcon: Heart, iconImg: iconPotion,
+  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI,
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
     descPt: `Vai pra pastinha; usar cura ${HEART_HEAL} coração`, descEn: `Goes to Items; use to heal ${HEART_HEAL} heart`, price: 150 },
   // (Glitchtama is deliberately NOT sold — the only way to get one is
@@ -143,46 +128,46 @@ export const SHOP_ITEMS: ShopItem[] = [
   // troca o que estava naquele espaço, nunca empilha.
   //
   // INTERIORES
-  { id: 'furn-sofa', kind: 'furniture', icon: '🛋️', displayIcon: Sofa,
+  { id: 'furn-sofa', kind: 'furniture', icon: '🛋️',
     slot: 'floor-left', fits: 'indoor',
     namePt: 'Sofá Pixel', nameEn: 'Pixel Sofa',
     descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 100 },
-  { id: 'furn-chair', kind: 'furniture', icon: '🪑', displayIcon: Armchair,
+  { id: 'furn-chair', kind: 'furniture', icon: '🪑',
     slot: 'floor-left', fits: 'indoor',
     namePt: 'Poltrona', nameEn: 'Armchair',
     descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 120 },
-  { id: 'furn-books', kind: 'furniture', icon: '📚', displayIcon: BookOpen,
+  { id: 'furn-books', kind: 'furniture', icon: '📚',
     slot: 'floor-left', fits: 'indoor',
     namePt: 'Estante de Livros', nameEn: 'Bookshelf',
     descPt: 'Ocupa o canto esquerdo — só em cenários de interior', descEn: 'Takes the left corner — indoor scenes only', price: 120 },
-  { id: 'furn-lamp', kind: 'furniture', icon: '💡', displayIcon: Lamp,
+  { id: 'furn-lamp', kind: 'furniture', icon: '💡',
     slot: 'floor-right', fits: 'indoor',
     namePt: 'Luminária', nameEn: 'Lamp',
     descPt: 'Ocupa o canto direito — só em cenários de interior', descEn: 'Takes the right corner — indoor scenes only', price: 100 },
-  { id: 'furn-rug', kind: 'furniture', icon: '🐾', displayIcon: PawPrint,
+  { id: 'furn-rug', kind: 'furniture', icon: '🐾',
     slot: 'rug', fits: 'indoor',
     namePt: 'Tapete de Patinhas', nameEn: 'Paw Print Rug',
     descPt: 'Fica no chão, no centro — o pet anda por cima', descEn: 'Lies on the floor, centered — the pet walks over it', price: 140 },
   // QUALQUER CENÁRIO
-  { id: 'furn-plant', kind: 'furniture', icon: '🪴', displayIcon: Flower2,
+  { id: 'furn-plant', kind: 'furniture', icon: '🪴',
     slot: 'floor-right', fits: 'any',
     namePt: 'Vaso de Planta', nameEn: 'Potted Plant',
     descPt: 'Ocupa o canto direito — combina com qualquer cenário', descEn: 'Takes the right corner — fits any scene', price: 100 },
-  { id: 'furn-picture', kind: 'furniture', icon: '🖼️', displayIcon: Image,
+  { id: 'furn-picture', kind: 'furniture', icon: '🖼️',
     slot: 'wall', fits: 'any',
     namePt: 'Quadro do Soulmon', nameEn: 'Soulmon Portrait',
     descPt: 'Pendurado acima do pet — em cenários que tenham onde pendurar', descEn: 'Hangs above the pet — in scenes with somewhere to hang it', price: 130 },
   // EXTERIORES — o pet passa a maior parte do tempo em cenários abertos, e até
   // aqui não havia UM elemento pensado para eles (só móvel de sala).
-  { id: 'furn-campfire', kind: 'furniture', icon: '🔥', displayIcon: Flame,
+  { id: 'furn-campfire', kind: 'furniture', icon: '🔥',
     slot: 'floor-left', fits: 'outdoor',
     namePt: 'Fogueira', nameEn: 'Campfire',
     descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 120 },
-  { id: 'furn-tent', kind: 'furniture', icon: '⛺', displayIcon: Tent,
+  { id: 'furn-tent', kind: 'furniture', icon: '⛺',
     slot: 'floor-left', fits: 'outdoor',
     namePt: 'Barraca', nameEn: 'Tent',
     descPt: 'Ocupa o canto esquerdo — só em cenários abertos', descEn: 'Takes the left corner — outdoor scenes only', price: 140 },
-  { id: 'furn-rock', kind: 'furniture', icon: '🪨', displayIcon: Mountain,
+  { id: 'furn-rock', kind: 'furniture', icon: '🪨',
     slot: 'floor-right', fits: 'outdoor',
     namePt: 'Pedra Musgosa', nameEn: 'Mossy Rock',
     descPt: 'Ocupa o canto direito — só em cenários abertos', descEn: 'Takes the right corner — outdoor scenes only', price: 100 },
@@ -272,17 +257,17 @@ export const SHOP_ITEMS: ShopItem[] = [
  * em ~5 vitórias e o último em ~23.
  */
 export const TOURNAMENT_ITEMS: ShopItem[] = [
-  { id: 'furniture-champion-banner', kind: 'furniture', icon: '🎌', displayIcon: Flag, currency: 'emblems',
+  { id: 'furniture-champion-banner', kind: 'furniture', icon: '🎌', currency: 'emblems',
     slot: 'wall', fits: 'any',
     namePt: 'Estandarte do Campeão', nameEn: "Champion's Banner",
     descPt: 'Pendurado acima do pet, em qualquer cenário', descEn: 'Hangs above the pet, in any scene',
     price: 15 },
-  { id: 'furniture-medal-wall', kind: 'furniture', icon: '🏅', displayIcon: Medal, currency: 'emblems',
+  { id: 'furniture-medal-wall', kind: 'furniture', icon: '🏅', currency: 'emblems',
     slot: 'wall', fits: 'any',
     namePt: 'Mural de Medalhas', nameEn: 'Medal Wall',
     descPt: 'Uma medalha para cada luta que valeu a pena', descEn: 'One medal for every fight worth having',
     price: 20 },
-  { id: 'furniture-trophy-shelf', kind: 'furniture', icon: '🏆', displayIcon: Trophy, currency: 'emblems',
+  { id: 'furniture-trophy-shelf', kind: 'furniture', icon: '🏆', currency: 'emblems',
     slot: 'trophy', fits: 'any',
     namePt: 'Estante de Troféus', nameEn: 'Trophy Shelf',
     descPt: 'Vitrine — exibe os troféus que você ganhou de verdade', descEn: 'Display case — shows the trophies you actually won',
@@ -291,7 +276,7 @@ export const TOURNAMENT_ITEMS: ShopItem[] = [
     namePt: 'Arena dos Campeões', nameEn: "Champions' Arena",
     descPt: 'O cenário de quem já subiu ao pódio', descEn: 'The backdrop of those who reached the podium',
     price: 40 },
-  { id: 'furniture-podium', kind: 'furniture', icon: '🥇', displayIcon: Award, currency: 'emblems',
+  { id: 'furniture-podium', kind: 'furniture', icon: '🥇', currency: 'emblems',
     slot: 'trophy', fits: 'any',
     namePt: 'Pódio', nameEn: 'Podium',
     descPt: 'Vitrine — exibe os troféus que você ganhou de verdade', descEn: 'Display case — shows the trophies you actually won',

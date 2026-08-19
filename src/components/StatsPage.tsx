@@ -1,12 +1,44 @@
-import { ActivityCategory, ATTR_ICON, ATTR_INK, ATTR_LABEL } from '../types/attributes';
+/**
+ * ESTATÍSTICAS — a tela que deixou de ser uma parede de números.
+ * ==============================================================
+ *
+ * A lição do Pokémon Sleep aplicada literalmente: ele não mostra o hipnograma,
+ * mostra TRÊS PALAVRAS. Esta tela fazia o contrário — 13 números simultâneos
+ * (XP, Bits, 3 atributos, 5 contadores de jornada, e depois três tabelas de
+ * contagem), e a pergunta "o usuário DECIDE alguma coisa com este número?"
+ * respondia "não" em quase todos.
+ *
+ * O que ficou, e por quê:
+ *
+ *  · **Nível de Vínculo** (`utils/bond.ts`) é a ÚNICA leitura grande. Ele é o
+ *    dono legítimo do `totalXP`, que antes aparecia cru aqui e não governava
+ *    nada (a evolução é por `perfectDays`). Um número solto sem dono é ruído;
+ *    ligado ao Vínculo ele vira uma PALAVRA — o título ("Companheiro") — com
+ *    uma barra embaixo. Só a LEITURA foi ligada: nenhuma regra nova, nenhum
+ *    campo novo no save, e nada disto entra na home (a home tem orçamento
+ *    próprio de leituras — PLANO-DESIGN §5.1).
+ *  · **Traço de nascimento e ritmo de cuidado**: já eram palavras. Ficaram, e
+ *    os emojis-de-sistema viraram `<Icon>`.
+ *  · **Dias perfeitos**: o único contador que governa alguma coisa (evolução).
+ *    Fica, com `tabular-nums`.
+ *  · **A jornada** (kills, runs, recorde do Dino, itens raros): virou FRASE.
+ *    Ninguém decide nada com "Runs concluídas: 3" numa grade de cinco caixas;
+ *    dentro de uma sentença os mesmos fatos leem como memória, que é o que
+ *    eles são.
+ *  · **Atributos (Poder/Harmonia/Benevolência)**: SAÍRAM. A casa deles é a
+ *    página de Evolução, onde a pessoa está justamente decidindo o galho.
+ *  · **As três tabelas de contagem** viraram DUAS listas: o que você mais
+ *    repete (top 5) e as últimas conclusões. Atividade e tarefa eram duas
+ *    tabelas com o mesmo desenho, uma embaixo da outra.
+ */
+import { useMemo } from 'react';
+import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import type { CarePattern } from '../utils/carePattern';
-import { PixelTag } from './pixel/PixelKit';
-import { useTheme } from '../contexts/ThemeContext';
-import { bitsStyle, bitsStyleLight } from '../utils/currencies';
-import iconBolt from '../assets/soulmon/icons/icon-bolt.png';
-import iconStar from '../assets/soulmon/icons/icon-star.png';
+import { bondProgress, bondTitle } from '../utils/bond';
+import { Icon } from './ui/Icon';
+import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 
 interface CompletedTask {
   id: string;
@@ -29,9 +61,12 @@ interface StatsPageProps {
   completedTasks: CompletedTask[];
   activityStats: ActivityStats;
   language?: Language;
+  /** Bits. Mora na Loja, onde é acionável — não é leitura desta tela. */
   gamePoints?: number;
+  /** Combustível do **Nível de Vínculo** (`utils/bond.ts`). Nunca exibido cru. */
   totalXP?: number;
   streakDays?: number;
+  /** Insumo do galho de evolução: a casa deles é a página de Evolução. */
   virusPoints?: number;
   dataPoints?: number;
   vaccinePoints?: number;
@@ -52,51 +87,78 @@ interface StatsPageProps {
   };
 }
 
+/**
+ * Emoji marcando SEÇÃO é ícone de sistema disfarçado (PLANO-DESIGN §4.11).
+ * O traço e o ritmo são conceitos do app, não escolha da pessoa — viram glifo
+ * da Material Symbols. Todo nome abaixo está no inventário de `tokens.md`;
+ * nome fora dele renderiza VAZIO e não dá erro nenhum.
+ */
+const PASSIVE_ICON: Record<string, string> = {
+  guloso: 'restaurant',
+  carinhoso: 'favorite',
+  teimoso: 'pan_tool',
+  sortudo: 'casino',
+  madrugador: 'wb_sunny',
+};
+const PATTERN_ICON: Record<string, string> = {
+  constante: 'eco',
+  explosivo: 'local_fire_department',
+  equilibrado: 'tune',
+};
+
+/** A superfície do sistema: sem chanfro, sem cobre, sem 9-slice. */
+const card: React.CSSProperties = {
+  backgroundColor: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 12,
+  boxShadow: SM2_SHADOW_CARD,
+  padding: 16,
+};
+
+const sectionTitle: React.CSSProperties = {
+  fontFamily: 'var(--sm2-font-display)',
+  fontSize: 'var(--sm2-text-md)',
+  fontWeight: 600,
+  lineHeight: 'var(--sm2-leading-title)',
+  color: 'var(--sm2-ink)',
+  margin: '0 0 12px',
+};
+
 export function StatsPage({
   completedTasks,
   activityStats,
   language = 'en-US',
-  gamePoints = 0,
   totalXP = 0,
   streakDays = 0,
-  virusPoints = 0,
-  dataPoints = 0,
-  vaccinePoints = 0,
   petPassive,
   carePattern,
   journey,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
   const t = useTranslation(language);
+  const isPt = language === 'pt-BR';
 
-  // Sort activities by completion count
-  const sortedActivityStats = Object.entries(activityStats)
-    .filter(([key]) => key.startsWith('activity-'))
-    .sort((a, b) => b[1].completionCount - a[1].completionCount);
+  /**
+   * O antigo "top de atividades" e "top de tarefas" eram a MESMA tabela
+   * desenhada duas vezes; a distinção `activity-`/`task-` é um detalhe de
+   * chave interna, e ninguém age sobre ela. Uma lista só, os 5 mais repetidos.
+   */
+  const topRepeated = useMemo(
+    () => Object.entries(activityStats)
+      .filter(([, s]) => s.completionCount > 0)
+      .sort((a, b) => b[1].completionCount - a[1].completionCount)
+      .slice(0, 5),
+    [activityStats],
+  );
 
-  // Sort tasks by completion count
-  const sortedTaskStats = Object.entries(activityStats)
-    .filter(([key]) => key.startsWith('task-'))
-    .sort((a, b) => b[1].completionCount - a[1].completionCount);
-
-  // Cores explícitas (não classes Tailwind pré-compiladas): os tons *-600/700
-  // do Tailwind são calibrados para tema claro e ficam ilegíveis (baixo
-  // contraste) sobre --sm-bg escuro (#0e2323). Usamos hex vibrantes o
-  // suficiente para o fundo escuro forçado do app.
-  const getCategoryColor = (category: ActivityCategory) => {
-    switch (category) {
-      case 'Health': return '#ff8a8a';
-      case 'Study': return '#7cb0ff';
-      case 'Social': return '#4ade80';
-      case 'Creativity': return 'var(--sm-primary)';
-      default: return 'var(--sm-muted)';
-    }
-  };
+  const recent = useMemo(
+    () => completedTasks.slice(-10).reverse(),
+    [completedTasks],
+  );
 
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    const diffMs = Date.now() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
@@ -109,307 +171,222 @@ export function StatsPage({
     return date.toLocaleDateString(language, { day: '2-digit', month: 'short' });
   };
 
-  const isPt = language === 'pt-BR';
-  const { resolvedTheme } = useTheme();
+  // ── Vínculo: a única leitura grande da tela. Derivado, nunca persistido. ──
+  const bond = bondProgress(totalXP);
+  const title = bondTitle(bond.level, language);
+  const pct = Math.round(bond.ratio * 100);
 
-  // Cartão de identidade/ritmo: mesmo visual para traço e padrão de cuidado.
-  const traitCard = (emoji: string, title: string, desc: string) => (
-    <div
-      key={title}
-      style={{
-        display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 14px',
-        backgroundColor: 'var(--sm-bg)',
-        border: '1px solid color-mix(in srgb, var(--sm-px-copper) 40%, transparent)',
-      }}
-    >
-      <span style={{ fontSize: 26, lineHeight: 1 }}>{emoji}</span>
+  // ── A jornada em FRASE. Só entra o que realmente aconteceu: uma sentença
+  //    que enumera zeros é uma sentença que cobra. ──
+  const feitos: string[] = [];
+  if ((journey?.dungeonRunsCompleted ?? 0) > 0) {
+    const n = journey!.dungeonRunsCompleted!;
+    feitos.push(isPt ? `limparam ${n} run(s) da masmorra` : `cleared ${n} dungeon run(s)`);
+  }
+  if ((journey?.dungeonKills ?? 0) > 0) {
+    const n = journey!.dungeonKills!;
+    feitos.push(isPt ? `enfrentaram ${n} inimigos` : `faced ${n} enemies`);
+  }
+  if ((journey?.droppedItems?.length ?? 0) > 0) {
+    const n = journey!.droppedItems!.length;
+    feitos.push(isPt ? `acharam ${n} item(ns) raro(s)` : `found ${n} rare item(s)`);
+  }
+  if ((journey?.dinoBest ?? 0) > 0) {
+    const n = journey!.dinoBest!;
+    feitos.push(isPt ? `e marcaram ${n} no Dino` : `and scored ${n} on the Dino`);
+  }
+
+  const formNames = (journey?.unlockedEvolutions ?? []).map(id => {
+    const form = journey?.soulmonStages?.find(
+      st => (st.branch ? `${st.stage}-${st.branch}` : st.stage) === id,
+    );
+    return form?.name ?? id;
+  });
+
+  const traitRow = (iconName: string, name: string, desc: string) => (
+    <div key={name} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      {/* Ícone PELADO — sem moldura, sem fundo, sem chanfro (regra do dono). */}
+      <Icon name={iconName} size={28} fill={1} tone="primary" />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9rem', color: 'var(--sm-ink)' }}>{title}</p>
-        <p style={{ margin: '2px 0 0', fontSize: '0.76rem', lineHeight: 1.45, color: 'var(--sm-muted)' }}>{desc}</p>
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{name}</p>
+        <p style={{ ...sm2Hint, marginTop: 2 }}>{desc}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="space-y-6">
-      {/* Identidade: o traço de nascimento e o ritmo de cuidado. Fica ANTES dos
-          números porque é quem este Soulmon é, não quanto ele rendeu. */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
+
+      {/* ─────────────── A leitura dominante: o Vínculo ─────────────── */}
+      <section style={{ ...card, padding: 20 }} aria-labelledby="sm2-bond-title">
+        <p style={{ ...sm2Hint, letterSpacing: '.06em', textTransform: 'uppercase' }}>
+          {isPt ? 'Nível de vínculo' : 'Bond level'}
+        </p>
+        <h2
+          id="sm2-bond-title"
+          style={{
+            fontFamily: 'var(--sm2-font-display)',
+            fontSize: 'var(--sm2-text-2xl)',
+            fontWeight: 600,
+            lineHeight: 'var(--sm2-leading-title)',
+            color: 'var(--sm2-ink)',
+            margin: '2px 0 0',
+          }}
+        >
+          {/* A PALAVRA vem primeiro; o número é a legenda dela. */}
+          {title ?? (isPt ? 'Recém-chegados' : 'Just met')}
+        </h2>
+        <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2 }}>
+          {isPt ? `Nível ${bond.level}` : `Level ${bond.level}`}
+        </p>
+
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+          aria-label={isPt ? 'Progresso até o próximo nível de vínculo' : 'Progress to the next bond level'}
+          style={{
+            marginTop: 14, height: 8, borderRadius: 999,
+            backgroundColor: 'var(--sm2-surface-2)', overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${pct}%`, height: '100%',
+              backgroundColor: 'var(--sm2-primary-fill)',
+              transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
+            }}
+          />
+        </div>
+        <p style={{ ...sm2Hint, marginTop: 8 }}>
+          {isPt
+            ? 'Ele só sobe. Cuidar de você é o que aproxima vocês dois — nada aqui desce, nunca.'
+            : 'It only goes up. Caring for yourself is what brings you two closer — nothing here ever drops.'}
+        </p>
+      </section>
+
+      {/* ─────────────── Quem ele é ─────────────── */}
       {(passive || carePattern) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {passive && traitCard(passive.emoji, isPt ? passive.namePt : passive.nameEn, isPt ? passive.descPt : passive.descEn)}
-          {carePattern && traitCard(
-            carePattern.emoji,
-            `${isPt ? 'Ritmo: ' : 'Rhythm: '}${isPt ? carePattern.namePt : carePattern.nameEn}`,
-            isPt ? carePattern.descPt : carePattern.descEn,
-          )}
-        </div>
+        <section style={card}>
+          <h3 style={sectionTitle}>{isPt ? 'Quem ele é' : 'Who they are'}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {passive && traitRow(
+              PASSIVE_ICON[passive.id] ?? 'auto_awesome',
+              isPt ? passive.namePt : passive.nameEn,
+              isPt ? passive.descPt : passive.descEn,
+            )}
+            {carePattern && traitRow(
+              PATTERN_ICON[carePattern.id] ?? 'auto_awesome',
+              `${isPt ? 'Ritmo: ' : 'Rhythm: '}${isPt ? carePattern.namePt : carePattern.nameEn}`,
+              isPt ? carePattern.descPt : carePattern.descEn,
+            )}
+          </div>
+        </section>
       )}
 
-      {/* A jornada — memória, não placar. Nada aqui vale ponto. */}
-      {journey && (
-        <div className="rounded-2xl px-4 py-3 sm-card">
-          <p style={{
-            fontSize: '0.72rem', letterSpacing: 1, fontWeight: 800, margin: '0 0 10px',
-            color: 'var(--sm-muted)',
-          }}>
-            {isPt ? 'A JORNADA DESTE SOULMON' : "THIS SOULMON'S JOURNEY"}
-          </p>
+      {/* ─────────────── A jornada ─────────────── */}
+      <section style={card}>
+        <h3 style={sectionTitle}>{isPt ? 'A jornada' : 'The journey'}</h3>
 
-          {!!journey.unlockedEvolutions?.length && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-              {journey.unlockedEvolutions.map(id => {
-                const form = journey.soulmonStages?.find(
-                  st => (st.branch ? `${st.stage}-${st.branch}` : st.stage) === id,
-                );
-                return (
-                  /* Pilula -> etiqueta emoldurada do kit (portao T2). */
-                  <PixelTag key={id}>{form?.name ?? id}</PixelTag>
-                );
-              })}
-            </div>
-          )}
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(112px, 1fr))', gap: 8 }}>
-            {[
-              { label: isPt ? 'Dias perfeitos' : 'Perfect days', value: journey.totalPerfectDays ?? 0 },
-              { label: isPt ? 'Inimigos vencidos' : 'Enemies beaten', value: journey.dungeonKills ?? 0 },
-              { label: isPt ? 'Runs concluídas' : 'Runs cleared', value: journey.dungeonRunsCompleted ?? 0 },
-              { label: isPt ? 'Recorde no Dino' : 'Dino best', value: journey.dinoBest ?? 0 },
-              { label: isPt ? 'Itens raros achados' : 'Rare items found', value: journey.droppedItems?.length ?? 0 },
-            ].map(row => (
-              <div key={row.label} style={{
-                padding: '9px 11px',
-                backgroundColor: 'var(--sm-bg)',
-                border: '1px solid color-mix(in srgb, var(--sm-px-copper) 30%, transparent)',
-              }}>
-                <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: 'var(--sm-ink)' }}>
-                  {row.value}
-                </p>
-                <p style={{ margin: 0, fontSize: '0.68rem', lineHeight: 1.3, color: 'var(--sm-muted)' }}>
-                  {row.label}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {journey.soulGoal && (
-            <p style={{
-              margin: '12px 0 0', fontSize: '0.76rem', lineHeight: 1.5, fontStyle: 'italic',
-              color: 'var(--sm-muted)',
-            }}>
-              {isPt ? 'Começou por: ' : 'Started for: '}“{journey.soulGoal}”
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Overview: Bits/XP/Streak + attribute points */}
-      <div className="rounded-2xl px-4 py-3 sm-card">
-        <div className="flex items-center gap-4 flex-wrap">
-          {/* Guardrail das moedas: Bits NUNCA têm ícone — só o número na
-              fonte de calculadora (utils/currencies.ts). O 💠 daqui era a
-              exata confusão visual que a regra proíbe. */}
-          <span className="flex items-center gap-1.5">
-            <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>Bits</span>
-            <span className="text-sm" style={resolvedTheme === 'light' ? bitsStyleLight : bitsStyle}>{gamePoints}</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <img src={iconBolt} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>XP</span>
-            <span className="text-sm font-bold" style={{ color: 'var(--sm-ink)' }}>{totalXP}</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <img src={iconStar} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            <span className="text-xs font-semibold" style={{ color: 'var(--sm-muted)' }}>
-              {isPt ? 'Dias perfeitos (total)' : 'Perfect days (total)'}
-            </span>
-            <span className="text-sm font-bold" style={{ color: 'var(--sm-ink)' }}>{streakDays}</span>
-          </span>
-        </div>
-        <div className="flex items-center justify-between gap-2 flex-wrap mt-2 pt-2" style={{ borderTop: '1px solid var(--sm-line)' }}>
-          {/* Nomes internos (`virus`/`data`/`vaccine`) NUNCA vão à tela: o
-              jogador conhece Poder, Harmonia e Benevolência. Rótulo, cor de
-              texto e ícone saem todos de `types/attributes.ts`, que é a fonte
-              única — antes esta tela repetia os hex à mão e escrevia os nomes
-              internos, em inglês, sem par PT-BR. */}
-          {([
-            ['virus', virusPoints],
-            ['data', dataPoints],
-            ['vaccine', vaccinePoints],
-          ] as const).map(([attr, pontos]) => (
-            <div key={attr} className="flex items-center gap-1.5">
-              <img
-                src={ATTR_ICON[attr]}
-                alt=""
-                width={20}
-                height={20}
-                style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
-              />
-              <span className="text-xs" style={{ color: 'var(--sm-muted)' }}>
-                {isPt ? ATTR_LABEL[attr].pt : ATTR_LABEL[attr].en}
-              </span>
-              <span className="text-xs font-bold" style={{ color: ATTR_INK[attr] }}>{pontos}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Activity Completions */}
-      <div>
-        <h3
-          className="mb-3"
-          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
-        >
-          {t.evolution.completed_activities}
-        </h3>
-        {sortedActivityStats.length === 0 ? (
-          <p
-            className="text-center py-8"
-            style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
+        {/* O ÚNICO contador que governa alguma coisa: dias perfeitos alimentam
+            a evolução (`perfectDays`). Por isso ele é número, e sozinho. */}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+          <span
+            className="sm2-num"
+            style={{
+              fontFamily: 'var(--sm2-font-display)',
+              fontSize: 'var(--sm2-text-xl)',
+              fontWeight: 600,
+              color: 'var(--sm2-ink)',
+            }}
           >
-            {t.evolution.no_activities}
+            {streakDays}
+          </span>
+          <span style={sm2Hint}>{isPt ? 'dias perfeitos até aqui' : 'perfect days so far'}</span>
+        </div>
+
+        {formNames.length > 0 && (
+          <p style={{ ...sm2Text, marginTop: 12 }}>
+            {isPt ? 'Formas já alcançadas: ' : 'Forms reached so far: '}
+            <span style={{ color: 'var(--sm2-primary-ink)' }}>{formNames.join(' · ')}</span>
           </p>
-        ) : (
-          <div className="space-y-2">
-            {sortedActivityStats.map(([key, stat]) => (
-              <div
-                key={key}
-                className="p-4 rounded-xl flex items-center justify-between sm-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span style={{ fontSize: '1.5rem' }}>{stat.emoji}</span>
-                  <div>
-                    <p
-                      style={{ fontFamily: 'monospace', fontSize: '0.9375rem', color: 'var(--sm-ink)' }}
-                    >
-                      {stat.name}
-                    </p>
-                    <p
-                      className="text-xs"
-                      style={{ fontFamily: 'monospace', color: getCategoryColor(stat.category) }}
-                    >
-                      {stat.category}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className="px-4 py-2 rounded-lg"
-                  style={{
-                    fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600',
-                    background: 'var(--sm-primary-soft)', color: 'var(--sm-primary)',
-                  }}
-                >
-                  {stat.completionCount}×
-                </div>
-              </div>
-            ))}
-          </div>
         )}
-      </div>
 
-      {/* Task Completions */}
-      <div>
-        <h3
-          className="mb-3"
-          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
-        >
-          {t.evolution.completed_tasks}
-        </h3>
-        {sortedTaskStats.length === 0 ? (
-          <p
-            className="text-center py-8"
-            style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
-          >
-            {t.evolution.no_tasks}
+        {feitos.length > 0 && (
+          <p className="sm2-num" style={{ ...sm2Hint, marginTop: 8 }}>
+            {isPt ? 'Vocês também ' : 'You two also '}{feitos.join(', ')}.
           </p>
-        ) : (
-          <div className="space-y-2">
-            {sortedTaskStats.map(([key, stat]) => (
-              <div
-                key={key}
-                className="p-4 rounded-xl flex items-center justify-between sm-card"
-              >
-                <div className="flex items-center gap-3">
-                  <span style={{ fontSize: '1.5rem' }}>{stat.emoji}</span>
-                  <div>
-                    <p
-                      style={{ fontFamily: 'monospace', fontSize: '0.9375rem', color: 'var(--sm-ink)' }}
-                    >
-                      {stat.name}
-                    </p>
-                    <p
-                      className="text-xs"
-                      style={{ fontFamily: 'monospace', color: getCategoryColor(stat.category) }}
-                    >
-                      {stat.category}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  className="px-4 py-2 rounded-lg"
-                  style={{
-                    fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: '600',
-                    background: 'rgba(74,222,128,0.16)', color: '#4ade80',
-                  }}
-                >
-                  {stat.completionCount}×
-                </div>
-              </div>
-            ))}
-          </div>
         )}
-      </div>
 
-      {/* Recent Completed Tasks History */}
-      <div>
-        <h3
-          className="mb-3"
-          style={{ fontFamily: 'monospace', fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sm-ink)' }}
-        >
-          {t.evolution.recent_history}
-        </h3>
-        {completedTasks.length === 0 ? (
-          <p
-            className="text-center py-8"
-            style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-muted)' }}
-          >
-            {t.evolution.no_history}
+        {journey?.soulGoal && (
+          <p style={{ ...sm2Hint, marginTop: 14, fontStyle: 'italic' }}>
+            {isPt ? 'Começou por: ' : 'Started for: '}“{journey.soulGoal}”
+          </p>
+        )}
+      </section>
+
+      {/* ─────────────── O que você mais repete ─────────────── */}
+      <section style={card}>
+        <h3 style={sectionTitle}>{isPt ? 'O que você mais repete' : 'What you repeat most'}</h3>
+        {topRepeated.length === 0 ? (
+          <p style={sm2Hint}>
+            {isPt
+              ? 'Nada concluído ainda. A primeira vez já aparece aqui.'
+              : 'Nothing finished yet. The very first one shows up here.'}
           </p>
         ) : (
-          <div className="space-y-2">
-            {completedTasks.slice(-50).reverse().map((task) => (
-              <div
-                key={task.id}
-                className="p-3 rounded-xl flex items-center justify-between sm-card"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span style={{ fontSize: '1.25rem' }}>{task.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className="truncate"
-                      style={{ fontFamily: 'monospace', fontSize: '0.875rem', color: 'var(--sm-ink)' }}
-                    >
-                      {task.name}
-                    </p>
-                    <p
-                      className="text-xs"
-                      style={{ fontFamily: 'monospace', color: getCategoryColor(task.category) }}
-                    >
-                      {task.category}
-                    </p>
-                  </div>
-                </div>
-                <p
-                  className="text-xs ml-3 whitespace-nowrap"
-                  style={{ fontFamily: 'monospace', color: 'var(--sm-muted)' }}
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 14 }}>
+            {topRepeated.map(([key, stat]) => (
+              <li key={key} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* O emoji da atividade é CONTEÚDO — escolha da pessoa, não
+                    ícone de sistema. Fica (PLANO-DESIGN §4.11). */}
+                <span aria-hidden="true" style={{ fontSize: 'var(--sm2-text-lg)', width: 26, textAlign: 'center' }}>
+                  {stat.emoji}
+                </span>
+                <span
+                  title={stat.name}
+                  style={{ ...sm2Text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                 >
+                  {stat.name}
+                </span>
+                <span className="sm2-num" style={sm2Hint}>
+                  {isPt ? `${stat.completionCount}× feita` : `done ${stat.completionCount}×`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* ─────────────── Últimas conclusões ─────────────── */}
+      <section style={card}>
+        <h3 style={sectionTitle}>{isPt ? 'Últimas conclusões' : 'Latest completions'}</h3>
+        {recent.length === 0 ? (
+          <p style={sm2Hint}>
+            {isPt ? 'O histórico começa na sua próxima conclusão.' : 'History starts at your next completion.'}
+          </p>
+        ) : (
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 14 }}>
+            {recent.map(task => (
+              <li key={task.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span aria-hidden="true" style={{ fontSize: 'var(--sm2-text-md)', width: 26, textAlign: 'center' }}>
+                  {task.emoji}
+                </span>
+                <span
+                  title={task.name}
+                  style={{ ...sm2Text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                >
+                  {task.name}
+                </span>
+                <span className="sm2-num" style={{ ...sm2Hint, whiteSpace: 'nowrap' }}>
                   {formatDate(task.completedAt)}
-                </p>
-              </div>
+                </span>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
-      </div>
+      </section>
     </div>
   );
 }

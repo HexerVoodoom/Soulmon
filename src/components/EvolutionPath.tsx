@@ -1,14 +1,44 @@
+/**
+ * EVOLUÇÃO — a árvore, e a criatura como heroína dela.
+ * ===================================================
+ *
+ * REVAMP. Três coisas mudaram de APRESENTAÇÃO (nenhuma regra mudou):
+ *
+ * 1. **A criatura abre a tela**, dentro do `<Viewport>` — o elemento de marca —
+ *    em escala inteira, e a ação dominante da página (o CADEADO de evolução)
+ *    mora logo abaixo dela, como um botão de verdade com 44px. O cadeado
+ *    continua também no nó ATUAL do grafo, que é o gesto que a regra descreve
+ *    ("tocar na criatura atual alterna `evolutionLocked`"); o botão é o mesmo
+ *    estado, dito em palavras, para quem não descobre o gesto.
+ *
+ * 2. **O progresso virou PALAVRA.** Era `3/7 dias` numa barra. Agora é
+ *    "Faltam 4 dias perfeitos" / "Pronto para evoluir" — a frase que responde à
+ *    única pergunta que o jogador faz nesta tela. A barra ficou como apoio
+ *    visual, não como o portador do dado.
+ *
+ * 3. **Os atributos tinham DOIS desenhos na mesma tela** (PNG pixel-art no
+ *    "alinhamento atual" e SVG inline no seletor de galho — o achado do
+ *    inventário, `docs/PLANO-DESIGN.md` §4.3). Unificado no SVG inline de
+ *    `AlignmentIcons`: é arte nossa, é vetor e RECOLORE, que é justamente o
+ *    que o PNG não fazia quando o botão ativo pinta o fundo com a cor do
+ *    atributo.
+ *
+ * PRESERVADO integralmente: a árvore por galho, o tronco rookie compartilhado,
+ * o Ultra atrás dos 3 megas, o cadeado `evolutionLocked`, a degeneração com
+ * dupla confirmação, o spoiler-guard das formas futuras, o galho previsto e o
+ * desempate por ritmo de cuidado, e a situação de cada nó dita em PALAVRAS no
+ * `aria-label` (WCAG 1.4.1: cor e posição nunca são o único portador).
+ */
 import { useState, useMemo, type CSSProperties } from 'react';
-import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
-import iconLock from '../assets/soulmon/icons/icon-lock.png';
-import { DigivolutionProgress } from './DigivolutionProgress';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
-import { WalkingPetStrip } from './WalkingPetStrip';
-import { creatureFormId, type CreatureStage, type AlignmentId, type LText } from '../utils/oracle';
+import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
-import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_ICON, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
+import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
+import { Viewport } from './ui/Viewport';
+import { Icon } from './ui/Icon';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 
 type Attr = 'virus' | 'data' | 'vaccine';
 // ALIGN_TO_ATTR mudou para types/attributes.ts quando o EvoTrail da Home
@@ -16,20 +46,14 @@ type Attr = 'virus' | 'data' | 'vaccine';
 const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
 
 /**
- * DOIS jogos de ícone, de propósito:
- *
- * - `ATTR_ICON` (PNG pixel-art, de `types/attributes.ts`) onde o fundo é
- *   NEUTRO. É a arte da referência e o que o jogador deve reconhecer.
- * - `ATTR_ICON_SVG` onde a cor INVERTE — no seletor de galho o botão ativo
- *   pinta o fundo com a cor do atributo, e o ícone precisa virar tinta clara
- *   para continuar legível. PNG não recolore; um pixel-art ciano/cobre sobre
- *   preenchimento verde/azul/laranja fica ilegível.
- *
- * O rótulo NÃO é duplicado aqui: vem de `types/attributes.ts`. Este mapa já
- * existiu em duas cópias (aqui e em `PlayerDetailModal`), enquanto a
- * `StatsPage` não usava nenhuma e mostrava "Virus/Data/Vaccine" cru.
+ * UM jogo de ícone de atributo, e só um. Antes eram dois na mesma tela (PNG
+ * pixel-art + SVG inline). Ganhou o SVG: ele herda a cor, então serve tanto
+ * sobre superfície neutra (tinta do atributo) quanto sobre o preenchimento do
+ * botão ativo (tinta escura por cima do fill) — um PNG ciano/cobre sobre
+ * verde/azul/laranja simplesmente não tinha como ficar legível.
+ * O RÓTULO não é duplicado aqui: vem de `types/attributes.ts`.
  */
-const ATTR_ICON_SVG: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
+const ATTR_GLYPH: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
 
 interface EvolutionPathProps {
   /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */
@@ -58,6 +82,30 @@ interface EvolutionPathProps {
   forecastBranch?: Attr;
 }
 
+const card: CSSProperties = {
+  backgroundColor: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 12,
+  boxShadow: '0 1px 2px rgba(4, 18, 20, .10), 0 4px 12px rgba(4, 18, 20, .10)',
+  padding: 16,
+};
+
+const sectionLabel: CSSProperties = {
+  ...sm2Hint,
+  letterSpacing: '.06em',
+  textTransform: 'uppercase',
+};
+
+/** O sprite dentro do visor: escala inteira, sem suavização. */
+const spriteInScreen: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
+  imageRendering: 'pixelated',
+};
+
 export function EvolutionPath({
   currentStageId,
   currentBranch,
@@ -68,7 +116,6 @@ export function EvolutionPath({
   digivolutionSegmentsNeeded,
   onDegenerate,
   stages,
-  eggType = 'tapirmon',
   demoCharacterId,
   unlockedEvolutions = [],
   evolutionLocked = false,
@@ -86,9 +133,9 @@ export function EvolutionPath({
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions), [unlockedEvolutions]);
   const [selectedBranch, setSelectedBranch] = useState<Attr>(clampBranch(currentBranch));
   const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean } | null>(null);
-  // Locked evolutions are hidden behind a pixelated "?" (spoiler guard). The
-  // user can reveal one (shown darkened) after confirming; this local set resets
-  // when they leave the screen (the component unmounts on navigation).
+  // Locked evolutions are hidden behind a "?" (spoiler guard). The user can
+  // reveal one (shown darkened) after confirming; this local set resets when
+  // they leave the screen (the component unmounts on navigation).
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [confirmReveal, setConfirmReveal] = useState<CreatureStage | null>(null);
 
@@ -106,7 +153,9 @@ export function EvolutionPath({
   const areAllMegasUnlocked = megaIds.every(id => unlockedSet.has(id));
 
   const branchPath = getBranchPath(selectedBranch);
-  const colors = getBranchColor(selectedBranch);
+  const branchHex = ATTR_COLOR[selectedBranch];
+
+  const formaAtual = stages.find(s => creatureFormId(s) === currentStageId);
 
   /**
    * O nó que a página JÁ dizia em texto ("Seguindo para Harmonia"), agora
@@ -133,16 +182,30 @@ export function EvolutionPath({
     }
   };
 
-  const handleDegenerateCancel = () => setConfirmDegenerate(null);
+  // ── O progresso, em PALAVRAS. `Math.max(0, …)` porque `perfectDays` pode
+  //    passar do requisito enquanto a evolução está travada — e "faltam -2"
+  //    seria um jeito criativo de dizer "pronto". ──
+  const faltam = Math.max(0, digivolutionSegmentsNeeded - digivolutionSegments);
+  const prontoParaEvoluir = faltam === 0;
+  const ratio = digivolutionSegmentsNeeded > 0
+    ? Math.min(1, digivolutionSegments / digivolutionSegmentsNeeded)
+    : 1;
+  const fraseProgresso = prontoParaEvoluir
+    ? (evolutionLocked
+        ? (isPt ? 'Pronto para evoluir — mas você segurou a evolução.' : 'Ready to evolve — but you are holding it back.')
+        : (isPt ? 'Pronto para evoluir na virada do dia.' : 'Ready to evolve at the day’s turn.'))
+    : (isPt
+        ? `Falta${faltam === 1 ? '' : 'm'} ${faltam} dia${faltam === 1 ? '' : 's'} perfeito${faltam === 1 ? '' : 's'}.`
+        : `${faltam} perfect day${faltam === 1 ? '' : 's'} to go.`);
 
   /**
-   * Um nó do grafo (Ref C: coluna vertical de losangos ligados por linhas).
+   * Um nó do grafo: coluna vertical de nós ligados por uma linha.
    *
    * NÃO existe regra nova aqui — `isCurrent`, `isReached`, `hidden`,
    * `isPreviousStage` e o galho previsto são exatamente os mesmos cálculos que
-   * a página já fazia; o que mudou é a apresentação (lista de fichas → grafo).
+   * a página já fazia; o que mudou é a superfície da placa (kit pixel → tokens).
    */
-  const renderEvolutionCard = (evolution: CreatureStage, colors: BranchColors, index: number, pathLength: number) => {
+  const renderEvolutionCard = (evolution: CreatureStage, hex: string, index: number, pathLength: number) => {
     const stageId = creatureFormId(evolution);
     const isCurrent = stageId === currentStageId;
     const isUltra = evolution.stage === 'ultra';
@@ -186,14 +249,34 @@ export function EvolutionPath({
             : (isPt ? 'Evolução destravada, toque para travar' : 'Evolution unlocked, tap to lock')}`
         : `${nome} — ${situacao}`;
 
+    /** A etiqueta de estado do nó. Uma palavra, caixa alta, nunca uma cor só. */
+    const tag = (texto: string, style: CSSProperties) => (
+      <span
+        style={{
+          fontFamily: 'var(--sm2-font-text)',
+          fontSize: 'var(--sm2-text-xs)',
+          fontWeight: 500,
+          letterSpacing: '.04em',
+          padding: '2px 8px',
+          borderRadius: 999,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          ...style,
+        }}
+      >
+        {texto}
+      </span>
+    );
+
     return (
-      <div key={stageId} className="sm-px-tree-row">
+      <div key={stageId} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
         {/* Trilho do grafo: o nó e a linha que desce até o próximo. */}
-        <div className="sm-px-tree-rail">
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
           <SoulNode
             visual={visual}
             size={48}
-            tone={isReached && !isCurrent ? colors.hex : undefined}
+            tone={isReached && !isCurrent ? hex : undefined}
             ring={isCurrent}
             sprite={hidden ? undefined : getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined)}
             label={nodeLabel}
@@ -208,55 +291,62 @@ export function EvolutionPath({
           />
           {index < pathLength - 1 && (
             <span
-              className={`sm-px-tree-link${isReached ? ' sm-px-tree-link-on' : ''}`}
               aria-hidden="true"
-              style={isReached ? { ['--sm-px-link-tone' as string]: colors.hex } : undefined}
+              style={{
+                width: 2,
+                flex: 1,
+                minHeight: 28,
+                backgroundColor: isReached ? hex : 'var(--sm2-line)',
+              }}
             />
           )}
         </div>
 
         {/* Placa do nó: nome, estágio e situação. */}
-        <div className={`sm-px-tree-plate${isCurrent ? ' sm-px-tree-plate-current' : ''}${!isReached ? ' sm-px-tree-plate-locked' : ''}`}>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: isReached ? 'var(--sm-ink)' : 'var(--sm-muted)' }}>
+        <div style={{ flex: 1, minWidth: 0, paddingBottom: index < pathLength - 1 ? 20 : 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <h3
+              style={{
+                fontFamily: 'var(--sm2-font-display)',
+                fontSize: 'var(--sm2-text-md)',
+                fontWeight: 600,
+                lineHeight: 'var(--sm2-leading-title)',
+                color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)',
+                margin: 0,
+              }}
+            >
               {hidden ? '???' : evolution.name}
             </h3>
-            {!hidden && (
-              <span style={{ fontSize: '0.7rem', color: 'var(--sm-muted)' }}>
-                {L(evolution.stageName)}
-              </span>
-            )}
-            {isCurrent && (
-              <span className="sm-px-tree-tag" style={{ background: colors.hex, color: ATTR_ON_FILL_INK }}>
-                {isPt ? 'ATUAL' : 'CURRENT'}
-              </span>
-            )}
-            {isForecast && (
-              <span className="sm-px-tree-tag sm-px-tree-tag-forecast">
-                {isPt ? 'PREVISTA' : 'FORECAST'}
-              </span>
-            )}
+            {!hidden && <span style={sm2Hint}>{L(evolution.stageName)}</span>}
+            {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', { backgroundColor: hex, color: ATTR_ON_FILL_INK })}
+            {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST', {
+              border: '1px solid var(--sm2-primary-ink)', color: 'var(--sm2-primary-ink)',
+            })}
             {isCurrent && evolutionLocked && (
-              <span className="sm-px-tree-tag" style={{ background: 'var(--sm-ink)', color: 'var(--sm-bg)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                <img src={iconLock} alt="" width={10} height={10} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> {isPt ? 'TRAVADA' : 'LOCKED'}
+              <span
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)', fontWeight: 500,
+                  padding: '2px 8px', borderRadius: 999,
+                  backgroundColor: 'var(--sm2-gold-fill)', color: 'var(--sm2-on-gold)',
+                }}
+              >
+                <Icon name="lock" size={20} style={{ fontSize: 14, width: 14, height: 14 }} />
+                {isPt ? 'TRAVADA' : 'LOCKED'}
               </span>
             )}
-            {isUltraMode && (
-              <span className="sm-px-tree-tag" style={{ background: 'var(--sm-gold)', color: 'var(--sm-bg)' }}>
-                {isPt ? 'ZÊNITE' : 'ZENITH'}
-              </span>
-            )}
-            {!isReached && (
-              <span className="sm-px-tree-tag sm-px-tree-tag-locked">
-                <img src={iconLock} alt="" width={10} height={10} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                {isPt ? 'BLOQUEADA' : 'LOCKED'}
-              </span>
-            )}
+            {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', {
+              backgroundColor: 'var(--sm2-gold-fill)', color: 'var(--sm2-on-gold)',
+            })}
+            {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED', {
+              border: '1px solid var(--sm2-line)', color: 'var(--sm2-muted)',
+            })}
           </div>
           {isPreviousStage && (
             <button
+              type="button"
               onClick={() => handleDegenerateClick(evolution)}
-              className="sm-px-tree-degen"
+              style={{ ...sm2Button('quiet'), marginTop: 4, padding: '10px 0' }}
             >
               {isPt ? 'Degenerar' : 'Degenerate'}
             </button>
@@ -267,105 +357,166 @@ export function EvolutionPath({
   };
 
   return (
-    <div>
-      {/* Confirmation Dialog */}
-      {confirmDegenerate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="sm-card p-6 max-w-sm w-full">
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--sm-ink)', marginBottom: 16 }}>
-              {confirmDegenerate.isSecondConfirm
-                ? (isPt ? '⚠️ Aviso final!' : '⚠️ Final warning!')
-                : (isPt ? '⚠️ Confirmar degeneração' : '⚠️ Confirm degeneration')}
-            </h3>
-            <p style={{ color: 'var(--sm-muted)', fontSize: '0.875rem', marginBottom: 24 }}>
-              {confirmDegenerate.isSecondConfirm
-                ? (isPt
-                    ? `Tem CERTEZA ABSOLUTA que quer degenerar para ${confirmDegenerate.name}? Essa ação NÃO pode ser desfeita!`
-                    : `Are you ABSOLUTELY SURE you want to degenerate to ${confirmDegenerate.name}? This action CANNOT be undone!`)
-                : (isPt
-                    ? `Quer degenerar para ${confirmDegenerate.name}? Você vai perder o progresso além deste estágio.`
-                    : `Do you want to degenerate to ${confirmDegenerate.name}? You will lose all progress beyond this stage.`)
-              }
-            </p>
-            <div className="flex gap-3">
-              <button onClick={handleDegenerateCancel} className="sm-btn sm-btn-secondary flex-1">
-                {isPt ? 'Cancelar' : 'Cancel'}
-              </button>
-              <button
-                onClick={handleDegenerateConfirm}
-                className="sm-btn flex-1"
-                style={{
-                  backgroundColor: confirmDegenerate.isSecondConfirm ? '#e0483e' : 'var(--sm-ink)',
-                  color: '#fff',
-                }}
-              >
-                {confirmDegenerate.isSecondConfirm ? (isPt ? 'SIM, DEGENERAR!' : 'YES, DEGENERATE!') : (isPt ? 'Confirmar' : 'Confirm')}
-              </button>
-            </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
+
+      {/* Degeneração — dupla confirmação preservada, agora com foco preso e
+          Escape (o modal antigo não tinha nenhum dos dois). */}
+      <ModalSheet
+        open={!!confirmDegenerate}
+        onClose={() => setConfirmDegenerate(null)}
+        language={language}
+        title={confirmDegenerate?.isSecondConfirm
+          ? (isPt ? 'Aviso final' : 'Final warning')
+          : (isPt ? 'Confirmar degeneração' : 'Confirm degeneration')}
+        footer={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="button" onClick={() => setConfirmDegenerate(null)} style={{ ...sm2Button('ghost'), flex: 1 }}>
+              {isPt ? 'Cancelar' : 'Cancel'}
+            </button>
+            <button
+              type="button"
+              onClick={handleDegenerateConfirm}
+              style={{
+                ...sm2Button('primary'),
+                flex: 1,
+                ...(confirmDegenerate?.isSecondConfirm
+                  ? { backgroundColor: 'var(--sm2-danger-fill)', color: 'var(--sm2-on-danger)' }
+                  : null),
+              }}
+            >
+              {confirmDegenerate?.isSecondConfirm
+                ? (isPt ? 'Sim, degenerar' : 'Yes, degenerate')
+                : (isPt ? 'Confirmar' : 'Confirm')}
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Reveal (spoiler) confirmation */}
-      {confirmReveal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="sm-card p-6 max-w-sm w-full">
-            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--sm-ink)', marginBottom: 16 }}>
-              👁️ {isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
-            </h3>
-            <p style={{ color: 'var(--sm-muted)', fontSize: '0.875rem', marginBottom: 24 }}>
-              {isPt
-                ? 'Essa é uma evolução futura que você ainda não desbloqueou — espiar é spoiler! Ela vai aparecer escurecida e esconder de novo quando você sair dessa tela.'
-                : "This is a future evolution you haven't unlocked yet — peeking is a spoiler! It'll show up darkened, and hide again once you leave this screen."}
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmReveal(null)} className="sm-btn sm-btn-secondary flex-1">
-                {isPt ? 'Cancelar' : 'Cancel'}
-              </button>
-              <button onClick={handleRevealConfirm} className="sm-btn flex-1">
-                {isPt ? 'Sim, revelar' : 'Yes, reveal'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <WalkingPetStrip stageId={currentStageId} demoCharacterId={demoCharacterId} />
-
-      {/* Attribute Balance */}
-      <div className="sm-card p-4 mb-4">
-        <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--sm-muted)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 10 }}>
-          {isPt ? 'Alinhamento atual' : 'Current alignment'}
+        }
+      >
+        <p style={sm2Text}>
+          {confirmDegenerate?.isSecondConfirm
+            ? (isPt
+                ? `Tem certeza absoluta que quer degenerar para ${confirmDegenerate?.name}? Essa ação NÃO pode ser desfeita.`
+                : `Are you absolutely sure you want to degenerate to ${confirmDegenerate?.name}? This action CANNOT be undone.`)
+            : (isPt
+                ? `Quer degenerar para ${confirmDegenerate?.name}? Você vai perder o progresso além deste estágio.`
+                : `Do you want to degenerate to ${confirmDegenerate?.name}? You will lose all progress beyond this stage.`)}
         </p>
-        <div className="flex justify-between text-sm">
-          {ATTR_ORDER.map(a => (
-            // Fundo neutro aqui: entra o pixel-art da referência.
-            // TEXTO na tinta legível (o ícone é elemento de interface, 3:1).
-            <span key={a} className="flex items-center gap-1.5" style={{ fontWeight: 700, color: ATTR_INK[a], fontSize: '0.85rem' }}>
-              <img
-                src={ATTR_ICON[a]}
-                alt=""
-                width={20}
-                height={20}
-                style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
-              />
-              {L(ATTR_LABEL[a])}: {a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints}
-            </span>
-          ))}
+      </ModalSheet>
+
+      {/* Spoiler-guard das formas futuras. */}
+      <ModalSheet
+        open={!!confirmReveal}
+        onClose={() => setConfirmReveal(null)}
+        language={language}
+        title={isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}
+        footer={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button type="button" onClick={() => setConfirmReveal(null)} style={{ ...sm2Button('ghost'), flex: 1 }}>
+              {isPt ? 'Cancelar' : 'Cancel'}
+            </button>
+            <button type="button" onClick={handleRevealConfirm} style={{ ...sm2Button('primary'), flex: 1 }}>
+              {isPt ? 'Sim, revelar' : 'Yes, reveal'}
+            </button>
+          </div>
+        }
+      >
+        <p style={sm2Text}>
+          {isPt
+            ? 'Essa é uma evolução futura que você ainda não desbloqueou — espiar é spoiler. Ela vai aparecer escurecida e esconder de novo quando você sair dessa tela.'
+            : "This is a future evolution you haven't unlocked yet — peeking is a spoiler. It'll show up darkened, and hide again once you leave this screen."}
+        </p>
+      </ModalSheet>
+
+      {/* ─────────── A HEROÍNA + A AÇÃO DOMINANTE ─────────── */}
+      <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        <Viewport
+          width={64}
+          height={64}
+          scale={3}
+          label={formaAtual
+            ? (isPt ? `${formaAtual.name}, forma atual` : `${formaAtual.name}, current form`)
+            : (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
+          screenStyle={{ position: 'relative' }}
+        >
+          <img src={getSpriteForStage(currentStageId, demoCharacterId)} alt="" style={spriteInScreen} />
+        </Viewport>
+
+        <div style={{ textAlign: 'center', maxWidth: 380 }}>
+          <p
+            style={{
+              fontFamily: 'var(--sm2-font-display)',
+              fontSize: 'var(--sm2-text-lg)',
+              fontWeight: 600,
+              lineHeight: 'var(--sm2-leading-title)',
+              color: 'var(--sm2-ink)',
+              margin: 0,
+            }}
+          >
+            {fraseProgresso}
+          </p>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={digivolutionSegmentsNeeded}
+            aria-valuenow={Math.min(digivolutionSegments, digivolutionSegmentsNeeded)}
+            aria-label={isPt ? 'Progresso até a próxima evolução' : 'Progress to the next evolution'}
+            style={{
+              margin: '12px auto 0', width: 200, height: 8, borderRadius: 999,
+              backgroundColor: 'var(--sm2-surface-2)', overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${Math.round(ratio * 100)}%`, height: '100%',
+                backgroundColor: 'var(--sm2-primary-fill)',
+                transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
+              }}
+            />
+          </div>
         </div>
 
-        {/* Os números sozinhos não dizem PARA ONDE o pet está indo — o jogador
-            tinha que inferir. Esta linha fecha a alça: mostra o galho previsto
-            e, no empate, quem decide. */}
-        {forecastBranch && (
-          <p style={{ fontSize: '0.76rem', color: 'var(--sm-muted)', marginTop: 10, lineHeight: 1.45 }}>
+        {/* A ÚNICA ação da tela. O gesto no nó do grafo continua valendo — este
+            botão é o mesmo estado dito em palavras, e com alvo de 44px. */}
+        {onToggleEvolutionLock && (
+          <button
+            type="button"
+            onClick={onToggleEvolutionLock}
+            aria-pressed={evolutionLocked}
+            style={{
+              ...sm2Button(evolutionLocked ? 'primary' : 'ghost'),
+              minWidth: 220,
+            }}
+          >
+            <Icon name={evolutionLocked ? 'lock' : 'lock_open'} size={20} fill={evolutionLocked ? 1 : 0} />
+            {evolutionLocked
+              ? (isPt ? 'Evolução segurada' : 'Evolution on hold')
+              : (isPt ? 'Segurar evolução' : 'Hold evolution')}
+          </button>
+        )}
+        <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
+          {evolutionLocked
+            ? (isPt
+                ? 'Os dias perfeitos continuam somando. Ele só espera você dizer quando.'
+                : 'Perfect days keep adding up. It just waits for your go-ahead.')
+            : (isPt
+                ? 'Ele vai evoluir sozinho assim que o dia virar.'
+                : 'It will evolve on its own at the next day’s turn.')}
+        </p>
+      </section>
+
+      {/* ─────────── Para onde ele está indo ─────────── */}
+      <section style={card}>
+        <p style={sectionLabel}>{isPt ? 'Para onde ele está indo' : 'Where they are heading'}</p>
+
+        {/* A FRASE vem antes dos números: é ela que responde à pergunta. */}
+        {forecastBranch ? (
+          <p style={{ ...sm2Text, marginTop: 6 }}>
             {isPt ? 'Seguindo para ' : 'Heading toward '}
             <strong style={{ color: ATTR_INK[forecastBranch] }}>{L(ATTR_LABEL[forecastBranch])}</strong>
             {isTie
               ? (carePattern
                   ? (isPt
-                      ? ` — empate nos atributos, e o seu ritmo ${carePattern.emoji} ${carePattern.namePt} desempata.`
-                      : ` — attributes are tied, and your ${carePattern.emoji} ${carePattern.nameEn} rhythm breaks it.`)
+                      ? ` — empate nos atributos, e o seu ritmo ${carePattern.namePt} desempata.`
+                      : ` — attributes are tied, and your ${carePattern.nameEn} rhythm breaks it.`)
                   : (isPt
                       ? ' — empate nos atributos; cumprir mais tarefas de uma categoria decide.'
                       : ' — attributes are tied; completing more tasks of one category decides.'))
@@ -373,69 +524,79 @@ export function EvolutionPath({
                   ? '. Muda cumprindo mais tarefas de outra categoria.'
                   : '. Change it by completing more tasks of another category.')}
           </p>
+        ) : (
+          <p style={{ ...sm2Text, marginTop: 6 }}>
+            {isPt
+              ? 'Ainda não dá para dizer. Conclua tarefas e o galho aparece aqui.'
+              : 'Too early to tell. Finish tasks and the branch shows up here.'}
+          </p>
         )}
-      </div>
 
-      {/* Digivolution Progress */}
-      <div className="mb-4">
-        <DigivolutionProgress
-          currentDays={digivolutionSegments}
-          daysRequired={digivolutionSegmentsNeeded}
-          language={language}
-        />
-      </div>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 14 }}>
+          {ATTR_ORDER.map(a => {
+            const Glyph = ATTR_GLYPH[a];
+            const valor = a === 'virus' ? virusPoints : a === 'data' ? dataPoints : vaccinePoints;
+            return (
+              <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Glyph size={18} color={ATTR_COLOR[a]} strokeWidth={2.2} />
+                <span style={sm2Hint}>{L(ATTR_LABEL[a])}</span>
+                <span className="sm2-num" style={{ ...sm2Text, fontWeight: 500, color: ATTR_INK[a] }}>{valor}</span>
+              </span>
+            );
+          })}
+        </div>
+      </section>
 
-      {/* Branch Selector Divider */}
-      <div className="my-4 flex items-center gap-3">
-        <div className="h-px flex-1" style={{ background: 'var(--sm-line)' }} />
-        <span style={{ color: 'var(--sm-muted)', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.04em' }}>
-          {isPt ? 'LINHAS DE EVOLUÇÃO' : 'EVOLUTION BRANCHES'}
-        </span>
-        <div className="h-px flex-1" style={{ background: 'var(--sm-line)' }} />
-      </div>
+      {/* ─────────── A árvore ─────────── */}
+      <section>
+        <p style={{ ...sectionLabel, marginBottom: 10 }}>
+          {isPt ? 'Linhas de evolução' : 'Evolution branches'}
+        </p>
 
-      {/* Seletor de branch — só os branches disponíveis (transição de arte) */}
-      <div className="flex gap-2 mb-4">
-        {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
-          const hex = getBranchColor(b).hex;
-          const active = selectedBranch === b;
-          const Icon = ATTR_ICON_SVG[b];
-          return (
-            <button
-              key={b}
-              onClick={() => setSelectedBranch(b)}
-              className="sm-px-chip-btn flex-1"
-              style={{
-                fontSize: '0.75rem',
-                backgroundColor: active ? hex : 'var(--sm-surface)',
-                borderColor: active ? hex : 'var(--sm-line)',
-                ['--sm-cham-line' as string]: active ? hex : 'var(--sm-line)',
-                // Branco sobre os três preenchimentos media 2,4–3,1:1 (medido);
-                // a tinta escura mede 5,4–7,0:1.
-                color: active ? ATTR_ON_FILL_INK : ATTR_INK[b],
-              } as CSSProperties}
-            >
-              <Icon size={16} color={active ? ATTR_ON_FILL_INK : hex} strokeWidth={2.2} />
-              {L(ATTR_LABEL[b])}
-            </button>
-          );
-        })}
-      </div>
+        {/* Seletor de galho — só os branches disponíveis (transição de arte). */}
+        <div role="radiogroup" aria-label={isPt ? 'Linha de evolução' : 'Evolution branch'} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+          {(AVAILABLE_BRANCHES as readonly Attr[]).map(b => {
+            const hex = ATTR_COLOR[b];
+            const active = selectedBranch === b;
+            const Glyph = ATTR_GLYPH[b];
+            return (
+              <button
+                key={b}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setSelectedBranch(b)}
+                style={{
+                  ...sm2Button(active ? 'primary' : 'ghost'),
+                  flex: 1,
+                  padding: '10px 8px',
+                  // Branco sobre os três preenchimentos media 2,4–3,1:1 (medido);
+                  // a tinta escura mede 5,4–7,0:1.
+                  ...(active
+                    ? { backgroundColor: hex, color: ATTR_ON_FILL_INK, borderColor: hex }
+                    : { color: ATTR_INK[b] }),
+                }}
+              >
+                <Glyph size={18} color={active ? ATTR_ON_FILL_INK : hex} strokeWidth={2.2} />
+                {L(ATTR_LABEL[b])}
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Grafo da árvore (Ref C): coluna vertical de nós de cristal ligados
-          por linhas. O Rookie é o TRONCO — mesmo nó para os três galhos —,
-          por isso encabeça a coluna em vez de morar numa ficha à parte. */}
-      <div className="sm-px-tree">
         {branchPath.length === 0 && !ultra ? (
           // Sem a árvore do oráculo (save antigo ou incompleto) não há o que
           // desenhar. Antes ficava só um vazio enorme abaixo dos botões, e a
           // tela parecia quebrada.
-          <div className="sm-card" style={{ padding: 20, textAlign: 'center' }}>
-            <img src={ravenMascot} alt="" width={52} height={52} style={{ objectFit: 'contain', margin: '0 auto 10px', opacity: 0.85 }} />
-            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: 'var(--sm-ink)' }}>
+          <div style={{ ...card, textAlign: 'center' }}>
+            {/* `pets` e não `account_tree`: o inventário da fonte subsetada tem
+                102 nomes e `account_tree` não está nele — nome fora do
+                inventário renderiza VAZIO e não dá erro (tokens.md §5). */}
+            <Icon name="pets" size={40} tone="muted" />
+            <p style={{ ...sm2Text, fontWeight: 500, marginTop: 8 }}>
               {isPt ? 'Sua árvore ainda não foi revelada' : 'Your tree hasn’t been revealed yet'}
             </p>
-            <p style={{ margin: '6px 0 0', fontSize: 12.5, lineHeight: 1.6, color: 'var(--sm-muted)' }}>
+            <p style={{ ...sm2Hint, marginTop: 6 }}>
               {isPt
                 ? 'Cuide do seu Soulmon e conclua as tarefas do dia — as próximas formas aparecem aqui conforme ele evolui.'
                 : 'Care for your Soulmon and finish today’s tasks — the next forms show up here as it evolves.'}
@@ -447,21 +608,15 @@ export function EvolutionPath({
             const total = (rookie ? 1 : 0) + branchPath.length + (ultra ? 1 : 0);
             let i = 0;
             return (
-              <>
-                {rookie && renderEvolutionCard(rookie, { hex: '#14b8a6' }, i++, total)}
-                {branchPath.map(evolution => renderEvolutionCard(evolution, colors, i++, total))}
-                {ultra && renderEvolutionCard(ultra, colors, i++, total)}
-              </>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {rookie && renderEvolutionCard(rookie, 'var(--sm2-primary-fill)', i++, total)}
+                {branchPath.map(evolution => renderEvolutionCard(evolution, branchHex, i++, total))}
+                {ultra && renderEvolutionCard(ultra, branchHex, i++, total)}
+              </div>
             );
           })()
         )}
-      </div>
+      </section>
     </div>
   );
-}
-
-interface BranchColors { hex: string }
-
-function getBranchColor(branch: Attr): BranchColors {
-  return { hex: ATTR_COLOR[branch] };
 }
