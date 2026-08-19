@@ -3,14 +3,13 @@ import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 import { heartLossCap } from './passives';
 import {
   normalizeSchedule,
-  weekDaysForSchedule,
   normalizeEffort,
   HABIT_WEIGHT,
   type Schedule,
 } from '../types/taskModel';
 import {
   emptyRhythm,
-  isDueOn,
+  habitCountsOn,
   completeHabit,
   applyMissedDay,
   earnShield,
@@ -179,29 +178,53 @@ export function daysSinceLastReset(lastResetDate: string | undefined, now: Date)
 /** Fatia do estado que a meta do dia lê. */
 export interface DailyGoalState {
   evolutionStage: string;
-  activities: Array<{ weekDays?: number[]; schedule?: Schedule }>;
+  activities: Array<{ id?: string; weekDays?: number[]; schedule?: Schedule }>;
+  /** Histórico por hábito. Opcional: nenhum save antigo tem, e sem ele a meta
+   *  volta ao comportamento antigo (hábito flexível elegível) — nunca cobra a
+   *  mais por não saber. */
+  habitRhythms?: Record<string, HabitRhythm>;
   /** `any` porque a meta lê `effort`/`status` de tarefas que vêm do save (dado
    *  não confiável) — `normalizeEffort` e `countsForGoal` fazem a validação. */
   tasks: any[];
 }
 
 /**
- * Atividades que valem PARA ESTE dia da semana (0 = domingo).
+ * Atividades que valem PARA ESTE dia (0 = domingo).
  *
- * Um hábito com recorrência flexível (`timesPerWeek`, `everyNDays`) é elegível
- * TODO dia — a meta dele é semanal ou por intervalo, não por calendário, e quem
- * decide se ele conta hoje é `utils/habitRhythm.ts`. Ler `weekDays` cru aqui
- * excluiria esses hábitos do dia inteiro (o campo antigo é preenchido com a
- * semana toda para eles, mas depender disso seria depender de um detalhe de
- * compatibilidade); `weekDaysForSchedule` é a leitura correta e continua dando
- * exatamente o array antigo no caso `weekdays`.
+ * ANTES: um hábito de recorrência flexível (`timesPerWeek`, `everyNDays`) era
+ * elegível TODO dia, porque `weekDaysForSchedule` devolve `[0..6]` para eles.
+ * Só que o laço de ritmo da virada julgava a falta por `isDueOn`. Os dois lados
+ * da razão — a META e o FEITO — usavam regras de elegibilidade DIFERENTES, e o
+ * hábito de intervalo era cobrado em coração nos dias em que o próprio motor
+ * dizia que ele não era devido (ver o bloco de `habitCountsOn` em
+ * `utils/habitRhythm.ts` para o caso medido).
+ *
+ * AGORA: a elegibilidade é UMA só (`habitCountsOn`), e ela precisa da DATA e do
+ * `HabitRhythm` — daí o `dayKey` opcional. Quem não passa `dayKey` (call sites
+ * que só têm o dia da semana em mãos) cai no comportamento antigo: hábito
+ * flexível conta. É o padrão seguro na direção certa — na dúvida a meta é a
+ * MAIOR, e a meta maior nunca é a que cobra a mais, porque `dailyDone` usa esta
+ * mesma lista.
  */
-export function activitiesForWeekDay<A extends { weekDays?: number[]; schedule?: Schedule }>(
-  state: { evolutionStage: string; activities: A[] },
+export function activitiesForWeekDay<A extends { id?: string; weekDays?: number[]; schedule?: Schedule }>(
+  state: { evolutionStage: string; activities: A[]; habitRhythms?: Record<string, HabitRhythm> },
   weekDay: number,
+  dayKey?: string,
 ): A[] {
-  if (!canSelectWeekdays(state.evolutionStage)) return state.activities;
-  return state.activities.filter(a => weekDaysForSchedule(normalizeSchedule(a)).includes(weekDay));
+  const parsed = dayKey ? new Date(dayKey) : null;
+  const date = parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+  const weekdaysMatter = canSelectWeekdays(state.evolutionStage);
+  return state.activities.filter(a => {
+    const schedule = normalizeSchedule(a);
+    if (schedule.kind === 'weekdays') {
+      // O calendário continua mandando, e continua lendo o `weekDay` recebido
+      // (e não o dia do `dayKey`): o chamador é quem escolhe o dia da semana, e
+      // trocar a fonte aqui mudaria a resposta de quem passa os dois.
+      return !weekdaysMatter || schedule.days.includes(weekDay);
+    }
+    // Flexível: sem data não há histórico a consultar → comportamento antigo.
+    return date ? habitCountsOn(a, state.habitRhythms?.[String(a.id)], date) : true;
+  });
 }
 
 /**
@@ -258,7 +281,7 @@ function countsForGoal(t: any): boolean {
  * nele) porque o papel é o mesmo — o que mudou é a UNIDADE: esforço, não itens.
  */
 export function registeredForDay(state: DailyGoalState, weekDay: number, dayKey?: string): number {
-  return activitiesForWeekDay(state, weekDay).length * HABIT_WEIGHT
+  return activitiesForWeekDay(state, weekDay, dayKey).length * HABIT_WEIGHT
     + state.tasks.filter(countsForGoal).reduce((s, t: any) => s + normalizeEffort(t?.effort), 0)
     + (dayKey ? tasksCompletedOn(state as any, dayKey) : 0);
 }
@@ -342,7 +365,16 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const requiredToday = requirements.required;
 
   let dailyDone = 0;
-  const availableActivities = activitiesForWeekDay(prev as any, yesterdayWeekDay) as any[];
+  // A MESMA lista para os três usos: o que entra na meta (`registeredForDay`),
+  // o que pode creditar `dailyDone` e o que o laço de ritmo julga. Era aqui que
+  // a razão tinha dois denominadores: esta chamada não passava o `dayKey`, então
+  // hábito flexível entrava sempre, enquanto o laço lá embaixo filtrava por
+  // `isDueOn` e não registrava nada. Ver `habitCountsOn` (utils/habitRhythm.ts).
+  const availableActivities = activitiesForWeekDay(
+    prev as any,
+    yesterdayWeekDay,
+    yesterdayString,
+  ) as any[];
 
   availableActivities.forEach((activity: any) => {
     let isComplete = false;
@@ -536,10 +568,11 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const rhythms: Record<string, HabitRhythm> = { ...(prev.habitRhythms ?? {}) };
   if (!wasAway) {
     availableActivities.forEach((activity: any) => {
-      const schedule = normalizeSchedule(activity);
       const current = rhythms[activity.id] ?? emptyRhythm();
-      if (!isDueOn(schedule, current, yesterday)) return;
-
+      // Sem `isDueOn` de novo aqui: `availableActivities` JÁ foi filtrada pela
+      // mesma regra (`habitCountsOn`, que chama `isDueOn` para `everyNDays`).
+      // A segunda checagem era a origem do bug — duas leituras da mesma
+      // pergunta, uma por lista, produzindo meta e falta discordantes.
       const isComplete = activity.steps?.length > 0
         ? activity.steps.every((s: any) => s.completed)
         : !!activity.completedToday && activity.lastCompletedDate === yesterdayString;

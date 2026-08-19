@@ -36,7 +36,7 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
   // descreve nada e só faria o cartão parecer uma cobrança vazia.
   const lines = report.perHabit.filter(l => l.window > 0);
 
-  const muted: React.CSSProperties = { fontSize: '0.72rem', color: 'var(--sm-muted)', lineHeight: 1.45 };
+  const muted: React.CSSProperties = { fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45 };
 
   return (
     <PixelPanel title={isPt ? 'SUA SEMANA' : 'YOUR WEEK'}>
@@ -51,7 +51,12 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
           {lines.map(line => (
             <li key={line.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span aria-hidden="true" style={{ fontSize: 16, width: 22, textAlign: 'center' }}>{line.emoji}</span>
-              <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: 'var(--sm-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {/* `title`: o nome é cortado por reticências e não havia como ler
+                  o resto — nem com o mouse, nem com o dedo. */}
+              <span
+                title={line.name}
+                style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: 'var(--sm-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+              >
                 {line.name}
                 {line.id === report.bestHabitId && (
                   <span style={{ ...muted, marginLeft: 6 }}>
@@ -103,7 +108,7 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
             lineHeight: 1.5,
             color: 'var(--sm-ink)',
             backgroundColor: 'var(--sm-surface)',
-            border: '1px solid color-mix(in srgb, var(--sm-px-cyan) 45%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--sm-px-cyan-ink) 60%, transparent)',
           }}
         >
           {suggestion}

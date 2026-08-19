@@ -42,9 +42,12 @@ import {
   plannedEffort,
   isOvercommitted,
   weightOf,
+  parseDayValue,
+  sameDay,
 } from './taskTriage';
 import type { TriageTask } from './taskTriage';
-import { constancy, habitTier, dayKeyOf, weekStart } from './habitRhythm';
+import { constancy, habitTier, dayKeyOf, weekStart, habitCountsOn } from './habitRhythm';
+import type { Schedule } from '../types/taskModel';
 import type { HabitRhythm } from './habitRhythm';
 import type { RestState } from './restWindow';
 
@@ -61,6 +64,7 @@ export interface RitualActivity {
   emoji?: string;
   category?: string;
   weekDays?: number[];
+  schedule?: Schedule;
   completedToday?: boolean;
 }
 
@@ -116,25 +120,11 @@ function addDays(date: Date, n: number): Date {
   return d;
 }
 
-/**
- * A mesma normalização de `taskTriage`: `startDate`/`focusDate` podem estar em
- * ISO ou em 'YYYY-MM-DD' (o valor cru de um `<input type="date">`), e comparar
- * string com string quebraria em silêncio para metade dos casos.
- */
-function parseDayValue(value: string): Date | null {
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function sameDay(value: string | undefined, dayKey: string): boolean {
-  if (!value) return false;
-  if (value === dayKey) return true;
-  const a = parseDayValue(value);
-  const b = parseDayValue(dayKey);
-  return !!a && !!b && a.toDateString() === b.toDateString();
-}
+// `parseDayValue`/`sameDay` vêm de `taskTriage` (dono da normalização de
+// `startDate`/`focusDate`: ISO ou 'YYYY-MM-DD', o valor cru de um
+// `<input type="date">`). Eram uma cópia byte-a-byte aqui — duas
+// implementações da mesma comparação, ambas vivas, é o footgun 9 esperando a
+// correção que só chega num dos lados.
 
 const WEEKDAY_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const WEEKDAY_PT = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
@@ -190,15 +180,18 @@ export interface CheckInPlan {
 export function checkInPlan(state: RitualState, now: Date): CheckInPlan {
   const dayKey = dayKeyOf(now);
   const yesterdayKey = dayKeyOf(addDays(now, -1));
-  const weekDay = now.getDay();
 
   const activities = state.activities ?? [];
   const tasks = state.tasks ?? [];
+  const rhythms = state.habitRhythms ?? {};
 
-  const habitsToday = activities.filter(a => {
-    if (!Array.isArray(a.weekDays)) return true;
-    return a.weekDays.includes(weekDay);
-  });
+  // Elegibilidade vem do DONO (`habitCountsOn`, utils/habitRhythm.ts), não de
+  // `a.weekDays` cru. A leitura antiga era a segunda das três cópias da mesma
+  // pergunta e concordava com a virada do dia só por acidente: o CreateModal
+  // escreve `weekDays: [0..6]` para schedule flexível por compatibilidade com o
+  // widget Android. O check-in mostrava um `everyNDays` todo dia como se fosse
+  // devido — e a virada, corretamente, não o cobrava.
+  const habitsToday = activities.filter(a => habitCountsOn(a, rhythms[a.id], now));
 
   const live = tasks.filter(t => isActive(t) && !t.completed);
 
@@ -226,7 +219,7 @@ export function checkInPlan(state: RitualState, now: Date): CheckInPlan {
 
   const suggestedFocus = ordered.slice(0, MAX_DAILY_FOCUS);
 
-  const effort = plannedEffort(tasks, habitsToday, dayKey);
+  const effort = plannedEffort(tasks, habitsToday, dayKey, rhythms);
 
   return {
     habitsToday,

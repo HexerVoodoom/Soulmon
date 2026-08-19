@@ -5,7 +5,6 @@ import iconHeart from '../assets/icons/icon-heart-item.png';
 import iconWake from '../assets/soulmon/icons/icon-wake.png';
 import iconStar from '../assets/soulmon/icons/icon-star.png';
 import iconCloudRain from '../assets/soulmon/icons/icon-cloud-rain.png';
-import iconHeartCrack from '../assets/soulmon/icons/icon-heart-crack.png';
 import iconHeartHandshake from '../assets/soulmon/icons/icon-heart-handshake.png';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
@@ -41,7 +40,10 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   // Só faz sentido oferecer quando houve cobrança e ela ainda não foi desfeita.
   const canRecover = !welcome && report.heartsLost > 0 && !report.heartsRecovered && !!onRecoverHearts;
 
-  const rows: { icon: string; label: string; value: string; highlight?: 'good' | 'bad' }[] = welcome
+  // `soft` = âmbar (#d9a441), o mesmo do MorningCheckIn/TriagePile. NÃO existe
+  // `bad`: o vermelho de alerta é a cor de erro do sistema, e um dia mais
+  // devagar não é um erro do usuário (mesma tese escrita em TaskMeta.tsx:29).
+  const rows: { icon: string; label: string; value: string; highlight?: 'good' | 'soft' }[] = welcome
     ? [
         {
           icon: iconHeart,
@@ -60,14 +62,21 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
         {
           icon: iconActivities,
           label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
-          value: `${report.done}/${report.total}`,
+          value: isPt ? `${report.done} de ${report.total}` : `${report.done} of ${report.total}`,
           highlight: report.wasPerfect ? 'good' : undefined,
         },
         {
           icon: iconHeart,
           label: isPt ? 'Corações' : 'Hearts',
-          value: report.heartsLost > 0 ? `-${report.heartsLost} ❤️` : (isPt ? 'inteiros!' : 'all there!'),
-          highlight: report.heartsLost > 0 ? 'bad' : 'good',
+          // Sem sinal de menos: era o único número negativo do app, e escrever
+          // uma perda como "-1" é o vocabulário de extrato bancário. A frase
+          // logo abaixo já oferece o caminho de volta (carinho).
+          value: report.heartsLost > 0
+            ? (report.heartsLost <= 0.5
+                ? (isPt ? 'meio em recuperação' : 'half recovering')
+                : (isPt ? `${report.heartsLost} em recuperação` : `${report.heartsLost} recovering`))
+            : (isPt ? 'inteiros!' : 'all there!'),
+          highlight: report.heartsLost > 0 ? 'soft' : 'good',
         },
         {
           icon: iconStar,
@@ -77,14 +86,17 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
         },
       ];
 
-  const headIcon: string = welcome ? iconHeartHandshake : report.degenerated ? iconHeartCrack : report.wasPerfect ? iconStar : report.heartsLost > 0 ? iconCloudRain : iconWake;
-  const headColor = welcome ? '#22A900' : report.degenerated ? '#e0483e' : report.wasPerfect ? '#d9a441' : report.heartsLost > 0 ? '#6b7280' : '#f0a500';
-  const headBg = welcome ? '#e6f6e2' : report.degenerated ? '#fde8e6' : report.wasPerfect ? '#fbf1dd' : report.heartsLost > 0 ? '#eef0f3' : '#fff4e0';
+  // Coração partido + vermelho + fundo rosa era uma composição de LUTO para um
+  // evento que já exige dias ruins seguidos. Chuva + âmbar diz a mesma coisa
+  // ("passou um tempo ruim") sem dizer que a pessoa falhou.
+  const headIcon: string = welcome ? iconHeartHandshake : report.degenerated ? iconCloudRain : report.wasPerfect ? iconStar : report.heartsLost > 0 ? iconCloudRain : iconWake;
+  const headColor = welcome ? '#22A900' : report.degenerated ? '#d9a441' : report.wasPerfect ? '#d9a441' : report.heartsLost > 0 ? '#6b7280' : '#f0a500';
+  const headBg = welcome ? '#e6f6e2' : report.degenerated ? '#fbf1dd' : report.wasPerfect ? '#fbf1dd' : report.heartsLost > 0 ? '#eef0f3' : '#fff4e0';
 
   const headline = welcome
     ? (isPt ? 'Que saudade!' : 'I missed you!')
     : report.degenerated
-      ? (isPt ? 'Seu Soulmon regrediu...' : 'Your Soulmon degenerated...')
+      ? (isPt ? 'Seu Soulmon voltou um estágio' : 'Your Soulmon stepped back a stage')
       : report.wasPerfect
         ? (isPt ? 'Dia perfeito!' : 'Perfect day!')
         : report.heartsLost > 0
@@ -106,18 +118,23 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   }
   if (!welcome && report.done >= report.required && report.energyWasFull === false) {
     notes.push(isPt
-      ? 'Tarefas em dia! Faltou só encher a energia antes do fim do dia para o dia perfeito.'
-      : 'Tasks done! Only the energy bar was short of full for a perfect day.');
+      // "Faltou" para quem cumpriu 100% da própria meta é a palavra de quem
+      // cobra. Vira dica para amanhã, que é o que ela de fato é.
+      ? 'Tarefas em dia! Fica a dica pra amanhã: encher a energia também fecha o dia perfeito.'
+      : 'Tasks done! A tip for tomorrow: filling the energy bar also seals a perfect day.');
   }
   if (!welcome && report.heartsLost > 0 && !report.degenerated) {
     notes.push(isPt
-      ? 'Faça carinho nele para recuperar meio coração — e nunca se perde mais que um por dia.'
-      : 'Rub your pet to restore half a heart — and you never lose more than one a day.');
+      // Convite, não imperativo: era a única ordem dirigida ao usuário no app.
+      ? 'Um carinho devolve meio coração, se você quiser — e nunca se perde mais que um por dia.'
+      : 'A rub gives half a heart back, if you feel like it — and you never lose more than one a day.');
   }
   if (report.heartsRecovered) {
     notes.push(isPt
-      ? 'Corações devolvidos. Da próxima vez marque no dia — seu Soulmon gosta de acompanhar de perto.'
-      : 'Hearts restored. Next time log it the same day — your Soulmon likes following along.');
+      // A segunda oração corrigia o comportamento logo depois de perdoar — o
+      // perdão com ressalva é o que ensina a pessoa a não pedir de novo.
+      ? 'Corações devolvidos. Ficou tudo certo.'
+      : 'Hearts restored. All good.');
   }
   if (soulGoal && (report.wasPerfect || welcome)) {
     notes.push(isPt
@@ -172,7 +189,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
               <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>{r.label}</span>
               <span style={{
                 fontSize: '0.92rem', fontWeight: 800,
-                color: r.highlight === 'good' ? '#22A900' : r.highlight === 'bad' ? '#e0483e' : 'var(--sm-ink)',
+                color: r.highlight === 'good' ? '#22A900' : r.highlight === 'soft' ? '#d9a441' : 'var(--sm-ink)',
               }}>
                 {r.value}
               </span>
@@ -233,7 +250,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
             </>
           )}
           <button onClick={onClose} className="sm-btn" style={{ width: '100%' }}>
-            OK
+            {isPt ? 'Começar o dia' : 'Start the day'}
           </button>
         </div>
       </div>

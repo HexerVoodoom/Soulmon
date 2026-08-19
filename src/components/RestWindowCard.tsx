@@ -58,10 +58,15 @@ export interface RestWindowCardProps {
   onToggleMetrics: (hide: boolean) => void;
 }
 
+/**
+ * Cor da ETIQUETA de raridade — texto, então 4,5:1. Os tokens crus do kit não
+ * têm par para o tema claro (`--sm-px-cyan` mede 1,40:1 ali); as variantes
+ * `-ink` têm, e são declaradas nos dois temas em `index.css`.
+ */
 const RARITY_TONE: Record<DreamRarity, string> = {
   common: 'var(--sm-muted)',
-  rare: 'var(--sm-px-cyan)',
-  legendary: 'var(--sm-px-copper)',
+  rare: 'var(--sm-px-cyan-ink)',
+  legendary: 'var(--sm-px-copper-ink)',
 };
 
 function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
@@ -72,7 +77,7 @@ function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
 
 const labelStyle: CSSProperties = {
   display: 'block',
-  fontSize: '0.7rem',
+  fontSize: '0.75rem',
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
   color: 'var(--sm-muted)',
@@ -88,7 +93,7 @@ const timeInputStyle: CSSProperties = {
   fontWeight: 700,
   color: 'var(--sm-ink)',
   background: 'var(--sm-bg)',
-  border: '2px solid color-mix(in srgb, var(--sm-px-copper) 60%, transparent)',
+  border: '2px solid var(--sm-px-copper-ink)',
   borderRadius: 0,
 };
 
@@ -148,6 +153,13 @@ export function RestWindowCard({
           Média móvel das últimas REST_WINDOW_DAYS manhãs; noite sem registro
           sai do denominador (restConstancy), então nada aqui pode ler como
           falha. Some inteira quando `hideMetrics` está ligado. */}
+      {/* `aria-live`: este bloco INTEIRO aparece e some quando o switch lá
+          embaixo é ligado. Sem anúncio, quem usa leitor de tela apertava a
+          chave e não recebia confirmação nenhuma de que os números tinham
+          sumido — e é justamente a pessoa que escolheu não conviver com eles.
+          O contêiner vive fora do `&&` de propósito: região viva que só nasce
+          junto com o conteúdo não é anunciada por parte dos leitores. */}
+      <div aria-live="polite">
       {!hidden && (
         <div style={{ marginBottom: 14 }}>
           {/* O denominador é o de noites REGISTRADAS, nunca `REST_WINDOW_DAYS`
@@ -173,7 +185,7 @@ export function RestWindowCard({
             tone="cyan"
             label={isPt ? 'Constância de horário' : 'Bedtime constancy'}
           />
-          <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '6px 0 0' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '6px 0 0' }}>
             {constancy.window === 0
               ? (isPt
                 ? 'Ainda não há noites registradas. Nenhuma noite conta como falha — as que faltam simplesmente não entram na conta.'
@@ -184,6 +196,7 @@ export function RestWindowCard({
           </p>
         </div>
       )}
+      </div>
 
       {/* RECOMPENSAS — ficam visíveis com o switch ligado (regra 5). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -206,7 +219,7 @@ export function RestWindowCard({
         />
         <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--sm-ink)', lineHeight: 1.35 }}>
           {switchLabel}
-          <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--sm-muted)' }}>
+          <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--sm-muted)' }}>
             {isPt
               ? 'Some com os números. Os sonhos continuam chegando igual.'
               : 'Hides the numbers. Dreams keep arriving all the same.'}

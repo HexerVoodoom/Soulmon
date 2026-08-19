@@ -18,10 +18,10 @@
  * de propósito: quem passou uma noite ruim é exatamente quem menos aguenta
  * abrir o app e encontrar uma fatura.
  */
-import type { KeyboardEvent } from 'react';
 import type { Dream, DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 export interface MorningDreamProps {
   open: boolean;
@@ -33,10 +33,16 @@ export interface MorningDreamProps {
   onClose: () => void;
 }
 
+/**
+ * A raridade aparece como TEXTO, então precisa dos tokens com par por tema:
+ * `--sm-px-cyan` media 1,40:1 sobre a superfície clara e `--sm-px-copper`
+ * 3,05:1 — o rótulo "Raro" era praticamente invisível no tema claro, que é o
+ * padrão de quem abre o app de manhã.
+ */
 const RARITY_TONE: Record<DreamRarity, string> = {
   common: 'var(--sm-muted)',
-  rare: 'var(--sm-px-cyan)',
-  legendary: 'var(--sm-px-copper)',
+  rare: 'var(--sm-px-cyan-ink)',
+  legendary: 'var(--sm-px-copper-ink)',
 };
 
 function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
@@ -46,6 +52,14 @@ function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
 }
 
 export function MorningDream({ open, dream, isNew, language, onClose }: MorningDreamProps) {
+  // Trap + Escape + devolução de foco (`hooks/useDialogA11y.ts`). O Escape
+  // daqui funcionava POR ACIDENTE: o handler estava na div do véu, que não é
+  // focável, e só recebia a tecla porque o `autoFocus` do botão OK fazia o
+  // evento borbulhar até lá. Um Tab do usuário já matava o acidente.
+  // Chamado ANTES do `return null` — hook depois de retorno condicional quebra
+  // a ordem dos hooks.
+  const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+
   if (!open) return null;
 
   const isPt = language === 'pt-BR';
@@ -64,21 +78,15 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
       ? 'Seu Soulmon acordou primeiro e ficou esperando você. Hoje ele não trouxe nenhuma cena da noite — e está tudo bem.'
       : 'Your Soulmon woke up first and waited for you. No scene came back from the night today — and that’s okay.');
 
-  // Handler de teclado no contêiner: o foco cai no botão OK (autoFocus) e o
-  // keydown sobe até aqui. Sem listener global, sem efeito.
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') onClose();
-  };
-
   return (
     <div
-      onKeyDown={onKeyDown}
       style={{
         position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26, 0.55)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={headline}
@@ -114,11 +122,11 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
               {label}
             </p>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 8 }}>
-              <span style={{ fontSize: '0.7rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: RARITY_TONE[dream.rarity] }}>
+              <span style={{ fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: RARITY_TONE[dream.rarity] }}>
                 {rarityLabel(dream.rarity, isPt)}
               </span>
               {isNew && (
-                <span style={{ fontSize: '0.7rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan)', fontWeight: 800 }}>
+                <span style={{ fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan-ink)', fontWeight: 800 }}>
                   {isPt ? '· Novo!' : '· New!'}
                 </span>
               )}
@@ -131,7 +139,7 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
         </p>
 
         {dream && isNew && (
-          <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '0 0 6px' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '0 0 6px' }}>
             {isPt ? 'Cena nova na coleção de sonhos.' : 'New scene in the dream collection.'}
           </p>
         )}

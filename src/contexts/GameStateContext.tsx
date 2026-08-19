@@ -14,7 +14,7 @@ import { rollPetPassive } from '../utils/passives';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
-import { createRestState } from '../utils/restWindow';
+import { createRestState, MAX_NIGHTS } from '../utils/restWindow';
 import type { NightmareState } from '../utils/nightmares';
 import { createNightmareState } from '../utils/nightmares';
 import type { PlayLog } from '../utils/petNeeds';
@@ -402,6 +402,181 @@ function hydratePlayLog(v: unknown): PlayLog | undefined {
     : { date: raw.date };
 }
 
+/** String opcional: qualquer outra coisa vira `undefined` (= "não tem"). */
+const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+
+/** Lista de strings — descarta silenciosamente item que não é string. */
+const strArr = (v: unknown): string[] =>
+  arr<unknown>(v).filter((x): x is string => typeof x === 'string');
+
+/**
+ * Um passo de checklist. `completed` só é `true` quando o save diz `true` —
+ * `activity.steps.every(s => s.completed)` decide conclusão de hábito, então
+ * inventar `true` a partir de lixo daria dia perfeito de graça.
+ */
+function hydrateStep(v: unknown, i: number): Step {
+  const raw = obj<unknown>(v);
+  return {
+    id: str(raw.id) ?? `step-${i}`,
+    label: str(raw.label) ?? '',
+    completed: raw.completed === true,
+  };
+}
+
+/**
+ * Uma ATIVIDADE do save.
+ *
+ * `computeDailyReset` faz `activity.steps.length` e `activity.steps.map(...)`
+ * na virada — uma atividade sem `steps` (save de cliente antigo, que é
+ * literalmente uma das fixtures do fuzz) lança DENTRO do updater, no mount:
+ * mesma tela branca permanente dos outros dois buracos. Item sem `id` string é
+ * DESCARTADO — sem id ele não pode ser marcado, editado nem apagado pela UI, e
+ * `habitRhythms` não teria chave para ele.
+ */
+function hydrateActivity(v: unknown): Activity | null {
+  const raw = obj<unknown>(v);
+  const id = str(raw.id);
+  if (!id) return null;
+  return {
+    ...(raw as object),
+    id,
+    name: str(raw.name) ?? '',
+    category: raw.category as ActivityCategory,
+    emoji: str(raw.emoji) ?? '⭐',
+    steps: arr<unknown>(raw.steps).map(hydrateStep),
+    // A ponte com o widget Android e o desktop lê `weekDays` direto.
+    weekDays: numArr(raw.weekDays),
+    completedToday: raw.completedToday === true,
+    lastCompletedDate: str(raw.lastCompletedDate),
+  } as Activity;
+}
+
+/** Uma TAREFA. Mesmo motivo: `steps` é percorrido sem checagem na UI. */
+function hydrateTask(v: unknown): Task | null {
+  const raw = obj<unknown>(v);
+  const id = str(raw.id);
+  if (!id) return null;
+  return {
+    ...(raw as object),
+    id,
+    name: str(raw.name) ?? '',
+    category: raw.category as ActivityCategory,
+    emoji: str(raw.emoji) ?? '⭐',
+    completed: raw.completed === true,
+    ...(raw.steps !== undefined ? { steps: arr<unknown>(raw.steps).map(hydrateStep) } : {}),
+  } as Task;
+}
+
+/**
+ * Histórico de tarefas concluídas — alimenta `carePattern`, o foco do dia e a
+ * contagem do ranking público.
+ *
+ * Aqui a régua é DELIBERADAMENTE mais frouxa que a de `activities`/`tasks`:
+ * este array é HISTÓRICO, e histórico descartado não volta. Saves antigos
+ * guardavam entradas com formatos diferentes (até só o id) e nenhum consumidor
+ * lança em cima delas — ler `.completedAt` de uma string devolve `undefined`,
+ * não um erro. Só o que é NULLISH é removido, porque só isso lança de fato
+ * (`null.completedAt`).
+ */
+function hydrateCompletedTask(v: unknown): unknown {
+  if (v === null || v === undefined) return null;
+  if (typeof v !== 'object' || Array.isArray(v)) return v;
+  const raw = v as Record<string, unknown>;
+  return {
+    ...raw,
+    ...(str(raw.emoji) === undefined ? { emoji: '⭐' } : {}),
+    ...(str(raw.name) === undefined ? { name: '' } : {}),
+  };
+}
+
+/** Lista de números finitos — descarta o resto (índices, ids numéricos). */
+const numArr = (v: unknown): number[] =>
+  arr<unknown>(v).filter((x): x is number => typeof x === 'number' && Number.isFinite(x));
+
+/** Decoração equipada: um id de item (string) por espaço do palco. */
+function hydrateDecor(v: unknown): Partial<Record<SlotId, string>> {
+  const out: Partial<Record<SlotId, string>> = {};
+  for (const [slot, id] of Object.entries(obj<unknown>(v))) {
+    if (typeof id === 'string') out[slot as SlotId] = id;
+  }
+  return out;
+}
+
+/**
+ * Descanso: `nights`, `dreams` e `window` PRECISAM existir com o tipo certo.
+ *
+ * Um `rest: {}` vindo da nuvem (ou de um cliente antigo) passava pelo teste de
+ * "é objeto" e explodia no PRIMEIRO render: `restConstancy` faz
+ * `state.nights.filter(...)` e roda a cada render via `tiredness`;
+ * `hasPendingNightmare` faz `rest.nights.find(...)` já no efeito da manhã. Como
+ * `hydrateSave` não lança nesse caminho, o try/catch do inicializador não
+ * resgata — a árvore desmonta no render e toda carga seguinte lê o mesmo save,
+ * que é a tela branca PERMANENTE deste arquivo.
+ *
+ * Noite malformada é DESCARTADA (item sem `date` string não é registro de nada);
+ * `onTime` inválido vira `false`, que é o valor NEUTRO — jamais inventar um
+ * "dormiu no horário" que não aconteceu.
+ */
+function hydrateRest(v: unknown): RestState {
+  const base = createRestState();
+  const raw = obj<unknown>(v);
+
+  const w = obj<unknown>(raw.window);
+  const window = (typeof w.start === 'string' && typeof w.end === 'string')
+    ? { start: w.start, end: w.end }
+    : base.window;
+
+  const nights = arr<unknown>(raw.nights)
+    .map((n) => obj<unknown>(n))
+    .filter((n) => typeof n.date === 'string' && n.date)
+    .map((n) => ({
+      date: n.date as string,
+      ...(typeof n.sleptAt === 'string' ? { sleptAt: n.sleptAt } : {}),
+      ...(typeof n.wokeAt === 'string' ? { wokeAt: n.wokeAt } : {}),
+      onTime: n.onTime === true,
+    }))
+    .slice(-MAX_NIGHTS);
+
+  return {
+    window,
+    nights,
+    dreams: strArr(raw.dreams),
+    // `hideMetrics` é switch de apresentação: só o `true` explícito o liga.
+    ...(raw.hideMetrics === true ? { hideMetrics: true } : {}),
+  };
+}
+
+/**
+ * Uma entrada de `habitRhythms`.
+ *
+ * `obj()` validava só o CONTÊINER, então `{ "a": {} }` ou `{ "a": 5 }` passavam
+ * inteiros. `computeDailyReset` faz `rhythms[id] ?? emptyRhythm()` — e `{}` não
+ * é nullish, logo flui direto para `applyMissedDay`, que faz
+ * `rhythm.done.includes(...)` e lança DENTRO do updater da virada, no mount.
+ * Mesma tela branca. Aqui cada campo é normalizado; entrada que não é objeto
+ * simples vira ritmo vazio (nunca é propagada).
+ */
+function hydrateRhythm(v: unknown): HabitRhythm {
+  const raw = obj<unknown>(v);
+  const done = strArr(raw.done);
+  return {
+    done,
+    missed: strArr(raw.missed),
+    shielded: strArr(raw.shielded),
+    shields: Math.max(0, Math.floor(num(raw.shields, 0))),
+    // Nunca menor que o histórico visível: `totalDone` alimenta os marcos e a
+    // poda dos 120 dias só pode fazê-lo crescer em relação a `done`.
+    totalDone: Math.max(done.length, Math.floor(Math.max(0, num(raw.totalDone, 0)))),
+    ...(typeof raw.lastCompletedDate === 'string' ? { lastCompletedDate: raw.lastCompletedDate } : {}),
+  };
+}
+
+function hydrateRhythms(v: unknown): Record<string, HabitRhythm> {
+  const out: Record<string, HabitRhythm> = {};
+  for (const [id, r] of Object.entries(obj<unknown>(v))) out[id] = hydrateRhythm(r);
+  return out;
+}
+
 /** Passos: só o agregado do dia, e só com os três campos no tipo certo. */
 function hydrateSteps(v: unknown): StepsRecord | undefined {
   const raw = obj<unknown>(v);
@@ -429,11 +604,33 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
   const maxHP = getMaxHPForStage(loadedState.evolutionStage ?? 'rookie');
   return {
         ...loadedState,
-        activities: arr(loadedState.activities),
-        tasks: arr(loadedState.tasks),
-        completedTasks: arr(loadedState.completedTasks),
-        activityStats: (loadedState.activityStats && typeof loadedState.activityStats === 'object'
-          && !Array.isArray(loadedState.activityStats)) ? loadedState.activityStats : {},
+        // Não basta ser array: cada ITEM é percorrido sem checagem (a virada faz
+        // `activity.steps.length`). Item irrecuperável é DESCARTADO.
+        activities: arr<unknown>(loadedState.activities)
+          .map(hydrateActivity).filter((a): a is Activity => a !== null),
+        tasks: arr<unknown>(loadedState.tasks)
+          .map(hydrateTask).filter((t): t is Task => t !== null),
+        completedTasks: arr<unknown>(loadedState.completedTasks)
+          .map(hydrateCompletedTask).filter((t) => t !== null) as CompletedTask[],
+        // Só a entrada NULLISH sai (`null.completionCount` lança); o resto é
+        // completado, nunca descartado. Save legado do DigiApp guardava um
+        // NÚMERO cru por atividade (`{a1: 12}`) — apagar isso seria perder
+        // histórico de quem já joga, e ninguém lança lendo `.completionCount`
+        // de um número.
+        activityStats: Object.fromEntries(
+          Object.entries(obj<unknown>(loadedState.activityStats))
+            .filter(([, s]) => s !== null && s !== undefined)
+            .map(([id, s]) => {
+              if (typeof s !== 'object' || Array.isArray(s)) return [id, s];
+              const e = s as Record<string, unknown>;
+              return [id, {
+                ...e,
+                name: str(e.name) ?? id,
+                emoji: str(e.emoji) ?? '⭐',
+                completionCount: Math.max(0, num(e.completionCount, 0)),
+              }];
+            }),
+        ) as ActivityStats,
         maxHealthPoints: maxHP,
         // Save sem HP é save corrompido, não save de quem estava mal: começa
         // cheio. O oposto (0) degeneraria o pet na primeira virada por causa de
@@ -451,13 +648,24 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           ? loadedState.evolutionStage : 'rookie',
         energyPoints: num(loadedState.energyPoints, 0),
         perfectDays: num(loadedState.perfectDays, 0),
-        lastDayWasPerfect: loadedState.lastDayWasPerfect ?? false,
-        poopEventsScheduled: arr(loadedState.poopEventsScheduled),
-        poopEventsCompleted: arr(loadedState.poopEventsCompleted),
-        unlockedEvolutions: arr(loadedState.unlockedEvolutions, ['rookie']),
-        degeneratedByHP: loadedState.degeneratedByHP ?? false,
-        currentBranch: loadedState.currentBranch ?? 'data',
-        maxActivityCap: loadedState.maxActivityCap ?? FORM_REQUIREMENTS[getStageLevel(loadedState.evolutionStage ?? 'rookie')].cap,
+        lastDayWasPerfect: loadedState.lastDayWasPerfect === true,
+        // Índices de evento: só números finitos. Um `'x'` aqui vira `NaN` em
+        // toda comparação de agendamento e o cocô nunca mais aparece.
+        poopEventsScheduled: numArr(loadedState.poopEventsScheduled),
+        poopEventsCompleted: numArr(loadedState.poopEventsCompleted),
+        unlockedEvolutions: (() => {
+          const u = strArr(loadedState.unlockedEvolutions);
+          return u.length > 0 ? u : ['rookie'];
+        })(),
+        degeneratedByHP: loadedState.degeneratedByHP === true,
+        // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/
+        // sprites como galho inexistente.
+        currentBranch: (loadedState.currentBranch === 'virus' || loadedState.currentBranch === 'data'
+          || loadedState.currentBranch === 'vaccine') ? loadedState.currentBranch : 'data',
+        maxActivityCap: num(
+          loadedState.maxActivityCap,
+          FORM_REQUIREMENTS[getStageLevel(typeof loadedState.evolutionStage === 'string' ? loadedState.evolutionStage : 'rookie')].cap,
+        ),
         eggType: (
           (loadedState.eggType as string) === 'agumon' ? 'tapirmon'
           : loadedState.eggType
@@ -470,29 +678,51 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           data: num(loadedState.attributesSinceLastEvolution?.data, 0),
           vaccine: num(loadedState.attributesSinceLastEvolution?.vaccine, 0),
         },
-        foodInventory: (loadedState.foodInventory && typeof loadedState.foodInventory === 'object'
-          && !Array.isArray(loadedState.foodInventory)) ? loadedState.foodInventory : {},
-        poopEventsShown: arr(loadedState.poopEventsShown),
+        // Contagem por emoji: valor não-numérico vira `NaN` no primeiro `-1` e
+        // a pastinha exibe item fantasma que nunca acaba.
+        foodInventory: Object.fromEntries(
+          Object.entries(obj<unknown>(loadedState.foodInventory))
+            .map(([k, v]) => [k, Math.max(0, Math.floor(num(v, 0)))])
+            .filter(([, v]) => (v as number) > 0),
+        ) as Record<string, number>,
+        poopEventsShown: numArr(loadedState.poopEventsShown),
         poopPenaltyClockAt: num(loadedState.poopPenaltyClockAt, 0),
         gamePoints: num(loadedState.gamePoints, 0),
         emblems: num(loadedState.emblems, 0),
         pvpEnabled: loadedState.pvpEnabled ?? false,
-        trophies: arr(loadedState.trophies),
-        friends: arr(loadedState.friends),
+        // `PetStageDecor` lê `.place`/`.season` de cada troféu para desenhar
+        // 🥇🥈🥉 — item que não é objeto vira medalha fantasma.
+        trophies: arr<unknown>(loadedState.trophies).filter(
+          (t): t is { season: string; place: 1 | 2 | 3 } => {
+            const e = obj<unknown>(t);
+            return typeof e.season === 'string' && (e.place === 1 || e.place === 2 || e.place === 3);
+          },
+        ),
+        friends: strArr(loadedState.friends),
         // 'bg-room' is free — always owned, even for saves from before it existed.
         // `arr()` e não `?? []`: um `ownedBackgrounds` NÃO-array fazia o spread
         // LANÇAR, o try/catch do inicializador caía para `freshGameState()` e o
         // jogador perdia o save inteiro em silêncio.
-        ownedBackgrounds: Array.from(new Set([...arr<string>(loadedState.ownedBackgrounds), 'bg-room'])),
-        equippedBackground: loadedState.equippedBackground ?? null,
-        ownedFurniture: arr(loadedState.ownedFurniture),
-        equippedDecor: migrateDecor(loadedState),
+        ownedBackgrounds: Array.from(new Set([...strArr(loadedState.ownedBackgrounds), 'bg-room'])),
+        equippedBackground: str(loadedState.equippedBackground) ?? null,
+        ownedFurniture: strArr(loadedState.ownedFurniture),
+        // `migrateDecor` devolve `loaded.equippedDecor` CRU quando ele existe —
+        // um array ou um número passaria. O palco indexa por espaço e espera id
+        // de item (string) em cada um.
+        equippedDecor: hydrateDecor(migrateDecor(loadedState)),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
-        soulGoal: loadedState.soulGoal ?? '',
-        soulStruggle: loadedState.soulStruggle ?? '',
-        moodLog: arr(loadedState.moodLog),
-        activityLog: arr(loadedState.activityLog),
-        petPassive: loadedState.petPassive ?? rollPetPassive(),
+        soulGoal: str(loadedState.soulGoal) ?? '',
+        soulStruggle: str(loadedState.soulStruggle) ?? '',
+        moodLog: arr<unknown>(loadedState.moodLog).filter(
+          (m): m is { date: string; mood: 1 | 2 | 3 | 4 | 5 } => {
+            const e = obj<unknown>(m);
+            return typeof e.date === 'string' && typeof e.mood === 'number';
+          },
+        ),
+        // `carePattern` faz `new Date(iso)` em cada item: um número ou objeto
+        // aqui não lança, mas envenena o ritmo com `Invalid Date`.
+        activityLog: strArr(loadedState.activityLog),
+        petPassive: str(loadedState.petPassive) ?? rollPetPassive(),
         // Campo antigo some do save no próximo gravar (JSON.stringify descarta
         // undefined). Sem isto ele sobreviveria para sempre e voltaria a
         // reequipar o item toda vez que o jogador desequipasse tudo.
@@ -500,20 +730,44 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // Saves from before accountTier existed are grandfathered as 'paid' —
         // they already have a real oracle character and full functionality,
         // so they must never be retroactively downgraded to demo.
-        accountTier: loadedState.accountTier ?? 'paid',
-        demoCharacterId: loadedState.demoCharacterId,
-        credits: loadedState.credits ?? 0,
+        accountTier: loadedState.accountTier === 'demo' ? 'demo' : 'paid',
+        demoCharacterId: (loadedState.demoCharacterId === 'kaelen' || loadedState.demoCharacterId === 'orrin'
+          || loadedState.demoCharacterId === 'thalindra') ? loadedState.demoCharacterId : undefined,
+        credits: num(loadedState.credits, 0),
+        // Sistema de missões: contadores LIFETIME. `Math.max(prev ?? 0, x)` e a
+        // aritmética de incremento em `App.tsx` transformam um valor não-numérico
+        // em `NaN` permanente no save — a missão fica impossível para sempre.
+        dungeonKills: num(loadedState.dungeonKills, 0),
+        dungeonRunsCompleted: num(loadedState.dungeonRunsCompleted, 0),
+        dinoBest: num(loadedState.dinoBest, 0),
+        totalPerfectDays: num(loadedState.totalPerfectDays, 0),
+        droppedItems: strArr(loadedState.droppedItems),
+        // A árvore do oráculo: cada forma é lida por `creatureFormId(s)`, que
+        // acessa campos do objeto — um item primitivo aqui derruba a tela do Pet.
+        soulmonStages: Array.isArray(loadedState.soulmonStages)
+          ? (loadedState.soulmonStages as unknown[]).filter(
+              (s): s is CreatureStage => !!s && typeof s === 'object' && !Array.isArray(s),
+            )
+          : undefined,
+        // Relatório do dia: só sobrevive como OBJETO com data. Lixo aqui é
+        // truthy e abriria o modal do relatório com campos vazios.
+        lastDayReport: (() => {
+          const r = obj<unknown>(loadedState.lastDayReport);
+          return typeof r.date === 'string'
+            ? (loadedState.lastDayReport as GameState['lastDayReport'])
+            : undefined;
+        })(),
         // Motor de tarefas (docs/PLANO-TAREFAS.md). Todos opcionais, mas com
         // linha aqui por regra: campo sem linha em `hydrateSave` já produziu a
-        // tela branca permanente. `obj()` porque um `habitRhythms: []` vindo da
-        // nuvem passaria por `??` e só explodiria lá na frente, dentro do
-        // updater da virada do dia.
-        habitRhythms: obj<HabitRhythm>(loadedState.habitRhythms),
-        rest: (loadedState.rest && typeof loadedState.rest === 'object'
-          && !Array.isArray(loadedState.rest)) ? loadedState.rest : createRestState(),
-        lastCheckInDate: loadedState.lastCheckInDate,
-        lastWeeklyReportDate: loadedState.lastWeeklyReportDate,
-        lastFreshStartDate: loadedState.lastFreshStartDate,
+        // tela branca permanente.
+        // `obj()` valida só o CONTÊINER — cada ENTRADA também precisa de tipo,
+        // senão `{a:{}}` chega em `applyMissedDay` e lança na virada (ver
+        // `hydrateRhythm`).
+        habitRhythms: hydrateRhythms(loadedState.habitRhythms),
+        rest: hydrateRest(loadedState.rest),
+        lastCheckInDate: str(loadedState.lastCheckInDate),
+        lastWeeklyReportDate: str(loadedState.lastWeeklyReportDate),
+        lastFreshStartDate: str(loadedState.lastFreshStartDate),
         // Sono jogável, brincar e passos. Mesma regra dos campos acima: TODO
         // campo novo tem linha aqui, mesmo sendo opcional — campo sem linha em
         // `hydrateSave` já produziu a tela branca permanente.

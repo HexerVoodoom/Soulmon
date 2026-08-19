@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Language } from '../utils/i18n';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import {
   effortOf,
   daysStale,
@@ -42,26 +43,36 @@ export interface TriagePileProps {
   onClose: () => void;
 }
 
+/**
+ * As quatro saídas. `ink` desenha a BORDA de 2px de cada botão — borda é objeto
+ * gráfico e precisa de 3:1 (WCAG 1.4.11).
+ *
+ * Os quatro valores eram hex/token cru sem par por tema e mediam, no tema
+ * claro, 2,92 / 2,11 / 1,31 / 4,87. Só o último passava. Trocados por tokens
+ * COM par por tema (`index.css`, bloco "tinta com par por tema"): a única coisa
+ * que distingue os quatro botões é a cor da moldura, então uma moldura que some
+ * no branco apaga a distinção inteira.
+ */
 const ACTIONS: { action: TriageAction; pt: string; en: string; ink: string; hint: { pt: string; en: string } }[] = [
   {
     action: 'today',
     pt: 'Hoje',
     en: 'Today',
-    ink: '#22A900',
+    ink: 'var(--sm-ok-ink)',
     hint: { pt: 'vai pra lista de hoje', en: 'moves to today’s list' },
   },
   {
     action: 'week',
     pt: 'Esta semana',
     en: 'This week',
-    ink: 'var(--sm-px-cyan)',
+    ink: 'var(--sm-px-cyan-ink)',
     hint: { pt: 'volta a aparecer nos próximos dias', en: 'comes back in the next few days' },
   },
   {
     action: 'someday',
     pt: 'Algum dia',
     en: 'Someday',
-    ink: '#d9a441',
+    ink: 'var(--sm-gold)',
     hint: { pt: 'lista inerte: não cobra, não envelhece', en: 'inert list: no nagging, no aging' },
   },
   {
@@ -79,6 +90,10 @@ export function TriagePile({ open, tasks, language, onResolve, onClose }: Triage
   // funcionar tanto se o pai remover a tarefa da lista quanto se ele apenas
   // mudar o status dela e devolver o mesmo array.
   const [resolved, setResolved] = useState<string[]>([]);
+
+  // Trap + Escape + devolução de foco. Sair no meio não tem penalidade (é regra
+  // desta tela), então Escape pode simplesmente fechar.
+  const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
 
   useEffect(() => {
     if (open) setResolved([]);
@@ -118,7 +133,7 @@ export function TriagePile({ open, tasks, language, onResolve, onClose }: Triage
         padding: 16,
       }}
     >
-      <div className="sm-card" style={{ width: '100%', maxWidth: 380, padding: 0, overflow: 'hidden' }}>
+      <div ref={dialogRef} className="sm-card" style={{ width: '100%', maxWidth: 380, padding: 0, overflow: 'hidden' }}>
         {/* Header */}
         <div
           style={{
@@ -136,7 +151,7 @@ export function TriagePile({ open, tasks, language, onResolve, onClose }: Triage
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {total > 0 && (
-              <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--sm-muted)' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--sm-muted)' }}>
                 {isPt ? `${doneCount} de ${total} decididas` : `${doneCount} of ${total} decided`}
               </span>
             )}
@@ -165,25 +180,52 @@ export function TriagePile({ open, tasks, language, onResolve, onClose }: Triage
           </div>
         </div>
 
-        {/* Progresso — barra que só enche. Nada aqui mede o tamanho da culpa. */}
+        {/* Progresso — barra que só enche. Nada aqui mede o tamanho da culpa.
+            `role="progressbar"` com rótulo: sem isso a barra era um retângulo
+            colorido que só existia para quem enxerga. */}
         {total > 0 && (
-          <div style={{ height: 4, background: 'var(--sm-line)' }}>
+          <div
+            role="progressbar"
+            aria-valuenow={doneCount}
+            aria-valuemin={0}
+            aria-valuemax={total}
+            aria-label={
+              isPt
+                ? `Triagem: ${doneCount} de ${total} decididas`
+                : `Triage: ${doneCount} of ${total} decided`
+            }
+            style={{ height: 4, background: 'var(--sm-line)' }}
+          >
             <div
               style={{
                 height: '100%',
                 width: `${total === 0 ? 0 : Math.round((doneCount / total) * 100)}%`,
-                background: 'var(--sm-px-cyan)',
+                background: 'var(--sm-px-cyan-ink)',
                 transition: 'width .2s ease',
               }}
             />
           </div>
         )}
 
-        {current ? (
-          <TriageCard task={current} now={now} isPt={isPt} onAction={handle} />
-        ) : (
-          <TriageDone isPt={isPt} decided={doneCount} onClose={onClose} />
-        )}
+        {/* `aria-live`: a carta troca sozinha a cada decisão, e sem anúncio
+            quem não vê a tela decidiria 40 cartas às cegas, sem saber que
+            tarefa está na frente nem quanto falta. `polite` porque a troca é
+            consequência da própria ação da pessoa — `assertive` interromperia
+            o feedback do botão que ela acabou de apertar. */}
+        <div aria-live="polite" aria-atomic="false">
+          {current ? (
+            <TriageCard
+              task={current}
+              now={now}
+              isPt={isPt}
+              onAction={handle}
+              position={doneCount + 1}
+              total={total}
+            />
+          ) : (
+            <TriageDone isPt={isPt} decided={doneCount} onClose={onClose} />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -194,11 +236,16 @@ function TriageCard({
   now,
   isPt,
   onAction,
+  position,
+  total,
 }: {
   task: TriageTask;
   now: Date;
   isPt: boolean;
   onAction: (action: TriageAction) => void;
+  /** 1-based: a carta que está na frente da fila agora. */
+  position: number;
+  total: number;
 }) {
   const effort = effortOf(task);
   const postponed = task.postponedCount ?? 0;
@@ -234,17 +281,22 @@ function TriageCard({
         style={{
           padding: '16px 14px',
           backgroundColor: 'var(--sm-surface)',
-          border: '1px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--sm-px-copper-ink) 45%, transparent)',
           marginBottom: 14,
         }}
       >
+        {/* A posição na fila é a informação que o olho pega da barra de cima e
+            que o leitor de tela não tinha de jeito nenhum. */}
+        <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--sm-muted)', fontWeight: 700 }}>
+          {isPt ? `Carta ${position} de ${total}` : `Card ${position} of ${total}`}
+        </p>
         <p
           className="sm-display"
           style={{ fontSize: '0.95rem', margin: 0, color: 'var(--sm-ink)', lineHeight: 1.35 }}
         >
           {task.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
         </p>
-        <p style={{ margin: '8px 0 0', fontSize: 11.5, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+        <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
           {facts.join(' · ')}
         </p>
       </div>
@@ -277,7 +329,7 @@ function TriageCard({
             }}
           >
             <span style={{ fontSize: 13.5, fontWeight: 800 }}>{isPt ? a.pt : a.en}</span>
-            <span style={{ fontSize: 10.5, color: 'var(--sm-muted)', lineHeight: 1.35 }}>
+            <span style={{ fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.35 }}>
               {isPt ? a.hint.pt : a.hint.en}
             </span>
           </button>

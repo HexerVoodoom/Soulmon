@@ -18,6 +18,7 @@ import {
 import {
   HABIT_MILESTONES,
   REST_SHIELD_MAX,
+  REST_SHIELD_EARN_EVERY_DAYS,
   MISS_INTERVENTION_AT,
   CONSTANCY_WINDOW_DAYS,
 } from '../types/taskModel';
@@ -209,10 +210,37 @@ describe('marcos de maturidade', () => {
 });
 
 describe('escudos de descanso', () => {
-  it('ganha com boa constância, respeitando o teto', () => {
+  // Este teste passava chamando `earnShield` cinco vezes no MESMO dia e exigindo
+  // 3 escudos — ou seja, ele travava exatamente o bug: a concessão não tinha
+  // cadência nenhuma, e `computeDailyReset` (que chama uma vez por virada, por
+  // hábito) enchia o teto em três dias. Agora as chamadas andam no calendário.
+  it('ganha com boa constância, respeitando o teto — 1 a cada REST_SHIELD_EARN_EVERY_DAYS', () => {
     let r = withDone([0, 1, 2, 3, 4, 5, 6]);
-    for (let i = 0; i < REST_SHIELD_MAX + 2; i++) r = earnShield(r, TODAY);
+    let day = TODAY;
+    for (let i = 0; i < REST_SHIELD_MAX + 2; i++) {
+      r = earnShield(r, day);
+      day = new Date(day.getTime() + REST_SHIELD_EARN_EVERY_DAYS * 86400000);
+      // A janela de constância anda junto, senão o hábito "para" e deixa de
+      // merecer escudo por um motivo que não é o do teste.
+      r = { ...r, done: [...r.done, dayKeyOf(day)] };
+    }
     expect(r.shields).toBe(REST_SHIELD_MAX);
+  });
+
+  it('NÃO concede dois escudos na mesma janela de 7 dias (nem rodando 2× no dia)', () => {
+    const bom = withDone([0, 1, 2, 3, 4, 5, 6]);
+    const um = earnShield(bom, TODAY);
+    expect(um.shields).toBe(1);
+    expect(um.lastShieldAt).toBe(dayKeyOf(TODAY));
+    // Idempotência da virada (StrictMode, aba reaberta, relógio ajustado).
+    expect(earnShield(um, TODAY).shields).toBe(1);
+    // E nos dias seguintes, dentro dos 7, continua 1.
+    for (let d = 1; d < REST_SHIELD_EARN_EVERY_DAYS; d++) {
+      const depois = new Date(TODAY.getTime() + d * 86400000);
+      expect(earnShield(um, depois).shields).toBe(1);
+    }
+    const setimo = new Date(TODAY.getTime() + REST_SHIELD_EARN_EVERY_DAYS * 86400000);
+    expect(earnShield({ ...um, done: [...um.done, dayKeyOf(setimo)] }, setimo).shields).toBe(2);
   });
 
   it('não ganha com constância ruim nem sem histórico', () => {

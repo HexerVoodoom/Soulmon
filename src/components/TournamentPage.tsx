@@ -63,6 +63,20 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   const myPoints = rank?.find(r => r.id === saveId)?.points ?? 0;
   const standing = rank === null ? null : getTierStanding(myPoints);
   const round = getTournamentWindow();
+  /** Quantas posições aparecem ACIMA e ABAIXO do jogador na lista da season.
+   *  A season inteira transformava a tela num placar absoluto: dois dedos de
+   *  scroll e a pessoa se lê como "47º", que é justamente a leitura de
+   *  comparação social que a faixa (mostrada antes) existe para substituir.
+   *  A vizinhança é a comparação útil — e a lista inteira continua a UM toque. */
+  const RANK_WINDOW = 3;
+  const [rankExpanded, setRankExpanded] = useState(false);
+  const myIndex = rank ? rank.findIndex(r => r.id === saveId) : -1;
+  /** Linhas visíveis, carregando o índice ORIGINAL: a posição mostrada é
+   *  sempre a real, nunca a posição dentro da fatia. */
+  const rankRows: Array<{ row: RankRow; place: number }> = (rank ?? []).map((row, i) => ({ row, place: i + 1 }));
+  const visibleRank = rankExpanded || myIndex < 0
+    ? rankRows
+    : rankRows.slice(Math.max(0, myIndex - RANK_WINDOW), myIndex + RANK_WINDOW + 1);
   const [tab, setTab] = useState<'arena' | 'rank'>('arena');
   const TABS: readonly PixelTabItem<'arena' | 'rank'>[] = [
     { key: 'arena', icon: iconSwords, label: 'Arena' },
@@ -299,7 +313,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                 <p style={{ margin: '7px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.45 }}>
                   {standing.next
                     ? (isPt
-                        ? `Faltam ${standing.pointsToNext} pts para ${standing.next.namePt}. Sua faixa só sobe — ninguém te tira dela.`
+                        ? `${standing.pointsToNext} pts até ${standing.next.namePt}. Sua faixa só sobe — ninguém te tira dela.`
                         : `${standing.pointsToNext} pts to ${standing.next.nameEn}. Your tier only climbs — nobody can knock you down.`)
                     : (isPt ? 'Faixa máxima. Daqui é só jogar por gosto.' : 'Top tier. From here it’s just for the love of it.')}
                 </p>
@@ -311,13 +325,22 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                 {isPt ? 'Ranking da season' : 'Season ranking'}
               </p>
             )}
-            {rank?.map((r, i) => (
+            {visibleRank.map(({ row: r, place }) => (
               <div key={r.id} className="sm-px-arcade-bar" style={{ padding: '8px 12px', gap: 10 }}>
-                <span className="sm-px-arcade-value" style={{ width: 24, textAlign: 'center', color: i < 3 ? PLACE_COLOR[(i + 1) as 1 | 2 | 3] : undefined }}>{i + 1}</span>
+                <span className="sm-px-arcade-value" style={{ width: 24, textAlign: 'center', color: place <= 3 ? PLACE_COLOR[place as 1 | 2 | 3] : undefined }}>{place}</span>
                 <span style={{ flex: 1, fontSize: 13, fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
                 <span className="sm-px-arcade-value" style={{ fontSize: 12 }}>{r.points} pts</span>
               </div>
             ))}
+            {rank && myIndex >= 0 && rank.length > visibleRank.length && !rankExpanded && (
+              <button
+                onClick={() => setRankExpanded(true)}
+                className="sm-px-arcade-label"
+                style={{ display: 'block', width: '100%', marginTop: 6, padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', color: 'rgba(255,255,255,0.6)' }}
+              >
+                {isPt ? 'Ver a season inteira' : 'See the whole season'}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -328,7 +351,10 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
             <p className="sm-px-label" style={{ margin: 0 }}>
               {result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat')}
             </p>
-            <h2 className="sm-px-value" style={{ fontSize: 24, margin: '6px 0 14px', color: result.won ? '#3fae5a' : '#d9534f' }}>
+            {/* O placar da derrota era o MAIOR elemento da tela de resultado,
+                pintado de vermelho — a partida perdida virava um erro. Agora é
+                tinta neutra nos dois casos; a vitória segue em verde. */}
+            <h2 className="sm-px-value" style={{ fontSize: 24, margin: '6px 0 14px', color: result.won ? '#3fae5a' : 'var(--sm-ink)' }}>
               {result.myScore} × {result.oppScore}
             </h2>
             <p style={{ fontSize: 13, color: 'var(--sm-ink)', margin: '0 0 6px' }}>

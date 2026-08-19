@@ -32,7 +32,24 @@ import {
 
 type DotState = 'done' | 'shielded' | 'missed' | 'notDue';
 
-const DONE_INK = '#22A900';
+/**
+ * As três tintas da janela. Todas por TOKEN com par por tema (`index.css`),
+ * nunca hex cru:
+ *
+ *  · `#22A900` media 2,92:1 no tema claro — o ponto "feito", o mais frequente
+ *    da janela, era o que menos aparecia sobre fundo claro;
+ *  · o losango de escudo e os escudos disponíveis usavam `--sm-px-cyan`
+ *    (1,40:1 no claro): o estado que existe justamente para NÃO parecer falha
+ *    era o mais fraco da linha;
+ *  · o anel de FALTA media 1,82:1 (claro) e 2,74:1 (escuro) — reprovava nos
+ *    DOIS temas, e é o estado que mais importa conseguir ler.
+ *
+ * São objetos gráficos (3:1, WCAG 1.4.11), e as variantes `-ink` passam com
+ * folga nos dois temas.
+ */
+const DONE_INK = 'var(--sm-ok-ink)';
+const SHIELD_INK = 'var(--sm-px-cyan-ink)';
+const MISS_INK = 'var(--sm-px-copper-ink)';
 
 export interface HabitConstancyProps {
   rhythm: HabitRhythm;
@@ -82,14 +99,14 @@ function Dot({ state, label }: { state: DotState; label: string }) {
             width: 10,
             height: 10,
             margin: 1,
-            backgroundColor: 'var(--sm-px-cyan)',
+            backgroundColor: SHIELD_INK,
             transform: 'rotate(45deg)',
           }
         : state === 'missed'
           ? {
               ...base,
               backgroundColor: 'transparent',
-              border: '2px solid color-mix(in srgb, var(--sm-px-copper) 60%, transparent)',
+              border: `2px solid ${MISS_INK}`,
             }
           : { ...base, height: 3, marginTop: 4.5, backgroundColor: 'var(--sm-line)' };
 
@@ -145,7 +162,7 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: compact ? 8 : 10,
-        fontSize: compact ? 11.5 : 12.5,
+        fontSize: compact ? 12 : 12.5,
         color: 'var(--sm-muted)',
       }}
     >
@@ -162,9 +179,16 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
       <span style={{ fontWeight: 800, color: 'var(--sm-ink)' }}>{headline}</span>
 
       {/* A janela. Forma OU cor distinta por estado. */}
+      {/* O rótulo dizia "Últimos 7 dias" fixo enquanto o denominador EXIBIDO é
+          `total` (a janela realmente registrada) — um hábito de 3x por semana
+          era anunciado como uma janela de 7 que a tela não mostra. */}
       <span
         role="group"
-        aria-label={isPt ? 'Últimos 7 dias' : 'Last 7 days'}
+        aria-label={
+          isPt
+            ? `Janela de constância: últimos ${total} dias devidos`
+            : `Constancy window: last ${total} due days`
+        }
         style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
       >
         {days.map(day => {
@@ -195,18 +219,15 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
               width: 8,
               height: 8,
               transform: 'rotate(45deg)',
-              backgroundColor: i < shields ? 'var(--sm-px-cyan)' : 'transparent',
-              border:
-                i < shields
-                  ? '1px solid var(--sm-px-cyan)'
-                  : '1px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent)',
+              backgroundColor: i < shields ? SHIELD_INK : 'transparent',
+              border: `1px solid ${i < shields ? SHIELD_INK : MISS_INK}`,
             }}
           />
         ))}
       </span>
 
       {!compact && (
-        <span style={{ flexBasis: '100%', fontSize: 11, lineHeight: 1.45 }}>
+        <span style={{ flexBasis: '100%', fontSize: 12, lineHeight: 1.45 }}>
           {isPt
             ? 'Nada zera aqui: um dia perdido custa um pontinho, não a sua história.'
             : 'Nothing resets here: one missed day costs a dot, not your history.'}

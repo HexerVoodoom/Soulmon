@@ -50,7 +50,10 @@ import {
   MAX_DAILY_FOCUS,
   OVERCOMMIT_EFFORT,
   HABIT_WEIGHT,
+  type Schedule,
 } from '../types/taskModel';
+import { habitCountsOn } from './habitRhythm';
+import type { HabitRhythm } from './habitRhythm';
 
 // Reexportado de propósito: quem consome o motor de tarefas não deveria ter que
 // importar de dois módulos para somar a carga de um dia. `taskModel` continua
@@ -103,7 +106,13 @@ function parseDate(value: string | undefined | null): Date | null {
  * cru de um `<input type="date">`). Comparar string com string quebraria em
  * silêncio para metade dos casos, então normaliza-se os dois lados.
  */
-function sameDay(value: string | undefined, dayKey: string): boolean {
+/**
+ * Exportada porque `utils/rituals.ts` tinha uma cópia byte-a-byte disto (junto
+ * com `parseDayValue`). Duas normalizações de data idênticas em dois módulos que
+ * comparam os MESMOS campos (`startDate`/`focusDate`) é o footgun 9 esperando a
+ * primeira correção que só chegue num dos lados.
+ */
+export function sameDay(value: string | undefined, dayKey: string): boolean {
   if (!value) return false;
   if (value === dayKey) return true;
   const a = parseDayValue(value);
@@ -112,7 +121,7 @@ function sameDay(value: string | undefined, dayKey: string): boolean {
 }
 
 /** 'YYYY-MM-DD' é lido como UTC pelo `Date` — vira o dia anterior em fuso negativo. */
-function parseDayValue(value: string): Date | null {
+export function parseDayValue(value: string): Date | null {
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
   return parseDate(value);
@@ -401,7 +410,9 @@ export function focusComplete<T extends TriageTask>(
 
 /** Fatia de um hábito que a carga do dia lê. */
 export interface PlannedActivity {
+  id?: string;
   weekDays?: number[];
+  schedule?: Schedule;
 }
 
 /**
@@ -417,21 +428,24 @@ export function plannedEffort(
   tasks: TriageTask[],
   activities: PlannedActivity[],
   dayKey: string,
+  rhythms?: Record<string, HabitRhythm>,
 ): number {
   const day = parseDayValue(dayKey);
-  const weekDay = day ? day.getDay() : -1;
 
   const taskLoad = tasks
     .filter(t => isActive(t) && !t.completed)
     .filter(t => sameDay(t.startDate, dayKey) || sameDay(t.focusDate, dayKey))
     .reduce((sum, t) => sum + weightOf(t), 0);
 
-  // Hábito sem `weekDays` vale todo dia (é o padrão de save antigo, e também o
-  // caso de `timesPerWeek`/`everyNDays`, que são elegíveis diariamente).
-  const habitLoad = activities.filter(a => {
-    if (!Array.isArray(a.weekDays)) return true;
-    return weekDay >= 0 && a.weekDays.includes(weekDay);
-  }).length * HABIT_WEIGHT;
+  // A elegibilidade do hábito NÃO é decidida aqui. Antes era: este filtro lia
+  // `a.weekDays` cru, que é a terceira cópia da mesma pergunta (as outras duas
+  // estavam em `dailyReset` e em `rituals`), e só concordava com as outras
+  // porque o CreateModal escreve `weekDays: [0..6]` para schedule flexível — um
+  // detalhe de compatibilidade do widget Android, não um contrato. Dono único:
+  // `habitCountsOn` (utils/habitRhythm.ts).
+  const habitLoad = day
+    ? activities.filter(a => habitCountsOn(a, rhythms?.[String(a.id)], day)).length * HABIT_WEIGHT
+    : 0;
 
   return taskLoad + habitLoad;
 }

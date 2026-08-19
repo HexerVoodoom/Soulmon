@@ -124,20 +124,27 @@ export function PlayCard({
           : `Costs ${PLAY_ENERGY_COST} energy and grants +${bonusPct}% Bits on your next minigame, plus one attribute point.`}
       </p>
 
-      {canPlay ? (
-        <PixelButton size="lg" variant="primary" onClick={onPlay}>
-          {isPt ? 'Brincar' : 'Play'}
-        </PixelButton>
-      ) : (
-        // Sem energia. Frase NEUTRA — sem alerta, sem cor de erro, sem
-        // "você precisa": a energia vem de comer, e comida vem de concluir
-        // tarefa. Cobrar aqui seria cobrar tarefa por tabela.
-        <p style={mutedLine}>
-          {isPt
-            ? `Brincar pede ${PLAY_ENERGY_COST} de energia — dá pra deixar pra depois de uma comidinha.`
-            : `Playing takes ${PLAY_ENERGY_COST} energy — it can wait until after a snack.`}
-        </p>
-      )}
+      {/* Este bloco troca SOZINHO: o botão vira frase (e volta) assim que a
+          energia muda por uma comida dada em outro canto da tela. `aria-live`
+          para a troca ser anunciada — `polite`, porque a oferta sumir nunca é
+          urgente e nunca é erro (é regra desta tela). O contêiner fica fora do
+          ternário: região viva criada junto com o conteúdo não é anunciada. */}
+      <div aria-live="polite">
+        {canPlay ? (
+          <PixelButton size="lg" variant="primary" onClick={onPlay}>
+            {isPt ? 'Brincar' : 'Play'}
+          </PixelButton>
+        ) : (
+          // Sem energia. Frase NEUTRA — sem alerta, sem cor de erro, sem
+          // "você precisa": a energia vem de comer, e comida vem de concluir
+          // tarefa. Cobrar aqui seria cobrar tarefa por tabela.
+          <p style={mutedLine}>
+            {isPt
+              ? `Brincar pede ${PLAY_ENERGY_COST} de energia — dá pra deixar pra depois de uma comidinha.`
+              : `Playing takes ${PLAY_ENERGY_COST} energy — it can wait until after a snack.`}
+          </p>
+        )}
+      </div>
     </PixelPanel>
   );
 }

@@ -50,8 +50,9 @@
  * às ~40 linhas marcadas com `⚠️ DUPLICADO`.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { CSSProperties, KeyboardEvent } from 'react';
+import type { CSSProperties } from 'react';
 import { PixelButton } from './pixel/PixelKit';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import { getSpriteForStage } from '../utils/sprites';
 import { getStageLevel } from '../types/progression';
 import { playTaskComplete, playFeed } from '../utils/sounds';
@@ -102,6 +103,24 @@ const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
 const PERFECT = 0.92;
 const DEFEND_TIME = 3.0;
 const POPUP_MS = 1200;
+
+/**
+ * `prefers-reduced-motion` lido do sistema, com guard.
+ *
+ * Guard e não `window.matchMedia(...)` direto por dois motivos, os dois já
+ * pagos: o jsdom dos testes NÃO implementa `matchMedia` (a chamada crua joga
+ * `TypeError` e derruba o render inteiro), e o renderer do desktop pode montar
+ * este arquivo fora de um documento. Falso é o padrão seguro: mantém o jogo
+ * como sempre foi.
+ */
+function prefersReducedMotion(): boolean {
+  try {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
 
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'won' | 'lost';
 interface Popup { icon: string; title: string; detail: string; color: string }
@@ -186,13 +205,40 @@ export function NightmareBattle({
   const isPt = language === 'pt-BR';
   const stats = PLAYER_STATS[getStageLevel(petStage)] ?? PLAYER_STATS.rookie;
 
+  /**
+   * G5 — WCAG 2.2.1 (Timing Adjustable, nível A).
+   *
+   * A defesa tinha 3,0 s FIXOS, sem jeito de desligar, estender ou ajustar:
+   * é exatamente o que o 2.2.1 proíbe. A saída mais simples que passa é a
+   * primeira opção do próprio critério — **desligar o limite** — e ela vem
+   * atrelada ao sinal que o sistema operacional já dá: quem pediu movimento
+   * reduzido pediu, na prática, uma tela que não corre atrás dele. Sem
+   * preferência declarada, o combate continua idêntico ao que sempre foi.
+   *
+   * Lido UMA vez por montagem (`useState` com inicializador): o limite não pode
+   * mudar no meio de uma esquiva.
+   *
+   * O que NÃO muda: a `TimingBar` continua andando. Ela é a mecânica essencial
+   * do minijogo (2.3.3 isenta movimento essencial), e sem ela não existe
+   * acerto nem contra-ataque — o que sai é a AMEAÇA de perder o turno por
+   * demora, não a habilidade.
+   */
+  const [relaxedTiming] = useState(prefersReducedMotion);
+  const defendTime = relaxedTiming ? 0 : DEFEND_TIME;
+
+  /* Trap + Escape + devolução de foco. O handler de Escape daqui existia, mas
+     nada recebia foco na abertura: o `keydown` nascia no `<body>`, fora da
+     árvore do diálogo, e nunca chegava na div do véu. Escape morto desde o
+     primeiro frame. */
+  const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
+
   const [idx, setIdx] = useState(0);
   const [enemyHp, setEnemyHp] = useState(0);
   const [playerHp, setPlayerHp] = useState(stats.hp);
   const [phase, setPhase] = useState<Phase>('intro');
   const [popup, setPopup] = useState<Popup | null>(null);
   const [hitFx, setHitFx] = useState<'enemy' | 'player' | null>(null);
-  const [defendLeft, setDefendLeft] = useState(DEFEND_TIME);
+  const [defendLeft, setDefendLeft] = useState(defendTime);
   const [rewards, setRewards] = useState<NightmareRewards | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -219,7 +265,7 @@ export function NightmareBattle({
     setPlayerHp(stats.hp);
     setPhase('intro');
     setPopup(null);
-    setDefendLeft(DEFEND_TIME);
+    setDefendLeft(defendTime);
     setRewards(null);
     defendResolved.current = false;
   }, [open, wave, stats.hp]);
@@ -277,7 +323,11 @@ export function NightmareBattle({
     const next = Math.max(0, enemyHp - dmg);
     setEnemyHp(next);
     flash('enemy');
-    try { navigator.vibrate?.(crit ? 40 : 15); } catch { /* noop */ }
+    // A vibração NÃO passa por CSS nenhum, então `prefers-reduced-motion` só a
+    // alcança por guard em JS. E ela não é essencial: é tempero do acerto.
+    if (!relaxedTiming) {
+      try { navigator.vibrate?.(crit ? 40 : 15); } catch { /* noop */ }
+    }
 
     const head = crit ? (isPt ? 'PERFEITO!' : 'PERFECT!')
       : acc >= 0.6 ? (isPt ? 'Bom golpe!' : 'Good hit!')
@@ -296,7 +346,7 @@ export function NightmareBattle({
     after(POPUP_MS, () => {
       setPopup(null);
       defendResolved.current = false;
-      setDefendLeft(DEFEND_TIME);
+      setDefendLeft(defendTime);
       setPhase('defend');
     });
   };
@@ -348,21 +398,17 @@ export function NightmareBattle({
   };
   defendRef.current = handleDefend;
 
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') onClose();
-  };
-
   const inBattle = !!enemy && ['attack', 'defend', 'result'].includes(phase);
 
   return (
     <div
-      onKeyDown={onKeyDown}
       style={{
         position: 'fixed', inset: 0, zIndex: 210, background: 'rgba(6, 12, 26, 0.6)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -389,7 +435,7 @@ export function NightmareBattle({
         {/* ── Convite ─────────────────────────────────────────────────── */}
         {phase === 'intro' && (
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '0.74rem', color: '#9fb2d8', margin: '0 0 8px' }}>
+            <p style={{ fontSize: '0.75rem', color: '#9fb2d8', margin: '0 0 8px' }}>
               {isPt ? 'De manhã, seu Soulmon conta:' : 'In the morning, your Soulmon says:'}
             </p>
             <div aria-hidden="true" style={{ fontSize: 46, lineHeight: 1.1, marginBottom: 6 }}>🌙</div>
@@ -442,16 +488,22 @@ export function NightmareBattle({
                 <p style={{ ...sceneLabel, fontSize: '0.76rem', fontWeight: 700, margin: '0 0 4px' }}>{enemy.name}</p>
                 {hpBar(enemyHp, enemy.hp, '#c084fc', isPt ? 'Vida do pesadelo' : 'Nightmare health')}
               </div>
+              {/* O idle era `style={{animation}}` inline nos DOIS sprites, e
+                  animação inline só perde para `animation: none !important` —
+                  `prefers-reduced-motion` não alcançava nenhum dos dois. Virou
+                  classe, com a duração por custom property (que é onde os dois
+                  diferem). Ver o bloco de movimento reduzido no index.css. */}
               <img
                 src={enemy.sprite}
                 alt={enemy.name}
+                className="sm-battle-idle"
                 style={{
                   position: 'absolute', top: '20%', right: '8%', width: 84, height: 84,
                   objectFit: 'contain', imageRendering: 'pixelated',
                   filter: hitFx === 'enemy' ? 'brightness(3) drop-shadow(0 0 10px #c084fc)' : 'drop-shadow(0 0 8px rgba(192,132,252,0.35))',
                   transition: 'filter 0.15s',
-                  animation: 'dungeon-idle 1.6s ease-in-out infinite',
-                }}
+                  ['--sm-idle-dur' as string]: '1.6s',
+                } as CSSProperties}
               />
               <div style={{ position: 'absolute', bottom: 96, left: 12 }}>
                 <p style={{ ...sceneLabel, fontSize: '0.76rem', fontWeight: 700, margin: '0 0 4px' }}>
@@ -462,13 +514,14 @@ export function NightmareBattle({
               <img
                 src={petSprite}
                 alt=""
+                className="sm-battle-idle"
                 style={{
                   position: 'absolute', bottom: '6%', left: '8%', width: 76, height: 76,
                   objectFit: 'contain', imageRendering: 'pixelated',
                   filter: hitFx === 'player' ? 'brightness(3) drop-shadow(0 0 10px #f0abfc)' : 'drop-shadow(0 0 8px rgba(74,222,128,0.35))',
                   transition: 'filter 0.15s',
-                  animation: 'dungeon-idle 1.3s ease-in-out infinite',
-                }}
+                  ['--sm-idle-dur' as string]: '1.3s',
+                } as CSSProperties}
               />
               {popup && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
@@ -498,8 +551,13 @@ export function NightmareBattle({
               )}
               {phase === 'defend' && (
                 <>
-                  <p style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 800, color: defendLeft <= 1 ? '#f0abfc' : '#facc15', margin: '0 0 6px' }}>
-                    {isPt ? `${enemy.name} vindo — desvie!` : `${enemy.name} incoming — dodge!`} {defendLeft.toFixed(1)}s
+                  {/* Sem limite de tempo, o relógio não aparece: um contador
+                      parado seria pressão sem função. */}
+                  <p style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 800, color: defendTime > 0 && defendLeft <= 1 ? '#f0abfc' : '#facc15', margin: '0 0 6px' }}>
+                    {isPt ? `${enemy.name} vindo — desvie!` : `${enemy.name} incoming — dodge!`}
+                    {defendTime > 0
+                      ? ` ${defendLeft.toFixed(1)}s`
+                      : (isPt ? ' (sem pressa)' : ' (no time limit)')}
                   </p>
                   <TimingBar
                     key={`def-${idx}-${enemyHp}-${playerHp}`}
@@ -515,7 +573,7 @@ export function NightmareBattle({
               )}
             </div>
             <DefendClock
-              running={phase === 'defend'}
+              running={phase === 'defend' && defendTime > 0}
               left={defendLeft}
               setLeft={setDefendLeft}
               onTimeout={() => defendRef.current(0, true)}

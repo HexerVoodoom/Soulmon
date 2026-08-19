@@ -29,10 +29,16 @@ export interface DreamDexProps {
 
 const RARITY_ORDER: DreamRarity[] = ['common', 'rare', 'legendary'];
 
+/**
+ * Serve para DUAS coisas: a borda da célula (objeto gráfico, 3:1) e a cor da
+ * etiqueta de raridade (texto, 4,5:1). Nos dois papéis os tokens crus do kit
+ * (`--sm-px-cyan` = 1,40:1, `--sm-px-copper` = 3,05:1 sobre superfície clara)
+ * reprovavam — daí as variantes `-ink`, que têm par por tema.
+ */
 const RARITY_TONE: Record<DreamRarity, string> = {
-  common: 'color-mix(in srgb, var(--sm-px-copper) 50%, transparent)',
-  rare: 'var(--sm-px-cyan)',
-  legendary: 'var(--sm-px-copper)',
+  common: 'color-mix(in srgb, var(--sm-px-copper-ink) 60%, transparent)',
+  rare: 'var(--sm-px-cyan-ink)',
+  legendary: 'var(--sm-px-copper-ink)',
 };
 
 function rarityTitle(rarity: DreamRarity, isPt: boolean): string {
@@ -57,7 +63,7 @@ function DreamCell({ dream, owned, isPt }: { dream: Dream; owned: boolean; isPt:
         padding: '8px 4px',
         boxSizing: 'border-box',
         background: owned ? 'var(--sm-surface)' : 'transparent',
-        border: `2px solid ${owned ? RARITY_TONE[dream.rarity] : 'color-mix(in srgb, var(--sm-px-copper) 22%, transparent)'}`,
+        border: `2px solid ${owned ? RARITY_TONE[dream.rarity] : 'color-mix(in srgb, var(--sm-px-copper-ink) 30%, transparent)'}`,
       }}
     >
       <span
@@ -74,7 +80,9 @@ function DreamCell({ dream, owned, isPt }: { dream: Dream; owned: boolean; isPt:
       </span>
       <span
         style={{
-          fontSize: '0.62rem',
+          /* 0,62rem ≈ 9,9px: texto funcional abaixo do piso de 12px (0,75rem),
+             e é o NOME da cena — a única forma de saber o que foi coletado. */
+          fontSize: '0.75rem',
           lineHeight: 1.25,
           textAlign: 'center',
           color: owned ? 'var(--sm-ink)' : 'var(--sm-muted)',
@@ -99,7 +107,7 @@ export function DreamDex({ rest, language }: DreamDexProps) {
           <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)' }}>
             {isPt ? `${collected} de ${total}` : `${collected} of ${total}`}
           </span>
-          <span style={{ fontSize: '0.74rem', color: 'var(--sm-muted)' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--sm-muted)' }}>
             {isPt ? 'sonhos descobertos' : 'dreams discovered'}
           </span>
         </div>
@@ -108,7 +116,7 @@ export function DreamDex({ rest, language }: DreamDexProps) {
           tone="gold"
           label={isPt ? 'Completude da coleção de sonhos' : 'Dream collection completeness'}
         />
-        <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '6px 0 0' }}>
+        <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '6px 0 0' }}>
           {collected === 0
             ? (isPt
               ? 'Toda manhã depois de uma noite na sua janela, seu Soulmon volta com uma cena. A primeira está a caminho.'
@@ -134,7 +142,7 @@ export function DreamDex({ rest, language }: DreamDexProps) {
               <PixelTag style={{ color: rarity === 'common' ? 'var(--sm-muted)' : RARITY_TONE[rarity] }}>
                 {rarityTitle(rarity, isPt)}
               </PixelTag>
-              <span style={{ fontSize: '0.72rem', color: 'var(--sm-muted)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--sm-muted)' }}>
                 {isPt ? `${got} de ${group.length}` : `${got} of ${group.length}`}
               </span>
             </div>
@@ -155,7 +163,7 @@ export function DreamDex({ rest, language }: DreamDexProps) {
         );
       })}
 
-      <p style={{ fontSize: '0.68rem', color: 'var(--sm-muted)', margin: 0 }}>
+      <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', margin: 0 }}>
         {isPt
           ? `${DREAM_CATALOG.length} cenas no total. A coleção só cresce — nada aqui volta atrás.`
           : `${DREAM_CATALOG.length} scenes in total. The collection only grows — nothing here ever goes back.`}

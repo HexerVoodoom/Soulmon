@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Language } from '../utils/i18n';
 import { MAX_DAILY_FOCUS, normalizeEffort } from '../types/taskModel';
 import { isOvercommitted } from '../utils/taskTriage';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 /**
  * O CHECK-IN MATINAL (≤20 SEGUNDOS)
@@ -100,6 +101,12 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
 
   const [selected, setSelected] = useState<string[]>([]);
 
+  // `aria-modal="true"` é uma promessa: nada fora daqui existe agora. Sem trap
+  // o Tab passeava pela lista de tarefas atrás do véu, e não havia Escape.
+  // Fechar pelo teclado equivale a "hoje não, obrigado" — nunca a confirmar um
+  // plano que a pessoa não escolheu.
+  const dialogRef = useDialogA11y<HTMLDivElement>(open, onSkip);
+
   // Progresso dotado (Nunes & Drèze): ninguém começa em 0%. A tela abre com a
   // sugestão já marcada, e desmarcar é um toque.
   useEffect(() => {
@@ -148,6 +155,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
       }}
     >
       <div
+        ref={dialogRef}
         className="sm-card"
         style={{
           width: '100%',
@@ -170,7 +178,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
           <p className="sm-display" style={{ fontSize: '1rem', margin: 0, color: 'var(--sm-ink)' }}>
             {isPt ? 'Bom dia!' : 'Good morning!'}
           </p>
-          <p style={{ margin: '4px 0 0', fontSize: 11.5, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
             {isPt ? 'Vinte segundos e a gente começa.' : 'Twenty seconds and we’re off.'}
           </p>
         </div>
@@ -189,12 +197,13 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                       fontSize: 12.5,
                       color: 'var(--sm-ink)',
                       backgroundColor: 'var(--sm-surface)',
-                      border: '1px solid color-mix(in srgb, var(--sm-px-copper) 40%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--sm-px-copper-ink) 45%, transparent)',
                     }}
                   >
                     {t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
+                    {/* Era 10,5px: texto funcional abaixo do piso de 12px. */}
                     {(t.postponedCount ?? 0) >= 1 && (
-                      <span style={{ marginLeft: 6, fontSize: 10.5, color: 'var(--sm-muted)' }}>
+                      <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--sm-muted)' }}>
                         {isPt
                           ? `· adiada ${t.postponedCount} ${t.postponedCount === 1 ? 'vez' : 'vezes'}`
                           : `· postponed ${t.postponedCount}${t.postponedCount === 1 ? ' time' : ' times'}`}
@@ -203,7 +212,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                   </div>
                 ))}
               </div>
-              <p style={{ margin: '8px 0 0', fontSize: 11, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+              <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
                 {isPt
                   ? 'Sem cobrança: só pra não começar o dia sem saber o que sobrou.'
                   : 'No blame: just so the day doesn’t start blind to what’s left.'}
@@ -232,7 +241,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                       fontWeight: 700,
                       color: 'var(--sm-ink)',
                       backgroundColor: 'var(--sm-bg)',
-                      border: '1px solid color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--sm-px-cyan-ink) 55%, transparent)',
                     }}
                     title={
                       h.anchor?.after
@@ -269,12 +278,31 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                   const active = selected.includes(t.id);
                   const full = !active && selected.length >= MAX_DAILY_FOCUS;
                   const effort = normalizeEffort(t.effort);
+                  const name = t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task');
+                  // O esforço só existia como três pontinhos `aria-hidden`:
+                  // quem não vê a tela escolhia foco sem saber o peso. Entra no
+                  // rótulo do botão. E `full` (limite de 3 atingido) precisa de
+                  // `aria-disabled` — antes era só opacidade e cursor, que
+                  // nenhum leitor de tela anuncia. `aria-disabled` e não
+                  // `disabled`: o botão continua focável, então dá para ler o
+                  // que ficou de fora em vez de o item sumir da navegação.
+                  const effortText = isPt
+                    ? `esforço ${effort} de 3`
+                    : `effort ${effort} of 3`;
                   return (
                     <button
                       key={t.id}
                       type="button"
                       onClick={() => toggle(t.id)}
                       aria-pressed={active}
+                      aria-disabled={full || undefined}
+                      aria-label={
+                        full
+                          ? isPt
+                            ? `${name}, ${effortText}. Limite de ${MAX_DAILY_FOCUS} focos atingido — desmarque um para escolher este.`
+                            : `${name}, ${effortText}. Limit of ${MAX_DAILY_FOCUS} focuses reached — unselect one to pick this.`
+                          : `${name}, ${effortText}`
+                      }
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -288,8 +316,8 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                         color: 'var(--sm-ink)',
                         backgroundColor: active ? 'var(--sm-primary-soft)' : 'var(--sm-bg)',
                         border: active
-                          ? '2px solid var(--sm-px-cyan)'
-                          : '2px solid color-mix(in srgb, var(--sm-px-copper) 35%, transparent)',
+                          ? '2px solid var(--sm-px-cyan-ink)'
+                          : '2px solid color-mix(in srgb, var(--sm-px-copper-ink) 55%, transparent)',
                       }}
                     >
                       <span
@@ -298,14 +326,14 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                           width: 12,
                           height: 12,
                           flexShrink: 0,
-                          backgroundColor: active ? 'var(--sm-px-cyan)' : 'transparent',
+                          backgroundColor: active ? 'var(--sm-px-cyan-ink)' : 'transparent',
                           border: active
-                            ? '2px solid var(--sm-px-cyan)'
-                            : '2px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)',
+                            ? '2px solid var(--sm-px-cyan-ink)'
+                            : '2px solid color-mix(in srgb, var(--sm-px-copper-ink) 70%, transparent)',
                         }}
                       />
                       <span style={{ flex: 1, fontSize: 12.5, lineHeight: 1.4 }}>
-                        {t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
+                        {name}
                       </span>
                       <span aria-hidden="true" style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
                         {[1, 2, 3].map(n => (
@@ -314,7 +342,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                             style={{
                               width: 5,
                               height: 5,
-                              backgroundColor: n <= effort ? 'var(--sm-px-cyan)' : 'var(--sm-line)',
+                              backgroundColor: n <= effort ? 'var(--sm-px-cyan-ink)' : 'var(--sm-line)',
                             }}
                           />
                         ))}
@@ -325,7 +353,7 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
               </div>
             )}
 
-            <p style={{ margin: '8px 0 0', fontSize: 11, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+            <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
               {isPt
                 ? `Carga planejada: ${plan.plannedEffort} pontos · foco escolhido: ${focusEffort}`
                 : `Planned load: ${plan.plannedEffort} points · chosen focus: ${focusEffort}`}

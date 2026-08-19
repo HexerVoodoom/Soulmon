@@ -24,7 +24,9 @@ import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { Edit2 } from 'lucide-react';
-import iconWarning from './assets/soulmon/icons/icon-warning.png';
+// Único uso: o aviso de HP baixo. Deixou de ser um triângulo de alerta (ver a
+// nota no banner) e passou a ser o ícone de acolhimento.
+import iconHeartHandshake from './assets/soulmon/icons/icon-heart-handshake.png';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, getStageBranch, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -2844,21 +2846,28 @@ export default function App() {
                    repinta a moldura de uma peça do kit repinta a QUINA também, senão
                    a quina sai cobre e a borda vermelha. Ver "RODADA 4 — A QUINA
                    FECHA" no index.css. */
+                /* ÂMBAR, não `--sm-danger`: o vermelho de alerta somado a
+                   contagem regressiva, imperativo, prazo e ponto de exclamação
+                   fazia deste o texto mais duro do app — e ele aparece
+                   exatamente no dia em que a pessoa está pior. O NÚMERO é o
+                   mesmo (`tasksToAvoidHeartLoss`, dono da regra); mudou só o
+                   enquadramento, e o perdão (o carinho) vem junto, na mesma
+                   frase, em vez de ficar escondido num modal. */
                 <div
                   className="flex items-center gap-2 px-4 py-2 sm-px-card"
-                  style={{ backgroundColor: 'var(--sm-danger-soft)', borderColor: 'var(--sm-danger)', '--sm-cham-line': 'var(--sm-danger)' } as React.CSSProperties}
+                  style={{ backgroundColor: '#fbf1dd', borderColor: '#d9a441', '--sm-cham-line': '#d9a441' } as React.CSSProperties}
                 >
-                  <img src={iconWarning} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
-                  <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: 'var(--sm-danger)' }}>
+                  <img src={iconHeartHandshake} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+                  <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: '#7a5a12' }}>
                     {language === 'pt-BR'
-                      ? `1 HP restante — complete ao menos ${hpSafeToday} item(s) hoje para não regredir!`
-                      : `1 HP left — complete at least ${hpSafeToday} item(s) today to avoid degeneration!`}
+                      ? `Seu Soulmon está com pouco fôlego. ${hpSafeToday} ${hpSafeToday === 1 ? 'item' : 'itens'} hoje já seguram — ou um carinho devolve meio coração.`
+                      : `Your Soulmon is short of breath. ${hpSafeToday} ${hpSafeToday === 1 ? 'item' : 'items'} today already holds it — or a rub gives half a heart back.`}
                   </p>
                   <button
                     onClick={() => setHpBannerDismissed(true)}
                     className="shrink-0 text-sm leading-none flex items-center justify-center"
                     /* 44x44 de área de toque (WCAG 2.2 AA 2.5.8); o ✕ continua pequeno. */
-                    style={{ width: 44, height: 44, background: 'none', border: 'none', color: 'var(--sm-danger)' }}
+                    style={{ width: 44, height: 44, background: 'none', border: 'none', color: '#7a5a12' }}
                     aria-label={language === 'pt-BR' ? 'Dispensar' : 'Dismiss'}
                   >
                     ✕

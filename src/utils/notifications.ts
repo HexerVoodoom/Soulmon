@@ -79,7 +79,9 @@ export interface ScheduledNotification {
 }
 
 const STORAGE_KEY = STORAGE_KEYS.SCHEDULED_NOTIFICATIONS;
-const DAILY_CHECK_KEY = STORAGE_KEYS.DAILY_NOTIFICATION_CHECK;
+// `STORAGE_KEYS.DAILY_NOTIFICATION_CHECK` continua existindo (chave de save de
+// quem já joga), mas não é mais lida: o lembrete das 12h foi REMOVIDO — ver a
+// nota em `checkAndShowNotifications`.
 
 export const getScheduledNotifications = (): ScheduledNotification[] => {
   const stored = readJson<ScheduledNotification[]>(STORAGE_KEY, []);
@@ -260,30 +262,26 @@ export const unregisterFromPushNotifications = async (): Promise<void> => {
 
 // ── Check & fire due notifications ────────────────────────────────────────
 
+/**
+ * O lembrete diário das 12h foi REMOVIDO (auditoria de tom).
+ *
+ * Ele disparava incondicionalmente com "Não se esqueça de checar suas
+ * atividades hoje! 💪" — o único texto de push do app que cobrava, e o único
+ * fora do dono único de horário/texto (`functions/api/_pushCopy.js`), que
+ * declara `PUSH_HOURS_BRT = [10, 16, 22]` e tirou o nudge das 21h de propósito,
+ * pelo mesmo motivo. O papel dele já é coberto — e melhor — pelo push das 10h
+ * ("Tem algo do seu dia que você já fez?"), que pergunta em vez de mandar.
+ * Reescrever o texto aqui só recriaria uma quarta visita diária ao app fora do
+ * arquivo que governa isso; por isso ele sai em vez de mudar de palavra.
+ */
 export const checkAndShowNotifications = (
-  userName = 'Trainer',
-  language: 'pt-BR' | 'en-US' = 'en-US'
+  _userName = 'Trainer',
+  _language: 'pt-BR' | 'en-US' = 'en-US'
 ) => {
   if (Notification.permission !== 'granted') return;
 
   const now = new Date();
   const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const today = now.toDateString();
-
-  // Daily 12:00 reminder — fires once per day
-  const lastDailyCheck = readLocal(DAILY_CHECK_KEY);
-  if (currentTime === '12:00' && lastDailyCheck !== today) {
-    const title = language === 'pt-BR'
-      ? '🦖 Seu Soulmon está chamando!'
-      : '🦖 Your Soulmon is calling!';
-    const body = language === 'pt-BR'
-      ? `Olá ${userName}! Não se esqueça de checar suas atividades hoje! 💪`
-      : `Hi ${userName}! Don't forget to check your activities today! 💪`;
-
-    showNotification(title, { body, tag: 'daily-reminder' });
-    // Marca de "já lembrei hoje": no pior caso o lembrete repete. Cosmético.
-    writeLocal(DAILY_CHECK_KEY, today, { silent: true });
-  }
 
   // Alarm notifications scheduled for this exact minute (web/PWA path)
   // On native Android, AlarmManager handles this — no polling needed.

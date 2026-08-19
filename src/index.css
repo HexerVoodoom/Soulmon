@@ -6207,3 +6207,101 @@ button.sm-px-node {
 .sm-screen-frame-tr { top: 0; right: 0; }
 .sm-screen-frame-bl { bottom: 0; left: 0; }
 .sm-screen-frame-br { bottom: 0; right: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RODADA A11Y — TOKENS DE TINTA COM PAR POR TEMA (footgun 10, outro token)
+   ═══════════════════════════════════════════════════════════════════════════
+   `--sm-px-cyan` (#5df0e0) e `--sm-px-copper` (#c68642) são declarados UMA vez,
+   num `:root` sem par para o tema claro. Enquanto pintam MOLDURA de peça escura
+   do kit isso está certo — a peça é escura nos dois temas. O defeito aparece
+   quando esses dois viram COR DE TEXTO ou BORDA sobre superfície do TEMA: no
+   claro, o ciano mede 1,40:1 e o cobre 3,05:1 contra os 4,5:1 de texto normal.
+   É o mesmo defeito do `--foreground` do scaffold shadcn, em outro token.
+
+   A correção NÃO é mudar `--sm-px-cyan` (a moldura do kit depende do neon):
+   é ter um par LEGÍVEL, com valor por tema, para o papel de tinta. Regra de
+   uso, e ela é a parte que não pode se perder:
+
+     · decorativo (fundo, véu, brilho, moldura de peça escura) → `--sm-px-cyan`
+       / `--sm-px-copper`, como sempre;
+     · TEXTO ou BORDA que carrega significado → `*-ink`, sempre.
+
+   Todos os valores abaixo foram medidos com a fórmula de contraste da WCAG
+   contra `--sm-bg` e `--sm-surface` do PRÓPRIO tema (razão mínima anotada). */
+:root, [data-theme="light"] {
+  --sm-px-cyan-ink: #0f766e;    /* 5,14:1 sobre --sm-bg · 5,47:1 sobre branco */
+  --sm-px-copper-ink: #8a5a2b;  /* 5,38:1 sobre --sm-bg · 5,87:1 sobre branco */
+  --sm-ok-ink: #177a00;         /* 5,16:1 — o verde "feito"/"hoje" */
+  --sm-haunt-ink: #6242ad;      /* 6,79:1 — o roxo do assombro, nunca vermelho */
+  --sm-haunt-veil: color-mix(in srgb, #6242ad 8%, var(--sm-surface));
+}
+[data-theme="dark"] {
+  --sm-px-cyan-ink: #5df0e0;    /* 12,66:1 sobre --sm-bg */
+  --sm-px-copper-ink: #c68642;  /* 5,81:1 sobre --sm-bg · 5,27:1 sobre surface */
+  --sm-ok-ink: #22A900;         /* 5,69:1 sobre --sm-bg */
+  --sm-haunt-ink: #b39bff;      /* 7,63:1 sobre --sm-bg · 6,93:1 sobre surface */
+  --sm-haunt-veil: color-mix(in srgb, #b39bff 12%, var(--sm-surface));
+}
+
+/* ── Alvo de toque ────────────────────────────────────────────────────────
+   `.sm-btn` é o botão de texto do app inteiro; 44px de altura mínima resolve
+   de uma vez os alvos curtos de vários modais (WCAG 2.5.5). */
+.sm-btn { min-height: 44px; }
+
+/* O interruptor do kit media 30px de altura — abaixo até do mínimo de 24px do
+   2.5.8. Cresce para 44 e o cursor cresce junto (44 − 2×2 de borda − 2×3 de
+   folga = 34), senão a chave vira uma caixa alta com uma pastilha perdida. */
+.sm-px-switch { height: 44px; }
+.sm-px-switch-knob { height: 34px; }
+
+/* Expansor de alvo para controles que PRECISAM ser pequenos no layout (o chip
+   de adiamentos da faixa de metadados tem 23px de altura). O pseudo-elemento
+   aumenta só a área que o dedo acerta — o desenho não muda de tamanho, e a
+   linha de metadados não vira uma barra de 44px. */
+.sm-tap-44 { position: relative; }
+.sm-tap-44::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  min-width: 44px;
+  transform: translateY(-50%);
+}
+
+/* ── Animações que ESTAVAM inline (para `prefers-reduced-motion` alcançá-las)
+   Animação em `style={{animation}}` só perde para `animation: none !important`.
+   Vira classe, que é mais limpo e deixa a regra de movimento reduzida legível. */
+.sm-haunt-particle {
+  animation: sm-ambient-float 3.6s ease-in-out infinite;
+}
+.sm-battle-idle {
+  animation: dungeon-idle var(--sm-idle-dur, 1.5s) ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOVIMENTO REDUZIDO — cobertura do arquivo inteiro
+   ═══════════════════════════════════════════════════════════════════════════
+   Antes desta rodada, `prefers-reduced-motion` cobria UMA regra no CSS todo
+   (`.sm-px-node-ring`). Ficavam de fora a partícula da tarefa assombrada, o
+   idle dos sprites do combate e todas as transições de barra.
+
+   Fica de fora DE PROPÓSITO a `TimingBar` do combate (requestAnimationFrame):
+   ela é a mecânica essencial do minijogo e a WCAG 2.3.3 isenta explicitamente
+   o movimento essencial à funcionalidade. O idle dos sprites e a vibração do
+   toque não são essenciais — o idle morre aqui, a vibração tem guard em JS
+   (`window.matchMedia('(prefers-reduced-motion: reduce)').matches`), porque
+   `navigator.vibrate` não passa por CSS nenhum. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* `!important` obrigatório: estas duas nasceram como `style={{animation}}`
+     e ainda podem receber a propriedade por inline em algum ponto. */
+  .sm-haunt-particle,
+  .sm-battle-idle { animation: none !important; }
+}

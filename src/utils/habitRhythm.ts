@@ -80,6 +80,19 @@ export interface HabitRhythm {
   /** total de conclusões (não some com a poda dos 120) */
   totalDone: number;
   lastCompletedDate?: string;
+  /**
+   * dayKey da ÚLTIMA concessão de escudo. É o que dá a cadência de
+   * `REST_SHIELD_EARN_EVERY_DAYS` e o que torna `earnShield` idempotente.
+   *
+   * Nasceu de um bug medido: a virada do dia chamava `earnShield` uma vez por
+   * hábito, TODO dia, e a função só respeitava o teto. Resultado: escudo cheio
+   * (3) em três dias, toda falta absorvida, `missed[]` parando de crescer e
+   * `needsIntervention` virando INALCANÇÁVEL — o pet nunca chegava a oferecer a
+   * versão reduzida do hábito. Opcional porque nenhum save existente tem o
+   * campo: ausente = "nunca concedeu", e a primeira concessão pode acontecer já
+   * (o que não cobra nada de ninguém; só a SEGUNDA passa a esperar 7 dias).
+   */
+  lastShieldAt?: string;
 }
 
 /** Teto de dayKeys guardados por lista. Ver comentário de `HabitRhythm`. */
@@ -219,6 +232,63 @@ export function weeklyProgress(
   return { done, target: s.kind === 'timesPerWeek' ? s.target : 0 };
 }
 
+// ---------------------------------------------------------------------------
+// O DONO ÚNICO DA PERGUNTA "ESTE HÁBITO CONTA NESTE DIA?"
+//
+// A pergunta estava implementada TRÊS vezes, a partir de DUAS fontes de dados
+// diferentes: `dailyReset.activitiesForWeekDay` lia o `Schedule`,
+// `rituals.checkInPlan` e `taskTriage.plannedEffort` liam `a.weekDays` cru. As
+// três só concordavam porque o CreateModal escreve `weekDays: [0..6]` para os
+// schedules flexíveis — um detalhe de compatibilidade com o widget Android do
+// qual `taskModel.ts` avisa explicitamente para não depender. Footgun 9 com
+// três cópias.
+//
+// Pior: mesmo dentro de `dailyReset` os DOIS LADOS DA RAZÃO usavam regras
+// diferentes. `registeredForDay` (a META) contava todo hábito flexível TODO
+// dia, porque `weekDaysForSchedule` devolve `[0..6]` para `timesPerWeek` e
+// `everyNDays`; o laço de ritmo (o que julga a FALTA) filtrava por `isDueOn`.
+// Medido: hábito `everyNDays n=3 from:'completion'` concluído em 17/ago, virada
+// avaliando 19/ago → `isDueOn` false (nada escrito no ritmo, correto) mas
+// `registeredForDay` 1, `dailyGoalFor` 1, `dailyDone` 0 → **1 coração perdido**
+// num dia em que o próprio motor diz que o hábito não era devido. Acontecia em
+// ~2 de cada 3 dias e tornava o dia perfeito estruturalmente impossível neles.
+//
+// Daqui em diante existe UMA regra, e é esta função. Quem precisar da resposta
+// chama; ninguém mais lê `weekDays` para decidir elegibilidade.
+// ---------------------------------------------------------------------------
+
+/**
+ * O hábito conta neste dia?
+ *
+ * - `weekdays`: o calendário manda (é o formato antigo e o padrão de todo save).
+ * - `everyNDays`: manda `isDueOn` — que já considera schedule + histórico, e é
+ *   exatamente o que o laço de ritmo sempre usou.
+ * - `timesPerWeek`: conta **enquanto a meta semanal não foi cumprida**. Um "3x
+ *   por semana" não pode pedir 7 na meta da semana (era isso que acontecia), e
+ *   também não pode continuar cobrando depois que a pessoa já cumpriu os 3 —
+ *   cobrar o 4º dia transformaria o formato com perdão embutido no formato mais
+ *   duro de todos. Depois de cumprida a meta, os dias restantes ficam de graça:
+ *   fazer a mais nunca vira dívida. O dia em que a meta FOI cumprida continua
+ *   contando (senão o crédito da conclusão sumiria junto com a cobrança).
+ *
+ * `rhythm` ausente vira `emptyRhythm()` — a MESMA leitura que o laço de ritmo
+ * de `computeDailyReset` faz, para não reabrir a divergência por outro caminho.
+ */
+export function habitCountsOn(
+  source: { schedule?: Schedule; weekDays?: number[] },
+  rhythm: HabitRhythm | undefined,
+  date: Date,
+): boolean {
+  const s = normalizeSchedule(source);
+  const r = rhythm ?? emptyRhythm();
+  if (s.kind === 'weekdays') return s.days.includes(date.getDay());
+  if (s.kind === 'timesPerWeek') {
+    if (r.done.includes(dayKeyOf(date))) return true;
+    return weeklyProgress(r, s, date).done < s.target;
+  }
+  return isDueOn(s, r, date);
+}
+
 /**
  * A métrica que substitui o streak: "N das últimas 7".
  *
@@ -294,22 +364,38 @@ export function attributeMultiplier(totalDone: number): number {
 }
 
 /**
- * Concede um escudo se a constância estiver boa.
+ * Concede NO MÁXIMO um escudo a cada `REST_SHIELD_EARN_EVERY_DAYS` dias de boa
+ * constância. A cadência é DESTA função — não do chamador.
  *
- * Pensado para ser chamado no ritual semanal (a cada
- * `REST_SHIELD_EARN_EVERY_DAYS` dias), e é isso que dá o "1 por semana"; a
- * função em si é idempotente dentro da mesma janela apenas no sentido de que
- * respeita o teto `REST_SHIELD_MAX` — a cadência quem decide é o chamador,
- * porque só ele sabe a data do último ritual.
+ * Ela já foi do chamador, e o resultado foi medido: `computeDailyReset` chamava
+ * `earnShield` a cada virada, por hábito, incondicionalmente. Com a constância
+ * boa (que é justamente o caso de quem está usando o app), o escudo batia o
+ * teto 3 em TRÊS dias e ficava lá para sempre — toda falta era absorvida por
+ * `applyMissedDay`, `missed[]` parava de crescer, `consecutiveMisses` nunca
+ * chegava a `MISS_INTERVENTION_AT` e `needsIntervention` virava inalcançável.
+ * O pet nunca oferecia a versão reduzida do hábito, que é a intervenção de
+ * custo zero com maior efeito medido na literatura — e o GuideModal/HelpModal
+ * seguiam dizendo ao jogador "a cada 7 dias", ou seja, o app mentia.
+ *
+ * A cadência mora aqui porque só aqui existe o dado que a define
+ * (`lastShieldAt`), e porque um chamador que "sabe a cadência" é a segunda
+ * cópia da regra (footgun 9). Idempotente por construção: rodar a virada duas
+ * vezes no mesmo dia não concede dois escudos.
  */
 export function earnShield(rhythm: HabitRhythm, now: Date): HabitRhythm {
   if (rhythm.shields >= REST_SHIELD_MAX) return rhythm;
+  if (
+    rhythm.lastShieldAt
+    && daysBetween(dayKeyToDate(rhythm.lastShieldAt), now) < REST_SHIELD_EARN_EVERY_DAYS
+  ) {
+    return rhythm;
+  }
   const { ratio, window } = constancy(rhythm, now, REST_SHIELD_EARN_EVERY_DAYS);
   // `window === 0` é hábito sem nenhum dia devido na janela: não houve
   // constância a premiar (nem falha a punir). Não ganha escudo — senão quem
   // nunca abre o app acumularia proteção justamente por não jogar.
   if (window === 0 || ratio < GOOD_CONSTANCY_RATIO) return rhythm;
-  return { ...rhythm, shields: rhythm.shields + 1 };
+  return { ...rhythm, shields: rhythm.shields + 1, lastShieldAt: dayKeyOf(now) };
 }
 
 /**
