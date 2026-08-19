@@ -2,6 +2,27 @@ import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { PixelButton } from './pixel/PixelKit';
 import { Language } from '../utils/i18n';
+import {
+  HABIT_MILESTONES,
+  CONSTANCY_WINDOW_DAYS,
+  REST_SHIELD_MAX,
+  REST_SHIELD_EARN_EVERY_DAYS,
+  MAX_DAILY_FOCUS,
+  OVERCOMMIT_EFFORT,
+  HAUNTED_AFTER_DAYS,
+  DEFAULT_REST_WINDOW,
+  REST_WINDOW_DAYS,
+  REST_WINDOW_GRACE_MIN,
+} from '../types/taskModel';
+import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
+import { DREAM_CATALOG } from '../utils/restWindow';
+
+// Números DERIVADOS das constantes — o glossário nunca escreve um número à mão
+// (regra do CLAUDE.md), senão ele passa a mentir no dia em que a regra muda.
+const [MS_1, MS_2, MS_3] = HABIT_MILESTONES;
+/** O "5" de "5 das últimas 7" sai da razão que concede escudo, não de um literal. */
+const GOOD_DAYS = Math.round(GOOD_CONSTANCY_RATIO * CONSTANCY_WINDOW_DAYS);
+const DREAM_COUNT = DREAM_CATALOG.length;
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -38,8 +59,8 @@ const SECTIONS = [
         icon: '📊',
         labelEn: 'Perfect Days bar',
         labelPt: 'Barra de Dias Perfeitos',
-        descEn: 'Each day you complete the required number of activities earns a Perfect Day. When the bar is full, an Evolve button appears over your pet — evolution only happens when you press it.',
-        descPt: 'Cada dia em que você completa as atividades necessárias conta como Dia Perfeito. Com a barra cheia, um botão Evoluir aparece sobre o pet — a evolução só acontece quando você aperta.',
+        descEn: 'Each day you meet your daily goal — measured in effort, not in item count — earns a Perfect Day. When the bar is full, an Evolve button appears over your pet — evolution only happens when you press it.',
+        descPt: 'Cada dia em que você cumpre a meta do dia — medida em esforço, não em quantidade de itens — conta como Dia Perfeito. Com a barra cheia, um botão Evoluir aparece sobre o pet — a evolução só acontece quando você aperta.',
       },
       {
         icon: '🦠',
@@ -130,6 +151,115 @@ const SECTIONS = [
         labelPt: 'Evento de cocô',
         descEn: 'Appears up to twice a day (never while asleep). Give a bath to clean it. While left uncleaned it drains 1 heart every 6 hours.',
         descPt: 'Aparece até duas vezes por dia (nunca dormindo). Dê banho para limpar. Enquanto não limpo, tira 1 coração a cada 6 horas.',
+      },
+    ],
+  },
+  {
+    titleEn: 'Habits',
+    titlePt: 'Hábitos',
+    items: [
+      {
+        icon: '📈',
+        labelEn: 'Consistency',
+        labelPt: 'Constância',
+        descEn: `Replaces the streak. It reads "${GOOD_DAYS} of the last ${CONSTANCY_WINDOW_DAYS}" — only days the habit was actually due count. A missed day costs a small slice, never everything: nothing here resets to zero. Shielded days count as done.`,
+        descPt: `Substitui a sequência. Aparece como "${GOOD_DAYS} das últimas ${CONSTANCY_WINDOW_DAYS}" — só contam os dias em que o hábito era devido. Uma falta custa uma fatia pequena, nunca tudo: nada aqui volta para zero. Dia protegido por escudo conta como feito.`,
+      },
+      {
+        icon: '🛡️',
+        labelEn: 'Rest shield',
+        labelPt: 'Escudo de descanso',
+        descEn: `Earned every ${REST_SHIELD_EARN_EVERY_DAYS} days of good consistency, up to ${REST_SHIELD_MAX} stored. It is spent AUTOMATICALLY on a day you miss — you never have to remember to activate it — and the protected day counts as done.`,
+        descPt: `Ganho a cada ${REST_SHIELD_EARN_EVERY_DAYS} dias de boa constância, até ${REST_SHIELD_MAX} guardados. É gasto SOZINHO no dia em que você falta — você nunca precisa lembrar de ativar — e o dia protegido conta como feito.`,
+      },
+      {
+        icon: '🌳',
+        labelEn: 'Habit maturity',
+        labelPt: 'Maturidade do hábito',
+        descEn: `Milestones at ${MS_1} / ${MS_2} / ${MS_3} days done: Seed → Sprout → Sapling → Tree. The habit icon grows at each one and the habit starts yielding more attribute points — old effort is worth MORE, never less. The ${MS_3} is the median measured in research for a habit to turn automatic.`,
+        descPt: `Marcos em ${MS_1} / ${MS_2} / ${MS_3} dias feitos: Semente → Broto → Muda → Árvore. O ícone do hábito cresce em cada um e ele passa a render mais atributo — o esforço antigo vale MAIS, nunca menos. Os ${MS_3} são a mediana medida em pesquisa para um hábito virar automático.`,
+      },
+      {
+        icon: '🔁',
+        labelEn: 'Count from completion',
+        labelPt: 'Contar da conclusão',
+        descEn: 'A repeat option for "every N days": the next date is measured from when you actually did it, not from the planned date. Disappearing for a month gives you ONE occurrence today, never thirty overdue ones.',
+        descPt: 'Opção da recorrência "a cada N dias": a próxima data é contada de quando você fez de verdade, não da data prevista. Sumir por um mês devolve UMA ocorrência hoje, nunca trinta atrasadas.',
+      },
+    ],
+  },
+  {
+    titleEn: 'Tasks',
+    titlePt: 'Tarefas',
+    items: [
+      {
+        icon: '🏋️',
+        labelEn: 'Effort',
+        labelPt: 'Esforço',
+        descEn: `Quick (1), Medium (2) or Project (3). The daily goal adds up effort instead of counting items — one Project is worth three Quick ones, and each habit weighs 1. Past ${OVERCOMMIT_EFFORT} points planned for a day, your Soulmon gently says it's a lot. It's a heads-up, never a block.`,
+        descPt: `Rápida (1), Média (2) ou Projeto (3). A meta do dia soma esforço em vez de contar itens — um Projeto vale por três Rápidas, e cada hábito pesa 1. Passando de ${OVERCOMMIT_EFFORT} pontos planejados para o dia, seu Soulmon comenta com carinho que é bastante coisa. É aviso, nunca bloqueio.`,
+      },
+      {
+        icon: '🎯',
+        labelEn: 'Today\'s focus',
+        labelPt: 'Foco do dia',
+        descEn: `Up to ${MAX_DAILY_FOCUS} tasks chosen at the morning check-in. Completing all ${MAX_DAILY_FOCUS} earns the day's seal. Choosing few is the point — the relief comes from deciding, not from doing everything.`,
+        descPt: `Até ${MAX_DAILY_FOCUS} tarefas escolhidas no check-in da manhã. Completar as ${MAX_DAILY_FOCUS} rende o selo do dia. Escolher poucas é o ponto — o alívio vem de decidir, não de fazer tudo.`,
+      },
+      {
+        icon: '👻',
+        labelEn: 'Haunted',
+        labelPt: 'Assombrada',
+        descEn: `A task that is overdue or untouched for ${HAUNTED_AFTER_DAYS} days: it fades and gains a dark particle, and your Soulmon glances at it now and then. It is not a scolding — clearing a haunted task grants a relief bonus, with a bigger celebration.`,
+        descPt: `Tarefa vencida ou parada há ${HAUNTED_AFTER_DAYS} dias: esmaece, ganha uma partícula escura e seu Soulmon olha para ela de vez em quando. Não é bronca — concluir uma assombrada dá bônus de alívio, com comemoração maior.`,
+      },
+      {
+        icon: '💤',
+        labelEn: 'Someday',
+        labelPt: 'Algum dia',
+        descEn: 'A deliberately inert list: it does not count toward the daily goal, does not age, does not haunt and never nags. Formal permission not to do it now — and it comes back whenever you want.',
+        descPt: 'Uma lista deliberadamente parada: não conta na meta do dia, não envelhece, não assombra e não cobra. Permissão formal para não fazer agora — e volta quando você quiser.',
+      },
+      {
+        icon: '🌙',
+        labelEn: 'Let it go',
+        labelPt: 'Deixar pra lá',
+        descEn: 'An honest ending for a task that will not happen. It is not deleting (that loses the context) and not ticking it done (that would be a lie). It has its own list and an undo button.',
+        descPt: 'Um fim honesto para a tarefa que não vai acontecer. Não é apagar (perde o contexto) nem marcar como feita (seria mentira). Tem lista própria e botão de voltar atrás.',
+      },
+    ],
+  },
+  {
+    titleEn: 'Rest & rituals',
+    titlePt: 'Descanso e rituais',
+    items: [
+      {
+        icon: '🛏️',
+        labelEn: 'Rest Window',
+        labelPt: 'Janela de Descanso',
+        descEn: `Your own chosen sleep window (default ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}), with ${REST_WINDOW_GRACE_MIN} min of grace. What counts is putting your Soulmon to bed inside it — never how well you slept. No sleep score, no penalty for a rough night, and an unlogged night is neutral. The reading is "how many of the last ${REST_WINDOW_DAYS} nights". A switch hides the numbers and keeps every reward.`,
+        descPt: `A janela de sono que VOCÊ escolhe (padrão ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}), com ${REST_WINDOW_GRACE_MIN} min de tolerância. O que conta é colocar seu Soulmon para dormir dentro dela — nunca a qualidade do seu sono. Sem nota de sono, sem castigo por noite ruim, e noite sem registro é neutra. A leitura é "quantas das últimas ${REST_WINDOW_DAYS} noites". Um botão esconde os números e mantém todas as recompensas.`,
+      },
+      {
+        icon: '🌠',
+        labelEn: 'Dream',
+        labelPt: 'Sonho',
+        descEn: `Every night inside the window your Soulmon dreams, and the dream is a collectible scene of itself. ${DREAM_COUNT} to discover; rarity comes from REGULARITY, never from sleeping longer. The collection only grows — it never loses anything.`,
+        descPt: `Cada noite dentro da janela seu Soulmon sonha, e o sonho é uma cena colecionável dele mesmo. São ${DREAM_COUNT} para descobrir; a raridade vem da REGULARIDADE, nunca de dormir mais. A coleção só cresce — nunca perde nada.`,
+      },
+      {
+        icon: '☀️',
+        labelEn: 'Check-in',
+        labelPt: 'Check-in',
+        descEn: `The twenty-second morning ritual: today's habits, up to ${MAX_DAILY_FOCUS} focus tasks and how you're doing. Anything left over from yesterday appears first. Opened the app only at night? It's still available — "morning" is an invitation, not a deadline.`,
+        descPt: `O ritual de vinte segundos da manhã: os hábitos de hoje, até ${MAX_DAILY_FOCUS} focos e como você está. O que ficou pendente de ontem aparece primeiro. Só abriu o app à noite? Continua disponível — "matinal" é convite, não horário.`,
+      },
+      {
+        icon: '🌱',
+        labelEn: 'Fresh start',
+        labelPt: 'Recomeço',
+        descEn: 'Offered every Monday and every 1st of the month: pending nagging is cleared. Your evolution, habit milestones and dream collection stay exactly as they are — a fresh start never erases anything you earned.',
+        descPt: 'Oferecido toda segunda e todo dia 1: as cobranças pendentes zeram. Sua evolução, seus marcos de hábito e sua coleção de sonhos continuam iguais — recomeço nunca apaga nada do que você conquistou.',
       },
     ],
   },

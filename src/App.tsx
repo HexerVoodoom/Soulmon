@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense, Fragment } from 'react';
 import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
@@ -90,6 +90,146 @@ import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components
 import { PixelFrame } from './components/PixelFrame';
 import { EvoTrail } from './components/EvoTrail';
 
+// ── O MOTOR DE TAREFAS (docs/PLANO-TAREFAS.md) ──────────────────────────────
+// As REGRAS moram nos módulos puros (`taskTriage`, `habitRhythm`, `rituals`,
+// `restWindow`); aqui embaixo só existe FIAÇÃO — estado de UI, efeitos e a
+// tradução de um gesto do usuário em chamada de regra. Nenhuma fórmula é
+// reescrita neste arquivo: regra copiada é regra que diverge em silêncio
+// (footgun 9 do CLAUDE.md).
+import { MorningCheckIn } from './components/MorningCheckIn';
+import { TriagePile, type TriageAction } from './components/TriagePile';
+import { TaskMeta } from './components/TaskMeta';
+import { HabitConstancy } from './components/HabitConstancy';
+import { MorningDream } from './components/MorningDream';
+import { WeeklyReportCard } from './components/WeeklyReportCard';
+import {
+  needsCheckIn, checkInPlan, completeCheckIn,
+  needsWeeklyReport, weeklyReport, stackingSuggestion,
+  freshStartOffer, applyFreshStart,
+} from './utils/rituals';
+import {
+  triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
+} from './utils/taskTriage';
+import {
+  completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached,
+} from './utils/habitRhythm';
+import { normalizeSchedule } from './types/taskModel';
+
+/**
+ * O rótulo de frequência de um hábito na lista.
+ *
+ * Lê o `schedule` (fonte da verdade da recorrência) e NUNCA o `weekDays`, que
+ * para os modos flexíveis é preenchido com a semana inteira só para o widget
+ * Android e o app de desktop — que não carregam o motor novo — continuarem
+ * enxergando o item. Ler o campo antigo aqui fazia "3× por semana" e "a cada 2
+ * dias" aparecerem como "Todo dia": o app anunciava uma cobrança diária que a
+ * regra não faz, que é a pior classe de erro possível num app cuja tese é não
+ * cobrar demais.
+ */
+function frequencyLabel(
+  activity: { schedule?: any; weekDays?: number[] },
+  isPt: boolean,
+  diasCurtos: string[],
+): string {
+  const s = normalizeSchedule(activity);
+  if (s.kind === 'timesPerWeek') {
+    return isPt ? `${s.target}× por semana` : `${s.target}× per week`;
+  }
+  if (s.kind === 'everyNDays') {
+    const base = isPt ? `A cada ${s.n} dia${s.n > 1 ? 's' : ''}` : `Every ${s.n} day${s.n > 1 ? 's' : ''}`;
+    // O sufixo importa: é a diferença entre acumular atrasadas e não acumular.
+    return s.from === 'completion'
+      ? `${base} ${isPt ? '(após concluir)' : '(after completion)'}`
+      : base;
+  }
+  const dias = s.days;
+  if (dias.length === 7) return isPt ? 'Todo dia' : 'Every day';
+  if (dias.length === 0) return isPt ? 'Avulsa' : 'One-off';
+  return dias.map(d => diasCurtos[d]).join(' · ');
+}
+import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
+import {
+  createRestState, recordNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG,
+} from './utils/restWindow';
+import type { Dream, RestWindow } from './utils/restWindow';
+
+const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
+const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
+
+/** Ritmo vazio ESTÁVEL para hábito sem histórico — um `emptyRhythm()` inline na
+ *  prop cria objeto novo a cada render (mesmo motivo de `EMPTY_DECOR`). */
+const EMPTY_RHYTHM = emptyRhythm();
+
+/**
+ * Registra a conclusão de um hábito NO MESMO DIA em que ela acontece.
+ *
+ * A virada do dia (`utils/dailyReset.ts`) já escreve faltas, escudos e a
+ * conclusão de ONTEM — isto aqui não duplica aquilo: `completeHabit` é
+ * idempotente por dayKey, então quando a virada reprocessar o mesmo dia ela não
+ * acha nada para fazer. O que se ganha escrevendo agora é a única coisa que a
+ * virada não pode dar: a pessoa marca o hábito e VÊ a constância mexer, em vez
+ * de esperar até depois da meia-noite para descobrir se contou.
+ *
+ * O rendimento de atributo é o BÔNUS de maturidade (`attributeMultiplier`, de
+ * `habitRhythm.ts`), e só ele: a base continua vindo da comida, como sempre
+ * veio. Um hábito maduro rende MAIS, nunca menos — a "eficiência decrescente"
+ * comum em jogos de idle ensinaria a abandonar exatamente o que o app quer
+ * preservar. Hábito novo (tier semente) tem multiplicador 1, logo bônus zero:
+ * ninguém ganha nada que já não ganhava.
+ *
+ * Função PURA sobre `prev`, para poder viver dentro de um updater sem violar o
+ * footgun 6 (a celebração do marco fica fora, no chamador).
+ */
+function withHabitCompletion(
+  prev: GameState,
+  activityId: string,
+  category: ActivityCategory,
+  todayKey: string,
+): GameState {
+  const before = prev.habitRhythms?.[activityId] ?? EMPTY_RHYTHM;
+  const after = completeHabit(before, todayKey);
+  if (after === before) return prev; // já marcado hoje — nada a fazer
+
+  const extra = attributeMultiplier(after.totalDone) - 1;
+  const base = CATEGORY_ATTRIBUTES[category] ?? { virus: 0, data: 0, vaccine: 0 };
+  const bonus = {
+    virus: Math.round(base.virus * extra),
+    data: Math.round(base.data * extra),
+    vaccine: Math.round(base.vaccine * extra),
+  };
+
+  return {
+    ...prev,
+    habitRhythms: { ...(prev.habitRhythms ?? {}), [activityId]: after },
+    virusPoints: prev.virusPoints + bonus.virus,
+    dataPoints: prev.dataPoints + bonus.data,
+    vaccinePoints: prev.vaccinePoints + bonus.vaccine,
+    attributesSinceLastEvolution: {
+      virus: (prev.attributesSinceLastEvolution?.virus ?? 0) + bonus.virus,
+      data: (prev.attributesSinceLastEvolution?.data ?? 0) + bonus.data,
+      vaccine: (prev.attributesSinceLastEvolution?.vaccine ?? 0) + bonus.vaccine,
+    },
+  };
+}
+
+/**
+ * O marco (7/21/66 dias) que esta conclusão ACABOU de cruzar, ou `null`.
+ *
+ * Lido fora do updater, do estado que o handler já tem em mãos: `setGameState`
+ * roda 2× no StrictMode, e uma celebração lá dentro tocaria duas vezes.
+ */
+function habitMilestoneOf(state: GameState, activityId: string, todayKey: string) {
+  const before = state.habitRhythms?.[activityId] ?? EMPTY_RHYTHM;
+  const after = completeHabit(before, todayKey);
+  return milestoneReached(before.totalDone, after.totalDone);
+}
+
+const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
+  sprout: { pt: '🌿 7 dias! Este hábito virou broto.', en: '🌿 7 days! This habit is a sprout now.' },
+  sapling: { pt: '🪴 21 dias! Este hábito está criando tronco.', en: '🪴 21 days! This habit is growing a trunk.' },
+  tree: { pt: '🌳 66 dias! Este hábito virou parte de quem você é.', en: '🌳 66 days! This habit is part of who you are.' },
+};
+
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
 const GameTutorialFlow = lazy(() => import('./components/GameTutorialFlow').then(m => ({ default: m.GameTutorialFlow })));
@@ -173,6 +313,20 @@ export default function App() {
   const [fullSignal, setFullSignal] = useState(0);
   // Daily report: shown once per day, on the first open after the reset ran.
   const [showDailyReport, setShowDailyReport] = useState(false);
+
+  // ── Os rituais do motor de tarefas (utils/rituals.ts) ─────────────────────
+  // Check-in matinal: no MÁXIMO 1× por dia (`lastCheckInDate` no save) e
+  // pulável sem culpa. O plano é congelado em estado ao abrir, e não recalculado
+  // a cada render, para a lista de sugestões não trocar debaixo do dedo.
+  const [checkInPlanData, setCheckInPlanData] = useState<ReturnType<typeof checkInPlan> | null>(null);
+  // "Arrumar a pilha": a fila também é congelada ao abrir — ela encolhe a cada
+  // decisão, e recalcular ao vivo faria o contador "3 de 8" mentir.
+  const [triageTasks, setTriageTasks] = useState<Task[] | null>(null);
+  // O sonho da manhã. NUNCA aparece à noite (ver o efeito lá embaixo).
+  const [morningDream, setMorningDream] = useState<{ dream: Dream | null; isNew: boolean } | null>(null);
+  // Recomeço de segunda/dia 1: cartão discreto, dispensável nesta sessão sem
+  // gravar nada — recusar um convite não é uma decisão que mereça memória.
+  const [freshStartDismissed, setFreshStartDismissed] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     return readJson<AISettings>(STORAGE_KEYS.AI_SETTINGS, {
       tone: 'casual',
@@ -523,6 +677,24 @@ export default function App() {
     return XP_BY_LEVEL[level];
   };
 
+  /**
+   * Celebra o marco de maturidade do hábito, se esta conclusão cruzou um.
+   *
+   * Os cortes são 7/21/66 dias EFETIVOS (Lally et al., 2010 — mediana real de
+   * 66 dias até a automaticidade), não os "21 dias" populares, que vêm de um
+   * cirurgião plástico de 1960. `milestoneReached` só responde uma vez por
+   * corte, então a festa não repete a cada reload.
+   */
+  const celebrateHabitMilestone = useCallback((activityId: string, name: string, todayKey: string) => {
+    const tier = habitMilestoneOf(gameState, activityId, todayKey);
+    if (!tier) return;
+    const text = MILESTONE_TEXT[tier];
+    if (!text) return;
+    playEvolve();
+    setMessageTrigger(prev => prev + 1);
+    toast.success(`${name} — ${language === 'pt-BR' ? text.pt : text.en}`);
+  }, [gameState, language]);
+
   const handleUpdateStep = (activityId: string, stepId: string) => {
     const activity = gameState.activities.find(a => a.id === activityId);
     const step = activity?.steps.find(s => s.id === stepId);
@@ -588,18 +760,27 @@ export default function App() {
           newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
         }
 
-        return {
+        const next: GameState = {
           ...prev,
           activities: updatedActivities,
           activityStats: newActivityStats,
           foodInventory: newFoodInventory,
           activityLog: newActivityLog,
         };
+
+        // Um hábito de etapas fecha na ÚLTIMA etapa — a constância dele precisa
+        // ser alimentada aqui também, senão só os hábitos sem etapas contariam.
+        return isFullyCompleted && updatedActivity
+          ? withHabitCompletion(next, activityId, updatedActivity.category, new Date().toDateString())
+          : next;
       });
 
       playTaskComplete();
       if (justFinishedActivity) {
         queueMicrotask(() => announceTaskGains(gameState, justFinishedActivity.category));
+        celebrateHabitMilestone(
+          justFinishedActivity.id, justFinishedActivity.name, new Date().toDateString(),
+        );
       }
 
       // Check if this is the first task/step ever completed and show popup
@@ -686,18 +867,31 @@ export default function App() {
         newActivityLog = [...newActivityLog, new Date().toISOString()].slice(-ACTIVITY_LOG_CAP);
       }
 
-      return {
+      const next: GameState = {
         ...prev,
         activities: updatedActivities,
         activityStats: newActivityStats,
         foodInventory: newFoodInventory,
         activityLog: newActivityLog,
       };
+
+      // A constância do hábito é alimentada NO MESMO DIA (ver
+      // `withHabitCompletion`), e não só na virada — senão marcar o hábito não
+      // move nada visível até depois da meia-noite.
+      return newCompletedState
+        ? withHabitCompletion(next, activityId, activity.category, today)
+        : next;
     });
 
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
     if (activity) queueMicrotask(() => announceTaskGains(gameState, activity.category));
+
+    // Marco de maturidade (7/21/66 dias de Lally et al.) — celebra UMA vez, no
+    // dia em que o corte é cruzado. Fora do updater pelo mesmo motivo.
+    if (activity && !(activity.completedToday && activity.lastCompletedDate === today)) {
+      celebrateHabitMilestone(activity.id, activity.name, today);
+    }
 
     // Check if this is the first task ever completed and show popup
     if (!hasShownFirstTaskPopup) {
@@ -723,13 +917,37 @@ export default function App() {
     setEditModalOpen(true);
   }, []);
 
-  const handleSaveActivity = (data: { name: string; category: string; emoji: string; steps: Step[] }) => {
+  /**
+   * Salva um hábito vindo do `EditModal`.
+   *
+   * `schedule` e `anchor` são REPASSADOS, e isso é o conserto principal daqui:
+   * o modal já perguntava "3× por semana" e "depois do café da manhã", e este
+   * handler montava o objeto campo a campo e jogava as respostas fora — o
+   * usuário respondia e o app esquecia. `weekDays` continua sendo escrito ao
+   * lado de `schedule` porque o widget Android e o app de desktop leem ELE, e
+   * nenhum dos dois carrega o motor de recorrência novo.
+   */
+  const handleSaveActivity = (data: {
+    name: string; category: string; emoji: string; steps: Step[];
+    weekDays?: number[]; alarm?: { time: string };
+    schedule?: Schedule; anchor?: HabitAnchor;
+  }) => {
     if (editingActivity) {
       setGameState(prev => ({
         ...prev,
         activities: prev.activities.map(activity =>
           activity.id === editingActivity
-            ? { ...activity, name: data.name, category: data.category as ActivityCategory, emoji: data.emoji, steps: data.steps }
+            ? {
+              ...activity,
+              name: data.name,
+              category: data.category as ActivityCategory,
+              emoji: data.emoji,
+              steps: data.steps,
+              ...(data.weekDays ? { weekDays: data.weekDays } : {}),
+              ...(data.alarm !== undefined ? { alarm: data.alarm } : {}),
+              ...(data.schedule ? { schedule: data.schedule } : {}),
+              ...(data.anchor !== undefined ? { anchor: data.anchor } : {}),
+            }
             : activity
         ),
       }));
@@ -740,7 +958,10 @@ export default function App() {
         category: data.category as ActivityCategory,
         emoji: data.emoji,
         steps: data.steps,
-        weekDays: [0, 1, 2, 3, 4, 5, 6], // Available all days by default
+        weekDays: data.weekDays ?? [0, 1, 2, 3, 4, 5, 6], // Available all days by default
+        alarm: data.alarm,
+        schedule: data.schedule,
+        anchor: data.anchor,
       };
       setGameState(prev => ({
         ...prev,
@@ -780,7 +1001,10 @@ export default function App() {
       }
     ];
 
-    // Create the activity with custom points
+    // Create the activity with custom points. `schedule` nasce junto de
+    // `weekDays` (os dois dizendo a mesma coisa): um hábito criado pela IA sem
+    // o campo novo cairia no `normalizeSchedule` de save antigo — funciona,
+    // mas a lista mostraria "todo dia" sem que ninguém tenha decidido isso.
     const newActivity: Activity = {
       id: Date.now().toString(),
       name: activity.name,
@@ -788,6 +1012,7 @@ export default function App() {
       emoji,
       steps,
       weekDays: [0, 1, 2, 3, 4, 5, 6], // Available all days by default
+      schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
     };
 
     setGameState(prev => ({
@@ -806,15 +1031,48 @@ export default function App() {
     setTaskEditModalOpen(true);
   }, []);
 
-  // Handle saving task
-  const handleSaveTask = (data: { name: string; category: string; emoji: string }) => {
+  /**
+   * Salva uma tarefa vinda do `TaskEditModal` (criação e edição).
+   *
+   * Os campos do contrato de EXECUÇÃO são repassados inteiros:
+   *  - `effort` — a recompensa e a meta do dia escalam com ELE, nunca com a
+   *    contagem de itens (é o defeito do Karma do Todoist);
+   *  - `startDate` — o "When" do Things 3, separado do prazo: só ele traz a
+   *    tarefa para o Hoje;
+   *  - `createdAt`/`lastTouchedAt` — a idade da tarefa, que é o que `isHaunted`
+   *    lê. Sem eles `daysStale` responde 0 e a tarefa nunca envelhece;
+   *  - `status: 'open'` — o padrão explícito de uma tarefa viva.
+   *
+   * Na EDIÇÃO, `lastTouchedAt` anda: mexer na tarefa é uma decisão real sobre
+   * ela, então ela não deve continuar assombrando por tempo parado.
+   */
+  const handleSaveTask = (data: {
+    name: string; category: string; emoji: string;
+    steps?: Step[];
+    deadline?: { date: string; time: string };
+    alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
+    effort?: Effort; startDate?: string; lastTouchedAt?: string;
+  }) => {
+    const nowIso = new Date().toISOString();
     if (editingTask) {
       // Editing existing task
       setGameState(prev => ({
         ...prev,
         tasks: prev.tasks.map(task =>
           task.id === editingTask
-            ? { ...task, name: data.name, category: data.category as ActivityCategory, emoji: data.emoji }
+            ? {
+              ...task,
+              name: data.name,
+              category: data.category as ActivityCategory,
+              emoji: data.emoji,
+              steps: data.steps,
+              deadline: data.deadline,
+              alarm: data.alarm,
+              effort: data.effort ?? task.effort,
+              startDate: data.startDate,
+              createdAt: task.createdAt ?? nowIso,
+              lastTouchedAt: data.lastTouchedAt ?? nowIso,
+            }
             : task
         ),
       }));
@@ -826,6 +1084,14 @@ export default function App() {
         category: data.category as ActivityCategory,
         emoji: data.emoji,
         completed: false,
+        steps: data.steps,
+        deadline: data.deadline,
+        alarm: data.alarm,
+        effort: data.effort,
+        startDate: data.startDate,
+        status: 'open',
+        createdAt: nowIso,
+        lastTouchedAt: data.lastTouchedAt ?? nowIso,
       };
       setGameState(prev => ({
         ...prev,
@@ -845,11 +1111,46 @@ export default function App() {
     if (!task.completed) {
       playTaskComplete();
 
+      /**
+       * BÔNUS DE ALÍVIO — concluir uma tarefa ASSOMBRADA (vencida ou parada há
+       * 7 dias, `isHaunted`) comemora mais alto e rende uma comida extra.
+       *
+       * É a peça mais Soulmon do plano: a pilha de atrasadas é a causa nº1
+       * documentada de abandono da categoria, e em vez de pintá-la de vermelho
+       * e cobrar, ela vira o conteúdo com a MAIOR recompensa do laço. Nada de
+       * moeda nova nem regra nova — a recompensa é o alívio (fala + animação
+       * que o app já tem) mais uma comida, que é exatamente o que concluir uma
+       * tarefa já dá.
+       *
+       * Calculado FORA do updater: efeito colateral dentro de setGameState roda
+       * 2× no StrictMode (footgun 6) e daria comida em dobro.
+       */
+      const relief = isHaunted(task, new Date());
+
       // Mark task as completed first
       setGameState(prev => ({
         ...prev,
         tasks: prev.tasks.map(t => t.id === taskId ? { ...t, completed: true } : t),
       }));
+
+      if (relief) {
+        const food = FOOD_BY_CATEGORY[task.category];
+        if (food) {
+          setGameState(prev => ({
+            ...prev,
+            foodInventory: {
+              ...prev.foodInventory,
+              [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+            },
+          }));
+          setFeedAnim(prev => ({ emoji: food.emoji, n: (prev?.n ?? 0) + 1 }));
+        }
+        // O mesmo caminho de fala do resto do app — o pet reage, não um banner.
+        setMessageTrigger(prev => prev + 1);
+        toast(language === 'pt-BR'
+          ? '👻 Você enfrentou uma tarefa assombrada! Seu Soulmon comemorou (e ganhou comida extra).'
+          : '👻 You faced a haunted task! Your Soulmon cheered (and got extra food).');
+      }
 
       // Check if this is the first task ever completed and show popup
       if (!hasShownFirstTaskPopup) {
@@ -917,6 +1218,21 @@ export default function App() {
     setGameState(prev => ({
       ...prev,
       tasks: prev.tasks.filter(t => t.id !== taskId),
+    }));
+  }, []);
+
+  /**
+   * Tira a tarefa da gaveta e devolve para a lista ativa.
+   *
+   * `restore` (taskTriage) atualiza o toque junto, senão a tarefa voltaria já
+   * assombrada pelo tempo que passou guardada — o que puniria exatamente a
+   * decisão saudável de ter guardado em vez de arrastar a culpa.
+   */
+  const handleRestoreTask = useCallback((taskId: string) => {
+    const agoraLocal = new Date();
+    setGameState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(t => (t.id === taskId ? restore(t, agoraLocal) : t)),
     }));
   }, []);
 
@@ -1541,6 +1857,186 @@ export default function App() {
     setShowDailyReport(false);
   }, [gameState.lastDayReport]);
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OS RITUAIS (docs/PLANO-TAREFAS.md §2.4) — check-in, triagem, sono, semana
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /** 'YYYY-MM-DD' local — o formato que os `<input type="date">` do app usam e
+   *  que `taskTriage`/`rituals` sabem ler. `toISOString` daria o dia ERRADO em
+   *  fuso negativo (é UTC), que é o bug clássico deste campo. */
+  const isoDay = (d: Date) => {
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+
+  /**
+   * Abre o check-in matinal UMA vez por dia.
+   *
+   * Mesmo padrão do `DailyReportModal` ("mostrar 1× por dia"), só que a marca
+   * mora no save (`lastCheckInDate`) em vez do localStorage: o ritual é do
+   * jogador, não do aparelho, e reabri-lo em cada celular seria transformar
+   * planejamento em interrupção.
+   *
+   * O `ref` é o que impede o efeito de reabrir a tela a cada `setGameState` —
+   * `gameState` está nas deps porque o plano depende dele, e sem a trava o
+   * check-in voltaria sozinho depois de qualquer alteração de estado.
+   *
+   * Não abre com o plano vazio (usuário sem hábito e sem tarefa): um ritual de
+   * planejamento sobre uma lista vazia é só uma tela a mais entre a pessoa e o
+   * pet dela.
+   */
+  const checkInPromptedRef = useRef(false);
+  useEffect(() => {
+    if (checkInPromptedRef.current) return;
+    if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
+    if (showDailyReport) return; // dois modais empilhados roubam o clique um do outro
+    const now = new Date();
+    if (!needsCheckIn(gameState, now)) return;
+    const plan = checkInPlan(gameState, now);
+    if (plan.habitsToday.length === 0 && plan.suggestedFocus.length === 0 && plan.carryOver.length === 0) return;
+    checkInPromptedRef.current = true;
+    setCheckInPlanData(plan);
+  }, [gameState, hasCompletedOnboarding, hasCompletedTutorial, showDailyReport]);
+
+  /** Fecha o check-in gravando os focos escolhidos (a regra é de `setFocus`). */
+  const handleCheckInConfirm = useCallback((focusIds: string[]) => {
+    const dayKey = dayKeyOf(new Date());
+    setGameState(prev => completeCheckIn(prev, focusIds, dayKey));
+    setCheckInPlanData(null);
+  }, [setGameState]);
+
+  /**
+   * Pular. Marca o dia do mesmo jeito — e isso é de propósito: um ritual que
+   * reaparece porque você não quis fazê-lo é cobrança, e o app não cobra.
+   */
+  const handleCheckInSkip = useCallback(() => {
+    const dayKey = dayKeyOf(new Date());
+    setGameState(prev => ({ ...prev, lastCheckInDate: dayKey }));
+    setCheckInPlanData(null);
+  }, [setGameState]);
+
+  /**
+   * "Arrumar a pilha" — o Smart Schedule do Todoist com ergonomia de jogo.
+   *
+   * Cada carta vira uma chamada de `taskTriage`, e nenhuma regra é reescrita
+   * aqui: 'today' devolve a tarefa ao Hoje (`toOpen` + `startDate` de hoje),
+   * 'week' é um adiamento CONTADO (`postpone`, +7 dias — é o contador do
+   * Sunsama que torna evitação crônica um dado), 'someday' é a lista inerte do
+   * Things 3 e 'drop' é o Won't Do do TickTick, terminal e reversível.
+   */
+  const handleOpenTriage = useCallback(() => {
+    setTriageTasks(triageQueue(gameState.tasks, new Date()));
+  }, [gameState.tasks]);
+
+  const handleTriageResolve = useCallback((taskId: string, action: TriageAction) => {
+    const now = new Date();
+    const weekAhead = new Date(now.getTime());
+    weekAhead.setDate(weekAhead.getDate() + 7);
+    setGameState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(task => {
+        if (task.id !== taskId) return task;
+        switch (action) {
+          case 'today': return toOpen({ ...task, startDate: isoDay(now) }, now);
+          case 'week': return postpone(task, now, isoDay(weekAhead));
+          case 'someday': return toSomeday(task, now);
+          case 'drop': return drop(task, now);
+          default: return task;
+        }
+      }),
+    }));
+  }, [setGameState]);
+
+  /**
+   * Registra a NOITE quando o pet dorme e quando acorda (`recordNight`).
+   *
+   * Fica num efeito sobre `isSleeping` — e não dentro do `handleSleep` — porque
+   * o sono AUTOMÁTICO (a janela das Configurações) também troca esse estado, e
+   * um registro preso ao botão perderia justamente as noites de quem configurou
+   * o app para não precisar do botão.
+   *
+   * O `ref` começa em `null` e a primeira execução só sincroniza: abrir o app
+   * com o pet já dormindo não inventa uma noite que não aconteceu (noite sem
+   * registro é NEUTRA, nunca uma falha).
+   */
+  const sleepStateRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (sleepStateRef.current === null) { sleepStateRef.current = isSleeping; return; }
+    if (sleepStateRef.current === isSleeping) return;
+    sleepStateRef.current = isSleeping;
+    const now = new Date();
+    if (isSleeping) {
+      // Perder isto só custa a hora de deitar da noite em curso. Silencioso.
+      writeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, now.toISOString(), { silent: true });
+      setGameState(prev => ({ ...prev, rest: recordNight(prev.rest ?? createRestState(), now) }));
+      return;
+    }
+    const startedIso = readLocal(STORAGE_KEYS.SLEEP_STARTED_AT);
+    const started = startedIso ? new Date(startedIso) : null;
+    if (!started || Number.isNaN(started.getTime())) return;
+    // Idempotente por manhã: isto ATUALIZA o registro criado ao deitar.
+    setGameState(prev => ({ ...prev, rest: recordNight(prev.rest ?? createRestState(), started, now) }));
+    removeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, { silent: true });
+  }, [isSleeping, setGameState]);
+
+  /**
+   * O SONHO DA MANHÃ — e a palavra "manhã" é a regra, não o enfeite.
+   *
+   * Todo feedback de sono acontece de manhã, dentro do app, e vem em forma de
+   * recompensa colecionável. NUNCA à noite: a ortossonia é ansiedade ANTES de
+   * dormir, e um app que comenta seu sono às 23h45 é exatamente o estímulo que
+   * atrapalha o sono que ele diz proteger. Nada aqui exibe nota, duração ou
+   * veredito — a raridade sai da REGULARIDADE (`dreamRarity`) e o pior
+   * resultado possível é um sonho comum.
+   *
+   * `rollDream` é determinístico pela seed (o dayKey), então recarregar a
+   * página de manhã não re-sorteia até achar um lendário.
+   */
+  const dreamShownRef = useRef(false);
+  useEffect(() => {
+    if (dreamShownRef.current) return;
+    if (isSleeping) return;
+    const now = new Date();
+    const hour = now.getHours();
+    if (hour < 4 || hour >= 12) return; // só de manhã
+    const rest = gameState.rest;
+    if (!rest) return;
+    const key = dayKeyOf(now);
+    if (!rest.nights.some(n => n.date === key)) return; // nenhuma noite registrada
+    // "já mostrei o sonho desta manhã": no pior caso ele reaparece uma vez.
+    if (readLocal(STORAGE_KEYS.MORNING_DREAM_SHOWN) === key) return;
+
+    const dreamId = rollDream(rest, dreamRarity(rest, now), hashString(key));
+    const isNew = !rest.dreams.includes(dreamId);
+    dreamShownRef.current = true;
+    writeLocal(STORAGE_KEYS.MORNING_DREAM_SHOWN, key, { silent: true });
+    setGameState(prev => ({ ...prev, rest: collectDream(prev.rest ?? createRestState(), dreamId) }));
+    setMorningDream({ dream: DREAM_CATALOG.find(d => d.id === dreamId) ?? null, isNew });
+  }, [gameState.rest, isSleeping, setGameState]);
+
+  /** Aceita o recomeço. NUNCA apaga progresso — ver `applyFreshStart`. */
+  const handleFreshStart = useCallback(() => {
+    setGameState(prev => applyFreshStart(prev, new Date()));
+    setFreshStartDismissed(true);
+    toast(language === 'pt-BR'
+      ? 'Recomeço aceito. Nada do seu progresso foi tocado.'
+      : 'Fresh start taken. None of your progress was touched.');
+  }, [language, setGameState]);
+
+  const handleDismissWeeklyReport = useCallback(() => {
+    setGameState(prev => ({ ...prev, lastWeeklyReportDate: dayKeyOf(new Date()) }));
+  }, [setGameState]);
+
+  /** A Janela de Descanso (Configurações). Só o usuário escolhe os horários. */
+  const handleChangeRestWindow = useCallback((window: RestWindow) => {
+    setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), window } }));
+  }, [setGameState]);
+
+  /** "Não quero ver métricas": esconde NÚMEROS, preserva RECOMPENSAS. */
+  const handleToggleRestMetrics = useCallback((hide: boolean) => {
+    setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), hideMetrics: hide } }));
+  }, [setGameState]);
+
   // Optional auto-sleep schedule: puts the pet to sleep when entering the
   // configured window and wakes it when leaving. Only acts on window EDGES, so
   // a manual wake/sleep inside the window isn't fought by the automation.
@@ -2109,9 +2605,17 @@ export default function App() {
                   ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
                   : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-                const tarefas = [...gameState.tasks].sort(
-                  (a, b) => Number(a.completed) - Number(b.completed),
-                );
+                // Só as ATIVAS entram na lista. 'someday' e 'dropped' saem de
+                // vista de propósito: as duas existem justamente para tirar um
+                // item do campo de atenção sem apagá-lo. Deixá-las aqui
+                // devolveria a culpa que a decisão acabou de resolver — o
+                // usuário disse "isso não é para agora" e o app continuaria
+                // mostrando. Elas seguem no save, contáveis e reversíveis pela
+                // gaveta abaixo, e ficam fora da meta do dia (dailyReset).
+                const tarefas = gameState.tasks
+                  .filter(t => isActive(t))
+                  .sort((a, b) => Number(a.completed) - Number(b.completed));
+                const guardadas = gameState.tasks.filter(t => !isActive(t));
 
                 const atividades = [
                   ...gameState.activities.filter(a => a.weekDays?.includes(today)),
@@ -2138,6 +2642,14 @@ export default function App() {
                     gameState.currentBranch,
                   );
 
+                const agora = new Date();
+                // A fila de "arrumar a pilha": vencidas + assombradas, na ordem
+                // canônica de `triageQueue`. O botão só existe quando há pilha —
+                // um botão de arrumar sobre uma lista limpa é cobrança gratuita.
+                const pilha = triageQueue(gameState.tasks, agora).length;
+                const recomeco = freshStartDismissed ? null : freshStartOffer(gameState, agora, language);
+                const mostrarSemana = needsWeeklyReport(gameState, agora);
+
                 return (
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                   {(gameState.soulmonStages?.length ?? 0) > 0 && (
@@ -2152,6 +2664,67 @@ export default function App() {
                     />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* RECOMEÇO (segunda-feira / dia 1) — cartão discreto no topo
+                      da lista, JAMAIS um modal que tranca a tela. O *fresh
+                      start effect* (Dai, Milkman & Riis) funciona porque
+                      "relega as imperfeições ao período anterior"; um convite
+                      que bloqueia o app viraria mais uma cobrança de segunda. */}
+                  {recomeco && (
+                    <div
+                      className="sm-px-card"
+                      style={{ padding: '10px 12px', marginBottom: 10, backgroundColor: 'var(--sm-surface)' }}
+                    >
+                      <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: 'var(--sm-ink)' }}>
+                        {recomeco.title}
+                      </p>
+                      <p style={{ margin: '4px 0 8px', fontSize: '0.75rem', lineHeight: 1.45, color: 'var(--sm-muted)' }}>
+                        {recomeco.body}
+                      </p>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button type="button" className="sm-btn" style={{ fontSize: '0.72rem', padding: '8px 12px' }} onClick={handleFreshStart}>
+                          {isPt ? 'Recomeçar' : 'Start fresh'}
+                        </button>
+                        <button
+                          type="button"
+                          className="sm-btn sm-btn-secondary"
+                          style={{ fontSize: '0.72rem', padding: '8px 12px' }}
+                          onClick={() => setFreshStartDismissed(true)}
+                        >
+                          {isPt ? 'Agora não' : 'Not now'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* RELATÓRIO SEMANAL (domingo) — bloco próprio, ao lado do
+                      relatório diário, que tem outro dono. Ver
+                      components/WeeklyReportCard.tsx. */}
+                  {mostrarSemana && (
+                    <div style={{ marginBottom: 10 }}>
+                      <WeeklyReportCard
+                        report={weeklyReport(gameState, agora)}
+                        suggestion={stackingSuggestion(gameState, agora, language)}
+                        language={language}
+                        onDismiss={handleDismissWeeklyReport}
+                      />
+                    </div>
+                  )}
+
+                  {/* ARRUMAR A PILHA — 200 itens vermelhos viram uma sequência
+                      de decisões de um clique. Só aparece com pilha de verdade. */}
+                  {pilha > 0 && (
+                    <button
+                      type="button"
+                      className="sm-btn sm-btn-secondary"
+                      style={{ width: '100%', marginBottom: 10, fontSize: '0.75rem', padding: '10px 8px' }}
+                      onClick={handleOpenTriage}
+                    >
+                      {isPt
+                        ? `Arrumar a pilha (${pilha})`
+                        : `Tidy the pile (${pilha})`}
+                    </button>
+                  )}
+
                   <RitualPanel
                     done={feitos}
                     total={total}
@@ -2162,8 +2735,12 @@ export default function App() {
                     emptyMessage={total === 0 ? t.main.noActivityRegistered : undefined}
                   >
                     {tarefas.map(task => (
+                      /* A linha + a fita de metadados abaixo dela. `<li>` e não
+                         `<div>`: o pai é uma `<ul>`, e um filho que não é item
+                         de lista quebra a semântica que o leitor de tela usa
+                         para contar as tarefas. */
+                      <Fragment key={task.id}>
                       <RitualRow
-                        key={task.id}
                         icon={categoryIconImg(task.category)}
                         name={task.name}
                         subtitle={task.category
@@ -2178,25 +2755,35 @@ export default function App() {
                         toggleLabelPt={task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}
                         toggleLabelEn={task.completed ? 'Task completed' : 'Mark task as completed'}
                       />
+                      {!task.completed && (
+                        <li style={{ listStyle: 'none', padding: '0 12px 8px 12px' }}>
+                          {/* Esforço, prazo, "adiada 4×" e a aura de assombrada
+                              — dado honesto, nunca acusação (TaskMeta.tsx). */}
+                          <TaskMeta task={task} now={agora} language={language} />
+                        </li>
+                      )}
+                      </Fragment>
                     ))}
 
                     {atividades.map(activity => {
                       const disponivelHoje = !!activity.weekDays?.includes(today);
                       const etapas = activity.steps ?? [];
                       const feitasEtapas = etapas.filter(s => s.completed).length;
-                      const dias = activity.weekDays ?? [];
-                      const freq = dias.length === 7
-                        ? (isPt ? 'Todo dia' : 'Every day')
-                        : dias.length === 0
-                          ? (isPt ? 'Avulsa' : 'One-off')
-                          : dias.map(d => diasCurtos[d]).join(' · ');
+                      // O rótulo sai do `schedule`, não do `weekDays` cru: um
+                      // hábito "3× por semana" ou "a cada 2 dias" preenche
+                      // `weekDays` com a semana inteira (é assim que o widget
+                      // Android e o desktop continuam entendendo o item), então
+                      // ler o campo antigo aqui rotulava os dois como "Todo
+                      // dia" — o app anunciava uma cobrança diária que a regra
+                      // não faz.
+                      const freq = frequencyLabel(activity, isPt, diasCurtos);
                       const subtitulo = etapas.length > 0
                         ? `${freq} · ${feitasEtapas}/${etapas.length} ${isPt ? 'etapas' : 'steps'}`
                         : freq;
 
                       return (
+                        <Fragment key={activity.id}>
                         <RitualRow
-                          key={activity.id}
                           icon={categoryIconImg(activity.category)}
                           name={activity.name}
                           subtitle={subtitulo}
@@ -2227,9 +2814,68 @@ export default function App() {
                             />
                           ))}
                         </RitualRow>
+                        <li style={{ listStyle: 'none', padding: '0 12px 8px 12px' }}>
+                          {/* "5 das últimas 7", escudos e o marco do hábito —
+                              média móvel, nunca streak que zera. O ritmo vem do
+                              save (`habitRhythms`); sem histórico, o vazio
+                              ESTÁVEL, porque um objeto novo por render anula
+                              memoização mundo afora. */}
+                          <HabitConstancy
+                            compact
+                            rhythm={gameState.habitRhythms?.[activity.id] ?? EMPTY_RHYTHM}
+                            schedule={normalizeSchedule(activity)}
+                            now={agora}
+                            language={language}
+                          />
+                        </li>
+                        </Fragment>
                       );
                     })}
                   </RitualPanel>
+
+                  {/* GAVETA DO QUE SAIU DE VISTA.
+                      'Algum dia' e 'Deixar pra lá' tiram o item da atenção sem
+                      apagá-lo — mas some-sem-volta é indistinguível de perda de
+                      dado, e um backlog que o usuário não consegue reencontrar
+                      deixa de ser uma decisão e vira desconfiança no app. A
+                      gaveta fica FECHADA por padrão (o ponto é não pesar) e diz
+                      em uma linha que nada ali cobra nada. */}
+                  {guardadas.length > 0 && (
+                    <details style={{ marginTop: 12, opacity: 0.75 }}>
+                      <summary style={{ cursor: 'pointer', fontSize: 12, letterSpacing: '.04em' }}>
+                        {isPt
+                          ? `Guardadas (${guardadas.length}) — não cobram nada`
+                          : `Put aside (${guardadas.length}) — these ask nothing of you`}
+                      </summary>
+                      <ul style={{ listStyle: 'none', padding: '8px 0 0 0', margin: 0 }}>
+                        {guardadas.map(t => (
+                          <li
+                            key={t.id}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              padding: '6px 4px', fontSize: 13,
+                            }}
+                          >
+                            <span aria-hidden="true">{t.emoji}</span>
+                            <span style={{ flex: 1, minWidth: 0 }}>{t.name}</span>
+                            <span style={{ fontSize: 11, opacity: 0.7 }}>
+                              {t.status === 'dropped'
+                                ? (isPt ? 'deixada pra lá' : 'let go')
+                                : (isPt ? 'algum dia' : 'someday')}
+                            </span>
+                            <button
+                              type="button"
+                              className="sm-btn sm-btn-secondary"
+                              style={{ padding: '2px 8px', fontSize: 11 }}
+                              onClick={() => handleRestoreTask(t.id)}
+                            >
+                              {isPt ? 'Retomar' : 'Bring back'}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  )}
                   </div>
                   </div>
                 );
@@ -2330,6 +2976,19 @@ export default function App() {
             /></Suspense>
           )}
 
+          {/* DEX DE SONHOS na página do PET, e não em Configurações: é uma
+              COLEÇÃO do bicho — cenas dele dormindo —, então mora onde já vive
+              a ficha dele (formas, descrições, habilidades). Em Configurações
+              ele leria como um painel de métrica de sono, que é exatamente a
+              leitura que a Parte 3 do plano manda evitar. */}
+          {currentView === 'pet' && (
+            <div style={{ marginTop: 16 }}>
+              <Suspense fallback={null}>
+                <DreamDex rest={gameState.rest ?? createRestState()} language={language} />
+              </Suspense>
+            </div>
+          )}
+
           {currentView === 'stats' && (
             <Suspense fallback={null}><StatsPage
               completedTasks={gameState.completedTasks}
@@ -2408,6 +3067,25 @@ export default function App() {
                 return state ? 'loaded' : 'created';
               }}
             /></Suspense>
+          )}
+
+          {/* JANELA DE DESCANSO em CONFIGURAÇÕES: é uma preferência (os
+              horários que combinam com a vida da pessoa) e mora ao lado da
+              janela de sono automático, que ela conversa. O switch "não quero
+              ver métricas" também é preferência — e esconder números sem tirar
+              recompensa é a regra do `restWindow.ts`. */}
+          {currentView === 'settings' && (
+            <div style={{ marginTop: 16 }}>
+              <Suspense fallback={null}>
+                <RestWindowCard
+                  rest={gameState.rest ?? createRestState()}
+                  now={new Date()}
+                  language={language}
+                  onChangeWindow={handleChangeRestWindow}
+                  onToggleMetrics={handleToggleRestMetrics}
+                />
+              </Suspense>
+            </div>
           )}
 
           {currentView === 'oracle' && (
@@ -2542,6 +3220,9 @@ export default function App() {
           demoLimitReached={gameState.accountTier === 'demo' && !canCreateDemoTaskToday()}
           onUnlock={() => { setCreateModalOpen(false); setUnlockReason('task-limit'); }}
           onSaveTask={(data) => {
+            // Esforço, "quando" e idade vêm do modal e são gravados — sem eles
+            // a tarefa nasce sem peso (meta do dia contaria item, não esforço)
+            // e sem idade (nunca envelheceria, nunca assombraria).
             const newTask: Task = {
               id: `task-${Date.now()}`,
               name: data.name,
@@ -2551,6 +3232,11 @@ export default function App() {
               deadline: data.deadline,
               alarm: data.alarm,
               steps: data.steps,
+              effort: data.effort,
+              startDate: data.startDate,
+              status: data.status ?? 'open',
+              createdAt: data.createdAt ?? new Date().toISOString(),
+              lastTouchedAt: data.lastTouchedAt ?? new Date().toISOString(),
             };
             setGameState(prev => ({
               ...prev,
@@ -2567,6 +3253,11 @@ export default function App() {
               steps: data.steps,
               weekDays: data.weekDays,
               alarm: data.alarm,
+              // Recorrência flexível + âncora ("depois do café da manhã"): o
+              // modal já pergunta as duas coisas, e jogá-las fora aqui era o
+              // buraco principal do motor de hábitos.
+              schedule: data.schedule,
+              anchor: data.anchor,
             };
             setGameState(prev => ({
               ...prev,
@@ -2686,6 +3377,41 @@ export default function App() {
           soulGoal={gameState.soulGoal}
         />
       )}
+      {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia, pulável sem
+          culpa, e nunca por cima do relatório diário (dois modais empilhados
+          fazem o de cima roubar o clique do de baixo). */}
+      {checkInPlanData && !showDailyReport && (
+        <MorningCheckIn
+          open
+          plan={checkInPlanData}
+          language={language}
+          onConfirm={handleCheckInConfirm}
+          onSkip={handleCheckInSkip}
+        />
+      )}
+
+      {/* ARRUMAR A PILHA — fila de cartas com quatro saídas grandes. */}
+      {triageTasks && (
+        <TriagePile
+          open
+          tasks={triageTasks}
+          language={language}
+          onResolve={handleTriageResolve}
+          onClose={() => setTriageTasks(null)}
+        />
+      )}
+
+      {/* O SONHO DA MANHÃ — recompensa, nunca veredito. Só de manhã. */}
+      {morningDream && (
+        <MorningDream
+          open
+          dream={morningDream.dream}
+          isNew={morningDream.isNew}
+          language={language}
+          onClose={() => setMorningDream(null)}
+        />
+      )}
+
       {!showDailyReport && (
         <WelcomePromptModal
           language={language}

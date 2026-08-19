@@ -3,6 +3,8 @@ import { CATEGORY_ATTRIBUTES } from '../types/attributes';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { getMaxEnergyForStage, MAX_STAGE_REQUIREMENT } from '../types/progression';
 import { GULOSO_BONUS_ATTR, hasPassive, rubDailyCap } from './passives';
+import { isHaunted as isHauntedTask } from './taskTriage';
+import type { TaskStatus } from '../types/taskModel';
 
 // Regras de cuidado como funções PURAS.
 //
@@ -198,8 +200,15 @@ export function foodForCompletedTask(
 
 /** Fatia do GameState que a conclusão de tarefa lê e escreve. */
 export interface TaskState extends CareState {
-  tasks: Array<{ id: string; name: string; category: ActivityCategory; emoji: string; completed?: boolean }>;
-  completedTasks: Array<{ id: string; name: string; category: ActivityCategory; emoji: string; completedAt: string }>;
+  tasks: Array<{
+    id: string; name: string; category: ActivityCategory; emoji: string; completed?: boolean;
+    effort?: 1 | 2 | 3; status?: TaskStatus; deadline?: { date: string; time: string };
+    createdAt?: string; lastTouchedAt?: string;
+  }>;
+  completedTasks: Array<{
+    id: string; name: string; category: ActivityCategory; emoji: string; completedAt: string;
+    effort?: 1 | 2 | 3; wasHaunted?: boolean;
+  }>;
   activityStats: Record<string, {
     name: string; emoji: string; category: ActivityCategory; completionCount: number;
   }>;
@@ -238,6 +247,13 @@ export function completeTask<T extends TaskState>(state: T, taskId: string, now 
   const stats = state.activityStats[activityKey]
     ?? { name: task.name, emoji: task.emoji, category: task.category, completionCount: 0 };
 
+  // O peso e a "assombração" são lidos AQUI, no último instante em que a tarefa
+  // ainda existe. Depois desta função ela sai de `tasks` para sempre, e tanto a
+  // meta ponderada do dia quanto o bônus de alívio precisam do dado — quem
+  // recalculasse depois estaria lendo uma tarefa que não existe mais.
+  const effort = task.effort === 2 || task.effort === 3 ? task.effort : 1;
+  const wasHaunted = isHauntedTask(task, now);
+
   return {
     ...state,
     tasks: state.tasks.filter(t => t.id !== taskId),
@@ -249,6 +265,8 @@ export function completeTask<T extends TaskState>(state: T, taskId: string, now 
         category: task.category,
         emoji: task.emoji,
         completedAt: now.toISOString(),
+        effort,
+        wasHaunted,
       },
     ].slice(-COMPLETED_HISTORY_CAP),
     activityStats: {

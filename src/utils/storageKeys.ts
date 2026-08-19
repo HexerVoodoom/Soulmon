@@ -41,4 +41,10 @@ export const STORAGE_KEYS = {
   // Login por link de e-mail: o Firebase exige reconfirmar o e-mail ao
   // completar o login, então ele fica guardado entre o envio e o retorno.
   PENDING_LOGIN_EMAIL: 'soulmon-pending-login-email',
+  /** ISO de quando o pet foi dormir — a "outra ponta" da noite, lida ao acordar
+   *  para `recordNight` gravar deitar E acordar (utils/restWindow.ts). */
+  SLEEP_STARTED_AT: 'soulmon-sleep-started-at',
+  /** dayKey da última manhã em que o sonho já foi mostrado. Um por manhã: o
+   *  feedback de sono é SÓ de manhã e SÓ uma vez (ortossonia é ansiedade). */
+  MORNING_DREAM_SHOWN: 'soulmon-morning-dream-shown',
 } as const;

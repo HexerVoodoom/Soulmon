@@ -6,8 +6,10 @@ import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
-import { WEEKDAY_INDEXES, weekdayFull, weekdayShort } from '../utils/weekdays';
 import { PixelChoiceChip } from './pixel/PixelKit';
+import { useHabitSchedule } from '../hooks/useItemForm';
+import { HabitAnchorFields, HabitScheduleFields } from './CreateModal';
+import type { HabitAnchor, Schedule } from '../types/taskModel';
 import type { Language } from '../utils/i18n';
 
 interface Step {
@@ -24,8 +26,12 @@ interface EditModalProps {
     category: string;
     emoji: string;
     steps: Step[];
+    /** Escrito junto de `schedule`: é o campo que o widget Android e o app de
+     *  desktop leem, e nenhum dos dois carrega o motor de recorrência novo. */
     weekDays: number[];
     alarm?: { time: string };
+    schedule?: Schedule;
+    anchor?: HabitAnchor;
   }) => void;
   onDelete?: () => void;
   initialData?: {
@@ -35,6 +41,8 @@ interface EditModalProps {
     steps?: Step[];
     weekDays?: number[];
     alarm?: { time: string };
+    schedule?: Schedule;
+    anchor?: HabitAnchor;
   };
   language?: Language;
   canEditWeekdays?: boolean; // Se a atividade foi criada quando podia selecionar dias
@@ -49,15 +57,14 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<ActivityCategory>(CATEGORIES[0]);
-  const [weekDays, setWeekDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [steps, setSteps] = useState<Step[]>([]);
   const [alarmTime, setAlarmTime] = useState('');
+  const sched = useHabitSchedule({ isOpen, initial: initialData });
 
   useEffect(() => {
     if (isOpen && initialData) {
       setName(initialData.name);
       setCategory(initialData.category as ActivityCategory);
-      setWeekDays(initialData.weekDays || [0, 1, 2, 3, 4, 5, 6]);
       setSteps(initialData.steps || []);
       setAlarmTime(initialData.alarm?.time || '');
     }
@@ -69,10 +76,13 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
   if (!isOpen) return null;
 
   const handleSave = () => {
-    if (!name.trim() || weekDays.length === 0) return;
+    if (!name.trim() || (canEditWeekdays && !sched.isValid)) return;
     onSave({
-      name, category, emoji: currentEmoji, steps, weekDays,
+      name, category, emoji: currentEmoji, steps,
+      weekDays: canEditWeekdays ? sched.buildWeekDays() : [0, 1, 2, 3, 4, 5, 6],
       alarm: alarmTime ? { time: alarmTime } : undefined,
+      schedule: canEditWeekdays ? sched.buildSchedule() : { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
+      anchor: sched.buildAnchor(),
     });
     onClose();
   };
@@ -84,11 +94,6 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
     setSteps(steps.map(step => step.id === id ? { ...step, label } : step));
   };
   const handleDeleteStep = (id: string) => setSteps(steps.filter(step => step.id !== id));
-
-  const toggleWeekDay = (day: number) => {
-    if (weekDays.includes(day)) setWeekDays(weekDays.filter(d => d !== day));
-    else setWeekDays([...weekDays, day].sort());
-  };
 
   const txt = {
     title: isPt ? 'Editar atividade' : 'Edit Activity',
@@ -173,25 +178,9 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
             )}
           </div>
 
-          {canEditWeekdays && (
-            <div>
-              <label style={labelStyle}>{txt.weekdays} <span style={{ color: '#e0483e' }}>*</span></label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-                {WEEKDAY_INDEXES.map(index => (
-                  <PixelChoiceChip
-                    key={index}
-                    shape="day"
-                    selected={weekDays.includes(index)}
-                    onToggle={() => toggleWeekDay(index)}
-                    title={weekdayFull(index, language)}
-                    ariaLabel={weekdayFull(index, language)}
-                  >
-                    {weekdayShort(index, language)}
-                  </PixelChoiceChip>
-                ))}
-              </div>
-            </div>
-          )}
+          {canEditWeekdays && <HabitScheduleFields sched={sched} language={language} />}
+
+          <HabitAnchorFields sched={sched} language={language} />
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
@@ -207,7 +196,7 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 16, background: 'var(--sm-surface)', borderTop: '1px solid var(--sm-line)' }}>
           <div style={{ display: 'flex', gap: 14 }}>
             <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
-            <button onClick={handleSave} disabled={!name.trim() || weekDays.length === 0} className="sm-btn" style={{ flex: 1 }}>{txt.save}</button>
+            <button onClick={handleSave} disabled={!name.trim() || (canEditWeekdays && !sched.isValid)} className="sm-btn" style={{ flex: 1 }}>{txt.save}</button>
           </div>
           {onDelete && (
             <button onClick={onDelete} style={{ background: 'none', border: 'none', color: '#e0483e', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '4px 0' }}>

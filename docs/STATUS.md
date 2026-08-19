@@ -7,7 +7,68 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **kit de UI pixel — rodada de arte (18/08/2026)**. 142 PNGs
+Última atualização: **motor de tarefas — Fases 1 a 3 do `docs/PLANO-TAREFAS.md`
+(19/08/2026)**.
+
+**O que foi feito.** Cinco módulos novos, todos funções puras com testes:
+`src/types/taskModel.ts` (dono único dos tipos e das constantes),
+`utils/habitRhythm.ts` (constância "N das últimas 7", escudos automáticos,
+never-miss-twice, marcos 7/21/66), `utils/taskTriage.ts` (esforço, quando ×
+prazo, contador de adiamentos, assombrada, someday/dropped, foco do dia, aviso
+de sobrecarga, fila de triagem), `utils/restWindow.ts` (Janela de Descanso,
+média móvel, 18 Sonhos) e `utils/rituals.ts` (check-in, relatório semanal com
+sugestão de habit stacking, fresh start). E a mudança de regra mais profunda:
+**a meta do dia passou a ser PONDERADA POR ESFORÇO** em `utils/dailyReset.ts`
+(hábito pesa 1, tarefa pesa o próprio `effort` 1–3; `someday`/`dropped` não
+entram) — enquanto tudo valia 1, cadastrar cinco triviais rendia mais que
+encarar a difícil, que é o defeito documentado do Karma do Todoist. É
+retrocompatível por construção (`normalizeEffort` devolve 1 para item sem o
+campo, então em save antigo peso == contagem). A documentação do jogador foi
+atualizada junto: `GuideModal` ganhou 6 seções novas (esforço e meta, os três
+modos de recorrência incl. "contar da conclusão", constância/escudos/marcos,
+tarefas e suas saídas, Janela de Descanso e Sonhos, rituais) e `HelpModal`
+ganhou 13 verbetes novos, PT+EN, com **todos os números saindo das
+constantes** — nenhum literal escrito à mão. As linhas de ⭐ Dia perfeito e
+❤️ Corações do `CLAUDE.md` foram corrigidas (diziam "min(cadastradas,
+requisito)" contando ITENS; agora dizem peso) e a tabela de regras ganhou o
+bloco "Motor de tarefas".
+
+**O que ficou pendente.**
+
+- 🔴 **Fase 4 (sensores via Health Connect) NÃO foi implementada, e é DECISÃO DO
+  DONO.** Nada no código de hoje lê sensor: a Janela de Descanso funciona
+  inteira sem permissão de saúde, igual na PWA e no APK, e isso é escolha de
+  arquitetura, não limitação. Ligar a Fase 4 custa, **antes de qualquer linha de
+  código**: (1) **conta de organização verificada no Google Play** — enforcement
+  de jan/2026; se o publisher for conta pessoal, isso é bloqueador absoluto;
+  (2) **declaração de health app** no Play Console; (3) **política de privacidade
+  dedicada** (sono/passos são dado sensível sob LGPD art. 11, exigindo
+  consentimento específico e destacado por finalidade — checkbox dentro dos
+  Termos é juridicamente inválido); (4) **APK novo** (é mudança em `android/`).
+  Some-se a janela de 30 dias do Health Connect (só lê os 30 dias anteriores à
+  concessão, e reinstalar recomeça a contagem), que empurra a espelhar dado
+  sensível no backend. Se e quando o dono decidir seguir: guardar **agregados
+  diários** ("regularidade da semana = 0,82"), nunca séries brutas — isso sai
+  quase inteiro do escopo de dado sensível. O plano só previa a Fase 4 **se** a
+  Fase 3 provar que move retenção; ela é opt-in e só Android.
+- ⛔ **Google Fit está sendo desligado e NADA deve ser escrito contra ele.**
+  Cadastros novos fechados desde 01/05/2024, APIs suportadas só até o fim de
+  2026. Não existe uma linha contra o Fit no repositório, e isso é de propósito.
+  O caminho — se e quando o dono decidir — é **`@capgo/capacitor-health`**, o
+  único plugin Capacitor vivo e mantido em 2026 que expõe `SleepSessionRecord`
+  (o `capacitor-health` original do mley **não** expõe sono). O app já é
+  Capacitor: seria adicionar plugin + permissões ao build Android existente, não
+  fazer app novo. Na **PWA pura não existe caminho nenhum** — não há ponte web
+  para Health Connect nem HealthKit.
+- 🟡 A UI dos módulos novos é de outros agentes desta mesma rodada (`App.tsx`,
+  `CreateModal.tsx`, `src/utils/`): guia e glossário já descrevem as regras, então
+  qualquer tela que chegue depois precisa bater com o que está documentado ali —
+  se divergir, o texto está certo e a tela está errada (o guia lê as constantes).
+- 🟡 Fase 2 do plano com entrega parcial: `Quick Add` de uma linha (parsing
+  PT-BR/EN, `!1..!3`, `#categoria`, `*3x semana`) e a **aventura narrada** do pet
+  no relatório noturno ainda não existem como código.
+
+Antes disso: **kit de UI pixel — rodada de arte (18/08/2026)**. 142 PNGs
 gerados (Gemini no navegador + desenho determinístico quando a cota travou),
 recortados por algoritmo e medidos contra o guard de asset. Três itens do
 `docs/BACKLOG-ARTE-GERAR.md` saíram: **A4** (nós da árvore de evolução, SVG →
@@ -578,6 +639,7 @@ decisão sua.
 | 🟠 | `VITE_FIREBASE_*` no projeto Pages (e o `FIREBASE_PROJECT_ID` **por último**) |
 | 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim, mas `capacitor.config.json` ainda aponta o APK para `digiapp-a5e.pages.dev` |
 | 🟡 | Endereço de contato do VAPID (`workers/push-scheduler.js` → `CONTACT`) — hoje é `contact@digiapp.app`; precisa ser um que você controle |
+| 🟠 | **Decidir se a Fase 4 (sensores via Health Connect) vale o custo** — só o dono pode: exige **conta de organização verificada** no Play (enforcement jan/2026; conta pessoal é bloqueador), declaração de health app, política de privacidade dedicada e consentimento LGPD art. 11 específico por finalidade, além de APK novo. A Fase 3 (Janela de Descanso + Sonhos) já roda **sem sensor nenhum**, igual na PWA e no APK — a Fase 4 é opt-in, só Android, e o plano só a previa **se** a Fase 3 provar que move retenção. Caminho técnico, se aprovada: `@capgo/capacitor-health` (único plugin Capacitor vivo em 2026 que expõe sono). **Google Fit está morrendo (APIs até o fim de 2026) — nada deve ser escrito contra ele.** |
 | 🟡 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages (fingerprint sai do Play Console → Integridade do app) |
 
 ### 3.3 Steam

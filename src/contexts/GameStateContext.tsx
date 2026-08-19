@@ -11,6 +11,10 @@ import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
+import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
+import type { HabitRhythm } from '../utils/habitRhythm';
+import type { RestState } from '../utils/restWindow';
+import { createRestState } from '../utils/restWindow';
 import { resolveLanguage } from '../utils/i18n';
 import {
   readLocal,
@@ -50,6 +54,14 @@ export interface Step {
   completed: boolean;
 }
 
+/**
+ * HÁBITO — contrato de CONSTÂNCIA (ver types/taskModel.ts e utils/habitRhythm.ts).
+ *
+ * `weekDays` continua existindo e continua sendo escrito: é a interface com o
+ * widget Android e com o app de desktop, que não carregam o motor novo. Quem
+ * manda de verdade é `schedule`; `normalizeSchedule` lê um a partir do outro,
+ * então save antigo (que só tem `weekDays`) funciona sem migração destrutiva.
+ */
 export interface Activity {
   id: string;
   name: string;
@@ -60,8 +72,23 @@ export interface Activity {
   alarm?: { time: string };
   completedToday?: boolean;
   lastCompletedDate?: string;
+  /** Recorrência flexível: dias da semana, N× por semana, ou a cada N dias
+   *  (contando da conclusão — o `every!` do Todoist, que impede acúmulo). */
+  schedule?: Schedule;
+  /** Implementation intention: "depois do café, na mesa da cozinha". */
+  anchor?: HabitAnchor;
 }
 
+/**
+ * TAREFA — contrato de EXECUÇÃO (ver utils/taskTriage.ts).
+ *
+ * Todos os campos novos são OPCIONAIS e têm padrão seguro: uma tarefa de save
+ * antigo lê como `effort 1`, `status 'open'`, sem adiamentos e sem idade — ou
+ * seja, exatamente o comportamento de antes. Isso é deliberado: se `daysStale`
+ * caísse para uma data qualquer, o backlog inteiro de quem já joga apareceria
+ * assombrado na primeira abertura depois do update, que é justamente a tela de
+ * culpa que este trabalho existe para eliminar.
+ */
 export interface Task {
   id: string;
   name: string;
@@ -71,6 +98,21 @@ export interface Task {
   deadline?: { date: string; time: string };
   alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
   steps?: Step[];
+  /** 1 rápida · 2 média · 3 projeto. A recompensa escala com ISTO, nunca com a
+   *  quantidade de itens — senão o jogo premia cadastrar tarefa trivial. */
+  effort?: Effort;
+  /** 'open' | 'someday' (inerte, não cobra) | 'dropped' (Won't Do, reversível). */
+  status?: TaskStatus;
+  /** Quando pretendo fazer — separado do prazo (Things 3). Só isto traz a
+   *  tarefa para o Hoje; prazo distante não polui a tela. */
+  startDate?: string;
+  /** Contador de adiamentos, exibido na tarefa (Sunsama). Torna a evitação
+   *  crônica um dado em vez de um sentimento. */
+  postponedCount?: number;
+  createdAt?: string;
+  lastTouchedAt?: string;
+  /** dayKey em que esta tarefa é um dos 3 focos do dia. */
+  focusDate?: string;
 }
 
 export interface CompletedTask {
@@ -79,6 +121,13 @@ export interface CompletedTask {
   category: ActivityCategory;
   emoji: string;
   completedAt: string;
+  /** Carregado da tarefa para o histórico: a meta do dia é ponderada por
+   *  esforço e `completeTask` REMOVE a tarefa da lista — sem guardar o peso
+   *  aqui, concluir uma tarefa de projeto derrubaria o total do dia de 3 para
+   *  1 e a virada cobraria coração de quem fez tudo. */
+  effort?: Effort;
+  /** Era uma tarefa assombrada quando foi concluída (bônus de alívio). */
+  wasHaunted?: boolean;
 }
 
 export interface ActivityStats {
@@ -240,6 +289,28 @@ export interface GameState {
   /** Créditos (moeda premium, dinheiro real) — reroll de personagem, cura
    *  instantânea de coração, itens/cenários da loja. */
   credits?: number;
+  /**
+   * Histórico de constância por hábito (utils/habitRhythm.ts), chaveado pelo id
+   * da Activity. Fica SEPARADO da `Activity` de propósito: a virada do dia
+   * reescreve o array inteiro de atividades (`resetActivities`), e um histórico
+   * morando lá dentro seria reconstruído a cada dia sob risco de perder o
+   * acumulado — que é justamente o único dado que não pode se perder, porque é
+   * o que sustenta os 66 dias de maturidade.
+   */
+  habitRhythms?: Record<string, HabitRhythm>;
+  /**
+   * Janela de Descanso + coleção de Sonhos (utils/restWindow.ts). Guarda só
+   * agregados por noite (deitou/acordou/entrou na janela) — nunca série bruta
+   * de sensor. Isso mantém o app fora do escopo de dado sensível da LGPD e
+   * fora das exigências de health app do Google Play.
+   */
+  rest?: RestState;
+  /** dayKey do último check-in matinal concluído (evita repetir no mesmo dia). */
+  lastCheckInDate?: string;
+  /** dayKey do último relatório semanal mostrado. */
+  lastWeeklyReportDate?: string;
+  /** dayKey do último "recomeço" (fresh start) proposto e aceito. */
+  lastFreshStartDate?: string;
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
@@ -265,6 +336,9 @@ const GameStateContext = createContext<GameStateContextType | null>(null);
  */
 const arr = <T,>(v: unknown, fallback: T[] = []): T[] => (Array.isArray(v) ? (v as T[]) : fallback);
 const num = (v: unknown, fallback: number): number => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+/** Mapa simples (nunca array, nunca null) — mesma defesa do `arr` para records. */
+const obj = <T,>(v: unknown): Record<string, T> =>
+  (v && typeof v === 'object' && !Array.isArray(v)) ? (v as Record<string, T>) : {};
 
 /**
  * Migra/completa um save carregado. Isolada da leitura de propósito: o
@@ -356,6 +430,17 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         accountTier: loadedState.accountTier ?? 'paid',
         demoCharacterId: loadedState.demoCharacterId,
         credits: loadedState.credits ?? 0,
+        // Motor de tarefas (docs/PLANO-TAREFAS.md). Todos opcionais, mas com
+        // linha aqui por regra: campo sem linha em `hydrateSave` já produziu a
+        // tela branca permanente. `obj()` porque um `habitRhythms: []` vindo da
+        // nuvem passaria por `??` e só explodiria lá na frente, dentro do
+        // updater da virada do dia.
+        habitRhythms: obj<HabitRhythm>(loadedState.habitRhythms),
+        rest: (loadedState.rest && typeof loadedState.rest === 'object'
+          && !Array.isArray(loadedState.rest)) ? loadedState.rest : createRestState(),
+        lastCheckInDate: loadedState.lastCheckInDate,
+        lastWeeklyReportDate: loadedState.lastWeeklyReportDate,
+        lastFreshStartDate: loadedState.lastFreshStartDate,
       } as GameState;
 }
 
@@ -410,6 +495,8 @@ function freshGameState(): GameState {
       // purchase completes.
       accountTier: 'demo',
       credits: 0,
+      habitRhythms: {},
+      rest: createRestState(),
   };
 }
 

@@ -1,6 +1,21 @@
 import { FORM_REQUIREMENTS, MANUAL_EVOLUTION, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, clampBranch } from '../types/progression';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 import { heartLossCap } from './passives';
+import {
+  normalizeSchedule,
+  weekDaysForSchedule,
+  normalizeEffort,
+  HABIT_WEIGHT,
+  type Schedule,
+} from '../types/taskModel';
+import {
+  emptyRhythm,
+  isDueOn,
+  completeHabit,
+  applyMissedDay,
+  earnShield,
+  type HabitRhythm,
+} from './habitRhythm';
 
 // Tipos necessários para o reset
 interface Activity {
@@ -164,17 +179,29 @@ export function daysSinceLastReset(lastResetDate: string | undefined, now: Date)
 /** Fatia do estado que a meta do dia lê. */
 export interface DailyGoalState {
   evolutionStage: string;
-  activities: Array<{ weekDays?: number[] }>;
-  tasks: unknown[];
+  activities: Array<{ weekDays?: number[]; schedule?: Schedule }>;
+  /** `any` porque a meta lê `effort`/`status` de tarefas que vêm do save (dado
+   *  não confiável) — `normalizeEffort` e `countsForGoal` fazem a validação. */
+  tasks: any[];
 }
 
-/** Atividades que valem PARA ESTE dia da semana (0 = domingo). */
-export function activitiesForWeekDay<A extends { weekDays?: number[] }>(
+/**
+ * Atividades que valem PARA ESTE dia da semana (0 = domingo).
+ *
+ * Um hábito com recorrência flexível (`timesPerWeek`, `everyNDays`) é elegível
+ * TODO dia — a meta dele é semanal ou por intervalo, não por calendário, e quem
+ * decide se ele conta hoje é `utils/habitRhythm.ts`. Ler `weekDays` cru aqui
+ * excluiria esses hábitos do dia inteiro (o campo antigo é preenchido com a
+ * semana toda para eles, mas depender disso seria depender de um detalhe de
+ * compatibilidade); `weekDaysForSchedule` é a leitura correta e continua dando
+ * exatamente o array antigo no caso `weekdays`.
+ */
+export function activitiesForWeekDay<A extends { weekDays?: number[]; schedule?: Schedule }>(
   state: { evolutionStage: string; activities: A[] },
   weekDay: number,
 ): A[] {
   if (!canSelectWeekdays(state.evolutionStage)) return state.activities;
-  return state.activities.filter(a => a.weekDays?.includes(weekDay));
+  return state.activities.filter(a => weekDaysForSchedule(normalizeSchedule(a)).includes(weekDay));
 }
 
 /**
@@ -187,23 +214,52 @@ export function activitiesForWeekDay<A extends { weekDays?: number[] }>(
  * não cadastrou nada.
  */
 export function tasksCompletedOn(
-  state: { completedTasks?: Array<{ completedAt?: string }> },
+  state: { completedTasks?: Array<{ completedAt?: string; effort?: unknown }> },
   dayKey: string,
 ): number {
-  return (state.completedTasks ?? []).filter(t => {
-    if (!t?.completedAt) return false;
+  return (state.completedTasks ?? []).reduce((sum, t) => {
+    if (!t?.completedAt) return sum;
     const d = new Date(t.completedAt);
-    return !Number.isNaN(d.getTime()) && d.toDateString() === dayKey;
-  }).length;
+    if (Number.isNaN(d.getTime()) || d.toDateString() !== dayKey) return sum;
+    return sum + normalizeEffort(t.effort);
+  }, 0);
+}
+
+// ---------------------------------------------------------------------------
+// A META É PONDERADA POR ESFORÇO — não é uma contagem de itens.
+//
+// Hábito pesa HABIT_WEIGHT (1); tarefa pesa o próprio `effort` (1–3). Enquanto
+// a meta contava ITENS, o jogo ensinava exatamente o comportamento que ele
+// existe para corrigir: cinco tarefas triviais rendiam mais que a única difícil
+// que mudaria o dia da pessoa. É o defeito documentado do Karma do Todoist —
+// recompensa desacoplada do esforço real produz teatro, não progresso.
+//
+// A mudança é retrocompatível por construção: `normalizeEffort` devolve 1 para
+// todo item sem o campo, então para um save antigo peso == contagem e nenhum
+// número que o jogador via muda de valor.
+//
+// Tarefas 'someday' e 'dropped' NÃO entram: a primeira é deliberadamente inerte
+// (o Someday do Things 3) e a segunda é um estado terminal. Fazê-las contar na
+// meta transformaria as duas saídas honestas do backlog em cobrança nova, que é
+// o oposto exato do motivo pelo qual elas existem.
+// ---------------------------------------------------------------------------
+
+/** Uma tarefa entra na meta do dia? (Só as ativas.) */
+function countsForGoal(t: any): boolean {
+  const status = t?.status ?? 'open';
+  return status === 'open';
 }
 
 /**
- * Quantos itens estão cadastrados PARA ESTE dia: atividades do dia + tarefas
- * ainda na lista + tarefas do dia que já saíram da lista por terem sido feitas.
+ * O PESO cadastrado PARA ESTE dia: atividades do dia + tarefas ativas ainda na
+ * lista + tarefas do dia que já saíram da lista por terem sido feitas.
+ *
+ * O nome continua `registeredForDay` (e o guard de origem continua ancorado
+ * nele) porque o papel é o mesmo — o que mudou é a UNIDADE: esforço, não itens.
  */
 export function registeredForDay(state: DailyGoalState, weekDay: number, dayKey?: string): number {
-  return activitiesForWeekDay(state, weekDay).length
-    + state.tasks.length
+  return activitiesForWeekDay(state, weekDay).length * HABIT_WEIGHT
+    + state.tasks.filter(countsForGoal).reduce((s, t: any) => s + normalizeEffort(t?.effort), 0)
     + (dayKey ? tasksCompletedOn(state as any, dayKey) : 0);
 }
 
@@ -295,7 +351,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     } else {
       isComplete = !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
     }
-    if (isComplete) dailyDone++;
+    if (isComplete) dailyDone += HABIT_WEIGHT;
   });
 
   // Tarefas avulsas: as que ainda estão na lista marcadas (janela de 3s entre o
@@ -305,7 +361,12 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // NEGAVA o dia perfeito — o dia em que a pessoa fez tudo ficava idêntico ao
   // dia em que ela não cadastrou nada, e o progresso para a evolução travava
   // sem nenhum aviso, com a barra da tela marcando 100%.
-  dailyDone += prev.tasks.filter((t: any) => t.completed).length
+  // Ponderado pelo mesmo peso da meta (`registeredForDay`): se o feito contasse
+  // itens e a meta contasse esforço, uma tarefa de projeto pediria 3 e entregaria
+  // 1 — o jogador faria 100% do que se comprometeu e a virada cobraria coração.
+  dailyDone += prev.tasks
+    .filter((t: any) => t.completed && countsForGoal(t))
+    .reduce((s: number, t: any) => s + normalizeEffort(t?.effort), 0)
     + tasksCompletedOn(prev as any, yesterdayString);
 
   // Meta do dia = min(cadastradas, requisito do estágio). Cumprir o que você
@@ -457,6 +518,39 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     }
   }
 
+  // -------------------------------------------------------------------------
+  // CONSTÂNCIA DOS HÁBITOS (utils/habitRhythm.ts)
+  //
+  // A virada é o único momento em que se sabe se um hábito devido ONTEM foi
+  // cumprido — logo abaixo, `resetActivities` apaga `completedToday` e a
+  // resposta deixa de existir. Por isso o histórico é escrito aqui, e por isso
+  // ele mora em `habitRhythms` (fora do array de atividades, que é justamente o
+  // que essa linha reescreve inteiro).
+  //
+  // Falta NÃO gera perda de HP própria nem zera nada: ela só entra no
+  // denominador da média móvel e, se houver escudo, é absorvida
+  // automaticamente. A cobrança do dia continua sendo uma só — a fórmula de
+  // corações lá em cima. Duas cobranças pelo mesmo dia ruim seria exatamente o
+  // empilhamento de punição que afunda o Habitica.
+  // -------------------------------------------------------------------------
+  const rhythms: Record<string, HabitRhythm> = { ...(prev.habitRhythms ?? {}) };
+  if (!wasAway) {
+    availableActivities.forEach((activity: any) => {
+      const schedule = normalizeSchedule(activity);
+      const current = rhythms[activity.id] ?? emptyRhythm();
+      if (!isDueOn(schedule, current, yesterday)) return;
+
+      const isComplete = activity.steps?.length > 0
+        ? activity.steps.every((s: any) => s.completed)
+        : !!activity.completedToday && activity.lastCompletedDate === yesterdayString;
+
+      const next = isComplete
+        ? completeHabit(current, yesterdayString)
+        : applyMissedDay(current, yesterdayString);
+      rhythms[activity.id] = earnShield(next, now);
+    });
+  }
+
   const resetActivities = prev.activities.map((activity: any) => ({
     ...activity,
     steps: activity.steps.map((step: any) => ({ ...step, completed: false })),
@@ -491,6 +585,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     totalPerfectDays: (prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0),
     maxActivityCap: newMaxActivityCap,
     attributesSinceLastEvolution: newRecentAttrs,
+    habitRhythms: rhythms,
     energyPoints: 0, // Energia zera todo dia (enche comendo)
     // Resumo de ontem, mostrado 1× como "relatório diário" na próxima abertura.
     lastDayReport: {

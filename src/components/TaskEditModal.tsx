@@ -6,8 +6,9 @@ import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { Input } from './ui/input';
 import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICON_IMG, CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
-import { useItemForm } from '../hooks/useItemForm';
+import { useItemForm, todayIso } from '../hooks/useItemForm';
 import type { Language } from '../utils/i18n';
+import type { Effort } from '../types/taskModel';
 import { PixelChoiceChip } from './pixel/PixelKit';
 
 interface TaskEditModalProps {
@@ -20,6 +21,10 @@ interface TaskEditModalProps {
     steps?: { id: string; label: string; completed: boolean }[];
     deadline?: { date: string; time: string };
     alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
+    effort?: Effort;
+    /** Quando pretendo fazer — só isto traz a tarefa para o Hoje. */
+    startDate?: string;
+    lastTouchedAt?: string;
   }) => void;
   onDelete?: () => void;
   title?: string;
@@ -30,6 +35,8 @@ interface TaskEditModalProps {
     steps?: { id: string; label: string; completed: boolean }[];
     deadline?: { date: string; time: string };
     alarm?: { type: '2h' | '1h' | '30min' | 'custom'; time?: string };
+    effort?: Effort;
+    startDate?: string;
   };
   language?: Language;
 }
@@ -53,6 +60,10 @@ export function TaskEditModal({
     name, setName,
     category, setCategory,
     steps,
+    effort, setEffort,
+    hasStart, setHasStart,
+    startDate, setStartDate,
+    buildStartDate,
     hasDeadline, setHasDeadline,
     deadlineDate, setDeadlineDate,
     deadlineTime, setDeadlineTime,
@@ -82,6 +93,9 @@ export function TaskEditModal({
       steps: steps.length > 0 ? steps : undefined,
       deadline: buildDeadline(),
       alarm: hasAlarm ? buildAlarm() : undefined,
+      effort,
+      startDate: buildStartDate(),
+      lastTouchedAt: new Date().toISOString(),
     });
     onClose();
   };
@@ -104,7 +118,33 @@ export function TaskEditModal({
     cancel: isPt ? 'Cancelar' : 'Cancel',
     save: isPt ? 'Salvar' : 'Save',
     delete: isPt ? 'Excluir' : 'Delete',
+    effort: isPt ? 'Esforço' : 'Effort',
+    effortReward: isPt
+      ? 'A recompensa escala com o esforço — uma tarefa grande vale mais que três triviais.'
+      : 'The reward scales with effort — one big task is worth more than three trivial ones.',
+    effort1: isPt ? 'Rápida' : 'Quick',
+    effort2: isPt ? 'Média' : 'Medium',
+    effort3: isPt ? 'Projeto' : 'Project',
+    effort1Hint: isPt ? 'minutos' : 'minutes',
+    effort2Hint: isPt ? 'uma sentada' : 'one sitting',
+    effort3Hint: isPt ? 'vários dias' : 'several days',
+    projectSteps: isPt
+      ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos? (opcional)'
+      : 'A project is too big for a single line. How about breaking it into steps? (optional)',
+    when: isPt ? 'Quando pretendo fazer' : 'When I plan to do it',
+    whenVsDeadline: isPt
+      ? 'O "quando" é o dia em que você vai fazer, e só ele traz a tarefa para o Hoje; o prazo é só o dia em que ela vence.'
+      : 'The "when" is the day you plan to do it, and only it brings the task into Today; the deadline is just the day it is due.',
   };
+
+  const segment = (active: boolean): React.CSSProperties => ({
+    flex: 1, padding: '8px 4px', textAlign: 'center', cursor: 'pointer',
+    display: 'flex', flexDirection: 'column', gap: 2,
+    border: active ? '2px solid var(--sm-px-cyan)' : '2px solid color-mix(in srgb, var(--sm-px-copper) 65%, transparent)',
+    backgroundColor: active ? 'var(--sm-px-cyan)' : 'var(--sm-surface)',
+    color: active ? '#04211f' : 'var(--sm-ink)',
+    fontSize: 13, fontWeight: 700,
+  });
 
   const inputStyle: React.CSSProperties = {
     /* Visual mora em .sm-px-field (kit); aqui só layout. */
@@ -172,6 +212,54 @@ export function TaskEditModal({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Esforço — a recompensa escala com ISTO, nunca com a contagem. */}
+          <div>
+            <label style={labelStyle}>{txt.effort}</label>
+            <div role="radiogroup" aria-label={txt.effort} style={{ display: 'flex', gap: 10 }}>
+              {([
+                [1, txt.effort1, txt.effort1Hint],
+                [2, txt.effort2, txt.effort2Hint],
+                [3, txt.effort3, txt.effort3Hint],
+              ] as const).map(([value, label, hint]) => {
+                const active = effort === value;
+                return (
+                  <button key={value} type="button" role="radio" aria-checked={active}
+                    onClick={() => setEffort(value as Effort)} style={segment(active)}>
+                    <span>{label}</span>
+                    <span style={{ fontSize: 10.5, fontWeight: 600, opacity: 0.8 }}>{hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', marginTop: 6, lineHeight: 1.45 }}>{txt.effortReward}</p>
+            {/* Sugestão, nunca obrigação. */}
+            {effort === 3 && steps.length === 0 && (
+              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', lineHeight: 1.45 }}>💡 {txt.projectSteps}</span>
+                <button type="button" onClick={handleAddStep} className="sm-btn sm-btn-secondary" style={{ padding: '6px 12px', fontSize: 12 }}>
+                  {txt.add}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* "Quando" ≠ prazo: só o "quando" traz a tarefa para o Hoje. */}
+          <div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: hasStart ? 10 : 0 }}>
+              <input type="checkbox" checked={hasStart}
+                onChange={(e) => { setHasStart(e.target.checked); if (e.target.checked && !startDate) setStartDate(todayIso()); }}
+                style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }} />
+              <img src={iconClock} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <span style={{ fontSize: 13.5, color: 'var(--sm-ink)', fontWeight: 600 }}>{txt.when}</span>
+            </label>
+            {hasStart && (
+              <div style={{ marginLeft: 28 }}>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="sm-px-field" style={inputStyle} />
+              </div>
+            )}
+            <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', marginTop: 6, lineHeight: 1.45 }}>{txt.whenVsDeadline}</p>
           </div>
 
           <div>
