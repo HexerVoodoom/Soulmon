@@ -1,156 +1,171 @@
 /**
- * HUD do topo da Home (Ref C): marca à esquerda, medidores à direita.
+ * HUD do topo da Home — marca à esquerda, medidores segmentados abaixo.
  *
- * **Guardrail das três moedas** (`src/utils/currencies.ts`, e há teste
- * travando): a referência rotula a cápsula da direita como "SOUL CRYSTAL".
- * Aqui ela é rotulada **CREDITS / CRÉDITOS**, que é o nome real da moeda de
- * dinheiro real, e usa o `icon-gem` — o MESMO ícone que o menu já usa para
- * Créditos, e só ele. Bits não aparecem neste HUD; quando aparecerem, será
- * sem ícone e com a fonte de calculadora (`bitsStyle`). Um rótulo de fantasia
- * ("SOUL CRYSTAL") sobre uma moeda paga é exatamente como Bits e Créditos
- * viraram a mesma coisa aos olhos do jogador da última vez.
+ * ══ ORÇAMENTO DE LEITURAS DA HOME (PLANO-DESIGN §5.1) ══════════════════════
+ *
+ * O teto é de **5 leituras numéricas simultâneas** na Home, e a pendência do
+ * PLANO-PRODUTO é explícita: *o Nível de Vínculo só entra na Home se DUAS
+ * outras leituras saírem no mesmo PR*. As duas que saíram:
+ *
+ *  1. **Contador de Créditos** — saiu DESTE arquivo. Moeda comprada com
+ *     dinheiro real, gasta em reroll / cura / troca por Bits: tudo fora da
+ *     Home. Saldo permanente de moeda paga na tela principal é vitrine de
+ *     loja, e o produto não é isso. Ela continua acionável no menu e na Loja
+ *     (`CreditsModal`), que é onde a pessoa está decidindo gastar.
+ *  2. **Os 3 atributos** (vírus/dado/vacina) — insumo de GALHO DE EVOLUÇÃO,
+ *     não leitura diária. Casa própria em "CURRENT ALIGNMENT", na página de
+ *     Evolução (`EvolutionPath`), onde a decisão acontece. Verificado: eles já
+ *     não são renderizados por nenhuma superfície da Home.
+ *
+ * Ficam aqui: **HP** e **Energia**. Mais o contador de rituais (x/y, no
+ * `RitualPanel`) e os Bits, que são a moeda ganha na própria sessão.
+ *
+ * // TODO(Vínculo): a vaga aberta é ESTA — uma terceira `.sm2-meter` na
+ * // fileira abaixo, lendo `src/utils/bond.ts` (o módulo já existe e está
+ * // testado). NÃO ligue junto de mais nada: o teto de 5 já estará no limite,
+ * // e qualquer leitura nova depois dela precisa tirar outra antes.
+ *
+ * ══ GUARDRAIL DAS TRÊS MOEDAS (`src/utils/currencies.ts`) ══════════════════
+ * Bits e Créditos já apareceram com o mesmo ícone 💎. Com os Créditos fora,
+ * o HUD não mostra moeda NENHUMA — e é assim que ele deixa de poder repetir o
+ * bug. Se um dia os Bits entrarem, é sem ícone e com a fonte de calculadora.
  */
-import { PixelChip, PixelSegmentedBar } from './PixelKit';
+import type { CSSProperties } from 'react';
+import { Icon } from '../ui/Icon';
 import type { Language } from '../../utils/i18n';
-import iconFlame from '../../assets/soulmon/icons/icon-flame.png';
-import iconGem from '../../assets/soulmon/icons/icon-gem.png';
-import imgHeartSprite from 'figma:asset/7e77e9ec45ca6381843c93b205d4f8cdd7ddf568.png';
 
 interface HomeHudProps {
   energyPoints: number;
   maxEnergyPoints: number;
-  credits: number;
-  /** HP — rodada 3 (B1): saiu de "3 corações no ar" sobre o palco para dentro
-   *  de uma cápsula emoldurada, na mesma fileira de Energia. */
+  /** HP — na MESMA fileira e com o MESMO peso da energia. */
   healthPoints?: number;
   maxHealthPoints?: number;
   language?: Language;
-  /** Abre o modal de Créditos — a cápsula é clicável, não é enfeite. */
-  onOpenCredits?: () => void;
 }
 
 /**
- * Corações de HP em miniatura (14px), com suporte a meio coração — é a MESMA
- * arte e a mesma regra de meio-a-meio do "carinho" que vivia solta em cima do
- * palco. Mudou o CONTINENTE (agora tem moldura), não a informação.
+ * Barra segmentada do aparelho — blocos discretos, trilho escuro, **meia
+ * unidade = meio bloco**.
+ *
+ * Por que não `PixelSegmentedBar` nem `PixelMeter`:
+ *  · `PixelSegmentedBar` arredonda (`Math.round(ratio * total)`), então HP 1,5
+ *    de 3 acenderia 2 blocos inteiros — a barra mentiria sobre a regra do
+ *    jogo, que aceita frações de 0,5 (o carinho cura meio coração);
+ *  · `PixelMeter` é CONTÍNUA (um preenchimento liso em %), e continuidade é
+ *    exatamente o que se perde aqui: num v-pet você CONTA os blocos.
+ *
+ * É a leitura instantânea do gênero, e por isso é DOM e não PNG: a arte do kit
+ * é uma barra fixa de 9 blocos cheios, incapaz de mostrar 3/7.
  */
-function Hearts({ value, max }: { value: number; max: number }) {
-  const cheios = Math.floor(value);
-  const meio = value - cheios >= 0.5;
+function SegBar({
+  value, max, tone, label,
+}: { value: number; max: number; tone: string; label: string }) {
+  const total = Math.max(0, Math.round(max));
+  const seguro = Math.min(Math.max(0, value), total);
+  const cheios = Math.floor(seguro);
+  // 0,5 é o único passo fracionário que a regra produz; qualquer resto ≥0,25
+  // lê como meio bloco em vez de sumir.
+  const meio = seguro - cheios >= 0.25;
   return (
-    <span style={{ display: 'inline-flex', gap: 2 }}>
-      {Array.from({ length: Math.max(0, max) }, (_, i) => (
-        <span key={i} style={{ position: 'relative', width: 14, height: 13, flexShrink: 0 }}>
-          <img
-            src={imgHeartSprite}
-            alt=""
-            className={i < cheios ? undefined : 'sm-hp-empty'}
-            style={{ position: 'absolute', inset: 0, width: 14, height: 13, imageRendering: 'pixelated' }}
-          />
-          {i === cheios && meio && (
-            <span style={{ position: 'absolute', inset: 0, width: '50%', overflow: 'hidden' }}>
-              <img src={imgHeartSprite} alt="" style={{ width: 14, height: 13, maxWidth: 'none', imageRendering: 'pixelated' }} />
-            </span>
-          )}
-        </span>
-      ))}
-    </span>
+    <div
+      className="sm2-seg"
+      role="progressbar"
+      aria-valuenow={value}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-label={label}
+      style={{ height: 12, '--sm2-seg-tone': tone } as CSSProperties}
+    >
+      {Array.from({ length: Math.max(1, total) }, (_, i) => {
+        const cls = i < cheios
+          ? 'sm2-seg-blk sm2-seg-on'
+          : (i === cheios && meio ? 'sm2-seg-blk sm2-seg-half' : 'sm2-seg-blk');
+        return <div key={i} className={cls} />;
+      })}
+    </div>
   );
 }
 
 export function HomeHud({
-  energyPoints, maxEnergyPoints, credits,
+  energyPoints, maxEnergyPoints,
   healthPoints, maxHealthPoints,
-  language = 'en-US', onOpenCredits,
+  language = 'en-US',
 }: HomeHudProps) {
   const isPt = language === 'pt-BR';
   const temHp = typeof healthPoints === 'number' && typeof maxHealthPoints === 'number' && maxHealthPoints > 0;
+  const hp = healthPoints as number;
+  const hpMax = maxHealthPoints as number;
+
   return (
-    <div className="sm-px-hud">
-    <div className="flex items-center justify-between gap-3">
-      {/* `minWidth: 0` para a marca poder encolher em vez de vazar por baixo
-          das cápsulas num flex row (o padrão é `min-width: auto`). */}
-      <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
-        <img
-          src={iconFlame}
-          alt=""
-          width={26}
-          height={26}
-          style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
-        />
-        {/* A MARCA é o lugar mais óbvio da fonte bitmap: duas palavras, sem
-            acento, caixa alta por definição. */}
-        <span
-          className="sm-px-font"
-          style={{
-            /* 11px, não 14: a Silkscreen é MUITO mais larga que a sans no
-               mesmo corpo, e a 14 a marca invadia a cápsula de Energia
-               (medido: "SOUL MON" saía cortado em "SOUL MO"). */
-            fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
-            textTransform: 'uppercase', color: 'var(--sm-primary)',
-            whiteSpace: 'nowrap', lineHeight: 1.4,
-          }}
-        >
-          Soul Mon
-        </span>
+    <div className="sm2-hud">
+      {/* A marca é a PALAVRA, sem ícone ao lado.
+          Aqui havia um `local_fire_department`, e ele era errado por dois
+          motivos independentes. O primeiro é de produto: chama é o vocabulário
+          visual de STREAK, e este app recusa streak por tese — o contador que
+          zera dispara o "já quebrei, quebra tudo". Pôr a chama na marca é
+          prometer, no primeiro elemento da tela, exatamente a mecânica que o
+          jogo não tem. O segundo é de identidade: a marca do Soulmon é o
+          VISOR (o aparelho), não um glifo de biblioteca — e um ícone genérico
+          coberto ao lado do nome é o caminho mais curto para o app parecer um
+          template, que é o risco declarado desta virada. Enquanto o glifo
+          proprietário do visor não existir, a palavra sozinha carrega melhor
+          a marca do que um símbolo emprestado. */}
+      <div className="sm2-hud-brand">
+        <span className="sm2-hud-wordmark">Soulmon</span>
       </div>
 
-      {/* A cápsula de Créditos é a ÚNICA ação da fileira da marca — por isso
-          ela fica aqui em cima, e os dois medidores (que são leitura, não
-          ação) descem para a fileira própria. */}
-      <PixelChip
-        label={isPt ? 'Créditos' : 'Credits'}
-        icon={iconGem}
-        value={credits}
-        title={isPt ? 'Créditos — comprados com dinheiro real' : 'Credits — bought with real money'}
-        onClick={onOpenCredits ?? (() => {})}
-        ariaLabel={isPt ? `Créditos: ${credits}` : `Credits: ${credits}`}
-        style={{ minHeight: 44 }}
-      />
-    </div>
-
-    {/* Fileira de medidores: HP e Energia, cada um na SUA moldura e com o
-        MESMO peso. Antes o HP eram três corações soltos sobre o palco e a
-        Energia era uma barra vertical vazia colada na margem direita — dois
-        medidores, duas linguagens, nenhuma superfície (B1). */}
-    <div className="sm-px-hud-meters">
-      {temHp && (
-        <PixelChip
-          style={{ flex: 1, minWidth: 0 }}
-          label={isPt ? 'Vida' : 'Health'}
-          title={isPt
-            ? `HP: ${healthPoints}/${maxHealthPoints} — cai quando você perde cuidados; faça carinho no pet para curar`
-            : `HP: ${healthPoints}/${maxHealthPoints} — drops when care is missed; rub the pet to heal`}
-          value={
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Hearts value={healthPoints as number} max={maxHealthPoints as number} />
-              {healthPoints}/{maxHealthPoints}
-            </span>
-          }
-        />
-      )}
-      <PixelChip
-        style={{ flex: 1, minWidth: 0 }}
-        label={isPt ? 'Energia' : 'Energy'}
-        icon={iconFlame}
-        title={isPt
-          ? `Energia: ${energyPoints}/${maxEnergyPoints} — sobe comendo; cheia no fim do dia = ponto de evolução`
-          : `Energy: ${energyPoints}/${maxEnergyPoints} — fills by eating; full at day's end = evolution point`}
-        value={
-          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <PixelSegmentedBar
-              value={energyPoints}
-              max={maxEnergyPoints}
-              segments={Math.max(1, maxEnergyPoints)}
-              height={10}
-              style={{ width: 46 }}
-              label={isPt ? 'Energia' : 'Energy'}
+      {/* Fileira de medidores: HP e Energia, cada um na SUA caixa e com o mesmo
+          peso. O trilho é escuro nos dois temas (é a tela do aparelho) e o
+          número usa tabular-nums — sem isso o valor "dança" na horizontal a
+          cada tick e a barra inteira parece tremer. */}
+      <div className="sm2-hud-meters">
+        {temHp && (
+          <div
+            className="sm2-meter"
+            title={isPt
+              ? `HP: ${hp}/${hpMax} — cai quando você perde cuidados; faça carinho no pet para curar`
+              : `HP: ${hp}/${hpMax} — drops when care is missed; rub the pet to heal`}
+          >
+            <div className="sm2-meter-head">
+              <Icon name="favorite" size={20} fill={1} tone={hp <= 1 ? 'danger' : 'gold'} />
+              <span className="sm2-meter-label">{isPt ? 'Vida' : 'Health'}</span>
+              <span className="sm2-meter-value sm2-num">{hp}/{hpMax}</span>
+            </div>
+            <SegBar
+              value={hp}
+              max={hpMax}
+              /* Tinta de VISOR (cobre), clara nos dois temas e medida em 4,1:1
+                 sobre o trilho escuro do tema claro — acima do 3:1 de
+                 componente não-textual. O HP baixo NÃO troca a cor da barra:
+                 `--sm2-danger-fill` no tema claro é um vermelho escuro que dá
+                 2,8:1 ali dentro e sumiria. Quem carrega o alarme é o glifo do
+                 coração (tom `danger`) e o número ao lado — os dois sobre
+                 superfície clara, onde o vermelho passa AA. */
+              tone="var(--sm2-viewport-ring)"
+              label={isPt ? 'Vida' : 'Health'}
             />
-            {energyPoints}/{maxEnergyPoints}
-          </span>
-        }
-      />
-    </div>
+          </div>
+        )}
+
+        <div
+          className="sm2-meter"
+          title={isPt
+            ? `Energia: ${energyPoints}/${maxEnergyPoints} — sobe comendo; cheia no fim do dia = ponto de evolução`
+            : `Energy: ${energyPoints}/${maxEnergyPoints} — fills by eating; full at day's end = evolution point`}
+        >
+          <div className="sm2-meter-head">
+            <Icon name="bolt" size={20} fill={1} tone="primary" />
+            <span className="sm2-meter-label">{isPt ? 'Energia' : 'Energy'}</span>
+            <span className="sm2-meter-value sm2-num">{energyPoints}/{maxEnergyPoints}</span>
+          </div>
+          <SegBar
+            value={energyPoints}
+            max={maxEnergyPoints}
+            tone="var(--sm2-viewport-ink)"
+            label={isPt ? 'Energia' : 'Energy'}
+          />
+        </div>
+      </div>
     </div>
   );
 }

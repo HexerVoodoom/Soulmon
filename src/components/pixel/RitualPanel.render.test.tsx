@@ -102,7 +102,7 @@ describe('RitualRow — ícone SEM MOLDURA (rodada 4), e NUNCA emoji', () => {
     // cobre vazio" do G2). Tirada a moldura por direção do dono, um quadro
     // vazio vira 40px de NADA no meio de uma tela de 412px — então a casa
     // deixa de existir e a linha começa no texto.
-    const { container } = renderWithCss(<ul>{linha({ icon: undefined })}</ul>);
+    const { container } = renderWithCss(<ul>{linha({ iconName: undefined })}</ul>);
     expect(container.querySelector('.sm-px-ritual-icon')).toBeNull();
   });
 
@@ -110,7 +110,7 @@ describe('RitualRow — ícone SEM MOLDURA (rodada 4), e NUNCA emoji', () => {
     // A regra da rodada 3 ("controle interativo sem superfície = 0") vale para
     // CONTROLE. Esta casa é decorativa (`aria-hidden`); o checkbox e a coluna
     // de texto da linha continuam com superfície e alvo próprios.
-    const { container } = renderWithCss(<ul>{linha({ icon: '/icone-fake.png' })}</ul>);
+    const { container } = renderWithCss(<ul>{linha({ iconName: 'favorite' })}</ul>);
     const casa = container.querySelector('.sm-px-ritual-icon') as HTMLElement;
     expect(computed(casa, 'width')).toBe('40px');
     // `border-style`, não `border-width`: sem estilo a borda não desenha, e o
@@ -121,17 +121,20 @@ describe('RitualRow — ícone SEM MOLDURA (rodada 4), e NUNCA emoji', () => {
   });
 
   it('nenhum emoji do sistema sobra no conteúdo da linha', () => {
-    const { container } = renderWithCss(<ul>{linha({ icon: undefined, name: 'Ler 10 páginas' })}</ul>);
+    const { container } = renderWithCss(<ul>{linha({ iconName: undefined, name: 'Ler 10 páginas' })}</ul>);
     const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
     expect(EMOJI.test(container.textContent ?? '')).toBe(false);
   });
 
-  it('com ícone de categoria, renderiza a arte do kit dentro da casa', () => {
-    const { container } = renderWithCss(<ul>{linha({ icon: '/icone-fake.png' })}</ul>);
-    const img = container.querySelector('.sm-px-ritual-icon img') as HTMLImageElement;
-    expect(img.getAttribute('src')).toBe('/icone-fake.png');
+  it('com categoria, renderiza o GLIFO da Material Symbols — nunca PNG, nunca emoji', () => {
+    const { container } = renderWithCss(<ul>{linha({ iconName: 'favorite' })}</ul>);
+    // O nome TEM que estar no inventário de 99 (tokens.md): fora dele o
+    // `<span>` sai vazio, sem glifo e sem erro — falha silenciosa.
+    const glifo = container.querySelector('.sm-px-ritual-icon .sm2-icon') as HTMLElement;
+    expect(glifo.textContent).toBe('favorite');
     // decorativo: o nome ao lado já diz o que é
-    expect(img.getAttribute('alt')).toBe('');
+    expect(glifo.getAttribute('aria-hidden')).toBe('true');
+    expect(container.querySelectorAll('.sm-px-ritual-icon img').length).toBe(0);
   });
 });
 
@@ -168,7 +171,8 @@ describe('RitualPanel — um painel só, com contador e CTA largo', () => {
         {linha()}
       </RitualPanel>,
     );
-    expect(screen.getByText('Rituais diários 2/5')).toBeTruthy();
+    expect(screen.getByText('Rituais diários')).toBeTruthy();
+    expect(screen.getByText('2/5')).toBeTruthy();
     unmount();
 
     renderWithCss(
@@ -176,7 +180,8 @@ describe('RitualPanel — um painel só, com contador e CTA largo', () => {
         {linha({ language: 'en-US' })}
       </RitualPanel>,
     );
-    expect(screen.getByText('Daily rituals 2/5')).toBeTruthy();
+    expect(screen.getByText('Daily rituals')).toBeTruthy();
+    expect(screen.getByText('2/5')).toBeTruthy();
   });
 
   it('o CTA largo existe e dispara (é o que aposentou o FAB flutuante)', () => {

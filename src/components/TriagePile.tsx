@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { Icon } from './ui/Icon';
+import { SM2_SHADOW_SHEET, sm2Button, sm2Hint, sm2TitleStyle } from './form/FormKit';
 import {
   effortOf,
   daysStale,
@@ -30,6 +31,12 @@ import {
  *    terminada é mais uma dívida.
  *  - A tela final comemora de verdade. É o oposto exato da falência periódica
  *    (apagar tudo e recomeçar), que é o padrão de uso dominante do mercado.
+ *
+ * ONDA 5: bottom sheet, porque as quatro decisões são o gesto repetido desta
+ * tela e a zona do polegar sai de graça. O que distingue as quatro saídas
+ * deixou de ser a cor da moldura (quatro hex sem par por tema, três deles
+ * reprovando 3:1 no tema claro) e passou a ser GLIFO + PALAVRA — que funciona
+ * também para quem não distingue as cores.
  */
 
 export type TriageAction = 'today' | 'week' | 'someday' | 'drop';
@@ -43,46 +50,39 @@ export interface TriagePileProps {
   onClose: () => void;
 }
 
-/**
- * As quatro saídas. `ink` desenha a BORDA de 2px de cada botão — borda é objeto
- * gráfico e precisa de 3:1 (WCAG 1.4.11).
- *
- * Os quatro valores eram hex/token cru sem par por tema e mediam, no tema
- * claro, 2,92 / 2,11 / 1,31 / 4,87. Só o último passava. Trocados por tokens
- * COM par por tema (`index.css`, bloco "tinta com par por tema"): a única coisa
- * que distingue os quatro botões é a cor da moldura, então uma moldura que some
- * no branco apaga a distinção inteira.
- */
-const ACTIONS: { action: TriageAction; pt: string; en: string; ink: string; hint: { pt: string; en: string } }[] = [
+/** As quatro saídas. Mesma moldura, mesmo tamanho, mesmo peso. */
+const ACTIONS: { action: TriageAction; icon: string; pt: string; en: string; hint: { pt: string; en: string } }[] = [
   {
     action: 'today',
+    icon: 'today',
     pt: 'Hoje',
     en: 'Today',
-    ink: 'var(--sm-ok-ink)',
     hint: { pt: 'vai pra lista de hoje', en: 'moves to today’s list' },
   },
   {
     action: 'week',
+    icon: 'event_repeat',
     pt: 'Esta semana',
     en: 'This week',
-    ink: 'var(--sm-px-cyan-ink)',
-    hint: { pt: 'volta a aparecer nos próximos dias', en: 'comes back in the next few days' },
+    hint: { pt: 'volta nos próximos dias', en: 'comes back in a few days' },
   },
   {
     action: 'someday',
+    icon: 'archive',
     pt: 'Algum dia',
     en: 'Someday',
-    ink: 'var(--sm-gold)',
-    hint: { pt: 'lista inerte: não cobra, não envelhece', en: 'inert list: no nagging, no aging' },
+    hint: { pt: 'não cobra, não envelhece', en: 'no nagging, no aging' },
   },
   {
     action: 'drop',
+    icon: 'do_not_disturb_on',
     pt: 'Deixar pra lá',
     en: 'Let it go',
-    ink: 'var(--sm-muted)',
     hint: { pt: 'saída digna, com volta atrás', en: 'a dignified exit, undoable' },
   },
 ];
+
+const hint = sm2Hint;
 
 export function TriagePile({ open, tasks, language, onResolve, onClose }: TriagePileProps) {
   const isPt = language === 'pt-BR';
@@ -119,65 +119,54 @@ export function TriagePile({ open, tasks, language, onResolve, onClose }: Triage
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={isPt ? 'Arrumar a pilha' : 'Tidy the pile'}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 200,
-        background: 'rgba(6, 24, 26, 0.55)',
+        background: 'rgba(6, 24, 26, .55)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: 16,
       }}
     >
-      <div ref={dialogRef} className="sm-card" style={{ width: '100%', maxWidth: 380, padding: 0, overflow: 'hidden' }}>
-        {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-            padding: '14px 16px',
-            background: 'var(--sm-surface)',
-            borderBottom: '1px solid var(--sm-line)',
-          }}
-        >
-          <span style={{ fontWeight: 800, fontSize: '0.98rem', color: 'var(--sm-ink)' }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={isPt ? 'Arrumar a pilha' : 'Tidy the pile'}
+        style={{
+          width: '100%',
+          maxWidth: 420,
+          maxHeight: '92vh',
+          overflow: 'hidden',
+          backgroundColor: 'var(--sm2-surface)',
+          borderRadius: '20px 20px 0 0',
+          boxShadow: SM2_SHADOW_SHEET,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 8px 10px 18px' }}>
+          <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>
             {isPt ? 'Arrumar a pilha' : 'Tidy the pile'}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {total > 0 && (
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--sm-muted)' }}>
-                {isPt ? `${doneCount} de ${total} decididas` : `${doneCount} of ${total} decided`}
-              </span>
-            )}
-            <button
-              onClick={onClose}
-              aria-label={isPt ? 'Fechar' : 'Close'}
-              style={{
-                width: 44,
-                height: 44,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <img
-                src={iconClose}
-                alt=""
-                width={18}
-                height={18}
-                style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
-              />
-            </button>
-          </div>
+          {total > 0 && (
+            <span style={hint}>
+              <span className="sm2-num">{doneCount}</span>
+              {isPt ? ' de ' : ' of '}
+              <span className="sm2-num">{total}</span>
+              {isPt ? ' decididas' : ' decided'}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={isPt ? 'Fechar' : 'Close'}
+            style={{
+              width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}
+          >
+            <Icon name="close" size={24} tone="muted" />
+          </button>
         </div>
 
         {/* Progresso — barra que só enche. Nada aqui mede o tamanho da culpa.
@@ -194,14 +183,14 @@ export function TriagePile({ open, tasks, language, onResolve, onClose }: Triage
                 ? `Triagem: ${doneCount} de ${total} decididas`
                 : `Triage: ${doneCount} of ${total} decided`
             }
-            style={{ height: 4, background: 'var(--sm-line)' }}
+            style={{ height: 4, background: 'var(--sm2-line)' }}
           >
             <div
               style={{
                 height: '100%',
                 width: `${total === 0 ? 0 : Math.round((doneCount / total) * 100)}%`,
-                background: 'var(--sm-px-cyan-ink)',
-                transition: 'width .2s ease',
+                background: 'var(--sm2-primary-fill)',
+                transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
               }}
             />
           </div>
@@ -214,14 +203,7 @@ export function TriagePile({ open, tasks, language, onResolve, onClose }: Triage
             o feedback do botão que ela acabou de apertar. */}
         <div aria-live="polite" aria-atomic="false">
           {current ? (
-            <TriageCard
-              task={current}
-              now={now}
-              isPt={isPt}
-              onAction={handle}
-              position={doneCount + 1}
-              total={total}
-            />
+            <TriageCard task={current} now={now} isPt={isPt} onAction={handle} />
           ) : (
             <TriageDone isPt={isPt} decided={doneCount} onClose={onClose} />
           )}
@@ -236,16 +218,11 @@ function TriageCard({
   now,
   isPt,
   onAction,
-  position,
-  total,
 }: {
   task: TriageTask;
   now: Date;
   isPt: boolean;
   onAction: (action: TriageAction) => void;
-  /** 1-based: a carta que está na frente da fila agora. */
-  position: number;
-  total: number;
 }) {
   const effort = effortOf(task);
   const postponed = task.postponedCount ?? 0;
@@ -270,38 +247,19 @@ function TriageCard({
         : `postponed ${postponed}${postponed === 1 ? ' time' : ' times'}`,
     );
   }
-  facts.push(
-    isPt ? `esforço ${effort} de 3` : `effort ${effort} of 3`,
-  );
+  facts.push(isPt ? `esforço ${effort} de 3` : `effort ${effort} of 3`);
 
   return (
-    <div style={{ padding: '18px 16px 16px' }}>
-      {/* A carta. Sem vermelho, sem exclamação, sem "atrasada!". */}
-      <div
-        style={{
-          padding: '16px 14px',
-          backgroundColor: 'var(--sm-surface)',
-          border: '1px solid color-mix(in srgb, var(--sm-px-copper-ink) 45%, transparent)',
-          marginBottom: 14,
-        }}
-      >
-        {/* A posição na fila é a informação que o olho pega da barra de cima e
-            que o leitor de tela não tinha de jeito nenhum. */}
-        <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--sm-muted)', fontWeight: 700 }}>
-          {isPt ? `Carta ${position} de ${total}` : `Card ${position} of ${total}`}
-        </p>
-        <p
-          className="sm-display"
-          style={{ fontSize: '0.95rem', margin: 0, color: 'var(--sm-ink)', lineHeight: 1.35 }}
-        >
-          {task.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
-        </p>
-        <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
-          {facts.join(' · ')}
-        </p>
-      </div>
+    <div style={{ padding: '16px 18px 20px' }}>
+      {/* A carta. Sem vermelho, sem exclamação, sem "atrasada!". Sem moldura
+          também: o espaço já separa o nome dos botões, e a posição na fila já
+          está no cabeçalho e na barra de progresso. */}
+      <p className="sm2-title" style={{ fontSize: 'var(--sm2-text-md)', fontWeight: 600, margin: 0 }}>
+        {task.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
+      </p>
+      <p style={{ ...hint, marginTop: 6 }}>{facts.join(' · ')}</p>
 
-      <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+      <p style={{ ...hint, margin: '16px 0 10px' }}>
         {isPt
           ? 'Onde ela vive agora? Qualquer resposta serve — inclusive nenhuma.'
           : 'Where does it live now? Any answer works — including none.'}
@@ -314,24 +272,28 @@ function TriageCard({
             key={a.action}
             type="button"
             onClick={() => onAction(a.action)}
-            title={isPt ? a.hint.pt : a.hint.en}
             style={{
-              minHeight: 64,
-              padding: '10px 8px',
+              minHeight: 72,
+              padding: '12px 12px',
+              borderRadius: 12,
               cursor: 'pointer',
               textAlign: 'left',
-              backgroundColor: 'var(--sm-bg)',
-              border: `2px solid ${a.ink}`,
-              color: 'var(--sm-ink)',
+              backgroundColor: 'var(--sm2-surface-2)',
+              border: '1px solid var(--sm2-line)',
+              color: 'var(--sm2-ink)',
               display: 'flex',
               flexDirection: 'column',
               gap: 4,
             }}
           >
-            <span style={{ fontSize: 13.5, fontWeight: 800 }}>{isPt ? a.pt : a.en}</span>
-            <span style={{ fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.35 }}>
-              {isPt ? a.hint.pt : a.hint.en}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
+            }}>
+              <Icon name={a.icon} size={20} tone="muted" />
+              {isPt ? a.pt : a.en}
             </span>
+            <span style={hint}>{isPt ? a.hint.pt : a.hint.en}</span>
           </button>
         ))}
       </div>
@@ -342,19 +304,15 @@ function TriageCard({
 function TriageDone({ isPt, decided, onClose }: { isPt: boolean; decided: number; onClose: () => void }) {
   const nothingToDo = decided === 0;
   return (
-    <div style={{ padding: '28px 20px 22px', textAlign: 'center' }}>
-      <p aria-hidden="true" style={{ fontSize: 40, lineHeight: 1, margin: '0 0 10px' }}>
-        {nothingToDo ? '🌿' : '🎉'}
-      </p>
-      <p
-        className="sm-display"
-        style={{ fontSize: '1rem', margin: 0, color: 'var(--sm-ink)', WebkitTextStroke: '1px var(--sm-ink)' }}
-      >
+    <div style={{ padding: '24px 20px 24px', textAlign: 'center' }}>
+      <Icon name={nothingToDo ? 'spa' : 'auto_awesome'} size={40} fill={1}
+        tone={nothingToDo ? 'primary' : 'gold'} />
+      <p className="sm2-title" style={{ ...sm2TitleStyle, marginTop: 8 }}>
         {nothingToDo
           ? isPt ? 'A pilha já estava arrumada' : 'The pile was already tidy'
           : isPt ? 'Pilha arrumada!' : 'Pile tidied!'}
       </p>
-      <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', lineHeight: 1.55, margin: '10px 0 0' }}>
+      <p style={{ ...hint, margin: '10px 0 0' }}>
         {nothingToDo
           ? isPt
             ? 'Nada parado por aqui hoje. Seu Soulmon aproveitou pra cochilar.'
@@ -363,7 +321,11 @@ function TriageDone({ isPt, decided, onClose }: { isPt: boolean; decided: number
             ? `Você decidiu ${decided} ${decided === 1 ? 'coisa' : 'coisas'}. Decidir o que NÃO fazer é planejamento de verdade — e é isso que tira o peso da cabeça, não a lista vazia.`
             : `You decided on ${decided} ${decided === 1 ? 'item' : 'items'}. Deciding what NOT to do is real planning — and that's what lifts the weight, not an empty list.`}
       </p>
-      <button onClick={onClose} className="sm-btn" style={{ width: '100%', marginTop: 16 }}>
+      <button
+        type="button"
+        onClick={onClose}
+        style={{ ...sm2Button('primary'), width: '100%', marginTop: 16 }}
+      >
         {isPt ? 'Voltar' : 'Back'}
       </button>
     </div>

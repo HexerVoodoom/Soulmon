@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense, Fragment } from 'react';
+import type { ReactNode } from 'react';
+import { Icon } from './components/ui/Icon';
 import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
@@ -8,8 +10,7 @@ import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { RitualPanel, RitualRow } from './components/pixel/RitualPanel';
 import { StepRow } from './components/StepRow';
-import { categoryIconImg, categoryLabel } from './types/category-icons';
-import iconTarget from './assets/soulmon/icons/icon-target.png';
+import { categoryIconName, categoryLabel } from './types/category-icons';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
@@ -24,9 +25,6 @@ import { ItemsWindow } from './components/ItemsWindow';
 import { HelpModal } from './components/HelpModal';
 import { ProtectProgressModal } from './components/ProtectProgressModal';
 import { Edit2 } from 'lucide-react';
-// Único uso: o aviso de HP baixo. Deixou de ser um triângulo de alerta (ver a
-// nota no banner) e passou a ser o ícone de acolhimento.
-import iconHeartHandshake from './assets/soulmon/icons/icon-heart-handshake.png';
 import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './types/attributes';
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, getStageBranch, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
@@ -334,6 +332,9 @@ export default function App() {
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
   const [hpBannerDismissed, setHpBannerDismissed] = useState(false);
+  /* SLOT DO DIA — a linha "+N avisos" nasce RECOLHIDA. Estado de VISTA, fora
+     do GameState de propósito (não vira cloud save a cada toque). */
+  const [avisosAbertos, setAvisosAbertos] = useState(false);
   /* Etapas na Home nascem RECOLHIDAS (G1): uma atividade de 4 etapas ocupava 5
      linhas e comia sozinha a dobra. Estado de VISTA, não de jogo — de propósito
      fora do GameState, para não virar cloud save a cada toque. */
@@ -2166,6 +2167,14 @@ export default function App() {
     setTriageTasks(triageQueue(gameState.tasks, new Date()));
   }, [gameState.tasks]);
 
+  /* Handlers do SLOT DO DIA. `useCallback` com deps vazias (todos são setters
+     de estado, estáveis por contrato do React) — e não lambdas inline: a Home
+     re-renderiza a cada tick de jogo, e função nova por render é o que anula
+     `memo()` mundo abaixo (footgun 5). */
+  const handleDismissHpBanner = useCallback(() => setHpBannerDismissed(true), []);
+  const handleDismissFreshStart = useCallback(() => setFreshStartDismissed(true), []);
+  const handleToggleAvisos = useCallback(() => setAvisosAbertos(v => !v), []);
+
   const handleTriageResolve = useCallback((taskId: string, action: TriageAction) => {
     const now = new Date();
     const weekAhead = new Date(now.getTime());
@@ -2922,56 +2931,171 @@ export default function App() {
               <HomeHud
                 energyPoints={gameState.energyPoints}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
-                credits={gameState.credits ?? 0}
                 healthPoints={gameState.healthPoints}
                 maxHealthPoints={gameState.maxHealthPoints}
                 language={language}
-                onOpenCredits={() => setCreditsOpen(true)}
               />
 
-              {/* HP risk banner — dismissible strip acima do pet.
-                  O número vem de `tasksToAvoidHeartLoss`, dono da regra. Era
-                  `ceil(required / 2)`, que prometia que METADE das tarefas
-                  evitava a perda — falso: a perda só zera acima de 1 − 1/maxHP
-                  da meta (rookie: 3 de 4, não 2). A mesma promessa falsa já
-                  tinha sido removida do aviso das 20h e ficou aqui, que é o
-                  momento de maior consequência do jogo. */}
-              {gameState.healthPoints <= 1 && gameState.healthPoints > 0 && dailyDone < hpSafeToday && !hpBannerDismissed && (
-                /* Chanfro do kit em vez do `rounded-2xl` do sistema antigo:
-                   era o último raio Material que sobrava na Home (B1). */
-                /* `backgroundColor` (nunca o atalho `background`, que zeraria as
-                   bandas de quina) e `--sm-cham-line` junto de `borderColor`: quem
-                   repinta a moldura de uma peça do kit repinta a QUINA também, senão
-                   a quina sai cobre e a borda vermelha. Ver "RODADA 4 — A QUINA
-                   FECHA" no index.css. */
-                /* ÂMBAR, não `--sm-danger`: o vermelho de alerta somado a
-                   contagem regressiva, imperativo, prazo e ponto de exclamação
-                   fazia deste o texto mais duro do app — e ele aparece
-                   exatamente no dia em que a pessoa está pior. O NÚMERO é o
-                   mesmo (`tasksToAvoidHeartLoss`, dono da regra); mudou só o
-                   enquadramento, e o perdão (o carinho) vem junto, na mesma
-                   frase, em vez de ficar escondido num modal. */
-                <div
-                  className="flex items-center gap-2 px-4 py-2 sm-px-card"
-                  style={{ backgroundColor: '#fbf1dd', borderColor: '#d9a441', '--sm-cham-line': '#d9a441' } as React.CSSProperties}
-                >
-                  <img src={iconHeartHandshake} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
-                  <p className="flex-1 text-xs" style={{ lineHeight: '1.3', color: '#7a5a12' }}>
-                    {language === 'pt-BR'
-                      ? `Seu Soulmon está com pouco fôlego. ${hpSafeToday} ${hpSafeToday === 1 ? 'item' : 'itens'} hoje já seguram — ou um carinho devolve meio coração.`
-                      : `Your Soulmon is short of breath. ${hpSafeToday} ${hpSafeToday === 1 ? 'item' : 'items'} today already holds it — or a rub gives half a heart back.`}
-                  </p>
-                  <button
-                    onClick={() => setHpBannerDismissed(true)}
-                    className="shrink-0 text-sm leading-none flex items-center justify-center"
-                    /* 44x44 de área de toque (WCAG 2.2 AA 2.5.8); o ✕ continua pequeno. */
-                    style={{ width: 44, height: 44, background: 'none', border: 'none', color: '#7a5a12' }}
-                    aria-label={language === 'pt-BR' ? 'Dispensar' : 'Dismiss'}
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
+              {/* ═══════════════════════════════════════════════════════════
+                  SLOT DO DIA — UM cartão contextual por vez, e essa é a REGRA
+                  ═══════════════════════════════════════════════════════════
+
+                  PRIORIDADE FIXA:  HP  >  TRIAGEM  >  SEMANAL  >  RECOMEÇO
+
+                  **Só o primeiro da fila renderiza.** Os demais viram uma
+                  linha discreta ("+2 avisos") que expande sob toque.
+
+                  Por que isto existe, e por que a prioridade é escrita aqui e
+                  não distribuída: os quatro avisos podem coincidir. Num
+                  DOMINGO que também seja DIA 1, com a pilha atrasada e o HP em
+                  1, a Home abria com banner de HP + botão de arrumar a pilha +
+                  relatório semanal + cartão de recomeço — quatro superfícies
+                  de meta-gestão empilhadas ANTES da primeira tarefa, no dia em
+                  que a pessoa está pior. Cada um deles foi acrescentado
+                  sozinho e parecia barato sozinho; o custo só existe na soma,
+                  e ninguém é dono da soma. Esta lista é a dona.
+
+                  A ordem não é estética, é de CONSEQUÊNCIA:
+                   1. HP — é a única com dano de jogo em curso hoje;
+                   2. TRIAGEM — é a única acionável em um toque, e planejar é o
+                      que alivia (Masicampo & Baumeister);
+                   3. SEMANAL — leitura, não ação; só domingo;
+                   4. RECOMEÇO — convite, e o mais adiável dos quatro.
+
+                  **Cartão novo na Home entra NESTA fila, com posição
+                  declarada — nunca como mais um `&&` solto.** É a mesma
+                  restrição da fila única de intersticiais (App.tsx, mais
+                  acima), que continua intacta e independente desta. */}
+              {(() => {
+                const isPtA = language === 'pt-BR';
+                const agoraA = new Date();
+                const pilhaA = triageQueue(gameState.tasks, agoraA).length;
+                const recomecoA = freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language);
+                const semanaA = needsWeeklyReport(gameState, agoraA);
+                const hpA = gameState.healthPoints <= 1 && gameState.healthPoints > 0
+                  && dailyDone < hpSafeToday && !hpBannerDismissed;
+
+                const avisos: { key: string; node: ReactNode }[] = [];
+
+                // ── 1. HP ────────────────────────────────────────────────
+                // O número vem de `tasksToAvoidHeartLoss`, dono da regra.
+                // ÂMBAR (token de ouro), nunca `danger`: vermelho + prazo +
+                // imperativo fazia deste o texto mais duro do app, exatamente
+                // no dia pior. O perdão (o carinho) vem na MESMA frase.
+                if (hpA) avisos.push({
+                  key: 'hp',
+                  node: (
+                    <div className="sm2-notice sm2-notice-warn">
+                      <div className="sm2-notice-row">
+                        <Icon name="volunteer_activism" size={20} fill={1} tone="gold" />
+                        <p className="sm2-notice-body" style={{ flex: 1, minWidth: 0, marginTop: 0 }}>
+                          {isPtA
+                            ? `Seu Soulmon está com pouco fôlego. ${hpSafeToday} ${hpSafeToday === 1 ? 'item' : 'itens'} hoje já seguram — ou um carinho devolve meio coração.`
+                            : `Your Soulmon is short of breath. ${hpSafeToday} ${hpSafeToday === 1 ? 'item' : 'items'} today already holds it — or a rub gives half a heart back.`}
+                        </p>
+                        <button
+                          type="button"
+                          className="sm2-notice-dismiss"
+                          onClick={handleDismissHpBanner}
+                          aria-label={isPtA ? 'Dispensar' : 'Dismiss'}
+                        >
+                          <Icon name="close" size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                });
+
+                // ── 2. TRIAGEM ───────────────────────────────────────────
+                // 200 itens vermelhos viram uma sequência de decisões de um
+                // clique. Só existe com pilha de verdade — um botão de arrumar
+                // sobre uma lista limpa é cobrança gratuita.
+                if (pilhaA > 0) avisos.push({
+                  key: 'triagem',
+                  node: (
+                    <button
+                      type="button"
+                      className="sm2-notice-more"
+                      style={{ borderStyle: 'solid', color: 'var(--sm2-ink)' }}
+                      onClick={handleOpenTriage}
+                    >
+                      <Icon name="cleaning_services" size={20} tone="primary" />
+                      <span>{isPtA ? 'Arrumar a pilha' : 'Tidy the pile'}</span>
+                      <span className="sm2-num" style={{ fontWeight: 600 }}>({pilhaA})</span>
+                    </button>
+                  ),
+                });
+
+                // ── 3. SEMANAL (domingo) ─────────────────────────────────
+                if (semanaA) avisos.push({
+                  key: 'semanal',
+                  node: (
+                    <WeeklyReportCard
+                      report={weeklyReport(gameState, agoraA)}
+                      suggestion={stackingSuggestion(gameState, agoraA, language)}
+                      language={language}
+                      onDismiss={handleDismissWeeklyReport}
+                    />
+                  ),
+                });
+
+                // ── 4. RECOMEÇO (segunda / dia 1) ────────────────────────
+                // Cartão discreto, JAMAIS um modal que tranca a tela: o *fresh
+                // start effect* funciona porque relega as imperfeições ao
+                // período anterior; um convite que bloqueia o app viraria mais
+                // uma cobrança de segunda.
+                if (recomecoA) avisos.push({
+                  key: 'recomeco',
+                  node: (
+                    <div className="sm2-notice">
+                      <p className="sm2-notice-title">{recomecoA.title}</p>
+                      <p className="sm2-notice-body">{recomecoA.body}</p>
+                      <div className="sm2-notice-actions">
+                        <button type="button" className="sm-btn" style={{ fontSize: 12, padding: '10px 14px' }} onClick={handleFreshStart}>
+                          {isPtA ? 'Recomeçar' : 'Start fresh'}
+                        </button>
+                        <button
+                          type="button"
+                          className="sm-btn sm-btn-secondary"
+                          style={{ fontSize: 12, padding: '10px 14px' }}
+                          onClick={handleDismissFreshStart}
+                        >
+                          {isPtA ? 'Agora não' : 'Not now'}
+                        </button>
+                      </div>
+                    </div>
+                  ),
+                });
+
+                if (avisos.length === 0) return null;
+                const resto = avisos.length - 1;
+                return (
+                  <div className="sm2-notice-slot">
+                    {avisos[0].node}
+                    {resto > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          className="sm2-notice-more"
+                          aria-expanded={avisosAbertos}
+                          onClick={handleToggleAvisos}
+                        >
+                          <Icon name={avisosAbertos ? 'expand_less' : 'expand_more'} size={20} />
+                          <span className="sm2-num" style={{ fontWeight: 600 }}>+{resto}</span>
+                          <span>
+                            {isPtA
+                              ? (resto === 1 ? 'aviso' : 'avisos')
+                              : (resto === 1 ? 'notice' : 'notices')}
+                          </span>
+                        </button>
+                        {avisosAbertos && avisos.slice(1).map(a => (
+                          <div key={a.key}>{a.node}</div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Pet — acima, sem estar contido em uma caixa */}
               <CompanionHUD
@@ -3108,12 +3232,11 @@ export default function App() {
                   );
 
                 const agora = new Date();
-                // A fila de "arrumar a pilha": vencidas + assombradas, na ordem
-                // canônica de `triageQueue`. O botão só existe quando há pilha —
-                // um botão de arrumar sobre uma lista limpa é cobrança gratuita.
-                const pilha = triageQueue(gameState.tasks, agora).length;
-                const recomeco = freshStartDismissed ? null : freshStartOffer(gameState, agora, language);
-                const mostrarSemana = needsWeeklyReport(gameState, agora);
+                /* Recomeço, relatório semanal e "arrumar a pilha" NÃO moram
+                   mais aqui: os três entraram no SLOT DO DIA lá em cima, com
+                   posição declarada na fila de prioridade. Eram três `&&`
+                   independentes que, no domingo dia 1 com pilha atrasada,
+                   empilhavam antes da primeira tarefa. */
 
                 return (
                   <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
@@ -3129,71 +3252,10 @@ export default function App() {
                     />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                  {/* RECOMEÇO (segunda-feira / dia 1) — cartão discreto no topo
-                      da lista, JAMAIS um modal que tranca a tela. O *fresh
-                      start effect* (Dai, Milkman & Riis) funciona porque
-                      "relega as imperfeições ao período anterior"; um convite
-                      que bloqueia o app viraria mais uma cobrança de segunda. */}
-                  {recomeco && (
-                    <div
-                      className="sm-px-card"
-                      style={{ padding: '10px 12px', marginBottom: 10, backgroundColor: 'var(--sm-surface)' }}
-                    >
-                      <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: 'var(--sm-ink)' }}>
-                        {recomeco.title}
-                      </p>
-                      <p style={{ margin: '4px 0 8px', fontSize: '0.75rem', lineHeight: 1.45, color: 'var(--sm-muted)' }}>
-                        {recomeco.body}
-                      </p>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button type="button" className="sm-btn" style={{ fontSize: '0.72rem', padding: '8px 12px' }} onClick={handleFreshStart}>
-                          {isPt ? 'Recomeçar' : 'Start fresh'}
-                        </button>
-                        <button
-                          type="button"
-                          className="sm-btn sm-btn-secondary"
-                          style={{ fontSize: '0.72rem', padding: '8px 12px' }}
-                          onClick={() => setFreshStartDismissed(true)}
-                        >
-                          {isPt ? 'Agora não' : 'Not now'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* RELATÓRIO SEMANAL (domingo) — bloco próprio, ao lado do
-                      relatório diário, que tem outro dono. Ver
-                      components/WeeklyReportCard.tsx. */}
-                  {mostrarSemana && (
-                    <div style={{ marginBottom: 10 }}>
-                      <WeeklyReportCard
-                        report={weeklyReport(gameState, agora)}
-                        suggestion={stackingSuggestion(gameState, agora, language)}
-                        language={language}
-                        onDismiss={handleDismissWeeklyReport}
-                      />
-                    </div>
-                  )}
-
-                  {/* ARRUMAR A PILHA — 200 itens vermelhos viram uma sequência
-                      de decisões de um clique. Só aparece com pilha de verdade. */}
-                  {pilha > 0 && (
-                    <button
-                      type="button"
-                      className="sm-btn sm-btn-secondary"
-                      style={{ width: '100%', marginBottom: 10, fontSize: '0.75rem', padding: '10px 8px' }}
-                      onClick={handleOpenTriage}
-                    >
-                      {isPt
-                        ? `Arrumar a pilha (${pilha})`
-                        : `Tidy the pile (${pilha})`}
-                    </button>
-                  )}
-
                   <RitualPanel
                     done={feitos}
                     total={total}
-                    titleIcon={iconTarget}
+                    titleIconName="task_alt"
                     language={language}
                     ctaLabel={`+ ${t.activities.addNew}`}
                     onCta={handleAddNewActivity}
@@ -3206,7 +3268,7 @@ export default function App() {
                          para contar as tarefas. */
                       <Fragment key={task.id}>
                       <RitualRow
-                        icon={categoryIconImg(task.category)}
+                        iconName={categoryIconName(task.category)}
                         name={task.name}
                         subtitle={task.category
                           ? categoryLabel(task.category as ActivityCategory, isPt)
@@ -3249,7 +3311,7 @@ export default function App() {
                       return (
                         <Fragment key={activity.id}>
                         <RitualRow
-                          icon={categoryIconImg(activity.category)}
+                          iconName={categoryIconName(activity.category)}
                           name={activity.name}
                           subtitle={subtitulo}
                           value={etapas.length > 0 ? feitasEtapas : (activity.isComplete ? 1 : 0)}

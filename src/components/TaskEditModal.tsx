@@ -1,15 +1,10 @@
-import { Plus } from 'lucide-react';
-import iconTrash from '../assets/soulmon/icons/icon-trash.png';
-import iconClock from '../assets/soulmon/icons/icon-clock.png';
-import iconBell from '../assets/soulmon/icons/icon-bell.png';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
-import { Input } from './ui/input';
-import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
-import { CATEGORY_ICON_IMG, CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
+import { ActivityCategory } from '../types/attributes';
+import { CATEGORY_ICONS } from '../types/category-icons';
 import { useItemForm, todayIso } from '../hooks/useItemForm';
 import type { Language } from '../utils/i18n';
 import type { Effort } from '../types/taskModel';
-import { PixelChoiceChip } from './pixel/PixelKit';
+import { CategoryChips, EffortFields, StepsFields } from './CreateModal';
+import { CheckRow, Field, ModalSheet, Segment, sm2Button, sm2Hint, sm2Label } from './form/FormKit';
 
 interface TaskEditModalProps {
   isOpen: boolean;
@@ -40,10 +35,6 @@ interface TaskEditModalProps {
   };
   language?: Language;
 }
-
-const CATEGORIES: ActivityCategory[] = [
-  'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
-];
 
 export function TaskEditModal({
   isOpen,
@@ -79,17 +70,12 @@ export function TaskEditModal({
     buildDeadline,
   } = useItemForm({ isOpen, initialData });
 
-  const attributes = CATEGORY_ATTRIBUTES[category];
-  const currentEmoji = CATEGORY_ICONS[category];
-
-  if (!isOpen) return null;
-
   const handleSave = () => {
     if (!name.trim()) return;
     onSave({
       name,
       category,
-      emoji: currentEmoji,
+      emoji: CATEGORY_ICONS[category as ActivityCategory],
       steps: steps.length > 0 ? steps : undefined,
       deadline: buildDeadline(),
       alarm: hasAlarm ? buildAlarm() : undefined,
@@ -101,237 +87,109 @@ export function TaskEditModal({
   };
 
   const txt = {
-    title: title ?? (isPt ? 'Editar tarefa' : 'Edit Task'),
-    name: isPt ? 'Nome' : 'Name',
-    category: isPt ? 'Categoria' : 'Category',
-    attributesLabel: isPt ? 'Atributos por atividade completa:' : 'Attributes per completed activity:',
-    steps: isPt ? 'Passos' : 'Steps',
-    optional: isPt ? '(opcional)' : '(optional)',
-    add: isPt ? 'Adicionar' : 'Add',
-    setDeadline: isPt ? 'Definir deadline' : 'Set deadline',
-    date: isPt ? 'Data' : 'Date',
-    time: isPt ? 'Hora' : 'Time',
-    alarm: isPt ? 'Alarme' : 'Alarm',
-    quickOptions: isPt ? 'Opções rápidas:' : 'Quick options:',
-    before: isPt ? 'antes' : 'before',
-    customTime: isPt ? 'Horário customizado' : 'Custom time',
-    cancel: isPt ? 'Cancelar' : 'Cancel',
-    save: isPt ? 'Salvar' : 'Save',
-    delete: isPt ? 'Excluir' : 'Delete',
-    effort: isPt ? 'Esforço' : 'Effort',
-    effortReward: isPt
-      ? 'A recompensa escala com o esforço — uma tarefa grande vale mais que três triviais.'
-      : 'The reward scales with effort — one big task is worth more than three trivial ones.',
-    effort1: isPt ? 'Rápida' : 'Quick',
-    effort2: isPt ? 'Média' : 'Medium',
-    effort3: isPt ? 'Projeto' : 'Project',
-    effort1Hint: isPt ? 'minutos' : 'minutes',
-    effort2Hint: isPt ? 'uma sentada' : 'one sitting',
-    effort3Hint: isPt ? 'vários dias' : 'several days',
-    projectSteps: isPt
-      ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos? (opcional)'
-      : 'A project is too big for a single line. How about breaking it into steps? (optional)',
     when: isPt ? 'Quando pretendo fazer' : 'When I plan to do it',
-    whenVsDeadline: isPt
-      ? 'O "quando" é o dia em que você vai fazer, e só ele traz a tarefa para o Hoje; o prazo é só o dia em que ela vence.'
-      : 'The "when" is the day you plan to do it, and only it brings the task into Today; the deadline is just the day it is due.',
+    whenHint: isPt ? 'Só o "quando" traz a tarefa para o Hoje.' : 'Only the "when" brings the task into Today.',
+    deadline: isPt ? 'Prazo' : 'Deadline',
+    alarm: isPt ? 'Alarme' : 'Alarm',
+    before: isPt ? 'antes' : 'before',
+    projectSteps: isPt
+      ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos?'
+      : 'A project is too big for a single line. How about breaking it into steps?',
+    add: isPt ? 'Adicionar' : 'Add',
   };
 
-  const segment = (active: boolean): React.CSSProperties => ({
-    flex: 1, padding: '8px 4px', textAlign: 'center', cursor: 'pointer',
-    display: 'flex', flexDirection: 'column', gap: 2,
-    border: active ? '2px solid var(--sm-px-cyan)' : '2px solid color-mix(in srgb, var(--sm-px-copper) 65%, transparent)',
-    backgroundColor: active ? 'var(--sm-px-cyan)' : 'var(--sm-surface)',
-    color: active ? '#04211f' : 'var(--sm-ink)',
-    fontSize: 13, fontWeight: 700,
-  });
-
-  const inputStyle: React.CSSProperties = {
-    /* Visual mora em .sm-px-field (kit); aqui só layout. */
-    width: '100%', boxSizing: 'border-box', outline: 'none',
-  };
-  const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--sm-muted)' };
+  const footer = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <button type="button" onClick={onClose} style={{ ...sm2Button('ghost'), flex: 1 }}>
+          {isPt ? 'Cancelar' : 'Cancel'}
+        </button>
+        <button type="button" onClick={handleSave} disabled={!name.trim()}
+          style={{ ...sm2Button('primary', !name.trim()), flex: 1 }}>
+          {isPt ? 'Salvar' : 'Save'}
+        </button>
+      </div>
+      {onDelete && (
+        <button type="button" onClick={onDelete}
+          style={{ ...sm2Button('quiet'), width: '100%', color: 'var(--sm2-danger-ink)' }}>
+          {isPt ? 'Excluir' : 'Delete'}
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4, 18, 20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-      <div className="sm-card" style={{ backgroundColor: 'var(--sm-bg)', width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
-          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>{txt.title}</span>
-          <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}><img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /></button>
-        </div>
+    <ModalSheet
+      open={isOpen}
+      title={title ?? (isPt ? 'Editar tarefa' : 'Edit task')}
+      onClose={onClose}
+      language={language}
+      footer={footer}
+    >
+      <div>
+        <label style={sm2Label} htmlFor="sm-task-name">{isPt ? 'Nome' : 'Name'}</label>
+        <Field id="sm-task-name" type="text" value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
 
-        <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label style={labelStyle}>{txt.name}</label>
-            <Input type="text" autoComplete="new-password" value={name} onChange={(e) => setName(e.target.value)} className="sm-px-field" style={inputStyle} />
+      <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
+
+      {/* Esforço — a recompensa escala com ISTO, nunca com a contagem. */}
+      <div>
+        <EffortFields effort={effort} setEffort={setEffort} isPt={isPt} />
+        {/* Sugestão, nunca obrigação. */}
+        {effort === 3 && steps.length === 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
+            <span style={{ ...sm2Hint, margin: 0, flex: 1, minWidth: 180 }}>{txt.projectSteps}</span>
+            <button type="button" onClick={handleAddStep} style={{ ...sm2Button('ghost'), padding: '6px 12px' }}>
+              {txt.add}
+            </button>
           </div>
+        )}
+      </div>
 
-          <div>
-            <label style={labelStyle}>{txt.category}</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {CATEGORIES.map(cat => (
-                <PixelChoiceChip
-                  key={cat}
-                  selected={category === cat}
-                  onToggle={() => setCategory(cat)}
-                  icon={CATEGORY_ICON_IMG[cat]}
-                >
-                  {categoryLabel(cat, isPt)}
-                </PixelChoiceChip>
-              ))}
-            </div>
+      <StepsFields steps={steps} isPt={isPt} onAdd={handleAddStep}
+        onLabel={handleUpdateStepLabel} onDelete={handleDeleteStep} />
+
+      <div>
+        <CheckRow checked={hasStart} onChange={(v) => { setHasStart(v); if (v && !startDate) setStartDate(todayIso()); }}>
+          {txt.when}
+        </CheckRow>
+        {hasStart && (
+          <Field type="date" value={startDate} aria-label={txt.when}
+            onChange={(e) => setStartDate(e.target.value)} />
+        )}
+        <p style={sm2Hint}>{txt.whenHint}</p>
+      </div>
+
+      <div>
+        <CheckRow checked={hasDeadline} onChange={setHasDeadline}>{txt.deadline}</CheckRow>
+        {hasDeadline && (
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Field type="date" value={deadlineDate} aria-label={isPt ? 'Data do prazo' : 'Deadline date'}
+              onChange={(e) => setDeadlineDate(e.target.value)} />
+            <Field type="time" value={deadlineTime} aria-label={isPt ? 'Hora do prazo' : 'Deadline time'}
+              onChange={(e) => setDeadlineTime(e.target.value)} />
           </div>
+        )}
+      </div>
 
-          <div className="sm-card" style={{ padding: 12, backgroundColor: 'var(--sm-surface)' }}>
-            <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--sm-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{txt.attributesLabel}</p>
-            <div style={{ display: 'flex', gap: 14 }}>
-              {(['virus', 'data', 'vaccine'] as const).map(a => (
-                <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700, color: ATTR_COLOR[a] }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: ATTR_COLOR[a] }} />+{attributes[a]}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }}>{txt.steps} <span style={{ opacity: 0.7, fontWeight: 500 }}>{txt.optional}</span></label>
-              <button onClick={handleAddStep} className="sm-btn sm-btn-secondary" style={{ padding: '6px 12px', fontSize: 12 }}><Plus size={14} strokeWidth={2.4} />{txt.add}</button>
-            </div>
-            {steps.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {steps.map((step, index) => (
-                  <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: 'var(--sm-muted)', flexShrink: 0 }}>{index + 1}.</span>
-                    <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
-                      placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} className="sm-px-field" style={{ ...inputStyle, padding: '8px 11px' }} />
-                    <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
-                      <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                    </button>
-                  </div>
+      <div>
+        <CheckRow checked={hasAlarm} onChange={setHasAlarm}>{txt.alarm}</CheckRow>
+        {hasAlarm && (
+          <>
+            {hasDeadline && (
+              <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                {(['2h', '1h', '30min'] as const).map(preset => (
+                  <Segment key={preset} selected={selectedPreset === preset}
+                    onSelect={() => handlePresetClick(preset)} label={`${preset} ${txt.before}`} />
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Esforço — a recompensa escala com ISTO, nunca com a contagem. */}
-          <div>
-            <label style={labelStyle}>{txt.effort}</label>
-            <div role="radiogroup" aria-label={txt.effort} style={{ display: 'flex', gap: 10 }}>
-              {([
-                [1, txt.effort1, txt.effort1Hint],
-                [2, txt.effort2, txt.effort2Hint],
-                [3, txt.effort3, txt.effort3Hint],
-              ] as const).map(([value, label, hint]) => {
-                const active = effort === value;
-                return (
-                  <button key={value} type="button" role="radio" aria-checked={active}
-                    onClick={() => setEffort(value as Effort)} style={segment(active)}>
-                    <span>{label}</span>
-                    <span style={{ fontSize: 10.5, fontWeight: 600, opacity: 0.8 }}>{hint}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', marginTop: 6, lineHeight: 1.45 }}>{txt.effortReward}</p>
-            {/* Sugestão, nunca obrigação. */}
-            {effort === 3 && steps.length === 0 && (
-              <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', lineHeight: 1.45 }}>💡 {txt.projectSteps}</span>
-                <button type="button" onClick={handleAddStep} className="sm-btn sm-btn-secondary" style={{ padding: '6px 12px', fontSize: 12 }}>
-                  {txt.add}
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* "Quando" ≠ prazo: só o "quando" traz a tarefa para o Hoje. */}
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: hasStart ? 10 : 0 }}>
-              <input type="checkbox" checked={hasStart}
-                onChange={(e) => { setHasStart(e.target.checked); if (e.target.checked && !startDate) setStartDate(todayIso()); }}
-                style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }} />
-              <img src={iconClock} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <span style={{ fontSize: 13.5, color: 'var(--sm-ink)', fontWeight: 600 }}>{txt.when}</span>
-            </label>
-            {hasStart && (
-              <div style={{ marginLeft: 28 }}>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="sm-px-field" style={inputStyle} />
-              </div>
-            )}
-            <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', marginTop: 6, lineHeight: 1.45 }}>{txt.whenVsDeadline}</p>
-          </div>
-
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: hasDeadline ? 10 : 0 }}>
-              <input type="checkbox" checked={hasDeadline} onChange={(e) => setHasDeadline(e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }} />
-              <img src={iconClock} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <span style={{ fontSize: 13.5, color: 'var(--sm-ink)', fontWeight: 600 }}>{txt.setDeadline}</span>
-            </label>
-            {hasDeadline && (
-              <div style={{ display: 'flex', gap: 10, marginLeft: 28 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{txt.date}</label>
-                  <Input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className="sm-px-field" style={inputStyle} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{txt.time}</label>
-                  <Input type="time" value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} className="sm-px-field" style={inputStyle} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: hasAlarm ? 10 : 0 }}>
-              <input type="checkbox" checked={hasAlarm} onChange={(e) => setHasAlarm(e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }} />
-              <img src={iconBell} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <span style={{ fontSize: 13.5, color: 'var(--sm-ink)', fontWeight: 600 }}>{txt.alarm}</span>
-            </label>
-            {hasAlarm && (
-              <div style={{ marginLeft: 28, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {hasDeadline && (
-                  <div>
-                    <label style={{ ...labelStyle, fontSize: 11 }}>{txt.quickOptions}</label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {(['2h', '1h', '30min'] as const).map(preset => {
-                        const active = selectedPreset === preset;
-                        return (
-                          <button key={preset} type="button" onClick={() => handlePresetClick(preset)}
-                            style={{
-                              flex: 1, padding: '8px 4px', borderRadius: 10, fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
-                              border: active ? '2px solid var(--sm-primary)' : '2px solid var(--sm-line)',
-                              background: active ? 'var(--sm-primary)' : 'var(--sm-surface)',
-                              color: active ? 'var(--sm-btn-text)' : 'var(--sm-ink)',
-                            }}>
-                            {preset} {txt.before}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <label style={{ ...labelStyle, fontSize: 11 }}>{txt.customTime}</label>
-                  <Input type="time" value={customAlarmTime} onChange={(e) => handleCustomTimeChange(e.target.value)} className="sm-px-field" style={inputStyle} />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 16, background: 'var(--sm-surface)', borderTop: '1px solid var(--sm-line)' }}>
-          <div style={{ display: 'flex', gap: 14 }}>
-            <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
-            <button onClick={handleSave} disabled={!name.trim()} className="sm-btn" style={{ flex: 1 }}>{txt.save}</button>
-          </div>
-          {onDelete && (
-            <button onClick={onDelete} style={{ background: 'none', border: 'none', color: '#e0483e', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '4px 0' }}>
-              {txt.delete}
-            </button>
-          )}
-        </div>
+            <Field type="time" value={customAlarmTime} aria-label={txt.alarm}
+              onChange={(e) => handleCustomTimeChange(e.target.value)} />
+          </>
+        )}
       </div>
-    </div>
+    </ModalSheet>
   );
 }

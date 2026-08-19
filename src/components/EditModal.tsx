@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
-import iconTrash from '../assets/soulmon/icons/icon-trash.png';
-import iconBell from '../assets/soulmon/icons/icon-bell.png';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
-import { Input } from './ui/input';
-import { CATEGORY_ATTRIBUTES, ATTR_COLOR, ActivityCategory } from '../types/attributes';
-import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
-import { PixelChoiceChip } from './pixel/PixelKit';
+import { ActivityCategory } from '../types/attributes';
+import { CATEGORY_ICONS } from '../types/category-icons';
 import { useHabitSchedule } from '../hooks/useItemForm';
-import { HabitAnchorFields, HabitScheduleFields } from './CreateModal';
+import { CategoryChips, HabitAnchorFields, HabitScheduleFields, StepsFields } from './CreateModal';
+import { Field, ModalSheet, sm2Button, sm2Label } from './form/FormKit';
 import type { HabitAnchor, Schedule } from '../types/taskModel';
 import type { Language } from '../utils/i18n';
 
@@ -70,15 +65,10 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
     }
   }, [isOpen, initialData]);
 
-  const attributes = CATEGORY_ATTRIBUTES[category];
-  const currentEmoji = CATEGORY_ICONS[category];
-
-  if (!isOpen) return null;
-
   const handleSave = () => {
     if (!name.trim() || (canEditWeekdays && !sched.isValid)) return;
     onSave({
-      name, category, emoji: currentEmoji, steps,
+      name, category, emoji: CATEGORY_ICONS[category], steps,
       weekDays: canEditWeekdays ? sched.buildWeekDays() : [0, 1, 2, 3, 4, 5, 6],
       alarm: alarmTime ? { time: alarmTime } : undefined,
       schedule: canEditWeekdays ? sched.buildSchedule() : { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
@@ -95,116 +85,60 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
   };
   const handleDeleteStep = (id: string) => setSteps(steps.filter(step => step.id !== id));
 
-  const txt = {
-    title: isPt ? 'Editar atividade' : 'Edit Activity',
-    name: isPt ? 'Nome' : 'Name',
-    category: isPt ? 'Categoria' : 'Category',
-    attributesLabel: isPt ? 'Atributos por atividade completa:' : 'Attributes per completed activity:',
-    steps: isPt ? 'Passos' : 'Steps',
-    optional: isPt ? '(opcional)' : '(optional)',
-    add: isPt ? 'Adicionar' : 'Add',
-    weekdays: isPt ? 'Dias da semana' : 'Weekdays',
-    time: isPt ? 'Horário' : 'Time',
-    cancel: isPt ? 'Cancelar' : 'Cancel',
-    save: isPt ? 'Salvar' : 'Save',
-    delete: isPt ? 'Excluir' : 'Delete',
-  };
+  const disabled = !name.trim() || (canEditWeekdays && !sched.isValid);
 
-  const inputStyle: React.CSSProperties = {
-    /* Visual mora em .sm-px-field (kit); aqui só layout. */
-    width: '100%', boxSizing: 'border-box', outline: 'none',
-  };
-  const labelStyle: React.CSSProperties = { display: 'block', marginBottom: 6, fontSize: 12.5, fontWeight: 700, color: 'var(--sm-muted)' };
+  const footer = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <button type="button" onClick={onClose} style={{ ...sm2Button('ghost'), flex: 1 }}>
+          {isPt ? 'Cancelar' : 'Cancel'}
+        </button>
+        <button type="button" onClick={handleSave} disabled={disabled}
+          style={{ ...sm2Button('primary', disabled), flex: 1 }}>
+          {isPt ? 'Salvar' : 'Save'}
+        </button>
+      </div>
+      {onDelete && (
+        <button type="button" onClick={onDelete}
+          style={{ ...sm2Button('quiet'), width: '100%', color: 'var(--sm2-danger-ink)' }}>
+          {isPt ? 'Excluir' : 'Delete'}
+        </button>
+      )}
+    </div>
+  );
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 120, background: 'rgba(4, 18, 20,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12 }}>
-      <div className="sm-card" style={{ backgroundColor: 'var(--sm-bg)', width: '100%', maxWidth: 440, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--sm-surface)', borderBottom: '1px solid var(--sm-line)' }}>
-          <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--sm-ink)' }}>{txt.title}</span>
-          <button onClick={onClose} className="sm-nav-btn" aria-label={isPt ? 'Fechar' : 'Close'}><img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /></button>
-        </div>
-
-        <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <label style={labelStyle}>{txt.name}</label>
-            <Input type="text" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} className="sm-px-field" style={inputStyle} />
-          </div>
-
-          <div>
-            <label style={labelStyle}>{txt.category}</label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {CATEGORIES.map(cat => (
-                <PixelChoiceChip
-                  key={cat}
-                  selected={category === cat}
-                  onToggle={() => setCategory(cat)}
-                  icon={CATEGORY_ICON_IMG[cat]}
-                >
-                  {categoryLabel(cat, isPt)}
-                </PixelChoiceChip>
-              ))}
-            </div>
-          </div>
-
-          <div className="sm-card" style={{ padding: 12, backgroundColor: 'var(--sm-surface)' }}>
-            <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'var(--sm-muted)', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{txt.attributesLabel}</p>
-            <div style={{ display: 'flex', gap: 14 }}>
-              {(['virus', 'data', 'vaccine'] as const).map(a => (
-                <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 700, color: ATTR_COLOR[a] }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: ATTR_COLOR[a] }} />+{attributes[a]}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <label style={{ ...labelStyle, marginBottom: 0 }}>{txt.steps} <span style={{ opacity: 0.7, fontWeight: 500 }}>{txt.optional}</span></label>
-              <button onClick={handleAddStep} className="sm-btn sm-btn-secondary" style={{ padding: '6px 12px', fontSize: 12 }}><Plus size={14} strokeWidth={2.4} />{txt.add}</button>
-            </div>
-            {steps.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {steps.map((step, index) => (
-                  <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: 'var(--sm-muted)', flexShrink: 0 }}>{index + 1}.</span>
-                    <Input type="text" value={step.label} onChange={(e) => handleUpdateStepLabel(step.id, e.target.value)}
-                      placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} className="sm-px-field" style={{ ...inputStyle, padding: '8px 11px' }} />
-                    <button onClick={() => handleDeleteStep(step.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, flexShrink: 0, color: '#e0483e' }}>
-                      <img src={iconTrash} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {canEditWeekdays && <HabitScheduleFields sched={sched} language={language} />}
-
-          <HabitAnchorFields sched={sched} language={language} />
-
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-              <img src={iconBell} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--sm-muted)' }}>{txt.time} <span style={{ opacity: 0.75, fontWeight: 500 }}>{txt.optional}</span></span>
-            </div>
-            <div style={{ marginLeft: 24 }}>
-              <Input type="time" value={alarmTime} onChange={(e) => setAlarmTime(e.target.value)} className="sm-px-field" style={inputStyle} />
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 16, background: 'var(--sm-surface)', borderTop: '1px solid var(--sm-line)' }}>
-          <div style={{ display: 'flex', gap: 14 }}>
-            <button onClick={onClose} className="sm-btn sm-btn-secondary" style={{ flex: 1 }}>{txt.cancel}</button>
-            <button onClick={handleSave} disabled={!name.trim() || (canEditWeekdays && !sched.isValid)} className="sm-btn" style={{ flex: 1 }}>{txt.save}</button>
-          </div>
-          {onDelete && (
-            <button onClick={onDelete} style={{ background: 'none', border: 'none', color: '#e0483e', fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '4px 0' }}>
-              {txt.delete}
-            </button>
-          )}
-        </div>
+    <ModalSheet
+      open={isOpen}
+      title={isPt ? 'Editar atividade' : 'Edit activity'}
+      onClose={onClose}
+      language={language}
+      footer={footer}
+    >
+      <div>
+        <label style={sm2Label} htmlFor="sm-edit-name">{isPt ? 'Nome' : 'Name'}</label>
+        <Field id="sm-edit-name" type="text" value={name} maxLength={60}
+          onChange={(e) => setName(e.target.value)} />
       </div>
-    </div>
+
+      {/* O card "Atributos por atividade completa" com os três +N saiu: a linha
+          de "Fortalece" dentro dos chips diz o mesmo em uma linha, sem caixa. */}
+      <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
+
+      {canEditWeekdays && <HabitScheduleFields sched={sched} language={language} />}
+
+      <HabitAnchorFields sched={sched} language={language} />
+
+      <StepsFields steps={steps} isPt={isPt} onAdd={handleAddStep}
+        onLabel={handleUpdateStepLabel} onDelete={handleDeleteStep} />
+
+      <div>
+        <label style={sm2Label} htmlFor="sm-edit-time">
+          {isPt ? 'Horário (opcional)' : 'Time (optional)'}
+        </label>
+        <Field id="sm-edit-time" type="time" value={alarmTime}
+          onChange={(e) => setAlarmTime(e.target.value)} />
+      </div>
+    </ModalSheet>
   );
 }

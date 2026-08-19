@@ -41,6 +41,7 @@
  */
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
+import { Icon } from '../ui/Icon';
 import { PixelCheckbox, PixelPanel, PixelSegmentedBar, PixelButton } from './PixelKit';
 
 // ─────────────────────────────────────────────────────────── o ícone (sem caixa)
@@ -58,19 +59,26 @@ import { PixelCheckbox, PixelPanel, PixelSegmentedBar, PixelButton } from './Pix
  *    categoria") passa a vir da ausência, e não de um quadro vazio que parecia
  *    ícone quebrado — sem gastar 50px dos 412px da tela em nada.
  *
+ * O QUE MUDOU AGORA: era um PNG de categoria (`icon-cat-*.png`). Virou
+ * `<Icon>` (Material Symbols Rounded, fonte variável) — o ícone de categoria é
+ * ícone de INTERFACE, mora fora do visor e por isso é vetor, não raster. O
+ * nome vem de `categoryIconName` e **tem que estar no inventário de 99**
+ * (`src/styles/tokens.md`): nome fora dele não renderiza glifo e não dá erro.
+ *
  * O que NÃO mudou: emoji do sistema continua proibido aqui (era o gap mais
  * gritante do tema claro — duas eras gráficas na mesma linha).
  *
  * O que isto NÃO é: violação da regra da rodada 3 ("controle interativo sem
  * superfície = 0". Este `<span>` é `aria-hidden` e decorativo; os controles da
  * linha (coluna de texto, checkbox, expansor) continuam todos com superfície
- * e alvo próprios.
+ * e alvo próprios. E NÃO é "ícone dentro de box": `.sm-px-ritual-icon` não
+ * desenha fundo, borda nem chanfro — é só a casa que alinha a coluna.
  */
-export function RitualIcon({ src }: { src?: string }) {
-  if (!src) return null;
+export function RitualIcon({ name }: { name?: string }) {
+  if (!name) return null;
   return (
     <span className="sm-px-ritual-icon" aria-hidden="true">
-      <img src={src} alt="" width={32} height={32} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+      <Icon name={name} size={32} tone="gold" />
     </span>
   );
 }
@@ -78,9 +86,10 @@ export function RitualIcon({ src }: { src?: string }) {
 // ───────────────────────────────────────────────────────────────────── a linha
 
 export interface RitualRowProps {
-  /** Ícone do kit, solto na linha (sem moldura). Ausente = a linha começa no
-   *  texto, sem casa reservada. NUNCA emoji do sistema. */
-  icon?: string;
+  /** Nome de ícone do inventário (Material Symbols), solto na linha e sem
+   *  moldura. Ausente = a linha começa no texto, sem casa reservada. NUNCA
+   *  emoji do sistema, nunca PNG. */
+  iconName?: string;
   name: string;
   /** Uma linha curta: categoria, frequência, "3/5 etapas". */
   subtitle?: string;
@@ -105,7 +114,7 @@ export interface RitualRowProps {
 }
 
 export function RitualRow({
-  icon, name, subtitle, value, max, done = false, dimmed = false,
+  iconName, name, subtitle, value, max, done = false, dimmed = false,
   onToggle, onEdit, expandable = false, expanded = false, onExpand,
   children, language, toggleLabelPt, toggleLabelEn,
 }: RitualRowProps) {
@@ -117,7 +126,7 @@ export function RitualRow({
       data-action-unit
     >
       <div className="sm-px-ritual-row">
-        <RitualIcon src={icon} />
+        <RitualIcon name={iconName} />
 
         {/* Coluna de texto = botão de editar (decisão 5 do cabeçalho). */}
         <button
@@ -198,8 +207,8 @@ export interface RitualPanelProps {
   /** Feitos hoje / total — vira o contador do título ("2/5"). */
   done: number;
   total: number;
-  /** Ícone do cabeçalho do painel (do kit; nunca emoji). */
-  titleIcon?: string;
+  /** Nome de ícone do cabeçalho (inventário de 99; nunca emoji, nunca PNG). */
+  titleIconName?: string;
   children: ReactNode;
   /** CTA largo no fim da lista — o que aposenta o FAB flutuante. */
   ctaLabel: string;
@@ -210,18 +219,32 @@ export interface RitualPanelProps {
 }
 
 export function RitualPanel({
-  done, total, titleIcon, children, ctaLabel, onCta, emptyMessage, language,
+  done, total, titleIconName, children, ctaLabel, onCta, emptyMessage, language,
 }: RitualPanelProps) {
   const isPt = language === 'pt-BR';
   // Rótulo em EN com par PT-BR — e o container foi dimensionado pelo PT-BR,
   // que é o mais longo dos dois.
   const titulo = isPt ? 'Rituais diários' : 'Daily rituals';
   return (
-    <PixelPanel
-      title={total > 0 ? `${titulo} ${done}/${total}` : titulo}
-      titleIcon={titleIcon}
-      padded={false}
-    >
+    /* Cabeçalho PRÓPRIO em vez do `title`/`titleIcon` do `PixelPanel`: aquele
+       desenha Silkscreen 12px com um `<img>` PNG ao lado — abaixo do piso de
+       14px da voz do aparelho, e raster onde a regra pede vetor. Aqui o título
+       é Fredoka (tipografia de título) e o contador é `.sm2-num`, porque é
+       número que MUDA: sem tabular-nums o "2/5" pula de largura ao virar
+       "10/12" e o cabeçalho inteiro treme. */
+    <PixelPanel padded={false}>
+      <div className="sm2-panel-head">
+        {titleIconName && <Icon name={titleIconName} size={20} fill={total > 0 && done >= total ? 1 : 0} tone="primary" />}
+        <span className="sm2-panel-head-title">{titulo}</span>
+        {total > 0 && (
+          <span
+            className="sm2-panel-head-count sm2-num"
+            aria-label={isPt ? `${done} de ${total} concluídos` : `${done} of ${total} done`}
+          >
+            {done}/{total}
+          </span>
+        )}
+      </div>
       {emptyMessage ? (
         <p className="sm-px-ritual-empty">{emptyMessage}</p>
       ) : (

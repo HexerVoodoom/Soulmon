@@ -5192,7 +5192,9 @@ button.sm-px-node {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
+  /* 12px é o PISO ABSOLUTO do design system (tokens.md §4) — nem legenda nem
+     "detalhe" desce disso. Estava em 11px. */
+  font-size: var(--sm2-text-xs);
   font-weight: 500;
   line-height: 1.3;
   color: var(--sm-muted);
@@ -6627,4 +6629,187 @@ button.sm-px-node {
 @media (prefers-reduced-motion: reduce) {
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   ONDA "SLOT DO DIA" — a Home deixa de empilhar meta-gestão
+   ═════════════════════════════════════════════════════════════════════════
+   Três peças, todas em tokens `--sm2-*` (nenhum literal de cor):
+
+   1. `.sm2-notice-*` — o SLOT ÚNICO. Só o primeiro aviso da fila de
+      prioridade renderiza; o resto vira uma linha "+N avisos" que expande.
+   2. `.sm2-meter-*` / `.sm2-seg-*` — HP e energia SEGMENTADAS, com trilho
+      escuro. É a leitura instantânea do v-pet: você CONTA os blocos, não
+      estima a fração de uma barra lisa.
+   3. `.sm2-panel-head-*` — o cabeçalho do painel de rituais em Fredoka
+      (título) + `.sm2-num` (contador), no piso de 12px.
+
+   Variantes SEMPRE aninhadas (`&:hover`), nunca planas — guard de
+   `index.css.contract.test.ts`. */
+
+/* ── SLOT DO DIA ────────────────────────────────────────────────────────── */
+.sm2-notice-slot { display: flex; flex-direction: column; gap: 8px; }
+.sm2-notice {
+  box-sizing: border-box;
+  padding: 10px 12px;
+  background-color: var(--sm2-surface);
+  border: 1px solid var(--sm2-line);
+  border-radius: 10px;
+}
+/* Aviso de HP: ÂMBAR pelo token de ouro, nunca `danger`. O vermelho somado a
+   contagem regressiva aparecia justamente no dia em que a pessoa está pior. */
+.sm2-notice-warn { border-color: var(--sm2-gold-fill); }
+.sm2-notice-row { display: flex; align-items: flex-start; gap: 10px; }
+.sm2-notice-title {
+  margin: 0;
+  font-family: var(--sm2-font-display);
+  font-weight: 600;
+  font-size: var(--sm2-text-sm);
+  line-height: var(--sm2-leading-title);
+  color: var(--sm2-ink);
+}
+.sm2-notice-body {
+  margin: 4px 0 0;
+  font-family: var(--sm2-font-text);
+  font-weight: 400;
+  font-size: var(--sm2-text-xs);
+  line-height: var(--sm2-leading-body);
+  color: var(--sm2-ink);
+}
+.sm2-notice-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+/* Alvo de 44px (WCAG 2.5.8) com o glifo pequeno dentro — o alvo é do BOTÃO,
+   nunca do ícone (regra do dono: ícone jamais dentro de caixa). */
+.sm2-notice-dismiss {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  margin: -10px -12px -10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--sm2-muted);
+  cursor: pointer;
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
+}
+/* A linha "+N avisos". Discreta de propósito: ela existe para que nada seja
+   escondido em silêncio, não para recriar a pilha que acabou de sair. */
+.sm2-notice-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  background: none;
+  border: 1px dashed var(--sm2-line);
+  border-radius: 10px;
+  font-family: var(--sm2-font-text);
+  font-weight: 500;
+  font-size: var(--sm2-text-xs);
+  color: var(--sm2-muted);
+  cursor: pointer;
+  &:hover { color: var(--sm2-ink); border-color: var(--sm2-muted); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+
+/* ── HUD: medidores segmentados ─────────────────────────────────────────── */
+.sm2-hud { display: flex; flex-direction: column; gap: 8px; }
+.sm2-hud-brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* Fredoka, não Silkscreen: a marca vivia em 11px bitmap, abaixo do piso de
+   14px da voz do aparelho (e do piso de 12px do app). */
+.sm2-hud-wordmark {
+  font-family: var(--sm2-font-display);
+  font-weight: 600;
+  font-size: var(--sm2-text-md);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: var(--sm2-leading-title);
+  color: var(--sm2-primary-ink);
+  white-space: nowrap;
+}
+.sm2-hud-meters { display: flex; align-items: stretch; gap: 8px; }
+.sm2-meter {
+  flex: 1 1 0;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  background-color: var(--sm2-surface);
+  border: 1px solid var(--sm2-line);
+  border-radius: 10px;
+}
+.sm2-meter-head { display: flex; align-items: center; gap: 6px; }
+.sm2-meter-label {
+  font-family: var(--sm2-font-text);
+  font-weight: 500;
+  font-size: var(--sm2-text-xs);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--sm2-muted);
+}
+.sm2-meter-value {
+  margin-left: auto;
+  font-size: var(--sm2-text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sm2-ink);
+}
+
+/* ── BARRA SEGMENTADA `--sm2-*` ─────────────────────────────────────────────
+   Trilho ESCURO nos dois temas (`--sm2-viewport-bg`) porque isto é a tela do
+   aparelho, não um card do app: por isso o preenchimento também usa as tintas
+   de VISOR (`--sm2-viewport-ink` / `--sm2-viewport-ring`), que são claras nos
+   dois temas. Um `--sm2-primary-fill` aqui daria 2,7:1 no tema claro (teal
+   escuro sobre trilho escuro) — abaixo do 3:1 de componente não-textual.
+
+   MEIA UNIDADE = MEIO BLOCO. HP aceita frações de 0,5 (carinho cura meio
+   coração) e uma barra que arredonda mente sobre a regra do jogo. */
+.sm2-seg {
+  display: flex;
+  gap: 2px;
+  box-sizing: border-box;
+  padding: 2px;
+  background-color: var(--sm2-viewport-bg);
+  border: 1px solid var(--sm2-viewport-ring-deep);
+  border-radius: 3px;
+}
+.sm2-seg-blk {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 4px;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--sm2-viewport-ink) 14%, transparent);
+}
+.sm2-seg-on { background-color: var(--sm2-seg-tone, var(--sm2-viewport-ink)); }
+.sm2-seg-half::after {
+  content: '';
+  position: absolute;
+  inset: 0 50% 0 0;
+  background-color: var(--sm2-seg-tone, var(--sm2-viewport-ink));
+}
+
+/* ── CABEÇALHO DO PAINEL DE RITUAIS ─────────────────────────────────────── */
+.sm2-panel-head { display: flex; align-items: center; gap: 8px; padding: 10px 16px 0; }
+.sm2-panel-head-title {
+  font-family: var(--sm2-font-display);
+  font-weight: 600;
+  font-size: var(--sm2-text-sm);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: var(--sm2-leading-title);
+  color: var(--sm2-primary-ink);
+}
+.sm2-panel-head-count {
+  margin-left: auto;
+  font-size: var(--sm2-text-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sm2-ink);
 }

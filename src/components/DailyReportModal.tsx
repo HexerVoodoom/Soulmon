@@ -1,11 +1,6 @@
-import { RowIcon } from './RowIcon';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
-import iconActivities from '../assets/soulmon/icons/icon-activities.png';
-import iconHeart from '../assets/icons/icon-heart-item.png';
-import iconWake from '../assets/soulmon/icons/icon-wake.png';
-import iconStar from '../assets/soulmon/icons/icon-star.png';
-import iconCloudRain from '../assets/soulmon/icons/icon-cloud-rain.png';
-import iconHeartHandshake from '../assets/soulmon/icons/icon-heart-handshake.png';
+import { Icon } from './ui/Icon';
+import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2TitleStyle } from './form/FormKit';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
@@ -26,13 +21,24 @@ interface DailyReportModalProps {
   moodNote?: string | null;
 }
 
+const hint = sm2Hint;
+type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
+
 /**
- * "Daily report" shown once on the first open after the day rolls over.
- * Layout uses INLINE styles — several Tailwind utilities (px-5, py-4, max-w-xs)
- * don't exist in the precompiled index.css (see CLAUDE.md footgun #1).
+ * O relatório do dia, mostrado uma vez na primeira abertura depois da virada.
+ *
+ * O TOM JÁ PASSOU POR UM PASSE E NÃO REGRIDE: nenhum vermelho, nenhum sinal de
+ * menos, nenhum imperativo. Perda vira "em recuperação", e a frase de rodapé
+ * oferece o caminho de volta em vez de mandar.
+ *
+ * ONDA 5: o ícone da manchete saiu da caixa de cobre (regra do dono: ícone
+ * nunca dentro de box) e os PNGs viraram Material Symbols. Os ícones de CADA
+ * LINHA saíram — eles desenhavam de novo a palavra ao lado ("Corações" com um
+ * coração), que é o tipo de repetição que esta onda existe para cortar.
  */
 export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
+  const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
   // retorno depois de uma ausência tem que ser um abraço, não uma fatura.
@@ -40,58 +46,43 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   // Só faz sentido oferecer quando houve cobrança e ela ainda não foi desfeita.
   const canRecover = !welcome && report.heartsLost > 0 && !report.heartsRecovered && !!onRecoverHearts;
 
-  // `soft` = âmbar (#d9a441), o mesmo do MorningCheckIn/TriagePile. NÃO existe
-  // `bad`: o vermelho de alerta é a cor de erro do sistema, e um dia mais
-  // devagar não é um erro do usuário (mesma tese escrita em TaskMeta.tsx:29).
-  const rows: { icon: string; label: string; value: string; highlight?: 'good' | 'soft' }[] = welcome
+  // `soft` = ouro. NÃO existe `bad`: o vermelho de alerta é a cor de erro do
+  // sistema, e um dia mais devagar não é um erro do usuário (mesma tese escrita
+  // em TaskMeta.tsx:29).
+  // Sem sinal de menos: era o único número negativo do app, e escrever uma
+  // perda como "-1" é o vocabulário de extrato bancário. A frase de rodapé já
+  // oferece o caminho de volta (carinho).
+  const heartsValue = report.heartsLost <= 0
+    ? (isPt ? 'inteiros!' : 'all there!')
+    : report.heartsLost <= 0.5
+      ? (isPt ? 'meio em recuperação' : 'half recovering')
+      : (isPt ? `${report.heartsLost} em recuperação` : `${report.heartsLost} recovering`);
+  const rows: Row[] = welcome
     ? [
-        {
-          icon: iconHeart,
-          label: isPt ? 'Corações' : 'Hearts',
-          value: isPt ? 'intactos' : 'untouched',
-          highlight: 'good',
-        },
-        {
-          icon: iconStar,
-          label: isPt ? 'Dias perfeitos guardados' : 'Perfect days saved',
-          value: `${report.perfectDays}`,
-          highlight: 'good',
-        },
+        { label: isPt ? 'Corações' : 'Hearts', value: isPt ? 'intactos' : 'untouched', highlight: 'good' },
+        { label: isPt ? 'Dias perfeitos guardados' : 'Perfect days saved', value: `${report.perfectDays}`, highlight: 'good' },
       ]
     : [
         {
-          icon: iconActivities,
           label: isPt ? 'Tarefas de ontem' : "Yesterday's tasks",
           value: isPt ? `${report.done} de ${report.total}` : `${report.done} of ${report.total}`,
           highlight: report.wasPerfect ? 'good' : undefined,
         },
-        {
-          icon: iconHeart,
-          label: isPt ? 'Corações' : 'Hearts',
-          // Sem sinal de menos: era o único número negativo do app, e escrever
-          // uma perda como "-1" é o vocabulário de extrato bancário. A frase
-          // logo abaixo já oferece o caminho de volta (carinho).
-          value: report.heartsLost > 0
-            ? (report.heartsLost <= 0.5
-                ? (isPt ? 'meio em recuperação' : 'half recovering')
-                : (isPt ? `${report.heartsLost} em recuperação` : `${report.heartsLost} recovering`))
-            : (isPt ? 'inteiros!' : 'all there!'),
-          highlight: report.heartsLost > 0 ? 'soft' : 'good',
-        },
-        {
-          icon: iconStar,
-          label: isPt ? 'Dias perfeitos' : 'Perfect days',
-          value: `${report.perfectDays}`,
-          highlight: report.wasPerfect ? 'good' : undefined,
-        },
+        { label: isPt ? 'Corações' : 'Hearts', value: heartsValue, highlight: report.heartsLost > 0 ? 'soft' : 'good' },
+        { label: isPt ? 'Dias perfeitos' : 'Perfect days', value: `${report.perfectDays}`, highlight: report.wasPerfect ? 'good' : undefined },
       ];
 
   // Coração partido + vermelho + fundo rosa era uma composição de LUTO para um
-  // evento que já exige dias ruins seguidos. Chuva + âmbar diz a mesma coisa
+  // evento que já exige dias ruins seguidos. A noite diz a mesma coisa
   // ("passou um tempo ruim") sem dizer que a pessoa falhou.
-  const headIcon: string = welcome ? iconHeartHandshake : report.degenerated ? iconCloudRain : report.wasPerfect ? iconStar : report.heartsLost > 0 ? iconCloudRain : iconWake;
-  const headColor = welcome ? '#22A900' : report.degenerated ? '#d9a441' : report.wasPerfect ? '#d9a441' : report.heartsLost > 0 ? '#6b7280' : '#f0a500';
-  const headBg = welcome ? '#e6f6e2' : report.degenerated ? '#fbf1dd' : report.wasPerfect ? '#fbf1dd' : report.heartsLost > 0 ? '#eef0f3' : '#fff4e0';
+  const headIcon = welcome ? 'volunteer_activism'
+    : report.wasPerfect ? 'star'
+      : (report.degenerated || report.heartsLost > 0) ? 'bedtime' : 'wb_sunny';
+  const headTone: 'primary' | 'gold' | 'muted' = welcome
+    ? 'primary'
+    : report.heartsLost > 0 && !report.degenerated
+      ? 'muted'
+      : 'gold';
 
   const headline = welcome
     ? (isPt ? 'Que saudade!' : 'I missed you!')
@@ -143,68 +134,62 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div className="sm-card" style={{ width: '100%', maxWidth: 320, padding: 0, overflow: 'hidden' }}>
-        {/* Header */}
-        <div style={{ position: 'relative', padding: '24px 20px 16px', textAlign: 'center' }}>
-          <button
-            onClick={onClose}
-            aria-label={isPt ? 'Fechar' : 'Close'}
-            /* 44x44 de area de toque (WCAG 2.2 AA 2.5.8) com o circulo de 30px
-               desenhado dentro; top/right recuados em 7px para o circulo ficar
-               exatamente onde estava. Fechar um modal e a saida de emergencia
-               da UI — e o pior lugar para um alvo pequeno. */
-            style={{ position: 'absolute', top: 5, right: 5, width: 44, height: 44, padding: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}
-          >
-            <span aria-hidden="true" style={{ width: 30, height: 30, backgroundColor: 'var(--sm-bg)', color: 'var(--sm-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src={iconClose} alt="" width={16} height={16} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-            </span>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6, 24, 26, .55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={headline}
+        style={{
+          width: '100%', maxWidth: 340, maxHeight: '90vh', overflowY: 'auto',
+          backgroundColor: 'var(--sm2-surface)',
+          borderRadius: 12,
+          boxShadow: SM2_SHADOW_CARD,
+        }}
+      >
+        {/* Cabeçalho */}
+        <div style={{ position: 'relative', padding: '24px 20px 12px', textAlign: 'center' }}>
+          {/* 44×44 de área de toque (WCAG 2.2 AA 2.5.8): fechar um modal é a
+              saída de emergência da UI, e o pior lugar para um alvo pequeno. A
+              placa cinza em volta saiu — ícone nunca dentro de box. */}
+          <button type="button" onClick={onClose} aria-label={isPt ? 'Fechar' : 'Close'}
+            style={{ position: 'absolute', top: 4, right: 4, width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', cursor: 'pointer' }}>
+            <Icon name="close" size={24} tone="muted" />
           </button>
-          <div style={{ position: 'relative', width: 56, height: 56, margin: '0 auto 10px' }}>
+          <div style={{ position: 'relative', width: 48, height: 48, margin: '0 auto 10px' }}>
             {report.wasPerfect && (
-              <img
-                src={confettiBurst}
-                alt=""
-                aria-hidden="true"
-                style={{
-                  position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                  width: 140, height: 140, maxWidth: 'none', pointerEvents: 'none', imageRendering: 'pixelated',
-                }}
-              />
+              <img src={confettiBurst} alt="" aria-hidden="true" style={{
+                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                width: 140, height: 140, maxWidth: 'none', pointerEvents: 'none', imageRendering: 'pixelated',
+              }} />
             )}
-            <div style={{ position: 'relative', width: 56, height: 56, backgroundColor: headBg, border: '1px solid color-mix(in srgb, var(--sm-px-copper) 45%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <RowIcon icon={headIcon} size={28} color={headColor} />
-            </div>
+            <Icon name={headIcon} size={48} fill={1} tone={headTone} style={{ position: 'relative' }} />
           </div>
-          <p className="sm-display" style={{ fontSize: '1rem', margin: 0, WebkitTextStroke: '1px var(--sm-ink)' }}>{headline}</p>
+          <p className="sm2-title" style={sm2TitleStyle}>{headline}</p>
         </div>
 
-        {/* Rows */}
-        <div style={{ padding: '4px 20px 6px' }}>
+        {/* Linhas */}
+        <div style={{ padding: '0 20px 6px' }}>
           {rows.map(r => (
-            <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
-              <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <RowIcon icon={r.icon} size={22} color="var(--sm-muted)" />
-              </span>
-              <span style={{ flex: 1, fontSize: '0.82rem', color: 'var(--sm-muted)' }}>{r.label}</span>
-              <span style={{
-                fontSize: '0.92rem', fontWeight: 800,
-                color: r.highlight === 'good' ? '#22A900' : r.highlight === 'soft' ? '#d9a441' : 'var(--sm-ink)',
-              }}>
-                {r.value}
-              </span>
+            <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0' }}>
+              <span style={{ ...hint, flex: 1 }}>{r.label}</span>
+              <span className="sm2-num" style={{
+                fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
+                color: r.highlight === 'good' ? 'var(--sm2-primary-ink)'
+                  : r.highlight === 'soft' ? 'var(--sm2-gold-ink)' : 'var(--sm2-ink)',
+              }}>{r.value}</span>
             </div>
           ))}
           {notes.map((n, i) => (
-            <p key={i} style={{ fontSize: '0.74rem', color: 'var(--sm-muted)', paddingTop: 8, lineHeight: 1.4 }}>{n}</p>
+            <p key={i} style={{ ...hint, paddingTop: 8 }}>{n}</p>
           ))}
         </div>
 
         {/* Check-in de humor. Fica aqui porque o relatório já aparece 1×/dia:
             não custa uma abertura a mais do app. É opcional e não vale ponto. */}
         {onPickMood && (
-          <div style={{ padding: '10px 20px 0' }}>
-            <p style={{ fontSize: '0.78rem', color: 'var(--sm-muted)', margin: '0 0 8px' }}>
+          <div style={{ padding: '12px 20px 0' }}>
+            <p style={{ ...hint, marginBottom: 8 }}>
               {isPt ? 'E você, como está hoje?' : 'And how are you today?'}
             </p>
             <div style={{ display: 'flex', gap: 6 }}>
@@ -213,13 +198,16 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
                 return (
                   <button
                     key={m.value}
+                    type="button"
                     onClick={() => onPickMood(m.value)}
                     aria-label={isPt ? m.labelPt : m.labelEn}
+                    aria-pressed={active}
                     title={isPt ? m.labelPt : m.labelEn}
                     style={{
-                      flex: 1, padding: '8px 0', cursor: 'pointer', fontSize: 20, lineHeight: 1,
-                      backgroundColor: active ? 'var(--sm-primary-soft)' : 'var(--sm-bg)',
-                      border: active ? '2px solid var(--sm-px-cyan)' : '2px solid color-mix(in srgb, var(--sm-px-copper) 30%, transparent)',
+                      flex: 1, minHeight: 44, cursor: 'pointer', fontSize: 20, lineHeight: 1,
+                      borderRadius: 10,
+                      backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+                      border: active ? '1px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-line)',
                     }}
                   >
                     {m.emoji}
@@ -227,29 +215,25 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
                 );
               })}
             </div>
-            {moodNote && (
-              <p style={{ fontSize: '0.72rem', color: 'var(--sm-muted)', margin: '8px 0 0', lineHeight: 1.45 }}>
-                {moodNote}
-              </p>
-            )}
+            {moodNote && <p style={{ ...hint, marginTop: 8 }}>{moodNote}</p>}
           </div>
         )}
 
         {/* Ações */}
-        <div style={{ padding: '14px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {canRecover && (
             <>
-              <button onClick={onRecoverHearts} className="sm-btn sm-btn-secondary" style={{ width: '100%' }}>
+              <button type="button" onClick={onRecoverHearts} style={{ ...sm2Button('ghost'), width: '100%' }}>
                 {isPt ? 'Eu fiz, esqueci de marcar' : 'I did it, forgot to log'}
               </button>
-              <p style={{ fontSize: '0.7rem', color: 'var(--sm-muted)', textAlign: 'center', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ ...hint, textAlign: 'center' }}>
                 {isPt
                   ? 'Devolve os corações. O dia perfeito não volta — esse já passou.'
                   : 'Gives the hearts back. The perfect day doesn’t return — that one’s gone.'}
               </p>
             </>
           )}
-          <button onClick={onClose} className="sm-btn" style={{ width: '100%' }}>
+          <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
             {isPt ? 'Começar o dia' : 'Start the day'}
           </button>
         </div>

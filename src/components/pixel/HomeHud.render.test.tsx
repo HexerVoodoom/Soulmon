@@ -2,99 +2,112 @@
 /**
  * Teste de render do `HomeHud`.
  *
- * O guardrail aqui não é estético: **as três moedas nunca se misturam
- * visualmente**. Bits e Créditos já apareceram com o mesmo ícone 💎 e o
- * jogador não tinha como saber que o que pagou com dinheiro real não comprava
- * nada na loja. `currencies.test.ts` trava o MODELO; nada travava o HUD
- * renderizado — e é o HUD que o jogador vê.
+ * Dois guardrails, e nenhum deles é estético:
+ *
+ * 1. **Orçamento de leituras da Home** (PLANO-DESIGN §5.1). O contador de
+ *    Créditos SAIU daqui para abrir espaço ao Nível de Vínculo. Se alguém
+ *    devolver uma moeda ao HUD sem tirar outra leitura, o teto de 5 estoura em
+ *    silêncio — e foi assim que a Home chegou a nove superfícies.
+ * 2. **As três moedas nunca se misturam visualmente.** Bits e Créditos já
+ *    apareceram com o mesmo ícone 💎 e o jogador não tinha como saber que o
+ *    que pagou com dinheiro real não comprava nada na loja. Com moeda NENHUMA
+ *    no HUD, o bug fica estruturalmente impossível aqui.
+ *
+ * E a leitura de HP/energia: blocos DISCRETOS, com meio bloco para a fração de
+ * 0,5 que a regra do carinho produz.
  */
-import { describe, it, expect, vi } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
-import { renderWithCss, declaredTargetSize } from '../../test/renderEnv';
+import { describe, it, expect } from 'vitest';
+import { screen } from '@testing-library/react';
+import { renderWithCss } from '../../test/renderEnv';
 import { HomeHud } from './HomeHud';
 
-const base = { energyPoints: 2, maxEnergyPoints: 4, credits: 7 };
+const base = { energyPoints: 2, maxEnergyPoints: 4 };
 
-describe('HomeHud', () => {
-  it('a barra de energia mostra o valor real (2 de 4 blocos)', () => {
+describe('HomeHud — medidores segmentados', () => {
+  it('a barra de energia mostra o valor real (2 de 4 blocos acesos)', () => {
     const { container } = renderWithCss(<HomeHud {...base} />);
     const bar = screen.getByRole('progressbar');
     expect(bar.getAttribute('aria-valuenow')).toBe('2');
-    expect(container.querySelectorAll('.sm-px-bar-seg-on')).toHaveLength(2);
-  });
-
-  it('a cápsula de Créditos é AÇÃO: botão com rótulo e alvo de 44', () => {
-    renderWithCss(<HomeHud {...base} language="en-US" />);
-    const btn = screen.getByRole('button', { name: 'Credits: 7' });
-    expect(declaredTargetSize(btn).h).toBe(44);
-  });
-
-  it('abrir Créditos dispara o handler', () => {
-    const onOpenCredits = vi.fn();
-    renderWithCss(<HomeHud {...base} onOpenCredits={onOpenCredits} language="en-US" />);
-    fireEvent.click(screen.getByRole('button', { name: 'Credits: 7' }));
-    expect(onOpenCredits).toHaveBeenCalledTimes(1);
-  });
-
-  it('GUARDRAIL DAS MOEDAS: o HUD não escreve "Bits" nem usa o ícone de Bits', () => {
-    const { container } = renderWithCss(<HomeHud {...base} language="pt-BR" />);
-    expect(container.textContent).not.toMatch(/\bBits?\b/i);
-    const srcs = Array.from(container.querySelectorAll('img')).map(i => i.getAttribute('src') ?? '');
-    expect(srcs.some(s => /icon-coin/.test(s))).toBe(false);
-    // o ícone de gema aparece UMA vez, e só na cápsula de Créditos
-    expect(srcs.filter(s => /icon-gem/.test(s))).toHaveLength(1);
-  });
-
-  it('o rótulo da moeda paga é o nome real, nos dois idiomas', () => {
-    const en = renderWithCss(<HomeHud {...base} language="en-US" />);
-    expect(screen.getByText('Credits')).toBeTruthy();
-    expect(screen.queryByText(/SOUL CRYSTAL/i)).toBeNull();
-    en.unmount();
-    renderWithCss(<HomeHud {...base} language="pt-BR" />);
-    expect(screen.getByText('Créditos')).toBeTruthy();
+    expect(container.querySelectorAll('.sm2-seg-blk')).toHaveLength(4);
+    expect(container.querySelectorAll('.sm2-seg-on')).toHaveLength(2);
   });
 
   it('energia 0/0 (estágio sem requisito) não quebra nem acende bloco', () => {
-    const { container } = renderWithCss(<HomeHud energyPoints={0} maxEnergyPoints={0} credits={0} />);
-    expect(container.querySelectorAll('.sm-px-bar-seg-on')).toHaveLength(0);
+    const { container } = renderWithCss(<HomeHud energyPoints={0} maxEnergyPoints={0} />);
+    expect(container.querySelectorAll('.sm2-seg-on')).toHaveLength(0);
     expect(screen.getByRole('progressbar')).toBeTruthy();
   });
 
-  // ── B1 (rodada 3): o HP saiu de "3 corações no ar" sobre o palco e virou
-  // cápsula emoldurada. O que o teste protege não é a moldura — é o par
-  // "medidor tem superfície" + "o número continua legível como número".
-  it('B1: o HP é uma cápsula com moldura, não corações soltos', () => {
+  it('HP tem medidor próprio, com o mesmo peso da energia', () => {
     const { container } = renderWithCss(
       <HomeHud {...base} healthPoints={2} maxHealthPoints={3} language="pt-BR" />,
     );
-    const chips = Array.from(container.querySelectorAll('.sm-px-chip'));
-    // duas cápsulas na fileira de medidores (Vida, Energia) + Créditos
-    expect(chips.length).toBe(3);
-    const vida = chips.find(c => c.textContent?.includes('Vida'))!;
-    expect(vida).toBeTruthy();
+    const medidores = Array.from(container.querySelectorAll('.sm2-meter'));
+    expect(medidores.length).toBe(2);
+    const vida = medidores.find(m => m.textContent?.includes('Vida'))!;
     expect(vida.textContent).toContain('2/3');
-    expect(vida.querySelectorAll('img').length).toBe(3); // 3 corações
+    expect(vida.querySelectorAll('.sm2-seg-blk')).toHaveLength(3);
+    expect(vida.querySelectorAll('.sm2-seg-on')).toHaveLength(2);
   });
 
-  it('meio coração (cura por carinho) continua desenhado', () => {
+  it('MEIA UNIDADE = MEIO BLOCO — a cura por carinho não é arredondada', () => {
+    // `PixelSegmentedBar` faz `Math.round`, e 1,5/3 acenderia DOIS blocos
+    // inteiros: a barra mentiria sobre a regra (HP aceita frações de 0,5).
     const { container } = renderWithCss(
       <HomeHud {...base} healthPoints={1.5} maxHealthPoints={3} language="en-US" />,
     );
-    const vida = Array.from(container.querySelectorAll('.sm-px-chip'))
-      .find(c => c.textContent?.includes('Health'))!;
-    // 3 corações-base + 1 sobreposição de metade
-    expect(vida.querySelectorAll('img').length).toBe(4);
-    expect(vida.querySelectorAll('.sm-hp-empty').length).toBe(2);
+    const vida = Array.from(container.querySelectorAll('.sm2-meter'))
+      .find(m => m.textContent?.includes('Health'))!;
+    expect(vida.querySelectorAll('.sm2-seg-on')).toHaveLength(1);
+    expect(vida.querySelectorAll('.sm2-seg-half')).toHaveLength(1);
   });
 
-  it('sem HP declarado (chamador antigo) o HUD não inventa uma cápsula vazia', () => {
+  it('o número que muda usa tabular-nums (senão o valor "dança" a cada tick)', () => {
+    const { container } = renderWithCss(
+      <HomeHud {...base} healthPoints={2} maxHealthPoints={3} />,
+    );
+    expect(container.querySelectorAll('.sm2-meter-value.sm2-num').length).toBe(2);
+  });
+
+  it('sem HP declarado (chamador antigo) o HUD não inventa um medidor vazio', () => {
     const { container } = renderWithCss(<HomeHud {...base} />);
     expect(container.textContent).not.toMatch(/Health|Vida/);
-    expect(container.querySelectorAll('.sm-px-chip').length).toBe(2);
+    expect(container.querySelectorAll('.sm2-meter').length).toBe(1);
+  });
+});
+
+describe('HomeHud — o orçamento de leituras da Home', () => {
+  it('ORÇAMENTO: nenhuma moeda no HUD — Créditos saíram para abrir o Vínculo', () => {
+    const { container } = renderWithCss(
+      <HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="pt-BR" />,
+    );
+    expect(container.textContent).not.toMatch(/Cr[ée]dito|Credit/i);
+    expect(container.textContent).not.toMatch(/\bBits?\b/i);
+    expect(container.textContent).not.toMatch(/Emblema|Emblem/i);
   });
 
-  it('créditos negativos (estado corrompido) não travam a render', () => {
-    renderWithCss(<HomeHud {...base} credits={-3} language="en-US" />);
-    expect(screen.getByRole('button', { name: 'Credits: -3' })).toBeTruthy();
+  it('ORÇAMENTO: as leituras numéricas do HUD são exatamente duas (HP e energia)', () => {
+    const { container } = renderWithCss(
+      <HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="en-US" />,
+    );
+    expect(container.querySelectorAll('.sm2-meter-value').length).toBe(2);
+  });
+
+  it('nenhum PNG sobrou no HUD — os ícones são glifos da Material Symbols', () => {
+    const { container } = renderWithCss(
+      <HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="pt-BR" />,
+    );
+    expect(container.querySelectorAll('img').length).toBe(0);
+    expect(container.querySelectorAll('.sm2-icon').length).toBeGreaterThan(0);
+  });
+
+  it('par PT/EN dos rótulos', () => {
+    const pt = renderWithCss(<HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="pt-BR" />);
+    expect(screen.getByText('Vida')).toBeTruthy();
+    expect(screen.getByText('Energia')).toBeTruthy();
+    pt.unmount();
+    renderWithCss(<HomeHud {...base} healthPoints={3} maxHealthPoints={3} language="en-US" />);
+    expect(screen.getByText('Health')).toBeTruthy();
+    expect(screen.getByText('Energy')).toBeTruthy();
   });
 });

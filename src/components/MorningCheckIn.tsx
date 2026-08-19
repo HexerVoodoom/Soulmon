@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
 import { MAX_DAILY_FOCUS, normalizeEffort } from '../types/taskModel';
 import { isOvercommitted } from '../utils/taskTriage';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { Icon } from './ui/Icon';
+import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
 
 /**
  * O CHECK-IN MATINAL (≤20 SEGUNDOS)
@@ -31,6 +33,10 @@ import { useDialogA11y } from '../hooks/useDialogA11y';
  *  - **Pulável sem culpa, com `onSkip` sempre visível.** Um ritual que só sai
  *    da frente se cumprido é uma cobrança na porta do app — e um app que cobra
  *    na abertura é um app que a pessoa passa a evitar abrir.
+ *
+ * ONDA 5: saiu o kit de arcade (moldura de cobre em cada pendência, caixa em
+ * cada hábito, os três quadradinhos de esforço que cifravam a palavra ao lado).
+ * Superfície limpa nos tokens `--sm2-*`, raio 12.
  *
  * Componente puramente apresentacional: nada de GameState, nada de
  * localStorage. O plano vem pronto (`checkInPlan`) e quem grava é o pai.
@@ -78,6 +84,17 @@ export interface MorningCheckInProps {
   onConfirm: (focusIds: string[]) => void;
   onSkip: () => void;
 }
+
+const EFFORT_WORD: Record<number, { pt: string; en: string }> = {
+  1: { pt: 'rápida', en: 'quick' },
+  2: { pt: 'média', en: 'medium' },
+  3: { pt: 'projeto', en: 'project' },
+};
+
+const hint = sm2Hint;
+const body = sm2Text;
+
+const sectionTitle: CSSProperties = { ...sm2Hint, margin: '0 0 8px', fontWeight: 500, letterSpacing: '.02em' };
 
 export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: MorningCheckInProps) {
   const isPt = language === 'pt-BR';
@@ -129,25 +146,17 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
     .reduce((sum, t) => sum + normalizeEffort(t.effort), 0);
 
   const overcommitted = plan.overcommitted || isOvercommitted(plan.plannedEffort);
-
-  const sectionTitle: React.CSSProperties = {
-    margin: '0 0 8px',
-    fontSize: 12,
-    fontWeight: 800,
-    letterSpacing: '.02em',
-    color: 'var(--sm-muted)',
-  };
+  // Pluralização: "Planned load: 1 points" era o primeiro texto que o usuário
+  // novo lia depois de nascer o pet.
+  const points = (n: number) => (isPt ? (n === 1 ? 'ponto' : 'pontos') : (n === 1 ? 'point' : 'points'));
 
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={isPt ? 'Check-in da manhã' : 'Morning check-in'}
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 200,
-        background: 'rgba(6, 24, 26, 0.55)',
+        background: 'rgba(6, 24, 26, .55)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -156,75 +165,62 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
     >
       <div
         ref={dialogRef}
-        className="sm-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label={isPt ? 'Check-in da manhã' : 'Morning check-in'}
         style={{
           width: '100%',
           maxWidth: 380,
           maxHeight: '90vh',
-          padding: 0,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          backgroundColor: 'var(--sm2-surface)',
+          borderRadius: 12,
+          boxShadow: SM2_SHADOW_CARD,
         }}
       >
-        {/* Header */}
-        <div
-          style={{
-            padding: '16px 18px 12px',
-            background: 'var(--sm-surface)',
-            borderBottom: '1px solid var(--sm-line)',
-          }}
-        >
-          <p className="sm-display" style={{ fontSize: '1rem', margin: 0, color: 'var(--sm-ink)' }}>
+        <div style={{ padding: '18px 18px 0' }}>
+          <p className="sm2-title" style={sm2TitleStyle}>
             {isPt ? 'Bom dia!' : 'Good morning!'}
           </p>
-          <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+          <p style={{ ...hint, marginTop: 4 }}>
             {isPt ? 'Vinte segundos e a gente começa.' : 'Twenty seconds and we’re off.'}
           </p>
         </div>
 
         <div style={{ overflowY: 'auto', padding: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {/* (a) PENDÊNCIAS DE ONTEM — primeiro, sempre que houver. */}
+          {/* (a) PENDÊNCIAS DE ONTEM — primeiro, sempre que houver.
+              As molduras de cobre saíram: uma lista de linhas é uma lista. */}
           {carryOver.length > 0 && (
             <section>
-              <p style={sectionTitle}>{isPt ? 'FICOU DE ONTEM' : 'LEFT FROM YESTERDAY'}</p>
+              <p style={sectionTitle}>
+                {isPt ? 'Ficou de ontem — sem cobrança' : 'Left from yesterday — no blame'}
+              </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {carryOver.map(t => (
-                  <div
-                    key={t.id}
-                    style={{
-                      padding: '8px 10px',
-                      fontSize: 12.5,
-                      color: 'var(--sm-ink)',
-                      backgroundColor: 'var(--sm-surface)',
-                      border: '1px solid color-mix(in srgb, var(--sm-px-copper-ink) 45%, transparent)',
-                    }}
-                  >
+                  <p key={t.id} style={{ ...body, margin: 0 }}>
                     {t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task')}
-                    {/* Era 10,5px: texto funcional abaixo do piso de 12px. */}
                     {(t.postponedCount ?? 0) >= 1 && (
-                      <span style={{ marginLeft: 6, fontSize: 12, color: 'var(--sm-muted)' }}>
+                      <span style={{ ...hint, marginLeft: 6 }}>
+                        {isPt ? '· adiada ' : '· postponed '}
+                        <span className="sm2-num">{t.postponedCount}</span>
                         {isPt
-                          ? `· adiada ${t.postponedCount} ${t.postponedCount === 1 ? 'vez' : 'vezes'}`
-                          : `· postponed ${t.postponedCount}${t.postponedCount === 1 ? ' time' : ' times'}`}
+                          ? (t.postponedCount === 1 ? ' vez' : ' vezes')
+                          : (t.postponedCount === 1 ? ' time' : ' times')}
                       </span>
                     )}
-                  </div>
+                  </p>
                 ))}
               </div>
-              <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
-                {isPt
-                  ? 'Sem cobrança: só pra não começar o dia sem saber o que sobrou.'
-                  : 'No blame: just so the day doesn’t start blind to what’s left.'}
-              </p>
             </section>
           )}
 
-          {/* (b) HÁBITOS DE HOJE */}
+          {/* (b) HÁBITOS DE HOJE. O emoji é do usuário — conteúdo, e fica. */}
           <section>
-            <p style={sectionTitle}>{isPt ? 'HÁBITOS DE HOJE' : 'TODAY’S HABITS'}</p>
+            <p style={sectionTitle}>{isPt ? 'Hábitos de hoje' : 'Today’s habits'}</p>
             {habits.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+              <p style={hint}>
                 {isPt ? 'Nenhum hábito devido hoje. Dia leve.' : 'No habits due today. Light day.'}
               </p>
             ) : (
@@ -233,15 +229,14 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                   <span
                     key={h.id}
                     style={{
+                      ...body,
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 5,
-                      padding: '5px 9px',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color: 'var(--sm-ink)',
-                      backgroundColor: 'var(--sm-bg)',
-                      border: '1px solid color-mix(in srgb, var(--sm-px-cyan-ink) 55%, transparent)',
+                      gap: 6,
+                      padding: '6px 10px',
+                      borderRadius: 999,
+                      fontSize: 'var(--sm2-text-xs)',
+                      backgroundColor: 'var(--sm2-surface-2)',
                     }}
                     title={
                       h.anchor?.after
@@ -264,10 +259,10 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
           {/* (c) ATÉ 3 FOCOS */}
           <section>
             <p style={sectionTitle}>
-              {isPt ? `FOCO DO DIA (ATÉ ${MAX_DAILY_FOCUS})` : `TODAY’S FOCUS (UP TO ${MAX_DAILY_FOCUS})`}
+              {isPt ? `Foco do dia (até ${MAX_DAILY_FOCUS})` : `Today’s focus (up to ${MAX_DAILY_FOCUS})`}
             </p>
             {candidates.length === 0 ? (
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
+              <p style={hint}>
                 {isPt
                   ? 'Nenhuma tarefa esperando. Hoje é só cuidar dos hábitos.'
                   : 'No tasks waiting. Today is habits only.'}
@@ -280,15 +275,14 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                   const effort = normalizeEffort(t.effort);
                   const name = t.name || (isPt ? 'Tarefa sem nome' : 'Untitled task');
                   // O esforço só existia como três pontinhos `aria-hidden`:
-                  // quem não vê a tela escolhia foco sem saber o peso. Entra no
-                  // rótulo do botão. E `full` (limite de 3 atingido) precisa de
-                  // `aria-disabled` — antes era só opacidade e cursor, que
-                  // nenhum leitor de tela anuncia. `aria-disabled` e não
-                  // `disabled`: o botão continua focável, então dá para ler o
-                  // que ficou de fora em vez de o item sumir da navegação.
-                  const effortText = isPt
-                    ? `esforço ${effort} de 3`
-                    : `effort ${effort} of 3`;
+                  // quem não vê a tela escolhia foco sem saber o peso. Agora é
+                  // a PALAVRA na tela e no rótulo. E `full` (limite de 3
+                  // atingido) precisa de `aria-disabled` — antes era só
+                  // opacidade e cursor, que nenhum leitor de tela anuncia.
+                  // `aria-disabled` e não `disabled`: o botão continua focável,
+                  // então dá para ler o que ficou de fora.
+                  const word = isPt ? EFFORT_WORD[effort].pt : EFFORT_WORD[effort].en;
+                  const effortText = isPt ? `esforço ${effort} de 3, ${word}` : `effort ${effort} of 3, ${word}`;
                   return (
                     <button
                       key={t.id}
@@ -306,57 +300,35 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 8,
+                        gap: 10,
                         width: '100%',
                         minHeight: 44,
-                        padding: '8px 10px',
+                        padding: '8px 12px',
+                        borderRadius: 10,
                         textAlign: 'left',
                         cursor: full ? 'not-allowed' : 'pointer',
                         opacity: full ? 0.5 : 1,
-                        color: 'var(--sm-ink)',
-                        backgroundColor: active ? 'var(--sm-primary-soft)' : 'var(--sm-bg)',
-                        border: active
-                          ? '2px solid var(--sm-px-cyan-ink)'
-                          : '2px solid color-mix(in srgb, var(--sm-px-copper-ink) 55%, transparent)',
+                        color: 'var(--sm2-ink)',
+                        backgroundColor: active ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface-2)',
+                        border: active ? '1px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-line)',
                       }}
                     >
-                      <span
-                        aria-hidden="true"
-                        style={{
-                          width: 12,
-                          height: 12,
-                          flexShrink: 0,
-                          backgroundColor: active ? 'var(--sm-px-cyan-ink)' : 'transparent',
-                          border: active
-                            ? '2px solid var(--sm-px-cyan-ink)'
-                            : '2px solid color-mix(in srgb, var(--sm-px-copper-ink) 70%, transparent)',
-                        }}
-                      />
-                      <span style={{ flex: 1, fontSize: 12.5, lineHeight: 1.4 }}>
-                        {name}
-                      </span>
-                      <span aria-hidden="true" style={{ display: 'inline-flex', gap: 2, flexShrink: 0 }}>
-                        {[1, 2, 3].map(n => (
-                          <span
-                            key={n}
-                            style={{
-                              width: 5,
-                              height: 5,
-                              backgroundColor: n <= effort ? 'var(--sm-px-cyan-ink)' : 'var(--sm-line)',
-                            }}
-                          />
-                        ))}
-                      </span>
+                      {/* FILL 0→1 é o estado: o MESMO glifo se preenchendo. */}
+                      <Icon name="check_circle" size={20} fill={active ? 1 : 0}
+                        tone={active ? 'primary' : 'muted'} />
+                      <span style={{ ...body, flex: 1 }}>{name}</span>
+                      <span style={hint}>{word}</span>
                     </button>
                   );
                 })}
               </div>
             )}
 
-            <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--sm-muted)', lineHeight: 1.5 }}>
-              {isPt
-                ? `Carga planejada: ${plan.plannedEffort} pontos · foco escolhido: ${focusEffort}`
-                : `Planned load: ${plan.plannedEffort} points · chosen focus: ${focusEffort}`}
+            <p style={{ ...hint, marginTop: 8 }}>
+              {isPt ? 'Carga planejada: ' : 'Planned load: '}
+              <span className="sm2-num">{plan.plannedEffort}</span> {points(plan.plannedEffort)}
+              {isPt ? ' · foco escolhido: ' : ' · chosen focus: '}
+              <span className="sm2-num">{focusEffort}</span>
             </p>
           </section>
 
@@ -366,12 +338,12 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
             <div
               role="status"
               style={{
+                ...body,
+                fontSize: 'var(--sm2-text-xs)',
                 padding: '10px 12px',
-                fontSize: 12,
-                lineHeight: 1.5,
-                color: 'var(--sm-ink)',
-                backgroundColor: 'color-mix(in srgb, #d9a441 14%, var(--sm-surface))',
-                border: '1px solid color-mix(in srgb, #d9a441 55%, transparent)',
+                borderRadius: 10,
+                backgroundColor: 'color-mix(in srgb, var(--sm2-gold-fill) 14%, var(--sm2-surface))',
+                border: '1px solid var(--sm2-gold-fill)',
               }}
             >
               {isPt
@@ -382,20 +354,11 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
         </div>
 
         {/* Ações. Pular fica SEMPRE visível e sem tom de desistência. */}
-        <div
-          style={{
-            padding: 16,
-            background: 'var(--sm-surface)',
-            borderTop: '1px solid var(--sm-line)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-          }}
-        >
-          <button onClick={() => onConfirm(selected)} className="sm-btn" style={{ width: '100%' }}>
+        <div style={{ padding: 16, borderTop: '1px solid var(--sm2-line)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button type="button" onClick={() => onConfirm(selected)} style={{ ...sm2Button('primary'), width: '100%' }}>
             {isPt ? 'Começar o dia' : 'Start the day'}
           </button>
-          <button onClick={onSkip} className="sm-btn sm-btn-secondary" style={{ width: '100%' }}>
+          <button type="button" onClick={onSkip} style={{ ...sm2Button('ghost'), width: '100%' }}>
             {isPt ? 'Hoje não, obrigado' : 'Not today, thanks'}
           </button>
         </div>
