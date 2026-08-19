@@ -152,8 +152,28 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
 
   // Denominador: a própria janela registrada. Um hábito de 3x por semana não
   // pode aparecer como "3 de 7" só porque a semana tem sete dias.
+  //
+  // JANELA VAZIA NÃO VIRA "0 DE 7". O fallback para `CONSTANCY_WINDOW_DAYS`
+  // fabricava um denominador que não existe e imprimia "0 das últimas 7" logo
+  // abaixo do hábito recém-criado, na primeira tela do app — contradizendo o
+  // dono da própria regra, que devolve `ratio: 1` sem histórico exatamente
+  // porque ninguém começa em 0% (progresso dotado, Nunes & Drèze). O mesmo
+  // aparecia para quem volta de uma ausência (ausência não registra falta, então
+  // a janela fica vazia): o relatório dizia "você não perdeu nada" e a linha
+  // logo abaixo dizia zero, na mesma tela. `WeeklyReportCard` já filtrava
+  // `window > 0` pelo motivo certo — "0 de 0 não descreve nada".
+  const semJanela = window === 0;
   const total = window || CONSTANCY_WINDOW_DAYS;
-  const headline = isPt ? `${done} das últimas ${total}` : `${done} of the last ${total}`;
+  const headline = semJanela
+    ? (rhythm.totalDone === 0
+      ? (isPt ? 'hábito novo' : 'new habit')
+      : (isPt ? 'sem dias devidos' : 'no due days'))
+    : isPt ? `${done} das últimas ${total}` : `${done} of the last ${total}`;
+  const headlineTitle = semJanela
+    ? (isPt
+      ? 'Sem dias devidos na janela — começa hoje. Ninguém começa em 0%.'
+      : 'No due days in this window — it starts today. Nobody starts at 0%.')
+    : undefined;
 
   return (
     <div
@@ -175,8 +195,8 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
         {!compact && <span>{isPt ? tierName[tier].pt : tierName[tier].en}</span>}
       </span>
 
-      {/* A métrica. Nada aqui zera. */}
-      <span style={{ fontWeight: 800, color: 'var(--sm-ink)' }}>{headline}</span>
+      {/* A métrica. Nada aqui zera — e sem janela ela nem vira número. */}
+      <span title={headlineTitle} style={{ fontWeight: 800, color: 'var(--sm-ink)' }}>{headline}</span>
 
       {/* A janela. Forma OU cor distinta por estado. */}
       {/* O rótulo dizia "Últimos 7 dias" fixo enquanto o denominador EXIBIDO é
@@ -185,9 +205,13 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
       <span
         role="group"
         aria-label={
-          isPt
-            ? `Janela de constância: últimos ${total} dias devidos`
-            : `Constancy window: last ${total} due days`
+          semJanela
+            ? (isPt
+              ? 'Janela de constância: nenhum dia devido ainda'
+              : 'Constancy window: no due days yet')
+            : isPt
+              ? `Janela de constância: últimos ${total} dias devidos`
+              : `Constancy window: last ${total} due days`
         }
         style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
       >

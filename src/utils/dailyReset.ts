@@ -133,6 +133,40 @@ export const ABSENCE_FORGIVENESS_DAYS = 2;
 export const WEEKLY_RELIEF_HEARTS = 0.5;
 
 /**
+ * Carência de HP nas primeiras viradas de vida do save.
+ *
+ * É o MESMO mecanismo de `ABSENCE_FORGIVENESS_DAYS`, apontado para o começo em
+ * vez do retorno. Cenário medido: usuário novo cadastra 3 hábitos no tutorial e
+ * faz 1 no dia 1. Na virada, `dailyGoal = min(3, 4) = 3` e `dailyDone = 1`, o
+ * que dá `floor((1 − 1/3) × 3) = 2`, com teto 1 → ele PERDE UM CORAÇÃO na
+ * segunda abertura da vida do save. Está dentro das regras da tabela do
+ * CLAUDE.md, e é a pior aplicação possível delas: no dia 2 a pessoa ainda não
+ * conhece a mecânica de cura (esfregar o pet, coraçãozinho), não tem carinho de
+ * sobra guardado, e a única leitura disponível para o que aconteceu é "eu já
+ * estou falhando". A perda proporcional só comunica alguma coisa para quem já
+ * entendeu o contrato; antes disso ela é só um castigo sem professor.
+ *
+ * A carência NÃO relaxa nenhuma tese: nada zera, a falha continua sem punição
+ * própria, e o histórico de constância (`habitRhythms`) continua sendo escrito
+ * normalmente durante a carência — inclusive porque é ele que faz o contador
+ * abaixo andar.
+ */
+export const NEW_SAVE_GRACE_DAYS = 3;
+
+/**
+ * Rampa de HP DEPOIS de um retorno — quantas viradas seguintes à virada do
+ * retorno ainda não cobram.
+ *
+ * `ABSENCE_FORGIVENESS_DAYS` perdoava só a virada em que a ausência foi
+ * detectada: no dia seguinte `wasAway` já é `false` e a cobrança volta inteira.
+ * Ou seja, quem sumiu 5 dias era cobrado na SEGUNDA abertura depois de voltar —
+ * e quem acabou de voltar está no momento de MAIOR risco de abandono, não de
+ * menor. O argumento que justifica o perdão da ausência é exatamente o mesmo
+ * aqui; ele só não tinha sido aplicado à rampa.
+ */
+export const RETURN_GRACE_DAYS = 2;
+
+/**
  * Quantos dias perfeitos custa uma degeneração REAL (queda de estágio).
  *
  * O piso continua sendo `floor(required/2)` do estágio novo, então quem tinha
@@ -153,6 +187,77 @@ export function daysSinceLastReset(lastResetDate: string | undefined, now: Date)
   const a = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const b = new Date(last.getFullYear(), last.getMonth(), last.getDate()).getTime();
   return Math.max(1, Math.round((a - b) / 86400000));
+}
+
+// ---------------------------------------------------------------------------
+// IDADE DO SAVE — como se sabe que um save é NOVO sem um campo de nascimento
+//
+// O GameState não tem (e não vai ganhar) um `createdAt`: `hydrateSave` monta um
+// objeto com campos EXPLÍCITOS, então um campo novo de topo simplesmente não
+// sobrevive a um reload. O único lugar deste arquivo que atravessa a hidratação
+// inteiro é `lastDayReport` (o hydrate devolve o objeto verbatim quando
+// `date` é string) — e ele já é output EXCLUSIVO desta função. É lá, portanto,
+// que mora o contador `saveDay`: uma virada = +1 (mais os dias pulados).
+//
+// A parte que exige cuidado não é contar, é o CHUTE INICIAL: um save antigo, na
+// primeira virada depois desta mudança, não tem `saveDay` nenhum. Se o padrão
+// fosse 0, todo save antigo do mundo ganharia três dias de carência indevida no
+// dia do deploy. Por isso o padrão é decidido por `looksLikeVeteranSave`: só um
+// estado SEM NENHUM sinal de vida pregressa começa em 0. Na dúvida, veterano —
+// a direção segura aqui é a que NÃO dá carência.
+//
+// Limites conhecidos e aceitos da heurística:
+//  (a) um save antigo que nunca evoluiu, nunca teve dia perfeito, nunca
+//      concluiu nada e nunca registrou ritmo é indistinguível de um save novo,
+//      e ganha até `NEW_SAVE_GRACE_DAYS` viradas sem cobrança. É alguém que,
+//      por definição, não tem histórico a proteger — errar para o lado de não
+//      cobrar é a escolha que o produto já faz em toda regra desta tabela;
+//  (b) o contador anda por VIRADA, não por relógio: quem fica meses sem abrir
+//      não "envelhece" o save. Coerente de propósito — dia sem virada é dia que
+//      o jogo não julgou.
+// ---------------------------------------------------------------------------
+
+/** Sinais de que este save JÁ VIVEU — qualquer um basta para não ser novo. */
+export function looksLikeVeteranSave(state: Record<string, any>): boolean {
+  if ((state.totalPerfectDays ?? 0) > 0) return true;
+  if ((state.perfectDays ?? 0) > 0) return true;
+  if (state.degeneratedByHP) return true;
+  if (getStageLevel(state.evolutionStage) !== 'rookie') return true;
+  if ((state.unlockedEvolutions?.length ?? 0) > 1) return true;
+  if ((state.completedTasks?.length ?? 0) > 0) return true;
+  if ((state.activityLog?.length ?? 0) > 0) return true;
+  if ((state.moodLog?.length ?? 0) > 0) return true;
+  if ((state.rest?.nights?.length ?? 0) > 0) return true;
+  const rhythms: Record<string, HabitRhythm> = state.habitRhythms ?? {};
+  for (const r of Object.values(rhythms)) {
+    if ((r?.done?.length ?? 0) > 0 || (r?.missed?.length ?? 0) > 0 || (r?.totalDone ?? 0) > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** Quantas viradas este save já viveu ANTES da que está sendo calculada. */
+export function saveDaysLived(state: Record<string, any>): number {
+  const stored = state.lastDayReport?.saveDay;
+  if (typeof stored === 'number' && Number.isFinite(stored) && stored >= 0) {
+    return Math.floor(stored);
+  }
+  // Sem contador: save anterior a esta regra. Veterano assume a carência já
+  // gasta; só um estado limpo de qualquer histórico começa do zero.
+  return looksLikeVeteranSave(state) ? NEW_SAVE_GRACE_DAYS : 0;
+}
+
+/** Quantas viradas ainda restam da rampa pós-retorno (0 = já acabou). */
+function returnGraceLeft(state: Record<string, any>): number {
+  const stored = state.lastDayReport?.returnGraceLeft;
+  if (typeof stored === 'number' && Number.isFinite(stored) && stored > 0) {
+    return Math.floor(stored);
+  }
+  // Compatibilidade: save que voltou ANTES desta regra existir só tem o
+  // `welcomeBack` do relatório do retorno. Ele garante ao menos a virada
+  // seguinte — que é exatamente a "segunda abertura" que cobrava.
+  return state.lastDayReport?.welcomeBack ? 1 : 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -431,6 +536,23 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const daysAway = daysSinceLastReset(prev.lastResetDate, now);
   const wasAway = daysAway >= ABSENCE_FORGIVENESS_DAYS;
 
+  // Carência de começo de vida (ver NEW_SAVE_GRACE_DAYS). `lived` é o número de
+  // viradas ANTERIORES a esta; a virada nº 1 de um save novo tem lived 0.
+  const lived = saveDaysLived(prev);
+  const newSaveGrace = lived < NEW_SAVE_GRACE_DAYS;
+
+  // Rampa pós-retorno (ver RETURN_GRACE_DAYS). O crédito é gasto por DIA
+  // decorrido, não por virada, senão sumir de novo no meio da rampa esticaria a
+  // carência para sempre.
+  const graceLeftBefore = returnGraceLeft(prev);
+  const returnRamp = !wasAway && graceLeftBefore > 0;
+  const graceLeftAfter = wasAway
+    ? RETURN_GRACE_DAYS
+    : Math.max(0, graceLeftBefore - daysAway);
+
+  /** Esta virada cobra HP? As três carências têm o MESMO argumento por trás. */
+  const forgivesHP = wasAway || newSaveGrace || returnRamp;
+
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
   let newEvolutionStage = prev.evolutionStage;
@@ -449,7 +571,7 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   const rawHeartsLost = rawHeartsLostFor(dailyDone, dailyGoal, prev.maxHealthPoints);
   // Teimoso (utils/passives.ts) aguenta melhor um dia ruim.
   const lossCap = heartLossCap(prev.petPassive, MAX_HEARTS_LOST_PER_DAY);
-  const heartsLost = wasAway ? 0 : Math.min(rawHeartsLost, lossCap);
+  const heartsLost = forgivesHP ? 0 : Math.min(rawHeartsLost, lossCap);
   if (heartsLost > 0) {
     newHP = Math.max(0, prev.healthPoints - heartsLost);
   }
@@ -635,6 +757,17 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       welcomeBack: wasAway,
       daysAway: wasAway ? daysAway : 0,
       weeklyRelief: isMonday,
+      // --- estado de carência, carregado DENTRO do relatório de propósito ---
+      // `hydrateSave` monta o GameState com campos explícitos (campo de topo
+      // desconhecido é descartado no reload), e `lastDayReport` é o único
+      // objeto deste arquivo que atravessa a hidratação inteiro. Estes dois
+      // números não são para a UI: são o relógio das carências.
+      /** Viradas já vividas por este save, contando esta. */
+      saveDay: Math.min(lived + Math.max(1, daysAway), 9999),
+      /** Viradas de rampa que ainda restam depois de um retorno. */
+      returnGraceLeft: graceLeftAfter,
+      /** Esta virada não cobrou HP por carência (novo save / rampa de retorno). */
+      forgiven: forgivesHP,
     },
   };
 }

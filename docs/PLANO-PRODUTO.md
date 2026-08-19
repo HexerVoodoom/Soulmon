@@ -21,6 +21,41 @@ A auditoria comparou o funil pago do Soulmon com o funil grátis do Finch. O an�
 
 Lição registrada, porque vale para as próximas rodadas: **auditoria sem telemetria produz opinião com aparência de diagnóstico.** O erro não foi de raciocínio, foi de não ter um número.
 
+### Correção da correção (ciclo de QA seguinte)
+
+A Parte 0 acima estava **também errada**, e o erro era desta análise, não da auditoria original. Verificar `SoulmonOnboarding.tsx` isolado dá 4 telas — mas o `App.tsx` tem um **segundo gate obrigatório** depois dele:
+
+```
+App.tsx:2661  showIntro            → splash
+App.tsx:2666  !hasCompletedOnboarding → SoulmonOnboarding (4 telas no demo)
+App.tsx:2672  !hasCompletedTutorial   → GameTutorialFlow (6 páginas + criação obrigatória da 1ª atividade)
+```
+
+`GameTutorialFlow` tem 6 páginas de conceito (HP, comida/energia, dia perfeito, cocô/banho/sono, loja/minijogos) e um `TASK_STEP` sem opção de pular (`canFinish = effectiveCount > 0`). Somando o splash e o `WelcomePromptModal` que vem depois: **o dia 1 real são ~12 telas antes do usuário tocar em qualquer coisa** — não 4.
+
+Ou seja: a comparação honesta com o Finch é 12 contra 6, e **o onboarding É um problema real**, ao contrário do que esta Parte 0 concluiu na primeira versão. O que continua valendo da correção original é que o ritual do Oráculo (as 15–35 telas) não é o culpado — ele é o caminho de quem já converteu. O culpado é o tutorial de 6 páginas que cobra conceito antes de qualquer contato, e cujo conteúdo já existe duplicado no `GuideModal`/`HelpModal`.
+
+A lição, então, é mais forte do que a primeira versão sugeria: **"eu conferi no código" só vale se você conferiu o caminho inteiro.** Duas análises seguidas erraram a contagem por medir um arquivo em vez de medir a jornada.
+
+### A contagem medida (percorrendo o app de verdade, com localStorage limpo)
+
+Nem a correção acima acertou. Percorrendo o caminho grátis no navegador, tela a tela:
+
+| # | Tela | Origem |
+|---|---|---|
+| 1 | Splash | `IntroScreen` |
+| 2 | Intro (grátis × jogo completo) | `SoulmonOnboarding` |
+| 3 | "O que você quer melhorar na sua vida?" | `GOAL_STEP` |
+| 4 | "E o que mais atrapalha?" | `STRUGGLE_STEP` |
+| 5 | Escolher 1 de 3 personagens | `DEMO_PICK` |
+| 6 | **Apelido + e-mail** | `REGISTER` — nenhuma análise anterior contou esta |
+| 7 | "Seu Soulmon nasceu!" | `GameTutorialFlow` |
+| 8 | Criar a 1ª atividade | `TASK_STEP` |
+
+**Oito telas**, mais o `WelcomePromptModal` depois. Antes deste ciclo eram **13** (o tutorial tinha 6 páginas de conceito em vez de 1). A comparação honesta com o Finch é 8 contra ~6 — perto, e não mais 13 contra 6.
+
+Três contagens erradas seguidas (4, depois 12, depois 13) sobre o mesmo fluxo. O que finalmente acertou não foi ler melhor o código: foi **abrir o app com o localStorage limpo e clicar até chegar na home**. Para perguntas sobre jornada, a leitura estática é palpite; o navegador é a medida.
+
 ---
 
 ## Parte 1 — Core

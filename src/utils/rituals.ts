@@ -267,11 +267,42 @@ export function completeCheckIn<T extends RitualState>(
  */
 export function needsWeeklyReport(state: RitualState, now: Date): boolean {
   if (now.getDay() !== 0) return false;
+  if (!weeklyReportHasSubstance(state, now)) return false;
   const last = state.lastWeeklyReportDate;
   if (!last) return true;
   const lastDate = parseDayValue(last);
   if (!lastDate) return true;
   return weekStart(lastDate).getTime() !== weekStart(now).getTime();
+}
+
+/**
+ * O relatório desta semana tem ALGUMA coisa dentro?
+ *
+ * O calendário sozinho não bastava, e o caso medido é o de quem instala o app
+ * num sábado: no domingo — SEGUNDA sessão da vida do save — ele recebia um
+ * painel "SUA SEMANA" com a lista de hábitos vazia (todo hábito novo cai em
+ * `window === 0` e some do painel), "0 tarefas · 0 pontos de esforço" e "0
+ * sonhos". Um painel de zeros não é descrição neutra: é a primeira leitura que o
+ * app faz do usuário, e ela diz que ele não fez nada — quando na verdade o app é
+ * que não tem o que dizer ainda. Vale aqui o mesmo critério de
+ * `stackingSuggestion` e de `carePattern.ts`: **sem dados, o silêncio é a
+ * resposta certa**, porque a tela que se desacredita na estreia não volta a ser
+ * lida depois.
+ *
+ * Suprimir NÃO acumula dívida, e por isso esta função não escreve nada: o portão
+ * de `needsWeeklyReport` é "é domingo de uma semana ainda não relatada", e não
+ * uma fila de relatórios pendentes. Um domingo suprimido simplesmente não
+ * acontece; no domingo seguinte, já com histórico, o relatório aparece normal e
+ * fala da janela das últimas 7 manhãs. Marcar `lastWeeklyReportDate` de um
+ * relatório que ninguém viu seria escrever no save uma mentira sem nenhum ganho.
+ */
+export function weeklyReportHasSubstance(state: RitualState, now: Date): boolean {
+  const report = weeklyReport(state, now);
+  return (
+    report.perHabit.some(l => l.window > 0)
+    || report.tasksDone > 0
+    || report.dreams > 0
+  );
 }
 
 export interface WeeklyHabitLine {
@@ -479,8 +510,32 @@ export function stackingSuggestion(
  * A segunda-feira já é marco neste app por outro motivo (devolve 0,5 de HP);
  * este ritual é a mesma data ganhando significado explícito.
  */
-export function isFreshStartDay(now: Date): boolean {
-  return now.getDay() === 1 || now.getDate() === 1;
+export function isFreshStartDay(now: Date, state?: RitualState): boolean {
+  if (now.getDay() !== 1 && now.getDate() !== 1) return false;
+  // O calendário é condição NECESSÁRIA, não suficiente (ver
+  // `freshStartHasSomethingToClear`). O parâmetro é opcional para quem só
+  // pergunta "hoje é um marco?" — a pergunta de calendário continua tendo
+  // resposta de calendário.
+  return state ? freshStartHasSomethingToClear(state) : true;
+}
+
+/**
+ * Existe COBRANÇA PENDENTE para o recomeço limpar?
+ *
+ * O fresh start é perdão de dívida, e perdão de dívida oferecido a quem não deve
+ * nada não é neutro: ele APRESENTA a dívida. Caso medido: quem instala o app no
+ * sábado ou no domingo cai numa segunda-feira na sessão seguinte e recebe "um
+ * recomeço limpo: as cobranças pendentes zeram" antes de ter adiado uma única
+ * tarefa. A mensagem ensina ao usuário novo que ele já acumulou alguma coisa
+ * errada — exatamente o enquadramento que este app existe para não fazer.
+ *
+ * O critério é o que `applyFreshStart` de fato faz: zerar `postponedCount` das
+ * tarefas ativas. Sem nenhuma tarefa ativa adiada, aceitar o convite seria um
+ * no-op — o ritual não teria nem o que perdoar. Nenhum progresso entra nesta
+ * conta, pela mesma razão de sempre: o fresh start não olha para progresso.
+ */
+export function freshStartHasSomethingToClear(state: RitualState): boolean {
+  return (state.tasks ?? []).some(t => isActive(t) && (t.postponedCount ?? 0) > 0);
 }
 
 export interface FreshStartOffer {
@@ -500,7 +555,7 @@ export function freshStartOffer(
   now: Date,
   language: RitualLanguage,
 ): FreshStartOffer | null {
-  if (!isFreshStartDay(now)) return null;
+  if (!isFreshStartDay(now, state)) return null;
   if (sameDay(state.lastFreshStartDate, dayKeyOf(now))) return null;
 
   const monday = now.getDay() === 1;

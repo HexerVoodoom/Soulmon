@@ -30,6 +30,10 @@ const resetBase = () => ({
   maxActivityCap: 6,
   attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
   lastResetDate: new Date('2026-08-04T12:00:00').toDateString(),
+  // Save VETERANO: sem isto o estado cai na carência de começo de vida
+  // (`NEW_SAVE_GRACE_DAYS`, utils/dailyReset.ts), que não cobra HP nas primeiras
+  // viradas — e um teste de perda de coração passaria a medir a carência.
+  lastDayReport: { date: 'seed', saveDay: 90 },
 });
 
 describe('passives — catálogo', () => {

@@ -1,7 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import {
-  Heart, Utensils, Zap, Sparkles, ShowerHead, ShoppingBag,
-  LoaderCircle, Check, Wand2,
+  Heart, Sparkles, LoaderCircle, Check, Wand2,
 } from 'lucide-react';
 import { PixelChoiceChip } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
@@ -11,12 +10,21 @@ import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
 
 // ---------------------------------------------------------------------------
 // GameTutorialFlow — segundo onboarding: depois que o Soulmon nasce (ritual
-// do oráculo), antes de entrar no jogo de verdade, um tutorial estilo RPG
-// (páginas com setinha triangular pra avançar/voltar) ensina o básico, e
-// termina numa tela OBRIGATÓRIA de criação da 1ª tarefa: o jogador digita
-// seu objetivo + escolhe tags de área da vida, e um pool de tarefas sugeridas
-// por IA (mesma API do chat do pet — functions/api/suggest-tasks.js) aparece
-// pra ele escolher o que adicionar. Precisa sair daqui com >=1 tarefa.
+// do oráculo), antes de entrar no jogo de verdade. São DUAS telas, e nenhuma
+// a mais: (1) a promessa central, (2) a criação OBRIGATÓRIA da 1ª atividade —
+// o jogador digita seu objetivo + escolhe tags de área da vida, e um pool de
+// tarefas sugeridas por IA (mesma API do chat do pet —
+// functions/api/suggest-tasks.js) aparece pra ele escolher o que adicionar.
+// Precisa sair daqui com >=1 tarefa, pra home nunca nascer vazia.
+//
+// Por que só duas: o dia 1 tinha ~12 telas antes de o usuário tocar em nada
+// (splash + 4 do onboarding demo + 6 páginas de conceito aqui + criação +
+// WelcomePromptModal), contra ~6 do benchmark do gênero (Finch). As 5 páginas
+// de conceito que saíram (HP, comida/energia, dia perfeito, cocô/banho/sono,
+// loja/moedas) cobravam teoria antes de qualquer contato — e 4 delas já
+// estavam ditas, melhor e com os NÚMEROS vindos das constantes, no
+// `GuideModal` (seções 1, 2 e 6) e no glossário do `HelpModal`. Ver
+// `docs/PLANO-PRODUTO.md`, Parte 0 ("Correção da correção").
 // ---------------------------------------------------------------------------
 
 interface TutorialPage {
@@ -25,44 +33,38 @@ interface TutorialPage {
   bodyPt: string; bodyEn: string;
 }
 
+/**
+ * A única tela de conceito que sobrou: a promessa central, e nada que não seja
+ * acionável no minuto zero. HP, energia, cocô e loja não existem ainda para
+ * quem acabou de chegar — nenhum desses botões faz sentido antes da primeira
+ * atividade existir.
+ */
 const PAGES: TutorialPage[] = [
   {
     Icon: Sparkles,
     titlePt: 'Seu Soulmon nasceu!', titleEn: 'Your Soulmon is born!',
-    bodyPt: 'Ele cresce com você — cada tarefa que você cumpre na vida real o ajuda a evoluir. Vamos aprender o básico antes de começar.',
-    bodyEn: "It grows with you — every task you complete in real life helps it evolve. Let's learn the basics before you start.",
-  },
-  {
-    Icon: Heart,
-    titlePt: 'Corações (HP)', titleEn: 'Hearts (HP)',
-    bodyPt: 'Nos dias em que não der, ele fica meio pra baixo — no máximo um coração, nunca mais que isso. Esfregue nele com carinho, ou marque depois o que você fez: os corações voltam. Se você sumir por uns dias, voltar não custa nada.',
-    bodyEn: "On the days you can't, it gets a little low — at most one heart, never more. Rub it gently, or log later what you did: the hearts come back. And if you disappear for a few days, coming back costs nothing.",
-  },
-  {
-    Icon: Utensils,
-    titlePt: 'Comida & Energia', titleEn: 'Food & Energy',
-    bodyPt: 'Cumprir tarefas dá comida — alimentá-lo enche a barra de energia e dá pontos de atributo. A energia cheia no fim do dia é essencial pro dia perfeito.',
-    bodyEn: "Finishing tasks earns food — feeding it fills the energy bar and gives attribute points. Full energy at day's end is key to a perfect day.",
-  },
-  {
-    Icon: Zap,
-    titlePt: 'Dia perfeito & Evolução', titleEn: 'Perfect day & Evolution',
-    bodyPt: 'Cumpra suas tarefas cadastradas + energia cheia = dia perfeito, que soma pontos de evolução. Junte o suficiente e seu Soulmon evolui!',
-    bodyEn: 'Finish your registered tasks + full energy = a perfect day, which earns evolution points. Gather enough and your Soulmon evolves!',
-  },
-  {
-    Icon: ShowerHead,
-    titlePt: 'Cocô, banho & sono', titleEn: 'Poop, bath & sleep',
-    bodyPt: 'De vez em quando aparece um cocôzinho — dê um banho quando aparecer — ele fica bem melhor limpinho. Dormir pausa tudo isso até você acordá-lo.',
-    bodyEn: "Every so often a little poop shows up — give it a bath when it does, it feels much better clean. Sleep pauses all of that until you wake it up.",
-  },
-  {
-    Icon: ShoppingBag,
-    titlePt: 'Loja, minijogos & créditos', titleEn: 'Shop, minigames & credits',
-    bodyPt: 'Jogue os minijogos na aba Atividades pra ganhar Bits e gastar na loja (itens, cenários, mobílias). Créditos são uma moeda especial pra ajudas extras.',
-    bodyEn: 'Play the minigames in the Activities tab to earn Bits and spend them in the shop (items, backdrops, furniture). Credits are a special currency for extra help.',
+    bodyPt: 'Ele cresce com você — cada tarefa que você cumpre na vida real o ajuda a evoluir. Vamos começar pela primeira.',
+    bodyEn: "It grows with you — every task you complete in real life helps it evolve. Let's start with the first one.",
   },
 ];
+
+/**
+ * O ÚNICO assunto das 5 páginas removidas que o `GuideModal` ainda não cobre:
+ * Bits, Créditos, loja e minijogos não aparecem em nenhuma seção do guia nem
+ * no glossário do `HelpModal` (conferido, não presumido). Os outros quatro
+ * assuntos foram descartados por duplicidade real — corações (Guia §2 e §6),
+ * comida/energia (§2), dia perfeito/evolução (§1) e cocô/banho/sono (§2 e §6)
+ * já estão lá, com os números lidos das constantes em vez de escritos à mão.
+ *
+ * Fica exportado, e não inline no guia, porque este arquivo é o único dono
+ * deste texto agora: quem for mexer no `GuideModal` consome daqui e apaga esta
+ * constante no mesmo PR.
+ */
+export const SHOP_AND_CURRENCY_PRIMER = {
+  titlePt: 'Loja, minijogos & créditos', titleEn: 'Shop, minigames & credits',
+  bodyPt: 'Jogue os minijogos na aba Atividades pra ganhar Bits e gastar na loja (itens, cenários, mobílias). Créditos são uma moeda especial pra ajudas extras.',
+  bodyEn: 'Play the minigames in the Activities tab to earn Bits and spend them in the shop (items, backdrops, furniture). Credits are a special currency for extra help.',
+} as const;
 
 const CATEGORIES: ActivityCategory[] = ['Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness'];
 
@@ -181,28 +183,28 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
     }} />
   );
 
-  const triangle = (dir: 'left' | 'right', onClick: () => void, disabled: boolean) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={dir === 'left' ? (isPt ? 'Voltar' : 'Back') : (isPt ? 'Avançar' : 'Next')}
-      /* 44x44 de area de toque com o quadrado de 34px dentro (WCAG 2.2 AA 2.5.8):
-         avancar/voltar e a unica navegacao do tutorial. */
-      style={{
-        width: 44, height: 44, padding: 5, border: 'none', background: 'none',
-        cursor: disabled ? 'default' : 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        opacity: disabled ? 0.35 : 1, flexShrink: 0,
-      }}
+  /**
+   * Pontinhos de progresso. O denominador inclui a criação da 1ª atividade
+   * (`TASK_STEP + 1`), e não só as páginas de conceito — a barra do
+   * `SoulmonOnboarding` já foi corrigida uma vez pelo mesmo motivo: barra que
+   * enche antes do fim do fluxo mente sobre quanto falta.
+   */
+  const dots = (
+    <div
+      role="progressbar"
+      aria-valuemin={1}
+      aria-valuemax={TASK_STEP + 1}
+      aria-valuenow={step + 1}
+      aria-label={isPt ? `Passo ${step + 1} de ${TASK_STEP + 1}` : `Step ${step + 1} of ${TASK_STEP + 1}`}
+      style={{ display: 'flex', gap: 6, justifyContent: 'center' }}
     >
-      <span aria-hidden="true" style={{
-        width: 34, height: 34, borderRadius: 10,
-        background: disabled ? 'var(--sm-bg)' : 'var(--sm-primary-soft)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {triangleGlyph(dir)}
-      </span>
-    </button>
+      {Array.from({ length: TASK_STEP + 1 }, (_, i) => (
+        <span key={i} style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: i === step ? 'var(--sm-primary)' : 'var(--sm-line)',
+        }} />
+      ))}
+    </div>
   );
 
   return (
@@ -243,41 +245,32 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               </p>
             </div>
 
-            {/* Navegação: setinhas triangulares + pontos de progresso */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginTop: 20 }}>
-              {triangle('left', () => setStep(s => Math.max(0, s - 1)), step === 0)}
-              <div style={{ display: 'flex', gap: 6 }}>
-                {PAGES.map((_, i) => (
-                  <span key={i} style={{
-                    width: 6, height: 6, borderRadius: '50%',
-                    background: i === step ? 'var(--sm-primary)' : 'var(--sm-line)',
-                  }} />
-                ))}
-              </div>
-              {triangle('right', () => setStep(s => Math.min(TASK_STEP, s + 1)), false)}
-            </div>
-
+            {/* Uma tela, uma saída. As setinhas de avançar/voltar e o "Pular
+                tutorial" existiam porque havia 6 páginas para percorrer;
+                com uma só, os três botões faziam a MESMA coisa. Sobra o CTA
+                primário (largura cheia, altura do `sm-btn` ≥44px). */}
             <button
+              className="sm-btn"
+              style={{ width: '100%', marginTop: 20 }}
               onClick={() => setStep(TASK_STEP)}
-              /* Medido na rodada 3: saía 71×19 — bem abaixo dos 44 do WCAG
-                 2.2 AA (2.5.8). É a saída de quem não quer o tutorial; um
-                 alvo desse tamanho prende a pessoa na tela. O sublinhado
-                 continua no texto, o alvo é a caixa inteira. */
-              style={{ background: 'none', border: 'none', color: 'var(--sm-muted)', fontSize: 12.5, minHeight: 44, padding: '0 16px', margin: '10px auto 0', cursor: 'pointer', textDecoration: 'underline' }}
             >
-              {isPt ? 'Pular tutorial' : 'Skip tutorial'}
+              {isPt ? 'Começar' : "Let's start"}
             </button>
+            <div style={{ marginTop: 16 }}>{dots}</div>
           </>
         ) : (
           <>
             {/* Passo obrigatório: criar a 1ª tarefa */}
             <button
               onClick={() => setStep(TASK_STEP - 1)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--sm-muted)', fontSize: 12, margin: '0 0 10px', cursor: 'pointer', padding: 0 }}
+              /* minHeight 44 = alvo de toque do WCAG 2.2 AA (2.5.8); era 0 de
+                 padding e ~19px de altura. */
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--sm-muted)', fontSize: 12, margin: '0 0 4px', cursor: 'pointer', padding: '0 4px', minHeight: 44 }}
             >
               {triangleGlyph('left', 'var(--sm-muted)')}
-              {isPt ? 'Rever tutorial' : 'Review tutorial'}
+              {isPt ? 'Voltar' : 'Back'}
             </button>
+            <div style={{ marginBottom: 10 }}>{dots}</div>
             <h1 style={{ fontSize: 21, margin: '8px 0 4px', fontWeight: 800 }}>
               {isPt ? 'Qual é o seu objetivo?' : "What's your goal?"}
             </h1>

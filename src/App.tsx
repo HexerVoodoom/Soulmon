@@ -617,10 +617,59 @@ export default function App() {
     setGameState,
   });
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // A FILA DE INTERSTICIAIS — UMA prioridade explícita, e só UM monta por vez.
+  //
+  // Esta é a regra que evita o próximo modal empilhado. LEIA antes de acrescentar
+  // qualquer tela que se abra sozinha: ela entra AQUI, na ordem, e nunca com um
+  // guard ad-hoc do tipo `x && !y`.
+  //
+  //   triagem → relatório diário → check-in → sonho → pesadelo → welcome prompt
+  //
+  // Por que a fila: todos esses modais são `position: fixed` no MESMO z-index
+  // (200; o pesadelo em 210) e vários montam focus-trap próprio. Dois abertos ao
+  // mesmo tempo davam três defeitos de uma vez — o de cima cobria o de baixo, que
+  // ficava montado e inalcançável; um Escape fechava os DOIS; e o trap do de
+  // baixo puxava o Tab para um diálogo invisível. Acontecia todo dia 1
+  // (check-in × welcome prompt) e em qualquer manhã com noite registrada
+  // (sonho × check-in). Havia um único guard escrito à mão (`nightmareOpen &&
+  // !morningDream`), e ele cobria só um dos três pares.
+  //
+  // O que NÃO muda: quem está mais abaixo na fila continua com o estado
+  // PENDENTE, e monta sozinho assim que o de cima fecha. Nada é descartado.
+  //
+  // A triagem vem primeiro por ser a única aberta por TOQUE do usuário — uma
+  // ação explícita não pode ser engolida por um automático. O welcome prompt vem
+  // por último porque é o único que decide sozinho se tem algo a dizer (ele
+  // devolve `null` quando não tem), então não dá para consultá-lo daqui.
+  // ═══════════════════════════════════════════════════════════════════════════
+  const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'welcome' =
+    triageTasks ? 'triage'
+      : showDailyReport && gameState.lastDayReport ? 'dailyReport'
+        : checkInPlanData ? 'checkIn'
+          : morningDream ? 'dream'
+            : nightmareOpen ? 'nightmare'
+              : 'welcome';
+
   const { dailyTotal, dailyDone, progress } = useProgressTracking(gameState);
   // Quantos itens de HOJE evitam a perda de coração na virada — regra única em
   // `utils/dailyReset.ts`, derivada da própria fórmula da perda.
   const hpSafeToday = tasksToAvoidHeartLoss(gameState, new Date().getDay(), new Date().toDateString());
+
+  /**
+   * "O jogador já concluiu ALGUMA coisa, algum dia?"
+   *
+   * Derivado do estado que já existe, sem campo novo: `activityStats` guarda
+   * `completionCount` acumulado por hábito (nunca zerado), `completedTasks`
+   * guarda as tarefas avulsas e `activityLog` guarda as conclusões recorrentes.
+   * Usado pelo card de BRINCAR — ver o comentário no ponto de render.
+   */
+  const jaConcluiuAlgo = useMemo(
+    () => (gameState.completedTasks?.length ?? 0) > 0
+      || (gameState.activityLog?.length ?? 0) > 0
+      || Object.values(gameState.activityStats ?? {}).some(s => (s?.completionCount ?? 0) > 0),
+    [gameState.completedTasks, gameState.activityLog, gameState.activityStats],
+  );
 
   const t = useTranslation(language);
 
@@ -860,7 +909,7 @@ export default function App() {
 
       playTaskComplete();
       if (justFinishedActivity) {
-        queueMicrotask(() => announceTaskGains(gameState, justFinishedActivity.category));
+        queueTaskGains(justFinishedActivity.category);
         celebrateHabitMilestone(
           justFinishedActivity.id, justFinishedActivity.name, new Date().toDateString(),
         );
@@ -883,10 +932,13 @@ export default function App() {
         }
       }
 
-      // If there's an active care event, complete it
-      if (careEvent) {
-        handleCareEventComplete();
-      }
+      // NÃO limpa o cocô. Quem limpa é o 🚿 BANHO — está assim na tabela de
+      // regras e é a única leitura possível para o jogador. Aqui havia um
+      // `if (careEvent) handleCareEventComplete()`, herança de quando existiam
+      // eventos de comida atrelados a tarefa (`CareEvent.type` ainda declara
+      // 'food', mas nada produz esse tipo e `handleCareEventComplete` já o
+      // ignora): na prática, marcar QUALQUER tarefa desligava o dreno de −1
+      // coração/6h sem o pet ter tomado banho nenhum.
   };
 
   // Handler para atividades sem etapas
@@ -971,7 +1023,7 @@ export default function App() {
 
     // Mesmo resumo das tarefas: uma ação, várias barras. Fora do updater porque
     // efeito colateral dentro de setGameState roda 2× no StrictMode.
-    if (activity) queueMicrotask(() => announceTaskGains(gameState, activity.category));
+    if (activity) queueTaskGains(activity.category);
 
     // Marco de maturidade (7/21/66 dias de Lally et al.) — celebra UMA vez, no
     // dia em que o corte é cruzado. Fora do updater pelo mesmo motivo.
@@ -994,10 +1046,8 @@ export default function App() {
       }
     }
 
-    // If there's an active care event, complete it
-    if (careEvent) {
-      handleCareEventComplete();
-    }
+    // Sem limpeza de cocô aqui — ver o comentário no handler de etapas: o dreno
+    // só para com o 🚿 BANHO.
   };
 
   const handleEditActivity = useCallback((activityId: string) => {
@@ -1261,11 +1311,18 @@ export default function App() {
       // a árvore do Soulmon não tem mais ovo/baby, então getStageLevel nunca
       // devolvia esses níveis e o ramo era inalcançável.)
       setTimeout(() => {
+        let concluiu = false;
         setGameState(prev => {
           const next = completeTask(prev, taskId) ?? prev;
-          if (next !== prev) queueMicrotask(() => announceTaskGains(prev, task.category));
+          // Nada de `queueMicrotask` DENTRO do updater (footgun 6: StrictMode
+          // invoca 2× e o toast saía dobrado). A flag é idempotente; quem
+          // dispara é a linha depois do updater.
+          concluiu = next !== prev;
           return next;
         });
+        // Microtask: React 18 agenda o flush do lote num microtask criado no
+        // primeiro `setState`, então este roda DEPOIS do updater acima.
+        queueMicrotask(() => { if (concluiu) queueTaskGains(task.category); });
       }, 3000);
     }
   };
@@ -1279,28 +1336,61 @@ export default function App() {
    * Fica fora do updater de propósito: efeito colateral dentro de setGameState
    * roda 2× no StrictMode (footgun 6).
    */
-  const announceTaskGains = useCallback((prev: GameState, category: ActivityCategory) => {
+  /**
+   * O toast NÃO reconta mais nada.
+   *
+   * Ele reimplementava a contagem e divergia em três frentes ao mesmo tempo:
+   *  · comparava CONTAGEM DE ITENS contra `dailyGoalFor`, que é PESO DE ESFORÇO
+   *    — quem concluía uma tarefa `effort:3` lia "📋 1/3 do dia" tendo feito
+   *    100% da meta (a assimetria de unidade que o CLAUDE.md proíbe);
+   *  · `activities.filter(a => a.completedToday)` ignorava hábitos COM ETAPAS
+   *    (a conclusão deles é derivada de `steps.every`, e `completedToday` nunca
+   *    é escrito), então quem só usa hábitos em etapas lia sempre "0/N";
+   *  · no caminho de hábito recebia o `gameState` PRÉ-update, então o item que
+   *    o jogador acabara de marcar não entrava no próprio anúncio dele.
+   *
+   * Agora os dois números vêm de `useProgressTracking` — a mesma fonte da barra,
+   * do widget e do humor do pet, que por sua vez usa `dailyGoalFor` e
+   * `doneWeightFor` (footgun 9: regra copiada é regra que diverge em silêncio).
+   * O disparo é via `queueTaskGains` + efeito, para o toast ser calculado depois
+   * do render que já aplicou a conclusão.
+   */
+  const announceTaskGains = useCallback((category: ActivityCategory) => {
     const isPt = language === 'pt-BR';
-    // Meta do dia: `dailyGoalFor`, nunca uma cópia da fórmula. Antes era
-    // `min(activities.length + tasks.length, required)` — sem o filtro de dia
-    // da semana que `computeDailyReset` aplica, então num sábado o toast
-    // anunciava "2/4 do dia" para quem já tinha cumprido a meta real (2).
-    const goal = dailyGoalFor(prev, new Date().getDay());
-    const doneNow = prev.tasks.filter(t => t.completed).length
-      + prev.activities.filter(a => a.completedToday).length;
-
     const food = FOOD_BY_CATEGORY[category];
     const parts = [
       isPt ? `${food?.emoji ?? '🍎'} +1 comida` : `${food?.emoji ?? '🍎'} +1 food`,
     ];
-    if (goal > 0) {
-      parts.push(isPt ? `📋 ${Math.min(doneNow, goal)}/${goal} do dia` : `📋 ${Math.min(doneNow, goal)}/${goal} today`);
+    if (dailyTotal > 0) {
+      parts.push(isPt ? `📋 ${dailyDone}/${dailyTotal} do dia` : `📋 ${dailyDone}/${dailyTotal} today`);
     }
-    if (goal > 0 && doneNow >= goal) {
+    // Só oferece o próximo passo se ele existir de verdade: a condição do dia
+    // perfeito é energia ≥ meta do dia, então com a energia já cheia isto seria
+    // uma cobrança inventada em cima de quem acabou de fechar tudo.
+    if (dailyTotal > 0 && dailyDone >= dailyTotal && (gameState.energyPoints ?? 0) < dailyTotal) {
       parts.push(isPt ? '⚡ falta encher a energia' : '⚡ energy left to fill');
     }
     toast(parts.join('  ·  '));
-  }, [language]);
+  }, [language, dailyDone, dailyTotal, gameState.energyPoints]);
+
+  /**
+   * Fila de UM anúncio: o handler só ENFILEIRA (`queueTaskGains`) e o efeito
+   * abaixo dispara depois do render, quando `dailyDone`/`dailyTotal` já refletem
+   * a conclusão. `n` existe para duas conclusões seguidas da mesma categoria
+   * contarem como dois sinais distintos.
+   */
+  const [gainSignal, setGainSignal] = useState<{ category: ActivityCategory; n: number } | null>(null);
+  const queueTaskGains = useCallback((category: ActivityCategory) => {
+    setGainSignal(prev => ({ category, n: (prev?.n ?? 0) + 1 }));
+  }, []);
+  useEffect(() => {
+    if (!gainSignal) return;
+    announceTaskGains(gainSignal.category);
+    // `announceTaskGains` FORA das deps de propósito: ele muda a cada alteração
+    // de meta/feito, e incluí-lo faria o mesmo anúncio tocar de novo a cada
+    // conclusão seguinte. O gatilho é o sinal, nunca o formatador.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gainSignal]);
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setGameState(prev => ({
@@ -2028,18 +2118,23 @@ export default function App() {
    * planejamento sobre uma lista vazia é só uma tela a mais entre a pessoa e o
    * pet dela.
    */
-  const checkInPromptedRef = useRef(false);
+  /* A trava guarda o DIA, não um booleano de sessão. Sendo `true` para sempre,
+     ela era definitiva por sessão: numa PWA/desktop deixada aberta a noite
+     toda, no dia seguinte `needsCheckIn` voltava a ser verdadeiro e o efeito
+     retornava na primeira linha — o ritual só reaparecia depois de um reload
+     que ninguém faz. Comparar com o dia de hoje rearma sozinho na virada. */
+  const checkInPromptedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (checkInPromptedRef.current) return;
-    if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
-    if (showDailyReport) return; // dois modais empilhados roubam o clique um do outro
     const now = new Date();
+    const hoje = dayKeyOf(now);
+    if (checkInPromptedRef.current === hoje) return;
+    if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;
     const plan = checkInPlan(gameState, now);
     if (plan.habitsToday.length === 0 && plan.suggestedFocus.length === 0 && plan.carryOver.length === 0) return;
-    checkInPromptedRef.current = true;
+    checkInPromptedRef.current = hoje;
     setCheckInPlanData(plan);
-  }, [gameState, hasCompletedOnboarding, hasCompletedTutorial, showDailyReport]);
+  }, [gameState, hasCompletedOnboarding, hasCompletedTutorial]);
 
   /** Fecha o check-in gravando os focos escolhidos (a regra é de `setFocus`). */
   const handleCheckInConfirm = useCallback((focusIds: string[]) => {
@@ -2135,9 +2230,11 @@ export default function App() {
    * `rollDream` é determinístico pela seed (o dayKey), então recarregar a
    * página de manhã não re-sorteia até achar um lendário.
    */
-  const dreamShownRef = useRef(false);
+  /* Mesma correção do check-in: a trava guarda o DIA. Um booleano de sessão
+     nunca rearmava, então o app aberto a noite toda pulava o sonho da manhã
+     seguinte inteiro. */
+  const dreamShownRef = useRef<string | null>(null);
   useEffect(() => {
-    if (dreamShownRef.current) return;
     if (isSleeping) return;
     const now = new Date();
     const hour = now.getHours();
@@ -2145,13 +2242,14 @@ export default function App() {
     const rest = gameState.rest;
     if (!rest) return;
     const key = dayKeyOf(now);
+    if (dreamShownRef.current === key) return;
     if (!rest.nights.some(n => n.date === key)) return; // nenhuma noite registrada
     // "já mostrei o sonho desta manhã": no pior caso ele reaparece uma vez.
     if (readLocal(STORAGE_KEYS.MORNING_DREAM_SHOWN) === key) return;
 
     const dreamId = rollDream(rest, dreamRarity(rest, now), hashString(key));
     const isNew = !rest.dreams.includes(dreamId);
-    dreamShownRef.current = true;
+    dreamShownRef.current = key;
     writeLocal(STORAGE_KEYS.MORNING_DREAM_SHOWN, key, { silent: true });
     setGameState(prev => ({ ...prev, rest: collectDream(prev.rest ?? createRestState(), dreamId) }));
     setMorningDream({ dream: DREAM_CATALOG.find(d => d.id === dreamId) ?? null, isNew });
@@ -2936,8 +3034,14 @@ export default function App() {
               {/* BRINCAR — na área do pet, junto de banho/dormir/itens, porque
                   é um gesto de CUIDADO e não um minijogo. É uma OFERTA: sem
                   barra de diversão, sem contador regressivo, sem badge por não
-                  ter brincado. Ver components/PlayCard.tsx. */}
-              {(() => {
+                  ter brincado. Ver components/PlayCard.tsx.
+
+                  Não existe antes da PRIMEIRA conclusão. `canPlay` exige energia
+                  ≥1, energia só vem de comida e comida só vem de concluir
+                  atividade — ou seja, no dia 1 o card nascia indisponível e
+                  ocupava o espaço mais nobre da tela com uma oferta impossível.
+                  Uma oferta que não dá para aceitar não é convite, é ruído. */}
+              {jaConcluiuAlgo && (() => {
                 const agoraPet = new Date();
                 const chavePet = dayKeyOf(agoraPet);
                 return (
@@ -3748,7 +3852,8 @@ export default function App() {
            passavam a medir populações diferentes. */
         totalRequired={dailyGoalFor(gameState, new Date().getDay(), new Date().toDateString())}
       />
-      {showDailyReport && gameState.lastDayReport && (
+      {/* Ordem da fila em `interstitial` (perto do topo do componente). */}
+      {interstitial === 'dailyReport' && gameState.lastDayReport && (
         <DailyReportModal
           report={gameState.lastDayReport}
           onClose={handleCloseDailyReport}
@@ -3760,10 +3865,9 @@ export default function App() {
           soulGoal={gameState.soulGoal}
         />
       )}
-      {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia, pulável sem
-          culpa, e nunca por cima do relatório diário (dois modais empilhados
-          fazem o de cima roubar o clique do de baixo). */}
-      {checkInPlanData && !showDailyReport && (
+      {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia e pulável sem
+          culpa. Posição na fila: depois do relatório diário. */}
+      {interstitial === 'checkIn' && checkInPlanData && (
         <MorningCheckIn
           open
           plan={checkInPlanData}
@@ -3773,8 +3877,9 @@ export default function App() {
         />
       )}
 
-      {/* ARRUMAR A PILHA — fila de cartas com quatro saídas grandes. */}
-      {triageTasks && (
+      {/* ARRUMAR A PILHA — fila de cartas com quatro saídas grandes. Topo da
+          fila de intersticiais: é a única aberta por toque do usuário. */}
+      {interstitial === 'triage' && triageTasks && (
         <TriagePile
           open
           tasks={triageTasks}
@@ -3785,7 +3890,7 @@ export default function App() {
       )}
 
       {/* O SONHO DA MANHÃ — recompensa, nunca veredito. Só de manhã. */}
-      {morningDream && (
+      {interstitial === 'dream' && morningDream && (
         <MorningDream
           open
           dream={morningDream.dream}
@@ -3796,9 +3901,9 @@ export default function App() {
       )}
 
       {/* O PESADELO DA MANHÃ — a face jogável da mesma noite do sonho. Entra
-          DEPOIS dele (dois modais empilhados roubam o clique um do outro), e
-          nunca à noite. Perder não custa nada, e a tela diz isso. */}
-      {nightmareOpen && !morningDream && (
+          DEPOIS dele (posição na fila), e nunca à noite. Perder não custa nada,
+          e a tela diz isso. */}
+      {interstitial === 'nightmare' && (
         <NightmareBattle
           open
           wave={nightmareWave}
@@ -3812,7 +3917,15 @@ export default function App() {
         />
       )}
 
-      {!showDailyReport && (
+      {/* ÚLTIMO da fila: ele mesmo decide se tem algo a pedir (instalar a PWA /
+          notificações) e devolve `null` quando não tem — por isso não dá para
+          consultá-lo daqui e ele só é montado quando mais nada está aberto.
+          Efeito colateral aceito: se um ritual estiver aberto na abertura do
+          app, o `beforeinstallprompt` daquela sessão pode passar sem ouvinte e
+          o convite de instalar volta na sessão seguinte. Perder um convite
+          adiável é mais barato que dois diálogos empilhados com dois
+          focus-traps. */}
+      {interstitial === 'welcome' && (
         <WelcomePromptModal
           language={language}
           notificationsEnabled={notificationsEnabled}

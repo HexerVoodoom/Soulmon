@@ -29,6 +29,10 @@ const base = {
   tasks: [] as any[],
   completedTasks: [] as any[],
   activityLog: [] as string[],
+  // Save VETERANO: sem isto o estado cai na carência de começo de vida
+  // (`NEW_SAVE_GRACE_DAYS`, utils/dailyReset.ts), que não cobra HP nas primeiras
+  // viradas — e um teste de perda de coração passaria a medir a carência.
+  lastDayReport: { date: 'seed', saveDay: 90 },
 };
 
 // ---------------------------------------------------------------------------

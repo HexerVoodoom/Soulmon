@@ -6,6 +6,9 @@ import {
   ABSENCE_FORGIVENESS_DAYS,
   WEEKLY_RELIEF_HEARTS,
   DEGENERATION_PERFECT_DAYS_COST,
+  NEW_SAVE_GRACE_DAYS,
+  RETURN_GRACE_DAYS,
+  looksLikeVeteranSave,
 } from '../utils/dailyReset';
 
 // Estes testes exercitam O MESMO computeDailyReset que o hook usa em produção.
@@ -38,6 +41,13 @@ const baseState = () => ({
   maxActivityCap: 6,
   // Terça — véspera do WEDNESDAY usado nos testes: virada normal de 1 dia.
   lastResetDate: new Date('2026-08-04T12:00:00').toDateString(),
+  // Save VETERANO. Sem esta linha todo estado deste arquivo cairia na carência
+  // de começo de vida (`NEW_SAVE_GRACE_DAYS`), que existe para não cobrar
+  // coração de quem está na segunda abertura do app — e todo teste de perda de
+  // HP daqui passaria a medir a carência, não a regra. O contador de idade do
+  // save mora dentro de `lastDayReport` porque é o único objeto que atravessa
+  // `hydrateSave` inteiro (ver o bloco "IDADE DO SAVE" em utils/dailyReset.ts).
+  lastDayReport: { date: new Date('2026-08-03T12:00:00').toDateString(), saveDay: 90 },
 });
 
 describe('performDailyReset — proportional HP loss', () => {
@@ -352,6 +362,138 @@ describe('computeDailyReset — teto de perda diária', () => {
     });
     expect(result.degeneratedByHP).toBe(false);
     expect(result.evolutionStage).toBe('champion-virus');
+  });
+});
+
+describe('computeDailyReset — carência de começo de vida', () => {
+  /** O save exato da auditoria: 3 hábitos criados no tutorial, 1 feito no dia 1. */
+  const saveRecemNascido = () => {
+    const ontem = new Date('2026-08-04T12:00:00').toDateString();
+    const ativ = (id: string, feito: boolean) => ({
+      id, name: id, category: 'work', emoji: '✨', steps: [], weekDays: [0, 1, 2, 3, 4, 5, 6],
+      completedToday: feito, lastCompletedDate: feito ? ontem : undefined,
+    });
+    return {
+      ...baseState(),
+      activities: [ativ('a1', true), ativ('a2', false), ativ('a3', false)],
+      energyPoints: 1,
+      // Save NOVO: nada de `lastDayReport` (nunca houve virada), nenhum ritmo,
+      // nenhuma tarefa concluída, nenhuma evolução.
+      lastDayReport: undefined,
+      unlockedEvolutions: ['rookie'],
+    };
+  };
+
+  // REGRESSÃO — dailyGoal = min(3, 4) = 3 e dailyDone = 1 dão
+  // `floor((1 − 1/3) × 3) = 2`, com teto 1: sem a carência, a SEGUNDA abertura
+  // da vida do save tirava um coração de quem ainda não conhece a mecânica de
+  // cura, e a única leitura possível era "eu já estou falhando".
+  it('a primeira virada da vida do save NÃO tira coração', () => {
+    const r = runReset(saveRecemNascido());
+    expect(r.lastDayReport.required).toBe(3); // a meta que cobraria
+    expect(r.lastDayReport.done).toBe(1);
+    expect(r.lastDayReport.heartsLost).toBe(0);
+    expect(r.healthPoints).toBe(3);
+    expect(r.lastDayReport.forgiven).toBe(true);
+  });
+
+  it('a carência tem prazo: acaba em NEW_SAVE_GRACE_DAYS viradas', () => {
+    let s: any = saveRecemNascido();
+    for (let i = 0; i < NEW_SAVE_GRACE_DAYS; i++) {
+      s = runReset(s);
+      expect(s.lastDayReport.heartsLost).toBe(0);
+      // Cada virada devolve o save ao mesmo estado de "fez 1 de 3".
+      s = { ...s, activities: saveRecemNascido().activities, energyPoints: 1, healthPoints: 3 };
+    }
+    const cobrada = runReset(s);
+    expect(cobrada.lastDayReport.forgiven).toBe(false);
+    expect(cobrada.lastDayReport.heartsLost).toBe(MAX_HEARTS_LOST_PER_DAY);
+  });
+
+  // A metade que protege o save ANTIGO: sem esta regra, todo save do mundo
+  // ganharia três viradas sem cobrança no dia do deploy (nenhum deles tem o
+  // contador `saveDay`, que nasce agora).
+  it('save ANTIGO nunca é tratado como novo, mesmo sem o contador', () => {
+    const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const semContador = (over: any) => runReset({
+      ...baseState(), tasks, healthPoints: 3, lastDayReport: undefined, ...over,
+    });
+
+    // Cada sinal de vida pregressa, sozinho, basta.
+    expect(semContador({ totalPerfectDays: 4 }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ perfectDays: 2 }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ evolutionStage: 'champion-data' }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ unlockedEvolutions: ['rookie', 'champion-data'] }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ completedTasks: [{ id: 'c', completedAt: '2026-01-01T10:00:00' }] }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ activityLog: ['2026-01-01T10:00:00'] }).lastDayReport.heartsLost).toBe(1);
+    expect(semContador({ habitRhythms: { h1: { done: ['x'], missed: [], shields: 0, totalDone: 1 } } }).lastDayReport.heartsLost).toBe(1);
+    expect(looksLikeVeteranSave({ ...baseState(), totalPerfectDays: 1 })).toBe(true);
+  });
+
+  it('a carência não relaxa nenhuma tese: nada zera e o ritmo continua sendo escrito', () => {
+    const r = runReset(saveRecemNascido());
+    expect(r.perfectDays).toBe(0);
+    expect(r.totalPerfectDays ?? 0).toBe(0);
+    expect(r.unlockedEvolutions).toEqual(['rookie']);
+    // O histórico de constância É escrito durante a carência — a falta entra no
+    // denominador da média móvel (que não pune) como em qualquer outro dia.
+    expect(Object.keys(r.habitRhythms)).toEqual(['a1', 'a2', 'a3']);
+    expect(r.habitRhythms.a1.done).toHaveLength(1);
+    expect(r.habitRhythms.a2.missed).toHaveLength(1);
+  });
+});
+
+describe('computeDailyReset — rampa depois do retorno', () => {
+  const tarefasNaoFeitas = () => Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
+
+  // REGRESSÃO — `welcomeBack` só existia no relatório da virada do retorno; no
+  // dia seguinte `wasAway` era false e a cobrança voltava inteira. Quem voltou
+  // depois de 5 dias sumido era cobrado na SEGUNDA abertura, que é o momento de
+  // maior risco de abandono, não o de menor.
+  it('quem voltou não é cobrado na segunda abertura', () => {
+    const longAgo = new Date('2026-07-28T12:00:00').toDateString();
+    const retorno = runReset({ ...baseState(), tasks: tarefasNaoFeitas(), lastResetDate: longAgo, healthPoints: 3 });
+    expect(retorno.lastDayReport.welcomeBack).toBe(true);
+    expect(retorno.lastDayReport.heartsLost).toBe(0);
+
+    // Segunda abertura: um dia normal depois do retorno.
+    const diaSeguinte = runReset(
+      { ...retorno, tasks: tarefasNaoFeitas(), healthPoints: 3 },
+      new Date('2026-08-06T12:00:00'),
+    );
+    expect(diaSeguinte.lastDayReport.welcomeBack).toBe(false);
+    expect(diaSeguinte.lastDayReport.heartsLost).toBe(0);
+    expect(diaSeguinte.healthPoints).toBe(3);
+  });
+
+  it('a rampa dura RETURN_GRACE_DAYS viradas e depois a cobrança volta', () => {
+    const longAgo = new Date('2026-07-28T12:00:00').toDateString();
+    let s: any = runReset({ ...baseState(), tasks: tarefasNaoFeitas(), lastResetDate: longAgo, healthPoints: 3 });
+
+    for (let i = 1; i <= RETURN_GRACE_DAYS; i++) {
+      s = runReset(
+        { ...s, tasks: tarefasNaoFeitas(), healthPoints: 3 },
+        new Date(`2026-08-0${5 + i}T12:00:00`),
+      );
+      expect(s.lastDayReport.heartsLost).toBe(0);
+    }
+
+    const cobrada = runReset(
+      { ...s, tasks: tarefasNaoFeitas(), healthPoints: 3 },
+      new Date(`2026-08-0${5 + RETURN_GRACE_DAYS + 1}T12:00:00`),
+    );
+    expect(cobrada.lastDayReport.heartsLost).toBe(MAX_HEARTS_LOST_PER_DAY);
+  });
+
+  it('save antigo que voltou ANTES da regra ganha ao menos a virada seguinte', () => {
+    // Só o `welcomeBack` do relatório antigo existe — nenhum contador.
+    const antigo = {
+      ...baseState(),
+      tasks: tarefasNaoFeitas(),
+      healthPoints: 3,
+      lastDayReport: { date: 'seed', saveDay: 90, welcomeBack: true, daysAway: 5 },
+    };
+    expect(runReset(antigo).lastDayReport.heartsLost).toBe(0);
   });
 });
 

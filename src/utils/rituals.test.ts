@@ -8,6 +8,7 @@ import {
   stackingSuggestion,
   isFreshStartDay,
   freshStartOffer,
+  freshStartHasSomethingToClear,
   applyFreshStart,
 } from './rituals';
 import type { RitualState } from './rituals';
@@ -128,18 +129,64 @@ describe('completeCheckIn', () => {
 // Relatório semanal
 // ---------------------------------------------------------------------------
 
+// Save com histórico de verdade: um hábito com dias registrados na janela. É o
+// mínimo que faz o painel semanal ter o que dizer (ver `weeklyReportHasSubstance`).
+function comHistorico(over: Partial<RitualState> = {}, ref: Date = SUN): RitualState {
+  return base({
+    activities: [{ id: 'h1', name: 'Ler', emoji: '📖' }],
+    habitRhythms: {
+      h1: { ...emptyRhythm(), done: [key(-1, ref), key(-2, ref)], missed: [key(-3, ref)], totalDone: 2 },
+    },
+    ...over,
+  });
+}
+
 describe('needsWeeklyReport', () => {
+  // ATUALIZADO: estes casos usavam `base()` (save vazio) e codificavam o
+  // comportamento antigo — "domingo basta". O calendário passou a ser condição
+  // necessária, não suficiente; por isso o estado dos casos ganhou histórico.
   it('só no domingo', () => {
-    expect(needsWeeklyReport(base(), SUN)).toBe(true);
-    expect(needsWeeklyReport(base(), MON)).toBe(false);
-    expect(needsWeeklyReport(base(), WED)).toBe(false);
+    expect(needsWeeklyReport(comHistorico(), SUN)).toBe(true);
+    expect(needsWeeklyReport(comHistorico(), MON)).toBe(false);
+    expect(needsWeeklyReport(comHistorico(), WED)).toBe(false);
   });
 
   it('uma vez por semana', () => {
-    const shown = base({ lastWeeklyReportDate: dayKeyOf(SUN) });
+    const shown = comHistorico({ lastWeeklyReportDate: dayKeyOf(SUN) });
     expect(needsWeeklyReport(shown, SUN)).toBe(false);
-    // domingo seguinte: volta a valer
-    expect(needsWeeklyReport(shown, day(7, SUN))).toBe(true);
+    // domingo seguinte: volta a valer (o histórico acompanha a janela móvel)
+    const proximo = comHistorico({ lastWeeklyReportDate: dayKeyOf(SUN) }, day(7, SUN));
+    expect(needsWeeklyReport(proximo, day(7, SUN))).toBe(true);
+  });
+
+  // REGRESSÃO — quem instala no SÁBADO recebia, no domingo, um painel de zeros
+  // na segunda sessão da vida do save: nenhum hábito (todos filtrados por
+  // `window > 0`), "0 tarefas · 0 pontos de esforço", "0 sonhos".
+  it('não estreia no dia 2 de vida, sem NADA para mostrar', () => {
+    const recemInstalado = base({
+      // Instalou no sábado: os hábitos existem, mas ainda não viveram virada
+      // nenhuma — nenhum ritmo, nenhuma tarefa concluída, nenhum sonho.
+      activities: [{ id: 'h1', name: 'Ler', emoji: '📖' }, { id: 'h2', name: 'Correr', emoji: '🏃' }],
+    });
+    const painel = weeklyReport(recemInstalado, SUN);
+    expect(painel.perHabit.every(l => l.window === 0)).toBe(true);
+    expect(painel.tasksDone).toBe(0);
+    expect(painel.effortDone).toBe(0);
+    expect(painel.dreams).toBe(0);
+
+    expect(needsWeeklyReport(recemInstalado, SUN)).toBe(false);
+
+    // E a supressão NÃO acumula: o portão é "domingo de uma semana ainda não
+    // relatada", nunca uma fila de relatórios pendentes. No domingo seguinte,
+    // já com histórico, o relatório aparece normalmente.
+    expect(needsWeeklyReport(comHistorico({}, day(7, SUN)), day(7, SUN))).toBe(true);
+  });
+
+  it('uma tarefa concluída na semana já basta — o critério é ter o que dizer', () => {
+    const soTarefa = base({
+      completedTasks: [{ id: 't1', category: 'work', completedAt: day(-2, SUN).toISOString(), effort: 2 }],
+    });
+    expect(needsWeeklyReport(soTarefa, SUN)).toBe(true);
   });
 });
 
@@ -262,17 +309,44 @@ describe('isFreshStartDay', () => {
 });
 
 describe('freshStartOffer', () => {
-  it('só aparece em marco, e uma vez só', () => {
-    expect(freshStartOffer(base(), WED, 'pt-BR')).toBeNull();
+  // ATUALIZADO: os casos usavam `base()` (nenhuma tarefa, nenhum adiamento) e
+  // codificavam o comportamento antigo — "é segunda, logo tem oferta". O
+  // recomeço é perdão de dívida, e oferecê-lo a quem não deve nada APRESENTA a
+  // dívida; por isso agora ele exige cobrança pendente de verdade.
+  const comDivida = (over: Partial<RitualState> = {}) =>
+    base({ tasks: [task('adiada', { postponedCount: 3 })], ...over });
 
-    const offer = freshStartOffer(base(), MON, 'pt-BR');
+  it('só aparece em marco, e uma vez só', () => {
+    expect(freshStartOffer(comDivida(), WED, 'pt-BR')).toBeNull();
+
+    const offer = freshStartOffer(comDivida(), MON, 'pt-BR');
     expect(offer?.title).toBe('Semana nova');
 
-    const en = freshStartOffer(base(), FIRST, 'en');
+    const en = freshStartOffer(comDivida(), FIRST, 'en');
     expect(en?.title).toBe('A new month');
 
-    const done = base({ lastFreshStartDate: dayKeyOf(MON) });
+    const done = comDivida({ lastFreshStartDate: dayKeyOf(MON) });
     expect(freshStartOffer(done, MON, 'pt-BR')).toBeNull();
+  });
+
+  // REGRESSÃO — usuário novo (instalou no fim de semana, cai numa segunda)
+  // recebia "as cobranças pendentes zeram" antes de ter adiado o que quer que
+  // fosse: o app ensinando a alguém que acabou de chegar que ele já acumulou
+  // dívida.
+  it('não oferece perdão de dívida a quem nunca adiou nada', () => {
+    expect(freshStartHasSomethingToClear(base())).toBe(false);
+    expect(freshStartOffer(base(), MON, 'pt-BR')).toBeNull();
+    expect(freshStartOffer(base(), FIRST, 'en')).toBeNull();
+    // O calendário continua respondendo sobre calendário quando perguntado sozinho.
+    expect(isFreshStartDay(MON)).toBe(true);
+    expect(isFreshStartDay(MON, base())).toBe(false);
+    expect(isFreshStartDay(MON, comDivida())).toBe(true);
+  });
+
+  it('tarefa inerte/descartada não é cobrança pendente', () => {
+    const inerte = base({ tasks: [task('x', { postponedCount: 4, status: 'someday' })] });
+    expect(freshStartHasSomethingToClear(inerte)).toBe(false);
+    expect(freshStartOffer(inerte, MON, 'pt-BR')).toBeNull();
   });
 });
 

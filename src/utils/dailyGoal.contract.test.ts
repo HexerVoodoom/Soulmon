@@ -114,6 +114,10 @@ describe('a meta que a UI anuncia é a que a virada do dia cobra', () => {
     tasks: [] as unknown[],
     completedTasks: [] as unknown[],
     activityLog: [] as string[],
+    // Save VETERANO: sem isto o estado cai na carência de começo de vida
+    // (`NEW_SAVE_GRACE_DAYS`, utils/dailyReset.ts), que não cobra HP nas
+    // primeiras viradas — e a autoverificação abaixo mediria a carência.
+    lastDayReport: { date: 'seed', saveDay: 90 },
   };
 
   it('cumpriu a meta do sábado → a virada NÃO tira coração', () => {
