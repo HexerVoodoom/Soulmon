@@ -52,8 +52,7 @@ type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-cl
 interface Popup { icon: string; title: string; detail: string; color: string }
 
 // ── Timing bar ─────────────────────────────────────────────────────────────
-// Exported: a ArenaGame usa a MESMA barra (regra copiada = regra que diverge).
-export function TimingBar({ speed, color, label, onStop }: {
+function TimingBar({ speed, color, label, onStop }: {
   speed: number;
   color: string;
   label: string;

@@ -17,7 +17,6 @@ import {
   countersElement, playerHitDamage, enemyHitDamage, loadBestiaryPool,
   type ArenaEnemy, type BestiaryCreature,
 } from '../utils/arena';
-import { TimingBar } from './DungeonGame';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -26,9 +25,16 @@ import type { Language } from '../utils/i18n';
  * ficha) and its two elemental attributes; enemies come from the bestiary
  * pool (stats only — displayed names are always generated, never the pool's).
  *
- * 5 rounds: 1 medium / 2 weak / 1 medium / 3 weak / 1 boss. Same timing bar
- * as the dungeon. Rewards: Bits per enemy — no heart drops, no Glitchtama
- * (it's a test arena), and losing NEVER costs hearts.
+ * 5 rounds: 1 medium / 2 weak / 1 medium / 3 weak / 1 boss. Rewards: Bits per
+ * enemy — no heart drops, no Glitchtama (it's a test arena), and losing NEVER
+ * costs hearts.
+ *
+ * ⚠️ DORMENTE (18/ago/2026, pedido do dono): a Arena NÃO tem entrada na UI —
+ * nenhum card em `ActivitiesPage`, nenhuma prop no `App`. O arquivo e
+ * `utils/arena.ts` ficam no repo de propósito, e o teste de balanceamento
+ * (`arena.test.ts`) continua rodando na suíte: é ele que guarda os
+ * coeficientes calibrados por simulação até a retomada. Para religar, basta
+ * um card apontando para este componente.
  */
 
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'round-clear' | 'run-complete' | 'lost';
@@ -39,6 +45,69 @@ const DEFEND_TIME = 3.0;
 const POPUP_MS = 1400;
 
 const FICHA_STAGES: FichaStage[] = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
+
+/**
+ * Barra de timing da Arena — igual à da masmorra por enquanto.
+ *
+ * É uma CÓPIA consciente, e a dívida está anotada aqui de propósito (footgun 9
+ * do CLAUDE.md: regra copiada é regra que diverge em silêncio). Enquanto a
+ * Arena está dormente, a alternativa — exportar a barra do `DungeonGame` ou
+ * extrair um módulo comum — mexeria num jogo que está no ar por causa de um
+ * que ninguém joga; o dono pediu explicitamente a masmorra INTACTA. Ao
+ * retomar a Arena, o passo 1 é extrair as duas para um componente único, não
+ * manter as cópias em sincronia à mão.
+ */
+function TimingBar({ speed, color, label, onStop }: {
+  speed: number;
+  color: string;
+  label: string;
+  onStop: (accuracy: number) => void;
+}) {
+  const [pos, setPos] = useState(0);
+  const posRef = useRef(0);
+  const rafRef = useRef(0);
+  const stoppedRef = useRef(false);
+
+  useEffect(() => {
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = (((t - t0) / 1000) * speed) % 2;
+      const x = p < 1 ? p : 2 - p; // ping-pong 0..1..0
+      posRef.current = x;
+      setPos(x);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [speed]);
+
+  const stop = () => {
+    if (stoppedRef.current) return;
+    stoppedRef.current = true;
+    cancelAnimationFrame(rafRef.current);
+    onStop(1 - Math.abs(posRef.current - 0.5) * 2); // 1 = dead center
+  };
+
+  return (
+    <div style={{ width: '100%' }}>
+      <div
+        onPointerDown={stop}
+        style={{ position: 'relative', height: 34, background: '#131a26', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
+      >
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: '30%', background: 'rgba(250, 204, 21, 0.22)' }} />
+        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '46%', width: '8%', background: 'rgba(74, 222, 128, 0.45)' }} />
+        <div style={{ position: 'absolute', top: 2, bottom: 2, left: `calc(${pos * 100}% - 3px)`, width: 6, background: color, boxShadow: `0 0 8px ${color}` }} />
+      </div>
+      <button
+        onPointerDown={stop}
+        className="sm-btn"
+        style={{ width: '100%', marginTop: 8, backgroundColor: color, borderColor: 'color-mix(in srgb, ' + color + ' 55%, black)', ['--sm-cham-line' as string]: 'color-mix(in srgb, ' + color + ' 55%, black)', color: '#0b0f17' } as React.CSSProperties}
+      >
+        {label}
+      </button>
+    </div>
+  );
+}
 
 export function ArenaGame({ evolutionStage, demoCharacterId, language, soulmonSkills, onEarnPoints, onExit }: {
   evolutionStage: string;

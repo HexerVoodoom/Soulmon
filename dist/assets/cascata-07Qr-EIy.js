@@ -1,1 +1,0 @@
-import{D as r}from"./derivedElements-m82axlox.js";const n=5,_=10,E=1,O=2;function R(s){const a=[];for(const t of r){const[c,A]=t.componentes,o=Math.min(Math.floor((s[c]??0)/n),Math.floor((s[A]??0)/n));o<=0||a.push({def:t,passivos:o,destravado:o>=_})}return a}export{O as C,n as D,_ as L,E as a,R as c};
