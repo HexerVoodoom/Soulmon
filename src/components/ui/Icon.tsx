@@ -1,0 +1,120 @@
+import { CSSProperties, memo } from 'react';
+
+/**
+ * `Icon` — Material Symbols Rounded, fonte VARIÁVEL, self-hosted.
+ *
+ * Três decisões que valem para todas as ondas seguintes:
+ *
+ * 1. **Ícone NUNCA dentro de box.** Este componente não desenha moldura,
+ *    fundo, borda, chanfro nem padding — nunca, em nenhuma prop. É a regra
+ *    visual do dono (CLAUDE.md, "UI: regras visuais") e há teste travando.
+ *    Quem precisar de alvo de toque de 44px põe o padding no BOTÃO que
+ *    envolve o ícone, não no ícone.
+ *
+ * 2. **`FILL 0→1` é o sistema de estado** (inativo → ativo), e ele
+ *    INTERPOLA. Não existe par "outline/solid" de ícones diferentes: é o
+ *    mesmo glifo se preenchendo. Valores fracionários são válidos e úteis
+ *    (arrastar, progresso).
+ *
+ * 3. **`opsz` casado ao tamanho renderizado.** O eixo óptico é o que impede
+ *    o traço de afinar em 20px e engrossar em 40px. `weight` padrão 500 —
+ *    é o que faz o traço casar com a espessura do pixel do sprite; 400
+ *    devolve "biblioteca de ícones padrão".
+ *
+ * A fonte é um SUBSET de 99 ícones (145 KB). Nome fora do inventário não
+ * renderiza glifo nenhum — a lista e o comando de regeração estão em
+ * `src/styles/tokens.md`.
+ */
+
+/** Tom do glifo. Todos são tokens de TINTA (`*-ink`), nunca de fill. */
+export type IconTone = 'ink' | 'muted' | 'primary' | 'gold' | 'danger' | 'inherit';
+
+export interface IconProps {
+  /** Nome da ligature (ex.: `'favorite'`). Deve estar no inventário. */
+  name: string;
+  /** Tamanho renderizado em px. `opsz` é casado a ele. Padrão 24. */
+  size?: number;
+  /** Eixo FILL, 0 (inativo) a 1 (ativo). Interpolável. Padrão 0. */
+  fill?: number;
+  /** Eixo wght, 100–700. Padrão 500. */
+  weight?: number;
+  /** Eixo GRAD. Padrão: -25 no tema escuro, 0 no claro (vem do CSS). */
+  grade?: number;
+  /** Tom. Padrão `'inherit'` (herda o `color` do contexto). */
+  tone?: IconTone;
+  /**
+   * Nome acessível. **Ausente = decorativo**: o ícone recebe
+   * `aria-hidden` e some do leitor de tela, que é o certo quando existe um
+   * texto ao lado dizendo a mesma coisa. Presente = `role="img"` + label.
+   * Texto de UI nasce em inglês; quem chama passa o par PT/EN.
+   */
+  label?: string;
+  className?: string;
+  style?: CSSProperties;
+}
+
+/**
+ * `opsz` da Material Symbols só existe entre 20 e 48. Fora disso o eixo é
+ * clampado pelo próprio motor de fonte, mas declarar valor inválido em
+ * `font-variation-settings` invalida a declaração INTEIRA em alguns
+ * WebViews — aí o ícone perde também o FILL e o wght. Clampar aqui.
+ */
+const OPSZ_MIN = 20;
+const OPSZ_MAX = 48;
+
+function clamp(v: number, lo: number, hi: number): number {
+  return v < lo ? lo : v > hi ? hi : v;
+}
+
+const TONE_CLASS: Record<IconTone, string> = {
+  ink: 'sm2-icon-ink',
+  muted: 'sm2-icon-muted',
+  primary: 'sm2-icon-primary',
+  gold: 'sm2-icon-gold',
+  danger: 'sm2-icon-danger',
+  inherit: '',
+};
+
+function IconBase({
+  name,
+  size = 24,
+  fill = 0,
+  weight = 500,
+  grade,
+  tone = 'inherit',
+  label,
+  className,
+  style,
+}: IconProps) {
+  // `--sm2-icon-*` em vez de escrever `font-variation-settings` inteiro por
+  // inline: assim o CSS continua dono da string de eixos (e da transição), e
+  // o componente só move os números.
+  const vars = {
+    '--sm2-icon-fill': String(clamp(fill, 0, 1)),
+    '--sm2-icon-wght': String(clamp(weight, 100, 700)),
+    '--sm2-icon-opsz': String(clamp(size, OPSZ_MIN, OPSZ_MAX)),
+    ...(grade === undefined ? null : { '--sm2-icon-grad': String(clamp(grade, -25, 200)) }),
+  } as CSSProperties;
+
+  const classes = ['sm2-icon', TONE_CLASS[tone], className].filter(Boolean).join(' ');
+
+  return (
+    <span
+      className={classes}
+      // `fontSize` inline e não classe: footgun 1 — o Tailwind aqui é
+      // pré-compilado, então `text-[28px]` não aplicaria nada.
+      style={{ fontSize: size, width: size, height: size, ...vars, ...style }}
+      {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
+      translate="no"
+    >
+      {name}
+    </span>
+  );
+}
+
+/**
+ * `memo` porque ícone é o componente mais instanciado do app (nav, cada
+ * card de tarefa, cada ação do pet) e todas as props são primitivas.
+ */
+export const Icon = memo(IconBase);
+export default Icon;

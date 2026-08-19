@@ -6305,3 +6305,326 @@ button.sm-px-node {
   .sm-haunt-particle,
   .sm-battle-idle { animation: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONDA 1 — FUNDAÇÃO DO NOVO DESIGN SYSTEM  (prefixo `--sm2-*` / `.sm2-*`)
+   Documentação completa e regras de consumo: `src/styles/tokens.md`.
+
+   POR QUE `--sm2-*` E NÃO SOBRESCREVER `--sm-*`:
+   os `--sm-*` atuais estão espalhados por ~6300 linhas deste arquivo (kit
+   pixel, palco, masmorra, moldura chanfrada). Trocar o valor deles repinta
+   TODA tela existente de uma vez, sem que nenhuma onda tenha revisado nada —
+   é regressão garantida. O conjunto novo nasce ao lado; as ondas seguintes
+   migram tela por tela e só no fim os `--sm-*` morrem.
+
+   REGRA CENTRAL — TINTA × FILL (é isto que mata o bug de contraste):
+   todo acento tem DOIS tokens e eles NUNCA têm o mesmo valor.
+     · `*-ink`  = cor de TEXTO/GLIFO sobre fundo de página ou card.
+     · `*-fill` = cor de PREENCHIMENTO (botão, barra, chip, badge).
+   Texto sobre um `*-fill` usa `--sm2-on-<acento>`, nunca `*-ink`.
+   Nunca escreva `color: var(--sm2-gold-fill)` — é o erro que o par existe
+   para tornar impossível de cometer por descuido.
+
+   FOOTGUN 10 — todo token de COR declarado aqui existe NOS DOIS temas. Token
+   que só aparece em `:root` fica preso no valor claro quando
+   `[data-theme="dark"]` está ativo. Há teste mecânico
+   (`src/styles/tokens.contrast.test.ts`) exigindo paridade de chaves entre os
+   dois blocos, além dos contrastes numéricos.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── FONTES — SELF-HOST, e o motivo é o service worker ─────────────────────
+   `public/sw.js` faz `if (url.origin !== self.location.origin) return;` — ele
+   IGNORA qualquer requisição cross-origin. Fonte servida por
+   fonts.gstatic.com nunca entra no cache e some quando o app abre offline
+   (que é o modo de uso normal de um PWA de bichinho: abre, cuida, fecha).
+   Servida de `/fonts/*.woff2` ela cai na regra cache-first de same-origin que
+   já existe. Por isso: self-host, sem exceção — e sem dependência nova no
+   package.json (os arquivos vivem em `public/fonts/`, não em node_modules).
+
+   Subsets: latin + latin-ext. PT-BR precisa de ã õ ç ê á, todos no bloco
+   `latin` (U+00C0–U+00FF); latin-ext cobre o resto do Latim estendido.
+   `font-display: swap` no texto (o conteúdo aparece na hora com a fonte do
+   sistema) e `block` no ícone — ligature de Material Symbols com `swap`
+   mostraria a PALAVRA "settings" por uns 100 ms antes do glifo chegar.     */
+
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/fredoka-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fredoka';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/fredoka-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/rubik-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Rubik';
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url('/fonts/rubik-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Material Symbols Rounded, VARIÁVEL (opsz/wght/FILL/GRAD), subset por
+   `icon_names`: 99 ícones, 145 KB. A fonte inteira tem 5,3 MB — num PWA que
+   precisa caber no cache do celular isso não é uma opção. O inventário de
+   nomes e o comando exato para regerar o arquivo estão em
+   `src/styles/tokens.md`; ícone fora do inventário NÃO renderiza. */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: block;
+  src: url('/fonts/material-symbols-rounded.woff2') format('woff2');
+}
+
+/* ── TOKENS — TEMA CLARO (e `:root`, que vale antes do script de tema) ───── */
+:root, [data-theme="light"] {
+  /* superfícies */
+  --sm2-bg: #F1F7F5;
+  --sm2-surface: #FFFFFF;
+  --sm2-surface-2: #E9F2EF;
+  --sm2-line: #DCE9E6;
+  /* tinta */
+  --sm2-ink: #0E2422;
+  --sm2-muted: #4E6B66;
+  /* primário — tinta e fill separados */
+  --sm2-primary-ink: #0B6F68;
+  --sm2-primary-fill: #0B6F68;
+  --sm2-primary-deep: #08544F;
+  --sm2-primary-soft: #D6F5EF;
+  --sm2-on-primary: #FFFFFF;
+  /* ouro — tinta e fill NUNCA são o mesmo valor */
+  --sm2-gold-ink: #8A5A2B;
+  --sm2-gold-fill: #A2641F;
+  --sm2-on-gold: #FFFFFF;
+  /* perigo */
+  --sm2-danger-ink: #B3261E;
+  --sm2-danger-fill: #B3261E;
+  --sm2-on-danger: #FFFFFF;
+  /* o vidro é ESCURO nos dois temas — é um visor, não um cartão */
+  --sm2-viewport-bg: #0E2422;
+  --sm2-viewport-ink: #E9F5F2;
+  --sm2-viewport-ring: #B0722F;
+  --sm2-viewport-ring-deep: #5E3612;
+}
+
+/* ── TOKENS — TEMA ESCURO (canônico: o Soulmon é noturno) ────────────────── */
+[data-theme="dark"] {
+  --sm2-bg: #08191A;
+  --sm2-surface: #0F2A29;
+  --sm2-surface-2: #163735;
+  --sm2-line: #1E3F3C;
+  --sm2-ink: #E9F5F2;
+  --sm2-muted: #9DBCB4;
+  --sm2-primary-ink: #5FF3E0;
+  --sm2-primary-fill: #5FF3E0;
+  --sm2-primary-deep: #29C9B8;
+  --sm2-primary-soft: rgba(95, 243, 224, .14);
+  --sm2-on-primary: #04211F;
+  --sm2-gold-ink: #EBBE84;
+  --sm2-gold-fill: #D9A05B;
+  --sm2-on-gold: #04211F;
+  --sm2-danger-ink: #FF8B8B;
+  --sm2-danger-fill: #FF8B8B;
+  --sm2-on-danger: #04211F;
+  --sm2-viewport-bg: #071413;
+  --sm2-viewport-ink: #E9F5F2;
+  --sm2-viewport-ring: #C68642;
+  --sm2-viewport-ring-deep: #241507;
+}
+
+/* GRAD do ícone: eixo de grade da Material Symbols. No escuro o glifo claro
+   "engorda" opticamente contra o fundo; GRAD -25 devolve a espessura
+   percebida SEM mudar o avanço do glifo (ao contrário de mexer no `wght`,
+   que reflui o layout). Fica fora dos blocos de cor acima de propósito: não
+   é cor, é métrica — mas segue declarado nos dois temas. */
+:root, [data-theme="light"] { --sm2-icon-grad: 0; }
+[data-theme="dark"] { --sm2-icon-grad: -25; }
+
+/* ── TIPOGRAFIA E MOVIMENTO — invariantes de tema ────────────────────────── */
+:root {
+  --sm2-font-display: 'Fredoka', 'Segoe UI', system-ui, sans-serif;      /* títulos */
+  --sm2-font-text: 'Rubik', 'Segoe UI', system-ui, sans-serif;           /* texto e dado */
+  --sm2-font-pixel: 'Silkscreen', ui-monospace, 'Courier New', monospace;/* voz do aparelho */
+  --sm2-font-icon: 'Material Symbols Rounded';
+
+  /* Escala FECHADA: 12/14/16/20/24/32. Piso ABSOLUTO de 12px — não existe
+     texto menor no app, nem legenda, nem rodapé de card. */
+  --sm2-text-xs: 12px;
+  --sm2-text-sm: 14px;
+  --sm2-text-md: 16px;
+  --sm2-text-lg: 20px;
+  --sm2-text-xl: 24px;
+  --sm2-text-2xl: 32px;
+  --sm2-leading-body: 1.45;
+  --sm2-leading-title: 1.2;
+
+  /* Movimento: três durações e UMA curva. Mais que isso vira ruído. */
+  --sm2-dur-tap: 120ms;    /* feedback de toque */
+  --sm2-dur-enter: 200ms;  /* entrada de card/sheet */
+  --sm2-dur-page: 320ms;   /* troca de página */
+  --sm2-ease: cubic-bezier(.2, 0, 0, 1);
+}
+
+/* ── HELPERS DE TIPOGRAFIA ───────────────────────────────────────────────── */
+.sm2-title {
+  font-family: var(--sm2-font-display);
+  font-weight: 600;
+  line-height: var(--sm2-leading-title);
+  color: var(--sm2-ink);
+}
+.sm2-text {
+  font-family: var(--sm2-font-text);
+  font-weight: 400;
+  line-height: var(--sm2-leading-body);
+  color: var(--sm2-ink);
+}
+.sm2-muted { color: var(--sm2-muted); }
+/* Números que MUDAM (HP, energia, Bits, contadores). Sem tabular-nums o valor
+   "dança" na horizontal a cada tick e a barra inteira parece tremer. */
+.sm2-num {
+  font-family: var(--sm2-font-text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+/* Silkscreen mudou de PAPEL, não saiu: é a VOZ DO APARELHO. Só dentro do
+   visor e em selos. Mínimo 14px e caixa alta — abaixo disso o bitmap fecha os
+   contornos e os acentos (Ã Õ Ç Ê Á, todos presentes na fonte) viram borrão. */
+.sm2-device {
+  font-family: var(--sm2-font-pixel);
+  font-size: var(--sm2-text-sm);
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  -webkit-font-smoothing: none;
+}
+
+/* ── ÍCONE ────────────────────────────────────────────────────────────────
+   REGRA DO DONO (CLAUDE.md, "UI: regras visuais"): ícone NUNCA dentro de box.
+   Esta classe não declara `background`, `border`, `box-shadow` nem `padding`,
+   e isso é contratual — há teste travando. O ícone aparece grande e pelado.
+
+   `opsz` é CASADO ao `font-size` pelo componente: o eixo óptico existe para
+   que o traço não afine em 20px nem engrosse em 40px, e casá-lo é a diferença
+   entre um ícone desenhado e um ícone esticado.                            */
+.sm2-icon {
+  font-family: var(--sm2-font-icon);
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  flex-shrink: 0;
+  color: currentColor;
+  /* Defaults; o componente sobrescreve por inline. */
+  --sm2-icon-fill: 0;
+  --sm2-icon-wght: 500;
+  --sm2-icon-opsz: 24;
+  font-variation-settings:
+    'FILL' var(--sm2-icon-fill),
+    'wght' var(--sm2-icon-wght),
+    'GRAD' var(--sm2-icon-grad),
+    'opsz' var(--sm2-icon-opsz);
+  /* FILL 0→1 é o sistema de estado (inativo→ativo) e ele INTERPOLA: a
+     transição é o que faz "ficar ativo" parecer uma coisa se preenchendo, em
+     vez de dois ícones diferentes trocando de lugar. */
+  transition: font-variation-settings var(--sm2-dur-tap) var(--sm2-ease),
+              color var(--sm2-dur-tap) var(--sm2-ease);
+}
+.sm2-icon-ink { color: var(--sm2-ink); }
+.sm2-icon-muted { color: var(--sm2-muted); }
+.sm2-icon-primary { color: var(--sm2-primary-ink); }
+.sm2-icon-gold { color: var(--sm2-gold-ink); }
+.sm2-icon-danger { color: var(--sm2-danger-ink); }
+
+/* ── VISOR (`Viewport`) — o elemento de marca ─────────────────────────────
+   É a FRONTEIRA entre o pixel (dentro) e o vetor (fora). Bisel externo 20px,
+   tela interna 12px, anel de cobre de 4px (2px de linha + 2px de sombra
+   interna), um ÚNICO reflexo e vinheta de 12%. "Um único reflexo" é regra:
+   dois brilhos param de ler como vidro e passam a ler como adesivo.       */
+.sm2-viewport {
+  position: relative;
+  display: inline-block;
+  padding: 4px;
+  border-radius: 20px;
+  background-color: var(--sm2-viewport-ring);
+  box-shadow:
+    inset 0 0 0 2px var(--sm2-viewport-ring-deep),
+    0 2px 0 0 var(--sm2-viewport-ring-deep),
+    0 6px 18px rgba(0, 0, 0, .35);
+  /* Respiração: a sombra do anel varia ~4% num loop de 4s. */
+  animation: sm2-viewport-breathe 4s ease-in-out infinite;
+}
+.sm2-viewport-still { animation: none; }
+.sm2-viewport-screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--sm2-viewport-bg);
+  color: var(--sm2-viewport-ink);
+  /* Escala INTEIRA obrigatória (2× ou 3×) — escala fracionária é a causa nº1
+     de pixel art borrada, e `pixelated` não salva meio pixel. */
+  image-rendering: pixelated;
+}
+.sm2-viewport-screen img,
+.sm2-viewport-screen canvas { image-rendering: pixelated; }
+/* Reflexo único + vinheta de 12%, ambos `pointer-events: none` para não
+   roubarem o gesto de esfregar o pet que vive lá dentro. Sem scanline por
+   padrão: scanline sobre sprite de 32px come metade do desenho. */
+.sm2-viewport-glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 12px;
+  background-image:
+    linear-gradient(160deg, rgba(255, 255, 255, .10), transparent 40%),
+    radial-gradient(120% 100% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .12) 100%);
+}
+@keyframes sm2-viewport-breathe {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px var(--sm2-viewport-ring-deep),
+      0 2px 0 0 var(--sm2-viewport-ring-deep),
+      0 6px 18px rgba(0, 0, 0, .35);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px var(--sm2-viewport-ring-deep),
+      0 2px 0 0 var(--sm2-viewport-ring-deep),
+      0 6px 19px rgba(0, 0, 0, .365);
+  }
+}
+
+/* ── MOVIMENTO REDUZIDO ──────────────────────────────────────────────────
+   O bloco global logo acima já zera `animation`/`transition` de tudo; este é
+   explícito sobre as duas peças desta onda porque `font-variation-settings` e
+   a respiração do anel são exatamente o movimento contínuo que a WCAG 2.3.3
+   manda desligar — e depender de um `*` distante é como o guard se perde numa
+   refatoração. */
+@media (prefers-reduced-motion: reduce) {
+  .sm2-viewport { animation: none !important; }
+  .sm2-icon { transition: none !important; }
+}

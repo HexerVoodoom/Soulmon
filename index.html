@@ -11,6 +11,30 @@
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
       <link rel="apple-touch-icon" href="/favicon-192x192.png" />
+
+      <!-- FONTES — self-hosted em `/fonts/`, NUNCA de CDN.
+           `public/sw.js` ignora toda requisição cross-origin
+           (`if (url.origin !== self.location.origin) return;`), então fonte
+           vinda de fonts.gstatic.com jamais entra no cache e some quando o
+           app abre offline — que é metade do uso de um PWA de bichinho.
+           Servida daqui, ela cai na regra cache-first de same-origin que já
+           existe. Os @font-face ficam em `src/index.css` (o único CSS
+           empacotado, footgun 1); estes preloads existem só para o
+           carregador não esperar o CSS parsear para descobrir as três fontes
+           da primeira tela. `crossorigin` é OBRIGATÓRIO mesmo same-origin:
+           fonte é requisição em modo CORS, e sem o atributo o preload é
+           descartado e o arquivo baixa DUAS vezes.
+           `as="font"` + woff2: só os subsets latin, que é o que a primeira
+           tela usa; latin-ext chega sob demanda pelo unicode-range. -->
+      <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/rubik-latin.woff2" />
+      <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/fredoka-latin.woff2" />
+      <!-- A Material Symbols (145 KB) NÃO é preloadada de propósito: ela usa
+           `font-display: block` e só é buscada quando um ícone realmente
+           renderiza. Preload dela hoje seriam 145 KB no caminho crítico sem
+           nenhum ícone na tela — mais um aviso de "preloaded but not used" no
+           console. Quando a barra inferior passar a usar `<Icon>`, ela vira o
+           primeiro glifo acima da dobra e a linha entra aqui. -->
+
       <script>
         (function () {
           try {
