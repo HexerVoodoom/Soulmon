@@ -19,7 +19,8 @@ import type { WeeklyReport } from '../utils/rituals';
 import type { Language } from '../utils/i18n';
 import { categoryLabel } from '../types/category-icons';
 import type { ActivityCategory } from '../types/attributes';
-import { PixelPanel, PixelMeter, PixelButton } from './pixel/PixelKit';
+import { PixelPanel, PixelButton } from './pixel/PixelKit';
+import { Icon } from './ui/Icon';
 
 export interface WeeklyReportCardProps {
   report: WeeklyReport;
@@ -36,7 +37,19 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
   // descreve nada e só faria o cartão parecer uma cobrança vazia.
   const lines = report.perHabit.filter(l => l.window > 0);
 
-  const muted: React.CSSProperties = { fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45 };
+  /** ONDA 2 — tokens da fundação; 0.75rem (12px) vira o token `xs`, o piso. */
+  const muted: React.CSSProperties = {
+    fontFamily: 'var(--sm2-font-text)',
+    fontSize: 'var(--sm2-text-xs)',
+    color: 'var(--sm2-muted)',
+    lineHeight: 'var(--sm2-leading-body)',
+  };
+  const body: React.CSSProperties = {
+    fontFamily: 'var(--sm2-font-text)',
+    fontSize: 'var(--sm2-text-sm)',
+    color: 'var(--sm2-ink)',
+    lineHeight: 'var(--sm2-leading-body)',
+  };
 
   return (
     <PixelPanel title={isPt ? 'SUA SEMANA' : 'YOUR WEEK'}>
@@ -50,12 +63,12 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
         <ul style={{ listStyle: 'none', margin: '0 0 12px', padding: 0, display: 'grid', gap: 8 }}>
           {lines.map(line => (
             <li key={line.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span aria-hidden="true" style={{ fontSize: 16, width: 22, textAlign: 'center' }}>{line.emoji}</span>
+              <span aria-hidden="true" style={{ fontSize: 'var(--sm2-text-md)', width: 22, textAlign: 'center' }}>{line.emoji}</span>
               {/* `title`: o nome é cortado por reticências e não havia como ler
                   o resto — nem com o mouse, nem com o dedo. */}
               <span
                 title={line.name}
-                style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: 'var(--sm-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                style={{ ...body, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
               >
                 {line.name}
                 {line.id === report.bestHabitId && (
@@ -64,24 +77,20 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
                   </span>
                 )}
               </span>
-              <span style={{ ...muted, fontVariantNumeric: 'tabular-nums' }}>
+              {/* A BARRINHA DE 64px SAIU. Ela e o "3 de 5" ao lado eram o mesmo
+                  dado desenhado duas vezes na mesma linha — e a barra era a
+                  versão imprecisa dos dois. O número fica (é o que a regra de
+                  constância publica) e a linha volta a caber sem apertar o nome
+                  do hábito, que era quem pagava a conta com reticências. */}
+              <span className="sm2-num" style={muted}>
                 {isPt ? `${line.done} de ${line.window}` : `${line.done} of ${line.window}`}
               </span>
-              <PixelMeter
-                ratio={line.ratio}
-                tone={line.ratio >= 0.8 ? 'gold' : 'cyan'}
-                height={12}
-                label={isPt
-                  ? `Constância de ${line.name}: ${line.done} de ${line.window}`
-                  : `${line.name} consistency: ${line.done} of ${line.window}`}
-                style={{ width: 64, flexShrink: 0 }}
-              />
             </li>
           ))}
         </ul>
       )}
 
-      <p style={{ fontSize: '0.8rem', color: 'var(--sm-ink)', lineHeight: 1.5, margin: '0 0 6px' }}>
+      <p className="sm2-num" style={{ ...body, margin: '0 0 6px' }}>
         {isPt
           ? `${report.tasksDone} tarefa(s) concluída(s) · ${report.effortDone} ponto(s) de esforço`
           : `${report.tasksDone} task(s) done · ${report.effortDone} effort point(s)`}
@@ -92,8 +101,14 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
           {categoryLabel(report.dominantCategory as ActivityCategory, isPt)}
         </p>
       )}
-      <p style={{ ...muted, margin: 0 }}>
-        {isPt ? `🌙 ${report.dreams} sonho(s) na coleção` : `🌙 ${report.dreams} dream(s) collected`}
+      {/* 🌙 era emoji marcando SEÇÃO — ícone de sistema disfarçado, não
+          conteúdo escolhido por ninguém. Virou `bedtime`, decorativo (o texto
+          ao lado já diz "sonhos"). O emoji do hábito, esse fica: é da pessoa. */}
+      <p style={{ ...muted, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Icon name="bedtime" size={20} tone="muted" />
+        <span className="sm2-num">
+          {isPt ? `${report.dreams} sonho(s) na coleção` : `${report.dreams} dream(s) collected`}
+        </span>
       </p>
 
       {/* A sugestão só aparece quando `stackingSuggestion` devolve alguma coisa:
@@ -102,13 +117,13 @@ export function WeeklyReportCard({ report, suggestion, language, onDismiss }: We
       {suggestion && (
         <p
           style={{
+            ...body,
             margin: '12px 0 0',
-            padding: '8px 10px',
-            fontSize: '0.8rem',
-            lineHeight: 1.5,
-            color: 'var(--sm-ink)',
-            backgroundColor: 'var(--sm-surface)',
-            border: '1px solid color-mix(in srgb, var(--sm-px-cyan-ink) 60%, transparent)',
+            // Caixa inteira → um fio de 3px na lateral. A sugestão continua
+            // destacada do resto (é a única linha do cartão que aconselha) sem
+            // virar mais uma moldura dentro do painel.
+            padding: '2px 0 2px 10px',
+            borderLeft: '3px solid var(--sm2-primary-fill)',
           }}
         >
           {suggestion}

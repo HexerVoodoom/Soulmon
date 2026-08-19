@@ -59,14 +59,13 @@ export interface RestWindowCardProps {
 }
 
 /**
- * Cor da ETIQUETA de raridade — texto, então 4,5:1. Os tokens crus do kit não
- * têm par para o tema claro (`--sm-px-cyan` mede 1,40:1 ali); as variantes
- * `-ink` têm, e são declaradas nos dois temas em `index.css`.
+ * Cor da ETIQUETA de raridade — é TEXTO, então são tokens de TINTA (`*-ink`) e
+ * nunca de fill. Os três passam 4,5:1 nos dois temas (`src/styles/tokens.md`).
  */
 const RARITY_TONE: Record<DreamRarity, string> = {
-  common: 'var(--sm-muted)',
-  rare: 'var(--sm-px-cyan-ink)',
-  legendary: 'var(--sm-px-copper-ink)',
+  common: 'var(--sm2-muted)',
+  rare: 'var(--sm2-primary-ink)',
+  legendary: 'var(--sm2-gold-ink)',
 };
 
 function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
@@ -75,26 +74,44 @@ function rarityLabel(rarity: DreamRarity, isPt: boolean): string {
   return isPt ? 'Comum' : 'Common';
 }
 
+/** ONDA 2 — Rubik, escala fechada e tokens da fundação. */
+const mutedLine: CSSProperties = {
+  fontFamily: 'var(--sm2-font-text)',
+  fontSize: 'var(--sm2-text-xs)',
+  color: 'var(--sm2-muted)',
+  lineHeight: 'var(--sm2-leading-body)',
+  margin: 0,
+};
+
 const labelStyle: CSSProperties = {
   display: 'block',
-  fontSize: '0.75rem',
+  fontFamily: 'var(--sm2-font-text)',
+  fontSize: 'var(--sm2-text-xs)',
   letterSpacing: '0.06em',
   textTransform: 'uppercase',
-  color: 'var(--sm-muted)',
+  color: 'var(--sm2-muted)',
   marginBottom: 4,
 };
 
+/**
+ * O campo de horário. Era moldura de COBRE de 2px, herança do kit pixel — dois
+ * campos de formulário desenhados como peça de arcade, dentro de um cartão que
+ * fala de dormir. Vira um campo comum: 1px de `--sm2-line`, superfície própria,
+ * canto de 8px. Os 44px de alvo continuam sendo o piso.
+ */
 const timeInputStyle: CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
   minHeight: 44,
   padding: '8px 10px',
-  fontSize: '1rem',
-  fontWeight: 700,
-  color: 'var(--sm-ink)',
-  background: 'var(--sm-bg)',
-  border: '2px solid var(--sm-px-copper-ink)',
-  borderRadius: 0,
+  fontFamily: 'var(--sm2-font-text)',
+  fontVariantNumeric: 'tabular-nums',
+  fontSize: 'var(--sm2-text-md)',
+  fontWeight: 500,
+  color: 'var(--sm2-ink)',
+  background: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 8,
 };
 
 export function RestWindowCard({
@@ -115,7 +132,7 @@ export function RestWindowCard({
 
   return (
     <PixelPanel title={isPt ? 'JANELA DE DESCANSO' : 'REST WINDOW'}>
-      <p style={{ fontSize: '0.78rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '0 0 12px' }}>
+      <p style={{ ...mutedLine, margin: '0 0 12px' }}>
         {isPt
           ? 'Escolha os horários que combinam com a sua vida. A janela é sua — o app não sugere nenhuma.'
           : 'Pick the hours that fit your life. The window is yours — the app suggests none.'}
@@ -168,12 +185,15 @@ export function RestWindowCard({
               NEUTRA). Sem registro nenhum, o número simplesmente não aparece. */}
           {constancy.window > 0 && (
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
-              <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)' }}>
+              <span
+                className="sm2-num"
+                style={{ fontSize: 'var(--sm2-text-lg)', fontWeight: 500, color: 'var(--sm2-ink)' }}
+              >
                 {isPt
                   ? `${constancy.onTime} de ${constancy.window}`
                   : `${constancy.onTime} of ${constancy.window}`}
               </span>
-              <span style={{ fontSize: '0.76rem', color: 'var(--sm-muted)' }}>
+              <span style={mutedLine}>
                 {isPt
                   ? `noites registradas nos últimos ${REST_WINDOW_DAYS} dias começaram na sua janela`
                   : `logged nights in the last ${REST_WINDOW_DAYS} days started inside your window`}
@@ -185,14 +205,21 @@ export function RestWindowCard({
             tone="cyan"
             label={isPt ? 'Constância de horário' : 'Bedtime constancy'}
           />
-          <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '6px 0 0' }}>
+          {/* Com noites registradas, a frase "é a constância do HORÁRIO em que
+              você deita" repetia palavra por palavra a linha que acompanha o
+              número logo acima ("noites registradas … começaram na sua janela").
+              Ficou só a metade que a linha de cima NÃO diz — e que é a regra de
+              produto desta tela: noite sem registro nunca conta contra você.
+              O texto vazio (sem registro nenhum) continua inteiro: ali não há
+              linha nenhuma acima para repetir. */}
+          <p style={{ ...mutedLine, margin: '6px 0 0' }}>
             {constancy.window === 0
               ? (isPt
                 ? 'Ainda não há noites registradas. Nenhuma noite conta como falha — as que faltam simplesmente não entram na conta.'
                 : 'No nights logged yet. No night ever counts as a miss — the ones missing just stay out of the count.')
               : (isPt
-                ? 'É a constância do HORÁRIO em que você deita, não uma medida do seu sono. Noite sem registro não conta contra você.'
-                : "It's the constancy of the TIME you go to bed, not a measure of your sleep. A night without a log never counts against you.")}
+                ? 'Noite sem registro não conta contra você.'
+                : 'A night without a log never counts against you.')}
           </p>
         </div>
       )}
@@ -200,10 +227,10 @@ export function RestWindowCard({
 
       {/* RECOMPENSAS — ficam visíveis com o switch ligado (regra 5). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-        <PixelTag style={{ color: RARITY_TONE[rarity] }}>
+        <PixelTag style={{ color: RARITY_TONE[rarity], fontFamily: 'var(--sm2-font-text)' }}>
           {isPt ? `Sonho ${rarityLabel(rarity, true).toLowerCase()}` : `${rarityLabel(rarity, false)} dream`}
         </PixelTag>
-        <span style={{ fontSize: '0.76rem', color: 'var(--sm-muted)' }}>
+        <span className="sm2-num" style={mutedLine}>
           {isPt
             ? `Sonhos na coleção: ${dex.collected} de ${dex.total}`
             : `Dreams collected: ${dex.collected} of ${dex.total}`}
@@ -217,9 +244,17 @@ export function RestWindowCard({
           onToggle={() => onToggleMetrics(!hidden)}
           ariaLabel={switchLabel}
         />
-        <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--sm-ink)', lineHeight: 1.35 }}>
+        <span
+          style={{
+            flex: 1,
+            fontFamily: 'var(--sm2-font-text)',
+            fontSize: 'var(--sm2-text-sm)',
+            color: 'var(--sm2-ink)',
+            lineHeight: 'var(--sm2-leading-body)',
+          }}
+        >
           {switchLabel}
-          <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--sm-muted)' }}>
+          <span style={{ ...mutedLine, display: 'block' }}>
             {isPt
               ? 'Some com os números. Os sonhos continuam chegando igual.'
               : 'Hides the numbers. Dreams keep arriving all the same.'}

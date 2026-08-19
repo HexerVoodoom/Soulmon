@@ -125,6 +125,51 @@ describe('CompanionHUD', () => {
     expect(nest.style.marginTop).toBe(`${BASE_SLOTS.nest.yPx}px`);
   });
 
+  /* ── O VISOR e a escala inteira ───────────────────────────────────────── */
+
+  it('o sprite vive DENTRO do visor, e o visor é o elemento de marca', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    const visor = container.querySelector('.sm2-viewport') as HTMLElement;
+    expect(visor).toBeTruthy();
+    // nome próprio, PT/EN — e é `role="img"`, então os CONTROLES (evoluir,
+    // balão) têm que estar FORA dele, senão o leitor de tela os ignora.
+    expect(visor.getAttribute('role')).toBe('img');
+    expect(visor.getAttribute('aria-label')).toBe('Seu Soulmon');
+    const tela = container.querySelector('.sm2-viewport-screen')!;
+    expect(tela.querySelector('img[alt="rookie"]')).toBeTruthy();
+  });
+
+  it('o botão Evoluir e o balão de fala ficam FORA do `role="img"` do visor', () => {
+    const { container } = renderWithCss(
+      <CompanionHUD {...base} canEvolve onEvolveRequest={() => {}} />,
+    );
+    const visor = container.querySelector('.sm2-viewport')!;
+    expect(visor.querySelector('button')).toBeNull();
+    fireEvent.click(screen.getByAltText('rookie'));
+    const balao = screen.getByText(/Estômago vazio|Me alimenta|Com muita fome|fome|energia/i);
+    expect(visor.contains(balao)).toBe(false);
+  });
+
+  it('o sprite é renderizado em escala INTEIRA (2:1 ou 3:1), nunca fracionária', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const dir = path.resolve(__dirname, '../assets/soulmon/lines');
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.png'));
+    expect(files.length).toBeGreaterThan(10);
+
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    const pet = container.querySelector('img[alt="rookie"]') as HTMLImageElement;
+    const render = parseFloat(pet.style.width);
+
+    for (const f of files) {
+      // largura/altura vêm do IHDR do PNG (bytes 16..24) — sem dependência.
+      const b = fs.readFileSync(path.join(dir, f));
+      const w = b.readUInt32BE(16), h = b.readUInt32BE(20);
+      expect(w % render, `${f} (${w}×${h}) não é múltiplo de ${render}: escala fracionária`).toBe(0);
+      expect(h % render, `${f} (${w}×${h}) não é múltiplo de ${render}: escala fracionária`).toBe(0);
+    }
+  });
+
   it('HP 0 continua renderizando a cena (degeneração não pode quebrar a tela)', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} healthPoints={0} />);
     expect(container.querySelectorAll('img').length).toBeGreaterThan(0);

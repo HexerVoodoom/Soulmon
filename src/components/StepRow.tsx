@@ -13,13 +13,15 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
   const isPt = language === 'pt-BR';
 
   return (
-    /* G8: era `rounded-2xl` com `--sm-primary-soft` no concluido — pilula de
-       outro design system, e no tema claro o "soft" quase nao se distinguia do
-       fundo. A moldura chanfrada do kit e a mesma peca do resto do painel; a
-       etapa CONCLUIDA e a unica preenchida, como toda selecao desta rodada. */
+    /* ONDA 2 — a etapa perdeu a MOLDURA.
+       Era `sm-px-card` (moldura chanfrada do kit pixel) por etapa: uma caixa
+       dentro da caixa do hábito, que já está dentro do painel. Três molduras
+       aninhadas para dizer "isto é um subitem". Agora quem diz isso é o recuo e
+       o marcador — que é o que a lista de etapas sempre foi. O único sinal de
+       CONCLUÍDA que sobra é o do próprio marcador + o texto riscado, e nenhum
+       dos dois é cor sozinha. */
     <div
-      className={completed ? 'sm-px-card sm-px-card-ok' : 'sm-px-card'}
-      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 10px', backgroundColor: 'var(--sm-bg)' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '2px 4px' }}
     >
       {/* Checkbox de etapa — <button> e não <div>, para receber foco de teclado
           e ser anunciado por leitor de tela. */}
@@ -39,19 +41,23 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
         <span
           aria-hidden="true"
           style={{
-            /* Quadrado, não círculo: casa com o checkbox de cobre da
-               referência e com o PixelCheckbox das linhas principais. */
-            width: 22, height: 22, borderRadius: 0, display: 'flex',
+            /* Quadrado, não círculo: casa com o `PixelCheckbox` das linhas
+               principais — a etapa é o mesmo gesto, um nível abaixo.
+               O estado é PREENCHIMENTO (vazio → cheio), nunca só matiz, e o
+               brilho ciano assado (`box-shadow`) saiu: era a terceira maneira
+               de dizer "concluída" na mesma linha. */
+            width: 20, height: 20, borderRadius: 4, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
-            background: 'var(--sm-surface)',
-            border: `2px solid ${completed ? 'var(--sm-px-copper)' : 'var(--sm-gold)'}`,
-            boxShadow: completed ? '0 0 6px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' : 'none',
-            transition: 'box-shadow .15s ease, border-color .15s ease',
+            backgroundColor: completed ? 'var(--sm2-primary-fill)' : 'transparent',
+            border: `2px solid ${completed ? 'var(--sm2-primary-fill)' : 'var(--sm2-muted)'}`,
+            transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease)',
           }}
         >
           {completed && (
+            /* Tinta SOBRE o fill: `--sm2-on-primary`, jamais `--sm2-primary-ink`
+               (é a regra tinta×fill de `src/styles/tokens.md`). */
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm-primary)" strokeWidth="2.2" strokeLinecap="square" strokeLinejoin="miter" />
+              <path d="M11.6666 3.5L5.24992 9.91667L2.33325 7" stroke="var(--sm2-on-primary)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
         </span>
@@ -66,8 +72,10 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
           disabled ? 'cursor-not-allowed opacity-50' : completed ? 'cursor-default' : 'cursor-pointer'
         }`}
         style={{
-          fontSize: '0.875rem',
-          color: completed ? 'var(--sm-muted)' : 'var(--sm-ink)',
+          fontFamily: 'var(--sm2-font-text)',
+          fontSize: 'var(--sm2-text-sm)',
+          lineHeight: 'var(--sm2-leading-body)',
+          color: completed ? 'var(--sm2-muted)' : 'var(--sm2-ink)',
           textDecoration: completed ? 'line-through' : 'none',
         }}
       >

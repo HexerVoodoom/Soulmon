@@ -49,17 +49,20 @@ export interface StepsCardProps {
   onDismiss: () => void;
 }
 
+/** ONDA 2 — escala fechada da fundação: legenda 12px, corpo 14px. */
 const mutedLine: CSSProperties = {
-  fontSize: '0.76rem',
-  color: 'var(--sm-muted)',
-  lineHeight: 1.45,
+  fontFamily: 'var(--sm2-font-text)',
+  fontSize: 'var(--sm2-text-xs)',
+  color: 'var(--sm2-muted)',
+  lineHeight: 'var(--sm2-leading-body)',
   margin: 0,
 };
 
 const bodyLine: CSSProperties = {
-  fontSize: '0.78rem',
-  color: 'var(--sm-ink)',
-  lineHeight: 1.5,
+  fontFamily: 'var(--sm2-font-text)',
+  fontSize: 'var(--sm2-text-sm)',
+  color: 'var(--sm2-ink)',
+  lineHeight: 'var(--sm2-leading-body)',
   margin: '0 0 8px',
 };
 
@@ -122,10 +125,16 @@ export function StepsCard({
   return (
     <PixelPanel title={isPt ? 'PASSOS DE HOJE' : "TODAY'S STEPS"}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
-        <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--sm-ink)', lineHeight: 1.1 }}>
+        {/* O dado do dia: Rubik com `tabular-nums` (`sm2-num`). É o número que
+            mais muda do cartão — sem largura fixa de dígito ele pula de posição
+            a cada leitura do sensor. */}
+        <span
+          className="sm2-num"
+          style={{ fontSize: 'var(--sm2-text-xl)', fontWeight: 500, color: 'var(--sm2-ink)', lineHeight: 'var(--sm2-leading-title)' }}
+        >
           {shown.toLocaleString(locale)}
         </span>
-        <span style={{ fontSize: '0.76rem', color: 'var(--sm-muted)' }}>
+        <span style={mutedLine}>
           {isPt
             ? `de ${goal.toLocaleString(locale)} passos`
             : `of ${goal.toLocaleString(locale)} steps`}
@@ -138,11 +147,15 @@ export function StepsCard({
         label={isPt ? 'Progresso de passos do dia' : "Today's step progress"}
       />
 
-      {/* A REGRA DE PRODUTO, na tela, sempre visível. */}
+      {/* A REGRA DE PRODUTO, na tela, sempre visível.
+          A segunda frase ("quem não tem contador não fica atrás em nada") saiu
+          DESTE ramo: aqui só chega quem TEM contador e já deu permissão, então
+          ela tranquilizava uma pessoa que não está lendo. Ela continua inteira
+          no ramo `!available`, que é o de quem precisa dela. */}
       <p style={{ ...mutedLine, margin: '10px 0 0' }}>
         {isPt
-          ? 'Passos não valem ponto sozinhos: eles só confirmam um hábito de saúde que você já marcou como feito. Quem não tem contador de passos não fica atrás em nada.'
-          : "Steps never score on their own: they only confirm a health habit you already marked as done. Anyone without a step counter is behind on nothing."}
+          ? 'Passos não valem ponto sozinhos: eles só confirmam um hábito de saúde que você já marcou como feito.'
+          : 'Steps never score on their own: they only confirm a health habit you already marked as done.'}
       </p>
     </PixelPanel>
   );

@@ -4,10 +4,10 @@ import { CONSTANCY_WINDOW_DAYS, REST_SHIELD_MAX } from '../types/taskModel';
 import {
   constancy,
   habitTier,
-  habitTierIcon,
   dayKeyOf,
   type HabitRhythm,
 } from '../utils/habitRhythm';
+import { Icon } from './ui/Icon';
 
 /**
  * O INDICADOR DE CONSTÂNCIA DE UM HÁBITO
@@ -33,23 +33,34 @@ import {
 type DotState = 'done' | 'shielded' | 'missed' | 'notDue';
 
 /**
- * As três tintas da janela. Todas por TOKEN com par por tema (`index.css`),
- * nunca hex cru:
+ * As três tintas da janela, agora na fundação `--sm2-*` (todas com par nos DOIS
+ * temas e medidas em `src/styles/tokens.md`; nenhuma delas é hex cru).
  *
- *  · `#22A900` media 2,92:1 no tema claro — o ponto "feito", o mais frequente
- *    da janela, era o que menos aparecia sobre fundo claro;
- *  · o losango de escudo e os escudos disponíveis usavam `--sm-px-cyan`
- *    (1,40:1 no claro): o estado que existe justamente para NÃO parecer falha
- *    era o mais fraco da linha;
- *  · o anel de FALTA media 1,82:1 (claro) e 2,74:1 (escuro) — reprovava nos
- *    DOIS temas, e é o estado que mais importa conseguir ler.
+ * O que mudou de valor e por quê: o verde `--sm-ok-ink` e o ciano/cobre do kit
+ * antigo não existem na fundação nova, e inventar um terceiro verde só para
+ * esta linha reabriria o problema que ela já teve (o ponto "feito", o mais
+ * frequente da janela, era o que menos aparecia no tema claro). Feito passa a
+ * usar o acento do app (`primary`) e protegido usa o ouro. A FORMA continua
+ * sendo o que distingue os quatro estados — ver a nota do topo — então a troca
+ * de matiz não custa nenhuma leitura a quem não separa verde de ciano.
  *
- * São objetos gráficos (3:1, WCAG 1.4.11), e as variantes `-ink` passam com
- * folga nos dois temas.
+ * São objetos gráficos (3:1, WCAG 1.4.11): `primary-fill` mede 5,55:1 (claro) e
+ * 13,21:1 (escuro) contra o fundo; `gold-fill`, 4,80:1 e 6,60:1.
  */
-const DONE_INK = 'var(--sm-ok-ink)';
-const SHIELD_INK = 'var(--sm-px-cyan-ink)';
-const MISS_INK = 'var(--sm-px-copper-ink)';
+const DONE_FILL = 'var(--sm2-primary-fill)';
+const SHIELD_FILL = 'var(--sm2-gold-fill)';
+const MISS_INK = 'var(--sm2-muted)';
+
+/**
+ * Maturidade: UM glifo que se PREENCHE, não quatro emojis diferentes.
+ *
+ * Os 🌱🌿🌳 eram ícone de sistema disfarçado de emoji (o próprio plano de
+ * design os cita nominalmente): não são escolha da pessoa, são o estado que o
+ * app calcula. `eco` com o eixo `FILL` de 0 a 1 é o mesmo estado dito do jeito
+ * da fundação — inativo→ativo é o mesmo desenho se preenchendo, e o tier é
+ * legível na tinta e no rótulo, nunca só na cor.
+ */
+const TIER_FILL: Record<string, number> = { seed: 0, sprout: 0.34, sapling: 0.67, tree: 1 };
 
 export interface HabitConstancyProps {
   rhythm: HabitRhythm;
@@ -92,14 +103,14 @@ function Dot({ state, label }: { state: DotState; label: string }) {
   };
   const style: React.CSSProperties =
     state === 'done'
-      ? { ...base, backgroundColor: DONE_INK }
+      ? { ...base, backgroundColor: DONE_FILL }
       : state === 'shielded'
         ? {
             ...base,
             width: 10,
             height: 10,
             margin: 1,
-            backgroundColor: SHIELD_INK,
+            backgroundColor: SHIELD_FILL,
             transform: 'rotate(45deg)',
           }
         : state === 'missed'
@@ -107,8 +118,9 @@ function Dot({ state, label }: { state: DotState; label: string }) {
               ...base,
               backgroundColor: 'transparent',
               border: `2px solid ${MISS_INK}`,
+              borderRadius: '50%',
             }
-          : { ...base, height: 3, marginTop: 4.5, backgroundColor: 'var(--sm-line)' };
+          : { ...base, height: 3, marginTop: 4.5, backgroundColor: 'var(--sm2-line)' };
 
   return (
     <span
@@ -126,7 +138,6 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
   const isPt = language === 'pt-BR';
   const { done, window } = constancy(rhythm, now);
   const tier = habitTier(rhythm.totalDone);
-  const tierIcon = habitTierIcon(rhythm.totalDone);
   const shields = Math.max(0, Math.min(REST_SHIELD_MAX, rhythm.shields));
 
   const days = windowDays(now);
@@ -182,21 +193,39 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
         alignItems: 'center',
         flexWrap: 'wrap',
         gap: compact ? 8 : 10,
-        fontSize: compact ? 12 : 12.5,
-        color: 'var(--sm-muted)',
+        fontFamily: 'var(--sm2-font-text)',
+        // Piso ABSOLUTO de 12px: o modo largo estava em 12.5 e o compacto em 12
+        // — dois tamanhos para a mesma linha, um deles fora da escala fechada.
+        fontSize: 'var(--sm2-text-xs)',
+        lineHeight: 'var(--sm2-leading-body)',
+        color: 'var(--sm2-muted)',
       }}
     >
-      {/* Maturidade. Emoji pelado, sem moldura — ícone nunca dentro de box. */}
+      {/* Maturidade. Glifo pelado, sem moldura — ícone nunca dentro de box. */}
       <span
         title={isPt ? `Maturidade: ${tierName[tier].pt} (${rhythm.totalDone} dias)` : `Maturity: ${tierName[tier].en} (${rhythm.totalDone} days)`}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700, color: 'var(--sm-ink)' }}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500, color: 'var(--sm2-ink)' }}
       >
-        <span aria-hidden="true" style={{ fontSize: compact ? 14 : 16, lineHeight: 1 }}>{tierIcon}</span>
+        <Icon
+          name="eco"
+          size={20}
+          fill={TIER_FILL[tier] ?? 0}
+          tone="primary"
+          label={isPt ? `Maturidade: ${tierName[tier].pt}` : `Maturity: ${tierName[tier].en}`}
+        />
         {!compact && <span>{isPt ? tierName[tier].pt : tierName[tier].en}</span>}
       </span>
 
-      {/* A métrica. Nada aqui zera — e sem janela ela nem vira número. */}
-      <span title={headlineTitle} style={{ fontWeight: 800, color: 'var(--sm-ink)' }}>{headline}</span>
+      {/* A métrica. Nada aqui zera — e sem janela ela nem vira número.
+          `sm2-num` (tabular-nums) porque o numerador muda todo dia: sem ele a
+          linha inteira dança na horizontal a cada conclusão. */}
+      <span
+        title={headlineTitle}
+        className={semJanela ? undefined : 'sm2-num'}
+        style={{ fontWeight: 500, color: 'var(--sm2-ink)' }}
+      >
+        {headline}
+      </span>
 
       {/* A janela. Forma OU cor distinta por estado. */}
       {/* O rótulo dizia "Últimos 7 dias" fixo enquanto o denominador EXIBIDO é
@@ -223,35 +252,47 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
 
       {/* Escudos disponíveis. Consumidos sozinhos quando falta um dia — o
           usuário nunca precisa lembrar de ativar, que é exatamente o que faz o
-          Streak Freeze do Duolingo funcionar. */}
-      <span
-        title={
-          isPt
-            ? `${shields} escudo(s) de descanso. Usados sozinhos num dia perdido.`
-            : `${shields} rest shield(s). Spent automatically on a missed day.`
-        }
-        aria-label={
-          isPt ? `${shields} escudos de descanso disponíveis` : `${shields} rest shields available`
-        }
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
-      >
-        {Array.from({ length: REST_SHIELD_MAX }, (_, i) => (
-          <span
-            key={i}
-            aria-hidden="true"
-            style={{
-              width: 8,
-              height: 8,
-              transform: 'rotate(45deg)',
-              backgroundColor: i < shields ? SHIELD_INK : 'transparent',
-              border: `1px solid ${i < shields ? SHIELD_INK : MISS_INK}`,
-            }}
-          />
-        ))}
-      </span>
+          Streak Freeze do Duolingo funcionar.
 
+          ONDA 2: as CASAS VAZIAS saíram. A linha desenhava sempre
+          `REST_SHIELD_MAX` losangos e apagava os que faltavam — ou seja, com 0
+          escudo (o caso mais comum, e o de quem acabou de criar o hábito) a
+          lista mostrava três contornos vazios embaixo de cada hábito, dizendo
+          "você não tem" três vezes. Agora só existe o que existe: sem escudo,
+          nada é desenhado. O losango é o MESMO do dia protegido, de propósito —
+          é a mesma coisa, guardada. */}
+      {shields > 0 && (
+        <span
+          title={
+            isPt
+              ? `${shields} escudo(s) de descanso. Usados sozinhos num dia perdido.`
+              : `${shields} rest shield(s). Spent automatically on a missed day.`
+          }
+          aria-label={
+            isPt ? `${shields} escudos de descanso disponíveis` : `${shields} rest shields available`
+          }
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
+        >
+          {Array.from({ length: shields }, (_, i) => (
+            <span
+              key={i}
+              aria-hidden="true"
+              style={{
+                width: 8,
+                height: 8,
+                transform: 'rotate(45deg)',
+                backgroundColor: SHIELD_FILL,
+              }}
+            />
+          ))}
+        </span>
+      )}
+
+      {/* A tese do produto, escrita. Fica só no modo largo — na lista diária
+          ela apareceria embaixo de CADA hábito, e uma frase repetida seis vezes
+          na mesma tela deixa de ser tranquilizadora. */}
       {!compact && (
-        <span style={{ flexBasis: '100%', fontSize: 12, lineHeight: 1.45 }}>
+        <span style={{ flexBasis: '100%', fontSize: 'var(--sm2-text-xs)', lineHeight: 'var(--sm2-leading-body)' }}>
           {isPt
             ? 'Nada zera aqui: um dia perdido custa um pontinho, não a sua história.'
             : 'Nothing resets here: one missed day costs a dot, not your history.'}

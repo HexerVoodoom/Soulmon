@@ -56,10 +56,26 @@ const ATTRIBUTE_LABEL: Record<PlayAttribute, { en: string; pt: string }> = {
   vaccine: { en: 'Vaccine', pt: 'Vacina' },
 };
 
+/**
+ * ONDA 2 — tipografia e cor pela fundação `--sm2-*`.
+ *
+ * Os tamanhos em `rem` (0.76 = 12,16px · 0.86 = 13,76px) eram dois degraus
+ * inventados fora da escala fechada, e o de baixo passava raspando o piso de
+ * 12px. Agora são os tokens: legenda em `xs` (12), corpo em `sm` (14).
+ */
 const mutedLine: CSSProperties = {
-  fontSize: '0.76rem',
-  color: 'var(--sm-muted)',
-  lineHeight: 1.45,
+  fontFamily: 'var(--sm2-font-text)',
+  fontSize: 'var(--sm2-text-xs)',
+  color: 'var(--sm2-muted)',
+  lineHeight: 'var(--sm2-leading-body)',
+  margin: 0,
+};
+
+const bodyLine: CSSProperties = {
+  fontFamily: 'var(--sm2-font-text)',
+  fontSize: 'var(--sm2-text-sm)',
+  color: 'var(--sm2-ink)',
+  lineHeight: 'var(--sm2-leading-body)',
   margin: 0,
 };
 
@@ -84,9 +100,13 @@ export function PlayCard({
         {isPt ? `+${bonusPct}% de Bits` : `+${bonusPct}% Bits`}
       </PixelTag>
       <span style={mutedLine}>
+        {/* `min` é número que ANDA (cai a cada minuto): sem tabular-nums a
+            linha inteira treme a cada tick. */}
+        {isPt ? 'no próximo minijogo · ' : 'on your next minigame · '}
+        <span className="sm2-num">{minutesLeft(buff, now)}</span>
         {isPt
-          ? `no próximo minijogo · ${minutesLeft(buff, now)} min · ${ATTRIBUTE_LABEL[buff.attribute].pt}`
-          : `on your next minigame · ${minutesLeft(buff, now)} min · ${ATTRIBUTE_LABEL[buff.attribute].en}`}
+          ? ` min · ${ATTRIBUTE_LABEL[buff.attribute].pt}`
+          : ` min · ${ATTRIBUTE_LABEL[buff.attribute].en}`}
       </span>
     </div>
   ) : null;
@@ -96,13 +116,15 @@ export function PlayCard({
     return (
       <PixelPanel title={isPt ? 'BRINCAR' : 'PLAY'}>
         {buffBlock}
-        <p style={{ fontSize: '0.86rem', color: 'var(--sm-ink)', lineHeight: 1.5, margin: 0 }}>
-          {isPt ? 'Já brincamos hoje!' : 'We already played today!'}
-        </p>
-        <p style={{ ...mutedLine, marginTop: 4 }}>
+        {/* Duas frases viraram uma. "Já brincamos hoje!" + "Seu Soulmon ficou
+            feliz da vida. Amanhã tem mais, se você quiser." diziam a mesma
+            coisa em dois parágrafos; a segunda metade ("amanhã tem mais, se
+            você quiser") é a única que carrega a regra — que brincar é oferta,
+            nunca compromisso — então é ela que fica. */}
+        <p style={bodyLine}>
           {isPt
-            ? 'Seu Soulmon ficou feliz da vida. Amanhã tem mais, se você quiser.'
-            : 'Your Soulmon had a great time. There will be more tomorrow, if you feel like it.'}
+            ? 'Já brincamos hoje! Amanhã tem mais, se você quiser.'
+            : 'We already played today! There will be more tomorrow, if you feel like it.'}
         </p>
       </PixelPanel>
     );
@@ -113,16 +135,20 @@ export function PlayCard({
     <PixelPanel title={isPt ? 'BRINCAR' : 'PLAY'}>
       {buffBlock}
 
-      <p style={{ fontSize: '0.86rem', color: 'var(--sm-ink)', lineHeight: 1.5, margin: '0 0 6px' }}>
+      <p style={{ ...bodyLine, marginBottom: 6 }}>
         {isPt ? 'Vamos brincar um pouquinho?' : 'Want to play for a bit?'}
       </p>
 
-      {/* Custo e prêmio, honestos, ANTES do clique. */}
-      <p style={{ ...mutedLine, marginBottom: 10 }}>
-        {isPt
-          ? `Custa ${PLAY_ENERGY_COST} de energia e dá +${bonusPct}% de Bits no próximo minijogo, mais um ponto de atributo.`
-          : `Costs ${PLAY_ENERGY_COST} energy and grants +${bonusPct}% Bits on your next minigame, plus one attribute point.`}
-      </p>
+      {/* Custo e prêmio, honestos, ANTES do clique — mas só enquanto a oferta
+          existe: sem energia, a linha logo abaixo já diz o preço, e as duas
+          juntas repetiam "custa 1 de energia" duas vezes seguidas. */}
+      {canPlay && (
+        <p style={{ ...mutedLine, marginBottom: 10 }}>
+          {isPt
+            ? `Custa ${PLAY_ENERGY_COST} de energia e dá +${bonusPct}% de Bits no próximo minijogo, mais um ponto de atributo.`
+            : `Costs ${PLAY_ENERGY_COST} energy and grants +${bonusPct}% Bits on your next minigame, plus one attribute point.`}
+        </p>
+      )}
 
       {/* Este bloco troca SOZINHO: o botão vira frase (e volta) assim que a
           energia muda por uma comida dada em outro canto da tela. `aria-live`

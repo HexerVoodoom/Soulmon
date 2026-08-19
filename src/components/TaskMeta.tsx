@@ -1,4 +1,5 @@
 import type { Language } from '../utils/i18n';
+import { Icon } from './ui/Icon';
 import {
   effortOf,
   isHaunted,
@@ -39,8 +40,15 @@ import {
  * A correção é a mesma que o `.sm-px-btn:disabled` já tinha adotado: esmaecer
  * com COR dedicada por tema (`--sm-haunt-ink` para o que é lido, e um véu de
  * superfície `--sm-haunt-veil` para o "esmaecido"), nunca com opacidade.
+ *
+ * ONDA 2 (`--sm2-*`): o roxo continua vindo de `--sm-haunt-ink`/`--sm-haunt-veil`
+ * porque a fundação nova NÃO tem par de assombro — e inventar um hex aqui é
+ * exatamente o que este bloco documenta como o erro. Os dois tokens já existem
+ * nos DOIS temas e já foram medidos (6,79:1 no claro, 7,63:1 no escuro). Quando
+ * a fundação ganhar `--sm2-haunt-*`, esta é a única linha a trocar.
  */
 const HAUNT_INK = 'var(--sm-haunt-ink)';
+const HAUNT_VEIL = 'var(--sm-haunt-veil)';
 
 const EFFORT_LABEL: Record<number, { pt: string; en: string }> = {
   1: { pt: 'rápida', en: 'quick' },
@@ -69,19 +77,25 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
   const stale = daysStale(task, now);
   const nudge = needsPostponeNudge(task);
 
-  const chip: React.CSSProperties = {
+  /**
+   * ONDA 2 — a faixa perdeu as CAIXAS.
+   *
+   * Cada metadado era um chip com fundo e borda de cobre. Três caixinhas
+   * empilhadas debaixo de CADA tarefa da lista é a maior fonte de ruído da
+   * superfície mais vista do app, e nenhuma delas carregava informação que a
+   * moldura acrescentasse: o dado é o texto. Sobrou texto pelado em `--sm2-muted`
+   * separado por espaço. O único que continua com superfície própria é o
+   * assombrado — ali o véu É a informação ("esta está esmaecida").
+   */
+  const meta: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: 4,
-    padding: '2px 7px',
-    fontSize: 12,
-    fontWeight: 700,
-    lineHeight: 1.5,
-    color: 'var(--sm-muted)',
-    // O "esmaecido" da tarefa assombrada vira SUPERFÍCIE, não opacidade: o véu
-    // roxo tinge o fundo do chip e o texto continua na sua cor cheia.
-    backgroundColor: haunted ? 'var(--sm-haunt-veil)' : 'var(--sm-surface)',
-    border: `1px solid color-mix(in srgb, ${haunted ? 'var(--sm-haunt-ink)' : 'var(--sm-px-copper-ink)'} 35%, transparent)`,
+    fontFamily: 'var(--sm2-font-text)',
+    fontSize: 'var(--sm2-text-xs)',
+    fontWeight: 500,
+    lineHeight: 'var(--sm2-leading-body)',
+    color: 'var(--sm2-muted)',
   };
 
   const effortText = isPt ? EFFORT_LABEL[effort].pt : EFFORT_LABEL[effort].en;
@@ -93,7 +107,7 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
         display: 'flex',
         alignItems: 'center',
         flexWrap: 'wrap',
-        gap: 6,
+        gap: 12,
         /* NÃO volte a pôr `opacity` aqui. Esmaecida nunca quis dizer ilegível —
            e opacidade no contêiner é a única coisa nesta faixa capaz de
            reprovar AA em TODOS os chips de uma vez, inclusive os que não têm
@@ -115,25 +129,15 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
         />
       )}
 
-      {/* Selo de esforço — pontinhos, porque "1/2/3" sozinho não diz nada.
+      {/* Esforço. Os três pontinhos SAÍRAM: eles codificavam 1/2/3 ao lado da
+          palavra que já diz 1/2/3 ("rápida/média/projeto") — duas leituras do
+          mesmo dado, uma delas cifrada. A palavra fica, os pontos vão embora.
           A recompensa escala com ISTO, nunca com a contagem de tarefas. */}
       <span
-        style={{ ...chip, position: 'relative' }}
-        title={isPt ? `Esforço ${effort} — ${effortText}` : `Effort ${effort} — ${effortText}`}
+        style={{ ...meta, position: 'relative' }}
+        title={isPt ? `Esforço ${effort} de 3` : `Effort ${effort} of 3`}
         aria-label={isPt ? `Esforço ${effort} de 3, ${effortText}` : `Effort ${effort} of 3, ${effortText}`}
       >
-        <span aria-hidden="true" style={{ display: 'inline-flex', gap: 2 }}>
-          {[1, 2, 3].map(n => (
-            <span
-              key={n}
-              style={{
-                width: 5,
-                height: 5,
-                backgroundColor: n <= effort ? 'var(--sm-px-cyan-ink)' : 'var(--sm-line)',
-              }}
-            />
-          ))}
-        </span>
         {effortText}
       </span>
 
@@ -150,13 +154,17 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
              uma barra alta. */
           className={onPostponeNudge ? 'sm-tap-44' : undefined}
           style={{
-            ...chip,
+            ...meta,
             position: 'relative',
+            background: 'none',
+            border: 'none',
+            padding: 0,
             cursor: onPostponeNudge ? 'pointer' : 'default',
-            color: nudge ? 'var(--sm-ink)' : 'var(--sm-muted)',
-            borderColor: nudge
-              ? 'color-mix(in srgb, var(--sm-px-cyan-ink) 70%, transparent)'
-              : `color-mix(in srgb, ${haunted ? 'var(--sm-haunt-ink)' : 'var(--sm-px-copper-ink)'} 35%, transparent)`,
+            // O destaque do limite de adiamentos deixou de ser uma borda ciano
+            // e virou a TINTA do próprio dado: mais forte, e sem caixa.
+            color: nudge ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
+            textDecoration: nudge ? 'underline' : 'none',
+            textUnderlineOffset: 3,
           }}
           title={
             nudge
@@ -166,9 +174,15 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
               : undefined
           }
         >
+          {/* `schedule` (relógio) no lugar de nada: o contador precisava do
+              rótulo inteiro para dizer que falava de tempo. Decorativo — o
+              texto ao lado diz a mesma coisa. */}
+          <Icon name="schedule" size={20} fill={nudge ? 1 : 0} />
+          {isPt ? 'adiada ' : 'postponed '}
+          <span className="sm2-num">{postponed}</span>
           {isPt
-            ? `adiada ${postponed} ${postponed === 1 ? 'vez' : 'vezes'}`
-            : `postponed ${postponed}${postponed === 1 ? ' time' : ' times'}`}
+            ? (postponed === 1 ? ' vez' : ' vezes')
+            : (postponed === 1 ? ' time' : ' times')}
         </button>
       )}
 
@@ -177,11 +191,15 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
       {haunted && (
         <span
           style={{
-            ...chip,
+            ...meta,
             position: 'relative',
+            // A ÚNICA superfície que sobrou na faixa, e ela é informação: o véu
+            // roxo é o "esmaecido" da tarefa assombrada. Fill de véu + tinta
+            // cheia por cima — nunca `opacity`, que derruba o contraste de tudo.
+            padding: '2px 8px',
             color: HAUNT_INK,
-            borderColor: `color-mix(in srgb, ${HAUNT_INK} 55%, transparent)`,
-            backgroundColor: `color-mix(in srgb, ${HAUNT_INK} 12%, var(--sm-surface))`,
+            backgroundColor: HAUNT_VEIL,
+            fontWeight: 600,
           }}
           title={
             overdue
@@ -193,18 +211,12 @@ export function TaskMeta({ task, now, language, onPostponeNudge }: TaskMetaProps
                 : `Idle for ${stale} days. Finishing it gives a relief bonus.`
           }
         >
-          {/* A partícula era `style={{animation}}` inline — e animação inline só
-              perde para `animation: none !important`, então
-              `prefers-reduced-motion` não a alcançava. Virou classe. */}
-          <span
-            aria-hidden="true"
-            className="sm-haunt-particle"
-            style={{
-              width: 6,
-              height: 6,
-              backgroundColor: HAUNT_INK,
-            }}
-          />
+          {/* A partícula quadrada pulsante (`sm-haunt-particle`) virou o glifo:
+              `auto_awesome` diz "tem prêmio aqui" — que é a metade da mensagem
+              que importa. Continua sem ícone de ALERTA, e continua roxo: isto é
+              convite, não erro. A classe da animação sai junto, e com ela a
+              única peça desta faixa que dependia de `prefers-reduced-motion`. */}
+          <Icon name="auto_awesome" size={20} fill={1} />
           {isPt ? 'assombrada · +alívio' : 'haunted · +relief'}
         </span>
       )}

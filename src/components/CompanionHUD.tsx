@@ -2,11 +2,9 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { PixelButton } from './pixel/PixelKit';
-import iconItems from '../assets/soulmon/icons/icon-items.png';
+import { Icon } from './ui/Icon';
+import { Viewport } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
-import iconBath from '../assets/soulmon/icons/icon-bath.png';
-import iconSleep from '../assets/soulmon/icons/icon-sleep.png';
-import iconWake from '../assets/soulmon/icons/icon-wake.png';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -17,6 +15,31 @@ import { playShower } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
+
+/* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
+   Os PNGs das linhas (`src/assets/soulmon/lines/*`) são 256×256 (53 arquivos)
+   ou 384×384 (10) — MEDIDO no cabeçalho de cada arquivo, não suposto.
+   Renderizados em `PET_BOX` (152px) davam fator 0,594× e 0,396×: escala
+   fracionária, exatamente a causa nº 1 de pixel art parecer borrada
+   (tokens.md §7). Pior: com `image-rendering: pixelated` o navegador não
+   borra — ele DERRUBA linhas de forma desigual, então o traço do pet ficava
+   com espessura variável de uma parte do corpo para a outra.
+
+   128 é o maior divisor comum útil dos dois tamanhos: 256 → 128 é 2:1 e
+   384 → 128 é 3:1, os dois INTEIROS. Cada pixel de origem vira exatamente um
+   bloco de destino em todo o roster, e o `pixelated` passa a ser uma decisão
+   em vez de um remendo. Há guard mecânico no teste de render — sprite novo com
+   lado que não seja múltiplo de `PET_RENDER` reabre o buraco em silêncio.
+
+   A linha do chão NÃO se mexe: `PET_BOX - PET_RENDER` é somado ao
+   `PET_TOP_OFFSET` para que a BORDA DE BAIXO da caixa do sprite continue no
+   mesmo pixel de antes. `utils/petStage.ts` (dono do palco, do berço e do
+   `GROUND_Y`) não é tocado — o pet fica 24px menor e sentado no mesmo berço,
+   que tem 148px de largura e passa a abraçá-lo em vez de sumir atrás dele. */
+const SPRITE_SRC_PX = 256;
+const SPRITE_SCALE = 2;
+const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
+const PET_GROUND_KEEP = PET_BOX - PET_RENDER;
 
 interface CompanionHUDProps {
   companionMood: 'idle' | 'happy' | 'tired';
@@ -528,9 +551,34 @@ export const CompanionHUD = memo(function CompanionHUD({
             ao FUNDO; quem encolhe é a janela por cima dela, que corta pelo
             TOPO — exatamente onde estava o ar. Nada em `utils/petStage.ts`
             muda, e o pet nunca aparece cortado. */}
-        <div
-          className="relative overflow-hidden"
-          style={{ height: 'var(--sm-petstage-h)', borderRadius: 28 }}
+        {/* A janela do palco. A altura vem do visor (tela + 4px de bisel de cada
+            lado), não de um `height` fixo — e ela existe para ancorar os
+            CONTROLES que ficam por cima do visor (ver logo abaixo). */}
+        <div className="relative">
+        {/* ── O VISOR — elemento de marca nº 1 ────────────────────────────────
+            O palco deixa de ser um retângulo de raio 28 e passa a ser a TELA de
+            um aparelho v-pet: bisel de cobre por fora, interior escuro nos dois
+            temas, um único reflexo. É a fronteira declarada do plano — pixel
+            art vive DENTRO do visor, e tudo fora dele é SVG limpo.
+
+            `width`/`height`/`scale` do componente derivam uma tela QUADRADA de
+            152px; aqui a tela é a coluna inteira e a altura é a janela do palco
+            (`--sm-petstage-h`, que encolhe em tela baixa), então `screenStyle`
+            substitui as duas medidas. A regra de escala inteira que importa
+            está onde ela é visível — no sprite (256 → 128, 2:1 exato acima).
+
+            O cenário comprado na loja passa a ser pintado DENTRO da tela. Antes
+            ele era uma lavagem em tela cheia atrás de tudo (App.tsx); com o
+            visor opaco ele sumiria daqui, e cenário é item pago. Dentro do
+            visor ele também lê melhor: é o cenário do JOGO, não o papel de
+            parede do aplicativo. */}
+        <Viewport
+          width={PET_RENDER / 2}
+          height={PET_RENDER / 2}
+          scale={2}
+          label={language === 'pt-BR' ? 'Seu Soulmon' : 'Your Soulmon'}
+          style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
+          screenStyle={{ width: '100%', height: 'var(--sm-petstage-h)', background: cenario }}
         >
         <div
           className="p-3"
@@ -548,29 +596,6 @@ export const CompanionHUD = memo(function CompanionHUD({
               emoldurada no HUD do topo, ao lado de ENERGIA. Eram o único
               medidor do app desenhado sem superfície — e o T1 os citava como
               "3 corações no ar". Ver components/pixel/HomeHud.tsx. */}
-
-          {/* Evolução manual: botão aparece SÓ quando pode evoluir */}
-          {canEvolve && !isSleeping && (
-            /* Botão do kit pixel (moldura de cobre, miolo aceso em ciano).
-               `left`/`transform` seguem INLINE: `left-1/2` não existe no
-               index.css pré-compilado (footgun 1) e sem ele o botão caía na
-               posição estática, fora do centro do palco.
-
-               RODADA 4 — `bottom: 6`, não `top: 10`. A janela do palco corta
-               pelo TOPO em tela baixa, e CONTROLE cortado é defeito funcional,
-               não estético: em 412×700 o botão de evoluir sumiria da tela.
-               Ancorado no rodapé ele existe em qualquer altura de janela — e
-               de quebra deixa de disputar a faixa acima do pet com o balão de
-               abraço (que era o motivo do `top` variável do balão, abaixo). */
-            <PixelButton
-              size="sm"
-              variant="primary"
-              onClick={onEvolveRequest}
-              style={{ position: 'absolute', zIndex: 30, left: '50%', bottom: 6, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
-            >
-              {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
-            </PixelButton>
-          )}
 
           {/* Evolution flash overlay */}
           {evolutionFlash && (
@@ -709,7 +734,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                    para a esquerda joga o pet para fora do berço. */
                 transform: `translateX(-50%) ${getHorizontalFlip()}`,
                 top: '50%',
-                marginTop: PET_TOP_OFFSET,
+                /* `+ PET_GROUND_KEEP` mantém a BORDA DE BAIXO da caixa do
+                   sprite no mesmo pixel de quando ela media `PET_BOX` — o pet
+                   encolheu para a escala 2:1 exata e os pés não saíram do
+                   chão. Ver o bloco de escala no topo do arquivo. */
+                marginTop: PET_TOP_OFFSET + PET_GROUND_KEEP,
                 zIndex: 1,
                 transition: 'left 0.1s ease-linear, transform 0.1s ease-linear',
                 touchAction: 'none', // let the rub gesture own the pointer
@@ -726,7 +755,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                   alt={currentStage}
                   className={`object-contain ${getCompanionFilter()}`}
                   style={{
-                    width: PET_BOX, height: PET_BOX,
+                    width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
@@ -797,39 +826,83 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
           )}
 
-          {/* Speech bubble — anchored to bottom of pet area */}
-          {showBubble && (
-            <div
-              className="absolute bottom-0 left-0 right-0 z-[45] px-2 pb-1 pointer-events-auto"
-              onClick={handleBubbleClick}
-            >
-              <div className="relative px-3 py-1.5 cursor-pointer bg-white rounded-xl shadow-lg">
-                <p
-                  className="text-gray-800 text-center break-words"
-                  style={{
-                    fontFamily: 'monospace',
-                    fontSize: '0.68rem',
-                    lineHeight: '1.3',
-                  }}
-                >
-                  {bubbleText}
-                </p>
-                {/* Bubble tail pointing up */}
-                <span
-                  className="absolute"
-                  style={{
-                    top: -6, left: '50%', transform: 'translateX(-50%)',
-                    width: 0, height: 0,
-                    borderLeft: '6px solid transparent',
-                    borderRight: '6px solid transparent',
-                    borderBottom: '6px solid white',
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
         </div>
+        </Viewport>
+
+        {/* ── Os CONTROLES ficam FORA do visor ────────────────────────────────
+            Não é preciosismo de composição, é acessibilidade: o `Viewport` é
+            `role="img"` com nome acessível, e tudo dentro de um `role="img"` é
+            ignorado pelo leitor de tela. Botão de evoluir e balão de fala
+            DENTRO dele seriam invisíveis para quem usa leitor — e um botão
+            focável dentro de subárvore ignorada é o defeito clássico.
+
+            Então: o visor é a TELA (a imagem do pet, com nome próprio), e o que
+            é controle vive no corpo do aparelho, por cima dela. Visualmente
+            fica onde estava; a âncora agora é a janela do palco. */}
+
+        {/* Evolução manual: botão aparece SÓ quando pode evoluir. `left`/
+            `transform` seguem INLINE — `left-1/2` não existe no index.css
+            pré-compilado (footgun 1). Ancorado no rodapé (rodada 4): a janela
+            do palco corta pelo TOPO em tela baixa, e controle cortado é defeito
+            funcional, não estético. */}
+        {canEvolve && !isSleeping && (
+          <PixelButton
+            size="sm"
+            variant="primary"
+            onClick={onEvolveRequest}
+            style={{ position: 'absolute', zIndex: 30, left: '50%', bottom: 10, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
+          >
+            {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
+          </PixelButton>
+        )}
+
+        {/* Balão de fala. Saiu do monospace a 0,68rem (≈11px, abaixo do piso
+            absoluto de 12px da escala) para Rubik 14px em tokens `--sm2-*`: é o
+            PET falando com a pessoa, texto de leitura, não voz de aparelho —
+            Silkscreen aqui seria a fonte errada e o branco chapado de antes
+            ignorava o tema. */}
+        {showBubble && (
+          <div
+            className="absolute left-0 right-0 pointer-events-auto"
+            style={{ bottom: 6, zIndex: 45, padding: '0 10px', cursor: 'pointer' }}
+            onClick={handleBubbleClick}
+          >
+            <div
+              className="relative"
+              style={{
+                background: 'var(--sm2-surface)',
+                border: '1px solid var(--sm2-line)',
+                borderRadius: 14,
+                padding: '8px 12px',
+                boxShadow: '0 4px 14px rgba(0,0,0,.28)',
+              }}
+            >
+              <p
+                className="text-center break-words"
+                style={{
+                  margin: 0,
+                  fontFamily: 'var(--sm2-font-text)',
+                  fontSize: 'var(--sm2-text-sm)',
+                  lineHeight: 'var(--sm2-leading-body)',
+                  color: 'var(--sm2-ink)',
+                }}
+              >
+                {bubbleText}
+              </p>
+              {/* Rabinho apontando para cima — geometria de peça única. */}
+              <span
+                className="absolute"
+                style={{
+                  top: -6, left: '50%', transform: 'translateX(-50%)',
+                  width: 0, height: 0,
+                  borderLeft: '6px solid transparent',
+                  borderRight: '6px solid transparent',
+                  borderBottom: '6px solid var(--sm2-surface)',
+                }}
+              />
+            </div>
+          </div>
+        )}
         </div>
 
         {/* ── B1: fileira EMOLDURADA de ações, rente ao palco ────────────────
@@ -845,11 +918,19 @@ export const CompanionHUD = memo(function CompanionHUD({
             os mesmos três rótulos, agora dentro de uma superfície com alvo
             visível de 60px de altura. */}
         <div className="sm-px-actionbar" role="group" aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}>
+          {/* Os três PNGs saíram: as ações do pet são `Icon` (Material Symbols
+              Rounded) a 42px, `weight 500` — o peso que faz o traço casar com a
+              espessura do pixel do sprite. SEM MOLDURA: o alvo de toque de
+              60px é do BOTÃO (`.sm-px-action`), nunca do ícone.
+
+              O eixo FILL carrega o estado aqui também: `bedtime` preenchido
+              enquanto o pet dorme, e o glifo troca para `wb_sunny` só porque a
+              AÇÃO muda (acordar ≠ dormir), não porque o estado mudou. */}
           {([
-            { key: 'items', icon: iconItems, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
-            { key: 'bath', icon: iconBath, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
-            { key: 'sleep', icon: isSleeping ? iconWake : iconSleep, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
-          ] as { key: string; icon: string; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
+            { key: 'items', icon: 'inventory_2', fill: hasNewItems ? 1 : 0, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
+            { key: 'bath', icon: 'shower', fill: 0, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
+            { key: 'sleep', icon: isSleeping ? 'wb_sunny' : 'bedtime', fill: isSleeping ? 1 : 0, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
+          ] as { key: string; icon: string; fill: number; en: string; pt: string; onClick: () => void; disabled: boolean; badge: boolean | undefined }[]).map(a => (
             <button
               key={a.key}
               type="button"
@@ -868,14 +949,28 @@ export const CompanionHUD = memo(function CompanionHUD({
                   className="sm-px-action-dot"
                   aria-label={language === 'pt-BR' ? 'Novidade' : 'New'}
                   role="img"
+                  style={{ background: 'var(--sm2-danger-fill)', border: '1px solid var(--sm2-viewport-ring)' }}
                 />
               )}
-              <img src={a.icon} alt="" width={42} height={42} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-              {/* Rótulo curto de AÇÃO — cabe na bitmap sem prejuízo de
-                  leitura (é uma palavra, não frase). "Acordar"/"Dormir" não
-                  têm acento; se um dia tiverem, o subset latin da Silkscreen
-                  cobre (conferido no cmap). */}
-              <span className="sm-px-action-label">
+              <Icon name={a.icon} size={42} fill={a.fill} weight={500} tone={a.fill ? 'primary' : 'ink'} />
+              {/* Rótulo de AÇÃO em Rubik 12px, caixa mista. Era Silkscreen a
+                  8px: abaixo do piso absoluto da escala, e a bitmap fecha os
+                  contornos nesse tamanho. Silkscreen agora é a voz do aparelho
+                  — só DENTRO do visor e em selos —, e esta fileira é o corpo
+                  do aparelho, por fora. */}
+              <span
+                className="sm-px-action-label"
+                style={{
+                  fontFamily: 'var(--sm2-font-text)',
+                  fontSize: 'var(--sm2-text-xs)',
+                  fontWeight: 500,
+                  letterSpacing: 0,
+                  lineHeight: 1.2,
+                  textTransform: 'none',
+                  WebkitFontSmoothing: 'antialiased',
+                  color: 'var(--sm2-ink)',
+                }}
+              >
                 {language === 'pt-BR' ? a.pt : a.en}
               </span>
             </button>

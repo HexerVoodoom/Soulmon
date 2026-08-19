@@ -1,14 +1,6 @@
 import { useState } from 'react';
 import type { Language } from '../utils/i18n';
-import iconHome from '../assets/soulmon/icons/icon-home.png';
-import iconActivities from '../assets/soulmon/icons/icon-activities.png';
-import iconEvolution from '../assets/soulmon/icons/icon-evolution.png';
-import iconBook from '../assets/soulmon/icons/icon-book.png';
-import iconCoin from '../assets/soulmon/icons/icon-coin.png';
-import iconMenu from '../assets/soulmon/icons/icon-menu.png';
-import iconGem from '../assets/soulmon/icons/icon-gem.png';
-import iconGear from '../assets/soulmon/icons/icon-gear.png';
-import iconReset from '../assets/soulmon/icons/icon-reset.png';
+import { Icon } from './ui/Icon';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
 
@@ -21,88 +13,151 @@ interface BottomNavProps {
   language?: Language;
 }
 
-/** Ícone-imagem (gerado no Higgsfield, kit bronze/cobre) no lugar do
- *  lucide-react. Sem `color` de SVG pra recolorir por aba — o destaque da
- *  aba ativa vem do halo (glow) + fundo, não de tingir o ícone. */
-function NavIcon({ src, alt, active, size = 36 }: { src: string; alt: string; active?: boolean; size?: number }) {
-  return (
-    <img
-      src={src}
-      alt={alt}
-      width={size}
-      height={size}
-      style={{
-        objectFit: 'contain',
-        imageRendering: 'pixelated',
-        opacity: active ? 1 : 0.55,
-        /* O `scale(1.22)` saiu junto com a chegada do rótulo (B7): com texto
-           embaixo, aumentar o ícone empurrava a linha de base e a fileira
-           deixava de ter um ritmo só. O destaque agora é o preenchimento da
-           placa + o rótulo aceso. */
-        filter: active ? 'drop-shadow(0 0 7px rgba(93,240,224,0.85)) drop-shadow(0 0 14px rgba(93,240,224,0.4))' : 'none',
-        transition: 'opacity 0.15s ease, filter 0.15s ease',
-      }}
-    />
-  );
-}
-
 /**
- * Um destino da nav: ícone + RÓTULO PERSISTENTE (B7).
+ * Um destino da nav: ícone + RÓTULO PERSISTENTE.
  *
- * Material e HIG convergem: barra inferior tem 3–5 destinos **com nome**. O
- * app tinha 6 destinos e nenhum nome — o ícone sozinho é adivinhação, e para
- * leitor de tela o `aria-label` existia mas nada aparecia na tela.
+ * **O eixo FILL é o sistema de estado.** Inativo = `fill 0` + tinta `muted`;
+ * ativo = `fill 1` + tinta `primary` + o sublinhado de 3px. É o MESMO glifo se
+ * preenchendo — não são dois ícones trocando de lugar, e a interpolação já vem
+ * com a transição de `--sm2-dur-tap` do `.sm2-icon`.
  *
- * Por que o rótulo cabe: 412px / 6 = 68px por célula; a Silkscreen a 8px sem
- * espaçamento extra mede ~4,8px de avanço por caractere, então "ATIVIDADES"
- * (10, o pior caso em PT-BR) mede ~48px dentro de 62px úteis — MEDIDO no
- * navegador, não estimado (ver `align-round3.md`).
+ * **Ícone nunca dentro de box** (regra do dono): nada de placa, moldura ou
+ * halo. O alvo de 44px é do BOTÃO (`.sm-bottom-nav-btn` ocupa os 80px de
+ * altura da barra), nunca do ícone. O sublinhado é uma BARRA — não é uma caixa
+ * em volta do ícone — e existe porque a seleção não pode ser carregada só por
+ * cor (daltonismo, alto contraste).
  *
- * A seleção segue a regra da rodada 2 — **o preenchimento carrega**: o item
- * ativo é o único bloco sólido da fileira, e o inativo nunca é preenchido.
- * Isso é invariante de tema; brilho e cor de rótulo são reforço, não a
- * informação.
+ * **Rótulo em Rubik 12px, caixa mista.** Era Silkscreen a 8px: abaixo do piso
+ * absoluto de 12px da escala tipográfica, e a bitmap fecha os contornos nesse
+ * tamanho. Silkscreen agora é a voz do APARELHO (só dentro do visor e em
+ * selos), e a nav é o aparelho por fora. O rótulo fica: `home`/`casino`/
+ * `auto_awesome` sozinhos são adivinhação, e o texto na tela é o mesmo do
+ * `aria-label` (quem vê e quem ouve leem a mesma coisa).
  */
-function NavItem({ icon, label, active, onClick, current }: {
+function NavItem({ icon, label, active, onClick, current, expanded }: {
   icon: string; label: string; active?: boolean; onClick: () => void;
   /** `aria-current="page"` só para destinos de verdade, não para ações. */
   current?: boolean;
+  expanded?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       aria-label={label}
       aria-current={current && active ? 'page' : undefined}
-      className={active ? 'sm-bottom-nav-btn sm-bottom-nav-btn-on' : 'sm-bottom-nav-btn'}
+      {...(expanded === undefined ? null : { 'aria-expanded': expanded, 'aria-haspopup': true as const })}
+      className="sm-bottom-nav-btn"
       title={label}
+      /* Inline e não classe: footgun 1 — o Tailwind aqui é pré-compilado e
+         `relative`/`text-[12px]` novos não gerariam nada. */
+      style={{ position: 'relative' }}
     >
-      <NavIcon src={icon} alt="" active={active} />
-      <span className="sm-bottom-nav-label">{label}</span>
+      <Icon name={icon} size={32} fill={active ? 1 : 0} weight={500} tone={active ? 'primary' : 'muted'} />
+      <span
+        className="sm-bottom-nav-label"
+        style={{
+          fontFamily: 'var(--sm2-font-text)',
+          fontSize: 'var(--sm2-text-xs)',
+          fontWeight: 500,
+          letterSpacing: 0,
+          lineHeight: 1.2,
+          textTransform: 'none',
+          WebkitFontSmoothing: 'antialiased',
+          color: active ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
+        }}
+      >
+        {label}
+      </span>
+      {active && (
+        /* A barra do estado ativo. 3px, largura do ícone, `--sm2-primary-fill`
+           (fill, não tinta: é preenchimento de superfície) — que no tema claro
+           é o teal escuro, e por isso passa o 3:1 de componente nos DOIS temas.
+           O ciano fixo do kit antigo só passava no escuro. */
+        <span
+          aria-hidden="true"
+          data-nav-underline
+          style={{
+            position: 'absolute', left: '26%', right: '26%', bottom: 0,
+            height: 3, borderRadius: 2, background: 'var(--sm2-primary-fill)',
+          }}
+        />
+      )}
     </button>
   );
 }
 
-/** Navegação principal do app: barra de ícones fixa no rodapé (abaixo da
- *  barra de chat). 4 views à esquerda + Loja (ação) + menu sanduíche
- *  (Configurações + Debug) sempre por último, à direita de tudo. */
+/** Linha do menu sanduíche. Ícone pelado + texto Rubik 14px. */
+function MenuRow({ icon, label, onClick, active, first }: {
+  icon: string; label: string; onClick: () => void; active?: boolean; first?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      role="menuitem"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+        minHeight: 44, padding: '11px 14px',
+        background: active ? 'var(--sm2-primary-soft)' : 'transparent',
+        border: 'none',
+        borderTop: first ? 'none' : '1px solid var(--sm2-line)',
+        color: active ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
+        fontFamily: 'var(--sm2-font-text)',
+        fontSize: 'var(--sm2-text-sm)',
+        lineHeight: 'var(--sm2-leading-body)',
+        cursor: 'pointer', textAlign: 'left',
+      }}
+    >
+      <Icon name={icon} size={22} fill={active ? 1 : 0} tone={active ? 'primary' : 'muted'} />
+      {label}
+    </button>
+  );
+}
+
+/**
+ * Navegação principal do app.
+ *
+ * **Teto de 4 destinos** (PLANO-DESIGN §5, orçamento de complexidade). Eram 5
+ * destinos + menu. A **Biblioteca sai da nav**: é um diretório social de
+ * jogadores, de frequência rara medida no inventário — e uma barra com 6
+ * células de 68px é onde o rótulo deixa de caber e o ícone vira adivinhação.
+ * Ela **não some**: passa para o menu sanduíche, que é o mesmo alvo de sempre
+ * e continua sendo o único caminho até `currentView === 'library'` (o plano
+ * previa um card em Atividades, mas `ActivitiesPage` não é minha superfície
+ * nesta onda — mandar a tela para o limbo seria pior que a nav cheia).
+ *
+ * A Loja fica na barra e passa a ser DESTINO de verdade (`aria-current`): ela
+ * navega para uma view, sempre navegou, e chamá-la de "ação" só existia para
+ * caber num arranjo de 6 células que acabou.
+ */
 export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCredits, language = 'en-US' }: BottomNavProps) {
   const isPt = language === 'pt-BR';
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Torneio mora dentro de Atividades
-  // (junto dos minigames); Estatísticas mora dentro de Evolução (aba interna
-  // — ver App.tsx). Só views de verdade viram "abas" coloridas-quando-ativas;
-  // Loja e o menu sanduíche são AÇÕES (cor neutra fixa), agrupadas à direita.
+  // Torneio mora dentro de Atividades (junto dos minigames); Estatísticas mora
+  // dentro de Evolução (aba interna — ver App.tsx).
   const items: { view: ViewType; label: string; icon: string }[] = [
-    { view: 'main', label: isPt ? 'Início' : 'Home', icon: iconHome },
-    { view: 'games', label: isPt ? 'Atividades' : 'Activities', icon: iconActivities },
-    { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', icon: iconEvolution },
-    { view: 'library', label: isPt ? 'Biblioteca' : 'Library', icon: iconBook },
+    { view: 'main', label: isPt ? 'Início' : 'Home', icon: 'home' },
+    // `casino` e não `stadia_controller`/`sports_esports`: a fonte é um SUBSET
+    // de 99 ícones e nome fora do inventário **não renderiza glifo nenhum**,
+    // sem erro (tokens.md §5). O dado é o desenho de "jogos" que existe lá — e
+    // a página é dungeon + dino + pedra-papel-tesoura + torneio.
+    { view: 'games', label: isPt ? 'Atividades' : 'Activities', icon: 'casino' },
+    // `auto_awesome` pelo mesmo motivo (`account_tree`/`hub` não estão no
+    // subset). Evolução é transformação, e o FILL 0→1 do brilho lê como isso.
+    { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', icon: 'auto_awesome' },
+    { view: 'shop', label: isPt ? 'Loja' : 'Shop', icon: 'storefront' },
   ];
-  const menuActive = menuOpen || currentView === 'settings';
+  const menuActive = menuOpen || currentView === 'settings' || currentView === 'library';
 
   return (
-    <nav className="sm-bottom-nav">
+    <nav
+      className="sm-bottom-nav"
+      /* A altura continua vindo da classe (`--sm-bottomnav-h`); o que muda por
+         inline é só a pele: superfície e a linha de cobre do aparelho, agora em
+         tokens `--sm2-*`. */
+      style={{ background: 'var(--sm2-surface)', borderTop: '2px solid var(--sm2-viewport-ring)' }}
+      onKeyDown={e => { if (e.key === 'Escape' && menuOpen) { setMenuOpen(false); e.stopPropagation(); } }}
+    >
       {items.map(({ view, label, icon }) => (
         <NavItem
           key={view}
@@ -113,20 +168,15 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
           onClick={() => onNavigate(view)}
         />
       ))}
-      <NavItem
-        icon={iconCoin}
-        label={isPt ? 'Loja' : 'Shop'}
-        active={currentView === 'shop'}
-        onClick={() => onNavigate('shop')}
-      />
 
       {/* Menu sanduíche — sempre por último (à direita de tudo). Agrega
-          Configurações + Recomeçar num popover, em vez de dois botões soltos. */}
+          Biblioteca + Créditos + Configurações + Recomeçar num popover. */}
       <div style={{ position: 'relative', flex: 1, display: 'flex', height: '100%' }}>
         <NavItem
-          icon={iconMenu}
+          icon="more_horiz"
           label={isPt ? 'Menu' : 'Menu'}
           active={menuActive}
+          expanded={menuOpen}
           onClick={() => setMenuOpen(o => !o)}
         />
 
@@ -138,49 +188,43 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
               style={{ position: 'fixed', inset: 0, zIndex: 60 }}
             />
             <div
-              className="sm-px-pop"
+              role="menu"
+              aria-label={isPt ? 'Mais' : 'More'}
               style={{
                 position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
-                minWidth: 200, overflow: 'hidden', zIndex: 61,
+                minWidth: 210, overflow: 'hidden', zIndex: 61,
+                background: 'var(--sm2-surface)',
+                border: '1px solid var(--sm2-line)',
+                borderRadius: 14,
+                boxShadow: '0 8px 24px rgba(0,0,0,.28)',
               }}
             >
+              <MenuRow
+                first
+                icon="person"
+                label={isPt ? 'Biblioteca' : 'Library'}
+                active={currentView === 'library'}
+                onClick={() => { onNavigate('library'); setMenuOpen(false); }}
+              />
               {onOpenCredits && (
-                <button
+                <MenuRow
+                  icon="diamond"
+                  label={isPt ? 'Créditos' : 'Credits'}
                   onClick={() => { onOpenCredits(); setMenuOpen(false); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 14px',
-                    background: 'transparent', border: 'none',
-                    color: 'var(--sm-ink)', fontFamily: 'var(--sm-font-pixel)', fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', textAlign: 'left',
-                  }}
-                >
-                  <img src={iconGem} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  {isPt ? 'Créditos' : 'Credits'}
-                </button>
+                />
               )}
-              <button
+              <MenuRow
+                icon="settings"
+                label={isPt ? 'Configurações' : 'Settings'}
+                active={currentView === 'settings'}
                 onClick={() => { onNavigate('settings'); setMenuOpen(false); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 14px',
-                  background: currentView === 'settings' ? 'var(--sm-bg)' : 'transparent', border: 'none',
-                  borderTop: onOpenCredits ? '1px solid color-mix(in srgb, var(--sm-px-copper) 40%, transparent)' : 'none',
-                  color: 'var(--sm-ink)', fontFamily: 'var(--sm-font-pixel)', fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', textAlign: 'left',
-                }}
-              >
-                <img src={iconGear} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                {isPt ? 'Configurações' : 'Settings'}
-              </button>
+              />
               {onResetOnboarding && (
-                <button
+                <MenuRow
+                  icon="replay"
+                  label={isPt ? 'Refazer o ritual' : 'Redo the ritual'}
                   onClick={() => { onResetOnboarding(); setMenuOpen(false); }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '13px 14px',
-                    background: 'transparent', border: 'none', borderTop: '1px solid color-mix(in srgb, var(--sm-px-copper) 40%, transparent)',
-                    color: 'var(--sm-ink)', fontFamily: 'var(--sm-font-pixel)', fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', cursor: 'pointer', textAlign: 'left',
-                  }}
-                >
-                  <img src={iconReset} alt="" width={17} height={17} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  {isPt ? 'Refazer o ritual' : 'Redo the ritual'}
-                </button>
+                />
               )}
             </div>
           </>
