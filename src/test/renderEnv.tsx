@@ -106,13 +106,36 @@ export function installAppCss(): void {
  */
 export function installDomGlobals(): void {
   if (typeof (globalThis as { localStorage?: Storage }).localStorage?.getItem === 'function') return;
+  installFakeStorage();
+}
+
+/**
+ * Instala um `localStorage` de mentira que o TESTE controla, SEMPRE — sem o
+ * atalho de `installDomGlobals`, que devolve cedo quando já existe algum
+ * storage funcional.
+ *
+ * Existe porque espionar a plataforma aqui não funciona, e a suíte levou meses
+ * para perceber: neste ambiente `globalThis.localStorage` **não é** uma
+ * instância do `Storage` do jsdom (medido: `constructor` indefinido,
+ * `instanceof Storage === false` — é o `localStorage` experimental do Node 22,
+ * o mesmo que emite o aviso `--localstorage-file`). Então
+ * `vi.spyOn(Storage.prototype, 'setItem')` decorava uma classe que o objeto
+ * real não herda: o método verdadeiro seguia intacto, o caminho de falha nunca
+ * era exercitado, e 6 testes de resiliência ficavam vermelhos rotulados como
+ * "falha de ambiente". Um teste que não consegue tocar no código que afirma
+ * testar é pior que teste nenhum — ele ocupa o lugar dele.
+ *
+ * Devolve o objeto instalado para que o caso substitua `setItem`/`getItem` por
+ * uma versão que lança, que é como a falha real do navegador chega.
+ */
+export function installFakeStorage(): Storage {
   const store = new Map<string, string>();
   const storage: Storage = {
     get length() { return store.size; },
     key: (i: number) => Array.from(store.keys())[i] ?? null,
-    getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+    getItem: (k: string) => (store.has(String(k)) ? store.get(String(k))! : null),
     setItem: (k: string, v: string) => { store.set(String(k), String(v)); },
-    removeItem: (k: string) => { store.delete(k); },
+    removeItem: (k: string) => { store.delete(String(k)); },
     clear: () => { store.clear(); },
   };
   for (const target of [globalThis, globalThis.window].filter(Boolean)) {
@@ -120,6 +143,7 @@ export function installDomGlobals(): void {
       value: storage, configurable: true, writable: true,
     });
   }
+  return storage;
 }
 
 /** Monta um componente com o `index.css` real aplicado. */

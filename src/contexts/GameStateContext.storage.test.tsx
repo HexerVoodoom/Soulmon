@@ -1,10 +1,12 @@
-// NOTA (jsdom 29): os spies têm que ir em `Storage.prototype`, não na
-// INSTÂNCIA `globalThis.localStorage`. O Storage do jsdom 29 é um Proxy cujo
-// trap `defineProperty` grava um ITEM de storage em vez de definir a
-// propriedade — `vi.spyOn(localStorage, 'setItem')` virava
-// `localStorage.setItem('setItem', fn)` e o método real continuava intacto,
-// então estes 6 testes NUNCA exercitavam o caminho de falha e ficaram
-// vermelhos por meses, documentados como "falha de ambiente".
+// NOTA (ambiente): não dá para espionar a plataforma aqui. Neste runner
+// `globalThis.localStorage` NÃO é uma instância do `Storage` do jsdom — é o
+// `localStorage` experimental do Node 22 (medido: `constructor` indefinido,
+// `instanceof Storage === false`), então tanto `vi.spyOn(localStorage, …)`
+// quanto `vi.spyOn(Storage.prototype, …)` decoravam algo que o objeto real não
+// usa: o método verdadeiro seguia intacto, o caminho de falha nunca rodava, e
+// estes 6 testes ficaram vermelhos por meses rotulados como "falha de
+// ambiente". A correção é injetar um storage NOSSO (`installFakeStorage`) e
+// trocar o método dele — o código sob teste chama exatamente esse objeto.
 // @vitest-environment jsdom
 /**
  * B-2 / B-3 — resiliência de storage.
@@ -19,7 +21,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import { installDomGlobals } from '../test/renderEnv';
+import { installFakeStorage } from '../test/renderEnv';
 import { GameStateProvider, useGameState } from './GameStateContext';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import {
@@ -62,8 +64,12 @@ const montar = () => {
   return JSON.parse(screen.getByTestId('estado').textContent!);
 };
 
+/** O storage que o código sob teste realmente enxerga — reinstalado a cada
+ *  caso, para que um método trocado por um que lança não vaze para o próximo. */
+let storage: Storage;
+
 beforeEach(() => {
-  installDomGlobals();
+  storage = installFakeStorage();
   localStorage.clear();
   avisos.length = 0;
   opcoes.length = 0;
@@ -80,19 +86,22 @@ afterEach(() => {
 
 /** Faz `setItem` lançar o erro de cota que o navegador lança de verdade. */
 function encherOStorage() {
-  vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+  storage.setItem = () => {
     const err = new Error('The quota has been exceeded.');
     err.name = 'QuotaExceededError';
     throw err;
-  });
+  };
+}
+
+/** Faz `getItem` lançar, como um navegador com storage bloqueado. */
+function bloquearLeitura() {
+  storage.getItem = () => { throw new Error('SecurityError: storage bloqueado'); };
 }
 
 // ── A camada, isolada ───────────────────────────────────────────────────────
 describe('safeStorage: a camada nunca lança', () => {
   it('readLocal devolve null quando o storage está bloqueado', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('SecurityError');
-    });
+    bloquearLeitura();
     expect(() => readLocal('qualquer')).not.toThrow();
     expect(readLocal('qualquer')).toBeNull();
   });
@@ -105,9 +114,7 @@ describe('safeStorage: a camada nunca lança', () => {
   });
 
   it('removeLocal também não lança', () => {
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
-      throw new Error('SecurityError');
-    });
+    storage.removeItem = () => { throw new Error('SecurityError'); };
     expect(removeLocal('k')).toBe(false);
   });
 
@@ -167,9 +174,7 @@ describe('GameStateProvider com storage hostil', () => {
   });
 
   it('storage BLOQUEADO: monta com estado novo e avisa (não é queda nem silêncio)', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('SecurityError: storage bloqueado');
-    });
+    bloquearLeitura();
     const s = montar();
     expect(s.evolutionStage).toBe('rookie');
     expect(s.maxHealthPoints).toBeGreaterThan(0);
