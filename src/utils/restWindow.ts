@@ -66,6 +66,7 @@ import {
   REST_WINDOW_GRACE_MIN,
   REST_WINDOW_DAYS,
 } from '../types/taskModel';
+import { currentSeason } from './seasons';
 
 // ---------------------------------------------------------------------------
 // Modelo
@@ -275,6 +276,18 @@ export interface Dream {
   labelEn: string;
   labelPt: string;
   rarity: DreamRarity;
+  /**
+   * Id da estação que DESTACA este sonho (`utils/seasons.ts`), quando houver.
+   *
+   * **Este campo é um adjetivo, nunca um portão.** Um sonho com `season` é
+   * sorteável em qualquer dia do ano, exatamente como os outros — durante a
+   * estação dele ele só é MAIS PROVÁVEL (ver `rollDream`). Nenhum filtro do
+   * app pode remover um sonho do pool por causa deste campo; se alguém
+   * escrever esse filtro, transformou a estação em battle pass e desfez a
+   * tese. Há teste travando ("sonho sazonal continua obtenível fora da
+   * estação").
+   */
+  season?: string;
 }
 
 /**
@@ -312,6 +325,37 @@ export const DREAM_CATALOG: readonly Dream[] = [
   { id: 'dream-between-stars', emoji: '✨', labelEn: 'Drifting between stars', labelPt: 'Boiando entre estrelas', rarity: 'legendary' },
   { id: 'dream-aurora', emoji: '🌌', labelEn: 'Under the aurora', labelPt: 'Sob a aurora', rarity: 'legendary' },
   { id: 'dream-whale-sky', emoji: '🐋', labelEn: 'Riding a sky whale', labelPt: 'Montado numa baleia do céu', rarity: 'legendary' },
+
+  // -------------------------------------------------------------------------
+  // SONHOS SAZONAIS (`utils/seasons.ts`) — três por estação, um de cada
+  // raridade, para que nenhuma faixa fique parada enquanto as outras crescem.
+  //
+  // **Eles vivem AQUI, no mesmo catálogo, e nunca saem dele.** Não existe uma
+  // segunda lista "sazonal" nem um filtro por data em lugar nenhum: a estação
+  // mexe SÓ no peso do sorteio. É por isso que fechar o Dex continua sendo
+  // possível em qualquer época do ano, e é a diferença entre calendário e
+  // battle pass.
+  // -------------------------------------------------------------------------
+
+  // 🌱 Estação do Broto (mar–mai)
+  { id: 'dream-dew-sprout', emoji: '🌱', labelEn: 'Tucked under a sprout', labelPt: 'Abrigado debaixo de um broto', rarity: 'common', season: 'season-sprout' },
+  { id: 'dream-paper-kite', emoji: '🪁', labelEn: 'Tangled in a kite string', labelPt: 'Enroscado na linha da pipa', rarity: 'rare', season: 'season-sprout' },
+  { id: 'dream-mossy-stone', emoji: '🍃', labelEn: 'Asleep on a mossy stone', labelPt: 'Dormindo numa pedra de musgo', rarity: 'legendary', season: 'season-sprout' },
+
+  // 🔥 Estação da Fogueira (jun–ago)
+  { id: 'dream-quilt-fort', emoji: '🧶', labelEn: 'Inside a blanket fort', labelPt: 'Dentro de um forte de cobertor', rarity: 'common', season: 'season-ember' },
+  { id: 'dream-ember-circle', emoji: '🪵', labelEn: 'Warm in the ember circle', labelPt: 'Quentinho na roda de brasa', rarity: 'rare', season: 'season-ember' },
+  { id: 'dream-firefly-jar', emoji: '🪔', labelEn: 'Lit by a jar of fireflies', labelPt: 'À luz de um pote de vaga-lumes', rarity: 'legendary', season: 'season-ember' },
+
+  // 🌊 Estação da Maré (set–nov)
+  { id: 'dream-paper-umbrella', emoji: '☂️', labelEn: 'Under a paper umbrella', labelPt: 'Sob um guarda-chuva de papel', rarity: 'common', season: 'season-tide' },
+  { id: 'dream-sea-glass', emoji: '🫧', labelEn: 'Counting sea glass', labelPt: 'Contando vidrinhos do mar', rarity: 'rare', season: 'season-tide' },
+  { id: 'dream-storm-lantern', emoji: '🌊', labelEn: 'Lulled by the storm lantern', labelPt: 'Embalado pela lanterna da tempestade', rarity: 'legendary', season: 'season-tide' },
+
+  // ✨ Estação da Constelação (dez–fev)
+  { id: 'dream-comet-tail', emoji: '☄️', labelEn: 'Curled in a comet tail', labelPt: 'Enroscado na cauda de um cometa', rarity: 'common', season: 'season-starlit' },
+  { id: 'dream-planetarium', emoji: '🔭', labelEn: 'Dozing in a planetarium', labelPt: 'Cochilando num planetário', rarity: 'rare', season: 'season-starlit' },
+  { id: 'dream-snowglobe', emoji: '🔮', labelEn: 'Dreaming inside a snow globe', labelPt: 'Sonhando dentro de um globo de neve', rarity: 'legendary', season: 'season-starlit' },
 ] as const;
 
 export const DREAMS_BY_RARITY: Record<DreamRarity, readonly Dream[]> = {
@@ -365,17 +409,66 @@ function hashSeed(seed: number): number {
 }
 
 /**
+ * Quantas vezes o sonho da estação corrente entra no bilhete do sorteio.
+ *
+ * 3 = três vezes mais provável que um sonho fora de estação da mesma faixa. É
+ * "mais fácil AGORA", que é o teto do que a mecânica pode fazer: um peso
+ * infinito (ou remover os outros do pool) seria exclusividade disfarçada.
+ */
+export const SEASON_DREAM_WEIGHT = 3;
+
+/**
+ * O pool ponderado da faixa.
+ *
+ * **Regra estrutural: este pool só ADICIONA repetições — nunca remove nada.**
+ * Todo sonho da raridade pedida aparece pelo menos uma vez, em qualquer dia do
+ * ano, inclusive os sazonais de outras estações e inclusive em entre-estações
+ * (quando `currentSeason` devolve `null` e ninguém ganha peso). Se um dia
+ * alguém precisar mudar este código, a invariante a preservar é essa, e ela
+ * tem teste.
+ */
+function weightedPool(pool: readonly Dream[], now?: Date): readonly Dream[] {
+  const season = currentSeason(now ?? new Date());
+  if (!season) return pool;
+  const extra = Math.max(0, SEASON_DREAM_WEIGHT - 1);
+  if (extra === 0) return pool;
+
+  const out: Dream[] = [];
+  for (const d of pool) {
+    out.push(d);
+    // Repetições ficam AGRUPADAS junto do original: o scan circular abaixo
+    // continua percorrendo o pool inteiro, então a preferência pelo não
+    // coletado (e o determinismo) valem exatamente como antes.
+    if (d.season === season.id) for (let i = 0; i < extra; i++) out.push(d);
+  }
+  return out;
+}
+
+/**
  * Sorteia o sonho da noite. **Determinístico por `seed`** — mesmo estado, mesma
- * raridade e mesma seed devolvem sempre o mesmo id. A aleatoriedade mora em
- * quem chama (a seed costuma ser derivada do dayKey da manhã), nunca aqui.
+ * raridade, mesma seed e mesma data devolvem sempre o mesmo id. A aleatoriedade
+ * mora em quem chama (a seed costuma ser derivada do dayKey da manhã), nunca
+ * aqui.
  *
  * Prefere um sonho ainda NÃO coletado da faixa — o Dex avança em vez de
  * devolver repetido enquanto houver o que descobrir.
+ *
+ * ESTAÇÃO: os sonhos da estação corrente entram `SEASON_DREAM_WEIGHT` vezes no
+ * pool. **Nada é removido**: fora da estação dele, um sonho sazonal continua
+ * plenamente sorteável com peso 1 — é a regra que separa isto de um battle
+ * pass, e é o teste mais importante deste arquivo. `now` é parâmetro (função
+ * pura); o default existe só para não quebrar quem já chama com 3 argumentos.
  */
-export function rollDream(state: RestState, rarity: DreamRarity, seed: number): string {
-  const pool = DREAMS_BY_RARITY[rarity] ?? DREAMS_BY_RARITY.common;
-  if (pool.length === 0) return DREAM_CATALOG[0].id;
+export function rollDream(
+  state: RestState,
+  rarity: DreamRarity,
+  seed: number,
+  now: Date = new Date(),
+): string {
+  const base = DREAMS_BY_RARITY[rarity] ?? DREAMS_BY_RARITY.common;
+  if (base.length === 0) return DREAM_CATALOG[0].id;
 
+  const pool = weightedPool(base, now);
   const owned = new Set(state.dreams);
   const start = hashSeed(seed) % pool.length;
 
