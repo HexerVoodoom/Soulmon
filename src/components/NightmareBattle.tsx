@@ -65,7 +65,7 @@ import {
 import type { DungeonEnemy } from '../utils/dungeon';
 import type { DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { Icon } from './ui/Icon';
 
 export interface NightmareBattleProps {
   open: boolean;
@@ -429,7 +429,9 @@ export function NightmareBattle({
             background: 'none', border: 'none', cursor: 'pointer',
           }}
         >
-          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          {/* CHROME: o fechar é interface, não conteúdo da cena. Tinta fixa
+              porque o cartão tem contexto escuro próprio (#0c1120) — 8,9:1. */}
+          <Icon name="close" size={22} style={{ color: '#9fb2d8' }} />
         </button>
 
         {/* ── Convite ─────────────────────────────────────────────────── */}

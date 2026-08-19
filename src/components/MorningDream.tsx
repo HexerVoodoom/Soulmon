@@ -20,7 +20,7 @@
  */
 import type { Dream, DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { Icon } from './ui/Icon';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 
 export interface MorningDreamProps {
@@ -105,7 +105,9 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
             background: 'none', border: 'none', cursor: 'pointer',
           }}
         >
-          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          {/* CHROME da cena, não conteúdo do visor: o fechar é interface e
+              fala Material Symbols, não pixel. */}
+          <Icon name="close" size={22} tone="muted" />
         </button>
 
         <p style={{ fontSize: '0.76rem', color: 'var(--sm-muted)', margin: '0 0 10px' }}>

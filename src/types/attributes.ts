@@ -1,7 +1,3 @@
-import attrPoder from '../assets/soulmon/icons/icon-attr-poder.png';
-import attrHarmonia from '../assets/soulmon/icons/icon-attr-harmonia.png';
-import attrBenevolencia from '../assets/soulmon/icons/icon-attr-benevolencia.png';
-
 export interface AttributePoints {
   virus: number;
   data: number;
@@ -75,12 +71,20 @@ export const ATTR_LABEL: Record<BranchType, { pt: string; en: string }> = {
   vaccine: { pt: 'Benevolência', en: 'Benevolence' },
 };
 
-/** Ícone pixel-art de cada atributo (kit da referência v1.2). */
-export const ATTR_ICON: Record<BranchType, string> = {
-  virus: attrPoder,
-  data: attrHarmonia,
-  vaccine: attrBenevolencia,
-};
+/**
+ * NÃO EXISTE `ATTR_ICON` AQUI — de propósito, e a ausência é a decisão.
+ *
+ * O desenho de cada atributo é UM SÓ no app inteiro: os SVG inline de
+ * `components/AlignmentIcons.tsx` (`PowerIcon`/`HarmonyIcon`/
+ * `BenevolenceIcon`), que já são a arte usada por `EvolutionPath` e
+ * `PlayerDetailModal`. Este módulo tinha um mapa PARALELO de três PNGs
+ * (`icon-attr-*`) — um segundo desenho para a mesma ideia, que ninguém
+ * renderizava mais e que, se alguém ligasse, colocaria PNG e SVG do mesmo
+ * atributo na mesma tela (bug 4.3 do `docs/PLANO-DESIGN.md`, cuja decisão é
+ * "o SVG vence"). Um módulo de DADOS também não deve devolver JSX.
+ *
+ * Precisa do ícone de um atributo? Importe de `components/AlignmentIcons`.
+ */
 
 /**
  * A mesma cor de `ATTR_COLOR`, mas na luminosidade que passa 4,5:1 como

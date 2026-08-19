@@ -1,24 +1,66 @@
+/**
+ * ATIVIDADES — o hub de MINIJOGOS (não a lista de hábitos, apesar do nome).
+ *
+ * REVAMP: saiu do fliperama (`sm-px-*`), saíram os 9 PNGs de ícone e saiu o
+ * `PixelChip`/`PixelTag`. Superfície limpa sobre `--sm2-*`, glifos pela
+ * `<Icon>` (Material Symbols Rounded), tipografia Fredoka/Rubik.
+ *
+ * ─── A RÉGUA APLICADA ──────────────────────────────────────────────────────
+ *
+ * 1. **Uma ação dominante: ENTRAR num jogo.** O card inteiro é o alvo (≥44px,
+ *    é um `<button>` de verdade, alcançável pelo teclado). Nada mais nesta
+ *    tela compete com esse gesto.
+ *
+ * 2. **Rótulo nomeado no lugar do número.** As etiquetas eram "1 Bit a cada
+ *    100 de score", "5 partidas/dia", "Bits por inimigo + ranking" — números
+ *    de BALANCEAMENTO, que ninguém usa para escolher entre pular obstáculo e
+ *    explorar masmorra. Viraram o que a pessoa realmente decide: "Ranking",
+ *    "Recorde", "Rápido", "Toda semana". Os números continuam existindo
+ *    dentro de cada jogo, onde são a consequência da jogada.
+ *
+ * 3. **Corte impiedoso.** Saíram: a setinha por card (o card já é o botão), o
+ *    ícone ao lado do título da página, a cápsula com moldura em volta dos
+ *    Bits e a segunda linha de metadado que dividia espaço com a descrição.
+ *    Sobrou uma linha de descrição por jogo — essa ajuda a escolher, então
+ *    fica.
+ *
+ * 4. **Sem PNG e sem Silkscreen.** O único selo de arcade autorizado aqui era
+ *    o título da página em bitmap; ele volta a ser Fredoka, porque "Atividades"
+ *    é a voz do PRODUTO, não a do aparelho.
+ *
+ * A Loja **não** é card daqui: ela é destino da `BottomNav` (ver
+ * `BottomNav.tsx`), e duplicar a entrada seria dois caminhos para a mesma
+ * tela no mesmo polegar.
+ *
+ * Nomes de ícone conferidos UM A UM contra o inventário de `tokens.md` — nome
+ * fora dele renderiza VAZIO, sem erro nenhum.
+ */
 import { useState } from 'react';
-import iconGamepad from '../assets/soulmon/icons/games/icon-game-activities.png';
-import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
-import iconDino from '../assets/soulmon/icons/games/icon-game-dino.png';
-import iconScissors from '../assets/soulmon/icons/games/icon-game-rps.png';
-import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import { DungeonGame } from './DungeonGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
-import { bitsStyle } from '../utils/currency';
-import { PixelChip, PixelTag } from './pixel/PixelKit';
+import { bitsStyle } from '../utils/currencies';
+import { Icon } from './ui/Icon';
+import { sm2Hint, SM2_SHADOW_CARD } from './form/FormKit';
 import type { Language } from '../utils/i18n';
-import iconChevronRight from '../assets/soulmon/icons/icon-chevron-right.png';
 
-/**
- * "Atividades" page — interactive minigames hub (+ Tournament, which lives
- * here alongside the minigames rather than as its own bottom-nav view).
- * All games award 🪙 Bits (GameState.gamePoints), spent in the shop (its own
- * bottom-nav entry now — kept out of the minigames hub).
- * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
- */
+/** Bits: fonte de calculadora (identidade da moeda), tinta legível nos dois
+ *  temas e `tabular-nums` — o saldo muda a cada partida. Sem ícone, sempre:
+ *  a AUSÊNCIA de ícone é o que distingue Bits de Emblemas e Créditos. */
+const bitsNum: React.CSSProperties = { ...bitsStyle, color: 'var(--sm2-ink)', textShadow: 'none' };
+
+interface GameCard {
+  key: string;
+  /** Ligature da Material Symbols. Tem que estar no inventário de 102 nomes. */
+  icon: string;
+  title: string;
+  desc: string;
+  /** Rótulo NOMEADO (nunca número de balanceamento). */
+  tag: string;
+  featured?: boolean;
+  onClick: () => void;
+}
+
 export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet nos minijogos. */
@@ -37,126 +79,138 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   const isPt = language === 'pt-BR';
   const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
 
-  // Torneio fica ACIMA e separado dos minigames (seção própria) — não é mais
-  // só mais um card na mesma lista.
-  const tournamentCard = {
-    key: 'tournament' as const, icon: iconTrophy,
+  // O Torneio vem primeiro e destacado: é o único que acontece CONTRA outras
+  // pessoas e o único com rodada semanal — a coisa que muda de estado sozinha
+  // é a que merece o topo.
+  const tournament: GameCard = {
+    key: 'tournament',
+    icon: 'emoji_events',
     title: isPt ? 'Torneio' : 'Tournament',
-    desc: isPt ? 'PvP assíncrono contra outros jogadores. Rodada toda semana.' : 'Asynchronous PvP against other players. A round every week.',
-    pts: isPt ? '5 partidas/dia' : '5 matches/day',
+    desc: isPt ? 'Desafie os pets de outros jogadores.' : "Challenge other players' pets.",
+    tag: isPt ? 'Toda semana' : 'Every week',
+    featured: true,
     onClick: onOpenTournament,
   };
 
-  const cards: { key: 'dungeon' | 'dino' | 'rps'; icon: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
+  const games: GameCard[] = [
     {
-      key: 'dungeon', icon: iconSwords,
+      key: 'dungeon',
+      icon: 'swords',
       title: isPt ? 'Masmorra' : 'Dungeon',
       desc: isPt
-        ? '5 andares retrô, cada um com 6 inimigos e mais forte. Perder custa a run, nunca seus corações. Reset semanal.'
-        : '5 retro floors, each with 6 tougher enemies. Losing costs you the run, never your hearts. Weekly reset.',
-      pts: isPt ? 'Bits por inimigo + ranking' : 'Bits per enemy + ranking',
+        ? 'Cinco andares, cada um mais forte. Perder custa a run, nunca seus corações.'
+        : 'Five floors, each one tougher. Losing costs you the run, never your hearts.',
+      tag: isPt ? 'Ranking' : 'Ranking',
       onClick: () => setOpenGame('dungeon'),
     },
     {
-      key: 'dino', icon: iconDino,
+      key: 'dino',
+      icon: 'pets',
       title: isPt ? 'Corrida do Dino' : 'Dino Runner',
       desc: isPt ? 'Pule os obstáculos e corra o máximo que conseguir.' : 'Jump the obstacles and run as far as you can.',
-      pts: isPt ? '1 Bit a cada 100 de score' : '1 Bit per 100 score',
+      tag: isPt ? 'Recorde' : 'High score',
       onClick: () => setOpenGame('dino'),
     },
     {
-      key: 'rps', icon: iconScissors,
+      key: 'rps',
+      icon: 'pan_tool',
       title: isPt ? 'Pedra, Papel e Tesoura' : 'Rock, Paper, Scissors',
-      desc: isPt ? 'Clássico duelo contra o seu Soulmon. Primeiro a 3 vitórias.' : 'The classic duel against your Soulmon. First to 3.',
-      pts: isPt ? '5 Bits por vitória' : '5 Bits per match win',
+      desc: isPt ? 'Duelo rápido contra o seu Soulmon.' : 'A quick duel against your Soulmon.',
+      tag: isPt ? 'Rápido' : 'Quick',
       onClick: () => setOpenGame('rps'),
     },
   ];
 
-  const renderCard = (c: { key: string; icon: string; title: string; desc: string; pts: string; onClick: () => void }) => (
+  const renderCard = (c: GameCard) => (
     <button
       key={c.key}
+      type="button"
       onClick={c.onClick}
-      className="w-full text-left sm-px-card sm-px-card-tap"
-      style={{ padding: 14 }}
+      /* O CARD INTEIRO é o alvo. `minHeight` 44 é o piso do sistema; na
+         prática a linha dupla passa de 72px. */
+      style={{
+        width: '100%',
+        minHeight: 44,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 14,
+        padding: 14,
+        textAlign: 'left',
+        cursor: 'pointer',
+        borderRadius: 12,
+        backgroundColor: c.featured ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface)',
+        border: c.featured ? '1px solid var(--sm2-primary-fill)' : '1px solid var(--sm2-line)',
+        boxShadow: SM2_SHADOW_CARD,
+        transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
+      }}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center shrink-0" style={{ width: 52, height: 52 }}>
-          <img src={c.icon} alt="" width={48} height={48} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-        </div>
-        {/* P2: a etiqueta ("+5 Bits", "5 partidas/dia") dividia a LINHA do
-            título — em PT-BR os nomes longos quebravam em duas linhas por
-            causa dela. A etiqueta desce para a linha da descrição, que é
-            onde mora o resto do metadado; o título passa a ter a largura
-            inteira, e `minWidth: 0` deixa o flex encolher em vez de vazar. */}
-        <div className="flex-1" style={{ minWidth: 0 }}>
-          <span style={{ display: 'block', fontSize: '0.92rem', fontWeight: 700, color: 'var(--sm-ink)' }}>
-            {c.title}
-          </span>
-          <div className="flex items-center gap-2" style={{ marginTop: 3 }}>
-            <PixelTag>{c.pts}</PixelTag>
-            <p style={{ fontSize: '0.75rem', margin: 0, color: 'var(--sm-muted)', minWidth: 0 }}>
-              {c.desc}
-            </p>
-          </div>
-        </div>
-        {/* P1: a setinha era `ChevronRight` da lucide — traço vetorial de
-            2,2px ao lado de sprites pixelados de 48px, e o único line-art que
-            sobrava na tela. Virou o caractere `>` da fonte bitmap como
-            paliativo, porque o kit não tinha "seta". Agora tem: chevron
-            desenhado na grade do kit (18/08/2026), que é a mesma linguagem dos
-            sprites ao lado. `aria-hidden` porque o card inteiro já é o botão. */}
-        <img
-          src={iconChevronRight}
-          alt=""
-          aria-hidden="true"
-          width={14}
-          height={14}
-          style={{ flexShrink: 0, imageRendering: 'pixelated', opacity: 0.75 }}
-        />
-      </div>
+      {/* Ícone PELADO — sem moldura, sem fundo, sem chanfro (regra do dono). */}
+      <Icon name={c.icon} size={32} fill={c.featured ? 1 : 0} tone={c.featured ? 'primary' : 'ink'} />
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span
+          className="sm2-title"
+          style={{ display: 'block', fontSize: 'var(--sm2-text-md)', fontWeight: 600 }}
+        >
+          {c.title}
+        </span>
+        <span style={{ ...sm2Hint, display: 'block', marginTop: 2 }}>{c.desc}</span>
+      </span>
+      {/* O rótulo nomeado. Tinta sobre superfície, nunca `*-fill` como cor de
+          texto — e por isso ele não precisa de pílula preenchida atrás. */}
+      <span
+        style={{
+          ...sm2Hint,
+          flexShrink: 0,
+          fontWeight: 500,
+          color: c.featured ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)',
+        }}
+      >
+        {c.tag}
+      </span>
     </button>
   );
 
   return (
-    <div className="p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        {/* Título de página em bitmap (0.95rem, não 1.15: a Silkscreen é
-            bem mais larga e "Atividades" quebrava a linha ao lado da cápsula
-            de Bits). O PARÁGRAFO abaixo continua sans — é texto de leitura. */}
-        <h2 className="sm-px-heading" style={{ fontSize: '0.95rem', color: 'var(--sm-ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <img src={iconGamepad} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          {isPt ? 'Atividades' : 'Activities'}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--sm2-font-display)',
+              fontSize: 'var(--sm2-text-xl)',
+              fontWeight: 600,
+              lineHeight: 'var(--sm2-leading-title)',
+              color: 'var(--sm2-ink)',
+              margin: 0,
+            }}
+          >
+            {isPt ? 'Atividades' : 'Activities'}
+          </h1>
+          <p style={{ ...sm2Hint, marginTop: 4 }}>
+            {isPt ? 'Jogue com seu Soulmon e ganhe Bits.' : 'Play with your Soulmon and earn Bits.'}
+          </p>
+        </div>
+        {/* Saldo: número + a palavra, sem cápsula e sem ícone. */}
+        <span
+          title={isPt ? 'Bits — moeda dos minijogos, gaste na Loja' : 'Bits — minigame currency, spend it in the Shop'}
+          style={{ display: 'flex', alignItems: 'baseline', gap: 4, flexShrink: 0, paddingTop: 2 }}
+        >
+          <span className="sm2-num" style={{ ...bitsNum, fontSize: 'var(--sm2-text-lg)' }}>{totalPoints}</span>
+          <span style={sm2Hint}>Bits</span>
+        </span>
+      </div>
+
+      {renderCard(tournament)}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h2
+          className="sm2-title"
+          style={{ fontSize: 'var(--sm2-text-md)', fontWeight: 600, margin: 0 }}
+        >
+          {isPt ? 'Minijogos' : 'Minigames'}
         </h2>
-        {/* Sem gem: aquele icone e dos Creditos (dinheiro real). O valor
-            mantem a fonte de calculadora obrigatoria dos Bits; so o rotulo
-            da capsula e bitmap. Ver utils/currencies.ts. */}
-        <PixelChip
-          label="Bits"
-          title={isPt ? 'Bits — moeda dos minijogos (gaste na loja!)' : 'Bits — minigame currency (spend in the shop!)'}
-          value={<span style={{ ...bitsStyle, fontSize: '0.85rem' }}>{totalPoints}</span>}
-        />
+        {games.map(renderCard)}
       </div>
-      <p style={{ fontSize: '0.8rem', color: 'var(--sm-muted)' }}>
-        {isPt ? 'Minijogos para se divertir e acumular pontos com seu Soulmon.' : 'Minigames to have fun and earn points with your Soulmon.'}
-      </p>
-
-      {/* Torneio — separado, acima dos minigames */}
-      {renderCard(tournamentCard)}
-
-      <div
-        className="sm-px-heading"
-        style={{
-          fontSize: '0.62rem',
-          color: 'var(--sm-muted)',
-          paddingTop: 6,
-          borderTop: '1px solid var(--sm-line)',
-        }}
-      >
-        {isPt ? 'Minijogos' : 'Minigames'}
-      </div>
-
-      {cards.map(renderCard)}
 
       {openGame === 'dungeon' && (
         <DungeonGame

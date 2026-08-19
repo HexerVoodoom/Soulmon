@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import iconRps from '../assets/soulmon/icons/games/icon-game-rps.png';
-import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
-import iconSkull from '../assets/soulmon/icons/icon-skull.png';
-import { PixelButton } from './pixel/PixelKit';import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { PixelButton } from './pixel/PixelKit';
+import { Icon } from './ui/Icon';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
@@ -82,12 +80,15 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
   return (
     <div className="sm-px-dark-ctx sm-px-arcade-root" style={{ background: 'linear-gradient(180deg, #081a20 0%, #10312f 100%)', color: '#eaf5f2' }}>
       <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
-        <img src={iconRps} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+        {/* CHROME: cabecalho, sair e a linha de resultado sao interface. As
+            PECAS do jogo (os tres emojis de mao) e o sprite do pet sao a cena
+            e ficam como estao. */}
+        <Icon name="casino" size={22} />
         <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
           {isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
         </span>
         <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
-          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          <Icon name="close" size={20} />
         </button>
       </div>
 
@@ -112,12 +113,16 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         <p style={{ fontSize: '0.9rem', fontWeight: 700, minHeight: 22, display: 'flex', alignItems: 'center', gap: 6 }}>
           {matchOver === 'won' ? (
             <>
-              <img src={iconTrophy} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              {/* Sem `tone`: a tela e escura NOS DOIS temas (`sm-px-dark-ctx`),
+                  e um token `--sm2-*-ink` seguiria o tema da PAGINA — o ouro
+                  claro (#8A5A2B) sobre #10312f nao passa AA. Herda o
+                  #eaf5f2 do contexto, que passa. */}
+              <Icon name="emoji_events" size={20} />
               {isPt ? `Você venceu! +${MATCH_POINTS} Bits` : `You won! +${MATCH_POINTS} Bits`}
             </>
           ) : matchOver === 'lost' ? (
             <>
-              <img src={iconSkull} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <Icon name="pets" size={20} />
               {isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!'}
             </>
           ) : roundMsg}

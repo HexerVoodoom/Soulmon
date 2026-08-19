@@ -227,7 +227,18 @@ describe('guard de asset — autoverificação (o detector enxerga?)', () => {
 
   it('a varredura achou assets de verdade (não uma pasta vazia)', () => {
     expect(allAssets.length).toBeGreaterThan(150);
-    expect(referenced.size).toBeGreaterThan(100);
+    // O piso caiu de 100 para 80 no revamp de design: 13 PNGs de ÍCONE
+    // deixaram de ser importados de uma vez ao virarem glifo do Material
+    // Symbols, e o número de referenciados caiu para 91.
+    //
+    // Este número é autoverificação do scanner ("não estou lendo uma pasta
+    // vazia"), não regra de produto — e é esperado que ele siga CAINDO
+    // enquanto a migração de ícone avança, porque cada ícone que vira glifo
+    // é um asset a menos referenciado. Se um dia cair perto de 80 de novo, a
+    // resposta certa é olhar o que sobrou antes de baixar o piso outra vez:
+    // o que resta referenciado deveria ser sprite de criatura e arte de
+    // cenário, nunca ícone de interface.
+    expect(referenced.size).toBeGreaterThan(80);
     // e a lista de referenciados é um subconjunto real, não "tudo"
     expect(referenced.size).toBeLessThan(allAssets.length);
   });

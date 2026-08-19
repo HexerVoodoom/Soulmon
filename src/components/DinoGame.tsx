@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ArrowUp } from 'lucide-react';
-import iconDino from '../assets/soulmon/icons/games/icon-game-dino.png';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { Icon } from './ui/Icon';
 import { getSpriteForStage } from '../utils/sprites';
 import { playDegenerate, playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -16,6 +14,20 @@ import { PixelButton } from './pixel/PixelKit';
  * spawn rate also scale continuously). Jump via the big button BELOW the game
  * box (thumb never covers the action), the box itself, or SPACE.
  * Scoring: 🪙 Bits earned = floor(distance score / 100) per run.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * A FRONTEIRA RETRÔ, nesta tela
+ * ───────────────────────────────────────────────────────────────────────────
+ * DENTRO do `<canvas>` (pet, inimigos, linha do chão, o véu de fim de jogo)
+ * é território retrô, diegético, e NÃO migra: é o conteúdo do visor.
+ * FORA dele — a barra de cabeçalho, o botão de sair, o HUD de Recorde/Score e
+ * o botão de pular — é CHROME, ou seja, interface, e fala Material Symbols.
+ * O `sm-px-*` do chrome de arcade fica (é a moldura do fliperama, decisão da
+ * Onda 6 do PLANO-DESIGN); o que saiu foram os PNGs raster de ícone.
+ *
+ * `expand_less` e não `arrow_upward` no botão de pular: `arrow_upward` NÃO
+ * está no subset da fonte (`src/styles/tokens.md`) e um nome fora do
+ * inventário renderiza VAZIO, sem erro nenhum.
  */
 
 // Obstacle tiers: unlocked as the run progresses (start time in seconds).
@@ -201,12 +213,12 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           de 34px do botao de sair virou quadrado chanfrado de 44px — era o
           ultimo controle redondo da tela (portao T2). */}
       <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
-        <img src={iconDino} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+        <Icon name="pets" size={22} />
         <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
           {isPt ? 'Corrida do Dino' : 'Dino Runner'}
         </span>
         <button onClick={onExit} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
-          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          <Icon name="close" size={20} />
         </button>
       </div>
 
@@ -267,7 +279,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           className="sm-px-jump"
           aria-label={isPt ? 'Pular' : 'Jump'}
         >
-          <ArrowUp size={20} strokeWidth={2.6} />
+          <Icon name="expand_less" size={22} weight={600} />
           {isPt ? 'Pular' : 'Jump'}
         </button>
       </div>

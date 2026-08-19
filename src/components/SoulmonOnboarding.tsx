@@ -1,6 +1,8 @@
-import { useState, useRef, lazy, Suspense } from 'react';
-import { ArrowLeft, ArrowRight, LoaderCircle } from 'lucide-react';
+import { useState, useRef, lazy, Suspense, type CSSProperties } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
+import { Icon } from './ui/Icon';
+import { ScreenSkeleton } from './ui/ScreenSkeleton';
+import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeJson } from '../utils/safeStorage';
 import {
@@ -34,8 +36,57 @@ const OraclePage = lazy(() => import('./OraclePage').then(m => ({ default: m.Ora
 // 'oracle' = compra única (placeholder, ainda sem processador real) libera o
 // ritual completo (nome/nascimento/quiz → personagem ÚNICO); 'demo' = escolhe
 // um dos 3 personagens pré-prontos, pula o oráculo inteiro.
-// Visual: Soulmon design system (claro, minimalista, espiritual+digital).
+//
+// ── A ROUPA NOVA (onda final da limpeza) ────────────────────────────────────
+// Esta é a PRIMEIRA superfície do app e era a mais antiga: `sm-px-*`, `sm-card`,
+// `sm-btn`, três blocos de `@keyframes` inline iguais, ícones `lucide-react` e
+// texto a 11,5px. Passou pela mesma régua das outras telas:
+//
+//   · tokens `--sm2-*`, tipografia Fredoka (título) / Rubik (texto), PISO DE
+//     12px — não existe mais `fontSize: 11.5`;
+//   · UMA ação dominante por passo. O que foi cortado é o que não decidia nada:
+//     os dois parágrafos de propaganda embaixo dos botões da intro (o preço já
+//     está no rótulo do botão), a legenda dupla do cadastro e a repetição do
+//     "modo demo" na escolha de personagem;
+//   · glifos pela `<Icon>` (`arrow_back`/`arrow_forward`/`sync`, os três
+//     conferidos no inventário de `src/styles/tokens.md`);
+//   · `Suspense fallback={null}` do atalho de debug virou `ScreenSkeleton`.
+//
+// O QUE NÃO MUDOU, de propósito: o FLUXO. O ritual continua com as 6 perguntas
+// e o teste longo continua com os 20 itens — são regra de PRODUTO, não roupa.
+// A barra de progresso mantém o denominador corrigido (inclui o tutorial que
+// vem depois) e o desconto do bloco de 20 para quem recusa o teste.
 // ---------------------------------------------------------------------------
+
+/**
+ * Os `@keyframes` do giro do carregando. Existiam TRÊS blocos `<style>`
+ * idênticos espalhados pelo componente (intro, gerando, cadastro); agora é um
+ * só, montado uma vez. `prefers-reduced-motion` corta o giro — o ícone fica
+ * parado e o texto ao lado continua dizendo o que está acontecendo, então
+ * nenhuma informação vive só no movimento.
+ */
+const SPIN_CSS = `
+@keyframes soulspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){[data-sm-spin]{animation:none !important}}
+`;
+
+/** O giro do carregando. `sync` está no inventário da fonte; `progress_activity` não. */
+function Spinner({ size = 20 }: { size?: number }) {
+  return (
+    // O giro vive num `<span>` de fora e não na `<Icon>`: o componente de
+    // ícone não repassa props soltas, e um seletor por ATRIBUTO (em vez de
+    // classe) é o que mantém o `prefers-reduced-motion` funcionando sem
+    // declarar classe nova — `index.css` tem outro dono e classe fantasma não
+    // aplica nada e não avisa (footgun 1).
+    <span
+      data-sm-spin=""
+      aria-hidden="true"
+      style={{ display: 'inline-flex', animation: 'soulspin 1.1s linear infinite' }}
+    >
+      <Icon name="sync" size={size} />
+    </span>
+  );
+}
 
 export type OnboardingCompleteData = {
   userName: string;
@@ -417,35 +468,62 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     );
   };
 
-  /* RODADA 5: o visual (fundo, moldura chanfrada, estados) mora nas classes
-     do kit `.sm-px-field` e `.sm-px-choice` em index.css — aqui fica só o que
-     é layout. `background`/`border` inline apagariam a banda de quina. */
-  const input: React.CSSProperties = {
-    width: '100%', boxSizing: 'border-box', outline: 'none',
+  /* Campo, opção e cartão vivem em `style` inline sobre os tokens `--sm2-*`:
+     o Tailwind daqui é PRÉ-COMPILADO, então classe utilitária que não existe
+     no `index.css` não aplica nada e não avisa (footgun 1). O kit `sm-px-*`
+     (moldura chanfrada, banda de quina) saiu — ele fica dentro do visor e nas
+     telas de arcade, e um formulário nunca foi nenhum dos dois. */
+  const fieldStyle: CSSProperties = {
+    width: '100%', boxSizing: 'border-box', minHeight: 44,
+    padding: '10px 12px', borderRadius: 10,
+    border: '1px solid var(--sm2-line)',
+    backgroundColor: 'var(--sm2-surface-2)',
+    fontFamily: 'var(--sm2-font-text)',
+    fontSize: 'var(--sm2-text-sm)',
+    lineHeight: 'var(--sm2-leading-body)',
+    color: 'var(--sm2-ink)',
+    outline: 'none',
   };
-  const optionBtn = (selected: boolean): React.CSSProperties => ({
-    width: '100%', boxSizing: 'border-box',
-    padding: '13px 15px', fontSize: 14, marginBottom: 8,
-    fontWeight: selected ? 700 : 500,
-    transition: 'all .12s ease',
+  /** Opção de escolha única. Selecionado = FILL, e o texto por cima usa
+   *  `--sm2-on-primary` — nunca o `*-ink` do mesmo acento. */
+  const optionBtn = (selected: boolean): CSSProperties => ({
+    width: '100%', boxSizing: 'border-box', textAlign: 'left',
+    minHeight: 44, padding: '12px 14px', marginBottom: 8, borderRadius: 10,
+    fontFamily: 'var(--sm2-font-text)',
+    fontSize: 'var(--sm2-text-sm)',
+    lineHeight: 'var(--sm2-leading-body)',
+    fontWeight: selected ? 600 : 400,
+    cursor: 'pointer',
+    border: selected ? '1px solid transparent' : '1px solid var(--sm2-line)',
+    backgroundColor: selected ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface)',
+    color: selected ? 'var(--sm2-on-primary)' : 'var(--sm2-ink)',
+    transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
   });
 
   return (
-    <div className="sm-app-bg" style={{
+    <div style={{
       position: 'fixed', inset: 0, overflowY: 'auto',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      color: 'var(--sm-ink)',
+      backgroundColor: 'var(--sm2-bg)',
+      color: 'var(--sm2-ink)',
+      fontFamily: 'var(--sm2-font-text)',
     }}>
+      <style>{SPIN_CSS}</style>
+      {/* A moldura do aparelho é o chassi do app inteiro (o `App.tsx` monta a
+          mesma peça): sem ela o primeiro contato seria a única tela do produto
+          que não parece o Soulmon. */}
       <PixelFrame />
       {oracleDebugOpen ? (
-        <Suspense fallback={null}>
+        /* Ferramenta interna de dev, carregada por `lazy()`. O `fallback` era
+           `null` — meio segundo de tela branca; agora é o esqueleto do visor. */
+        <Suspense fallback={<ScreenSkeleton language={isPt ? 'pt-BR' : 'en-US'} />}>
           <div style={{ width: '100%', maxWidth: 440, padding: '20px 20px 40px' }}>
             <button
-              className="sm-btn sm-btn-secondary"
-              style={{ marginBottom: 12 }}
+              type="button"
+              style={{ ...sm2Button('ghost'), marginBottom: 12 }}
               onClick={() => setOracleDebugOpen(false)}
             >
-              <ArrowLeft size={16} strokeWidth={2.4} />
+              <Icon name="arrow_back" size={18} />
               {isPt ? 'Fechar' : 'Close'}
             </button>
             <OraclePage language={isPt ? 'pt-BR' : 'en-US'} initialDebugMode />
@@ -453,26 +531,42 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         </Suspense>
       ) : (
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px' }}>
-        {/* Barra de progresso */}
+        {/* Barra de progresso. O DENOMINADOR não mudou nesta rodada: ele já
+            inclui o tutorial que vem depois do onboarding (antes a barra
+            chegava a 100% e ainda apareciam telas) e já desconta o bloco de 20
+            itens de quem recusa o teste longo. */}
         {step > 0 && step <= lastStep && (
-          <div style={{ height: 10, backgroundColor: 'var(--sm-line)', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', marginBottom: 24, overflow: 'hidden' }}>
+          <div
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress * 100)}
+            aria-label={isPt ? 'Progresso do ritual' : 'Ritual progress'}
+            style={{
+              height: 6, borderRadius: 999, marginBottom: 24, overflow: 'hidden',
+              backgroundColor: 'var(--sm2-surface-2)',
+              border: '1px solid var(--sm2-line)',
+            }}
+          >
             <div style={{
-              height: '100%', width: `${progress * 100}%`, backgroundColor: 'var(--sm-px-cyan)', transition: 'width .3s',
-              /* Blocos discretos (barra SEGMENTADA do kit) sem asset: faixas
-                 de sombra a cada 10px sobre o preenchimento ciano. */
-              backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 10px, rgba(4,18,20,0.45) 10px 12px)',
+              height: '100%', width: `${progress * 100}%`,
+              backgroundColor: 'var(--sm2-primary-fill)',
+              transition: 'width var(--sm2-dur-page) var(--sm2-ease)',
             }} />
           </div>
         )}
 
-        {/* 0 — Intro */}
+        {/* 0 — Intro. UMA ação dominante: começar. Os dois parágrafos de
+            propaganda que ficavam embaixo dos botões saíram — nenhum deles
+            decidia nada que o rótulo do botão já não dissesse, e eram a
+            primeira parede de texto que o app mostrava. */}
         {step === 0 && (
           <div style={{ textAlign: 'center', paddingTop: 60 }}>
             {/* Corvo + wordmark são UM logo só, e é ele o alvo do gesto oculto
-                (segurar ~1.8s abre a OraclePage em modo debug). Como agora o
-                alvo inclui TEXTO, `userSelect`/`touchCallout` precisam sair:
-                segurar em texto no mobile abre seleção e menu de contexto, que
-                comeriam o gesto. `touchAction: manipulation` mata o atraso de
+                (segurar ~1.8s abre a OraclePage em modo debug). Como o alvo
+                inclui TEXTO, `userSelect`/`touchCallout` precisam sair: segurar
+                em texto no mobile abre seleção e menu de contexto, que comeriam
+                o gesto. `touchAction: manipulation` mata o atraso de
                 duplo-toque sem bloquear o scroll da página. */}
             <div
               style={{
@@ -485,96 +579,88 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               onPointerLeave={cancelOracleDebugHold}
               onPointerCancel={cancelOracleDebugHold}
             >
-              <div style={{
-                width: 88, height: 88, margin: '0 auto 18px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <img src={ravenMascot} alt="" width={72} height={72} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} draggable={false} />
-              </div>
-              <h1 style={{ fontFamily: 'var(--sm-font-pixel)', fontSize: 26, margin: '0 0 8px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--sm-px-cyan)', textShadow: '0 0 12px color-mix(in srgb, var(--sm-px-cyan) 55%, transparent)' }}>Soulmon</h1>
+              <img src={ravenMascot} alt="" width={72} height={72}
+                style={{ display: 'block', margin: '0 auto 16px', objectFit: 'contain', imageRendering: 'pixelated' }}
+                draggable={false} />
+              <h1 style={{
+                fontFamily: 'var(--sm2-font-display)',
+                fontSize: 'var(--sm2-text-2xl)',
+                lineHeight: 'var(--sm2-leading-title)',
+                fontWeight: 600, letterSpacing: '.01em',
+                color: 'var(--sm2-ink)', margin: '0 0 10px',
+              }}>Soulmon</h1>
             </div>
-            <p style={{ fontSize: 15, color: 'var(--sm-muted)', lineHeight: 1.6, margin: '0 0 32px' }}>
+            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 28px' }}>
               {isPt
-                ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA — única, só sua, com todas as suas evoluções.'
-                : 'Every soul carries a creature. Answer a few questions and reveal YOURS — unique, yours alone, with all its evolutions.'}
+                ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA.'
+                : 'Every soul carries a creature. Answer a few questions and reveal YOURS.'}
             </p>
             {/* Começar grátis é o caminho PRINCIPAL. Pedir R$ 29,90 de quem
                 ainda não viu o app funcionar é o jeito mais caro de perder o
                 usuário; quem gostar encontra a compra no app inteiro. */}
             <button
-              className="sm-btn" style={{ width: '100%' }}
+              type="button"
+              style={{ ...sm2Button('primary'), width: '100%' }}
               onClick={() => { setFlow('demo'); setStep(GOAL_STEP); }}
             >
               {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
             </button>
-            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '8px 0 18px' }}>
-              {isPt
-                ? 'Escolha um personagem pronto e comece em menos de um minuto.'
-                : 'Pick a ready-made character and start in under a minute.'}
-            </p>
+            {/* A compra continua acessível, mas em voz baixa: é a segunda ação
+                da tela, e duas ações do mesmo peso não têm ação dominante. */}
             <button
-              className="sm-btn sm-btn-secondary" style={{ width: '100%' }}
+              type="button"
+              style={{ ...sm2Button('quiet', unlockLoading), width: '100%', marginTop: 8 }}
               onClick={handleUnlockFull}
               disabled={unlockLoading}
             >
               {unlockLoading
-                ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
-                : (isPt ? `Já quero o completo — ${FULL_UNLOCK_PRICE_LABEL}` : `Get the full game — ${FULL_UNLOCK_PRICE_LABEL}`)}
+                ? <Spinner />
+                : (isPt ? `Quero o completo — ${FULL_UNLOCK_PRICE_LABEL}` : `Get the full game — ${FULL_UNLOCK_PRICE_LABEL}`)}
             </button>
-            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '8px 0 0' }}>
-              {isPt
-                ? 'Compra única: personagem gerado só pra você e tarefas ilimitadas.'
-                : 'One-time purchase: a character generated just for you, unlimited tasks.'}
-            </p>
             {unlockMessage && (
-              <p style={{ fontSize: 12, color: '#e0483e', marginTop: 16, lineHeight: 1.5 }}>
+              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 16 }}>
                 {unlockMessage}
               </p>
             )}
-            <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
 
-        {/* DEMO_PICK — escolha entre os 3 personagens pré-prontos (modo demo) */}
+        {/* GOAL_STEP / STRUGGLE_STEP — o "porquê", antes de qualquer mecânica */}
         {(step === GOAL_STEP || step === STRUGGLE_STEP) && (
           <div style={{ paddingTop: 28 }}>
-            <p style={{ fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--sm-primary)', fontWeight: 700, margin: '0 0 10px' }}>
-              {step === GOAL_STEP
-                ? (isPt ? 'Antes de tudo' : 'First things first')
-                : (isPt ? 'Mais uma' : 'One more')}
-            </p>
-            <h2 style={{ fontSize: 23, fontWeight: 800, margin: '0 0 10px', lineHeight: 1.25 }}>
+            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 8 }}>
               {step === GOAL_STEP
                 ? (isPt ? 'O que você quer melhorar na sua vida?' : 'What do you want to improve in your life?')
                 : (isPt ? 'E o que mais te atrapalha hoje?' : 'And what gets in your way the most?')}
             </h2>
-            <p style={{ fontSize: 14, color: 'var(--sm-muted)', lineHeight: 1.55, margin: '0 0 18px' }}>
+            <p style={{ ...sm2Hint, marginBottom: 16 }}>
               {step === GOAL_STEP
                 ? (isPt
-                    ? 'Escreva do seu jeito. Seu Soulmon vai lembrar disso quando você precisar — e nada aqui vira nota ou cobrança.'
-                    : 'In your own words. Your Soulmon will remember it when you need it — none of this becomes a score.')
+                    ? 'Escreva do seu jeito. Nada aqui vira nota ou cobrança.'
+                    : 'In your own words. None of this becomes a score.')
                 : (isPt
-                    ? 'Saber onde costuma travar ajuda seu Soulmon a te encontrar nos dias difíceis.'
-                    : 'Knowing where you tend to get stuck helps your Soulmon meet you on the hard days.')}
+                    ? 'Saber onde você costuma travar ajuda seu Soulmon nos dias difíceis.'
+                    : 'Knowing where you tend to get stuck helps your Soulmon on the hard days.')}
             </p>
             <textarea
               rows={4}
               autoFocus
-              className="sm-px-field"
-              style={{ ...input, resize: 'none', lineHeight: 1.5, fontFamily: 'inherit' }}
+              style={{ ...fieldStyle, resize: 'none', fontFamily: 'var(--sm2-font-text)' }}
               value={step === GOAL_STEP ? soulGoal : soulStruggle}
               onChange={e => (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(e.target.value.slice(0, 280))}
               placeholder={step === GOAL_STEP
                 ? (isPt ? 'Ex.: quero voltar a estudar sem me cobrar tanto' : 'e.g. get back to studying without beating myself up')
                 : (isPt ? 'Ex.: começo animado e largo na segunda semana' : 'e.g. I start strong and quit in week two')}
             />
-            <button className="sm-btn" style={{ width: '100%', marginTop: 16 }} onClick={next}>
+            <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginTop: 16 }} onClick={next}>
               {isPt ? 'Continuar' : 'Continue'}
+              <Icon name="arrow_forward" size={18} />
             </button>
             {/* Pular é de propósito: obrigar a escrever antes de ver o app é o
                 jeito mais rápido de perder alguém logo na primeira tela. */}
             <button
-              className="sm-btn sm-btn-secondary" style={{ width: '100%', marginTop: 8 }}
+              type="button"
+              style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }}
               onClick={() => { (step === GOAL_STEP ? setSoulGoal : setSoulStruggle)(''); next(); }}
             >
               {isPt ? 'Prefiro não responder agora' : 'I’d rather not say right now'}
@@ -582,30 +668,33 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </div>
         )}
 
+        {/* DEMO_PICK — escolha entre os 3 personagens pré-prontos */}
         {step === DEMO_PICK && (
           <div style={{ paddingTop: 20 }}>
-            <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>
+            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 16 }}>
               {isPt ? 'Escolha seu Soulmon' : 'Choose your Soulmon'}
             </h2>
-            <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 20px' }}>
-              {isPt ? 'No modo demo, seu Soulmon evolui até Mega — sem escolha de caminho.' : "In demo mode, your Soulmon evolves up to Mega — no path choice."}
-            </p>
             {PREMADE_CHARACTERS.map(c => (
               <button
                 key={c.id}
+                type="button"
                 onClick={() => { setDemoCharacterId(c.id); setStep(REGISTER); }}
-                className="sm-card"
-                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12, padding: 12, marginBottom: 10, cursor: 'pointer' }}
+                style={{
+                  width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12,
+                  padding: 12, marginBottom: 8, cursor: 'pointer',
+                  borderRadius: 12, border: '1px solid var(--sm2-line)',
+                  backgroundColor: 'var(--sm2-surface)',
+                }}
               >
                 <img src={getDemoSprite(c.id, 'rookie')} alt="" style={{ width: 52, height: 52, objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.92rem', color: 'var(--sm-ink)' }}>{c.name}</p>
-                  <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: 'var(--sm-muted)', lineHeight: 1.4 }}>{isPt ? c.bioPt : c.bioEn}</p>
-                </div>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ ...sm2Text, fontWeight: 500, display: 'block' }}>{c.name}</span>
+                  <span style={{ ...sm2Hint, display: 'block', marginTop: 2 }}>{isPt ? c.bioPt : c.bioEn}</span>
+                </span>
               </button>
             ))}
-            <button className="sm-btn sm-btn-secondary" style={{ width: '100%', marginTop: 4 }} onClick={() => { setFlow(null); setStep(0); }}>
-              <ArrowLeft size={16} strokeWidth={2.4} />
+            <button type="button" style={{ ...sm2Button('quiet'), marginTop: 4 }} onClick={() => { setFlow(null); setStep(0); }}>
+              <Icon name="arrow_back" size={18} />
               {isPt ? 'Voltar' : 'Back'}
             </button>
           </div>
@@ -615,7 +704,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === 1 && (
           <StepShell title={isPt ? 'Qual é o seu nome completo?' : 'What is your full name?'}
             hint={isPt ? 'Seu nome molda a numerologia da sua criatura.' : 'Your name shapes your creature\'s numerology.'}>
-            <input className="sm-px-field" style={input} type="text" value={fullName} autoFocus
+            <Field type="text" value={fullName} autoFocus
               onChange={e => setFullName(e.target.value)}
               placeholder={isPt ? 'Ex.: Maria da Silva' : 'E.g.: Jane Doe'}
               onKeyDown={e => e.key === 'Enter' && next()} />
@@ -626,7 +715,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === 2 && (
           <StepShell title={isPt ? 'Quando você nasceu?' : 'When were you born?'}
             hint={isPt ? 'Define seus signos e elementos.' : 'Sets your signs and elements.'}>
-            <input className="sm-px-field" style={input} type="text" inputMode="numeric" autoComplete="off"
+            <Field type="text" inputMode="numeric" autoComplete="off"
               value={birthDateText} autoFocus
               placeholder={isPt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)'}
               onChange={e => handleBirthDateChange(e.target.value)}
@@ -641,28 +730,23 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'A hora define o Ascendente e as casas do seu mapa.'
               : 'The hour sets the Ascendant and the houses of your chart.'}>
-            <input className="sm-px-field" style={{ ...input, opacity: timeUnknown ? 0.5 : 1 }} type="time" value={birthTime}
+            <Field type="time" value={birthTime}
               disabled={timeUnknown}
+              style={{ opacity: timeUnknown ? 0.5 : 1 }}
               onChange={e => setBirthTime(e.target.value)} />
             {/* Sem hora, o mapa NÃO inventa Ascendente — ele desliga o cálculo
                 e avisa. Obrigar um palpite seria pedir para a pessoa mentir
                 num dado que desloca o mapa inteiro. */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={timeUnknown}
-                onChange={e => setTimeUnknown(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }}
-              />
-              <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>
+            <div style={{ marginTop: 8 }}>
+              <CheckRow checked={timeUnknown} onChange={setTimeUnknown}>
                 {isPt ? 'Não sei a hora que nasci' : "I don't know my birth time"}
-              </span>
-            </label>
+              </CheckRow>
+            </div>
             {timeUnknown && (
-              <p style={{ fontSize: 12, color: 'var(--sm-muted)', margin: '10px 2px 0', lineHeight: 1.5 }}>
+              <p style={{ ...sm2Hint, marginTop: 4 }}>
                 {isPt
-                  ? 'Sem problema: usamos meio-dia e o mapa fica sem Ascendente e sem casas, em vez de fingir uma precisão que não existe.'
-                  : 'No problem: we use noon and the chart goes without Ascendant and houses, instead of faking a precision it does not have.'}
+                  ? 'Sem problema: usamos meio-dia, e o mapa fica sem Ascendente em vez de fingir precisão.'
+                  : 'No problem: we use noon, and the chart goes without an Ascendant instead of faking precision.'}
               </p>
             )}
           </StepShell>
@@ -675,8 +759,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               ? 'O lugar posiciona o céu do seu nascimento — e o fuso certo.'
               : 'The place positions the sky at your birth — and the right timezone.'}>
             <CityPicker value={birthCity} onChange={setBirthCity} isPt={isPt}
-              inputStyle={input} optionStyle={optionBtn}
-              inputClass="sm-px-field" optionClass="sm-px-choice" />
+              inputStyle={fieldStyle} optionStyle={optionBtn} />
           </StepShell>
         )}
 
@@ -684,26 +767,22 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === FAVORITE_STEP && (
           <StepShell title={isPt ? 'Qual sua criatura favorita?' : "What's your favorite creature?"}
             hint={isPt ? 'Opcional — até 2 palavras. Ela influencia a aparência da sua criatura.' : 'Optional — up to 2 words. It shapes how your creature looks.'}>
-            <input className="sm-px-field" style={{ ...input, opacity: skipFavorite ? 0.5 : 1 }} type="text" value={favoriteCreature} autoFocus
+            <Field type="text" value={favoriteCreature} autoFocus
               disabled={skipFavorite}
+              style={{ opacity: skipFavorite ? 0.5 : 1 }}
               onChange={e => setFavoriteCreature(e.target.value.split(/\s+/).slice(0, 2).join(' '))}
               placeholder={isPt ? 'Ex.: axolote' : 'E.g.: axolotl'}
               onKeyDown={e => e.key === 'Enter' && next()} />
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={skipFavorite}
-                onChange={e => setSkipFavorite(e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: 'var(--sm-primary)' }}
-              />
-              <span style={{ fontSize: 13, color: 'var(--sm-muted)' }}>
+            <div style={{ marginTop: 8 }}>
+              <CheckRow checked={skipFavorite} onChange={setSkipFavorite}>
                 {isPt ? 'Prefiro não influenciar o resultado' : "I'd rather not influence the result"}
-              </span>
-            </label>
+              </CheckRow>
+            </div>
           </StepShell>
         )}
 
-        {/* 6..11 — As 6 perguntas do ritual (uma por página) */}
+        {/* 6..11 — As 6 perguntas do ritual (uma por página). O NÚMERO delas é
+            regra de produto e não muda: só a roupa mudou. */}
         {step >= QUIZ_START && step < QUIZ_END && (() => {
           const q = ORACLE_QUESTIONS[step - QUIZ_START];
           return (
@@ -715,7 +794,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 {q.options.map(opt => {
                   const selected = answers[q.id] === opt.id;
                   return (
-                    <button key={opt.id} className="sm-px-choice" aria-pressed={selected} style={optionBtn(selected)}
+                    <button key={opt.id} type="button" aria-pressed={selected} style={optionBtn(selected)}
                       onClick={() => {
                         setAnswers(prev => ({ ...prev, [q.id]: opt.id }));
                         // avança sozinho após escolher (fluido)
@@ -737,21 +816,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'Esta escolha não tem volta — não dá para responder o teste depois.'
               : "This choice is final — there's no answering the test later."}>
-            <p style={{ fontSize: 13.5, color: 'var(--sm-muted)', lineHeight: 1.65, margin: '0 0 18px' }}>
+            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 18px' }}>
               {isPt
-                ? 'Seu Soulmon já pode nascer agora, do seu nome, do céu do seu nascimento e das 6 respostas que você deu. Se quiser, dá para responder mais 20 perguntas sobre você — elas afinam quem ele vai ser.'
-                : 'Your Soulmon can be born right now, from your name, the sky at your birth and the 6 answers you gave. If you like, you can answer 20 more questions about yourself — they sharpen who he turns out to be.'}
+                ? `Seu Soulmon já pode nascer agora. Se quiser, dá para responder mais ${SOUL_TEST_ITEMS.length} perguntas sobre você — elas afinam quem ele vai ser.`
+                : `Your Soulmon can be born right now. If you like, you can answer ${SOUL_TEST_ITEMS.length} more questions about yourself — they sharpen who he turns out to be.`}
             </p>
-            <button className="sm-btn" style={{ width: '100%', marginBottom: 10 }}
+            <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginBottom: 8 }}
               onClick={() => chooseRefine(true)}>
               {isPt ? `Responder mais ${SOUL_TEST_ITEMS.length} perguntas` : `Answer ${SOUL_TEST_ITEMS.length} more questions`}
             </button>
-            <button className="sm-btn sm-btn-secondary" style={{ width: '100%' }}
+            <button type="button" style={{ ...sm2Button('ghost'), width: '100%' }}
               onClick={() => chooseRefine(false)}>
               {isPt ? 'Revelar meu Soulmon agora' : 'Reveal my Soulmon now'}
             </button>
             {generateError && (
-              <p style={{ fontSize: 12.5, color: 'var(--sm-danger, #c0392b)', margin: '14px 2px 0', lineHeight: 1.5 }}>
+              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 14 }}>
                 {isPt
                   ? 'Não foi possível revelar sua criatura agora. Escolha de novo para tentar outra vez.'
                   : "We couldn't reveal your creature just now. Choose again to retry."}
@@ -771,7 +850,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 answer={testAnswers[item.id]}
                 isPt={isPt}
                 optionStyle={optionBtn}
-                optionClass="sm-px-choice"
                 onAnswer={answer => {
                   const nextTest = { ...testAnswers, [item.id]: answer };
                   setTestAnswers(nextTest);
@@ -787,115 +865,112 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
         {/* Gerando */}
         {step === GENERATING && (
-          <div style={{ textAlign: 'center', paddingTop: 90 }}>
-            <div style={{ position: 'relative', width: 88, height: 88, margin: '0 auto 20px' }}>
-              <img src={ravenMascot} alt="" width={64} height={64}
-                style={{ position: 'absolute', inset: 0, margin: 'auto', objectFit: 'contain' }} />
-              <LoaderCircle size={88} color="var(--sm-primary)" strokeWidth={1.6}
-                style={{ animation: 'soulspin 1.1s linear infinite' }} />
-            </div>
-            <p style={{ fontSize: 16, color: 'var(--sm-muted)' }}>
+          <div style={{ textAlign: 'center', paddingTop: 90 }} role="status" aria-live="polite">
+            <img src={ravenMascot} alt="" width={64} height={64}
+              style={{ display: 'block', margin: '0 auto 8px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+            <Spinner size={32} />
+            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', marginTop: 12 }}>
               {isPt ? 'Revelando a criatura da sua alma…' : 'Revealing your soul\'s creature…'}
             </p>
-            <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
 
         {/* Reveal — apenas nome + descrição breve */}
         {step === REVEAL && result && (
           <div style={{ textAlign: 'center', paddingTop: 40 }}>
-            <div style={{ fontSize: 12, color: 'var(--sm-muted)', letterSpacing: 2, fontWeight: 700 }}>
-              {isPt ? 'A CRIATURA DA SUA ALMA' : 'YOUR SOUL\'S CREATURE'}
-            </div>
-            <h1 style={{ fontSize: 36, margin: '10px 0 10px', fontWeight: 800, letterSpacing: -0.5 }}>
+            <p style={{ ...sm2Hint, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 500 }}>
+              {isPt ? 'A criatura da sua alma' : 'Your soul\'s creature'}
+            </p>
+            <h1 style={{
+              fontFamily: 'var(--sm2-font-display)',
+              fontSize: 'var(--sm2-text-2xl)',
+              lineHeight: 'var(--sm2-leading-title)',
+              fontWeight: 600, color: 'var(--sm2-ink)',
+              margin: '8px 0 8px',
+            }}>
               {result.creature.baseName}
             </h1>
 
             {essence && (
-              <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', letterSpacing: 0.6, fontWeight: 700, margin: '0 0 16px' }}>
+              <p style={{ ...sm2Hint, color: 'var(--sm2-gold-ink)', fontWeight: 500, margin: '0 0 16px' }}>
                 {isPt ? essence.pt : essence.en}
               </p>
             )}
 
-            <div className="sm-card" style={{ padding: '18px 16px', marginBottom: 28 }}>
-              <p style={{ fontSize: 14, color: 'var(--sm-ink)', lineHeight: 1.7, margin: 0 }}>
-                {L(result.creature.bio)}
-              </p>
+            <div style={{
+              padding: '16px 16px', marginBottom: 24, borderRadius: 12,
+              border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
+              textAlign: 'left',
+            }}>
+              <p style={{ ...sm2Text, margin: 0 }}>{L(result.creature.bio)}</p>
             </div>
 
             <button
-              className="sm-btn" style={{ width: '100%' }}
+              type="button"
+              style={{ ...sm2Button('primary'), width: '100%' }}
               onClick={() => { if (isUpgrade) onRevealed?.(result); else setStep(REGISTER); }}
             >
               {isUpgrade
                 ? (isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`)
                 : (isPt ? 'Continuar' : 'Continue')}
+              <Icon name="arrow_forward" size={18} />
             </button>
           </div>
         )}
 
-        {/* Register — nickname (identidade pública) + e-mail (sync), obrigatórios */}
+        {/* Register — nickname (identidade pública) + e-mail (sync) */}
         {step === REGISTER && (result || demoChar) && (
           <div style={{ paddingTop: 20 }}>
-            <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>
+            <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 18 }}>
               {isPt ? 'Últimos detalhes' : 'Last details'}
             </h2>
-            <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 20px' }}>
-              {emailRequired
-                ? (isPt
-                  ? 'Isso identifica você na Biblioteca/Torneio e sincroniza seu progresso na nuvem.'
-                  : 'This identifies you in the Library/Tournament and syncs your progress to the cloud.')
-                : (isPt
-                  ? 'Só falta um apelido para o seu Soulmon te conhecer.'
-                  : 'Just a nickname left, so your Soulmon knows who you are.')}
-            </p>
 
-            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
-              {isPt ? 'Seu nickname' : 'Your nickname'}
+            <label style={sm2Label} htmlFor="onb-nick">
+              {isPt ? 'Seu apelido' : 'Your nickname'}
             </label>
-            <input className="sm-px-field" style={input} type="text" value={nickname} autoFocus maxLength={24}
+            <Field id="onb-nick" type="text" value={nickname} autoFocus maxLength={24}
               onChange={e => setNickname(e.target.value)}
               placeholder={isPt ? 'Ex.: Mateus' : 'E.g.: Matt'}
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
-            <p style={{ fontSize: 11.5, color: 'var(--sm-muted)', margin: '6px 0 18px' }}>
+            <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
               {isPt ? 'Visível para outros jogadores na Biblioteca e no Torneio.' : 'Visible to other players in the Library and Tournament.'}
             </p>
 
-            <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 6 }}>
+            <label style={sm2Label} htmlFor="onb-email">
               {isPt ? 'Seu e-mail' : 'Your email'}
-              {!emailRequired && (
-                <span style={{ fontWeight: 600, color: 'var(--sm-muted)' }}>
-                  {isPt ? ' (opcional)' : ' (optional)'}
-                </span>
-              )}
+              {!emailRequired && (isPt ? ' (opcional)' : ' (optional)')}
             </label>
-            <input className="sm-px-field" style={input} type="email" value={email} autoComplete="email"
+            <Field id="onb-email" type="email" value={email} autoComplete="email"
+              aria-invalid={emailError || undefined}
               onChange={e => { setEmail(e.target.value); setEmailError(false); }}
               placeholder="voce@exemplo.com"
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
-            <p style={{ fontSize: 11.5, color: emailError ? '#e0483e' : 'var(--sm-muted)', margin: '6px 0 0' }}>
+            <p style={{ ...sm2Hint, color: emailError ? 'var(--sm2-danger-ink)' : 'var(--sm2-muted)', margin: '6px 0 0' }}>
               {emailError
                 ? (isPt ? 'Digite um e-mail válido.' : 'Enter a valid email.')
                 : emailRequired
-                  ? (isPt ? 'Obrigatório — garante que seu progresso não se perca ao trocar de aparelho.' : 'Required — makes sure your progress survives a device change.')
-                  : (isPt ? 'Só serve para não perder o progresso ao trocar de aparelho. Dá pra deixar em branco e informar depois.' : 'Only used so your progress survives a device change. You can leave it blank and add it later.')}
+                  ? (isPt ? 'Garante que seu progresso não se perca ao trocar de aparelho.' : 'Makes sure your progress survives a device change.')
+                  : (isPt ? 'Só serve para não perder o progresso. Dá para deixar em branco.' : 'Only used so your progress survives a device change. You can leave it blank.')}
             </p>
 
             {linkSent ? (
               // Link enviado: o onboarding continua quando o usuário voltar
               // pelo e-mail (App.tsx detecta o link e conclui o login).
-              <div className="sm-card" style={{ marginTop: 24, padding: 16, backgroundColor: 'var(--sm-primary-soft)', border: 'none', ['--sm-cham-line' as string]: 'transparent' } as React.CSSProperties}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--sm-primary)' }}>
-                  {isPt ? 'Confira seu e-mail 📬' : 'Check your email 📬'}
+              <div style={{
+                marginTop: 24, padding: 16, borderRadius: 12,
+                backgroundColor: 'var(--sm2-primary-soft)',
+              }}>
+                <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: 'var(--sm2-primary-ink)' }}>
+                  {isPt ? 'Confira seu e-mail' : 'Check your email'}
                 </p>
-                <p style={{ margin: '6px 0 0', fontSize: 12.5, color: 'var(--sm-ink)', lineHeight: 1.6 }}>
+                <p style={{ ...sm2Hint, marginTop: 6 }}>
                   {isPt
-                    ? `Mandamos um link de acesso para ${email.trim().toLowerCase()}. Abra o link NESTE aparelho para continuar — é assim que garantimos que o e-mail é seu.`
-                    : `We sent a sign-in link to ${email.trim().toLowerCase()}. Open it ON THIS DEVICE to continue — that's how we confirm the address is yours.`}
+                    ? `Mandamos um link de acesso para ${email.trim().toLowerCase()}. Abra o link NESTE aparelho para continuar.`
+                    : `We sent a sign-in link to ${email.trim().toLowerCase()}. Open it ON THIS DEVICE to continue.`}
                 </p>
                 <button
-                  className="sm-btn sm-btn-secondary"
-                  style={{ width: '100%', marginTop: 14 }}
+                  type="button"
+                  style={{ ...sm2Button('ghost'), width: '100%', marginTop: 14 }}
                   onClick={() => { setLinkSent(false); setUnlockMessage(null); }}
                 >
                   {isPt ? 'Usar outro e-mail' : 'Use a different email'}
@@ -903,15 +978,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </div>
             ) : (
               <>
-                <button className="sm-btn" style={{ width: '100%', marginTop: 24 }} onClick={finish} disabled={!canFinish}>
+                <button type="button" style={{ ...sm2Button('primary', !canFinish), width: '100%', marginTop: 24 }}
+                  onClick={finish} disabled={!canFinish}>
                   {submitting
-                    ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'soulspin 1.1s linear infinite' }} />
+                    ? <Spinner />
                     : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
                 </button>
                 {/* Sem isto o botão só ficava apagado e o toque não fazia nada —
                     o usuário não tinha como saber o que faltava. */}
                 {!canFinish && !submitting && (
-                  <p style={{ fontSize: 12, color: 'var(--sm-muted)', marginTop: 8, textAlign: 'center' }}>
+                  <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
                     {nickname.trim().length < 2
                       ? (isPt ? 'Escolha um apelido com pelo menos 2 letras.' : 'Pick a nickname with at least 2 letters.')
                       : (isPt ? 'Falta o e-mail.' : 'Your email is missing.')}
@@ -920,21 +996,20 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </>
             )}
             {unlockMessage && !linkSent && (
-              <p style={{ fontSize: 12, color: '#e0483e', marginTop: 12, lineHeight: 1.5 }}>{unlockMessage}</p>
+              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 12 }}>{unlockMessage}</p>
             )}
-            <style>{`@keyframes soulspin{to{transform:rotate(360deg)}}`}</style>
           </div>
         )}
 
         {/* Navegação (para passos com input manual) */}
         {step >= 1 && step <= FAVORITE_STEP && (
-          <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-            <button className="sm-btn sm-btn-secondary" onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
-              <ArrowLeft size={18} strokeWidth={2.4} />
+          <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
+            <button type="button" style={sm2Button('ghost')} onClick={back} aria-label={isPt ? 'Voltar' : 'Back'}>
+              <Icon name="arrow_back" size={20} />
             </button>
-            <button className="sm-btn" style={{ flex: 1 }} onClick={next} disabled={!canAdvance()}>
+            <button type="button" style={{ ...sm2Button('primary', !canAdvance()), flex: 1 }} onClick={next} disabled={!canAdvance()}>
               {isPt ? 'Continuar' : 'Continue'}
-              <ArrowRight size={18} strokeWidth={2.4} />
+              <Icon name="arrow_forward" size={18} />
             </button>
           </div>
         )}
@@ -943,8 +1018,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             PRIMEIRO item em diante, porque voltar de lá devolve a bifurcação
             para quem entrou no teste longo sem querer. */}
         {((step > QUIZ_START && step < QUIZ_END) || (step >= DEEP_START && step < DEEP_END)) && (
-          <button className="sm-btn sm-btn-secondary" style={{ marginTop: 8 }} onClick={back}>
-            <ArrowLeft size={16} strokeWidth={2.4} />
+          <button type="button" style={{ ...sm2Button('quiet'), marginTop: 4 }} onClick={back}>
+            <Icon name="arrow_back" size={18} />
             {isPt ? 'Voltar' : 'Back'}
           </button>
         )}
@@ -954,11 +1029,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   );
 }
 
+/** O casco de um passo: título em Fredoka, legenda em Rubik no piso de 12px. */
 function StepShell({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div style={{ paddingTop: 20 }}>
-      <h2 style={{ fontSize: 21, margin: '0 0 6px', lineHeight: 1.35, fontWeight: 800 }}>{title}</h2>
-      {hint && <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 20px' }}>{hint}</p>}
+      <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 6 }}>{title}</h2>
+      {hint && <p style={{ ...sm2Hint, marginBottom: 18 }}>{hint}</p>}
       {children}
     </div>
   );

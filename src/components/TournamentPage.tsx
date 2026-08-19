@@ -1,39 +1,52 @@
+/**
+ * TORNEIO — PvP assíncrono.
+ *
+ * REVAMP: a MOLDURA saiu do fliperama. Saíram os 3 PNGs de ícone, o
+ * `lucide-react`, o `sm-px-*` (barra de arcade, chanfro, `sm-px-card`), o
+ * `PixelKit` inteiro e as cores cruas (`#fff`, `rgba(255,255,255,…)`,
+ * `#facc15`, os três hexes de pódio). Tudo vive em `--sm2-*` + `<Icon>`.
+ *
+ * ─── ONDE EU TRACEI A FRONTEIRA RETRÔ ──────────────────────────────────────
+ *
+ * O `PLANO-DESIGN` §3.1 deixa no território retrô "só a cena de arena" desta
+ * tela. **Cena de arena, aqui, não existe**: a partida é resolvida no servidor
+ * (`playMatch`) e volta como placar — não há um único frame de combate neste
+ * arquivo. O que existia era um GABINETE: a arte `bg/tournament.png` pintada no
+ * fundo da página inteira, girada 265° de matiz em tempo real porque saiu roxa
+ * do gerador, mais um véu de legibilidade por cima dela. Isso não é cena, é
+ * moldura — e moldura migra. Ela saiu inteira, e com ela some a razão de a tela
+ * ser escura no tema claro e de todo texto daqui ser branco cru.
+ *
+ * O que **fica** pixel, porque é conteúdo do visor e não interface: os sprites
+ * dos oponentes (`getSpriteForStage`, `image-rendering: pixelated`). E fica
+ * reservado: se um dia a partida ganhar animação, ela nasce dentro de um
+ * `<Viewport>` — a fronteira é o vidro, não o arquivo.
+ *
+ * ─── O QUE NÃO PODE SER "SIMPLIFICADO" DAQUI (correções de tom) ────────────
+ *
+ * 1. **A FAIXA vem ANTES do ranking.** Posição absoluta é a leitura que a
+ *    pesquisa associa a comparação tóxica; a faixa mede o jogador contra ele
+ *    mesmo e só sobe. Inverter a ordem desfaz a tese.
+ * 2. **O ranking é uma JANELA de ±3 posições** em volta do jogador, com a
+ *    season inteira a UM toque. A lista completa transformava a tela num
+ *    placar absoluto ("você é o 47º"), que é exatamente o que a faixa existe
+ *    para substituir.
+ * 3. **O placar de derrota é tinta NEUTRA**, nunca vermelho — perder uma
+ *    partida não é um erro do usuário. Só a vitória ganha cor.
+ * 4. **Perder também rende Emblemas, e a tela diz isso.**
+ *
+ * Nomes de ícone conferidos um a um contra o inventário de `tokens.md`.
+ */
 import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
-import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { getStageLevel } from '../types/progression';
 import { getOpponents, playMatch, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
-import tournamentBg from '../assets/soulmon/bg/tournament.png';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { getTierStanding } from '../utils/tournamentTiers';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
-import { PixelButton, PixelChip, PixelMeter, PixelSwitch, PixelTabs, PixelTag, type PixelTabItem } from './pixel/PixelKit';
-import iconCalendar from '../assets/soulmon/icons/icon-clock.png';
-
-/**
- * Torneio — PvP assincrono.
- *
- * --- Rodada 2 do alinhamento visual (G4/G8/G9) ---------------------------
- * Era a tela citada como prova do gap: cards brancos com sombra suave, abas
- * `sm-btn` com fundo translucido, capsula-pilula branca de Emblemas, toggle
- * do PvP em pill+bolinha do Material e barra de faixa arredondada.
- *
- * Duas decisoes que valem registro:
- *
- * 1. **A tela inteira e peca escura nos dois temas, de proposito.** Ela pinta
- *    o proprio fundo (`bg/tournament.png`), entao NAO usa `--sm-surface`: e um
- *    gabinete de arcade, nao uma pagina do app. Isso NAO e o forasteiro do G8
- *    (o dock de chat) — a diferenca e que la a peca escura ficava sobre a
- *    pagina clara sem motivo, e aqui a arte de fundo e o motivo. O que mudou e
- *    a FORMA (chanfro de cobre) e a fonte de rotulo/numero.
- * 2. **`PixelTabs` no lugar das duas `sm-btn`.** A aba inativa era uma `sm-btn`
- *    com `background: rgba(255,255,255,0.12)` — mais clara que a pagina, mais
- *    pesada que a ativa em certos fundos: exatamente o G9. Agora a selecao e o
- *    preenchimento solido.
- */
+import { Icon } from './ui/Icon';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 
 interface TournamentPageProps {
   saveId: string;
@@ -48,7 +61,67 @@ interface TournamentPageProps {
   onEarnEmblems: (amount: number) => void;
 }
 
-const PLACE_COLOR: Record<1 | 2 | 3, string> = { 1: '#e8c96a', 2: '#c7cad4', 3: '#c98a52' };
+/** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
+const emblemNum: React.CSSProperties = { ...emblemStyle, color: 'var(--sm2-gold-ink)' };
+
+/** Card do sistema: mesma superfície da Biblioteca e da Loja. */
+const cardStyle: React.CSSProperties = {
+  backgroundColor: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 12,
+  boxShadow: SM2_SHADOW_CARD,
+};
+
+/**
+ * Símbolo da faixa. O modelo (`utils/tournamentTiers.ts`) guarda um EMOJI, que
+ * é arte do sistema operacional no meio de uma peça nossa — e `tournamentTiers`
+ * não é meu arquivo nesta onda. O mapa mora aqui e cai em `military_tech` para
+ * faixa nova: um `id` desconhecido não pode apagar a marca da faixa.
+ */
+const TIER_ICON: Record<string, string> = {
+  semente: 'eco',
+  broto: 'park',
+  guardiao: 'military_tech',
+  anciao: 'auto_awesome',
+  lendario: 'emoji_events',
+};
+
+/** Alternador do PvP. `role="switch"` de verdade, alvo de 44px. */
+function Switch({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={onToggle}
+      style={{
+        flexShrink: 0,
+        width: 56, height: 44,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'none', border: 'none', cursor: 'pointer',
+      }}
+    >
+      <span
+        style={{
+          width: 44, height: 26, borderRadius: 999, padding: 3, boxSizing: 'border-box',
+          display: 'flex', alignItems: 'center',
+          justifyContent: checked ? 'flex-end' : 'flex-start',
+          backgroundColor: checked ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface-2)',
+          border: checked ? '1px solid transparent' : '1px solid var(--sm2-line)',
+          transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
+        }}
+      >
+        <span
+          style={{
+            width: 20, height: 20, borderRadius: 999,
+            backgroundColor: checked ? 'var(--sm2-on-primary)' : 'var(--sm2-muted)',
+          }}
+        />
+      </span>
+    </button>
+  );
+}
 
 export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
@@ -57,8 +130,12 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   const [matchesLeft, setMatchesLeft] = useState<number | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [rank, setRank] = useState<RankRow[] | null>(null);
+  const [rankFailed, setRankFailed] = useState(false);
   const [fighting, setFighting] = useState<string | null>(null);
   const [result, setResult] = useState<MatchResult | null>(null);
+  /** Erro de AÇÃO (a partida não foi). Era `alert()` — diálogo do sistema por
+   *  cima de um app de bichinho, e sem par PT/EN garantido. */
+  const [fightError, setFightError] = useState<string | null>(null);
   // Pontos do próprio jogador, lidos da linha dele no ranking.
   const myPoints = rank?.find(r => r.id === saveId)?.points ?? 0;
   const standing = rank === null ? null : getTierStanding(myPoints);
@@ -78,10 +155,6 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
     ? rankRows
     : rankRows.slice(Math.max(0, myIndex - RANK_WINDOW), myIndex + RANK_WINDOW + 1);
   const [tab, setTab] = useState<'arena' | 'rank'>('arena');
-  const TABS: readonly PixelTabItem<'arena' | 'rank'>[] = [
-    { key: 'arena', icon: iconSwords, label: 'Arena' },
-    { key: 'rank', icon: iconTrophy, label: 'Rank' },
-  ];
 
   const loadOpponents = () => {
     if (!pvpEnabled) return;
@@ -100,11 +173,14 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 
   useEffect(() => { loadOpponents(); }, [pvpEnabled, saveId]);
   useEffect(() => {
-    if (tab === 'rank' && !rank) getRank().then(r => setRank(r.rank)).catch(() => setRank([]));
+    if (tab === 'rank' && !rank) {
+      getRank().then(r => setRank(r.rank)).catch(() => { setRank([]); setRankFailed(true); });
+    }
   }, [tab, rank]);
 
   const fight = async (opp: Opponent) => {
     setFighting(opp.id);
+    setFightError(null);
     try {
       const r = await playMatch(saveId, opp.id);
       setResult(r);
@@ -116,261 +192,420 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
       onEarnEmblems(r.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS);
     } catch (err) {
       setResult(null);
-      alert(err instanceof Error ? err.message : 'error');
+      setFightError(err instanceof Error && err.message
+        ? err.message
+        : (isPt ? 'A partida não aconteceu. Tente de novo.' : "The match didn't happen. Try again."));
     } finally {
       setFighting(null);
     }
   };
 
+  const TABS = [
+    { key: 'arena' as const, icon: 'swords', label: isPt ? 'Arena' : 'Arena' },
+    { key: 'rank' as const, icon: 'leaderboard', label: isPt ? 'Ranking' : 'Ranking' },
+  ];
+
   return (
-    /* `sm-px-dark-ctx`: esta tela é uma peça ESCURA nos dois temas (ela pinta
-       o próprio fundo). Sem declarar o contexto, a aba não selecionada herdava
-       a tinta escura da página clara e sumia sobre o painel — medido na
-       verificação. O chanfro substitui o `borderRadius: 20` do sistema antigo. */
-    <div
-      className="sm-px-dark-ctx"
-      style={{
-        position: 'relative', overflow: 'hidden', minHeight: 420,
-        clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px)',
-      }}
-    >
-      {/* RODADA 5 — a arte de fundo saiu ROXA do gerador (paleta antiga do
-          projeto; o kit proíbe roxo/magenta). Enquanto a regeração em teal não
-          chega (item no BACKLOG-ARTE-GERAR), o hue-rotate leva o violeta
-          (~270°) para o teal do kit (~175°) sem arte nova. */}
-      <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${tournamentBg})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'hue-rotate(265deg) saturate(0.75)' }} />
-      {/* B4 — véu de legibilidade. A "decoração desenhada por cima do texto"
-          nunca esteve por cima: o anel dourado é parte da ARTE DE FUNDO
-          (`tournamentBg`), e é o título que estava por cima dele, sem placa.
-          Um `z-index` menor não resolveria nada (o fundo já é o de baixo);
-          o que faltava era separar as duas camadas por contraste.
-
-          O véu é um gradiente vertical: forte onde mora o texto (topo, onde
-          o anel cruza "TORNEIO" e a linha de PvP) e some no meio da peça,
-          para a arte continuar aparecendo onde ela não disputa leitura.
-          Zero arte nova, e vale nos dois temas — o painel é escuro em ambos,
-          então o véu não pode inverter. */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          background: 'linear-gradient(180deg, rgba(6,22,24,0.82) 0%, rgba(6,22,24,0.72) 26%, rgba(6,22,24,0.18) 52%, rgba(6,22,24,0.10) 100%)',
-        }}
-      />
-      <div style={{ position: 'relative', zIndex: 1, padding: '20px 16px 24px', color: '#fff' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <img src={iconSwords} alt="" width={24} height={24} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          <h1 className="sm-px-heading" style={{ fontSize: 16, margin: 0, color: 'var(--sm-px-ink)' }}>{isPt ? 'Torneio' : 'Tournament'}</h1>
-          {/* Emblemas mantem a serifa dourada dentro da capsula do kit — as
-              tres moedas continuam impossiveis de confundir. */}
-          <PixelChip
-            style={{ marginLeft: 'auto' }}
-            label={isPt ? 'Emblemas' : 'Emblems'}
-            title={isPt ? 'Emblemas — só compram itens da aba Torneio na loja' : 'Emblems — only buy Tournament items in the shop'}
-            value={<span style={{ ...emblemStyle, color: 'color-mix(in srgb, var(--sm-gold) 40%, white)', fontSize: 13.5 }}>{emblems}</span>}
-          />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--sm2-font-display)',
+              fontSize: 'var(--sm2-text-xl)',
+              fontWeight: 600,
+              lineHeight: 'var(--sm2-leading-title)',
+              color: 'var(--sm2-ink)',
+              margin: 0,
+            }}
+          >
+            {isPt ? 'Torneio' : 'Tournament'}
+          </h1>
+          <p style={{ ...sm2Hint, marginTop: 4 }}>
+            {isPt ? 'Desafie os pets de outros jogadores.' : "Challenge other players' pets."}
+          </p>
         </div>
-        <p style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.85)', margin: '0 0 16px' }}>
-          {isPt ? 'PvP assíncrono — desafie os pets de outros jogadores.' : 'Asynchronous PvP — challenge other players\' pets.'}
-        </p>
-
-        {/* Troféus */}
-        {trophies.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-            {trophies.map((t, i) => (
-              <PixelTag key={i} title={`${t.season} — ${isPt ? 'lugar' : 'place'} ${t.place}`} style={{ color: PLACE_COLOR[t.place], borderColor: PLACE_COLOR[t.place] }}>
-                <img src={iconTrophy} alt="" width={14} height={14} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                {t.season}
-              </PixelTag>
-            ))}
-          </div>
-        )}
-
-        {/* Opt-in */}
-        <div className="sm-px-arcade-bar" style={{ padding: '12px 14px', marginBottom: 16, justifyContent: 'space-between' }}>
-          <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5 }}>{isPt ? 'Participar do PvP' : 'Join PvP'}</p>
-            <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.65)' }}>
-              {isPt ? 'Seu pet fica disponível como oponente de outros jogadores.' : 'Your pet becomes available as an opponent for other players.'}
-            </p>
-          </div>
-          <PixelSwitch
-            checked={pvpEnabled}
-            onToggle={() => onTogglePvp(!pvpEnabled)}
-            ariaLabel={isPt ? 'Participar do PvP' : 'Join PvP'}
-          />
-        </div>
-
-        {/* A rodada semanal é RITUAL, não tranca: fora dela o Torneio continua
-            inteiro disponível. Trancar conteúdo fora de um horário é o erro dos
-            Remote Raid Passes de 2023 — quem não consegue estar lá na hora
-            combinada não se esforça mais, sai. Ver utils/tournamentSeason.ts. */}
-        {/* Os dois emojis (circo/calendario) sairam: eram emoji do SISTEMA em
-            conteudo, o que o portao T2 conta. O icone do kit diz a mesma
-            coisa, e a distincao aberto/fechado passou para a borda + a tinta. */}
-        <div
-          className="sm-px-arcade-bar"
-          style={{
-            marginBottom: 12, padding: '9px 12px', gap: 9,
-            borderColor: round.isOpen ? '#facc15' : 'var(--sm-px-copper)',
-          }}
+        {/* Emblemas: ícone em ouro + número com serifa. As três moedas
+            continuam impossíveis de confundir. */}
+        <span
+          title={isPt ? 'Emblemas — só compram itens da aba Torneio na loja' : 'Emblems — only buy Tournament items in the shop'}
+          style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}
         >
-          <img src={iconCalendar} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
-          <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.45, color: round.isOpen ? '#facc15' : 'rgba(255,255,255,0.78)' }}>
-            {tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}
-          </p>
-        </div>
-
-        {/* Abas — G9: quem carrega a selecao e o preenchimento. */}
-        <PixelTabs
-          items={TABS}
-          value={tab}
-          onChange={setTab}
-          ariaLabel={isPt ? 'Secoes do torneio' : 'Tournament sections'}
-          style={{ marginBottom: 14 }}
-        />
-
-        {tab === 'arena' && !pvpEnabled && (
-          <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.6)', padding: '30px 0' }}>
-            {isPt ? 'Ative o PvP acima para desafiar oponentes.' : 'Enable PvP above to challenge opponents.'}
-          </p>
-        )}
-
-        {tab === 'arena' && pvpEnabled && (
-          <>
-            <p className="sm-px-arcade-label" style={{ marginBottom: 10 }}>
-              {matchesLeft === null
-                ? (isPt ? 'Partidas de hoje: não deu para consultar' : "Today's matches: couldn't check")
-                : (isPt ? `${matchesLeft} partida(s) restante(s) hoje` : `${matchesLeft} match(es) left today`)}
-            </p>
-            {opponents === null && <Loader2 className="animate-spin" size={24} style={{ margin: '20px auto', display: 'block' }} />}
-            {/* VAZIO e ERRO são coisas diferentes, e o app dizia a mesma frase
-                para os dois: "nenhum oponente disponível" quando na verdade a
-                rede caiu esconde do usuário que existe algo a tentar de novo. */}
-            {opponents?.length === 0 && !loadFailed && (
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.7)', padding: '20px 0' }}>
-                {isPt ? 'Nenhum oponente disponível agora.' : 'No opponents available right now.'}
-              </p>
-            )}
-            {loadFailed && (
-              <div style={{ textAlign: 'center', padding: '16px 0' }}>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', margin: '0 0 12px' }}>
-                  {isPt ? 'Não foi possível carregar os oponentes. Você está offline?' : "Couldn't load opponents. Are you offline?"}
-                </p>
-                <PixelButton size="sm" onClick={loadOpponents}>{isPt ? 'Tentar de novo' : 'Try again'}</PixelButton>
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {opponents?.map(o => (
-                <div key={o.id} className="sm-px-arcade-bar" style={{ padding: '10px 12px', gap: 12 }}>
-                  <img src={getSpriteForStage(o.stage)} alt="" style={{ width: 48, height: 48, objectFit: 'contain', imageRendering: 'pixelated' }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontWeight: 700, fontSize: 13.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.name}</p>
-                    <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{o.petName || o.stage} · {getStageLevel(o.stage)}</p>
-                  </div>
-                  <PixelButton size="sm" variant="primary" disabled={matchesLeft === 0 || fighting === o.id} onClick={() => fight(o)}>
-                    {fighting === o.id ? <Loader2 className="animate-spin" size={16} /> : (isPt ? 'Desafiar' : 'Fight')}
-                  </PixelButton>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {tab === 'rank' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {rank === null && <Loader2 className="animate-spin" size={24} style={{ margin: '20px auto', display: 'block' }} />}
-
-            {/* A FAIXA vem primeiro e o ranking global depois, de propósito: a
-                posição absoluta é a leitura que a pesquisa associa a comparação
-                tóxica, e a faixa mede o jogador contra ele mesmo — ela sobe com
-                o que ele acumula e nunca desce porque outra pessoa jogou mais. */}
-            {standing && (
-              <div className="sm-px-arcade-bar" style={{ flexDirection: 'column', alignItems: 'stretch', padding: '14px 16px', marginBottom: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  {/* O emoji da faixa e o SIMBOLO dela no modelo
-                      (utils/tournamentTiers.ts) e ainda nao tem par no kit —
-                      fica registrado como divida de arte no relatorio, e nao
-                      removido as cegas: apaga-lo deixaria a faixa sem marca. */}
-                  <span style={{ fontSize: 26, lineHeight: 1 }}>{standing.tier.emoji}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p className="sm-px-arcade-label" style={{ margin: 0 }}>
-                      {isPt ? 'Sua faixa' : 'Your tier'}
-                    </p>
-                    <p className="sm-px-arcade-value" style={{ margin: '1px 0 0', fontSize: 15 }}>
-                      {isPt ? standing.tier.namePt : standing.tier.nameEn}
-                    </p>
-                  </div>
-                  <span className="sm-px-arcade-value" style={{ fontSize: 12 }}>{myPoints} pts</span>
-                </div>
-                <PixelMeter
-                  ratio={standing.progress}
-                  tone="gold"
-                  height={10}
-                  style={{ marginTop: 10 }}
-                  label={isPt ? 'Progresso na faixa' : 'Tier progress'}
-                />
-                <p style={{ margin: '7px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)', lineHeight: 1.45 }}>
-                  {standing.next
-                    ? (isPt
-                        ? `${standing.pointsToNext} pts até ${standing.next.namePt}. Sua faixa só sobe — ninguém te tira dela.`
-                        : `${standing.pointsToNext} pts to ${standing.next.nameEn}. Your tier only climbs — nobody can knock you down.`)
-                    : (isPt ? 'Faixa máxima. Daqui é só jogar por gosto.' : 'Top tier. From here it’s just for the love of it.')}
-                </p>
-              </div>
-            )}
-
-            {rank && rank.length > 0 && (
-              <p className="sm-px-arcade-label" style={{ margin: '8px 0 2px' }}>
-                {isPt ? 'Ranking da season' : 'Season ranking'}
-              </p>
-            )}
-            {visibleRank.map(({ row: r, place }) => (
-              <div key={r.id} className="sm-px-arcade-bar" style={{ padding: '8px 12px', gap: 10 }}>
-                <span className="sm-px-arcade-value" style={{ width: 24, textAlign: 'center', color: place <= 3 ? PLACE_COLOR[place as 1 | 2 | 3] : undefined }}>{place}</span>
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
-                <span className="sm-px-arcade-value" style={{ fontSize: 12 }}>{r.points} pts</span>
-              </div>
-            ))}
-            {rank && myIndex >= 0 && rank.length > visibleRank.length && !rankExpanded && (
-              <button
-                onClick={() => setRankExpanded(true)}
-                className="sm-px-arcade-label"
-                style={{ display: 'block', width: '100%', marginTop: 6, padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'center', color: 'rgba(255,255,255,0.6)' }}
-              >
-                {isPt ? 'Ver a season inteira' : 'See the whole season'}
-              </button>
-            )}
-          </div>
-        )}
+          <Icon name="military_tech" size={20} tone="gold" />
+          <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-lg)' }}>{emblems}</span>
+        </span>
       </div>
 
-      {result && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(8,5,20,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div className="sm-px-card" style={{ maxWidth: 340, width: '100%', padding: 24, textAlign: 'center' }}>
-            <p className="sm-px-label" style={{ margin: 0 }}>
-              {result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat')}
-            </p>
-            {/* O placar da derrota era o MAIOR elemento da tela de resultado,
-                pintado de vermelho — a partida perdida virava um erro. Agora é
-                tinta neutra nos dois casos; a vitória segue em verde. */}
-            <h2 className="sm-px-value" style={{ fontSize: 24, margin: '6px 0 14px', color: result.won ? '#3fae5a' : 'var(--sm-ink)' }}>
-              {result.myScore} × {result.oppScore}
-            </h2>
-            <p style={{ fontSize: 13, color: 'var(--sm-ink)', margin: '0 0 6px' }}>
-              {isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`} · {result.points} pts
-            </p>
-            {/* Perder também rende Emblemas, mas a UI nunca dizia isso — a
-                partida virava tempo perdido aos olhos de quem perdeu. */}
-            <p style={{ fontSize: 14, fontWeight: 800, margin: '0 0 18px', ...emblemStyle }}>
-              +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS} {isPt ? 'Emblemas' : 'Emblems'}
-            </p>
-            <PixelButton size="lg" variant="primary" onClick={() => { setResult(null); loadOpponents(); }}>
-              {isPt ? 'Continuar' : 'Continue'}
-            </PixelButton>
-          </div>
+      {/* Troféus de season — só existem se foram ganhos. Um selo por season,
+          com o lugar dito em PALAVRA no `title`/`aria`, em vez de três hexes
+          de pódio que ninguém decodifica sem legenda. */}
+      {trophies.length > 0 && (
+        <ul style={{ display: 'flex', gap: 8, flexWrap: 'wrap', listStyle: 'none', margin: 0, padding: 0 }}>
+          {trophies.map((t, i) => (
+            <li
+              key={`${t.season}-${i}`}
+              title={isPt ? `${t.season} — ${t.place}º lugar` : `${t.season} — place ${t.place}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 10px', borderRadius: 999,
+                border: '1px solid var(--sm2-line)',
+                backgroundColor: 'var(--sm2-surface)',
+              }}
+            >
+              <Icon name="emoji_events" size={18} tone="gold" fill={t.place === 1 ? 1 : 0} />
+              <span className="sm2-num" style={{ ...sm2Hint, color: 'var(--sm2-ink)' }}>
+                {t.season} · {t.place}º
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Opt-in do PvP — o rótulo inteiro descreve o que muda no mundo. */}
+      <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 14 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{isPt ? 'Participar do PvP' : 'Join PvP'}</p>
+          <p style={{ ...sm2Hint, marginTop: 2 }}>
+            {isPt ? 'Seu pet fica disponível como oponente de outros jogadores.' : 'Your pet becomes available as an opponent for other players.'}
+          </p>
+        </div>
+        <Switch
+          checked={pvpEnabled}
+          onToggle={() => onTogglePvp(!pvpEnabled)}
+          label={isPt ? 'Participar do PvP' : 'Join PvP'}
+        />
+      </div>
+
+      {/* A rodada semanal é RITUAL, não tranca: fora dela o Torneio continua
+          inteiro disponível. Trancar conteúdo fora de um horário é o erro dos
+          Remote Raid Passes de 2023 — quem não consegue estar lá na hora
+          combinada não se esforça mais, sai. Ver utils/tournamentSeason.ts.
+          Aberto × fechado é dito pela TINTA e pelo ícone, nunca por um
+          `#facc15` cravado nem por emoji do sistema. */}
+      <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, color: round.isOpen ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
+        <Icon name={round.isOpen ? 'event_repeat' : 'schedule'} size={18} fill={round.isOpen ? 1 : 0} />
+        {tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}
+      </p>
+
+      {/* Duas abas: a selecionada é a ÚNICA preenchida. */}
+      <div role="tablist" aria-label={isPt ? 'Seções do torneio' : 'Tournament sections'} style={{ display: 'flex', gap: 8 }}>
+        {TABS.map(item => {
+          const active = tab === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => setTab(item.key)}
+              style={{ ...sm2Button(active ? 'primary' : 'ghost'), flex: 1 }}
+            >
+              <Icon name={item.icon} size={20} fill={active ? 1 : 0} />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === 'arena' && !pvpEnabled && (
+        <div style={{ textAlign: 'center', padding: '24px 0' }}>
+          <Icon name="swords" size={40} tone="muted" />
+          <p style={{ ...sm2Text, marginTop: 8 }}>
+            {isPt ? 'Ative o PvP acima para desafiar oponentes.' : 'Enable PvP above to challenge opponents.'}
+          </p>
         </div>
       )}
+
+      {tab === 'arena' && pvpEnabled && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={sm2Hint}>
+            {matchesLeft === null
+              ? (isPt ? 'Partidas de hoje: não deu para consultar' : "Today's matches: couldn't check")
+              : (isPt ? `${matchesLeft} partida(s) restante(s) hoje` : `${matchesLeft} match(es) left today`)}
+          </p>
+
+          {fightError && (
+            <p role="alert" style={{ ...sm2Text, color: 'var(--sm2-danger-ink)' }}>{fightError}</p>
+          )}
+
+          {/* ── Carregando ── */}
+          {opponents === null && (
+            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
+              <Icon name="sync" size={24} tone="primary" className="animate-spin" />
+              {isPt ? 'Procurando oponentes…' : 'Looking for opponents…'}
+            </p>
+          )}
+
+          {/* ── Vazio ── VAZIO e ERRO são coisas diferentes, e o app dizia a
+              mesma frase para os dois: "nenhum oponente disponível" quando na
+              verdade a rede caiu esconde que existe algo a tentar de novo. */}
+          {opponents?.length === 0 && !loadFailed && (
+            <p style={{ ...sm2Hint, textAlign: 'center', padding: '24px 0' }}>
+              {isPt ? 'Nenhum oponente disponível agora. Volte mais tarde.' : 'No opponents available right now. Come back later.'}
+            </p>
+          )}
+
+          {/* ── Erro / sem rede ── */}
+          {loadFailed && (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <Icon name="cloud_off" size={40} tone="muted" />
+              <p style={{ ...sm2Text, marginTop: 8 }}>
+                {isPt ? 'Não deu para carregar os oponentes.' : "Couldn't load the opponents."}
+              </p>
+              <p style={{ ...sm2Hint, marginTop: 4 }}>
+                {isPt ? 'Pode ser a sua conexão.' : 'It may be your connection.'}
+              </p>
+              <button type="button" onClick={loadOpponents} style={{ ...sm2Button('ghost'), marginTop: 12 }}>
+                <Icon name="refresh" size={20} />
+                {isPt ? 'Tentar de novo' : 'Try again'}
+              </button>
+            </div>
+          )}
+
+          {opponents?.map(o => {
+            const busy = fighting === o.id;
+            const blocked = matchesLeft === 0;
+            return (
+              <div key={o.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
+                {/* Sprite: conteúdo do visor, e por isso continua pixel. */}
+                <img
+                  src={getSpriteForStage(o.stage)}
+                  alt=""
+                  style={{ width: 44, height: 44, flexShrink: 0, objectFit: 'contain', imageRendering: 'pixelated' }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {o.name}
+                  </p>
+                  <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {o.petName || o.stage} · {getStageLevel(o.stage)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={blocked || busy}
+                  onClick={() => fight(o)}
+                  aria-label={blocked
+                    ? (isPt ? 'Sem partidas restantes hoje' : 'No matches left today')
+                    : (isPt ? `Desafiar ${o.name}` : `Challenge ${o.name}`)}
+                  style={{ ...sm2Button('primary', blocked || busy), flexShrink: 0, padding: '10px 14px' }}
+                >
+                  {busy && <Icon name="sync" size={16} className="animate-spin" />}
+                  {isPt ? 'Desafiar' : 'Fight'}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === 'rank' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {rank === null && (
+            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
+              <Icon name="sync" size={24} tone="primary" className="animate-spin" />
+              {isPt ? 'Carregando o ranking…' : 'Loading the ranking…'}
+            </p>
+          )}
+
+          {rankFailed && (
+            <div style={{ textAlign: 'center', padding: '16px 0' }}>
+              <Icon name="cloud_off" size={40} tone="muted" />
+              <p style={{ ...sm2Text, marginTop: 8 }}>
+                {isPt ? 'Não deu para carregar o ranking.' : "Couldn't load the ranking."}
+              </p>
+              <button
+                type="button"
+                onClick={() => { setRank(null); setRankFailed(false); }}
+                style={{ ...sm2Button('ghost'), marginTop: 12 }}
+              >
+                <Icon name="refresh" size={20} />
+                {isPt ? 'Tentar de novo' : 'Try again'}
+              </button>
+            </div>
+          )}
+
+          {/* A FAIXA vem primeiro e o ranking global depois, de propósito: a
+              posição absoluta é a leitura que a pesquisa associa a comparação
+              tóxica, e a faixa mede o jogador contra ele mesmo — ela sobe com
+              o que ele acumula e nunca desce porque outra pessoa jogou mais. */}
+          {standing && !rankFailed && (
+            <div style={{ ...cardStyle, padding: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Icon name={TIER_ICON[standing.tier.id] ?? 'military_tech'} size={32} tone="gold" fill={1} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={sm2Hint}>{isPt ? 'Sua faixa' : 'Your tier'}</p>
+                  {/* Selo de faixa: um dos DOIS lugares onde a Silkscreen é a
+                      voz do aparelho. 14px e caixa alta, o piso da bitmap. */}
+                  <p
+                    style={{
+                      fontFamily: 'var(--sm2-font-pixel)',
+                      fontSize: 'var(--sm2-text-sm)',
+                      lineHeight: 1.4,
+                      textTransform: 'uppercase',
+                      letterSpacing: '.06em',
+                      color: 'var(--sm2-gold-ink)',
+                      margin: '2px 0 0',
+                    }}
+                  >
+                    {isPt ? standing.tier.namePt : standing.tier.nameEn}
+                  </p>
+                </div>
+                <span className="sm2-num" style={{ ...sm2Text, flexShrink: 0, fontWeight: 500 }}>
+                  {myPoints} pts
+                </span>
+              </div>
+
+              {/* Progresso DENTRO da faixa. Nunca diminui. */}
+              <div
+                role="progressbar"
+                aria-label={isPt ? 'Progresso na faixa' : 'Tier progress'}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(standing.progress * 100)}
+                style={{
+                  marginTop: 12, height: 10, borderRadius: 999, overflow: 'hidden',
+                  backgroundColor: 'var(--sm2-surface-2)',
+                  border: '1px solid var(--sm2-line)',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${Math.round(Math.min(1, Math.max(0, standing.progress)) * 100)}%`,
+                    height: '100%',
+                    backgroundColor: 'var(--sm2-gold-fill)',
+                    transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
+                  }}
+                />
+              </div>
+
+              <p style={{ ...sm2Hint, marginTop: 8 }}>
+                {standing.next
+                  ? (isPt
+                      ? `${standing.pointsToNext} pts até ${standing.next.namePt}. Sua faixa só sobe — ninguém te tira dela.`
+                      : `${standing.pointsToNext} pts to ${standing.next.nameEn}. Your tier only climbs — nobody can knock you down.`)
+                  : (isPt ? 'Faixa máxima. Daqui é só jogar por gosto.' : 'Top tier. From here it’s just for the love of it.')}
+              </p>
+            </div>
+          )}
+
+          {rank && rank.length > 0 && (
+            <p style={{ ...sm2Hint, marginTop: 8 }}>
+              {isPt ? 'Ranking da season' : 'Season ranking'}
+            </p>
+          )}
+          {rank && rank.length === 0 && !rankFailed && (
+            <p style={{ ...sm2Hint, textAlign: 'center', padding: '24px 0' }}>
+              {isPt ? 'A season ainda não tem placar. Jogue a primeira partida.' : 'The season has no scores yet. Play the first match.'}
+            </p>
+          )}
+
+          {visibleRank.map(({ row: r, place }) => {
+            const isMe = r.id === saveId;
+            return (
+              <div
+                key={r.id}
+                style={{
+                  ...cardStyle,
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 12px',
+                  backgroundColor: isMe ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface)',
+                  borderColor: isMe ? 'var(--sm2-primary-fill)' : 'var(--sm2-line)',
+                }}
+              >
+                <span
+                  className="sm2-num"
+                  style={{ ...sm2Text, width: 28, textAlign: 'center', flexShrink: 0, color: place <= 3 ? 'var(--sm2-gold-ink)' : 'var(--sm2-muted)' }}
+                >
+                  {place}
+                </span>
+                <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: isMe ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {r.name}
+                </span>
+                <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{r.points} pts</span>
+              </div>
+            );
+          })}
+
+          {rank && myIndex >= 0 && rank.length > visibleRank.length && !rankExpanded && (
+            <button
+              type="button"
+              onClick={() => setRankExpanded(true)}
+              style={{ ...sm2Button('quiet'), width: '100%' }}
+            >
+              <Icon name="expand_more" size={20} />
+              {isPt ? 'Ver a season inteira' : 'See the whole season'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {result && (
+        <ResultDialog
+          result={result}
+          isPt={isPt}
+          onClose={() => { setResult(null); loadOpponents(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Resultado da partida. Foco preso, Escape fecha e o foco volta para quem
+ * abriu — a peça inteira é um `dialog` de verdade e não uma `div` por cima.
+ */
+function ResultDialog({ result, isPt, onClose }: { result: MatchResult; isPt: boolean; onClose: () => void }) {
+  const ref = useDialogA11y<HTMLDivElement>(true, onClose);
+  const title = result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 400,
+        background: 'rgba(4, 18, 20, .55)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+      }}
+    >
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        style={{ ...cardStyle, maxWidth: 340, width: '100%', padding: 24, textAlign: 'center' }}
+      >
+        <p style={sm2Hint}>{title}</p>
+        {/* O placar da derrota era o MAIOR elemento da tela de resultado,
+            pintado de vermelho — a partida perdida virava um erro. É tinta
+            NEUTRA nos dois casos; só a vitória ganha cor. */}
+        <p
+          className="sm2-num"
+          style={{
+            fontFamily: 'var(--sm2-font-display)',
+            fontSize: 'var(--sm2-text-2xl)',
+            fontWeight: 600,
+            lineHeight: 'var(--sm2-leading-title)',
+            color: result.won ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)',
+            margin: '4px 0 12px',
+          }}
+        >
+          {result.myScore} × {result.oppScore}
+        </p>
+        <p className="sm2-num" style={sm2Text}>
+          {isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`} · {result.points} pts
+        </p>
+        {/* Perder também rende Emblemas, mas a UI nunca dizia isso — a
+            partida virava tempo perdido aos olhos de quem perdeu. */}
+        <p style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, margin: '10px 0 18px' }}>
+          <Icon name="military_tech" size={20} tone="gold" />
+          <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-md)' }}>
+            +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS}
+          </span>
+          <span style={sm2Hint}>{isPt ? 'Emblemas' : 'Emblems'}</span>
+        </p>
+        <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }}>
+          {isPt ? 'Continuar' : 'Continue'}
+        </button>
+      </div>
     </div>
   );
 }

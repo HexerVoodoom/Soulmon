@@ -158,7 +158,13 @@ Não existe texto abaixo de 12px no app — nem legenda, nem rodapé de card, ne
 `--sm2-leading-title` 1.2 (títulos).
 
 Helpers prontos: `.sm2-title`, `.sm2-text`, `.sm2-muted`, `.sm2-num`,
-`.sm2-device`.
+`.sm2-device-voice`.
+
+> **Cuidado com o nome.** `.sm2-device-voice` é a TIPOGRAFIA (a voz do
+> aparelho); `.sm2-device` é o CORPO do aparelho (padding, bisel, fundo,
+> sombras). As duas já se chamaram igual, e como as propriedades eram
+> disjuntas elas somavam em vez de sobrescrever: pedir a fonte trazia a
+> carcaça junto, e a carcaça fazia a subárvore herdar bitmap em caixa alta.
 
 **Números que mudam usam `.sm2-num`** (`font-variant-numeric: tabular-nums`):
 HP, energia, Bits, Emblemas, contadores, cronômetro. Sem tabular-nums o valor
@@ -174,7 +180,7 @@ Use **só** em dois lugares:
 1. **dentro do `Viewport`** (HUD do visor, contador, mensagem de sistema);
 2. em **selos** (rótulo de conquista, marca de dia perfeito, faixa de torneio).
 
-Regras: **mínimo 14px** e **caixa alta** (`.sm2-device` já aplica as duas).
+Regras: **mínimo 14px** e **caixa alta** (`.sm2-device-voice` já aplica as duas).
 Abaixo de 14px o bitmap fecha os contornos e os acentos viram borrão.
 
 **Acentos:** verificado no cmap do arquivo real

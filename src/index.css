@@ -6506,8 +6506,17 @@ button.sm-px-node {
 }
 /* Silkscreen mudou de PAPEL, não saiu: é a VOZ DO APARELHO. Só dentro do
    visor e em selos. Mínimo 14px e caixa alta — abaixo disso o bitmap fecha os
-   contornos e os acentos (Ã Õ Ç Ê Á, todos presentes na fonte) viram borrão. */
-.sm2-device {
+   contornos e os acentos (Ã Õ Ç Ê Á, todos presentes na fonte) viram borrão.
+
+   RENOMEADA de `.sm2-device` para `.sm2-device-voice`: existiam DUAS regras
+   com o mesmo nome, esta (tipografia) e a do CORPO do aparelho mais abaixo.
+   Como os conjuntos de propriedades eram disjuntos, elas não se
+   sobrescreviam — elas SOMAVAM, nos dois sentidos. Quem pedisse a fonte
+   ganhava padding, raio, fundo e três sombras junto; e o corpo do aparelho,
+   que usa a outra, fazia a subárvore inteira HERDAR Silkscreen em caixa alta.
+   Só não apareceu porque os filhos declaram fonte própria — o primeiro texto
+   que esquecesse sairia em bitmap. */
+.sm2-device-voice {
   font-family: var(--sm2-font-pixel);
   font-size: var(--sm2-text-sm);
   line-height: 1.4;

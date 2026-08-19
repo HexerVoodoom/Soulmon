@@ -4,15 +4,12 @@
 // from GameState counters.
 import { getStageLevel, type EvolutionStage } from '../types/progression';
 import type { ShopItem } from './shop';
-// Arte da MOLDURA do kit. O emoji continua no modelo porque é a chave curta
-// que aparece em texto (e em save antigo), mas a LOJA nunca mais o desenha:
-// emoji do sistema em conteúdo é item do portão T2 da análise de gap.
-import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
-import iconEvolution from '../assets/soulmon/icons/icon-evolution.png';
-import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
-import iconShield from '../assets/soulmon/icons/icon-shield.png';
-import iconDino from '../assets/soulmon/icons/games/icon-game-dino.png';
-import iconStar from '../assets/soulmon/icons/icon-star.png';
+// Missão é INTERFACE (aparece na aba da loja), não conteúdo do visor: o ícone
+// deixou de ser PNG emoldurado e virou o nome de uma ligature da Material
+// Symbols Rounded, desenhada pelo `<Icon>`. Este módulo é de DADOS e não
+// importa React — ele carrega só o NOME; quem renderiza é a tela.
+// Os seis nomes foram conferidos no inventário de `src/styles/tokens.md`;
+// nome fora dele não renderiza glifo nenhum e não dá erro.
 
 export interface MissionState {
   evolutionStage: string;
@@ -31,8 +28,9 @@ export interface Mission {
   id: string;
   /** Emoji — chave curta para TEXTO. Não é o visual da loja. */
   icon: string;
-  /** Ícone emoldurado do kit — é ISTO que a loja desenha. */
-  iconImg: string;
+  /** Ligature da Material Symbols (inventário de `styles/tokens.md`) — é
+   *  ISTO que a loja desenha, via `<Icon name={iconName} />`. */
+  iconName: string;
   namePt: string;
   nameEn: string;
   descPt: string;
@@ -56,37 +54,37 @@ function reachedLevel(s: MissionState, level: EvolutionStage): number {
 
 export const MISSIONS: Mission[] = [
   {
-    id: 'mission-champion', icon: '🥋', iconImg: iconTrophy, target: 1, bgReward: 'bg-mission-filecity',
+    id: 'mission-champion', icon: '🥋', iconName: 'military_tech', target: 1, bgReward: 'bg-mission-filecity',
     namePt: 'Primeiro Campeão', nameEn: 'First Champion',
     descPt: 'Evolua até o nível CAMPEÃO', descEn: 'Evolve to CHAMPION level',
     progress: s => reachedLevel(s, 'champion'),
   },
   {
-    id: 'mission-mega', icon: '👑', iconImg: iconEvolution, target: 1, bgReward: 'bg-mission-infinity',
+    id: 'mission-mega', icon: '👑', iconName: 'emoji_events', target: 1, bgReward: 'bg-mission-infinity',
     namePt: 'Lenda Mega', nameEn: 'Mega Legend',
     descPt: 'Evolua até o nível MEGA', descEn: 'Evolve to MEGA level',
     progress: s => reachedLevel(s, 'mega'),
   },
   {
-    id: 'mission-kills-100', icon: '⚔️', iconImg: iconSwords, target: 100, bgReward: 'bg-mission-coliseum',
+    id: 'mission-kills-100', icon: '⚔️', iconName: 'swords', target: 100, bgReward: 'bg-mission-coliseum',
     namePt: 'Gladiador', nameEn: 'Gladiator',
     descPt: 'Derrote 100 inimigos na masmorra', descEn: 'Defeat 100 dungeon enemies',
     progress: s => s.dungeonKills,
   },
   {
-    id: 'mission-runs-3', icon: '🏰', iconImg: iconShield, target: 3, bgReward: 'bg-mission-abyss',
+    id: 'mission-runs-3', icon: '🏰', iconName: 'flag', target: 3, bgReward: 'bg-mission-abyss',
     namePt: 'Conquistador do Abismo', nameEn: 'Abyss Conqueror',
     descPt: 'Conclua 3 runs completas da masmorra', descEn: 'Complete 3 full dungeon runs',
     progress: s => s.dungeonRunsCompleted,
   },
   {
-    id: 'mission-dino-1000', icon: '🦖', iconImg: iconDino, target: 1000, bgReward: 'bg-mission-dinoland',
+    id: 'mission-dino-1000', icon: '🦖', iconName: 'pets', target: 1000, bgReward: 'bg-mission-dinoland',
     namePt: 'Maratonista Jurássico', nameEn: 'Jurassic Marathoner',
     descPt: 'Faça 1000 de score na Corrida do Dino', descEn: 'Score 1000 in Dino Runner',
     progress: s => s.dinoBest,
   },
   {
-    id: 'mission-perfect-30', icon: '⭐', iconImg: iconStar, target: 30, bgReward: 'bg-mission-aurora',
+    id: 'mission-perfect-30', icon: '⭐', iconName: 'star', target: 30, bgReward: 'bg-mission-aurora',
     namePt: 'Constância Perfeita', nameEn: 'Perfect Consistency',
     descPt: 'Acumule 30 dias perfeitos (total)', descEn: 'Earn 30 perfect days (lifetime)',
     progress: s => s.totalPerfectDays,

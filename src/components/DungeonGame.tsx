@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import iconSwords from '../assets/soulmon/icons/games/icon-game-dungeon.png';
-import iconClose from '../assets/soulmon/icons/icon-close.png';
+import { Icon } from './ui/Icon';
 import { PixelButton } from './pixel/PixelKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
@@ -357,7 +356,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
       <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
           <span className="sm-px-arcade-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src={iconSwords} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            {/* CHROME: a barra de topo e o sair sao interface. O CAMPO DE
+                BATALHA abaixo (sprites, cenario, overlay VHS, popup) e
+                territorio retro e NAO migra. */}
+            <Icon name="swords" size={22} />
             {isPt ? 'Masmorra' : 'Dungeon'}
           </span>
           <span className="sm-px-arcade-label" style={{ color: scene.accent }}>
@@ -366,7 +368,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           </span>
         </span>
         <button onClick={exitRun} aria-label={isPt ? 'Sair' : 'Exit'} className="sm-px-arcade-close">
-          <img src={iconClose} alt="" width={18} height={18} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          <Icon name="close" size={20} />
         </button>
       </div>
 
@@ -427,9 +429,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
       {/* Intro */}
       {phase === 'intro' && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center' }}>
-          <div className="sm-px-slot" style={{ width: 72, height: 72 }}>
-            <img src={iconSwords} alt="" width={40} height={40} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          </div>
+          {/* Tela de MENU (intro) = chrome. O icone saiu do `sm-px-slot`: o
+              slot e uma caixa, e icone nunca vai dentro de box (regra do
+              dono). Grande e pelado. */}
+          <Icon name="swords" size={48} />
           {/* Os dois emojis (medalha/fogo) sairam: rotulo em bitmap ja diz o
               que cada numero e, e emoji do sistema em conteudo conta no T2. */}
           <div style={{ display: 'flex', gap: 18 }}>
