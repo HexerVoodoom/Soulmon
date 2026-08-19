@@ -258,7 +258,23 @@ export function ModalSheet({
           boxShadow: SM2_SHADOW_SHEET,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 8px 12px 18px' }}>
+        {/* O GRABBER — a alcinha. É a convenção que diz "isto vem de baixo e
+            é uma folha", e sem ela o sheet lê como um card que apareceu do
+            nada colado no rodapé. Não é um controle: arrastar-para-fechar não
+            existe aqui (fechar é o X e o Escape, os dois já acessíveis), então
+            ele é `aria-hidden` — anunciar uma alça que não arrasta seria pior
+            que não ter alça nenhuma. */}
+        <div
+          aria-hidden="true"
+          style={{
+            width: 36, height: 4, margin: '8px auto 0',
+            borderRadius: 2,
+            backgroundColor: 'var(--sm2-line)',
+            flexShrink: 0,
+          }}
+        />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 8px 12px 18px' }}>
           <span className="sm2-title" style={{ ...sm2TitleStyle, flex: 1 }}>{title}</span>
           <button
             type="button"
@@ -273,11 +289,35 @@ export function ModalSheet({
           </button>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: '4px 18px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* SAFE AREA. O sheet encosta no fundo da tela por definição, e o fundo
+            da tela é justamente onde moram a barra de gestos do Android e a
+            home indicator do iOS. Sem `env(safe-area-inset-bottom)` o botão
+            PRIMÁRIO do formulário fica embaixo da barra do sistema — alvo
+            inalcançável exatamente no controle que conclui a tarefa.
+            Vale nos dois casos: com rodapé, ele carrega a folga; sem rodapé,
+            ela vai para o fim do conteúdo rolável. */}
+        <div
+          style={{
+            overflowY: 'auto',
+            padding: footer
+              ? '4px 18px 18px'
+              : '4px 18px calc(18px + env(safe-area-inset-bottom, 0px))',
+            display: 'flex', flexDirection: 'column', gap: 18,
+          }}
+        >
           {children}
         </div>
 
-        {footer && <div style={{ padding: 16, borderTop: '1px solid var(--sm2-line)' }}>{footer}</div>}
+        {footer && (
+          <div
+            style={{
+              padding: '16px 16px calc(16px + env(safe-area-inset-bottom, 0px))',
+              borderTop: '1px solid var(--sm2-line)',
+            }}
+          >
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

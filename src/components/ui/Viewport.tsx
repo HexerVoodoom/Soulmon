@@ -124,7 +124,15 @@ export function Viewport({
     >
       <div
         className={['sm2-viewport-screen', screenClassName].filter(Boolean).join(' ')}
-        style={{ width: width * s, height: height * s, ...screenStyle }}
+        /* A ORDEM AQUI É O CONTRATO, não estilo de código.
+           Enquanto o spread vinha DEPOIS, qualquer chamador que passasse
+           `width`/`height` em `screenStyle` anulava a regra de escala inteira
+           em silêncio — foi exatamente o bug do `CompanionHUD` (um
+           `width:'100%'` + `height:var(--sm-petstage-h)` que apagavam
+           `width*scale`). Agora o `screenStyle` decora (fundo, sombra) e a
+           MEDIDA é do componente, sempre. Há teste travando isto:
+           `Viewport.contract.test.tsx`. */
+        style={{ ...screenStyle, width: width * s, height: height * s }}
       >
         {children}
         <div className="sm2-viewport-glass" aria-hidden="true" />

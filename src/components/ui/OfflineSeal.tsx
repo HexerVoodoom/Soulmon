@@ -89,11 +89,18 @@ export function OfflineSeal({ language = 'en-US', topOffset = 0 }: OfflineSealPr
         alignItems: 'center',
         gap: 8,
         padding: '6px 12px',
-        borderRadius: 999,
+        /* NÃO É PÍLULA. `borderRadius: 999` é linguagem de chip de app; este é
+           um SELO DE APARELHO, em Silkscreen caixa alta, e o próprio CSS do
+           sistema declara a regra no marcador de novidade: "quadrado, não
+           bolinha". 4px é o mesmo raio curto das peças do aparelho — o
+           suficiente para não ser uma quina crua, longe de virar cápsula. */
+        borderRadius: 4,
         // Superfície + linha do tema: legível nos dois, sem cor crua.
         background: 'var(--sm2-surface-2)',
         border: '1px solid var(--sm2-line)',
-        boxShadow: '0 2px 10px rgba(0,0,0,.18)',
+        // Quina de luz em cima, como o corpo do aparelho: é uma placa, não um
+        // adesivo flutuante.
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.12), 0 2px 10px rgba(0,0,0,.18)',
         // Selo não intercepta toque: ele informa, não age.
         pointerEvents: 'none',
         maxWidth: 'calc(100vw - 24px)',

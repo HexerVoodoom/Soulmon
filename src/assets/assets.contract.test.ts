@@ -394,6 +394,141 @@ describe('guard de asset — ruído pontilhado (fundo mal removido)', () => {
   });
 });
 
+/**
+ * QUARTA classe de asset sujo, e a mais grave que sobrou: **DUAS GRADES DE
+ * PIXEL DENTRO DO MESMO VISOR**.
+ *
+ * O visor inteiro do Soulmon existe sob uma regra: escala INTEIRA. O sprite do
+ * pet foi corrigido para ela (256 → 128 = 2:1, 384 → 128 = 3:1) e o
+ * `image-rendering: pixelated` virou decisão em vez de remendo. Só que o pet
+ * não é a única coisa desenhada lá dentro — e nada mede o resto:
+ *
+ *   · `soulmon/nest-base.png` é **360×201** numa caixa de **148×83**
+ *     (`BASE_SLOTS.nest`): 2,43× na horizontal e 2,40× na vertical. Fracionário
+ *     **e anisotrópico** — a mesma peça esmaga de um jeito em X e de outro em Y;
+ *   · as **14 peças de mobília** (`assets/decor/*.png`) são todas 256×256 e
+ *     caem em caixas de 56×56, 104×16, 46×50, 48×52, 56×40 — fatores de 4,57×
+ *     a 16×, nenhum inteiro, e a do tapete (256×256 → 104×16) é 2,46× em X
+ *     contra 16× em Y.
+ *
+ * O efeito é exatamente o que a regra do sprite descreve, mas ao lado dele: com
+ * `pixelated`, o navegador não borra — ele DERRUBA linhas de forma desigual.
+ * Então o pet tem um pixel de um tamanho e o berço em que ele está sentado tem
+ * um pixel de outro, com espessura de traço variando dentro da mesma peça. É a
+ * assinatura de "arte reunida de fontes diferentes", que é o oposto do que o
+ * visor deveria comunicar.
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * POR QUE O GUARD FALTAVA, e por que ele é o item importante desta rodada:
+ * este arquivo tem guard para xadrez assado, arquivo morto, ruído pontilhado e
+ * contaminação de paleta — quatro dimensões — e **nenhum para a escala em que a
+ * arte é DESENHADA na tela**. Foi por isso que o sprite foi corrigido à mão e
+ * catorze peças de mobília não: o defeito só era visível para quem estivesse
+ * olhando aquele arquivo naquele dia. Guard é o que transforma "alguém reparou"
+ * em "não passa mais".
+ *
+ * O conserto NÃO é código: é REDESENHAR a arte para as caixas (nest-base em
+ * 296×166 = 2:1, ou 444×249 = 3:1; mobília exportada no tamanho do slot × 2).
+ * `utils/petStage.ts` e os PNGs não são desta rodada, então o caso do
+ * repositório fica **`skip`, com a lista medida impressa na mensagem** — o
+ * valor aqui é travar o problema e documentá-lo, não pintar o CI de vermelho
+ * por uma dívida de arte. **Quem redesenhar as peças tira o `.skip` no mesmo
+ * commit** — e a partir daí a próxima peça fora da grade não entra.
+ */
+describe('guard de asset — escala de render (uma grade de pixel só)', () => {
+  /** Fator de ampliação de um PNG dentro da caixa em que ele é desenhado. */
+  function escala(src: { w: number; h: number }, box: { w: number; h: number }) {
+    return { x: box.w / src.w, y: box.h / src.h };
+  }
+  /** Inteiro nos dois eixos (ampliação ou redução) E o MESMO nos dois. */
+  function naGrade(e: { x: number; y: number }): boolean {
+    const inteiro = (v: number) => Number.isInteger(v) || Number.isInteger(1 / v);
+    return inteiro(e.x) && inteiro(e.y) && e.x === e.y;
+  }
+
+  it('AUTOVERIFICAÇÃO: o detector separa 2:1 de 2,43× e pega anisotropia', () => {
+    // O caso bom, que é o do sprite do pet: 256 de origem em caixa de 128.
+    expect(naGrade(escala({ w: 256, h: 256 }, { w: 128, h: 128 }))).toBe(true);
+    expect(naGrade(escala({ w: 384, h: 384 }, { w: 128, h: 128 }))).toBe(true);
+    // Ampliação inteira também vale (arte 16px desenhada em 64px).
+    expect(naGrade(escala({ w: 16, h: 16 }, { w: 64, h: 64 }))).toBe(true);
+    // O berço de hoje: fracionário nos dois eixos.
+    expect(naGrade(escala({ w: 360, h: 201 }, { w: 148, h: 83 }))).toBe(false);
+    // Anisotropia pura: inteiro em cada eixo, mas fatores DIFERENTES — a peça
+    // sai esticada, e um teste que olhasse um eixo só deixaria isto passar.
+    expect(naGrade(escala({ w: 64, h: 64 }, { w: 32, h: 16 }))).toBe(false);
+  });
+
+  /** Todo PNG que o visor desenha, com a caixa em px em que ele é desenhado. */
+  async function pecasDoVisor(): Promise<Array<{ nome: string; src: { w: number; h: number }; box: { w: number; h: number } }>> {
+    const { BASE_SLOTS, DECOR_SLOTS } = await import('../utils/petStage');
+    const { ALL_SHOP_ITEMS } = await import('../utils/shop');
+    const pecas: Array<{ nome: string; src: { w: number; h: number }; box: { w: number; h: number } }> = [];
+
+    const medir = async (arquivo: string) => {
+      const m = await sharp(arquivo).metadata();
+      return { w: m.width ?? 0, h: m.height ?? 0 };
+    };
+
+    // A mobília base (o berço), que fica DEBAIXO do pet — o pior vizinho
+    // possível para uma grade divergente.
+    const berco = path.join(ASSETS, 'soulmon/nest-base.png');
+    pecas.push({ nome: 'soulmon/nest-base.png', src: await medir(berco), box: { w: BASE_SLOTS.nest.w, h: BASE_SLOTS.nest.h } });
+
+    // A decoração: id do item da loja → `decor/<id>.png` (a convenção de nome
+    // é do `utils/decorArt.ts`; arquivo faltando aqui é achado por si só).
+    for (const item of ALL_SHOP_ITEMS) {
+      if (item.kind !== 'furniture' || !item.slot) continue;
+      const arquivo = path.join(ASSETS, 'decor', `${item.id}.png`);
+      if (!fs.existsSync(arquivo)) continue;
+      const slot = DECOR_SLOTS[item.slot];
+      pecas.push({ nome: `decor/${item.id}.png`, src: await medir(arquivo), box: { w: slot.w, h: slot.h } });
+    }
+    return pecas;
+  }
+
+  it('o inventário de peças do visor não está vazio (senão o guard passa por omissão)', async () => {
+    const pecas = await pecasDoVisor();
+    expect(pecas.length).toBeGreaterThan(10);
+  });
+
+  it('REGRESSÃO (passa hoje): o sprite do pet cai em escala inteira', async () => {
+    // O que JÁ foi consertado, e a prova de que o guard mede a coisa certa:
+    // toda arte de linha é 256 ou 384 e é desenhada em `PET_RENDER` (128).
+    // Importado, nunca digitado: número copiado é número que diverge (footgun 9).
+    const { PET_RENDER } = await import('../components/CompanionHUD');
+    const linhas = [...referenced].filter(f => /soulmon[\\/]lines[\\/]/.test(rel(f)));
+    expect(linhas.length).toBeGreaterThan(10);
+    const fora: string[] = [];
+    for (const f of linhas) {
+      const m = await sharp(f).metadata();
+      const e = escala({ w: m.width ?? 0, h: m.height ?? 0 }, { w: PET_RENDER, h: PET_RENDER });
+      if (!naGrade(e)) fora.push(`${rel(f)} (${m.width}×${m.height} → ${PET_RENDER}px)`);
+    }
+    expect(fora).toEqual([]);
+  });
+
+  /**
+   * ⚠️ `skip` DE DÍVIDA DE ARTE, não de teste quebrado. Ele falha hoje, e deve
+   * falhar: são 15 peças fora da grade (o berço + as 14 mobílias). Tirar o
+   * `skip` sem redesenhar os PNGs só quebra o CI; redesenhar os PNGs sem tirar
+   * o `skip` deixa o buraco reaberto para a próxima peça. Os dois no mesmo
+   * commit. A lista exata sai na mensagem da falha quando rodado.
+   */
+  it.skip('DÍVIDA DE ARTE: toda peça do visor é desenhada em escala inteira', async () => {
+    const fora: string[] = [];
+    for (const p of await pecasDoVisor()) {
+      const e = escala(p.src, p.box);
+      if (!naGrade(e)) {
+        // Impresso como REDUÇÃO (origem ÷ caixa), que é como a peça é lida:
+        // "esta arte é 2,43× maior que o buraco onde ela entra".
+        fora.push(`${p.nome}: ${p.src.w}×${p.src.h} numa caixa de ${p.box.w}×${p.box.h} (÷${(1 / e.x).toFixed(2)} por ÷${(1 / e.y).toFixed(2)})`);
+      }
+    }
+    expect(fora, 'peças com grade de pixel própria dentro do visor').toEqual([]);
+  });
+});
+
 describe('guard de asset — paleta (magenta/roxo da paleta antiga)', () => {
   it('os PNGs contaminados continuam contaminados E continuam fora do bundle', async () => {
     const referenciados = new Set([...referenced].map(rel));

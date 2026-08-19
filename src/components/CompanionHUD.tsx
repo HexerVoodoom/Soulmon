@@ -15,6 +15,9 @@ import { playShower } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
+import { ModalSheet, sm2Hint, sm2Text } from './form/FormKit';
+import { isSpecialItem } from '../utils/shop';
+import { FOOD_BY_CATEGORY } from '../constants/labels';
 
 /* ── Escala INTEIRA do sprite ──────────────────────────────────────────────
    Os PNGs das linhas (`src/assets/soulmon/lines/*`) são 256×256 (53 arquivos)
@@ -38,7 +41,10 @@ import { readFlag, writeFlag } from '../utils/safeStorage';
    que tem 148px de largura e passa a abraçá-lo em vez de sumir atrás dele. */
 const SPRITE_SRC_PX = 256;
 const SPRITE_SCALE = 2;
-const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
+/** Lado da caixa em que o sprite do pet é RENDERIZADO, em px. Exportado
+    porque o guard de escala de render (`assets/assets.contract.test.ts`) mede
+    a razão entre o PNG e esta caixa — número copiado é número que diverge. */
+export const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
 const PET_GROUND_KEEP = PET_BOX - PET_RENDER;
 
 /* ── O VISOR TEM MEDIDA, e a medida é INTEIRA ──────────────────────────────
@@ -66,6 +72,30 @@ const STAGE_FALLBACK_W = 320;
    pet sem duplicar a regra do palco. */
 const PET_BOTTOM_IN_STAGE =
   STAGE_HEIGHT - (STAGE_HEIGHT / 2 + PET_TOP_OFFSET + PET_GROUND_KEEP) - PET_RENDER;
+
+/* ── O BALÃO NÃO PODE COMER O ÚNICO CTA DO JOGO ────────────────────────────
+   BLOQUEADOR medido, não suposto. Os dois controles são `position:absolute`
+   dentro da MESMA caixa (`.sm2-device-stage`), os dois ancorados no rodapé:
+    · "Evoluir" — `bottom: 10`, altura mínima 44px (`.sm-px-btn-sm` no
+      index.css) → ocupa de 10 a 54px a partir do fundo;
+    · balão de fala — `bottom: 6`, `left-0 right-0` (largura TOTAL), uma linha
+      de 14px/1,5 + 8px de padding em cima e embaixo + 1px de borda dos dois
+      lados → ocupa de 6 a ~45px.
+   As faixas [10,54] e [6,45] se cruzam em 35px de altura, na largura inteira,
+   e o balão está em `zIndex: 45` contra 30 do botão, com `pointer-events:
+   auto`. Sobrepõe, sim, e o clique morre no balão: a fala idle dispara a cada
+   3 min e o único caminho de progresso do jogo fica intocável por até 5s.
+
+   Dois consertos somados, porque um só deixa uma brecha:
+    1. quando o botão está na tela, o balão SOBE para cima dele (mesma tática
+       que o balão do abraço já usava);
+    2. a faixa de largura total do balão passa a ser `pointer-events: none` e
+       só a CAIXA de fala aceita o clique — assim as sobras laterais (que são
+       transparentes e cobrem o palco inteiro) param de interceptar toque, em
+       qualquer estado. */
+const EVOLVE_BTN_BOTTOM = 10;
+const EVOLVE_BTN_H = 44;   // `.sm-px-btn-sm { min-height: 44px }`
+const BUBBLE_GAP = 6;
 
 /** Passo do passeio: 2 device px = 1 pixel de origem do sprite (escala 2:1).
     Meio pixel aqui é o que transforma serrilhado em borrão. */
@@ -240,6 +270,17 @@ export const CompanionHUD = memo(function CompanionHUD({
   onPetRef.current = onPet;
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
+  /* ── ALIMENTAR É CONTROLE DE PRIMEIRA CLASSE ─────────────────────────────
+     O deck tinha Itens / Banho / Dormir e a ação que DEFINE o gênero v-pet
+     estava enterrada dentro do `ItemsWindow`, atrás de "Itens" — um rótulo
+     que não promete comida. Tamagotchi Uni, Vital Bracelet e Pokémon Sleep
+     põem alimentar na primeira fileira; aqui ele voltou para lá.
+
+     O que NÃO muda: a escolha da comida continua existindo (v-pet sem escolha
+     de comida é um botão de +1), e a REGRA continua inteira em `onFeed`
+     (`handleFeed` no App) — teto por hora, recusa quando cheio, pontos de
+     atributo. Este botão só encurta o caminho até ela. */
+  const [feedOpen, setFeedOpen] = useState(false);
 
   // Always-current snapshot of props for stable intervals
   const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping });
@@ -576,15 +617,24 @@ export const CompanionHUD = memo(function CompanionHUD({
     }
   };
 
-  // Apply filters based on companion mood (without saturation reduction)
-  const handleFeedWithAnimation = (emoji: string) => {
-    setEatingEmoji(emoji);
-    setEatKey(k => k + 1);
-    setIsMunching(true);
+  /* A comida do DECK. Só comida de verdade: chips de atributo, coraçãozinho e
+     Glitchtama continuam na pastinha (`ItemsWindow`), que é onde se USA item —
+     misturá-los aqui faria "Alimentar" gastar um consumível caro por engano.
+     `isSpecialItem` é o dono dessa fronteira (utils/shop.ts). */
+  const foodStock = Object.entries(foodInventory)
+    .filter(([emoji, n]) => n > 0 && !isSpecialItem(emoji))
+    .sort((a, b) => b[1] - a[1]);
+  const FOOD_NAME_BY_EMOJI: Record<string, string> = Object.fromEntries(
+    Object.values(FOOD_BY_CATEGORY).map(f => [f.emoji, f.name]),
+  );
+
+  /* Alimentar pelo deck NÃO reimplementa a regra: chama o mesmo `onFeed` do
+     `ItemsWindow`. Quem decide teto por hora, recusa por estar cheio e pontos
+     de atributo é o `handleFeed` do App — a animação volta por `feedAnim`,
+     como no caminho antigo (animar aqui TAMBÉM daria dois "nhac" por comida). */
+  const handleDeckFeed = (emoji: string) => {
+    setFeedOpen(false);
     onFeed?.(emoji);
-    showHug();
-    setTimeout(() => setEatingEmoji(null), 1500);
-    setTimeout(() => setIsMunching(false), 600);
   };
 
   // Shower: always available (cleans poop anytime), 5s cooldown
@@ -698,15 +748,27 @@ export const CompanionHUD = memo(function CompanionHUD({
     }
   };
 
-  const getCompanionFilter = () => {
+  /* ── A AURA DE HUMOR, agora de verdade ───────────────────────────────────
+     Era `drop-shadow-[0_0_12px_${auraColor}]`: classe utilitária do Tailwind
+     com valor arbitrário **E** montada por interpolação. Duas mortes de uma
+     vez — não há plugin do Tailwind neste build (footgun 1), então classe que
+     não está no `index.css` não aplica nada; e mesmo que houvesse, valor
+     interpolado nunca é visto pelo extrator. Ou seja: a aura de galho, o
+     `brightness` de "feliz" e o de "cansado" NUNCA renderizaram. Três anos de
+     código morto passando por feature.
+
+     Implementado: `filter` CSS de verdade, inline (que é o único caminho
+     confiável aqui). É glow FORA da silhueta — não reamostra pixel nenhum,
+     então não conflita com a regra do visor. */
+  const getCompanionFilter = (): string => {
     const auraColor = getBranchAuraColor();
     switch (companionMood) {
       case 'happy':
-        return `brightness-110 drop-shadow-[0_0_12px_${auraColor}]`;
+        return `brightness(1.1) drop-shadow(0 0 12px ${auraColor})`;
       case 'tired':
-        return 'brightness-75';
+        return 'brightness(0.75)';
       default:
-        return `drop-shadow-[0_0_8px_${auraColor}]`;
+        return `drop-shadow(0 0 8px ${auraColor})`;
     }
   };
 
@@ -977,10 +1039,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <img
                   src={sprite}
                   alt={currentStage}
-                  className={`object-contain ${getCompanionFilter()}`}
+                  className="object-contain"
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
+                    filter: getCompanionFilter(),
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
                     /* Prioridade: o que o USUÁRIO acabou de fazer vence o que o
@@ -1076,7 +1139,13 @@ export const CompanionHUD = memo(function CompanionHUD({
             acompanha em vez de descolar em silêncio. */}
         <button
           type="button"
-          className="sm2-rub"
+          /* A MIRA (`.sm2-rub::after`) é a affordance que faltava: o alvo era
+             um botão transparente de 128×128 e ninguém que enxerga descobria
+             que existe — sendo a ÚNICA cura de HP do jogo. Quatro cantos de
+             cobre, discretos; quando há HP a recuperar eles trocam para a cor
+             de alerta e piscam, porque é a hora em que o controle precisa ser
+             encontrado. Nada de `title`: não existe hover no toque. */
+          className={`sm2-rub${healthPoints < maxHealthPoints ? ' sm2-rub-heal' : ''}`}
           aria-label={language === 'pt-BR'
             ? 'Fazer carinho no Soulmon (segure para curar)'
             : 'Pet your Soulmon (hold to heal)'}
@@ -1116,7 +1185,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             size="sm"
             variant="primary"
             onClick={onEvolveRequest}
-            style={{ position: 'absolute', zIndex: 30, left: '50%', bottom: 10, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
+            style={{ position: 'absolute', zIndex: 30, left: '50%', bottom: EVOLVE_BTN_BOTTOM, transform: 'translateX(-50%)', animation: 'evo-btn-pulse 1.6s ease-in-out infinite' }}
           >
             {language === 'pt-BR' ? 'Evoluir' : 'Evolve'}
           </PixelButton>
@@ -1129,13 +1198,26 @@ export const CompanionHUD = memo(function CompanionHUD({
             ignorava o tema. */}
         {showBubble && (
           <div
-            className="absolute left-0 right-0 pointer-events-auto"
-            style={{ bottom: 6, zIndex: 45, padding: '0 10px', cursor: 'pointer' }}
-            onClick={handleBubbleClick}
+            className="absolute left-0 right-0"
+            style={{
+              /* Ver o bloco `EVOLVE_BTN_*` no topo: com o CTA na tela o balão
+                 sobe acima dele em vez de deitar por cima. */
+              bottom: canEvolve && !isSleeping
+                ? EVOLVE_BTN_BOTTOM + EVOLVE_BTN_H + BUBBLE_GAP
+                : BUBBLE_GAP,
+              zIndex: 45,
+              padding: '0 10px',
+              /* A faixa é só posicionamento — ela cobre a largura inteira do
+                 palco e não pode interceptar toque nenhum. Quem recebe clique
+                 é a caixa de fala, logo abaixo. */
+              pointerEvents: 'none',
+            }}
           >
             <div
-              className="relative"
+              className="relative pointer-events-auto"
+              onClick={handleBubbleClick}
               style={{
+                cursor: 'pointer',
                 background: 'var(--sm2-surface)',
                 border: '1px solid var(--sm2-line)',
                 borderRadius: 14,
@@ -1193,6 +1275,9 @@ export const CompanionHUD = memo(function CompanionHUD({
               enquanto o pet dorme, e o glifo troca para `wb_sunny` só porque a
               AÇÃO muda (acordar ≠ dormir), não porque o estado mudou. */}
           {([
+            /* Alimentar PRIMEIRO: é a ação que define o gênero, e a leitura da
+               fileira é da esquerda para a direita. */
+            { key: 'feed', icon: 'restaurant', fill: 0, en: 'Feed', pt: 'Alimentar', onClick: () => setFeedOpen(true), disabled: false, badge: false },
             { key: 'items', icon: 'inventory_2', fill: hasNewItems ? 1 : 0, en: 'Items', pt: 'Itens', onClick: onOpenItems ?? (() => {}), disabled: false, badge: hasNewItems },
             { key: 'bath', icon: 'shower', fill: 0, en: 'Bath', pt: 'Banho', onClick: handleShowerClick, disabled: showerCooldown, badge: false },
             { key: 'sleep', icon: isSleeping ? 'wb_sunny' : 'bedtime', fill: isSleeping ? 1 : 0, en: isSleeping ? 'Wake' : 'Sleep', pt: isSleeping ? 'Acordar' : 'Dormir', onClick: onSleep ?? (() => {}), disabled: false, badge: false },
@@ -1233,6 +1318,55 @@ export const CompanionHUD = memo(function CompanionHUD({
       </div>
 
       </div>
+
+      {/* A escolha da comida. Bottom sheet porque o polegar chega lá, e porque
+          é a mesma superfície `--sm2-*` do resto do app fora do visor.
+          Os TRÊS estados existem: com estoque (a grade), vazio (o que fazer
+          para conseguir comida) e recusa (o pet fala, via `fullSignal`). */}
+      <ModalSheet
+        open={feedOpen}
+        onClose={() => setFeedOpen(false)}
+        title={language === 'pt-BR' ? 'Alimentar' : 'Feed'}
+        language={language}
+      >
+        {foodStock.length === 0 ? (
+          <p style={{ ...sm2Text, margin: 0 }}>
+            {language === 'pt-BR'
+              ? 'Sua pastinha está sem comida. Conclua uma tarefa ou hábito para ganhar comida — é assim que seu Soulmon come.'
+              : "You're out of food. Complete a task or habit to earn some — that's how your Soulmon eats."}
+          </p>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(72px, 1fr))', gap: 8 }}>
+              {foodStock.map(([emoji, n]) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => handleDeckFeed(emoji)}
+                  aria-label={`${FOOD_NAME_BY_EMOJI[emoji] ?? emoji} × ${n}`}
+                  style={{
+                    minHeight: 72,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                    padding: 8,
+                    borderRadius: 10,
+                    border: '1px solid var(--sm2-line)',
+                    backgroundColor: 'var(--sm2-surface-2)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span aria-hidden="true" style={{ fontSize: 26, lineHeight: 1 }}>{emoji}</span>
+                  <span className="sm2-num" style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>×{n}</span>
+                </button>
+              ))}
+            </div>
+            <p style={sm2Hint}>
+              {language === 'pt-BR'
+                ? 'Cada comida dá +1 de energia e pontos de atributo. Se ele estiver cheio, vai avisar.'
+                : 'Each food gives +1 energy and attribute points. If he is full, he will say so.'}
+            </p>
+          </>
+        )}
+      </ModalSheet>
 
       {/* Chat Box — fixo no rodapé da tela (não rola com o conteúdo), mas dentro
           da mesma árvore/stacking context do app: assim modais (z-index maior)
