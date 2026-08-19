@@ -7,7 +7,80 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **motor de tarefas — Fases 1 a 3 do `docs/PLANO-TAREFAS.md`
+Última atualização: **pesadelos, passos e "mais consequências em vez de mais
+medidores" (19/08/2026)**.
+
+**O que foi feito.** Três decisões novas do dono viraram código e entraram no
+`docs/PLANO-TAREFAS.md` (Partes 3a, 3b, 3c + Roadmap reescrito):
+
+1. **Pesadelos** (`src/utils/nightmares.ts`) — o sono deixou de ser passivo e
+   virou conteúdo de combate, reaproveitando o motor da Masmorra
+   (`buildNightmareWave` chama `buildDungeonWave`; nada de combate
+   reimplementado). Regra central e inegociável: **a quantidade NUNCA escala com
+   a duração do sono, só com a regularidade** — duração é resultado fisiológico
+   que ninguém comanda às 3h da manhã (premiar resultado é como se fabrica
+   ortossonia) e é farmável (é daí que veio o exploit do Pokémon Sleep, com
+   gente forjando semanas de sono). Regularidade é comportamento controlável,
+   tem teto natural (1 noite por noite) e é a métrica mais forte que existe
+   (UK Biobank, n=60.977). O arquivo **não lê `sleptAt`/`wokeAt`**, e há teste
+   travando: noites de 3h e de 11h com a mesma regularidade devolvem resultado
+   idêntico. 1 pesadelo por noite dentro da janela, onda curta de 2 inimigos
+   (é de manhã), vencer devolve energia e até **meio coração** — o sono
+   contribui para a saúde do pet **através do combate**, nunca por bônus
+   passivo, que seria score de sono disfarçado. Perder não custa nada; não
+   combater também não (expira em silêncio). Sonho é a coleta, pesadelo é o
+   combate: as duas faces da mesma noite.
+2. **Passos** (`src/utils/steps.ts`) — substitui a antiga dependência de Health
+   Connect para passos. Sensor `TYPE_STEP_COUNTER` via
+   `@capgo/capacitor-pedometer`, permissão `ACTIVITY_RECOGNITION` (runtime
+   simples), **sem** Health Connect e **sem** Google Fit. Princípio mantido:
+   *declarado pontua, inferido confirma* — passo nunca pontua sozinho, só dá
+   selo de "verificado" + bônus pequeno a um hábito JÁ marcado, e quem não tem
+   sensor não fica em desvantagem estrutural. Guarda-se só o agregado diário.
+   Limitação técnica registrada: o plugin conta desde o início da sessão de
+   medição, então há reset por relançamento **além** do reset de boot — os dois
+   caem no mesmo caminho puro (`stepsDeltaFrom`/`updateStepBaseline`, que nunca
+   devolve negativo), e passos com o app morto ficam de fora. Aceitável
+   justamente porque passo não pontua sozinho.
+3. **Nada de mais medidores** (`src/utils/petNeeds.ts`) — decisão de NÃO
+   adicionar barras. O app já tem cocô, energia, banho, dormir e carinho; do kit
+   clássico faltava só brincar. Cada barra nova é uma cobrança nova (Habitica:
+   usuários gastando mais tempo administrando o app que fazendo os hábitos; quem
+   retém tem MENOS sistemas). Entraram no lugar: **brincar como dreno de
+   recurso** (1×/dia, gasta energia que veio de comida que veio de tarefa real,
+   buff de +20% no minijogo seguinte; nunca condição de dia perfeito/HP/
+   evolução) e **cansaço como estado DERIVADO** (sobrecarga de ontem + noite
+   fora da janela, apenas cosmético — nunca reduz recompensa nem trava ação,
+   porque reduzir puniria exatamente quem trabalhou demais). Regra de ouro
+   registrada para qualquer parâmetro futuro: ou é alimentado por tarefa real
+   cumprida, ou gasta recurso que veio de tarefa real.
+
+**O que ficou pendente desta rodada.**
+
+- 🔴 **O APK precisa ser rebuildado.** O plugin de pedômetro é código nativo e
+  mudou `android/` — e a regra normal ("mudança web não precisa de APK") **não
+  vale aqui**. O `android-build.yml` builda no push; o artefato sai em
+  `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`. **Sem APK novo nada
+  quebra**: a camada de passos degrada sozinha (`isStepsAvailable() === false`,
+  `readStepsToday() === null`), exatamente como já degrada na PWA, e o app segue
+  idêntico — só sem passos.
+- 🟡 A camada de cima dos passos ainda não existe: **selo de "verificado"** nos
+  hábitos de Fitness/Health e **missões corporais** com teto diário. Quando
+  forem ligadas, é sempre como confirmação de algo já declarado — nenhuma
+  função de `steps.ts` pode passar a devolver HP, energia, `perfectDays` ou peso
+  de esforço.
+- 🟡 UI dos Pesadelos (a tela de manhã que apresenta a luta) e do Brincar são de
+  outros donos desta mesma rodada.
+- ⛔ **Health Connect continua FORA, e agora por decisão registrada**, não por
+  falta de tempo: conta de organização verificada no Play, declaração de health
+  app, política de privacidade dedicada e consentimento LGPD art. 11 por
+  finalidade — custo desproporcional para um selo cosmético que a mecânica de
+  sono já entrega **sem sensor nenhum**. Google Fit segue morto (APIs até o fim
+  de 2026); nada deve ser escrito contra ele.
+
+---
+
+Antes disso: **motor de tarefas — Fases 1 a 3 do `docs/PLANO-TAREFAS.md`
 (19/08/2026)**.
 
 **O que foi feito.** Cinco módulos novos, todos funções puras com testes:

@@ -216,25 +216,151 @@ Regra final, que resume a seção: **premie o comportamento (deitar no horário)
 
 - Hábitos de Fitness/Health podem ser marcados como **verificáveis**: ao completar, se houver sessão de exercício ou passos no dia, ganha selo "verificado" + bônus pequeno. Sem sensor, completa normal, sem selo.
 - **Missões corporais opcionais** em `missions.ts`: "7.000 passos hoje" → Bits, com teto diário para não virar farm.
-- A **Recording API** de passos do Google não exige conta nem OAuth — é o caminho leve se só passos bastarem.
+- O **como** disso mudou e virou seção própria: ver **Parte 3b — Passos**. Em resumo: nem Health Connect, nem Google Fit — o sensor de passos do próprio aparelho, que é permissão de runtime simples.
+
+---
+
+## Parte 3a — Pesadelos: o sono deixa de ser passivo
+
+Dono da regra: `src/utils/nightmares.ts`. Camada de cima da Janela de Descanso, irmã dos Sonhos.
+
+### O buraco que ela fecha
+
+A Parte 3 entregou um sono que **rende** — o Dex de Sonhos — mas que o jogador não *joga*. Coleta passiva é exatamente o modelo do Pokémon Sleep, e é também de onde vem a crítica de que ele é "um app de sono com uma tela de gacha", não um jogo. O Soulmon já tem um motor de combate pago e testado (a Masmorra). Não usá-lo para a mecânica de sono era desperdício de conteúdo.
+
+O desenho: **sonho é a coleta, pesadelo é o combate — as duas faces da mesma noite.** Uma noite dentro da janela rende as duas coisas: a cena colecionável e uma luta curta de manhã, em que o Soulmon conta que enfrentou algo enquanto o dono dormia.
+
+O enquadramento é regra, não enfeite: o pesadelo **não é uma ameaça ao jogador**, é o Soulmon *defendendo o descanso do dono*. Nomes e descrições são fofos de propósito (Nuvenzinha Rabugenta, Bicho-Cobertor Embolado). Um app que assusta perto da hora de dormir é o oposto exato do que a Janela de Descanso existe para ser.
+
+### A regra que precisa estar em destaque
+
+> **A quantidade de pesadelos NUNCA escala com a DURAÇÃO do sono. Só com a REGULARIDADE.**
+
+Por quê, e o argumento tem duas pernas:
+
+1. **Duração é resultado fisiológico, não comportamento.** Ninguém comanda o próprio sono às 3h da manhã. Premiar o resultado é a definição operacional de como se fabrica **ortossonia** — a busca ansiosa pelo sono perfeito alimentada por métrica (3–14% da população geral; **~23% dos usuários de 18–35 anos** relatam estresse com apps de sono, contra 2,4% acima dos 66 — o público deste app está *inteiro* na faixa de risco). É a mesma razão pela qual não há score de sono na home.
+2. **Duração é farmável, e o precedente é famoso.** O exploit do Pokémon Sleep — gente forjando semanas de sono para farmar recompensa — nasce de recompensa por duração. Se dormir 11h rendesse mais inimigos que dormir 6h, a jogada ótima passaria a ser mentir para o app, ou pior: ficar deitado sem dormir.
+
+Quem escala é a **regularidade** (o `ratio` de `restConstancy`), e ela ganha nos três eixos que importam:
+
+- é **comportamento controlável** — deitar no horário que a própria pessoa escolheu;
+- tem **teto natural**: não dá para farmar regularidade dormindo 14h, porque o máximo é uma noite por noite (`NIGHTMARES_PER_NIGHT = 1`);
+- é a **métrica mais forte cientificamente**: no UK Biobank (n=60.977) o Sleep Regularity Index previu mortalidade por todas as causas *melhor* que a duração (20–48% menos mortalidade nos quintis mais regulares), e o efeito **sobrevive ao controle por duração**.
+
+Consequência de arquitetura, e ela é verificável: `nightmares.ts` **não lê `sleptAt`/`wokeAt` para calcular nada**. As únicas entradas de regra são o bit `onTime` da noite e a razão de regularidade. Há teste travando — mesma regularidade com noites de 3h e de 11h devolve resultado idêntico.
+
+### O resto do desenho
+
+- **1 pesadelo por noite dentro da janela** (`NIGHTMARES_PER_NIGHT = 1`). A única forma de ver mais pesadelos é ter mais *noites* — ou seja, viver mais dias, a única "moeda" que ninguém acelera.
+- **Luta curta**: `NIGHTMARE_WAVE_SIZE = 2` inimigos, contra os 6 de um andar de masmorra. Isto acontece **de manhã**; uma mecânica de sono que exige dez minutos de combate antes do café vira obrigação.
+- **Vencer restaura energia e até meio coração** (`NIGHTMARE_MAX_HEART_CURE = 0.5`). E este é o ponto: **o sono contribui para a saúde do pet ATRAVÉS do combate, nunca por bônus passivo.** A diferença não é cosmética — um bônus passivo por "ter dormido bem" é um score de sono disfarçado, e vira métrica na cabeça do jogador. Passando pelo jogo, o que se ganha é uma partida. O teto de meio coração também protege a economia: o carinho continua sendo a cura principal (até 1 coração/dia); se o sono curasse mais, ele viraria a rota ótima de HP e o app estaria de novo premiando resultado fisiológico.
+- **Perder não custa nada. Não combater não custa nada.** Pesadelo não combatido simplesmente **expira** — sem dano, sem multa, sem fila que acumula, sem contador que zera. Cobrar por não combater transformaria uma recompensa em dívida, que é exatamente como um bônus vira imposto na cabeça do usuário. Perder a luta segue a mesma regra da Masmorra: o jogo nunca cobra da barra que representa o cuidado que o usuário teve consigo mesmo.
+- **Noite sem registro, ou fora da janela = 0 pesadelos e nenhuma perda.** Noite sem registro é NEUTRA (regra de `restConstancy`): o app não sabe se a pessoa dormiu mal ou só não abriu o app, e chutar "falhou" seria inventar um dado ruim sobre a vida de alguém.
+- **O combate é delegado.** `buildNightmareWave` chama `buildDungeonWave` em vez de reimplementar inimigo/stat/escala — regra copiada é regra que diverge em silêncio (footgun 9). O módulo só decide *quantos* e *até que tier*; o tier alvo vem da raridade (`baby-ii`/`rookie`/`champion`) e é limitado pelo estágio do pet, para um rookie nunca encarar um mega.
+
+---
+
+## Parte 3b — Passos: o sensor certo é o mais burro
+
+Dono da regra: `src/utils/steps.ts`. **Esta seção substitui a antiga dependência de Health Connect para passos.**
+
+### A decisão técnica
+
+`Sensor.TYPE_STEP_COUNTER` do próprio aparelho, via **`@capgo/capacitor-pedometer`** (no iOS, `CMPedometer`), com a permissão **`ACTIVITY_RECOGNITION`** — permissão de runtime simples, do mesmo tipo que câmera ou microfone. **Sem Health Connect e sem Google Fit.**
+
+**Por que não Health Connect.** Ele é a plataforma certa para um app de saúde, e o Soulmon não é um. O custo de conformidade é desproporcional para um bônus cosmético: **conta de organização verificada no Play** (enforcement de jan/2026 — se o publisher for conta pessoal, é bloqueador absoluto), declaração pesada de acesso a dados de saúde no Play Console e **política de privacidade dedicada**. Some-se a janela de 30 dias (só lê os 30 dias anteriores à concessão; reinstalar recomeça a contagem), que empurra a espelhar dado sensível no backend. Nada disso se paga por um selo de "verificado".
+
+**Por que não Google Fit.** Está sendo desligado: cadastros novos fechados desde 01/05/2024, APIs suportadas só até o fim de 2026. **Nada deve ser escrito contra ele** — nem a Recording API, que aparecia como "caminho leve" na versão anterior deste documento e morre junto.
+
+**O custo real desta escolha**, e é ele que a torna viável:
+
+1. marcar **"Activity and fitness"** no formulário de health apps que *todo* app já preenche — não é a declaração de health app, é uma linha no formulário que já existe;
+2. **tela de consentimento no app**, mostrada ANTES do diálogo do sistema (`stepsConsentCopy`, EN + PT-BR): o que é lido, para quê, e o que não sai do aparelho. Chamar `requestStepsPermission()` sem ter mostrado essa tela é bug de conformidade, não de UX;
+3. **APK novo** — é código nativo, mudou `android/`. Mudança web não precisa de APK; esta precisa.
+
+E a decisão de dado que barateia tudo: guarda-se **só o agregado diário** (`{ date, baseline, today }`). Nunca a série bruta, nunca horário de passo, nunca localização. Minimização de dados — e sem série não há como inferir a rotina de ninguém.
+
+### O princípio continua o mesmo
+
+> **Declarado pontua. Inferido confirma.**
+
+Passo é sinal **inferido**, e por isso **nunca pontua sozinho**. Os dois usos legítimos:
+
+- **selo de "verificado" + bônus pequeno** num hábito de Fitness/Health que o usuário **já marcou** como feito — o hábito marcado é que vale, o passo só confirma;
+- **missões corporais opcionais com teto diário** — conteúdo extra, nunca requisito de meta, de coração, de dia perfeito ou de evolução.
+
+Nenhuma função de `steps.ts` devolve HP, energia, `perfectDays` ou peso de esforço, e nenhuma delas deve passar a devolver. **Quem não tem sensor não fica em desvantagem estrutural**: a maior parte da base joga na PWA, onde não existe sensor nenhum, e lá a mecânica degrada sozinha — `isStepsAvailable()` responde `false`, `readStepsToday()` responde `null`, e o app segue idêntico, só sem passos. No dia em que existir uma recompensa alcançável *só* com sensor, a regra já foi quebrada.
+
+Meta padrão: `DEFAULT_STEP_GOAL = 7000` — referência de caminhada regular, **não meta médica**.
+
+### A limitação técnica achada na implementação (registrada de propósito)
+
+`TYPE_STEP_COUNTER` conta acumulado **desde o boot** e zera no reboot. O plugin acrescenta um **segundo reset**: no Android ele entrega passos desde o `startMeasurementUpdates()` da *sessão*, então relançar o app também derruba o número para 0. Os dois casos têm exatamente a mesma assinatura — *a leitura crua caiu abaixo da última leitura* — e por isso são tratados pelo mesmo caminho, em função pura e testável (`stepsDeltaFrom` / `updateStepBaseline`). O invariante que sai daí: **nunca devolvemos passo negativo**, e uma queda do acumulado só pode *adicionar* ao total do dia, jamais subtrair.
+
+A consequência honesta: **passos dados com o app morto (e o aparelho não reiniciado) ficam de fora.** Isso é aceitável — e é aceitável *exatamente* porque passo não pontua sozinho. Subcontar não tira nada de ninguém. Se um dia passo virasse insumo de pontuação, esta limitação deixaria de ser aceitável no mesmo instante, e a resposta certa seria rever a pontuação, não o sensor.
+
+---
+
+## Parte 3c — Mais parâmetros de v-pet? Não — mais consequências
+
+Dono da regra: `src/utils/petNeeds.ts`.
+
+### A decisão: NÃO adicionar medidores
+
+A pergunta natural depois de tudo isso é "que outras barras de v-pet clássico faltam?". A resposta medida é: **quase nenhuma**. O Soulmon já tem cocô, energia, banho, dormir e carinho. Do kit clássico do gênero, o que faltava mesmo era **brincar**.
+
+E cada barra nova é **uma cobrança nova**. O contra-exemplo canônico é o **Habitica**, onde usuários relatam gastar mais tempo administrando o app do que fazendo os próprios hábitos. O benchmark é inequívoco na outra direção: **quem retém (Finch, Pokémon Sleep) tem MENOS sistemas, não mais.** Profundidade nesses produtos vem de consequência, não de contagem de medidores.
+
+Então o que entrou no lugar foram duas coisas que **não são medidores**:
+
+### 1. Brincar como dreno de recurso
+
+- Oferta de **1×/dia** (`PLAY_TIMES_PER_DAY = 1`).
+- **Consome energia** (`PLAY_ENERGY_COST = 1`) — e energia só existe porque alguém comeu, e comida só existe porque alguém **concluiu uma tarefa real**. O gasto está ancorado em trabalho real; não há barra de "diversão" que desce sozinha.
+- **Concede um buff no minijogo seguinte**: `PLAY_BUFF_MULTIPLIER = 1.2` (+20% de Bits) por `PLAY_BUFF_DURATION_MIN = 60` minutos, mais 1 ponto de atributo na categoria do dia. Modesto **de propósito**: um bônus grande transformaria a oferta em dever diário — a pessoa passaria a "ter que" brincar antes de todo minijogo, que é a definição de mais uma cobrança.
+- ⚠️ **Regra que não pode ser quebrada: brincar NUNCA é condição de dia perfeito, de HP ou de evolução.** No instante em que qualquer um dos três olhar para `playLog`, a oferta vira obrigação. Brincar só pode *somar*; nunca subtrair de nada além da energia que o próprio jogador escolheu gastar. Não ter brincado não é uma pendência, e `canPlay() === false` não é aviso vermelho — é só a oferta não estar disponível.
+
+### 2. Cansaço como estado DERIVADO
+
+- **Não é campo de save e não é barra.** É calculado, a cada leitura, de duas entradas que **já existem**: a **sobrecarga de ontem** (`plannedEffort` acima de `OVERCOMMIT_EFFORT`) e a **noite fora da janela**. Nada novo é medido, nada novo é persistido. No instante em que `tiredness` virar campo do `GameState`, ele vira uma barra que sobe e desce sozinha.
+- **O efeito é APENAS cosmético/narrativo.** O pet aparece sonolento — um espelho do dono, e nada além disso. Cansaço **não pode**: reduzir recompensa (Bits, comida, atributo, multiplicador); travar ação nenhuma (brincar, minijogo, masmorra, concluir tarefa); nem entrar em dia perfeito, HP ou evolução.
+- O porquê é o desenho inteiro do produto: **quem aparece cansado é exatamente quem trabalhou demais ou dormiu fora de hora.** Se o jogo reduzisse a recompensa dessa pessoa, estaria punindo justamente quem mais precisa de acolhimento. O pet sonolento existe para a pessoa **se ver**, não para pagar por isso — e por isso a fala é cumplicidade ("a gente descansa junto"), nunca diagnóstico.
+- No mesmo espírito, `needsAttention` devolve **no máximo UM** desejo por vez. Uma lista de três desejos é um painel de pendências, e painel de pendências é o Habitica: a pessoa abre o app e encontra uma fatura. Um convite de cada vez é o Finch. Array vazio é um resultado perfeitamente bom — um pet que não quer nada agora é um pet feliz, não um bug.
+
+### A regra de ouro para qualquer parâmetro futuro
+
+> Um parâmetro novo só entra se **ou for alimentado por uma tarefa real cumprida, ou gastar um recurso que veio de tarefa real**.
+>
+> **Medidor que sobe e desce sozinho com o tempo é cobrança desacoplada da vida real — e neste app a vida real é o jogo.**
+
+Todo pedido futuro de "adicionar higiene", "adicionar humor do pet", "adicionar social" passa por esse teste antes de qualquer linha de código. Brincar passa (gasta energia que veio de tarefa). Cansaço passa (é derivado, não medido). Uma barra de diversão que decai com o relógio **não passa** — e não passar é a resposta correta.
 
 ---
 
 ## Parte 4 — Roadmap
 
-**Fase 1 — o motor (só código web, sem dependência nativa, impacto máximo)**
+**Fase 1 — o motor (só código web, sem dependência nativa, impacto máximo)** — ✅ **implementada**
 Recorrência flexível com `from: 'completion'` · esforço nas tarefas · meta ponderada · constância "5 das últimas 7" + escudos automáticos · marcos 7/21/66 · when vs deadline · contador de adiamentos · "deixar pra lá" · aging assombrado · foco do dia.
 
-**Fase 2 — os rituais**
-Check-in matinal · aventura narrada no relatório noturno · relatório semanal com sugestão de habit stacking · nudges contextuais do pet (push já existe) · estações/fresh start · Quick Add de uma linha · "Arrumar a pilha".
+**Fase 2 — os rituais** — 🟡 **parcial**
+✅ Check-in · relatório semanal com sugestão de habit stacking · estações/fresh start · "Arrumar a pilha" (`triageQueue`).
+⬜ Falta: **Quick Add de uma linha** e a **aventura narrada** no relatório noturno.
 
-**Fase 3 — sono (sem sensor)**
-Janela de Descanso · média móvel · coleção de Sonhos gerada pelo pipeline de sprites. **Roda igual na PWA e no Android** — não depende de nada nativo.
+**Fase 3 — sono (sem sensor)** — ✅ **implementada**
+Janela de Descanso · média móvel · 18 Sonhos no `DREAM_CATALOG`. **Roda igual na PWA e no Android** — não depende de nada nativo.
 
-**Fase 4 — sensores (só Android, opt-in, se a Fase 3 provar que move retenção)**
-`@capgo/capacitor-health` · `READ_SLEEP` + `READ_STEPS` + background read · hábitos verificáveis · missões corporais · tela de consentimento granular própria · guardar só agregados. Exige APK novo e resolver a conta de organização no Play.
+**Fase 3b — pesadelos (sem sensor)** — ✅ **implementada** (`utils/nightmares.ts`)
+1 por noite dentro da janela · onda de 2 inimigos delegada a `buildDungeonWave` · tier pela **regularidade**, nunca pela duração · vitória devolve energia e até meio coração · derrota e não-combate custam **zero**. Também roda igual na PWA — não lê sensor nenhum.
 
-**Nunca**: Google Fit; punição por sono ruim; score de sono na home; streak que zera; recompensa por contagem de tarefas.
+**Fase 4a — passos (só Android, opt-in)** — ✅ **implementada** (`utils/steps.ts`)
+`@capgo/capacitor-pedometer` + `ACTIVITY_RECOGNITION` · agregado diário só (`{date, baseline, today}`) · `stepsConsentCopy` antes do diálogo do sistema · degradação graciosa na PWA. **Exige APK novo** (mudou `android/`). Ainda ⬜ na camada de cima: ligar o **selo de "verificado"** nos hábitos de Fitness/Health e as **missões corporais** com teto diário — sempre como confirmação de algo já declarado.
+
+**Fase 4b — Health Connect: continua FORA, e isto é decisão fechada**
+Sono e exercício via Health Connect **não entram**. O motivo não é técnico e sim de custo: exige **conta de organização verificada no Play** (enforcement de jan/2026 — conta pessoal é bloqueador absoluto), **declaração de health app** no Play Console, **política de privacidade dedicada** e consentimento LGPD art. 11 específico e destacado por finalidade. Tudo isso para entregar um selo cosmético que a Parte 3b já entrega sem sensor nenhum. A Janela de Descanso, os Sonhos e os Pesadelos rodam **inteiros sem permissão de saúde** — o sono virou conteúdo de jogo por *design*, não por falta de acesso ao sensor. Se um dia isso mudar, a decisão volta para o dono (`docs/STATUS.md` §3.2) e o caminho técnico é `@capgo/capacitor-health`, guardando **só agregados diários**.
+
+**Não haverá Fase 5 de "mais medidores"** — ver Parte 3c. Brincar e cansaço derivado fecham o kit; qualquer parâmetro novo passa antes pela regra de ouro.
+
+**Nunca**: Google Fit; Health Connect enquanto o custo de conformidade não se pagar; punição por sono ruim; score de sono na home; recompensa que escale com a **duração** do sono; streak que zera; recompensa por contagem de tarefas.
 
 ---
 

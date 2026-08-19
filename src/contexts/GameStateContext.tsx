@@ -15,6 +15,10 @@ import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskMod
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
 import { createRestState } from '../utils/restWindow';
+import type { NightmareState } from '../utils/nightmares';
+import { createNightmareState } from '../utils/nightmares';
+import type { PlayLog } from '../utils/petNeeds';
+import type { StepsRecord } from '../utils/steps';
 import { resolveLanguage } from '../utils/i18n';
 import {
   readLocal,
@@ -311,6 +315,32 @@ export interface GameState {
   lastWeeklyReportDate?: string;
   /** dayKey do último "recomeço" (fresh start) proposto e aceito. */
   lastFreshStartDate?: string;
+  /**
+   * Combate a pesadelos (utils/nightmares.ts) — a face JOGÁVEL da noite, ao
+   * lado do sonho, que é a coleção. Guarda só as manhãs já combatidas (teto de
+   * 30): pesadelo não combatido EXPIRA sem custo, então não há fila, dívida nem
+   * contador que zera para persistir.
+   */
+  nightmares?: NightmareState;
+  /**
+   * Brincar (utils/petNeeds.ts): a data da última brincadeira e o buff de Bits
+   * do próximo minijogo. NUNCA pode ser lido por dia perfeito, HP ou evolução —
+   * no instante em que for, a oferta vira obrigação diária.
+   */
+  playLog?: PlayLog;
+  /**
+   * Passos (utils/steps.ts). SÓ o agregado do dia (`{date, baseline, today}`) —
+   * nunca a série bruta, nunca horário, nunca localização. Passo não pontua
+   * sozinho: ele só confirma um hábito de saúde já marcado como feito.
+   */
+  steps?: StepsRecord;
+  /**
+   * Resposta do usuário à tela de consentimento de passos. `'declined'` é
+   * PERMANENTE de propósito: sem esta marca o app perguntaria de novo a cada
+   * abertura para quem já recusou, o que é assédio — e uma recusa que não é
+   * respeitada não é uma recusa.
+   */
+  stepsConsent?: 'granted' | 'declined';
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
@@ -339,6 +369,49 @@ const num = (v: unknown, fallback: number): number => (typeof v === 'number' && 
 /** Mapa simples (nunca array, nunca null) — mesma defesa do `arr` para records. */
 const obj = <T,>(v: unknown): Record<string, T> =>
   (v && typeof v === 'object' && !Array.isArray(v)) ? (v as Record<string, T>) : {};
+
+/**
+ * Pesadelos: `fought` PRECISA ser array de string — `hasPendingNightmare` faz
+ * `.includes` nele já no primeiro render da manhã, e um `fought: {}` vindo da
+ * nuvem derrubaria a árvore antes de qualquer tela aparecer.
+ */
+function hydrateNightmares(v: unknown): NightmareState {
+  const base = createNightmareState();
+  const raw = obj<unknown>(v);
+  const fought = arr<unknown>(raw.fought).filter((x): x is string => typeof x === 'string');
+  const pending = typeof raw.pending === 'string' ? raw.pending : undefined;
+  return pending ? { fought, pending } : { ...base, fought };
+}
+
+/**
+ * Brincar: sem `date` válido não existe registro (o campo é obrigatório em
+ * `PlayLog`, e um log sem data faria `playedToday` mentir nos dois sentidos).
+ * Buff com `expiresAt` inválido é descartado — `activeBuff` já trata isso, mas
+ * um multiplicador não-numérico multiplicaria Bits por `NaN`.
+ */
+function hydratePlayLog(v: unknown): PlayLog | undefined {
+  const raw = obj<unknown>(v);
+  if (typeof raw.date !== 'string' || !raw.date) return undefined;
+  const b = obj<unknown>(raw.buff);
+  const okBuff = b.kind === 'minigame'
+    && typeof b.expiresAt === 'string'
+    && typeof b.multiplier === 'number' && Number.isFinite(b.multiplier)
+    && (b.attribute === 'virus' || b.attribute === 'data' || b.attribute === 'vaccine');
+  return okBuff
+    ? { date: raw.date, buff: b as unknown as NonNullable<PlayLog['buff']> }
+    : { date: raw.date };
+}
+
+/** Passos: só o agregado do dia, e só com os três campos no tipo certo. */
+function hydrateSteps(v: unknown): StepsRecord | undefined {
+  const raw = obj<unknown>(v);
+  if (typeof raw.date !== 'string' || !raw.date) return undefined;
+  return {
+    date: raw.date,
+    baseline: Math.max(0, num(raw.baseline, 0)),
+    today: Math.max(0, num(raw.today, 0)),
+  };
+}
 
 /**
  * Migra/completa um save carregado. Isolada da leitura de propósito: o
@@ -441,6 +514,18 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         lastCheckInDate: loadedState.lastCheckInDate,
         lastWeeklyReportDate: loadedState.lastWeeklyReportDate,
         lastFreshStartDate: loadedState.lastFreshStartDate,
+        // Sono jogável, brincar e passos. Mesma regra dos campos acima: TODO
+        // campo novo tem linha aqui, mesmo sendo opcional — campo sem linha em
+        // `hydrateSave` já produziu a tela branca permanente.
+        nightmares: hydrateNightmares(loadedState.nightmares),
+        playLog: hydratePlayLog(loadedState.playLog),
+        steps: hydrateSteps(loadedState.steps),
+        // Só os dois valores conhecidos sobrevivem: qualquer outra coisa vira
+        // "ainda não perguntei", que é o estado seguro (perguntar de novo é
+        // recuperável; tratar lixo como 'granted' leria sensor sem consentimento).
+        stepsConsent: loadedState.stepsConsent === 'granted' || loadedState.stepsConsent === 'declined'
+          ? loadedState.stepsConsent
+          : undefined,
       } as GameState;
 }
 
@@ -497,6 +582,10 @@ function freshGameState(): GameState {
       credits: 0,
       habitRhythms: {},
       rest: createRestState(),
+      // Instalação nova: nenhuma noite combatida, nenhuma brincadeira, nenhum
+      // passo e nenhuma resposta sobre passos ainda (`stepsConsent` ausente é o
+      // "ainda não perguntei" — só o `declined` é definitivo).
+      nightmares: createNightmareState(),
   };
 }
 

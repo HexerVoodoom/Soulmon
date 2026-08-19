@@ -137,4 +137,13 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- Contador de passos (@capgo/capacitor-pedometer → Sensor.TYPE_STEP_COUNTER).
+         O manifesto do plugin já declara esta permissão e o merger a traria de
+         qualquer jeito; está repetida aqui DE PROPÓSITO, porque é a permissão
+         que aparece na ficha do Play e precisa estar visível para quem revisa o
+         app sem abrir node_modules. Runtime simples desde a API 29 — NÃO é
+         Health Connect: nada de conta de organização verificada, declaração de
+         dados de saúde ou política dedicada. Opcional: o app roda inteiro sem
+         ela (ver src/utils/steps.ts). -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
 </manifest>

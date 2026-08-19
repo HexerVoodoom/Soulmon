@@ -153,6 +153,49 @@ import {
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
 
+// ── SONO JOGÁVEL, BRINCAR E PASSOS ──────────────────────────────────────────
+// Mesma disciplina do bloco acima: as regras moram nos módulos puros
+// (`nightmares`, `petNeeds`, `steps`) e aqui só existe fiação.
+import { NightmareBattle } from './components/NightmareBattle';
+import { PlayCard } from './components/PlayCard';
+import { StepsCard } from './components/StepsCard';
+import {
+  buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
+  createNightmareState, type NightmareRewards,
+} from './utils/nightmares';
+import {
+  play, canPlay, playedToday, activeBuff, minigameMultiplier, consumeBuff,
+  tiredness, tirednessMessage, needsAttention,
+} from './utils/petNeeds';
+import {
+  DEFAULT_STEP_GOAL, isStepsAvailable, hasStepsPermission, requestStepsPermission,
+  readStepsToday, stepsDayKey,
+} from './utils/steps';
+
+/**
+ * Categorias em que um passo pode CONFIRMAR o hábito que o usuário já marcou.
+ *
+ * O selo é confirmação, nunca pontuação: quem não tem sensor marca o hábito
+ * exatamente igual, ganha exatamente a mesma comida e a mesma meta do dia —
+ * só não vê o selo. Ver a regra 1 de `utils/steps.ts`.
+ */
+const STEP_VERIFIABLE: readonly ActivityCategory[] = ['Health', 'Fitness', 'Wellness'];
+
+/**
+ * Limiar do selo: METADE da meta de referência, e é DERIVADO dela de propósito
+ * (`DEFAULT_STEP_GOAL` é o dono do número) — um limiar inventado aqui viraria
+ * uma segunda meta que só quem tem sensor consegue enxergar. Modesto porque o
+ * bônus é 1 comida: um limiar alto transformaria o selo numa meta corporal, que
+ * é exatamente o que a Parte 3 do plano proíbe.
+ */
+const STEPS_VERIFIED_MIN = Math.round(DEFAULT_STEP_GOAL / 2);
+
+/** Quanto tempo entre leituras do pedômetro (só com o app em foreground). */
+const STEPS_POLL_MS = 5 * 60 * 1000;
+
+/** Ritmo/estado vazios ESTÁVEIS (mesma razão do `EMPTY_RHYTHM`). */
+const EMPTY_NIGHTMARES = createNightmareState();
+
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 
@@ -327,6 +370,13 @@ export default function App() {
   // Recomeço de segunda/dia 1: cartão discreto, dispensável nesta sessão sem
   // gravar nada — recusar um convite não é uma decisão que mereça memória.
   const [freshStartDismissed, setFreshStartDismissed] = useState(false);
+  // O COMBATE do pesadelo: a outra face da mesma noite que rendeu o sonho.
+  // Também só de manhã, também nunca à noite (ver o efeito lá embaixo).
+  const [nightmareOpen, setNightmareOpen] = useState(false);
+  // Passos: `null` = ainda não perguntei ao aparelho. Na PWA vira `false` e
+  // nada de passos aparece em lugar nenhum (a camada já degrada sozinha).
+  const [stepsAvailable, setStepsAvailable] = useState<boolean | null>(null);
+  const [stepsPermission, setStepsPermission] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     return readJson<AISettings>(STORAGE_KEYS.AI_SETTINGS, {
       tone: 'casual',
@@ -612,8 +662,31 @@ export default function App() {
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal]);
 
+  /**
+   * A fatia que `utils/petNeeds.ts` lê. `hasPoop` é DERIVADO (o dono do cocô é
+   * o sistema de cuidado), e o resto vem do save como está.
+   */
+  const petNeedsView = {
+    ...gameState,
+    hasPoop: (gameState.poopEventsShown || []).some(
+      i => !(gameState.poopEventsCompleted || []).includes(i),
+    ),
+  };
+
+  /**
+   * CANSAÇO DERIVADO — e ele é **só cosmético/narrativo**.
+   *
+   * Nunca reduz recompensa, nunca trava ação, nunca entra em dia perfeito, HP
+   * ou evolução: quem aparece 'tired' é exatamente quem trabalhou demais ou
+   * dormiu fora de hora, e cobrar dessa pessoa seria punir quem mais precisa de
+   * acolhimento. O pet sonolento existe para o dono se VER, não para pagar.
+   */
+  const tirednessLevel = tiredness(petNeedsView, new Date());
+
   // Determine companion mood based on progress
   const getCompanionMood = (): 'idle' | 'happy' | 'tired' => {
+    // Sonolento é EXPRESSÃO, não estado de jogo — só muda a carinha.
+    if (tirednessLevel === 'tired') return 'tired';
     if (progress >= 60) return 'happy'; // Fica feliz mais fácil
     if (progress <= 15) return 'tired'; // Só fica cansado se MUITO baixo (antes era 30%)
     return 'idle';
@@ -624,6 +697,14 @@ export default function App() {
     if (gameState.healthPoints <= 1) {
       return t.main.companionNeedHelp;
     }
+    // UMA sugestão de cada vez (`needsAttention` devolve no máximo um item) —
+    // nunca um painel de pendências, que é a fatura do Habitica. Nenhuma delas
+    // tem contador nem vira penalidade se for ignorada.
+    const wish = needsAttention(petNeedsView, new Date())[0];
+    if (wish) return language === 'pt-BR' ? wish.pt : wish.en;
+    // Sem nada a sugerir, o pet fala do próprio sono. 'tired' é cumplicidade
+    // ("a gente descansa junto"), nunca diagnóstico.
+    if (tirednessLevel !== 'normal') return tirednessMessage(tirednessLevel, language);
     if (progress >= 70) return t.main.companionAmazing;
     if (progress >= 40) return t.main.companionGoodProgress;
     if (progress >= 20) return t.main.companionYouGotThis;
@@ -781,6 +862,9 @@ export default function App() {
         celebrateHabitMilestone(
           justFinishedActivity.id, justFinishedActivity.name, new Date().toDateString(),
         );
+        // Selo de "verificado": o hábito de saúde JÁ contou; os passos só
+        // confirmam e rendem uma comida a mais. Sem sensor, nada muda.
+        grantStepsVerified(justFinishedActivity.category);
       }
 
       // Check if this is the first task/step ever completed and show popup
@@ -891,6 +975,8 @@ export default function App() {
     // dia em que o corte é cruzado. Fora do updater pelo mesmo motivo.
     if (activity && !(activity.completedToday && activity.lastCompletedDate === today)) {
       celebrateHabitMilestone(activity.id, activity.name, today);
+      // Ver `grantStepsVerified`: confirmação, nunca pontuação.
+      grantStepsVerified(activity.category);
     }
 
     // Check if this is the first task ever completed and show popup
@@ -1564,11 +1650,66 @@ export default function App() {
   };
   const missionProgress = getMissionProgress(missionState);
 
+  /**
+   * O buff de brincar já foi gasto NESTA sessão de minijogo?
+   *
+   * Existe porque uma run de Masmorra credita Bits VÁRIAS vezes (por inimigo e
+   * por andar) dentro do mesmo tick de render: sem esta trava, `gameState`
+   * ainda traria o buff nas chamadas seguintes e o +20% seria aplicado de novo
+   * a cada inimigo. Volta a `false` quando uma brincadeira nova concede o buff.
+   */
+  const playBuffSpentRef = useRef(false);
+
   // 🪙 Bits — minigame currency; accumulates in GameState (cloud-synced), spent in the shop.
+  // O buff de BRINCAR (utils/petNeeds.ts) é consumido AQUI, que é o funil único
+  // por onde passam os Bits de Dino, PPT e Masmorra. `minigameMultiplier` é
+  // sempre ≥ 1 por construção — este caminho não tem como reduzir ganho.
   const handleEarnGamePoints = useCallback((pts: number) => {
     if (pts <= 0) return;
-    setGameState(prev => ({ ...prev, gamePoints: (prev.gamePoints ?? 0) + pts }));
-  }, []);
+    const mult = playBuffSpentRef.current ? 1 : minigameMultiplier(gameState, new Date());
+    const total = mult > 1 ? Math.round(pts * mult) : pts;
+    setGameState(prev => {
+      // Gasta o buff junto do crédito: assim ele nunca sobrevive ao minijogo
+      // que ele bonificou. `consumeBuff` mantém `playLog.date` (1×/dia segue
+      // de pé). O spread vem ANTES do `gamePoints` — invertido, o estado
+      // devolvido por `consumeBuff` sobrescreveria os Bits recém-creditados.
+      const base = mult > 1 ? consumeBuff(prev) : prev;
+      return { ...base, gamePoints: (base.gamePoints ?? 0) + total };
+    });
+    if (mult > 1) {
+      // Fora do updater (footgun 6): no StrictMode ele roda 2×.
+      playBuffSpentRef.current = true;
+      toast(language === 'pt-BR'
+        ? `🎈 A brincadeira rendeu: +${total - pts} Bits extras!`
+        : `🎈 Playtime paid off: +${total - pts} bonus Bits!`);
+    }
+  }, [gameState, language, setGameState]);
+
+  /**
+   * BRINCAR — oferta, nunca obrigação (a regra inteira é de `utils/petNeeds.ts`).
+   *
+   * A recusa (`refused`) é uma frase carinhosa do pet, JAMAIS um erro vermelho:
+   * "já brincamos hoje" e "falta energia" não são falhas do usuário, são a
+   * oferta não estar de pé agora. Quem não brincou não perdeu nada — brincar
+   * não entra em dia perfeito, HP nem evolução.
+   */
+  const handlePlay = useCallback(() => {
+    const now = new Date();
+    const todayKey = dayKeyOf(now);
+    const preview = play(gameState, todayKey, now);
+    if (preview.refused) {
+      const isPt = language === 'pt-BR';
+      toast(preview.refused === 'already-played'
+        ? (isPt ? '🎈 Já brincamos hoje! Amanhã tem mais.' : '🎈 We already played today! More tomorrow.')
+        : (isPt ? '🎈 Uma comidinha primeiro, aí a gente brinca.' : '🎈 A snack first, then we play.'));
+      setMessageTrigger(prev => prev + 1);
+      return;
+    }
+    setGameState(prev => play(prev, todayKey, now).state);
+    playFeed();
+    playBuffSpentRef.current = false; // buff novo, pronto para o próximo minijogo
+    setMessageTrigger(prev => prev + 1);
+  }, [gameState, language, setGameState]);
 
   // 🛒 Shop purchase — charges points and applies the item's effect. Items can
   // be locked behind a mission (utils/shop.ts `unlock`).
@@ -2014,6 +2155,91 @@ export default function App() {
     setMorningDream({ dream: DREAM_CATALOG.find(d => d.id === dreamId) ?? null, isNew });
   }, [gameState.rest, isSleeping, setGameState]);
 
+  /**
+   * O PESADELO DA MANHÃ — a face jogável da mesma noite que rendeu o sonho.
+   *
+   * O sonho é a COLETA (passiva, colecionável) e o pesadelo é o COMBATE: as
+   * duas metades da noite, e por isso os dois vivem no MESMO momento e sob a
+   * MESMA janela de horas do sonho (4h–12h). Nada de sono aparece à noite —
+   * ortossonia é ansiedade ANTES de dormir, e um app que às 23h avisa que há
+   * uma luta pendente é o estímulo exato que a Janela de Descanso existe para
+   * não produzir.
+   *
+   * Aparece depois do sonho (`!morningDream`) porque dois modais empilhados
+   * fazem o de cima roubar o clique do de baixo — já visto em teste.
+   */
+  useEffect(() => {
+    if (nightmareOpen) return;
+    if (isSleeping) return;
+    const now = new Date();
+    const hour = now.getHours();
+    if (hour < 4 || hour >= 12) return; // só de manhã
+    const rest = gameState.rest;
+    if (!rest) return;
+    if (!hasPendingNightmare(gameState.nightmares ?? EMPTY_NIGHTMARES, rest, now)) return;
+    setNightmareOpen(true);
+  }, [gameState.rest, gameState.nightmares, isSleeping, nightmareOpen]);
+
+  /**
+   * A onda vem PRONTA de `buildNightmareWave` — o componente não decide inimigo
+   * nenhum, e o motor de combate continua sendo o da Masmorra (o módulo delega
+   * a `buildDungeonWave`; regra copiada é regra que diverge em silêncio).
+   *
+   * `nightmareDayKey` nas deps, e não o `Date` inteiro: sem isso a onda seria
+   * re-sorteada a cada render e o inimigo trocaria no meio da luta.
+   */
+  const nightmareKey = nightmareDayKey(new Date());
+  const nightmareWave = useMemo(
+    () => (nightmareOpen
+      ? buildNightmareWave(gameState.rest ?? createRestState(), gameState.evolutionStage, new Date())
+      : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nightmareOpen, nightmareKey, gameState.evolutionStage],
+  );
+  const nightmareRarity = useMemo(
+    () => nightmaresFor(gameState.rest ?? createRestState(), new Date(), gameState.evolutionStage).rarity,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [nightmareKey, gameState.evolutionStage, gameState.rest],
+  );
+
+  /**
+   * Fecha a noite. **Sempre** chamado — vitória, derrota ou fechar a tela.
+   *
+   * Deixar o pesadelo pendente faria a oferta reaparecer na próxima abertura, e
+   * uma recompensa que insiste vira cobrança. `markFought` é idempotente por
+   * dayKey, então o StrictMode (que roda o updater 2×) não duplica nada.
+   */
+  const closeNightmare = useCallback(() => {
+    const key = nightmareDayKey(new Date());
+    setGameState(prev => ({
+      ...prev,
+      nightmares: markFought(prev.nightmares ?? EMPTY_NIGHTMARES, key),
+    }));
+    setNightmareOpen(false);
+  }, [setGameState]);
+
+  /**
+   * Vitória: energia (teto do estágio), meio coração no máximo (teto de
+   * `NIGHTMARE_MAX_HEART_CURE`, respeitando `maxHealthPoints`) e Bits.
+   *
+   * Perder não credita nada — `nightmareRewards(rarity,false)` devolve zeros e
+   * este caminho nem é chamado. O som/fala ficam FORA do updater (footgun 6).
+   */
+  const handleNightmareWin = useCallback((rewards: NightmareRewards) => {
+    const key = nightmareDayKey(new Date());
+    setGameState(prev => ({
+      ...prev,
+      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + (rewards.hearts ?? 0)),
+      energyPoints: Math.min(
+        getMaxEnergyForStage(prev.evolutionStage),
+        (prev.energyPoints ?? 0) + (rewards.energy ?? 0),
+      ),
+      gamePoints: (prev.gamePoints ?? 0) + (rewards.bits ?? 0),
+      nightmares: markFought(prev.nightmares ?? EMPTY_NIGHTMARES, key),
+    }));
+    setMessageTrigger(prev => prev + 1);
+  }, [setGameState]);
+
   /** Aceita o recomeço. NUNCA apaga progresso — ver `applyFreshStart`. */
   const handleFreshStart = useCallback(() => {
     setGameState(prev => applyFreshStart(prev, new Date()));
@@ -2036,6 +2262,113 @@ export default function App() {
   const handleToggleRestMetrics = useCallback((hide: boolean) => {
     setGameState(prev => ({ ...prev, rest: { ...(prev.rest ?? createRestState()), hideMetrics: hide } }));
   }, [setGameState]);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PASSOS (utils/steps.ts) — opcional, e a palavra opcional é literal
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Este aparelho tem contador? Na PWA (a maior parte da base) a resposta é
+  // `false` e NADA de passos aparece em lugar nenhum — sem erro, sem medidor
+  // vazio, sem "você está perdendo isto".
+  useEffect(() => {
+    let cancelled = false;
+    isStepsAvailable().then(ok => { if (!cancelled) setStepsAvailable(ok); });
+    hasStepsPermission().then(ok => { if (!cancelled) setStepsPermission(ok); });
+    return () => { cancelled = true; };
+  }, []);
+
+  /* O agregado anterior por REF: `readStepsToday` precisa dele para calcular o
+     delta, e colocá-lo nas deps do efeito abaixo reiniciaria o polling a cada
+     leitura. */
+  const stepsRecordRef = useRef(gameState.steps);
+  stepsRecordRef.current = gameState.steps;
+
+  /**
+   * Lê o pedômetro só com o app EM FOREGROUND e só com consentimento.
+   *
+   * `null` NÃO é 0: sem sensor, sem permissão ou com leitura falha o registro
+   * anterior fica exatamente como está — zerar o dia por uma leitura que não
+   * respondeu seria apagar passo que a pessoa deu.
+   */
+  useEffect(() => {
+    if (gameState.stepsConsent !== 'granted') return;
+    let cancelled = false;
+    const read = () => {
+      if (document.hidden) return;
+      readStepsToday(new Date(), stepsRecordRef.current).then(record => {
+        if (cancelled || !record) return; // null nunca vira 0
+        setGameState(prev => {
+          const p = prev.steps;
+          // Só grava quando algo mudou: todo setGameState agenda cloud save.
+          if (p && p.date === record.date && p.today === record.today && p.baseline === record.baseline) return prev;
+          return { ...prev, steps: record };
+        });
+      }).catch(() => {});
+    };
+    read();
+    const id = setInterval(read, STEPS_POLL_MS);
+    document.addEventListener('visibilitychange', read);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', read);
+    };
+  }, [gameState.stepsConsent, setGameState]);
+
+  /**
+   * Consentimento → diálogo do sistema. NUNCA o contrário: chamar
+   * `requestStepsPermission` sem ter mostrado `stepsConsentCopy` (que é o que o
+   * `StepsCard` renderiza) é bug de conformidade (política do Play + LGPD).
+   */
+  const handleStepsRequestPermission = useCallback(async () => {
+    const granted = await requestStepsPermission();
+    setStepsPermission(granted);
+    setGameState(prev => ({ ...prev, stepsConsent: granted ? 'granted' : 'declined' }));
+  }, [setGameState]);
+
+  /**
+   * Recusar. Grava `'declined'` PARA SEMPRE — sem esta marca o cartão voltaria
+   * a cada abertura para quem já disse não, e insistir depois de um "não" é
+   * assédio, não onboarding. Não existe custo: quem recusa não perde nada.
+   */
+  const handleStepsDecline = useCallback(() => {
+    setGameState(prev => ({ ...prev, stepsConsent: 'declined' }));
+  }, [setGameState]);
+
+  /** Passos de HOJE (0 se o registro é de outro dia — nada é herdado da véspera). */
+  const stepsToday = gameState.steps && gameState.steps.date === stepsDayKey(new Date())
+    ? gameState.steps.today
+    : 0;
+
+  /**
+   * SELO DE "VERIFICADO" — declarado pontua, inferido CONFIRMA.
+   *
+   * O hábito marcado é que vale: ele já rendeu a comida da categoria, já entrou
+   * na meta do dia e já alimentou a constância, com ou sem sensor. Isto aqui
+   * acrescenta UMA comida e um selo por cima, e só isso. Não existe meta, item
+   * ou conquista alcançável apenas com sensor — quem joga na PWA não fica atrás
+   * de nada (regra 2 de `utils/steps.ts`).
+   *
+   * Fora do updater, como todo efeito colateral (footgun 6).
+   */
+  const grantStepsVerified = useCallback((category: ActivityCategory) => {
+    if (!STEP_VERIFIABLE.includes(category)) return;
+    if (stepsToday < STEPS_VERIFIED_MIN) return;
+    const food = FOOD_BY_CATEGORY[category];
+    if (food) {
+      setGameState(prev => ({
+        ...prev,
+        foodInventory: {
+          ...prev.foodInventory,
+          [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
+        },
+      }));
+      setFeedAnim(prev => ({ emoji: food.emoji, n: (prev?.n ?? 0) + 1 }));
+    }
+    toast(language === 'pt-BR'
+      ? `🥾 Verificado pelos seus passos hoje — +1 comida de bônus.`
+      : `🥾 Verified by today's steps — +1 bonus food.`);
+  }, [stepsToday, language, setGameState]);
 
   // Optional auto-sleep schedule: puts the pet to sleep when entering the
   // configured window and wakes it when leaving. Only acts on window EDGES, so
@@ -2591,6 +2924,25 @@ export default function App() {
                 feedAnim={feedAnim}
               />
 
+              {/* BRINCAR — na área do pet, junto de banho/dormir/itens, porque
+                  é um gesto de CUIDADO e não um minijogo. É uma OFERTA: sem
+                  barra de diversão, sem contador regressivo, sem badge por não
+                  ter brincado. Ver components/PlayCard.tsx. */}
+              {(() => {
+                const agoraPet = new Date();
+                const chavePet = dayKeyOf(agoraPet);
+                return (
+                  <PlayCard
+                    canPlay={canPlay(petNeedsView, chavePet)}
+                    playedToday={playedToday(petNeedsView, chavePet)}
+                    buff={activeBuff(petNeedsView, agoraPet)}
+                    now={agoraPet}
+                    language={language}
+                    onPlay={handlePlay}
+                  />
+                );
+              })()}
+
               {/* ── G1: UM painel de rituais, linhas de ~72px ────────────────
                   Antes: um `PixelPanel` de ~200px por item, três estourando a
                   dobra e o quarto cortado pelo dock de chat. A composição e as
@@ -3088,6 +3440,28 @@ export default function App() {
             </div>
           )}
 
+          {/* PASSOS em CONFIGURAÇÕES, logo abaixo da Janela de Descanso: é uma
+              PREFERÊNCIA de privacidade (ligar/desligar um sensor, com o texto
+              de consentimento), e não conteúdo de jogo — na Home ou na página
+              do Pet ele leria como mais um medidor a administrar, que é
+              exatamente o que a Parte 3 do plano proíbe.
+
+              Some por completo quando não há sensor (PWA, a maior parte da
+              base) e quando a pessoa já disse não: `'declined'` é definitivo,
+              porque insistir depois de um "não" é assédio. */}
+          {currentView === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (
+            <div style={{ marginTop: 16 }}>
+              <StepsCard
+                steps={stepsToday}
+                available
+                hasPermission={gameState.stepsConsent === 'granted' && stepsPermission}
+                language={language}
+                onRequestPermission={handleStepsRequestPermission}
+                onDismiss={handleStepsDecline}
+              />
+            </div>
+          )}
+
           {currentView === 'oracle' && (
             <Suspense fallback={null}>
               <OraclePage language={language} />
@@ -3409,6 +3783,23 @@ export default function App() {
           isNew={morningDream.isNew}
           language={language}
           onClose={() => setMorningDream(null)}
+        />
+      )}
+
+      {/* O PESADELO DA MANHÃ — a face jogável da mesma noite do sonho. Entra
+          DEPOIS dele (dois modais empilhados roubam o clique um do outro), e
+          nunca à noite. Perder não custa nada, e a tela diz isso. */}
+      {nightmareOpen && !morningDream && (
+        <NightmareBattle
+          open
+          wave={nightmareWave}
+          rarity={nightmareRarity}
+          petStage={gameState.evolutionStage}
+          demoCharacterId={gameState.demoCharacterId}
+          language={language}
+          onWin={handleNightmareWin}
+          onLose={closeNightmare}
+          onClose={closeNightmare}
         />
       )}
 
