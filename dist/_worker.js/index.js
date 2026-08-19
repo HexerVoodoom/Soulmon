@@ -1491,8 +1491,167 @@ async function onRequestPost5({ request, env }) {
 }
 __name(onRequestPost5, "onRequestPost");
 
-// api/save.js
+// api/metrics.js
 var CORS8 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+var METRICS_PREFIX = "m:";
+var EVENT_SCHEMA = {
+  install: null,
+  onboarding_step: { step: { min: 0, max: 40 } },
+  demo_pick: null,
+  first_task_done: null,
+  day_active: { effort: { min: 0, max: 500 } },
+  unlock_view: null,
+  purchase: null
+};
+var MAX_BODY_BYTES = 16 * 1024;
+var MAX_EVENTS = 100;
+var MAX_DAY_SKEW_DAYS = 7;
+var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+var ID_RE = /^[0-9a-f]{32}$/;
+var RATE = { limit: 60, windowMs: 6e4 };
+function serverDay(now = /* @__PURE__ */ new Date()) {
+  return now.toISOString().slice(0, 10);
+}
+__name(serverDay, "serverDay");
+function dayDistance(a, b) {
+  const ta = Date.parse(`${a}T00:00:00Z`);
+  const tb = Date.parse(`${b}T00:00:00Z`);
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return NaN;
+  return Math.abs(ta - tb) / 864e5;
+}
+__name(dayDistance, "dayDistance");
+function sanitizeRecord(record, today3) {
+  if (!record || typeof record !== "object" || Array.isArray(record)) return null;
+  const event = record.e;
+  if (typeof event !== "string") return null;
+  if (!Object.prototype.hasOwnProperty.call(EVENT_SCHEMA, event)) return null;
+  const schema = EVENT_SCHEMA[event];
+  const day2 = record.d;
+  if (typeof day2 !== "string" || !DAY_RE.test(day2)) return null;
+  const skew = dayDistance(day2, today3);
+  if (!Number.isFinite(skew) || skew > MAX_DAY_SKEW_DAYS) return null;
+  for (const key of Object.keys(record)) {
+    if (key !== "e" && key !== "d" && key !== "p") return null;
+  }
+  const props = record.p;
+  if (!schema) {
+    if (props !== void 0) return null;
+    return { e: event, d: day2 };
+  }
+  if (!props || typeof props !== "object" || Array.isArray(props)) return null;
+  const out = {};
+  for (const key of Object.keys(props)) {
+    const rule = schema[key];
+    if (!rule) return null;
+    const raw = props[key];
+    if (typeof raw !== "number" || !Number.isFinite(raw)) return null;
+    const n = Math.round(raw);
+    if (n < rule.min || n > rule.max) return null;
+    out[key] = n;
+  }
+  for (const key of Object.keys(schema)) if (!(key in out)) return null;
+  return { e: event, d: day2, p: out };
+}
+__name(sanitizeRecord, "sanitizeRecord");
+function sanitizeBatch(body, today3 = serverDay()) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return { ok: false, reason: "body" };
+  }
+  if (body.v !== 1) return { ok: false, reason: "version" };
+  if (typeof body.id !== "string" || !ID_RE.test(body.id)) {
+    return { ok: false, reason: "id" };
+  }
+  if (!Array.isArray(body.events)) return { ok: false, reason: "events" };
+  if (body.events.length === 0 || body.events.length > MAX_EVENTS) {
+    return { ok: false, reason: "events" };
+  }
+  for (const key of Object.keys(body)) {
+    if (key !== "v" && key !== "id" && key !== "events") return { ok: false, reason: "body" };
+  }
+  const events = [];
+  for (const record of body.events) {
+    const clean = sanitizeRecord(record, today3);
+    if (clean) events.push(clean);
+  }
+  return { ok: true, events };
+}
+__name(sanitizeBatch, "sanitizeBatch");
+function applyAggregate(agg, events) {
+  const out = { ...agg && typeof agg === "object" && !Array.isArray(agg) ? agg : {} };
+  const bump2 = /* @__PURE__ */ __name((key, by = 1) => {
+    const cur = typeof out[key] === "number" && Number.isFinite(out[key]) ? out[key] : 0;
+    out[key] = cur + by;
+  }, "bump");
+  for (const record of events) {
+    bump2(record.e);
+    if (record.e === "onboarding_step") bump2(`onboarding_step.${record.p.step}`);
+    if (record.e === "day_active") bump2("effort_sum", record.p.effort);
+  }
+  return out;
+}
+__name(applyAggregate, "applyAggregate");
+function groupByDay(events) {
+  const byDay = /* @__PURE__ */ new Map();
+  for (const record of events) {
+    if (!byDay.has(record.d)) byDay.set(record.d, []);
+    byDay.get(record.d).push(record);
+  }
+  return byDay;
+}
+__name(groupByDay, "groupByDay");
+async function onRequestOptions8() {
+  return new Response(null, { headers: CORS8 });
+}
+__name(onRequestOptions8, "onRequestOptions");
+async function onRequest2({ request, env }) {
+  if (request.method !== "POST") {
+    return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS8 });
+  }
+  const gate = takeToken("metrics", clientKey(request), RATE);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS8);
+  const raw = await request.text().catch(() => null);
+  if (raw === null || raw.length > MAX_BODY_BYTES) {
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS8 });
+  }
+  let body = null;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS8 });
+  }
+  const result = sanitizeBatch(body);
+  if (!result.ok) {
+    return Response.json({ error: "Invalid batch" }, { status: 400, headers: CORS8 });
+  }
+  if (result.events.length === 0) {
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS8 });
+  }
+  if (!env?.DIGIAPP_SAVES) {
+    console.warn("metrics: KV DIGIAPP_SAVES n\xE3o vinculado \u2014 agregado descartado");
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS8 });
+  }
+  let accepted = 0;
+  for (const [day2, records] of groupByDay(result.events)) {
+    const key = METRICS_PREFIX + day2;
+    try {
+      const current = await env.DIGIAPP_SAVES.get(key, { type: "json" }).catch(() => null);
+      const next = applyAggregate(current, records);
+      await env.DIGIAPP_SAVES.put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
+      accepted += records.length;
+    } catch (err) {
+      console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err?.name ?? err) });
+    }
+  }
+  return Response.json({ ok: true, accepted }, { headers: CORS8 });
+}
+__name(onRequest2, "onRequest");
+
+// api/save.js
+var CORS9 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` PRECISA estar aqui: o cliente manda `Bearer <idToken>` e o
@@ -1503,57 +1662,57 @@ var CORS8 = {
 };
 var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
-async function onRequestOptions8() {
-  return new Response(null, { headers: CORS8 });
+async function onRequestOptions9() {
+  return new Response(null, { headers: CORS9 });
 }
-__name(onRequestOptions8, "onRequestOptions");
-async function onRequest2({ request, env }) {
+__name(onRequestOptions9, "onRequestOptions");
+async function onRequest3({ request, env }) {
   const url = new URL(request.url);
   const body = request.method === "POST" ? await request.json().catch(() => null) : null;
   const queryId = url.searchParams.get("id");
   const bodyId = typeof body?.id === "string" ? body.id : null;
   if (queryId && bodyId && queryId !== bodyId) {
-    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS8 });
+    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS9 });
   }
   const saveId = queryId || bodyId;
   if (!saveId || !VALID_ID.test(saveId)) {
-    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS8 });
+    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS9 });
   }
   if (!env.DIGIAPP_SAVES) {
-    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS8 });
+    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS9 });
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
-    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS8 });
+    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS9 });
   }
   if (request.method === "GET") {
     const raw = await env.DIGIAPP_SAVES.get(saveId);
-    if (!raw) return Response.json({ found: false }, { headers: CORS8 });
+    if (!raw) return Response.json({ found: false }, { headers: CORS9 });
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
     state.accountTier = ent.tier;
     state.credits = ent.credits;
-    return Response.json({ found: true, state }, { headers: CORS8 });
+    return Response.json({ found: true, state }, { headers: CORS9 });
   }
   if (request.method === "POST") {
     const incoming = body?.state;
     if (typeof incoming !== "object" || incoming === null || Array.isArray(incoming)) {
       console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveId, tipo: Array.isArray(incoming) ? "array" : typeof incoming });
-      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS8 });
+      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS9 });
     }
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
-      return Response.json({ error: "State too large" }, { status: 413, headers: CORS8 });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS9 });
     }
     await env.DIGIAPP_SAVES.put(saveId, serialized, { expirationTtl: 86400 * 365 });
-    return Response.json({ ok: true }, { headers: CORS8 });
+    return Response.json({ ok: true }, { headers: CORS9 });
   }
-  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS8 });
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS9 });
 }
-__name(onRequest2, "onRequest");
+__name(onRequest3, "onRequest");
 
 // api/_pushTargets.js
 var PUSH_HOST_SUFFIXES = [
@@ -1592,18 +1751,18 @@ function costGate(request) {
   const gate = takeToken("subscribe", clientKey(request), SUB_LIMIT);
   if (gate.ok) return null;
   console.warn("[subscribe] rate limited", { retryAfter: gate.retryAfter });
-  return tooManyRequests(gate.retryAfter, CORS9);
+  return tooManyRequests(gate.retryAfter, CORS10);
 }
 __name(costGate, "costGate");
-var CORS9 = {
+var CORS10 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions9() {
-  return new Response(null, { status: 204, headers: CORS9 });
+async function onRequestOptions10() {
+  return new Response(null, { status: 204, headers: CORS10 });
 }
-__name(onRequestOptions9, "onRequestOptions");
+__name(onRequestOptions10, "onRequestOptions");
 async function onRequestPost6({ request, env }) {
   const limited = costGate(request);
   if (limited) return limited;
@@ -1613,20 +1772,20 @@ async function onRequestPost6({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS9 }
+      headers: { "Content-Type": "application/json", ...CORS10 }
     });
   }
   const { endpoint, keys, petName, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS9 }
+      headers: { "Content-Type": "application/json", ...CORS10 }
     });
   }
   if (!isAllowedPushEndpoint(endpoint)) {
     return new Response(JSON.stringify({ error: "Unsupported push endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS9 }
+      headers: { "Content-Type": "application/json", ...CORS10 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -1654,7 +1813,7 @@ async function onRequestPost6({ request, env }) {
   }
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS9 }
+    headers: { "Content-Type": "application/json", ...CORS10 }
   });
 }
 __name(onRequestPost6, "onRequestPost");
@@ -1667,21 +1826,21 @@ async function onRequestDelete2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS9 }
+      headers: { "Content-Type": "application/json", ...CORS10 }
     });
   }
   const { endpoint } = body;
   if (!endpoint) {
     return new Response(JSON.stringify({ error: "Missing endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS9 }
+      headers: { "Content-Type": "application/json", ...CORS10 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS9 }
+    headers: { "Content-Type": "application/json", ...CORS10 }
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
@@ -1692,16 +1851,16 @@ async function hashEndpoint(endpoint) {
 __name(hashEndpoint, "hashEndpoint");
 
 // api/suggest-tasks.js
-var CORS10 = {
+var CORS11 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var VALID_CATEGORIES = ["Health", "Creativity", "Discipline", "Study", "Work", "Social", "Wellness", "Fitness"];
-async function onRequestOptions10() {
-  return new Response(null, { headers: CORS10 });
+async function onRequestOptions11() {
+  return new Response(null, { headers: CORS11 });
 }
-__name(onRequestOptions10, "onRequestOptions");
+__name(onRequestOptions11, "onRequestOptions");
 async function onRequestPost7({ request, env }) {
   try {
     const body = await request.json();
@@ -1716,12 +1875,12 @@ async function onRequestPost7({ request, env }) {
     const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === "pt-BR";
     if (!goalText && categories.length === 0) {
-      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS10 });
+      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS11 });
     }
     const gate = await guardAiRequest(request, env, "suggest", body.id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS10 });
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS11 });
     const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS10 });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS11 });
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
 Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
 that would help achieve that goal. Each task name must be short (max 40 chars), action-oriented, and
@@ -1747,7 +1906,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     });
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS10 });
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS11 });
     }
     const data = await groqRes.json();
     const raw = data.choices?.[0]?.message?.content ?? "[]";
@@ -1756,16 +1915,16 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       const match2 = raw.match(/\[[\s\S]*\]/);
       parsed = JSON.parse(match2 ? match2[0] : raw);
     } catch {
-      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS10 });
+      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS11 });
     }
     const suggestions = (Array.isArray(parsed) ? parsed : []).map((item) => ({
       name: (item?.name || "").toString().trim().slice(0, 60),
       category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
     })).filter((item) => item.name.length > 0).slice(0, 6);
-    return Response.json({ suggestions }, { headers: CORS10 });
+    return Response.json({ suggestions }, { headers: CORS11 });
   } catch (err) {
     console.error("suggest-tasks error:", err);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS10 });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS11 });
   }
 }
 __name(onRequestPost7, "onRequestPost");
@@ -1773,7 +1932,7 @@ __name(onRequestPost7, "onRequestPost");
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.digipartner.digiapp";
 var DEFAULT_SHA256 = "F5:10:2B:09:7B:B3:5C:81:FA:DC:FE:AB:A9:32:E6:8D:7F:F8:50:FB:1C:71:F0:7B:29:95:CC:86:A4:AA:7B:84";
-async function onRequest3({ env }) {
+async function onRequest4({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
   const fingerprint = env?.ASSETLINKS_SHA256 || DEFAULT_SHA256;
   return new Response(JSON.stringify([{
@@ -1790,9 +1949,9 @@ async function onRequest3({ env }) {
     }
   });
 }
-__name(onRequest3, "onRequest");
+__name(onRequest4, "onRequest");
 
-// ../.wrangler/tmp/pages-V4IApe/functionsRoutes-0.39612330452417843.mjs
+// ../.wrangler/tmp/pages-ukQsHI/functionsRoutes-0.05570042349278659.mjs
 var routes = [
   {
     routePath: "/api/billing",
@@ -1900,11 +2059,18 @@ var routes = [
     modules: [onRequestPost5]
   },
   {
-    routePath: "/api/save",
+    routePath: "/api/metrics",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
     modules: [onRequestOptions8]
+  },
+  {
+    routePath: "/api/save",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions9]
   },
   {
     routePath: "/api/subscribe",
@@ -1918,7 +2084,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions9]
+    modules: [onRequestOptions10]
   },
   {
     routePath: "/api/subscribe",
@@ -1932,7 +2098,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions10]
+    modules: [onRequestOptions11]
   },
   {
     routePath: "/api/suggest-tasks",
@@ -1946,7 +2112,7 @@ var routes = [
     mountPath: "/.well-known",
     method: "",
     middlewares: [],
-    modules: [onRequest3]
+    modules: [onRequest4]
   },
   {
     routePath: "/api/community",
@@ -1956,11 +2122,18 @@ var routes = [
     modules: [onRequest]
   },
   {
-    routePath: "/api/save",
+    routePath: "/api/metrics",
     mountPath: "/api",
     method: "",
     middlewares: [],
     modules: [onRequest2]
+  },
+  {
+    routePath: "/api/save",
+    mountPath: "/api",
+    method: "",
+    middlewares: [],
+    modules: [onRequest3]
   }
 ];
 
