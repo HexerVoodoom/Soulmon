@@ -5,11 +5,14 @@ import iconDino from '../assets/soulmon/icons/games/icon-game-dino.png';
 import iconScissors from '../assets/soulmon/icons/games/icon-game-rps.png';
 import iconTrophy from '../assets/soulmon/icons/games/icon-game-tournament.png';
 import { DungeonGame } from './DungeonGame';
+import { ArenaGame } from './ArenaGame';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
 import { bitsStyle } from '../utils/currency';
 import { PixelChip, PixelTag } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
+import type { FichaStage } from '../utils/soulProfile/ficha/types';
+import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import iconChevronRight from '../assets/soulmon/icons/icon-chevron-right.png';
 
 /**
@@ -19,12 +22,14 @@ import iconChevronRight from '../assets/soulmon/icons/icon-chevron-right.png';
  * bottom-nav entry now — kept out of the minigames hub).
  * Balance: Dungeon points/enemy + wave clear · Dino floor(score/100) · RPS +5/match.
  */
-export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
+export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, soulmonSkills, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet nos minijogos. */
   demoCharacterId?: string;
   language: Language;
   totalPoints: number;
+  /** Skills por estágio persistidas no save — a Arena luta com elas. */
+  soulmonSkills?: Record<FichaStage, StageSkills>;
   onDungeonEnter: () => { ok: true; level: number; best: number };
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
@@ -35,7 +40,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   onOpenTournament: () => void;
 }) {
   const isPt = language === 'pt-BR';
-  const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
+  const [openGame, setOpenGame] = useState<'dungeon' | 'arena' | 'dino' | 'rps' | null>(null);
 
   // Torneio fica ACIMA e separado dos minigames (seção própria) — não é mais
   // só mais um card na mesma lista.
@@ -47,7 +52,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
     onClick: onOpenTournament,
   };
 
-  const cards: { key: 'dungeon' | 'dino' | 'rps'; icon: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
+  const cards: { key: 'dungeon' | 'arena' | 'dino' | 'rps'; icon: string; title: string; desc: string; pts: string; onClick: () => void }[] = [
     {
       key: 'dungeon', icon: iconSwords,
       title: isPt ? 'Masmorra' : 'Dungeon',
@@ -56,6 +61,16 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
         : '5 retro floors, each with 6 tougher enemies. Losing costs you the run, never your hearts. Weekly reset.',
       pts: isPt ? 'Bits por inimigo + ranking' : 'Bits per enemy + ranking',
       onClick: () => setOpenGame('dungeon'),
+    },
+    {
+      // Reusa o ícone da masmorra por enquanto (arena experimental, tag Teste/Beta).
+      key: 'arena', icon: iconSwords,
+      title: isPt ? 'Arena' : 'Arena',
+      desc: isPt
+        ? '5 rounds com as habilidades e elementos do SEU Soulmon. Experimental. Perder nunca custa corações.'
+        : '5 rounds using YOUR Soulmon\'s skills and elements. Experimental. Losing never costs hearts.',
+      pts: isPt ? 'Teste · Bits por inimigo' : 'Beta · Bits per enemy',
+      onClick: () => setOpenGame('arena'),
     },
     {
       key: 'dino', icon: iconDino,
@@ -168,6 +183,16 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
           onHeartDrop={onDungeonHeartDrop}
           onGlitchtama={onGlitchtama}
           onEnemyDefeated={onDungeonEnemyDefeated}
+          onEarnPoints={onEarnPoints}
+          onExit={() => setOpenGame(null)}
+        />
+      )}
+      {openGame === 'arena' && (
+        <ArenaGame
+          evolutionStage={evolutionStage}
+          demoCharacterId={demoCharacterId}
+          language={language}
+          soulmonSkills={soulmonSkills}
           onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}
         />

@@ -2473,6 +2473,7 @@ export default function App() {
                 demoCharacterId={gameState.demoCharacterId}
                 language={language}
                 totalPoints={gameState.gamePoints ?? 0}
+                soulmonSkills={gameState.soulmonSkills}
                 onDungeonEnter={handleDungeonEnter}
                 onDungeonLose={handleDungeonLose}
                 onDungeonHeartDrop={handleDungeonHeartDrop}
