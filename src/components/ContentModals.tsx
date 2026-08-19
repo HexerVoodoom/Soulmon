@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Language } from '../utils/i18n';
+import { ScreenSkeleton } from './ui/ScreenSkeleton';
 
 const GuideModal = lazy(() => import('./GuideModal').then(m => ({ default: m.GuideModal })));
 
@@ -17,8 +18,10 @@ export function ContentModals({
   return (
     <>
       {/* Guide Modal */}
+      {/* Era `fallback={null}`: abrir o guia num 3G apagava a tela por meio
+          segundo e o toque parecia não ter funcionado. */}
       {guideModalOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <GuideModal
             isOpen={guideModalOpen}
             onClose={onCloseGuide}

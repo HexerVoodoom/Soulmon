@@ -3,7 +3,7 @@ import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { PixelButton } from './pixel/PixelKit';
 import { Icon } from './ui/Icon';
-import { Viewport } from './ui/Viewport';
+import { Viewport, usePrefersReducedMotion } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
@@ -40,6 +40,52 @@ const SPRITE_SRC_PX = 256;
 const SPRITE_SCALE = 2;
 const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
 const PET_GROUND_KEEP = PET_BOX - PET_RENDER;
+
+/* ── O VISOR TEM MEDIDA, e a medida é INTEIRA ──────────────────────────────
+   O contrato do `Viewport` (`width`/`height`/`scale` → tela de `width*scale`)
+   estava sendo anulado aqui: passava-se 64/64/2 e logo em seguida
+   `screenStyle={{width:'100%', height:'var(--sm-petstage-h)'}}` sobrescrevia
+   as duas medidas. A regra de escala inteira — a justificativa inteira do
+   componente — não agia em lugar nenhum.
+
+   Agora a tela é MEDIDA e quantizada: a largura útil do corpo e a janela do
+   palco (`--sm-petstage-h`, que encolhe em tela baixa) são divididas por
+   `VIEW_SCALE` e arredondadas PARA BAIXO, e o resultado volta como `width`/
+   `height` lógicos. A tela sai sempre num múltiplo exato de 2 device px, o
+   passo do pet cai na mesma grade, e sobra no máximo 1px — centrado.
+
+   A composição por dentro não muda: ela continua ancorada ao FUNDO com
+   `STAGE_HEIGHT`, então `GROUND_Y`, o berço e a decoração ficam onde estavam;
+   quem corta (pelo topo, onde era ar) é a janela. */
+const VIEW_SCALE = 2 as const;
+const RING_PX = 4;          // o anel de cobre do Viewport (padding real)
+const STAGE_FALLBACK_H = 215;
+const STAGE_FALLBACK_W = 320;
+/* Distância dos pés do sprite até o fundo da composição — derivada, nunca
+   digitada: é o que permite pendurar o ALVO DO CARINHO exatamente sobre o
+   pet sem duplicar a regra do palco. */
+const PET_BOTTOM_IN_STAGE =
+  STAGE_HEIGHT - (STAGE_HEIGHT / 2 + PET_TOP_OFFSET + PET_GROUND_KEEP) - PET_RENDER;
+
+/** Passo do passeio: 2 device px = 1 pixel de origem do sprite (escala 2:1).
+    Meio pixel aqui é o que transforma serrilhado em borrão. */
+const WALK_STEP_PX = 4;
+const WALK_TICK_MS = 200;
+
+/** Períodos do dia — o ciclo diurno do interior do visor. */
+function periodoDoDia(d = new Date()): 'dawn' | 'day' | 'dusk' | 'night' {
+  const h = d.getHours();
+  if (h >= 5 && h < 11) return 'dawn';
+  if (h >= 11 && h < 17) return 'day';
+  if (h >= 17 && h < 21) return 'dusk';
+  return 'night';
+}
+const SKY_CLASS: Record<'dawn' | 'day' | 'dusk' | 'night', string> = {
+  dawn: 'sm2-sky-dawn',
+  day: 'sm2-sky-day',
+  dusk: 'sm2-sky-dusk',
+  night: 'sm2-sky-night',
+};
 
 interface CompanionHUDProps {
   companionMood: 'idle' | 'happy' | 'tired';
@@ -146,10 +192,33 @@ export const CompanionHUD = memo(function CompanionHUD({
   // Energy bars = the stage's daily task requirement (falls back to HP max for
   // older callers that don't pass it).
   const maxEnergy = maxEnergyPoints ?? maxHealthPoints;
-  // Parado no centro — o passeio lateral saiu da Home (o dono pediu o pet
-  // parado ali) e agora só existe na tela de Evolução (WalkingPetStrip).
-  const [position] = useState(50);
-  const [direction] = useState<'right' | 'left'>('right');
+  const reducedMotion = usePrefersReducedMotion();
+
+  /* ── O PET SE COMPORTA ───────────────────────────────────────────────────
+     Antes: `const [position] = useState(50)` e `const [direction] = useState()`
+     — sem setter. O bicho era um decalque no centro da tela, e a única
+     animação era um salto de escala de 10% a cada 1200ms, que lê como tremor.
+     Um v-pet que não faz nada é um app de tarefas com sprite.
+
+     `walkPx` é o deslocamento em DEVICE PIXELS INTEIROS a partir do centro —
+     não uma porcentagem contínua. A porcentagem é derivada dele, então o
+     `left:%` cai sempre num pixel exato da tela medida. Sem `transition`:
+     movimento dentro do visor é `steps()`, sempre. */
+  const [walkPx, setWalkPx] = useState(0);
+  const [direction, setDirection] = useState<'right' | 'left'>('right');
+  const [isBlinking, setIsBlinking] = useState(false);
+  const [isGreeting, setIsGreeting] = useState(false);
+  const [periodo, setPeriodo] = useState(() => periodoDoDia());
+  /** Tela medida e quantizada (ver o bloco de escala no topo do arquivo). */
+  const [tela, setTela] = useState(() => ({
+    w: Math.floor((STAGE_FALLBACK_W - RING_PX * 2) / VIEW_SCALE),
+    h: Math.floor(STAGE_FALLBACK_H / VIEW_SCALE),
+  }));
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const dirRef = useRef<'right' | 'left'>('right');
+  dirRef.current = direction;
+  const telaW = tela.w * VIEW_SCALE;
+  const position = 50 + (walkPx * 100) / telaW;
   const [showBubble, setShowBubble] = useState(false);
   const [squashFrame, setSquashFrame] = useState(0);
   const [bubbleText, setBubbleText] = useState('');
@@ -267,13 +336,128 @@ export const CompanionHUD = memo(function CompanionHUD({
 
 
 
-  // Squash and stretch animation (10% height variation)
+  /* Respiração. Era 0.9 ↔ 1.0 a cada 1200ms: 10% de salto sem easing, que lê
+     como TREMOR, não como bicho respirando. Agora é 0.97 ↔ 1.0 (um pixel de
+     origem, na escala 2:1) num ritmo mais lento. Continua em `prefers-
+     reduced-motion`, e mais devagar ainda: respirar é CONTEÚDO — é o que diz
+     que o bicho está vivo —, e o que para ali é o resto (passeio, piscada,
+     saudação). */
   useEffect(() => {
     const squashInterval = setInterval(() => {
-      setSquashFrame(prev => (prev + 1) % 2); // Alternate between 0 and 1
-    }, 1200); // Change every 1200ms for slow breathing animation
-
+      if (document.hidden) return;
+      setSquashFrame(prev => (prev + 1) % 2);
+    }, reducedMotion ? 2600 : 1500);
     return () => clearInterval(squashInterval);
+  }, [reducedMotion]);
+
+  /* Mede a tela do visor e quantiza para múltiplo INTEIRO de `VIEW_SCALE`. */
+  useEffect(() => {
+    const medir = () => {
+      const raiz = typeof window !== 'undefined' ? window.getComputedStyle(document.documentElement) : null;
+      const janela = parseFloat(raiz?.getPropertyValue('--sm-petstage-h') || '') || STAGE_FALLBACK_H;
+      const corpo = stageRef.current?.clientWidth || STAGE_FALLBACK_W;
+      setTela({
+        w: Math.max(16, Math.floor((corpo - RING_PX * 2) / VIEW_SCALE)),
+        h: Math.max(24, Math.floor(janela / VIEW_SCALE)),
+      });
+    };
+    medir();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(medir) : null;
+    if (ro && stageRef.current) ro.observe(stageRef.current);
+    window.addEventListener('resize', medir);
+    return () => { ro?.disconnect(); window.removeEventListener('resize', medir); };
+  }, []);
+
+  /* O PASSEIO. O `WalkingPetStrip` já provava que dá — aqui o passo é em
+     pixel inteiro e o pet ALTERNA andar e parar, com pausas de duração
+     irregular: andar sem parar lê como carrossel, e é o que faz um sprite
+     parecer um GIF em vez de um bicho. Ele vira ao bater na parede e às
+     vezes só porque mudou de ideia.
+     Não anda dormindo, não anda com a aba escondida (ninguém vê, e o timer
+     ainda custa bateria) e não anda em `prefers-reduced-motion`. */
+  useEffect(() => {
+    if (reducedMotion || isSleeping) return;
+    const alcance = telaW / 2 - PET_RENDER / 2 - 6;
+    if (alcance < WALK_STEP_PX) return;
+    let passos = 0;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      if (passos <= 0) {
+        // Parado: ~18% de chance por tique de começar a andar (≈1×/segundo).
+        if (Math.random() < 0.18) {
+          passos = 6 + Math.floor(Math.random() * 18);
+          if (Math.random() < 0.35) setDirection(d => (d === 'right' ? 'left' : 'right'));
+        }
+        return;
+      }
+      passos -= 1;
+      setWalkPx(prev => {
+        const passo = dirRef.current === 'right' ? WALK_STEP_PX : -WALK_STEP_PX;
+        const proximo = prev + passo;
+        if (Math.abs(proximo) > alcance) {
+          setDirection(dirRef.current === 'right' ? 'left' : 'right');
+          return prev;
+        }
+        return proximo;
+      });
+    }, WALK_TICK_MS);
+    return () => clearInterval(id);
+  }, [reducedMotion, isSleeping, telaW]);
+
+  /* A PISCADA, em intervalo irregular (2,6–7,8s). Regular seria pisca-pisca. */
+  useEffect(() => {
+    if (reducedMotion) return;
+    let t: ReturnType<typeof setTimeout>;
+    let fim: ReturnType<typeof setTimeout>;
+    const agenda = () => {
+      t = setTimeout(() => {
+        if (!document.hidden && !isSleeping) {
+          setIsBlinking(true);
+          fim = setTimeout(() => setIsBlinking(false), 280);
+        }
+        agenda();
+      }, 2600 + Math.random() * 5200);
+    };
+    agenda();
+    return () => { clearTimeout(t); clearTimeout(fim); };
+  }, [reducedMotion, isSleeping]);
+
+  /* REAÇÃO À ABERTURA DO APP: o bicho pula e cumprimenta. É o gesto que
+     transforma "abri um app" em "cheguei em casa" — e é o único momento em
+     que o v-pet do gênero fala primeiro. Volta a acontecer quando a pessoa
+     retorna à aba depois de ≥10 min; nem toda troca de aba é uma chegada. */
+  const ultimaSaudacaoRef = useRef(0);
+  useEffect(() => {
+    const isPt = language === 'pt-BR';
+    const linhas = isPt
+      ? ['Você voltou!', 'Oi! Senti sua falta.', 'Que bom te ver!', 'Oi oi! Tudo bem?']
+      : ['You came back!', 'Hi! I missed you.', 'Good to see you!', 'Hey hey! How are you?'];
+    const saudar = () => {
+      if (document.hidden || propsRef.current.isSleeping) return;
+      ultimaSaudacaoRef.current = Date.now();
+      if (!reducedMotion) {
+        setIsGreeting(true);
+        setTimeout(() => setIsGreeting(false), 800);
+      }
+      speak(linhas[Math.floor(Math.random() * linhas.length)], 3500);
+    };
+    const t = setTimeout(saudar, 700);
+    const onVis = () => {
+      if (document.hidden) return;
+      if (Date.now() - ultimaSaudacaoRef.current < 10 * 60 * 1000) return;
+      saudar();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearTimeout(t); document.removeEventListener('visibilitychange', onVis); };
+  }, [speak, language, reducedMotion]);
+
+  /* O céu do visor acompanha a hora. 10 min de resolução é de sobra para uma
+     transição de período, e não é um relógio re-renderizando a Home. */
+  useEffect(() => {
+    const id = setInterval(() => setPeriodo(periodoDoDia()), 600000);
+    const onVis = () => { if (!document.hidden) setPeriodo(periodoDoDia()); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
   }, []);
 
   // Random idle speech every 3 min — preset shown immediately, then API updates it
@@ -374,10 +558,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   // exceções por espécie, todas de sprites emprestados que saíram do bundle.)
   const getHorizontalFlip = () => (direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)');
 
-  // Get squash/stretch scale (10% total variation: 90% to 100%)
-  const getSquashScale = () => {
-    return squashFrame === 0 ? 0.9 : 1.0; // 90% or 100% of original height
-  };
+  /* Respiração: 3% (≈2 device px num sprite de 128 = 1 pixel de origem).
+     Os 10% de antes eram um salto, não uma respiração. */
+  const getSquashScale = () => (squashFrame === 0 ? 0.97 : 1.0);
 
   // Get branch aura color
   const getBranchAuraColor = () => {
@@ -448,6 +631,49 @@ export const CompanionHUD = memo(function CompanionHUD({
     if (rubIntervalRef.current) clearInterval(rubIntervalRef.current);
   }, []);
 
+  /* CARINHO POR TECLADO. O gesto de esfregar é ponteiro puro: quem navega por
+     teclado (ou por leitor de tela) ficava sem a ÚNICA cura de HP do jogo.
+     Aqui, segurar Enter/Espaço no botão do pet faz um ciclo de carinho de 2s
+     — exatamente o mesmo custo do gesto —, com os mesmos corações e a mesma
+     chamada a `onPet`, que é quem aplica a regra (e o teto diário). Nada de
+     atalho: uma tecla não cura mais rápido que uma mão. */
+  const teclaRubRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleRubKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if (e.repeat || teclaRubRef.current) return;
+    setIsRubbing(true);
+    spawnRubHearts();
+    teclaRubRef.current = setTimeout(() => {
+      teclaRubRef.current = null;
+      setIsRubbing(false);
+      const p = propsRef.current;
+      if (p.healthPoints < p.maxHealthPoints) onPetRef.current?.();
+    }, 2000);
+  };
+  useEffect(() => () => { if (teclaRubRef.current) clearTimeout(teclaRubRef.current); }, []);
+
+  /** Uma rajada de corações saindo do centro do pet. */
+  const spawnRubHearts = () => {
+    try { navigator.vibrate?.(20); } catch { /* noop */ }
+    const EMOJIS = ['❤️', '💕', '💖', '💗'];
+    const burst = 2 + Math.floor(Math.random() * 2); // 2–3 corações de uma vez
+    const spawned: { id: number; dx: number; dy: number; size: number; emoji: string }[] = [];
+    for (let k = 0; k < burst; k++) {
+      const id2 = ++rubHeartIdRef.current;
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 32 + Math.random() * 46; // espalhamento moderado (32–78px)
+      spawned.push({
+        id: id2,
+        dx: Math.round(Math.cos(angle) * dist),
+        dy: Math.round(Math.sin(angle) * dist),
+        size: 0.65 + Math.random() * 0.55,
+        emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
+      });
+      setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1500);
+    }
+    setRubHearts(prev => [...prev, ...spawned]);
+  };
+
   const rubTick = () => {
     const TICK = 100;
     {
@@ -457,27 +683,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       if (!active) return;
       // Every ~500ms emit a small BURST of hearts drifting out from the center.
       rubHeartTickRef.current += 1;
-      if (rubHeartTickRef.current % 5 === 0) {
-        // Tactile feedback on devices that support it (Android)
-        try { navigator.vibrate?.(20); } catch { /* noop */ }
-        const EMOJIS = ['❤️', '💕', '💖', '💗'];
-        const burst = 2 + Math.floor(Math.random() * 2); // 2–3 hearts at once
-        const spawned: { id: number; dx: number; dy: number; size: number; emoji: string }[] = [];
-        for (let k = 0; k < burst; k++) {
-          const id2 = ++rubHeartIdRef.current;
-          const angle = Math.random() * Math.PI * 2;
-          const dist = 32 + Math.random() * 46; // moderate spread (32–78px)
-          spawned.push({
-            id: id2,
-            dx: Math.round(Math.cos(angle) * dist),
-            dy: Math.round(Math.sin(angle) * dist),
-            size: 0.65 + Math.random() * 0.55, // varied heart sizes
-            emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
-          });
-          setTimeout(() => setRubHearts(prev => prev.filter(h => h.id !== id2)), 1500);
-        }
-        setRubHearts(prev => [...prev, ...spawned]);
-      }
+      if (rubHeartTickRef.current % 5 === 0) spawnRubHearts();
       // Accumulate heal time only while there's HP to restore
       const p = propsRef.current;
       if (p.healthPoints < p.maxHealthPoints) {
@@ -551,34 +757,45 @@ export const CompanionHUD = memo(function CompanionHUD({
             ao FUNDO; quem encolhe é a janela por cima dela, que corta pelo
             TOPO — exatamente onde estava o ar. Nada em `utils/petStage.ts`
             muda, e o pet nunca aparece cortado. */}
-        {/* A janela do palco. A altura vem do visor (tela + 4px de bisel de cada
-            lado), não de um `height` fixo — e ela existe para ancorar os
-            CONTROLES que ficam por cima do visor (ver logo abaixo). */}
-        <div className="relative">
+        {/* ── O CORPO DO APARELHO ──────────────────────────────────────────
+            O achado da crítica: o "visor" era um card. `padding: 4px` +
+            `border-radius: 20px` — os 20px eram RAIO, e o aparelho tinha 4px
+            de corpo. Sem massa, não há onde os controles morarem, e a fileira
+            de ações acabava flutuando no fundo da PÁGINA (`background:
+            transparent; border: none`) em vez de estar cravada no bicho.
+
+            Agora existe corpo: 16px de material em volta do anel de 4px = os
+            20px de bisel do plano, e o deck de ações é uma ÁREA dele, com
+            sulco de cobre entre a tela e os botões. */}
+        <div className="sm2-device">
+        {/* A janela do palco: ancora os CONTROLES que ficam por cima da tela
+            (evoluir, balão, alvo do carinho) e é a caixa que dá a largura
+            medida para a escala inteira do visor. */}
+        <div className="sm2-device-stage" ref={stageRef}>
         {/* ── O VISOR — elemento de marca nº 1 ────────────────────────────────
             O palco deixa de ser um retângulo de raio 28 e passa a ser a TELA de
             um aparelho v-pet: bisel de cobre por fora, interior escuro nos dois
             temas, um único reflexo. É a fronteira declarada do plano — pixel
             art vive DENTRO do visor, e tudo fora dele é SVG limpo.
 
-            `width`/`height`/`scale` do componente derivam uma tela QUADRADA de
-            152px; aqui a tela é a coluna inteira e a altura é a janela do palco
-            (`--sm-petstage-h`, que encolhe em tela baixa), então `screenStyle`
-            substitui as duas medidas. A regra de escala inteira que importa
-            está onde ela é visível — no sprite (256 → 128, 2:1 exato acima).
+            A ESCALA INTEIRA AGE AQUI. Antes, `width`/`height`/`scale` eram
+            passados e logo em seguida anulados por um `screenStyle` com
+            `width:100%` e `height:var(--sm-petstage-h)` — o contrato inteiro do
+            componente virava decoração justamente na única tela que importa.
+            Agora a medida é tirada do DOM e quantizada (ver `VIEW_SCALE` no
+            topo), então a tela é sempre `w*2 × h*2` device px exatos.
 
-            O cenário comprado na loja passa a ser pintado DENTRO da tela. Antes
-            ele era uma lavagem em tela cheia atrás de tudo (App.tsx); com o
-            visor opaco ele sumiria daqui, e cenário é item pago. Dentro do
-            visor ele também lê melhor: é o cenário do JOGO, não o papel de
-            parede do aplicativo. */}
+            O cenário comprado na loja passa a ser pintado DENTRO da tela e tem
+            PRIORIDADE sobre o ciclo diurno: é item pago, não se pinta por cima
+            dele. Só quando não há cenário equipado o céu do visor acompanha a
+            hora (`.sm2-sky-*`). */}
         <Viewport
-          width={PET_RENDER / 2}
-          height={PET_RENDER / 2}
-          scale={2}
+          width={tela.w}
+          height={tela.h}
+          scale={VIEW_SCALE}
           label={language === 'pt-BR' ? 'Seu Soulmon' : 'Your Soulmon'}
-          style={{ display: 'block', width: '100%', boxSizing: 'border-box' }}
-          screenStyle={{ width: '100%', height: 'var(--sm-petstage-h)', background: cenario }}
+          screenClassName={cenario ? undefined : SKY_CLASS[periodo]}
+          screenStyle={cenario ? { background: cenario } : undefined}
         >
         <div
           className="p-3"
@@ -702,7 +919,10 @@ export const CompanionHUD = memo(function CompanionHUD({
               data-nest
               style={{
                 position: 'absolute',
-                left: `${position}%`,
+                /* O berço é MOBÍLIA: ele fica onde está enquanto o pet passeia.
+                   Antes os dois liam a mesma variável, então o "berço" andava
+                   junto — o que só não aparecia porque nada andava. */
+                left: '50%',
                 top: '50%',
                 marginTop: BASE_SLOTS.nest.yPx,
                 width: BASE_SLOTS.nest.w, height: BASE_SLOTS.nest.h,
@@ -722,8 +942,13 @@ export const CompanionHUD = memo(function CompanionHUD({
             />
 
             {/* Soulmon Sprite with flip */}
+            {/* Sem `transition` e sem `hover:scale`: movimento DENTRO do visor é
+                em passos (`steps()`), e um pixel deslizando em sub-pixel
+                destrói o serrilhado que é a coisa inteira. O alvo de toque
+                também não é mais esta `<div>` — é o `<button>` nomeado que
+                fica por cima, fora do `role="img"` (ver adiante). */}
             <div
-              className="absolute transition-all duration-100 ease-linear cursor-pointer hover:scale-110 active:scale-95"
+              className="absolute"
               style={{
                 left: `${position}%`,
                 /* O `translateX(-50%)` é o que CENTRA o pet no berço. Sem ele
@@ -740,7 +965,6 @@ export const CompanionHUD = memo(function CompanionHUD({
                    chão. Ver o bloco de escala no topo do arquivo. */
                 marginTop: PET_TOP_OFFSET + PET_GROUND_KEEP,
                 zIndex: 1,
-                transition: 'left 0.1s ease-linear, transform 0.1s ease-linear',
                 touchAction: 'none', // let the rub gesture own the pointer
               }}
               onClick={() => { if (rubMovedRef.current) { rubMovedRef.current = false; return; } handlePetClick(); }}
@@ -759,13 +983,19 @@ export const CompanionHUD = memo(function CompanionHUD({
                     imageRendering: 'pixelated',
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
+                    /* Prioridade: o que o USUÁRIO acabou de fazer vence o que o
+                       bicho faz sozinho. Piscada e saudação são as últimas. */
                     animation: isRubbing
                       ? 'pet-rub 0.35s ease-in-out infinite'
                       : isShowering
                         ? 'pet-shower-shake 0.5s ease-in-out 3'
                         : isMunching
                           ? 'pet-munch 0.6s ease-out'
-                          : undefined,
+                          : isGreeting
+                            ? 'sm2-pet-greet 0.8s steps(4, end)'
+                            : isBlinking
+                              ? 'sm2-pet-blink 0.28s steps(2, end)'
+                              : undefined,
                   }}
                 />
               ) : (
@@ -828,6 +1058,42 @@ export const CompanionHUD = memo(function CompanionHUD({
 
         </div>
         </Viewport>
+
+        {/* ── O ALVO DO CARINHO — o controle mais importante do jogo ─────────
+            BLOQUEADOR corrigido: o gesto de esfregar (a ÚNICA cura de HP)
+            morava numa `<div>` sem role, sem tabIndex e sem nome acessível,
+            DENTRO de um `role="img"` — subárvore que o leitor de tela ignora
+            inteira. Ou seja: existia só para quem usa mouse/dedo e enxerga.
+
+            Agora ele é um `<button>` nomeado, FORA do visor, sobreposto ao
+            sprite: o desenho continua sendo o pet (o botão é transparente),
+            mas ele é focável, tem nome em PT/EN e responde a Enter/Espaço com
+            um ciclo de carinho de 2s — o mesmo custo do gesto, a mesma regra
+            de cura, o mesmo teto diário (quem aplica é `onPet`).
+
+            A geometria é DERIVADA do palco (`PET_BOTTOM_IN_STAGE` + o anel do
+            visor), não digitada: se o berço ou o `GROUND_Y` mudarem, o alvo
+            acompanha em vez de descolar em silêncio. */}
+        <button
+          type="button"
+          className="sm2-rub"
+          aria-label={language === 'pt-BR'
+            ? 'Fazer carinho no Soulmon (segure para curar)'
+            : 'Pet your Soulmon (hold to heal)'}
+          style={{
+            left: `calc(50% + ${walkPx}px)`,
+            bottom: PET_BOTTOM_IN_STAGE + RING_PX,
+            width: PET_RENDER,
+            height: PET_RENDER,
+            transform: 'translateX(-50%)',
+          }}
+          onClick={() => { if (rubMovedRef.current) { rubMovedRef.current = false; return; } handlePetClick(); }}
+          onKeyDown={handleRubKeyDown}
+          onPointerDown={startRub}
+          onPointerMove={moveRub}
+          onPointerUp={endRub}
+          onPointerCancel={endRub}
+        />
 
         {/* ── Os CONTROLES ficam FORA do visor ────────────────────────────────
             Não é preciosismo de composição, é acessibilidade: o `Viewport` é
@@ -905,19 +1171,19 @@ export const CompanionHUD = memo(function CompanionHUD({
         )}
         </div>
 
-        {/* ── B1: fileira EMOLDURADA de ações, rente ao palco ────────────────
-            A barra vertical de energia que morava aqui à direita foi REMOVIDA:
-            ela era um segundo desenho do MESMO número que a cápsula ENERGIA do
-            HUD já mostra (`HomeHud`), 26px de largura colados na margem, sem
-            rótulo — o T1 a citava como "barra vertical vazia". Duplicar um
-            medidor em duas linguagens é pior que não ter a segunda.
+        {/* ── O DECK — a fileira de ações CRAVADA no corpo do aparelho ───────
+            Ela flutuava no fundo da página (`.sm-px-actionbar`: `background:
+            transparent; border: none`), o que é o oposto do que Tamagotchi e
+            Vital Bracelet fazem — lá os botões são do APARELHO, e é isso que
+            torna o objeto um objeto. Agora ela é uma ÁREA do corpo: mesma
+            superfície, separada da tela por um sulco de cobre, dentro do
+            `.sm2-device`.
 
-            No lugar entra o padrão do gênero (Tamagotchi, Neko Atsume,
-            Habitica): o cuidado do pet mora numa fileira de ações ancorada
-            embaixo do palco. Zero arte nova — os mesmos três ícones do kit,
-            os mesmos três rótulos, agora dentro de uma superfície com alvo
-            visível de 60px de altura. */}
-        <div className="sm-px-actionbar" role="group" aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}>
+            O alvo de 60px de altura não mudou (WCAG 2.2 AA 2.5.8), o ícone
+            continua pelado (regra do dono: ícone nunca dentro de box — quem
+            ganha superfície ao toque é o BOTÃO), e o FILL segue carregando o
+            estado. */}
+        <div className="sm2-deck" role="group" aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}>
           {/* Os três PNGs saíram: as ações do pet são `Icon` (Material Symbols
               Rounded) a 42px, `weight 500` — o peso que faz o traço casar com a
               espessura do pixel do sprite. SEM MOLDURA: o alvo de toque de
@@ -940,16 +1206,15 @@ export const CompanionHUD = memo(function CompanionHUD({
                  no meio do uso. */
               onClick={a.key === 'bath' ? a.onClick : (a.disabled ? undefined : a.onClick)}
               disabled={a.key !== 'bath' && a.disabled}
-              className="sm-px-action"
+              className="sm2-deck-btn"
               aria-label={language === 'pt-BR' ? a.pt : a.en}
               style={{ opacity: a.disabled ? 0.45 : 1, cursor: a.disabled ? 'default' : 'pointer' }}
             >
               {a.badge && (
                 <span
-                  className="sm-px-action-dot"
+                  className="sm2-deck-dot"
                   aria-label={language === 'pt-BR' ? 'Novidade' : 'New'}
                   role="img"
-                  style={{ background: 'var(--sm2-danger-fill)', border: '1px solid var(--sm2-viewport-ring)' }}
                 />
               )}
               <Icon name={a.icon} size={42} fill={a.fill} weight={500} tone={a.fill ? 'primary' : 'ink'} />
@@ -958,23 +1223,12 @@ export const CompanionHUD = memo(function CompanionHUD({
                   contornos nesse tamanho. Silkscreen agora é a voz do aparelho
                   — só DENTRO do visor e em selos —, e esta fileira é o corpo
                   do aparelho, por fora. */}
-              <span
-                className="sm-px-action-label"
-                style={{
-                  fontFamily: 'var(--sm2-font-text)',
-                  fontSize: 'var(--sm2-text-xs)',
-                  fontWeight: 500,
-                  letterSpacing: 0,
-                  lineHeight: 1.2,
-                  textTransform: 'none',
-                  WebkitFontSmoothing: 'antialiased',
-                  color: 'var(--sm2-ink)',
-                }}
-              >
+              <span className="sm2-deck-label">
                 {language === 'pt-BR' ? a.pt : a.en}
               </span>
             </button>
           ))}
+        </div>
         </div>
       </div>
 

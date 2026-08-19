@@ -6563,21 +6563,31 @@ button.sm-px-node {
 .sm2-icon-danger { color: var(--sm2-danger-ink); }
 
 /* ── VISOR (`Viewport`) — o elemento de marca ─────────────────────────────
-   É a FRONTEIRA entre o pixel (dentro) e o vetor (fora). Bisel externo 20px,
-   tela interna 12px, anel de cobre de 4px (2px de linha + 2px de sombra
-   interna), um ÚNICO reflexo e vinheta de 12%. "Um único reflexo" é regra:
-   dois brilhos param de ler como vidro e passam a ler como adesivo.       */
+   É a FRONTEIRA entre o pixel (dentro) e o vetor (fora). Bisel externo 20px
+   (16px de CORPO em `.sm2-device` + estes 4px de anel), tela interna 12px,
+   anel de cobre de 4px (2px de linha + 2px de sombra interna), um ÚNICO
+   reflexo e vinheta de 12%. "Um único reflexo" é regra: dois brilhos param
+   de ler como vidro e passam a ler como adesivo.                          */
 .sm2-viewport {
   position: relative;
   display: inline-block;
   padding: 4px;
-  border-radius: 20px;
+  border-radius: 16px;
   background-color: var(--sm2-viewport-ring);
+  /* MATERIAL do anel: o cobre tem uma quina iluminada em cima e sombra
+     embaixo. Sem isto o "anel" é um retângulo de cor chapada, que é
+     exatamente o que fazia o visor ler como card. */
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--sm2-viewport-ring) 74%, #fff) 0%,
+    var(--sm2-viewport-ring) 46%,
+    color-mix(in srgb, var(--sm2-viewport-ring) 72%, var(--sm2-viewport-ring-deep)) 100%
+  );
   box-shadow:
     inset 0 0 0 2px var(--sm2-viewport-ring-deep),
     0 2px 0 0 var(--sm2-viewport-ring-deep),
     0 6px 18px rgba(0, 0, 0, .35);
-  /* Respiração: a sombra do anel varia ~4% num loop de 4s. */
+  /* Respiração: o anel ACENDE. Ver a nota no keyframe. */
   animation: sm2-viewport-breathe 4s ease-in-out infinite;
 }
 .sm2-viewport-still { animation: none; }
@@ -6601,23 +6611,199 @@ button.sm-px-node {
   inset: 0;
   pointer-events: none;
   border-radius: 12px;
+  /* PRESENÇA do reflexo: era `rgba(255,255,255,.10)` sobre `#071413` — dois
+     níveis de luminância, ou seja, vidro invisível. A faixa agora começa em
+     .22, cai rápido e MORRE em 46%: continua UM reflexo só (uma diagonal),
+     mas com quina de luz onde o vidro pega o ambiente. A vinheta de 12% não
+     muda — ela é o que segura o contraste do sprite contra a borda. */
   background-image:
-    linear-gradient(160deg, rgba(255, 255, 255, .10), transparent 40%),
+    linear-gradient(160deg,
+      rgba(255, 255, 255, .22) 0%,
+      rgba(255, 255, 255, .09) 18%,
+      rgba(255, 255, 255, .03) 32%,
+      transparent 46%),
     radial-gradient(120% 100% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, .12) 100%);
 }
+/* A respiração é do ANEL, não da sombra. A versão anterior interpolava
+   `blur 18px → 19px` e `alfa .35 → .365`: nenhum olho humano lê 1px de blur
+   num halo escuro, então o aparelho parecia MORTO enquanto pagava recálculo
+   de layer a 60fps. Agora o cobre esquenta (~22% mais claro) e ganha um halo
+   — é a lâmpada do aparelho piscando devagar, e lê a 1 metro de distância. */
 @keyframes sm2-viewport-breathe {
   0%, 100% {
+    background-color: var(--sm2-viewport-ring);
     box-shadow:
       inset 0 0 0 2px var(--sm2-viewport-ring-deep),
       0 2px 0 0 var(--sm2-viewport-ring-deep),
+      0 0 0 0 rgba(0, 0, 0, 0),
       0 6px 18px rgba(0, 0, 0, .35);
   }
   50% {
+    background-color: color-mix(in srgb, var(--sm2-viewport-ring) 78%, #fff);
     box-shadow:
       inset 0 0 0 2px var(--sm2-viewport-ring-deep),
       0 2px 0 0 var(--sm2-viewport-ring-deep),
-      0 6px 19px rgba(0, 0, 0, .365);
+      0 0 14px 2px color-mix(in srgb, var(--sm2-viewport-ring) 55%, transparent),
+      0 6px 18px rgba(0, 0, 0, .35);
   }
+}
+
+/* ── O CORPO DO APARELHO (`.sm2-device`) ──────────────────────────────────
+   O achado da crítica: o "visor" tinha 4px de corpo (os 20px eram RAIO), e
+   por isso não havia massa onde os controles pudessem morar — a fileira de
+   ações flutuava no fundo da página com `background: transparent`. Tamagotchi
+   e Vital Bracelet fazem o oposto: os botões são do APARELHO.
+
+   Então o corpo existe de verdade: 16px de material em volta do anel (4px) =
+   20px de bisel, e a fileira de ações é uma ÁREA do corpo, separada da tela
+   por um sulco, não um flutuante.
+
+   Por que o deck não vive dentro do `Viewport`: com `label`, o `Viewport` é
+   `role="img"` — subárvore inteira ignorada pelo leitor de tela. Botão ali
+   dentro é focável e invisível. O corpo é o pai dos dois. */
+.sm2-device {
+  position: relative;
+  box-sizing: border-box;
+  padding: 16px 16px 0;
+  border-radius: 22px;
+  background-color: var(--sm2-surface);
+  background-image:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--sm2-ink) 7%, transparent) 0%,
+      transparent 28%),
+    linear-gradient(0deg,
+      color-mix(in srgb, var(--sm2-viewport-ring-deep) 26%, transparent) 0%,
+      transparent 38%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .12),
+    inset 0 0 0 1px var(--sm2-line),
+    0 8px 20px rgba(0, 0, 0, .28);
+}
+/* A janela do palco: só ela ancora os controles que ficam POR CIMA da tela
+   (evoluir, balão, alvo do carinho). O visor é centrado porque a largura da
+   tela é DERIVADA (`width * scale`) e pode sobrar 1px do arredondamento —
+   sobra centrada não vira quina torta. */
+.sm2-device-stage {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+/* O deck: a fileira de ações CRAVADA no corpo. O sulco de cobre é a junta
+   entre a tela e o painel de controle — a mesma peça que no aparelho de
+   verdade separa o vidro dos botões. */
+.sm2-deck {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 6px 0 8px;
+  border-top: 1px solid color-mix(in srgb, var(--sm2-viewport-ring-deep) 60%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+.sm2-deck-btn {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  /* 60px > 44px do alvo mínimo (WCAG 2.2 AA 2.5.8) COM o rótulo dentro. */
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 4px;
+  background-color: transparent;
+  border: none;
+  border-radius: 12px;
+  color: var(--sm2-ink);
+  cursor: pointer;
+  /* Sem moldura em volta do ícone (regra do dono): quem tem superfície é o
+     BOTÃO, e só ao toque. */
+  &:hover { background-color: var(--sm2-primary-soft); }
+  &:active { background-color: color-mix(in srgb, var(--sm2-primary-fill) 26%, transparent); }
+  &:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: -3px; }
+  &:disabled { opacity: .45; cursor: default; }
+}
+.sm2-deck-label {
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--sm2-ink);
+}
+/* Marcador de "tem coisa nova" — quadrado, não bolinha. */
+.sm2-deck-dot {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--sm2-danger-fill);
+  border: 1px solid var(--sm2-viewport-ring);
+}
+/* ── O ALVO DO CARINHO ────────────────────────────────────────────────────
+   É o controle mais importante do jogo (a ÚNICA cura de HP) e estava dentro
+   do `role="img"`, numa `<div>` sem role, sem tabIndex e sem nome — ou seja,
+   inexistente para leitor de teclado. Agora é um `<button>` de verdade, no
+   corpo do aparelho, sobreposto ao sprite: transparente (o desenho continua
+   sendo o pet), mas focável, nomeado e acionável por teclado. */
+.sm2-rub {
+  position: absolute;
+  z-index: 10;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  /* o gesto de esfregar precisa do ponteiro inteiro */
+  touch-action: none;
+  &:focus-visible { outline: 3px solid var(--sm2-primary-fill); outline-offset: 2px; }
+}
+/* ── CICLO DIURNO DO INTERIOR ─────────────────────────────────────────────
+   O gancho do Pokémon Sleep, e o interior era `#071413` fixo 24h. Cada céu é
+   uma MISTURA em cima de `--sm2-viewport-bg` (≥74% dele), então:
+    · continua escuro nos dois temas (regra: visor claro não existe);
+    · o pior par de contraste do interior (`--sm2-viewport-ink` sobre o topo
+      do gradiente) segue acima de 9:1 — o sprite e a voz do aparelho não
+      perdem legibilidade em nenhuma hora;
+    · o cenário COMPRADO na loja tem prioridade e simplesmente substitui o
+      céu (item pago não é decorado por cima). */
+.sm2-sky-dawn {
+  background-image: linear-gradient(180deg,
+    color-mix(in srgb, var(--sm2-viewport-bg) 76%, var(--sm2-gold-fill)) 0%,
+    var(--sm2-viewport-bg) 64%);
+}
+.sm2-sky-day {
+  background-image: linear-gradient(180deg,
+    color-mix(in srgb, var(--sm2-viewport-bg) 78%, var(--sm2-primary-deep)) 0%,
+    var(--sm2-viewport-bg) 70%);
+}
+.sm2-sky-dusk {
+  background-image: linear-gradient(180deg,
+    color-mix(in srgb, var(--sm2-viewport-bg) 74%, var(--sm2-gold-ink)) 0%,
+    color-mix(in srgb, var(--sm2-viewport-bg) 92%, var(--sm2-danger-fill)) 38%,
+    var(--sm2-viewport-bg) 78%);
+}
+.sm2-sky-night {
+  background-image: linear-gradient(180deg,
+    color-mix(in srgb, var(--sm2-viewport-bg) 90%, var(--sm2-primary-deep)) 0%,
+    var(--sm2-viewport-bg) 58%);
+}
+/* ── O PET SE COMPORTA ────────────────────────────────────────────────────
+   Movimento DENTRO do visor é `steps()`, sempre: pixel deslizando em
+   sub-pixel destrói o serrilhado deliberado, que é a coisa inteira.
+   A piscada é curta e assimétrica de propósito — piscada regular lê como
+   pisca-pisca, não como bicho. */
+@keyframes sm2-pet-blink {
+  0%, 100% { transform: scaleY(1); filter: brightness(1); }
+  40%, 60% { transform: scaleY(.94); filter: brightness(.86); }
+}
+@keyframes sm2-pet-greet {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-10px); }
+  50%  { transform: translateY(0); }
+  75%  { transform: translateY(-5px); }
+  100% { transform: translateY(0); }
 }
 
 /* ── MOVIMENTO REDUZIDO ──────────────────────────────────────────────────

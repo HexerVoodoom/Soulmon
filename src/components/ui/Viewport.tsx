@@ -9,12 +9,22 @@ import { CSSProperties, ReactNode, useEffect, useState } from 'react';
  * moderna disputam a mesma superfície e as duas parecem erradas.
  *
  * Anatomia, fixa e não negociável:
- *  · bisel externo `border-radius: 20px`, tela interna `12px`;
- *  · anel de cobre de 4px = 2px de linha + 2px de sombra interna;
+ *  · **anel de cobre de 4px** (padding real) = 2px de linha + 2px de sombra
+ *    interna, com material (gradiente) — este componente é o ANEL e a TELA;
+ *  · o **corpo do aparelho** (bisel de 16px com material, e a fileira de
+ *    controles cravada nele) é `.sm2-device`, a peça que ENVOLVE este
+ *    componente. Ele não mora aqui por um motivo de acessibilidade, não de
+ *    composição: com `label` este elemento é `role="img"`, e tudo dentro de
+ *    um `role="img"` some da árvore de acessibilidade. Um `<button>` aqui
+ *    dentro seria focável e invisível para leitor de tela — o defeito
+ *    clássico. Anel + tela = imagem; corpo = chassi que carrega controles.
+ *    Somados, os 16px do corpo + 4px do anel são os 20px de bisel do plano;
  *  · interior `--sm2-viewport-bg`, **escuro nos DOIS temas** (é um visor,
  *    não um cartão — visor claro não lê como aparelho);
  *  · UM único reflexo + vinheta de 12%;
- *  · respiração de 4% num loop de 4s, desligada por
+ *  · respiração = o anel ACENDE (cor + halo) num loop de 4s. Era variação de
+ *    blur de 1px e alfa de 0,015 — literalmente imperceptível, movimento que
+ *    custava recálculo e não comunicava nada. Desligada por
  *    `prefers-reduced-motion`;
  *  · sem scanline por padrão (scanline sobre sprite de 32px come metade
  *    do desenho).
@@ -47,6 +57,13 @@ export interface ViewportProps {
   style?: CSSProperties;
   /** Estilo do retângulo interno (a "tela"), não do bisel. */
   screenStyle?: CSSProperties;
+  /**
+   * Classe do retângulo interno. Existe para o **ciclo diurno**: o céu do
+   * visor é uma classe (`.sm2-sky-*`), não uma cor inline, porque a mistura
+   * é feita em cima do token de tema (`--sm2-viewport-bg`) e um literal aqui
+   * congelaria o interior num dos temas.
+   */
+  screenClassName?: string;
 }
 
 /**
@@ -56,7 +73,7 @@ export interface ViewportProps {
  * dispara milhares de recálculos por segundo. Aqui a animação simplesmente
  * não é aplicada.
  */
-function usePrefersReducedMotion(): boolean {
+export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -85,6 +102,7 @@ export function Viewport({
   className,
   style,
   screenStyle,
+  screenClassName,
 }: ViewportProps) {
   const reduced = usePrefersReducedMotion();
   // Guard de escala inteira: se alguém passar 2.5 por `as any` num JSX, o
@@ -105,7 +123,7 @@ export function Viewport({
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
     >
       <div
-        className="sm2-viewport-screen"
+        className={['sm2-viewport-screen', screenClassName].filter(Boolean).join(' ')}
         style={{ width: width * s, height: height * s, ...screenStyle }}
       >
         {children}

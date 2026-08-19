@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense, Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from './components/ui/Icon';
+import { ScreenSkeleton } from './components/ui/ScreenSkeleton';
+import { OfflineSeal } from './components/ui/OfflineSeal';
 import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
@@ -2772,14 +2774,14 @@ export default function App() {
 
   // Show onboarding if not completed — Soulmon: quiz da alma no lugar do ovo
   if (!hasCompletedOnboarding) {
-    return <Suspense fallback={null}><SoulmonOnboarding onComplete={handleCompleteOnboarding} /></Suspense>;
+    return <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} /></Suspense>;
   }
 
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa —
   // mostrado uma vez, depois que o Soulmon já nasceu, antes de liberar o app.
   if (!hasCompletedTutorial) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<ScreenSkeleton language={language} />}>
         <GameTutorialFlow
           language={language}
           maxActivities={gameState.maxActivityCap}
@@ -2794,7 +2796,7 @@ export default function App() {
   // sem intro nem cadastro (ver SoulmonOnboarding mode='upgrade').
   if (upgradeRitual) {
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<ScreenSkeleton language={language} />}>
         <SoulmonOnboarding
           mode="upgrade"
           onComplete={handleCompleteOnboarding}
@@ -2808,6 +2810,11 @@ export default function App() {
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
         <PixelFrame />
+        {/* Selo de "sem sinal": montado UMA vez, aqui, e por isso cobre todas
+            as superfícies do app sem redesenhar nenhuma. Ele se acende sozinho
+            pelos eventos `online`/`offline` do window (ver OfflineSeal) e some
+            quando a rede volta; não bloqueia nada, porque o jogo roda local. */}
+        <OfflineSeal language={language} topOffset={8} />
         {unlockReason && (
           <UnlockAccountModal
             language={language}
@@ -2853,7 +2860,7 @@ export default function App() {
 
         {/* Créditos (monetização) — modal próprio, aberto pelo menu sanduíche. */}
         {creditsOpen && (
-          <Suspense fallback={null}>
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
             <CreditsModal
               language={language}
               credits={gameState.credits ?? 0}
@@ -3463,7 +3470,7 @@ export default function App() {
           )}
 
           {currentView === 'evolution' && (
-            <Suspense fallback={null}><EvolutionPath
+            <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
               currentBranch={getDominantBranch() === 'balanced' ? 'data' : getDominantBranch() as 'virus' | 'data' | 'vaccine'}
               virusPoints={gameState.virusPoints}
@@ -3489,7 +3496,7 @@ export default function App() {
           )}
 
           {currentView === 'pet' && (
-            <Suspense fallback={null}><PetPage
+            <Suspense fallback={<ScreenSkeleton language={language} />}><PetPage
               stages={gameState.soulmonStages ?? []}
               unlockedEvolutions={gameState.unlockedEvolutions}
               currentStageId={gameState.evolutionStage}
@@ -3510,14 +3517,14 @@ export default function App() {
               leitura que a Parte 3 do plano manda evitar. */}
           {currentView === 'pet' && (
             <div style={{ marginTop: 16 }}>
-              <Suspense fallback={null}>
+              <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <DreamDex rest={gameState.rest ?? createRestState()} language={language} />
               </Suspense>
             </div>
           )}
 
           {currentView === 'stats' && (
-            <Suspense fallback={null}><StatsPage
+            <Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
               language={language}
@@ -3543,7 +3550,7 @@ export default function App() {
           )}
 
           {currentView === 'settings' && (
-            <Suspense fallback={null}><SettingsPage
+            <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               aiSettings={aiSettings}
@@ -3603,7 +3610,7 @@ export default function App() {
               recompensa é a regra do `restWindow.ts`. */}
           {currentView === 'settings' && (
             <div style={{ marginTop: 16 }}>
-              <Suspense fallback={null}>
+              <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <RestWindowCard
                   rest={gameState.rest ?? createRestState()}
                   now={new Date()}
@@ -3638,13 +3645,13 @@ export default function App() {
           )}
 
           {currentView === 'oracle' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
               <OraclePage language={language} />
             </Suspense>
           )}
 
           {currentView === 'tournament' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
               <TournamentPage
                 saveId={saveId}
                 petStage={gameState.evolutionStage}
@@ -3659,7 +3666,7 @@ export default function App() {
           )}
 
           {currentView === 'library' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
               <LibraryPage
                 saveId={saveId}
                 friends={gameState.friends ?? []}
@@ -3672,7 +3679,7 @@ export default function App() {
           )}
 
           {currentView === 'shop' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
               <ShopModal
                 asPage
                 language={language}
@@ -3694,7 +3701,7 @@ export default function App() {
           )}
 
           {currentView === 'games' && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<ScreenSkeleton language={language} />}>
               <ActivitiesPage
                 evolutionStage={gameState.evolutionStage}
                 demoCharacterId={gameState.demoCharacterId}
@@ -3714,7 +3721,7 @@ export default function App() {
         </div>
 
       {editModalOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <EditModal
             isOpen={editModalOpen}
             onClose={() => {
@@ -3735,7 +3742,7 @@ export default function App() {
       )}
 
       {taskEditModalOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <TaskEditModal
             isOpen={taskEditModalOpen}
             onClose={() => {
@@ -3760,7 +3767,7 @@ export default function App() {
       )}
 
       {createModalOpen && (
-        <Suspense fallback={null}><CreateModal
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><CreateModal
           isOpen={createModalOpen}
           onClose={() => setCreateModalOpen(false)}
           evolutionStage={gameState.evolutionStage}
@@ -3835,7 +3842,7 @@ export default function App() {
       />
 
       {settingsOpen && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <SettingsModal
             isOpen={settingsOpen}
             onClose={() => setSettingsOpen(false)}

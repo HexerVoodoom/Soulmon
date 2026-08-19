@@ -1,8 +1,6 @@
 import { aiFetch } from '../utils/aiClient';
 import { useState } from 'react';
-import { Square } from 'lucide-react';
-import iconSend from '../assets/soulmon/icons/icon-send.png';
-import iconMic from '../assets/soulmon/icons/icon-mic.png';
+import { Icon } from './ui/Icon';
 import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
 import { type Language } from '../utils/i18n';
@@ -313,8 +311,18 @@ export function ChatBox({
 
   return (
     /* Moldura de cobre chanfrada do kit no lugar do retângulo arredondado
-       cinza-ardósia (#1e2939/#364153 eram cores cruas, fora dos tokens). */
-    <div className="sm-px-chatbar">
+       cinza-ardósia (#1e2939/#364153 eram cores cruas, fora dos tokens).
+
+       `--sm-px-cyan` é redefinido AQUI, no escopo da barra, para o token de
+       tema `--sm2-primary-fill`. O ciano do kit tem UM valor só nos dois
+       temas: o realce de foco do campo e o acender do hover do botão davam
+       ~1,4:1 no tema claro. Sobrescrever a variável no elemento raiz conserta
+       os dois de uma vez sem tocar no `index.css` (que é de outro dono) e sem
+       classe utilitária de valor arbitrário (footgun 1). */
+    <div
+      className="sm-px-chatbar"
+      style={{ '--sm-px-cyan': 'var(--sm2-primary-fill)' } as React.CSSProperties}
+    >
       <div className="flex gap-2">
         <input
           type="text"
@@ -340,19 +348,31 @@ export function ChatBox({
           maxLength={200}
         />
 
-        {/* Send or Mic Button - Mic shows when empty, Send shows when typing */}
+        {/* Enviar ou Gravar — o microfone aparece com o campo vazio, o enviar
+            aparece quando há texto.
+
+            Antes esta barra sozinha carregava TRÊS linguagens visuais mortas:
+            dois PNGs raster (`icon-send`/`icon-mic`), o `Square` do
+            lucide-react e o `.sm-px-chat-btn-send` com o ciano do kit
+            (chapado nos dois temas, hardcode `#04211f` por cima). Como a
+            barra é `position: fixed`, isso aparecia em 100% da Home. Agora é
+            só `<Icon>` + tokens `--sm2-*`.
+
+            Sem preenchimento no botão de enviar: ícone NUNCA dentro de box
+            (regra do dono). O estado "ativo" é o próprio glifo em tom
+            primário, não uma placa colorida atrás dele. */}
         {inputValue.trim() ? (
           <button
             onClick={handleSendMessage}
             disabled={isLoading}
-            className="sm-px-chat-btn sm-px-chat-btn-send"
+            className="sm-px-chat-btn"
             title={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
             aria-label={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
           >
             {isLoading ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <Icon name="sync" size={26} tone="muted" className="animate-spin" />
             ) : (
-              <img src={iconSend} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <Icon name="send" size={30} fill={1} tone="primary" />
             )}
           </button>
         ) : (
@@ -362,16 +382,16 @@ export function ChatBox({
             /* `flex-shrink: 0` e o mínimo de 44px de altura vivem em
                `.sm-px-chat-btn`: sem eles o botão encolhia até ~18px num
                flex row de 320px (medido com Playwright). */
-            className={`sm-px-chat-btn${isRecording ? ' sm-px-chat-btn-rec' : ''}`}
+            className="sm-px-chat-btn"
             title={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
             aria-label={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
           >
             {isRecording ? (
-              <Square className="w-4 h-4 fill-red-500 text-red-500" />
+              <Icon name="stop_circle" size={30} fill={1} tone="danger" />
             ) : isLoading ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <Icon name="sync" size={26} tone="muted" className="animate-spin" />
             ) : (
-              <img src={iconMic} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <Icon name="mic" size={30} tone="ink" />
             )}
           </button>
         )}
