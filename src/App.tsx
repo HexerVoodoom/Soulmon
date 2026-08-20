@@ -2910,8 +2910,16 @@ export default function App() {
           />
         )}
 
-        {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home) */}
-        <div
+        {/* Scrollable Content - padding bottom pra não ficar atrás da bottom nav (+ chat na home)
+
+            `<main>` e não `<div>`: o app só tinha `<nav>`. Sem landmark de
+            conteúdo principal, um leitor de tela não tem para onde pular
+            depois da navegação — ele percorre a barra inferior e cai no meio
+            do conteúdo sem saber que entrou nele. É UM `<main>` por documento,
+            e ele fica aqui (o container de rolagem que troca de conteúdo por
+            `currentView`), não dentro de cada página. */}
+        <main
+          id="conteudo"
           className="flex-1 overflow-y-auto px-6"
           style={{
             position: 'relative', zIndex: 1,
@@ -2929,6 +2937,43 @@ export default function App() {
               : 'calc(var(--sm-bottomnav-h) + env(safe-area-inset-bottom, 0px) + 16px)',
           }}
         >
+          {/* ── O `<h1>` DA TELA ──────────────────────────────────────────────
+              Nenhuma tela tinha heading; Evolução e Estatísticas não tinham
+              NADA. Aqui cada view ganha o seu, com duas exceções que já são
+              donas do próprio `<h1>` e ganhariam um segundo:
+               · `main` — o wordmark "Soulmon" do `HomeHud`;
+               · `pet`  — o nome da criatura, na `PetPage`.
+              Título de tela nasce em inglês com par PT-BR, como todo texto. */}
+          {(() => {
+            const isPtH = language === 'pt-BR';
+            const titulos: Partial<Record<typeof currentView, string>> = {
+              evolution: isPtH ? 'Evolução' : 'Evolution',
+              stats: isPtH ? 'Estatísticas' : 'Stats',
+              settings: isPtH ? 'Configurações' : 'Settings',
+              shop: isPtH ? 'Loja' : 'Shop',
+              games: isPtH ? 'Atividades' : 'Activities',
+              tournament: isPtH ? 'Torneio' : 'Tournament',
+              library: isPtH ? 'Amigos' : 'Friends',
+              oracle: isPtH ? 'Oráculo' : 'Oracle',
+            };
+            const titulo = titulos[currentView];
+            if (!titulo) return null;
+            return (
+              <h1
+                style={{
+                  fontFamily: 'var(--sm2-font-display)',
+                  fontSize: 'var(--sm2-text-xl)',
+                  fontWeight: 600,
+                  lineHeight: 'var(--sm2-leading-title)',
+                  color: 'var(--sm2-ink)',
+                  margin: '0 0 12px',
+                }}
+              >
+                {titulo}
+              </h1>
+            );
+          })()}
+
           {currentView === 'main' && (
             <div className="space-y-4">
               {/* HUD do topo (Ref C): marca + medidores em cápsula de cobre.
@@ -3375,7 +3420,10 @@ export default function App() {
                       em uma linha que nada ali cobra nada. */}
                   {guardadas.length > 0 && (
                     <details style={{ marginTop: 12, opacity: 0.75 }}>
-                      <summary style={{ cursor: 'pointer', fontSize: 12, letterSpacing: '.04em' }}>
+                      {/* Piso de 12px e Rubik DECLARADA em toda a gaveta: os
+                          rótulos de status e o botão "Retomar" estavam em 11px
+                          herdando a fonte do documento. */}
+                      <summary style={{ cursor: 'pointer', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)', letterSpacing: '.04em' }}>
                         {isPt
                           ? `Guardadas (${guardadas.length}) — não cobram nada`
                           : `Put aside (${guardadas.length}) — these ask nothing of you`}
@@ -3386,12 +3434,14 @@ export default function App() {
                             key={t.id}
                             style={{
                               display: 'flex', alignItems: 'center', gap: 8,
-                              padding: '6px 4px', fontSize: 13,
+                              padding: '6px 4px',
+                              fontFamily: 'var(--sm2-font-text)',
+                              fontSize: 'var(--sm2-text-sm)',
                             }}
                           >
                             <span aria-hidden="true">{t.emoji}</span>
                             <span style={{ flex: 1, minWidth: 0 }}>{t.name}</span>
-                            <span style={{ fontSize: 11, opacity: 0.7 }}>
+                            <span style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>
                               {t.status === 'dropped'
                                 ? (isPt ? 'deixada pra lá' : 'let go')
                                 : (isPt ? 'algum dia' : 'someday')}
@@ -3399,7 +3449,7 @@ export default function App() {
                             <button
                               type="button"
                               className="sm-btn sm-btn-secondary"
-                              style={{ padding: '2px 8px', fontSize: 11 }}
+                              style={{ padding: '6px 10px', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs)' }}
                               onClick={() => handleRestoreTask(t.id)}
                             >
                               {isPt ? 'Retomar' : 'Bring back'}
@@ -3442,7 +3492,19 @@ export default function App() {
                   key={view}
                   onClick={() => setCurrentView(view)}
                   className={`sm-btn ${currentView === view ? '' : 'sm-btn-secondary'}`}
-                  style={{ flex: 1, minWidth: 0, fontSize: '0.72rem', padding: '10px 4px', letterSpacing: 0, whiteSpace: 'nowrap' }}
+                  /* `0.72rem` computava **11,52px** — abaixo do piso ABSOLUTO
+                     de 12px do design system (tokens.md §4), medido no app
+                     rodando. O piso não tem exceção para "chip" nem para
+                     "aba": abaixo dele o texto deixa de ser legível para quem
+                     não tem visão perfeita, e estes três são a única forma de
+                     trocar de página aqui. `var(--sm2-text-xs)` é o token, e a
+                     família é declarada porque `.sm-btn` não declara nenhuma. */
+                  style={{
+                    flex: 1, minWidth: 0,
+                    fontFamily: 'var(--sm2-font-text)',
+                    fontSize: 'var(--sm2-text-xs)',
+                    padding: '10px 4px', letterSpacing: 0, whiteSpace: 'nowrap',
+                  }}
                 >
                   {label}
                 </button>
@@ -3717,7 +3779,7 @@ export default function App() {
               />
             </Suspense>
           )}
-        </div>
+        </main>
 
       {editModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>

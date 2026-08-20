@@ -110,8 +110,15 @@ export function HomeHud({
           template, que é o risco declarado desta virada. Enquanto o glifo
           proprietário do visor não existir, a palavra sozinha carrega melhor
           a marca do que um símbolo emprestado. */}
+      {/* A marca é o `<h1>` DA HOME. A Home era a tela mais vista do app e não
+          tinha um único heading — um leitor de tela entrava nela sem nenhum
+          ponto de partida e sem como pular para a lista de rituais (que agora
+          é o `<h2>` do `RitualPanel`). O wordmark já era o primeiro elemento
+          da tela e o nome do lugar onde a pessoa está: ele é o heading certo,
+          e virar `<h1>` não muda um pixel (`.sm2-hud-wordmark` traz família,
+          tamanho e cor; a margem do `h1` é zerada aqui). */}
       <div className="sm2-hud-brand">
-        <span className="sm2-hud-wordmark">Soulmon</span>
+        <h1 className="sm2-hud-wordmark" style={{ margin: 0 }}>Soulmon</h1>
       </div>
 
       {/* Fileira de medidores: HP e Energia, cada um na SUA caixa e com o mesmo

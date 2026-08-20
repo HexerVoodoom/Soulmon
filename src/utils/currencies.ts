@@ -47,35 +47,60 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
 // ─────────────────────────────────────────────────────────────── aparência
 // Cada moeda tem leitura própria. Nenhuma pode ser confundida com outra à
 // primeira vista — foi o bug que o QA de UI pegou.
+//
+// A DISTINÇÃO CONTINUA NA FAMÍLIA TIPOGRÁFICA (Bits = calculadora, Emblemas =
+// serifa de medalha, Créditos = texto do app + ícone 💎), porque é isso que o
+// CLAUDE.md declara como regra de produto. O que saiu daqui foi a COR crua:
+//
+//   · Bits eram `#39ff14` com halo neon → 1,36:1 sobre superfície clara.
+//   · Emblemas eram `#b8860b`           → 3,25:1 sobre branco.
+//   · Créditos eram `#a855f7`           → 3,65:1 sobre `--sm2-bg` claro.
+//
+// Os três reprovavam AA, e os dois primeiros vinham como estilo INLINE em
+// `span.sm2-num` — ou seja, venciam o token do design system por
+// especificidade (29 ocorrências só na Loja). Agora as cores são tokens
+// `--sm2-*`, que já respondem ao tema e são medidos por
+// `src/styles/tokens.contrast.test.ts`:
+//
+//   Bits     `--sm2-primary-ink`  5,55:1 (claro) / 13,21:1 (escuro) sobre `bg`
+//   Emblemas `--sm2-gold-ink`     5,41:1 (claro) / 10,51:1 (escuro) sobre `bg`
+//   Créditos `--sm2-credit-ink`   6,55:1 (claro) /  8,98:1 (escuro) sobre `bg`
+//
+// A família também virou token (`--sm2-font-mono` / `--sm2-font-serif`): estilo
+// inline com nome de fonte literal é justamente o que fez o app terminar com
+// sete tipos diferentes na tela.
 
-/** Bits: calculadora verde (tema claro). */
-export const bitsStyleLight: CSSProperties = {
-  fontFamily: "'Courier New', ui-monospace, monospace",
-  color: '#1b8f3a',
+/**
+ * Bits: calculadora, tinta primária.
+ *
+ * Existe um par histórico (`bitsStyle` retrô / `bitsStyleLight` claro) porque
+ * a cor era escolhida à mão por tema. Com token isso deixou de ser preciso — o
+ * token já muda sozinho — mas os DOIS exports ficam, porque `utils/currency.ts`
+ * reexporta ambos e há call-site em cada um. São idênticos de propósito.
+ */
+export const bitsStyle: CSSProperties = {
+  fontFamily: 'var(--sm2-font-mono)',
+  color: 'var(--sm2-primary-ink)',
   letterSpacing: '1px',
   fontWeight: 700,
+  fontVariantNumeric: 'tabular-nums',
 };
 
-/** Bits nos temas retrô: verde neon sobre fundo escuro. */
-export const bitsStyle: CSSProperties = {
-  fontFamily: "'Courier New', ui-monospace, monospace",
-  color: '#39ff14',
-  textShadow: '0 0 6px rgba(57,255,20,0.75)',
-  letterSpacing: '1.5px',
-  fontWeight: 700,
-};
+/** @see bitsStyle — mesmo estilo; o token já resolve o tema. */
+export const bitsStyleLight: CSSProperties = { ...bitsStyle };
 
 /** Emblemas: dourado, com serifa — cara de medalha, não de dígito. */
-export const EMBLEM_COLOR = '#b8860b';
+export const EMBLEM_COLOR = 'var(--sm2-gold-ink)';
 export const emblemStyle: CSSProperties = {
-  fontFamily: 'Georgia, "Times New Roman", serif',
+  fontFamily: 'var(--sm2-font-serif)',
   color: EMBLEM_COLOR,
   fontWeight: 700,
   letterSpacing: '0.5px',
+  fontVariantNumeric: 'tabular-nums',
 };
 
 /** Créditos: roxo do sistema, sempre acompanhados do ícone Gem. */
-export const CREDIT_COLOR = '#a855f7';
+export const CREDIT_COLOR = 'var(--sm2-credit-ink)';
 
 // ───────────────────────────────────────────────────────────────── câmbio
 

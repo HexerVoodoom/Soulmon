@@ -119,8 +119,8 @@
     --text-sm--line-height: calc(1.25 / .875);
     --text-base: 1rem;
     --text-base--line-height: calc(1.5 / 1);
-    --text-lg: 1.125rem;
-    --text-lg--line-height: calc(1.75 / 1.125);
+    --text-lg: 1.25rem;
+    --text-lg--line-height: calc(1.75 / 1.25);
     --text-xl: 1.25rem;
     --text-xl--line-height: calc(1.75 / 1.25);
     --text-2xl: 1.5rem;
@@ -1346,7 +1346,7 @@
   }
 
   .rounded {
-    border-radius: .25rem;
+    border-radius: var(--sm2-radius-sm);
   }
 
   .rounded-2xl {
@@ -1354,19 +1354,19 @@
   }
 
   .rounded-\[4px\] {
-    border-radius: 4px;
+    border-radius: var(--sm2-radius-sm);
   }
 
   .rounded-\[10px\] {
-    border-radius: 10px;
+    border-radius: var(--sm2-radius-md);
   }
 
   .rounded-\[14px\] {
-    border-radius: 14px;
+    border-radius: var(--sm2-radius-md);
   }
 
   .rounded-\[32px\] {
-    border-radius: 32px;
+    border-radius: var(--sm2-radius-lg);
   }
 
   .rounded-\[inherit\] {
@@ -2191,7 +2191,7 @@
   }
 
   .text-\[10px\] {
-    font-size: 10px;
+    font-size: var(--sm2-text-xs);
   }
 
   .leading-\[15px\] {
@@ -3994,7 +3994,7 @@ html {
 .sm-nav-btn {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: var(--sm2-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4086,7 +4086,7 @@ html {
    nenhum rótulo atual chega perto de precisar dele. */
 .sm-bottom-nav-label {
   font-family: var(--sm-font-pixel);
-  font-size: 8px;
+  font-size: var(--sm2-text-xs);
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1.3;
@@ -4128,12 +4128,12 @@ html {
   font-weight: 800;
   letter-spacing: .03em;
   text-transform: uppercase;
-  font-size: 0.85rem;
+  font-size: var(--sm2-text-sm);
   padding: 14px 22px;
   color: var(--sm-btn-text);
   background: var(--sm-btn-fill);
   border: 2px solid var(--sm-btn-border);
-  border-radius: 14px;
+  border-radius: var(--sm2-radius-md);
   /* A barra 3D (0 4px) é só o "degrau" de baixo — sem a segunda camada (com
      spread) ela ficava sem contorno, como se a borda bronze estivesse só na
      tampa e não no volume inteiro. A segunda camada, maior, espia por trás
@@ -4245,13 +4245,13 @@ select:focus-visible {
 /* Decoração ambiente da área do pet: sparkles e corações flutuando devagar */
 .sm-ambient-sparkle {
   position: absolute;
-  font-size: 14px;
+  font-size: var(--sm2-text-sm);
   color: rgba(109, 91, 208, 0.4);
   animation: sm-ambient-float 3.6s ease-in-out infinite;
 }
 .sm-ambient-heart {
   position: absolute;
-  font-size: 12px;
+  font-size: var(--sm2-text-xs);
   color: rgba(217, 118, 148, 0.5);
   animation: sm-ambient-float 3.6s ease-in-out infinite;
 }
@@ -4371,7 +4371,7 @@ select:focus-visible {
 .leading-tight  { --tw-leading: 1.25; line-height: 1.25; }
 .text-right     { text-align: right; }
 .break-all      { word-break: break-all; }
-.text-\[9px\]   { font-size: 9px; }
+.text-\[9px\]   { font-size: var(--sm2-text-xs); }
 
 /* Cores — sempre de token, nunca hex solto */
 .text-gray-300  { color: var(--color-gray-300); }
@@ -4509,9 +4509,9 @@ select:focus-visible {
     opacity: .9;
   }
 }
-.sm-px-btn-sm { --sm-px-slice: 82; --sm-px-bw: 11px; min-height: 44px; padding: 4px 14px; font-size: 12px; }
-.sm-px-btn-md { --sm-px-slice: 66; --sm-px-bw: 12px; min-height: 48px; padding: 6px 20px; font-size: 14px; }
-.sm-px-btn-lg { --sm-px-slice: 43; --sm-px-bw: 12px; min-height: 56px; padding: 8px 26px; font-size: 15px; width: 100%; }
+.sm-px-btn-sm { --sm-px-slice: 82; --sm-px-bw: 11px; min-height: 44px; padding: 4px 14px; font-size: var(--sm2-text-xs); }
+.sm-px-btn-md { --sm-px-slice: 66; --sm-px-bw: 12px; min-height: 48px; padding: 6px 20px; font-size: var(--sm2-text-sm); }
+.sm-px-btn-lg { --sm-px-slice: 43; --sm-px-bw: 12px; min-height: 56px; padding: 8px 26px; font-size: var(--sm2-text-sm); width: 100%; }
 
 /* ── Painel emoldurado ─────────────────────────────────────────────────────
    Sem `fill`: o miolo é o token de superfície do TEMA, então o tema claro
@@ -4534,7 +4534,7 @@ select:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--sm2-text-xs);
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -4552,7 +4552,7 @@ select:focus-visible {
   padding: 2px;
   background: var(--sm-px-track);
   border: 2px solid var(--sm-px-track-line);
-  border-radius: 3px;
+  border-radius: var(--sm2-radius-sm);
   overflow: hidden;
 }
 .sm-px-bar-seg {
@@ -4616,7 +4616,7 @@ select:focus-visible {
   clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
 }
 .sm-px-chip-label {
-  font-size: 9px;
+  font-size: var(--sm2-text-xs);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -4624,7 +4624,7 @@ select:focus-visible {
   color: color-mix(in srgb, var(--sm-px-cyan) 75%, #ffffff);
 }
 .sm-px-chip-value {
-  font-size: 13px;
+  font-size: var(--sm2-text-sm);
   font-weight: 800;
   line-height: 1.1;
   color: var(--sm-px-ink);
@@ -4682,9 +4682,9 @@ select:focus-visible {
 }
 /* Silkscreen desenha ~15% menor que a sans no mesmo `font-size`; sem esta
    compensação os botões pareciam ter encolhido de tamanho. */
-.sm-px-btn-sm { font-size: 11px; }
-.sm-px-btn-md { font-size: 13px; }
-.sm-px-btn-lg { font-size: 14px; }
+.sm-px-btn-sm { font-size: var(--sm2-text-xs); }
+.sm-px-btn-md { font-size: var(--sm2-text-sm); }
+.sm-px-btn-lg { font-size: var(--sm2-text-sm); }
 
 .sm-px-panel-title {
   font-family: var(--sm-font-pixel);
@@ -4696,7 +4696,7 @@ select:focus-visible {
 .sm-px-chip-label {
   font-family: var(--sm-font-pixel);
   font-weight: 400;
-  font-size: 8px;
+  font-size: var(--sm2-text-xs);
   letter-spacing: 0.06em;
   line-height: 1.4;
   -webkit-font-smoothing: none;
@@ -4704,7 +4704,7 @@ select:focus-visible {
 .sm-px-chip-value {
   font-family: var(--sm-font-pixel);
   font-weight: 700;
-  font-size: 12px;
+  font-size: var(--sm2-text-xs);
   line-height: 1.4;
   -webkit-font-smoothing: none;
 }
@@ -4783,7 +4783,7 @@ select:focus-visible {
      A fonte aqui é MONOSPACE, não Silkscreen: é onde o usuário digita texto
      livre em português, exatamente o caso que a bitmap não atende. */
   font-family: ui-monospace, 'Courier New', monospace;
-  font-size: 16px;
+  font-size: var(--sm2-text-md);
   &::placeholder { color: var(--sm-muted); }
   &:focus { outline: 2px solid var(--sm-px-cyan); outline-offset: -2px; }
   &:disabled { opacity: 0.55; }
@@ -4910,7 +4910,7 @@ select:focus-visible {
   align-items: center;
   gap: 3px;
   padding: 2px 6px;
-  font-size: 0.65rem;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   line-height: 1.5;
   letter-spacing: 0.03em;
@@ -4931,7 +4931,7 @@ select:focus-visible {
 .sm-px-tree-degen {
   min-height: 44px;
   padding: 0 12px;
-  font-size: 0.72rem;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   background: var(--sm-bg);
   color: var(--sm-ink);
@@ -5182,7 +5182,7 @@ button.sm-px-node {
   -webkit-line-clamp: 2;
   overflow: hidden;
   overflow-wrap: anywhere;
-  font-size: 15px;
+  font-size: var(--sm2-text-sm);
   font-weight: 600;
   line-height: 1.25;
   color: var(--sm-ink);
@@ -5230,7 +5230,7 @@ button.sm-px-node {
 .sm-px-ritual-empty {
   padding: 18px 16px 6px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--sm2-text-sm);
   color: var(--sm-muted);
 }
 /* CTA largo no fim do painel: é ele que aposenta o FAB flutuante (que era um
@@ -5364,7 +5364,7 @@ button.sm-px-node {
   padding: 6px 12px;
   cursor: pointer;
   font-family: var(--sm-font-pixel);
-  font-size: 11px;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -5407,7 +5407,7 @@ button.sm-px-node {
   gap: 6px;
   padding: 6px 12px;
   cursor: pointer;
-  font-size: 12.5px;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   line-height: 1.3;
   background: var(--sm-px-off-bg);
@@ -5433,7 +5433,7 @@ button.sm-px-node {
   min-width: 46px;
   padding: 6px 8px;
   font-family: var(--sm-font-pixel);
-  font-size: 11px;
+  font-size: var(--sm2-text-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   -webkit-font-smoothing: none;
@@ -5449,7 +5449,7 @@ button.sm-px-node {
   box-sizing: border-box;
   padding: 3px 8px;
   font-family: var(--sm-font-pixel);
-  font-size: 9px;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -5558,7 +5558,7 @@ button.sm-px-node {
 /* Rótulo/valor de HUD de arcade (SCORE, ANDAR, RECORDE). */
 .sm-px-arcade-label {
   font-family: var(--sm-font-pixel);
-  font-size: 9px;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -5568,7 +5568,7 @@ button.sm-px-node {
 }
 .sm-px-arcade-value {
   font-family: var(--sm-font-pixel);
-  font-size: 13px;
+  font-size: var(--sm2-text-sm);
   font-weight: 700;
   line-height: 1.3;
   -webkit-font-smoothing: none;
@@ -5580,7 +5580,7 @@ button.sm-px-node {
    fundo é a superfície do TEMA, então o ciano do kit não serve no claro. */
 .sm-px-label {
   font-family: var(--sm-font-pixel);
-  font-size: 10px;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -5591,7 +5591,7 @@ button.sm-px-node {
 /* Número/valor em bitmap na superfície do tema. */
 .sm-px-value {
   font-family: var(--sm-font-pixel);
-  font-size: 14px;
+  font-size: var(--sm2-text-sm);
   font-weight: 700;
   line-height: 1.3;
   -webkit-font-smoothing: none;
@@ -5683,7 +5683,7 @@ button.sm-px-node {
 }
 .sm-px-action-label {
   font-family: var(--sm-font-pixel);
-  font-size: 8px;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1.4;
@@ -5739,7 +5739,7 @@ button.sm-px-node {
   justify-content: center;
   gap: 8px;
   font-family: var(--sm-font-pixel);
-  font-size: 14px;
+  font-size: var(--sm2-text-sm);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -5784,7 +5784,7 @@ button.sm-px-node {
   border: 2px solid color-mix(in srgb, var(--sm-px-copper) 70%, transparent);
   border-radius: 0;
   font-family: ui-monospace, 'Courier New', monospace;
-  font-size: 16px;
+  font-size: var(--sm2-text-md);
   &::placeholder { color: var(--sm-muted); }
   &:focus { outline: 2px solid var(--sm-px-cyan); outline-offset: -2px; }
   &:disabled { opacity: 0.55; }
@@ -5797,7 +5797,7 @@ button.sm-px-node {
   align-items: center;
   gap: 8px;
   font-family: var(--sm-font-pixel);
-  font-size: 12px;
+  font-size: var(--sm2-text-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1.5;
@@ -5830,7 +5830,7 @@ button.sm-px-node {
   background: var(--sm-bg);
   color: var(--sm-ink);
   border: 2px solid color-mix(in srgb, var(--sm-px-copper) 60%, transparent);
-  font-size: 13.5px;
+  font-size: var(--sm2-text-sm);
   font-weight: 600;
   cursor: pointer;
   clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
@@ -6069,7 +6069,7 @@ button.sm-px-node {
   color: #04211f;
   box-shadow: none;
   font-family: var(--sm-font-pixel);
-  font-size: 13px;
+  font-size: var(--sm2-text-sm);
   letter-spacing: 0.05em;
   -webkit-font-smoothing: none;
   min-height: 48px;
@@ -6136,7 +6136,7 @@ button.sm-px-node {
   color: var(--sm-ink);
   border: 2px solid color-mix(in srgb, var(--sm-px-copper) 75%, transparent);
   border-radius: 0;
-  font-size: 16px;
+  font-size: var(--sm2-text-md);
   padding: 12px 14px;
   &:focus {
     border-color: var(--sm-px-cyan);
@@ -6423,6 +6423,11 @@ button.sm-px-node {
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #B0722F;
   --sm2-viewport-ring-deep: #5E3612;
+  /* CRÉDITOS — a moeda de dinheiro real. É a única das três cuja distinção é
+     COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
+     (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
+     3,47:1 sobre `surface-2`. Este dá 6,55:1 / 6,23:1. */
+  --sm2-credit-ink: #6D28D9;
 }
 
 /* ── TOKENS — TEMA ESCURO (canônico: o Soulmon é noturno) ────────────────── */
@@ -6448,6 +6453,7 @@ button.sm-px-node {
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #C68642;
   --sm2-viewport-ring-deep: #241507;
+  --sm2-credit-ink: #C9A7FF;
 }
 
 /* GRAD do ícone: eixo de grade da Material Symbols. No escuro o glifo claro
@@ -6464,6 +6470,16 @@ button.sm-px-node {
   --sm2-font-text: 'Rubik', 'Segoe UI', system-ui, sans-serif;           /* texto e dado */
   --sm2-font-pixel: 'Silkscreen', ui-monospace, 'Courier New', monospace;/* voz do aparelho */
   --sm2-font-icon: 'Material Symbols Rounded';
+  /* AS DUAS FAMÍLIAS DE MOEDA. Não são fontes novas (nenhum byte a mais no
+     bundle): são pilhas do sistema, e existem como TOKEN para que
+     `utils/currencies.ts` pare de escrever `'Courier New'` e `Georgia` em
+     estilo INLINE — inline vence o token por especificidade, e foi assim
+     que `span.sm2-num` (classe do kit novo) renderizou em Courier na Loja.
+     A distinção das três moedas é regra de produto (CLAUDE.md): Bits em fonte
+     de CALCULADORA, Emblemas em SERIFA de medalha, Créditos no texto do app +
+     ícone 💎. A família fica; a cor virou token (ver `--sm2-credit-ink`). */
+  --sm2-font-mono: ui-monospace, 'Courier New', 'Cascadia Mono', monospace;
+  --sm2-font-serif: 'Georgia', 'Times New Roman', serif;
 
   /* Escala FECHADA: 12/14/16/20/24/32. Piso ABSOLUTO de 12px — não existe
      texto menor no app, nem legenda, nem rodapé de card. */
@@ -6475,6 +6491,17 @@ button.sm-px-node {
   --sm2-text-2xl: 32px;
   --sm2-leading-body: 1.45;
   --sm2-leading-title: 1.2;
+
+  /* Escala de RAIO — três degraus, e três é o número.
+     A Home media SETE raios (2, 3, 10, 12, 16, 20, 22px): sete arredondamentos
+     diferentes não são um sistema, são sete decisões avulsas que ninguém
+     consegue repetir. Os degraus abaixo cobrem os três papéis que existem de
+     verdade: peça pequena (chip, bloco de barra), card/painel, e casca
+     (aparelho, sheet). Pílula (`rounded-full`) continua sendo FORMA, não
+     degrau de escala. */
+  --sm2-radius-sm: 4px;
+  --sm2-radius-md: 12px;
+  --sm2-radius-lg: 20px;
 
   /* Movimento: três durações e UMA curva. Mais que isso vira ruído. */
   --sm2-dur-tap: 120ms;    /* feedback de toque */
@@ -6581,7 +6608,7 @@ button.sm-px-node {
   position: relative;
   display: inline-block;
   padding: 4px;
-  border-radius: 16px;
+  border-radius: var(--sm2-radius-lg);
   background-color: var(--sm2-viewport-ring);
   /* MATERIAL do anel: o cobre tem uma quina iluminada em cima e sombra
      embaixo. Sem isto o "anel" é um retângulo de cor chapada, que é
@@ -6603,7 +6630,7 @@ button.sm-px-node {
 .sm2-viewport-screen {
   position: relative;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--sm2-radius-md);
   background-color: var(--sm2-viewport-bg);
   color: var(--sm2-viewport-ink);
   /* Escala INTEIRA obrigatória (2× ou 3×) — escala fracionária é a causa nº1
@@ -6619,7 +6646,7 @@ button.sm-px-node {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  border-radius: 12px;
+  border-radius: var(--sm2-radius-md);
   /* PRESENÇA do reflexo: era `rgba(255,255,255,.10)` sobre `#071413` — dois
      níveis de luminância, ou seja, vidro invisível. A faixa agora começa em
      .22, cai rápido e MORRE em 46%: continua UM reflexo só (uma diagonal),
@@ -6674,7 +6701,7 @@ button.sm-px-node {
   position: relative;
   box-sizing: border-box;
   padding: 16px 16px 0;
-  border-radius: 22px;
+  border-radius: var(--sm2-radius-lg);
   background-color: var(--sm2-surface);
   background-image:
     linear-gradient(180deg,
@@ -6723,7 +6750,7 @@ button.sm-px-node {
   padding: 8px 4px;
   background-color: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--sm2-radius-md);
   color: var(--sm2-ink);
   cursor: pointer;
   /* Sem moldura em volta do ícone (regra do dono): quem tem superfície é o
@@ -6762,7 +6789,7 @@ button.sm-px-node {
   padding: 0;
   background-color: transparent;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--sm2-radius-md);
   cursor: pointer;
   /* o gesto de esfregar precisa do ponteiro inteiro */
   touch-action: none;
@@ -6916,7 +6943,7 @@ button.sm-px-node {
   padding: 10px 12px;
   background-color: var(--sm2-surface);
   border: 1px solid var(--sm2-line);
-  border-radius: 10px;
+  border-radius: var(--sm2-radius-md);
 }
 /* Aviso de HP: ÂMBAR pelo token de ouro, nunca `danger`. O vermelho somado a
    contagem regressiva aparecia justamente no dia em que a pessoa está pior. */
@@ -6968,7 +6995,7 @@ button.sm-px-node {
   padding: 8px 12px;
   background: none;
   border: 1px dashed var(--sm2-line);
-  border-radius: 10px;
+  border-radius: var(--sm2-radius-md);
   font-family: var(--sm2-font-text);
   font-weight: 500;
   font-size: var(--sm2-text-xs);
@@ -7004,7 +7031,7 @@ button.sm-px-node {
   padding: 8px 10px;
   background-color: var(--sm2-surface);
   border: 1px solid var(--sm2-line);
-  border-radius: 10px;
+  border-radius: var(--sm2-radius-md);
 }
 .sm2-meter-head { display: flex; align-items: center; gap: 6px; }
 .sm2-meter-label {
@@ -7040,7 +7067,7 @@ button.sm-px-node {
   padding: 2px;
   background-color: var(--sm2-viewport-bg);
   border: 1px solid var(--sm2-viewport-ring-deep);
-  border-radius: 3px;
+  border-radius: var(--sm2-radius-sm);
 }
 .sm2-seg-blk {
   position: relative;
@@ -7074,4 +7101,58 @@ button.sm-px-node {
   font-weight: 600;
   line-height: 1.2;
   color: var(--sm2-ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FUNDAÇÃO — A FAMÍLIA BASE E A ESCALA (fim do arquivo, footgun 1)
+   ═══════════════════════════════════════════════════════════════════════════
+
+   1. O APP NÃO TINHA FONTE-BASE.
+   Nenhuma regra declarava `font-family` em `html`, `body` ou `:root`. O que o
+   navegador computava nos três era a pilha do preflight do Tailwind
+   (`ui-sans-serif, system-ui…`), ou seja: o tipo REAL do Soulmon era a Segoe
+   UI, e a Rubik só aparecia onde um componente lembrou de pedir. Medido no app
+   rodando: a DreamDex inteira saía em Segoe (67 nós contra 10 em Rubik), e o
+   estado vazio do painel de rituais também.
+
+   Por que no `body` e não no `html`: o `html` é onde o preflight declara a
+   pilha padrão, e o `body` é o ancestral comum de tudo que o React monta —
+   herança simples, sem `!important` e sem `*`.
+
+   FOOTGUN 10: esta regra declara SÓ `font-family`. O `background-color` e o
+   `color` do `body` continuam onde estão (o bloco do preflight, com
+   `--sm-bg`/`--sm-ink`, que respondem a `[data-theme]` de verdade). Nada aqui
+   reintroduz `--foreground`/`--background`.
+
+   Não quebra nem Silkscreen nem os ícones: `.sm2-device-voice`,
+   `.sm-px-*` e `.sm2-icon` declaram a própria `font-family`, e declaração
+   vence herança sempre.                                                     */
+body {
+  font-family: var(--sm2-font-text);
+  line-height: var(--sm2-leading-body);
+}
+
+/* 2. RAIO — os `rounded-*` do Tailwind pré-compilado caem nos três degraus.
+   As classes acima resolvem para `var(--radius)` (10px) e três `calc()`
+   (6/8/14px): cinco raios que ninguém escolheu, vindos de um scaffold. Como
+   este arquivo é pré-compilado (footgun 1), o único jeito de corrigi-las sem
+   tocar em componente é redeclarar as classes aqui no fim, onde a cascata
+   ganha. `rounded-full` e `rounded-[inherit]` ficam de fora de propósito:
+   pílula é FORMA, não degrau de escala.                                     */
+.rounded,
+.rounded-sm,
+.rounded-md,
+.rounded-\[4px\] { border-radius: var(--sm2-radius-sm); }
+
+.rounded-lg,
+.rounded-xl,
+.rounded-\[10px\],
+.rounded-\[14px\] { border-radius: var(--sm2-radius-md); }
+
+.rounded-2xl,
+.rounded-\[32px\] { border-radius: var(--sm2-radius-lg); }
+
+.rounded-t-2xl {
+  border-top-left-radius: var(--sm2-radius-lg);
+  border-top-right-radius: var(--sm2-radius-lg);
 }

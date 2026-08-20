@@ -39,10 +39,104 @@
  *
  * Texto nasce em EN com par PT-BR, como todo texto de UI do app.
  */
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
-import { PixelCheckbox, PixelPanel, PixelSegmentedBar, PixelButton } from './PixelKit';
+import { PixelSegmentedBar } from './PixelKit';
+import { SM2_SHADOW_CARD, sm2Button, sm2Hint } from '../form/FormKit';
+
+/**
+ * ONDA 7 — O PAINEL DA HOME SAI DO FLIPERAMA
+ * ==========================================
+ *
+ * A Home é a tela mais vista do app e era a última a carregar DUAS linguagens
+ * no MESMO painel: a moldura chanfrada (`sm-px-panel`) com o CTA de fliperama
+ * (`sm-px-btn-primary`, Silkscreen) e, logo ao lado, o cabeçalho `sm2-*` em
+ * Fredoka. O estado vazio era pior ainda: `.sm-px-ritual-empty` não declara
+ * família nenhuma, então caía na fonte do sistema (Segoe UI) — uma terceira
+ * tipografia dentro do mesmo card.
+ *
+ * O que migrou aqui: a MOLDURA do painel, o CTA, o estado vazio, o checkbox e
+ * o expansor. O que FICOU com classe `sm-px-ritual-*`: só a GEOMETRIA da linha
+ * (72px de altura, casa de 40px do ícone, clamp de 2 linhas do nome). Essas
+ * regras não desenham nada de arcade — são layout puro sobre tokens de tema —
+ * e o `index.css` é de outro dono nesta onda. Cada texto que passa por elas
+ * declara a própria família aqui no JSX (footgun 10: herança de `body` já
+ * traiu esta base uma vez).
+ */
+
+/** A superfície do painel — a mesma do resto do sistema (FormKit). */
+const painel: CSSProperties = {
+  backgroundColor: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 12,
+  boxShadow: SM2_SHADOW_CARD,
+  overflow: 'hidden',
+};
+
+/** Alvo de 44×44 para os dois controles da direita da linha. */
+const alvo44: CSSProperties = {
+  flex: '0 0 44px',
+  width: 44,
+  height: 44,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxSizing: 'border-box',
+  padding: 0,
+  cursor: 'pointer',
+  borderRadius: 10,
+  background: 'none',
+};
+
+/**
+ * O checkbox da lista — a ação central do app.
+ *
+ * Era o `PixelCheckbox` do kit (quadro de cobre chanfrado, `clip-path`).
+ * Aqui é a mesma semântica (`role="checkbox"` + `aria-checked`) e o mesmo alvo
+ * de 44×44 declarado INLINE (footgun 1: classe utilitária ausente não aplica
+ * nada, e a medida de 44px é travada por teste), com a caixa do sistema novo:
+ * raio 8, linha `--sm2-line`, e o estado marcado é `--sm2-primary-fill` com o
+ * glifo em `--sm2-on-primary` — nunca o `*-ink` do mesmo acento.
+ *
+ * O FILL 0→1 do `<Icon>` é o sistema de estado: é o mesmo glifo se preenchendo,
+ * não dois ícones trocando de lugar.
+ */
+function RitualCheck({
+  checked, disabled, onToggle, label,
+}: { checked: boolean; disabled: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={disabled ? undefined : onToggle}
+      style={{ ...alvo44, border: 'none', cursor: disabled ? 'default' : 'pointer' }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          width: 24,
+          height: 24,
+          borderRadius: 8,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxSizing: 'border-box',
+          border: checked ? '1px solid transparent' : '1px solid var(--sm2-line)',
+          backgroundColor: checked ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface-2)',
+          color: 'var(--sm2-on-primary)',
+          opacity: disabled && !checked ? 0.5 : 1,
+          transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
+        }}
+      >
+        <Icon name="check" size={20} fill={checked ? 1 : 0} weight={600} style={{ opacity: checked ? 1 : 0 }} />
+      </span>
+    </button>
+  );
+}
 
 // ─────────────────────────────────────────────────────────── o ícone (sem caixa)
 
@@ -137,8 +231,25 @@ export function RitualRow({
         >
           {/* `title` porque o nome TRUNCA: sem ele, um nome longo em PT-BR
               some sem recurso nenhum de leitura. */}
-          <span className="sm-px-ritual-name" title={name}>{name}</span>
-          {subtitle && <span className="sm-px-ritual-sub" title={subtitle}>{subtitle}</span>}
+          {/* A família é DECLARADA aqui, não herdada: `.sm-px-ritual-name` só
+              traz geometria (clamp de 2 linhas), e texto sem `font-family`
+              próprio já caiu na fonte do sistema nesta base (footgun 10). */}
+          <span
+            className="sm-px-ritual-name"
+            title={name}
+            style={{ fontFamily: 'var(--sm2-font-text)' }}
+          >
+            {name}
+          </span>
+          {subtitle && (
+            <span
+              className="sm-px-ritual-sub"
+              title={subtitle}
+              style={{ fontFamily: 'var(--sm2-font-text)' }}
+            >
+              {subtitle}
+            </span>
+          )}
           {/* Barra segmentada só onde ela DIZ alguma coisa: com `max` 1 ela vira
               um sulco escuro de bloco único que repete o que o checkbox ao lado
               já mostra — decoração ocupando a linha inteira (medido em
@@ -165,38 +276,34 @@ export function RitualRow({
         {expandable ? (
           <button
             type="button"
-            className="sm-px-ritual-expand"
             onClick={onExpand}
             aria-expanded={expanded}
             aria-label={isPt
               ? `${expanded ? 'Recolher' : 'Expandir'} etapas de ${name}`
               : `${expanded ? 'Collapse' : 'Expand'} steps of ${name}`}
+            /* Era o quadro de cobre chanfrado do kit (`.sm-px-ritual-expand`).
+               Agora é o mesmo chevron do resto do sistema, SEM caixa — a regra
+               do dono é que ícone não mora dentro de moldura; quem carrega o
+               alvo de 44px é o botão. */
+            style={{ ...alvo44, border: 'none', color: 'var(--sm2-muted)' }}
           >
-            {/* Seta em blocos retos: o glifo do lucide tem ponta arredondada e
-                destoa no meio de peça pixel-art (mesma razão do "+" do kit). */}
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false"
-              style={{ transform: expanded ? 'rotate(180deg)' : undefined }}>
-              <rect x="2" y="5" width="3" height="3" fill="currentColor" />
-              <rect x="5" y="8" width="3" height="3" fill="currentColor" />
-              <rect x="8" y="8" width="3" height="3" fill="currentColor" />
-              <rect x="11" y="5" width="3" height="3" fill="currentColor" />
-            </svg>
+            <Icon name={expanded ? 'expand_less' : 'expand_more'} size={24} />
           </button>
         ) : onToggle ? (
-          <PixelCheckbox
+          <RitualCheck
             checked={done}
             disabled={done || dimmed}
             onToggle={onToggle}
-            language={language}
-            labelPt={toggleLabelPt}
-            labelEn={toggleLabelEn}
+            label={isPt
+              ? (toggleLabelPt ?? (done ? 'Concluído' : 'Marcar como concluído'))
+              : (toggleLabelEn ?? (done ? 'Completed' : 'Mark as completed'))}
           />
         ) : (
-          <span className="sm-px-ritual-slot" aria-hidden="true" />
+          <span aria-hidden="true" style={{ flex: '0 0 44px', width: 44, height: 44 }} />
         )}
       </div>
 
-      {expanded && children && <div className="sm-px-ritual-steps">{children}</div>}
+      {expanded && children && <div style={{ padding: '0 12px 12px 62px' }}>{children}</div>}
     </li>
   );
 }
@@ -226,16 +333,19 @@ export function RitualPanel({
   // que é o mais longo dos dois.
   const titulo = isPt ? 'Rituais diários' : 'Daily rituals';
   return (
-    /* Cabeçalho PRÓPRIO em vez do `title`/`titleIcon` do `PixelPanel`: aquele
-       desenha Silkscreen 12px com um `<img>` PNG ao lado — abaixo do piso de
-       14px da voz do aparelho, e raster onde a regra pede vetor. Aqui o título
-       é Fredoka (tipografia de título) e o contador é `.sm2-num`, porque é
-       número que MUDA: sem tabular-nums o "2/5" pula de largura ao virar
-       "10/12" e o cabeçalho inteiro treme. */
-    <PixelPanel padded={false}>
+    /* A MOLDURA saiu do fliperama. Era `PixelPanel` — borda 9-slice de cobre,
+       chanfro de gabinete — com um cabeçalho `sm2-*` em Fredoka dentro: as
+       duas linguagens do app no mesmo card, na tela mais vista dele. Agora é a
+       superfície do sistema (surface + line + raio 12 + a sombra de card).
+       O contador é `.sm2-num` porque é número que MUDA: sem tabular-nums o
+       "2/5" pula de largura ao virar "10/12" e o cabeçalho inteiro treme. */
+    <section style={painel} aria-labelledby="sm2-ritual-title">
       <div className="sm2-panel-head">
         {titleIconName && <Icon name={titleIconName} size={20} fill={total > 0 && done >= total ? 1 : 0} tone="primary" />}
-        <span className="sm2-panel-head-title">{titulo}</span>
+        {/* HEADING DE VERDADE. Era um `<span>`: a Home inteira não tinha um só
+            heading, e um leitor de tela não consegue navegar uma tela assim.
+            `<h2>` porque o `<h1>` da Home é a marca, no `HomeHud`. */}
+        <h2 id="sm2-ritual-title" className="sm2-panel-head-title" style={{ margin: 0 }}>{titulo}</h2>
         {total > 0 && (
           <span
             className="sm2-panel-head-count sm2-num"
@@ -246,15 +356,27 @@ export function RitualPanel({
         )}
       </div>
       {emptyMessage ? (
-        <p className="sm-px-ritual-empty">{emptyMessage}</p>
+        /* ESTADO VAZIO — era `.sm-px-ritual-empty`, uma regra que declara
+           tamanho e cor e NENHUMA família: caía na fonte do sistema (Segoe UI
+           na medição), uma terceira tipografia dentro do mesmo card. Agora é
+           `sm2Hint` (Rubik, piso de 12px) com um glifo do sistema em cima —
+           um vazio que CONVIDA, e o CTA logo abaixo é a saída. */
+        <div style={{ padding: '20px 16px 8px', textAlign: 'center' }}>
+          <Icon name="task_alt" size={32} tone="muted" />
+          <p style={{ ...sm2Hint, marginTop: 8 }}>{emptyMessage}</p>
+        </div>
       ) : (
         <ul className="sm-px-ritual-list">{children}</ul>
       )}
-      <div className="sm-px-ritual-cta">
-        <PixelButton size="lg" variant="primary" onClick={onCta}>
+      {/* CTA — era `sm-px-btn-primary`: Silkscreen em caixa alta dentro de um
+          chanfro de fliperama, o único botão do app que ainda falava a língua
+          antiga na Home. Agora é o botão primário do sistema (`sm2Button`),
+          largo porque é ele que aposentou o FAB flutuante. */}
+      <div style={{ padding: '10px 12px 12px' }}>
+        <button type="button" onClick={onCta} style={{ ...sm2Button('primary'), width: '100%' }}>
           {ctaLabel}
-        </PixelButton>
+        </button>
       </div>
-    </PixelPanel>
+    </section>
   );
 }

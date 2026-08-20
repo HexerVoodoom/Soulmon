@@ -20,7 +20,29 @@ import {
   type DreamRarity,
 } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
-import { PixelPanel, PixelMeter, PixelTag } from './pixel/PixelKit';
+import type { CSSProperties } from 'react';
+import { Icon } from './ui/Icon';
+import { SM2_SHADOW_CARD, sm2Hint, sm2Text } from './form/FormKit';
+
+/**
+ * ONDA 7 — a Dex sai do fliperama.
+ *
+ * Era `PixelPanel` (moldura 9-slice de cobre) + `PixelMeter` + `PixelTag`, com
+ * SESSENTA E POUCOS `<span>` sem `font-family` própria: a grade inteira
+ * computava a fonte do sistema (Segoe UI na medição), lado a lado com o
+ * cabeçalho em Fredoka da página do Pet. Agora é a superfície `--sm2-*`, com
+ * cada texto declarando a própria família.
+ *
+ * ⚠️ PENDÊNCIA DE ARTE — DECLARADA, NÃO ESCONDIDA.
+ * As 30 cenas continuam representadas por EMOJI DO SISTEMA (`dream.emoji`, do
+ * `DREAM_CATALOG`). Isso é um placeholder: emoji é arte de terceiro, muda de
+ * desenho por plataforma e não conversa com a pixel art do app. O que esta
+ * onda pode fazer sem inventar arte é dar a elas a MOLDURA e a TIPOGRAFIA do
+ * sistema novo e tratar o glifo como conteúdo de visor (fundo escuro, escala
+ * fixa, `pointer-events: none`). A substituição por 30 sprites próprios de
+ * 32×32 é trabalho de ARTE e está reportada como tal — quem for fazer troca
+ * `dream.emoji` por um `<img>` aqui e em `utils/restWindow.ts`.
+ */
 
 export interface DreamDexProps {
   rest: RestState;
@@ -30,15 +52,30 @@ export interface DreamDexProps {
 const RARITY_ORDER: DreamRarity[] = ['common', 'rare', 'legendary'];
 
 /**
- * Serve para DUAS coisas: a borda da célula (objeto gráfico, 3:1) e a cor da
- * etiqueta de raridade (texto, 4,5:1). Nos dois papéis os tokens crus do kit
- * (`--sm-px-cyan` = 1,40:1, `--sm-px-copper` = 3,05:1 sobre superfície clara)
- * reprovavam — daí as variantes `-ink`, que têm par por tema.
+ * Tinta da etiqueta de raridade — TODOS tokens `*-ink`, porque aqui a cor é
+ * TEXTO (4,5:1). Nenhum `*-fill` entra: fill não é tinta.
  */
-const RARITY_TONE: Record<DreamRarity, string> = {
-  common: 'color-mix(in srgb, var(--sm-px-copper-ink) 60%, transparent)',
-  rare: 'var(--sm-px-cyan-ink)',
-  legendary: 'var(--sm-px-copper-ink)',
+const RARITY_INK: Record<DreamRarity, string> = {
+  common: 'var(--sm2-muted)',
+  rare: 'var(--sm2-primary-ink)',
+  legendary: 'var(--sm2-gold-ink)',
+};
+
+const card: CSSProperties = {
+  backgroundColor: 'var(--sm2-surface)',
+  border: '1px solid var(--sm2-line)',
+  borderRadius: 12,
+  boxShadow: SM2_SHADOW_CARD,
+  padding: 16,
+};
+
+const sectionTitle: CSSProperties = {
+  fontFamily: 'var(--sm2-font-display)',
+  fontSize: 'var(--sm2-text-md)',
+  fontWeight: 600,
+  lineHeight: 'var(--sm2-leading-title)',
+  color: 'var(--sm2-ink)',
+  margin: 0,
 };
 
 function rarityTitle(rarity: DreamRarity, isPt: boolean): string {
@@ -59,33 +96,55 @@ function DreamCell({ dream, owned, isPt }: { dream: Dream; owned: boolean; isPt:
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 4,
+        gap: 6,
         padding: '8px 4px',
         boxSizing: 'border-box',
-        background: owned ? 'var(--sm-surface)' : 'transparent',
-        border: `2px solid ${owned ? RARITY_TONE[dream.rarity] : 'color-mix(in srgb, var(--sm-px-copper-ink) 30%, transparent)'}`,
+        borderRadius: 10,
+        backgroundColor: owned ? 'var(--sm2-surface)' : 'var(--sm2-surface-2)',
+        /* A borda é objeto GRÁFICO (3:1): coletado ganha a tinta da raridade,
+           não-coletado fica na linha neutra. A ausência lê como "ainda não",
+           nunca como erro — nada de vermelho, nada de tracejado de falta. */
+        border: `1px solid ${owned ? RARITY_INK[dream.rarity] : 'var(--sm2-line)'}`,
       }}
     >
+      {/* A CENA. Moldura de visor: interior escuro nos dois temas, como o
+          `Viewport`, porque isto é conteúdo de tela do aparelho e não um chip
+          de interface. O glifo é PLACEHOLDER — ver a pendência de arte no
+          cabeçalho do arquivo. */}
       <span
         aria-hidden="true"
         style={{
-          fontSize: 26,
-          lineHeight: 1.1,
-          /* Silhueta: a cena existe, o pet ainda não a trouxe. Sem cor de
-             alerta — cinza esmaecido, do mesmo jeito que uma carta virada. */
-          filter: owned ? 'none' : 'grayscale(1) brightness(0.55) opacity(0.45)',
+          width: 40,
+          height: 40,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 8,
+          boxSizing: 'border-box',
+          backgroundColor: 'var(--sm2-viewport-bg)',
+          border: '1px solid var(--sm2-line)',
+          fontSize: 22,
+          lineHeight: 1,
+          pointerEvents: 'none',
+          /* SILHUETA, não falta: a cena existe e o pet ainda não a trouxe.
+             `brightness(0)` + opacidade devolve um recorte cheio (a forma se
+             lê), em vez do cinza lavado de antes, que parecia ícone quebrado.
+             O `contrast` segura o recorte dos emoji de traço fino. */
+          filter: owned ? 'none' : 'grayscale(1) brightness(0.35) contrast(1.4) opacity(0.6)',
         }}
       >
         {dream.emoji}
       </span>
       <span
         style={{
-          /* 0,62rem ≈ 9,9px: texto funcional abaixo do piso de 12px (0,75rem),
-             e é o NOME da cena — a única forma de saber o que foi coletado. */
-          fontSize: '0.75rem',
-          lineHeight: 1.25,
+          fontFamily: 'var(--sm2-font-text)',
+          /* Piso absoluto do sistema: 12px. É o NOME da cena — a única forma
+             de saber o que foi coletado. */
+          fontSize: 'var(--sm2-text-xs)',
+          lineHeight: 'var(--sm2-leading-body)',
           textAlign: 'center',
-          color: owned ? 'var(--sm-ink)' : 'var(--sm-muted)',
+          overflowWrap: 'anywhere',
+          color: owned ? 'var(--sm2-ink)' : 'var(--sm2-muted)',
         }}
       >
         {owned ? label : '???'}
@@ -99,24 +158,55 @@ export function DreamDex({ rest, language }: DreamDexProps) {
   const owned = new Set(rest.dreams);
   const { collected, total } = dexProgress(rest);
 
+  const ratio = total > 0 ? collected / total : 0;
+
   return (
-    <PixelPanel title={isPt ? 'COLEÇÃO DE SONHOS' : 'DREAM COLLECTION'}>
+    <section style={card} aria-labelledby="sm2-dex-title">
+      <h2 id="sm2-dex-title" style={{ ...sectionTitle, marginBottom: 14 }}>
+        {isPt ? 'Coleção de sonhos' : 'Dream collection'}
+      </h2>
+
       {/* Barra de completude — nunca barra de desempenho. */}
       <div style={{ marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
-          <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--sm-ink)' }}>
+          {/* `.sm2-num`: o contador MUDA, e sem tabular-nums "9 de 30" e
+              "10 de 30" têm larguras diferentes — a linha treme a cada coleta. */}
+          <span
+            className="sm2-num"
+            style={{ ...sm2Text, fontSize: 'var(--sm2-text-lg)', fontWeight: 600 }}
+          >
             {isPt ? `${collected} de ${total}` : `${collected} of ${total}`}
           </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--sm-muted)' }}>
+          <span style={sm2Hint}>
             {isPt ? 'sonhos descobertos' : 'dreams discovered'}
           </span>
         </div>
-        <PixelMeter
-          ratio={total > 0 ? collected / total : 0}
-          tone="gold"
-          label={isPt ? 'Completude da coleção de sonhos' : 'Dream collection completeness'}
-        />
-        <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', lineHeight: 1.45, margin: '6px 0 0' }}>
+        {/* Trilho + preenchimento em ouro. `*-fill` no fundo (objeto gráfico,
+            3:1), nunca `*-ink`. */}
+        <div
+          role="progressbar"
+          aria-valuenow={collected}
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-label={isPt ? 'Completude da coleção de sonhos' : 'Dream collection completeness'}
+          style={{
+            height: 8,
+            borderRadius: 999,
+            overflow: 'hidden',
+            backgroundColor: 'var(--sm2-surface-2)',
+            border: '1px solid var(--sm2-line)',
+          }}
+        >
+          <div
+            style={{
+              width: `${Math.round(ratio * 100)}%`,
+              height: '100%',
+              backgroundColor: 'var(--sm2-gold-fill)',
+              transition: 'width var(--sm2-dur-enter) var(--sm2-ease)',
+            }}
+          />
+        </div>
+        <p style={{ ...sm2Hint, margin: '6px 0 0' }}>
           {collected === 0
             ? (isPt
               ? 'Toda manhã depois de uma noite na sua janela, seu Soulmon volta com uma cena. A primeira está a caminho.'
@@ -139,18 +229,32 @@ export function DreamDex({ rest, language }: DreamDexProps) {
         return (
           <section key={rarity} style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <PixelTag style={{ color: rarity === 'common' ? 'var(--sm-muted)' : RARITY_TONE[rarity] }}>
+              {/* Era `PixelTag` (Silkscreen 10px, chanfro). Agora é um `<h3>`
+                  de verdade — a grade abaixo é uma lista, e sem heading não há
+                  como pular de "Comuns" para "Lendários" com leitor de tela. */}
+              <h3
+                style={{
+                  fontFamily: 'var(--sm2-font-display)',
+                  fontSize: 'var(--sm2-text-sm)',
+                  fontWeight: 600,
+                  lineHeight: 'var(--sm2-leading-title)',
+                  color: RARITY_INK[rarity],
+                  margin: 0,
+                }}
+              >
                 {rarityTitle(rarity, isPt)}
-              </PixelTag>
-              <span style={{ fontSize: '0.75rem', color: 'var(--sm-muted)' }}>
+              </h3>
+              <span className="sm2-num" style={sm2Hint}>
                 {isPt ? `${got} de ${group.length}` : `${got} of ${group.length}`}
               </span>
             </div>
             <ul
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-                gap: 6,
+                /* `auto-fill` em vez de 4 fixas: em 412px a célula de 4 colunas
+                   ficava com ~88px e o nome da cena quebrava em 4 linhas. */
+                gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))',
+                gap: 8,
                 margin: 0,
                 padding: 0,
               }}
@@ -163,12 +267,15 @@ export function DreamDex({ rest, language }: DreamDexProps) {
         );
       })}
 
-      <p style={{ fontSize: '0.75rem', color: 'var(--sm-muted)', margin: 0 }}>
-        {isPt
-          ? `${DREAM_CATALOG.length} cenas no total. A coleção só cresce — nada aqui volta atrás.`
-          : `${DREAM_CATALOG.length} scenes in total. The collection only grows — nothing here ever goes back.`}
+      <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+        <Icon name="info" size={20} tone="muted" />
+        <span>
+          {isPt
+            ? `${DREAM_CATALOG.length} cenas no total. A coleção só cresce — nada aqui volta atrás.`
+            : `${DREAM_CATALOG.length} scenes in total. The collection only grows — nothing here ever goes back.`}
+        </span>
       </p>
-    </PixelPanel>
+    </section>
   );
 }
 

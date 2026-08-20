@@ -60,6 +60,34 @@ const card: CSSProperties = {
   padding: 16,
 };
 
+/**
+ * HIERARQUIA DE HEADING — a tela era navegável só com os olhos.
+ *
+ * A página do Pet tinha `<h1>`/`<h2>` só no caminho FELIZ: quando nenhuma forma
+ * estava revelada, ela renderizava um card sem heading nenhum, e uma tela sem
+ * heading é uma tela que leitor de tela não consegue percorrer (não há como
+ * pular para "o que ela sabe fazer" nem saber onde a página começa). Os dois
+ * estilos abaixo são o par único da página: `h1` = a criatura, `h2` = as
+ * seções. A `DreamDex` logo abaixo entra como `<h2>` irmã.
+ */
+const h1Style: CSSProperties = {
+  fontFamily: 'var(--sm2-font-display)',
+  fontSize: 'var(--sm2-text-xl)',
+  fontWeight: 600,
+  lineHeight: 'var(--sm2-leading-title)',
+  color: 'var(--sm2-ink)',
+  margin: 0,
+};
+
+const h2Style: CSSProperties = {
+  fontFamily: 'var(--sm2-font-display)',
+  fontSize: 'var(--sm2-text-md)',
+  fontWeight: 600,
+  lineHeight: 'var(--sm2-leading-title)',
+  color: 'var(--sm2-ink)',
+  margin: 0,
+};
+
 /** O sprite dentro do visor: escala inteira e nada de suavização. */
 const spriteInScreen: CSSProperties = {
   position: 'absolute',
@@ -209,18 +237,7 @@ export function PetPage({
           </Viewport>
 
           <div style={{ textAlign: 'center', maxWidth: 420 }}>
-            <h1
-              style={{
-                fontFamily: 'var(--sm2-font-display)',
-                fontSize: 'var(--sm2-text-xl)',
-                fontWeight: 600,
-                lineHeight: 'var(--sm2-leading-title)',
-                color: 'var(--sm2-ink)',
-                margin: 0,
-              }}
-            >
-              {atual.name}
-            </h1>
+            <h1 style={h1Style}>{atual.name}</h1>
             {/* Estágio e CLASSE: duas palavras nomeadas, e nenhum número. */}
             <p style={{ ...sm2Hint, marginTop: 4 }}>
               {L(atual.stageName)}
@@ -232,6 +249,12 @@ export function PetPage({
       ) : (
         <section style={{ ...card, textAlign: 'center' }}>
           <Icon name="egg" size={40} tone="muted" />
+          {/* O ESTADO VAZIO também tem `<h1>`: sem ele esta tela ficava sem
+              heading nenhum, e é justamente o estado em que a pessoa mais
+              precisa saber onde está. */}
+          <h1 style={{ ...h1Style, fontSize: 'var(--sm2-text-lg)', marginTop: 8 }}>
+            {isPt ? 'Seu Soulmon' : 'Your Soulmon'}
+          </h1>
           <p style={{ ...sm2Text, marginTop: 8 }}>
             {isPt ? 'Nenhuma forma revelada ainda.' : 'No form revealed yet.'}
           </p>
@@ -246,16 +269,7 @@ export function PetPage({
       {/* ─────────── O que ela sabe fazer ─────────── */}
       {skillsAtuais && (
         <section style={card}>
-          <h2
-            style={{
-              fontFamily: 'var(--sm2-font-display)',
-              fontSize: 'var(--sm2-text-md)',
-              fontWeight: 600,
-              lineHeight: 'var(--sm2-leading-title)',
-              color: 'var(--sm2-ink)',
-              margin: '0 0 14px',
-            }}
-          >
+          <h2 style={{ ...h2Style, marginBottom: 14 }}>
             {isPt ? 'O que ela sabe fazer' : 'What they can do'}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -268,16 +282,7 @@ export function PetPage({
       {/* ─────────── As formas anteriores ─────────── */}
       {anteriores.length > 0 && (
         <section>
-          <h2
-            style={{
-              fontFamily: 'var(--sm2-font-display)',
-              fontSize: 'var(--sm2-text-md)',
-              fontWeight: 600,
-              lineHeight: 'var(--sm2-leading-title)',
-              color: 'var(--sm2-ink)',
-              margin: '0 0 12px',
-            }}
-          >
+          <h2 style={{ ...h2Style, marginBottom: 12 }}>
             {isPt ? 'Quem ela já foi' : 'Who they used to be'}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Language } from '../utils/i18n';
 import { Icon } from './ui/Icon';
+import { NavGlyph, type NavGlyphName } from './ui/NavGlyphs';
 
 type ViewType = 'main' | 'evolution' | 'stats' | 'pet' | 'settings' | 'games' | 'oracle' | 'tournament' | 'library' | 'shop';
 
@@ -16,10 +17,19 @@ interface BottomNavProps {
 /**
  * Um destino da nav: ícone + RÓTULO PERSISTENTE.
  *
+ * **Os cinco glifos são NOSSOS** (`ui/NavGlyphs.tsx`), e só os cinco. Material
+ * Symbols + rótulo era a nav padrão do Android: recortada em 200×200, sem logo,
+ * ela não dizia de que app era. O resto do app segue em Material — os glifos
+ * daqui copiam a métrica dele (caixa de 24dp, traço equivalente ao `wght` 500,
+ * pontas redondas) exatamente para conviverem sem parecer adesivo colado. As
+ * linhas do menu sanduíche, logo abaixo, continuam em `Icon`: são muitas, mudam
+ * com o tempo, e não é ali que a identidade se decide.
+ *
  * **O eixo FILL é o sistema de estado.** Inativo = `fill 0` + tinta `muted`;
  * ativo = `fill 1` + tinta `primary` + o sublinhado de 3px. É o MESMO glifo se
  * preenchendo — não são dois ícones trocando de lugar, e a interpolação já vem
- * com a transição de `--sm2-dur-tap` do `.sm2-icon`.
+ * com a transição de `--sm2-dur-tap`. O `NavGlyph` reproduz esse eixo sem fonte
+ * variável: o contorno fica, a camada sólida entra por opacidade.
  *
  * **Ícone nunca dentro de box** (regra do dono): nada de placa, moldura ou
  * halo. O alvo de 44px é do BOTÃO (`.sm-bottom-nav-btn` ocupa os 80px de
@@ -35,7 +45,7 @@ interface BottomNavProps {
  * `aria-label` (quem vê e quem ouve leem a mesma coisa).
  */
 function NavItem({ icon, label, active, onClick, current, expanded }: {
-  icon: string; label: string; active?: boolean; onClick: () => void;
+  icon: NavGlyphName; label: string; active?: boolean; onClick: () => void;
   /** `aria-current="page"` só para destinos de verdade, não para ações. */
   current?: boolean;
   expanded?: boolean;
@@ -52,7 +62,7 @@ function NavItem({ icon, label, active, onClick, current, expanded }: {
          `relative`/`text-[12px]` novos não gerariam nada. */
       style={{ position: 'relative' }}
     >
-      <Icon name={icon} size={32} fill={active ? 1 : 0} weight={500} tone={active ? 'primary' : 'muted'} />
+      <NavGlyph name={icon} size={32} fill={active ? 1 : 0} tone={active ? 'primary' : 'muted'} />
       <span
         className="sm-bottom-nav-label"
         style={{
@@ -135,17 +145,19 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
 
   // Torneio mora dentro de Atividades (junto dos minigames); Estatísticas mora
   // dentro de Evolução (aba interna — ver App.tsx).
-  const items: { view: ViewType; label: string; icon: string }[] = [
+  // O nome do glifo aqui NÃO é mais uma ligature da Material: é um dos cinco
+  // desenhos de `NavGlyphs.tsx`, e o TypeScript passou a barrar nome inventado
+  // (antes, nome fora do subset de 99 ícones não renderizava glifo nenhum e
+  // também não dava erro — tokens.md §5).
+  const items: { view: ViewType; label: string; icon: NavGlyphName }[] = [
     { view: 'main', label: isPt ? 'Início' : 'Home', icon: 'home' },
-    // `casino` e não `stadia_controller`/`sports_esports`: a fonte é um SUBSET
-    // de 99 ícones e nome fora do inventário **não renderiza glifo nenhum**,
-    // sem erro (tokens.md §5). O dado é o desenho de "jogos" que existe lá — e
-    // a página é dungeon + dino + pedra-papel-tesoura + torneio.
-    { view: 'games', label: isPt ? 'Atividades' : 'Activities', icon: 'casino' },
-    // `auto_awesome` pelo mesmo motivo (`account_tree`/`hub` não estão no
-    // subset). Evolução é transformação, e o FILL 0→1 do brilho lê como isso.
-    { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', icon: 'auto_awesome' },
-    { view: 'shop', label: isPt ? 'Loja' : 'Shop', icon: 'storefront' },
+    // D-pad, e não um dado: a página é dungeon + dino + pedra-papel-tesoura +
+    // torneio. É o BOTÃO do aparelho, não a aposta.
+    { view: 'games', label: isPt ? 'Atividades' : 'Activities', icon: 'activities' },
+    // O galho que se divide é literalmente a mecânica: um nó embaixo, dois em
+    // cima. `auto_awesome` (brilho) servia a qualquer coisa mágica.
+    { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', icon: 'evolution' },
+    { view: 'shop', label: isPt ? 'Loja' : 'Shop', icon: 'shop' },
   ];
   const menuActive = menuOpen || currentView === 'settings' || currentView === 'library';
 
@@ -173,7 +185,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
           Biblioteca + Créditos + Configurações + Recomeçar num popover. */}
       <div style={{ position: 'relative', flex: 1, display: 'flex', height: '100%' }}>
         <NavItem
-          icon="more_horiz"
+          icon="menu"
           label={isPt ? 'Menu' : 'Menu'}
           active={menuActive}
           expanded={menuOpen}
