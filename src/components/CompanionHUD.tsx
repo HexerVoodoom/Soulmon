@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { PixelButton } from './pixel/PixelKit';
@@ -245,6 +246,45 @@ export const CompanionHUD = memo(function CompanionHUD({
     h: Math.floor(STAGE_FALLBACK_H / VIEW_SCALE),
   }));
   const stageRef = useRef<HTMLDivElement | null>(null);
+
+  /* ── ORDEM DE FOCO DO DOCK DE CHAT ───────────────────────────────────────
+     Mesma classe de defeito da barra de navegação (que era percorrida ANTES
+     do conteúdo): descasamento entre ordem do DOM e ordem VISUAL — WCAG 1.3.2
+     e 2.4.3. O dock é `position: fixed` no rodapé (y≈770, o elemento mais
+     baixo do conteúdo da Home), mas nasce aqui DENTRO do `CompanionHUD`, que
+     é o primeiro bloco da Home. Resultado medido: o Tab chegava ao campo de
+     chat ANTES da lista de atividades e do CTA "+ Nova atividade" (y 512–813).
+
+     Não havia portal nenhum aqui — o dock era um `<div>` normal. E ao
+     contrário da nav, reordenar o JSX não resolve: a peça inteira que
+     precisaria descer é o `CompanionHUD`, e ele é o pet, que fica em cima.
+     A correção é dar ao dock o PONTO DE MONTAGEM que a posição visual dele
+     pede: ÚLTIMO filho do `<main id="conteudo">` — depois da lista e do CTA,
+     e ainda antes da `BottomNav` (que é irmã do `<main>` e mora abaixo do
+     chat na tela). A ordem de foco passa a ser a ordem visual, ponto a ponto.
+
+     Por que NÃO muda um pixel:
+      · `position: fixed` não depende da posição no documento;
+      · o `<main>` JÁ era ancestral do dock (o `CompanionHUD` vive dentro
+        dele), e o index.css declara explicitamente que nada em `<main>` pode
+        virar bloco contenedor do `.sm-chat-fixed` — o contexto de
+        posicionamento é exatamente o mesmo de antes;
+      · empilhamento: o dock sai de dentro do `.sm-pet-sticky` (que cria
+        contexto com `z-index: 5`) para o contexto do próprio `<main>`
+        (`z-index: 1`). Nos dois casos ele pinta ACIMA do conteúdo da Home e
+        ABAIXO da nav (`z-index: 45`) e dos modais — que são irmãos do
+        `<main>` com z-index maior. O dock é fixo no rodapé e o pet é sticky
+        no topo: não há sobreposição entre os dois para reordenar.
+
+     `document` só existe depois da montagem, então o primeiro render cai no
+     lugar antigo e o `useLayoutEffect` reancora ANTES da pintura (sem flash);
+     sem hospedeiro (jsdom dos testes de render, SSR) o dock fica onde estava,
+     que é o comportamento antigo e continua correto. */
+  const [chatHost, setChatHost] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (typeof document === 'undefined') return;
+    setChatHost(document.getElementById('conteudo'));
+  }, []);
   const dirRef = useRef<'right' | 'left'>('right');
   dirRef.current = direction;
   const telaW = tela.w * VIEW_SCALE;
@@ -798,6 +838,23 @@ export const CompanionHUD = memo(function CompanionHUD({
   const cenario = equippedBackground && PET_BACKGROUNDS[equippedBackground]
     ? PET_BACKGROUNDS[equippedBackground].css
     : undefined;
+
+  const chatDock = (
+    <div className="sm-chat-fixed">
+      <ChatBox
+        petName={currentStage}
+        mood={companionMood}
+        evolutionStage={evolutionStage}
+        dominantBranch={dominantBranch}
+        useAI={useAI}
+        onSendMessage={handleChatMessage}
+        aiSettings={aiSettings}
+        onOpenAISettings={onOpenAISettings}
+        onCreateActivity={onCreateActivity}
+        language={language}
+      />
+    </div>
+  );
 
   return (
     <div className="relative sm-pet-sticky" style={{ '--sm-pet-scene': cenario ?? 'none' } as React.CSSProperties}>
@@ -1368,24 +1425,14 @@ export const CompanionHUD = memo(function CompanionHUD({
         )}
       </ModalSheet>
 
-      {/* Chat Box — fixo no rodapé da tela (não rola com o conteúdo), mas dentro
-          da mesma árvore/stacking context do app: assim modais (z-index maior)
-          conseguem ficar corretamente acima dela em vez de um portal externo
-          que sempre pintava por cima de tudo, modais inclusive. */}
-      <div className="sm-chat-fixed">
-        <ChatBox
-          petName={currentStage}
-          mood={companionMood}
-          evolutionStage={evolutionStage}
-          dominantBranch={dominantBranch}
-          useAI={useAI}
-          onSendMessage={handleChatMessage}
-          aiSettings={aiSettings}
-          onOpenAISettings={onOpenAISettings}
-          onCreateActivity={onCreateActivity}
-          language={language}
-        />
-      </div>
+      {/* Chat Box — fixo no rodapé da tela (não rola com o conteúdo), e ainda
+          dentro do `<main>` do app: assim modais (z-index maior, irmãos do
+          `<main>`) continuam corretamente acima dele, o que um portal para o
+          `<body>` quebraria — foi por isso que o portal externo saiu daqui uma
+          vez. O que muda agora é só o PONTO DE MONTAGEM dentro do `<main>`
+          (último filho, depois da lista e do CTA): ver a nota de ORDEM DE FOCO
+          lá em cima. */}
+      {chatHost ? createPortal(chatDock, chatHost) : chatDock}
     </div>
   );
 });

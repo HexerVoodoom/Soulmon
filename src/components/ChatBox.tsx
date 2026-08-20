@@ -186,7 +186,10 @@ export function ChatBox({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  /* `onKeyDown` e não `onKeyPress`: o evento `keypress` está DEPRECADO e não
+     é disparado por todo teclado virtual/IME de Android. Mesmo contrato —
+     Enter envia, Shift+Enter não. */
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -195,6 +198,7 @@ export function ChatBox({
 
   // Handle audio recording
   const handleMicClick = async () => {
+    if (isLoading) return;
     if (isRecording) {
       // Stop recording
       if (mediaRecorder) {
@@ -309,6 +313,20 @@ export function ChatBox({
     }
   };
 
+  const isPt = language === 'pt-BR';
+  const hasText = inputValue.trim().length > 0;
+  /* O rótulo acompanha a AÇÃO do botão único (enviar / gravar / parar), e há
+     um estado para o envio em curso — antes o spinner ficava com o rótulo
+     "Enviar mensagem", que é o que o leitor de tela anunciava enquanto a
+     resposta não chegava. */
+  const actionLabel = isLoading
+    ? (isPt ? 'Enviando mensagem…' : 'Sending message…')
+    : hasText
+      ? (isPt ? 'Enviar mensagem' : 'Send message')
+      : isRecording
+        ? (isPt ? 'Parar gravação' : 'Stop recording')
+        : (isPt ? 'Gravar mensagem' : 'Record message');
+
   return (
     /* MIGRADO para `--sm2-*` (`.sm2-chatbar` / `.sm2-chat-input` /
        `.sm2-chat-btn`, no fim do `index.css`).
@@ -326,12 +344,22 @@ export function ChatBox({
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           onFocus={() => setIsInputReadOnly(false)}
           onBlur={() => setIsInputReadOnly(true)}
           readOnly={isInputReadOnly}
           placeholder=">_"
-          disabled={isLoading}
+          /* NOME ACESSÍVEL. O único rótulo do campo era o placeholder `>_`,
+             que um leitor de tela anuncia como "maior que sublinhado" — ou
+             não anuncia nada. É o campo de conversa com o pet, o controle de
+             texto mais visível da Home. */
+          aria-label={language === 'pt-BR' ? 'Falar com seu Soulmon' : 'Talk to your Soulmon'}
+          /* NÃO usar `disabled` durante o envio: um controle focado que fica
+             `disabled` joga o foco no `<body>` (medido), e quem navega por
+             teclado teria que tabular a Home inteira de novo a cada mensagem.
+             `aria-busy` anuncia o estado e o `handleSendMessage` já ignora
+             envio repetido enquanto `isLoading`. */
+          aria-busy={isLoading || undefined}
           autoComplete="new-password"
           data-form-type="other"
           spellCheck="false"
@@ -359,40 +387,45 @@ export function ChatBox({
             Sem preenchimento no botão de enviar: ícone NUNCA dentro de box
             (regra do dono). O estado "ativo" é o próprio glifo em tom
             primário, não uma placa colorida atrás dele. */}
-        {inputValue.trim() ? (
-          <button
-            onClick={handleSendMessage}
-            disabled={isLoading}
-            className="sm2-chat-btn"
-            title={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
-            aria-label={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
-          >
-            {isLoading ? (
-              <Icon name="sync" size={32} tone="muted" className="animate-spin" />
-            ) : (
-              <Icon name="send" size={32} fill={1} tone="primary" />
-            )}
-          </button>
-        ) : (
-          <button
-            onClick={handleMicClick}
-            disabled={isLoading}
-            /* `flex-shrink: 0` e o mínimo de 44px de altura vivem em
-               `.sm2-chat-btn`: sem eles o botão encolhia até ~18px num
-               flex row de 320px (medido com Playwright). */
-            className="sm2-chat-btn"
-            title={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
-            aria-label={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
-          >
-            {isRecording ? (
-              <Icon name="stop_circle" size={32} fill={1} tone="danger" />
-            ) : isLoading ? (
-              <Icon name="sync" size={32} tone="muted" className="animate-spin" />
-            ) : (
-              <Icon name="mic" size={32} tone="ink" />
-            )}
-          </button>
-        )}
+        {/* UM botão só, que TROCA de ação — e não dois que se substituem.
+            Eram dois elementos irmãos em `? :`: ao enviar, o campo esvazia no
+            mesmo tique, o botão "enviar" DESMONTA e o "gravar" monta no lugar.
+            Para o teclado isso é o foco caindo no `<body>` no instante exato
+            em que a pessoa acabou de agir (medido) — e ela volta a tabular a
+            Home desde o começo. Com um `<button>` estável só mudam o rótulo,
+            o ícone e o handler; o nó do foco continua o mesmo.
+
+            `flex-shrink: 0` e o mínimo de 44px de altura vivem em
+            `.sm2-chat-btn`: sem eles o botão encolhia até ~18px num flex row
+            de 320px (medido com Playwright).
+
+            Sem preenchimento no botão de enviar: ícone NUNCA dentro de box
+            (regra do dono). O estado "ativo" é o próprio glifo em tom
+            primário, não uma placa colorida atrás dele. */}
+        <button
+          type="button"
+          onClick={hasText ? handleSendMessage : handleMicClick}
+          /* `aria-disabled`, nunca `disabled`: ver a nota do campo acima —
+             desabilitar de verdade tira o botão da ordem de tabulação no meio
+             do uso e derruba o foco. Os dois handlers já ignoram `isLoading`. */
+          aria-disabled={isLoading || undefined}
+          className="sm2-chat-btn"
+          /* Paridade exata com o `&:disabled { opacity: .5 }` do
+             `.sm2-chat-btn` (index.css), que o `aria-disabled` não dispara. */
+          style={isLoading ? { opacity: 0.5, cursor: 'default' } : undefined}
+          title={actionLabel}
+          aria-label={actionLabel}
+        >
+          {isLoading ? (
+            <Icon name="sync" size={32} tone="muted" className="animate-spin" />
+          ) : hasText ? (
+            <Icon name="send" size={32} fill={1} tone="primary" />
+          ) : isRecording ? (
+            <Icon name="stop_circle" size={32} fill={1} tone="danger" />
+          ) : (
+            <Icon name="mic" size={32} tone="ink" />
+          )}
+        </button>
       </div>
     </div>
   );

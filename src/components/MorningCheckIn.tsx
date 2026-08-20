@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
 import { MAX_DAILY_FOCUS, normalizeEffort } from '../types/taskModel';
 import { isOvercommitted } from '../utils/taskTriage';
@@ -124,6 +124,44 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
   // plano que a pessoa não escolheu.
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onSkip);
 
+  /* ── O PONTO DE ENTRADA DO FOCO É O CARTÃO, E ELE É DAQUI ────────────────
+     Este diálogo não é aberto por um toque da pessoa: ele é o primeiro item
+     da fila de intersticiais e MONTA SOZINHO na abertura do app. Quem chega
+     de teclado ou leitor de tela não tem um "eu cliquei em alguma coisa" para
+     ancorar o que acabou de acontecer — então a entrada do foco tem que ser
+     inequívoca, e tem que ser o CARTÃO.
+
+     Duas coisas mudam em relação a deixar isso por conta do `useDialogA11y`:
+
+      1. **QUANDO.** O foco inicial do hook vive num efeito PASSIVO, que só
+         roda depois da pintura e depois de todos os efeitos de layout do
+         commit — inclusive os de quem estava montado antes na fila (o
+         relatório diário devolvendo o foco a quem o abriu, por exemplo).
+         Aqui ele é de LAYOUT: acontece no próprio commit, antes de a tela
+         pintar, e nenhum outro efeito pode chegar antes com um `focus()` de
+         despedida. O hook enxerga o foco já dentro do diálogo
+         (`!node.contains(activeElement)`) e respeita — é o mesmo caminho que
+         o `autoFocus` do `MorningDream` já usava, e está documentado lá.
+
+      2. **ONDE.** O primeiro focável do cartão é a primeira TAREFA da lista
+         de focos, lá no meio da tela: quem usa leitor caía em "Escrever o
+         relatório, esforço 2 de 3, média, botão" (medido) e nunca ouvia o
+         nome do diálogo, o "Bom dia" nem a seção de pendências de ontem, que
+         é justamente a primeira coisa que esta tela existe para dizer.
+         Focando o container (`tabIndex={-1}`, declarado no JSX e não herdado
+         do último recurso do hook), o leitor anuncia o diálogo pelo nome e lê
+         do começo; o primeiro Tab entra na lista.
+
+     O trap, o Escape, o fundo inerte e a devolução do foco continuam sendo do
+     hook — nada disso é reimplementado aqui. */
+  useLayoutEffect(() => {
+    if (!open) return;
+    const node = dialogRef.current;
+    if (!node) return;
+    if (node.contains(document.activeElement)) return;
+    node.focus({ preventScroll: true });
+  }, [open, dialogRef]);
+
   // Progresso dotado (Nunes & Drèze): ninguém começa em 0%. A tela abre com a
   // sugestão já marcada, e desmarcar é um toque.
   useEffect(() => {
@@ -168,7 +206,18 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
         role="dialog"
         aria-modal="true"
         aria-label={isPt ? 'Check-in da manhã' : 'Morning check-in'}
+        /* Focável por programa, FORA da ordem de Tab — ver a nota do efeito
+           de layout lá em cima. Declarado aqui de propósito: o hook põe o
+           mesmo `-1` como último recurso, e depender disso deixaria o ponto
+           de entrada desta tela invisível em quem lê o JSX. */
+        tabIndex={-1}
+        /* Sem anel de foco no cartão: ele recebe o foco por MONTAGEM, não por
+           navegação, e um contorno de 380px em volta do diálogo inteiro leria
+           como "isto está selecionado". Quem navega de teclado só volta aqui
+           por Shift+Tab a partir do primeiro botão, e o foco visível dos
+           controles continua intacto. */
         style={{
+          outline: 'none',
           width: '100%',
           maxWidth: 380,
           maxHeight: '90vh',
