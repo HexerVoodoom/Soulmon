@@ -53,6 +53,24 @@ import type { Language } from '../utils/i18n';
 
 type ShopSegment = 'shop' | 'tournament';
 
+/**
+ * OS DOIS EIXOS DE TAMANHO DESTA TELA (tokens.md §6.1 e §6.2).
+ *
+ * A Loja tinha CINCO tamanhos de ícone medidos na mesma tela (14, 16, 18, 22 e
+ * 32) porque `size` é um número livre e cada call-site escolheu o seu. Os
+ * degraus abaixo são os únicos que esta tela usa, e cada um tem UM papel — é o
+ * papel, e não o espaço disponível no canto, que escolhe o número.
+ */
+/** Ícone ao lado de palavra, na mesma linha: preço, saldo, dica, pacote. */
+const ICON_INLINE = 20;
+/** Ícone que é a AÇÃO/ESTADO da linha do card: cadeado, "equipado". */
+const ICON_ACTION = 24;
+
+/** Caixa de arte do card. Ela manda no glifo de dentro — o emoji não é texto. */
+const ART_BOX = 56;
+/** Glifo de arte = metade da caixa. Derivado dela, nunca de `--sm2-text-*`. */
+const ART_GLYPH = ART_BOX / 2;
+
 /** Bits: exatamente o que `utils/currencies.ts` define — SEM override.
  *
  *  Havia aqui um `color: var(--sm2-ink)` por cima do estilo da moeda. Ele
@@ -136,8 +154,11 @@ export function ShopModal({
         { key: 'furniture', title: isPt ? 'Mobílias' : 'Furniture', items: SHOP_ITEMS.filter(i => i.kind === 'furniture') },
       ];
 
-  /** A arte do item É o item: prévia do cenário, pixel da decoração, ou o
-   *  emoji do consumível (conteúdo da pastinha). Nunca um ícone decorativo. */
+  /** A CAIXA DE ARTE do card (tokens.md §6.2). 56px, e ela manda no que estiver
+   *  dentro: prévia CSS do cenário, PNG da decoração, ou o emoji do consumível.
+   *  A caixa não herda tipografia — `fontSize: 0` corta a herança de texto na
+   *  fronteira, para que nenhum degrau de `--sm2-text-*` chegue aqui por
+   *  acidente (foi assim que o emoji virou "texto de 32px" no audit). */
   const art = (item: ShopItem, dim: boolean) => {
     const css = item.kind === 'bg' ? PET_BACKGROUNDS[item.id]?.css : undefined;
     const png = DECOR_ART[item.id];
@@ -145,18 +166,18 @@ export function ShopModal({
       <span
         aria-hidden="true"
         style={{
-          width: 56, height: 56, flexShrink: 0, borderRadius: 'var(--sm2-radius-md)', overflow: 'hidden',
+          width: ART_BOX, height: ART_BOX, flexShrink: 0,
+          borderRadius: 'var(--sm2-radius-md)', overflow: 'hidden',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: css ?? 'var(--sm2-surface-2)', backgroundSize: 'cover',
-          // 28px era o único tamanho fora da escala nesta tela. O emoji é
-          // CONTEÚDO, mas ainda é um glifo medido pelo audit — vai para o
-          // degrau que existe.
-          opacity: dim ? 0.4 : 1, fontSize: 'var(--sm2-text-2xl)', lineHeight: 1,
+          opacity: dim ? 0.4 : 1, fontSize: 0, lineHeight: 1,
         }}
       >
         {png
           ? <img src={png} alt="" width={48} height={48} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-          : css ? null : item.icon}
+          : css ? null : (
+            <span style={{ fontSize: ART_GLYPH, lineHeight: 1, display: 'block' }}>{item.icon}</span>
+          )}
       </span>
     );
   };
@@ -227,14 +248,18 @@ export function ShopModal({
         {/* Ação/preço. Ícone pelado, nunca dentro de caixa. */}
         <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
           {!unlocked ? (
-            <Icon name="lock" size={22} tone="muted" />
+            /* Cadeado e "equipado" ocupam a MESMA coluna de estado da linha, e
+               por isso o mesmo degrau. Estavam em 22 e 24 — dois números para
+               um papel só, invisíveis como hierarquia e visíveis como bagunça. */
+            <Icon name="lock" size={ICON_ACTION} tone="muted" />
           ) : owned ? (
             equipped
-              ? <Icon name="check_circle" size={24} fill={1} tone="primary" label={isPt ? 'Equipado' : 'Equipped'} />
+              ? <Icon name="check_circle" size={ICON_ACTION} fill={1} tone="primary" label={isPt ? 'Equipado' : 'Equipped'} />
               : <span style={{ ...sm2Text, color: 'var(--sm2-primary-ink)', fontWeight: 500 }}>{status}</span>
           ) : isEmblem ? (
             <>
-              <Icon name="military_tech" size={20} tone="gold" />
+              {/* Anda colado ao número do preço: degrau inline. */}
+              <Icon name="military_tech" size={ICON_INLINE} tone="gold" />
               <span className="sm2-num" style={{ ...emblemNum, opacity: affordable ? 1 : 0.5 }}>{item.price}</span>
             </>
           ) : (
@@ -248,7 +273,7 @@ export function ShopModal({
   /** Saldo — uma leitura só, a da moeda que compra o que está na tela. */
   const balance = seg === 'tournament' ? (
     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <Icon name="military_tech" size={22} tone="gold" label={isPt ? 'Emblemas' : 'Emblems'} />
+      <Icon name="military_tech" size={ICON_INLINE} tone="gold" label={isPt ? 'Emblemas' : 'Emblems'} />
       <span className="sm2-num" style={emblemNum}>{emblems}</span>
     </span>
   ) : (
@@ -261,7 +286,7 @@ export function ShopModal({
   const exchange = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 4 }}>
       <span style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Icon name="diamond" size={18} tone="primary" label={isPt ? 'Créditos' : 'Credits'} />
+        <Icon name="diamond" size={ICON_INLINE} tone="primary" label={isPt ? 'Créditos' : 'Credits'} />
         {isPt ? `Trocar Créditos por Bits — você tem ${credits}` : `Swap Credits for Bits — you have ${credits}`}
       </span>
       <div style={{ display: 'flex', gap: 8 }}>
@@ -282,11 +307,15 @@ export function ShopModal({
                   ? (isPt ? `+${pack.bits} Bits.` : `+${pack.bits} Bits.`)
                   : (isPt ? 'A troca não foi concluída. Tente de novo.' : 'The swap did not go through. Try again.'));
               }}
-              style={{ ...sm2Button(can ? 'ghost' : 'ghost', !can), flex: 1, gap: 4 }}
+              /* O padding cede, o ícone não. Três botões nesta linha eram a
+                 desculpa dos degraus 16 e 14 — "não cabia". O que não cabia era
+                 o padding de 16px de um botão de texto num botão que é quase
+                 só número; a escala de ícone não negocia com o layout. */
+              style={{ ...sm2Button(can ? 'ghost' : 'ghost', !can), flex: 1, gap: 4, padding: '10px 8px' }}
             >
-              <Icon name={busy ? 'sync' : 'diamond'} size={16} tone={can ? 'primary' : 'muted'} />
+              <Icon name={busy ? 'sync' : 'diamond'} size={ICON_INLINE} tone={can ? 'primary' : 'muted'} />
               <span className="sm2-num">{pack.credits}</span>
-              <Icon name="arrow_forward" size={14} tone="muted" />
+              <Icon name="arrow_forward" size={ICON_INLINE} tone="muted" />
               <span className="sm2-num" style={{ ...bitsNum, fontSize: 'var(--sm2-text-xs)' }}>{pack.bits}</span>
             </button>
           );

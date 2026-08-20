@@ -1,4 +1,4 @@
-import { CSSProperties, memo, useEffect, useState, type ReactNode } from 'react';
+import { CSSProperties, memo, useEffect, useId, useState, type ReactNode } from 'react';
 
 /**
  * Os GLIFOS PRÓPRIOS do Soulmon — o conjunto inteiro
@@ -46,10 +46,12 @@ import { CSSProperties, memo, useEffect, useState, type ReactNode } from 'react'
  *     a peça de marca do app. É a porta do Início, a alça da Loja, a trava da
  *     caixa de Itens, a haste do Cadeado, a cuba do prato, a cúpula do
  *     chuveiro, a lua e o anel do carregando.
- *  2. **O NÓ** (círculo cheio). É o miolo do Menu, os estágios da Evolução, as
- *     gotas do banho, o segredo do Cadeado, a estrela da medalha e a cabeça do
- *     spinner. Quando o glifo se enche, o nó vira **vazio** — é o que impede um
- *     ícone cheio de virar mancha (a porta do Início inaugurou a regra).
+ *  2. **O NÓ** (círculo cheio). É o miolo do Menu, os estágios da Evolução, o
+ *     pino do D-pad, o segredo do Cadeado e a cabeça do spinner. Quando o glifo
+ *     se enche, o nó vira **vazio** — é o que impede um ícone cheio de virar
+ *     mancha (a porta do Início inaugurou a regra). O nó é sempre CHEIO, nunca
+ *     um anelzinho: círculo de raio ~2 com traço 2.1 fecha o miolo em 20/24px, e
+ *     aí vazio e cheio viram o mesmo desenho (era o defeito do `evolution`).
  *  3. **A CRUZ DIRECIONAL** do v-pet: o D-pad de Atividades, os raios do sol,
  *     os ponteiros do relógio, as pontas côncavas da fagulha.
  *
@@ -60,6 +62,25 @@ import { CSSProperties, memo, useEffect, useState, type ReactNode } from 'react'
  * contorno está SEMPRE desenhado e a camada sólida do MESMO desenho aparece
  * por cima com `opacity = fill`. É um glifo se preenchendo — não são dois
  * ícones trocando de lugar — e aceita valor fracionário igual ao eixo real.
+ *
+ * O VAZIO É UMA MÁSCARA, E ISSO É A PEÇA CENTRAL
+ * ----------------------------------------------
+ * "O glifo se enche e o furo continua vazio" é a tese deste arquivo, e a
+ * primeira implementação a quebrava justamente onde ela importava: o furo era um
+ * subpath `evenodd` DA CAMADA SÓLIDA, então o traço de contorno já desenhado
+ * EMBAIXO preenchia o furo por baixo e ele sumia. Todo furo que era o contorno
+ * geométrico de um traço caía exatamente sobre esse mesmo traço — `check_circle`
+ * cheio virava um disco preto, e com ele o estado mais importante do app
+ * (*concluída*) perdia a forma; `task_alt`, `schedule`, `diamond`, `eco` e o
+ * segredo do `lock` tinham o mesmo defeito.
+ *
+ * Agora o glifo declara `holes` (`areaHole`/`nodeHole`/`strokeHole`) e o
+ * componente monta com eles uma **máscara** aplicada às DUAS camadas de uma vez.
+ * O furo passa a ser furo por construção, em qualquer glifo, sem que o desenho
+ * precise saber quem está embaixo — era esse cuidado manual, camada por camada,
+ * que produzia o bug. Um `strokeHole` traça o PRÓPRIO `d` do contorno (mais
+ * grosso, ver `HOLE_STROKE_RATIO`): não existe mais contorno geométrico
+ * calculado à mão para ficar fora de sincronia com o traço que ele apaga.
  *
  * **Glifo sem estado ativo não finge ter um.** `close`, `check`, as setas, os
  * chevrons e o `sync` não declaram camada sólida: o FILL neles é no-op, o que
@@ -97,19 +118,37 @@ const HOME_BODY =
   + 'a1.5 1.5 0 0 1 .6-1.14Z';
 /** A porta: meio arco de r 2.5, o MESMO da alça da Loja. */
 const HOME_DOOR = 'M9.5 21v-4.4a2.5 2.5 0 0 1 5 0V21';
+/* O vazio da porta desce ABAIXO da base (22.4 contra 21): a base da casa é um
+   traço de 2.1 e metade dele fica sob a linha do chão — sem esticar o furo
+   sobrava uma lasca preta atravessando o vão da porta no estado cheio. */
+const HOME_DOOR_HOLE = 'M9.5 22.4v-5.8a2.5 2.5 0 0 1 5 0V22.4';
 
-/** D-pad: cruz de braços 6, cantos convexos e CÔNCAVOS de r 2. */
+/**
+ * D-pad: cruz de braços LARGOS (7.6 de vão), cantos de ponta r 1.4 e cantos
+ * CÔNCAVOS de r 0.7.
+ *
+ * A versão anterior tinha braço 6 com canto côncavo de r 2 — e r 2 de concavidade
+ * contra braço 6 arredonda o braço inteiro: a cruz virava um TREVO DE QUATRO
+ * PÉTALAS, e cheia em 20/24px lia como FLOR (medido na rasterização). É o ícone
+ * central da nav, então o defeito custava caro. A correção é geométrica e não
+ * cosmética: braço mais largo (o lado reto passa a existir de fato) e concavidade
+ * de 0.7, que marca o encaixe sem comer o braço.
+ */
 const DPAD =
-  'M11 3h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2'
-  + 'a2 2 0 0 0-2 2v2a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2H5'
-  + 'a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h2a2 2 0 0 0 2-2V5a2 2 0 0 1 2-2Z';
+  'M9.6 3h4.8a1.4 1.4 0 0 1 1.4 1.4V7.5a.7.7 0 0 0 .7.7H19.6a1.4 1.4 0 0 1 1.4 1.4'
+  + 'v4.8a1.4 1.4 0 0 1-1.4 1.4H16.5a.7.7 0 0 0-.7.7V19.6a1.4 1.4 0 0 1-1.4 1.4'
+  + 'h-4.8a1.4 1.4 0 0 1-1.4-1.4V16.5a.7.7 0 0 0-.7-.7H4.4a1.4 1.4 0 0 1-1.4-1.4'
+  + 'v-4.8a1.4 1.4 0 0 1 1.4-1.4H7.5a.7.7 0 0 0 .7-.7V4.4A1.4 1.4 0 0 1 9.6 3Z';
 /**
  * O EIXO do d-pad, e ele não é decoração: a cruz pelada lia como "adicionar"
  * (visto no app rodando, 32px) — o pior mal-entendido possível numa nav, porque
  * "+" é a ação mais comum do app. Com o pino no meio ela vira um botão
- * direcional. No estado cheio o pino é um VAZIO, pelo mesmo motivo da porta.
+ * direcional. O pino é um NÓ (círculo CHEIO, não um anelzinho): anel de r 2.1
+ * com traço 2.1 deixa um miolo de 1 px em 24 e some. No estado cheio ele vira
+ * VAZIO, pelo mesmo motivo da porta do Início.
  */
-const DPAD_HUB = 'M14.1 12a2.1 2.1 0 1 0-4.2 0 2.1 2.1 0 1 0 4.2 0Z';
+const DPAD_HUB: [number, number, number] = [12, 12, 1.7];
+const DPAD_HUB_HOLE: [number, number, number] = [12, 12, 2.05];
 
 /**
  * EVOLUÇÃO — três nós CRESCENDO numa diagonal ascendente.
@@ -122,18 +161,28 @@ const DPAD_HUB = 'M14.1 12a2.1 2.1 0 1 0-4.2 0 2.1 2.1 0 1 0 4.2 0Z';
  * segunda leitura possível — é metamorfose, e é literalmente o que a página
  * mostra (a escada rookie→champion→ultimate→mega). Sem hastes de propósito:
  * ligação entre nós é exatamente o que dizia "rede".
+ *
+ * O nó menor tinha r 2.0 contra traço 2.1: sobrava um miolo de 0.95 de raio, que
+ * em 20 e 24px FECHA — vazio e cheio viravam o mesmo desenho. Os três raios
+ * subiram (2.3 / 3.0 / 3.7) e as distâncias entre centros foram abertas para que
+ * nenhum par se toque com o traço de 2.1 (a menor folga é do par 2–3: 9.05 de
+ * distância contra 8.8 de necessidade).
  */
-const EVO_NODES: [number, number, number][] = [[5.9, 18.1, 2.0], [12, 12.8, 2.8], [18.1, 7, 3.6]];
+const EVO_NODES: [number, number, number][] = [[5.2, 18.8, 2.3], [12, 12.4, 3.0], [18.6, 6.2, 3.7]];
 
 /**
- * Sacola: trapézio de cantos r 1.2 + alça em ARCO de r 3 — o MESMO arco da
- * porta do Início. A boca desceu para y 9.5 (era 8.5) porque com a alça
- * aparecendo só 1.5 acima do corpo o glifo lia como BALDE em 32px.
+ * Sacola. A versão anterior era trapézio + alça POR CIMA da boca, e as duas
+ * decisões juntas soletravam BALDE (alça externa sobre corpo que afina embaixo)
+ * — a rasterização confirmou pela segunda vez. Agora é o desenho que nenhum
+ * balde tem: corpo de LADOS RETOS com ombro reto no topo, e a alça DENTRO da
+ * sacola, um arco que não ultrapassa a boca. Balde nenhum guarda a alça dentro
+ * de si. No estado cheio o arco vira o VAZIO.
  */
 const SHOP_BAG =
-  'M6.2 9.5h11.6a1.2 1.2 0 0 1 1.19 1.33l-1.15 9.11A1.2 1.2 0 0 1 16.65 21'
-  + 'H7.35a1.2 1.2 0 0 1-1.19-1.06L5.01 10.83A1.2 1.2 0 0 1 6.2 9.5Z';
-const SHOP_HANDLE = 'M9 9.5V7.6a3 3 0 0 1 6 0v1.9';
+  'M6.4 5.4h11.2a1.4 1.4 0 0 1 1.4 1.4v12a1.8 1.8 0 0 1-1.8 1.8H6.8'
+  + 'a1.8 1.8 0 0 1-1.8-1.8V6.8a1.4 1.4 0 0 1 1.4-1.4Z';
+const SHOP_HANDLE = 'M10.1 12V11.4a1.9 1.9 0 0 1 3.8 0v.6';
+const SHOP_HANDLE_HOLE = `${SHOP_HANDLE}Z`;
 
 /** Menu: quatro nós. O mesmo círculo da Evolução, em grade. */
 const MENU_NODES: [number, number, number][] = [
@@ -149,14 +198,19 @@ const HEART =
 const BOLT = 'M13.6 3.2 6.8 13.2h4.4l-.8 7.6 6.8-10h-4.4Z';
 
 /**
- * ALIMENTAR — cuba + nó. A cuba é meio ARCO (o mesmo da porta, virado) e a
- * comida é um NÓ. Garfo-e-faca (o `restaurant` do Material) é ícone de
- * restaurante: fala de refeição humana em mesa posta. Aqui a ação é dar comida
- * ao bicho, e uma tigela é o gesto certo — e cabe na gramática, o que garfo e
- * faca cruzados nunca iam caber.
+ * ALIMENTAR — cuba + fumaça. A cuba é meio ARCO (o mesmo da porta, virado).
+ * Garfo-e-faca (o `restaurant` do Material) é ícone de restaurante: fala de
+ * refeição humana em mesa posta. Aqui a ação é dar comida ao bicho, e uma
+ * tigela é o gesto certo — e cabe na gramática, o que garfo e faca cruzados
+ * nunca iam caber.
+ *
+ * A comida ERA um NÓ pousado acima da cuba, e cheio isso é uma bola sobre uma
+ * base: a leitura CABEÇA E OMBROS (ícone de pessoa) voltava mesmo com o pé. O
+ * que sobe de uma tigela e não pode ser confundido com uma cabeça é FUMAÇA —
+ * duas mechas em S. Sendo traço, elas sobrevivem ao estado cheio de graça.
  */
 const BOWL = 'M4.4 11.6h15.2a7.6 7.6 0 0 1-15.2 0Z';
-const BOWL_FOOD: [number, number, number] = [12, 7.2, 2.2];
+const BOWL_STEAM = 'M10.2 9.2q-1-1.2 0-2.4t0-2.4M13.8 9.2q-1-1.2 0-2.4t0-2.4';
 /* O pé. Sem ele, cuba + nó lia como CABEÇA E OMBROS (um ícone de pessoa) no
    deck de 42px; com a linha embaixo vira um prato apoiado, e só isso. */
 const BOWL_FOOT = 'M8.6 20.4h6.8';
@@ -196,12 +250,10 @@ const SUN_RAYS =
 
 /**
  * O CHEQUE, e ele é UM SÓ no app inteiro: o mesmo traço em `check`,
- * `check_circle` e `task_alt`. `CHECK_HOLE` é o contorno geométrico desse
- * mesmo traço (largura 2.1, junção em esquadria), usado como VAZIO quando o
- * disco se enche — de novo a regra da porta do Início.
+ * `check_circle` e `task_alt`. Quando o disco se enche, o VAZIO é ESTE MESMO
+ * caminho declarado como `strokeHole` — nunca um contorno redesenhado à mão.
  */
 const CHECK_IN_RING = 'M8 12.4 11 15.4 17.4 8';
-const CHECK_HOLE = 'M7.26 13.14 11.06 16.94 18.19 8.69 16.61 7.31 10.94 13.86 8.74 11.66Z';
 const RING = 'M20.6 12a8.6 8.6 0 1 1-17.2 0 8.6 8.6 0 1 1 17.2 0Z';
 /**
  * `task_alt`: o MESMO anel e o MESMO cheque, só que o cheque SAI por uma falha
@@ -209,7 +261,6 @@ const RING = 'M20.6 12a8.6 8.6 0 1 1-17.2 0 8.6 8.6 0 1 1 17.2 0Z';
  * indistinguíveis em 20px — dois nomes para o mesmo desenho.
  */
 const CHECK_OUT = 'M8 12.4 11 15.4 19.4 6';
-const CHECK_OUT_HOLE = 'M7.26 13.14 11.04 16.93 20.18 6.7 18.62 5.3 10.96 13.87 8.74 11.66Z';
 const RING_OPEN = 'M19.97 8.78A8.6 8.6 0 1 1 17.05 5.04';
 const CHECK_BARE = 'M5.2 12.6 9.8 17.2 18.8 6.8';
 const CLOSE = 'M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6';
@@ -223,8 +274,9 @@ const ARROW = 'M4.2 12h15.6M13.4 5.6 19.8 12l-6.4 6.4';
 
 /** Créditos: losango + faceta. A faceta vira VAZIO no estado cheio. */
 const GEM = 'M12 3.4 20.6 12 12 20.6 3.4 12Z';
-const GEM_FACET = 'M7.9 7.9h8.2';
-const GEM_FACET_HOLE = 'M7.9 6.85h8.2v2.1H7.9Z';
+/* A faceta NÃO encosta nas arestas: com ela de ponta a ponta, o vazio cortava o
+   losango em dois e a coroa ficava boiando solta no estado cheio. */
+const GEM_FACET = 'M9.6 8.6h4.8';
 
 /** Cadeado: corpo + haste em ARCO r 3.6 + o segredo, que é um NÓ. */
 const LOCK_BODY =
@@ -234,20 +286,33 @@ const LOCK_SHACKLE = 'M8.4 10.4V8a3.6 3.6 0 0 1 7.2 0v2.4';
 /** Aberto = a MESMA haste sem a perna direita descendo. */
 const LOCK_SHACKLE_OPEN = 'M8.4 10.4V8a3.6 3.6 0 0 1 7.2 0';
 const LOCK_KEY: [number, number, number] = [12, 15.7, 1.55];
-const LOCK_KEY_HOLE = 'M13.55 15.7a1.55 1.55 0 1 0-3.1 0 1.55 1.55 0 1 0 3.1 0Z';
+const LOCK_KEY_HOLE: [number, number, number] = [12, 15.7, 1.95];
 
 /** Carregando: ARCO com falha + a cabeça, que é um NÓ. */
 /* A falha fica na DIAGONAL (nordeste), e não em cima: anel com falha no topo é
    o símbolo de liga/desliga, e ninguém precisa achar que o app vai desligar. */
-const SYNC_ARC = 'M20.08 10.58A8.2 8.2 0 1 1 13.42 3.93';
-const SYNC_HEAD: [number, number, number] = [20.08, 10.58, 1.5];
+/*
+ * O arco do `sync` PARA ANTES da cabeça (θ 8°, contra os −10° de antes) e a
+ * cabeça é um nó de 1.7 solto em θ −16°. Antes o nó ficava exatamente na ponta
+ * do arco e o `linecap` redondo o engolia: sobrava um anel quebrado igual ao do
+ * `refresh` — dois nomes, um desenho.
+ */
+const SYNC_ARC = 'M20.12 13.14A8.2 8.2 0 1 1 13.42 3.93';
+const SYNC_HEAD: [number, number, number] = [19.88, 9.74, 1.7];
 
 /**
- * `refresh`/`replay`: o MESMO arco do `sync`, com farpa no lugar do nó. A
- * diferença entre carregar (nó = cabeça de spinner) e refazer (seta) fica na
- * ponta, não em dois desenhos diferentes. `replay` é o espelho de `refresh`.
+ * `refresh`/`replay`: arco MAIS FECHADO que o do `sync` (a falha é menor) e
+ * farpa no lugar do nó. Carregar (nó solto = cabeça de cometa) e refazer (seta
+ * na ponta do arco) passam a ter silhueta diferente, não só um detalhe de 1px.
+ * `replay` continua sendo o espelho de `refresh` — é a mesma relação que a
+ * Material usa entre os dois.
  */
-const SYNC_HEAD_ARROW = 'M20.62 13.63 22.25 9.59 17.71 10.39Z';
+const REFRESH_ARC = 'M20.08 10.58A8.2 8.2 0 1 1 13.42 3.93';
+/* A farpa fica na PONTA DE CHEGADA do arco (o alto), apontando para dentro da
+   falha, no sentido em que o traço estava andando. Antes ela ficava na ponta de
+   PARTIDA e apontava para trás: virava um caroço na lateral do anel, que foi
+   exatamente a leitura "três nomes, um desenho". */
+const SYNC_HEAD_ARROW = 'M15.88 4.37 11.96 5.91 12.72 1.57Z';
 
 /** Enviar: a seta de papel, com a dobra do meio (o vértice côncavo em 6.5). */
 const SEND = 'M4.6 4.4 20.2 12 4.6 19.6 8.4 12Z';
@@ -261,14 +326,22 @@ const MIC_STEM = 'M12 17.2v3.2';
 
 /** Relógio: anel + ponteiros (a cruz, quebrada nas 3h10). */
 const CLOCK_HANDS = 'M12 6.8V12l3.6 2.2';
-const CLOCK_HANDS_HOLE = 'M10.95 6.8 10.95 12.59 15.06 14.75 16.14 13.65 13.05 11.41 13.05 6.8Z';
 
-/** Folha: dois ARCOS de r 15 se encontrando em ponta + nervura. */
-/* Raios DIFERENTES nos dois lados: uma vesica simétrica com nervura no meio é
-   um grão de café, não uma folha. */
-const LEAF = 'M4.8 19.2A15 15 0 0 1 19.2 4.8 11 11 0 0 1 4.8 19.2Z';
-const LEAF_VEIN = 'M6.6 17.4 15.6 8.4';
-const LEAF_VEIN_HOLE = 'M5.86 16.66 14.86 7.66 16.34 9.14 7.34 18.14Z';
+/**
+ * Folha: dois ARCOS de raios diferentes + nervura que SAI da folha virando talo.
+ *
+ * Raio diferente nos dois lados já estava certo e não bastou: a avaliação leu
+ * GRÃO DE CAFÉ, e o culpado é a nervura — um vinco reto que morre nas duas
+ * pontas de uma amêndoa é literalmente o desenho do grão. A correção é o TALO:
+ * a mesma reta continua 2.6 para FORA da base. Folha com talo não é grão de
+ * café, e o talo é a peça que nenhuma leitura alternativa tem.
+ *
+ * O vazio cobre só o trecho DE DENTRO da lâmina (começa em 7.2 16.8, não na
+ * ponta do talo): assim, cheio, o talo continua desenhado do lado de fora.
+ */
+const LEAF = 'M6 18.6A13 13 0 0 1 19.6 5 10.5 10.5 0 0 1 6 18.6Z';
+const LEAF_VEIN = 'M4.6 19.4 14.4 9.6';
+const LEAF_VEIN_HOLE = 'M7.2 16.8 14.4 9.6';
 
 /** Fagulha: estrela de 4 pontas CÔNCAVAS — a mesma concavidade do D-pad. */
 const SPARK_BIG =
@@ -294,11 +367,44 @@ function node([cx, cy, r]: [number, number, number]) {
   return <circle cx={cx} cy={cy} r={r} />;
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   OS TIPOS DE VAZIO. Um glifo declara seus furos com estas funções e mais
+   nada — quem desenha um ícone novo não precisa saber COMO o furo é recortado.
+   Era exatamente esse "cuidado manual" (contorno geométrico calculado à mão,
+   camada por camada) que produziu o defeito do `check_circle`.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Vazio de ÁREA: a forma inteira vira buraco (a porta da casa, a alça da sacola). */
+function areaHole(d: string) {
+  return <path d={d} stroke="none" />;
+}
+/** Vazio de ÁREA circular — o NÓ que se esvazia (o pino do D-pad, o segredo do cadeado). */
+function nodeHole([cx, cy, r]: [number, number, number]) {
+  return <circle cx={cx} cy={cy} r={r} stroke="none" />;
+}
+/**
+ * Vazio de TRAÇO: o MESMO caminho do contorno vira buraco. É o caso do cheque,
+ * dos ponteiros do relógio, da faceta e da nervura — nenhum deles redesenha
+ * contorno à mão. A máscara traça o próprio `d` um pouco mais grosso que o
+ * traço (`HOLE_STROKE_RATIO`), o que garante que a ponta redonda também saia.
+ */
+function strokeHole(d: string) {
+  return <path d={d} fill="none" />;
+}
+
 interface GlyphDef {
   /** Sempre desenhado, em traço. */
   outline: ReactNode;
-  /** A MESMA forma, cheia. Ausente = o glifo não tem estado ativo. */
+  /**
+   * A MESMA forma, cheia — SILHUETA PURA, sem `fill-rule` e sem furo embutido.
+   * Ausente = o glifo não tem estado ativo.
+   */
   solid?: ReactNode;
+  /**
+   * Os VAZIOS, como formas POSITIVAS (`areaHole`/`nodeHole`/`strokeHole`). Viram
+   * uma MÁSCARA que corta as DUAS camadas de uma vez, com opacidade = `fill`.
+   */
+  holes?: ReactNode;
   /** Giro em graus sobre o centro (12,12) — chevrons e setas. */
   rotate?: number;
   /** Espelho horizontal — `replay` é `refresh` ao contrário. */
@@ -310,13 +416,13 @@ const GLYPHS: Record<string, GlyphDef> = {
         Material equivalentes, logo abaixo) ─────────────────────────────── */
   home: {
     outline: <><path d={HOME_BODY} /><path d={HOME_DOOR} /></>,
-    // `evenodd` + a porta FECHADA: no estado cheio a casa é sólida e a porta
-    // continua sendo um vazio — é o que impede o glifo de virar uma mancha.
-    solid: <path fillRule="evenodd" d={`${HOME_BODY}${HOME_DOOR}Z`} />,
+    solid: <path d={HOME_BODY} />,
+    holes: <>{areaHole(`${HOME_DOOR_HOLE}Z`)}{strokeHole(HOME_DOOR_HOLE)}</>,
   },
   activities: {
-    outline: <><path d={DPAD} /><circle cx={12} cy={12} r={2.1} /></>,
-    solid: <path fillRule="evenodd" d={`${DPAD}${DPAD_HUB}`} />,
+    outline: <><path d={DPAD} /><g fill="currentColor" stroke="none">{node(DPAD_HUB)}</g></>,
+    solid: <path d={DPAD} />,
+    holes: nodeHole(DPAD_HUB_HOLE),
   },
   evolution: {
     outline: <>{circles(EVO_NODES)}</>,
@@ -325,6 +431,7 @@ const GLYPHS: Record<string, GlyphDef> = {
   shop: {
     outline: <><path d={SHOP_BAG} /><path d={SHOP_HANDLE} /></>,
     solid: <path d={SHOP_BAG} />,
+    holes: <>{areaHole(SHOP_HANDLE_HOLE)}{strokeHole(SHOP_HANDLE)}</>,
   },
   menu: {
     outline: <>{circles(MENU_NODES)}</>,
@@ -335,12 +442,16 @@ const GLYPHS: Record<string, GlyphDef> = {
   favorite: { outline: <path d={HEART} />, solid: <path d={HEART} /> },
   bolt: { outline: <path d={BOLT} />, solid: <path d={BOLT} /> },
   restaurant: {
-    outline: <><path d={BOWL} /><path d={BOWL_FOOT} />{node(BOWL_FOOD)}</>,
-    solid: <><path d={BOWL} />{node(BOWL_FOOD)}</>,
+    /* O PÉ é traço e vive no CONTORNO, que é desenhado sempre — inclusive
+       debaixo do estado cheio. É o que devolve o pé ao prato preenchido (sem
+       ele volta o "cabeça e ombros" que este desenho existe para evitar). */
+    outline: <><path d={BOWL} /><path d={BOWL_FOOT} /><path d={BOWL_STEAM} /></>,
+    solid: <path d={BOWL} />,
   },
   inventory_2: {
     outline: <><path d={BOX_LID} /><path d={BOX_BODY} /><path d={BOX_LATCH} /></>,
-    solid: <><path d={BOX_LID} /><path fillRule="evenodd" d={`${BOX_BODY}${BOX_LATCH}Z`} /></>,
+    solid: <><path d={BOX_LID} /><path d={BOX_BODY} /></>,
+    holes: <>{areaHole(`${BOX_LATCH}Z`)}{strokeHole(BOX_LATCH)}</>,
   },
   shower: {
     outline: <><path d={SHOWER_DOME} /><path d={SHOWER_RIM} /><path d={SHOWER_RAIN} /></>,
@@ -355,11 +466,13 @@ const GLYPHS: Record<string, GlyphDef> = {
   /* ── Lista diária: concluir, marcar, expandir ─────────────────────────── */
   task_alt: {
     outline: <><path d={RING_OPEN} /><path d={CHECK_OUT} /></>,
-    solid: <path fillRule="evenodd" d={`${RING}${CHECK_OUT_HOLE}`} />,
+    solid: <path d={RING} />,
+    holes: strokeHole(CHECK_OUT),
   },
   check_circle: {
     outline: <><path d={RING} /><path d={CHECK_IN_RING} /></>,
-    solid: <path fillRule="evenodd" d={`${RING}${CHECK_HOLE}`} />,
+    solid: <path d={RING} />,
+    holes: strokeHole(CHECK_IN_RING),
   },
   check: { outline: <path d={CHECK_BARE} /> },
   close: { outline: <path d={CLOSE} /> },
@@ -374,8 +487,14 @@ const GLYPHS: Record<string, GlyphDef> = {
   /* ── Moedas, estados e utilitários de toda tela ───────────────────────── */
   diamond: {
     outline: <><path d={GEM} /><path d={GEM_FACET} /></>,
-    solid: <path fillRule="evenodd" d={`${GEM}${GEM_FACET_HOLE}`} />,
+    solid: <path d={GEM} />,
+    holes: strokeHole(GEM_FACET),
   },
+  /* A haste do cadeado é TRAÇO nas duas camadas. Antes a camada sólida
+     PREENCHIA o caminho ABERTO da haste — vira uma lente colada no corpo, e era
+     por isso que `lock` e `lock_open` cheios ficavam o mesmo desenho de bolsa.
+     Desenhada só no contorno (que nunca sai), ela sobrevive ao estado cheio com
+     a forma certa, e a perna que falta no `lock_open` volta a se ver. */
   lock: {
     outline: (
       <>
@@ -383,7 +502,8 @@ const GLYPHS: Record<string, GlyphDef> = {
         <g fill="currentColor" stroke="none">{node(LOCK_KEY)}</g>
       </>
     ),
-    solid: <><path d={LOCK_SHACKLE} /><path fillRule="evenodd" d={`${LOCK_BODY}${LOCK_KEY_HOLE}`} /></>,
+    solid: <path d={LOCK_BODY} />,
+    holes: nodeHole(LOCK_KEY_HOLE),
   },
   lock_open: {
     outline: (
@@ -392,19 +512,20 @@ const GLYPHS: Record<string, GlyphDef> = {
         <g fill="currentColor" stroke="none">{node(LOCK_KEY)}</g>
       </>
     ),
-    solid: <path fillRule="evenodd" d={`${LOCK_BODY}${LOCK_KEY_HOLE}`} />,
+    solid: <path d={LOCK_BODY} />,
+    holes: nodeHole(LOCK_KEY_HOLE),
   },
   sync: {
     outline: <><path d={SYNC_ARC} /><g fill="currentColor" stroke="none">{node(SYNC_HEAD)}</g></>,
   },
   refresh: {
     outline: (
-      <><path d={SYNC_ARC} /><g fill="currentColor" stroke="none"><path d={SYNC_HEAD_ARROW} /></g></>
+      <><path d={REFRESH_ARC} /><g fill="currentColor" stroke="none"><path d={SYNC_HEAD_ARROW} /></g></>
     ),
   },
   replay: {
     outline: (
-      <><path d={SYNC_ARC} /><g fill="currentColor" stroke="none"><path d={SYNC_HEAD_ARROW} /></g></>
+      <><path d={REFRESH_ARC} /><g fill="currentColor" stroke="none"><path d={SYNC_HEAD_ARROW} /></g></>
     ),
     flip: true,
   },
@@ -415,15 +536,18 @@ const GLYPHS: Record<string, GlyphDef> = {
   send: { outline: <path d={SEND} />, solid: <path d={SEND} /> },
   stop_circle: {
     outline: <><path d={RING} /><path d={STOP_SQUARE} /></>,
-    solid: <path fillRule="evenodd" d={`${RING}${STOP_SQUARE}`} />,
+    solid: <path d={RING} />,
+    holes: <>{areaHole(STOP_SQUARE)}{strokeHole(STOP_SQUARE)}</>,
   },
   schedule: {
     outline: <><path d={RING} /><path d={CLOCK_HANDS} /></>,
-    solid: <path fillRule="evenodd" d={`${RING}${CLOCK_HANDS_HOLE}`} />,
+    solid: <path d={RING} />,
+    holes: strokeHole(CLOCK_HANDS),
   },
   eco: {
     outline: <><path d={LEAF} /><path d={LEAF_VEIN} /></>,
-    solid: <path fillRule="evenodd" d={`${LEAF}${LEAF_VEIN_HOLE}`} />,
+    solid: <path d={LEAF} />,
+    holes: strokeHole(LEAF_VEIN_HOLE),
   },
   auto_awesome: {
     outline: <><path d={SPARK_BIG} /><path d={SPARK_SMALL} /></>,
@@ -452,6 +576,14 @@ export const GLYPH_NAMES = Object.keys(GLYPHS);
 
 /** O equivalente óptico do `wght` 500 do Material em caixa de 24dp. */
 const STROKE_AT_500 = 2.1;
+
+/**
+ * Quanto o vazio de TRAÇO é mais grosso que o traço que ele apaga. Precisa ser
+ * >1 por duas razões: a ponta REDONDA do traço avança 0.5×largura além do fim
+ * geométrico (era o que deixava tocos pretos), e um vazio rente ao traço vira
+ * uma costura de antialias em vez de um furo legível em 20px.
+ */
+const HOLE_STROKE_RATIO = 1.4;
 
 function clamp(v: number, lo: number, hi: number) { return v < lo ? lo : v > hi ? hi : v; }
 
@@ -491,6 +623,7 @@ export interface GlyphSvgProps {
 export function GlyphSvg({ name, size = 24, fill = 0, weight = 500, style }: GlyphSvgProps) {
   const glyph = GLYPHS[name];
   const reduced = usePrefersReducedMotion();
+  const uid = useId();
   if (!glyph) return null;
 
   const f = clamp(fill, 0, 1);
@@ -499,6 +632,8 @@ export function GlyphSvg({ name, size = 24, fill = 0, weight = 500, style }: Gly
     glyph.flip ? 'translate(24 0) scale(-1 1)' : '',
     glyph.rotate ? `rotate(${glyph.rotate} 12 12)` : '',
   ].filter(Boolean).join(' ') || undefined;
+  const ease = reduced ? 'none' : 'opacity var(--sm2-dur-tap) var(--sm2-ease)';
+  const maskId = glyph.holes ? `sm2-hole-${uid.replace(/:/g, '')}` : undefined;
 
   return (
     <svg
@@ -509,28 +644,51 @@ export function GlyphSvg({ name, size = 24, fill = 0, weight = 500, style }: Gly
       aria-hidden="true"
       style={{ display: 'block', ...style }}
     >
-      <g
-        transform={transform}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {glyph.outline}
-      </g>
-      {glyph.solid ? (
-        <g
-          transform={transform}
-          fill="currentColor"
-          style={{
-            opacity: f,
-            transition: reduced ? 'none' : 'opacity var(--sm2-dur-tap) var(--sm2-ease)',
-          }}
-        >
-          {glyph.solid}
-        </g>
+      {/* A MÁSCARA DO VAZIO. Branco = fica; preto = furo. Ela é aplicada ao
+          grupo INTEIRO (contorno + sólido), e é aí que mora a correção: antes o
+          furo era um subpath `evenodd` só da camada sólida, então o traço já
+          desenhado embaixo o preenchia por baixo e o furo sumia — foi assim que
+          o `check_circle` cheio virou um disco preto. Cortando as duas camadas
+          de uma vez, "vazio" quer dizer vazio em qualquer glifo, e um desenho
+          novo não precisa de cuidado manual nenhum para herdar isso.
+          A opacidade do furo é o próprio `fill`: em 0.5 o cheque está meio
+          aberto, como no eixo real da fonte. */}
+      {maskId ? (
+        <mask id={maskId} maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+          <rect x="0" y="0" width="24" height="24" fill="#fff" />
+          <g
+            fill="#000"
+            stroke="#000"
+            strokeWidth={stroke * HOLE_STROKE_RATIO}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ opacity: f, transition: ease }}
+          >
+            {glyph.holes}
+          </g>
+        </mask>
       ) : null}
+      {/* O `transform` fica FORA do grupo mascarado: assim a máscara é sempre
+          lida no grid de 24 cru, sem depender de o navegador transformar (ou
+          não) a máscara junto com o elemento que a referencia. */}
+      <g transform={transform}>
+        <g mask={maskId ? `url(#${maskId})` : undefined}>
+          <g
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {glyph.outline}
+          </g>
+          {glyph.solid ? (
+            <g fill="currentColor" style={{ opacity: f, transition: ease }}>
+              {glyph.solid}
+            </g>
+          ) : null}
+        </g>
+      </g>
     </svg>
   );
 }

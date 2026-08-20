@@ -353,6 +353,65 @@ Três regras que **não** afrouxam:
 `weight` 500 (e não 400) é o que faz o traço casar com a espessura do pixel do
 sprite; 400 devolve "biblioteca de ícones padrão".
 
+### 6.1 A ESCALA DE ÍCONE (fechada, como a de texto)
+
+Este documento fixava a escala de TEXTO e **nunca declarou a de ÍCONE**. A
+ausência não ficou neutra: a Loja chegou a desenhar **14, 16, 18, 22 e 32px na
+mesma tela** — cinco tamanhos, nenhuma regra, porque `size` é um número livre e
+todo call-site escolheu o dele. A Home, por acidente de disciplina, já usava só
+quatro. Esses quatro viram a escala.
+
+| degrau | px | papel — e SÓ ele |
+|---|---|---|
+| `inline` | **20** | ícone que anda ao lado de TEXTO na mesma linha: dica, chip, preço, saldo, rótulo de campo. Casa com a altura de x da Rubik 14/16. |
+| `action` | **24** | ícone que É a ação ou o estado de uma LINHA de lista / botão de barra: fechar, cadeado, "equipado", linha de menu. |
+| `nav` | **32** | destino da barra inferior e botão da barra de chat. |
+| `deck` | **42** | o deck de ações do aparelho (Home) — comida, carinho, banho. |
+
+Quatro degraus, e o pulo entre eles é visível (20 → 24 → 32 → 42). Não existe
+degrau intermediário: 22 ao lado de 24 na mesma tela não é hierarquia, é ruído
+— ninguém consegue dizer qual dos dois significa mais.
+
+**Como escolher, em uma pergunta:** _o ícone está ao lado de uma palavra na
+mesma linha?_ Sim → **20**. Não, ele ocupa a coluna de ação/estado da linha →
+**24**. É a barra do aparelho (nav/chat) → **32**. É o deck da Home → **42**.
+
+**Não há token CSS para isto**, de propósito: `Icon`/`NavGlyph` recebem `size`
+como NÚMERO (o `opsz` é casado a ele em JS, §6 regra 3), então um
+`var(--sm2-icon-*)` não chegaria ao `font-variation-settings`. O contrato é
+esta tabela + a revisão. Tamanho novo fora dos quatro degraus só entra aqui
+com o papel escrito ao lado — se o papel já existe, use o degrau que existe.
+
+> **Duas dívidas conhecidas, de outros donos:** `ChatBox` usa 26/30 (o degrau é
+> **32**) e várias páginas ainda têm 18/22/28/40/48 herdados de antes desta
+> tabela. Elas migram na onda de quem for dono do arquivo; a Loja, a nav e este
+> documento já estão na escala.
+
+### 6.2 EMOJI E ARTE NÃO SÃO TEXTO — nem ícone
+
+O emoji dos consumíveis da Loja (🦠 💾 💉 💗) é **conteúdo** — é o item que
+está na pastinha, não um símbolo de sistema — então não vira Material Symbols.
+Mas ele também não pode ser dimensionado pela escala de TEXTO: o motor de
+layout trata emoji como glifo, e um `font-size: var(--sm2-text-2xl)` põe 32px
+de TEXTO numa tela onde a escala tipográfica termina em 16px de corpo. Foi
+assim que o audit mediu "texto de 32px" onde não há texto nenhum.
+
+A regra: **arte mora numa CAIXA, e a caixa manda no glifo.**
+
+| token de arte | px | uso |
+|---|---|---|
+| caixa `art-md` | **56** | miniatura do card de item (prévia de cenário, pixel de decoração, emoji do consumível) |
+| glifo dentro dela | **28** | = metade da caixa; derivado dela, **nunca** de `--sm2-text-*` |
+
+O glifo é `50%` da caixa e nada mais o governa: `line-height: 1`,
+`font-size` em px literal com a caixa citada ao lado, e o nó é
+`aria-hidden` (o nome do item já está na linha, em texto de verdade). Se a
+caixa mudar de tamanho, o glifo muda junto — que é exatamente o que "arte" quer
+dizer e "texto" não.
+
+**Nunca** `fontSize: 'var(--sm2-text-*)'` num nó cujo conteúdo é emoji, sprite
+ou qualquer desenho. A escala de texto serve ao que se LÊ.
+
 ## 7. `Viewport` — API
 
 `src/components/ui/Viewport.tsx`
@@ -437,6 +496,8 @@ Duas decisões que não afrouxam:
 - [ ] Nenhum texto abaixo de 12px; número que muda com `.sm2-num`?
 - [ ] Silkscreen só no visor e em selo, ≥14px, caixa alta?
 - [ ] Ícone sem moldura, sem fundo, sem borda?
+- [ ] Ícone novo em um dos QUATRO degraus (20 / 24 / 32 / 42), §6.1?
+- [ ] Emoji/arte fora da escala de texto, dentro de caixa própria, §6.2?
 - [ ] Escala do `Viewport` inteira?
 - [ ] Classe utilitária nova? Ela **existe** no `index.css`? (footgun 1 — o
       Tailwind aqui é pré-compilado; classe ausente não aplica nada e não avisa)

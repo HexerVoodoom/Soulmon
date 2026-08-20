@@ -96,10 +96,14 @@ function NavItem({ icon, label, active, onClick, current, expanded }: {
   );
 }
 
-/** Id do heading do painel de menu — o `aria-labelledby` do `role="menu"`
+/** Id do rótulo do painel de menu — o `aria-labelledby` do `role="menu"`
  *  aponta para ele. Constante de módulo (e não `useId`) porque só existe UM
  *  painel de menu montado por vez em todo o app. */
-const MENU_HEADING_ID = 'sm-menu-panel-heading';
+const MENU_LABEL_ID = 'sm-menu-panel-label';
+
+/** Ícone que É a ação de uma linha de lista: degrau `action` (tokens.md §6.1).
+ *  Era 22 — um degrau que não existe, herdado de antes da escala. */
+const ICON_ACTION = 24;
 
 /** Linha do menu sanduíche. Ícone pelado + texto Rubik 14px. */
 function MenuRow({ icon, label, onClick, active, first }: {
@@ -122,7 +126,7 @@ function MenuRow({ icon, label, onClick, active, first }: {
         cursor: 'pointer', textAlign: 'left',
       }}
     >
-      <Icon name={icon} size={22} fill={active ? 1 : 0} tone={active ? 'primary' : 'muted'} />
+      <Icon name={icon} size={ICON_ACTION} fill={active ? 1 : 0} tone={active ? 'primary' : 'muted'} />
       {label}
     </button>
   );
@@ -214,12 +218,28 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
                 Semântica escolhida: **menu, não diálogo**. Ele não é modal
                 (o toque fora fecha, o conteúdo de baixo continua válido e
                 nada aqui é uma tarefa a concluir), então `role="dialog"` +
-                `aria-modal` mentiria sobre a inércia do resto da tela. O que
-                faltava era só o RÓTULO com forma de heading: o `<h2>` fica
-                FORA do `role="menu"` (filho de menu só pode ser menuitem) e
-                o menu é rotulado por ele via `aria-labelledby` — um rótulo
-                só, lido pelos dois caminhos (índice de headings e nome
-                acessível do menu). */}
+                `aria-modal` mentiria sobre a inércia do resto da tela.
+
+                **E o rótulo NÃO é um heading — foi medido por que.** Este
+                `<nav>` é montado ANTES do conteúdo da página no DOM (o
+                `App.tsx` renderiza `BottomNav` acima do `<main>`, e não é
+                arquivo deste dono), então o `<h2>Menu</h2>` que morava aqui
+                entrava no índice de headings ANTES do `<h1>` da página:
+                quem navega por heading encontrava um H2 órfão como primeira
+                parada, e a árvore do documento passava a mentir sobre a
+                estrutura da tela. As saídas eram três, e duas são piores:
+                portal para o fim do `<body>` (arrisca o ancoramento
+                `position:absolute` e o Escape do `<nav>` por um ganho
+                duvidoso), `aria-level` acrobático, ou aceitar o que a
+                semântica já diz. Heading é ferramenta de ESTRUTURA DE
+                DOCUMENTO; um popover transitório, aberto e fechado por um
+                botão, não é seção de documento — e nada se perde, porque o
+                painel já se anuncia por dois caminhos que continuam
+                intactos: o `aria-expanded`/`aria-haspopup` do botão e o
+                `aria-labelledby` que dá a este texto o papel de NOME
+                ACESSÍVEL do `role="menu"`. O rótulo fica fora do
+                `role="menu"` (filho de menu só pode ser menuitem) e segue
+                sendo lido em voz alta na abertura. */}
             <div
               style={{
                 position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
@@ -230,22 +250,27 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
                 boxShadow: '0 8px 24px rgba(0,0,0,.28)',
               }}
             >
-              <h2
-                id={MENU_HEADING_ID}
+              {/* 16px (`-text-md`), e não os 14 de antes: um título do mesmo
+                  tamanho dos itens que ele encabeça não é título, é mais uma
+                  linha. A hierarquia aqui é a soma de três coisas — o degrau
+                  acima na escala, a Fredoka contra a Rubik das linhas, e o
+                  peso 600. */}
+              <p
+                id={MENU_LABEL_ID}
                 style={{
                   margin: 0,
-                  padding: '10px 14px 8px',
+                  padding: '12px 14px 10px',
                   fontFamily: 'var(--sm2-font-display)',
-                  fontSize: 'var(--sm2-text-sm)',
+                  fontSize: 'var(--sm2-text-md)',
                   fontWeight: 600,
                   lineHeight: 'var(--sm2-leading-title)',
-                  color: 'var(--sm2-muted)',
+                  color: 'var(--sm2-ink)',
                   textAlign: 'left',
                 }}
               >
                 {isPt ? 'Menu' : 'Menu'}
-              </h2>
-              <div role="menu" aria-labelledby={MENU_HEADING_ID}>
+              </p>
+              <div role="menu" aria-labelledby={MENU_LABEL_ID}>
               <MenuRow
                 first
                 icon="person"
