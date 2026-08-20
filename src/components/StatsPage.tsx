@@ -206,7 +206,7 @@ export function StatsPage({
   const traitRow = (iconName: string, name: string, desc: string) => (
     <div key={name} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
       {/* Ícone PELADO — sem moldura, sem fundo, sem chanfro (regra do dono). */}
-      <Icon name={iconName} size={28} fill={1} tone="primary" />
+      <Icon name={iconName} size={24} fill={1} tone="primary" />
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{name}</p>
         <p style={{ ...sm2Hint, marginTop: 2 }}>{desc}</p>

@@ -252,7 +252,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                 backgroundColor: 'var(--sm2-surface)',
               }}
             >
-              <Icon name="emoji_events" size={18} tone="gold" fill={t.place === 1 ? 1 : 0} />
+              <Icon name="emoji_events" size={20} tone="gold" fill={t.place === 1 ? 1 : 0} />
               <span className="sm2-num" style={{ ...sm2Hint, color: 'var(--sm2-ink)' }}>
                 {t.season} · {t.place}º
               </span>
@@ -283,7 +283,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
           Aberto × fechado é dito pela TINTA e pelo ícone, nunca por um
           `#facc15` cravado nem por emoji do sistema. */}
       <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, color: round.isOpen ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
-        <Icon name={round.isOpen ? 'event_repeat' : 'schedule'} size={18} fill={round.isOpen ? 1 : 0} />
+        <Icon name={round.isOpen ? 'event_repeat' : 'schedule'} size={20} fill={round.isOpen ? 1 : 0} />
         {tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}
       </p>
 
@@ -309,7 +309,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 
       {tab === 'arena' && !pvpEnabled && (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <Icon name="swords" size={40} tone="muted" />
+          <Icon name="swords" size={48} tone="muted" />
           <p style={{ ...sm2Text, marginTop: 8 }}>
             {isPt ? 'Ative o PvP acima para desafiar oponentes.' : 'Enable PvP above to challenge opponents.'}
           </p>
@@ -348,7 +348,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
           {/* ── Erro / sem rede ── */}
           {loadFailed && (
             <div style={{ textAlign: 'center', padding: '16px 0' }}>
-              <Icon name="cloud_off" size={40} tone="muted" />
+              <Icon name="cloud_off" size={48} tone="muted" />
               <p style={{ ...sm2Text, marginTop: 8 }}>
                 {isPt ? 'Não deu para carregar os oponentes.' : "Couldn't load the opponents."}
               </p>
@@ -390,7 +390,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
                     : (isPt ? `Desafiar ${o.name}` : `Challenge ${o.name}`)}
                   style={{ ...sm2Button('primary', blocked || busy), flexShrink: 0, padding: '10px 14px' }}
                 >
-                  {busy && <Icon name="sync" size={16} className="animate-spin" />}
+                  {busy && <Icon name="sync" size={20} className="animate-spin" />}
                   {isPt ? 'Desafiar' : 'Fight'}
                 </button>
               </div>
@@ -410,7 +410,7 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
 
           {rankFailed && (
             <div style={{ textAlign: 'center', padding: '16px 0' }}>
-              <Icon name="cloud_off" size={40} tone="muted" />
+              <Icon name="cloud_off" size={48} tone="muted" />
               <p style={{ ...sm2Text, marginTop: 8 }}>
                 {isPt ? 'Não deu para carregar o ranking.' : "Couldn't load the ranking."}
               </p>

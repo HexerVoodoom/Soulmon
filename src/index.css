@@ -7240,3 +7240,43 @@ body {
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
   &:disabled { opacity: .5; cursor: default; }
 }
+
+/* ── ATALHO "PULAR PARA O CONTEÚDO" ──────────────────────────────────────
+   Padrão consagrado: o link EXISTE sempre na ordem de foco e só fica
+   VISÍVEL quando recebe foco. Fora da tela por deslocamento, e nunca por
+   display/visibility ou por width 1px com overflow hidden — as duas
+   primeiras tiram o link da ordem de tabulação, e a terceira torna o link
+   focado ilegível no instante em que ele mais precisa ser lido.
+
+   z-index acima do PixelFrame e da nav, e position fixed porque a raiz do
+   app é fixed e recortada: um absolute aqui seria clipado pelo overflow
+   hidden do container.
+
+   Cor: par ink/surface, o mesmo do resto do aparelho — medido em AA nos
+   dois temas pelo teste de contraste dos tokens. */
+.sm-skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  z-index: 2000;
+  display: inline-block;
+  padding: 10px 16px;
+  min-height: 44px;
+  box-sizing: border-box;
+  background-color: var(--sm2-surface);
+  color: var(--sm2-ink);
+  border: 2px solid var(--sm2-primary-ink);
+  border-radius: var(--sm2-radius-sm);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  line-height: 24px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+  transition: top var(--sm2-dur-tap) var(--sm2-ease);
+}
+.sm-skip-link:focus {
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  outline: 2px solid var(--sm2-primary-ink);
+  outline-offset: 2px;
+}

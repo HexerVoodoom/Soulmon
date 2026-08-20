@@ -305,7 +305,7 @@ function TriageDone({ isPt, decided, onClose }: { isPt: boolean; decided: number
   const nothingToDo = decided === 0;
   return (
     <div style={{ padding: '24px 20px 24px', textAlign: 'center' }}>
-      <Icon name={nothingToDo ? 'spa' : 'auto_awesome'} size={40} fill={1}
+      <Icon name={nothingToDo ? 'spa' : 'auto_awesome'} size={48} fill={1}
         tone={nothingToDo ? 'primary' : 'gold'} />
       <p className="sm2-title" style={{ ...sm2TitleStyle, marginTop: 8 }}>
         {nothingToDo

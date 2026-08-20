@@ -592,7 +592,7 @@ export function EvolutionPath({
             {/* `pets` e não `account_tree`: o inventário da fonte subsetada tem
                 102 nomes e `account_tree` não está nele — nome fora do
                 inventário renderiza VAZIO e não dá erro (tokens.md §5). */}
-            <Icon name="pets" size={40} tone="muted" />
+            <Icon name="pets" size={48} tone="muted" />
             <p style={{ ...sm2Text, fontWeight: 500, marginTop: 8 }}>
               {isPt ? 'Sua árvore ainda não foi revelada' : 'Your tree hasn’t been revealed yet'}
             </p>

@@ -110,7 +110,7 @@ export function SwitchRow({
         <span style={{ ...sm2Text, display: 'block', fontSize: 'var(--sm2-text-md)' }}>{label}</span>
         {hint && <span style={{ ...sm2Hint, display: 'block' }}>{hint}</span>}
       </span>
-      <Icon name="check_circle" size={28} fill={checked ? 1 : 0} tone={checked ? 'primary' : 'muted'} />
+      <Icon name="check_circle" size={24} fill={checked ? 1 : 0} tone={checked ? 'primary' : 'muted'} />
     </button>
   );
 }

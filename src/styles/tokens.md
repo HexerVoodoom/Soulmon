@@ -382,10 +382,45 @@ como NÚMERO (o `opsz` é casado a ele em JS, §6 regra 3), então um
 esta tabela + a revisão. Tamanho novo fora dos quatro degraus só entra aqui
 com o papel escrito ao lado — se o papel já existe, use o degrau que existe.
 
-> **Duas dívidas conhecidas, de outros donos:** `ChatBox` usa 26/30 (o degrau é
-> **32**) e várias páginas ainda têm 18/22/28/40/48 herdados de antes desta
-> tabela. Elas migram na onda de quem for dono do arquivo; a Loja, a nav e este
-> documento já estão na escala.
+**A tabela acima é EXECUTÁVEL**: `src/styles/iconScale.contract.test.ts` lê os
+degraus daqui (não os digita) e varre o `src/` inteiro por
+`<Icon size={n}>` / `<NavGlyph size={n}>`. Tamanho fora dos degraus reprova.
+Degrau novo escrito nesta tabela passa a valer no mesmo commit; dívida
+consciente vai para a allowlist do guard, **com o motivo escrito**.
+
+> **Dívidas migradas (onda de escala de ícone).** Eram 38 de 100 call-sites
+> fora da escala. `ChatBox` (26/30) foi para **32**; 18/16 inline foram para
+> **20**; 28/26 de coluna de linha foram para **24**; 22 foi para **20** ou
+> **24** conforme o papel. Sobraram 10, todos do MESMO papel — ver §6.1a.
+
+### 6.1a Um 5º degrau, proposto (`state` = 48) — PENDENTE DE DONO
+
+Migrar os 38 call-sites fora de escala pelo PAPEL (e não pelo número mais
+próximo) revelou uma coisa que a tabela não previa: **28 caíram limpos nos
+quatro degraus e os 10 restantes são todos a mesma coisa**, escrita por autores
+diferentes em seis arquivos — um glifo sozinho, centralizado, acima de um
+parágrafo, que **É a tela naquele momento**: estado vazio ("sua árvore ainda não
+foi revelada"), estado de erro ("não deu para falar com o servidor"), estado de
+conclusão ("pilha arrumada!"), herói do relatório diário e da intro da masmorra.
+Estavam espalhados em 40 e 48; foram **unificados em 48**.
+
+| degrau proposto | px | papel |
+|---|---|---|
+| `state` | **48** | o glifo que É a tela: estado vazio, estado de erro, estado de conclusão, herói de modal. Nunca em linha, nunca em lista, **no máximo UM por tela**. |
+
+Por que não coube nos quatro que existem: **42 (`deck`) é o deck de ações do
+aparelho na Home** e a §6.1 diz "o papel — e SÓ ele"; um estado vazio desenhado
+do tamanho do botão de dar comida é colisão de significado, não hierarquia.
+**32 (`nav`) é a barra do aparelho**, e rebaixar para lá encolhe em 33% a única
+coisa desenhada numa tela vazia. **48** já era o valor de 3 dos 10, e o do
+relatório diário vive numa caixa de 48×48 declarada no JSX — o precedente da
+§6.2 ("arte mora numa CAIXA, e a caixa manda no glifo") aponta para cá. Fica em
+48 e não em 56 porque 56 é a caixa `art-md` da §6.2: um ícone de sistema do
+tamanho da caixa de arte confunde as duas escalas.
+
+Enquanto a linha não entra na tabela de §6.1, os 10 vivem na allowlist do guard
+(`iconScale.contract.test.ts`, ENTRADA 1) e o guard **cobra a retirada da
+entrada** no dia em que 48 virar degrau oficial.
 
 ### 6.2 EMOJI E ARTE NÃO SÃO TEXTO — nem ícone
 

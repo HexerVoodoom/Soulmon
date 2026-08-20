@@ -368,9 +368,9 @@ export function ChatBox({
             aria-label={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
           >
             {isLoading ? (
-              <Icon name="sync" size={26} tone="muted" className="animate-spin" />
+              <Icon name="sync" size={32} tone="muted" className="animate-spin" />
             ) : (
-              <Icon name="send" size={30} fill={1} tone="primary" />
+              <Icon name="send" size={32} fill={1} tone="primary" />
             )}
           </button>
         ) : (
@@ -385,11 +385,11 @@ export function ChatBox({
             aria-label={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
           >
             {isRecording ? (
-              <Icon name="stop_circle" size={30} fill={1} tone="danger" />
+              <Icon name="stop_circle" size={32} fill={1} tone="danger" />
             ) : isLoading ? (
-              <Icon name="sync" size={26} tone="muted" className="animate-spin" />
+              <Icon name="sync" size={32} tone="muted" className="animate-spin" />
             ) : (
-              <Icon name="mic" size={30} tone="ink" />
+              <Icon name="mic" size={32} tone="ink" />
             )}
           </button>
         )}

@@ -116,7 +116,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             style={{ ...sm2Button('quiet'), width: '100%' }}
           >
             {loading === 'restore'
-              ? <><Icon name="sync" size={18} className="animate-spin" />{isPt ? 'Restaurando…' : 'Restoring…'}</>
+              ? <><Icon name="sync" size={20} className="animate-spin" />{isPt ? 'Restaurando…' : 'Restoring…'}</>
               : (isPt ? 'Já comprei — restaurar' : 'Already bought — restore')}
           </button>
         </div>

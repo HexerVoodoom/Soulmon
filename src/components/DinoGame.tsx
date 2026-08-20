@@ -213,7 +213,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           de 34px do botao de sair virou quadrado chanfrado de 44px — era o
           ultimo controle redondo da tela (portao T2). */}
       <div className="sm-px-arcade-bar" style={{ margin: '14px 16px 8px', justifyContent: 'space-between' }}>
-        <Icon name="pets" size={22} />
+        <Icon name="pets" size={20} />
         <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
           {isPt ? 'Corrida do Dino' : 'Dino Runner'}
         </span>
@@ -279,7 +279,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           className="sm-px-jump"
           aria-label={isPt ? 'Pular' : 'Jump'}
         >
-          <Icon name="expand_less" size={22} weight={600} />
+          <Icon name="expand_less" size={20} weight={600} />
           {isPt ? 'Pular' : 'Jump'}
         </button>
       </div>

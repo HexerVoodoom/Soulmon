@@ -83,7 +83,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         {/* CHROME: cabecalho, sair e a linha de resultado sao interface. As
             PECAS do jogo (os tres emojis de mao) e o sprite do pet sao a cena
             e ficam como estao. */}
-        <Icon name="casino" size={22} />
+        <Icon name="casino" size={20} />
         <span className="sm-px-arcade-value" style={{ flex: 1, minWidth: 0 }}>
           {isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
         </span>

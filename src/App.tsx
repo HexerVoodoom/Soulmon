@@ -1075,6 +1075,10 @@ export default function App() {
     // só para com o 🚿 BANHO.
   };
 
+  /** Abre o modal de Créditos (linha do menu da nav). Identidade estável em
+   *  vez de lambda inline na prop — mesma disciplina do CompanionHUD. */
+  const openCredits = useCallback(() => setCreditsOpen(true), []);
+
   const handleEditActivity = useCallback((activityId: string) => {
     setEditingActivity(activityId);
     setEditModalOpen(true);
@@ -2831,6 +2835,22 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
+        {/* ── PULAR PARA O CONTEÚDO ────────────────────────────────────────
+            PRIMEIRO nó focável do documento, de propósito: a barra de
+            navegação é montada antes do `<main>` no DOM, então quem navega
+            por teclado atravessava os 5 botões da nav (e, com o popover
+            aberto, mais 4 linhas) antes de alcançar o conteúdo — em TODA
+            troca de tela.
+
+            Padrão consagrado, inteiro: fica fora da tela em repouso (nunca
+            `display:none`, que o tiraria da ordem de foco e o tornaria
+            inútil), aparece ao receber foco e leva ao `<main id="conteudo">`,
+            que tem `tabIndex={-1}` para ser um alvo de foco programático de
+            verdade — sem isso o `href="#…"` move a âncora do documento mas o
+            Tab seguinte volta para a nav, que é o defeito clássico. */}
+        <a href="#conteudo" className="sm-skip-link">
+          {language === 'pt-BR' ? 'Pular para o conteúdo' : 'Skip to content'}
+        </a>
         <PixelFrame />
         {/* Selo de "sem sinal": montado UMA vez, aqui, e por isso cobre todas
             as superfícies do app sem redesenhar nenhuma. Ele se acende sozinho
@@ -2870,15 +2890,6 @@ export default function App() {
             language={language}
           />
         )}
-
-        {/* Navegação principal — barra fixa no rodapé (abaixo do chat), ícones abertos */}
-        <BottomNav
-          currentView={currentView}
-          onNavigate={setCurrentView}
-          onResetOnboarding={handleResetOnboarding}
-          onOpenCredits={() => setCreditsOpen(true)}
-          language={language}
-        />
 
         {/* Créditos (monetização) — modal próprio, aberto pelo menu sanduíche. */}
         {creditsOpen && (
@@ -2943,6 +2954,9 @@ export default function App() {
             `currentView`), não dentro de cada página. */}
         <main
           id="conteudo"
+          /* Alvo do "pular para o conteúdo": `-1` = focável por programa,
+             fora da ordem de Tab. Ver o comentário no atalho lá em cima. */
+          tabIndex={-1}
           className="flex-1 overflow-y-auto px-6"
           style={{
             position: 'relative', zIndex: 1,
@@ -3812,6 +3826,26 @@ export default function App() {
             </Suspense>
           )}
         </main>
+
+      {/* Navegação principal — barra fixa no rodapé (abaixo do chat).
+          **Depois do `<main>` no DOM, de propósito.** Ela é `position: fixed`
+          (z-index 45 contra o z-index 1 do `<main>`), então a posição no JSX
+          não muda um pixel — muda a ORDEM DE FOCO, e essa estava invertida:
+          a barra mora no RODAPÉ da tela e era percorrida ANTES do conteúdo,
+          em toda troca de view. Medido: o Tab visitava os 5 botões da nav
+          (y≈843) antes do primeiro controle do conteúdo (y≈205). É a ordem
+          significativa da WCAG 2.4.3/1.3.2 — e vale igual para quem lê a tela
+          com leitor, que agora encontra o conteúdo antes do rodapé.
+          O atalho "pular para o conteúdo" continua no topo: ele é a saída
+          para a ordem inversa (conteúdo longo → rodapé) e o único caminho
+          curto quando o foco já entrou na lista. */}
+      <BottomNav
+        currentView={currentView}
+        onNavigate={setCurrentView}
+        onResetOnboarding={handleResetOnboarding}
+        onOpenCredits={openCredits}
+        language={language}
+      />
 
       {editModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>

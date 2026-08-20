@@ -107,7 +107,7 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
         >
           {/* CHROME da cena, não conteúdo do visor: o fechar é interface e
               fala Material Symbols, não pixel. */}
-          <Icon name="close" size={22} tone="muted" />
+          <Icon name="close" size={24} tone="muted" />
         </button>
 
         <p style={{ fontSize: '0.76rem', color: 'var(--sm-muted)', margin: '0 0 10px' }}>

@@ -143,8 +143,54 @@ describe('BottomNav', () => {
     renderWithCss(<BottomNav currentView="main" onNavigate={onNavigate} />);
     expect(screen.queryByRole('button', { name: 'Library' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Library' }));
+    // Botão comum, e não `menuitem`: o popover é uma DIVULGAÇÃO (disclosure),
+    // não um menu de comandos de aplicação — ver a justificativa no BottomNav.
+    fireEvent.click(screen.getByRole('button', { name: 'Library' }));
     expect(onNavigate).toHaveBeenCalledWith('library');
+  });
+
+  it('o <nav> tem nome próprio nos dois idiomas (mais de um ponto de nav na página)', () => {
+    const en = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} />);
+    expect(en.container.querySelector('nav')!.getAttribute('aria-label')).toBe('Main navigation');
+    en.unmount();
+    const pt = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} language="pt-BR" />);
+    expect(pt.container.querySelector('nav')!.getAttribute('aria-label')).toBe('Navegação principal');
+  });
+
+  /**
+   * O popover é uma DIVULGAÇÃO, e o contrato dela é exatamente este:
+   * `aria-expanded` sem `aria-haspopup`, nenhum papel de menu (que prometeria
+   * setas e roving focus inexistentes), o Tab entrando nas linhas na ordem do
+   * DOM e o Escape devolvendo o foco ao gatilho.
+   */
+  it('divulgação, não menu: sem role=menu/menuitem e sem aria-haspopup', () => {
+    const { container } = renderWithCss(
+      <BottomNav currentView="main" onNavigate={() => {}} onResetOnboarding={() => {}} />,
+    );
+    const menuBtn = screen.getByRole('button', { name: 'Menu' });
+    expect(menuBtn.getAttribute('aria-haspopup')).toBeNull();
+    fireEvent.click(menuBtn);
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+    expect(container.querySelector('[role="menuitem"]')).toBeNull();
+    // O nome acessível do grupo continua vindo do rótulo visível "Menu".
+    const grupo = container.querySelector('[role="group"]')!;
+    expect(grupo.getAttribute('aria-labelledby')).toBeTruthy();
+    expect(document.getElementById(grupo.getAttribute('aria-labelledby')!)!.textContent).toBe('Menu');
+    // As linhas vêm DEPOIS do gatilho no DOM — é isso que dá a ordem de Tab
+    // correta sem uma linha de código de foco.
+    expect(menuBtn.compareDocumentPosition(grupo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('Escape fecha o popover E devolve o foco ao botão que o abriu', () => {
+    renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} onResetOnboarding={() => {}} />);
+    const menuBtn = screen.getByRole('button', { name: 'Menu' });
+    fireEvent.click(menuBtn);
+    const linha = screen.getByRole('button', { name: 'Library' });
+    linha.focus();
+    fireEvent.keyDown(linha, { key: 'Escape' });
+    expect(screen.queryByRole('button', { name: 'Library' })).toBeNull();
+    expect(document.activeElement).toBe(menuBtn);
+    expect(menuBtn.getAttribute('aria-expanded')).toBe('false');
   });
 
   it('o menu abre, mostra as ações e o backdrop fecha (saída de emergência)', () => {

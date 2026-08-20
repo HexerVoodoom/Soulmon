@@ -222,7 +222,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       {/* ── Erro / sem rede: nunca confundido com "não há ninguém" ── */}
       {loadError && (
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <Icon name="cloud_off" size={40} tone="muted" />
+          <Icon name="cloud_off" size={48} tone="muted" />
           <p style={{ ...sm2Text, marginTop: 8 }}>
             {isPt ? 'Não deu para falar com o servidor.' : "Couldn't reach the server."}
           </p>

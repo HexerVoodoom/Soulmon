@@ -117,7 +117,7 @@ export function CreditsModal({
         opacity: disabled ? 0.55 : 1,
       }}
     >
-      <Icon name={icon} size={26} tone={disabled ? 'muted' : tone} />
+      <Icon name={icon} size={24} tone={disabled ? 'muted' : tone} />
       <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <span style={{ ...sm2Text, fontWeight: 500 }}>{title}</span>
         <span style={sm2Hint}>{hint}</span>
@@ -137,7 +137,7 @@ export function CreditsModal({
       language={language}
       footer={
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Icon name="diamond" size={22} tone="primary" label={isPt ? 'Créditos' : 'Credits'} />
+          <Icon name="diamond" size={20} tone="primary" label={isPt ? 'Créditos' : 'Credits'} />
           <span className="sm2-num" style={{ ...sm2Text, fontWeight: 500 }}>{credits}</span>
         </div>
       }
@@ -223,7 +223,7 @@ export function CreditsModal({
       {confirmingReroll && (
         <div style={{ padding: 12, borderRadius: 16, backgroundColor: 'var(--sm2-surface-2)', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <p style={{ ...sm2Text, margin: 0, display: 'flex', gap: 10 }}>
-            <Icon name="warning" size={22} tone="danger" />
+            <Icon name="warning" size={20} tone="danger" />
             {isPt
               ? `Troca seu Soulmon por um NOVO e reseta a evolução pra Rookie. Atividades, tarefas e Bits continuam. Custa ${REROLL_COST_CREDITS} créditos.`
               : `Swaps your Soulmon for a brand-new one and resets evolution to Rookie. Activities, tasks and Bits stay. Costs ${REROLL_COST_CREDITS} credits.`}

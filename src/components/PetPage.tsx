@@ -248,7 +248,7 @@ export function PetPage({
         </section>
       ) : (
         <section style={{ ...card, textAlign: 'center' }}>
-          <Icon name="egg" size={40} tone="muted" />
+          <Icon name="egg" size={48} tone="muted" />
           {/* O ESTADO VAZIO também tem `<h1>`: sem ele esta tela ficava sem
               heading nenhum, e é justamente o estado em que a pessoa mais
               precisa saber onde está. */}

@@ -431,7 +431,7 @@ export function NightmareBattle({
         >
           {/* CHROME: o fechar é interface, não conteúdo da cena. Tinta fixa
               porque o cartão tem contexto escuro próprio (#0c1120) — 8,9:1. */}
-          <Icon name="close" size={22} style={{ color: '#9fb2d8' }} />
+          <Icon name="close" size={24} style={{ color: '#9fb2d8' }} />
         </button>
 
         {/* ── Convite ─────────────────────────────────────────────────── */}

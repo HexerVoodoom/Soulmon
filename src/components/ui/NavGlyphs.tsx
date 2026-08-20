@@ -133,6 +133,16 @@ const HOME_DOOR_HOLE = 'M9.5 22.4v-5.8a2.5 2.5 0 0 1 5 0V22.4';
  * central da nav, então o defeito custava caro. A correção é geométrica e não
  * cosmética: braço mais largo (o lado reto passa a existir de fato) e concavidade
  * de 0.7, que marca o encaixe sem comer o braço.
+ *
+ * **O 0.7 fica, e a decisão foi MEDIDA, não herdada.** A crítica é justa — com
+ * 0.7 o encaixe côncavo (um dos três motivos da assinatura) some abaixo de
+ * 32px. Só que a alternativa foi rasterizada: subindo a concavidade para 1.2 e
+ * comparando pixel a pixel os oito quadros (20/24/32/42 × fill 0 e 1), a
+ * diferença é de **0.6% dos pixels, e nenhum deles fora do antialias** — o
+ * encaixe continua invisível, e o único efeito real é aproximar de novo o braço
+ * do trevo que a rodada anterior matou. Recuperar o côncavo aqui custaria a
+ * legibilidade do ícone central da nav; o motivo côncavo continua vivo onde ele
+ * cabe (as pontas da fagulha). Não gaste a rodada nisto de novo.
  */
 const DPAD =
   'M9.6 3h4.8a1.4 1.4 0 0 1 1.4 1.4V7.5a.7.7 0 0 0 .7.7H19.6a1.4 1.4 0 0 1 1.4 1.4'
@@ -171,18 +181,28 @@ const DPAD_HUB_HOLE: [number, number, number] = [12, 12, 2.05];
 const EVO_NODES: [number, number, number][] = [[5.2, 18.8, 2.3], [12, 12.4, 3.0], [18.6, 6.2, 3.7]];
 
 /**
- * Sacola. A versão anterior era trapézio + alça POR CIMA da boca, e as duas
- * decisões juntas soletravam BALDE (alça externa sobre corpo que afina embaixo)
- * — a rasterização confirmou pela segunda vez. Agora é o desenho que nenhum
- * balde tem: corpo de LADOS RETOS com ombro reto no topo, e a alça DENTRO da
- * sacola, um arco que não ultrapassa a boca. Balde nenhum guarda a alça dentro
- * de si. No estado cheio o arco vira o VAZIO.
+ * Sacola — QUARTA tentativa, e as três anteriores morreram pela mesma
+ * restrição autoimposta: "a alça mora DENTRO da boca". Ela nasceu para matar o
+ * balde (alça externa sobre corpo que afina), mas o preço era um retângulo
+ * arredondado FECHADO com um arquinho solto no meio — em 20px cheio, um
+ * quadrado preto com um entalhe branco. Pior: o entalhe era o MESMO arco da
+ * porta do `home`, o vizinho imediato na barra.
+ *
+ * O que uma sacola tem e um balde não tem não é a alça por dentro — é a BOCA.
+ * Agora são três peças: o **corpo** (lados retos), a **borda** que passa dele
+ * (a boca, mais larga que o corpo — a lasca de traço que sobra dos dois lados é
+ * o que diz "isto é um recipiente aberto") e a **alça ACIMA da boca**.
+ *
+ * E some o furo: a alça e a borda são TRAÇO e vivem no contorno, que é
+ * desenhado sempre — inclusive sob a camada cheia. Cheio vira corpo sólido com
+ * arco vazado por cima, que é a silhueta de sacola e de nada mais. Sem `holes`,
+ * sem colisão de motivo com a porta do Início.
  */
 const SHOP_BAG =
-  'M6.4 5.4h11.2a1.4 1.4 0 0 1 1.4 1.4v12a1.8 1.8 0 0 1-1.8 1.8H6.8'
-  + 'a1.8 1.8 0 0 1-1.8-1.8V6.8a1.4 1.4 0 0 1 1.4-1.4Z';
-const SHOP_HANDLE = 'M10.1 12V11.4a1.9 1.9 0 0 1 3.8 0v.6';
-const SHOP_HANDLE_HOLE = `${SHOP_HANDLE}Z`;
+  'M6 9.4h12a1 1 0 0 1 1 1.05v7.15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7.15'
+  + 'a1 1 0 0 1 1-1.05Z';
+const SHOP_RIM = 'M4.2 9.4h15.6';
+const SHOP_HANDLE = 'M9.2 9.4V7.6a2.8 2.8 0 0 1 5.6 0v1.8';
 
 /** Menu: quatro nós. O mesmo círculo da Evolução, em grade. */
 const MENU_NODES: [number, number, number][] = [
@@ -218,14 +238,24 @@ const BOWL_FOOT = 'M8.6 20.4h6.8';
 /** Caixa de itens: tampa + corpo + trava em ARCO de r 2.4. */
 /**
  * Caixa de itens: tampa LARGA e baixa + corpo estreito + trava em ARCO de 2.4.
- * A folga entre as duas peças (9.6 → 10.5) e a diferença de largura são o que
- * impede a versão cheia de virar uma fatia de pão — que foi como ela leu em
- * 32px quando tampa e corpo tinham a mesma largura e se encostavam.
+ * A folga entre as duas peças e a diferença de largura são o que impede a
+ * versão cheia de virar uma fatia de pão — que foi como ela leu em 32px quando
+ * tampa e corpo tinham a mesma largura e se encostavam.
+ *
+ * **A folga tem que ser maior que o TRAÇO INTEIRO, não que meio traço.** A
+ * rodada passada deixou 1.4 de vão (tampa até 9.4, corpo a partir de 10.8) e
+ * isso é menos do que o próprio contorno gasta: a tampa desce 1.05 abaixo da
+ * base (→10.45) e o corpo sobe 1.05 acima do topo (→9.75). Os dois se
+ * SOBREPÕEM, tampa e corpo viram uma peça só e o glifo cheio lê como CAMISETA —
+ * no deck da Home, a 42px, no ícone de "Itens".
+ *
+ * Agora o vão é **3.2** (8.4 → 11.6): 2.1 gastos pelos dois contornos e **1.1
+ * de branco sobrando**, que é o que sobrevive à rasterização em 20px.
  */
 const BOX_LID =
-  'M4.2 4.4h15.6a1 1 0 0 1 1 1v2.8a1 1 0 0 1-1 1H4.2a1 1 0 0 1-1-1V5.4a1 1 0 0 1 1-1Z';
-const BOX_BODY = 'M5.6 10.8h12.8v7.6a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2Z';
-const BOX_LATCH = 'M9.6 10.8a2.4 2.4 0 0 0 4.8 0';
+  'M4.2 4h15.6a1 1 0 0 1 1 1v2.4a1 1 0 0 1-1 1H4.2a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z';
+const BOX_BODY = 'M5.6 11.6h12.8v6.8a2 2 0 0 1-2 2H7.6a2 2 0 0 1-2-2Z';
+const BOX_LATCH = 'M9.6 11.6a2.4 2.4 0 0 0 4.8 0';
 
 /**
  * Chuveiro: cúpula (ARCO r 6.4) + aro + a água caindo.
@@ -259,9 +289,19 @@ const RING = 'M20.6 12a8.6 8.6 0 1 1-17.2 0 8.6 8.6 0 1 1 17.2 0Z';
  * `task_alt`: o MESMO anel e o MESMO cheque, só que o cheque SAI por uma falha
  * do anel. Com o cheque contido, `task_alt` e `check_circle` ficavam
  * indistinguíveis em 20px — dois nomes para o mesmo desenho.
+ *
+ * **A camada cheia é o anel ABERTO fechado por uma corda** (`RING_DISC_OPEN`),
+ * não o anel inteiro. Enchendo com o `RING` fechado o furo do cheque — que sai
+ * do anel (ponta em 19.4,6, a 9.5 do centro contra raio 8.6) — atravessava a
+ * borda do disco e abria uma MORDIDA numa parte cheia do desenho: em 20px, um
+ * borrão torto. Com o disco já faltando a cunha por onde o cheque passa
+ * (−22° a −54°, e o cheque cruza a borda em −38°, com folga angular dos dois
+ * lados), o branco do furo cai onde o contorno também tem falha: cheio e vazio
+ * viram o mesmo desenho, que é a tese do arquivo.
  */
 const CHECK_OUT = 'M8 12.4 11 15.4 19.4 6';
 const RING_OPEN = 'M19.97 8.78A8.6 8.6 0 1 1 17.05 5.04';
+const RING_DISC_OPEN = `${RING_OPEN}Z`;
 const CHECK_BARE = 'M5.2 12.6 9.8 17.2 18.8 6.8';
 const CLOSE = 'M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6';
 /* O mais. É a cruz direcional sem os cantos: por isso o D-pad da nav precisou
@@ -274,17 +314,49 @@ const ARROW = 'M4.2 12h15.6M13.4 5.6 19.8 12l-6.4 6.4';
 
 /** Créditos: losango + faceta. A faceta vira VAZIO no estado cheio. */
 const GEM = 'M12 3.4 20.6 12 12 20.6 3.4 12Z';
-/* A faceta NÃO encosta nas arestas: com ela de ponta a ponta, o vazio cortava o
-   losango em dois e a coroa ficava boiando solta no estado cheio. */
-const GEM_FACET = 'M9.6 8.6h4.8';
+/*
+ * A MESA (o `table` da lapidação) — o traço vai de ARESTA A ARESTA.
+ *
+ * A faceta anterior era um traço curto solto no meio do losango, sem encostar em
+ * aresta nenhuma: uma pílula flutuante, isto é, um SINAL DE MENOS dentro de um
+ * losango — placa de proibição, e renderizada 7× por tela na Loja e no Menu.
+ * Faceta que não nasce numa aresta não é faceta, é ruído.
+ *
+ * Um V de duas diagonais saindo do ápice também toca as arestas, foi desenhado
+ * e foi DESCARTADO na rasterização: cheio, o vazio em V lê como CORAÇÃO em
+ * 24/32/42px (visto ampliado, não deduzido). Trocar "proibido" por "curtir" não
+ * é conserto. A mesa reta não tem essa segunda leitura.
+ *
+ * A altura é 9.2 e não o meio: ali o losango mede 11.6 de largura, o que dá
+ * mesa larga E uma coroa de proporção de joia acima dela.
+ * (6.2,9.2) e (17.8,9.2) caem exatamente sobre x+y=15.4 e x−y=8.6, as retas das
+ * duas arestas de cima.
+ *
+ * O VAZIO para 2.85 antes de cada aresta — mais que a meia-largura do furo
+ * (1.47) somada à espessura horizontal da aresta (1.48). Se ele fosse de ponta
+ * a ponta DECEPARIA a coroa do losango cheio e ela ficaria boiando solta; assim
+ * a coroa continua presa pelos dois cantos e a mesa lê como vinco, não corte.
+ */
+const GEM_FACET = 'M6.2 9.2H17.8';
+const GEM_FACET_HOLE = 'M9.05 9.2H14.95';
 
 /** Cadeado: corpo + haste em ARCO r 3.6 + o segredo, que é um NÓ. */
 const LOCK_BODY =
   'M6.4 10.4h11.2a1.8 1.8 0 0 1 1.8 1.8v7a1.8 1.8 0 0 1-1.8 1.8H6.4'
   + 'a1.8 1.8 0 0 1-1.8-1.8v-7a1.8 1.8 0 0 1 1.8-1.8Z';
 const LOCK_SHACKLE = 'M8.4 10.4V8a3.6 3.6 0 0 1 7.2 0v2.4';
-/** Aberto = a MESMA haste sem a perna direita descendo. */
-const LOCK_SHACKLE_OPEN = 'M8.4 10.4V8a3.6 3.6 0 0 1 7.2 0';
+/**
+ * Aberto = a MESMA haste, DESENGATADA PARA O LADO.
+ *
+ * Antes a única diferença era a perna direita 2.4 mais curta, e a Loja renderiza
+ * `lock` seis vezes a 24px: dois cadeados com o mesmo arco centrado sobre o
+ * mesmo corpo são o mesmo ícone, e "travado/destravado" — que é a informação —
+ * some. A correção é a que a Material usa: a haste SAI do lugar. O arco inteiro
+ * anda 3.8 para a direita, o pé direito desaparece (a haste soltou) e o pé
+ * esquerdo cai no corpo perto da borda. A silhueta muda de simétrica para
+ * assimétrica, que é uma diferença que sobrevive a 20px.
+ */
+const LOCK_SHACKLE_OPEN = 'M12.2 10.4V8a3.6 3.6 0 0 1 7.2 0';
 const LOCK_KEY: [number, number, number] = [12, 15.7, 1.55];
 const LOCK_KEY_HOLE: [number, number, number] = [12, 15.7, 1.95];
 
@@ -332,16 +404,26 @@ const CLOCK_HANDS = 'M12 6.8V12l3.6 2.2';
  *
  * Raio diferente nos dois lados já estava certo e não bastou: a avaliação leu
  * GRÃO DE CAFÉ, e o culpado é a nervura — um vinco reto que morre nas duas
- * pontas de uma amêndoa é literalmente o desenho do grão. A correção é o TALO:
- * a mesma reta continua 2.6 para FORA da base. Folha com talo não é grão de
- * café, e o talo é a peça que nenhuma leitura alternativa tem.
+ * pontas de uma amêndoa é literalmente o desenho do grão. A correção é o TALO.
  *
- * O vazio cobre só o trecho DE DENTRO da lâmina (começa em 7.2 16.8, não na
- * ponta do talo): assim, cheio, o talo continua desenhado do lado de fora.
+ * Só que a rodada anterior *disse* talo e não *desenhou* talo: a lâmina tinha a
+ * ponta em 6,18.6 e a nervura começava em 4.6,19.4 — 2 unidades de sobra, que a
+ * ponta REDONDA do traço de 2.1 (0.5×largura de avanço em cada extremidade)
+ * engolia inteirinhas. Sobrava uma amêndoa com uma barra atravessada, ou seja
+ * **Ø, o símbolo de proibido** — o pior mal-entendido possível para o ícone que
+ * marca a maturidade de um hábito.
+ *
+ * Agora as duas correções juntas: a lâmina RECUOU (ponta em 7.4,17.2) e o talo
+ * DESCE (até 3.6,21). Os três pontos vivem na mesma diagonal x+y = 24.6, então
+ * o talo é a continuação exata da nervura, e sobram **5.4 unidades** de talo
+ * fora da lâmina — mais que o dobro do que a ponta redonda consegue comer.
+ *
+ * O vazio cobre só o trecho DE DENTRO da lâmina: assim, cheio, o talo continua
+ * desenhado (preto) do lado de fora, que é onde ele faz o trabalho.
  */
-const LEAF = 'M6 18.6A13 13 0 0 1 19.6 5 10.5 10.5 0 0 1 6 18.6Z';
-const LEAF_VEIN = 'M4.6 19.4 14.4 9.6';
-const LEAF_VEIN_HOLE = 'M7.2 16.8 14.4 9.6';
+const LEAF = 'M7.4 17.2A13 13 0 0 1 19.6 5 10.5 10.5 0 0 1 7.4 17.2Z';
+const LEAF_VEIN = 'M3.6 21 14.6 10';
+const LEAF_VEIN_HOLE = 'M9.4 15.2 14.6 10';
 
 /** Fagulha: estrela de 4 pontas CÔNCAVAS — a mesma concavidade do D-pad. */
 const SPARK_BIG =
@@ -429,9 +511,8 @@ const GLYPHS: Record<string, GlyphDef> = {
     solid: <>{circles(EVO_NODES)}</>,
   },
   shop: {
-    outline: <><path d={SHOP_BAG} /><path d={SHOP_HANDLE} /></>,
+    outline: <><path d={SHOP_BAG} /><path d={SHOP_RIM} /><path d={SHOP_HANDLE} /></>,
     solid: <path d={SHOP_BAG} />,
-    holes: <>{areaHole(SHOP_HANDLE_HOLE)}{strokeHole(SHOP_HANDLE)}</>,
   },
   menu: {
     outline: <>{circles(MENU_NODES)}</>,
@@ -466,7 +547,7 @@ const GLYPHS: Record<string, GlyphDef> = {
   /* ── Lista diária: concluir, marcar, expandir ─────────────────────────── */
   task_alt: {
     outline: <><path d={RING_OPEN} /><path d={CHECK_OUT} /></>,
-    solid: <path d={RING} />,
+    solid: <path d={RING_DISC_OPEN} />,
     holes: strokeHole(CHECK_OUT),
   },
   check_circle: {
@@ -488,7 +569,7 @@ const GLYPHS: Record<string, GlyphDef> = {
   diamond: {
     outline: <><path d={GEM} /><path d={GEM_FACET} /></>,
     solid: <path d={GEM} />,
-    holes: strokeHole(GEM_FACET),
+    holes: strokeHole(GEM_FACET_HOLE),
   },
   /* A haste do cadeado é TRAÇO nas duas camadas. Antes a camada sólida
      PREENCHIA o caminho ABERTO da haste — vira uma lente colada no corpo, e era

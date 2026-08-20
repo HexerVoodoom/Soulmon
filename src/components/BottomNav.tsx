@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Language } from '../utils/i18n';
 import { Icon } from './ui/Icon';
 import { NavGlyph, type NavGlyphName } from './ui/NavGlyphs';
@@ -44,18 +44,22 @@ interface BottomNavProps {
  * `auto_awesome` sozinhos são adivinhação, e o texto na tela é o mesmo do
  * `aria-label` (quem vê e quem ouve leem a mesma coisa).
  */
-function NavItem({ icon, label, active, onClick, current, expanded }: {
+function NavItem({ icon, label, active, onClick, current, expanded, buttonRef }: {
   icon: NavGlyphName; label: string; active?: boolean; onClick: () => void;
   /** `aria-current="page"` só para destinos de verdade, não para ações. */
   current?: boolean;
+  /** Gatilho de DIVULGAÇÃO (disclosure): só `aria-expanded`, nunca
+   *  `aria-haspopup` — ver o bloco de semântica no painel, abaixo. */
   expanded?: boolean;
+  buttonRef?: React.Ref<HTMLButtonElement>;
 }) {
   return (
     <button
+      ref={buttonRef}
       onClick={onClick}
       aria-label={label}
       aria-current={current && active ? 'page' : undefined}
-      {...(expanded === undefined ? null : { 'aria-expanded': expanded, 'aria-haspopup': true as const })}
+      {...(expanded === undefined ? null : { 'aria-expanded': expanded })}
       className="sm-bottom-nav-btn"
       title={label}
       /* Inline e não classe: footgun 1 — o Tailwind aqui é pré-compilado e
@@ -96,7 +100,7 @@ function NavItem({ icon, label, active, onClick, current, expanded }: {
   );
 }
 
-/** Id do rótulo do painel de menu — o `aria-labelledby` do `role="menu"`
+/** Id do rótulo do painel de menu — o `aria-labelledby` do grupo de linhas
  *  aponta para ele. Constante de módulo (e não `useId`) porque só existe UM
  *  painel de menu montado por vez em todo o app. */
 const MENU_LABEL_ID = 'sm-menu-panel-label';
@@ -105,14 +109,15 @@ const MENU_LABEL_ID = 'sm-menu-panel-label';
  *  Era 22 — um degrau que não existe, herdado de antes da escala. */
 const ICON_ACTION = 24;
 
-/** Linha do menu sanduíche. Ícone pelado + texto Rubik 14px. */
+/** Linha do menu sanduíche. Ícone pelado + texto Rubik 14px.
+ *
+ *  **Botão comum, sem `role="menuitem"`** — ver a justificativa no painel. */
 function MenuRow({ icon, label, onClick, active, first }: {
   icon: string; label: string; onClick: () => void; active?: boolean; first?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      role="menuitem"
       style={{
         display: 'flex', alignItems: 'center', gap: 10, width: '100%',
         minHeight: 44, padding: '11px 14px',
@@ -151,6 +156,30 @@ function MenuRow({ icon, label, onClick, active, first }: {
 export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCredits, language = 'en-US' }: BottomNavProps) {
   const isPt = language === 'pt-BR';
   const [menuOpen, setMenuOpen] = useState(false);
+  /** O gatilho do popover — o Escape devolve o foco PARA ELE. Sem isso, fechar
+   *  pelo teclado com o foco dentro do painel joga o foco para o `<body>` e a
+   *  pessoa recomeça a nav do zero. */
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+
+  const closeMenuAndFocus = useCallback(() => {
+    setMenuOpen(false);
+    menuBtnRef.current?.focus();
+  }, []);
+
+  const onNavKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && menuOpen) { closeMenuAndFocus(); e.stopPropagation(); }
+  }, [menuOpen, closeMenuAndFocus]);
+
+  /** Sair do popover com Tab FECHA o popover (padrão de divulgação). Sem isto,
+   *  o painel ficaria aberto por trás enquanto o foco já está noutro lugar —
+   *  e o próximo Shift+Tab voltaria para dentro de um painel esquecido. */
+  const onMenuBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setMenuOpen(false);
+  }, []);
+
+  const toggleMenu = useCallback(() => setMenuOpen(o => !o), []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   // Torneio mora dentro de Atividades (junto dos minigames); Estatísticas mora
   // dentro de Evolução (aba interna — ver App.tsx).
@@ -172,12 +201,17 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
 
   return (
     <nav
+      /* Um `<nav>` sem nome é "navigation" na lista de landmarks — e agora há
+         mais de um ponto de navegação na página (o atalho "pular para o
+         conteúdo" e esta barra). O nome é o mesmo texto em EN/PT do resto do
+         app. */
+      aria-label={isPt ? 'Navegação principal' : 'Main navigation'}
       className="sm-bottom-nav"
       /* A altura continua vindo da classe (`--sm-bottomnav-h`); o que muda por
          inline é só a pele: superfície e a linha de cobre do aparelho, agora em
          tokens `--sm2-*`. */
       style={{ background: 'var(--sm2-surface)', borderTop: '2px solid var(--sm2-viewport-ring)' }}
-      onKeyDown={e => { if (e.key === 'Escape' && menuOpen) { setMenuOpen(false); e.stopPropagation(); } }}
+      onKeyDown={onNavKeyDown}
     >
       {items.map(({ view, label, icon }) => (
         <NavItem
@@ -192,20 +226,24 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
 
       {/* Menu sanduíche — sempre por último (à direita de tudo). Agrega
           Biblioteca + Créditos + Configurações + Recomeçar num popover. */}
-      <div style={{ position: 'relative', flex: 1, display: 'flex', height: '100%' }}>
+      <div
+        style={{ position: 'relative', flex: 1, display: 'flex', height: '100%' }}
+        onBlur={onMenuBlur}
+      >
         <NavItem
           icon="menu"
           label={isPt ? 'Menu' : 'Menu'}
           active={menuActive}
           expanded={menuOpen}
-          onClick={() => setMenuOpen(o => !o)}
+          buttonRef={menuBtnRef}
+          onClick={toggleMenu}
         />
 
         {menuOpen && (
           <>
             {/* Backdrop transparente — fecha o popover ao tocar fora dele. */}
             <div
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenu}
               style={{ position: 'fixed', inset: 0, zIndex: 60 }}
             />
             {/* O PAINEL É UM CONTEXTO NOVO, e ele precisa se apresentar.
@@ -215,10 +253,37 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
                 (`H1:Shop, H2:Items…`) e não havia nada dizendo que outro
                 contexto tinha entrado — medido.
 
-                Semântica escolhida: **menu, não diálogo**. Ele não é modal
-                (o toque fora fecha, o conteúdo de baixo continua válido e
-                nada aqui é uma tarefa a concluir), então `role="dialog"` +
-                `aria-modal` mentiria sobre a inércia do resto da tela.
+                Semântica escolhida: **DIVULGAÇÃO (disclosure), não menu e
+                não diálogo** — e isto é uma correção deliberada do
+                `role="menu"` que morava aqui.
+
+                Diálogo está fora porque ele não é modal: o toque fora fecha,
+                o conteúdo de baixo continua válido e nada aqui é tarefa a
+                concluir; `aria-modal` mentiria sobre a inércia da tela.
+
+                `role="menu"` também está fora, e o motivo é o conteúdo: as
+                linhas daqui são majoritariamente DESTINOS (Biblioteca,
+                Configurações) e não comandos de aplicação. O papel `menu` da
+                ARIA descreve a barra de menus de um app de desktop
+                (Arquivo/Editar/Exibir), e vem com um contrato caro: foco
+                rotativo (roving), um único ponto de tabulação, setas
+                obrigatórias, Home/End — e, o preço real, o Tab deixa de
+                percorrer os itens. Implementar isso para quatro links seria
+                ensinar ao usuário um modelo de interação que a página
+                inteira não usa; não implementar (o estado anterior) era pior
+                ainda: o papel PROMETIA setas que não existiam e o leitor de
+                tela anunciava "menu, 4 itens" para uma lista que o Tab nem
+                alcançava.
+
+                A divulgação entrega o mesmo resultado sem contrato nenhum:
+                botão com `aria-expanded`, painel logo DEPOIS dele no DOM (o
+                Tab entra nas linhas na ordem visual, sem código de foco),
+                Escape fecha devolvendo o foco ao botão
+                (`closeMenuAndFocus`), e sair por Tab fecha o painel
+                (`onMenuBlur`). `aria-haspopup` saiu junto do papel: sem
+                `role="menu"` no destino ele passaria a anunciar um menu que
+                não existe. O grupo abaixo mantém o NOME acessível pelo
+                mesmo `aria-labelledby` de antes.
 
                 **E o rótulo NÃO é um heading — foi medido por que.** Este
                 `<nav>` é montado ANTES do conteúdo da página no DOM (o
@@ -270,7 +335,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
               >
                 {isPt ? 'Menu' : 'Menu'}
               </p>
-              <div role="menu" aria-labelledby={MENU_LABEL_ID}>
+              <div role="group" aria-labelledby={MENU_LABEL_ID}>
               <MenuRow
                 first
                 icon="person"

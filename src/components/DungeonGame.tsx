@@ -359,7 +359,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
             {/* CHROME: a barra de topo e o sair sao interface. O CAMPO DE
                 BATALHA abaixo (sprites, cenario, overlay VHS, popup) e
                 territorio retro e NAO migra. */}
-            <Icon name="swords" size={22} />
+            <Icon name="swords" size={20} />
             {isPt ? 'Masmorra' : 'Dungeon'}
           </span>
           <span className="sm-px-arcade-label" style={{ color: scene.accent }}>

@@ -523,7 +523,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               style={{ ...sm2Button('ghost'), marginBottom: 12 }}
               onClick={() => setOracleDebugOpen(false)}
             >
-              <Icon name="arrow_back" size={18} />
+              <Icon name="arrow_back" size={20} />
               {isPt ? 'Fechar' : 'Close'}
             </button>
             <OraclePage language={isPt ? 'pt-BR' : 'en-US'} initialDebugMode />
@@ -654,7 +654,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             />
             <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginTop: 16 }} onClick={next}>
               {isPt ? 'Continuar' : 'Continue'}
-              <Icon name="arrow_forward" size={18} />
+              <Icon name="arrow_forward" size={20} />
             </button>
             {/* Pular é de propósito: obrigar a escrever antes de ver o app é o
                 jeito mais rápido de perder alguém logo na primeira tela. */}
@@ -694,7 +694,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </button>
             ))}
             <button type="button" style={{ ...sm2Button('quiet'), marginTop: 4 }} onClick={() => { setFlow(null); setStep(0); }}>
-              <Icon name="arrow_back" size={18} />
+              <Icon name="arrow_back" size={20} />
               {isPt ? 'Voltar' : 'Back'}
             </button>
           </div>
@@ -913,7 +913,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {isUpgrade
                 ? (isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`)
                 : (isPt ? 'Continuar' : 'Continue')}
-              <Icon name="arrow_forward" size={18} />
+              <Icon name="arrow_forward" size={20} />
             </button>
           </div>
         )}
@@ -1009,7 +1009,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             </button>
             <button type="button" style={{ ...sm2Button('primary', !canAdvance()), flex: 1 }} onClick={next} disabled={!canAdvance()}>
               {isPt ? 'Continuar' : 'Continue'}
-              <Icon name="arrow_forward" size={18} />
+              <Icon name="arrow_forward" size={20} />
             </button>
           </div>
         )}
@@ -1019,7 +1019,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             para quem entrou no teste longo sem querer. */}
         {((step > QUIZ_START && step < QUIZ_END) || (step >= DEEP_START && step < DEEP_END)) && (
           <button type="button" style={{ ...sm2Button('quiet'), marginTop: 4 }} onClick={back}>
-            <Icon name="arrow_back" size={18} />
+            <Icon name="arrow_back" size={20} />
             {isPt ? 'Voltar' : 'Back'}
           </button>
         )}
