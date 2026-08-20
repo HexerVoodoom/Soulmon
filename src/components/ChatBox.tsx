@@ -310,19 +310,17 @@ export function ChatBox({
   };
 
   return (
-    /* Moldura de cobre chanfrada do kit no lugar do retângulo arredondado
-       cinza-ardósia (#1e2939/#364153 eram cores cruas, fora dos tokens).
+    /* MIGRADO para `--sm2-*` (`.sm2-chatbar` / `.sm2-chat-input` /
+       `.sm2-chat-btn`, no fim do `index.css`).
 
-       `--sm-px-cyan` é redefinido AQUI, no escopo da barra, para o token de
-       tema `--sm2-primary-fill`. O ciano do kit tem UM valor só nos dois
-       temas: o realce de foco do campo e o acender do hover do botão davam
-       ~1,4:1 no tema claro. Sobrescrever a variável no elemento raiz conserta
-       os dois de uma vez sem tocar no `index.css` (que é de outro dono) e sem
-       classe utilitária de valor arbitrário (footgun 1). */
-    <div
-      className="sm-px-chatbar"
-      style={{ '--sm-px-cyan': 'var(--sm2-primary-fill)' } as React.CSSProperties}
-    >
+       Estas três classes eram a última linguagem `sm-px-*` da Home: como a
+       barra é `position: fixed`, a moldura de cobre chanfrada aparecia em
+       100% da tela mais vista do app, ao lado de superfícies já migradas.
+       Some junto o hack que redefinia `--sm-px-cyan` no elemento raiz — o
+       ciano do kit tinha UM valor nos dois temas e dava ~1,4:1 no claro;
+       agora o foco e o hover saem de `--sm2-primary-ink`/`--sm2-primary-soft`,
+       que respondem ao tema e estão medidos na nota do `index.css`. */
+    <div className="sm2-chatbar">
       <div className="flex gap-2">
         <input
           type="text"
@@ -341,10 +339,10 @@ export function ChatBox({
           name={randomName}
           id={randomName}
           /* Cor, borda, foco e o mínimo de 16px (anti auto-zoom do iOS
-             Safari) vivem em `.sm-px-chat-input` no index.css. A fonte do
-             campo continua MONOESPAÇADA, não a bitmap: é onde se digita
-             frase livre em português, com acento. */
-          className="sm-px-chat-input"
+             Safari) vivem em `.sm2-chat-input` no index.css. A fonte do
+             campo continua MONOESPAÇADA (`--sm2-font-mono`), não a bitmap: é
+             onde se digita frase livre em português, com acento. */
+          className="sm2-chat-input"
           maxLength={200}
         />
 
@@ -365,7 +363,7 @@ export function ChatBox({
           <button
             onClick={handleSendMessage}
             disabled={isLoading}
-            className="sm-px-chat-btn"
+            className="sm2-chat-btn"
             title={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
             aria-label={language === 'pt-BR' ? 'Enviar mensagem' : 'Send message'}
           >
@@ -380,9 +378,9 @@ export function ChatBox({
             onClick={handleMicClick}
             disabled={isLoading}
             /* `flex-shrink: 0` e o mínimo de 44px de altura vivem em
-               `.sm-px-chat-btn`: sem eles o botão encolhia até ~18px num
+               `.sm2-chat-btn`: sem eles o botão encolhia até ~18px num
                flex row de 320px (medido com Playwright). */
-            className="sm-px-chat-btn"
+            className="sm2-chat-btn"
             title={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
             aria-label={isRecording ? (language === 'pt-BR' ? 'Parar gravação' : 'Stop recording') : (language === 'pt-BR' ? 'Gravar mensagem' : 'Record message')}
           >

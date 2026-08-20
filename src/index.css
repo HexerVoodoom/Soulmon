@@ -6478,7 +6478,15 @@ button.sm-px-node {
      A distinção das três moedas é regra de produto (CLAUDE.md): Bits em fonte
      de CALCULADORA, Emblemas em SERIFA de medalha, Créditos no texto do app +
      ícone 💎. A família fica; a cor virou token (ver `--sm2-credit-ink`). */
-  --sm2-font-mono: ui-monospace, 'Courier New', 'Cascadia Mono', monospace;
+  /* MEDIDO: `ui-monospace` no Windows resolve para a mono do SISTEMA, e a 12px
+     ela lê quase igual à Rubik de relance — ou seja, a "fonte de calculadora"
+     dos Bits, que é REGRA DE PRODUTO, dependia de plataforma. A pilha agora
+     nomeia uma face concreta por sistema ANTES de qualquer genérico, e as três
+     escolhidas têm o sinal que identifica dígito de máquina de imediato:
+     Cascadia Mono e Consolas no Windows e Menlo no macOS/iOS têm ZERO
+     CORTADO; Roboto Mono no Android tem zero pontilhado. `ui-monospace` fica
+     no fim, como rede, e não mais como primeira escolha. */
+  --sm2-font-mono: 'Cascadia Mono', Consolas, Menlo, 'Roboto Mono', 'DejaVu Sans Mono', 'Courier New', ui-monospace, monospace;
   --sm2-font-serif: 'Georgia', 'Times New Roman', serif;
 
   /* Escala FECHADA: 12/14/16/20/24/32. Piso ABSOLUTO de 12px — não existe
@@ -7155,4 +7163,80 @@ body {
 .rounded-t-2xl {
   border-top-left-radius: var(--sm2-radius-lg);
   border-top-right-radius: var(--sm2-radius-lg);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   BARRA DE CHAT — última fronteira `sm-px-*` da Home
+   ═════════════════════════════════════════════════════════════════════════
+   O ChatBox é `position: fixed` e aparece em 100% da Home, então as três
+   classes antigas (`sm-px-chatbar`, `sm-px-chat-input`, `sm-px-chat-btn`)
+   eram a última linguagem de fliperama na tela mais vista do app: moldura de
+   cobre chanfrada, ciano chapado do kit e o hack de redefinir `--sm-px-cyan`
+   no elemento raiz do componente para consertar o contraste do tema claro.
+
+   As classes velhas continuam no arquivo — outras telas ainda as usam. Estas
+   são as `--sm2-*` que o ChatBox passa a consumir.
+
+   CONTRASTE MEDIDO, nos dois temas, claro / escuro:
+   · texto digitado `--sm2-ink` sobre `--sm2-bg` ......... 14,96 / 16,15
+   · placeholder `--sm2-muted` sobre `--sm2-bg` .......... 5,35 / 8,83
+   · borda do campo `--sm2-muted` sobre `--sm2-surface` .. 5,80 / 7,43
+   · anel de foco `--sm2-primary-ink` sobre `--sm2-surface` 6,02 / 11,12
+   · ícone primário sobre o realce de hover ............... 5,21 / 7,68
+   · ícone de perigo sobre o realce de hover .............. 5,65 / 4,65
+
+   A borda do campo é `--sm2-muted` e NÃO `--sm2-line` de propósito: o miolo
+   do campo é `--sm2-bg` dentro de uma barra `--sm2-surface`, e esses dois dão
+   1,08 no claro — sem a borda o campo é invisível, e a borda é o que
+   identifica o controle, logo ela precisa do 3:1 da WCAG 1.4.11.
+   `--sm2-line` daria 1,25 e reprovaria.                                    */
+.sm2-chatbar {
+  box-sizing: border-box;
+  padding: 8px;
+  background-color: var(--sm2-surface);
+  border: 1px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-md);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .14);
+}
+/* 16px é o PISO, não uma escolha estética: abaixo disso o Safari do iOS dá
+   auto-zoom ao focar o campo e a Home inteira sai do lugar. A família é a
+   MONO de dado, não a bitmap do aparelho — aqui se digita frase livre em
+   português com acento, exatamente o caso que a Silkscreen não atende. */
+.sm2-chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  background-color: var(--sm2-bg);
+  color: var(--sm2-ink);
+  border: 1px solid var(--sm2-muted);
+  border-radius: var(--sm2-radius-sm);
+  font-family: var(--sm2-font-mono);
+  font-size: var(--sm2-text-md);
+  line-height: var(--sm2-leading-body);
+  &::placeholder { color: var(--sm2-muted); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 1px; }
+  &:disabled { opacity: .55; }
+}
+/* Ícone PELADO — sem moldura, sem fundo, sem chanfro, em nenhum estado de
+   repouso (regra do dono). O alvo de 50×44 é do BOTÃO, e o realce de hover é
+   transitório: ele anuncia o alvo, não desenha uma placa permanente. */
+.sm2-chat-btn {
+  width: 50px;
+  min-height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  background-color: transparent;
+  color: var(--sm2-ink);
+  border: none;
+  border-radius: var(--sm2-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--sm2-dur-tap) var(--sm2-ease);
+  &:hover:not(:disabled) { background-color: var(--sm2-primary-soft); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: -2px; }
+  &:disabled { opacity: .5; cursor: default; }
 }

@@ -96,6 +96,11 @@ function NavItem({ icon, label, active, onClick, current, expanded }: {
   );
 }
 
+/** Id do heading do painel de menu — o `aria-labelledby` do `role="menu"`
+ *  aponta para ele. Constante de módulo (e não `useId`) porque só existe UM
+ *  painel de menu montado por vez em todo o app. */
+const MENU_HEADING_ID = 'sm-menu-panel-heading';
+
 /** Linha do menu sanduíche. Ícone pelado + texto Rubik 14px. */
 function MenuRow({ icon, label, onClick, active, first }: {
   icon: string; label: string; onClick: () => void; active?: boolean; first?: boolean;
@@ -199,9 +204,23 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
               onClick={() => setMenuOpen(false)}
               style={{ position: 'fixed', inset: 0, zIndex: 60 }}
             />
+            {/* O PAINEL É UM CONTEXTO NOVO, e ele precisa se apresentar.
+                Ele abre POR CIMA de uma página inteira (Loja, Evolução…) sem
+                trocar a `currentView`: para quem lê a tela com leitor, a
+                árvore de headings continuava sendo a da página de baixo
+                (`H1:Shop, H2:Items…`) e não havia nada dizendo que outro
+                contexto tinha entrado — medido.
+
+                Semântica escolhida: **menu, não diálogo**. Ele não é modal
+                (o toque fora fecha, o conteúdo de baixo continua válido e
+                nada aqui é uma tarefa a concluir), então `role="dialog"` +
+                `aria-modal` mentiria sobre a inércia do resto da tela. O que
+                faltava era só o RÓTULO com forma de heading: o `<h2>` fica
+                FORA do `role="menu"` (filho de menu só pode ser menuitem) e
+                o menu é rotulado por ele via `aria-labelledby` — um rótulo
+                só, lido pelos dois caminhos (índice de headings e nome
+                acessível do menu). */}
             <div
-              role="menu"
-              aria-label={isPt ? 'Mais' : 'More'}
               style={{
                 position: 'absolute', bottom: 'calc(100% + 8px)', right: 0,
                 minWidth: 210, overflow: 'hidden', zIndex: 61,
@@ -211,6 +230,22 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
                 boxShadow: '0 8px 24px rgba(0,0,0,.28)',
               }}
             >
+              <h2
+                id={MENU_HEADING_ID}
+                style={{
+                  margin: 0,
+                  padding: '10px 14px 8px',
+                  fontFamily: 'var(--sm2-font-display)',
+                  fontSize: 'var(--sm2-text-sm)',
+                  fontWeight: 600,
+                  lineHeight: 'var(--sm2-leading-title)',
+                  color: 'var(--sm2-muted)',
+                  textAlign: 'left',
+                }}
+              >
+                {isPt ? 'Menu' : 'Menu'}
+              </h2>
+              <div role="menu" aria-labelledby={MENU_HEADING_ID}>
               <MenuRow
                 first
                 icon="person"
@@ -238,6 +273,7 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
                   onClick={() => { onResetOnboarding(); setMenuOpen(false); }}
                 />
               )}
+              </div>
             </div>
           </>
         )}

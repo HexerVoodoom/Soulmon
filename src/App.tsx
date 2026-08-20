@@ -644,6 +644,29 @@ export default function App() {
   // ação explícita não pode ser engolida por um automático. O welcome prompt vem
   // por último porque é o único que decide sozinho se tem algo a dizer (ele
   // devolve `null` quando não tem), então não dá para consultá-lo daqui.
+  //
+  // ── A CONDIÇÃO DE ENTRADA (o que faltava na fila) ─────────────────────────
+  // A fila só ordenava QUEM aparece antes de quem; ela nunca disse QUANDO um
+  // item tem direito de entrar. O pedido de notificação (metade do welcome
+  // prompt) entrava sempre, e numa carga limpa era a PRIMEIRA coisa da vida do
+  // app: um diálogo de permissão sobre um produto que a pessoa ainda não usou,
+  // com a tela inteira inerte atrás. Ordem certa, momento errado.
+  //
+  // O critério agora é: **o pedido de notificação só entra na fila depois de um
+  // MOMENTO DE VALOR — a primeira conclusão do jogador (`jaConcluiuAlgo`:
+  // qualquer tarefa avulsa, atividade recorrente ou hábito já concluído, algum
+  // dia).** Escolhido em vez de "segunda sessão" por três motivos: (a) é
+  // DERIVADO do save que já existe, sem chave nova de localStorage e sem
+  // contador de sessões para sincronizar na nuvem; (b) amarra a permissão ao
+  // que o lembrete de fato serve (quem nunca concluiu nada não tem o que ser
+  // lembrado); (c) uma segunda sessão pode acontecer sem que nada de valor
+  // tenha ocorrido — seria só adiar a mesma cobrança. O convite de INSTALAR a
+  // PWA não muda: é oferta, não permissão do sistema, e não deixa o app inerte
+  // esperando decisão de um prompt do navegador.
+  //
+  // Regra para quem acrescentar item novo: além da POSIÇÃO na ordem acima,
+  // declare a CONDIÇÃO DE ENTRADA. Nenhum intersticial pede permissão de
+  // sistema antes de o app ter entregado alguma coisa.
   // ═══════════════════════════════════════════════════════════════════════════
   const interstitial: 'triage' | 'dailyReport' | 'checkIn' | 'dream' | 'nightmare' | 'welcome' =
     triageTasks ? 'triage'
@@ -2939,10 +2962,22 @@ export default function App() {
         >
           {/* ── O `<h1>` DA TELA ──────────────────────────────────────────────
               Nenhuma tela tinha heading; Evolução e Estatísticas não tinham
-              NADA. Aqui cada view ganha o seu, com duas exceções que já são
-              donas do próprio `<h1>` e ganhariam um segundo:
-               · `main` — o wordmark "Soulmon" do `HomeHud`;
-               · `pet`  — o nome da criatura, na `PetPage`.
+              NADA. Aqui cada view ganha o seu.
+
+              **O CRITÉRIO (uma página, um `<h1>`):** se o COMPONENTE da view já
+              é dono do próprio `<h1>`, o App NÃO injeta; se não é, o App injeta.
+              Nada de heurística no meio. Donas do próprio `<h1>` — e por isso
+              ausentes do mapa abaixo:
+               · `main`       — o wordmark "Soulmon" do `HomeHud`;
+               · `pet`        — o nome da criatura, na `PetPage`;
+               · `games`      — "Activities"/"Atividades", na `ActivitiesPage`;
+               · `tournament` — "Tournament"/"Torneio", na `TournamentPage`;
+               · `library`    — "Library"/"Biblioteca", na `LibraryPage`.
+              As três últimas estavam no mapa E na própria página: a tela de
+              Atividades renderizava DOIS `<h1>` com o mesmo texto (medido), o
+              que faz o índice de headings de um leitor de tela anunciar dois
+              começos de página. Tela nova: só entra no mapa se o componente
+              dela não tiver `<h1>` — e nunca as duas coisas.
               Título de tela nasce em inglês com par PT-BR, como todo texto. */}
           {(() => {
             const isPtH = language === 'pt-BR';
@@ -2951,9 +2986,6 @@ export default function App() {
               stats: isPtH ? 'Estatísticas' : 'Stats',
               settings: isPtH ? 'Configurações' : 'Settings',
               shop: isPtH ? 'Loja' : 'Shop',
-              games: isPtH ? 'Atividades' : 'Activities',
-              tournament: isPtH ? 'Torneio' : 'Tournament',
-              library: isPtH ? 'Amigos' : 'Friends',
               oracle: isPtH ? 'Oráculo' : 'Oracle',
             };
             const titulo = titulos[currentView];
@@ -4059,6 +4091,10 @@ export default function App() {
         <WelcomePromptModal
           language={language}
           notificationsEnabled={notificationsEnabled}
+          /* CONDIÇÃO DE ENTRADA do pedido de notificação — ver a fila de
+             intersticiais lá em cima. `jaConcluiuAlgo` é o momento de valor:
+             uma conclusão, qualquer uma, algum dia. */
+          notificationsUnlocked={jaConcluiuAlgo}
           onEnableNotifications={handleToggleNotifications}
         />
       )}

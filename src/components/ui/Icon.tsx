@@ -1,7 +1,29 @@
 import { CSSProperties, memo } from 'react';
+import { GlyphSvg, hasGlyph } from './NavGlyphs';
 
 /**
- * `Icon` — Material Symbols Rounded, fonte VARIÁVEL, self-hosted.
+ * `Icon` — o ÚNICO ponto de ícone do app. Dois motores, uma API.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────┐
+ * │ **A troca de motor é invisível para quem chama.** `name` continua    │
+ * │ sendo o nome Material (`favorite`, `close`, `lock`…). Se existir um  │
+ * │ GLIFO PRÓPRIO com esse nome (`NavGlyphs.tsx`), o `Icon` desenha o    │
+ * │ nosso SVG; se não existir, cai na ligature da Material Symbols. As   │
+ * │ props (`name`, `size`, `fill`, `weight`, `tone`, `label`) são as     │
+ * │ mesmas nos dois casos e significam a mesma coisa — `fill` é o eixo   │
+ * │ de estado, `weight` vira espessura de traço no SVG. **Nenhum         │
+ * │ call-site precisa mudar** para ganhar (ou perder) um glifo próprio:  │
+ * │ desenhar o ícone novo em `NavGlyphs.tsx` já troca o app inteiro.     │
+ * └──────────────────────────────────────────────────────────────────────┘
+ *
+ * A casca (`<span class="sm2-icon">`, `fontSize`, as variáveis `--sm2-icon-*`,
+ * o tom, o aria) é **a mesma nos dois motores**, e isso é de propósito: é o
+ * que garante que trocar um ícone de motor não mude alinhamento, tamanho nem
+ * acessibilidade. No motor SVG a ligature continua no DOM (é o `name`, escrito
+ * ali) e é o SVG que aparece: o texto é pintado transparente
+ * (`-webkit-text-fill-color`, que não mexe em `color` — o SVG precisa dele
+ * inteiro para o `currentColor`) e o desenho fica por cima, em posição
+ * absoluta, ocupando exatamente a caixa do ícone.
  *
  * Três decisões que valem para todas as ondas seguintes:
  *
@@ -97,16 +119,33 @@ function IconBase({
   } as CSSProperties;
 
   const classes = ['sm2-icon', TONE_CLASS[tone], className].filter(Boolean).join(' ');
+  const own = hasGlyph(name);
 
   return (
     <span
       className={classes}
       // `fontSize` inline e não classe: footgun 1 — o Tailwind aqui é
       // pré-compilado, então `text-[28px]` não aplicaria nada.
-      style={{ fontSize: size, width: size, height: size, ...vars, ...style }}
+      style={{
+        fontSize: size,
+        width: size,
+        height: size,
+        ...(own ? { position: 'relative', WebkitTextFillColor: 'transparent' } : null),
+        ...vars,
+        ...style,
+      }}
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
       translate="no"
     >
+      {own && (
+        <GlyphSvg
+          name={name}
+          size={size}
+          fill={clamp(fill, 0, 1)}
+          weight={weight}
+          style={{ position: 'absolute', left: 0, top: 0 }}
+        />
+      )}
       {name}
     </span>
   );

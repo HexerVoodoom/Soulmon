@@ -53,10 +53,24 @@ import type { Language } from '../utils/i18n';
 
 type ShopSegment = 'shop' | 'tournament';
 
-/** Bits: calculadora, mas em tinta legível nos dois temas. */
-const bitsNum = { ...bitsStyle, color: 'var(--sm2-ink)', textShadow: 'none' } as const;
-/** Emblemas: serifa de medalha, em ouro-TINTA (nunca o `*-fill`). */
-const emblemNum = { ...emblemStyle, color: 'var(--sm2-gold-ink)' } as const;
+/** Bits: exatamente o que `utils/currencies.ts` define — SEM override.
+ *
+ *  Havia aqui um `color: var(--sm2-ink)` por cima do estilo da moeda. Ele
+ *  anulava o token da moeda (`--sm2-primary-ink`) no call-site e fazia o
+ *  número dos Bits sair na mesma tinta do texto corrido: a distinção das três
+ *  moedas passava a depender só da família tipográfica, num número de 12px.
+ *  Era o padrão "inline vence o token" que o próprio `currencies.ts` declara
+ *  ter eliminado, reintroduzido um nível acima.
+ *
+ *  Não havia motivo de contraste: `--sm2-primary-ink` MEDIDO sobre as três
+ *  superfícies onde os Bits aparecem passa AA nos dois temas —
+ *  bg 5,55 / 13,21 · surface 6,02 / 11,12 · surface-2 5,28 / 9,43 (claro /
+ *  escuro), todos ≥ 4,5:1. O override era custo puro. */
+const bitsNum = bitsStyle;
+/** Emblemas: serifa de medalha, em ouro-TINTA (nunca o `*-fill`). Também sem
+ *  override — `emblemStyle` já é `--sm2-gold-ink`; repetir a cor aqui era o
+ *  mesmo call-site vencendo o token, só que por acaso com o valor certo. */
+const emblemNum = emblemStyle;
 
 export function ShopModal({
   language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor,
@@ -131,10 +145,13 @@ export function ShopModal({
       <span
         aria-hidden="true"
         style={{
-          width: 56, height: 56, flexShrink: 0, borderRadius: 12, overflow: 'hidden',
+          width: 56, height: 56, flexShrink: 0, borderRadius: 'var(--sm2-radius-md)', overflow: 'hidden',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: css ?? 'var(--sm2-surface-2)', backgroundSize: 'cover',
-          opacity: dim ? 0.4 : 1, fontSize: 28, lineHeight: 1,
+          // 28px era o único tamanho fora da escala nesta tela. O emoji é
+          // CONTEÚDO, mas ainda é um glifo medido pelo audit — vai para o
+          // degrau que existe.
+          opacity: dim ? 0.4 : 1, fontSize: 'var(--sm2-text-2xl)', lineHeight: 1,
         }}
       >
         {png
@@ -192,7 +209,9 @@ export function ShopModal({
           display: 'flex', alignItems: 'center', gap: 14, width: '100%',
           minHeight: 76, padding: 12, textAlign: 'left',
           border: failing ? '1px solid var(--sm2-danger-ink)' : '1px solid transparent',
-          borderRadius: 16,
+          // Era 16px — um quarto raio na Loja, fora dos três degraus. Card é
+          // `--sm2-radius-lg`.
+          borderRadius: 'var(--sm2-radius-lg)',
           backgroundColor: 'var(--sm2-surface)',
           cursor: action ? 'pointer' : 'default',
           transition: 'border-color var(--sm2-dur-tap) var(--sm2-ease)',

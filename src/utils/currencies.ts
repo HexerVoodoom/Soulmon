@@ -69,6 +69,22 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
 // A família também virou token (`--sm2-font-mono` / `--sm2-font-serif`): estilo
 // inline com nome de fonte literal é justamente o que fez o app terminar com
 // sete tipos diferentes na tela.
+//
+// DUAS correções medidas depois disso:
+//
+//   1. O token de cor voltou a valer no CALL-SITE. `ShopModal` e
+//      `ActivitiesPage` — os dois ÚNICOS lugares onde Bits aparecem — faziam
+//      `{ ...bitsStyle, color: 'var(--sm2-ink)' }`. O número saía na tinta do
+//      texto corrido e o `--sm2-primary-ink` daqui não chegava à tela: o
+//      mesmo "inline vence o token" que este arquivo declara ter matado,
+//      reintroduzido um nível acima. Não havia motivo de contraste —
+//      `--sm2-primary-ink` mede 5,55 / 13,21 sobre `bg`, 6,02 / 11,12 sobre
+//      `surface` e 5,28 / 9,43 sobre `surface-2` (claro / escuro), tudo
+//      acima do 4,5:1 de AA.
+//   2. A leitura de calculadora deixou de depender de plataforma. Ver a nota
+//      do `--sm2-font-mono` no `index.css`: a pilha nomeia face concreta por
+//      sistema, e `bitsStyle` acrescentou `slashed-zero` como SEGUNDO eixo —
+//      a 12px a família sozinha não estava distinguindo nada.
 
 /**
  * Bits: calculadora, tinta primária.
@@ -81,9 +97,17 @@ export const CURRENCIES: Record<CurrencyId, CurrencyMeta> = {
 export const bitsStyle: CSSProperties = {
   fontFamily: 'var(--sm2-font-mono)',
   color: 'var(--sm2-primary-ink)',
-  letterSpacing: '1px',
+  // Antes `1px` fixo. Em `em` o espaçamento acompanha o tamanho: o saldo dos
+  // Bits aparece a 12px na Loja e a 20px em Atividades, e um valor absoluto
+  // vira quase nada num extremo e frouxo no outro.
+  letterSpacing: '0.08em',
   fontWeight: 700,
-  fontVariantNumeric: 'tabular-nums',
+  // DOIS eixos de distinção, não um. A família de calculadora sozinha é sutil
+  // a 12px (foi a medição que derrubou a versão anterior); `slashed-zero` é o
+  // sinal que ninguém confunde com texto corrido, e degrada em silêncio numa
+  // fonte que não tenha o eixo. `tabular-nums` continua obrigatório: o saldo
+  // muda a cada partida e sem ele o número dança na horizontal.
+  fontVariantNumeric: 'tabular-nums slashed-zero',
 };
 
 /** @see bitsStyle — mesmo estilo; o token já resolve o tema. */

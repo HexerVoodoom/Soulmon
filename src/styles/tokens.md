@@ -148,6 +148,21 @@ composta sobre o fundo antes de medir; medir alfa direto dá número inventado.
 | texto e dado | **Rubik** (400–500) | `--sm2-font-text` |
 | voz do aparelho | **Silkscreen** | `--sm2-font-pixel` |
 | ícones | **Material Symbols Rounded** (variável) | `--sm2-font-icon` |
+| dígito de moeda (Bits) | pilha **mono** nomeada por sistema | `--sm2-font-mono` |
+| dígito de moeda (Emblemas) | serifa | `--sm2-font-serif` |
+
+> **`--sm2-font-mono` não pode começar em `ui-monospace`.** Medido no Windows:
+> `ui-monospace` resolve para a mono do sistema e, a 12px, lê quase igual à
+> Rubik de relance — ou seja, a "fonte de calculadora" dos Bits, que é regra de
+> produto (`CLAUDE.md`: as três moedas nunca se confundem), dependia de
+> plataforma. A pilha nomeia face concreta ANTES de qualquer genérico
+> (`'Cascadia Mono', Consolas, Menlo, 'Roboto Mono', 'DejaVu Sans Mono',
+> 'Courier New', ui-monospace, monospace`) e as três primeiras trazem o sinal
+> que identifica dígito de máquina na hora: zero cortado no Windows/macOS/iOS,
+> zero pontilhado no Android. **E a família não trabalha sozinha**:
+> `bitsStyle` acrescenta `slashed-zero` como segundo eixo e troca o
+> `letter-spacing` de `1px` fixo para `0.08em`, que acompanha o tamanho (o
+> saldo aparece a 12px na Loja e a 20px em Atividades).
 
 Escala **fechada**, e o piso é **absoluto**:
 
@@ -211,6 +226,46 @@ os `.woff2` são assets, não pacotes.
 | `rubik-latin.woff2` | 35 KB | latin |
 | `rubik-latin-ext.woff2` | 19 KB | latin-ext |
 | `material-symbols-rounded.woff2` | **147 KB** | 102 ícones |
+
+### Silkscreen: onde ela mora, e o que foi MEDIDO
+
+A Silkscreen é a **única** que não está em `public/fonts/`: ela vem do pacote
+`@fontsource/silkscreen` (SIL OFL 1.1), importado em `src/main.tsx`
+(`latin-400.css` + `latin-700.css`). O `@font-face` é o do pacote — o Vite
+resolve o `url(./files/…woff2)` para um asset com hash servido pela **mesma
+origem**, então ela cai na regra cache-first do `sw.js` igual às outras. A
+decisão de §5 (self-host) está cumprida; o que muda é o caminho.
+
+Uma avaliação relatou "Silkscreen NUNCA carrega
+(`document.fonts.check('16px Silkscreen') === false`)". Medido com CDP no app
+rodando, o diagnóstico é outro e tem três partes:
+
+1. **O `@font-face` existe e a família bate.** `document.fonts` lista
+   `Silkscreen 400` e `Silkscreen 700`.
+2. **O arquivo é servido.** `await document.fonts.load('16px Silkscreen')`
+   devolve 1 face e o `check` passa a `true` logo depois. Não é peso morto no
+   bundle nem 404.
+3. **`check() === false` na Home é o comportamento CORRETO do navegador.**
+   Fonte só é baixada quando um nó realmente a exige; nenhum elemento da Home
+   pede `--sm2-font-pixel`, então nada é buscado. A conclusão "nunca carrega"
+   confundiu carregamento preguiçoso com fonte quebrada.
+
+O que o relato acerta é a **ausência na Home**, e ela é por desenho: a regra
+desta seção manda usar Silkscreen só no visor e em selo, e o `Viewport` da Home
+não desenha HUD de texto. Os três consumidores reais hoje são
+`ui/OfflineSeal.tsx` (selo, ≥14px, caixa alta — aparece **na Home**, offline),
+`ui/ScreenSkeleton.tsx` (palavra do sistema) e o selo de faixa da
+`TournamentPage`.
+
+> **Pendência de outro dono:** pôr a voz do aparelho dentro do visor da Home
+> (contador/HUD do `Viewport`) é edição de `src/components/ui/Viewport.tsx` e
+> do `CompanionHUD` — nenhum dos dois é deste dono. Enquanto isso não acontecer,
+> a Silkscreen segue correta e carregável, mas visível só em estados
+> (offline, esqueleto) e no Torneio.
+
+**Não preloadar.** Pelo mesmo motivo da Material Symbols: ela não está na
+primeira tela: preload seria bytes no caminho crítico e um aviso de
+"preloaded but not used" no console.
 
 `font-display: swap` no texto (o conteúdo aparece na hora com a fonte do
 sistema, sem bloquear o LCP) e **`block` no ícone** — com `swap`, a ligature
@@ -356,7 +411,26 @@ Três durações e uma curva. Mais que isso vira ruído e ninguém consegue dize
 qual usar. O `@media (prefers-reduced-motion: reduce)` no fim do `index.css`
 cobre tudo o que esta onda criou.
 
-## 9. Checklist para a próxima onda
+## 9. Barra de chat — `.sm2-chatbar` / `.sm2-chat-input` / `.sm2-chat-btn`
+
+O `ChatBox` é `position: fixed` e aparece em **100% da Home**, então as três
+classes `sm-px-*` dele eram a última linguagem de fliperama na tela mais vista
+do app. Migradas para `--sm2-*` (fim do `index.css`). Some junto o hack de
+redefinir `--sm-px-cyan` no elemento raiz do componente: o ciano do kit tinha
+UM valor nos dois temas e dava ~1,4:1 no claro.
+
+Duas decisões que não afrouxam:
+
+- **A borda do campo é `--sm2-muted`, não `--sm2-line`.** O miolo do campo é
+  `--sm2-bg` dentro de uma barra `--sm2-surface`, e esses dois dão **1,08:1**
+  no tema claro: sem borda o campo não existe. Sendo a borda o que IDENTIFICA
+  o controle, ela cai no 3:1 da WCAG 1.4.11 — `--sm2-line` dá 1,25 e reprova;
+  `--sm2-muted` dá **5,80 (claro) / 7,43 (escuro)**.
+- **A fonte do campo é `--sm2-font-mono`, nunca a Silkscreen.** É onde se
+  digita frase livre em português com acento, e 16px é PISO (abaixo disso o
+  Safari do iOS dá auto-zoom ao focar e a Home sai do lugar).
+
+## 10. Checklist para a próxima onda
 
 - [ ] Usou `*-ink` para texto e `*-fill` para fundo? Texto sobre fill usa `--sm2-on-*`?
 - [ ] Todo token novo foi declarado nos DOIS temas?

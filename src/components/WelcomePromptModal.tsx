@@ -15,6 +15,12 @@ interface BeforeInstallPromptEvent extends Event {
 interface WelcomePromptModalProps {
   language: Language;
   notificationsEnabled: boolean;
+  /**
+   * **A condição de ENTRADA do pedido de notificação** (ver o bloco de doc
+   * abaixo). `false` = a metade de notificações nem existe nesta sessão; a
+   * metade de instalar a PWA segue igual.
+   */
+  notificationsUnlocked: boolean;
   onEnableNotifications: () => void | Promise<void>;
 }
 
@@ -28,7 +34,9 @@ interface WelcomePromptModalProps {
  * X próprio — o do `ModalSheet` já dispensa, e dois jeitos de dizer "não"
  * no mesmo canto era um deles a mais.
  */
-export function WelcomePromptModal({ language, notificationsEnabled, onEnableNotifications }: WelcomePromptModalProps) {
+export function WelcomePromptModal({
+  language, notificationsEnabled, notificationsUnlocked, onEnableNotifications,
+}: WelcomePromptModalProps) {
   const isPt = language === 'pt-BR';
   const isNative = Capacitor.isNativePlatform();
 
@@ -63,7 +71,19 @@ export function WelcomePromptModal({ language, notificationsEnabled, onEnableNot
   }, [isNative]);
 
   const notifPermission = checkNotificationPermission();
-  const notifPromptable = !notificationsEnabled && !notifPermission.denied;
+  /**
+   * **`notificationsUnlocked` vem PRIMEIRO, e é a regra de produto.**
+   *
+   * Antes, este pedido era a primeira coisa que a pessoa via numa carga limpa:
+   * um diálogo de permissão sobre um app que ela ainda não usou, com o resto da
+   * tela inerte atrás. É o padrão que a literatura de onboarding mais critica —
+   * e num app cuja tese declarada é NÃO COBRAR, cobrar permissão antes de
+   * entregar qualquer valor é a contradição mais cara possível.
+   *
+   * Quem decide o momento é o App (`utils`-free, derivado do save): o pedido só
+   * é liberado DEPOIS de um momento de valor. Aqui embaixo isto é só um portão.
+   */
+  const notifPromptable = notificationsUnlocked && !notificationsEnabled && !notifPermission.denied;
 
   useEffect(() => {
     if (step) return;

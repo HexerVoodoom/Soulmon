@@ -44,10 +44,18 @@ import { Icon } from './ui/Icon';
 import { sm2Hint, SM2_SHADOW_CARD } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
-/** Bits: fonte de calculadora (identidade da moeda), tinta legível nos dois
- *  temas e `tabular-nums` — o saldo muda a cada partida. Sem ícone, sempre:
- *  a AUSÊNCIA de ícone é o que distingue Bits de Emblemas e Créditos. */
-const bitsNum: React.CSSProperties = { ...bitsStyle, color: 'var(--sm2-ink)', textShadow: 'none' };
+/** Bits: o estilo da moeda, inteiro, SEM override de cor.
+ *
+ *  Havia aqui `color: var(--sm2-ink)` por cima — o número saía na mesma tinta
+ *  do texto corrido e a moeda perdia metade da sua identidade (a outra metade,
+ *  a família de calculadora, é sutil a 12px). É o padrão "inline vence o
+ *  token" que `utils/currencies.ts` declara ter eliminado.
+ *
+ *  Não havia motivo de contraste: `--sm2-primary-ink` medido sobre as
+ *  superfícies desta tela passa AA nos dois temas (bg 5,55 / 13,21 · surface
+ *  6,02 / 11,12 · surface-2 5,28 / 9,43). Sem ícone, sempre: a AUSÊNCIA de
+ *  ícone é o que distingue Bits de Emblemas e Créditos. */
+const bitsNum: React.CSSProperties = bitsStyle;
 
 interface GameCard {
   key: string;
@@ -137,7 +145,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
         padding: 14,
         textAlign: 'left',
         cursor: 'pointer',
-        borderRadius: 12,
+        borderRadius: 'var(--sm2-radius-md)',
         backgroundColor: c.featured ? 'var(--sm2-primary-soft)' : 'var(--sm2-surface)',
         border: c.featured ? '1px solid var(--sm2-primary-fill)' : '1px solid var(--sm2-line)',
         boxShadow: SM2_SHADOW_CARD,
