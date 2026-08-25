@@ -33,16 +33,17 @@ import { SM2_SHADOW_CARD, sm2Hint, sm2Text } from './form/FormKit';
  * cabeçalho em Fredoka da página do Pet. Agora é a superfície `--sm2-*`, com
  * cada texto declarando a própria família.
  *
- * ⚠️ PENDÊNCIA DE ARTE — DECLARADA, NÃO ESCONDIDA.
- * As 30 cenas continuam representadas por EMOJI DO SISTEMA (`dream.emoji`, do
- * `DREAM_CATALOG`). Isso é um placeholder: emoji é arte de terceiro, muda de
- * desenho por plataforma e não conversa com a pixel art do app. O que esta
- * onda pode fazer sem inventar arte é dar a elas a MOLDURA e a TIPOGRAFIA do
- * sistema novo e tratar o glifo como conteúdo de visor (fundo escuro, escala
- * fixa, `pointer-events: none`). A substituição por 30 sprites próprios de
- * 32×32 é trabalho de ARTE e está reportada como tal — quem for fazer troca
- * `dream.emoji` por um `<img>` aqui e em `utils/restWindow.ts`.
+ * ✅ A PENDÊNCIA DE ARTE FOI PAGA (ago/2026).
+ * As 30 cenas eram EMOJI DO SISTEMA — arte de terceiro, com desenho diferente
+ * em cada plataforma, na ÚNICA coleção do jogo. Agora são 30 sprites nossos
+ * (`utils/dreamArt.ts`), na paleta do kit. A moldura de visor e a silhueta do
+ * não-coletado continuam iguais; o que mudou é o que entra dentro delas.
+ *
+ * O `emoji` continua no `DREAM_CATALOG` e não é lixo: é o único glifo que cabe
+ * num push ou num título de notificação, onde não existe `<img>`.
  */
+
+import { DREAM_ART } from '../utils/dreamArt';
 
 export interface DreamDexProps {
   rest: RestState;
@@ -123,17 +124,21 @@ function DreamCell({ dream, owned, isPt }: { dream: Dream; owned: boolean; isPt:
           boxSizing: 'border-box',
           backgroundColor: 'var(--sm2-viewport-bg)',
           border: '1px solid var(--sm2-line)',
-          fontSize: 22,
           lineHeight: 1,
           pointerEvents: 'none',
           /* SILHUETA, não falta: a cena existe e o pet ainda não a trouxe.
              `brightness(0)` + opacidade devolve um recorte cheio (a forma se
              lê), em vez do cinza lavado de antes, que parecia ícone quebrado.
-             O `contrast` segura o recorte dos emoji de traço fino. */
-          filter: owned ? 'none' : 'grayscale(1) brightness(0.35) contrast(1.4) opacity(0.6)',
+             Com sprite de verdade o `contrast` deixou de ser necessário (ele
+             existia para segurar o traço fino de emoji), mas o resto da receita
+             vale igual: a forma some, o objeto não. */
+          filter: owned ? 'none' : 'grayscale(1) brightness(0.35) opacity(0.6)',
         }}
       >
-        {dream.emoji}
+        {DREAM_ART[dream.id]
+          ? <img src={DREAM_ART[dream.id]} alt="" width={34} height={34}
+                 style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          : <span style={{ fontSize: 22 }}>{dream.emoji}</span>}
       </span>
       <span
         style={{

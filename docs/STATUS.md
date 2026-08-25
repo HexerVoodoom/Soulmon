@@ -785,8 +785,17 @@ o app de todo mundo que já tem o APK instalado.
   mesma crítica que Kotaku e Digital Trends fizeram ao Premium Pass do Pokémon
   Sleep. Sugestão em `docs/PLANO-EVOLUCAO.md`: reposicionar como perdão pontual
   com teto. É decisão de produto, não técnica.
-- **Sprite do cocô** (`src/assets/9087038…png`) é um blob escuro pouco legível.
-  Anterior a este trabalho.
+- ~~**Sprite do cocô** é um blob escuro pouco legível.~~ **FEITO** (ago/2026):
+  redesenhado na paleta do kit, legível em 32px.
+- ~~**Os 30 slots do Dex de Sonhos são emoji do sistema.**~~ **FEITO**
+  (ago/2026): 30 sprites nossos em `src/assets/soulmon/dreams/` +
+  `utils/dreamArt.ts`. Era a ÚNICA coleção do jogo e a única sem arte própria.
+  O `emoji` continua no `DREAM_CATALOG` de propósito — é o único glifo que cabe
+  num push, onde não existe `<img>`.
+- **Quatro itens do `BACKLOG-ARTE-GERAR.md` foram declarados OBSOLETOS**
+  (`A3`, `A10`, `A15`, `A16`): foram escritos antes do `PLANO-DESIGN` e pedem
+  pixel art em superfícies que o §1 dele põe do lado SVG (fronteira do Visor).
+  Gerá-los pagaria uma dívida que deixou de existir e criaria outra.
 
 ---
 

@@ -22,6 +22,7 @@ import type { Dream, DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
 import { Icon } from './ui/Icon';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { DREAM_ART } from '../utils/dreamArt';
 
 export interface MorningDreamProps {
   open: boolean;
@@ -114,8 +115,14 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
           {headline}
         </p>
 
-        <div aria-hidden="true" style={{ fontSize: 56, lineHeight: 1.1, margin: '0 0 8px' }}>
-          {dream ? dream.emoji : '🌅'}
+        {/* A cena do sonho, agora em arte nossa (utils/dreamArt.ts). O emoji
+            fica como saída só para o caso de um sonho novo entrar no catálogo
+            antes de a arte dele existir — silencioso, e melhor que um buraco. */}
+        <div aria-hidden="true" style={{ fontSize: 56, lineHeight: 1.1, margin: '0 0 8px', display: 'flex', justifyContent: 'center' }}>
+          {dream && DREAM_ART[dream.id]
+            ? <img src={DREAM_ART[dream.id]} alt="" width={72} height={72}
+                   style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+            : (dream ? dream.emoji : '🌅')}
         </div>
 
         {dream && (

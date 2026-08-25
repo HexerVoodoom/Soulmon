@@ -121,6 +121,40 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 ---
 
+> ## ⚠️ Quatro itens abaixo estão OBSOLETOS (revisado em ago/2026)
+>
+> `A3` (ícones dos atributos), `A10` (Banho/Dormir), `A15` (traços de
+> nascimento) e `A16` (relatório diário) foram escritos ANTES do `PLANO-DESIGN`
+> e o contradizem. A regra §1 de lá — declarada como "não reabro nada disto" —
+> é a **fronteira diegética do Visor**: pixel art existe **dentro** do visor do
+> aparelho; tudo fora é SVG limpo + Material Symbols. A lista nominal do §3.2
+> põe `StatsPage` (traços), a fileira de ações da Home (banho/dormir) e o
+> `DailyReportModal` explicitamente do lado SVG.
+>
+> Gerar esses quatro PNGs seria pagar uma dívida que deixou de existir e criar
+> uma nova: superfície falando as duas línguas ao mesmo tempo, que é o defeito
+> que a Onda 5 foi feita para eliminar.
+>
+> **Continua válido** o que é território retrô (`PLANO-DESIGN` §3.1): `A11`
+> (mãos do PPT — ✅ feito), `A8` (cocô — ✅ feito), os **30 sonhos do
+> `DreamDex`** (✅ feito) e `A12` (berço — ainda aberto).
+
+> ## 💡 Gerar em FOLHA, não peça por peça
+>
+> Os 34 sprites desta rodada saíram em **8 gerações**, não 34: vários ícones por
+> imagem, numa grade 3×2 sobre branco sólido, fatiados depois por
+> `scripts-arte/_fatiar.mjs`. O corte é por PROJEÇÃO de pixels opacos (linhas e
+> colunas inteiramente vazias), não por grade fixa — se o gerador espaçar
+> diferente do pedido, o corte ainda acerta, e ele ABORTA quando a contagem de
+> recortes não bate com a de nomes, em vez de salvar 6 arquivos errados.
+>
+> Duas armadilhas medidas: (a) a aba do Gemini **tem de estar em primeiro
+> plano** — em segundo plano a geração trava em "Creating your image" e o clique
+> de enviar não registra (o clique só passa depois de um `screenshot`, que traz
+> a aba à frente); (b) pedir "aurora" devolveu uma CENA com fundo em vez de um
+> objeto recortado — em folha de objetos, dizer `a CUT-OUT object floating alone
+> on the white, no sky, no ground, no square tile` é o que conserta.
+
 ## P1½ — achados da rodada 5 (auditoria visual de 15/08/2026)
 
 > Rodada que converteu onboarding/tutorial/modais/menu/Evolução para o kit via
@@ -161,7 +195,14 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > - **Dormir** → `a crescent moon with two tiny sparkles, pale gold`
   > - **Acordar** → `a rising sun over a horizon line, warm gold`
 
-### A11 · Mãos do Pedra-Papel-Tesoura (hoje são emoji do sistema)
+### A11 · Mãos do Pedra-Papel-Tesoura — ✅ feito ago/2026, Gemini (navegador)
+- Geradas as três numa FOLHA só (uma imagem, fundo branco) e fatiadas por
+  projeção de pixels — ver `_fatiar.mjs`. Ao trocar emoji por `<img>` foi
+  preciso ACRESCENTAR `aria-label` PT/EN nos três botões: emoji carrega nome
+  acessível embutido, `<img>` não carrega nada, e sem isso a troca de arte
+  teria custado a leitura por voz dos únicos controles da tela.
+
+<details><summary>enunciado original</summary>
 - **Destino:** `src/assets/soulmon/icons/games/hand-{rock,paper,scissors}.png`
 - **Uso:** `RPSGame.tsx` — os 3 botões de jogada usam ✊ ✋ ✌️ (`HANDS`).
   São os CONTROLES PRIMÁRIOS do minijogo em emoji de sistema — a maior peça
@@ -174,6 +215,8 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > skin with near-black outlines, crisp 16-bit pixel art, hard edges, no
   > blur. STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D. NO magenta,
   > purple, violet or pink. Transparent PNG.
+
+</details>
 
 ### A12 · Berço "sentável" (mais largo e raso — Ref C)
 - **Destino:** `src/assets/soulmon/nest-base.png` (substitui; manter ~360×~160
@@ -349,7 +392,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   as 14 — falta rodar num lugar com acesso a `higgsfield.ai` (a política de
   rede do sandbox de agente responde 403 no CONNECT para esse host).
 
-### A8 · Sprite do cocô
+### A8 · Sprite do cocô — ✅ feito ago/2026, Gemini (navegador)
 - **Destino:** `src/assets/9087038….png`
 - **Uso:** mecânica de cocô na Home
 - **Por quê:** registrado em `docs/STATUS.md` §4 como "blob escuro pouco

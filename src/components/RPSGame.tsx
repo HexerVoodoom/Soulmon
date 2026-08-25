@@ -11,7 +11,25 @@ import type { Language } from '../utils/i18n';
  * Scoring: 🪙 +5 Bits on a match victory (luck-based game → flat, modest reward).
  */
 type Hand = 0 | 1 | 2; // rock, paper, scissors
-const HANDS = ['✊', '✋', '✌️'];
+import handRock from '../assets/soulmon/icons/games/hand-rock.png';
+import handPaper from '../assets/soulmon/icons/games/hand-paper.png';
+import handScissors from '../assets/soulmon/icons/games/hand-scissors.png';
+
+/* As tres PECAS do jogo. Eram emoji do SISTEMA (✊ ✋ ✌️) — os controles
+   primarios do minijogo desenhados por outra pessoa, com outra grade e outra
+   paleta, dentro do visor. Estava contado como divida de arte nomeada no
+   comentario abaixo e em `docs/BACKLOG-ARTE-GERAR.md` (A11); agora e arte
+   nossa, na paleta do kit.
+
+   O nome NAO some junto com o emoji: emoji carrega nome acessivel embutido
+   ("raised fist"), `<img>` nao carrega nada. Cada peca leva o proprio rotulo
+   em PT e EN, senao a troca de arte teria custado a leitura por voz dos tres
+   unicos botoes desta tela. */
+const HANDS = [
+  { art: handRock, pt: 'Pedra', en: 'Rock' },
+  { art: handPaper, pt: 'Papel', en: 'Paper' },
+  { art: handScissors, pt: 'Tesoura', en: 'Scissors' },
+] as const;
 const MATCH_POINTS = 5;
 const WINS_NEEDED = 3;
 
@@ -107,13 +125,10 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       <div className="sm-px-card" style={{ flex: 1, margin: 16, background: `url(${rpsScene}) center/cover`, boxShadow: 'inset 0 0 60px rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <img src={getSpriteForStage(evolutionStage, demoCharacterId)} alt="pet"
              style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
-        {/* Os tres EMOJIS DE MAO sao as PECAS do jogo, nao decoracao: o kit
-            nao tem pedra/papel/tesoura e esta rodada nao gera arte. Ficam, e
-            estao contados no relatorio como divida de arte nomeada. O que saiu
-            foi o emoji ACESSORIO (balao de pensamento, trofeu, caveira) —
-            esse sim era decoracao, e tem par no kit. */}
-        <div style={{ fontSize: '2.6rem', minHeight: 52, lineHeight: 1 }}>
-          {thinking ? <span className="sm-px-arcade-value" style={{ fontSize: 20 }}>. . .</span> : petHand !== null ? HANDS[petHand] : ''}
+        {/* As PECAS do jogo, agora em arte nossa (ver HANDS no topo). */}
+        <div style={{ minHeight: 52, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+          {thinking ? <span className="sm-px-arcade-value" style={{ fontSize: 20 }}>. . .</span>
+            : petHand !== null ? <img src={HANDS[petHand].art} alt={isPt ? HANDS[petHand].pt : HANDS[petHand].en} width={52} height={52} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> : null}
         </div>
         <p style={{ fontSize: '0.9rem', fontWeight: 700, minHeight: 22, display: 'flex', alignItems: 'center', gap: 6 }}>
           {matchOver === 'won' ? (
@@ -132,8 +147,8 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
             </>
           ) : roundMsg}
         </p>
-        <div style={{ fontSize: '2.2rem', minHeight: 44, lineHeight: 1 }}>
-          {playerHand !== null ? HANDS[playerHand] : ''}
+        <div style={{ minHeight: 44, lineHeight: 1, display: 'flex', alignItems: 'center' }}>
+          {playerHand !== null ? <img src={HANDS[playerHand].art} alt={isPt ? HANDS[playerHand].pt : HANDS[playerHand].en} width={44} height={44} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> : null}
         </div>
       </div>
 
@@ -151,10 +166,10 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         ) : (
           <div style={{ display: 'flex', gap: 8 }}>
             {HANDS.map((h, i) => (
-              <button key={h} onClick={() => play(i as Hand)} disabled={thinking}
-                className="sm-px-chip-btn"
-                style={{ flex: 1, padding: '16px 0', fontSize: '1.8rem', color: '#f1edfb' }}>
-                {h}
+              <button key={h.en} onClick={() => play(i as Hand)} disabled={thinking}
+                className="sm-px-chip-btn" aria-label={isPt ? h.pt : h.en}
+                style={{ flex: 1, padding: '10px 0', color: '#f1edfb', display: 'flex', justifyContent: 'center' }}>
+                <img src={h.art} alt="" width={40} height={40} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
               </button>
             ))}
           </div>
