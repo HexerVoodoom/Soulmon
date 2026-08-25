@@ -146,8 +146,10 @@ writeFileSync(
       note:
         'Artefato COMPILADO, commitado (ADR-002 §1). O build do Soulmon não busca ' +
         'este repositório. Para atualizar: rode `npm run vendor:class-system` com o ' +
-        'clone irmão atualizado e `npm run sync:oracle-data` (os fixtures de paridade ' +
-        'de `cascata.parity.test.ts` têm que vir do MESMO SHA).',
+        'clone irmão atualizado e, LOGO EM SEGUIDA, `npm run gen:cascata-fixtures` ' +
+        '(regenera `ficha/cascata.fixtures.json` a partir DESTE bundle — o teste de ' +
+        'paridade falha se os dois SHAs divergirem). `npm run sync:oracle-data` é ' +
+        'independente: traz vocabulário e diais, não fixtures de cascata.',
     },
     null,
     2,
