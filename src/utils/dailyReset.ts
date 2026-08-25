@@ -1,4 +1,5 @@
 import { FORM_REQUIREMENTS, MANUAL_EVOLUTION, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, clampBranch } from '../types/progression';
+import type { EvolutionStage } from '../types/progression';
 import { CATEGORY_ATTRIBUTES, ActivityCategory } from '../types/attributes';
 import { heartLossCap } from './passives';
 import {
@@ -178,6 +179,39 @@ export const RETURN_GRACE_DAYS = 2;
  * avançado, e só para ele.
  */
 export const DEGENERATION_PERFECT_DAYS_COST = 5;
+
+/**
+ * OS DIAS PERFEITOS DEPOIS DE UMA QUEDA DE ESTÁGIO — dono único da regra.
+ *
+ * Existem DOIS caminhos que degeneram: o automático (HP 0 na virada, logo
+ * abaixo em `computeDailyReset`) e o MANUAL (o botão da página de Evolução,
+ * `handleDegenerate` no App). Enquanto a expressão estava escrita à mão nos
+ * dois, ela divergiu em silêncio — o footgun 9 literal: o automático virou
+ * piso + custo fixo e o manual ficou na atribuição antiga
+ * (`= floor(required/2)`), que é ESTRITAMENTE mais dura para qualquer jogador
+ * acima do piso. Um mega com 39 dias perfeitos que descia de propósito
+ * reaparecia com 2, enquanto o mesmo mega que simplesmente deixou o HP zerar
+ * reaparecia com 34. O caminho deliberado punia mais que o descuido, e o
+ * comentário do App afirmava exatamente o contrário.
+ *
+ * `piso` = metade do requisito do estágio NOVO (a misericórdia de sempre:
+ * quem cai não recomeça do zero). `custo` = os dias que a queda tira de quem
+ * tinha muito. O piso é chão, nunca prêmio: um jogador que já tinha mais que
+ * ele não é rebaixado até ele.
+ *
+ * Há teste de PARIDADE (`useDailyReset.test.ts`) exigindo que os dois caminhos
+ * devolvam o mesmo número — se alguém reescrever a expressão em qualquer um
+ * dos lados, ele quebra.
+ */
+export function degeneratedPerfectDays(
+  previousPerfectDays: number,
+  newStageLevel: EvolutionStage,
+): number {
+  return Math.max(
+    Math.floor(FORM_REQUIREMENTS[newStageLevel].required / 2),
+    previousPerfectDays - DEGENERATION_PERFECT_DAYS_COST,
+  );
+}
 
 /** Quantos dias se passaram desde a última virada. 1 = virada normal de ontem. */
 export function daysSinceLastReset(lastResetDate: string | undefined, now: Date): number {
@@ -648,10 +682,11 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       // seguidos (o mínimo para zerar o HP com o teto de 1/dia) apagavam três
       // meses. Agora a queda custa DEGENERATION_PERFECT_DAYS_COST dias, e o
       // desconto é o chão — nunca um prêmio.
-      newPerfectDays = Math.max(
-        Math.floor(FORM_REQUIREMENTS[degeneratedLevel].required / 2),
-        prev.perfectDays - DEGENERATION_PERFECT_DAYS_COST,
-      );
+      //
+      // A expressão vive em `degeneratedPerfectDays` (acima) porque o caminho
+      // MANUAL (`handleDegenerate`, App.tsx) precisa da mesma — e enquanto ela
+      // estava duplicada os dois divergiram.
+      newPerfectDays = degeneratedPerfectDays(prev.perfectDays, degeneratedLevel);
       newRecentAttrs = { virus: 0, data: 0, vaccine: 0 };
     } else {
       // RAIZ da árvore (rookie): não existe forma abaixo, então `getPreviousForm`

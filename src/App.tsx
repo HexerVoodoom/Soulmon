@@ -49,7 +49,7 @@ import { PET_BACKGROUNDS } from './utils/backgrounds';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, registeredForDay, tasksToAvoidHeartLoss } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
   FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
@@ -110,7 +110,10 @@ import {
 } from './utils/rituals';
 import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
+  shrink, effortOf,
 } from './utils/taskTriage';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
+import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached,
 } from './utils/habitRhythm';
@@ -196,6 +199,234 @@ const STEPS_POLL_MS = 5 * 60 * 1000;
 
 /** Ritmo/estado vazios ESTÁVEIS (mesma razão do `EMPTY_RHYTHM`). */
 const EMPTY_NIGHTMARES = createNightmareState();
+
+// ---------------------------------------------------------------------------
+// O SHEET DE ADIAMENTO — "adiada 3 vezes: decompor / encolher / deixar pra lá"
+//
+// A mecânica existia inteira e MORTA: `needsPostponeNudge` tinha teste,
+// `shrink` tinha teste, o `GuideModal` prometia as três ações ao usuário em PT
+// e EN, o `TaskMeta` desenhava o contador sublinhado — e ninguém passava
+// `onPostponeNudge`, então o chip nascia `disabled` com `cursor: default`.
+// Tocar nele não fazia NADA. Regra documentada, testada na função pura e
+// anunciada no guia, mas inexistente no app: a pior das três, porque só o
+// usuário descobre.
+//
+// As três ações não são um menu de opções equivalentes; são as três saídas
+// honestas de uma tarefa que a pessoa vem evitando, e nenhuma delas é "faça
+// logo isso":
+//   · DECOMPOR — o gargalo do modelo de Fogg quase nunca é motivação, é
+//     habilidade. Uma tarefa adiada 3× em geral não tem primeiro passo claro.
+//   · ENCOLHER — `shrink` (taskTriage), rebaixa o esforço e ZERA o contador:
+//     a tarefa mudou, e carregar a marca puniria a decisão certa.
+//   · DEIXAR PRA LÁ — `drop`, o Won't Do do TickTick: terminal COM volta
+//     atrás. É a saída que quebra o ciclo de falência periódica.
+// Não existe quarta opção "fechar sem fazer nada" com peso de fracasso: o X do
+// sheet fecha e nada acontece, e o texto diz isso.
+// ---------------------------------------------------------------------------
+
+/** Estado da chamada de IA da decomposição. Erro e vazio são estados de
+ *  primeira classe: a rede do celular cai, e o sheet não pode virar um spinner
+ *  eterno na tela de quem já estava evitando a tarefa. */
+type DecomposeState =
+  | { kind: 'idle' }
+  | { kind: 'loading' }
+  | { kind: 'ready'; items: SuggestedTask[] }
+  | { kind: 'empty' }
+  | { kind: 'error' };
+
+function PostponeNudgeSheet({
+  task, language, onClose, onShrink, onDrop, onDecompose,
+}: {
+  task: Task | null;
+  language: Language;
+  onClose: () => void;
+  onShrink: (taskId: string) => void;
+  onDrop: (taskId: string) => void;
+  onDecompose: (taskId: string, picks: SuggestedTask[]) => void;
+}) {
+  const isPt = language === 'pt-BR';
+  const [state, setState] = useState<DecomposeState>({ kind: 'idle' });
+  const [picked, setPicked] = useState<Record<string, boolean>>({});
+
+  // Trocar de tarefa (ou fechar) zera o painel — senão o próximo sheet abriria
+  // já com as sugestões da tarefa anterior, que é como se oferece à pessoa um
+  // passo que não tem nada a ver com o que ela abriu.
+  const taskId = task?.id ?? null;
+  useEffect(() => {
+    setState({ kind: 'idle' });
+    setPicked({});
+  }, [taskId]);
+
+  const effort = task ? effortOf(task) : 1;
+  const canShrink = effort > 1;
+
+  const runDecompose = useCallback(async () => {
+    if (!task) return;
+    setState({ kind: 'loading' });
+    try {
+      const items = await suggestTasks(
+        task.name,
+        [task.category as ActivityCategory],
+        isPt ? 'pt-BR' : 'en-US',
+      );
+      // `suggestTasks` já engole rede caída / IA fora do ar e devolve []. "Não
+      // veio nada" e "quebrou" não são a mesma coisa para o usuário, então
+      // 'empty' tem texto próprio e caminho manual em vez de um "erro" — e o
+      // catch fica de pé para o que a função não prometeu engolir.
+      setState(items.length ? { kind: 'ready', items: items.slice(0, 4) } : { kind: 'empty' });
+    } catch {
+      setState({ kind: 'error' });
+    }
+  }, [task, isPt]);
+
+  if (!task) return null;
+
+  const picks = state.kind === 'ready' ? state.items.filter(i => picked[i.name]) : [];
+
+  const actionCard: React.CSSProperties = {
+    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4,
+    width: '100%', textAlign: 'left',
+    padding: '12px 14px', minHeight: 44,
+    border: '1px solid var(--sm2-line)', borderRadius: 12,
+    background: 'var(--sm2-surface)', cursor: 'pointer',
+  };
+  const actionTitle: React.CSSProperties = {
+    ...sm2Text, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8,
+  };
+
+  return (
+    <ModalSheet
+      open
+      onClose={onClose}
+      language={language}
+      title={isPt ? 'Essa aí tá difícil?' : 'Is this one stuck?'}
+      maxWidth={480}
+    >
+      <p style={sm2Hint}>
+        {isPt
+          ? `"${task.name}" já foi adiada ${task.postponedCount ?? 0} vezes. Isso é um dado, não uma bronca — e dado tem botão. Escolha uma saída, ou feche: nada acontece se você fechar.`
+          : `"${task.name}" has been postponed ${task.postponedCount ?? 0} times. That's data, not a scolding — and data has buttons. Pick a way out, or close: nothing happens if you close.`}
+      </p>
+
+      {/* ---- DECOMPOR ---- */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button
+          type="button"
+          style={{ ...actionCard, cursor: state.kind === 'loading' ? 'progress' : 'pointer' }}
+          onClick={runDecompose}
+          disabled={state.kind === 'loading'}
+        >
+          <span style={actionTitle}>
+            <Icon name="psychology" size={20} />
+            {isPt ? 'Decompor' : 'Break it down'}
+          </span>
+          <span style={sm2Hint}>
+            {isPt
+              ? 'O pet pensa em primeiros passos pequenos e você escolhe quais viram tarefa.'
+              : 'Your pet thinks up small first steps and you pick which become tasks.'}
+          </span>
+        </button>
+
+        {/* Estados da chamada — todos anunciados, nenhum silencioso. */}
+        <div aria-live="polite" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {state.kind === 'loading' && (
+            <span style={sm2Hint}>{isPt ? 'Pensando em passos…' : 'Thinking of steps…'}</span>
+          )}
+
+          {state.kind === 'error' && (
+            <span style={sm2Hint}>
+              {isPt ? 'Não deu pra pensar agora (sem conexão?).' : 'Could not think right now (offline?).'}
+            </span>
+          )}
+
+          {state.kind === 'empty' && (
+            <span style={sm2Hint}>
+              {isPt
+                ? 'Não achei um passo bom pra essa. Encolher costuma resolver igual — ou deixe pra lá sem culpa.'
+                : 'I could not find a good step for this one. Shrinking usually works just as well — or let it go, guilt-free.'}
+            </span>
+          )}
+
+          {state.kind === 'ready' && (
+            <>
+              <span style={sm2Hint}>
+                {isPt ? 'Toque nos passos que você quer:' : 'Tap the steps you want:'}
+              </span>
+              {state.items.map(item => {
+                const on = !!picked[item.name];
+                return (
+                  <button
+                    key={item.name}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setPicked(p => ({ ...p, [item.name]: !p[item.name] }))}
+                    style={{
+                      ...actionCard,
+                      flexDirection: 'row', alignItems: 'center', gap: 10,
+                      borderColor: on ? 'var(--sm2-primary-ink)' : 'var(--sm2-line)',
+                    }}
+                  >
+                    <Icon name={on ? 'check_circle' : 'radio_button_unchecked'} size={20} fill={on ? 1 : 0} />
+                    <span style={sm2Text}>{item.name}</span>
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                style={sm2Button('primary', picks.length === 0)}
+                disabled={picks.length === 0}
+                onClick={() => { onDecompose(task.id, picks); onClose(); }}
+              >
+                {isPt
+                  ? `Adicionar ${picks.length || ''} ${picks.length === 1 ? 'passo' : 'passos'}`.replace('  ', ' ')
+                  : `Add ${picks.length || ''} ${picks.length === 1 ? 'step' : 'steps'}`.replace('  ', ' ')}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* ---- ENCOLHER ---- */}
+      <button
+        type="button"
+        style={{ ...actionCard, cursor: canShrink ? 'pointer' : 'default' }}
+        disabled={!canShrink}
+        onClick={() => { onShrink(task.id); onClose(); }}
+      >
+        <span style={actionTitle}>
+          <Icon name="do_not_disturb_on" size={20} />
+          {isPt ? 'Encolher' : 'Shrink it'}
+        </span>
+        <span style={sm2Hint}>
+          {canShrink
+            ? (isPt
+              ? `Vira uma versão menor (esforço ${effort} → ${effort - 1}) e o contador de adiamentos zera.`
+              : `Becomes a smaller version (effort ${effort} → ${effort - 1}) and the postpone counter resets.`)
+            : (isPt
+              ? 'Já é do tamanho mínimo — não dá pra encolher mais.'
+              : 'Already at the smallest size — nothing left to shrink.')}
+        </span>
+      </button>
+
+      {/* ---- DEIXAR PRA LÁ ---- */}
+      <button
+        type="button"
+        style={actionCard}
+        onClick={() => { onDrop(task.id); onClose(); }}
+      >
+        <span style={actionTitle}>
+          <Icon name="nightlight" size={20} />
+          {isPt ? 'Deixar pra lá' : 'Let it go'}
+        </span>
+        <span style={sm2Hint}>
+          {isPt
+            ? 'Sai da lista sem ser concluída e sem ser apagada. Fica guardada, e dá pra trazer de volta quando quiser.'
+            : 'Leaves the list without being completed and without being deleted. It stays tucked away, and you can bring it back any time.'}
+        </span>
+      </button>
+    </ModalSheet>
+  );
+}
 
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
@@ -1443,6 +1674,83 @@ export default function App() {
     }));
   }, []);
 
+  // -------------------------------------------------------------------------
+  // ADIAMENTO: o chip do `TaskMeta` agora ABRE alguma coisa.
+  //
+  // `onPostponeNudge` é passado por AQUI — sem ele o botão nasce `disabled`.
+  // O handler só guarda o id (efeito nenhum dentro de updater, footgun 6); as
+  // três ações lá embaixo é que mexem no estado, cada uma delegando para a
+  // função pura dona da regra em `utils/taskTriage.ts`.
+  // -------------------------------------------------------------------------
+  const [nudgeTaskId, setNudgeTaskId] = useState<string | null>(null);
+  const handlePostponeNudge = useCallback((taskId: string) => setNudgeTaskId(taskId), []);
+  const handleCloseNudge = useCallback(() => setNudgeTaskId(null), []);
+
+  /** ENCOLHER — `shrink` rebaixa o esforço e ZERA o contador de adiamentos.
+   *  Nada é reimplementado aqui de propósito (footgun 9). */
+  const handleShrinkTask = useCallback((taskId: string) => {
+    const now = new Date();
+    setGameState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(t => (t.id === taskId ? shrink(t, now) : t)),
+    }));
+  }, [setGameState]);
+
+  /** DEIXAR PRA LÁ — `drop`. Terminal e reversível; a gaveta de guardadas já
+   *  existe na página de Atividades com `handleRestoreTask` do outro lado. */
+  const handleDropTask = useCallback((taskId: string) => {
+    const now = new Date();
+    setGameState(prev => ({
+      ...prev,
+      tasks: prev.tasks.map(t => (t.id === taskId ? drop(t, now) : t)),
+    }));
+    toast(language === 'pt-BR'
+      ? 'Guardada. Dá pra trazer de volta.'
+      : 'Tucked away. You can bring it back.');
+  }, [setGameState, language]);
+
+  /**
+   * DECOMPOR — os passos escolhidos viram tarefas novas de esforço 1.
+   *
+   * A tarefa ORIGINAL fica, e fica com o contador zerado: ela mudou de tamanho
+   * na cabeça da pessoa no momento em que ganhou um primeiro passo, e é a
+   * mesma tese do `shrink` ("carregar a marca puniria a decisão certa"). O que
+   * NÃO acontece aqui é apagar ou concluir a original em nome dela — se a
+   * pessoa quiser que ela suma, "deixar pra lá" está no mesmo sheet.
+   */
+  const handleDecomposeTask = useCallback((taskId: string, picks: SuggestedTask[]) => {
+    if (!picks.length) return;
+    const nowIso = new Date().toISOString();
+    const stamp = Date.now();
+    setGameState(prev => {
+      const parent = prev.tasks.find(t => t.id === taskId);
+      const novos: Task[] = picks.map((p, i) => ({
+        id: `task-${stamp}-${i}`,
+        name: p.name,
+        category: (p.category ?? parent?.category ?? 'Personal') as ActivityCategory,
+        emoji: p.emoji,
+        completed: false,
+        // Esforço 1 é a razão de existir da decomposição: o gargalo era
+        // habilidade, não motivação. Um "passo" de esforço 3 não é um passo.
+        effort: 1,
+        startDate: parent?.startDate,
+        status: 'open',
+        createdAt: nowIso,
+        lastTouchedAt: nowIso,
+      }));
+      return {
+        ...prev,
+        tasks: [
+          ...novos,
+          ...prev.tasks.map(t => (t.id === taskId ? { ...t, postponedCount: 0, lastTouchedAt: nowIso } : t)),
+        ],
+      };
+    });
+    toast(language === 'pt-BR'
+      ? `${picks.length === 1 ? 'Passo adicionado' : `${picks.length} passos adicionados`}. Comece pelo menor.`
+      : `${picks.length === 1 ? 'Step added' : `${picks.length} steps added`}. Start with the smallest one.`);
+  }, [setGameState, language]);
+
   const handleEditTask = useCallback((taskId: string) => {
     setEditingTask(taskId);
     setTaskEditModalOpen(true);
@@ -1452,6 +1760,34 @@ export default function App() {
     setEditingActivity(null);
     setEditModalOpen(true);
   }, []);
+
+  /**
+   * Abrir a cerimônia de evolução a partir do HUD.
+   *
+   * Isto era uma LAMBDA INLINE na prop `onEvolveRequest` — a única entre os 14
+   * handlers do `CompanionHUD`, que é `memo()`. Identidade nova a cada render
+   * anula a memoização inteira (footgun 5), e o `App` re-renderiza sozinho no
+   * polling do cocô (10s), no check da virada (30s) e a cada tecla do chat: o
+   * HUD inteiro (sprites, respiração, piscada, gesto de esfregar) redesenhava
+   * junto, que é exatamente o que o `memo` existe para evitar.
+   *
+   * As deps são os campos CRUS que a decisão lê — nada de `getDominantBranch`,
+   * que é recriada a cada render e devolveria a identidade instável pela porta
+   * dos fundos. Assim a identidade só muda quando a DECISÃO muda (ganhou
+   * atributo, evoluiu, destravou galho), e não a cada tique do relógio.
+   */
+  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions } = gameState;
+  const handleEvolveRequest = useCallback(() => {
+    const total = virusPoints + dataPoints + vaccinePoints;
+    let b: 'virus' | 'data' | 'vaccine' = 'data';
+    if (total > 0) {
+      const max = Math.max(virusPoints, dataPoints, vaccinePoints);
+      if (virusPoints === max && virusPoints > dataPoints && virusPoints > vaccinePoints) b = 'virus';
+      else if (vaccinePoints === max && vaccinePoints > virusPoints && vaccinePoints > dataPoints) b = 'vaccine';
+    }
+    const next = getNextEvolution(evolutionStage, b, unlockedEvolutions);
+    if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
+  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -2587,8 +2923,14 @@ export default function App() {
     setGameState(prev => {
       const newHP = getMaxHPForStage(targetStage);
       const newStageLevel = getStageLevel(targetStage);
-      // Intentional degen: head start at half the requirement (easier recovery than neglect)
-      const newPerfectDays = Math.floor(FORM_REQUIREMENTS[newStageLevel].required / 2);
+      /* MESMA regra da degeneração automática, e a função é a de `dailyReset`
+         (dona da regra). Aqui havia uma cópia: `= floor(required/2)`, uma
+         ATRIBUIÇÃO onde o outro caminho já era PISO + custo fixo. Um mega com
+         39 dias perfeitos que descia de propósito caía para 2; o mesmo mega
+         que deixava o HP zerar por descuido ficava com 34. O comentário
+         prometia "recuperação mais fácil que o descuido" e a linha entregava o
+         oposto exato. Não reescreva a expressão aqui — chame a função. */
+      const newPerfectDays = degeneratedPerfectDays(prev.perfectDays, newStageLevel);
 
       return {
         ...prev,
@@ -3226,11 +3568,7 @@ export default function App() {
                   const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
                   return next !== gameState.evolutionStage;
                 })()}
-                onEvolveRequest={() => {
-                  const b = getDominantBranch();
-                  const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
-                  if (next !== gameState.evolutionStage) setEvolutionCeremony({ from: gameState.evolutionStage, to: next });
-                }}
+                onEvolveRequest={handleEvolveRequest}
                 careEvent={careEvent}
                 onCareEventComplete={handleCareEventComplete}
                 foodInventory={gameState.foodInventory}
@@ -3383,7 +3721,12 @@ export default function App() {
                         <li style={{ listStyle: 'none', padding: '0 12px 8px 12px' }}>
                           {/* Esforço, prazo, "adiada 4×" e a aura de assombrada
                               — dado honesto, nunca acusação (TaskMeta.tsx). */}
-                          <TaskMeta task={task} now={agora} language={language} />
+                          <TaskMeta
+                            task={task}
+                            now={agora}
+                            language={language}
+                            onPostponeNudge={handlePostponeNudge}
+                          />
                         </li>
                       )}
                       </Fragment>
@@ -4008,6 +4351,18 @@ export default function App() {
           onClose={() => setEvolutionCeremony(null)}
         />
       )}
+
+      {/* O sheet das três saídas da tarefa adiada. Vive aqui em cima e não
+          dentro da lista: a lista re-renderiza a cada conclusão, e um sheet
+          montado lá dentro perderia o estado da decomposição no meio dela. */}
+      <PostponeNudgeSheet
+        task={nudgeTaskId ? (gameState.tasks.find(t => t.id === nudgeTaskId) ?? null) : null}
+        language={language}
+        onClose={handleCloseNudge}
+        onShrink={handleShrinkTask}
+        onDrop={handleDropTask}
+        onDecompose={handleDecomposeTask}
+      />
 
       <EvolveTaskModal
         isOpen={evolveModalStage !== null}

@@ -9,7 +9,10 @@ import {
   NEW_SAVE_GRACE_DAYS,
   RETURN_GRACE_DAYS,
   looksLikeVeteranSave,
+  degeneratedPerfectDays,
 } from '../utils/dailyReset';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 // Estes testes exercitam O MESMO computeDailyReset que o hook usa em produção.
 // Antes este arquivo reimplementava a virada do dia numa cópia local, então
@@ -675,6 +678,73 @@ describe('degeneração — piso, custo e a raiz da árvore', () => {
     });
     // 0 − 5 seria negativo; o piso é floor(required do rookie / 2) = 2.
     expect(r.perfectDays).toBe(Math.floor(FORM_REQUIREMENTS.rookie.required / 2));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PARIDADE MANUAL × AUTOMÁTICO
+//
+// Existem DOIS caminhos que degeneram: a virada com HP 0 (`computeDailyReset`,
+// acima) e o BOTÃO da página de Evolução (`handleDegenerate`, App.tsx). A
+// expressão estava escrita à mão nos dois, e divergiu em silêncio — o footgun
+// 9 literal. O automático virou piso + custo fixo; o manual ficou na
+// ATRIBUIÇÃO antiga (`= floor(required/2)`), que é ESTRITAMENTE mais dura para
+// qualquer jogador acima do piso: um mega com 39 dias perfeitos que descia de
+// PROPÓSITO caía para 2, enquanto o mesmo mega que só deixou o HP zerar
+// reaparecia com 34. O comentário do App prometia "recuperação mais fácil que
+// o descuido" e a linha entregava o oposto.
+//
+// A regra passou a ter dono único (`degeneratedPerfectDays`), e estes dois
+// testes são o que impede a cópia de voltar: o primeiro compara os NÚMEROS dos
+// dois caminhos, o segundo lê o FONTE do App e exige que ele chame a função em
+// vez de reescrever a expressão.
+// ---------------------------------------------------------------------------
+describe('degeneração — paridade entre o caminho manual e o automático', () => {
+  /** O que `handleDegenerate` (App.tsx) faz hoje, pela função dona da regra. */
+  const manual = (prevPerfectDays: number, targetStage: string) =>
+    degeneratedPerfectDays(prevPerfectDays, getStageLevel(targetStage));
+
+  const casos: Array<{ de: string; branch: string; para: string; dias: number }> = [
+    { de: 'mega-virus', branch: 'virus', para: 'ultimate-virus', dias: 39 },
+    { de: 'mega-virus', branch: 'virus', para: 'ultimate-virus', dias: 6 },
+    { de: 'mega-virus', branch: 'virus', para: 'ultimate-virus', dias: 0 },
+    { de: 'champion-data', branch: 'data', para: 'rookie', dias: 12 },
+    { de: 'champion-data', branch: 'data', para: 'rookie', dias: 1 },
+    { de: 'ultimate-vaccine', branch: 'vaccine', para: 'champion-vaccine', dias: 25 },
+  ];
+
+  it.each(casos)('$de com $dias dias perfeitos: manual == automático', ({ de, branch, para, dias }) => {
+    const tasks = Array.from({ length: 8 }, (_, i) => ({ id: `t${i}`, completed: false }));
+    const auto = runReset({
+      ...baseState(), tasks, healthPoints: 1,
+      evolutionStage: de, currentBranch: branch, perfectDays: dias,
+    });
+    // O automático realmente caiu, e caiu para onde o manual mandaria descer.
+    expect(auto.degeneratedByHP).toBe(true);
+    expect(getStageLevel(auto.evolutionStage)).toBe(getStageLevel(para));
+    // E o número é O MESMO. Esta é a asserção inteira do achado.
+    expect(auto.perfectDays).toBe(manual(dias, auto.evolutionStage));
+  });
+
+  it('a queda deliberada NUNCA é mais dura que o descuido, em nenhum ponto da escada', () => {
+    for (let dias = 0; dias <= 60; dias++) {
+      const tasks = Array.from({ length: 8 }, (_, i) => ({ id: `t${i}`, completed: false }));
+      const auto = runReset({
+        ...baseState(), tasks, healthPoints: 1,
+        evolutionStage: 'mega-virus', currentBranch: 'virus', perfectDays: dias,
+      });
+      expect(manual(dias, auto.evolutionStage)).toBeGreaterThanOrEqual(auto.perfectDays);
+    }
+  });
+
+  it('`handleDegenerate` chama a função dona da regra — nada de expressão à mão', () => {
+    const src = readFileSync(path.join(process.cwd(), 'src', 'App.tsx'), 'utf-8');
+    const inicio = src.indexOf('const handleDegenerate');
+    expect(inicio).toBeGreaterThan(-1);
+    const corpo = src.slice(inicio, inicio + 1600);
+    expect(corpo).toContain('degeneratedPerfectDays(');
+    // A cópia que causou o bug, em qualquer espaçamento.
+    expect(corpo).not.toMatch(/Math\.floor\(\s*FORM_REQUIREMENTS\[[^\]]+\]\.required\s*\/\s*2\s*\)/);
   });
 });
 

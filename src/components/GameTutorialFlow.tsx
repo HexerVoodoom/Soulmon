@@ -1,7 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import {
-  Heart, Sparkles, LoaderCircle, Check, Wand2,
-} from 'lucide-react';
+import { Icon } from './ui/Icon';
 import { PixelChoiceChip } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
@@ -25,10 +23,21 @@ import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
 // estavam ditas, melhor e com os NÚMEROS vindos das constantes, no
 // `GuideModal` (seções 1, 2 e 6) e no glossário do `HelpModal`. Ver
 // `docs/PLANO-PRODUTO.md`, Parte 0 ("Correção da correção").
+//
+// ÍCONES: esta tela era o ÚLTIMO consumidor de `lucide-react` no `src/` — e no
+// pior lugar possível, porque é a primeira tela de verdade de todo usuário
+// novo. Cinco glifos de uma quarta biblioteca, desenhados em 16/18/42px com
+// `strokeWidth` 2.2–3, ao lado da nav (Material Symbols), dos sprites e dos
+// emojis de categoria. Migrados para o `<Icon>` (motor único), com os nomes
+// CONFERIDOS no inventário de `src/styles/tokens.md` §5 — nome fora do
+// inventário não renderiza glifo NENHUM e não dá erro — e nos degraus da §6.1.
+// A dependência saiu do `package.json` no mesmo commit; o guard
+// `iconScale.contract.test.ts` agora acusa qualquer import dela de volta.
 // ---------------------------------------------------------------------------
 
 interface TutorialPage {
-  Icon: typeof Heart;
+  /** Nome Material do `<Icon>`. Tem que estar no inventário de tokens.md §5. */
+  icon: string;
   titlePt: string; titleEn: string;
   bodyPt: string; bodyEn: string;
 }
@@ -41,7 +50,7 @@ interface TutorialPage {
  */
 const PAGES: TutorialPage[] = [
   {
-    Icon: Sparkles,
+    icon: 'pets',
     titlePt: 'Seu Soulmon nasceu!', titleEn: 'Your Soulmon is born!',
     bodyPt: 'Ele cresce com você — cada tarefa que você cumpre na vida real o ajuda a evoluir. Vamos começar pela primeira.',
     bodyEn: "It grows with you — every task you complete in real life helps it evolve. Let's start with the first one.",
@@ -175,7 +184,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
     onComplete(activities.slice(0, remaining));
   };
 
-  const triangleGlyph = (dir: 'left' | 'right', color = 'var(--sm-primary)') => (
+  const triangleGlyph = (dir: 'left' | 'right', color = 'var(--sm2-primary-ink)') => (
     <span style={{
       display: 'inline-block', width: 0, height: 0,
       borderTop: '7px solid transparent', borderBottom: '7px solid transparent',
@@ -201,7 +210,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
       {Array.from({ length: TASK_STEP + 1 }, (_, i) => (
         <span key={i} style={{
           width: 6, height: 6, borderRadius: '50%',
-          background: i === step ? 'var(--sm-primary)' : 'var(--sm-line)',
+          background: i === step ? 'var(--sm2-primary-fill)' : 'var(--sm2-line)',
         }} />
       ))}
     </div>
@@ -211,7 +220,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
     <div className="sm-app-bg" style={{
       position: 'fixed', inset: 0, overflowY: 'auto',
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      color: 'var(--sm-ink)',
+      color: 'var(--sm2-ink)',
     }}>
       <div style={{ width: '100%', maxWidth: 440, padding: '24px 20px 40px', flex: 1, display: 'flex', flexDirection: 'column' }}>
         {step < TASK_STEP ? (
@@ -227,20 +236,28 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                    mudar a moldura. */
                 flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center',
                 padding: '36px 24px', marginTop: 40, marginBottom: 4,
-                border: '3px solid var(--sm-gold)',
-                boxShadow: '0 0 0 4px var(--sm-gold-soft), 0 8px 24px rgba(6, 24, 26,.12)',
+                /* Moldura dourada. Era uma borda `--sm-gold` de 3px MAIS um
+                   anel de 4px em `--sm-gold-soft`; o `--sm2-*` não tem um par
+                   ink/soft de ouro, e inventar um `rgba()` aqui seria cor
+                   fora do sistema (o footgun dos tokens à mão). Fica UMA
+                   linha de `--sm2-gold-fill` + a sombra de profundidade, que
+                   é o que já lia como moldura. */
+                border: '3px solid var(--sm2-gold-fill)',
+                boxShadow: '0 8px 24px rgba(6, 24, 26,.12)',
               }}
             >
-              <div style={{
-                width: 84, height: 84, borderRadius: 24, marginBottom: 22,
-                background: 'var(--sm-primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {(() => { const Icon = PAGES[step].Icon; return <Icon size={42} color="var(--sm-primary)" strokeWidth={1.8} />; })()}
+              {/* Glifo herói, PELADO. A caixa de 84px com fundo
+                  `--sm-primary-soft` que existia aqui era ícone DENTRO DE BOX,
+                  proibido no app inteiro (CLAUDE.md, "UI: regras visuais").
+                  48px é o papel `state` da §6.1a — o glifo que É a tela; está
+                  na allowlist do guard junto dos outros nove do mesmo papel. */}
+              <div style={{ marginBottom: 22, display: 'flex' }}>
+                <Icon name={PAGES[step].icon} size={48} tone="primary" fill={1} />
               </div>
               <h1 style={{ fontSize: 22, margin: '0 0 12px', fontWeight: 800 }}>
                 {isPt ? PAGES[step].titlePt : PAGES[step].titleEn}
               </h1>
-              <p style={{ fontSize: 14.5, color: 'var(--sm-muted)', lineHeight: 1.7, margin: 0 }}>
+              <p style={{ fontSize: 14.5, color: 'var(--sm2-muted)', lineHeight: 1.7, margin: 0 }}>
                 {isPt ? PAGES[step].bodyPt : PAGES[step].bodyEn}
               </p>
             </div>
@@ -265,16 +282,16 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               onClick={() => setStep(TASK_STEP - 1)}
               /* minHeight 44 = alvo de toque do WCAG 2.2 AA (2.5.8); era 0 de
                  padding e ~19px de altura. */
-              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--sm-muted)', fontSize: 12, margin: '0 0 4px', cursor: 'pointer', padding: '0 4px', minHeight: 44 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: 'var(--sm2-muted)', fontSize: 12, margin: '0 0 4px', cursor: 'pointer', padding: '0 4px', minHeight: 44 }}
             >
-              {triangleGlyph('left', 'var(--sm-muted)')}
+              {triangleGlyph('left', 'var(--sm2-muted)')}
               {isPt ? 'Voltar' : 'Back'}
             </button>
             <div style={{ marginBottom: 10 }}>{dots}</div>
             <h1 style={{ fontSize: 21, margin: '8px 0 4px', fontWeight: 800 }}>
               {isPt ? 'Qual é o seu objetivo?' : "What's your goal?"}
             </h1>
-            <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', margin: '0 0 16px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: 12.5, color: 'var(--sm2-muted)', margin: '0 0 16px', lineHeight: 1.5 }}>
               {isPt
                 ? 'Conte pra gente o que você quer alcançar — vamos sugerir tarefas pra ajudar. Você precisa adicionar pelo menos 1 pra continuar.'
                 : "Tell us what you want to achieve — we'll suggest tasks to help. You need to add at least 1 to continue."}
@@ -290,7 +307,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               style={{ width: '100%', boxSizing: 'border-box', resize: 'none', outline: 'none', fontFamily: 'inherit' }}
             />
 
-            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--sm-muted)', margin: '14px 0 8px' }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--sm2-muted)', margin: '14px 0 8px' }}>
               {isPt ? 'Áreas da vida (opcional)' : 'Life areas (optional)'}
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
@@ -314,10 +331,19 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               style={{ width: '100%' }}
               onClick={handleGenerate}
               disabled={loading || (!goalText.trim() && selectedCats.size === 0)}
+              aria-busy={loading}
             >
+              {/* 20 = degrau `inline` da §6.1: os dois andam ao lado de uma
+                  palavra na mesma linha (o spinner ocupa o lugar dela). O
+                  spinner tem `label` porque, carregando, ele é a única coisa
+                  no botão — sem isso o leitor de tela anuncia um botão mudo. */}
               {loading
-                ? <LoaderCircle size={18} strokeWidth={2.4} style={{ animation: 'tutspin 1.1s linear infinite' }} />
-                : <><Wand2 size={16} strokeWidth={2.2} /> {isPt ? 'Sugerir tarefas com IA' : 'Suggest tasks with AI'}</>}
+                ? <Icon
+                    name="sync" size={20}
+                    label={isPt ? 'Gerando sugestões…' : 'Generating suggestions…'}
+                    style={{ animation: 'tutspin 1.1s linear infinite' }}
+                  />
+                : <><Icon name="auto_awesome" size={20} /> {isPt ? 'Sugerir tarefas com IA' : 'Suggest tasks with AI'}</>}
             </button>
 
             {searched && !loading && (
@@ -334,21 +360,21 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                       style={{
                         width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
                         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
-                        borderColor: isSel ? 'var(--sm-primary)' : undefined,
-                        backgroundColor: isSel ? 'var(--sm-primary-soft)' : undefined,
-                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm-primary)' } : null),
+                        borderColor: isSel ? 'var(--sm2-primary-ink)' : undefined,
+                        backgroundColor: isSel ? 'var(--sm2-primary-soft)' : undefined,
+                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm2-primary-ink)' } : null),
                       } as CSSProperties}
                     >
-                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm2-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {CATEGORY_ICONS[customCategory]}
                       </span>
-                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: 'var(--sm-ink)' }}>{goalText.trim()}</span>
-                      {isSel && <Check size={18} strokeWidth={3} color="var(--sm-primary)" />}
+                      <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: 'var(--sm2-ink)' }}>{goalText.trim()}</span>
+                      {isSel && <Icon name="check" size={24} tone="primary" />}
                     </button>
                   );
                 })()}
                 {suggestions.length === 0 ? (
-                  <p style={{ fontSize: 12.5, color: 'var(--sm-muted)', textAlign: 'center', margin: '8px 0' }}>
+                  <p style={{ fontSize: 12.5, color: 'var(--sm2-muted)', textAlign: 'center', margin: '8px 0' }}>
                     {isPt
                       ? 'Não veio sugestão da IA agora — sem problema, use seu objetivo acima ou digite de novo.'
                       : 'No AI suggestions came back — no worries, use your goal above or try again.'}
@@ -366,24 +392,24 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
                       style={{
                         width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 10, padding: 12,
                         cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
-                        borderColor: isSel ? 'var(--sm-primary)' : undefined,
-                        backgroundColor: isSel ? 'var(--sm-primary-soft)' : undefined,
-                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm-primary)' } : null),
+                        borderColor: isSel ? 'var(--sm2-primary-ink)' : undefined,
+                        backgroundColor: isSel ? 'var(--sm2-primary-soft)' : undefined,
+                        ...(isSel ? { ['--sm-cham-line' as string]: 'var(--sm2-primary-ink)' } : null),
                       } as CSSProperties}
                     >
-                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: '1.3rem', width: 36, height: 36, backgroundColor: 'var(--sm2-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         {s.emoji}
                       </span>
                       <span style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: 'var(--sm-ink)' }}>{s.name}</span>
-                        <span style={{ fontSize: 11, color: 'var(--sm-muted)' }}>{categoryLabel(s.category, isPt)}</span>
+                        <span style={{ display: 'block', fontSize: 13.5, fontWeight: 600, color: 'var(--sm2-ink)' }}>{s.name}</span>
+                        <span style={{ fontSize: 11, color: 'var(--sm2-muted)' }}>{categoryLabel(s.category, isPt)}</span>
                       </span>
-                      {isSel && <Check size={18} strokeWidth={3} color="var(--sm-primary)" />}
+                      {isSel && <Icon name="check" size={24} tone="primary" />}
                     </button>
                   );
                 })}
                 {atCap && (
-                  <p style={{ fontSize: 11.5, color: 'var(--sm-gold)', textAlign: 'center', margin: '2px 0 0', fontWeight: 600 }}>
+                  <p style={{ fontSize: 11.5, color: 'var(--sm2-gold-ink)', textAlign: 'center', margin: '2px 0 0', fontWeight: 600 }}>
                     {isPt
                       ? `Limite de ${remaining} atividades do estágio atingido — desmarque algo pra trocar.`
                       : `Stage limit of ${remaining} activities reached — unselect something to swap.`}

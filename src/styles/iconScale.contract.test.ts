@@ -24,6 +24,30 @@
  *    exista: se alguém migrar o call-site e esquecer de tirar a entrada, o
  *    guard acusa a entrada morta. Lista que só cresce vira cemitério — é a
  *    mesma regra da QUARANTINE de `assets.contract.test.ts`.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * DOIS FUROS FECHADOS (auditoria de agosto), e o segundo explica o primeiro
+ * achado da mesma auditoria:
+ *
+ * A. **`size={CONST}` passava invisível.** O parser só lia `size={<literal>}`
+ *    e o resto virava "não há número para julgar". Uma constante local com
+ *    valor fora da escala atravessava o guard sem deixar rastro. Agora o
+ *    guard RESOLVE o identificador quando ele é uma const de módulo literal
+ *    (ou um parâmetro com default literal) do MESMO arquivo, e quando não
+ *    consegue resolver com segurança ele **acusa a FORMA** e pede um literal.
+ *    Falso positivo que o autor resolve escrevendo o número é melhor que furo
+ *    silencioso — é a mesma escolha do `[^>]*?` lá em cima.
+ *
+ * B. **O guard não enxergava uma BIBLIOTECA de ícone inteira.** Ele media o
+ *    tamanho de `<Icon>`/`<NavGlyph>` e ficava verde enquanto o
+ *    `GameTutorialFlow` — o segundo onboarding, OBRIGATÓRIO, a primeira tela
+ *    de verdade de todo usuário novo — desenhava cinco glifos de
+ *    `lucide-react` em 16/18/42px com `strokeWidth` 2.2–3. Um quarto idioma
+ *    de ícone entrou pela porta que o guard não vigiava: escala é sobre
+ *    TAMANHO, mas o defeito que a §6.1 nasceu para fechar (a tela com cinco
+ *    linguagens visuais) também entra por MOTOR. Agora qualquer import de
+ *    `lucide-react` no `src/` reprova, com allowlist própria — hoje VAZIA,
+ *    e o caso de entrada morta abaixo garante que ela volte a ficar vazia.
  */
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
@@ -66,7 +90,10 @@ interface CallSite {
   arquivo: string;   // relativo à raiz, com `/`
   linha: number;
   tag: 'Icon' | 'NavGlyph';
-  size: number;
+  /** O número desenhado, quando dá para saber. `null` = forma não resolvível. */
+  size: number | null;
+  /** O que estava escrito entre as chaves (`24`, `ICON_ACTION`, `props.size`). */
+  expr: string;
 }
 
 function walk(dir: string): string[] {
@@ -80,14 +107,44 @@ function walk(dir: string): string[] {
 }
 
 /**
- * Varre um fonte por `<Icon …>` / `<NavGlyph …>` e extrai o `size={n}`.
+ * Constantes de tamanho resolvíveis DENTRO de um arquivo. Duas formas, e só
+ * duas — porque cada forma a mais é uma chance de o guard "resolver" errado e
+ * julgar um número que o app não desenha:
+ *
+ *   · `const ICON_ACTION = 24;` no topo do módulo (é o padrão que ShopModal e
+ *     BottomNav já usam, e é o padrão CERTO: dá nome ao papel do degrau);
+ *   · `{ size = 20 }` — parâmetro desestruturado com default literal, que é o
+ *     tamanho que o componente DESENHA quando ninguém passa nada.
+ *
+ * O que NÃO se resolve (`props.size`, ternário, soma, valor vindo de outro
+ * módulo) fica `null` e é ACUSADO pela forma. Assumir um valor ali seria pior
+ * que não olhar: o guard passaria a afirmar um número inventado.
+ */
+function constantesLiterais(src: string): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const c of src.matchAll(/^\s*(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*(?::\s*number\s*)?=\s*(\d+(?:\.\d+)?)\s*;/gm)) {
+    m.set(c[1], Number(c[2]));
+  }
+  for (const c of src.matchAll(/[{,]\s*size\s*=\s*(\d+(?:\.\d+)?)\s*[,}]/g)) {
+    m.set('size', Number(c[1]));
+  }
+  return m;
+}
+
+/**
+ * Varre um fonte por `<Icon …>` / `<NavGlyph …>` e extrai o `size={…}`.
  *
  * Não é um regex de uma linha só de propósito: uma prop pode conter `>` (arrow
  * function, comparação) e um `[^>]*?` pararia cedo, deixando o call-site
  * invisível — guard que não enxerga é guard verde pelo motivo errado. Aqui a
  * tag é fechada contando `{}` e ignorando o que está dentro de string.
+ *
+ * `size` AUSENTE continua não sendo acusado: aí não há escolha de tamanho, o
+ * componente usa o padrão dele (24, um degrau). O que passou a ser acusado é
+ * `size={…}` com algo que não é literal nem constante local resolvível.
  */
 export function varrerFonte(src: string, arquivo = '<memória>'): CallSite[] {
+  const CONSTS = constantesLiterais(src);
   const achados: CallSite[] = [];
   const abertura = /<(Icon|NavGlyph)(?=[\s/>])/g;
   for (const m of src.matchAll(abertura)) {
@@ -103,13 +160,22 @@ export function varrerFonte(src: string, arquivo = '<memória>'): CallSite[] {
       else if (c === '>' && chaves === 0) break;
     }
     const corpo = src.slice(m.index!, i);
-    const s = corpo.match(/\bsize=\{\s*(\d+)\s*\}/);
-    if (!s) continue; // sem `size` literal: usa o padrão (24) ou uma variável
+    const temSize = /\bsize=\{/.test(corpo);
+    if (!temSize) continue; // sem `size`: usa o padrão do componente (24, um degrau)
+    // `[^{}]*` só casa expressão SEM chave aninhada. Quando não casa (template
+    // string, objeto, chamada com bloco), o call-site não some da varredura —
+    // ele entra com a forma marcada e cai no caso que exige literal.
+    const s = corpo.match(/\bsize=\{([^{}]*)\}/);
+    const expr = s ? s[1].trim() : '<expressão com chave aninhada>';
+    const size = /^\d+(\.\d+)?$/.test(expr)
+      ? Number(expr)
+      : (CONSTS.has(expr) ? CONSTS.get(expr)! : null);
     achados.push({
       arquivo,
       linha: src.slice(0, m.index!).split('\n').length,
       tag: m[1] as CallSite['tag'],
-      size: Number(s[1]),
+      size,
+      expr,
     });
   }
   return achados;
@@ -139,6 +205,43 @@ function inventario(): CallSite[] {
 
 const CALL_SITES = inventario();
 const chave = (c: CallSite) => `${c.arquivo}:${c.linha}`;
+
+// ───────────────────────────────────────────── o 4º idioma de ícone (motor)
+
+/**
+ * Acha IMPORT de `lucide-react` — não a palavra. Os arquivos migrados citam a
+ * biblioteca em comentário ("o que saiu daqui: `lucide-react`…"), e um guard
+ * que acusasse a MENÇÃO puniria justamente quem documentou a migração; o
+ * primeiro a apagar o comentário ficaria verde. Cobre as quatro formas que
+ * fazem o código entrar no bundle — `import … from`, `import '…'` de efeito,
+ * `import('…')` dinâmico e `require('…')` — e o alias versionado
+ * (`lucide-react@0.487.0`) que o `vite.config.ts` mapeia.
+ */
+export function importaLucide(src: string): boolean {
+  const alvo = String.raw`lucide-react(@[\w.^~*-]+)?`;
+  return new RegExp(
+    String.raw`(?:from|import|require)\s*\(?\s*['"]${alvo}['"]`,
+  ).test(src);
+}
+
+interface DividaDeMotor { arquivo: string; motivo: string }
+
+/**
+ * ALLOWLIST DE MOTOR — vazia, e é para continuar vazia.
+ *
+ * Ela existe (em vez de o guard ser uma proibição sem saída) porque o dia em
+ * que alguém tiver um motivo real vai chegar, e a alternativa a uma linha com
+ * o motivo escrito é alguém apagar o teste inteiro. Regra de entrada: o mesmo
+ * motivo de 40 caracteres que a allowlist de tamanho cobra, e a mesma
+ * verificação nos dois sentidos — entrada que não corresponde a um import real
+ * reprova como dívida morta.
+ */
+const ALLOWLIST_MOTOR: DividaDeMotor[] = [];
+
+const IMPORTS_LUCIDE = walk(SRC)
+  .map(f => path.relative(ROOT, f).split(path.sep).join('/'))
+  .filter(rel => rel !== ARQUIVO_DESTE_GUARD)
+  .filter(rel => importaLucide(fs.readFileSync(path.join(ROOT, rel), 'utf8')));
 
 // ──────────────────────────────────────────────────────────────── allowlist
 
@@ -236,6 +339,10 @@ const ALLOWLIST: Divida[] = [
     motivo: 'Ilustração de estado: o herói do modal de boas-vindas. Ver ENTRADA 1.',
   },
   {
+    arquivo: 'src/components/GameTutorialFlow.tsx', size: 48, quantos: 1,
+    motivo: 'Ilustração de estado: o glifo herói do segundo onboarding — sozinho, centralizado, acima do parágrafo, É a tela. Veio de `lucide-react` em 42px dentro de uma caixa de 84px (ícone em box, proibido). Ver ENTRADA 1.',
+  },
+  {
     arquivo: 'src/components/ui/foundation.render.test.tsx', size: 64, quantos: 1,
     motivo: 'NÃO é UI: é o teste do clamp de `opsz` (§6 regra 3). Precisa passar acima de 48 para provar que o componente clampa. Ver ENTRADA 2.',
   },
@@ -277,7 +384,7 @@ describe('guard da escala de ícone — autoverificação (o instrumento enxerga
 
   it('o parser acha o call-site e lê o tamanho', () => {
     const achados = varrerFonte('<Icon name="mic" size={30} tone="ink" />');
-    expect(achados).toEqual([{ arquivo: '<memória>', linha: 1, tag: 'Icon', size: 30 }]);
+    expect(achados).toEqual([{ arquivo: '<memória>', linha: 1, tag: 'Icon', size: 30, expr: '30' }]);
   });
 
   it('o parser NÃO se perde numa prop que contém `>` (o furo do regex ingênuo)', () => {
@@ -304,16 +411,75 @@ describe('guard da escala de ícone — autoverificação (o instrumento enxerga
     expect(varrerFonte('<NavGlyph name="home" size={32} />')[0].tag).toBe('NavGlyph');
   });
 
-  it('`size` ausente ou vindo de variável não é acusado (não há número para julgar)', () => {
+  it('`size` AUSENTE não é acusado (aí não há escolha: vale o padrão 24)', () => {
     expect(varrerFonte('<Icon name="a" />')).toEqual([]);
-    expect(varrerFonte('<Icon name="a" size={props.size} />')).toEqual([]);
+  });
+
+  /**
+   * FURO 1 da auditoria, em forma de teste: `size={CONST}` passava invisível.
+   * Uma constante local fora da escala atravessava o guard sem rastro — e o
+   * padrão `const ICON_ACTION = 24` é justamente o padrão BOM (dá nome ao
+   * papel), então ele precisa ser lido, não ignorado.
+   */
+  it('o parser RESOLVE `size={CONST}` quando a const é local e literal', () => {
+    const src = [
+      'const ICON_ACTION = 24;',
+      'const ICON_TORTO = 18;',
+      '<Icon name="a" size={ICON_ACTION} />',
+      '<Icon name="b" size={ICON_TORTO} />',
+    ].join('\n');
+    const achados = varrerFonte(src);
+    expect(achados.map(c => [c.expr, c.size])).toEqual([['ICON_ACTION', 24], ['ICON_TORTO', 18]]);
+    // e o de 18 é julgado como qualquer literal fora de escala seria
+    expect(achados.filter(c => c.size !== null && !ESCALA.has(c.size)).map(c => c.expr)).toEqual(['ICON_TORTO']);
+  });
+
+  it('o parser resolve o default literal de um parâmetro desestruturado', () => {
+    const src = 'function Spinner({ size = 20 }: { size?: number }) {\n  return <Icon name="sync" size={size} />;\n}';
+    expect(varrerFonte(src).map(c => c.size)).toEqual([20]);
+  });
+
+  it('forma NÃO resolvível vira `size: null` — a forma é acusada, não adivinhada', () => {
+    // Adivinhar aqui seria pior que não olhar: o guard passaria a afirmar um
+    // número que o app não desenha. `null` é a acusação.
+    expect(varrerFonte('<Icon name="a" size={props.size} />').map(c => c.size)).toEqual([null]);
+    expect(varrerFonte('<Icon name="a" size={aberto ? 20 : 32} />').map(c => c.size)).toEqual([null]);
+    expect(varrerFonte('<Icon name="a" size={BASE + 4} />').map(c => c.size)).toEqual([null]);
+    // const de OUTRO módulo não é local: não se resolve, se acusa.
+    expect(varrerFonte('import { ICON } from "./x";\n<Icon size={ICON} />').map(c => c.size)).toEqual([null]);
+  });
+
+  it('nem uma expressão com chave aninhada some da varredura', () => {
+    const achados = varrerFonte('<Icon name="a" size={{ a: 1 }.a} />');
+    expect(achados.length).toBe(1);
+    expect(achados[0].size).toBe(null);
+  });
+
+  /**
+   * FURO 2, o que deixou o furo do `GameTutorialFlow` passar: o guard media
+   * TAMANHO e ficava cego a MOTOR. Um quarto idioma de ícone entrou pela porta
+   * que ninguém vigiava.
+   */
+  it('o detector de `lucide-react` acusa IMPORT, nas quatro formas', () => {
+    expect(importaLucide("import { Heart } from 'lucide-react';")).toBe(true);
+    expect(importaLucide('import Foo from "lucide-react";')).toBe(true);
+    expect(importaLucide("import 'lucide-react';")).toBe(true);
+    expect(importaLucide("const m = await import('lucide-react');")).toBe(true);
+    expect(importaLucide("require('lucide-react')")).toBe(true);
+    // e o alias versionado que o vite.config.ts mapeia
+    expect(importaLucide("import { Heart } from 'lucide-react@0.487.0';")).toBe(true);
+  });
+
+  it('o detector NÃO acusa a MENÇÃO em comentário (senão pune quem documentou)', () => {
+    expect(importaLucide('// O que saiu daqui: `lucide-react`, o PNG raster.')).toBe(false);
+    expect(importaLucide("import { Icon } from './ui/Icon'; // era lucide-react")).toBe(false);
   });
 
   it('o julgamento separa dentro de escala de fora dela', () => {
     const dentro = varrerFonte('<Icon size={20} /><Icon size={24} /><Icon size={32} /><Icon size={42} />');
-    expect(dentro.filter(c => !ESCALA.has(c.size))).toEqual([]);
+    expect(dentro.filter(c => c.size === null || !ESCALA.has(c.size))).toEqual([]);
     const fora = varrerFonte('<Icon size={22} /><Icon size={18} />');
-    expect(fora.filter(c => !ESCALA.has(c.size)).map(c => c.size)).toEqual([22, 18]);
+    expect(fora.filter(c => c.size !== null && !ESCALA.has(c.size)).map(c => c.size)).toEqual([22, 18]);
   });
 
   it('a exclusão do próprio guard aponta para um arquivo que existe', () => {
@@ -335,9 +501,26 @@ describe('guard da escala de ícone — autoverificação (o instrumento enxerga
 describe('guard da escala de ícone — §6.1 é lei', () => {
   it('todo `<Icon size>` / `<NavGlyph size>` cai num degrau da escala', () => {
     const fora = CALL_SITES
-      .filter(c => !ESCALA.has(c.size) && !perdoado(c))
-      .map(c => `${chave(c)} — <${c.tag} size={${c.size}}> (degraus: ${[...ESCALA].join('/')})`);
+      .filter(c => c.size !== null && !ESCALA.has(c.size) && !perdoado(c))
+      .map(c => `${chave(c)} — <${c.tag} size={${c.expr}}>${c.expr === String(c.size) ? '' : ` (= ${c.size})`} (degraus: ${[...ESCALA].join('/')})`);
     expect(fora, 'tamanho fora da escala de tokens.md §6.1').toEqual([]);
+  });
+
+  /**
+   * O FURO 1: `size={CONST}` cujo valor estivesse fora da escala passava
+   * invisível, porque o parser antigo só entendia literal e tratava todo o
+   * resto como "não há número para julgar". Resolver o que dá para resolver
+   * fechou a maior parte; o resto tem que ser ESCRITO como número, e é isso
+   * que este caso cobra. É a escolha consciente por falso positivo: quem
+   * escreveu a expressão sabe o valor e troca por um literal ou por uma const
+   * local nomeada (`const ICON_ACTION = 24`, que é o padrão bom) — enquanto um
+   * furo silencioso não tem dono nenhum.
+   */
+  it('nenhum `size={…}` é opaco: ou é literal, ou resolve para um número', () => {
+    const opacos = CALL_SITES
+      .filter(c => c.size === null)
+      .map(c => `${chave(c)} — <${c.tag} size={${c.expr}}>: escreva o número (ou uma const LOCAL literal, ex. \`const ICON_ACTION = 24\`) para o guard poder julgar`);
+    expect(opacos, 'forma de `size` que o guard não consegue julgar').toEqual([]);
   });
 
   /**
@@ -369,16 +552,27 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
   });
 
   /**
-   * A allowlist tem 10 entradas e 9 delas são o MESMO papel. Isso é um sinal
+   * A allowlist tem 11 entradas e 10 delas são o MESMO papel. Isso é um sinal
    * sobre a ESCALA, não sobre os call-sites — e um sinal que se apaga sozinho
    * se ninguém contar. Este caso mantém o número visível: no dia em que a
    * dívida de ilustração de estado crescer, alguém tem que decidir entre
    * escrever o 5º degrau na §6.1 ou frouxar o guard, e essa decisão passa a
    * ser consciente.
+   *
+   * O teto foi de 12 para **13** UMA vez, e aqui está a decisão por escrito,
+   * que é exatamente o que este caso existe para forçar: o herói do
+   * `GameTutorialFlow` era `lucide-react` e não aparecia na contagem — ao
+   * migrar para `<Icon>`, o 11º caso do papel `state` ficou visível. Não é
+   * dívida nova, é dívida que estava fora do alcance do instrumento. A
+   * alternativa era desenhar o herói do segundo onboarding em 42 (`deck` = o
+   * botão de dar comida da Home), que é a colisão de significado que a §6.1a
+   * já recusou. **O próximo aumento não deve ser um aumento**: 11 de 13 são o
+   * mesmo papel, e a resposta certa é a §6.1a virar linha da tabela de §6.1 —
+   * aí `escalaDeclarada()` aceita 48 sozinha e nove entradas caem de uma vez.
    */
   it('a allowlist não cresce em silêncio', () => {
     const perdoados = ALLOWLIST.reduce((n, d) => n + d.quantos, 0);
-    expect(perdoados, 'dívida nova sem revisar a escala — leia a ENTRADA 1').toBeLessThanOrEqual(12);
+    expect(perdoados, 'dívida nova sem revisar a escala — leia a ENTRADA 1').toBeLessThanOrEqual(13);
     // e ela é uma FATIA pequena: se um dia a maior parte dos call-sites estiver
     // perdoada, a escala virou ficção outra vez.
     expect(perdoados / CALL_SITES.length).toBeLessThan(0.2);
@@ -391,6 +585,40 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
    * ("nenhum está fora") passaria também num repositório onde alguém tivesse
    * quebrado a varredura; estes dois provam que a varredura chega ATÉ LÁ.
    */
+  /**
+   * O outro lado do FURO 2. `<Icon>` é "o ÚNICO ponto de ícone do app"
+   * (`Icon.tsx`) — uma biblioteca paralela desfaz isso em silêncio, e desfez:
+   * a §6.1 nasceu contra a tela com cinco tamanhos, e um segundo motor traz
+   * cinco tamanhos DE VOLTA junto com um traço (`strokeWidth`) que a escala
+   * nem sabe medir.
+   */
+  it('`lucide-react` não é importado em lugar nenhum do `src/`', () => {
+    const intrusos = IMPORTS_LUCIDE
+      .filter(f => !ALLOWLIST_MOTOR.some(d => d.arquivo === f))
+      .map(f => `${f}: importa \`lucide-react\` — o app tem UM motor de ícone (\`components/ui/Icon.tsx\`, §6 do tokens.md)`);
+    expect(intrusos, 'quarto idioma de ícone de volta no app').toEqual([]);
+  });
+
+  it('a allowlist de motor está vazia — e cada entrada dela seria dívida VIVA', () => {
+    const mortas = ALLOWLIST_MOTOR
+      .filter(d => !IMPORTS_LUCIDE.includes(d.arquivo))
+      .map(d => `${d.arquivo}: não importa mais \`lucide-react\` — TIRE a entrada`);
+    expect(mortas, 'allowlist de motor desatualizada').toEqual([]);
+    const vagos = ALLOWLIST_MOTOR.filter(d => d.motivo.trim().length < 40).map(d => d.arquivo);
+    expect(vagos, 'motivo curto demais para justificar um segundo motor de ícone').toEqual([]);
+  });
+
+  /**
+   * A dependência também sai do `package.json`. Pacote instalado com zero
+   * imports é uma porta encostada: o próximo `import { Heart }` funciona de
+   * primeira, sem instalar nada e sem ninguém decidir nada.
+   */
+  it('`lucide-react` não está mais nas dependências', () => {
+    const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    expect(Object.keys(deps).filter(d => d.startsWith('lucide-react'))).toEqual([]);
+  });
+
   it('REGRESSÃO: os dois que apareciam nas telas principais estão na escala', () => {
     const mic = CALL_SITES.filter(c => c.arquivo === 'src/components/ChatBox.tsx');
     expect(mic.length, 'a barra de chat sumiu da varredura').toBeGreaterThan(0);
@@ -398,7 +626,7 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
 
     const evo = CALL_SITES.filter(c => c.arquivo === 'src/components/EvolutionPath.tsx');
     expect(evo.length).toBeGreaterThan(0);
-    expect(evo.filter(c => !ESCALA.has(c.size) && !perdoado(c))).toEqual([]);
+    expect(evo.filter(c => c.size === null || (!ESCALA.has(c.size) && !perdoado(c)))).toEqual([]);
   });
 
   /**
@@ -407,7 +635,7 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
    * a §6.1 estaria descrevendo uma tela que não existe.
    */
   it('cada degrau declarado é um degrau USADO (a tabela descreve o app real)', () => {
-    const usados = new Set(CALL_SITES.map(c => c.size));
+    const usados = new Set(CALL_SITES.map(c => c.size).filter((s): s is number => s !== null));
     const orfaos = [...DEGRAUS.entries()]
       .filter(([, px]) => !usados.has(px))
       .map(([nome, px]) => `${nome} (${px}px) está na tabela e não é usado em lugar nenhum`);

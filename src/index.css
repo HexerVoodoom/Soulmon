@@ -7280,3 +7280,73 @@ body {
   outline: 2px solid var(--sm2-primary-ink);
   outline-offset: 2px;
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   TOAST — a peça de sistema, sobre `--sm2-*`
+   ─────────────────────────────────────────────────────────────────────────
+   O CSS do sonner é INJETADO em runtime, depois deste arquivo, então a
+   especificidade tem que vencer sozinha: `[data-sonner-toast].sm2-toast[data-styled='true']`
+   soma duas unidades contra a única do seletor dele. A classe vem de
+   `toastOptions` em `src/components/ui/sonner.tsx`.
+
+   Por que existe: o scaffold do Figma pintava o toast com `var(--popover)`,
+   token do shadcn CONGELADO no tema claro (footgun 10). Medido no tema
+   escuro: creme com laranja, 3,08:1, 13px. Aqui o par é `--sm2-ink` sobre
+   `--sm2-surface`, medido em AA nos dois temas por
+   `src/styles/tokens.contrast.test.ts`.
+
+   14px e não 12: o piso do sistema é 12, mas isto é o canal de ERRO,
+   OFFLINE e IA-INDISPONÍVEL — texto que o usuário precisa ler para decidir
+   é 14 (`src/styles/tokens.md`). */
+[data-sonner-toast].sm2-toast[data-styled='true'] {
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  line-height: var(--sm2-leading-body);
+  background-color: var(--sm2-surface);
+  color: var(--sm2-ink);
+  border: 1px solid var(--sm2-line);
+  border-radius: var(--sm2-radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28);
+}
+/* O tipo do toast é lido pela TINTA e por uma faixa lateral de 4px — não por
+   um fundo saturado. Fundo saturado era o que obrigava o sonner a inventar
+   uma cor de texto própria, e é de lá que vinha o laranja de 3,08:1. O fundo
+   segue `--sm2-surface` nos quatro tipos, então todos os pares medidos são
+   `<acento>-ink` sobre `surface`. */
+[data-sonner-toast].sm2-toast[data-styled='true'][data-type='error'] {
+  color: var(--sm2-danger-ink);
+  border-color: var(--sm2-danger-ink);
+  border-left: 4px solid var(--sm2-danger-ink);
+}
+[data-sonner-toast].sm2-toast[data-styled='true'][data-type='warning'] {
+  color: var(--sm2-gold-ink);
+  border-color: var(--sm2-gold-ink);
+  border-left: 4px solid var(--sm2-gold-ink);
+}
+[data-sonner-toast].sm2-toast[data-styled='true'][data-type='success'],
+[data-sonner-toast].sm2-toast[data-styled='true'][data-type='info'] {
+  color: var(--sm2-primary-ink);
+  border-color: var(--sm2-primary-ink);
+  border-left: 4px solid var(--sm2-primary-ink);
+}
+/* O título HERDA a cor do tipo (o `color` das três regras acima) — é o que
+   faz um erro se anunciar como erro sem fundo saturado. A DESCRIÇÃO volta
+   para a tinta neutra: texto corrido em cor de acento cansa, e o ouro é o
+   par mais apertado da paleta. MEDIDO no app: título 14px em
+   `--sm2-danger-ink` sobre `--sm2-surface` dá 6,54:1 no claro e 6,73:1 no
+   escuro; antes eram 3,08:1 a 13px, iguais nos dois temas. */
+[data-sonner-toast].sm2-toast[data-styled='true'] [data-title] {
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  font-weight: 600;
+}
+[data-sonner-toast].sm2-toast[data-styled='true'] [data-description] {
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-sm);
+  color: var(--sm2-muted);
+}
+[data-sonner-toast].sm2-toast[data-styled='true'] [data-close-button] {
+  background-color: var(--sm2-surface);
+  border-color: var(--sm2-line);
+  color: var(--sm2-ink);
+}

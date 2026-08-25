@@ -245,6 +245,75 @@ for (const [nomeTema, tokens] of [
   });
 }
 
+// ── 2b. O TOAST ───────────────────────────────────────────────────────────
+//
+// O toast é o canal de ERRO, OFFLINE e IA-INDISPONÍVEL do app inteiro (11
+// call-sites). Até agosto/2026 ele era o scaffold do Figma intacto: lia tema
+// do `next-themes` (que este app nunca configurou) e amarrava `--normal-bg` a
+// `var(--popover)` — token shadcn CONGELADO no tema claro (footgun 10).
+// Medido com o app em tema escuro: creme #FFFCF0 com texto #DC7609 a 13px,
+// 3,08:1, idêntico ao tema claro.
+//
+// A peça foi refeita sobre `--sm2-*` (`src/components/ui/sonner.tsx` + a regra
+// no fim de `src/index.css`): fundo SEMPRE `--sm2-surface`, e o tipo do toast
+// é lido pela TINTA + faixa lateral, nunca por fundo saturado. Este bloco
+// existe para que o MAPA DE TIPOS tenha um dono medido: mudar a tinta de um
+// tipo do toast quebra aqui, e não na tela de um usuário.
+const PARES_TOAST: Par[] = [
+  ['toast neutro — título', '--sm2-ink', '--sm2-surface', AA_TEXTO],
+  ['toast — descrição', '--sm2-muted', '--sm2-surface', AA_TEXTO],
+  ['toast error — título', '--sm2-danger-ink', '--sm2-surface', AA_TEXTO],
+  ['toast warning — título', '--sm2-gold-ink', '--sm2-surface', AA_TEXTO],
+  ['toast success/info — título', '--sm2-primary-ink', '--sm2-surface', AA_TEXTO],
+  // A faixa lateral e a borda são o sinal NÃO-TEXTUAL do tipo: 3:1 (1.4.11).
+  ['toast error — faixa', '--sm2-danger-ink', '--sm2-bg', AA_UI],
+  ['toast warning — faixa', '--sm2-gold-ink', '--sm2-bg', AA_UI],
+  ['toast success/info — faixa', '--sm2-primary-ink', '--sm2-bg', AA_UI],
+];
+
+for (const [nomeTema, tokens] of [
+  ['tema claro', temaClaro],
+  ['tema escuro', temaEscuro],
+] as const) {
+  describe(`contraste do TOAST — ${nomeTema}`, () => {
+    for (const [nome, frente, fundo, min] of PARES_TOAST) {
+      it(`${nome} ≥ ${min}:1`, () => {
+        const t = tokens();
+        const cf = t[frente];
+        const cb = t[fundo];
+        expect(cf, `token ausente: ${frente}`).toBeTruthy();
+        expect(cb, `token ausente: ${fundo}`).toBeTruthy();
+        const r = contraste(cf, cb);
+        expect(
+          Number(r.toFixed(2)),
+          `${nome} (${nomeTema}): ${cf} sobre ${cb} = ${r.toFixed(2)}:1, mínimo ${min}:1`,
+        ).toBeGreaterThanOrEqual(min);
+      });
+    }
+  });
+}
+
+describe('o toast não voltou a ser o scaffold do Figma', () => {
+  it('a regra do toast existe no index.css e é toda `--sm2-*`', () => {
+    // O seletor em INÍCIO DE LINHA, e não a primeira ocorrência do texto: o
+    // comentário da regra CITA `[data-sonner-toast].sm2-toast` e `var(--popover)`
+    // para explicar por que aquele token não pode voltar — casar dentro do
+    // comentário faria o teste reprovar a própria documentação dele.
+    const i = cssRaw.indexOf("\n[data-sonner-toast].sm2-toast");
+    expect(i, 'a regra do toast sumiu de src/index.css').toBeGreaterThan(0);
+    const bloco = cssRaw.slice(i).replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(bloco).toContain('var(--sm2-surface)');
+    expect(bloco).toContain('var(--sm2-text-sm)');
+    // Os tokens shadcn congelados no tema claro — footgun 10.
+    expect(bloco).not.toMatch(/var\(--popover|var\(--foreground|var\(--background/);
+  });
+
+  it('o texto do toast é 14px (o piso do sistema é 12, mas isto é decisão)', () => {
+    const t = temaClaro();
+    expect(t['--sm2-text-sm']).toBe('14px');
+  });
+});
+
 // ── 3. A REGRA TINTA × FILL ───────────────────────────────────────────────
 
 describe('tinta e fill nunca são a mesma cor', () => {

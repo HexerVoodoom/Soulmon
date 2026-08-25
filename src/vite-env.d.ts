@@ -13,9 +13,14 @@ declare module '*.png' {
 }
 
 // Versioned package aliases (vite.config.ts maps pkg@version → pkg)
-declare module 'lucide-react@*' {
-  export * from 'lucide-react';
-}
+//
+// `lucide-react@*` saiu daqui junto com a dependência: era a quarta linguagem
+// de ícone do app e o `GameTutorialFlow` (o segundo onboarding, obrigatório)
+// foi o último consumidor. Reintroduzir o alias sem reinstalar o pacote deixa
+// o reexport apontando para o vazio e o `tsc` acusa — mas o guard
+// `src/styles/iconScale.contract.test.ts` acusa antes disso.
+// (A linha de import NÃO é reescrita aqui de propósito: o guard detecta a
+// FORMA do import e não a menção, então citá-la literalmente reprovaria.)
 declare module 'sonner@*' {
   export * from 'sonner';
 }
