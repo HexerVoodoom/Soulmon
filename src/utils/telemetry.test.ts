@@ -191,11 +191,80 @@ describe('sem PII: o corpo da requisição não carrega conteúdo do usuário', 
       return Promise.resolve(new Response('{}'));
     }));
     track('install');
+    track('day_active', { effort: 4 });
     flush();
-    // Nenhum número com cara de epoch ms (13 dígitos) em lugar nenhum.
-    expect(sent[0]).not.toMatch(/\d{13}/);
+    expectNoTimestamp(JSON.parse(sent[0]));
+  });
+
+  // REGRESSÃO NOMEADA — não simplifique de volta para `expect(corpo)`.
+  //
+  // A asserção original varria o corpo CRU com /\d{13}/. O corpo carrega o
+  // pseudônimo de 32 hex (telemetry.ts:346), e sorteio de hex produz ≥13
+  // dígitos decimais consecutivos em 1,83% dos ids (3.664 em 200.000 medidos
+  // pelo alpha-qa). Ou seja: 1,83% de vermelho por execução de CI, sem culpa
+  // nenhuma do código de produção. O id abaixo é um caso REAL reproduzido.
+  it('id com 13 dígitos consecutivos NÃO reprova — o pseudônimo não é timestamp', () => {
+    localStorage.setItem('soulmon-telemetry-id', '12bc7637879311510185b749ffffffff');
+    const sent: string[] = [];
+    vi.stubGlobal('fetch', vi.fn((_u: string, init: RequestInit) => {
+      sent.push(String(init.body));
+      return Promise.resolve(new Response('{}'));
+    }));
+    track('install');
+    flush();
+    // O corpo cru CONTÉM 13 dígitos (é o que fazia o teste antigo piscar)...
+    expect(sent[0]).toMatch(/\d{13}/);
+    const parsed = JSON.parse(sent[0]);
+    expect(parsed.id).toBe('12bc7637879311510185b749ffffffff');
+    // ...e mesmo assim não há timestamp nenhum nos CAMPOS DO EVENTO.
+    expectNoTimestamp(parsed);
+  });
+
+  // A intenção original continua coberta: reintroduzir um timestamp de verdade
+  // no payload tem que reprovar, venha ele numa prop ou no campo de dia.
+  it('timestamp reintroduzido no payload reprova', () => {
+    const day = telemetryDayKey();
+    expect(() =>
+      expectNoTimestamp({ v: 1, id: 'a'.repeat(32), events: [{ e: 'install', d: day, p: { ts: 1756123456789 } }] }),
+    ).toThrow();
+    expect(() =>
+      expectNoTimestamp({ v: 1, id: 'a'.repeat(32), events: [{ e: 'install', d: day, p: { at: 1756123456 } }] }),
+    ).toThrow();
+    expect(() =>
+      expectNoTimestamp({ v: 1, id: 'a'.repeat(32), events: [{ e: 'install', d: new Date(1756123456789).toISOString() }] }),
+    ).toThrow();
+    expect(() =>
+      expectNoTimestamp({ v: 1, id: 'a'.repeat(32), events: [{ e: 'install', d: day, t: 1756123456789 }] }),
+    ).toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Verifica a intenção do teste de fingerprint: **os campos do EVENTO** não
+ * carregam tempo mais fino que o dia. Olha o objeto desserializado, campo a
+ * campo — nunca a string crua, que inclui o pseudônimo aleatório e por isso
+ * casa com /\d{13}/ por puro sorteio.
+ */
+function expectNoTimestamp(batch: unknown): void {
+  const b = batch as { events: unknown[] };
+  expect(Array.isArray(b.events)).toBe(true);
+  for (const raw of b.events) {
+    const record = raw as Record<string, unknown>;
+    // Nenhum campo além dos três do contrato (um `t` novo seria timestamp).
+    expect(Object.keys(record).sort().join(',')).toMatch(/^(d,e|d,e,p)$/);
+    // Dia local, e SÓ o dia: nada de hora, minuto ou ISO completo.
+    expect(record.d).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    for (const [key, value] of Object.entries((record.p ?? {}) as Record<string, unknown>)) {
+      expect(typeof value).toBe('number');
+      // Corta epoch em ms (13 díg.) E em segundos (10 díg.): nenhuma prop
+      // legítima (step, effort, dias) chega perto de 1e9.
+      expect(Math.abs(value as number), `prop ${key}`).toBeLessThan(1e9);
+      expect(Number.isFinite(value as number)).toBe(true);
+    }
+  }
+}
 
 // ---------------------------------------------------------------------------
 
