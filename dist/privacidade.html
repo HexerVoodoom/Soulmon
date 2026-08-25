@@ -103,7 +103,47 @@
   <a href="/termos.html">Termos de Uso</a> descrevem a mesma regra na seção 9.
 </p>
 
-<h2>4. O que outros jogadores conseguem ver</h2>
+<h2 id="estatisticas">4. Estatísticas de uso (dá para desligar)</h2>
+<p>
+  O app envia para o <strong>nosso próprio servidor</strong> (Cloudflare)
+  <strong>contadores agregados</strong> de uso — sem nenhuma empresa de análise
+  no meio (não há Google Analytics, Firebase Analytics, Amplitude nem similar).
+  São exatamente estes sete eventos, e nada além deles:
+</p>
+<table>
+  <tr><th>Evento</th><th>O que registra</th></tr>
+  <tr><td><code>install</code></td><td>Primeira abertura do app neste aparelho.</td></tr>
+  <tr><td><code>onboarding_step</code></td><td>Qual passo do onboarding você alcançou (<code>step</code>, um número) e, junto, a propriedade <code>funnel</code>: por qual caminho — grátis, completo, ou ainda indefinido antes da escolha.</td></tr>
+  <tr><td><code>demo_pick</code></td><td>Que você escolheu um personagem pronto.</td></tr>
+  <tr><td><code>first_task_done</code></td><td>Sua primeira conclusão de verdade.</td></tr>
+  <tr><td><code>day_active</code></td><td>Uma vez por dia: que houve atividade, com a propriedade <code>effort</code> — o peso de esforço concluído (um número, como 4).</td></tr>
+  <tr><td><code>unlock_view</code></td><td>Que a tela de compra foi aberta.</td></tr>
+  <tr><td><code>purchase</code></td><td>Que houve uma compra.</td></tr>
+</table>
+<p>
+  Junto vai <strong>a data — só o dia, nunca a hora</strong> — e um
+  <strong>identificador pseudonimizado</strong>: uma sequência aleatória criada
+  neste aparelho, sem nenhuma relação com seu e-mail nem com o código do seu
+  save. Ele serve só para não contar o mesmo evento duas vezes, e o servidor o
+  <strong>descarta antes de gravar qualquer coisa</strong>: o que fica guardado
+  é um total por dia, somado a todo mundo. Não existe uma linha do tempo sua.
+</p>
+<p>
+  <strong>Nenhum conteúdo vai junto.</strong> Nunca são enviados: o que você
+  quer melhorar e o que atrapalha (<code>soulGoal</code> e
+  <code>soulStruggle</code>), seu nome, sua data/hora/local de nascimento, seu
+  e-mail, o nome do seu personagem, nome de tarefa ou de hábito, seu humor do
+  check-in e qualquer resposta do Oráculo. Os eventos acima não têm nenhum campo
+  de texto — só números.
+</p>
+<p>
+  O envio vem <strong>ligado</strong>. Para desligar:
+  <strong>Configurações → Seus dados → “Enviar estatísticas de uso”</strong>.
+  Desligado, o envio para de verdade e o que estiver na fila do aparelho é
+  apagado.
+</p>
+
+<h2>5. O que outros jogadores conseguem ver</h2>
 <p>
   Se você ativar os recursos sociais, ficam visíveis para outros jogadores:
   seu <strong>apelido</strong>, o <strong>nome e estágio do seu personagem</strong>
@@ -112,7 +152,7 @@
   <strong>nunca</strong> são exibidos para outros jogadores.
 </p>
 
-<h2>5. Terceiros que recebem dados</h2>
+<h2>6. Terceiros que recebem dados</h2>
 <table>
   <tr><th>Serviço</th><th>O que recebe</th><th>Quando</th></tr>
   <tr>
@@ -136,14 +176,14 @@
   Não vendemos seus dados e não os usamos para publicidade direcionada.
 </p>
 
-<h2>6. Idade mínima</h2>
+<h2>7. Idade mínima</h2>
 <p>
   O Soulmon é destinado a <strong>maiores de 18 anos</strong>. Não é direcionado
   a menores de idade e não coletamos intencionalmente dados de quem tem menos
   de 18 anos.
 </p>
 
-<h2>7. Seus direitos</h2>
+<h2>8. Seus direitos</h2>
 <p>
   Você pode pedir a <strong>exclusão</strong> da sua conta e de todos os dados
   associados, ou uma <strong>cópia</strong> deles, escrevendo para o contato
@@ -151,7 +191,7 @@
   automaticamente o save na nuvem — para isso, use o contato.
 </p>
 
-<h2>8. Contato</h2>
+<h2>9. Contato</h2>
 <p>
   Dúvidas ou pedidos sobre privacidade: <strong>mateus.sprnd@gmail.com</strong>
 </p>
@@ -224,7 +264,45 @@
   <a href="/termos.html#en">Terms of Use</a> state the same rule in section 9.
 </p>
 
-<h2>4. What other players can see</h2>
+<h2 id="usage-stats">4. Usage stats (you can turn this off)</h2>
+<p>
+  The app sends <strong>aggregate counters</strong> about usage to
+  <strong>our own server</strong> (Cloudflare) — with no analytics company in
+  between (there is no Google Analytics, Firebase Analytics, Amplitude or
+  similar). These are exactly the seven events, and nothing beyond them:
+</p>
+<table>
+  <tr><th>Event</th><th>What it records</th></tr>
+  <tr><td><code>install</code></td><td>First launch of the app on this device.</td></tr>
+  <tr><td><code>onboarding_step</code></td><td>Which onboarding step you reached (<code>step</code>, a number) and, with it, the <code>funnel</code> property: which path — free, full, or still undefined before you choose.</td></tr>
+  <tr><td><code>demo_pick</code></td><td>That you picked a ready-made character.</td></tr>
+  <tr><td><code>first_task_done</code></td><td>Your first real completion.</td></tr>
+  <tr><td><code>day_active</code></td><td>Once a day: that there was activity, with the <code>effort</code> property — the effort weight you completed (a number, like 4).</td></tr>
+  <tr><td><code>unlock_view</code></td><td>That the purchase screen was opened.</td></tr>
+  <tr><td><code>purchase</code></td><td>That a purchase happened.</td></tr>
+</table>
+<p>
+  Along with it goes <strong>the date — the day only, never the time</strong> —
+  and a <strong>pseudonymous identifier</strong>: a random string created on this
+  device, with no relation to your email or to your save code. It exists only so
+  the same event isn't counted twice, and the server
+  <strong>discards it before writing anything</strong>: what is stored is a
+  daily total summed across everyone. There is no timeline of you.
+</p>
+<p>
+  <strong>No content goes with it.</strong> Never sent: what you want to improve
+  and what gets in the way (<code>soulGoal</code> and <code>soulStruggle</code>),
+  your name, your date/time/place of birth, your email, your character's name,
+  task or habit names, your check-in mood, and any Oracle answer. The events
+  above have no text field at all — numbers only.
+</p>
+<p>
+  Sending is <strong>on</strong> by default. To turn it off:
+  <strong>Settings → Your data → “Send usage stats”</strong>. Once off, sending
+  really stops and whatever is queued on the device is deleted.
+</p>
+
+<h2>5. What other players can see</h2>
 <p>
   If you enable the social features, other players can see your
   <strong>nickname</strong>, your <strong>character's name and stage</strong>
@@ -233,7 +311,7 @@
   <strong>never</strong> shown to other players.
 </p>
 
-<h2>5. Third parties that receive data</h2>
+<h2>6. Third parties that receive data</h2>
 <table>
   <tr><th>Service</th><th>What it receives</th><th>When</th></tr>
   <tr>
@@ -255,13 +333,13 @@
 </table>
 <p>We do not sell your data and do not use it for targeted advertising.</p>
 
-<h2>6. Minimum age</h2>
+<h2>7. Minimum age</h2>
 <p>
   Soulmon is intended for people aged <strong>18 or older</strong>. It is not
   directed at minors, and we do not knowingly collect data from anyone under 18.
 </p>
 
-<h2>7. Your rights</h2>
+<h2>8. Your rights</h2>
 <p>
   You may request <strong>deletion</strong> of your account and all associated
   data, or a <strong>copy</strong> of it, by writing to the contact below.
@@ -269,7 +347,7 @@
   cloud save — use the contact for that.
 </p>
 
-<h2>8. Contact</h2>
+<h2>9. Contact</h2>
 <p>Privacy questions or requests: <strong>mateus.sprnd@gmail.com</strong></p>
 
 </body>

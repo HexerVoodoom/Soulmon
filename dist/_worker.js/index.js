@@ -48,6 +48,14 @@ function emptyEntitlement() {
      * teto vitalício — é um teto diário com nome comprido. Ver `_aiGuard.js`.
      */
     aiLifetime: {},
+    /**
+     * Consumo VITALÍCIO por FORMA da árvore (`{ 'mega-virus': 3 }`). Mesma casa
+     * e mesmo motivo do `aiLifetime`: teto por forma que se perde no reset do
+     * dia é teto nenhum. Dicionário fechado nas 11 formas que existem — o
+     * `_aiGuard` valida o id antes de escrever (`VALID_FORM_ID`), senão o
+     * cliente inflaria este registro com uma chave por requisição.
+     */
+    aiForms: {},
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now()
@@ -929,9 +937,19 @@ var AI_LIMITS = {
   chat: { perAccount: 120, global: 2e4 },
   suggest: { perAccount: 30, global: 3e3 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
-  // 20 vitalício = 14 do pior caso da spec + 6 de folga ⇒ R$ 2,02 por conta,
-  // para sempre, 6,8 % de R$ 29,90.
-  sprite: { perAccount: 6, perAccountLifetime: 20, globalMonth: 800 }
+  //
+  // 26 vitalício: o 20 anterior foi calibrado contra "14 gerações por save", que
+  // é a árvore ERRADA. `ultra` exige as TRÊS megas (`dailyReset.ts:86-88`), então
+  // o caminho completo percorre as 11 formas distintas que existem
+  // (1 rookie + 3 champion + 3 ultimate + 3 mega + 1 ultra, `progression.ts:51-55`),
+  // com quedas e re-subidas no meio. 11 × 2 (tentativa + possível refeitura por
+  // recusa de conteúdo, que custa DUAS imagens) + 4 de folga = 26.
+  // ⇒ 26 × R$ 0,101 = R$ 2,63 por conta, para sempre — 8,8 % de R$ 29,90.
+  // O teto de 20 não era caro demais: era CURTO demais, e encurtava no clímax.
+  //
+  // 3 por forma = 1 tentativa + 1 refeitura por recusa + 1 retentativa. A forma
+  // que falhou três vezes fica na arte de reserva; as outras seguem inteiras.
+  sprite: { perAccount: 6, perAccountLifetime: 26, perFormLifetime: 3, globalMonth: 800 }
 };
 var day = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => now.toISOString().slice(0, 10), "day");
 var month = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => now.toISOString().slice(0, 7), "month");
@@ -941,6 +959,10 @@ var AI_REFUSAL_MESSAGES = {
   "sprite-lifetime-cap": {
     "pt-BR": "Seu Soulmon j\xE1 recebeu toda a arte que esta jornada guardava para ele. As formas que vierem aparecem com a arte de reserva \u2014 e ela vale igual.",
     en: "Your Soulmon has already received all the art this journey held for it. Any forms from here on show up with their reserve art \u2014 and it counts just the same."
+  },
+  "sprite-form-cap": {
+    "pt-BR": "Esta forma resistiu ao l\xE1pis do Or\xE1culo \u2014 ele tentou tudo que sabia e ela vai ficar com a arte de reserva. As outras formas do seu caminho continuam abertas, do jeito que sempre estiveram.",
+    en: "This form resisted the Oracle's pencil \u2014 it tried everything it knows, and this one will keep its reserve art. Every other form on your path is still open, just as it always was."
   },
   "ai-daily-limit": {
     "pt-BR": "Por hoje j\xE1 desenhamos bastante para o seu Soulmon. Amanh\xE3 a gente continua de onde parou.",
@@ -979,7 +1001,14 @@ function lifetimeUsed(ent, bucket) {
   return n;
 }
 __name(lifetimeUsed, "lifetimeUsed");
-async function guardAiRequest(request, env, bucket, saveId, units = 1) {
+var VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:virus|data|vaccine))$/;
+function formUsed(ent, formId) {
+  const n = Number(ent?.aiForms?.[formId] ?? 0);
+  if (!Number.isFinite(n) || n < 0) throw new Error("contador por forma ileg\xEDvel");
+  return n;
+}
+__name(formUsed, "formUsed");
+async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
   if (!env.DIGIAPP_SAVES) return refuse(500, "storage-not-bound");
   const limits = AI_LIMITS[bucket];
   if (!limits) return refuse(500, "unknown-bucket");
@@ -999,14 +1028,22 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1) {
   const globalTtl = usesMonth ? MONTH_TTL_SECONDS : TTL_SECONDS;
   const accountKey = `ai:${bucket}:${saveId}:${today3}`;
   const hasLifetime = typeof limits.perAccountLifetime === "number";
+  if (formId !== null && formId !== void 0) {
+    if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) {
+      return refuse(400, "invalid-form-id");
+    }
+  }
+  const hasFormCap = typeof limits.perFormLifetime === "number" && typeof formId === "string" && formId.length > 0;
   let ent = null;
   let usedLifetime = 0;
+  let usedForm = 0;
   let usedGlobal = 0;
   let usedAccount = 0;
   try {
-    if (hasLifetime) {
+    if (hasLifetime || hasFormCap) {
       ent = await readEntitlement(env, saveId);
-      usedLifetime = lifetimeUsed(ent, bucket);
+      if (hasLifetime) usedLifetime = lifetimeUsed(ent, bucket);
+      if (hasFormCap) usedForm = formUsed(ent, formId);
     }
     usedGlobal = await readCounter(env, globalKey);
     usedAccount = await readCounter(env, accountKey);
@@ -1017,6 +1054,9 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1) {
   if (hasLifetime && usedLifetime + units > limits.perAccountLifetime) {
     return refuse(402, "sprite-lifetime-cap");
   }
+  if (hasFormCap && usedForm + units > limits.perFormLifetime) {
+    return refuse(409, "sprite-form-cap");
+  }
   if (usedAccount + units > limits.perAccount) {
     return refuse(429, "ai-daily-limit");
   }
@@ -1024,8 +1064,9 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1) {
     return refuse(503, usesMonth ? "ai-monthly-budget-reached" : "ai-daily-budget-reached");
   }
   try {
-    if (hasLifetime) {
-      ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: usedLifetime + units };
+    if (hasLifetime || hasFormCap) {
+      if (hasLifetime) ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: usedLifetime + units };
+      if (hasFormCap) ent.aiForms = { ...ent.aiForms || {}, [formId]: usedForm + units };
       await writeEntitlement(env, saveId, ent);
     }
     await env.DIGIAPP_SAVES.put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
@@ -1888,7 +1929,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
 __name(generateWithProviders, "generateWithProviders");
 async function onRequestPost5({ request, env }) {
   try {
-    const { prompt, promptFallback, referenceImageUrls, id } = await request.json();
+    const { prompt, promptFallback, referenceImageUrls, id, formId } = await request.json();
     if (!prompt || typeof prompt !== "string") {
       return Response.json({ error: "prompt required" }, { status: 400, headers: CORS8 });
     }
@@ -1896,7 +1937,7 @@ async function onRequestPost5({ request, env }) {
     if (!tier.ok) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS8 });
     }
-    const gate = await guardAiRequest(request, env, "sprite", id);
+    const gate = await guardAiRequest(request, env, "sprite", id, 1, formId);
     if (!gate.ok) {
       return Response.json(
         { error: gate.reason, ...gate.message ? { message: gate.message } : {} },
@@ -1914,7 +1955,7 @@ async function onRequestPost5({ request, env }) {
         }
         throw err;
       }
-      const extra = await guardAiRequest(request, env, "sprite", id);
+      const extra = await guardAiRequest(request, env, "sprite", id, 1, formId);
       if (!extra.ok) {
         return Response.json(
           { error: extra.reason, ...extra.message ? { message: extra.message } : {} },
@@ -1941,7 +1982,7 @@ var CORS9 = {
 var METRICS_PREFIX = "m:";
 var EVENT_SCHEMA = {
   install: null,
-  onboarding_step: { step: { min: 0, max: 40 } },
+  onboarding_step: { step: { min: 0, max: 45 }, funnel: { min: 0, max: 2 } },
   demo_pick: null,
   first_task_done: null,
   day_active: { effort: { min: 0, max: 500 } },
@@ -2021,6 +2062,7 @@ function sanitizeBatch(body, today3 = serverDay()) {
   return { ok: true, events };
 }
 __name(sanitizeBatch, "sanitizeBatch");
+var FUNNEL_LABEL = ["unknown", "demo", "paid"];
 function applyAggregate(agg, events) {
   const out = { ...agg && typeof agg === "object" && !Array.isArray(agg) ? agg : {} };
   const bump = /* @__PURE__ */ __name((key, by = 1) => {
@@ -2029,7 +2071,10 @@ function applyAggregate(agg, events) {
   }, "bump");
   for (const record of events) {
     bump(record.e);
-    if (record.e === "onboarding_step") bump(`onboarding_step.${record.p.step}`);
+    if (record.e === "onboarding_step") {
+      const funnel = FUNNEL_LABEL[record.p.funnel] ?? "unknown";
+      bump(`onboarding_step.${funnel}.${record.p.step}`);
+    }
     if (record.e === "day_active") bump("effort_sum", record.p.effort);
   }
   return out;
@@ -2392,7 +2437,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-Jl6lXB/functionsRoutes-0.5066028815951247.mjs
+// ../.wrangler/tmp/pages-Na6BBC/functionsRoutes-0.6344250587692529.mjs
 var routes = [
   {
     routePath: "/api/account",
