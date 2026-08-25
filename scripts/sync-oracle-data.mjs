@@ -17,8 +17,7 @@
 //
 // Uso:  node scripts/sync-oracle-data.mjs
 //       CLASS_SYSTEM_DIR=/x BESTIARIO_DIR=/y node scripts/sync-oracle-data.mjs
-//       BESTIARIO_REF=origin/main  (default: origin/claude/canonical-classification
-//       enquanto a classificação canônica não estiver mergeada na main)
+//       BESTIARIO_REF=<ref>            (default: origin/main)
 // ---------------------------------------------------------------------------
 
 import { execFileSync } from 'node:child_process';
@@ -29,15 +28,34 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CLASS_DIR = process.env.CLASS_SYSTEM_DIR ?? path.resolve(ROOT, '../Class-System');
 const BEST_DIR = process.env.BESTIARIO_DIR ?? path.resolve(ROOT, '../Besti-rio-');
-// A classificação canônica (elementos/família/biologia por criatura) ainda
-// vive nesta branch do Besti-rio-; a main só tem `tags`. Quando ela for
-// mergeada, troque para origin/main.
-const BEST_REF = process.env.BESTIARIO_REF ?? 'origin/claude/canonical-classification';
+// A classificação canônica (elementos/família/biologia/classificacaoConfianca)
+// foi MERGEADA na `main` do Besti-rio- em 25/ago/2026 (merge 56933df). Antes
+// disso o default era a branch de trabalho `claude/canonical-classification`:
+// TODO o pool.json dependia de uma ref não mergeada de OUTRO repositório, e o
+// sumiço/renomeação dela quebrava o sync em silêncio. Não volte a apontar para
+// branch de trabalho — se o canônico mudar, ele vira main lá.
+const BEST_REF = process.env.BESTIARIO_REF ?? 'origin/main';
 
 const POOL_TARGET = 2000;
 
 function sh(cwd, cmd, args) {
   return execFileSync(cmd, args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+}
+
+// Roda TypeScript dentro do clone irmão. NÃO usa `npx`: no Windows o executável
+// é `npx.cmd`, e desde a correção do CVE-2024-27980 o Node RECUSA spawnar .cmd
+// sem `shell: true` (EINVAL) — o sync inteiro morria na máquina do dono. Passar
+// `shell: true` resolveria e traria de volta o parser do cmd.exe em cima de um
+// caminho com espaço. Então chamamos o CLI do tsx PELO CAMINHO, com o mesmo
+// `process.execPath` que já está rodando: um binário só, sem shell, igual nos
+// três sistemas. Sem node_modules no clone, a mensagem diz o que fazer em vez
+// de estourar um ENOENT sem contexto.
+function tsxEval(cwd, code) {
+  const cli = path.join(cwd, 'node_modules/tsx/dist/cli.mjs');
+  if (!existsSync(cli)) {
+    throw new Error(`tsx nao encontrado em ${cwd} - rode \`npm install\` no clone irmao.`);
+  }
+  return sh(cwd, process.execPath, [cli, '-e', code]);
 }
 function provenance(dir, ref) {
   return {
@@ -79,7 +97,7 @@ const escolas = Object.fromEntries(Object.entries(ESCOLAS).map(([id, e]) => [id,
 const recursos = Object.fromEntries(Object.entries(RECURSOS).map(([id, r]) => [id, { nome: r.nome }]));
 console.log(JSON.stringify({ escolas, recursos, profissoes, talentos, criaturas, familias }));
 `;
-const classData = JSON.parse(sh(CLASS_DIR, 'npx', ['tsx', '-e', extract]));
+const classData = JSON.parse(tsxEval(CLASS_DIR, extract));
 
 // Fixtures de PARIDADE da cascata geracional: o MOTOR REAL calcula os casos
 // de referência e o Soulmon confere a réplica mínima de `ficha/cascata.ts`
@@ -108,7 +126,7 @@ const saida = casos.map((diretos) => {
 });
 console.log(JSON.stringify(saida));
 `;
-const cascataFixtures = JSON.parse(sh(CLASS_DIR, 'npx', ['tsx', '-e', parityExtract]));
+const cascataFixtures = JSON.parse(tsxEval(CLASS_DIR, parityExtract));
 
 // Diais da alocação geracional, lidos do CONTRATO DE MÁQUINA do class-system
 // (`taxonomy.json` v2, gerado por `npm run export:taxonomy` a partir de
