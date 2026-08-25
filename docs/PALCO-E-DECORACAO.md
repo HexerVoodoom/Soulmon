@@ -233,3 +233,31 @@ palco não for refeita, pet e berço dividem uma origem única e declarada
 Enquanto isso valer, a decoração dos cinco espaços continua ancorada em
 `GROUND_Y` — ou seja, **ela e o pet não estão exatamente na mesma linha de
 chão**. Refazer essa conta é trabalho próprio, e está registrado como pendência.
+
+
+#### Os números, medidos (ago/2026)
+
+Com cenário PINTADO o desalinhamento deixou de ser teórico: a decoração se
+apoia numa linha de piso desenhada e o pet fica **54px abaixo dela**. Medido no
+navegador, numa composição de `STAGE_HEIGHT` = 250:
+
+| o quê | px do fundo da composição |
+|---|---|
+| `GROUND_Y` (74%) — onde a decoração encosta | **65** |
+| base da caixa de render do pet (`PET_BOTTOM_IN_STAGE`) | **11** |
+| base do berço | 25 |
+
+Para o pet pisar na linha, `PET_TOP_OFFSET` teria de ir de **−38 para −92**
+(`125 + X + PET_GROUND_KEEP = GROUND_Y_px − PET_RENDER`). O topo da caixa de
+render sobe de 111 para **57**.
+
+**E é aqui que a conta esbarra numa decisão que não é técnica:** a janela do
+palco corta pelo TOPO. Com `--sm-petstage-h: 215px` ela começa em y=35, e 57 >
+35 — cabe. Mas em tela baixa (`max-height: 800px` → 175px) ela começa em
+**y=75**, e o pet perderia **18px de cabeça**.
+
+Ou seja: hoje o pet flutua abaixo do piso em todas as telas; o conserto o põe no
+lugar e corta a cabeça dele nas telas baixas, a menos que a janela também
+cresça (o que custa altura da lista de atividades — o motivo declarado de a
+janela existir). É troca de um defeito por outro e a escolha é do dono. Mexer em
+`PET_TOP_OFFSET` sem mexer em `--sm-petstage-h` **não** é o conserto.

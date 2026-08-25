@@ -6731,6 +6731,28 @@ button.sm-px-node {
   position: relative;
   display: flex;
   justify-content: center;
+  /* ── O TETO DE LARGURA DO VISOR ───────────────────────────────────────────
+     Este elemento é o que o `CompanionHUD` MEDE para dimensionar a tela, e sem
+     teto ele acompanhava a largura da página: ~1500px numa tela de 1920. Um
+     v-pet de 1500px de visor já era estranho sozinho, mas quebrava duas coisas
+     de verdade:
+
+       1. Os cinco espaços de decoração têm tamanho FIXO em px e posição em %
+          (`utils/petStage.ts`). Num visor de 1500px, um sofá de 56px ficava a
+          240px da borda esquerda, sozinho no meio do nada — a composição que o
+          palco existe para garantir simplesmente não acontecia.
+       2. Os cenários PINTADOS têm proporção fixa (1200×648). Numa caixa de
+          ~8:1 sobrava mais moldura do que cena.
+
+     O número é DERIVADO, não escolhido: é a largura em que a arte de cenário
+     preenche o visor exatamente, desenhada na altura da composição —
+     STAGE_HEIGHT (250) × (1200/648) ≈ 463 — mais os 4px do anel de cobre de
+     cada lado. Passar disso não mostra mais cena nenhuma, só mais borda.
+
+     Em celular nada muda: a largura útil já é menor que este teto. */
+  max-width: 471px;
+  margin-inline: auto;
+  width: 100%;
 }
 /* O deck: a fileira de ações CRAVADA no corpo. O sulco de cobre é a junta
    entre a tela e o painel de controle — a mesma peça que no aparelho de
