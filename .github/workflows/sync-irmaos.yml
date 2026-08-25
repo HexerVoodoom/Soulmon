@@ -1,0 +1,396 @@
+name: Sync repos irmãos (abre PR)
+
+# ADR-002 §4 — "propagação viva" dos repos irmãos.
+#
+# O `vendor/class-system/` e o `pool.json` do Bestiário são SNAPSHOTS COMMITADOS.
+# Foi a escolha certa (o build deixa de precisar de rede e de credencial, e
+# sobrevive ao dia em que o repo irmão virar privado), mas ela trocou FRESCOR por
+# reprodutibilidade: o snapshot envelhece EM SILÊNCIO. Este workflow é a metade
+# que devolve o frescor — sem devolver o risco.
+#
+# Ele NUNCA empurra para a `main`. Abre PR. Um sync que commita sozinho publica
+# no Cloudflare em ~2 min sem ninguém ter lido nada.
+#
+# 🔴 A REGRA QUE NÃO PODE SER QUEBRADA — MESMO SHA
+# `npm run vendor:class-system` (o MOTOR, código executável no bundle) e
+# `npm run sync:oracle-data` (os DADOS: classSystem.data.json + pool.json) leem o
+# MESMO clone, na MESMA execução, e há uma verificação EXECUTADA no fim que
+# compara `vendor/class-system/_provenance.json:sha` com
+# `src/utils/soulProfile/ficha/classSystem.data.json:_provenance.sha`.
+# Motivo, MEDIDO na `main` em 25/ago/2026: vendor em `fb866455` e dados em
+# `1025012c` — motor e snapshot em SHAs diferentes, que é exatamente o defeito
+# por trás dos 35 pares divergentes da cascata. Rodar um sem o outro RECRIA o bug.
+
+on:
+  # CADÊNCIA: SEMANAL, segunda 06:17 UTC (03:17 BRT).
+  #  * O canônico não muda todo dia. Diário produziria "nenhuma mudança" 6x por
+  #    semana e treinaria o dono a ignorar a notificação do sétimo.
+  #  * Segunda de manhã porque o PR precisa aterrissar quando o dono LÊ — PR de
+  #    sync esquecido aberto é snapshot velho com uma aba aberta em cima.
+  #  * 06:17 e não 06:00: o agendador do GitHub enfileira em rajada na virada da
+  #    hora e atrasa (às vezes dezenas de minutos). Minuto quebrado é mais pontual.
+  #  * A janela de divergência aceita é, portanto, de ATÉ 7 DIAS. Se isso doer, a
+  #    alavanca é o `repository_dispatch` do ADR §4 (os irmãos disparam ao mergear
+  #    na main) — que exige mexer nos workflows DELES e por isso não entra aqui.
+  #    Este arquivo é a rede que funciona sem depender de nada lá.
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+# Menor privilégio: escrever branch + abrir PR. Nada de deploy, nada de packages.
+permissions:
+  contents: write
+  pull-requests: write
+
+# Duas rodadas simultâneas brigariam pela mesma branch `sync/repos-irmaos`.
+concurrency:
+  group: sync-irmaos
+  cancel-in-progress: false
+
+env:
+  BRANCH: sync/repos-irmaos
+  CLASS_SYSTEM_DIR: ${{ github.workspace }}/../Class-System
+  BESTIARIO_DIR: ${{ github.workspace }}/../Besti-rio-
+
+jobs:
+  sync:
+    name: vendor + sync + gate + PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # A credencial existe SÓ AQUI, na CI. Nunca no build — é isso que faz o
+      # desenho do ADR sobreviver ao repo privado. Reusamos o MESMO secret do
+      # `ci.yml` (`SIBLING_REPOS_TOKEN`) em vez de criar um segundo: um segredo a
+      # menos para rotacionar, e o escopo é o mesmo (Contents:read nos irmãos).
+      - name: Verificar credencial dos repos irmãos
+        env:
+          SIBLING_REPOS_TOKEN: ${{ secrets.SIBLING_REPOS_TOKEN }}
+        run: |
+          if [ -z "$SIBLING_REPOS_TOKEN" ]; then
+            echo "::warning::SIBLING_REPOS_TOKEN ausente — vou tentar clone ANÔNIMO. Funciona só enquanto os DOIS repos irmãos forem públicos."
+          else
+            echo "::notice::SIBLING_REPOS_TOKEN presente — clone autenticado."
+          fi
+
+      # Falha com INSTRUÇÃO, não com stack trace. Um `fatal: could not read
+      # Username for 'https://github.com'` às 3h da manhã não diz a ninguém que o
+      # conserto é criar um secret; a mensagem abaixo diz.
+      - name: Clonar os repos irmãos
+        env:
+          SIBLING_REPOS_TOKEN: ${{ secrets.SIBLING_REPOS_TOKEN }}
+          # Sem isto o `git` pode FICAR PARADO pedindo usuário/senha quando o
+          # repo é privado e o token falta — e um step parado queima os 30 min
+          # de timeout em vez de falhar em 2 segundos com a mensagem abaixo.
+          # Medido: com `GIT_TERMINAL_PROMPT=0` o clone morre na hora.
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          set -u
+          if [ -n "$SIBLING_REPOS_TOKEN" ]; then
+            AUTH="https://x-access-token:$SIBLING_REPOS_TOKEN@github.com"
+          else
+            AUTH="https://github.com"
+          fi
+
+          falhou() {
+            echo "::error::Não consegui clonar $1."
+            echo "::error::Se o repositório é PRIVADO (ou acabou de virar), o conserto é UM secret:"
+            echo "::error::  Soulmon -> Settings -> Secrets and variables -> Actions -> New repository secret"
+            echo "::error::  Nome:  SIBLING_REPOS_TOKEN"
+            echo "::error::  Valor: PAT fine-grained com Contents: READ em HexerVoodoom/Class-System E em HexerVoodoom/Besti-rio-"
+            echo "::error::É o MESMO secret que o ci.yml já usa: se ele existe, ESTENDA o escopo para incluir Besti-rio-. Não crie um segundo."
+            exit 1
+          }
+
+          # Class-System: clone COM working tree — o artefato é compilado a partir
+          # do `src/` dele, com o esbuild/tsc DELE. `--depth=1`: não precisamos de
+          # histórico, só do HEAD e do SHA.
+          git clone --depth=1 --no-tags "$AUTH/HexerVoodoom/Class-System.git" "$CLASS_SYSTEM_DIR" \
+            || falhou "HexerVoodoom/Class-System"
+
+          # Bestiário: 120 MB medidos. O `sync:oracle-data` só faz
+          # `git show <ref>:src/registry/data/*.json` — não precisa da árvore
+          # inteira em disco. `--filter=blob:none` traz blob sob demanda e
+          # `--depth=1` corta o histórico: é a alavanca que o ADR §Gargalo nomeia.
+          git clone --filter=blob:none --depth=1 --no-tags "$AUTH/HexerVoodoom/Besti-rio-.git" "$BESTIARIO_DIR" \
+            || falhou "HexerVoodoom/Besti-rio-"
+
+          echo "Class-System @ $(git -C "$CLASS_SYSTEM_DIR" rev-parse HEAD)"
+          echo "Besti-rio-  @ $(git -C "$BESTIARIO_DIR" rev-parse HEAD)"
+
+      # `--depth=1` clona só o branch default e pode não deixar `origin/main`
+      # exatamente como o script espera (`BESTIARIO_REF` default = `origin/main`).
+      # Criamos o ref explicitamente em vez de mudar o default do script: mudar o
+      # default afetaria a máquina do dono, e o ADR foi explícito sobre nunca
+      # voltar a apontar para branch de trabalho de outro repo.
+      - name: Garantir a ref `origin/main` no clone do Bestiário
+        run: |
+          set -eu
+          git -C "$BESTIARIO_DIR" fetch --depth=1 --no-tags origin main
+          git -C "$BESTIARIO_DIR" update-ref refs/remotes/origin/main FETCH_HEAD
+          git -C "$BESTIARIO_DIR" rev-parse origin/main
+
+      # `vendor-class-system.mjs` ABORTA se o clone estiver sujo — e ele está
+      # certo: vendor sem procedência real é vendor mentiroso. `npm ci` cria
+      # `node_modules/`; se o .gitignore de LÁ não o cobrir, o clone fica sujo e o
+      # sync morre por um motivo que não é sobre o sync. `.git/info/exclude` é
+      # local ao clone descartável: não altera o repo irmão e mantém a checagem de
+      # sujeira valendo para tudo o que importa.
+      - name: Instalar deps do Class-System (esbuild/tsc/tsx saem DE LÁ)
+        run: |
+          set -eu
+          printf 'node_modules/\n.vendor-dts/\n' >> "$CLASS_SYSTEM_DIR/.git/info/exclude"
+          npm --prefix "$CLASS_SYSTEM_DIR" ci || npm --prefix "$CLASS_SYSTEM_DIR" install
+          git -C "$CLASS_SYSTEM_DIR" checkout -- package-lock.json 2>/dev/null || true
+          test -f "$CLASS_SYSTEM_DIR/node_modules/tsx/dist/cli.mjs" \
+            || { echo "::error::tsx não instalou no clone do Class-System — o sync:oracle-data depende dele (scripts/sync-oracle-data.mjs:tsxEval)."; exit 1; }
+
+      - name: Instalar deps do Soulmon (npm ci)
+        run: npm ci
+
+      # 🔴 OS DOIS, NA MESMA RODADA, CONTRA O MESMO CLONE. Não separe em jobs:
+      # jobs diferentes clonam de novo e podem pegar SHAs diferentes se alguém
+      # mergear no irmão no meio.
+      - name: vendor:class-system (motor)
+        run: npm run vendor:class-system
+
+      - name: sync:oracle-data (dados + fixtures de paridade)
+        run: npm run sync:oracle-data
+
+      # Verificação EXECUTADA da regra central — não confiança na ordem dos steps.
+      # É a REGRESSÃO NOMEADA do defeito achado na main (vendor `fb866455` x dados
+      # `1025012c`). Se alguém um dia rodar só um dos dois, isto reprova AQUI, em
+      # vez de virar 35 pares divergentes de cascata dentro de um PR verde.
+      - name: 🔴 Assert MESMO SHA (vendor x classSystem.data.json)
+        run: |
+          node -e '
+            const fs = require("fs");
+            const rd = (p) => JSON.parse(fs.readFileSync(p, "utf8"));
+            const motor = rd("vendor/class-system/_provenance.json").sha;
+            const dados = rd("src/utils/soulProfile/ficha/classSystem.data.json")._provenance.sha;
+            const pool  = rd("src/utils/soulProfile/bestiary/pool.json")._provenance;
+            console.log("vendor/class-system   sha:", motor);
+            console.log("classSystem.data.json sha:", dados);
+            console.log("pool.json             sha:", pool.sha, "(ref " + pool.ref + ")");
+            if (motor !== dados) {
+              console.error("::error::MOTOR E DADOS EM SHAs DIFERENTES (" + motor + " != " + dados + "). E o defeito dos 35 pares divergentes da cascata. O PR NAO pode existir assim.");
+              process.exit(1);
+            }
+            console.log("OK: motor e dados no mesmo SHA.");
+          '
+
+      - name: Há mudança?
+        id: diff
+        run: |
+          set -eu
+          # Escopo FECHADO de propósito. `dist/` NUNCA entra num PR de sync
+          # (ADR-002 §4): ele é regerado no fluxo normal depois do merge.
+          PATHS="vendor/class-system src/utils/soulProfile/ficha src/utils/soulProfile/bestiary"
+          if git diff --quiet -- $PATHS && [ -z "$(git ls-files --others --exclude-standard -- $PATHS)" ]; then
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nenhuma mudança nos snapshots — os irmãos não mexeram no que consumimos. Saindo limpo."
+          else
+            echo "mudou=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat -- $PATHS
+            git status --porcelain -- $PATHS
+          fi
+
+      # ── GATE. Roda ANTES do PR, e só se houve mudança. ────────────────────
+      # Por que o gate está AQUI e não confiando no `ci.yml`:
+      #
+      # 🔴 A PEGADINHA DO `GITHUB_TOKEN` — CONFERIDA NA DOC, não de memória.
+      # A crença comum é "PR de bot não dispara CI". O texto real é mais preciso,
+      # e a diferença muda o que o dono tem que fazer:
+      #   "When a pull request is created or updated by a workflow using
+      #    GITHUB_TOKEN, pull_request events with the opened, synchronize, or
+      #    reopened activity types create workflow runs that REQUIRE APPROVAL.
+      #    A user with write access can approve these runs from the pull request
+      #    page. With the exception of workflow_dispatch and repository_dispatch,
+      #    other GITHUB_TOKEN-triggered events do not create workflow runs at all."
+      #   (docs.github.com — events-that-trigger-workflows)
+      # Ou seja: o `ci.yml` APARECE no PR, mas fica PARADO esperando um clique em
+      # "Approve and run". Um check pendente parece um check rodando — e é assim
+      # que um PR de sync entra sem verificação nenhuma. Duas respostas, as duas:
+      #  1. o gate roda AQUI, incondicionalmente — é a barreira REAL e não depende
+      #     de token nenhum;
+      #  2. se existir o secret OPCIONAL `SYNC_PR_TOKEN` (PAT), o PR é aberto com
+      #     ele e o `ci.yml` dispara normalmente. Sem ele, o corpo do PR declara,
+      #     em letras grandes, que o CI não roda sozinho e como resolver.
+      # Nada é desabilitado e nada é afrouxado: se o gate falha, o PR é aberto
+      # mesmo assim — como DRAFT, rotulado `sync-quebrado`, com a saída colada.
+      # Sync que falha em silêncio devolve o problema que este workflow resolve.
+      - name: Gate — tsc (app)
+        if: steps.diff.outputs.mudou == 'true'
+        id: tsc_app
+        continue-on-error: true
+        run: npx tsc --noEmit 2>&1 | tee /tmp/tsc-app.log
+
+      - name: Gate — tsc (servidor)
+        if: steps.diff.outputs.mudou == 'true'
+        id: tsc_server
+        continue-on-error: true
+        run: npx tsc -p tsconfig.server.json --noEmit 2>&1 | tee /tmp/tsc-server.log
+
+      - name: Gate — vitest
+        if: steps.diff.outputs.mudou == 'true'
+        id: vitest
+        continue-on-error: true
+        run: npx vitest run 2>&1 | tee /tmp/vitest.log
+
+      - name: Montar corpo do PR
+        if: steps.diff.outputs.mudou == 'true'
+        id: corpo
+        env:
+          R_TSC_APP: ${{ steps.tsc_app.outcome }}
+          R_TSC_SRV: ${{ steps.tsc_server.outcome }}
+          R_VITEST: ${{ steps.vitest.outcome }}
+          PR_TOKEN_PRESENTE: ${{ secrets.SYNC_PR_TOKEN != '' }}
+        run: |
+          set -eu
+          P_VENDOR=vendor/class-system/_provenance.json
+          P_POOL=src/utils/soulProfile/bestiary/pool.json
+          CS_SHA=$(node -p "require('./$P_VENDOR').sha")
+          CS_REF=$(node -p "require('./$P_VENDOR').ref")
+          CS_SUB=$(node -p "require('./$P_VENDOR').commitSubject")
+          BE_SHA=$(node -p "require('./$P_POOL')._provenance.sha")
+          BE_REF=$(node -p "require('./$P_POOL')._provenance.ref")
+          CS_ANT=$(git show "HEAD:$P_VENDOR" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).sha" || echo '?')
+          BE_ANT=$(git show "HEAD:$P_POOL" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8'))._provenance.sha" || echo '?')
+
+          VERDE=true
+          for r in "$R_TSC_APP" "$R_TSC_SRV" "$R_VITEST"; do
+            [ "$r" = "success" ] || VERDE=false
+          done
+          echo "verde=$VERDE" >> "$GITHUB_OUTPUT"
+          if [ "$VERDE" = "true" ]; then
+            TITULO="chore(sync): repos irmãos -> class-system ${CS_SHA%${CS_SHA#????????}} · bestiário ${BE_SHA%${BE_SHA#????????}}"
+          else
+            TITULO="🔴 sync-quebrado: repos irmãos -> class-system ${CS_SHA%${CS_SHA#????????}} · bestiário ${BE_SHA%${BE_SHA#????????}}"
+          fi
+          echo "titulo=$TITULO" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "## SHA que está entrando"
+            echo
+            echo "| Repo | ref | de | para |"
+            echo "|---|---|---|---|"
+            echo "| \`HexerVoodoom/Class-System\` (motor + dados) | \`$CS_REF\` | \`$CS_ANT\` | **\`$CS_SHA\`** |"
+            echo "| \`HexerVoodoom/Besti-rio-\` (pool.json) | \`$BE_REF\` | \`$BE_ANT\` | **\`$BE_SHA\`** |"
+            echo
+            echo "Último commit do Class-System: $CS_SUB"
+            echo
+            echo "Procedência de MÁQUINA, não deste texto: \`vendor/class-system/_provenance.json\` e o"
+            echo "\`_provenance\` de \`pool.json\` / \`classSystem.data.json\`, todos no diff."
+            echo
+            echo "✅ **Motor e dados vieram do MESMO SHA** — verificado por assert executado no workflow."
+            echo "Vendor e snapshot em SHAs diferentes foi o defeito por trás dos 35 pares divergentes da cascata."
+            echo
+            echo "\`dist/\` **não** foi tocado (ADR-002 §4): é regerado no fluxo normal depois do merge."
+            echo
+            echo "## Gate (rodado NESTE workflow, antes de o PR existir)"
+            echo
+            echo "| Passo | Resultado |"
+            echo "|---|---|"
+            echo "| \`npx tsc --noEmit\` | $R_TSC_APP |"
+            echo "| \`npx tsc -p tsconfig.server.json --noEmit\` | $R_TSC_SRV |"
+            echo "| \`npx vitest run\` | $R_VITEST |"
+            echo
+            if [ "$PR_TOKEN_PRESENTE" != "true" ]; then
+              echo "> ⚠️ **O \`ci.yml\` NÃO roda sozinho neste PR — ele fica ESPERANDO APROVAÇÃO.**"
+              echo "> Este PR foi aberto com o \`GITHUB_TOKEN\`, e o GitHub segura \`pull_request\`"
+              echo "> disparado por workflow atrás de um botão: o check aparece na aba, mas parado."
+              echo "> **Check pendente parece check rodando** — não confunda os dois."
+              echo ">"
+              echo "> **O que fazer:** clique em **\"Approve and run\"** na aba Checks deste PR."
+              echo "> Ou, para acabar com o clique de vez, crie o secret OPCIONAL \`SYNC_PR_TOKEN\`"
+              echo "> (PAT com Contents:write + Pull requests:write **neste** repositório)."
+              echo ">"
+              echo "> De qualquer forma, **a verificação já aconteceu**: a tabela acima é o gate"
+              echo "> rodado neste workflow, com os mesmos três comandos do \`ci.yml\`."
+              echo
+            fi
+            if [ "$VERDE" != "true" ]; then
+              echo "## 🔴 O gate NÃO passou — leia antes de mergear"
+              echo
+              echo "O PR foi aberto mesmo assim, como **draft**, de propósito: sync que falha em"
+              echo "silêncio é snapshot envelhecendo em silêncio de novo. A saída REAL:"
+              echo
+              for f in /tmp/tsc-app.log /tmp/tsc-server.log /tmp/vitest.log; do
+                [ -f "$f" ] || continue
+                echo "<details><summary><code>$f</code></summary>"
+                echo
+                echo '```'
+                tail -c 30000 "$f"
+                echo '```'
+                echo
+                echo "</details>"
+                echo
+              done
+            fi
+          } > /tmp/pr-body.md
+          echo "Corpo montado ($(wc -c < /tmp/pr-body.md) bytes)."
+
+      - name: Commitar no branch de sync
+        if: steps.diff.outputs.mudou == 'true'
+        run: |
+          set -eu
+          git config user.name  'soulmon-sync[bot]'
+          git config user.email 'soulmon-sync@users.noreply.github.com'
+          git checkout -B "$BRANCH"
+          git add -- vendor/class-system src/utils/soulProfile/ficha src/utils/soulProfile/bestiary
+          # Trava barata: se QUALQUER coisa fora do escopo entrou no index (em
+          # especial `dist/`), aborta. O dia em que um script começar a escrever
+          # fora do escopo é o dia em que isto salva o deploy.
+          if git diff --cached --name-only | grep -qE '^dist/'; then
+            echo "::error::Algo de dist/ entrou no commit de sync. O PR de sync NUNCA toca dist/."
+            exit 1
+          fi
+          git diff --cached --name-only
+          git commit -m "chore(sync): snapshots dos repos irmãos (vendor + dados + fixtures de paridade)"
+          git push --force-with-lease origin "$BRANCH"
+
+      - name: Abrir/atualizar PR
+        if: steps.diff.outputs.mudou == 'true'
+        env:
+          # Prefere o PAT OPCIONAL (faz o ci.yml disparar); cai no GITHUB_TOKEN.
+          GH_TOKEN: ${{ secrets.SYNC_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          TITULO: ${{ steps.corpo.outputs.titulo }}
+          VERDE: ${{ steps.corpo.outputs.verde }}
+        run: |
+          set -eu
+          EXISTENTE=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTENTE" ]; then
+            gh pr edit "$EXISTENTE" --title "$TITULO" --body-file /tmp/pr-body.md
+            echo "::notice::PR #$EXISTENTE atualizado."
+            ALVO="$EXISTENTE"
+          else
+            if [ "$VERDE" = "true" ]; then
+              ALVO=$(gh pr create --base main --head "$BRANCH" --title "$TITULO" --body-file /tmp/pr-body.md | tail -1)
+            else
+              ALVO=$(gh pr create --base main --head "$BRANCH" --draft --title "$TITULO" --body-file /tmp/pr-body.md | tail -1)
+            fi
+            echo "::notice::PR aberto: $ALVO"
+          fi
+          if [ "$VERDE" != "true" ]; then
+            gh pr edit "$ALVO" --add-label sync-quebrado \
+              || echo "::warning::Label 'sync-quebrado' não existe — crie-a uma vez em Issues > Labels. O título do PR já começa com 🔴, então nada se perde."
+          fi
+
+      # O PR existe (com a saída colada), mas o RUN tem que ficar VERMELHO. Run
+      # verde que produziu PR quebrado é exatamente a maquiagem que não fazemos.
+      - name: Reprovar o run se o gate falhou
+        if: steps.diff.outputs.mudou == 'true' && steps.corpo.outputs.verde != 'true'
+        run: |
+          echo "::error::O sync gerou PR com gate VERMELHO (tsc/vitest). A saída está no corpo do PR."
+          exit 1
+
+      - name: Sem mudança — sair limpo e calado
+        if: steps.diff.outputs.mudou != 'true'
+        run: echo "Snapshots já estão no SHA canônico. Nada a fazer."
