@@ -1,4 +1,4 @@
-// Arte pixel real das 14 peças de decoração (geradas via Higgsfield, ver
+// Arte pixel real das 33 peças de decoração (geradas via Higgsfield, ver
 // docs/BRIEF-ARTE-DECORACAO.md). Cada PNG foi desenhado EXATAMENTE para a
 // caixa do slot que ocupa (DECOR_SLOTS em utils/petStage.ts) — nada aqui
 // redimensiona de forma não-uniforme, só encaixa.
@@ -16,6 +16,26 @@ import furnitureChampionBanner from '../assets/decor/furniture-champion-banner.p
 import furnitureMedalWall from '../assets/decor/furniture-medal-wall.png';
 import furnitureTrophyShelf from '../assets/decor/furniture-trophy-shelf.png';
 import furniturePodium from '../assets/decor/furniture-podium.png';
+// Segunda leva (kit v1.2) — 19 peças, ver docs/BRIEF-ARTE-DECORACAO.md.
+import furnGrass from '../assets/decor/furn-grass.png';
+import furnSand from '../assets/decor/furn-sand.png';
+import furnStoneTiles from '../assets/decor/furn-stone-tiles.png';
+import furnDeck from '../assets/decor/furn-deck.png';
+import furnCircuitMat from '../assets/decor/furn-circuit-mat.png';
+import furnArcadeCab from '../assets/decor/furn-arcade-cab.png';
+import furnCauldron from '../assets/decor/furn-cauldron.png';
+import furnCrystal from '../assets/decor/furn-crystal.png';
+import furnWell from '../assets/decor/furn-well.png';
+import furnLantern from '../assets/decor/furn-lantern.png';
+import furnMushrooms from '../assets/decor/furn-mushrooms.png';
+import furnHourglass from '../assets/decor/furn-hourglass.png';
+import furnFoodBowl from '../assets/decor/furn-food-bowl.png';
+import furnShelfSimple from '../assets/decor/furn-shelf-simple.png';
+import furnCrate from '../assets/decor/furn-crate.png';
+import furnWindow from '../assets/decor/furn-window.png';
+import furnGarland from '../assets/decor/furn-garland.png';
+import furnWindChime from '../assets/decor/furn-wind-chime.png';
+import furnClock from '../assets/decor/furn-clock.png';
 
 /** Chave = id do item em utils/shop.ts (kind: 'furniture'). */
 export const DECOR_ART: Record<string, string> = {
@@ -33,4 +53,23 @@ export const DECOR_ART: Record<string, string> = {
   'furniture-medal-wall': furnitureMedalWall,
   'furniture-trophy-shelf': furnitureTrophyShelf,
   'furniture-podium': furniturePodium,
+  'furn-grass': furnGrass,
+  'furn-sand': furnSand,
+  'furn-stone-tiles': furnStoneTiles,
+  'furn-deck': furnDeck,
+  'furn-circuit-mat': furnCircuitMat,
+  'furn-arcade-cab': furnArcadeCab,
+  'furn-cauldron': furnCauldron,
+  'furn-crystal': furnCrystal,
+  'furn-well': furnWell,
+  'furn-lantern': furnLantern,
+  'furn-mushrooms': furnMushrooms,
+  'furn-hourglass': furnHourglass,
+  'furn-food-bowl': furnFoodBowl,
+  'furn-shelf-simple': furnShelfSimple,
+  'furn-crate': furnCrate,
+  'furn-window': furnWindow,
+  'furn-garland': furnGarland,
+  'furn-wind-chime': furnWindChime,
+  'furn-clock': furnClock,
 };

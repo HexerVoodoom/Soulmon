@@ -374,7 +374,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
 
       {/* Battlefield (only during a run) — per-floor retro scene + VHS overlay */}
       {inBattle && enemy && (
-        <div className="sm-px-card" style={{ flex: 1, position: 'relative', margin: '0 16px', borderColor: scene.accent, ['--sm-cham-line' as string]: scene.accent, backgroundColor: scene.bg, overflow: 'hidden', boxShadow: 'inset 0 0 60px rgba(0,0,0,0.6)' }}>
+        <div className="sm-px-card" style={{ flex: 1, position: 'relative', margin: '0 16px', borderColor: scene.accent, ['--sm-cham-line' as string]: scene.accent,
+          // `background` e NÃO `backgroundColor`: `scene.bg` é um valor de
+          // shorthand (`url(...) center/cover`, pilha de gradientes), e
+          // `background-color` só aceita COR — o CSSOM descartava a string
+          // inteira em silêncio, sem erro nenhum. Efeito: o campo de batalha
+          // vinha sem cenário desde sempre, e os 5 de `DUNGEON_SCENES` mais os
+          // de `SPIRIT_BG_SCENES` nunca chegaram a aparecer na tela.
+          background: scene.bg, overflow: 'hidden', boxShadow: 'inset 0 0 60px rgba(0,0,0,0.6)' }}>
           {/* VHS scanline overlay */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.28) 0 1px, transparent 1px 3px)', backgroundSize: '100% 6px', animation: 'dungeon-vhs 5s linear infinite', opacity: 0.55, mixBlendMode: 'overlay' }} />
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: `inset 0 0 40px ${scene.accent}22` }} />

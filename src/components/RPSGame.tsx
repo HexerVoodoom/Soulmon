@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { PixelButton } from './pixel/PixelKit';
 import { Icon } from './ui/Icon';
+import rpsScene from '../assets/soulmon/bg/minigame-rps.png';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
@@ -99,7 +100,11 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       </p>
 
       {/* Arena */}
-      <div className="sm-px-card" style={{ flex: 1, margin: 16, backgroundColor: 'rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      {/* A CENA (o cartão da arena) ganha arte; o CHROME em volta continua
+          `--sm2-*`, que é a fronteira que esta tela já tinha traçado. O altar
+          foi desenhado simétrico e com o centro vazio justamente para o sprite
+          e as mãos caírem em cima dele sem disputar leitura. */}
+      <div className="sm-px-card" style={{ flex: 1, margin: 16, background: `url(${rpsScene}) center/cover`, boxShadow: 'inset 0 0 60px rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <img src={getSpriteForStage(evolutionStage, demoCharacterId)} alt="pet"
              style={{ width: 88, height: 88, objectFit: 'contain', imageRendering: 'pixelated', animation: 'dungeon-idle 1.4s ease-in-out infinite' }} />
         {/* Os tres EMOJIS DE MAO sao as PECAS do jogo, nao decoracao: o kit

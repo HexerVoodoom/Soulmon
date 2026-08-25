@@ -162,6 +162,12 @@ export function ShopModal({
   const art = (item: ShopItem, dim: boolean) => {
     const css = item.kind === 'bg' ? PET_BACKGROUNDS[item.id]?.css : undefined;
     const png = DECOR_ART[item.id];
+    // Peça de CHÃO é 6,5:1 (104x16 — o pet anda por cima dela). `contain` numa
+    // caixa quadrada de 56px espremia a arte numa tira de 7px de altura: o
+    // card do Tufo de Grama chegava a parecer vazio. Chão é TEXTURA, então
+    // `cover` (um pedaço ampliado dela) é a prévia honesta; para todo o resto,
+    // que é objeto, `contain` continua sendo o certo — recortar um sofá pela
+    // metade não diria o que ele é.
     return (
       <span
         aria-hidden="true"
@@ -174,7 +180,7 @@ export function ShopModal({
         }}
       >
         {png
-          ? <img src={png} alt="" width={48} height={48} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+          ? <img src={png} alt="" width={48} height={48} style={{ objectFit: item.slot === 'rug' ? 'cover' : 'contain', imageRendering: 'pixelated' }} />
           : css ? null : (
             <span style={{ fontSize: ART_GLYPH, lineHeight: 1, display: 'block' }}>{item.icon}</span>
           )}

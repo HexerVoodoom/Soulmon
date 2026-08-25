@@ -838,6 +838,10 @@ export const CompanionHUD = memo(function CompanionHUD({
   const cenario = equippedBackground && PET_BACKGROUNDS[equippedBackground]
     ? PET_BACKGROUNDS[equippedBackground].css
     : undefined;
+  /** Cor atrás da arte no visor — só cenário pintado declara (ver backgrounds.ts). */
+  const cenarioBase = equippedBackground
+    ? PET_BACKGROUNDS[equippedBackground]?.baseColor
+    : undefined;
 
   const chatDock = (
     <div className="sm-chat-fixed">
@@ -914,7 +918,16 @@ export const CompanionHUD = memo(function CompanionHUD({
           scale={VIEW_SCALE}
           label={language === 'pt-BR' ? 'Seu Soulmon' : 'Your Soulmon'}
           screenClassName={cenario ? undefined : SKY_CLASS[periodo]}
-          screenStyle={cenario ? { background: cenario } : undefined}
+          // Cenário PINTADO não é desenhado aqui: a arte tem a linha do chão
+          // numa % da PRÓPRIA altura, e a tela do visor não tem a altura da
+          // composição (ela corta pelo topo, ver a janela do palco acima).
+          // Medir os 72% da arte contra a altura da JANELA e os 74% do
+          // `GROUND_Y` contra os 250px da COMPOSIÇÃO é comparar duas réguas
+          // diferentes — foi assim que a decoração ficou uns 13px acima do
+          // piso desenhado. A arte desce para a caixa da composição (logo
+          // abaixo), que é a régua certa; aqui fica só a cor de base, que
+          // preenche a tela inteira.
+          screenStyle={cenario ? (cenarioBase ? { backgroundColor: cenarioBase } : { background: cenario }) : undefined}
         >
         <div
           className="p-3"
@@ -926,6 +939,12 @@ export const CompanionHUD = memo(function CompanionHUD({
             height: STAGE_HEIGHT,
             imageRendering: 'pixelated',
             borderWidth: 0,
+            // `auto 100%` + `center bottom`: a ALTURA da arte casa com a
+            // altura da composição, que é a única régua em que `GROUND_Y`
+            // significa alguma coisa. Sem esticar (o pixel não perdoa) e sem
+            // `cover` (que numa caixa larga escala pela largura e joga o chão
+            // para fora). O que sobra nas laterais é a `baseColor`.
+            ...(cenarioBase ? { background: `${cenario} center bottom / auto 100% no-repeat` } : null),
           }}
         >
           {/* Os corações de HP saíram daqui (rodada 3 / B1): viraram cápsula

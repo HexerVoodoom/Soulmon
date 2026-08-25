@@ -18,12 +18,16 @@
  * berço, e juntá-los agora só adiantaria a confusão.
  */
 import nestBase from '../assets/soulmon/nest-base.png';
+import nestBasket from '../assets/soulmon/nest-basket.png';
+import nestCushion from '../assets/soulmon/nest-cushion.png';
 
 /** Peças que sabem ocupar o espaço `nest`. */
-export type NestId = 'nest-base';
+export type NestId = 'nest-base' | 'nest-basket' | 'nest-cushion';
 
 export const NEST_ART: Record<NestId, string> = {
   'nest-base': nestBase,
+  'nest-basket': nestBasket,
+  'nest-cushion': nestCushion,
 };
 
 /** A peça que o app põe quando o jogador não escolheu nenhuma. */

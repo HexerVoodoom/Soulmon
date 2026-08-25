@@ -81,6 +81,28 @@ Todo cenário (`src/utils/backgrounds.ts`) declara três coisas:
 > estrela. A primeira versão do teste procurava a string no CSS inteiro e
 > passava sem verificar nada.
 
+### Cenário PINTADO (`url(...)`) — o que muda
+
+Oito cenários já não são gradiente: são arte de 1200×648 com o chão desenhado na
+linha do palco. Três coisas neles são diferentes, e as três foram aprendidas
+errando:
+
+1. **O visor desenha com `auto 100%`, nunca `cover`.** A ALTURA é o eixo onde
+   mora a linha do chão, então é ela que tem de mapear 1:1. `cover` parece certo
+   no celular e quebra no desktop: numa caixa de 1500×185 (~8:1) ele escala pela
+   largura e o chão vai parar centenas de px abaixo da borda de baixo.
+   `100% 100%` resolveria a linha, mas deforma o pixel.
+2. **A arte é pintada na CAIXA DA COMPOSIÇÃO** (250px, ancorada embaixo), e não
+   na tela do visor — que corta pelo topo e por isso tem outra altura. Medir os
+   72% da arte contra a janela e os 74% do `GROUND_Y` contra os 250px é comparar
+   duas réguas: a decoração ficava ~13px acima do piso desenhado.
+3. **`baseColor`** preenche o que sobra nas laterais quando a caixa é mais larga
+   que a proporção da arte. Amostrada da faixa de baixo do próprio PNG.
+
+O teste de deriva (`petStage.test.ts`) só sabe conferir gradiente, então ele
+**pula** quem começa com `url(`. O que garante esses oito é a arte ter sido
+encomendada para a caixa — a mesma regra da decoração.
+
 ---
 
 ## Itens de decoração
@@ -157,13 +179,23 @@ x = 66 % — a faixa livre entre a vitrine (47 %) e o canto direito (84 %). Ante
 eram `bottom-3 right-3`, uma regra anterior ao palco que os deixava boiando
 abaixo do piso; com o resto da cena alinhada, isso ficou visível.
 
-## Ainda falta (arte)
+## A arte (feita)
 
-Os itens são **emoji** hoje, escalados para a caixa do slot. A estrutura já
-está pronta para arte de verdade: quando os PNGs existirem, o que muda é o
-render de `PetStageDecor.tsx` (trocar o `<span>` do emoji por `<img>`) — as
-caixas, as posições e a linha do chão continuam iguais. Desenhe nos tamanhos da
-tabela acima, em 2× (112×112 para uma peça de 56×56) para telas retina.
+Todas as peças à venda têm PNG de verdade em `src/assets/decor/`, registrado em
+`utils/decorArt.ts` — o emoji do `ShopItem` sobrou só como identidade de
+inventário. Os sprites são gerados em 3× a caixa do slot (312×48 para o
+`rug` de 104×16, 168×168 para um `floor-left` de 56×56) com fundo alfa de
+verdade, recortados até a margem transparente e encaixados com `contain`.
+
+Duas coisas aprendidas ao fechar isso, e que valem para a próxima leva:
+
+- **O `rug` era o buraco real.** Existia UM tapete e ele era `indoor`, enquanto
+  o pet passa a maior parte do tempo em cenário aberto — quem jogava lá fora não
+  tinha chão nenhum para comprar. Ao acrescentar peça de chão, cheque a
+  distribuição por `fits`, não só a contagem por slot.
+- **Peça de chão é 6,5:1 e some no card quadrado da loja.** `ShopModal` desenha
+  as peças de `rug` com `object-fit: cover` justamente por isso: chão é textura,
+  e um pedaço ampliado dela diz mais que a tira inteira espremida em 7px.
 
 ---
 

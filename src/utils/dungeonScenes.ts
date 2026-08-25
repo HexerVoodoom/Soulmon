@@ -47,6 +47,14 @@ import dungeonBg2 from '../assets/soulmon/bg/dungeon-2.png';
 import dungeonBg3 from '../assets/soulmon/bg/dungeon-3.png';
 import dungeonBg4 from '../assets/soulmon/bg/dungeon-4.png';
 import dungeonBg5 from '../assets/soulmon/bg/dungeon-5.png';
+import dungeonBg6 from '../assets/soulmon/bg/dungeon-6.png';
+import dungeonBg7 from '../assets/soulmon/bg/dungeon-7.png';
+import dungeonBg8 from '../assets/soulmon/bg/dungeon-8.png';
+import dungeonBg9 from '../assets/soulmon/bg/dungeon-9.png';
+import dungeonBg10 from '../assets/soulmon/bg/dungeon-10.png';
+import ruinedHall from '../assets/soulmon/bg/minigame-dino.png';
+import arenaNight from '../assets/soulmon/bg/tournament-night.png';
+import arenaFinal from '../assets/soulmon/bg/tournament-final.png';
 
 // Cenários espirituais (Soulmon) — cavernas geradas, uma paleta por "andar".
 const SPIRIT_BG_SCENES: DungeonScene[] = [
@@ -55,6 +63,26 @@ const SPIRIT_BG_SCENES: DungeonScene[] = [
   { namePt: 'Salão Dourado', nameEn: 'Golden Hall', accent: '#d9a441', bg: `url(${dungeonBg3}) center/cover` },
   { namePt: 'Abismo Violeta', nameEn: 'Violet Abyss', accent: '#8f7fe8', bg: `url(${dungeonBg4}) center/cover` },
   { namePt: 'Fenda Rósea', nameEn: 'Rose Rift', accent: '#d96a8a', bg: `url(${dungeonBg5}) center/cover` },
+  // Segunda leva (kit v1.2): retrato 9:16, mesma paleta petróleo/turquesa/cobre
+  // do resto do app. O campo de batalha é `flex: 1` numa página inteira, ou
+  // seja, uma caixa ALTA — por isso a arte foi desenhada em pé, e não deitada
+  // como os 5 primeiros (960×540, herdados).
+  { namePt: 'Ruína Submersa', nameEn: 'Sunken Ruin', accent: '#3fd2d9', bg: `url(${dungeonBg6}) center/cover` },
+  { namePt: 'Forja das Almas', nameEn: 'Soul Forge', accent: '#c98a4b', bg: `url(${dungeonBg7}) center/cover` },
+  { namePt: 'Necrópole de Ossos', nameEn: 'Bone Necropolis', accent: '#9fb8b4', bg: `url(${dungeonBg8}) center/cover` },
+  { namePt: 'Núcleo de Dados', nameEn: 'Data Core', accent: '#4fe3c1', bg: `url(${dungeonBg9}) center/cover` },
+  { namePt: 'Céu Partido', nameEn: 'Shattered Sky', accent: '#5ad6ff', bg: `url(${dungeonBg10}) center/cover` },
+  // Nasceu como fundo do Dino e acabou aqui: o visor do Dino é largo e baixo
+  // (~7:1) e uma cena 9:16 vira nele uma lasca ampliada de parede. A arte é um
+  // corredor em ruínas — o campo de batalha da masmorra, que é ALTO, é a caixa
+  // para a qual ela sempre serviu.
+  { namePt: 'Corredor em Ruínas', nameEn: 'Ruined Hall', accent: '#57d9c4', bg: `url(${ruinedHall}) center/cover` },
+  // As duas arenas do Torneio entram AQUI, e não como fundo da página do
+  // Torneio: aquela moldura saiu de propósito (ver TournamentPage.tsx) e não
+  // volta. Como CENA de um andar, a arena é conteúdo do visor — que é
+  // exatamente a fronteira que aquele arquivo traçou.
+  { namePt: 'Arena Noturna', nameEn: 'Night Arena', accent: '#6fd3e8', bg: `url(${arenaNight}) center/cover` },
+  { namePt: 'Coliseu Ancião', nameEn: 'Elder Colosseum', accent: '#d7a55c', bg: `url(${arenaFinal}) center/cover` },
 ];
 
 const SHOP_BG_ACCENTS: Record<string, string> = {
@@ -66,6 +94,14 @@ const SHOP_BG_ACCENTS: Record<string, string> = {
   'bg-sakura': '#db2777',
   'bg-toytown': '#f59e0b',
   'bg-synthwave': '#ff2bd6',
+  'bg-attic': '#c98a4b',
+  'bg-arcade': '#3fd2d9',
+  'bg-library': '#8fd6c2',
+  'bg-shrine': '#5ad6ff',
+  'bg-rooftop': '#7fb8d9',
+  'bg-cloudsea': '#4fe3c1',
+  'bg-observatory': '#d7a55c',
+  'bg-swamp': '#4fd6a8',
 };
 
 const SHOP_BG_SCENES: DungeonScene[] = Object.entries(SHOP_BG_ACCENTS)

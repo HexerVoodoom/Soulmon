@@ -12,6 +12,14 @@ import { type SlotId, type StageSetting } from './petStage';
 import bgMatrixImg from '../assets/backgrounds/bg-matrix.png';
 import bgOceanImg from '../assets/backgrounds/bg-ocean.png';
 import bgGameboyImg from '../assets/backgrounds/bg-gameboy.png';
+import bgAtticImg from '../assets/backgrounds/bg-attic.png';
+import bgArcadeImg from '../assets/backgrounds/bg-arcade.png';
+import bgLibraryImg from '../assets/backgrounds/bg-library.png';
+import bgShrineImg from '../assets/backgrounds/bg-shrine.png';
+import bgRooftopImg from '../assets/backgrounds/bg-rooftop.png';
+import bgCloudseaImg from '../assets/backgrounds/bg-cloudsea.png';
+import bgObservatoryImg from '../assets/backgrounds/bg-observatory.png';
+import bgSwampImg from '../assets/backgrounds/bg-swamp.png';
 
 /**
  * Só chão — para cenas de céu aberto sem nenhuma superfície vertical (planície
@@ -31,6 +39,14 @@ export interface PetBackground {
   setting: StageSetting;
   /** Espaços de decoração que ESTE cenário oferece. */
   slots: SlotId[];
+  /**
+   * Cor de base atrás da arte, para cenário PINTADO (`url(...)`). O visor
+   * desenha a arte com `auto 100%` para não deformar o pixel nem perder a
+   * linha do chão; numa caixa mais larga que a proporção da arte sobra área, e
+   * é esta cor que a preenche. Ausente em cenário de gradiente, que se estica
+   * sozinho.
+   */
+  baseColor?: string;
   /**
    * Altura (%) em que o CHÃO começa neste cenário — o horizonte. Tem que ser
    * MENOR OU IGUAL a GROUND_Y, senão o pet e a decoração ficam apoiados no céu.
@@ -200,6 +216,68 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
       'linear-gradient(180deg, #2e1065 0%, #6d28d9 40%, #db2777 72%, #1e1b4b 74%, #312e81 100%)',
     ].join(', '),
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // só a grade: nada onde pendurar
+  },
+  // ── Cenários PINTADOS (kit v1.2) ──────────────────────────────────────────
+  // Os oito abaixo não são gradiente: são arte de verdade, 1200×648, desenhada
+  // com o chão JÁ na linha do palco. É por isso que o `horizonY` deles não
+  // aparece em camada nenhuma de CSS — não há camada. O teste de deriva em
+  // `petStage.test.ts` só sabe conferir gradiente, então ele pula quem começa
+  // com `url(`; o que garante estes é a arte ter sido encomendada para a
+  // caixa, do mesmo jeito que a decoração.
+  //
+  // O `baseColor` existe por causa destes oito e só deles: o VISOR os desenha
+  // com `auto 100%` (ver CompanionHUD), porque a ALTURA é o eixo onde mora a
+  // linha do chão e é ela que tem de mapear 1:1 sempre. `cover` — que foi a
+  // primeira tentativa — parece certo no celular e QUEBRA no desktop: numa
+  // caixa de 1500x185 (~8:1) ele escala pela LARGURA e o chão vai parar
+  // centenas de px abaixo da borda inferior, com a decoração apoiada no que
+  // sobrou do meio da parede. Com `auto 100%` o corte fica nas laterais, e a
+  // cor (amostrada da faixa de baixo do próprio PNG, para ler como
+  // continuação da cena e não como buraco) preenche o que sobra quando a caixa
+  // é larga demais para a arte. Cenário de gradiente não precisa dela: um
+  // gradiente não tem tamanho intrínseco, então `auto` já vira 100%.
+  'bg-attic': {
+    namePt: 'Sótão na Chuva', nameEn: 'Rainy Attic',
+    css: `url(${bgAtticImg})`, baseColor: '#02120e',
+    setting: 'indoor', slots: FULL_SLOTS, horizonY: 72,
+  },
+  'bg-arcade': {
+    namePt: 'Sala de Fliperama', nameEn: 'Arcade Room',
+    css: `url(${bgArcadeImg})`, baseColor: '#071d1b',
+    setting: 'indoor', slots: FULL_SLOTS, horizonY: 62,
+  },
+  'bg-library': {
+    namePt: 'Biblioteca Arcana', nameEn: 'Arcane Library',
+    css: `url(${bgLibraryImg})`, baseColor: '#031615',
+    setting: 'indoor', slots: FULL_SLOTS, horizonY: 70,
+  },
+  'bg-shrine': {
+    namePt: 'Santuário de Pedra', nameEn: 'Stone Shrine',
+    css: `url(${bgShrineImg})`, baseColor: '#142f2b',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 72,
+  },
+  'bg-rooftop': {
+    namePt: 'Telhado da Cidade', nameEn: 'City Rooftop',
+    css: `url(${bgRooftopImg})`, baseColor: '#031515',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 70,
+  },
+  'bg-cloudsea': {
+    // Cume acima das nuvens: não há parede, mastro nem galho — só o chão.
+    namePt: 'Mar de Nuvens', nameEn: 'Sea of Clouds',
+    css: `url(${bgCloudseaImg})`, baseColor: '#0e2f2a',
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 73,
+  },
+  'bg-observatory': {
+    namePt: 'Observatório', nameEn: 'Observatory',
+    css: `url(${bgObservatoryImg})`, baseColor: '#395146',
+    setting: 'indoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-swamp': {
+    // Pântano: raiz e cipó por toda parte, mas nada que leia como "pendurado
+    // de propósito" acima da cabeça do pet.
+    namePt: 'Pântano Fosforescente', nameEn: 'Glowing Swamp',
+    css: `url(${bgSwampImg})`, baseColor: '#021513',
+    setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,
   },
   // ── Mission-exclusive backgrounds (utils/missions.ts) — never sold ─────────
   'bg-mission-filecity': {

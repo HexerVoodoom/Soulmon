@@ -101,6 +101,12 @@ describe('cenários', () => {
     // uma estrela — verde falso, não verificava nada.
     for (const [id, bg] of Object.entries(PET_BACKGROUNDS)) {
       if (bg.horizonY === undefined) continue;
+      // Cenário PINTADO (`url(...)`) não tem camada de CSS onde o número
+      // pudesse aparecer: quem garante o horizonte dele é a arte ter sido
+      // encomendada com o chão na linha do palco (ver utils/backgrounds.ts).
+      // Exigir gradiente aqui obrigaria a inventar uma camada falsa só para
+      // satisfazer o teste — que é o oposto de guardar contra deriva.
+      if (bg.css.trimStart().startsWith('url(')) continue;
       const camadas = bg.css
         .split(/(?<=,\s?)(?=[a-z-]*gradient\()/)
         .filter(l => /^(repeating-)?linear-gradient\(180deg/.test(l.trim()));

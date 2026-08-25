@@ -766,14 +766,21 @@ o app de todo mundo que já tem o APK instalado.
 - **Corrida no `spendCredits`** (read-modify-write) — limitada a cobrar a menos
   do jogador, nunca a cunhar crédito. Cai junto se o SEC-3 migrar o módulo para
   Durable Objects.
-- **Arte da decoração são emoji.** A estrutura já aceita PNG; ver
-  `docs/PALCO-E-DECORACAO.md`.
-- **Arte da decoração** ainda é emoji. O brief de produção está pronto e a
-  geração virou um comando (`node scripts/gen-decor.mjs`, 14 peças) — falta só
-  rodar num lugar com acesso a `higgsfield.ai`: a política de rede do sandbox de
-  agente responde **403 no CONNECT** para esse host, então não dá pra gerar de
-  dentro de uma sessão. Brief em
-  `docs/BRIEF-ARTE-DECORACAO.md` (14 peças, caixa em px, prompt-base).
+- ~~**Arte da decoração são emoji.**~~ **FEITO** (ago/2026): 33 peças com PNG de
+  verdade em `src/assets/decor/` + `utils/decorArt.ts`, e 8 cenários PINTADOS
+  em `utils/backgrounds.ts`. Ver `docs/PALCO-E-DECORACAO.md`.
+- **Duas cenas geradas ficaram sem casa**: `evolution-ritual` e `evolution-ultra`
+  (1080×1920, em `_gemini_out/backgrounds/`, fora do repo). A `EvolutionCeremony`
+  já tem um fundo em VÍDEO animado; trocá-lo por PNG estático seria piorar.
+  Entram no dia em que a cerimônia ganhar variação por galho — aí a arte já
+  existe.
+- **O palco fica largo demais no desktop.** A caixa do visor acompanha a largura
+  da página (≈1500px numa tela de 1920), enquanto os cinco espaços de decoração
+  têm tamanho FIXO em px e posição em % — o resultado é um sofá de 56px a 16% de
+  uma caixa de 1500. É anterior a este trabalho e afeta todos os cenários, mas a
+  arte pintada tornou o efeito visível. A correção provável é limitar a largura
+  do `.sm2-device-stage` à proporção da arte (250 × 1,85 ≈ 462px); é mudança de
+  layout na tela principal, então fica para o dono decidir.
 - **Cura instantânea por Créditos** é, na prática, pagar para pular o cuidado — a
   mesma crítica que Kotaku e Digital Trends fizeram ao Premium Pass do Pokémon
   Sleep. Sugestão em `docs/PLANO-EVOLUCAO.md`: reposicionar como perdão pontual
