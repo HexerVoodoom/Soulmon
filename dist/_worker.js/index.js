@@ -586,7 +586,13 @@ async function onRequestPost({ request, env }) {
     grantCredits: result.product.grantCredits,
     // Guardado para o reembolso saber o que desfazer depois (ver auditRefunds).
     provider,
-    productId: provider === "play" ? body.productId : result.productId,
+    // Só o caminho da Steam devolve `productId` (verifySteamTxn); na Play quem
+    // informa é o cliente. O cast documenta isso em vez de mentir no @returns
+    // de verifySteamOwnership, que de fato não tem o campo.
+    productId: provider === "play" ? body.productId : (
+      /** @type {{ productId?: string }} */
+      result.productId
+    ),
     purchaseToken: provider === "play" ? body.purchaseToken : void 0
   });
   return json({
@@ -928,7 +934,7 @@ __name(onRequestOptions3, "onRequestOptions");
 async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const action = url.searchParams.get("action");
+  const action = url.searchParams.get("action") ?? "";
   const ip = clientKey(request);
   const cacheable = request.method === "GET" && CACHEABLE_ACTIONS.has(action) && typeof caches !== "undefined" && caches.default;
   let hit = null;
@@ -1007,7 +1013,7 @@ async function handleCommunity({ request, env }) {
       players.push(await publicProfile(env, p, { rankPoints: rank.points }));
       if (players.length >= 50) break;
     }
-    players.sort((a, b) => b.rankPoints - a.rankPoints);
+    players.sort((a, b) => (b.rankPoints ?? 0) - (a.rankPoints ?? 0));
     return json2({ players });
   }
   if (action === "player" && method === "GET") {
@@ -1367,7 +1373,10 @@ function isRefusal(err) {
 }
 __name(isRefusal, "isRefusal");
 function refusalError(message) {
-  const err = new Error(message);
+  const err = (
+    /** @type {Error & { refusal?: boolean }} */
+    new Error(message)
+  );
   err.refusal = true;
   return err;
 }
@@ -1475,7 +1484,10 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   }
   if (hfRefusal) throw refusalError(hfError);
   if (hfError) throw new Error(hfError);
-  const err = new Error("image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)");
+  const err = (
+    /** @type {Error & { notConfigured?: boolean }} */
+    new Error("image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)")
+  );
   err.notConfigured = true;
   throw err;
 }
@@ -1974,7 +1986,7 @@ async function onRequest4({ env }) {
 }
 __name(onRequest4, "onRequest");
 
-// ../.wrangler/tmp/pages-rHP2X5/functionsRoutes-0.9677282573919187.mjs
+// ../.wrangler/tmp/pages-cveLvP/functionsRoutes-0.06749758976297493.mjs
 var routes = [
   {
     routePath: "/api/billing",
@@ -2160,7 +2172,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -2486,7 +2498,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
