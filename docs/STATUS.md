@@ -36,28 +36,44 @@ depender do `tsconfig` de outro repositório. Declaração não é compilada, e
 `skipLibCheck` cobre o resto.
 
 **Atualizar o vendor** é `npm run vendor:class-system` **junto** com
-`npm run sync:oracle-data` — os fixtures de `cascata.parity.test.ts` e o vendor
-têm que vir do MESMO SHA. Hoje NÃO vêm (ver dívida abaixo).
+`npm run sync:oracle-data`. Os fixtures da cascata **não vêm mais do sync**: são
+gerados do próprio vendor (`npm run gen:cascata-fixtures`), com repo/SHA/sha256
+gravados no arquivo, e o `cascata.parity.test.ts` **asserta** que o SHA do fixture
+é igual ao do vendor. Divergir passou a ser vermelho, não comentário.
 
-**🟠 ACHADO, e ele não é do vendor — o vendor só o tornou visível.** Com o motor
-canônico dentro do repo, dá para confrontar a réplica manual da cascata
-(`src/utils/soulProfile/ficha/cascata.ts`) contra o motor VIVO em vez de contra
-fixtures de sync. Feito o confronto: **35 de 538 pares divergem** numa varredura
-de 300 fichas aleatórias. Causa: o `fb866455` do Class-System (PR #8, "sinergia
-de alvo único alimenta o destrave") passou a alimentar a cascata com o transbordo
-de sinergias de alvo único, e a réplica não modela isso. O
-`cascata.parity.test.ts` não pegava porque seus 7 fixtures foram gerados no SHA
-`1025012c` — de uma **branch de trabalho**, anterior ao PR — e cobrem só
-`fogo`/`agua`, que não têm sinergia de alvo único. É o footgun 9 acontecendo
-dentro do próprio antídoto: **fixture de sync envelhece em silêncio**.
+**✅ RESOLVIDO (25/08/2026) — a réplica da cascata bate com o motor canônico.**
+O achado original registrava "35 de 538 pares" — o número estava subdimensionado
+porque a metodologia daquela varredura não ficou registrada. A varredura definitiva
+(300 fichas × 5 estágios, gerador determinístico, contando todo par com passivos > 0
+dos dois lados) mediu **21.795 de 79.199 pares divergentes**. Depois da correção:
+**0 de 79.013**.
 
-O teste NÃO foi maquiado nem afrouxado. Entrou um bloco novo que confronta os
-quatro diais contra o motor vivo (verde). O confronto de COMPORTAMENTO ficou de
-fora **com o motivo escrito no arquivo**: corrigir a réplica muda a distribuição
-de pontos da ficha e mexe na cobertura travada por simulação (17/17 elementos,
-65/65 talentos, 11/11 profissões, 32/32 criaturas) — é decisão de produto, não
-de infraestrutura de build. **Pergunta ao dono: a réplica deve passar a modelar
-o transbordo de sinergia, ou o Soulmon congela a regra antiga de propósito?**
+Causa, lida em `vendor/class-system/index.js:1019-1053`:
+`alimento(base) = direto + Σ floor(direto(origem) × razao)` das `SINERGIAS` com
+`para.length === 1`, **antes** da divisão. Sinergia de leque (`vida`→primais,
+`arcano`→7) fica de fora — há teste travando isso.
+
+**O antídoto do footgun 9 foi reconstruído**, porque a causa-raiz era ele mesmo
+falhando: fixture de sync envelhecia em silêncio. Agora o fixture nasce do motor
+vendorizado, SHA do fixture == SHA do motor **por construção**, e há teste falhando
+se divergirem. 7 → **19 casos, 13 exercitando o transbordo**. A tabela de sinergia é
+**dado**, não regra reescrita — o teste a confronta com o filtro do motor vivo.
+
+**Cobertura travada por simulação, refeita** (400 perfis × 5 estágios): 17/17
+elementos, 65/65 talentos, 11/11 profissões, 32/32 criaturas — **iguais**, com as
+distribuições **byte a byte idênticas** (terra 40,8% … vileza 0,1%; ferreiro 21,8%
+… luthier 2,8%). Era esperado: a correção não toca `axes.ts`. O que muda é a
+largura dos pares: **44 → 50** pares destravados distintos, **240 → 265** fichas
+ultra que compram um par. **Ninguém perde alcance.**
+
+**🟠 PERGUNTA AO DONO — save antigo muda, e só no `ultra`.** A ficha é recomputada
+do `SOULMON_PROFILE` a cada visita (`src/components/PetPage.tsx:163`) e regravada
+no save. Medido em 120 perfis × 5 estágios: **10 perfis (8,3%) mudam, exclusivamente
+no estágio `ultra`**. Muda `elementos` e o **nome da skill especial**, sempre subindo
+de base para par (`Colosso de Sombra` → `Colosso de Obsidiana`; `Fúria de Luz` →
+`Fúria de Chama Solar`). **`classTitle` e companheiro não mudam em nenhum perfil**,
+nem rookie/champion/ultimate/mega. Ou seja: quem já está no `ultra` vê o nome da
+própria skill trocar **uma vez**. Não há como evitar sem congelar a regra antiga.
 
 
 **O que foi feito.** Três decisões novas do dono viraram código e entraram no
