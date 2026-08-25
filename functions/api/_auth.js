@@ -125,3 +125,53 @@ export async function authorizeSaveAccess(request, env, saveId) {
 
   return { ok: true, enforced: true, email: claims.email };
 }
+
+/**
+ * Autoriza uma operação **DESTRUTIVA ou de EXPORTAÇÃO TOTAL** sobre um saveId.
+ *
+ * Existe separada de `authorizeSaveAccess` de propósito. Aquela é **fail-open**
+ * por decisão de migração (`if (!projectId) return { ok: true }`): sem
+ * `FIREBASE_PROJECT_ID` ela aceita qualquer chamada, para não derrubar os
+ * usuários atuais. Isso é tolerável num save que o cliente já reescreve
+ * sozinho; **não é tolerável numa rota que APAGA ou que DESPEJA o dado inteiro
+ * da pessoa.** O `saveId` é derivado do e-mail por um algoritmo público — com
+ * fail-open, "excluir conta" vira "destruir a conta de quem eu souber o
+ * e-mail", e "exportar" vira "baixar a vida de quem eu souber o e-mail".
+ *
+ * Por isso aqui é **FAIL-CLOSED**, no mesmo espírito de `requirePaidTier`:
+ * autorização indeterminável RECUSA. Consequência declarada e aceita — enquanto
+ * `FIREBASE_PROJECT_ID` estiver desligado, exportação e exclusão respondem
+ * **503 `auth-unavailable`** e ficam INDISPONÍVEIS. Indisponível é melhor que
+ * perigosa: a rota volta a existir junto com o login, sem tocar nesta variável.
+ *
+ * @returns {Promise<{ ok: true, email: string }
+ *                 | { ok: false, status: number, reason: 'auth-unavailable' | 'unauthenticated' | 'forbidden' }>}
+ */
+export async function requireVerifiedOwner(request, env, saveId) {
+  const projectId = env?.FIREBASE_PROJECT_ID;
+  if (!projectId) return { ok: false, status: 503, reason: 'auth-unavailable' };
+
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+
+  let claims = null;
+  try {
+    claims = await verifyIdToken(token, projectId);
+  } catch {
+    // `verifyIdToken` promete não lançar, mas a rede do JWK pode. Dúvida nega.
+    return { ok: false, status: 503, reason: 'auth-unavailable' };
+  }
+  if (!claims) return { ok: false, status: 401, reason: 'unauthenticated' };
+
+  const expected = await emailToSaveId(claims.email);
+  // Comparação de tamanho fixo (32 hex dos dois lados) — sem early-return por
+  // caractere, para não transformar o 403 num oráculo de prefixo do saveId.
+  if (expected.length !== String(saveId).length) {
+    return { ok: false, status: 403, reason: 'forbidden' };
+  }
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ String(saveId).charCodeAt(i);
+  if (diff !== 0) return { ok: false, status: 403, reason: 'forbidden' };
+
+  return { ok: true, email: claims.email };
+}

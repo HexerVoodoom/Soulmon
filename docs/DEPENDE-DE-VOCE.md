@@ -171,6 +171,62 @@ smoke"*, eu conserto. Não bloqueia o APK — o build passa e o artefato sai.
 
 ---
 
+## 🟠 DECISÃO DE PRODUTO — exclusão de conta e recibos de pagamento
+
+### Recibo de pagamento sobrevive à exclusão da conta?
+
+**Contexto (fato, não parecer — não há assessoria jurídica aqui, P7=B):**
+`functions/api/account.js` implementa exportação e exclusão. A exclusão apaga o
+save, o perfil público, o `pid`, os presentes e o ranking, e limpa o `saveId` da
+lista de amigos de terceiros. **Duas coisas eu deixei em pé, e a decisão é sua:**
+
+1. **`ord:<orderId> → saveId`** — o vínculo "este comprovante já foi resgatado
+   por esta conta". É a trava do `claimOrder` (`_entitlements.js:147`): sem ela,
+   **um recibo vira N contas pagas**. E, do lado do titular, é o que permite que
+   ele volte com o mesmo e-mail e **restaure a compra** (mesmo e-mail → mesmo
+   `saveId`). O valor guardado é o `saveId`, que é derivado do e-mail.
+2. **`ent:<saveId>`** — não apago: **minimizo**. Sai o uso (`aiLifetime`,
+   `adDate`, `adCount`); ficam `tier`, `credits`, `consumedOrders`,
+   `orderDetails` (com o `purchaseToken`, que é o que `auditRefunds` precisa
+   para conferir reembolso) e uma marca `accountDeletedAt`.
+
+**As três saídas possíveis, e o custo de cada uma:**
+
+| | O que faz | Custo |
+|---|---|---|
+| **A (implementado hoje)** | Recibo e entitlement sobrevivem, uso é apagado | Um identificador derivado do e-mail continua no servidor por tempo indeterminado |
+| **B** | Substituir o valor de `ord:` por uma marca opaca de "já resgatado" | Mantém a anti-fraude, mas **quem voltar perde a compra** — não há como reconhecer o dono |
+| **C** | Apagar `ord:` e `ent:` | Exclusão completa, e **o mesmo recibo passa a valer para N contas** |
+
+**O que eu preciso de você:** A, B ou C. E, se for A, **por quanto tempo** o
+`ord:`/`ent:` fica (hoje os dois são gravados **sem TTL** — retenção infinita por
+construção). Eu não afirmo norma; a escolha é sua e vira texto na política.
+
+---
+
+### Exportação e exclusão ficam INDISPONÍVEIS até o item 2 desta lista
+
+Não é bug. As duas rotas usam `requireVerifiedOwner` (`functions/api/_auth.js`),
+que é **fail-closed**: sem `FIREBASE_PROJECT_ID` elas respondem **503
+`auth-unavailable`**, com texto em PT-BR e EN explicando ao usuário. O motivo é
+direto: o `saveId` é o SHA-256 do e-mail por algoritmo público, então uma rota
+de **exclusão** com a autorização fail-open de hoje seria *"apague a conta de
+qualquer um cujo e-mail eu conheça"*. **Indisponível é melhor que perigosa** —
+elas ligam sozinhas junto com o login, sem tocar em nenhuma variável.
+
+---
+
+### Push não é alcançável pela exclusão do servidor
+
+`push:*` e `fcm:*` são chaveados pelo **hash do endpoint/token** e o registro
+**não guarda o `saveId`** — o servidor não consegue achar as inscrições de um
+titular a partir da conta dele. A exclusão **declara isso** na resposta e o
+cliente precisa chamar `DELETE /api/subscribe` e `DELETE /api/fcm-subscribe`.
+Alternativa: gravar o `saveId` dentro do registro de push — o que **aumenta a
+ligação de dados** para resolver o problema. Também é decisão sua.
+
+---
+
 ## ✅ Resolvido e publicado (para não voltar à lista)
 
 - APK abria o **DigiApp** — `capacitor.config.json` apontava para o projeto
