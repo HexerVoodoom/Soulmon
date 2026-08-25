@@ -263,6 +263,318 @@ async function authorizeSaveAccess(request, env, saveId) {
   return { ok: true, enforced: true, email: claims.email };
 }
 __name(authorizeSaveAccess, "authorizeSaveAccess");
+async function requireVerifiedOwner(request, env, saveId) {
+  const projectId = env?.FIREBASE_PROJECT_ID;
+  if (!projectId) return { ok: false, status: 503, reason: "auth-unavailable" };
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+  let claims = null;
+  try {
+    claims = await verifyIdToken(token, projectId);
+  } catch {
+    return { ok: false, status: 503, reason: "auth-unavailable" };
+  }
+  if (!claims) return { ok: false, status: 401, reason: "unauthenticated" };
+  const expected = await emailToSaveId(claims.email);
+  if (expected.length !== String(saveId).length) {
+    return { ok: false, status: 403, reason: "forbidden" };
+  }
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ String(saveId).charCodeAt(i);
+  if (diff !== 0) return { ok: false, status: 403, reason: "forbidden" };
+  return { ok: true, email: claims.email };
+}
+__name(requireVerifiedOwner, "requireVerifiedOwner");
+
+// api/account.js
+var CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+var DEL_PREFIX = "del:";
+var CONFIRM_TTL_SECONDS = 15 * 60;
+var MAX_SCAN_PAGES = 20;
+var json = /* @__PURE__ */ __name((data, status = 200) => Response.json(data, { status, headers: CORS }), "json");
+function log(event, saveId, extra = {}) {
+  console.log(JSON.stringify({ event, saveIdPrefix: String(saveId).slice(0, 8), ...extra }));
+}
+__name(log, "log");
+async function onRequestOptions() {
+  return new Response(null, { headers: CORS });
+}
+__name(onRequestOptions, "onRequestOptions");
+async function publicIdFor(saveId) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-pub:${saveId}`));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
+}
+__name(publicIdFor, "publicIdFor");
+async function listPrefix(env, prefix) {
+  const out = [];
+  let cursor;
+  for (let page = 0; page < MAX_SCAN_PAGES; page++) {
+    const res = await env.DIGIAPP_SAVES.list({ prefix, cursor, limit: 1e3 });
+    for (const k of res.keys || []) out.push(k.name);
+    if (res.list_complete || !res.cursor) break;
+    cursor = res.cursor;
+  }
+  return out;
+}
+__name(listPrefix, "listPrefix");
+function maskOrderDetails(details) {
+  if (!Array.isArray(details)) return [];
+  return details.map((d) => ({
+    ...d,
+    purchaseToken: typeof d?.purchaseToken === "string" && d.purchaseToken ? `***${d.purchaseToken.slice(-4)}` : void 0
+  }));
+}
+__name(maskOrderDetails, "maskOrderDetails");
+var COPY = {
+  exportNote: {
+    "pt-BR": 'Isto \xE9 tudo que o Soulmon guarda de voc\xEA nos servidores dele. O que n\xE3o est\xE1 aqui est\xE1 listado em "naoIncluido" \u2014 e a maior parte disso nunca saiu do seu aparelho.',
+    en: 'This is everything Soulmon keeps about you on its servers. Whatever is not here is listed under "notIncluded" \u2014 and most of it never left your device.'
+  },
+  deleteReady: {
+    "pt-BR": "Est\xE1 tudo pronto para apagar. Confirme quando quiser \u2014 seu bichinho vai sentir sua falta, e a porta fica aberta se voc\xEA voltar.",
+    en: "Everything is ready to be erased. Confirm whenever you want \u2014 your buddy will miss you, and the door stays open if you come back."
+  },
+  deleteDone: {
+    "pt-BR": "Pronto, apagamos. Obrigado pelo tempo que voc\xEA passou aqui \u2014 foi bom cuidar de voc\xEA por um tempo.",
+    en: "Done, it is erased. Thank you for the time you spent here \u2014 it was good to look after you for a while."
+  },
+  pending: {
+    "pt-BR": "Sem pressa: este pedido vale por 15 minutos. Se ele expirar, \xE9 s\xF3 pedir de novo.",
+    en: "No rush: this request is valid for 15 minutes. If it expires, just ask again."
+  },
+  unavailable: {
+    "pt-BR": "Esta fun\xE7\xE3o ainda n\xE3o est\xE1 dispon\xEDvel \u2014 ela liga junto com o login, porque sem login n\xE3o temos como ter certeza de que \xE9 voc\xEA. Preferimos deixar indispon\xEDvel a deixar arriscada.",
+    en: "This feature is not available yet \u2014 it turns on together with sign-in, because without sign-in we cannot be sure it is you. We would rather leave it unavailable than leave it risky."
+  },
+  confirmMissing: {
+    "pt-BR": "Falta confirmar. Pe\xE7a um token novo em action=delete-request e confirme com ele \u2014 \xE9 s\xF3 para ningu\xE9m apagar a conta sem querer.",
+    en: "Confirmation missing. Ask for a fresh token at action=delete-request and confirm with it \u2014 this is only so nobody erases an account by accident."
+  }
+};
+var NOT_INCLUDED = [
+  {
+    what: "soulmon-profile (localStorage)",
+    "pt-BR": 'Seu perfil psicom\xE9trico (as 20 perguntas) e seu nome completo, data, hora e local de nascimento NUNCA s\xE3o enviados ao servidor \u2014 vivem s\xF3 neste aparelho, na chave "soulmon-profile". N\xE3o d\xE1 para export\xE1-los daqui, e apagar a conta n\xE3o os apaga: limpar os dados do app (ou desinstalar) apaga.',
+    en: 'Your psychometric profile (the 20 questions) and your full name, date, time and place of birth are NEVER sent to the server \u2014 they live only on this device, under the "soulmon-profile" key. They cannot be exported from here, and deleting your account does not delete them: clearing the app data (or uninstalling) does.'
+  },
+  {
+    what: "push:* / fcm:*",
+    "pt-BR": "Suas inscri\xE7\xF5es de notifica\xE7\xE3o s\xE3o guardadas pelo endere\xE7o do aparelho, n\xE3o pela sua conta \u2014 o servidor n\xE3o consegue ach\xE1-las a partir dela. O app desfaz a inscri\xE7\xE3o deste aparelho junto com a exclus\xE3o; se voc\xEA usa o Soulmon em mais de um aparelho, desligue as notifica\xE7\xF5es em cada um.",
+    en: "Your notification subscriptions are stored by device address, not by your account \u2014 the server cannot find them from it. The app unsubscribes this device along with the deletion; if you use Soulmon on more than one device, turn notifications off on each."
+  },
+  {
+    what: "ord:<orderId>",
+    "pt-BR": "O v\xEDnculo entre um comprovante de compra e a conta que o resgatou N\xC3O \xE9 apagado. \xC9 o que impede que um mesmo comprovante vire v\xE1rias contas pagas \u2014 e \xE9 o que deixa voc\xEA restaurar a compra se voltar com o mesmo e-mail.",
+    en: "The link between a purchase receipt and the account that redeemed it is NOT deleted. It is what stops one receipt from becoming several paid accounts \u2014 and it is what lets you restore your purchase if you come back with the same email."
+  },
+  {
+    what: "terceiros / third parties",
+    "pt-BR": "Mensagens que voc\xEA mandou para o assistente foram processadas por provedores de IA fora daqui. O Soulmon n\xE3o guarda essas conversas, ent\xE3o elas n\xE3o est\xE3o nesta exporta\xE7\xE3o e esta exclus\xE3o n\xE3o alcan\xE7a o que estiver do lado deles.",
+    en: "Messages you sent to the assistant were processed by AI providers outside of here. Soulmon does not store those conversations, so they are not in this export and this deletion does not reach whatever is on their side."
+  }
+];
+async function collect(env, saveId) {
+  const kv = env.DIGIAPP_SAVES;
+  const pid = await publicIdFor(saveId);
+  let state = null;
+  try {
+    state = JSON.parse(await kv.get(saveId) || "null");
+  } catch {
+    state = null;
+  }
+  let profile = null;
+  try {
+    profile = JSON.parse(await kv.get(`profile:${saveId}`) || "null");
+  } catch {
+    profile = null;
+  }
+  let gifts = null;
+  try {
+    gifts = JSON.parse(await kv.get(`gifts:${saveId}`) || "null");
+  } catch {
+    gifts = null;
+  }
+  const entRaw = await kv.get(ENT_PREFIX + saveId);
+  const entitlement = entRaw ? await readEntitlement(env, saveId) : null;
+  const rankKeys = (await listPrefix(env, "rank:")).filter((k) => k.endsWith(`:${saveId}`));
+  const ranks = [];
+  for (const k of rankKeys) {
+    try {
+      ranks.push({
+        season: k.slice("rank:".length, k.length - saveId.length - 1),
+        record: JSON.parse(await kv.get(k) || "null")
+      });
+    } catch {
+    }
+  }
+  const pidIndexed = await kv.get(`pid:${pid}`) === saveId;
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed };
+}
+__name(collect, "collect");
+async function handleExport(env, saveId) {
+  const c = await collect(env, saveId);
+  log("account.export", saveId, {
+    hasState: !!c.state,
+    hasProfile: !!c.profile,
+    ranks: c.ranks.length,
+    hasEntitlement: !!c.entitlement
+  });
+  return json({
+    format: "soulmon.account-export/1",
+    generatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    // O `saveId` sai porque o titular já provou ser dono dele.
+    account: { saveId, publicId: c.pid },
+    aviso: COPY.exportNote,
+    data: {
+      // As chaves do objeto são as PRÓPRIAS chaves do KV, para o arquivo ser
+      // auditável contra o servidor sem precisar de um mapa à parte.
+      [`${saveId} (save)`]: c.state,
+      [`profile:${saveId}`]: c.profile,
+      [`pid:${c.pid}`]: c.pidIndexed ? saveId : null,
+      [`gifts:${saveId}`]: c.gifts,
+      [`${ENT_PREFIX}${saveId}`]: c.entitlement ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) } : null,
+      ranks: c.ranks
+    },
+    naoIncluido: NOT_INCLUDED
+  });
+}
+__name(handleExport, "handleExport");
+function plan(c, saveId) {
+  return {
+    apaga: [
+      c.state ? `${saveId} (save)` : null,
+      c.profile ? `profile:${saveId}` : null,
+      c.pidIndexed ? `pid:${c.pid}` : null,
+      c.gifts ? `gifts:${saveId}` : null,
+      ...c.rankKeys,
+      "men\xE7\xF5es a voc\xEA na lista de amigos de outros jogadores"
+    ].filter(Boolean),
+    minimiza: c.entitlement ? [`${ENT_PREFIX}${saveId} \u2014 sai o uso (IA, an\xFAncios), ficam os campos de compra`] : [],
+    sobrevive: Array.isArray(c.entitlement?.consumedOrders) ? c.entitlement.consumedOrders.map((o) => `${ORDER_PREFIX}${o}`) : []
+  };
+}
+__name(plan, "plan");
+async function handleDeleteRequest(env, saveId) {
+  const c = await collect(env, saveId);
+  const token = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  await env.DIGIAPP_SAVES.put(
+    DEL_PREFIX + saveId,
+    JSON.stringify({ token, createdAt: Date.now() }),
+    { expirationTtl: CONFIRM_TTL_SECONDS }
+  );
+  log("account.delete.request", saveId, { hasState: !!c.state });
+  return json({
+    confirmToken: token,
+    expiresInSeconds: CONFIRM_TTL_SECONDS,
+    plano: plan(c, saveId),
+    naoIncluido: NOT_INCLUDED,
+    aviso: COPY.deleteReady,
+    prazo: COPY.pending
+  });
+}
+__name(handleDeleteRequest, "handleDeleteRequest");
+function tokenMatches(a, b) {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length || a.length === 0) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+__name(tokenMatches, "tokenMatches");
+async function handleDeleteConfirm(env, saveId, body) {
+  const kv = env.DIGIAPP_SAVES;
+  let pending = null;
+  try {
+    pending = JSON.parse(await kv.get(DEL_PREFIX + saveId) || "null");
+  } catch {
+    pending = null;
+  }
+  if (!pending || !tokenMatches(pending.token, body?.confirmToken)) {
+    log("account.delete.refused", saveId, { reason: "confirmation-required" });
+    return json({ error: "confirmation-required", aviso: COPY.confirmMissing }, 409);
+  }
+  const c = await collect(env, saveId);
+  const executed = plan(c, saveId);
+  if (c.state) await kv.delete(saveId);
+  if (c.profile) await kv.delete(`profile:${saveId}`);
+  if (c.pidIndexed) await kv.delete(`pid:${c.pid}`);
+  if (c.gifts) await kv.delete(`gifts:${saveId}`);
+  for (const k of c.rankKeys) await kv.delete(k);
+  let scrubbed = 0;
+  for (const key of await listPrefix(env, "profile:")) {
+    if (key === `profile:${saveId}`) continue;
+    let p;
+    try {
+      p = JSON.parse(await kv.get(key) || "null");
+    } catch {
+      continue;
+    }
+    if (!p || !Array.isArray(p.friends) || !p.friends.includes(saveId)) continue;
+    p.friends = p.friends.filter((f) => f !== saveId);
+    await kv.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
+    scrubbed++;
+  }
+  if (c.entitlement) {
+    const ent = c.entitlement;
+    await kv.put(ENT_PREFIX + saveId, JSON.stringify({
+      tier: ent.tier,
+      credits: ent.credits,
+      consumedOrders: ent.consumedOrders,
+      orderDetails: ent.orderDetails,
+      auditedAt: ent.auditedAt,
+      aiLifetime: {},
+      adDate: "1970-01-01",
+      adCount: 0,
+      accountDeletedAt: Date.now(),
+      updatedAt: Date.now()
+    }));
+  }
+  await kv.delete(DEL_PREFIX + saveId);
+  log("account.delete.done", saveId, {
+    deletedKeys: executed.apaga.length,
+    scrubbedFriendLists: scrubbed,
+    entitlementMinimized: !!c.entitlement
+  });
+  return json({
+    ok: true,
+    executado: { ...executed, listasDeAmigosLimpas: scrubbed },
+    naoIncluido: NOT_INCLUDED,
+    aviso: COPY.deleteDone
+  });
+}
+__name(handleDeleteConfirm, "handleDeleteConfirm");
+async function onRequest({ request, env }) {
+  const url = new URL(request.url);
+  const method = request.method;
+  if (method !== "GET" && method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
+  const body = method === "POST" ? await request.json().catch(() => null) : null;
+  const action = url.searchParams.get("action") || body?.action || "";
+  const saveId = url.searchParams.get("id") || (typeof body?.id === "string" ? body.id : null);
+  if (!saveId || !VALID_ID.test(saveId)) {
+    return json({ error: "Invalid save ID" }, 400);
+  }
+  if (!env.DIGIAPP_SAVES) {
+    return json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, 500);
+  }
+  const auth = await requireVerifiedOwner(request, env, saveId);
+  if (!auth.ok) {
+    log("account.denied", saveId, { action, reason: auth.reason });
+    return json({
+      error: auth.reason,
+      ...auth.reason === "auth-unavailable" ? { aviso: COPY.unavailable } : {}
+    }, auth.status);
+  }
+  if (action === "export") return handleExport(env, saveId);
+  if (method === "POST" && action === "delete-request") return handleDeleteRequest(env, saveId);
+  if (method === "POST" && action === "delete-confirm") return handleDeleteConfirm(env, saveId, body);
+  return json({ error: "Unknown action" }, 400);
+}
+__name(onRequest, "onRequest");
 
 // api/_billing.js
 var PRODUCTS = {
@@ -527,12 +839,12 @@ async function isSteamPurchaseVoided(env, { orderId }) {
 __name(isSteamPurchaseVoided, "isSteamPurchaseVoided");
 
 // api/billing.js
-var CORS = {
+var CORS2 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-var json = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS }), "json");
+var json2 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS2 }), "json");
 var STATUS_BY_REASON = {
   "billing-not-configured": 503,
   "billing-misconfigured": 503,
@@ -545,21 +857,21 @@ var STATUS_BY_REASON = {
   "order-in-use": 409,
   "account-mismatch": 403
 };
-async function onRequestOptions() {
-  return new Response(null, { headers: CORS });
+async function onRequestOptions2() {
+  return new Response(null, { headers: CORS2 });
 }
-__name(onRequestOptions, "onRequestOptions");
+__name(onRequestOptions2, "onRequestOptions");
 async function onRequestPost({ request, env }) {
   const url = new URL(request.url);
-  if (url.searchParams.get("action") !== "verify") return json({ error: "Unknown action" }, 400);
+  if (url.searchParams.get("action") !== "verify") return json2({ error: "Unknown action" }, 400);
   const provider = url.searchParams.get("provider") ?? "play";
-  if (provider !== "play" && provider !== "steam") return json({ error: "Unknown provider" }, 400);
-  if (!env.DIGIAPP_SAVES) return json({ error: "Storage not bound" }, 500);
+  if (provider !== "play" && provider !== "steam") return json2({ error: "Unknown provider" }, 400);
+  if (!env.DIGIAPP_SAVES) return json2({ error: "Storage not bound" }, 500);
   const body = await request.json().catch(() => null);
   const saveId = body?.id;
-  if (!saveId || !VALID_ID.test(saveId)) return json({ error: "Invalid save ID" }, 400);
+  if (!saveId || !VALID_ID.test(saveId)) return json2({ error: "Invalid save ID" }, 400);
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  if (!auth.ok) return json2({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   let result;
   if (provider === "play") {
     result = await verifyPlayPurchase(env, {
@@ -577,14 +889,14 @@ async function onRequestPost({ request, env }) {
     result = { ok: false, reason: "missing-token" };
   }
   if (!result.ok) {
-    return json(
+    return json2(
       { ok: false, reason: result.reason, status: result.status },
       STATUS_BY_REASON[result.reason] ?? 402
     );
   }
   const claim = await claimOrder(env, saveId, result.orderId);
   if (!claim.ok) {
-    return json({ ok: false, reason: claim.reason }, STATUS_BY_REASON[claim.reason]);
+    return json2({ ok: false, reason: claim.reason }, STATUS_BY_REASON[claim.reason]);
   }
   const { ent, duplicate } = await applyVerifiedPurchase(env, saveId, {
     orderId: result.orderId,
@@ -601,7 +913,7 @@ async function onRequestPost({ request, env }) {
     ),
     purchaseToken: provider === "play" ? body.purchaseToken : void 0
   });
-  return json({
+  return json2({
     ok: true,
     duplicate,
     ...publicView(ent),
@@ -757,7 +1069,7 @@ function redactionCount(redactions) {
 __name(redactionCount, "redactionCount");
 
 // api/chat.js
-var CORS2 = {
+var CORS3 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
@@ -812,19 +1124,19 @@ propose tasks and do not try to cheer them out of it. You are a companion who
 grows alongside them, never a boss keeping score.`;
 }
 __name(buildSystemPrompt, "buildSystemPrompt");
-async function onRequestOptions2() {
-  return new Response(null, { headers: CORS2 });
+async function onRequestOptions3() {
+  return new Response(null, { headers: CORS3 });
 }
-__name(onRequestOptions2, "onRequestOptions");
+__name(onRequestOptions3, "onRequestOptions");
 async function onRequestPost2({ request, env }) {
   try {
     const body = await request.json();
     const { message, petName: petNameRaw, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
-    if (!message) return Response.json({ error: "Message required" }, { status: 400, headers: CORS2 });
+    if (!message) return Response.json({ error: "Message required" }, { status: 400, headers: CORS3 });
     const gate = await guardAiRequest(request, env, "chat", body.id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS2 });
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS3 });
     const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS2 });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS3 });
     const min = minimizeForAi(message, 500);
     const safeMessage = min.text;
     const removed = redactionCount(min.redactions);
@@ -850,7 +1162,7 @@ async function onRequestPost2({ request, env }) {
     });
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS2 });
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS3 });
     }
     const data = await groqRes.json();
     const response = data.choices?.[0]?.message?.content ?? "...";
@@ -866,12 +1178,12 @@ async function onRequestPost2({ request, env }) {
       else if (safeMessage.match(/friend|family|social/i)) category = "Social";
       else if (safeMessage.match(/clean|organi|plan/i)) category = "Discipline";
       else if (safeMessage.match(/health|doctor|medic/i)) category = "Health";
-      return Response.json({ response, action: { type: "create_activity", activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS2 });
+      return Response.json({ response, action: { type: "create_activity", activity: { name: activityName, category, points: { virus: 0, data: 0, vaccine: 0 } } } }, { headers: CORS3 });
     }
-    return Response.json({ response }, { headers: CORS2 });
+    return Response.json({ response }, { headers: CORS3 });
   } catch (err) {
     console.error("Chat error:", err);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS2 });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS3 });
   }
 }
 __name(onRequestPost2, "onRequestPost");
@@ -924,7 +1236,7 @@ function tooManyRequests(retryAfter, cors = {}) {
 __name(tooManyRequests, "tooManyRequests");
 
 // api/community.js
-var CORS3 = {
+var CORS4 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` é obrigatório nas 6 ações que passam por denyUnlessOwner.
@@ -933,7 +1245,7 @@ var CORS3 = {
 };
 var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
 var MATCHES_PER_DAY = 5;
-var json2 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS3 }), "json");
+var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS4 }), "json");
 var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult"]);
 var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
 var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
@@ -948,11 +1260,11 @@ function stagePower(stage) {
 }
 __name(stagePower, "stagePower");
 var PID_PREFIX = "pid:";
-async function publicIdFor(saveId) {
+async function publicIdFor2(saveId) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-pub:${saveId}`));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
 }
-__name(publicIdFor, "publicIdFor");
+__name(publicIdFor2, "publicIdFor");
 async function indexPublicId(env, saveId, pid) {
   await env.DIGIAPP_SAVES.put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
@@ -963,7 +1275,7 @@ async function saveIdForPublicId(env, pid) {
 }
 __name(saveIdForPublicId, "saveIdForPublicId");
 async function publicProfile(env, p, extra = {}) {
-  const pid = p.pid || await publicIdFor(p.id);
+  const pid = p.pid || await publicIdFor2(p.id);
   return {
     id: pid,
     name: p.name,
@@ -995,7 +1307,7 @@ async function putRank(env, season, id, rec) {
   await env.DIGIAPP_SAVES.put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
 }
 __name(putRank, "putRank");
-async function listPrefix(env, prefix, limit = 100) {
+async function listPrefix2(env, prefix, limit = 100) {
   const out = [];
   let cursor;
   do {
@@ -1008,12 +1320,12 @@ async function listPrefix(env, prefix, limit = 100) {
   } while (cursor);
   return out;
 }
-__name(listPrefix, "listPrefix");
-async function onRequestOptions3() {
-  return new Response(null, { headers: CORS3 });
+__name(listPrefix2, "listPrefix");
+async function onRequestOptions4() {
+  return new Response(null, { headers: CORS4 });
 }
-__name(onRequestOptions3, "onRequestOptions");
-async function onRequest(context) {
+__name(onRequestOptions4, "onRequestOptions");
+async function onRequest2(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const action = url.searchParams.get("action") ?? "";
@@ -1028,7 +1340,7 @@ async function onRequest(context) {
   );
   if (!gate.ok) {
     console.warn("[community] rate limited", { action, cached: !!hit, retryAfter: gate.retryAfter });
-    return tooManyRequests(gate.retryAfter, CORS3);
+    return tooManyRequests(gate.retryAfter, CORS4);
   }
   if (hit) return hit;
   const res = await handleCommunity(context);
@@ -1043,19 +1355,19 @@ async function onRequest(context) {
   }
   return res;
 }
-__name(onRequest, "onRequest");
+__name(onRequest2, "onRequest");
 async function handleCommunity({ request, env }) {
-  if (!env.DIGIAPP_SAVES) return json2({ error: "Storage not bound" }, 500);
+  if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
   const method = request.method;
   const body = method === "POST" ? await request.json().catch(() => ({})) : {};
   const id = body.id || url.searchParams.get("id");
   const denyUnlessOwner = /* @__PURE__ */ __name(async (actorId) => {
-    if (!VALID_ID2.test(actorId || "")) return json2({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(actorId || "")) return json3({ error: "invalid id" }, 400);
     const auth = await authorizeSaveAccess(request, env, actorId);
     if (auth.ok) return null;
-    return json2({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+    return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   }, "denyUnlessOwner");
   if (action === "profile" && method === "POST") {
     const denied = await denyUnlessOwner(id);
@@ -1075,15 +1387,15 @@ async function handleCommunity({ request, env }) {
       updatedAt: Date.now(),
       // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
       // mapa reverso conhece a correspondência.
-      pid: prev.pid || await publicIdFor(id)
+      pid: prev.pid || await publicIdFor2(id)
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    return json2({ ok: true, id: profile.pid });
+    return json3({ ok: true, id: profile.pid });
   }
   if (action === "players" && method === "GET") {
     const search = (url.searchParams.get("search") || "").toLowerCase();
-    const keys = await listPrefix(env, "profile:", 300);
+    const keys = await listPrefix2(env, "profile:", 300);
     const season = currentSeason();
     const players = [];
     for (const k of keys) {
@@ -1096,15 +1408,15 @@ async function handleCommunity({ request, env }) {
       if (players.length >= 50) break;
     }
     players.sort((a, b) => (b.rankPoints ?? 0) - (a.rankPoints ?? 0));
-    return json2({ players });
+    return json3({ players });
   }
   if (action === "player" && method === "GET") {
     const targetSave = await saveIdForPublicId(env, id) || id;
     const p = await getProfile(env, targetSave);
-    if (!p) return json2({ found: false });
+    if (!p) return json3({ found: false });
     const rank = await getRank(env, currentSeason(), targetSave);
-    const friendPids = await Promise.all((p.friends || []).map((f) => publicIdFor(f)));
-    return json2({
+    const friendPids = await Promise.all((p.friends || []).map((f) => publicIdFor2(f)));
+    return json3({
       found: true,
       player: await publicProfile(env, p, {
         friends: friendPids,
@@ -1115,7 +1427,7 @@ async function handleCommunity({ request, env }) {
     });
   }
   if (action === "opponents" && method === "GET") {
-    const keys = await listPrefix(env, "profile:", 300);
+    const keys = await listPrefix2(env, "profile:", 300);
     const me = id;
     const pool = [];
     for (const k of keys) {
@@ -1132,20 +1444,20 @@ async function handleCommunity({ request, env }) {
     const season = currentSeason();
     const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
-    return json2({ opponents: pool.slice(0, 3), matchesLeft: Math.max(0, matchesLeft) });
+    return json3({ opponents: pool.slice(0, 3), matchesLeft: Math.max(0, matchesLeft) });
   }
   if (action === "match" && method === "POST") {
     const { opponentId } = body;
-    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(opponentId || "")) return json2({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(opponentId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const oppSave = await saveIdForPublicId(env, opponentId);
-    if (!oppSave) return json2({ error: "opponent unavailable" }, 404);
-    if (id === oppSave) return json2({ error: "cannot fight yourself" }, 400);
+    if (!oppSave) return json3({ error: "opponent unavailable" }, 404);
+    if (id === oppSave) return json3({ error: "cannot fight yourself" }, 400);
     const me = await getProfile(env, id);
     const opp = await getProfile(env, oppSave);
-    if (!me?.pvpEnabled) return json2({ error: "pvp disabled" }, 403);
-    if (!opp?.pvpEnabled) return json2({ error: "opponent unavailable" }, 404);
+    if (!me?.pvpEnabled) return json3({ error: "pvp disabled" }, 403);
+    if (!opp?.pvpEnabled) return json3({ error: "opponent unavailable" }, 404);
     const season = currentSeason();
     const myRank = await getRank(env, season, id);
     if (myRank.day !== today2()) {
@@ -1153,7 +1465,7 @@ async function handleCommunity({ request, env }) {
       myRank.matchesToday = 0;
     }
     if (myRank.matchesToday >= MATCHES_PER_DAY) {
-      return json2({ error: "daily limit", matchesLeft: 0 }, 429);
+      return json3({ error: "daily limit", matchesLeft: 0 }, 429);
     }
     const power = /* @__PURE__ */ __name((p) => stagePower(p.stage) * 10 + Math.min(20, ((p.attrs?.virus || 0) + (p.attrs?.data || 0) + (p.attrs?.vaccine || 0)) / 5) + Math.random() * 18, "power");
     const myScore = power(me);
@@ -1169,7 +1481,7 @@ async function handleCommunity({ request, env }) {
     if (won) oppRank.losses += 1;
     else oppRank.wins += 1;
     await putRank(env, season, oppSave, oppRank);
-    return json2({
+    return json3({
       won,
       myScore: Math.round(myScore),
       oppScore: Math.round(oppScore),
@@ -1180,8 +1492,8 @@ async function handleCommunity({ request, env }) {
   }
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
     const season = url.searchParams.get("season") || currentSeason();
-    if (!/^\d{4}-\d{2}$/.test(season)) return json2({ error: "invalid season" }, 400);
-    const keys = await listPrefix(env, `rank:${season}:`, 300);
+    if (!/^\d{4}-\d{2}$/.test(season)) return json3({ error: "invalid season" }, 400);
+    const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
       const raw = await env.DIGIAPP_SAVES.get(k);
@@ -1190,7 +1502,7 @@ async function handleCommunity({ request, env }) {
       const ownerSave = k.slice(`rank:${season}:`.length);
       const p = await getProfile(env, ownerSave);
       rows.push({
-        id: p?.pid || await publicIdFor(ownerSave),
+        id: p?.pid || await publicIdFor2(ownerSave),
         name: p?.name || "An\xF4nimo",
         petName: p?.petName || "",
         stage: p?.stage || "rookie",
@@ -1200,14 +1512,14 @@ async function handleCommunity({ request, env }) {
       });
     }
     rows.sort((a, b) => b.points - a.points);
-    if (action === "seasonResult") return json2({ season, top3: rows.slice(0, 3) });
-    return json2({ season, rank: rows.slice(0, 50) });
+    if (action === "seasonResult") return json3({ season, top3: rows.slice(0, 3) });
+    return json3({ season, rank: rows.slice(0, 50) });
   }
   if (action === "closeSeason" && method === "POST") {
     const { season, adminKey } = body;
-    if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json2({ error: "unauthorized" }, 401);
-    if (!/^\d{4}-\d{2}$/.test(season || "")) return json2({ error: "invalid season" }, 400);
-    const keys = await listPrefix(env, `rank:${season}:`, 300);
+    if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json3({ error: "unauthorized" }, 401);
+    if (!/^\d{4}-\d{2}$/.test(season || "")) return json3({ error: "invalid season" }, 400);
+    const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
       const raw = await env.DIGIAPP_SAVES.get(k);
@@ -1223,7 +1535,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    return json2({ ok: true, season, awarded: top3.length });
+    return json3({ ok: true, season, awarded: top3.length });
   }
   if (action === "trophies" && method === "GET") {
     const denied = await denyUnlessOwner(id);
@@ -1234,47 +1546,47 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies = [];
       await putProfile(env, id, p);
     }
-    return json2({ trophies });
+    return json3({ trophies });
   }
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
-    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const friendSave = await saveIdForPublicId(env, friendId);
-    if (!friendSave) return json2({ error: "friend not found" }, 404);
-    if (id === friendSave) return json2({ error: "cannot befriend yourself" }, 400);
+    if (!friendSave) return json3({ error: "friend not found" }, 404);
+    if (id === friendSave) return json3({ error: "cannot befriend yourself" }, 400);
     const me = await getProfile(env, id);
-    if (!me) return json2({ error: "profile not found" }, 404);
+    if (!me) return json3({ error: "profile not found" }, 404);
     me.friends = me.friends || [];
     if (remove) {
       me.friends = me.friends.filter((f) => f !== friendSave);
     } else if (!me.friends.includes(friendSave)) {
-      if (me.friends.length >= 5) return json2({ error: "friend limit (5)" }, 400);
+      if (me.friends.length >= 5) return json3({ error: "friend limit (5)" }, 400);
       me.friends.push(friendSave);
     }
     await putProfile(env, id, me);
-    return json2({ ok: true, friends: await Promise.all(me.friends.map((f) => publicIdFor(f))) });
+    return json3({ ok: true, friends: await Promise.all(me.friends.map((f) => publicIdFor2(f))) });
   }
   if (action === "gift" && method === "POST") {
     const { friendId } = body;
-    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json2({ error: "invalid id" }, 400);
+    if (!VALID_ID2.test(id || "") || !VALID_ID2.test(friendId || "")) return json3({ error: "invalid id" }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const friendSave = await saveIdForPublicId(env, friendId);
-    if (!friendSave) return json2({ error: "not a friend" }, 403);
+    if (!friendSave) return json3({ error: "not a friend" }, 403);
     const me = await getProfile(env, id);
-    if (!me) return json2({ error: "profile not found" }, 404);
-    if (!(me.friends || []).includes(friendSave)) return json2({ error: "not a friend" }, 403);
+    if (!me) return json3({ error: "profile not found" }, 404);
+    if (!(me.friends || []).includes(friendSave)) return json3({ error: "not a friend" }, 403);
     me.giftLog = me.giftLog || {};
-    if (me.giftLog[friendSave] === today2()) return json2({ error: "already gifted today" }, 429);
+    if (me.giftLog[friendSave] === today2()) return json3({ error: "already gifted today" }, 429);
     me.giftLog[friendSave] = today2();
     await putProfile(env, id, me);
     const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
     await env.DIGIAPP_SAVES.put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
-    return json2({ ok: true });
+    return json3({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
     const denied = await denyUnlessOwner(id);
@@ -1284,34 +1596,34 @@ async function handleCommunity({ request, env }) {
     if (url.searchParams.get("claim") === "1" && gifts.length) {
       await env.DIGIAPP_SAVES.delete(`gifts:${id}`);
     }
-    return json2({ gifts });
+    return json3({ gifts });
   }
-  return json2({ error: "unknown action" }, 400);
+  return json3({ error: "unknown action" }, 400);
 }
 __name(handleCommunity, "handleCommunity");
 
 // api/config.js
-var CORS4 = {
+var CORS5 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions4() {
-  return new Response(null, { headers: CORS4 });
+async function onRequestOptions5() {
+  return new Response(null, { headers: CORS5 });
 }
-__name(onRequestOptions4, "onRequestOptions");
+__name(onRequestOptions5, "onRequestOptions");
 async function onRequestGet({ env }) {
   return Response.json({
     // true = todas as rotas de save/dinheiro exigem ID token do Firebase.
     authRequired: !!env.FIREBASE_PROJECT_ID
   }, {
-    headers: { ...CORS4, "Cache-Control": "public, max-age=300" }
+    headers: { ...CORS5, "Cache-Control": "public, max-age=300" }
   });
 }
 __name(onRequestGet, "onRequestGet");
 
 // api/entitlements.js
-var CORS5 = {
+var CORS6 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` é obrigatório aqui (authorizeSaveAccess). Sem anunciá-lo, o
@@ -1319,64 +1631,64 @@ var CORS5 = {
   // é bloqueado pelo navegador e a falha aparece como erro de rede.
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
-async function onRequestOptions5() {
-  return new Response(null, { headers: CORS5 });
+var json4 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS6 }), "json");
+async function onRequestOptions6() {
+  return new Response(null, { headers: CORS6 });
 }
-__name(onRequestOptions5, "onRequestOptions");
+__name(onRequestOptions6, "onRequestOptions");
 async function onRequestGet2({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get("id");
-  if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
-  if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
+  if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
+  if (!env.DIGIAPP_SAVES) return json4({ error: "Storage not bound" }, 500);
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  if (!auth.ok) return json4({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   const { ent } = await auditRefunds(env, saveId, (order) => {
     if (order.provider !== "steam") {
       return isPlayPurchaseVoided(env, { productId: order.productId, purchaseToken: order.purchaseToken });
     }
     return String(order.orderId).startsWith("steam:own:") ? isSteamOwnershipVoided(env, { orderId: order.orderId }) : isSteamPurchaseVoided(env, { orderId: order.orderId });
   });
-  return json3({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
+  return json4({ ...publicView(ent), adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
 __name(onRequestGet2, "onRequestGet");
 async function onRequestPost3({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
-  if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
+  if (!env.DIGIAPP_SAVES) return json4({ error: "Storage not bound" }, 500);
   const body = await request.json().catch(() => null);
   const saveId = body?.id;
-  if (!saveId || !VALID_ID.test(saveId)) return json3({ error: "Invalid save ID" }, 400);
+  if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
   const auth = await authorizeSaveAccess(request, env, saveId);
-  if (!auth.ok) return json3({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
+  if (!auth.ok) return json4({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   if (action === "spend") {
     const amount = Number(body?.amount);
     const ent = await spendCredits(env, saveId, amount);
-    if (!ent) return json3({ ok: false, reason: "insufficient" }, 402);
-    return json3({ ok: true, ...publicView(ent) });
+    if (!ent) return json4({ ok: false, reason: "insufficient" }, 402);
+    return json4({ ok: true, ...publicView(ent) });
   }
   if (action === "ad") {
     if (env.ADMOB_SSV_ENABLED !== "true") {
-      return json3({ ok: false, reason: "ads-not-configured" }, 501);
+      return json4({ ok: false, reason: "ads-not-configured" }, 501);
     }
     const ent = await grantAdReward(env, saveId);
-    if (!ent) return json3({ ok: false, reason: "daily-cap" }, 429);
-    return json3({ ok: true, ...publicView(ent) });
+    if (!ent) return json4({ ok: false, reason: "daily-cap" }, 429);
+    return json4({ ok: true, ...publicView(ent) });
   }
-  return json3({ error: "Unknown action" }, 400);
+  return json4({ error: "Unknown action" }, 400);
 }
 __name(onRequestPost3, "onRequestPost");
 
 // api/fcm-subscribe.js
-var CORS6 = {
+var CORS7 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions6() {
-  return new Response(null, { status: 204, headers: CORS6 });
+async function onRequestOptions7() {
+  return new Response(null, { status: 204, headers: CORS7 });
 }
-__name(onRequestOptions6, "onRequestOptions");
+__name(onRequestOptions7, "onRequestOptions");
 async function onRequestPost4({ request, env }) {
   let body;
   try {
@@ -1384,14 +1696,14 @@ async function onRequestPost4({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS7 }
     });
   }
   const { token, petName, digimonName, language } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS7 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
@@ -1402,7 +1714,7 @@ async function onRequestPost4({ request, env }) {
   );
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS6 }
+    headers: { "Content-Type": "application/json", ...CORS7 }
   });
 }
 __name(onRequestPost4, "onRequestPost");
@@ -1413,21 +1725,21 @@ async function onRequestDelete({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS7 }
     });
   }
   const { token } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS6 }
+      headers: { "Content-Type": "application/json", ...CORS7 }
     });
   }
   const kvKey = `fcm:${await hashToken(token)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS6 }
+    headers: { "Content-Type": "application/json", ...CORS7 }
   });
 }
 __name(onRequestDelete, "onRequestDelete");
@@ -1438,17 +1750,17 @@ async function hashToken(token) {
 __name(hashToken, "hashToken");
 
 // api/generate-sprite.js
-var CORS7 = {
+var CORS8 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var HF_BASE = "https://platform.higgsfield.ai";
 var GEMINI_MODEL = "gemini-2.5-flash-image";
-async function onRequestOptions7() {
-  return new Response(null, { headers: CORS7 });
+async function onRequestOptions8() {
+  return new Response(null, { headers: CORS8 });
 }
-__name(onRequestOptions7, "onRequestOptions");
+__name(onRequestOptions8, "onRequestOptions");
 var REFUSAL_WORDS = /nsfw|safety|policy|polic[ií]|moderation|blocked|prohibited|content[_ -]filter|copyright|trademark|intellectual property|recitation/i;
 function isRefusal(err) {
   return Boolean(err?.refusal) || REFUSAL_WORDS.test(err?.message || "");
@@ -1578,27 +1890,27 @@ async function onRequestPost5({ request, env }) {
   try {
     const { prompt, promptFallback, referenceImageUrls, id } = await request.json();
     if (!prompt || typeof prompt !== "string") {
-      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS7 });
+      return Response.json({ error: "prompt required" }, { status: 400, headers: CORS8 });
     }
     const tier = await requirePaidTier(env, id);
     if (!tier.ok) {
-      return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS7 });
+      return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS8 });
     }
     const gate = await guardAiRequest(request, env, "sprite", id);
     if (!gate.ok) {
       return Response.json(
         { error: gate.reason, ...gate.message ? { message: gate.message } : {} },
-        { status: gate.status, headers: CORS7 }
+        { status: gate.status, headers: CORS8 }
       );
     }
     try {
       const out = await generateWithProviders(env, prompt, referenceImageUrls);
-      return Response.json(out, { headers: CORS7 });
+      return Response.json(out, { headers: CORS8 });
     } catch (err) {
       const canRetry = typeof promptFallback === "string" && promptFallback.length > 0 && promptFallback !== prompt;
       if (!canRetry || !isRefusal(err)) {
         if (err.notConfigured) {
-          return Response.json({ error: err.message }, { status: 503, headers: CORS7 });
+          return Response.json({ error: err.message }, { status: 503, headers: CORS8 });
         }
         throw err;
       }
@@ -1606,22 +1918,22 @@ async function onRequestPost5({ request, env }) {
       if (!extra.ok) {
         return Response.json(
           { error: extra.reason, ...extra.message ? { message: extra.message } : {} },
-          { status: extra.status, headers: CORS7 }
+          { status: extra.status, headers: CORS8 }
         );
       }
       console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err.message);
       const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
-      return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS7 });
+      return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS8 });
     }
   } catch (err) {
     console.error("generate-sprite error:", err);
-    return Response.json({ error: "internal error" }, { status: 500, headers: CORS7 });
+    return Response.json({ error: "internal error" }, { status: 500, headers: CORS8 });
   }
 }
 __name(onRequestPost5, "onRequestPost");
 
 // api/metrics.js
-var CORS8 = {
+var CORS9 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
@@ -1732,36 +2044,36 @@ function groupByDay(events) {
   return byDay;
 }
 __name(groupByDay, "groupByDay");
-async function onRequestOptions8() {
-  return new Response(null, { headers: CORS8 });
+async function onRequestOptions9() {
+  return new Response(null, { headers: CORS9 });
 }
-__name(onRequestOptions8, "onRequestOptions");
-async function onRequest2({ request, env }) {
+__name(onRequestOptions9, "onRequestOptions");
+async function onRequest3({ request, env }) {
   if (request.method !== "POST") {
-    return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS8 });
+    return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS9 });
   }
   const gate = takeToken("metrics", clientKey(request), RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS8);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS9);
   const raw = await request.text().catch(() => null);
   if (raw === null || raw.length > MAX_BODY_BYTES) {
-    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS8 });
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS9 });
   }
   let body = null;
   try {
     body = JSON.parse(raw);
   } catch {
-    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS8 });
+    return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS9 });
   }
   const result = sanitizeBatch(body);
   if (!result.ok) {
-    return Response.json({ error: "Invalid batch" }, { status: 400, headers: CORS8 });
+    return Response.json({ error: "Invalid batch" }, { status: 400, headers: CORS9 });
   }
   if (result.events.length === 0) {
-    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS8 });
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS9 });
   }
   if (!env?.DIGIAPP_SAVES) {
     console.warn("metrics: KV DIGIAPP_SAVES n\xE3o vinculado \u2014 agregado descartado");
-    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS8 });
+    return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS9 });
   }
   let accepted = 0;
   for (const [day2, records] of groupByDay(result.events)) {
@@ -1775,12 +2087,12 @@ async function onRequest2({ request, env }) {
       console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err?.name ?? err) });
     }
   }
-  return Response.json({ ok: true, accepted }, { headers: CORS8 });
+  return Response.json({ ok: true, accepted }, { headers: CORS9 });
 }
-__name(onRequest2, "onRequest");
+__name(onRequest3, "onRequest");
 
 // api/save.js
-var CORS9 = {
+var CORS10 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` PRECISA estar aqui: o cliente manda `Bearer <idToken>` e o
@@ -1791,57 +2103,57 @@ var CORS9 = {
 };
 var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
-async function onRequestOptions9() {
-  return new Response(null, { headers: CORS9 });
+async function onRequestOptions10() {
+  return new Response(null, { headers: CORS10 });
 }
-__name(onRequestOptions9, "onRequestOptions");
-async function onRequest3({ request, env }) {
+__name(onRequestOptions10, "onRequestOptions");
+async function onRequest4({ request, env }) {
   const url = new URL(request.url);
   const body = request.method === "POST" ? await request.json().catch(() => null) : null;
   const queryId = url.searchParams.get("id");
   const bodyId = typeof body?.id === "string" ? body.id : null;
   if (queryId && bodyId && queryId !== bodyId) {
-    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS9 });
+    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS10 });
   }
   const saveId = queryId || bodyId;
   if (!saveId || !VALID_ID.test(saveId)) {
-    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS9 });
+    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS10 });
   }
   if (!env.DIGIAPP_SAVES) {
-    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS9 });
+    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS10 });
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
-    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS9 });
+    return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS10 });
   }
   if (request.method === "GET") {
     const raw = await env.DIGIAPP_SAVES.get(saveId);
-    if (!raw) return Response.json({ found: false }, { headers: CORS9 });
+    if (!raw) return Response.json({ found: false }, { headers: CORS10 });
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
     state.accountTier = ent.tier;
     state.credits = ent.credits;
-    return Response.json({ found: true, state }, { headers: CORS9 });
+    return Response.json({ found: true, state }, { headers: CORS10 });
   }
   if (request.method === "POST") {
     const incoming = body?.state;
     if (typeof incoming !== "object" || incoming === null || Array.isArray(incoming)) {
       console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveId, tipo: Array.isArray(incoming) ? "array" : typeof incoming });
-      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS9 });
+      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS10 });
     }
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
     const serialized = JSON.stringify(state);
     if (serialized.length > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
-      return Response.json({ error: "State too large" }, { status: 413, headers: CORS9 });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS10 });
     }
     await env.DIGIAPP_SAVES.put(saveId, serialized, { expirationTtl: 86400 * 365 });
-    return Response.json({ ok: true }, { headers: CORS9 });
+    return Response.json({ ok: true }, { headers: CORS10 });
   }
-  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS9 });
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS10 });
 }
-__name(onRequest3, "onRequest");
+__name(onRequest4, "onRequest");
 
 // api/_pushTargets.js
 var PUSH_HOST_SUFFIXES = [
@@ -1880,18 +2192,18 @@ function costGate(request) {
   const gate = takeToken("subscribe", clientKey(request), SUB_LIMIT);
   if (gate.ok) return null;
   console.warn("[subscribe] rate limited", { retryAfter: gate.retryAfter });
-  return tooManyRequests(gate.retryAfter, CORS10);
+  return tooManyRequests(gate.retryAfter, CORS11);
 }
 __name(costGate, "costGate");
-var CORS10 = {
+var CORS11 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-async function onRequestOptions10() {
-  return new Response(null, { status: 204, headers: CORS10 });
+async function onRequestOptions11() {
+  return new Response(null, { status: 204, headers: CORS11 });
 }
-__name(onRequestOptions10, "onRequestOptions");
+__name(onRequestOptions11, "onRequestOptions");
 async function onRequestPost6({ request, env }) {
   const limited = costGate(request);
   if (limited) return limited;
@@ -1901,20 +2213,20 @@ async function onRequestPost6({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS10 }
+      headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
   const { endpoint, keys, petName, digimonName, language } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS10 }
+      headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
   if (!isAllowedPushEndpoint(endpoint)) {
     return new Response(JSON.stringify({ error: "Unsupported push endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS10 }
+      headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -1942,7 +2254,7 @@ async function onRequestPost6({ request, env }) {
   }
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS10 }
+    headers: { "Content-Type": "application/json", ...CORS11 }
   });
 }
 __name(onRequestPost6, "onRequestPost");
@@ -1955,21 +2267,21 @@ async function onRequestDelete2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS10 }
+      headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
   const { endpoint } = body;
   if (!endpoint) {
     return new Response(JSON.stringify({ error: "Missing endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS10 }
+      headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS10 }
+    headers: { "Content-Type": "application/json", ...CORS11 }
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
@@ -1980,16 +2292,16 @@ async function hashEndpoint(endpoint) {
 __name(hashEndpoint, "hashEndpoint");
 
 // api/suggest-tasks.js
-var CORS11 = {
+var CORS12 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var VALID_CATEGORIES = ["Health", "Creativity", "Discipline", "Study", "Work", "Social", "Wellness", "Fitness"];
-async function onRequestOptions11() {
-  return new Response(null, { headers: CORS11 });
+async function onRequestOptions12() {
+  return new Response(null, { headers: CORS12 });
 }
-__name(onRequestOptions11, "onRequestOptions");
+__name(onRequestOptions12, "onRequestOptions");
 async function onRequestPost7({ request, env }) {
   try {
     const body = await request.json();
@@ -2004,12 +2316,12 @@ async function onRequestPost7({ request, env }) {
     const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === "pt-BR";
     if (!goalText && categories.length === 0) {
-      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS11 });
+      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS12 });
     }
     const gate = await guardAiRequest(request, env, "suggest", body.id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS11 });
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS12 });
     const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS11 });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS12 });
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
 Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
 that would help achieve that goal. Each task name must be short (max 40 chars), action-oriented, and
@@ -2035,7 +2347,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     });
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS11 });
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS12 });
     }
     const data = await groqRes.json();
     const raw = data.choices?.[0]?.message?.content ?? "[]";
@@ -2044,16 +2356,16 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       const match2 = raw.match(/\[[\s\S]*\]/);
       parsed = JSON.parse(match2 ? match2[0] : raw);
     } catch {
-      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS11 });
+      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS12 });
     }
     const suggestions = (Array.isArray(parsed) ? parsed : []).map((item) => ({
       name: (item?.name || "").toString().trim().slice(0, 60),
       category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
     })).filter((item) => item.name.length > 0).slice(0, 6);
-    return Response.json({ suggestions }, { headers: CORS11 });
+    return Response.json({ suggestions }, { headers: CORS12 });
   } catch (err) {
     console.error("suggest-tasks error:", err);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS11 });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS12 });
   }
 }
 __name(onRequestPost7, "onRequestPost");
@@ -2061,7 +2373,7 @@ __name(onRequestPost7, "onRequestPost");
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.digipartner.digiapp";
 var DEFAULT_SHA256 = "F5:10:2B:09:7B:B3:5C:81:FA:DC:FE:AB:A9:32:E6:8D:7F:F8:50:FB:1C:71:F0:7B:29:95:CC:86:A4:AA:7B:84";
-async function onRequest4({ env }) {
+async function onRequest5({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
   const fingerprint = env?.ASSETLINKS_SHA256 || DEFAULT_SHA256;
   return new Response(JSON.stringify([{
@@ -2078,16 +2390,23 @@ async function onRequest4({ env }) {
     }
   });
 }
-__name(onRequest4, "onRequest");
+__name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-Kljkqw/functionsRoutes-0.2823682002608472.mjs
+// ../.wrangler/tmp/pages-HkhSMv/functionsRoutes-0.8923138163841383.mjs
 var routes = [
+  {
+    routePath: "/api/account",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions]
+  },
   {
     routePath: "/api/billing",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions]
+    modules: [onRequestOptions2]
   },
   {
     routePath: "/api/billing",
@@ -2101,7 +2420,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions2]
+    modules: [onRequestOptions3]
   },
   {
     routePath: "/api/chat",
@@ -2115,7 +2434,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions3]
+    modules: [onRequestOptions4]
   },
   {
     routePath: "/api/config",
@@ -2129,7 +2448,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions4]
+    modules: [onRequestOptions5]
   },
   {
     routePath: "/api/entitlements",
@@ -2143,7 +2462,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions5]
+    modules: [onRequestOptions6]
   },
   {
     routePath: "/api/entitlements",
@@ -2164,7 +2483,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions6]
+    modules: [onRequestOptions7]
   },
   {
     routePath: "/api/fcm-subscribe",
@@ -2178,7 +2497,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions7]
+    modules: [onRequestOptions8]
   },
   {
     routePath: "/api/generate-sprite",
@@ -2192,14 +2511,14 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions8]
+    modules: [onRequestOptions9]
   },
   {
     routePath: "/api/save",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions9]
+    modules: [onRequestOptions10]
   },
   {
     routePath: "/api/subscribe",
@@ -2213,7 +2532,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions10]
+    modules: [onRequestOptions11]
   },
   {
     routePath: "/api/subscribe",
@@ -2227,7 +2546,7 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions11]
+    modules: [onRequestOptions12]
   },
   {
     routePath: "/api/suggest-tasks",
@@ -2241,28 +2560,35 @@ var routes = [
     mountPath: "/.well-known",
     method: "",
     middlewares: [],
-    modules: [onRequest4]
+    modules: [onRequest5]
   },
   {
-    routePath: "/api/community",
+    routePath: "/api/account",
     mountPath: "/api",
     method: "",
     middlewares: [],
     modules: [onRequest]
   },
   {
-    routePath: "/api/metrics",
+    routePath: "/api/community",
     mountPath: "/api",
     method: "",
     middlewares: [],
     modules: [onRequest2]
   },
   {
-    routePath: "/api/save",
+    routePath: "/api/metrics",
     mountPath: "/api",
     method: "",
     middlewares: [],
     modules: [onRequest3]
+  },
+  {
+    routePath: "/api/save",
+    mountPath: "/api",
+    method: "",
+    middlewares: [],
+    modules: [onRequest4]
   }
 ];
 
