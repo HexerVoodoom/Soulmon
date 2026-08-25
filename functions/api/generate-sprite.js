@@ -178,7 +178,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
 
 export async function onRequestPost({ request, env }) {
   try {
-    const { prompt, promptFallback, referenceImageUrls, id } = await request.json();
+    const { prompt, promptFallback, referenceImageUrls, id, formId } = await request.json();
     if (!prompt || typeof prompt !== 'string') {
       return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
     }
@@ -198,7 +198,11 @@ export async function onRequestPost({ request, env }) {
 
     // A rota mais cara do app, e a única em que o PROMPT vem do cliente: sem
     // portão, era geração de imagem ilimitada e livre na nossa conta.
-    const gate = await guardAiRequest(request, env, 'sprite', id);
+    // `formId` liga o teto POR FORMA (`perFormLifetime`, _aiGuard.js). É ele o
+    // disjuntor de loop de retentativa numa forma só — sem estrangular quem
+    // percorre a árvore inteira até o `ultra`. Opcional: ausente, os outros três
+    // tetos seguem inteiros e a conta continua presa ao vitalício de 26.
+    const gate = await guardAiRequest(request, env, 'sprite', id, 1, formId);
     if (!gate.ok) {
       return Response.json(
         { error: gate.reason, ...(gate.message ? { message: gate.message } : {}) },
@@ -224,7 +228,7 @@ export async function onRequestPost({ request, env }) {
       // Ela é uma SEGUNDA COBRANÇA do provedor — uma recusa custa duas imagens.
       // Por isso passa pelo portão de volume de novo, debitando a unidade extra
       // ANTES de gerar: teto que não conta a refeitura é teto que mente.
-      const extra = await guardAiRequest(request, env, 'sprite', id);
+      const extra = await guardAiRequest(request, env, 'sprite', id, 1, formId);
       if (!extra.ok) {
         return Response.json(
           { error: extra.reason, ...(extra.message ? { message: extra.message } : {}) },

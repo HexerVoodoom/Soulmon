@@ -66,20 +66,20 @@ describe('generate-sprite: o teto para ANTES de gastar', () => {
     expect(chamadasDeIA).toHaveLength(6); // nenhuma chamada nova
   });
 
-  it('a 21ª da VIDA é 402 e não chama IA — mesmo em dias diferentes', async () => {
+  it('a 27ª da VIDA é 402 e não chama IA — mesmo em dias diferentes', async () => {
     const env = fakeEnv();
-    for (let d = 0; d < 4; d++) {
+    for (let d = 0; d < 5; d++) {
       vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
       for (let i = 0; i < 6; i++) await onRequestPost({ request: req(), env });
     }
     expect(chamadasDeIA).toHaveLength(AI_LIMITS.sprite.perAccountLifetime);
-    expect(lifetimeDe(env)).toBe(20);
+    expect(lifetimeDe(env)).toBe(26);
 
     vi.setSystemTime(new Date('2026-12-25T12:00:00Z'));
     const res = await onRequestPost({ request: req(), env });
     expect(res.status).toBe(402);
     expect((await res.json()).error).toBe('sprite-lifetime-cap');
-    expect(chamadasDeIA).toHaveLength(20);
+    expect(chamadasDeIA).toHaveLength(26);
   });
 
   it('a recusa de conteúdo custa 2 no teto vitalício — porque são 2 cobranças', async () => {
@@ -99,8 +99,8 @@ describe('generate-sprite: o teto para ANTES de gastar', () => {
 
   it('a refeitura por recusa é RECUSADA se estourar o teto — não fura pela porta dos fundos', async () => {
     const env = fakeEnv();
-    // Deixa a conta com 19 de 20 gastos: sobra exatamente 1, e a recusa pede 2.
-    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiLifetime: { sprite: 19 } }));
+    // Deixa a conta com 25 de 26 gastos: sobra exatamente 1, e a recusa pede 2.
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiLifetime: { sprite: 25 } }));
     fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
     const res = await onRequestPost({
       request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE }),
@@ -109,7 +109,7 @@ describe('generate-sprite: o teto para ANTES de gastar', () => {
     expect(res.status).toBe(402);
     expect((await res.json()).error).toBe('sprite-lifetime-cap');
     expect(chamadasDeIA).toHaveLength(1); // a 1ª aconteceu; a refeitura NÃO
-    expect(lifetimeDe(env)).toBe(20);
+    expect(lifetimeDe(env)).toBe(26);
   });
 
   it('cota mensal esgotada devolve 503 sem chamar IA, e com texto PT-BR + EN', async () => {
@@ -130,6 +130,60 @@ describe('generate-sprite: o teto para ANTES de gastar', () => {
     const res = await onRequestPost({ request: req(), env });
     expect(res.status).toBe(503);
     expect((await res.json()).error).toBe('ai-quota-unavailable');
+    expect(chamadasDeIA).toEqual([]);
+  });
+});
+
+describe('generate-sprite: o teto POR FORMA para antes de gastar', () => {
+  const reqForma = formId => req({ prompt: 'um bicho fofo', id: SAVE, formId });
+
+  it('a 4ª tentativa da MESMA forma é 409 sem chamar IA — e outra forma ainda gera', async () => {
+    const env = fakeEnv();
+    for (let i = 0; i < 3; i++) {
+      expect((await onRequestPost({ request: reqForma('mega-virus'), env })).status).toBe(200);
+    }
+    expect(chamadasDeIA).toHaveLength(3);
+
+    const res = await onRequestPost({ request: reqForma('mega-virus'), env });
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe('sprite-form-cap');
+    expect(body.message['pt-BR']).toBeTruthy();
+    expect(body.message.en).toBeTruthy();
+    expect(chamadasDeIA).toHaveLength(3); // NENHUM fetch novo
+
+    // O jogador no clímax não perde a árvore por causa de um galho.
+    expect((await onRequestPost({ request: reqForma('ultra'), env })).status).toBe(200);
+    expect(chamadasDeIA).toHaveLength(4);
+  });
+
+  it('recusa de conteúdo custa 2 na FORMA também — a refeitura é uma segunda imagem paga', async () => {
+    const env = fakeEnv();
+    fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
+    const res = await onRequestPost({
+      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE, formId: 'rookie' }),
+      env,
+    });
+    expect(res.status).toBe(200);
+    expect(chamadasDeIA).toHaveLength(2);
+    expect(JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiForms).toEqual({ rookie: 2 });
+
+    // Sobra 1 de 3: a próxima recusa NÃO pode refazer pela porta dos fundos.
+    fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
+    const res2 = await onRequestPost({
+      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE, formId: 'rookie' }),
+      env,
+    });
+    expect(res2.status).toBe(409);
+    expect(chamadasDeIA).toHaveLength(3); // a 1ª aconteceu; a refeitura NÃO
+    expect(JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiForms.rookie).toBe(3);
+  });
+
+  it('`formId` inventado é 400 e ZERO chamada de IA', async () => {
+    const env = fakeEnv();
+    const res = await onRequestPost({ request: reqForma('mega-fogo'), env });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toBe('invalid-form-id');
     expect(chamadasDeIA).toEqual([]);
   });
 });

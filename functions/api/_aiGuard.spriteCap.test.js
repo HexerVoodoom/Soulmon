@@ -39,8 +39,15 @@ beforeEach(() => {
 afterEach(() => { vi.useRealTimers(); });
 
 describe('sprite: os três tetos', () => {
-  it('os números são os aprovados — 6/dia, 20 vitalício, 800/mês', () => {
-    expect(AI_LIMITS.sprite).toEqual({ perAccount: 6, perAccountLifetime: 20, globalMonth: 800 });
+  it('os números são os aprovados — 6/dia, 26 vitalício, 3 por forma, 800/mês', () => {
+    // 26 e não 20: o 20 foi calibrado contra "14 gerações por save", a árvore
+    // errada. `ultra` exige as 3 megas, o caminho completo passa pelas 11 formas
+    // que existem, e cada uma pode custar 2 (recusa de conteúdo refaz o pedido).
+    // 11 × 2 + 4 de folga = 26.
+    expect(AI_LIMITS.sprite).toEqual({
+      perAccount: 6, perAccountLifetime: 26, perFormLifetime: 3, globalMonth: 800,
+    });
+    expect(AI_LIMITS.sprite.perAccountLifetime).toBe(2 * 11 + 4);
     // O teto diário global sumiu de propósito: era ele que valia R$ 1.212/mês.
     expect(AI_LIMITS.sprite.global).toBeUndefined();
   });
@@ -51,11 +58,11 @@ describe('sprite: os três tetos', () => {
     expect(await gerar(env)).toMatchObject({ ok: false, status: 429, reason: 'ai-daily-limit' });
   });
 
-  it('teto VITALÍCIO atravessa a virada do dia — 20 no total, e aí 402 para sempre', async () => {
+  it('teto VITALÍCIO atravessa a virada do dia — 26 no total, e aí 402 para sempre', async () => {
     const env = fakeEnv();
     let feitas = 0;
-    // 6 por dia durante 4 dias = 24 tentativas, mas só 20 podem passar.
-    for (let d = 0; d < 4; d++) {
+    // 6 por dia durante 5 dias = 30 tentativas, mas só 26 podem passar.
+    for (let d = 0; d < 5; d++) {
       vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
       for (let i = 0; i < 6; i++) {
         const r = await gerar(env);
@@ -63,7 +70,7 @@ describe('sprite: os três tetos', () => {
         else expect(r).toMatchObject({ status: 402, reason: 'sprite-lifetime-cap' });
       }
     }
-    expect(feitas).toBe(20);
+    expect(feitas).toBe(26);
 
     // Um dia novo NÃO devolve nada: é vitalício, não diário.
     vi.setSystemTime(new Date('2026-09-01T12:00:00Z'));
@@ -88,7 +95,7 @@ describe('sprite: os três tetos', () => {
 
   it('a cota vitalícia de uma conta não vaza para outra', async () => {
     const env = fakeEnv();
-    for (let d = 0; d < 4; d++) {
+    for (let d = 0; d < 5; d++) {
       vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
       for (let i = 0; i < 6; i++) await gerar(env);
     }
@@ -152,7 +159,7 @@ describe('sprite: os três tetos', () => {
 
   it('recusa no vitalício NÃO gasta a cota mensal de todo mundo', async () => {
     const env = fakeEnv();
-    for (let d = 0; d < 4; d++) {
+    for (let d = 0; d < 5; d++) {
       vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
       for (let i = 0; i < 6; i++) await gerar(env);
     }
@@ -171,7 +178,7 @@ describe('sprite: os três tetos', () => {
   // --- A recusa chega a quem PAGOU. ---
 
   it('toda recusa de cota vem com texto PT-BR e EN, e nenhum deles cobra o jogador', async () => {
-    const razoes = ['sprite-lifetime-cap', 'ai-daily-limit', 'ai-monthly-budget-reached', 'ai-quota-unavailable'];
+    const razoes = ['sprite-lifetime-cap', 'sprite-form-cap', 'ai-daily-limit', 'ai-monthly-budget-reached', 'ai-quota-unavailable'];
     for (const razao of razoes) {
       const m = AI_REFUSAL_MESSAGES[razao];
       expect(m['pt-BR'].length).toBeGreaterThan(20);
@@ -202,6 +209,109 @@ describe('chat e suggest: o mesmo buraco de agregado?', () => {
   it('chat e suggest também são fail-closed com contador ilegível', async () => {
     const env = fakeEnv({ lixo: true });
     expect(await guardAiRequest(req(), env, 'chat', SAVE))
+      .toMatchObject({ ok: false, status: 503, reason: 'ai-quota-unavailable' });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Teto POR FORMA. O teto só por CONTA falha na ÚLTIMA forma — e quem o estoura é
+// quem percorreu a árvore inteira, no `mega` do terceiro galho, a uma evolução
+// do `ultra`. Estes casos travam a diferença: falhar LOCALMENTE, na forma que
+// deu problema, sem levar as outras dez junto.
+// ---------------------------------------------------------------------------
+describe('sprite: teto por forma', () => {
+  const gerarForma = (env, formId, save = SAVE) =>
+    guardAiRequest(req(), env, 'sprite', save, 1, formId);
+  const entDe = env => JSON.parse(env._store.get(ENT_PREFIX + SAVE));
+
+  it('a forma A esgota em 3 e a forma B continua gerando — o galho que falhou não leva a árvore', async () => {
+    const env = fakeEnv();
+    for (let i = 0; i < 3; i++) expect((await gerarForma(env, 'mega-virus')).ok).toBe(true);
+
+    const bloqueada = await gerarForma(env, 'mega-virus');
+    expect(bloqueada).toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
+
+    // A 4ª de `mega-virus` recusa, mas `mega-data` e `ultra` seguem inteiras.
+    expect((await gerarForma(env, 'mega-data')).ok).toBe(true);
+    expect((await gerarForma(env, 'ultra')).ok).toBe(true);
+    expect(entDe(env).aiForms).toEqual({ 'mega-virus': 3, 'mega-data': 1, ultra: 1 });
+  });
+
+  it('o teto por forma PERSISTE entre dias — teto que o reset devolve é teto nenhum', async () => {
+    const env = fakeEnv();
+    for (let i = 0; i < 3; i++) await gerarForma(env, 'champion-vaccine');
+
+    // Dia novo (a cota diária volta) e MÊS novo (a global volta). A forma, não.
+    vi.setSystemTime(new Date('2026-09-14T09:00:00Z'));
+    expect(await gerarForma(env, 'champion-vaccine'))
+      .toMatchObject({ ok: false, status: 409, reason: 'sprite-form-cap' });
+    // E o contador continua no `ent:`, que não tem TTL.
+    for (const k of [...env._store.keys()]) if (k.startsWith('ai:')) env._store.delete(k);
+    expect(entDe(env).aiForms['champion-vaccine']).toBe(3);
+    expect(await gerarForma(env, 'champion-vaccine')).toMatchObject({ status: 409 });
+  });
+
+  it('o teto por forma de uma conta não vaza para outra', async () => {
+    const env = fakeEnv();
+    for (let i = 0; i < 3; i++) await gerarForma(env, 'rookie');
+    expect((await gerarForma(env, 'rookie')).status).toBe(409);
+    expect((await gerarForma(env, 'rookie', 'outraconta99xx')).ok).toBe(true);
+  });
+
+  it('recusa por forma NÃO consome cota diária, mensal nem vitalícia', async () => {
+    const env = fakeEnv();
+    for (let i = 0; i < 3; i++) await gerarForma(env, 'ultimate-data');
+    const diaria = env._store.get(`ai:sprite:${SAVE}:2026-08-10`);
+    const mensal = env._store.get('ai:sprite:@all:2026-08');
+    const vital = entDe(env).aiLifetime.sprite;
+
+    for (let i = 0; i < 10; i++) expect((await gerarForma(env, 'ultimate-data')).status).toBe(409);
+
+    expect(env._store.get(`ai:sprite:${SAVE}:2026-08-10`)).toBe(diaria);
+    expect(env._store.get('ai:sprite:@all:2026-08')).toBe(mensal);
+    expect(entDe(env).aiLifetime.sprite).toBe(vital);
+  });
+
+  it('`formId` fora das 11 formas da árvore recusa com 400 e não escreve nada', async () => {
+    const env = fakeEnv();
+    for (const lixo of ['mega-fogo', 'rookie; drop', '../ent:outro', 'x'.repeat(300), 42]) {
+      expect(await gerarForma(env, lixo)).toMatchObject({ ok: false, status: 400, reason: 'invalid-form-id' });
+    }
+    expect(env._store.size).toBe(0);
+  });
+
+  it('sem `formId` o teto por forma não aplica — mas o vitalício de 26 continua', async () => {
+    const env = fakeEnv();
+    let feitas = 0;
+    for (let d = 0; d < 5; d++) {
+      vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
+      for (let i = 0; i < 6; i++) if ((await gerar(env)).ok) feitas++;
+    }
+    expect(feitas).toBe(26);
+    expect(entDe(env).aiForms).toEqual({});
+  });
+
+  it('a recusa por forma diz coisa DIFERENTE da recusa vitalícia, e nenhuma soa como punição', async () => {
+    const forma = AI_REFUSAL_MESSAGES['sprite-form-cap'];
+    const vida = AI_REFUSAL_MESSAGES['sprite-lifetime-cap'];
+    expect(forma['pt-BR']).not.toBe(vida['pt-BR']);
+    expect(forma.en).not.toBe(vida.en);
+    // "essa forma falhou demais" ≠ "você chegou ao fim": a de forma precisa
+    // dizer que o RESTO segue aberto.
+    expect(forma['pt-BR']).toMatch(/outras formas/i);
+    expect(forma.en).toMatch(/other form/i);
+
+    const env = fakeEnv();
+    for (let i = 0; i < 3; i++) await gerarForma(env, 'mega-vaccine');
+    const r = await gerarForma(env, 'mega-vaccine');
+    expect(r.message['pt-BR']).toBe(forma['pt-BR']);
+    expect(r.message.en).toBe(forma.en);
+  });
+
+  it('contador por forma ILEGÍVEL recusa (fail-closed), não vale zero', async () => {
+    const env = fakeEnv();
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { rookie: 'muitas' } }));
+    expect(await gerarForma(env, 'rookie'))
       .toMatchObject({ ok: false, status: 503, reason: 'ai-quota-unavailable' });
   });
 });

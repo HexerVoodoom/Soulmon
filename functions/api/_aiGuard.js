@@ -18,6 +18,14 @@
 //     TTL**: teto vitalício que expira não é vitalício. É o único número que
 //     casa custo (recorrente enquanto a conta viver) com receita (única, de
 //     R$ 29,90). Ver `squad-alpha-runs/soulmon-02/custo-geracao-sprite.md` §3.
+//  2b. **Teto por FORMA, vitalício** (`ent:<saveId>.aiForms.<formId>`, também
+//     sem TTL). Um teto só por CONTA falha na ÚLTIMA forma — e quem o estoura é
+//     o jogador que percorreu a árvore inteira, no `mega` do terceiro galho, a
+//     uma evolução do `ultra`. Um teto por forma falha LOCALMENTE: a forma que
+//     deu problema cai na arte de reserva e as outras dez continuam. É este o
+//     disjuntor que importa; o vitalício por conta vira o de segundo nível, e o
+//     que ele passa a pegar é bug de cliente, não jogador dedicado.
+//     Ver `spec-geracao-incremental.md` §3.4.
 //  3. **Teto global**, por DIA para texto e por **MÊS** para imagem
 //     (`ai:<bucket>:@all:<dia>` / `ai:<bucket>:@all:<AAAA-MM>`). Enquanto o
 //     login não for exigido, o saveId é só um hash de e-mail: um atacante
@@ -52,9 +60,19 @@ export const AI_LIMITS = {
   chat: { perAccount: 120, global: 20000 },
   suggest: { perAccount: 30, global: 3000 },
   // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
-  // 20 vitalício = 14 do pior caso da spec + 6 de folga ⇒ R$ 2,02 por conta,
-  // para sempre, 6,8 % de R$ 29,90.
-  sprite: { perAccount: 6, perAccountLifetime: 20, globalMonth: 800 },
+  //
+  // 26 vitalício: o 20 anterior foi calibrado contra "14 gerações por save", que
+  // é a árvore ERRADA. `ultra` exige as TRÊS megas (`dailyReset.ts:86-88`), então
+  // o caminho completo percorre as 11 formas distintas que existem
+  // (1 rookie + 3 champion + 3 ultimate + 3 mega + 1 ultra, `progression.ts:51-55`),
+  // com quedas e re-subidas no meio. 11 × 2 (tentativa + possível refeitura por
+  // recusa de conteúdo, que custa DUAS imagens) + 4 de folga = 26.
+  // ⇒ 26 × R$ 0,101 = R$ 2,63 por conta, para sempre — 8,8 % de R$ 29,90.
+  // O teto de 20 não era caro demais: era CURTO demais, e encurtava no clímax.
+  //
+  // 3 por forma = 1 tentativa + 1 refeitura por recusa + 1 retentativa. A forma
+  // que falhou três vezes fica na arte de reserva; as outras seguem inteiras.
+  sprite: { perAccount: 6, perAccountLifetime: 26, perFormLifetime: 3, globalMonth: 800 },
 };
 
 const day = (now = new Date()) => now.toISOString().slice(0, 10);
@@ -76,6 +94,10 @@ export const AI_REFUSAL_MESSAGES = {
   'sprite-lifetime-cap': {
     'pt-BR': 'Seu Soulmon já recebeu toda a arte que esta jornada guardava para ele. As formas que vierem aparecem com a arte de reserva — e ela vale igual.',
     en: 'Your Soulmon has already received all the art this journey held for it. Any forms from here on show up with their reserve art — and it counts just the same.',
+  },
+  'sprite-form-cap': {
+    'pt-BR': 'Esta forma resistiu ao lápis do Oráculo — ele tentou tudo que sabia e ela vai ficar com a arte de reserva. As outras formas do seu caminho continuam abertas, do jeito que sempre estiveram.',
+    en: "This form resisted the Oracle's pencil — it tried everything it knows, and this one will keep its reserve art. Every other form on your path is still open, just as it always was.",
   },
   'ai-daily-limit': {
     'pt-BR': 'Por hoje já desenhamos bastante para o seu Soulmon. Amanhã a gente continua de onde parou.',
@@ -122,6 +144,23 @@ function lifetimeUsed(ent, bucket) {
 }
 
 /**
+ * As ONZE formas da árvore, e só elas (`src/types/progression.ts:51-55`).
+ *
+ * O `formId` vem do CLIENTE, e o contador por forma mora dentro do registro de
+ * entitlement — aceitar texto livre aqui seria deixar o cliente inflar um
+ * registro que só o servidor escreve, uma chave por requisição. Conjunto
+ * fechado: o pior caso do dicionário são 11 entradas, para sempre.
+ */
+export const VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:virus|data|vaccine))$/;
+
+/** Quantas unidades esta FORMA já gastou vitaliciamente nesta conta. */
+function formUsed(ent, formId) {
+  const n = Number(ent?.aiForms?.[formId] ?? 0);
+  if (!Number.isFinite(n) || n < 0) throw new Error('contador por forma ilegível');
+  return n;
+}
+
+/**
  * Libera (ou não) uma chamada de IA — e, quando libera, **debita**.
  *
  * A ordem é: lê os três contadores → confere os três → só então incrementa.
@@ -137,9 +176,16 @@ function lifetimeUsed(ent, bucket) {
  * @param {string|undefined} saveId  vem do corpo da requisição
  * @param {number} units  quantas gerações esta chamada vai custar (a recusa de
  *   conteúdo refaz o pedido com `promptFallback` e por isso custa 2).
+ * @param {string|null|undefined} formId  a forma da árvore que está sendo
+ *   desenhada. Quando vem, o teto POR FORMA (`perFormLifetime`) vale — e é ele
+ *   o disjuntor de loop de retentativa numa forma só. Quando NÃO vem, os outros
+ *   três tetos continuam valendo inteiros; a conta segue limitada a
+ *   `perAccountLifetime`, então omitir `formId` não destrava geração nenhuma a
+ *   mais — só perde a granularidade. ⚠️ `src/utils/spriteGen.ts` ainda não
+ *   envia; enquanto não enviar, o teto por forma não tem o que separar.
  * @returns {Promise<{ ok: true } | { ok: false, status: number, reason: string, message?: object }>}
  */
-export async function guardAiRequest(request, env, bucket, saveId, units = 1) {
+export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
   if (!env.DIGIAPP_SAVES) return refuse(500, 'storage-not-bound');
 
   const limits = AI_LIMITS[bucket];
@@ -166,15 +212,26 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1) {
   const globalTtl = usesMonth ? MONTH_TTL_SECONDS : TTL_SECONDS;
   const accountKey = `ai:${bucket}:${saveId}:${today}`;
   const hasLifetime = typeof limits.perAccountLifetime === 'number';
+  // Forma só entra na conta se for uma forma que existe. Texto livre recusa —
+  // numa rota que queima dinheiro, entrada que não dá para validar não passa.
+  if (formId !== null && formId !== undefined) {
+    if (typeof formId !== 'string' || !VALID_FORM_ID.test(formId)) {
+      return refuse(400, 'invalid-form-id');
+    }
+  }
+  const hasFormCap =
+    typeof limits.perFormLifetime === 'number' && typeof formId === 'string' && formId.length > 0;
 
   let ent = null;
   let usedLifetime = 0;
+  let usedForm = 0;
   let usedGlobal = 0;
   let usedAccount = 0;
   try {
-    if (hasLifetime) {
+    if (hasLifetime || hasFormCap) {
       ent = await readEntitlement(env, saveId);
-      usedLifetime = lifetimeUsed(ent, bucket);
+      if (hasLifetime) usedLifetime = lifetimeUsed(ent, bucket);
+      if (hasFormCap) usedForm = formUsed(ent, formId);
     }
     usedGlobal = await readCounter(env, globalKey);
     usedAccount = await readCounter(env, accountKey);
@@ -187,6 +244,17 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1) {
   if (hasLifetime && usedLifetime + units > limits.perAccountLifetime) {
     return refuse(402, 'sprite-lifetime-cap');
   }
+  // Depois do vitalício (que é o irreversível) e ANTES do diário: a forma que
+  // já esgotou não pode queimar a cota do dia das formas que ainda podem sair.
+  //
+  // 409 e não 402 de propósito. O contrato do 402 (custo-geracao-sprite.md §5) é
+  // "para para sempre NESTA CONTA". Aqui o que acabou é UMA forma; a conta
+  // continua inteira. Reusar o 402 ensinaria o cliente a desligar a árvore toda
+  // por causa de um galho — que é exatamente a punição no clímax que este teto
+  // existe para evitar.
+  if (hasFormCap && usedForm + units > limits.perFormLifetime) {
+    return refuse(409, 'sprite-form-cap');
+  }
   if (usedAccount + units > limits.perAccount) {
     return refuse(429, 'ai-daily-limit');
   }
@@ -195,8 +263,12 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1) {
   }
 
   try {
-    if (hasLifetime) {
-      ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: usedLifetime + units };
+    if (hasLifetime || hasFormCap) {
+      // Os dois contadores vitalícios vivem no MESMO registro e vão numa
+      // escrita só: dois `put` aqui abririam uma janela em que a conta debitou
+      // e a forma não (ou o contrário).
+      if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: usedLifetime + units };
+      if (hasFormCap) ent.aiForms = { ...(ent.aiForms || {}), [formId]: usedForm + units };
       await writeEntitlement(env, saveId, ent);
     }
     await env.DIGIAPP_SAVES.put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });

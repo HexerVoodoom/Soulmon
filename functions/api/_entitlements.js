@@ -88,6 +88,14 @@ function emptyEntitlement() {
      * teto vitalício — é um teto diário com nome comprido. Ver `_aiGuard.js`.
      */
     aiLifetime: {},
+    /**
+     * Consumo VITALÍCIO por FORMA da árvore (`{ 'mega-virus': 3 }`). Mesma casa
+     * e mesmo motivo do `aiLifetime`: teto por forma que se perde no reset do
+     * dia é teto nenhum. Dicionário fechado nas 11 formas que existem — o
+     * `_aiGuard` valida o id antes de escrever (`VALID_FORM_ID`), senão o
+     * cliente inflaria este registro com uma chave por requisição.
+     */
+    aiForms: {},
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now(),
