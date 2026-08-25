@@ -16,6 +16,7 @@
 //   → { image: <url|dataURL>, usedFallbackPrompt?: true, refusal?: <motivo> }
 
 import { guardAiRequest } from './_aiGuard.js';
+import { requirePaidTier } from './_entitlements.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -177,6 +178,19 @@ export async function onRequestPost({ request, env }) {
     const { prompt, promptFallback, referenceImageUrls, id } = await request.json();
     if (!prompt || typeof prompt !== 'string') {
       return Response.json({ error: 'prompt required' }, { status: 400, headers: CORS });
+    }
+
+    // DOIS portões, nesta ordem, e ambos ANTES de qualquer chamada de IA.
+    //
+    // 1) DIREITO (`requirePaidTier`): quem NÃO paga não gera. Vem primeiro de
+    //    propósito — recusar antes do `_aiGuard` faz com que uma conta demo em
+    //    loop não consuma nem o teto global do dia (que é o disjuntor da conta
+    //    de quem paga). É fail-closed: tier indeterminável recusa.
+    // 2) VOLUME (`guardAiRequest`): cota por conta + teto global. Mede quantas,
+    //    não quem — por isso não substitui o de cima.
+    const tier = await requirePaidTier(env, id);
+    if (!tier.ok) {
+      return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS });
     }
 
     // A rota mais cara do app, e a única em que o PROMPT vem do cliente: sem

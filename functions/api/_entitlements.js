@@ -18,6 +18,48 @@ export const ENT_PREFIX = 'ent:';
 export const ORDER_PREFIX = 'ord:';
 export const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 
+/**
+ * Portão de TIER para as rotas que gastam COGS de IA (hoje só a geração de
+ * sprite, a mais cara do app).
+ *
+ * `docs/PLANO-PRODUTO.md` sempre afirmou que o custo de IA está "travado atrás
+ * de `accountTier:'paid'`, então só quem paga gera" — mas o servidor nunca
+ * implementou isso: `generate-sprite` passava só pelo `_aiGuard`, que mede
+ * VOLUME, não DIREITO. Qualquer um gerava sprite pago, e o denominador da tese
+ * ("custo de IA por usuário pago ≤ R$ 8") media uma população que não era a
+ * pagante.
+ *
+ * Aqui não se inventa mecanismo novo: o tier é lido de `ent:<saveId>`, o mesmo
+ * registro que só `applyVerifiedPurchase` escreve. O cliente segue sem voto.
+ *
+ * **FAIL-CLOSED, e isso é a regra.** Tier indeterminável (KV não ligado, leitura
+ * que explode, saveId inválido) RECUSA. O fail-open do `_auth.js`
+ * (`if (!projectId) return { ok: true }`) é exatamente o defeito que a auditoria
+ * encontrou: uma variável desligada virou porta aberta. Numa rota que queima
+ * dinheiro real, a dúvida custa a fatura — então a dúvida nega.
+ *
+ * @returns {Promise<{ ok: true, tier: 'paid' } | { ok: false, status: number, reason: string }>}
+ */
+export async function requirePaidTier(env, saveId) {
+  if (!saveId || !VALID_ID.test(saveId)) {
+    return { ok: false, status: 400, reason: 'missing-save-id' };
+  }
+  if (!env?.DIGIAPP_SAVES) {
+    return { ok: false, status: 503, reason: 'tier-unavailable' };
+  }
+  let ent;
+  try {
+    ent = await readEntitlement(env, saveId);
+  } catch {
+    // Não deu para saber o tier → não gasta. Ver o parágrafo FAIL-CLOSED acima.
+    return { ok: false, status: 503, reason: 'tier-unavailable' };
+  }
+  if (ent?.tier !== 'paid') {
+    return { ok: false, status: 402, reason: 'paid-tier-required' };
+  }
+  return { ok: true, tier: 'paid' };
+}
+
 /** Recompensa por anúncio assistido e teto diário — espelham utils/monetization.ts. */
 export const AD_REWARD_CREDITS = 5;
 export const AD_DAILY_CAP = 3;
