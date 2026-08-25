@@ -1986,7 +1986,7 @@ async function onRequest4({ env }) {
 }
 __name(onRequest4, "onRequest");
 
-// ../.wrangler/tmp/pages-ygwqCe/functionsRoutes-0.7051646222895281.mjs
+// ../.wrangler/tmp/pages-AQA1E0/functionsRoutes-0.7502319612145569.mjs
 var routes = [
   {
     routePath: "/api/billing",
