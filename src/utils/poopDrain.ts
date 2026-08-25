@@ -1,0 +1,131 @@
+import { heartLossCap } from './passives';
+import {
+  MAX_HEARTS_LOST_PER_DAY,
+  ABSENCE_FORGIVENESS_DAYS,
+  daysSinceLastReset,
+} from './dailyReset';
+
+// Dreno de cocô como função PURA — o dono único da regra.
+//
+// Por que existe: a subtração vivia dentro de um `setGameState` de `useEffect`
+// no `App.tsx` (`healthPoints: Math.max(0, prev.healthPoints - periods)`), fora
+// de `computeDailyReset()`. Por morar fora, escapava das TRÊS travas que a
+// virada do dia respeita — `MAX_HEARTS_LOST_PER_DAY`, o traço **Teimoso**
+// (`heartLossCap`) e o perdão por ausência (`ABSENCE_FORGIVENESS_DAYS`). Era a
+// única perda de HP sem teto do jogo: 24h de cocô na tela custavam 4 corações
+// (zerando o pet) num dia em que a regra escrita permitia 1 — e quem voltava de
+// 2 dias fora era cobrado retroativamente pelas horas em que não estava lá,
+// exatamente o instante que o perdão foi criado para proteger.
+// Ver `squad-alpha-runs/soulmon-01/discovery/verificacao-V1.md` (decisão D-09).
+//
+// Aqui, como em `careRules.ts`: recebe estado e devolve estado, sem React, sem
+// `Date.now()` interno, sem localStorage. Quem chama cuida de efeito e
+// persistência. Este arquivo NÃO inventa número nenhum — as constantes
+// continuam sendo de `dailyReset.ts` e o traço de `passives.ts`.
+
+/** Um tick de dreno = 6h de cocô não limpo. */
+export const POOP_DRAIN_PERIOD_MS = 6 * 3600000;
+
+/** Corações cobrados por período de 6h, ANTES do teto diário. */
+export const POOP_DRAIN_HEARTS_PER_PERIOD = 1;
+
+/** Dormindo o relógio é só empurrado; persistir a cada ≥5min evita que o
+ *  bump vire spam de cloud save a noite inteira (ver CLAUDE.md, arquitetura). */
+export const SLEEP_CLOCK_BUMP_MS = 5 * 60000;
+
+/** Quanto já foi cobrado pelo dreno no dia civil — é o que faz o teto ser
+ *  DIÁRIO e não por tick: sem isso, bastavam quatro ticks de 6h para o dia
+ *  custar 4 corações, cada um "dentro" do teto. */
+export interface PoopDrainCharge {
+  /** `new Date(now).toDateString()` do dia cobrado. */
+  day: string;
+  hearts: number;
+}
+
+/** Fatia do GameState que esta regra lê e escreve. */
+export interface PoopDrainState {
+  healthPoints: number;
+  poopEventsShown?: number[];
+  poopEventsCompleted?: number[];
+  poopPenaltyClockAt: number;
+  poopDrainCharge?: PoopDrainCharge;
+  /** Traço de nascimento — lido do ESTADO, nunca por parâmetro novo, para o
+   *  desktop herdar o efeito sem uma segunda implementação. */
+  petPassive?: string;
+  /** Data da última virada; é dela que sai a leitura de ausência. */
+  lastResetDate?: string;
+}
+
+export interface PoopDrainOptions {
+  /** Epoch ms. Sempre por parâmetro — a função não olha o relógio sozinha. */
+  now: number;
+  isSleeping: boolean;
+}
+
+/** Corações já cobrados HOJE pelo dreno. */
+export function chargedToday(state: PoopDrainState, now: number): number {
+  const charge = state.poopDrainCharge;
+  if (!charge || charge.day !== new Date(now).toDateString()) return 0;
+  return Math.max(0, charge.hearts);
+}
+
+/** Quanto o dreno ainda PODE cobrar hoje (0 = o teto do dia já foi gasto).
+ *  Usado também pelo aviso de ~30min: avisar de um tick que não vai cobrar
+ *  nada é assustar de graça — e o Soulmon não é cobrador. */
+export function remainingDrainToday(state: PoopDrainState, now: number): number {
+  const cap = heartLossCap(state.petPassive, MAX_HEARTS_LOST_PER_DAY);
+  return Math.max(0, cap - chargedToday(state, now));
+}
+
+/**
+ * Aplica o dreno de cocô ao estado. Devolve o MESMO objeto quando nada muda
+ * (o chamador está dentro de um updater de `setGameState`; devolver `prev` é o
+ * que evita re-render à toa).
+ */
+export function applyPoopDrain<T extends PoopDrainState>(state: T, opts: PoopDrainOptions): T {
+  const { now, isSleeping } = opts;
+  const shown = state.poopEventsShown || [];
+  const cleaned = state.poopEventsCompleted || [];
+  const hasUncleanPoop = shown.some(i => !cleaned.includes(i));
+  const clock = state.poopPenaltyClockAt ?? 0;
+
+  // Banho tomado / nenhum cocô na tela: o relógio para.
+  if (!hasUncleanPoop) {
+    return clock === 0 ? state : { ...state, poopPenaltyClockAt: 0 };
+  }
+
+  // Dormindo não cobra — só empurra o relógio (com throttle de persistência).
+  if (isSleeping) {
+    if (clock !== 0 && now - clock < SLEEP_CLOCK_BUMP_MS) return state;
+    return { ...state, poopPenaltyClockAt: now };
+  }
+
+  // Relógio parado: começa a contar agora.
+  if (clock === 0) return { ...state, poopPenaltyClockAt: now };
+
+  // Ausência ≥ ABSENCE_FORGIVENESS_DAYS: quem volta encontra saudade, não
+  // fatura. O relógio é REANCORADO em `now` (e não acumulado), senão a próxima
+  // passagem cobraria a mesma ausência que acabou de ser perdoada.
+  if (daysSinceLastReset(state.lastResetDate, new Date(now)) >= ABSENCE_FORGIVENESS_DAYS) {
+    return { ...state, poopPenaltyClockAt: now };
+  }
+
+  const periods = Math.floor((now - clock) / POOP_DRAIN_PERIOD_MS);
+  if (periods <= 0) return state;
+
+  // Teto do dia, com o traço Teimoso valendo aqui como vale na virada.
+  const cap = heartLossCap(state.petPassive, MAX_HEARTS_LOST_PER_DAY);
+  const already = chargedToday(state, now);
+  const lost = Math.min(periods * POOP_DRAIN_HEARTS_PER_PERIOD, Math.max(0, cap - already));
+
+  // Sempre reancora em `now`: o resto dos períodos é PERDOADO, não guardado
+  // para o próximo tick — guardar seria o teto voltando a vazar por fora.
+  if (lost <= 0) return { ...state, poopPenaltyClockAt: now };
+
+  return {
+    ...state,
+    healthPoints: Math.max(0, state.healthPoints - lost),
+    poopPenaltyClockAt: now,
+    poopDrainCharge: { day: new Date(now).toDateString(), hearts: already + lost },
+  };
+}

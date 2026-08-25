@@ -460,16 +460,27 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 
 | # | Onde | O quê | Status |
 |---|---|---|---|
-| SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ✅ corrigido |
-| SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ✅ corrigido |
-| SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido |
+| SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ⚠️ **corrigido no código, INERTE em produção** |
+| SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ✅ corrigido (independe do Firebase) |
+| SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido (⚠️ o worker é deploy MANUAL — a versão rodando hoje não é verificável por leitura) |
+
+> **Reverificação de 2026-08-25** (`squad-alpha-runs/soulmon-01/discovery/security-escopo-e-reverificacao.md`):
+> os selos ✅ desta seção mediam o CÓDIGO, não o que está em pé em produção.
+> `denyUnlessOwner` delega a `authorizeSaveAccess`, que é *fail-open*
+> (`_auth.js:112-113`: sem `FIREBASE_PROJECT_ID`, devolve `ok:true` sem
+> verificar nada) — e a sonda `GET /api/save?id=…` sem `Authorization` devolveu
+> **200** em produção. Ou seja: **a correção do SEC-1 só passa a existir quando o
+> Firebase for ligado**. Doc que diz ✅ sobre segurança aberta é pior que doc
+> ausente: a próxima sessão acredita nele.
 
 **SEC-1 — o buraco central.** Só `action=profile` chama `authorizeSaveAccess`.
 `friends`, `gift`, `match`, `trophies?claim=1` e `gifts?claim=1` pegam o ator do
 `body.id`/`?id=` e escrevem no registro daquela conta sem prova de posse.
-Agravante: **isso não fecha quando o `FIREBASE_PROJECT_ID` for ligado** — ao
+~~Agravante: **isso não fecha quando o `FIREBASE_PROJECT_ID` for ligado** — ao
 contrário do `save.js`/`billing.js`, essas ações não consultam autenticação em
-ponto nenhum.
+ponto nenhum.~~ **Desatualizado ao contrário** (reverificação de 2026-08-25):
+hoje as seis ações passam por `denyUnlessOwner` (`community.js:236, 332, 432,
+450, 476, 497`), então é exatamente o oposto — **só fecha quando ligar**.
 
 Impacto concreto: roubar 20 Bits/vítima/dia emitindo presente em nome dela;
 reescrever a lista de amigos de qualquer um; forjar o campeonato inteiro
@@ -500,8 +511,16 @@ jogador.
 
 | # | Onde | O quê | Status |
 |---|---|---|---|
-| SEC-3 | `functions/api/_entitlements.js:132` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | ✅ corrigido |
-| SEC-4 | `functions/api/_billing.js:311` | microtransação Steam sem vínculo com o dono | ✅ corrigido |
+| SEC-3 | `functions/api/_entitlements.js:132` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | 🔴 **NÃO RESOLVIDO** |
+| SEC-4 | `functions/api/_billing.js:311` | microtransação Steam sem vínculo com o dono | ⚠️ parcial (`PLAY_REQUIRE_ACCOUNT_BINDING` não está ligada) |
+
+> **SEC-3, reverificado (2026-08-25).** O caminho atômico é condicionado a
+> `env.DB` (`_entitlements.js:148`) e **não existe binding `d1_databases` em
+> `wrangler.jsonc`** — em produção roda sempre o ramo do KV (*read-then-write*
+> sem CAS, sobre armazenamento eventualmente consistente). O teste que dava o ✅
+> usa um `Map` em memória, fortemente consistente: a corrida é estruturalmente
+> irreproduzível ali. O selo media o código, não a semântica do armazenamento.
+> Fonte: `squad-alpha-runs/soulmon-01/discovery/security-escopo-e-reverificacao.md`.
 
 **SEC-3.** O comentário no código dizia que a corrida "exige tempo de propagação
 na casa dos milissegundos". **Está errado, e a estimativa era minha.** O Workers

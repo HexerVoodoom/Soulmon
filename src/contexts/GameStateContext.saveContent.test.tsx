@@ -154,7 +154,11 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.gamePoints).toBe(777);
     expect(s.emblems).toBe(42);
     expect(s.credits).toBe(60);
-    expect(s.poopPenaltyClockAt).toBe(1700000000000);
+    // O relógio do dreno é a ÚNICA exceção deste controle negativo, e de
+    // propósito: timestamp absoluto restaurado cru cobrava retroativamente as
+    // horas de ausência (regra em utils/poopDrain.ts, guard em
+    // poopDrain.regression.test.ts). Sempre zera na hidratação.
+    expect(s.poopPenaltyClockAt).toBe(0);
     expect(s.degeneratedByHP).toBe(true);
     expect(s.lastDayWasPerfect).toBe(true);
     expect(s.pvpEnabled).toBe(true);
@@ -476,7 +480,7 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     vi.useFakeTimers();
     try {
       localStorage.setItem(STORAGE_KEYS.LANGUAGE, 'en-US');
-      abrirComSave({ activities: [], tasks: [] });
+      abrirComSave({ activities: [], tasks: [], pvpEnabled: true });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
       expect(perfis[0].name).toBe('Anonymous');
@@ -487,13 +491,26 @@ describe('backup na nuvem: só depois de uma mudança REAL, e com o conteúdo ce
     vi.useFakeTimers();
     try {
       localStorage.setItem(STORAGE_KEYS.USER_NAME, 'Mateus');
-      abrirComSave({ activities: [], tasks: [] });
+      abrirComSave({ activities: [], tasks: [], pvpEnabled: true });
       act(() => { screen.getByText('mais').click(); });
       act(() => { vi.advanceTimersByTime(3000); });
       expect(perfis[0].name).toBe('Mateus');
       expect(perfis[0].petName).toBe('');
-      expect(perfis[0].pvpEnabled).toBe(false);
       expect(perfis[0].tasksDone).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+
+  // Antes deste gate, o perfil público subia MESMO com os recursos sociais
+  // desligados: `pvpEnabled: false` ia no corpo, mas o corpo já tinha sido
+  // publicado. Quem nunca ligou o social não aparece em diretório nenhum.
+  it('com recursos sociais DESLIGADOS nada é publicado (o save continua indo)', () => {
+    vi.useFakeTimers();
+    try {
+      abrirComSave({ activities: [], tasks: [], pvpEnabled: false });
+      act(() => { screen.getByText('mais').click(); });
+      act(() => { vi.advanceTimersByTime(3000); });
+      expect(perfis).toHaveLength(0);
+      expect(cloudSaves.length).toBeGreaterThan(0);
     } finally { vi.useRealTimers(); }
   });
 

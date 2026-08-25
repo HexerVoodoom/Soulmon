@@ -203,6 +203,9 @@ export interface GameState {
   poopEventsShown: number[];
   /** Epoch ms clock for the "uncleaned poop drains 1 heart / 6h" penalty (0 = inactive). */
   poopPenaltyClockAt: number;
+  /** Quanto o dreno de cocô já cobrou no dia civil — é o que faz o teto ser
+   *  DIÁRIO (regra em `utils/poopDrain.ts`). */
+  poopDrainCharge?: { day: string; hearts: number };
   /** Bits (🪙): minigame currency earned in the Activities games, spent in the shop. */
   gamePoints: number;
   /** Emblemas: moeda do Torneio (utils/currencies.ts). Só compra itens da aba
@@ -686,7 +689,19 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
             .filter(([, v]) => (v as number) > 0),
         ) as Record<string, number>,
         poopEventsShown: numArr(loadedState.poopEventsShown),
-        poopPenaltyClockAt: num(loadedState.poopPenaltyClockAt, 0),
+        // O relógio do dreno NÃO sobrevive ao save: é um timestamp absoluto,
+        // então restaurá-lo cru fazia o dreno da montagem cobrar as horas em
+        // que a pessoa não estava lá — exatamente o que
+        // `ABSENCE_FORGIVENESS_DAYS` existe para impedir. Zerar aqui também
+        // elimina a corrida com a virada (`dailyReset.ts`, que só zera quando
+        // roda). O relógio recomeça sozinho no primeiro tick com cocô na tela.
+        poopPenaltyClockAt: 0,
+        // Quanto o dreno já cobrou HOJE (utils/poopDrain.ts). Persiste para o
+        // teto diário não ser zerado por um reload.
+        poopDrainCharge: (() => {
+          const c = obj<unknown>(loadedState.poopDrainCharge);
+          return typeof c.day === 'string' ? { day: c.day, hearts: num(c.hearts, 0) } : undefined;
+        })(),
         gamePoints: num(loadedState.gamePoints, 0),
         emblems: num(loadedState.emblems, 0),
         pvpEnabled: loadedState.pvpEnabled ?? false,
@@ -914,6 +929,11 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
 
     const timer = setTimeout(() => {
       cloudSave(saveId!, gameState);
+      // O perfil público só vai para a nuvem com os recursos sociais LIGADOS.
+      // Sem este gate, quem nunca ativou o PvP tinha nome, pet e atributos
+      // publicados no diretório assim mesmo — `pvpEnabled: false` no corpo não
+      // impede a publicação, só descreve o estado.
+      if (!gameState.pvpEnabled) return;
       pushProfile({
         id: saveId!,
         // O nome vai para o ranking da COMUNIDADE, onde outros jogadores leem.

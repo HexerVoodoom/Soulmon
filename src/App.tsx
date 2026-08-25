@@ -54,6 +54,7 @@ import {
   feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
   FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
 } from './utils/careRules';
+import { applyPoopDrain, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
@@ -1978,17 +1979,19 @@ export default function App() {
   // clock starts when a poop is on screen and stops the moment it's cleaned.
   const poopDrainWarnedAtRef = useRef(0);
   useEffect(() => {
-    const SIX_HOURS = 6 * 3600000;
     const drain = () => {
       // Warn ~30min before a drain tick so the user can react (bath) in time.
       {
         const shown = gameState.poopEventsShown || [];
         const cleaned = gameState.poopEventsCompleted || [];
         const clock = gameState.poopPenaltyClockAt ?? 0;
-        if (!isSleeping && clock !== 0 && shown.some(i => !cleaned.includes(i))) {
-          const now = Date.now();
-          const periodStart = clock + Math.floor((now - clock) / SIX_HOURS) * SIX_HOURS;
-          const msToNextTick = periodStart + SIX_HOURS - now;
+        const now = Date.now();
+        // Só avisa se o tick FOR cobrar: com o teto do dia já gasto, o aviso
+        // prometeria um dano que não acontece.
+        if (!isSleeping && clock !== 0 && shown.some(i => !cleaned.includes(i))
+            && remainingDrainToday(gameState, now) > 0) {
+          const periodStart = clock + Math.floor((now - clock) / POOP_DRAIN_PERIOD_MS) * POOP_DRAIN_PERIOD_MS;
+          const msToNextTick = periodStart + POOP_DRAIN_PERIOD_MS - now;
           if (msToNextTick <= 30 * 60000 && poopDrainWarnedAtRef.current !== periodStart) {
             poopDrainWarnedAtRef.current = periodStart;
             const ispt = language === 'pt-BR';
@@ -2004,30 +2007,10 @@ export default function App() {
           }
         }
       }
-      setGameState(prev => {
-        const shown = prev.poopEventsShown || [];
-        const cleaned = prev.poopEventsCompleted || [];
-        const hasUncleanPoop = shown.some(i => !cleaned.includes(i));
-        const clock = prev.poopPenaltyClockAt ?? 0;
-        if (!hasUncleanPoop) {
-          return clock === 0 ? prev : { ...prev, poopPenaltyClockAt: 0 };
-        }
-        const now = Date.now();
-        // Sleeping pauses the clock. Only persist the bump every ≥5 min so we
-        // don't write state (and trigger a cloud save) every 60s all night.
-        if (isSleeping) {
-          if (clock !== 0 && now - clock < 5 * 60000) return prev;
-          return { ...prev, poopPenaltyClockAt: now };
-        }
-        if (clock === 0) return { ...prev, poopPenaltyClockAt: now };
-        const periods = Math.floor((now - clock) / SIX_HOURS);
-        if (periods <= 0) return prev;
-        return {
-          ...prev,
-          healthPoints: Math.max(0, prev.healthPoints - periods),
-          poopPenaltyClockAt: clock + periods * SIX_HOURS,
-        };
-      });
+      // A regra do dreno mora em `utils/poopDrain.ts` (teto diário, traço
+      // Teimoso e perdão por ausência). Aqui só sobra o efeito.
+      const now = Date.now();
+      setGameState(prev => applyPoopDrain(prev, { now, isSleeping }));
     };
     drain();
     const id = setInterval(drain, 60000);

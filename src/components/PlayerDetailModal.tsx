@@ -94,11 +94,15 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
               {isPt ? 'Personagem de demonstração' : 'Demo character'}
             </p>
           )}
-          {/* Os três números numa frase só, com `tabular-nums`. */}
+          {/* `tasksDone` SAIU daqui de propósito: expor "X tarefas feitas" de
+              outro jogador num diretório pesquisável é exatamente o score de
+              vida real que `docs/PLANO-PRODUTO.md:69-71` proíbe — o Torneio
+              mede por FAIXA (utils/tournamentTiers.ts) pelo mesmo motivo.
+              Ficam os dois números que são do JOGO, não da vida. */}
           <p className="sm2-num" style={{ ...sm2Hint, marginTop: 6 }}>
             {isPt
-              ? `${player.daysPlaying} dias jogando · ${player.tasksDone} tarefas feitas · rank ${player.rankPoints}`
-              : `${player.daysPlaying} days playing · ${player.tasksDone} tasks done · rank ${player.rankPoints}`}
+              ? `${player.daysPlaying} dias jogando · rank ${player.rankPoints}`
+              : `${player.daysPlaying} days playing · rank ${player.rankPoints}`}
           </p>
         </div>
       </div>

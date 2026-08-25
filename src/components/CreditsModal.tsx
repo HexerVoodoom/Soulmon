@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
 import {
-  CREDIT_PACKS, type CreditPack, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
+  CREDIT_PACKS, type CreditPack, ADS_ENABLED, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
   HEART_COST_CREDITS, FULL_UNLOCK_PRICE_LABEL,
 } from '../utils/monetization';
 import { fetchEntitlement } from '../utils/entitlements';
@@ -158,7 +158,10 @@ export function CreditsModal({
 
       {sectionTitle(isPt ? 'Ganhar' : 'Earn')}
 
-      {adsEnabled && (
+      {/* Duas travas, e a de cá é a que vale hoje: `ADS_ENABLED` é o
+          desligamento local (D-13); `adsEnabled` continua sendo a palavra do
+          servidor sobre a verificação do AdMob. */}
+      {ADS_ENABLED && adsEnabled && (
         <Row
           icon="play_arrow"
           tone="primary"

@@ -91,7 +91,14 @@ export const CREDIT_PACKS: CreditPack[] = [
 export const FULL_UNLOCK_SKU = 'soulmon.unlock.full';
 export const FULL_UNLOCK_PRICE_LABEL = 'R$ 29,90';
 
-// ── Anúncio recompensado ────────────────────────────────────────────────────
+// ── Anúncio recompensado — DESLIGADO (decisão D-13, 25/08/2026) ─────────────
+// O caminho anúncio → moeda premium → reroll aleatório fica FECHADO: com o
+// público em 18+ (D-06) e o SDK de anúncio ainda inexistente, desligar hoje
+// custa zero e evita nascer uma engrenagem de sorte paga por atenção.
+// A mecânica NÃO foi arrancada — segue inteira e inerte. Para reativar:
+// ponha `ADS_ENABLED = true` (e o servidor ainda precisa devolver
+// `adsEnabled`, que é quem manda de verdade).
+export const ADS_ENABLED = false;
 // Os valores abaixo espelham functions/api/_entitlements.js — o teto diário
 // que VALE é o do servidor; este aqui é só para a UI.
 export const AD_REWARD_CREDITS = 5;
