@@ -74,6 +74,7 @@
   "scripts": {
     "sync:oracle-data": "node scripts/sync-oracle-data.mjs",
     "vendor:class-system": "node scripts/vendor-class-system.mjs",
+    "gen:cascata-fixtures": "node scripts/gen-cascata-fixtures.mjs",
     "dev": "vite",
     "build": "vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
     "test": "vitest run",

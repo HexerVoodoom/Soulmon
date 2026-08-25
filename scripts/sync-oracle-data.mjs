@@ -99,34 +99,12 @@ console.log(JSON.stringify({ escolas, recursos, profissoes, talentos, criaturas,
 `;
 const classData = JSON.parse(tsxEval(CLASS_DIR, extract));
 
-// Fixtures de PARIDADE da cascata geracional: o MOTOR REAL calcula os casos
-// de referência e o Soulmon confere a réplica mínima de `ficha/cascata.ts`
-// contra eles (`cascata.parity.test.ts`). Se o class-system mudar um dial
-// (divisor, limiar), o próximo sync regenera isto e o teste acusa.
-const parityExtract = `
-import { calcularCascata, ELEMENTOS } from './src/index';
-const ehPar = (id) => ELEMENTOS[id]?.receita?.length === 2;
-const casos = [
-  { fogo: 5, agua: 5 },
-  { fogo: 4, agua: 5 },
-  { fogo: 20, agua: 5 },
-  { fogo: 50, agua: 50 },
-  { fogo: 49, agua: 50 },
-  { fogo: 88, terra: 57, tempo: 55 },
-  { ar: 51, terra: 34, luz: 32 },
-];
-const saida = casos.map((diretos) => {
-  const c = calcularCascata(diretos);
-  const pares = {};
-  for (const [id, passivos] of c.passivos) {
-    if (!ehPar(id)) continue; // a réplica do Soulmon modela só gen-2
-    if ((passivos ?? 0) > 0) pares[id] = { passivos, destravado: c.destravados.has(id) };
-  }
-  return { diretos, pares };
-});
-console.log(JSON.stringify(saida));
-`;
-const cascataFixtures = JSON.parse(tsxEval(CLASS_DIR, parityExtract));
+// Os fixtures de PARIDADE da cascata NÃO são mais gerados aqui. Ficavam neste
+// snapshot, com a procedência do CLONE IRMÃO — e o clone pode estar num SHA
+// diferente do vendor que roda no app. Foi assim que fixtures do `1025012c`
+// (branch de trabalho) ficaram confrontando um motor `fb866455`, escondendo
+// 21.795 pares divergentes. Agora saem do PRÓPRIO vendor:
+// `npm run gen:cascata-fixtures` → `ficha/cascata.fixtures.json`.
 
 // Diais da alocação geracional, lidos do CONTRATO DE MÁQUINA do class-system
 // (`taxonomy.json` v2, gerado por `npm run export:taxonomy` a partir de
@@ -156,7 +134,6 @@ const classOut = {
   _provenance: provenance(CLASS_DIR),
   ...classData,
   geracoes,
-  cascataFixtures,
 };
 const fichaDir = path.join(ROOT, 'src/utils/soulProfile/ficha');
 mkdirSync(fichaDir, { recursive: true });

@@ -1,0 +1,1011 @@
+{
+ "_procedencia": {
+  "origem": "vendor/class-system/index.js",
+  "repo": "https://github.com/HexerVoodoom/Class-System",
+  "sha": "fb8664553142bf9080782ae553395e57e493757a",
+  "commitSubject": "Sinergia de alvo único alimenta o destrave; lista mostra progresso (#8)",
+  "bundleSha256": "09dbe3ffbf5e8b2bd8276f279f66cbb4b7fe1a624923bfbc12e9e197d776a7a7",
+  "geradoPor": "scripts/gen-cascata-fixtures.mjs",
+  "geradoEm": "2026-08-25T17:42:43.082Z",
+  "nota": "Regenere com `npm run gen:cascata-fixtures` SEMPRE que rodar `npm run vendor:class-system`. O SHA daqui TEM que ser o de vendor/class-system/_provenance.json — cascata.parity.test.ts falha se divergir."
+ },
+ "bases": [
+  "fogo",
+  "agua",
+  "terra",
+  "ar",
+  "eletricidade",
+  "arcano",
+  "sombra",
+  "luz",
+  "vileza",
+  "morte",
+  "vida",
+  "vigor",
+  "marcial",
+  "tempo",
+  "som",
+  "gravidade",
+  "espaco"
+ ],
+ "sinergiasAlvoUnico": [
+  {
+   "de": "fogo",
+   "para": "vileza",
+   "razao": 0.1
+  },
+  {
+   "de": "vileza",
+   "para": "fogo",
+   "razao": 0.1
+  },
+  {
+   "de": "sombra",
+   "para": "morte",
+   "razao": 0.1
+  },
+  {
+   "de": "morte",
+   "para": "sombra",
+   "razao": 0.1
+  },
+  {
+   "de": "luz",
+   "para": "vida",
+   "razao": 0.1
+  },
+  {
+   "de": "vida",
+   "para": "luz",
+   "razao": 0.1
+  },
+  {
+   "de": "vigor",
+   "para": "vida",
+   "razao": 0.1
+  },
+  {
+   "de": "vida",
+   "para": "vigor",
+   "razao": 0.1
+  },
+  {
+   "de": "marcial",
+   "para": "vigor",
+   "razao": 0.1
+  },
+  {
+   "de": "vigor",
+   "para": "marcial",
+   "razao": 0.1
+  },
+  {
+   "de": "arcano",
+   "para": "tempo",
+   "razao": 0.08
+  },
+  {
+   "de": "tempo",
+   "para": "arcano",
+   "razao": 0.08
+  },
+  {
+   "de": "arcano",
+   "para": "espaco",
+   "razao": 0.08
+  },
+  {
+   "de": "espaco",
+   "para": "gravidade",
+   "razao": 0.08
+  },
+  {
+   "de": "gravidade",
+   "para": "espaco",
+   "razao": 0.08
+  },
+  {
+   "de": "eletricidade",
+   "para": "som",
+   "razao": 0.05
+  },
+  {
+   "de": "ar",
+   "para": "som",
+   "razao": 0.05
+  },
+  {
+   "de": "terra",
+   "para": "vigor",
+   "razao": 0.05
+  },
+  {
+   "de": "eletricidade",
+   "para": "ar",
+   "razao": 0.05
+  }
+ ],
+ "cascataFixtures": [
+  {
+   "diretos": {
+    "fogo": 5,
+    "agua": 5
+   },
+   "pares": {
+    "vapor": {
+     "passivos": 1,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "fogo": 4,
+    "agua": 5
+   },
+   "pares": {}
+  },
+  {
+   "diretos": {
+    "fogo": 20,
+    "agua": 5
+   },
+   "pares": {
+    "vapor": {
+     "passivos": 1,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "fogo": 50,
+    "agua": 50
+   },
+   "pares": {
+    "vapor": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "fogo_infernal": {
+     "passivos": 1,
+     "destravado": false
+    },
+    "acido": {
+     "passivos": 1,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "fogo": 49,
+    "agua": 50
+   },
+   "pares": {
+    "vapor": {
+     "passivos": 9,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "fogo": 88,
+    "terra": 57,
+    "tempo": 55
+   },
+   "pares": {
+    "lava": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "fogo_infernal": {
+     "passivos": 1,
+     "destravado": false
+    },
+    "pira_eterna": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "solo_profano": {
+     "passivos": 1,
+     "destravado": false
+    },
+    "fossil": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "ruina": {
+     "passivos": 1,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "ar": 51,
+    "terra": 34,
+    "luz": 32
+   },
+   "pares": {
+    "areia": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "ouro_vivo": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "aurora": {
+     "passivos": 6,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "luz": 40,
+    "vida": 14
+   },
+   "pares": {
+    "santidade": {
+     "passivos": 3,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "vida": 49,
+    "vigor": 49
+   },
+   "pares": {
+    "vitalidade": {
+     "passivos": 10,
+     "destravado": true
+    }
+   }
+  },
+  {
+   "diretos": {
+    "terra": 60,
+    "marcial": 40,
+    "vigor": 41
+   },
+   "pares": {
+    "tita": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "aco": {
+     "passivos": 8,
+     "destravado": false
+    },
+    "maestria": {
+     "passivos": 8,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "luz": 100,
+    "vida": 49
+   },
+   "pares": {
+    "santidade": {
+     "passivos": 11,
+     "destravado": true
+    }
+   }
+  },
+  {
+   "diretos": {
+    "vigor": 100,
+    "marcial": 49
+   },
+   "pares": {
+    "vitalidade": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "lamina_viva": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "maestria": {
+     "passivos": 11,
+     "destravado": true
+    }
+   }
+  },
+  {
+   "diretos": {
+    "arcano": 100,
+    "tempo": 47,
+    "espaco": 47
+   },
+   "pares": {
+    "cronomancia": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "portal": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "continuum": {
+     "passivos": 11,
+     "destravado": true
+    }
+   }
+  },
+  {
+   "diretos": {
+    "espaco": 60,
+    "gravidade": 44
+   },
+   "pares": {
+    "dobra": {
+     "passivos": 9,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "eletricidade": 80,
+    "ar": 43,
+    "som": 39
+   },
+   "pares": {
+    "tempestade": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "estampido": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "trovao": {
+     "passivos": 9,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "eletricidade": 100,
+    "ar": 100
+   },
+   "pares": {
+    "tempestade": {
+     "passivos": 20,
+     "destravado": true
+    },
+    "estampido": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "trovao": {
+     "passivos": 2,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "fogo": 60,
+    "vileza": 44,
+    "sombra": 60,
+    "morte": 44
+   },
+   "pares": {
+    "fogo_negro": {
+     "passivos": 12,
+     "destravado": true
+    },
+    "fogo_infernal": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "chama_azul": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "terror": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "espectro": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "praga": {
+     "passivos": 10,
+     "destravado": true
+    }
+   }
+  },
+  {
+   "diretos": {
+    "luz": 9,
+    "vida": 5
+   },
+   "pares": {
+    "santidade": {
+     "passivos": 1,
+     "destravado": false
+    }
+   }
+  },
+  {
+   "diretos": {
+    "fogo": 60,
+    "agua": 20,
+    "terra": 45,
+    "ar": 30,
+    "eletricidade": 55,
+    "arcano": 70,
+    "sombra": 25,
+    "luz": 50,
+    "vileza": 15,
+    "morte": 20,
+    "vida": 48,
+    "vigor": 47,
+    "marcial": 35,
+    "tempo": 46,
+    "som": 10,
+    "gravidade": 12,
+    "espaco": 45
+   },
+   "pares": {
+    "vapor": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "lava": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "incendio": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "plasma": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "fogo_feiticeiro": {
+     "passivos": 12,
+     "destravado": true
+    },
+    "fogo_negro": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "chama_solar": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "fogo_infernal": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "chama_azul": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "fenix": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "fervor": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "forja": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "pira_eterna": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "estrondo": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "fornalha_estelar": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "meteoro": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "pantano": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "gelo": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "agua_viva": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "mare": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "abismo": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "prisma": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "acido": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "veneno": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "nascente": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "correnteza": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "tempera": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "erosao": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "sonar": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "voragem": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "cometa": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "areia": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "magnetismo": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "cristal": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "obsidiana": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "ouro_vivo": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "solo_profano": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "ossuario": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "flora": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "tita": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "aco": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "fossil": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "terremoto": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "colapso": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "asteroide": {
+     "passivos": 9,
+     "destravado": false
+    },
+    "tempestade": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "eter": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "murmurio": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "aurora": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "enxofre": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "miasma": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "alento": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "impeto": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "esgrima": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "aceleracao": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "estampido": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "vacuo": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "estratosfera": {
+     "passivos": 6,
+     "destravado": false
+    },
+    "fluxo": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "trovao_negro": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "fulgor": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "tormento": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "galvanismo": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "sinapse": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "reflexo": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "aco_voltaico": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "instante": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "trovao": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "magnetar": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "pulsar": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "ocultismo": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "runa": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "pacto": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "alma": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "essencia": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "encantamento": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "arsenal": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "cronomancia": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "cantico": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "singularidade": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "portal": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "crepusculo": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "terror": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "espectro": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "parasita": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "assassinio": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "lamina_oculta": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "entropia": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "sussurro": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "buraco_negro": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "vazio": {
+     "passivos": 5,
+     "destravado": false
+    },
+    "heresia": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "julgamento": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "santidade": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "bravura": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "lamina_radiante": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "eon": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "harmonia": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "halo_gravitacional": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "constelacao": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "praga": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "mutacao": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "carnificina": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "serrilha": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "ruina": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "dissonancia": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "jugo": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "devorador": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "equilibrio": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "ceifa": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "fio_funebre": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "ocaso": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "requiem": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "implosao": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "nebulosa": {
+     "passivos": 4,
+     "destravado": false
+    },
+    "vitalidade": {
+     "passivos": 11,
+     "destravado": true
+    },
+    "lamina_viva": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "florescer": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "melodia": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "ancora_vital": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "semente_estelar": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "maestria": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "frenesi": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "brado": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "peso_descomunal": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "gigante_estelar": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "contratempo": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "cadencia": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "ariete": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "lamina_sideral": {
+     "passivos": 7,
+     "destravado": false
+    },
+    "eco": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "dilatacao": {
+     "passivos": 3,
+     "destravado": false
+    },
+    "continuum": {
+     "passivos": 10,
+     "destravado": true
+    },
+    "onda_de_choque": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "silencio_cosmico": {
+     "passivos": 2,
+     "destravado": false
+    },
+    "dobra": {
+     "passivos": 3,
+     "destravado": false
+    }
+   }
+  }
+ ]
+}
