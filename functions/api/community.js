@@ -98,6 +98,12 @@ async function saveIdForPublicId(env, pid) {
  * Versão pública de um perfil. É o ÚNICO lugar que monta o que sai daqui —
  * assim não existe rota que devolva o saveId por esquecimento.
  */
+/**
+ * Vista pública de um perfil. `extra` são campos que só alguns chamadores
+ * acrescentam (ranking, amizades), por isso o retorno é aberto.
+ * @param {Record<string, any>} [extra]
+ * @returns {Promise<Record<string, any>>}
+ */
 async function publicProfile(env, p, extra = {}) {
   const pid = p.pid || await publicIdFor(p.id);
   return {
@@ -162,7 +168,9 @@ export async function onRequestOptions() {
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  const action = url.searchParams.get('action');
+  // `?? ''` porque `searchParams.get` devolve `string | null` e os Sets abaixo
+  // são de string — `has(null)` e `has('')` são igualmente falsos.
+  const action = url.searchParams.get('action') ?? '';
 
   const ip = clientKey(request);
   const cacheable =
@@ -264,6 +272,7 @@ async function handleCommunity({ request, env }) {
     const search = (url.searchParams.get('search') || '').toLowerCase();
     const keys = await listPrefix(env, 'profile:', 300);
     const season = currentSeason();
+    /** @type {Array<{ rankPoints?: number }>} */
     const players = [];
     for (const k of keys) {
       const raw = await env.DIGIAPP_SAVES.get(k);
@@ -274,7 +283,7 @@ async function handleCommunity({ request, env }) {
       players.push(await publicProfile(env, p, { rankPoints: rank.points }));
       if (players.length >= 50) break;
     }
-    players.sort((a, b) => b.rankPoints - a.rankPoints);
+    players.sort((a, b) => (b.rankPoints ?? 0) - (a.rankPoints ?? 0));
     return json({ players });
   }
 

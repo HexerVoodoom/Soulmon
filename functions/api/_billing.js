@@ -245,6 +245,9 @@ function steamConfig(env) {
  * Por que não confiar no SteamID que o cliente manda: ele é público. Qualquer
  * um poderia mandar o SteamID de outra pessoa e herdar o benefício dela. O
  * ticket é assinado pela Valve e só o dono da sessão consegue produzir.
+ *
+ * @returns {Promise<{ ok: true, steamId: string, ownerSteamId: string }
+ *                 | { ok: false, reason: string }>}
  */
 async function authenticateSteamTicket({ key, appId }, ticket) {
   const url = `${STEAM_PARTNER}/ISteamUserAuth/AuthenticateUserTicket/v1/`
@@ -334,7 +337,10 @@ export async function verifySteamOwnership(env, { ticket }) {
  * Consultamos a Valve pelo `orderid` e só creditamos se o status for
  * `Succeeded`.
  *
- * @returns {Promise<{ ok: true, orderId: string, product: object }
+ * `productId` sai daqui (a Steam é quem diz qual item foi comprado); no caminho
+ * da Play quem informa é o cliente. `billing.js` escolhe a origem por provider.
+ *
+ * @returns {Promise<{ ok: true, orderId: string, product: object, productId: string }
  *                 | { ok: false, reason: string }>}
  */
 export async function verifySteamPurchase(env, { orderId, ticket }) {

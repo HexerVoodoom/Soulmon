@@ -49,6 +49,7 @@ const RULES = [
 export function minimizeForAi(input, maxLength = 500) {
   const original = (input ?? '').toString();
   let text = original;
+  /** @type {Record<string, number>} */
   const redactions = {};
 
   for (const { kind, re, tag } of RULES) {

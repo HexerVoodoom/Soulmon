@@ -107,6 +107,9 @@ export async function emailToSaveId(email) {
  * Modo aberto (sem FIREBASE_PROJECT_ID): aceita, para não derrubar os usuários
  * atuais no meio da migração. Ligue a variável assim que a versão com login
  * estiver publicada — enquanto ela estiver ausente, a proteção NÃO está ativa.
+ *
+ * @returns {Promise<{ ok: true, enforced: boolean, email?: string }
+ *                 | { ok: false, enforced: true, reason: 'unauthenticated' | 'forbidden' }>}
  */
 export async function authorizeSaveAccess(request, env, saveId) {
   const projectId = env.FIREBASE_PROJECT_ID;

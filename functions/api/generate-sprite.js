@@ -38,12 +38,13 @@ export async function onRequestOptions() {
 const REFUSAL_WORDS =
   /nsfw|safety|policy|polic[ií]|moderation|blocked|prohibited|content[_ -]filter|copyright|trademark|intellectual property|recitation/i;
 
+/** @param {{ refusal?: boolean, message?: string }} [err] */
 function isRefusal(err) {
   return Boolean(err?.refusal) || REFUSAL_WORDS.test(err?.message || '');
 }
 
 function refusalError(message) {
-  const err = new Error(message);
+  const err = /** @type {Error & { refusal?: boolean }} */ (new Error(message));
   err.refusal = true;
   return err;
 }
@@ -168,7 +169,9 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
 
   if (hfRefusal) throw refusalError(hfError);
   if (hfError) throw new Error(hfError);
-  const err = new Error('image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)');
+  const err = /** @type {Error & { notConfigured?: boolean }} */ (
+    new Error('image generation not configured (HF_API_KEY/HF_SECRET ou GEMINI_API_KEY)')
+  );
   err.notConfigured = true;
   throw err;
 }

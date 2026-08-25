@@ -200,6 +200,8 @@ export async function claimOrder(env, saveId, orderId) {
  * Reivindicação atômica via D1. O `INSERT` é a própria disputa: só um vencedor
  * é possível, porque `order_id` é PRIMARY KEY. Reprocessar na MESMA conta
  * continua valendo (é o que faz o "restaurar compras" funcionar).
+ *
+ * @returns {Promise<{ ok: true } | { ok: false, reason: 'order-in-use' }>}
  */
 async function claimOrderAtomic(env, saveId, orderId) {
   try {

@@ -89,6 +89,10 @@ export const CREDIT_PACKS: CreditPack[] = [
 
 /** SKU do desbloqueio completo (compra única, NÃO consumível). */
 export const FULL_UNLOCK_SKU = 'soulmon.unlock.full';
+/** Rotulo do preco do desbloqueio completo. **Ao mudar aqui, mude tambem
+ *  `public/termos.html`** (secao 4, PT e EN) — o HTML estatico nao importa TS,
+ *  entao quem guarda a igualdade e `src/utils/publishedPrice.test.ts`, que
+ *  reprova a divergencia em vez de confiar neste comentario. */
 export const FULL_UNLOCK_PRICE_LABEL = 'R$ 29,90';
 
 // ── Anúncio recompensado — DESLIGADO (decisão D-13, 25/08/2026) ─────────────

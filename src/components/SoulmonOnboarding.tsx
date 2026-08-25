@@ -6,7 +6,7 @@ import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow }
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeJson, removeLocal } from '../utils/safeStorage';
 import {
-  buildConsentRecord, isAgeBlocked, MIN_AGE_YEARS,
+  buildConsentRecord, isAgeBlocked, isAgeBlockedByMonth, monthYearFromText, MIN_AGE_YEARS,
   type ConsentRecord,
 } from '../utils/consent';
 import {
@@ -200,6 +200,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  específico (achado do run 01, PLANO-TAREFAS.md:187). */
   const [consentChecked, setConsentChecked] = useState(false);
   const [consent, setConsent] = useState<ConsentRecord | null>(null);
+  /** Mês/ano de nascimento pedido SÓ no caminho demo, e SÓ para conferir 18+
+   *  (utils/consent.ts). O demo pula o Oráculo inteiro e nunca chega ao passo
+   *  da data — sem isto, o 18+ do dono valeria só para quem paga. Fica em
+   *  estado de componente e NÃO é persistido: aqui ele não alimenta mapa astral
+   *  nenhum, então guardar seria coletar sem finalidade. */
+  const [demoAgeText, setDemoAgeText] = useState('');
+  const demoAgeMonth = monthYearFromText(demoAgeText);
+  /** O passo de consentimento é o ponto comum aos dois caminhos e vem ANTES da
+   *  bifurcação — é onde a idade custa menos fricção no demo. No caminho do
+   *  Oráculo o campo não aparece: a data cheia do mapa astral já confere. */
+  const demoNeedsAge = flow === 'demo';
   const [soulGoal, setSoulGoal] = useState('');
   const [soulStruggle, setSoulStruggle] = useState('');
   const [fullName, setFullName] = useState('');
@@ -262,7 +273,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const progress = Math.min(shrink(step), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
 
   const canAdvance = (): boolean => {
-    if (step === CONSENT_STEP) return consentChecked;
+    if (step === CONSENT_STEP) return consentChecked && (!demoNeedsAge || !!demoAgeMonth);
     if (step === 1) return fullName.trim().length >= 3;
     if (step === 2) return !!birthDate;
     if (step === 3) return timeUnknown || !!birthTime;
@@ -362,7 +373,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(CONSENT_STEP); return; }
     if (step === CONSENT_STEP) {
-      if (!consentChecked) return;
+      if (!canAdvance()) return;
+      // Gate 18+ do caminho DEMO, aqui porque este passo é o último ponto comum
+      // antes da bifurcação. Mesma trava do caminho pago: mês/ano ausente ou
+      // ilegível NÃO bloqueia — só bloqueia declaração legível de menor.
+      if (demoNeedsAge && isAgeBlockedByMonth(demoAgeMonth)) { setStep(AGE_BLOCK); return; }
       // O carimbo é feito no MOMENTO do aceite, não no fim do onboarding: é
       // esse instante que a prova precisa registrar.
       setConsent(buildConsentRecord());
@@ -418,9 +433,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setRefine(null);
     setConsentChecked(false);
     setConsent(null);
+    setDemoAgeText('');
     setFlow(null);
     removeLocal(STORAGE_KEYS.SOULMON_PROFILE);
     setStep(0);
+  };
+
+  /** Máscara MM/AAAA do campo de idade do demo. Só dígitos, barra sozinha. */
+  const handleDemoAgeChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, '').slice(0, 6);
+    setDemoAgeText(digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits);
   };
 
   // Máscara DD/MM/AAAA: só dígitos, insere as barras sozinho enquanto digita.
@@ -758,6 +780,28 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             </div>
             {/* Separador: a caixa não pertence ao bloco de links acima. */}
             <div style={{ height: 1, backgroundColor: 'var(--sm2-line)', margin: '0 0 12px' }} />
+            {/* Idade no caminho DEMO. O caminho do Oráculo confere pela data
+                cheia do mapa astral (passo 2); o demo nunca chega lá, e sem
+                este campo o 18+ valeria só para quem paga. Pede o MÍNIMO que
+                responde a pergunta — mês e ano — e diz para que serve. */}
+            {demoNeedsAge && (
+              <div style={{ marginBottom: 16 }}>
+                <label htmlFor="sm-demo-age" style={{ ...sm2Label, display: 'block', marginBottom: 6 }}>
+                  {isPt ? 'Em que mês e ano você nasceu?' : 'What month and year were you born?'}
+                </label>
+                <Field id="sm-demo-age" type="text" inputMode="numeric" autoComplete="off"
+                  value={demoAgeText}
+                  placeholder={isPt ? '__/____ (MM/AAAA)' : '__/____ (MM/YYYY)'}
+                  onChange={e => handleDemoAgeChange(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && next()}
+                  maxLength={7} />
+                <p style={{ ...sm2Hint, marginTop: 6 }}>
+                  {isPt
+                    ? `Serve só para confirmar que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima do Soulmon. Por isso pedimos só o mês e o ano — não guardamos essa resposta e ela não é usada para mais nada.`
+                    : `This is only to confirm you're ${MIN_AGE_YEARS} or older, Soulmon's minimum age. That's why we ask for the month and year only — we don't store this answer and it isn't used for anything else.`}
+                </p>
+              </div>
+            )}
             <CheckRow checked={consentChecked} onChange={setConsentChecked}>
               {isPt
                 ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
@@ -765,18 +809,18 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             </CheckRow>
             <button
               type="button"
-              style={{ ...sm2Button('primary', !consentChecked), width: '100%', marginTop: 16 }}
+              style={{ ...sm2Button('primary', !canAdvance()), width: '100%', marginTop: 16 }}
               onClick={next}
-              disabled={!consentChecked}
+              disabled={!canAdvance()}
             >
               {isPt ? 'Continuar' : 'Continue'}
               <Icon name="arrow_forward" size={20} />
             </button>
-            {!consentChecked && (
+            {!canAdvance() && (
               <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
-                {isPt
-                  ? 'Marque a caixa acima para continuar.'
-                  : 'Check the box above to continue.'}
+                {!consentChecked
+                  ? (isPt ? 'Marque a caixa acima para continuar.' : 'Check the box above to continue.')
+                  : (isPt ? 'Preencha o mês e o ano (MM/AAAA) para continuar.' : 'Fill in the month and year (MM/YYYY) to continue.')}
               </p>
             )}
             <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }} onClick={back}>
@@ -797,8 +841,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               : `Soulmon asks for ${MIN_AGE_YEARS}+.`}>
             <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 20px' }}>
               {isPt
-                ? 'O Soulmon é feito para maiores de 18 anos, e pela data que você digitou você ainda não chegou lá. Não é nada que você tenha feito errado — é só o tanto que o app pede pra funcionar do jeito que ele foi pensado. Volte quando fizer 18 anos; vamos estar aqui.'
-                : "Soulmon is built for people 18 and older, and based on the date you entered, you're not there yet. This isn't about anything you did wrong — it's just what the app needs to work the way it was designed. Come back when you turn 18; we'll be here."}
+                ? 'O Soulmon é feito para maiores de 18 anos, e pelo que você respondeu você ainda não chegou lá. Não é nada que você tenha feito errado — é só o tanto que o app pede pra funcionar do jeito que ele foi pensado. Volte quando fizer 18 anos; vamos estar aqui.'
+                : "Soulmon is built for people 18 and older, and based on what you entered, you're not there yet. This isn't about anything you did wrong — it's just what the app needs to work the way it was designed. Come back when you turn 18; we'll be here."}
             </p>
             <button
               type="button"

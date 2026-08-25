@@ -18,6 +18,23 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
+      # Mesmo problema do `ci.yml` (ver a justificativa longa lá): `class-system`
+      # resolve por `git+ssh` (`package-lock.json:5502`) e o runner não tem
+      # chave SSH — hoje passa só porque o repo irmão é PÚBLICO. Sem este step,
+      # o APK para de buildar no dia em que ele virar privado.
+      - name: Configurar acesso aos repos irmãos (sobrevive ao repo privado)
+        env:
+          SIBLING_REPOS_TOKEN: ${{ secrets.SIBLING_REPOS_TOKEN }}
+        run: |
+          if [ -n "$SIBLING_REPOS_TOKEN" ]; then
+            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "ssh://git@github.com/"
+            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "git@github.com:"
+          else
+            git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+            git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+            echo "::warning::SIBLING_REPOS_TOKEN ausente — HTTPS anônimo. Só funciona enquanto HexerVoodoom/Class-System for público."
+          fi
+
       - name: Install dependencies
         run: npm ci
 

@@ -116,7 +116,10 @@ export async function onRequestPost({ request, env }) {
     grantCredits: result.product.grantCredits,
     // Guardado para o reembolso saber o que desfazer depois (ver auditRefunds).
     provider,
-    productId: provider === 'play' ? body.productId : result.productId,
+    // Só o caminho da Steam devolve `productId` (verifySteamTxn); na Play quem
+    // informa é o cliente. O cast documenta isso em vez de mentir no @returns
+    // de verifySteamOwnership, que de fato não tem o campo.
+    productId: provider === 'play' ? body.productId : /** @type {{ productId?: string }} */ (result).productId,
     purchaseToken: provider === 'play' ? body.purchaseToken : undefined,
   });
 

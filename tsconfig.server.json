@@ -1,0 +1,48 @@
+{
+  // ---------------------------------------------------------------------------
+  // Typecheck do código de SERVIDOR (`functions/` + `workers/`).
+  //
+  // Por que existe: o `tsconfig.json` da raiz inclui SÓ `src`. Ou seja, até
+  // aqui o dinheiro (`functions/api/_entitlements.js`, `_billing.js`), a
+  // autorização (`_auth.js`) e o gate de tier não passavam por verificação
+  // nenhuma além dos testes — e a auditoria do run 01 achou defeito real
+  // exatamente nessa área.
+  //
+  // Como: `allowJs` + `checkJs`, então o que tipa é o JSDoc que o código já
+  // escrevia como documentação. Nenhum arquivo foi convertido para TS.
+  //
+  // Ajustes deliberados (cada um evita ruído SEM esconder defeito):
+  //  • `strict: true` — contraintuitivo, mas com `strictNullChecks: false` o TS
+  //    NÃO estreita união discriminada por `ok: true`/`ok: false`, e cada
+  //    `if (!gate.ok) return gate.reason` virava erro falso. Estrito dá MENOS
+  //    erro aqui, e os que sobram são de verdade.
+  //  • `noImplicitAny: false` — os parâmetros são JS sem anotação; exigir
+  //    anotação em todos seria reescrever o servidor inteiro, não achar bug.
+  //  • `useUnknownInCatchVariables: false` — `catch (err)` em JS; o valor é
+  //    logado, nunca desestruturado.
+  //  • `types: []` — não carrega @types global (vitest etc.); este projeto
+  //    checa código de runtime, não os testes.
+  // ---------------------------------------------------------------------------
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false,
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["functions/**/*.js", "workers/**/*.js", "types/**/*.d.ts"],
+  // FORA, e declarado:
+  //  • `**/*.test.js` — usam globais do vitest; incluí-los exigiria carregar
+  //    @types e não acha defeito de runtime. `npx vitest run` já os executa.
+  //  • `scripts/` — 4 erros hoje (`convert-to-webp.mjs`, `gen-decor.mjs`) e é
+  //    ferramenta de build, não caminho de produção. Próximo passo natural.
+  //  • `desktop/` — tem tsconfig próprio (`desktop-build.yml`).
+  "exclude": ["node_modules", "dist", "**/*.test.js"]
+}

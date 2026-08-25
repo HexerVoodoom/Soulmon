@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   ageOn, isAdult, isAgeBlocked, buildConsentRecord, normalizeConsent,
+  ageOnMonth, isAgeBlockedByMonth, monthYearFromText,
   MIN_AGE_YEARS, TERMS_VERSION, PRIVACY_VERSION,
 } from './consent';
 
@@ -124,5 +125,64 @@ describe('superfícies novas em PT-BR e EN', () => {
     expect(credits).toContain('Every pet is mechanically equal');
     expect(credits).toContain('sorteado aleatoriamente');
     expect(credits).toContain('randomly rolled');
+  });
+});
+
+describe('gate de idade no caminho DEMO — mês/ano no passo de consentimento', () => {
+  // O buraco que estes casos fecham: o demo pula o Oráculo inteiro
+  // (STRUGGLE_STEP → CONSENT_STEP → DEMO_PICK) e nunca chega ao passo da data,
+  // então o 18+ existia SÓ para quem pagava. A decisão do dono é 18+ para o
+  // produto.
+  it('demo com menos de 18 é barrado', () => {
+    expect(isAgeBlockedByMonth('2012-03', AGORA)).toBe(true);
+    expect(ageOnMonth('2012-03', AGORA)).toBe(14);
+  });
+
+  it('demo com 18 ou mais passa', () => {
+    expect(isAgeBlockedByMonth('2000-01', AGORA)).toBe(false);
+    expect(ageOnMonth('2000-01', AGORA)).toBe(26);
+  });
+
+  it('a folga do mês é resolvida para o lado generoso (assume o dia 1º)', () => {
+    // Nasceu em agosto/2008: em 25/08/2026 pode ter 17 (nasceu dia 26+) ou 18.
+    // Autodeclaração não ganha nada apertando a folga — quem quiser passar
+    // digita outro ano; apertar só criaria o risco de barrar adulto de verdade
+    // no mês do aniversário dele. Ver a nota em consent.ts.
+    expect(ageOnMonth('2008-08', AGORA)).toBe(MIN_AGE_YEARS);
+    expect(isAgeBlockedByMonth('2008-08', AGORA)).toBe(false);
+    // O mês seguinte inteiro ainda é de menor, e aí bloqueia.
+    expect(isAgeBlockedByMonth('2008-09', AGORA)).toBe(true);
+  });
+
+  it('mês/ano ausente ou ilegível NÃO barra — save antigo e quem já joga seguem', () => {
+    expect(isAgeBlockedByMonth(undefined, AGORA)).toBe(false);
+    expect(isAgeBlockedByMonth('', AGORA)).toBe(false);
+    expect(isAgeBlockedByMonth('2008', AGORA)).toBe(false);
+    expect(isAgeBlockedByMonth('13-2008', AGORA)).toBe(false);
+    expect(isAgeBlockedByMonth('não sei', AGORA)).toBe(false);
+  });
+
+  it('a máscara MM/AAAA só vira data quando está completa e o mês existe', () => {
+    expect(monthYearFromText('05/2000')).toBe('2000-05');
+    expect(monthYearFromText('12/1999')).toBe('1999-12');
+    expect(monthYearFromText('')).toBe('');
+    expect(monthYearFromText('05/20')).toBe('');
+    expect(monthYearFromText('00/2000')).toBe('');
+    expect(monthYearFromText('13/2000')).toBe('');
+  });
+
+  it('a tela do demo pede mês/ano, diz para que serve, e nos dois idiomas', () => {
+    const onboarding = ler('src/components/SoulmonOnboarding.tsx');
+    expect(onboarding).toContain('Em que mês e ano você nasceu?');
+    expect(onboarding).toContain('What month and year were you born?');
+    // Coleta declarada: a tela diz a finalidade e que a resposta não é guardada.
+    expect(onboarding).toContain('não guardamos essa resposta');
+    expect(onboarding).toContain("we don't store this answer");
+    // O campo só aparece no demo — no Oráculo a data cheia já confere.
+    expect(onboarding).toMatch(/const demoNeedsAge = flow === 'demo'/);
+    // E o avanço do passo de consentimento passa pelo gate.
+    expect(onboarding).toMatch(/isAgeBlockedByMonth\(demoAgeMonth\)/);
+    // A resposta NÃO é persistida: nada de writeJson/STORAGE_KEYS com ela.
+    expect(onboarding).not.toMatch(/writeJson\([^)]*demoAge/);
   });
 });

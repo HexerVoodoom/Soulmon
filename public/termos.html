@@ -75,7 +75,11 @@
 <p>O Soulmon vende duas coisas com dinheiro real:</p>
 <ul>
   <li>
-    <strong>Desbloqueio completo</strong> (pagamento único, R$ 29,90): libera
+    <!-- O preco vive dentro de data-price="full-unlock" nos DOIS idiomas.
+       src/utils/publishedPrice.test.ts compara com FULL_UNLOCK_PRICE_LABEL
+       (src/utils/monetization.ts) e reprova se divergirem. Nao escreva preco
+       fora do marcador: o mesmo teste reprova preco solto. -->
+    <strong>Desbloqueio completo</strong> (pagamento único, <span data-price="full-unlock">R$ 29,90</span>): libera
     gerar sua própria criatura, em vez de escolher entre os personagens de
     demonstração.
   </li>
@@ -197,7 +201,7 @@
 <p>Soulmon sells two things for real money:</p>
 <ul>
   <li>
-    <strong>Full unlock</strong> (one-time payment, R$29.90): lets you generate
+    <strong>Full unlock</strong> (one-time payment, <span data-price="full-unlock">R$29.90</span>): lets you generate
     your own creature instead of picking from the demo characters.
   </li>
   <li>

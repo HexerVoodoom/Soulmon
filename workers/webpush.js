@@ -97,7 +97,7 @@ async function encryptPayload(payload, p256dh, auth) {
  * @param {object} vapidJWK - private key as JWK object
  * @param {string} vapidPublicKey - base64url-encoded uncompressed P-256 public key
  * @param {string} contact - "mailto:..." or "https://..." for VAPID sub claim
- * @returns {{ status: number, ok: boolean }}
+ * @returns {Promise<{ status: number, ok: boolean }>}
  */
 export async function sendWebPush(sub, payload, vapidJWK, vapidPublicKey, contact) {
   const { protocol, host } = new URL(sub.endpoint);

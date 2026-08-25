@@ -49,22 +49,78 @@ jobs:
       # única forma de o CI falar sobre o lockfile em vez de sobre um resíduo de
       # commit. Mesmo comando de `android-build.yml:22`.
       # (Não commitamos nada de volta; o runner é descartável.)
+      # ── Repos irmãos por git+ssh ───────────────────────────────────────────
+      # `class-system` (dependency) resolve para
+      # `git+ssh://git@github.com/HexerVoodoom/Class-System.git`
+      # (`package-lock.json:5502`). NÃO há chave SSH no runner: hoje funciona
+      # só porque o repo é PÚBLICO e o npm cai sozinho no HTTPS anônimo. O dono
+      # declarou que pretende tornar o repositório privado — no dia em que isso
+      # acontecer, o `npm ci` abaixo morre com "Permission denied (publickey)",
+      # mensagem que não parece um problema de visibilidade e vai custar horas.
+      #
+      # ESCOLHA, e por que as outras foram descartadas:
+      #  • reescrever o lock para HTTPS — não resolve nada: HTTPS anônimo em
+      #    repo privado dá 404, e o problema é AUTENTICAÇÃO, não protocolo.
+      #  • deploy key (SSH) — funciona, mas obriga a manter um par de chaves e
+      #    um secret por repo irmão, e o `ssh-agent` some entre steps.
+      #  • `secrets.GITHUB_TOKEN` sozinho — NÃO serve: ele é escopado a ESTE
+      #    repositório e não enxerga `Class-System` privado.
+      #  • ESCOLHIDA: `git config url.<https+token>.insteadOf <ssh>`. Reescreve
+      #    o protocolo NO RUNNER, sem tocar em `package.json`/`package-lock.json`
+      #    (que são de outro dono — ver o ADR de repos irmãos do `alpha-architect`).
+      #    Um único ponto, vale para qualquer dependência git futura.
+      #
+      # DEGRADAÇÃO DELIBERADA: sem o secret, cai no HTTPS anônimo — que é
+      # exatamente o comportamento de hoje. Portanto este step nunca piora o
+      # estado atual; ele só já deixa o caminho pronto para o dia do privado.
+      - name: Configurar acesso aos repos irmãos (sobrevive ao repo privado)
+        env:
+          SIBLING_REPOS_TOKEN: ${{ secrets.SIBLING_REPOS_TOKEN }}
+        # `--add` NÃO é detalhe de estilo: as duas linhas gravam a MESMA chave
+        # (`url.<x>.insteadOf`) e, sem ele, a segunda SOBRESCREVE a primeira —
+        # sobra só o mapeamento `git@github.com:` e a URL do lock, que é
+        # `ssh://git@github.com/`, continua indo por SSH de verdade. Verificado
+        # na mão: sem `--add`, `git ls-remote ssh://git@github.com/...` falha
+        # com "Host key verification failed"; com `--add`, resolve o SHA.
+        run: |
+          if [ -n "$SIBLING_REPOS_TOKEN" ]; then
+            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "ssh://git@github.com/"
+            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "git@github.com:"
+            echo "::notice::Repos irmãos: HTTPS autenticado (SIBLING_REPOS_TOKEN presente)."
+          else
+            git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+            git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+            echo "::warning::SIBLING_REPOS_TOKEN ausente — usando HTTPS ANÔNIMO. Funciona SÓ enquanto HexerVoodoom/Class-System for público. Crie o secret (PAT fine-grained, escopo Contents:read nos repos irmãos) ANTES de tornar o repo privado."
+          fi
+
       - name: Install dependencies (npm ci — descarta o node_modules versionado)
         run: npm ci
 
-      # `class-system` (dependency) resolve para
-      # `git+ssh://git@github.com/HexerVoodoom/Class-System.git` no
-      # `package-lock.json:5502`. Não há chave SSH no runner; funciona porque o
-      # repo é PÚBLICO e o npm cai sozinho no HTTPS. Se ele virar privado, é
-      # AQUI que o CI quebra — e a mensagem será "Permission denied (publickey)",
-      # que não parece um problema de visibilidade de repositório.
+      # Verificação EXECUTADA, não confiança no exit code do npm: se a
+      # dependência de git falhar em silêncio (ou for podada), o gate tem que
+      # apontar a causa em vez de estourar 40 linhas adiante.
+      - name: Verificar que a dependência de git resolveu (class-system)
+        run: |
+          if [ ! -f node_modules/class-system/package.json ]; then
+            echo "::error::class-system NÃO instalou. Se o repo irmão virou privado, crie o secret SIBLING_REPOS_TOKEN (PAT fine-grained, Contents:read em HexerVoodoom/Class-System)."
+            exit 1
+          fi
+          node -e "console.log('class-system', require('./node_modules/class-system/package.json').version)"
 
-      # `tsc --noEmit` cobre SÓ `src/` (`tsconfig.json > include`). `functions/`,
-      # `workers/` e `scripts/` são JS e não passam por typecheck nenhum;
+      # `tsc --noEmit` cobre SÓ `src/` (`tsconfig.json > include`).
       # `desktop/` tem tsconfig próprio e é checado em `desktop-build.yml:30`,
       # mas só quando o push toca nos paths dele.
-      - name: Typecheck (npx tsc --noEmit)
+      - name: Typecheck do app (npx tsc --noEmit — só src/)
         run: npx tsc --noEmit
+
+      # Servidor: `functions/` e `workers/` são JS e NÃO entravam em typecheck
+      # nenhum — inclusive `_entitlements.js`/`_billing.js` (dinheiro) e
+      # `_auth.js` (autorização), onde a auditoria do run 01 achou defeito real.
+      # `tsconfig.server.json` liga `checkJs` e tipa pelo JSDoc que já existia.
+      # FORA, de propósito e declarado lá: `scripts/` (ferramenta de build, 4
+      # erros abertos), `**/*.test.js` e `desktop/`.
+      - name: Typecheck do servidor (functions/ + workers/)
+        run: npx tsc -p tsconfig.server.json --noEmit
 
       - name: Testes (npx vitest run)
         run: npx vitest run

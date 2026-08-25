@@ -86,7 +86,7 @@ export async function getFcmAccessToken(serviceAccount) {
  * @param {{title: string, body: string, tag?: string}} notif
  * @param {string} projectId - Firebase project_id (from the service account)
  * @param {string} accessToken - from getFcmAccessToken()
- * @returns {{ status: number, ok: boolean, error?: string }}
+ * @returns {Promise<{ status: number, ok: boolean, error?: string }>}
  */
 export async function sendFcmPush(token, notif, projectId, accessToken) {
   const res = await fetch(

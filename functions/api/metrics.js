@@ -153,7 +153,8 @@ export function sanitizeRecord(record, today) {
 
 /**
  * Valida o lote inteiro.
- * @returns `{ ok, events, reason }` — `events` já agrupados por dia.
+ * @returns {{ ok: true, events: Array<{ e: string, d: string, p?: object }> }
+ *         | { ok: false, reason: string }} `events` já agrupados por dia.
  */
 export function sanitizeBatch(body, today = serverDay()) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
