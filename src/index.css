@@ -7372,3 +7372,20 @@ body {
   border-color: var(--sm2-line);
   color: var(--sm2-ink);
 }
+
+
+/* ── Sintonia do Visor (spec `soulmon-02/spec-geracao-incremental.md` §2.3.1)
+   A troca da arte de reserva pelo sprite próprio: fade de 120 ms, e o 120 ms é
+   o token de movimento que já existe (`--sm2-dur-tap`), não um número novo.
+   Com movimento reduzido a troca vira CORTE SECO — ela continua acontecendo,
+   só sem a transição (§6 da spec). */
+@keyframes sm-visor-swap-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.sm-visor-swap {
+  animation: sm-visor-swap-in var(--sm2-dur-tap, 120ms) var(--sm2-ease, ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-visor-swap { animation: none; }
+}

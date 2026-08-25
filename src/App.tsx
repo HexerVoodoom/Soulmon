@@ -19,6 +19,8 @@ import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { EvolveTaskModal } from './components/EvolveTaskModal';
 import { EvolutionCeremony } from './components/EvolutionCeremony';
+import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
+import { emptySpriteLibrary, revertVisor, displaySprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
@@ -559,6 +561,7 @@ export default function App() {
     () => computeCarePattern(careHistory(gameState)),
     [gameState.completedTasks, gameState.activityLog],
   );
+
   const [guideModalOpen, setGuideModalOpen] = useState(false);
   // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
   // Créditos (monetização) — modal próprio, aberto pelo menu sanduíche.
@@ -594,6 +597,42 @@ export default function App() {
   const [fullSignal, setFullSignal] = useState(0);
   // Daily report: shown once per day, on the first open after the reset ran.
   const [showDailyReport, setShowDailyReport] = useState(false);
+  // ── Geração incremental de sprite (spec `soulmon-02/spec-geracao-incremental.md`)
+  //    A regra não mora aqui: o gatilho é `utils/spriteTrigger.ts`, o acervo é
+  //    `utils/spriteLibrary.ts`, e a forma-destino vem da MESMA
+  //    `evolutionTarget()` que a cerimônia commita — nada de quarta cópia.
+  const spriteAcervo = libraryOf(gameState);
+  const updateSpriteLibrary = useCallback(
+    (fn: (prev: SpriteLibrary) => SpriteLibrary) =>
+      setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
+    [setGameState],
+  );
+  const spriteGen = useSpriteGeneration({
+    trigger: {
+      evolutionStage: gameState.evolutionStage,
+      currentBranch: gameState.currentBranch,
+      unlockedEvolutions: gameState.unlockedEvolutions,
+      perfectDays: gameState.perfectDays,
+      points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+      reading: carePatternReading,
+    },
+    library: spriteAcervo,
+    updateLibrary: updateSpriteLibrary,
+    stages: gameState.soulmonStages,
+    dayKey: dayKeyOf(new Date()),
+    // As quatro regras de janela do §3.3: nada parte (e nada troca de rosto)
+    // durante a cerimônia, o relatório diário ou uma animação de cuidado.
+    busy: !!evolutionCeremony || showDailyReport || !!careEvent || !!feedAnim,
+    // NÃO é pré-checagem de tier (quem decide é o servidor): é o corte de quem
+    // não tem árvore própria e portanto não teria prompt para mandar.
+    enabled: !gameState.demoCharacterId && (gameState.soulmonStages?.length ?? 0) > 0,
+  });
+  const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
+  const handleRevertVisor = useCallback(
+    (formId: string) => updateSpriteLibrary(prev => revertVisor(prev, formId)),
+    [updateSpriteLibrary],
+  );
+
 
   // ── Os rituais do motor de tarefas (utils/rituals.ts) ─────────────────────
   // Check-in matinal: no MÁXIMO 1× por dia (`lastCheckInDate` no save) e
@@ -3588,6 +3627,9 @@ export default function App() {
                 evolutionStage={gameState.evolutionStage}
                 eggType={gameState.eggType}
                 demoCharacterId={gameState.demoCharacterId}
+                /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
+                   segue na arte de reserva, que nunca é erro. */
+                ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
                 healthPoints={gameState.healthPoints}
                 maxHealthPoints={gameState.maxHealthPoints}
                 dominantBranch={getDominantBranch()}
@@ -3988,6 +4030,9 @@ export default function App() {
               onToggleEvolutionLock={handleToggleEvolutionLock}
               language={language}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              spriteLibrary={spriteAcervo}
+              onTuneVisor={handleTuneVisor}
+              onRevertVisor={handleRevertVisor}
               forecastBranch={resolveBranch(
                 { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
                 carePatternReading,

@@ -129,6 +129,11 @@ interface CompanionHUDProps {
   eggType?: 'tapirmon' | 'veemon' | 'salamon';
   /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
   demoCharacterId?: string;
+  /** Sprite PRÓPRIO da forma atual, quando existe **e já foi adotado**
+   *  (`utils/spriteLibrary.ts`). Ausente = arte de reserva, que é o piso e
+   *  nunca um erro: o visor não tem estado de carregamento nem de erro
+   *  (`spec-geracao-incremental.md` §2.1). */
+  ownSpriteUrl?: string;
   healthPoints: number;
   maxHealthPoints: number;
   dominantBranch: 'virus' | 'data' | 'vaccine' | 'balanced';
@@ -183,6 +188,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   evolutionStage,
   eggType = 'tapirmon',
   demoCharacterId,
+  ownSpriteUrl,
   healthPoints,
   maxHealthPoints, 
   dominantBranch, 
@@ -632,7 +638,9 @@ export const CompanionHUD = memo(function CompanionHUD({
       .catch(() => {});
   };
 
-  const sprite = getSpriteForStage(evolutionStage, demoCharacterId);
+  // O visor mostra a criatura, e só isso. Sprite próprio quando adotado; senão
+  // a arte de reserva, imediatamente, sem placeholder e sem spinner.
+  const sprite = ownSpriteUrl ?? getSpriteForStage(evolutionStage, demoCharacterId);
 
 
   // Sprites da nossa arte são desenhados olhando pra DIREITA — a única regra

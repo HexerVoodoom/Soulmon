@@ -12,6 +12,7 @@ import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
+import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
@@ -179,6 +180,12 @@ export interface GameState {
    *  (utils/oracle.ts generateOracle().creature.stages) e congelada — nomes,
    *  descrições e prompts de imagem de cada forma. */
   soulmonStages?: CreatureStage[];
+  /** Acervo de sprites GERADOS por forma + estado da adoção do visor
+   *  (`utils/spriteLibrary.ts`, spec `soulmon-02/spec-geracao-incremental.md`).
+   *  Guarda **só a URL** de cada forma (~120 bytes): base64 aqui iria ao
+   *  localStorage — cota compartilhada com o DigiApp — e subiria à KV a cada
+   *  debounce de 3 s (`custo-geracao-sprite.md` §4). */
+  spriteLibrary?: SpriteLibrary;
   /** As duas skills de cada estágio. Persistidas junto das formas porque o
    *  perfil do oráculo (`soulmon-profile`) vive só no localStorage e NÃO vai
    *  na nuvem: num aparelho novo a página do Pet perdia metade do conteúdo
@@ -770,6 +777,11 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         droppedItems: strArr(loadedState.droppedItems),
         // A árvore do oráculo: cada forma é lida por `creatureFormId(s)`, que
         // acessa campos do objeto — um item primitivo aqui derruba a tela do Pet.
+        // Acervo de sprites: o save vem do localStorage E da nuvem, os dois são
+        // dado não confiável. `normalizeSpriteLibrary` devolve acervo vazio para
+        // qualquer coisa estranha — e acervo vazio é a arte de RESERVA, que
+        // nunca é erro (Invariante nº 1 da spec).
+        spriteLibrary: normalizeSpriteLibrary(loadedState.spriteLibrary),
         soulmonStages: Array.isArray(loadedState.soulmonStages)
           ? (loadedState.soulmonStages as unknown[]).filter(
               (s): s is CreatureStage => !!s && typeof s === 'object' && !Array.isArray(s),

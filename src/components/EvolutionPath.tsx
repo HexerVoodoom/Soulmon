@@ -33,6 +33,9 @@ import { useState, useMemo, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
+import { cardState, displaySprite, emptySpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
+import { spriteText } from '../utils/spriteCopy';
+import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
 import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
@@ -80,6 +83,13 @@ interface EvolutionPathProps {
   carePattern?: { emoji: string; namePt: string; nameEn: string } | null;
   /** Galho que a próxima evolução vai seguir, já resolvido. */
   forecastBranch?: Attr;
+  /** Acervo de sprites gerados (`utils/spriteLibrary.ts`). Ausente = tudo na
+   *  arte de reserva, que é o piso e nunca é erro. */
+  spriteLibrary?: SpriteLibrary;
+  /** "Sintonizar o Visor" — a adoção do sprite próprio é gesto do JOGADOR. */
+  onTuneVisor?: (formId: string) => void;
+  /** "Voltar ao traço antigo" — devolve a reserva sem apagar o sprite pago. */
+  onRevertVisor?: (formId: string) => void;
 }
 
 const card: CSSProperties = {
@@ -123,6 +133,9 @@ export function EvolutionPath({
   language = 'en-US',
   carePattern,
   forecastBranch,
+  spriteLibrary,
+  onTuneVisor,
+  onRevertVisor,
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
   // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
@@ -156,6 +169,25 @@ export function EvolutionPath({
   const branchHex = ATTR_COLOR[selectedBranch];
 
   const formaAtual = stages.find(s => creatureFormId(s) === currentStageId);
+
+  /**
+   * A criatura ATUAL: sprite PRÓPRIO só quando ele já foi adotado. Enquanto o
+   * jogador não sintoniza (ou depois de ele voltar ao traço antigo),
+   * `displaySprite` devolve `null` e a arte de reserva assume — que é o piso do
+   * Invariante nº 1, e nunca um erro.
+   */
+  const acervo = spriteLibrary ?? emptySpriteLibrary();
+  const spriteAtual = displaySprite(acervo, currentStageId)?.url
+    ?? getSpriteForStage(currentStageId, demoCharacterId);
+  // "Iminente" é contra `required` (4/5/5/6) — o número que os dois portões de
+  // evolução manual leem — e NÃO contra `daysToEvolve`, que sobrevive só como
+  // rótulo da barra desta página (`spec-geracao-incremental.md` §3.1).
+  const estadoAtual = cardState(acervo, currentStageId, {
+    generating: [],
+    imminent: pointsToEvolve(currentStageId, digivolutionSegments) <= 1,
+    reachable: true,
+    online: true,
+  });
 
   /**
    * O nó que a página JÁ dizia em texto ("Seguindo para Harmonia"), agora
@@ -437,7 +469,16 @@ export function EvolutionPath({
             : (isPt ? 'Seu Soulmon' : 'Your Soulmon')}
           screenStyle={{ position: 'relative' }}
         >
-          <img src={getSpriteForStage(currentStageId, demoCharacterId)} alt="" style={spriteInScreen} />
+          <img
+            src={spriteAtual}
+            alt=""
+            style={spriteInScreen}
+            /* Fade de 120 ms na troca reserva→próprio: reusa o token de
+               movimento que já existe (`--sm2-dur-tap`), e ele já respeita
+               `prefers-reduced-motion` no `index.css`. */
+            className="sm-visor-swap"
+            key={spriteAtual}
+          />
         </Viewport>
 
         <div style={{ textAlign: 'center', maxWidth: 380 }}>
@@ -501,6 +542,54 @@ export function EvolutionPath({
                 ? 'Ele vai evoluir sozinho assim que o dia virar.'
                 : 'It will evolve on its own at the next day’s turn.')}
         </p>
+
+        {/* ── A SINTONIA (spec §2.3.1) ──────────────────────────────────────
+            A criatura ATUAL é o único objeto do jogo cuja troca sempre teve
+            ritual, então quem troca o rosto dela é o JOGADOR. O controle mora
+            aqui, no card da forma atual — nenhum modal, nenhum push, nenhum
+            toast: o Invariante nº 2 continua valendo e isto nunca interrompe o
+            jogo. Os dois botões têm 44px de alvo real e **não** recebem foco
+            automático: são alcançáveis, nunca impostos. */}
+        {estadoAtual === 'A_SINTONIZAR' && onTuneVisor && (
+          <div
+            style={{ ...card, width: '100%', maxWidth: 380, textAlign: 'center' }}
+            data-testid="sm-tune-card"
+          >
+            <p style={{ ...sm2Text, margin: 0 }}>{spriteText('tuneReady', language)}</p>
+            <button
+              type="button"
+              onClick={() => onTuneVisor(currentStageId)}
+              style={{ ...sm2Button('primary'), marginTop: 12, minHeight: 44, minWidth: 220 }}
+            >
+              {spriteText('tune', language)}
+            </button>
+            {/* A troca deixa de ser silenciosa porque é ANUNCIADA ANTES. */}
+            <p style={{ ...sm2Hint, marginTop: 8 }}>{spriteText('tuneAuto', language)}</p>
+          </div>
+        )}
+
+        {/* Desfazer: o sprite próprio fica no save e pode ser sintonizado de
+            novo a qualquer momento — re-sintonizar NÃO chama geração, logo não
+            toca teto nenhum. Trocar o rosto do bicho sem saída é a versão
+            educada do mesmo erro. */}
+        {estadoAtual === 'PROPRIO' && onRevertVisor && (
+          <button
+            type="button"
+            onClick={() => onRevertVisor(currentStageId)}
+            style={{ ...sm2Button('ghost'), minHeight: 44, minWidth: 220 }}
+          >
+            {spriteText('revert', language)}
+          </button>
+        )}
+        {acervo.reverted.includes(currentStageId) && onTuneVisor && (
+          <button
+            type="button"
+            onClick={() => onTuneVisor(currentStageId)}
+            style={{ ...sm2Button('ghost'), minHeight: 44, minWidth: 220 }}
+          >
+            {spriteText('tune', language)}
+          </button>
+        )}
       </section>
 
       {/* ─────────── Para onde ele está indo ─────────── */}
