@@ -62,6 +62,7 @@ import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './ut
 import { heartDropBonus, rollPetPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
+import { evolutionTarget } from './utils/evolutionTarget';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
 import {
@@ -1776,19 +1777,26 @@ export default function App() {
    * que é recriada a cada render e devolveria a identidade instável pela porta
    * dos fundos. Assim a identidade só muda quando a DECISÃO muda (ganhou
    * atributo, evoluiu, destravou galho), e não a cada tique do relógio.
+   * (`carePatternReading` é `useMemo` sobre `completedTasks`/`activityLog`, então
+   * entra nas deps sem reintroduzir identidade instável.)
+   *
+   * A decisão em si NÃO mora aqui: quem anuncia o destino chama a MESMA
+   * `evolutionTarget` que o `handleEvolve` commita. Este handler reimplementava
+   * a regra à mão e mandava todo empate para `data`, sem consultar o ritmo —
+   * empate vírus/vacina com leitura confiável anunciava `ultimate-data` e
+   * gravava `ultimate-virus`. Ver `utils/evolutionTarget.ts` (footgun 9).
    */
-  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions } = gameState;
+  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch } = gameState;
   const handleEvolveRequest = useCallback(() => {
-    const total = virusPoints + dataPoints + vaccinePoints;
-    let b: 'virus' | 'data' | 'vaccine' = 'data';
-    if (total > 0) {
-      const max = Math.max(virusPoints, dataPoints, vaccinePoints);
-      if (virusPoints === max && virusPoints > dataPoints && virusPoints > vaccinePoints) b = 'virus';
-      else if (vaccinePoints === max && vaccinePoints > virusPoints && vaccinePoints > dataPoints) b = 'vaccine';
-    }
-    const next = getNextEvolution(evolutionStage, b, unlockedEvolutions);
+    const { stage: next } = evolutionTarget({
+      points: { virus: virusPoints, data: dataPoints, vaccine: vaccinePoints },
+      reading: carePatternReading,
+      currentBranch,
+      evolutionStage,
+      unlockedEvolutions,
+    });
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions]);
+  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, carePatternReading]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -1807,20 +1815,18 @@ export default function App() {
       // dado), sem significado nenhum. É a ideia dos care mistakes do v-pet de
       // 97: o jeito como você cuidou define quem seu bicho vira, e nenhum jeito
       // é melhor que o outro. Ver utils/carePattern.ts.
-      const newCurrentBranch = resolveBranch(
-        { virus: prev.virusPoints, data: prev.dataPoints, vaccine: prev.vaccinePoints },
+      const alvo = evolutionTarget({
+        points: { virus: prev.virusPoints, data: prev.dataPoints, vaccine: prev.vaccinePoints },
         // `careHistory(prev)`, não `prev.completedTasks`: a página de Evolução
         // prevê o galho com tarefas + activityLog, e ler só as tarefas aqui
         // fazia a cerimônia entregar um galho diferente do prometido.
-        computeCarePattern(careHistory(prev)),
-        prev.currentBranch,
-      );
-
-      newEvolutionStage = getNextEvolution(
-        prev.evolutionStage,
-        newCurrentBranch,
-        prev.unlockedEvolutions,
-      );
+        reading: computeCarePattern(careHistory(prev)),
+        currentBranch: prev.currentBranch,
+        evolutionStage: prev.evolutionStage,
+        unlockedEvolutions: prev.unlockedEvolutions,
+      });
+      const newCurrentBranch = alvo.branch;
+      newEvolutionStage = alvo.stage;
       newSegmentsNeeded = EVOLVE_SEGMENTS[getStageLevel(newEvolutionStage)] ?? newSegmentsNeeded;
       newHP = getMaxHPForStage(newEvolutionStage);
 
@@ -3551,8 +3557,16 @@ export default function App() {
                 canEvolve={(() => {
                   const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
                   if (gameState.evolutionLocked || gameState.perfectDays < req) return false;
-                  const b = getDominantBranch();
-                  const next = getNextEvolution(gameState.evolutionStage, b === 'balanced' ? 'data' : b, gameState.unlockedEvolutions);
+                  // Mesma fonte que anuncia e que commita (utils/evolutionTarget.ts):
+                  // `getDominantBranch` mandava todo empate para `data` e podia
+                  // liberar/travar o botão contra um destino que não era o real.
+                  const { stage: next } = evolutionTarget({
+                    points: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
+                    reading: carePatternReading,
+                    currentBranch: gameState.currentBranch,
+                    evolutionStage: gameState.evolutionStage,
+                    unlockedEvolutions: gameState.unlockedEvolutions,
+                  });
                   return next !== gameState.evolutionStage;
                 })()}
                 onEvolveRequest={handleEvolveRequest}
