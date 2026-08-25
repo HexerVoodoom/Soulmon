@@ -4,3 +4,6 @@ node_modules/
 
 # Artefato de build TWA antigo (DigiApp) — o app hoje é Capacitor.
 bubblewrap_build/
+
+# Artefatos de runs da SQUAD-Alpha - contem relatorios de seguranca; ficam so no disco
+squad-alpha-runs/
