@@ -8,6 +8,14 @@ export default defineConfig({
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: {
+      // O motor do Class-System entra pelo ARTEFATO COMPILADO commitado em
+      // `vendor/class-system/`, e NÃO por dependência npm de git (ADR-002 §1).
+      // A resolução antiga (`git+ssh://…/Class-System.git` no package-lock) só
+      // funcionava porque o repositório é público; no dia em que ele virar
+      // privado o `npm ci` do Cloudflare Pages falha e a `main` para de
+      // publicar. Com o alias, o build não busca rede nem credencial nenhuma.
+      // Atualizar o vendor: `npm run vendor:class-system` (clone irmão).
+      'class-system': path.resolve(__dirname, './vendor/class-system/index.js'),
       'vaul@1.1.2': 'vaul',
       'sonner@2.0.3': 'sonner',
       'recharts@2.15.2': 'recharts',

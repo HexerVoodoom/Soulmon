@@ -1,0 +1,12 @@
+{
+  "repo": "https://github.com/HexerVoodoom/Class-System",
+  "ref": "main",
+  "sha": "fb8664553142bf9080782ae553395e57e493757a",
+  "commitDate": "2026-08-17T11:53:37-03:00",
+  "commitSubject": "Sinergia de alvo único alimenta o destrave; lista mostra progresso (#8)",
+  "generatedAt": "2026-08-25T17:03:25.944Z",
+  "generatedBy": "scripts/vendor-class-system.mjs",
+  "bundleSha256": "09dbe3ffbf5e8b2bd8276f279f66cbb4b7fe1a624923bfbc12e9e197d776a7a7",
+  "bundleBytes": 226978,
+  "note": "Artefato COMPILADO, commitado (ADR-002 §1). O build do Soulmon não busca este repositório. Para atualizar: rode `npm run vendor:class-system` com o clone irmão atualizado e `npm run sync:oracle-data` (os fixtures de paridade de `cascata.parity.test.ts` têm que vir do MESMO SHA)."
+}

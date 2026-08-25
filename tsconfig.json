@@ -15,7 +15,14 @@
     "noEmit": true,
     "skipLibCheck": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      // O `class-system` deixou de ser dependência npm (ADR-002 §1): o motor
+      // vem do artefato compilado em `vendor/class-system/`, commitado. Aqui
+      // entram só os `.d.ts` — declaração não é compilada pelo nosso tsconfig
+      // estrito, que é exatamente a propriedade que a decisão de snapshot
+      // (`scripts/sync-oracle-data.mjs:14-19`) exigia e que o `.ts` de origem
+      // vindo por `node_modules` violava.
+      "class-system": ["./vendor/class-system/index.d.ts"]
     }
   },
   "include": ["src"],

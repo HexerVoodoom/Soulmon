@@ -10,6 +10,56 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 Última atualização: **pesadelos, passos e "mais consequências em vez de mais
 medidores" (19/08/2026)**.
 
+## 🔴 Class-System saiu do `npm ci` — artefato vendorizado (25/08/2026, ADR-002 §1)
+
+**O problema, que já era verdade antes desta mudança:** o `class-system` é
+CÓDIGO EXECUTÁVEL dentro do bundle (`src/utils/soulProfile/ficha/realEngine.ts:26`,
+`await import('class-system')`) e entrava como dependência npm de git, resolvida
+no `package-lock.json` como `git+ssh://git@github.com/HexerVoodoom/Class-System.git`.
+Isso **só funcionava porque o repositório é público** (o npm cai para HTTPS
+anônimo quando o SSH falha). O Cloudflare Pages roda `npm ci` a cada deploy —
+então no dia em que o dono clicasse em "make private", **o `npm ci` do Cloudflare
+falharia e a `main` pararia de publicar no push seguinte**. Não é degradação: é o
+site fora do ar, sem aviso.
+
+**O que entrou:** `vendor/class-system/` — bundle ESM + árvore de `.d.ts` +
+`_provenance.json` (repo, ref, SHA, data, sha256 do bundle), tudo commitado,
+gerado por `npm run vendor:class-system` a partir do clone irmão. Alias em
+`vite.config.ts` e `paths` no `tsconfig.json`; o `realEngine.ts` **não mudou uma
+linha** e o import DINÂMICO continua igual — o motor segue fora do bundle
+inicial (medido: bundle inicial idêntico antes/depois, 620.523 B). A dependência
+saiu do `package.json` e do `package-lock.json`.
+
+**O `.d.ts` é autossuficiente de propósito**: o motivo original do snapshot
+(`scripts/sync-oracle-data.mjs:14-19`) é que o typecheck estrito não pode
+depender do `tsconfig` de outro repositório. Declaração não é compilada, e
+`skipLibCheck` cobre o resto.
+
+**Atualizar o vendor** é `npm run vendor:class-system` **junto** com
+`npm run sync:oracle-data` — os fixtures de `cascata.parity.test.ts` e o vendor
+têm que vir do MESMO SHA. Hoje NÃO vêm (ver dívida abaixo).
+
+**🟠 ACHADO, e ele não é do vendor — o vendor só o tornou visível.** Com o motor
+canônico dentro do repo, dá para confrontar a réplica manual da cascata
+(`src/utils/soulProfile/ficha/cascata.ts`) contra o motor VIVO em vez de contra
+fixtures de sync. Feito o confronto: **35 de 538 pares divergem** numa varredura
+de 300 fichas aleatórias. Causa: o `fb866455` do Class-System (PR #8, "sinergia
+de alvo único alimenta o destrave") passou a alimentar a cascata com o transbordo
+de sinergias de alvo único, e a réplica não modela isso. O
+`cascata.parity.test.ts` não pegava porque seus 7 fixtures foram gerados no SHA
+`1025012c` — de uma **branch de trabalho**, anterior ao PR — e cobrem só
+`fogo`/`agua`, que não têm sinergia de alvo único. É o footgun 9 acontecendo
+dentro do próprio antídoto: **fixture de sync envelhece em silêncio**.
+
+O teste NÃO foi maquiado nem afrouxado. Entrou um bloco novo que confronta os
+quatro diais contra o motor vivo (verde). O confronto de COMPORTAMENTO ficou de
+fora **com o motivo escrito no arquivo**: corrigir a réplica muda a distribuição
+de pontos da ficha e mexe na cobertura travada por simulação (17/17 elementos,
+65/65 talentos, 11/11 profissões, 32/32 criaturas) — é decisão de produto, não
+de infraestrutura de build. **Pergunta ao dono: a réplica deve passar a modelar
+o transbordo de sinergia, ou o Soulmon congela a regra antiga de propósito?**
+
+
 **O que foi feito.** Três decisões novas do dono viraram código e entraram no
 `docs/PLANO-TAREFAS.md` (Partes 3a, 3b, 3c + Roadmap reescrito):
 

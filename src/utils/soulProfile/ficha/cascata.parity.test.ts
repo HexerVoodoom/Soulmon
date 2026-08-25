@@ -88,3 +88,47 @@ describe('paridade com o motor real do class-system', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// PARIDADE VIVA — só possível depois do vendor (ADR-002 §1).
+//
+// Até aqui a única referência era `cascataFixtures`, gerado pelo motor real no
+// momento do `npm run sync:oracle-data`. Isso tem um buraco estrutural: o
+// fixture envelhece em silêncio. O snapshot em uso foi gerado no SHA
+// `1025012c` (`classSystem.data.json → _provenance`), de uma branch de
+// trabalho — e o vendor está em `fb866455` (`vendor/class-system/
+// _provenance.json`). São SHAs diferentes.
+//
+// Com o artefato compilado DENTRO do repo, o motor canônico está disponível em
+// teste sem rede e sem credencial. Isto NÃO é tautologia: a réplica
+// (`cascata.ts`) é código escrito à mão no Soulmon; o vendor é o binário do
+// class-system. São dois autores diferentes do mesmo número — que é
+// exatamente o que o footgun 9 pede que se confronte.
+//
+// O bloco abaixo confronta os DIAIS contra o motor vivo. O confronto de
+// COMPORTAMENTO (passivos par a par sobre fichas arbitrárias) está
+// deliberadamente FORA daqui: ele acusa divergência real hoje (35 de 538
+// pares numa varredura de 300 fichas), porque o `fb866455` do class-system
+// introduziu transbordo de sinergia de alvo único na cascata e a réplica não
+// modela isso. Corrigir a réplica muda a distribuição de pontos da ficha e a
+// cobertura travada por simulação — é decisão de produto, não de vendor.
+// Ver o achado no run `soulmon-02`.
+// ---------------------------------------------------------------------------
+describe('diais batem com o MOTOR VIVO vendorizado (não com o fixture velho)', () => {
+  it('divisor, limiar e custo por aridade vêm do próprio class-system', async () => {
+    const engine = await import('class-system');
+    expect(DIVISOR_CASCATA_PAR).toBe(engine.DIVISOR_CASCATA[2]);
+    expect(LIMIAR_DESTRAVAMENTO_PAR).toBe(engine.LIMIAR_DESTRAVAMENTO[2]);
+    expect(CUSTO_PONTO_BASE).toBe(engine.CUSTO_PONTO_ALOCACAO[1]);
+    expect(CUSTO_PONTO_PAR).toBe(engine.CUSTO_PONTO_ALOCACAO[2]);
+  });
+
+  it('o vendor declara procedência (repo + SHA) — sem isso ninguém sabe o que roda', async () => {
+    const prov = (await import('../../../../vendor/class-system/_provenance.json')).default as {
+      repo: string;
+      sha: string;
+    };
+    expect(prov.repo).toContain('Class-System');
+    expect(prov.sha).toMatch(/^[0-9a-f]{40}$/);
+  });
+});

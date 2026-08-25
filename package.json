@@ -37,7 +37,6 @@
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
     "astronomy-engine": "^2.1.19",
-    "class-system": "github:HexerVoodoom/Class-System",
     "class-variance-authority": "^0.7.1",
     "clsx": "*",
     "cmdk": "^1.1.1",
@@ -74,6 +73,7 @@
   },
   "scripts": {
     "sync:oracle-data": "node scripts/sync-oracle-data.mjs",
+    "vendor:class-system": "node scripts/vendor-class-system.mjs",
     "dev": "vite",
     "build": "vite build && node scripts/convert-to-webp.mjs && npx wrangler pages functions build --outdir=./dist/_worker.js/",
     "test": "vitest run",
