@@ -11,6 +11,7 @@ import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
+import { normalizeConsent, type ConsentRecord } from '../utils/consent';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
@@ -268,6 +269,13 @@ export interface GameState {
    */
   soulGoal?: string;
   soulStruggle?: string;
+  /**
+   * Prova do consentimento aceito no onboarding: quando (ISO) e QUAL versão de
+   * cada documento. Um booleano não diz a que texto a pessoa disse sim.
+   * **Opcional de propósito**: save anterior aos Termos não tem o campo, e
+   * ausência aqui nunca pode virar bloqueio (utils/consent.ts).
+   */
+  consent?: ConsentRecord;
   /**
    * Check-in de humor, opcional e curto. Só o histórico recente é guardado —
    * é registro de acompanhamento, NUNCA insumo de pontuação ou de penalidade.
@@ -726,6 +734,9 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // de item (string) em cada um.
         equippedDecor: hydrateDecor(migrateDecor(loadedState)),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
+        // Sem `?? padrão` de valor: aqui o padrão É a ausência. Save antigo
+        // continua sem consentimento registrado — e continua jogando.
+        consent: normalizeConsent(loadedState.consent),
         soulGoal: str(loadedState.soulGoal) ?? '',
         soulStruggle: str(loadedState.soulStruggle) ?? '',
         moodLog: arr<unknown>(loadedState.moodLog).filter(
@@ -841,6 +852,7 @@ function freshGameState(): GameState {
       equippedDecor: {},
       soulGoal: '',
       soulStruggle: '',
+      consent: undefined,
       moodLog: [],
       activityLog: [],
       petPassive: rollPetPassive(),

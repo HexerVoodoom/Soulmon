@@ -216,8 +216,8 @@ export function CreditsModal({
           onClick={() => setConfirmingReroll(true)}
           title={isPt ? 'Reroll de personagem' : 'Character reroll'}
           hint={isPt
-            ? `${REROLL_COST_CREDITS} créditos — volta pra Rookie com um Soulmon novo`
-            : `${REROLL_COST_CREDITS} credits — resets to Rookie with a brand-new Soulmon`}
+            ? `${REROLL_COST_CREDITS} créditos — volta pra Rookie com um Soulmon novo. Todo pet é igual em atributos: muda a identidade, não o poder.`
+            : `${REROLL_COST_CREDITS} credits — resets to Rookie with a brand-new Soulmon. Every pet is equal in stats: it changes identity, not power.`}
         />
       )}
 
@@ -227,9 +227,13 @@ export function CreditsModal({
         <div style={{ padding: 12, borderRadius: 16, backgroundColor: 'var(--sm2-surface-2)', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <p style={{ ...sm2Text, margin: 0, display: 'flex', gap: 10 }}>
             <Icon name="warning" size={20} tone="danger" />
+            {/* O reroll é SORTEIO: o texto diz isso e diz que o resultado não
+                muda o poder do pet — todo pet é mecanicamente igual (regra do
+                jogo). Vender aleatoriedade sem essa frase é vender a ilusão de
+                que existe um resultado melhor. */}
             {isPt
-              ? `Troca seu Soulmon por um NOVO e reseta a evolução pra Rookie. Atividades, tarefas e Bits continuam. Custa ${REROLL_COST_CREDITS} créditos.`
-              : `Swaps your Soulmon for a brand-new one and resets evolution to Rookie. Activities, tasks and Bits stay. Costs ${REROLL_COST_CREDITS} credits.`}
+              ? `Troca seu Soulmon por um NOVO, sorteado aleatoriamente — e reseta a evolução pra Rookie. Atividades, tarefas e Bits continuam. Todo pet é mecanicamente igual: o sorteio muda quem sua criatura é, nunca o quanto ela ajuda. Custa ${REROLL_COST_CREDITS} créditos.`
+              : `Swaps your Soulmon for a brand-new, randomly rolled one — and resets evolution to Rookie. Activities, tasks and Bits stay. Every pet is mechanically equal: the roll changes who your creature is, never how much it helps. Costs ${REROLL_COST_CREDITS} credits.`}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" style={{ ...sm2Button('ghost'), flex: 1 }} onClick={() => setConfirmingReroll(false)}>

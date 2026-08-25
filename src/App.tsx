@@ -3020,6 +3020,9 @@ export default function App() {
         demoCharacterId: data.demoCharacterId,
         soulGoal: data.soulGoal,
         soulStruggle: data.soulStruggle,
+        // Prova do consentimento (timestamp + versão dos documentos). Vem do
+        // onboarding e entra no save — é o que sobrevive ao cloud save.
+        consent: data.consent ?? prev.consent,
         petPassive: rollPetPassive(),
       }));
       return;
@@ -3056,6 +3059,7 @@ export default function App() {
       demoCharacterId: undefined,
       soulGoal: data.soulGoal,
       soulStruggle: data.soulStruggle,
+      consent: data.consent ?? prev.consent,
       petPassive: rollPetPassive(),
     }));
   };

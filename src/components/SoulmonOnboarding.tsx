@@ -4,7 +4,11 @@ import { Icon } from './ui/Icon';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { readLocal, writeJson } from '../utils/safeStorage';
+import { readLocal, writeJson, removeLocal } from '../utils/safeStorage';
+import {
+  buildConsentRecord, isAgeBlocked, MIN_AGE_YEARS,
+  type ConsentRecord,
+} from '../utils/consent';
 import {
   generateOracle, ORACLE_QUESTIONS,
   type OracleInput, type OracleResult, type LText,
@@ -95,6 +99,12 @@ export type OnboardingCompleteData = {
   /** O "porquê" do usuário, perguntado ANTES de qualquer mecânica de jogo. */
   soulGoal: string;
   soulStruggle: string;
+  /**
+   * Prova do consentimento específico: timestamp + versão de CADA documento
+   * aceito (utils/consent.ts). Opcional no TIPO porque o modo 'upgrade' e os
+   * saves antigos não têm — ausência NUNCA vira bloqueio.
+   */
+  consent?: ConsentRecord;
 } & (
   | { mode: 'oracle'; oracleResult: OracleResult }
   | { mode: 'demo'; demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' }
@@ -170,6 +180,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // não renumerar a sequência do ritual.
   const GOAL_STEP = -2;
   const STRUGGLE_STEP = -3;
+  // Termos + Política ANTES da coleta de nome e data (D-07). Também id
+  // negativo: a numeração do ritual não se mexe por causa de uma tela nova.
+  const CONSENT_STEP = -4;
+  // Muro de idade: aparece ao AVANÇAR do passo da data, quando ela dá <18.
+  // Não é alerta genérico — é um passo próprio, com o mesmo casco dos outros.
+  const AGE_BLOCK = -5;
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
@@ -178,6 +194,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
+  /** A caixa de consentimento vive FORA do texto legal: é elemento de UI
+   *  próprio, com rótulo e foco, e o botão de avançar só liga com ela marcada.
+   *  Caixa embutida dentro do parágrafo dos Termos não é consentimento
+   *  específico (achado do run 01, PLANO-TAREFAS.md:187). */
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [consent, setConsent] = useState<ConsentRecord | null>(null);
   const [soulGoal, setSoulGoal] = useState('');
   const [soulStruggle, setSoulStruggle] = useState('');
   const [fullName, setFullName] = useState('');
@@ -240,6 +262,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const progress = Math.min(shrink(step), shrink(lastStep)) / shrink(isUpgrade ? lastStep : REGISTER + 1);
 
   const canAdvance = (): boolean => {
+    if (step === CONSENT_STEP) return consentChecked;
     if (step === 1) return fullName.trim().length >= 3;
     if (step === 2) return !!birthDate;
     if (step === 3) return timeUnknown || !!birthTime;
@@ -337,8 +360,20 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const next = () => {
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
-    if (step === STRUGGLE_STEP) { setStep(flow === 'demo' ? DEMO_PICK : 1); return; }
+    if (step === STRUGGLE_STEP) { setStep(CONSENT_STEP); return; }
+    if (step === CONSENT_STEP) {
+      if (!consentChecked) return;
+      // O carimbo é feito no MOMENTO do aceite, não no fim do onboarding: é
+      // esse instante que a prova precisa registrar.
+      setConsent(buildConsentRecord());
+      setStep(flow === 'demo' ? DEMO_PICK : 1);
+      return;
+    }
     if (!canAdvance()) return;
+    // Gate 18+ (D-06): a MESMA data do mapa astral confirma a idade mínima.
+    // `isAgeBlocked` só bloqueia data legível de menor — data vazia ou
+    // ilegível segue o fluxo, que é o que impede barrar alguém por engano.
+    if (step === 2 && isAgeBlocked(birthDate)) { setStep(AGE_BLOCK); return; }
     if (step === DEEP_END - 1) {
       // último item do teste longo respondido → tela de geração e gera
       setStep(GENERATING);
@@ -361,12 +396,31 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (isUpgrade && step === 1) { onCancel?.(); return; }
     if (step === GOAL_STEP) { setStep(0); return; }
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
-    if (step === DEMO_PICK) { setStep(STRUGGLE_STEP); return; }
-    if (step === 1 && !isUpgrade) { setStep(STRUGGLE_STEP); return; }
+    if (step === CONSENT_STEP) { setStep(STRUGGLE_STEP); return; }
+    if (step === DEMO_PICK) { setStep(CONSENT_STEP); return; }
+    if (step === 1 && !isUpgrade) { setStep(CONSENT_STEP); return; }
     // Voltar de dentro do teste longo devolve a escolha: quem entrou sem
     // querer não fica preso em 20 perguntas.
     if (step === DEEP_START) { setRefine(null); setStep(REFINE_OFFER); return; }
     setStep(s => Math.max(isUpgrade ? 1 : 0, s - 1));
+  };
+
+  /** Saída do muro de idade: nada de nome/data fica guardado, e o ritual
+   *  recomeça do zero. Não é castigo — é não segurar dado de quem o app não
+   *  pode atender. */
+  const restartFromAgeBlock = () => {
+    setFullName('');
+    setBirthDate('');
+    setBirthDateText('');
+    setBirthCity(null);
+    setAnswers({});
+    setTestAnswers({});
+    setRefine(null);
+    setConsentChecked(false);
+    setConsent(null);
+    setFlow(null);
+    removeLocal(STORAGE_KEYS.SOULMON_PROFILE);
+    setStep(0);
   };
 
   // Máscara DD/MM/AAAA: só dígitos, insere as barras sozinho enquanto digita.
@@ -425,6 +479,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         initialActivities: [],
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
+        consent: consent ?? undefined,
       });
     } else if (result) {
       await onComplete({
@@ -435,6 +490,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         initialActivities: [],
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
+        consent: consent ?? undefined,
       });
     }
     // Nota: o caminho feliz normalmente recarrega a página (troca de saveId
@@ -668,6 +724,92 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           </div>
         )}
 
+        {/* CONSENT_STEP — Termos + Política ANTES de nome e data de nascimento
+            (D-07). A caixa de aceite fica FORA e visualmente separada do bloco
+            dos links legais: é elemento de UI próprio, com rótulo e foco. Uma
+            caixa embutida no meio do texto dos Termos não vale como
+            consentimento específico (achado do run 01). */}
+        {step === CONSENT_STEP && (
+          <StepShell
+            title={isPt ? 'Antes de começar' : 'Before we start'}
+            hint={isPt
+              ? 'Você pode ler os dois documentos agora — eles abrem numa aba nova e seu progresso aqui não se perde.'
+              : 'You can read both documents now — they open in a new tab and nothing here is lost.'}>
+            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 16px' }}>
+              {isPt
+                ? 'Para criar sua conta, precisamos que você leia (ou pelo menos saiba que existem) nossos Termos de Uso e nossa Política de Privacidade. Neles explicamos o que o Soulmon faz com seus dados e o que esperamos um do outro.'
+                : 'To create your account, we need you to read (or at least know they exist) our Terms of Use and our Privacy Policy. They explain what Soulmon does with your data and what we expect from each other.'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+              <a
+                href={isPt ? '/termos.html' : '/termos.html#en'}
+                target="_blank" rel="noopener noreferrer"
+                style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
+              >
+                {isPt ? 'Ler os Termos de Uso' : 'Read the Terms of Use'}
+              </a>
+              <a
+                href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
+                target="_blank" rel="noopener noreferrer"
+                style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
+              >
+                {isPt ? 'Ler a Política de Privacidade' : 'Read the Privacy Policy'}
+              </a>
+            </div>
+            {/* Separador: a caixa não pertence ao bloco de links acima. */}
+            <div style={{ height: 1, backgroundColor: 'var(--sm2-line)', margin: '0 0 12px' }} />
+            <CheckRow checked={consentChecked} onChange={setConsentChecked}>
+              {isPt
+                ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
+                : 'I have read and agree to the Terms of Use and the Privacy Policy'}
+            </CheckRow>
+            <button
+              type="button"
+              style={{ ...sm2Button('primary', !consentChecked), width: '100%', marginTop: 16 }}
+              onClick={next}
+              disabled={!consentChecked}
+            >
+              {isPt ? 'Continuar' : 'Continue'}
+              <Icon name="arrow_forward" size={20} />
+            </button>
+            {!consentChecked && (
+              <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
+                {isPt
+                  ? 'Marque a caixa acima para continuar.'
+                  : 'Check the box above to continue.'}
+              </p>
+            )}
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }} onClick={back}>
+              <Icon name="arrow_back" size={20} />
+              {isPt ? 'Voltar' : 'Back'}
+            </button>
+          </StepShell>
+        )}
+
+        {/* AGE_BLOCK — muro de idade. Convite adiado, NÃO expulsão: sem "erro",
+            sem ícone de alerta, sem vermelho. A voz do produto encoraja, e isso
+            vale inclusive aqui. */}
+        {step === AGE_BLOCK && (
+          <StepShell
+            title={isPt ? 'Ainda não dá para continuar' : 'Not quite yet'}
+            hint={isPt
+              ? `O Soulmon pede ${MIN_AGE_YEARS} anos.`
+              : `Soulmon asks for ${MIN_AGE_YEARS}+.`}>
+            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 20px' }}>
+              {isPt
+                ? 'O Soulmon é feito para maiores de 18 anos, e pela data que você digitou você ainda não chegou lá. Não é nada que você tenha feito errado — é só o tanto que o app pede pra funcionar do jeito que ele foi pensado. Volte quando fizer 18 anos; vamos estar aqui.'
+                : "Soulmon is built for people 18 and older, and based on the date you entered, you're not there yet. This isn't about anything you did wrong — it's just what the app needs to work the way it was designed. Come back when you turn 18; we'll be here."}
+            </p>
+            <button
+              type="button"
+              style={{ ...sm2Button('primary'), width: '100%' }}
+              onClick={restartFromAgeBlock}
+            >
+              {isPt ? 'Voltar ao início' : 'Back to start'}
+            </button>
+          </StepShell>
+        )}
+
         {/* DEMO_PICK — escolha entre os 3 personagens pré-prontos */}
         {step === DEMO_PICK && (
           <div style={{ paddingTop: 20 }}>
@@ -713,8 +855,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
         {/* 2 — Data */}
         {step === 2 && (
+          /* A data tem DOIS propósitos e a tela diz os dois: mapa astral E
+             confirmação de 18+ (D-06). Um campo que verifica idade sem avisar
+             é coleta silenciosa. */
           <StepShell title={isPt ? 'Quando você nasceu?' : 'When were you born?'}
-            hint={isPt ? 'Define seus signos e elementos.' : 'Sets your signs and elements.'}>
+            hint={isPt
+              ? `Sua data de nascimento faz duas coisas aqui: define os elementos do seu mapa astral e confirma que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima do Soulmon.`
+              : `Your birth date does two things here: it sets your astral chart's elements and confirms you're ${MIN_AGE_YEARS} or older, Soulmon's minimum age.`}>
             <Field type="text" inputMode="numeric" autoComplete="off"
               value={birthDateText} autoFocus
               placeholder={isPt ? '__/__/____ (DD/MM/AAAA)' : '__/__/____ (DD/MM/YYYY)'}
