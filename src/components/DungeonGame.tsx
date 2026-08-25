@@ -11,6 +11,7 @@ import {
 } from '../utils/dungeon';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
 import type { Language } from '../utils/i18n';
+import { FX_ART } from '../utils/fxArt';
 
 /**
  * Dungeon minigame — timing-bar battle across up to 5 FLOORS.
@@ -424,7 +425,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
           {popup && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
               <div className="sm-px-card" style={{ textAlign: 'center', backgroundColor: '#0e1522', borderColor: popup.color, ['--sm-cham-line' as string]: popup.color, padding: '16px 26px' }}>
-                <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{popup.icon}</div>
+                {/* O `icon` continua sendo o emoji-CHAVE; quem tem sprite em
+                    FX_ART ganha a arte, quem nao tem cai no texto — e assim um
+                    popup novo nunca quebra. */}
+                <div style={{ fontSize: '1.7rem', lineHeight: 1.2 }}>{FX_ART[popup.icon]
+                  ? <img src={FX_ART[popup.icon]} alt="" width={44} height={44}
+                         style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block' }} />
+                  : popup.icon}</div>
                 <p className="sm-px-arcade-value" style={{ fontSize: '1rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
                 <p style={{ fontSize: '0.82rem', color: '#c6d4f2' }}>{popup.detail}</p>
               </div>

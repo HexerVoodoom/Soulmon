@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ITEM_ART } from '../utils/itemArt';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import type { Language } from '../utils/i18n';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
@@ -150,7 +151,11 @@ export function ItemsWindow({ foodInventory, onFeed, onClose, language = 'en-US'
                   transition: 'background-color var(--sm2-dur-tap) var(--sm2-ease)',
                 }}
               >
-                <span aria-hidden="true" style={{ fontSize: 30, lineHeight: 1 }}>{emoji}</span>
+                <span aria-hidden="true" style={{ fontSize: 30, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 38 }}>
+                  {ITEM_ART[emoji]
+                    ? <img src={ITEM_ART[emoji]} alt="" width={38} height={38} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                    : emoji}
+                </span>
                 <span style={{ ...sm2Hint, color: 'var(--sm2-ink)', fontWeight: 500, textAlign: 'center' }}>
                   {getFoodName(emoji, language)}
                 </span>

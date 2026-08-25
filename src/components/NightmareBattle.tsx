@@ -66,6 +66,7 @@ import type { DungeonEnemy } from '../utils/dungeon';
 import type { DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
 import { Icon } from './ui/Icon';
+import { FX_ART } from '../utils/fxArt';
 
 export interface NightmareBattleProps {
   open: boolean;
@@ -528,7 +529,10 @@ export function NightmareBattle({
               {popup && (
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(6,9,15,0.45)' }}>
                   <div className="sm-px-card" style={{ textAlign: 'center', backgroundColor: '#0e1522', borderColor: popup.color, ['--sm-cham-line' as string]: popup.color, padding: '12px 20px' } as CSSProperties}>
-                    <div aria-hidden="true" style={{ fontSize: '1.5rem', lineHeight: 1.2 }}>{popup.icon}</div>
+                    <div aria-hidden="true" style={{ fontSize: '1.5rem', lineHeight: 1.2 }}>{FX_ART[popup.icon]
+                      ? <img src={FX_ART[popup.icon]} alt="" width={40} height={40}
+                             style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block' }} />
+                      : popup.icon}</div>
                     <p className="sm-px-arcade-value" style={{ fontSize: '0.94rem', color: popup.color, margin: '4px 0 2px' }}>{popup.title}</p>
                     <p style={{ fontSize: '0.8rem', color: '#c6d4f2', margin: 0 }}>{popup.detail}</p>
                   </div>

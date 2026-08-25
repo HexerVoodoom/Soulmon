@@ -5,6 +5,7 @@ import { ModalSheet, Segment, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from 
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, type ShopItem } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { DECOR_ART } from '../utils/decorArt';
+import { ITEM_ART } from '../utils/itemArt';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
 import { decorFitsSetting, type SlotId } from '../utils/petStage';
 import type { Language } from '../utils/i18n';
@@ -161,7 +162,9 @@ export function ShopModal({
    *  acidente (foi assim que o emoji virou "texto de 32px" no audit). */
   const art = (item: ShopItem, dim: boolean) => {
     const css = item.kind === 'bg' ? PET_BACKGROUNDS[item.id]?.css : undefined;
-    const png = DECOR_ART[item.id];
+    // Decoração é indexada pelo ID do item; consumível (chip/coraçãozinho)
+    // pelo EMOJI, que é a chave de inventário dele (utils/itemArt.ts).
+    const png = DECOR_ART[item.id] ?? ITEM_ART[item.icon];
     // Peça de CHÃO é 6,5:1 (104x16 — o pet anda por cima dela). `contain` numa
     // caixa quadrada de 56px espremia a arte numa tira de 7px de altura: o
     // card do Tufo de Grama chegava a parecer vazio. Chão é TEXTURA, então

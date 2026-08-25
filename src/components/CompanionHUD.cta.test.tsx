@@ -19,7 +19,7 @@
  * quebrar se alguém devolver as duas âncoras para a mesma faixa.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, within } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { CompanionHUD } from './CompanionHUD';
 
@@ -134,9 +134,13 @@ describe('CompanionHUD — ALIMENTAR é controle de primeira classe', () => {
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 1, '💗': 3, '🌀': 1 }} onFeed={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: 'Alimentar' }));
     const folha = screen.getByRole('dialog', { name: 'Alimentar' });
-    expect(folha.textContent).not.toContain('💗');
-    expect(folha.textContent).not.toContain('🌀');
-    expect(folha.textContent).toContain('🍎');
+    // A identidade do item deixou de ser texto (a arte agora é <img>, ver
+    // utils/itemArt.ts), então a afirmação certa é pelo NOME ACESSÍVEL do
+    // botão — que é também o que o leitor de tela anuncia. Conferir pelo
+    // textContent voltaria a passar/falhar ao sabor de como a arte é rendida.
+    expect(within(folha).queryByRole('button', { name: /💗|Coração|Heart/ })).toBeNull();
+    expect(within(folha).queryByRole('button', { name: /🌀|Glitchtama/ })).toBeNull();
+    expect(within(folha).getByRole('button', { name: 'Apple × 1' })).toBeTruthy();
   });
 
   it('ESTADO VAZIO: sem comida a folha explica como conseguir, não some', () => {

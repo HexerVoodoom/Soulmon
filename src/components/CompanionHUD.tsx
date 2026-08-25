@@ -6,6 +6,8 @@ import { PixelButton } from './pixel/PixelKit';
 import { Icon } from './ui/Icon';
 import { Viewport, usePrefersReducedMotion } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
+import { ITEM_ART } from '../utils/itemArt';
+import { FX_ART } from '../utils/fxArt';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -745,7 +747,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   /** Uma rajada de corações saindo do centro do pet. */
   const spawnRubHearts = () => {
     try { navigator.vibrate?.(20); } catch { /* noop */ }
-    const EMOJIS = ['❤️', '💕', '💖', '💗'];
+    // Os três têm sprite em FX_ART; o antigo 💗 saiu da lista porque ele é
+    // chave de ITEM (o coraçãozinho da pastinha) e aqui viraria a arte errada.
+    const EMOJIS = ['❤️', '💕', '💖'];
     const burst = 2 + Math.floor(Math.random() * 2); // 2–3 corações de uma vez
     const spawned: { id: number; dx: number; dy: number; size: number; emoji: string }[] = [];
     for (let k = 0; k < burst; k++) {
@@ -998,7 +1002,9 @@ export const CompanionHUD = memo(function CompanionHUD({
                   animation: 'rub-heart 1.5s ease-out forwards',
                 } as React.CSSProperties}
               >
-                {h.emoji}
+                {FX_ART[h.emoji]
+                  ? <img src={FX_ART[h.emoji]} alt="" style={{ width: `${h.size}rem`, height: `${h.size}rem`, objectFit: 'contain', imageRendering: 'pixelated' }} />
+                  : h.emoji}
               </span>
             ))}
 
@@ -1013,7 +1019,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 style={{ left: `${position}%`, top: canEvolve && !isSleeping ? 'calc(50% - 46px)' : 'calc(50% - 78px)', transform: 'translateX(-50%)' }}
               >
                 <div className="relative bg-white rounded-full px-2 py-0.5 shadow text-lg leading-none">
-                  🤗
+                  <img src={FX_ART['🤗']} alt="" width={22} height={22} style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'inline-block', verticalAlign: 'middle' }} />
                   {/* Rabinho do balão: geometria de peça única (triângulo por
                       borda), toda inline — nenhuma dessas classes existe no
                       index.css pré-compilado e não vale virar utilitário. */}
@@ -1042,7 +1048,9 @@ export const CompanionHUD = memo(function CompanionHUD({
                   animation: 'float-up 1.5s ease-out forwards',
                 }}
               >
-                {eatingEmoji}
+                {ITEM_ART[eatingEmoji]
+                  ? <img src={ITEM_ART[eatingEmoji]} alt="" width={30} height={30} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                  : eatingEmoji}
               </span>
             )}
 
@@ -1159,14 +1167,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                         animation: `shower-drop 0.9s linear ${i * 0.12}s infinite`,
                       }}
                     >
-                      💧
+                      <img src={FX_ART['💧']} alt="" width={14} height={14} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                     </span>
                   ))}
                   <span
                     className="absolute text-xl"
                     style={{ left: '50%', top: '-26px', transform: 'translateX(-50%)' }}
                   >
-                    🚿
+                    <img src={FX_ART['🚿']} alt="" width={26} height={26} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
                   </span>
                 </div>
               )}
@@ -1430,7 +1438,11 @@ export const CompanionHUD = memo(function CompanionHUD({
                     cursor: 'pointer',
                   }}
                 >
-                  <span aria-hidden="true" style={{ fontSize: 26, lineHeight: 1 }}>{emoji}</span>
+                  <span aria-hidden="true" style={{ fontSize: 26, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 34 }}>
+                    {ITEM_ART[emoji]
+                      ? <img src={ITEM_ART[emoji]} alt="" width={34} height={34} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                      : emoji}
+                  </span>
                   <span className="sm2-num" style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)' }}>×{n}</span>
                 </button>
               ))}

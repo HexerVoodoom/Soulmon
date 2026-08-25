@@ -792,6 +792,15 @@ o app de todo mundo que já tem o APK instalado.
   `utils/dreamArt.ts`. Era a ÚNICA coleção do jogo e a única sem arte própria.
   O `emoji` continua no `DREAM_CATALOG` de propósito — é o único glifo que cabe
   num push, onde não existe `<img>`.
+- ~~**Consumíveis e FX eram emoji do sistema.**~~ **FEITO** (ago/2026): 25
+  sprites novos — 8 comidas + 5 itens especiais (`utils/itemArt.ts`, chave =
+  EMOJI porque `foodInventory` indexa o save assim; trocar a chave quebraria
+  save, trocar só a arte não quebra nada) e 6 FX de batalha + 6 partículas de
+  cuidado (`utils/fxArt.ts`, chave = o `icon` dos popups). Todo render cai no
+  emoji quando não há arte — item novo nunca quebra, só nasce sem sprite.
+  Lista e prompts em `D:\Soulmon\prompts\consumiveis-fx-list.md`. O que foi
+  deliberadamente NÃO gerado: moeda para Bits (regra: Bits nunca têm ícone) e
+  `CATEGORY_EMOJIS` (lado SVG da fronteira do Visor).
 - **Quatro itens do `BACKLOG-ARTE-GERAR.md` foram declarados OBSOLETOS**
   (`A3`, `A10`, `A15`, `A16`): foram escritos antes do `PLANO-DESIGN` e pedem
   pixel art em superfícies que o §1 dele põe do lado SVG (fronteira do Visor).
