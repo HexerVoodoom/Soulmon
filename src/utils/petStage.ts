@@ -131,6 +131,27 @@ export const PET_TOP_OFFSET = -38;
 /** Lado da caixa do sprite do pet, em px (a arte é contida e centrada nela). */
 export const PET_BOX = 152;
 
+/* ── A GRADE DE PIXEL DO SPRITE ────────────────────────────────────────────
+   Todo PNG de linha do roster é 256 ou 384 de lado, e 128 é o maior divisor
+   útil dos dois (2:1 e 3:1, os dois INTEIROS). Cada pixel de origem vira
+   exatamente um bloco de destino e o `image-rendering: pixelated` passa a ser
+   decisão em vez de remendo.
+
+   Mora AQUI, e não no `CompanionHUD`, por duas razões que se somam:
+   (a) é geometria do palco, e este arquivo já é o dono declarado da geometria
+       do palco — `PET_GROUND_KEEP` no HUD é literalmente `PET_BOX - PET_RENDER`,
+       ou seja, a constante já era derivada de um número daqui;
+   (b) o guard de escala de render (`src/assets/assets.contract.test.ts`) precisa
+       do número REAL, nunca copiado. Enquanto ele vivia no `CompanionHUD`, ler
+       o número obrigava o teste a transformar/importar as 1469 linhas do
+       componente e todo o grafo React/asset atrás dele — ~600ms ociosos e >4,4s
+       sob carga, dentro de um orçamento de 5s. Este módulo não importa nada.
+   O `CompanionHUD` reexporta `PET_RENDER` para quem já o importava de lá. */
+const SPRITE_SRC_PX = 256;
+const SPRITE_SCALE = 2;
+/** Lado da caixa em que o sprite do pet é RENDERIZADO, em px. */
+export const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
+
 /**
  * A caixa do berço. Ancorada ao PET (não à linha do chão, ver acima): `y` é o
  * topo da caixa em px a partir de `top: 50%`, o mesmo zero de

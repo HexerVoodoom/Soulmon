@@ -507,7 +507,15 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
     // O que JÁ foi consertado, e a prova de que o guard mede a coisa certa:
     // toda arte de linha é 256 ou 384 e é desenhada em `PET_RENDER` (128).
     // Importado, nunca digitado: número copiado é número que diverge (footgun 9).
-    const { PET_RENDER } = await import('../components/CompanionHUD');
+    //
+    // ⚠️ FLAKE MEDIDO (25/08/2026) — importa-se de `utils/petStage`, o DONO da
+    // constante, e não do `CompanionHUD` que a reexporta. O componente tem 1469
+    // linhas e um grafo de 23 imports (React, react-dom, sprites, backgrounds);
+    // transformá-lo custava ~600ms com a máquina ociosa e passava de 4,4s sob
+    // contenção de CPU, estourando o orçamento de 5s DESTE teste — reproduzido
+    // em 5005ms. O guard não perde nada: `petStage` é o dono do número, o
+    // `CompanionHUD` o consome de lá, e continua não havendo literal digitado.
+    const { PET_RENDER } = await import('../utils/petStage');
     const linhas = [...referenced].filter(f => /soulmon[\\/]lines[\\/]/.test(rel(f)));
     expect(linhas.length).toBeGreaterThan(10);
     const fora: string[] = [];
@@ -517,6 +525,40 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
       if (!naGrade(e)) fora.push(`${rel(f)} (${m.width}×${m.height} → ${PET_RENDER}px)`);
     }
     expect(fora).toEqual([]);
+  });
+
+  /**
+   * REGRESSÃO DE FLAKE (25/08/2026) — "o guard de escala não paga o import do
+   * renderer". O teste acima estourava o timeout de 5s porque lia `PET_RENDER`
+   * de `components/CompanionHUD`, arrastando o grafo React inteiro para dentro
+   * do orçamento do teste. Reproduzido em 5005ms sob contenção de CPU.
+   *
+   * O conserto foi mover a constante para o dono da geometria; o que pode
+   * desfazê-lo em silêncio é alguém voltar a importar o componente aqui. Este
+   * teste é o cadeado — e ele é textual de propósito: verificar importando o
+   * componente seria pagar exatamente o custo que se quer proibir.
+   */
+  it('REGRESSÃO DE FLAKE: o guard de asset não importa componente React (o custo que estourava 5s)', () => {
+    const fonte = fs.readFileSync(path.join(SRC, 'assets/assets.contract.test.ts'), 'utf8');
+    const importsDeComponente = [...fonte.matchAll(/import\(\s*['"]([^'"]*components\/[^'"]+)['"]\s*\)/g)]
+      .map(m => m[1]);
+    expect(importsDeComponente, 'importe a constante do módulo-dono (utils/), nunca do componente').toEqual([]);
+  });
+
+  /**
+   * O cadeado do outro lado: `PET_RENDER` só vale como guard se for o MESMO
+   * número que o renderer desenha. Como o teste acima passou a lê-lo de
+   * `utils/petStage`, o elo que precisa continuar existindo é o `CompanionHUD`
+   * consumir/reexportar de lá em vez de redeclarar o seu. Redeclarar não daria
+   * erro nenhum — o guard passaria a medir um número que ninguém renderiza,
+   * que é a forma exata de "suíte verde que não prova o que você acha".
+   */
+  it('REGRESSÃO: o CompanionHUD não redeclara PET_RENDER — ele vem de utils/petStage', () => {
+    const hud = fs.readFileSync(path.join(SRC, 'components/CompanionHUD.tsx'), 'utf8');
+    expect(/^\s*(export\s+)?const\s+PET_RENDER\s*=/m.test(hud),
+      'PET_RENDER redeclarado no CompanionHUD — o guard passaria a medir outro número').toBe(false);
+    expect(/from\s+['"]\.\.\/utils\/petStage['"]/.test(hud)).toBe(true);
+    expect(/PET_RENDER/.test(hud), 'o renderer precisa usar a constante, não um literal').toBe(true);
   });
 
   /**

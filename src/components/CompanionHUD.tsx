@@ -8,7 +8,7 @@ import { Viewport, usePrefersReducedMotion } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
-import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, STAGE_HEIGHT } from '../utils/petStage';
+import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { CareSystem, CareEvent } from './CareSystem';
@@ -39,15 +39,14 @@ import { FOOD_BY_CATEGORY } from '../constants/labels';
 
    A linha do chão NÃO se mexe: `PET_BOX - PET_RENDER` é somado ao
    `PET_TOP_OFFSET` para que a BORDA DE BAIXO da caixa do sprite continue no
-   mesmo pixel de antes. `utils/petStage.ts` (dono do palco, do berço e do
-   `GROUND_Y`) não é tocado — o pet fica 24px menor e sentado no mesmo berço,
-   que tem 148px de largura e passa a abraçá-lo em vez de sumir atrás dele. */
-const SPRITE_SRC_PX = 256;
-const SPRITE_SCALE = 2;
-/** Lado da caixa em que o sprite do pet é RENDERIZADO, em px. Exportado
-    porque o guard de escala de render (`assets/assets.contract.test.ts`) mede
-    a razão entre o PNG e esta caixa — número copiado é número que diverge. */
-export const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
+   mesmo pixel de antes. `GROUND_Y` e a caixa do berço em `utils/petStage.ts`
+   não se mexem — o pet fica 24px menor e sentado no mesmo berço, que tem 148px
+   de largura e passa a abraçá-lo em vez de sumir atrás dele. */
+/* `PET_RENDER` mudou de casa: vive em `utils/petStage.ts`, o dono declarado da
+   geometria do palco (e de onde `PET_BOX` já vinha). Reexportado aqui para não
+   quebrar quem importava daqui — mas NÃO redeclare o número neste arquivo:
+   número copiado é número que diverge (footgun 9). */
+export { PET_RENDER } from '../utils/petStage';
 const PET_GROUND_KEEP = PET_BOX - PET_RENDER;
 
 /* ── O VISOR TEM MEDIDA, e a medida é INTEIRA ──────────────────────────────
