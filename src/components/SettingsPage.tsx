@@ -7,6 +7,7 @@ import { AccountSection } from './AccountSection';
 import { AccountDataSection } from './AccountDataSection';
 import { InstallPrompt } from './InstallPrompt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
 
 /**
@@ -60,6 +61,62 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
         {children}
       </div>
     </section>
+  );
+}
+
+/**
+ * ESTATÍSTICAS DE USO — o opt-out real, na tela.
+ *
+ * `utils/telemetry.ts` já tinha `setTelemetryEnabled` e `telemetryConsentCopy`
+ * e nenhum call site: a coleta estava LIGADA e o desligar não existia em lugar
+ * nenhum. Mora no grupo "Seus dados" porque é exatamente o mesmo assunto do
+ * exportar/apagar — o direito de entrar e sair.
+ *
+ * O texto não barganha: diz o que sai e o que nunca sai, e não promete
+ * benefício nem cobra de quem desliga (`metrica-norte.md` — encoraja, nunca
+ * cobra). A copy nasce no módulo, não aqui: um segundo texto divergiria em
+ * silêncio da allowlist que ele descreve.
+ *
+ * O padrão (ligado) NÃO é decidido aqui — `isTelemetryEnabled()` é a única
+ * fonte, e trocar o padrão é uma linha lá.
+ */
+function TelemetrySection({ language }: { language: Language }) {
+  const isPt = language === 'pt-BR';
+  const copy = telemetryConsentCopy(isPt ? 'pt-BR' : 'en-US');
+  // Lido uma vez: o estado real mora no localStorage, e a tela é o espelho.
+  const [enabled, setEnabled] = useState(() => isTelemetryEnabled());
+
+  const list = (items: string[]) => (
+    <ul style={{ ...sm2Hint, margin: '4px 0 0', paddingLeft: 18 }}>
+      {items.map(item => <li key={item} style={{ marginBottom: 4 }}>{item}</li>)}
+    </ul>
+  );
+
+  return (
+    <div>
+      <SwitchRow
+        checked={enabled}
+        onToggle={() => {
+          // Gravar FORA do updater (footgun 6: StrictMode roda 2×).
+          const next = !enabled;
+          setTelemetryEnabled(next);
+          setEnabled(next);
+        }}
+        label={copy.toggleLabel}
+        hint={isPt
+          ? 'Contadores de uso do app. Nunca o que você escreveu.'
+          : 'Counters about app usage. Never what you wrote.'}
+      />
+      <Disclosure label={copy.title}>
+        <div>
+          <p style={{ ...sm2Text, fontWeight: 500 }}>{isPt ? 'O que é enviado' : 'What is sent'}</p>
+          {list(copy.sent)}
+          <p style={{ ...sm2Text, fontWeight: 500, marginTop: 12 }}>{isPt ? 'O que nunca é enviado' : 'What is never sent'}</p>
+          {list(copy.never)}
+          <p style={{ ...sm2Hint, marginTop: 12 }}>{copy.footnote}</p>
+        </div>
+      </Disclosure>
+    </div>
   );
 }
 
@@ -238,6 +295,7 @@ export function SettingsPage({
              ajustes avançados, são o direito de entrar e sair. ─────────── */}
       <Group title={isPt ? 'Seus dados' : 'Your data'}>
         <AccountDataSection language={language} />
+        <TelemetrySection language={language} />
       </Group>
 
       {/* ── O QUE O SOULMON TE MANDA ──────────────────────────────────────── */}
