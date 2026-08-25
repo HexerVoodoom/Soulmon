@@ -1,0 +1,84 @@
+name: CI (typecheck + testes)
+
+# Por que este workflow existe: `CLAUDE.md:43-53` autoriza merge automático com
+# "tsc/vitest/build limpos" e o fluxo real deste repo é PUSH DIRETO NA MAIN
+# (D-24, dev solo). Até aqui nada verificava isso — a garantia dependia 100% de
+# disciplina manual, e os dois workflows existentes (`android-build.yml`,
+# `desktop-build.yml`) só provam que COMPILA, nunca que os testes passam.
+#
+# `push: main` importa MAIS que `pull_request` aqui, justamente porque o commit
+# costuma chegar na main sem passar por PR nenhum.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Push seguido de push na main: o run velho não interessa mais.
+# `main` nunca é cancelada no meio — vermelho na main tem que aparecer.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  gate:
+    name: tsc + vitest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # ⚠️ `node_modules/` ESTÁ VERSIONADO neste repo (19.035 arquivos em
+      # `git ls-files node_modules`), apesar de constar no `.gitignore` — foram
+      # commitados antes da regra e nunca removidos. Logo o `checkout` acima já
+      # traz uma árvore de dependências no disco, e ela é a coisa mais perigosa
+      # deste workflow: está DESATUALIZADA e INCOMPLETA (no run 01 um agente
+      # bateu nisso e teve que rodar `npm install` na mão), então usá-la faria o
+      # CI testar um conjunto de dependências que não é o do `package-lock.json`
+      # — verde aqui, quebrado no build de verdade.
+      #
+      # ESCOLHA EXPLÍCITA: `npm ci`, que APAGA `node_modules/` antes de instalar
+      # e reinstala exatamente o que o lock manda. Não é opinião de estilo: é a
+      # única forma de o CI falar sobre o lockfile em vez de sobre um resíduo de
+      # commit. Mesmo comando de `android-build.yml:22`.
+      # (Não commitamos nada de volta; o runner é descartável.)
+      - name: Install dependencies (npm ci — descarta o node_modules versionado)
+        run: npm ci
+
+      # `class-system` (dependency) resolve para
+      # `git+ssh://git@github.com/HexerVoodoom/Class-System.git` no
+      # `package-lock.json:5502`. Não há chave SSH no runner; funciona porque o
+      # repo é PÚBLICO e o npm cai sozinho no HTTPS. Se ele virar privado, é
+      # AQUI que o CI quebra — e a mensagem será "Permission denied (publickey)",
+      # que não parece um problema de visibilidade de repositório.
+
+      # `tsc --noEmit` cobre SÓ `src/` (`tsconfig.json > include`). `functions/`,
+      # `workers/` e `scripts/` são JS e não passam por typecheck nenhum;
+      # `desktop/` tem tsconfig próprio e é checado em `desktop-build.yml:30`,
+      # mas só quando o push toca nos paths dele.
+      - name: Typecheck (npx tsc --noEmit)
+        run: npx tsc --noEmit
+
+      - name: Testes (npx vitest run)
+        run: npx vitest run
+
+      # NÃO rodamos `npm run build` aqui de propósito, e o motivo não é tempo:
+      # é duplicação. `npm run build` = `vite build` + conversão de ~80 PNG→WebP
+      # + `wrangler pages functions build`, e o `android-build.yml:25` JÁ roda
+      # esse mesmo comando em TODO push na `main` — o caminho por onde o código
+      # realmente entra em produção aqui. Somar um segundo build na main custaria
+      # minuto de Actions para reprovar as mesmas coisas duas vezes.
+      #
+      # O buraco que sobra é honesto e está declarado: em PULL REQUEST o build
+      # não roda (o android-build só dispara em push). Quebra que só aparece no
+      # `vite build` — import quebrado que o `tsc` tolera, asset faltando,
+      # `wrangler` — passa neste gate e só acende no push da main.
+      # Se o fluxo passar a ser de PR de verdade, o conserto é acrescentar
+      # `npm run build` num job à parte, não afrouxar este.
