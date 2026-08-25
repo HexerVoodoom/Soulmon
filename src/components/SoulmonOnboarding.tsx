@@ -1,4 +1,4 @@
-import { useState, useRef, lazy, Suspense, type CSSProperties } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense, type CSSProperties } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { Icon } from './ui/Icon';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
@@ -23,6 +23,7 @@ import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_L
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
+import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL } from '../utils/telemetry';
 import type { ActivityCategory } from '../types/attributes';
 
 // Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
@@ -290,6 +291,28 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     return true;
   };
 
+  // -------------------------------------------------------------------------
+  // Telemetria do funil (utils/telemetry.ts).
+  //
+  // O `onboarding_step` sozinho media a MÉDIA de duas populações opostas — o
+  // demo de 4 telas e o ritual pago de 8+ — e por isso não respondia nada
+  // (evidencia-comportamento.md §3). A prop `funnel` é o que separa as duas.
+  //
+  // Um efeito só, aqui, em vez de uma chamada em cada `setStep`: fiação
+  // espalhada por 15 transições esquece uma e vira buraco silencioso no funil.
+  // Nenhum texto do usuário entra — o passo é um NÚMERO e nada mais.
+  // -------------------------------------------------------------------------
+  const funnel = isUpgrade || flow === 'oracle'
+    ? TELEMETRY_FUNNEL.paid
+    : flow === 'demo'
+      ? TELEMETRY_FUNNEL.demo
+      : TELEMETRY_FUNNEL.unknown;
+  useEffect(() => {
+    const code = onboardingStepCode(step);
+    if (code === null) return;
+    track('onboarding_step', { step: code, funnel });
+  }, [step, funnel]);
+
   const [generateError, setGenerateError] = useState(false);
 
   /** Dispara a geração e, se ela falhar, devolve o usuário à última pergunta
@@ -533,6 +556,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     const result = await purchase(FULL_UNLOCK_SKU);
     setUnlockLoading(false);
     if (result.ok) {
+      // Só depois de a compra voltar OK — clique não é receita.
+      track('purchase');
+      flushTelemetry();
       setFlow('oracle');
       setStep(GOAL_STEP);
       return;
@@ -864,7 +890,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               <button
                 key={c.id}
                 type="button"
-                onClick={() => { setDemoCharacterId(c.id); setStep(REGISTER); }}
+                onClick={() => { track('demo_pick'); setDemoCharacterId(c.id); setStep(REGISTER); }}
                 style={{
                   width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12,
                   padding: 12, marginBottom: 8, cursor: 'pointer',

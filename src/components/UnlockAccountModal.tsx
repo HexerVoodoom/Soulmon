@@ -1,10 +1,11 @@
-import { useState, type CSSProperties } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_DAILY_CAP } from '../utils/monetization';
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
 import type { Entitlement } from '../utils/entitlements';
 import type { Language } from '../utils/i18n';
+import { track } from '../utils/telemetry';
 
 // ---------------------------------------------------------------------------
 // Desbloqueio completo DENTRO do jogo.
@@ -49,6 +50,13 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
   const isPt = language === 'pt-BR';
   const [loading, setLoading] = useState<'buy' | 'restore' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  // `unlock_view` — o denominador da conversão. Na MONTAGEM, porque este modal
+  // só existe quando foi aberto por toque (nunca abre sozinho, ver o cabeçalho),
+  // então montar É ver. `track` já ignora app oculto e não carrega prop nenhuma:
+  // de qual dos dois convites (`reason`) a pessoa veio é dado que o schema atual
+  // não tem — acrescentar isso é outro run, não improviso aqui.
+  useEffect(() => { track('unlock_view'); }, []);
 
   const unavailable = isPt
     ? 'A compra acontece pela Google Play, dentro do app Android. No navegador não dá para cobrar.'

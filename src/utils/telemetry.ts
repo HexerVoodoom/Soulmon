@@ -83,7 +83,7 @@ export type TelemetryEvent =
  */
 export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; max: number }> | null> = {
   install: null,
-  onboarding_step: { step: { min: 0, max: 40 } },
+  onboarding_step: { step: { min: 0, max: 45 }, funnel: { min: 0, max: 2 } },
   demo_pick: null,
   first_task_done: null,
   day_active: { effort: { min: 0, max: 500 } },
@@ -93,10 +93,42 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
 
+/**
+ * Qual dos DOIS funis o passo pertence. Os dois usuários são opostos (demo
+ * grátis de 4 telas × ritual pago de 8+ telas) e somá-los no mesmo contador
+ * produz um número que não descreve nenhum dos dois — o `onboarding_step` sem
+ * esta prop mede a média de duas populações que nunca se encontram.
+ *
+ * `unknown` existe porque a intro é ANTERIOR à bifurcação: forçar um rótulo
+ * ali seria inventar o caminho de quem ainda não escolheu.
+ */
+export const TELEMETRY_FUNNEL = { unknown: 0, demo: 1, paid: 2 } as const;
+export type TelemetryFunnel = typeof TELEMETRY_FUNNEL[keyof typeof TELEMETRY_FUNNEL];
+
+/**
+ * Passos do onboarding são ids do componente e alguns são NEGATIVOS de
+ * propósito (`DEMO_PICK`, `GOAL_STEP`, `STRUGGLE_STEP`, `CONSENT_STEP`,
+ * `AGE_BLOCK` — ver `SoulmonOnboarding.tsx`), para telas novas não renumerarem
+ * o ritual. A allowlist só aceita número não-negativo dentro de faixa, então o
+ * id vira um CÓDIGO estável aqui, num lugar só: `-1 → 44 … -5 → 40`, acima do
+ * maior passo positivo que existe (REGISTER = 35). Mapear em cada call site
+ * seria regra copiada (footgun 9).
+ */
+export const NEGATIVE_STEP_BASE = 45;
+export function onboardingStepCode(step: number): number | null {
+  if (!Number.isFinite(step)) return null;
+  const code = step < 0 ? NEGATIVE_STEP_BASE + step : step;
+  return code >= 0 && code <= NEGATIVE_STEP_BASE ? code : null;
+}
+
 /** Props aceitas. Note que NÃO existe campo de texto livre — de propósito. */
 export interface TelemetryProps {
-  /** `onboarding_step`: índice da tela alcançada. */
+  /** `onboarding_step`: índice da tela alcançada (já como código, ver
+   *  `onboardingStepCode`). */
   step?: number;
+  /** `onboarding_step`: qual funil (`TELEMETRY_FUNNEL`). Demo e pago NUNCA
+   *  podem cair no mesmo contador. */
+  funnel?: number;
   /** `day_active`: peso de esforço concluído no dia (hábito=1, tarefa=effort). */
   effort?: number;
 }
@@ -272,7 +304,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
     return {
       title: 'Estatísticas de uso',
       sent: [
-        'Contadores de momentos do app: primeira abertura, qual passo do onboarding você alcançou, se escolheu um personagem pronto, sua primeira conclusão, se você abriu a tela de compra e se comprou.',
+        'Contadores de momentos do app: primeira abertura, qual passo do onboarding você alcançou e por qual caminho (grátis ou completo), se escolheu um personagem pronto, sua primeira conclusão, se você abriu a tela de compra e se comprou.',
         'Uma vez por dia, um sinal de "teve atividade hoje" com o PESO de esforço concluído (um número, como 4).',
         'A data — só o dia, nunca a hora.',
         'Um identificador aleatório criado neste aparelho, sem nenhuma ligação com seu e-mail nem com seu save.',
@@ -291,7 +323,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
   return {
     title: 'Usage stats',
     sent: [
-      'Counters for app moments: first launch, which onboarding step you reached, whether you picked a ready-made character, your first completion, whether you opened the purchase screen, and whether you purchased.',
+      'Counters for app moments: first launch, which onboarding step you reached and which path you took (free or full), whether you picked a ready-made character, your first completion, whether you opened the purchase screen, and whether you purchased.',
       'Once a day, a "there was activity today" signal with the effort WEIGHT you completed (a number, like 4).',
       'The date — the day only, never the time.',
       'A random identifier created on this device, with no link to your email or your save.',
@@ -388,6 +420,27 @@ function seenKeyFor(record: TelemetryRecord): string | null {
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 /**
+ * O app está em SEGUNDO PLANO?
+ *
+ * Vive aqui, e não em cada call site, pelo mesmo motivo do dedupe: quatro
+ * componentes checando `document.hidden` por conta própria é regra copiada
+ * (footgun 9). O `CompanionHUD` já faz isso para a fala idle; evento disparado
+ * com o app oculto é dado sujo (a virada do dia roda num timer de 30s que não
+ * para quando a aba some) e bateria queimada por métrica.
+ *
+ * Ambiente sem `document` (Node, teste de servidor) NÃO é "oculto": lá não
+ * existe segundo plano nenhum.
+ */
+export function isDocumentHidden(): boolean {
+  try {
+    const doc = (globalThis as { document?: Document }).document;
+    return !!doc && doc.visibilityState === 'hidden';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Enfileira um evento. **Nunca lança, nunca bloqueia, nunca faz I/O de rede.**
  *
  * É idempotente onde o evento é conceitualmente único (`install`,
@@ -402,6 +455,10 @@ let flushTimer: ReturnType<typeof setTimeout> | null = null;
 export function track(event: TelemetryEvent, props?: TelemetryProps): void {
   try {
     if (!isTelemetryEnabled()) return;
+    // Segundo plano não gera evento (ver `isDocumentHidden`). O `flush` de
+    // saída continua valendo — o que está na fila foi enfileirado com o app
+    // à vista.
+    if (isDocumentHidden()) return;
     const record = sanitizeEvent(event, props as Record<string, unknown> | undefined);
     if (!record) return;
 

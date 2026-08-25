@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
+import { track, flush as flushTelemetry, installTelemetryAutoFlush } from './utils/telemetry';
 import { BottomNav } from './components/BottomNav';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
@@ -851,6 +852,49 @@ export default function App() {
     gameState,
     setGameState,
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TELEMETRIA (src/utils/telemetry.ts) — a fiação, e só ela.
+  //
+  // O módulo existia inteiro, testado, e nunca era chamado: zero evento saía de
+  // um aparelho. Estes efeitos são os pontos de emissão. Regras que valem para
+  // todos eles:
+  //  · `track` NUNCA lança, nunca é `await`ado e nunca dispara com o app oculto
+  //    (guard dentro do próprio módulo).
+  //  · nenhum deles escreve no GameState — efeito em timer que grava estado
+  //    vira spam de cloud save (CLAUDE.md, GameStateContext).
+  //  · nenhum carrega texto do usuário: a allowlist do módulo só aceita número.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /** Boot: `install` (dedupe de uma vez na vida é do módulo) + o flush
+   *  oportunista de quando a aba morre — sem ele, o último passo do funil se
+   *  perde justamente em quem abandona. */
+  useEffect(() => {
+    track('install');
+    const stop = installTelemetryAutoFlush();
+    return stop;
+  }, []);
+
+  /** `first_task_done`: a primeira conclusão REAL. Um ponto só, ancorado no
+   *  popup que já é disparado pelos três handlers de conclusão — repetir a
+   *  condição nos três seria regra copiada (footgun 9). */
+  useEffect(() => {
+    if (showFirstTaskPopup) track('first_task_done');
+  }, [showFirstTaskPopup]);
+
+  /** `day_active` com o PESO de esforço do dia que fechou. A virada é o único
+   *  momento em que esse peso está fechado (`lastDayReport.done`, computado por
+   *  `computeDailyReset`). Fora dele o número ainda ia crescer.
+   *
+   *  Só emite com esforço > 0: "ativo" é ter concluído ≥1 item, não ter o app
+   *  instalado. E lê o relatório de FORA do updater do setGameState — efeito
+   *  colateral dentro do updater roda 2× em StrictMode (footgun 6). */
+  useEffect(() => {
+    const report = gameState.lastDayReport;
+    const effort = Number(report?.done ?? 0);
+    if (!report || !Number.isFinite(effort) || effort <= 0) return;
+    track('day_active', { effort });
+  }, [gameState.lastDayReport]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // A FILA DE INTERSTICIAIS — UMA prioridade explícita, e só UM monta por vez.
@@ -2339,6 +2383,12 @@ export default function App() {
   // Desbloqueio completo comprado NO MEIO do jogo (UnlockAccountModal.tsx).
   // O servidor já confirmou a compra quando isto roda.
   const handleAccountUnlocked = useCallback((ent: Entitlement) => {
+    // `purchase` no ponto em que o SERVIDOR já confirmou — não no clique, que
+    // contaria intenção como receita. `flushTelemetry` porque a compra costuma
+    // ser seguida de saída do app, e 5s de debounce perderia o evento mais caro
+    // que existe aqui.
+    track('purchase');
+    flushTelemetry();
     syncEntitlement(ent);
     setUnlockReason(null);
     // A compra promete "uma criatura gerada só pra você" — o ritual do oráculo

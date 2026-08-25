@@ -27,6 +27,10 @@ import {
   pendingTelemetry,
   resetTelemetryForTest,
   EVENT_SCHEMA,
+  TELEMETRY_FUNNEL,
+  onboardingStepCode,
+  isDocumentHidden,
+  NEGATIVE_STEP_BASE,
   TELEMETRY_EVENTS,
   MAX_QUEUE,
   ENDPOINT,
@@ -96,18 +100,22 @@ describe('allowlist de eventos', () => {
   });
 
   it('prop desconhecida derruba o EVENTO inteiro (allowlist, não denylist)', () => {
-    expect(sanitizeEvent('onboarding_step', { step: 3, taskName: 'x' })).toBeNull();
+    expect(sanitizeEvent('onboarding_step', { step: 3, funnel: 1, taskName: 'x' })).toBeNull();
     expect(sanitizeEvent('day_active', { effort: 4, mood: 'triste' })).toBeNull();
   });
 
   it('prop declarada é obrigatória e precisa ser número finito na faixa', () => {
     expect(sanitizeEvent('onboarding_step', {})).toBeNull();
-    expect(sanitizeEvent('onboarding_step', { step: '3' })).toBeNull();
-    expect(sanitizeEvent('onboarding_step', { step: NaN })).toBeNull();
-    expect(sanitizeEvent('onboarding_step', { step: 999 })).toBeNull();
-    expect(sanitizeEvent('onboarding_step', { step: -1 })).toBeNull();
+    expect(sanitizeEvent('onboarding_step', { step: '3', funnel: 1 })).toBeNull();
+    expect(sanitizeEvent('onboarding_step', { step: NaN, funnel: 1 })).toBeNull();
+    expect(sanitizeEvent('onboarding_step', { step: 999, funnel: 1 })).toBeNull();
+    expect(sanitizeEvent('onboarding_step', { step: -1, funnel: 1 })).toBeNull();
     expect(sanitizeEvent('day_active', { effort: 9e99 })).toBeNull();
-    expect(sanitizeEvent('onboarding_step', { step: 3 })?.p).toEqual({ step: 3 });
+    // `funnel` é OBRIGATÓRIO como qualquer prop declarada: passo sem funil é
+    // exatamente o dado inútil que o levantamento apontou.
+    expect(sanitizeEvent('onboarding_step', { step: 3 })).toBeNull();
+    expect(sanitizeEvent('onboarding_step', { step: 3, funnel: 9 })).toBeNull();
+    expect(sanitizeEvent('onboarding_step', { step: 3, funnel: 1 })?.p).toEqual({ step: 3, funnel: 1 });
   });
 
   it('recusa dia fora do formato ISO (a única resolução temporal que existe)', () => {
@@ -158,7 +166,7 @@ describe('sem PII: o corpo da requisição não carrega conteúdo do usuário', 
       return Promise.resolve(new Response('{}'));
     }));
     track('install');
-    track('onboarding_step', { step: 5 });
+    track('onboarding_step', { step: 5, funnel: TELEMETRY_FUNNEL.paid });
     track('day_active', { effort: 4 });
     flush();
 
@@ -280,7 +288,7 @@ describe('opt-out real', () => {
     setTelemetryEnabled(false);
     expect(isTelemetryEnabled()).toBe(false);
     track('install');
-    track('onboarding_step', { step: 2 });
+    track('onboarding_step', { step: 2, funnel: TELEMETRY_FUNNEL.demo });
     expect(pendingTelemetry()).toEqual([]);
     flush();
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -477,5 +485,53 @@ describe('paridade cliente ↔ servidor (footgun 9)', () => {
 
   it('e as mesmas props, com as mesmas faixas', () => {
     expect(JSON.parse(JSON.stringify(SERVER_SCHEMA))).toEqual(JSON.parse(JSON.stringify(EVENT_SCHEMA)));
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('funil: demo e pago nunca caem no mesmo contador', () => {
+  it('onboardingStepCode mapeia os ids negativos sem colidir com os positivos', () => {
+    expect(onboardingStepCode(0)).toBe(0);
+    expect(onboardingStepCode(35)).toBe(35); // REGISTER, o maior passo positivo
+    expect(onboardingStepCode(-1)).toBe(NEGATIVE_STEP_BASE - 1); // DEMO_PICK
+    expect(onboardingStepCode(-5)).toBe(NEGATIVE_STEP_BASE - 5); // AGE_BLOCK
+    // Nenhum código de negativo pode cair na faixa dos positivos que existem.
+    expect(onboardingStepCode(-1)).toBeGreaterThan(35);
+    expect(onboardingStepCode(-99)).toBeNull();
+    expect(onboardingStepCode(NaN)).toBeNull();
+  });
+
+  it('os três rótulos de funil passam pela allowlist e chegam distintos', () => {
+    for (const funnel of Object.values(TELEMETRY_FUNNEL)) {
+      expect(sanitizeEvent('onboarding_step', { step: 7, funnel })?.p).toEqual({ step: 7, funnel });
+    }
+    // O mesmo passo em funis diferentes é um registro diferente — é isso que
+    // impede a média das duas populações opostas.
+    const demo = sanitizeEvent('onboarding_step', { step: 7, funnel: TELEMETRY_FUNNEL.demo });
+    const paid = sanitizeEvent('onboarding_step', { step: 7, funnel: TELEMETRY_FUNNEL.paid });
+    expect(demo).not.toEqual(paid);
+  });
+});
+
+// ---------------------------------------------------------------------------
+
+describe('guard de segundo plano', () => {
+  it('nada é enfileirado com o app oculto', () => {
+    const original = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState');
+    try {
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      expect(isDocumentHidden()).toBe(true);
+      track('install');
+      track('day_active', { effort: 4 });
+      track('onboarding_step', { step: 1, funnel: TELEMETRY_FUNNEL.demo });
+      expect(pendingTelemetry()).toEqual([]);
+    } finally {
+      Object.defineProperty(document, 'visibilityState', original ?? { value: 'visible', configurable: true });
+    }
+    // De volta à vista, o mesmo evento passa — o guard não é um opt-out oculto.
+    expect(isDocumentHidden()).toBe(false);
+    track('install');
+    expect(pendingTelemetry()).toHaveLength(1);
   });
 });

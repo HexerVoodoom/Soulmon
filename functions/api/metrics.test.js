@@ -68,7 +68,7 @@ describe('allowlist de eventos (nunca denylist)', () => {
   });
 
   it('recusa prop desconhecida derrubando o evento inteiro', () => {
-    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: 3, taskName: 'x' } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: 3, funnel: 1, taskName: 'x' } }, DAY)).toBeNull();
     expect(sanitizeRecord({ e: 'day_active', d: DAY, p: { effort: 4, soulGoal: 'x' } }, DAY)).toBeNull();
   });
 
@@ -78,11 +78,14 @@ describe('allowlist de eventos (nunca denylist)', () => {
   });
 
   it('recusa prop fora da faixa, não numérica, ou faltando', () => {
-    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: 999 } }, DAY)).toBeNull();
-    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: '3' } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: 999, funnel: 1 } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: '3', funnel: 1 } }, DAY)).toBeNull();
     expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: {} }, DAY)).toBeNull();
-    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: 3 } }, DAY)).toEqual({
-      e: 'onboarding_step', d: DAY, p: { step: 3 },
+    // Passo sem funil é recusado: dado que não diz de qual dos dois usuários
+    // opostos veio não serve para nada (evidencia-comportamento.md §3).
+    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: 3 } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'onboarding_step', d: DAY, p: { step: 3, funnel: 1 } }, DAY)).toEqual({
+      e: 'onboarding_step', d: DAY, p: { step: 3, funnel: 1 },
     });
   });
 
@@ -149,7 +152,7 @@ describe('lote', () => {
       events: [
         { e: 'install', d: DAY },
         { e: 'evento_do_futuro', d: DAY },
-        { e: 'onboarding_step', d: DAY, p: { step: 4 } },
+        { e: 'onboarding_step', d: DAY, p: { step: 4, funnel: 2 } },
       ],
     }, DAY);
     expect(result.ok).toBe(true);
@@ -169,15 +172,26 @@ describe('agregado diário — nunca a série de ninguém', () => {
     expect(agg).toEqual({ install: 2, purchase: 1 });
   });
 
-  it('onboarding_step vira um contador POR PASSO — o drop-off por tela', () => {
+  it('onboarding_step vira um contador POR PASSO E POR FUNIL — o drop-off por tela', () => {
     const agg = applyAggregate({}, [
-      { e: 'onboarding_step', d: DAY, p: { step: 1 } },
-      { e: 'onboarding_step', d: DAY, p: { step: 1 } },
-      { e: 'onboarding_step', d: DAY, p: { step: 2 } },
+      { e: 'onboarding_step', d: DAY, p: { step: 1, funnel: 1 } },
+      { e: 'onboarding_step', d: DAY, p: { step: 1, funnel: 1 } },
+      { e: 'onboarding_step', d: DAY, p: { step: 2, funnel: 1 } },
     ]);
-    expect(agg['onboarding_step.1']).toBe(2);
-    expect(agg['onboarding_step.2']).toBe(1);
+    expect(agg['onboarding_step.demo.1']).toBe(2);
+    expect(agg['onboarding_step.demo.2']).toBe(1);
     expect(agg.onboarding_step).toBe(3);
+  });
+
+  it('o MESMO passo em funis diferentes NUNCA soma na mesma chave', () => {
+    const agg = applyAggregate({}, [
+      { e: 'onboarding_step', d: DAY, p: { step: 7, funnel: 1 } },
+      { e: 'onboarding_step', d: DAY, p: { step: 7, funnel: 2 } },
+      { e: 'onboarding_step', d: DAY, p: { step: 7, funnel: 0 } },
+    ]);
+    expect(agg['onboarding_step.demo.7']).toBe(1);
+    expect(agg['onboarding_step.paid.7']).toBe(1);
+    expect(agg['onboarding_step.unknown.7']).toBe(1);
   });
 
   it('day_active dá o north star: effort_sum / day_active', () => {

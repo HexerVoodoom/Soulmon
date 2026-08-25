@@ -55,7 +55,7 @@ export const METRICS_PREFIX = 'm:';
  */
 export const EVENT_SCHEMA = {
   install: null,
-  onboarding_step: { step: { min: 0, max: 40 } },
+  onboarding_step: { step: { min: 0, max: 45 }, funnel: { min: 0, max: 2 } },
   demo_pick: null,
   first_task_done: null,
   day_active: { effort: { min: 0, max: 500 } },
@@ -185,12 +185,21 @@ export function sanitizeBatch(body, today = serverDay()) {
 }
 
 /**
+ * Rótulo do funil no agregado. Espelha `TELEMETRY_FUNNEL` de
+ * `src/utils/telemetry.ts` (0 unknown / 1 demo / 2 paid). Sai como TEXTO na
+ * chave porque quem vai ler o agregado é uma pessoa, e `onboarding_step.2.7`
+ * não diz de qual dos dois usuários opostos aquele 7 é.
+ */
+const FUNNEL_LABEL = ['unknown', 'demo', 'paid'];
+
+/**
  * Soma eventos num agregado do dia. PURA — recebe e devolve o objeto contado.
  *
  * Formato (tudo número, tudo somado sobre todos os usuários):
  *   `install`, `demo_pick`, `first_task_done`, `unlock_view`, `purchase`,
  *   `day_active`               → contagem de eventos
- *   `onboarding_step.<n>`      → quantos chegaram ao passo n (o drop-off)
+ *   `onboarding_step.<funil>.<n>` → quantos chegaram ao passo n em CADA funil
+ *                                (demo/paid/unknown) — o drop-off por caminho
  *   `effort_sum`               → soma do peso de esforço do dia
  *
  * O north star sai daqui: `effort_sum / day_active` = peso de esforço real
@@ -204,7 +213,13 @@ export function applyAggregate(agg, events) {
   };
   for (const record of events) {
     bump(record.e);
-    if (record.e === 'onboarding_step') bump(`onboarding_step.${record.p.step}`);
+    // Chave SEMPRE com o funil. Sem ele, o passo 7 do demo e o passo 7 do
+    // ritual pago viravam o mesmo número — a média de duas populações que nunca
+    // se encontram, que é o mesmo que não medir.
+    if (record.e === 'onboarding_step') {
+      const funnel = FUNNEL_LABEL[record.p.funnel] ?? 'unknown';
+      bump(`onboarding_step.${funnel}.${record.p.step}`);
+    }
     if (record.e === 'day_active') bump('effort_sum', record.p.effort);
   }
   return out;
