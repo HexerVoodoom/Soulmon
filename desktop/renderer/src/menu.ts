@@ -110,7 +110,7 @@ function renderMain() {
 
   const img = document.createElement('img');
   img.className = 'pet-portrait';
-  img.src = petSprite(state.stage, state.genericLine, state.demoCharacterId);
+  img.src = petSprite(state.stage, state.demoCharacterId);
   img.alt = state.stageName;
   content.appendChild(img);
 

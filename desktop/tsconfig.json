@@ -8,6 +8,12 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    // O teste de contrato importa o endpoint REAL (functions/api/save.js), que é
+    // JS puro sem tipos. Sem isto o `tsc --noEmit` do CI do desktop fica vermelho
+    // por TS7016 — e foi um dos dois motivos de o gate nunca ter sido honrado.
+    // `checkJs` fica FALSE: queremos o import resolvido, não o endpoint tipado.
+    "allowJs": true,
+    "checkJs": false,
     "types": ["vite/client"]
   },
   "include": ["renderer/src/**/*.ts"]

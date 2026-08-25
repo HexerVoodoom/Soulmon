@@ -36,7 +36,7 @@ let behaviorUntil = 0;
 let lastTs = performance.now();
 
 function applyPetVisual() {
-  petImg.src = petSprite(state.stage, state.genericLine, state.demoCharacterId);
+  petImg.src = petSprite(state.stage, state.demoCharacterId);
   petImg.alt = state.stageName;
   pet.classList.toggle('sleeping', state.sleeping);
 }
