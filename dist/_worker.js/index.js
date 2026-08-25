@@ -5,6 +5,25 @@ var __name = (target, value) => __defProp(target, "name", { value, configurable:
 var ENT_PREFIX = "ent:";
 var ORDER_PREFIX = "ord:";
 var VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
+async function requirePaidTier(env, saveId) {
+  if (!saveId || !VALID_ID.test(saveId)) {
+    return { ok: false, status: 400, reason: "missing-save-id" };
+  }
+  if (!env?.DIGIAPP_SAVES) {
+    return { ok: false, status: 503, reason: "tier-unavailable" };
+  }
+  let ent;
+  try {
+    ent = await readEntitlement(env, saveId);
+  } catch {
+    return { ok: false, status: 503, reason: "tier-unavailable" };
+  }
+  if (ent?.tier !== "paid") {
+    return { ok: false, status: 402, reason: "paid-tier-required" };
+  }
+  return { ok: true, tier: "paid" };
+}
+__name(requirePaidTier, "requirePaidTier");
 var AD_REWARD_CREDITS = 5;
 var AD_DAILY_CAP = 3;
 var today = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
@@ -1467,6 +1486,10 @@ async function onRequestPost5({ request, env }) {
     if (!prompt || typeof prompt !== "string") {
       return Response.json({ error: "prompt required" }, { status: 400, headers: CORS7 });
     }
+    const tier = await requirePaidTier(env, id);
+    if (!tier.ok) {
+      return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS7 });
+    }
     const gate = await guardAiRequest(request, env, "sprite", id);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS7 });
     try {
@@ -1951,7 +1974,7 @@ async function onRequest4({ env }) {
 }
 __name(onRequest4, "onRequest");
 
-// ../.wrangler/tmp/pages-GATMSa/functionsRoutes-0.902534261997279.mjs
+// ../.wrangler/tmp/pages-eR1IaK/functionsRoutes-0.10263753608307591.mjs
 var routes = [
   {
     routePath: "/api/billing",
