@@ -199,7 +199,12 @@ export async function onRequestPost({ request, env }) {
     // A rota mais cara do app, e a única em que o PROMPT vem do cliente: sem
     // portão, era geração de imagem ilimitada e livre na nossa conta.
     const gate = await guardAiRequest(request, env, 'sprite', id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
+    if (!gate.ok) {
+      return Response.json(
+        { error: gate.reason, ...(gate.message ? { message: gate.message } : {}) },
+        { status: gate.status, headers: CORS },
+      );
+    }
 
     // 1ª tentativa: SEMPRE o prompt com as referências de gênero.
     try {
@@ -215,6 +220,17 @@ export async function onRequestPost({ request, env }) {
         throw err;
       }
       // 2ª tentativa: mesmo pedido, sem citar franquia nenhuma.
+      //
+      // Ela é uma SEGUNDA COBRANÇA do provedor — uma recusa custa duas imagens.
+      // Por isso passa pelo portão de volume de novo, debitando a unidade extra
+      // ANTES de gerar: teto que não conta a refeitura é teto que mente.
+      const extra = await guardAiRequest(request, env, 'sprite', id);
+      if (!extra.ok) {
+        return Response.json(
+          { error: extra.reason, ...(extra.message ? { message: extra.message } : {}) },
+          { status: extra.status, headers: CORS },
+        );
+      }
       console.warn('Prompt com referências recusado, refazendo sem elas:', err.message);
       const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
       return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS });

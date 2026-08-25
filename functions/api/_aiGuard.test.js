@@ -57,12 +57,12 @@ describe('portão das rotas de IA', () => {
     // É o cenário real enquanto o login não estiver ligado: o saveId é só um
     // hash de e-mail, então o atacante inventa um novo toda vez. A cota por
     // conta não pega isso; o teto global é o disjuntor da fatura.
-    const global = AI_LIMITS.sprite.global;
+    const global = AI_LIMITS.sprite.globalMonth;
     for (let i = 0; i < global; i++) {
       expect((await guardAiRequest(req(), env, 'sprite', `conta${i}xxxxxxx`)).ok).toBe(true);
     }
     expect(await guardAiRequest(req(), env, 'sprite', 'maisumaconta1'))
-      .toMatchObject({ ok: false, status: 503, reason: 'ai-daily-budget-reached' });
+      .toMatchObject({ ok: false, status: 503, reason: 'ai-monthly-budget-reached' });
   });
 
   it('buckets não dividem contador entre si', async () => {
@@ -81,6 +81,8 @@ describe('portão das rotas de IA', () => {
   });
 
   it('geração de imagem tem teto bem menor que o chat — é a cara', () => {
-    expect(AI_LIMITS.sprite.global).toBeLessThan(AI_LIMITS.chat.global);
+    // O de imagem é MENSAL e o do chat é DIÁRIO: comparar os dois números crus
+    // já favorece o chat, e ainda assim o de imagem tem que ser menor.
+    expect(AI_LIMITS.sprite.globalMonth).toBeLessThan(AI_LIMITS.chat.global);
   });
 });

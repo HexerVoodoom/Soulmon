@@ -42,6 +42,12 @@ function emptyEntitlement() {
     orderDetails: [],
     /** Epoch ms da última conferência de reembolso (0 = nunca). */
     auditedAt: 0,
+    /**
+     * Consumo VITALÍCIO de IA cara, por bucket (`{ sprite: 7 }`). Mora aqui, e
+     * não numa chave `ai:*` com TTL, porque teto vitalício que expira não é
+     * teto vitalício — é um teto diário com nome comprido. Ver `_aiGuard.js`.
+     */
+    aiLifetime: {},
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now()
@@ -610,35 +616,111 @@ __name(onRequestPost, "onRequestPost");
 var AI_LIMITS = {
   chat: { perAccount: 120, global: 2e4 },
   suggest: { perAccount: 30, global: 3e3 },
-  sprite: { perAccount: 20, global: 400 }
+  // 6/dia = o maior lote possível (empate triplo = 3) + retentativas do dia.
+  // 20 vitalício = 14 do pior caso da spec + 6 de folga ⇒ R$ 2,02 por conta,
+  // para sempre, 6,8 % de R$ 29,90.
+  sprite: { perAccount: 6, perAccountLifetime: 20, globalMonth: 800 }
 };
-var day = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "day");
+var day = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => now.toISOString().slice(0, 10), "day");
+var month = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => now.toISOString().slice(0, 7), "month");
 var TTL_SECONDS = 60 * 60 * 30;
-async function bump(env, key, limit) {
+var MONTH_TTL_SECONDS = 60 * 60 * 24 * 40;
+var AI_REFUSAL_MESSAGES = {
+  "sprite-lifetime-cap": {
+    "pt-BR": "Seu Soulmon j\xE1 recebeu toda a arte que esta jornada guardava para ele. As formas que vierem aparecem com a arte de reserva \u2014 e ela vale igual.",
+    en: "Your Soulmon has already received all the art this journey held for it. Any forms from here on show up with their reserve art \u2014 and it counts just the same."
+  },
+  "ai-daily-limit": {
+    "pt-BR": "Por hoje j\xE1 desenhamos bastante para o seu Soulmon. Amanh\xE3 a gente continua de onde parou.",
+    en: "We've drawn plenty for your Soulmon today. Tomorrow we pick up right where we left off."
+  },
+  "ai-monthly-budget-reached": {
+    "pt-BR": "O ateli\xEA est\xE1 descansando at\xE9 o m\xEAs virar. Seu Soulmon segue inteiro com a arte de reserva, sem perder nada do caminho.",
+    en: "The studio is resting until the month turns over. Your Soulmon carries on whole with its reserve art, losing nothing along the way."
+  },
+  "ai-daily-budget-reached": {
+    "pt-BR": "O ateli\xEA j\xE1 rendeu bastante hoje. Amanh\xE3 ele abre de novo.",
+    en: "The studio has given plenty today. It opens again tomorrow."
+  },
+  "ai-quota-unavailable": {
+    "pt-BR": "N\xE3o conseguimos conferir a sua cota agora, e preferimos n\xE3o arriscar cobrar voc\xEA duas vezes. Tente de novo daqui a pouco.",
+    en: "We couldn't check your quota right now, and we'd rather not risk charging you twice. Please try again in a little while."
+  }
+};
+var refuse = /* @__PURE__ */ __name((status, reason) => ({
+  ok: false,
+  status,
+  reason,
+  ...AI_REFUSAL_MESSAGES[reason] ? { message: AI_REFUSAL_MESSAGES[reason] } : {}
+}), "refuse");
+async function readCounter(env, key) {
   const raw = await env.DIGIAPP_SAVES.get(key);
-  const used = Number(raw) || 0;
-  if (used >= limit) return false;
-  await env.DIGIAPP_SAVES.put(key, String(used + 1), { expirationTtl: TTL_SECONDS });
-  return true;
+  if (raw === null || raw === void 0) return 0;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) throw new Error(`contador ileg\xEDvel em ${key}: ${raw}`);
+  return n;
 }
-__name(bump, "bump");
-async function guardAiRequest(request, env, bucket, saveId) {
-  if (!env.DIGIAPP_SAVES) return { ok: false, status: 500, reason: "storage-not-bound" };
+__name(readCounter, "readCounter");
+function lifetimeUsed(ent, bucket) {
+  const n = Number(ent?.aiLifetime?.[bucket] ?? 0);
+  if (!Number.isFinite(n) || n < 0) throw new Error("contador vital\xEDcio ileg\xEDvel");
+  return n;
+}
+__name(lifetimeUsed, "lifetimeUsed");
+async function guardAiRequest(request, env, bucket, saveId, units = 1) {
+  if (!env.DIGIAPP_SAVES) return refuse(500, "storage-not-bound");
   const limits = AI_LIMITS[bucket];
-  if (!limits) return { ok: false, status: 500, reason: "unknown-bucket" };
+  if (!limits) return refuse(500, "unknown-bucket");
   if (!saveId || !VALID_ID.test(saveId)) {
-    return { ok: false, status: 400, reason: "missing-save-id" };
+    return refuse(400, "missing-save-id");
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
     return { ok: false, status: auth.reason === "forbidden" ? 403 : 401, reason: auth.reason };
   }
-  const today3 = day();
-  if (!await bump(env, `ai:${bucket}:@all:${today3}`, limits.global)) {
-    return { ok: false, status: 503, reason: "ai-daily-budget-reached" };
+  const now = /* @__PURE__ */ new Date();
+  const today3 = day(now);
+  const thisMonth = month(now);
+  const usesMonth = typeof limits.globalMonth === "number";
+  const globalKey = usesMonth ? `ai:${bucket}:@all:${thisMonth}` : `ai:${bucket}:@all:${today3}`;
+  const globalLimit = usesMonth ? limits.globalMonth : limits.global;
+  const globalTtl = usesMonth ? MONTH_TTL_SECONDS : TTL_SECONDS;
+  const accountKey = `ai:${bucket}:${saveId}:${today3}`;
+  const hasLifetime = typeof limits.perAccountLifetime === "number";
+  let ent = null;
+  let usedLifetime = 0;
+  let usedGlobal = 0;
+  let usedAccount = 0;
+  try {
+    if (hasLifetime) {
+      ent = await readEntitlement(env, saveId);
+      usedLifetime = lifetimeUsed(ent, bucket);
+    }
+    usedGlobal = await readCounter(env, globalKey);
+    usedAccount = await readCounter(env, accountKey);
+  } catch (err) {
+    console.error("aiGuard: contador ileg\xEDvel, recusando", err?.message);
+    return refuse(503, "ai-quota-unavailable");
   }
-  if (!await bump(env, `ai:${bucket}:${saveId}:${today3}`, limits.perAccount)) {
-    return { ok: false, status: 429, reason: "ai-daily-limit" };
+  if (hasLifetime && usedLifetime + units > limits.perAccountLifetime) {
+    return refuse(402, "sprite-lifetime-cap");
+  }
+  if (usedAccount + units > limits.perAccount) {
+    return refuse(429, "ai-daily-limit");
+  }
+  if (usedGlobal + units > globalLimit) {
+    return refuse(503, usesMonth ? "ai-monthly-budget-reached" : "ai-daily-budget-reached");
+  }
+  try {
+    if (hasLifetime) {
+      ent.aiLifetime = { ...ent.aiLifetime || {}, [bucket]: usedLifetime + units };
+      await writeEntitlement(env, saveId, ent);
+    }
+    await env.DIGIAPP_SAVES.put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
+    await env.DIGIAPP_SAVES.put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
+  } catch (err) {
+    console.error("aiGuard: falha ao debitar cota, recusando", err?.message);
+    return refuse(503, "ai-quota-unavailable");
   }
   return { ok: true };
 }
@@ -1503,7 +1585,12 @@ async function onRequestPost5({ request, env }) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS7 });
     }
     const gate = await guardAiRequest(request, env, "sprite", id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS7 });
+    if (!gate.ok) {
+      return Response.json(
+        { error: gate.reason, ...gate.message ? { message: gate.message } : {} },
+        { status: gate.status, headers: CORS7 }
+      );
+    }
     try {
       const out = await generateWithProviders(env, prompt, referenceImageUrls);
       return Response.json(out, { headers: CORS7 });
@@ -1514,6 +1601,13 @@ async function onRequestPost5({ request, env }) {
           return Response.json({ error: err.message }, { status: 503, headers: CORS7 });
         }
         throw err;
+      }
+      const extra = await guardAiRequest(request, env, "sprite", id);
+      if (!extra.ok) {
+        return Response.json(
+          { error: extra.reason, ...extra.message ? { message: extra.message } : {} },
+          { status: extra.status, headers: CORS7 }
+        );
       }
       console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err.message);
       const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
@@ -1617,14 +1711,14 @@ function sanitizeBatch(body, today3 = serverDay()) {
 __name(sanitizeBatch, "sanitizeBatch");
 function applyAggregate(agg, events) {
   const out = { ...agg && typeof agg === "object" && !Array.isArray(agg) ? agg : {} };
-  const bump2 = /* @__PURE__ */ __name((key, by = 1) => {
+  const bump = /* @__PURE__ */ __name((key, by = 1) => {
     const cur = typeof out[key] === "number" && Number.isFinite(out[key]) ? out[key] : 0;
     out[key] = cur + by;
   }, "bump");
   for (const record of events) {
-    bump2(record.e);
-    if (record.e === "onboarding_step") bump2(`onboarding_step.${record.p.step}`);
-    if (record.e === "day_active") bump2("effort_sum", record.p.effort);
+    bump(record.e);
+    if (record.e === "onboarding_step") bump(`onboarding_step.${record.p.step}`);
+    if (record.e === "day_active") bump("effort_sum", record.p.effort);
   }
   return out;
 }
@@ -1986,7 +2080,7 @@ async function onRequest4({ env }) {
 }
 __name(onRequest4, "onRequest");
 
-// ../.wrangler/tmp/pages-AQA1E0/functionsRoutes-0.7502319612145569.mjs
+// ../.wrangler/tmp/pages-3K0d5t/functionsRoutes-0.26114980541921073.mjs
 var routes = [
   {
     routePath: "/api/billing",

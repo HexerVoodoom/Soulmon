@@ -1,0 +1,135 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { onRequestPost } from './generate-sprite.js';
+import { ENT_PREFIX } from './_entitlements.js';
+import { AI_LIMITS } from './_aiGuard.js';
+
+// O que interessa medir aqui NÃO é o corpo da resposta (ele pode dizer qualquer
+// coisa): é se o provedor de IA foi CHAMADO. Chamada que não aconteceu é fatura
+// que não chegou. Por isso todo caso conta `fetch`.
+
+const SAVE = 'abcdefgh12345678';
+
+function fakeEnv() {
+  const store = new Map();
+  store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid' }));
+  const env = {
+    GEMINI_API_KEY: 'k',
+    DIGIAPP_SAVES: {
+      get: async k => (store.has(k) ? store.get(k) : null),
+      put: async (k, v) => { store.set(k, v); },
+    },
+  };
+  env._store = store;
+  return env;
+}
+
+const req = (body = { prompt: 'um bicho fofo', id: SAVE }) =>
+  new Request('https://soulmon.test/api/generate-sprite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+const geminiOk = () => new Response(JSON.stringify({
+  candidates: [{ finishReason: 'STOP', content: { parts: [{ inlineData: { mimeType: 'image/png', data: 'AAAA' } }] } }],
+}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+const geminiRecusa = () => new Response(JSON.stringify({
+  promptFeedback: { blockReason: 'PROHIBITED_CONTENT' },
+}), { status: 200, headers: { 'Content-Type': 'application/json' } });
+
+let chamadasDeIA;
+const lifetimeDe = env => JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiLifetime?.sprite ?? 0;
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-08-10T12:00:00Z'));
+  chamadasDeIA = [];
+  vi.stubGlobal('fetch', vi.fn(async url => {
+    chamadasDeIA.push(String(url));
+    return geminiOk();
+  }));
+});
+afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
+
+describe('generate-sprite: o teto para ANTES de gastar', () => {
+  it('a 7ª do dia é 429 e NÃO chama IA nenhuma', async () => {
+    const env = fakeEnv();
+    for (let i = 0; i < 6; i++) {
+      expect((await onRequestPost({ request: req(), env })).status).toBe(200);
+    }
+    expect(chamadasDeIA).toHaveLength(6);
+
+    const res = await onRequestPost({ request: req(), env });
+    expect(res.status).toBe(429);
+    expect((await res.json()).error).toBe('ai-daily-limit');
+    expect(chamadasDeIA).toHaveLength(6); // nenhuma chamada nova
+  });
+
+  it('a 21ª da VIDA é 402 e não chama IA — mesmo em dias diferentes', async () => {
+    const env = fakeEnv();
+    for (let d = 0; d < 4; d++) {
+      vi.setSystemTime(new Date(`2026-08-${String(10 + d).padStart(2, '0')}T12:00:00Z`));
+      for (let i = 0; i < 6; i++) await onRequestPost({ request: req(), env });
+    }
+    expect(chamadasDeIA).toHaveLength(AI_LIMITS.sprite.perAccountLifetime);
+    expect(lifetimeDe(env)).toBe(20);
+
+    vi.setSystemTime(new Date('2026-12-25T12:00:00Z'));
+    const res = await onRequestPost({ request: req(), env });
+    expect(res.status).toBe(402);
+    expect((await res.json()).error).toBe('sprite-lifetime-cap');
+    expect(chamadasDeIA).toHaveLength(20);
+  });
+
+  it('a recusa de conteúdo custa 2 no teto vitalício — porque são 2 cobranças', async () => {
+    // `promptFallback` refaz o pedido sem citar franquia. É uma SEGUNDA imagem
+    // paga. Teto que conta 1 aí é teto que mente.
+    const env = fakeEnv();
+    fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
+    const res = await onRequestPost({
+      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE }),
+      env,
+    });
+    expect(res.status).toBe(200);
+    expect((await res.json()).usedFallbackPrompt).toBe(true);
+    expect(chamadasDeIA).toHaveLength(2);
+    expect(lifetimeDe(env)).toBe(2);
+  });
+
+  it('a refeitura por recusa é RECUSADA se estourar o teto — não fura pela porta dos fundos', async () => {
+    const env = fakeEnv();
+    // Deixa a conta com 19 de 20 gastos: sobra exatamente 1, e a recusa pede 2.
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiLifetime: { sprite: 19 } }));
+    fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
+    const res = await onRequestPost({
+      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE }),
+      env,
+    });
+    expect(res.status).toBe(402);
+    expect((await res.json()).error).toBe('sprite-lifetime-cap');
+    expect(chamadasDeIA).toHaveLength(1); // a 1ª aconteceu; a refeitura NÃO
+    expect(lifetimeDe(env)).toBe(20);
+  });
+
+  it('cota mensal esgotada devolve 503 sem chamar IA, e com texto PT-BR + EN', async () => {
+    const env = fakeEnv();
+    env._store.set('ai:sprite:@all:2026-08', String(AI_LIMITS.sprite.globalMonth));
+    const res = await onRequestPost({ request: req(), env });
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBe('ai-monthly-budget-reached');
+    expect(body.message['pt-BR']).toBeTruthy();
+    expect(body.message.en).toBeTruthy();
+    expect(chamadasDeIA).toEqual([]);
+  });
+
+  it('contador ilegível recusa com 503 e ZERO chamada de IA (fail-closed)', async () => {
+    const env = fakeEnv();
+    env._store.set('ai:sprite:@all:2026-08', 'NaN-de-verdade');
+    const res = await onRequestPost({ request: req(), env });
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe('ai-quota-unavailable');
+    expect(chamadasDeIA).toEqual([]);
+  });
+});

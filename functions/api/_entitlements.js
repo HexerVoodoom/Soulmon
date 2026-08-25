@@ -82,6 +82,12 @@ function emptyEntitlement() {
     orderDetails: [],
     /** Epoch ms da última conferência de reembolso (0 = nunca). */
     auditedAt: 0,
+    /**
+     * Consumo VITALÍCIO de IA cara, por bucket (`{ sprite: 7 }`). Mora aqui, e
+     * não numa chave `ai:*` com TTL, porque teto vitalício que expira não é
+     * teto vitalício — é um teto diário com nome comprido. Ver `_aiGuard.js`.
+     */
+    aiLifetime: {},
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now(),
