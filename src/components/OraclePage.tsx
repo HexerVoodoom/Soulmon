@@ -6,7 +6,7 @@ import { readLocal, writeJson } from '../utils/safeStorage';
 import { PixelizerCard } from './PixelizerCard';
 import { generateAllSprites } from '../utils/spriteGen';
 import {
-  generateOracle, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
+  generateOracle, creatureFormId, ELEMENT_INFO, ROLE_INFO, ELEMENT_ORDER, ROLE_ORDER,
   ALIGNMENT_INFO, REALM_INFO, ALIGNMENT_ORDER, REALM_ORDER,
   type OracleInput, type OracleResult, type OracleOverrides, type OraclePreferences, type LText,
   type ElementId, type RoleId, type AlignmentId, type RealmId,
@@ -253,8 +253,14 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
     setGenBusy(true);
     setGenSprites({});
     setGenProgress({ done: 0, total: creature.creature.stages.length });
+    // `formId` vai junto: é ele que liga o teto POR FORMA do servidor
+    // (`_aiGuard.js`, `perFormLifetime: 3`). Sem ele, um loop de retentativa
+    // numa forma só consome o vitalício de 26 da conta inteira.
     const stages = creature.creature.stages.map(s => ({
-      key: stageKey(s), prompt: s.imagePrompt, promptFallback: s.imagePromptFallback,
+      key: stageKey(s),
+      prompt: s.imagePrompt,
+      promptFallback: s.imagePromptFallback,
+      formId: creatureFormId(s),
     }));
     const { sprites, errors } = await generateAllSprites(stages, {
       onProgress: (done, total) => setGenProgress({ done, total }),

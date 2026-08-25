@@ -149,26 +149,51 @@ export interface AttrPoints { virus: number; data: number; vaccine: number }
  * continuam mandando. O padrão de cuidado entra só quando eles empatam — que
  * antes era resolvido por uma ordem fixa no código, sem significado nenhum.
  */
+/**
+ * Os galhos EMPATADOS no topo dos atributos — a lista que `resolveBranch` já
+ * calculava internamente e descartava ao devolver um só.
+ *
+ * Existe porque a geração incremental de sprite precisa gerar TODOS os líderes
+ * na véspera (`spec-geracao-incremental.md` §4): o galho de fato só é decidido
+ * no toque da cerimônia, com o ritmo daquele momento, e gerar só o preferido
+ * reintroduz o risco que a geração antecipada existe para eliminar. **Não é
+ * critério novo** — é a mesma aritmética, exposta aqui, no dono da regra, para
+ * não virar a segunda cópia (footgun 9 do `CLAUDE.md`).
+ *
+ * Devolve **lista vazia** quando ninguém pontuou (`max <= 0`): aí não há
+ * disputa de atributo nenhuma, e quem responde é o ritmo/fallback de
+ * `resolveBranch`.
+ */
+export function branchLeaders(points: AttrPoints): Array<'virus' | 'data' | 'vaccine'> {
+  const safe = safeAttrPoints(points);
+  const max = Math.max(safe.virus, safe.data, safe.vaccine);
+  if (max <= 0) return [];
+  return (['virus', 'data', 'vaccine'] as const).filter(k => safe[k] === max);
+}
+
+/** Ponto não-finito vira 0 — ver o comentário dentro de `resolveBranch`. */
+function safeAttrPoints(points: AttrPoints): AttrPoints {
+  return {
+    virus: Number.isFinite(points?.virus) ? points.virus : 0,
+    data: Number.isFinite(points?.data) ? points.data : 0,
+    vaccine: Number.isFinite(points?.vaccine) ? points.vaccine : 0,
+  };
+}
+
 export function resolveBranch(
   points: AttrPoints,
   reading: CareReading,
   fallback: 'virus' | 'data' | 'vaccine' = 'data',
 ): 'virus' | 'data' | 'vaccine' {
-  // Ponto NÃO-FINITO vira 0. Sem isto, um `virusPoints` ausente/NaN no save
+  // Ponto NÃO-FINITO vira 0 (saneado dentro de `branchLeaders`). Sem isto, um
+  // `virusPoints` ausente/NaN no save
   // fazia `Math.max` dar NaN, `NaN <= 0` ser false, a lista de líderes ficar
   // VAZIA (nada é === NaN) e a função devolver `leaders[0]` — ou seja,
   // **`undefined`**, um valor fora do próprio tipo de retorno. O galho previsto
   // na página de Evolução ficava indefinido e `currentBranch: undefined` era
   // gravado no save. Achado por fuzzing na rodada 6.
-  const safe = {
-    virus: Number.isFinite(points?.virus) ? points.virus : 0,
-    data: Number.isFinite(points?.data) ? points.data : 0,
-    vaccine: Number.isFinite(points?.vaccine) ? points.vaccine : 0,
-  };
-  const max = Math.max(safe.virus, safe.data, safe.vaccine);
-  if (max <= 0) return reading.confident ? patternBranch(reading.pattern.id) : fallback;
-
-  const leaders = (['virus', 'data', 'vaccine'] as const).filter(k => safe[k] === max);
+  const leaders = branchLeaders(points);
+  if (leaders.length === 0) return reading.confident ? patternBranch(reading.pattern.id) : fallback;
   if (leaders.length === 1) return leaders[0];
 
   // Empate: o jeito como a pessoa cuidou decide, se houver leitura confiável.

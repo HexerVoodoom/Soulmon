@@ -1,0 +1,127 @@
+/**
+ * O executor do lote: serial, com recuo, e com as duas paradas diferentes.
+ */
+import { describe, it, expect, vi } from 'vitest';
+import { runSpriteBatch, SPRITE_RETRY_BACKOFF_MS } from './spriteRunner';
+import { SpriteGenError } from './spriteGen';
+import type { SpriteEntry } from './spriteLibrary';
+
+const ok = (formId: string): SpriteEntry => ({ url: `https://cdn/${formId}.png`, formId, at: 1 });
+
+function harness(generate: (formId: string) => Promise<SpriteEntry>) {
+  const results: string[] = [];
+  const failures: Array<{ formId: string; kind: string }> = [];
+  const waits: number[] = [];
+  return {
+    results, failures, waits,
+    deps: {
+      generate,
+      onResult: (formId: string) => { results.push(formId); },
+      onFailure: (formId: string, kind: string) => { failures.push({ formId, kind }); },
+      sleep: async (ms: number) => { waits.push(ms); },
+    } as Parameters<typeof runSpriteBatch>[1],
+  };
+}
+
+describe('serial, uma forma por vez', () => {
+  it('não dispara o segundo pedido antes do primeiro terminar', async () => {
+    let vivos = 0;
+    let pico = 0;
+    const h = harness(async formId => {
+      vivos += 1; pico = Math.max(pico, vivos);
+      await Promise.resolve();
+      vivos -= 1;
+      return ok(formId);
+    });
+    await runSpriteBatch(['rookie', 'champion-virus', 'champion-data'], h.deps);
+    expect(pico).toBe(1);
+    expect(h.results).toEqual(['rookie', 'champion-virus', 'champion-data']);
+  });
+});
+
+describe('retentativa automática: 2, com recuo de 60 s e 10 min', () => {
+  it('falha instável retenta duas vezes e depois desiste', async () => {
+    const generate = vi.fn().mockRejectedValue(new SpriteGenError('error', 500, 'boom'));
+    const h = harness(generate);
+    await runSpriteBatch(['rookie'], h.deps);
+    expect(generate).toHaveBeenCalledTimes(3);
+    expect(h.waits).toEqual([...SPRITE_RETRY_BACKOFF_MS]);
+    expect(h.failures).toEqual([{ formId: 'rookie', kind: 'error' }]);
+  });
+
+  it('não retenta 429, 503 nem os terminais — bater na porta que fechou só gasta', async () => {
+    for (const [reason, status] of [['daily-limit', 429], ['budget', 503], ['form-cap', 409]] as const) {
+      const generate = vi.fn().mockRejectedValue(new SpriteGenError(reason, status, reason));
+      const h = harness(generate);
+      await runSpriteBatch(['rookie'], h.deps);
+      expect(generate).toHaveBeenCalledTimes(1);
+      expect(h.waits).toEqual([]);
+    }
+  });
+});
+
+describe('as duas paradas, que não são a mesma', () => {
+  it('409 `form-cap` para SÓ a forma: o resto do lote continua', async () => {
+    const h = harness(async formId => {
+      if (formId === 'champion-virus') throw new SpriteGenError('form-cap', 409, 'sprite-form-cap');
+      return ok(formId);
+    });
+    const out = await runSpriteBatch(['champion-virus', 'champion-data'], h.deps);
+    expect(h.results).toEqual(['champion-data']);
+    expect(h.failures).toEqual([{ formId: 'champion-virus', kind: 'form-cap' }]);
+    expect(out.aborted).toBe(false);
+  });
+
+  it('402 `lifetime-cap` aborta o lote inteiro: a conta parou', async () => {
+    const generate = vi.fn(async (formId: string) => {
+      if (formId === 'champion-virus') throw new SpriteGenError('lifetime-cap', 402, 'sprite-lifetime-cap');
+      return ok(formId);
+    });
+    const h = harness(generate);
+    const out = await runSpriteBatch(['champion-virus', 'champion-data'], h.deps);
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(out.aborted).toBe(true);
+    expect(h.results).toEqual([]);
+  });
+});
+
+describe('202 e offline', () => {
+  it('202 repergunta no prazo do servidor e não marca falha se o outro aparelho entregar', async () => {
+    let n = 0;
+    const h = harness(async formId => {
+      n += 1;
+      if (n === 1) throw new SpriteGenError('pending', 202, 'pending', { retryAfter: 20 });
+      return ok(formId);
+    });
+    await runSpriteBatch(['rookie'], h.deps);
+    expect(h.waits).toEqual([20_000]);
+    expect(h.results).toEqual(['rookie']);
+    expect(h.failures).toEqual([]);
+  });
+
+  it('202 até o fim não vira erro nenhum: fica na reserva, calado', async () => {
+    const h = harness(async () => { throw new SpriteGenError('pending', 202, 'pending'); });
+    await runSpriteBatch(['rookie'], h.deps);
+    expect(h.failures).toEqual([]);
+  });
+
+  it('rede fora (status 0) é registrada como `offline`, e offline não consome teto', async () => {
+    const h = harness(async () => { throw new SpriteGenError('error', 0, 'network'); });
+    await runSpriteBatch(['rookie'], h.deps);
+    expect(h.failures).toEqual([{ formId: 'rookie', kind: 'offline' }]);
+  });
+});
+
+describe('cancelamento cooperativo', () => {
+  it('para no meio do lote quando o app pede', async () => {
+    const generate = vi.fn(async (formId: string) => ok(formId));
+    const h = harness(generate);
+    let calls = 0;
+    const out = await runSpriteBatch(['a', 'b', 'c'], {
+      ...h.deps,
+      isCancelled: () => ++calls > 2,
+    });
+    expect(out.aborted).toBe(true);
+    expect(generate).toHaveBeenCalledTimes(2);
+  });
+});

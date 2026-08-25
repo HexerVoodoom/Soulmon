@@ -1,0 +1,306 @@
+/**
+ * O ACERVO DE SPRITES do jogador — estado puro da geração incremental.
+ *
+ * Spec: `squad-alpha-runs/soulmon-02/spec-geracao-incremental.md` (revisão 3,
+ * gate `gate-spec-sprite.md` em PASS). Este módulo é o dono único de:
+ *
+ *  - o que existe (`sprites[formId]`), que é **o gatilho inteiro** (§3.5: "a
+ *    única pergunta que o gatilho faz é: `sprites[formId]` existe?");
+ *  - o que falhou e quantas vezes, incluindo o estado TERMINAL por forma
+ *    (`perFormLifetime: 3`, §3.4) — que é **409 `sprite-form-cap`**, e é
+ *    distinto do terminal por CONTA (**402 `sprite-lifetime-cap`**);
+ *  - a adoção do sprite próprio da forma ATUAL (§2.3.1): quem troca o rosto do
+ *    bicho é o jogador, e a oferta expira numa virada de dia — o sprite, nunca.
+ *
+ * Funções PURAS: `dayKey` e `now` entram por parâmetro, sem React, sem
+ * localStorage. Só a URL vai ao save (`custo-geracao-sprite.md` §4): base64 no
+ * `GameState` estoura a cota de `localStorage` compartilhada com o DigiApp.
+ *
+ * ⚠️ **Reverter e re-sintonizar NÃO consomem teto** (gate, "Para o
+ * `alpha-frontend`"): nenhuma função de adoção aqui toca `attempts`.
+ */
+
+/** Uma forma desenhada. Só metadado — o binário mora no Cache Storage. */
+export interface SpriteEntry {
+  /** URL do provedor (ou data URL, no caminho Gemini enquanto não houver republicação). */
+  url: string;
+  formId: string;
+  provider?: string;
+  /** Epoch ms de quando chegou. */
+  at: number;
+}
+
+/**
+ * Por que uma forma não tem sprite próprio. `form-cap` (409) e `lifetime-cap`
+ * (402) são **contratos diferentes** e não podem ser tratados como um só:
+ * o 402 é a conta inteira parando para sempre; o 409 é UMA forma que esgotou
+ * as 3 tentativas dela, com as outras dez seguindo abertas.
+ */
+export type SpriteFailKind =
+  | 'form-cap'
+  | 'lifetime-cap'
+  | 'daily-limit'
+  | 'budget'
+  | 'offline'
+  | 'error';
+
+export interface SpriteFormFailure {
+  /** Tentativas que o CLIENTE contou nesta forma (o teto de verdade é do servidor). */
+  attempts: number;
+  /** Quantas vieram do botão "Tentar de novo" (cooldown/teto manual, §6 do custo). */
+  manual: number;
+  /** Última falha registrada — governa o rótulo do card. */
+  kind: SpriteFailKind;
+  /** Terminal: não há mais o que tentar nesta forma. */
+  terminal?: 'form-cap' | 'lifetime-cap';
+  lastAt: number;
+}
+
+/** A oferta de adoção da forma ATUAL (§2.3.1). Expira em uma virada de dia. */
+export interface PendingTune {
+  formId: string;
+  /** `dayKey` do dia em que a oferta apareceu. Na virada seguinte, adota sozinho. */
+  sinceDay: string;
+}
+
+export interface SpriteLibrary {
+  sprites: Record<string, SpriteEntry>;
+  failures: Record<string, SpriteFormFailure>;
+  /** Forma atual com sprite próprio pronto e ainda não adotado. */
+  pendingTune: PendingTune | null;
+  /**
+   * Formas em que o jogador escolheu "Voltar ao traço antigo". O sprite próprio
+   * **fica no save** e pode ser sintonizado de novo — por isso é uma lista de
+   * opt-out, e não um apagamento. Persistida: se fosse só de sessão, recarregar
+   * a página desfaria a escolha dele em silêncio, que é o erro que o X4 derrubou.
+   */
+  reverted: string[];
+}
+
+/** Teto de tentativas por forma — espelha `AI_LIMITS.sprite.perFormLifetime`
+ *  (`functions/api/_aiGuard.js`). O servidor é a autoridade; isto é o
+ *  disjuntor local que evita gastar uma chamada que já se sabe recusada. */
+export const SPRITE_FORM_ATTEMPT_CAP = 3;
+/** Botão manual: 3 por forma, vitalício (`custo-geracao-sprite.md` §6). */
+export const SPRITE_MANUAL_RETRY_CAP = 3;
+/** Cooldown do botão manual, em ms (idem §6). */
+export const SPRITE_MANUAL_COOLDOWN_MS = 60_000;
+
+export function emptySpriteLibrary(): SpriteLibrary {
+  return { sprites: {}, failures: {}, pendingTune: null, reverted: [] };
+}
+
+/**
+ * Normaliza o que veio do save (localStorage OU nuvem — os dois são dado não
+ * confiável). Campo novo sempre com fallback `?? padrão`, regra do `CLAUDE.md`.
+ */
+export function normalizeSpriteLibrary(raw: unknown): SpriteLibrary {
+  const lib = emptySpriteLibrary();
+  if (!raw || typeof raw !== 'object') return lib;
+  const r = raw as Partial<SpriteLibrary>;
+  if (r.sprites && typeof r.sprites === 'object') {
+    for (const [formId, entry] of Object.entries(r.sprites)) {
+      if (entry && typeof entry === 'object' && typeof (entry as SpriteEntry).url === 'string') {
+        const e = entry as SpriteEntry;
+        lib.sprites[formId] = {
+          url: e.url,
+          formId,
+          provider: typeof e.provider === 'string' ? e.provider : undefined,
+          at: Number.isFinite(e.at) ? e.at : 0,
+        };
+      }
+    }
+  }
+  if (r.failures && typeof r.failures === 'object') {
+    for (const [formId, f] of Object.entries(r.failures)) {
+      if (!f || typeof f !== 'object') continue;
+      const v = f as SpriteFormFailure;
+      lib.failures[formId] = {
+        attempts: Number.isFinite(v.attempts) ? Math.max(0, v.attempts) : 0,
+        manual: Number.isFinite(v.manual) ? Math.max(0, v.manual) : 0,
+        kind: (v.kind ?? 'error') as SpriteFailKind,
+        terminal: v.terminal === 'form-cap' || v.terminal === 'lifetime-cap' ? v.terminal : undefined,
+        lastAt: Number.isFinite(v.lastAt) ? v.lastAt : 0,
+      };
+    }
+  }
+  if (r.pendingTune && typeof r.pendingTune === 'object'
+      && typeof r.pendingTune.formId === 'string' && typeof r.pendingTune.sinceDay === 'string') {
+    lib.pendingTune = { formId: r.pendingTune.formId, sinceDay: r.pendingTune.sinceDay };
+  }
+  lib.reverted = Array.isArray(r.reverted) ? r.reverted.filter(id => typeof id === 'string') : [];
+  return lib;
+}
+
+/** `sprites[formId]` existe? É a ÚNICA pergunta do gatilho (§3.5). */
+export function hasSprite(lib: SpriteLibrary, formId: string): boolean {
+  return Boolean(lib.sprites[formId]);
+}
+
+/**
+ * O sprite a EXIBIR nesta forma — `null` significa "usa a arte de reserva"
+ * (`getSpriteForStage`), que é o piso do Invariante nº 1 e **nunca é erro**.
+ *
+ * Devolve `null` também quando o próprio existe mas ainda não foi adotado
+ * (`pendingTune`) ou o jogador voltou ao traço antigo (`reverted`).
+ */
+export function displaySprite(lib: SpriteLibrary, formId: string): SpriteEntry | null {
+  if (lib.pendingTune?.formId === formId) return null;
+  if (lib.reverted.includes(formId)) return null;
+  return lib.sprites[formId] ?? null;
+}
+
+/** A conta parou de vez? (402 em qualquer forma vale para a conta inteira.) */
+export function isAccountCapped(lib: SpriteLibrary): boolean {
+  return Object.values(lib.failures).some(f => f.terminal === 'lifetime-cap');
+}
+
+/** Esta FORMA esgotou as 3 tentativas dela? (409 — não desliga as outras.) */
+export function isFormCapped(lib: SpriteLibrary, formId: string): boolean {
+  return lib.failures[formId]?.terminal === 'form-cap';
+}
+
+/**
+ * Registra um sprite que chegou.
+ *
+ * `adopt: 'now'` = ocasião A e formas FUTURAS (chegam caladas). `adopt: 'ask'`
+ * = a forma ATUAL depois da cerimônia (ocasião C): a troca do rosto do bicho é
+ * do jogador (§2.3.1), então vira `pendingTune`.
+ */
+export function recordSprite(
+  lib: SpriteLibrary,
+  entry: SpriteEntry,
+  opts: { adopt: 'now' | 'ask'; dayKey?: string },
+): SpriteLibrary {
+  const sprites = { ...lib.sprites, [entry.formId]: { ...entry } };
+  const failures = { ...lib.failures };
+  delete failures[entry.formId];
+  const next: SpriteLibrary = {
+    ...lib,
+    sprites,
+    failures,
+    reverted: lib.reverted.filter(id => id !== entry.formId),
+  };
+  if (opts.adopt === 'ask') {
+    next.pendingTune = { formId: entry.formId, sinceDay: opts.dayKey ?? '' };
+  }
+  return next;
+}
+
+/** Registra uma falha. 409 e 402 gravam terminais DIFERENTES — de propósito. */
+export function recordFailure(
+  lib: SpriteLibrary,
+  formId: string,
+  kind: SpriteFailKind,
+  opts: { manual?: boolean; at?: number } = {},
+): SpriteLibrary {
+  const prev = lib.failures[formId];
+  // Offline não consome nada (`custo-geracao-sprite.md` §6): nem tentativa, nem
+  // teto. A chamada não chegou a acontecer.
+  const consumes = kind !== 'offline';
+  const failure: SpriteFormFailure = {
+    attempts: (prev?.attempts ?? 0) + (consumes ? 1 : 0),
+    manual: (prev?.manual ?? 0) + (opts.manual && consumes ? 1 : 0),
+    kind,
+    terminal:
+      kind === 'form-cap' ? 'form-cap'
+      : kind === 'lifetime-cap' ? 'lifetime-cap'
+      : prev?.terminal,
+    lastAt: opts.at ?? Date.now(),
+  };
+  return { ...lib, failures: { ...lib.failures, [formId]: failure } };
+}
+
+/**
+ * O botão "Tentar de novo" pode aparecer? Nunca em estado terminal — botão que
+ * sempre falha é pior que botão ausente (`custo-geracao-sprite.md` §9).
+ */
+export function canManualRetry(
+  lib: SpriteLibrary,
+  formId: string,
+  now: number = Date.now(),
+): boolean {
+  if (hasSprite(lib, formId)) return false;
+  if (isAccountCapped(lib) || isFormCapped(lib, formId)) return false;
+  const f = lib.failures[formId];
+  if (!f) return true;
+  if (f.manual >= SPRITE_MANUAL_RETRY_CAP) return false;
+  if (f.attempts >= SPRITE_FORM_ATTEMPT_CAP) return false;
+  return now - f.lastAt >= SPRITE_MANUAL_COOLDOWN_MS;
+}
+
+// ── Adoção do sprite próprio da forma ATUAL (§2.3.1) ────────────────────────
+// NENHUMA destas funções mexe em `failures`: sintonizar, reverter e
+// re-sintonizar não chamam geração, logo não consomem teto nenhum.
+
+/** O jogador tocou "Sintonizar o Visor". */
+export function tuneVisor(lib: SpriteLibrary, formId: string): SpriteLibrary {
+  return {
+    ...lib,
+    pendingTune: lib.pendingTune?.formId === formId ? null : lib.pendingTune,
+    reverted: lib.reverted.filter(id => id !== formId),
+  };
+}
+
+/** "Voltar ao traço antigo" — devolve a reserva sem apagar o sprite pago. */
+export function revertVisor(lib: SpriteLibrary, formId: string): SpriteLibrary {
+  if (!hasSprite(lib, formId)) return lib;
+  return {
+    ...lib,
+    pendingTune: lib.pendingTune?.formId === formId ? null : lib.pendingTune,
+    reverted: lib.reverted.includes(formId) ? lib.reverted : [...lib.reverted, formId],
+  };
+}
+
+/**
+ * A oferta expirou? (§2.3.1: "se o card continuar sem toque até a **próxima
+ * virada de dia**, a adoção acontece sozinha".) O sprite nunca expira — só a
+ * oferta de escolher o momento.
+ */
+export function autoTuneDue(lib: SpriteLibrary, dayKey: string): string | null {
+  const p = lib.pendingTune;
+  if (!p) return null;
+  return p.sinceDay && p.sinceDay !== dayKey ? p.formId : null;
+}
+
+/** Estados de card da página de Evolução (§2.2). */
+export type SpriteCardState =
+  | 'PROPRIO'
+  | 'GERANDO'
+  | 'NOVO'
+  | 'RESERVA'
+  | 'RESERVA_VESPERA'
+  | 'RESERVA_FINAL'
+  | 'OFFLINE'
+  | 'DISTANTE'
+  | 'A_SINTONIZAR';
+
+export interface CardStateContext {
+  /** Formas com lote vivo agora. */
+  generating: readonly string[];
+  /** A forma-destino da próxima evolução já pode acontecer (faltam <= 1). */
+  imminent: boolean;
+  /** Esta forma já teve ocasião? (Falso = `DISTANTE`, sem botão.) */
+  reachable: boolean;
+  online: boolean;
+  /** Selo NOVO ainda não visto — controlado por quem chama (some ao ver). */
+  unseen?: boolean;
+}
+
+/**
+ * O estado do card, e ele é UM só. A ordem das perguntas é a regra: o terminal
+ * de conta (402) e o de forma (409) mandam mais que "ainda estou gerando",
+ * porque sem isso um card ficaria pulsando para sempre por algo que já parou.
+ */
+export function cardState(lib: SpriteLibrary, formId: string, ctx: CardStateContext): SpriteCardState {
+  if (lib.pendingTune?.formId === formId) return 'A_SINTONIZAR';
+  if (hasSprite(lib, formId)) return ctx.unseen ? 'NOVO' : 'PROPRIO';
+  if (isAccountCapped(lib) || isFormCapped(lib, formId)) return 'RESERVA_FINAL';
+  if (ctx.generating.includes(formId)) return 'GERANDO';
+  if (!ctx.reachable) return 'DISTANTE';
+  if (!ctx.online) return 'OFFLINE';
+  // Sem sprite, sem lote vivo e alcançável: reserva. A variante VÉSPERA existe
+  // só porque a evolução está iminente — é quando o "Tentar de novo" deixa de
+  // ser link discreto e vira botão de texto real (§2.2).
+  return ctx.imminent ? 'RESERVA_VESPERA' : 'RESERVA';
+}
