@@ -4,6 +4,7 @@ import { Field, Segment, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './fo
 import { Language, useTranslation, getLanguageName } from '../utils/i18n';
 import { readFlag, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { AccountSection } from './AccountSection';
+import { AccountDataSection } from './AccountDataSection';
 import { InstallPrompt } from './InstallPrompt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { useTheme } from '../contexts/ThemeContext';
@@ -230,6 +231,13 @@ export function SettingsPage({
             </div>
           </div>
         </Disclosure>
+      </Group>
+
+      {/* ── SEUS DADOS — levar embora e apagar. Grupo PRÓPRIO, e não uma
+             revelação dentro de "Sua conta": exportar e apagar não são
+             ajustes avançados, são o direito de entrar e sair. ─────────── */}
+      <Group title={isPt ? 'Seus dados' : 'Your data'}>
+        <AccountDataSection language={language} />
       </Group>
 
       {/* ── O QUE O SOULMON TE MANDA ──────────────────────────────────────── */}
