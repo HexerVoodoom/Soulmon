@@ -80,9 +80,9 @@ import { evolutionTarget } from './utils/evolutionTarget';
 import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
 import {
-  PREMADE_CHARACTERS, getDemoCreatureStages, canCreateDemoTaskToday, recordDemoCreation,
+  PREMADE_CHARACTERS, getDemoCreatureStages, canCreateActivity, activityCapFor,
   REROLL_COST_CREDITS, HEART_COST_CREDITS,
-  type CreditPack,
+  type CreditPack, type AccountTier,
 } from './utils/monetization';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
@@ -1069,6 +1069,133 @@ export default function App() {
     });
   }, [gameState.lastDayReport]);
 
+  /**
+   * O tier para efeito de REGRA. `accountTier` é opcional no save, e save antigo
+   * chega sem ele — tratar `undefined` como `demo` apertaria, de uma atualização
+   * para a outra, quem nunca escolheu o modo grátis. O módulo de monetização
+   * falha ABERTO por decisão explícita (ver o comentário de `recordDemoCreation`
+   * que existia lá: a regra AVISA, nunca bloqueia por acidente técnico), e esta
+   * linha é a mesma decisão dita no ponto de uso. Não é trava de segurança — é
+   * desenho de produto, 100% cliente.
+   */
+  const tierForRules: AccountTier = gameState.accountTier === 'demo' ? 'demo' : 'paid';
+  /**
+   * O TETO EFETIVO de hábitos ativos — o número que a UI mostra e o portão usa.
+   *
+   * Um só nome para os dois lados de propósito: mostrar o teto do ESTÁGIO a um
+   * demo seria prometer uma vaga que o portão vai negar — a pessoa escreveria a
+   * atividade inteira para o Salvar recusar no fim.
+   */
+  const activityCap = activityCapFor(tierForRules, gameState.maxActivityCap);
+
+  /**
+   * O PORTÃO DE CRIAÇÃO DE HÁBITO — ponto ÚNICO de escrita em `activities`.
+   *
+   * Antes de D-12 a regra do modo grátis morava numa prop do `CreateModal`, e o
+   * `CreateModal` tinha um único ponto de abertura no app inteiro: o botão
+   * principal da tela inicial, a IA do chat e o lote do tutorial criavam por
+   * fora, sem consultar teto e sem contar nada. A regra existia e ninguém
+   * passava por ela. Agora existe UMA porta, e `activityCreate.contract.test.ts`
+   * fica vermelho para quem tentar cavar outra.
+   *
+   * Devolve quantos foram criados — o tutorial cria um LOTE, e o que não coube
+   * precisa ser visível para quem chamou, nunca descartado em silêncio.
+   *
+   * A contagem sai do `prev` de dentro do updater? Não: o `track` é efeito
+   * colateral e rodaria 2× no StrictMode (footgun 6). A decisão é tomada FORA,
+   * contra `gameState.activities`, e o updater só escreve.
+   */
+  const commitHabitCreate = useCallback((novos: Activity[], createPath: number): number => {
+    const cabem: Activity[] = [];
+    for (const novo of novos) {
+      if (!canCreateActivity({
+        tier: tierForRules,
+        kind: 'habit',
+        habitCount: gameState.activities.length + cabem.length,
+        stageCap: gameState.maxActivityCap,
+      })) break;
+      cabem.push(novo);
+    }
+    if (cabem.length === 0) {
+      // `demo_cap_hit` (G-4) é o DENOMINADOR da pergunta "o teto é a fronteira
+      // certa?": sem ele, o `unlock_view` de `task-limit` é um numerador sem
+      // denominador. Só o demo conta — o pagante que bate no teto do estágio
+      // dele não está encontrando uma fronteira de monetização, e somar os dois
+      // daria a média de duas populações que nunca se encontram.
+      if (tierForRules === 'demo') track('demo_cap_hit', { path: createPath });
+      return 0;
+    }
+    setGameState(prev => ({ ...prev, activities: [...prev.activities, ...cabem] }));
+    for (let i = 0; i < cabem.length; i++) {
+      // Um evento por atividade: o tutorial é o único caminho que cria várias de
+      // uma vez, e contar o LOTE como 1 faria a soma dos caminhos nunca fechar.
+      track('activity_create', {
+        kind: TELEMETRY_ACTIVITY_KIND.habit,
+        path: createPath,
+      });
+    }
+    setMessageTrigger(prev => prev + 1);
+    return cabem.length;
+  }, [tierForRules, gameState.activities.length, gameState.maxActivityCap]);
+
+  /**
+   * O PORTÃO DE CRIAÇÃO DE TAREFA — ponto ÚNICO de escrita em `tasks`.
+   *
+   * Ele pergunta a `canCreateActivity` e a resposta é sempre sim. Isso é de
+   * propósito, e a pergunta fica escrita: tarefa avulsa NÃO consome teto porque
+   * é o uso espontâneo, o gerador da métrica-norte — no desenho antigo ela
+   * custava a mesma cota de um hábito, e quem anotava "ligar pro médico"
+   * gastava o orçamento inteiro do dia na coisa de menor valor. Passar pelo
+   * portão mesmo assim é o que impede a regra de voltar a divergir entre as
+   * duas listas sem ninguém perceber.
+   *
+   * `posicao` existe porque as duas listas do app já divergiam: a tela inicial
+   * põe a tarefa nova no TOPO (é o que se acabou de decidir) e o `CreateModal`
+   * põe no fim. Preservado como estava — não é assunto desta mudança.
+   */
+  const commitTaskCreate = useCallback((novo: Task, createPath: number, posicao: 'topo' | 'fim' = 'topo') => {
+    if (!canCreateActivity({
+      tier: tierForRules,
+      kind: 'task',
+      habitCount: gameState.activities.length,
+      stageCap: gameState.maxActivityCap,
+    })) return false;
+    setGameState(prev => ({
+      ...prev,
+      tasks: posicao === 'topo' ? [novo, ...prev.tasks] : [...prev.tasks, novo],
+    }));
+    track('activity_create', {
+      kind: TELEMETRY_ACTIVITY_KIND.task,
+      path: createPath,
+    });
+    setMessageTrigger(prev => prev + 1);
+    return true;
+  }, [tierForRules, gameState.activities.length, gameState.maxActivityCap]);
+
+  /**
+   * `demo_cap_hit` quando a PAREDE APARECE, e não só quando o portão recusa.
+   *
+   * Os dois modais desabilitam o Salvar no teto — então, por eles, a recusa do
+   * portão nunca chega a acontecer, e contar só ela zeraria o denominador
+   * justamente nos dois caminhos onde o teto mais morde. Encontrar o teto é o
+   * evento; ser recusado é só uma das formas de encontrá-lo.
+   *
+   * O `path` distingue os dois modais porque eles são convites diferentes: o
+   * `create_modal` só abre a partir da tela de evolução, o `home_edit` é o botão
+   * principal da tela inicial. Somá-los daria de novo a média de duas
+   * populações — o defeito que o `funnel` já resolveu para o `onboarding_step`.
+   */
+  const atCapForDemo = tierForRules === 'demo' && gameState.activities.length >= activityCap;
+  useEffect(() => {
+    if (!atCapForDemo || !createModalOpen) return;
+    track('demo_cap_hit', { path: TELEMETRY_CREATE_PATH.create_modal });
+  }, [atCapForDemo, createModalOpen]);
+  useEffect(() => {
+    // `editingActivity` preenchido é EDIÇÃO: não encontra teto nenhum.
+    if (!atCapForDemo || !editModalOpen || editingActivity) return;
+    track('demo_cap_hit', { path: TELEMETRY_CREATE_PATH.home_edit });
+  }, [atCapForDemo, editModalOpen, editingActivity]);
+
   /** `unlock_view` COM O MOTIVO (G-5). Vive aqui, e não no modal, porque é aqui
    *  que `unlockReason` existe — o modal recebia o motivo mas não tinha como
    *  saber o tier, e os dois convites (bati no teto × quero a criatura que é
@@ -1076,23 +1203,6 @@ export default function App() {
    *  um número que não descreve nenhum dos dois.
    *
    *  Montar É ver: este modal nunca abre sozinho (ver o cabeçalho dele). */
-  /** `demo_cap_hit` (G-4): a pessoa abriu a criação e ENCONTROU o teto do modo
-   *  grátis. É o DENOMINADOR da pergunta que o dono quer responder — sem ele,
-   *  o `unlock_view` de `task-limit` é um numerador sem denominador e nenhuma
-   *  taxa é calculável.
-   *
-   *  Um aviso honesto sobre o que este número mede HOJE: `CreateModal` é o
-   *  único caminho de criação que consulta o teto. O `+ adicionar` da tela
-   *  inicial, a criação pela IA e o lote do tutorial passam por fora dele. Este
-   *  evento mede o teto ONDE ele morde; quanto ele deixa de morder se lê pelo
-   *  `activity_create.<caminho>`. Instrumentar não é consertar — o conserto
-   *  isolado apertaria o modo grátis e é decisão do dono. */
-  const demoLimitReached = gameState.accountTier === 'demo' && !canCreateDemoTaskToday();
-  useEffect(() => {
-    if (!createModalOpen || !demoLimitReached) return;
-    track('demo_cap_hit', { path: TELEMETRY_CREATE_PATH.create_modal });
-  }, [createModalOpen, demoLimitReached]);
-
   useEffect(() => {
     if (!unlockReason) return;
     track('unlock_view', {
@@ -1613,23 +1723,12 @@ export default function App() {
         schedule: data.schedule,
         anchor: data.anchor,
       };
-      setGameState(prev => ({
-        ...prev,
-        activities: [...prev.activities, newActivity],
-      }));
-      // Trigger message bubble for new activity
-      setMessageTrigger(prev => prev + 1);
-      // Este e o caminho PRINCIPAL de criacao da tela inicial, e ele NAO
-      // consulta `canCreateDemoTaskToday()` nem consome a cota do dia. Isso e
-      // um defeito conhecido, e ele nao e consertado aqui: o conserto isolado
-      // apertaria o modo gratis e esta esperando decisao do dono. O que o
-      // evento faz e tornar o desvio CONTAVEL — `activity_create.home_edit.*`
-      // contra `activity_create.create_modal.*` mede exatamente quanto do
-      // teto e contornado, e a decisao para de depender de quem leu o codigo.
-      track('activity_create', {
-        kind: TELEMETRY_ACTIVITY_KIND.habit,
-        path: TELEMETRY_CREATE_PATH.home_edit,
-      });
+      // Este e o caminho PRINCIPAL de criacao da tela inicial — e era por ele
+      // que o teto do modo gratis vazava inteiro (D-12). Agora ele entra pela
+      // mesma porta que todos os outros. A bolha de fala e o evento vivem
+      // DENTRO do portao: um caminho que cria sem contar volta a ser invisivel
+      // no agregado, que foi como o vazamento durou tanto.
+      commitHabitCreate([newActivity], TELEMETRY_CREATE_PATH.home_edit);
     }
     setEditingActivity(null);
   };
@@ -1676,22 +1775,13 @@ export default function App() {
       schedule: { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
     };
 
-    setGameState(prev => ({
-      ...prev,
-      activities: [...prev.activities, newActivity],
-    }));
+    // Criar pela IA nao e um privilegio: o portao vale igual (D-12).
+    const criadas = commitHabitCreate([newActivity], TELEMETRY_CREATE_PATH.ai_chat);
 
-    // Trigger message bubble
-    setMessageTrigger(prev => prev + 1);
-
-    // Terceiro caminho por fora do teto do demo (ver `handleSaveActivity`).
-    track('activity_create', {
-      kind: TELEMETRY_ACTIVITY_KIND.habit,
-      path: TELEMETRY_CREATE_PATH.ai_chat,
-    });
-
-    if (import.meta.env.DEV) console.log('Activity created successfully:', newActivity);
-  }, []);
+    if (import.meta.env.DEV) {
+      console.log(criadas ? 'Activity created successfully:' : 'Activity refused by cap:', newActivity);
+    }
+  }, [commitHabitCreate]);
 
   const handleAddNewTask = useCallback(() => {
     setEditingTask(null);
@@ -1760,13 +1850,13 @@ export default function App() {
         createdAt: nowIso,
         lastTouchedAt: data.lastTouchedAt ?? nowIso,
       };
-      setGameState(prev => ({
-        ...prev,
-        tasks: [newTask, ...prev.tasks],
-      }));
+      // Quarto caminho de criacao, e ele nao emitia evento NENHUM: a tarefa
+      // criada pela tela inicial nao existia no agregado. Pelo portao ela passa
+      // a contar — e segue sem consumir teto, que e a decisao de D-12.
+      commitTaskCreate(newTask, TELEMETRY_CREATE_PATH.home_edit, 'topo');
     }
 
-    setMessageTrigger(prev => prev + 1);
+    if (editingTask) setMessageTrigger(prev => prev + 1);
     setEditingTask(null);
   };
 
@@ -3342,19 +3432,11 @@ export default function App() {
       steps: [],
       weekDays: [0, 1, 2, 3, 4, 5, 6],
     }));
-    setGameState(prev => ({
-      ...prev,
-      activities: [...prev.activities, ...newActivities],
-    }));
-    // Um evento por atividade do lote: o denominador de "quantas atividades
-    // existem" tem que bater, e o tutorial e o unico caminho que cria varias de
-    // uma vez. Contar o LOTE como 1 faria a soma dos caminhos nunca fechar.
-    for (let i = 0; i < newActivities.length; i++) {
-      track('activity_create', {
-        kind: TELEMETRY_ACTIVITY_KIND.habit,
-        path: TELEMETRY_CREATE_PATH.tutorial,
-      });
-    }
+    // O lote do tutorial tambem passa pelo portao — e o portao corta o que nao
+    // couber, em vez de gravar por cima do teto. O `GameTutorialFlow` ja recebe
+    // `maxActivities` com o teto EFETIVO, entao na pratica nao ha corte: as
+    // duas reguas sao a mesma, e essa e a questao.
+    commitHabitCreate(newActivities, TELEMETRY_CREATE_PATH.tutorial);
   };
 
 
@@ -3412,7 +3494,7 @@ export default function App() {
       <Suspense fallback={<ScreenSkeleton language={language} />}>
         <GameTutorialFlow
           language={language}
-          maxActivities={gameState.maxActivityCap}
+          maxActivities={activityCap}
           existingActivitiesCount={gameState.activities.length}
           onComplete={handleCompleteTutorial}
         />
@@ -4540,8 +4622,11 @@ export default function App() {
           onClose={() => setCreateModalOpen(false)}
           evolutionStage={gameState.evolutionStage}
           activitiesCount={gameState.activities.length}
-          activitiesCap={gameState.maxActivityCap}
-          demoLimitReached={demoLimitReached}
+          activitiesCap={activityCap}
+          /* O convite de compra so faz sentido para quem PODE comprar, e so
+             quando o teto que morde e o do modo gratis. Um pagante no teto do
+             estagio dele nao esta encontrando uma fronteira de monetizacao. */
+          capIsDemoBoundary={gameState.accountTier === 'demo'}
           onUnlock={() => { setCreateModalOpen(false); setUnlockReason('task-limit'); }}
           onSaveTask={(data) => {
             // Esforço, "quando" e idade vêm do modal e são gravados — sem eles
@@ -4562,15 +4647,7 @@ export default function App() {
               createdAt: data.createdAt ?? new Date().toISOString(),
               lastTouchedAt: data.lastTouchedAt ?? new Date().toISOString(),
             };
-            setGameState(prev => ({
-              ...prev,
-              tasks: [...prev.tasks, newTask],
-            }));
-            if (gameState.accountTier === 'demo') recordDemoCreation();
-            track('activity_create', {
-              kind: TELEMETRY_ACTIVITY_KIND.task,
-              path: TELEMETRY_CREATE_PATH.create_modal,
-            });
+            commitTaskCreate(newTask, TELEMETRY_CREATE_PATH.create_modal, 'fim');
           }}
           onSaveActivity={(data) => {
             const newActivity: Activity = {
@@ -4587,15 +4664,7 @@ export default function App() {
               schedule: data.schedule,
               anchor: data.anchor,
             };
-            setGameState(prev => ({
-              ...prev,
-              activities: [...prev.activities, newActivity],
-            }));
-            if (gameState.accountTier === 'demo') recordDemoCreation();
-            track('activity_create', {
-              kind: TELEMETRY_ACTIVITY_KIND.habit,
-              path: TELEMETRY_CREATE_PATH.create_modal,
-            });
+            commitHabitCreate([newActivity], TELEMETRY_CREATE_PATH.create_modal);
           }}
           language={language}
         /></Suspense>

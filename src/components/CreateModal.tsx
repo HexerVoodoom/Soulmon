@@ -65,10 +65,12 @@ interface CreateModalProps {
   evolutionStage?: string;
   activitiesCount?: number;
   activitiesCap?: number;
-  /** Monetização (utils/monetization.ts): modo demo já usou a criação de hoje. */
-  demoLimitReached?: boolean;
+  /** O teto que morde é a FRONTEIRA DO MODO GRÁTIS (D-12), e não o teto do
+   *  estágio que o pagante também tem. Só nesse caso o convite de compra faz
+   *  sentido: um pagante no teto dele não tem nada a comprar aqui. */
+  capIsDemoBoundary?: boolean;
   /** Abre a oferta de desbloqueio (UnlockAccountModal). Só faz sentido junto
-   *  com demoLimitReached — é o momento em que o limite dói. */
+   *  com `capIsDemoBoundary` — é o momento em que o limite dói. */
   onUnlock?: () => void;
 }
 
@@ -312,7 +314,7 @@ export function EffortFields({
   );
 }
 
-export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, demoLimitReached = false, onUnlock }: CreateModalProps) {
+export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, language = 'en-US', evolutionStage = 'rookie', activitiesCount = 0, activitiesCap = 2, capIsDemoBoundary = false, onUnlock }: CreateModalProps) {
   const isPt = language === 'pt-BR';
   const showWeekdayGrid = canSelectWeekdays(evolutionStage);
   const t = useTranslation(language);
@@ -355,8 +357,10 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
   // Fogg é Habilidade, não Motivação.
   const minHint = minimumViableHint(name, isPt ? 'pt-BR' : 'en-US');
 
+  // Tarefa avulsa (`isSingleExecution`) NUNCA bate no teto — D-12: ela é o uso
+  // espontâneo, e no desenho antigo custava a mesma cota de um hábito.
   const isAtCap = !isSingleExecution && activitiesCount >= activitiesCap;
-  const isBlocked = isAtCap || demoLimitReached;
+  const isBlocked = isAtCap;
   const currentEmoji = CATEGORY_ICONS[category];
 
   const handleSave = () => {
@@ -451,10 +455,11 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
     cancel: isPt ? 'Cancelar' : 'Cancel',
     save: isPt ? 'Salvar' : 'Save',
     limitReached: isPt ? 'Limite atingido' : 'Limit reached',
-    demoLimitReached: isPt ? 'Limite diário do demo' : 'Demo daily limit',
-    demoLimitHint: isPt
-      ? 'Modo demo: 1 atividade/tarefa nova por dia. Assine para criar sem limites.'
-      : 'Demo mode: 1 new activity/task per day. Subscribe to create without limits.',
+    demoCapHint: isPt
+      ? `Modo grátis: até ${activitiesCap} hábitos ativos. Tarefas avulsas continuam sem limite; `
+        + 'evoluir com seu próprio Soulmon é o que aumenta esse teto.'
+      : `Free mode: up to ${activitiesCap} active habits. One-off tasks stay unlimited; `
+        + 'evolving your own Soulmon is what raises this ceiling.',
     projectSteps: isPt
       ? 'Projeto é grande demais para uma linha só. Que tal quebrar em passos?'
       : 'A project is too big for a single line. How about breaking it into steps?',
@@ -465,7 +470,7 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
     <>
       {/* O botão desabilitado explica o limite, mas não oferece a saída —
           é aqui, com a tarefa já escrita, que a compra faz sentido. */}
-      {demoLimitReached && onUnlock && (
+      {isAtCap && capIsDemoBoundary && onUnlock && (
         <div style={{ marginBottom: 10 }}>
           <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />
         </div>
@@ -477,9 +482,9 @@ export function CreateModal({ isOpen, onClose, onSaveTask, onSaveActivity, langu
           onClick={handleSave}
           disabled={!name.trim() || (!isSingleExecution && showWeekdayGrid && !sched.isValid) || isBlocked}
           style={{ ...sm2Button('primary', !name.trim() || (!isSingleExecution && showWeekdayGrid && !sched.isValid) || isBlocked), flex: 1 }}
-          title={isAtCap ? `${txt.limitReached} (${activitiesCap})` : demoLimitReached ? txt.demoLimitHint : ''}
+          title={isAtCap ? (capIsDemoBoundary ? txt.demoCapHint : `${txt.limitReached} (${activitiesCap})`) : ''}
         >
-          {isAtCap ? txt.limitReached : demoLimitReached ? txt.demoLimitReached : txt.save}
+          {isAtCap ? txt.limitReached : txt.save}
         </button>
       </div>
     </>

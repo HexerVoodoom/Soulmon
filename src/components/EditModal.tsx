@@ -3,6 +3,7 @@ import { ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS } from '../types/category-icons';
 import { useHabitSchedule } from '../hooks/useItemForm';
 import { CategoryChips, HabitAnchorFields, HabitScheduleFields, StepsFields } from './CreateModal';
+import { UnlockNudge } from './UnlockAccountModal';
 import { Field, ModalSheet, sm2Button, sm2Label } from './form/FormKit';
 import type { HabitAnchor, Schedule } from '../types/taskModel';
 import type { Language } from '../utils/i18n';
@@ -29,6 +30,21 @@ interface EditModalProps {
     anchor?: HabitAnchor;
   }) => void;
   onDelete?: () => void;
+  /** O teto de hábitos ATIVOS bate aqui também (D-12).
+   *
+   *  Este modal é o do botão principal da tela inicial, e era por ele que o teto
+   *  do modo grátis vazava inteiro: ele salvava sem perguntar nada. O portão do
+   *  `App` agora recusa — e recusar em silêncio, depois de a pessoa escrever a
+   *  atividade toda, seria trocar um defeito por outro. Então a mesma parede que
+   *  o `CreateModal` mostra aparece aqui, com as mesmas palavras.
+   *
+   *  Só vale na CRIAÇÃO: editar um hábito que já existe não cria vaga nenhuma. */
+  atCap?: boolean;
+  /** O teto que morde é a fronteira do modo GRÁTIS (e não o teto do estágio, que
+   *  o pagante também tem)? Só então o convite de compra faz sentido. */
+  capIsDemoBoundary?: boolean;
+  activitiesCap?: number;
+  onUnlock?: () => void;
   initialData?: {
     name: string;
     category: string;
@@ -47,7 +63,10 @@ const CATEGORIES: ActivityCategory[] = [
   'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
 ];
 
-export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, language = 'en-US', canEditWeekdays = true }: EditModalProps) {
+export function EditModal({
+  isOpen, onClose, onSave, onDelete, initialData, language = 'en-US', canEditWeekdays = true,
+  atCap = false, capIsDemoBoundary = false, activitiesCap = 0, onUnlock,
+}: EditModalProps) {
   const isPt = language === 'pt-BR';
 
   const [name, setName] = useState('');
@@ -85,17 +104,32 @@ export function EditModal({ isOpen, onClose, onSave, onDelete, initialData, lang
   };
   const handleDeleteStep = (id: string) => setSteps(steps.filter(step => step.id !== id));
 
-  const disabled = !name.trim() || (canEditWeekdays && !sched.isValid);
+  // `initialData` é o que separa criar de editar: no teto, editar continua livre.
+  const blocked = atCap && !initialData;
+  const disabled = !name.trim() || (canEditWeekdays && !sched.isValid) || blocked;
+  const capHint = capIsDemoBoundary
+    ? (isPt
+      ? `Modo grátis: até ${activitiesCap} hábitos ativos. Tarefas avulsas continuam sem limite; `
+        + 'evoluir com seu próprio Soulmon é o que aumenta esse teto.'
+      : `Free mode: up to ${activitiesCap} active habits. One-off tasks stay unlimited; `
+        + 'evolving your own Soulmon is what raises this ceiling.')
+    : (isPt ? `Limite atingido (${activitiesCap})` : `Limit reached (${activitiesCap})`);
 
   const footer = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* O botão desabilitado explica o limite, mas não oferece a saída — é
+          aqui, com a atividade já escrita, que a compra faz sentido. */}
+      {blocked && capIsDemoBoundary && onUnlock && (
+        <UnlockNudge language={language} reason="task-limit" onOpen={onUnlock} />
+      )}
       <div style={{ display: 'flex', gap: 12 }}>
         <button type="button" onClick={onClose} style={{ ...sm2Button('ghost'), flex: 1 }}>
           {isPt ? 'Cancelar' : 'Cancel'}
         </button>
         <button type="button" onClick={handleSave} disabled={disabled}
-          style={{ ...sm2Button('primary', disabled), flex: 1 }}>
-          {isPt ? 'Salvar' : 'Save'}
+          style={{ ...sm2Button('primary', disabled), flex: 1 }}
+          title={blocked ? capHint : ''}>
+          {blocked ? (isPt ? 'Limite atingido' : 'Limit reached') : (isPt ? 'Salvar' : 'Save')}
         </button>
       </div>
       {onDelete && (
