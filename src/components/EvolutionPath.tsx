@@ -29,7 +29,7 @@
  * desempate por ritmo de cuidado, e a situação de cada nó dita em PALAVRAS no
  * `aria-label` (WCAG 1.4.1: cor e posição nunca são o único portador).
  */
-import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
+import { useState, useMemo, useEffect, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
@@ -39,7 +39,11 @@ import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
 import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
-import { Viewport, usePrefersReducedMotion } from './ui/Viewport';
+/* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
+   (`ui/Viewport.tsx`), porque a spec pede a MESMA sintonia em dois call-sites
+   — esta página e o visor da Home (`CompanionHUD`). Hook duplicado com um
+   número que tem gêmeo no CSS é como os dois lados divergem em silêncio. */
+import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 
@@ -57,49 +61,6 @@ const ATTR_ORDER: Attr[] = ['virus', 'data', 'vaccine'];
  * O RÓTULO não é duplicado aqui: vem de `types/attributes.ts`.
  */
 const ATTR_GLYPH: Record<Attr, typeof PowerIcon> = { virus: PowerIcon, data: HarmonyIcon, vaccine: BenevolenceIcon };
-
-/**
- * Os 400 ms da varredura, em JS. Gêmeo declarado do token `--sm2-dur-scan` no
- * `index.css` — o CSS anima, este número só decide QUANDO o elemento sai do
- * DOM. Se um dos dois mudar, o outro tem de mudar junto; há trava nos dois
- * lados (`styles/tokens.contrast.test.ts` no token,
- * `EvolutionPath.scanline.render.test.tsx` no desmonte).
- */
-const DUR_VARREDURA_MS = 400;
-
-/**
- * A VARREDURA DA SINTONIA — verdadeira só enquanto a faixa está passando.
- *
- * Três decisões moram aqui, e nenhuma delas cabe no CSS:
- *
- * 1. **Só na TROCA, nunca na montagem.** Abrir a página de Evolução não é
- *    sintonizar o Visor. Uma animação que dispara em todo mount vira tique
- *    ambiental, e aí ela sim começa a competir com o sprite pela atenção — que
- *    é o medo legítimo por trás do "sem scanline por padrão" do `Viewport`.
- *    Por isso o `useRef` guarda o sprite anterior: sem valor anterior, não
- *    houve troca.
- * 2. **UMA vez, e sai do DOM.** O `both` do CSS deixaria a faixa parada no fim
- *    do percurso para sempre; tirar o elemento é o que garante que isto é
- *    transição e não overlay permanente.
- * 3. **Movimento reduzido corta em JS, não em CSS.** O bloco global deste
- *    projeto encolhe animação para `0.01ms`, o que não é "desligado" — é a
- *    mesma armadilha que fez a respiração do anel ser cortada em JS
- *    (`ui/Viewport.tsx`). Aqui o elemento simplesmente não nasce.
- */
-function useVarreduraDeSintonia(sprite: string, reduzido: boolean): boolean {
-  const anterior = useRef<string | null>(null);
-  const [varrendo, setVarrendo] = useState(false);
-  useEffect(() => {
-    const antes = anterior.current;
-    anterior.current = sprite;
-    if (antes === null || antes === sprite) return;
-    if (reduzido) return;
-    setVarrendo(true);
-    const t = setTimeout(() => setVarrendo(false), DUR_VARREDURA_MS);
-    return () => clearTimeout(t);
-  }, [sprite, reduzido]);
-  return varrendo;
-}
 
 interface EvolutionPathProps {
   /** Id da forma atual ('rookie' | 'champion-virus' | ... | 'ultra'). */

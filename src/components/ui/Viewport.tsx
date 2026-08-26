@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, useEffect, useState } from 'react';
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from 'react';
 
 /**
  * `Viewport` — o elemento de marca do Soulmon.
@@ -95,6 +95,56 @@ export function usePrefersReducedMotion(): boolean {
     };
   }, []);
   return reduced;
+}
+
+/**
+ * Os 400 ms da varredura, em JS. Gemeo declarado do token `--sm2-dur-scan` no
+ * `index.css` — o CSS anima, este numero so decide QUANDO o elemento sai do
+ * DOM. Se um dos dois mudar, o outro tem de mudar junto; ha trava nos dois
+ * lados (`styles/tokens.contrast.test.ts` no token, e os testes de render da
+ * varredura no `EvolutionPath` e no `CompanionHUD` no desmonte).
+ */
+export const DUR_VARREDURA_MS = 400;
+
+/**
+ * A VARREDURA DA SINTONIA — verdadeira só enquanto a faixa está passando.
+ *
+ * **Por que mora AQUI, e não no componente que a usa.** Ela nasceu dentro do
+ * `EvolutionPath`, com um call-site só. A spec (§2.1 e §2.3.1) sempre pediu
+ * dois: a sintonia acontece "na página de Evolução e depois no visor" — e o
+ * visor da Home (`CompanionHUD`) é onde o jogador de fato vê o bicho. Duas
+ * cópias de um hook cujo número tem gêmeo no CSS é exatamente a forma de os
+ * dois lados divergirem em silêncio; o dono da varredura é o dono do visor,
+ * que é este arquivo.
+ *
+ * Três decisões moram aqui, e nenhuma delas cabe no CSS:
+ *
+ * 1. **Só na TROCA, nunca na montagem.** Abrir a Home ou a página de Evolução
+ *    não é sintonizar. Uma animação que dispara em todo mount vira tique
+ *    ambiental, e aí ela sim começa a competir com o sprite pela atenção — que
+ *    é o medo legítimo por trás do "sem scanline por padrão" acima. Por isso o
+ *    `useRef` guarda o sprite anterior: sem valor anterior, não houve troca.
+ * 2. **UMA vez, e sai do DOM.** O `both` do CSS deixaria a faixa parada no fim
+ *    do percurso para sempre; tirar o elemento é o que garante que isto é
+ *    transição e não overlay permanente.
+ * 3. **Movimento reduzido corta em JS, não em CSS.** O bloco global deste
+ *    projeto encolhe animação para `0.01ms`, o que não é "desligado" — a mesma
+ *    armadilha que fez a respiração do anel ser cortada em JS logo acima. Aqui
+ *    o elemento simplesmente não nasce.
+ */
+export function useVarreduraDeSintonia(sprite: string, reduzido: boolean): boolean {
+  const anterior = useRef<string | null>(null);
+  const [varrendo, setVarrendo] = useState(false);
+  useEffect(() => {
+    const antes = anterior.current;
+    anterior.current = sprite;
+    if (antes === null || antes === sprite) return;
+    if (reduzido) return;
+    setVarrendo(true);
+    const t = setTimeout(() => setVarrendo(false), DUR_VARREDURA_MS);
+    return () => clearTimeout(t);
+  }, [sprite, reduzido]);
+  return varrendo;
 }
 
 export function Viewport({

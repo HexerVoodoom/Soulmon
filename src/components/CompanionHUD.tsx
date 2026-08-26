@@ -4,7 +4,7 @@ import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { PixelButton } from './pixel/PixelKit';
 import { Icon } from './ui/Icon';
-import { Viewport, usePrefersReducedMotion } from './ui/Viewport';
+import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
@@ -642,6 +642,18 @@ export const CompanionHUD = memo(function CompanionHUD({
   // a arte de reserva, imediatamente, sem placeholder e sem spinner.
   const sprite = ownSpriteUrl ?? getSpriteForStage(evolutionStage, demoCharacterId);
 
+  /* ── A SINTONIA, vista de dentro do visor (`spec` §2.1 e §2.3.1) ──────────
+     A tabela do §2.1 é a tabela DESTA tela, e cobra a varredura de 400 ms nas
+     duas ocasiões em que o sprite próprio assume: no nascimento (automático) e
+     depois da cerimônia (quando o jogador sintoniza). O §2.3.1 diz onde a
+     mesma transição acontece: "na página de Evolução E DEPOIS NO VISOR" — este
+     aqui, que é o único que o jogador olha todo dia.
+
+     Nada de estado novo: `sprite` acima já é `ownSpriteUrl ?? reserva`, então a
+     chegada do traço próprio JÁ É uma troca de valor. A varredura só observa
+     essa troca. Ela NÃO dispara na montagem: abrir a Home não é sintonizar. */
+  const varrendoSintonia = useVarreduraDeSintonia(sprite, reducedMotion);
+
 
   // Sprites da nossa arte são desenhados olhando pra DIREITA — a única regra
   // de flip que restou é virar quando o pet anda pra esquerda. (Antes havia
@@ -1211,6 +1223,26 @@ export const CompanionHUD = memo(function CompanionHUD({
           )}
 
         </div>
+
+        {/* A VARREDURA da sintonia — a faixa que atravessa a tela UMA vez
+            quando o rosto do bicho troca, e sai do DOM aos 400 ms. Peça de CSS
+            já existente (`.sm-visor-scan`, `index.css`), o mesmo call-site que
+            a página de Evolução usa: aqui não nasceu regra nova.
+
+            ÚLTIMA FILHA do visor de propósito — sem `z-index`. A ordem no DOM
+            já a coloca por cima do palco inteiro, e um `z-index` novo aqui
+            entraria numa disputa com os overlays do palco (flash de evolução,
+            sono) que ninguém pediu.
+
+            `pointer-events: none` vem da classe, e é o que garante que ela não
+            engole o gesto de esfregar o pet — a ÚNICA cura de HP do jogo, e o
+            controle mais importante desta tela. Há teste de comportamento, não
+            só de estilo computado, em `CompanionHUD.scanline.render.test.tsx`.
+
+            `key` no sprite para a animação recomeçar do zero a cada troca. */}
+        {varrendoSintonia && (
+          <div className="sm-visor-scan" aria-hidden="true" key={`scan-${sprite}`} />
+        )}
         </Viewport>
 
         {/* ── O ALVO DO CARINHO — o controle mais importante do jogo ─────────
