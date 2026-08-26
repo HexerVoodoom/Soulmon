@@ -84,6 +84,7 @@ import {
   REROLL_COST_CREDITS, HEART_COST_CREDITS,
   type CreditPack, type AccountTier,
 } from './utils/monetization';
+import { soulmonDisplayName } from './utils/petName';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
@@ -3369,7 +3370,11 @@ export default function App() {
         maxHealthPoints: getMaxHPForStage('rookie'),
         maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
         soulmonStages: premade ? getDemoCreatureStages(premade) : [],
-        soulmonMeta: premade ? { baseName: premade.name } : undefined,
+        // `petName` só entra quando a pessoa trocou o sugerido — assim o save
+        // de quem manteve continua idêntico ao que sempre foi.
+        soulmonMeta: premade
+          ? { baseName: premade.name, ...(data.petName && data.petName !== premade.name ? { petName: data.petName } : {}) }
+          : undefined,
         accountTier: 'demo',
         demoCharacterId: data.demoCharacterId,
         soulGoal: data.soulGoal,
@@ -3405,6 +3410,10 @@ export default function App() {
       soulmonMeta: {
         seed: data.oracleResult.seed,
         baseName: data.oracleResult.creature.baseName,
+        // Idem: batismo só existe no save de quem batizou.
+        ...(data.petName && data.petName !== data.oracleResult.creature.baseName
+          ? { petName: data.petName }
+          : {}),
         dominantElement: data.oracleResult.dominantElement,
         dominantAlignment: data.oracleResult.dominantAlignment,
         dominantRealm: data.oracleResult.dominantRealm,
@@ -4331,7 +4340,7 @@ export default function App() {
               unlockedEvolutions={gameState.unlockedEvolutions}
               currentStageId={gameState.evolutionStage}
               demoCharacterId={gameState.demoCharacterId}
-              petName={gameState.soulmonMeta?.baseName}
+              petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
               savedSkills={gameState.soulmonSkills}
               onSkillsComputed={handleSkillsComputed}
               savedClassTitles={gameState.soulmonClassTitles}

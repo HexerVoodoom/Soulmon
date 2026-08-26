@@ -95,6 +95,13 @@ function Spinner({ size = 20 }: { size?: number }) {
 
 export type OnboardingCompleteData = {
   userName: string;
+  /**
+   * O nome que a PESSOA deu ao Soulmon depois de ele ser gerado. Opcional de
+   * propósito: ausente = fica valendo o nome sugerido pelo oráculo
+   * (`creature.baseName`). Quem já jogava nunca teve este campo, e um save
+   * antigo não pode ser forçado a nada.
+   */
+  petName?: string;
   email: string;
   initialActivities: Array<{ name: string; category: ActivityCategory; emoji: string }>;
   /** O "porquê" do usuário, perguntado ANTES de qualquer mecânica de jogo. */
@@ -240,6 +247,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
   const [essence, setEssence] = useState<{ pt: string; en: string } | null>(null);
   const [nickname, setNickname] = useState('');
+  /** Batismo do Soulmon. `null` = a pessoa não encostou no campo, e o que
+   *  aparece na tela é a sugestão (`registerDisplayName`). Guardar assim, em
+   *  vez de semear o estado por efeito, é o que faz MANTER o sugerido custar
+   *  zero toque — e continua funcionando se a criatura mudar antes do
+   *  cadastro (reroll do demo, por exemplo). */
+  const [petNameEdit, setPetNameEdit] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -258,6 +271,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     && !submitting;
   const demoChar = flow === 'demo' && demoCharacterId ? PREMADE_CHARACTERS.find(c => c.id === demoCharacterId) ?? null : null;
   const registerDisplayName = demoChar?.name ?? result?.creature.baseName ?? '';
+  /** O que o campo do batismo mostra. */
+  const petNameValue = petNameEdit ?? registerDisplayName;
+  /** O que SAI daqui. Campo apagado ou só com espaços volta para o sugerido:
+   *  o pet nunca fica sem nome por causa de um campo em branco. */
+  const petNameFinal = petNameValue.trim() || registerDisplayName;
 
   // O denominador inclui o tutorial que vem DEPOIS do onboarding: antes a
   // barra chegava a 100% aqui e ainda apareciam várias telas, dando a
@@ -519,6 +537,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       await onComplete({
         mode: 'demo',
         userName: nickname.trim(),
+        petName: petNameFinal,
         email: email.trim().toLowerCase(),
         demoCharacterId,
         initialActivities: [],
@@ -530,6 +549,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       await onComplete({
         mode: 'oracle',
         userName: nickname.trim(),
+        petName: petNameFinal,
         email: email.trim().toLowerCase(),
         oracleResult: result,
         initialActivities: [],
@@ -1142,15 +1162,37 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {isPt ? 'Últimos detalhes' : 'Last details'}
             </h2>
 
+            {/* BATISMO — o Soulmon já foi gerado e já tem nome sugerido; o
+                campo vem PREENCHIDO com ele. Manter é seguir em frente, trocar
+                é digitar por cima. Um formulário vazio aqui obrigaria a
+                inventar um nome no meio do cadastro. */}
+            <label style={sm2Label} htmlFor="onb-petname">
+              {isPt ? 'Batize seu Soulmon' : 'Name your Soulmon'}
+            </label>
+            <Field id="onb-petname" type="text" value={petNameValue} maxLength={24}
+              onChange={e => setPetNameEdit(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
+            <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
+              {isPt
+                ? `${registerDisplayName} é o nome que veio com ele. Se quiser dar outro, é só escrever por cima.`
+                : `${registerDisplayName} is the name it came with. Want to give it another? Just type over it.`}
+            </p>
+
             <label style={sm2Label} htmlFor="onb-nick">
               {isPt ? 'Seu apelido' : 'Your nickname'}
             </label>
             <Field id="onb-nick" type="text" value={nickname} autoFocus maxLength={24}
               onChange={e => setNickname(e.target.value)}
-              placeholder={isPt ? 'Ex.: Mateus' : 'E.g.: Matt'}
+              placeholder={isPt ? 'Ex.: CorvoAzul' : 'E.g.: BlueRaven'}
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
+            {/* Enquadramento, não aviso: este apelido aparece para outros
+                jogadores, e a pessoa escolhe o que mostrar. Dizer que pode ser
+                inventado é o que faz o nome real deixar de vazar por engano —
+                sem transformar a tela num alerta de perigo. */}
             <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
-              {isPt ? 'Visível para outros jogadores na Biblioteca e no Torneio.' : 'Visible to other players in the Library and Tournament.'}
+              {isPt
+                ? 'Aparece para outros jogadores na Biblioteca e no Torneio. Pode ser um apelido inventado — não precisa ser seu nome real.'
+                : "Shown to other players in the Library and Tournament. It can be a made-up name — it doesn't have to be your real name."}
             </p>
 
             <label style={sm2Label} htmlFor="onb-email">
@@ -1199,7 +1241,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   onClick={finish} disabled={!canFinish}>
                   {submitting
                     ? <Spinner />
-                    : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
+                    : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
                 </button>
                 {/* Sem isto o botão só ficava apagado e o toque não fazia nada —
                     o usuário não tinha como saber o que faltava. */}
