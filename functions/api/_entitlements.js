@@ -58,9 +58,11 @@ export const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
  * e o direito pago volta pelo caminho que já existe (restaurar compra, que
  * reverifica o recibo NA LOJA).
  *
- * ⚠️ O caminho **D1** de `claimOrder` (`order_claims`) NÃO tem TTL — banco não
- * expira linha sozinho. Enquanto o D1 estiver ligado, a retenção do vínculo de
- * recibo depende de uma limpeza que ainda não existe. Está endereçado ao dono.
+ * O caminho **D1** de `claimOrder` (`order_claims`) obedece à MESMA decisão, por
+ * outro mecanismo: banco não expira linha sozinho, então a linha carrega o
+ * próprio vencimento na coluna `expires_at` (derivada desta constante) e quem
+ * passa por lá apaga o que venceu. Renova do mesmo jeito. Ver `claimOrderAtomic`
+ * e `migrations/0002_order_claims_expires_at.sql`.
  */
 export const RETENTION_TTL_SECONDS = 5 * 365 * 24 * 60 * 60;
 
@@ -249,7 +251,8 @@ export async function grantAdReward(env, saveId) {
  * Aqui, quando existe um binding **D1** (`env.DB`), a reivindicação passa a ser
  * de verdade atômica: `INSERT` com `order_id` como PRIMARY KEY falha se outra
  * conta chegou primeiro, e o banco resolve a corrida. Sem D1, cai no KV com a
- * limitação acima. Ver `docs/BILLING-SETUP.md` para criar a tabela.
+ * limitação acima. O schema é versionado em `migrations/` (ver o README de lá);
+ * `docs/BILLING-SETUP.md` explica quando vale a pena ligar.
  *
  * @returns {Promise<{ ok: true } | { ok: false, reason: 'order-in-use' }>}
  */
@@ -277,23 +280,86 @@ export async function claimOrder(env, saveId, orderId) {
  * é possível, porque `order_id` é PRIMARY KEY. Reprocessar na MESMA conta
  * continua valendo (é o que faz o "restaurar compras" funcionar).
  *
+ * ## O prazo aqui é COLUNA, e a limpeza é na leitura
+ *
+ * `RETENTION_TTL_SECONDS` é um recurso do KV: a chave morre sozinha. Banco não
+ * apaga linha sozinho, e por um tempo isso deixou os dois backends com
+ * políticas DIFERENTES para o mesmo dado — o `ord:` do KV com prazo de 5 anos,
+ * a linha equivalente do D1 para sempre.
+ *
+ * O desenho que fecha a paridade: a linha carrega o próprio vencimento em
+ * `expires_at` (o prazo vira DADO, não convenção guardada em código de job), e
+ * quem passa por este caminho apaga a linha que venceu ANTES de decidir a
+ * disputa. Sem cron, sem infra nova, e a limpeza custa uma busca por PRIMARY
+ * KEY — o mesmo índice que a disputa já usa.
+ *
+ * A ordem não é acidental: se o DELETE viesse depois do INSERT, uma linha
+ * vencida ainda estaria lá na hora de decidir, e o recibo ficaria travado para
+ * sempre por um vínculo morto — exatamente o problema que o prazo existe para
+ * não ter.
+ *
+ * ## Reivindicar RENOVA — a metade que importa, igual ao KV
+ *
+ * Chegar aqui pelo mesmo dono é o "restaurar compras", e recibo em uso é recibo
+ * vivo: o UPDATE empurra `expires_at`, e só ele. `claimed_at` continua sendo
+ * quando a linha nasceu — renovar é sinal de vida, não novo nascimento. A
+ * tentativa ALHEIA recusa antes de qualquer escrita: não muda dono e não renova
+ * prazo de vínculo que ninguém exerce.
+ *
+ * ## Vencido e reivindicado de novo: restauração, não fraude
+ *
+ * A trava anti-fraude (um recibo, uma conta) vale DENTRO do prazo, e continua
+ * inteira: linha viva de outra conta recusa. Depois de 5 anos de silêncio
+ * absoluto, porém, NENHUMA conta exerceu aquele recibo — e o caminho do KV já
+ * se comporta exatamente assim há tempo (a chave `ord:` expira e some, e o
+ * recibo volta a ser reivindicável). Divergir aqui seria criar a segunda
+ * política. Além disso, quem reivindica ainda precisa de um recibo que a LOJA
+ * valide e vincule à conta na origem (`obfuscatedExternalAccountId` na Play,
+ * session ticket na Steam — ver `_billing.js`), que é a defesa REAL: recibo
+ * alheio não vale em conta nenhuma, vencido ou não. Quem volta depois do prazo
+ * é, na prática, o comprador voltando.
+ *
+ * ## Linha legada (`expires_at` NULL) não é vítima disto
+ *
+ * A tabela existiu antes da coluna. Num banco onde o backfill da migração não
+ * rodou, `expires_at` é NULL — e NULL é prazo DESCONHECIDO, não prazo vencido.
+ * Como apagar é irreversível, o desempate é a favor de manter: a linha continua
+ * travando, e ganha prazo na primeira renovação do próprio dono.
+ *
  * @returns {Promise<{ ok: true } | { ok: false, reason: 'order-in-use' }>}
  */
 async function claimOrderAtomic(env, saveId, orderId) {
+  const agora = Date.now();
+  const vence = agora + RETENTION_TTL_SECONDS * 1000;
+
+  // Limpeza na leitura, ANTES da disputa. `expires_at IS NOT NULL` protege a
+  // linha legada; `<=` faz o vencimento valer no instante em que chega.
+  await env.DB
+    .prepare('DELETE FROM order_claims WHERE order_id = ? AND expires_at IS NOT NULL AND expires_at <= ?')
+    .bind(orderId, agora)
+    .run();
+
   try {
     await env.DB
-      .prepare('INSERT INTO order_claims (order_id, save_id, claimed_at) VALUES (?, ?, ?)')
-      .bind(orderId, saveId, Date.now())
+      .prepare('INSERT INTO order_claims (order_id, save_id, claimed_at, expires_at) VALUES (?, ?, ?, ?)')
+      .bind(orderId, saveId, agora, vence)
       .run();
     return { ok: true };
   } catch {
-    // Violou a PRIMARY KEY: alguém já reivindicou. Quem?
+    // Violou a PRIMARY KEY: alguém já reivindicou, e a linha não estava vencida
+    // (se estivesse, o DELETE acima teria aberto caminho). Quem?
     const row = await env.DB
       .prepare('SELECT save_id FROM order_claims WHERE order_id = ?')
       .bind(orderId)
       .first();
-    if (row?.save_id === saveId) return { ok: true };
-    return { ok: false, reason: 'order-in-use' };
+    if (row?.save_id !== saveId) return { ok: false, reason: 'order-in-use' };
+
+    // Mesmo dono: renova o prazo e só ele.
+    await env.DB
+      .prepare('UPDATE order_claims SET expires_at = ? WHERE order_id = ?')
+      .bind(vence, orderId)
+      .run();
+    return { ok: true };
   }
 }
 
