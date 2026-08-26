@@ -26,6 +26,9 @@ import { playerDayKey, sanitizePlayerDayAnchor } from '../../../src/utils/player
 // O sono importa a regra inteira: `recordNight` nomeia a noite, decide `onTime`,
 // é idempotente por manha e poda em MAX_NIGHTS. Nada disso se reescreve aqui.
 import { recordNight, createRestState, type RestState } from '../../../src/utils/restWindow';
+// O banho também: `cleanPoop` é a regra pura, e mora no MESMO arquivo que
+// `applyPoopDrain` porque limpar é escrever os campos que o dreno lê.
+import { cleanPoop } from '../../../src/utils/poopDrain';
 
 /** O GameState como ele chega do servidor: JSON cru, sem tipo. */
 export type RemoteState = Record<string, unknown>;
@@ -224,37 +227,45 @@ function numeros(v: unknown): number[] {
  * relógio (o `handleShower` do app existe exatamente para isso). O jogador com
  * o overlay aberto via o pet perder coração enquanto apertava o botão do banho.
  *
- * ⚠️ ESTA É A ÚNICA TRANSIÇÃO DESTE ARQUIVO QUE NÃO É UM IMPORT, e é uma
- * dívida declarada, não um descuido: no app o banho não tem regra pura em
- * `src/utils/`. Ele mora inteiro no `App.tsx` (`handleCareEventComplete`,
- * ~linha 2028) e é acoplado ao `careEvent`, um estado de React produzido pelo
- * agendamento do `useCareSystem` — coisa que o overlay não tem e não deveria
- * ter. Não há função para importar. O conserto certo é extrair um `cleanPoop()`
- * para `src/utils/poopDrain.ts`, dono da regra, e esta função virar uma linha;
- * fica para uma frente que possa tocar `src/`.
+ * A DÍVIDA DECLARADA EM `86341fcb` ESTÁ PAGA. Até ela, esta era a única
+ * transição do arquivo que não era um import: o banho não tinha regra pura em
+ * `src/utils/` — morava inteiro no `App.tsx` (`handleCareEventComplete`),
+ * acoplado ao `careEvent`, estado de React produzido pelo agendamento do
+ * `useCareSystem`, coisa que o overlay não tem e não deveria ter. O commit
+ * `46a6e542` extraiu `cleanPoop()` para `src/utils/poopDrain.ts` — que é
+ * também o dono de `applyPoopDrain`, de propósito: limpar é escrever
+ * exatamente os três campos que o dreno lê para decidir se cobra. Agora o
+ * overlay DELEGA, e a única coisa que sobra aqui é o saneamento do JSON cru.
  *
- * Enquanto isso, a garantia não é a fé: o teste de paridade não confere a forma
- * do objeto, ele EXECUTA `applyPoopDrain` (a regra do app, importada) sobre o
- * resultado e exige que ela pare de cobrar. Quem julga limpeza continua sendo
- * `poopDrain.ts`; aqui só se prova que o resultado a satisfaz.
+ * Banho GERAL (`cleanPoop` sem `at`), e não por índice: o overlay não tem
+ * `careEvent`, não sabe qual dos cocôs está na tela do celular, e o dreno não
+ * distingue — para ele existe "tem sujeira" e "não tem". Essa é exatamente a
+ * forma sem `at` que `cleanPoop` documenta como "o banho do OVERLAY".
  *
- * Limpa TODO cocô mostrado, e não um índice: o overlay não tem `careEvent`, não
- * sabe qual dos cocôs está na tela do celular, e o dreno não distingue — para
- * ele existe "tem sujeira" e "não tem". Um banho que limpasse só um deixaria o
- * relógio correndo com o pet visivelmente limpo aqui.
+ * ⚠️ O `numeros()` continua existindo, e não é gordura: `cleanPoop` é genérica
+ * em `T extends CleanPoopState`, que pede `number[]`/`number`; `RemoteState` é
+ * `Record<string, unknown>` — JSON cru vindo do servidor, onde
+ * `poopEventsShown` pode ser `undefined`, string ou lista com lixo dentro. O
+ * saneamento é o que faz o contrato da regra valer de verdade em vez de valer
+ * por um `as`. Só os DOIS campos que `cleanPoop` escreve voltam para o save: o
+ * `poopEventsShown` cru é preservado byte a byte, porque sanear não é papel do
+ * banho e reescrevê-lo seria o overlay editando o que não pediu para editar.
  */
 export function remoteShower(remote: RemoteState): CareOutcome<ShowerRefusal> {
-  const shown = numeros(remote.poopEventsShown);
-  const cleaned = numeros(remote.poopEventsCompleted);
-  const sujos = shown.filter(i => !cleaned.includes(i));
-  const clock = typeof remote.poopPenaltyClockAt === 'number' ? remote.poopPenaltyClockAt : 0;
-  // Nada sujo E relógio já parado: o save não mudaria em byte nenhum.
-  if (sujos.length === 0 && clock === 0) return { next: null, refused: 'already-clean' };
+  const { state, refused } = cleanPoop({
+    poopEventsShown: numeros(remote.poopEventsShown),
+    poopEventsCompleted: numeros(remote.poopEventsCompleted),
+    poopPenaltyClockAt: typeof remote.poopPenaltyClockAt === 'number' ? remote.poopPenaltyClockAt : 0,
+  });
+  // Sem `at` só existe uma recusa possível (`already-clean`); `not-scheduled` é
+  // do banho por índice, que é o do celular. Os dois nomes já coincidem de
+  // propósito — ver `CleanPoopRefusal`.
+  if (refused) return { next: null, refused: 'already-clean' };
   return {
     next: {
       ...remote,
-      poopEventsCompleted: [...cleaned, ...sujos],
-      poopPenaltyClockAt: 0, // para o relógio de 6h do dreno
+      poopEventsCompleted: state.poopEventsCompleted,
+      poopPenaltyClockAt: state.poopPenaltyClockAt, // 0: para o relógio de 6h do dreno
     },
   };
 }

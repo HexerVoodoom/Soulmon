@@ -11,30 +11,21 @@
 import { APP_URL } from './config';
 import type { GenericLine } from './sprites';
 
-/** Espelha MAX_HP_BY_FORM (src/types/progression.ts).
- *  EXPORTADA só para o teste de paridade: enquanto era privada, o teste
- *  comparava uma TERCEIRA cópia (escrita dentro dele) contra o jogo, e uma
- *  divergência escrita AQUI passava verde — footgun 9 dentro do próprio guard.
- *  Medido: trocar `champion: 5` por `9` na tabela de energia não quebrava nada. */
-export const MAX_HP_BY_LEVEL: Record<string, number> = {
-  rookie: 3, champion: 3, ultimate: 3, mega: 4, ultra: 5,
-};
-/** Espelha FORM_REQUIREMENTS[].required — barras de energia = tarefas exigidas.
- *  Exportada pelo mesmo motivo de `MAX_HP_BY_LEVEL` (paridade sob teste). */
-export const ENERGY_BY_LEVEL: Record<string, number> = {
-  rookie: 4, champion: 5, ultimate: 5, mega: 6, ultra: 6,
-};
-
-/**
- * Espelha getStageLevel (src/types/progression.ts) para o esquema de ids do
- * Soulmon. Não importamos o módulo direto porque ele arrasta o roster legado
- * da masmorra, que o desktop não usa — a regra de prefixo é a mesma.
- */
-function stageLevel(stage: string): string {
-  if (stage === 'rookie' || stage === 'ultra') return stage;
-  const prefix = stage.split('-')[0];
-  return prefix === 'champion' || prefix === 'ultimate' || prefix === 'mega' ? prefix : 'rookie';
-}
+// ⚠️ AQUI MORAVAM TRÊS CÓPIAS: `MAX_HP_BY_LEVEL`, `ENERGY_BY_LEVEL` e uma
+// `stageLevel` própria. A justificativa escrita era que importar
+// `types/progression.ts` "arrasta o roster legado da masmorra" — e ela era
+// FALSA: aquele arquivo não importa NADA (nem sprite, nem util), é dado puro,
+// e o próprio `cloudSync.test.ts` já o importava sem arrastar coisa alguma.
+//
+// A cópia custou comportamento, não estética. A `stageLevel` do desktop lia só
+// o PREFIXO do id; a `getStageLevel` do app cai em `LEGACY_FORM_TIERS` quando o
+// prefixo não casa, que é a compatibilidade de save escrita para um save antigo
+// em `gaioumon` continuar MEGA. Divergindo, o overlay rebaixava esse jogador a
+// rookie em silêncio: 3 corações em vez de 4 no HUD — e, pior, o
+// `maxHealthPoints` errado voltava para o SAVE em `normalizeForRules`, então
+// `applyRub` passava a cortar a cura do mega no teto de um rookie.
+// Footgun 9 do CLAUDE.md, cobrado em coração. Ver o teste `SAVE LEGADO`.
+import { MAX_HP_BY_FORM, getStageLevel, getMaxEnergyForStage } from '../../../src/types/progression';
 
 /**
  * O servidor exige login? (`FIREBASE_PROJECT_ID` definido lá.)
@@ -86,12 +77,12 @@ function stageDisplayName(state: Record<string, unknown>, stageId: string): stri
   const stages = state.soulmonStages as RemoteStage[] | undefined;
   const meta = state.soulmonMeta as { baseName?: string } | undefined;
   if (Array.isArray(stages)) {
-    const level = stageLevel(stageId);
+    const level = getStageLevel(stageId);
     const branch = stageId.split('-')[1];
     // O oráculo usa outro vocabulário para nível e branch, então casamos pelo
     // que der: primeiro nível+branch, depois só nível.
     const match = stages.find(s => {
-      const sLevel = stageLevel(`${s.stage}${s.branch ? `-${s.branch}` : ''}`);
+      const sLevel = getStageLevel(`${s.stage}${s.branch ? `-${s.branch}` : ''}`);
       return sLevel === level && (!branch || !s.branch || s.branch === branch);
     });
     if (match?.name) return match.name;
@@ -127,7 +118,6 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
 
   const state = data.state as Record<string, unknown>;
   const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
-  const level = stageLevel(stage);
   const rawLine = state.eggType;
   const genericLine: GenericLine =
     rawLine === 'veemon' || rawLine === 'salamon' || rawLine === 'tapirmon' ? rawLine : 'tapirmon';
@@ -139,9 +129,9 @@ export async function fetchRemoteSnapshot(email: string): Promise<SyncResult> {
       genericLine,
       demoCharacterId: typeof state.demoCharacterId === 'string' ? state.demoCharacterId : undefined,
       hearts: typeof state.healthPoints === 'number' ? state.healthPoints : 1,
-      maxHearts: MAX_HP_BY_LEVEL[level] ?? 3,
+      maxHearts: MAX_HP_BY_FORM[getStageLevel(stage)],
       energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
-      maxEnergy: ENERGY_BY_LEVEL[level] ?? 4,
+      maxEnergy: getMaxEnergyForStage(stage),
       foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
       tasks: pendingTasks(state),
     },
@@ -273,11 +263,10 @@ export async function pushCareAction(
  */
 export function normalizeForRules(state: Record<string, unknown>): Record<string, unknown> {
   const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
-  const level = stageLevel(stage);
   return {
     ...state,
     healthPoints: Number.isFinite(state.healthPoints as number) ? state.healthPoints : 1,
-    maxHealthPoints: MAX_HP_BY_LEVEL[level] ?? 3,
+    maxHealthPoints: MAX_HP_BY_FORM[getStageLevel(stage)],
     energyPoints: Number.isFinite(state.energyPoints as number) ? state.energyPoints : 0,
     foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
     virusPoints: Number(state.virusPoints) || 0,
@@ -301,7 +290,6 @@ export function isSaneCareState(state: Record<string, unknown>): boolean {
 /** Extrai o snapshot de exibição de um GameState já em mãos. */
 function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
   const stage = typeof state.evolutionStage === 'string' ? state.evolutionStage : 'rookie';
-  const level = stageLevel(stage);
   const rawLine = state.eggType;
   return {
     stage,
@@ -309,9 +297,9 @@ function snapshotOf(state: Record<string, unknown>): RemoteSnapshot {
     genericLine: rawLine === 'veemon' || rawLine === 'salamon' || rawLine === 'tapirmon' ? rawLine : 'tapirmon',
     demoCharacterId: typeof state.demoCharacterId === 'string' ? state.demoCharacterId : undefined,
     hearts: typeof state.healthPoints === 'number' ? state.healthPoints : 1,
-    maxHearts: MAX_HP_BY_LEVEL[level] ?? 3,
+    maxHearts: MAX_HP_BY_FORM[getStageLevel(stage)],
     energy: typeof state.energyPoints === 'number' ? state.energyPoints : 0,
-    maxEnergy: ENERGY_BY_LEVEL[level] ?? 4,
+    maxEnergy: getMaxEnergyForStage(stage),
     foodInventory: (state.foodInventory ?? {}) as Record<string, number>,
     tasks: pendingTasks(state),
   };
