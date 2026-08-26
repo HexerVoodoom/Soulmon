@@ -60,6 +60,11 @@ export default defineConfig({
       // saveId, HP por nível). Divergir delas quebra em SILÊNCIO — o overlay
       // lê um save que não existe e mostra um bicho genérico, sem erro.
       'desktop/renderer/**/*.test.ts',
+      // `public/sw.js` nao e `src/**` nem `functions/**`, e ficou sem lugar —
+      // e sem teste — ate 26/08/2026. Ele e caminho de EXECUCAO (o que entra
+      // no cache e servido da nossa origem para sempre), entao ganhou raiz
+      // propria: `tests/` para o codigo que nao mora em nenhum dos bundles.
+      'tests/**/*.test.ts',
     ],
     coverage: {
       provider: 'v8',

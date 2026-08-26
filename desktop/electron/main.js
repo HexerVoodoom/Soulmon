@@ -19,7 +19,13 @@ const { appOrigin, decideNavigation, decideWindowOpen, isTrustedAuthSender } = r
 // Nessa variante o auto-update via GitHub Releases fica DESLIGADO — a
 // atualização passa a ser responsabilidade do SteamPipe (senão os dois
 // mecanismos brigariam pelo mesmo binário).
-const isSteamBuild = require('../package.json').steamBuild === true;
+// A leitura da marcacao e a decisao "pode se auto-atualizar?" moram em
+// `updatePolicy.js`, testadas em `renderer/src/updatePolicy.test.ts`. A
+// comparacao estrita `=== true` que vivia aqui falhava para o lado PERIGOSO
+// se a marcacao chegasse como string: o build de Steam se auto-atualizaria
+// pelo GitHub por cima do SteamPipe. Ver o cabecalho de updatePolicy.js.
+const { shouldAutoUpdate } = require('./updatePolicy.js');
+const pkgEmpacotado = require('../package.json');
 
 // Altura da faixa: pet (~96px) + espaço pro balão de fala acima dele. O menu
 // é uma janela própria (ver createMenuWindow), não precisa caber aqui.
@@ -73,7 +79,7 @@ if (!gotLock) {
     // ainda: clicou em "Jogar" e nenhuma janela apareceu.
     if (isFirstRun()) setTimeout(() => createMenuWindow(), 1200);
 
-    if (app.isPackaged && !isSteamBuild) {
+    if (shouldAutoUpdate({ isPackaged: app.isPackaged, pkg: pkgEmpacotado })) {
       checkForUpdates();
       setInterval(checkForUpdates, 4 * 60 * 60 * 1000); // a cada 4h
     }
@@ -107,7 +113,7 @@ function checkForUpdates() {
 
 // Baixa sozinho e instala na próxima vez que o app fechar — nunca precisa
 // baixar/rodar o instalador de novo manualmente a partir do GitHub. (Só na
-// build normal — na build de Steam isso nunca é chamado, ver isSteamBuild.)
+// build normal — na build de Steam isso nunca é chamado, ver shouldAutoUpdate.)
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
 autoUpdater.on('update-downloaded', () => {

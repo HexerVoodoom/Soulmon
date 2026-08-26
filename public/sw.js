@@ -12,6 +12,29 @@ const PRECACHE_URLS = [
   '/favicon-192x192.png',
 ];
 
+/**
+ * Esta resposta pode entrar no cache?
+ *
+ * O `fetch` handler ja recusa outra origem na entrada, mas isso sozinho NAO
+ * garante que a RESPOSTA veio de nos: uma URL nossa pode redirecionar para
+ * fora (redirect aberto, hospedagem de terceiro, proxy), e o `cache.put` grava
+ * o corpo do destino sob a NOSSA chave. Dai o SW passa a servir HTML/JS de
+ * fonte nao controlada a partir da nossa origem, e serve para sempre — ate o
+ * proximo bump de CACHE_VERSION.
+ *
+ * As tres condicoes, cada uma fechando um caminho distinto:
+ *  - `ok`         : nao grava 404/500 sob o nome do recurso (a pagina de erro
+ *                   viraria o "asset" ate a proxima versao);
+ *  - `basic`      : exclui resposta opaca e de outra origem — um subrecurso
+ *                   `no-cors` que termina fora do dominio volta como 'opaque',
+ *                   um corpo que nem da para inspecionar;
+ *  - `!redirected`: a URL final tem que ser a URL da chave. E este o caso do
+ *                   redirect para fora numa navegacao, que volta 'basic'.
+ */
+function cacheavel(res) {
+  return !!res && res.ok && res.type === 'basic' && !res.redirected;
+}
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -25,9 +48,15 @@ self.addEventListener('activate', (event) => {
       Promise.all(
         keys
           .filter((k) => k.startsWith('digiapp-') && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
-          .map((k) => caches.delete(k))
+          // `.catch` por chave: se UMA delecao falhar (cache em uso, quota,
+          // storage em modo estrito), o `Promise.all` rejeitaria e o
+          // `self.clients.claim()` abaixo — que esta no `.then` — nunca
+          // rodaria. O usuario ficaria com o SW ANTIGO no controle da aba ate
+          // recarregar, que e o oposto do que o skipWaiting/claim existe para
+          // fazer. Limpeza e melhor-esforco; assumir o controle nao e.
+          .map((k) => caches.delete(k).catch(() => false))
       )
-    ).then(() => self.clients.claim())
+    ).then(() => self.clients.claim(), () => self.clients.claim())
   );
 });
 
@@ -49,8 +78,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((res) => {
-          const clone = res.clone();
-          caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
+          if (cacheavel(res)) {
+            const clone = res.clone();
+            caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
+          }
           return res;
         })
         .catch(() => caches.match('/index.html'))
@@ -73,7 +104,7 @@ self.addEventListener('fetch', (event) => {
           if (cached) return cached;
           return fetch(webpRequest)
             .then((res) => {
-              if (!res.ok) throw new Error('WebP not found');
+              if (!cacheavel(res)) throw new Error('WebP not found');
               const clone = res.clone();
               caches.open(STATIC_CACHE).then((c) => c.put(webpRequest, clone));
               return res;
@@ -83,7 +114,10 @@ self.addEventListener('fetch', (event) => {
                 (c) =>
                   c ||
                   fetch(request).then((res) => {
-                    caches.open(STATIC_CACHE).then((cache) => cache.put(request, res.clone()));
+                    if (cacheavel(res)) {
+                      const clone = res.clone();
+                      caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+                    }
                     return res;
                   })
               )
@@ -98,8 +132,10 @@ self.addEventListener('fetch', (event) => {
         (cached) =>
           cached ||
           fetch(request).then((res) => {
-            const clone = res.clone();
-            caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
+            if (cacheavel(res)) {
+              const clone = res.clone();
+              caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
+            }
             return res;
           })
       )
@@ -111,8 +147,10 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((res) => {
-        const clone = res.clone();
-        caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
+        if (cacheavel(res)) {
+          const clone = res.clone();
+          caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
+        }
         return res;
       })
       .catch(() => caches.match(request))
