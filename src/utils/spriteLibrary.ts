@@ -151,6 +151,30 @@ export function displaySprite(lib: SpriteLibrary, formId: string): SpriteEntry |
 }
 
 /** A conta parou de vez? (402 em qualquer forma vale para a conta inteira.) */
+/**
+ * O acervo ainda não desenhou NADA — é a ocasião A (`birthBatch`), o lote de
+ * nascimento de quem acabou de criar a árvore (achado **F-1** do gate).
+ *
+ * Por que a pergunta é esta e não "quem é você": a ocasião A dependia de um
+ * `GET /api/whoami` que **não existe e não tem dono**, e por isso nunca foi
+ * ligada — quem paga chegava ao reveal e via a mesma arte de reserva do demo
+ * grátis. O acervo responde a mesma pergunta com o que já está no save:
+ *
+ *  - quem NÃO paga não chega aqui (o `enabled` do hook corta quem não tem
+ *    árvore própria, e o servidor recusa em `requirePaidTier` antes de
+ *    qualquer IA — o tier nunca foi decidido no cliente);
+ *  - gasto duplicado não é risco: `birthBatch` filtra por `hasSprite` e
+ *    `isFormCapped`, então com o acervo povoado ele devolve `null` sozinho.
+ *
+ * O que se perde em relação ao `whoami`: um pagante ANTIGO que perdesse o
+ * acervo inteiro seria tratado como recém-nascido — e receberia um lote a que
+ * já tinha direito, dentro do vitalício de 26. Imprecisão de rótulo, não de
+ * dinheiro. O `whoami` segue como dívida do desktop (ADR §2-4).
+ */
+export function isNewbornLibrary(lib: SpriteLibrary): boolean {
+  return Object.keys(lib.sprites).length === 0;
+}
+
 export function isAccountCapped(lib: SpriteLibrary): boolean {
   return Object.values(lib.failures).some(f => f.terminal === 'lifetime-cap');
 }

@@ -20,7 +20,7 @@ import { GamePopups } from './components/GamePopups';
 import { EvolveTaskModal } from './components/EvolveTaskModal';
 import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
-import { emptySpriteLibrary, revertVisor, displaySprite, type SpriteLibrary } from './utils/spriteLibrary';
+import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, type SpriteLibrary } from './utils/spriteLibrary';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
@@ -626,6 +626,15 @@ export default function App() {
     // NÃO é pré-checagem de tier (quem decide é o servidor): é o corte de quem
     // não tem árvore própria e portanto não teria prompt para mandar.
     enabled: !gameState.demoCharacterId && (gameState.soulmonStages?.length ?? 0) > 0,
+    // F-1: a ocasiao A (`birthBatch`) nao tinha chamador, e quem paga chegava ao
+    // reveal vendo a MESMA arte de reserva do demo gratis -- o primeiro sprite
+    // proprio so nascia na vespera da primeira evolucao, dias depois.
+    //
+    // A pergunta e do ACERVO, nao de identidade: `isNewbornLibrary` documenta
+    // por que isto NAO depende do `GET /api/whoami` (que nao existe e nao tem
+    // dono). `birthBatch` ja filtra o que existe, entao ligar isto nao pode
+    // gerar duas vezes.
+    newborn: isNewbornLibrary(spriteAcervo),
   });
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
   const handleRevertVisor = useCallback(
