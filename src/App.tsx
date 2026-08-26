@@ -59,6 +59,7 @@ import {
   FOOD_LIMIT_PER_HOUR,
 } from './utils/careRules';
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
+import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applyPoopDrain, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -2084,12 +2085,7 @@ export default function App() {
     // o teto. Aqui a segunda passada já enxerga o timestamp da primeira. A
     // checagem de fora existe só pela recusa, que dispara fala/animação e por
     // isso não pode morar dentro do updater (footgun 6).
-    setGameState(prev => {
-      const before = feedTimesFor(prev.careCaps, now);
-      const fed = feedFood(prev, foodEmoji, before, now);
-      if (fed.refused) return prev;
-      return { ...fed.state, careCaps: { ...prev.careCaps, feedTimes: fed.feedTimes } };
-    });
+    setGameState(prev => applyFeed(prev, foodEmoji, now).state);
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
 
@@ -3010,10 +3006,10 @@ export default function App() {
     // `petPassive` entra na checagem: sem ele o teto lido aqui era sempre 1, e o
     // traço Carinhoso (que o CLAUDE.md declara como "cura até 1,5/dia") era
     // anulado pela checagem de fora antes de a regra pura sequer rodar.
-    const refused = rubRefusal(
-      gameState.healthPoints, gameState.maxHealthPoints,
-      rubHealFor(gameState.careCaps, today), today, gameState.petPassive,
-    );
+    // `rubDecision` lê o `petPassive` do ESTADO, e não de um parâmetro que quem
+    // chama possa esquecer — foi assim que o Traço Carinhoso ficou desligado na
+    // prática, barrado em 1,0 enquanto o CLAUDE.md declarava 1,5 (X-6).
+    const refused = rubDecision(gameState, today);
     if (refused) {
       // "Já está cheio" é silencioso; "acabou o carinho de hoje" o pet comenta.
       if (refused === 'daily-cap') setHealCapSignal(n => n + 1);
@@ -3024,11 +3020,7 @@ export default function App() {
     // registro que está no save. Antes chegava aqui `{ healed: 0 }` fixo, o que
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
     // checagem de fora.
-    setGameState(prev => {
-      const done = rubHeal(prev, rubHealFor(prev.careCaps, today), today);
-      if (done.refused) return prev;
-      return { ...done.state, careCaps: { ...prev.careCaps, rubHeal: done.record } };
-    });
+    setGameState(prev => applyRub(prev, today).state);
   }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive]);
 
   // targetStage é sempre um ID da árvore ('rookie' | 'champion-virus' | ...),
