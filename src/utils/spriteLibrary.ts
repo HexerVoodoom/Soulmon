@@ -75,6 +75,15 @@ export interface SpriteLibrary {
    * a página desfaria a escolha dele em silêncio, que é o erro que o X4 derrubou.
    */
   reverted: string[];
+  /**
+   * Formas que o Visor adotou SOZINHO (adoção automática da virada do dia) e
+   * que o jogador ainda não viu. Alimenta o selo `NOVO` (X-3).
+   *
+   * Mora no SAVE, e não em memória, porque o caso do achado é exatamente
+   * "acordou com o rosto do bicho trocado": um flag de sessão sumiria no
+   * primeiro reload e o aviso nunca alcançaria quem não abre a aba Evolução.
+   */
+  tunedUnseen: string[];
 }
 
 /** Teto de tentativas por forma — espelha `AI_LIMITS.sprite.perFormLifetime`
@@ -87,7 +96,7 @@ export const SPRITE_MANUAL_RETRY_CAP = 3;
 export const SPRITE_MANUAL_COOLDOWN_MS = 60_000;
 
 export function emptySpriteLibrary(): SpriteLibrary {
-  return { sprites: {}, failures: {}, pendingTune: null, reverted: [] };
+  return { sprites: {}, failures: {}, pendingTune: null, reverted: [], tunedUnseen: [] };
 }
 
 /**
@@ -129,6 +138,7 @@ export function normalizeSpriteLibrary(raw: unknown): SpriteLibrary {
     lib.pendingTune = { formId: r.pendingTune.formId, sinceDay: r.pendingTune.sinceDay };
   }
   lib.reverted = Array.isArray(r.reverted) ? r.reverted.filter(id => typeof id === 'string') : [];
+  lib.tunedUnseen = Array.isArray(r.tunedUnseen) ? r.tunedUnseen.filter(id => typeof id === 'string') : [];
   return lib;
 }
 
@@ -257,13 +267,33 @@ export function canManualRetry(
 // NENHUMA destas funções mexe em `failures`: sintonizar, reverter e
 // re-sintonizar não chamam geração, logo não consomem teto nenhum.
 
-/** O jogador tocou "Sintonizar o Visor". */
-export function tuneVisor(lib: SpriteLibrary, formId: string): SpriteLibrary {
+/**
+ * Adota o sprite próprio desta forma.
+ *
+ * `auto: true` é a adoção da VIRADA DO DIA, que acontece sem gesto nenhum do
+ * jogador — e é ela que precisa deixar rastro (`tunedUnseen`), porque quem nunca
+ * abre a aba Evolução acordava com o rosto do bicho trocado sem nenhum aviso
+ * (achado **X-3**). O toque do próprio jogador não marca: ele já viu.
+ */
+export function tuneVisor(
+  lib: SpriteLibrary,
+  formId: string,
+  opts: { auto?: boolean } = {},
+): SpriteLibrary {
   return {
     ...lib,
     pendingTune: lib.pendingTune?.formId === formId ? null : lib.pendingTune,
     reverted: lib.reverted.filter(id => id !== formId),
+    tunedUnseen: opts.auto
+      ? (lib.tunedUnseen.includes(formId) ? lib.tunedUnseen : [...lib.tunedUnseen, formId])
+      : lib.tunedUnseen.filter(id => id !== formId),
   };
+}
+
+/** O jogador finalmente viu o selo `NOVO` desta forma. */
+export function markTuneSeen(lib: SpriteLibrary, formId: string): SpriteLibrary {
+  if (!lib.tunedUnseen.includes(formId)) return lib;
+  return { ...lib, tunedUnseen: lib.tunedUnseen.filter(id => id !== formId) };
 }
 
 /** "Voltar ao traço antigo" — devolve a reserva sem apagar o sprite pago. */
@@ -273,6 +303,8 @@ export function revertVisor(lib: SpriteLibrary, formId: string): SpriteLibrary {
     ...lib,
     pendingTune: lib.pendingTune?.formId === formId ? null : lib.pendingTune,
     reverted: lib.reverted.includes(formId) ? lib.reverted : [...lib.reverted, formId],
+    // Reverter é um gesto: o jogador viu.
+    tunedUnseen: lib.tunedUnseen.filter(id => id !== formId),
   };
 }
 

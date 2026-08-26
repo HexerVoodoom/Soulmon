@@ -15,7 +15,7 @@ import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { EvolutionPath } from './EvolutionPath';
-import { emptySpriteLibrary, recordSprite } from '../utils/spriteLibrary';
+import { emptySpriteLibrary, recordSprite, tuneVisor } from '../utils/spriteLibrary';
 import type { CreatureStage } from '../utils/oracle';
 
 const stage = (over: Partial<CreatureStage>): CreatureStage => ({
@@ -107,5 +107,59 @@ describe('acessibilidade dos dois botões (§6)', () => {
     const botão = screen.getByRole('button', { name: 'Sintonizar o Visor' });
     expect(document.activeElement).not.toBe(botão);
     expect(botão.getAttribute('autofocus')).toBeNull();
+  });
+});
+
+/**
+ * X-3 — o selo do que o Visor fez SOZINHO.
+ *
+ * Antes deste conserto, `'NOVO'` era inalcançável em runtime: a copy existia,
+ * `cardState` sabia produzi-la, e ninguém passava `unseen`. Estes testes montam
+ * a página de verdade — não é guard textual.
+ */
+describe('X-3: quem não estava olhando descobre que o rosto trocou', () => {
+  const adotadoSozinho = () =>
+    tuneVisor(recordSprite(emptySpriteLibrary(), own, { adopt: 'ask', dayKey: '2026-08-25' }),
+      'rookie', { auto: true });
+
+  it('adoção automática ainda não vista: o selo NOVO aparece', () => {
+    renderWithCss(
+      <EvolutionPath {...base} spriteLibrary={adotadoSozinho()} onRevertVisor={() => {}} />,
+    );
+    expect(screen.getByTestId('sm-tuned-badge').textContent).toContain('NOVO');
+    expect(screen.getByTestId('sm-tuned-badge').textContent).toContain('Visor sintonizado');
+  });
+
+  it('o mesmo em EN', () => {
+    renderWithCss(
+      <EvolutionPath {...base} language="en-US" spriteLibrary={adotadoSozinho()} onRevertVisor={() => {}} />,
+    );
+    expect(screen.getByTestId('sm-tuned-badge').textContent).toContain('NEW');
+  });
+
+  it('a saída continua à mão no card com selo — descobrir a troca sem poder desfazer é meio aviso', () => {
+    renderWithCss(
+      <EvolutionPath {...base} spriteLibrary={adotadoSozinho()} onRevertVisor={() => {}} />,
+    );
+    expect(screen.getByRole('button', { name: 'Voltar ao traço antigo' })).toBeTruthy();
+  });
+
+  it('ver o card avisa quem cuida do save — é assim que o selo some', () => {
+    const vistas: string[] = [];
+    renderWithCss(
+      <EvolutionPath {...base} spriteLibrary={adotadoSozinho()} onSeenTune={id => vistas.push(id)} />,
+    );
+    expect(vistas, 'sem isto o selo ficaria para sempre em quem só passa os olhos').toEqual(['rookie']);
+  });
+
+  it('adoção POR GESTO do jogador não mostra selo nenhum, e não avisa nada', () => {
+    const porGesto = tuneVisor(
+      recordSprite(emptySpriteLibrary(), own, { adopt: 'ask', dayKey: '2026-08-25' }), 'rookie');
+    const vistas: string[] = [];
+    renderWithCss(
+      <EvolutionPath {...base} spriteLibrary={porGesto} onRevertVisor={() => {}} onSeenTune={id => vistas.push(id)} />,
+    );
+    expect(screen.queryByTestId('sm-tuned-badge')).toBeNull();
+    expect(vistas).toEqual([]);
   });
 });

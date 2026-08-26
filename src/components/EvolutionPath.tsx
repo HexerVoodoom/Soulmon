@@ -29,7 +29,7 @@
  * desempate por ritmo de cuidado, e a situação de cada nó dita em PALAVRAS no
  * `aria-label` (WCAG 1.4.1: cor e posição nunca são o único portador).
  */
-import { useState, useMemo, type CSSProperties } from 'react';
+import { useState, useMemo, useEffect, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
@@ -90,6 +90,8 @@ interface EvolutionPathProps {
   onTuneVisor?: (formId: string) => void;
   /** "Voltar ao traço antigo" — devolve a reserva sem apagar o sprite pago. */
   onRevertVisor?: (formId: string) => void;
+  /** O jogador chegou a ver o selo `NOVO` desta forma (X-3). */
+  onSeenTune?: (formId: string) => void;
 }
 
 const card: CSSProperties = {
@@ -136,6 +138,7 @@ export function EvolutionPath({
   spriteLibrary,
   onTuneVisor,
   onRevertVisor,
+  onSeenTune,
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
   // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
@@ -187,7 +190,17 @@ export function EvolutionPath({
     imminent: pointsToEvolve(currentStageId, digivolutionSegments) <= 1,
     reachable: true,
     online: true,
+    // X-3: o selo `NOVO` existia na copy e em `cardState`, mas era INALCANÇÁVEL
+    // em runtime — ninguém passava `unseen`, e nada no save marcava "visto".
+    unseen: acervo.tunedUnseen.includes(currentStageId),
   });
+
+  /* Ver o card É ter visto. A marca sai do save aqui, e não num toque: o
+     achado é sobre quem NÃO age — exigir um clique para limpar deixaria o selo
+     acumulado para sempre em quem só passa os olhos. */
+  useEffect(() => {
+    if (estadoAtual === 'NOVO') onSeenTune?.(currentStageId);
+  }, [estadoAtual, currentStageId, onSeenTune]);
 
   /**
    * O nó que a página JÁ dizia em texto ("Seguindo para Harmonia"), agora
@@ -572,7 +585,18 @@ export function EvolutionPath({
             novo a qualquer momento — re-sintonizar NÃO chama geração, logo não
             toca teto nenhum. Trocar o rosto do bicho sem saída é a versão
             educada do mesmo erro. */}
-        {estadoAtual === 'PROPRIO' && onRevertVisor && (
+        {/* X-3: o aviso de que o Visor sintonizou SOZINHO. Quem nunca abre esta
+            aba acordava com o rosto do bicho trocado sem nada dizendo nada. */}
+        {estadoAtual === 'NOVO' && (
+          <p
+            style={{ ...sm2Hint, margin: 0, fontWeight: 700, letterSpacing: '0.08em' }}
+            data-testid="sm-tuned-badge"
+          >
+            {spriteText('new', language)} · {spriteText('tuned', language)}
+          </p>
+        )}
+
+        {(estadoAtual === 'PROPRIO' || estadoAtual === 'NOVO') && onRevertVisor && (
           <button
             type="button"
             onClick={() => onRevertVisor(currentStageId)}

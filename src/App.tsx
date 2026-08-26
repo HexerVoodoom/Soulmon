@@ -20,7 +20,8 @@ import { GamePopups } from './components/GamePopups';
 import { EvolveTaskModal } from './components/EvolveTaskModal';
 import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
-import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, type SpriteLibrary } from './utils/spriteLibrary';
+import { spriteText } from './utils/spriteCopy';
+import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, type SpriteLibrary } from './utils/spriteLibrary';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
@@ -651,6 +652,21 @@ export default function App() {
     newborn: isNewbornLibrary(spriteAcervo),
   });
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
+  /* O anúncio é PONTUAL: some depois de anunciado, para a região viva não
+     repetir a mesma frase na próxima mudança dela. 4s é o suficiente para um
+     leitor de tela ler "Visor sintonizado" sem cortar. */
+  const { tunedAnnouncement: visorAnunciou, clearAnnouncement: limparAnuncio } = spriteGen;
+  useEffect(() => {
+    if (!visorAnunciou) return;
+    const t = setTimeout(limparAnuncio, 4000);
+    return () => clearTimeout(t);
+  }, [visorAnunciou, limparAnuncio]);
+
+  // X-3: a marca de "adotado sozinho" sai do save quando o jogador vê o card.
+  const handleSeenTune = useCallback(
+    (formId: string) => updateSpriteLibrary(prev => markTuneSeen(prev, formId)),
+    [updateSpriteLibrary],
+  );
   const handleRevertVisor = useCallback(
     (formId: string) => updateSpriteLibrary(prev => revertVisor(prev, formId)),
     [updateSpriteLibrary],
@@ -3280,6 +3296,24 @@ export default function App() {
 
   return (
     <div className="fixed inset-0 overflow-hidden flex flex-col sm-app-bg">
+        {/* ── O VISOR SINTONIZOU SOZINHO ───────────────────────────────────
+            X-3: a adoção automática da virada do dia trocava o rosto do bicho
+            sem nenhum aviso fora da aba Evolução. Esta região vive na RAIZ, e
+            não dentro da aba, exatamente porque o achado é sobre quem nunca
+            abre a aba.
+
+            Fora da tela em vez de `display:none`: região viva escondida com
+            `display:none` não é anunciada por leitor de tela nenhum. */}
+        <div
+          aria-live="polite"
+          data-testid="sm-tuned-live"
+          style={{
+            position: 'absolute', width: 1, height: 1, overflow: 'hidden',
+            clip: 'rect(0 0 0 0)', clipPath: 'inset(50%)', whiteSpace: 'nowrap',
+          }}
+        >
+          {visorAnunciou ? spriteText('tuned', language) : ''}
+        </div>
         {/* ── PULAR PARA O CONTEÚDO ────────────────────────────────────────
             PRIMEIRO nó focável do documento, de propósito: a barra de
             navegação é montada antes do `<main>` no DOM, então quem navega
@@ -4054,6 +4088,7 @@ export default function App() {
               spriteLibrary={spriteAcervo}
               onTuneVisor={handleTuneVisor}
               onRevertVisor={handleRevertVisor}
+              onSeenTune={handleSeenTune}
               forecastBranch={resolveBranch(
                 { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
                 carePatternReading,

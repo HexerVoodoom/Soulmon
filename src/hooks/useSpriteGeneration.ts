@@ -103,7 +103,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
     const pendente = autoTuneDue(library, dayKey);
     if (!pendente) return;
     return whenIdle(() => {
-      updateLibrary(prev => (autoTuneDue(prev, dayKey) ? tuneVisor(prev, pendente) : prev));
+      updateLibrary(prev => (autoTuneDue(prev, dayKey) ? tuneVisor(prev, pendente, { auto: true }) : prev));
       setTunedAnnouncement(true);
     });
   }, [busy, library, dayKey, updateLibrary]);
