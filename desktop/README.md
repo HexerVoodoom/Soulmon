@@ -66,15 +66,44 @@ npm run dist            # gera o NSIS installer em desktop/release/ (não public
 npm run dist:publish    # idem, e publica/atualiza o GitHub Release (fonte do auto-update)
 ```
 
-Também há CI: `.github/workflows/desktop-build.yml` builda no push (quando
-`desktop/**` ou os sprites mudam), publica/atualiza um GitHub Release e sobe o
-`.exe` como artefato.
+Também há CI, e desde 26/08/2026 são **dois arquivos**, porque **build e
+publicação foram separados de propósito**:
+
+| Workflow | Dispara em | Faz | `permissions` |
+|---|---|---|---|
+| `.github/workflows/desktop-build.yml` | push na **`main`** (só quando `desktop/**`, `src/utils/sprites.ts`, `src/assets/**` ou o próprio workflow mudam) + `workflow_dispatch` | builda com `--publish never` e sobe o `.exe` como **artefato de Actions** (retido 30 dias). **NÃO cria nem atualiza Release.** | `contents: read` |
+| `.github/workflows/desktop-release.yml` | **só** push de tag `v[0-9]+.[0-9]+.[0-9]+` (`v1.2.3` entra; `v1.2`, `v1.2.3-beta` e `vqualquercoisa` NÃO) | `electron-builder --publish always` → cria/atualiza o **GitHub Release**, que é a fonte do auto-update | `contents: write` |
+
+⚠️ **Este parágrafo dizia "builda no push (quando `desktop/**` ou os sprites
+mudam), publica/atualiza um GitHub Release".** A parte do "publica" ficou falsa
+na separação. E o que ela descrevia era o defeito que motivou a separação:
+enquanto publicar era efeito colateral de commitar, um push numa branch de
+rascunho (`claude/ui-layout-z-index-coth3e` estava na lista de gatilhos) virava
+**atualização automática instalada na máquina de quem tem o desktop** — sem
+assinatura Authenticode (`CSC_IDENTITY_AUTO_DISCOVERY: 'false'`), então o
+updater não tinha como validar a origem do que instalava.
+
+A separação é em **dois arquivos** e não em dois jobs porque o poder de publicar
+acompanha o `permissions:` do ARQUIVO: um arquivo que nunca dispara em branch
+não tem como publicar por acidente.
+
+**Para publicar hoje: empurre a tag de versão.** Não há `workflow_dispatch` no
+release, e a ausência é escolha — um botão "publicar" que roda sobre qualquer
+ref é exatamente o efeito colateral que a separação eliminou.
+
+O filtro de caminhos do `desktop-build.yml` **não** cobre a família de regras de
+cuidado que o overlay importa (`careRules`, `careUpdaters`, `playerDay`,
+`restWindow`, `poopDrain`) — de propósito: quem cobre isso é o `ci.yml`, que roda
+`npx tsc -p desktop/tsconfig.json --noEmit` em **todo PR** e em todo push da
+`main`, sem filtro de paths e sem runner Windows.
 
 **Auto-update**: `electron-updater` baixa a versão nova sozinho em segundo plano
 e instala na próxima vez que o app fechar (`autoInstallOnAppQuit`). O updater só
 considera "nova" uma versão cujo número seja maior que o instalado — **bump o
-campo `version` em `desktop/package.json`** antes de um push que deva chegar
-como atualização.
+campo `version` em `desktop/package.json`** antes de **criar a tag** que deva
+chegar como atualização. (Dizia "antes de um push"; desde a separação nenhum
+push publica.) O número da tag e o `version` do `package.json` precisam
+concordar — quem lê o `latest.yml` é o updater, e ele compara o `version`.
 
 **Steam**: `npm run dist:steam` gera um build alternativo (pasta desempacotada,
 sem publicar no GitHub) com o auto-update via GitHub desligado — nessa variante
