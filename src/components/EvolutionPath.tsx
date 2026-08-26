@@ -33,8 +33,8 @@ import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react'
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
-import { cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
-import { spriteText } from '../utils/spriteCopy';
+import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
+import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
@@ -97,6 +97,8 @@ interface EvolutionPathProps {
   onRevertVisor?: (formId: string) => void;
   /** O jogador chegou a ver o selo `NOVO` desta forma (X-3). */
   onSeenTune?: (formId: string) => void;
+  /** "Tentar de novo" da forma atual. Ausente = o botao nao aparece. */
+  onRetrySprite?: (formId: string) => void;
 }
 
 const card: CSSProperties = {
@@ -168,6 +170,7 @@ export function EvolutionPath({
   onTuneVisor,
   onRevertVisor,
   onSeenTune,
+  onRetrySprite,
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
   // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
@@ -299,6 +302,41 @@ export function EvolutionPath({
   useEffect(() => {
     if (estadoAtual === 'NOVO') onSeenTune?.(currentStageId);
   }, [estadoAtual, currentStageId, onSeenTune]);
+
+
+  /**
+   * A FALHA DE CREDENCIAL (401 / 403), que ate 84209ded chegava aqui como
+   * `error` generico e saia da tela como NADA: arte de reserva e silencio.
+   *
+   * **Por que isto NAO virou estado novo de `SpriteCardState`.** O enum
+   * responde a uma pergunta so — em que estado esta a ARTE desta forma — e a
+   * ordem das perguntas em `cardState` e a regra que faz o terminal calar o
+   * "estou gerando". Credencial nao e um estado da arte: a arte esta em
+   * RESERVA, exatamente como esta quando o lote simplesmente ainda nao rodou.
+   * Um `CREDENCIAL_*` teria de ser inserido nessa ordem e, onde entrasse,
+   * apagaria informacao verdadeira — antes de `RESERVA_VESPERA` engoliria a
+   * vespera (que e quem promove o "Tentar de novo" a botao de texto real);
+   * depois dela, nunca apareceria na vespera, que e justamente quando o
+   * jogador mais precisa saber por que o traco nao veio. E seriam DOIS
+   * estados que se comportam como RESERVA em todo o resto.
+   *
+   * O MOTIVO e um eixo ORTOGONAL ao estado, e `spriteFailText` ja o modela
+   * assim: devolve `null` para tudo que ja tem card proprio ou que nao pede
+   * gesto nenhum. Aqui ele so precisava de superficie.
+   *
+   * O portao e `RESERVA`/`RESERVA_VESPERA` de proposito: fora deles a falha
+   * gravada esta VELHA (o sprite chegou, ou o teto fechou a forma) e repetir
+   * "entre de novo" seria mentir em cima de um card que ja diz outra coisa.
+   * E nenhum dos dois e terminal — a frase do RESERVA_FINAL nao entra aqui.
+   */
+  const avisoCredencial = (() => {
+    if (estadoAtual !== 'RESERVA' && estadoAtual !== 'RESERVA_VESPERA') return null;
+    const falha = acervo.failures[currentStageId];
+    return falha ? spriteFailText(falha.kind, language) : null;
+  })();
+  // O botao vale para 401 e 403 (nenhum e terminal), mas continua obedecendo
+  // cooldown e teto manual: quem decide e `canManualRetry`, nao esta tela.
+  const podeRetentar = avisoCredencial != null && canManualRetry(acervo, currentStageId);
 
   /**
    * O nó que a página JÁ dizia em texto ("Seguindo para Harmonia"), agora
@@ -693,6 +731,34 @@ export function EvolutionPath({
             </button>
             {/* A troca deixa de ser silenciosa porque é ANUNCIADA ANTES. */}
             <p style={{ ...sm2Hint, marginTop: 8 }}>{spriteText('tuneAuto', language)}</p>
+          </div>
+        )}
+
+        {/* ── A FALHA DE CREDENCIAL ─────────────────────────────
+            A SITUACAO EM PALAVRAS, e so em palavras: nao ha cor, icone nem
+            posicao carregando o recado sozinho (WCAG 1.4.1). `role="status"`
+            porque a frase pode NASCER com a pagina aberta — e um estado, nao
+            um alerta, e nao rouba foco de ninguem.
+
+            O texto NAO diz "ficou com a arte de reserva para sempre": esta e a
+            frase do RESERVA_FINAL e aqui ela seria mentira — o teto nao foi
+            atingido, quem falhou foi a credencial, e o traco ainda pode vir. */}
+        {avisoCredencial && (
+          <div
+            style={{ ...card, width: '100%', maxWidth: 380, textAlign: 'center' }}
+            role="status"
+            data-testid="sm-sprite-credencial"
+          >
+            <p style={{ ...sm2Text, margin: 0 }}>{avisoCredencial}</p>
+            {podeRetentar && onRetrySprite && (
+              <button
+                type="button"
+                onClick={() => onRetrySprite(currentStageId)}
+                style={{ ...sm2Button('ghost'), marginTop: 12, minHeight: 44, minWidth: 220 }}
+              >
+                {spriteText('retry', language)}
+              </button>
+            )}
           </div>
         )}
 
