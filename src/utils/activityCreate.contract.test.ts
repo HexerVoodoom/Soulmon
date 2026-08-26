@@ -48,9 +48,19 @@ const fonte = () => fonteDe(path.join(SRC, APP));
  * da métrica-norte). Um portão só, com um `if`, esconderia essa diferença
  * dentro de um parâmetro em vez de a declarar.
  */
+/**
+ * A quarta coluna é COMO o portão consulta a regra, e ela diverge por um
+ * motivo: desde o conserto de X-6 (instância 3) o hábito pergunta o teto DUAS
+ * vezes — de fora, para a telemetria e para o retorno, e de novo DENTRO do
+ * updater, sobre o `prev`. As duas passam por `fitHabitCreates`
+ * (`utils/habitCreate.ts`), que é quem chama `canCreateActivity`. Exigir a
+ * chamada literal aqui empurraria a regra de volta para dentro do `App.tsx` —
+ * exatamente o que a extração desfez. O elo com `monetization.ts` continua
+ * travado pelo teste seguinte, que confere o dono da pergunta.
+ */
 const PORTOES = [
-  ['commitHabitCreate', 'activities', 'hábito: consome o teto de ativas'],
-  ['commitTaskCreate', 'tasks', 'tarefa avulsa: nunca consome teto, mas CONTA'],
+  ['commitHabitCreate', 'activities', 'hábito: consome o teto de ativas', /fitHabitCreates\s*\(/],
+  ['commitTaskCreate', 'tasks', 'tarefa avulsa: nunca consome teto, mas CONTA', /canCreateActivity\s*\(/],
 ] as const;
 
 /** Nomes que o regime antigo (teto diário) usava. Nenhum pode voltar. */
@@ -120,8 +130,11 @@ function temArranjoQueEstende(no: No, lista: string, sf: ts.SourceFile): boolean
   return achou;
 }
 
-function escritasDeCriacao(sf: ts.SourceFile, lista: string): Array<{ fn: string; texto: string }> {
-  const achados: Array<{ fn: string; texto: string }> = [];
+function escritasDeCriacao(
+  sf: ts.SourceFile,
+  lista: string,
+): Array<{ fn: string; texto: string; completo: string }> {
+  const achados: Array<{ fn: string; texto: string; completo: string }> = [];
   const anda = (n: No): void => {
     if (
       ts.isPropertyAssignment(n)
@@ -129,7 +142,14 @@ function escritasDeCriacao(sf: ts.SourceFile, lista: string): Array<{ fn: string
       && n.name.text === lista
       && temArranjoQueEstende(n.initializer, lista, sf)
     ) {
-      achados.push({ fn: funcaoQueContem(n), texto: n.getText(sf).slice(0, 90) });
+      achados.push({
+        fn: funcaoQueContem(n),
+        // `texto` é o recorte que entra na mensagem de erro; `completo` é o que
+        // as perguntas sobre o CONTEÚDO da escrita usam — 90 caracteres cortam
+        // a chamada que reconfere o teto.
+        texto: n.getText(sf).slice(0, 90),
+        completo: n.getText(sf),
+      });
     }
     ts.forEachChild(n, anda);
   };
@@ -194,13 +214,48 @@ describe('todo caminho de criação passa pelo mesmo portão (guard de elo, no A
 
   it('o portão CONSULTA a regra antes de escrever, e a regra mora em monetization.ts', () => {
     const sf = fonte();
-    for (const [portao, , porque] of PORTOES) {
+    for (const [portao, , porque, pergunta] of PORTOES) {
       const corpo = corpoDe(sf, portao);
       expect(corpo, `${portao} sumiu do App.tsx — o guard ficou cego`).not.toBeNull();
       expect(
         corpo!,
-        `${portao} (${porque}) escreve sem perguntar a canCreateActivity`,
-      ).toMatch(/canCreateActivity\s*\(/);
+        `${portao} (${porque}) escreve sem perguntar o teto (${pergunta})`,
+      ).toMatch(pergunta);
+    }
+  });
+
+  /**
+   * O elo do hábito: quem responde `fitHabitCreates` tem de ser a
+   * `canCreateActivity` de `monetization.ts`, e não um número reescrito à mão.
+   * Sem esta pergunta, a extração do X-6 teria aberto a porta para o teto
+   * migrar de dono sem ninguém ver.
+   */
+  it('quem o portão de hábito consulta é `canCreateActivity`, do dono de sempre', () => {
+    const fitFonte = fonteDe(path.join(SRC, 'utils', 'habitCreate.ts'));
+    const texto = fitFonte.getFullText();
+    expect(texto, 'habitCreate.ts deixou de importar a regra de monetization.ts')
+      .toMatch(/import\s*\{[^}]*canCreateActivity[^}]*\}\s*from\s*'\.\/monetization'/);
+    expect(texto, 'fitHabitCreates parou de chamar canCreateActivity — o teto virou número solto')
+      .toMatch(/canCreateActivity\s*\(/);
+  });
+
+  /**
+   * ⚠️ X-6, instância 3: a decisão do teto tem de ser reconferida DENTRO do
+   * updater. Enquanto ela era tomada só de fora, duas criações no mesmo lote do
+   * React liam a mesma contagem e ambas passavam. O guard pergunta ao AST se a
+   * escrita em `activities` dentro do portão passa por `fitHabitCreates` — o
+   * `prev` é o único estado que o updater tem para reconferir.
+   */
+  it('a escrita do portão de hábito reconfere o teto sobre o `prev` (X-6)', () => {
+    const sf = fonte();
+    const escritas = escritasDeCriacao(sf, 'activities');
+    expect(escritas.length).toBeGreaterThan(0);
+    for (const e of escritas) {
+      expect(
+        e.completo,
+        'o updater voltou a escrever a lista sem reconferir o teto sobre o `prev` — '
+        + 'é a família X-6 renascendo: dois toques no mesmo lote furam activityCapFor',
+      ).toMatch(/fitHabitCreates\s*\(/);
     }
   });
 
