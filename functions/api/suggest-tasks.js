@@ -43,11 +43,15 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: 'goalText or categories required' }, { status: 400, headers: CORS });
     }
 
-    const gate = await guardAiRequest(request, env, 'suggest', body.id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
-
+    // ORDEM: configuração ANTES do portão de volume. Esta rota é o segundo
+    // onboarding, com criação de 1ª tarefa obrigatória, e tem o MENOR teto do
+    // sistema (30/dia). Debitar antes de saber que não há chave esvaziava a cota
+    // do jogador no caminho de primeira impressão.
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });
+
+    const gate = await guardAiRequest(request, env, 'suggest', body.id);
+    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
 
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
 Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
@@ -61,7 +65,10 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       categories.length ? `Life-area tags: ${categories.join(', ')}` : '',
     ].filter(Boolean).join('\n');
 
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // Unidade reservada daqui para baixo (ver `makeRelease` em _aiGuard.js).
+    let groqRes;
+    try {
+      groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
       body: JSON.stringify({
@@ -73,10 +80,15 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
         max_tokens: 400,
         temperature: 0.7,
       }),
-    });
+      });
+    } catch (err) {
+      await gate.release(`rede/timeout no Groq: ${err?.message}`);
+      throw err;
+    }
 
     if (!groqRes.ok) {
       console.error('Groq error:', await groqRes.text());
+      await gate.release(`Groq respondeu ${groqRes.status}`);
       return Response.json({ error: 'AI service error' }, { status: 500, headers: CORS });
     }
 
@@ -88,6 +100,8 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       const match = raw.match(/\[[\s\S]*\]/);
       parsed = JSON.parse(match ? match[0] : raw);
     } catch {
+      // NÃO devolve: o Groq respondeu e cobrou. É o análogo exato da recusa de
+      // conteúdo no sprite — o modelo trabalhou, só entregou torto.
       return Response.json({ error: 'Could not parse suggestions' }, { status: 502, headers: CORS });
     }
 

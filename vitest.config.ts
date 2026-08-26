@@ -21,6 +21,28 @@ export default defineConfig({
     // componente que lê o storage cru quebra no teste (medido em
     // `CompanionHUD.tsx:228`). Só afeta arquivos com o docblock jsdom.
     environmentOptions: { jsdom: { url: 'http://localhost:3000/' } },
+    // PISO DE ROBUSTEZ, não conserto de lentidão.
+    //
+    // Até 26/08/2026 a suíte inteira vivia no default de 5s do Vitest, sem uma
+    // única exceção declarada. O flake medido em `sweeper/flake-assets-contract.md`
+    // mostra o mesmo teste a 2599ms com 6 CPUs concorrentes (52% do orçamento) e
+    // a 5005ms sob 8 (100% — timeout). O fator entre a carga normal e a que
+    // estoura é pequeno demais: 5s não tem folga para CI compartilhada nem para
+    // Windows frio.
+    //
+    // 15s dá ~3x sobre o pior caso PRÉ-conserto já observado. Não é licença para
+    // teste lento: aquele caso foi consertado na origem (1242ms → 14ms) e o
+    // documento do sweeper rejeita por escrito subir o timeout como solução.
+    //
+    // O valor não é escolhido no vácuo: o único teste que já declarava teto
+    // próprio (`assets/assets.contract.test.ts`, o guard de vínculo do F-2)
+    // escolheu 15s pelo mesmo raciocínio, medindo 514ms. Alinhar o piso global
+    // a ele evita duas réguas para a mesma pergunta.
+    //
+    // ⚠️ DÍVIDA que este número NÃO paga: ninguém mediu quem mais está perto do
+    // teto. Falta o passe ordenando testes por tempo e uma regra de "teste acima
+    // de X% do orçamento é dívida nomeada".
+    testTimeout: 15_000,
     include: [
       'src/**/*.test.ts', 'src/**/*.test.tsx', 'functions/**/*.test.js', 'workers/**/*.test.js',
       // O renderer do desktop tem cópias de regras do app (derivação do

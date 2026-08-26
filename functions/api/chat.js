@@ -79,13 +79,17 @@ export async function onRequestPost({ request, env }) {
 
     if (!message) return Response.json({ error: 'Message required' }, { status: 400, headers: CORS });
 
+    // ORDEM: configuração ANTES do portão de volume. Chave ausente não é falha
+    // transitória, é estado permanente — e debitar antes dela fazia toda
+    // requisição queimar cota contra um endpoint que nunca ia funcionar. Mesma
+    // ordenação que `generate-sprite.js` já usa (direito antes de volume).
+    const groqKey = env.GROQ_API_KEY;
+    if (!groqKey) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });
+
     // Sem portão, esta rota gasta a nossa cota do Groq para qualquer um com um
     // `curl`. Ver functions/api/_aiGuard.js.
     const gate = await guardAiRequest(request, env, 'chat', body.id);
     if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS });
-
-    const groqKey = env.GROQ_API_KEY;
-    if (!groqKey) return Response.json({ error: 'AI not configured' }, { status: 500, headers: CORS });
 
     // N-3: minimização na fronteira. O que o usuário digita para o pet é a
     // maior superfície de texto livre do produto e sai daqui para um processador
@@ -106,7 +110,11 @@ export async function onRequestPost({ request, env }) {
       ? { ...aiSettings, customKeywords: minimizeForAi(aiSettings.customKeywords, 120).text }
       : aiSettings;
 
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // A unidade já está RESERVADA (ver `makeRelease` em _aiGuard.js). Daqui em
+    // diante, todo caminho que não produz resposta devolve.
+    let groqRes;
+    try {
+      groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${groqKey}` },
       body: JSON.stringify({
@@ -118,10 +126,15 @@ export async function onRequestPost({ request, env }) {
         max_tokens: 120,
         temperature: aiSettings?.temperature ?? 0.85,
       }),
-    });
+      });
+    } catch (err) {
+      await gate.release(`rede/timeout no Groq: ${err?.message}`);
+      throw err;
+    }
 
     if (!groqRes.ok) {
       console.error('Groq error:', await groqRes.text());
+      await gate.release(`Groq respondeu ${groqRes.status}`);
       return Response.json({ error: 'AI service error' }, { status: 500, headers: CORS });
     }
 
