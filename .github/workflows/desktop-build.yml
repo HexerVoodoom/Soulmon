@@ -1,26 +1,65 @@
 name: Desktop Windows Build
 
+# ESTE ARQUIVO SÓ BUILDA. NÃO PUBLICA NADA.
+#
+# Até esta rodada ele fazia as duas coisas no mesmo job — e disparava em push
+# numa BRANCH DE TRABALHO (`claude/ui-layout-z-index-coth3e`). O efeito real:
+# commitar numa branch de rascunho publicava um GitHub Release, e o Release é a
+# fonte do auto-update do `electron-updater` (`autoDownload` +
+# `autoInstallOnAppQuit` em `desktop/electron/main.js`). Ou seja, um `git push`
+# de rascunho instalava sozinho um `.exe` na máquina de quem tem o desktop —
+# e sem assinatura Authenticode para o Windows barrar coisa errada
+# (`CSC_IDENTITY_AUTO_DISCOVERY: 'false'`). Publicar não pode ser efeito
+# colateral de commitar.
+#
+# DECISÃO DO DONO: publicar passa a sair SÓ de tag de versão, e mora em
+# `desktop-release.yml`. Aqui fica o que é bom manter em push: saber cedo se o
+# desktop QUEBROU. É a razão de a separação ser em dois arquivos e não em dois
+# jobs — o poder de publicar acompanha o `permissions:` do ARQUIVO, e um arquivo
+# que nunca dispara em branch não tem como publicar por acidente.
+#
+# A branch de trabalho saiu dos gatilhos junto: ela não é mais especial agora
+# que não publica, e o `ci.yml` já roda `tsc -p desktop/tsconfig.json` em TODO
+# PR — que é onde uma branch de trabalho deve ser verificada.
 on:
   push:
-    branches: [main, 'claude/ui-layout-z-index-coth3e']
+    branches: [main]
+    # Filtro de caminho: build de `windows-latest` é caro e não tem o que fazer
+    # num commit que não encosta no desktop. `src/utils/sprites.ts` e
+    # `src/assets/**` entram porque o renderer os consome.
+    # ⚠️ Este filtro NÃO cobre a família de regras de cuidado (`careRules`,
+    # `careUpdaters`, `playerDay`, `restWindow`) que o overlay importa — de
+    # propósito: quem cobre isso é o `ci.yml`, que roda em todo PR e em todo
+    # push da main, sem filtro de paths e sem runner Windows.
     paths: ['desktop/**', 'src/utils/sprites.ts', 'src/assets/**', '.github/workflows/desktop-build.yml']
   workflow_dispatch:
 
-# Precisa de contents:write pra electron-builder publicar/atualizar o GitHub
-# Release que o electron-updater usa como fonte do auto-update.
+# 🔴 `contents: read`, e é para continuar assim.
+# Este workflow só lê o código e produz um artefato de Actions (retido 30 dias,
+# que ninguém instala sozinho). Quem precisa de `contents: write` é o
+# `desktop-release.yml`, porque criar Release é escrever no repositório.
+# Devolver `write` aqui é desfazer a separação inteira: voltaria a existir um
+# caminho de publicação disparado por push de branch.
 permissions:
-  contents: write
+  contents: read
+
+# Push atrás de push na `main` mexendo em `desktop/`: o build velho não
+# interessa. `main` não é cancelada no meio (vermelho na main tem que aparecer).
+concurrency:
+  group: desktop-build-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
 
     steps:
       # Acoes presas por SHA (S-6 da auditoria de suprimentos). Tag movel como
-      # `@v4` pode ser reapontada pelo dono da action a qualquer momento, e o
-      # commit novo roda no runner que tem `contents: write` e publica o Release
-      # do auto-update. O comentario ao lado do SHA e OBRIGATORIO: sem ele
-      # ninguem consegue saber que versao esta presa nem como atualizar.
+      # `@v4` pode ser reapontada pelo dono da action a qualquer momento. Aqui o
+      # token e so `contents: read`, mas a regra do repo e UMA so — e este job
+      # empacota o binario que, na versao publicada, roda na maquina do jogador.
+      # O comentario com a versao ao lado do SHA e OBRIGATORIO.
       # Atualizar: `curl -s https://api.github.com/repos/<owner>/<repo>/git/ref/tags/<tag>`
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -33,15 +72,12 @@ jobs:
       # `desktop/package-lock.json` EXISTE e estava sendo ignorado: com
       # `npm install` todo `^` do `desktop/package.json` resolve NA HORA DO
       # BUILD, entao dois builds do mesmo commit podiam empacotar arvores de
-      # dependencia diferentes. E o artefato daqui nao e um APK de teste: e o
-      # `.exe` que o `electron-updater` instala sozinho na maquina do jogador
-      # (`autoDownload`/`autoInstallOnAppQuit` em `desktop/electron/main.js`),
-      # sem assinatura Authenticode para barrar nada. Build de release tem que
-      # ser reproduzivel a partir do lock.
-      # Se o lock estiver dessincronizado do `package.json`, o `npm ci` FALHA de
-      # proposito (em vez de consertar em silencio) — o conserto e rodar
-      # `npm install` na maquina e commitar o lock.
-      - name: Install dependencies (npm ci — build de release reproduzivel)
+      # dependencia diferentes. Se o lock estiver dessincronizado do
+      # `package.json`, o `npm ci` FALHA de proposito (em vez de consertar em
+      # silencio) — o conserto e rodar `npm install` na maquina e commitar o lock.
+      # O `desktop-release.yml` roda EXATAMENTE o mesmo comando, para o binario
+      # publicado sair do mesmo lock que este build verificou.
+      - name: Install dependencies (npm ci — build reproduzivel a partir do lock)
         working-directory: desktop
         run: npm ci
 
@@ -49,18 +85,39 @@ jobs:
         working-directory: desktop
         run: npx tsc --noEmit
 
-      - name: Build, publish GitHub Release (auto-update source) + upload .exe
+      # 🔴 `--publish never`, EXPLÍCITO, e não por confiança no default.
+      #
+      # `desktop/package.json > build.publish` declara `provider: github`. Sem
+      # flag, a política default do electron-builder é `onTagOrDraft`: ele
+      # PUBLICA sozinho quando o build acontece em cima de uma tag. Como este
+      # workflow também roda via `workflow_dispatch` — e um `workflow_dispatch`
+      # pode ser disparado SOBRE UMA TAG — o default abriria de novo, pela porta
+      # dos fundos, o caminho que esta rodada fechou.
+      # `--publish never` fecha isso sem depender de raciocínio de ninguém.
+      # (Cinto e suspensório: não há `GH_TOKEN` neste job, então mesmo que a
+      # política mudasse, o publish não teria credencial.)
+      #
+      # `npm run dist -- --publish never` em vez de um script novo: os argumentos
+      # depois do `--` são anexados ao FIM da linha do script
+      # (`vite build && electron-builder --win`), então o comando efetivo é
+      # `electron-builder --win --publish never`. CONFERIDO nesta máquina: o npm
+      # ecoou `> vite build && electron-builder --win --publish never`, ou seja o
+      # argumento chega mesmo. O build completo NÃO fecha aqui — o electron-builder
+      # extrai o `winCodeSign` e o 7-Zip não consegue criar os symlinks do pacote
+      # sem privilégio ("A required privilege is not held by the client"), uma
+      # limitação desta máquina Windows, não do comando: `npm run dist` SEM a flag
+      # falha no mesmo ponto. No runner `windows-latest` isso não acontece.
+      - name: Build do instalador (SEM publicar — `--publish never`)
         working-directory: desktop
-        run: npm run dist:publish
-        env:
-          # Sem certificado de assinatura — não tentar auto-descobrir um
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run dist -- --publish never
 
+      # Artefato de Actions, não Release: fica 30 dias, é baixado à mão por quem
+      # quer testar, e o `electron-updater` NÃO o enxerga. É a diferença entre
+      # "dá para pegar o .exe deste commit" e "todo mundo recebe este .exe".
       - name: Upload installer artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: soulmon-desktop-windows
+          name: soulmon-desktop-windows-${{ github.sha }}
           path: |
             desktop/release/*.exe
           retention-days: 30

@@ -1,0 +1,128 @@
+name: Desktop Windows Release (só por tag de versão)
+
+# O ÚNICO caminho de publicação do desktop. Nasceu nesta rodada, separado do
+# `desktop-build.yml`, por decisão do dono.
+#
+# O QUE ESTE ARQUIVO PUBLICA, e por que ele merece um arquivo só para si:
+# `electron-builder --publish always` cria/atualiza um GitHub Release, e esse
+# Release é a FONTE DO AUTO-UPDATE: `desktop/electron/main.js` liga
+# `autoDownload` e `autoInstallOnAppQuit` no `electron-updater`, que baixa e
+# instala sozinho na máquina de quem já tem o Soulmon desktop. E o `.exe` sai
+# SEM assinatura Authenticode (`CSC_IDENTITY_AUTO_DISCOVERY: 'false'`), então o
+# updater não tem como validar a origem do que instala.
+#
+# Consequência que motivou a separação: enquanto isto morava junto do build e
+# disparava em `push` de branch, um commit numa branch de rascunho
+# (`claude/ui-layout-z-index-coth3e` estava na lista) virava atualização
+# automática na máquina do jogador. Publicar tem que ser ATO DELIBERADO.
+#
+# O ato deliberado é: criar e empurrar uma tag de versão.
+
+on:
+  push:
+    tags:
+      # 🔴 PADRÃO RESTRITO, de propósito. `v*` casaria com `vamos`, `v2-teste`,
+      # `vai-que-cola` — qualquer tag começando com "v" publicaria um Release.
+      # Este glob do GitHub Actions (que aceita `[0-9]` e `+`) exige três
+      # números: `v1.2.3` entra; `v1.2`, `v1.2.3-beta` e `vqualquercoisa` NÃO.
+      # Pré-lançamento fica de fora de propósito — se um dia for preciso, é uma
+      # decisão nova (e provavelmente um canal de update separado), não um
+      # afrouxamento silencioso deste padrão.
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+  # Sem `workflow_dispatch`, e é escolha. Um botão "publicar" que roda sobre
+  # qualquer ref é justamente o efeito colateral que esta separação eliminou.
+  # Para publicar, empurre a tag. Para republicar a MESMA versão, apague o
+  # Release e a tag e empurre de novo — trabalhoso na medida certa.
+
+# `contents: write` é o teto exato e é NECESSÁRIO: criar Release e subir os
+# assets (`.exe`, `latest.yml`, blockmap) é escrita no repositório. Este é o
+# único workflow do repo com essa permissão para Release — `ci.yml` e
+# `desktop-build.yml` são `contents: read`, `sync-irmaos.yml` tem `write` mas
+# para empurrar branch de sync e abrir PR, nunca para Release.
+permissions:
+  contents: write
+
+# Duas tags empurradas em sequência não podem correr juntas: as duas escreveriam
+# `latest.yml` no mesmo repositório de Release. `cancel-in-progress: false` —
+# publicação começada não se cancela no meio.
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      # Acoes presas por SHA (S-6 da auditoria de suprimentos). Aqui pesa mais
+      # que em qualquer outro workflow do repo: este job roda com
+      # `contents: write` e produz o binario que o auto-update instala sozinho
+      # na maquina do jogador, sem assinatura para barrar nada. Uma tag movel
+      # reapontada executaria codigo novo exatamente aqui.
+      # Comentario com a versao ao lado do SHA e OBRIGATORIO. Atualizar com:
+      #   curl -s https://api.github.com/repos/<owner>/<repo>/git/ref/tags/<tag>
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+
+      # 🔴 A TAG TEM QUE BATER COM `desktop/package.json > version`.
+      #
+      # O electron-builder nomeia o Release pela `version` do `package.json`, NÃO
+      # pela tag. Sem esta checagem, empurrar `v1.2.3` com o `package.json` ainda
+      # em `0.1.0` publicaria um Release `v0.1.0` — e o `electron-updater` compara
+      # versão, então o jogador ou não receberia nada, ou receberia um update com
+      # número menor que o instalado. Falha silenciosa e cara de diagnosticar.
+      # Falhar AQUI custa 30 segundos e diz exatamente o que fazer.
+      - name: Conferir que a tag casa com a version do desktop/package.json
+        shell: bash
+        run: |
+          set -eu
+          TAG="${GITHUB_REF_NAME}"
+          VER=$(node -p "require('./desktop/package.json').version")
+          echo "tag:     $TAG"
+          echo "version: $VER"
+          if [ "$TAG" != "v$VER" ]; then
+            echo "::error::A tag ($TAG) nao bate com desktop/package.json > version ($VER). O electron-builder nomeia o Release pela VERSION, nao pela tag, entao publicar assim geraria um Release com numero errado e quebraria a comparacao do electron-updater. Conserto: acerte a version em desktop/package.json, commite, apague a tag errada (git tag -d $TAG; git push origin :refs/tags/$TAG) e empurre a tag certa."
+            exit 1
+          fi
+          echo "OK: tag e version no mesmo numero."
+
+      # Mesmo `npm ci` do `desktop-build.yml`, de propósito: o binário publicado
+      # tem que sair do MESMO lock que o build de push verificou. Se o lock
+      # estiver dessincronizado, isto falha antes de publicar qualquer coisa.
+      - name: Install dependencies (npm ci — release reproduzivel a partir do lock)
+        working-directory: desktop
+        run: npm ci
+
+      # O typecheck roda aqui TAMBÉM, e não é duplicata inútil: o
+      # `desktop-build.yml` tem filtro de `paths` e pode não ter rodado no commit
+      # que recebeu a tag. Release não pode depender de "provavelmente já rodou".
+      - name: Typecheck renderer
+        working-directory: desktop
+        run: npx tsc --noEmit
+
+      - name: Build + publicar GitHub Release (fonte do auto-update)
+        working-directory: desktop
+        run: npm run dist:publish
+        env:
+          # Sem certificado de assinatura — não tentar auto-descobrir um.
+          # ⚠️ Isto é o que faz o auto-update ser não-validado: está declarado
+          # aqui e em `docs/STATUS.md`, não escondido.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Cópia em artefato além do Release: se o Release precisar ser apagado
+      # (número errado, build ruim), o `.exe` daquele run continua recuperável.
+      - name: Upload installer artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: soulmon-desktop-windows-${{ github.ref_name }}
+          path: |
+            desktop/release/*.exe
+          retention-days: 90
