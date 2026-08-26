@@ -7,18 +7,47 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **26/08/2026 (2ª passada do dia)** — as referências de linha
-dos achados de segurança escorregaram **de novo**, poucas horas depois de a
-auditoria da manhã as ter corrigido, porque `b2a35465` acrescentou ~53 linhas de
-comentário ao topo de `functions/api/_entitlements.js`. Reconferidas uma a uma
-contra `HEAD = 2be666d5` (gate: `tsc` EXIT=0 · `vitest` 142 arquivos / 2483
-passed / 2 skipped). Nada de produto novo entrou aqui.
+Última atualização: **26/08/2026 (3ª e última passada do dia)** — fecha o dia
+inteiro contra `HEAD = 33fd94cc`. Gate reexecutado nesta árvore:
+`npx tsc --noEmit` **EXIT=0** · `npx vitest run` → **149 arquivos, 2631 passed,
+2 skipped** (a 2ª passada media 142 / 2483). Entraram cinco bugs reais, o
+primeiro empacotamento de Steam já executado, e o veredito do login do desktop.
+Ver a seção "Merges de 26/08/2026" abaixo.
 
-> **Isto é o padrão, não o acidente.** Referência `arquivo:linha` num documento é
-> um ponteiro sem dono: nada quebra quando ela escorrega, e ela escorrega a cada
-> merge que acrescenta comentário acima do alvo. O achado em si continua válido
-> — o que apodrece é o endereço. Ver
-> `squad-alpha-runs/soulmon-02/LICOES-DE-METODO.md`.
+> ### 📌 Mudança de FORMATO das referências, e o motivo
+>
+> **As referências de linha escorregaram TRÊS vezes hoje** — de manhã (auditoria
+> `df3275de`), à tarde (`51401559`, depois de `b2a35465` acrescentar ~53 linhas
+> de comentário de TTL no topo de `_entitlements.js`) e agora à noite (as onze
+> referências de `App.tsx` da linha 🧮 do `CLAUDE.md`, todas invalidadas quando
+> `dcbeb42d` tirou ~85 linhas do arquivo). Nenhuma dessas três vezes algo ficou
+> vermelho: **referência `arquivo:linha` é um ponteiro sem dono.**
+>
+> A lição já estava formulada — *o endereço apodrece mais rápido que o número* —
+> mas continuávamos pagando por ela porque o conserto adotado era **corrigir de
+> novo**, que é a operação que se repete. **A partir desta passada o formato
+> canônico deste documento é `arquivo` + SÍMBOLO**, com a linha só como
+> conveniência opcional e sempre depois do símbolo:
+>
+> | ❌ Não escreva | ✅ Escreva |
+> |---|---|
+> | `_entitlements.js:256` | `claimOrder` em `_entitlements.js` |
+> | `App.tsx:3091` | `rubDecision`, chamado no `App.tsx` |
+> | `menu.ts:412` | `doPet` em `menu.ts` |
+>
+> **Por que o símbolo resolve e a linha não:** o símbolo é o que o leitor vai
+> `grep`ar, e ele só muda quando alguém renomeia — que é uma mudança
+> intencional, revisada e rara. A linha muda quando alguém acrescenta um
+> comentário três telas acima, que é acidental, invisível e frequente. Quando o
+> símbolo some, o `grep` vazio **diz** que o achado precisa ser reavaliado; a
+> linha escorregada mente, apontando para código não relacionado — que foi
+> exatamente o que aconteceu com `community.js:122` e `subscribe.js:33`.
+>
+> Onde o ponteiro precisa mesmo ser exato (um bloco de comentário sem símbolo, a
+> saída de um `grep`), a linha fica — mas **com o símbolo mais próximo junto**,
+> para o leitor conseguir se reorientar sozinho. As referências de linha que
+> sobraram abaixo foram reconferidas contra `33fd94cc`; as novas já nascem no
+> formato de símbolo. Ver `squad-alpha-runs/soulmon-02/LICOES-DE-METODO.md`.
 
 A série X (X-1…X-8) **não é rastreada nesta página** e
 continua não sendo — quem a acompanha é `squad-alpha-runs/`.
@@ -528,9 +557,94 @@ dinheiro / auth+dados / IA+push+segredos).
 
 ---
 
-## 🆕 Merges da tarde de 26/08/2026 — o que mudou de FATO no código
+## 🆕 Merges de 26/08/2026 — parte 2 (a tarde e a noite), `2be666d5..33fd94cc`
 
-Verificado nesta árvore (`HEAD = 2be666d5`), não lembrado.
+Verificado nesta árvore (`HEAD = 33fd94cc`), não lembrado. Gate:
+`tsc` EXIT=0 · `vitest` **149 arquivos / 2631 passed / 2 skipped**.
+
+### 💗 O coraçãozinho queimado — 150 Bits gastos para curar ZERO
+
+**É o achado do dia, e é dinheiro do jogador.** A tarefa era estrutural (tirar
+regra de dentro de três updaters inline do `handleFeed`); o que apareceu foi um
+bug de moeda.
+
+A recusa de "vida já cheia" só era lida do `gameState` **de fora** do updater;
+dentro, o código se limitava a clampar a cura com `Math.min`. Dois toques no
+mesmo lote do React leem o **mesmo** `gameState` — com 4/5 de vida, `4 < 5`
+passa **as duas vezes** — e a segunda passada decrementava o inventário para
+curar **zero**. Um Coraçãozinho custa **150 Bits** na loja, ou é drop de 5% na
+masmorra. Sumia em silêncio, sem toast, sem log, sem nada.
+
+**É a família do X-6 num lugar novo**, e a assinatura é idêntica: o defeito é a
+**procedência do argumento**, não o tipo dele. Trocar `prev` por `gameState`
+dentro de um updater compila; apagar a recusa de dentro dele também.
+
+O conserto: `applySpecialItem` reconfere a recusa **sobre o `prev`**, como
+`applyRub` e `applyFeed` já faziam. A regra foi para um arquivo **novo**,
+`src/utils/specialItemUse.ts`, e a escolha está argumentada no cabeçalho dele —
+não no `careUpdaters.ts`, que existe para guardar o **teto**, e item especial
+não tem teto; não no `shop.ts`, que é **catálogo**. O arquivo novo **consome**
+`CHIP_BOOST` e `HEART_HEAL` em vez de redeclarar, para os números seguirem com
+um dono só. Nenhum número de progressão se mexeu.
+
+`dcbeb42d` (merge `96a62b86`) · `specialItemUse.ts`, `specialItemUse.test.ts`
+
+### Os outros quatro bugs reais
+
+| O quê | Dano concreto | Commit |
+|---|---|---|
+| **O overlay rebaixava save legado a rookie — e devolvia o erro ao SAVE.** `cloudSync.ts` tinha `MAX_HP_BY_LEVEL`, `ENERGY_BY_LEVEL` e uma `stageLevel` própria que lia só o **prefixo** do id; a `getStageLevel` do app cai em `LEGACY_FORM_TIERS`, a compatibilidade que mantém um save antigo em `gaioumon` como **mega**. A justificativa escrita da cópia ("importar `types/progression` arrasta o roster legado da masmorra") era **falsa** — aquele arquivo não importa nada. | O jogador via **3 corações em vez de 4**, e o `maxHealthPoints` errado **voltava para o save** em `normalizeForRules`, fazendo `applyRub` cortar a cura do mega no teto de um rookie. | `2bc9af3a` (merge `d56bba7a`) |
+| **Banho e dormir do overlay não escreviam NADA.** `doShower` eram três linhas — frase, efeito, render — e zero escrita. `doSleepToggle` virava um booleano no `localStorage` do overlay. | Medível em corações: `applyPoopDrain` tira **1 coração a cada 6h** de cocô não limpo, e o banho é o **único** jeito de parar esse relógio — o jogador via o pet perder coração apertando exatamente o botão que existe para impedir isso. E pelo overlay `rest.nights` nunca recebia nada: sem constância, sem raridade de sonho, sem pesadelo. | `3e1e92d5` (merge `86341fcb`) |
+| **O teto de carinho do overlay era por APARELHO** (`{ healed: 0 }` fixo). | Quem tinha o overlay aberto curava 1 coração no celular **E** mais 1 no desktop, todo dia. O teto de 1/dia do produto não existia para essa pessoa. | `f6fb5f30` (merge `69f7f157`) |
+| **O botão "Tentar de novo" do sprite existia, era testado, e NÃO EXISTIA NA TELA.** A prop `onRetrySprite` é opcional, o `App` não a passava, e **nada acusava** — nem o `tsc` nem a suíte. | O jogador com falha de credencial via um card sem saída. `canManualRetry` já sabia tudo (teto manual de 3, cooldown de 60 s); faltava um chamador. A execução do lote virou `executarLote()`, usada pelo lote automático **e** pelo retry — mesma trava serial, mesmo `runSpriteBatch`, sem segundo caminho de geração. | `46a6e542` (merge `9ebd35f4`) |
+
+### 📦 Steam: o empacotamento foi EXECUTADO pela primeira vez — e rodar provou algo
+
+`npm run dist:steam` **nunca tinha sido rodado por ninguém**. Rodou:
+**EXIT=0**, `release/win-unpacked` com **274 MB**, `Soulmon.exe` de **188 MB**,
+`app.asar` de 5,1 MB.
+
+**O achado que só aparece rodando:** lendo de dentro do asar,
+`-c.extraMetadata.steamBuild=true` vira **BOOLEANO**. A comparação estrita de
+`main.js` (`steamBuild === true`) portanto acerta, e o auto-update fica
+desligado no build de Steam. **Se tivesse virado a string `"true"`**, o build da
+Steam se auto-atualizaria pelo GitHub por cima do que o SteamPipe instalou —
+exatamente o conflito que essa variante existe para evitar, e **ninguém sabia de
+que lado estava**. Saída real e o tropeço do caminho em `desktop/STEAM.md`.
+
+`2f3cd4f6` (merge `33fd94cc`)
+
+### 🔐 Login do desktop: **guarda deliberada**, não bug
+
+Veredito, para ninguém "consertar" o que não está quebrado:
+`startDesktopAuthBridge` (`src/utils/auth.ts`) sai na primeira linha porque
+`isAuthConfigured()` exige três `VITE_FIREBASE_*` que **não existem em lugar
+nenhum desta árvore** (nem `.env`, nem CI, nem vite config) — e o próprio
+arquivo documenta que isso é proposital. O chamador existe e roda (`App.tsx`).
+**Depende da fatia 1 do dono**, não de código. Não foi forçado nem mockado.
+
+O que dava para exercitar foi exercitado: `desktop/electron/auth-preload.js`,
+código nosso, síncrono, sem rede, que **nunca tinha rodado uma vez** — sete
+casos carregando o arquivo de PRODUÇÃO com um `electron` falso só no lugar do
+host, provados vermelhos mutando o preload (`authBridge.test.ts`).
+
+### Infra e medição que entraram junto
+
+| O quê | Commit |
+|---|---|
+| **CI passou a rodar `tsc -p desktop/tsconfig.json` em PR.** O buraco era menor do que "não existe CI do desktop" — os testes do desktop já rodavam em PR (`vitest.config.ts` inclui `desktop/renderer`). Faltava exatamente UM comando, que só existia no `desktop-build.yml` (não roda em PR, e com filtro de `paths` que **não inclui** `src/utils/careRules.ts` nem a família de cuidado). Custo medido: **2,4 s**, sem `npm install` dentro de `desktop/`, sem segredo nenhum — roda em fork. O caminho de FALHA foi exercitado, não suposto. | `3795020b` (merge `a3c581d5`) |
+| **Métrica-norte instrumentada e legível.** Não havia evento que permitisse calcular NEM "ativo na semana" NEM "≥4 de 7" — `day_active` é diário e anônimo, e `count(day_active)` não distingue 1 pessoa em 5 dias de 5 pessoas em 1 dia. Agora a conta fecha **no aparelho** e sai agregada: ledger local acumula dias ativos e dias no objetivo, e na virada da semana ISO despacha **dois inteiros de 0 a 7**. O servidor guarda o **histograma**, então mudar o alvo depois não exige reinstrumentar nem perde histórico. | `fae95fc5` (merge `149ea0e4`) |
+| **Rota de leitura de `m:*` criada, fail-closed.** Havia dado gravado com TTL de 730 dias que **ninguém conseguia abrir** — nenhuma rota, nenhum painel, nenhum script. Agora há leitor, fechado por segredo: **sem `METRICS_ADMIN_KEY` a rota responde 404, não 401** (401 confirmaria o endpoint). Precisa do secret configurado para existir. | idem · `functions/api/metrics.js` |
+| **O vazamento do cap do demo foi INSTRUMENTADO, nunca corrigido.** `activity_create` distingue o caminho que consulta o teto do que o contorna, então dá para **medir** quanto do teto é furado. Nenhuma linha do comportamento mudou — o conserto isolado seria um **aperto**, e espera decisão do dono. | idem |
+| **Falha de credencial ganhou voz.** Com 401/403 no acervo, o card mostrava arte de reserva e **silêncio total**. Agora 401 pede entrar de novo e 403 pede **sincronizar o progresso** — e há teste que falha se as duas saídas forem iguais, porque são conserto de coisas diferentes (403 é `SAVE_ID` errado; re-login não conserta). A copy provisória virou copy de verdade em `e1da4e2f`. | `60b0c89b` (merge `8296d66e`) + `e1da4e2f` (merge `fd4562ee`) |
+| **Retentar virou orçamento POR MOTIVO, não booleano.** `auth` (401) ganha **uma** retentativa — o SDK do Firebase renova o token de hora em hora, então uma pega a renovação e a segunda é bateria gasta; `identity` (403) já não retentava. O que estava quebrado no 403 era só a **classificação** (gravava kind `error` no acervo). | `84209ded` (merge `689e2dcc`) |
+| **A cópia da energia da comida saiu do overlay — e escondia um cast mentiroso.** `menu.ts` recalculava `Math.min(maxEnergy, energy+1)` depois de `feedFood` já ter aplicado o teto. Por baixo havia um `as unknown as` rodando sobre `undefined` (`DesktopState` não tem `evolutionStage`, `energyPoints`, `virusPoints` nem `totalXP`): a regra devolvia energia errada e atributos `NaN`, e **só não aparecia porque o `menu.ts` jogava tudo fora e recalculava à mão**. A cópia era o curativo que mantinha o cast quebrado invisível. | `d9765d09` (merge `f6716ec5`) |
+
+---
+
+## Merges da tarde de 26/08/2026 — parte 1
+
+Verificado à época contra `HEAD = 2be666d5`.
 
 | O quê | Commit | Onde |
 |---|---|---|
@@ -804,6 +918,17 @@ seção 3.
   > ligando o cliente no `onRequest` real — `desktop/renderer/src/pushCareAction.test.ts`.
   > A lição que fica não é o bug de 1 linha: é que o registro vivo afirmou
   > "funcional" sem nada nunca ter exercido o caminho.
+  >
+  > **Atualização de 26/08/2026 (fim do dia).** As **quatro** ações de cuidado do
+  > overlay escrevem no save: carinho, comida, **banho** e **dormir/acordar**
+  > (`86341fcb`). E o overlay **quase não reimplementa mais regra** — `care.ts`
+  > importa `careUpdaters`, `careRules`, `careCaps`, `playerDay`, `restWindow` e
+  > `poopDrain` do app. Sobrou uma cópia declarada (a derivação do `saveId`, sob
+  > teste de paridade das três implementações) e uma dívida declarada: **banho é
+  > a única transição que não é import**, porque não existe regra pura de banho
+  > em `src/utils/` — ela mora no `App.tsx`, acoplada a estado de React. Em vez
+  > de copiar, o teste **executa** `applyPoopDrain` sobre o resultado e exige que
+  > ela pare de cobrar: quem julga limpeza continua sendo `poopDrain.ts`.
 - **Separação do DigiApp** — inventário e ordem segura em
   `docs/SEPARACAO-DIGIAPP.md`. Limpeza de herança morta já feita.
 
@@ -838,6 +963,7 @@ decisão sua.
 | 🟡 | Endereço de contato do VAPID (`workers/push-scheduler.js` → `CONTACT`) — hoje é `contact@digiapp.app`; precisa ser um que você controle |
 | 🟠 | **Decidir se a Fase 4 (sensores via Health Connect) vale o custo** — só o dono pode: exige **conta de organização verificada** no Play (enforcement jan/2026; conta pessoal é bloqueador), declaração de health app, política de privacidade dedicada e consentimento LGPD art. 11 específico por finalidade, além de APK novo. A Fase 3 (Janela de Descanso + Sonhos) já roda **sem sensor nenhum**, igual na PWA e no APK — a Fase 4 é opt-in, só Android, e o plano só a previa **se** a Fase 3 provar que move retenção. Caminho técnico, se aprovada: `@capgo/capacitor-health` (único plugin Capacitor vivo em 2026 que expõe sono). **Google Fit está morrendo (APIs até o fim de 2026) — nada deve ser escrito contra ele.** |
 | 🟡 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages (fingerprint sai do Play Console → Integridade do app) |
+| 🟡 | **`METRICS_ADMIN_KEY` no Pages** — a rota de leitura das métricas (`functions/api/metrics.js`) é **fail-closed**: sem o secret ela responde **404**, não 401, de propósito (401 confirmaria que o endpoint existe). Ou seja: a métrica-norte está instrumentada e agregada, mas **você não consegue ler nada até definir esse segredo**. |
 
 ### 3.3 Steam
 
@@ -846,7 +972,9 @@ decisão sua.
 | 🔴 | Conta Steamworks + US$ 100 |
 | 🔴 | **App ID e Depot ID** (bloqueiam o cliente Steam) |
 | 🟠 | Arte da loja |
-| 🟠 | Subir build a partir de uma máquina Windows |
+| 🟠 | Subir build a partir de uma máquina Windows. ✅ **O empacotamento em si deixou de ser incógnita** — `npm run dist:steam` rodou em 26/08/2026, EXIT=0, 274 MB (`desktop/STEAM.md`). O que falta é o `steamcmd` com o seu login de parceiro |
+| 🟠 | **Ligar o Modo de Desenvolvedor do Windows** (Configurações → Privacidade e segurança → Para desenvolvedores). É **pendência de MÁQUINA, não de projeto**: o pacote `winCodeSign` do electron-builder traz dois symlinks de macOS (`libcrypto.dylib`, `libssl.dylib`) que não servem para nada num build `--win`, e criar symlink no Windows exige o Modo de Desenvolvedor. Sem ele o build inteiro morre por causa de dois arquivos irrelevantes, **depois** de já ter gerado o `.exe`. Contornado uma vez pré-extraindo o `.7z` à mão; a saída limpa é sua, porque mexe em configuração do sistema |
+| 🟠 | **Preencher `author` em `desktop/package.json`.** Hoje o electron-builder avisa `author is missed`. No `--dir` é só aviso, mas o `nsis` do `npm run dist` usa o `author` como **Publisher do instalador** — é o nome que aparece no aviso do Windows e nas propriedades do `.exe`. Não preenchi porque é **identidade, não código** |
 | 🟡 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` (o SEC-4 já está corrigido; o cliente Steam precisa mandar o session ticket junto do `orderId`) |
 
 ### 3.4 Ordem que evita ficar fora do ar
@@ -868,6 +996,16 @@ o app de todo mundo que já tem o APK instalado.
   o `localStorage`. Aceitável **enquanto a aba Torneio vender só cosmético**. Há
   teste travando isso: se algum item de torneio virar vantagem de jogo, o teste
   cai, e a resposta certa é mover Emblemas para o servidor, não afrouxar o teste.
+- **Validade ilegível vira "nunca expira" na ponte de login do desktop.**
+  `auth-preload.js` faz `Number(payload.expiresAt) || 0`, e `main.js` lê `exp: 0`
+  como sessão sem prazo (o guard só roda `if (authSession.exp && …)`). Ou seja:
+  um payload com validade ausente, `NaN` ou `null` produz um token que o overlay
+  nunca considera vencido. **Documentado e NÃO consertado de propósito**:
+  escolher o comportamento certo (recusar? tratar como já vencido? pedir
+  renovação?) é decisão, não limpeza — e o caminho ainda não roda em produção
+  (§3d de `docs/PLANO-DESKTOP-STEAM.md`). Travado por teste em
+  `desktop/renderer/src/authBridge.test.ts`, que documenta o ponto cego em vez
+  de mascará-lo.
 - **Corrida no `spendCredits`** (read-modify-write) — limitada a cobrar a menos
   do jogador, nunca a cunhar crédito. Cai junto se o SEC-3 migrar o módulo para
   Durable Objects.
