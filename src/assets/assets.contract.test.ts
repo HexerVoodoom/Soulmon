@@ -546,20 +546,184 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
   });
 
   /**
+   * Lê o `CompanionHUD.tsx` como TEXTO (AST, sem executar nada) e responde três
+   * perguntas que o regex não sabia responder: onde `PET_RENDER` é DECLARADO,
+   * onde é USADO, e com que valor o `<img>` do sprite é dimensionado.
+   *
+   * Comentário não é nó de AST — nenhuma das três respostas pode ser satisfeita
+   * por um bloco de comentário, que era exatamente o buraco do guard anterior.
+   *
+   * MEMOIZADO: os dois guards abaixo leem a MESMA análise. Parsear duas vezes
+   * pagaria o custo duas vezes num arquivo cujo defeito histórico é timeout.
+   */
+  let analise: ReturnType<typeof analisaHud> | null = null;
+  const elosDoPetRender = () => (analise ??= analisaHud());
+
+  async function analisaHud() {
+    const mod = await import('typescript');
+    const ts = ((mod as { default?: typeof import('typescript') }).default
+      ?? mod) as typeof import('typescript');
+    const arquivo = path.join(SRC, 'components/CompanionHUD.tsx');
+    const sf = ts.createSourceFile(
+      arquivo, fs.readFileSync(arquivo, 'utf8'),
+      ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
+    );
+    const ln = (n: import('typescript').Node) =>
+      sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
+
+    /* Toda forma de DECLARAR um nome, enumerada pelo parser em vez de por um
+       regex escrito contra a variante que o autor acabou de ver. */
+    const DECLARA = new Set<number>([
+      ts.SyntaxKind.VariableDeclaration, ts.SyntaxKind.BindingElement,
+      ts.SyntaxKind.Parameter, ts.SyntaxKind.FunctionDeclaration,
+      ts.SyntaxKind.ClassDeclaration, ts.SyntaxKind.EnumDeclaration,
+      ts.SyntaxKind.ModuleDeclaration, ts.SyntaxKind.TypeAliasDeclaration,
+      ts.SyntaxKind.InterfaceDeclaration, ts.SyntaxKind.PropertyDeclaration,
+      ts.SyntaxKind.MethodDeclaration, ts.SyntaxKind.ImportClause,
+      ts.SyntaxKind.NamespaceImport, ts.SyntaxKind.ImportEqualsDeclaration,
+    ]);
+
+    const vinculos: string[] = [];
+    const usos: number[] = [];
+    const literais: Array<{ valor: number; linha: number }> = [];
+    const spriteBox: Record<string, string> = {};
+    let achouSpriteImg = false;
+
+    const atributo = (el: import('typescript').JsxOpeningLikeElement, nome: string) =>
+      el.attributes.properties.find(
+        (a): a is import('typescript').JsxAttribute =>
+          ts.isJsxAttribute(a) && a.name.getText(sf) === nome);
+    const valorDe = (a?: import('typescript').JsxAttribute) =>
+      a?.initializer && ts.isJsxExpression(a.initializer) ? a.initializer.expression : undefined;
+
+    const visita = (node: import('typescript').Node): void => {
+      if (ts.isIdentifier(node) && node.text === 'PET_RENDER') {
+        const p = node.parent;
+        if (ts.isImportSpecifier(p) && p.name === node) {
+          const decl = p.parent.parent.parent;
+          const de = ts.isImportDeclaration(decl) && ts.isStringLiteral(decl.moduleSpecifier)
+            ? decl.moduleSpecifier.text : '?';
+          vinculos.push(`import de '${de}'`);
+        } else if (ts.isExportSpecifier(p)) {
+          /* `export { PET_RENDER } from '…'` não cria vínculo local NEM é uso —
+             é só o reexport que mantém quem importava daqui. */
+        } else if (ts.isBindingElement(p) && p.propertyName === node) {
+          /* `const { PET_RENDER: outroNome } = …` declara `outroNome`, não este. */
+        } else if (DECLARA.has(p.kind) && (p as { name?: unknown }).name === node) {
+          vinculos.push(`${ts.SyntaxKind[p.kind]} na linha ${ln(node)}`);
+        } else if (
+          (ts.isPropertyAssignment(p) || ts.isPropertySignature(p) || ts.isEnumMember(p))
+          && p.name === node
+        ) {
+          /* chave de objeto: nomeia um campo, não lê a constante. */
+        } else if (ts.isPropertyAccessExpression(p) && p.name === node) {
+          /* `X.PET_RENDER`: propriedade de outro objeto, não a constante daqui. */
+        } else {
+          usos.push(ln(node));
+        }
+      }
+      if (ts.isNumericLiteral(node)) literais.push({ valor: Number(node.text), linha: ln(node) });
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        if (node.tagName.getText(sf) === 'img') {
+          const src = valorDe(atributo(node, 'src'));
+          if (src && ts.isIdentifier(src) && src.text === 'sprite') {
+            achouSpriteImg = true;
+            const style = valorDe(atributo(node, 'style'));
+            if (style && ts.isObjectLiteralExpression(style)) {
+              for (const prop of style.properties) {
+                if (!ts.isPropertyAssignment(prop)) continue;
+                const chave = prop.name.getText(sf);
+                if (chave === 'width' || chave === 'height') {
+                  spriteBox[chave] = prop.initializer.getText(sf);
+                }
+              }
+            }
+          }
+        }
+      }
+      ts.forEachChild(node, visita);
+    };
+    visita(sf);
+    return { vinculos, usos, literais, achouSpriteImg, spriteBox };
+  }
+
+  /**
    * O cadeado do outro lado: `PET_RENDER` só vale como guard se for o MESMO
    * número que o renderer desenha. Como o teste acima passou a lê-lo de
    * `utils/petStage`, o elo que precisa continuar existindo é o `CompanionHUD`
-   * consumir/reexportar de lá em vez de redeclarar o seu. Redeclarar não daria
-   * erro nenhum — o guard passaria a medir um número que ninguém renderiza,
-   * que é a forma exata de "suíte verde que não prova o que você acha".
+   * consumir de lá em vez de redeclarar o seu. Redeclarar não daria erro nenhum
+   * — o guard passaria a medir um número que ninguém renderiza, que é a forma
+   * exata de "suíte verde que não prova o que você acha".
+   *
+   * ⚠️ ENDURECIDO em 26/08/2026 — achado **F-2** do gate da fatia 2. O guard
+   * anterior eram três `expect` TEXTUAIS, e DOIS deles já eram satisfeitos sem
+   * elo nenhum:
+   *   - a regex do import era satisfeita pelo import de `PET_BOX`, que não tem
+   *     nada a ver com escala;
+   *   - `/PET_RENDER/.test(hud)` era satisfeita pelo BLOCO DE COMENTÁRIO do topo
+   *     do `CompanionHUD`, que cita a constante três vezes;
+   *   - e a regex de redeclaração simplesmente não casava com destructuring.
+   *
+   * MEDIDO na branch antes de trocar, com a variante do gate aplicada ao
+   * componente (import de `PET_RENDER` removido, `PET_BOX` mantido):
+   *     const LOCAL_GEOM = { PET_RENDER: 144 };
+   *     const { PET_RENDER } = LOCAL_GEOM;
+   *   → `npx tsc --noEmit` exit 0 e ESTE arquivo passava 24/24, com o app
+   *   renderizando 144 e o guard de escala medindo 128. Verde provando nada.
+   *
+   * O que mudou: a pergunta deixou de ser textual e passou a ser de VÍNCULO,
+   * respondida no AST. As formas de declarar um nome passam a ser enumeradas
+   * pelo PARSER, não por um regex escrito contra a variante que o autor acabou
+   * de ver (a sexta lição de método do run `soulmon-02`).
+   *
+   * Por que AST estático e não importar o componente: importar `CompanionHUD`
+   * aqui é o custo que causou o flake (guard acima), e o reexport de
+   * `CompanionHUD.tsx:49` NÃO é saída — importar dele executa o módulo inteiro
+   * e o grafo React atrás dele. O parser lê o arquivo como TEXTO: não resolve
+   * import nenhum. `import('typescript')` é módulo folha e custou ~220ms.
    */
-  it('REGRESSÃO: o CompanionHUD não redeclara PET_RENDER — ele vem de utils/petStage', () => {
-    const hud = fs.readFileSync(path.join(SRC, 'components/CompanionHUD.tsx'), 'utf8');
-    expect(/^\s*(export\s+)?const\s+PET_RENDER\s*=/m.test(hud),
-      'PET_RENDER redeclarado no CompanionHUD — o guard passaria a medir outro número').toBe(false);
-    expect(/from\s+['"]\.\.\/utils\/petStage['"]/.test(hud)).toBe(true);
-    expect(/PET_RENDER/.test(hud), 'o renderer precisa usar a constante, não um literal').toBe(true);
-  });
+  it('REGRESSÃO (F-2): PET_RENDER tem UM vínculo no CompanionHUD, e é o import de utils/petStage', async () => {
+    const elo = await elosDoPetRender();
+    expect(
+      elo.vinculos,
+      'PET_RENDER declarado dentro do CompanionHUD (const, destructuring, parâmetro, import de outro módulo…): '
+      + 'o guard de escala passaria a medir um número que ninguém renderiza',
+    ).toEqual(["import de '../utils/petStage'"]);
+    expect(
+      elo.usos.length,
+      'PET_RENDER não é USADO em lugar nenhum do código do CompanionHUD — citar a constante em comentário não é elo',
+    ).toBeGreaterThan(0);
+    /* ORÇAMENTO DECLARADO, não asserção afrouxada. Medido com a máquina ociosa:
+       514ms neste (import + parse) e 17ms no seguinte (memoizado). O defeito
+       histórico DESTE arquivo é timeout: o flake de 25/08 mediu ~8× de
+       degradação sob contenção de CPU (598ms → 4,4s), o que colocaria 514ms
+       perigosamente perto de um teto de 5s. 15s é o teto de um teste que só lê
+       UM arquivo e roda um parser — nenhum expect foi tocado para caber nele. */
+  }, 15_000);
+
+  /**
+   * A outra metade do elo: provar que o número medido aqui é o número que
+   * chega ao `<img>` do pet. O vínculo (teste acima) diz de onde vem o VALOR;
+   * este diz que é ele que é DESENHADO — e que ninguém digitou o número.
+   */
+  it('REGRESSÃO (F-2): o <img> do sprite é dimensionado pela constante, e o número não é digitado', async () => {
+    const { PET_RENDER } = await import('../utils/petStage');
+    const elo = await elosDoPetRender();
+    expect(
+      elo.achouSpriteImg,
+      'não achei o `<img src={sprite}>` do pet — o guard perdeu o alvo; aponte-o para o elemento que desenha o sprite',
+    ).toBe(true);
+    expect(
+      elo.spriteBox,
+      'o sprite do pet é desenhado com um valor que não é `PET_RENDER` — o guard de escala mede outra coisa',
+    ).toEqual({ width: 'PET_RENDER', height: 'PET_RENDER' });
+    expect(
+      elo.literais.filter(l => l.valor === PET_RENDER),
+      `${PET_RENDER} digitado no CompanionHUD: número copiado é número que diverge (footgun 9)`,
+    ).toEqual([]);
+    /* Mesmo orçamento do guard acima: se ELE rodar primeiro, este paga 17ms;
+       se a ordem mudar, este é que paga o parse. Ver a nota lá. */
+  }, 15_000);
 
   /**
    * ⚠️ `skip` DE DÍVIDA DE ARTE, não de teste quebrado. Ele falha hoje, e deve

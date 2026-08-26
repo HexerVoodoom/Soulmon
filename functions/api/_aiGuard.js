@@ -181,8 +181,17 @@ function formUsed(ent, formId) {
  *   o disjuntor de loop de retentativa numa forma só. Quando NÃO vem, os outros
  *   três tetos continuam valendo inteiros; a conta segue limitada a
  *   `perAccountLifetime`, então omitir `formId` não destrava geração nenhuma a
- *   mais — só perde a granularidade. ⚠️ `src/utils/spriteGen.ts` ainda não
- *   envia; enquanto não enviar, o teto por forma não tem o que separar.
+ *   mais — só perde a granularidade. **O cliente ENVIA hoje**, pelos dois
+ *   caminhos que geram sprite: `src/utils/spriteGen.ts` põe `formId` no corpo
+ *   do POST (`requestSprite`), alimentado pela geração incremental
+ *   (`src/hooks/useSpriteGeneration.ts`) e pela `OraclePage`. Contrato travado
+ *   em `src/utils/spriteGen.contract.test.ts`. ⚠️ **Não "simplifique" o ramo
+ *   `hasFormCap` abaixo por achar que ele nunca liga** — ele é o disjuntor que
+ *   impede um loop de retentativa numa forma só de consumir o vitalício de
+ *   26 gerações da conta inteira. (Até 26/08/2026 este JSDoc afirmava o
+ *   contrário — que o cliente não mandava o campo. Ficou falso na fatia 2 e
+ *   virou a 9ª divergência doc↔código do projeto, a 1ª criada pela própria
+ *   squad. Há guard: `src/utils/spriteGen.contract.test.ts`, achado X-8.)
  * @returns {Promise<{ ok: true } | { ok: false, status: number, reason: string, message?: object }>}
  */
 export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {

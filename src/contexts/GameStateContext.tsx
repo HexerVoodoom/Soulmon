@@ -735,10 +735,16 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // for adotada dá o mesmo resultado — é o que permite apagar as chaves
         // antigas logo abaixo sem criar ponto de não retorno.
         careCaps: (() => {
+          // O `now` da higienização é o relógio DESTE aparelho no instante do
+          // load: é ele que `recentFeeds` vai usar depois para medir a janela
+          // de 1h, e é o único relógio confiável aqui. Timestamp de comida no
+          // FUTURO (relógio adiantado do outro aparelho, que agora viaja no
+          // save) some na fusão — senão travaria a comida por horas. Ver
+          // `utils/careCaps.ts`, `sanitizeFeedTimes` (achado X-5).
           const merged = mergeCareCaps(loadedState.careCaps, {
             feedTimes: readJson<unknown>(STORAGE_KEYS.FOOD_FEED_TIMES, undefined),
             rubHeal: readJson<unknown>(STORAGE_KEYS.RUB_HEAL_DAY, undefined),
-          });
+          }, Date.now());
           removeLocal(STORAGE_KEYS.FOOD_FEED_TIMES);
           removeLocal(STORAGE_KEYS.RUB_HEAL_DAY);
           return merged;

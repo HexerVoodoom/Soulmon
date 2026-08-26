@@ -32,11 +32,43 @@ export interface LegacyCareCaps {
   rubHeal?: unknown;
 }
 
-/** Aceita só número finito; qualquer outra coisa some (um `NaN` na janela
- *  passaria pelo filtro de 1h para sempre e travaria a comida do jogador). */
-function sanitizeFeedTimes(v: unknown): number[] {
+/**
+ * Aceita só número finito **e não posterior a `now`**; qualquer outra coisa some.
+ *
+ * As duas metades existem pelo MESMO motivo, e a segunda foi paga com o achado
+ * X-5 do gate da fatia 2: um `NaN` na janela passaria pelo filtro de 1h para
+ * sempre — e um timestamp NO FUTURO também, porque `now - t < HOUR_MS`
+ * (`careRules.ts`) é verdadeiro para todo `t` futuro. O filtro original pegou
+ * só o `NaN`; a classe de defeito era a mesma.
+ *
+ * **Por que isto virou urgente na fatia 2:** enquanto os tetos moravam no
+ * `localStorage`, um aparelho com o relógio adiantado só travava a si mesmo.
+ * Agora eles moram no SAVE — 6 comidas gravadas com relógio 3h adiantado
+ * VIAJAM para a nuvem e travam a comida do aparelho de relógio certo por até
+ * 4 horas, sem explicação nenhuma na tela (o pet só diz que está cheio).
+ *
+ * **Qual `now`, e por que ele é PARÂMETRO** (a escolha, declarada): é o relógio
+ * do aparelho que está CARREGANDO o save, no instante do load — o mesmo relógio
+ * que `recentFeeds` vai usar depois para medir a janela de 1h. Um timestamp que
+ * sobrevive à higienização é, por construção, comparável com o `now` da regra.
+ * Não existe relógio melhor disponível aqui: o aparelho que gravou pode ter sido
+ * qualquer um, e não há carimbo de servidor no save. No aparelho de relógio
+ * errado nada é perdido — o `Date.now()` dele também está adiantado, então os
+ * registros dele continuam `t <= now`. Fica por parâmetro (e não `Date.now()`
+ * aqui dentro) porque este módulo é puro e os testes precisam de relógio fixo.
+ *
+ * **O que este filtro NÃO é:** não é a janela de 1h nem um teto. Ele não sabe
+ * quantas comidas cabem nem por quanto tempo um registro vale — isso continua
+ * inteiro em `careRules.ts`, que segue intocado. Aqui só se decide se um
+ * registro é um registro: instante futuro não é registro de coisa que aconteceu.
+ *
+ * Assimetria com `rubHeal`, de propósito: um `date` de dia futuro não trava
+ * nada, porque `rubHealRecordFor` compara igualdade de dia e um dia que não é
+ * hoje simplesmente vira `{healed: 0}`. Não há o que higienizar lá.
+ */
+function sanitizeFeedTimes(v: unknown, now: number): number[] {
   if (!Array.isArray(v)) return [];
-  return v.filter((t): t is number => typeof t === 'number' && Number.isFinite(t));
+  return v.filter((t): t is number => typeof t === 'number' && Number.isFinite(t) && t <= now);
 }
 
 function sanitizeRubHeal(v: unknown): RubHealRecord | undefined {
@@ -47,11 +79,15 @@ function sanitizeRubHeal(v: unknown): RubHealRecord | undefined {
   return { date: e.date, healed: Math.max(0, healed) };
 }
 
-/** Higieniza o que veio do save (local ou nuvem) — nunca lança. */
-export function hydrateCareCaps(v: unknown): CareCaps {
+/**
+ * Higieniza o que veio do save (local ou nuvem) — nunca lança.
+ *
+ * `now` é o relógio de quem está carregando; ver `sanitizeFeedTimes`.
+ */
+export function hydrateCareCaps(v: unknown, now: number): CareCaps {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
   const e = v as Record<string, unknown>;
-  const feedTimes = sanitizeFeedTimes(e.feedTimes);
+  const feedTimes = sanitizeFeedTimes(e.feedTimes, now);
   const rubHeal = sanitizeRubHeal(e.rubHeal);
   const out: CareCaps = {};
   if (feedTimes.length) out.feedTimes = feedTimes;
@@ -82,11 +118,13 @@ export function hydrateCareCaps(v: unknown): CareCaps {
  *
  * Nada é PODADO na migração: a poda da janela de 1h é da regra
  * (`recentFeeds`), e duplicá-la aqui criaria a 7ª cópia de regra do projeto.
- * A única exceção é o descarte de duplicatas exatas, que é da fusão, não da regra.
+ * A única exceção é o descarte de duplicatas exatas, que é da fusão, não da regra
+ * — e o de instantes no FUTURO, que não são registro de nada (ver
+ * `sanitizeFeedTimes`; `now` é o relógio de quem está carregando o save).
  */
-export function mergeCareCaps(fromSave: unknown, legacy: LegacyCareCaps): CareCaps {
-  const saved = hydrateCareCaps(fromSave);
-  const legacyFeed = sanitizeFeedTimes(legacy.feedTimes);
+export function mergeCareCaps(fromSave: unknown, legacy: LegacyCareCaps, now: number): CareCaps {
+  const saved = hydrateCareCaps(fromSave, now);
+  const legacyFeed = sanitizeFeedTimes(legacy.feedTimes, now);
   const legacyRub = sanitizeRubHeal(legacy.rubHeal);
 
   const feedTimes = Array.from(new Set([...(saved.feedTimes ?? []), ...legacyFeed]))

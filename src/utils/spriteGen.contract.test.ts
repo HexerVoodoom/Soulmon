@@ -14,6 +14,7 @@
  *    árvore inteira por causa de um galho.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { requestSprite, SpriteGenError } from './spriteGen';
 
 const jsonResponse = (status: number, body: unknown) =>
@@ -99,5 +100,39 @@ describe('409 e 402 são contratos diferentes', () => {
     const err = await requestSprite('p', { formId: 'rookie' }).catch(e => e);
     expect(err.status).toBe(0);
     expect(err.reason).toBe('error');
+  });
+});
+
+/**
+ * REGRESSÃO X-8 — a 9ª divergência doc↔código do projeto, e a primeira criada
+ * pela própria squad.
+ *
+ * O JSDoc de `guardAiRequest` dizia *"⚠️ `src/utils/spriteGen.ts` ainda não
+ * envia"* o `formId`. Era verdade quando foi escrito e deixou de ser na fatia 2.
+ * Uma linha de comentário — mas ela mente sobre o DISJUNTOR que protege dinheiro:
+ * quem ler e acreditar pode "simplificar" o ramo `hasFormCap` por achá-lo morto,
+ * e sem ele um loop de retentativa numa forma só passa a consumir o vitalício de
+ * 26 gerações da conta inteira (achado X-1 do mesmo gate).
+ *
+ * Os testes acima provam o comportamento; este prova que a DOCUMENTAÇÃO do
+ * servidor não contradiz esse comportamento. Guard textual é a ferramenta certa
+ * aqui porque o objeto medido é, ele mesmo, texto.
+ */
+describe('REGRESSÃO X-8 — o comentário do servidor não pode contradizer o cliente', () => {
+  const guard = () => readFileSync('functions/api/_aiGuard.js', 'utf-8');
+
+  it('X-8: o cliente envia `formId` no POST de /api/generate-sprite', () => {
+    const cliente = readFileSync('src/utils/spriteGen.ts', 'utf-8');
+    expect(
+      /aiFetch\(\s*'\/api\/generate-sprite',\s*\{[^}]*\bformId\b/.test(cliente),
+      'o corpo do POST parou de levar formId — o teto POR FORMA fica sem o que separar',
+    ).toBe(true);
+  });
+
+  it('X-8: o `_aiGuard.js` não afirma que o cliente "ainda não envia"', () => {
+    expect(
+      guard(),
+      'comentário do disjuntor de dinheiro voltou a mentir sobre o cliente (X-8)',
+    ).not.toMatch(/ainda n[ãa]o envia/i);
   });
 });
