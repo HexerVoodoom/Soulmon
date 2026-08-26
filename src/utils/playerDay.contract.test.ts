@@ -31,7 +31,21 @@ const HANDLERS = [
   ['handlePickMood', 'moodLog — uma entrada por dia do jogador'],
   ['handleCheckInConfirm', 'lastCheckInDate — o ritual é do jogador'],
   ['handleCheckInSkip', 'lastCheckInDate — pular carimba o dia do mesmo jeito'],
+  ['handlePlay', 'playLog — brincar é 1×/dia do jogador (PLAY_TIMES_PER_DAY)'],
 ] as const;
+
+/**
+ * As funções puras de `petNeeds.ts` que recebem a chave de dia POR PARÂMETRO.
+ *
+ * Elas não são chamadas só de dentro de um handler nomeado: o `PlayCard` é
+ * montado direto no JSX, e ali `canPlay`/`playedToday` recebem uma chave
+ * calculada numa IIFE que nenhum guard de handler alcança. Como as duas réguas
+ * têm de bater — a leitura da UI e a escrita do `handlePlay` —, o guard olha o
+ * ARGUMENTO: em todo o `App.tsx`, a chave que chega a estas funções tem de vir
+ * de `playerDayKey`. É o mesmo defeito de fiação de sempre, só que a peça errada
+ * entra por um argumento em vez de por uma linha de atribuição.
+ */
+const CONSUMIDORAS_DE_DIA = ['play', 'canPlay', 'playedToday'] as const;
 
 async function carregarTs() {
   const mod = await import('typescript');
@@ -99,6 +113,63 @@ describe('a fiação do dia do jogador existe (guard de elo, no AST)', () => {
     }
   });
 
+  it('a chave de dia que chega a `play`/`canPlay`/`playedToday` vem de playerDayKey', async () => {
+    // O guard de handler não cobre o `PlayCard`: ele é montado no JSX, dentro de
+    // uma IIFE, fora de qualquer `const handleX =`. Se a UI lesse o dia do
+    // APARELHO enquanto o `handlePlay` grava o dia do JOGADOR, o card mostraria
+    // "vamos brincar" e o clique responderia "já brincamos hoje" — as duas
+    // réguas desencontradas, que é pior do que qualquer uma das duas sozinha.
+    const ts = await carregarTs();
+    const arquivo = path.join(SRC, 'App.tsx');
+    const sf = ts.createSourceFile(
+      arquivo, fs.readFileSync(arquivo, 'utf8'),
+      ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
+    );
+
+    /** Nomes locais que provaram vir de `playerDayKey(...)`. */
+    const doJogador = new Set<string>();
+    const suspeitas: string[] = [];
+
+    const vemDoJogador = (n: import('typescript').Expression): boolean => {
+      if (ts.isCallExpression(n) && ts.isIdentifier(n.expression)) {
+        return n.expression.text === 'playerDayKey';
+      }
+      return ts.isIdentifier(n) && doJogador.has(n.text);
+    };
+
+    // Duas passadas não são necessárias: no `App.tsx` a chave é sempre declarada
+    // antes de ser usada, e o AST é percorrido em ordem de código.
+    const anda = (n: import('typescript').Node): void => {
+      if (
+        ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.initializer
+        && vemDoJogador(n.initializer)
+      ) {
+        doJogador.add(n.name.text);
+      }
+      if (
+        ts.isCallExpression(n) && ts.isIdentifier(n.expression)
+        && (CONSUMIDORAS_DE_DIA as readonly string[]).includes(n.expression.text)
+      ) {
+        // Assinatura: (state, todayKey, ...). O segundo argumento é a chave.
+        const chave = n.arguments[1];
+        if (!chave || !vemDoJogador(chave)) {
+          suspeitas.push(`${n.expression.text}(${chave ? chave.getText(sf) : '—'})`);
+        }
+      }
+      ts.forEachChild(n, anda);
+    };
+    anda(sf);
+
+    expect(
+      doJogador.size,
+      'nenhuma chave de `playerDayKey` no App.tsx — o guard ficou cego',
+    ).toBeGreaterThan(0);
+    expect(
+      suspeitas,
+      'estas chamadas recebem uma chave de dia que não é a do JOGADOR',
+    ).toEqual([]);
+  });
+
   it('os módulos puros leem a âncora do ESTADO, e não de um parâmetro novo', async () => {
     // Parâmetro é coisa que quem chama esquece — e um chamador que esquecesse
     // voltaria em SILÊNCIO ao dia do aparelho, compilando. Vindo do estado, o
@@ -108,6 +179,9 @@ describe('a fiação do dia do jogador existe (guard de elo, no AST)', () => {
     for (const [arquivo, tipo] of [
       ['utils/poopDrain.ts', 'PoopDrainState'],
       ['utils/rituals.ts', 'RitualState'],
+      // `needsAttention` decide sozinha se oferece brincar, e para isso precisa
+      // saber que dia é hoje sem que ninguém lhe passe a chave.
+      ['utils/petNeeds.ts', 'PetNeedsState'],
     ] as const) {
       const p = path.join(SRC, arquivo);
       const sf = ts.createSourceFile(

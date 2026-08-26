@@ -2257,7 +2257,12 @@ export default function App() {
    */
   const handlePlay = useCallback(() => {
     const now = new Date();
-    const todayKey = dayKeyOf(now);
+    // Dia do JOGADOR: `playLog` mora no save e tem teto de 1×/dia. Com
+    // `dayKeyOf` (o dia do APARELHO) o mesmo instante rendia dois nomes de dia
+    // em fusos diferentes, e a segunda leitura reabria a oferta — teto furado em
+    // ponto de atributo e num segundo multiplicador de Bits. Ver
+    // `utils/petNeeds.fuso.test.ts`.
+    const todayKey = playerDayKey(now, gameState.playerDayTz);
     const preview = play(gameState, todayKey, now);
     if (preview.refused) {
       const isPt = language === 'pt-BR';
@@ -3755,7 +3760,11 @@ export default function App() {
                   Uma oferta que não dá para aceitar não é convite, é ruído. */}
               {jaConcluiuAlgo && (() => {
                 const agoraPet = new Date();
-                const chavePet = dayKeyOf(agoraPet);
+                // A MESMA régua do `handlePlay`: o que a UI oferece e o que o
+                // clique aceita têm de ser o mesmo dia. Guard de AST em
+                // `playerDay.contract.test.ts` trava isto — o handler sozinho
+                // não cobriria esta IIFE.
+                const chavePet = playerDayKey(agoraPet, gameState.playerDayTz);
                 return (
                   <PlayCard
                     canPlay={canPlay(petNeedsView, chavePet)}
