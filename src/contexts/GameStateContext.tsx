@@ -14,6 +14,10 @@ import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
 import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
+import {
+  resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
+  type PlayerDayAnchor,
+} from '../utils/playerDay';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
@@ -339,6 +343,16 @@ export interface GameState {
    * fora das exigências de health app do Google Play.
    */
   rest?: RestState;
+  /**
+   * O FUSO FIXO em que o dia do jogador é contado (`utils/playerDay.ts`).
+   *
+   * Gravado uma vez, no primeiro load, e daí em diante ESTÁVEL: é a estabilidade
+   * que faz dois aparelhos concordarem sobre qual dia é hoje. Consumido só pelos
+   * quatro registros diários que moram no save e têm teto — `careCaps.rubHeal`,
+   * `lastCheckInDate`, `moodLog` e `poopDrainCharge`. O motor de hábitos, a
+   * streak e a virada continuam em `dayKeyOf`, que NÃO pode mudar.
+   */
+  playerDayTz?: PlayerDayAnchor;
   /** dayKey do último check-in matinal concluído (evita repetir no mesmo dia). */
   lastCheckInDate?: string;
   /** dayKey do último relatório semanal mostrado. */
@@ -607,6 +621,31 @@ function hydrateRhythms(v: unknown): Record<string, HabitRhythm> {
   return out;
 }
 
+/**
+ * O fuso IANA que o onboarding já colheu — a cidade de NASCIMENTO declarada no
+ * ritual, que o mapa astral consome (`SoulOnboardingData.timeZone`).
+ *
+ * Reuso deliberado: é o único fuso que o jogador já declarou explicitamente, ele
+ * sabe de horário de verão, e não custa nenhuma pergunta nova. O perfil mora no
+ * `localStorage` deste aparelho, mas o que sai daqui vai para o SAVE — é a
+ * PRIMEIRA leitura que importa; da segunda em diante o save manda.
+ *
+ * Todo o corpo é defensivo porque o perfil é JSON de disco: ausente, de versão
+ * antiga, ou de quem pulou o caminho pago (`birthCity` indefinido → sem
+ * `soulProfile`). Nesses casos devolve `undefined` e a âncora cai no offset do
+ * aparelho, que é o fallback previsto.
+ */
+function onboardingTimeZone(): string | undefined {
+  try {
+    const saved = readJson<unknown>(STORAGE_KEYS.SOULMON_PROFILE, undefined);
+    const perfil = obj<unknown>(obj<unknown>(saved).soulProfile);
+    const tz = obj<unknown>(perfil.onboarding).timeZone;
+    return typeof tz === 'string' && tz.length > 0 ? tz : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Passos: só o agregado do dia, e só com os três campos no tipo certo. */
 function hydrateSteps(v: unknown): StepsRecord | undefined {
   const raw = obj<unknown>(v);
@@ -835,6 +874,26 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // `hydrateRhythm`).
         habitRhythms: hydrateRhythms(loadedState.habitRhythms),
         rest: hydrateRest(loadedState.rest),
+        // A ÂNCORA DO DIA DO JOGADOR, resolvida no load e gravada no save.
+        //
+        // A que já está no save VENCE — recalcular a cada load faria o dia do
+        // jogador andar junto com o avião de quem viaja, que é o bug com mais
+        // código. Save sem âncora (todos os existentes) ganha a dele agora:
+        // primeiro o fuso IANA da cidade de nascimento do onboarding, que o mapa
+        // astral já consome e que sabe de horário de verão; sem perfil, o offset
+        // DESTE aparelho, congelado.
+        //
+        // MIGRAÇÃO: no aparelho do fuso de casa a chave sai IDÊNTICA à que já
+        // estava gravada — nenhum teto devolvido, nenhum ritual reaberto,
+        // migração invisível. Fora dele, o pior caso é UM teto extra concedido
+        // uma única vez, no primeiro load. Forçar zero pediria carimbar o
+        // instante nos quatro registros e migrá-los; complexidade que só serviria
+        // para não presentear um coração a quem trocou de continente.
+        playerDayTz: resolvePlayerDayAnchor(
+          sanitizePlayerDayAnchor(loadedState.playerDayTz),
+          onboardingTimeZone(),
+          new Date(),
+        ),
         lastCheckInDate: str(loadedState.lastCheckInDate),
         lastWeeklyReportDate: str(loadedState.lastWeeklyReportDate),
         lastFreshStartDate: str(loadedState.lastFreshStartDate),
@@ -886,6 +945,9 @@ function freshGameState(): GameState {
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
       careCaps: {},
+      // Save novo já nasce ancorado. Sem perfil ainda (o onboarding vem depois),
+      // o offset deste aparelho é o melhor palpite sobre onde o jogador vive.
+      playerDayTz: { offsetMs: deviceOffsetMs(new Date()) },
       gamePoints: 0,
       emblems: 0,
       pvpEnabled: false,

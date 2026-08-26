@@ -16,6 +16,9 @@
 
 import * as Astro from "astronomy-engine";
 import type { LText } from "../../oracle";
+// `tzOffsetMs` mora em `utils/tzOffset.ts`: o `playerDay.ts` usa o MESMO
+// calculo e nao pode importar este arquivo, que puxa a astronomy-engine.
+import { tzOffsetMs } from "../../tzOffset";
 import {
   Angles,
   Aspect,
@@ -81,30 +84,6 @@ export function localToUtc(date: string, time: string, timeZone: string): Date {
   return new Date(guess);
 }
 
-function tzOffsetMs(instant: Date, timeZone: string): number {
-  const dtf = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  const parts = Object.fromEntries(
-    dtf.formatToParts(instant).filter((p) => p.type !== "literal").map((p) => [p.type, p.value])
-  ) as Record<string, string>;
-  const asUtc = Date.UTC(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-    Number(parts.hour) % 24,
-    Number(parts.minute),
-    Number(parts.second)
-  );
-  return asUtc - instant.getTime();
-}
 
 /** Mean obliquity of the ecliptic (IAU 1980), in degrees. */
 function meanObliquity(jd: number): number {

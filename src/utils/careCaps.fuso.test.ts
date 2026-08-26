@@ -64,7 +64,7 @@ describe('X-4: a VOLTA não devolve carinho — o que tornava o furo ilimitado',
   });
 });
 
-describe('X-4: o resíduo conhecido, medido e NÃO fechado por este conserto', () => {
+describe('X-4: o resíduo desta CAMADA — fechado uma camada acima, por playerDay.ts', () => {
   /* ⚠️ Este teste trava o que o conserto NÃO faz, para ninguém achar que o X-4
      está fechado. O aparelho ADIANTADO ainda estreia o teto do dia dele mais
      cedo: ele lê um registro de um dia anterior, que é indistinguível de um
@@ -73,10 +73,19 @@ describe('X-4: o resíduo conhecido, medido e NÃO fechado por este conserto', (
      Efeito: no máximo UM teto extra por dia civil, e só para quem alterna
      aparelhos entre fusos. Antes era ilimitado.
 
-     Fechar de vez pede um "dia do jogador" em fuso fixo gravado no save —
-     fatia própria, porque `lastCheckInDate`, `moodLog` e `poopDrainCharge` têm
-     exatamente o mesmo defeito e merecem a mesma solução de uma vez. */
-  it('o aparelho adiantado ainda estreia o teto dele mais cedo (1x por dia civil)', () => {
+     ✅ ATUALIZAÇÃO — o resíduo foi FECHADO, e não aqui. A função abaixo segue
+     se comportando exatamente assim, porque o conserto não era comparar melhor:
+     era os dois aparelhos pararem de DISCORDAR do dia. Isso mora agora em
+     `utils/playerDay.ts` (o dia do jogador em fuso fixo gravado no save), que
+     alimenta `todayKey` e fechou junto os três irmãos anunciados aqui —
+     `lastCheckInDate`, `moodLog` e `poopDrainCharge`. Ver `playerDay.test.ts`.
+
+     Este teste FICA, e fica invertido de propósito: ele trava o contrato desta
+     camada. Se alguém um dia fizer `rubHealRecordFor` aceitar um registro de
+     um dia anterior como "provavelmente é outro fuso", a monotonicidade do
+     X-4 morre e o furo ILIMITADO volta pela porta de trás. A ordem-consciência
+     e a âncora de fuso são camadas distintas, e cada uma tem o seu teste. */
+  it('esta camada, sozinha, ainda deixa o dia anterior zerar — e tem de deixar', () => {
     expect(rubHealFor({ rubHeal: { date: DIA_A, healed: RUB_HEAL_DAILY_CAP } }, DIA_B).healed)
       .toBe(0);
   });

@@ -60,6 +60,7 @@ import {
 } from './utils/careRules';
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
+import { playerDayKey } from './utils/playerDay';
 import { applyPoopDrain, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -2553,9 +2554,11 @@ export default function App() {
    * responder o que rende mais ponto em vez do que sente.
    */
   const handlePickMood = useCallback((mood: MoodValue) => {
-    const today = new Date().toDateString();
+    // Dia do JOGADOR: `moodLog` mora no save, e com o dia do aparelho o mesmo
+    // dia rendia DUAS entradas em fusos diferentes (ver `utils/mood.ts`).
+    const today = playerDayKey(new Date(), gameState.playerDayTz);
     setGameState(prev => ({ ...prev, moodLog: recordMood(prev.moodLog, today, mood) }));
-  }, []);
+  }, [gameState.playerDayTz]);
 
   const handleCloseDailyReport = useCallback(() => {
     if (gameState.lastDayReport) {
@@ -2601,7 +2604,9 @@ export default function App() {
   const checkInPromptedRef = useRef<string | null>(null);
   useEffect(() => {
     const now = new Date();
-    const hoje = dayKeyOf(now);
+    // Mesma régua de `needsCheckIn`: com `dayKeyOf` aqui, a trava de sessão
+    // rearmaria na virada do APARELHO e a leitura na virada do JOGADOR.
+    const hoje = playerDayKey(now, gameState.playerDayTz);
     if (checkInPromptedRef.current === hoje) return;
     if (!hasCompletedOnboarding || !hasCompletedTutorial) return;
     if (!needsCheckIn(gameState, now)) return;
@@ -2613,20 +2618,24 @@ export default function App() {
 
   /** Fecha o check-in gravando os focos escolhidos (a regra é de `setFocus`). */
   const handleCheckInConfirm = useCallback((focusIds: string[]) => {
-    const dayKey = dayKeyOf(new Date());
+    // `playerDayKey` e NÃO `dayKeyOf`: quem lê este carimbo é `needsCheckIn`,
+    // que passou a contar o dia do jogador. Gravar aqui com a chave do aparelho
+    // deixaria a leitura e a escrita em réguas diferentes — o pior dos dois
+    // mundos, porque o ritual reabriria no MESMO aparelho.
+    const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
     setGameState(prev => completeCheckIn(prev, focusIds, dayKey));
     setCheckInPlanData(null);
-  }, [setGameState]);
+  }, [setGameState, gameState.playerDayTz]);
 
   /**
    * Pular. Marca o dia do mesmo jeito — e isso é de propósito: um ritual que
    * reaparece porque você não quis fazê-lo é cobrança, e o app não cobra.
    */
   const handleCheckInSkip = useCallback(() => {
-    const dayKey = dayKeyOf(new Date());
+    const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
     setGameState(prev => ({ ...prev, lastCheckInDate: dayKey }));
     setCheckInPlanData(null);
-  }, [setGameState]);
+  }, [setGameState, gameState.playerDayTz]);
 
   /**
    * "Arrumar a pilha" — o Smart Schedule do Todoist com ergonomia de jogo.
@@ -3002,7 +3011,11 @@ export default function App() {
     // Regra em utils/careRules.ts, compartilhada com o app de desktop. A
     // checagem usa só HP (deps estreitas de propósito: CompanionHUD é memo(),
     // e depender do gameState inteiro anularia o memo — footgun 5).
-    const today = new Date().toDateString();
+    // Dia do JOGADOR, em fuso fixo do save (`utils/playerDay.ts`), e não o dia
+    // do APARELHO: `careCaps.rubHeal` viaja na nuvem, e com `toDateString()` o
+    // aparelho adiantado estreava o teto do dia dele mais cedo — o resíduo que
+    // o X-4 (commit 9e9f679f) mediu, travou num teste e deixou aberto.
+    const today = playerDayKey(new Date(), gameState.playerDayTz);
     // `petPassive` entra na checagem: sem ele o teto lido aqui era sempre 1, e o
     // traço Carinhoso (que o CLAUDE.md declara como "cura até 1,5/dia") era
     // anulado pela checagem de fora antes de a regra pura sequer rodar.
@@ -3021,7 +3034,7 @@ export default function App() {
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
     // checagem de fora.
     setGameState(prev => applyRub(prev, today).state);
-  }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive]);
+  }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive, gameState.playerDayTz]);
 
   // targetStage é sempre um ID da árvore ('rookie' | 'champion-virus' | ...),
   // não mais um nome de exibição — a árvore é única por jogador, então não dá
@@ -4553,7 +4566,7 @@ export default function App() {
           report={gameState.lastDayReport}
           onClose={handleCloseDailyReport}
           onRecoverHearts={handleRecoverHearts}
-          moodToday={moodFor(gameState.moodLog, new Date().toDateString())}
+          moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
           onPickMood={handlePickMood}
           moodNote={moodSummary(gameState.moodLog, language === 'pt-BR' ? 'pt-BR' : 'en-US')}
           language={language}

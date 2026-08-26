@@ -1,4 +1,5 @@
 import { heartLossCap } from './passives';
+import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
   MAX_HEARTS_LOST_PER_DAY,
   ABSENCE_FORGIVENESS_DAYS,
@@ -37,7 +38,7 @@ export const SLEEP_CLOCK_BUMP_MS = 5 * 60000;
  *  DIÁRIO e não por tick: sem isso, bastavam quatro ticks de 6h para o dia
  *  custar 4 corações, cada um "dentro" do teto. */
 export interface PoopDrainCharge {
-  /** `new Date(now).toDateString()` do dia cobrado. */
+  /** Chave do DIA DO JOGADOR (`utils/playerDay.ts`), forma de `toDateString()`. */
   day: string;
   hearts: number;
 }
@@ -54,6 +55,15 @@ export interface PoopDrainState {
   petPassive?: string;
   /** Data da última virada; é dela que sai a leitura de ausência. */
   lastResetDate?: string;
+  /**
+   * Fuso FIXO do dia do jogador (`utils/playerDay.ts`). Lido do ESTADO, e não
+   * por um parâmetro novo em `PoopDrainOptions`, pela mesma razão do
+   * `petPassive` logo acima: parâmetro é coisa que quem chama esquece, e um
+   * chamador que esquecesse voltaria em silêncio ao dia do APARELHO — que é
+   * exatamente o bug. Vindo do estado, o desktop e o celular herdam a âncora
+   * sem uma segunda fiação.
+   */
+  playerDayTz?: PlayerDayAnchor;
 }
 
 export interface PoopDrainOptions {
@@ -62,10 +72,19 @@ export interface PoopDrainOptions {
   isSleeping: boolean;
 }
 
-/** Corações já cobrados HOJE pelo dreno. */
+/**
+ * Corações já cobrados HOJE pelo dreno.
+ *
+ * "Hoje" é o dia do JOGADOR, não o do aparelho. Com `toDateString()` o teto
+ * diário do dreno era furável por troca de fuso do mesmo jeito que o teto de
+ * carinho era (achado X-4): `poopDrainCharge` mora no SAVE, e o aparelho que
+ * lesse um `day` com outro nome achava que o dia do teto ainda não tinha
+ * começado — devolvendo ao dreno o direito de cobrar o teto INTEIRO de novo, em
+ * corações de verdade.
+ */
 export function chargedToday(state: PoopDrainState, now: number): number {
   const charge = state.poopDrainCharge;
-  if (!charge || charge.day !== new Date(now).toDateString()) return 0;
+  if (!charge || charge.day !== playerDayKey(new Date(now), state.playerDayTz)) return 0;
   return Math.max(0, charge.hearts);
 }
 
@@ -126,6 +145,6 @@ export function applyPoopDrain<T extends PoopDrainState>(state: T, opts: PoopDra
     ...state,
     healthPoints: Math.max(0, state.healthPoints - lost),
     poopPenaltyClockAt: now,
-    poopDrainCharge: { day: new Date(now).toDateString(), hearts: already + lost },
+    poopDrainCharge: { day: playerDayKey(new Date(now), state.playerDayTz), hearts: already + lost },
   };
 }
