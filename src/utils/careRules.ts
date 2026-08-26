@@ -162,10 +162,17 @@ export interface RubHealRecord {
  * do motor de hábitos, de `perfectDays`, da streak e do gatilho de virada em
  * `useDailyReset.ts:57` — redefini-la dispararia uma virada espúria em todo save
  * existente. Sobra um resíduo conhecido: o aparelho à frente ainda ganha o teto
- * do dia dele mais cedo, no máximo uma vez por dia civil. Fechar isso pede um
- * "dia do jogador" em fuso fixo, que é fatia própria — `lastCheckInDate`,
- * `moodLog` e `poopDrainCharge` têm o mesmo defeito e mereceriam a mesma solução
- * de uma vez.
+ * do dia dele mais cedo, no máximo uma vez por dia civil. **Esse resíduo foi
+ * fechado uma camada acima**, e não aqui: `utils/playerDay.ts` é o "dia do
+ * jogador" em fuso FIXO gravado no save (`playerDayTz`), e quem chama esta
+ * função hoje lhe entrega uma `todayKey` já produzida por `playerDayKey`. Com
+ * os dois aparelhos concordando sobre QUAL DIA É, o pingue-pongue não tem mais
+ * de onde nascer — e a ordem estrita abaixo continua de pé como a segunda
+ * trava, para o intervalo em que um save antigo ainda carrega a chave do
+ * aparelho. `lastCheckInDate`, `moodLog` e `poopDrainCharge` tinham o mesmo
+ * defeito e **já receberam a mesma solução**, junto com `playLog`, as noites do
+ * descanso e o pesadelo (a lista viva está no cabeçalho de `playerDay.ts`, e o
+ * guard de fiação em `playerDay.contract.test.ts`).
  *
  * `Date.parse` sobre `toDateString()` é estável (formato fixo do JS, não
  * dependente de locale) e devolve meia-noite local — comparar duas dessas

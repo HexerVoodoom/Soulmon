@@ -40,9 +40,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   emailToSaveId,
   reconcileSaveId,
-  RECONCILE_KEYS,
   __resetRetryBudgets,
 } from './cloudSave';
+// A tabela de chaves mora em `storageKeys.ts` — o VALOR de cada string é
+// contrato com o `localStorage` do jogador, e `storageKeys.reconcile.test.ts`
+// o trava como literal.
+import { RECONCILE_KEYS } from './storageKeys';
 
 const EMAIL = 'jogadora@exemplo.com';
 const UUID_ANTIGO = '3f1c2b8a-77aa-4d1e-9f0b-5c6d7e8f9a01';

@@ -15,16 +15,31 @@ import { tzOffsetMs } from './tzOffset';
 // A causa raiz é sempre a mesma linha: `new Date().toDateString()` é o dia do
 // APARELHO. Enquanto esses registros moravam no `localStorage`, isso era
 // correto por construção — o registro e o relógio eram do mesmo aparelho. A
-// fatia 2 moveu quatro deles para o SAVE, que é sincronizado na nuvem, e a
+// fatia 2 começou a movê-los para o SAVE, que é sincronizado na nuvem, e a
 // premissa morreu: dois aparelhos em fusos diferentes discordam do NOME do dia
 // por `|offsetA − offsetB|` horas TODO DIA (BR↔Tóquio: 12h; BR↔Portugal: 4h).
 //
-// Os quatro registros afetados, e por que só eles usam esta chave:
+// Os registros afetados, e por que só eles usam esta chave. Nasceram quatro; as
+// frentes seguintes acharam mais três com o mesmo defeito, e a régua VIVA da
+// lista é `playerDay.contract.test.ts` — o guard de AST que pergunta, no ponto
+// de uso, quem produz a chave de dia:
 //
-//   • `careCaps.rubHeal` — teto diário de carinho          (o resíduo do X-4)
-//   • `lastCheckInDate`  — o ritual de check-in é UM por dia do JOGADOR
-//   • `moodLog[].date`   — "como você está hoje" tem de ser um "hoje" só
-//   • `poopDrainCharge`  — teto diário de perda de HP pelo dreno
+//   • `careCaps.rubHeal.date` — teto diário de carinho     (o resíduo do X-4)
+//   • `lastCheckInDate`       — o ritual de check-in é UM por dia do JOGADOR
+//   • `moodLog[].date`        — "como você está hoje" tem de ser um "hoje" só
+//   • `poopDrainCharge.day`   — teto diário de perda de HP pelo dreno
+//   • `playLog.date`          — brincar é 1×/dia (`PLAY_TIMES_PER_DAY`), e a
+//                               UI e o clique têm de concordar sobre qual dia
+//   • `rest.nights[].date`    — a MANHÃ: `restConstancy` conta noites na janela
+//                               e o sonho é procurado pelo nome do dia
+//   • `nightmares.fought[]`   — a escrita carimba e o portão pergunta pelo
+//                               MESMO nome; discordando, o pesadelo volta para
+//                               sempre a cada abertura
+//
+// **A comida NÃO entra**, e a exceção é instrutiva: `careCaps.feedTimes` é uma
+// janela DESLIZANTE de timestamps (`FOOD_LIMIT_PER_HOUR`), não um registro
+// diário. Um instante em ms é o mesmo instante nos dois aparelhos — não tem
+// nome de dia para discordar, e portanto não tem o que consertar.
 //
 // ═══ O QUE ESTE ARQUIVO DELIBERADAMENTE **NÃO** FAZ ═══
 //
@@ -60,8 +75,9 @@ import { tzOffsetMs } from './tzOffset';
 // Migração, o caso ruim, declarado: quem está FORA do fuso de casa no primeiro
 // load pode ver a chave saltar de um dia para outro uma única vez. O pior caso
 // é UM teto extra concedido de graça, uma vez. Forçar zero pediria carimbar o
-// instante em cada registro e migrar os quatro campos — complexidade que só
-// serviria para não presentear um coração a quem trocou de continente.
+// instante em cada registro e migrar todos os campos da lista acima —
+// complexidade que só serviria para não presentear um coração a quem trocou de
+// continente.
 // ---------------------------------------------------------------------------
 
 /**

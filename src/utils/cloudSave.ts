@@ -10,7 +10,7 @@
 // save instead of creating a fresh Soulmon one. "soulmon:" makes the two
 // products derive different keys even while the raw KV storage is shared.
 import { authHeaders } from './auth';
-import { STORAGE_KEYS } from './storageKeys';
+import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal } from './safeStorage';
 
 export async function emailToSaveId(email: string): Promise<string> {
@@ -343,20 +343,6 @@ export function adoptCloudSave(
 // ler" como "não existe save lá" faria o cliente sobrescrever o save do outro
 // aparelho assim que a rede voltasse. Dúvida não move dado.
 // ---------------------------------------------------------------------------
-
-/**
- * Chaves desta reconciliação.
- *
- * Moram aqui, e não em `STORAGE_KEYS`, porque esta frente não é dona de
- * `utils/storageKeys.ts`. Ao integrar, mova-as para lá — o valor da string é
- * que é contrato com o aparelho do jogador, e ele não pode mudar.
- */
-export const RECONCILE_KEYS = {
-  /** Id que o aparelho usava antes da re-derivação. Só diagnóstico. */
-  PREVIOUS_SAVE_ID: 'soulmon-previous-save-id',
-  /** Cópia do estado local descartado quando a nuvem ganhou o conflito. */
-  CONFLICT_BACKUP: 'soulmon-reconcile-backup',
-} as const;
 
 export type ReconcileResult =
   /** O `SAVE_ID` já era o derivado. Nada foi tocado, nem a rede. */

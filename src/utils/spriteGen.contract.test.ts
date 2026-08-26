@@ -16,6 +16,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { requestSprite, SpriteGenError } from './spriteGen';
+import { classifyCloudSaveStatus, CLOUD_SAVE_POLICY } from './cloudSave';
 
 const jsonResponse = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -100,6 +101,65 @@ describe('409 e 402 são contratos diferentes', () => {
     const err = await requestSprite('p', { formId: 'rookie' }).catch(e => e);
     expect(err.status).toBe(0);
     expect(err.reason).toBe('error');
+  });
+});
+
+/**
+ * ITEM 0.2 DO ROTEIRO DE CORTE — 401 e 403 são portas DIFERENTES.
+ *
+ * Enquanto `enforced: false`, o `_aiGuard.js` deixa passar e nada disto aparece.
+ * No instante em que a fatia 1 ligar `enforced: true`, a rota de sprite passa a
+ * devolver os dois códigos, e eles pedem coisas OPOSTAS do jogador
+ * (`preparo-fatia1.md` §0.2 e §0.4):
+ *
+ *  - **401** — o token venceu. O SDK do Firebase renova sozinho de hora em
+ *    hora; uma retentativa pega a renovação, e só se insistir é que vira "faça
+ *    login". Retentar AJUDA.
+ *  - **403** — o token é bom; o `SAVE_ID` do aparelho é que não é o derivado do
+ *    e-mail (§B.2.2, Classe 1). Retentar dá 403 de novo, e re-login TAMBÉM não
+ *    conserta: quem conserta é `reconcileSaveId`. Retentar é laço infinito.
+ *
+ * Colapsar os dois num `auth` só faz o cliente pedir login a quem já está
+ * logado — o beco sem saída que `cloudSave.ts` já nomeou de `identity`. É
+ * daquele arquivo que este vocabulário vem, de propósito: dois nomes para o
+ * mesmo 403 seriam duas verdades sobre o que dizer ao jogador.
+ */
+describe('0.2 — 401 e 403 nas rotas de IA: nomes diferentes, porque pedem gestos diferentes', () => {
+  it('401 → `auth`, e retentar tem chance real (o token renova sozinho)', async () => {
+    mockFetch(jsonResponse(401, { error: 'unauthenticated' }));
+    const err = await requestSprite('p', { formId: 'rookie' }).catch(e => e);
+    expect(err).toBeInstanceOf(SpriteGenError);
+    expect(err.reason).toBe('auth');
+    expect(err.status).toBe(401);
+    expect(
+      err.retryable,
+      'CLOUD_SAVE_POLICY.auth.retentavel é true: uma retentativa pega a renovação do token',
+    ).toBe(true);
+  });
+
+  it('403 → `identity`, e NÃO é `auth`: re-login não conserta `SAVE_ID` errado', async () => {
+    mockFetch(jsonResponse(403, { error: 'forbidden' }));
+    const err = await requestSprite('p', { formId: 'rookie' }).catch(e => e);
+    expect(err.reason).toBe('identity');
+    expect(
+      err.reason,
+      '403 tratado como 401 manda o jogador logar de novo para tomar 403 de novo, para sempre',
+    ).not.toBe('auth');
+    expect(err.status).toBe(403);
+    expect(
+      err.retryable,
+      'CLOUD_SAVE_POLICY.identity.retentavel é false: o erro está no aparelho, não no token',
+    ).toBe(false);
+  });
+
+  it('o vocabulário é o MESMO de `cloudSave.ts` — não um segundo dicionário', () => {
+    // Se `classifyCloudSaveStatus` mudar de ideia sobre 401/403, o cliente de
+    // sprite muda junto. Duas tabelas separadas divergiriam em silêncio, e a
+    // copy de produto (§0.4) passaria a depender de qual arquivo se leu.
+    expect(classifyCloudSaveStatus(401)).toBe('auth');
+    expect(classifyCloudSaveStatus(403)).toBe('identity');
+    expect(CLOUD_SAVE_POLICY.auth.retentavel).toBe(true);
+    expect(CLOUD_SAVE_POLICY.identity.retentavel).toBe(false);
   });
 });
 
