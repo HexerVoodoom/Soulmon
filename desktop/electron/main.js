@@ -4,10 +4,15 @@
 // atravessam para o que estiver embaixo) exceto quando o mouse está sobre o
 // pet — o renderer avisa via IPC ('set-interactive'). Clicar no pet abre uma
 // janela separada com o menu de ações.
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { autoUpdater } = require('electron-updater');
+// A DECISAO de quem pode navegar e de quem pode publicar token mora fora deste
+// arquivo, em `navigationPolicy.js`, porque este aqui nao e importavel por
+// teste nenhum (cria janela no corpo do modulo). Ver o cabecalho de la e
+// `renderer/src/navigationPolicy.test.ts`. Aqui fica so a fiacao.
+const { appOrigin, decideNavigation, decideWindowOpen, isTrustedAuthSender } = require('./navigationPolicy.js');
 
 // Builds de Steam (ver `npm run dist:steam` + desktop/STEAM.md) marcam
 // package.json com steamBuild:true via extraMetadata do electron-builder.
@@ -24,6 +29,11 @@ const PET_SIZE = 96; // mesma constante do renderer (main.ts)
 // junto com capacitor.config.json quando o domínio próprio existir
 // (docs/SEPARACAO-DIGIAPP.md). O renderer lê o mesmo valor de config.ts.
 const FULL_APP_URL = process.env.SOULMON_APP_URL || 'https://soulmon.mateus-sprnd.workers.dev';
+// Origem confiavel derivada da URL acima. Como `SOULMON_APP_URL` e env var,
+// `appOrigin` recusa o que nao for `https:` (ou `http:` em localhost) e cai no
+// default — sem isso uma env com `file:` daria origem opaca ('null') e a
+// checagem aceitaria qualquer origem opaca.
+const APP_ORIGIN = appOrigin(FULL_APP_URL);
 const MENU_SIZE = { width: 340, height: 520 };
 
 /** @type {BrowserWindow | null} */
@@ -251,6 +261,29 @@ function openFullApp() {
       partition: 'persist:soulmon-app',
     },
   });
+  // F-2 da auditoria: o preload e propriedade da JANELA, nao da URL. Sem as
+  // duas travas abaixo, qualquer navegacao para fora entregaria
+  // `window.soulmonDesktopAuth` para a origem nova — que entao publicaria o
+  // token DELA e desviaria os dados da vitima para a conta do atacante.
+  // `will-redirect` junto com `will-navigate` porque redirecionamento de
+  // servidor (302 para outra origem) NAO passa por `will-navigate`.
+  for (const evento of ['will-navigate', 'will-redirect']) {
+    fullAppWin.webContents.on(evento, (event, url) => {
+      const decisao = decideNavigation(url, APP_ORIGIN);
+      if (decisao.allow) return;
+      event.preventDefault();
+      if (decisao.openExternal) shell.openExternal(decisao.openExternal);
+    });
+  }
+  // `target="_blank"` do app vira `window.open` aqui. Nunca abre dentro do
+  // Electron: seria uma janela sem barra de endereco (e, sem handler, com
+  // heranca de preload). Vai para o navegador do sistema, onde o usuario ve
+  // para onde foi.
+  fullAppWin.webContents.setWindowOpenHandler(({ url }) => {
+    const decisao = decideWindowOpen(url);
+    if (decisao.openExternal) shell.openExternal(decisao.openExternal);
+    return { action: 'deny' };
+  });
   fullAppWin.loadURL(FULL_APP_URL);
   fullAppWin.on('closed', () => { fullAppWin = null; });
 }
@@ -280,7 +313,15 @@ ipcMain.on('pet-effect', (_event, emoji, phrase) => {
 
 // ------------------------------------------------------------------ auth
 // A janela do app completo manda o ID token sempre que ele muda/renova.
-ipcMain.on('auth-token', (_event, payload) => {
+ipcMain.on('auth-token', (event, payload) => {
+  // O `auth-preload` so expoe canal de SAIDA, entao ninguem LE o token por
+  // aqui — o risco e o inverso: injetar o token de OUTRA conta e fazer o
+  // overlay da vitima sincronizar para ela. Por isso a checagem e de ORIGEM,
+  // nao de formato: payload perfeito de origem errada e exatamente o ataque.
+  // `senderFrame` e nao `sender` porque um <iframe> de terceiro compartilha o
+  // `sender` da janela mas tem URL propria.
+  const senderUrl = event.senderFrame ? event.senderFrame.url : undefined;
+  if (!isTrustedAuthSender(senderUrl, APP_ORIGIN)) return;
   authSession = payload && payload.token
     ? { token: String(payload.token), email: String(payload.email ?? ''), exp: Number(payload.exp) || 0 }
     : null;
