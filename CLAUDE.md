@@ -54,11 +54,16 @@ Repositório: `HexerVoodoom/Soulmon`.
 - `main` é a branch de produção do **Cloudflare Pages**; o push publica sozinho
   em ~2 min. `dist/` **é commitado** (o CF também builda, mas o commit é o que
   garante o conteúdo).
-- ⚠️ A URL de produção ainda é a do DigiApp (`digiapp-a5e.pages.dev`), apontada
-  em `capacitor.config.json > server.url`, `desktop/renderer/src/config.ts` e
-  `desktop/electron/main.js`. **Não troque isso sozinho**: só depois que
-  existir um projeto Pages próprio com TODAS as variáveis reconfiguradas
-  (passo 1 de `docs/SEPARACAO-DIGIAPP.md`) — trocar antes derruba o app.
+- A URL de produção é **`soulmon.mateus-sprnd.workers.dev`**, e as três fontes
+  já concordam: `capacitor.config.json:6`, `desktop/renderer/src/config.ts:6` e
+  `desktop/electron/main.js:26`.
+  ⚠️ **Até 26/08/2026 este arquivo afirmava que a URL ainda era a do DigiApp
+  (`digiapp-a5e.pages.dev`) e mandava não trocar.** Era falso — a migração já
+  tinha acontecido, e a mesma mentira estava no `docs/PLANO-DESKTOP-STEAM.md`
+  (item 15). Um agente que lesse isto decidiria errado sobre deploy. Verificado
+  nas três fontes antes de corrigir.
+  O que **continua** valendo: o KV `DIGIAPP_SAVES` ainda é o namespace herdado
+  e compartilhado, e é a fatia 1 que resolve isso (`docs/SEPARACAO-DIGIAPP.md`).
 - O **APK carrega a URL de produção**, então mudança web NÃO precisa de APK
   novo. Só mudanças em `android/` precisam — o GitHub Actions
   (`android-build.yml`) builda no push e o artefato fica em
