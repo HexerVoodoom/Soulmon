@@ -14,7 +14,7 @@ import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
-import { playShower } from '../utils/sounds';
+import { playShower, playVisorTune } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
@@ -653,6 +653,19 @@ export const CompanionHUD = memo(function CompanionHUD({
      chegada do traço próprio JÁ É uma troca de valor. A varredura só observa
      essa troca. Ela NÃO dispara na montagem: abrir a Home não é sintonizar. */
   const varrendoSintonia = useVarreduraDeSintonia(sprite, reducedMotion);
+
+  /* O CHIADO CURTO da sintonia (spec §2.3.1) — o terceiro terço, ao lado da
+     varredura e do fade. Irmão exato do efeito de mesmo nome no
+     `EvolutionPath`, e é lá que mora o raciocínio completo: por que ele se
+     pendura no `varrendoSintonia` em vez de na troca de `sprite`, e por que
+     `prefers-reduced-motion` silencia o som junto com a imagem. Não copie o
+     argumento para cá; regra copiada é regra que diverge em silêncio.
+
+     A spec dizia que este chiado "a ocasião A já usa": não usava, e a
+     divergência doc↔código nº 10 está registrada em `utils/sounds.ts`. */
+  useEffect(() => {
+    if (varrendoSintonia) playVisorTune();
+  }, [varrendoSintonia]);
 
 
   // Sprites da nossa arte são desenhados olhando pra DIREITA — a única regra
