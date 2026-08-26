@@ -66,6 +66,7 @@ import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey } from './utils/playerDay';
+import { awardBondXP } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -132,9 +133,9 @@ import {
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
-  completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached,
+  completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
 } from './utils/habitRhythm';
-import { normalizeSchedule } from './types/taskModel';
+import { normalizeSchedule, HABIT_WEIGHT } from './types/taskModel';
 
 /**
  * O rótulo de frequência de um hábito na lista.
@@ -477,6 +478,10 @@ function withHabitCompletion(
   activityId: string,
   category: ActivityCategory,
   todayKey: string,
+  /** Dia do JOGADOR (`utils/playerDay.ts`) — a régua do ledger de teto do
+   *  Vínculo. Vem por parâmetro, e não de um `new Date()` aqui dentro, porque
+   *  esta função roda DENTRO de um updater e precisa continuar pura. */
+  bondDayKey: string,
 ): GameState {
   const before = prev.habitRhythms?.[activityId] ?? EMPTY_RHYTHM;
   const after = completeHabit(before, todayKey);
@@ -490,8 +495,16 @@ function withHabitCompletion(
     vaccine: Math.round(base.vaccine * extra),
   };
 
+  // 🔗 Vínculo: a conclusão do hábito é UM dos eventos que a trilha relê. O
+  // multiplicador é o MESMO tier de maturidade que já rege o atributo
+  // (`habitRhythm.ts`) — nada de segunda tabela (footgun 9), e nenhuma ação
+  // nova é pedida: quem marcaria o hábito de qualquer jeito sobe.
+  const comXP = awardBondXP(prev, {
+    kind: 'completion', weight: HABIT_WEIGHT, habitTier: habitTier(after.totalDone),
+  }, bondDayKey);
+
   return {
-    ...prev,
+    ...comXP,
     habitRhythms: { ...(prev.habitRhythms ?? {}), [activityId]: after },
     virusPoints: prev.virusPoints + bonus.virus,
     dataPoints: prev.dataPoints + bonus.data,
@@ -1522,7 +1535,10 @@ export default function App() {
         // Um hábito de etapas fecha na ÚLTIMA etapa — a constância dele precisa
         // ser alimentada aqui também, senão só os hábitos sem etapas contariam.
         return isFullyCompleted && updatedActivity
-          ? withHabitCompletion(next, activityId, updatedActivity.category, new Date().toDateString())
+          ? withHabitCompletion(
+            next, activityId, updatedActivity.category,
+            new Date().toDateString(), playerDayKey(new Date(), prev.playerDayTz),
+          )
           : next;
       });
 
@@ -1636,7 +1652,10 @@ export default function App() {
       // `withHabitCompletion`), e não só na virada — senão marcar o hábito não
       // move nada visível até depois da meia-noite.
       return newCompletedState
-        ? withHabitCompletion(next, activityId, activity.category, today)
+        ? withHabitCompletion(
+          next, activityId, activity.category, today,
+          playerDayKey(new Date(), prev.playerDayTz),
+        )
         : next;
     });
 
@@ -1933,7 +1952,19 @@ export default function App() {
       setTimeout(() => {
         let concluiu = false;
         setGameState(prev => {
-          const next = completeTask(prev, taskId) ?? prev;
+          const feito = completeTask(prev, taskId) ?? prev;
+          // 🔗 Vínculo: a tarefa rende XP pelo PESO DE ESFORÇO dela (`effortOf`),
+          // nunca por contagem de itens — é a mesma unidade da meta do dia. Se
+          // rendesse por item, cadastrar cinco triviais valeria mais que encarar
+          // a difícil, que é o defeito documentado do Karma do Todoist.
+          //
+          // Só rende se a conclusão ACONTECEU (`completeTask` devolve o mesmo
+          // objeto quando não há o que fazer): tocar duas vezes não paga duas.
+          const next = feito === prev ? prev : awardBondXP(
+            feito,
+            { kind: 'completion', weight: effortOf(task) },
+            playerDayKey(new Date(), prev.playerDayTz),
+          );
           // Nada de `queueMicrotask` DENTRO do updater (footgun 6: StrictMode
           // invoca 2× e o toast saía dobrado). A flag é idempotente; quem
           // dispara é a linha depois do updater.
@@ -2384,7 +2415,12 @@ export default function App() {
   // Also counts a completed run for the missions.
   const handleGlitchtama = useCallback(() => {
     setGameState(prev => ({
-      ...prev,
+      // 🔗 Vínculo: a run completa (os 5 andares) é o evento de masmorra que o
+      // app tem em mãos, e ele passa pelo TETO DIÁRIO SUAVE de `bond.ts` —
+      // ao bater, simplesmente para de somar. Nada é subtraído e a masmorra
+      // continua inteira (Bits, Glitchtama, placar): o teto diz "o pet já está
+      // satisfeito", nunca "você jogou demais".
+      ...awardBondXP(prev, { kind: 'dungeonRun' }, playerDayKey(new Date(), prev.playerDayTz)),
       foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
       dungeonRunsCompleted: (prev.dungeonRunsCompleted ?? 0) + 1,
     }));
@@ -2827,7 +2863,12 @@ export default function App() {
     // deixaria a leitura e a escrita em réguas diferentes — o pior dos dois
     // mundos, porque o ritual reabriria no MESMO aparelho.
     const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
-    setGameState(prev => completeCheckIn(prev, focusIds, dayKey));
+    // 🔗 Vínculo: o check-in é evento de esforço que JÁ existia (`bondXP`), e
+    // ele é naturalmente 1×/dia — `lastCheckInDate` é a mesma trava que impede
+    // o ritual de reabrir, então não há teto a inventar aqui.
+    setGameState(prev => awardBondXP(
+      completeCheckIn(prev, focusIds, dayKey), { kind: 'checkIn' }, dayKey,
+    ));
     setCheckInPlanData(null);
   }, [setGameState, gameState.playerDayTz]);
 
@@ -4500,6 +4541,10 @@ export default function App() {
                 language={language}
                 emblems={gameState.emblems ?? 0}
                 onEarnEmblems={amount => setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }))}
+                totalXP={gameState.totalXP}
+                onMatchPlayed={won => setGameState(prev => awardBondXP(
+                  prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
+                ))}
               />
             </Suspense>
           )}

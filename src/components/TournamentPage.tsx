@@ -47,6 +47,7 @@ import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentS
 import { Icon } from './ui/Icon';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { bondLevelFor, meetsPvpBond, xpToPvpBond, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 
 interface TournamentPageProps {
   saveId: string;
@@ -59,6 +60,14 @@ interface TournamentPageProps {
   emblems: number;
   /** Chamado ao fim de cada partida com os Emblemas ganhos. */
   onEarnEmblems: (amount: number) => void;
+  /** 🔗 XP acumulado do save — a ÚNICA entrada do Vínculo (o nível nunca é
+   *  persistido; ver invariante 4 de `utils/bond.ts`). */
+  totalXP: number;
+  /** Chamado ao fim de cada partida, ganhando ou perdendo. Existe separado de
+   *  `onEarnEmblems` porque XP de Vínculo e Emblemas são coisas diferentes:
+   *  derrota rende XP igual (menos que a vitória, mas rende), e deduzir o
+   *  resultado a partir do número de Emblemas seria regra copiada. */
+  onMatchPlayed: (won: boolean) => void;
 }
 
 /** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
@@ -87,19 +96,24 @@ const TIER_ICON: Record<string, string> = {
 };
 
 /** Alternador do PvP. `role="switch"` de verdade, alvo de 44px. */
-function Switch({ checked, onToggle, label }: { checked: boolean; onToggle: () => void; label: string }) {
+function Switch({ checked, onToggle, label, disabled = false }: {
+  checked: boolean; onToggle: () => void; label: string; disabled?: boolean;
+}) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={onToggle}
       style={{
         flexShrink: 0,
         width: 56, height: 44,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'none', border: 'none', cursor: 'pointer',
+        background: 'none', border: 'none',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.45 : 1,
       }}
     >
       <span
@@ -123,7 +137,7 @@ function Switch({ checked, onToggle, label }: { checked: boolean; onToggle: () =
   );
 }
 
-export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems }: TournamentPageProps) {
+export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trophies, language, emblems, onEarnEmblems, totalXP, onMatchPlayed }: TournamentPageProps) {
   const isPt = language === 'pt-BR';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
   /** `null` = o servidor não disse quantas sobraram (offline ou resposta velha). */
@@ -190,6 +204,10 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
       // Emblemas: moeda EXCLUSIVA do torneio (utils/currencies.ts). Perder
       // também rende algo — a partida diária não pode virar tempo perdido.
       onEarnEmblems(r.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS);
+      // 🔗 Vínculo: a partida rende XP dos dois lados do placar (`bondXP`), sob
+      // o teto diário suave do torneio. Perder rende menos, nunca zero — falha
+      // não pune, é a invariante 1 do módulo.
+      onMatchPlayed(r.won);
     } catch (err) {
       setResult(null);
       setFightError(err instanceof Error && err.message
@@ -261,20 +279,73 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
         </ul>
       )}
 
-      {/* Opt-in do PvP — o rótulo inteiro descreve o que muda no mundo. */}
-      <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 14 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{isPt ? 'Participar do PvP' : 'Join PvP'}</p>
-          <p style={{ ...sm2Hint, marginTop: 2 }}>
-            {isPt ? 'Seu pet fica disponível como oponente de outros jogadores.' : 'Your pet becomes available as an opponent for other players.'}
-          </p>
-        </div>
-        <Switch
-          checked={pvpEnabled}
-          onToggle={() => onTogglePvp(!pvpEnabled)}
-          label={isPt ? 'Participar do PvP' : 'Join PvP'}
-        />
-      </div>
+      {/* Opt-in do PvP — o rótulo inteiro descreve o que muda no mundo.
+          Duas coisas moram aqui, e nenhuma é decoração:
+
+          1. O GATE DE VÍNCULO (nível 5, `utils/bond.ts`). Aqui ele é
+             EXPERIÊNCIA, não trava: a trava inforjável é a do servidor
+             (`functions/api/community.js`), porque `POST profile` aceita
+             `pvpEnabled` do cliente. O que o cliente faz é não oferecer o que
+             não está disponível — e DIZER o que falta, em vez de aceitar o
+             toque e desfazer em silêncio.
+          2. O AVISO DO NICK. Ligar o PvP põe o nome numa lista pública
+             (`action=players` responde `name` para qualquer um). Consentimento
+             sem informação não é consentimento, então o aviso fica ANTES do
+             gesto — não num termo.
+
+          ⚠️ Quem JÁ ligou nunca fica preso: o gate vale para LIGAR. Com o PvP
+          ativo o interruptor continua disponível, em qualquer nível, para a
+          pessoa poder sair.
+
+          📝 Copy FUNCIONAL — diz a coisa certa, mas não passou pelo redator.
+          A voz é pendente do `alpha-redator-ux`. */}
+      {(() => {
+        const liberado = meetsPvpBond(totalXP);
+        const podeMexer = liberado || pvpEnabled;
+        const faltam = xpToPvpBond(totalXP);
+        return (
+          <div style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{isPt ? 'Participar do PvP' : 'Join PvP'}</p>
+                <p style={{ ...sm2Hint, marginTop: 2 }}>
+                  {isPt ? 'Seu pet fica disponível como oponente de outros jogadores.' : 'Your pet becomes available as an opponent for other players.'}
+                </p>
+              </div>
+              <Switch
+                checked={pvpEnabled}
+                onToggle={() => onTogglePvp(!pvpEnabled)}
+                label={isPt ? 'Participar do PvP' : 'Join PvP'}
+                disabled={!podeMexer}
+              />
+            </div>
+
+            {/* O aviso do nick público. Fica visível SEMPRE que o interruptor
+                pode ser ligado — é a informação que torna o gesto um
+                consentimento. */}
+            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
+              <Icon name="visibility" size={20} tone="muted" />
+              <span>
+                {isPt
+                  ? 'Ao ligar, seu apelido e seu pet passam a aparecer numa lista pública de jogadores. Dá para desligar quando quiser.'
+                  : 'Once on, your nickname and your pet show up on a public list of players. You can turn it off any time.'}
+              </span>
+            </p>
+
+            {/* O que falta, dito como progresso — nunca como dívida. */}
+            {!podeMexer && (
+              <p style={{ ...sm2Hint, display: 'flex', alignItems: 'flex-start', gap: 8, margin: 0 }}>
+                <Icon name="link" size={20} tone="muted" />
+                <span>
+                  {isPt
+                    ? `O PvP abre no Vínculo ${BOND_PVP_MIN_LEVEL}. Você está no ${bondLevelFor(totalXP)} — faltam ${faltam} XP, que vêm do que você já faz aqui.`
+                    : `PvP opens at Bond ${BOND_PVP_MIN_LEVEL}. You're at ${bondLevelFor(totalXP)} — ${faltam} XP to go, earned by what you already do here.`}
+                </span>
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* A rodada semanal é RITUAL, não tranca: fora dela o Torneio continua
           inteiro disponível. Trancar conteúdo fora de um horário é o erro dos

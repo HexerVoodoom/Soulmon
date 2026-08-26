@@ -27,6 +27,7 @@
 
 import { authorizeSaveAccess } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -322,13 +323,39 @@ async function handleCommunity({ request, env }) {
     // `putProfile` de baixo.
     const pidAntigo = prev.pid;
     const pidLegado = pidAntigo && pidAntigo === await legacyPidFor(id);
+    // ── O gate de PvP, do lado que não dá para forjar ───────────────────────
+    //
+    // Até aqui isto era `!!body.pvpEnabled`, e o perfil é gravado JUNTO do
+    // cloud save: bastava um POST com o campo ligado para entrar no diretório
+    // público e na fila de oponentes sem investimento nenhum. O nível mínimo é
+    // 5 (`_bond.js`, derivação em `level-de-conta.md` §6) e quem decide é o
+    // Vínculo derivado do `totalXP` do save que o servidor já guarda.
+    //
+    // Duas regras do dono, e as duas são sobre não tirar nada de ninguém:
+    //  · o gate vale para LIGAR. Quem JÁ estava com `pvpEnabled: true` continua
+    //    ligado em qualquer nível — consentimento dado não se revoga por regra
+    //    nova (`level-de-conta.md` §7, "PvP retroativo");
+    //  · desligar é sempre permitido, em qualquer nível.
+    //
+    // E o pedido barrado NÃO derruba o resto do perfil: nome, estágio e
+    // atributos continuam sendo gravados, e a resposta diz `pvpBlocked` para o
+    // app poder explicar em vez de sumir com o botão em silêncio.
+    const querLigar = !!body.pvpEnabled;
+    const jaEstavaLigado = prev.pvpEnabled === true;
+    let pvpEnabled = querLigar;
+    let pvpBlocked = false;
+    let bondLevel = null;
+    if (querLigar && !jaEstavaLigado) {
+      bondLevel = await bondLevelOf(env, id);
+      if (bondLevel < BOND_PVP_MIN_LEVEL) { pvpEnabled = false; pvpBlocked = true; }
+    }
     const profile = {
       id,
       name: String(body.name || prev.name || 'Anônimo').slice(0, 24),
       stage: String(body.stage || prev.stage || 'rookie').slice(0, 40),
       petName: String(body.petName || prev.petName || '').slice(0, 32),
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.slice(0, 16) : (prev.unlockedStages || []),
-      pvpEnabled: !!body.pvpEnabled,
+      pvpEnabled,
       attrs: body.attrs && typeof body.attrs === 'object'
         ? { virus: +body.attrs.virus || 0, data: +body.attrs.data || 0, vaccine: +body.attrs.vaccine || 0 }
         : (prev.attrs || { virus: 0, data: 0, vaccine: 0 }),
@@ -343,7 +370,10 @@ async function handleCommunity({ request, env }) {
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
     if (pidLegado) await env.DIGIAPP_SAVES.delete(`${PID_PREFIX}${pidAntigo}`);
-    return json({ ok: true, id: profile.pid });
+    return json({
+      ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled,
+      ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}),
+    });
   }
 
   // ── Diretório / busca ─────────────────────────────────────────────────────

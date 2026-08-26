@@ -404,3 +404,93 @@ export function unclaimedBondRewards(
   const done = new Set(claimed);
   return BOND_REWARDS.filter((r) => r.level <= level && !done.has(r.id));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. A FIAÇÃO — o funil único por onde o XP entra em produção.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * O ledger do dia, do jeito que ele mora no save.
+ *
+ * `day` é a chave do DIA DO JOGADOR (`utils/playerDay.ts`), nunca a do
+ * aparelho: dois celulares em fusos diferentes discordariam do nome do dia e o
+ * teto valeria duas vezes — o mesmo furo que `careCaps` fechou.
+ *
+ * O ledger guarda SÓ o dia corrente e as fontes com teto. Não é histórico, não
+ * é streak, não é saldo: na virada ele é DESCARTADO e o `totalXP` não é tocado.
+ */
+export interface BondDailyLedger {
+  day: string;
+  spent: BondDailyXP;
+}
+
+/** A fatia do GameState que a fiação lê e escreve. */
+export interface BondState {
+  totalXP: number;
+  bondDaily?: BondDailyLedger;
+}
+
+/**
+ * Concede o XP de UM evento — **o único caminho de produção**.
+ *
+ * Função PURA, como o resto do módulo: recebe o estado e a chave do dia do
+ * jogador, devolve o estado novo. Quem chama (App.tsx) só passa o evento que já
+ * aconteceu — a trilha continua sem pedir nenhuma ação nova.
+ *
+ * Três coisas que ela NÃO faz, e é por isso que ela existe:
+ *  · não subtrai nada de `totalXP` em situação nenhuma (invariante 1);
+ *  · não expira, não decai e não zera XP na virada — a virada troca só o
+ *    LEDGER do teto (invariante do desenho: sem streak, sem decaimento);
+ *  · não persiste nível (invariante 4) — nível é sempre `bondLevelFor`.
+ */
+export function awardBondXP<T extends BondState>(state: T, event: BondEvent, dayKey: string): T {
+  // Dia diferente = ledger novo. O que zera é o TETO, nunca o acumulado.
+  const spent = state.bondDaily?.day === dayKey ? state.bondDaily.spent : {};
+  const gain = applyBondXP(event, spent);
+  return {
+    ...state,
+    totalXP: Math.max(0, safe(state.totalXP)) + gain.xp,
+    bondDaily: { day: dayKey, spent: gain.spent },
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. O gate de PvP — o ÚNICO destrave não-cosmético, e ele é social.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Nível mínimo para LIGAR o PvP: **5**.
+ *
+ * Não é número escolhido: os níveis 1–4 são o funil de retenção D1–D7 declarado
+ * na própria curva (seção 3), e o 5 é o primeiro degrau FORA dele — 700 XP,
+ * ~uma semana de uso real nos dois perfis de referência, que é exatamente a
+ * janela da métrica-norte. Pôr o gate dentro do funil contaminaria a calibração
+ * de retenção com um objetivo social; pôr depois transformaria o Vínculo em
+ * grind. Derivação completa em `level-de-conta.md` §6.
+ *
+ * **Todo destrave social futuro reusa ESTE nível.** Uma escada de gates sociais
+ * é grind com outro nome — o Vínculo destrava cosmético e superfície social, e
+ * NUNCA capacidade de cuidar do bicho.
+ */
+export const BOND_PVP_MIN_LEVEL = 5;
+
+/**
+ * O Vínculo já é suficiente para o PvP?
+ *
+ * É um LIMIAR, não uma manutenção: como `bondLevelFor` é monótona e `totalXP`
+ * nunca desce (nenhum caminho de regressão o toca — `dailyReset.ts` mexe em
+ * estágio, dias perfeitos e HP), quem cruzou uma vez cruzou para sempre. Não há
+ * janela, decaimento nem "proteção de nível" a manter.
+ *
+ * O nível NÃO substitui o consentimento: ele só torna o PvP DISPONÍVEL. Ligar
+ * continua sendo um ato explícito, com o aviso de que o nick vai para uma lista
+ * pública.
+ */
+export function meetsPvpBond(totalXP: number): boolean {
+  return bondLevelFor(Math.max(0, safe(totalXP))) >= BOND_PVP_MIN_LEVEL;
+}
+
+/** Quanto falta para o PvP ficar disponível. `0` quando já está. Nunca negativo. */
+export function xpToPvpBond(totalXP: number): number {
+  return Math.max(0, xpForLevel(BOND_PVP_MIN_LEVEL) - Math.max(0, safe(totalXP)));
+}

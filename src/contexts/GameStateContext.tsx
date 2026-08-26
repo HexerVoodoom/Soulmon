@@ -14,6 +14,7 @@ import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
 import { normalizeSpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
 import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
+import type { BondDailyLedger, BondDailyXP } from '../utils/bond';
 import {
   resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
   type PlayerDayAnchor,
@@ -164,6 +165,14 @@ export interface GameState {
   energyPoints: number;
   perfectDays: number;
   totalXP: number;
+  /** 🔗 Vínculo — as recompensas COSMÉTICAS da escada (`utils/bond.ts`) já
+   *  entregues. É a única coisa que a escada persiste: o NÍVEL nunca vai para
+   *  o save (invariante 4 do módulo), é sempre `bondLevelFor(totalXP)`. */
+  bondRewardsClaimed?: string[];
+  /** 🔗 Ledger do teto diário SUAVE das fontes repetíveis (masmorra/torneio).
+   *  Zera na virada como a energia — e o que zera é o TETO, nunca o `totalXP`.
+   *  `day` é o dia do JOGADOR (`utils/playerDay.ts`), não o do aparelho. */
+  bondDaily?: BondDailyLedger;
   virusPoints: number;
   dataPoints: number;
   vaccinePoints: number;
@@ -461,6 +470,29 @@ const strArr = (v: unknown): string[] =>
   arr<unknown>(v).filter((x): x is string => typeof x === 'string');
 
 /**
+ * 🔗 O ledger do teto diário do Vínculo, higienizado.
+ *
+ * Tudo que não for número finito e positivo vira ZERO — nunca `NaN` e nunca
+ * negativo. O sentido é assimétrico de propósito: teto gasto que o save não
+ * consegue provar é teto NÃO gasto. Um `spent` corrompido que virasse `NaN`
+ * faria `applyBondXP` devolver `room = NaN` e o jogador perderia o XP do dia
+ * inteiro por causa de um campo torto — o oposto de um teto suave.
+ *
+ * Fonte desconhecida no `spent` é descartada: o ledger guarda SÓ as fontes com
+ * teto, e é isso que o impede de virar histórico (nada de streak aqui).
+ */
+const hydrateBondDaily = (v: unknown): BondDailyLedger => {
+  const raw = obj<unknown>(v);
+  const spentRaw = obj<unknown>(raw.spent);
+  const spent: BondDailyXP = {};
+  for (const fonte of ['dungeon', 'tournament'] as const) {
+    const n = num(spentRaw[fonte], 0);
+    if (n > 0) spent[fonte] = n;
+  }
+  return { day: typeof raw.day === 'string' ? raw.day : '', spent };
+};
+
+/**
  * Um passo de checklist. `completed` só é `true` quando o save diz `true` —
  * `activity.steps.every(s => s.completed)` decide conclusão de hábito, então
  * inventar `true` a partir de lixo daria dia perfeito de graça.
@@ -727,6 +759,14 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // um campo ausente.
         healthPoints: Math.min(maxHP, Math.max(0, num(loadedState.healthPoints, maxHP))),
         totalXP: num(loadedState.totalXP, 0),
+        // 🔗 Vínculo. Padrão `?? vazio` — save de quem já joga não pode chegar
+        // com recompensa marcada como entregue nem com o teto do dia já gasto.
+        // `bondLevel` é apagado de propósito: se um save (ou um cliente
+        // adulterado) trouxer o nível gravado, ele NÃO entra no estado — nível
+        // é derivado, sempre (footgun 9).
+        bondRewardsClaimed: strArr(loadedState.bondRewardsClaimed),
+        bondDaily: hydrateBondDaily(loadedState.bondDaily),
+        bondLevel: undefined,
         virusPoints: num(loadedState.virusPoints, 0),
         dataPoints: num(loadedState.dataPoints, 0),
         vaccinePoints: num(loadedState.vaccinePoints, 0),
@@ -953,6 +993,8 @@ function freshGameState(): GameState {
       energyPoints: 0,
       perfectDays: 0,
       totalXP: 0,
+      bondRewardsClaimed: [],
+      bondDaily: { day: '', spent: {} },
       virusPoints: 0,
       dataPoints: 0,
       vaccinePoints: 0,
