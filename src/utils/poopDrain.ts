@@ -148,3 +148,81 @@ export function applyPoopDrain<T extends PoopDrainState>(state: T, opts: PoopDra
     poopDrainCharge: { day: playerDayKey(new Date(now), state.playerDayTz), hearts: already + lost },
   };
 }
+
+// ── O BANHO ────────────────────────────────────────────────────────────────
+//
+// Mora AQUI, e não num arquivo próprio, porque limpar é escrever exatamente as
+// três coisas que `applyPoopDrain` lê para decidir se cobra: `poopEventsShown`,
+// `poopEventsCompleted` e `poopPenaltyClockAt`. Separar a leitura da escrita em
+// dois arquivos é como a regra ganha duas donas e diverge em silêncio.
+//
+// Existe porque o commit 86341fcb declarou a dívida por escrito ao ligar o
+// banho no overlay do desktop: no app não havia regra pura de banho — ela vivia
+// inteira no `App.tsx` (`handleCareEventComplete`), acoplada ao `careEvent`,
+// estado de React produzido pelo agendamento do `useCareSystem`, que o overlay
+// não tem e não deveria ter. Sem função para importar, o desktop refez o
+// trabalho à mão.
+//
+// As DUAS formas do banho estão aqui de propósito, e não são um `if` de
+// conveniência:
+//  - **com `at`** é o banho do CELULAR. O `careEvent` sabe o HORÁRIO AGENDADO
+//    do cocô que está na tela, não o índice; achar o índice é regra, e era ela
+//    que estava solta no `App.tsx`.
+//  - **sem `at`** é o banho do OVERLAY. Ele não tem `careEvent` e não sabe qual
+//    dos cocôs está na tela do celular — e o dreno não distingue: para ele
+//    existe "tem sujeira" e "não tem". Um banho que limpasse só um deixaria o
+//    relógio correndo com o pet visivelmente limpo.
+
+/** Por que o banho não escreveu nada. Nunca é erro — é "não havia o que fazer". */
+export type CleanPoopRefusal = 'not-scheduled' | 'already-clean';
+
+/** Fatia do estado que o banho lê e escreve. */
+export interface CleanPoopState {
+  poopEventsScheduled?: number[];
+  poopEventsShown?: number[];
+  poopEventsCompleted?: number[];
+  poopPenaltyClockAt: number;
+}
+
+export interface CleanPoopOptions {
+  /** Horário agendado (`careEvent.requestTime`) do cocô que está na tela.
+   *  Ausente = banho geral, o do overlay. */
+  at?: number;
+}
+
+/**
+ * Dá banho. Devolve o MESMO objeto quando nada mudaria — o chamador do app está
+ * dentro de um `setGameState`, e devolver `prev` é o que evita re-render à toa.
+ *
+ * O relógio de 6h SEMPRE para, mesmo quando sobra cocô sujo: é o que o
+ * `handleCareEventComplete` sempre fez, e quem decide se ele volta a correr é
+ * `applyPoopDrain` na passagem seguinte — não esta função.
+ */
+export function cleanPoop<T extends CleanPoopState>(
+  state: T,
+  opts: CleanPoopOptions = {},
+): { state: T; refused?: CleanPoopRefusal } {
+  const cleaned = state.poopEventsCompleted ?? [];
+  const clock = state.poopPenaltyClockAt ?? 0;
+
+  const alvos = opts.at === undefined
+    ? (state.poopEventsShown ?? []).filter(i => !cleaned.includes(i))
+    : (() => {
+        const i = (state.poopEventsScheduled ?? []).indexOf(opts.at!);
+        // Guarda contra -1: a virada do dia pode ter limpado a agenda no meio
+        // do evento, e aí não há cocô nenhum a que este gesto se refira.
+        if (i < 0) return null;
+        return cleaned.includes(i) ? [] : [i];
+      })();
+
+  if (alvos === null) return { state, refused: 'not-scheduled' };
+  if (alvos.length === 0 && clock === 0) return { state, refused: 'already-clean' };
+
+  return {
+    state: {
+      ...state,
+      poopEventsCompleted: alvos.length === 0 ? cleaned : [...cleaned, ...alvos],
+      poopPenaltyClockAt: 0,
+    },
+  };
+}
