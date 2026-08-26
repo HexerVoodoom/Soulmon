@@ -42,8 +42,16 @@ export const STORAGE_KEYS = {
   ORACLE_FORM: 'digiapp-oracle-form',
   // Soulmon: perfil da alma gerado no onboarding (input + seed p/ regenerar)
   SOULMON_PROFILE: 'soulmon-profile',
-  // Monetização — cap diário de criação de atividade/tarefa no modo demo
-  DEMO_TASKS_CREATED_TODAY: 'soulmon-demo-tasks-created-today',
+  // ⚰️ APOSENTADA em 26/08/2026 — `soulmon-demo-tasks-created-today`
+  //
+  // Era o contador do cap DIÁRIO de criação no demo. O regime diário morreu: o
+  // teto passou a ser TOTAL (6 ativas, `DEMO_ACTIVITY_TOTAL_CAP`), aparado na
+  // leitura, e o contador não tem mais função nenhuma.
+  //
+  // A declaração sai, mas **o valor continua no `localStorage` de quem já usou
+  // o app** — apagar a constante não apaga o dado do aparelho. Fica registrado
+  // aqui para ninguém reaproveitar esse nome de chave para outra coisa e herdar
+  // um número velho como se fosse novo. É órfão inofensivo: nada o lê.
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa
   TUTORIAL_COMPLETE: 'soulmon-tutorial-complete',
   // Login por link de e-mail: o Firebase exige reconfirmar o e-mail ao
