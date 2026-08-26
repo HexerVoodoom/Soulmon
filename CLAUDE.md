@@ -188,10 +188,17 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   transparente na barra de tarefas do Windows. Build próprio
   (`npx vite build -c desktop/vite.config.ts`), `package.json` próprio, NÃO
   entra no bundle do app web. É um **controle remoto** do app: lê e escreve o
-  save por `/api/save` (carinho, comida e marcar tarefa) e se autentica pela
-  janela do app web (`auth-preload.js`). **Banho e Dormir ainda NÃO escrevem no
-  save** — são locais ao overlay (`menu.ts:496-507`). Criar/editar tarefa e todo
-  o resto é só no app. A fronteira de cuidado é `desktop/renderer/src/care.ts`,
+  save por `/api/save` (carinho, comida, marcar tarefa, **banho e dormir**) e se
+  autentica pela janela do app web (`auth-preload.js`). Criar/editar tarefa e
+  todo o resto é só no app.
+  ⚠️ Até 26/08/2026 esta linha dizia que **banho e dormir não escreviam no save**.
+  Era verdade, e o dano era medível: `applyPoopDrain` tira 1 coração a cada 6h de
+  cocô não limpo, e o 🚿 é o único jeito de parar esse relógio — o jogador via o
+  pet perder coração apertando o botão que existe para impedir isso. Consertado
+  em `86341fcb`.
+  As regras de cuidado do overlay **não são mais cópia**: `care.ts` importa
+  `careUpdaters`, `careCaps`, `playerDay`, `restWindow` e `poopDrain` de
+  `src/utils/`. O que ainda é cópia, e por quê, está no footgun 9. A fronteira de cuidado é `desktop/renderer/src/care.ts`,
   não o `menu.ts`: este toca o DOM no topo e por isso **nenhum teste em `node`
   consegue importá-lo** — foi assim que o teto de carinho ficou por aparelho sem
   ninguém ver. Ver `desktop/README.md` e `docs/PLANO-DESKTOP-STEAM.md`.
