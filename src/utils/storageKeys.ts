@@ -56,3 +56,25 @@ export const STORAGE_KEYS = {
    *  feedback de sono é SÓ de manhã e SÓ uma vez (ortossonia é ansiedade). */
   MORNING_DREAM_SHOWN: 'soulmon-morning-dream-shown',
 } as const;
+
+/**
+ * Chaves da RECONCILIAÇÃO de `saveId` (`utils/cloudSave.ts`, B-R1).
+ *
+ * Moram numa tabela própria, e não dentro de `STORAGE_KEYS`, porque não são
+ * preferência nem estado de jogo: são o rastro forense de UMA migração de
+ * identidade. Nada as lê no caminho normal do app — elas existem para quando
+ * alguém precisar desfazer à mão o que a reconciliação fez.
+ *
+ * ⚠️ **O VALOR de cada string é contrato com o aparelho do jogador.** Quem já
+ * reconciliou tem estas duas chaves gravadas no `localStorage` dele.
+ * `CONFLICT_BACKUP` guarda a cópia do progresso local descartado quando a nuvem
+ * ganhou o conflito — renomeá-la não apaga o backup, torna-o inalcançável para
+ * sempre, e sem erro nenhum para avisar. `storageKeys.reconcile.test.ts` trava
+ * os dois valores como literais.
+ */
+export const RECONCILE_KEYS = {
+  /** Id que o aparelho usava antes da re-derivação. Só diagnóstico. */
+  PREVIOUS_SAVE_ID: 'soulmon-previous-save-id',
+  /** Cópia do estado local descartado quando a nuvem ganhou o conflito. */
+  CONFLICT_BACKUP: 'soulmon-reconcile-backup',
+} as const;

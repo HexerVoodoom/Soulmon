@@ -3,6 +3,7 @@
 // sem o usuário precisar copiar prompt ou fazer upload.
 import { pixelizeBuffer } from './pixelizer';
 import { aiFetch } from './aiClient';
+import { classifyCloudSaveStatus, CLOUD_SAVE_POLICY } from './cloudSave';
 
 export interface SpriteGenOptions {
   grid?: number;          // lado do grid final (default 16)
@@ -25,6 +26,24 @@ export interface SpriteGenOptions {
  *
  * `pending` (**202**) **não é erro**: outro aparelho está gerando a mesma
  * forma. O visor fica na reserva e a gente repergunta depois.
+ *
+ * **401 e 403 também são contratos diferentes** (item 0.2 do
+ * `preparo-fatia1.md`), e os nomes vêm EMPRESTADOS de `cloudSave.ts` em vez de
+ * inventados aqui — um segundo dicionário para o mesmo par de códigos HTTP
+ * divergiria em silêncio, e a copy de produto (§0.4) passaria a depender de
+ * qual arquivo quem escreve tiver aberto:
+ *
+ *  - `auth` (**401**) — o token venceu. O SDK do Firebase renova sozinho de
+ *    hora em hora, então retentar AJUDA; só a insistência é que vira "faça
+ *    login".
+ *  - `identity` (**403**) — o token é bom, o `SAVE_ID` do aparelho é que não é
+ *    o derivado do e-mail. Retentar dá 403 de novo e re-login TAMBÉM não
+ *    conserta — quem conserta é `reconcileSaveId`. Colapsar isto em `auth`
+ *    manda o jogador logar de novo para tomar 403 de novo, para sempre.
+ *
+ * Enquanto o `_aiGuard.js` estiver com `enforced: false` nenhum dos dois
+ * aparece; o dia em que a fatia 1 ligar o gate, eles aparecem os dois de uma
+ * vez, e é tarde para descobrir a diferença ali.
  */
 export type SpriteGenReason =
   | 'pending'
@@ -34,6 +53,7 @@ export type SpriteGenReason =
   | 'budget'
   | 'not-configured'
   | 'auth'
+  | 'identity'
   | 'error';
 
 export class SpriteGenError extends Error {
@@ -58,11 +78,26 @@ export class SpriteGenError extends Error {
     this.serverMessage = extra.serverMessage;
   }
 
-  /** Retentar tem chance de mudar alguma coisa? */
+  /**
+   * Retentar tem chance de mudar alguma coisa?
+   *
+   * Nas duas razões que este arquivo COMPARTILHA com `cloudSave.ts`, quem
+   * responde é a `CLOUD_SAVE_POLICY` — a decisão de retentar 401 e 403 é a
+   * mesma decisão, e escrevê-la duas vezes é garantir que uma delas envelheça.
+   * Nas demais, o motivo é de produto (cota, teto por forma, orçamento) e a
+   * política é local: porta que acabou de fechar não reabre por insistência.
+   */
   get retryable(): boolean {
-    return this.reason === 'error';
+    const compartilhada = POLITICA_COMPARTILHADA[this.reason];
+    return compartilhada ? compartilhada.retentavel : this.reason === 'error';
   }
 }
+
+/** As razões que `spriteGen` e `cloudSave` nomeiam do MESMO jeito. */
+const POLITICA_COMPARTILHADA: Partial<Record<SpriteGenReason, { retentavel: boolean }>> = {
+  auth: CLOUD_SAVE_POLICY.auth,
+  identity: CLOUD_SAVE_POLICY.identity,
+};
 
 /** Traduz o par (status, `error`) do servidor no motivo do cliente. */
 function reasonFor(status: number, code: unknown): SpriteGenReason {
@@ -70,7 +105,12 @@ function reasonFor(status: number, code: unknown): SpriteGenReason {
   if (status === 402) return 'lifetime-cap';
   if (status === 409) return 'form-cap';
   if (status === 429) return 'daily-limit';
-  if (status === 401 || status === 403) return 'auth';
+  // 401/403: o classificador do save é a fonte única. Ele não serve para os
+  // outros códigos — 409 lá é `conflict` de revisão, aqui é teto POR FORMA —,
+  // por isso a delegação é ESTREITA e vem depois dos casos de produto.
+  if (status === 401 || status === 403) {
+    return classifyCloudSaveStatus(status) as 'auth' | 'identity';
+  }
   if (status === 503) {
     return code === 'ai-monthly-budget-reached' || code === 'ai-daily-budget-reached'
       ? 'budget'
