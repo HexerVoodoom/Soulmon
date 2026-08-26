@@ -7,6 +7,7 @@
  * está desenhando", nunca "gerando imagem" ou "3 créditos".
  */
 import type { Language } from './i18n';
+import type { SpriteFailKind } from './spriteLibrary';
 
 export interface SpriteText { pt: string; en: string }
 
@@ -30,6 +31,18 @@ export const SPRITE_COPY = {
   },
   revert: { pt: 'Voltar ao traço antigo', en: 'Keep the old look' },
   tuned: { pt: 'Visor sintonizado', en: 'Visor tuned' },
+  // ✏️ PENDENTE DO REDATOR: as duas abaixo são funcionais, não são voz de
+  // marca. Elas existem porque 401 e 403 deixaram de ser `error` genérico e o
+  // card não pode nascer mudo — quem escreve a versão final é o redator, sem
+  // trocar a AÇÃO que cada uma pede (são ações diferentes de propósito).
+  authFail: {
+    pt: 'O Oráculo não reconheceu você. Entre de novo e ele continua o traço.',
+    en: "The Oracle didn't recognize you. Sign in again and it resumes the drawing.",
+  },
+  identityFail: {
+    pt: 'Este aparelho está com outro caderno. Sincronize o progresso para o Oráculo voltar a desenhar.',
+    en: 'This device is holding another notebook. Sync your progress so the Oracle can draw again.',
+  },
 } as const satisfies Record<string, SpriteText>;
 
 export type SpriteCopyKey = keyof typeof SPRITE_COPY;
@@ -37,4 +50,23 @@ export type SpriteCopyKey = keyof typeof SPRITE_COPY;
 export function spriteText(key: SpriteCopyKey, language: Language): string {
   const t = SPRITE_COPY[key];
   return language === 'pt-BR' ? t.pt : t.en;
+}
+
+/**
+ * A frase de uma falha registrada no acervo, quando ela pede AÇÃO do jogador.
+ *
+ * `null` é resposta legítima e é a maioria: `offline` já tem card próprio,
+ * `error` é transitório (o lote volta sozinho) e os tetos são o card
+ * `RESERVA_FINAL` — dizer algo ali seria ruído. Só 401 e 403 travam por
+ * credencial, e são as duas únicas em que ficar calado deixa o jogador sem
+ * saber que existe um gesto capaz de destravar.
+ */
+const COPY_POR_FALHA: Partial<Record<SpriteFailKind, SpriteCopyKey>> = {
+  auth: 'authFail',
+  identity: 'identityFail',
+};
+
+export function spriteFailText(kind: SpriteFailKind, language: Language): string | null {
+  const key = COPY_POR_FALHA[kind];
+  return key ? spriteText(key, language) : null;
 }

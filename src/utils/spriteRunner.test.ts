@@ -125,3 +125,75 @@ describe('cancelamento cooperativo', () => {
     expect(generate).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('401 e 403: a classificacao do spriteGen manda, e o default nao', () => {
+  it('401 `auth` retenta UMA vez (a renovacao do SDK), nunca a de 10 min', async () => {
+    const generate = vi.fn().mockRejectedValue(new SpriteGenError('auth', 401, 'unauthorized'));
+    const h = harness(generate);
+    await runSpriteBatch(['rookie'], h.deps);
+    // CLOUD_SAVE_POLICY.auth diz `retentavel: true` — uma retentativa pega a
+    // renovacao horaria do token. A segunda, de 10 min, e so bateria: se a
+    // primeira nao pegou, a sessao esta morta e so o login conserta.
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(h.waits).toEqual([SPRITE_RETRY_BACKOFF_MS[0]]);
+    expect(h.failures).toEqual([{ formId: 'rookie', kind: 'auth' }]);
+  });
+
+  it('403 `identity` nao retenta nenhuma vez — re-login nao conserta SAVE_ID errado', async () => {
+    const generate = vi.fn().mockRejectedValue(new SpriteGenError('identity', 403, 'forbidden'));
+    const h = harness(generate);
+    await runSpriteBatch(['rookie'], h.deps);
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(h.waits).toEqual([]);
+    expect(h.failures).toEqual([{ formId: 'rookie', kind: 'identity' }]);
+  });
+
+  it('nem 401 nem 403 abortam o lote: nao sao teto de conta', async () => {
+    for (const [reason, status] of [['auth', 401], ['identity', 403]] as const) {
+      const h = harness(async formId => {
+        if (formId === 'champion-virus') throw new SpriteGenError(reason, status, reason);
+        return ok(formId);
+      });
+      const out = await runSpriteBatch(['champion-virus', 'champion-data'], h.deps);
+      expect(out.aborted).toBe(false);
+      expect(h.results).toEqual(['champion-data']);
+      expect(out.failed).toEqual([{ formId: 'champion-virus', kind: reason }]);
+    }
+  });
+});
+
+describe('o que NAO pode mudar com essa passada', () => {
+  it('5xx transitorio continua com as DUAS retentativas e os dois recuos', async () => {
+    const generate = vi.fn().mockRejectedValue(new SpriteGenError('error', 503, 'boom'));
+    const h = harness(generate);
+    await runSpriteBatch(['rookie'], h.deps);
+    expect(generate).toHaveBeenCalledTimes(3);
+    expect(h.waits).toEqual([...SPRITE_RETRY_BACKOFF_MS]);
+  });
+
+  it('rede fora (status 0) continua retentando e continua sendo `offline`', async () => {
+    const generate = vi.fn().mockRejectedValue(new SpriteGenError('error', 0, 'network'));
+    const h = harness(generate);
+    await runSpriteBatch(['rookie'], h.deps);
+    expect(generate).toHaveBeenCalledTimes(3);
+    expect(h.failures).toEqual([{ formId: 'rookie', kind: 'offline' }]);
+  });
+
+  it('os terminais continuam terminais: 409 so a forma, 402 o lote inteiro', async () => {
+    const hForm = harness(async () => { throw new SpriteGenError('form-cap', 409, 'form-cap'); });
+    const outForm = await runSpriteBatch(['rookie', 'champion-data'], {
+      ...hForm.deps,
+      generate: async (formId: string) => {
+        if (formId === 'rookie') throw new SpriteGenError('form-cap', 409, 'form-cap');
+        return ok(formId);
+      },
+    });
+    expect(outForm.aborted).toBe(false);
+    expect(outForm.failed).toEqual([{ formId: 'rookie', kind: 'form-cap' }]);
+
+    const hAcc = harness(async () => { throw new SpriteGenError('lifetime-cap', 402, 'lifetime-cap'); });
+    const outAcc = await runSpriteBatch(['rookie', 'champion-data'], hAcc.deps);
+    expect(outAcc.aborted).toBe(true);
+    expect(outAcc.done).toEqual([]);
+  });
+});
