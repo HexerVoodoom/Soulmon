@@ -7,10 +7,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **26/08/2026** — auditoria de documentação contra o código.
-Nada de produto novo entrou aqui; só saiu o que estava falso: os números da aba
-Torneio e as referências de linha dos achados de segurança, que tinham
-escorregado com o código. A série X (X-1…X-8) **não é rastreada nesta página** e
+Última atualização: **26/08/2026 (2ª passada do dia)** — as referências de linha
+dos achados de segurança escorregaram **de novo**, poucas horas depois de a
+auditoria da manhã as ter corrigido, porque `b2a35465` acrescentou ~53 linhas de
+comentário ao topo de `functions/api/_entitlements.js`. Reconferidas uma a uma
+contra `HEAD = 2be666d5` (gate: `tsc` EXIT=0 · `vitest` 142 arquivos / 2483
+passed / 2 skipped). Nada de produto novo entrou aqui.
+
+> **Isto é o padrão, não o acidente.** Referência `arquivo:linha` num documento é
+> um ponteiro sem dono: nada quebra quando ela escorrega, e ela escorrega a cada
+> merge que acrescenta comentário acima do alvo. O achado em si continua válido
+> — o que apodrece é o endereço. Ver
+> `squad-alpha-runs/soulmon-02/LICOES-DE-METODO.md`.
+
+A série X (X-1…X-8) **não é rastreada nesta página** e
 continua não sendo — quem a acompanha é `squad-alpha-runs/`.
 
 ## 🔴 Class-System saiu do `npm ci` — artefato vendorizado (25/08/2026, ADR-002 §1)
@@ -518,6 +528,26 @@ dinheiro / auth+dados / IA+push+segredos).
 
 ---
 
+## 🆕 Merges da tarde de 26/08/2026 — o que mudou de FATO no código
+
+Verificado nesta árvore (`HEAD = 2be666d5`), não lembrado.
+
+| O quê | Commit | Onde |
+|---|---|---|
+| **Retenção de `ent:` e `ord:`: 5 anos, RENOVADOS a cada escrita.** Até aqui os dois eram gravados **sem TTL nenhum**. A renovação não é detalhe: com prazo contado do nascimento, o `ent:` expiraria e levaria junto o `tier: 'paid'` de quem comprou e continua jogando, e o teto VITALÍCIO de IA (26 gerações) resetaria. O registro só morre após 5 anos de silêncio absoluto. | `b2a35465` (merge `b3cdfabc`) | `_entitlements.js:20-65`, escrita em `:164-170` e `:271`; testes em `_entitlements.ttl.test.js` |
+| ⚠️ **O caminho D1 (`order_claims`) NÃO expira** — banco não apaga linha sozinho. Com D1 ligado, a decisão de 5 anos **não se aplica ao recibo**. Falta uma limpeza que não existe. | idem | `_entitlements.js:61-63` (aviso já está no código) · decisão do dono pendente |
+| **`saveId` reconciliado no login (B-R1)** — quem nunca logou tinha `saveId` = UUID aleatório e, no corte para `enforced:true`, tomaria **403 permanente** que re-login não conserta. `reconcileSaveId` reusa o `emailToSaveId` existente (nada de quarta cópia). Conflito de dado resolvido por **assimetria de reversão**: chave derivada vazia → migra; ocupada → a **nuvem** ganha e o local vai para backup byte a byte; a chave antiga **nunca** é apagada; nuvem indeterminada (5xx/offline) **não** migra. | `d07bb287` (merge `f56e7075`) | `cloudSave.ts` (`reconcileSaveId`), chamado em `App.tsx:811-814`; `cloudSave.reconcile.test.ts` |
+| **Cloud save devolve erro TIPADO (R-3)** — antes 401/403/409/412/413/5xx colapsavam num `boolean` que o chamador nem lia. O risco nunca foi conflito: era **save perdido sem ninguém ver**. Agora há política POR CÓDIGO de `retentável` e `avisaJogador`. | idem | `cloudSave.ts` (`classifyCloudSaveStatus`, `CLOUD_SAVE_POLICY`); `cloudSave.errors.test.ts`, `GameStateContext.cloudErrors.test.tsx` |
+| **`spriteGen.ts` deixa de colapsar 401 e 403.** Não era "esquecimento": ele os unia de propósito num `auth` só. 403 é `SAVE_ID` errado e **re-login NÃO conserta** — quem conserta é `reconcileSaveId`. Agora reusa o classificador do save em vez de um segundo vocabulário de erro. | `d1bbf0ff` (merge `2be666d5`) | `spriteGen.ts:30-42`, `:108-112` |
+| **`RECONCILE_KEYS` saiu de `cloudSave.ts` para `storageKeys.ts`**, como tabela própria e **não** dentro de `STORAGE_KEYS`: é rastro forense de migração, não preferência. O valor das strings está travado por teste — mover a constante de arquivo não pode mudar o que já está gravado no aparelho de ninguém. | idem | `storageKeys.ts`, `storageKeys.reconcile.test.ts` |
+| **Teto de cuidado do desktop virou o teto do SAVE.** Ver `docs/PLANO-DESKTOP-STEAM.md` §3c-bis. | `f6fb5f30` (merge `69f7f157`) | `desktop/renderer/src/care.ts` |
+
+**Efeito sobre a fatia 1:** os dois itens que a `squad-alpha-runs/ROADMAP.md`
+classificava como bloqueantes do corte (**B-R1** e **R-3**) estão **feitos**. O
+que ainda bloqueia é só o que depende do dono (§3).
+
+---
+
 ## 1. Segurança — auditoria de 2026-08
 
 Rodada com o motor do `/security-review` da Anthropic, dividida em três frentes
@@ -530,8 +560,8 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 | # | Onde | O quê | Status |
 |---|---|---|---|
 | SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ⚠️ **corrigido no código, INERTE em produção** |
-| SEC-2 | `functions/api/community.js:122` | o `saveId` é publicado como identidade social | ✅ corrigido (independe do Firebase) |
-| SEC-5 | `functions/api/subscribe.js:33` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido (⚠️ o worker é deploy MANUAL — a versão rodando hoje não é verificável por leitura) |
+| SEC-2 | `functions/api/community.js` — hoje o conserto está em `:78` (`PID_PREFIX`), `:263` e `:271`; ~~`:122`~~ era o endereço do defeito ANTES da correção e hoje aponta para `putProfile` | o `saveId` era publicado como identidade social | ✅ corrigido (independe do Firebase) |
+| SEC-5 | `functions/api/subscribe.js:43` (entrada) e `:54` (`isAllowedPushEndpoint`, a trava); ~~`:33`~~ hoje é o `costGate` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido (⚠️ o worker é deploy MANUAL — a versão rodando hoje não é verificável por leitura) |
 
 > **Reverificação de 2026-08-25** (`squad-alpha-runs/soulmon-01/discovery/security-escopo-e-reverificacao.md`):
 > os selos ✅ desta seção mediam o CÓDIGO, não o que está em pé em produção.
@@ -580,11 +610,12 @@ jogador.
 
 | # | Onde | O quê | Status |
 |---|---|---|---|
-| SEC-3 | `functions/api/_entitlements.js:203` (`claimOrder`) | `claimOrder` não é atômico → 1 recibo vira N contas pagas | 🔴 **NÃO RESOLVIDO** |
+| SEC-3 | `functions/api/_entitlements.js:256` (`claimOrder`) — **era `:203`; +53 linhas de comentário de TTL em `b2a35465`** | `claimOrder` não é atômico → 1 recibo vira N contas pagas | 🔴 **NÃO RESOLVIDO** |
 | SEC-4 | `functions/api/_billing.js:346` (`verifySteamPurchase`) | microtransação Steam sem vínculo com o dono | ⚠️ parcial (`PLAY_REQUIRE_ACCOUNT_BINDING` não está ligada) |
 
-> **SEC-3, reverificado (2026-08-25).** O caminho atômico é condicionado a
-> `env.DB` (`_entitlements.js:204`, que desvia para `claimOrderAtomic` em `:220`) e **não existe binding `d1_databases` em
+> **SEC-3, reverificado (2026-08-25; endereços reconferidos em 26/08 pós-merge).**
+> O caminho atômico é condicionado a
+> `env.DB` (`_entitlements.js:257` — era `:204` —, que desvia para `claimOrderAtomic` em `:282` — era `:220`) e **não existe binding `d1_databases` em
 > `wrangler.jsonc`** — em produção roda sempre o ramo do KV (*read-then-write*
 > sem CAS, sobre armazenamento eventualmente consistente). O teste que dava o ✅
 > usa um `Map` em memória, fortemente consistente: a corrida é estruturalmente
