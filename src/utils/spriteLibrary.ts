@@ -35,6 +35,13 @@ export interface SpriteEntry {
  * (402) são **contratos diferentes** e não podem ser tratados como um só:
  * o 402 é a conta inteira parando para sempre; o 409 é UMA forma que esgotou
  * as 3 tentativas dela, com as outras dez seguindo abertas.
+ *
+ * `auth` (401) e `identity` (403) entram com o **mesmo nome** que
+ * `cloudSave.ts` e `spriteGen.ts` já usam — um terceiro dicionário para o
+ * mesmo par de códigos HTTP divergiria em silêncio. Nenhum dos dois é
+ * terminal: o teto não foi atingido, quem falhou foi a credencial. O 401 se
+ * conserta com login; o 403 é `SAVE_ID` errado e quem conserta é
+ * `reconcileSaveId` — nem login, nem retentativa.
  */
 export type SpriteFailKind =
   | 'form-cap'
@@ -42,6 +49,8 @@ export type SpriteFailKind =
   | 'daily-limit'
   | 'budget'
   | 'offline'
+  | 'auth'
+  | 'identity'
   | 'error';
 
 export interface SpriteFormFailure {

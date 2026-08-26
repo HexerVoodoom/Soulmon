@@ -12,6 +12,7 @@ import {
   canManualRetry, isAccountCapped, isFormCapped,
   SPRITE_MANUAL_COOLDOWN_MS,
 } from './spriteLibrary';
+import { spriteFailText } from './spriteCopy';
 
 const entry = (formId: string) => ({ url: `https://cdn/${formId}.png`, formId, at: 1000 });
 const ctx = (over = {}) => ({ generating: [] as string[], imminent: false, reachable: true, online: true, ...over });
@@ -153,5 +154,40 @@ describe('estados de card (§2.2)', () => {
     expect(cardState(own, 'rookie', ctx())).toBe('PROPRIO');
     const ask = recordSprite(emptySpriteLibrary(), entry('rookie'), { adopt: 'ask', dayKey: 'd' });
     expect(cardState(ask, 'rookie', ctx({ unseen: true }))).toBe('A_SINTONIZAR');
+  });
+});
+
+describe('401 e 403 no acervo: nao sao teto, e nao ficam mudos', () => {
+  it('`auth` e `identity` consomem tentativa mas NAO viram terminal', () => {
+    for (const kind of ['auth', 'identity'] as const) {
+      const lib = recordFailure(emptySpriteLibrary(), 'rookie', kind, { at: 1000 });
+      expect(lib.failures.rookie.kind).toBe(kind);
+      expect(lib.failures.rookie.attempts).toBe(1);
+      expect(lib.failures.rookie.terminal).toBeUndefined();
+      expect(isAccountCapped(lib)).toBe(false);
+      expect(isFormCapped(lib, 'rookie')).toBe(false);
+    }
+  });
+
+  it('o botao manual continua existindo depois do cooldown — o gesto do jogador e o conserto', () => {
+    const lib = recordFailure(emptySpriteLibrary(), 'rookie', 'auth', { at: 0 });
+    expect(canManualRetry(lib, 'rookie', SPRITE_MANUAL_COOLDOWN_MS - 1)).toBe(false);
+    expect(canManualRetry(lib, 'rookie', SPRITE_MANUAL_COOLDOWN_MS)).toBe(true);
+  });
+
+  it('cada uma tem a sua frase, e as duas pedem acoes DIFERENTES', () => {
+    const a = spriteFailText('auth', 'pt-BR');
+    const i = spriteFailText('identity', 'pt-BR');
+    expect(a).toBeTruthy();
+    expect(i).toBeTruthy();
+    expect(a).not.toBe(i);
+    expect(spriteFailText('auth', 'en-US')).toBeTruthy();
+    expect(spriteFailText('identity', 'en-US')).toBeTruthy();
+  });
+
+  it('as falhas que ja tem card proprio seguem sem frase — nao inventar ruido', () => {
+    for (const kind of ['offline', 'error', 'form-cap', 'lifetime-cap', 'daily-limit', 'budget'] as const) {
+      expect(spriteFailText(kind, 'pt-BR')).toBeNull();
+    }
   });
 });
