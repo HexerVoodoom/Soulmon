@@ -171,8 +171,8 @@ ocorrências**. Ver 3c.
 | Carinho | ✅ sim, **e agora com o teto do SAVE** | `menu.ts:418` → `pushCareAction(…, remote => remoteRub(remote, new Date()).next)` |
 | Comida | ✅ sim, **e agora com a janela do SAVE** | `menu.ts:474-478` → `remoteFeed` |
 | Marcar tarefa feita | ✅ sim | `menu.ts:517-520` → `completeTask` |
-| **Banho** | ❌ **não** — `[em andamento nesta sessão]` | `menu.ts:496-500` (`doShower`): toca a frase e o efeito, e **retorna**. Nenhum `pushCareAction` |
-| **Dormir / Acordar** | ❌ **não** — `[em andamento nesta sessão]` | `menu.ts:502-507` (`doSleepToggle`): `state.sleeping = !state.sleeping` no `localStorage` local |
+| **Banho** | ✅ **sim** (`86341fcb`) | `menu.ts:498` (`doShower`) → `remoteShower` em `care.ts`. Marca o cocô mostrado como limpo e **para o relógio de 6h** do `applyPoopDrain`. Antes eram três linhas sem escrita nenhuma, e o pet perdia coração apertando o botão que existe para impedir isso |
+| **Dormir / Acordar** | ✅ **sim** (`86341fcb`) | `menu.ts:525` (`doSleepToggle`) → `remoteSleep`/`remoteWake`, que chamam `recordNight` de `src/utils/restWindow.ts` (import puro). `sleepStartedAt` sobrevive à noite para o `wokeAt` fechar o registro. A janela (`onTime`) continua no relógio do APARELHO, de propósito, e há teste |
 
 > ⚠️ Os dois ❌ acima estão **sendo trabalhados agora** pela frente
 > `frente/wt-banho` (worktree `E:/tmp/claude/wt-banho`). Verifiquei: naquela
@@ -568,7 +568,7 @@ base algo que não existia. Substituída por estado, não por sequência.
 | 4 | Hover IPC, multi-monitor, `display-metrics-changed` | `[não verificado]` | código existe (`main.js:56,260`); nunca exercido |
 | 5 | Leitura do save | ✅ (menos `isSleeping`) | §3a |
 | 6 | Escrita: carinho, comida, tarefa | ✅ | `menu.ts:418,474,517` |
-| 7 | Escrita: banho, dormir | ❌ **teatro** — `[em andamento nesta sessão]` | `menu.ts:496-507`; frente `frente/wt-banho` ativa, sem commit em `2be666d5` |
+| 7 | Escrita: banho, dormir | ✅ **feito** (`86341fcb`) | `menu.ts:498` e `:525` → `care.ts`. ⚠️ Dívida declarada: banho é a única transição que **não** é import — não existe regra pura de banho em `src/utils/` (ela mora no `App.tsx`, acoplada ao `careEvent`). O teste executa `applyPoopDrain` sobre o resultado, então quem julga limpeza continua sendo `poopDrain.ts`. O conserto certo é extrair `cleanPoop()` |
 | 8 | Login por token no desktop | ⚠️ escrito, **nunca executado** | `auth.ts:175` |
 | 9 | `revision` / 409 / contrato de conflito | ❌ | `grep revision functions/api/save.js` → vazio |
 | 10 | `GET /api/whoami` (ADR §2) | ❌ | arquivo não existe em `functions/api/` |
