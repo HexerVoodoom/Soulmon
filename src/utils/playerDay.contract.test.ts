@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { ts, fonteDe } from '../test/tsAst';
 
 /**
  * O GUARD DE ELO do dia do jogador — no AST, porque o defeito é de FIAÇÃO.
@@ -47,20 +48,11 @@ const HANDLERS = [
  */
 const CONSUMIDORAS_DE_DIA = ['play', 'canPlay', 'playedToday'] as const;
 
-async function carregarTs() {
-  const mod = await import('typescript');
-  return ((mod as { default?: typeof import('typescript') }).default
-    ?? mod) as typeof import('typescript');
-}
 
 describe('a fiação do dia do jogador existe (guard de elo, no AST)', () => {
   it('os quatro handlers diários derivam o dia de `playerDayKey`, e nunca do aparelho', async () => {
-    const ts = await carregarTs();
     const arquivo = path.join(SRC, 'App.tsx');
-    const sf = ts.createSourceFile(
-      arquivo, fs.readFileSync(arquivo, 'utf8'),
-      ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
-    );
+    const sf = fonteDe(arquivo);
 
     /** nome do handler → as chamadas que produzem chave de dia no corpo dele. */
     const chamadas = new Map<string, string[]>();
@@ -119,12 +111,8 @@ describe('a fiação do dia do jogador existe (guard de elo, no AST)', () => {
     // APARELHO enquanto o `handlePlay` grava o dia do JOGADOR, o card mostraria
     // "vamos brincar" e o clique responderia "já brincamos hoje" — as duas
     // réguas desencontradas, que é pior do que qualquer uma das duas sozinha.
-    const ts = await carregarTs();
     const arquivo = path.join(SRC, 'App.tsx');
-    const sf = ts.createSourceFile(
-      arquivo, fs.readFileSync(arquivo, 'utf8'),
-      ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
-    );
+    const sf = fonteDe(arquivo);
 
     /** Nomes locais que provaram vir de `playerDayKey(...)`. */
     const doJogador = new Set<string>();
@@ -175,7 +163,6 @@ describe('a fiação do dia do jogador existe (guard de elo, no AST)', () => {
     // voltaria em SILÊNCIO ao dia do aparelho, compilando. Vindo do estado, o
     // desktop e o celular herdam a âncora sem uma segunda fiação. É a mesma
     // razão pela qual `petPassive` mora no estado (X-6).
-    const ts = await carregarTs();
     for (const [arquivo, tipo] of [
       ['utils/poopDrain.ts', 'PoopDrainState'],
       ['utils/rituals.ts', 'RitualState'],
@@ -184,9 +171,7 @@ describe('a fiação do dia do jogador existe (guard de elo, no AST)', () => {
       ['utils/petNeeds.ts', 'PetNeedsState'],
     ] as const) {
       const p = path.join(SRC, arquivo);
-      const sf = ts.createSourceFile(
-        p, fs.readFileSync(p, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TS,
-      );
+      const sf = fonteDe(p);
       let temCampo = false;
       const visita = (n: import('typescript').Node): void => {
         if (ts.isInterfaceDeclaration(n) && n.name.text === tipo) {
@@ -205,11 +190,8 @@ describe('a fiação do dia do jogador existe (guard de elo, no AST)', () => {
     // A âncora só resolve alguma coisa se MORAR NO SAVE: é a viagem pela nuvem
     // que faz os dois aparelhos concordarem. Resolvida e não persistida, cada
     // aparelho voltaria a inventar a dele — o bug com mais código.
-    const ts = await carregarTs();
     const p = path.join(SRC, 'contexts/GameStateContext.tsx');
-    const sf = ts.createSourceFile(
-      p, fs.readFileSync(p, 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
-    );
+    const sf = fonteDe(p);
 
     let campoNoTipo = false;
     let atribuicaoResolvida = false;

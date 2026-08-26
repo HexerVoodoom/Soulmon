@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { ts, fonteDe } from '../test/tsAst';
 import { emptySpriteLibrary, isNewbornLibrary, recordSprite, recordFailure } from './spriteLibrary';
 import { birthBatch, type SpriteTriggerInput } from './spriteTrigger';
 import { CARE_PATTERNS, type CareReading } from './carePattern';
@@ -82,14 +83,8 @@ describe('F-1: o acervo vazio é a ocasião A', () => {
 
 describe('F-1: a fiação existe (guard de elo, no AST — comentário não conta)', () => {
   it('App.tsx passa `newborn` para useSpriteGeneration, e não uma constante desligada', async () => {
-    const mod = await import('typescript');
-    const ts = ((mod as { default?: typeof import('typescript') }).default
-      ?? mod) as typeof import('typescript');
     const arquivo = path.join(SRC, 'App.tsx');
-    const sf = ts.createSourceFile(
-      arquivo, fs.readFileSync(arquivo, 'utf8'),
-      ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
-    );
+    const sf = fonteDe(arquivo);
 
     let valorDeNewborn: string | null = null;
     let achouChamada = false;

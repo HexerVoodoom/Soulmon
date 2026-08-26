@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { ts, fonteDe } from '../test/tsAst';
 import {
   emptySpriteLibrary, normalizeSpriteLibrary, recordSprite, tuneVisor, revertVisor,
   markTuneSeen, cardState,
@@ -79,22 +80,10 @@ describe('X-3: a adoção SEM gesto deixa rastro; a com gesto, não', () => {
 describe('X-3: a superfície existe (guards de elo, no AST — comentário não conta)', () => {
   /* Textual não serve: `/NOVO/` e `/aria-live/` já eram satisfeitas por copy e
      por comentário enquanto nada renderizava. Sexta lição de método do run. */
-  const lerAst = async (arquivo: string) => {
-    const mod = await import('typescript');
-    const ts = ((mod as { default?: typeof import('typescript') }).default
-      ?? mod) as typeof import('typescript');
-    const caminho = path.join(SRC, arquivo);
-    return {
-      ts,
-      sf: ts.createSourceFile(
-        caminho, fs.readFileSync(caminho, 'utf8'),
-        ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
-      ),
-    };
-  };
+  const lerAst = (arquivo: string) => fonteDe(path.join(SRC, arquivo));
 
   it('o App tem uma região `aria-live` que consome o anúncio do hook', async () => {
-    const { ts, sf } = await lerAst('App.tsx');
+    const sf = lerAst('App.tsx');
     let achou = false;
     const visita = (node: import('typescript').Node): void => {
       if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
@@ -112,7 +101,7 @@ describe('X-3: a superfície existe (guards de elo, no AST — comentário não 
   });
 
   it('o EvolutionPath passa `unseen` para o cardState', async () => {
-    const { ts, sf } = await lerAst('components/EvolutionPath.tsx');
+    const sf = lerAst('components/EvolutionPath.tsx');
     let unseen: string | null = null;
     const visita = (node: import('typescript').Node): void => {
       if (

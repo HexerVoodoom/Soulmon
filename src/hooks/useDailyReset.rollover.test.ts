@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { ts, fonteDe } from '../test/tsAst';
 import { rolloverPendingFor } from './useDailyReset';
 
 /**
@@ -43,14 +44,8 @@ describe('X-7: a fiação existe (guard de elo, no AST — comentário não cont
      comentário enquanto passava três. É o defeito do F-2 na mesma família —
      a sexta lição de método deste run. */
   it('o `busy` de useSpriteGeneration inclui o sinal de virada do dia', async () => {
-    const mod = await import('typescript');
-    const ts = ((mod as { default?: typeof import('typescript') }).default
-      ?? mod) as typeof import('typescript');
     const arquivo = path.join(SRC, 'App.tsx');
-    const sf = ts.createSourceFile(
-      arquivo, fs.readFileSync(arquivo, 'utf8'),
-      ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
-    );
+    const sf = fonteDe(arquivo);
 
     let busy: string | null = null;
     const visita = (node: import('typescript').Node): void => {
