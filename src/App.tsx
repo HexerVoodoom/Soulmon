@@ -52,9 +52,10 @@ const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
 import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss } from './utils/dailyReset';
 import {
-  feedFood, rubHeal, rubRefusal, rubHealRecordFor, recentFeeds, completeTask,
-  FOOD_LIMIT_PER_HOUR, RUB_HEAL_STEP,
+  feedFood, rubHeal, rubRefusal, completeTask,
+  FOOD_LIMIT_PER_HOUR,
 } from './utils/careRules';
+import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyPoopDrain, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -586,10 +587,9 @@ export default function App() {
   const [newItemsReady, setNewItemsReady] = useState(false);
   // Sleep state persists across app close/reopen — the pet stays asleep until woken.
   const [isSleeping, setIsSleeping] = useState(() => readFlag(STORAGE_KEYS.IS_SLEEPING));
-  // Feeding is limited to 5 per rolling hour; timestamps persist across app close.
-  const feedTimesRef = useRef<number[]>(
-    readJson<number[]>(STORAGE_KEYS.FOOD_FEED_TIMES, [])
-  );
+  // O teto de comida por hora mora no SAVE (`gameState.careCaps.feedTimes`), e
+  // não mais no localStorage: com PWA e APK o contador por aparelho dava 12
+  // comidas/hora ao mesmo jogador. Ver utils/careCaps.ts.
   // Bumped when a feed is refused for being full → pet says it's full.
   const [fullSignal, setFullSignal] = useState(0);
   // Daily report: shown once per day, on the first open after the reset ran.
@@ -1998,25 +1998,26 @@ export default function App() {
     // fala/animação, que são efeitos colaterais — e efeito dentro de updater
     // roda 2× no StrictMode). A mutação em si vai no updater, sobre o `prev`.
     const now = Date.now();
-    const before = recentFeeds(feedTimesRef.current, now);
-    feedTimesRef.current = before;
     if ((gameState.foodInventory[foodEmoji] ?? 0) <= 0) return;
-    if (before.length >= FOOD_LIMIT_PER_HOUR) {
-      writeJson(STORAGE_KEYS.FOOD_FEED_TIMES, before);
+    if (feedTimesFor(gameState.careCaps, now).length >= FOOD_LIMIT_PER_HOUR) {
       setFullSignal(n => n + 1); // pet says "I'm full"
       return;
     }
-    const nextTimes = [...before, now];
-    feedTimesRef.current = nextTimes;
-    // Janela de 5 comidas/hora: regra de economia do jogo - a falha AVISA.
-    writeJson(STORAGE_KEYS.FOOD_FEED_TIMES, nextTimes);
 
     playFeed();
-    // `before` é a janela ANTES desta comida, então a regra horária aqui chega
-    // à mesma conclusão da checagem acima.
-    setGameState(prev => feedFood(prev, foodEmoji, before, now).state);
+    // A janela é lida do `prev`, e NÃO da leitura de fora: dois toques dentro do
+    // mesmo lote do React veriam o mesmo `gameState` e a segunda comida furaria
+    // o teto. Aqui a segunda passada já enxerga o timestamp da primeira. A
+    // checagem de fora existe só pela recusa, que dispara fala/animação e por
+    // isso não pode morar dentro do updater (footgun 6).
+    setGameState(prev => {
+      const before = feedTimesFor(prev.careCaps, now);
+      const fed = feedFood(prev, foodEmoji, before, now);
+      if (fed.refused) return prev;
+      return { ...fed.state, careCaps: { ...prev.careCaps, feedTimes: fed.feedTimes } };
+    });
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-  }, [gameState.foodInventory, gameState.healthPoints, gameState.maxHealthPoints, language]);
+  }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
@@ -2922,14 +2923,8 @@ export default function App() {
   // Carinho: the ONLY way to heal HP. Called by CompanionHUD after every ~2s of
   // rubbing — each grant restores half a heart, capped at 1 full heart PER DAY
   // (so rubbing can't trivialize the daily heart loss). Animation always plays.
-  const rubHealRef = useRef<{ date: string; healed: number }>(
-    (() => {
-      const saved = readJson<{ date: string; healed: number } | null>(
-        STORAGE_KEYS.RUB_HEAL_DAY, null);
-      if (saved && saved.date === new Date().toDateString()) return saved;
-      return { date: new Date().toDateString(), healed: 0 };
-    })()
-  );
+  // O teto diário de cura por carinho mora no SAVE (`gameState.careCaps.rubHeal`):
+  // no localStorage, PWA + APK davam 2 corações/dia ao mesmo jogador.
   // Bumped when rubbing can't heal because today's cap was reached → pet comments.
   const [healCapSignal, setHealCapSignal] = useState(0);
 
@@ -2938,22 +2933,29 @@ export default function App() {
     // checagem usa só HP (deps estreitas de propósito: CompanionHUD é memo(),
     // e depender do gameState inteiro anularia o memo — footgun 5).
     const today = new Date().toDateString();
-    rubHealRef.current = rubHealRecordFor(rubHealRef.current, today);
+    // `petPassive` entra na checagem: sem ele o teto lido aqui era sempre 1, e o
+    // traço Carinhoso (que o CLAUDE.md declara como "cura até 1,5/dia") era
+    // anulado pela checagem de fora antes de a regra pura sequer rodar.
     const refused = rubRefusal(
-      gameState.healthPoints, gameState.maxHealthPoints, rubHealRef.current, today,
+      gameState.healthPoints, gameState.maxHealthPoints,
+      rubHealFor(gameState.careCaps, today), today, gameState.petPassive,
     );
     if (refused) {
       // "Já está cheio" é silencioso; "acabou o carinho de hoje" o pet comenta.
       if (refused === 'daily-cap') setHealCapSignal(n => n + 1);
       return;
     }
-    rubHealRef.current = { date: today, healed: rubHealRef.current.healed + RUB_HEAL_STEP };
-    // Teto de cura por carinho: sem persistir, o teto do dia some. AVISA.
-    writeJson(STORAGE_KEYS.RUB_HEAL_DAY, rubHealRef.current);
     playFeed();
-    // O teto do dia já foi conferido acima; aqui só a cura é aplicada.
-    setGameState(prev => rubHeal(prev, { date: today, healed: 0 }, today).state);
-  }, [gameState.healthPoints, gameState.maxHealthPoints]);
+    // O teto é reconferido sobre o `prev` — quem manda é a regra pura, sobre o
+    // registro que está no save. Antes chegava aqui `{ healed: 0 }` fixo, o que
+    // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
+    // checagem de fora.
+    setGameState(prev => {
+      const done = rubHeal(prev, rubHealFor(prev.careCaps, today), today);
+      if (done.refused) return prev;
+      return { ...done.state, careCaps: { ...prev.careCaps, rubHeal: done.record } };
+    });
+  }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive]);
 
   // targetStage é sempre um ID da árvore ('rookie' | 'champion-virus' | ...),
   // não mais um nome de exibição — a árvore é única por jogador, então não dá

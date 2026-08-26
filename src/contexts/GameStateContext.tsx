@@ -12,6 +12,7 @@ import type { SlotId } from '../utils/petStage';
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { rollPetPassive } from '../utils/passives';
 import { normalizeConsent, type ConsentRecord } from '../utils/consent';
+import { mergeCareCaps, type CareCaps } from '../utils/careCaps';
 import type { Schedule, HabitAnchor, Effort, TaskStatus } from '../types/taskModel';
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { RestState } from '../utils/restWindow';
@@ -24,6 +25,8 @@ import { resolveLanguage } from '../utils/i18n';
 import {
   readLocal,
   writeLocal,
+  readJson,
+  removeLocal,
   onStorageDegraded,
   storageDegradedMessage,
 } from '../utils/safeStorage';
@@ -207,6 +210,15 @@ export interface GameState {
   /** Quanto o dreno de cocô já cobrou no dia civil — é o que faz o teto ser
    *  DIÁRIO (regra em `utils/poopDrain.ts`). */
   poopDrainCharge?: { day: string; hearts: number };
+  /**
+   * Tetos de cuidado — comida por hora e carinho por dia (`utils/careCaps.ts`).
+   *
+   * Moravam no `localStorage`, ou seja, UM contador por APARELHO: com PWA e APK
+   * o mesmo jogador tinha 2 corações/dia e 12 comidas/hora em vez de 1 e 6. No
+   * save eles são um contador por JOGADOR. As regras seguem em
+   * `utils/careRules.ts` — aqui só mudou de onde o estado vem.
+   */
+  careCaps?: CareCaps;
   /** Bits (🪙): minigame currency earned in the Activities games, spent in the shop. */
   gamePoints: number;
   /** Emblemas: moeda do Torneio (utils/currencies.ts). Só compra itens da aba
@@ -710,6 +722,20 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           const c = obj<unknown>(loadedState.poopDrainCharge);
           return typeof c.day === 'string' ? { day: c.day, hearts: num(c.hearts, 0) } : undefined;
         })(),
+        // Migração dos tetos de cuidado (D-33): o que sobrou no localStorage
+        // deste aparelho é fundido com o que já está no save. `mergeCareCaps` é
+        // idempotente, então rodar aqui no save local E de novo quando a nuvem
+        // for adotada dá o mesmo resultado — é o que permite apagar as chaves
+        // antigas logo abaixo sem criar ponto de não retorno.
+        careCaps: (() => {
+          const merged = mergeCareCaps(loadedState.careCaps, {
+            feedTimes: readJson<unknown>(STORAGE_KEYS.FOOD_FEED_TIMES, undefined),
+            rubHeal: readJson<unknown>(STORAGE_KEYS.RUB_HEAL_DAY, undefined),
+          });
+          removeLocal(STORAGE_KEYS.FOOD_FEED_TIMES);
+          removeLocal(STORAGE_KEYS.RUB_HEAL_DAY);
+          return merged;
+        })(),
         gamePoints: num(loadedState.gamePoints, 0),
         emblems: num(loadedState.emblems, 0),
         pvpEnabled: loadedState.pvpEnabled ?? false,
@@ -841,6 +867,7 @@ function freshGameState(): GameState {
       foodInventory: {},
       poopEventsShown: [],
       poopPenaltyClockAt: 0,
+      careCaps: {},
       gamePoints: 0,
       emblems: 0,
       pvpEnabled: false,
