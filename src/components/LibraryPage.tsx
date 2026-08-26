@@ -16,6 +16,7 @@
  */
 import { useEffect, useState } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
+import { isSafeSpriteSrc } from '../utils/spriteLibrary';
 import { listPlayers, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
@@ -261,7 +262,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                 style={rowStyle}
               >
                 <img
-                  src={p.spriteUrl ?? getSpriteForStage(p.stage)}
+                  src={isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : getSpriteForStage(p.stage)}
                   alt=""
                   style={{ width: 44, height: 44, flexShrink: 0, objectFit: 'contain', imageRendering: 'pixelated' }}
                 />

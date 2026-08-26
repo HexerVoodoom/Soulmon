@@ -172,6 +172,53 @@ export function isSafeSpriteUrl(url: unknown): url is string {
   return SPRITE_URL_PERMITIDA.test(limpa);
 }
 
+// ── F-1 (lado dos componentes): o ramo do ASSET EMPACOTADO ────────────────
+//
+// A Biblioteca e o perfil de outro jogador fazem
+// `src={p.spriteUrl ?? getSpriteForStage(p.stage)}`. Os dois lados dessa
+// expressao tem PROCEDENCIA OPOSTA:
+//
+//  - `p.spriteUrl` e campo EXTRA do tipo `LibraryEntry`/`PlayerDetailModal`.
+//    O tipo `DirectoryPlayer` de `community.ts` nao o declara, mas
+//    `setPlayers(r.players ?? [])` entra num estado `LibraryEntry[]` e o
+//    excedente do JSON viaja junto: um `players[]` hostil vindo do KV
+//    (`GET /api/players`) carrega `spriteUrl` igualzinho ao NPC local. Mesmo
+//    beacon do F-1, por um diretorio PUBLICO que qualquer um alimenta.
+//  - `getSpriteForStage(...)` e `DUNGEON_LINE_SPRITES` sao asset EMPACOTADO
+//    pelo Vite. Verificado no `dist/` deste worktree: o bundle referencia
+//    `/assets/ignar-rookie-C6FBPY0e.png` — caminho ABSOLUTO de raiz, same
+//    origin (`base` e o padrao `/`). Sob vitest/dev o mesmo import resolve
+//    para `/src/assets/soulmon/rookie.png` — mesma forma, outro prefixo.
+//
+// Por isso `isSafeSpriteUrl` sozinha NAO serve nestes dois pontos: ela so
+// conhece `https:` e `data:image/*`, e recusaria a arte de reserva — o que
+// apagaria o sprite em silencio, porque o visor nao tem estado de erro por
+// spec. `isSafeSpriteSrc` e a guarda de `<img src>` desses dois lugares:
+// `isSafeSpriteUrl` OU caminho de raiz same-origin.
+//
+// O ramo relativo e estreito de proposito: UMA barra no inicio, e a proxima
+// nao pode ser `/` nem `\`. `//host` herda o esquema da pagina e vaza o mesmo
+// beacon; `/\host` o parser de URL do navegador trata como `//host`. Os dois
+// ficam de fora. Um caminho de raiz que passa nao consegue sair da origem, que
+// e exatamente o que o beacon precisa.
+//
+// `isSafeSpriteUrl` NAO foi afrouxada: o ramo novo mora aqui, e o save
+// (`normalizeSpriteLibrary`, `recordSprite`, `loadImage`) continua com a
+// allowlist estreita de antes.
+const CAMINHO_DE_RAIZ = /^\/(?![/\\])/;
+
+/** A URL pode virar `<img src>` num ponto que TAMBEM exibe asset do Vite? */
+export function isSafeSpriteSrc(url: unknown): url is string {
+  if (typeof url !== 'string') return false;
+  // A limpeza vem ANTES dos dois testes, e nao entre eles: `isSafeSpriteUrl` e
+  // um type predicate (`url is string`), entao um `if (isSafeSpriteUrl(x))` com
+  // `return` no ramo verdadeiro estreita `x` para `never` no resto da funcao, e
+  // o `tsc` recusa qualquer `.replace` depois. Chamar a guarda ja com o texto
+  // limpo resolve os dois lados — a limpeza dela e idempotente.
+  const limpa = url.replace(/[\t\n\r]/g, '').replace(/^[\u0000-\u0020]+|[\u0000-\u0020]+$/g, '');
+  return isSafeSpriteUrl(limpa) || CAMINHO_DE_RAIZ.test(limpa);
+}
+
 export function emptySpriteLibrary(): SpriteLibrary {
   return { sprites: {}, failures: {}, pendingTune: null, reverted: [], tunedUnseen: [] };
 }
