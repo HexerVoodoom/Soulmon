@@ -80,10 +80,26 @@ Métricas de suporte:
 
 | Métrica | Alvo v1 | Por que |
 |---|---|---|
-| % da semana 2 com ≥1 conclusão real em ≥4 dos 7 dias | — | Mede se o hábito de *usar* virou hábito de *fazer*. Abrir o app não conta nada |
+| % da semana 2 com ≥1 conclusão real em ≥4 dos 7 dias | **≥4 de 7** | Mede se o hábito de *usar* virou hábito de *fazer*. Abrir o app não conta nada |
 | Retenção D7 / D30 | 25% / 12% *(estimativa)* | Mediana do gênero é D30 ~5–8% |
 | Conversão demo→pago em 14 dias | ≥3% *(estimativa)* | Mede se o pet único é desejado o bastante para pagar |
 | Retorno após ausência ≥2 dias | — | A métrica-assinatura da tese anti-cobrança. Se o perdão funciona, quem some volta mais que no gênero |
+
+### ✅ DECIDIDO em 26/08/2026 — as duas definições que faltavam
+
+O north star acima sempre existiu; o que estava em branco eram os **dois números que o tornam
+verificável**. O dono aprovou a proposta da squad, como está:
+
+- **Usuário ativo** = concluiu **≥1 item real** (tarefa ou hábito) na semana. Deliberadamente
+  NÃO é "abriu o app": a tese inteira do produto é que a vida real anda, e uma métrica que conta
+  abertura mede o oposto do que se quer.
+- **Alvo v1** = o usuário ativo médio atinge o **próprio `dailyGoalFor`** em **≥4 dos 7 dias**.
+  É o próprio dele, não um número fixo — a meta já é ponderada por esforço, então comparar
+  pessoas por contagem bruta seria premiar quem tem tarefas fáceis.
+
+⚠️ **O que esta decisão NÃO resolve** continua valendo, e é o parágrafo abaixo: nada disso é
+legível hoje. Definir a métrica não a instrumenta. A definição saiu do caminho crítico; a
+instrumentação não.
 
 **Nenhuma dessas é legível hoje.** É o achado mais duro da rodada 2: um north star que ninguém consegue medir é um slogan. Ver Parte 5.
 
