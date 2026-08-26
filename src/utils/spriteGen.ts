@@ -2,6 +2,7 @@
 // e converte a imagem retornada em sprite v-pet DE VERDADE via o Pixelador,
 // sem o usuário precisar copiar prompt ou fazer upload.
 import { pixelizeBuffer } from './pixelizer';
+import { isSafeSpriteUrl } from './spriteLibrary';
 import { aiFetch } from './aiClient';
 import { classifyCloudSaveStatus, CLOUD_SAVE_POLICY } from './cloudSave';
 
@@ -189,9 +190,24 @@ export async function requestSprite(
   return { image: body.image, provider: body.provider, cached: body.cached };
 }
 
-/** Carrega uma data URL num HTMLImageElement. */
+/**
+ * Carrega uma data URL num HTMLImageElement.
+ *
+ * **F-1, segunda porta** (`auditoria-cliente.md`): `img.src = src` e um
+ * `<img src>` de verdade, e o `src` veio da REDE (`requestSprite` ->
+ * `body.image`). Nao executa script -- `<img>` nunca executou `javascript:`
+ * nem `data:text/html` --, mas dispara um GET para o host de quem controlou a
+ * resposta, que e o mesmo beacon do achado. A guarda e **a mesma funcao** do
+ * acervo (`isSafeSpriteUrl`): um segundo dicionario de esquema divergiria em
+ * silencio, exatamente o erro que `SpriteFailKind` evita ao emprestar os nomes
+ * de `cloudSave.ts`.
+ */
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
+    if (!isSafeSpriteUrl(src)) {
+      reject(new Error('image url: esquema fora da allowlist'));
+      return;
+    }
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error('could not decode image'));

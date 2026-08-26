@@ -15,7 +15,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { requestSprite, SpriteGenError } from './spriteGen';
+import { requestSprite, SpriteGenError, pixelizeDataUrl } from './spriteGen';
 import { classifyCloudSaveStatus, CLOUD_SAVE_POLICY } from './cloudSave';
 
 const jsonResponse = (status: number, body: unknown) =>
@@ -194,5 +194,26 @@ describe('REGRESSÃO X-8 — o comentário do servidor não pode contradizer o c
       guard(),
       'comentário do disjuntor de dinheiro voltou a mentir sobre o cliente (X-8)',
     ).not.toMatch(/ainda n[ãa]o envia/i);
+  });
+});
+
+/**
+ * F-1 (auditoria-cliente.md), segunda porta: `loadImage` faz `img.src = src`
+ * com uma string que veio da REDE (`requestSprite` → `body.image`). É um
+ * `<img src>` de verdade, com dado que este processo não escolheu.
+ *
+ * Não é XSS (`<img>` não executa `javascript:` nem `data:text/html`), mas é o
+ * mesmo beacon do achado: um GET para o host de quem controlou a resposta.
+ * A guarda é a MESMA função do acervo — dois dicionários de esquema divergiriam
+ * em silêncio, que é o erro que este repositório já evitou em `SpriteFailKind`.
+ */
+describe('F-1: pixelizeDataUrl só aceita esquema da allowlist', () => {
+  it.each([
+    'javascript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'http://evil.example/x.png',
+    'x',
+  ])('recusa %j antes de tocar no canvas', async (url) => {
+    await expect(pixelizeDataUrl(url)).rejects.toThrow(/esquema|scheme/i);
   });
 });
