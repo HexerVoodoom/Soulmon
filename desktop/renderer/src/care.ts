@@ -18,6 +18,9 @@
 // aconteceu com o teto de carinho. A resposta NÃO é copiar melhor, é não
 // copiar: tudo abaixo importa do app.
 import { applyRub, applyFeed, type CareCapsState } from '../../../src/utils/careUpdaters';
+// `feedFood` entra direto (e não via `applyFeed`) porque o caminho SEM conta não
+// tem `careCaps`: a janela de 1h dele é local por falta de save, não por opção.
+import { feedFood } from '../../../src/utils/careRules';
 import {
   rubRefusal, rubHealRecordFor, RUB_HEAL_STEP,
   type RubHealRecord, type FeedRefusal, type RubRefusal,
@@ -267,5 +270,79 @@ export function remoteShower(remote: RemoteState): CareOutcome<ShowerRefusal> {
       poopEventsCompleted: state.poopEventsCompleted,
       poopPenaltyClockAt: state.poopPenaltyClockAt, // 0: para o relógio de 6h do dreno
     },
+  };
+}
+
+/** A fatia do estado do overlay que a comida local lê e escreve. */
+export interface LocalFeedState {
+  /** Id da forma (`DesktopState.stage`) — é ele que decide o teto de energia. */
+  stage: string;
+  energy: number;
+  foodInventory: Record<string, number>;
+  feedTimes: number[];
+}
+
+/**
+ * Comida SEM conta sincronizada, aplicada só ao estado do overlay.
+ *
+ * ⚠️ ERA A ÚLTIMA REGRA REIMPLEMENTADA DO `menu.ts`. A linha era
+ * `state.energy = Math.min(state.maxEnergy, state.energy + 1)` (menu.ts:459),
+ * escrita LOGO DEPOIS de chamar `feedFood` — que já calcula exatamente isso,
+ * com `getMaxEnergyForStage(state.evolutionStage)`. Duas escritas da mesma
+ * regra, o footgun 9 inteiro: o passo (`+ 1`) e o teto estavam escritos duas
+ * vezes, e hoje coincidem por acidente feliz — `state.maxEnergy` do overlay é
+ * preenchido por `cloudSync` com `getMaxEnergyForStage(stage)`, a MESMA função.
+ * No dia em que o teto deixasse de ser "o requisito diário da escada" (um
+ * bônus de item, um traço de nascimento, um estágio novo), o app mudaria numa
+ * função e o overlay continuaria somando 1 até um número em cache.
+ *
+ * Por que aqui a resposta é VESTIR o estado e não repetir a decisão como em
+ * `localRub`: o carinho tinha um problema que este não tem — `rubHeal` pede um
+ * `CareState` inteiro só para consultar o traço Carinhoso, e o overlay não tem
+ * traço nenhum, então fabricar o estado seria mentir sobre um dado que MUDA a
+ * resposta. Aqui não: dos campos que faltam (atributos, XP, traço), NENHUM
+ * altera a energia nem a recusa. `feedFood` os usa apenas para calcular o
+ * ganho de atributo, que o overlay sem conta descarta — não há save onde
+ * gravá-lo. Zerar o que não existe e ignorar o que sai é honesto; o que era
+ * desonesto era o `state as unknown as CareState` do `menu.ts`, que entregava
+ * um objeto SEM `evolutionStage` e SEM `virusPoints` e fazia a regra devolver
+ * `energyPoints` calculado sobre `undefined` e atributos `NaN` — lixo que só
+ * não aparecia porque o `menu.ts` jogava fora e recalculava a energia à mão.
+ *
+ * Na recusa devolve a entrada INTACTA, igual a `localRub` e aos updaters do app.
+ */
+export function localFeed(
+  local: LocalFeedState,
+  foodEmoji: string,
+  now: number,
+): { energy: number; foodInventory: Record<string, number>; feedTimes: number[]; refused?: FeedRefusal } {
+  const f = feedFood({
+    // O que o overlay TEM, com o nome que a regra usa:
+    evolutionStage: local.stage,
+    energyPoints: local.energy,
+    foodInventory: local.foodInventory,
+    // O que o overlay não tem e a regra não consulta para decidir — só soma e
+    // devolve. Sem conta não há save para receber esses pontos; eles morrem
+    // aqui, como já morriam (só que como `NaN`).
+    healthPoints: 0, maxHealthPoints: 0,
+    virusPoints: 0, dataPoints: 0, vaccinePoints: 0, totalXP: 0,
+    attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+  }, foodEmoji, local.feedTimes, now);
+
+  if (f.refused) {
+    return {
+      energy: local.energy,
+      foodInventory: local.foodInventory,
+      // `feedTimes` PODADO mesmo na recusa: é o contrato de `feedFood`, e sem
+      // ele os timestamps vencidos cresceriam para sempre no localStorage.
+      feedTimes: f.feedTimes,
+      refused: f.refused,
+    };
+  }
+  return {
+    // O teto e o passo saem de `feedFood`, que é o ponto desta fatia.
+    energy: f.state.energyPoints,
+    foodInventory: f.state.foodInventory,
+    feedTimes: f.feedTimes,
   };
 }
