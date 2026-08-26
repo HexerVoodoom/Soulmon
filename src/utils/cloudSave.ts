@@ -11,7 +11,7 @@
 // products derive different keys even while the raw KV storage is shared.
 import { authHeaders } from './auth';
 import { STORAGE_KEYS } from './storageKeys';
-import { writeLocal } from './safeStorage';
+import { writeLocal, readLocal } from './safeStorage';
 
 export async function emailToSaveId(email: string): Promise<string> {
   const norm = email.trim().toLowerCase();
@@ -19,16 +19,94 @@ export async function emailToSaveId(email: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 32);
 }
 
+// ---------------------------------------------------------------------------
+// R-3 — O CAMINHO DE ERRO TIPADO.
+//
+// `cloudSave` devolvia `boolean`. 401, 403, 409, 412, 413, 5xx e "offline"
+// colapsavam todos em `false`, e o único chamador real
+// (`GameStateContext.tsx`) nem lia o retorno. O risco medido no preparo da
+// fatia 1 (§A.3.3) NÃO é conflito — é **save perdido sem ninguém ver**: o
+// servidor recusa o dia inteiro e a única pista é um `console.warn`.
+//
+// Cada código vira uma CLASSE nomeada, e cada classe carrega — por código, não
+// na cabeça de quem chama — as duas decisões que importam: retentar, e avisar.
+//
+// O 409 aparece aqui como classe de propósito. O `revision` que o produz é da
+// FATIA 1 e não está implementado nesta frente; o que está pronto é o caminho
+// por onde ele vai chegar.
+// ---------------------------------------------------------------------------
+
+export type CloudSaveFailureKind =
+  | 'offline'    // a requisição nem saiu (rede, DNS, CORS) — status 0
+  | 'auth'       // 401: sem token válido
+  | 'identity'   // 403: o token é bom, mas o saveId local não é o do e-mail
+  | 'conflict'   // 409: outro aparelho escreveu antes (fatia 1)
+  | 'stale'      // 412: pré-condição falhou; o cliente está atrasado
+  | 'too-large'  // 413: o save passou do teto do servidor
+  | 'server'     // 5xx: o servidor caiu, o save continua válido
+  | 'client';    // 4xx restante: o cliente mandou algo que o servidor recusa
+
+export interface CloudSavePolicy {
+  /** Reenviar o MESMO corpo tem chance real de mudar o resultado? */
+  retentavel: boolean;
+  /** O jogador precisa saber, ou isto se resolve sozinho? */
+  avisaJogador: boolean;
+}
+
+export const CLOUD_SAVE_POLICY: Record<CloudSaveFailureKind, CloudSavePolicy> = {
+  // A rede volta sozinha, e o save local já está persistido. Avisar a cada
+  // oscilação de sinal seria ruído que ensina o jogador a ignorar o aviso.
+  offline: { retentavel: true, avisaJogador: false },
+  // O SDK do Firebase renova o token de hora em hora sozinho; uma retentativa
+  // pega a renovação. Se insistir, é sessão morta e só o login conserta.
+  auth: { retentavel: true, avisaJogador: true },
+  // 403 é o `saveId` local errado (§B.2.2, Classe 1). Reenviar dá 403 de novo,
+  // e re-login TAMBÉM não conserta — quem conserta é `reconcileSaveId`.
+  identity: { retentavel: false, avisaJogador: true },
+  // Retentar um 409 sem reconciliar é o loop que se auto-alimenta (R-1). Quem
+  // resolve conflito é a reconciliação da fatia 1, não o backoff.
+  conflict: { retentavel: false, avisaJogador: false },
+  stale: { retentavel: false, avisaJogador: true },
+  // Reenviar os mesmos bytes grandes dá o mesmo 413. Só o jogador pode agir.
+  'too-large': { retentavel: false, avisaJogador: true },
+  server: { retentavel: true, avisaJogador: false },
+  client: { retentavel: false, avisaJogador: true },
+};
+
+/** `status: 0` é o nosso código para "a requisição não chegou a sair". */
+export function classifyCloudSaveStatus(status: number): CloudSaveFailureKind {
+  if (status === 0) return 'offline';
+  if (status === 401) return 'auth';
+  if (status === 403) return 'identity';
+  if (status === 409) return 'conflict';
+  if (status === 412) return 'stale';
+  if (status === 413) return 'too-large';
+  if (status >= 500) return 'server';
+  return 'client';
+}
+
+export interface CloudSaveFailure extends CloudSavePolicy {
+  ok: false;
+  kind: CloudSaveFailureKind;
+  status: number;
+}
+export type CloudSaveOutcome = { ok: true } | CloudSaveFailure;
+
+function falha(status: number): CloudSaveFailure {
+  const kind = classifyCloudSaveStatus(status);
+  return { ok: false, kind, status, ...CLOUD_SAVE_POLICY[kind] };
+}
+
 /**
- * Envia o save para a nuvem. Devolve `true` só quando o SERVIDOR confirmou.
+ * Envia o save para a nuvem. `ok: true` só quando o SERVIDOR confirmou.
  *
  * O carimbo `digiapp-last-cloud-sync` é o que o app mostra como "sincronizado":
  * gravá-lo sem checar `res.ok` fazia o app afirmar que o progresso estava na
  * nuvem depois de um 401 (token expirado), 403 ou 500 — o jogador trocava de
  * aparelho confiando nisso e perdia tudo. Falhou = não carimba, e quem chama
- * recebe `false` para reagendar/avisar.
+ * recebe a CLASSE do erro (não mais um `false` mudo) para decidir.
  */
-export async function cloudSave(saveId: string, state: unknown): Promise<boolean> {
+export async function cloudSave(saveId: string, state: unknown): Promise<CloudSaveOutcome> {
   try {
     const res = await fetch(`/api/save?id=${saveId}`, {
       method: 'POST',
@@ -36,30 +114,132 @@ export async function cloudSave(saveId: string, state: unknown): Promise<boolean
       body: JSON.stringify({ state }),
     });
     if (!res.ok) {
-      console.warn('cloudSave: servidor recusou o save', { status: res.status });
-      return false;
+      console.warn('cloudSave: servidor recusou o save', {
+        status: res.status,
+        classe: classifyCloudSaveStatus(res.status),
+      });
+      return falha(res.status);
     }
     // `writeLocal`, não `setItem` cru: com o storage cheio o `setItem` lançava
-    // DENTRO deste try e o `catch` devolvia `false` — o servidor tinha aceitado
-    // o save e o app relatava falha. O carimbo é conveniência; o resultado da
+    // DENTRO deste try e o `catch` devolvia falha — o servidor tinha aceitado
+    // o save e o app relatava erro. O carimbo é conveniência; o resultado da
     // gravação na nuvem é o que a função promete.
     writeLocal(STORAGE_KEYS.LAST_CLOUD_SYNC, new Date().toISOString());
-    return true;
+    return { ok: true };
   } catch {
-    // Silent — local save already persisted
-    return false;
+    // Local save já persistido; a requisição nem saiu.
+    return falha(0);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// R-2 — ORÇAMENTO DE RETRY POR `saveId`, COM TETO E JANELA.
+//
+// O erro que este desenho evita está escrito no preparo (§A.3.3, R-2): um teto
+// "3 tentativas" POR CHAMADA, com ~14 chamadas de save por dia geradas por
+// gesto (§A.2.3), vira 42 requisições autenticadas/dia. Sob 401 ou 5xx
+// permanente isso não é retry — é uma tempestade contra o Firebase e contra o
+// próprio Pages, gerada pelo jogador que está só jogando.
+//
+// O orçamento é do SAVE, não da chamada: `CLOUD_SAVE_RETRY_TETO` retentativas
+// por `CLOUD_SAVE_RETRY_JANELA_MS`, não importa quantas vezes o debounce
+// disparar. Cada chamada nova sempre tenta UMA vez (o estado mudou, é dado
+// novo); o que o orçamento raciona é a INSISTÊNCIA sobre a mesma falha.
+//
+// Sucesso devolve o orçamento: uma queda de rede de 30 s não pode penalizar o
+// resto do dia.
+// ---------------------------------------------------------------------------
+
+export const CLOUD_SAVE_RETRY_TETO = 3;
+export const CLOUD_SAVE_RETRY_JANELA_MS = 10 * 60_000;
+/** Backoff da ADR §3. A última entrada é o teto — não volta a encolher. */
+export const CLOUD_SAVE_RETRY_BACKOFF_MS = [2000, 8000, 30000];
+
+const orcamentos = new Map<string, { gasto: number; janelaEm: number }>();
+
+/** Só para teste: zera o estado de módulo entre casos. */
+export function __resetRetryBudgets(): void {
+  orcamentos.clear();
+}
+
+/**
+ * Consome uma retentativa do `saveId`. Devolve o atraso a esperar, ou `null`
+ * quando o orçamento da janela acabou.
+ */
+function consumirRetry(saveId: string, agora: number): number | null {
+  const atual = orcamentos.get(saveId);
+  const vivo = atual && agora - atual.janelaEm < CLOUD_SAVE_RETRY_JANELA_MS
+    ? atual
+    : { gasto: 0, janelaEm: agora };
+  if (vivo.gasto >= CLOUD_SAVE_RETRY_TETO) {
+    orcamentos.set(saveId, vivo);
+    return null;
+  }
+  const atraso = CLOUD_SAVE_RETRY_BACKOFF_MS[
+    Math.min(vivo.gasto, CLOUD_SAVE_RETRY_BACKOFF_MS.length - 1)
+  ];
+  orcamentos.set(saveId, { gasto: vivo.gasto + 1, janelaEm: vivo.janelaEm });
+  return atraso;
+}
+
+export interface CloudSaveRetryOpts {
+  /** Injetável para o teste não gastar 40 s de relógio real. */
+  esperar?: (ms: number) => Promise<void>;
+  agora?: () => number;
+}
+
+const esperaReal = (ms: number) => new Promise<void>(r => { setTimeout(r, ms); });
+
+/**
+ * `cloudSave` com a política aplicada: retenta o que a tabela diz ser
+ * retentável, dentro do orçamento do `saveId`, e devolve o resultado FINAL.
+ *
+ * ⚠️ **R-1:** esta função nunca toca o estado do jogo. O corpo enviado é o
+ * snapshot recebido, e continua o mesmo em toda retentativa. Quem chama também
+ * não pode reagir chamando `setGameState` — o efeito de save depende de
+ * `[gameState]`, então isso reiniciaria o debounce e reagendaria o POST que
+ * falhou, com cada gesto do jogador acelerando o ciclo.
+ */
+export async function cloudSaveComRetry(
+  saveId: string,
+  state: unknown,
+  opts: CloudSaveRetryOpts = {},
+): Promise<CloudSaveOutcome> {
+  const esperar = opts.esperar ?? esperaReal;
+  const agora = opts.agora ?? Date.now;
+
+  let resultado = await cloudSave(saveId, state);
+  while (!resultado.ok && resultado.retentavel) {
+    const atraso = consumirRetry(saveId, agora());
+    if (atraso === null) break;
+    await esperar(atraso);
+    resultado = await cloudSave(saveId, state);
+  }
+  // Devolve o orçamento: só a falha PERSISTENTE precisa ser racionada.
+  if (resultado.ok) orcamentos.delete(saveId);
+  return resultado;
+}
+
+/** Leitura do save da nuvem que distingue "não existe" de "não sei". */
+type LeituraNuvem =
+  | { estado: 'encontrado'; state: unknown }
+  | { estado: 'vazio' }
+  | { estado: 'indeterminado' };
+
+async function lerNuvem(saveId: string): Promise<LeituraNuvem> {
+  try {
+    const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
+    if (!res.ok) return { estado: 'indeterminado' };
+    const data = await res.json();
+    return data.found ? { estado: 'encontrado', state: data.state } : { estado: 'vazio' };
+  } catch {
+    return { estado: 'indeterminado' };
   }
 }
 
 export async function cloudLoad(saveId: string): Promise<unknown | null> {
-  try {
-    const res = await fetch(`/api/save?id=${saveId}`, { headers: await authHeaders() });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.found ? data.state : null;
-  } catch {
-    return null;
-  }
+  const r = await lerNuvem(saveId);
+  return r.estado === 'encontrado' ? r.state : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,4 +298,139 @@ export function adoptCloudSave(
   writeLocal(STORAGE_KEYS.SAVE_ID, saveId);
   if (email) writeLocal(STORAGE_KEYS.USER_EMAIL, email.trim().toLowerCase());
   return 'ok';
+}
+
+// ---------------------------------------------------------------------------
+// B-R1 — RE-DERIVAR O `saveId` NO LOGIN.
+//
+// ## O 403 que re-login não conserta
+//
+// Quem nunca logou tem `SAVE_ID = crypto.randomUUID()` (`GameStateContext.tsx`
+// e `App.tsx`). Esse UUID passa no `VALID_ID` do servidor
+// (`^[a-zA-Z0-9_-]{8,64}$`), então hoje funciona. No instante em que a fatia 1
+// ligar o `enforced: true`, o servidor vai comparar `emailToSaveId(email)` com
+// o UUID, não vai bater, e vai devolver 403 — e a tabela da ADR manda "não
+// retenta; força re-login". Só que **re-login não conserta**: o erro não está
+// no token, está no `SAVE_ID` gravado no aparelho. É um beco sem saída.
+//
+// A decisão do dono é re-derivar no login. Esta função é o único lugar onde
+// isso acontece, e ela REUSA `emailToSaveId` acima — não reimplementa. Há
+// teste de paridade travando três cópias da derivação (cliente, servidor,
+// desktop); uma quarta cópia seria o footgun 9.
+//
+// ## As três decisões de dado, e o porquê de cada uma
+//
+// **1. Chave derivada vazia → MIGRA.** O estado local é o único que existe:
+// reaponta a identidade e sobe. Ninguém perde nada.
+//
+// **2. Chave derivada ocupada + estado local → a NUVEM ganha, e o local vai
+// para backup.** O critério é assimetria de reversão. Sobrescrever a nuvem
+// destrói o progresso de OUTRO aparelho de forma irrecuperável — `save.js` faz
+// um `put` cego, sem versão e sem histórico. Já "perder" o estado local é
+// recuperável, porque aqui ele é copiado byte a byte antes da troca. É a mesma
+// decisão que o app já tinha tomado no caminho "proteger progresso"
+// (`App.tsx`: "apagar o save antigo de alguém seria bem pior do que perder o
+// progresso local recente") — não é regra nova, é a regra existente aplicada
+// ao caminho que faltava.
+//
+// **3. A chave antiga NUNCA é apagada** — nem no aparelho, nem na nuvem. O
+// cliente só para de escrever nela e registra o id anterior. O save sob o UUID
+// continua na KV até o TTL de 1 ano (`save.js`), de onde uma recuperação
+// manual ainda é possível. Apagar dado de jogador como efeito colateral de uma
+// migração de identidade é exatamente o que não tem volta.
+//
+// **4. Nuvem indeterminada (5xx, offline) NÃO migra.** Tratar "não consegui
+// ler" como "não existe save lá" faria o cliente sobrescrever o save do outro
+// aparelho assim que a rede voltasse. Dúvida não move dado.
+// ---------------------------------------------------------------------------
+
+/**
+ * Chaves desta reconciliação.
+ *
+ * Moram aqui, e não em `STORAGE_KEYS`, porque esta frente não é dona de
+ * `utils/storageKeys.ts`. Ao integrar, mova-as para lá — o valor da string é
+ * que é contrato com o aparelho do jogador, e ele não pode mudar.
+ */
+export const RECONCILE_KEYS = {
+  /** Id que o aparelho usava antes da re-derivação. Só diagnóstico. */
+  PREVIOUS_SAVE_ID: 'soulmon-previous-save-id',
+  /** Cópia do estado local descartado quando a nuvem ganhou o conflito. */
+  CONFLICT_BACKUP: 'soulmon-reconcile-backup',
+} as const;
+
+export type ReconcileResult =
+  /** O `SAVE_ID` já era o derivado. Nada foi tocado, nem a rede. */
+  | { estado: 'sem-mudanca'; saveId: string }
+  /** Chave derivada estava vazia: identidade reapontada e estado local subido. */
+  | { estado: 'migrado'; saveId: string; anterior: string }
+  /** Chave derivada ocupada: save da nuvem adotado, local guardado em backup. */
+  | { estado: 'adotado'; saveId: string; anterior: string }
+  /** Não deu para saber o que há na nuvem. Nada foi movido — tenta de novo depois. */
+  | { estado: 'indeterminado'; saveId: string }
+  /** O storage recusou a gravação. A identidade NÃO trocou. */
+  | { estado: 'storage'; saveId: string }
+  /** Sem e-mail autenticado: não há de onde derivar. */
+  | { estado: 'sem-email' };
+
+/**
+ * Realinha o `saveId` local com o e-mail autenticado, sem perder progresso.
+ *
+ * Idempotente e barata no caso comum: para quem já está logado hoje o
+ * `SAVE_ID` já é o derivado, e a função sai antes de tocar a rede.
+ *
+ * Nunca lança.
+ */
+export async function reconcileSaveId(
+  email: string,
+  estadoLocal: unknown,
+): Promise<ReconcileResult> {
+  const norm = email.trim().toLowerCase();
+  if (!norm) return { estado: 'sem-email' };
+
+  const derivado = await emailToSaveId(norm);
+  const atual = readLocal(STORAGE_KEYS.SAVE_ID);
+
+  // Caminho de quem já está logado: sai aqui, sem rede e sem reescrita.
+  if (atual === derivado) return { estado: 'sem-mudanca', saveId: derivado };
+
+  const naNuvem = await lerNuvem(derivado);
+  if (naNuvem.estado === 'indeterminado') {
+    console.warn('[cloudSave] reconciliação adiada: não deu para ler a chave derivada');
+    return { estado: 'indeterminado', saveId: derivado };
+  }
+
+  const anterior = atual ?? '';
+
+  if (naNuvem.estado === 'encontrado') {
+    // Conflito. Guarda o local ANTES de qualquer troca — se o backup falhar,
+    // não trocamos nada, porque a troca passaria a ser destrutiva de verdade.
+    const copia = JSON.stringify({
+      saveId: anterior,
+      salvoEm: new Date().toISOString(),
+      state: estadoLocal,
+    });
+    if (!writeLocal(RECONCILE_KEYS.CONFLICT_BACKUP, copia)) {
+      return { estado: 'storage', saveId: derivado };
+    }
+    // `adoptCloudSave` grava o DADO e só então troca a identidade, e não lança.
+    if (adoptCloudSave(derivado, naNuvem.state, norm) !== 'ok') {
+      return { estado: 'storage', saveId: derivado };
+    }
+    writeLocal(RECONCILE_KEYS.PREVIOUS_SAVE_ID, anterior, { silent: true });
+    return { estado: 'adotado', saveId: derivado, anterior };
+  }
+
+  // Chave derivada vazia: o estado local é o que vale. Aqui não há dado a
+  // mover no aparelho — o `GAME_STATE` já é o certo —, então trocar a
+  // identidade primeiro é seguro; o que não pode é trocar e não conseguir.
+  if (!writeLocal(STORAGE_KEYS.SAVE_ID, derivado)) {
+    return { estado: 'storage', saveId: derivado };
+  }
+  writeLocal(STORAGE_KEYS.USER_EMAIL, norm);
+  writeLocal(RECONCILE_KEYS.PREVIOUS_SAVE_ID, anterior, { silent: true });
+  // Sobe o progresso que a pessoa já tinha, sob a chave nova. Com retry: esta
+  // é a única escrita do fluxo, e perdê-la por um 5xx deixaria a nuvem vazia
+  // sob a identidade nova.
+  await cloudSaveComRetry(derivado, estadoLocal);
+  return { estado: 'migrado', saveId: derivado, anterior };
 }

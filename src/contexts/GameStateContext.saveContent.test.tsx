@@ -32,7 +32,14 @@ const { cloudSaves, perfis } = vi.hoisted(() => ({
 }));
 vi.mock('../utils/cloudSave', () => ({
   cloudSave: (id: string, state: Record<string, unknown>) => {
-    cloudSaves.push({ id, state }); return Promise.resolve();
+    cloudSaves.push({ id, state }); return Promise.resolve({ ok: true });
+  },
+  // R-2: o provider passou a mandar o save pelo caminho COM política de retry
+  // (`cloudSaveComRetry`). O espião fica nele — é ele que este arquivo audita.
+  // `{ ok: true }` e não `true`: o retorno virou tipado (R-3), e um mock que
+  // devolve booleano faria o provider ler `avisaJogador` de `undefined`.
+  cloudSaveComRetry: (id: string, state: Record<string, unknown>) => {
+    cloudSaves.push({ id, state }); return Promise.resolve({ ok: true });
   },
   emailToSaveId: async () => 'x',
   adoptCloudSave: async () => false,
