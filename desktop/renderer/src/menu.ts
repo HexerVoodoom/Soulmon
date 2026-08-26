@@ -4,7 +4,7 @@
 import './menu.css';
 import { petSprite } from './sprites';
 import {
-  loadState, saveState, feedsLeft, todayKey, foodCount, firstFood,
+  loadState, saveState, feedsLeft, foodCount, firstFood,
   type DesktopState,
 } from './state';
 import {
@@ -12,7 +12,11 @@ import {
   type RemoteSnapshot, type Wallet,
 } from './cloudSync';
 // As regras vêm do app, não de uma cópia — é o motivo de careRules.ts existir.
-import { feedFood, rubHeal, completeTask, type CareState, type TaskState } from '../../../src/utils/careRules';
+import { feedFood, completeTask, type CareState, type FeedRefusal, type TaskState } from '../../../src/utils/careRules';
+// A fronteira de cuidado mora em `care.ts`, e não aqui, porque este módulo toca
+// o DOM no topo e por isso nenhum teste consegue importá-lo — foi assim que o
+// teto de carinho ficou por aparelho sem ninguém ver. Ver o cabeçalho de lá.
+import { remoteRub, remoteFeed, localRub } from './care';
 import { eventPhrase } from './phrases';
 
 const state: DesktopState = loadState();
@@ -385,18 +389,17 @@ function pushFailed(reason: string) {
 }
 
 function doPet() {
-  const day = todayKey();
-  const jaCurouHoje = state.rubHealDay === day;
-
   if (!state.syncEmail) {
-    // Sem conta: cai no comportamento local de sempre.
-    if (!jaCurouHoje && state.hearts < state.maxHearts) {
-      state.hearts = Math.min(state.maxHearts, state.hearts + 0.5);
-      state.rubHealDay = day;
+    // Sem conta: cai no comportamento local de sempre — mas a cura, o passo e o
+    // teto agora saem da regra do app (`localRub`), não de um `+ 0.5` à mão.
+    const r = localRub(state, new Date());
+    if (r.refused) {
+      status = eventPhrase('pet', state.language);
+    } else {
+      state.hearts = r.hearts;
+      state.rubHeal = r.rubHeal;
       persist();
       status = eventPhrase('petHealed', state.language);
-    } else {
-      status = eventPhrase('pet', state.language);
     }
     window.soulmonDesktop?.sendEffect('💗', status);
     render();
@@ -406,24 +409,27 @@ function doPet() {
   // A animação toca sempre — carinho nunca é "rejeitado" visualmente.
   status = eventPhrase('pet', state.language);
   window.soulmonDesktop?.sendEffect('💗', status);
-  if (jaCurouHoje) { render(); return; }
+  render();
 
-  void pushCareAction(state.syncEmail, remote => {
-    const r = rubHeal(remote as unknown as CareState, { date: day, healed: 0 }, day);
-    return r.refused ? null : (r.state as unknown as Record<string, unknown>);
-  }).then(res => {
-    if (res.ok) {
-      applySnapshot(res.snapshot);
-      state.rubHealDay = day;
-      persist();
-      status = eventPhrase('petHealed', state.language);
-      render();
-    } else if (res.reason === 'refused') {
-      render(); // HP já estava cheio no save real — só a animação mesmo.
-    } else {
-      pushFailed(res.reason);
-    }
-  });
+  // NÃO existe mais um pré-teste local de "já curou hoje". Ele comparava
+  // `state.rubHealDay`, um contador DESTE aparelho — o teto do celular não
+  // valia aqui e o do desktop não valia lá. Quem decide é `remoteRub`, sobre o
+  // registro que está no save; a ida ao servidor é o preço de o teto ser um só.
+  void pushCareAction(state.syncEmail, remote => remoteRub(remote, new Date()).next)
+    .then(res => {
+      if (res.ok) {
+        applySnapshot(res.snapshot);
+        persist();
+        status = eventPhrase('petHealed', state.language);
+        render();
+      } else if (res.reason === 'refused') {
+        // HP cheio no save real, ou o teto do dia já gasto (no celular ou aqui):
+        // nos dois casos a animação já tocou e não há cura a mostrar.
+        render();
+      } else {
+        pushFailed(res.reason);
+      }
+    });
 }
 
 function doFeed() {
@@ -433,13 +439,14 @@ function doFeed() {
     render();
     return;
   }
-  if (feedsLeft(state) <= 0) {
-    status = eventPhrase('full', state.language);
-    render();
-    return;
-  }
 
   if (!state.syncEmail) {
+    // Sem conta a janela de 1h só pode ser a local — não há save onde escrevê-la.
+    if (feedsLeft(state) <= 0) {
+      status = eventPhrase('full', state.language);
+      render();
+      return;
+    }
     const local = feedFood(state as unknown as CareState, emoji, state.feedTimes, Date.now());
     if (local.refused) {
       status = eventPhrase(local.refused === 'no-stock' ? 'noFood' : 'full', state.language);
@@ -456,22 +463,29 @@ function doFeed() {
     return;
   }
 
+  // Com conta, a janela é a do SAVE (`careCaps.feedTimes`) — `state.feedTimes`
+  // era o contador DESTE aparelho, e num overlay recém-aberto ele está vazio:
+  // o teto de comidas/hora do celular simplesmente não valia aqui (D-33).
+  //
+  // A recusa é capturada por fora porque `pushCareAction` só sabe dizer
+  // "refused"; a fala do pet precisa distinguir "acabou a comida" de "tá cheio".
   const now = Date.now();
-  const before = state.feedTimes;
+  let motivo: FeedRefusal | undefined;
   void pushCareAction(state.syncEmail, remote => {
-    const r = feedFood(remote as unknown as CareState, emoji, before, now);
-    return r.refused ? null : (r.state as unknown as Record<string, unknown>);
+    const r = remoteFeed(remote, emoji, now);
+    motivo = r.refused;
+    return r.next;
   }).then(res => {
     if (res.ok) {
       applySnapshot(res.snapshot);
-      state.feedTimes = [...before, now];
       persist();
       status = eventPhrase('feed', state.language);
       window.soulmonDesktop?.sendEffect('🍖', status);
       render();
     } else if (res.reason === 'refused') {
-      // O save real discorda do cache (comida acabou no celular).
-      status = eventPhrase('noFood', state.language);
+      // O save real discorda do cache: ou a comida acabou no celular, ou a
+      // janela de 1h já está cheia lá.
+      status = eventPhrase(motivo === 'hourly-limit' ? 'full' : 'noFood', state.language);
       render();
     } else {
       pushFailed(res.reason);
