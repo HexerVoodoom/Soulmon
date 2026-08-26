@@ -14,6 +14,28 @@
 Toda linha marcada ✅ tem `arquivo:linha` ou saída de comando. O que não pôde ser
 executado está marcado **`[não verificado]`** — e isso é diferente de ❌.
 
+> ### 🔄 3ª redação parcial — 26/ago/2026, branch `frente/wt-docs2`, `HEAD = 2be666d5`
+>
+> Esta redação **não reescreve o documento**: ela conserta o que envelheceu nos
+> merges de `c6961d69..2be666d5` (poucas horas depois da 2ª redação). Gate desta
+> reverificação: `npx tsc --noEmit` EXIT=0 · `npx vitest run` → **142 arquivos,
+> 2483 passed, 2 skipped**.
+>
+> O que mudou de fato, e onde:
+>
+> | O quê | Onde neste doc | Commit |
+> |---|---|---|
+> | O teto de carinho do desktop **deixou de ser por dispositivo** | §3b, §3c-2, §8 item 11 | `f6fb5f30` / merge `69f7f157` |
+> | O desktop **importa** as regras de cuidado em vez de reimplementá-las, via `desktop/renderer/src/care.ts` | §3b, §8 | idem |
+> | Referências de linha de `_entitlements.js` escorregaram (+66 linhas de comentário de TTL) | §5b, §5c | `b2a35465` / merge `b3cdfabc` |
+> | Retenção de 5 anos com TTL **renovável** em `ent:`/`ord:` | §5b (nota nova) | idem |
+>
+> **Banho e sono continuam teatro** — confirmado por leitura em `menu.ts:496-507`
+> nesta árvore. ⚠️ Existe uma frente ATIVA em `E:/tmp/claude/wt-banho`
+> (`frente/wt-banho`), hoje ainda em `2be666d5` — **nenhum commit dela chegou
+> aqui**. Onde este documento fala de banho/dormir, o estado é `[em andamento
+> nesta sessão]`: verdadeiro agora, provavelmente falso amanhã.
+
 ## A regra que passa a valer
 
 > **Nenhuma fase recebe ✅ sem evidência colada** — `arquivo:linha` para o que é
@@ -144,22 +166,45 @@ ocorrências**. Ver 3c.
 
 **Funciona, com prova:**
 
-| Ação | Escreve no save? | Evidência |
+| Ação | Escreve no save? | Evidência (reverificada em `2be666d5`) |
 |---|---|---|
-| Carinho | ✅ sim | `menu.ts:411` → `pushCareAction` |
-| Comida | ✅ sim | `menu.ts:461` |
-| Marcar tarefa feita | ✅ sim | `menu.ts:503` → `completeTask` |
-| **Banho** | ❌ **não** | `menu.ts:482-486`: toca a frase e o efeito, e **retorna**. Nenhum `pushCareAction` |
-| **Dormir / Acordar** | ❌ **não** | `menu.ts:488-492`: `state.sleeping = !state.sleeping` no `localStorage` local |
+| Carinho | ✅ sim, **e agora com o teto do SAVE** | `menu.ts:418` → `pushCareAction(…, remote => remoteRub(remote, new Date()).next)` |
+| Comida | ✅ sim, **e agora com a janela do SAVE** | `menu.ts:474-478` → `remoteFeed` |
+| Marcar tarefa feita | ✅ sim | `menu.ts:517-520` → `completeTask` |
+| **Banho** | ❌ **não** — `[em andamento nesta sessão]` | `menu.ts:496-500` (`doShower`): toca a frase e o efeito, e **retorna**. Nenhum `pushCareAction` |
+| **Dormir / Acordar** | ❌ **não** — `[em andamento nesta sessão]` | `menu.ts:502-507` (`doSleepToggle`): `state.sleeping = !state.sleeping` no `localStorage` local |
 
-As regras são de fato **compartilhadas, não copiadas** — `menu.ts:15` e
-`state.ts:11,56` importam `src/utils/careRules.ts` de verdade. A rede de
-segurança contra `NaN` existe (`cloudSync.ts:293-299`, coberta em
+> ⚠️ Os dois ❌ acima estão **sendo trabalhados agora** pela frente
+> `frente/wt-banho` (worktree `E:/tmp/claude/wt-banho`). Verifiquei: naquela
+> branch ainda não há commit além de `2be666d5`, então o que está escrito aqui é
+> o estado **desta árvore**, não um veredito sobre o que aquela frente vai
+> entregar. Reconfira antes de citar.
+
+As regras são de fato **compartilhadas, não copiadas**, e desde `f6fb5f30` isso
+vale para a família INTEIRA de cuidado, não só para as duas funções que já
+importavam:
+
+- `menu.ts:15` importa `feedFood`, `completeTask` de `src/utils/careRules.ts`;
+  `state.ts:11,69` importa `recentFeeds`/`feedsLeft`/`FOOD_LIMIT_PER_HOUR` de lá.
+- **Novo:** `desktop/renderer/src/care.ts` — um adaptador fino que **não decide
+  nada de cuidado**. Ele importa `applyRub`/`applyFeed` de
+  `src/utils/careUpdaters`, `rubRefusal`/`rubHealRecordFor`/`RUB_HEAL_STEP` de
+  `src/utils/careRules` e `playerDayKey`/`sanitizePlayerDayAnchor` de
+  `src/utils/playerDay` (`care.ts:24-29`), veste o `GameState` cru no formato que
+  a regra pede e chama a regra do app. Coberto por
+  `desktop/renderer/src/care.parity.test.ts`.
+- **Por que o adaptador existe, e não a decisão dentro do `menu.ts`:** o
+  `menu.ts` faz `document.getElementById` no topo, então **nenhum teste em `node`
+  consegue importá-lo** — enquanto a decisão de cuidado morava lá, ela era na
+  prática intestável. É a razão MECÂNICA de o defeito do `healed: 0` ter
+  sobrevivido à fatia 2 inteira, e está escrita no cabeçalho de `care.ts:1-22`.
+
+A rede de segurança contra `NaN` existe (`cloudSync.ts:293-299`, coberta em
 `cloudSync.snapshot.test.ts:528`), e a releitura antes de gravar existe.
 
 **A decisão de produto ("o desktop é um controle remoto, não um segundo jogo")
 continua válida** — mas hoje ela descreve um controle remoto com **2 de 4 botões
-falsos**. O usuário dá banho, vê a bolha, e no celular o cocô continua drenando
+falsos** (banho e sono; carinho e comida deixaram de ser falsos em `f6fb5f30`). O usuário dá banho, vê a bolha, e no celular o cocô continua drenando
 −1 coração/6h. Isso não é uma limitação declarada; é a UI oferecendo uma ação
 que não acontece.
 
@@ -173,10 +218,53 @@ Não são do desktop — são da arquitetura. O desktop é só o primeiro a faz�
    mitigado pela releitura"* — **a releitura fecha ~1 ida-e-volta**, não a janela
    real (celular de manhã, PC à noite). O contrato de conflito desenhado na
    `adr-conta-e-save.md` §3–§4 **não existe em lado nenhum**.
-2. **O teto de carinho é por dispositivo, não por conta.** `menu.ts:412` chama
-   `rubHeal(remote, { date: day, healed: 0 }, day)` — **sempre `healed: 0`**,
-   informando à regra compartilhada que ninguém curou hoje. Celular + PC =
-   2 corações/dia onde a regra diz 1. Já vale hoje para PWA+APK.
+2. ~~**O teto de carinho é por dispositivo, não por conta.** `menu.ts:412` chama
+   `rubHeal(remote, { date: day, healed: 0 }, day)` — **sempre `healed: 0`**.~~
+   ✅ **CONSERTADO em `f6fb5f30`** (merge `69f7f157`), e o conserto foi maior que
+   a linha. Ver §3c-bis abaixo.
+
+### 3c-bis. ✅ O teto de cuidado do desktop virou o teto do SAVE (`f6fb5f30`)
+
+**O defeito, e o dano concreto.** `menu.ts:412` passava `{ healed: 0 }` **fixo**
+para `rubHeal`. Com o registro sempre zerado, o ramo `daily-cap` de `rubRefusal`
+**nunca disparava**, e o registro devolvido era descartado — o desktop nunca
+gravava o gasto. Quem tinha o overlay aberto curava **1 coração no celular E
+mais 1 no desktop, todo dia**: o teto de 1/dia do produto simplesmente não
+existia para essa pessoa.
+
+**Mas o `healed: 0` era só o topo.** O desktop estava atrasado em **seis**
+consertos que o app já tinha feito:
+
+| # | Conserto do app | Como estava no desktop |
+|---|---|---|
+| 1 | **D-33** — os tetos moram no SAVE (`careCaps`), não no `localStorage` | a janela de comida vinha de `state.feedTimes`, o `localStorage` DO OVERLAY, e voltava para lá |
+| 2 | **X-4** — `rubHealRecordFor` ordem-consciente | ausente |
+| 3 | **X-5** — higienização do timestamp | ausente |
+| 4 | **X-6** — updaters puros (`applyRub`/`applyFeed`) leem e regravam o registro | reimplementado à mão |
+| 5 | **Dia do jogador em fuso fixo** (`playerDayTz` no save) | chave própria `YYYY-MM-DD` do overlay |
+| 6 | **Janela de comida vinda do `prev`** | vinda do estado local |
+
+Isso é o footgun 9 medido: **copiar regra não diverge um pouco, diverge em
+tudo, com o tempo.**
+
+**A saída foi IMPORTAR, não recopiar** — e a verificação veio antes da decisão:
+`menu.ts` e `state.ts` **já** importavam `careRules` do app (precedente
+deliberado), o `vite.config` do desktop já resolve fora do root, e o `vitest` da
+raiz já inclui os testes do renderer. Não havia razão técnica para a cópia — era
+histórica, do tempo em que o desktop não escrevia no save.
+
+**Um detalhe de formato que evitou um bug pior.** A chave gravada é
+`toDateString()` (`care.ts:remoteDayKey`), o formato que o app compara. Se o
+desktop tivesse gravado o `YYYY-MM-DD` antigo, `Date.parse` o entenderia — **de
+um ANO errado** — e o registro viraria "dia à frente" para sempre, **congelando o
+teto do celular**. Está documentado em `care.ts:33-46` como a restrição nº 1
+daquela fronteira.
+
+**O que NÃO foi consertado:** o teto por conta **do PWA + APK** continua
+dependendo de os aparelhos estarem no mesmo save e de o save na nuvem ser
+confiável — ou seja, da `revision` (§3c-1), que continua ❌.
+
+---
 
 ### 3d. Autenticação no desktop — ⚠️ **o ✅ mais caro da 1ª redação**
 
@@ -308,10 +396,25 @@ Na Steam há dois caminhos:
 
 1. **`steamid === ownersteamid`** no ticket (`_billing.js:307`) — quem pegou a
    biblioteca emprestada por Family Sharing joga, mas não herda o tier pago.
-2. **`claimOrder`** (`_entitlements.js:203`, prefixo `ord:` em `:18`, chamado em
+2. **`claimOrder`** (`_entitlements.js:256` — **era `:203`; escorregou 53 linhas
+   com o bloco de TTL de `b2a35465`** —, prefixo `ord:` em `:18`, chamado em
    `billing.js:108`) — um comprovante pertence a uma conta só, globalmente.
    Vale para as duas lojas: o desbloqueio da Play é não consumível, então sem
    essa trava bastava trocar de e-mail e restaurar para clonar a conta paga.
+
+> **🆕 Retenção dos dois registros de dinheiro (`b2a35465`, merge `b3cdfabc`).**
+> `ent:` e `ord:` eram gravados **sem TTL nenhum** — para sempre. Agora têm
+> **5 anos** (`RETENTION_TTL_SECONDS`, `_entitlements.js:65`), decisão do dono
+> (CDC + prazo fiscal), **renovado a cada escrita** (`:164-170` e `:271`).
+> A renovação é a metade que importa para esta fase: com prazo fixo contado do
+> nascimento, o `ent:` expiraria e **levaria junto o `tier: 'paid'`** de quem
+> comprou e continua jogando — retenção de dados não é tomar de volta o que a
+> pessoa pagou. O registro só morre após **5 anos de silêncio absoluto**.
+> No `ord:`, sem renovação a trava anti-fraude do `claimOrder` cairia 5 anos
+> após a compra **mesmo com o comprador ativo** — e restaurar compras passaria a
+> poder clonar conta paga. Raciocínio inteiro em `_entitlements.js:20-63`.
+> ⚠️ **O caminho D1 de `claimOrder` (`order_claims`) NÃO expira** — banco não
+> apaga linha sozinho (`:61-63`). Endereçado ao dono.
 
 ⚠️ Fica **desligado (503)** enquanto `STEAM_PUBLISHER_KEY`/`STEAM_APP_ID` não
 existirem, e **nada disso foi testado contra a Valve** — não há App ID. Os
@@ -324,8 +427,9 @@ Steamworks antes de ligar (`_billing.js:226-230` registra isso).
 
 ### 5c. Reembolso — ✅ implementado
 
-`auditRefunds` (`functions/api/_entitlements.js:294`) roda na leitura do saldo
-(no máximo 1×/dia por conta, `:270`) e desfaz compra da Play
+`auditRefunds` (`functions/api/_entitlements.js:356` — **era `:294`**) roda na
+leitura do saldo (no máximo 1×/dia por conta, `AUDIT_INTERVAL_MS`, razão escrita
+em `:340-349`) e desfaz compra da Play
 (`_billing.js:186-219`), microtransação da Steam (`:445-467`) e posse do app na
 Steam (`:411-438`). Se a loja não responder, o benefício é **mantido**. Ver
 `docs/BILLING-SETUP.md`.
@@ -463,12 +567,13 @@ base algo que não existia. Substituída por estado, não por sequência.
 | 3 | Empacotamento (`dist` / `dist:steam`) | `[não verificado]` | `desktop/node_modules` ausente; exige Windows + `npm install` |
 | 4 | Hover IPC, multi-monitor, `display-metrics-changed` | `[não verificado]` | código existe (`main.js:56,260`); nunca exercido |
 | 5 | Leitura do save | ✅ (menos `isSleeping`) | §3a |
-| 6 | Escrita: carinho, comida, tarefa | ✅ | `menu.ts:411,461,503` |
-| 7 | Escrita: banho, dormir | ❌ **teatro** | `menu.ts:482-492` |
+| 6 | Escrita: carinho, comida, tarefa | ✅ | `menu.ts:418,474,517` |
+| 7 | Escrita: banho, dormir | ❌ **teatro** — `[em andamento nesta sessão]` | `menu.ts:496-507`; frente `frente/wt-banho` ativa, sem commit em `2be666d5` |
 | 8 | Login por token no desktop | ⚠️ escrito, **nunca executado** | `auth.ts:175` |
 | 9 | `revision` / 409 / contrato de conflito | ❌ | `grep revision functions/api/save.js` → vazio |
 | 10 | `GET /api/whoami` (ADR §2) | ❌ | arquivo não existe em `functions/api/` |
-| 11 | Teto de carinho/comida por CONTA | ❌ é por dispositivo | `menu.ts:412` (`healed: 0` fixo) |
+| 11 | Teto de carinho/comida por CONTA **no desktop** | ✅ **corrigido** (`f6fb5f30`) | `desktop/renderer/src/care.ts` importa `applyRub`/`applyFeed` do app; `care.parity.test.ts` |
+| 11b | Teto por CONTA entre PWA+APK **em escrita concorrente** | ❌ ainda depende de `revision` | ver item 9 |
 | 12 | Provider `steam` no servidor | ✅ (desligado por 503) | `_billing.js:232-400` |
 | 13 | Reembolso cross-store | ✅ | `_entitlements.js:294` |
 | 14 | Cliente Steamworks | ❌ | grep → zero |
@@ -486,8 +591,9 @@ base algo que não existia. Substituída por estado, não por sequência.
    agora existe mesmo um segundo dispositivo escrevendo. **Publicar na Steam
    antes de fechar isto é vender corrupção de progresso.**
 2. 🟠 **Banho e sono são teatro** — 2 de 4 botões de cuidado não fazem nada.
-3. 🟠 **Tetos de carinho/comida por dispositivo** — "mesma conta em qualquer
-   plataforma" dobra a cura diária. Já vale para PWA+APK hoje.
+3. ~~🟠 **Tetos de carinho/comida por dispositivo**~~ ✅ **fechado no desktop**
+   (`f6fb5f30`). O que sobra é o caso de escrita CONCORRENTE entre aparelhos, que
+   é o critical 1 (`revision`) e não um defeito do desktop.
 4. 🟠 **CI do desktop não é obrigatório e não roda em PR.** O problema nunca foi
    falta de gate; foi gate não honrado.
 5. 🟡 **`desktop/STEAM.md:32-34` desatualizado** (nega o provider Steam; ele existe).
