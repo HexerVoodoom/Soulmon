@@ -135,9 +135,16 @@ export function mergeCareCaps(fromSave: unknown, legacy: LegacyCareCaps, now: nu
     if (!rubHeal) rubHeal = legacyRub;
     else if (rubHeal.date === legacyRub.date) {
       rubHeal = { date: rubHeal.date, healed: Math.max(rubHeal.healed, legacyRub.healed) };
+    } else {
+      // Datas diferentes: manda o dia mais RECENTE, não o save por ser save
+      // (X-4). Igualdade cega aqui tinha o mesmo defeito da leitura: com dois
+      // aparelhos em fusos diferentes, "o save manda" podia enterrar o registro
+      // mais novo do aparelho e devolver teto. Data ilegível perde para a legível.
+      const s = Date.parse(rubHeal.date);
+      const l = Date.parse(legacyRub.date);
+      if (Number.isNaN(s) && !Number.isNaN(l)) rubHeal = legacyRub;
+      else if (!Number.isNaN(s) && !Number.isNaN(l) && l > s) rubHeal = legacyRub;
     }
-    // Datas diferentes: o registro do SAVE manda. Um registro de ontem no
-    // aparelho não pode sobrescrever o de hoje que veio do save.
   }
 
   const out: CareCaps = {};

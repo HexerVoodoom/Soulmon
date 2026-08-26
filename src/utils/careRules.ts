@@ -139,8 +139,54 @@ export interface RubHealRecord {
   healed: number;
 }
 
+/**
+ * O registro que vale para HOJE — **ordem-consciente**, não igualdade cega.
+ *
+ * ⚠️ Achado **X-4** do gate da fatia 2. Enquanto este registro morava no
+ * `localStorage`, igualdade bastava: um `date` que não fosse o de hoje só podia
+ * ser de ontem. A fatia 2 mudou a premissa ao mover o campo para o SAVE, e um
+ * mesmo save passou a ser lido por aparelhos em fusos diferentes — que discordam
+ * do NOME do dia durante `|offsetA − offsetB|` horas por dia.
+ *
+ * Com igualdade, o furo não era "um coração a mais": era ILIMITADO. O aparelho
+ * A (UTC−3, 23:00 de 26/ago) gasta o teto e grava "Wed Aug 26"; o aparelho B
+ * (UTC+9, MESMO INSTANTE, 11:00 de 27/ago) lê "Thu Aug 27" ≠ e zera; de volta em
+ * A, "Wed Aug 26" ≠ "Thu Aug 27" e zera de novo. Cada troca invalidava o
+ * registro do outro, para sempre.
+ *
+ * A correção é estreita de propósito: só um dia **estritamente anterior** zera.
+ * Um registro de hoje ou de um dia à frente (o aparelho adiantado) continua
+ * valendo — é teto já gasto, não teto a devolver.
+ *
+ * O que isto deliberadamente NÃO faz: mudar `dayKeyOf`. A chave de dia é a mesma
+ * do motor de hábitos, de `perfectDays`, da streak e do gatilho de virada em
+ * `useDailyReset.ts:57` — redefini-la dispararia uma virada espúria em todo save
+ * existente. Sobra um resíduo conhecido: o aparelho à frente ainda ganha o teto
+ * do dia dele mais cedo, no máximo uma vez por dia civil. Fechar isso pede um
+ * "dia do jogador" em fuso fixo, que é fatia própria — `lastCheckInDate`,
+ * `moodLog` e `poopDrainCharge` têm o mesmo defeito e mereceriam a mesma solução
+ * de uma vez.
+ *
+ * `Date.parse` sobre `toDateString()` é estável (formato fixo do JS, não
+ * dependente de locale) e devolve meia-noite local — comparar duas dessas
+ * compara dias, não horas.
+ */
 export function rubHealRecordFor(record: RubHealRecord | null, todayKey: string): RubHealRecord {
-  return record && record.date === todayKey ? record : { date: todayKey, healed: 0 };
+  if (!record) return { date: todayKey, healed: 0 };
+  if (record.date === todayKey) return record;
+  const gravado = Date.parse(record.date);
+  const hoje = Date.parse(todayKey);
+  // Data ilegível (save adulterado ou formato antigo): mantém o gasto, mas adota
+  // a chave de hoje, para o registro se normalizar sozinho na próxima virada em
+  // vez de ficar ilegível para sempre.
+  if (Number.isNaN(gravado) || Number.isNaN(hoje)) return { date: todayKey, healed: record.healed };
+  // Dia à frente: devolve o registro INTACTO, com a data dele. Reescrever a data
+  // para o `todayKey` (mais antigo) faria o registro ANDAR PARA TRÁS quando o
+  // chamador o gravasse de volta no save — e o aparelho adiantado zeraria de
+  // novo na leitura seguinte, ressuscitando o pingue-pongue pelo caminho da
+  // escrita. Medido: sem isto, 5 repiques alternados devolviam o teto 2x.
+  if (gravado > hoje) return record;
+  return { date: todayKey, healed: 0 };
 }
 
 /**
