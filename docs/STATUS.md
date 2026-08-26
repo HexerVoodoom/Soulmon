@@ -7,8 +7,11 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **pesadelos, passos e "mais consequências em vez de mais
-medidores" (19/08/2026)**.
+Última atualização: **26/08/2026** — auditoria de documentação contra o código.
+Nada de produto novo entrou aqui; só saiu o que estava falso: os números da aba
+Torneio e as referências de linha dos achados de segurança, que tinham
+escorregado com o código. A série X (X-1…X-8) **não é rastreada nesta página** e
+continua não sendo — quem a acompanha é `squad-alpha-runs/`.
 
 ## 🔴 Class-System saiu do `npm ci` — artefato vendorizado (25/08/2026, ADR-002 §1)
 
@@ -533,7 +536,7 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 > **Reverificação de 2026-08-25** (`squad-alpha-runs/soulmon-01/discovery/security-escopo-e-reverificacao.md`):
 > os selos ✅ desta seção mediam o CÓDIGO, não o que está em pé em produção.
 > `denyUnlessOwner` delega a `authorizeSaveAccess`, que é *fail-open*
-> (`_auth.js:112-113`: sem `FIREBASE_PROJECT_ID`, devolve `ok:true` sem
+> (`_auth.js:116` — era `:112-113`, conferido em 26/08/2026: sem `FIREBASE_PROJECT_ID`, devolve `ok:true` sem
 > verificar nada) — e a sonda `GET /api/save?id=…` sem `Authorization` devolveu
 > **200** em produção. Ou seja: **a correção do SEC-1 só passa a existir quando o
 > Firebase for ligado**. Doc que diz ✅ sobre segurança aberta é pior que doc
@@ -545,8 +548,8 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 ~~Agravante: **isso não fecha quando o `FIREBASE_PROJECT_ID` for ligado** — ao
 contrário do `save.js`/`billing.js`, essas ações não consultam autenticação em
 ponto nenhum.~~ **Desatualizado ao contrário** (reverificação de 2026-08-25):
-hoje as seis ações passam por `denyUnlessOwner` (`community.js:236, 332, 432,
-450, 476, 497`), então é exatamente o oposto — **só fecha quando ligar**.
+hoje as seis ações passam por `denyUnlessOwner` (`community.js:244, 341, 441,
+459, 485, 506`), então é exatamente o oposto — **só fecha quando ligar**.
 
 Impacto concreto: roubar 20 Bits/vítima/dia emitindo presente em nome dela;
 reescrever a lista de amigos de qualquer um; forjar o campeonato inteiro
@@ -577,11 +580,11 @@ jogador.
 
 | # | Onde | O quê | Status |
 |---|---|---|---|
-| SEC-3 | `functions/api/_entitlements.js:132` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | 🔴 **NÃO RESOLVIDO** |
-| SEC-4 | `functions/api/_billing.js:311` | microtransação Steam sem vínculo com o dono | ⚠️ parcial (`PLAY_REQUIRE_ACCOUNT_BINDING` não está ligada) |
+| SEC-3 | `functions/api/_entitlements.js:203` (`claimOrder`) | `claimOrder` não é atômico → 1 recibo vira N contas pagas | 🔴 **NÃO RESOLVIDO** |
+| SEC-4 | `functions/api/_billing.js:346` (`verifySteamPurchase`) | microtransação Steam sem vínculo com o dono | ⚠️ parcial (`PLAY_REQUIRE_ACCOUNT_BINDING` não está ligada) |
 
 > **SEC-3, reverificado (2026-08-25).** O caminho atômico é condicionado a
-> `env.DB` (`_entitlements.js:148`) e **não existe binding `d1_databases` em
+> `env.DB` (`_entitlements.js:204`, que desvia para `claimOrderAtomic` em `:220`) e **não existe binding `d1_databases` em
 > `wrangler.jsonc`** — em produção roda sempre o ramo do KV (*read-then-write*
 > sem CAS, sobre armazenamento eventualmente consistente). O teste que dava o ✅
 > usa um `Map` em memória, fortemente consistente: a corrida é estruturalmente
@@ -746,8 +749,13 @@ seção 3.
   decoração (não é código). Ver `docs/PLANO-EVOLUCAO.md`.
 - **Palco do pet** (composição, 5 espaços, decoração) — pronto. Contrato de arte
   em `docs/PALCO-E-DECORACAO.md`. Falta só a arte de verdade (hoje são emoji).
-- **Torneio** — 6 itens na aba, escada 15/20/25/40/55/70 Emblemas. A vitrine
-  exibe os troféus de season realmente ganhos.
+- **Torneio** — **8** itens na aba, escada **8/12/15/20/25/40/55/70** Emblemas
+  (`utils/shop.ts:359`, `TOURNAMENT_ITEMS`). A vitrine exibe os troféus de season
+  realmente ganhos.
+  > ⚠️ Corrigido em 26/08/2026: esta linha dizia "6 itens, escada
+  > 15/20/25/40/55/70". Dois degraus baratos (8 e 12) foram acrescentados no
+  > começo da escada e ninguém atualizou aqui. O `CLAUDE.md` já estava certo — o
+  > registro vivo é que estava errado, que é o pior dos dois lugares para errar.
 - **Compra dentro do jogo** — `UnlockAccountModal` nos dois momentos em que a
   falta é sentida (limite de criação do grátis; árvore de demonstração na página
   de Evolução), mais ritual do oráculo pós-compra que troca só a criatura.
