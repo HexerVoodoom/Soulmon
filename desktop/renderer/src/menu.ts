@@ -4,7 +4,7 @@
 import './menu.css';
 import { petSprite } from './sprites';
 import {
-  loadState, saveState, feedsLeft, foodCount, firstFood,
+  loadState, saveState, foodCount, firstFood,
   type DesktopState,
 } from './state';
 import {
@@ -12,12 +12,12 @@ import {
   type RemoteSnapshot, type Wallet,
 } from './cloudSync';
 // As regras vêm do app, não de uma cópia — é o motivo de careRules.ts existir.
-import { feedFood, completeTask, type CareState, type FeedRefusal, type TaskState } from '../../../src/utils/careRules';
+import { completeTask, type FeedRefusal, type TaskState } from '../../../src/utils/careRules';
 // A fronteira de cuidado mora em `care.ts`, e não aqui, porque este módulo toca
 // o DOM no topo e por isso nenhum teste consegue importá-lo — foi assim que o
 // teto de carinho ficou por aparelho sem ninguém ver. Ver o cabeçalho de lá.
 import {
-  remoteRub, remoteFeed, localRub, remoteShower, remoteSleep, remoteWake,
+  remoteRub, remoteFeed, localRub, localFeed, remoteShower, remoteSleep, remoteWake,
 } from './care';
 import { eventPhrase } from './phrases';
 
@@ -444,20 +444,23 @@ function doFeed() {
 
   if (!state.syncEmail) {
     // Sem conta a janela de 1h só pode ser a local — não há save onde escrevê-la.
-    if (feedsLeft(state) <= 0) {
-      status = eventPhrase('full', state.language);
-      render();
-      return;
-    }
-    const local = feedFood(state as unknown as CareState, emoji, state.feedTimes, Date.now());
+    //
+    // O pré-teste de `feedsLeft` saiu junto com a energia à mão: ele decidia
+    // "tá cheio" ANTES de `localFeed`, que decide a MESMA coisa (`hourly-limit`)
+    // com a mesma função do app. Duas portas para a mesma recusa, e a de fora
+    // sem o poda de timestamps que a de dentro faz.
+    const local = localFeed(state, emoji, Date.now());
+    state.feedTimes = local.feedTimes;
     if (local.refused) {
       status = eventPhrase(local.refused === 'no-stock' ? 'noFood' : 'full', state.language);
       render();
       return;
     }
-    state.foodInventory = local.state.foodInventory;
-    state.energy = Math.min(state.maxEnergy, state.energy + 1);
-    state.feedTimes = local.feedTimes;
+    state.foodInventory = local.foodInventory;
+    // A energia NÃO é recalculada aqui. Era, e era o footgun 9: `Math.min(
+    // state.maxEnergy, state.energy + 1)` reescrevia o teto e o passo que
+    // `feedFood` já aplica. Ver `localFeed`.
+    state.energy = local.energy;
     persist();
     status = eventPhrase('feed', state.language);
     window.soulmonDesktop?.sendEffect('🍖', status);

@@ -16,7 +16,7 @@
 // campos de ação local ficam claramente separados.
 import { STORAGE_KEY } from './config';
 import type { GenericLine } from './sprites';
-import { recentFeeds, feedsLeft as sharedFeedsLeft, type RubHealRecord } from '../../../src/utils/careRules';
+import type { RubHealRecord } from '../../../src/utils/careRules';
 
 /** Tarefa de hoje, vinda do save do app. O desktop NÃO cria tarefas. */
 export interface RemoteTask {
@@ -138,16 +138,13 @@ export function saveState(state: DesktopState): void {
   }
 }
 
-/**
- * Quantas comidas ainda cabem na janela de 1h.
- *
- * Também PODA os timestamps vencidos no estado (efeito colateral proposital:
- * sem isso a lista cresceria para sempre no localStorage).
- */
-export function feedsLeft(state: DesktopState, now = Date.now()): number {
-  state.feedTimes = recentFeeds(state.feedTimes, now);
-  return sharedFeedsLeft(state.feedTimes, now);
-}
+// `feedsLeft(state)` MORREU AQUI, e a ausência é a mensagem: enquanto ele
+// existia, o overlay tinha duas portas para a mesma recusa — este pré-teste e o
+// `hourly-limit` que a regra do app já devolve. `menu.ts` batia nas duas, e só a
+// de dentro podava os timestamps vencidos. Quem precisa da janela chama
+// `localFeed` (care.ts), que decide uma vez só. Se voltar a fazer falta para
+// DESENHAR (um contador na tela, por exemplo), importe `feedsLeft` de
+// `src/utils/careRules` direto — desenhar não é decidir.
 
 /** Total de comidas no bolso — o que a UI mostra. */
 export function foodCount(inventory: Record<string, number>): number {
