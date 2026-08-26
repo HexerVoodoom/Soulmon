@@ -54,7 +54,7 @@ export function useDailyReset({
   // whole app every second for a countdown string nothing displayed.
   useEffect(() => {
     const checkRollover = () => {
-      if (new Date().toDateString() !== gameState.lastResetDate) {
+      if (rolloverPendingFor(gameState.lastResetDate)) {
         performDailyReset();
       }
     };
@@ -63,4 +63,27 @@ export function useDailyReset({
     const interval = setInterval(checkRollover, 30000);
     return () => clearInterval(interval);
   }, [gameState.lastResetDate, performDailyReset]);
+
+  // A VIRADA COMO SINAL, para quem precisa não agir durante ela.
+  //
+  // Achado X-7: a regra 3 do §3.3 da spec de geração incremental ("nunca durante
+  // a virada do dia, o relatório, a cerimônia ou uma animação de cuidado") estava
+  // declarada e não implementada — o `busy` do `useSpriteGeneration` cobria três
+  // das quatro ocasiões, e o comentário no `App.tsx` dizia "as quatro".
+  //
+  // Devolvido daqui em vez de recalculado no `App.tsx` de propósito: o aviso no
+  // topo deste arquivo ("não reimplemente a lógica aqui — foi assim que o teste
+  // antigo passou a testar uma cópia") vale para fora também. Uma dona só.
+  //
+  // É `true` na janela entre a meia-noite civil e o commit do `computeDailyReset`
+  // — no máximo os 30s da cadência, mais o tempo do próprio setState.
+  return { rolloverPending: rolloverPendingFor(gameState.lastResetDate) };
+}
+
+/**
+ * A pergunta da virada, num lugar só: o dia de hoje já é outro em relação ao
+ * último reset commitado?
+ */
+export function rolloverPendingFor(lastResetDate: string | undefined): boolean {
+  return new Date().toDateString() !== lastResetDate;
 }

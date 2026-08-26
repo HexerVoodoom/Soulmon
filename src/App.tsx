@@ -597,6 +597,14 @@ export default function App() {
   const [fullSignal, setFullSignal] = useState(0);
   // Daily report: shown once per day, on the first open after the reset ran.
   const [showDailyReport, setShowDailyReport] = useState(false);
+  // A virada do dia. Subiu para ANTES da geração incremental porque o
+  // `rolloverPending` que ela devolve entra no `busy` do lote (X-7) -- ordem de
+  // hook, não de lógica: continua incondicional e única.
+  const { rolloverPending } = useDailyReset({
+    gameState,
+    setGameState,
+  });
+
   // ── Geração incremental de sprite (spec `soulmon-02/spec-geracao-incremental.md`)
   //    A regra não mora aqui: o gatilho é `utils/spriteTrigger.ts`, o acervo é
   //    `utils/spriteLibrary.ts`, e a forma-destino vem da MESMA
@@ -621,8 +629,14 @@ export default function App() {
     stages: gameState.soulmonStages,
     dayKey: dayKeyOf(new Date()),
     // As quatro regras de janela do §3.3: nada parte (e nada troca de rosto)
-    // durante a cerimônia, o relatório diário ou uma animação de cuidado.
-    busy: !!evolutionCeremony || showDailyReport || !!careEvent || !!feedAnim,
+    // durante a VIRADA DO DIA, a cerimônia, o relatório diário ou uma animação
+    // de cuidado.
+    //
+    // ⚠️ X-7: até 26/08/2026 este comentário dizia "as quatro" e enumerava três
+    // — a virada faltava no valor. O sinal vem do `useDailyReset`, dono único da
+    // regra, em vez de recalculado aqui: o próprio `useDailyReset.ts` avisa por
+    // escrito contra a segunda cópia.
+    busy: rolloverPending || !!evolutionCeremony || showDailyReport || !!careEvent || !!feedAnim,
     // NÃO é pré-checagem de tier (quem decide é o servidor): é o corte de quem
     // não tem árvore própria e portanto não teria prompt para mandar.
     enabled: !gameState.demoCharacterId && (gameState.soulmonStages?.length ?? 0) > 0,
@@ -896,10 +910,6 @@ export default function App() {
     isSleeping,
   });
 
-  useDailyReset({
-    gameState,
-    setGameState,
-  });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // TELEMETRIA (src/utils/telemetry.ts) — a fiação, e só ela.
