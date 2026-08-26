@@ -353,18 +353,39 @@ function fakeEnvStaleKV() {
   };
 }
 
-/** D1 falso com a restrição que importa: order_id é PRIMARY KEY. */
+/**
+ * D1 falso com a restrição que importa: order_id é PRIMARY KEY.
+ *
+ * Fala também o SQL de RETENÇÃO (`DELETE` do que venceu, `UPDATE` que renova o
+ * prazo), porque `claimOrderAtomic` emite os três. O que este bloco afere,
+ * porém, continua sendo só a ATOMICIDADE — o prazo tem arquivo próprio,
+ * `_entitlements.d1Retencao.test.js`.
+ */
 function fakeEnvD1() {
   const rows = new Map();
   const db = {
     prepare: (sql) => ({
       bind: (...args) => ({
         async run() {
-          if (!/^INSERT/.test(sql)) throw new Error('sql inesperado');
-          const [orderId, saveId, at] = args;
-          if (rows.has(orderId)) throw new Error('UNIQUE constraint failed');
-          rows.set(orderId, { save_id: saveId, claimed_at: at });
-          return { success: true };
+          if (/^INSERT/i.test(sql)) {
+            const [orderId, saveId, at, expiresAt] = args;
+            if (rows.has(orderId)) throw new Error('UNIQUE constraint failed');
+            rows.set(orderId, { save_id: saveId, claimed_at: at, expires_at: expiresAt ?? null });
+            return { success: true };
+          }
+          if (/^DELETE/i.test(sql)) {
+            const [orderId, agora] = args;
+            const row = rows.get(orderId);
+            if (row && row.expires_at !== null && row.expires_at <= agora) rows.delete(orderId);
+            return { success: true };
+          }
+          if (/^UPDATE/i.test(sql)) {
+            const [expiresAt, orderId] = args;
+            const row = rows.get(orderId);
+            if (row) row.expires_at = expiresAt;
+            return { success: true };
+          }
+          throw new Error('sql inesperado: ' + sql);
         },
         async first() {
           return rows.get(args[0]) ?? null;
