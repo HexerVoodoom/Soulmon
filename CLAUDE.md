@@ -28,6 +28,7 @@ via `language === 'pt-BR'`).
 
 ```bash
 npx tsc --noEmit     # typecheck — deve sair limpo (exit 0)
+npx tsc -p desktop/tsconfig.json --noEmit   # o overlay; roda em PR desde 3795020b
 npx vitest run       # testes — todos devem passar
 npm run build        # vite build + conversão PNG→WebP (dist/ é commitado!)
 ```
@@ -81,9 +82,9 @@ Repositório: `HexerVoodoom/Soulmon`.
 | Sistema | Regra |
 |---|---|
 | ❤️ Corações (HP) | Perde na virada do dia: `min(floor((1 − feitas/meta) × maxHP), MAX_HEARTS_LOST_PER_DAY)`, onde meta = `dailyGoalFor` = `min(PESO cadastrado no dia, requisito do estágio)`. **"Feitas" e "cadastradas" são PESO DE ESFORÇO, não contagem de itens** (hábito = `HABIT_WEIGHT` = 1; tarefa = seu `effort` 1–3; `someday`/`dropped` não entram). Os dois lados da razão usam a MESMA unidade — se o feito contasse itens e a meta contasse esforço, uma tarefa de projeto pediria 3 e entregaria 1, cobrando coração de quem fez 100%. Cumpriu o requisito (ou fez tudo que cadastrou) = não perde. **Teto de 1 coração por dia** — um dia ruim é um sinal, não uma sentença. **Ausência ≥2 dias não cobra nada** (`ABSENCE_FORGIVENESS_DAYS`): quem volta encontra saudade, não fatura. **Segunda-feira devolve 0.5** (`WEEKLY_RELIEF_HEARTS`) — o teto do estrago é 7 dias. HP aceita frações de 0.5. HP 0 → degeneração. |
-| 🫶 Carinho | Cura principal de HP. Esfregar o pet (pointer drag): ~2s = +0.5 coração, **máx. 1 coração/dia** (`careCaps.rubHeal` **no save**, ver 🧮 abaixo). Animação (explosão de corações) sempre toca. Alternativa: item **Coraçãozinho** (`💗`, comprado na loja ou dropado na masmorra) cura +1 coração ao ser usado na pastinha. |
+| 🫶 Carinho | Cura principal de HP. Esfregar o pet (pointer drag): ~2s = +0.5 coração, **máx. 1 coração/dia** (`careCaps.rubHeal` **no save**, ver 🧮 abaixo). Animação (explosão de corações) sempre toca. Alternativa: item **Coraçãozinho** (`💗`, comprado na loja ou dropado na masmorra) cura +1 coração ao ser usado na pastinha. **Dono único do USO de item especial: `src/utils/specialItemUse.ts`** (`specialRefusal`/`applySpecialItem`) — não é o `careUpdaters.ts`, porque aquele arquivo existe para guardar o TETO e item especial não tem teto. ⚠️ Até `dcbeb42d` a regra vivia em três updaters inline do `handleFeed`, e carregava a família de bug do X-6: a recusa de vida cheia era lida do `gameState` de FORA do updater, então **dois toques no mesmo lote do React** liam o mesmo estado, passavam a recusa duas vezes e a segunda passada decrementava o inventário para curar ZERO — 150 Bits queimados em silêncio. `applySpecialItem` reconfere a recusa sobre o `prev`. **Não reintroduza regra dentro de updater inline.** |
 | 🍎 Comida | Máx. **`MAX_STAGE_REQUIREMENT` por hora** (hoje **6**; janela deslizante, `careCaps.feedTimes` **no save**, ver 🧮 abaixo). O teto é **derivado** do maior requisito diário da escada (`FORM_REQUIREMENTS`), nunca um literal: era 5 contra um mega que precisa de 6 barras, e quem fechava as 6 tarefas numa sessão só não conseguia dar a 6ª comida — dia perfeito negado a quem fez 100%. Dá +1 energia + pontos de atributo (vírus/dado/vacina → galho de evolução). NÃO cura HP. Recusa = pet fala que está cheio (sem toast). Ganha-se comida completando atividades. Chips/coraçõezinhos NÃO contam nesse limite. |
-| 🧮 Onde os tetos moram | **No SAVE (`careCaps`), nunca no localStorage** — dono: `src/utils/careCaps.ts`. Enquanto os dois contadores moravam no aparelho, o mesmo jogador com PWA **e** APK tinha DOIS tetos: **2 corações/dia e 12 comidas/hora** em vez de 1 e 6. O teto existe como regra de CUIDADO, e um teto furável trocando de aparelho desfaz a regra. As REGRAS seguem em `careRules.ts` e não mudaram — mudou só de onde o estado vem; `careCaps.ts` não redeclara nenhuma constante de teto (há teste travando). A migração das chaves antigas é **idempotente** (união de `feedTimes`, `max` de `rubHeal.healed`), porque roda no save local **e** de novo quando a nuvem é adotada. ⚠️ **Isto fecha o furo só enquanto os aparelhos estiverem no MESMO save.** Dois aparelhos escrevendo em paralelo ainda dependem de save na nuvem confiável (fatia 1) — o último a gravar vence, e **quem vence não está decidido**. Ver `squad-alpha-runs/soulmon-02/builder/tetos-cuidado-no-save.md`. **O DIA de todo registro diário que mora no save é o DIA DO JOGADOR** (`src/utils/playerDay.ts`), em fuso FIXO gravado no save (`playerDayTz`) — nunca `new Date().toDateString()`, que é o dia do APARELHO e fazia dois celulares em fusos diferentes discordarem do nome do dia todo dia. Consumidores (verificados no código em 26/08/2026 — eram 4, hoje são **7 famílias**; a lista do cabeçalho de `src/utils/playerDay.ts:26-37` **foi atualizada em `d1bbf0ff`** e hoje cita as sete, então as duas fontes concordam — a régua VIVA continua sendo `playerDay.contract.test.ts`): **carinho** `careCaps.rubHeal` (`App.tsx:3091` → `rubDecision` em `:3098`) · **check-in** `lastCheckInDate` (escrita `App.tsx:2684` e `App.tsx:2694-2695`; trava de sessão `App.tsx:2668`; leitura `utils/rituals.ts:163`) · **humor** `moodLog[].date` (escrita `App.tsx:2618-2619`; leitura `App.tsx:4646`) · **cocô** `poopDrainCharge.day` (`utils/poopDrain.ts:87` e `:148`) · **brincar** `playLog` (`App.tsx:2319`, `utils/petNeeds.ts:376`, e a IIFE do `PlayCard` em `App.tsx:3835`) · **a manhã** `RestNight.date` / `restConstancy` (`utils/restWindow.ts:203`, `:274`, `:325`; o sonho da manhã em `App.tsx:2801`) · **o pesadelo** `nightmares.fought` (`utils/nightmares.ts:215`, `:260`, `:317`, `:333`; a onda em `App.tsx:2848`). **A comida NÃO entra**: o teto dela é por HORA e por janela deslizante (`careRules.ts:56`, `FOOD_LIMIT_PER_HOUR`), não por dia — `careCaps.feedTimes` são timestamps, e timestamp não tem nome de dia para discordar. ⚠️ **`dayKeyOf` (`habitRhythm.ts`) NÃO é isso e não pode virar isso** — é a chave do motor de hábitos, de `perfectDays`, da streak e do gatilho de virada; redefini-la dispararia virada espúria em todo save existente. Há guard de fiação no AST (`playerDay.contract.test.ts`). |
+| 🧮 Onde os tetos moram | **No SAVE (`careCaps`), nunca no localStorage** — dono: `src/utils/careCaps.ts`. Enquanto os dois contadores moravam no aparelho, o mesmo jogador com PWA **e** APK tinha DOIS tetos: **2 corações/dia e 12 comidas/hora** em vez de 1 e 6. O teto existe como regra de CUIDADO, e um teto furável trocando de aparelho desfaz a regra. As REGRAS seguem em `careRules.ts` e não mudaram — mudou só de onde o estado vem; `careCaps.ts` não redeclara nenhuma constante de teto (há teste travando). A migração das chaves antigas é **idempotente** (união de `feedTimes`, `max` de `rubHeal.healed`), porque roda no save local **e** de novo quando a nuvem é adotada. ⚠️ **Isto fecha o furo só enquanto os aparelhos estiverem no MESMO save.** Dois aparelhos escrevendo em paralelo ainda dependem de save na nuvem confiável (fatia 1) — o último a gravar vence, e **quem vence não está decidido**. Ver `squad-alpha-runs/soulmon-02/builder/tetos-cuidado-no-save.md`. **O DIA de todo registro diário que mora no save é o DIA DO JOGADOR** (`src/utils/playerDay.ts`), em fuso FIXO gravado no save (`playerDayTz`) — nunca `new Date().toDateString()`, que é o dia do APARELHO e fazia dois celulares em fusos diferentes discordarem do nome do dia todo dia. Consumidores (verificados no código em 26/08/2026 — eram 4, hoje são **7 famílias**; a lista do cabeçalho de `src/utils/playerDay.ts` **foi atualizada em `d1bbf0ff`** e hoje cita as sete, então as duas fontes concordam — a régua VIVA continua sendo `playerDay.contract.test.ts`). ⚠️ **As referências abaixo citam SÍMBOLO, não linha**, de propósito: elas já escorregaram três vezes num único dia — o endereço apodrece mais rápido que o número, e um `grep` pelo símbolo reencontra o alvo enquanto um número escorregado aponta para código não relacionado. **carinho** `careCaps.rubHeal` (→ `rubDecision` de `utils/careUpdaters`, chamado no `App.tsx`) · **check-in** `lastCheckInDate` (escrita e trava de sessão no `App.tsx`; leitura em `needsCheckIn`, `utils/rituals.ts`) · **humor** `moodLog[].date` (`recordMood`/`moodFor`) · **cocô** `poopDrainCharge.day` (`applyPoopDrain`/`cleanPoop`, `utils/poopDrain.ts`) · **brincar** `playLog` (`utils/petNeeds.ts` + a IIFE do `PlayCard` no `App.tsx`) · **a manhã** `RestNight.date` / `restConstancy` (`recordNight`, `utils/restWindow.ts`) · **o pesadelo** `nightmares.fought` (`utils/nightmares.ts`). Todas as sete passam por `playerDayKey(now, playerDayTz)` — é esse o `grep` que acha a família inteira. **A comida NÃO entra**: o teto dela é por HORA e por janela deslizante (`FOOD_LIMIT_PER_HOUR`, `careRules.ts`), não por dia — `careCaps.feedTimes` são timestamps, e timestamp não tem nome de dia para discordar. ⚠️ **`dayKeyOf` (`habitRhythm.ts`) NÃO é isso e não pode virar isso** — é a chave do motor de hábitos, de `perfectDays`, da streak e do gatilho de virada; redefini-la dispararia virada espúria em todo save existente. Há guard de fiação no AST (`playerDay.contract.test.ts`). |
 | ⚡ Energia | Enche só comendo, zera todo dia. **Barras de energia = requisito de tarefas do estágio** (`getMaxEnergyForStage` = `FORM_REQUIREMENTS.required`; ex.: rookie precisa de 4 tarefas → 4 barras). **Condição do dia perfeito: energia ≥ META DO DIA** (`dailyGoalFor`, hoje ponderada por esforço), e não ≥ requisito cru — comida vem de concluir tarefa, então num dia de meta 2 a energia máxima ALCANÇÁVEL é 2; cobrar 6 ali negava o dia perfeito a quem fez 100% da própria meta. As barras exibidas continuam sendo o requisito do estágio. |
 | ✨ Traço de nascimento | `utils/passives.ts`: todo pet nasce com UM traço sorteado (`petPassive` no GameState), visível em Estatísticas. **Todos são positivos** — traço negativo puniria por um dado que o jogador não jogou; a variedade é em ESPÉCIE, não em força (há teste travando). Guloso (+1 atributo/comida) · Carinhoso (carinho cura até 1,5/dia) · Teimoso (perde só 0,5 coração no dia ruim) · Sortudo (+5pp de coraçãozinho na masmorra) · Madrugador (cocô só a partir das 10h). Os efeitos são lidos **do estado**, nunca por parâmetro novo — é o que faz o desktop herdar sem uma segunda implementação. |
 | 🧭 O "porquê" do usuário | `soulGoal` e `soulStruggle`: duas perguntas abertas no onboarding, **antes de qualquer mecânica de jogo** (passos `GOAL_STEP`/`STRUGGLE_STEP`, ids negativos como `DEMO_PICK`, para não renumerar o ritual). Ambas puláveis — obrigar a escrever antes de ver o app é o jeito mais rápido de perder alguém. O `DailyReportModal` devolve o objetivo em dias perfeitos e no retorno. A página de Evolução mostra o **galho previsto** e, no empate, que é o ritmo que decide. |
@@ -139,9 +140,11 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
 
 ## Arquitetura
 
-- `src/App.tsx` (**~4700 linhas** — dizia "~1500" até 26/08/2026, e a diferença
-  importa: quem lê "1500" acha que cabe num contexto e lê o arquivo inteiro à
-  toa) — orquestra tudo: handlers (feed/pet/shower/sleep),
+- `src/App.tsx` (**4489 linhas**, medido em 26/08/2026 ao fim do dia — dizia
+  "~1500" de manhã e "~4700" à tarde; a diferença importa porque quem lê "1500"
+  acha que cabe num contexto e lê o arquivo inteiro à toa. Encolheu ~240 linhas
+  no dia: `dcbeb42d` tirou os três updaters inline de item especial e
+  `46a6e542`/`2bc9af3a` levaram regra para módulo puro) — orquestra tudo: handlers (feed/pet/shower/sleep),
   efeitos de jogo (dreno de cocô, sono automático, relatório), navegação de páginas.
 - `src/contexts/GameStateContext.tsx` — `GameState` + persistência: todo setGameState
   grava no localStorage (`digiapp_state_v3`) e agenda cloud save (3s debounce).
@@ -382,22 +385,52 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
    estado que não era o semeado).
 8. Sprites: importados via alias `figma:asset/<hash>.png` (mapa no `vite.config.ts`)
    → arquivos reais em `src/assets/`. `assetsInlineLimit: 0` (nunca inline base64).
-9. **Regra copiada = regra que diverge em silêncio.** O renderer do desktop
-   ainda reimplementa a derivação do `saveId` (`cloudSync.ts:59`, salt `soulmon:`)
-   e as tabelas de HP/energia (`cloudSync.ts:19-26`, `MAX_HP_BY_LEVEL` /
-   `ENERGY_BY_LEVEL`) — é TS puro e não carrega o bundle do jogo. Divergir não dá
-   erro nenhum: o overlay lê um save inexistente e mostra um bicho genérico. Já
-   aconteceu: o código veio do DigiApp com o salt `digiapp:`.
-   **Atualizado em 26/08/2026 (`f6fb5f30`):** as regras de CUIDADO deixaram de ser
-   cópia — o desktop agora **importa** `careRules`/`careUpdaters`/`playerDay` do
-   app através do adaptador `desktop/renderer/src/care.ts`, que não decide nada.
-   O motivo é o custo medido da cópia: o desktop estava atrasado em **SEIS**
-   consertos da família de cuidado (D-33, X-4, X-5, X-6, dia do jogador em fuso
-   fixo, janela de comida vinda do `prev`) — cópia de regra não diverge um pouco,
-   diverge em tudo. Os lugares onde as cópias restantes se encontram são
-   `cloudSync.test.ts`, `sprites.parity.test.ts` e `care.parity.test.ts`; se
-   copiar mais alguma regra pra lá, adicione o teste de paridade junto — mas
-   prefira **importar**, que é o precedente que passou a valer.
+9. **Regra copiada = regra que diverge em silêncio.** Estado em 26/08/2026, ao
+   fim do dia — **o que ainda é cópia mudou três vezes hoje, então leia a data**:
+   - **Sobrou a derivação do `saveId`, e ela tem TRÊS implementações**, em três
+     árvores com três ciclos de deploy: `emailToSaveId` em
+     `src/utils/cloudSave.ts` (app), em `desktop/renderer/src/cloudSync.ts`
+     (overlay) e a do servidor em `functions/api/_auth.js`. Regra:
+     `SHA-256("soulmon:" + e-mail normalizado)`, corte em 32 hex. Divergir não
+     dá erro nenhum — o overlay lê um save inexistente e mostra um bicho
+     genérico, e a do servidor devolve **403 para todo usuário autenticado**.
+     Já aconteceu: o código do desktop veio do DigiApp com o salt `digiapp:`.
+     Encontro travado, e **comportamental**, em
+     `functions/api/saveId.parity.test.js` (as três) e
+     `desktop/renderer/src/cloudSync.test.ts` (duas).
+   - ⚠️ **As tabelas de HP/energia NÃO são mais cópia** (`d56bba7a`). Este item
+     citava `MAX_HP_BY_LEVEL` / `ENERGY_BY_LEVEL` / uma `stageLevel` própria em
+     `cloudSync.ts`; as três foram apagadas e hoje o arquivo **importa**
+     `MAX_HP_BY_FORM`/`getStageLevel`/`getMaxEnergyForStage` de
+     `src/types/progression.ts`. A justificativa escrita da cópia ("importar
+     `types/progression` arrasta o roster legado da masmorra") era **falsa** —
+     aquele arquivo não importa nada. E a cópia custou comportamento: a
+     `stageLevel` do desktop lia só o prefixo do id e não caía em
+     `LEGACY_FORM_TIERS`, então um save antigo em `gaioumon` (mega) era
+     **rebaixado a rookie** no overlay — 3 corações em vez de 4 — e o
+     `maxHealthPoints` errado **voltava para o SAVE** em `normalizeForRules`,
+     fazendo `applyRub` cortar a cura do mega no teto de um rookie. Não
+     reintroduza a tabela.
+   - **As regras de CUIDADO deixaram de ser cópia** (`f6fb5f30`): o desktop
+     importa `careRules`/`careUpdaters`/`careCaps`/`playerDay`/`restWindow`/
+     `poopDrain` do app pelo adaptador `desktop/renderer/src/care.ts`, que não
+     decide nada. O motivo é o custo medido: o desktop estava atrasado em
+     **SEIS** consertos da família de cuidado (D-33, X-4, X-5, X-6, dia do
+     jogador em fuso fixo, janela de comida vinda do `prev`) — cópia de regra
+     não diverge um pouco, diverge em tudo.
+   - **A energia da comida também saiu** (`f6716ec5`): `menu.ts` recalculava
+     `Math.min(maxEnergy, energy + 1)` **depois** de `feedFood` já ter aplicado
+     o teto. E a cópia não era redundância inofensiva — ela mantinha
+     **invisível** um `as unknown as` que rodava sobre `undefined`
+     (`DesktopState` não tem `evolutionStage`, `energyPoints`, `virusPoints`
+     nem `totalXP`), devolvendo energia errada e atributos `NaN`. O `menu.ts`
+     jogava tudo fora e recalculava a energia à mão, então nada aparecia.
+     **Cópia pode estar encobrindo defeito, não só duplicando.**
+   - Os testes de paridade que sobraram: `cloudSync.test.ts`,
+     `sprites.parity.test.ts`, `care.parity.test.ts`,
+     `care.feed.parity.test.ts`, `care.banhoSono.parity.test.ts`. Se copiar
+     alguma regra pra lá, adicione o teste de paridade junto — mas prefira
+     **importar**, que é o precedente que passou a valer.
 10. **Dois sistemas de tema no mesmo CSS.** O app real alterna
     `[data-theme="light"|"dark"]` no `<html>` e define `--sm-*` para os dois. O
     `index.css` TAMBÉM carrega o scaffold shadcn importado do Figma
