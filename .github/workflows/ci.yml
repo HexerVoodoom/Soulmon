@@ -14,6 +14,18 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# MENOR PRIVILEGIO (S-6 da auditoria de suprimentos). Sem este bloco o
+# `GITHUB_TOKEN` do job herda o default da CONTA — que ninguem consegue ler pelo
+# repo (e Settings > Actions) e pode ser `write-all`. Este workflow so LE o
+# codigo e roda `tsc`/`vitest`: nao commita, nao abre PR, nao publica pacote,
+# nao toca em Release. `contents: read` e o teto exato.
+# ATENCAO ao copiar isto para outro workflow: `sync-irmaos.yml` PRECISA de
+# `contents: write` + `pull-requests: write` (ele empurra branch e abre PR) e
+# `desktop-build.yml` PRECISA de `contents: write` (publica o Release que
+# alimenta o auto-update). Trocar la por `read` quebra os dois em silencio.
+permissions:
+  contents: read
+
 # Push seguido de push na main: o run velho não interessa mais.
 # `main` nunca é cancelada no meio — vermelho na main tem que aparecer.
 concurrency:
@@ -27,10 +39,17 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - uses: actions/checkout@v4
+      # ACOES PRESAS POR SHA (S-6 da auditoria). Tag movel (`@v4`) e reapontavel
+      # pelo dono da action; o SHA nao e. As duas aqui sao do proprio GitHub —
+      # risco menor que o das actions de terceiro do `android-build.yml`, mas o
+      # repo passa a ter UMA regra so em vez de duas.
+      # O comentario com a versao ao lado do SHA e OBRIGATORIO: sem ele ninguem
+      # sabe o que esta preso nem como subir. Para atualizar:
+      #   curl -s https://api.github.com/repos/<owner>/<repo>/git/ref/tags/<tag>
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
           cache: 'npm'
@@ -96,16 +115,52 @@ jobs:
       - name: Install dependencies (npm ci — descarta o node_modules versionado)
         run: npm ci
 
-      # Verificação EXECUTADA, não confiança no exit code do npm: se a
-      # dependência de git falhar em silêncio (ou for podada), o gate tem que
-      # apontar a causa em vez de estourar 40 linhas adiante.
-      - name: Verificar que a dependência de git resolveu (class-system)
+      # ── ESTE STEP SUBSTITUI UM GATE QUE ESTAVA MORTO ─────────────────────
+      #
+      # O que estava aqui ate agora exigia `node_modules/class-system/package.json`
+      # e falhava com "class-system NAO instalou". Ele nao podia passar NUNCA:
+      # a dependencia de git saiu do `package.json` e do `package-lock.json`
+      # quando o `vendor/` entrou (ADR-002 §1, `docs/STATUS.md`). Conferido nesta
+      # maquina, e o comando esta colado no relatorio:
+      #   grep -c "class-system" package-lock.json  ->  0
+      #   grep -n  "class-system" package.json      ->  so o script `vendor:class-system`
+      #   ls node_modules/class-system              ->  No such file or directory
+      # Ou seja: `npm ci` instala exatamente o lock, o lock nao tem `class-system`,
+      # o arquivo nunca existe, o step sempre da exit 1 — e derruba junto os
+      # `tsc` e o `vitest` que vem DEPOIS dele, que sao o motivo de o workflow
+      # existir. Gate que sempre reprova e gate que alguem desliga.
+      #
+      # O QUE ENTRA NO LUGAR, e por que e a verificacao que importa hoje:
+      # o motor do Class-System agora entra como ARTEFATO COMMITADO em
+      # `vendor/class-system/index.js`, com procedencia declarada em
+      # `_provenance.json` (repo, ref, sha do commit irmao, bytes e sha256 do
+      # bundle). Nada no repo conferia esse sha256 — procedencia que ninguem
+      # recalcula e procedencia decorativa. Este step recalcula.
+      #
+      # 🔴 LE O BLOB DO GIT (`git show HEAD:...`), NAO O ARQUIVO DO DISCO.
+      # `core.autocrlf` transforma LF em CRLF no checkout do Windows e o arquivo
+      # do disco da OUTRO hash (medido: 232533 bytes no disco contra 226978 no
+      # blob, sha256 completamente diferente). Quem escrever isto lendo o disco
+      # cria um teste que reprova sozinho e vai ser desligado na semana seguinte.
+      # No runner ubuntu o disco bate — justamente por isso o erro passaria aqui
+      # e so apareceria na maquina do dono. Ler o blob e correto nos dois.
+      - name: Integridade do vendor (sha256 do blob x _provenance.json)
         run: |
-          if [ ! -f node_modules/class-system/package.json ]; then
-            echo "::error::class-system NÃO instalou. Se o repo irmão virou privado, crie o secret SIBLING_REPOS_TOKEN (PAT fine-grained, Contents:read em HexerVoodoom/Class-System)."
-            exit 1
-          fi
-          node -e "console.log('class-system', require('./node_modules/class-system/package.json').version)"
+          node -e '
+            const cp = require("child_process");
+            const crypto = require("crypto");
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync("vendor/class-system/_provenance.json", "utf8"));
+            const blob = cp.execFileSync("git", ["show", "HEAD:vendor/class-system/index.js"], { maxBuffer: 1 << 28 });
+            const sha = crypto.createHash("sha256").update(blob).digest("hex");
+            console.log("declarado:", p.bundleSha256, p.bundleBytes, "bytes  (Class-System @ " + p.sha + ")");
+            console.log("recalculado:", sha, blob.length, "bytes");
+            if (sha !== p.bundleSha256 || blob.length !== p.bundleBytes) {
+              console.error("::error::O bundle de vendor/class-system/index.js NAO bate com o sha256 declarado em _provenance.json. Ou o artefato foi editado a mao depois de gerado, ou a procedencia esta velha. O conserto e rodar `npm run vendor:class-system` JUNTO com `npm run sync:oracle-data` (os dois no MESMO SHA do clone irmao) e commitar os dois.");
+              process.exit(1);
+            }
+            console.log("OK: o vendor commitado e exatamente o que o script gerou.");
+          '
 
       # `tsc --noEmit` cobre SÓ `src/` (`tsconfig.json > include`).
       # O typecheck de `desktop/` é o step logo abaixo — leia o comentário dele

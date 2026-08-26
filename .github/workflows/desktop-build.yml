@@ -16,16 +16,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # Acoes presas por SHA (S-6 da auditoria de suprimentos). Tag movel como
+      # `@v4` pode ser reapontada pelo dono da action a qualquer momento, e o
+      # commit novo roda no runner que tem `contents: write` e publica o Release
+      # do auto-update. O comentario ao lado do SHA e OBRIGATORIO: sem ele
+      # ninguem consegue saber que versao esta presa nem como atualizar.
+      # Atualizar: `curl -s https://api.github.com/repos/<owner>/<repo>/git/ref/tags/<tag>`
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
 
-      - name: Install dependencies
+      # `npm ci`, nao `npm install` (S-1a da auditoria de suprimentos).
+      # `desktop/package-lock.json` EXISTE e estava sendo ignorado: com
+      # `npm install` todo `^` do `desktop/package.json` resolve NA HORA DO
+      # BUILD, entao dois builds do mesmo commit podiam empacotar arvores de
+      # dependencia diferentes. E o artefato daqui nao e um APK de teste: e o
+      # `.exe` que o `electron-updater` instala sozinho na maquina do jogador
+      # (`autoDownload`/`autoInstallOnAppQuit` em `desktop/electron/main.js`),
+      # sem assinatura Authenticode para barrar nada. Build de release tem que
+      # ser reproduzivel a partir do lock.
+      # Se o lock estiver dessincronizado do `package.json`, o `npm ci` FALHA de
+      # proposito (em vez de consertar em silencio) — o conserto e rodar
+      # `npm install` na maquina e commitar o lock.
+      - name: Install dependencies (npm ci — build de release reproduzivel)
         working-directory: desktop
-        run: npm install
+        run: npm ci
 
       - name: Typecheck renderer
         working-directory: desktop
@@ -40,7 +58,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: soulmon-desktop-windows
           path: |
