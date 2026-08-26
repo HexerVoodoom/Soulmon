@@ -117,6 +117,12 @@ export const AI_REFUSAL_MESSAGES = {
   },
 };
 
+/**
+ * Uma recusa. O `ok` é anotado como o LITERAL `false` porque o spread
+ * condicional da mensagem faz o TS inferir `boolean`, e aí a recusa deixa de
+ * casar com o lado negativo da união que `guardAiRequest` devolve.
+ * @returns {{ ok: false, status: number, reason: string, message?: object }}
+ */
 const refuse = (status, reason) => ({
   ok: false,
   status,
@@ -192,7 +198,10 @@ function formUsed(ent, formId) {
  *   contrário — que o cliente não mandava o campo. Ficou falso na fatia 2 e
  *   virou a 9ª divergência doc↔código do projeto, a 1ª criada pela própria
  *   squad. Há guard: `src/utils/spriteGen.contract.test.ts`, achado X-8.)
- * @returns {Promise<{ ok: true } | { ok: false, status: number, reason: string, message?: object }>}
+ * @returns {Promise<{ ok: true, release: (motivo: string) => Promise<void> } | { ok: false, status: number, reason: string, message?: object }>}
+ *   O `release` é o outro lado do par: a unidade sai debitada (a reserva precisa
+ *   estar escrita para valer contra concorrência), e o chamador a DEVOLVE quando
+ *   a geração não aconteceu. Ver `makeRelease` — recusa de conteúdo não devolve.
  */
 export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
   if (!env.DIGIAPP_SAVES) return refuse(500, 'storage-not-bound');
@@ -288,5 +297,58 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     return refuse(503, 'ai-quota-unavailable');
   }
 
-  return { ok: true };
+  return { ok: true, release: makeRelease(env, { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey }) };
+}
+
+/**
+ * Devolve a unidade RESERVADA quando a geração não aconteceu (achado **X-1** do
+ * gate da fatia 2).
+ *
+ * Por que o débito continua vindo ANTES da chamada: o KV não tem transação, e
+ * conferir-agora-debitar-depois abriria a janela em que duas requisições
+ * simultâneas passam pelo mesmo teto. A reserva tem de ser escrita para valer
+ * como reserva. O que faltava era o outro lado do par — a CONFIRMAÇÃO: sem ela,
+ * três 500 transitórios do provedor queimavam 3 das 26 gerações vitalícias e
+ * fechavam uma das 11 formas para sempre (`perFormLifetime: 3`), por uma imagem
+ * que nunca existiu e sem botão de recuperar.
+ *
+ * Regras desta devolução, todas deliberadas:
+ *
+ *  - **Recusa de conteúdo NÃO devolve.** O provedor foi chamado e cobrou; o teto
+ *    por forma existe justamente para limitar o loop de recusa. Quem decide é o
+ *    chamador — aqui só existe o mecanismo.
+ *  - **Idempotente.** Chamar duas vezes devolve uma vez só. Um `release` que
+ *    roda em dois caminhos de erro sobrepostos creditaria de graça.
+ *  - **Nunca abaixo de zero.** Relê o contador atual em vez de restaurar o valor
+ *    lido na reserva: entre a reserva e a devolução, outra requisição pode ter
+ *    debitado, e reescrever o valor antigo apagaria o débito dela.
+ *  - **Falha em silêncio, com log.** Devolução que não gravou deixa a unidade
+ *    queimada — é ruim, mas é o lado seguro: o erro que a causou já está a
+ *    caminho do cliente, e estourar aqui trocaria um 500 informativo por um
+ *    genérico.
+ */
+function makeRelease(env, ctx) {
+  let devolvida = false;
+  return async function release(motivo) {
+    if (devolvida) return;
+    devolvida = true;
+    const { saveId, bucket, units, formId, hasLifetime, hasFormCap, globalKey, globalTtl, accountKey } = ctx;
+    const menos = (n) => Math.max(0, n - units);
+    try {
+      if (hasLifetime || hasFormCap) {
+        // Mesma escrita única da reserva, pelo mesmo motivo: dois `put` abririam
+        // a janela em que a conta devolveu e a forma não.
+        const ent = await readEntitlement(env, saveId);
+        if (hasLifetime) ent.aiLifetime = { ...(ent.aiLifetime || {}), [bucket]: menos(lifetimeUsed(ent, bucket)) };
+        if (hasFormCap) ent.aiForms = { ...(ent.aiForms || {}), [formId]: menos(formUsed(ent, formId)) };
+        await writeEntitlement(env, saveId, ent);
+      }
+      const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
+      await env.DIGIAPP_SAVES.put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
+      await env.DIGIAPP_SAVES.put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
+      console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? '-'} — ${motivo}`);
+    } catch (err) {
+      console.error('aiGuard: falha ao devolver cota reservada', err?.message);
+    }
+  };
 }

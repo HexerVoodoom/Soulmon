@@ -33,8 +33,10 @@ describe('portão das rotas de IA', () => {
     expect(r.ok).toBe(false);
   });
 
-  it('libera dentro da cota', async () => {
-    expect(await guardAiRequest(req(), env, 'chat', SAVE)).toEqual({ ok: true });
+  it('libera dentro da cota, e entrega o release do par reserva/confirmação (X-1)', async () => {
+    const gate = await guardAiRequest(req(), env, 'chat', SAVE);
+    expect(gate.ok).toBe(true);
+    expect(typeof gate.release, 'quem reserva precisa poder devolver').toBe('function');
   });
 
   it('bloqueia ao estourar a cota da conta', async () => {

@@ -218,6 +218,14 @@ export async function onRequestPost({ request, env }) {
       const canRetry =
         typeof promptFallback === 'string' && promptFallback.length > 0 && promptFallback !== prompt;
       if (!canRetry || !isRefusal(err)) {
+        // X-1: a unidade foi RESERVADA antes da chamada (o KV não tem transação
+        // e reserva não-escrita não segura concorrência). Como não saiu imagem
+        // nenhuma e o motivo NÃO foi política de conteúdo, ela volta.
+        //
+        // Recusa sem prompt de reserva (`!canRetry && isRefusal`) NÃO volta: o
+        // provedor foi chamado e cobrou, e é esse caso que o teto por forma
+        // existe para limitar.
+        if (!isRefusal(err)) await gate.release(err.notConfigured ? 'provedor não configurado' : `falha do provedor: ${err.message}`);
         if (err.notConfigured) {
           return Response.json({ error: err.message }, { status: 503, headers: CORS });
         }
@@ -236,8 +244,15 @@ export async function onRequestPost({ request, env }) {
         );
       }
       console.warn('Prompt com referências recusado, refazendo sem elas:', err.message);
-      const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
-      return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS });
+      try {
+        const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
+        return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS });
+      } catch (err2) {
+        // Mesma regra da 1ª tentativa, aplicada à unidade EXTRA. A unidade da 1ª
+        // segue debitada: aquela foi uma recusa de conteúdo, e recusa custa.
+        if (!isRefusal(err2)) await extra.release(`falha do provedor na refeitura: ${err2.message}`);
+        throw err2;
+      }
     }
   } catch (err) {
     console.error('generate-sprite error:', err);
