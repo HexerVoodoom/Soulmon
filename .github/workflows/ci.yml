@@ -108,10 +108,59 @@ jobs:
           node -e "console.log('class-system', require('./node_modules/class-system/package.json').version)"
 
       # `tsc --noEmit` cobre SÓ `src/` (`tsconfig.json > include`).
-      # `desktop/` tem tsconfig próprio e é checado em `desktop-build.yml:30`,
-      # mas só quando o push toca nos paths dele.
+      # O typecheck de `desktop/` é o step logo abaixo — leia o comentário dele
+      # antes de concluir que é duplicata do `desktop-build.yml`.
       - name: Typecheck do app (npx tsc --noEmit — só src/)
         run: npx tsc --noEmit
+
+      # ── O BURACO QUE ESTE STEP FECHA (medido, não suposto) ────────────────
+      #
+      # O `desktop/renderer` DEIXOU de reimplementar as regras de cuidado e
+      # passou a IMPORTAR do app (`desktop/renderer/src/care.ts:20-28` puxa
+      # `src/utils/careUpdaters`, `careRules`, `playerDay`, `restWindow`;
+      # `menu.ts`, `state.ts`, `sprites.ts` e os testes puxam mais). Isso é o
+      # conserto certo do footgun 9 — e, de quebra, criou um acoplamento novo:
+      # mudar assinatura em `src/utils/careRules.ts` agora pode quebrar o
+      # overlay.
+      #
+      # O que JÁ estava coberto, e por isso NÃO se repete aqui:
+      #  • os TESTES do desktop rodam no `npx vitest run` da raiz desde sempre —
+      #    `vitest.config.ts > include` lista `desktop/renderer/**/*.test.ts`.
+      #    Medido: `npx vitest run desktop/renderer` = 6 arquivos, 113 testes.
+      #    Ou seja: "não existe CI do desktop" era exagero. O buraco era menor.
+      #  • o BUILD do Electron (`desktop-build.yml`) é caro (windows-latest,
+      #    `npm install` próprio, electron-builder, publica Release) e não tem o
+      #    que fazer num PR. Continua onde está.
+      #
+      # O que faltava, e é EXATAMENTE isto: `tsc -p desktop/tsconfig.json`.
+      # Ele só rodava em `desktop-build.yml:30`, que dispara em `push: main` E
+      # com filtro de `paths` (`desktop/**`, `src/utils/sprites.ts`,
+      # `src/assets/**`). `src/utils/careRules.ts` NÃO está nessa lista — logo
+      # um commit que quebrasse a assinatura importada por `care.ts` não
+      # acendia nem no PR nem no push da main. Era invisível dos dois lados.
+      #
+      # POR QUE É BARATO: `desktop/tsconfig.json` só inclui
+      # `renderer/**/*.ts`, e a única dependência externa desses arquivos é
+      # `vitest` (`types: ["vite/client"]`), que já veio no `npm ci` da raiz.
+      # NÃO precisa de `npm install` dentro de `desktop/` — verificado com
+      # `desktop/node_modules` INEXISTENTE na máquina: resolve tudo pela raiz.
+      # Medido local: 2,4s. Sem segredo, roda em fork e em PR de fora.
+      #
+      # NOTA sobre versão: aqui roda o TypeScript da raiz (6.0.3); o
+      # `desktop-build.yml` roda o do `desktop/package.json` (^5.6.3). A
+      # divergência é aceita de propósito — este gate é o mais NOVO, então
+      # falha aqui e passa lá significa código que vai quebrar quando o desktop
+      # subir de versão. O contrário (passa aqui, falha lá) seria o problema, e
+      # o build da main continua sendo a rede para isso.
+      #
+      # A mensagem de erro é explícita porque quem abre o PR provavelmente mexeu
+      # em `src/utils/` e não faz ideia de que o overlay depende disso.
+      - name: Typecheck do overlay desktop (desktop/tsconfig.json)
+        run: |
+          if ! npx tsc -p desktop/tsconfig.json --noEmit; then
+            echo "::error::O typecheck do OVERLAY DESKTOP quebrou. Ele importa regras de src/utils/ (careRules, careUpdaters, playerDay, restWindow, sprites, cloudSave, types/progression) via desktop/renderer/src/. Se voce mudou assinatura/tipo em src/utils/, atualize tambem desktop/renderer/src/. Reproduza local com: npx tsc -p desktop/tsconfig.json --noEmit"
+            exit 1
+          fi
 
       # Servidor: `functions/` e `workers/` são JS e NÃO entravam em typecheck
       # nenhum — inclusive `_entitlements.js`/`_billing.js` (dinheiro) e
