@@ -101,12 +101,12 @@ describe('retentativa manual — o botão passa a fazer alguma coisa', () => {
   });
 
   it('com o cooldown vencido, o gesto chama a geração UMA vez e grava o sprite', async () => {
-    requestSprite.mockResolvedValue({ image: 'data:img', provider: 'teste' });
+    requestSprite.mockResolvedValue({ image: 'data:image/png;base64,AAA', provider: 'teste' });
     const { hook, acervo } = montar({ library: comFalhaAuth(SPRITE_MANUAL_COOLDOWN_MS) });
     act(() => { hook.result.current.retry(FORMA); });
     await ocioso();
     expect(requestSprite).toHaveBeenCalledTimes(1);
-    expect(acervo().sprites[FORMA]?.url).toBe('data:img');
+    expect(acervo().sprites[FORMA]?.url).toBe('data:image/png;base64,AAA');
   });
 
   it('DENTRO do cooldown de 60 s não gasta chamada nenhuma', async () => {
@@ -137,7 +137,7 @@ describe('retentativa manual — o botão passa a fazer alguma coisa', () => {
   });
 
   it('dois toques seguidos não viram duas gerações (um lote por vez, serial)', async () => {
-    requestSprite.mockResolvedValue({ image: 'data:img', provider: 'teste' });
+    requestSprite.mockResolvedValue({ image: 'data:image/png;base64,AAA', provider: 'teste' });
     const { hook } = montar({ library: comFalhaAuth(SPRITE_MANUAL_COOLDOWN_MS) });
     act(() => { hook.result.current.retry(FORMA); hook.result.current.retry(FORMA); });
     await ocioso();

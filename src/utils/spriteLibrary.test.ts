@@ -10,7 +10,7 @@ import {
   emptySpriteLibrary, normalizeSpriteLibrary, recordSprite, recordFailure,
   displaySprite, hasSprite, tuneVisor, revertVisor, autoTuneDue, cardState,
   canManualRetry, isAccountCapped, isFormCapped,
-  SPRITE_MANUAL_COOLDOWN_MS,
+  SPRITE_MANUAL_COOLDOWN_MS, isSafeSpriteUrl,
 } from './spriteLibrary';
 import { spriteFailText } from './spriteCopy';
 
@@ -189,5 +189,100 @@ describe('401 e 403 no acervo: nao sao teto, e nao ficam mudos', () => {
     for (const kind of ['offline', 'error', 'form-cap', 'lifetime-cap', 'daily-limit', 'budget'] as const) {
       expect(spriteFailText(kind, 'pt-BR')).toBeNull();
     }
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// F-1 (auditoria-cliente.md) — a `url` do acervo vira `<img src>`
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// **Por que estes testes existem, e por que NÃO são testes de XSS.**
+//
+// O caminho é: `POST /api/save` (hoje fail-open, N-1 da `auditoria-rotas.md`)
+// → `normalizeSpriteLibrary` → `displaySprite` → `<img src>` na tela principal
+// (`CompanionHUD`) e na aba Evolução (`EvolutionPath`). Quem escolhe o JSON do
+// save escolhe a URL que o navegador da vítima busca.
+//
+// O que NÃO acontece: `javascript:`, `data:text/html` e SVG-com-`<script>`
+// **não executam** em `<img src>` — `<img>` não é sink de navegação e SVG só
+// roteia script em contexto de documento. Chamar isto de XSS seria falso
+// positivo, e a auditoria recusa esse rótulo de propósito.
+//
+// O que acontece: **beacon**. Uma URL sob controle do atacante dispara um GET a
+// cada render, entregando IP, User-Agent, `Accept-Language` e carimbo de hora —
+// e o visor **não tem estado de erro por spec** (§2.1), então uma URL que nunca
+// responde é invisível para a vítima. É rastreio silencioso e persistente,
+// porque mora no save da nuvem e sobrevive a logout e troca de aparelho.
+//
+// O conserto é do tamanho do problema: allowlist de **esquema** no ponto de
+// normalização que já existe. Fechar o beacon inteiro exige allowlist de HOST,
+// que depende de saber o host do provedor — declarado como próximo passo.
+describe('F-1: allowlist de esquema na URL do sprite', () => {
+  const hostis = [
+    'javascript:alert(1)',
+    'JaVaScRiPt:alert(1)',                 // esquema é case-insensitive
+    ' \n\tjavascript:alert(1)',            // o navegador apara C0/espaço antes de resolver
+    'java\tscript:alert(1)',               // e ignora TAB/LF dentro do esquema
+    'vbscript:msgbox(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'data:image/svg+xml;base64,PHN2Zz48c2NyaXB0Lz48L3N2Zz4=', // nenhum caminho legítimo produz SVG
+    'http://evil.example/x.png',           // texto claro: nenhum provedor nosso usa
+    'file:///C:/Windows/win.ini',
+    'blob:https://evil.example/abcd',      // hoje nenhum código nosso cria blob de sprite
+    '//evil.example/x.png',                // relativo a esquema: herda https e vaza igual
+    '',
+  ];
+
+  it.each(hostis)('descarta a entrada com url hostil: %j', (url) => {
+    const lib = normalizeSpriteLibrary({ sprites: { rookie: { url, formId: 'rookie', at: 1 } } });
+    expect(lib.sprites['rookie']).toBeUndefined();
+    // E o piso continua sendo a arte de reserva, nunca um erro (Invariante nº 1).
+    expect(displaySprite(lib, 'rookie')).toBeNull();
+  });
+
+  // Sem estes dois o teste passaria por acidente com uma função que rejeita tudo —
+  // e aí o Gemini (data URL) e o Higgsfield (URL remota) parariam em silêncio.
+  const legitimas = [
+    'data:image/png;base64,iVBORw0KGgo=',                 // Gemini: generate-sprite.js:137
+    'data:image/jpeg;base64,/9j/4AAQ',                    // idem, outro mime do Gemini
+    'https://platform.higgsfield.ai/results/abc.png',      // Higgsfield: HF_BASE
+    'https://cdn/rookie.png',
+  ];
+
+  it.each(legitimas)('preserva a url legítima: %j', (url) => {
+    const lib = normalizeSpriteLibrary({ sprites: { rookie: { url, formId: 'rookie', at: 1 } } });
+    expect(lib.sprites['rookie']?.url).toBe(url);
+    expect(displaySprite(lib, 'rookie')?.url).toBe(url);
+  });
+
+  it('a entrada hostil não contamina as irmãs — descarta UMA, mantém as outras', () => {
+    const lib = normalizeSpriteLibrary({
+      sprites: {
+        rookie: { url: 'https://cdn/rookie.png', formId: 'rookie', at: 1 },
+        ultra: { url: 'javascript:alert(1)', formId: 'ultra', at: 2 },
+      },
+    });
+    expect(lib.sprites['rookie']).toBeDefined();
+    expect(lib.sprites['ultra']).toBeUndefined();
+  });
+
+  // O outro caminho: a resposta do servidor entra no acervo por `recordSprite`
+  // SEM passar por `normalizeSpriteLibrary` (useSpriteGeneration.ts:147 grava
+  // `url: image` direto). Validar só na normalização deixaria essa porta aberta
+  // até o primeiro reload — que é exatamente o "campo extra sobrevive à
+  // tipagem TS" que a auditoria manda cobrir.
+  it('recordSprite recusa url fora da allowlist e mantém o acervo intacto', () => {
+    const antes = recordSprite(emptySpriteLibrary(), entry('rookie'), { adopt: 'now' });
+    const depois = recordSprite(antes, { url: 'javascript:alert(1)', formId: 'ultra', at: 5 }, { adopt: 'now' });
+    expect(depois.sprites['ultra']).toBeUndefined();
+    expect(depois.sprites['rookie']).toBeDefined();
+    expect(depois).toEqual(antes);
+  });
+
+  it('isSafeSpriteUrl é o guarda reutilizável, e responde a não-string', () => {
+    expect(isSafeSpriteUrl(42)).toBe(false);
+    expect(isSafeSpriteUrl(null)).toBe(false);
+    expect(isSafeSpriteUrl('https://cdn/x.png')).toBe(true);
+    expect(isSafeSpriteUrl('data:image/png;base64,AAA')).toBe(true);
   });
 });

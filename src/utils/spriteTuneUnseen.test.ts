@@ -28,7 +28,7 @@ const SRC = path.resolve(__dirname, '..');
 const FORM = 'champion-data';
 
 const comSprite = (formId: string) =>
-  recordSprite(emptySpriteLibrary(), { url: `u/${formId}`, formId, at: 1_000 }, { adopt: 'ask' });
+  recordSprite(emptySpriteLibrary(), { url: `https://cdn/${formId}.png`, formId, at: 1_000 }, { adopt: 'ask' });
 
 const ctx = (unseen: boolean) => ({
   generating: [] as string[], imminent: false, reachable: true, online: true, unseen,

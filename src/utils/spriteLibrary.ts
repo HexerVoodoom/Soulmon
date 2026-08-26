@@ -104,6 +104,74 @@ export const SPRITE_MANUAL_RETRY_CAP = 3;
 /** Cooldown do botão manual, em ms (idem §6). */
 export const SPRITE_MANUAL_COOLDOWN_MS = 60_000;
 
+// ── F-1: allowlist de ESQUEMA da URL do sprite ──────────────────────────────
+//
+// **O caminho, confirmado ponta a ponta** (`auditoria-cliente.md` F-1):
+// `POST /api/save` (fail-open hoje — N-1 da `auditoria-rotas.md`) →
+// `normalizeSpriteLibrary` → `GameStateContext` → `displaySprite` →
+// `<img src>` em `CompanionHUD.tsx` (tela principal, TODA sessão) e em
+// `EvolutionPath.tsx` (aba Evolução). Quem escreve o save escreve a URL que o
+// navegador da vítima vai buscar.
+//
+// **Isto NÃO é XSS, e o rótulo importa.** Em `<img src>` não executa
+// `javascript:`, não executa `data:text/html`, e SVG com `<script>` dentro
+// também não — SVG só roteia script em contexto de documento (`<object>`,
+// `<iframe>`, navegação direta). `<img>` não é sink de navegação. Chamar isto
+// de XSS seria falso positivo, e quem lesse depois gastaria pânico no lugar
+// errado.
+//
+// **O que é, então: BEACON.** Uma URL sob controle do atacante dispara um GET
+// a cada render e entrega IP, User-Agent, `Accept-Language` e um carimbo de
+// hora — sinal de presença por vítima. E o visor **não tem estado de erro por
+// spec** (`spec-geracao-incremental.md` §2.1: a reserva é o piso, nunca um
+// erro), então uma URL que jamais responde não produz **nenhum** sinal visível.
+// Como mora no save da nuvem, sobrevive a logout, troca de aparelho e
+// reinstalação. Subestimar também é erro.
+//
+// **Os esquemas que passam, e o porquê de cada um:**
+//
+//  - `data:image/{png,jpeg,jpg,gif,webp,avif};base64,` — **caminho Gemini**,
+//    que é real: `functions/api/generate-sprite.js:137` devolve
+//    `data:${mime};base64,${inline.data}`. E é também o formato de saída do
+//    Pixelador (`pixelizeDataUrl` → `canvas.toDataURL('image/png')`). Bloquear
+//    `data:` desligaria o Gemini inteiro em silêncio. `svg+xml` fica **de
+//    fora** de propósito: nenhum caminho legítimo produz SVG, e recusar o que
+//    ninguém usa é gratuito.
+//  - `https://` — **caminho Higgsfield**, o provedor primário
+//    (`HF_BASE = 'https://platform.higgsfield.ai'`), que devolve URL remota.
+//
+// **O que NÃO passa, e o porquê:** `javascript:`/`vbscript:` (inertes aqui,
+// mas não há motivo nenhum para guardar um no save); `data:` de qualquer tipo
+// que não seja imagem; `http:` (texto claro — nenhum provedor nosso usa, e a
+// página é https, então seria mixed content de todo jeito); `file:`;
+// `blob:` (a CSP permite, mas **hoje nenhum código nosso cria** blob de
+// sprite — quando o Cache Storage virar origem de URL, entra aqui com teste);
+// e `//host` (relativo a esquema: herda https e vaza igual).
+//
+// **LIMITE CONHECIDO, declarado de propósito:** `https://atacante.example/x.png`
+// **ainda passa**. Fechar o beacon por completo exige allowlist de **HOST**, e
+// o host do provedor é pergunta em aberto na auditoria. Próximo passo, com
+// dono: fixar o host aqui e fechar o `img-src ... https:` do `_headers`.
+const SPRITE_URL_PERMITIDA = /^(?:https:\/\/[^/?#\s]+(?:[/?#]|$)|data:image\/(?:png|jpe?g|gif|webp|avif);base64,)/i;
+
+/**
+ * A URL pode virar `<img src>`? Guarda ÚNICA — `normalizeSpriteLibrary`,
+ * `recordSprite` e `spriteGen.loadImage` compartilham esta função em vez de
+ * cada um ter o seu dicionário de esquema, que é o mesmo motivo pelo qual
+ * `SpriteFailKind` empresta os nomes de `cloudSave.ts`: duas listas para a
+ * mesma decisão divergem em silêncio.
+ *
+ * A limpeza antes do teste não é firula: o navegador **apara** espaço e
+ * controles C0 nas pontas do atributo e **ignora** TAB/LF/CR dentro do
+ * esquema, então `java<TAB>script:` e `<LF>javascript:` chegam ao parser como
+ * `javascript:`. Testar a string crua deixaria os dois passarem.
+ */
+export function isSafeSpriteUrl(url: unknown): url is string {
+  if (typeof url !== 'string') return false;
+  const limpa = url.replace(/[\t\n\r]/g, '').replace(/^[\u0000-\u0020]+|[\u0000-\u0020]+$/g, '');
+  return SPRITE_URL_PERMITIDA.test(limpa);
+}
+
 export function emptySpriteLibrary(): SpriteLibrary {
   return { sprites: {}, failures: {}, pendingTune: null, reverted: [], tunedUnseen: [] };
 }
@@ -118,7 +186,10 @@ export function normalizeSpriteLibrary(raw: unknown): SpriteLibrary {
   const r = raw as Partial<SpriteLibrary>;
   if (r.sprites && typeof r.sprites === 'object') {
     for (const [formId, entry] of Object.entries(r.sprites)) {
-      if (entry && typeof entry === 'object' && typeof (entry as SpriteEntry).url === 'string') {
+      // F-1: `typeof url === 'string'` sozinho deixava passar qualquer
+      // esquema. A entrada recusada simplesmente NÃO entra no acervo — e
+      // cair na arte de reserva é o piso do Invariante nº 1, nunca um erro.
+      if (entry && typeof entry === 'object' && isSafeSpriteUrl((entry as SpriteEntry).url)) {
         const e = entry as SpriteEntry;
         lib.sprites[formId] = {
           url: e.url,
@@ -215,6 +286,10 @@ export function recordSprite(
   entry: SpriteEntry,
   opts: { adopt: 'now' | 'ask'; dayKey?: string },
 ): SpriteLibrary {
+  // F-1, segunda porta: a resposta do servidor entra aqui SEM passar pela
+  // normalização (`useSpriteGeneration.ts` grava `url: image` direto), e só
+  // seria validada no reload seguinte. Mesma guarda, mesmo lugar da decisão.
+  if (!isSafeSpriteUrl(entry.url)) return lib;
   const sprites = { ...lib.sprites, [entry.formId]: { ...entry } };
   const failures = { ...lib.failures };
   delete failures[entry.formId];
