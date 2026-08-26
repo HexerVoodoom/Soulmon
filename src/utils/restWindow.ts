@@ -67,6 +67,7 @@ import {
   REST_WINDOW_DAYS,
 } from '../types/taskModel';
 import { currentSeason } from './seasons';
+import { playerDayKey, anchorOffsetMs, type PlayerDayAnchor } from './playerDay';
 
 // ---------------------------------------------------------------------------
 // Modelo
@@ -80,7 +81,15 @@ export interface RestWindow {
 }
 
 export interface RestNight {
-  /** dayKey da MANHÃ (`Date.prototype.toDateString`). */
+  /**
+   * dayKey da MANHÃ, no DIA DO JOGADOR (`utils/playerDay.ts`) — mesma FORMA de
+   * `toDateString()`, mas ancorada num fuso fixo que mora no save.
+   *
+   * A noite é um fato de INSTANTE; o NOME dela era do aparelho. Dois aparelhos
+   * em fusos diferentes batizavam a MESMA noite com duas manhãs diferentes, e
+   * a idempotência de `recordNight` (que é por dayKey) não alcançava a segunda:
+   * uma noite, dois registros. Ver o cabeçalho de `recordNight`.
+   */
   date: string;
   /** ISO — quando o pet foi dormir. */
   sleptAt?: string;
@@ -98,6 +107,17 @@ export interface RestState {
   dreams: string[];
   /** O switch "não quero ver métricas" — esconde números, preserva prêmios. */
   hideMetrics?: boolean;
+  /**
+   * Fuso FIXO do dia do jogador (`utils/playerDay.ts`), lido do ESTADO e nunca
+   * por um parâmetro novo — mesma razão escrita em `PoopDrainState` e em
+   * `PetNeedsState`: parâmetro é coisa que quem chama esquece, e um chamador
+   * que esquecesse voltaria em SILÊNCIO ao dia do APARELHO, compilando. Vindo
+   * do estado, o desktop e o celular herdam a mesma âncora sem uma segunda
+   * fiação — e `nightmares.ts`, que é a camada de cima desta, lê a âncora
+   * DAQUI em vez de guardar uma cópia própria (duas âncoras seriam duas
+   * verdades sobre qual noite é hoje).
+   */
+  playerDayTz?: PlayerDayAnchor;
 }
 
 export const MAX_NIGHTS = 30;
@@ -173,8 +193,30 @@ export function isWithinWindow(
 // 2. Registro das noites
 // ---------------------------------------------------------------------------
 
-function dayKey(d: Date): string {
-  return d.toDateString();
+/**
+ * O nome do dia — agora o do JOGADOR, não o do APARELHO.
+ *
+ * Sem âncora devolve exatamente `toDateString()`, byte a byte (é a garantia de
+ * `playerDayKey`), então save que ainda não migrou se comporta como sempre.
+ */
+function dayKey(d: Date, anchor?: PlayerDayAnchor): string {
+  return playerDayKey(d, anchor);
+}
+
+/**
+ * A hora de PAREDE do jogador em `at`.
+ *
+ * Existe porque `morningKey` decide "deitou de noite ou de madrugada?" por uma
+ * hora, e ler `getHours()` ali seria ler o relógio do aparelho depois de já ter
+ * ancorado a data — as duas metades da mesma decisão em réguas diferentes, que
+ * é como um conserto de fuso produz uma borda nova. O cálculo é o MESMO de
+ * `playerDayKey` (desloca o instante pelo offset da âncora e lê em UTC), para
+ * as duas leituras não poderem divergir.
+ */
+function playerHour(at: Date, anchor?: PlayerDayAnchor): number {
+  const offset = anchorOffsetMs(anchor, at);
+  if (offset === null) return at.getHours();
+  return new Date(at.getTime() + offset).getUTCHours();
 }
 
 function addDays(d: Date, n: number): Date {
@@ -190,9 +232,15 @@ function addDays(d: Date, n: number): Date {
  * madrugada (antes do meio-dia) → a manhã já é a do mesmo dia civil. Se houver
  * `wokeAt`, ele manda: é literalmente a manhã.
  */
-export function morningKey(sleptAt: Date, wokeAt?: Date): string {
-  if (wokeAt) return dayKey(wokeAt);
-  return sleptAt.getHours() >= 12 ? dayKey(addDays(sleptAt, 1)) : dayKey(sleptAt);
+export function morningKey(
+  sleptAt: Date,
+  wokeAt?: Date,
+  anchor?: PlayerDayAnchor,
+): string {
+  if (wokeAt) return dayKey(wokeAt, anchor);
+  return playerHour(sleptAt, anchor) >= 12
+    ? dayKey(addDays(sleptAt, 1), anchor)
+    : dayKey(sleptAt, anchor);
 }
 
 /**
@@ -200,11 +248,30 @@ export function morningKey(sleptAt: Date, wokeAt?: Date): string {
  * para a mesma manhã atualiza o registro, nunca cria um segundo. Poda em
  * `MAX_NIGHTS` mantendo as mais recentes.
  *
+ * ═══ POR QUE A MANHÃ É NOMEADA NO DIA DO JOGADOR ═══
+ *
+ * A noite é um fato de INSTANTE (`sleptAt`/`wokeAt` são ISO absolutos, e
+ * instante não tem fuso). O NOME dela, porém, saía de `toDateString()` — o dia
+ * do APARELHO. Enquanto o descanso vivia num aparelho só isso era correto por
+ * construção; com o `rest` no SAVE sincronizado, dois aparelhos em fusos
+ * diferentes batizam a MESMA noite com duas manhãs diferentes, e a
+ * idempotência acima — que é POR dayKey — não alcança a segunda: uma noite,
+ * dois registros.
+ *
+ * O preço não é cosmético. `restConstancy` conta noites REGISTRADAS na janela:
+ * uma noite duplicada entra duas vezes no denominador (e, se `onTime`, duas no
+ * numerador), o que distorce a razão de regularidade — a única régua que este
+ * módulo tem, e a que decide raridade de sonho e tier de pesadelo. Pior no
+ * caso torto: a segunda gravação pode carimbar `onTime` do outro relógio.
+ *
+ * Com a âncora do save, o nome vira função do INSTANTE e da ÂNCORA — e não de
+ * quem está segurando o celular. Dois aparelhos, uma noite, um registro.
+ *
  * Não existe caminho aqui que devolva penalidade: o pior resultado possível é
  * uma noite com `onTime: false`, que apenas não rende prêmio.
  */
 export function recordNight(state: RestState, sleptAt: Date, wokeAt?: Date): RestState {
-  const key = morningKey(sleptAt, wokeAt);
+  const key = morningKey(sleptAt, wokeAt, state.playerDayTz);
   const night: RestNight = {
     date: key,
     sleptAt: sleptAt.toISOString(),
@@ -255,7 +322,7 @@ export function restConstancy(
 ): RestConstancy {
   const days = Math.max(1, Math.round(windowDays));
   const keys = new Set<string>();
-  for (let i = 0; i < days; i++) keys.add(dayKey(addDays(now, -i)));
+  for (let i = 0; i < days; i++) keys.add(dayKey(addDays(now, -i), state?.playerDayTz));
 
   const inWindow = state.nights.filter((n) => keys.has(n.date));
   const onTime = inWindow.filter((n) => n.onTime).length;
