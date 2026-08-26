@@ -1142,7 +1142,29 @@ export const CompanionHUD = memo(function CompanionHUD({
                 <img
                   src={sprite}
                   alt={currentStage}
-                  className="object-contain"
+                  /* A OUTRA METADE DA SINTONIA (`spec-geracao-incremental.md`
+                     §2.1 e §2.3.1). A varredura de 400 ms já passava por cima
+                     deste sprite; a spec sempre pediu o PAR — "scanline de
+                     400 ms + fade de 120 ms reserva→próprio" —, e sem o fade a
+                     faixa anunciava uma troca que embaixo dela acontecia em
+                     corte seco. `.sm-visor-swap` é a MESMA classe da aba
+                     Evolução: nada novo no CSS, e o 120 ms continua sendo o
+                     token `--sm2-dur-tap`, nunca um literal.
+
+                     O `key` não é enfeite: sem ele o React reusa este `<img>`,
+                     a animação já terminou na montagem e a troca fica sem fade
+                     nenhum. Trocar a chave é o que faz o nó ser DESCARTADO e a
+                     animação recomeçar — há caso de teste comparando a
+                     referência do nó antes e depois, porque é a única forma
+                     observável disso sem layout.
+
+                     Movimento reduzido: o corte é a regra `.sm-visor-swap
+                     { animation: none !important }` dentro do bloco
+                     `SENTINELA-MOVIMENTO-REDUZIDO-CANONICO` do `index.css` —
+                     aqui, ao contrário da varredura, não se corta em JS, porque
+                     tirar a classe tiraria o elemento do alcance dessa regra. */
+                  className="object-contain sm-visor-swap"
+                  key={sprite}
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
