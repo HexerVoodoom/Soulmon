@@ -80,6 +80,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "orcamento": "node scripts/orcamento-de-tempo.mjs",
     "typecheck": "tsc --noEmit"
   }
 }

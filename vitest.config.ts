@@ -1,5 +1,9 @@
 import { defineConfig } from 'vitest/config';
 import viteConfig from './vite.config';
+// O NÚMERO do orçamento mora em `vitest.budget.mjs` porque tem dois leitores:
+// este arquivo (que o aplica) e `scripts/orcamento-de-tempo.mjs` (que afere
+// quem está perto dele). Ver o cabeçalho de lá.
+import { TEST_TIMEOUT_MS } from './vitest.budget.mjs';
 
 // FRONTEIRA: este arquivo é um config INDEPENDENTE do `vite.config.ts`. Os
 // aliases (`figma:asset/*`, `@/*`, os pacotes com versão no nome) vivem só lá,
@@ -39,10 +43,17 @@ export default defineConfig({
     // escolheu 15s pelo mesmo raciocínio, medindo 514ms. Alinhar o piso global
     // a ele evita duas réguas para a mesma pergunta.
     //
-    // ⚠️ DÍVIDA que este número NÃO paga: ninguém mediu quem mais está perto do
-    // teto. Falta o passe ordenando testes por tempo e uma regra de "teste acima
-    // de X% do orçamento é dívida nomeada".
-    testTimeout: 15_000,
+    // ✅ DÍVIDA PAGA (26/08/2026). O passe existe: `npm run orcamento` roda a
+    // suíte N vezes, ordena por PIOR caso e por INSTABILIDADE, e aplica a régua
+    // de `vitest.budget.mjs` (atenção 10% / dívida 25% / crítico 50%). Baseline
+    // medido em `squad-alpha-runs/soulmon-02/sweeper/orcamento-de-tempo.md`:
+    // pior caso 1248 ms = 8,3% do orçamento, ZERO testes acima de 10%.
+    //
+    // O passe NÃO virou teste da suíte, e a razão é medida: com o pior caso em
+    // 1248 ms e o fator de contenção de 4,4× medido no incidente de referência,
+    // um guard de relógio ficaria vermelho a ~5,5 s numa máquina carregada sem
+    // que nada tivesse piorado no código. Seria trocar um flake por outro.
+    testTimeout: TEST_TIMEOUT_MS,
     include: [
       'src/**/*.test.ts', 'src/**/*.test.tsx', 'functions/**/*.test.js', 'workers/**/*.test.js',
       // O renderer do desktop tem cópias de regras do app (derivação do
