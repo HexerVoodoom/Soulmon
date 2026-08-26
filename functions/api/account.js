@@ -23,6 +23,10 @@
 //  MINIMIZA     `ent:<saveId>` — some o que é USO (`aiLifetime`, `adDate`,
 //               `adCount`) e ficam os campos de DINHEIRO.
 //  SOBREVIVE    `ord:<orderId> -> saveId` e o `orderDetails` do entitlement.
+//               "Sobrevive" quer dizer à EXCLUSÃO, não ao tempo: desde a
+//               decisão de retenção do dono os dois têm prazo de 5 anos
+//               (`_entitlements.js:RETENTION_TTL_SECONDS`). A exclusão não
+//               toca na chave `ord:` — nem para apagar, nem para renovar.
 //               Motivo técnico, não jurídico: `ord:` é a trava que faz um
 //               comprovante valer por UMA conta (`_entitlements.js:claimOrder`).
 //               Apagá-lo faz um recibo virar N contas pagas — e, do lado do
@@ -45,7 +49,9 @@
 // (`del:<saveId>`, TTL 15 min) e o INVENTÁRIO do que será apagado;
 // `action=delete-confirm` só executa com aquele token. A UI vem depois.
 
-import { VALID_ID, ENT_PREFIX, ORDER_PREFIX, readEntitlement } from './_entitlements.js';
+import {
+  VALID_ID, ENT_PREFIX, ORDER_PREFIX, RETENTION_TTL_SECONDS, readEntitlement,
+} from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
 
 const CORS = {
@@ -325,7 +331,11 @@ async function handleDeleteConfirm(env, saveId, body) {
       adCount: 0,
       accountDeletedAt: Date.now(),
       updatedAt: Date.now(),
-    }));
+    }), { expirationTtl: RETENTION_TTL_SECONDS });
+    // ↑ O resíduo mínimo também tem prazo, e este é o único caso em que o prazo
+    // corre até o fim de verdade: depois da exclusão nada mais escreve neste
+    // registro, então nada mais o renova. Sem o TTL, o único artefato que
+    // sobrava de uma conta APAGADA seria justamente o imortal.
   }
 
   await kv.delete(DEL_PREFIX + saveId);

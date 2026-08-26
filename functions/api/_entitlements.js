@@ -19,6 +19,52 @@ export const ORDER_PREFIX = 'ord:';
 export const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 
 /**
+ * RETENÇÃO de `ent:` e `ord:` — **5 anos**, decisão do dono (item 3.1 do
+ * `GUIA-DO-DONO.md`). Até aqui os dois eram gravados sem TTL nenhum, ou seja:
+ * para sempre.
+ *
+ * O raciocínio dele, registrado aqui porque número de política sem o porquê
+ * vira número mágico na primeira refatoração: cinco anos cobrem o prazo do CDC
+ * para reclamação de vício/fato do produto e o prazo fiscal usual de guarda —
+ * e depois disso o dado some sozinho. É o MENOR prazo que ainda protege numa
+ * disputa de compra, e fecha a ponta solta de guardar indefinidamente um
+ * identificador derivado de e-mail.
+ *
+ * ## O prazo é RENOVADO a cada escrita, e isso é a metade que importa
+ *
+ * A pergunta que este TTL responde é **"essa conta ainda existe?"**, não
+ * "quando ela nasceu?". Mesmo precedente já decidido no cloud save
+ * (`save.js`), onde até uma escrita recusada renova: o que mantém o registro
+ * vivo é o SINAL DE VIDA, não o sucesso da operação.
+ *
+ * Isso não é detalhe de implementação — é o que impede o TTL de estragar duas
+ * coisas que dependem de `ent:` durar:
+ *
+ *  1. **O tier pago.** Um prazo fixo contado do nascimento tiraria o `paid` de
+ *     quem comprou e continua jogando, cinco anos depois, sem nada ter
+ *     acontecido. Isso não seria retenção de dados: seria tomar de volta o que
+ *     a pessoa pagou.
+ *  2. **O teto VITALÍCIO de IA** (`aiLifetime`/`aiForms`, ver `_aiGuard.js`,
+ *     que afirma em texto que "teto vitalício que expira não é vitalício").
+ *     Com renovação, o teto NÃO reseta para ninguém que jogue: toda geração de
+ *     sprite é uma escrita neste registro, e toda leitura de saldo de uma conta
+ *     com compra escreve a conferência de reembolso (`auditRefunds`, no máximo
+ *     1×/dia). O registro só morre depois de **5 anos de silêncio absoluto** —
+ *     e aí ele morre INTEIRO, não só o contador.
+ *
+ * O que sobra de reset é, então: quem some por cinco anos e volta chega como
+ * conta nova, com 26 gerações de novo (R$ 2,63 de custo). É consequência
+ * QUERIDA, não efeito colateral — quem apagou o rastro tem que poder recomeçar,
+ * e o direito pago volta pelo caminho que já existe (restaurar compra, que
+ * reverifica o recibo NA LOJA).
+ *
+ * ⚠️ O caminho **D1** de `claimOrder` (`order_claims`) NÃO tem TTL — banco não
+ * expira linha sozinho. Enquanto o D1 estiver ligado, a retenção do vínculo de
+ * recibo depende de uma limpeza que ainda não existe. Está endereçado ao dono.
+ */
+export const RETENTION_TTL_SECONDS = 5 * 365 * 24 * 60 * 60;
+
+/**
  * Portão de TIER para as rotas que gastam COGS de IA (hoje só a geração de
  * sprite, a mais cara do app).
  *
@@ -115,7 +161,14 @@ export async function readEntitlement(env, saveId) {
 
 export async function writeEntitlement(env, saveId, ent) {
   ent.updatedAt = Date.now();
-  await env.DIGIAPP_SAVES.put(ENT_PREFIX + saveId, JSON.stringify(ent));
+  // O TTL vai em TODA escrita, e não só na primeira: é assim que ele renova.
+  // Ver RETENTION_TTL_SECONDS — sem a renovação, o teto vitalício de IA e o
+  // tier pago passariam a expirar em 5 anos para quem nunca parou de jogar.
+  await env.DIGIAPP_SAVES.put(
+    ENT_PREFIX + saveId,
+    JSON.stringify(ent),
+    { expirationTtl: RETENTION_TTL_SECONDS },
+  );
   return ent;
 }
 
@@ -206,7 +259,16 @@ export async function claimOrder(env, saveId, orderId) {
   const key = ORDER_PREFIX + orderId;
   const owner = await env.DIGIAPP_SAVES.get(key);
   if (owner && owner !== saveId) return { ok: false, reason: 'order-in-use' };
-  if (!owner) await env.DIGIAPP_SAVES.put(key, saveId);
+  // Reivindicação nova OU do MESMO dono: as duas gravam, e a segunda existe só
+  // para RENOVAR o prazo. Reprocessar na mesma conta é o "restaurar compras" —
+  // um recibo que continua sendo exercido é um recibo vivo, e a pergunta que o
+  // TTL faz aqui é essa. Sem a renovação, o vínculo morreria 5 anos depois da
+  // COMPRA mesmo com o comprador jogando, e a trava anti-fraude (um recibo, uma
+  // conta) cairia junto, de graça, para quem só esperasse.
+  //
+  // A escrita não muda o dono: `owner === saveId` ou não existe dono. Tentativa
+  // alheia recusa ANTES desta linha, e portanto nem renova nem reescreve.
+  await env.DIGIAPP_SAVES.put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
   return { ok: true };
 }
 

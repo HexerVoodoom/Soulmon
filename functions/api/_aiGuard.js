@@ -14,12 +14,23 @@
 //     loop. Vale de verdade quando `FIREBASE_PROJECT_ID` estiver ligado — aí o
 //     saveId é provado por token e ninguém roda em nome de outro.
 //  2. **Teto por conta VITALÍCIO** (`ent:<saveId>.aiLifetime.<bucket>`, só
-//     `sprite` hoje). Vive no registro que só o servidor escreve e **não tem
-//     TTL**: teto vitalício que expira não é vitalício. É o único número que
-//     casa custo (recorrente enquanto a conta viver) com receita (única, de
-//     R$ 29,90). Ver `squad-alpha-runs/soulmon-02/custo-geracao-sprite.md` §3.
-//  2b. **Teto por FORMA, vitalício** (`ent:<saveId>.aiForms.<formId>`, também
-//     sem TTL). Um teto só por CONTA falha na ÚLTIMA forma — e quem o estoura é
+//     `sprite` hoje). Vive no registro que só o servidor escreve. É o único
+//     número que casa custo (recorrente enquanto a conta viver) com receita
+//     (única, de R$ 29,90). Ver
+//     `squad-alpha-runs/soulmon-02/custo-geracao-sprite.md` §3.
+//     ⚠️ Até 26/08/2026 esta linha dizia que o registro **não tem TTL**, e o
+//     argumento era "teto vitalício que expira não é vitalício". O argumento
+//     continua certo; o fato mudou. Desde a decisão de retenção (item 3.1 do
+//     GUIA-DO-DONO) o `ent:` tem TTL de 5 anos — mas ele é **RENOVADO A CADA
+//     ESCRITA**, e todo débito daqui é uma escrita. Para quem joga, o teto
+//     segue vitalício: o registro só expira depois de 5 anos de silêncio
+//     absoluto, e aí some inteiro (tier pago junto), não só o contador. Quem
+//     volta depois disso é, para todos os efeitos, uma conta nova. O
+//     raciocínio inteiro está em `_entitlements.js:RETENTION_TTL_SECONDS`.
+//     **Não "conserte" isso pondo o contador numa chave `ai:*`**: lá o TTL é
+//     de dia/mês e o teto viraria mesmo um teto diário com nome comprido.
+//  2b. **Teto por FORMA, vitalício** (`ent:<saveId>.aiForms.<formId>`, mesmo
+//     registro e mesmo prazo renovável). Um teto só por CONTA falha na ÚLTIMA forma — e quem o estoura é
 //     o jogador que percorreu a árvore inteira, no `mega` do terceiro galho, a
 //     uma evolução do `ultra`. Um teto por forma falha LOCALMENTE: a forma que
 //     deu problema cai na arte de reserva e as outras dez continuam. É este o
