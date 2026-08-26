@@ -17,6 +17,14 @@ export const STORAGE_KEYS = {
   /** Última vez que o app pediu o e-mail para proteger o progresso (epoch ms). */
   PROTECT_PROMPT_AT: 'soulmon-protect-prompt-at',
   IS_SLEEPING: 'digiapp-is-sleeping',
+  /**
+   * ⚠️ LEGADO — os tetos de cuidado NÃO moram mais aqui.
+   *
+   * Contador por APARELHO dava 12 comidas/hora e 2 corações/dia ao mesmo
+   * jogador que usa PWA e APK. Hoje eles vivem no SAVE (`careCaps`, em
+   * `utils/careCaps.ts`), e estas duas chaves existem apenas para a MIGRAÇÃO:
+   * são lidas uma vez no load e apagadas em seguida. **Nada escreve nelas.**
+   */
   FOOD_FEED_TIMES: 'digiapp-food-feed-times',
   RUB_HEAL_DAY: 'digiapp-rub-heal-day',
   DAILY_REPORT_SHOWN: 'digiapp-daily-report-shown',
