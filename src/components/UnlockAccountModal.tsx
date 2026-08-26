@@ -1,7 +1,7 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_DAILY_CAP } from '../utils/monetization';
+import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_TOTAL_CAP } from '../utils/monetization';
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
 import type { Entitlement } from '../utils/entitlements';
 import type { Language } from '../utils/i18n';
@@ -134,8 +134,10 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
       <p style={{ ...sm2Text, margin: 0 }}>
         {reason === 'task-limit'
           ? (isPt
-            ? `No modo grátis dá para criar ${DEMO_ACTIVITY_DAILY_CAP} atividade por dia.`
-            : `The free mode lets you create ${DEMO_ACTIVITY_DAILY_CAP} activity a day.`)
+            ? `No modo grátis cabem ${DEMO_ACTIVITY_TOTAL_CAP} hábitos ativos — a rotina inteira do Rookie. `
+              + 'Quem evolui com o próprio Soulmon vai além desse teto.'
+            : `The free mode holds ${DEMO_ACTIVITY_TOTAL_CAP} active habits — the whole Rookie routine. `
+              + 'Evolving your own Soulmon is what takes you past that ceiling.')
           : (isPt
             ? 'Esta é a árvore de um personagem de demonstração — os três caminhos levam ao mesmo lugar.'
             : "This is a demo character's tree — all three paths lead to the same place.")}

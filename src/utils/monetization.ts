@@ -5,8 +5,7 @@
 // watchRewardedAd() simula um anúncio recompensado (sem SDK real ainda) só
 // pra dar pra testar o loop de recompensa fim-a-fim — troque por AdMob (ou
 // equivalente) quando a conta de anúncios existir; a assinatura já serve.
-import { STORAGE_KEYS } from './storageKeys';
-import { readJson, writeJson } from './safeStorage';
+import { FORM_REQUIREMENTS } from '../types/progression';
 import { getSpriteForStage } from './sprites';
 import { STAGE_NAMES, type CreatureStage, type StageId, type AlignmentId } from './oracle';
 
@@ -108,30 +107,80 @@ export const ADS_ENABLED = false;
 export const AD_REWARD_CREDITS = 5;
 export const AD_DAILY_CAP = 3;
 
-// ── Modo demo: limite de criação de atividades ──────────────────────────────
-export const DEMO_ACTIVITY_DAILY_CAP = 1;
+// ── Modo demo: A FRONTEIRA DO GRÁTIS (D-12, 26/08/2026) ────────────────────
+//
+// O teto DIÁRIO de criação (1/dia) morreu aqui, e não por generosidade.
+//
+// 1. Ele racionava o VERBO CENTRAL do produto. `docs/PLANO-PRODUTO.md:70` lista,
+//    como primeiro não-objetivo do Soulmon, "app que tranca cuidado atrás de
+//    paywall" — e o objeto trancado era o ato de escrever o que se pretende
+//    fazer da própria vida.
+// 2. Ele não protegia custo nenhum. Todo o COGS do produto (sprite por IA,
+//    Oráculo, criatura única, reroll) já está trancado em outro lugar, com
+//    `requirePaidTier` falhando FECHADO no servidor. Um item de paywall que não
+//    protege custo só se justifica se converter — e isso é NÃO MEDIDO.
+// 3. Ele mal existia. Só o `CreateModal` o consultava, e o botão principal da
+//    tela inicial não passa por ele: na prática o demo criava sem limite, por
+//    fora. Consertar a fiação SEM afrouxar a regra seria um APERTO — por isso as
+//    duas coisas saem juntas, no mesmo release, ou nenhuma sai.
+//
+// No lugar dele entra um teto TOTAL de ativas, e ele é o MESMO do pagante no
+// Rookie. A fronteira deixa de separar "quanto cuidado cabe" e passa a separar
+// IDENTIDADE de CUIDADO: o que se compra é a criatura própria, a árvore própria
+// — e, como consequência dela, um teto que CRESCE (7/8/9/10). O demo recebe a
+// rotina inteira do Rookie e nada além.
+//
+// NÃO É TRAVA DE SEGURANÇA. É desenho de produto, 100% cliente. Quem quiser
+// burlar abre o DevTools; o que está aqui é a regra que o app propõe, não uma
+// fronteira que ele defende.
 
-interface DemoCreationRecord { date: string; count: number }
+/** O teto de hábitos ATIVOS do modo grátis.
+ *
+ *  Não é um número escolhido: é o teto do Rookie, que o pagante também tem.
+ *  Escrever `6` aqui faria a escada de `progression.ts` mudar um dia e este
+ *  valor ficar para trás em silêncio. */
+export const DEMO_ACTIVITY_TOTAL_CAP = FORM_REQUIREMENTS.rookie.cap;
 
-function readDemoCreations(): DemoCreationRecord {
-  const saved = readJson<DemoCreationRecord | null>(STORAGE_KEYS.DEMO_TASKS_CREATED_TODAY, null);
-  if (saved && saved.date === new Date().toDateString()) return saved;
-  return { date: new Date().toDateString(), count: 0 };
+/** Tarefa avulsa (uma vez) × hábito (recorrente). São regras diferentes. */
+export type ActivityKind = 'task' | 'habit';
+
+/**
+ * O teto EFETIVO de hábitos ativos, dado o tier e o teto do estágio.
+ *
+ * É aqui que a paywall passa a cair: `stageCap` cresce com a evolução
+ * (`FORM_REQUIREMENTS`), e para o demo esse crescimento é aparado. A elevação
+ * do teto vira consequência de ter uma árvore própria — o diferencial — em vez
+ * de uma cota diária cobrada sobre o cuidado.
+ *
+ * Aparar com `Math.min` (e não devolver a constante) importa: um save de demo
+ * que por qualquer razão chegue com teto MENOR que 6 continua com o dele. O teto
+ * do grátis é um limite, nunca uma promoção.
+ */
+export function activityCapFor(tier: AccountTier, stageCap: number): number {
+  return tier === 'demo' ? Math.min(stageCap, DEMO_ACTIVITY_TOTAL_CAP) : stageCap;
 }
 
-export function getDemoCreationsToday(): number {
-  return readDemoCreations().count;
-}
-
-export function canCreateDemoTaskToday(): boolean {
-  return readDemoCreations().count < DEMO_ACTIVITY_DAILY_CAP;
-}
-
-/** Chame depois de criar com sucesso uma atividade/tarefa nova no modo demo. */
-export function recordDemoCreation(): void {
-  const rec = readDemoCreations();
-  rec.count += 1;
-  // Limite do modo grátis: se não gravar, o cap do dia some. É regra de
-  // monetização — a falha AVISA (e o app segue permitindo, nunca bloqueando).
-  writeJson(STORAGE_KEYS.DEMO_TASKS_CREATED_TODAY, rec);
+/**
+ * O PORTÃO. Pergunte a esta função antes de criar qualquer coisa, por qualquer
+ * caminho — é o ponto único de decisão que o vazamento de D-12 não tinha.
+ *
+ * `kind: 'task'` responde SEMPRE `true`, e isso é decisão, não esquecimento: no
+ * desenho antigo um hábito e uma tarefa de hoje custavam a mesma cota, então
+ * quem anotava "ligar pro médico" gastava o orçamento inteiro do dia na coisa
+ * de menor valor. Tarefa avulsa é o uso espontâneo — o que gera a métrica-norte
+ * — e punir o espontâneo é punir exatamente o que se quer.
+ *
+ * A regra vale para os DOIS tiers. O pagante bate no teto do estágio dele pela
+ * mesma porta; o que muda entre eles é só o número que `activityCapFor` devolve.
+ */
+export function canCreateActivity(args: {
+  tier: AccountTier;
+  kind: ActivityKind;
+  /** Quantos hábitos JÁ existem na lista. Tarefas não entram nesta conta. */
+  habitCount: number;
+  /** O teto do estágio atual (`gameState.maxActivityCap`). */
+  stageCap: number;
+}): boolean {
+  if (args.kind === 'task') return true;
+  return args.habitCount < activityCapFor(args.tier, args.stageCap);
 }
