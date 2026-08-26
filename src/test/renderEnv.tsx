@@ -34,9 +34,39 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { render as rtlRender, cleanup } from '@testing-library/react';
+import { render as rtlRender, cleanup, configure } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import type { ReactElement } from 'react';
+import { TEST_TIMEOUT_MS } from '../../vitest.budget.mjs';
+
+// ---------------------------------------------------------------------------
+// O SEGUNDO TETO — o que o `testTimeout` do `vitest.config.ts` NÃO governa.
+//
+// Achado medido em 26/08/2026, na 5ª rodada do passe de orçamento
+// (`scripts/orcamento-de-tempo.mjs`, baseline em
+// `sweeper/orcamento-de-tempo.md`): sob contenção, `AccountDataSection.render
+// .test.tsx > confirmar com o token executa e devolve uma despedida` falhou
+// com "Unable to find an element with the text: /Obrigado pelo tempo/" —
+// **não** com timeout de teste. A rodada inteira levou 63,5 s contra os 32 s
+// habituais (transform 55 s contra 7,6 s), e o elemento aparecia depois.
+//
+// A causa é que `findBy*`/`waitFor` do testing-library têm orçamento PRÓPRIO,
+// `asyncUtilTimeout`, cujo default é **1000 ms** e que ignora completamente o
+// `testTimeout`. Ou seja: subir o teto global para 15 s comprou ZERO folga
+// para toda espera assíncrona de render — o teto real desses casos continuou
+// em 1 s, escondido, e é 15× mais apertado que o declarado. Duas réguas para
+// a mesma pergunta é o footgun 9 do `CLAUDE.md`; aqui ele já cobrou.
+//
+// A fração (20%) é deliberada, e não "o mesmo valor do testTimeout": a espera
+// tem de estourar ANTES do teste, senão a falha chega como um timeout opaco
+// do runner em vez da mensagem do testing-library dizendo o que não achou na
+// tela — que é a diferença entre diagnosticar em 1 minuto e em 1 hora.
+//
+// Por que isto não pode transformar verde em vermelho: `asyncUtilTimeout` só
+// define até quando esperar. Mais paciência nunca reprova o que já passava;
+// no máximo faz uma falha REAL demorar mais para aparecer, e ela continua
+// aparecendo com a mesma mensagem.
+configure({ asyncUtilTimeout: TEST_TIMEOUT_MS * 0.2 });
 
 // Desmonta o que foi montado entre casos. Sem isto, dois `render()` no mesmo
 // arquivo deixam dois checkboxes no documento e `getByRole` passa a falhar por
