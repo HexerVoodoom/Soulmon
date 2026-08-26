@@ -357,6 +357,19 @@ async function handleCommunity({ request, env }) {
       const raw = await env.DIGIAPP_SAVES.get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
+      // N-4: o diretório respeita o MESMO gate que `opponents` — só entra
+      // quem ligou o PvP. Antes daqui, o perfil era gravado junto do cloud
+      // save e a pessoa entrava no diretório por consequência de salvar, não
+      // por escolha: `name` é texto livre e `tasksDone`/`daysPlaying`
+      // descrevem hábito. `pvpEnabled` undefined (perfil anterior ao campo)
+      // cai no `!` e fica de fora: consentimento não se presume.
+      //
+      // Este `continue` vem ANTES do `search` e antes de `publicProfile` de
+      // propósito: o search é feito no servidor, então filtrar depois dele
+      // transformaria a busca por nome em confirmação de existência; e
+      // `publicProfile` chama `ensurePid`, que EMITE e indexa identidade
+      // social como efeito colateral — não se emite para quem não pediu.
+      if (!p.pvpEnabled) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
       const rank = await getRank(env, season, p.id);
       players.push(await publicProfile(env, p, { rankPoints: rank.points }));
