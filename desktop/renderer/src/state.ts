@@ -1,11 +1,19 @@
 // Estado local do overlay. Fica num namespace PRÓPRIO do desktop
-// (`soulmon_desktop_v1`) de propósito: enquanto a escrita de volta não existir
-// (fase 2b do docs/PLANO-DESKTOP-STEAM.md), as ações feitas aqui NÃO podem
-// tocar no save real — uma mutação incompatível com as regras do jogo
-// corromperia o progresso do celular sem chance de desfazer.
+// (`soulmon_desktop_v1`) de propósito: o que mora aqui é o que é DESTE
+// APARELHO (idioma, a cama, o cache de leitura da nuvem), e misturá-lo com o
+// save real é como uma mutação incompatível com as regras do jogo corromperia
+// o progresso do celular sem chance de desfazer.
 //
-// A partir da sincronização, os campos vindos da nuvem (pet/hearts/energia/…)
-// são um CACHE de leitura; os campos de ação local ficam claramente separados.
+// ⚠️ Este cabeçalho dizia "enquanto a escrita de volta não existir (fase 2b)"
+// e isso era FALSO desde `f6fb5f30`/`86341fcb`: a escrita de volta existe.
+// `menu.ts` chama `pushCareAction` para carinho, comida, tarefa, banho e sono,
+// e quem decide cada uma é `care.ts`, importando a regra do app. Um agente que
+// lesse a frase velha concluiria que ainda precisa duplicar estado aqui —
+// exatamente o footgun 9. Verificado em `menu.ts` (as seis chamadas de
+// `pushCareAction`) antes de corrigir.
+//
+// Os campos vindos da nuvem (pet/hearts/energia/…) são um CACHE de leitura; os
+// campos de ação local ficam claramente separados.
 import { STORAGE_KEY } from './config';
 import type { GenericLine } from './sprites';
 import { recentFeeds, feedsLeft as sharedFeedsLeft, type RubHealRecord } from '../../../src/utils/careRules';
@@ -50,7 +58,16 @@ export interface DesktopState {
    * que é o comportamento neutro do app (noite sem registro nunca é falha).
    */
   sleepStartedAt: string | null;
-  /** Timestamps (ms) das últimas comidas — janela deslizante de 5/hora, igual ao mobile. */
+  /**
+   * Timestamps (ms) das últimas comidas — janela deslizante de
+   * `FOOD_LIMIT_PER_HOUR` por hora, igual ao mobile. Hoje o número é **6**:
+   * `FOOD_LIMIT_PER_HOUR = MAX_STAGE_REQUIREMENT` (`careRules.ts:56`), o maior
+   * requisito diário da escada (mega/ultra pedem 6). Este comentário dizia
+   * "5/hora" — o literal antigo, aposentado justamente porque negava a 6ª
+   * comida a quem fechava as 6 tarefas numa sessão só. Se a escada mudar, o
+   * limite acompanha sozinho, e é por isso que a frase abaixo não repete
+   * número nenhum.
+   */
   feedTimes: number[];
   /**
    * Teto de carinho do dia — SÓ do modo sem conta.

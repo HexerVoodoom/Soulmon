@@ -1,12 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { emailToSaveId, normalizeForRules, isSaneCareState, MAX_HP_BY_LEVEL, ENERGY_BY_LEVEL } from './cloudSync';
+import { emailToSaveId, normalizeForRules, isSaneCareState } from './cloudSync';
 import { emailToSaveId as appEmailToSaveId } from '../../../src/utils/cloudSave';
 import { MAX_HP_BY_FORM, FORM_REQUIREMENTS, getStageLevel } from '../../../src/types/progression';
 
-// O desktop reimplementa três regras que já existem no app, porque o renderer
-// é TS puro e não carrega o bundle do jogo. Divergir delas não dá erro nenhum:
-// o overlay simplesmente lê um save que não existe, ou mostra HP/energia
-// errados. Estes testes são o único lugar onde as duas cópias se encontram.
+// O desktop reimplementava três regras do app porque o renderer é TS puro e não
+// carrega o bundle do jogo. Duas delas (as tabelas de HP/energia e o nível do
+// estágio) foram ELIMINADAS: hoje o `cloudSync.ts` importa `types/progression`.
+// A que resta é a derivação do `saveId` — e ela não tem como ser importada de
+// `src/utils/cloudSave.ts` sem arrastar o localStorage do app junto, então
+// continua sendo cópia guardada por teste, abaixo. Divergir dela não dá erro
+// nenhum: o overlay lê um save que não existe e mostra um bicho genérico.
 
 describe('saveId do desktop bate com o do app', () => {
   // Este é o bug que já aconteceu: o código veio do DigiApp com o salt
@@ -29,53 +32,44 @@ describe('saveId do desktop bate com o do app', () => {
   });
 });
 
-// As tabelas do cloudSync são COMPARADAS DIRETO com as do jogo.
+// AS TABELAS COPIADAS DEIXARAM DE EXISTIR.
 //
-// Até esta rodada este bloco declarava uma TERCEIRA cópia dos números dentro do
-// próprio teste e comparava ELA com o jogo — então uma divergência escrita em
-// `cloudSync.ts` passava verde. Medido: trocar `champion: 5` por `9` na tabela
-// de energia do cloudSync não quebrava um único teste. Era o footgun 9 do
-// CLAUDE.md acontecendo dentro do guard que existe para pegar o footgun 9.
-describe('tabelas copiadas continuam iguais às do jogo', () => {
-  it('HP máximo por nível — a tabela REAL do cloudSync', () => {
-    expect(MAX_HP_BY_LEVEL).toEqual({ ...MAX_HP_BY_FORM });
+// Este bloco guardava três cópias (`MAX_HP_BY_LEVEL`, `ENERGY_BY_LEVEL` e uma
+// `stageLevel` de prefixo) contra as do jogo. Guardar cópia é o segundo melhor
+// resultado: o melhor é não ter cópia. Hoje o `cloudSync.ts` IMPORTA
+// `MAX_HP_BY_FORM`, `getStageLevel` e `getMaxEnergyForStage` de
+// `src/types/progression.ts` — que não importa nada e por isso nunca arrastou o
+// roster legado, ao contrário do que o comentário de lá afirmava.
+//
+// O que sobra para testar não é igualdade de tabela (agora é tautologia), e sim
+// que os NÚMEROS QUE CHEGAM AO OVERLAY saem da regra do jogo, inclusive no caso
+// que a cópia errava: o save legado.
+describe('HP e energia do overlay saem da regra do jogo', () => {
+  for (const [stage, nivel] of [
+    ['rookie', 'rookie'], ['champion-virus', 'champion'], ['ultimate-data', 'ultimate'],
+    ['mega-vaccine', 'mega'], ['ultra', 'ultra'],
+    // O caso que a cópia errava: id legado, sem prefixo de nível.
+    ['gaioumon', 'mega'], ['agumon', 'rookie'], ['mastemon', 'ultra'],
+  ] as const) {
+    it(`${stage} -> ${nivel}: maxHealthPoints é o do jogo`, () => {
+      expect(getStageLevel(stage)).toBe(nivel);
+      expect(normalizeForRules({ evolutionStage: stage }).maxHealthPoints)
+        .toBe(MAX_HP_BY_FORM[nivel]);
+    });
+  }
+
+  it('estágio que não é string cai em rookie sem derrubar nada', () => {
+    // Save vindo da nuvem é dado NÃO confiável; `/api/save` só valida que
+    // `state` é objeto. `getStageLevel` já trata, e agora o desktop herda isso.
+    expect(normalizeForRules({ evolutionStage: 42 }).maxHealthPoints)
+      .toBe(MAX_HP_BY_FORM.rookie);
   });
 
-  it('barras de energia por nível — a tabela REAL do cloudSync', () => {
-    const doJogo = Object.fromEntries(
-      Object.entries(FORM_REQUIREMENTS).map(([level, r]) => [level, r.required]),
-    );
-    expect(ENERGY_BY_LEVEL).toEqual(doJogo);
-  });
-
-  it('AUTOVERIFICAÇÃO: uma tabela divergente seria reprovada', () => {
-    // Sem este caso, um `toEqual` contra um objeto vazio dos dois lados passaria.
-    expect({ ...MAX_HP_BY_LEVEL, mega: 9 }).not.toEqual({ ...MAX_HP_BY_FORM });
-    expect({ ...ENERGY_BY_LEVEL, champion: 9 }).not.toEqual(
-      Object.fromEntries(Object.entries(FORM_REQUIREMENTS).map(([l, r]) => [l, r.required])),
-    );
-    expect(Object.keys(MAX_HP_BY_LEVEL).length).toBeGreaterThan(0);
-  });
-
-  it('todo nível do jogo existe nas duas tabelas do desktop', () => {
-    // O `?? 3` / `?? 4` dos call sites transforma nível FALTANDO em número
-    // plausível e errado, sem erro nenhum. Um nível novo em FORM_REQUIREMENTS
-    // sem par aqui é exatamente essa falha silenciosa.
-    for (const level of Object.keys(FORM_REQUIREMENTS)) {
-      expect(MAX_HP_BY_LEVEL[level], `HP de ${level}`).toBeTypeOf('number');
-      expect(ENERGY_BY_LEVEL[level], `energia de ${level}`).toBeTypeOf('number');
-    }
-  });
-
-  it('a regra de prefixo do estágio casa com getStageLevel', () => {
-    const desktopStageLevel = (stage: string): string => {
-      if (stage === 'rookie' || stage === 'ultra') return stage;
-      const prefix = stage.split('-')[0];
-      return prefix === 'champion' || prefix === 'ultimate' || prefix === 'mega' ? prefix : 'rookie';
-    };
-    for (const stage of ['rookie', 'ultra', 'champion-virus', 'ultimate-data', 'mega-vaccine']) {
-      expect(desktopStageLevel(stage)).toBe(getStageLevel(stage));
-    }
+  it('AUTOVERIFICAÇÃO: a regra do jogo distingue mesmo os níveis', () => {
+    // Sem isto, uma `getStageLevel` que devolvesse sempre 'rookie' passaria em
+    // tudo acima — que é literalmente o bug que este bloco substitui.
+    expect(MAX_HP_BY_FORM.mega).not.toBe(MAX_HP_BY_FORM.rookie);
+    expect(FORM_REQUIREMENTS.mega.required).not.toBe(FORM_REQUIREMENTS.rookie.required);
   });
 });
 
@@ -85,6 +79,20 @@ describe('proteção da escrita de volta', () => {
     // save antigo. Sem completar, Math.min(undefined, x) vira NaN e
     // JSON.stringify(NaN) grava `null` — o HP do jogador some.
     const n = normalizeForRules({ evolutionStage: 'mega-virus', healthPoints: 2 });
+    expect(n.maxHealthPoints).toBe(4);
+  });
+
+  it('SAVE LEGADO: `gaioumon` é MEGA, e o overlay tem que ver 4 corações', () => {
+    // O bug: o desktop tinha a PRÓPRIA `stageLevel`, que lia só o prefixo do id
+    // e devolvia 'rookie' para qualquer coisa que não casasse. O app tem
+    // `LEGACY_FORM_TIERS` (`types/progression.ts`) exatamente para o save antigo
+    // em `gaioumon` continuar MEGA — é compatibilidade de save, não roster.
+    // Divergindo, o mesmo jogador via 4 corações no celular e 3 no overlay, e o
+    // `maxHealthPoints` ERRADO voltava para o save na escrita de volta: o
+    // `applyRub` corta a cura em `maxHealthPoints`, então o teto do carinho do
+    // mega passava a ser o de um rookie. Nenhum erro, nenhum log.
+    expect(getStageLevel('gaioumon')).toBe('mega'); // a régua é o app
+    const n = normalizeForRules({ evolutionStage: 'gaioumon', healthPoints: 4 });
     expect(n.maxHealthPoints).toBe(4);
   });
 
