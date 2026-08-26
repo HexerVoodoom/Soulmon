@@ -50,6 +50,7 @@ import { constancy, habitTier, dayKeyOf, weekStart, habitCountsOn } from './habi
 import type { Schedule } from '../types/taskModel';
 import type { HabitRhythm } from './habitRhythm';
 import type { RestState } from './restWindow';
+import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 
 export { MAX_DAILY_FOCUS };
 
@@ -92,7 +93,20 @@ export interface RitualState {
   completedTasks?: RitualCompletedTask[];
   habitRhythms?: Record<string, HabitRhythm>;
   rest?: RestState;
-  /** dayKey (`toDateString`) do último check-in matinal. */
+  /** Fuso FIXO do dia do jogador; só `lastCheckInDate` o consome aqui. Os
+   *  demais dayKeys deste arquivo (semana, fresh start) seguem em `dayKeyOf`,
+   *  que NÃO pode mudar — ver o cabeçalho de `playerDay.ts`. */
+  playerDayTz?: PlayerDayAnchor;
+  /**
+   * Chave do DIA DO JOGADOR (`utils/playerDay.ts`) do último check-in matinal.
+   *
+   * ⚠️ Este campo mora no SAVE de propósito — "o ritual é do jogador, não do
+   * aparelho", diz o comentário do efeito que o abre no `App.tsx`. Só que ele
+   * era gravado com o dia do APARELHO, e a frase virava mentira na prática:
+   * quem plantava o check-in às 23h no Brasil abria o app em Tóquio (mesmo
+   * instante, 11h do dia seguinte lá) e o ritual reaparecia — planejamento
+   * virando interrupção, que é exatamente o que o campo existe para evitar.
+   */
   lastCheckInDate?: string;
   /** dayKey do último relatório semanal mostrado. */
   lastWeeklyReportDate?: string;
@@ -143,7 +157,10 @@ const WEEKDAY_PT = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta',
  * cobrança.
  */
 export function needsCheckIn(state: RitualState, now: Date): boolean {
-  return !sameDay(state.lastCheckInDate, dayKeyOf(now));
+  // `playerDayKey` e não `dayKeyOf`: sem âncora no save as duas devolvem a
+  // MESMA string, então isto não muda nada para quem ainda não migrou — e com
+  // âncora os dois aparelhos passam a concordar sobre qual dia é hoje.
+  return !sameDay(state.lastCheckInDate, playerDayKey(now, state.playerDayTz));
 }
 
 export interface CheckInPlan {

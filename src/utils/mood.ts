@@ -23,7 +23,22 @@
 export type MoodValue = 1 | 2 | 3 | 4 | 5;
 
 export interface MoodEntry {
-  /** `new Date().toDateString()`. */
+  /**
+   * Chave do DIA DO JOGADOR (`utils/playerDay.ts`), na forma de
+   * `toDateString()`.
+   *
+   * ⚠️ Já foi `new Date().toDateString()` — o dia do APARELHO — e `moodLog`
+   * mora no SAVE. Com dois aparelhos em fusos diferentes, o mesmo dia rendia
+   * DUAS entradas de humor (uma por nome de dia), e a de baixo era a que o
+   * `recordMood` deixava de substituir: o "responder de novo SUBSTITUI" logo
+   * abaixo virava "acumula", e a média de `moodSummary` passava a ser puxada
+   * por um dia contado duas vezes. Num registro que a regra 2 deste arquivo
+   * proíbe de virar score, o único valor é a fidelidade — e ela era o que se
+   * perdia.
+   *
+   * Este módulo continua sem olhar relógio: a chave vem SEMPRE por parâmetro,
+   * de quem tem acesso à âncora do save.
+   */
   date: string;
   mood: MoodValue;
 }
