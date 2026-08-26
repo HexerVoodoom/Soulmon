@@ -477,6 +477,13 @@ bisel externo 20px · tela interna 12px · anel de cobre de 4px (2px de linha +
 temas** · **um único** reflexo `linear-gradient(160deg, rgba(255,255,255,.10),
 transparent 40%)` · vinheta interna de 12% · **sem scanline** por padrão.
 
+> **"Por padrão" quer dizer: sem overlay PERMANENTE de listras** — sobre um
+> sprite de 32px ele come metade do desenho, e isso continua proibido. O que
+> existe é `.sm-visor-scan`: uma varredura de `--sm2-dur-scan` (400ms) que passa
+> UMA vez no momento em que o sprite troca (a "sintonia") e sai do DOM. É
+> transição, irmã do fade de `--sm2-dur-tap`, e não estado do visor. Com
+> `prefers-reduced-motion` ela não toca — corte em JS, não `0.01ms`.
+
 - **Escala inteira, sempre.** Escala fracionária é a causa nº 1 de pixel art
   borrada, e `image-rendering: pixelated` não salva meio pixel — só troca o
   borrão por linhas de espessura desigual. Por isso o tamanho da tela é
