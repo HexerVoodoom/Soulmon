@@ -35,6 +35,30 @@ executado está marcado **`[não verificado]`** — e isso é diferente de ❌.
 > (`frente/wt-banho`), hoje ainda em `2be666d5` — **nenhum commit dela chegou
 > aqui**. Onde este documento fala de banho/dormir, o estado é `[em andamento
 > nesta sessão]`: verdadeiro agora, provavelmente falso amanhã.
+>
+> ↳ **Foi falso no mesmo dia.** Ver a 4ª redação abaixo: `86341fcb` mergeou.
+
+> ### 🔄 4ª redação parcial — 26/ago/2026 (fim do dia), `HEAD = 33fd94cc`
+>
+> Gate desta reverificação: `npx tsc --noEmit` **EXIT=0** ·
+> `npx tsc -p desktop/tsconfig.json --noEmit` **EXIT=0** · `npx vitest run` →
+> **149 arquivos, 2631 passed, 2 skipped**.
+>
+> | O quê | Onde neste doc | Commit |
+> |---|---|---|
+> | **Empacotamento EXECUTADO pela primeira vez** — deixou de ser `[não verificado]` | §4a, §7 (itens novos), §8 item 3 | `2f3cd4f6` / merge `33fd94cc` |
+> | **Banho e dormir escrevem no save** — os "2 de 4 botões falsos" acabaram | §3b, §8 item 7, criticais | `3e1e92d5` / merge `86341fcb` |
+> | **O overlay quase não reimplementa mais regra**: HP/energia/`stageLevel` e a energia da comida deixaram de ser cópia | §3b (nota nova) | `2bc9af3a` / `d56bba7a`, `d9765d09` / `f6716ec5` |
+> | **CI do desktop passou a rodar em PR** (`tsc -p desktop/tsconfig.json`) | §8 item 18, criticais | `3795020b` / merge `a3c581d5` |
+> | **Login do desktop: veredito = GUARDA DELIBERADA**, não bug e não caminho morto | §3d | `2f3cd4f6` |
+> | 🔴 **Caminho errado corrigido**: a tabela do §8 escrevia `auth.ts:175` como se fosse `desktop/renderer/src/auth.ts`. É **`src/utils/auth.ts`** | §8 item 8 | idem |
+> | Pendências novas do dono: Modo de Desenvolvedor do Windows, `author` no `desktop/package.json` | §7 | idem |
+>
+> **Uma correção de MÉTODO, não de fato.** Este documento envelheceu duas vezes
+> em ~8h, sempre pelo mesmo mecanismo: `arquivo:linha`. Daqui em diante a
+> referência canônica é **`arquivo` + SÍMBOLO** (`doShower` em `menu.ts`, não
+> `menu.ts:498`), pelo motivo detalhado no cabeçalho do `docs/STATUS.md`. As
+> linhas que sobraram abaixo foram reconferidas contra `33fd94cc`.
 
 ## A regra que passa a valer
 
@@ -174,11 +198,9 @@ ocorrências**. Ver 3c.
 | **Banho** | ✅ **sim** (`86341fcb`) | `menu.ts:498` (`doShower`) → `remoteShower` em `care.ts`. Marca o cocô mostrado como limpo e **para o relógio de 6h** do `applyPoopDrain`. Antes eram três linhas sem escrita nenhuma, e o pet perdia coração apertando o botão que existe para impedir isso |
 | **Dormir / Acordar** | ✅ **sim** (`86341fcb`) | `menu.ts:525` (`doSleepToggle`) → `remoteSleep`/`remoteWake`, que chamam `recordNight` de `src/utils/restWindow.ts` (import puro). `sleepStartedAt` sobrevive à noite para o `wokeAt` fechar o registro. A janela (`onTime`) continua no relógio do APARELHO, de propósito, e há teste |
 
-> ⚠️ Os dois ❌ acima estão **sendo trabalhados agora** pela frente
-> `frente/wt-banho` (worktree `E:/tmp/claude/wt-banho`). Verifiquei: naquela
-> branch ainda não há commit além de `2be666d5`, então o que está escrito aqui é
-> o estado **desta árvore**, não um veredito sobre o que aquela frente vai
-> entregar. Reconfira antes de citar.
+> ✅ **Fechado.** A frente `frente/wt-banho` mergeou em `86341fcb` no mesmo dia:
+> não há mais ❌ nesta tabela. As quatro ações de cuidado do overlay escrevem no
+> save.
 
 As regras são de fato **compartilhadas, não copiadas**, e desde `f6fb5f30` isso
 vale para a família INTEIRA de cuidado, não só para as duas funções que já
@@ -199,14 +221,46 @@ importavam:
   prática intestável. É a razão MECÂNICA de o defeito do `healed: 0` ter
   sobrevivido à fatia 2 inteira, e está escrita no cabeçalho de `care.ts:1-22`.
 
-A rede de segurança contra `NaN` existe (`cloudSync.ts:293-299`, coberta em
-`cloudSync.snapshot.test.ts:528`), e a releitura antes de gravar existe.
+A rede de segurança contra `NaN` existe (`normalizeForRules` em `cloudSync.ts`,
+coberta em `cloudSync.snapshot.test.ts`), e a releitura antes de gravar existe.
+
+> ### ✅ 26/08, fim do dia: o overlay quase não reimplementa mais REGRA
+>
+> Duas cópias que ainda restavam saíram, e as duas **escondiam defeito**:
+>
+> - **HP / energia / `stageLevel`** (`2bc9af3a`). `cloudSync.ts` tinha
+>   `MAX_HP_BY_LEVEL`, `ENERGY_BY_LEVEL` e uma `stageLevel` própria. A
+>   justificativa escrita ("importar `types/progression` arrasta o roster legado
+>   da masmorra") era **falsa** — aquele arquivo não importa nada, e o próprio
+>   `cloudSync.test.ts` já o importava. E a cópia divergia onde mais dói: a
+>   `stageLevel` do desktop lia só o **prefixo** do id, enquanto a
+>   `getStageLevel` do app cai em `LEGACY_FORM_TIERS` — a compatibilidade que
+>   mantém um save antigo em `gaioumon` como **MEGA**. O overlay rebaixava esse
+>   jogador a rookie em silêncio (3 corações em vez de 4), e o `maxHealthPoints`
+>   errado **voltava para o SAVE** em `normalizeForRules`, fazendo `applyRub`
+>   cortar a cura do mega no teto de um rookie. O bloco de testes que guardava as
+>   cópias virou teste de **delegação** — igualdade de tabela, agora, seria
+>   tautologia.
+> - **A energia da comida** (`d9765d09`). `menu.ts` recalculava
+>   `Math.min(maxEnergy, energy + 1)` **depois** de `feedFood` já ter aplicado o
+>   teto. Davam o mesmo número por sorte de origem — e por baixo havia um
+>   `as unknown as` rodando sobre `undefined` (`DesktopState` não tem
+>   `evolutionStage`, `energyPoints`, `virusPoints` nem `totalXP`). A regra
+>   devolvia energia errada e atributos `NaN`, e **só não aparecia porque o
+>   `menu.ts` jogava tudo fora e recalculava à mão**. A cópia não era redundância
+>   inofensiva: era o curativo que mantinha o cast quebrado invisível. `localFeed`
+>   veste o estado de verdade, e o tipo **não tem** campo `maxEnergy` — não há
+>   onde o chamador passar o teto errado. Saíram junto o pré-teste `feedsLeft` do
+>   menu e um wrapper morto.
+>
+> **A dívida `menu.ts:459` declarada na 3ª redação está paga.** O que sobra de
+> cópia declarada no overlay é a derivação do `saveId` — e ela agora tem guard
+> **comportamental** das três implementações (app, desktop, servidor) em
+> `functions/api/saveId.parity.test.js`.
 
 **A decisão de produto ("o desktop é um controle remoto, não um segundo jogo")
-continua válida** — mas hoje ela descreve um controle remoto com **2 de 4 botões
-falsos** (banho e sono; carinho e comida deixaram de ser falsos em `f6fb5f30`). O usuário dá banho, vê a bolha, e no celular o cocô continua drenando
-−1 coração/6h. Isso não é uma limitação declarada; é a UI oferecendo uma ação
-que não acontece.
+continua válida — e agora ela descreve um controle remoto de verdade.** Os
+"2 de 4 botões falsos" acabaram em `86341fcb`: as quatro ações escrevem.
 
 ### 3c. 🔴 Dois defeitos de regra que o plano antigo não menciona
 
@@ -287,6 +341,39 @@ E o servidor responde `authRequired: false` — `functions/api/config.js` devolv
 **Estado honesto: ⚠️ escrito, nunca executado, nem em teste.** O único caminho
 vivo hoje é o e-mail digitado.
 
+> ### ✅ Veredito de 26/08 (fim do dia): **guarda deliberada, não bug**
+>
+> Isto foi reinvestigado em `2f3cd4f6` e o veredito importa para ninguém
+> "consertar" o que não está quebrado: `startDesktopAuthBridge` **não é caminho
+> morto e não é defeito**. Ele sai porque `isAuthConfigured()` exige
+> `VITE_FIREBASE_API_KEY` / `AUTH_DOMAIN` / `PROJECT_ID`, e **nenhuma existe
+> nesta árvore** — nem `.env`, nem CI, nem vite config; só menção em docs. O
+> próprio `src/utils/auth.ts` documenta que isso é proposital, e o chamador
+> existe e roda (`App.tsx`). **É a fatia 1 do dono.** Nada foi mockado nem
+> forçado para produzir um ✅ falso.
+>
+> ⚠️ **Correção de caminho, e ela induziu um agente ao erro.** A tabela do §8
+> escrevia só `auth.ts:175`, e o leitor natural conclui
+> `desktop/renderer/src/auth.ts` — arquivo que **não existe**. É
+> **`src/utils/auth.ts`**, do app. Corrigido no item 8.
+>
+> **O que DAVA para exercitar foi exercitado.** `desktop/electron/auth-preload.js`
+> é código nosso, síncrono, sem rede, e **nunca tinha rodado uma vez**.
+> `authBridge.test.ts` carrega o **arquivo de produção** (sem cópia) com um
+> `electron` falso só no lugar do host, e trava o contrato inteiro contra
+> `src/utils/auth.ts` e `main.js`: o nome exposto, a tradução do payload, o
+> logout, a recusa de payload sem token de texto, e-mail ausente virando string
+> vazia. Provado vermelho: mutando o nome exposto e a checagem de token, **3 dos
+> 7 casos quebram**.
+>
+> 🔴 **Ponto cego documentado e NÃO consertado** (é decisão, não limpeza):
+> `auth-preload.js` faz `Number(payload.expiresAt) || 0`, e `main.js` lê `exp: 0`
+> como **"nunca expira"** (o guard é `if (authSession.exp && Date.now() >= …)`).
+> Validade ausente, `NaN` ou `null` produz uma sessão que o overlay nunca
+> considera vencida. Ainda não dói porque o caminho não roda em produção — mas
+> ele vai rodar exatamente quando o login for ligado, que é o pior momento para
+> descobrir. Ver `docs/STATUS.md` §4.
+
 **O aviso de ordem continua correto e continua importante:** ligar
 `FIREBASE_PROJECT_ID` no servidor **depois** de publicar uma versão do desktop
 com o login funcionando. Se inverter, o overlay para de sincronizar para quem já
@@ -302,18 +389,56 @@ caminho a publicar **nunca foi provado**, então "publicar antes" não é sufici
 
 | Item | Estado | Evidência |
 |---|---|---|
-| `dist:steam` gera build desempacotado | `[não verificado]` | `desktop/package.json:15` tem `--dir --publish never -c.extraMetadata.steamBuild=true`. **Não executei**: `desktop/node_modules` não existe nesta árvore (electron-builder não instalado) |
+| `dist:steam` gera build desempacotado | ✅ **EXECUTADO** em 26/08/2026 | `EXIT=0`, saída real abaixo e em `desktop/STEAM.md` |
 | A etapa `vite build` do script | ✅ | `EXIT=0`, saída em §2 |
-| Marcação `steamBuild: true` | ✅ lida em `main.js:17` | `require('../package.json').steamBuild === true` |
-| Auto-update desligado no build Steam | ✅ | `main.js:17,67` — `checkForUpdates()` só corre quando não é build Steam |
+| Marcação `steamBuild: true` | ✅ **e agora provada BOOLEANA**, lida de dentro do asar | `isSteamBuild` em `main.js`: `require('../package.json').steamBuild === true` |
+| Auto-update desligado no build Steam | ✅ | `checkForUpdates()` em `main.js` só corre quando não é build Steam |
 | Nenhuma regra de jogo muda na Steam | ✅ | nenhuma referência a Steam em `src/` |
 
 O raciocínio original continua certo: se o app se auto-atualizasse pelo GitHub
 enquanto a Steam atualiza via SteamPipe, os dois brigariam pelo mesmo binário.
 
-**A 1ª redação dizia "3a. O que já está pronto ✅". A metade que importa —
-gerar o pacote — nunca foi executada por ninguém.** Marcar `[não verificado]` em
-vez de ✅ é a correção.
+### ✅ 26/08/2026 — o empacotamento saiu de `[não verificado]`
+
+**A 1ª redação dizia "3a. O que já está pronto ✅"; a 2ª e a 3ª marcaram
+`[não verificado]`, porque a metade que importa — gerar o pacote — nunca tinha
+sido executada por ninguém.** Foi executada (`2f3cd4f6`). Saída real, Windows 10
+x64, `desktop/node_modules` instalado do zero (426 pacotes, 28 s):
+
+```
+> vite build && electron-builder --win --dir --publish never -c.extraMetadata.steamBuild=true
+  • electron-builder  version=25.1.8 os=10.0.19045
+  • packaging  platform=win32 arch=x64 electron=33.4.11 appOutDir=release\win-unpacked
+  • no signing info identified, signing is skipped
+EXIT=0
+```
+
+`release/win-unpacked/` com **274 MB**, `Soulmon.exe` de **188 MB**,
+`resources/app.asar` de **5,1 MB**.
+
+**O achado que só apareceu porque rodou, e ninguém sabia de que lado estava.**
+Lendo o `package.json` de dentro do asar empacotado:
+
+```
+steamBuild = true | typeof boolean
+```
+
+`-c.extraMetadata.steamBuild=true` na linha de comando vira **booleano**, não a
+string `"true"` — então a comparação **estrita** de `main.js` (`=== true`)
+acerta e o auto-update fica desligado no build de Steam. **Se tivesse virado
+string**, `"true" === true` seria `false`, o auto-update ficaria LIGADO, e o
+build da Steam se auto-atualizaria pelo GitHub por cima do que o SteamPipe
+instalou — exatamente o conflito que esta variante existe para evitar. Era um
+50/50 invisível: `tsc` não vê, teste nenhum via, e só empacotar responde.
+**Código que nunca rodou não é código pronto.**
+
+**O tropeço, porque ele vai voltar.** A primeira tentativa falhou **depois** de
+já ter gerado o `.exe`, ao extrair o `winCodeSign`: o `7za` não consegue criar
+os dois symlinks de macOS (`libcrypto.dylib` / `libssl.dylib`) sem o **Modo de
+Desenvolvedor do Windows** ligado. Não é defeito do repositório e não tem
+conserto no código — os dois arquivos são irrelevantes num build `--win` e
+matam o build inteiro mesmo assim. **Pendência de MÁQUINA, não de projeto**;
+está no §7. Saída real e as duas saídas possíveis em `desktop/STEAM.md`.
 
 ### 4b. O que falta no código
 
@@ -324,7 +449,7 @@ vez de ✅ é a correção.
 | `.vdf` de depot | ❌ | `find . -name "*.vdf"` → nada |
 | Provider `steam` no `/api/billing` | ✅ **existe** | `functions/api/_billing.js:232-400`; despacho em `billing.js:65-66` |
 | Primeira impressão (menu abre no 1º lançamento) | ✅ | `main.js:76-83`, marcador em `app.getPath('userData')` |
-| Qualquer teste que exercite `desktop/electron/` | ❌ | 0 arquivos |
+| Qualquer teste que exercite `desktop/electron/` | ✅ **parcial** (`2f3cd4f6`) | `authBridge.test.ts` carrega `auth-preload.js` de produção. `main.js` continua sem teste |
 
 O provedor do servidor está pronto e **desligado**; o que falta é o cliente, e
 ele **depende do App ID real** para ser escrito e testado. É por isso que os
@@ -539,6 +664,21 @@ Ver `docs/BILLING-SETUP.md`. Resumo, com o que pude verificar:
 12. **Classificação etária / formulário de conteúdo** da Steam.
 13. **Upload do build**: `npm run dist:steam` precisa rodar **no Windows** e o
     `steamcmd` precisa do seu login de parceiro. É a última milha manual.
+    ✅ **A metade do `dist:steam` deixou de ser incógnita** em 26/08 (§4a): roda,
+    EXIT=0, 274 MB. Falta o `steamcmd`.
+13b. 🖥️ **Ligar o Modo de Desenvolvedor do Windows** — Configurações →
+    Privacidade e segurança → Para desenvolvedores. É **pendência de MÁQUINA,
+    não de projeto**, e é sua porque mexe em configuração do sistema. Sem ele o
+    `electron-builder` morre ao extrair o `winCodeSign` (dois symlinks de macOS
+    que nem servem num build `--win`), **depois** de já ter gerado o `.exe`. A
+    alternativa é pré-extrair o `.7z` na mão a cada limpeza de cache — foi assim
+    que o build de 26/08 passou, e não é sustentável. Detalhe em
+    `desktop/STEAM.md`.
+13c. 🏷️ **Preencher `author` em `desktop/package.json`.** O electron-builder
+    avisa `author is missed in the package.json`. No `--dir` é só aviso — mas o
+    **`nsis`** do `npm run dist` usa o `author` como **Publisher do
+    instalador**: é o nome que aparece no aviso do Windows e nas propriedades do
+    `.exe`. Não foi preenchido de propósito: é **identidade, não código**.
 
 ### 🟡 Opcional, mas recomendado
 
@@ -564,12 +704,12 @@ base algo que não existia. Substituída por estado, não por sequência.
 |---|---|---|---|
 | 1 | Overlay portado e compilando | ✅ | `vite build` EXIT=0; `tsc -p desktop/tsconfig.json` EXIT=0 |
 | 2 | O `.exe` abre e desenha o pet | ✅ desempacotado | screenshots em `sweeper/sonda-overlay-pet.png`, `sonda-menu.png` (sonda do run 02) |
-| 3 | Empacotamento (`dist` / `dist:steam`) | `[não verificado]` | `desktop/node_modules` ausente; exige Windows + `npm install` |
+| 3 | Empacotamento (`dist:steam`) | ✅ **EXECUTADO** (`2f3cd4f6`) | `EXIT=0`, 274 MB, `Soulmon.exe` 188 MB. E a flag `steamBuild` provada **booleana** lendo de dentro do asar — se fosse string, o build da Steam se auto-atualizaria por cima do SteamPipe. Ver §4a e `desktop/STEAM.md`. ⚠️ Exige **Modo de Desenvolvedor do Windows** (§7 item 13b). O `dist` com `nsis` **continua** `[não verificado]` |
 | 4 | Hover IPC, multi-monitor, `display-metrics-changed` | `[não verificado]` | código existe (`main.js:56,260`); nunca exercido |
 | 5 | Leitura do save | ✅ (menos `isSleeping`) | §3a |
 | 6 | Escrita: carinho, comida, tarefa | ✅ | `menu.ts:418,474,517` |
-| 7 | Escrita: banho, dormir | ✅ **feito** (`86341fcb`) | `menu.ts:498` e `:525` → `care.ts`. ⚠️ Dívida declarada: banho é a única transição que **não** é import — não existe regra pura de banho em `src/utils/` (ela mora no `App.tsx`, acoplada ao `careEvent`). O teste executa `applyPoopDrain` sobre o resultado, então quem julga limpeza continua sendo `poopDrain.ts`. O conserto certo é extrair `cleanPoop()` |
-| 8 | Login por token no desktop | ⚠️ escrito, **nunca executado** | `auth.ts:175` |
+| 7 | Escrita: banho, dormir | ✅ **feito** (`86341fcb`) | `doShower` → `remoteShower` e `doSleepToggle` → `remoteSleep`/`remoteWake`, em `menu.ts` → `care.ts`. ✅ **A dívida do `cleanPoop()` foi paga** em `46a6e542`: ele saiu do `App.tsx` para `poopDrain.ts`, ao lado de `applyPoopDrain`, e o `App` passou a delegar — a extração criou fonte única em vez de terceira cópia. O que **continua** valendo: banho é a única transição cujo caminho não nasceu de regra pura própria, e por isso o teste **executa** `applyPoopDrain` sobre o resultado e exige que ela pare de cobrar. Quem julga limpeza continua sendo `poopDrain.ts` |
+| 8 | Login por token no desktop | ⚠️ escrito, **nunca executado** — mas é **GUARDA DELIBERADA**, não bug (§3d) | `startDesktopAuthBridge` em **`src/utils/auth.ts`** (⚠️ **não** `desktop/renderer/src/auth.ts`, que não existe — a redação anterior escrevia só `auth.ts:175` e isso induziu um agente ao erro). Sai porque `isAuthConfigured()` exige três `VITE_FIREBASE_*` inexistentes nesta árvore. O outro lado da ponte (`auth-preload.js`) **foi** exercitado: `authBridge.test.ts`, 7 casos, 3 vermelhos sob mutação |
 | 9 | `revision` / 409 / contrato de conflito | ❌ | `grep revision functions/api/save.js` → vazio |
 | 10 | `GET /api/whoami` (ADR §2) | ❌ | arquivo não existe em `functions/api/` |
 | 11 | Teto de carinho/comida por CONTA **no desktop** | ✅ **corrigido** (`f6fb5f30`) | `desktop/renderer/src/care.ts` importa `applyRub`/`applyFeed` do app; `care.parity.test.ts` |
@@ -579,8 +719,8 @@ base algo que não existia. Substituída por estado, não por sequência.
 | 14 | Cliente Steamworks | ❌ | grep → zero |
 | 15 | `steam_appid.txt` / `.vdf` / depot | ❌ | find → nada |
 | 16 | Resgate de chave Steam (ADR §7.3) | ❌ | grep → nada |
-| 17 | Teste de `desktop/electron/` | ❌ | 0 arquivos |
-| 18 | CI do desktop | ⚠️ existe, **não é obrigatório** | `.github/workflows/desktop-build.yml:4-6`: dispara só em `push` para `main` (e uma branch morta, `claude/ui-layout-z-index-coth3e`), **nunca em `pull_request`** |
+| 17 | Teste de `desktop/electron/` | ✅ **deixou de ser 0** (`2f3cd4f6`) | `authBridge.test.ts` carrega `desktop/electron/auth-preload.js`, o arquivo de PRODUÇÃO, com um `electron` falso no lugar do host. O `main.js` em si continua sem teste |
+| 18 | CI do desktop | ✅ **roda em PR** (`3795020b`) | `ci.yml` ganhou o step `tsc -p desktop/tsconfig.json`. O buraco era **menor** do que "não existe CI do desktop", e foi medido antes de propor: os testes do desktop já rodavam em PR (`vitest.config.ts` inclui `desktop/renderer`; medido: 6 arquivos, 113 testes). Faltava exatamente UM comando, que só existia no `desktop-build.yml` — que não roda em PR **e** tem filtro de `paths` que não inclui `src/utils/careRules.ts` nem a família de cuidado, ou seja, quebrar o overlay via `src/utils/` era invisível dos DOIS lados. Isso passou a importar hoje: o desktop deixou de reimplementar as regras e ganhou acoplamento junto. Custo: **2,4 s**, sem `npm install` dentro de `desktop/`, sem segredo — roda em fork. O caminho de FALHA foi exercitado, não suposto |
 | 19 | CI da raiz (`tsc` + `vitest`) | ✅ existe | `.github/workflows/ci.yml:11-14,113-126` — roda em `pull_request` e `push: main` |
 
 ### Os criticais que continuam abertos
@@ -590,13 +730,30 @@ base algo que não existia. Substituída por estado, não por sequência.
    overlay ter passado a abrir **aproxima** esse risco em vez de afastá-lo:
    agora existe mesmo um segundo dispositivo escrevendo. **Publicar na Steam
    antes de fechar isto é vender corrupção de progresso.**
-2. 🟠 **Banho e sono são teatro** — 2 de 4 botões de cuidado não fazem nada.
+2. ~~🟠 **Banho e sono são teatro**~~ ✅ **fechado** (`86341fcb`). As quatro ações
+   escrevem no save.
 3. ~~🟠 **Tetos de carinho/comida por dispositivo**~~ ✅ **fechado no desktop**
    (`f6fb5f30`). O que sobra é o caso de escrita CONCORRENTE entre aparelhos, que
    é o critical 1 (`revision`) e não um defeito do desktop.
-4. 🟠 **CI do desktop não é obrigatório e não roda em PR.** O problema nunca foi
-   falta de gate; foi gate não honrado.
+4. ~~🟠 **CI do desktop não é obrigatório e não roda em PR**~~ ✅ **fechado**
+   (`3795020b`): `tsc -p desktop/tsconfig.json` roda em `pull_request`.
 5. 🟡 **`desktop/STEAM.md:32-34` desatualizado** (nega o provider Steam; ele existe).
+6. 🖥️ **NOVO, e não é do repositório:** o empacotamento exige o **Modo de
+   Desenvolvedor do Windows** ligado na máquina que builda (§7 item 13b), e o
+   `desktop/package.json` está **sem `author`**, que vira o Publisher do
+   instalador NSIS (§7 item 13c). Nenhum dos dois é código.
+7. 🔵 **NOVO, e é o mais instrutivo:** `Number(expiresAt) || 0` no
+   `auth-preload.js` colapsa validade ilegível em `exp: 0`, que o `main.js` lê
+   como **"nunca expira"**. Documentado, travado por teste, **não consertado** —
+   é decisão, não limpeza (§3d).
+
+**Depois desta rodada, o critical 1 (`revision`) ficou sozinho.** Vale registrar
+o que isso significa: dos cinco criticais abertos de manhã, quatro eram baratos
+e foram pagos no mesmo dia; o que sobra é o único que exige contrato novo entre
+cliente e servidor. **É a confirmação da tese do fim deste documento — o gargalo
+nunca foi o overlay.** E o overlay ter passado a escrever de verdade **aproxima**
+o risco do `revision` em vez de afastá-lo: agora existe mesmo um segundo
+dispositivo gravando no save, e em mais duas ações que ontem.
 
 ---
 
@@ -614,7 +771,7 @@ A auditoria (`squad-alpha-runs/soulmon-02/auditoria-desktop.md`) é de
 | Plano: "domínio próprio — hoje aponta pro Pages do DigiApp" | não avaliado | **FALSO** | **Esta redação.** As 3 fontes apontam para `soulmon.mateus-sprnd.workers.dev` |
 | Plano: "17 testes em `_billing.test.js`" | não avaliado | **desatualizado**: 32 + 39 | **Esta redação**, por contagem |
 | "Sem CI" (dívida 4 de `flake-assets-contract.md`) | sem CI de `tsc`/`vitest` em PR | ✅ `ci.yml` existe e roda em `pull_request` | **Esta redação.** O `ci.yml` foi criado depois daquele registro |
-| Banho/sono são teatro | 🟠 aberto | 🟠 **aberto, confirmado por leitura** | **Empate — nada mudou.** `menu.ts:482-492` |
+| Banho/sono são teatro | 🟠 aberto | ✅ **fechado no mesmo dia** (`86341fcb`) | **A auditoria estava certa na data dela.** Foi 🟠 confirmado por leitura de manhã e ✅ à noite — este é o exemplo mais curto de envelhecimento deste documento: **~8 horas** |
 | Sem `revision`/`whoami` | 🔴 / 🟠 abertos | **abertos, confirmados por grep** | **Empate — nada mudou** |
 | Cliente Steamworks | ❌ | ❌ **confirmado por grep** | **Empate — nada mudou** |
 | Estimativas de esforço (§5 da auditoria) | 10–22 semanas para A+B+C | **não reavaliadas aqui** | **A auditoria.** Estimar não era o trabalho desta redação, e refazer número sem medir seria repetir o erro que ela apontou |
@@ -628,3 +785,15 @@ data e branch: sem isso, este documento vira o próximo a ficar falso em silênc
 `whoami`, Steamworks, banho/sono, tetos por dispositivo. O que mudou foi o
 barato (6 linhas de `sprites.ts` e um `allowJs`). Isso é informação sobre o
 projeto, não coincidência: **o gargalo nunca foi o overlay.**
+
+> **Pós-escrito de 26/08 à noite, e ele CORRIGE o parágrafo acima em parte.**
+> Banho/sono e tetos por dispositivo saíram da lista dos "caros" — foram
+> fechados no mesmo dia, junto com o CI do desktop e o empacotamento. A tese
+> geral sobrevive (**`revision`, `whoami` e Steamworks continuam intocados, e
+> são os que exigem contrato novo ou dinheiro do dono**), mas a classificação
+> "caro" estava inflada por três itens que ninguém tinha tentado. O que os
+> distinguia dos verdadeiramente caros não era tamanho: era **ninguém ter
+> executado**. `dist:steam` era `[não verificado]` havia semanas e levou uma
+> sessão; o veredito do login levou uma leitura. **Não confunda "não
+> verificado" com "difícil"** — é a mesma lição do empacotamento, aplicada ao
+> planejamento em vez de ao código.
