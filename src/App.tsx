@@ -64,11 +64,14 @@ import {
 } from './utils/careRules';
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
+import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey } from './utils/playerDay';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
-import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
+// `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
+// especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
+import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
 import { getDungeonDifficulty, getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
 import { heartDropBonus, rollPetPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
@@ -2145,67 +2148,31 @@ export default function App() {
     // Neither counts against the 5-feeds-per-hour food limit.
     const special = SPECIAL_ITEMS[foodEmoji];
     if (special) {
-      // 🌀 Glitchtama: using it grants 1 perfect day (evolution point).
-      if (special.kind === 'glitchtama') {
-        playEvolve();
-        setGameState(prev => {
-          const count = prev.foodInventory[foodEmoji] ?? 0;
-          if (count <= 0) return prev;
-          const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
-          if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
-          return {
-            ...prev,
-            foodInventory: newInventory,
-            perfectDays: prev.perfectDays + 1,
-            totalPerfectDays: (prev.totalPerfectDays ?? 0) + 1,
-          };
-        });
-        setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-        toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia perfeito' : '🌀 Glitchtama! +1 perfect day');
+      // A REGRA mora em `utils/specialItemUse.ts` (leia o cabeçalho de lá para
+      // saber por que não é o `careUpdaters.ts`). Aqui sobra só o efeito: o som
+      // de cada tipo, a animação de comer e o toast do glitchtama.
+      //
+      // Só a RECUSA acontece fora do updater — ela acende o `healCapSignal`, e
+      // efeito colateral dentro de updater roda 2× no StrictMode (footgun 6).
+      // O `applySpecialItem` reconfere a recusa sobre o `prev`: era o furo do
+      // coraçãozinho, que dois toques no mesmo lote queimavam curando zero.
+      const refused = specialRefusal(gameState, foodEmoji);
+      if (refused === 'no-stock') return;
+      if (refused === 'already-full') {
+        setHealCapSignal(n => n + 1);
         return;
       }
-      if (special.kind === 'heart') {
-        // The heart item is the only buyable HP heal. Refuse (keep it) if full.
-        if (gameState.healthPoints >= gameState.maxHealthPoints) {
-          setHealCapSignal(n => n + 1);
-          return;
-        }
-        playTaskComplete();
-        setGameState(prev => {
-          const count = prev.foodInventory[foodEmoji] ?? 0;
-          if (count <= 0) return prev;
-          const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
-          if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
-          return {
-            ...prev,
-            foodInventory: newInventory,
-            healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + HEART_HEAL),
-          };
-        });
-        setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
-        return;
-      }
-      // Chip: attribute points only, no energy.
-      playFeed();
-      setGameState(prev => {
-        const count = prev.foodInventory[foodEmoji] ?? 0;
-        if (count <= 0) return prev;
-        const newInventory = { ...prev.foodInventory, [foodEmoji]: count - 1 };
-        if (newInventory[foodEmoji] === 0) delete newInventory[foodEmoji];
-        const attr = special.attr!;
-        const key = `${attr}Points` as 'virusPoints' | 'dataPoints' | 'vaccinePoints';
-        return {
-          ...prev,
-          foodInventory: newInventory,
-          [key]: prev[key] + CHIP_BOOST,
-          totalXP: prev.totalXP + CHIP_BOOST * 10,
-          attributesSinceLastEvolution: {
-            ...prev.attributesSinceLastEvolution,
-            [attr]: (prev.attributesSinceLastEvolution?.[attr] ?? 0) + CHIP_BOOST,
-          },
-        };
-      });
+
+      if (special.kind === 'glitchtama') playEvolve();
+      else if (special.kind === 'heart') playTaskComplete();
+      else playFeed();
+
+      setGameState(prev => applySpecialItem(prev, foodEmoji).state);
       setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
+
+      if (special.kind === 'glitchtama') {
+        toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia perfeito' : '🌀 Glitchtama! +1 perfect day');
+      }
       return;
     }
 
