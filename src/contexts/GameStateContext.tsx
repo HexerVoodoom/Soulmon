@@ -27,6 +27,7 @@ import { createNightmareState } from '../utils/nightmares';
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { resolveLanguage } from '../utils/i18n';
+import { soulmonDisplayName } from '../utils/petName';
 import {
   readLocal,
   writeLocal,
@@ -206,6 +207,12 @@ export interface GameState {
   soulmonMeta?: {
     seed?: number;
     baseName: string;
+    /** O nome que o JOGADOR deu à criatura no cadastro (`utils/petName.ts`).
+     *  Ausente nos saves antigos e em quem manteve a sugestão — quem lê usa
+     *  `soulmonDisplayName`, que cai no `baseName`. Nunca sobrescreve o
+     *  `baseName`: a bio, a linhagem e a página do Oráculo continuam falando
+     *  do nome da espécie. */
+    petName?: string;
     dominantElement?: ElementId;
     dominantAlignment?: AlignmentId;
     dominantRealm?: RealmId;
@@ -1180,7 +1187,9 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // "Anônimo" aparecia para quem nunca escolheu português.
         name: readLocal(STORAGE_KEYS.USER_NAME)
           || (resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR' ? 'Anônimo' : 'Anonymous'),
-        petName: gameState.soulmonMeta?.baseName || '',
+        // É o nome ESCOLHIDO que vai para o diretório público, com o nome
+        // sugerido como padrão de quem nunca batizou nada.
+        petName: soulmonDisplayName(gameState.soulmonMeta),
         stage: gameState.evolutionStage,
         unlockedStages: gameState.unlockedEvolutions,
         pvpEnabled: !!gameState.pvpEnabled,
