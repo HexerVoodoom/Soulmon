@@ -8,7 +8,7 @@
 // são um CACHE de leitura; os campos de ação local ficam claramente separados.
 import { STORAGE_KEY } from './config';
 import type { GenericLine } from './sprites';
-import { recentFeeds, feedsLeft as sharedFeedsLeft } from '../../../src/utils/careRules';
+import { recentFeeds, feedsLeft as sharedFeedsLeft, type RubHealRecord } from '../../../src/utils/careRules';
 
 /** Tarefa de hoje, vinda do save do app. O desktop NÃO cria tarefas. */
 export interface RemoteTask {
@@ -41,8 +41,21 @@ export interface DesktopState {
   sleeping: boolean;
   /** Timestamps (ms) das últimas comidas — janela deslizante de 5/hora, igual ao mobile. */
   feedTimes: number[];
-  /** Dia (YYYY-MM-DD) em que o carinho já curou — máx. 1×/dia, igual ao mobile. */
-  rubHealDay: string | null;
+  /**
+   * Teto de carinho do dia — SÓ do modo sem conta.
+   *
+   * Com conta sincronizada este campo não é lido nem escrito: o registro que
+   * vale mora em `careCaps.rubHeal` DO SAVE (`care.ts`), porque um teto que se
+   * fura trocando de aparelho não é teto. Aqui ele sobrevive só para o overlay
+   * ainda fazer alguma coisa antes de o jogador entrar na conta.
+   *
+   * É o `RubHealRecord` do app, e não a antiga string `YYYY-MM-DD`: mesmo tipo e
+   * mesmo formato de data dos dois lados, para nunca precisar traduzir um no
+   * outro. O campo velho (`rubHealDay`) simplesmente deixa de ser lido — no
+   * primeiro dia depois da atualização o jogador sem conta pode ganhar um
+   * carinho a mais, uma vez, e isso é mais barato que uma migração.
+   */
+  rubHeal?: RubHealRecord;
   /** E-mail usado pro cloud save (mesmo do app mobile/web) — null = nunca configurado. */
   syncEmail: string | null;
   /** ISO da última vez que puxamos o GameState real da nuvem. */
@@ -70,7 +83,7 @@ function defaults(): DesktopState {
     tasks: [],
     sleeping: false,
     feedTimes: [],
-    rubHealDay: null,
+    rubHeal: undefined,
     syncEmail: null,
     lastSyncAt: null,
   };
@@ -94,11 +107,6 @@ export function saveState(state: DesktopState): void {
   } catch {
     // Sem espaço/modo privado: segue só em memória.
   }
-}
-
-export function todayKey(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 /**
