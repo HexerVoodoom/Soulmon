@@ -6515,6 +6515,13 @@ button.sm-px-node {
   --sm2-dur-tap: 120ms;    /* feedback de toque */
   --sm2-dur-enter: 200ms;  /* entrada de card/sheet */
   --sm2-dur-page: 320ms;   /* troca de página */
+  /* A quarta duração, e a única acima de 320ms. Ela existe porque a varredura
+     da sintonia do Visor não é feedback nem entrada: é uma passagem que o olho
+     precisa SEGUIR de um lado ao outro da tela. Em 320ms a faixa vira um
+     flash; a spec fixou 400ms (`spec-geracao-incremental.md` §2.1/§2.3.1).
+     Fica como TOKEN porque duração de movimento neste projeto é vocabulário,
+     não literal solto — há trava em `styles/tokens.contrast.test.ts`. */
+  --sm2-dur-scan: 400ms;   /* varredura da sintonia do Visor (uma vez, nunca em loop) */
   --sm2-ease: cubic-bezier(.2, 0, 0, 1);
 }
 
@@ -6946,6 +6953,13 @@ button.sm-px-node {
    manda desligar — e depender de um `*` distante é como o guard se perde numa
    refatoração. */
 @media (prefers-reduced-motion: reduce) {
+  /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
+     `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
+     para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
+     `lastIndexOf` e cobra a respiração do visor DENTRO dele; um bloco novo
+     colado no fim do arquivo faz o teste medir o bloco errado e desarmar em
+     silêncio. Há guard travando esta sentinela — não a remova, e não abra
+     bloco novo: acrescente a regra AQUI. */
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* A sintonia do Visor (troca da arte de reserva pelo sprite próprio) vira
@@ -6957,6 +6971,12 @@ button.sm-px-node {
      dele. Um bloco novo no fim tira a trava da fundação do alcance do teste
      sem ninguém notar. */
   .sm-visor-swap { animation: none !important; }
+  /* A varredura da sintonia NÃO TOCA (§6 da spec). O corte de verdade é em JS
+     — `EvolutionPath` nem monta o elemento —, exatamente como a respiração do
+     anel: o `*` global deste arquivo só encolhe para `0.01ms`, e 0,01ms de
+     animação ainda é animação disparada. Esta regra é a segunda tranca, para o
+     caso de a faixa aparecer por outro caminho. */
+  .sm-visor-scan { animation: none !important; display: none !important; }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -7394,4 +7414,45 @@ body {
 }
 .sm-visor-swap {
   animation: sm-visor-swap-in var(--sm2-dur-tap, 120ms) var(--sm2-ease, ease-out) both;
+}
+
+/* ── A VARREDURA da sintonia — 400 ms, UMA vez (§2.1 e §2.3.1 da mesma spec)
+   Isto NÃO contradiz o "sem scanline por padrão" da fundação do `Viewport`
+   (`ui/Viewport.tsx` e o gêmeo em `.sm2-viewport-glass` acima). Aquela regra
+   recusa um overlay PERMANENTE de listras, que sobre um sprite de 32px come
+   metade do desenho. Esta é uma faixa única que atravessa a tela no momento em
+   que o rosto do bicho troca e some — 400 ms de passagem, e o sprite continua
+   inteiro embaixo o tempo todo.
+
+   Por que uma faixa larga com gradiente, e não uma linha de 1px: em escala 3×
+   uma linha de 1px cai no meio de um pixel do sprite e cintila. A faixa de 34%
+   da altura viaja por cima de vários pixels ao mesmo tempo, que é como um CRT
+   sintonizando lê de verdade.
+
+   `translateY` e `opacity` só — as duas propriedades que o compositor resolve
+   sem relayout. Condição real declarada do projeto é aparelho fraco. */
+@keyframes sm-visor-scan-once {
+  0%   { transform: translateY(-120%); opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(320%); opacity: 0; }
+}
+.sm-visor-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 34%;
+  /* Luz do próprio primário, como a varredura do `ScreenSkeleton` — a leitura é
+     "sintonizando", nunca "erro". */
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--sm2-primary-fill) 38%, transparent),
+    transparent
+  );
+  /* O mesmo contrato do `.sm2-viewport-glass`: sobrepõe sem roubar o gesto de
+     esfregar o pet que vive lá dentro. */
+  pointer-events: none;
+  animation: sm-visor-scan-once var(--sm2-dur-scan, 400ms) var(--sm2-ease, ease-out) 1 both;
 }

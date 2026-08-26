@@ -27,7 +27,12 @@ import { CSSProperties, ReactNode, useEffect, useState } from 'react';
  *    custava recálculo e não comunicava nada. Desligada por
  *    `prefers-reduced-motion`;
  *  · sem scanline por padrão (scanline sobre sprite de 32px come metade
- *    do desenho).
+ *    do desenho). "Por padrão" = sem overlay PERMANENTE de listras, e isso
+ *    continua valendo. A varredura de 400ms da sintonia (`.sm-visor-scan`,
+ *    `index.css`) é outra coisa: passa UMA vez quando o sprite troca e sai do
+ *    DOM — transição, não estado do visor. Quem sobrepõe algo aqui dentro
+ *    copia o contrato do `.sm2-viewport-glass`: absoluto e `pointer-events:
+ *    none`, para não roubar o gesto de esfregar o pet.
  *
  * **Escala INTEIRA, sempre.** `scale` só aceita 2 ou 3. Escala fracionária
  * é a causa nº 1 de pixel art borrada, e `image-rendering: pixelated` não

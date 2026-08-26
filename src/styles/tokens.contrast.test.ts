@@ -418,10 +418,54 @@ describe('regras da fundação travadas no CSS', () => {
     expect(t['--sm2-ease']).toBe('cubic-bezier(.2, 0, 0, 1)');
   });
 
+  it('a varredura da sintonia do Visor é token de 400ms, não literal solto', () => {
+    // Quarta duração, e a única acima de 320ms: a faixa da sintonia é uma
+    // passagem que o olho segue de ponta a ponta da tela, não um feedback.
+    expect(temaClaro()['--sm2-dur-scan']).toBe('400ms');
+    // E o CSS tem de CONSUMIR o token — token que ninguém usa é decoração.
+    expect(cssRaw).toMatch(/\.sm-visor-scan\s*\{[^}]*var\(--sm2-dur-scan/);
+    // Uma vez, nunca em loop: `infinite` aqui seria a scanline permanente que
+    // o `Viewport` recusa desde a fundação (come metade de um sprite de 32px).
+    expect(cssRaw).not.toMatch(/sm-visor-scan-once[^;]*infinite/);
+  });
+
   it('prefers-reduced-motion desliga a respiração do visor', () => {
     const bloco = cssRaw.slice(cssRaw.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
     expect(bloco).toContain('.sm2-viewport');
     expect(bloco).toMatch(/animation:\s*none/);
+  });
+
+  /**
+   * GUARD DO GUARD acima.
+   *
+   * O teste anterior mede o ÚLTIMO bloco `prefers-reduced-motion` do arquivo e
+   * cobra `.sm2-viewport` + `animation: none` DENTRO dele. Isso só funciona
+   * enquanto o último bloco for o bloco canônico da fundação. Se alguém colar
+   * um bloco novo no fim do `index.css` que por acaso contenha um seletor
+   * começando em `.sm2-viewport` e um `animation: none` qualquer, o teste
+   * acima passa a medir o bloco errado, continua VERDE, e a trava da
+   * respiração do visor evapora sem ninguém notar — falso verde é pior que
+   * vermelho, porque ocupa o lugar de um teste.
+   *
+   * A sentinela resolve por identidade, não por conteúdo: o bloco canônico se
+   * IDENTIFICA, e tem de ser o último.
+   */
+  it('o último bloco de movimento reduzido é o CANÔNICO — sentinela de identidade', () => {
+    const SENTINELA = 'SENTINELA-MOVIMENTO-REDUZIDO-CANONICO';
+    const ocorrências = cssRaw.split(SENTINELA).length - 1;
+    expect(ocorrências, 'a sentinela identifica UM bloco só').toBe(1);
+
+    const último = cssRaw.slice(cssRaw.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
+    expect(
+      último,
+      'apareceu um bloco `prefers-reduced-motion` DEPOIS do canônico: a trava da ' +
+      'respiração do visor passou a medir o bloco errado. Mova a regra nova para ' +
+      'dentro do bloco canônico em vez de abrir outro.',
+    ).toContain(SENTINELA);
+
+    // E as regras do visor moram todas lá — inclusive a varredura nova.
+    expect(último).toContain('.sm-visor-swap');
+    expect(último).toContain('.sm-visor-scan');
   });
 
   it('o visor é escuro nos DOIS temas', () => {
