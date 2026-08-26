@@ -6948,6 +6948,15 @@ button.sm-px-node {
 @media (prefers-reduced-motion: reduce) {
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
+  /* A sintonia do Visor (troca da arte de reserva pelo sprite próprio) vira
+     CORTE SECO: a troca continua acontecendo, só sem a transição
+     (`spec-geracao-incremental.md` §6). Mora AQUI, e não num segundo bloco no
+     fim do arquivo, porque a regra de movimento reduzido deste projeto tem UM
+     lugar — `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco
+     `prefers-reduced-motion` do CSS e cobra a respiração do visor dentro
+     dele. Um bloco novo no fim tira a trava da fundação do alcance do teste
+     sem ninguém notar. */
+  .sm-visor-swap { animation: none !important; }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -7385,7 +7394,4 @@ body {
 }
 .sm-visor-swap {
   animation: sm-visor-swap-in var(--sm2-dur-tap, 120ms) var(--sm2-ease, ease-out) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .sm-visor-swap { animation: none; }
 }
