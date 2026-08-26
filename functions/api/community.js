@@ -77,10 +77,56 @@ function stagePower(stage) {
 // um token opaco que devolve ao servidor.
 const PID_PREFIX = 'pid:';
 
-/** pid público a partir do saveId. Determinístico, então não precisa migração. */
-async function publicIdFor(saveId) {
+/**
+ * DERIVAÇÃO ANTIGA do pid — mantida SÓ para reconhecer e aposentar os pids
+ * velhos. **Não use para gerar identidade nova.**
+ *
+ * Ela era `SHA-256("soulmon-pub:" + saveId)`, sem segredo nenhum. O caminho
+ * pid → saveId é de mão única, e por isso ela parecia suficiente. Mas o
+ * caminho que importa para o atacante é o INVERSO e ele estava aberto:
+ * `saveId` é `SHA-256("soulmon:" + e-mail)`, algoritmo igualmente público, e
+ * as duas derivações se encadeiam. De um e-mail qualquer saía, offline,
+ * o pid da conta daquela pessoa — e daí "esse e-mail tem conta?" era só
+ * perguntar (`action=player`) ou procurar na listagem pública do diretório.
+ * Ver `community.playerOracle.test.js` (N-3 / item B3 da auditoria).
+ */
+async function legacyPidFor(saveId) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`soulmon-pub:${saveId}`));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
+}
+
+/**
+ * Identidade pública nova: 24 hex ALEATÓRIOS, sem relação com o saveId.
+ *
+ * Aleatório, e não "hash com segredo", de propósito: um pepper obriga a
+ * gerenciar (e um dia rotacionar) um segredo do qual TODA identidade social já
+ * publicada depende. O pid já é armazenado no perfil e indexado em `pid:` —
+ * derivá-lo nunca foi necessário, só era conveniente.
+ */
+function newPid() {
+  const b = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Devolve o pid do perfil, cunhando um novo quando não há — ou quando o que
+ * está lá é o pid DERIVADO antigo, que é justamente o que precisa morrer.
+ *
+ * Escreve no KV durante uma leitura, o que é incomum e é intencional: é uma
+ * migração preguiçosa, sem passo de operação e sem janela em que uma conta
+ * antiga continue endereçável pelo pid adivinhável. A escrita acontece no
+ * máximo uma vez por perfil. O índice velho é apagado aqui, no caminho de
+ * escrita — nunca no de leitura do atacante, para não devolver a ele um sinal
+ * de tempo ("apagou algo, logo a conta existia").
+ */
+async function ensurePid(env, p) {
+  if (p.pid && p.pid !== await legacyPidFor(p.id)) return p.pid;
+  const antigo = p.pid;
+  p.pid = newPid();
+  await putProfile(env, p.id, p);
+  await indexPublicId(env, p.id, p.pid);
+  if (antigo) await env.DIGIAPP_SAVES.delete(`${PID_PREFIX}${antigo}`);
+  return p.pid;
 }
 
 /** Grava o mapa reverso. Idempotente; roda a cada upsert de perfil. */
@@ -88,10 +134,36 @@ async function indexPublicId(env, saveId, pid) {
   await env.DIGIAPP_SAVES.put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
 
-/** pid → saveId. `null` quando o alvo não existe (ou ainda não se registrou). */
+/**
+ * pid → saveId. `null` quando o alvo não existe (ou ainda não se registrou).
+ *
+ * Recusa explicitamente um pid que seja a derivação antiga do saveId ao qual
+ * ele aponta: enquanto esses índices existirem no KV, a cadeia
+ * e-mail → saveId → pid continuaria resolvendo e o oráculo continuaria vivo.
+ * A recusa é imediata e não depende da migração ter passado por aquele perfil.
+ *
+ * O hash é calculado nos DOIS ramos (com um saveId de mentira do mesmo
+ * tamanho quando não há acerto) e não há escrita em ramo nenhum: um KV `get`,
+ * um SHA-256, sempre. Sem isso, "pid inexistente" e "pid legado de conta
+ * existente" gastariam trabalhos diferentes e o oráculo voltaria pelo relógio.
+ */
+const PID_PLACEHOLDER = '0'.repeat(32);
 async function saveIdForPublicId(env, pid) {
   if (!VALID_ID.test(pid || '')) return null;
-  return await env.DIGIAPP_SAVES.get(`${PID_PREFIX}${pid}`);
+  const saveId = await env.DIGIAPP_SAVES.get(`${PID_PREFIX}${pid}`);
+  const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
+  if (!saveId || pid === legado) return null;
+  return saveId;
+}
+
+/**
+ * pid público de um saveId que NÃO é o autor da requisição (amigo, dono de uma
+ * linha do ranking). Só o perfil sabe o pid — não há mais como calcular.
+ * `null` quando aquele saveId não tem perfil.
+ */
+async function pidDeSaveId(env, saveId) {
+  const p = await getProfile(env, saveId);
+  return p ? await ensurePid(env, p) : null;
 }
 
 /**
@@ -105,7 +177,7 @@ async function saveIdForPublicId(env, pid) {
  * @returns {Promise<Record<string, any>>}
  */
 async function publicProfile(env, p, extra = {}) {
-  const pid = p.pid || await publicIdFor(p.id);
+  const pid = await ensurePid(env, p);
   return {
     id: pid,
     name: p.name, petName: p.petName, stage: p.stage,
@@ -244,6 +316,12 @@ async function handleCommunity({ request, env }) {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const prev = (await getProfile(env, id)) || {};
+    // Mantém o pid que a pessoa já tem, EXCETO quando ele é o derivado antigo
+    // — esse é aposentado aqui, junto com o índice que o resolvia. Não uso
+    // `ensurePid` neste ponto para não gravar um perfil parcial antes do
+    // `putProfile` de baixo.
+    const pidAntigo = prev.pid;
+    const pidLegado = pidAntigo && pidAntigo === await legacyPidFor(id);
     const profile = {
       id,
       name: String(body.name || prev.name || 'Anônimo').slice(0, 24),
@@ -260,10 +338,11 @@ async function handleCommunity({ request, env }) {
       updatedAt: Date.now(),
       // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
       // mapa reverso conhece a correspondência.
-      pid: prev.pid || await publicIdFor(id),
+      pid: (pidAntigo && !pidLegado) ? pidAntigo : newPid(),
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
+    if (pidLegado) await env.DIGIAPP_SAVES.delete(`${PID_PREFIX}${pidAntigo}`);
     return json({ ok: true, id: profile.pid });
   }
 
@@ -288,15 +367,28 @@ async function handleCommunity({ request, env }) {
   }
 
   if (action === 'player' && method === 'GET') {
-    // `id` aqui é um pid (é o que o diretório publica). Aceita o saveId do
-    // próprio dono também, para o app conseguir consultar o próprio perfil.
-    const targetSave = (await saveIdForPublicId(env, id)) || id;
-    const p = await getProfile(env, targetSave);
+    // `id` aqui é SEMPRE um pid. O `|| id` que existia aqui aceitava o saveId
+    // cru — o comentário dizia "para o app consultar o próprio perfil", e o
+    // motivo era legítimo, mas o efeito era um oráculo: o saveId é derivável
+    // do e-mail por algoritmo público, então a rota respondia, sem
+    // autenticação nenhuma, "esse e-mail tem conta?" — com o perfil junto.
+    //
+    // O caso legítimo continua atendido sem o fallback: `action=profile`
+    // devolve `{ ok: true, id: <pid> }` ao próprio dono a cada cloud save, que
+    // é onde o app aprende o próprio pid. Nenhum chamador passava saveId aqui.
+    //
+    // Autorizar em vez de remover NÃO serviria: `authorizeSaveAccess` é
+    // fail-open enquanto `FIREBASE_PROJECT_ID` estiver desligado (SEC-1), e o
+    // oráculo é para ser fechado AGORA, sem depender da fatia 1.
+    const targetSave = await saveIdForPublicId(env, id);
+    const p = targetSave ? await getProfile(env, targetSave) : null;
     if (!p) return json({ found: false });
     const rank = await getRank(env, currentSeason(), targetSave);
     // `friends` sai como pid: internamente são saveIds, e devolvê-los cru
     // vazaria a chave do save de até 5 pessoas por consulta.
-    const friendPids = await Promise.all((p.friends || []).map(f => publicIdFor(f)));
+    // Amigo sem perfil não tem pid e some da lista — antes saía um pid
+    // derivado que não resolvia em lugar nenhum.
+    const friendPids = (await Promise.all((p.friends || []).map(f => pidDeSaveId(env, f)))).filter(Boolean);
     return json({
       found: true,
       player: await publicProfile(env, p, {
@@ -399,7 +491,9 @@ async function handleCommunity({ request, env }) {
       const ownerSave = k.slice(`rank:${season}:`.length);
       const p = await getProfile(env, ownerSave);
       rows.push({
-        id: p?.pid || await publicIdFor(ownerSave),
+        // Sem perfil não há identidade pública: a linha do rank existe (o
+        // `rank:` dura mais que o `profile:`), mas não é endereçável.
+        id: p ? await ensurePid(env, p) : null,
         name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie',
         points: rec.points, wins: rec.wins, losses: rec.losses,
       });
@@ -473,7 +567,7 @@ async function handleCommunity({ request, env }) {
     }
     await putProfile(env, id, me);
     // Devolve pids: a lista interna é de saveIds e não pode sair daqui.
-    return json({ ok: true, friends: await Promise.all(me.friends.map(f => publicIdFor(f))) });
+    return json({ ok: true, friends: (await Promise.all(me.friends.map(f => pidDeSaveId(env, f)))).filter(Boolean) });
   }
 
   // ── Presente de bits (grátis; exige energia cheia no cliente; 1x/dia/amigo)

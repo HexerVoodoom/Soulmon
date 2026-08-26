@@ -28,10 +28,18 @@ function fakeKV(seed = {}) {
   };
 }
 
-async function pidDeSync(saveId) {
+// DERIVAÇÃO ANTIGA do pid. Hoje ela existe aqui por um motivo só: provar que
+// o servidor a RECUSA. Ver `community.playerOracle.test.js` (N-3/B3) — como o
+// saveId é derivado do e-mail por algoritmo público, um pid derivado do saveId
+// fechava a cadeia e-mail → conta para qualquer um, offline.
+async function pidLegado(saveId) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`soulmon-pub:${saveId}`));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
 }
+
+// Um pid como o servidor passa a emitir: opaco, sem relação com o saveId.
+const PID_VITIMA = 'v'.repeat(24);
+const PID_ATOR = 'a1b2c3d4e5f60718293a4b5c';
 
 const perfil = (id, extra = {}) => JSON.stringify({
   id, name: `n-${id.slice(0, 4)}`, petName: 'pet', stage: 'rookie',
@@ -142,9 +150,9 @@ describe('community — o torneio não aceita partida contra si mesmo', () => {
     // Sem isso, os dois getRank/putRank caem na mesma chave e a segunda
     // escrita sobrescreve a primeira, inclusive o contador de partidas do dia.
     // A checagem acontece DEPOIS de resolver o pid: o alvo é sempre público.
-    const meuPid = await pidDeSync(ATOR);
+    const meuPid = PID_ATOR;
     const env = { DIGIAPP_SAVES: fakeKV({
-      [`profile:${ATOR}`]: perfil(ATOR),
+      [`profile:${ATOR}`]: perfil(ATOR, { pid: meuPid }),
       [`pid:${meuPid}`]: ATOR,
     }) }; // auth desligada
     const res = await onRequest({ request: req('match', { method: 'POST', body: { id: ATOR, opponentId: meuPid } }), env });
@@ -182,7 +190,6 @@ describe('community — a lista de ações com ator está completa', () => {
 // A identidade social passou a ser um pid derivado (caminho só de ida).
 // ─────────────────────────────────────────────────────────────────────────────
 
-const pidDe = pidDeSync;
 
 describe('community — o saveId nunca sai em resposta pública', () => {
   const LEITURAS_PUBLICAS = [
@@ -196,8 +203,8 @@ describe('community — o saveId nunca sai em resposta pública', () => {
     it(`'${caso.action}' não contém nenhum saveId`, async () => {
       const env = {
         DIGIAPP_SAVES: fakeKV({
-          [`profile:${VITIMA}`]: perfil(VITIMA, { pid: await pidDe(VITIMA) }),
-          [`profile:${ATOR}`]: perfil(ATOR, { pid: await pidDe(ATOR) }),
+          [`profile:${VITIMA}`]: perfil(VITIMA, { pid: PID_VITIMA }),
+          [`profile:${ATOR}`]: perfil(ATOR, { pid: PID_ATOR }),
           [`rank:${new Date().toISOString().slice(0, 7)}:${VITIMA}`]:
             JSON.stringify({ points: 30, wins: 3, losses: 1, day: '2026-01-01', matchesToday: 0 }),
         }),
@@ -209,18 +216,39 @@ describe('community — o saveId nunca sai em resposta pública', () => {
     });
   }
 
-  it('o diretório publica o pid, e ele é derivado do saveId', async () => {
+  it('o diretório publica um pid que NÃO é derivado do saveId', async () => {
+    // Era derivado, e essa era a falha: derivável do saveId = derivável do
+    // e-mail. Hoje o pid é sorteado no primeiro contato e guardado no perfil.
     const env = { DIGIAPP_SAVES: fakeKV({ [`profile:${VITIMA}`]: perfil(VITIMA) }) };
     const res = await onRequest({ request: req('players'), env });
     const { players } = await res.json();
-    expect(players[0].id).toBe(await pidDe(VITIMA));
+    expect(players[0].id).not.toBe(await pidLegado(VITIMA));
+    expect(players[0].id).toMatch(/^[0-9a-f]{24}$/);
+    // e ficou persistido: a identidade social não pode mudar a cada leitura.
+    const salvo = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${VITIMA}`));
+    expect(salvo.pid).toBe(players[0].id);
+    expect(env.DIGIAPP_SAVES.store.get(`pid:${players[0].id}`)).toBe(VITIMA);
   });
 
   it('o pid não permite voltar ao saveId sem o mapa do servidor', async () => {
-    // É um hash: a única forma de resolver um alvo é o índice `pid:` no KV.
-    const pid = await pidDe(VITIMA);
+    // A única forma de resolver um alvo é o índice `pid:` no KV.
+    const env = { DIGIAPP_SAVES: fakeKV({ [`profile:${VITIMA}`]: perfil(VITIMA) }) };
+    const res = await onRequest({ request: req('players'), env });
+    const pid = (await res.json()).players[0].id;
     expect(pid).not.toContain(VITIMA);
     expect(VITIMA).not.toContain(pid);
+  });
+
+  it('um pid LEGADO indexado não resolve mais — nem para quem já o tinha', async () => {
+    // Índices `pid:` derivados continuam no KV até expirar (400 dias). Se eles
+    // resolvessem, o oráculo sobreviveria à correção nas contas antigas.
+    const legado = await pidLegado(VITIMA);
+    const env = { DIGIAPP_SAVES: fakeKV({
+      [`profile:${VITIMA}`]: perfil(VITIMA, { pid: legado }),
+      [`pid:${legado}`]: VITIMA,
+    }) };
+    const res = await onRequest({ request: req('player', { params: { id: legado } }), env });
+    expect(await res.json()).toEqual({ found: false });
   });
 });
 
@@ -241,10 +269,10 @@ describe('community — alvos são endereçados por pid, não por saveId', () =>
   });
 
   it('com o pid indexado, a amizade funciona — e a resposta volta em pid', async () => {
-    const pidVitima = await pidDe(VITIMA);
+    const pidVitima = PID_VITIMA;
     const env = { DIGIAPP_SAVES: fakeKV({
       [`profile:${ATOR}`]: perfil(ATOR),
-      [`profile:${VITIMA}`]: perfil(VITIMA),
+      [`profile:${VITIMA}`]: perfil(VITIMA, { pid: pidVitima }),
       [`pid:${pidVitima}`]: VITIMA,
     }) };
     const res = await onRequest({
