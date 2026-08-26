@@ -16,6 +16,7 @@
  */
 import { FORM_REQUIREMENTS, getStageBranch, getStageLevel } from '../types/progression';
 import { getSpriteForStage } from '../utils/sprites';
+import { isSafeSpriteSrc } from '../utils/spriteLibrary';
 import { ATTR_COLOR, ATTR_INK, ATTR_LABEL } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { Viewport } from './ui/Viewport';
@@ -79,7 +80,7 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           screenStyle={{ position: 'relative' }}
         >
           <img
-            src={player.spriteUrl ?? getSpriteForStage(player.stage)}
+            src={isSafeSpriteSrc(player.spriteUrl) ? player.spriteUrl : getSpriteForStage(player.stage)}
             alt=""
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }}
           />
