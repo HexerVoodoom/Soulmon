@@ -17,7 +17,7 @@
 import { useEffect, useState } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
+import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { Icon } from './ui/Icon';
@@ -35,9 +35,26 @@ interface LibraryPageProps {
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
 // utils/libraryNpcs.ts); isNpc/spriteUrl ficam undefined pros reais.
-type LibraryEntry = DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string };
+type LibraryEntry = DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string; unresolved?: boolean };
 
 const MAX_FRIENDS = 5;
+
+/**
+ * Linha de amigo que NAO resolveu (rede caiu, 502, perfil apagado no servidor).
+ *
+ * Ela existe de proposito: o vinculo esta na lista `friends` e o contador
+ * `Amigos N/5` o conta, entao sumir com a linha faria o contador mentir — que e
+ * exatamente o sintoma da regressao que este arquivo conserta. A linha fica,
+ * degradada, e as duas acoes que NAO dependem do perfil continuam de pe:
+ * presentear e remover, que o servidor resolve pelo pid.
+ */
+const amigoNaoResolvido = (id: string, isPt: boolean): LibraryEntry => ({
+  id,
+  name: isPt ? 'Amigo (nao carregou)' : "Friend (didn't load)",
+  petName: '', stage: 'rookie', unlockedStages: [],
+  pvpEnabled: false, rankPoints: 0, daysPlaying: 0, tasksDone: 0,
+  unresolved: true,
+});
 
 const rowStyle: React.CSSProperties = {
   width: '100%',
@@ -103,6 +120,8 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  /** Amigos resolvidos por pid. `null` = ainda carregando (nao "sem amigos"). */
+  const [friendPlayers, setFriendPlayers] = useState<LibraryEntry[] | null>(null);
 
   useEffect(() => {
     let vivo = true;
@@ -115,6 +134,43 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
     }, 300);
     return () => { vivo = false; clearTimeout(t); };
   }, [search, reloadKey]);
+
+  /**
+   * A ABA AMIGOS RESOLVE POR `action=player`, E NAO PELO DIRETORIO.
+   *
+   * Antes daqui a lista era `players.filter(p => friends.includes(p.id))` —
+   * derivada de `action=players`. Desde `f1ce3848` (N-4) o diretorio publico so
+   * devolve quem ligou o `pvpEnabled`, entao um amigo JA ADICIONADO que nao
+   * consentiu sumia da aba: o vinculo continuava no servidor, so a renderizacao
+   * o perdia, e com ele o botao de presente.
+   *
+   * Amizade e consentimento PROPRIO — quem me adicionou aceitou me mostrar A
+   * ELE. Sair do diretorio publico nao e sair da lista de amigos de quem ja me
+   * tem. Por isso o conserto e resolver por pid (`action=player` nao tem gate de
+   * `pvpEnabled`) em vez de afrouxar o filtro do diretorio.
+   *
+   * N CHAMADAS: `Promise.allSettled` dispara as (no maximo 5) de uma vez e
+   * espera UMA rodada — nao 5 idas e voltas em serie travando a aba. E
+   * `allSettled` (nao `all`) porque uma falha isolada nao pode derrubar as
+   * outras quatro: cada indice e tratado sozinho, e o que falhou vira linha
+   * degradada em vez de desaparecer.
+   */
+  const friendsKey = friends.join(',');
+  useEffect(() => {
+    let vivo = true;
+    const ids = friendsKey ? friendsKey.split(',') : [];
+    if (ids.length === 0) { setFriendPlayers([]); return; }
+    setFriendPlayers(null);
+    Promise.allSettled(ids.map(id => getPlayer(id))).then(rs => {
+      if (!vivo) return;
+      setFriendPlayers(rs.map((r, i) => (
+        r.status === 'fulfilled' && r.value.found && r.value.player
+          ? (r.value.player as LibraryEntry)
+          : amigoNaoResolvido(ids[i], isPt)
+      )));
+    });
+    return () => { vivo = false; };
+  }, [friendsKey, reloadKey, isPt]);
 
   const toggleFriend = async (p: DirectoryPlayer) => {
     setBusyId(p.id);
@@ -144,11 +200,12 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
     }
   };
 
-  const friendPlayers: LibraryEntry[] = (players ?? []).filter(p => friends.includes(p.id));
   const searchLower = search.toLowerCase();
   const npcMatches: LibraryEntry[] = LIBRARY_NPCS.filter(p => !searchLower || p.name.toLowerCase().includes(searchLower) || p.petName.toLowerCase().includes(searchLower));
   const directoryList: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...npcMatches];
   const list = tab === 'friends' ? friendPlayers : directoryList;
+  /** Carregando e por ABA: cada uma tem a sua fonte e o seu `null`. */
+  const carregando = list === null;
 
   const TABS = [
     { key: 'directory' as const, icon: 'person', label: isPt ? 'Todos' : 'All' },
@@ -213,7 +270,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       )}
 
       {/* ── Carregando ── */}
-      {players === null && (
+      {carregando && (
         <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, padding: '24px 0', justifyContent: 'center' }}>
           <Icon name="sync" size={24} tone="primary" className="animate-spin" />
           {isPt ? 'Procurando jogadores…' : 'Looking for players…'}
@@ -221,7 +278,8 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       )}
 
       {/* ── Erro / sem rede: nunca confundido com "não há ninguém" ── */}
-      {loadError && (
+      {/* O erro de carga e do DIRETORIO; na aba Amigos a falha e por linha. */}
+      {loadError && tab === 'directory' && (
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
           <Icon name="cloud_off" size={48} tone="muted" />
           <p style={{ ...sm2Text, marginTop: 8 }}>
@@ -238,7 +296,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       )}
 
       {/* ── Vazio ── */}
-      {list && list.length === 0 && !loadError && (
+      {list && list.length === 0 && !(loadError && tab === 'directory') && (
         <p style={{ ...sm2Hint, textAlign: 'center', padding: '24px 0' }}>
           {tab === 'friends'
             ? (isPt ? 'Você ainda não tem amigos. Toque em alguém na aba Todos.' : 'You have no friends yet. Tap someone in the All tab.')
@@ -276,9 +334,11 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                     )}
                   </span>
                   <span className="sm2-num" style={{ ...sm2Hint, display: 'block' }}>
-                    {isPt
-                      ? `${p.daysPlaying} dias jogando · rank ${p.rankPoints}`
-                      : `${p.daysPlaying} days playing · rank ${p.rankPoints}`}
+                    {p.unresolved
+                      ? (isPt ? 'Nao deu para carregar o perfil agora.' : "Couldn't load this profile right now.")
+                      : isPt
+                        ? `${p.daysPlaying} dias jogando · rank ${p.rankPoints}`
+                        : `${p.daysPlaying} days playing · rank ${p.rankPoints}`}
                   </span>
                 </span>
               </button>
