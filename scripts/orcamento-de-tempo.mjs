@@ -64,6 +64,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync, rmSync, existsSync, mkdtempSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -85,6 +86,48 @@ const TOP = Math.max(1, Number(opcao('--top', 20)) || 20);
 const JSON_OUT = opcao('--json', null);
 
 // ---------------------------------------------------------------------------
+// A SEGUNDA RÉGUA — o custo que o `testTimeout` NÃO cronometra.
+//
+// Achado que motivou isto: na rodada contendida de 26/08/2026 o relógio de
+// parede quase dobrou (63,5 s contra 32 s) e a linha `transform` do vitest
+// subiu 7× (55 s contra 7,6 s) — enquanto as DURAÇÕES POR TESTE mal se
+// mexeram. Ou seja: o ranking acima, sozinho, mede menos que o risco. O que
+// estourou não foi o corpo de nenhum caso; foi o custo de PÔR O ARQUIVO DE PÉ
+// (transform + import do módulo de teste e do grafo atrás dele), que corre
+// fora do `testTimeout` e por isso não aparece em `assertionResults[].duration`.
+//
+// O reporter JSON não expõe esse número: `startTime`/`endTime` de cada suíte
+// são derivados dos próprios testes (vitest 4, `JsonReporter`), então a
+// diferença entre eles não contém o carregamento. Quem expõe é a API de
+// reporter: `TestModule.diagnostic()` devolve `collectDuration` (importar o
+// módulo de teste e executar os callbacks de suíte), `environmentSetupDuration`
+// (montar jsdom/node), `prepareDuration` (o harness) e `setupDuration`.
+//
+// Por que um reporter escrito em disco e não um arquivo versionado: o passe já
+// cria um diretório temporário por execução, e um reporter de 20 linhas que
+// vive e morre com ele evita uma sexta cópia de regra em `scripts/`. Ele não
+// altera o que roda — só observa.
+// ---------------------------------------------------------------------------
+const FONTE_REPORTER = `import fs from "node:fs";
+export default class {
+  onTestRunEnd(modulos) {
+    const linhas = [];
+    for (const m of modulos) {
+      const d = m.diagnostic?.();
+      if (!d) continue;
+      linhas.push({
+        arquivo: m.moduleId,
+        collect: d.collectDuration ?? 0,
+        ambiente: d.environmentSetupDuration ?? 0,
+        preparo: d.prepareDuration ?? 0,
+        setup: d.setupDuration ?? 0,
+      });
+    }
+    fs.writeFileSync(process.env.ORCAMENTO_CARGA_OUT, JSON.stringify(linhas));
+  }
+}`;
+
+// ---------------------------------------------------------------------------
 // Coleta: o reporter JSON do próprio vitest. Não parseamos a saída humana do
 // `--reporter=verbose` de propósito — ela é formatação, muda de versão, e
 // arredonda. `assertionResults[].duration` é o número que o runner usou.
@@ -92,6 +135,7 @@ const JSON_OUT = opcao('--json', null);
 /** @returns {Map<string, number>} nome completo do teste → duração em ms */
 function umaRodada(n, dir) {
   const arquivo = path.join(dir, `rodada-${n}.json`);
+  const cargaOut = path.join(dir, `carga-${n}.json`);
   process.stderr.write(`  rodada ${n}/${RODADAS} … `);
   const t0 = Date.now();
   // Chamamos o entrypoint do vitest com o próprio node, e não `npx` — mesmo
@@ -100,8 +144,15 @@ function umaRodada(n, dir) {
   // `shell: true` reabriria exatamente esse buraco por um ganho de zero.
   const r = spawnSync(
     process.execPath,
-    [VITEST, 'run', '--reporter=json', `--outputFile=${arquivo}`],
-    { cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 28 },
+    [
+      VITEST, 'run',
+      '--reporter=json', `--outputFile=${arquivo}`,
+      `--reporter=${pathToFileURL(REPORTER).href}`,
+    ],
+    {
+      cwd: REPO, encoding: 'utf8', maxBuffer: 1 << 28,
+      env: { ...process.env, ORCAMENTO_CARGA_OUT: cargaOut },
+    },
   );
   const seg = ((Date.now() - t0) / 1000).toFixed(1);
 
@@ -130,19 +181,32 @@ function umaRodada(n, dir) {
     + (rel.success === false ? ' · ⚠️ SUÍTE VERMELHA' : '')
     + '\n',
   );
-  return { mapa, verde: rel.success !== false };
+  // Carga por ARQUIVO. Ausente = vitest mudou a API do reporter; o passe
+  // segue medindo o que sabe medir em vez de morrer.
+  const carga = new Map();
+  if (existsSync(cargaOut)) {
+    for (const l of JSON.parse(readFileSync(cargaOut, 'utf8'))) {
+      const arq = path.relative(REPO, l.arquivo).replace(/\\/g, '/');
+      carga.set(arq, l);
+    }
+  }
+
+  return { mapa, carga, verde: rel.success !== false };
 }
 
 // ---------------------------------------------------------------------------
 // Execução
 // ---------------------------------------------------------------------------
 const dir = mkdtempSync(path.join(tmpdir(), 'orcamento-'));
+const REPORTER = path.join(dir, 'reporter-carga.mjs');
+writeFileSync(REPORTER, FONTE_REPORTER);
 process.stderr.write(
   `orçamento = ${TEST_TIMEOUT_MS} ms · faixas: atenção ${pct(LIMIARES.atencao)}`
   + ` · dívida ${pct(LIMIARES.divida)} · crítico ${pct(LIMIARES.critico)}\n`,
 );
 
 const rodadas = [];
+const cargas = [];
 let todasVerdes = true;
 try {
   for (let i = 1; i <= RODADAS; i++) {
@@ -150,6 +214,7 @@ try {
     if (!r) { process.exitCode = 1; process.stderr.write('\nAbortado: uma rodada não produziu relatório.\n'); break; }
     todasVerdes &&= r.verde;
     rodadas.push(r.mapa);
+    if (r.carga.size) cargas.push(r.carga);
   }
 } finally {
   rmSync(dir, { recursive: true, force: true });
@@ -226,6 +291,58 @@ console.log('     máquina ociosa é quem a contenção transforma em timeout.')
   );
 });
 
+// ---------------------------------------------------------------------------
+// A segunda régua, reportada
+// ---------------------------------------------------------------------------
+// Não há FAIXA em fração do orçamento aqui, e a ausência é deliberada: este
+// custo não é governado pelo `testTimeout`, então compará-lo com ele seria
+// inventar uma régua. O que ele governa é o RELÓGIO DE PAREDE e o risco de
+// contenção — e para isso o sinal útil é o mesmo do ranking de cima: o pior
+// caso e a INSTABILIDADE entre rodadas idênticas.
+const cargaLinhas = [];
+if (cargas.length) {
+  const arqs = [...cargas[0].keys()].filter(k => cargas.every(m => m.has(k)));
+  for (const arq of arqs) {
+    const vs = cargas.map(m => {
+      const l = m.get(arq);
+      return l.collect + l.ambiente + l.preparo + l.setup;
+    });
+    const pior = Math.max(...vs);
+    const melhor = Math.min(...vs);
+    cargaLinhas.push({
+      arquivo: arq,
+      rodadas: vs,
+      pior,
+      melhor,
+      delta: pior - melhor,
+      razao: pior / (melhor + 1),
+      detalhe: cargas.map(m => m.get(arq)),
+    });
+  }
+
+  const total = cargaLinhas.reduce((a, l) => a + l.pior, 0);
+  console.log('');
+  console.log(`## Top ${TOP} por CUSTO DE CARREGAMENTO por arquivo`);
+  console.log('   — transform + import do módulo de teste + ambiente + setup.');
+  console.log('     É o custo que o `testTimeout` NÃO cronometra: ele corre ANTES do');
+  console.log('     primeiro `it`, e não aparece em nenhuma duração de teste. Foi ele');
+  console.log('     que subiu 7× na rodada contendida enquanto os testes não se mexeram.');
+  console.log(`   total (pior caso, somado): ${ms(total)} em ${cargaLinhas.length} arquivos`);
+  [...cargaLinhas].sort((a, b) => b.pior - a.pior).slice(0, TOP).forEach((l, i) => {
+    console.log(
+      `${String(i + 1).padStart(3)}. ${String(Math.round(l.pior)).padStart(6)}ms`
+      + `  [${l.rodadas.map(v => Math.round(v)).join(' / ')}]`
+      + `  ${l.arquivo}`,
+    );
+  });
+} else if (RODADAS >= 1) {
+  console.log('');
+  console.log('## Custo de carregamento por arquivo: INDISPONÍVEL');
+  console.log('   O reporter não produziu saída — provável mudança na API');
+  console.log('   `TestModule.diagnostic()` do vitest. O ranking de tempo por teste');
+  console.log('   acima continua válido; esta segunda régua, não.');
+}
+
 if (JSON_OUT) {
   writeFileSync(path.resolve(REPO, JSON_OUT), JSON.stringify({
     geradoEm: new Date().toISOString(),
@@ -234,6 +351,7 @@ if (JSON_OUT) {
     rodadas: rodadas.length,
     suiteVerde: todasVerdes,
     linhas,
+    carga: cargaLinhas,
   }, null, 1));
   console.log(`\n(JSON em ${JSON_OUT})`);
 }

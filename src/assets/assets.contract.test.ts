@@ -27,6 +27,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { ts, fonteDe } from '../test/tsAst';
 import sharp from 'sharp';
 
 const SRC = path.resolve(process.cwd(), 'src');
@@ -560,14 +561,8 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
   const elosDoPetRender = () => (analise ??= analisaHud());
 
   async function analisaHud() {
-    const mod = await import('typescript');
-    const ts = ((mod as { default?: typeof import('typescript') }).default
-      ?? mod) as typeof import('typescript');
     const arquivo = path.join(SRC, 'components/CompanionHUD.tsx');
-    const sf = ts.createSourceFile(
-      arquivo, fs.readFileSync(arquivo, 'utf8'),
-      ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX,
-    );
+    const sf = fonteDe(arquivo);
     const ln = (n: import('typescript').Node) =>
       sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
 
@@ -680,7 +675,9 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
    * aqui é o custo que causou o flake (guard acima), e o reexport de
    * `CompanionHUD.tsx:49` NÃO é saída — importar dele executa o módulo inteiro
    * e o grafo React atrás dele. O parser lê o arquivo como TEXTO: não resolve
-   * import nenhum. `import('typescript')` é módulo folha e custou ~220ms.
+   * import nenhum. O parser vem de `src/test/tsAst.ts`, com `import` ESTÁTICO:
+   * o custo de carregar o `typescript` (~490ms) é pago na fase de import do
+   * arquivo, e não dentro do orçamento deste caso — ver o cabeçalho de lá.
    */
   it('REGRESSÃO (F-2): PET_RENDER tem UM vínculo no CompanionHUD, e é o import de utils/petStage', async () => {
     const elo = await elosDoPetRender();
@@ -693,13 +690,15 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
       elo.usos.length,
       'PET_RENDER não é USADO em lugar nenhum do código do CompanionHUD — citar a constante em comentário não é elo',
     ).toBeGreaterThan(0);
-    /* ORÇAMENTO DECLARADO, não asserção afrouxada. Medido com a máquina ociosa:
-       514ms neste (import + parse) e 17ms no seguinte (memoizado). O defeito
-       histórico DESTE arquivo é timeout: o flake de 25/08 mediu ~8× de
-       degradação sob contenção de CPU (598ms → 4,4s), o que colocaria 514ms
-       perigosamente perto de um teto de 5s. 15s é o teto de um teste que só lê
-       UM arquivo e roda um parser — nenhum expect foi tocado para caber nele. */
-  }, 15_000);
+    /* O TETO LOCAL DE 15s SAIU — e sair não é afrouxar, é parar de ter duas
+       réguas para a mesma pergunta (footgun 9). Quando ele foi escrito, o
+       default da suíte era 5s e este caso media 514ms, dos quais ~490ms eram
+       o `await import('typescript')` DENTRO do relógio. Hoje duas coisas
+       mudaram: o piso global é 15s (`vitest.budget.mjs`, dono único do
+       número), e o parser é carregado na fase de import do arquivo
+       (`src/test/tsAst.ts`). Medido depois da mudança: 56ms — 0,37% do
+       orçamento, contra 726ms antes. Nenhum expect foi tocado. */
+  });
 
   /**
    * A outra metade do elo: provar que o número medido aqui é o número que
@@ -721,9 +720,10 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
       elo.literais.filter(l => l.valor === PET_RENDER),
       `${PET_RENDER} digitado no CompanionHUD: número copiado é número que diverge (footgun 9)`,
     ).toEqual([]);
-    /* Mesmo orçamento do guard acima: se ELE rodar primeiro, este paga 17ms;
-       se a ordem mudar, este é que paga o parse. Ver a nota lá. */
-  }, 15_000);
+    /* A memoização de `elosDoPetRender` continua valendo: quem rodar primeiro
+       paga o parse (não mais o carregamento do compilador) e o outro lê o
+       resultado. Sem teto local, pelo mesmo motivo da nota acima. */
+  });
 
   /**
    * ⚠️ `skip` DE DÍVIDA DE ARTE, não de teste quebrado. Ele falha hoje, e deve
