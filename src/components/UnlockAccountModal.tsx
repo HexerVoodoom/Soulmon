@@ -51,12 +51,13 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
   const [loading, setLoading] = useState<'buy' | 'restore' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  // `unlock_view` — o denominador da conversão. Na MONTAGEM, porque este modal
-  // só existe quando foi aberto por toque (nunca abre sozinho, ver o cabeçalho),
-  // então montar É ver. `track` já ignora app oculto e não carrega prop nenhuma:
-  // de qual dos dois convites (`reason`) a pessoa veio é dado que o schema atual
-  // não tem — acrescentar isso é outro run, não improviso aqui.
-  useEffect(() => { track('unlock_view'); }, []);
+  // `unlock_view` NÃO é emitido aqui — ele mudou de lugar, de propósito.
+  //
+  // O evento agora carrega `reason` (de qual dos dois convites a pessoa veio) e
+  // `tier`, e quem conhece os dois é o `App.tsx`, que é dono do estado
+  // `unlockReason` e do `accountTier`. Emitir daqui TAMBÉM contaria a mesma
+  // visualização duas vezes — e um denominador inflado mente para baixo em
+  // todas as taxas de conversão. Ver o efeito de `unlockReason` em `App.tsx`.
 
   const unavailable = isPt
     ? 'A compra acontece pela Google Play, dentro do app Android. No navegador não dá para cobrar.'

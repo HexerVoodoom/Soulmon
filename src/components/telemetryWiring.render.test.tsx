@@ -19,6 +19,7 @@ import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { UnlockAccountModal } from './UnlockAccountModal';
 import {
   pendingTelemetry, resetTelemetryForTest, TELEMETRY_FUNNEL, onboardingStepCode,
+  track, setTelemetryTier, TELEMETRY_TIER, TELEMETRY_UNLOCK_REASON,
 } from '../utils/telemetry';
 
 const only = (event: string) => pendingTelemetry().filter(r => r.e === event);
@@ -100,17 +101,31 @@ describe('fiação da telemetria — tela de compra', () => {
 
   });
 
-  it('abrir o modal de desbloqueio emite unlock_view UMA vez', () => {
-    const { rerender } = renderWithCss(
+  /**
+   * O `unlock_view` MUDOU DE LUGAR: ele agora carrega `reason` (qual dos dois
+   * convites) e `tier`, e quem conhece os dois é o `App.tsx`, dono de
+   * `unlockReason` e de `accountTier`. O modal ficou mudo DE PROPÓSITO.
+   *
+   * Este teste trava o silêncio, e não é preciosismo: enquanto os dois lados
+   * emitissem, cada visualização contaria DUAS vezes — e um denominador
+   * inflado mente para baixo em todas as taxas de conversão, sem dar erro
+   * nenhum. É exatamente o tipo de defeito que só um teste pega.
+   */
+  it('o modal NÃO emite unlock_view — quem emite é o App, com o motivo', () => {
+    renderWithCss(
       <UnlockAccountModal language="en-US" reason="task-limit" onUnlocked={() => {}} onClose={() => {}} />,
     );
-    expect(only('unlock_view')).toHaveLength(1);
-    // Re-render não é uma segunda visualização.
-    rerender(
-      <UnlockAccountModal language="en-US" reason="task-limit" onUnlocked={() => {}} onClose={() => {}} />,
-    );
-    expect(only('unlock_view')).toHaveLength(1);
-    // E não carrega prop nenhuma — nada do usuário viaja aqui.
-    expect(only('unlock_view')[0].p).toBeUndefined();
+    expect(only('unlock_view')).toHaveLength(0);
+  });
+
+  it('os dois convites viram contadores distintos, com o tier junto', () => {
+    setTelemetryTier('demo');
+    // O mapeamento que o efeito de `unlockReason` do App.tsx faz.
+    track('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.taskLimit });
+    track('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.evolution });
+    expect(only('unlock_view').map(r => r.p)).toEqual([
+      { reason: TELEMETRY_UNLOCK_REASON.taskLimit, tier: TELEMETRY_TIER.demo },
+      { reason: TELEMETRY_UNLOCK_REASON.evolution, tier: TELEMETRY_TIER.demo },
+    ]);
   });
 });

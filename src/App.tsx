@@ -7,7 +7,11 @@ import { toast } from 'sonner';
 import { useProgressTracking } from './hooks/useProgressTracking';
 import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
-import { track, flush as flushTelemetry, installTelemetryAutoFlush } from './utils/telemetry';
+import {
+  track, flush as flushTelemetry, installTelemetryAutoFlush,
+  setTelemetryTier, trackDayClosed, telemetryDayKey,
+  TELEMETRY_UNLOCK_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
+} from './utils/telemetry';
 import { BottomNav } from './components/BottomNav';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
@@ -1012,19 +1016,81 @@ export default function App() {
     if (showFirstTaskPopup) track('first_task_done');
   }, [showFirstTaskPopup]);
 
-  /** `day_active` com o PESO de esforço do dia que fechou. A virada é o único
-   *  momento em que esse peso está fechado (`lastDayReport.done`, computado por
-   *  `computeDailyReset`). Fora dele o número ainda ia crescer.
+  /** O TIER, declarado num lugar só (G-2). `setTelemetryTier` não emite nada:
+   *  ele só diz ao módulo qual é o balde, e o módulo carimba todo evento que
+   *  declara `tier`. Passar o tier em cada `track` seria a mesma regra escrita
+   *  em seis call sites (footgun 9), e o call site que esquecesse não perderia
+   *  o evento — mandaria ele para o balde errado, que é pior. */
+  useEffect(() => {
+    setTelemetryTier(gameState.accountTier ?? null);
+  }, [gameState.accountTier]);
+
+  /** O FECHAMENTO DO DIA — `day_active` e a métrica-norte, do MESMO fato.
    *
-   *  Só emite com esforço > 0: "ativo" é ter concluído ≥1 item, não ter o app
-   *  instalado. E lê o relatório de FORA do updater do setGameState — efeito
-   *  colateral dentro do updater roda 2× em StrictMode (footgun 6). */
+   *  A virada é o único momento em que o peso do dia está fechado
+   *  (`lastDayReport`, computado por `computeDailyReset`); fora dela o número
+   *  ainda ia crescer. `trackDayClosed` recebe os três dados desse fechamento e
+   *  cuida do resto: emite `day_active` e vai somando, NO APARELHO, os dias
+   *  ativos e os dias em que a meta foi batida — despachando `week_active`
+   *  quando a semana vira. Ver o bloco "A MÉTRICA-NORTE" em `utils/telemetry.ts`.
+   *
+   *  `goalMet` compara com `report.required`, que É o `dailyGoalFor` DAQUELE dia
+   *  daquela pessoa — a meta própria, e não um número fixo. `required <= 0`
+   *  (ninguém cadastrou nada) não conta como meta batida: bater zero não é
+   *  atingir objetivo nenhum, e contá-lo inflaria o numerador da métrica-norte
+   *  justamente com os dias vazios.
+   *
+   *  A data vem de `report.date`, que é `toDateString()` (o formato do motor de
+   *  hábitos); `telemetryDayKey` a converte para o ISO que a telemetria usa.
+   *  Lê o relatório de FORA do updater do setGameState — efeito colateral
+   *  dentro do updater roda 2× em StrictMode (footgun 6). */
   useEffect(() => {
     const report = gameState.lastDayReport;
-    const effort = Number(report?.done ?? 0);
-    if (!report || !Number.isFinite(effort) || effort <= 0) return;
-    track('day_active', { effort });
+    if (!report) return;
+    const effort = Number(report.done ?? 0);
+    const required = Number(report.required ?? 0);
+    if (!Number.isFinite(effort)) return;
+    const closed = new Date(report.date);
+    if (Number.isNaN(closed.getTime())) return;
+    trackDayClosed({
+      day: telemetryDayKey(closed),
+      effort,
+      goalMet: Number.isFinite(required) && required > 0 && effort >= required,
+    });
   }, [gameState.lastDayReport]);
+
+  /** `unlock_view` COM O MOTIVO (G-5). Vive aqui, e não no modal, porque é aqui
+   *  que `unlockReason` existe — o modal recebia o motivo mas não tinha como
+   *  saber o tier, e os dois convites (bati no teto × quero a criatura que é
+   *  minha) testam hipóteses opostas sobre por que alguém paga. Somados, davam
+   *  um número que não descreve nenhum dos dois.
+   *
+   *  Montar É ver: este modal nunca abre sozinho (ver o cabeçalho dele). */
+  /** `demo_cap_hit` (G-4): a pessoa abriu a criação e ENCONTROU o teto do modo
+   *  grátis. É o DENOMINADOR da pergunta que o dono quer responder — sem ele,
+   *  o `unlock_view` de `task-limit` é um numerador sem denominador e nenhuma
+   *  taxa é calculável.
+   *
+   *  Um aviso honesto sobre o que este número mede HOJE: `CreateModal` é o
+   *  único caminho de criação que consulta o teto. O `+ adicionar` da tela
+   *  inicial, a criação pela IA e o lote do tutorial passam por fora dele. Este
+   *  evento mede o teto ONDE ele morde; quanto ele deixa de morder se lê pelo
+   *  `activity_create.<caminho>`. Instrumentar não é consertar — o conserto
+   *  isolado apertaria o modo grátis e é decisão do dono. */
+  const demoLimitReached = gameState.accountTier === 'demo' && !canCreateDemoTaskToday();
+  useEffect(() => {
+    if (!createModalOpen || !demoLimitReached) return;
+    track('demo_cap_hit', { path: TELEMETRY_CREATE_PATH.create_modal });
+  }, [createModalOpen, demoLimitReached]);
+
+  useEffect(() => {
+    if (!unlockReason) return;
+    track('unlock_view', {
+      reason: unlockReason === 'task-limit'
+        ? TELEMETRY_UNLOCK_REASON.taskLimit
+        : TELEMETRY_UNLOCK_REASON.evolution,
+    });
+  }, [unlockReason]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // A FILA DE INTERSTICIAIS — UMA prioridade explícita, e só UM monta por vez.
@@ -1543,6 +1609,17 @@ export default function App() {
       }));
       // Trigger message bubble for new activity
       setMessageTrigger(prev => prev + 1);
+      // Este e o caminho PRINCIPAL de criacao da tela inicial, e ele NAO
+      // consulta `canCreateDemoTaskToday()` nem consome a cota do dia. Isso e
+      // um defeito conhecido, e ele nao e consertado aqui: o conserto isolado
+      // apertaria o modo gratis e esta esperando decisao do dono. O que o
+      // evento faz e tornar o desvio CONTAVEL — `activity_create.home_edit.*`
+      // contra `activity_create.create_modal.*` mede exatamente quanto do
+      // teto e contornado, e a decisao para de depender de quem leu o codigo.
+      track('activity_create', {
+        kind: TELEMETRY_ACTIVITY_KIND.habit,
+        path: TELEMETRY_CREATE_PATH.home_edit,
+      });
     }
     setEditingActivity(null);
   };
@@ -1596,6 +1673,12 @@ export default function App() {
 
     // Trigger message bubble
     setMessageTrigger(prev => prev + 1);
+
+    // Terceiro caminho por fora do teto do demo (ver `handleSaveActivity`).
+    track('activity_create', {
+      kind: TELEMETRY_ACTIVITY_KIND.habit,
+      path: TELEMETRY_CREATE_PATH.ai_chat,
+    });
 
     if (import.meta.env.DEV) console.log('Activity created successfully:', newActivity);
   }, []);
@@ -3292,6 +3375,15 @@ export default function App() {
       ...prev,
       activities: [...prev.activities, ...newActivities],
     }));
+    // Um evento por atividade do lote: o denominador de "quantas atividades
+    // existem" tem que bater, e o tutorial e o unico caminho que cria varias de
+    // uma vez. Contar o LOTE como 1 faria a soma dos caminhos nunca fechar.
+    for (let i = 0; i < newActivities.length; i++) {
+      track('activity_create', {
+        kind: TELEMETRY_ACTIVITY_KIND.habit,
+        path: TELEMETRY_CREATE_PATH.tutorial,
+      });
+    }
   };
 
 
@@ -4477,7 +4569,7 @@ export default function App() {
           evolutionStage={gameState.evolutionStage}
           activitiesCount={gameState.activities.length}
           activitiesCap={gameState.maxActivityCap}
-          demoLimitReached={gameState.accountTier === 'demo' && !canCreateDemoTaskToday()}
+          demoLimitReached={demoLimitReached}
           onUnlock={() => { setCreateModalOpen(false); setUnlockReason('task-limit'); }}
           onSaveTask={(data) => {
             // Esforço, "quando" e idade vêm do modal e são gravados — sem eles
@@ -4503,6 +4595,10 @@ export default function App() {
               tasks: [...prev.tasks, newTask],
             }));
             if (gameState.accountTier === 'demo') recordDemoCreation();
+            track('activity_create', {
+              kind: TELEMETRY_ACTIVITY_KIND.task,
+              path: TELEMETRY_CREATE_PATH.create_modal,
+            });
           }}
           onSaveActivity={(data) => {
             const newActivity: Activity = {
@@ -4524,6 +4620,10 @@ export default function App() {
               activities: [...prev.activities, newActivity],
             }));
             if (gameState.accountTier === 'demo') recordDemoCreation();
+            track('activity_create', {
+              kind: TELEMETRY_ACTIVITY_KIND.habit,
+              path: TELEMETRY_CREATE_PATH.create_modal,
+            });
           }}
           language={language}
         /></Suspense>
