@@ -7,12 +7,27 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-Última atualização: **26/08/2026 (3ª e última passada do dia)** — fecha o dia
-inteiro contra `HEAD = 33fd94cc`. Gate reexecutado nesta árvore:
-`npx tsc --noEmit` **EXIT=0** · `npx vitest run` → **149 arquivos, 2631 passed,
-2 skipped** (a 2ª passada media 142 / 2483). Entraram cinco bugs reais, o
-primeiro empacotamento de Steam já executado, e o veredito do login do desktop.
-Ver a seção "Merges de 26/08/2026" abaixo.
+Última atualização: **26/08/2026 (4ª passada — a consolidação do dia)** — fecha
+o dia inteiro contra `HEAD = e8aef62a`. Gate reexecutado nesta árvore:
+
+| Comando | Resultado |
+|---|---|
+| `npx tsc --noEmit` | **EXIT=0** |
+| `npx tsc -p desktop/tsconfig.json --noEmit` | **EXIT=0** |
+| `npx vitest run` | **167 arquivos · 2793 passed · 2 skipped** |
+
+> ⚠️ **A 3ª passada dizia "3ª e última do dia" e estava errada.** Ela fechou em
+> `33fd94cc`; vieram **mais ~20 merges depois**, e vários deles mudaram o ESTADO
+> de achados de segurança que esta página declarava. A trajetória do dia:
+> 135/2392 → 142/2483 → 149/2631 → **167/2793**. **+18 arquivos e +162 casos**
+> só na noite.
+>
+> A lição operacional não é "escrever de novo": é que **"última passada" é uma
+> afirmação sobre o futuro**, e este documento não tem como fazê-la. Ver a lição
+> 2 de `squad-alpha-runs/soulmon-02/LICOES-DE-METODO.md`.
+
+**O que entrou depois de `33fd94cc`** está na seção "Merges de 26/08/2026 —
+parte 3" e, no que toca a segurança, **reconferido achado a achado na seção 1**.
 
 > ### 📌 Mudança de FORMATO das referências, e o motivo
 >
@@ -557,7 +572,101 @@ dinheiro / auth+dados / IA+push+segredos).
 
 ---
 
-## 🆕 Merges de 26/08/2026 — parte 2 (a tarde e a noite), `2be666d5..33fd94cc`
+## 🆕 Merges de 26/08/2026 — parte 3 (a virada da noite), `33fd94cc..e8aef62a`
+
+**~20 merges.** A parte 2 dizia fechar "o dia inteiro" e não fechava. A natureza
+do que entrou aqui é diferente das três passadas anteriores: a parte 1 e a 2
+fecharam **dívida estrutural** e depois **bugs de comportamento**; esta fechou
+**segurança e cadeia de suprimentos** — e ligou uma feature inteira que já
+existia com outro nome.
+
+### 🔐 Segurança — seis frentes, todas na seção 1
+
+Detalhe achado a achado em **1.1** (N-3 a N-8) e **1.5**. Resumo:
+
+| | O quê | Merge |
+|---|---|---|
+| ✅ | Oráculo e-mail→conta morto **na raiz** — o `pid` deixa de ser derivável | `d3094918` |
+| ✅ | Diretório público respeita `pvpEnabled`; aba Amigos resolve por `pid` | `08b04038` |
+| ✅ | Guarda de esquema na URL de sprite — dados **e** os dois componentes | `7f3f6193`, `8148f34f` |
+| ✅ | Electron: `will-navigate`+`will-redirect` travados; IPC checa `senderFrame` | `16effec2` |
+| ✅ | Service worker para de cachear resposta de outra origem | `3b45df1b` |
+| ✅ | `customKeywords` delimitado no prompt; `temperature` `clamp`ada | `4997bccb` |
+| ✅ | Keystores: são do **DigiApp**, e com Play App Signing a rotação é formulário | análise |
+| 🔴 | SEC-3 (resgate atômico) e SEC-4 (`PLAY_REQUIRE_ACCOUNT_BINDING`) **seguem abertos** | — |
+
+### 📦 Suprimentos — e o achado mais desconfortável do dia
+
+`node_modules` **saiu do rastreamento** (19.035 arquivos), permissões declaradas,
+actions presas por SHA, `npm ci` no desktop — e **o gate do CI estava morto**,
+então `tsc` e `vitest` provavelmente não rodavam em push nenhum. Seção **1.5**.
+
+### 🚦 Workflows — publicar vira ato deliberado
+
+Build e release do desktop foram **separados em dois arquivos**: release só sai
+de tag `v[0-9]+.[0-9]+.[0-9]+`. O motivo é medível — enquanto publicar disparava
+em push de branch, um commit numa branch de rascunho virava **atualização
+automática instalada na máquina do jogador**, sem assinatura Authenticode. Ver
+`desktop/README.md` e a linha de Deploy do `CLAUDE.md`. O step do
+`SIBLING_REPOS_TOKEN` foi **provado inútil** e saiu dos dois workflows de build.
+
+### 🎮 Produto
+
+| | O quê | Merge |
+|---|---|---|
+| 🏷️ | **Nick reenquadrado no onboarding** + batismo do Soulmon no cadastro. O apelido é **identidade pública**, e o texto anterior convidava a digitar o nome real — que é exatamente o dado que o diretório público expunha | `6054e747` |
+| 🔓 | **O cap do demo consertado E afrouxado no MESMO release** — ver abaixo | `cc0ba3f2` |
+| 🔗 | **Vínculo LIGADO** — ver abaixo | `e8aef62a` |
+
+#### 🔓 O cap do demo: **a lição 7 sendo obedecida à risca**
+
+A pendência **A** do dono era um bug que vazava **a favor** do jogador: o
+`DEMO_ACTIVITY_DAILY_CAP` só era consultado dentro do `CreateModal`, e o botão
+principal de criar da tela inicial abre o `EditModal`, que salvava sem checar
+nada. Consertar sozinho seria um **APERTO**.
+
+**Saiu conserto e afrouxamento no mesmo release, e a fronteira mudou de EIXO:**
+
+- o teto deixa de ser **diário** e passa a ser **TOTAL**:
+  `DEMO_ACTIVITY_TOTAL_CAP = FORM_REQUIREMENTS.rookie.cap` — **6 hábitos
+  ativos**, derivado da constante e não um literal (confirmado no código);
+- **tarefa avulsa fica livre**, sem limite nenhum;
+- **todo caminho de criação passa pela mesma porta** — os dois modais e os dois
+  vazamentos menores (`handleAICreateActivity`, `handleCompleteTutorial`);
+- o `UnlockNudge` passou a aparecer também no `EditModal`, senão a recusa nova
+  chegaria sem saída (por isso o `CLAUDE.md` dizia "dois lugares" e hoje são
+  três).
+
+> **O argumento de produto, e é o que justifica o eixo novo:** a paywall estava
+> caindo sobre o **cuidado** — o grátis era impedido de registrar o que fez, que
+> é justamente o que o produto diz existir para fazer. 6 hábitos ativos é a
+> rotina inteira do Rookie. A fronteira passou a cair sobre **quantidade de
+> rotina mantida**, não sobre **poder usar o app hoje**.
+
+#### 🔗 Vínculo: o level de conta que **já existia com outro nome**
+
+`0f38f303` / merge `e8aef62a`. A suspeita inicial era de que não existia nada —
+e estava errada. O XP já era acumulado; faltava fiação, nome e consequência.
+
+- **O nível NUNCA vai para o save**: é sempre `bondLevelFor(totalXP)`, derivado
+  na leitura. Persistir `bondLevel` seria o footgun 9 na forma mais cara — duas
+  fontes para o mesmo número, uma delas já gravada no aparelho de quem joga.
+- **Gate de PvP no nível 5** (`BOND_PVP_MIN_LEVEL`), **nos dois lados**:
+  cliente (`canPvp`) e servidor (ação `profile` em `community.js`). O servidor é
+  quem decide, porque o cliente é editável.
+- **O gate vale para LIGAR**, não para manter: quem já estava com
+  `pvpEnabled: true` continua. Como `bondLevelFor` é monótona e `totalXP` só
+  cresce, é um **limiar**, não uma manutenção — ninguém é rebaixado.
+- Os eventos de XP são os de esforço que já existiam (check-in, conclusão, run
+  de masmorra, partida), e passam pelo teto diário suave de `bond.ts`.
+
+⚠️ **Nota de método, e é a terceira vez no dia:** *verificar antes de construir*.
+Três vezes hoje a suspeita de "isso não existe" era falsa — o teste do D1, o
+campo de nick, e o Vínculo inteiro. Lição **15** de `LICOES-DE-METODO.md`.
+
+---
+
+## Merges de 26/08/2026 — parte 2 (a tarde e a noite), `2be666d5..33fd94cc`
 
 Verificado nesta árvore (`HEAD = 33fd94cc`), não lembrado. Gate:
 `tsc` EXIT=0 · `vitest` **149 arquivos / 2631 passed / 2 skipped**.
@@ -671,17 +780,140 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 
 ### 1.1 Explorável AGORA, em produção
 
-| # | Onde | O quê | Status |
+**Reconferido contra `e8aef62a` na consolidação de 26/08.** Referências em
+**SÍMBOLO**, pela decisão de formato do topo desta página.
+
+| # | Onde (símbolo) | O quê | Status em `e8aef62a` |
 |---|---|---|---|
-| SEC-1 | `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ⚠️ **corrigido no código, INERTE em produção** |
-| SEC-2 | `functions/api/community.js` — hoje o conserto está em `:78` (`PID_PREFIX`), `:263` e `:271`; ~~`:122`~~ era o endereço do defeito ANTES da correção e hoje aponta para `putProfile` | o `saveId` era publicado como identidade social | ✅ corrigido (independe do Firebase) |
-| SEC-5 | `functions/api/subscribe.js:43` (entrada) e `:54` (`isAllowedPushEndpoint`, a trava); ~~`:33`~~ hoje é o `costGate` | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido (⚠️ o worker é deploy MANUAL — a versão rodando hoje não é verificável por leitura) |
+| SEC-1 | `denyUnlessOwner` em `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ⚠️ **corrigido no código, INERTE em produção** — inalterado hoje. Depende do `FIREBASE_PROJECT_ID` (Bloco 2 do dono) |
+| SEC-2 | `pidFor` / `PID_PREFIX` / `putProfile` em `functions/api/community.js` | o `saveId` era publicado como identidade social | ✅ **corrigido, e a correção MUDOU de natureza hoje** — ver N-3 abaixo |
+| SEC-5 | `isAllowedPushEndpoint` em `functions/api/subscribe.js` (a trava); `costGate` na entrada | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido (⚠️ o worker é deploy MANUAL — a versão rodando hoje **não é verificável por leitura**; inalterado hoje) |
+
+#### 🆕 N-3 — o oráculo e-mail→conta morreu, e a recomendação da auditoria não teria fechado nada
+
+**Fechado em `8ff7f7ab` / merge `d3094918`. Confirmado no código.**
+
+O SEC-2 tinha sido corrigido publicando um `pid` **derivado** —
+`SHA-256("soulmon-pub:" + saveId)`, 24 hex, "caminho só de ida". A auditoria
+recomendou remover um fallback. **O agente verificou e a recomendação não
+fechava o buraco**, por duas razões que só aparecem lendo:
+
+1. O `saveId` já é `SHA-256("soulmon:" + e-mail)`, e o `pid` era hash **sem
+   segredo** do `saveId`. Logo `e-mail → saveId → pid` era uma cadeia
+   inteiramente derivável **offline, por qualquer um**. Tirar o fallback só
+   trocaria o parâmetro que o atacante usa.
+2. Pior, **o próprio diretório público JÁ era o oráculo**: bastava derivar o
+   `pid` do e-mail e procurá-lo na listagem — sem nem chamar a rota que a
+   recomendação mandava fechar.
+
+**A derivação morreu.** O `pid` hoje é **aleatório**
+(`crypto.getRandomValues`, 12 bytes) e o vínculo vive num índice reverso no
+servidor (`pid:<pid>` → saveId, com `expirationTtl`). Os índices antigos são
+aposentados sozinhos no próximo save de cada conta — não houve migração.
+
+> **A lição, e ela é de método, não de código:** *a recomendação de uma auditoria
+> pode não fechar nada*. Está registrada como lição **13** em
+> `squad-alpha-runs/soulmon-02/LICOES-DE-METODO.md`.
+
+#### 🆕 N-4 — o diretório público passa a respeitar o consentimento que já existia
+
+**Fechado em `f1ce3848`; a aba Amigos deixou de depender dele em `9989a0c1` /
+merge `08b04038`. Confirmado no código.**
+
+Era o **B5** do `GUIA-DO-DONO.md`, listado como "decisão do dono". A
+inconsistência que decidia a pergunta: a rota de **oponentes** filtrava por
+`pvpEnabled` e a de **jogadores** não filtrava por nada — e o perfil é gravado
+junto do cloud save, então **o jogador entrava no diretório por consequência de
+salvar, não por escolha**. O produto já tinha o gate de consentimento; uma das
+duas rotas o ignorava.
+
+Hoje a ação `players` também aplica `if (!p.pvpEnabled) continue`. O que estava
+exposto sem token e para qualquer origem — `name` (texto livre de 24 caracteres,
+**e tem gente que digita o nome real**), nome do pet, estágio, dias jogando,
+tarefas feitas e pontos, até 50 perfis por chamada com busca por parte do nome —
+passa a sair só de quem ligou PvP.
+
+⚠️ **Consequência querida e que precisa estar escrita:** a aba **Amigos** lia do
+diretório público. Se ela continuasse lendo, amigo com PvP desligado sumiria da
+lista do próprio amigo. Ela passou a resolver **por `pid`**, que é o
+identificador que a amizade já guardava — a lista de amigos não é o diretório, e
+agora as duas coisas não compartilham fonte.
+
+#### 🆕 N-5 — a URL de sprite ganha guarda de esquema (dados **e** componentes)
+
+**`6dde6750` / merge `7f3f6193`, estendido a dois componentes em `94d45e62` /
+merge `8148f34f`. Confirmado no código e em teste.**
+
+A URL do sprite vinha do diretório público e ia direto para `<img src>`.
+`isSafeSpriteUrl` (em `src/utils/spriteLibrary.ts`) é a **função única**,
+importada também por `pixelizeDataUrl` (`src/utils/spriteGen.ts`) e pelos dois
+componentes. Fecha `javascript:` (inclusive `JaVaScRiPt:` e com TAB/LF no meio
+do esquema), `data:` não-imagem, `http:`, `file:`, `blob:` e `//host`.
+
+🔴 **NÃO fecha o beacon** `https://atacante.example/x.png`. Fechá-lo exige
+allowlist de **HOST**, e o host do CDN do Higgsfield **não está confirmado** —
+`platform.higgsfield.ai` é o host da API. **Pendência do dono** (ver
+`GUIA-DO-DONO.md`): um exemplo real de URL devolvida pelo provedor fecha isto
+**e** aperta a CSP de `img-src … https:` para `img-src 'self' data: <host>`.
+Chutar o host **desliga a arte própria de todo mundo em silêncio** — o visor não
+tem estado de erro, por decisão de spec.
+
+#### 🆕 N-6 — Electron: trava de navegação da janela e origem no IPC
+
+**`1ce7014c` / merge `16effec2`. Confirmado no código.**
+
+`desktop/electron/main.js` passou a interceptar **`will-navigate` E
+`will-redirect`** — os dois, porque redirecionamento de servidor (302 para outra
+origem) **não passa** por `will-navigate` —, e `setWindowOpenHandler` manda link
+externo para o navegador padrão. No IPC do token, a checagem é sobre
+**`event.senderFrame`** e não `event.sender`: um `<iframe>` de terceiro
+compartilha o `sender` com a página que o hospeda, então checar `sender` deixaria
+um frame de outra origem pedir o token.
+
+🙋 **Falta o olho humano, e é 1 minuto** — o agente não executou o Electron. Está
+no `GUIA-DO-DONO.md`.
+
+#### 🆕 N-7 — o service worker parava na requisição e não olhava a resposta
+
+**`2299bc53` / merge `3b45df1b`. Confirmado em `public/sw.js` (`CACHE_VERSION`
+= `v93`).**
+
+O `fetch` handler saía cedo em requisição de outra origem, mas **guardava a
+resposta** de caminhos que podiam ser redirecionados para fora. Hoje a checagem
+é `url.origin !== self.location.origin` no ponto de entrada **e** a resposta é
+inspecionada antes de entrar no cache. No mesmo merge, o updater do desktop
+passou a decidir **fail-safe**.
+
+#### 🆕 N-8 — prompt injection: o texto do jogador sai da lista de regras e vira dado delimitado
+
+**`a9343068` / merge `4997bccb`. Confirmado em `functions/api/chat.js`.**
+
+`customKeywords` é texto livre do usuário e entrava **no prompt de sistema**,
+como se fosse regra. Hoje entra dentro de uma caixa rotulada e delimitada
+(`<<<USER_STYLE>>>` … `<<<END_USER_STYLE>>>`), com `sanitizeCustomKeywords`
+removendo os próprios delimitadores e qualquer coisa parecida com eles — **ele
+não consegue fechar a própria caixa**. A trava de cuidado (o que a persona pode
+dizer num dia ruim) vem **depois** do bloco, de propósito.
+
+Junto: `temperature` vinha **crua do corpo** para o Groq e passou por
+`clampTemperature`. Não é injeção de texto — é parâmetro de inferência sob
+controle do cliente, que é a mesma família de dano.
+
+> ⚠️ Isto **rebaixa mas não apaga** o item "Prompt injection sem consequência
+> privilegiada" da seção 1.3. O argumento de lá (*nada do que o modelo responde
+> vira escrita no servidor ou chamada de ferramenta*) continua de pé e continua
+> sendo a razão pela qual isto nunca foi crítico. O que mudou é que o texto do
+> jogador deixou de ter **status de regra**.
 
 > **Reverificação de 2026-08-25** (`squad-alpha-runs/soulmon-01/discovery/security-escopo-e-reverificacao.md`):
 > os selos ✅ desta seção mediam o CÓDIGO, não o que está em pé em produção.
 > `denyUnlessOwner` delega a `authorizeSaveAccess`, que é *fail-open*
-> (`_auth.js:116` — era `:112-113`, conferido em 26/08/2026: sem `FIREBASE_PROJECT_ID`, devolve `ok:true` sem
-> verificar nada) — e a sonda `GET /api/save?id=…` sem `Authorization` devolveu
+> (**`authorizeSaveAccess` em `functions/api/_auth.js`** — o endereço deste
+> achado já escorregou de `:112-113` para `:116`, que é por que hoje ele é
+> símbolo; **reconferido em `e8aef62a`, a linha não escorregou de novo e o
+> comportamento não mudou**: sem `FIREBASE_PROJECT_ID`, devolve
+> `{ ok: true, enforced: false }` sem verificar nada) — e a sonda
+> `GET /api/save?id=…` sem `Authorization` devolveu
 > **200** em produção. Ou seja: **a correção do SEC-1 só passa a existir quando o
 > Firebase for ligado**. Doc que diz ✅ sobre segurança aberta é pior que doc
 > ausente: a próxima sessão acredita nele.
@@ -692,8 +924,10 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 ~~Agravante: **isso não fecha quando o `FIREBASE_PROJECT_ID` for ligado** — ao
 contrário do `save.js`/`billing.js`, essas ações não consultam autenticação em
 ponto nenhum.~~ **Desatualizado ao contrário** (reverificação de 2026-08-25):
-hoje as seis ações passam por `denyUnlessOwner` (`community.js:244, 341, 441,
-459, 485, 506`), então é exatamente o oposto — **só fecha quando ligar**.
+hoje as seis ações passam por **`denyUnlessOwner`** em `functions/api/community.js`
+(as seis chamadas — `grep -n denyUnlessOwner functions/api/community.js` acha a
+família inteira; as linhas foram deixadas de fora de propósito, pela decisão de
+formato do topo), então é exatamente o oposto — **só fecha quando ligar**.
 
 Impacto concreto: roubar 20 Bits/vítima/dia emitindo presente em nome dela;
 reescrever a lista de amigos de qualquer um; forjar o campeonato inteiro
@@ -711,30 +945,63 @@ qualquer página aberta no navegador da vítima.
 > antigo dizia "quem souber seu e-mail pode ler seu save". Na prática **ninguém
 > precisa saber e-mail nenhum** — é leitura e destruição em massa.
 
-**Correção aplicada.** A identidade social passou a ser um `pid` derivado
-(`SHA-256("soulmon-pub:" + saveId)`, 24 hex) — caminho só de ida. O índice
-reverso `pid:<pid>` → saveId vive no servidor e é o único jeito de resolver um
-alvo. Alvos (`friendId`, `opponentId`, `player?id=`) chegam como pid; a lista de
-amigos guarda saveId internamente e sai como pid. Nada mudou no cliente: ele já
-tratava o id alheio como token opaco. Como o pid é derivado, não houve migração
-de dados — o índice reverso se preenche sozinho no próximo salvamento de cada
-jogador.
+**Correção aplicada — e ela foi REFEITA no fim do dia.**
+
+⚠️ **Este parágrafo dizia: *"A identidade social passou a ser um `pid` derivado
+(`SHA-256("soulmon-pub:" + saveId)`, 24 hex) — caminho só de ida. […] Como o pid
+é derivado, não houve migração de dados."* Ficou FALSO em `d3094918`, no mesmo
+dia — e a parte falsa era justamente o que dava o selo ✅.**
+
+"Caminho só de ida" descrevia a função errada. `saveId` é
+`SHA-256("soulmon:" + e-mail)` e o `pid` era hash **sem segredo** dele: a cadeia
+`e-mail → saveId → pid` era derivável offline por qualquer pessoa, então o
+diretório público **era** o oráculo e-mail→conta. Irreversível ≠ imprevisível.
+
+**Hoje o `pid` é ALEATÓRIO** (`crypto.getRandomValues`, 12 bytes), e é o índice
+reverso `pid:<pid>` → saveId, no servidor, que passou a ser a **única** ligação
+entre os dois — não mais uma função que qualquer um recalcula. Alvos
+(`friendId`, `opponentId`, `player?id=`) chegam como pid; a lista de amigos
+guarda saveId internamente e sai como pid. Nada mudou no cliente: ele já tratava
+o id alheio como token opaco. Os índices derivados antigos são **aposentados
+sozinhos** no próximo save de cada conta (o `pid` anterior é apagado quando o
+novo é gravado), então também aqui não houve migração — mas por outro motivo.
 
 ### 1.2 Latente — arma no dia em que o billing for configurado
 
-| # | Onde | O quê | Status |
+| # | Onde (símbolo) | O quê | Status em `e8aef62a` |
 |---|---|---|---|
-| SEC-3 | `functions/api/_entitlements.js:256` (`claimOrder`) — **era `:203`; +53 linhas de comentário de TTL em `b2a35465`** | `claimOrder` não é atômico → 1 recibo vira N contas pagas | 🔴 **NÃO RESOLVIDO** |
-| SEC-4 | `functions/api/_billing.js:346` (`verifySteamPurchase`) | microtransação Steam sem vínculo com o dono | ⚠️ parcial (`PLAY_REQUIRE_ACCOUNT_BINDING` não está ligada) |
+| SEC-3 | `claimOrder` / `claimOrderAtomic` em `functions/api/_entitlements.js` | `claimOrder` não é atômico → 1 recibo vira N contas pagas | 🔴 **NÃO RESOLVIDO** — inalterado hoje. O que entrou foi **preparação**, não conserto (ver abaixo) |
+| SEC-4 | `verifySteamPurchase` / `isPlayPurchaseBoundTo` em `functions/api/_billing.js` | microtransação Steam sem vínculo com o dono | ⚠️ parcial — **`PLAY_REQUIRE_ACCOUNT_BINDING` continua não ligada**; reconferido: o código lê `env.PLAY_REQUIRE_ACCOUNT_BINDING !== 'true'`, e sem a variável a compra sem vínculo é **aceita** |
 
-> **SEC-3, reverificado (2026-08-25; endereços reconferidos em 26/08 pós-merge).**
-> O caminho atômico é condicionado a
-> `env.DB` (`_entitlements.js:257` — era `:204` —, que desvia para `claimOrderAtomic` em `:282` — era `:220`) e **não existe binding `d1_databases` em
-> `wrangler.jsonc`** — em produção roda sempre o ramo do KV (*read-then-write*
-> sem CAS, sobre armazenamento eventualmente consistente). O teste que dava o ✅
-> usa um `Map` em memória, fortemente consistente: a corrida é estruturalmente
-> irreproduzível ali. O selo media o código, não a semântica do armazenamento.
+> **SEC-3, reverificado em `e8aef62a`.** O caminho atômico continua condicionado
+> a `env.DB` (`claimOrder` desvia para `claimOrderAtomic`) e — **conferido nesta
+> árvore, e é a prova dura** — **não existe binding `d1_databases` em
+> `wrangler.jsonc`**. O arquivo declara `kv_namespaces` (`DIGIAPP_SAVES`,
+> `PUSH_SUBSCRIPTIONS`) e mais nada. Em produção roda **sempre** o ramo do KV
+> (*read-then-write* sem CAS, sobre armazenamento eventualmente consistente). O
+> teste que dava o ✅ usa um `Map` em memória, fortemente consistente: a corrida
+> é estruturalmente irreproduzível ali. O selo media o código, não a semântica do
+> armazenamento.
 > Fonte: `squad-alpha-runs/soulmon-01/discovery/security-escopo-e-reverificacao.md`.
+
+> #### 🆕 O que entrou hoje no D1, e por que NÃO fecha o SEC-3
+>
+> `ff55215e` / merge `2ef54721` deu **prazo em coluna** ao recibo no D1
+> (`migrations/0002_order_claims_expires_at.sql`, limpo na leitura), e
+> `45b8c4cf` tirou o schema de dentro do `docs/BILLING-SETUP.md` para apontar
+> para `migrations/`. Isso responde a **pendência C do dono** — *"banco não apaga
+> linha sozinho, então com D1 ligado a decisão de 5 anos não se aplica ao
+> recibo"*.
+>
+> **Mas é preparação de um caminho que nunca dispara.** Enquanto não houver
+> binding de D1 no `wrangler.jsonc`, `env.DB` é `undefined`, `claimOrderAtomic`
+> não roda, e a tabela `order_claims` não existe em produção. **Ligar o D1
+> continua sendo o conserto do SEC-3** — e agora ele chega com a retenção já
+> resolvida, em vez de abrir uma ponta nova no dia em que for ligado.
+>
+> ⚠️ Não confunda as duas coisas: *a migração existir* e *o caminho atômico
+> rodar* são afirmações diferentes, e só a primeira é verdade hoje. Este é
+> exatamente o tipo de selo que já enganou esta página antes.
 
 **SEC-3.** O comentário no código dizia que a corrida "exige tempo de propagação
 na casa dos milissegundos". **Está errado, e a estimativa era minha.** O Workers
@@ -779,7 +1046,11 @@ Vale registrar para não reauditar à toa:
 - **Chave da Groq não vaza.** Host e modelo são fixos; corpo de erro upstream
   nunca volta ao cliente. Sem SSRF (nem host nem protocolo são controláveis).
 - **Prompt injection sem consequência privilegiada** — nada do que o modelo
-  responde vira escrita no servidor ou chamada de ferramenta.
+  responde vira escrita no servidor ou chamada de ferramenta. ⚠️ **Este item
+  continua certo pelo motivo dele, mas era otimista sobre a ENTRADA**: até
+  `4997bccb` o `customKeywords` do jogador entrava no prompt de SISTEMA com
+  status de regra, e a `temperature` vinha crua do corpo. Hoje o texto vai
+  delimitado e saneado, e a temperatura é `clamp`ada. Ver N-8 na seção 1.1.
 - **PII do oráculo fica no cliente.** Nome completo, data, hora e local de
   nascimento vivem só no `localStorage` (`SOULMON_PROFILE`) e são consumidos
   por `generateOracle`. **Não** entram no `GameState`, não vão para `/api/save`
@@ -806,8 +1077,94 @@ bubblewrap_build/app-release-signed.apk
 bubblewrap_build/app-release-aligned.apk
 ```
 
-Remover do HEAD **não tira do histórico** — quem clonar ainda recupera. Ver
-seção 3.
+Remover do HEAD **não tira do histórico** — quem clonar ainda recupera.
+
+#### ✅ Analisado em 26/08/2026 — rebaixado de "projeto" para "formulário"
+
+`squad-alpha-runs/soulmon-02/security/keystores-vazados.md`. O que a análise
+mudou, e é bastante:
+
+- **Os keystores são do DigiApp** (`com.digipartner.digiapp`), **não do
+  Soulmon**. O Soulmon builda outro package via Capacitor e o CI dele só faz
+  `assembleDebug`, sem keystore de release. **Não há nada a rotacionar do lado
+  do Soulmon.**
+- **O DigiApp usa Play App Signing** (confirmado pelo dono). Logo a chave vazada
+  é a de **upload**; a que assina o app para os usuários é da Google e **nunca
+  esteve no repo**. A rotação é Play Console → Assinatura do app → *Solicitar
+  troca da chave de upload*: **um formulário de ~5 min**, e os usuários não
+  percebem nada.
+
+⚠️ **O risco que sobra enquanto não trocar, declarado sem alívio:** quem tem o
+keystore consegue assinar um APK que o Android aceita como **atualização
+legítima do DigiApp**, instalando por cima e preservando os dados. **Não**
+consegue publicar na Play — isso exige credencial de conta, que nunca esteve no
+repo. **O risco é de instalação lateral, não de loja.**
+
+E um detalhe que agrava: a senha da **outra** keystore está em texto puro num
+`build.gradle` do repo. A da que importa não foi encontrada — mas JKS tem
+derivação de chave fraca, então foi tratada como comprometida.
+
+Ver seção 3.
+
+### 🆕 1.5 Cadeia de suprimentos — a lacuna inteira que ninguém tinha auditado
+
+Até 26/08/2026 esta página registrava, textualmente, que **a cadeia de
+suprimentos inteira nunca tinha sido auditada** — dependências, CVEs, permissões
+de CI, `vendor/`. Foi auditada. Documento:
+`squad-alpha-runs/soulmon-02/security/auditoria-suprimentos.md`.
+
+#### 🔴 O achado que importa: **o gate do CI estava MORTO**
+
+**Confirmado no `ci.yml` desta árvore, com o comando colado no próprio
+workflow.** Havia um step que exigia `node_modules/class-system/package.json` e
+falhava com *"class-system NAO instalou"*. Ele **não podia passar nunca**: a
+dependência de git saiu do `package.json` e do `package-lock.json` quando o
+`vendor/` entrou (ADR-002 §1).
+
+```
+grep -c "class-system" package-lock.json  ->  0
+grep -n  "class-system" package.json      ->  so o script `vendor:class-system`
+ls node_modules/class-system              ->  No such file or directory
+```
+
+**A consequência é a parte grave, e ela é inferência forte a partir da ordem dos
+steps** (marcada como tal): o step morto vinha **ANTES** do `tsc` e do `vitest`,
+que são o motivo de o workflow existir. Um step que sempre sai com exit 1 derruba
+o job ali. Ou seja: **`tsc` e `vitest` provavelmente não rodaram em push nenhum**
+enquanto isso esteve de pé. O CI *parecia* proteger e não protegia.
+
+⚠️ **E ninguém percebeu porque falha de CI vira ruído.** Um gate que sempre
+reprova é um gate que alguém desliga — ou, pior, que todo mundo aprende a
+ignorar. É a lição **12** de `LICOES-DE-METODO.md`: **gate morto é pior que gate
+ausente**, porque gate ausente pelo menos não mente sobre cobertura.
+
+#### O que entrou no lugar, e o resto da rodada
+
+| O quê | Commit | Estado |
+|---|---|---|
+| **`node_modules` sai do rastreamento** — **19.035 arquivos** | `6e7aa3cd` / merge `aa487200` | ✅ **Confirmado**: `git ls-files node_modules \| wc -l` → **0**. O `.gitignore` já listava `node_modules/`; os arquivos estavam rastreados de antes do ignore, e ignore não desrastreia nada |
+| **Integridade do `vendor/`** no lugar do gate morto | `0d41b74c` | ✅ recalcula o `sha256` do bundle contra `_provenance.json`. **Lê o BLOB do git (`git show HEAD:…`), não o arquivo do disco** — `core.autocrlf` transforma LF em CRLF no checkout do Windows e o disco dá outro hash (medido: 232.533 bytes no disco contra 226.978 no blob). Quem escrevesse isto lendo o disco criaria um teste que reprova sozinho na máquina do dono — e seria desligado na semana seguinte |
+| **`permissions:` declarado** nos workflows | `0d41b74c`, `80ef844d` | ✅ mínimo por arquivo. `ci.yml` e `desktop-build.yml`: `contents: read`. **`desktop-release.yml` é o único com `contents: write`**, e precisa: criar Release é escrever no repositório |
+| **Actions presas por SHA** | `0d41b74c` | ✅ ex.: `actions/checkout@11d5960a…` (v4.4.0), `actions/setup-node@49933ea5…` (v4.4.0). Tag é ponteiro móvel; SHA não |
+| **`npm ci` no desktop** | `0d41b74c` | ✅ instala exatamente o lockfile, em vez de `npm install` |
+
+#### 🆕 O step do `SIBLING_REPOS_TOKEN` foi **provado inútil** e removido
+
+**`80ef844d` / merge `5e07e0a4`.** Havia, no `ci.yml` e no `android-build.yml`,
+um step "Clonar os repos irmãos" que reescrevia `git+ssh` para HTTPS com o
+`SIBLING_REPOS_TOKEN` — para uma dependência de git **que não existe mais no
+lock**. Não é que fosse redundante: **não tinha o que fazer**.
+
+⚠️ **O secret continua existindo e continua tendo dono** — o
+`sync-irmaos.yml`, que de fato clona os dois repos irmãos toda semana. **O Bloco
+1 do `GUIA-DO-DONO.md` continua valendo.** O que mudou é que o `npm ci` não
+depende mais dele, então o deploy não quebra no dia em que o token expirar; o
+sync semanal, sim.
+
+**O custo, declarado:** se um dia voltar dependência de git no lock, o `npm ci`
+vai tentar SSH e falhar em repo privado. **O conserto não é ressuscitar o
+step** — é não voltar a ter dependência de git (ADR-002 §1). Se voltar mesmo
+assim, o step está no histórico.
 
 ---
 
@@ -945,7 +1302,7 @@ decisão sua.
 |---|---|---|
 | ✅ | **Licença dos sprites DMC e uso dos nomes Digimon** — RESOLVIDO em 09/08/2026. Foi a opção (b): substituir por arte e nomenclatura originais. Saíram do repositório os 25 `*_dmc.png` (arte da Bandai, via `furudbat/wayland-vpets`) e os 49 `figma:asset/*` das linhas Tapirmon/Veemon/Salamon, junto com os itens de digievolução da loja, os Digimentais e o roster nominal da masmorra. `getSpriteForStage` responde sempre com arte de `src/assets/soulmon/`; save antigo cai num fallback determinístico que também usa arte nossa. Os nomes de franquia saíram até do prompt do gerador (`utils/oracle.ts`), com teste travando a ausência. Detalhes em `docs/Attributions.md`. |
 | 🟠 | **Reroll por Créditos = resultado aleatório pago com dinheiro real** | `monetization.ts:76` + `oracle.ts` (`Math.random()`). Atenuante forte: todo pet gerado é mecanicamente equivalente — é identidade, não poder. Mas a Lei 15.211/2025 (ECA Digital) vale desde 17/03/2026, houve condenação de R$ 333M em jun/2026, e o Pokémon GO teve incubadoras removidas no Brasil. Pode bastar deixar explícito que os resultados são equivalentes. |
-| 🔴 | **Decidir sobre as keystores no histórico do git** | Se o repositório for público, ou se essas chaves ainda assinam algo na Play Store: rotacionar a chave de upload no Play Console e/ou limpar o histórico com `git filter-repo` (reescreve todos os commits, exige force push e quebra clones). Posso preparar o comando; a decisão de reescrever histórico é sua. |
+| 🟡 | ~~**Decidir sobre as keystores no histórico do git**~~ → **rebaixado de 🔴 para 🟡 pela análise de 26/08** (§1.4) | Os keystores são do **DigiApp**, não do Soulmon, e o DigiApp usa **Play App Signing** — a chave vazada é a de **upload**, e a rotação é um formulário de ~5 min no Play Console (Assinatura do app → *Solicitar troca da chave de upload*). **Nada a rotacionar do lado do Soulmon.** `git filter-repo` deixou de ser a opção óbvia: ele reescreve todos os commits, exige force push, quebra clones — **e não muda o risco**, porque quem já clonou já tem. O risco real é instalação lateral de um APK que o Android aceita como atualização do DigiApp; **não** é publicação na loja (isso exige credencial de conta, que nunca esteve no repo). |
 | 🟠 | **Ligar o `FIREBASE_PROJECT_ID`** | É o que fecha `save.js`, `billing.js` e `entitlements.js`. **Só depois** que `VITE_FIREBASE_*` estiver configurado e o build do desktop com login tiver saído — ligar antes derruba o login de todo mundo. |
 
 ### 3.2 Lançamento
@@ -956,10 +1313,11 @@ decisão sua.
 | 🔴 | Criar os 4 produtos no Play Console (`soulmon.unlock.full`, 3 pacotes de crédito) |
 | 🔴 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` |
 | 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
-| 🟡 | Opcional: banco **D1** vinculado como `DB` + tabela `order_claims`, para o resgate de comprovante ser atômico em vez de best-effort |
+| 🟠 | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims`. ⚠️ **"Opcional" é otimista e a palavra sai.** Este é o conserto do **SEC-3**, que a §1.2 chama de *maior risco de dinheiro que sobrou*, e o `wrangler.jsonc` **não tem binding `d1_databases`** — conferido em `e8aef62a`. Enquanto não tiver, `env.DB` é `undefined`, `claimOrderAtomic` **nunca roda** e o resgate é read-then-write sem CAS sobre KV eventualmente consistente. ✅ **O que a squad já preparou:** `migrations/0001_order_claims.sql` e `0002_order_claims_expires_at.sql` (com o prazo em coluna, respondendo à pendência C). Falta **ligar** |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
 | 🟠 | `VITE_FIREBASE_*` no projeto Pages (e o `FIREBASE_PROJECT_ID` **por último**) |
-| 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim, mas `capacitor.config.json` ainda aponta o APK para `digiapp-a5e.pages.dev` |
+| 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim. ⚠️ **A segunda metade desta linha era FALSA e saiu**: dizia que `capacitor.config.json` "ainda aponta o APK para `digiapp-a5e.pages.dev`". Conferido em `e8aef62a` — ele aponta para `https://soulmon.mateus-sprnd.workers.dev`, e as três fontes concordam (`capacitor.config.json`, `desktop/renderer/src/config.ts`, `desktop/electron/main.js`). É a **mesma mentira** que o `CLAUDE.md` e o `docs/PLANO-DESKTOP-STEAM.md` carregaram até 26/08 e que faria um agente decidir errado sobre deploy |
+| 🐛 | 🆕 **Comentário mentiroso encontrado e NÃO consertado** (é `src/`, fora do escopo desta frente): `desktop/renderer/src/config.ts:3` diz *"A URL ainda aponta pro Pages herdado do DigiApp"* — **a linha logo abaixo é `soulmon.mateus-sprnd.workers.dev`**. É o mesmo dano de sempre: comentário que descreve um estado anterior e não fica vermelho. Conserto de 1 linha, para quem tocar `desktop/renderer/` |
 | 🟡 | Endereço de contato do VAPID (`workers/push-scheduler.js` → `CONTACT`) — hoje é `contact@digiapp.app`; precisa ser um que você controle |
 | 🟠 | **Decidir se a Fase 4 (sensores via Health Connect) vale o custo** — só o dono pode: exige **conta de organização verificada** no Play (enforcement jan/2026; conta pessoal é bloqueador), declaração de health app, política de privacidade dedicada e consentimento LGPD art. 11 específico por finalidade, além de APK novo. A Fase 3 (Janela de Descanso + Sonhos) já roda **sem sensor nenhum**, igual na PWA e no APK — a Fase 4 é opt-in, só Android, e o plano só a previa **se** a Fase 3 provar que move retenção. Caminho técnico, se aprovada: `@capgo/capacitor-health` (único plugin Capacitor vivo em 2026 que expõe sono). **Google Fit está morrendo (APIs até o fim de 2026) — nada deve ser escrito contra ele.** |
 | 🟡 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages (fingerprint sai do Play Console → Integridade do app) |
@@ -975,7 +1333,7 @@ decisão sua.
 | 🟠 | Subir build a partir de uma máquina Windows. ✅ **O empacotamento em si deixou de ser incógnita** — `npm run dist:steam` rodou em 26/08/2026, EXIT=0, 274 MB (`desktop/STEAM.md`). O que falta é o `steamcmd` com o seu login de parceiro |
 | 🟠 | **Ligar o Modo de Desenvolvedor do Windows** (Configurações → Privacidade e segurança → Para desenvolvedores). É **pendência de MÁQUINA, não de projeto**: o pacote `winCodeSign` do electron-builder traz dois symlinks de macOS (`libcrypto.dylib`, `libssl.dylib`) que não servem para nada num build `--win`, e criar symlink no Windows exige o Modo de Desenvolvedor. Sem ele o build inteiro morre por causa de dois arquivos irrelevantes, **depois** de já ter gerado o `.exe`. Contornado uma vez pré-extraindo o `.7z` à mão; a saída limpa é sua, porque mexe em configuração do sistema |
 | 🟠 | **Preencher `author` em `desktop/package.json`.** Hoje o electron-builder avisa `author is missed`. No `--dir` é só aviso, mas o `nsis` do `npm run dist` usa o `author` como **Publisher do instalador** — é o nome que aparece no aviso do Windows e nas propriedades do `.exe`. Não preenchi porque é **identidade, não código** |
-| 🟡 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` (o SEC-4 já está corrigido; o cliente Steam precisa mandar o session ticket junto do `orderId`) |
+| 🟡 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID`. ⚠️ **"o SEC-4 já está corrigido" é forte demais** — a §1.2 o marca **parcial**, e a metade que falta é uma variável: `PLAY_REQUIRE_ACCOUNT_BINDING` continua não ligada, e `isPlayPurchaseBoundTo` lê `env.PLAY_REQUIRE_ACCOUNT_BINDING !== 'true'`, ou seja **sem a variável a compra sem vínculo é aceita**. O que está corrigido é o oráculo de enumeração do `orderid`. O cliente Steam ainda precisa mandar o session ticket junto do `orderId` |
 
 ### 3.4 Ordem que evita ficar fora do ar
 

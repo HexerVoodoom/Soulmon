@@ -68,8 +68,16 @@ Repositório: `HexerVoodoom/Soulmon`.
 - O **APK carrega a URL de produção**, então mudança web NÃO precisa de APK
   novo. Só mudanças em `android/` precisam — o GitHub Actions
   (`android-build.yml`) builda no push e o artefato fica em
-  `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`. O app Electron tem o
-  próprio workflow (`desktop-build.yml`).
+  `github.com/HexerVoodoom/Soulmon/actions/runs/<id>`.
+  ⚠️ **O app Electron tem DOIS workflows desde 26/08/2026, e esta linha citava
+  só um.** `desktop-build.yml` builda em push da `main` com `--publish never` e
+  só sobe artefato (`permissions: contents: read`); `desktop-release.yml` é o
+  **único** caminho de publicação e dispara **só em tag `v[0-9]+.[0-9]+.[0-9]+`**
+  (`permissions: contents: write`). A separação é em dois ARQUIVOS porque o poder
+  de publicar acompanha o `permissions:` do arquivo — antes, um push de branch de
+  rascunho criava um GitHub Release, que é a fonte do auto-update do
+  `electron-updater`, e instalava um `.exe` sem assinatura na máquina do jogador.
+  **Publicar não pode ser efeito colateral de commitar.** Ver `desktop/README.md`.
 - O worker de push (`workers/`) **não** é uma Pages Function: não builda no
   push da `main`. Deploy manual com `wrangler deploy` dentro de `workers/`.
 - Ao mudar assets estáticos/HTML de forma incompatível, **bump `CACHE_VERSION`**
@@ -140,11 +148,16 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
 
 ## Arquitetura
 
-- `src/App.tsx` (**4489 linhas**, medido em 26/08/2026 ao fim do dia — dizia
-  "~1500" de manhã e "~4700" à tarde; a diferença importa porque quem lê "1500"
-  acha que cabe num contexto e lê o arquivo inteiro à toa. Encolheu ~240 linhas
-  no dia: `dcbeb42d` tirou os três updaters inline de item especial e
-  `46a6e542`/`2bc9af3a` levaram regra para módulo puro) — orquestra tudo: handlers (feed/pet/shower/sleep),
+- `src/App.tsx` (**4921 linhas**, medido em 26/08/2026 na consolidação final —
+  dizia "~1500" de manhã, "~4700" à tarde e **"4489" à noite**, número que ficou
+  falso poucos merges depois; a diferença importa porque quem lê "1500" acha que
+  cabe num contexto e lê o arquivo inteiro à toa. A trajetória do dia é útil:
+  caiu para 4489 quando `dcbeb42d` tirou os três updaters inline de item
+  especial e `46a6e542`/`2bc9af3a` levaram regra para módulo puro, e **voltou a
+  subir** com o cap do demo passando a valer em todo caminho de criação
+  (`24870bf7`) e com a fiação do Vínculo (`0f38f303`). ⚠️ **Contagem de linha é a
+  mesma família de dano da referência `arquivo:linha`** — envelhece sem ficar
+  vermelha. Quando este número importar, meça: `wc -l src/App.tsx`) — orquestra tudo: handlers (feed/pet/shower/sleep),
   efeitos de jogo (dreno de cocô, sono automático, relatório), navegação de páginas.
 - `src/contexts/GameStateContext.tsx` — `GameState` + persistência: todo setGameState
   grava no localStorage (`digiapp_state_v3`) e agenda cloud save (3s debounce).
@@ -295,7 +308,12 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   compra também existe DENTRO do app, não só na tela inicial (que o usuário vê
   uma vez). `UnlockNudge` só aparece em dois lugares — ao bater o limite de
   criação do modo grátis (`CreateModal`) e na página de Evolução de quem tem
-  `demoCharacterId` — e nunca abre sozinho. Depois da compra confirmada pelo
+  `demoCharacterId` — e nunca abre sozinho.
+  ⚠️ **"dois lugares" ficou falso em `24870bf7`: hoje são TRÊS.** O `EditModal`
+  passou a exibir o `UnlockNudge` também, porque era exatamente o caminho que
+  **contornava o teto do demo** — o botão principal de criar da tela inicial
+  abre o `EditModal`, que salvava sem checar cap nenhum. Fechar o vazamento sem
+  pôr o convite ali deixaria a recusa sem saída. Depois da compra confirmada pelo
   servidor, `SoulmonOnboarding mode='upgrade'` roda o MESMO ritual do oráculo
   (sem intro/cadastro) e `handleUpgradeRevealed` troca **só a criatura**:
   estágio, atividades, Bits e histórico continuam. Se o usuário sair do ritual
@@ -385,8 +403,9 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
    estado que não era o semeado).
 8. Sprites: importados via alias `figma:asset/<hash>.png` (mapa no `vite.config.ts`)
    → arquivos reais em `src/assets/`. `assetsInlineLimit: 0` (nunca inline base64).
-9. **Regra copiada = regra que diverge em silêncio.** Estado em 26/08/2026, ao
-   fim do dia — **o que ainda é cópia mudou três vezes hoje, então leia a data**:
+9. **Regra copiada = regra que diverge em silêncio.** Estado em 26/08/2026, na
+   consolidação final do dia — **o que ainda é cópia mudou QUATRO vezes hoje**
+   (dizia "três" e ficou desatualizado no mesmo dia), **então leia a data**:
    - **Sobrou a derivação do `saveId`, e ela tem TRÊS implementações**, em três
      árvores com três ciclos de deploy: `emailToSaveId` em
      `src/utils/cloudSave.ts` (app), em `desktop/renderer/src/cloudSync.ts`
@@ -426,6 +445,29 @@ das 22h, que chegava em PT para quem tinha escolhido inglês. `resolveLanguage`
      nem `totalXP`), devolvendo energia errada e atributos `NaN`. O `menu.ts`
      jogava tudo fora e recalculava a energia à mão, então nada aparecia.
      **Cópia pode estar encobrindo defeito, não só duplicando.**
+   - 🆕 **A 4ª mudança do dia é a que quase virou cópia e não virou** (`6dde6750`
+     / `94d45e62`): a allowlist de **esquema** da URL de sprite. Ela tinha dois
+     candidatos a dono — o acervo (`isSafeSpriteUrl` em
+     `src/utils/spriteLibrary.ts`) e o pixelizador (`pixelizeDataUrl` em
+     `src/utils/spriteGen.ts`, que passa a URL para um `<img>`) —, e os dois
+     componentes que liam do diretório público precisavam da mesma resposta.
+     **Escreveu-se UMA função e ela é importada nos quatro pontos.** Dois
+     dicionários de esquema divergiriam exatamente onde dói: um fecharia
+     `javascript:` e o outro não, e nada ficaria vermelho. O que a guarda fecha:
+     `javascript:` (inclusive `JaVaScRiPt:` e com TAB/LF no meio), `data:`
+     não-imagem, `http:`, `file:`, `blob:` e `//host` (relativo a esquema, que
+     herda `https` e vaza igual). ⚠️ **O que ela NÃO fecha** é o beacon
+     `https://atacante.example/x.png` — para isso é preciso fixar o **HOST** do
+     provedor, e o host do CDN do Higgsfield não está confirmado (é pendência do
+     dono). Guarda reutilizável, não um `if` inline: `isSafeSpriteUrl` responde
+     `false` para não-string também.
+   - **O nível do Vínculo NUNCA vai para o save** (`src/utils/bond.ts`) — é
+     sempre `bondLevelFor(totalXP)`, derivado na leitura. Guardar `bondLevel`
+     persistido seria este footgun na sua forma mais cara: duas fontes para o
+     mesmo número, uma delas gravada no aparelho de quem já joga. O gate de PvP
+     (`BOND_PVP_MIN_LEVEL` = 5) usa a MESMA derivação nos dois lados — cliente
+     (`canPvp`) e servidor (`community.js`, ação `profile`) — e é o servidor que
+     decide, porque o cliente é editável.
    - Os testes de paridade que sobraram: `cloudSync.test.ts`,
      `sprites.parity.test.ts`, `care.parity.test.ts`,
      `care.feed.parity.test.ts`, `care.banhoSono.parity.test.ts`. Se copiar
