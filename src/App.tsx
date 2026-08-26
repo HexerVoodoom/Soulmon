@@ -781,6 +781,60 @@ export default function App() {
     writeFlag(STORAGE_KEYS.NOTIFICATIONS_ENABLED, notificationsEnabled, { silent: true });
   }, [notificationsEnabled]);
 
+  // ─────────────────────────────────────────────────────────── B-R1
+  //
+  // RE-DERIVAÇÃO DO `saveId` DE QUEM JÁ ESTÁ AUTENTICADO.
+  //
+  // Quem nunca logou tem `SAVE_ID = crypto.randomUUID()` (a linha ~548 acima e
+  // a gêmea no `GameStateContext`). Esse UUID passa no `VALID_ID` do servidor,
+  // então hoje funciona. Quando a fatia 1 ligar o `enforced: true`, o servidor
+  // vai comparar `emailToSaveId(email)` com o UUID, não vai bater, e vai
+  // devolver **403 permanente** — e re-login NÃO conserta, porque o erro está
+  // no `SAVE_ID` local, não no token. É um beco sem saída.
+  //
+  // Os quatro handlers de login abaixo já realinham o id no caminho feliz. O
+  // que faltava era a rede de segurança para quem CHEGA nesta sessão já
+  // autenticado e desalinhado — porque o `writeLocal` daquele momento falhou
+  // (storage cheio), porque o login aconteceu em outra aba, ou porque a sessão
+  // do Firebase sobreviveu a um caminho que não passou por nenhum handler.
+  // Este efeito fecha todos de uma vez, no ponto onde o sintoma apareceria.
+  //
+  // Barato no caso comum: quem já está alinhado (todo mundo que logou hoje)
+  // sai de `reconcileSaveId` antes de tocar a rede. Sem sessão, não faz nada —
+  // quem nunca logou continua jogando local exatamente como antes.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { getCurrentEmail } = await import('./utils/auth');
+      const email = await getCurrentEmail();
+      if (cancelled || !email) return;
+      const { reconcileSaveId } = await import('./utils/cloudSave');
+      // O estado LOCAL é o que sobe quando a chave derivada está vazia — é o
+      // "subindo o estado que ela já tinha" da decisão do dono.
+      const r = await reconcileSaveId(email, gameState);
+      if (cancelled || r.estado === 'sem-mudanca' || r.estado === 'sem-email') return;
+      if (r.estado === 'migrado') {
+        // A identidade trocou e o dado é o mesmo que já está em memória: nada
+        // a recarregar. Só o id de comunidade precisa acompanhar.
+        setSaveId(r.saveId);
+        return;
+      }
+      if (r.estado === 'adotado') {
+        // O save da nuvem substituiu o local. Recarregar é o caminho que o app
+        // já usa para trocar de identidade COM troca de dado — o estado em
+        // memória é de outra conta e não pode continuar sendo escrito.
+        window.location.reload();
+      }
+      // 'indeterminado' e 'storage': nada foi movido de propósito. A próxima
+      // abertura tenta de novo, e até lá o jogo segue local (que é o modo
+      // normal deste app).
+    })();
+    return () => { cancelled = true; };
+    // Uma vez por abertura. `gameState` é lido como snapshot de propósito: pôr
+    // ele nas deps faria a reconciliação re-rodar a cada gesto do jogador.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Retorno do link de acesso por e-mail: se o app abriu a partir dele,
   // conclui o login antes de qualquer chamada de API (as rotas de save e
   // dinheiro passam a exigir o token). Ver src/utils/auth.ts.

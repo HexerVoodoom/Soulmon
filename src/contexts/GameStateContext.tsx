@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useRef, type R
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { cloudSave } from '../utils/cloudSave';
+import { cloudSaveComRetry } from '../utils/cloudSave';
 import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
@@ -1000,6 +1000,53 @@ function freshGameState(): GameState {
   };
 }
 
+/**
+ * Debounce de CAUDA do cloud save. Continua 3 s, e isso agora é DECISÃO, não
+ * detalhe: o preparo da fatia 1 (§A.3.2) mediu que é este amortecedor que
+ * impede a densidade de gesto de virar densidade de escrita — as ~23 mutações
+ * de uma sessão cheia colapsam em ~14 POSTs. Reduzi-lo "para encurtar a janela
+ * de conflito" PIORA o 409 e o custo. Não otimize isto sem refazer a conta.
+ */
+export const CLOUD_SAVE_DEBOUNCE_MS = 3000;
+
+/**
+ * R-4 — teto absoluto de espera. Ver o comentário longo no efeito de save: sem
+ * ele, um fluxo sustentado de mutações a menos de 3 s adia o POST para sempre
+ * e o cloud save para em silêncio. 15 s é 5× o debounce — longe o bastante
+ * para nunca atrapalhar a rajada normal, curto o bastante para o jogador não
+ * perder uma sessão inteira.
+ */
+export const CLOUD_SAVE_MAX_WAIT_MS = 15000;
+
+/**
+ * Aviso por CLASSE de falha, PT + EN. Só chega ao jogador o que ele pode
+ * entender ou resolver — 5xx e offline se resolvem sozinhos e não aparecem
+ * (ver `CLOUD_SAVE_POLICY.avisaJogador`).
+ *
+ * A copy final é do `alpha-redator-ux` (item 0.4 do roteiro de corte). Estes
+ * textos são funcionais e existem para o caminho não nascer mudo.
+ */
+function cloudSaveWarning(kind: string, pt: boolean): string {
+  switch (kind) {
+    case 'identity':
+      return pt
+        ? 'Este aparelho está apontando para outra conta. Entre com seu e-mail para religar o progresso à nuvem.'
+        : 'This device is pointing at another account. Sign in with your email to reconnect your progress to the cloud.';
+    case 'auth':
+      return pt
+        ? 'Sua sessão expirou e o progresso não está indo para a nuvem. Entre de novo com seu e-mail.'
+        : 'Your session expired and progress is not reaching the cloud. Sign in again with your email.';
+    case 'too-large':
+      return pt
+        ? 'Seu save ficou grande demais para a nuvem. O progresso continua salvo neste aparelho.'
+        : 'Your save is too large for the cloud. Progress is still saved on this device.';
+    default:
+      return pt
+        ? 'Não consegui salvar na nuvem. O progresso continua neste aparelho.'
+        : "Couldn't save to the cloud. Progress is still on this device.";
+  }
+}
+
 export function GameStateProvider({ children }: { children: ReactNode }) {
   // Um aviso por sessão, com par PT/EN. O idioma é lido pelo mesmo caminho
   // defensivo — num storage bloqueado, `readLocal` devolve null e cai no padrão.
@@ -1048,6 +1095,17 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   });
 
   const isFirstRender = useRef(true);
+  /**
+   * R-4 — quando a rajada de mutações COMEÇOU. `null` = não há POST pendente.
+   * É o que impede a inanição do debounce (ver a constante abaixo).
+   */
+  const rajadaComecouEm = useRef<number | null>(null);
+  /**
+   * R-3 — a última classe de falha já avisada ao jogador. Um 403 permanente
+   * dispara a cada gesto; avisar a cada gesto vira ruído que ensina a ignorar
+   * o aviso. Um aviso por classe, por sessão.
+   */
+  const falhaJaAvisada = useRef<string | null>(null);
 
   useEffect(() => {
     // Storage cheio (`QuotaExceededError`) OU bloqueado não pode derrubar a
@@ -1069,8 +1127,47 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       writeLocal(STORAGE_KEYS.SAVE_ID, saveId);
     }
 
+    // R-4 — INVARIANTE CONTRA INANIÇÃO DO DEBOUNCE.
+    //
+    // O `clearTimeout` do retorno faz deste um debounce de CAUDA: ele reinicia
+    // a cada mutação. A propriedade que ninguém tinha escrito é que um fluxo
+    // SUSTENTADO de mutações a menos de 3 s de distância **nunca dispara o
+    // POST** — o save fica só em memória e no localStorage, e a nuvem para de
+    // receber em silêncio, indefinidamente, enquanto o fluxo durar.
+    //
+    // Hoje isso não acontece, mas por ACIDENTE: o único gesto com cadência de
+    // ~2 s é o carinho, e ele tem teto de 2 concessões por dia
+    // (`careRules.ts`). No dia em que esse teto mudar — é discussão viva de
+    // produto — o cloud save para de disparar sem ninguém ver.
+    //
+    // O teto de espera fecha isso por DESENHO: por mais que a rajada continue,
+    // o POST sai no máximo `CLOUD_SAVE_MAX_WAIT_MS` depois da PRIMEIRA mutação
+    // pendente. E o amortecedor continua inteiro — a rajada curta ainda
+    // colapsa num POST só, que é o que impede a densidade de gesto de virar
+    // densidade de escrita.
+    if (rajadaComecouEm.current === null) rajadaComecouEm.current = Date.now();
+    const esperando = Date.now() - rajadaComecouEm.current;
+    const espera = Math.max(0, Math.min(CLOUD_SAVE_DEBOUNCE_MS, CLOUD_SAVE_MAX_WAIT_MS - esperando));
+
     const timer = setTimeout(() => {
-      cloudSave(saveId!, gameState);
+      rajadaComecouEm.current = null;
+      // R-3 — o retorno é LIDO. Antes este `false` era jogado fora: o servidor
+      // podia recusar o dia inteiro e a única pista era um `console.warn`.
+      //
+      // ⚠️ R-1 — NADA neste callback pode chamar `setGameState`. Este efeito
+      // depende de `[gameState]`; tocar o estado aqui reiniciaria o debounce e
+      // reagendaria o POST que acabou de falhar, e **cada gesto do jogador
+      // aceleraria o ciclo**. Vale em especial para o 409 que a fatia 1 vai
+      // introduzir: a reconciliação de conflito precisa de uma via própria,
+      // fora deste efeito. Avisar por `toast` é seguro (não é estado do jogo).
+      void cloudSaveComRetry(saveId!, gameState).then(resultado => {
+        if (resultado.ok) { falhaJaAvisada.current = null; return; }
+        if (!resultado.avisaJogador) return;
+        if (falhaJaAvisada.current === resultado.kind) return;
+        falhaJaAvisada.current = resultado.kind;
+        const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+        toast.warning(cloudSaveWarning(resultado.kind, pt), { duration: 10000 });
+      });
       // O perfil público só vai para a nuvem com os recursos sociais LIGADOS.
       // Sem este gate, quem nunca ativou o PvP tinha nome, pet e atributos
       // publicados no diretório assim mesmo — `pvpEnabled: false` no corpo não
@@ -1090,7 +1187,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         attrs: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
         tasksDone: gameState.completedTasks?.length ?? 0,
       }).catch(() => {});
-    }, 3000);
+    }, espera);
     return () => clearTimeout(timer);
   }, [gameState]);
 
