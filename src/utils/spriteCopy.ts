@@ -31,17 +31,13 @@ export const SPRITE_COPY = {
   },
   revert: { pt: 'Voltar ao traço antigo', en: 'Keep the old look' },
   tuned: { pt: 'Visor sintonizado', en: 'Visor tuned' },
-  // ✏️ PENDENTE DO REDATOR: as duas abaixo são funcionais, não são voz de
-  // marca. Elas existem porque 401 e 403 deixaram de ser `error` genérico e o
-  // card não pode nascer mudo — quem escreve a versão final é o redator, sem
-  // trocar a AÇÃO que cada uma pede (são ações diferentes de propósito).
   authFail: {
-    pt: 'O Oráculo não reconheceu você. Entre de novo e ele continua o traço.',
-    en: "The Oracle didn't recognize you. Sign in again and it resumes the drawing.",
+    pt: 'O Oráculo não reconheceu você. Entre de novo para ele continuar o traço.',
+    en: "The Oracle didn't recognize you. Sign in again for it to keep drawing.",
   },
   identityFail: {
-    pt: 'Este aparelho está com outro caderno. Sincronize o progresso para o Oráculo voltar a desenhar.',
-    en: 'This device is holding another notebook. Sync your progress so the Oracle can draw again.',
+    pt: 'Este aparelho está com outro caderno. Sincronize o progresso e o Oráculo volta a desenhar.',
+    en: 'This device is holding a different notebook. Sync your progress and the Oracle draws again.',
   },
 } as const satisfies Record<string, SpriteText>;
 
