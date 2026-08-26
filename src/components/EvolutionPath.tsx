@@ -29,11 +29,11 @@
  * desempate por ritmo de cuidado, e a situação de cada nó dita em PALAVRAS no
  * `aria-label` (WCAG 1.4.1: cor e posição nunca são o único portador).
  */
-import { useState, useMemo, useEffect, type CSSProperties } from 'react';
+import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { getSpriteForStage } from '../utils/sprites';
-import { cardState, displaySprite, emptySpriteLibrary, type SpriteLibrary } from '../utils/spriteLibrary';
+import { cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
 import { spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
@@ -104,6 +104,30 @@ const card: CSSProperties = {
   borderRadius: 12,
   boxShadow: '0 1px 2px rgba(4, 18, 20, .10), 0 4px 12px rgba(4, 18, 20, .10)',
   padding: 16,
+};
+
+/**
+ * O ANUNCIO da sintonia — visivel so para leitor de tela.
+ *
+ * Nao ha classe utilitaria para isto no projeto (`index.css` e pre-compilado;
+ * classe que nao existe la nao aplica nada — footgun 1), e abrir regra nova no
+ * fim do arquivo e justamente o que a sentinela de movimento reduzido proibe.
+ * Entao a caixa vem inline, que e a saida que o proprio footgun 1 recomenda.
+ *
+ * Nao usa `display:none` nem `visibility:hidden`: os dois TIRAM o no da arvore
+ * de acessibilidade, e um `aria-live` fora da arvore nunca anuncia nada — e a
+ * forma mais comum de um anuncio "existir" no DOM e nao existir no ouvido.
+ */
+const soParaLeitor: CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
 };
 
 const sectionLabel: CSSProperties = {
@@ -202,6 +226,38 @@ export function EvolutionPath({
     // em runtime — ninguém passava `unseen`, e nada no save marcava "visto".
     unseen: acervo.tunedUnseen.includes(currentStageId),
   });
+
+  /**
+   * O ANÚNCIO DA SINTONIA (§6, literal): "ao concluir, um `aria-live="polite"`
+   * único anuncia 'Visor sintonizado' / 'Visor tuned'. (…) troca sem palavra
+   * nenhuma é exatamente o que o X4 derrubou."
+   *
+   * **Por que o gatilho é a TRANSIÇÃO DE ESTADO, e não a troca do sprite.** A
+   * varredura pode acompanhar qualquer troca de sprite — inclusive uma
+   * evolução, em que o bicho vira outro bicho. Uma faixa de luz ali continua
+   * lendo bem; a frase "Visor sintonizado" seria uma MENTIRA. `A_SINTONIZAR →
+   * adotado` é o único caminho que o ato de sintonizar produz, e este
+   * componente já o calcula — nenhum dono de estado novo foi inventado.
+   *
+   * Vale para os DOIS caminhos que a spec cita: o clique em "Sintonizar o
+   * Visor" e a adoção automática do prazo, que chega aqui pelo mesmo estado.
+   *
+   * O anúncio nasce da conclusão OBSERVADA: abrir a página com a forma já
+   * adotada não anuncia nada. Anúncio em toda montagem vira ruído ambiental, e
+   * leitor de tela que vira ruído para de ser ouvido.
+   */
+  const estadoAnterior = useRef<SpriteCardState | null>(null);
+  const [sintonizouAgora, setSintonizouAgora] = useState(false);
+  useEffect(() => {
+    const adotado = (e: SpriteCardState | null) => e === 'PROPRIO' || e === 'NOVO';
+    const antes = estadoAnterior.current;
+    estadoAnterior.current = estadoAtual;
+    if (antes === 'A_SINTONIZAR' && adotado(estadoAtual)) setSintonizouAgora(true);
+    // Sair da adoção (voltar ao traço antigo, ou um sprite novo chegando) apaga
+    // a frase: `aria-live` só reanuncia quando o conteúdo MUDA, e uma frase que
+    // nunca sai do DOM anunciaria uma vez e ficaria muda para sempre depois.
+    else if (!adotado(estadoAtual)) setSintonizouAgora(false);
+  }, [estadoAtual]);
 
   /* Ver o card É ter visto. A marca sai do save aqui, e não num toque: o
      achado é sobre quem NÃO age — exigir um clique para limpar deixaria o selo
@@ -509,6 +565,15 @@ export function EvolutionPath({
             <div className="sm-visor-scan" aria-hidden="true" key={`scan-${spriteAtual}`} />
           )}
         </Viewport>
+
+        {/* UM anúncio (§6), e num lugar só. Fica logo depois do visor porque é
+            o visor que sintonizou, e a ordem de foco do §6 começa pela forma
+            atual — a região não é focável e não desloca nada. */}
+        {sintonizouAgora && (
+          <p style={soParaLeitor} aria-live="polite" data-testid="sm-tune-anuncio">
+            {spriteText('tuned', language)}
+          </p>
+        )}
 
         <div style={{ textAlign: 'center', maxWidth: 380 }}>
           <p
