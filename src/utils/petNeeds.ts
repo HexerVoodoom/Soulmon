@@ -40,6 +40,7 @@ import { GOOD_CONSTANCY_RATIO, dayKeyOf } from './habitRhythm';
 import type { HabitRhythm } from './habitRhythm';
 import { restConstancy } from './restWindow';
 import type { RestState } from './restWindow';
+import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 
 // Reexportado só como documentação de qual constante define "dia pesado" aqui.
 // O DONO continua sendo `types/taskModel.ts` — este arquivo não inventa número.
@@ -71,7 +72,19 @@ export type PlayAttribute = 'virus' | 'data' | 'vaccine';
 
 /** O registro de persistência (opcional no GameState). */
 export interface PlayLog {
-  /** dayKey (`new Date().toDateString()`) da última brincadeira. */
+  /**
+   * Chave do DIA DO JOGADOR (`utils/playerDay.ts`) da última brincadeira, na
+   * forma de `toDateString()`.
+   *
+   * ⚠️ Era o dia do APARELHO, e este campo MORA NO SAVE — o quinto irmão da
+   * família fechada em b8296e0b. Dois aparelhos em fusos diferentes discordam do
+   * NOME do dia, então quem brincava às 23h no Brasil abria o tablet que estava
+   * em Tóquio (mesmo instante, 11h do dia seguinte lá) e `playedToday` dizia
+   * `false`: a oferta reabria e o teto de `PLAY_TIMES_PER_DAY` virava dois. E
+   * não era simétrico só para o bem do jogador — na direção contrária o dia
+   * NOVO chegava carimbado como o de hoje e a oferta era NEGADA a quem não
+   * tinha brincado. Ver `petNeeds.fuso.test.ts`.
+   */
   date: string;
   buff?: PlayBuff;
 }
@@ -92,6 +105,19 @@ export interface PetNeedsState {
   rest?: RestState;
   habitRhythms?: Record<string, HabitRhythm>;
   playLog?: PlayLog;
+  /**
+   * Fuso FIXO do dia do jogador (`utils/playerDay.ts`), lido do ESTADO e nunca
+   * de um parâmetro novo — mesma razão de `PoopDrainState.playerDayTz` e de
+   * `petPassive` (X-6): parâmetro é coisa que quem chama esquece, e um chamador
+   * que esquecesse voltaria em SILÊNCIO ao dia do aparelho, compilando.
+   *
+   * Quem o consome aqui é só `needsAttention`, que é a única função deste
+   * arquivo que decide sozinha qual dia é hoje. As demais (`play`, `canPlay`,
+   * `playedToday`) recebem `todayKey` por parâmetro, como `applyRub` já fazia —
+   * e é o guard de AST de `playerDay.contract.test.ts` que trava o `App.tsx` a
+   * passar ali a chave do JOGADOR, inclusive no `PlayCard` montado no JSX.
+   */
+  playerDayTz?: PlayerDayAnchor;
   /** Há cocô na tela agora (quem decide isso é o sistema de cuidado). */
   hasPoop?: boolean;
   virusPoints?: number;
@@ -342,7 +368,12 @@ export function needsAttention(state: PetNeedsState, now: Date): PetWish[] {
     }];
   }
 
-  if (canPlay(state, dayKeyOf(now))) {
+  // `playerDayKey` e NÃO `dayKeyOf`: a oferta de brincar é lida contra o mesmo
+  // carimbo que o `handlePlay` grava. Com réguas diferentes, o card diria
+  // "vamos brincar?" e o clique responderia "já brincamos hoje" — pior do que
+  // qualquer uma das duas sozinha. Sem âncora no save, as duas devolvem a MESMA
+  // string, então nada muda para quem ainda não migrou.
+  if (canPlay(state, playerDayKey(now, state.playerDayTz))) {
     return [{
       kind: 'play',
       en: 'Want to play for a bit?',
