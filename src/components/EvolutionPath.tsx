@@ -45,6 +45,7 @@ import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } fro
    número que tem gêmeo no CSS é como os dois lados divergem em silêncio. */
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { Icon } from './ui/Icon';
+import { playVisorTune } from '../utils/sounds';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 
 type Attr = 'virus' | 'data' | 'vaccine';
@@ -214,6 +215,39 @@ export function EvolutionPath({
   // 400ms precisa de um elemento próprio, que só existe enquanto ela passa.
   const movimentoReduzido = usePrefersReducedMotion();
   const varrendoSintonia = useVarreduraDeSintonia(spriteAtual, movimentoReduzido);
+
+  /* ── O CHIADO CURTO da sintonia (spec §2.3.1) ────────────────────────────
+     O terceiro terço da sintonia, ao lado da varredura de 400 ms e do fade de
+     120 ms. A spec dizia que "a ocasião A já usa" este som; não usava — não
+     existia som de sintonia nenhum no projeto. É a 10ª divergência doc↔código,
+     registrada por extenso no JSDoc de `playVisorTune` (`utils/sounds.ts`).
+
+     **Preso ao `varrendoSintonia`, e não à troca de `spriteAtual`.** Não é
+     economia de linha: é o que ATA o som à imagem. `useVarreduraDeSintonia` já
+     concentra as três regras da sintonia (só na troca, nunca na montagem; uma
+     vez só; e nada sob movimento reduzido). Um segundo gatilho lendo o sprite
+     por conta própria seria uma quarta cópia dessas regras, divergindo em
+     silêncio (footgun 9) — e a primeira coisa a divergir seria justamente o
+     caso de acessibilidade abaixo.
+
+     **Movimento reduzido silencia o chiado — de propósito.** A WCAG 2.3.3 é
+     sobre movimento, não sobre som, e nada na norma obriga a cortar áudio
+     aqui. A decisão é de coerência diegética: este som não é um aviso, é o
+     RUÍDO DO APARELHO sintonizando — a trilha sonora da faixa que atravessa a
+     tela. Sob `prefers-reduced-motion` a faixa não chega a nascer, e um chiado
+     sem a varredura correspondente vira um barulho órfão, sem nada na tela que
+     o explique: o usuário que pediu menos movimento receberia MAIS ruído
+     inexplicado, não menos. O outro caminho — tocar sempre, argumentando que
+     som não é movimento — só faria sentido se o chiado carregasse informação
+     que a imagem não carrega. Não carrega: o anúncio para leitor de tela
+     ('Visor sintonizado', logo abaixo) é quem faz esse trabalho, e ele
+     continua de pé nos dois casos. Nada de acessibilidade se perde no corte.
+
+     O mudo (`STORAGE_KEYS.SOUND_MUTED`) é o outro gate, e mora no `play()` do
+     `sounds.ts` — aqui não se pergunta por ele. */
+  useEffect(() => {
+    if (varrendoSintonia) playVisorTune();
+  }, [varrendoSintonia]);
   // "Iminente" é contra `required` (4/5/5/6) — o número que os dois portões de
   // evolução manual leem — e NÃO contra `daysToEvolve`, que sobrevive só como
   // rótulo da barra desta página (`spec-geracao-incremental.md` §3.1).

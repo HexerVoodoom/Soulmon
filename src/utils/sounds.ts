@@ -151,3 +151,67 @@ export function playSleep(): void {
     beep(ctx, 349, 0.44, 0.25, 'sine', 0.05);
   });
 }
+
+/**
+ * O CHIADO CURTO DA SINTONIA — o terceiro terço da sintonia do Visor
+ * (spec §2.3.1: "scanline de 400 ms + fade de 120 ms reserva→próprio + o
+ * chiado curto que a ocasião A já usa").
+ *
+ * ⚠️ DIVERGÊNCIA doc↔código nº 10 do projeto (a 9ª está registrada em
+ * `spriteGen.contract.test.ts`). A spec afirma que a ocasião A **já usa** o
+ * chiado. Não usava: até este commit não existia som de sintonia nenhum no
+ * código, em call-site nenhum — a busca por `play*` nas duas telas da sintonia
+ * (`EvolutionPath`, `CompanionHUD`) não devolvia nada, e o único som do
+ * `CompanionHUD` era o `playShower`. Pior: a própria spec se contradiz — a
+ * tabela do §2.1 dá "nada" na coluna de fora do visor para a ocasião A,
+ * enquanto a prosa do §2.3 (linha 124) pede o chiado. Este arquivo é o lugar
+ * onde a frase deixa de mentir: o chiado passa a existir, e nasce nos DOIS
+ * call-sites de uma vez, não só no que a spec dizia já ter.
+ *
+ * **Por que ruído filtrado e não `beep`.** Os outros nove sons são osciladores
+ * — a linguagem certa para nota, arpejo e sweep. Chiado não tem altura: é
+ * banda de ruído. Um oscilador imitando estática só consegue soar como alarme,
+ * e a sintonia é uma coisa BOA acontecendo (o Visor achou o rosto próprio do
+ * bicho). Daí o desenho: ruído branco curto (180 ms) passando por um bandpass
+ * que SOBE de 900 Hz para 2,4 kHz — a mesma curva de um rádio saindo do meio
+ * da faixa e travando na estação —, envelope que abre em 8 ms e decai até o
+ * silêncio, ganho de 0,05 (metade do som mais discreto do arquivo, o
+ * `playMenuOpen`). Sem graves: grave curto é impacto, e impacto assusta.
+ *
+ * O gate de mudo e o AudioContext são os do `play()`; aqui não nasce plumbing
+ * nenhum. O corte por movimento reduzido NÃO mora aqui — mora no call-site,
+ * porque quem sabe se a varredura correspondente existiu é quem varre. Veja o
+ * raciocínio em `EvolutionPath.tsx`/`CompanionHUD.tsx`.
+ */
+export function playVisorTune(): void {
+  play(ctx => {
+    const DUR = 0.18;
+    const taxa = ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, Math.ceil(taxa * DUR), taxa);
+    const canal = buffer.getChannelData(0);
+    for (let i = 0; i < canal.length; i++) canal[i] = Math.random() * 2 - 1;
+
+    const fonte = ctx.createBufferSource();
+    fonte.buffer = buffer;
+
+    // Bandpass estreito: é o que separa "estação sintonizando" de "chuvisco".
+    const filtro = ctx.createBiquadFilter();
+    filtro.type = 'bandpass';
+    filtro.Q.value = 3;
+
+    const vol = ctx.createGain();
+    fonte.connect(filtro);
+    filtro.connect(vol);
+    vol.connect(ctx.destination);
+
+    const t = ctx.currentTime;
+    filtro.frequency.setValueAtTime(900, t);
+    filtro.frequency.exponentialRampToValueAtTime(2400, t + DUR);
+    vol.gain.setValueAtTime(0, t);
+    vol.gain.linearRampToValueAtTime(0.05, t + 0.008);
+    vol.gain.exponentialRampToValueAtTime(0.0001, t + DUR);
+
+    fonte.start(t);
+    fonte.stop(t + DUR);
+  });
+}
