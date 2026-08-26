@@ -2738,7 +2738,13 @@ export default function App() {
     if (hour < 4 || hour >= 12) return; // só de manhã
     const rest = gameState.rest;
     if (!rest) return;
-    const key = dayKeyOf(now);
+    // `playerDayKey` e NÃO `dayKeyOf`: esta chave é comparada contra
+    // `RestNight.date`, que `recordNight` passou a carimbar no dia do JOGADOR.
+    // Lida do aparelho, ela não encontraria a noite que o outro aparelho
+    // gravou e a manhã inteira (sonho E pesadelo) sumiria em silêncio.
+    // `dayKeyOf` continua sendo a chave certa no resto deste arquivo — hábito,
+    // streak, semana, fresh start e virada.
+    const key = playerDayKey(now, rest.playerDayTz);
     if (dreamShownRef.current === key) return;
     if (!rest.nights.some(n => n.date === key)) return; // nenhuma noite registrada
     // "já mostrei o sonho desta manhã": no pior caso ele reaparece uma vez.
@@ -2785,7 +2791,7 @@ export default function App() {
    * `nightmareDayKey` nas deps, e não o `Date` inteiro: sem isso a onda seria
    * re-sorteada a cada render e o inimigo trocaria no meio da luta.
    */
-  const nightmareKey = nightmareDayKey(new Date());
+  const nightmareKey = nightmareDayKey(new Date(), gameState.rest?.playerDayTz);
   const nightmareWave = useMemo(
     () => (nightmareOpen
       ? buildNightmareWave(gameState.rest ?? createRestState(), gameState.evolutionStage, new Date())
@@ -2807,10 +2813,16 @@ export default function App() {
    * dayKey, então o StrictMode (que roda o updater 2×) não duplica nada.
    */
   const closeNightmare = useCallback(() => {
-    const key = nightmareDayKey(new Date());
+    // A âncora sai de DENTRO do updater: `prev.rest` é o estado corrente, e
+    // carimbar com uma âncora capturada por fechamento seria gravar um nome de
+    // dia que o portão (`hasPendingNightmare`, que lê `rest.playerDayTz`)
+    // poderia não reconhecer — o modal reabriria para sempre.
     setGameState(prev => ({
       ...prev,
-      nightmares: markFought(prev.nightmares ?? EMPTY_NIGHTMARES, key),
+      nightmares: markFought(
+        prev.nightmares ?? EMPTY_NIGHTMARES,
+        nightmareDayKey(new Date(), prev.rest?.playerDayTz),
+      ),
     }));
     setNightmareOpen(false);
   }, [setGameState]);
@@ -2823,7 +2835,6 @@ export default function App() {
    * este caminho nem é chamado. O som/fala ficam FORA do updater (footgun 6).
    */
   const handleNightmareWin = useCallback((rewards: NightmareRewards) => {
-    const key = nightmareDayKey(new Date());
     setGameState(prev => ({
       ...prev,
       healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + (rewards.hearts ?? 0)),
@@ -2832,7 +2843,10 @@ export default function App() {
         (prev.energyPoints ?? 0) + (rewards.energy ?? 0),
       ),
       gamePoints: (prev.gamePoints ?? 0) + (rewards.bits ?? 0),
-      nightmares: markFought(prev.nightmares ?? EMPTY_NIGHTMARES, key),
+      nightmares: markFought(
+        prev.nightmares ?? EMPTY_NIGHTMARES,
+        nightmareDayKey(new Date(), prev.rest?.playerDayTz),
+      ),
     }));
     setMessageTrigger(prev => prev + 1);
   }, [setGameState]);

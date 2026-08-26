@@ -84,6 +84,8 @@ import {
   type DreamRarity,
   type RestState,
 } from './restWindow';
+import type { PlayerDayAnchor } from './playerDay';
+import { playerDayKey } from './playerDay';
 
 // ---------------------------------------------------------------------------
 // Constantes (nenhum número solto no meio da regra)
@@ -184,9 +186,33 @@ export interface NightmareRewards {
  * O dayKey do pesadelo de `now` — a MANHÃ, mesma chave que `recordNight` usa
  * em `RestNight.date`. É a única "unidade de tempo" desta mecânica: um dia
  * civil, uma noite, no máximo um pesadelo.
+ *
+ * ═══ POR QUE A ÂNCORA ═══
+ *
+ * `toDateString()` é o dia do APARELHO, e o portão de `nightmaresFor` é
+ * `rest.nights.find(n => n.date === key)`. Com o `rest` no SAVE, isso furava
+ * **na direção de NEGAR**, que é o lado que ninguém percebe e ninguém
+ * reclama: o aparelho B não ganhava um pesadelo extra (`NIGHTMARES_PER_NIGHT`
+ * é 1 e o portão exige uma noite REGISTRADA) — ele **perdia** o que a noite
+ * gravada pelo aparelho A rendeu. A manhã carimbada "Thu Aug 27" simplesmente
+ * não existia para quem chamava o mesmo instante de "Wed Aug 26", e a luta da
+ * manhã sumia sem gesto nenhum que a recuperasse.
+ *
+ * Uma recompensa que some sem motivo é pior que um teto furado: não há nada
+ * que o jogador possa fazer a respeito, e a mecânica passa a parecer quebrada
+ * exatamente para quem cumpriu a regra (dormiu no horário) — o oposto da tese
+ * deste arquivo, que é nunca punir sono.
+ *
+ * A âncora é PARÂMETRO aqui, e só aqui, porque esta função não recebe estado
+ * nenhum; todas as que recebem (`nightmaresFor`, `hasPendingNightmare`,
+ * `pendingNightmare`) leem `rest.playerDayTz` e não podem esquecer. Quem chama
+ * esta de fora — o `App.tsx`, para carimbar `markFought` — passa
+ * `rest.playerDayTz`, e há guard de AST travando isso: a chave da ESCRITA e a
+ * do PORTÃO têm de bater, senão `markFought` grava um nome que
+ * `hasPendingNightmare` nunca reconhece e o modal reabre para sempre.
  */
-export function nightmareDayKey(now: Date): string {
-  return now.toDateString();
+export function nightmareDayKey(now: Date, anchor?: PlayerDayAnchor): string {
+  return playerDayKey(now, anchor);
 }
 
 function tierIndex(tier: EnemyTier): number {
@@ -231,7 +257,7 @@ export function nightmaresFor(
   const target = RARITY_TIER[rarity] ?? 'baby-ii';
   const tier = petStage ? capTier(target, petStage) : target;
 
-  const key = nightmareDayKey(now);
+  const key = nightmareDayKey(now, rest?.playerDayTz);
   const night = rest.nights.find((n) => n.date === key);
   const count = night?.onTime ? NIGHTMARES_PER_NIGHT : 0;
 
@@ -288,7 +314,7 @@ export function hasPendingNightmare(
   now: Date,
 ): boolean {
   if (nightmaresFor(rest, now).count <= 0) return false;
-  return !nm.fought.includes(nightmareDayKey(now));
+  return !nm.fought.includes(nightmareDayKey(now, rest?.playerDayTz));
 }
 
 /**
@@ -304,7 +330,7 @@ export function pendingNightmare(
   rest: RestState,
   now: Date,
 ): string | null {
-  return hasPendingNightmare(nm, rest, now) ? nightmareDayKey(now) : null;
+  return hasPendingNightmare(nm, rest, now) ? nightmareDayKey(now, rest?.playerDayTz) : null;
 }
 
 /**

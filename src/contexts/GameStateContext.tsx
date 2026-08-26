@@ -561,7 +561,7 @@ function hydrateDecor(v: unknown): Partial<Record<SlotId, string>> {
  * `onTime` inválido vira `false`, que é o valor NEUTRO — jamais inventar um
  * "dormiu no horário" que não aconteceu.
  */
-function hydrateRest(v: unknown): RestState {
+function hydrateRest(v: unknown, anchor?: PlayerDayAnchor): RestState {
   const base = createRestState();
   const raw = obj<unknown>(v);
 
@@ -587,6 +587,10 @@ function hydrateRest(v: unknown): RestState {
     dreams: strArr(raw.dreams),
     // `hideMetrics` é switch de apresentação: só o `true` explícito o liga.
     ...(raw.hideMetrics === true ? { hideMetrics: true } : {}),
+    // A âncora do load VENCE a que veio no save do `rest`: a do `GameState` é a
+    // resolvida (e é ela que persiste), e ter duas discordando dentro do mesmo
+    // save seria pior que não ter nenhuma.
+    ...(anchor ? { playerDayTz: anchor } : {}),
   };
 }
 
@@ -671,6 +675,16 @@ function hydrateSteps(v: unknown): StepsRecord | undefined {
 function hydrateSave(loadedState: Partial<GameState>): GameState {
   const savedEggType = readLocal(STORAGE_KEYS.EGG_TYPE) as GameState['eggType'] | null;
   const maxHP = getMaxHPForStage(loadedState.evolutionStage ?? 'rookie');
+  // A âncora é resolvida UMA vez e distribuída — ver a nota longa em
+  // `playerDayTz`, abaixo. `rest` recebe a MESMA referência de propósito: duas
+  // âncoras resolvidas em pontos diferentes do load poderiam divergir (basta o
+  // relógio virar entre as duas linhas) e passariam a nomear a mesma noite de
+  // dois jeitos, que é exatamente o defeito que esta família fecha.
+  const ancoraDoDia = resolvePlayerDayAnchor(
+    sanitizePlayerDayAnchor(loadedState.playerDayTz),
+    onboardingTimeZone(),
+    new Date(),
+  );
   return {
         ...loadedState,
         // Não basta ser array: cada ITEM é percorrido sem checagem (a virada faz
@@ -873,7 +887,12 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // senão `{a:{}}` chega em `applyMissedDay` e lança na virada (ver
         // `hydrateRhythm`).
         habitRhythms: hydrateRhythms(loadedState.habitRhythms),
-        rest: hydrateRest(loadedState.rest),
+        // A Janela de Descanso leva a âncora DENTRO dela: `recordNight`,
+        // `restConstancy` e `nightmares.ts` leem `rest.playerDayTz` do ESTADO,
+        // nunca por parâmetro (ver a nota em `RestState`). Sem esta linha a
+        // âncora existiria no save e não chegaria a quem nomeia a noite — o bug
+        // de FIAÇÃO de sempre, e há guard de AST travando esta linha.
+        rest: hydrateRest(loadedState.rest, ancoraDoDia),
         // A ÂNCORA DO DIA DO JOGADOR, resolvida no load e gravada no save.
         //
         // A que já está no save VENCE — recalcular a cada load faria o dia do
@@ -889,11 +908,13 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // uma única vez, no primeiro load. Forçar zero pediria carimbar o
         // instante nos quatro registros e migrá-los; complexidade que só serviria
         // para não presentear um coração a quem trocou de continente.
-        playerDayTz: resolvePlayerDayAnchor(
-          sanitizePlayerDayAnchor(loadedState.playerDayTz),
-          onboardingTimeZone(),
-          new Date(),
-        ),
+        // Idempotente por construção — "a que já está VENCE" é o primeiro
+        // degrau de `resolvePlayerDayAnchor`, então isto devolve `ancoraDoDia`
+        // (a MESMA referência) sem resolver nada de novo. A chamada fica
+        // escrita aqui de propósito: o guard de AST de
+        // `playerDay.contract.test.ts` pergunta ao campo, não ao arquivo, e um
+        // save que perdesse esta linha nunca mais ganharia âncora.
+        playerDayTz: resolvePlayerDayAnchor(ancoraDoDia, onboardingTimeZone(), new Date()),
         lastCheckInDate: str(loadedState.lastCheckInDate),
         lastWeeklyReportDate: str(loadedState.lastWeeklyReportDate),
         lastFreshStartDate: str(loadedState.lastFreshStartDate),
@@ -969,7 +990,9 @@ function freshGameState(): GameState {
       accountTier: 'demo',
       credits: 0,
       habitRhythms: {},
-      rest: createRestState(),
+      // Save novo já nasce com a noite ancorada, pela mesma razão do
+      // `playerDayTz` logo abaixo: quem nomeia a noite é `rest.playerDayTz`.
+      rest: { ...createRestState(), playerDayTz: { offsetMs: deviceOffsetMs(new Date()) } },
       // Instalação nova: nenhuma noite combatida, nenhuma brincadeira, nenhum
       // passo e nenhuma resposta sobre passos ainda (`stepsConsent` ausente é o
       // "ainda não perguntei" — só o `declined` é definitivo).
