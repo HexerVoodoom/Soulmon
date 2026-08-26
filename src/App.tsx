@@ -85,6 +85,9 @@ import {
   REROLL_COST_CREDITS, HEART_COST_CREDITS,
   type CreditPack, type AccountTier,
 } from './utils/monetization';
+import { fitHabitCreates } from './utils/habitCreate';
+import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
+import { applyInstantHeal, instantHealRefusal } from './utils/instantHeal';
 import { soulmonDisplayName } from './utils/petName';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
@@ -1115,21 +1118,23 @@ export default function App() {
    * Devolve quantos foram criados — o tutorial cria um LOTE, e o que não coube
    * precisa ser visível para quem chamou, nunca descartado em silêncio.
    *
-   * A contagem sai do `prev` de dentro do updater? Não: o `track` é efeito
-   * colateral e rodaria 2× no StrictMode (footgun 6). A decisão é tomada FORA,
-   * contra `gameState.activities`, e o updater só escreve.
+   * ⚠️ O teto é decidido DUAS vezes, e isso é o conserto de X-6 (instância 3).
+   * O `track` é efeito colateral e rodaria 2× no StrictMode dentro do updater
+   * (footgun 6), então a contagem para telemetria e para o retorno continua
+   * saindo de fora, contra `gameState.activities`. O que mudou é que ela não é
+   * mais a ÚNICA: `fitHabitCreates` roda de novo sobre o `prev`, dentro do
+   * updater, e é ele quem decide o que de fato entra na lista. Antes, duas
+   * criações no mesmo lote do React (duplo submit, ou tutorial + clique) liam a
+   * mesma contagem, ambas passavam, e a lista terminava acima de
+   * `activityCapFor` — furando a fronteira de monetização do demo e o teto de
+   * estágio do pagante. Nada disso quebrava o TypeScript.
    */
   const commitHabitCreate = useCallback((novos: Activity[], createPath: number): number => {
-    const cabem: Activity[] = [];
-    for (const novo of novos) {
-      if (!canCreateActivity({
-        tier: tierForRules,
-        kind: 'habit',
-        habitCount: gameState.activities.length + cabem.length,
-        stageCap: gameState.maxActivityCap,
-      })) break;
-      cabem.push(novo);
-    }
+    const cabem = fitHabitCreates(
+      { activities: gameState.activities, maxActivityCap: gameState.maxActivityCap },
+      novos,
+      tierForRules,
+    );
     if (cabem.length === 0) {
       // `demo_cap_hit` (G-4) é o DENOMINADOR da pergunta "o teto é a fronteira
       // certa?": sem ele, o `unlock_view` de `task-limit` é um numerador sem
@@ -1139,7 +1144,15 @@ export default function App() {
       if (tierForRules === 'demo') track('demo_cap_hit', { path: createPath });
       return 0;
     }
-    setGameState(prev => ({ ...prev, activities: [...prev.activities, ...cabem] }));
+    setGameState(prev => ({
+      ...prev,
+      // O teto reconferido sobre o `prev`: a segunda criação do mesmo lote já
+      // enxerga o que a primeira escreveu. É esta a linha que fecha X-6 aqui.
+      activities: [
+        ...prev.activities,
+        ...fitHabitCreates(prev, cabem, tierForRules),
+      ],
+    }));
     for (let i = 0; i < cabem.length; i++) {
       // Um evento por atividade: o tutorial é o único caminho que cria várias de
       // uma vez, e contar o LOTE como 1 faria a soma dos caminhos nunca fechar.
@@ -2542,38 +2555,20 @@ export default function App() {
     const item = ALL_SHOP_ITEMS.find(i => i.id === itemId);
     if (!item) return false;
     if (!isShopItemUnlocked(item, missionProgress)) return false;
-    // Cada item cobra na SUA moeda — Emblemas (torneio) e Bits (minijogos)
-    // não se substituem (ver utils/currencies.ts).
-    const paysWithEmblems = item.currency === 'emblems';
-    const saldo = paysWithEmblems ? (gameState.emblems ?? 0) : (gameState.gamePoints ?? 0);
-    if (saldo < item.price) return false;
-    if (item.kind === 'bg' && (gameState.ownedBackgrounds ?? []).includes(item.id)) return false;
-    if (item.kind === 'furniture' && (gameState.ownedFurniture ?? []).includes(item.id)) return false;
+    // A recusa lida AQUI decide o retorno do botão e o som — efeito colateral
+    // não entra em updater (footgun 6). Ela NÃO é mais a única: `applyShopBuy`
+    // reconfere sobre o `prev` (utils/shopBuy.ts). Enquanto era só esta, dois
+    // cliques no mesmo lote com saldo exatamente igual ao preço passavam os
+    // dois — saldo negativo, e o cenário entrando duas vezes na lista de posse.
+    if (shopBuyRefusal(gameState, item)) return false;
 
-    setGameState(prev => {
-      const next = paysWithEmblems
-        ? { ...prev, emblems: (prev.emblems ?? 0) - item.price }
-        : { ...prev, gamePoints: (prev.gamePoints ?? 0) - item.price };
-      if (item.kind === 'chip' || item.kind === 'heart') {
-        // Consumables go to the Items folder; their effect is applied on USE.
-        next.foodInventory = {
-          ...prev.foodInventory,
-          [item.icon]: (prev.foodInventory[item.icon] ?? 0) + 1,
-        };
-      } else if (item.kind === 'bg') {
-        next.ownedBackgrounds = [...(prev.ownedBackgrounds ?? []), item.id];
-        next.equippedBackground = item.id; // equip right away
-      } else if (item.kind === 'furniture') {
-        next.ownedFurniture = [...(prev.ownedFurniture ?? []), item.id];
-        // Equipa na hora, no espaço do palco que o item declara — o que
-        // estava ali sai (um espaço, um item; ver utils/petStage.ts).
-        if (item.slot) next.equippedDecor = { ...(prev.equippedDecor ?? {}), [item.slot]: item.id };
-      }
-      return next;
-    });
+    setGameState(prev => applyShopBuy(prev, item).state);
     playFeed();
     return true;
-  }, [gameState.gamePoints, gameState.ownedBackgrounds, gameState.ownedFurniture, missionProgress]);
+    // `gameState` inteiro: a recusa externa lê saldo em DUAS moedas e as duas
+    // listas de posse, e `gameState.emblems` estava faltando na lista antiga —
+    // a compra em Emblemas decidia sobre um saldo velho.
+  }, [gameState, missionProgress]);
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));
@@ -2611,17 +2606,42 @@ export default function App() {
     return true;
   }, [syncEntitlement]);
 
+  /**
+   * A cura instantânea por Créditos — X-6 instância 1, a de DINHEIRO REAL.
+   *
+   * Duas peças, porque há um `await` no meio e a janela é maior que um lote do
+   * React (ver o cabeçalho de utils/instantHeal.ts):
+   *
+   *  1. `healInFlightRef` TRAVA ANTES DE GASTAR. É a única peça que impede a
+   *     COBRANÇA dupla: com 4/5 de vida, dois toques enquanto o primeiro
+   *     `spendCredits` ainda está no ar liam `4 < 5` e cobravam 10 Créditos
+   *     DUAS vezes — a segunda curando ZERO. Reconferir só dentro do updater
+   *     evitaria a cura dupla, mas o Crédito já teria ido embora.
+   *  2. `applyInstantHeal` reconfere sobre o `prev`, para o que a trava não
+   *     cobre (duas abas, dois aparelhos, recarga no meio do pedido).
+   *
+   * O que NÃO dá para fazer daqui: estornar. Estorno de verdade é idempotência
+   * no servidor (`functions/api/_entitlements.js`), fora desta frente. Por isso
+   * o saldo confirmado é escrito no estado mesmo na recusa — espelho que
+   * esconde débito mente até o próximo sync.
+   */
+  const healInFlightRef = useRef(false);
   const handleInstantHealWithCredits = useCallback(async (): Promise<boolean> => {
-    if (gameState.healthPoints >= gameState.maxHealthPoints) return false;
-    const ent = await spendCredits(HEART_COST_CREDITS, 'instant-heal');
-    if (!ent) return false;
-    setGameState(prev => ({
-      ...prev,
-      credits: ent.credits,
-      accountTier: ent.tier,
-      healthPoints: Math.min(prev.maxHealthPoints, prev.healthPoints + 1),
-    }));
-    return true;
+    if (healInFlightRef.current) return false;
+    if (instantHealRefusal(gameState)) return false;
+    healInFlightRef.current = true;
+    try {
+      const ent = await spendCredits(HEART_COST_CREDITS, 'instant-heal');
+      if (!ent) return false;
+      // Devolve `true` porque o servidor confirmou o gasto: é isso que a UI
+      // precisa saber. Se o updater ainda assim recusar (o caso da segunda
+      // peça), quem conta a verdade é o estado, não este retorno — e o updater
+      // roda DEPOIS deste `return`, então ler a recusa daqui seria mentira.
+      setGameState(prev => applyInstantHeal(prev, ent).state);
+      return true;
+    } finally {
+      healInFlightRef.current = false;
+    }
   }, [gameState.healthPoints, gameState.maxHealthPoints]);
 
   // Reroll: regenera o personagem do oráculo com uma seed NOVA (mesmos dados
