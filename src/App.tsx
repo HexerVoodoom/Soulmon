@@ -65,7 +65,7 @@ import {
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { playerDayKey } from './utils/playerDay';
-import { applyPoopDrain, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
+import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 import { ALL_SHOP_ITEMS, CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
@@ -658,6 +658,13 @@ export default function App() {
     newborn: isNewbornLibrary(spriteAcervo),
   });
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
+  /* O botao "Tentar de novo" do card de falha de credencial. Nasceu INERTE no
+     commit 60b0c89b: `onRetrySprite` e opcional, entao a prop faltando nao
+     acusava nada nem no TypeScript nem na suite, e o botao simplesmente nao
+     era desenhado. Quem manda continua sendo `canManualRetry` (teto manual de
+     3 e cooldown de 60 s), dentro do hook — este handler nao decide nada e nao
+     abre um segundo caminho de geracao. */
+  const handleRetrySprite = useCallback((formId: string) => spriteGen.retry(formId), [spriteGen]);
   /* O anúncio é PONTUAL: some depois de anunciado, para a região viva não
      repetir a mesma frase na próxima mudança dela. 4s é o suficiente para um
      leitor de tela ler "Visor sintonizado" sem cortar. */
@@ -2114,14 +2121,11 @@ export default function App() {
     setGameState(prev => {
       // Only poop care events exist now (scheduled food events were removed).
       if (careEvent.type !== 'poop') return prev;
-      const poopIndex = (prev.poopEventsScheduled || []).findIndex(t => t === careEvent.requestTime);
-      // Guard against -1 (e.g. a daily reset cleared the schedule mid-event).
-      if (poopIndex < 0) return prev;
-      return {
-        ...prev,
-        poopEventsCompleted: [...(prev.poopEventsCompleted || []), poopIndex],
-        poopPenaltyClockAt: 0, // stop the 6h heart-drain clock
-      };
+      // A regra do banho mora em `utils/poopDrain.ts`, ao lado de quem lê o que
+      // ela escreve (`applyPoopDrain`). Aqui sobra só o efeito — som e o fim do
+      // evento. O overlay do desktop refaz este trabalho à mão hoje; agora há
+      // função para ele importar (ver o cabeçalho de `cleanPoop`).
+      return cleanPoop(prev, { at: careEvent.requestTime }).state;
     });
 
     if (careEvent.type === 'poop') playPoopClean();
@@ -4261,6 +4265,7 @@ export default function App() {
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
               spriteLibrary={spriteAcervo}
               onTuneVisor={handleTuneVisor}
+              onRetrySprite={handleRetrySprite}
               onRevertVisor={handleRevertVisor}
               onSeenTune={handleSeenTune}
               forecastBranch={resolveBranch(
