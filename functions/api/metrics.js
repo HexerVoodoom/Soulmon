@@ -21,6 +21,40 @@
 //     relógio errado (ou alguém brincando) cria chaves arbitrárias no
 //     namespace e polui o agregado que deveria arbitrar decisões de produto.
 //
+// O QUE ESTE AGREGADO NÃO CONSEGUE RESPONDER — e não é bug, é o desenho.
+//
+// A chave é `m:<dia do EVENTO>`. Não existe dia de INSTALAÇÃO em lugar nenhum,
+// e portanto não existe coorte. Isso torna impossível — não difícil, impossível
+// — calcular, a partir daqui:
+//
+//   · **retenção / sobrevivência D1, D7, D30**. Exige saber que a pessoa ativa
+//     hoje é a mesma que instalou há 7 dias. O agregado só sabe "houve 40
+//     `day_active` hoje" e "houve 60 `install` naquele dia"; a interseção dos
+//     dois conjuntos não está guardada em lugar nenhum.
+//   · **conversão em N dias** ("quantos dos que instalaram em agosto compraram
+//     em até 14 dias"). Mesma razão: o `purchase` de hoje não carrega quando
+//     aquela pessoa chegou.
+//   · **qualquer razão numerador/denominador entre DIAS DIFERENTES sobre as
+//     MESMAS pessoas.** `purchase / install` no mesmo dia é uma razão entre
+//     dois grupos que não são o mesmo grupo, e ler isso como "taxa de
+//     conversão" é o erro mais fácil de cometer com este JSON.
+//   · **frequência por pessoa** ("quantos dias por semana o usuário médio
+//     abre"). O `week_active` responde a versão SEMANAL disso porque a
+//     contagem é fechada no aparelho; a versão mensal ou trimestral não.
+//
+// O que É legível: tudo que é uma contagem do dia, o funil por passo e por
+// caminho, o esforço por tier, os dois convites de compra, os caminhos de
+// criação, e a métrica-norte inteira (via `week_active`, fechado no cliente).
+//
+// Fechar essa lacuna exigiria carimbar o dia (ou a semana) de INSTALAÇÃO em
+// cada evento — e isso reabre a discussão de privacidade que os princípios 1, 3
+// e 6 já decidiram: um evento que carrega "instalei na semana X" é um passo
+// concreto na direção de religar eventos à mesma pessoa. **É um trade-off do
+// dono, não uma decisão de implementação, e ninguém deve implementá-lo por cima
+// deste desenho sem que ele reabra o assunto.** Até lá, retenção fica ilegível,
+// e este comentário existe para que isso seja uma escolha declarada em vez de
+// uma surpresa para quem for ler o painel.
+//
 // ALLOWLIST, NUNCA DENYLIST. `EVENT_SCHEMA` enumera os eventos e, por evento,
 // exatamente quais props existem e em que faixa. Qualquer coisa fora disso
 // derruba o EVENTO inteiro (não "limpa o campo"): denylist esquece o campo que
@@ -42,8 +76,8 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Metrics-Key',
 };
 
 /** Prefixo da chave de agregado diário. Ver "BINDING" acima. */
@@ -57,10 +91,17 @@ export const EVENT_SCHEMA = {
   install: null,
   onboarding_step: { step: { min: 0, max: 45 }, funnel: { min: 0, max: 2 } },
   demo_pick: null,
-  first_task_done: null,
-  day_active: { effort: { min: 0, max: 500 } },
-  unlock_view: null,
-  purchase: null,
+  first_task_done: { tier: { min: 0, max: 2 } },
+  day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 1 }, tier: { min: 0, max: 2 } },
+  purchase: { tier: { min: 0, max: 2 } },
+  demo_cap_hit: { path: { min: 0, max: 4 } },
+  activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
+  week_active: {
+    active_days: { min: 1, max: 7 },
+    goal_days: { min: 0, max: 7 },
+    tier: { min: 0, max: 2 },
+  },
 };
 
 /**
@@ -193,6 +234,33 @@ export function sanitizeBatch(body, today = serverDay()) {
 const FUNNEL_LABEL = ['unknown', 'demo', 'paid'];
 
 /**
+ * Rótulo do TIER. Mesma razão do funil: quem vai ler `m:2026-08-24` é uma
+ * pessoa, e `purchase.1` não diz se aquele 1 é de quem estava no grátis.
+ * Espelha `TELEMETRY_TIER` de `src/utils/telemetry.ts`.
+ */
+const TIER_LABEL = ['unknown', 'demo', 'paid'];
+
+/** Espelha `TELEMETRY_UNLOCK_REASON` — qual dos dois convites abriu a compra. */
+const REASON_LABEL = ['task_limit', 'evolution'];
+
+/** Espelha `TELEMETRY_CREATE_PATH`. Os caminhos NÃO são equivalentes: só
+ *  `create_modal` consulta o teto do modo demo. Ver o comentário lá. */
+const PATH_LABEL = ['create_modal', 'home_edit', 'ai_chat', 'tutorial', 'onboarding'];
+
+/** Espelha `TELEMETRY_ACTIVITY_KIND`. */
+const KIND_LABEL = ['task', 'habit'];
+
+/** Prefixo do histograma da métrica-norte dentro do agregado. */
+export const WEEK_GOAL_PREFIX = 'week_active';
+
+/**
+ * O ALVO v1 da métrica-norte: o ativo bate o PRÓPRIO objetivo em ≥4 dos 7 dias.
+ * O número mora aqui porque é ele que a leitura usa para dizer "no alvo" — e
+ * mudá-lo é uma decisão de produto que tem que aparecer num diff.
+ */
+export const NORTH_STAR_GOAL_DAYS = 4;
+
+/**
  * Soma eventos num agregado do dia. PURA — recebe e devolve o objeto contado.
  *
  * Formato (tudo número, tudo somado sobre todos os usuários):
@@ -213,16 +281,89 @@ export function applyAggregate(agg, events) {
   };
   for (const record of events) {
     bump(record.e);
+    const p = record.p;
     // Chave SEMPRE com o funil. Sem ele, o passo 7 do demo e o passo 7 do
     // ritual pago viravam o mesmo número — a média de duas populações que nunca
     // se encontram, que é o mesmo que não medir.
     if (record.e === 'onboarding_step') {
-      const funnel = FUNNEL_LABEL[record.p.funnel] ?? 'unknown';
-      bump(`onboarding_step.${funnel}.${record.p.step}`);
+      const funnel = FUNNEL_LABEL[p.funnel] ?? 'unknown';
+      bump(`onboarding_step.${funnel}.${p.step}`);
     }
-    if (record.e === 'day_active') bump('effort_sum', record.p.effort);
+
+    // O TIER, para todo evento que o carrega. Regra genérica de propósito: um
+    // `if` por evento seria a mesma regra escrita seis vezes, e o sétimo evento
+    // seria o que alguém esquece. O total sem sufixo continua existindo — quem
+    // quiser o número agregado não precisa somar os três baldes.
+    const tier = p && typeof p.tier === 'number' ? (TIER_LABEL[p.tier] ?? 'unknown') : null;
+    if (tier) bump(`${record.e}.${tier}`);
+
+    if (record.e === 'day_active') {
+      bump('effort_sum', p.effort);
+      // Esforço por tier: sem isto, "o pagante se esforça mais?" só se responde
+      // com a média das duas populações — o defeito que o funil já corrigiu.
+      if (tier) bump(`effort_sum.${tier}`, p.effort);
+    }
+
+    // Os dois convites de compra contam separado. Eles testam hipóteses
+    // OPOSTAS (bati num teto × quero a criatura que é minha) e somá-los produz
+    // um número que não descreve nenhuma das duas.
+    if (record.e === 'unlock_view') {
+      bump(`unlock_view.${REASON_LABEL[p.reason] ?? 'unknown'}`);
+    }
+
+    if (record.e === 'demo_cap_hit') {
+      bump(`demo_cap_hit.${PATH_LABEL[p.path] ?? 'unknown'}`);
+    }
+
+    // Caminho × tipo. O caminho é o que torna CONTÁVEL quantas criações do modo
+    // demo passaram por fora do teto — o defeito conhecido que este arquivo
+    // instrumenta e não conserta (o conserto é decisão do dono).
+    if (record.e === 'activity_create') {
+      const path = PATH_LABEL[p.path] ?? 'unknown';
+      bump(`activity_create.${path}.${KIND_LABEL[p.kind] ?? 'unknown'}`);
+    }
+
+    // A MÉTRICA-NORTE. O cliente já fechou a semana dele (ver `trackDayClosed`
+    // em `src/utils/telemetry.ts`); aqui ela vira HISTOGRAMA. Guardar o
+    // histograma inteiro, e não só "bateu/não bateu", é o que permite mudar o
+    // alvo (hoje ≥4 de 7) sem reinstrumentar nada nem perder o histórico.
+    if (record.e === 'week_active') {
+      bump(`week_active.goal_days.${p.goal_days}`);
+      if (tier) bump(`week_active.${tier}.goal_days.${p.goal_days}`);
+    }
   }
   return out;
+}
+
+/**
+ * Lê a MÉTRICA-NORTE de um agregado (ou da soma de vários dias).
+ *
+ * Responde exatamente as duas metades aprovadas:
+ *   · `weekly_active` — quantas SEMANAS-usuário tiveram ≥1 item real concluído.
+ *     É o denominador, e é a definição de "ativo" do plano.
+ *   · `on_target`     — dessas, quantas bateram o PRÓPRIO objetivo do dia em
+ *     ≥`NORTH_STAR_GOAL_DAYS` dos 7 dias.
+ *
+ * `rate` é `null` — nunca `0` — quando não há ativo nenhum. Zero sobre zero
+ * exibido como "0%" é o jeito mais rápido de alguém decidir a partir de um
+ * número que não existe, e este arquivo inteiro existe para o contrário disso.
+ *
+ * @param {Record<string, number>} totals agregado (ou soma de agregados).
+ */
+export function summarizeNorthStar(totals) {
+  const t = totals && typeof totals === 'object' ? totals : {};
+  const num = (k) => (typeof t[k] === 'number' && Number.isFinite(t[k]) ? t[k] : 0);
+
+  const read = (prefix) => {
+    const active = num(prefix);
+    let onTarget = 0;
+    for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num(`${prefix}.goal_days.${n}`);
+    return { weekly_active: active, on_target: onTarget, rate: active > 0 ? onTarget / active : null };
+  };
+
+  const by_tier = {};
+  for (const label of TIER_LABEL) by_tier[label] = read(`${WEEK_GOAL_PREFIX}.${label}`);
+  return { ...read(WEEK_GOAL_PREFIX), goal_days_threshold: NORTH_STAR_GOAL_DAYS, by_tier };
 }
 
 /** Agrupa por dia — uma leitura+escrita de KV por dia, não por evento. */
@@ -243,7 +384,152 @@ export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
 
+// ---------------------------------------------------------------------------
+// LEITURA DO AGREGADO (G-7)
+//
+// O levantamento de instrumentação achou o pior defeito possível numa métrica:
+// existiam sete eventos sendo GRAVADOS em `m:*` e NENHUM leitor — nem rota, nem
+// painel, nem script. Um agregado sem leitor não é dado, é custo. E enquanto
+// não houvesse leitura, fechar as outras seis lacunas não mudaria nada.
+//
+// Escolhas, e o porquê de cada uma:
+//
+//  · **GET no MESMO arquivo.** A allowlist, o prefixo, os rótulos e o formato
+//    do agregado vivem aqui. Um leitor noutro arquivo teria que reescrever os
+//    rótulos, e regra copiada é regra que diverge em silêncio (footgun 9). Quem
+//    muda `applyAggregate` vê a leitura na mesma tela.
+//
+//  · **Segredo, e FALHA FECHADA.** Sem `METRICS_ADMIN_KEY` a rota responde 404,
+//    não 401: um 401 confirma que a rota existe. Mesmo padrão de
+//    `SEASON_ADMIN_KEY` (`community.js`), que já é como este projeto protege
+//    operação. Não usamos `_auth.js` de propósito — aquilo autentica um DONO DE
+//    SAVE por e-mail, e ligar a leitura de métrica a uma conta de usuário
+//    introduziria justamente a associação identidade↔métrica que o princípio 3
+//    proíbe.
+//
+//  · **Janela fechada, lida chave a chave.** Nada de `list()` por prefixo: a
+//    leitura enumera os dias PEDIDOS, com teto (`MAX_READ_DAYS`). Não existe
+//    parâmetro por onde pedir uma chave que não seja `m:<dia>`, então nem uma
+//    chamada mal-intencionada alcança um save.
+//
+// O que a leitura NÃO devolve, e não é esquecimento: nada por usuário, nada por
+// coorte de instalação, nada de retenção. Não é limitação da rota — é a forma
+// do dado, decidida no cabeçalho deste arquivo. Ver o relato do run.
+// ---------------------------------------------------------------------------
+
+/**
+ * Teto da janela de leitura. ~3 meses: cobre a leitura de trimestre sem
+ * transformar uma requisição em varredura do namespace.
+ */
+export const MAX_READ_DAYS = 92;
+
+/** Cabeçalho do segredo de leitura. */
+export const METRICS_KEY_HEADER = 'X-Metrics-Key';
+
+/**
+ * Compara em tempo (aproximadamente) constante. Não é defesa de missão crítica
+ * — é o mínimo para o segredo não vazar pelo tempo do `===` num loop de sonda.
+ */
+function secretEquals(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** Os dias `YYYY-MM-DD` de `from` a `to`, inclusive. `null` se a janela é inválida. */
+export function dayRange(from, to, max = MAX_READ_DAYS) {
+  if (!DAY_RE.test(String(from)) || !DAY_RE.test(String(to))) return null;
+  const start = Date.parse(`${from}T00:00:00Z`);
+  const end = Date.parse(`${to}T00:00:00Z`);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return null;
+  const count = Math.round((end - start) / 86400000) + 1;
+  if (count > max) return null;
+  const days = [];
+  for (let i = 0; i < count; i++) days.push(new Date(start + i * 86400000).toISOString().slice(0, 10));
+  return days;
+}
+
+/**
+ * Soma os agregados de vários dias num total só. Pura.
+ * @returns {Record<string, number>}
+ */
+export function mergeTotals(byDay) {
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const agg of Object.values(byDay || {})) {
+    if (!agg || typeof agg !== 'object') continue;
+    for (const [k, v] of Object.entries(agg)) {
+      if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+      out[k] = (out[k] ?? 0) + v;
+    }
+  }
+  return out;
+}
+
+export async function onRequestGet({ request, env }) {
+  // Sem segredo configurado, a rota NÃO EXISTE. Fail-closed, e 404 em vez de
+  // 401 para não confirmar o endpoint a quem está sondando.
+  if (!env?.METRICS_ADMIN_KEY) {
+    return Response.json({ error: 'Not found' }, { status: 404, headers: CORS });
+  }
+
+  const gate = takeToken('metrics-read', clientKey(request), RATE);
+  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+
+  const given = request.headers.get(METRICS_KEY_HEADER);
+  if (!secretEquals(given ?? '', env.METRICS_ADMIN_KEY)) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401, headers: CORS });
+  }
+
+  const url = new URL(request.url);
+  const from = url.searchParams.get('from');
+  const to = url.searchParams.get('to');
+  const days = dayRange(from, to);
+  if (!days) {
+    return Response.json(
+      { error: 'Invalid range', max_days: MAX_READ_DAYS },
+      { status: 400, headers: CORS },
+    );
+  }
+
+  if (!env.DIGIAPP_SAVES) {
+    return Response.json({ error: 'Unavailable' }, { status: 503, headers: CORS });
+  }
+
+  const byDay = {};
+  for (const day of days) {
+    // Só `METRICS_PREFIX + day`. A chave é CONSTRUÍDA aqui a partir de um dia já
+    // validado pelo regex — não existe caminho por onde o cliente escolha a chave.
+    const agg = await env.DIGIAPP_SAVES.get(METRICS_PREFIX + day, { type: 'json' }).catch(() => null);
+    if (agg && typeof agg === 'object' && !Array.isArray(agg)) byDay[day] = agg;
+  }
+
+  const totals = mergeTotals(byDay);
+  return Response.json({
+    ok: true,
+    from,
+    to,
+    days: byDay,
+    totals,
+    north_star: summarizeNorthStar(totals),
+    // Dito na própria resposta, para quem ler o JSON não inferir o que ele não
+    // diz: o agregado é por dia de EVENTO, nunca por coorte de instalação.
+    // Retenção e "conversão em N dias" NÃO são calculáveis a partir daqui.
+    notes: {
+      cohort: 'nao existe: agregado por dia de evento, sem identidade nem dia de instalacao',
+      unreadable: ['retencao', 'D7', 'conversao em N dias', 'qualquer serie por usuario'],
+    },
+  }, { headers: CORS });
+}
+
 export async function onRequest({ request, env }) {
+  // O Pages roteia GET para `onRequestGet` sozinho quando ele existe. A
+  // delegação explícita está aqui mesmo assim porque este arquivo exporta
+  // `onRequest` genérico, e a ordem de precedência entre os dois é uma
+  // convenção do runtime — não uma garantia visível no código. Sem esta linha,
+  // uma mudança de precedência transformaria a leitura em 405 em silêncio.
+  if (request.method === 'GET') return onRequestGet({ request, env });
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405, headers: CORS });
   }

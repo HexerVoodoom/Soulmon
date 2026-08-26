@@ -28,6 +28,13 @@ import {
   resetTelemetryForTest,
   EVENT_SCHEMA,
   TELEMETRY_FUNNEL,
+  TELEMETRY_TIER,
+  TELEMETRY_UNLOCK_REASON,
+  TELEMETRY_ACTIVITY_KIND,
+  TELEMETRY_CREATE_PATH,
+  setTelemetryTier,
+  isoWeekKey,
+  trackDayClosed,
   onboardingStepCode,
   isDocumentHidden,
   NEGATIVE_STEP_BASE,
@@ -87,10 +94,11 @@ describe('allowlist de eventos', () => {
     expect(sanitizeEvent('toString')).toBeNull();
   });
 
-  it('aceita os sete eventos declarados, e só eles', () => {
+  it('aceita os dez eventos declarados, e só eles', () => {
     expect(TELEMETRY_EVENTS).toEqual([
       'install', 'onboarding_step', 'demo_pick', 'first_task_done',
       'day_active', 'unlock_view', 'purchase',
+      'demo_cap_hit', 'activity_create', 'week_active',
     ]);
     expect(sanitizeEvent('install')).toEqual({ e: 'install', d: telemetryDayKey() });
   });
@@ -156,7 +164,10 @@ describe('sem PII: o corpo da requisição não carrega conteúdo do usuário', 
       expect(body).not.toContain(leak);
     }
     const parsed = JSON.parse(body);
-    expect(parsed.events).toEqual([{ e: 'first_task_done', d: telemetryDayKey() }]);
+    // `tier` entra sozinho (carimbo ambiente) e é um ENUM — não é conteúdo.
+    expect(parsed.events).toEqual([
+      { e: 'first_task_done', d: telemetryDayKey(), p: { tier: TELEMETRY_TIER.unknown } },
+    ]);
   });
 
   it('o corpo inteiro só tem números, enums e o pseudônimo — nada de texto livre', () => {
@@ -299,7 +310,7 @@ describe('opt-out real', () => {
     vi.stubGlobal('fetch', fetchSpy);
 
     track('install');
-    track('unlock_view');
+    track('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.evolution });
     expect(pendingTelemetry()).toHaveLength(2);
 
     setTelemetryEnabled(false);
@@ -361,7 +372,9 @@ describe('fila com teto', () => {
   });
 
   it('o teto vale pelo caminho público também', () => {
-    for (let i = 0; i < MAX_QUEUE + 20; i++) track('unlock_view');
+    for (let i = 0; i < MAX_QUEUE + 20; i++) {
+      track('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.taskLimit });
+    }
     expect(pendingTelemetry()).toHaveLength(MAX_QUEUE);
   });
 
@@ -401,7 +414,7 @@ describe('falha silenciosa', () => {
 
   it('sendBeacon que recusa devolve a fila para a próxima tentativa', () => {
     (navigator as unknown as Record<string, unknown>).sendBeacon = vi.fn(() => false);
-    track('unlock_view');
+    track('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.taskLimit });
     flush();
     expect(pendingTelemetry()).toHaveLength(1);
   });
@@ -459,7 +472,7 @@ describe('dedupe: o denominador não pode inflar', () => {
     track('day_active', { effort: 5 });
     const queue = pendingTelemetry();
     expect(queue).toHaveLength(1);
-    expect(queue[0].p).toEqual({ effort: 5 });
+    expect(queue[0].p).toEqual({ effort: 5, tier: TELEMETRY_TIER.unknown });
   });
 
   it('day_active de dias diferentes convive', () => {
@@ -533,5 +546,172 @@ describe('guard de segundo plano', () => {
     expect(isDocumentHidden()).toBe(false);
     track('install');
     expect(pendingTelemetry()).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AS LACUNAS DA MÉTRICA-NORTE (G-2, G-4, G-5, G-6 e o north star em si).
+//
+// Este bloco existe porque `docs/PLANO-PRODUTO.md` diz, por escrito, que
+// "um north star que ninguém consegue medir é um slogan". A métrica aprovada é:
+//   · ATIVO  = concluiu ≥1 item real (tarefa ou hábito) NA SEMANA;
+//   · ALVO   = o ativo atinge o PRÓPRIO `dailyGoalFor` em ≥4 dos 7 dias.
+// Os dois são por PESSOA e por SEMANA. O agregado do servidor é por DIA e sem
+// identidade — e vai continuar assim. Por isso a contagem "≥1 na semana" e
+// "≥4 de 7" é fechada NO APARELHO, que é o único lugar que conhece a própria
+// história sem que ninguém precise guardar uma linha do tempo de ninguém.
+// ---------------------------------------------------------------------------
+
+describe('G-2: tier ambiente — nenhum call site é responsável por lembrar dele', () => {
+  it('os eventos que separam demo de pago declaram `tier` na allowlist', () => {
+    const comTier = ['day_active', 'purchase', 'unlock_view', 'first_task_done',
+      'activity_create', 'week_active'] as const;
+    for (const e of comTier) {
+      expect(EVENT_SCHEMA[e]).toHaveProperty('tier');
+    }
+  });
+
+  it('`track` carimba o tier ambiente sem o call site passar nada', () => {
+    setTelemetryTier('demo');
+    track('purchase');
+    expect(pendingTelemetry()[0]).toEqual({
+      e: 'purchase', d: telemetryDayKey(), p: { tier: TELEMETRY_TIER.demo },
+    });
+  });
+
+  it('sem tier conhecido o evento sai como `unknown` — nunca some, nunca mente', () => {
+    track('first_task_done');
+    expect(pendingTelemetry()[0]?.p).toEqual({ tier: TELEMETRY_TIER.unknown });
+  });
+
+  it('o tier vale no momento do ENFILEIRAMENTO, não no do envio', () => {
+    setTelemetryTier('demo');
+    track('day_active', { effort: 3 });
+    setTelemetryTier('paid');
+    expect(pendingTelemetry()[0]?.p).toEqual({ effort: 3, tier: TELEMETRY_TIER.demo });
+  });
+});
+
+describe('G-4: demo_cap_hit — o denominador da pergunta do cap', () => {
+  it('existe, e diz por QUAL caminho a pessoa bateu no teto', () => {
+    track('demo_cap_hit', { path: TELEMETRY_CREATE_PATH.create_modal });
+    expect(pendingTelemetry()[0]).toEqual({
+      e: 'demo_cap_hit', d: telemetryDayKey(), p: { path: TELEMETRY_CREATE_PATH.create_modal },
+    });
+  });
+
+  it('caminho fora da faixa derruba o evento inteiro', () => {
+    expect(sanitizeEvent('demo_cap_hit', { path: 99 })).toBeNull();
+    expect(sanitizeEvent('demo_cap_hit', {})).toBeNull();
+  });
+});
+
+describe('G-5: unlock_view separa os dois convites', () => {
+  it('`task-limit` e `evolution` não caem no mesmo contador', () => {
+    const limite = sanitizeEvent('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.taskLimit, tier: 1 });
+    const evolucao = sanitizeEvent('unlock_view', { reason: TELEMETRY_UNLOCK_REASON.evolution, tier: 1 });
+    expect(limite?.p?.reason).toBe(0);
+    expect(evolucao?.p?.reason).toBe(1);
+    expect(limite).not.toEqual(evolucao);
+  });
+
+  it('unlock_view sem motivo não passa — o motivo é a razão de o evento existir', () => {
+    expect(sanitizeEvent('unlock_view', { tier: 1 })).toBeNull();
+  });
+});
+
+describe('G-6: activity_create — criação de atividade, com o caminho', () => {
+  it('distingue tarefa de hábito e o caminho de criação', () => {
+    setTelemetryTier('demo');
+    track('activity_create', {
+      kind: TELEMETRY_ACTIVITY_KIND.habit,
+      path: TELEMETRY_CREATE_PATH.home_edit,
+    });
+    expect(pendingTelemetry()[0]?.p).toEqual({
+      kind: TELEMETRY_ACTIVITY_KIND.habit,
+      path: TELEMETRY_CREATE_PATH.home_edit,
+      tier: TELEMETRY_TIER.demo,
+    });
+  });
+
+  it('os caminhos são códigos distintos — o vazamento tem que ser VISÍVEL', () => {
+    const codes = Object.values(TELEMETRY_CREATE_PATH);
+    expect(new Set(codes).size).toBe(codes.length);
+    expect(TELEMETRY_CREATE_PATH.create_modal).not.toBe(TELEMETRY_CREATE_PATH.home_edit);
+  });
+
+  it('nenhum texto do usuário tem por onde entrar', () => {
+    expect(sanitizeEvent('activity_create', { kind: 0, path: 0, tier: 1, name: 'ligar pro medico' })).toBeNull();
+  });
+});
+
+describe('A METRICA-NORTE: ativo na semana e >=4 de 7 no proprio objetivo', () => {
+  it('isoWeekKey agrupa a semana ISO (segunda a domingo) e recusa lixo', () => {
+    // 2026-08-24 é uma SEGUNDA; 2026-08-30 é o domingo da MESMA semana.
+    expect(isoWeekKey('2026-08-24')).toBe(isoWeekKey('2026-08-30'));
+    // 2026-08-23 é o domingo ANTERIOR — semana diferente.
+    expect(isoWeekKey('2026-08-23')).not.toBe(isoWeekKey('2026-08-24'));
+    expect(isoWeekKey('nao-e-data')).toBeNull();
+  });
+
+  it('só fecha a semana quando ela vira, e conta os dias no PRÓPRIO objetivo', () => {
+    // Semana A: 5 dias ativos, 4 deles batendo a meta própria.
+    trackDayClosed({ day: '2026-08-24', effort: 4, goalMet: true });
+    trackDayClosed({ day: '2026-08-25', effort: 2, goalMet: false });
+    trackDayClosed({ day: '2026-08-26', effort: 6, goalMet: true });
+    trackDayClosed({ day: '2026-08-27', effort: 5, goalMet: true });
+    trackDayClosed({ day: '2026-08-28', effort: 3, goalMet: true });
+    // Nada de `week_active` ainda: a semana não fechou.
+    expect(pendingTelemetry().filter(r => r.e === 'week_active')).toEqual([]);
+
+    // Primeiro dia da semana seguinte: a semana A é despachada.
+    trackDayClosed({ day: '2026-08-31', effort: 1, goalMet: false });
+    const semana = pendingTelemetry().filter(r => r.e === 'week_active');
+    expect(semana).toHaveLength(1);
+    expect(semana[0].p).toEqual({
+      active_days: 5, goal_days: 4, tier: TELEMETRY_TIER.unknown,
+    });
+    // Datado no ÚLTIMO dia ativo da semana fechada — nunca em "hoje", senão o
+    // agregado do dia atual receberia a semana passada.
+    expect(semana[0].d).toBe('2026-08-28');
+  });
+
+  it('dia sem esforço não conta como ativo (abrir o app não é atividade)', () => {
+    trackDayClosed({ day: '2026-08-24', effort: 0, goalMet: false });
+    trackDayClosed({ day: '2026-08-25', effort: 3, goalMet: true });
+    trackDayClosed({ day: '2026-08-31', effort: 1, goalMet: false });
+    const semana = pendingTelemetry().find(r => r.e === 'week_active');
+    expect(semana?.p?.active_days).toBe(1);
+    // e nenhum `day_active` foi emitido pelo dia vazio
+    expect(pendingTelemetry().filter(r => r.e === 'day_active').map(r => r.d))
+      .toEqual(['2026-08-25', '2026-08-31']);
+  });
+
+  it('o mesmo dia recontado não infla a semana', () => {
+    trackDayClosed({ day: '2026-08-24', effort: 4, goalMet: true });
+    trackDayClosed({ day: '2026-08-24', effort: 9, goalMet: true });
+    trackDayClosed({ day: '2026-08-31', effort: 1, goalMet: false });
+    expect(pendingTelemetry().find(r => r.e === 'week_active')?.p?.active_days).toBe(1);
+  });
+
+  it('semana sem nenhum dia ativo não gera week_active — o denominador é ATIVO', () => {
+    trackDayClosed({ day: '2026-08-24', effort: 0, goalMet: false });
+    trackDayClosed({ day: '2026-08-31', effort: 2, goalMet: true });
+    expect(pendingTelemetry().filter(r => r.e === 'week_active')).toEqual([]);
+  });
+
+  it('a semana carrega o tier vigente NELA, não o de quem converteu depois', () => {
+    setTelemetryTier('demo');
+    trackDayClosed({ day: '2026-08-24', effort: 4, goalMet: true });
+    setTelemetryTier('paid');
+    trackDayClosed({ day: '2026-08-31', effort: 4, goalMet: true });
+    expect(pendingTelemetry().find(r => r.e === 'week_active')?.p?.tier)
+      .toBe(TELEMETRY_TIER.demo);
+  });
+
+  it('goal_days nunca passa de active_days', () => {
+    expect(sanitizeEvent('week_active', { active_days: 2, goal_days: 5, tier: 1 })).toBeNull();
+    expect(sanitizeEvent('week_active', { active_days: 5, goal_days: 2, tier: 1 })?.p)
+      .toEqual({ active_days: 5, goal_days: 2, tier: 1 });
   });
 });

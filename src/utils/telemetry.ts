@@ -41,6 +41,15 @@
 //     fingerprint: ordena e correlaciona usuários entre eventos). A resolução
 //     máxima é o DIA, e o servidor ainda recusa dia fora de uma janela curta.
 //
+// A MÉTRICA-NORTE, e como ela ficou legível sem afrouxar nada do que está
+// acima: `docs/PLANO-PRODUTO.md` diz que "um north star que ninguém consegue
+// medir é um slogan". A métrica aprovada é por PESSOA e por SEMANA — "concluiu
+// ≥1 item real na semana" e "bateu o próprio `dailyGoalFor` em ≥4 dos 7 dias"
+// — e um agregado diário anônimo não consegue calcular nenhuma das duas.
+// A resposta NÃO foi guardar série por usuário: foi mover a contagem para o
+// aparelho (`trackDayClosed`) e mandar só o resultado fechado (`week_active`,
+// dois inteiros de 0 a 7). Ver o bloco "A MÉTRICA-NORTE" mais abaixo.
+//
 // FRONTEIRA: `EVENT_SCHEMA` está DUPLICADO em `functions/api/metrics.js` — as
 // Pages Functions não importam de `src/`. Regra copiada é regra que diverge em
 // silêncio (footgun 9), então existe teste de PARIDADE (`telemetry.test.ts`)
@@ -54,7 +63,7 @@ import { readLocal, writeLocal, removeLocal, readJson, writeJson } from './safeS
 // Contrato de eventos
 // ---------------------------------------------------------------------------
 
-/** Os sete eventos. É o MÍNIMO que arbitra as decisões do plano — nada além. */
+/** Os eventos. É o MÍNIMO que arbitra as decisões do plano — nada além. */
 export type TelemetryEvent =
   /** Primeira abertura do app neste aparelho. Denominador de tudo. */
   | 'install'
@@ -68,10 +77,22 @@ export type TelemetryEvent =
   /** Abriu e concluiu ≥1 item no dia, com o PESO DE ESFORÇO do dia.
    *  `count(day_active)` = usuários ativos; `sum(effort)` = o north star. */
   | 'day_active'
-  /** Viu a tela de compra. */
+  /** Viu a tela de compra — e por qual dos dois convites (`reason`). */
   | 'unlock_view'
   /** Comprou. */
-  | 'purchase';
+  | 'purchase'
+  /** Bateu no teto diário de criação do modo demo. É o DENOMINADOR da pergunta
+   *  "o cap é a fronteira certa?": sem ele, `unlock_view` de `task-limit` é um
+   *  numerador sem denominador, e nenhuma taxa é calculável. */
+  | 'demo_cap_hit'
+  /** Criou uma atividade (tarefa ou hábito), com o CAMINHO por onde criou.
+   *  O caminho existe porque os caminhos de criação NÃO são equivalentes: um
+   *  consulta o teto do demo e os outros não (ver `TELEMETRY_CREATE_PATH`). */
+  | 'activity_create'
+  /** A SEMANA fechada de um usuário ativo: quantos dias ele concluiu ≥1 item
+   *  real e em quantos ele bateu o PRÓPRIO objetivo do dia. É a métrica-norte
+   *  inteira, e é o único evento cuja unidade é a SEMANA. Ver `trackDayClosed`. */
+  | 'week_active';
 
 /**
  * Allowlist de props por evento. `null` = evento sem prop nenhuma.
@@ -85,10 +106,17 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   install: null,
   onboarding_step: { step: { min: 0, max: 45 }, funnel: { min: 0, max: 2 } },
   demo_pick: null,
-  first_task_done: null,
-  day_active: { effort: { min: 0, max: 500 } },
-  unlock_view: null,
-  purchase: null,
+  first_task_done: { tier: { min: 0, max: 2 } },
+  day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 1 }, tier: { min: 0, max: 2 } },
+  purchase: { tier: { min: 0, max: 2 } },
+  demo_cap_hit: { path: { min: 0, max: 4 } },
+  activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
+  week_active: {
+    active_days: { min: 1, max: 7 },
+    goal_days: { min: 0, max: 7 },
+    tier: { min: 0, max: 2 },
+  },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -104,6 +132,60 @@ export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
  */
 export const TELEMETRY_FUNNEL = { unknown: 0, demo: 1, paid: 2 } as const;
 export type TelemetryFunnel = typeof TELEMETRY_FUNNEL[keyof typeof TELEMETRY_FUNNEL];
+
+/**
+ * O TIER da conta no momento do evento. Códigos IGUAIS aos do funil de
+ * propósito — é o mesmo eixo demo × pago, lido em dois momentos diferentes da
+ * vida do usuário (o funil descreve por qual onboarding ele passou; o tier,
+ * o que ele É agora, inclusive depois de converter). Duas escalas para o mesmo
+ * eixo dariam dois vocabulários para um conceito só.
+ *
+ * `unknown` não é preguiça: existe janela real (boot, onboarding antes da
+ * bifurcação) em que o app ainda não sabe o tier, e rotular isso de `demo`
+ * seria inventar população. Um `unknown` visível no agregado é um defeito de
+ * fiação que se ENXERGA; um `demo` inventado é um número errado que passa.
+ */
+export const TELEMETRY_TIER = { unknown: 0, demo: 1, paid: 2 } as const;
+export type TelemetryTier = typeof TELEMETRY_TIER[keyof typeof TELEMETRY_TIER];
+
+/**
+ * Por qual dos DOIS convites a tela de compra foi aberta (`UnlockReason` de
+ * `components/UnlockAccountModal.tsx`). Sem isto, o convite do teto de criação
+ * e o convite da árvore de evolução caem no mesmo contador — exatamente o
+ * defeito da média-de-duas-populações que o `funnel` já resolveu para o
+ * `onboarding_step`. Só que aqui é pior: os dois convites testam HIPÓTESES
+ * OPOSTAS sobre por que alguém paga.
+ */
+export const TELEMETRY_UNLOCK_REASON = { taskLimit: 0, evolution: 1 } as const;
+
+/** Tarefa (item com prazo) × hábito (item recorrente). */
+export const TELEMETRY_ACTIVITY_KIND = { task: 0, habit: 1 } as const;
+
+/**
+ * Por ONDE a atividade foi criada. Esta prop é a mais importante do
+ * `activity_create`, e a razão é desconfortável: os caminhos NÃO se comportam
+ * igual. Só `create_modal` consulta `canCreateDemoTaskToday()`; `home_edit`
+ * (o botão principal da tela inicial), `ai_chat` e `tutorial` criam sem
+ * consultar teto nenhum.
+ *
+ * Isso é um defeito conhecido e ele NÃO é consertado aqui — o conserto isolado
+ * apertaria o modo grátis e está esperando decisão do dono. O que este código
+ * faz é tornar o desvio CONTÁVEL: com estes rótulos, "quantas criações do demo
+ * passaram por fora do teto" vira uma divisão, e a decisão para de depender de
+ * quem leu o código por último.
+ */
+export const TELEMETRY_CREATE_PATH = {
+  /** `CreateModal` — o ÚNICO que hoje consulta o teto do demo. */
+  create_modal: 0,
+  /** `EditModal` aberto pelo `+ adicionar` da tela inicial — não consulta. */
+  home_edit: 1,
+  /** Criação por sugestão da IA no chat — não consulta. */
+  ai_chat: 2,
+  /** Lote do tutorial — não consulta (provavelmente de propósito). */
+  tutorial: 3,
+  /** Criação durante o onboarding, antes de o jogo começar. */
+  onboarding: 4,
+} as const;
 
 /**
  * Passos do onboarding são ids do componente e alguns são NEGATIVOS de
@@ -131,6 +213,21 @@ export interface TelemetryProps {
   funnel?: number;
   /** `day_active`: peso de esforço concluído no dia (hábito=1, tarefa=effort). */
   effort?: number;
+  /** Tier da conta (`TELEMETRY_TIER`). **Não passe isto à mão** — `track`
+   *  carimba sozinho a partir de `setTelemetryTier`. O campo existe aqui só
+   *  para o `week_active` poder despachar o tier ARQUIVADO da semana fechada,
+   *  que não é o de hoje. */
+  tier?: number;
+  /** `unlock_view`: qual convite (`TELEMETRY_UNLOCK_REASON`). */
+  reason?: number;
+  /** `activity_create`: tarefa ou hábito (`TELEMETRY_ACTIVITY_KIND`). */
+  kind?: number;
+  /** `activity_create` e `demo_cap_hit`: por onde (`TELEMETRY_CREATE_PATH`). */
+  path?: number;
+  /** `week_active`: dias com ≥1 item real concluído na semana fechada. */
+  active_days?: number;
+  /** `week_active`: dias, dentre os ativos, em que bateu o próprio objetivo. */
+  goal_days?: number;
 }
 
 /** O que vai no corpo da requisição. Três campos, todos números ou enums. */
@@ -187,6 +284,10 @@ const K_ID = 'soulmon-telemetry-id';
 const K_QUEUE = 'soulmon-telemetry-queue';
 /** Marcas de dedupe (`install`, `first_task_done`, `day_active:<dia>`). */
 const K_SEEN = 'soulmon-telemetry-seen';
+/** Tier ambiente (ver `setTelemetryTier`). Um número, nada mais. */
+const K_TIER = 'soulmon-telemetry-tier';
+/** Contagem da semana EM CURSO (ver `trackDayClosed`). Nunca sai daqui. */
+const K_WEEK = 'soulmon-telemetry-week';
 
 /** Eventos que acontecem UMA VEZ NA VIDA deste aparelho. */
 const ONCE_EVER: TelemetryEvent[] = ['install', 'first_task_done'];
@@ -214,6 +315,36 @@ export function telemetryDayKey(now: Date = new Date()): string {
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/**
+ * Chave da SEMANA ISO de um dia `YYYY-MM-DD`, no formato `YYYY-Www`.
+ *
+ * A métrica-norte é semanal ("concluiu ≥1 item real NA SEMANA", "≥4 dos 7
+ * dias"), então precisa de uma fronteira de semana que não dependa de o
+ * usuário ter aberto o app. ISO (segunda a domingo) e não "os últimos 7 dias":
+ * janela deslizante faz a mesma pessoa ser contada em semanas sobrepostas, e
+ * "4 de 7" deixa de ter denominador fixo.
+ *
+ * A chave NUNCA é enviada — ela só existe no aparelho, para saber quando a
+ * semana virou. O que trafega é o `week_active` já fechado.
+ */
+export function isoWeekKey(day: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+  const t = Date.parse(`${day}T00:00:00Z`);
+  if (!Number.isFinite(t)) return null;
+  const d = new Date(t);
+  // Algoritmo ISO-8601: anda até a QUINTA-feira da semana; o ano dela é o ano
+  // ISO (é o que faz a virada de ano cair na semana certa em vez de criar uma
+  // "semana 53" fantasma que quebraria a comparação de igualdade).
+  const dayNum = (d.getUTCDay() + 6) % 7; // segunda = 0
+  d.setUTCDate(d.getUTCDate() - dayNum + 3);
+  const isoYear = d.getUTCFullYear();
+  const firstThursday = Date.UTC(isoYear, 0, 4);
+  const ft = new Date(firstThursday);
+  ft.setUTCDate(ft.getUTCDate() - ((ft.getUTCDay() + 6) % 7) + 3);
+  const week = 1 + Math.round((d.getTime() - ft.getTime()) / (7 * 86400000));
+  return `${isoYear}-W${String(week).padStart(2, '0')}`;
 }
 
 /**
@@ -258,6 +389,11 @@ export function sanitizeEvent(
   // Toda prop declarada no schema é obrigatória — `onboarding_step` sem `step`
   // não mede nada e só sujaria o agregado.
   for (const key of Object.keys(schema)) if (!(key in out)) return null;
+
+  // Invariante ENTRE props — a faixa por campo não a alcança. Um `week_active`
+  // com mais dias no objetivo do que dias ativos é aritmeticamente impossível,
+  // e deixá-lo passar contaminaria justamente o numerador da métrica-norte.
+  if (event === 'week_active' && out.goal_days > out.active_days) return null;
 
   return { e: event as TelemetryEvent, d: day, p: out };
 }
@@ -304,8 +440,12 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
     return {
       title: 'Estatísticas de uso',
       sent: [
-        'Contadores de momentos do app: primeira abertura, qual passo do onboarding você alcançou e por qual caminho (grátis ou completo), se escolheu um personagem pronto, sua primeira conclusão, se você abriu a tela de compra e se comprou.',
+        'Contadores de momentos do app: primeira abertura, qual passo do onboarding você alcançou e por qual caminho (grátis ou completo), se escolheu um personagem pronto, sua primeira conclusão, se você abriu a tela de compra (e por qual convite), e se comprou.',
+        'Se você está no modo grátis ou no completo — só isso, sem nada da sua conta.',
+        'Quando você cria uma atividade: se foi tarefa ou hábito e por qual tela — nunca o que ela é.',
+        'Se você bateu no limite diário de criação do modo grátis.',
         'Uma vez por dia, um sinal de "teve atividade hoje" com o PESO de esforço concluído (um número, como 4).',
+        'Uma vez por semana, dois números de 0 a 7: em quantos dias você concluiu alguma coisa e em quantos alcançou a sua meta do dia. A contagem é feita aqui no aparelho; o que sai são só esses dois números.',
         'A data — só o dia, nunca a hora.',
         'Um identificador aleatório criado neste aparelho, sem nenhuma ligação com seu e-mail nem com seu save.',
       ],
@@ -323,8 +463,12 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
   return {
     title: 'Usage stats',
     sent: [
-      'Counters for app moments: first launch, which onboarding step you reached and which path you took (free or full), whether you picked a ready-made character, your first completion, whether you opened the purchase screen, and whether you purchased.',
+      'Counters for app moments: first launch, which onboarding step you reached and which path you took (free or full), whether you picked a ready-made character, your first completion, whether you opened the purchase screen (and which invite brought you there), and whether you purchased.',
+      'Whether you are on the free or the full mode — that alone, nothing else from your account.',
+      'When you create an activity: whether it was a task or a habit, and from which screen — never what it is.',
+      'Whether you hit the free mode\'s daily creation limit.',
       'Once a day, a "there was activity today" signal with the effort WEIGHT you completed (a number, like 4).',
+      'Once a week, two numbers from 0 to 7: on how many days you completed something, and on how many you reached your own daily goal. The counting happens here on your device; only those two numbers leave it.',
       'The date — the day only, never the time.',
       'A random identifier created on this device, with no link to your email or your save.',
     ],
@@ -363,6 +507,10 @@ export function setTelemetryEnabled(on: boolean): void {
     if (!on) {
       removeLocal(K_QUEUE, { silent: true });
       removeLocal(K_ID, { silent: true });
+      // A contagem da semana também some. Ela nunca saiu do aparelho, mas
+      // "desliguei e ele continuou contando meus dias" é uma frase que o opt-out
+      // não pode deixar verdadeira.
+      removeLocal(K_WEEK, { silent: true });
     }
   } catch {
     /* princípio 5 */
@@ -390,6 +538,36 @@ export function telemetryId(): string {
   }
   writeLocal(K_ID, id, { silent: true });
   return id;
+}
+
+/**
+ * Declara o TIER da conta. Chame uma vez, de um efeito sobre
+ * `gameState.accountTier` — e em nenhum outro lugar.
+ *
+ * Por que ambiente e não prop de call site: o tier é a mesma resposta para
+ * TODOS os eventos, vinda de uma fonte única (`gameState.accountTier`). Pedir
+ * que cada `track` a repita é regra copiada (footgun 9) com a pior falha
+ * possível: o dia em que um call site esquece, o evento não some — ele entra no
+ * balde errado, e um número errado é pior que um número faltando, porque
+ * ninguém percebe.
+ *
+ * `null` volta para `unknown`, que é o estado honesto antes de o app saber.
+ */
+export function setTelemetryTier(tier: 'demo' | 'paid' | null | undefined): void {
+  try {
+    const code = tier === 'demo' ? TELEMETRY_TIER.demo
+      : tier === 'paid' ? TELEMETRY_TIER.paid
+        : TELEMETRY_TIER.unknown;
+    writeLocal(K_TIER, String(code), { silent: true });
+  } catch {
+    /* princípio 5 */
+  }
+}
+
+/** O tier ambiente vigente. `unknown` quando ninguém declarou. */
+export function telemetryTier(): number {
+  const raw = Number(readLocal(K_TIER));
+  return raw === TELEMETRY_TIER.demo || raw === TELEMETRY_TIER.paid ? raw : TELEMETRY_TIER.unknown;
 }
 
 function readQueue(): TelemetryRecord[] {
@@ -452,14 +630,24 @@ export function isDocumentHidden(): boolean {
  * o peso do dia cresce ao longo do dia, e o número que interessa é o do
  * fechamento. O lugar natural de chamá-lo é a virada (`computeDailyReset`).
  */
-export function track(event: TelemetryEvent, props?: TelemetryProps): void {
+export function track(event: TelemetryEvent, props?: TelemetryProps, day?: string): void {
   try {
     if (!isTelemetryEnabled()) return;
     // Segundo plano não gera evento (ver `isDocumentHidden`). O `flush` de
     // saída continua valendo — o que está na fila foi enfileirado com o app
     // à vista.
     if (isDocumentHidden()) return;
-    const record = sanitizeEvent(event, props as Record<string, unknown> | undefined);
+
+    // Carimbo do tier: aqui, um lugar só, e no ENFILEIRAMENTO — não no envio.
+    // A diferença importa: quem compra dispara `purchase` e converte no mesmo
+    // segundo; carimbar no flush marcaria a compra como vinda de um pagante,
+    // e a taxa de conversão do demo iria a zero por construção.
+    const schema = EVENT_SCHEMA[event];
+    const withTier = schema && 'tier' in schema && (!props || props.tier === undefined)
+      ? { ...props, tier: telemetryTier() }
+      : props;
+
+    const record = sanitizeEvent(event, withTier as Record<string, unknown> | undefined, day ?? telemetryDayKey());
     if (!record) return;
 
     const seenKey = seenKeyFor(record);
@@ -476,6 +664,119 @@ export function track(event: TelemetryEvent, props?: TelemetryProps): void {
   } catch {
     /* princípio 5: telemetria não tem permissão de falhar em voz alta */
   }
+}
+
+// ---------------------------------------------------------------------------
+// A MÉTRICA-NORTE — e por que ela é fechada NO APARELHO
+//
+// A métrica aprovada tem duas metades, e as DUAS são por PESSOA e por SEMANA:
+//   · ATIVO = concluiu ≥1 item real (tarefa ou hábito) na semana;
+//   · ALVO  = o ativo atinge o PRÓPRIO `dailyGoalFor` em ≥4 dos 7 dias.
+//
+// Nenhuma das duas sai do agregado de hoje, e não é por falta de contador: é
+// por forma do dado. `m:YYYY-MM-DD` guarda somas do DIA sobre TODO MUNDO, sem
+// identidade. "≥1 na semana" exige saber se o Fulano de terça é o mesmo de
+// sexta; "≥4 de 7" exige comparar cada dia com o objetivo DAQUELA pessoa (que
+// muda com o estágio e com o que ela cadastrou). Ler isso no servidor exigiria
+// guardar uma série por usuário — que é exatamente o que os princípios 1, 3 e 6
+// proíbem, e com razão.
+//
+// A saída não é afrouxar a privacidade: é mover a CONTAGEM para o único lugar
+// que já conhece a própria história sem precisar guardá-la em lugar nenhum — o
+// aparelho. O ledger abaixo vive no localStorage, nunca é enviado, e o que
+// trafega é um `week_active` com dois inteiros de 0 a 7. O servidor ganha o
+// histograma inteiro sem ganhar uma linha do tempo de ninguém.
+//
+// LIMITE, declarado em vez de escondido: a semana W só é despachada no primeiro
+// fechamento de dia da semana W+1. Quem abandona o app nunca despacha a última
+// semana, então o histograma é levemente enviesado a favor de quem ficou. Isso
+// é aceitável para "o ativo médio bate o objetivo?" e seria inaceitável para
+// retenção — e retenção continua ilegível por outra razão (ver G-3 no relato).
+// ---------------------------------------------------------------------------
+
+/** A semana EM CURSO, no aparelho. `d` são os dias ATIVOS já contados. */
+interface WeekLedger {
+  /** Chave ISO da semana (`isoWeekKey`). */
+  w: string;
+  /** Dias ativos da semana, sem repetição. */
+  d: string[];
+  /** Quantos desses dias bateram o próprio objetivo. */
+  g: number;
+  /** Tier vigente DURANTE a semana. Arquivado aqui porque quem converte na
+   *  quarta não deve reetiquetar como "pago" a semana que viveu como demo. */
+  t: number;
+}
+
+function readWeekLedger(): WeekLedger | null {
+  const raw = readJson<WeekLedger | null>(K_WEEK, null);
+  if (!raw || typeof raw !== 'object') return null;
+  if (typeof raw.w !== 'string' || !Array.isArray(raw.d)) return null;
+  return { w: raw.w, d: raw.d.filter(x => typeof x === 'string'), g: Number(raw.g) || 0, t: Number(raw.t) || 0 };
+}
+
+/** Despacha uma semana FECHADA, se ela teve ao menos um dia ativo. */
+function flushWeekLedger(ledger: WeekLedger | null): void {
+  if (!ledger || ledger.d.length === 0) return; // semana sem atividade não é ativo
+  const active = Math.min(ledger.d.length, 7);
+  const goal = Math.min(ledger.g, active);
+  // Datado no ÚLTIMO dia ativo da semana que fechou, e não em "hoje": o
+  // agregado é por dia, e jogar a semana passada no balde de hoje deslocaria o
+  // histórico. O servidor recusa defasagem acima de `MAX_DAY_SKEW_DAYS` — quem
+  // some por um mês perde essa semana, e perder é melhor que datar errado.
+  const last = [...ledger.d].sort().pop();
+  track('week_active', { active_days: active, goal_days: goal, tier: ledger.t }, last);
+}
+
+/**
+ * O fechamento de UM dia. É o único ponto de fiação da métrica-norte: chame na
+ * virada do dia, com o relatório já fechado (`lastDayReport`).
+ *
+ * Faz duas coisas de uma vez de propósito — `day_active` e a contagem da semana
+ * nascem do MESMO fato ("o dia X fechou com esforço E e a meta era M"). Dois
+ * pontos de fiação para um fato só é como se chega a um `day_active` que existe
+ * e a uma semana que não fecha.
+ *
+ * @param day     dia fechado, `YYYY-MM-DD` (nunca "hoje": é o dia que virou).
+ * @param effort  peso de esforço concluído. `0` = dia NÃO ativo.
+ * @param goalMet o esforço alcançou o `dailyGoalFor` DAQUELA pessoa naquele dia.
+ */
+export function trackDayClosed({ day, effort, goalMet }: {
+  day: string; effort: number; goalMet: boolean;
+}): void {
+  try {
+    const week = isoWeekKey(day);
+    if (!week) return;
+    const active = Number.isFinite(effort) && effort > 0;
+
+    let ledger = readWeekLedger();
+    if (!ledger || ledger.w !== week) {
+      // A semana virou: despacha a anterior ANTES de abrir a nova. Um dia
+      // atrasado de duas semanas atrás também cai aqui e fecha o que havia —
+      // o que é o comportamento certo, porque a semana antiga já acabou.
+      flushWeekLedger(ledger);
+      ledger = { w: week, d: [], g: 0, t: telemetryTier() };
+    }
+
+    if (active) {
+      // `day_active` primeiro: ele é o evento DIÁRIO e tem dedupe próprio.
+      track('day_active', { effort }, day);
+      if (!ledger.d.includes(day)) {
+        ledger.d.push(day);
+        if (goalMet) ledger.g += 1;
+      }
+      // O tier da semana é o do PRIMEIRO dia ativo dela — quem converteu no
+      // meio ainda viveu a semana como demo até ali.
+      if (ledger.d.length === 1) ledger.t = telemetryTier();
+    }
+    writeJson(K_WEEK, ledger, { silent: true });
+  } catch {
+    /* princípio 5 */
+  }
+}
+
+/** Só para teste/depuração — a semana em curso, que NUNCA é enviada. */
+export function pendingWeekLedger(): WeekLedger | null {
+  return readWeekLedger();
 }
 
 /** Agenda um flush preguiçoso. Nada aqui é urgente o bastante para render. */
@@ -583,6 +884,8 @@ export function resetTelemetryForTest(): void {
   removeLocal(K_SEEN, { silent: true });
   removeLocal(K_ID, { silent: true });
   removeLocal(K_ENABLED, { silent: true });
+  removeLocal(K_TIER, { silent: true });
+  removeLocal(K_WEEK, { silent: true });
   if (flushTimer !== null) {
     try { clearTimeout(flushTimer); } catch { /* idem */ }
     flushTimer = null;

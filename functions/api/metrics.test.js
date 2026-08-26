@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   onRequest,
+  onRequestGet,
   onRequestOptions,
+  summarizeNorthStar,
   sanitizeRecord,
   sanitizeBatch,
   applyAggregate,
@@ -232,22 +234,32 @@ describe('handler', () => {
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
   });
 
-  it('GET não é permitido', async () => {
-    const res = await onRequest({ request: new Request('https://x/api/metrics'), env: env() });
+  // GET deixou de ser 405: virou a LEITURA do agregado (G-7). Sem segredo
+  // configurado ela responde 404 — fail-closed, e 404 em vez de 401 para nao
+  // confirmar o endpoint a quem esta sondando. Ver `onRequestGet`.
+  it('metodo que nao e GET nem POST continua sendo 405', async () => {
+    const res = await onRequest({
+      request: new Request('https://x/api/metrics', { method: 'DELETE' }),
+      env: env(),
+    });
     expect(res.status).toBe(405);
   });
 
   it('grava o agregado do dia sob o prefixo m:', async () => {
     const e = env();
     const res = await onRequest({
-      request: post({ v: 1, id: ID, events: [{ e: 'install', d: DAY }, { e: 'day_active', d: DAY, p: { effort: 4 } }] }),
+      request: post({ v: 1, id: ID, events: [{ e: 'install', d: DAY }, { e: 'day_active', d: DAY, p: { effort: 4, tier: 1 } }] }),
       env: e,
     });
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true, accepted: 2 });
 
     const stored = JSON.parse(e.DIGIAPP_SAVES.store.get(METRICS_PREFIX + DAY));
-    expect(stored).toEqual({ install: 1, day_active: 1, effort_sum: 4 });
+    expect(stored).toEqual({
+      install: 1,
+      day_active: 1, 'day_active.demo': 1,
+      effort_sum: 4, 'effort_sum.demo': 4,
+    });
     // Uma chave por DIA. Nada de chave por usuário nem série individual.
     expect([...e.DIGIAPP_SAVES.store.keys()]).toEqual([METRICS_PREFIX + DAY]);
   });
@@ -307,5 +319,216 @@ describe('handler', () => {
     expect(METRICS_PREFIX + DAY).not.toMatch(/^(ent:|ord:)/);
     // saveId é 32–64 de [a-zA-Z0-9_-]; `m:2026-08-19` tem `:` e não colide.
     expect(/^[a-zA-Z0-9_-]{8,64}$/.test(METRICS_PREFIX + DAY)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A LEITURA DO AGREGADO (G-7) E A METRICA-NORTE NO SERVIDOR.
+//
+// G-7 era o achado mais grave do levantamento: existia dado sendo GRAVADO em
+// `m:*` e nenhum leitor em lugar nenhum do repositorio. Agregado sem leitor e
+// dado morto — custa TTL, custa escrita, e nao arbitra decisao nenhuma.
+//
+// A leitura entra como GET no MESMO arquivo (nao numa rota nova) porque a
+// allowlist, o prefixo e o formato do agregado vivem aqui: um leitor noutro
+// arquivo seria regra copiada (footgun 9). Ela e fechada por segredo e FALHA
+// FECHADA — sem segredo configurado, a rota nao existe.
+// ---------------------------------------------------------------------------
+
+const ADMIN = 'k'.repeat(40);
+const getReq = (qs = '', headers = {}) =>
+  new Request(`https://x/api/metrics${qs}`, { method: 'GET', headers });
+
+describe('G-2/G-5/G-6: o agregado separa demo de pago, motivo e caminho', () => {
+  it('todo evento com tier vira um contador POR tier, e o total continua legivel', () => {
+    const agg = applyAggregate({}, [
+      { e: 'purchase', d: DAY, p: { tier: 1 } },
+      { e: 'purchase', d: DAY, p: { tier: 2 } },
+      { e: 'purchase', d: DAY, p: { tier: 2 } },
+    ]);
+    expect(agg.purchase).toBe(3);
+    expect(agg['purchase.demo']).toBe(1);
+    expect(agg['purchase.paid']).toBe(2);
+  });
+
+  it('effort_sum tambem se separa — o esforco do demo nao e o do pagante', () => {
+    const agg = applyAggregate({}, [
+      { e: 'day_active', d: DAY, p: { effort: 3, tier: 1 } },
+      { e: 'day_active', d: DAY, p: { effort: 5, tier: 2 } },
+    ]);
+    expect(agg.effort_sum).toBe(8);
+    expect(agg['effort_sum.demo']).toBe(3);
+    expect(agg['effort_sum.paid']).toBe(5);
+  });
+
+  it('unlock_view conta por MOTIVO — os dois convites nunca somam junto', () => {
+    const agg = applyAggregate({}, [
+      { e: 'unlock_view', d: DAY, p: { reason: 0, tier: 1 } },
+      { e: 'unlock_view', d: DAY, p: { reason: 1, tier: 1 } },
+      { e: 'unlock_view', d: DAY, p: { reason: 1, tier: 1 } },
+    ]);
+    expect(agg['unlock_view.task_limit']).toBe(1);
+    expect(agg['unlock_view.evolution']).toBe(2);
+  });
+
+  it('activity_create conta por caminho e por tipo — o vazamento fica visivel', () => {
+    const agg = applyAggregate({}, [
+      { e: 'activity_create', d: DAY, p: { kind: 1, path: 0, tier: 1 } },
+      { e: 'activity_create', d: DAY, p: { kind: 1, path: 1, tier: 1 } },
+      { e: 'activity_create', d: DAY, p: { kind: 0, path: 1, tier: 1 } },
+    ]);
+    // `create_modal` e o unico caminho que consulta o cap; `home_edit` e o que
+    // o levantamento achou vazando. Um contador para cada, de proposito.
+    expect(agg['activity_create.create_modal.habit']).toBe(1);
+    expect(agg['activity_create.home_edit.habit']).toBe(1);
+    expect(agg['activity_create.home_edit.task']).toBe(1);
+  });
+
+  it('demo_cap_hit conta por caminho', () => {
+    const agg = applyAggregate({}, [{ e: 'demo_cap_hit', d: DAY, p: { path: 0 } }]);
+    expect(agg.demo_cap_hit).toBe(1);
+    expect(agg['demo_cap_hit.create_modal']).toBe(1);
+  });
+});
+
+describe('A METRICA-NORTE fica LEGIVEL no agregado', () => {
+  it('week_active vira histograma de goal_days, por tier', () => {
+    const agg = applyAggregate({}, [
+      { e: 'week_active', d: DAY, p: { active_days: 5, goal_days: 4, tier: 1 } },
+      { e: 'week_active', d: DAY, p: { active_days: 3, goal_days: 1, tier: 1 } },
+      { e: 'week_active', d: DAY, p: { active_days: 7, goal_days: 6, tier: 2 } },
+    ]);
+    expect(agg.week_active).toBe(3);
+    expect(agg['week_active.goal_days.4']).toBe(1);
+    expect(agg['week_active.goal_days.1']).toBe(1);
+    expect(agg['week_active.demo.goal_days.4']).toBe(1);
+    expect(agg['week_active.paid.goal_days.6']).toBe(1);
+  });
+
+  it('summarizeNorthStar responde "quantos ativos batem >=4 de 7"', () => {
+    const totals = {
+      week_active: 10,
+      'week_active.goal_days.0': 2,
+      'week_active.goal_days.3': 3,
+      'week_active.goal_days.4': 4,
+      'week_active.goal_days.7': 1,
+      'week_active.demo.goal_days.4': 1,
+      'week_active.paid.goal_days.4': 3,
+      'week_active.paid.goal_days.7': 1,
+    };
+    const ns = summarizeNorthStar(totals);
+    expect(ns.weekly_active).toBe(10);
+    expect(ns.on_target).toBe(5);   // 4 + 1
+    expect(ns.rate).toBeCloseTo(0.5, 6);
+    expect(ns.by_tier.paid.on_target).toBe(4);
+    expect(ns.by_tier.demo.on_target).toBe(1);
+  });
+
+  it('sem nenhum ativo a taxa e null, nunca 0 — zero sobre zero nao e "0%"', () => {
+    expect(summarizeNorthStar({}).rate).toBeNull();
+  });
+});
+
+describe('G-7: a rota de leitura existe, e falha FECHADA', () => {
+  it('sem METRICS_ADMIN_KEY configurada a rota nem existe (404, nao 401)', async () => {
+    const res = await onRequestGet({ request: getReq('?from=2026-08-01&to=2026-08-07'), env: env() });
+    expect(res.status).toBe(404);
+  });
+
+  it('com segredo configurado, chave errada e 401 e nao devolve nada', async () => {
+    const e = { ...env(), METRICS_ADMIN_KEY: ADMIN };
+    const res = await onRequestGet({
+      request: getReq('?from=2026-08-01&to=2026-08-07', { 'X-Metrics-Key': 'errada' }),
+      env: e,
+    });
+    expect(res.status).toBe(401);
+    expect(await res.json()).not.toHaveProperty('days');
+  });
+
+  it('com a chave certa devolve os dias, os totais e a metrica-norte', async () => {
+    const e = {
+      ...env({
+        'm:2026-08-24': JSON.stringify({ install: 3, week_active: 2, 'week_active.goal_days.4': 1, 'week_active.goal_days.2': 1 }),
+        'm:2026-08-25': JSON.stringify({ install: 1, day_active: 4, effort_sum: 12 }),
+      }),
+      METRICS_ADMIN_KEY: ADMIN,
+    };
+    const res = await onRequestGet({
+      request: getReq('?from=2026-08-24&to=2026-08-25', { 'X-Metrics-Key': ADMIN }),
+      env: e,
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.days['2026-08-24'].install).toBe(3);
+    expect(body.totals.install).toBe(4);
+    expect(body.totals.effort_sum).toBe(12);
+    expect(body.north_star.weekly_active).toBe(2);
+    expect(body.north_star.on_target).toBe(1);
+  });
+
+  it('a janela tem teto — ninguem varre o namespace inteiro numa requisicao', async () => {
+    const e = { ...env(), METRICS_ADMIN_KEY: ADMIN };
+    const res = await onRequestGet({
+      request: getReq('?from=2020-01-01&to=2026-08-25', { 'X-Metrics-Key': ADMIN }),
+      env: e,
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('so le chaves do proprio prefixo — nao ha como pedir um save alheio', async () => {
+    const kv = fakeKV({ 'abc123': JSON.stringify({ secreto: 1 }) });
+    const e = { DIGIAPP_SAVES: kv, METRICS_ADMIN_KEY: ADMIN };
+    const lidas = [];
+    const origGet = kv.get;
+    kv.get = async (k, o) => { lidas.push(k); return origGet(k, o); };
+    await onRequestGet({
+      request: getReq('?from=2026-08-24&to=2026-08-25', { 'X-Metrics-Key': ADMIN }),
+      env: e,
+    });
+    expect(lidas.every(k => k.startsWith(METRICS_PREFIX))).toBe(true);
+  });
+
+  it('a leitura nao devolve identidade nenhuma — o agregado nao tem onde guardar', async () => {
+    const e = {
+      ...env({ 'm:2026-08-24': JSON.stringify({ install: 1 }) }),
+      METRICS_ADMIN_KEY: ADMIN,
+    };
+    const res = await onRequestGet({
+      request: getReq('?from=2026-08-24&to=2026-08-24', { 'X-Metrics-Key': ADMIN }),
+      env: e,
+    });
+    const texto = JSON.stringify(await res.json());
+    expect(texto).not.toMatch(/[0-9a-f]{32}/);
+  });
+});
+
+describe('allowlist fechada tambem para os eventos NOVOS', () => {
+  // O valor da allowlist e recusar o que ninguem previu. Estes nomes sao
+  // plausiveis, vizinhos dos que existem, e e exatamente por isso que estao
+  // aqui: sao os que passariam por uma denylist.
+  it.each([
+    'demo_cap_reached', 'activity_created', 'week_summary',
+    'task_create', 'goal_days', 'tier',
+  ])('recusa o evento inventado `%s`', name => {
+    expect(sanitizeRecord({ e: name, d: DAY }, DAY)).toBeNull();
+    const agg = applyAggregate({}, sanitizeBatch({ v: 1, id: ID, events: [{ e: name, d: DAY }] }, DAY).events);
+    expect(agg).toEqual({});
+  });
+
+  it('prop inventada num evento NOVO derruba o evento inteiro', () => {
+    expect(sanitizeRecord({ e: 'activity_create', d: DAY, p: { kind: 0, path: 0, tier: 1, taskName: 'x' } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'week_active', d: DAY, p: { active_days: 3, goal_days: 1, tier: 1, mood: 2 } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'demo_cap_hit', d: DAY, p: { path: 0, email: 1 } }, DAY)).toBeNull();
+  });
+
+  it('prop declarada faltando derruba o evento — meio dado nao arbitra nada', () => {
+    expect(sanitizeRecord({ e: 'activity_create', d: DAY, p: { kind: 0, path: 0 } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'unlock_view', d: DAY, p: { tier: 1 } }, DAY)).toBeNull();
+    expect(sanitizeRecord({ e: 'purchase', d: DAY }, DAY)).toBeNull();
+  });
+
+  it('GET tambem passa por onRequest quando o runtime nao separa o metodo', async () => {
+    const res = await onRequest({ request: getReq('?from=2026-08-24&to=2026-08-24'), env: env() });
+    expect(res.status).toBe(404); // sem segredo configurado: fail-closed
   });
 });
