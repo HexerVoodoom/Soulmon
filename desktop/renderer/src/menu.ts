@@ -16,7 +16,9 @@ import { feedFood, completeTask, type CareState, type FeedRefusal, type TaskStat
 // A fronteira de cuidado mora em `care.ts`, e não aqui, porque este módulo toca
 // o DOM no topo e por isso nenhum teste consegue importá-lo — foi assim que o
 // teto de carinho ficou por aparelho sem ninguém ver. Ver o cabeçalho de lá.
-import { remoteRub, remoteFeed, localRub } from './care';
+import {
+  remoteRub, remoteFeed, localRub, remoteShower, remoteSleep, remoteWake,
+} from './care';
 import { eventPhrase } from './phrases';
 
 const state: DesktopState = loadState();
@@ -494,16 +496,72 @@ function doFeed() {
 }
 
 function doShower() {
+  // A bolha toca sempre — banho, como carinho, nunca é "rejeitado" visualmente.
   status = eventPhrase('shower', state.language);
   window.soulmonDesktop?.sendEffect('🫧', status);
   render();
+  if (!state.syncEmail) return; // Sem conta não há cocô: ele mora no save.
+
+  // Até aqui o botão NÃO ESCREVIA NADA — só a fala e a bolha. O cocô do save
+  // continuava sujo, com o relógio de 6h do dreno correndo e tirando 1 coração
+  // por período (`utils/poopDrain.ts`). O 🚿 é o ÚNICO jeito de parar esse
+  // relógio, então o jogador via o pet perder coração apertando exatamente o
+  // botão que existe para impedir isso.
+  void pushCareAction(state.syncEmail, remote => remoteShower(remote).next)
+    .then(res => {
+      if (res.ok) {
+        applySnapshot(res.snapshot);
+        persist();
+        render();
+      } else if (res.reason === 'refused') {
+        // Já estava limpo no save real — a bolha já tocou, não há o que mostrar.
+        render();
+      } else {
+        pushFailed(res.reason);
+      }
+    });
 }
 
 function doSleepToggle() {
-  state.sleeping = !state.sleeping;
+  const agora = new Date();
+  const deitando = !state.sleeping;
+  state.sleeping = deitando;
+  // A hora de deitar precisa sobreviver à noite inteira: é ela que, ao acordar,
+  // fecha o registro com `wokeAt`. Ver `DesktopState.sleepStartedAt`.
+  const deitouEm = deitando ? agora.toISOString() : state.sleepStartedAt;
+  state.sleepStartedAt = deitando ? agora.toISOString() : null;
   persist();
-  status = eventPhrase(state.sleeping ? 'sleep' : 'wake', state.language);
+  status = eventPhrase(deitando ? 'sleep' : 'wake', state.language);
   render();
+  if (!state.syncEmail) return;
+
+  // Até aqui isto era SÓ o booleano local: a cama era desenho. `rest.nights`
+  // nunca recebia nada, então dormir pelo overlay não contava para a constância,
+  // para a raridade do sonho nem para o pesadelo — quem fecha o app e dorme com
+  // o overlay aberto simplesmente não tinha noites.
+  //
+  // A JANELA continua no relógio do APARELHO, de propósito: deitar cedo é um
+  // gesto do mundo real, é noite ONDE A PESSOA ESTÁ. Ver `remoteSleep`.
+  if (deitando) {
+    void pushCareAction(state.syncEmail, remote => remoteSleep(remote, agora)).then(sonoGravado);
+    return;
+  }
+  // Acordar sem hora de deitar (overlay atualizado no meio da noite) não
+  // registra nada: noite sem registro é NEUTRA, nunca uma falha inventada.
+  const inicio = deitouEm ? new Date(deitouEm) : null;
+  if (!inicio || Number.isNaN(inicio.getTime())) return;
+  void pushCareAction(state.syncEmail, remote => remoteWake(remote, inicio, agora)).then(sonoGravado);
+}
+
+/** O sono nunca recusa (`recordNight` não penaliza), então só há ok e erro. */
+function sonoGravado(res: Awaited<ReturnType<typeof pushCareAction>>) {
+  if (res.ok) {
+    applySnapshot(res.snapshot);
+    persist();
+    render();
+  } else if (res.reason !== 'refused') {
+    pushFailed(res.reason);
+  }
 }
 
 /** id da tarefa sendo marcada (trava a lista durante a ida ao servidor). */

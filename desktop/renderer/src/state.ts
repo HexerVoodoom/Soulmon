@@ -39,6 +39,17 @@ export interface DesktopState {
   /** Espelho das tarefas pendentes do save — a fonte é sempre o app. */
   tasks: RemoteTask[];
   sleeping: boolean;
+  /**
+   * ISO de quando o pet deitou — a metade que falta para `recordNight` gravar
+   * a noite INTEIRA ao acordar.
+   *
+   * Fica no estado do overlay, e não no save, pelo mesmo motivo de `sleeping`:
+   * a cama é deste aparelho. O que vai para o save é o FATO da noite
+   * (`rest.nights`), quando ela fecha. `null` = não está dormindo, ou o overlay
+   * foi atualizado no meio de uma noite — nesse caso acordar não registra nada,
+   * que é o comportamento neutro do app (noite sem registro nunca é falha).
+   */
+  sleepStartedAt: string | null;
   /** Timestamps (ms) das últimas comidas — janela deslizante de 5/hora, igual ao mobile. */
   feedTimes: number[];
   /**
@@ -82,6 +93,7 @@ function defaults(): DesktopState {
     language: 'pt-BR',
     tasks: [],
     sleeping: false,
+    sleepStartedAt: null,
     feedTimes: [],
     rubHeal: undefined,
     syncEmail: null,

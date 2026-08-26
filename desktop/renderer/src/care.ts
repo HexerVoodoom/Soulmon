@@ -23,6 +23,9 @@ import {
   type RubHealRecord, type FeedRefusal, type RubRefusal,
 } from '../../../src/utils/careRules';
 import { playerDayKey, sanitizePlayerDayAnchor } from '../../../src/utils/playerDay';
+// O sono importa a regra inteira: `recordNight` nomeia a noite, decide `onTime`,
+// é idempotente por manha e poda em MAX_NIGHTS. Nada disso se reescreve aqui.
+import { recordNight, createRestState, type RestState } from '../../../src/utils/restWindow';
 
 /** O GameState como ele chega do servidor: JSON cru, sem tipo. */
 export type RemoteState = Record<string, unknown>;
@@ -123,5 +126,135 @@ export function localRub(
   return {
     hearts: Math.min(local.maxHearts, local.hearts + RUB_HEAL_STEP),
     rubHeal: { date: day, healed: record.healed + RUB_HEAL_STEP },
+  };
+}
+
+// ─────────────────────────────────────────────────────── 🚿 banho e 💤 sono
+
+/**
+ * A NOITE do save, pronta para `recordNight`.
+ *
+ * Duas coisas acontecem aqui, e a segunda é a que quebra em silêncio:
+ *
+ * 1. o `rest` do JSON cru pode não existir (save nunca dormido) ou vir torto —
+ *    `createRestState()` é o mesmo default do app, e `nights`/`dreams` só são
+ *    aproveitados quando REALMENTE são listas. Um `nights: 'x'` chegando em
+ *    `recordNight` lançaria `filter is not a function` e a ação morreria como
+ *    "erro de rede" para o jogador;
+ * 2. a ÂNCORA DO DIA é fiada para dentro do `rest`. `recordNight`, como
+ *    `applyPoopDrain` e `applyRub`, lê a âncora do ESTADO e nunca por
+ *    parâmetro — exatamente para quem esquece não voltar em silêncio ao dia do
+ *    aparelho, compilando. No app essa fiação é uma linha do `hydrateRest`
+ *    (`GameStateContext`), travada por guard de AST; no save cru ela não existe,
+ *    e sem repeti-la o desktop nomearia a MANHÃ pelo relógio do aparelho —
+ *    ressuscitando aqui o bug de noite duplicada que o app já fechou.
+ *
+ * A âncora do topo do save VENCE a que porventura esteja dentro do `rest`,
+ * pela mesma razão do app: duas âncoras discordando dentro do mesmo save é
+ * pior que nenhuma.
+ */
+export function remoteRestState(remote: RemoteState): RestState {
+  const raw = (typeof remote.rest === 'object' && remote.rest !== null)
+    ? remote.rest as Record<string, unknown>
+    : {};
+  const base = createRestState();
+  const w = (typeof raw.window === 'object' && raw.window !== null)
+    ? raw.window as Record<string, unknown>
+    : {};
+  const anchor = sanitizePlayerDayAnchor(remote.playerDayTz);
+  return {
+    ...raw,
+    window: (typeof w.start === 'string' && typeof w.end === 'string')
+      ? { start: w.start, end: w.end }
+      : base.window,
+    nights: Array.isArray(raw.nights) ? raw.nights as RestState['nights'] : [],
+    dreams: Array.isArray(raw.dreams) ? raw.dreams as string[] : [],
+    ...(anchor ? { playerDayTz: anchor } : {}),
+  };
+}
+
+/**
+ * Deitar: a noite entra no save REAL.
+ *
+ * O `doSleepToggle` do overlay só virava `state.sleeping`, um booleano do
+ * `localStorage` DESTE aparelho. A cama era desenho: `rest.nights` nunca
+ * recebia nada, então dormir pelo overlay não contava para a constância, para a
+ * raridade do sonho nem para o pesadelo — o jogador que fecha o app e dorme com
+ * o overlay aberto simplesmente não tinha noites.
+ *
+ * ⚠️ A JANELA CONTINUA NO RELÓGIO DO APARELHO, de propósito. `recordNight`
+ * carimba `onTime` com `isWithinWindow`, que lê a hora de PAREDE local: deitar
+ * cedo é um gesto do mundo real — é noite ONDE A PESSOA ESTÁ. A âncora do save
+ * nomeia a MANHÃ (qual noite é esta), nunca julga a hora de deitar. Trocar uma
+ * pela outra transformaria "dormi na hora" em uma conta sobre um fuso que o
+ * jogador não está vivendo.
+ *
+ * Nunca recusa: o pior resultado possível de `recordNight` é uma noite com
+ * `onTime: false`, que apenas não rende prêmio. Sono não tem penalidade.
+ */
+export function remoteSleep(remote: RemoteState, sleptAt: Date): RemoteState {
+  return { ...remote, rest: recordNight(remoteRestState(remote), sleptAt) };
+}
+
+/**
+ * Acordar: a MESMA noite ganha o `wokeAt`.
+ *
+ * `recordNight` é idempotente por dayKey da manhã, então isto ATUALIZA o
+ * registro criado ao deitar em vez de criar um segundo — e com `wokeAt` em mãos
+ * a manhã passa a ser literalmente a manhã, e não a inferida pela hora de
+ * deitar.
+ */
+export function remoteWake(remote: RemoteState, sleptAt: Date, wokeAt: Date): RemoteState {
+  return { ...remote, rest: recordNight(remoteRestState(remote), sleptAt, wokeAt) };
+}
+
+/** Já estava limpo — não há o que gravar, e gravar seria um POST por clique. */
+export type ShowerRefusal = 'already-clean';
+
+function numeros(v: unknown): number[] {
+  return Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : [];
+}
+
+/**
+ * O BANHO aplicado ao save REAL.
+ *
+ * O `doShower` do overlay não escrevia NADA: tocava a fala e a bolha 🫧 e
+ * voltava. O dano é concreto e mensurável em corações — `applyPoopDrain` tira 1
+ * coração a cada 6h de cocô não limpo, e o 🚿 é o ÚNICO jeito de parar esse
+ * relógio (o `handleShower` do app existe exatamente para isso). O jogador com
+ * o overlay aberto via o pet perder coração enquanto apertava o botão do banho.
+ *
+ * ⚠️ ESTA É A ÚNICA TRANSIÇÃO DESTE ARQUIVO QUE NÃO É UM IMPORT, e é uma
+ * dívida declarada, não um descuido: no app o banho não tem regra pura em
+ * `src/utils/`. Ele mora inteiro no `App.tsx` (`handleCareEventComplete`,
+ * ~linha 2028) e é acoplado ao `careEvent`, um estado de React produzido pelo
+ * agendamento do `useCareSystem` — coisa que o overlay não tem e não deveria
+ * ter. Não há função para importar. O conserto certo é extrair um `cleanPoop()`
+ * para `src/utils/poopDrain.ts`, dono da regra, e esta função virar uma linha;
+ * fica para uma frente que possa tocar `src/`.
+ *
+ * Enquanto isso, a garantia não é a fé: o teste de paridade não confere a forma
+ * do objeto, ele EXECUTA `applyPoopDrain` (a regra do app, importada) sobre o
+ * resultado e exige que ela pare de cobrar. Quem julga limpeza continua sendo
+ * `poopDrain.ts`; aqui só se prova que o resultado a satisfaz.
+ *
+ * Limpa TODO cocô mostrado, e não um índice: o overlay não tem `careEvent`, não
+ * sabe qual dos cocôs está na tela do celular, e o dreno não distingue — para
+ * ele existe "tem sujeira" e "não tem". Um banho que limpasse só um deixaria o
+ * relógio correndo com o pet visivelmente limpo aqui.
+ */
+export function remoteShower(remote: RemoteState): CareOutcome<ShowerRefusal> {
+  const shown = numeros(remote.poopEventsShown);
+  const cleaned = numeros(remote.poopEventsCompleted);
+  const sujos = shown.filter(i => !cleaned.includes(i));
+  const clock = typeof remote.poopPenaltyClockAt === 'number' ? remote.poopPenaltyClockAt : 0;
+  // Nada sujo E relógio já parado: o save não mudaria em byte nenhum.
+  if (sujos.length === 0 && clock === 0) return { next: null, refused: 'already-clean' };
+  return {
+    next: {
+      ...remote,
+      poopEventsCompleted: [...cleaned, ...sujos],
+      poopPenaltyClockAt: 0, // para o relógio de 6h do dreno
+    },
   };
 }
