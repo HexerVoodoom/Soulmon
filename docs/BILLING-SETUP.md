@@ -359,13 +359,18 @@ identificador ofuscado que a Google pede). Sem isso o campo volta vazio.
 Para o `claimOrder` deixar de ser best-effort, crie um banco D1 e vincule como
 `DB` no projeto Pages:
 
-```sql
-CREATE TABLE order_claims (
-  order_id   TEXT PRIMARY KEY,
-  save_id    TEXT NOT NULL,
-  claimed_at INTEGER NOT NULL
-);
+⚠️ **O schema NÃO mora mais aqui.** Ele vive em `migrations/`, versionado, e é de lá que
+se aplica:
+
+```bash
+npx wrangler d1 migrations apply <nome-do-banco> --remote
 ```
+
+Até 26/08/2026 este documento carregava um `CREATE TABLE` solto para colar à mão. Era a
+**única** descrição da forma do banco em produção, e uma mudança de coluna não tinha onde
+ser registrada — o que só apareceu quando o prazo de retenção precisou de uma coluna nova.
+Duas fontes para a mesma verdade divergem em silêncio (footgun 9); a fonte agora é uma, e
+`migrations/README.md` tem as regras.
 
 Com o binding presente, `claimOrder` passa a usar `INSERT` — a PRIMARY KEY
 resolve a corrida e só um dono é possível. Sem o binding, continua no KV com a
