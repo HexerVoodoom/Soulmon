@@ -20,9 +20,14 @@ on:
 # codigo e roda `tsc`/`vitest`: nao commita, nao abre PR, nao publica pacote,
 # nao toca em Release. `contents: read` e o teto exato.
 # ATENCAO ao copiar isto para outro workflow: `sync-irmaos.yml` PRECISA de
-# `contents: write` + `pull-requests: write` (ele empurra branch e abre PR) e
-# `desktop-build.yml` PRECISA de `contents: write` (publica o Release que
-# alimenta o auto-update). Trocar la por `read` quebra os dois em silencio.
+# `contents: write` + `pull-requests: write` (ele empurra branch e abre PR).
+# `desktop-build.yml` ja NAO precisa mais: desde esta rodada ele so BUILDA, e
+# quem publica o Release do auto-update e o arquivo separado
+# `desktop-release.yml` — o unico do repo com `contents: write` para Release e
+# o unico que dispara em tag de versao. Trocar o do `sync-irmaos.yml` por
+# `read` quebra o sync em silencio; devolver `write` ao `desktop-build.yml`
+# devolve o poder de publicar a um workflow que dispara em push de branch, que
+# e exatamente o que esta rodada desmontou.
 permissions:
   contents: read
 
@@ -54,65 +59,52 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      # ⚠️ `node_modules/` ESTÁ VERSIONADO neste repo (19.035 arquivos em
-      # `git ls-files node_modules`), apesar de constar no `.gitignore` — foram
-      # commitados antes da regra e nunca removidos. Logo o `checkout` acima já
-      # traz uma árvore de dependências no disco, e ela é a coisa mais perigosa
-      # deste workflow: está DESATUALIZADA e INCOMPLETA (no run 01 um agente
-      # bateu nisso e teve que rodar `npm install` na mão), então usá-la faria o
-      # CI testar um conjunto de dependências que não é o do `package-lock.json`
-      # — verde aqui, quebrado no build de verdade.
+      # `node_modules/` JÁ NÃO É MAIS VERSIONADO — o commit `6e7aa3cd` tirou os
+      # 19.035 arquivos do rastreamento. Medido agora: `git ls-files node_modules
+      # | wc -l` -> 0. O texto anterior aqui dizia o contrário e virou mentira no
+      # dia daquele commit; está corrigido em vez de apagado porque o MOTIVO da
+      # escolha continua valendo e é o que interessa a quem lê.
       #
-      # ESCOLHA EXPLÍCITA: `npm ci`, que APAGA `node_modules/` antes de instalar
-      # e reinstala exatamente o que o lock manda. Não é opinião de estilo: é a
-      # única forma de o CI falar sobre o lockfile em vez de sobre um resíduo de
-      # commit. Mesmo comando de `android-build.yml:22`.
+      # `npm ci` (e não `npm install`) segue sendo a escolha, agora por um motivo
+      # só, o mais forte dos dois: ele instala EXATAMENTE o que o
+      # `package-lock.json` manda e falha se o lock estiver dessincronizado do
+      # `package.json`, em vez de consertar em silêncio. É a única forma de este
+      # gate falar sobre o lockfile. Mesmo comando de `android-build.yml`.
       # (Não commitamos nada de volta; o runner é descartável.)
-      # ── Repos irmãos por git+ssh ───────────────────────────────────────────
-      # `class-system` (dependency) resolve para
-      # `git+ssh://git@github.com/HexerVoodoom/Class-System.git`
-      # (`package-lock.json:5502`). NÃO há chave SSH no runner: hoje funciona
-      # só porque o repo é PÚBLICO e o npm cai sozinho no HTTPS anônimo. O dono
-      # declarou que pretende tornar o repositório privado — no dia em que isso
-      # acontecer, o `npm ci` abaixo morre com "Permission denied (publickey)",
-      # mensagem que não parece um problema de visibilidade e vai custar horas.
-      #
-      # ESCOLHA, e por que as outras foram descartadas:
-      #  • reescrever o lock para HTTPS — não resolve nada: HTTPS anônimo em
-      #    repo privado dá 404, e o problema é AUTENTICAÇÃO, não protocolo.
-      #  • deploy key (SSH) — funciona, mas obriga a manter um par de chaves e
-      #    um secret por repo irmão, e o `ssh-agent` some entre steps.
-      #  • `secrets.GITHUB_TOKEN` sozinho — NÃO serve: ele é escopado a ESTE
-      #    repositório e não enxerga `Class-System` privado.
-      #  • ESCOLHIDA: `git config url.<https+token>.insteadOf <ssh>`. Reescreve
-      #    o protocolo NO RUNNER, sem tocar em `package.json`/`package-lock.json`
-      #    (que são de outro dono — ver o ADR de repos irmãos do `alpha-architect`).
-      #    Um único ponto, vale para qualquer dependência git futura.
-      #
-      # DEGRADAÇÃO DELIBERADA: sem o secret, cai no HTTPS anônimo — que é
-      # exatamente o comportamento de hoje. Portanto este step nunca piora o
-      # estado atual; ele só já deixa o caminho pronto para o dia do privado.
-      - name: Configurar acesso aos repos irmãos (sobrevive ao repo privado)
-        env:
-          SIBLING_REPOS_TOKEN: ${{ secrets.SIBLING_REPOS_TOKEN }}
-        # `--add` NÃO é detalhe de estilo: as duas linhas gravam a MESMA chave
-        # (`url.<x>.insteadOf`) e, sem ele, a segunda SOBRESCREVE a primeira —
-        # sobra só o mapeamento `git@github.com:` e a URL do lock, que é
-        # `ssh://git@github.com/`, continua indo por SSH de verdade. Verificado
-        # na mão: sem `--add`, `git ls-remote ssh://git@github.com/...` falha
-        # com "Host key verification failed"; com `--add`, resolve o SHA.
-        run: |
-          if [ -n "$SIBLING_REPOS_TOKEN" ]; then
-            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "ssh://git@github.com/"
-            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "git@github.com:"
-            echo "::notice::Repos irmãos: HTTPS autenticado (SIBLING_REPOS_TOKEN presente)."
-          else
-            git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
-            git config --global --add url."https://github.com/".insteadOf "git@github.com:"
-            echo "::warning::SIBLING_REPOS_TOKEN ausente — usando HTTPS ANÔNIMO. Funciona SÓ enquanto HexerVoodoom/Class-System for público. Crie o secret (PAT fine-grained, escopo Contents:read nos repos irmãos) ANTES de tornar o repo privado."
-          fi
 
-      - name: Install dependencies (npm ci — descarta o node_modules versionado)
+      # ── Repos irmãos: por que NÃO há mais step de token aqui ───────────────
+      #
+      # Até esta rodada existia aqui um step "Configurar acesso aos repos
+      # irmãos" que reescrevia `git+ssh` para HTTPS com `SIBLING_REPOS_TOKEN`,
+      # justificado por um texto longo dizendo que `class-system` resolvia por
+      # `git+ssh://git@github.com/HexerVoodoom/Class-System.git` em
+      # `package-lock.json:5502`. ESSE TEXTO DEIXOU DE SER VERDADE quando o
+      # `vendor/` entrou (ADR-002 §1): a dependência de git saiu do
+      # `package.json` e do `package-lock.json`, e o motor passou a ser um
+      # artefato COMMITADO em `vendor/class-system/index.js` — conferido pelo
+      # step de integridade logo abaixo.
+      #
+      # MEDIDO nesta máquina antes de apagar (não é dedução):
+      #   grep -c "class-system" package-lock.json          -> 0
+      #   grep -cE 'git\+ssh|git\+https|"resolved": "git' package-lock.json         -> 0
+      #   grep -cE 'git\+ssh|git\+https|"resolved": "git' desktop/package-lock.json -> 0
+      # Ou seja: NENHUMA dependência dos dois lockfiles resolve por git. O
+      # `npm ci` abaixo fala só com o registry (e com `npm.jsr.io`, via
+      # `.npmrc`). O `url.<x>.insteadOf` reescreve remoto de GIT — não tem o que
+      # reescrever, e o step era um no-op caro de ler.
+      #
+      # E o Besti-rio-? Ele TAMBÉM não passa por aqui. Quem clona os dois repos
+      # irmãos é o `sync-irmaos.yml`, uma vez por semana, e ele NÃO depende de
+      # `insteadOf`: monta a URL HTTPS autenticada na mão
+      # (`https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/...`, steps
+      # "Clonar os repos irmãos"). Logo o secret continua existindo e continua
+      # tendo dono — só que o dono é o `sync-irmaos.yml`, não este arquivo.
+      #
+      # O QUE ISTO CUSTA, declarado: se um dia voltar uma dependência de git no
+      # lock, o `npm ci` vai tentar SSH e falhar em repo privado. O conserto NÃO
+      # é ressuscitar este step — é não voltar a ter dependência de git (a
+      # decisão do ADR-002 §1). Se voltar mesmo assim, o step está no histórico.
+      - name: Install dependencies (npm ci — instala exatamente o lockfile)
         run: npm ci
 
       # ── ESTE STEP SUBSTITUI UM GATE QUE ESTAVA MORTO ─────────────────────

@@ -38,23 +38,21 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      # Mesmo problema do `ci.yml` (ver a justificativa longa lá): `class-system`
-      # resolve por `git+ssh` (`package-lock.json:5502`) e o runner não tem
-      # chave SSH — hoje passa só porque o repo irmão é PÚBLICO. Sem este step,
-      # o APK para de buildar no dia em que ele virar privado.
-      - name: Configurar acesso aos repos irmãos (sobrevive ao repo privado)
-        env:
-          SIBLING_REPOS_TOKEN: ${{ secrets.SIBLING_REPOS_TOKEN }}
-        run: |
-          if [ -n "$SIBLING_REPOS_TOKEN" ]; then
-            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "ssh://git@github.com/"
-            git config --global --add url."https://x-access-token:$SIBLING_REPOS_TOKEN@github.com/".insteadOf "git@github.com:"
-          else
-            git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
-            git config --global --add url."https://github.com/".insteadOf "git@github.com:"
-            echo "::warning::SIBLING_REPOS_TOKEN ausente — HTTPS anônimo. Só funciona enquanto HexerVoodoom/Class-System for público."
-          fi
-
+      # ── Repos irmãos: aqui NÃO há mais step de token, e o motivo importa ───
+      #
+      # Existia aqui um step "Configurar acesso aos repos irmãos" que reescrevia
+      # `git+ssh` para HTTPS com `SIBLING_REPOS_TOKEN`, dizendo que `class-system`
+      # resolvia por `git+ssh` em `package-lock.json:5502`. Isso deixou de ser
+      # verdade quando o `vendor/` entrou (ADR-002 §1): a dependência de git saiu
+      # do lock e o motor virou artefato commitado em `vendor/class-system/`.
+      #
+      # MEDIDO antes de apagar: `grep -c "class-system" package-lock.json` -> 0, e
+      # ZERO entradas `git+ssh`/`git+https`/`"resolved": "git` no lock. O `npm ci`
+      # abaixo não fala git com ninguém — o step era um no-op.
+      # Quem de fato usa o `SIBLING_REPOS_TOKEN` (e clona Class-System E
+      # Besti-rio-) é o `sync-irmaos.yml`, que monta a URL HTTPS autenticada na
+      # mão e nunca dependeu de `insteadOf`. O secret continua tendo dono; o dono
+      # não é este arquivo. Justificativa longa em `ci.yml`, no mesmo ponto.
       - name: Install dependencies
         run: npm ci
 
