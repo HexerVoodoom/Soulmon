@@ -117,8 +117,12 @@
   <tr><td><code>demo_pick</code></td><td>Que você escolheu um personagem pronto.</td></tr>
   <tr><td><code>first_task_done</code></td><td>Sua primeira conclusão de verdade.</td></tr>
   <tr><td><code>day_active</code></td><td>Uma vez por dia: que houve atividade, com a propriedade <code>effort</code> — o peso de esforço concluído (um número, como 4).</td></tr>
-  <tr><td><code>unlock_view</code></td><td>Que a tela de compra foi aberta.</td></tr>
+  <tr><td><code>unlock_view</code></td><td>Que a tela de compra foi aberta, com a propriedade <code>reason</code>: por qual dos dois convites — o limite de criação do modo grátis, ou a árvore de evolução.</td></tr>
   <tr><td><code>purchase</code></td><td>Que houve uma compra.</td></tr>
+  <tr><td><code>demo_cap_hit</code></td><td>Que você encontrou o limite diário de criação do modo grátis, com a propriedade <code>path</code>: por qual tela.</td></tr>
+  <tr><td><code>activity_create</code></td><td>Que uma atividade foi criada, com <code>kind</code> (tarefa ou hábito) e <code>path</code> (por qual tela). <strong>Nunca</strong> o nome nem o conteúdo dela.</td></tr>
+  <tr><td><code>week_active</code></td><td>Uma vez por semana, dois números de 0 a 7: <code>active_days</code>, em quantos dias você concluiu alguma coisa, e <code>goal_days</code>, em quantos você alcançou a sua própria meta do dia. <strong>A contagem é feita no seu aparelho</strong> — o que sai são só esses dois números, já fechados. Nenhuma linha do tempo sua é enviada nem guardada.</td></tr>
+  <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
 </table>
 <p>
   Junto vai <strong>a data — só o dia, nunca a hora</strong> — e um
@@ -278,8 +282,12 @@
   <tr><td><code>demo_pick</code></td><td>That you picked a ready-made character.</td></tr>
   <tr><td><code>first_task_done</code></td><td>Your first real completion.</td></tr>
   <tr><td><code>day_active</code></td><td>Once a day: that there was activity, with the <code>effort</code> property — the effort weight you completed (a number, like 4).</td></tr>
-  <tr><td><code>unlock_view</code></td><td>That the purchase screen was opened.</td></tr>
+  <tr><td><code>unlock_view</code></td><td>That the purchase screen was opened, with the <code>reason</code> property: which of the two invites brought you there — the free mode's creation limit, or the evolution tree.</td></tr>
   <tr><td><code>purchase</code></td><td>That a purchase happened.</td></tr>
+  <tr><td><code>demo_cap_hit</code></td><td>That you hit the free mode's daily creation limit, with the <code>path</code> property: from which screen.</td></tr>
+  <tr><td><code>activity_create</code></td><td>That an activity was created, with <code>kind</code> (task or habit) and <code>path</code> (from which screen). <strong>Never</strong> its name or its contents.</td></tr>
+  <tr><td><code>week_active</code></td><td>Once a week, two numbers from 0 to 7: <code>active_days</code>, on how many days you completed something, and <code>goal_days</code>, on how many you reached your own daily goal. <strong>The counting happens on your device</strong> — only those two already-closed numbers leave it. No timeline of you is ever sent or stored.</td></tr>
+  <tr><td colspan="2">In addition, the events above that concern your account carry the <code>tier</code> property: whether you are on the free or the full mode. That alone — nothing else from your account.</td></tr>
 </table>
 <p>
   Along with it goes <strong>the date — the day only, never the time</strong> —
