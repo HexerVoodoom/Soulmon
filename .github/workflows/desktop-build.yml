@@ -77,11 +77,52 @@ jobs:
       # silencio) — o conserto e rodar `npm install` na maquina e commitar o lock.
       # O `desktop-release.yml` roda EXATAMENTE o mesmo comando, para o binario
       # publicado sair do mesmo lock que este build verificou.
+      # ── ESTE STEP ESTAVA FALTANDO, E DEIXOU O JOB VERMELHO POR 12 PUSHES ──
+      #
+      # Medido em 27/08 (`squad-alpha-runs/soulmon-02/ACHADO-desktop-build-vermelho.md`):
+      # este workflow falhou em 12 de 12 execucoes, de 26/08 16:43 em diante, e
+      # ninguem viu — o `ci.yml` e o `android-build.yml` ficam VERDES ao lado, e
+      # dois verdes com um vermelho no meio le-se como "esta tudo bem".
+      #
+      # A causa: o step de typecheck abaixo roda DENTRO de `desktop/`, e o
+      # `desktop/tsconfig.json` inclui `renderer/src/**/*.ts` — os `*.test.ts`
+      # JUNTO, que importam `vitest` — e alcanca `../src/utils/auth.ts`, que
+      # importa `firebase/app` e `firebase/auth`. Nenhum dos dois esta em
+      # `desktop/package.json`: eles vivem no `package.json` da RAIZ. Com apenas
+      # o `npm ci` de `desktop/`, o resolvedor nao tem onde achar, e o step
+      # nunca poderia passar:
+      #   renderer/src/navigationPolicy.test.ts(19,38): TS2307: Cannot find module 'vitest'
+      #   ../src/utils/auth.ts(36,12): TS2307: Cannot find module 'firebase/app'
+      #
+      # 🔴 POR QUE O GATE LOCAL NAO PEGAVA, que e a parte que interessa:
+      # o gate desta run roda `npx tsc -p desktop/tsconfig.json --noEmit` a
+      # partir da RAIZ, onde `node_modules/vitest` e `node_modules/firebase`
+      # existem e o resolvedor os encontra subindo a arvore. O CI rodava o
+      # mesmo typecheck de OUTRO diretorio de trabalho. Mesmo tsconfig, mesmo
+      # proposito, resultados opostos — o gate nao estava morto, estava MEDINDO
+      # OUTRA COISA. E a licao 12 (`LICOES-DE-METODO.md`) numa forma mais dificil
+      # de enxergar que a original: um gate morto ao menos fica vermelho sempre.
+      #
+      # O conserto e dar ao runner o mesmo que a maquina do dono tem. NAO e
+      # duplicar `vitest`/`firebase` em `desktop/package.json` (seria o footgun 9,
+      # dependencia declarada em dois lugares), nem excluir os `*.test.ts` do
+      # tsconfig (nao resolveria o `firebase`, que vem de `../src/utils/auth.ts`,
+      # e ainda tiraria os testes do typecheck).
+      - name: Install dependencies da RAIZ (o typecheck do renderer depende delas)
+        run: npm ci
+
       - name: Install dependencies (npm ci — build reproduzivel a partir do lock)
         working-directory: desktop
         run: npm ci
 
-      - name: Typecheck renderer
+      # Roda de dentro de `desktop/` DE PROPOSITO: aqui o `npx` pega o
+      # TypeScript do `desktop/package.json` (^5.6.3), enquanto o `ci.yml` roda
+      # o da raiz (6.0.3). A divergencia esta declarada no `ci.yml` e tem valor:
+      # aquele gate e o mais NOVO, e este e a rede para "passa no TypeScript
+      # novo e quebra no antigo". Trocar isto por um typecheck da raiz
+      # transformaria o step numa duplicata exata do `ci.yml` — e faria o
+      # comentario do `ci.yml` virar mentira.
+      - name: Typecheck renderer (com o TypeScript do proprio desktop)
         working-directory: desktop
         run: npx tsc --noEmit
 
