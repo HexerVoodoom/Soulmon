@@ -7,3 +7,7 @@ bubblewrap_build/
 
 # Artefatos de runs da SQUAD-Alpha - contem relatorios de seguranca; ficam so no disco
 squad-alpha-runs/
+
+# Artefatos locais de ferramenta (worktrees de agente, estado de sessao)
+.claude/worktrees/
+state/
