@@ -22,7 +22,17 @@
 
 /** Uma forma desenhada. Só metadado — o binário mora no Cache Storage. */
 export interface SpriteEntry {
-  /** URL do provedor (ou data URL, no caminho Gemini enquanto não houver republicação). */
+  /**
+   * URL do sprite — e hoje é **sempre `https://`**, nunca data URL. O
+   * Higgsfield devolve URL; o caminho Gemini devolve base64 e o SERVIDOR
+   * republica antes de responder (`functions/api/generate-sprite.js`,
+   * `republicar` → `/api/sprite-image?k=<token>`).
+   * ⚠️ Este campo dizia "ou data URL, no caminho Gemini enquanto não houver
+   * republicação". A republicação entrou; a ressalva ficou falsa.
+   * `isSafeSpriteUrl` continua aceitando `data:image/*` **por outro motivo** —
+   * é o formato de saída do Pixelador (`canvas.toDataURL`), que passa pela
+   * mesma guarda.
+   */
   url: string;
   formId: string;
   provider?: string;

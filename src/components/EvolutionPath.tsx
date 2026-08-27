@@ -44,6 +44,10 @@ import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } fro
    — esta página e o visor da Home (`CompanionHUD`). Hook duplicado com um
    número que tem gêmeo no CSS é como os dois lados divergem em silêncio. */
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
+/* `useIsOnline` já é o dono da leitura de rede neste app (o selo "SEM SINAL").
+   O card `OFFLINE` da spec (§2.2) precisa da MESMA resposta — um segundo
+   `navigator.onLine` aqui seria a cópia do footgun 9 na sua forma mais boba. */
+import { useIsOnline } from './ui/OfflineSeal';
 import { Icon } from './ui/Icon';
 import { playVisorTune } from '../utils/sounds';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
@@ -99,6 +103,17 @@ interface EvolutionPathProps {
   onSeenTune?: (formId: string) => void;
   /** "Tentar de novo" da forma atual. Ausente = o botao nao aparece. */
   onRetrySprite?: (formId: string) => void;
+  /**
+   * Formas com lote VIVO agora (`useSpriteGeneration().generating`). É o que
+   * torna o card `GERANDO` (§2.2) alcançável: sem esta prop ele existia na
+   * copy e em `cardState` e não aparecia em runtime — o mesmo defeito X-3 que
+   * o selo `NOVO` teve.
+   *
+   * **202 do servidor não chega aqui como falha**: `spriteRunner` trata
+   * `pending` como "outro aparelho está desenhando", sem gravar falha nenhuma
+   * — então a forma continua em `RESERVA`, nunca em erro (Invariante nº 1).
+   */
+  generatingSprites?: readonly string[];
 }
 
 const card: CSSProperties = {
@@ -171,6 +186,7 @@ export function EvolutionPath({
   onRevertVisor,
   onSeenTune,
   onRetrySprite,
+  generatingSprites,
 }: EvolutionPathProps) {
   const isPt = language === 'pt-BR';
   // Empate = mais de um atributo no topo. É quando o ritmo de cuidado decide.
@@ -254,11 +270,17 @@ export function EvolutionPath({
   // "Iminente" é contra `required` (4/5/5/6) — o número que os dois portões de
   // evolução manual leem — e NÃO contra `daysToEvolve`, que sobrevive só como
   // rótulo da barra desta página (`spec-geracao-incremental.md` §3.1).
+  /* O lote vivo e a rede: os dois eram LITERAIS aqui (`[]` e `true`), e por
+     isso `GERANDO` e `OFFLINE` — que existem na copy e em `cardState` desde o
+     começo — nunca podiam aparecer. Nenhum estado novo foi inventado; o que
+     faltava era a entrada verdadeira. */
+  const gerando = generatingSprites ?? [];
+  const online = useIsOnline();
   const estadoAtual = cardState(acervo, currentStageId, {
-    generating: [],
+    generating: gerando,
     imminent: pointsToEvolve(currentStageId, digivolutionSegments) <= 1,
     reachable: true,
-    online: true,
+    online,
     // X-3: o selo `NOVO` existia na copy e em `cardState`, mas era INALCANÇÁVEL
     // em runtime — ninguém passava `unseen`, e nada no save marcava "visto".
     unseen: acervo.tunedUnseen.includes(currentStageId),
@@ -379,6 +401,148 @@ export function EvolutionPath({
         ? `Falta${faltam === 1 ? '' : 'm'} ${faltam} dia${faltam === 1 ? '' : 's'} perfeito${faltam === 1 ? '' : 's'}.`
         : `${faltam} perfect day${faltam === 1 ? '' : 's'} to go.`);
 
+  /* ── O ESTADO DA ARTE, forma por forma (§2.2) ──────────────────────────────
+     Até aqui a página dizia o estado do sprite só da forma ATUAL. A spec põe o
+     estado em CADA card da árvore — é a superfície onde "quem meu bicho vai
+     ser" já mora, e a única que fala de falha (o visor não tem estado de erro,
+     §2.1).
+
+     `reachable` é a pergunta "esta forma já teve OCASIÃO?", e ela é literal:
+     tem sprite, tem falha gravada, está gerando agora, é a atual ou é a
+     próxima prevista. Sem isso, toda forma futura viraria `RESERVA` com um
+     "Tentar de novo" ao lado — e a UI estaria oferecendo gerar a árvore
+     inteira com um toque, que é exatamente a decisão do dono (geração
+     incremental) revertida pela tela (§2.2, `DISTANTE` sem botão). */
+  const teveOcasiao = (stageId: string, isCurrent: boolean, isForecast: boolean) =>
+    isCurrent || isForecast
+    || Boolean(acervo.sprites[stageId]) || Boolean(acervo.failures[stageId])
+    || gerando.includes(stageId);
+
+  const estadoDoNo = (stageId: string, isCurrent: boolean, isForecast: boolean): SpriteCardState =>
+    cardState(acervo, stageId, {
+      generating: gerando,
+      /* A véspera promove o "Tentar de novo" a botão de texto real, e só na
+         forma ATUAL e na próxima prevista — nas outras não há urgência a
+         comunicar. Contra `required` (`pointsToEvolve`), nunca contra o
+         `digivolutionSegmentsNeeded` desta página, que é rótulo de barra
+         (`daysToEvolve`) e dispararia num limiar que o jogo nunca alcança
+         antes de já ter evoluído (§3.1). */
+      imminent: (isCurrent || isForecast) && pointsToEvolve(currentStageId, digivolutionSegments) <= 1,
+      reachable: teveOcasiao(stageId, isCurrent, isForecast),
+      online,
+      unseen: acervo.tunedUnseen.includes(stageId),
+    });
+
+  const estadoTexto: CSSProperties = { ...sm2Hint, margin: '4px 0 0' };
+
+  /* Os 3 pontos do `GERANDO`, FORA da moldura do nó (§2.2) e quadrados, não
+     bolinhas — a regra do marcador de novidade deste projeto. Sob movimento
+     reduzido eles ficam estáticos (§6), e a animação reusa o `@keyframes pulse`
+     que o `index.css` já tem: nenhuma regra nova de CSS (footgun 1). */
+  const pontosPulsando = (
+    <span aria-hidden="true" style={{ display: 'inline-flex', gap: 4, marginLeft: 6, verticalAlign: 'middle' }}>
+      {[0, 1, 2].map(i => (
+        <span
+          key={i}
+          style={{
+            width: 5, height: 5, borderRadius: 2,
+            backgroundColor: 'var(--sm2-muted)',
+            animation: movimentoReduzido ? undefined : `pulse 1.4s ${i * 0.18}s ease-in-out infinite`,
+          }}
+        />
+      ))}
+    </span>
+  );
+
+  /**
+   * A linha de estado de um nó. `null` é a resposta da maioria — `PROPRIO` não
+   * diz nada, porque um card que anuncia normalidade é ruído.
+   *
+   * O "Tentar de novo" nasce de `canManualRetry` (teto de 3 por forma, cooldown
+   * de 60 s, terminais), nunca de "o card está em reserva": botão que sempre
+   * falha é pior que botão ausente.
+   */
+  const linhaDeEstado = (stageId: string, estado: SpriteCardState, hidden: boolean) => {
+    // O spoiler-guard esconde o NOME e a ARTE, não o fato de o Oráculo estar
+    // trabalhando — a posição do nó já está na tela, então uma frase de estado
+    // não entrega nada a mais. A exceção é `DISTANTE`: "Ainda não revelado"
+    // embaixo de um card que já diz "???" e "BLOQUEADA" é a mesma coisa dita
+    // três vezes.
+    if (hidden && estado === 'DISTANTE') return null;
+    /* "Tentar de novo" pede DUAS coisas, e a segunda é a que faltava: que algo
+       tenha sido TENTADO. `canManualRetry` responde `true` para uma forma
+       virgem (não há falha, não há teto, não há cooldown correndo) — e um
+       botão de retentativa numa forma que nunca partiu não é retentativa, é o
+       "gerar a árvore num toque" que o §2.2 proíbe. */
+    const podeRetentarNó = Boolean(onRetrySprite)
+      && Boolean(acervo.failures[stageId])
+      && canManualRetry(acervo, stageId);
+    const testid = `sm-estado-${stageId}`;
+    switch (estado) {
+      case 'PROPRIO':
+        return null;
+      case 'NOVO':
+        return <p style={estadoTexto} data-testid={testid}>{spriteText('new', language)}</p>;
+      case 'A_SINTONIZAR':
+        // O BOTÃO mora num lugar só — o card da forma atual, logo abaixo do
+        // visor. Aqui é só o mesmo recado, no nó a que ele pertence.
+        return <p style={estadoTexto} data-testid={testid}>{spriteText('tuneReady', language)}</p>;
+      case 'GERANDO':
+        return (
+          <p style={estadoTexto} data-testid={testid}>
+            {spriteText('drawing', language)}
+            {pontosPulsando}
+          </p>
+        );
+      case 'OFFLINE':
+        return <p style={estadoTexto} data-testid={testid}>{spriteText('offline', language)}</p>;
+      case 'DISTANTE':
+        return <p style={estadoTexto} data-testid={testid}>{spriteText('locked', language)}</p>;
+      case 'RESERVA_FINAL':
+        // Sem botão, de propósito, e o texto diz POR QUÊ: 402/409 indistinguível
+        // de escolha de arte é o pagante não saber que falhou (X1).
+        return <p style={estadoTexto} data-testid={testid} role="status">{spriteText('final', language)}</p>;
+      case 'RESERVA_VESPERA':
+        // Sem falha gravada, "ficou com o traço antigo" seria MENTIRA: nada
+        // ficou, o lote ainda nem partiu. Card mudo é a resposta certa —
+        // reserva não é erro, é o piso (Invariante nº 1).
+        if (!acervo.failures[stageId]) return null;
+        return (
+          <div data-testid={testid}>
+            <p style={estadoTexto}>{spriteText('kept', language)}</p>
+            {podeRetentarNó && (
+              <button
+                type="button"
+                onClick={() => onRetrySprite?.(stageId)}
+                style={{ ...sm2Button('ghost'), marginTop: 8, minHeight: 44, minWidth: 200 }}
+              >
+                {spriteText('retry', language)}
+              </button>
+            )}
+          </div>
+        );
+      case 'RESERVA':
+        // Link DISCRETO (§2.2) — mas com 44 px de alvo real, que é o que o §6
+        // cobra "mesmo sendo link de texto".
+        return podeRetentarNó ? (
+          <button
+            type="button"
+            data-testid={testid}
+            onClick={() => onRetrySprite?.(stageId)}
+            style={{
+              ...sm2Hint,
+              display: 'inline-flex', alignItems: 'center',
+              background: 'none', border: 'none', padding: '0 8px',
+              minHeight: 44, textDecoration: 'underline', cursor: 'pointer',
+              color: 'var(--sm2-primary-ink)',
+            }}
+          >
+            {spriteText('retry', language)}
+          </button>
+        ) : null;
+    }
+  };
+
   /**
    * Um nó do grafo: coluna vertical de nós ligados por uma linha.
    *
@@ -459,7 +623,14 @@ export function EvolutionPath({
             size={48}
             tone={isReached && !isCurrent ? hex : undefined}
             ring={isCurrent}
-            sprite={hidden ? undefined : getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined)}
+            /* O sprite PRÓPRIO desta forma quando ele já existe e já foi
+               adotado; senão a arte de reserva, que é o piso e nunca é erro
+               (Invariante nº 1). `displaySprite` é quem sabe a diferença —
+               nada de reperguntar `sprites[...]` aqui. */
+            sprite={hidden
+              ? undefined
+              : (displaySprite(acervo, stageId)?.url
+                 ?? getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined))}
             label={nodeLabel}
             title={hidden
               ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)')
@@ -523,6 +694,8 @@ export function EvolutionPath({
               border: '1px solid var(--sm2-line)', color: 'var(--sm2-muted)',
             })}
           </div>
+          {/* O estado da ARTE desta forma (§2.2). */}
+          {linhaDeEstado(stageId, estadoDoNo(stageId, isCurrent, isForecast), hidden)}
           {isPreviousStage && (
             <button
               type="button"
@@ -734,6 +907,26 @@ export function EvolutionPath({
           </div>
         )}
 
+        {/* ── RESERVA-FINAL (§2.2) ─────────────────────────────────────────
+            O teto desta forma acabou (409 `form-cap`) ou o da conta inteira
+            (402 `lifetime-cap`). **Sem botão**, e o texto diz por quê: um
+            "Tentar de novo" aqui é um botão que sempre falha, e um card mudo
+            deixa o pagante achando que a arte de reserva foi escolha de
+            estilo (X1 — Nielsen 1 e 9).
+
+            É a única superfície da forma ATUAL que fala de teto; a de credencial
+            (401/403) fica logo abaixo e NUNCA se sobrepõe a esta, porque
+            `avisoCredencial` só existe em `RESERVA`/`RESERVA_VESPERA`. */}
+        {estadoAtual === 'RESERVA_FINAL' && (
+          <div
+            style={{ ...card, width: '100%', maxWidth: 380, textAlign: 'center' }}
+            role="status"
+            data-testid="sm-sprite-final"
+          >
+            <p style={{ ...sm2Text, margin: 0 }}>{spriteText('final', language)}</p>
+          </div>
+        )}
+
         {/* ── A FALHA DE CREDENCIAL ─────────────────────────────
             A SITUACAO EM PALAVRAS, e so em palavras: nao ha cor, icone nem
             posicao carregando o recado sozinho (WCAG 1.4.1). `role="status"`
@@ -846,6 +1039,22 @@ export function EvolutionPath({
         <p style={{ ...sectionLabel, marginBottom: 10 }}>
           {isPt ? 'Linhas de evolução' : 'Evolution branches'}
         </p>
+
+        {/* UM anúncio por LOTE, no container (§6) — nunca um por card, senão um
+            empate triplo dispararia três anúncios. Os pontos de cada nó são
+            `aria-hidden`: quem fala é esta região. */}
+        <p style={soParaLeitor} aria-live="polite" data-testid="sm-gerando-anuncio">
+          {gerando.length > 0 ? spriteText('drawing', language) : ''}
+        </p>
+
+        {/* O empate, dito onde os cards estão (§2.2): "Seu ritmo ainda pode
+            decidir." Nenhum dos líderes é destacado como "o provável" —
+            destacar seria mentir sobre uma disputa que está aberta. */}
+        {isTie && (
+          <p style={{ ...sm2Text, marginBottom: 10 }} data-testid="sm-sprite-empate">
+            {spriteText('tie', language)}
+          </p>
+        )}
 
         {/* Seletor de galho — só os branches disponíveis (transição de arte). */}
         <div role="radiogroup" aria-label={isPt ? 'Linha de evolução' : 'Evolution branch'} style={{ display: 'flex', gap: 8, marginBottom: 20 }}>

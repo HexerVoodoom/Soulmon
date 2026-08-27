@@ -17,6 +17,8 @@ function fakeEnv() {
     DIGIAPP_SAVES: {
       get: async k => (store.has(k) ? store.get(k) : null),
       put: async (k, v) => { store.set(k, v); },
+      delete: async k => { store.delete(k); },
+      getWithMetadata: async (k) => ({ value: store.get(k) ?? null, metadata: null }),
     },
   };
   env._store = store;
@@ -139,8 +141,14 @@ describe('generate-sprite: o teto POR FORMA para antes de gastar', () => {
 
   it('a 4ª tentativa da MESMA forma é 409 sem chamar IA — e outra forma ainda gera', async () => {
     const env = fakeEnv();
+    // As três tentativas são RECUSAS de conteúdo, não sucessos, e isso não é
+    // detalhe de teste: sucesso escreve `sprite:img:<saveId>:<formId>`
+    // (dedupe do §5) e a 2ª chamada da mesma forma passa a ser acerto de cache
+    // com custo ZERO — nunca chega a três débitos. O caminho REAL para esgotar
+    // `perFormLifetime` é o que falha e cobra: a recusa de conteúdo.
     for (let i = 0; i < 3; i++) {
-      expect((await onRequestPost({ request: reqForma('mega-virus'), env })).status).toBe(200);
+      fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
+      expect((await onRequestPost({ request: reqForma('mega-virus'), env })).status).toBe(500);
     }
     expect(chamadasDeIA).toHaveLength(3);
 
@@ -168,15 +176,23 @@ describe('generate-sprite: o teto POR FORMA para antes de gastar', () => {
     expect(chamadasDeIA).toHaveLength(2);
     expect(JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiForms).toEqual({ rookie: 2 });
 
-    // Sobra 1 de 3: a próxima recusa NÃO pode refazer pela porta dos fundos.
+  });
+
+  it('com 2 de 3 gastas na forma, a recusa NÃO refaz pela porta dos fundos', async () => {
+    // Continuação do caso acima, em cenário próprio: a 2ª chamada de `rookie`
+    // ali viraria acerto de cache (a 1ª deu certo e escreveu `sprite:img:`), e
+    // o que se quer medir é o teto POR FORMA, não o dedupe. Forma virgem, com
+    // as 2 tentativas já gastas no registro.
+    const env = fakeEnv();
+    env._store.set(ENT_PREFIX + SAVE, JSON.stringify({ tier: 'paid', aiForms: { 'champion-data': 2 } }));
     fetch.mockImplementationOnce(async url => { chamadasDeIA.push(String(url)); return geminiRecusa(); });
-    const res2 = await onRequestPost({
-      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE, formId: 'rookie' }),
+    const res = await onRequestPost({
+      request: req({ prompt: 'com referências', promptFallback: 'sem referências', id: SAVE, formId: 'champion-data' }),
       env,
     });
-    expect(res2.status).toBe(409);
-    expect(chamadasDeIA).toHaveLength(3); // a 1ª aconteceu; a refeitura NÃO
-    expect(JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiForms.rookie).toBe(3);
+    expect(res.status).toBe(409);
+    expect(chamadasDeIA).toHaveLength(1); // a 1ª aconteceu; a refeitura NÃO
+    expect(JSON.parse(env._store.get(ENT_PREFIX + SAVE)).aiForms['champion-data']).toBe(3);
   });
 
   it('`formId` inventado é 400 e ZERO chamada de IA', async () => {

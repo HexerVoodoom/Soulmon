@@ -1976,6 +1976,52 @@ var CORS8 = {
 };
 var HF_BASE = "https://platform.higgsfield.ai";
 var GEMINI_MODEL = "gemini-2.5-flash-image";
+var CACHE_PREFIX = "sprite:img:";
+var LOCK_PREFIX = "sprite:lock:";
+var BLOB_PREFIX = "sprite:blob:";
+var LOCK_TTL_SECONDS = 120;
+var LOCK_RETRY_AFTER = 20;
+var MAX_BLOB_BYTES = 8 * 1024 * 1024;
+var cacheKey = /* @__PURE__ */ __name((saveId, formId) => `${CACHE_PREFIX}${saveId}:${formId}`, "cacheKey");
+var lockKey = /* @__PURE__ */ __name((saveId, formId) => `${LOCK_PREFIX}${saveId}:${formId}`, "lockKey");
+async function destravar(env, key) {
+  if (!key) return;
+  try {
+    await env.DIGIAPP_SAVES.delete(key);
+  } catch (err) {
+    console.error("generate-sprite: falha ao soltar o lock", err?.message);
+  }
+}
+__name(destravar, "destravar");
+async function republicar(env, request, image) {
+  const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
+  if (!m) return null;
+  const [, contentType, b64] = m;
+  let bytes;
+  try {
+    const bin = atob(b64);
+    if (bin.length > MAX_BLOB_BYTES) {
+      console.error(`generate-sprite: imagem republicada grande demais (${bin.length} bytes)`);
+      return null;
+    }
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch (err) {
+    console.error("generate-sprite: base64 ileg\xEDvel do provedor", err?.message);
+    return null;
+  }
+  const token = crypto.randomUUID().replace(/-/g, "");
+  try {
+    await env.DIGIAPP_SAVES.put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
+      metadata: { contentType }
+    });
+  } catch (err) {
+    console.error("generate-sprite: falha ao republicar a imagem", err?.message);
+    return null;
+  }
+  return `${new URL(request.url).origin}/api/sprite-image?k=${token}`;
+}
+__name(republicar, "republicar");
 async function onRequestOptions8() {
   return new Response(null, { headers: CORS8 });
 }
@@ -2106,6 +2152,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
 }
 __name(generateWithProviders, "generateWithProviders");
 async function onRequestPost5({ request, env }) {
+  let lock = null;
   try {
     const { prompt, promptFallback, referenceImageUrls, id, formId } = await request.json();
     if (!prompt || typeof prompt !== "string") {
@@ -2115,6 +2162,57 @@ async function onRequestPost5({ request, env }) {
     if (!tier.ok) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS8 });
     }
+    if (formId !== null && formId !== void 0) {
+      if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) {
+        return Response.json({ error: "invalid-form-id" }, { status: 400, headers: CORS8 });
+      }
+    }
+    const auth = await authorizeSaveAccess(request, env, id);
+    if (!auth.ok) {
+      return Response.json(
+        { error: auth.reason },
+        { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS8 }
+      );
+    }
+    if (typeof formId === "string" && formId.length > 0) {
+      let pronta = null;
+      let ocupada = null;
+      try {
+        pronta = await env.DIGIAPP_SAVES.get(cacheKey(id, formId));
+        ocupada = pronta ? null : await env.DIGIAPP_SAVES.get(lockKey(id, formId));
+      } catch (err) {
+        console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err?.message);
+        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS8 });
+      }
+      if (pronta) {
+        let guardada = null;
+        try {
+          guardada = JSON.parse(pronta);
+        } catch {
+          guardada = null;
+        }
+        if (guardada?.image) {
+          return Response.json(
+            { image: guardada.image, provider: guardada.provider, cached: true },
+            { headers: CORS8 }
+          );
+        }
+      }
+      if (ocupada) {
+        return Response.json(
+          { pending: true, retryAfter: LOCK_RETRY_AFTER },
+          { status: 202, headers: CORS8 }
+        );
+      }
+      lock = lockKey(id, formId);
+      try {
+        await env.DIGIAPP_SAVES.put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
+      } catch (err) {
+        console.error("generate-sprite: falha ao gravar o lock, recusando", err?.message);
+        lock = null;
+        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS8 });
+      }
+    }
     const gate = await guardAiRequest(request, env, "sprite", id, 1, formId);
     if (!gate.ok) {
       return Response.json(
@@ -2122,9 +2220,30 @@ async function onRequestPost5({ request, env }) {
         { status: gate.status, headers: CORS8 }
       );
     }
+    const responder = /* @__PURE__ */ __name(async (out) => {
+      let image = out.image;
+      if (typeof image === "string" && image.startsWith("data:")) {
+        const republicada = await republicar(env, request, image);
+        if (!republicada) {
+          return Response.json({ error: "image republish failed" }, { status: 502, headers: CORS8 });
+        }
+        image = republicada;
+      }
+      if (typeof formId === "string" && formId.length > 0) {
+        try {
+          await env.DIGIAPP_SAVES.put(
+            cacheKey(id, formId),
+            JSON.stringify({ image, provider: out.provider, at: Date.now() })
+          );
+        } catch (err) {
+          console.error("generate-sprite: falha ao cachear o resultado", err?.message);
+        }
+      }
+      return Response.json({ ...out, image }, { headers: CORS8 });
+    }, "responder");
     try {
       const out = await generateWithProviders(env, prompt, referenceImageUrls);
-      return Response.json(out, { headers: CORS8 });
+      return await responder(out);
     } catch (err) {
       const canRetry = typeof promptFallback === "string" && promptFallback.length > 0 && promptFallback !== prompt;
       if (!canRetry || !isRefusal(err)) {
@@ -2144,7 +2263,7 @@ async function onRequestPost5({ request, env }) {
       console.warn("Prompt com refer\xEAncias recusado, refazendo sem elas:", err.message);
       try {
         const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
-        return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS8 });
+        return await responder({ ...out, usedFallbackPrompt: true, refusal: err.message });
       } catch (err2) {
         if (!isRefusal(err2)) await extra.release(`falha do provedor na refeitura: ${err2.message}`);
         throw err2;
@@ -2153,6 +2272,8 @@ async function onRequestPost5({ request, env }) {
   } catch (err) {
     console.error("generate-sprite error:", err);
     return Response.json({ error: "internal error" }, { status: 500, headers: CORS8 });
+  } finally {
+    await destravar(env, lock);
   }
 }
 __name(onRequestPost5, "onRequestPost");
@@ -2511,6 +2632,42 @@ async function onRequest4({ request, env }) {
 }
 __name(onRequest4, "onRequest");
 
+// api/sprite-image.js
+var IMMUTABLE = "public, max-age=31536000, immutable";
+var TOKEN = /^[0-9a-f]{32}$/;
+async function onRequestGet4({ request, env }) {
+  const token = new URL(request.url).searchParams.get("k") || "";
+  if (!TOKEN.test(token)) {
+    return Response.json({ error: "invalid token" }, { status: 400 });
+  }
+  if (!env?.DIGIAPP_SAVES) {
+    return Response.json({ error: "storage-not-bound" }, { status: 503 });
+  }
+  let found;
+  try {
+    found = await env.DIGIAPP_SAVES.getWithMetadata(`sprite:blob:${token}`, "arrayBuffer");
+  } catch (err) {
+    console.error("sprite-image: falha ao ler o blob", err?.message);
+    return Response.json({ error: "internal error" }, { status: 500 });
+  }
+  if (!found?.value) {
+    return Response.json({ error: "not found" }, { status: 404 });
+  }
+  const declarado = found.metadata?.contentType;
+  const contentType = typeof declarado === "string" && /^image\/[a-z0-9.+-]+$/i.test(declarado) ? declarado : "image/png";
+  return new Response(found.value, {
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": IMMUTABLE,
+      // O conteúdo é imutável por token; nada aqui deve ser interpretado.
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+}
+__name(onRequestGet4, "onRequestGet");
+
 // api/_pushTargets.js
 var PUSH_HOST_SUFFIXES = [
   // `fcm.googleapis.com`, NÃO `googleapis.com`: o sufixo largo aceitava
@@ -2755,7 +2912,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-GyNUFR/functionsRoutes-0.28874115189211946.mjs
+// ../.wrangler/tmp/pages-rm8oQS/functionsRoutes-0.9826195923443279.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -2889,6 +3046,13 @@ var routes = [
     method: "OPTIONS",
     middlewares: [],
     modules: [onRequestOptions10]
+  },
+  {
+    routePath: "/api/sprite-image",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet4]
   },
   {
     routePath: "/api/subscribe",

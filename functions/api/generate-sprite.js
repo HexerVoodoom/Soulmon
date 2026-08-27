@@ -12,11 +12,39 @@
 // mesma requisição refaz sozinha com o fallback. Erro que não é recusa (timeout,
 // 5xx, sem crédito) NÃO refaz — repetir ali só dobra o custo sem mudar nada.
 //
-// POST { prompt, promptFallback?, referenceImageUrls?: string[] }
-//   → { image: <url|dataURL>, usedFallbackPrompt?: true, refusal?: <motivo> }
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTRATO DA ROTA (é o que o `alpha-frontend` implementa; caminho feliz não é
+// contrato — `custo-geracao-sprite.md` §5, `spec-geracao-incremental.md` §2.2).
+//
+//   POST /api/generate-sprite
+//   corpo: { prompt, promptFallback?, referenceImageUrls?: string[],
+//            id: <saveId>, formId?: <uma das 11 formas> }
+//   header: Authorization: Bearer <token Firebase>  (via `aiFetch`)
+//
+// | HTTP | corpo                                            | o cliente faz |
+// |------|--------------------------------------------------|---------------|
+// | 200  | `{ image, provider?, cached? }`                   | troca a reserva pelo próprio |
+// | 202  | `{ pending: true, retryAfter: 20 }`              | **não é erro** — fica na reserva, card `GERANDO`, repergunta |
+// | 400  | `{ error: 'prompt required' \| 'invalid-form-id' \| 'missing-save-id' }` | bug de cliente; não retenta |
+// | 401  | `{ error: 'unauthenticated' }`                    | renova token e retenta |
+// | 402  | `{ error: 'paid-tier-required' }`                 | não gera: conta não é paga |
+// | 402  | `{ error: 'sprite-lifetime-cap', message }`       | **para para sempre** nesta conta ⇒ `RESERVA-FINAL`, sem botão |
+// | 403  | `{ error: 'forbidden' }`                          | `SAVE_ID` errado; `reconcileSaveId`, nunca retentar |
+// | 409  | `{ error: 'sprite-form-cap', message }`           | **só ESTA forma** esgotou as 3 ⇒ `RESERVA-FINAL` nela; as outras 10 seguem |
+// | 429  | `{ error: 'ai-daily-limit', message }`            | retenta amanhã, não hoje |
+// | 503  | `{ error: 'ai-monthly-budget-reached' \| 'ai-daily-budget-reached' \| 'ai-quota-unavailable' \| 'tier-unavailable' \| 'image generation not configured…' }` | reserva, em silêncio |
+// | 500  | `{ error: 'internal error' }`                     | conta como tentativa (retentativa com backoff) |
+//
+// **`image` é SEMPRE `https://…`, nunca `data:`.** O Higgsfield já devolve URL;
+// o fallback Gemini devolve base64, e nesse caminho o servidor REPUBLICA a
+// imagem antes de responder (ver `republicar`). Data URL de 256×256 × 11 formas
+// no `GameState` vai para o `localStorage` (cota compartilhada com o DigiApp) e
+// para a KV a cada save — já estourou uma vez neste projeto.
+// ─────────────────────────────────────────────────────────────────────────────
 
-import { guardAiRequest } from './_aiGuard.js';
+import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { requirePaidTier } from './_entitlements.js';
+import { authorizeSaveAccess } from './_auth.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +54,96 @@ const CORS = {
 
 const HF_BASE = 'https://platform.higgsfield.ai';
 const GEMINI_MODEL = 'gemini-2.5-flash-image';
+
+// ── Dedupe multi-device (`custo-geracao-sprite.md` §5) ──────────────────────
+//
+// Dois aparelhos no mesmo `saveId` não veem o estado um do outro: qualquer
+// dedupe de CLIENTE é um dedupe que não dedupa. Duas chaves, e é o servidor que
+// decide — mesma tese do `adr-conta-e-save.md`.
+//
+//  - **resultado**, sem TTL: acerto devolve a URL com custo ZERO. É isto que
+//    faz o segundo aparelho, a reinstalação, o Steam e toda **re-subida para uma
+//    forma já gerada** (o caminho do `ultra` obriga a cair e re-subir,
+//    `spec-geracao-incremental.md` §3.4) não cobrarem nada.
+//  - **lock**, TTL 120 s: ocupado ⇒ 202. 120 porque o poll do Higgsfield vai a
+//    ~80 s — lock mais curto que a geração deixa dois aparelhos gerarem em
+//    paralelo, e lock eterno tranca a forma para sempre depois de um crash.
+//
+// **Corrida de lock aceita e declarada**: a KV não tem compare-and-swap, então
+// dois `put` no mesmo milissegundo passam os dois. O dano é UMA geração
+// duplicada num evento raríssimo, e a chave de resultado torna a segunda
+// escrita inofensiva. Fechar isso exigiria Durable Object — a mesma peça, e a
+// mesma recusa, do `adr-conta-e-save.md` §3.
+const CACHE_PREFIX = 'sprite:img:';
+const LOCK_PREFIX = 'sprite:lock:';
+/** Binário republicado do caminho Gemini. Chave por TOKEN aleatório, não por
+ *  saveId: o `saveId` é SHA-256 de e-mail (derivável por quem souber o e-mail),
+ *  e a URL vai parar num `<img src>` que não pode mandar `Authorization`. URL
+ *  de capacidade: quem não tem o token não acha. */
+const BLOB_PREFIX = 'sprite:blob:';
+const LOCK_TTL_SECONDS = 120;
+const LOCK_RETRY_AFTER = 20;
+/** Teto de sanidade do republicado. O valor de KV vai a 25 MiB; um sprite não
+ *  chega perto, e blob absurdo é sinal de resposta que não é imagem. */
+const MAX_BLOB_BYTES = 8 * 1024 * 1024;
+
+const cacheKey = (saveId, formId) => `${CACHE_PREFIX}${saveId}:${formId}`;
+const lockKey = (saveId, formId) => `${LOCK_PREFIX}${saveId}:${formId}`;
+
+/** Apagar o lock nunca pode derrubar a resposta: no pior caso ele expira em
+ *  120 s sozinho, e é para isso que o TTL existe. */
+async function destravar(env, key) {
+  if (!key) return;
+  try {
+    await env.DIGIAPP_SAVES.delete(key);
+  } catch (err) {
+    console.error('generate-sprite: falha ao soltar o lock', err?.message);
+  }
+}
+
+/**
+ * Republica uma data URL no nosso armazenamento e devolve uma URL `https://`.
+ *
+ * **Por que é obrigatório e não otimização:** o contrato desta rota é que
+ * `image` vira URL no `GameState`, que vai para o `localStorage` E para a KV a
+ * cada save (debounce de 3 s). Base64 ali estoura a cota — já aconteceu neste
+ * projeto. O Higgsfield já devolve URL; o caminho Gemini é o único que produz
+ * `data:`, e é ele que passa por aqui.
+ *
+ * Devolve `null` quando não deu para republicar. **Não lança de propósito:**
+ * lançar cairia no `catch` que chama `release`, devolvendo uma cota que o
+ * provedor já cobrou de verdade.
+ */
+async function republicar(env, request, image) {
+  const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
+  if (!m) return null;
+  const [, contentType, b64] = m;
+  let bytes;
+  try {
+    const bin = atob(b64);
+    if (bin.length > MAX_BLOB_BYTES) {
+      console.error(`generate-sprite: imagem republicada grande demais (${bin.length} bytes)`);
+      return null;
+    }
+    bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  } catch (err) {
+    console.error('generate-sprite: base64 ilegível do provedor', err?.message);
+    return null;
+  }
+  const token = crypto.randomUUID().replace(/-/g, '');
+  try {
+    // Sem TTL: é arte PAGA. Um sprite que some meses depois some em silêncio —
+    // o visor não tem estado de erro por spec (§2.1), então ninguém veria.
+    await env.DIGIAPP_SAVES.put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
+      metadata: { contentType },
+    });
+  } catch (err) {
+    console.error('generate-sprite: falha ao republicar a imagem', err?.message);
+    return null;
+  }
+  return `${new URL(request.url).origin}/api/sprite-image?k=${token}`;
+}
 
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
@@ -177,6 +295,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
 }
 
 export async function onRequestPost({ request, env }) {
+  let lock = null;
   try {
     const { prompt, promptFallback, referenceImageUrls, id, formId } = await request.json();
     if (!prompt || typeof prompt !== 'string') {
@@ -196,6 +315,83 @@ export async function onRequestPost({ request, env }) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS });
     }
 
+    // O dedupe (§5) roda ENTRE os dois portões, e a ordem não é arbitrária:
+    //
+    //  - depois de `requirePaidTier` **e da autorização**, porque a chave de
+    //    cache é derivada do `saveId`, que é SHA-256 de e-mail — público, para
+    //    quem souber o e-mail. Consultar o acervo de alguém antes de provar quem
+    //    é seria vazar o sprite pago de terceiro. `guardAiRequest` autoriza de
+    //    novo lá embaixo (leitura idempotente); autorizar duas vezes é barato,
+    //    ler o cache sem autorizar não é.
+    //  - **ANTES de `guardAiRequest`**, porque acerto de cache tem de custar
+    //    ZERO. Debitar-e-devolver daria 402 `sprite-lifetime-cap` para a conta
+    //    que já estourou o teto e só queria de volta a arte que já pagou —
+    //    exatamente o segundo aparelho / a reinstalação / o Steam.
+    //
+    // `formId` é validado aqui e não só no `_aiGuard`: ele entra na CHAVE, e
+    // texto livre em chave de KV é o cliente escolhendo onde escrevemos.
+    if (formId !== null && formId !== undefined) {
+      if (typeof formId !== 'string' || !VALID_FORM_ID.test(formId)) {
+        return Response.json({ error: 'invalid-form-id' }, { status: 400, headers: CORS });
+      }
+    }
+    const auth = await authorizeSaveAccess(request, env, id);
+    if (!auth.ok) {
+      return Response.json(
+        { error: auth.reason },
+        { status: auth.reason === 'forbidden' ? 403 : 401, headers: CORS },
+      );
+    }
+
+    if (typeof formId === 'string' && formId.length > 0) {
+      let pronta = null;
+      let ocupada = null;
+      try {
+        pronta = await env.DIGIAPP_SAVES.get(cacheKey(id, formId));
+        ocupada = pronta ? null : await env.DIGIAPP_SAVES.get(lockKey(id, formId));
+      } catch (err) {
+        // Não deu para ler o dedupe → seguir gerando duplicaria a cobrança.
+        // FAIL-CLOSED, mesma regra do `_aiGuard`.
+        console.error('generate-sprite: dedupe ilegível, recusando', err?.message);
+        return Response.json({ error: 'ai-quota-unavailable' }, { status: 503, headers: CORS });
+      }
+      if (pronta) {
+        let guardada = null;
+        try {
+          guardada = JSON.parse(pronta);
+        } catch {
+          guardada = null;
+        }
+        if (guardada?.image) {
+          return Response.json(
+            { image: guardada.image, provider: guardada.provider, cached: true },
+            { headers: CORS },
+          );
+        }
+        // Entrada corrompida não pode trancar a forma para sempre: cai adiante
+        // e gera de novo, pagando o teto como qualquer tentativa.
+      }
+      if (ocupada) {
+        // 202 **não é erro** — o outro aparelho está gerando esta mesma forma.
+        // O visor fica na reserva (Invariante nº 1) e o card fica `GERANDO`.
+        return Response.json(
+          { pending: true, retryAfter: LOCK_RETRY_AFTER },
+          { status: 202, headers: CORS },
+        );
+      }
+      lock = lockKey(id, formId);
+      try {
+        await env.DIGIAPP_SAVES.put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
+      } catch (err) {
+        // Lock que não gravou é dedupe que não dedupa — e o próximo aparelho
+        // geraria a mesma forma pagando de novo. Numa rota que queima dinheiro,
+        // a dúvida nega.
+        console.error('generate-sprite: falha ao gravar o lock, recusando', err?.message);
+        lock = null;
+        return Response.json({ error: 'ai-quota-unavailable' }, { status: 503, headers: CORS });
+      }
+    }
+
     // A rota mais cara do app, e a única em que o PROMPT vem do cliente: sem
     // portão, era geração de imagem ilimitada e livre na nossa conta.
     // `formId` liga o teto POR FORMA (`perFormLifetime`, _aiGuard.js). É ele o
@@ -210,10 +406,42 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
+    /**
+     * Único ponto de saída bem-sucedido: republica se vier `data:`, guarda no
+     * cache e responde. Escrito uma vez porque são DOIS caminhos de sucesso (a
+     * 1ª tentativa e a refeitura pelo `promptFallback`) — dois blocos aqui
+     * seriam a mesma regra em duas cópias, e uma delas esqueceria de cachear.
+     */
+    const responder = async out => {
+      let image = out.image;
+      if (typeof image === 'string' && image.startsWith('data:')) {
+        const republicada = await republicar(env, request, image);
+        if (!republicada) {
+          // Base64 NUNCA chega ao cliente. Sem republicação não há resposta —
+          // e a cota fica debitada, porque o provedor gerou e cobrou.
+          return Response.json({ error: 'image republish failed' }, { status: 502, headers: CORS });
+        }
+        image = republicada;
+      }
+      if (typeof formId === 'string' && formId.length > 0) {
+        try {
+          await env.DIGIAPP_SAVES.put(
+            cacheKey(id, formId),
+            JSON.stringify({ image, provider: out.provider, at: Date.now() }),
+          );
+        } catch (err) {
+          // Cache que não gravou custa uma regeração futura, não a resposta de
+          // agora. O jogador recebe a arte que acabou de pagar.
+          console.error('generate-sprite: falha ao cachear o resultado', err?.message);
+        }
+      }
+      return Response.json({ ...out, image }, { headers: CORS });
+    };
+
     // 1ª tentativa: SEMPRE o prompt com as referências de gênero.
     try {
       const out = await generateWithProviders(env, prompt, referenceImageUrls);
-      return Response.json(out, { headers: CORS });
+      return await responder(out);
     } catch (err) {
       const canRetry =
         typeof promptFallback === 'string' && promptFallback.length > 0 && promptFallback !== prompt;
@@ -246,7 +474,7 @@ export async function onRequestPost({ request, env }) {
       console.warn('Prompt com referências recusado, refazendo sem elas:', err.message);
       try {
         const out = await generateWithProviders(env, promptFallback, referenceImageUrls);
-        return Response.json({ ...out, usedFallbackPrompt: true, refusal: err.message }, { headers: CORS });
+        return await responder({ ...out, usedFallbackPrompt: true, refusal: err.message });
       } catch (err2) {
         // Mesma regra da 1ª tentativa, aplicada à unidade EXTRA. A unidade da 1ª
         // segue debitada: aquela foi uma recusa de conteúdo, e recusa custa.
@@ -257,5 +485,10 @@ export async function onRequestPost({ request, env }) {
   } catch (err) {
     console.error('generate-sprite error:', err);
     return Response.json({ error: 'internal error' }, { status: 500, headers: CORS });
+  } finally {
+    // Sempre, inclusive nos caminhos de recusa de teto e de erro. Lock que
+    // sobrevive a uma falha faz o próximo pedido tomar 202 por 120 s — e a
+    // retentativa automática do cliente (backoff de 60 s) cairia dentro dele.
+    await destravar(env, lock);
   }
 }

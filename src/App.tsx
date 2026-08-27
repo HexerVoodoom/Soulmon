@@ -4397,6 +4397,9 @@ export default function App() {
               onRetrySprite={handleRetrySprite}
               onRevertVisor={handleRevertVisor}
               onSeenTune={handleSeenTune}
+              // O lote VIVO: sem esta prop o card `GERANDO` (§2.2) existia na
+              // copy e em `cardState` e nunca aparecia em runtime.
+              generatingSprites={spriteGen.generating}
               forecastBranch={resolveBranch(
                 { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
                 carePatternReading,

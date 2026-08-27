@@ -27,6 +27,8 @@ function fakeEnv() {
     DIGIAPP_SAVES: {
       get: async k => (store.has(k) ? store.get(k) : null),
       put: async (k, v) => { store.set(k, v); },
+      delete: async k => { store.delete(k); },
+      getWithMetadata: async (k) => ({ value: store.get(k) ?? null, metadata: null }),
     },
   };
   env._store = store;
@@ -96,8 +98,13 @@ describe('X-1: a unidade reservada volta quando o provedor falha', () => {
     expect((await onRequestPost({ request: req(), env })).status).toBe(200);
     expect(vitalicio(env)).toBe(1);
 
+    // OUTRA forma de propósito: repetir `FORM` cairia no dedupe do §5
+    // (`sprite:img:<saveId>:<formId>` escrito pelo sucesso acima) e devolveria
+    // 200 `cached` sem nem chamar o provedor — o que este caso mede é a
+    // devolução, não o cache.
     responderCom(gemini500);
-    expect((await onRequestPost({ request: req(), env })).status).toBe(500);
+    const outra = req({ prompt: 'um bicho fofo', id: SAVE, formId: 'ultimate-vaccine' });
+    expect((await onRequestPost({ request: outra, env })).status).toBe(500);
 
     expect(vitalicio(env), 'a geração que DEU certo continua cobrada').toBe(1);
     expect(naForma(env)).toBe(1);

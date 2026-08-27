@@ -24,6 +24,8 @@ function fakeEnv({ tier, kv = true, quebrado = false } = {}) {
         return store.has(k) ? store.get(k) : null;
       },
       put: async (k, v) => { store.set(k, v); },
+      delete: async k => { store.delete(k); },
+      getWithMetadata: async (k) => ({ value: store.get(k) ?? null, metadata: null }),
     };
   }
   return env;
@@ -56,7 +58,12 @@ describe('generate-sprite: só quem paga gera', () => {
   it('tier PAGO gera (o portão não pode trancar quem pagou)', async () => {
     const res = await onRequestPost({ request: req(), env: fakeEnv({ tier: 'paid' }) });
     expect(res.status).toBe(200);
-    expect((await res.json()).image).toMatch(/^data:image\/png;base64,/);
+    // O Gemini devolve base64, e base64 NUNCA chega ao cliente: o servidor
+    // republica e responde uma URL. Data URL × 11 formas no `GameState` vai
+    // para o `localStorage` e para a KV a cada save — já estourou uma vez.
+    expect((await res.json()).image).toMatch(
+      /^https:\/\/soulmon\.test\/api\/sprite-image\?k=[0-9a-f]{32}$/,
+    );
     expect(chamadasDeIA).toHaveLength(1);
   });
 
