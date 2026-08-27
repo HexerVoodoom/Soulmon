@@ -6717,6 +6717,14 @@ button.sm-px-node {
   box-sizing: border-box;
   padding: 16px 16px 0;
   border-radius: var(--sm2-radius-lg);
+  /* Anel de cobre do CORPO inteiro (27/08/2026, pedido do dono: "quero esses
+     elementos no mesmo box do soulmon, nesse retângulo com bordas que ele
+     fica"). Até aqui só o `.sm2-viewport` (a tela, lá dentro) tinha borda —
+     o corpo era só sombra, sem contorno, e por isso Vida/Energia e o deck
+     pareciam morar FORA do "box" mesmo já estando dentro do `.sm2-device`.
+     Mesmo token de cor do anel do visor (`--sm2-viewport-ring`), pra ler
+     como UMA peça (aparelho + tela), não dois objetos empilhados. */
+  border: 3px solid var(--sm2-viewport-ring);
   background-color: var(--sm2-surface);
   /* `--sm2-device-photo` (27/08/2026, CompanionHUD.tsx): o fundo pintado que
      o dono forneceu, ATRÁS dos dois gradientes de material do bisel — eles
@@ -6952,18 +6960,27 @@ button.sm-px-node {
    INTEIRO (2 device px = 1 pixel de origem na escala 2:1) somado a um degrau
    de brilho. Nada é redimensionado, o serrilhado fica intacto, e com o
    `steps(2, end)` que o CompanionHUD aplica só existem dois quadros. */
-/* `--sm2-blink` é MULTIPLICADO ao filtro base pelo `style.filter` inline do
-   CompanionHUD (`brightness(var(--sm2-blink,1))` no fim da cadeia) — nunca
-   `filter:` aqui dentro. Animar `filter:` diretamente SUBSTITUI o valor
-   inteiro da propriedade pela duração da animação: o drop-shadow da aura e o
-   brightness de humor (`getCompanionFilter`) desapareciam e voltavam a cada
-   piscada (2,6–7,8s, nos DOIS temas/plataformas), lido como o bicho
-   "piscando" de claro pra escuro sem relação com o resto — reportado pelo
-   dono em 27/08/2026. A variável some do DOM quando `isBlinking` volta a
-   `false` (o `filter` some do estilo inline), então nunca fica presa em .86. */
+/* SÓ `transform` aqui — nunca `filter`. Duas rodadas do mesmo footgun em
+   27/08/2026:
+   1ª: a keyframe animava `filter:` direto, e animar `filter` SUBSTITUI o
+      valor inteiro da propriedade pela duração da animação — o drop-shadow
+      da aura e o brightness de humor (`getCompanionFilter`) desapareciam e
+      voltavam a cada piscada, lido como o bicho "piscando" sem relação com
+      o resto (reportado pelo dono).
+   2ª: o conserto trocou para uma custom property (`--sm2-blink`, animada
+      aqui e multiplicada no `style.filter` inline via `brightness(var(...))`)
+      — e isso NÃO FUNCIONA sem `@property` registrado (o navegador não sabe
+      interpolar/aplicar um valor de tipo desconhecido vindo de `@keyframes`
+      numa custom property; sem registro, o `var()` nunca muda). O dono
+      reportou "continua flickando" e a medição (`getComputedStyle` durante a
+      animação) confirmou: o valor nunca saía de 1.
+   O degrau de brilho agora é decidido em JS (`isBlinking`, já existe como
+   estado) e entra na MESMA string que `getCompanionFilter()` monta —
+   `filter` nunca é tocado por uma `animation`, então nunca há substituição
+   nem dependência de suporte a custom property animada. */
 @keyframes sm2-pet-blink {
-  0%, 100% { transform: translateY(0); --sm2-blink: 1; }
-  40%, 60% { transform: translateY(2px); --sm2-blink: .86; }
+  0%, 100% { transform: translateY(0); }
+  40%, 60% { transform: translateY(2px); }
 }
 @keyframes sm2-pet-greet {
   0%   { transform: translateY(0); }

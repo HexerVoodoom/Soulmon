@@ -836,16 +836,26 @@ export const CompanionHUD = memo(function CompanionHUD({
      Implementado: `filter` CSS de verdade, inline (que é o único caminho
      confiável aqui). É glow FORA da silhueta — não reamostra pixel nenhum,
      então não conflita com a regra do visor. */
-  const getCompanionFilter = (): string => {
+  /* O degrau de brilho da PISCADA entra AQUI, como texto, nunca como
+     `animation` CSS separada tocando `filter` — ver a nota grande em
+     `sm2-pet-blink`, index.css. Duas tentativas anteriores (animar `filter`
+     direto, depois uma custom property animada) as duas apagavam ou nunca
+     aplicavam o resto do filtro (aura, humor). Isto aqui é só JS: `isBlinking`
+     já é estado do componente, então o valor final de `filter` está sempre
+     completo e nunca é substituído por baixo dos panos por uma animação. */
+  const getCompanionFilter = (isBlinking: boolean): string => {
     const auraColor = getBranchAuraColor();
-    switch (companionMood) {
-      case 'happy':
-        return `brightness(1.1) drop-shadow(0 0 12px ${auraColor})`;
-      case 'tired':
-        return 'brightness(0.75)';
-      default:
-        return `drop-shadow(0 0 8px ${auraColor})`;
-    }
+    const base = (() => {
+      switch (companionMood) {
+        case 'happy':
+          return `brightness(1.1) drop-shadow(0 0 12px ${auraColor})`;
+        case 'tired':
+          return 'brightness(0.75)';
+        default:
+          return `drop-shadow(0 0 8px ${auraColor})`;
+      }
+    })();
+    return isBlinking ? `${base} brightness(.86)` : base;
   };
 
 
@@ -1205,13 +1215,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
-                    /* `brightness(var(--sm2-blink,1))` no FIM da cadeia: a
-                       piscada (`sm2-pet-blink`, index.css) anima só essa
-                       variável, nunca `filter:` inteiro — senão ela substitui
-                       o drop-shadow/humor de `getCompanionFilter()` pela
-                       duração da animação e o bicho parece apagar e reacender
-                       a cada 2,6–7,8s. */
-                    filter: `${getCompanionFilter()} brightness(var(--sm2-blink,1))`,
+                    /* `isBlinking` entra AQUI, em JS — nunca via `animation`
+                       CSS separada tocando `filter` (ver a nota grande em
+                       `getCompanionFilter` e em `sm2-pet-blink`, index.css).
+                       Duas tentativas anteriores erraram: animar `filter`
+                       direto apagava o drop-shadow/humor a cada piscada; uma
+                       custom property animada nunca aplicava (precisa de
+                       `@property` registrado, que este projeto não tem). */
+                    filter: getCompanionFilter(isBlinking),
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
                     /* Prioridade: o que o USUÁRIO acabou de fazer vence o que o
