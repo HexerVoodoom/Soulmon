@@ -1993,21 +1993,9 @@ async function destravar(env, key) {
   }
 }
 __name(destravar, "destravar");
-async function republicar(env, request, image) {
-  const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
-  if (!m) return null;
-  const [, contentType, b64] = m;
-  let bytes;
-  try {
-    const bin = atob(b64);
-    if (bin.length > MAX_BLOB_BYTES) {
-      console.error(`generate-sprite: imagem republicada grande demais (${bin.length} bytes)`);
-      return null;
-    }
-    bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  } catch (err) {
-    console.error("generate-sprite: base64 ileg\xEDvel do provedor", err?.message);
+async function guardarBlob(env, request, bytes, contentType) {
+  if (bytes.length > MAX_BLOB_BYTES) {
+    console.error(`generate-sprite: imagem republicada grande demais (${bytes.length} bytes)`);
     return null;
   }
   const token = crypto.randomUUID().replace(/-/g, "");
@@ -2020,6 +2008,47 @@ async function republicar(env, request, image) {
     return null;
   }
   return `${new URL(request.url).origin}/api/sprite-image?k=${token}`;
+}
+__name(guardarBlob, "guardarBlob");
+async function republicar(env, request, image) {
+  const dataMatch = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
+  if (dataMatch) {
+    const [, contentType, b64] = dataMatch;
+    let bytes;
+    try {
+      const bin = atob(b64);
+      bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    } catch (err) {
+      console.error("generate-sprite: base64 ileg\xEDvel do provedor", err?.message);
+      return null;
+    }
+    return guardarBlob(env, request, bytes, contentType);
+  }
+  if (/^https:\/\//i.test(image)) {
+    let res;
+    try {
+      res = await fetch(image);
+    } catch (err) {
+      console.error("generate-sprite: falha ao buscar a imagem do provedor", err?.message);
+      return null;
+    }
+    if (!res.ok) {
+      console.error(`generate-sprite: provedor devolveu ${res.status} ao buscar a imagem`);
+      return null;
+    }
+    const contentTypeHeader = (res.headers.get("content-type") || "").split(";")[0].trim();
+    const contentType = /^image\/[a-z0-9.+-]+$/i.test(contentTypeHeader) ? contentTypeHeader : "image/png";
+    let buf;
+    try {
+      buf = new Uint8Array(await res.arrayBuffer());
+    } catch (err) {
+      console.error("generate-sprite: corpo ileg\xEDvel do provedor", err?.message);
+      return null;
+    }
+    return guardarBlob(env, request, buf, contentType);
+  }
+  return null;
 }
 __name(republicar, "republicar");
 async function onRequestOptions8() {
@@ -2222,7 +2251,7 @@ async function onRequestPost5({ request, env }) {
     }
     const responder = /* @__PURE__ */ __name(async (out) => {
       let image = out.image;
-      if (typeof image === "string" && image.startsWith("data:")) {
+      if (typeof image === "string") {
         const republicada = await republicar(env, request, image);
         if (!republicada) {
           return Response.json({ error: "image republish failed" }, { status: 502, headers: CORS8 });
@@ -2912,7 +2941,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-rm8oQS/functionsRoutes-0.9826195923443279.mjs
+// ../.wrangler/tmp/pages-MACETZ/functionsRoutes-0.971693002368518.mjs
 var routes = [
   {
     routePath: "/api/account",

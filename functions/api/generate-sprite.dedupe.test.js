@@ -216,21 +216,36 @@ describe('republicação: base64 nunca chega ao cliente', () => {
     expect(new Uint8Array(await img.arrayBuffer())).toEqual(new Uint8Array([0, 0, 0]));
   });
 
-  it('a URL do Higgsfield passa inteira — não republicamos o que já é URL', async () => {
+  it('a URL do Higgsfield TAMBÉM é republicada — a do provedor pode expirar (27/08/2026)', async () => {
     const env = fakeEnv();
     env.HF_API_KEY = 'a';
     env.HF_SECRET = 'b';
     const url = 'https://cdn.higgsfield.ai/soul/xyz.png';
     vi.stubGlobal('fetch', vi.fn(async (u) => {
-      chamadasDeIA.push(String(u));
-      if (String(u).includes('/v1/text2image/')) {
-        return Response.json({ id: 'job-1' });
+      const s = String(u);
+      chamadasDeIA.push(s);
+      if (s.includes('/v1/text2image/')) return Response.json({ id: 'job-1' });
+      if (s.includes('/v1/job-sets/')) {
+        return Response.json({ jobs: [{ status: 'completed', results: { raw: { url } } }] });
       }
-      return Response.json({ jobs: [{ status: 'completed', results: { raw: { url } } }] });
+      // A busca de republicação: a URL do provedor primário, ida buscar de
+      // verdade — nunca mais devolvida crua ao cliente.
+      if (s === url) {
+        return new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/png' } });
+      }
+      throw new Error(`fetch inesperado em ${s}`);
     }));
 
     const res = await onRequestPost({ request: req(), env });
-    expect((await res.json()).image).toBe(url);
+    const body = await res.json();
+    expect(body.image).not.toBe(url);
+    expect(body.image).toMatch(/^https:\/\/soulmon\.test\/api\/sprite-image\?k=[0-9a-f]{32}$/);
+
+    const img = await spriteImage({
+      request: new Request(body.image),
+      env,
+    });
+    expect(new Uint8Array(await img.arrayBuffer())).toEqual(new Uint8Array([1, 2, 3]));
   });
 
   it('token fora do formato não lê nada do namespace dos saves', async () => {

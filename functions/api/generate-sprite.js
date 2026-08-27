@@ -35,11 +35,17 @@
 // | 503  | `{ error: 'ai-monthly-budget-reached' \| 'ai-daily-budget-reached' \| 'ai-quota-unavailable' \| 'tier-unavailable' \| 'image generation not configured…' }` | reserva, em silêncio |
 // | 500  | `{ error: 'internal error' }`                     | conta como tentativa (retentativa com backoff) |
 //
-// **`image` é SEMPRE `https://…`, nunca `data:`.** O Higgsfield já devolve URL;
-// o fallback Gemini devolve base64, e nesse caminho o servidor REPUBLICA a
-// imagem antes de responder (ver `republicar`). Data URL de 256×256 × 11 formas
-// no `GameState` vai para o `localStorage` (cota compartilhada com o DigiApp) e
-// para a KV a cada save — já estourou uma vez neste projeto.
+// **`image` é SEMPRE uma URL nossa (`/api/sprite-image?k=…`), nunca `data:` e
+// nunca a URL de outro domínio.** O servidor REPUBLICA toda imagem antes de
+// responder (ver `republicar`) — os DOIS provedores, não só o Gemini: a URL
+// que o Higgsfield devolve pode expirar (pergunta sem resposta em
+// `custo-geracao-sprite.md` §9; o dono escolheu o lado seguro em 27/08/2026
+// em vez de esperar confirmar), e sem republicar o sprite pago do provedor
+// PRIMÁRIO podia sumir sozinho meses depois, sem erro na tela. Data URL de
+// 256×256 × 11 formas no `GameState` iria para o `localStorage` (cota
+// compartilhada com o DigiApp) e para a KV a cada save — já estourou uma vez
+// neste projeto; é o motivo original do Gemini republicar, que agora vale
+// para os dois provedores igualmente.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
@@ -101,34 +107,11 @@ async function destravar(env, key) {
   }
 }
 
-/**
- * Republica uma data URL no nosso armazenamento e devolve uma URL `https://`.
- *
- * **Por que é obrigatório e não otimização:** o contrato desta rota é que
- * `image` vira URL no `GameState`, que vai para o `localStorage` E para a KV a
- * cada save (debounce de 3 s). Base64 ali estoura a cota — já aconteceu neste
- * projeto. O Higgsfield já devolve URL; o caminho Gemini é o único que produz
- * `data:`, e é ele que passa por aqui.
- *
- * Devolve `null` quando não deu para republicar. **Não lança de propósito:**
- * lançar cairia no `catch` que chama `release`, devolvendo uma cota que o
- * provedor já cobrou de verdade.
- */
-async function republicar(env, request, image) {
-  const m = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
-  if (!m) return null;
-  const [, contentType, b64] = m;
-  let bytes;
-  try {
-    const bin = atob(b64);
-    if (bin.length > MAX_BLOB_BYTES) {
-      console.error(`generate-sprite: imagem republicada grande demais (${bin.length} bytes)`);
-      return null;
-    }
-    bytes = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  } catch (err) {
-    console.error('generate-sprite: base64 ilegível do provedor', err?.message);
+/** Grava os bytes sob um token novo e devolve a URL de capacidade. Devolve
+ *  `null` sem lançar — ver a nota grande em `republicar`. */
+async function guardarBlob(env, request, bytes, contentType) {
+  if (bytes.length > MAX_BLOB_BYTES) {
+    console.error(`generate-sprite: imagem republicada grande demais (${bytes.length} bytes)`);
     return null;
   }
   const token = crypto.randomUUID().replace(/-/g, '');
@@ -143,6 +126,75 @@ async function republicar(env, request, image) {
     return null;
   }
   return `${new URL(request.url).origin}/api/sprite-image?k=${token}`;
+}
+
+/**
+ * Republica QUALQUER imagem (data URL do Gemini OU URL `https://` do
+ * Higgsfield) no nosso armazenamento e devolve uma URL `https://` nossa.
+ *
+ * **Por que os DOIS provedores, e não só o Gemini** (decisão do dono,
+ * 27/08/2026): a URL que o Higgsfield devolve pode expirar — a pergunta
+ * ficou sem resposta em `custo-geracao-sprite.md` §9, e o dono escolheu o
+ * lado seguro em vez de esperar confirmar. Sem isto, o sprite pago do
+ * provedor PRIMÁRIO podia sumir sozinho meses depois, sem erro na tela (o
+ * visor não tem estado de "arte sumiu" por spec).
+ *
+ * **Por que é obrigatório e não otimização, no caso do Gemini:** o contrato
+ * desta rota é que `image` vira URL no `GameState`, que vai para o
+ * `localStorage` E para a KV a cada save (debounce de 3 s). Base64 ali
+ * estoura a cota — já aconteceu neste projeto.
+ *
+ * Devolve `null` quando não deu para republicar. **Não lança de propósito:**
+ * lançar cairia no `catch` que chama `release`, devolvendo uma cota que o
+ * provedor já cobrou de verdade.
+ */
+async function republicar(env, request, image) {
+  const dataMatch = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
+  if (dataMatch) {
+    const [, contentType, b64] = dataMatch;
+    let bytes;
+    try {
+      const bin = atob(b64);
+      bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    } catch (err) {
+      console.error('generate-sprite: base64 ilegível do provedor', err?.message);
+      return null;
+    }
+    return guardarBlob(env, request, bytes, contentType);
+  }
+
+  // URL remota (Higgsfield hoje; qualquer provedor futuro que devolva URL em
+  // vez de base64 cai aqui também, sem código novo). Buscamos o binário UMA
+  // vez e guardamos com o resto do sprite — se a URL de origem expirar depois,
+  // já não importa, a nossa é permanente.
+  if (/^https:\/\//i.test(image)) {
+    let res;
+    try {
+      res = await fetch(image);
+    } catch (err) {
+      console.error('generate-sprite: falha ao buscar a imagem do provedor', err?.message);
+      return null;
+    }
+    if (!res.ok) {
+      console.error(`generate-sprite: provedor devolveu ${res.status} ao buscar a imagem`);
+      return null;
+    }
+    const contentTypeHeader = (res.headers.get('content-type') || '').split(';')[0].trim();
+    const contentType = /^image\/[a-z0-9.+-]+$/i.test(contentTypeHeader)
+      ? contentTypeHeader
+      : 'image/png';
+    let buf;
+    try {
+      buf = new Uint8Array(await res.arrayBuffer());
+    } catch (err) {
+      console.error('generate-sprite: corpo ilegível do provedor', err?.message);
+      return null;
+    }
+    return guardarBlob(env, request, buf, contentType);
+  }
+
+  return null;
 }
 
 export async function onRequestOptions() {
@@ -407,18 +459,21 @@ export async function onRequestPost({ request, env }) {
     }
 
     /**
-     * Único ponto de saída bem-sucedido: republica se vier `data:`, guarda no
-     * cache e responde. Escrito uma vez porque são DOIS caminhos de sucesso (a
-     * 1ª tentativa e a refeitura pelo `promptFallback`) — dois blocos aqui
-     * seriam a mesma regra em duas cópias, e uma delas esqueceria de cachear.
+     * Único ponto de saída bem-sucedido: republica SEMPRE (data: do Gemini OU
+     * https: do Higgsfield — decisão do dono em 27/08/2026, "joga seguro"
+     * contra a URL do provedor primário expirar em silêncio), guarda no cache
+     * e responde. Escrito uma vez porque são DOIS caminhos de sucesso (a 1ª
+     * tentativa e a refeitura pelo `promptFallback`) — dois blocos aqui seriam
+     * a mesma regra em duas cópias, e uma delas esqueceria de cachear.
      */
     const responder = async out => {
       let image = out.image;
-      if (typeof image === 'string' && image.startsWith('data:')) {
+      if (typeof image === 'string') {
         const republicada = await republicar(env, request, image);
         if (!republicada) {
-          // Base64 NUNCA chega ao cliente. Sem republicação não há resposta —
-          // e a cota fica debitada, porque o provedor gerou e cobrou.
+          // Base64/URL do provedor NUNCA chega ao cliente sem passar por nós.
+          // Sem republicação não há resposta — e a cota fica debitada, porque
+          // o provedor gerou e cobrou.
           return Response.json({ error: 'image republish failed' }, { status: 502, headers: CORS });
         }
         image = republicada;
