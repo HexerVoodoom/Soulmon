@@ -2,21 +2,27 @@
 /**
  * O BALÃO DE FALA NÃO PODE COMER O BOTÃO "EVOLUIR".
  *
- * O defeito, medido nas constantes de CSS e não estimado no olho: os dois são
- * `position:absolute` na MESMA caixa (`.sm2-device-stage`) e os dois ancoram no
- * rodapé. "Evoluir" ficava em `bottom:10` com `min-height:44px`
- * (`.sm-px-btn-sm`, index.css) → faixa [10, 54]. O balão ficava em `bottom:6`,
- * `left-0 right-0`, com uma linha de 14px/1,5 + 8px de padding dos dois lados
- * → faixa [6, ~45]. Cruzam em 35px de altura, na LARGURA INTEIRA do palco, e o
- * balão vinha em `zIndex:45` contra 30, com `pointer-events:auto`.
+ * Histórico do defeito, medido nas constantes de CSS e não estimado no olho:
+ * até 27/08/2026 os dois eram `position:absolute` na MESMA caixa
+ * (`.sm2-device-stage`) e os dois ancoravam no RODAPÉ. "Evoluir" ficava em
+ * `bottom:10` com `min-height:44px` (`.sm-px-btn-sm`, index.css) → faixa
+ * [10, 54]. O balão ficava em `bottom:6`, `left-0 right-0`, com uma linha de
+ * 14px/1,5 + 8px de padding dos dois lados → faixa [6, ~45]. Cruzam em 35px
+ * de altura, na LARGURA INTEIRA do palco, e o balão vinha em `zIndex:45`
+ * contra 30, com `pointer-events:auto`.
  *
- * Resultado no jogo: a fala idle dispara sozinha a cada 3 minutos e come o
+ * Resultado no jogo: a fala idle dispara sozinha a cada 3 minutos e comia o
  * clique do ÚNICO CTA que faz o jogo avançar, por até 5 segundos, sem que nada
- * pareça errado na tela.
+ * parecesse errado na tela.
  *
- * jsdom não faz layout, então este guard mede o que DECIDE o layout: o `bottom`
- * inline de cada peça e o `pointer-events` da faixa. É o suficiente para
- * quebrar se alguém devolver as duas âncoras para a mesma faixa.
+ * O CONSERTO DEFINITIVO (27/08/2026, pedido do dono): o balão saiu do rodapé
+ * de vez e foi ANCORADO NO TOPO da janela do palco (`top: BUBBLE_GAP`, fixo,
+ * nunca mais `bottom`). "Evoluir" continua no rodapé. As duas faixas não
+ * podem mais se cruzar por CONSTRUÇÃO — não porque uma "sobe" quando a outra
+ * aparece, mas porque vivem em pontas opostas da caixa sempre.
+ *
+ * jsdom não faz layout, então este guard mede o que DECIDE o layout: o
+ * `top`/`bottom` inline de cada peça e o `pointer-events` da faixa.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent, within } from '@testing-library/react';
@@ -42,8 +48,8 @@ const base = {
   maxEnergyPoints: 4,
 };
 
-/** Altura mínima do `PixelButton size="sm"` — `.sm-px-btn-sm` no index.css. */
-const EVOLVE_H = 44;
+/** Gêmeo de `BUBBLE_GAP` no `CompanionHUD.tsx` (não exportado). */
+const BUBBLE_GAP = 6;
 
 beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('rede proibida no teste'))));
@@ -58,26 +64,27 @@ function faixaDoBalao(texto: HTMLElement): HTMLElement {
 }
 
 describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
-  it('BLOQUEADOR: com "Evoluir" na tela, o balão sobe ACIMA dele', () => {
+  it('BLOQUEADOR: com "Evoluir" na tela, o balão continua no TOPO, longe do rodapé', () => {
     renderWithCss(<CompanionHUD {...base} canEvolve onEvolveRequest={() => {}} />);
     fireEvent.click(screen.getByAltText('rookie'));
 
     const btn = screen.getByRole('button', { name: 'Evoluir' });
     const faixa = faixaDoBalao(screen.getByText(/Cheio de energia!|Pronto para tudo!|Totalmente carregado!/));
 
-    const btnBottom = parseFloat(btn.style.bottom);
-    const balaoBottom = parseFloat(faixa.style.bottom);
-    expect(
-      balaoBottom,
-      `o balão começa em ${balaoBottom}px e o botão vai até ${btnBottom + EVOLVE_H}px — sobreposição`,
-    ).toBeGreaterThanOrEqual(btnBottom + EVOLVE_H);
+    // "Evoluir" é ancorado no RODAPÉ (`bottom`); o balão, no TOPO (`top`) —
+    // não há mais eixo comum para as duas faixas se cruzarem.
+    expect(btn.style.bottom).not.toBe('');
+    expect(faixa.style.top).not.toBe('');
+    expect(faixa.style.bottom).toBe('');
+    expect(parseFloat(btn.style.bottom)).toBeGreaterThanOrEqual(0);
+    expect(parseFloat(faixa.style.top)).toBeGreaterThanOrEqual(0);
   });
 
-  it('sem CTA na tela o balão volta para o rodapé (não fica flutuando alto)', () => {
+  it('sem CTA na tela o balão continua no MESMO topo (a posição não depende do botão)', () => {
     renderWithCss(<CompanionHUD {...base} />);
     fireEvent.click(screen.getByAltText('rookie'));
     const faixa = faixaDoBalao(screen.getByText(/Cheio de energia!|Pronto para tudo!|Totalmente carregado!/));
-    expect(parseFloat(faixa.style.bottom)).toBeLessThan(EVOLVE_H);
+    expect(faixa.style.top).toBe(`${BUBBLE_GAP}px`);
   });
 
   it('a faixa de largura total do balão não intercepta toque; a caixa de fala sim', () => {

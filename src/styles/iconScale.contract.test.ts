@@ -360,8 +360,11 @@ function perdoado(c: CallSite): Divida | undefined {
 
 describe('guard da escala de ícone — autoverificação (o instrumento enxerga?)', () => {
   it('a escala saiu do documento, com os quatro degraus e os papéis', () => {
+    // `deck` passou a valer 24 em 27/08/2026 (dividiu o degrau de `action` —
+    // o dono encolheu o deck da Home, e três valores de px bastam para os
+    // quatro papéis nomeados; ver tokens.md §6.1).
     expect([...DEGRAUS.entries()]).toEqual([
-      ['inline', 20], ['action', 24], ['nav', 32], ['deck', 42],
+      ['inline', 20], ['action', 24], ['nav', 32], ['deck', 24],
     ]);
     // Se a tabela sumir, `DEGRAUS` fica vazio e TUDO viraria violação —
     // vermelho, que é o certo. Mas o caso explícito diz por quê.
@@ -476,7 +479,9 @@ describe('guard da escala de ícone — autoverificação (o instrumento enxerga
   });
 
   it('o julgamento separa dentro de escala de fora dela', () => {
-    const dentro = varrerFonte('<Icon size={20} /><Icon size={24} /><Icon size={32} /><Icon size={42} />');
+    // 42 saiu da amostra "dentro" em 27/08/2026: não é mais um degrau da
+    // escala (o `deck` encolheu para dividir `action`, 24px).
+    const dentro = varrerFonte('<Icon size={20} /><Icon size={24} /><Icon size={32} />');
     expect(dentro.filter(c => c.size === null || !ESCALA.has(c.size))).toEqual([]);
     const fora = varrerFonte('<Icon size={22} /><Icon size={18} />');
     expect(fora.filter(c => c.size !== null && !ESCALA.has(c.size)).map(c => c.size)).toEqual([22, 18]);
@@ -630,9 +635,12 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
   });
 
   /**
-   * O degrau `deck` (42) existe para UM lugar só — o deck de ações da Home.
-   * Sem este caso, um degrau declarado e nunca usado passaria despercebido, e
-   * a §6.1 estaria descrevendo uma tela que não existe.
+   * O degrau `deck` existia em 42px, dedicado, para UM lugar só — o deck de
+   * ações da Home. Desde 27/08/2026 ele vale 24 e divide o degrau `action`
+   * (ver tokens.md §6.1); os dois nomes continuam na tabela porque o
+   * CONTEXTO é diferente, mesmo com o mesmo px. Sem este caso, um degrau
+   * declarado e nunca usado passaria despercebido, e a §6.1 estaria
+   * descrevendo uma tela que não existe.
    */
   it('cada degrau declarado é um degrau USADO (a tabela descreve o app real)', () => {
     const usados = new Set(CALL_SITES.map(c => c.size).filter((s): s is number => s !== null));

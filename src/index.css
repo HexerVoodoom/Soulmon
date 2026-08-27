@@ -6768,8 +6768,8 @@ button.sm-px-node {
   display: flex;
   align-items: stretch;
   gap: 4px;
-  margin-top: 12px;
-  padding: 6px 0 8px;
+  margin-top: 6px;
+  padding: 4px 0 6px;
   border-top: 1px solid color-mix(in srgb, var(--sm2-viewport-ring-deep) 60%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
 }
@@ -6777,14 +6777,17 @@ button.sm-px-node {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
-  /* 60px > 44px do alvo mínimo (WCAG 2.2 AA 2.5.8) COM o rótulo dentro. */
-  min-height: 60px;
+  /* Encolhido em 27/08/2026 (pedido do dono: pet + rituais são a
+     prioridade, o deck de cuidado ocupava espaço demais). 44px é o PISO
+     mínimo de alvo de toque (WCAG 2.2 AA 2.5.8), não uma folga extra como
+     os 60px de antes — não encolha mais que isto. */
+  min-height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 8px 4px;
+  gap: 2px;
+  padding: 5px 4px;
   background-color: transparent;
   border: none;
   border-radius: var(--sm2-radius-md);
@@ -6851,7 +6854,12 @@ button.sm-px-node {
   position: absolute;
   inset: 6px;
   pointer-events: none;
-  opacity: .45;
+  /* Em repouso, invisível — o dono achou os 4 cantos incômodos parados na
+     tela o tempo todo (27/08/2026). Continuam existindo para :hover/
+     :focus-visible/:active (mouse/teclado) logo abaixo e para o estado
+     MACHUCADO (`.sm2-rub-heal`, que os troca por vermelho piscante) — a
+     única hora em que o alvo do carinho precisa ser encontrado. */
+  opacity: 0;
   --sm2-rub-c: var(--sm2-viewport-ring);
   background-repeat: no-repeat;
   background-image:
@@ -7118,6 +7126,19 @@ button.sm-px-node {
   line-height: 1.2;
   color: var(--sm2-ink);
 }
+
+/* ── VARIANTE COMPACTA ────────────────────────────────────────────────────
+   27/08/2026: os medidores migraram para DENTRO do `.sm2-device` (o corpo
+   do aparelho, acima da tela do pet) — o dono achou o HUD cheio demais
+   acima do bicho. Aqui eles precisam caber ao lado do sulco de cobre sem
+   competir com o visor; o `compact` do `HomeHud` já encolhe ícone e trilho
+   via prop (JS), esta classe só aperta o que é CSS puro (padding/gap). */
+.sm2-hud--compact { gap: 4px; }
+.sm2-hud--compact .sm2-hud-meters { gap: 6px; }
+.sm2-hud--compact .sm2-meter { gap: 2px; padding: 4px 6px; }
+.sm2-hud--compact .sm2-meter-head { gap: 4px; }
+.sm2-hud--compact .sm2-meter-label { font-size: 9px; letter-spacing: .04em; }
+.sm2-hud--compact .sm2-meter-value { font-size: 9px; }
 
 /* ── BARRA SEGMENTADA `--sm2-*` ─────────────────────────────────────────────
    Trilho ESCURO nos dois temas (`--sm2-viewport-bg`) porque isto é a tela do

@@ -41,6 +41,18 @@ interface HomeHudProps {
   healthPoints?: number;
   maxHealthPoints?: number;
   language?: Language;
+  /**
+   * Some a marca (`<h1>Soulmon</h1>`) — usado quando os medidores migram
+   * para DENTRO do corpo do aparelho (`CompanionHUD`) e a marca continua
+   * sozinha, no topo da Home, como o `<h1>` da página (27/08/2026: "vida,
+   * energia... ocupam espaço demais — deixe isso dentro da área do pet").
+   */
+  hideBrand?: boolean;
+  /** Some os medidores — usado pela instância que só carrega a marca/h1. */
+  hideMeters?: boolean;
+  /** Medidores menores (rótulo oculto, ícone 16px, trilho mais baixo) —
+      para caber no corpo do aparelho sem competir com o pet. */
+  compact?: boolean;
 }
 
 /**
@@ -58,8 +70,8 @@ interface HomeHudProps {
  * é uma barra fixa de 9 blocos cheios, incapaz de mostrar 3/7.
  */
 function SegBar({
-  value, max, tone, label,
-}: { value: number; max: number; tone: string; label: string }) {
+  value, max, tone, label, height = 12,
+}: { value: number; max: number; tone: string; label: string; height?: number }) {
   const total = Math.max(0, Math.round(max));
   const seguro = Math.min(Math.max(0, value), total);
   const cheios = Math.floor(seguro);
@@ -74,7 +86,7 @@ function SegBar({
       aria-valuemin={0}
       aria-valuemax={max}
       aria-label={label}
-      style={{ height: 12, '--sm2-seg-tone': tone } as CSSProperties}
+      style={{ height, '--sm2-seg-tone': tone } as CSSProperties}
     >
       {Array.from({ length: Math.max(1, total) }, (_, i) => {
         const cls = i < cheios
@@ -90,6 +102,9 @@ export function HomeHud({
   energyPoints, maxEnergyPoints,
   healthPoints, maxHealthPoints,
   language = 'en-US',
+  hideBrand = false,
+  hideMeters = false,
+  compact = false,
 }: HomeHudProps) {
   const isPt = language === 'pt-BR';
   const temHp = typeof healthPoints === 'number' && typeof maxHealthPoints === 'number' && maxHealthPoints > 0;
@@ -97,7 +112,7 @@ export function HomeHud({
   const hpMax = maxHealthPoints as number;
 
   return (
-    <div className="sm2-hud">
+    <div className={compact ? 'sm2-hud sm2-hud--compact' : 'sm2-hud'}>
       {/* A marca é a PALAVRA, sem ícone ao lado.
           Aqui havia um `local_fire_department`, e ele era errado por dois
           motivos independentes. O primeiro é de produto: chama é o vocabulário
@@ -116,15 +131,22 @@ export function HomeHud({
           é o `<h2>` do `RitualPanel`). O wordmark já era o primeiro elemento
           da tela e o nome do lugar onde a pessoa está: ele é o heading certo,
           e virar `<h1>` não muda um pixel (`.sm2-hud-wordmark` traz família,
-          tamanho e cor; a margem do `h1` é zerada aqui). */}
-      <div className="sm2-hud-brand">
-        <h1 className="sm2-hud-wordmark" style={{ margin: 0 }}>Soulmon</h1>
-      </div>
+          tamanho e cor; a margem do `h1` é zerada aqui).
+
+          `hideBrand`: a instância COMPACTA que mora dentro do `.sm2-device`
+          (27/08/2026) não repete o `<h1>` — ele continua único, sozinho, no
+          topo da Home. */}
+      {!hideBrand && (
+        <div className="sm2-hud-brand">
+          <h1 className="sm2-hud-wordmark" style={{ margin: 0 }}>Soulmon</h1>
+        </div>
+      )}
 
       {/* Fileira de medidores: HP e Energia, cada um na SUA caixa e com o mesmo
           peso. O trilho é escuro nos dois temas (é a tela do aparelho) e o
           número usa tabular-nums — sem isso o valor "dança" na horizontal a
           cada tick e a barra inteira parece tremer. */}
+      {!hideMeters && (
       <div className="sm2-hud-meters">
         {temHp && (
           <div
@@ -134,6 +156,9 @@ export function HomeHud({
               : `HP: ${hp}/${hpMax} — drops when care is missed; rub the pet to heal`}
           >
             <div className="sm2-meter-head">
+              {/* 20px sempre (degrau `inline`, tokens.md §6.1) — é a escala
+                  FECHADA do app, não há degrau menor. O `compact` encolhe
+                  padding/gap/trilho ao redor (CSS), não o ícone. */}
               <Icon name="favorite" size={20} fill={1} tone={hp <= 1 ? 'danger' : 'gold'} />
               <span className="sm2-meter-label">{isPt ? 'Vida' : 'Health'}</span>
               <span className="sm2-meter-value sm2-num">{hp}/{hpMax}</span>
@@ -141,6 +166,7 @@ export function HomeHud({
             <SegBar
               value={hp}
               max={hpMax}
+              height={compact ? 7 : 12}
               /* Tinta de VISOR (cobre), clara nos dois temas e medida em 4,1:1
                  sobre o trilho escuro do tema claro — acima do 3:1 de
                  componente não-textual. O HP baixo NÃO troca a cor da barra:
@@ -168,11 +194,13 @@ export function HomeHud({
           <SegBar
             value={energyPoints}
             max={maxEnergyPoints}
+            height={compact ? 7 : 12}
             tone="var(--sm2-viewport-ink)"
             label={isPt ? 'Energia' : 'Energy'}
           />
         </div>
       </div>
+      )}
     </div>
   );
 }

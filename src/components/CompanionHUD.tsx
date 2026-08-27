@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { PixelButton } from './pixel/PixelKit';
+import { HomeHud } from './pixel/HomeHud';
 import { Icon } from './ui/Icon';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
@@ -76,27 +77,22 @@ const PET_BOTTOM_IN_STAGE =
   STAGE_HEIGHT - (STAGE_HEIGHT / 2 + PET_TOP_OFFSET + PET_GROUND_KEEP) - PET_RENDER;
 
 /* ── O BALÃO NÃO PODE COMER O ÚNICO CTA DO JOGO ────────────────────────────
-   BLOQUEADOR medido, não suposto. Os dois controles são `position:absolute`
-   dentro da MESMA caixa (`.sm2-device-stage`), os dois ancorados no rodapé:
-    · "Evoluir" — `bottom: 10`, altura mínima 44px (`.sm-px-btn-sm` no
-      index.css) → ocupa de 10 a 54px a partir do fundo;
-    · balão de fala — `bottom: 6`, `left-0 right-0` (largura TOTAL), uma linha
-      de 14px/1,5 + 8px de padding em cima e embaixo + 1px de borda dos dois
-      lados → ocupa de 6 a ~45px.
-   As faixas [10,54] e [6,45] se cruzam em 35px de altura, na largura inteira,
-   e o balão está em `zIndex: 45` contra 30 do botão, com `pointer-events:
-   auto`. Sobrepõe, sim, e o clique morre no balão: a fala idle dispara a cada
-   3 min e o único caminho de progresso do jogo fica intocável por até 5s.
+   BLOQUEADOR medido, não suposto — histórico, e ainda parcialmente vivo.
+   Até 27/08/2026 os DOIS controles eram `position:absolute` dentro da MESMA
+   caixa (`.sm2-device-stage`), ancorados no MESMO rodapé: "Evoluir"
+   (`bottom: 10`, 44px de altura → ocupa 10–54px) e o balão de fala
+   (`bottom: 6` → ocupa ~6–45px). As faixas se cruzavam em 35px de altura, e
+   o balão (zIndex 45, `pointer-events: auto`) comia o clique do botão —
+   a fala idle dispara a cada 3min e travava o único caminho de progresso do
+   jogo por até 5s.
 
-   Dois consertos somados, porque um só deixa uma brecha:
-    1. quando o botão está na tela, o balão SOBE para cima dele (mesma tática
-       que o balão do abraço já usava);
-    2. a faixa de largura total do balão passa a ser `pointer-events: none` e
-       só a CAIXA de fala aceita o clique — assim as sobras laterais (que são
-       transparentes e cobrem o palco inteiro) param de interceptar toque, em
-       qualquer estado. */
+   O dono pediu o balão no TOPO da janela (nunca sobre o corpo do pet, que
+   ocupa a base do palco) — isso by-construction tira o balão da faixa do
+   botão, que continua ancorado no rodapé. O que SOBREVIVE da correção
+   antiga, e continua necessário: a faixa de largura total do balão é
+   `pointer-events: none`, e só a CAIXA de fala (não as sobras
+   transparentes ao lado, que cobrem o palco inteiro) aceita o clique. */
 const EVOLVE_BTN_BOTTOM = 10;
-const EVOLVE_BTN_H = 44;   // `.sm-px-btn-sm { min-height: 44px }`
 const BUBBLE_GAP = 6;
 
 /** Passo do passeio: 2 device px = 1 pixel de origem do sprite (escala 2:1).
@@ -927,6 +923,22 @@ export const CompanionHUD = memo(function CompanionHUD({
             20px de bisel do plano, e o deck de ações é uma ÁREA dele, com
             sulco de cobre entre a tela e os botões. */}
         <div className="sm2-device">
+        {/* Vida/Energia — MIGRARAM para dentro do corpo do aparelho em
+            27/08/2026 (pedido do dono: pet + rituais são a prioridade da
+            Home, os medidores grandes acima do pet não). `hideBrand`: o
+            `<h1>Soulmon</h1>` continua sozinho lá em cima, no `App.tsx`
+            (`hideMeters`) — é o heading da página, e não pode sumir com os
+            medidores. `compact`: ícone e trilho menores (ver index.css,
+            `.sm2-hud--compact`). */}
+        <HomeHud
+          energyPoints={energyPoints}
+          maxEnergyPoints={maxEnergy}
+          healthPoints={healthPoints}
+          maxHealthPoints={maxHealthPoints}
+          language={language}
+          hideBrand
+          compact
+        />
         {/* A janela do palco: ancora os CONTROLES que ficam por cima da tela
             (evoluir, balão, alvo do carinho) e é a caixa que dá a largura
             medida para a escala inteira do visor. */}
@@ -1359,16 +1371,21 @@ export const CompanionHUD = memo(function CompanionHUD({
             absoluto de 12px da escala) para Rubik 14px em tokens `--sm2-*`: é o
             PET falando com a pessoa, texto de leitura, não voz de aparelho —
             Silkscreen aqui seria a fonte errada e o branco chapado de antes
-            ignorava o tema. */}
+            ignorava o tema.
+
+            27/08/2026 (pedido do dono): mudou de baixo (deitava em cima do
+            corpo do pet, que também ocupa a base do palco) para o TOPO da
+            janela — o pet é centrado/base, então o topo é o único trecho da
+            tela que nunca tem sprite embaixo dela. O rabinho virou de
+            "aponta pra cima" (quando falava PARA o pet vindo de baixo) para
+            "aponta pra baixo" (agora fala DE CIMA, e o pet está abaixo). O
+            fundo ganhou transparência (era `--sm2-surface` opaco) pelo mesmo
+            pedido. */}
         {showBubble && (
           <div
             className="absolute left-0 right-0"
             style={{
-              /* Ver o bloco `EVOLVE_BTN_*` no topo: com o CTA na tela o balão
-                 sobe acima dele em vez de deitar por cima. */
-              bottom: canEvolve && !isSleeping
-                ? EVOLVE_BTN_BOTTOM + EVOLVE_BTN_H + BUBBLE_GAP
-                : BUBBLE_GAP,
+              top: BUBBLE_GAP,
               zIndex: 45,
               padding: '0 10px',
               /* A faixa é só posicionamento — ela cobre a largura inteira do
@@ -1382,7 +1399,9 @@ export const CompanionHUD = memo(function CompanionHUD({
               onClick={handleBubbleClick}
               style={{
                 cursor: 'pointer',
-                background: 'var(--sm2-surface)',
+                background: 'color-mix(in srgb, var(--sm2-surface) 78%, transparent)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
                 border: '1px solid var(--sm2-line)',
                 borderRadius: 14,
                 padding: '8px 12px',
@@ -1401,15 +1420,15 @@ export const CompanionHUD = memo(function CompanionHUD({
               >
                 {bubbleText}
               </p>
-              {/* Rabinho apontando para cima — geometria de peça única. */}
+              {/* Rabinho apontando para BAIXO, na direção do pet. */}
               <span
                 className="absolute"
                 style={{
-                  top: -6, left: '50%', transform: 'translateX(-50%)',
+                  bottom: -6, left: '50%', transform: 'translateX(-50%)',
                   width: 0, height: 0,
                   borderLeft: '6px solid transparent',
                   borderRight: '6px solid transparent',
-                  borderBottom: '6px solid var(--sm2-surface)',
+                  borderTop: '6px solid color-mix(in srgb, var(--sm2-surface) 78%, transparent)',
                 }}
               />
             </div>
@@ -1466,7 +1485,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                   role="img"
                 />
               )}
-              <Icon name={a.icon} size={42} fill={a.fill} weight={500} tone={a.fill ? 'primary' : 'ink'} />
+              {/* 24px (era 42px, degrau `deck`): o deck encolheu a pedido do
+                  dono em 27/08/2026 — pet e lista de rituais são a
+                  prioridade da Home, o deck de cuidado não. 24 é o degrau
+                  `action` de tokens.md §6.1 (a escala é FECHADA a 20/24/32);
+                  o deck passou a dividi-lo — ver a nota na tabela. O `opsz`
+                  do `Icon` casa com o `size`, então o traço não afina ao
+                  encolher. */}
+              <Icon name={a.icon} size={24} fill={a.fill} weight={500} tone={a.fill ? 'primary' : 'ink'} />
               {/* Rótulo de AÇÃO em Rubik 12px, caixa mista. Era Silkscreen a
                   8px: abaixo do piso absoluto da escala, e a bitmap fecha os
                   contornos nesse tamanho. Silkscreen agora é a voz do aparelho

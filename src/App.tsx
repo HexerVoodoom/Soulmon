@@ -48,6 +48,10 @@ import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 import { PET_BACKGROUNDS } from './utils/backgrounds';
+// Fundo padrão da Home (27/08/2026, pedido do dono) — SÓ quando o jogador não
+// equipou um cenário da loja (esses continuam com prioridade, é conteúdo
+// pago/ganho). Substitui a grade de circuito ciano sobre o teal chapado.
+import homeSceneBg from './assets/backgrounds/home-scene-1547.png';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
 // objeto novo a cada render, anulando a memoização (footgun conhecido).
@@ -3693,20 +3697,21 @@ export default function App() {
 
         {/* Fundo da Home cheio, atrás de tudo (barra de chat/nav ficam por
             cima) — antes era só um retângulo dentro do CompanionHUD, restrito
-            à altura da área do pet. Sem cenário equipado, cai no teal escuro
-            do tema (--sm-bg) em vez de um cinza neutro genérico. */}
+            à altura da área do pet.
+
+            27/08/2026: sem cenário COMPRADO, o fundo deixou de ser o teal
+            chapado + grade de circuito (`sm-circuit-bg`) — pedido do dono,
+            que achou o visual antigo pobre perto da moldura pintada que ele
+            já tinha (`home-scene-1547.png`). Cenário equipado da loja SEGUE
+            com prioridade: é conteúdo pago/ganho, não se pinta por cima. */}
         {currentView === 'main' && (
           <div
             aria-hidden="true"
-            /* G10 (Ref C): sem cenário equipado, o teal padrão ganha a grade
-               de circuito ciano tênue. Cenário equipado sobrescreve por style
-               inline — a grade só existe no fundo padrão. */
-            className={gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground] ? undefined : 'sm-circuit-bg'}
             style={{
               position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
               backgroundImage: gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground]
                 ? PET_BACKGROUNDS[gameState.equippedBackground].css
-                : undefined,
+                : `url(${homeSceneBg})`,
               backgroundColor: 'var(--sm-bg)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
@@ -3794,14 +3799,18 @@ export default function App() {
 
           {currentView === 'main' && (
             <div className="space-y-4">
-              {/* HUD do topo (Ref C): marca + medidores em cápsula de cobre.
-                  Ver components/pixel/HomeHud.tsx para a nota sobre o rótulo
-                  da moeda ("SOUL CRYSTAL" da referência vs. Créditos). */}
+              {/* HUD do topo (Ref C): SÓ a marca (o `<h1>` da Home) agora.
+                  Vida/Energia migraram para DENTRO do `.sm2-device`
+                  (CompanionHUD, `hideBrand compact`) em 27/08/2026 — o dono
+                  achou os medidores grandes demais acima do pet. Ver
+                  components/pixel/HomeHud.tsx para a nota sobre o rótulo da
+                  moeda ("SOUL CRYSTAL" da referência vs. Créditos). */}
               <HomeHud
                 energyPoints={gameState.energyPoints}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
                 healthPoints={gameState.healthPoints}
                 maxHealthPoints={gameState.maxHealthPoints}
+                hideMeters
                 language={language}
               />
 

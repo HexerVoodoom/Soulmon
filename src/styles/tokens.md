@@ -364,17 +364,19 @@ quatro. Esses quatro viram a escala.
 | degrau | px | papel — e SÓ ele |
 |---|---|---|
 | `inline` | **20** | ícone que anda ao lado de TEXTO na mesma linha: dica, chip, preço, saldo, rótulo de campo. Casa com a altura de x da Rubik 14/16. |
-| `action` | **24** | ícone que É a ação ou o estado de uma LINHA de lista / botão de barra: fechar, cadeado, "equipado", linha de menu. |
+| `action` | **24** | ícone que É a ação ou o estado de uma LINHA de lista / botão de barra: fechar, cadeado, "equipado", linha de menu — e, desde 27/08/2026, também o deck de ações do aparelho (ver `deck` abaixo). |
 | `nav` | **32** | destino da barra inferior e botão da barra de chat. |
-| `deck` | **42** | o deck de ações do aparelho (Home) — comida, carinho, banho. |
+| `deck` | **24** | o deck de ações do aparelho (Home) — comida, carinho, banho. **Era 42, dedicado.** O dono achou o deck grande demais tomando espaço do pet/rituais em 27/08/2026; encolheu para dividir o degrau `action` em vez de abrir um quinto — o deck virou, na prática, mais uma fileira de botões de barra, não mais o elemento de maior peso visual da Home. |
 
-Quatro degraus, e o pulo entre eles é visível (20 → 24 → 32 → 42). Não existe
-degrau intermediário: 22 ao lado de 24 na mesma tela não é hierarquia, é ruído
-— ninguém consegue dizer qual dos dois significa mais.
+Três valores distintos hoje (20 → 24 → 32) — quatro PAPÉIS continuam
+nomeados porque o CONTEXTO de cada um é outro (linha de lista vs. corpo do
+aparelho), mesmo com `action` e `deck` no mesmo px desde 27/08/2026. Não
+existe degrau intermediário: 22 ao lado de 24 na mesma tela não é hierarquia,
+é ruído — ninguém consegue dizer qual dos dois significa mais.
 
 **Como escolher, em uma pergunta:** _o ícone está ao lado de uma palavra na
-mesma linha?_ Sim → **20**. Não, ele ocupa a coluna de ação/estado da linha →
-**24**. É a barra do aparelho (nav/chat) → **32**. É o deck da Home → **42**.
+mesma linha?_ Sim → **20**. Não, ele ocupa a coluna de ação/estado da linha,
+OU é o deck da Home? → **24**. É a barra do aparelho (nav/chat) → **32**.
 
 **Não há token CSS para isto**, de propósito: `Icon`/`NavGlyph` recebem `size`
 como NÚMERO (o `opsz` é casado a ele em JS, §6 regra 3), então um

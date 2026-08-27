@@ -146,7 +146,11 @@ describe('CompanionHUD', () => {
     const visor = container.querySelector('.sm2-viewport')!;
     expect(visor.querySelector('button')).toBeNull();
     fireEvent.click(screen.getByAltText('rookie'));
-    const balao = screen.getByText(/Estômago vazio|Me alimenta|Com muita fome|fome|energia/i);
+    // `{ selector: 'p' }`: o texto do balão é o único `<p>` da árvore que casa
+    // com o regex — desde 27/08/2026 o rótulo "Energia" do HUD compacto
+    // (migrou para dentro do `.sm2-device`) também casa com /energia/i, mas
+    // vive num `<span>`, não num `<p>`.
+    const balao = screen.getByText(/Estômago vazio|Me alimenta|Com muita fome|fome|energia/i, { selector: 'p' });
     expect(visor.contains(balao)).toBe(false);
   });
 
