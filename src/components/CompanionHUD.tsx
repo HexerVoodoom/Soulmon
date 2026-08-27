@@ -7,6 +7,10 @@ import { HomeHud } from './pixel/HomeHud';
 import { Icon } from './ui/Icon';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
+// O fundo do CORPO do aparelho (27/08/2026, pedido do dono: "dentro do box,
+// na área que o Soulmon fica"). Vive FORA do `Viewport` (que é pixel-art
+// estrito, escala inteira) — ver `.sm2-device` no index.css.
+import homeSceneBg from '../assets/backgrounds/home-scene-1547.png';
 import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { type SlotId, BASE_SLOTS, PET_TOP_OFFSET, PET_BOX, PET_RENDER, STAGE_HEIGHT } from '../utils/petStage';
@@ -922,7 +926,15 @@ export const CompanionHUD = memo(function CompanionHUD({
             Agora existe corpo: 16px de material em volta do anel de 4px = os
             20px de bisel do plano, e o deck de ações é uma ÁREA dele, com
             sulco de cobre entre a tela e os botões. */}
-        <div className="sm2-device">
+        <div
+          className="sm2-device"
+          /* `--sm2-device-photo`: consumida em index.css, empilhada ATRÁS
+             dos gradientes de material do bisel (que continuam por cima,
+             para o corpo do aparelho não virar um retângulo de foto plana).
+             CSS puro não alcança um asset importado pelo Vite — por isso a
+             variável, não uma classe. */
+          style={{ '--sm2-device-photo': `url(${homeSceneBg})` } as React.CSSProperties}
+        >
         {/* Vida/Energia — MIGRARAM para dentro do corpo do aparelho em
             27/08/2026 (pedido do dono: pet + rituais são a prioridade da
             Home, os medidores grandes acima do pet não). `hideBrand`: o

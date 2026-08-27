@@ -6718,13 +6718,23 @@ button.sm-px-node {
   padding: 16px 16px 0;
   border-radius: var(--sm2-radius-lg);
   background-color: var(--sm2-surface);
+  /* `--sm2-device-photo` (27/08/2026, CompanionHUD.tsx): o fundo pintado que
+     o dono forneceu, ATRÁS dos dois gradientes de material do bisel — eles
+     continuam por cima para o corpo do aparelho não virar uma foto plana; a
+     leitura de "objeto físico" (cobre, sombra) sobrevive em cima da cena.
+     `none` por padrão: nenhum outro consumidor de `.sm2-device` (se algum
+     dia existir) herda a foto sem pedir. */
   background-image:
     linear-gradient(180deg,
       color-mix(in srgb, var(--sm2-ink) 7%, transparent) 0%,
       transparent 28%),
     linear-gradient(0deg,
       color-mix(in srgb, var(--sm2-viewport-ring-deep) 26%, transparent) 0%,
-      transparent 38%);
+      transparent 38%),
+    var(--sm2-device-photo, none);
+  background-size: auto, auto, cover;
+  background-position: 0 0, 0 0, center;
+  background-repeat: no-repeat, no-repeat, no-repeat;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .12),
     inset 0 0 0 1px var(--sm2-line),

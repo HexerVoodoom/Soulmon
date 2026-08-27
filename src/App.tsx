@@ -48,10 +48,6 @@ import { hashString, creatureFormId } from './utils/oracle';
 import type { OracleInput, OracleResult } from './utils/oracle';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 import { PET_BACKGROUNDS } from './utils/backgrounds';
-// Fundo padrão da Home (27/08/2026, pedido do dono) — SÓ quando o jogador não
-// equipou um cenário da loja (esses continuam com prioridade, é conteúdo
-// pago/ganho). Substitui a grade de circuito ciano sobre o teal chapado.
-import homeSceneBg from './assets/backgrounds/home-scene-1547.png';
 
 // Identidades estáveis: CompanionHUD é memo() e um `?? {}` inline cria um
 // objeto novo a cada render, anulando a memoização (footgun conhecido).
@@ -3697,21 +3693,26 @@ export default function App() {
 
         {/* Fundo da Home cheio, atrás de tudo (barra de chat/nav ficam por
             cima) — antes era só um retângulo dentro do CompanionHUD, restrito
-            à altura da área do pet.
+            à altura da área do pet. Sem cenário equipado, cai no teal escuro
+            do tema (--sm-bg) em vez de um cinza neutro genérico.
 
-            27/08/2026: sem cenário COMPRADO, o fundo deixou de ser o teal
-            chapado + grade de circuito (`sm-circuit-bg`) — pedido do dono,
-            que achou o visual antigo pobre perto da moldura pintada que ele
-            já tinha (`home-scene-1547.png`). Cenário equipado da loja SEGUE
-            com prioridade: é conteúdo pago/ganho, não se pinta por cima. */}
+            27/08/2026: `home-scene-1547.png` (o pedido do dono) NÃO pinta
+            este fundo de página inteira — foi tentado e revertido no mesmo
+            dia. O pedido era "dentro do box, na área que o Soulmon fica":
+            a imagem foi para o `.sm2-device` (CompanionHUD, o corpo do
+            aparelho), não para trás da Home inteira. Ver a nota lá. */}
         {currentView === 'main' && (
           <div
             aria-hidden="true"
+            /* G10 (Ref C): sem cenário equipado, o teal padrão ganha a grade
+               de circuito ciano tênue. Cenário equipado sobrescreve por style
+               inline — a grade só existe no fundo padrão. */
+            className={gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground] ? undefined : 'sm-circuit-bg'}
             style={{
               position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none',
               backgroundImage: gameState.equippedBackground && PET_BACKGROUNDS[gameState.equippedBackground]
                 ? PET_BACKGROUNDS[gameState.equippedBackground].css
-                : `url(${homeSceneBg})`,
+                : undefined,
               backgroundColor: 'var(--sm-bg)',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
