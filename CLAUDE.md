@@ -56,8 +56,18 @@ Repositório: `HexerVoodoom/Soulmon`.
   em ~2 min. `dist/` **é commitado** (o CF também builda, mas o commit é o que
   garante o conteúdo).
 - A URL de produção é **`soulmon.mateus-sprnd.workers.dev`**, e as três fontes
-  já concordam: `capacitor.config.json:6`, `desktop/renderer/src/config.ts:6` e
-  `desktop/electron/main.js:26`.
+  já concordam: `capacitor.config.json` (chave `url`),
+  `desktop/renderer/src/config.ts` (`APP_URL`) e
+  `desktop/electron/main.js` (`FULL_APP_URL`).
+  ⚠️ **Esta linha citava `config.ts:6` e `main.js:26` — e em 27/08/2026 as duas
+  estavam erradas** (21 e 37). A do `main.js` já estava errada antes de alguém
+  mexer; a do `config.ts` escorregou no mesmo dia, ao ganhar um comentário
+  acima. **É a regra deste arquivo sendo violada por este arquivo**: a
+  referência canônica é `arquivo` + SÍMBOLO, e o motivo está escrito na tabela
+  de regras — o endereço apodrece mais rápido que o número, e um `grep` pelo
+  símbolo reencontra o alvo enquanto um número escorregado aponta para código
+  não relacionado. Quem obriga as fontes a concordarem é
+  `src/deploy/appUrl.contract.test.ts` — **essa** é a régua viva, não esta lista.
   ⚠️ **Até 26/08/2026 este arquivo afirmava que a URL ainda era a do DigiApp
   (`digiapp-a5e.pages.dev`) e mandava não trocar.** Era falso — a migração já
   tinha acontecido, e a mesma mentira estava no `docs/PLANO-DESKTOP-STEAM.md`
