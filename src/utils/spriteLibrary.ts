@@ -207,6 +207,68 @@ export function isSafeSpriteUrl(url: unknown): url is string {
 // allowlist estreita de antes.
 const CAMINHO_DE_RAIZ = /^\/(?![/\\])/;
 
+// ── ALLOWLIST DE HOST — o beacon que a guarda de ESQUEMA nunca alcancou ──────
+//
+// `isSafeSpriteUrl` fecha esquema (`javascript:`, `http:`, `data:` nao-imagem,
+// `file:`, `blob:`, `//host`) e o comentario dela ja declarava o que sobrava:
+// `https://atacante.example/x.png` PASSAVA. Nao e execucao de codigo — e
+// BEACON. O `<img>` de um perfil hostil do diretorio publico faz o navegador de
+// quem esta olhando bater num servidor de terceiro, entregando IP, User-Agent e
+// o instante em que a pessoa abriu a Biblioteca. Qualquer um alimenta aquele
+// diretorio.
+//
+// MEDIDO em 27/08, a partir de uma geracao real do dono: o arquivo NAO e
+// servido pelo host da API. O `og:image` aponta para o CloudFront abaixo, e a
+// pagina usa `images.higgs.ai` como proxy de otimizacao — o que importa porque
+// `generate-sprite.js` le `results.raw.url || results.min.url`, e a variante
+// `min` e candidata natural a vir do proxy.
+//
+// ⚠️ A LISTA E AMPLA DE PROPOSITO. Ha UMA amostra, e ela veio do `og:image` de
+// uma pagina de compartilhamento, nao do corpo que a API devolve ao servidor.
+// `platform.higgsfield.ai` fica porque o teste "MANTEM a https do provedor
+// legitimo" ja o declarava legitimo — tira-lo seria afirmar, sem medir, que a
+// API nunca serve o arquivo.
+//
+// 🔴 E POR QUE SER AMPLO NAO CUSTA CARO AQUI: esta guarda vale so nos dois
+// pontos que exibem sprite de TERCEIRO (`LibraryPage`, `PlayerDetailModal`), e
+// os dois ja caem em `getSpriteForStage(stage)` quando ela recusa. Lista errada
+// = sprite dos OUTROS vira o desenho generico do estagio. A arte PROPRIA nao
+// passa por aqui e nao quebra — foi essa assimetria que permitiu fechar o
+// beacon com uma amostra so, em vez de esperar uma certeza que nao vinha.
+//
+// NAO fixe `*.cloudfront.net`: a distribuicao e de quem a criou, e criar uma
+// leva minutos. Seria teatro de seguranca.
+const HOSTS_DE_SPRITE = new Set([
+  'd8j0ntlcm91z4.cloudfront.net', // o CDN onde o arquivo gerado vive (medido)
+  'images.higgs.ai',              // proxy de otimizacao do provedor (medido)
+  'platform.higgsfield.ai',       // a API (`HF_BASE`), mantida por precaucao
+]);
+
+/**
+ * O host desta `https:` esta na allowlist?
+ *
+ * PARSEIA a URL em vez de casar texto, e e isso que separa a guarda de um
+ * enfeite. Tres formas que um regex ingenuo aceitaria e o parser recusa:
+ * `https://images.higgs.ai@atacante.example/x.png` (o host real vem DEPOIS do
+ * arroba), `https://...cloudfront.net.atacante.example/x.png` (sufixo nao e
+ * host) e `https://atacante.example/?u=https://images.higgs.ai/x.png` (host
+ * permitido dentro da query nao permite a URL).
+ *
+ * Igualdade EXATA de `hostname`, nunca `endsWith`: `x.images.higgs.ai` e outro
+ * servidor, e um `endsWith('.higgs.ai')` seria o proprio buraco de sufixo que
+ * este bloco existe para fechar.
+ */
+function hostDeSpritePermitido(url: string): boolean {
+  try {
+    // `new URL` normaliza o hostname para minusculas e resolve o userinfo.
+    return HOSTS_DE_SPRITE.has(new URL(url).hostname.toLowerCase());
+  } catch {
+    // URL que o parser recusa nao vira `<img src>` util, e recusar e o lado
+    // seguro do erro.
+    return false;
+  }
+}
+
 /** A URL pode virar `<img src>` num ponto que TAMBEM exibe asset do Vite? */
 export function isSafeSpriteSrc(url: unknown): url is string {
   if (typeof url !== 'string') return false;
@@ -216,7 +278,13 @@ export function isSafeSpriteSrc(url: unknown): url is string {
   // o `tsc` recusa qualquer `.replace` depois. Chamar a guarda ja com o texto
   // limpo resolve os dois lados — a limpeza dela e idempotente.
   const limpa = url.replace(/[\t\n\r]/g, '').replace(/^[\u0000-\u0020]+|[\u0000-\u0020]+$/g, '');
-  return isSafeSpriteUrl(limpa) || CAMINHO_DE_RAIZ.test(limpa);
+  if (CAMINHO_DE_RAIZ.test(limpa)) return true;
+  // O ESQUEMA continua sendo julgado pela guarda unica; o HOST e a camada nova,
+  // e ela so tem o que dizer sobre `https:`. O `data:` de imagem passa direto
+  // porque nao faz requisicao externa — nao ha beacon a fechar nele, e recusa-lo
+  // desligaria o fallback Gemini, que devolve exatamente isso.
+  if (!isSafeSpriteUrl(limpa)) return false;
+  return limpa.toLowerCase().startsWith('https:') ? hostDeSpritePermitido(limpa) : true;
 }
 
 export function emptySpriteLibrary(): SpriteLibrary {
