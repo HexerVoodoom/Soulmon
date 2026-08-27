@@ -33,8 +33,34 @@ export interface PublicProfileInput {
   tasksDone?: number;
 }
 
+/**
+ * O que o servidor RESPONDE ao gravar o perfil — e não é só `ok`.
+ *
+ * O tipo antigo era `{ ok: true }`, e essa mentira de tipo custava
+ * comportamento: `POST profile` aceita `pvpEnabled` do cliente mas tem um gate
+ * de Vínculo (`BOND_PVP_MIN_LEVEL`, `functions/api/community.js`), e quando ele
+ * barra, o perfil é gravado com `pvpEnabled: false` e a resposta traz o porquê.
+ * O comentário do servidor diz para que esses campos existem, na letra: *"para
+ * o app poder explicar em vez de sumir com o botão em silêncio"*. Enquanto o
+ * tipo não os declarava, ninguém os lia.
+ *
+ * `pvpEnabled` é o que FOI GRAVADO, que pode divergir do que foi pedido — é o
+ * campo a acreditar, porque o servidor é quem decide (o cliente é editável).
+ */
+export interface ProfilePushResult {
+  ok: true;
+  /** O estado REAL no servidor depois da gravação. */
+  pvpEnabled?: boolean;
+  /** Só aparece quando um pedido de LIGAR o PvP foi recusado pelo gate. */
+  pvpBlocked?: boolean;
+  /** O nível de Vínculo que o servidor apurou. `null` quando não chegou a apurar. */
+  bondLevel?: number | null;
+  /** O nível exigido, dito pelo servidor — nunca reimplementado aqui. */
+  minBondLevel?: number;
+}
+
 export const pushProfile = (p: PublicProfileInput) =>
-  call<{ ok: true }>('profile', { method: 'POST', body: p });
+  call<ProfilePushResult>('profile', { method: 'POST', body: p });
 
 export interface DirectoryPlayer {
   id: string; name: string; petName: string; stage: string;

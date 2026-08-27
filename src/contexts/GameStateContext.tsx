@@ -1237,6 +1237,49 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         pvpEnabled: !!gameState.pvpEnabled,
         attrs: { virus: gameState.virusPoints, data: gameState.dataPoints, vaccine: gameState.vaccinePoints },
         tasksDone: gameState.completedTasks?.length ?? 0,
+      }).then(resposta => {
+        // ── A RECUSA DE PvP PRECISA CHEGAR AO JOGADOR ────────────────────────
+        //
+        // O servidor barra quem pede para LIGAR o PvP abaixo de
+        // `BOND_PVP_MIN_LEVEL`: grava `pvpEnabled: false` e responde
+        // `pvpBlocked`. Até aqui a resposta inteira caía num `.catch(() => {})`
+        // e o save local seguia com `pvpEnabled: true` — o interruptor ligado, o
+        // jogador fora do diretório, e nada explicando.
+        //
+        // ⚠️ E NÃO É UM CASO DE BORDA. O gate do cliente (`meetsPvpBond`,
+        // `TournamentPage`) lê o XP LOCAL; o servidor lê o XP do save NA NUVEM.
+        // Os dois saem deste MESMO timer e o `pushProfile` não espera o
+        // `cloudSaveComRetry` — quem acabou de cruzar o nível e liga o PvP no
+        // mesmo minuto é avaliado contra o save anterior. Com o cloud save
+        // falhando, a divergência dura o que a falha durar.
+        //
+        // 🔴 POR QUE ISTO NÃO VIOLA A NOTA R-1 acima, que proíbe `setGameState`
+        // neste callback: a proibição existe porque tocar o estado reagenda o
+        // efeito e reenvia o POST que acabou de falhar — cada gesto acelerando
+        // o ciclo. Aqui o `setGameState` DESLIGA `pvpEnabled`, e é justamente
+        // esse campo que o `if (!gameState.pvpEnabled) return` logo acima usa
+        // como portão do POST. A reconciliação FECHA a porta em vez de bater
+        // nela: o efeito roda mais uma vez e sai antes de publicar. É o oposto
+        // exato do 409 de conflito de save, que continua precisando de via
+        // própria. Há teste travando a não-realimentação
+        // (`GameStateContext.pvpBlocked.test.tsx`).
+        if (resposta?.pvpBlocked !== true) return;
+        // `=== true` e não `truthy`: enquanto a versão publicada do endpoint não
+        // tiver o campo, ausência NÃO pode ser lida como recusa — senão uma
+        // resposta velha desligaria o PvP de quem está regular.
+        setGameState(prev => (prev.pvpEnabled ? { ...prev, pvpEnabled: false } : prev));
+        const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+        // Os números vêm do SERVIDOR (`minBondLevel`/`bondLevel`), nunca de uma
+        // constante do cliente: reimplementar o limite aqui seria o footgun 9, e
+        // divergiria em silêncio no dia em que o servidor mudasse o gate.
+        const min = resposta.minBondLevel;
+        const seu = resposta.bondLevel;
+        toast.warning(
+          pt
+            ? `O PvP não foi ligado: falta Vínculo nível ${min}${typeof seu === 'number' ? ` (você está no ${seu})` : ''}.`
+            : `PvP was not enabled: Bond level ${min} required${typeof seu === 'number' ? ` (you are level ${seu})` : ''}.`,
+          { duration: 10000 },
+        );
       }).catch(() => {});
     }, espera);
     return () => clearTimeout(timer);
