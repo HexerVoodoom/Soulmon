@@ -124,13 +124,17 @@ function CornerSvg({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
   );
 }
 
+/**
+ * 27/08/2026 (pedido do dono, com rascunho anotado): os 4 cantos (cano +
+ * junta + trepadeira + cristal) incomodavam — marcados em vermelho no
+ * desenho dele como o que sair. Ficam só as linhas finas do `box-shadow`
+ * de `.sm-screen-frame` (o cobre-fino ao redor da tela inteira); os 4
+ * `<CornerSvg>` saíram. `buildCorner`/`Corner`/`CornerSvg`/`POS_CLASS`
+ * continuam aqui — nenhum deles tem outro consumidor no momento, mas
+ * apagar a peça inteira do kit por um pedido de estética é jogar fora
+ * trabalho que pode voltar (a referência do "kit SOUL MON" pode pedir
+ * cantos em outro lugar depois).
+ */
 export function PixelFrame() {
-  return (
-    <div className="sm-screen-frame" aria-hidden="true">
-      <CornerSvg pos="tl" />
-      <CornerSvg pos="tr" />
-      <CornerSvg pos="bl" />
-      <CornerSvg pos="br" />
-    </div>
-  );
+  return <div className="sm-screen-frame" aria-hidden="true" />;
 }

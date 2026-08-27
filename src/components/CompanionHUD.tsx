@@ -1422,9 +1422,12 @@ export const CompanionHUD = memo(function CompanionHUD({
               onClick={handleBubbleClick}
               style={{
                 cursor: 'pointer',
+                /* Só transparência, sem `backdrop-filter` — o blur atrás de
+                   um fundo animado (respiração/passeio do pet, logo abaixo)
+                   força o navegador a recompor a região toda a cada frame;
+                   é caro em aparelho fraco e foi cortado por suspeita de
+                   contribuir para o travamento relatado em 27/08/2026. */
                 background: 'color-mix(in srgb, var(--sm2-surface) 78%, transparent)',
-                backdropFilter: 'blur(4px)',
-                WebkitBackdropFilter: 'blur(4px)',
                 border: '1px solid var(--sm2-line)',
                 borderRadius: 14,
                 padding: '8px 12px',
