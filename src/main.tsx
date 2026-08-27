@@ -29,11 +29,26 @@
   // artificial — a splash dura exatamente o que o carregamento durar. O nó
   // sai do DOM no fim da transição pra não ficar um overlay morto por cima
   // de tudo (mesmo invisível, é um fixed inset-0 no topo do stacking).
+  //
+  // ⚠️ 27/08/2026 — a rede de segurança vivia DENTRO do duplo rAF, e por isso
+  // não era rede de segurança nenhuma: `requestAnimationFrame` NUNCA dispara
+  // numa aba em segundo plano (a aba some assim que o app abre atrás de outro
+  // app, o celular bloqueia com a tela em carregamento, ou o WebView abre
+  // oculto) — e como o `setTimeout` só era agendado DEPOIS do rAF rodar, ele
+  // também nunca disparava. Resultado: a splash (fixed, no topo do
+  // stacking) ficava para sempre em cima de um app que já tinha carregado
+  // por baixo — "não consigo passar da tela de loading", reportado pelo
+  // dono. Agora o timeout é agendado NA HORA, fora do rAF: ele dispara
+  // independente de a aba estar visível, e some a splash mesmo sem o fade.
+  const remover = () => {
+    const sp = document.getElementById('splash');
+    if (!sp) return;
+    sp.remove();
+  };
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const sp = document.getElementById('splash');
     if (!sp) return;
     sp.classList.add('done');
-    sp.addEventListener('transitionend', () => sp.remove(), { once: true });
-    // rede de segurança: se transitionend não vier (aba em background), remove.
-    window.setTimeout(() => sp.remove(), 1200);
+    sp.addEventListener('transitionend', remover, { once: true });
   }));
+  window.setTimeout(remover, 1200);
