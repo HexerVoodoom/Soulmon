@@ -6934,9 +6934,18 @@ button.sm-px-node {
    INTEIRO (2 device px = 1 pixel de origem na escala 2:1) somado a um degrau
    de brilho. Nada é redimensionado, o serrilhado fica intacto, e com o
    `steps(2, end)` que o CompanionHUD aplica só existem dois quadros. */
+/* `--sm2-blink` é MULTIPLICADO ao filtro base pelo `style.filter` inline do
+   CompanionHUD (`brightness(var(--sm2-blink,1))` no fim da cadeia) — nunca
+   `filter:` aqui dentro. Animar `filter:` diretamente SUBSTITUI o valor
+   inteiro da propriedade pela duração da animação: o drop-shadow da aura e o
+   brightness de humor (`getCompanionFilter`) desapareciam e voltavam a cada
+   piscada (2,6–7,8s, nos DOIS temas/plataformas), lido como o bicho
+   "piscando" de claro pra escuro sem relação com o resto — reportado pelo
+   dono em 27/08/2026. A variável some do DOM quando `isBlinking` volta a
+   `false` (o `filter` some do estilo inline), então nunca fica presa em .86. */
 @keyframes sm2-pet-blink {
-  0%, 100% { transform: translateY(0); filter: brightness(1); }
-  40%, 60% { transform: translateY(2px); filter: brightness(.86); }
+  0%, 100% { transform: translateY(0); --sm2-blink: 1; }
+  40%, 60% { transform: translateY(2px); --sm2-blink: .86; }
 }
 @keyframes sm2-pet-greet {
   0%   { transform: translateY(0); }

@@ -1181,7 +1181,13 @@ export const CompanionHUD = memo(function CompanionHUD({
                   style={{
                     width: PET_RENDER, height: PET_RENDER,
                     imageRendering: 'pixelated',
-                    filter: getCompanionFilter(),
+                    /* `brightness(var(--sm2-blink,1))` no FIM da cadeia: a
+                       piscada (`sm2-pet-blink`, index.css) anima só essa
+                       variável, nunca `filter:` inteiro — senão ela substitui
+                       o drop-shadow/humor de `getCompanionFilter()` pela
+                       duração da animação e o bicho parece apagar e reacender
+                       a cada 2,6–7,8s. */
+                    filter: `${getCompanionFilter()} brightness(var(--sm2-blink,1))`,
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
                     /* Prioridade: o que o USUÁRIO acabou de fazer vence o que o
