@@ -112,3 +112,37 @@ describe('(C) de onde o binario vem — o feed do updater', () => {
     expect(fonteMain).not.toMatch(/allowPrerelease\s*=\s*true/);
   });
 });
+
+describe('identidade do instalador (o Publisher que o Windows mostra)', () => {
+  // O `nsis` usa `author` como PUBLISHER do instalador: e o nome que aparece no
+  // aviso azul do Windows ("Editor: ...") e nas propriedades do .exe. Sem o
+  // campo, o electron-builder so avisa `author is missed` no log -- e aviso de
+  // build e exatamente a categoria de sinal que ninguem le (licao 12: o gate
+  // morto do CI). O resultado silencioso e um instalador assinado por "Editor
+  // desconhecido", que e a frase que faz o usuario cancelar e apagar.
+  //
+  // Guard aqui, e nao no build, porque o build do instalador nao roda no CI e
+  // hoje nem roda nesta maquina (o electron-builder precisa de symlink, ver o
+  // Modo de Desenvolvedor do Windows).
+  const pkg = pkgDesktop as { author?: unknown; productName?: unknown };
+
+  it('author existe e nao e vazio -- sem ele o Windows escreve Editor desconhecido', () => {
+    expect(typeof pkg.author, 'author precisa ser string (ou {name}) para virar Publisher')
+      .toBe('string');
+    expect(String(pkg.author).trim()).not.toBe('');
+  });
+
+  it('author nao vaza e-mail -- este package.json esta num repositorio publico', () => {
+    // O formato `Nome <email@dominio>` e idiomatico em Node e seria a escolha
+    // natural de quem preenchesse sem pensar no repo. Decisao do dono: so o nome.
+    expect(String(pkg.author ?? '')).not.toMatch(/@/);
+    expect(String(pkg.author ?? '')).not.toMatch(/[<>]/);
+  });
+
+  it('o nome do produto continua sendo Soulmon', () => {
+    // O Publisher e QUEM assina; o productName e O QUE se instala. Trocar um
+    // pelo outro faz o instalador dizer que o editor e o proprio app.
+    expect(pkg.productName).toBe('Soulmon');
+    expect(pkg.author).not.toBe(pkg.productName);
+  });
+});

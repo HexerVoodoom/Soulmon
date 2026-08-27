@@ -2,6 +2,7 @@
   "name": "soulmon-desktop",
   "productName": "Soulmon",
   "description": "Pet virtual do Soulmon como overlay na barra de tarefas do Windows",
+  "author": "HexerVoodoom",
   "version": "0.1.0",
   "private": true,
   "main": "electron/main.js",
