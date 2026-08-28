@@ -109,7 +109,6 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import { UnlockAccountModal, UnlockNudge, type UnlockReason } from './components/UnlockAccountModal';
-import { PixelFrame } from './components/PixelFrame';
 import { EvoTrail } from './components/EvoTrail';
 
 // ── O MOTOR DE TAREFAS (docs/PLANO-TAREFAS.md) ──────────────────────────────
@@ -3623,7 +3622,16 @@ export default function App() {
         <a href="#conteudo" className="sm-skip-link">
           {language === 'pt-BR' ? 'Pular para o conteúdo' : 'Skip to content'}
         </a>
-        <PixelFrame />
+        {/* Aqui morava um `<PixelFrame />` — a borda de cobre fina em volta da
+            TELA INTEIRA (`.sm-screen-frame`). Saiu em 27/08/2026 e não deve
+            voltar: com o `.sm2-device` ganhando borda própria no mesmo dia
+            ("box com bordas onde o Soulmon fica"), o app passou a empilhar
+            QUATRO bordas de cobre concêntricas — a da página, a do corpo do
+            aparelho, a pintada na foto de fundo e o anel do `.sm2-viewport`.
+            A da página era a única sem função: ela tinha perdido os 4 cantos
+            de pixel art (pedido do dono no mesmo dia) e virou uma linha de 3px
+            sem propósito. O componente CONTINUA existindo e sendo usado no
+            `SoulmonOnboarding`, onde ainda é o chassi da tela inteira. */}
         {/* Selo de "sem sinal": montado UMA vez, aqui, e por isso cobre todas
             as superfícies do app sem redesenhar nenhuma. Ele se acende sozinho
             pelos eventos `online`/`offline` do window (ver OfflineSeal) e some

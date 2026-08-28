@@ -49,7 +49,7 @@ import { GlyphSvg, hasGlyph } from './NavGlyphs';
  */
 
 /** Tom do glifo. Todos são tokens de TINTA (`*-ink`), nunca de fill. */
-export type IconTone = 'ink' | 'muted' | 'primary' | 'gold' | 'danger' | 'inherit';
+export type IconTone = 'ink' | 'muted' | 'primary' | 'gold' | 'danger' | 'viewport' | 'inherit';
 
 export interface IconProps {
   /** Nome da ligature (ex.: `'favorite'`). Deve estar no inventário. */
@@ -94,6 +94,11 @@ const TONE_CLASS: Record<IconTone, string> = {
   primary: 'sm2-icon-primary',
   gold: 'sm2-icon-gold',
   danger: 'sm2-icon-danger',
+  // `viewport` → `--sm2-viewport-ink`: tinta CLARA nos dois temas. É o tom de
+  // quem fica sobre superfície escura fixa (a tela do aparelho, o corpo do
+  // `.sm2-device` com a foto pintada por baixo) — `ink` inverte com o tema e
+  // desaparecia ali no tema claro.
+  viewport: 'sm2-icon-viewport',
   inherit: '',
 };
 

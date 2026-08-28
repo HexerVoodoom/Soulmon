@@ -50,8 +50,15 @@ interface HomeHudProps {
   hideBrand?: boolean;
   /** Some os medidores — usado pela instância que só carrega a marca/h1. */
   hideMeters?: boolean;
-  /** Medidores menores (rótulo oculto, ícone 16px, trilho mais baixo) —
-      para caber no corpo do aparelho sem competir com o pet. */
+  /**
+   * Medidores mais apertados, para caber no corpo do aparelho sem competir
+   * com o pet. Aperta só a MOLDURA: padding, gap e a altura do trilho da
+   * barra (12px → 7px). **O rótulo continua sempre visível** e **o ícone
+   * continua fixo em 20px** — o degrau `inline` da escala fechada
+   * (`tokens.md` §6.1), abaixo do qual não existe degrau. (Esta linha dizia
+   * "rótulo oculto, ícone 16px" até 27/08/2026; era falsa nas duas metades —
+   * o código nunca fez isso.)
+   */
   compact?: boolean;
 }
 

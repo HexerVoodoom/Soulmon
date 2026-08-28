@@ -1470,15 +1470,17 @@ export const CompanionHUD = memo(function CompanionHUD({
             superfície, separada da tela por um sulco de cobre, dentro do
             `.sm2-device`.
 
-            O alvo de 60px de altura não mudou (WCAG 2.2 AA 2.5.8), o ícone
+            O alvo é de 44px de altura (`min-height` do `.sm2-deck-btn`) — o
+            PISO da WCAG 2.2 AA 2.5.8, não uma folga: o deck encolheu de 60px
+            em 27/08/2026 a pedido do dono, e daqui não desce mais. O ícone
             continua pelado (regra do dono: ícone nunca dentro de box — quem
             ganha superfície ao toque é o BOTÃO), e o FILL segue carregando o
             estado. */}
         <div className="sm2-deck" role="group" aria-label={language === 'pt-BR' ? 'Cuidar do pet' : 'Care for your pet'}>
           {/* Os três PNGs saíram: as ações do pet são `Icon` (Material Symbols
-              Rounded) a 42px, `weight 500` — o peso que faz o traço casar com a
+              Rounded) a 24px, `weight 500` — o peso que faz o traço casar com a
               espessura do pixel do sprite. SEM MOLDURA: o alvo de toque de
-              60px é do BOTÃO (`.sm-px-action`), nunca do ícone.
+              44px é do BOTÃO (`.sm2-deck-btn`), nunca do ícone.
 
               O eixo FILL carrega o estado aqui também: `bedtime` preenchido
               enquanto o pet dorme, e o glifo troca para `wb_sunny` só porque a
@@ -1517,8 +1519,15 @@ export const CompanionHUD = memo(function CompanionHUD({
                   `action` de tokens.md §6.1 (a escala é FECHADA a 20/24/32);
                   o deck passou a dividi-lo — ver a nota na tabela. O `opsz`
                   do `Icon` casa com o `size`, então o traço não afina ao
-                  encolher. */}
-              <Icon name={a.icon} size={24} fill={a.fill} weight={500} tone={a.fill ? 'primary' : 'ink'} />
+                  encolher.
+
+                  `tone='viewport'` (e não `'ink'`): o deck fica sobre o corpo
+                  do `.sm2-device`, que tem a foto ESCURA por baixo nos dois
+                  temas. `--sm2-ink` inverte com o tema e o glifo virava tinta
+                  quase preta sobre fundo escuro no tema claro;
+                  `--sm2-viewport-ink` é claro nos dois, como já é a regra do
+                  visor e da barra segmentada. */}
+              <Icon name={a.icon} size={24} fill={a.fill} weight={500} tone={a.fill ? 'primary' : 'viewport'} />
               {/* Rótulo de AÇÃO em Rubik 12px, caixa mista. Era Silkscreen a
                   8px: abaixo do piso absoluto da escala, e a bitmap fecha os
                   contornos nesse tamanho. Silkscreen agora é a voz do aparelho

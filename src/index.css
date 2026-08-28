@@ -6181,8 +6181,21 @@ button.sm-px-node {
    RODADA 5 — MOLDURA DA TELA (canos + trepadeira, referência do kit)
    ═══════════════════════════════════════════════════════════════════════════
    Overlay fixo, `pointer-events: none` — NUNCA captura toque; cliques passam.
-   As linhas finas das bordas longas são box-shadow inset AQUI; os 4 cantos
-   (pixel art de cano/junta/folha/cristal) vêm do componente `PixelFrame`.
+   A linha fina das bordas longas é box-shadow inset AQUI.
+
+   ⚠️ 27/08/2026: os 4 cantos (pixel art de cano/junta/folha/cristal) SAÍRAM
+   a pedido do dono — o componente `PixelFrame` hoje só devolve este `<div>`
+   vazio (o `CornerSvg`/`buildCorner` continuam no arquivo, sem chamador, de
+   propósito: podem voltar). `PixelFrame` só é montado pelo
+   `SoulmonOnboarding` agora (saiu do `App.tsx` no mesmo dia, mesma revisão
+   de UI) — ou seja, hoje só a tela de onboarding tem esta linha de cobre; o
+   resto do app não. Consistência não decidida, herdada da remoção; achado
+   registrado para o dono, não uma escolha de design feita aqui.
+
+   As classes `.sm-screen-frame-corner`/`-tl`/`-tr`/`-bl`/`-br` abaixo
+   também ficaram sem consumidor no mesmo commit — mantidas pelo mesmo
+   motivo do `CornerSvg`: é o posicionamento que os 4 cantos usariam se
+   voltarem, não vale reescrever do zero por um pedido de estética.
 
    z-index 80: acima da nav (45) e do dock do chat — a moldura é o "bezel" do
    aparelho, então cobre a beirada de tudo, como na referência. Modais ficam
@@ -6612,6 +6625,10 @@ button.sm-px-node {
 .sm2-icon-primary { color: var(--sm2-primary-ink); }
 .sm2-icon-gold { color: var(--sm2-gold-ink); }
 .sm2-icon-danger { color: var(--sm2-danger-ink); }
+/* `viewport`: tinta de VISOR, clara nos DOIS temas — para glifo que fica sobre
+   superfície escura fixa (a tela do aparelho, o corpo do `.sm2-device` com a
+   foto por baixo). `ink` inverte com o tema e sumia ali no tema claro. */
+.sm2-icon-viewport { color: var(--sm2-viewport-ink); }
 
 /* ── VISOR (`Viewport`) — o elemento de marca ─────────────────────────────
    É a FRONTEIRA entre o pixel (dentro) e o vetor (fora). Bisel externo 20px
@@ -6731,7 +6748,27 @@ button.sm-px-node {
      continuam por cima para o corpo do aparelho não virar uma foto plana; a
      leitura de "objeto físico" (cobre, sombra) sobrevive em cima da cena.
      `none` por padrão: nenhum outro consumidor de `.sm2-device` (se algum
-     dia existir) herda a foto sem pedir. */
+     dia existir) herda a foto sem pedir.
+
+     ⚠️ O ZOOM DA FOTO NÃO É ESTÉTICA, É REGRA (27/08/2026). A arte
+     (`home-scene-1547.png`, 1376×3058) é uma MOLDURA pintada: os mesmos 4
+     cantos de cano/junta/trepadeira/cristal que o dono mandou tirar do
+     `PixelFrame` no mesmo dia, mais os dois trilhos de cano verticais nas
+     laterais. Medido no arquivo (remedido em 27/08/2026 — a primeira medição
+     desta nota dizia ~10%/~88%, otimista; a régua real do desenho é mais
+     apertada): o trilho esquerdo termina em ~8% da largura, o direito começa
+     em ~92%; a placa de cobre + trepadeira do topo desce até **~15%** da
+     altura, e a base (com os dois cristais acesos) começa em **~78%**.
+
+     Com `cover` numa caixa LARGA (o aparelho é ~340–503px de largo por
+     ~350–400px de alto, sempre mais largo que 1:2,22), a largura é quem manda:
+     a imagem entrava inteira na horizontal — os dois trilhos apareciam
+     cravados nas laterais do corpo. Por isso `150% auto` em vez de `cover`:
+     150% da largura da caixa, centrado, mostra só a faixa x 16,7%–83,3% —
+     folga de 8pp para cada trilho. Na vertical, `auto` a 150% rende
+     1,5 × 2,22 = 3,33 × a largura da caixa, sempre MUITO mais alto que ela, e
+     `center` deixa visível só o miolo de circuito. Nenhum canto ornamentado
+     sobra. **Não troque por `cover`** — volta a moldura dupla. */
   background-image:
     linear-gradient(180deg,
       color-mix(in srgb, var(--sm2-ink) 7%, transparent) 0%,
@@ -6740,7 +6777,7 @@ button.sm-px-node {
       color-mix(in srgb, var(--sm2-viewport-ring-deep) 26%, transparent) 0%,
       transparent 38%),
     var(--sm2-device-photo, none);
-  background-size: auto, auto, cover;
+  background-size: auto, auto, 150% auto;
   background-position: 0 0, 0 0, center;
   background-repeat: no-repeat, no-repeat, no-repeat;
   box-shadow:
@@ -6823,7 +6860,12 @@ button.sm-px-node {
   font-size: var(--sm2-text-xs);
   font-weight: 500;
   line-height: 1.2;
-  color: var(--sm2-ink);
+  /* Tinta de VISOR, clara nos dois temas — e não `--sm2-ink`, que inverte.
+     O deck fica sobre o corpo do aparelho, que desde 27/08/2026 tem a foto
+     ESCURA por baixo nos dois temas (mesma regra do visor: "é a tela do
+     aparelho, não um card"). Com `--sm2-ink` o rótulo virava tinta quase preta
+     sobre foto escura no tema claro. */
+  color: var(--sm2-viewport-ink);
 }
 /* Marcador de "tem coisa nova" — quadrado, não bolinha. */
 .sm2-deck-dot {
@@ -7158,14 +7200,29 @@ button.sm-px-node {
    27/08/2026: os medidores migraram para DENTRO do `.sm2-device` (o corpo
    do aparelho, acima da tela do pet) — o dono achou o HUD cheio demais
    acima do bicho. Aqui eles precisam caber ao lado do sulco de cobre sem
-   competir com o visor; o `compact` do `HomeHud` já encolhe ícone e trilho
-   via prop (JS), esta classe só aperta o que é CSS puro (padding/gap). */
+   competir com o visor.
+
+   O que `compact` faz, exatamente (a descrição antiga dizia "rótulo oculto,
+   ícone 16px" e era falsa nas duas metades): o RÓTULO continua sempre
+   visível — texto some é informação que some — e o ícone é FIXO em 20px, o
+   degrau `inline` da escala (`tokens.md` §6.1), porque não existe degrau
+   menor. `compact` aperta só a moldura em volta: gap, padding e a altura do
+   trilho da barra. Nada de tipografia encolhe abaixo do piso.
+
+   ⚠️ O `font-size` daqui era **9px** até 27/08/2026 — abaixo do piso absoluto
+   de 12px do projeto (`tokens.md` §4). Subiu para `--sm2-text-xs` (12px, o
+   menor degrau que existe) — que já é o valor da regra BASE
+   (`.sm2-meter-label`/`.sm2-meter-value` mais abaixo neste arquivo), então
+   aqui não sobrescreve nada além do `letter-spacing`. Achado do Loop 3 da
+   revisão de UI de 27/08/2026: a regra de `-value` era 100% morta (só
+   repetia o valor herdado) e foi removida; `-label` ficou só com o que tem
+   efeito de verdade. O HUD compacto ficou um pouco mais alto que antes: é o
+   preço certo, o piso não é negociável. */
 .sm2-hud--compact { gap: 4px; }
 .sm2-hud--compact .sm2-hud-meters { gap: 6px; }
 .sm2-hud--compact .sm2-meter { gap: 2px; padding: 4px 6px; }
 .sm2-hud--compact .sm2-meter-head { gap: 4px; }
-.sm2-hud--compact .sm2-meter-label { font-size: 9px; letter-spacing: .04em; }
-.sm2-hud--compact .sm2-meter-value { font-size: 9px; }
+.sm2-hud--compact .sm2-meter-label { letter-spacing: .04em; }
 
 /* ── BARRA SEGMENTADA `--sm2-*` ─────────────────────────────────────────────
    Trilho ESCURO nos dois temas (`--sm2-viewport-bg`) porque isto é a tela do

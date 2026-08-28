@@ -2,8 +2,9 @@
  * GUARD DA ESCALA DE ÍCONE — `tokens.md` §6.1 vira lei executável.
  *
  * O achado que criou este arquivo: a escala de ícone foi DECLARADA em
- * `src/styles/tokens.md` §6.1 (quatro degraus — 20 inline, 24 action, 32 nav,
- * 42 deck) e **38 de 100 call-sites estavam fora dela**. Não havia teste
+ * `src/styles/tokens.md` §6.1 (quatro PAPÉIS — 20 inline, 24 action, 32 nav e
+ * o deck, que era 42 dedicado e virou 24 em 27/08/2026, dividindo `action`)
+ * e **38 de 100 call-sites estavam fora dela**. Não havia teste
  * nenhum: uma escala que só o documento conhece não é escala, é intenção.
  * `size` é um `number` livre na API do `Icon`, então cada call-site escolhia o
  * dele — foi assim que a Loja chegou a desenhar 14/16/18/22/32 na mesma tela,
@@ -275,10 +276,12 @@ interface Divida {
  * masmorra. Estavam em 40 e 48; foram unificados em **48**.
  *
  * Por que NÃO forçar nos quatro degraus, que era a alternativa:
- *   · **42 (`deck`) não serve.** A §6.1 escreve o papel de cada degrau e diz
- *     "e SÓ ele": 42 é o deck de ações do aparelho na Home (comida, carinho,
- *     banho). Um estado vazio da Loja desenhado com o tamanho do botão de dar
- *     comida não é hierarquia, é colisão de significado — exatamente o que a
+ *   · **24 (`action`/`deck`) não serve.** A §6.1 escreve o papel de cada
+ *     degrau e diz "e SÓ ele": 24 é a coluna de ação da linha e o deck de
+ *     ações do aparelho na Home (comida, carinho, banho — o `deck` era 42
+ *     dedicado e encolheu para 24 em 27/08/2026). Um estado vazio da Loja
+ *     desenhado com o tamanho do botão de dar comida não é hierarquia, é
+ *     colisão de significado — e a 24 seria ainda metade do que já é — exatamente o que a
  *     §6.1 acusa quando diz que 22 ao lado de 24 "não é hierarquia, é ruído".
  *   · **32 (`nav`) também não.** É a barra do aparelho. E rebaixar de 48 para
  *     32 encolhe em 33% a única coisa desenhada numa tela vazia.
@@ -569,8 +572,8 @@ describe('guard da escala de ícone — §6.1 é lei', () => {
    * `GameTutorialFlow` era `lucide-react` e não aparecia na contagem — ao
    * migrar para `<Icon>`, o 11º caso do papel `state` ficou visível. Não é
    * dívida nova, é dívida que estava fora do alcance do instrumento. A
-   * alternativa era desenhar o herói do segundo onboarding em 42 (`deck` = o
-   * botão de dar comida da Home), que é a colisão de significado que a §6.1a
+   * alternativa era desenhar o herói do segundo onboarding em 24 (`deck` = o
+   * botão de dar comida da Home, que era 42 e encolheu em 27/08/2026), que é a colisão de significado que a §6.1a
    * já recusou. **O próximo aumento não deve ser um aumento**: 11 de 13 são o
    * mesmo papel, e a resposta certa é a §6.1a virar linha da tabela de §6.1 —
    * aí `escalaDeclarada()` aceita 48 sozinha e nove entradas caem de uma vez.

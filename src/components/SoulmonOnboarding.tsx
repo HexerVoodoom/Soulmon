@@ -633,9 +633,12 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       fontFamily: 'var(--sm2-font-text)',
     }}>
       <style>{SPIN_CSS}</style>
-      {/* A moldura do aparelho é o chassi do app inteiro (o `App.tsx` monta a
-          mesma peça): sem ela o primeiro contato seria a única tela do produto
-          que não parece o Soulmon. */}
+      {/* A moldura é o chassi DESTA tela — e desde 27/08/2026 ela vive só
+          aqui: o `App.tsx` parou de montá-la, porque lá dentro o corpo do
+          aparelho (`.sm2-device`) ganhou borda própria e as duas empilhavam
+          cobre em cima de cobre. No onboarding não existe `.sm2-device`
+          nenhum, então sem ela o primeiro contato seria a única tela do
+          produto que não parece o Soulmon. */}
       <PixelFrame />
       {oracleDebugOpen ? (
         /* Ferramenta interna de dev, carregada por `lazy()`. O `fallback` era

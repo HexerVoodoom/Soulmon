@@ -410,9 +410,12 @@ Estavam espalhados em 40 e 48; foram **unificados em 48**.
 |---|---|---|
 | `state` | **48** | o glifo que É a tela: estado vazio, estado de erro, estado de conclusão, herói de modal. Nunca em linha, nunca em lista, **no máximo UM por tela**. |
 
-Por que não coube nos quatro que existem: **42 (`deck`) é o deck de ações do
-aparelho na Home** e a §6.1 diz "o papel — e SÓ ele"; um estado vazio desenhado
-do tamanho do botão de dar comida é colisão de significado, não hierarquia.
+Por que não coube nos quatro que existem: **24 (`action`/`deck`) é a coluna de
+ação da linha e o deck de ações do aparelho na Home** e a §6.1 diz "o papel — e
+SÓ ele"; um estado vazio desenhado do tamanho do botão de dar comida é colisão
+de significado, não hierarquia — e desde que o `deck` encolheu de 42 para 24
+(27/08/2026), desenhar o herói de tela vazia ali seria também rebaixá-lo pela
+metade.
 **32 (`nav`) é a barra do aparelho**, e rebaixar para lá encolhe em 33% a única
 coisa desenhada numa tela vazia. **48** já era o valor de 3 dos 10, e o do
 relatório diário vive numa caixa de 48×48 declarada no JSX — o precedente da
@@ -540,7 +543,9 @@ Duas decisões que não afrouxam:
 - [ ] Nenhum texto abaixo de 12px; número que muda com `.sm2-num`?
 - [ ] Silkscreen só no visor e em selo, ≥14px, caixa alta?
 - [ ] Ícone sem moldura, sem fundo, sem borda?
-- [ ] Ícone novo em um dos QUATRO degraus (20 / 24 / 32 / 42), §6.1?
+- [ ] Ícone novo em um dos quatro PAPÉIS da §6.1 (`inline` 20 / `action` 24 /
+      `deck` 24 / `nav` 32 — três valores, quatro papéis; 42 saiu em
+      27/08/2026)?
 - [ ] Emoji/arte fora da escala de texto, dentro de caixa própria, §6.2?
 - [ ] Escala do `Viewport` inteira?
 - [ ] Classe utilitária nova? Ela **existe** no `index.css`? (footgun 1 — o

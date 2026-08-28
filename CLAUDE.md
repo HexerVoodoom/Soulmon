@@ -91,7 +91,7 @@ Repositório: `HexerVoodoom/Soulmon`.
 - O worker de push (`workers/`) **não** é uma Pages Function: não builda no
   push da `main`. Deploy manual com `wrangler deploy` dentro de `workers/`.
 - Ao mudar assets estáticos/HTML de forma incompatível, **bump `CACHE_VERSION`**
-  em `public/sw.js` (**v99** atual, `public/sw.js:3` — este arquivo dizia "v24"
+  em `public/sw.js` (**v100** atual, `public/sw.js:3` — este arquivo dizia "v24"
   até 26/08/2026, e o número tinha ficado 69 versões para trás) — senão
   usuários ficam presos em cache velho.
 
