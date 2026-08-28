@@ -6183,14 +6183,16 @@ button.sm-px-node {
    Overlay fixo, `pointer-events: none` — NUNCA captura toque; cliques passam.
    A linha fina das bordas longas é box-shadow inset AQUI.
 
-   ⚠️ 27/08/2026: os 4 cantos (pixel art de cano/junta/folha/cristal) SAÍRAM
-   a pedido do dono — o componente `PixelFrame` hoje só devolve este `<div>`
-   vazio (o `CornerSvg`/`buildCorner` continuam no arquivo, sem chamador, de
-   propósito: podem voltar). `PixelFrame` só é montado pelo
-   `SoulmonOnboarding` agora (saiu do `App.tsx` no mesmo dia, mesma revisão
-   de UI) — ou seja, hoje só a tela de onboarding tem esta linha de cobre; o
-   resto do app não. Consistência não decidida, herdada da remoção; achado
-   registrado para o dono, não uma escolha de design feita aqui.
+   ⚠️ 27–28/08/2026: os 4 cantos (pixel art de cano/junta/folha/cristal)
+   SAÍRAM a pedido do dono — o componente `PixelFrame` hoje só devolve este
+   `<div>` vazio (o `CornerSvg`/`buildCorner` continuam no arquivo, sem
+   chamador, de propósito: podem voltar). `PixelFrame` **não é montado em
+   lugar nenhum do app** — saiu do `App.tsx` em 27/08 (empilhava com a borda
+   nova do `.sm2-device`) e do `SoulmonOnboarding` em 28/08 (o dono pediu
+   consistência total: nenhuma tela leva mais esta borda). As classes deste
+   bloco (`.sm-screen-frame` e as 5 abaixo) ficam sem nenhum consumidor por
+   ora — mantidas pelo mesmo motivo do `CornerSvg`: não vale reescrever do
+   zero se a moldura voltar.
 
    As classes `.sm-screen-frame-corner`/`-tl`/`-tr`/`-bl`/`-br` abaixo
    também ficaram sem consumidor no mesmo commit — mantidas pelo mesmo
@@ -6436,6 +6438,12 @@ button.sm-px-node {
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #B0722F;
   --sm2-viewport-ring-deep: #5E3612;
+  /* 28/08/2026: `--sm2-danger-ink` (#B3261E, escuro — calibrado para SURFACE
+     clara) contra o vidro do visor (sempre escuro) cai perto de 2:1. O alerta
+     de HP crítico precisa de uma tinta de vermelho que já nasça clara, como
+     `--sm2-viewport-ink` — mesmo valor nos dois temas, porque o vidro é
+     escuro nos dois. */
+  --sm2-viewport-danger: #FF8B8B;
   /* CRÉDITOS — a moeda de dinheiro real. É a única das três cuja distinção é
      COR + ícone (💎), então a cor precisa ser tinta de verdade: o roxo antigo
      (`#a855f7`, inline em `utils/currencies.ts`) dava 3,65:1 sobre `bg` e
@@ -6466,6 +6474,7 @@ button.sm-px-node {
   --sm2-viewport-ink: #E9F5F2;
   --sm2-viewport-ring: #C68642;
   --sm2-viewport-ring-deep: #241507;
+  --sm2-viewport-danger: #FF8B8B;
   --sm2-credit-ink: #C9A7FF;
 }
 
@@ -6629,6 +6638,9 @@ button.sm-px-node {
    superfície escura fixa (a tela do aparelho, o corpo do `.sm2-device` com a
    foto por baixo). `ink` inverte com o tema e sumia ali no tema claro. */
 .sm2-icon-viewport { color: var(--sm2-viewport-ink); }
+/* `viewport-danger`: mesma lógica do `viewport` acima, em vermelho — o
+   alerta de HP crítico dentro do corpo do aparelho (28/08/2026). */
+.sm2-icon-viewport-danger { color: var(--sm2-viewport-danger); }
 
 /* ── VISOR (`Viewport`) — o elemento de marca ─────────────────────────────
    É a FRONTEIRA entre o pixel (dentro) e o vetor (fora). Bisel externo 20px
@@ -7166,6 +7178,16 @@ button.sm-px-node {
   white-space: nowrap;
 }
 .sm2-hud-meters { display: flex; align-items: stretch; gap: 8px; }
+/* 28/08/2026 — tinta de VISOR, fixa nos dois temas, não mais `--sm2-surface`/
+   `--sm2-ink`/`--sm2-muted` (que invertem por tema). Único consumidor hoje é
+   a instância COMPACTA dentro do `.sm2-device` (ver App.tsx/CompanionHUD.tsx),
+   ao lado do deck — que já usa a mesma tinta fixa (`--sm2-viewport-ink`,
+   revisão de UI de 27/08/2026). Dois cartões trocando de cor com o tema ao
+   lado de um deck que não troca lia como duas peças, não uma; unificado por
+   pedido do dono. Se algum dia `.sm2-meter` voltar a aparecer FORA do corpo
+   do aparelho (a instância não-compacta, hoje só `hideMeters`), essa
+   instância nova precisa dos tokens de tema — não reverta este bloco, crie
+   um modificador. */
 .sm2-meter {
   flex: 1 1 0;
   min-width: 0;
@@ -7174,8 +7196,8 @@ button.sm-px-node {
   flex-direction: column;
   gap: 5px;
   padding: 8px 10px;
-  background-color: var(--sm2-surface);
-  border: 1px solid var(--sm2-line);
+  background-color: var(--sm2-viewport-bg);
+  border: 1px solid var(--sm2-viewport-ring-deep);
   border-radius: var(--sm2-radius-md);
 }
 .sm2-meter-head { display: flex; align-items: center; gap: 6px; }
@@ -7186,14 +7208,14 @@ button.sm-px-node {
   letter-spacing: .08em;
   text-transform: uppercase;
   line-height: 1.2;
-  color: var(--sm2-muted);
+  color: color-mix(in srgb, var(--sm2-viewport-ink) 70%, transparent);
 }
 .sm2-meter-value {
   margin-left: auto;
   font-size: var(--sm2-text-xs);
   font-weight: 600;
   line-height: 1.2;
-  color: var(--sm2-ink);
+  color: var(--sm2-viewport-ink);
 }
 
 /* ── VARIANTE COMPACTA ────────────────────────────────────────────────────

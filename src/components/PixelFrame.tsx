@@ -134,6 +134,12 @@ function CornerSvg({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
  * apagar a peça inteira do kit por um pedido de estética é jogar fora
  * trabalho que pode voltar (a referência do "kit SOUL MON" pode pedir
  * cantos em outro lugar depois).
+ *
+ * 28/08/2026: este componente **não é montado em lugar nenhum do app**.
+ * Primeiro saiu do `App.tsx` (ficava empilhado com a borda nova do
+ * `.sm2-device`); o `SoulmonOnboarding` ainda o usava, mas o dono pediu
+ * consistência total — nenhuma tela leva mais a borda. Continua existindo
+ * pelo mesmo motivo do parágrafo acima: é peça de kit, não lixo.
  */
 export function PixelFrame() {
   return <div className="sm-screen-frame" aria-hidden="true" />;

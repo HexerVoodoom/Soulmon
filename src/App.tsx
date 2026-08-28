@@ -3630,8 +3630,13 @@ export default function App() {
             aparelho, a pintada na foto de fundo e o anel do `.sm2-viewport`.
             A da página era a única sem função: ela tinha perdido os 4 cantos
             de pixel art (pedido do dono no mesmo dia) e virou uma linha de 3px
-            sem propósito. O componente CONTINUA existindo e sendo usado no
-            `SoulmonOnboarding`, onde ainda é o chassi da tela inteira. */}
+            sem propósito.
+
+            28/08/2026: o `SoulmonOnboarding` também parou de montá-lo — o dono
+            pediu consistência total, nenhuma tela leva mais a borda. O
+            COMPONENTE continua existindo, sem chamador nenhum no momento (ver
+            `PixelFrame.tsx`): apagar a peça inteira por um pedido de estética
+            jogaria fora trabalho que a referência do kit pode pedir de volta. */}
         {/* Selo de "sem sinal": montado UMA vez, aqui, e por isso cobre todas
             as superfícies do app sem redesenhar nenhuma. Ele se acende sozinho
             pelos eventos `online`/`offline` do window (ver OfflineSeal) e some

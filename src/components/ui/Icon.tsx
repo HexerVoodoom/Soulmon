@@ -49,7 +49,7 @@ import { GlyphSvg, hasGlyph } from './NavGlyphs';
  */
 
 /** Tom do glifo. Todos são tokens de TINTA (`*-ink`), nunca de fill. */
-export type IconTone = 'ink' | 'muted' | 'primary' | 'gold' | 'danger' | 'viewport' | 'inherit';
+export type IconTone = 'ink' | 'muted' | 'primary' | 'gold' | 'danger' | 'viewport' | 'viewport-danger' | 'inherit';
 
 export interface IconProps {
   /** Nome da ligature (ex.: `'favorite'`). Deve estar no inventário. */
@@ -99,6 +99,11 @@ const TONE_CLASS: Record<IconTone, string> = {
   // `.sm2-device` com a foto pintada por baixo) — `ink` inverte com o tema e
   // desaparecia ali no tema claro.
   viewport: 'sm2-icon-viewport',
+  // `--sm2-danger-ink` é calibrado para superfície CLARA (a `-surface` de
+  // cada tema); contra o vidro do visor, sempre escuro, cai perto de 2:1. O
+  // alerta de HP crítico dentro do `.sm2-device` precisa da mesma lógica do
+  // `viewport` acima, mas em vermelho.
+  'viewport-danger': 'sm2-icon-viewport-danger',
   inherit: '',
 };
 

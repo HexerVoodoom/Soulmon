@@ -166,7 +166,7 @@ export function HomeHud({
               {/* 20px sempre (degrau `inline`, tokens.md §6.1) — é a escala
                   FECHADA do app, não há degrau menor. O `compact` encolhe
                   padding/gap/trilho ao redor (CSS), não o ícone. */}
-              <Icon name="favorite" size={20} fill={1} tone={hp <= 1 ? 'danger' : 'gold'} />
+              <Icon name="favorite" size={20} fill={1} tone={hp <= 1 ? 'viewport-danger' : 'viewport'} />
               <span className="sm2-meter-label">{isPt ? 'Vida' : 'Health'}</span>
               <span className="sm2-meter-value sm2-num">{hp}/{hpMax}</span>
             </div>
@@ -174,13 +174,15 @@ export function HomeHud({
               value={hp}
               max={hpMax}
               height={compact ? 7 : 12}
-              /* Tinta de VISOR (cobre), clara nos dois temas e medida em 4,1:1
-                 sobre o trilho escuro do tema claro — acima do 3:1 de
-                 componente não-textual. O HP baixo NÃO troca a cor da barra:
-                 `--sm2-danger-fill` no tema claro é um vermelho escuro que dá
-                 2,8:1 ali dentro e sumiria. Quem carrega o alarme é o glifo do
-                 coração (tom `danger`) e o número ao lado — os dois sobre
-                 superfície clara, onde o vermelho passa AA. */
+              /* Tinta de VISOR (cobre), clara nos dois temas. O HP baixo NÃO
+                 troca a cor da barra — `--sm2-danger-fill` é calibrado para
+                 SURFACE clara (a `-surface` de cada tema), não para o vidro
+                 do visor, que é escuro nos dois (28/08/2026: `.sm2-meter`
+                 passou a viver dentro do `.sm2-device`, sempre sobre o vidro
+                 — o comentário antigo falava de uma superfície clara que não
+                 existe mais aqui). Quem carrega o alarme é o glifo do coração
+                 (`viewport-danger`, calibrado pro vidro) e o número ao lado,
+                 os dois em `--sm2-viewport-ink`/`-danger`. */
               tone="var(--sm2-viewport-ring)"
               label={isPt ? 'Vida' : 'Health'}
             />
@@ -194,7 +196,7 @@ export function HomeHud({
             : `Energy: ${energyPoints}/${maxEnergyPoints} — fills by eating; full at day's end = evolution point`}
         >
           <div className="sm2-meter-head">
-            <Icon name="bolt" size={20} fill={1} tone="primary" />
+            <Icon name="bolt" size={20} fill={1} tone="viewport" />
             <span className="sm2-meter-label">{isPt ? 'Energia' : 'Energy'}</span>
             <span className="sm2-meter-value sm2-num">{energyPoints}/{maxEnergyPoints}</span>
           </div>

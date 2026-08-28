@@ -18,7 +18,6 @@ import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/ty
 import { cityLabel, type City } from '../utils/soulProfile/cities';
 import { CityPicker } from './CityPicker';
 import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
-import { PixelFrame } from './PixelFrame';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
@@ -633,13 +632,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       fontFamily: 'var(--sm2-font-text)',
     }}>
       <style>{SPIN_CSS}</style>
-      {/* A moldura é o chassi DESTA tela — e desde 27/08/2026 ela vive só
-          aqui: o `App.tsx` parou de montá-la, porque lá dentro o corpo do
-          aparelho (`.sm2-device`) ganhou borda própria e as duas empilhavam
-          cobre em cima de cobre. No onboarding não existe `.sm2-device`
-          nenhum, então sem ela o primeiro contato seria a única tela do
-          produto que não parece o Soulmon. */}
-      <PixelFrame />
+      {/* 28/08/2026: a moldura saiu DAQUI TAMBÉM — vivia só nesta tela desde
+          27/08 (o `App.tsx` já tinha parado de montá-la), mas isso nunca foi
+          uma decisão de design; era o resíduo de tirar o `PixelFrame` da
+          Home. O dono revisou e pediu consistência total: nenhuma tela do
+          app leva mais a linha de cobre ao redor. */}
       {oracleDebugOpen ? (
         /* Ferramenta interna de dev, carregada por `lazy()`. O `fallback` era
            `null` — meio segundo de tela branca; agora é o esqueleto do visor. */
