@@ -84,12 +84,32 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
+      # ⚠️ `retention-days: 1`, e o número é o ponto do step.
+      #
+      # Este APK NÃO é acervo: ele existe para o job `smoke` abaixo baixar de
+      # volta com `download-artifact`, dentro da MESMA run. Terminada a run, o
+      # único consumidor dele já consumiu.
+      #
+      # MEDIDO em 30/08, quando a conta bateu 100% da cota de armazenamento de
+      # artefato: o APK pesa **67 MB**, e o plano grátis dá **500 MB** somando
+      # todos os repos PRIVADOS (repo público não consome nada — este é
+      # privado). São ~7 APKs para encher a cota sozinho. Com `retention-days:
+      # 30` e um push por commit na `main`, a conta guardava um mês inteiro de
+      # builds: só nas 48h de 26–28/08 foram 30 runs deste workflow, ou seja
+      # ~2 GB de APK vivo para uma cota de 0,5 GB. Quando estoura, o
+      # `upload-artifact` passa a FALHAR e este workflow fica vermelho por
+      # falta de disco, não por defeito no código.
+      #
+      # Quem precisa de um APK que dure é uma tag de versão, e esse caminho é
+      # o `desktop-release.yml` do lado do desktop: Release não consome esta
+      # cota. Baixar o APK de um commit específico à mão continua possível no
+      # mesmo dia do push, que é quando alguém de fato quer.
       - name: Upload APK artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: digiapp-debug-${{ github.sha }}
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
+          retention-days: 1
 
   # ───────────────────────────────────────────────────────────────────────────
   # SMOKE DO APK — a ponte Capacitor↔web
