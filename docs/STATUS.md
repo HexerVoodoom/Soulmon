@@ -16,6 +16,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **01/09/2026 (rodada 2)** — as transcrições dos vídeos foram lidas via
+> NotebookLM (`docs/guia-experiencia/08-transcricoes-notebooklm.md`, 16/16
+> respondidas) e analisadas na **seção I do `GUIA-EXPERIENCIA.md`**. Três
+> achados que mudam decisão: (1) **`REST_SHIELD_MAX = 3` provavelmente deveria
+> ser 2** — o Duolingo testou 2 vs 3 freezes e o terceiro "não foi melhor que
+> dois" e "treinava o usuário a tirar mais tempo de folga" (experimento P1,
+> depende de telemetria existir); (2) o Soulmon empilhou **oito** mecanismos de
+> perdão sem nunca decidir **onde é a sua linha** — o risco nomeado pelo PM de
+> retenção do Duolingo é a mecânica perder significado ("extinction level
+> event"); (3) o caso mais forte contra gamificar produtividade (Errant Signal /
+> Extra Credits) acerta a comida-por-tarefa, e fica registrado como critério de
+> decisão permanente, não como pedido de remoção. **Nada de código mudou** —
+> a mudança de `REST_SHIELD_MAX` é decisão do dono e está na seção H.
+
 Última atualização: **26/08/2026 (4ª passada — a consolidação do dia)** — fecha
 o dia inteiro contra `HEAD = e8aef62a`. Gate reexecutado nesta árvore:
 

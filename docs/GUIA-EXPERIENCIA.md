@@ -60,6 +60,13 @@ independentes:
 | Medição | Inexistente | **Construir antes de otimizar** |
 | Conteúdo de longo prazo (D30–D90) | Só o Torneio semanal | **Eixo mais fraco do produto** |
 
+> 📼 **Leia a seção I antes de agir nesta tabela.** A rodada 2 leu as
+> transcrições dos vídeos (`08-transcricoes-notebooklm.md`) e trouxe três
+> achados que a rodada 1 não podia ter: `REST_SHIELD_MAX = 3` provavelmente
+> deveria ser 2 (o Duolingo testou e o 3º escudo treina ausência), o Soulmon
+> nunca decidiu **onde é a sua linha de perdão**, e o caso mais forte contra
+> gamificar produtividade acerta uma mecânica que o produto tem.
+
 ---
 
 ## B. A jornada, etapa por etapa
@@ -230,6 +237,10 @@ teste seguinte a considerar, com tela dispensável em um toque.
   Nunes & Drèze). **Streak que zera é proibido por teste.**
 - **Escudos de descanso** consumidos **automaticamente** em `applyMissedDay`
   (1 a cada 7 dias de boa constância, teto 3).
+  > ⚠️ **O teto 3 é o único número desta lista que a evidência contraria.** O
+  > Duolingo testou 2 vs 3 freezes: o terceiro "não foi melhor que dois" e
+  > "treinava o usuário a tirar mais tempo de folga". Ver **I.1.1** — é
+  > experimento P1, não correção.
 - **Never miss twice**: `MISS_INTERVENTION_AT = 2`; a 1ª falha não gera nada
   visível; a 2ª oferece versão reduzida que **conta como feito**.
 - **Marcos 7/21/66** (Lally et al. 2010) com tiers seed→sprout→sapling→tree e
@@ -557,7 +568,11 @@ fica listada na seção H.
 - **Som e música**: ausente da rodada, e é uma alavanca conhecida de vínculo.
 - **QA com usuários reais**: só apareceu como recomendação (R-13), não como dado.
 - **Mercado LATAM/preço no Brasil**: benchmarks de preço são majoritariamente
-  US/EU; a reprecificação (M-10) precisa de dado local.
+  US/EU; a reprecificação (M-10) precisa de dado local. *(Parcialmente
+  respondido na rodada 2 — ver I.5: preço regionalizado agressivo para o Brasil
+  aparece como prática JUSTA, não como desconto.)*
+- *(As lacunas acima seguem abertas depois da rodada 2, exceto onde marcado. As
+  transcrições não tocaram ASO, som, nem QA com usuário real — ver I.6.)*
 
 ---
 
@@ -713,6 +728,11 @@ impacto ÷ esforço.
 | 25 | Oferta proativa no 1º dia perfeito + cap de 1/semana | Alto × M | `DailyReportModal`, `playerDay.ts` | 06 |
 | 26 | Reroll → "Nova Leitura" (seed derivada das respostas) | Alto × M | `oracle.ts`, `monetization.ts` | 04, 06 |
 | 27 | Sonho garantido na 1ª noite | Alto × P | `restWindow.ts` | 07 |
+| 27a | **Experimento `REST_SHIELD_MAX` 3 → 2**, medindo retorno após ausência | Alto × P | `types/taskModel.ts` | **08 · I.1.1** |
+| 27b | **Prestígio cosmético por hábito levado sem escudo gasto** (modelo Perfect Streak) | Alto × M | `habitRhythm.ts`, `EvolutionPage` | **08 · I.3.1** |
+| 27c | **Botão do check-in vira compromisso ativo** ("Assumir minha meta" / "Commit to my goal", PT+EN) | Alto × PP | `rituals.ts`, modal de check-in | **08 · I.3.2** |
+| 27d | **Celebração de marco INTERROMPE o fluxo** (háptico + animação rica; complexidade reservada aos marcos) | Alto × M | `index.css`, componentes | **08 · I.3.3** |
+| 27e | **Descrição do Oráculo diz de ONDE a criatura veio, não COMO ela se comporta** | Médio × P | `oracle.ts`, reveal | **08 · I.3.4** |
 | 28 | Aniversário e idade do pet | Médio × P | `GameState`, virada | 04 |
 | 29 | Marcos intermediários de celebração (21→66) via `totalDone` | Médio × P | falas | 03 |
 | 30 | Push de quase-marco + fresh start como convite | Médio × P | scheduler, `rituals.ts` | 03, 07 |
@@ -798,6 +818,15 @@ Data Safety.
 | `paywall_view` / `purchase` | billing | sku, origem do nudge |
 | `error` | erro capturado | code |
 
+> ⚠️ **A seção I.4 corrige este plano em cinco pontos** (fonte: Emily Greer,
+> GDC): use **medianas**, não médias (jogo segue power law, não curva normal);
+> **nenhum experimento de monetização é julgado antes de 30 dias** (o caso
+> "Office Space" parecia +conversão em 10 dias e era −11% líquido em 30);
+> atribua o usuário ao teste **quando ele toca o recurso**, não no login;
+> exiba **tamanho de amostra** em todo gráfico de coorte; **eixo Y começa em
+> zero**. E o método do aha moment (YC): medir o **achatamento da curva de
+> coorte** sobre uma ação de valor real.
+
 ### Métrica-farol e guarda-corpos
 
 **Farol: tarefas concluídas por usuário ativo/dia, ponderadas por esforço.** Mede
@@ -829,11 +858,22 @@ Todos em `docs/guia-experiencia/`.
 | 04 | `04-monster-taming.md` | O que o gênero ensina sobre vínculo — V-Pet 97 (care mistakes, Numemon→Monzaemon), Monster Rancher (origem pessoal), shiny como raridade sem poder, Palworld como contraexemplo — e 17 recomendações. |
 | 05 | `05-onboarding.md` | Mapa completo do ritual do Oráculo passo a passo (`SoulmonOnboarding.tsx` lido integralmente), 7 fricções diagnosticadas — a maior é "o reveal não revela" — e 18 recomendações priorizadas. |
 | 06 | `06-paywall-monetizacao.md` | Auditoria do funil comercial (server-authoritative, 3 moedas, 3 nudges), benchmarks de assinatura 2025/2026, e 16 recomendações incluindo as linhas vermelhas publicáveis do que nunca vender. |
+| 08 | `08-transcricoes-notebooklm.md` | **Rodada 2 — a fonte primária mais forte do guia.** Respostas verbatim do NotebookLM às 16 perguntas de `00-PROMPTS-NOTEBOOKLM.md`, lendo as transcrições que o sandbox não alcança: streak do Duolingo com trechos literais e timestamp, motivos reais de abandono do v-pet, fronteira legítimo/abuso da aversão à perda, catálogo de dark patterns, checklist de monetização justa e armadilhas de métrica. Analisado na seção I. |
 | 07 | `07-retencao-engajamento.md` | Benchmarks de retenção por categoria, mapa de churn com hipóteses testáveis, plano de telemetria de ~20 eventos, calendário de re-engajamento, e por que A/B é fantasia abaixo de 1.000 usuários. |
 
 ---
 
 ## H. Decisões que só o dono pode tomar
+
+0. **`REST_SHIELD_MAX`: 3 ou 2?** *(novo na rodada 2 — ver I.1.1.)* O Duolingo
+   mediu que o 3º escudo não entrega nada e treina ausência. O escudo do Soulmon
+   é ganho por constância e gasto sozinho, o que não é a mesma peça — por isso é
+   experimento, não correção. Mas é mudança de regra de jogo, e regra de jogo é
+   decisão sua.
+0b. **Onde é a linha de perdão do Soulmon?** *(ver I.1.2.)* Oito mecanismos de
+   perdão foram decididos um a um, e nenhum documento pergunta o que ainda dói
+   perder. A resposta não é punir — é nomear o que o produto protege como
+   inviolável.
 
 1. **Assinatura recorrente: sim ou não?** É a única resposta ao custo de IA que
    escala com DAU. Se sim, valem as 3 travas de C.3 #3.
@@ -860,3 +900,245 @@ as pessoas mantêm por anos e pelo qual se dispõem a pagar**. E a primeira cois
 a fazer é **instrumentar os ~20 eventos e pôr o sprite no reveal** — na mesma
 semana: sem o primeiro nada mais pode ser priorizado com honestidade, e sem o
 segundo todo o funil de onboarding trabalha para entregar um parágrafo.
+
+---
+
+## I. Rodada 2 — o que as transcrições de vídeo mudaram
+
+A rodada 1 não conseguia ler transcrição de YouTube (bloqueio de IP no sandbox),
+e por isso 84 vídeos entraram no guia por **título e fonte secundária**. As
+16 perguntas de `00-PROMPTS-NOTEBOOKLM.md` foram executadas no NotebookLM e as
+respostas verbatim estão em `08-transcricoes-notebooklm.md`. Todas as 16
+responderam.
+
+**Regra de leitura:** tudo nesta seção é `via transcrição` — vem da fala dentro
+do vídeo, não de artigo sobre o vídeo. É a evidência mais forte do guia, e é a
+única que pode **derrubar** recomendação da rodada 1.
+
+### I.1 As três contradições (o motivo de ter ido buscar)
+
+#### ⚠️ I.1.1 `REST_SHIELD_MAX = 3` provavelmente deveria ser 2
+
+O Duolingo **testou exatamente isso**, na escala deles, e o 3º escudo não
+entregou nada — pior, treinou ausência:
+
+> "the really interesting insight of this experiment was that **three streak
+> freezes was actually no better than two streak freezes**… But if you start
+> taking three days off from any habit, it's just going to be less likely that
+> you return even four days later. And so… **we were training them to take more
+> time off**." — Jackson Shuttleworth, PM de retenção (≈00:46:30–00:48:30)
+
+O mecanismo do dano é o mesmo que o Soulmon quer evitar: quem some três dias
+seguidos tende a não voltar no quarto. O 3º escudo não protege o hábito — ele
+compra mais um dia de ausência para alguém que já está saindo.
+
+Vale registrar o que a mesma fonte **confirma**: o escudo equipado por padrão foi
+"holy smokes" de ganho, e o `applyMissedDay` automático do Soulmon já é essa
+lição implementada — inclusive antes de o guia ter a citação. O que não estava
+verificado era o **teto**, e ele é o único número da família que a evidência
+contraria.
+
+Há um detalhe que impede transplantar direto: o escudo do Duolingo é **carregado
+e gasto pelo usuário**, o do Soulmon é **ganho por constância e gasto sozinho**.
+Ganhar 1 a cada 7 dias de boa constância já limita o acúmulo de um jeito que o
+Duolingo não tinha. Então isto é **P1 e experimento, não correção de bug**:
+`REST_SHIELD_MAX` de 3 → 2, medindo retorno após ausência. Depende de telemetria
+(F) existir — que é justamente o P0.
+
+#### ⚠️ I.1.2 O Soulmon nunca decidiu onde é a SUA linha de perdão
+
+Esta é a mais estratégica, e não tem resposta pronta:
+
+> "You can almost always get engagement wins, up to a certain point, by just
+> **cheapening the streak**, making it easier to extend, letting users have more
+> flexibility, but **you kind of got to hold the line at some point. And it's not
+> clear where that line is.** … there's a point where you go too far and it's a
+> one-way door, and all of a sudden those users, those 9 million users on
+> one-year streaks **don't care about their streak anymore**. And that … would be
+> an **extinction level event** for us." (≈00:52:00–00:53:30)
+
+O Soulmon empilhou **oito** mecanismos de perdão — constância N/7, escudo
+automático, never miss twice, teto de 1 coração/dia, perdão por ausência ≥2
+dias, alívio de segunda, fresh start, `someday`/`dropped`. Cada um foi decidido
+com bom argumento e **isoladamente**. Nenhum documento do projeto pergunta onde
+o perdão para de significar cuidado e passa a significar que nada importa.
+
+Isso **não** é argumento para punir — a tese anti-punição segue de pé e é o
+diferencial do produto. É argumento para nomear o que o Soulmon protege como
+inviolável. A pergunta que falta responder: *o que ainda dói perder no Soulmon?*
+Hoje, honestamente: quase nada. A criatura do Oráculo é única e insubstituível —
+e é justamente por isso que ela, e não a barra de HP, é o ativo que sustenta
+significado. Ver I.3.1.
+
+Vale notar a assimetria a favor do Soulmon: o "evento de extinção" do Duolingo é
+sobre 9 milhões de pessoas perderem o apreço por um **número**. O Soulmon não
+tem esse número exposto — o que ele tem é uma criatura. Um vínculo com criatura
+não barateia pela mesma via, mas também não é imune: se cuidar não muda nada,
+some o motivo de cuidar.
+
+#### ⚠️ I.1.3 A crítica mais forte contra o produto, na íntegra
+
+Pedimos o caso mais duro contra gamificar produtividade. Ele acerta o Soulmon:
+
+> gamificação é "**colar um motivador extrínseco e frequentemente sem sentido a
+> uma atividade** para induzir as pessoas a engajarem nela por mais tempo ou mais
+> vezes"; o objetivo real é "explorar reações humanas instintivas a estímulos
+> básicos para fazer você fazer algo que de outra forma não faria". Ian Bogost
+> propõe renomear para **"exploitationware"**. — Errant Signal
+
+E o golpe específico, que descreve uma mecânica que o Soulmon **tem**:
+
+> ao anunciar antecipadamente a recompensa por concluir a tarefa, o cérebro
+> reduz a atividade a "**um mero meio para um fim**" — o trabalho vira "um
+> estorvo que se coloca entre o usuário e a notificação de conquista".
+
+No Soulmon, concluir tarefa **dá comida**, que dá energia e pontos de atributo
+que decidem o galho de evolução. Isso é literalmente recompensa tangível,
+esperada e condicional — a configuração que a literatura de motivação
+intrínseca aponta como a que corrói. O Extra Credits completa com a curva:
+o entusiasmo inicial some, e sem recompensa intrínseca o engajamento "desmorona
+de forma abrupta".
+
+**Como isto entra no guia, honestamente:** não como recomendação de remover a
+comida — a mecânica é o coração do produto e removê-la é outro produto. Entra
+como **critério de decisão permanente**: toda mecânica nova de recompensa
+precisa responder "isto faz a pessoa querer fazer a tarefa, ou querer a
+notificação?". E entra como o argumento mais forte a favor das peças do Soulmon
+que **não** são extrínsecas: o relatório que descreve sem julgar, o humor que
+não vira score, o `soulGoal` devolvido, o ritmo de cuidado que muda quem a
+criatura vira. Essas são a defesa contra a curva de colapso — e são as que o
+roadmap P0 já manda investir.
+
+### I.2 O que foi confirmado com evidência nova
+
+| Regra atual do Soulmon | Evidência via transcrição |
+|---|---|
+| Escudo consumido **automaticamente** (`applyMissedDay`) | Duolingo: dar 2 freezes equipados no início do streak foi um dos maiores ganhos que a equipe já mediu ("holy smokes") |
+| Hábito novo nasce em **ratio 1** (progresso dotado) | GDC/Engelstein cita Catan: todos começam com 2 dos 10 pontos; o progresso dado de presente aumenta motivação de continuar — o mesmo Nunes & Drèze, agora com precedente de design |
+| **Streak que zera é proibido** | "Forced Play / Punição por Inatividade" aparece **nomeado como dark pattern** (Extra Credits): apagar progresso de streak sem opção de freeze |
+| Faixas do Torneio **antes** do ranking global | Tim Gabe: placar global "parece impossível de vencer e desmotiva"; coortes reduzidas preservam a percepção de *winnability* |
+| Carga do dia é **aviso, nunca bloqueio** | The Freedom Fallacy: autonomia é **volição** (querer fazer o que se faz), não liberdade irrestrita — e estrutura satisfaz autonomia melhor que ambiente sem direção |
+| Humor **nunca** vira pontuação | Emily Greer (GDC): métrica isolada e avaliação precoce escondem canibalização — julgar por uma KPI é a armadilha, não a solução |
+
+Um achado que **reposiciona** uma regra sem contradizê-la: a tese anti-punição
+do Soulmon foi escrita como oposição ao Habitica. As transcrições mostram que
+ela é mais defensável do que o guia dizia — o "Forced Play" é dark pattern
+catalogado, e o Tamagotchi original **perdia** usuários exatamente por isso
+(morte em menos de 12h, sem botão de pausa; ignorar 5–6h matava o bicho). O
+criador Akihiro Yokoi projetou a dor de propósito, achando que bicho real "só é
+fofo 20 a 30% do tempo" e que sem trabalho não haveria responsabilidade. Deu
+apego **e** deu abandono em massa. O Soulmon fica com a primeira metade.
+
+### I.3 Mecânicas novas que valem entrar
+
+#### I.3.1 Prestígio cosmético por não usar a proteção (P1)
+
+O Duolingo tem **Perfect Streak**: calendário dourado, **sem recompensa
+material**, só para quem passou o período sem usar Streak Freeze. É a resposta
+direta à I.1.2 — cria significado sem criar punição, porque quem usa o escudo
+não perde nada, só não ganha o dourado.
+
+No Soulmon isto encaixa em `habitTier` / na página de Evolução: uma marca visual
+para o hábito levado sem escudo gasto. **Nunca** um número exposto que desce.
+
+#### I.3.2 Compromisso ativo em vez de botão neutro (P1, barato)
+
+Trocar `Continue` por **`Commit To My Goal`** rendeu ao Duolingo mais de **10.000
+DAU** — só a mudança de texto. A meta de streak (14/30/50 dias) escolhida
+ativamente e com opt-out visível aumentou engajamento **porque tornou a decisão
+intencional**.
+
+O check-in do Soulmon já escolhe até 3 focos: o botão que fecha o check-in é
+candidato imediato ao mesmo tratamento (PT/EN, `rituals.ts` + o modal).
+
+#### I.3.3 Celebração que faz PARAR, não acelerar (P1)
+
+Duolingo usa háptico + animação rica **para o usuário pausar e saborear**, em vez
+de acelerar pelo funil — e reserva as animações mais complexas para marcos.
+No Duolingo, a animação existe para o personagem virar "um parceiro de estudos
+atencioso" em vez de software frio.
+
+O guia já pedia cerimônia nos marcos 7/21/66 (P0). As transcrições dão o
+**mecanismo**: a celebração precisa interromper o fluxo, não decorá-lo.
+
+#### I.3.4 A criatura é ESPÉCIE, não personagem (revisa uma decisão de conteúdo)
+
+> Dar traços humanos muito específicos e rígidos à criatura **impede que o
+> jogador projete sua própria história nela**. Criaturas com design mais neutro
+> ou animalesco permitem que cada espécime tenha sua própria narrativa na mente
+> do jogador. — frogMak
+
+Isso tensiona o Oráculo, que entrega **nome + descrição + linha de essência**
+prontos. A saída não é apagar a descrição — ela é o que prova que a criatura veio
+das respostas da pessoa (I.1.2). É calibrar: a descrição deve dizer **de onde a
+criatura veio** (a leitura da pessoa), não **como ela se comporta** (personalidade
+fechada). Deixar o comportamento em aberto é o que dá espaço para o vínculo.
+
+#### I.3.5 As atividades precisam estar acopladas a alguma necessidade (P2)
+
+"Motivational sand traps": atividade desconectada de satisfação psicológica vira
+**ponto de ruído**, não oportunidade. O exemplo do Far Cry 3 é o mais direto —
+caçar tem valor até você fabricar tudo; depois os animais continuam no mapa como
+poluição visual.
+
+Aplicação no Soulmon: **a masmorra e os minijogos precisam continuar acoplados a
+algo depois que o jogador comprou tudo da loja.** Hoje eles rendem Bits, e Bits
+compram cosmético — quando o catálogo acaba, viram ruído. O eixo de conteúdo
+D30–D90 (já apontado como o mais fraco do produto) é exatamente este buraco.
+
+### I.4 Correções ao plano de telemetria (seção F)
+
+Emily Greer (GDC) contradiz duas escolhas metodológicas comuns que o plano da
+seção F fazia implicitamente:
+
+1. **Média é a métrica errada.** Quase tudo em jogo segue **power law**, não curva
+   normal — outliers distorcem qualquer ARPU/média. Usar **medianas** e testes
+   para distribuição não-normal (Wilcoxon rank-sum). Com amostra pequena,
+   priorizar métricas **binárias** estáveis (retenção D1, conversão) em vez de
+   médias.
+2. **Teste de 10 dias mente.** No caso "Office Space", uma promoção parecia
+   sucesso em 10 dias e a análise de **30 dias** revelou canibalização de receita
+   futura: **−11% líquido**. Nenhum experimento de monetização do Soulmon deve
+   ser julgado antes de 30 dias.
+
+Mais três, diretas:
+- **Atribuir o usuário ao teste no momento em que ele interage com o recurso**,
+  não no login — senão quem nunca abre a loja vira ruído que mascara o sinal.
+- **Sempre exibir tamanho de amostra** em qualquer gráfico de coorte.
+- **Eixo Y começa em zero.** Eixo cortado transforma flutuação irrelevante em
+  pânico.
+
+E o método do "aha moment" que a seção F não tinha: David Lee (YC) mede pelo
+**achatamento da curva de retenção de coorte** sobre uma ação de valor real.
+Se a curva estabiliza — mesmo em 20–30% — o valor foi provado; se continua caindo
+para zero, não foi. Isso é implementável com os ~20 eventos já planejados.
+
+### I.5 Checklist de monetização justa (fonte para a seção B.6)
+
+Oito critérios, de GDC + Sub Club. Os três que mais mexem com decisões abertas:
+
+- **Valores sagrados**: identificar o que nunca leva paywall. Para o Soulmon isto
+  já tem nome — a barra que representa o cuidado que a pessoa teve consigo mesma.
+  Reforça a recomendação de reenquadrar a **cura instantânea por Créditos**.
+- **Double dipping**: se um dia houver assinatura + consumíveis, a assinatura
+  precisa incluir franquia robusta. Cobrar mensalidade e ainda forçar consumível
+  logo em seguida "destrói a reputação nas lojas".
+- **Preço regionalizado**: reduzir preço de forma agressiva em mercados como o
+  **Brasil** é citado nominalmente como prática justa, não como desconto. Isso
+  responde parcialmente à lacuna "preço LATAM" declarada em C.4.
+
+Mais: promoção deve ser **espaçada e imprevisível** — desconto programado ensina
+o usuário a esperar; e o framework **GAMES** (Good times, Attitude, Mastery,
+Engagement, Social health) como contrapeso holístico às métricas financeiras.
+
+### I.6 O que continua sem resposta
+
+- **4 fontes com erro de carregamento** no notebook (URLs cruas): não dá para
+  saber por automação quais vídeos eram, e o conteúdo delas não está
+  representado.
+- **Timestamps são aproximados**, reconstruídos da transcrição pelo NotebookLM —
+  indicativos, não exatos. Para citação pública, conferir no vídeo.
+- **Duplicatas**: o notebook tem 168 itens para ~84 vídeos únicos; não impediu as
+  respostas, mas consome o limite de fontes do plano.
+- As lacunas de C.4 que nenhum vídeo cobria (ASO, som, QA com usuário real)
+  **seguem abertas** — as transcrições não as tocaram.
