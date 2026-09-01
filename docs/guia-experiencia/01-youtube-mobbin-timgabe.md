@@ -8,6 +8,22 @@
 > Mobbin (mobbin.com); e artigos de terceiros que cobrem os mesmos estudos
 > (RevenueCat, Growth Gems, UserGuiding, trophy.so). Onde a lição vem do título +
 > conhecimento consolidado do tema, isso está sinalizado. Cada fonte tem URL.
+>
+> ⚠️ **CORREÇÃO DE AUTORIA (01/09/2026).** A primeira versão deste relatório
+> atribuiu **cinco** vídeos ao canal errado. Todo ID foi depois verificado no
+> endpoint oEmbed do YouTube
+> (`https://www.youtube.com/oembed?url=…&format=json`), que devolve o título e o
+> canal REAIS — é a checagem barata que separa "achei o link numa busca" de "o
+> link é o que eu disse que era", e ela deveria ter sido feita antes do primeiro
+> commit. O que mudou: **"I Studied 100 Paywalls" é do Steven Cravotta**, **"This
+> app onboarding hides the paywall" é do Adam Lyttle**, o **"Design Breakdown Ep.
+> 5" é do Punit Chawla**, e o **curso `[MOBBIN] 01–06` é do DesignCode**, não da
+> Mobbin. Mais importante: **nenhum** vídeo citado aqui é do canal
+> `@mobbindesign` — o canal existe, mas o sandbox não consegue enumerar os
+> vídeos dele, então tudo que este relatório chama de "Mobbin" é **terceiro
+> falando sobre a ferramenta**. A lição de método continua valendo (o valor da
+> Mobbin está no catálogo de flows, não no canal), mas ela não veio do canal.
+> Os quatro vídeos confirmados do Tim Gabe estão marcados ✅ na tabela abaixo.
 
 ---
 
@@ -25,14 +41,14 @@ Temas/vídeos identificados:
 
 | Vídeo / tema | O que ensina | Fonte |
 |---|---|---|
-| **"I Studied 500+ Gamified Apps (Here's What Actually Works)"** (mai/2026) | Gamificação que retém vs. gamificação de enfeite: a maioria dos apps gamificados falha porque cola pontos/badges por cima sem ligar a recompensa ao valor real; o que funciona é loop ligado ao progresso do usuário (streaks com recuperação, mascote com emoção, recompensa variável com teto) | https://www.youtube.com/watch?v=LXX_qOA5D8E |
-| **"Why Leaderboards Kill App Retention (How To Fix It)"** (jun/2026) | Ranking global cru desmotiva a maioria (só o topo é recompensado); consertos: ligas/faixas pequenas, comparação consigo mesmo, coortes de nível parecido — o mesmo achado que a literatura reporta (31%+ de efeito negativo de comparação em ambientes só-leaderboard) | https://www.youtube.com/watch?v=BxhsCu9hNpY |
-| **"How To Solve The App Onboarding Paradox"** (jun/2026) | O paradoxo: onboarding precisa coletar contexto para personalizar, mas cada tela a mais perde gente. Solução: pedir só o que muda a experiência imediata, mostrar valor antes de pedir cadastro (gradual engagement), e transformar as perguntas em *parte do produto*, não formulário | https://www.youtube.com/watch?v=Aa89MC8jX2c |
-| **"This app onboarding hides the paywall"** | Breakdown de onboarding que embute o paywall no fim do fluxo de personalização (padrão Noom/Cal AI): o quiz cria investimento e o paywall chega como "seu plano está pronto" | https://www.youtube.com/watch?v=uw0Y_FiKkYQ |
-| **"I Studied 100 Paywalls, Here's What I Found"** | Padrões de paywall que convertem: benefícios concretos em vez de lista de features, âncora anual com preço/dia, social proof, trial com timeline explicada ("hoje / dia 5 lembrete / dia 7 cobra"), botão de fechar presente mas discreto | https://www.youtube.com/watch?v=y0f8-CSOJ58 |
-| **"Viral Design Tricks from Spotify (Founder Playbook)"** (jan/2026) | O que o Spotify faz de compartilhável por design (Wrapped-style: resumo pessoal, identidade, momento anual) e como founder pequeno replica | https://www.youtube.com/watch?v=Tpg0pxKHrCA |
-| **"Our World Class App Design Formula"** (transcrição completa via Sozai, jun/2026) | Processo de 6 etapas: Onboarding (do cliente) → Discovery → UX (wireflows antes de visual) → UI (micro-detalhes compõem polish) → **Emotional Integration** (animações e momentos estratégicos como camada própria, citando as animações Rive do Duolingo e o sistema de diamantes do Free Cash) → Delivery. Frase-chave: "Wireframing is a super effective tool for focusing on solving problems before obsessing over visual details" | https://sozai.app/transcript/world-class-app-design-formula/ e https://www.youtube.com/@TimGabe |
-| **"New UX/UI Trends… Duolingo End UX, Rise of AX Design" (Design Breakdown Ep. 5)** (mar/2025) | Série de breakdowns de tendências; discute o "end UX" do Duolingo (o que acontece depois que o usuário domina o produto) e design para agentes/IA | https://www.youtube.com/watch?v=Bu77RJKOUvA |
+| ✅ **"I Studied 500+ Gamified Apps (Here's What Actually Works)"** (mai/2026) | Gamificação que retém vs. gamificação de enfeite: a maioria dos apps gamificados falha porque cola pontos/badges por cima sem ligar a recompensa ao valor real; o que funciona é loop ligado ao progresso do usuário (streaks com recuperação, mascote com emoção, recompensa variável com teto) | https://www.youtube.com/watch?v=LXX_qOA5D8E |
+| ✅ **"Why Leaderboards Kill App Retention (How To Fix It)"** (jun/2026) | Ranking global cru desmotiva a maioria (só o topo é recompensado); consertos: ligas/faixas pequenas, comparação consigo mesmo, coortes de nível parecido — o mesmo achado que a literatura reporta (31%+ de efeito negativo de comparação em ambientes só-leaderboard) | https://www.youtube.com/watch?v=BxhsCu9hNpY |
+| ✅ **"How To Solve The App Onboarding Paradox"** (jun/2026) | O paradoxo: onboarding precisa coletar contexto para personalizar, mas cada tela a mais perde gente. Solução: pedir só o que muda a experiência imediata, mostrar valor antes de pedir cadastro (gradual engagement), e transformar as perguntas em *parte do produto*, não formulário | https://www.youtube.com/watch?v=Aa89MC8jX2c |
+| ⚠️ **"This app onboarding hides the paywall"** — **é do Adam Lyttle (`@adamlyttleapps`), não do Tim Gabe** | Breakdown de onboarding que embute o paywall no fim do fluxo de personalização (padrão Noom/Cal AI): o quiz cria investimento e o paywall chega como "seu plano está pronto" | https://www.youtube.com/watch?v=uw0Y_FiKkYQ |
+| ⚠️ **"I Studied 100 Paywalls, Here's What I Found"** — **é do Steven Cravotta (`@stevencravotta`), não do Tim Gabe** | Padrões de paywall que convertem: benefícios concretos em vez de lista de features, âncora anual com preço/dia, social proof, trial com timeline explicada ("hoje / dia 5 lembrete / dia 7 cobra"), botão de fechar presente mas discreto | https://www.youtube.com/watch?v=y0f8-CSOJ58 |
+| ✅ **"Viral Design Tricks from Spotify (Founder Playbook)"** (jan/2026) | O que o Spotify faz de compartilhável por design (Wrapped-style: resumo pessoal, identidade, momento anual) e como founder pequeno replica | https://www.youtube.com/watch?v=Tpg0pxKHrCA |
+| **"Our World Class App Design Formula"** (transcrição completa via Sozai, jun/2026) | Processo de 6 etapas: Onboarding (do cliente) → Discovery → UX (wireflows antes de visual) → UI (micro-detalhes compõem polish) → **Emotional Integration** (animações e momentos estratégicos como camada própria, citando as animações Rive do Duolingo e o sistema de diamantes do Free Cash) → Delivery. Frase-chave: "Wireframing is a super effective tool for focusing on solving problems before obsessing over visual details" | ✅ vídeo: https://www.youtube.com/watch?v=wmTkiF23GRQ · transcrição: https://sozai.app/transcript/world-class-app-design-formula/ |
+| ⚠️ **"New UX/UI Trends… Duolingo End UX, Rise of AX Design" (Design Breakdown Ep. 5)** (mar/2025) — **é do Punit Chawla (`@PunitChawla`), não do Tim Gabe** | Série de breakdowns de tendências; discute o "end UX" do Duolingo (o que acontece depois que o usuário domina o produto) e design para agentes/IA | https://www.youtube.com/watch?v=Bu77RJKOUvA |
 
 O fio condutor do canal: **retenção vem de emoção projetada de propósito**
 (mascote, celebração, streak com perdão), **conversão vem de onboarding que
@@ -45,9 +61,14 @@ Mobbin é antes de tudo a maior biblioteca de referência de UI/UX real
 (1.700+ apps, 400k+ screens, flows anotados). O canal de YouTube é o braço
 educacional dela, com dois formatos:
 
+⚠️ **Nada nesta tabela é do canal `@mobbindesign`.** O canal existe (responde 200),
+mas o sandbox não enumera os vídeos dele; o que segue é **terceiro usando a
+ferramenta**, e o curso `[MOBBIN] 01–06` é do **DesignCode** (`@DesignCodeTeam`),
+enquanto o build do app fintech é do **DSCODE** (`@dscodestudio`).
+
 | Formato | O que ensina | Fonte |
 |---|---|---|
-| **Curso [MOBBIN] 01–06** ("Introduction to UI/UX Design" … "UX Research and Design Flows") | Fundamentos: pesquisa por referência real (não por imaginação), decompor apps existentes em flows, montar UI a partir de padrões comprovados | https://www.youtube.com/watch?v=BB8uOVJQnLg · https://www.youtube.com/watch?v=9hFFyNHKr7A |
+| **Curso [MOBBIN] 01–06** (DesignCode) ("Introduction to UI/UX Design" … "UX Research and Design Flows") | Fundamentos: pesquisa por referência real (não por imaginação), decompor apps existentes em flows, montar UI a partir de padrões comprovados | https://www.youtube.com/watch?v=BB8uOVJQnLg · https://www.youtube.com/watch?v=9hFFyNHKr7A |
 | **Mobbin Workflows** (playlist) + builds completos ("We Finally Completed the Fintech App With Mobbin – Full Design + Prototype") | Workflow de designer: buscar o padrão (onboarding, paywall, empty state) em apps top, comparar variações e só então desenhar | https://www.youtube.com/playlist?list=PLl0Umi92CQzW04B2-suFw7wPN5GkdDErO · https://www.youtube.com/watch?v=fDkCdTc8LUY |
 
 O material mais valioso do Mobbin para o Soulmon não é o vídeo em si, é o
