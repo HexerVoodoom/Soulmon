@@ -7,6 +7,15 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> **01/09/2026** — entrou o **`docs/GUIA-EXPERIENCIA.md`** (guia mestre de
+> melhoria de experiência: onboarding/Oráculo, "streak" sem punição, vínculo,
+> paywall, retenção, DON'Ts e roadmap P0→P3) + 7 relatórios de pesquisa em
+> `docs/guia-experiencia/` (canais Mobbin/Tim Gabe, Tamagotchi effect,
+> gamificação, monster taming, onboarding, monetização, retenção). Só docs —
+> nenhuma regra de jogo mudou. As 8 decisões que dependem do dono estão na
+> seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
+> `vitest` 2852 passed · 2 skipped.
+
 Última atualização: **26/08/2026 (4ª passada — a consolidação do dia)** — fecha
 o dia inteiro contra `HEAD = e8aef62a`. Gate reexecutado nesta árvore:
 
