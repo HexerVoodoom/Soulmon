@@ -681,7 +681,7 @@ As táticas menos óbvias dos relatórios — o que um leitor apressado não ext
 
 ## E. Roadmap consolidado
 
-> 📋 **A execução deste roadmap vive em `docs/PLANO-MELHORIAS.md`** (30 pacotes
+> 📋 **A execução deste roadmap vive em `docs/PLANO-MELHORIAS.md`** (36 pacotes
 > em 5 ondas, 6 sprints, cada item com arquivo + símbolo verificado). Dois
 > itens abaixo estavam **errados** à luz do código e foram corrigidos lá (#1 e
 > #14, marcados). O plano também acrescenta o que nenhum relatório viu:

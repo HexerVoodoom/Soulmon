@@ -16,8 +16,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **02/09/2026 — SISTEMA DE GUARDA** — o plano ganhou custódia: **7 agentes
+> guardas** (`.claude/agents/soulmon-guarda-*.md`), **3 skills**
+> (`/guarda-soulmon`, `/implementar-wp`, `/destrinchar-estudo`) e um **livro-razão
+> durável** (`docs/plano-melhorias/LEDGER.md` + `ledger/*.md`). Cada guarda possui
+> uma fatia dos 36 pacotes, destrincha o estudo contra o código, e **só marca
+> VERIFICADO rodando o comando de aceite e colando a saída** — sem isso o estado
+> máximo é IMPLEMENTADO. O guarda da linha vermelha não possui pacote nenhum, de
+> propósito, e tem veto. Linha de base medida na criação: 28 PROPOSTO, 8
+> BLOQUEADO por decisão do dono. ⚠️ **A contagem "30 pacotes" estava errada —
+> são 36** (`grep -c '^### WP'`), corrigida aqui e no guia.
+
 > **02/09/2026 — PLANO DE MELHORIAS** — entrou `docs/PLANO-MELHORIAS.md`:
-> 30 pacotes de trabalho em 5 ondas, sequenciados em 6 sprints, cada um com
+> 36 pacotes de trabalho em 5 ondas, sequenciados em 6 sprints, cada um com
 > arquivo + símbolo verificado por seis mapeamentos do código
 > (`docs/plano-melhorias/A–F`). **O código contradisse os relatórios em doze
 > pontos** — os que mudam decisão: a telemetria JÁ EXISTE (10 eventos; falta
