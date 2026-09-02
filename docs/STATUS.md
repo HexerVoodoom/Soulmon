@@ -16,6 +16,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **02/09/2026 — PLANO DE MELHORIAS** — entrou `docs/PLANO-MELHORIAS.md`:
+> 30 pacotes de trabalho em 5 ondas, sequenciados em 6 sprints, cada um com
+> arquivo + símbolo verificado por seis mapeamentos do código
+> (`docs/plano-melhorias/A–F`). **O código contradisse os relatórios em doze
+> pontos** — os que mudam decisão: a telemetria JÁ EXISTE (10 eventos; falta
+> `METRICS_ADMIN_KEY` e a coorte é impossível por desenho declarado);
+> `daysToEvolve` é dado morto (evolução real = 4/5/5/6 dias perfeitos, mega em
+> 14 dias, depois nada); ultra só é alcançável **degenerando de propósito**;
+> `bondRewardFor` devolve `null` do L14; `SEASONS` expira em 2027-02-27; o
+> catálogo de Bits esgota em D15–D23; o chat tem memória zero; a push não tem
+> win-back nem dedup PWA×APK; e `setObfuscatedAccountId` NÃO EXISTE no Play
+> Billing. Onze decisões do dono estão na seção 10 do plano — **D1
+> (`METRICS_ADMIN_KEY`) destrava tudo**. Nenhuma regra de jogo mudou.
+
 > **01/09/2026 (rodada 2)** — as transcrições dos vídeos foram lidas via
 > NotebookLM (`docs/guia-experiencia/08-transcricoes-notebooklm.md`, 16/16
 > respondidas) e analisadas na **seção I do `GUIA-EXPERIENCIA.md`**. Três

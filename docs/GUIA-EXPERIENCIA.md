@@ -681,6 +681,13 @@ As táticas menos óbvias dos relatórios — o que um leitor apressado não ext
 
 ## E. Roadmap consolidado
 
+> 📋 **A execução deste roadmap vive em `docs/PLANO-MELHORIAS.md`** (30 pacotes
+> em 5 ondas, 6 sprints, cada item com arquivo + símbolo verificado). Dois
+> itens abaixo estavam **errados** à luz do código e foram corrigidos lá (#1 e
+> #14, marcados). O plano também acrescenta o que nenhum relatório viu:
+> `daysToEvolve` morto, ultra por degeneração, Vínculo sem recompensa após L13,
+> estações que expiram, Bits esgotando em D15–D23.
+
 Deduplicado entre os sete relatórios. Ordenado por prioridade e, dentro dela, por
 impacto ÷ esforço.
 
@@ -688,7 +695,7 @@ impacto ÷ esforço.
 
 | # | Item | Impacto × Esforço | Dono / arquivo provável | Origem |
 |---|---|---|---|---|
-| 1 | Instrumentar os ~20 eventos de telemetria | Muito alto × M | novo `src/utils/telemetry.ts` | 07 |
+| 1 | ~~Instrumentar os ~20 eventos de telemetria~~ **CORRIGIDO no `PLANO-MELHORIAS.md`**: a telemetria já existe (10 eventos em `src/utils/telemetry.ts` + `functions/api/metrics.js`); o que falta é `METRICS_ADMIN_KEY` (leitura) e a coorte de retenção (decisão do dono) → WP0.1/WP0.2 | Muito alto × P | `metrics.js`, Pages env | 07, plano |
 | 2 | Sprite no REVEAL do Oráculo | Muito alto × P/M | `SoulmonOnboarding.tsx` | 05 |
 | 3 | Reveal cerimonial (silhueta → flash → sprite) | Alto × M | `SoulmonOnboarding.tsx`, `index.css` | 05, 01 |
 | 4 | Checklist D0 (<1 min: carinho, 1 hábito, 1ª barra) + check-in não dispara no D0 | Muito alto × M | `App.tsx`, `utils/rituals.ts` | 01, 07 |
@@ -701,7 +708,7 @@ impacto ÷ esforço.
 | 11 | `soulGoal` ecoado no reveal | Alto × P | `SoulmonOnboarding.tsx`, `oracle.ts` | 05 |
 | 12 | Anel de constância + contador lifetime "dias juntos" | Alto × M | home, `GameState`, widget | 03 |
 | 13 | Aba "Apoie o Soulmon" na Loja + copy de resultado no `UnlockAccountModal` | Alto × M | `ShopModal`, `UnlockAccountModal` | 06, 01 |
-| 14 | 1ª evolução alcançável em ≤5 dias (auditar `FORM_REQUIREMENTS`) | Alto × M | `types/progression.ts` | 07 |
+| 14 | ~~1ª evolução alcançável em ≤5 dias~~ **CORRIGIDO no plano**: já é 4 dias perfeitos — `daysToEvolve` (10/20/30/40) é dado morto e o gate real é `.required` (4/5/5/6); o problema é o oposto, a árvore acaba em 14 dias → WP4.1 (decisão D5) | Alto × M | `types/progression.ts`, `App.tsx` `handleEvolve` | 07, plano |
 
 > **Corte deliberado do P0:** a onda acima tem 14 itens porque cobre 7 etapas da
 > jornada; se for preciso reduzir a uma sprint, os **sete** que valem sozinhos
