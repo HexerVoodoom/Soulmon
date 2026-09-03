@@ -435,3 +435,105 @@ Connect — todos dependem do dono ou de fora do código.
 | `D-monetizacao.md` | Catálogo/SKUs/preços; Play Billing sem `obfuscatedAccountId`; os 3 nudges e seus textos; nenhum na Loja/relatório; cap demo; sem trial/assinatura |
 | `E-telemetria.md` | O sistema que existe; bindings; padrão canônico de endpoint; cloud save; por que D1/D7 é impossível hoje e o precedente para resolver; consentimento e o bug "sete" |
 | `F-conteudo.md` | Economia de Bits com contas; masmorra/torneio/evolução/sonhos/Vínculo/social esgotando; `daysToEvolve` morto; ultra via degeneração; `SEASONS` expira |
+
+---
+
+## 13. Rodada 3 — o dossiê Mobbin (02/09/2026)
+
+Fonte: `docs/guia-experiencia/09-mobbin-dossie.md` (27 buscas no Mobbin Pro, ~90
+achados, 13 dossiês, só iOS, sem estados transitórios — ver §1 dele). Cada
+dossiê foi destrinchado pelo guarda dono em `docs/plano-melhorias/mobbin/`, em
+três colunas (o que o app faz · o que o Soulmon faz hoje, por `grep` · veredito).
+A linha vermelha inventariou 73 achados anti/limítrofes: o Soulmon **já evita 36**,
+tropeça em 12 na exibição/copy, e está **exposto em 5** (E1–E5, abaixo).
+
+### 13.1 O que a rodada corrigiu no próprio plano (de novo)
+
+| Onde | Dizia | Verdade (por `grep`) | Ação |
+|---|---|---|---|
+| WP4.6, anexo F, ledger | "roster de 60 inimigos invisíveis em `LEGACY_FORM_TIERS`" | **Falso.** `LEGACY_FORM_TIERS` tem um uso (`LEGACY_LEVEL_OF`); a masmorra sorteia de `DUNGEON_LINE_SPRITES` — 6 linhas × 4 artes, 6 nomes. Origem do erro: comentário morto em `progression.ts:57-59` | WP4.6 reescrito (G→M); WP4.9 corrige as três fontes |
+| WP1.2(c) | "calibrar `composeBio`" | `composeBio` **não existe**; a bio do reveal (`richConceptPt`) já é origem; a frase de comportamento vive em `stages[].description` e aparece no `PetPage` | Régua mira `stages[].description` |
+| WP3.3 | "título **sob o nome** do pet no HUD" | **Não há nome do pet no HUD** (`grep soulmonDisplayName CompanionHUD.tsx` → 0) | Spec vira pílula nome + título |
+| WP3.1 | contexto no chat | O chat recebe `petName: currentStage` — a criatura se apresenta pela **espécie**, não pelo nome batizado | Item 0 do WP3.1: persona = nome batizado |
+| "Guia #37/#24" em WP4.8 | referências | não resolvem (o rel. 07 vai só até 24) | fontes reais: 01 lição 18, 02 rec. 4, 04 rec. 12 |
+
+### 13.2 As cinco exposições (o código faz o que o dossiê marca como anti-padrão)
+
+| # | Onde | O que | Proibição | Fecha em |
+|---|---|---|---|---|
+| E1 | `WidgetRenderer.kt` | `"Don't forget about me today!"` · `"N task(s) left, let's go!"` · corações vazios — **o anti-padrão de referência do dossiê inteiro, dentro do nosso APK** | #16, #19 | WP2.6 (aceite novo: nenhum dígito quando `completed < total`) |
+| E2 | `CreditsModal` | cura de 1 coração por 10 Créditos | #13 | D7 (parecer: remover) |
+| E3 | `LibraryPage.tsx:340`, `PlayerDetailModal.tsx:105`, `community.js:180-188` | perfil do amigo com `rank N` e a escada Rookie→Mega com o nível atual marcado — a armadilha do Mimo | **#21** (nova) | WP4.11 |
+| E4 | aba Missões | 🔒 + `0/100 kills` em série | cadeado + zero em série | WP4.12 |
+| E5 | `tournamentTiers.ts` ← pontos da season | a faixa **caduca todo mês** | monotonia (🎪 "acumular nunca rebaixa") | WP4.13 |
+
+### 13.3 As oito decisões recebidas por via lateral (§16 do dossiê)
+
+O dossiê registra oito decisões "do time de produto" em 02/09/2026. Foram
+confrontadas com o código e passaram pela linha vermelha (pareceres em
+`ledger/vetos.md`). Resumo: 1, 5, 7 **já são assim**; 3 já é assim com ressalva
+(a copy do overlay vem da mesma fonte do push); **4 o código é melhor que a
+decisão** (mostra escudo só quando `> 0`; "invisível total" jogaria fora a
+leitura positiva — manter); 6 aprovada com a ressalva de que "invisível" não é
+"sem sinal" (Problema 1 do dossiê → WP1.2); 2 e 8/8b **abrem trabalho** (abaixo)
+e 8b está **vetada no código** até E3 fechar.
+
+### 13.4 Especificações revisadas (o texto novo está no arquivo do guarda)
+
+WP1.1 (espera atribuída à criatura, skeleton fiel, sem barra, `sprite_wait_ms`) ·
+WP1.2 (régua em `stages[].description`; sinal de que os 20 itens foram usados
+sem revelar perfil — Speak/Lovi/Noom) · WP1.3 (1 CTA por vez, contar feitos
+nunca restantes, dissolve na fala do pet) · WP1.5 (prévia vem de `pushCopy`,
+dismiss com data) · WP2.2 (`steadyWindow`, sem nome de "pureza", aura já
+vestida, rótulo neutro) · WP2.4 (modal que **espera o gesto**, "marco
+permanente", botão relacional) · WP2.6 (`shields`/`constancy_pct` **saem** do
+bridge; entram `steady`, `habit_tier_max`, `needs_intervention`, `bond_level`,
+`lang`; sprite é o traço que sobrevive; 1×1 sem texto) · WP2.7 (copy por bucket,
+**sem o número de dias**; `onRecoverHearts` nunca em `welcome`) · WP3.1 (item 0:
+persona = nome batizado) · WP3.2 (léxico sem mecânica: "HP baixo", "Vamos
+completar tarefas!" saem) · WP3.3 (pílula nome + título; sem barra de Vínculo na
+home) · WP3.4 (a copy das 20h entra na fonte única; win-back sem número de dias)
+· WP4.6 (Álbum de formas vividas + Encontros, molde `DreamDex`; Abismo adiado) ·
+WP4.8 (gatilho = forma nova; piso obrigatório; 4:5 + 9:16; só métricas
+monótonas) · WP5.1 (dois canais: passivo na Loja fora do cap + proativo no 1º
+dia perfeito vitalício; `×` grava dispensa permanente; `unlock_view.reason`
+sobe a `max: 3`).
+
+### 13.5 Pacotes novos (14) — o plano passa a ter **50**
+
+| WP | Guarda | O quê | Esforço | Verificação |
+|---|---|---|---|---|
+| WP1.6 | nascimento | `BirthCard.tsx`: cartão de nascimento reutilizável (sprite/silhueta + nome + epíteto + `soulGoal` + data), **sem número**; no reveal e na `StatsPage` | P | `grep -l BirthCard SoulmonOnboarding.tsx StatsPage.tsx` → 2; `grep -cE '[0-9]+ (dias\|days)' BirthCard.tsx` → 0 |
+| WP1.7 | nascimento | Rascunho persistente do ritual (`STORAGE_KEYS.ORACLE_DRAFT`): fechar o app no item 15 de 20 não perde as respostas; apagado em `finish()`; não altera a bifurcação SEM VOLTA | P | `grep -c ORACLE_DRAFT storageKeys.ts SoulmonOnboarding.tsx` ≥ 1 cada |
+| WP1.8 | nascimento | Pedir permissão de push **ao ligar o lembrete de deitar** (janela de descanso), com a prévia de `pushCopy` das 22h — o momento-ouro do dossiê é "a pessoa ligou um toggle"; hoje `requestNotificationPermission` só sai de `handleToggleNotifications` | P | grep de chamada em `sleepReminder`/Configurações da janela |
+| WP2.8 | constância | `hideMetrics` cobre a constância: esconde "N das últimas 7" e os pontos, preserva tier + aura + escudos | P | `grep -q hideMetrics HabitConstancy.tsx` + render test sem dígito |
+| WP2.9 | constância | Teste de guarda: nenhum render de constância contém `/\d+\s*%/` (percentual cru hoje só é proibido por tese) | PP | o teste existe e passa |
+| WP3.6 | vínculo | Sombra de contato sob o sprite (invariante de 5 apps; ausente) em `GROUND_Y`, `reducedMotion`-safe | PP | `grep -q sm2-pet-shadow index.css CompanionHUD.tsx` |
+| WP3.7 | vínculo | Auditoria de gênero da criatura (decisão 2): ~15 referências misturam "ele"/"ela" (`PetPage` diz "ela", Guia/Glossário/`MorningDream`/push 16h dizem "ele") → copy neutra por nome próprio, PT+EN | P | `grep -rnE "\b(ele\|ela)\b" src/components functions/api/_pushCopy.js` referindo-se à criatura → 0 |
+| WP4.9 | permanência | Corrigir a evidência do "roster de 60" nas três fontes + comentário morto de `progression.ts:57-59`; teste: `getDungeonEnemySprite` nunca devolve nome fora de `DUNGEON_LINE_NAMES` | PP | `grep -rn "60 nomes" docs/plano-melhorias` → 0 |
+| WP4.10 | permanência | Datar as coleções: `formReachedAt` e `rest.dreamDates` (dayKey do jogador), migração `?? {}`; insumo de WP4.6/4.8 | P | `grep -n "formReachedAt\|dreamDates" GameStateContext.tsx restWindow.ts` ≥ 2 |
+| WP4.11 | permanência | **E3** — perfil do amigo sem métrica (#21): só presença (criatura, nome, galho como palavra) e verbos de dar; `community.js` `profile` deixa de expor `tasksDone`/`rankPoints`; `PlayerDetailModal` sem escada | M | grep de `rank\|tasksDone` em `LibraryPage`/`PlayerDetailModal` → 0 |
+| WP4.12 | permanência | **E4** — missão bloqueada mostra a condição em palavra, nunca 🔒 + `0/N` em série | P | render test da aba Missões sem `0/` |
+| WP4.13 | permanência | **E5** — faixa do Torneio lê pontos **lifetime** (nunca rebaixa); a season só decide troféu | P | teste: faixa após virada de mês ≥ faixa anterior |
+| WP4.14 | permanência | Criatura **visitável** (decisão 8): o box do amigo com forma + pose idle neutra + decoração, sem estado (HP/sono) e sem número; depende de WP4.11 | G | `grep -q visit LibraryPage.tsx community.js` + teste "visita nunca expõe HP" |
+| WP5.5 | sustento | "Agora não" com peso de primário no `UnlockAccountModal` (Character AI); emite `unlock_dismiss` | PP | `grep -q "Agora não" UnlockAccountModal.tsx` + render test dos 3 botões |
+
+### 13.6 Decisões novas para o dono (continuação da seção 10)
+
+| # | Decisão | Evidência |
+|---|---|---|
+| D12 | **A criatura grátis ramifica?** A copy atual diz que a árvore demo "leva ao mesmo lugar"; a linha vermelha diz "sim, obrigatoriamente" (senão o grátis é pet pior, exposto na árvore de amigos) | §17 Q1, `UnlockAccountModal.tsx:142` |
+| D13 | Ratificar as ressalvas às decisões 4 e 8b (escudo ">0 only" em vez de invisível total; 8b vetada no código até E3) | `ledger/vetos.md` |
+| D14 | `Buddy up`/parceria: aprovar só na forma **meta somada + kudos**, nunca "a falha de um decepciona o outro" | §17 Q6 |
+
+**D4 e D7 são a mesma pergunta vista de dois lados** (parecer da linha vermelha):
+o produto empilha perdões para o coração não doer **e** vende a cura por
+dinheiro. Se não dói, a cura não vale 10 Créditos; se vale, há incentivo para
+que doa. Responder juntas.
+
+### 13.7 Limites herdados do dossiê
+Só iOS (sem Android, sem desktop) · sem data de captura · sem estados
+transitórios (celebração não-bloqueante e clímax de revelação ficaram fora por
+construção) · "app pequeno" é estimativa. A passada de fluxos (`search_flows`)
+foi a mais subutilizada e a mais rentável — um terceiro passe deveria ser só
+de fluxos.

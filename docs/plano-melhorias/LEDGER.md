@@ -4,7 +4,7 @@ Este arquivo é o **estado durável** do `docs/PLANO-MELHORIAS.md`. Ele existe
 porque um agente não tem memória entre sessões: sem registro em disco,
 "o guarda garante que foi implementado" é uma frase, não um mecanismo.
 
-**São 36 pacotes (WP)**, não 30 — o número "30" apareceu no primeiro commit do
+**São 50 pacotes (WP)** — 36 na criação, +14 na rodada 3 (dossiê Mobbin, 02/09/2026); antes disso, não 30 — o número "30" apareceu no primeiro commit do
 plano e estava errado; conferido com
 `grep -oE '^### WP[0-9]+\.[0-9]+' docs/PLANO-MELHORIAS.md | wc -l`.
 
@@ -40,11 +40,11 @@ execução: um `grep` que acha o símbolo, um `vitest` que passa, um screenshot.
 | Guarda | Domínio | WPs | Ledger |
 |---|---|---|---|
 | `soulmon-guarda-medicao` | Telemetria, privacidade, verdade dos números | WP0.1–0.5, WP0.7 | `ledger/medicao.md` |
-| `soulmon-guarda-nascimento` | Onboarding, Oráculo, reveal, D0 | WP1.1–1.5 | `ledger/nascimento.md` |
-| `soulmon-guarda-constancia` | Hábitos, escudos, rituais, marcos, widget | WP2.1–2.7 | `ledger/constancia.md` |
-| `soulmon-guarda-vinculo` | Chat, voz, presença, push, som | WP3.1–3.5 | `ledger/vinculo.md` |
-| `soulmon-guarda-permanencia` | Evolução, conteúdo D30–D90, coleção | WP4.1–4.8 | `ledger/permanencia.md` |
-| `soulmon-guarda-sustento` | Monetização, billing, créditos | WP0.6, WP5.1–5.4 | `ledger/sustento.md` |
+| `soulmon-guarda-nascimento` | Onboarding, Oráculo, reveal, D0 | WP1.1–1.8 | `ledger/nascimento.md` |
+| `soulmon-guarda-constancia` | Hábitos, escudos, rituais, marcos, widget | WP2.1–2.9 | `ledger/constancia.md` |
+| `soulmon-guarda-vinculo` | Chat, voz, presença, push, som | WP3.1–3.7 | `ledger/vinculo.md` |
+| `soulmon-guarda-permanencia` | Evolução, conteúdo D30–D90, coleção | WP4.1–4.14 | `ledger/permanencia.md` |
+| `soulmon-guarda-sustento` | Monetização, billing, créditos | WP0.6, WP5.1–5.5 | `ledger/sustento.md` |
 | `soulmon-guarda-linha-vermelha` | Seção 9 (guardrails) — **poder de veto** | nenhum | `ledger/vetos.md` |
 
 O guarda da linha vermelha não possui WP nenhum de propósito: se ele tivesse
@@ -68,12 +68,12 @@ rápido; a fonte são os arquivos de `ledger/`.
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
 | medição (6) | 4 | 2 (D1, D2) | — | — | — | — |
-| nascimento (5) | 5 | — | — | — | — | — |
-| constância (7) | 6 | 1 (D3) | — | — | — | — |
-| vínculo (5) | 4 | 1 (D11) | — | — | — | — |
-| permanência (8) | 6 | 2 (D5, D6) | — | — | — | — |
-| sustento (5) | 3 | 2 (D7, D10) | — | — | — | — |
-| **Total (36)** | **28** | **8** | — | — | — | — |
+| nascimento (8) | 8 | — | — | — | — | — |
+| constância (9) | 8 | 1 (D3) | — | — | — | — |
+| vínculo (7) | 6 | 1 (D11) | — | — | — | — |
+| permanência (14) | 12 | 2 (D5, D6) | — | — | — | — |
+| sustento (6) | 4 | 2 (D7, D10) | — | — | — | — |
+| **Total (50)** | **42** | **8** | — | — | — | — |
 
 **Oito pacotes esperam decisão do dono** (seção 10 do plano). D1
 (`METRICS_ADMIN_KEY`) é o que destrava mais coisa: sem ele ninguém lê nenhum
@@ -96,4 +96,12 @@ funcionam e que o diagnóstico está certo:
 | WP0.3 | "sete eventos" em `privacidade.html` | **1** (o bug) |
 | WP5.1 | `UnlockNudge` na Loja e no relatório | **0 e 0** |
 
-_Última consolidação: 02/09/2026 (nascimento do sistema de guarda)._
+**Rodada 3 (dossiê Mobbin, 02/09/2026):** 6 guardas destrincharam 13 dossiês em
+`mobbin/`; a linha vermelha inventariou 73 anti-padrões (36 já evitados, **5
+exposições no código** E1–E5), inscreveu a **proibição #21** e deu parecer às 8
+decisões do §16. Duas premissas do plano caíram por `grep` ("roster de 60";
+"título sob o nome" num HUD que não tem nome). O guarda da linha vermelha caiu
+por limite de API antes de gravar os pareceres — foram transcritos do seu
+arquivo de análise para `vetos.md` pelo consolidador, e estão marcados como tal.
+
+_Última consolidação: 02/09/2026 (rodada 3)._

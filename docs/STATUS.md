@@ -16,6 +16,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **02/09/2026 — RODADA 3 (dossiê Mobbin)** — o plano foi a **50 pacotes** (+14).
+> O código está **exposto em 5 anti-padrões catalogados**: o widget Android cobra
+> (`"N task(s) left, let's go!"`), Créditos compram HP (D7), o perfil do amigo
+> mostra rank e escada (nova proibição #21), Missões mostram 🔒 + `0/100`, e a
+> faixa do Torneio **caduca todo mês** (lê pontos da season). Duas premissas do
+> plano caíram por `grep`: não existe "roster de 60" na masmorra, e o HUD não tem
+> nome do pet. As 8 decisões de produto do §16 do dossiê foram confrontadas com o
+> código (1/5/7 já são assim; 4 o código é melhor que a decisão; 8b vetada no
+> código até fechar E3) — pareceres em `ledger/vetos.md`. Novas decisões D12–D14.
+
 > **02/09/2026 — SISTEMA DE GUARDA** — o plano ganhou custódia: **7 agentes
 > guardas** (`.claude/agents/soulmon-guarda-*.md`), **3 skills**
 > (`/guarda-soulmon`, `/implementar-wp`, `/destrinchar-estudo`) e um **livro-razão

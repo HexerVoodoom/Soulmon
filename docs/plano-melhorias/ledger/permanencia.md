@@ -10,9 +10,15 @@ Dono: `soulmon-guarda-permanencia`. Anexo: `../F-conteudo.md`.
 | WP4.3 | Vínculo depois do nível 13 | `PROPOSTO` | `node -e "…bondRewardFor(20)"` ≠ null; teste até L31; nenhuma recompensa duplica item da loja | `bondRewardFor` → null ≥ L14; 9/12 são duplicatas |
 | WP4.4 | Estações cíclicas | `PROPOSTO` | teste: `currentSeason()` ≠ null para qualquer data 2026–2036 | `SEASONS` expira 2027-02-27 |
 | WP4.5 | Sumidouro recorrente de Bits | `PROPOSTO` | teste: vitrine muda com `currentSeason()`; nenhum item novo tem efeito mecânico | catálogo esgota D15–D23 |
-| WP4.6 | Bestiário + Abismo | `PROPOSTO` | `test -f src/components/BestiaryPage.tsx` + teste "Abismo nunca rende mais Bits/andar que o andar 5" + `MAX_FLOORS` mora em `dungeon.ts` | 60 nomes de arte invisíveis hoje |
+| WP4.6 | Álbum de formas vividas + Encontros (molde `DreamDex`) | `PROPOSTO` | `test -f src/components/BestiaryPage.tsx` + teste "Abismo nunca rende mais Bits/andar que o andar 5" + `MAX_FLOORS` mora em `dungeon.ts` | ⚠️ evidência corrigida em 02/09: **não há roster de 60** — 6 linhas × 4 artes (`DUNGEON_LINE_SPRITES`); WP4.6 vira Álbum de formas vividas + Encontros (G→M), Abismo adiado |
 | WP4.7 | Missões semanais repetíveis | `PROPOSTO` | `test -f src/utils/weeklyMissions.ts` + teste de sorteio determinístico por semana + teste "nenhuma missão premia contagem de itens" | 6 missões de alvo único hoje |
 | WP4.8 | "Memórias" aos 30/90 dias + card | `PROPOSTO` | `test -f src/utils/shareCard.ts` + render test | — |
+| WP4.9 | Corrigir "roster de 60" nas 3 fontes + comentário `progression.ts:57-59` | `PROPOSTO` | `grep -rn "60 nomes" docs/plano-melhorias` → 0; teste `getDungeonEnemySprite` ∈ `DUNGEON_LINE_NAMES` | erro do plano, pego pela guarda |
+| WP4.10 | Datar coleções (`formReachedAt`, `rest.dreamDates`) | `PROPOSTO` | `grep -n "formReachedAt\|dreamDates" src/contexts/GameStateContext.tsx src/utils/restWindow.ts` ≥ 2 | Mobbin D7 |
+| WP4.11 | **E3** perfil do amigo sem métrica (#21) | `PROPOSTO` | grep `rank\|tasksDone` em `LibraryPage.tsx`/`PlayerDetailModal.tsx` → 0 | vetado no código hoje |
+| WP4.12 | **E4** missão bloqueada sem 🔒 + `0/N` | `PROPOSTO` | render test da aba Missões sem `0/` | vetado no código hoje |
+| WP4.13 | **E5** faixa do Torneio lifetime (nunca rebaixa) | `PROPOSTO` | teste: faixa após virada de mês ≥ anterior | vetado no código hoje |
+| WP4.14 | Criatura visitável (decisão 8), sem estado nem número; depende de WP4.11 | `PROPOSTO` | `grep -q visit src/components/LibraryPage.tsx functions/api/community.js` + teste "nunca expõe HP" | não existe hoje |
 
 ## Verdades deste domínio que o guarda defende
 - **Recompensa por contagem de tarefas é proibida** (`CLAUDE.md`). WP4.7 respeita: missão é comportamento, nunca "faça N tarefas".

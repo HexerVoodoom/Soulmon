@@ -9,6 +9,11 @@ Dono: `soulmon-guarda-vinculo`. Anexo: `../C-presenca.md`.
 | WP3.3 | Título do Vínculo sob o nome + micro-cerimônia | `PROPOSTO` | `grep -q "bondTitle" src/components/CompanionHUD.tsx` + `bond_level` emitido | comentário de `BOND_REWARDS` mentia |
 | WP3.4 | Push: fonte única, sem dedup PWA×APK, com win-back | `PROPOSTO` | `! grep -q "passou pra dizer oi" src/components/NotificationManager.tsx` (copy só em `_pushCopy.js`) + teste do scheduler com `refreshedAt` 3/6/15/40 dias → 0/1/1/0 + `wrangler deploy` manual | copy duplicada hoje (footgun 9) |
 | WP3.5 | Um som de presença | `BLOQUEADO:D11` | `grep -q "playChirp" src/utils/sounds.ts` + respeita `SOUND_MUTED` + 1× por sessão | nenhum som ligado à voz hoje |
+| WP3.6 | Sombra de contato sob o sprite | `PROPOSTO` | `grep -q sm2-pet-shadow src/index.css src/components/CompanionHUD.tsx` | Mobbin D5 (5 apps) |
+| WP3.7 | Copy da criatura neutra por nome (decisão 2): ~15 "ele"/"ela" misturados | `PROPOSTO` | `grep -rnE "\b(ele|ela)\b" src/components functions/api/_pushCopy.js` referindo-se à criatura → 0 | `PetPage` "ela" vs Guia/`MorningDream`/push "ele" |
+
+## Mobbin (02/09/2026) — `../mobbin/vinculo.md`
+Dossiês 5 e 10 contra o código. Estados não mudam; **specs revisadas**: WP3.1 ganha item 0 (chat recebe `petName: currentStage` = espécie, nunca `soulmonDisplayName`); WP3.2 ganha aceite de léxico (`getIdlePhrase` diz "HP baixo..."/"Vamos completar tarefas!" — nenhum app do dossiê escreve estado em texto); WP3.3 vira pílula nome + título (modelo Replika) porque **o nome do pet não existe no HUD** (`grep soulmonDisplayName src/components/CompanionHUD.tsx` → 0); WP3.4 absorve a copy exclusiva das 20h do `NotificationManager.tsx` (mesma condição `completedSteps < totalRequired` do nudge das 21h removido) e o win-back fica sem número de dias (Lovi). Para WP2.7 (guarda-constância): bucket interno, N nunca impresso; `onRecoverHearts` nunca em `welcome`. Candidato sem número: sombra de contato sob o sprite (convergência (a) do Dossiê 5, não encontrada em `CompanionHUD.tsx`/`index.css`).
 
 ## Verdades deste domínio que o guarda defende
 - O chat é o canal de vínculo **mais potente e mais arriscado** (efeito ELIZA). O prompt tem um bloco `NEVER` (culpa/vergonha/cobrança) que **sobrepõe** até o estilo do usuário — não se enfraquece.
