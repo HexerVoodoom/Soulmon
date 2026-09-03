@@ -1590,8 +1590,8 @@ export const CompanionHUD = memo(function CompanionHUD({
             </div>
             <p style={sm2Hint}>
               {language === 'pt-BR'
-                ? 'Cada comida dá +1 de energia e pontos de atributo. Se ele estiver cheio, vai avisar.'
-                : 'Each food gives +1 energy and attribute points. If he is full, he will say so.'}
+                ? 'Cada comida dá +1 de energia e pontos de atributo. Se a barriga estiver cheia, seu Soulmon avisa.'
+                : 'Each food gives +1 energy and attribute points. If its belly is full, your Soulmon will say so.'}
             </p>
           </>
         )}

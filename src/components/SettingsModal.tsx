@@ -62,7 +62,7 @@ export function SettingsModal({
             onToggle={onToggleAI}
             label={isPt ? 'Conversa com IA' : 'AI chat'}
             hint={isPt
-              ? 'Desligado, ele responde por palavras-chave.'
+              ? 'Desligado, seu Soulmon responde por palavras-chave.'
               : 'Off, it answers from keywords.'}
           />
           <ActionRow

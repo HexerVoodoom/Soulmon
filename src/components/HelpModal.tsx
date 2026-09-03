@@ -57,7 +57,7 @@ const TERMS: Term[] = [
   {
     icon: '❤️', en: 'Hearts (HP)', pt: 'Corações (HP)',
     descEn: 'Its health. Rubbing heals it; a bad day costs at most one, and it never drops to zero out of nowhere.',
-    descPt: 'A saúde dele. Carinho cura; um dia ruim custa no máximo um, e nunca zera do nada.',
+    descPt: 'A saúde do seu Soulmon. Carinho cura; um dia ruim custa no máximo um, e nunca zera do nada.',
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
@@ -77,7 +77,7 @@ const TERMS: Term[] = [
   {
     icon: '🔒', en: 'Evolution padlock', pt: 'Cadeado de evolução',
     descEn: 'Tap your current Soulmon on the Evolution page. Locked, it never evolves — perfect days keep counting.',
-    descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, ele nunca evolui — os dias perfeitos seguem contando.',
+    descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — os dias perfeitos seguem contando.',
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',

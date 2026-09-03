@@ -40,6 +40,11 @@ export const STORAGE_KEYS = {
   FCM_TOKEN: 'digiapp-fcm-token',
   LAST_CLOUD_SYNC: 'digiapp-last-cloud-sync',
   ORACLE_FORM: 'digiapp-oracle-form',
+  /** WP1.7 — rascunho do ritual do Oráculo (`utils/oracleDraft.ts`): fechar o
+   *  app no item 15 de 20 não perde as respostas. Apagado na geração, no
+   *  `finish()` e no muro de idade. Nunca guarda e-mail, consentimento, idade
+   *  do demo nem o resultado. */
+  ORACLE_DRAFT: 'soulmon-oracle-draft',
   // Soulmon: perfil da alma gerado no onboarding (input + seed p/ regenerar)
   SOULMON_PROFILE: 'soulmon-profile',
   // ⚰️ APOSENTADA em 26/08/2026 — `soulmon-demo-tasks-created-today`

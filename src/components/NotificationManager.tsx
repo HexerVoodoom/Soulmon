@@ -132,7 +132,7 @@ export function NotificationManager({
           ispt ? `${petName} está meio pra baixo` : `${petName} is a bit low`,
           {
             body: ispt
-              ? 'Se der, marque o que você já fez hoje. Se não der, amanhã ele ainda vai estar aqui.'
+              ? 'Se der, marque o que você já fez hoje. Se não der, amanhã seu Soulmon ainda vai estar aqui.'
               : "If you can, log what you did today. If not, it'll still be here tomorrow.",
             tag: 'hp-critical-evening',
           },
@@ -145,7 +145,7 @@ export function NotificationManager({
           ispt ? `🌙 ${petName} está te esperando` : `🌙 ${petName} is waiting for you`,
           {
             body: ispt
-              ? 'Marque o que você fez hoje e dê uma comidinha pra ele — energia cheia fecha o dia perfeito.'
+              ? 'Marque o que você fez hoje e dê uma comidinha pro seu Soulmon — energia cheia fecha o dia perfeito.'
               : 'Log what you did today and feed it — a full energy bar completes a perfect day.',
             tag: 'evening-reminder',
           },
@@ -212,7 +212,7 @@ export function NotificationManager({
         lastNudge16Date.current = today;
         showNotification(
           ispt ? `${petName} pensou em você` : `${petName} thought of you`,
-          { body: ispt ? 'Se sobrar um minuto hoje, ele adora companhia.' : 'If you get a minute today, it loves the company.', tag: 'pet-nudge-16' },
+          { body: ispt ? 'Se sobrar um minuto hoje, seu Soulmon adora companhia.' : 'If you get a minute today, it loves the company.', tag: 'pet-nudge-16' },
         );
       }
 

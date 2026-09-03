@@ -213,7 +213,7 @@ export function AISettingsModal({
         </div>
       }
     >
-      <ChipGroup label={isPt ? 'Como ele fala' : 'How it talks'}>
+      <ChipGroup label={isPt ? 'Como seu Soulmon fala' : 'How it talks'}>
         {tones.map(o => (
           <Chip key={o.v} selected={s.tone === o.v} onToggle={() => setS({ ...s, tone: o.v })}>
             {isPt ? o.pt : o.en}
@@ -229,7 +229,7 @@ export function AISettingsModal({
         ))}
       </ChipGroup>
 
-      <ChipGroup label={isPt ? 'Como ele te incentiva' : 'How it encourages you'}>
+      <ChipGroup label={isPt ? 'Como seu Soulmon te incentiva' : 'How it encourages you'}>
         {motivations.map(o => (
           <Chip key={o.v} selected={s.motivationStyle === o.v} onToggle={() => setS({ ...s, motivationStyle: o.v })}>
             {isPt ? o.pt : o.en}

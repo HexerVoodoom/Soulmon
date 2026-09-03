@@ -232,7 +232,7 @@ export function CreditsModal({
                 jogo). Vender aleatoriedade sem essa frase é vender a ilusão de
                 que existe um resultado melhor. */}
             {isPt
-              ? `Troca seu Soulmon por um NOVO, sorteado aleatoriamente — e reseta a evolução pra Rookie. Atividades, tarefas e Bits continuam. Todo pet é mecanicamente igual: o sorteio muda quem sua criatura é, nunca o quanto ela ajuda. Custa ${REROLL_COST_CREDITS} créditos.`
+              ? `Troca seu Soulmon por um NOVO, sorteado aleatoriamente — e reseta a evolução pra Rookie. Atividades, tarefas e Bits continuam. Todo pet é mecanicamente igual: o sorteio muda quem sua criatura é, nunca o quanto sua criatura ajuda. Custa ${REROLL_COST_CREDITS} créditos.`
               : `Swaps your Soulmon for a brand-new, randomly rolled one — and resets evolution to Rookie. Activities, tasks and Bits stay. Every pet is mechanically equal: the roll changes who your creature is, never how much it helps. Costs ${REROLL_COST_CREDITS} credits.`}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>

@@ -68,12 +68,12 @@ rápido; a fonte são os arquivos de `ledger/`.
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
 | medição (6) | 1 | 2 (D1, D2) | — | — | **3** (0.3, 0.5, 0.7) | — |
-| nascimento (8) | 8 | — | — | — | — | — |
+| nascimento (8) | 7 | — | — | — | **1** (1.7) | — |
 | constância (9) | 6 | 1 (D3) | — | — | **2** (2.3, 2.9) | — |
-| vínculo (7) | 6 | 1 (D11) | — | — | — | — |
+| vínculo (7) | 5 | 1 (D11) | — | — | **1** (3.7) | — |
 | permanência (14) | 10 | 2 (D5, D6) | — | — | **1** (4.9) | **1** (4.4) |
 | sustento (6) | 3 | 2 (D7, D10) | — | — | **1** (5.5) | — |
-| **Total (50)** | **34** | **8** | — | — | **7** | **1** |
+| **Total (50)** | **32** | **8** | — | — | **9** | **1** |
 
 **Oito pacotes esperam decisão do dono** (seção 10 do plano). D1
 (`METRICS_ADMIN_KEY`) é o que destrava mais coisa: sem ele ninguém lê nenhum
@@ -121,7 +121,13 @@ por leitura do código, e o padrão é o mesmo das duas anteriores: a evidência
 citava um DADO (tabela, tipo, nome) sem olhar a FUNÇÃO que o lê. Efeito
 colateral achado no caminho: `REASON_LABEL` do agregador tinha 2 rótulos para
 um schema de 4 valores — `report` e `shop` viravam `unknown` em silêncio.
-Sobram sem dependência do dono: WP3.7 (auditoria de pronome, ~15 lugares de
-copy) e WP1.7 (rascunho do ritual) — lote 3.
+**Sprint 1, lote 3 (03/09/2026):** WP3.7 e WP1.7 verificados. A auditoria de
+pronome achou **36** trechos, não ~15 — e dois "he" no inglês que ninguém tinha
+listado. O rascunho do ritual virou módulo puro (`utils/oracleDraft.ts`) com um
+detalhe que a spec não previa: o `ConsentRecord` precisa ir no rascunho, senão
+o ritual retomado termina num save sem prova de aceite. **Sprint 1 fechou: 9
+VERIFICADOS + 1 RECUSADO em 3 lotes.** Tudo que sobra em PROPOSTO ou é onda 2+
+(WP2.4 celebração, WP2.7 reencontro, WP3.2 pet olha, WP1.1 reveal…) ou depende
+de decisão do dono (D1–D14).
 
-_Última consolidação: 03/09/2026 (sprint 1, lote 2)._
+_Última consolidação: 03/09/2026 (sprint 1, lote 3)._

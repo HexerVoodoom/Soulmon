@@ -56,7 +56,7 @@ export function pushCopy(brtHour, petName, language) {
     return {
       title: pt ? `${name} pensou em você` : `${name} thought of you`,
       body: pt
-        ? 'Se sobrar um minuto hoje, ele adora companhia.'
+        ? 'Se sobrar um minuto hoje, seu Soulmon adora companhia.'
         : 'If you get a minute today, it loves the company.',
       tag: 'pet-nudge-16',
     };

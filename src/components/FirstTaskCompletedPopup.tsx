@@ -37,7 +37,7 @@ export function FirstTaskCompletedPopup({
       <div style={{ textAlign: 'center', fontSize: 56, lineHeight: 1 }} aria-hidden="true">🌱</div>
       <p style={{ ...sm2Text, textAlign: 'center', margin: 0 }}>
         {isPt
-          ? 'Ele cresceu um pouquinho agora. Uma coisa de cada vez, no seu ritmo.'
+          ? 'Seu Soulmon cresceu um pouquinho agora. Uma coisa de cada vez, no seu ritmo.'
           : 'It grew a little just now. One thing at a time, at your pace.'}
       </p>
     </ModalSheet>

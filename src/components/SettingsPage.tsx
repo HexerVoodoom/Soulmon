@@ -311,7 +311,7 @@ export function SettingsPage({
           onToggle={onToggleAI}
           label={isPt ? 'Conversa com IA' : 'AI chat'}
           hint={isPt
-            ? 'Desligado, ele responde por palavras-chave.'
+            ? 'Desligado, seu Soulmon responde por palavras-chave.'
             : 'Off, it answers from keywords.'}
         />
         <ActionRow
@@ -362,7 +362,7 @@ export function SettingsPage({
           }}
           label={isPt ? 'Sono automático' : 'Auto sleep'}
           hint={isPt
-            ? 'Ele dorme e acorda sozinho. Dormindo, não faz cocô.'
+            ? 'Seu Soulmon dorme e acorda sozinho. Dormindo, não faz cocô.'
             : 'It sleeps and wakes on its own. Asleep, it never poops.'}
         />
         {autoSleepEnabled && (

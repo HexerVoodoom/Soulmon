@@ -5,6 +5,7 @@ import { ScreenSkeleton } from './ui/ScreenSkeleton';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeJson, removeLocal } from '../utils/safeStorage';
+import { readOracleDraft, writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
 import {
   buildConsentRecord, isAgeBlocked, isAgeBlockedByMonth, monthYearFromText, MIN_AGE_YEARS,
   type ConsentRecord,
@@ -196,8 +197,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
-  const [step, setStep] = useState(isUpgrade ? 1 : 0);
-  const [flow, setFlow] = useState<'oracle' | 'demo' | null>(isUpgrade ? 'oracle' : null);
+  // WP1.7 — rascunho do ritual (`utils/oracleDraft.ts`). Lido UMA vez, na
+  // montagem: se a pessoa fechou o app no meio do ritual pago, volta para o
+  // mesmo passo com tudo que já respondeu. Nunca retoma na geração ou depois
+  // (`DEEP_END - 1` é o último item do teste), e só no mesmo modo.
+  const [draft] = useState(() => readOracleDraft(mode, DEEP_END - 1));
+  const [step, setStep] = useState(draft ? draft.step : isUpgrade ? 1 : 0);
+  const [flow, setFlow] = useState<'oracle' | 'demo' | null>(draft || isUpgrade ? 'oracle' : null);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
@@ -205,8 +211,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  próprio, com rótulo e foco, e o botão de avançar só liga com ela marcada.
    *  Caixa embutida dentro do parágrafo dos Termos não é consentimento
    *  específico (achado do run 01, PLANO-TAREFAS.md:187). */
-  const [consentChecked, setConsentChecked] = useState(false);
-  const [consent, setConsent] = useState<ConsentRecord | null>(null);
+  const [consentChecked, setConsentChecked] = useState(!!draft?.consent);
+  const [consent, setConsent] = useState<ConsentRecord | null>(draft?.consent ?? null);
   /** Mês/ano de nascimento pedido SÓ no caminho demo, e SÓ para conferir 18+
    *  (utils/consent.ts). O demo pula o Oráculo inteiro e nunca chega ao passo
    *  da data — sem isto, o 18+ do dono valeria só para quem paga. Fica em
@@ -218,29 +224,30 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  bifurcação — é onde a idade custa menos fricção no demo. No caminho do
    *  Oráculo o campo não aparece: a data cheia do mapa astral já confere. */
   const demoNeedsAge = flow === 'demo';
-  const [soulGoal, setSoulGoal] = useState('');
-  const [soulStruggle, setSoulStruggle] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
-  const [birthDateText, setBirthDateText] = useState('');
-  const [birthTime, setBirthTime] = useState('12:00');
+  const [soulGoal, setSoulGoal] = useState(draft?.soulGoal ?? '');
+  const [soulStruggle, setSoulStruggle] = useState(draft?.soulStruggle ?? '');
+  const [fullName, setFullName] = useState(draft?.fullName ?? '');
+  const [birthDate, setBirthDate] = useState(draft?.birthDate ?? '');
+  const [birthDateText, setBirthDateText] = useState(draft?.birthDateText ?? '');
+  const [birthTime, setBirthTime] = useState(draft?.birthTime ?? '12:00');
   // O local vira CIDADE da tabela (lat/lon/fuso IANA) em vez de texto livre: o
   // mapa astral precisa dos três, e o fuso é o que carrega o horário de verão
   // histórico. `birthPlace` continua existindo porque é o campo que o
   // `OracleInput` sempre teve (e o que os perfis já salvos guardam) — passa a
   // ser o rótulo legível da cidade escolhida.
-  const [birthCity, setBirthCity] = useState<City | null>(null);
+  const [birthCity, setBirthCity] = useState<City | null>(draft?.birthCity ?? null);
   const birthPlace = birthCity ? cityLabel(birthCity) : '';
-  const [timeUnknown, setTimeUnknown] = useState(false);
-  const [favoriteCreature, setFavoriteCreature] = useState('');
-  const [skipFavorite, setSkipFavorite] = useState(false);
+  const [timeUnknown, setTimeUnknown] = useState(draft?.timeUnknown ?? false);
+  const [favoriteCreature, setFavoriteCreature] = useState(draft?.favoriteCreature ?? '');
+  const [skipFavorite, setSkipFavorite] = useState(draft?.skipFavorite ?? false);
   /** As 6 perguntas do ritual — todo mundo responde. */
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>(draft?.answers ?? {});
   /** Os 20 itens psicométricos — só de quem aceitou refinar. */
-  const [testAnswers, setTestAnswers] = useState<SoulAnswers>({});
+  const [testAnswers, setTestAnswers] = useState<SoulAnswers>(draft?.testAnswers ?? {});
   /** null = ainda não decidiu. É uma decisão SEM VOLTA, por escolha de
-   *  produto: não existe caminho para responder o teste depois. */
-  const [refine, setRefine] = useState<boolean | null>(null);
+   *  produto: não existe caminho para responder o teste depois. O rascunho
+   *  guarda a decisão como está — retomar não reabre a bifurcação. */
+  const [refine, setRefine] = useState<boolean | null>(draft?.refine ?? null);
   const [result, setResult] = useState<OracleResult | null>(null);
   /** Essência do class-system + ofício, calculados pelo pipeline completo —
    *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
@@ -332,6 +339,20 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const [generateError, setGenerateError] = useState(false);
 
+  // WP1.7 — grava o rascunho a cada mudança, só DENTRO do ritual pago (do nome
+  // ao último item do teste) e só enquanto não existe resultado. Fora disso o
+  // rascunho é apagado, não deixado para trás: um rascunho velho retomaria um
+  // ritual que a pessoa já terminou.
+  const inRitual = (isUpgrade || flow === 'oracle') && step >= 1 && step < GENERATING && !result;
+  useEffect(() => {
+    if (!inRitual) return;
+    writeOracleDraft({
+      mode, step, soulGoal, soulStruggle, fullName, birthDate, birthDateText, birthTime,
+      birthCity, timeUnknown, favoriteCreature, skipFavorite, answers, testAnswers, refine, consent,
+    });
+  }, [inRitual, mode, step, soulGoal, soulStruggle, fullName, birthDate, birthDateText, birthTime,
+    birthCity, timeUnknown, favoriteCreature, skipFavorite, answers, testAnswers, refine, consent]);
+
   /** Dispara a geração e, se ela falhar, devolve o usuário à última pergunta
    *  com um aviso — travar na animação de "revelando" para sempre é o pior
    *  final possível para um ritual que a pessoa acabou de responder inteiro. */
@@ -402,6 +423,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       setEssence(null);
     }
     setResult(r);
+    // O ritual acabou: o rascunho sai AGORA, antes do reveal. Quem fechar no
+    // reveal tem o perfil com `seed` abaixo — retomar no item 20 regeneraria
+    // a criatura, e geração custa.
+    clearOracleDraft();
     const profile: SavedProfile = { ...input, seed: r.seed };
     // Perfil da alma = semente para REGERAR a criatura. Perder isso tira do
     // jogador o reroll pelo qual ele pode ter pagado. AVISA.
@@ -476,6 +501,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setDemoAgeText('');
     setFlow(null);
     removeLocal(STORAGE_KEYS.SOULMON_PROFILE);
+    clearOracleDraft();
     setStep(0);
   };
 
@@ -532,6 +558,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       return;
     }
 
+    // Defensivo: a geração já apagou o rascunho; o demo nunca cria um.
+    clearOracleDraft();
     if (flow === 'demo' && demoCharacterId) {
       await onComplete({
         mode: 'demo',
@@ -1055,8 +1083,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               : "This choice is final — there's no answering the test later."}>
             <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 18px' }}>
               {isPt
-                ? `Seu Soulmon já pode nascer agora. Se quiser, dá para responder mais ${SOUL_TEST_ITEMS.length} perguntas sobre você — elas afinam quem ele vai ser.`
-                : `Your Soulmon can be born right now. If you like, you can answer ${SOUL_TEST_ITEMS.length} more questions about yourself — they sharpen who he turns out to be.`}
+                ? `Seu Soulmon já pode nascer agora. Se quiser, dá para responder mais ${SOUL_TEST_ITEMS.length} perguntas sobre você — elas afinam quem seu Soulmon vai ser.`
+                : `Your Soulmon can be born right now. If you like, you can answer ${SOUL_TEST_ITEMS.length} more questions about yourself — they sharpen who it turns out to be.`}
             </p>
             <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginBottom: 8 }}
               onClick={() => chooseRefine(true)}>
@@ -1174,7 +1202,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
             <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
               {isPt
-                ? `${registerDisplayName} é o nome que veio com ele. Se quiser dar outro, é só escrever por cima.`
+                ? `${registerDisplayName} é o nome que veio com seu Soulmon. Se quiser dar outro, é só escrever por cima.`
                 : `${registerDisplayName} is the name it came with. Want to give it another? Just type over it.`}
             </p>
 

@@ -99,7 +99,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   const notes: string[] = [];
   if (welcome) {
     notes.push(isPt
-      ? `Você ficou ${report.daysAway} dias fora e seu Soulmon não perdeu nada esperando. Ele só estava com saudade. Comece de onde parou.`
+      ? `Você ficou ${report.daysAway} dias fora e seu Soulmon não perdeu nada esperando — só estava com saudade. Comece de onde parou.`
       : `You were away ${report.daysAway} days and your Soulmon lost nothing waiting. It just missed you. Pick up where you left off.`);
   }
   if (report.weeklyRelief) {

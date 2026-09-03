@@ -16,6 +16,17 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **03/09/2026 — SPRINT 1, LOTE 3 (2 VERIFICADOS; sprint fechado com 9+1)** —
+> WP3.7: a criatura deixou de ser "ele" no Guia/push/Configurações e "ela" na
+> página do Pet — **36 trechos** em 22 arquivos viraram "seu Soulmon" ou frase
+> reestruturada, PT e EN (dois "he" ingleses saíram); push das 16h mudou nos
+> dois lados (`NotificationManager` + `_pushCopy.js`) · WP1.7: **rascunho do
+> ritual do Oráculo** (`utils/oracleDraft.ts`, chave `ORACLE_DRAFT`): fechar o
+> app no item 15 de 20 volta ao item 15 com tudo preenchido; retoma só entre o
+> nome e o último item do teste (nunca na geração), guarda o `ConsentRecord` e
+> nunca e-mail/idade/resultado; apagado na geração, no `finish()` e no muro de
+> idade. Gate: tsc EXIT=0 (app + desktop), vitest **180 arquivos · 2900 passed · 2 skipped**.
+
 > **03/09/2026 — SPRINT 1, LOTE 2 (2 VERIFICADOS, 1 RECUSADO)** — WP2.3: o botão
 > do check-in virou compromisso ("Assumir minha meta de hoje" / "Commit to
 > today’s goal"; volta a "Começar o dia" sem meta cadastrada) e

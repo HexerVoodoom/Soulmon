@@ -76,7 +76,7 @@ export function MorningDream({ open, dream, isNew, language, onClose }: MorningD
       ? `Seu Soulmon passou a noite ${label.charAt(0).toLowerCase()}${label.slice(1)}.`
       : `Your Soulmon spent the night ${label.charAt(0).toLowerCase()}${label.slice(1)}.`)
     : (isPt
-      ? 'Seu Soulmon acordou primeiro e ficou esperando você. Hoje ele não trouxe nenhuma cena da noite — e está tudo bem.'
+      ? 'Seu Soulmon acordou primeiro e ficou esperando você. Hoje não veio nenhuma cena da noite — e está tudo bem.'
       : 'Your Soulmon woke up first and waited for you. No scene came back from the night today — and that’s okay.');
 
   return (

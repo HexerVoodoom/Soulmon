@@ -52,7 +52,7 @@ const PAGES: TutorialPage[] = [
   {
     icon: 'pets',
     titlePt: 'Seu Soulmon nasceu!', titleEn: 'Your Soulmon is born!',
-    bodyPt: 'Ele cresce com você — cada tarefa que você cumpre na vida real o ajuda a evoluir. Vamos começar pela primeira.',
+    bodyPt: 'Seu Soulmon cresce com você — cada tarefa que você cumpre na vida real ajuda na evolução. Vamos começar pela primeira.',
     bodyEn: "It grows with you — every task you complete in real life helps it evolve. Let's start with the first one.",
   },
 ];

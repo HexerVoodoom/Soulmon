@@ -875,10 +875,10 @@ export function EvolutionPath({
         <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
           {evolutionLocked
             ? (isPt
-                ? 'Os dias perfeitos continuam somando. Ele só espera você dizer quando.'
+                ? 'Os dias perfeitos continuam somando. Seu Soulmon só espera você dizer quando.'
                 : 'Perfect days keep adding up. It just waits for your go-ahead.')
             : (isPt
-                ? 'Ele vai evoluir sozinho assim que o dia virar.'
+                ? 'Seu Soulmon vai evoluir sozinho assim que o dia virar.'
                 : 'It will evolve on its own at the next day’s turn.')}
         </p>
 
@@ -992,7 +992,7 @@ export function EvolutionPath({
 
       {/* ─────────── Para onde ele está indo ─────────── */}
       <section style={card}>
-        <p style={sectionLabel}>{isPt ? 'Para onde ele está indo' : 'Where they are heading'}</p>
+        <p style={sectionLabel}>{isPt ? 'Para onde seu Soulmon está indo' : 'Where they are heading'}</p>
 
         {/* A FRASE vem antes dos números: é ela que responde à pergunta. */}
         {forecastBranch ? (
@@ -1101,7 +1101,7 @@ export function EvolutionPath({
             </p>
             <p style={{ ...sm2Hint, marginTop: 6 }}>
               {isPt
-                ? 'Cuide do seu Soulmon e conclua as tarefas do dia — as próximas formas aparecem aqui conforme ele evolui.'
+                ? 'Cuide do seu Soulmon e conclua as tarefas do dia — as próximas formas aparecem aqui conforme seu Soulmon evolui.'
                 : 'Care for your Soulmon and finish today’s tasks — the next forms show up here as it evolves.'}
             </p>
           </div>

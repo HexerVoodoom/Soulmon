@@ -269,7 +269,7 @@ export function StatsPage({
       {/* ─────────────── Quem ele é ─────────────── */}
       {(passive || carePattern) && (
         <section style={card}>
-          <h3 style={sectionTitle}>{isPt ? 'Quem ele é' : 'Who they are'}</h3>
+          <h3 style={sectionTitle}>{isPt ? 'Quem é o seu Soulmon' : 'Who they are'}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {passive && traitRow(
               PASSIVE_ICON[passive.id] ?? 'auto_awesome',

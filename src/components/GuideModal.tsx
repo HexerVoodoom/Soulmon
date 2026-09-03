@@ -64,12 +64,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
   const chapters: { id: string; title: string; body: ReactNode }[] = [
     {
       id: 'evolve',
-      title: L('Como ele evolui', 'How it evolves'),
+      title: L('Como seu Soulmon evolui', 'How it evolves'),
       body: (
         <>
           <p style={para}>
             {L(
-              'Dia perfeito = você cumpriu a meta do dia e a energia dele fechou cheia. A meta é o que você cadastrou, até o requisito do estágio.',
+              'Dia perfeito = você cumpriu a meta do dia e a energia do seu Soulmon fechou cheia. A meta é o que você cadastrou, até o requisito do estágio.',
               'A perfect day = you met your daily goal and its energy ended full. The goal is what you registered, capped at your stage requirement.',
             )}
           </p>
@@ -101,13 +101,13 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Sumiu por ${ABSENCE_FORGIVENESS_DAYS} dias ou mais? Voltar não custa nada. Toda segunda ele recupera ${WEEKLY_RELIEF_HEARTS} coração.`,
+              `Sumiu por ${ABSENCE_FORGIVENESS_DAYS} dias ou mais? Voltar não custa nada. Toda segunda seu Soulmon recupera ${WEEKLY_RELIEF_HEARTS} coração.`,
               `Away for ${ABSENCE_FORGIVENESS_DAYS} days or more? Coming back costs nothing. Every Monday it recovers ${WEEKLY_RELIEF_HEARTS} of a heart.`,
             )}
           </p>
           <p style={para}>
             {L(
-              'Cocô não limpo drena 1 coração a cada 6 horas — dê banho. Esfregar o pet é o principal jeito de curar (até 1 coração por dia). Se zerar, ele regride uma forma.',
+              'Cocô não limpo drena 1 coração a cada 6 horas — dê banho. Esfregar o pet é o principal jeito de curar (até 1 coração por dia). Se zerar, seu Soulmon regride uma forma.',
               'Uncleaned poop drains 1 heart every 6 hours — give it a bath. Rubbing your pet is the main way to heal (up to 1 heart a day). At zero it degenerates one form.',
             )}
           </p>
@@ -211,7 +211,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Cada noite na janela ele SONHA, e o sonho é uma cena colecionável dele mesmo — ${DREAM_COUNT} para descobrir. A raridade vem da regularidade, nunca de dormir mais.`,
+              `Cada noite na janela seu Soulmon SONHA, e o sonho é uma cena colecionável do próprio Soulmon — ${DREAM_COUNT} para descobrir. A raridade vem da regularidade, nunca de dormir mais.`,
               `Every night inside the window it DREAMS, and the dream is a collectible scene of itself — ${DREAM_COUNT} to discover. Rarity comes from regularity, never from sleeping longer.`,
             )}
           </p>
@@ -308,7 +308,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       </div>
 
       <p style={{ ...sm2Hint, borderTop: '1px solid var(--sm2-line)', paddingTop: 16 }}>
-        {L('Nos dias em que não der, ele continua aqui.',
+        {L('Nos dias em que não der, seu Soulmon continua aqui.',
            'On the days you can’t, it stays right here.')}
       </p>
     </ModalSheet>

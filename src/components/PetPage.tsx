@@ -260,7 +260,7 @@ export function PetPage({
           </p>
           <p style={{ ...sm2Hint, marginTop: 4 }}>
             {isPt
-              ? 'Cuide do seu Soulmon: a primeira forma aparece aqui assim que ele evoluir.'
+              ? 'Cuide do seu Soulmon: a primeira forma aparece aqui assim que seu Soulmon evoluir.'
               : 'Care for your Soulmon: the first form shows up here as soon as it evolves.'}
           </p>
         </section>
@@ -270,7 +270,7 @@ export function PetPage({
       {skillsAtuais && (
         <section style={card}>
           <h2 style={{ ...h2Style, marginBottom: 14 }}>
-            {isPt ? 'O que ela sabe fazer' : 'What they can do'}
+            {isPt ? 'O que seu Soulmon sabe fazer' : 'What they can do'}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <SkillRow skill={skillsAtuais.basica} isPt={isPt} />
@@ -283,7 +283,7 @@ export function PetPage({
       {anteriores.length > 0 && (
         <section>
           <h2 style={{ ...h2Style, marginBottom: 12 }}>
-            {isPt ? 'Quem ela já foi' : 'Who they used to be'}
+            {isPt ? 'Quem seu Soulmon já foi' : 'Who they used to be'}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {anteriores.map(form => {
