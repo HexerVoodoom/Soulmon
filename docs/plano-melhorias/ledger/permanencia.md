@@ -19,6 +19,13 @@ Dono: `soulmon-guarda-permanencia`. Anexo: `../F-conteudo.md`.
 | WP4.12 | **E4** missão bloqueada sem 🔒 + `0/N` | `PROPOSTO` | render test da aba Missões sem `0/` | vetado no código hoje |
 | WP4.13 | **E5** faixa do Torneio lifetime (nunca rebaixa) | `PROPOSTO` | teste: faixa após virada de mês ≥ anterior | vetado no código hoje |
 | WP4.14 | Criatura visitável (decisão 8), sem estado nem número; depende de WP4.11 | `PROPOSTO` | `grep -q visit src/components/LibraryPage.tsx functions/api/community.js` + teste "nunca expõe HP" | não existe hoje |
+| WP4.15 | Ligar `BOND_REWARDS` (escada L2–L13 nunca entregue) | `PROPOSTO` | `grep -c unclaimedBondRewards src/App.tsx` ≥ 1; idempotente | estudo C-P1; RESSALVA Bits; ANTES de WP4.3 (03/09/2026, rodada 4 — `../estudo/permanencia.md`) |
+| WP4.16 | Fiar estações (nome, caminhos, medalha) | `PROPOSTO` | `grep -rn 'ensureSeasonProgress\|applySeasonMedal' src/utils/dailyReset.ts src/App.tsx` ≥ 2 | estudo C-P2; RESSALVA **#15**/E4; ANTES de WP4.5/4.7 (03/09/2026, rodada 4 — `../estudo/permanencia.md`) |
+| WP4.17 | Guia diz o gate real | `PROPOSTO` | `grep -c daysToEvolve src/components/GuideModal.tsx src/App.tsx` → 0 | estudo C-P3; APROVADO (03/09/2026, rodada 4 — `../estudo/permanencia.md`) |
+| WP4.18 | Cron `closeSeason` | `PROPOSTO` | `grep -n closeSeason workers/push-scheduler.js` ≥ 1 | estudo C-P4; APROVADO (03/09/2026, rodada 4 — `../estudo/permanencia.md`) |
+| WP4.19 | Rota de redenção | `BLOQUEADO:D6` | `grep -n redeemed src/utils/dailyReset.ts src/App.tsx` ≥ 2 | estudo C-P5; RESSALVA #21 · **BLOQUEADO:D6** (03/09/2026, rodada 4 — `../estudo/permanencia.md`) |
+| WP4.20 | Cabeçalho de `dungeon.ts` | `PROPOSTO` | `grep -c 'resets monthly\|daily play limit\|costs a real heart' src/utils/dungeon.ts` → 0 | estudo C-P6; APROVADO (03/09/2026, rodada 4 — `../estudo/permanencia.md`) |
+| WP4.21 | Silhueta da próxima forma | `PROPOSTO` | `grep -n blur src/components/EvolutionPath.tsx` ≥ 1 | estudo C-P7; APROVADO (03/09/2026, rodada 4 — `../estudo/permanencia.md`) |
 
 ## Verdades deste domínio que o guarda defende
 - **Recompensa por contagem de tarefas é proibida** (`CLAUDE.md`). WP4.7 respeita: missão é comportamento, nunca "faça N tarefas".

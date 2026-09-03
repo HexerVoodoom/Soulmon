@@ -537,3 +537,115 @@ transitórios (celebração não-bloqueante e clímax de revelação ficaram for
 construção) · "app pequeno" é estimativa. A passada de fluxos (`search_flows`)
 foi a mais subutilizada e a mais rentável — um terceiro passe deveria ser só
 de fluxos.
+
+## 14. Rodada 4 — o corpus pré-Mobbin destrinchado (03/09/2026)
+
+Fonte: os seis estudos em `docs/plano-melhorias/estudo/` (nascimento, constância,
+vínculo, permanência, sustento, medição). Até aqui só o dossiê Mobbin tinha
+passado pelo crivo de três colunas (fonte · código por `grep` · veredito). Os
+relatórios 01–07, as transcrições 08 e o guia alimentaram o plano na criação,
+mas **ninguém os tinha confrontado linha a linha com o código**. Esta rodada fez
+isso: ~300 linhas de tabela, 41 candidatas, parecer da linha vermelha em
+`ledger/vetos.md` (17 APROVADO · 23 COM RESSALVA · 1 VETADO).
+
+### 14.1 O que a rodada corrigiu no próprio plano (terceira vez)
+
+| Onde | Dizia | Verdade (por `grep`) | Ação |
+|---|---|---|---|
+| WP2.5 | "onde a intervenção é montada" | **A intervenção não existe na UI**: `needsIntervention` (`habitRhythm.ts`) tem teste e 40 linhas de comentário e **nenhum componente o chama**. O guia e o `CLAUDE.md` prometem "o pet oferece 5 minutos"; o pet nunca oferece | WP2.5 passa a depender de **WP2.10** (a intervenção em si) |
+| WP4.3 | "estender a escada do Vínculo além do L13" | **L2–L13 nunca é entregue**: `BOND_REWARDS` e `unclaimedBondRewards` (`bond.ts`) sem consumidor; `bondRewardsClaimed` nunca escrito. O jogador recebe só o título | WP4.3 em duas fases: **WP4.15** (ligar a escada existente) antes |
+| WP4.5 | "vitrine por estação de WP4.4" | WP4.4 foi RECUSADO porque as estações **já são** cíclicas; o que falta é a UI: `seasonLabel`/`SEASON_PATHS`/`applySeasonMedal` sem consumidor — o jogador não sabe que estação é e a medalha nunca é ganha | WP4.5 depende de **WP4.16** |
+| WP4.7 | "`SEASON_PATHS` (5 runs = medalha) é o que já há" | `SEASON_PATHS` existe e **está desligado** | evidência corrigida; depende de WP4.16 |
+| WP4.13 | "faixa nunca desce" só pelo reset mensal | a faixa desce por **três** caminhos: derrota própria (−8), ser oponente sorteado (−4, sem jogar) e o reset. `tournamentTiers` testa só o cálculo, não `playMatch` | spec emendada: faixa deriva de contador **monotônico** (`wins`/pontos ganhos), teste exercita `playMatch` |
+| WP4.1 / guia | `daysToEvolve` é "dado morto" | é dado morto **exibido**: `GuideModal` mostra 10/20/30/40 e `App.tsx` passa `daysToEvolve` ao HUD; o gate real é `required` (4/5/5/6) | **WP4.17** corrige o guia independentemente de D5 |
+| WP1.6 | "data de nascimento no dia do jogador" | **não existe campo** de nascimento do pet (o único `createdAt` é de `Task`) | pré-requisito **WP1.16** (`bornAt`) |
+| WP0.5 | `VERIFICADO` | verificado = schema + paridade + política. **7 dos 9 eventos novos nunca são emitidos** (`reveal_seen`, `milestone`, `shield_used`, `welcome_back`, `evolve`, `dungeon_run`, `bond_level`). A régua das ondas 1–4 não existe ainda | ledger anotado; fiação em **WP2.15** e nos WPs donos |
+| Métrica-farol | "esforço por ativo" | `effort_sum / day_active` (`applyAggregate`) é **média** — exatamente o que I.4 #1 e C6 proíbem | **WP0.8** (histograma no servidor) |
+| Guia I.4 | "aha moment por coorte é implementável com os ~20 eventos" | falso sem D2 (`metrics.js` declara) | item do WP0.4 |
+| Guia H.3 / D7 | "a cura instantânea é a ÚNICA peça que vende HP" | são **duas**: `BITS_EXCHANGE` (1 Crédito = 10 Bits) + `heart-item` (150 Bits) = **15 Créditos → +1 coração, sem cap** | **D15** amplia D7 |
+| Guia E #36 | seasons do Torneio "a fazer, esforço G" | `closeSeason`, `trophies` e as vitrines **existem**; falta só o cron | **WP4.18** (PP) |
+| Guia M-2 e M-6 | recomendações P0/P1 | **nenhum WP** as cobria — escorregaram entre guia e plano | **WP5.6** e **WP5.7** |
+| `dungeon.ts` | cabeçalho: "resets monthly", "daily play limit", "losing costs a heart" | as três são falsas (semanal, sem limite, sem custo) — mesma família do "roster de 60" | **WP4.20** |
+| LEDGER | comando de contagem `### WP` → 50 | o comando devolve 36; os +14 são linhas da tabela de §13 | comando corrigido no LEDGER |
+
+### 14.2 Duplicidades fundidas (três guardas, um número)
+
+- **C-N8 ↔ C-V4** (`bornAt` × `soulmonMeta.bornOn`): UM campo, UM nome → **WP1.16**.
+- **C-C6 ↔ C-V7** (`welcome_back` proposto duas vezes): um emissor → **WP2.15**.
+- **C-V5** (frases do widget) é o conserto do veto E1, que já tem WP → **adendo ao WP2.6**, sem pacote novo.
+- **C-S2** (travas de forma no relatório) → **adendo ao WP5.1b**, sem pacote novo.
+- **C-C2** ("dias juntos") é uma segunda fonte para "há quanto tempo" (× `bornAt`) — fica, mas lê de `bornAt` quando existir, nunca de `saveDaysLived` em paralelo.
+- **C-N9 ↔ C-V6 ↔ WP3.4**: uma fonte única de copy de push (`_pushCopy.js`); **WP0.11** mede o efeito.
+
+### 14.3 Pacotes novos (36) — estado inicial `PROPOSTO`, salvo indicação
+
+| WP | Área | Origem | Spec resumida (o completo está no estudo do guarda) | Parecer | Tam. | Aceite / comando |
+|---|---|---|---|---|---|---|
+| WP0.8 | medição | C-M1 | `effort_bucket.<0..4>` no `applyAggregate` (servidor); mediana por bucket, média rotulada | APROVADO | PP | `grep -q effort_bucket functions/api/metrics.js` + `metrics.test.js` |
+| WP0.9 | medição | C-M2 | `purchase { tier, reason 0..4 }`, 4 = onboarding; `bump('purchase.<reason>')` | RESSALVA (#18: política PT/EN) | PP | `grep -n "purchase: { tier" telemetry.ts metrics.js` mostra `reason` nos dois |
+| WP0.10 | medição | C-M3 | `after_bad_day { gap 0..3, kind 0..1 }` fechado no aparelho (chave local nunca enviada); viés declarado no GET | RESSALVA (#18/#20: bucket sem data; propósito = convite de carinho, nunca calibrar cobrança) | P | `grep -q after_bad_day telemetry.ts metrics.js privacidade.html` |
+| WP0.11 | medição | C-M4 | `app_open { source 0..3 }` dedupe por dia e origem; `sw.js` abre `/?src=push`; `push_optout` | RESSALVA (**#19**: `app_open.push` só para CORTAR push que abre sem `day_active`; bump `CACHE_VERSION`) | P | `grep -q app_open …` + `grep -q "src=push" public/sw.js` |
+| WP0.12 | medição | C-M5 | `reveal_seen.duration 0..3` em memória; junto da fiação de WP1.1 | APROVADO | PP | `grep -q "duration: { min: 0, max: 3 }" telemetry.ts metrics.js` |
+| WP0.13 | medição | C-M6 | `haunted_done` em `completeTask` quando `isHaunted` | APROVADO | PP | `grep -q haunted_done telemetry.ts metrics.js` |
+| WP0.14 | medição | C-M7 | `checkin_shown` (`ONCE_PER_DAY`) onde `needsCheckIn` abre o modal; denominador de `checkin_commit` | APROVADO | PP | `grep -q checkin_shown telemetry.ts metrics.js` |
+| WP1.9 | nascimento | C-N1 | Ao avançar de `GOAL_STEP` com texto, o `STRUGGLE_STEP` abre com "Anotado. Seu Soulmon vai lembrar disso." (ecoa só `soulGoal`) | APROVADO | PP | `grep -c 'vai lembrar disso' SoulmonOnboarding.tsx` → 1 |
+| WP1.10 | nascimento | C-N2 | Bifurcação diz custo (`SOUL_TEST_ITEMS.length`, ~2 min) e o que muda; nunca "melhor" | APROVADO | PP | `grep -c 'afinam quem' …` → 0; bloco sem `melhor\|better` |
+| WP1.11 | nascimento | C-N3 | `hint` por pergunta dizendo QUAL eixo alimenta; linha-fôlego a cada 5 itens | RESSALVA (trava: só de onde vem, nunca como ela vai ser; o hint não ensina a mirar) | P | teste: nenhum hint casa `teimos\|brincalh\|tímid\|stubborn\|playful\|shy` |
+| WP1.12 | nascimento | C-N4 | 3 chips de tonalidade no demo (`demoTint`, `hue-rotate` no palco); zero mecânica; screenshot obrigatório | APROVADO | P | `grep -c demoTint sprites.ts GameStateContext.tsx` ≥ 1 cada |
+| WP1.13 | nascimento | C-N5 | Consent sem o parágrafo redundante; links, caixa, idade e ORDEM intactos | RESSALVA (aceite = teste de `consent.ts`, não `≤3 <p>`) | PP | `npx vitest run src/utils/consent` |
+| WP1.14 | nascimento | C-N6 | Tela do link mágico com sprite/silhueta + fala; depende de WP1.1 | APROVADO | PP | `awk '/link de acesso/,/<\/div>/' … \| grep -c '<img'` ≥ 1 |
+| WP1.15 | nascimento | C-N7 | Campo `onb-petname` vai para o REVEAL; botão "Nascer {nome}"; `REGISTER` fica com nick + e-mail | APROVADO | P | REVEAL contém `onb-petname`, REGISTER não; `oracleDraft.test.ts` |
+| WP1.16 | nascimento | C-N8 + C-V4 | `bornAt` (dia do jogador) gravado UMA vez em `handleCompleteOnboarding`; save antigo **nunca infere**; exibido como DATA; na virada, `anniversary: 'month'\|'year'` no `lastDayReport` → fala 1× do HUD; **sem XP, sem push**. Upgrade = "trocou de pele" (mantém `bornAt`) — confirmar com o dono | RESSALVA (footgun 9: um campo; #5: nada persistido além da data) | P | `grep -c bornAt GameStateContext.tsx App.tsx dailyReset.ts` ≥ 1 cada |
+| WP1.17 | nascimento | C-N9 | Push D1/D2 na voz do pet (D1 = dia SEGUINTE ao nascimento); copy em `_pushCopy.js`; só opt-in; `bornAt` na KV morre com a subscription | RESSALVA (**#19**/#18: nunca D0, sem condição de meta, fonte única com WP3.4) | P | `node --test functions/api/_pushCopy.test.js` com `ageDays` 1/2/3 |
+| WP2.10 | constância | C-C1 | A intervenção never-miss-twice EXISTE: hábito com `needsIntervention` ganha "Só 5 minutos hoje" no check-in/lista; aceitar = `completeHabit` normal; nunca conta faltas | RESSALVA (**#17**: perdão já contado saindo do papel; "5 min conta" só na 2ª falta) | M | `grep -c needsIntervention App.tsx MorningCheckIn.tsx` ≥ 1 fora de comentário |
+| WP2.11 | constância | C-C2 | "N dias juntos" na `StatsPage` (de `bornAt` quando existir); obedece `hideMetrics`; não vai a widget/perfil; renomear `streakDays` → `perfectDaysTotal` | RESSALVA (#14/#21: só sobe; uma fonte) | P | `grep -q saveDaysLived\|bornAt StatsPage.tsx` |
+| WP2.12 | constância | C-C3 | Selo do dia quando `focusComplete`; nunca "2 de 3"; some na virada sem toast; sem recompensa | RESSALVA (#16/#9) | P | `grep -c focusComplete App.tsx HomeHud.tsx` ≥ 1 |
+| WP2.13 | constância | C-C4 | `HABIT_CHEER_AT = [3, 36, 51]` em `taskModel.ts` + `cheerReached`; só fala do pet; nunca "faltam N" | RESSALVA (#16: sem bônus; cadência única com WP3.2) | P | `grep -q HABIT_CHEER_AT taskModel.ts`; `HABIT_MILESTONES` inalterado |
+| WP2.14 | constância | C-C5 | `RARE_CHEER_RATE` (~5%) de fala rara ao concluir; ZERO efeito material; nunca anunciada | RESSALVA (#16: valor zero; taxa nunca vira alavanca) | P | teste com RNG fixo: recompensa idêntica com/sem sorteio |
+| WP2.15 | constância | C-C6 + C-V7 | Emissores: `welcome_back { days }` (bucket) no efeito do relatório, `shield_used` no hook da virada, `bond_level` derivado na hora | RESSALVA (#18: bucket; #5: nunca persistir nível) | PP | `grep -c "'welcome_back'\|'shield_used'\|'bond_level'" App.tsx hooks/*.ts` ≥ 1 cada |
+| WP3.8 | vínculo | C-V1 | `useEffect` sobre `triggerMessage` → `speak()` de alívio; o `toast` sai do `App.tsx` | APROVADO | PP | `grep -A3 triggerMessage CompanionHUD.tsx \| grep -q useEffect` |
+| WP3.9 | vínculo | C-V2 | "Sou companhia, não tratamento." 1×/sessão + `chatSafety.ts` (léxico local → resposta fixa + CVV 188 / linha EN, **sem Groq**); condição de saída de WP3.1 | RESSALVA (#18: frase que casou NUNCA vira telemetria/save; nunca push) · **BLOQUEADO:D16** | M | `grep -q chatSafety ChatBox.tsx && npx vitest run chatSafety` |
+| WP3.10 | vínculo | C-V3 | Uma fala extra por traço (`petPassive`) em feed/rub/hp-low/poop/dungeon; `TRAIT:` como enum para a IA | APROVADO | P | `grep -q petPassive CompanionHUD.tsx` |
+| WP3.11 | vínculo | C-V6 | Ligar `sleepReminderAt` no `NotificationManager` (1×/dia, só com janela e notificações ligadas, nunca dormindo); copy em `_pushCopy.js` | RESSALVA (#12/#19: sem hora, sem "deveria", sem condição de meta) | P | `grep -q sleepReminderAt NotificationManager.tsx` |
+| WP4.15 | permanência | C-P1 | Ligar `BOND_REWARDS`: ponto único no `App.tsx` lê `unclaimedBondRewards`, entrega (`ownedFurniture`/`ownedBackgrounds`/`collectDream`), grava `bondRewardsClaimed`; idempotente; item já possuído marca `claimed` sem refund | RESSALVA (Bits: nada de moeda) | P | `grep -c unclaimedBondRewards App.tsx` ≥ 1 |
+| WP4.16 | permanência | C-P2 | `GameState.season`; `ensureSeasonProgress`/`applySeasonMedal` na virada; bloco na aba Missões com `seasonLabel`, caminhos só com `current ≥ 1`, medalha-selo; saudação 1× no primeiro dia | RESSALVA (**#15**/E4: virada nunca parece prazo; sem "faltam N dias"; sem push) | P | `grep -rn "ensureSeasonProgress\|applySeasonMedal" dailyReset.ts App.tsx` ≥ 2 |
+| WP4.17 | permanência | C-P3 | Guia e HUD leem o MESMO símbolo que `handleEvolve` (`required`); `daysToEvolve` sai da tela | APROVADO | PP | `grep -c daysToEvolve GuideModal.tsx App.tsx` → 0 |
+| WP4.18 | permanência | C-P4 | Cron mensal em `workers/push-scheduler.js` chama `closeSeason` (idempotente: `closed:<season>`) | APROVADO | PP | `grep -n closeSeason workers/push-scheduler.js` ≥ 1 |
+| WP4.19 | permanência | C-P5 | Rota de redenção: re-evoluir após `degeneratedByHP` marca `redeemed` (variante cosmética, lê como prestígio); só após WP4.2 | RESSALVA (#21: nunca marca de queda; exibir é escolha do jogador) · **BLOQUEADO:D6** | M | `grep -n redeemed dailyReset.ts App.tsx` ≥ 2 |
+| WP4.20 | permanência | C-P6 | Reescrever o cabeçalho de `dungeon.ts` com o que o código faz | APROVADO | PP | `grep -c "resets monthly\|daily play limit\|costs a real heart" dungeon.ts` → 0 |
+| WP4.21 | permanência | C-P7 | Silhueta (`blur(6px) brightness(0.3)`) da próxima forma no nó `forecast` quando o sprite existe; sem sprite, silêncio | APROVADO | P | `grep -n blur EvolutionPath.tsx` ≥ 1 |
+| WP5.6 | sustento | C-S1 | Copy do `UnlockAccountModal`: título "cresce porque você cresce", 3 perks como resultado (sem "Reroll liberado"); a frase "pagar nunca deixa mais forte" **só depois de D15** (hoje seria mentira) | RESSALVA (#13/verdade) | PP | `grep -q "cresce porque você cresce" UnlockAccountModal.tsx && ! grep -q "Reroll liberado" …` |
+| WP5.7 | sustento | C-S4 | Reroll → "Nova Leitura" determinística: reabre as 6 perguntas preenchidas; seed = `hash(respostas + contador)`; "aleatoriamente" sai de `CreditsModal`/`termos.html` | RESSALVA (tela diz "mesma resposta = mesma criatura" ANTES de cobrar) · **BLOQUEADO:H.4** | M | `grep -n Math.random App.tsx \| grep -i reroll` vazio |
+| WP5.8 | sustento | C-S5 | `formattedPrice` da Play via `BillingPlugin.kt` → `getLocalizedPrice(sku)`; rótulo BRL vira fallback | APROVADO · **requer APK** (agrupar com WP0.6) | P | `grep -q formattedPrice BillingPlugin.kt && grep -q getLocalizedPrice playBilling.ts` |
+
+**Adendos a pacotes existentes** (sem número novo): WP2.6 absorve C-V5 (frases do
+widget PT/EN sem cobrança, JSON único com paridade); WP5.1b absorve C-S2 (o pet
+celebra e NÃO menciona compra; nunca modal por cima; recusa vale 2 semanas);
+WP2.1 ganha "métrica de decisão = `week_active`, não `day_active`; `welcome_back`
+emitindo antes"; WP2.4 tira a linha "este hábito já rende mais" (anúncio de
+recompensa, C4); WP3.1 ganha `ORIGIN:` por enum e WP3.9 como condição de saída;
+WP0.1 ganha a spec do leitor (`tools/metrics-read.mjs` com as 5 regras de Greer:
+`n` em toda linha, mediana, eixo em zero, razões só na mesma janela, nada de
+conversão com < 30 dias) — escrevível ANTES da chave; WP0.4 ganha 4 itens (07 §0
+"nenhuma telemetria", 07 §3 "PostHog", I.4 "implementável", F "saveId").
+
+### 14.4 Decisões novas para o dono (continuação das seções 10 e 13.6)
+
+| # | Decisão | Fonte |
+|---|---|---|
+| D15 | **Amplia D7.** Além da cura instantânea, o trilho Créditos → Bits → 💗 vende +1 coração por 15 Créditos sem cap. A linha vermelha **vetou** a opção "aceitar e nomear" (#13: dinheiro comprando a volta do único recurso que a punição tira). Alternativa proposta: 💗 sai da loja de Bits e fica só como drop da masmorra; o câmbio serve a cosmético. O guarda do sustento recomendava nomear. **É sua a escolha** — e ela fecha ou não D7 de verdade | `estudo/sustento.md` C-S3 · `vetos.md` |
+| D16 | **Texto de saúde mental no chat** (WP3.9): a linha "Sou companhia, não tratamento" e a ponte para o CVV 188 (PT) / linha internacional (EN). O corpus (02 rec 17, B.5) diz que memória de chat sem isto é irresponsável. Precisa da sua palavra por ser texto sobre saúde | `estudo/vinculo.md` C-V2 |
+| D17 | **Upgrade é "nasceu de novo" ou "trocou de pele"?** Decide se `handleUpgradeRevealed` reescreve `bornAt` (WP1.16). Padrão assumido: trocou de pele (mantém a data) | `estudo/nascimento.md` C-N8 |
+| D4 (sobe) | A aura (WP2.2) **vai doer**: A2 relata reações intensas à marca dourada do Duolingo. Não é "pode a aura ser a única coisa que dói?", é "você aceita que ela seja?" | `estudo/constancia.md` §2 |
+
+### 14.5 Onde as fontes discordam (registrado, não reaberto)
+
+Degeneração: 04 §1 ("acidente domesticado") × anexo F (pré-requisito do Ultra) —
+os dois certos sobre partes diferentes; só WP4.2 resolve. Live-ops: 07 #13
+"visita especial" × C2 "ruído desacoplado" — C2 vence (`via transcrição`).
+Cadência de conteúdo: 07 mensal × `seasons.ts` trimestral — trimestral, porque
+o código mediu custo e o relatório não. Trial: rel. 06 contradiz a si mesmo
+(maior alavanca × comprador direto out-earns) — WP5.4 leva os dois números ao
+dono. Priming de push: 05 rec.10 "após a 1ª tarefa (D0)" × guia S-7 "D2–D3" —
+mantido D2–D3 (D0 é o dia de maior risco, pela própria fonte). Widget: rel. 07
+"2/4 hoje" × Mobbin sem dígito abaixo da meta — decidido, Mobbin.

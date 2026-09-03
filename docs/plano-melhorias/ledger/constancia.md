@@ -13,6 +13,12 @@ Dono: `soulmon-guarda-constancia`. Anexo: `../B-habitos.md`.
 | WP2.7 | Reencontro por DIAS, não por minutos | `PROPOSTO` | `grep -q "daysAway" src/components/CompanionHUD.tsx` + teste das 4 faixas + nenhuma frase cita o que ficou por fazer | hoje: limiar fixo de 10 min |
 | WP2.8 | `hideMetrics` cobre a constância | `PROPOSTO` | `grep -q hideMetrics src/components/HabitConstancy.tsx` + render test sem dígito | Mobbin D8 (Headspace) |
 | WP2.9 | Teste de guarda: nenhum render de constância com `/\d+\s*%/` | `VERIFICADO` (02/09/2026) | o teste existe e passa | `dailyList.sm2.render.test.tsx` → describe "HabitConstancy nunca imprime percentual (WP2.9)": 10 casos (5 estados × PT/EN) sobre o TEXTO visível — **passa**. A proibição #14 deixou de ser só tese |
+| WP2.10 | A intervenção never-miss-twice existe ("Só 5 minutos hoje") | `PROPOSTO` | `grep -c needsIntervention src/App.tsx src/components/MorningCheckIn.tsx` ≥ 1 fora de comentário | estudo C-C1; RESSALVA **#17** — perdão já contado; WP2.5 depende disto (03/09/2026, rodada 4 — `../estudo/constancia.md`) |
+| WP2.11 | "N dias juntos" na StatsPage | `PROPOSTO` | `grep -q 'saveDaysLived\|bornAt' src/components/StatsPage.tsx`; `hideMetrics` | estudo C-C2; RESSALVA #14/#21 — uma fonte (`bornAt`) (03/09/2026, rodada 4 — `../estudo/constancia.md`) |
+| WP2.12 | Selo de Foco do dia | `PROPOSTO` | `grep -c focusComplete src/App.tsx src/components/pixel/HomeHud.tsx` ≥ 1; nunca "2 de 3" | estudo C-C3; RESSALVA #16/#9 (03/09/2026, rodada 4 — `../estudo/constancia.md`) |
+| WP2.13 | Falas de constância em 3/36/51 | `PROPOSTO` | `grep -q HABIT_CHEER_AT src/types/taskModel.ts`; `HABIT_MILESTONES` inalterado | estudo C-C4; RESSALVA #16 (03/09/2026, rodada 4 — `../estudo/constancia.md`) |
+| WP2.14 | Celebração rara (valor zero) | `PROPOSTO` | `grep -q RARE_CHEER_RATE src/types/taskModel.ts`; teste RNG fixo | estudo C-C5; RESSALVA #16 (03/09/2026, rodada 4 — `../estudo/constancia.md`) |
+| WP2.15 | Emissores `welcome_back`/`shield_used`/`bond_level` (funde C-C6 e C-V7) | `PROPOSTO` | `grep -c "'welcome_back'\|'shield_used'\|'bond_level'" src/App.tsx src/hooks/*.ts` ≥ 1 cada | estudo C-C6/C-V7; RESSALVA #18/#5 (03/09/2026, rodada 4 — `../estudo/constancia.md`) |
 
 ## Verdades deste domínio que o guarda defende
 - **Streak que zera é proibido por teste.** Quem propuser um contador que volta a zero está propondo outro produto.

@@ -10,6 +10,9 @@ Dono: `soulmon-guarda-sustento`. Anexo: `../D-monetizacao.md`.
 | WP5.3 | Idempotência de `spend` | `PROPOSTO` | teste em `_entitlements.test.js`: mesmo `opId` duas vezes debita uma vez | sem estorno server-side hoje |
 | WP5.4 | Spec de assinatura/trial (documento, não código) | `BLOQUEADO:D10` | documento existe e lista as travas de C.3 #3 | — |
 | WP5.5 | "Agora não" com peso de primário no `UnlockAccountModal` | `VERIFICADO` (03/09/2026) | `grep -q "Agora não" src/components/UnlockAccountModal.tsx` + render test dos 3 botões | `grep -c "Agora não" src/components/UnlockAccountModal.tsx` → **2** (comentário + botão); botão `ghost` com `width: 100%` entre o primário e o `quiet`; emite `unlock_dismiss { reason }` (evento novo nos DOIS `EVENT_SCHEMA`, linha PT+EN em `privacidade.html`, `REASON_LABEL` do agregador corrigido de 2 para 4 rótulos — `report`/`shop` caíam em `unknown`); teste novo `UnlockAccountModal.dismiss.render.test.tsx` (4 casos) — **passa** |
+| WP5.6 | Copy do `UnlockAccountModal` | `PROPOSTO` | `grep -q 'cresce porque você cresce' … && ! grep -q 'Reroll liberado' …` | estudo C-S1; RESSALVA #13 — frase "nunca mais forte" só após D15 (03/09/2026, rodada 4 — `../estudo/sustento.md`) |
+| WP5.7 | Reroll → "Nova Leitura" determinística | `BLOQUEADO:H.4` | `grep -n Math.random src/App.tsx | grep -i reroll` vazio | estudo C-S4; RESSALVA · **BLOQUEADO:H.4** (03/09/2026, rodada 4 — `../estudo/sustento.md`) |
+| WP5.8 | Preço localizado da Play | `PROPOSTO` | `grep -q formattedPrice BillingPlugin.kt && grep -q getLocalizedPrice src/utils/playBilling.ts` | estudo C-S5; APROVADO · requer APK (03/09/2026, rodada 4 — `../estudo/sustento.md`) |
 
 ## Verdades deste domínio que o guarda defende
 - **Dinheiro nunca compra a barra que representa o cuidado que a pessoa teve consigo mesma.** É o "valor sagrado" (C5) e a razão de D7 existir.

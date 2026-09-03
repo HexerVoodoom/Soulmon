@@ -4,9 +4,9 @@ Este arquivo é o **estado durável** do `docs/PLANO-MELHORIAS.md`. Ele existe
 porque um agente não tem memória entre sessões: sem registro em disco,
 "o guarda garante que foi implementado" é uma frase, não um mecanismo.
 
-**São 50 pacotes (WP)** — 36 na criação, +14 na rodada 3 (dossiê Mobbin, 02/09/2026); antes disso, não 30 — o número "30" apareceu no primeiro commit do
+**São 86 pacotes (WP)** — 36 na criação, +14 na rodada 3, **+36 na rodada 4** (estudo pré-Mobbin, 03/09/2026 — tabela da seção 14.3 do plano, mesma forma de linhas da seção 13) (dossiê Mobbin, 02/09/2026); antes disso, não 30 — o número "30" apareceu no primeiro commit do
 plano e estava errado; conferido com
-`grep -oE '^### WP[0-9]+\.[0-9]+' docs/PLANO-MELHORIAS.md | wc -l` → **36** (as seções da criação) **mais** os 14 pacotes da rodada 3, que vivem como LINHAS da tabela da seção 13 e não como seções: `grep -oE '^\| WP[0-9]+\.[0-9]+ ' docs/PLANO-MELHORIAS.md | sort -u | wc -l` → 16, dos quais 2 (WP3.1, WP3.3) são revisões de pacotes que já existiam. ⚠️ Até 03/09/2026 este parágrafo citava só o primeiro comando e afirmava 50 — o guarda da medição rodou o comando, obteve 36 e apontou a contradição (`estudo/medicao.md`). O número estava certo; o comando, não.
+`grep -oE '^### WP[0-9]+\.[0-9]+' docs/PLANO-MELHORIAS.md | wc -l` → **36** (as seções da criação) **mais** os 14 pacotes da rodada 3, que vivem como LINHAS da tabela da seção 13 e não como seções: `grep -oE '^\| WP[0-9]+\.[0-9]+ ' docs/PLANO-MELHORIAS.md | sort -u | wc -l` → 16 na seção 13.5 (dos quais 2, WP3.1 e WP3.3, são revisões) e 36 na seção 14.3 (rodada 4). ⚠️ A tabela 14.1 também começa linhas com `| WPx.y |` para pacotes EXISTENTES — quem contar só pelo prefixo pega 60 e erra; conte por seção. Conferência hoje: 36 + 14 + 36 = **86**. ⚠️ Até 03/09/2026 este parágrafo citava só o primeiro comando e afirmava 50 — o guarda da medição rodou o comando, obteve 36 e apontou a contradição (`estudo/medicao.md`). O número estava certo; o comando, não.
 
 ## Como funciona a guarda
 
@@ -67,13 +67,13 @@ rápido; a fonte são os arquivos de `ledger/`.
 
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
-| medição (6) | 1 | 2 (D1, D2) | — | — | **3** (0.3, 0.5, 0.7) | — |
-| nascimento (8) | 7 | — | — | — | **1** (1.7) | — |
-| constância (9) | 6 | 1 (D3) | — | — | **2** (2.3, 2.9) | — |
-| vínculo (7) | 5 | 1 (D11) | — | — | **1** (3.7) | — |
-| permanência (14) | 10 | 2 (D5, D6) | — | — | **1** (4.9) | **1** (4.4) |
-| sustento (6) | 3 | 2 (D7, D10) | — | — | **1** (5.5) | — |
-| **Total (50)** | **32** | **8** | — | — | **9** | **1** |
+| medição (13) | 8 | 2 (D1, D2) | — | — | **3** (0.3, 0.5, 0.7) | — |
+| nascimento (17) | 16 | — | — | — | **1** (1.7) | — |
+| constância (15) | 12 | 1 (D3) | — | — | **2** (2.3, 2.9) | — |
+| vínculo (11) | 8 | 2 (D11, D16) | — | — | **1** (3.7) | — |
+| permanência (21) | 16 | 3 (D5, D6 ×2) | — | — | **1** (4.9) | **1** (4.4) |
+| sustento (9) | 5 | 3 (D7, D10, H.4) | — | — | **1** (5.5) | — |
+| **Total (86)** | **65** | **11** | — | — | **9** | **1** |
 
 **Oito pacotes esperam decisão do dono** (seção 10 do plano). D1
 (`METRICS_ADMIN_KEY`) é o que destrava mais coisa: sem ele ninguém lê nenhum
@@ -130,4 +130,22 @@ VERIFICADOS + 1 RECUSADO em 3 lotes.** Tudo que sobra em PROPOSTO ou é onda 2+
 (WP2.4 celebração, WP2.7 reencontro, WP3.2 pet olha, WP1.1 reveal…) ou depende
 de decisão do dono (D1–D14).
 
-_Última consolidação: 03/09/2026 (sprint 1, lote 3)._
+**Rodada 4 (03/09/2026) — o corpus pré-Mobbin destrinchado.** Os relatórios 01–07,
+as transcrições 08 e o guia nunca tinham passado pelo crivo de três colunas; só
+o Mobbin tinha. Seis guardas, ~300 linhas de tabela (`estudo/*.md`), 41
+candidatas, parecer da linha vermelha em `vetos.md` (17 aprovadas, 23 com
+ressalva, 1 vetada — C-S3, que vira **D15**). Duplicidades fundidas (`bornAt`
+proposto por dois guardas; `welcome_back` por dois; frases do widget já eram o
+conserto de E1). **Premissas do plano que caíram: sete** — a intervenção do
+never-miss-twice não existe na UI (WP2.5 dependia de uma tela não pintada), a
+escada do Vínculo L2–L13 nunca é entregue, as estações existem e estão desligadas,
+`daysToEvolve` é dado morto EXIBIDO no guia, a faixa do Torneio desce por três
+caminhos e não um, a métrica-farol é média onde a fonte proíbe média, e a "única
+peça que vende HP" são duas. O padrão das sete é o mesmo das três anteriores: a
+evidência citou um DADO (constante, tipo, tabela, comentário) sem olhar a FUNÇÃO
+que o consome ou o componente que o exibe. **Código sem consumidor foi o achado
+transversal**: `needsIntervention`, `focusComplete`, `BOND_REWARDS`,
+`SEASON_PATHS`, `sleepReminderAt`, `triggerMessage` e 7 eventos de telemetria
+estão escritos, testados e mudos.
+
+_Última consolidação: 03/09/2026 (rodada 4)._

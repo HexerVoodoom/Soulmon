@@ -16,6 +16,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **03/09/2026 — RODADA 4: o corpus PRÉ-Mobbin destrinchado** — os relatórios
+> 01–07, as transcrições 08 e o guia alimentaram o plano na criação, mas só o
+> dossiê Mobbin tinha sido confrontado linha a linha com o código. Agora os seis
+> guardas fizeram isso (`docs/plano-melhorias/estudo/`, ~300 linhas fonte × código
+> × veredito) e a linha vermelha deu parecer a 41 candidatas (17 aprovadas, 23 com
+> ressalva, 1 vetada). **O plano vai a 86 pacotes** (+36, seção 14). O achado
+> transversal é **código escrito, testado e sem consumidor**: `needsIntervention`
+> (o "só 5 minutos" que o guia promete nunca aparece), `focusComplete` (o selo dos
+> 3 focos), `BOND_REWARDS` (12 recompensas do Vínculo que ninguém recebe),
+> `SEASON_PATHS`/`applySeasonMedal` (estações desligadas), `sleepReminderAt`,
+> `triggerMessage` e 7 dos 9 eventos de telemetria novos. Sete premissas do plano
+> caíram; a métrica-farol é MÉDIA onde a fonte proíbe média. **Decisões novas:
+> D15** (o trilho Créditos → Bits → 💗 vende +1 coração por 15 Créditos sem cap —
+> a linha vermelha vetou "aceitar e nomear"; alternativa: 💗 sai da loja de Bits),
+> **D16** (texto de saúde mental no chat) e **D17** (upgrade mantém `bornAt`?).
+> Só docs; nenhuma regra de jogo mudou.
+
 > **03/09/2026 — SPRINT 1, LOTE 3 (2 VERIFICADOS; sprint fechado com 9+1)** —
 > WP3.7: a criatura deixou de ser "ele" no Guia/push/Configurações e "ela" na
 > página do Pet — **36 trechos** em 22 arquivos viraram "seu Soulmon" ou frase
