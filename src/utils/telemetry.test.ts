@@ -94,11 +94,13 @@ describe('allowlist de eventos', () => {
     expect(sanitizeEvent('toString')).toBeNull();
   });
 
-  it('aceita os dez eventos declarados, e só eles', () => {
+  it('aceita os dezoito eventos declarados, e só eles', () => {
     expect(TELEMETRY_EVENTS).toEqual([
-      'install', 'onboarding_step', 'demo_pick', 'first_task_done',
-      'day_active', 'unlock_view', 'purchase',
-      'demo_cap_hit', 'activity_create', 'week_active',
+      'install', 'onboarding_step', 'demo_pick', 'first_task_done', 'day_active',
+      'unlock_view', 'purchase', 'demo_cap_hit', 'activity_create', 'week_active',
+      // WP0.5 (rodada 2/3 do PLANO-MELHORIAS)
+      'reveal_seen', 'checkin_commit', 'milestone', 'shield_used', 'welcome_back',
+      'evolve', 'dungeon_run', 'bond_level',
     ]);
     expect(sanitizeEvent('install')).toEqual({ e: 'install', d: telemetryDayKey() });
   });
@@ -490,6 +492,22 @@ describe('dedupe: o denominador não pode inflar', () => {
 });
 
 // ---------------------------------------------------------------------------
+
+describe('política de privacidade ↔ EVENT_SCHEMA (WP0.3)', () => {
+  it('todo evento do allowlist está nomeado em public/privacidade.html (PT e EN)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const html = readFileSync(resolve(process.cwd(), 'public/privacidade.html'), 'utf8');
+    for (const ev of Object.keys(EVENT_SCHEMA)) {
+      const n = html.split(`<code>${ev}</code>`).length - 1;
+      expect(n, `evento ${ev} deve aparecer na tabela PT e na EN`).toBeGreaterThanOrEqual(2);
+    }
+    // O número de eventos NÃO fica escrito à mão na política — ele já ficou
+    // 3 eventos para trás uma vez ("sete" quando eram dez).
+    expect(html).not.toMatch(/exatamente estes (sete|dez|\d+) eventos/);
+    expect(html).not.toMatch(/exactly the (seven|ten|\d+) events/);
+  });
+});
 
 describe('paridade cliente ↔ servidor (footgun 9)', () => {
   it('os dois EVENT_SCHEMA têm exatamente os mesmos eventos', () => {

@@ -20,6 +20,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { renderWithCss } from '../test/renderEnv';
 import { TaskMeta } from './TaskMeta';
 import { HabitConstancy } from './HabitConstancy';
@@ -124,4 +125,33 @@ describe('lista diária — fundação sm2', () => {
     const botao = screen.getByRole('button');
     expect(botao.className).toContain('sm-tap-44');
   });
+});
+
+/**
+ * WP2.9 — proibição #14 (nunca percentual cru de constância) era só por tese.
+ * Este teste a trava: nenhum render de HabitConstancy, em nenhum estado, pode
+ * conter um "N%".
+ */
+describe('HabitConstancy nunca imprime percentual (WP2.9)', () => {
+  const dia = (n: number) => dayKeyOf(new Date(2026, 7, 19 - n));
+  const states: Array<Partial<HabitRhythm>> = [
+    {},
+    { totalDone: 3 },
+    { totalDone: 30 },
+    { done: [dia(1)], shielded: [dia(2)], missed: [dia(3)], totalDone: 9 },
+    { done: [dia(1), dia(2), dia(3), dia(4), dia(5)], totalDone: 70, shields: 2 },
+  ];
+  for (const lang of ['pt-BR', 'en-US'] as const) {
+    for (const [i, over] of states.entries()) {
+      it(`estado ${i} em ${lang}`, () => {
+        const html = renderToStaticMarkup(
+          <HabitConstancy rhythm={rhythm(over)} schedule={SCHEDULE} now={NOW} language={lang} />,
+        );
+        // Só o TEXTO visível conta — `width:74%` em style inline não é percentual
+        // de constância exposto ao usuário.
+        const visible = html.replace(/<[^>]+>/g, ' ');
+        expect(visible).not.toMatch(/\d+\s*%/);
+      });
+    }
+  }
 });

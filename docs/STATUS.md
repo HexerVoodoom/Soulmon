@@ -16,6 +16,18 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **02/09/2026 — SPRINT 1, LOTE 1 (5 pacotes VERIFICADOS)** — WP0.3 (política de
+> privacidade dizia "sete eventos", eram dez; agora não escreve número e um teste
+> exige todo evento do `EVENT_SCHEMA` na tabela PT/EN) · WP0.5 (8 eventos novos
+> nos DOIS schemas com paridade: `reveal_seen`, `checkin_commit`, `milestone`,
+> `shield_used`, `welcome_back`, `evolve`, `dungeon_run`, `bond_level`;
+> `unlock_view.reason` até 3) · **WP0.7 — o save foi medido pela primeira vez:
+> 79.602 bytes (77,7 KB) para 90 dias pesados, 64× abaixo do teto de 5 MB** ·
+> WP2.9 (teste de guarda: `HabitConstancy` nunca imprime `N%` no texto visível)
+> · WP4.9 (o "roster de 60" era falso — comentário morto de `progression.ts`
+> reescrito; teste novo trava que a masmorra só sorteia das 6 linhas nossas).
+> Gate: tsc EXIT=0 (app + desktop), vitest **176 arquivos · 2880 passed · 2 skipped**.
+
 > **02/09/2026 — RODADA 3 (dossiê Mobbin)** — o plano foi a **50 pacotes** (+14).
 > O código está **exposto em 5 anti-padrões catalogados**: o widget Android cobra
 > (`"N task(s) left, let's go!"`), Créditos compram HP (D7), o perfil do amigo

@@ -12,7 +12,7 @@ Dono: `soulmon-guarda-constancia`. Anexo: `../B-habitos.md`.
 | WP2.6 | Widget = janela do pet | `PROPOSTO` | `grep -c "habit_tier_max\|steady\|needs_intervention" android/app/src/main/java/com/hexervoodoom/soulmon/plugins/DigiWidgetPlugin.kt` → ≥3 **e** `grep -c "constancy_pct\|\"shields\""` → 0 (chaves vetadas em `../mobbin/constancia.md` §2; decisão 4 do dossiê); frases sem dígito quando `completed < total`; **APK novo**; widget antigo continua renderizando | widget hoje não recebe dado de hábito nenhum |
 | WP2.7 | Reencontro por DIAS, não por minutos | `PROPOSTO` | `grep -q "daysAway" src/components/CompanionHUD.tsx` + teste das 4 faixas + nenhuma frase cita o que ficou por fazer | hoje: limiar fixo de 10 min |
 | WP2.8 | `hideMetrics` cobre a constância | `PROPOSTO` | `grep -q hideMetrics src/components/HabitConstancy.tsx` + render test sem dígito | Mobbin D8 (Headspace) |
-| WP2.9 | Teste de guarda: nenhum render de constância com `/\d+\s*%/` | `PROPOSTO` | o teste existe e passa | proibição #14 hoje só por tese |
+| WP2.9 | Teste de guarda: nenhum render de constância com `/\d+\s*%/` | `VERIFICADO` (02/09/2026) | o teste existe e passa | `dailyList.sm2.render.test.tsx` → describe "HabitConstancy nunca imprime percentual (WP2.9)": 10 casos (5 estados × PT/EN) sobre o TEXTO visível — **passa**. A proibição #14 deixou de ser só tese |
 
 ## Verdades deste domínio que o guarda defende
 - **Streak que zera é proibido por teste.** Quem propuser um contador que volta a zero está propondo outro produto.

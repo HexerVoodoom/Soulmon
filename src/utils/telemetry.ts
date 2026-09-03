@@ -92,7 +92,24 @@ export type TelemetryEvent =
   /** A SEMANA fechada de um usuário ativo: quantos dias ele concluiu ≥1 item
    *  real e em quantos ele bateu o PRÓPRIO objetivo do dia. É a métrica-norte
    *  inteira, e é o único evento cuja unidade é a SEMANA. Ver `trackDayClosed`. */
-  | 'week_active';
+  | 'week_active'
+  // ---- Rodada 2/3 do PLANO-MELHORIAS (WP0.5) — todos inteiros/enum, nada de texto ----
+  /** Chegou ao REVEAL do Oráculo; `has_sprite` diz se viu a criatura ou só texto (WP1.1). */
+  | 'reveal_seen'
+  /** Fechou o check-in assumindo a meta (WP2.3). `focus_count` = focos escolhidos. */
+  | 'checkin_commit'
+  /** Um hábito cruzou um marco 7/21/66 (`tier` 1..3) — WP2.4. */
+  | 'milestone'
+  /** Um escudo de descanso foi consumido automaticamente — a régua do experimento WP2.1. */
+  | 'shield_used'
+  /** Voltou depois de ausência; `days` é BUCKET (0: 2–4, 1: 5–7, 2: 8–14, 3: 15+), nunca o número. */
+  | 'welcome_back'
+  /** Evoluiu; `level` 1..4 = champion/ultimate/mega/ultra. */
+  | 'evolve'
+  /** Fechou uma run da masmorra com `floors` andares limpos (1..5). */
+  | 'dungeon_run'
+  /** Subiu de nível de Vínculo (`level` 1..30). */
+  | 'bond_level';
 
 /**
  * Allowlist de props por evento. `null` = evento sem prop nenhuma.
@@ -108,7 +125,7 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
-  unlock_view: { reason: { min: 0, max: 1 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 3 }, tier: { min: 0, max: 2 } },
   purchase: { tier: { min: 0, max: 2 } },
   demo_cap_hit: { path: { min: 0, max: 4 } },
   activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
@@ -117,6 +134,14 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
     goal_days: { min: 0, max: 7 },
     tier: { min: 0, max: 2 },
   },
+  reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
+  checkin_commit: { focus_count: { min: 0, max: 3 } },
+  milestone: { tier: { min: 1, max: 3 } },
+  shield_used: null,
+  welcome_back: { days: { min: 0, max: 3 } },
+  evolve: { level: { min: 1, max: 4 } },
+  dungeon_run: { floors: { min: 1, max: 5 } },
+  bond_level: { level: { min: 1, max: 30 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -156,7 +181,8 @@ export type TelemetryTier = typeof TELEMETRY_TIER[keyof typeof TELEMETRY_TIER];
  * `onboarding_step`. Só que aqui é pior: os dois convites testam HIPÓTESES
  * OPOSTAS sobre por que alguém paga.
  */
-export const TELEMETRY_UNLOCK_REASON = { taskLimit: 0, evolution: 1 } as const;
+/** `report` = oferta proativa no 1º dia perfeito (WP5.1); `shop` = card passivo na Loja. */
+export const TELEMETRY_UNLOCK_REASON = { taskLimit: 0, evolution: 1, report: 2, shop: 3 } as const;
 
 /** Tarefa (item com prazo) × hábito (item recorrente). */
 export const TELEMETRY_ACTIVITY_KIND = { task: 0, habit: 1 } as const;

@@ -17,7 +17,7 @@ DREAM_CATALOG restWindow.ts:371 = 30 (18 base 8c/6r/4l + 12 sazonais :408-425); 
 seasons.ts SEASONS (:97): sprout 2026-03-01→05-31, ember 06-01→08-31, tide 09-01→11-30, starlit 2026-12-01→2027-02-27. **Tabela termina 2027-02-27; currentSeason() devolve null depois.** SEASON_PATHS (:329): 20 dias perfeitos OU 5 runs OU 15 noites → medalha; 5 runs = 5 dias fecha a medalha trimestral.
 MISSIONS (missions.ts): 6 alvo único não repetíveis (champion, mega, kills-100, runs-3, dino-1000, perfect-30) → só destravam compra dos 6 bg 300. Sem missão diária/semanal.
 Formas vividas: unlockedEvolutions[] renderizado em EvolutionPath.tsx:197, EvoTrail.tsx:49, PetPage.tsx:205, StatsPage.tsx:199 — sem tela "álbum". spriteLibrary.ts = storage de sprites IA (SPRITE_FORM_ATTEMPT_CAP 3, MANUAL_RETRY_CAP 3, COOLDOWN 60s), máx 11 formas, não cresce.
-**Bestiário: NÃO EXISTE.** LEGACY_FORM_TIERS (progression.ts:754) = roster de arte 60 nomes (9+24+15+9+3), consumido por getDungeonEnemySprite, sem registro do enfrentado. loadBestiaryPool arena.ts:243 alimenta combate, não dex. Maior massa de conteúdo existente e invisível.
+**Bestiário: NÃO EXISTE** — e ⚠️ **a premissa do 'roster de 60' era FALSA** (corrigido em 02/09/2026, WP4.9): `LEGACY_FORM_TIERS` tem UM uso (`LEGACY_LEVEL_OF`, nível de save antigo); `getDungeonEnemySprite` (sprites.ts:61) sorteia de `DUNGEON_LINE_SPRITES` = 6 linhas × 4 artes, 6 nomes. Não há registro do enfrentado (isso segue verdadeiro). `loadBestiaryPool` (arena.ts:243) alimenta combate, não dex.
 ## Vínculo (bond.ts)
 XP :54-75 (XP_PER_EFFORT 10, PERFECT_DAY 50, REST_NIGHT 15, NEW_DREAM 25, NIGHTMARE 10, DUNGEON_FLOOR 10, DUNGEON_RUN 60, TOURNAMENT_WIN 15/LOSS 8, TRIAGE 30, CHECK_IN 10, MILESTONE 100/200/400). BOND_DAILY_CAP :137 só dungeon 120/tournament 60. Curva :245-253 sem cap de nível. BOND_REWARDS :355 = 12 (L2–L13); **bondRewardFor null ≥ L14**; BOND_TITLES :337 para no 13. **9 das 12 recompensas são itens que a loja já vende** (furn-plant 100, bg-forest 150, furn-picture 130, bg-sakura 180, furn-rug 140) → duplicatas para quem esvaziou a loja. L13 = 6.700 XP ≈ **D25–D35**; depois nível sobe e não entrega nada. BOND_PVP_MIN_LEVEL=5 (:475), "todo destrave social futuro reusa ESTE nível" (:472). L5 em D5–D8.
 ## Social
@@ -33,4 +33,4 @@ community.ts: listPlayers/getPlayer (:70,:76), pushProfile (:62), addFriend/remo
 | Medalha estação | 5 runs = 5 dias | 1/trimestre |
 | Vínculo (12 rec.) | D25–D35 | níveis infinitos sem recompensa |
 | Social | PvP L5 (D5–D8) | 5 dados/dia + 20 Bits/amigo |
-3 buracos com símbolo: daysToEvolve morto (progression.ts vs App.tsx:2208); bondRewardFor null ≥14; SEASONS termina 2027-02-27.
+3 buracos com símbolo: daysToEvolve morto (progression.ts vs App.tsx:2208); bondRewardFor null ≥14; SEASONS termina 2027-02-27. (O 4º, 'roster de 60 invisível', era falso — ver acima.)

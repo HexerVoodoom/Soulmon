@@ -93,7 +93,7 @@ export const EVENT_SCHEMA = {
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
-  unlock_view: { reason: { min: 0, max: 1 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 3 }, tier: { min: 0, max: 2 } },
   purchase: { tier: { min: 0, max: 2 } },
   demo_cap_hit: { path: { min: 0, max: 4 } },
   activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
@@ -102,6 +102,16 @@ export const EVENT_SCHEMA = {
     goal_days: { min: 0, max: 7 },
     tier: { min: 0, max: 2 },
   },
+  // Rodada 2/3 do PLANO-MELHORIAS (WP0.5). ESPELHO de src/utils/telemetry.ts —
+  // o teste de paridade em telemetry.test.ts cai se os dois divergirem.
+  reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
+  checkin_commit: { focus_count: { min: 0, max: 3 } },
+  milestone: { tier: { min: 1, max: 3 } },
+  shield_used: null,
+  welcome_back: { days: { min: 0, max: 3 } },
+  evolve: { level: { min: 1, max: 4 } },
+  dungeon_run: { floors: { min: 1, max: 5 } },
+  bond_level: { level: { min: 1, max: 30 } },
 };
 
 /**

@@ -54,9 +54,14 @@ export const MAX_STAGE_REQUIREMENT: number = Math.max(
 // tabela por espécie, porque cada jogador tem nomes únicos.
 // ---------------------------------------------------------------------------
 
-// Roster "selvagem" da masmorra (utils/dungeon.ts) + fallback de sprite
-// genérico (utils/sprites.ts): nomes ESTÁTICOS antigos, reaproveitados como
-// arte/monstros, sem relação com a árvore do jogador atual.
+// SÓ compatibilidade de save: mapeia id de espécie LEGADA → nível, para um
+// save antigo em 'gaioumon' continuar mega em vez de virar rookie
+// (`LEGACY_LEVEL_OF`, abaixo — o único consumidor). NÃO é roster de nada:
+// a masmorra sorteia de `DUNGEON_LINE_SPRITES` (utils/sprites.ts — 6 linhas
+// nossas × 4 artes) e o fallback de sprite é `legacySpriteForStage`. Até
+// 02/09/2026 este comentário dizia "roster selvagem da masmorra", e a frase
+// contaminou o PLANO-MELHORIAS com um "bestiário de 60 nomes" que não existe
+// (WP4.9). Não acrescente nomes aqui (CLAUDE.md, seção "Arte e nomes").
 export const LEGACY_FORM_TIERS: Record<Exclude<EvolutionStage, 'ultra'> | 'ultra', readonly string[]> = {
   rookie: [
     'tapirmon', 'veemon', 'plotmon',

@@ -67,13 +67,13 @@ rápido; a fonte são os arquivos de `ledger/`.
 
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
-| medição (6) | 4 | 2 (D1, D2) | — | — | — | — |
+| medição (6) | 1 | 2 (D1, D2) | — | — | **3** (0.3, 0.5, 0.7) | — |
 | nascimento (8) | 8 | — | — | — | — | — |
-| constância (9) | 8 | 1 (D3) | — | — | — | — |
+| constância (9) | 7 | 1 (D3) | — | — | **1** (2.9) | — |
 | vínculo (7) | 6 | 1 (D11) | — | — | — | — |
-| permanência (14) | 12 | 2 (D5, D6) | — | — | — | — |
+| permanência (14) | 11 | 2 (D5, D6) | — | — | **1** (4.9) | — |
 | sustento (6) | 4 | 2 (D7, D10) | — | — | — | — |
-| **Total (50)** | **42** | **8** | — | — | — | — |
+| **Total (50)** | **37** | **8** | — | — | **5** | — |
 
 **Oito pacotes esperam decisão do dono** (seção 10 do plano). D1
 (`METRICS_ADMIN_KEY`) é o que destrava mais coisa: sem ele ninguém lê nenhum
@@ -104,4 +104,11 @@ decisões do §16. Duas premissas do plano caíram por `grep` ("roster de 60";
 por limite de API antes de gravar os pareceres — foram transcritos do seu
 arquivo de análise para `vetos.md` pelo consolidador, e estão marcados como tal.
 
-_Última consolidação: 02/09/2026 (rodada 3)._
+**Sprint 1 começou (02/09/2026):** os 5 primeiros pacotes sem dependência do dono
+foram implementados e **verificados com a saída colada** — WP0.3, WP0.5, WP0.7
+(medição), WP2.9 (constância), WP4.9 (permanência). O primeiro aceite escrito
+(WP4.9) era autodestrutivo — a agulha do `grep` estava no texto do próprio
+comando — e foi corrigido; é o tipo de coisa que só aparece quando alguém
+**roda** o comando em vez de lê-lo.
+
+_Última consolidação: 02/09/2026 (sprint 1, lote 1)._
