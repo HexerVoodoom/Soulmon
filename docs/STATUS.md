@@ -16,6 +16,21 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **03/09/2026 — SPRINT 1, LOTE 2 (2 VERIFICADOS, 1 RECUSADO)** — WP2.3: o botão
+> do check-in virou compromisso ("Assumir minha meta de hoje" / "Commit to
+> today’s goal"; volta a "Começar o dia" sem meta cadastrada) e
+> `handleCheckInConfirm` emite `checkin_commit { focus_count }` — só o confirm,
+> nunca o pular · WP5.5: `UnlockAccountModal` ganhou **"Agora não"** com a mesma
+> largura do primário, emitindo o evento novo `unlock_dismiss { reason }`
+> (dois schemas, paridade, linha PT+EN na política; no caminho, `REASON_LABEL`
+> do agregador só tinha 2 rótulos para 4 valores — `report`/`shop` viravam
+> `unknown`) · **WP4.4 RECUSADO — premissa falsa**: as estações NÃO expiram em
+> 2027, `coversDay` compara mês/dia desde a origem e havia teste em 2031; o
+> único `null` é a folga deliberada de 28/29/fev. Teste novo varre 2026–2036.
+> Não houve bump de `CACHE_VERSION`: `privacidade.html` não está no
+> `PRECACHE_URLS` e navegação é network-first. Gate: tsc EXIT=0 (app + desktop),
+> vitest **178 arquivos · 2890 passed · 2 skipped**.
+
 > **02/09/2026 — SPRINT 1, LOTE 1 (5 pacotes VERIFICADOS)** — WP0.3 (política de
 > privacidade dizia "sete eventos", eram dez; agora não escreve número e um teste
 > exige todo evento do `EVENT_SCHEMA` na tabela PT/EN) · WP0.5 (8 eventos novos

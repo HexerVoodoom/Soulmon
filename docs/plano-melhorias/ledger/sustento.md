@@ -9,7 +9,7 @@ Dono: `soulmon-guarda-sustento`. Anexo: `../D-monetizacao.md`.
 | WP5.2 | Cura instantânea por Créditos: remover ou reenquadrar | `BLOQUEADO:D7` | opção (a): `! grep -q "handleInstantHealWithCredits" src/App.tsx`; opção (b): passa por `applySpecialItem` | única peça que vende HP por dinheiro real |
 | WP5.3 | Idempotência de `spend` | `PROPOSTO` | teste em `_entitlements.test.js`: mesmo `opId` duas vezes debita uma vez | sem estorno server-side hoje |
 | WP5.4 | Spec de assinatura/trial (documento, não código) | `BLOQUEADO:D10` | documento existe e lista as travas de C.3 #3 | — |
-| WP5.5 | "Agora não" com peso de primário no `UnlockAccountModal` | `PROPOSTO` | `grep -q "Agora não" src/components/UnlockAccountModal.tsx` + render test dos 3 botões | Mobbin D11 (Character AI) |
+| WP5.5 | "Agora não" com peso de primário no `UnlockAccountModal` | `VERIFICADO` (03/09/2026) | `grep -q "Agora não" src/components/UnlockAccountModal.tsx` + render test dos 3 botões | `grep -c "Agora não" src/components/UnlockAccountModal.tsx` → **2** (comentário + botão); botão `ghost` com `width: 100%` entre o primário e o `quiet`; emite `unlock_dismiss { reason }` (evento novo nos DOIS `EVENT_SCHEMA`, linha PT+EN em `privacidade.html`, `REASON_LABEL` do agregador corrigido de 2 para 4 rótulos — `report`/`shop` caíam em `unknown`); teste novo `UnlockAccountModal.dismiss.render.test.tsx` (4 casos) — **passa** |
 
 ## Verdades deste domínio que o guarda defende
 - **Dinheiro nunca compra a barra que representa o cuidado que a pessoa teve consigo mesma.** É o "valor sagrado" (C5) e a razão de D7 existir.

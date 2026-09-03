@@ -5,7 +5,7 @@ import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_TOTAL_CAP } fro
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
 import type { Entitlement } from '../utils/entitlements';
 import type { Language } from '../utils/i18n';
-import { track } from '../utils/telemetry';
+import { track, TELEMETRY_UNLOCK_REASON } from '../utils/telemetry';
 
 // ---------------------------------------------------------------------------
 // Desbloqueio completo DENTRO do jogo.
@@ -19,8 +19,10 @@ import { track } from '../utils/telemetry';
 //   'evolution'   → está olhando a árvore de um personagem que não é dele
 // e o modal só abre por toque, nunca sozinho.
 //
-// UMA ação dominante: "Desbloquear". "Já comprei — restaurar" é uma saída para
-// quem reinstalou, não uma segunda oferta, e por isso sussurra (`quiet`).
+// UMA ação dominante: "Desbloquear". "Agora não" (WP5.5) tem a mesma largura,
+// porque recusar é uma resposta legítima ao convite e não um erro a esconder.
+// "Já comprei — restaurar" é uma saída para quem reinstalou, não uma segunda
+// oferta, e por isso sussurra (`quiet`).
 // ---------------------------------------------------------------------------
 
 export type UnlockReason = 'task-limit' | 'evolution';
@@ -62,6 +64,13 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
   const unavailable = isPt
     ? 'A compra acontece pela Google Play, dentro do app Android. No navegador não dá para cobrar.'
     : 'Purchases go through Google Play, inside the Android app. The browser cannot charge you.';
+
+  const handleDismiss = () => {
+    track('unlock_dismiss', {
+      reason: reason === 'evolution' ? TELEMETRY_UNLOCK_REASON.evolution : TELEMETRY_UNLOCK_REASON.taskLimit,
+    });
+    onClose();
+  };
 
   const handleBuy = async () => {
     if (!isBillingAvailable()) { setMessage(unavailable); return; }
@@ -117,6 +126,20 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             {loading === 'buy'
               ? <><Icon name="sync" size={20} className="animate-spin" />{isPt ? 'Comprando…' : 'Purchasing…'}</>
               : (isPt ? `Desbloquear — ${FULL_UNLOCK_PRICE_LABEL}` : `Unlock — ${FULL_UNLOCK_PRICE_LABEL}`)}
+          </button>
+          {/* WP5.5 — "Agora não" com a MESMA largura do primário, logo abaixo
+              dele (Mobbin, Character AI). Uma oferta cuja única saída visível é
+              o X no canto é uma oferta que encurrala; a recusa declarada é
+              parte do convite. Emite `unlock_dismiss` com o mesmo `reason` do
+              `unlock_view`, que é o que torna a taxa de recusa POR CONVITE
+              calculável. */}
+          <button
+            type="button"
+            onClick={handleDismiss}
+            disabled={loading !== null}
+            style={{ ...sm2Button('ghost'), width: '100%' }}
+          >
+            {isPt ? 'Agora não' : 'Not now'}
           </button>
           <button
             type="button"

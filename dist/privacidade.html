@@ -108,7 +108,7 @@
   O app envia para o <strong>nosso próprio servidor</strong> (Cloudflare)
   <strong>contadores agregados</strong> de uso — sem nenhuma empresa de análise
   no meio (não há Google Analytics, Firebase Analytics, Amplitude nem similar).
-  São exatamente estes sete eventos, e nada além deles:
+  São exatamente estes eventos, e nada além deles (a lista abaixo é conferida por teste contra o código a cada mudança):
 </p>
 <table>
   <tr><th>Evento</th><th>O que registra</th></tr>
@@ -117,11 +117,20 @@
   <tr><td><code>demo_pick</code></td><td>Que você escolheu um personagem pronto.</td></tr>
   <tr><td><code>first_task_done</code></td><td>Sua primeira conclusão de verdade.</td></tr>
   <tr><td><code>day_active</code></td><td>Uma vez por dia: que houve atividade, com a propriedade <code>effort</code> — o peso de esforço concluído (um número, como 4).</td></tr>
-  <tr><td><code>unlock_view</code></td><td>Que a tela de compra foi aberta, com a propriedade <code>reason</code>: por qual dos dois convites — o limite de criação do modo grátis, ou a árvore de evolução.</td></tr>
+  <tr><td><code>unlock_view</code></td><td>Que a tela de compra foi aberta, com a propriedade <code>reason</code>: por qual convite — o limite de criação do modo grátis, a árvore de evolução, o relatório do dia, ou a Loja.</td></tr>
   <tr><td><code>purchase</code></td><td>Que houve uma compra.</td></tr>
   <tr><td><code>demo_cap_hit</code></td><td>Que você encontrou o limite diário de criação do modo grátis, com a propriedade <code>path</code>: por qual tela.</td></tr>
   <tr><td><code>activity_create</code></td><td>Que uma atividade foi criada, com <code>kind</code> (tarefa ou hábito) e <code>path</code> (por qual tela). <strong>Nunca</strong> o nome nem o conteúdo dela.</td></tr>
   <tr><td><code>week_active</code></td><td>Uma vez por semana, dois números de 0 a 7: <code>active_days</code>, em quantos dias você concluiu alguma coisa, e <code>goal_days</code>, em quantos você alcançou a sua própria meta do dia. <strong>A contagem é feita no seu aparelho</strong> — o que sai são só esses dois números, já fechados. Nenhuma linha do tempo sua é enviada nem guardada.</td></tr>
+  <tr><td><code>reveal_seen</code></td><td>Que você chegou à tela de revelação da criatura, e se ela mostrou a imagem ou só o texto (<code>has_sprite</code>, 0 ou 1).</td></tr>
+  <tr><td><code>checkin_commit</code></td><td>Que você fechou o check-in assumindo a meta do dia, com quantos focos escolheu (<code>focus_count</code>, 0 a 3).</td></tr>
+  <tr><td><code>unlock_dismiss</code></td><td>Que você fechou a tela de compra tocando em "Agora não", com a mesma propriedade <code>reason</code> de <code>unlock_view</code>.</td></tr>
+  <tr><td><code>milestone</code></td><td>Que um hábito cruzou um marco (7, 21 ou 66 dias — <code>tier</code>, 1 a 3). <strong>Nunca</strong> qual hábito.</td></tr>
+  <tr><td><code>shield_used</code></td><td>Que um escudo de descanso foi gasto automaticamente. Só a contagem.</td></tr>
+  <tr><td><code>welcome_back</code></td><td>Que você voltou depois de alguns dias, com a faixa de ausência (<code>days</code>, 0 a 3 — uma faixa, nunca o número de dias).</td></tr>
+  <tr><td><code>evolve</code></td><td>Que a criatura evoluiu (<code>level</code>, 1 a 4).</td></tr>
+  <tr><td><code>dungeon_run</code></td><td>Que você terminou uma partida da masmorra, com quantos andares limpou (<code>floors</code>, 1 a 5).</td></tr>
+  <tr><td><code>bond_level</code></td><td>Que o nível de vínculo subiu (<code>level</code>, um número).</td></tr>
   <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
 </table>
 <p>
@@ -273,7 +282,7 @@
   The app sends <strong>aggregate counters</strong> about usage to
   <strong>our own server</strong> (Cloudflare) — with no analytics company in
   between (there is no Google Analytics, Firebase Analytics, Amplitude or
-  similar). These are exactly the seven events, and nothing beyond them:
+  similar). These are exactly these events, and nothing beyond them (the list below is checked by a test against the code on every change):
 </p>
 <table>
   <tr><th>Event</th><th>What it records</th></tr>
@@ -282,11 +291,20 @@
   <tr><td><code>demo_pick</code></td><td>That you picked a ready-made character.</td></tr>
   <tr><td><code>first_task_done</code></td><td>Your first real completion.</td></tr>
   <tr><td><code>day_active</code></td><td>Once a day: that there was activity, with the <code>effort</code> property — the effort weight you completed (a number, like 4).</td></tr>
-  <tr><td><code>unlock_view</code></td><td>That the purchase screen was opened, with the <code>reason</code> property: which of the two invites brought you there — the free mode's creation limit, or the evolution tree.</td></tr>
+  <tr><td><code>unlock_view</code></td><td>That the purchase screen was opened, with the <code>reason</code> property: which invite brought you there — the free mode's creation limit, the evolution tree, the daily report, or the Shop.</td></tr>
   <tr><td><code>purchase</code></td><td>That a purchase happened.</td></tr>
   <tr><td><code>demo_cap_hit</code></td><td>That you hit the free mode's daily creation limit, with the <code>path</code> property: from which screen.</td></tr>
   <tr><td><code>activity_create</code></td><td>That an activity was created, with <code>kind</code> (task or habit) and <code>path</code> (from which screen). <strong>Never</strong> its name or its contents.</td></tr>
   <tr><td><code>week_active</code></td><td>Once a week, two numbers from 0 to 7: <code>active_days</code>, on how many days you completed something, and <code>goal_days</code>, on how many you reached your own daily goal. <strong>The counting happens on your device</strong> — only those two already-closed numbers leave it. No timeline of you is ever sent or stored.</td></tr>
+  <tr><td><code>reveal_seen</code></td><td>That you reached the creature reveal screen, and whether it showed the image or only text (<code>has_sprite</code>, 0 or 1).</td></tr>
+  <tr><td><code>checkin_commit</code></td><td>That you closed the check-in committing to the day's goal, with how many focus items you picked (<code>focus_count</code>, 0 to 3).</td></tr>
+  <tr><td><code>unlock_dismiss</code></td><td>That you closed the purchase screen by tapping "Not now", with the same <code>reason</code> property as <code>unlock_view</code>.</td></tr>
+  <tr><td><code>milestone</code></td><td>That a habit crossed a milestone (7, 21 or 66 days — <code>tier</code>, 1 to 3). <strong>Never</strong> which habit.</td></tr>
+  <tr><td><code>shield_used</code></td><td>That a rest shield was spent automatically. Just the count.</td></tr>
+  <tr><td><code>welcome_back</code></td><td>That you came back after some days away, as a range (<code>days</code>, 0 to 3 — a bucket, never the number of days).</td></tr>
+  <tr><td><code>evolve</code></td><td>That the creature evolved (<code>level</code>, 1 to 4).</td></tr>
+  <tr><td><code>dungeon_run</code></td><td>That you finished a dungeon run, with how many floors you cleared (<code>floors</code>, 1 to 5).</td></tr>
+  <tr><td><code>bond_level</code></td><td>That the bond level went up (<code>level</code>, a number).</td></tr>
   <tr><td colspan="2">In addition, the events above that concern your account carry the <code>tier</code> property: whether you are on the free or the full mode. That alone — nothing else from your account.</td></tr>
 </table>
 <p>

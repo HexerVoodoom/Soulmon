@@ -98,6 +98,10 @@ export type TelemetryEvent =
   | 'reveal_seen'
   /** Fechou o check-in assumindo a meta (WP2.3). `focus_count` = focos escolhidos. */
   | 'checkin_commit'
+  /** Fechou a tela de compra pelo "Agora não" (WP5.5), com o mesmo `reason`
+   *  do `unlock_view`. É o DENOMINADOR honesto da oferta: sem ele, quem sai
+   *  pelo X e quem sai pelo botão declarado somem no mesmo silêncio. */
+  | 'unlock_dismiss'
   /** Um hábito cruzou um marco 7/21/66 (`tier` 1..3) — WP2.4. */
   | 'milestone'
   /** Um escudo de descanso foi consumido automaticamente — a régua do experimento WP2.1. */
@@ -136,6 +140,7 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   },
   reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
+  unlock_dismiss: { reason: { min: 0, max: 3 } },
   milestone: { tier: { min: 1, max: 3 } },
   shield_used: null,
   welcome_back: { days: { min: 0, max: 3 } },
@@ -244,7 +249,7 @@ export interface TelemetryProps {
    *  para o `week_active` poder despachar o tier ARQUIVADO da semana fechada,
    *  que não é o de hoje. */
   tier?: number;
-  /** `unlock_view`: qual convite (`TELEMETRY_UNLOCK_REASON`). */
+  /** `unlock_view` e `unlock_dismiss`: qual convite (`TELEMETRY_UNLOCK_REASON`). */
   reason?: number;
   /** `activity_create`: tarefa ou hábito (`TELEMETRY_ACTIVITY_KIND`). */
   kind?: number;
@@ -254,6 +259,16 @@ export interface TelemetryProps {
   active_days?: number;
   /** `week_active`: dias, dentre os ativos, em que bateu o próprio objetivo. */
   goal_days?: number;
+  /** `checkin_commit`: focos escolhidos no check-in (0 a `MAX_DAILY_FOCUS`). */
+  focus_count?: number;
+  /** `reveal_seen`: viu a criatura desenhada (1) ou só texto (0). */
+  has_sprite?: number;
+  /** `milestone`: tier do marco (1–3). `bond_level`: nível do Vínculo. `evolve`: nível alcançado. */
+  level?: number;
+  /** `welcome_back`: faixa de dias fora. */
+  days?: number;
+  /** `dungeon_run`: andares limpos na run (1–5). */
+  floors?: number;
 }
 
 /** O que vai no corpo da requisição. Três campos, todos números ou enums. */

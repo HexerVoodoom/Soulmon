@@ -106,6 +106,7 @@ export const EVENT_SCHEMA = {
   // o teste de paridade em telemetry.test.ts cai se os dois divergirem.
   reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
+  unlock_dismiss: { reason: { min: 0, max: 3 } },
   milestone: { tier: { min: 1, max: 3 } },
   shield_used: null,
   welcome_back: { days: { min: 0, max: 3 } },
@@ -250,8 +251,10 @@ const FUNNEL_LABEL = ['unknown', 'demo', 'paid'];
  */
 const TIER_LABEL = ['unknown', 'demo', 'paid'];
 
-/** Espelha `TELEMETRY_UNLOCK_REASON` — qual dos dois convites abriu a compra. */
-const REASON_LABEL = ['task_limit', 'evolution'];
+/** Espelha `TELEMETRY_UNLOCK_REASON` — qual convite abriu a compra. Eram dois
+ *  rótulos para um schema que já aceitava 0–3: `report` e `shop` caíam em
+ *  `unknown` sem erro nenhum. */
+const REASON_LABEL = ['task_limit', 'evolution', 'report', 'shop'];
 
 /** Espelha `TELEMETRY_CREATE_PATH`. Os caminhos NÃO são equivalentes: só
  *  `create_modal` consulta o teto do modo demo. Ver o comentário lá. */
@@ -319,6 +322,11 @@ export function applyAggregate(agg, events) {
     // um número que não descreve nenhuma das duas.
     if (record.e === 'unlock_view') {
       bump(`unlock_view.${REASON_LABEL[p.reason] ?? 'unknown'}`);
+    }
+    // WP5.5: a saída declarada, pelo mesmo motivo. `dismiss / view` por convite
+    // é a taxa que diz se a oferta chegou cedo demais.
+    if (record.e === 'unlock_dismiss') {
+      bump(`unlock_dismiss.${REASON_LABEL[p.reason] ?? 'unknown'}`);
     }
 
     if (record.e === 'demo_cap_hit') {

@@ -87,6 +87,30 @@ describe('currentSeason / seasonProgress', () => {
     expect(seasonLabel(null, 'pt-BR')).toMatch(/nada some/i);
   });
 
+  /**
+   * WP4.4 do PLANO-MELHORIAS chegou com a premissa "`SEASONS` expira em
+   * 2027-02-27". Era falsa — a comparação é por mês/dia desde o início — e o
+   * pacote foi RECUSADO por isso. Este teste existe para a premissa não voltar:
+   * varre TODOS os dias de 2026 a 2036 e exige que cada um devolva a mesma
+   * estação do mesmo mês/dia da primeira edição. Os únicos `null` são os de
+   * 28/29 de fevereiro, a folga de entre-estações — deliberada, documentada no
+   * cabeçalho de `seasons.ts` e travada pelo teste acima.
+   */
+  it('de 2026 a 2036, todo dia devolve estação — exceto a folga de 28/29 de fevereiro', () => {
+    for (let y = 2026; y <= 2036; y++) {
+      for (let d = new Date(y, 0, 1, 12); d.getFullYear() === y; d = new Date(y, d.getMonth(), d.getDate() + 1, 12)) {
+        const gap = d.getMonth() === 1 && d.getDate() >= 28;
+        const here = currentSeason(d);
+        const firstEdition = currentSeason(new Date(2026, d.getMonth(), Math.min(d.getDate(), 28), 12));
+        if (gap) expect(here, d.toDateString()).toBeNull();
+        else {
+          expect(here, d.toDateString()).not.toBeNull();
+          expect(here?.id, d.toDateString()).toBe(firstEdition?.id);
+        }
+      }
+    }
+  });
+
   it('a tabela é CÍCLICA: o ano guardado é só a primeira edição', () => {
     // Mesmo mês/dia, anos muito depois do escrito na tabela.
     expect(currentSeason(new Date(2031, 3, 10, 12))?.id).toBe('season-sprout');

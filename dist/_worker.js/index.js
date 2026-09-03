@@ -2320,7 +2320,7 @@ var EVENT_SCHEMA = {
   demo_pick: null,
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
-  unlock_view: { reason: { min: 0, max: 1 }, tier: { min: 0, max: 2 } },
+  unlock_view: { reason: { min: 0, max: 3 }, tier: { min: 0, max: 2 } },
   purchase: { tier: { min: 0, max: 2 } },
   demo_cap_hit: { path: { min: 0, max: 4 } },
   activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
@@ -2328,7 +2328,18 @@ var EVENT_SCHEMA = {
     active_days: { min: 1, max: 7 },
     goal_days: { min: 0, max: 7 },
     tier: { min: 0, max: 2 }
-  }
+  },
+  // Rodada 2/3 do PLANO-MELHORIAS (WP0.5). ESPELHO de src/utils/telemetry.ts —
+  // o teste de paridade em telemetry.test.ts cai se os dois divergirem.
+  reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
+  checkin_commit: { focus_count: { min: 0, max: 3 } },
+  unlock_dismiss: { reason: { min: 0, max: 3 } },
+  milestone: { tier: { min: 1, max: 3 } },
+  shield_used: null,
+  welcome_back: { days: { min: 0, max: 3 } },
+  evolve: { level: { min: 1, max: 4 } },
+  dungeon_run: { floors: { min: 1, max: 5 } },
+  bond_level: { level: { min: 1, max: 30 } }
 };
 var MAX_BODY_BYTES = 16 * 1024;
 var MAX_EVENTS = 100;
@@ -2405,7 +2416,7 @@ function sanitizeBatch(body, today3 = serverDay()) {
 __name(sanitizeBatch, "sanitizeBatch");
 var FUNNEL_LABEL = ["unknown", "demo", "paid"];
 var TIER_LABEL = ["unknown", "demo", "paid"];
-var REASON_LABEL = ["task_limit", "evolution"];
+var REASON_LABEL = ["task_limit", "evolution", "report", "shop"];
 var PATH_LABEL = ["create_modal", "home_edit", "ai_chat", "tutorial", "onboarding"];
 var KIND_LABEL = ["task", "habit"];
 var WEEK_GOAL_PREFIX = "week_active";
@@ -2431,6 +2442,9 @@ function applyAggregate(agg, events) {
     }
     if (record.e === "unlock_view") {
       bump(`unlock_view.${REASON_LABEL[p.reason] ?? "unknown"}`);
+    }
+    if (record.e === "unlock_dismiss") {
+      bump(`unlock_dismiss.${REASON_LABEL[p.reason] ?? "unknown"}`);
     }
     if (record.e === "demo_cap_hit") {
       bump(`demo_cap_hit.${PATH_LABEL[p.path] ?? "unknown"}`);
@@ -2941,7 +2955,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-lgwNu0/functionsRoutes-0.6574147479224016.mjs
+// ../.wrangler/tmp/pages-eHyGBQ/functionsRoutes-0.32476681897885595.mjs
 var routes = [
   {
     routePath: "/api/account",

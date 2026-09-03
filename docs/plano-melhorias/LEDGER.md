@@ -69,11 +69,11 @@ rápido; a fonte são os arquivos de `ledger/`.
 |---|---|---|---|---|---|---|
 | medição (6) | 1 | 2 (D1, D2) | — | — | **3** (0.3, 0.5, 0.7) | — |
 | nascimento (8) | 8 | — | — | — | — | — |
-| constância (9) | 7 | 1 (D3) | — | — | **1** (2.9) | — |
+| constância (9) | 6 | 1 (D3) | — | — | **2** (2.3, 2.9) | — |
 | vínculo (7) | 6 | 1 (D11) | — | — | — | — |
-| permanência (14) | 11 | 2 (D5, D6) | — | — | **1** (4.9) | — |
-| sustento (6) | 4 | 2 (D7, D10) | — | — | — | — |
-| **Total (50)** | **37** | **8** | — | — | **5** | — |
+| permanência (14) | 10 | 2 (D5, D6) | — | — | **1** (4.9) | **1** (4.4) |
+| sustento (6) | 3 | 2 (D7, D10) | — | — | **1** (5.5) | — |
+| **Total (50)** | **34** | **8** | — | — | **7** | **1** |
 
 **Oito pacotes esperam decisão do dono** (seção 10 do plano). D1
 (`METRICS_ADMIN_KEY`) é o que destrava mais coisa: sem ele ninguém lê nenhum
@@ -111,4 +111,17 @@ foram implementados e **verificados com a saída colada** — WP0.3, WP0.5, WP0.
 comando — e foi corrigido; é o tipo de coisa que só aparece quando alguém
 **roda** o comando em vez de lê-lo.
 
-_Última consolidação: 02/09/2026 (sprint 1, lote 1)._
+**Sprint 1, lote 2 (03/09/2026):** WP2.3 (botão de compromisso + `checkin_commit`)
+e WP5.5 ("Agora não" + `unlock_dismiss`) verificados. **WP4.4 foi RECUSADO por
+premissa falsa**: o anexo F leu a tabela ISO de `SEASONS` e concluiu que as
+estações expiravam em 2027; a função que a consome compara mês/dia e já tinha
+teste em 2031. O aceite escrito ("nunca null 2026–2036") também estava errado —
+28/29 de fevereiro é folga deliberada. É a terceira premissa do plano derrubada
+por leitura do código, e o padrão é o mesmo das duas anteriores: a evidência
+citava um DADO (tabela, tipo, nome) sem olhar a FUNÇÃO que o lê. Efeito
+colateral achado no caminho: `REASON_LABEL` do agregador tinha 2 rótulos para
+um schema de 4 valores — `report` e `shop` viravam `unknown` em silêncio.
+Sobram sem dependência do dono: WP3.7 (auditoria de pronome, ~15 lugares de
+copy) e WP1.7 (rascunho do ritual) — lote 3.
+
+_Última consolidação: 03/09/2026 (sprint 1, lote 2)._

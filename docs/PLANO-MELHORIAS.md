@@ -295,9 +295,9 @@ errou o tamanho: a árvore inteira acaba em 14 dias perfeitos, não em ~100.
 - **Spec:** (a) trocar as 5 duplicatas por **variantes exclusivas do Vínculo** (`furn-plant-bond` etc. — mesmo asset com paleta/moldura; `shop.ts` marca `unlock: { kind: 'bond' }` e **nunca vende**); (b) escada procedural ≥ L14: a cada 3 níveis um título novo (lista em `BOND_TITLES` estendida até L31) e a cada 6 um sonho exclusivo de Vínculo (`DREAM_CATALOG` ganha `source: 'bond'`); (c) `bondRewardFor` nunca devolve `null` até L31 (teste).
 - **Régua:** tudo cosmético — `currencies` já trava.
 
-### WP4.4 · Estações cíclicas — P
-- **Evidência:** anexo F §5: `SEASONS` (`seasons.ts:97`) termina 2027-02-27; `currentSeason()` → `null` depois.
-- **Spec:** estação derivada do **mês** (mar–mai sprout, jun–ago ember, set–nov tide, dez–fev starlit), sem tabela de datas; medalhas e sonhos sazonais por `season-*` continuam. Teste: para qualquer data entre 2026 e 2036, `currentSeason() !== null`.
+### WP4.4 · Estações cíclicas — P · **RECUSADO em 03/09/2026 (premissa falsa)**
+- **Evidência (corrigida):** ~~anexo F §5: `SEASONS` termina 2027-02-27; `currentSeason()` → `null` depois~~ — **falso**. `coversDay` (`seasons.ts`) compara **mês/dia** e ignora o ano de propósito (cabeçalho "O ANO É CÍCLICO"); `seasons.test.ts` já exercitava 2031. O anexo leu a tabela ISO e não a função que a consome. O único `null` é a folga deliberada de 28/29 de fevereiro, documentada e testada.
+- **O que ficou:** teste novo em `seasons.test.ts` varre todos os dias de 2026–2036 e exige estação em todos menos a folga. Nada a implementar. WP4.5 (vitrine da estação) não depende disto e segue válido.
 
 ### WP4.5 · Sumidouro recorrente de Bits — M
 - **Evidência:** anexo F §1: 53 itens permanentes = 8.540 Bits, esgotados em D15–D23; depois só chips (120) e coração (150). Transcrição C2: atividade desacoplada de necessidade vira "ponto de ruído".

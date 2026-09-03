@@ -404,8 +404,14 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
 
         {/* Ações. Pular fica SEMPRE visível e sem tom de desistência. */}
         <div style={{ padding: 16, borderTop: '1px solid var(--sm2-line)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* WP2.3: o botão é um COMPROMISSO, não um "continuar" — foi só a
+              troca desse texto que rendeu ao Duolingo dezenas de milhares de
+              DAU (transcrição A2). Sem meta cadastrada não há o que assumir,
+              então o texto volta a ser neutro. */}
           <button type="button" onClick={() => onConfirm(selected)} style={{ ...sm2Button('primary'), width: '100%' }}>
-            {isPt ? 'Começar o dia' : 'Start the day'}
+            {plan.plannedEffort > 0
+              ? (isPt ? 'Assumir minha meta de hoje' : 'Commit to today’s goal')
+              : (isPt ? 'Começar o dia' : 'Start the day')}
           </button>
           <button type="button" onClick={onSkip} style={{ ...sm2Button('ghost'), width: '100%' }}>
             {isPt ? 'Hoje não, obrigado' : 'Not today, thanks'}

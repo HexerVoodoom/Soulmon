@@ -137,7 +137,7 @@ import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
 } from './utils/habitRhythm';
-import { normalizeSchedule, HABIT_WEIGHT } from './types/taskModel';
+import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS } from './types/taskModel';
 
 /**
  * O rótulo de frequência de um hábito na lista.
@@ -2888,6 +2888,9 @@ export default function App() {
     setGameState(prev => awardBondXP(
       completeCheckIn(prev, focusIds, dayKey), { kind: 'checkIn' }, dayKey,
     ));
+    // WP2.3: só o CONFIRM emite — pular não é compromisso e não conta.
+    // Fora do updater (footgun 6: StrictMode invoca updater 2×).
+    track('checkin_commit', { focus_count: Math.min(focusIds.length, MAX_DAILY_FOCUS) });
     setCheckInPlanData(null);
   }, [setGameState, gameState.playerDayTz]);
 
