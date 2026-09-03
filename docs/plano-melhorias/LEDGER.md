@@ -6,7 +6,7 @@ porque um agente não tem memória entre sessões: sem registro em disco,
 
 **São 50 pacotes (WP)** — 36 na criação, +14 na rodada 3 (dossiê Mobbin, 02/09/2026); antes disso, não 30 — o número "30" apareceu no primeiro commit do
 plano e estava errado; conferido com
-`grep -oE '^### WP[0-9]+\.[0-9]+' docs/PLANO-MELHORIAS.md | wc -l`.
+`grep -oE '^### WP[0-9]+\.[0-9]+' docs/PLANO-MELHORIAS.md | wc -l` → **36** (as seções da criação) **mais** os 14 pacotes da rodada 3, que vivem como LINHAS da tabela da seção 13 e não como seções: `grep -oE '^\| WP[0-9]+\.[0-9]+ ' docs/PLANO-MELHORIAS.md | sort -u | wc -l` → 16, dos quais 2 (WP3.1, WP3.3) são revisões de pacotes que já existiam. ⚠️ Até 03/09/2026 este parágrafo citava só o primeiro comando e afirmava 50 — o guarda da medição rodou o comando, obteve 36 e apontou a contradição (`estudo/medicao.md`). O número estava certo; o comando, não.
 
 ## Como funciona a guarda
 
