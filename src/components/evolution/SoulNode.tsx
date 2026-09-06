@@ -19,6 +19,9 @@ interface SoulNodeProps {
   onClick?: () => void;
   /** Anel ciano pulsante do nó atual. */
   ring?: boolean;
+  /** WP4.21 — desenha o sprite como sombra borrada (a próxima forma prevista).
+   *  Só faz sentido quando existe sprite: sem ele o nó já é silêncio. */
+  silhouette?: boolean;
 }
 
 /**
@@ -36,6 +39,7 @@ interface SoulNodeProps {
  */
 export function SoulNode({
   visual, size = 44, tone, sprite, label, title, onClick, ring = false,
+  silhouette = false,
 }: SoulNodeProps) {
   const body = (
     <span className="sm-px-node-art" style={{ width: size, height: size }}>
@@ -47,7 +51,15 @@ export function SoulNode({
           src={sprite}
           alt=""
           aria-hidden="true"
-          style={{ width: Math.round(size * 0.95), height: Math.round(size * 0.95) }}
+          style={{
+            width: Math.round(size * 0.95), height: Math.round(size * 0.95),
+            /* WP4.21 — SILHUETA da próxima forma. A antecipação é o conteúdo:
+               ver o contorno do que vem, sem ver quem é. `brightness(0)` +
+               opacidade em vez de `brightness(.3)`: o sprite tem cor própria
+               e escurecer sem zerar deixava a paleta legível, entregando o
+               que a silhueta existe para NÃO entregar. */
+            ...(silhouette ? { filter: 'blur(6px) brightness(0)', opacity: .45 } : null),
+          }}
         />
       )}
     </span>

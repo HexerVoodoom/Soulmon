@@ -346,8 +346,12 @@ const BOND_TITLES: ReadonlyArray<{ level: number; en: string; pt: string }> = [
  * A escada de recompensas.
  *
  * O nível 2 (dia 1) e o nível 3 (dia 3) são os dois que decidem a retenção —
- * por isso o primeiro é um TÍTULO (aparece na home, sob o nome do pet, sem
- * precisar abrir nada) e o segundo é o vaso de planta, a única decoração que
+ * por isso o primeiro é um TÍTULO — que desde 06/09/2026 (WP3.3) realmente
+ * aparece na home, sob o nome do pet, sem precisar abrir nada. Até então esta
+ * frase era falsa: `bondTitle` só era lido em Estatísticas e no Torneio, telas
+ * que quem está no dia 1 não abre — e o nome do pet sequer existia no
+ * `CompanionHUD`. Quem prova a frase hoje é
+ * `CompanionHUD.vinculo.render.test.tsx` e o segundo é o vaso de planta, a única decoração que
  * `fits: 'any'` no espaço `floor-right` — ou seja, visível em QUALQUER cenário,
  * inclusive o `bg-room` grátis que todo mundo tem.
  */

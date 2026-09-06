@@ -66,7 +66,7 @@ import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey } from './utils/playerDay';
-import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
+import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards, bondTitle } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -4348,6 +4348,11 @@ export default function App() {
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
                 speakSignal={speakSignal}
+                /* WP3.3 — nome e título do Vínculo na home. O título é
+                   DERIVADO na leitura (`bondLevelFor(totalXP)`); guardá-lo no
+                   save seria duas fontes para o mesmo número (footgun 9). */
+                petDisplayName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
+                bondTitleText={bondTitle(bondLevelFor(gameState.totalXP ?? 0), language)}
                 hauntedWatching={hauntedWatching}
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}

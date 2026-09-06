@@ -635,10 +635,25 @@ export function EvolutionPath({
                adotado; senão a arte de reserva, que é o piso e nunca é erro
                (Invariante nº 1). `displaySprite` é quem sabe a diferença —
                nada de reperguntar `sprites[...]` aqui. */
+            /* Oculto normalmente é SEM sprite (a arte é o spoiler). A exceção
+               é o nó `forecast` com sprite próprio: ali a arte entra só para
+               virar SILHUETA (WP4.21) — contorno, nunca identidade. Sem
+               sprite próprio, segue sem nada: borrar a arte de reserva
+               mostraria a silhueta de uma criatura que não é a que vem. */
             sprite={hidden
-              ? undefined
+              ? (isForecast ? displaySprite(acervo, stageId)?.url : undefined)
               : (displaySprite(acervo, stageId)?.url
                  ?? getSpriteForStage(stageId, isCurrent ? demoCharacterId : undefined))}
+            /* WP4.21 — a próxima forma prevista aparece como SILHUETA quando
+               já existe sprite para ela. Antes o nó `forecast` era só um selo
+               de texto: o jogador sabia QUE vinha algo e não via nada. A
+               silhueta é a antecipação do gênero (o "quem é esse pokémon"),
+               e continua não revelando a arte. Sem sprite, silêncio — nada de
+               borrar a arte de reserva, que mostraria a silhueta ERRADA. */
+            /* A silhueta vale justamente para o nó OCULTO: mostrar a forma
+               sem mostrar quem é. Se o jogador já revelou (spoiler), ele
+               pediu para ver — e aí borrar seria desfazer a escolha dele. */
+            silhouette={isForecast && hidden && !!displaySprite(acervo, stageId)?.url}
             label={nodeLabel}
             title={hidden
               ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)')

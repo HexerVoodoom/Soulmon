@@ -149,6 +149,11 @@ interface CompanionHUDProps {
    *  um contador que só cresce, e o `kind` diz QUAL frase. As frases vivem em
    *  `utils/petVoice.ts` (o teste de tom varre lá, não aqui). */
   speakSignal?: { n: number; kind: PetVoiceKind };
+  /** WP3.3 — o nome do pet. Não existia neste arquivo até 06/09/2026. */
+  petDisplayName?: string;
+  /** WP3.3 — o título do Vínculo, já resolvido no idioma. DERIVADO de
+   *  `totalXP` por quem chama; nunca leia isto de um campo do save. */
+  bondTitleText?: string | null;
   /** WP3.2 — há tarefa assombrada na lista? O sprite VIRA O OLHAR enquanto
    *  houver. É o "o pet olha" que o `CLAUDE.md` prometia e não existia. */
   hauntedWatching?: boolean;
@@ -214,6 +219,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   healCapSignal = 0,
   speakSignal,
   hauntedWatching = false,
+  petDisplayName,
+  bondTitleText,
   equippedBackground = null,
   equippedDecor = {},
   trophies = [],
@@ -958,6 +965,36 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   return (
     <div className="relative sm-pet-sticky" style={{ '--sm-pet-scene': cenario ?? 'none' } as React.CSSProperties}>
+      {/* WP3.3 — NOME + TÍTULO DO VÍNCULO, na home.
+          O comentário de `BOND_REWARDS` prometia, por escrito, que o título
+          "aparece na home, sob o nome do pet" — e ele só existia em
+          Estatísticas e no Torneio, telas que quem está começando não abre. O
+          nível 2 (dia 1) e o 3 (dia 3) são justamente os que decidem a
+          retenção, então a recompensa deles precisa ser vista SEM abrir nada.
+          Descoberta ao implementar: o nome do pet também não existia neste
+          arquivo — a pílula resolve os dois de uma vez.
+          O título é DERIVADO (`bondTitle(bondLevelFor(totalXP))`), nunca
+          persistido — guardar `bondLevel` no save é o footgun 9 na forma mais
+          cara (ver `utils/bond.ts`). Uma linha só: cada pixel aqui é um pixel
+          a menos de lista de atividades. */}
+      {(petDisplayName || bondTitleText) && (
+        <div style={{
+          textAlign: 'center', lineHeight: 1.15, marginBottom: 2,
+          fontFamily: 'var(--sm2-font-text)',
+        }}>
+          {petDisplayName && (
+            <div style={{ fontSize: 'var(--sm2-text-sm)', fontWeight: 600, color: 'var(--sm-ink)' }}>
+              {petDisplayName}
+            </div>
+          )}
+          {bondTitleText && (
+            <div style={{ fontSize: 'var(--sm2-text-xs)', opacity: .75, color: 'var(--sm-ink)' }}>
+              {bondTitleText}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Main Container with Companion Area and Energy Bar */}
       <div className="relative">
       {/* O fundo de cenário equipado agora é pintado em App.tsx, cobrindo a
