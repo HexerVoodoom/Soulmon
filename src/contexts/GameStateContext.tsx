@@ -205,6 +205,9 @@ export interface GameState {
    * 0 = sem tint (o original). 1..3 = as três tonalidades.
    */
   demoTint?: number;
+  /** WP4.8 — marcos de memória (30/90) já mostrados. Um "momento" que
+   *  acontece duas vezes deixa de ser um momento. */
+  memoriesShown?: number[];
   /** WP5.1 — semana ISO em que a oferta do value moment foi mostrada. O cap é
    *  sobre ter OFERECIDO, não sobre ter comprado. */
   offerShownWeek?: string;
@@ -855,6 +858,9 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         bestiary: strArr(loadedState.bestiary),
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         demoTint: num(loadedState.demoTint, 0),
+        memoriesShown: Array.isArray(loadedState.memoriesShown)
+          ? loadedState.memoriesShown.filter((n: unknown) => typeof n === 'number')
+          : [],
         redeemed: loadedState.redeemed === true,
         showRedeemed: loadedState.showRedeemed === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/

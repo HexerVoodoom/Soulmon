@@ -2,6 +2,7 @@ import { Icon } from './ui/Icon';
 import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2TitleStyle } from './form/FormKit';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { UnlockNudge } from './UnlockAccountModal';
+import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
@@ -24,7 +25,17 @@ interface DailyReportModalProps {
    *  quando ele pode aparecer é de `utils/offerMoment.ts`; aqui só chega o
    *  resultado dela, para a tela não virar dona de uma decisão de ética. */
   showOffer?: boolean;
-  onOpenOffer?: () => void;}
+  onOpenOffer?: () => void;
+  /** WP4.8 — as memórias de 30/90 dias, quando este é o dia. */
+  memories?: {
+    mark: number;
+    petName: string;
+    spriteUrl?: string | null;
+    formNames: readonly string[];
+    dreamCount: number;
+    soulGoal?: string | null;
+  } | null;
+}
 
 const hint = sm2Hint;
 type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
@@ -41,7 +52,7 @@ type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
  * LINHA saíram — eles desenhavam de novo a palavra ao lado ("Corações" com um
  * coração), que é o tipo de repetição que esta onda existe para cortar.
  */
-export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer }: DailyReportModalProps) {
+export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, memories }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
@@ -221,6 +232,16 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
               })}
             </div>
             {moodNote && <p style={{ ...hint, marginTop: 8 }}>{moodNote}</p>}
+          </div>
+        )}
+
+        {/* WP4.8 — MEMÓRIAS. O app contava o dia e a semana e nunca contou a
+            HISTÓRIA. Fica dentro do relatório que a pessoa já ia ver: não
+            gera push, badge nem lembrete — um "momento" que persegue deixa de
+            ser momento. */}
+        {memories && (
+          <div style={{ padding: '0 20px 8px' }}>
+            <MemoriesCard {...memories} language={language} />
           </div>
         )}
 

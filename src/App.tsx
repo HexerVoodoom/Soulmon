@@ -101,6 +101,7 @@ import {
 } from './utils/rebirth';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
+import { memoryToShow, markMemoryShown } from './utils/memories';
 import { stampCollected } from './utils/collectionDates';
 import { shouldPrimePush, pushPrimingLine } from './utils/pushPriming';
 import { shouldOfferAtValueMoment, isoWeekKey } from './utils/offerMoment';
@@ -5623,7 +5624,23 @@ export default function App() {
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
         <DailyReportModal
           report={gameState.lastDayReport}
-          onClose={handleCloseDailyReport}
+          onClose={() => {
+            /* WP4.8 — o marco é registrado ao FECHAR: se fosse ao abrir, um
+               relatório reaberto no mesmo dia gastaria a memória sem ela ter
+               sido vista. `markMemoryShown` é idempotente. */
+            const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+            const marco = memoryToShow({
+              daysWithPet: daysTogether(gameState.bornAt, hoje),
+              shown: gameState.memoriesShown,
+            });
+            if (marco !== null) {
+              setGameState(prev => ({
+                ...prev,
+                memoriesShown: markMemoryShown(prev.memoriesShown, marco),
+              }));
+            }
+            handleCloseDailyReport();
+          }}
           onRecoverHearts={handleRecoverHearts}
           moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
           onPickMood={handlePickMood}
@@ -5633,6 +5650,31 @@ export default function App() {
           /* WP5.1 — o convite no VALUE MOMENT (o primeiro dia perfeito). A
              regra de quando ele pode aparecer é de `utils/offerMoment.ts`;
              aqui só chega o resultado dela. */
+          /* WP4.8 — as memórias de 30/90 dias. `memoryToShow` compara com
+             IGUALDADE, não com `>=`: com `>=` o cartão apareceria todo dia
+             depois do trigésimo, e a coisa que fazia dele um momento (ser
+             raro) desapareceria na segunda vez. */
+          memories={(() => {
+            const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+            const marco = memoryToShow({
+              daysWithPet: daysTogether(gameState.bornAt, hoje),
+              shown: gameState.memoriesShown,
+            });
+            if (marco === null) return null;
+            return {
+              mark: marco,
+              petName: soulmonDisplayName(gameState.soulmonMeta) || '—',
+              spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? null,
+              formNames: (gameState.unlockedEvolutions ?? []).map(id => {
+                const st = (gameState.soulmonStages ?? []).find(
+                  x => (x.branch ? `${x.stage}-${x.branch}` : x.stage) === id,
+                );
+                return st?.name ?? id;
+              }),
+              dreamCount: (gameState.rest?.dreams ?? []).length,
+              soulGoal: gameState.soulGoal ?? null,
+            };
+          })()}
           showOffer={ofereceNoRelatorio}
           onOpenOffer={() => {
             // Marca a semana ANTES de abrir: o cap é sobre ter oferecido, não
