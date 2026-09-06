@@ -81,6 +81,9 @@ export type TelemetryEvent =
   | 'unlock_view'
   /** Comprou. */
   | 'purchase'
+  | 'after_bad_day'
+  | 'app_open'
+  | 'push_optout'
   /** Bateu no teto diário de criação do modo demo. É o DENOMINADOR da pergunta
    *  "o cap é a fronteira certa?": sem ele, `unlock_view` de `task-limit` é um
    *  numerador sem denominador, e nenhuma taxa é calculável. */
@@ -138,7 +141,12 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   first_task_done: { tier: { min: 0, max: 2 } },
   day_active: { effort: { min: 0, max: 500 }, tier: { min: 0, max: 2 } },
   unlock_view: { reason: { min: 0, max: 3 }, tier: { min: 0, max: 2 } },
-  purchase: { tier: { min: 0, max: 2 } },
+  /* WP0.9 — `reason` diz DE ONDE veio a compra, com o mesmo vocabulário do
+     convite (`TELEMETRY_UNLOCK_REASON`) mais o 4 = onboarding. Sem ele, todas
+     as compras eram um número só: dava para saber quantas, nunca qual convite
+     as trouxe — e os convites testam hipóteses opostas sobre por que alguém
+     paga (bati no teto × quero a criatura que é minha). */
+  purchase: { tier: { min: 0, max: 2 }, reason: { min: 0, max: 4 } },
   demo_cap_hit: { path: { min: 0, max: 4 } },
   activity_create: { kind: { min: 0, max: 1 }, path: { min: 0, max: 4 }, tier: { min: 0, max: 2 } },
   week_active: {
@@ -146,7 +154,10 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
     goal_days: { min: 0, max: 7 },
     tier: { min: 0, max: 2 },
   },
-  reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
+  /* WP0.12 — `duration` em FAIXA (0 = <5s, 1 = 5–15s, 2 = 15–60s, 3 = 60s+).
+     Faixa e não segundos: segundo é quase um carimbo de tempo, e o que a
+     pergunta precisa saber é se o reveal foi olhado ou pulado. */
+  reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 }, duration: { min: 0, max: 3 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
   unlock_dismiss: { reason: { min: 0, max: 3 } },
   haunted_done: null,
@@ -157,6 +168,20 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   evolve: { level: { min: 1, max: 4 } },
   dungeon_run: { floors: { min: 1, max: 5 } },
   bond_level: { level: { min: 1, max: 30 } },
+  /* WP0.10 — o convite de carinho depois de um dia ruim. `gap` é a distância
+     em FAIXA (não data), `kind` diz se o app foi aberto (1) ou não (0). O
+     fechamento é no APARELHO: a chave local que guarda "houve dia ruim" nunca
+     é enviada. PROPÓSITO declarado: saber se o convite de carinho funciona —
+     nunca calibrar cobrança, que é o uso que esta métrica torna possível e
+     que o produto proíbe. */
+  after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
+  /* WP0.11 — de onde o app foi aberto (0 = direto, 1 = push, 2 = widget,
+     3 = atalho). Existe para uma decisão só: CORTAR push que abre o app e não
+     vira `day_active`. Um push que traz alguém que não faz nada é interrupção
+     paga com atenção alheia. Dedupe por dia e origem. */
+  app_open: { source: { min: 0, max: 3 } },
+  /** WP0.11 — desligou o push. Sem prop: é o fato, não o motivo. */
+  push_optout: null,
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -198,6 +223,46 @@ export type TelemetryTier = typeof TELEMETRY_TIER[keyof typeof TELEMETRY_TIER];
  */
 /** `report` = oferta proativa no 1º dia perfeito (WP5.1); `shop` = card passivo na Loja. */
 export const TELEMETRY_UNLOCK_REASON = { taskLimit: 0, evolution: 1, report: 2, shop: 3 } as const;
+
+/** WP0.9 — de onde a compra veio. Os quatro primeiros são os MESMOS de
+ *  `TELEMETRY_UNLOCK_REASON` de propósito (o convite e a compra têm de ser
+ *  comparáveis); `onboarding` é o caminho que não passa por convite nenhum. */
+export const TELEMETRY_PURCHASE_REASON = { ...TELEMETRY_UNLOCK_REASON, onboarding: 4 } as const;
+
+/** WP0.11 — origem da abertura. */
+export const TELEMETRY_OPEN_SOURCE = { direct: 0, push: 1, widget: 2, shortcut: 3 } as const;
+
+/**
+ * Lê a origem da abertura do `?src=` da URL (posto pelo `sw.js` no clique da
+ * notificação, e disponível para widget/atalho). Valor desconhecido cai em
+ * `direct` — inventar uma origem nova a partir de query string de terceiro
+ * seria deixar a métrica ser escrita por quem manda o link.
+ */
+export function openSourceFromUrl(search: string): number {
+  const v = new URLSearchParams(search || '').get('src');
+  if (v === 'push') return TELEMETRY_OPEN_SOURCE.push;
+  if (v === 'widget') return TELEMETRY_OPEN_SOURCE.widget;
+  if (v === 'shortcut') return TELEMETRY_OPEN_SOURCE.shortcut;
+  return TELEMETRY_OPEN_SOURCE.direct;
+}
+
+/** WP0.12 — faixas de tempo no reveal, em segundos. Faixa, nunca o segundo. */
+export function revealDurationBucket(segundos: number): 0 | 1 | 2 | 3 {
+  const s = Number.isFinite(segundos) ? segundos : 0;
+  if (s < 5) return 0;
+  if (s < 15) return 1;
+  if (s < 60) return 2;
+  return 3;
+}
+
+/** WP0.10 — distância até o retorno depois de um dia ruim, em faixa de dias. */
+export function afterBadDayGapBucket(dias: number): 0 | 1 | 2 | 3 {
+  const d = Number.isFinite(dias) ? dias : 0;
+  if (d <= 1) return 0;
+  if (d <= 3) return 1;
+  if (d <= 7) return 2;
+  return 3;
+}
 
 /** Tarefa (item com prazo) × hábito (item recorrente). */
 export const TELEMETRY_ACTIVITY_KIND = { task: 0, habit: 1 } as const;
@@ -275,6 +340,12 @@ export interface TelemetryProps {
   has_sprite?: number;
   /** `milestone`: tier do marco (1–3). `bond_level`: nível do Vínculo. `evolve`: nível alcançado. */
   level?: number;
+  /** `app_open`: origem da abertura (`TELEMETRY_OPEN_SOURCE`). */
+  source?: number;
+  /** `after_bad_day`: distância até o retorno, em FAIXA de dias — nunca data. */
+  gap?: number;
+  /** `reveal_seen`: quanto tempo o reveal ficou na tela, em faixa. */
+  duration?: number;
   /** `welcome_back`: faixa de dias fora. */
   days?: number;
   /** `dungeon_run`: andares limpos na run (1–5). */
@@ -643,6 +714,11 @@ function readSeen(): string[] {
 function seenKeyFor(record: TelemetryRecord): string | null {
   if (ONCE_EVER.includes(record.e)) return record.e;
   if (ONCE_PER_DAY.includes(record.e)) return `${record.e}:${record.d}`;
+  // WP0.11 — `app_open` é uma vez por dia POR ORIGEM. Sem a origem na chave,
+  // quem abre pelo push de manhã e direto à tarde contaria só a primeira, e a
+  // única pergunta que este evento existe para responder (o push traz gente
+  // que faz alguma coisa?) ficaria sem denominador.
+  if (record.e === 'app_open') return `app_open:${record.d}:${record.p?.source ?? 0}`;
   return null;
 }
 
@@ -725,6 +801,14 @@ export function track(event: TelemetryEvent, props?: TelemetryProps, day?: strin
     // dois comportamentos são idênticos.
     if (ONCE_PER_DAY.includes(record.e)) {
       queue = queue.filter(r => !(r.e === record.e && r.d === record.d));
+    }
+    // WP0.11 — `app_open` deduplica por dia E POR ORIGEM (mesma chave de
+    // `seenKeyFor`). Se fosse só por dia, quem abre pelo push de manhã e
+    // direto à tarde contaria uma abertura só, e a única pergunta que este
+    // evento existe para responder ficaria sem denominador.
+    if (record.e === 'app_open') {
+      const origem = record.p?.source ?? 0;
+      queue = queue.filter(r => !(r.e === 'app_open' && r.d === record.d && (r.p?.source ?? 0) === origem));
     }
     const next = enqueueCapped(queue, record);
     if (next === queue) return; // fila cheia: descarta o novo, preserva o funil

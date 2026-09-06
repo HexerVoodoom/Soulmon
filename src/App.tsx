@@ -10,7 +10,8 @@ import { useDailyReset } from './hooks/useDailyReset';
 import {
   track, flush as flushTelemetry, installTelemetryAutoFlush,
   setTelemetryTier, trackDayClosed, telemetryDayKey,
-  TELEMETRY_UNLOCK_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
+  TELEMETRY_UNLOCK_REASON, TELEMETRY_PURCHASE_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
+  openSourceFromUrl, afterBadDayGapBucket,
 } from './utils/telemetry';
 import { BottomNav } from './components/BottomNav';
 import { CompanionHUD } from './components/CompanionHUD';
@@ -1060,6 +1061,13 @@ export default function App() {
    *  perde justamente em quem abandona. */
   useEffect(() => {
     track('install');
+    /* WP0.11 — de onde esta abertura veio. A marca é o `?src=` que o
+       `sw.js` põe ao abrir pelo push (e que o widget/atalho podem usar); sem
+       marca nenhuma, é abertura direta. Dedupe por dia E por origem, no
+       módulo. Serve para UMA decisão: cortar push que traz gente e não vira
+       dia ativo — comparar `app_open.1` com `day_active` responde isso, e
+       nenhuma outra leitura é o propósito declarado desta métrica. */
+    track('app_open', { source: openSourceFromUrl(window.location.search) });
     const stop = installTelemetryAutoFlush();
     return stop;
   }, []);
@@ -2864,7 +2872,14 @@ export default function App() {
     // contaria intenção como receita. `flushTelemetry` porque a compra costuma
     // ser seguida de saída do app, e 5s de debounce perderia o evento mais caro
     // que existe aqui.
-    track('purchase');
+    // WP0.9 — `reason` com o MESMO vocabulário do convite, para compra e
+    // convite serem comparáveis: sem ele, todas as compras eram um número só
+    // e não dava para saber qual convite trouxe cada uma.
+    track('purchase', {
+      reason: unlockReason === 'task-limit'
+        ? TELEMETRY_PURCHASE_REASON.taskLimit
+        : TELEMETRY_PURCHASE_REASON.evolution,
+    });
     flushTelemetry();
     syncEntitlement(ent);
     setUnlockReason(null);
@@ -2972,6 +2987,30 @@ export default function App() {
     // "quantos dias o escudo salvou", que é por dia e não por hábito. O evento
     // não carrega props, então contar por hábito não seria representável.
     if (Number(report.shieldsSpent ?? 0) > 0) track('shield_used');
+
+    /* WP0.10 — `after_bad_day`, fechado NO APARELHO.
+       A pergunta é: depois de um dia ruim, a pessoa volta? E ela existe para
+       UMA finalidade declarada — saber se o convite de carinho funciona.
+       NUNCA para calibrar cobrança, que é o uso que esta mesma métrica torna
+       possível e que o produto proíbe.
+       A marca do dia ruim (`LAST_BAD_DAY`) fica no localStorage e não sai
+       daqui: o que é despachado é a DISTÂNCIA em faixa. Data de dia ruim,
+       cruzada com o resto, descreve uma pessoa. */
+    const ultimoRuim = readLocal(STORAGE_KEYS.LAST_BAD_DAY);
+    if (ultimoRuim && ultimoRuim !== report.date) {
+      const dias = Math.round((Date.parse(report.date) - Date.parse(ultimoRuim)) / 86400000);
+      if (Number.isFinite(dias) && dias > 0) {
+        // `kind` 1 = o app foi aberto (é o que faz este efeito rodar).
+        track('after_bad_day', { gap: afterBadDayGapBucket(dias), kind: 1 });
+      }
+      removeLocal(STORAGE_KEYS.LAST_BAD_DAY);
+    }
+    // Dia ruim é o que CUSTOU coração — não "não foi perfeito". Um dia sem
+    // dia perfeito é a maioria dos dias de qualquer pessoa; marcar todos eles
+    // como ruins transformaria a métrica num contador de vida normal.
+    if (Number(report.heartsLost ?? 0) > 0) {
+      writeLocal(STORAGE_KEYS.LAST_BAD_DAY, report.date, { silent: true });
+    }
   }, [gameState.lastDayReport]);
 
   /**
@@ -3813,6 +3852,11 @@ export default function App() {
       }
     } else {
       // Disable notifications
+      // WP0.11 — desligar o push é o sinal mais direto de que a régua de
+      // notificação passou do ponto, e não era medido. Sem prop: é o FATO,
+      // nunca o motivo (motivo exigiria perguntar, e perguntar na saída é
+      // exatamente o padrão escuro que este produto recusa).
+      track('push_optout');
       setNotificationsEnabled(false);
     }
   };

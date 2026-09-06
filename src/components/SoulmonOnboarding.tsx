@@ -23,7 +23,7 @@ import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_L
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
-import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL } from '../utils/telemetry';
+import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON } from '../utils/telemetry';
 import type { ActivityCategory } from '../types/attributes';
 
 // Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
@@ -604,7 +604,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setUnlockLoading(false);
     if (result.ok) {
       // Só depois de a compra voltar OK — clique não é receita.
-      track('purchase');
+      // WP0.9: `onboarding` é o caminho que não passa por convite nenhum.
+      track('purchase', { reason: TELEMETRY_PURCHASE_REASON.onboarding });
       flushTelemetry();
       setFlow('oracle');
       setStep(GOAL_STEP);

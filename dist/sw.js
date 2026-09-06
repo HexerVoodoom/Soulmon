@@ -1,6 +1,6 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v101';
+const CACHE_VERSION = 'v102';
 const STATIC_CACHE = `digiapp-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `digiapp-runtime-${CACHE_VERSION}`;
 
@@ -198,7 +198,12 @@ self.addEventListener('notificationclick', (event) => {
           return client.focus();
         }
       }
-      return self.clients.openWindow('/');
+      /* WP0.11 — `?src=push` marca a ORIGEM da abertura. Existe para uma
+         decisão só: cortar notificação que traz alguém e não vira dia ativo.
+         Um push que interrompe e não serve para nada é atenção alheia gasta.
+         (Aba já aberta é `focus()` acima e não recebe a marca — ela não foi
+         ABERTA pelo push.) */
+      return self.clients.openWindow('/?src=push');
     })
   );
 });

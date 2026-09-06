@@ -29,6 +29,11 @@ import {
   EVENT_SCHEMA,
   TELEMETRY_FUNNEL,
   TELEMETRY_TIER,
+  TELEMETRY_PURCHASE_REASON,
+  TELEMETRY_OPEN_SOURCE,
+  openSourceFromUrl,
+  afterBadDayGapBucket,
+  revealDurationBucket,
   TELEMETRY_UNLOCK_REASON,
   TELEMETRY_ACTIVITY_KIND,
   TELEMETRY_CREATE_PATH,
@@ -94,13 +99,15 @@ describe('allowlist de eventos', () => {
     expect(sanitizeEvent('toString')).toBeNull();
   });
 
-  it('aceita os vinte e um eventos declarados, e só eles', () => {
+  it('aceita os vinte e quatro eventos declarados, e só eles', () => {
     expect(TELEMETRY_EVENTS).toEqual([
       'install', 'onboarding_step', 'demo_pick', 'first_task_done', 'day_active',
       'unlock_view', 'purchase', 'demo_cap_hit', 'activity_create', 'week_active',
       // WP0.5 (rodada 2/3 do PLANO-MELHORIAS)
       'reveal_seen', 'checkin_commit', 'unlock_dismiss', 'haunted_done', 'checkin_shown', 'milestone', 'shield_used', 'welcome_back',
       'evolve', 'dungeon_run', 'bond_level',
+      // WP0.10 / WP0.11 (rodada 4)
+      'after_bad_day', 'app_open', 'push_optout',
     ]);
     expect(sanitizeEvent('install')).toEqual({ e: 'install', d: telemetryDayKey() });
   });
@@ -326,7 +333,7 @@ describe('opt-out real', () => {
     vi.stubGlobal('fetch', fetchSpy);
     setTelemetryEnabled(false);
     setTelemetryEnabled(true);
-    track('purchase');
+    track('purchase', { reason: TELEMETRY_PURCHASE_REASON.onboarding });
     flush();
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy.mock.calls[0][0]).toBe(ENDPOINT);
@@ -426,7 +433,7 @@ describe('falha silenciosa', () => {
     (navigator as unknown as Record<string, unknown>).sendBeacon = beacon;
     const fetchSpy = vi.fn((_u: string, _init?: RequestInit) => Promise.resolve(new Response('{}')));
     vi.stubGlobal('fetch', fetchSpy);
-    track('purchase');
+    track('purchase', { reason: TELEMETRY_PURCHASE_REASON.onboarding });
     flush();
     expect(beacon).toHaveBeenCalledTimes(1);
     expect(beacon.mock.calls[0][0]).toBe(ENDPOINT);
@@ -591,9 +598,14 @@ describe('G-2: tier ambiente — nenhum call site é responsável por lembrar de
 
   it('`track` carimba o tier ambiente sem o call site passar nada', () => {
     setTelemetryTier('demo');
-    track('purchase');
+    // WP0.9: `purchase` passou a carregar `reason` (de onde veio a compra), e
+    // toda prop declarada é obrigatória. O `tier` continua sendo o que o call
+    // site NÃO precisa lembrar — que é o que este teste mede.
+    track('purchase', { reason: TELEMETRY_PURCHASE_REASON.onboarding });
     expect(pendingTelemetry()[0]).toEqual({
-      e: 'purchase', d: telemetryDayKey(), p: { tier: TELEMETRY_TIER.demo },
+      e: 'purchase',
+      d: telemetryDayKey(),
+      p: { reason: TELEMETRY_PURCHASE_REASON.onboarding, tier: TELEMETRY_TIER.demo },
     });
   });
 
@@ -731,5 +743,64 @@ describe('A METRICA-NORTE: ativo na semana e >=4 de 7 no proprio objetivo', () =
     expect(sanitizeEvent('week_active', { active_days: 2, goal_days: 5, tier: 1 })).toBeNull();
     expect(sanitizeEvent('week_active', { active_days: 5, goal_days: 2, tier: 1 })?.p)
       .toEqual({ active_days: 5, goal_days: 2, tier: 1 });
+  });
+});
+
+describe('WP0.9/0.10/0.11/0.12 — os eventos novos e seus limites', () => {
+  beforeEach(() => { localStorage.clear(); setTelemetryEnabled(true); });
+
+  it('`purchase` sem `reason` é RECUSADO — prop declarada é obrigatória', () => {
+    // Sem isto, a compra voltaria a ser um número só e o convite que a
+    // trouxe ficaria invisível de novo.
+    expect(sanitizeEvent('purchase', { tier: 1 })).toBeNull();
+    expect(sanitizeEvent('purchase', { tier: 1, reason: 4 })).not.toBeNull();
+    expect(sanitizeEvent('purchase', { tier: 1, reason: 5 })).toBeNull();
+  });
+
+  it('`app_open` só aceita as quatro origens', () => {
+    expect(sanitizeEvent('app_open', { source: 0 })).not.toBeNull();
+    expect(sanitizeEvent('app_open', { source: 3 })).not.toBeNull();
+    expect(sanitizeEvent('app_open', { source: 4 })).toBeNull();
+  });
+
+  it('`app_open` deduplica por dia E por origem', () => {
+    // Só por dia, quem abre pelo push de manhã e direto à tarde contaria uma
+    // só — e a pergunta que o evento existe para responder ("o push traz
+    // gente que faz alguma coisa?") ficaria sem denominador.
+    track('app_open', { source: TELEMETRY_OPEN_SOURCE.push });
+    track('app_open', { source: TELEMETRY_OPEN_SOURCE.push });
+    track('app_open', { source: TELEMETRY_OPEN_SOURCE.direct });
+    const abertos = pendingTelemetry().filter(r => r.e === 'app_open');
+    expect(abertos).toHaveLength(2);
+  });
+
+  it('`openSourceFromUrl` não deixa a URL inventar origem', () => {
+    expect(openSourceFromUrl('?src=push')).toBe(TELEMETRY_OPEN_SOURCE.push);
+    expect(openSourceFromUrl('?src=widget')).toBe(TELEMETRY_OPEN_SOURCE.widget);
+    expect(openSourceFromUrl('')).toBe(TELEMETRY_OPEN_SOURCE.direct);
+    // Origem desconhecida vira `direct` — quem manda o link não escreve a métrica.
+    expect(openSourceFromUrl('?src=campanha-paga')).toBe(TELEMETRY_OPEN_SOURCE.direct);
+  });
+
+  it('`push_optout` é o FATO, sem prop nenhuma', () => {
+    expect(sanitizeEvent('push_optout')).toEqual({ e: 'push_optout', d: telemetryDayKey() });
+    // Motivo exigiria perguntar na saída, que é o padrão escuro recusado aqui.
+    expect(sanitizeEvent('push_optout', { reason: 1 })).toBeNull();
+  });
+
+  it('`after_bad_day` é FAIXA, nunca data', () => {
+    expect(afterBadDayGapBucket(1)).toBe(0);
+    expect(afterBadDayGapBucket(3)).toBe(1);
+    expect(afterBadDayGapBucket(7)).toBe(2);
+    expect(afterBadDayGapBucket(40)).toBe(3);
+    expect(sanitizeEvent('after_bad_day', { gap: 4, kind: 0 })).toBeNull();
+  });
+
+  it('`reveal_seen.duration` é faixa de 0 a 3', () => {
+    expect(revealDurationBucket(2)).toBe(0);
+    expect(revealDurationBucket(10)).toBe(1);
+    expect(revealDurationBucket(30)).toBe(2);
+    expect(revealDurationBucket(300)).toBe(3);
+    expect(sanitizeEvent('reveal_seen', { has_sprite: 1, funnel: 1, duration: 4 })).toBeNull();
   });
 });

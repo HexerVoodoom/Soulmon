@@ -1,5 +1,9 @@
 export const STORAGE_KEYS = {
   GAME_STATE: 'digiapp_state_v3',
+  /** WP0.10 — dia do último dia ruim, para fechar `after_bad_day` NO APARELHO.
+   *  Esta chave nunca é enviada: o que sai é uma FAIXA de distância, e é por
+   *  isso que ela mora aqui em vez de virar um campo de telemetria. */
+  LAST_BAD_DAY: 'digiapp-last-bad-day',
   AI_SETTINGS: 'digiapp-ai-settings',
   THEME: 'digiapp-theme',
   LANGUAGE: 'digiapp-language',

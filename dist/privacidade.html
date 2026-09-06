@@ -122,7 +122,7 @@
   <tr><td><code>demo_cap_hit</code></td><td>Que você encontrou o limite diário de criação do modo grátis, com a propriedade <code>path</code>: por qual tela.</td></tr>
   <tr><td><code>activity_create</code></td><td>Que uma atividade foi criada, com <code>kind</code> (tarefa ou hábito) e <code>path</code> (por qual tela). <strong>Nunca</strong> o nome nem o conteúdo dela.</td></tr>
   <tr><td><code>week_active</code></td><td>Uma vez por semana, dois números de 0 a 7: <code>active_days</code>, em quantos dias você concluiu alguma coisa, e <code>goal_days</code>, em quantos você alcançou a sua própria meta do dia. <strong>A contagem é feita no seu aparelho</strong> — o que sai são só esses dois números, já fechados. Nenhuma linha do tempo sua é enviada nem guardada.</td></tr>
-  <tr><td><code>reveal_seen</code></td><td>Que você chegou à tela de revelação da criatura, e se ela mostrou a imagem ou só o texto (<code>has_sprite</code>, 0 ou 1).</td></tr>
+  <tr><td><code>reveal_seen</code></td><td>Que você chegou à tela de revelação da criatura, e se ela mostrou a imagem ou só o texto (<code>has_sprite</code>, 0 ou 1) e quanto tempo ela ficou aberta em FAIXA (<code>duration</code>, 0 a 3 — nunca segundos).</td></tr>
   <tr><td><code>checkin_commit</code></td><td>Que você fechou o check-in assumindo a meta do dia, com quantos focos escolheu (<code>focus_count</code>, 0 a 3).</td></tr>
   <tr><td><code>unlock_dismiss</code></td><td>Que você fechou a tela de compra tocando em "Agora não", com a mesma propriedade <code>reason</code> de <code>unlock_view</code>.</td></tr>
   <tr><td><code>haunted_done</code></td><td>Que uma tarefa que estava parada há dias foi concluída. Nunca o nome nem o conteúdo dela.</td></tr>
@@ -133,6 +133,9 @@
   <tr><td><code>evolve</code></td><td>Que a criatura evoluiu (<code>level</code>, 1 a 4).</td></tr>
   <tr><td><code>dungeon_run</code></td><td>Que você terminou uma partida da masmorra, com quantos andares limpou (<code>floors</code>, 1 a 5).</td></tr>
   <tr><td><code>bond_level</code></td><td>Que o nível de vínculo subiu (<code>level</code>, um número).</td></tr>
+  <tr><td><code>after_bad_day</code></td><td>Que você voltou depois de um dia ruim, com a distância em FAIXA (<code>gap</code>, 0 a 3 — nunca a data) e se o app foi aberto (<code>kind</code>). Serve para saber se o convite de carinho funciona; a marca do dia ruim fica no seu aparelho e nunca é enviada.</td></tr>
+  <tr><td><code>app_open</code></td><td>De onde o app foi aberto (<code>source</code>: direto, notificação, widget ou atalho). Existe para uma decisão só: cortar notificação que traz gente e não serve para nada.</td></tr>
+  <tr><td><code>push_optout</code></td><td>Que você desligou as notificações. Sem detalhe nenhum — é o fato, não o motivo.</td></tr>
   <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
 </table>
 <p>
@@ -298,7 +301,7 @@
   <tr><td><code>demo_cap_hit</code></td><td>That you hit the free mode's daily creation limit, with the <code>path</code> property: from which screen.</td></tr>
   <tr><td><code>activity_create</code></td><td>That an activity was created, with <code>kind</code> (task or habit) and <code>path</code> (from which screen). <strong>Never</strong> its name or its contents.</td></tr>
   <tr><td><code>week_active</code></td><td>Once a week, two numbers from 0 to 7: <code>active_days</code>, on how many days you completed something, and <code>goal_days</code>, on how many you reached your own daily goal. <strong>The counting happens on your device</strong> — only those two already-closed numbers leave it. No timeline of you is ever sent or stored.</td></tr>
-  <tr><td><code>reveal_seen</code></td><td>That you reached the creature reveal screen, and whether it showed the image or only text (<code>has_sprite</code>, 0 or 1).</td></tr>
+  <tr><td><code>reveal_seen</code></td><td>That you reached the creature reveal screen, and whether it showed the image or only text (<code>has_sprite</code>, 0 or 1) and how long it stayed open as a RANGE (<code>duration</code>, 0 to 3 — never seconds).</td></tr>
   <tr><td><code>checkin_commit</code></td><td>That you closed the check-in committing to the day's goal, with how many focus items you picked (<code>focus_count</code>, 0 to 3).</td></tr>
   <tr><td><code>unlock_dismiss</code></td><td>That you closed the purchase screen by tapping "Not now", with the same <code>reason</code> property as <code>unlock_view</code>.</td></tr>
   <tr><td><code>haunted_done</code></td><td>That a task left untouched for days got finished. Never its name or contents.</td></tr>
@@ -309,6 +312,9 @@
   <tr><td><code>evolve</code></td><td>That the creature evolved (<code>level</code>, 1 to 4).</td></tr>
   <tr><td><code>dungeon_run</code></td><td>That you finished a dungeon run, with how many floors you cleared (<code>floors</code>, 1 to 5).</td></tr>
   <tr><td><code>bond_level</code></td><td>That the bond level went up (<code>level</code>, a number).</td></tr>
+  <tr><td><code>after_bad_day</code></td><td>That you came back after a bad day, with the distance as a RANGE (<code>gap</code>, 0 to 3 — never a date) and whether the app was opened (<code>kind</code>). It exists to tell whether the care invitation works; the bad-day marker stays on your device and is never sent.</td></tr>
+  <tr><td><code>app_open</code></td><td>Where the app was opened from (<code>source</code>: direct, notification, widget or shortcut). It exists for one decision only: cutting notifications that bring people in for nothing.</td></tr>
+  <tr><td><code>push_optout</code></td><td>That you turned notifications off. No detail at all — the fact, not the reason.</td></tr>
   <tr><td colspan="2">In addition, the events above that concern your account carry the <code>tier</code> property: whether you are on the free or the full mode. That alone — nothing else from your account.</td></tr>
 </table>
 <p>
