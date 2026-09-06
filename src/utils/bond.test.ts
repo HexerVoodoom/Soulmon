@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  BOND_LAST_TITLED_LEVEL,
   bondXP, applyBondXP, bondXPForDay, bondCapSource, BOND_DAILY_CAP,
   bondLevelFor, xpForLevel, bondProgress, bondRewardFor, bondRewardLadder,
   bondTitle, unclaimedBondRewards,
@@ -277,7 +278,13 @@ describe('títulos', () => {
     expect(bondTitle(2, 'pt-BR')).toBe('Companheiro');
     expect(bondTitle(5, 'pt-BR')).toBe('Companheiro'); // mantém o mais alto alcançado
     expect(bondTitle(6, 'en')).toBe('Confidant');
-    expect(bondTitle(99, 'pt-BR')).toBe('Vínculo de uma Vida');
+    // WP4.3 — a escada continua depois do 13 (títulos de 3 em 3 até o 31).
+    // Antes ela parava ali, e o L13 cai por volta do dia 25–35: exatamente
+    // quando o jogador provou que fica, o Vínculo parava de dizer qualquer
+    // coisa. O topo declarado agora é o 31.
+    expect(bondTitle(13, 'pt-BR')).toBe('Vínculo de uma Vida');
+    expect(bondTitle(16, 'pt-BR')).toBe('Guardião dos Dias');
+    expect(bondTitle(99, 'pt-BR')).toBe('Além da Conta');
   });
 
   it('todo título tem os dois idiomas preenchidos', () => {
@@ -305,5 +312,34 @@ describe('entrega de recompensas (bondRewardsClaimed — o nível NUNCA é persi
   it('um save antigo recebe as recompensas retroativas de graça', () => {
     // não fez nada de novo: só tinha totalXP acumulado
     expect(unclaimedBondRewards(900, []).length).toBeGreaterThan(0);
+  });
+});
+
+describe('WP4.3 — o Vínculo não trava no nível 13', () => {
+  it('todo nível com título é recompensa, até o 31', () => {
+    // `bondRewardFor` devolvia null a partir do 14: a trilha terminava em
+    // silêncio bem quando o jogador acabou de provar que fica.
+    for (const n of [16, 19, 22, 25, 28, 31]) {
+      const r = bondRewardFor(n);
+      expect(r, `nível ${n} sem recompensa`).toBeTruthy();
+      expect(r!.kind).toBe('title');
+      expect(r!.namePt).toContain('Título');
+      expect(r!.nameEn).toContain('Title');
+    }
+  });
+
+  it('a escada acaba num lugar DECLARADO', () => {
+    // Acabar num ponto declarado é diferente de parar sem aviso no 14.
+    expect(BOND_LAST_TITLED_LEVEL).toBe(31);
+    expect(bondRewardFor(BOND_LAST_TITLED_LEVEL)).toBeTruthy();
+    expect(bondRewardFor(BOND_LAST_TITLED_LEVEL + 1)).toBeNull();
+  });
+
+  it('tudo continua COSMÉTICO — a régua das moedas não é tocada', () => {
+    for (const n of [16, 19, 22, 25, 28, 31]) {
+      const r = bondRewardFor(n)!;
+      expect(['title', 'furniture', 'bg']).toContain(r.kind);
+      expect(JSON.stringify(r)).not.toMatch(/credits|gamePoints|emblems|bits/i);
+    }
   });
 });

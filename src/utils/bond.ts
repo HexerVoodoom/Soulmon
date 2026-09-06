@@ -335,12 +335,36 @@ export interface BondReward {
  * Títulos — o par EN/PT vive AQUI e é lido por `bondTitle`.
  * Um título é puro texto sob o nome do pet: zero efeito de jogo.
  */
+/**
+ * WP4.3 — A ESCADA CONTINUA DEPOIS DO 13.
+ *
+ * `bondRewardFor` devolvia `null` a partir do nível 14, e o L13 cai por volta
+ * do dia 25–35: exatamente quando o jogador provou que fica, o Vínculo — o
+ * sistema que existe para dizer "estamos juntos há tempo" — parava de dizer
+ * qualquer coisa. Um sistema de relação que trava é uma relação que acabou.
+ *
+ * A continuação é por TÍTULO, de três em três níveis até o 31, e nada mais:
+ * tudo cosmético, como a régua das moedas já obriga. Um título é a recompensa
+ * certa aqui porque ele não compete com a loja (que a essa altura já foi
+ * esvaziada) nem infla economia nenhuma — ele só nomeia o tempo.
+ */
 const BOND_TITLES: ReadonlyArray<{ level: number; en: string; pt: string }> = [
   { level: 2, en: 'Companion', pt: 'Companheiro' },
   { level: 6, en: 'Confidant', pt: 'Confidente' },
   { level: 10, en: 'Kindred Spirit', pt: 'Alma Irmã' },
   { level: 13, en: 'Lifelong Bond', pt: 'Vínculo de uma Vida' },
+  // ── Depois do 13: de três em três, até o 31. ──────────────────────────
+  { level: 16, en: 'Keeper of Days', pt: 'Guardião dos Dias' },
+  { level: 19, en: 'Old Friend', pt: 'Velho Amigo' },
+  { level: 22, en: 'Weathered Together', pt: 'Curtidos Juntos' },
+  { level: 25, en: 'Two of a Kind', pt: 'Dois de Um Só' },
+  { level: 28, en: 'Written in Us', pt: 'Escrito na Gente' },
+  { level: 31, en: 'Beyond Counting', pt: 'Além da Conta' },
 ];
+
+/** O último nível com título. Depois dele a escada acaba de verdade — e acabar
+ *  num lugar declarado é diferente de parar sem aviso no 14. */
+export const BOND_LAST_TITLED_LEVEL = 31;
 
 /**
  * A escada de recompensas.
@@ -373,7 +397,21 @@ const BOND_REWARDS: readonly BondReward[] = [
 /** A recompensa daquele nível, ou `null` se o nível não dá nada. */
 export function bondRewardFor(level: number): BondReward | null {
   const n = Math.floor(safe(level, 0));
-  return BOND_REWARDS.find((r) => r.level === n) ?? null;
+  const daLista = BOND_REWARDS.find((r) => r.level === n);
+  if (daLista) return daLista;
+  /* WP4.3 — depois do 13, os títulos novos também SÃO recompensa.
+     Sem isto, `bondRewardFor` continuaria devolvendo `null` a partir do 14 e
+     a trilha do Vínculo terminaria em silêncio no dia 25–35 — bem quando o
+     jogador acabou de provar que fica. */
+  const titulo = BOND_TITLES.find((t) => t.level === n);
+  if (!titulo) return null;
+  return {
+    id: `bond-${n}-title`,
+    level: n,
+    kind: 'title',
+    namePt: `Título: ${titulo.pt}`,
+    nameEn: `Title: ${titulo.en}`,
+  };
 }
 
 /** Toda a escada, para a UI da trilha (mostrar o que vem a seguir). */
