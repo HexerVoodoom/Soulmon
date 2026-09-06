@@ -7058,6 +7058,9 @@ button.sm-px-node {
      colado no fim do arquivo faz o teste medir o bloco errado e desarmar em
      silêncio. Há guard travando esta sentinela — não a remova, e não abra
      bloco novo: acrescente a regra AQUI. */
+  /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
+     leitura ("ele reparou naquilo") sobrevive parada. */
+  .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* A sintonia do Visor (troca da arte de reserva pelo sprite próprio) vira
@@ -7591,4 +7594,17 @@ body {
      esfregar o pet que vive lá dentro. */
   pointer-events: none;
   animation: sm-visor-scan-once var(--sm2-dur-scan, 400ms) var(--sm2-ease, ease-out) 1 both;
+}
+
+/* WP3.2 — O OLHAR do pet para a tarefa assombrada.
+   Inclinação lenta e mínima, não um sobressalto: é o bicho reparando na
+   pilha, não te apontando o dedo. Movimento reduzido corta a animação e
+   deixa a inclinação parada (a leitura se mantém sem o balanço). */
+@keyframes sm-pet-haunted-look {
+  0%, 100% { transform: rotate(-4deg) translateX(-1px); }
+  50%      { transform: rotate(-7deg) translateX(-2px); }
+}
+.sm-pet-haunted {
+  animation: sm-pet-haunted-look 3.2s ease-in-out infinite;
+  transform-origin: 50% 90%;
 }

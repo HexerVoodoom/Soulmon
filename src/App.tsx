@@ -89,6 +89,7 @@ import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
 import { readingSeed } from './utils/newReading';
+import type { PetVoiceKind } from './utils/petVoice';
 import {
   applyRebirth, canRebirth, rebirthEscolaOptions, rebirthElementOptions,
 } from './utils/rebirth';
@@ -640,6 +641,15 @@ export default function App() {
   // comidas/hora ao mesmo jogador. Ver utils/careCaps.ts.
   // Bumped when a feed is refused for being full → pet says it's full.
   const [fullSignal, setFullSignal] = useState(0);
+  /** WP3.2 — os gestos que eram mudos. O `kind` escolhe a tabela de frases
+   *  (`utils/petVoice.ts`); o `n` é o que dispara. */
+  const [speakSignal, setSpeakSignal] = useState<{ n: number; kind: PetVoiceKind } | undefined>();
+  const falar = useCallback((kind: PetVoiceKind) => {
+    setSpeakSignal(prev => ({ n: (prev?.n ?? 0) + 1, kind }));
+  }, []);
+  /** O carinho fala UMA vez por sessão: o gesto é repetido dezenas de vezes
+   *  por dia, e um bicho que comenta toda esfregada vira ruído. */
+  const rubFalouRef = useRef(false);
   // Daily report: shown once per day, on the first open after the reset ran.
   const [showDailyReport, setShowDailyReport] = useState(false);
   // A virada do dia. Subiu para ANTES da geração incremental porque o
@@ -1415,6 +1425,18 @@ export default function App() {
    * que `bondLevel` evita (footgun 9). Some sozinho na virada porque o
    * `dayKey` muda; nada a limpar, nada a expirar.
    */
+  /**
+   * WP3.2 — há tarefa assombrada AGORA? É isto que faz o pet virar o olhar.
+   *
+   * `useMemo` sobre a lista, e não um efeito com timer: a assombração muda de
+   * estado no máximo uma vez por dia (é idade em dias), então recalcular a
+   * cada render da lista é mais barato e mais correto que um relógio.
+   */
+  const hauntedWatching = useMemo(
+    () => (gameState.tasks ?? []).some(t => isActive(t) && isHaunted(t, new Date())),
+    [gameState.tasks],
+  );
+
   const focoDoDiaCompleto = useMemo(
     () => focusComplete(
       gameState.tasks, gameState.completedTasks,
@@ -1502,9 +1524,11 @@ export default function App() {
     const text = MILESTONE_TEXT[tier];
     if (!text) return;
     playEvolve();
-    setMessageTrigger(prev => prev + 1);
+    // WP3.2: o marco ganhou fala PRÓPRIA. O `setMessageTrigger` genérico
+    // repetia a fala de humor do momento, que não tem nada a ver com o marco.
+    falar('milestone');
     toast.success(`${name} — ${language === 'pt-BR' ? text.pt : text.en}`);
-  }, [gameState, language]);
+  }, [gameState, language, falar]);
 
   const handleUpdateStep = (activityId: string, stepId: string) => {
     const activity = gameState.activities.find(a => a.id === activityId);
@@ -2023,7 +2047,14 @@ export default function App() {
         });
         // Microtask: React 18 agenda o flush do lote num microtask criado no
         // primeiro `setState`, então este roda DEPOIS do updater acima.
-        queueMicrotask(() => { if (concluiu) queueTaskGains(task.category); });
+        queueMicrotask(() => {
+          if (!concluiu) return;
+          queueTaskGains(task.category);
+          // A assombrada tem fala PRÓPRIA, e é de alívio. Concluir a que
+          // estava te olhando não pode soar igual a concluir qualquer uma —
+          // é a peça que transforma a pilha de culpa em recompensa.
+          falar(isHaunted(task, new Date()) ? 'haunted' : 'task');
+        });
       }, 3000);
     }
   };
@@ -2373,7 +2404,8 @@ export default function App() {
     if (careEvent?.type === 'poop') {
       handleCareEventComplete();
     }
-  }, [careEvent, handleCareEventComplete]);
+    falar('shower');
+  }, [careEvent, handleCareEventComplete, falar]);
 
   // Uncleaned poop drains 1 heart every 6 hours (paused while sleeping). The
   // clock starts when a poop is on screen and stops the moment it's cleaned.
@@ -3537,6 +3569,10 @@ export default function App() {
       return;
     }
     playFeed();
+    if (!rubFalouRef.current) {
+      rubFalouRef.current = true;
+      falar('rub');
+    }
     // O teto é reconferido sobre o `prev` — quem manda é a regra pura, sobre o
     // registro que está no save. Antes chegava aqui `{ healed: 0 }` fixo, o que
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
@@ -4311,6 +4347,8 @@ export default function App() {
                 isSleeping={isSleeping}
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
+                speakSignal={speakSignal}
+                hauntedWatching={hauntedWatching}
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
                 aiSettings={aiSettings}

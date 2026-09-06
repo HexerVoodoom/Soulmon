@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo } from 
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
+import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { PixelButton } from './pixel/PixelKit';
 import { HomeHud } from './pixel/HomeHud';
 import { Icon } from './ui/Icon';
@@ -144,6 +145,13 @@ interface CompanionHUDProps {
   maxEnergyPoints?: number; // energy bars = the stage's daily task requirement
   fullSignal?: number; // bumped when a feed is refused → pet says it's full
   healCapSignal?: number; // bumped when rubbing can't heal (daily cap reached)
+  /** WP3.2 — fala nos momentos que eram mudos. Mesmo padrão de `fullSignal`:
+   *  um contador que só cresce, e o `kind` diz QUAL frase. As frases vivem em
+   *  `utils/petVoice.ts` (o teste de tom varre lá, não aqui). */
+  speakSignal?: { n: number; kind: PetVoiceKind };
+  /** WP3.2 — há tarefa assombrada na lista? O sprite VIRA O OLHAR enquanto
+   *  houver. É o "o pet olha" que o `CLAUDE.md` prometia e não existia. */
+  hauntedWatching?: boolean;
   equippedBackground?: string | null; // shop backdrop id for the pet box
   /** Decoração equipada por espaço do palco (utils/petStage.ts). */
   equippedDecor?: Partial<Record<SlotId, string>>;
@@ -204,6 +212,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   maxEnergyPoints,
   fullSignal = 0,
   healCapSignal = 0,
+  speakSignal,
+  hauntedWatching = false,
   equippedBackground = null,
   equippedDecor = {},
   trophies = [],
@@ -431,6 +441,16 @@ export const CompanionHUD = memo(function CompanionHUD({
       : ['So much affection today! Hehe', 'I love it... but no more healing today!', 'Petting feels great! It heals again tomorrow.'];
     speak(lines[Math.floor(Math.random() * lines.length)], 3500);
   }, [healCapSignal]);
+
+  // WP3.2 — os quatro gestos mudos ganham voz. Um efeito só, chaveado pelo
+  // contador: a fala é do gesto, e o `kind` escolhe a tabela.
+  useEffect(() => {
+    if (!speakSignal?.n) return;
+    speak(petVoiceLine(speakSignal.kind, language === 'pt-BR', Math.random()), 3500);
+    // `kind` fora das deps de propósito: quem dispara é a mudança do CONTADOR.
+    // Com `kind` na lista, trocar de idioma ou remontar repetiria a fala.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speakSignal?.n]);
 
   // One-time coach mark: teach the rub-to-heal gesture the first time the pet
   // is hurt (it's the only way to heal, and gestures aren't discoverable).
@@ -1240,7 +1260,13 @@ export const CompanionHUD = memo(function CompanionHUD({
                      `SENTINELA-MOVIMENTO-REDUZIDO-CANONICO` do `index.css` —
                      aqui, ao contrário da varredura, não se corta em JS, porque
                      tirar a classe tiraria o elemento do alcance dessa regra. */
-                  className="object-contain sm-visor-swap"
+                  /* WP3.2 — o OLHAR. Enquanto houver tarefa assombrada na
+                     lista, o sprite se inclina para ela (`sm-pet-haunted`,
+                     index.css). É o "o pet olha" que o CLAUDE.md prometia e
+                     que não existia em lugar nenhum deste arquivo. É gesto,
+                     não cobrança: nenhum texto acompanha, nada fica vermelho
+                     e a inclinação some sozinha quando a pilha esvazia. */
+                  className={`object-contain sm-visor-swap${hauntedWatching ? ' sm-pet-haunted' : ''}`}
                   key={sprite}
                   style={{
                     width: PET_RENDER, height: PET_RENDER,

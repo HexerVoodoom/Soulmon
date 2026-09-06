@@ -73,7 +73,7 @@ Mais quatro menores, todos com símbolo: o `HabitRhythm.shielded[]` **já existe
 | Guia E, P0 #1 | "Instrumentar os ~20 eventos de telemetria" | 10 eventos já existem; falta leitura e coorte | Reescrito como WP0.1/WP0.2 |
 | Guia F | plano de telemetria como se fosse do zero | `EVENT_SCHEMA` duplicado em 2 arquivos com paridade testada | Eventos novos entram nos DOIS (WP0.5) |
 | Guia E, P0 #14 | "1ª evolução alcançável em ≤5 dias (auditar)" | Já é 4 dias perfeitos. O problema é o **oposto**: a árvore inteira acaba em 14 | Substituído por WP4.1 |
-| `CLAUDE.md` 👻 Assombrada | "o pet olha" | NÃO ENCONTRADO no `CompanionHUD.tsx` | WP3.2 implementa; até lá, corrigir a linha |
+| ~~`CLAUDE.md` 👻 Assombrada~~ | "o pet olha" | ✅ **verdade desde 06/09/2026** — `hauntedWatching` + `sm-pet-haunted` | WP3.2 VERIFICADO |
 | `bond.ts` comentário de `BOND_REWARDS` | título "aparece na home, sob o nome do pet" | Só em `StatsPage` e `TournamentPage` | WP3.3 |
 | `public/privacidade.html:111` | "sete eventos" | São dez | WP0.3 |
 | `progression.ts` `daysToEvolve` | valores 10/20/30/40 | nunca lidos em produção | WP4.1 (decisão) |
