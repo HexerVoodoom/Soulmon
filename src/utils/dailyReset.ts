@@ -723,6 +723,14 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // empilhamento de punição que afunda o Habitica.
   // -------------------------------------------------------------------------
   const rhythms: Record<string, HabitRhythm> = { ...(prev.habitRhythms ?? {}) };
+  /* Quantos escudos esta virada CONSUMIU (WP2.15).
+     Vai no `lastDayReport` pelo mesmo motivo que `saveDay` e `returnGraceLeft`:
+     é registro da virada, e este é o único objeto deste arquivo que atravessa a
+     hidratação inteiro. Não é para a UI — é o dado que a decisão D3 (escudo
+     3→2) vai precisar, e que hoje não existe: `applyMissedDay` gasta o escudo
+     em silêncio, de propósito, e ninguém nunca soube com que frequência ele
+     salvou alguém. */
+  let shieldsSpent = 0;
   if (!wasAway) {
     availableActivities.forEach((activity: any) => {
       const current = rhythms[activity.id] ?? emptyRhythm();
@@ -737,6 +745,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       const next = isComplete
         ? completeHabit(current, yesterdayString)
         : applyMissedDay(current, yesterdayString);
+      // A conta é ANTES do `earnShield`: ganhar um escudo no mesmo dia em que
+      // gastou outro não pode esconder o gasto.
+      if (next.shields < current.shields) shieldsSpent += current.shields - next.shields;
       rhythms[activity.id] = earnShield(next, now);
     });
   }
@@ -799,6 +810,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       saveDay: Math.min(lived + Math.max(1, daysAway), 9999),
       /** Viradas de rampa que ainda restam depois de um retorno. */
       returnGraceLeft: graceLeftAfter,
+      /** Escudos de descanso consumidos NESTA virada (WP2.15). */
+      shieldsSpent,
       /** Esta virada não cobrou HP por carência (novo save / rampa de retorno). */
       forgiven: forgivesHP,
     },

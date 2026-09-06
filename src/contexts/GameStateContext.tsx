@@ -299,6 +299,8 @@ export interface GameState {
     degenerated: boolean;
     /** Voltou depois de ≥ABSENCE_FORGIVENESS_DAYS fora: relatório em modo acolhida. */
     welcomeBack?: boolean;
+    /** Escudos de descanso consumidos na virada (WP2.15). */
+    shieldsSpent?: number;
     daysAway?: number;
     /** Virada de segunda: ganhou o meio coração do alívio semanal. */
     weeklyRelief?: boolean;

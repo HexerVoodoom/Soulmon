@@ -66,7 +66,7 @@ import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey } from './utils/playerDay';
-import { awardBondXP } from './utils/bond';
+import { awardBondXP, bondLevelFor } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -2771,6 +2771,60 @@ export default function App() {
     if (readLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN) === report.date) return;
     setShowDailyReport(true);
   }, [gameState.lastDayReport]);
+
+  /**
+   * WP2.15 — os DOIS eventos da virada, emitidos aqui e não lá dentro.
+   *
+   * `welcome_back` e `shield_used` estavam no `EVENT_SCHEMA` desde o WP0.5 e
+   * **nunca eram emitidos**: o schema existia, a régua não. Sem eles, a decisão
+   * D3 (baixar `REST_SHIELD_MAX` de 3 para 2) seria tomada no escuro — o escudo
+   * é consumido em silêncio de propósito, e por isso ninguém nunca soube com
+   * que frequência ele salvou alguém.
+   *
+   * **Por que num efeito, e não em `computeDailyReset`:** a virada roda dentro
+   * de `setGameState(prev => …)`, e o StrictMode invoca updater duas vezes
+   * (footgun 6) — telemetria ali contaria tudo em dobro. O efeito observa o
+   * RESULTADO, que é a única leitura honesta.
+   *
+   * A trava é a mesma chave que já impede o relatório de reaparecer: um
+   * `lastDayReport` que já foi contado não conta de novo, nem depois de recarregar.
+   */
+  const viradaContadaRef = useRef<string | null>(null);
+  useEffect(() => {
+    const report = gameState.lastDayReport;
+    if (!report?.date) return;
+    if (viradaContadaRef.current === report.date) return;
+    viradaContadaRef.current = report.date;
+
+    // `days` é FAIXA, nunca o número cru: dia exato de retorno, cruzado com o
+    // resto, começa a descrever uma pessoa. 0 = voltou no dia seguinte,
+    // 1 = 2–4 dias, 2 = 5–14, 3 = 15+.
+    if (report.welcomeBack) {
+      const d = Number(report.daysAway ?? 0);
+      track('welcome_back', { days: d <= 1 ? 0 : d <= 4 ? 1 : d <= 14 ? 2 : 3 });
+    }
+    // UMA vez por virada em que ALGUM escudo foi gasto — a pergunta da D3 é
+    // "quantos dias o escudo salvou", que é por dia e não por hábito. O evento
+    // não carrega props, então contar por hábito não seria representável.
+    if (Number(report.shieldsSpent ?? 0) > 0) track('shield_used');
+  }, [gameState.lastDayReport]);
+
+  /**
+   * WP2.15 — `bond_level`, o terceiro evento que existia e não saía.
+   *
+   * O nível do Vínculo NUNCA é persistido (é sempre `bondLevelFor(totalXP)`,
+   * ver o footgun 9): então o evento também é derivado, e o que se compara é o
+   * nível DERIVADO agora contra o da renderização anterior. Emitir na subida e
+   * só na subida — o nível não desce, e um evento por render seria ruído.
+   */
+  const bondLevelRef = useRef<number | null>(null);
+  useEffect(() => {
+    const nivel = bondLevelFor(gameState.totalXP ?? 0);
+    const anterior = bondLevelRef.current;
+    bondLevelRef.current = nivel;
+    // `null` é a montagem: quem abre o app no nível 7 não "subiu" para o 7.
+    if (anterior !== null && nivel > anterior) track('bond_level', { level: nivel });
+  }, [gameState.totalXP]);
 
   /**
    * "Eu fiz, só esqueci de marcar." Devolve os corações que a virada cobrou —

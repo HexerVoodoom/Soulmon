@@ -372,6 +372,34 @@ export const CompanionHUD = memo(function CompanionHUD({
     speak(response, 5000);
   }, [speak]);
 
+  /**
+   * WP3.8 — O CANAL DE REAÇÃO DO PET, que existia e estava desligado.
+   *
+   * O `App.tsx` incrementa `messageTrigger` em **treze** pontos (concluir
+   * tarefa, alimentar, limpar cocô, brincar, evoluir, degenerar, editar, o
+   * `useCareSystem` inteiro…) e calcula `getCompanionMessage()` a cada render.
+   * As duas props chegavam aqui, eram desestruturadas e **nenhuma era lida**:
+   * todo sinal de "o pet deveria dizer alguma coisa agora" caía no chão, e o
+   * bicho só falava no relógio dele, nunca sobre o que você acabou de fazer.
+   *
+   * Um companheiro que não reage não é companheiro, é papel de parede animado —
+   * e o `triggerMessage` sozinho, sem consumidor, é a assinatura desse defeito.
+   *
+   * **A dependência é SÓ o pulso, e isso é a metade importante.** `message` é
+   * derivado do estado e muda o tempo todo (vida, energia, sono, progresso do
+   * dia); se ele entrasse nas deps, o pet falaria a cada mudança de estado — e
+   * bicho que fala sozinho o tempo todo é exatamente o bipe que fez as escolas
+   * banirem o Tamagotchi. Por isso o texto vem de um ref: fala quando ALGO
+   * ACONTECEU, com o que for verdade naquele instante.
+   */
+  const mensagemAtualRef = useRef(message);
+  mensagemAtualRef.current = message;
+  useEffect(() => {
+    // 0 é a montagem: ninguém fez nada ainda, e abrir o app não é um evento.
+    if (!triggerMessage) return;
+    speak(mensagemAtualRef.current);
+  }, [triggerMessage, speak]);
+
   useEffect(() => {
     if (!feedAnim) return;
     setEatingEmoji(feedAnim.emoji);
