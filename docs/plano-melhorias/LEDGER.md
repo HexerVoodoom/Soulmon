@@ -67,13 +67,13 @@ rápido; a fonte são os arquivos de `ledger/`.
 
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
-| medição (13) | 8 | — | — | — | **5** (0.3, 0.5, 0.7, 0.13, 0.14) | — |
+| medição (13) | 7 | — | — | **1** (0.1, falta a chave) | **5** (0.3, 0.5, 0.7, 0.13, 0.14) | — |
 | nascimento (17) | 14 | — | — | — | **3** (1.7, 1.9, 1.10) | — |
-| constância (15) | 12 | — | — | — | **2** (2.3, 2.9) | **1** (2.1, por D3) |
-| vínculo (11) | 10 | — | — | — | **1** (3.7) | — |
-| permanência (21) | 17 | — | — | — | **3** (4.9, 4.17, 4.20) | **1** (4.4) |
-| sustento (9) | 8 | — | — | — | **1** (5.5) | — |
-| **Total (87)** | **69** | **ZERO** | — | — | **15** | **2** |
+| constância (15) | 9 | — | — | — | **5** (2.3, 2.9, 2.10, 2.12, 2.15) | **1** (2.1, por D3) |
+| vínculo (11) | 9 | — | — | — | **2** (3.7, 3.8) | — |
+| permanência (21) | 13 | — | — | — | **7** (4.9, 4.11, 4.15, 4.16, 4.17, 4.20 + 4.4 recusado à parte) | **1** (4.4) |
+| sustento (10) | 6 | — | — | — | **4** (5.2, 5.5, 5.6, 5.9) | — |
+| **Total (88)** | **58** | **ZERO** | — | **1** | **26** | **2** |
 
 > **06/09/2026 — a coluna BLOQUEADO zerou.** As dezesseis decisões do dono foram
 > respondidas de uma vez (§15 do plano). Onze pacotes saíram do bloqueio; um
@@ -174,4 +174,34 @@ renderam achado maior que o próprio pacote:
   do GOAL_STEP como se fosse promessa de criatura melhor. **Aceite que ninguém
   rodou é hipótese** — é a terceira vez que essa frase se paga.
 
-_Última consolidação: 06/09/2026 (sprint 2, lote 1 + as 16 decisões do dono)._
+**Sprint 2 completo (06/09/2026) — 7 lotes, 26 pacotes VERIFICADOS.** Depois
+das 16 decisões, o sprint implementou o que elas destravaram e o que a rodada 4
+tinha achado. O fio condutor de quase tudo foi o mesmo: **código escrito,
+testado e mudo.**
+
+| Lote | Entregou |
+|---|---|
+| 1 | WP4.17, WP4.20, WP1.9, WP1.10, WP0.13, WP0.14 |
+| 2 | WP5.2 (D7+D15), WP5.6, WP5.9 (D12) |
+| 3 | WP4.1 (D5) |
+| 4 | WP3.8, WP2.15, WP4.15 |
+| 5 | WP4.11 (E3) |
+| 6 | WP0.1 (D1), WP4.16 |
+| 7 | WP2.10, WP2.12 |
+
+**Sete peças estavam escritas, testadas e sem consumidor**, e cada uma custava
+alguma coisa: as 12 recompensas do Vínculo que ninguém recebia; as estações,
+cuja medalha **não podia ser ganha por ninguém desde que o arquivo existe**; o
+canal de fala do pet, com treze pontos do app mandando sinal para o vazio; a
+oferta dos "5 minutos" e o selo de foco, os dois prometidos por escrito no guia;
+`daysToEvolve` e `EVOLVE_SEGMENTS`, dois números mortos ao lado do vivo. O
+padrão vale registrar: **quanto mais completo o módulo, menos óbvio que ele está
+mudo** — um arquivo com testes verdes parece um arquivo que funciona.
+
+Três achados foram maiores que o pacote que os encontrou: o `CompanionHUD`
+recebia três props do mesmo número e não desenhava nenhuma; `ONCE_PER_DAY`
+valia pela metade (o dedupe era um `if` literal para um evento só); e o
+diretório de amigos era **ordenado por rank**, o que faz dele um placar mesmo
+sem o número na tela.
+
+_Última consolidação: 06/09/2026 (sprint 2 completo)._

@@ -16,6 +16,30 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **06/09/2026 — SPRINT 2 COMPLETO: 7 lotes, 26 pacotes verificados.** O que as
+> decisões destravaram foi implementado no mesmo dia, e o fio condutor de quase
+> tudo foi **código escrito, testado e mudo**:
+> · **as 12 recompensas do Vínculo** (níveis 2–13) nunca chegavam a ninguém —
+> `bondRewardsClaimed` jamais era escrito. Só o título chegava, porque é
+> derivado, e era essa a única peça que não precisava de ninguém para funcionar
+> · **a medalha da estação NÃO PODIA SER GANHA por ninguém** desde que
+> `seasons.ts` existe: 500 linhas, teste próprio, cinco regras inegociáveis no
+> cabeçalho, zero consumidores · **o canal de fala do pet estava desligado**:
+> treze pontos do app mandavam "fale agora" e o HUD não lia nenhum · **a oferta
+> dos "5 minutos" e o selo dos 3 focos**, os dois prometidos por escrito no guia
+> e no CLAUDE.md, não existiam · **`daysToEvolve` + `EVOLVE_SEGMENTS`**: dois
+> números mortos ao lado do vivo, apagados junto com os campos de save que eles
+> alimentavam.
+> **Dinheiro parou de comprar coração pelos dois caminhos** (D7+D15) — e só por
+> isso a frase "pagar nunca deixa sua criatura mais forte" pôde entrar na tela
+> de compra, com teste amarrando a frase ao fato. **O perfil do amigo perdeu a
+> métrica de desempenho** (E3/#21) em três camadas, e a terceira ninguém tinha
+> visto: o diretório era ORDENADO por rank, o que faz dele um placar mesmo sem o
+> número aparecer. **O leitor de métricas existe** e espera só a chave (D1).
+> Três achados foram maiores que o pacote que os encontrou; estão no `LEDGER.md`.
+> Gate em cada lote: tsc app + desktop EXIT=0, vitest **193 arquivos · 2998
+> passed · 2 skipped**, build OK.
+
 > **06/09/2026 — AS 16 DECISÕES DO DONO, RESPONDIDAS. A coluna BLOQUEADO zerou.**
 > Estavam abertas desde a criação do plano; foram respondidas de uma vez (§15 do
 > `PLANO-MELHORIAS.md`). Onze pacotes saíram do bloqueio, um virou RECUSADO com
