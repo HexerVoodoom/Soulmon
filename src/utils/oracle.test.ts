@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   normalizeName, reduceNumber, computeNumerology, westernSunSign,
   approximateAscendant, computeChinese, computeVedic, generateOracle,
-  ELEMENT_ORDER, ROLE_ORDER, ALIGNMENT_ORDER, REALM_ORDER,
+  ELEMENT_ORDER, ROLE_ORDER, ALIGNMENT_ORDER, REALM_ORDER, ORACLE_QUESTIONS,
   type OracleInput,
 } from './oracle';
 
@@ -437,5 +437,43 @@ describe('generateOracle', () => {
     expect(Number.isInteger(r.seed)).toBe(true);
     const again = generateOracle(INPUT, r.seed);
     expect(again.archetype.phrase.pt).toBe(r.archetype.phrase.pt);
+  });
+});
+
+describe('WP1.11 — o hint diz DE ONDE a resposta entra, nunca como a criatura vai ser', () => {
+  /**
+   * A trava do pacote. "Isso decide o papel dela" é ORIGEM; "isso deixa ela
+   * teimosa" é ALVO — e alvo transforma a leitura num formulário de
+   * otimização: a pessoa passa a responder o que rende o bicho que ela quer, e
+   * a leitura deixa de ser sobre ela.
+   */
+  const PERSONALIDADE_FECHADA = [
+    'teimos', 'brincalh', 'tímid', 'timid', 'stubborn', 'playful', 'shy',
+    'agressiv', 'aggressive', 'preguiç', 'lazy', 'fofo', 'cute',
+  ];
+
+  it('as seis perguntas têm hint', () => {
+    for (const q of ORACLE_QUESTIONS) {
+      expect(q.hint, `pergunta '${q.id}' sem hint`).toBeTruthy();
+      expect(q.hint!.pt.length).toBeGreaterThan(0);
+      expect(q.hint!.en.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('nenhum hint promete traço de personalidade', () => {
+    for (const q of ORACLE_QUESTIONS) {
+      const texto = `${q.hint!.pt} ${q.hint!.en}`.toLowerCase();
+      for (const proibida of PERSONALIDADE_FECHADA) {
+        expect(texto, `o hint de '${q.id}' vira alvo ao dizer "${proibida}"`).not.toContain(proibida);
+      }
+    }
+  });
+
+  it('cada hint nomeia um EIXO da leitura', () => {
+    for (const q of ORACLE_QUESTIONS) {
+      const texto = `${q.hint!.pt} ${q.hint!.en}`.toLowerCase();
+      expect(texto, `o hint de '${q.id}' não diz de onde a resposta entra`)
+        .toMatch(/papel|role|alinhamento|alignment|elemento|element|reino|realm/);
+    }
   });
 });

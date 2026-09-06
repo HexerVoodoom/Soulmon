@@ -742,11 +742,25 @@ export interface OracleQuestion {
   id: string;
   text: LText;
   options: Array<{ id: string; text: LText; effects: QuestionEffects }>;
+  /**
+   * WP1.11 — o que esta pergunta ALIMENTA. Feedback de origem: o ritual
+   * pedia seis respostas e não dizia o que fazia com nenhuma delas, então
+   * ele lia como formulário em vez de leitura.
+   *
+   * ⚠️ TRAVA, e ela é o pacote inteiro: o hint diz DE ONDE a resposta entra
+   * (papel, alinhamento, elemento, reino), **nunca como a criatura vai ser**.
+   * "Isso decide o papel dela" é origem; "isso deixa ela teimosa" é um alvo,
+   * e alvo transforma a leitura num formulário de otimização — a pessoa passa
+   * a responder o que rende o bicho que ela quer, e a leitura deixa de ser
+   * sobre ela. Há teste rejeitando o vocabulário de personalidade fechada.
+   */
+  hint?: LText;
 }
 
 export const ORACLE_QUESTIONS: OracleQuestion[] = [
   {
     id: 'grupo',
+    hint: { pt: 'Isto alimenta o PAPEL dela — como ela se posiciona.', en: 'This feeds her ROLE — how she stands.' },
     text: { pt: 'Num grupo, você costuma ser quem...', en: 'In a group, you are usually the one who...' },
     options: [
       { id: 'protege', text: { pt: 'Protege e segura as pontas', en: 'Protects and holds the line' }, effects: { roles: { tanque: 4 }, alignments: { benevolencia: 2 }, elements: { terra: 2 } } },
@@ -758,6 +772,7 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
   },
   {
     id: 'objetivo',
+    hint: { pt: 'Isto alimenta o ALINHAMENTO — de onde vem a força dela.', en: 'This feeds the ALIGNMENT — where her strength comes from.' },
     text: { pt: 'Seu objetivo de vida se parece mais com...', en: 'Your life goal looks most like...' },
     options: [
       { id: 'conquistar', text: { pt: 'Conquistar e deixar minha marca', en: 'Conquering and leaving my mark' }, effects: { alignments: { poder: 4 }, elements: { fogo: 1 }, roles: { fisico: 1 } } },
@@ -768,6 +783,7 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
   },
   {
     id: 'pressao',
+    hint: { pt: 'Isto alimenta o ELEMENTO — a matéria de que ela é feita.', en: 'This feeds the ELEMENT — what she is made of.' },
     text: { pt: 'Sob pressão, você...', en: 'Under pressure, you...' },
     options: [
       { id: 'explode', text: { pt: 'Explode e resolve com intensidade', en: 'Explode and solve with intensity' }, effects: { elements: { fogo: 3 }, alignments: { poder: 2 } } },
@@ -779,6 +795,7 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
   },
   {
     id: 'energia',
+    hint: { pt: 'Isto alimenta o ELEMENTO e o ritmo dela.', en: 'This feeds the ELEMENT and her rhythm.' },
     text: { pt: 'O que te dá mais energia?', en: 'What energizes you the most?' },
     options: [
       { id: 'sol', text: { pt: 'Sol, gente e movimento', en: 'Sun, people and motion' }, effects: { elements: { luz: 3 }, alignments: { benevolencia: 1 } } },
@@ -789,6 +806,7 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
   },
   {
     id: 'lugar',
+    hint: { pt: 'Isto alimenta o REINO — de onde ela vem.', en: 'This feeds the REALM — where she comes from.' },
     text: { pt: 'Onde você se imagina vivendo?', en: 'Where do you imagine yourself living?' },
     options: [
       { id: 'praia', text: { pt: 'Perto do mar', en: 'Near the sea' }, effects: { realms: { oceano: 4 }, elements: { agua: 1 } } },
@@ -801,6 +819,7 @@ export const ORACLE_QUESTIONS: OracleQuestion[] = [
   },
   {
     id: 'conflito',
+    hint: { pt: 'Isto alimenta o ALINHAMENTO e o PAPEL.', en: 'This feeds the ALIGNMENT and the ROLE.' },
     text: { pt: 'Diante de um conflito injusto, você...', en: 'Facing an unfair conflict, you...' },
     options: [
       { id: 'enfrenta', text: { pt: 'Enfrenta de frente, custe o que custar', en: 'Face it head-on, whatever it takes' }, effects: { alignments: { poder: 3 }, roles: { fisico: 2 } } },

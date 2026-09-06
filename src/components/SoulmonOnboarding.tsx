@@ -916,11 +916,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             hint={isPt
               ? 'Você pode ler os dois documentos agora — eles abrem numa aba nova e seu progresso aqui não se perde.'
               : 'You can read both documents now — they open in a new tab and nothing here is lost.'}>
-            <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 16px' }}>
-              {isPt
-                ? 'Para criar sua conta, precisamos que você leia (ou pelo menos saiba que existem) nossos Termos de Uso e nossa Política de Privacidade. Neles explicamos o que o Soulmon faz com seus dados e o que esperamos um do outro.'
-                : 'To create your account, we need you to read (or at least know they exist) our Terms of Use and our Privacy Policy. They explain what Soulmon does with your data and what we expect from each other.'}
-            </p>
+            {/* WP1.13 — o parágrafo de abertura SAIU. Ele dizia, em três
+                linhas, exatamente o que o hint acima e os dois botões abaixo
+                já dizem: que existem dois documentos e do que eles tratam.
+                Texto redundante numa tela de consentimento não é neutro — ele
+                é a razão pela qual ninguém lê a tela inteira, e o que se
+                perde na rolagem é justamente a caixa de aceite.
+                O que NÃO mudou, e é o que vale juridicamente: os dois links,
+                a caixa fora do bloco de links, o campo de idade do caminho
+                demo e a ORDEM. A régua é `utils/consent.ts` e seus testes,
+                não a contagem de parágrafos. */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
               <a
                 href={isPt ? '/termos.html' : '/termos.html#en'}
@@ -1155,6 +1160,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   );
                 })}
               </div>
+              {/* WP1.11 — FEEDBACK DE ORIGEM. O ritual pedia seis respostas e
+                  não dizia o que fazia com nenhuma, então lia como
+                  formulário. O hint diz de ONDE a resposta entra — nunca como
+                  a criatura vai ficar: alvo transformaria a leitura num
+                  formulário de otimização, e a pessoa passaria a responder o
+                  que rende o bicho que ela quer. */}
+              {q.hint && <p style={{ ...sm2Hint, marginTop: 12 }}>{L(q.hint)}</p>}
             </StepShell>
           );
         })()}
@@ -1401,9 +1413,31 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 marginTop: 24, padding: 16, borderRadius: 12,
                 backgroundColor: 'var(--sm2-primary-soft)',
               }}>
+                {/* WP1.14 — A CRIATURA FICA PRESENTE NA ESPERA.
+                    Esta é a tela onde a pessoa SAI do app para abrir o e-mail,
+                    e ela era só texto: quem sai daqui sai de um formulário. Com
+                    o desenho e uma fala do pet, quem sai deixa alguém
+                    esperando — e é isso que faz voltar. Sem sprite próprio,
+                    nada é desenhado (arte de reserva seria outra criatura). */}
+                {revealSprite && (
+                  <img
+                    src={revealSprite.url}
+                    alt={registerDisplayName}
+                    width={72}
+                    height={72}
+                    style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'block', margin: '0 auto 8px' }}
+                  />
+                )}
                 <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: 'var(--sm2-primary-ink)' }}>
                   {isPt ? 'Confira seu e-mail' : 'Check your email'}
                 </p>
+                {result && (
+                  <p style={{ ...sm2Hint, margin: '4px 0 0' }}>
+                    {isPt
+                      ? `${registerDisplayName} está esperando aqui.`
+                      : `${registerDisplayName} is waiting right here.`}
+                  </p>
+                )}
                 <p style={{ ...sm2Hint, marginTop: 6 }}>
                   {isPt
                     ? `Mandamos um link de acesso para ${email.trim().toLowerCase()}. Abra o link NESTE aparelho para continuar.`
