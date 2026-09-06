@@ -21,7 +21,7 @@ import { PET_BACKGROUNDS } from '../utils/backgrounds';
 import { CareSystem, CareEvent } from './CareSystem';
 import { ChatBox } from './ChatBox';
 import { Language } from '../utils/i18n';
-import { playShower, playVisorTune } from '../utils/sounds';
+import { playShower, playVisorTune, playPresence } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readFlag, writeFlag } from '../utils/safeStorage';
@@ -586,6 +586,8 @@ export const CompanionHUD = memo(function CompanionHUD({
      que o v-pet do gênero fala primeiro. Volta a acontecer quando a pessoa
      retorna à aba depois de ≥10 min; nem toda troca de aba é uma chegada. */
   const ultimaSaudacaoRef = useRef(0);
+  /** WP3.5 — o som de presença toca UMA vez por sessão. */
+  const presencaTocadaRef = useRef(false);
   useEffect(() => {
     const isPt = language === 'pt-BR';
     const saudar = () => {
@@ -684,6 +686,16 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // Handle Soulmon click — show preset phrase immediately, then fire API update
   const handlePetClick = () => {
+    /* WP3.5 (decisão D11) — O SOM DE PRESENÇA.
+       Uma vez por sessão, e SÓ em resposta a um gesto. Som que sai sozinho
+       não é presença, é alarme — foi o bipe do Tamagotchi que fez as escolas
+       banirem o bicho. Por isso ele mora aqui, no toque, e não no ciclo idle;
+       e por isso o `document.hidden` também barra (aba em segundo plano é
+       exatamente o caso em que "tem alguém aqui" seria um susto). */
+    if (!presencaTocadaRef.current && !document.hidden) {
+      presencaTocadaRef.current = true;
+      playPresence();
+    }
     const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
     const ratio = maxEnergy > 0 ? energyPoints / maxEnergy : 0;
     const hpRatio = maxHealthPoints > 0 ? healthPoints / maxHealthPoints : 0;

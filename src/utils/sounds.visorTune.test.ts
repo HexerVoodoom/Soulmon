@@ -177,3 +177,14 @@ describe('o chiado é curto, discreto e nunca alarmante', () => {
     ).toBeLessThanOrEqual(0.001);
   });
 });
+
+describe('WP3.5 (D11) — o som de presença existe e é curto', () => {
+  it('`playPresence` é exportado e não lança sem AudioContext', async () => {
+    // A fronteira da D11 (só em resposta a gesto, 1× por sessão) mora no
+    // CHAMADOR — `CompanionHUD.handlePetClick`. Aqui só se garante que o som
+    // existe e falha em silêncio onde não há áudio, como os outros.
+    const { playPresence } = await import('./sounds');
+    expect(typeof playPresence).toBe('function');
+    expect(() => playPresence()).not.toThrow();
+  });
+});

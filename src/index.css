@@ -7063,6 +7063,8 @@ button.sm-px-node {
   .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
   /* WP1.1: o casulo do reveal para de pulsar e continua sendo um casulo. */
   .sm-reveal-cocoon { animation: none !important; }
+  /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
+  .sm-milestone-pop { animation: none !important; }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* A sintonia do Visor (troca da arte de reserva pelo sprite próprio) vira
@@ -7643,3 +7645,14 @@ body {
   border: 2px solid var(--sm2-line, #2f4145);
   animation: sm-reveal-cocoon-pulse 1.6s ease-in-out infinite;
 }
+
+/* WP2.4 — a CERIMÔNIA do marco de hábito.
+   Uma pulsação curta, uma vez: o marco é raro e a pausa existe para
+   saboreá-lo. Movimento reduzido remove a animação (o overlay continua,
+   parado, e a informação é a mesma) — a regra mora no bloco canônico. */
+@keyframes sm-milestone-pop {
+  0%   { transform: scale(.7); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.sm-milestone-pop { animation: sm-milestone-pop .45s ease-out both; }

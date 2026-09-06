@@ -15,6 +15,8 @@ import { screen } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { CompanionHUD } from './CompanionHUD';
 import { PET_VOICE_LINES } from '../utils/petVoice';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const base = {
   companionMood: 'idle' as const,
@@ -106,5 +108,24 @@ describe('CompanionHUD — a sombra de contato (WP3.6)', () => {
     const sombra = container.querySelector('.sm2-pet-shadow') as HTMLElement;
     expect(sombra.getAttribute('aria-hidden')).toBe('true');
     expect(sombra.style.pointerEvents).toBe('none');
+  });
+});
+
+describe('CompanionHUD — o som de presença é resposta a GESTO (WP3.5 / D11)', () => {
+  it('não toca na montagem: abrir o app não é um gesto', () => {
+    // Som que sai sozinho não é presença, é alarme — foi o bipe que fez as
+    // escolas banirem o Tamagotchi.
+    const fonte = readFileSync(resolve(process.cwd(), 'src/components/CompanionHUD.tsx'), 'utf-8');
+    const idle = fonte.slice(fonte.indexOf('getIdlePhrase'), fonte.indexOf('getIdlePhrase') + 2000);
+    expect(idle).not.toContain('playPresence');
+  });
+
+  it('mora no toque, e uma vez por sessão', () => {
+    const fonte = readFileSync(resolve(process.cwd(), 'src/components/CompanionHUD.tsx'), 'utf-8');
+    const clique = fonte.slice(fonte.indexOf('const handlePetClick'), fonte.indexOf('const handlePetClick') + 900);
+    expect(clique).toContain('playPresence');
+    expect(clique, 'sem a trava, o som repete e vira ruído').toContain('presencaTocadaRef');
+    expect(clique, 'aba em segundo plano é o caso em que "tem alguém aqui" vira susto')
+      .toContain('document.hidden');
   });
 });

@@ -3000,7 +3000,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-nhIpOw/functionsRoutes-0.922026173400442.mjs
+// ../.wrangler/tmp/pages-2sbSVN/functionsRoutes-0.41724002478378996.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -95,6 +95,7 @@ import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
 import { FirstDayCard } from './components/FirstDayCard';
+import { MilestoneCeremony } from './components/MilestoneCeremony';
 import {
   applyRebirth, canRebirth, rebirthEscolaOptions, rebirthElementOptions,
 } from './utils/rebirth';
@@ -160,7 +161,7 @@ import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
 } from './utils/habitRhythm';
-import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
+import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
 
 /**
  * O rótulo de frequência de um hábito na lista.
@@ -636,6 +637,10 @@ export default function App() {
   /** WP5.7 — a Nova Leitura (o que era o reroll por sorteio). */
   const [newReadingOpen, setNewReadingOpen] = useState(false);
   const [rebirthOpen, setRebirthOpen] = useState(false);
+  /** WP2.4 — a cerimônia do marco. `null` = nenhuma acontecendo. */
+  const [milestoneCeremony, setMilestoneCeremony] = useState<
+    { tierIcon: string; habitName: string; text: string } | null
+  >(null);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
@@ -1575,7 +1580,22 @@ export default function App() {
     // WP3.2: o marco ganhou fala PRÓPRIA. O `setMessageTrigger` genérico
     // repetia a fala de humor do momento, que não tem nada a ver com o marco.
     falar('milestone');
-    toast.success(`${name} — ${language === 'pt-BR' ? text.pt : text.en}`);
+    /* WP2.4 — a CERIMÔNIA. Cruzar 7/21/66 dias era um som, um toast e uma
+       fala: três coisas que o app faz o tempo todo por qualquer motivo, ou
+       seja, o momento mais raro da constância era indistinguível de concluir
+       uma tarefa. Em movimento reduzido cai para o toast de sempre — quem
+       pediu menos movimento não recebe um overlay animado como consolo. */
+    const movimentoReduzido = typeof window !== 'undefined'
+      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (movimentoReduzido) {
+      toast.success(`${name} — ${language === 'pt-BR' ? text.pt : text.en}`);
+    } else {
+      setMilestoneCeremony({
+        tierIcon: HABIT_TIER_ICONS[tier as keyof typeof HABIT_TIER_ICONS] ?? '🌱',
+        habitName: name,
+        text: language === 'pt-BR' ? text.pt : text.en,
+      });
+    }
   }, [gameState, language, falar]);
 
   const handleUpdateStep = (activityId: string, stepId: string) => {
@@ -4166,6 +4186,20 @@ export default function App() {
               onClose={() => setNewReadingOpen(false)}
             />
           </Suspense>
+        )}
+
+        {/* WP2.4 — a cerimônia do marco. Fora da fila de intersticiais de
+            propósito: ela não pede nada, some sozinha em 2,5s e não pode
+            esperar a vez — comemorar depois não é comemorar. */}
+        {milestoneCeremony && (
+          <MilestoneCeremony
+            tierIcon={milestoneCeremony.tierIcon}
+            habitName={milestoneCeremony.habitName}
+            text={milestoneCeremony.text}
+            spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
+            language={language}
+            onDone={() => setMilestoneCeremony(null)}
+          />
         )}
 
         {rebirthOpen && (

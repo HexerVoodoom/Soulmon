@@ -47,6 +47,25 @@ function beep(
   osc.stop(t + duration);
 }
 
+/* ── WP3.5 — O SOM DE PRESENÇA (decisão D11) ─────────────────────────────
+   Um sonzinho curto, de duas notas, que o pet faz ao ser TOCADO. É a única
+   coisa do app que existe para dizer "tem alguém aqui" — todos os outros sons
+   confirmam uma ação (comeu, limpou, evoluiu).
+
+   A fronteira da D11 é o pacote inteiro, e ela está no CHAMADOR e aqui:
+    · **só em resposta a gesto** — toque, chegada, carinho. NUNCA idle, nunca
+      com `document.hidden`. Som que sai sozinho não é presença, é alarme, e
+      foi o bipe que fez as escolas banirem o Tamagotchi.
+    · **uma vez por sessão.** Repetido, vira ruído; e a coisa que ele
+      comunica ("estou aqui") só precisa ser dita uma vez.
+   O `presencaTocadaRef` do `CompanionHUD` é quem guarda a segunda regra. */
+export function playPresence(): void {
+  play(ctx => {
+    beep(ctx, 587, 0, 0.07, 'sine', 0.05);
+    beep(ctx, 880, 0.08, 0.12, 'sine', 0.045);
+  });
+}
+
 /** Short ascending 3-note arpeggio (C–E–G) */
 export function playTaskComplete(): void {
   play(ctx => {
