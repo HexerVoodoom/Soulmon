@@ -287,3 +287,47 @@ describe('community — alvos são endereçados por pid, não por saveId', () =>
     expect(depois.friends).toEqual([VITIMA]);
   });
 });
+
+describe('community — fechar a season é IDEMPOTENTE (WP4.18)', () => {
+  // A partir do WP4.18 quem chama `closeSeason` é um cron, e cron repete:
+  // retry do Cloudflare, deploy duplicado, dois triggers no dashboard. Sem a
+  // trava a segunda passada empurraria o MESMO troféu de novo, e o campeão
+  // ficaria com dois 🥇 da mesma season na vitrine.
+  const KEY = 'chave-de-admin';
+  const CAMPEAO = 'c'.repeat(32);
+
+  function envSeason() {
+    return {
+      DIGIAPP_SAVES: fakeKV({
+        [`profile:${CAMPEAO}`]: perfil(CAMPEAO),
+        [`rank:2026-08:${CAMPEAO}`]: JSON.stringify({ points: 99, wins: 9, losses: 0 }),
+      }),
+      FIREBASE_PROJECT_ID: 'soulmon-test',
+      SEASON_ADMIN_KEY: KEY,
+    };
+  }
+
+  const fechar = env => onRequest({
+    request: req('closeSeason', { method: 'POST', body: { season: '2026-08', adminKey: KEY } }),
+    env,
+  });
+
+  it('duas chamadas dão UM troféu só', async () => {
+    const env = envSeason();
+    expect(await (await fechar(env)).json()).toMatchObject({ awarded: 1 });
+    expect(await (await fechar(env)).json()).toMatchObject({ awarded: 0, already: true });
+    const p = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${CAMPEAO}`));
+    expect(p.pendingTrophies).toEqual([{ season: '2026-08', place: 1 }]);
+  });
+
+  it('a trava é por season — fechar agosto não fecha setembro', async () => {
+    const env = envSeason();
+    env.DIGIAPP_SAVES.store.set(`rank:2026-09:${CAMPEAO}`, JSON.stringify({ points: 5 }));
+    await fechar(env);
+    const set = await onRequest({
+      request: req('closeSeason', { method: 'POST', body: { season: '2026-09', adminKey: KEY } }),
+      env,
+    });
+    expect(await set.json()).toMatchObject({ awarded: 1 });
+  });
+});

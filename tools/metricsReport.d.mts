@@ -23,6 +23,9 @@ export declare function barras(
   opts?: { largura?: number },
 ): string[];
 
+export declare const FAIXA_ESFORCO: string[];
+export declare function histogramaEsforco(totais: Record<string, number>): Record<string, number>;
+
 export declare function histogramaGoalDays(
   totais: Record<string, number>,
   prefixo?: string,

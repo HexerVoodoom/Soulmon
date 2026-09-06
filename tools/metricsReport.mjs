@@ -106,6 +106,16 @@ export function barras(balde, { largura = 24 } = {}) {
   return linhas;
 }
 
+/** Rótulo humano de cada balde de esforço (`effortBucket`, WP0.8). */
+export const FAIXA_ESFORCO = ['1–2', '3–4', '5–6', '7–9', '10+'];
+
+/** O histograma de esforço (WP0.8). Vazio em período anterior ao pacote. */
+export function histogramaEsforco(totais) {
+  const balde = {};
+  for (let i = 0; i < FAIXA_ESFORCO.length; i++) balde[i] = n(totais, `effort_bucket.${i}`);
+  return balde;
+}
+
 /** O histograma de `goal_days` (0..7) a partir das chaves do agregado. */
 export function histogramaGoalDays(totais, prefixo = 'week_active') {
   const balde = {};
@@ -145,14 +155,24 @@ export function renderRelatorio(payload) {
   out.push('     num dia dão o mesmo número. Ver a linha de cima sobre coorte.');
   out.push('');
 
-  // ── Esforço: média é o que existe, e ela vai ROTULADA (regra 2) ───────────
+  // ── Esforço: MEDIANA pelo histograma, com a média só como nota (regra 2) ──
   const somaEsforco = ['unknown', 'demo', 'paid'].reduce((s, t) => s + n(totais, `effort_sum.${t}`), 0);
-  out.push('ESFORÇO');
-  if (ativos > 0 && somaEsforco > 0) {
-    out.push(`  MÉDIA por dia-ativo: ${(somaEsforco / ativos).toFixed(2)}  (${somaEsforco} de esforço em ${ativos} dias)`);
-    out.push('  ⚠️ é MÉDIA, e média de distribuição com cauda mente. A mediana');
-    out.push('     exige o histograma de esforço (WP0.8) — enquanto ele não');
-    out.push('     existir, este número não decide nada sozinho.');
+  const baldeEsforco = histogramaEsforco(totais);
+  const diasComBalde = Object.values(baldeEsforco).reduce((s, v) => s + v, 0);
+  out.push('ESFORÇO POR DIA-ATIVO');
+  if (diasComBalde > 0) {
+    out.push(...barras(baldeEsforco).map((l, i) => `${l}   ${FAIXA_ESFORCO[i] ?? ''}`));
+    const b = medianaDeHistograma(baldeEsforco);
+    out.push(`  mediana: na faixa ${FAIXA_ESFORCO[b] ?? '?'}   (n = ${diasComBalde} dias)`);
+    if (ativos > 0 && somaEsforco > 0) {
+      out.push(`  (a média seria ${(somaEsforco / ativos).toFixed(2)} — guardada como nota, não como leitura)`);
+    }
+  } else if (ativos > 0 && somaEsforco > 0) {
+    // Agregado ANTERIOR ao WP0.8: só existe a soma. Dizer isso é melhor que
+    // imprimir a média como se ela fosse a resposta.
+    out.push(`  só há soma neste período: média ${(somaEsforco / ativos).toFixed(2)} em ${ativos} dias.`);
+    out.push('  ⚠️ média de distribuição com cauda descreve ninguém. Este período');
+    out.push('     é anterior ao histograma — não decida por este número.');
   } else {
     out.push('  sem dados');
   }

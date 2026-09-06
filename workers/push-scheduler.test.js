@@ -14,7 +14,7 @@
  * regras de limpeza de inscrição morta.
  */
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
-import worker from './push-scheduler.js';
+import worker, { previousSeasonBrt } from './push-scheduler.js';
 
 /** KV de mentira com `list` paginado, que é o que `drainPrefix` usa. */
 function fakeKV(seed = {}) {
@@ -258,5 +258,68 @@ describe('push-scheduler — IDIOMA da notificação (o bug que já aconteceu)',
     };
     await worker.scheduled(brt(10), env);
     expect(JSON.stringify(pushed[0])).toContain('Velhinho');
+  });
+});
+
+describe('push-scheduler — fechamento da season (WP4.18)', () => {
+  // Os troféus de season existiam inteiros e só chegavam se o DONO lembrasse
+  // de disparar a rota à mão. Recompensa que depende de alguém lembrar é sorte.
+  // Dia 1 às 10h BRT = 13h UTC do dia 1.
+  const emBrt = (ano, mes, dia, hora) => ({ scheduledTime: Date.UTC(ano, mes - 1, dia, hora + 3, 0, 0) });
+
+  function envSeason(extra = {}) {
+    return {
+      PUSH_SUBSCRIPTIONS: fakeKV({}),
+      VAPID_JWK: undefined,
+      FIREBASE_SERVICE_ACCOUNT: undefined,
+      APP_URL: 'https://app.test',
+      SEASON_ADMIN_KEY: 'k',
+      ...extra,
+    };
+  }
+
+  function capturaFetch() {
+    const chamadas = [];
+    vi.stubGlobal('fetch', vi.fn(async (url, init) => {
+      chamadas.push({ url: String(url), body: init?.body && JSON.parse(init.body) });
+      return Response.json({ ok: true });
+    }));
+    return chamadas;
+  }
+
+  it('no dia 1 fecha a season ANTERIOR', async () => {
+    const chamadas = capturaFetch();
+    await worker.scheduled(emBrt(2026, 9, 1, 10), envSeason());
+    const c = chamadas.find(x => x.url.includes('closeSeason'));
+    expect(c).toBeTruthy();
+    expect(c.body).toEqual({ season: '2026-08', adminKey: 'k' });
+  });
+
+  it('a virada de ano volta para dezembro do ano passado', () => {
+    expect(previousSeasonBrt(new Date(Date.UTC(2027, 0, 1, 13)))).toBe('2026-12');
+  });
+
+  it('o dia é o do BRT, não o do UTC', () => {
+    // 1º de setembro 00h UTC ainda é 31 de agosto em BRT: a season corrente
+    // é agosto, e a anterior, julho. Contar em UTC fecharia agosto cedo.
+    expect(previousSeasonBrt(new Date(Date.UTC(2026, 8, 1, 0)))).toBe('2026-07');
+  });
+
+  it('em qualquer outro dia do mês NÃO chama nada', async () => {
+    const chamadas = capturaFetch();
+    await worker.scheduled(emBrt(2026, 9, 14, 10), envSeason());
+    expect(chamadas.filter(x => x.url.includes('closeSeason'))).toHaveLength(0);
+  });
+
+  it('sem SEASON_ADMIN_KEY o fechamento é pulado, nunca tentado às cegas', async () => {
+    const chamadas = capturaFetch();
+    await worker.scheduled(emBrt(2026, 9, 1, 10), envSeason({ SEASON_ADMIN_KEY: undefined }));
+    expect(chamadas.filter(x => x.url.includes('closeSeason'))).toHaveLength(0);
+  });
+
+  it('roda numa hora SÓ — não três vezes no mesmo dia 1', async () => {
+    const chamadas = capturaFetch();
+    for (const h of [10, 16, 22]) await worker.scheduled(emBrt(2026, 9, 1, h), envSeason());
+    expect(chamadas.filter(x => x.url.includes('closeSeason'))).toHaveLength(1);
   });
 });

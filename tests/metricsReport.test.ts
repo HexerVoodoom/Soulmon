@@ -104,11 +104,26 @@ describe('o relatório inteiro', () => {
       .toMatch(/NÃO é gente/);
   });
 
-  it('esforço sai rotulado como MÉDIA, com a ressalva de que não decide sozinho', () => {
+  it('período ANTERIOR ao histograma diz que só há soma, e não decide por ela', () => {
+    // Agregados gravados antes do WP0.8 têm `effort_sum` e nenhum balde. Dizer
+    // isso é melhor que imprimir a média como se fosse a resposta — e melhor
+    // que imprimir "sem dados", que seria falso.
     const txt = renderRelatorio(resposta({ day_active: 10, 'effort_sum.demo': 109 })).join('\n');
-    expect(txt).toContain('MÉDIA por dia-ativo: 10.90');
-    expect(txt).toMatch(/média de distribuição com cauda mente/);
-    expect(txt, 'a dependência do WP0.8 tem de estar dita').toMatch(/WP0\.8/);
+    expect(txt).toContain('só há soma neste período: média 10.90');
+    expect(txt).toMatch(/descreve ninguém/);
+    expect(txt).toMatch(/não decida por este número/);
+  });
+
+  it('com o histograma (WP0.8), a leitura vira MEDIANA e a média cai para nota', () => {
+    // Nove dias na faixa 1–2 e um dia na faixa 10+: a média diria ~10 e
+    // descreveria ninguém; a mediana diz onde a maioria dos dias realmente está.
+    const txt = renderRelatorio(resposta({
+      day_active: 10, 'effort_sum.demo': 109,
+      'effort_bucket.0': 9, 'effort_bucket.4': 1,
+    })).join('\n');
+    expect(txt).toContain('mediana: na faixa 1–2');
+    expect(txt).toContain('n = 10 dias');
+    expect(txt, 'a média voltou a ser a leitura principal').toMatch(/guardada como nota/);
   });
 
   it('a métrica-norte sai como histograma + mediana, nunca só como taxa', () => {

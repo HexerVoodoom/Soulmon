@@ -259,6 +259,9 @@ describe('handler', () => {
       install: 1,
       day_active: 1, 'day_active.demo': 1,
       effort_sum: 4, 'effort_sum.demo': 4,
+      // WP0.8: o balde sai do MESMO `effort` que já chegava — o servidor deriva a
+      // faixa, nada de novo sai do aparelho. effort 4 cai na faixa 1 ("3–4").
+      'effort_bucket.1': 1, 'effort_bucket.demo.1': 1,
     });
     // Uma chave por DIA. Nada de chave por usuário nem série individual.
     expect([...e.DIGIAPP_SAVES.store.keys()]).toEqual([METRICS_PREFIX + DAY]);

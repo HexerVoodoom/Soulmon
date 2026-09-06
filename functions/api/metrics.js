@@ -253,6 +253,22 @@ const FUNNEL_LABEL = ['unknown', 'demo', 'paid'];
  */
 const TIER_LABEL = ['unknown', 'demo', 'paid'];
 
+/**
+ * O balde de esforço de um dia (WP0.8). Faixas largas de propósito: o objetivo
+ * é a FORMA da distribuição, não o valor exato — e faixa larga é também o que
+ * impede o histograma de virar quase-identificador para quem tem um dia atípico.
+ *
+ *   0 → 1–2 · 1 → 3–4 · 2 → 5–6 · 3 → 7–9 · 4 → 10 ou mais
+ */
+export function effortBucket(effort) {
+  const e = typeof effort === 'number' && Number.isFinite(effort) ? effort : 0;
+  if (e <= 2) return 0;
+  if (e <= 4) return 1;
+  if (e <= 6) return 2;
+  if (e <= 9) return 3;
+  return 4;
+}
+
 /** Espelha `TELEMETRY_UNLOCK_REASON` — qual convite abriu a compra. Eram dois
  *  rótulos para um schema que já aceitava 0–3: `report` e `shop` caíam em
  *  `unknown` sem erro nenhum. */
@@ -317,6 +333,18 @@ export function applyAggregate(agg, events) {
       // Esforço por tier: sem isto, "o pagante se esforça mais?" só se responde
       // com a média das duas populações — o defeito que o funil já corrigiu.
       if (tier) bump(`effort_sum.${tier}`, p.effort);
+
+      /* WP0.8 — O HISTOGRAMA, porque a soma sozinha só produz MÉDIA.
+         `effort_sum / day_active` era a métrica-farol do produto, e média de
+         distribuição com cauda descreve ninguém: nove pessoas com esforço 1 e
+         uma com 100 dão "10,9", um número que nenhuma delas viveu. A fonte
+         primária de analytics do corpus estudado (Greer, GDC) proíbe isso
+         nominalmente, e o leitor (`tools/metricsReport.mjs`) já avisava que a
+         mediana dependia deste balde.
+         Derivado NO SERVIDOR a partir do `effort` que já chega: nenhum dado
+         novo sai do aparelho, nenhum evento novo, nada a declarar na política. */
+      bump(`effort_bucket.${effortBucket(p.effort)}`);
+      if (tier) bump(`effort_bucket.${tier}.${effortBucket(p.effort)}`);
     }
 
     // Os dois convites de compra contam separado. Eles testam hipóteses

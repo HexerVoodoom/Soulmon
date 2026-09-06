@@ -1742,6 +1742,10 @@ async function handleCommunity({ request, env }) {
     const { season, adminKey } = body;
     if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json3({ error: "unauthorized" }, 401);
     if (!/^\d{4}-\d{2}$/.test(season || "")) return json3({ error: "invalid season" }, 400);
+    const closedKey = `closed:${season}`;
+    if (await env.DIGIAPP_SAVES.get(closedKey)) {
+      return json3({ ok: true, season, awarded: 0, already: true });
+    }
     const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
@@ -1758,6 +1762,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
+    await env.DIGIAPP_SAVES.put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
     return json3({ ok: true, season, awarded: top3.length });
   }
   if (action === "trophies" && method === "GET") {
@@ -2422,6 +2427,15 @@ function sanitizeBatch(body, today3 = serverDay()) {
 __name(sanitizeBatch, "sanitizeBatch");
 var FUNNEL_LABEL = ["unknown", "demo", "paid"];
 var TIER_LABEL = ["unknown", "demo", "paid"];
+function effortBucket(effort) {
+  const e = typeof effort === "number" && Number.isFinite(effort) ? effort : 0;
+  if (e <= 2) return 0;
+  if (e <= 4) return 1;
+  if (e <= 6) return 2;
+  if (e <= 9) return 3;
+  return 4;
+}
+__name(effortBucket, "effortBucket");
 var REASON_LABEL = ["task_limit", "evolution", "report", "shop"];
 var PATH_LABEL = ["create_modal", "home_edit", "ai_chat", "tutorial", "onboarding"];
 var KIND_LABEL = ["task", "habit"];
@@ -2445,6 +2459,8 @@ function applyAggregate(agg, events) {
     if (record.e === "day_active") {
       bump("effort_sum", p.effort);
       if (tier) bump(`effort_sum.${tier}`, p.effort);
+      bump(`effort_bucket.${effortBucket(p.effort)}`);
+      if (tier) bump(`effort_bucket.${tier}.${effortBucket(p.effort)}`);
     }
     if (record.e === "unlock_view") {
       bump(`unlock_view.${REASON_LABEL[p.reason] ?? "unknown"}`);
@@ -2961,7 +2977,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-xdqK7B/functionsRoutes-0.6635574157492266.mjs
+// ../.wrangler/tmp/pages-EAgbwx/functionsRoutes-0.6259189389849096.mjs
 var routes = [
   {
     routePath: "/api/account",

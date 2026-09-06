@@ -18,6 +18,7 @@ id = "12dd88d3282140e786a5b2c5b5b940cf"
 
 [vars]
 VAPID_PUBLIC_KEY = "BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY"
+APP_URL = "https://soulmon.mateus-sprnd.workers.dev"
 
 # VAPID_JWK must be set as a secret:
 # wrangler secret put VAPID_JWK
@@ -27,3 +28,10 @@ VAPID_PUBLIC_KEY = "BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t
 # native Android app (Firebase Console → Project Settings → Service accounts
 # → Generate new private key; paste the FULL downloaded JSON when prompted):
 # wrangler secret put FIREBASE_SERVICE_ACCOUNT
+
+# WP4.18 — fechamento automático da season do Torneio (troféus 🥇🥈🥉).
+# O cron das 10h BRT do dia 1 chama `POST /api/community?action=closeSeason`
+# da season anterior. Sem estes dois o fechamento é PULADO com log, nunca
+# tentado às cegas:
+#   wrangler secret put SEASON_ADMIN_KEY   # o mesmo valor do Pages
+# (APP_URL já vai em [vars] acima.)

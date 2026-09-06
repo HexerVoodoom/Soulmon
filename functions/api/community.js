@@ -568,6 +568,15 @@ async function handleCommunity({ request, env }) {
     const { season, adminKey } = body;
     if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json({ error: 'unauthorized' }, 401);
     if (!/^\d{4}-\d{2}$/.test(season || '')) return json({ error: 'invalid season' }, 400);
+    // Idempotência do FECHAMENTO, e ela é do SERVIDOR de propósito: a partir do
+    // WP4.18 quem chama é um cron, e cron repete (retry, deploy duplicado, dois
+    // triggers no dashboard). Sem esta trava a segunda passada empurraria o
+    // MESMO troféu de novo para `pendingTrophies` — o campeão receberia dois
+    // 🥇 da mesma season e a vitrine mentiria.
+    const closedKey = `closed:${season}`;
+    if (await env.DIGIAPP_SAVES.get(closedKey)) {
+      return json({ ok: true, season, awarded: 0, already: true });
+    }
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
@@ -584,6 +593,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
+    await env.DIGIAPP_SAVES.put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
     return json({ ok: true, season, awarded: top3.length });
   }
 

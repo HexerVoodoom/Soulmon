@@ -55,10 +55,60 @@ async function drainPrefix(env, prefix, handle, counts) {
   } while (cursor);
 }
 
+/**
+ * WP4.18 — o fechamento da season do Torneio.
+ *
+ * Os troféus de season JÁ existiam inteiros (`closeSeason` em
+ * `functions/api/community.js`, as vitrines que os exibem no palco), e mesmo
+ * assim só chegavam ao jogador se o DONO lembrasse de disparar a rota à mão.
+ * Recompensa que depende de alguém lembrar não é recompensa: é sorte.
+ *
+ * Roda no 1º dia do mês (dia do BRT, que é quem define a season) e fecha a
+ * season ANTERIOR. A idempotência é do servidor (`closed:<season>`), não deste
+ * arquivo — cron repete, e a trava tem que morar onde a escrita acontece.
+ */
+export function previousSeasonBrt(date) {
+  const brt = new Date(date.getTime() - 3 * 3600_000);
+  const y = brt.getUTCFullYear();
+  const m = brt.getUTCMonth(); // 0-11, mês CORRENTE
+  const anterior = new Date(Date.UTC(y, m - 1, 1));
+  return `${anterior.getUTCFullYear()}-${String(anterior.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/** Dia do mês em BRT — é o fuso da season, não o do UTC. */
+function brtDayOfMonth(date) {
+  return new Date(date.getTime() - 3 * 3600_000).getUTCDate();
+}
+
+async function closeSeasonIfDue(date, env) {
+  if (brtDayOfMonth(date) !== 1) return;
+  if (!env.SEASON_ADMIN_KEY || !env.APP_URL) {
+    console.log('[season] SEASON_ADMIN_KEY/APP_URL ausentes — fechamento não tentado');
+    return;
+  }
+  const season = previousSeasonBrt(date);
+  try {
+    const res = await fetch(`${env.APP_URL}/api/community?action=closeSeason`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ season, adminKey: env.SEASON_ADMIN_KEY }),
+    });
+    console.log(`[season] closeSeason ${season} → ${res.status}`);
+  } catch (err) {
+    console.error(`[season] closeSeason ${season} falhou:`, err.message);
+  }
+}
+
 export default {
   async scheduled(event, env) {
     const date = new Date(event.scheduledTime);
     const brtHour = (date.getUTCHours() - 3 + 24) % 24;
+
+    // ⚠️ ANTES do `return` de hora sem notificação declarada: o fechamento da
+    // season não é um push e não pode depender de existir cópia para a hora.
+    // Uma hora só (10h BRT) para não disparar três vezes no mesmo dia — a
+    // trava do servidor cobre o resto.
+    if (brtHour === 10) await closeSeasonIfDue(date, env);
 
     // Hora sem notificação declarada em `_pushCopy.js` (ex.: um cron das 21h
     // que ficou para trás no dashboard depois do deploy) não vira mensagem
