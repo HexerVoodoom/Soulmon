@@ -152,7 +152,14 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   const [fightError, setFightError] = useState<string | null>(null);
   // Pontos do próprio jogador, lidos da linha dele no ranking.
   const myPoints = rank?.find(r => r.id === saveId)?.points ?? 0;
-  const standing = rank === null ? null : getTierStanding(myPoints);
+  /* WP4.13 (achado E5) — a FAIXA lê o contador LIFETIME, não os pontos da
+     season. Os pontos da season descem por três caminhos (derrota própria,
+     ser sorteado como oponente e perder — sem jogar — e a virada de mês), e a
+     regra escrita da faixa é que acumular NUNCA rebaixa. Ela media o jogador
+     contra ele mesmo e caía por motivo que não era dele. `lifetime` só soma;
+     `points` continua sendo o do ranking e do troféu da season. */
+  const myLifetime = rank?.find(r => r.id === saveId)?.lifetime ?? 0;
+  const standing = rank === null ? null : getTierStanding(myLifetime);
   const round = getTournamentWindow();
   /** Quantas posições aparecem ACIMA e ABAIXO do jogador na lista da season.
    *  A season inteira transformava a tela num placar absoluto: dois dedos de

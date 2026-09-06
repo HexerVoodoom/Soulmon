@@ -69,6 +69,10 @@ export interface HabitConstancyProps {
   language: Language;
   /** Versão de uma linha, para caber no card do hábito na lista. */
   compact?: boolean;
+  /** WP2.8 — a mesma opção da Janela de Descanso (`rest.hideMetrics`): esconde
+   *  NÚMERO e preserva RECOMPENSA. Tier, janela de pontinhos e escudos ficam;
+   *  some só o "N das últimas 7" e as contagens dos tooltips. */
+  hideMetrics?: boolean;
 }
 
 function windowDays(now: Date): Date[] {
@@ -134,7 +138,7 @@ function Dot({ state, label }: { state: DotState; label: string }) {
   );
 }
 
-export function HabitConstancy({ rhythm, schedule, now, language, compact = false }: HabitConstancyProps) {
+export function HabitConstancy({ rhythm, schedule, now, language, compact = false, hideMetrics = false }: HabitConstancyProps) {
   const isPt = language === 'pt-BR';
   const { done, window } = constancy(rhythm, now);
   const tier = habitTier(rhythm.totalDone);
@@ -203,7 +207,9 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
     >
       {/* Maturidade. Glifo pelado, sem moldura — ícone nunca dentro de box. */}
       <span
-        title={isPt ? `Maturidade: ${tierName[tier].pt} (${rhythm.totalDone} dias)` : `Maturity: ${tierName[tier].en} (${rhythm.totalDone} days)`}
+        title={hideMetrics
+          ? (isPt ? `Maturidade: ${tierName[tier].pt}` : `Maturity: ${tierName[tier].en}`)
+          : (isPt ? `Maturidade: ${tierName[tier].pt} (${rhythm.totalDone} dias)` : `Maturity: ${tierName[tier].en} (${rhythm.totalDone} days)`)}
         style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500, color: 'var(--sm2-ink)' }}
       >
         <Icon
@@ -216,16 +222,27 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
         {!compact && <span>{isPt ? tierName[tier].pt : tierName[tier].en}</span>}
       </span>
 
+      {/* WP2.8 — `hideMetrics` cobre a CONSTÂNCIA também.
+          A opção já existia para a Janela de Descanso, com a regra escrita de
+          que esconder número PRESERVA as recompensas. Ela não alcançava esta
+          linha, então quem pediu para não ver número continuava recebendo
+          "3 das últimas 7" embaixo de cada hábito da lista — o número mais
+          frequente do app inteiro.
+          O que some é só o NÚMERO: o tier (maturidade), a janela de pontinhos
+          e os escudos ficam. É a mesma regra da Janela de Descanso — quem não
+          quer medir não perde o que ganhou. */}
       {/* A métrica. Nada aqui zera — e sem janela ela nem vira número.
           `sm2-num` (tabular-nums) porque o numerador muda todo dia: sem ele a
           linha inteira dança na horizontal a cada conclusão. */}
-      <span
-        title={headlineTitle}
-        className={semJanela ? undefined : 'sm2-num'}
-        style={{ fontWeight: 500, color: 'var(--sm2-ink)' }}
-      >
-        {headline}
-      </span>
+      {!hideMetrics && (
+        <span
+          title={headlineTitle}
+          className={semJanela ? undefined : 'sm2-num'}
+          style={{ fontWeight: 500, color: 'var(--sm2-ink)' }}
+        >
+          {headline}
+        </span>
+      )}
 
       {/* A janela. Forma OU cor distinta por estado. */}
       {/* O rótulo dizia "Últimos 7 dias" fixo enquanto o denominador EXIBIDO é
@@ -264,12 +281,18 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
       {shields > 0 && (
         <span
           title={
-            isPt
-              ? `${shields} escudo(s) de descanso. Usados sozinhos num dia perdido.`
-              : `${shields} rest shield(s). Spent automatically on a missed day.`
+            hideMetrics
+              ? (isPt
+                ? 'Escudos de descanso. Usados sozinhos num dia perdido.'
+                : 'Rest shields. Spent automatically on a missed day.')
+              : isPt
+                ? `${shields} escudo(s) de descanso. Usados sozinhos num dia perdido.`
+                : `${shields} rest shield(s). Spent automatically on a missed day.`
           }
           aria-label={
-            isPt ? `${shields} escudos de descanso disponíveis` : `${shields} rest shields available`
+            hideMetrics
+              ? (isPt ? 'Escudos de descanso disponíveis' : 'Rest shields available')
+              : isPt ? `${shields} escudos de descanso disponíveis` : `${shields} rest shields available`
           }
           style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
         >

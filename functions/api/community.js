@@ -526,6 +526,20 @@ async function handleCommunity({ request, env }) {
     if (won) oppRank.losses += 1; else oppRank.wins += 1;
     await putRank(env, season, oppSave, oppRank);
 
+    /* WP4.13 (achado E5) — a FAIXA passa a ler um contador MONOTÔNICO.
+       Ela lia `rank.points` da season, que desce por TRÊS caminhos: derrota
+       própria (−8), ser sorteado como oponente e perder (−4, sem sequer
+       jogar) e a virada de mês, que zera tudo. Ou seja, a faixa que existe
+       para medir o jogador contra ele mesmo — e cuja regra escrita é
+       "acumular pontos nunca rebaixa" — rebaixava por três motivos, um deles
+       sem participação nenhuma dele.
+       `lifetimePoints` só SOMA, e só em ganho. Fica no PERFIL (não na linha
+       da season) porque é justamente o que precisa sobreviver ao reset. */
+    const ganhoMeu = won ? 20 : 0;
+    const ganhoDele = won ? 0 : 10;
+    if (ganhoMeu) { me.lifetimePoints = (me.lifetimePoints || 0) + ganhoMeu; await putProfile(env, id, me); }
+    if (ganhoDele) { opp.lifetimePoints = (opp.lifetimePoints || 0) + ganhoDele; await putProfile(env, oppSave, opp); }
+
     return json({
       won,
       myScore: Math.round(myScore), oppScore: Math.round(oppScore),
@@ -554,6 +568,8 @@ async function handleCommunity({ request, env }) {
         id: p ? await ensurePid(env, p) : null,
         name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie',
         points: rec.points, wins: rec.wins, losses: rec.losses,
+        // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
+        lifetime: p?.lifetimePoints ?? 0,
       });
     }
     rows.sort((a, b) => b.points - a.points);

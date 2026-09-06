@@ -4576,6 +4576,11 @@ export default function App() {
                             schedule={normalizeSchedule(activity)}
                             now={agora}
                             language={language}
+                            /* WP2.8 — a MESMA chave da Janela de Descanso.
+                               Quem pediu para não ver número continuava
+                               recebendo "N das últimas 7" embaixo de cada
+                               hábito, que é o número mais frequente do app. */
+                            hideMetrics={gameState.rest?.hideMetrics === true}
                           />
                         </li>
                         </Fragment>

@@ -1284,6 +1284,27 @@ export const CompanionHUD = memo(function CompanionHUD({
               onPointerUp={endRub}
               onPointerCancel={endRub}
             >
+              {/* WP3.6 — a SOMBRA DE CONTATO.
+                  Convergência de cinco apps do gênero, e ausente aqui: sem
+                  ela o sprite FLUTUA sobre o cenário em vez de pousar nele —
+                  o pet e o fundo lêem como duas imagens sobrepostas por
+                  acaso. É uma elipse borrada, ancorada nos PÉS (a mesma linha
+                  de chão de `petStage.ts`), sem animação: nada a cortar em
+                  movimento reduzido. `pointerEvents: none` porque o gesto de
+                  esfregar é do sprite, não dela. */}
+              <span
+                aria-hidden="true"
+                className="sm2-pet-shadow"
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  bottom: PET_GROUND_KEEP,
+                  transform: 'translateX(-50%)',
+                  width: Math.round(PET_RENDER * 0.52),
+                  height: Math.round(PET_RENDER * 0.12),
+                  pointerEvents: 'none',
+                }}
+              />
               {sprite ? (
                 <img
                   src={sprite}

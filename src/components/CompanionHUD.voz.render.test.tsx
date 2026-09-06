@@ -94,3 +94,17 @@ describe('CompanionHUD — o pet OLHA a tarefa assombrada', () => {
     }
   });
 });
+
+describe('CompanionHUD — a sombra de contato (WP3.6)', () => {
+  it('existe: sem ela o pet flutua sobre o cenário', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    expect(container.querySelector('.sm2-pet-shadow')).not.toBeNull();
+  });
+
+  it('é decorativa e não rouba o gesto de esfregar', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} />);
+    const sombra = container.querySelector('.sm2-pet-shadow') as HTMLElement;
+    expect(sombra.getAttribute('aria-hidden')).toBe('true');
+    expect(sombra.style.pointerEvents).toBe('none');
+  });
+});

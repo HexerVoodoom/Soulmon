@@ -1702,6 +1702,16 @@ async function handleCommunity({ request, env }) {
     if (won) oppRank.losses += 1;
     else oppRank.wins += 1;
     await putRank(env, season, oppSave, oppRank);
+    const ganhoMeu = won ? 20 : 0;
+    const ganhoDele = won ? 0 : 10;
+    if (ganhoMeu) {
+      me.lifetimePoints = (me.lifetimePoints || 0) + ganhoMeu;
+      await putProfile(env, id, me);
+    }
+    if (ganhoDele) {
+      opp.lifetimePoints = (opp.lifetimePoints || 0) + ganhoDele;
+      await putProfile(env, oppSave, opp);
+    }
     return json3({
       won,
       myScore: Math.round(myScore),
@@ -1731,7 +1741,9 @@ async function handleCommunity({ request, env }) {
         stage: p?.stage || "rookie",
         points: rec.points,
         wins: rec.wins,
-        losses: rec.losses
+        losses: rec.losses,
+        // WP4.13: a faixa lê ISTO, não `points` — `points` é da season e cai.
+        lifetime: p?.lifetimePoints ?? 0
       });
     }
     rows.sort((a, b) => b.points - a.points);
@@ -2977,7 +2989,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-DwEW8u/functionsRoutes-0.8422034727360084.mjs
+// ../.wrangler/tmp/pages-otDtvC/functionsRoutes-0.9780591759826041.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -7608,3 +7608,16 @@ body {
   animation: sm-pet-haunted-look 3.2s ease-in-out infinite;
   transform-origin: 50% 90%;
 }
+
+/* WP3.6 — SOMBRA DE CONTATO sob o pet.
+   Sem ela o sprite flutua sobre o cenário: pet e fundo lêem como duas
+   imagens sobrepostas por acaso, e não como um bicho POUSADO num lugar. É a
+   convergência de cinco apps do gênero. Elipse borrada, sem animação — não
+   há o que cortar em movimento reduzido. A cor é preta com alfa baixo (e não
+   um token de tinta) porque sombra é ausência de luz nos dois temas: no
+   claro ela aparece discreta, no escuro quase some, que é o correto. */
+.sm2-pet-shadow {
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .28);
+  filter: blur(3px);
+}

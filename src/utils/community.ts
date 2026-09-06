@@ -93,7 +93,14 @@ export interface MatchResult {
 export const playMatch = (id: string, opponentId: string) =>
   call<MatchResult>('match', { method: 'POST', body: { id, opponentId } });
 
-export interface RankRow { id: string; name: string; petName: string; stage: string; points: number; wins: number; losses: number }
+export interface RankRow {
+  id: string; name: string; petName: string; stage: string;
+  points: number; wins: number; losses: number;
+  /** WP4.13 — pontos LIFETIME, que só somam. É deles que sai a FAIXA; os
+   *  `points` acima são da season e caem (derrota, ser sorteado, virada de
+   *  mês). Save antigo do servidor pode não trazer: `?? 0`, nunca `points`. */
+  lifetime?: number;
+}
 export const getRank = (season?: string) =>
   call<{ season: string; rank: RankRow[] }>('rank', { params: season ? { season } : {} });
 export const getSeasonResult = (season: string) =>

@@ -331,3 +331,69 @@ describe('community — fechar a season é IDEMPOTENTE (WP4.18)', () => {
     expect(await set.json()).toMatchObject({ awarded: 1 });
   });
 });
+
+describe('community — a FAIXA do Torneio nunca rebaixa (WP4.13 / achado E5)', () => {
+  // A faixa existe para medir o jogador contra ele mesmo, e a regra escrita é
+  // "acumular pontos nunca rebaixa". Ela lia `rank.points` da season, que cai
+  // por três caminhos: derrota própria (−8), ser sorteado como oponente e
+  // perder (−4, SEM jogar) e a virada de mês, que zera. Dois deles nem
+  // dependem de o jogador ter feito algo.
+  const A = 'a'.repeat(32);
+  const B = 'b'.repeat(32);
+  const PID_B = 'b'.repeat(24);
+
+  function envPvp() {
+    return {
+      DIGIAPP_SAVES: fakeKV({
+        [`profile:${A}`]: perfil(A, { pvpEnabled: true, stage: 'mega' }),
+        [`profile:${B}`]: perfil(B, { pvpEnabled: true, stage: 'rookie', pid: PID_B }),
+        [`pid:${PID_B}`]: A === B ? '' : B,
+      }),
+      FIREBASE_PROJECT_ID: undefined, // sem auth: `denyUnlessOwner` não bloqueia
+    };
+  }
+
+  async function lifetimeDe(env, saveId) {
+    const p = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${saveId}`));
+    return p.lifetimePoints ?? 0;
+  }
+
+  it('a partida ACONTECE — senão os testes abaixo mediriam o nada', async () => {
+    // Guarda contra o modo de falha clássico deste arquivo: um pid que não
+    // resolve devolve 404, os contadores ficam parados, e um assert de
+    // "não diminuiu" passa sem que nada tenha rodado.
+    const env = envPvp();
+    const res = await onRequest({ request: req('match', { method: 'POST', body: { id: A, opponentId: PID_B } }), env });
+    expect(res.status).toBe(200);
+    const r = await res.json();
+    expect(typeof r.won).toBe('boolean');
+    // Ganhou alguém: um dos dois lifetime tem de ter subido.
+    const soma = (await lifetimeDe(env, A)) + (await lifetimeDe(env, B));
+    expect(soma).toBeGreaterThan(0);
+  });
+
+  it('perder NÃO reduz o contador que a faixa lê', async () => {
+    const env = envPvp();
+    // Mesmo que a partida seja perdida, `lifetimePoints` só pode ficar igual
+    // ou crescer — jamais diminuir.
+    const antes = await lifetimeDe(env, A);
+    await onRequest({ request: req('match', { method: 'POST', body: { id: A, opponentId: PID_B } }), env });
+    expect(await lifetimeDe(env, A)).toBeGreaterThanOrEqual(antes);
+  });
+
+  it('o oponente sorteado também nunca perde faixa por ter sido escolhido', async () => {
+    const env = envPvp();
+    const antes = await lifetimeDe(env, B);
+    await onRequest({ request: req('match', { method: 'POST', body: { id: A, opponentId: PID_B } }), env });
+    expect(await lifetimeDe(env, B)).toBeGreaterThanOrEqual(antes);
+  });
+
+  it('o rank publica `lifetime` — é dele que a faixa sai, não de `points`', async () => {
+    const env = envPvp();
+    await onRequest({ request: req('match', { method: 'POST', body: { id: A, opponentId: PID_B } }), env });
+    const res = await onRequest({ request: req('rank'), env });
+    const { rank } = await res.json();
+    expect(rank.length).toBeGreaterThan(0);
+    for (const linha of rank) expect(linha).toHaveProperty('lifetime');
+  });
+});
