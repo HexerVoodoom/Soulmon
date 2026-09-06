@@ -67,6 +67,15 @@ export interface OracleInput {
    *  estágios. Opcional — o usuário pode optar por não influenciar. */
   favoriteCreature?: string;
   /**
+   * RENASCIMENTO (`utils/rebirth.ts`): as três escolhas da cerimônia. Só
+   * existem para quem chegou ao ultra, pagou e renasceu — é a recompensa por
+   * ter subido a escada inteira, e a única entrada do oráculo em que o
+   * jogador ESCOLHE em vez de responder. Os nomes chegam já traduzidos e
+   * higienizados; este módulo não valida catálogo (quem valida é
+   * `applyRebirth`, na entrada).
+   */
+  rebirth?: { criatura: string; escolaNome: string; elementoNome: string };
+  /**
    * Inspiração vinda do bestiário (utils/soulProfile/bestiary/select.ts):
    * a DESCRIÇÃO da criatura escolhida (sem o nome), cuja função é uma só —
    * alimentar a máquina de famílias com as menções de bicho que ela sabe
@@ -2351,6 +2360,9 @@ function composeSpritePrompt(args: {
   /** "Qual sua criatura favorita?" (1-2 palavras) — prefixo literal antes do
    *  conceito, em todos os estágios (ver OracleInput.favoriteCreature). */
   favoriteCreature?: string;
+  /** Cláusula do renascimento, já composta (ver `rebirthPromptClause`). Entra
+   *  nas DUAS variantes: é escolha do jogador, não referência de franquia. */
+  rebirth?: string;
   /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
   withReferences: boolean;
 }): string {
@@ -2363,6 +2375,7 @@ function composeSpritePrompt(args: {
     `Do not copy any existing franchise character. ` +
     `Retro virtual-pet sprite, 16x16 pixel art, no background, transparent background: ` +
     `${concept}. ${args.levelBlock}. ` +
+    (args.rebirth ? `${args.rebirth} ` : '') +
     `Flat ${args.colorDesc} colors with ${args.accent} accents, no shading, no outlines, no anti-aliasing. ` +
     // As paletas do pool já citam 2–3 cores, mas o gerador ainda entrega
     // resultados quase monocromáticos (uma cor só em tons diferentes) —
@@ -3158,6 +3171,14 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
   const favoriteCreature = input.favoriteCreature?.trim()
     ? input.favoriteCreature.trim().replace(/\s+/g, ' ').split(' ').slice(0, 2).join(' ')
     : undefined;
+  // Renascimento: a criatura é campo ABERTO e por isso vai entre aspas no
+  // prompt — delimitar é o que impede o texto do jogador de ser lido como
+  // instrução. Escola e elemento são de catálogo fechado e entram soltos.
+  const rebirthClause = input.rebirth
+    ? `Reborn form: shaped after "${input.rebirth.criatura}", `
+      + `of the ${input.rebirth.escolaNome} school, `
+      + `${input.rebirth.elementoNome} element.`
+    : undefined;
   // Bio: descrição breve e legível da criatura (não some no prompt, é exibida
   // na página/exportação). Se o dono descreveu o pet, essa descrição vale.
   const bio: LText = petConceptRaw
@@ -3189,7 +3210,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
-      favoriteCreature,
+      favoriteCreature, rebirth: rebirthClause,
       levelBlock: rookieLevel,
     }),
   });
@@ -3227,7 +3248,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature,
+        favoriteCreature, rebirth: rebirthClause,
         levelBlock: `it has evolved into ${champShape.en}`,
       }),
     });
@@ -3243,7 +3264,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature,
+        favoriteCreature, rebirth: rebirthClause,
         levelBlock: `it has transformed into ${perfShape.en}`,
       }),
     });
@@ -3259,7 +3280,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
       },
       ...composeSpritePrompts({
         concept: spriteConcept, colorDesc, accent: bAccent,
-        favoriteCreature,
+        favoriteCreature, rebirth: rebirthClause,
         levelBlock: `in its final form, it is ${megaShape.en}`,
       }),
     });
@@ -3280,7 +3301,7 @@ export function generateOracle(input: OracleInput, seed?: number, overrides?: Or
     },
     ...composeSpritePrompts({
       concept: spriteConcept, colorDesc, accent: 'red, cyan and gold',
-      favoriteCreature,
+      favoriteCreature, rebirth: rebirthClause,
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
     }),
   });

@@ -96,6 +96,16 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               `The Ultra has two paths: ${ULTRA_PATIENCE_DAYS} perfect days as a mega, or knowing all three branches. Neither is better, and neither asks you to degenerate.`,
             )}
           </p>
+          {/* Renascimento: o degrau depois do topo. Fica logo abaixo do Ultra
+              porque é a única coisa que vem DEPOIS dele, e a frase diz a perda
+              e o que sobrevive na mesma respiração — guia que só promete o
+              ganho é anúncio. */}
+          <p style={para}>
+            {L(
+              'Depois do Ultra existe o Renascimento: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e dias perfeitos continuam intactos. Acontece uma vez só.',
+              'After the Ultra comes Rebirth: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and perfect days stay intact. It happens only once.',
+            )}
+          </p>
           <p style={para}>
             {L(
               'Dias perfeitos só acumulam. A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',

@@ -65,6 +65,11 @@ const TERMS: Term[] = [
     descPt: `A barra lateral. Sobe apenas alimentando (até ${FOOD_LIMIT_PER_HOUR}/hora) e zera todo dia.`,
   },
   {
+    icon: '🥚', en: 'Rebirth', pt: 'Renascimento',
+    descEn: 'After the Ultra: your creature becomes an egg and you choose who they come back as. Once per creature.',
+    descPt: 'Depois do Ultra: sua criatura vira ovo e você escolhe quem ela volta a ser. Uma vez por criatura.',
+  },
+  {
     icon: '📊', en: 'Perfect Day', pt: 'Dia Perfeito',
     descEn: 'Daily goal met plus full energy. It is the currency of evolution, and it only accumulates.',
     descPt: 'Meta do dia cumprida mais energia cheia. É a moeda da evolução, e só acumula.',

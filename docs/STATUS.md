@@ -40,6 +40,33 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > Gate em cada lote: tsc app + desktop EXIT=0, vitest **193 arquivos · 2998
 > passed · 2 skipped**, build OK.
 
+> **06/09/2026 — NOVA MECÂNICA: RENASCIMENTO (Rebirth).** Pedido do dono nesta
+> sessão, com as quatro decisões de forma respondidas antes do código
+> (**D-R1..D-R4**, em `docs/RENASCIMENTO.md`). Depois do **Ultra**, quem
+> comprou pode devolver a criatura ao ovo **uma vez só**: ela volta a Rookie e
+> os três atributos zeram, e em troca o jogador escolhe **criatura** (campo
+> aberto), **escola** (as 6 do Class-System) e **elemento** (base ou par de 2º
+> nível), com o orçamento da ficha multiplicado por 1.5 em TODOS os estágios.
+> Quatro coisas que definem a peça:
+> · **não reabriu o estágio `egg`** — ele foi apagado da escada com motivo; o
+> ovo aqui é a CERIMÔNIA, e `types/progression.ts` não mudou;
+> · **perde-se o estágio e os atributos, e SÓ** — Bits, Emblemas, Créditos,
+> decoração, cenários, sonhos, hábitos, tarefas, `perfectDays` e
+> `unlockedEvolutions` passam intactos, com teste listando campo por campo. A
+> regra geral (perda só sobre item recuperável) continua de pé: o Rebirth é
+> uma TROCA declarada, não uma exceção a ela;
+> · **as escolhas têm consequência medível**, não são enfeite: orçamento
+> (`REBIRTH_BUDGET_MULTIPLIER`), piso da escola na ficha, viés do elemento na
+> cascata, e as três dentro do prompt das 11 formas — o campo aberto entra
+> **entre aspas**, que é o que impede o texto do jogador de virar instrução;
+> · **gera antes de gravar**, porque a chance é única: perfil corrompido faz a
+> geração lançar, e queimar o Rebirth sem entregar criatura seria a pior falha
+> possível deste app.
+> Gate: tsc app + desktop EXIT=0, vitest **198 arquivos · 3098 passed · 2
+> skipped**, build OK.
+> ⚠️ **Aberto**: a arte do ovo, telemetria do degrau final e a fala do pet ao
+> renascer — os três listados no fim de `docs/RENASCIMENTO.md`.
+
 > **06/09/2026 — SPRINT 3 COMPLETO: 5 lotes, 7 pacotes verificados** (WP4.2,
 > WP5.7, WP3.9, WP1.16, WP2.11, WP0.8, WP4.18). O fio condutor mudou: no Sprint 2
 > era código mudo; aqui é **promessa que dependia de alguém lembrar**.

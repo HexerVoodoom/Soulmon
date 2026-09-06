@@ -365,6 +365,10 @@ export interface GameState {
    *  1 atividade nova/dia; 'paid': jogo completo (compra única). Saves
    *  antigos (antes desse campo existir) são adotados como 'paid'. */
   accountTier?: 'demo' | 'paid';
+  /** Renascimento (utils/rebirth.ts). Existe UMA vez por save e nunca é
+   *  apagado: é o próprio registro que impede a segunda vez. Ausente =
+   *  jamais renasceu (nunca inferido de estágio nem de nada). */
+  rebirth?: import('../utils/rebirth').RebirthRecord | null;
   /** Modo demo: qual personagem pré-pronto foi escolhido (utils/monetization.ts). */
   demoCharacterId?: 'kaelen' | 'orrin' | 'thalindra';
   /** Créditos (moeda premium, dinheiro real) — reroll de personagem, cura
@@ -921,6 +925,11 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // they already have a real oracle character and full functionality,
         // so they must never be retroactively downgraded to demo.
         accountTier: loadedState.accountTier === 'demo' ? 'demo' : 'paid',
+        // Sem validação de forma aqui de propósito: `applyRebirth` já recusa
+        // escolha fora do catálogo na ENTRADA, e um registro presente só
+        // pode ter saído dele. O que importa no load é a PRESENÇA — é ela
+        // que trava a segunda vez.
+        rebirth: (loadedState.rebirth as GameState['rebirth']) ?? undefined,
         demoCharacterId: (loadedState.demoCharacterId === 'kaelen' || loadedState.demoCharacterId === 'orrin'
           || loadedState.demoCharacterId === 'thalindra') ? loadedState.demoCharacterId : undefined,
         credits: num(loadedState.credits, 0),

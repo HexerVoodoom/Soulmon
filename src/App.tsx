@@ -89,6 +89,10 @@ import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
 import { readingSeed } from './utils/newReading';
+import {
+  applyRebirth, canRebirth, rebirthEscolaOptions, rebirthElementOptions,
+} from './utils/rebirth';
+import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
@@ -547,6 +551,7 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
   tree: { pt: '🌳 66 dias! Este hábito virou parte de quem você é.', en: '🌳 66 days! This habit is part of who you are.' },
 };
 
+const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
 const NewReadingModal = lazy(() => import('./components/NewReadingModal').then(m => ({ default: m.NewReadingModal })));
@@ -606,6 +611,7 @@ export default function App() {
   const [creditsOpen, setCreditsOpen] = useState(false);
   /** WP5.7 — a Nova Leitura (o que era o reroll por sorteio). */
   const [newReadingOpen, setNewReadingOpen] = useState(false);
+  const [rebirthOpen, setRebirthOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
@@ -2737,6 +2743,84 @@ export default function App() {
     return true;
   }, []);
 
+  /**
+   * RENASCIMENTO (`utils/rebirth.ts`). Parece a Nova Leitura e é o oposto
+   * dela em três pontos que importam:
+   *  · **não cobra nada** — o preço já foi pago em meses de cuidado, e o
+   *    Rebirth é o que se ganha por ter chegado ao ultra;
+   *  · **não zera coleção**: `unlockedEvolutions`, `perfectDays` e tudo mais
+   *    passam intactos (a Nova Leitura zera, porque ali a criatura é OUTRA
+   *    desde a origem; aqui é a mesma alma renascida);
+   *  · a semente vem das ESCOLHAS do jogador, não das respostas sobre ele.
+   *
+   * Gera ANTES de escrever, pelo mesmo motivo do reroll: perfil corrompido
+   * faz a geração lançar, e um Rebirth que consome a única chance do save
+   * sem entregar criatura seria a pior falha possível deste app.
+   */
+  const handleRebirth = useCallback(async (choices: RebirthChoices): Promise<boolean> => {
+    if (!canRebirth(gameState)) return false;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(
+      STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved) return false;
+
+    const escolaNome = rebirthEscolaOptions().find(o => o.id === choices.escola)?.nome ?? '';
+    const elementoNome = rebirthElementOptions().find(o => o.id === choices.elemento)?.nome ?? '';
+    if (!escolaNome || !elementoNome) return false;
+
+    const comEscolhas: OracleInput = {
+      ...saved,
+      rebirth: { criatura: choices.criatura, escolaNome, elementoNome },
+    };
+    // Semente própria: duas pessoas que escolherem a mesma criatura, escola e
+    // elemento sobre leituras diferentes continuam recebendo bichos
+    // diferentes — a leitura de quem elas são segue no meio.
+    const novaSeed = hashString(
+      `${saved.seed}|${choices.criatura}|${choices.escola}|${choices.elemento}`,
+    );
+    let result: OracleResult;
+    try {
+      if (saved.soulProfile) {
+        const { generateOracleComplete } = await import('./utils/soulProfile');
+        result = (await generateOracleComplete(comEscolhas, novaSeed)).result;
+      } else {
+        const { generateOracle } = await import('./utils/oracle');
+        result = generateOracle(comEscolhas, novaSeed);
+      }
+    } catch {
+      return false; // a chance única NÃO foi gasta
+    }
+
+    writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...comEscolhas, seed: result.seed });
+    // A decisão de SE renasce é tomada aqui fora, sobre o estado que a tela
+    // viu; o updater só reaplica a mesma função pura sobre o `prev` — nada de
+    // escrever variável de fora dentro dele (footgun 6: StrictMode invoca 2×,
+    // e `applyRebirth` é idempotente justamente para a 2ª passada ser inócua).
+    const now = new Date();
+    if (!applyRebirth(gameState, choices, now).applied) return false;
+    setGameState(prev => {
+      const { state, applied } = applyRebirth(prev, choices, now);
+      if (!applied) return prev;
+      return {
+        ...state,
+        healthPoints: getMaxHPForStage('rookie'),
+        maxHealthPoints: getMaxHPForStage('rookie'),
+        maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
+        attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
+        currentBranch: 'data',
+        degeneratedByHP: false,
+        soulmonStages: result.creature.stages,
+        soulmonMeta: {
+          seed: result.seed,
+          baseName: result.creature.baseName,
+          dominantElement: result.dominantElement,
+          dominantAlignment: result.dominantAlignment,
+          dominantRealm: result.dominantRealm,
+        },
+      };
+    });
+    return true;
+  }, [gameState]);
+
   // Desbloqueio completo comprado NO MEIO do jogo (UnlockAccountModal.tsx).
   // O servidor já confirmou a compra quando isto roda.
   const handleAccountUnlocked = useCallback((ent: Entitlement) => {
@@ -3862,6 +3946,20 @@ export default function App() {
           </Suspense>
         )}
 
+        {rebirthOpen && (
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+            <RebirthModal
+              language={language}
+              onConfirm={async escolhas => {
+                const ok = await handleRebirth(escolhas);
+                if (ok) setRebirthOpen(false);
+                return ok;
+              }}
+              onClose={() => setRebirthOpen(false)}
+            />
+          </Suspense>
+        )}
+
         {/* O FAB "Nova Atividade" SAIU da Home (G1/G8). Ele flutuava sobre a
             lista e, em 412×915, cobria exatamente a última linha visível — o
             controle de criar tapava o conteúdo que ele cria. A referência não
@@ -4588,6 +4686,35 @@ export default function App() {
                 gameState.currentBranch,
               )}
             /></Suspense>
+          )}
+
+          {/* RENASCIMENTO — mora na página de Evolução porque é o último
+              degrau da escada que essa página conta, e só aparece para quem
+              PODE (ultra + comprou + nunca usou). Nunca abre sozinho: o
+              convite é um card, o gesto é do jogador. Quem já renasceu vê a
+              marca, não o botão — é um registro, não uma oferta repetida. */}
+          {currentView === 'evolution' && canRebirth(gameState) && (
+            <div style={{ marginTop: 16, padding: 16, borderRadius: 12, border: '1px solid var(--sm2-line)' }}>
+              <p style={{ ...sm2Text, margin: '0 0 8px' }}>
+                {language === 'pt-BR'
+                  ? 'Sua criatura chegou ao topo. Você pode devolvê-la ao ovo e escolher quem ela renasce.'
+                  : 'Your creature reached the top. You can return them to the egg and choose who they are reborn as.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => setRebirthOpen(true)}
+                style={{ ...sm2Button('primary'), width: '100%' }}
+              >
+                {language === 'pt-BR' ? 'Renascimento' : 'Rebirth'}
+              </button>
+            </div>
+          )}
+          {currentView === 'evolution' && gameState.rebirth && (
+            <p style={{ ...sm2Hint, marginTop: 16 }}>
+              {language === 'pt-BR'
+                ? `Renasceu do ${gameState.rebirth.fromStage} como "${gameState.rebirth.criatura}".`
+                : `Reborn from ${gameState.rebirth.fromStage} as "${gameState.rebirth.criatura}".`}
+            </p>
           )}
 
           {currentView === 'pet' && (

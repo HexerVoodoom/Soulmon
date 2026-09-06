@@ -25,6 +25,7 @@ import type {
 import snapshotJson from './classSystem.data.json';
 import type { ClassSystemSnapshot } from './types';
 import { cascataDosPares, CUSTO_PONTO_BASE, CUSTO_PONTO_PAR } from './cascata';
+import { DERIVED_ELEMENT_PAIRS } from '../derivedElements';
 
 export const CLASS_DATA = snapshotJson as unknown as ClassSystemSnapshot;
 
@@ -88,8 +89,25 @@ const FOCUS_EXPONENT: Record<FichaStage, number> = {
   rookie: 1, champion: 1.1, ultimate: 1.25, mega: 1.55, ultra: 1.7,
 };
 
-function budgetForStage(stage: FichaStage): Budget {
-  const m = STAGE_MULTIPLIER[stage];
+/**
+ * RENASCIMENTO (`utils/rebirth.ts`): quem renasceu joga com um orçamento
+ * maior em TODOS os estágios — é essa multiplicação, e não um bônus solto,
+ * que faz "mais pontos no primeiro nível e, por consequência, nos próximos"
+ * ser verdade por construção. O valor mora no módulo do Rebirth; aqui só se
+ * aplica (footgun 9: um dono por regra).
+ */
+export interface RebirthBoost {
+  multiplier: number;
+  /** Escola escolhida na cerimônia — recebe piso garantido de pontos. */
+  escola: EscolaId;
+  /** Elemento escolhido (base ou par de 2º nível): entra como VIÉS na
+   *  distribuição, nunca como pontos avulsos. Par vira viés nos dois
+   *  componentes, que é como a cascata destrava o par de verdade. */
+  elemento: string;
+}
+
+function budgetForStage(stage: FichaStage, boost?: RebirthBoost): Budget {
+  const m = STAGE_MULTIPLIER[stage] * (boost?.multiplier ?? 1);
   return {
     elementos: Math.round(ROOKIE_BUDGET.elementos * m),
     escolasDistribuidas: Math.round(ROOKIE_BUDGET.escolasDistribuidas * m),
@@ -98,6 +116,29 @@ function budgetForStage(stage: FichaStage): Budget {
     talentoRanks: Math.round(ROOKIE_BUDGET.talentoRanks * m),
     profissao: Math.round(ROOKIE_BUDGET.profissao * m),
   };
+}
+
+/**
+ * O elemento escolhido no Rebirth entra como VIÉS de participação, não como
+ * pontos avulsos: a alocação continua sendo a mesma função, com as mesmas
+ * garantias de soma. Um PAR (2º nível) vira viés nos DOIS componentes —
+ * é assim que a cascata destrava o par de verdade (`cascataDosPares`), em
+ * vez de escrever o par à mão numa ficha, que seria o par sem o caminho.
+ */
+const REBIRTH_ELEMENT_BIAS = 2.5;
+
+function applyElementBias(shares: Record<ElementoBaseId, number>, elementoId: string): void {
+  const par = DERIVED_ELEMENT_PAIRS.find(p => p.id === elementoId);
+  const alvos: ElementoBaseId[] = par
+    ? [...par.componentes]
+    : (CLASS_ELEMENT_ORDER as string[]).includes(elementoId) ? [elementoId as ElementoBaseId] : [];
+  // Piso antes de multiplicar: quem tirou ~0 no eixo escolhido continuaria em
+  // ~0 depois de multiplicar por qualquer coisa, e a escolha do jogador não
+  // apareceria na ficha.
+  const teto = Math.max(...CLASS_ELEMENT_ORDER.map(id => shares[id])) || 1;
+  for (const alvo of alvos) {
+    shares[alvo] = Math.max(shares[alvo], teto * 0.2) * REBIRTH_ELEMENT_BIAS;
+  }
 }
 
 const ROLE_TO_ESCOLA: Record<RoleId, EscolaId> = {
@@ -200,8 +241,14 @@ function custoElementos(elementos: Partial<Record<string, number>>): number {
 }
 
 /** Ficha de UM estágio a partir dos eixos. Determinística por `seedKey`. */
-export function buildFicha(nome: string, oracle: OracleAxes, stage: FichaStage = 'rookie', seedKey: string = nome): Ficha {
-  const budget = budgetForStage(stage);
+export function buildFicha(
+  nome: string,
+  oracle: OracleAxes,
+  stage: FichaStage = 'rookie',
+  seedKey: string = nome,
+  boost?: RebirthBoost,
+): Ficha {
+  const budget = budgetForStage(stage, boost);
 
   const elementoShares = Object.fromEntries(
     CLASS_ELEMENT_ORDER.map(id => [id, oracle.classElements[id]])
@@ -209,7 +256,11 @@ export function buildFicha(nome: string, oracle: OracleAxes, stage: FichaStage =
   const focoShares = Object.fromEntries(
     CLASS_ELEMENT_ORDER.map(id => [id, Math.pow(Math.max(0, elementoShares[id]), FOCUS_EXPONENT[stage])])
   ) as Record<ElementoBaseId, number>;
-  const elementos = allocateElementos(focoShares, ELEMENT_ORCAMENTO_BY_STAGE[stage]);
+  if (boost) applyElementBias(focoShares, boost.elemento);
+  const elementos = allocateElementos(
+    focoShares,
+    Math.round(ELEMENT_ORCAMENTO_BY_STAGE[stage] * (boost?.multiplier ?? 1)),
+  );
 
   const DISTRIBUTED_ESCOLAS = ['combate_fisico', 'longo_alcance', 'conjuracao', 'benca', 'maldicao'] as const;
   const roleEscolaShares = { combate_fisico: 0, longo_alcance: 0, conjuracao: 0, benca: 0, maldicao: 0 } as Record<(typeof DISTRIBUTED_ESCOLAS)[number], number>;
@@ -230,6 +281,14 @@ export function buildFicha(nome: string, oracle: OracleAxes, stage: FichaStage =
   const escolas: Partial<Record<EscolaId, number>> = { evocacao: budget.evocacaoFixo };
   for (const [escola, pontos] of Object.entries(distributedEscolas)) {
     if (pontos > 0) escolas[escola as EscolaId] = pontos;
+  }
+  if (boost) {
+    // Piso da escola escolhida: ela termina com a MAIOR pontuação da ficha.
+    // Escolher e não ver diferença é o pior resultado possível de uma tela de
+    // escolha — some-se a isso que `evocacao` tem valor fixo e nunca entra na
+    // distribuição, e sem este piso escolher evocação não faria nada.
+    const maior = Math.max(...Object.values(escolas).map(v => v ?? 0));
+    escolas[boost.escola] = Math.max(escolas[boost.escola] ?? 0, maior + 1);
   }
 
   const dominantRole = oracle.dominantRole;
