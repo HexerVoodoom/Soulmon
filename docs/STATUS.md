@@ -16,6 +16,28 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **06/09/2026 — SPRINT 2, LOTE 1 (6 pacotes VERIFICADOS)** — **WP4.17: o guia
+> mentia sobre a regra mais importante do jogo.** Ele dizia "Rookie→Champion
+> pede 10 dias perfeitos" lendo `daysToEvolve`, um campo que NENHUMA regra
+> consulta; o gate real é `required` = **4**. O botão de evoluir acendia e o
+> guia dizia que faltavam mais 6 — na tela que a pessoa abre justamente quando
+> não entendeu. No caminho apareceu coisa pior: o `CompanionHUD` recebia
+> `digivolutionSegments`, `digivolutionSegmentsNeeded` e `requiredDays` — três
+> fontes do mesmo número — e **não desenhava nenhuma**; as três saíram ·
+> **WP4.20**: o cabeçalho de `dungeon.ts` afirmava reset mensal, limite diário
+> de partidas e derrota que custa coração; as três eram falsas desde que
+> `handleDungeonLose` virou callback vazio. Corrigido, e a REGRA travada por
+> teste (a derrota não pode voltar a cobrar da barra de cuidado) · **WP1.9**: o
+> "porquê" escrito no onboarding agora recebe um eco ("Anotado. Seu Soulmon vai
+> lembrar disso") — só para quem escreveu · **WP1.10**: a oferta do teste longo
+> diz o que muda e quanto custa, em vez de prometer que "afina" a criatura ·
+> **WP0.13/WP0.14**: `haunted_done` e `checkin_shown` — o numerador de "a pilha
+> de culpa virou loop de jogo?" e o denominador que faltava para `checkin_commit`.
+> Aqui também apareceu um defeito: **`ONCE_PER_DAY` valia pela metade** (o dedupe
+> de fila era um `if` literal para `day_active`), então o denominador novo poderia
+> ser contado várias vezes por dia. Generalizado.
+> Gate: tsc EXIT=0 (app + desktop), vitest **184 arquivos · 2927 passed · 2 skipped**.
+
 > **03/09/2026 — RODADA 4: o corpus PRÉ-Mobbin destrinchado** — os relatórios
 > 01–07, as transcrições 08 e o guia alimentaram o plano na criação, mas só o
 > dossiê Mobbin tinha sido confrontado linha a linha com o código. Agora os seis

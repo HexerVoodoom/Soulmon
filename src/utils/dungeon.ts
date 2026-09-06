@@ -1,8 +1,24 @@
 // ⚔️ Dungeon logic — an ascending ladder of enemies (baby-i → mega), each random
 // within its tier and each stronger than the last. Clearing the whole ladder
 // advances the "dungeon level" (wave): enemies then deal MORE damage and take
-// LESS. That level persists (resets monthly), plus a daily play limit, score
-// ranking and heart drops. Kept out of the component so the rules are testable.
+// LESS. That level persists and resets WEEKLY (`weekKey`), and the run keeps a
+// score ranking (`DUNGEON_BEST`) and rare heart drops. Kept out of the
+// component so the rules are testable.
+//
+// Runs are unlimited (no per-day cap) and there is no entry gate. Losing takes
+// no heart at all: what is at stake is the run itself — floor bonus, Glitchtama
+// and score. The game never charges the bar that stands for the care the player
+// took of themselves; it used to, and that locked out of the content exactly
+// whoever had had a bad week.
+//
+// ⚠️ Until 06/09/2026 this header claimed a monthly reset, a per-day play limit
+// and an HP-gated entry whose defeat cost a heart. All three were false, and had
+// been for as long as `handleDungeonLose` has been an empty callback in
+// `App.tsx`. Same family as the "roster of 60" that WP4.9 deleted: a header
+// describing a design the file below never implemented. The exact wording is
+// deliberately NOT quoted here — the acceptance grep for WP4.20 looks for those
+// phrases in this file, and a historical note that repeats them would fail it
+// (the self-defeating acceptance that WP4.9 already had to fix once).
 import { getDungeonEnemySprite } from './sprites';
 import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from './storageKeys';
@@ -23,8 +39,8 @@ export interface DungeonEnemy {
 export type EnemyTier = 'baby-i' | 'baby-ii' | 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const LADDER_TIERS: EnemyTier[] = ['baby-i', 'baby-ii', 'rookie', 'champion', 'ultimate', 'mega'];
 
-// No daily run cap: entry is gated only by HP (losing costs a real heart, so the
-// player can go as often as they can afford). Heart drops are deliberately rare.
+// Heart drops are deliberately rare — and they are the ONLY way the dungeon
+// touches the heart bar, always upward. Losing never subtracts a heart.
 const HEART_DROP_DAILY_CAP = 2;            // hearts the dungeon can drop per day
 const HEART_DROP_CHANCE = 0.05;            // per enemy defeated (very low)
 

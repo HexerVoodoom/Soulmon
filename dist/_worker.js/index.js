@@ -2334,6 +2334,8 @@ var EVENT_SCHEMA = {
   reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
   unlock_dismiss: { reason: { min: 0, max: 3 } },
+  haunted_done: null,
+  checkin_shown: null,
   milestone: { tier: { min: 1, max: 3 } },
   shield_used: null,
   welcome_back: { days: { min: 0, max: 3 } },
@@ -2955,7 +2957,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-wq0k7j/functionsRoutes-0.21957169505917262.mjs
+// ../.wrangler/tmp/pages-Jvl4Bg/functionsRoutes-0.10141259205168685.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -149,10 +149,15 @@ interface CompanionHUDProps {
   equippedDecor?: Partial<Record<SlotId, string>>;
   /** Troféus de season ganhos no Torneio — exibidos na vitrine, se houver uma. */
   trophies?: Array<{ season: string; place: 1 | 2 | 3 }>;
-  digivolutionSegments: number;
-  digivolutionSegmentsNeeded: number;
   perfectDays?: number; // Dias perfeitos acumulados
-  requiredDays?: number; // Dias necessários para evolução
+  /* ⚰️ WP4.17 — `digivolutionSegments`, `digivolutionSegmentsNeeded` e
+     `requiredDays` SAÍRAM daqui (03/09/2026). Os três eram props declaradas,
+     recebidas e **nunca lidas no corpo deste componente**: o HUD tinha três
+     fontes para o mesmo número e não desenhava nenhuma. Duas delas vinham do
+     save (`digivolutionSegments*`, cujo valor `handleEvolve` ainda escreve e
+     ninguém lê) e a terceira do gate real. Não reintroduza: quem precisa do
+     gate chama `FORM_REQUIREMENTS[…].required`, que é o que `handleEvolve` e
+     `canEvolve` leem. */
   onEvolve?: () => void;
   /** Evolução manual: botão sobre o pet quando a barra está cheia. */
   canEvolve?: boolean;
@@ -202,10 +207,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   equippedBackground = null,
   equippedDecor = {},
   trophies = [],
-  digivolutionSegments,
-  digivolutionSegmentsNeeded,
   perfectDays = 0,
-  requiredDays = 1,
   onEvolve,
   canEvolve = false,
   onEvolveRequest,

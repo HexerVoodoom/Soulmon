@@ -274,7 +274,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
 
     if (newHp <= 0) {
       playDegenerate();
-      onLose();                                   // -1 real heart
+      // Não custa coração nenhum: `handleDungeonLose` é um callback vazio, de
+      // propósito. O que se perde ao cair é a RUN — bônus de andar, Glitchtama
+      // e placar. (WP4.20: este comentário afirmava um custo de um coração, e
+      // era falso desde que o handler ficou vazio.)
+      onLose();
       const newBest = recordDungeonScore(runScoreRef.current);
       setBest(newBest);
       setRunScore(runScoreRef.current);

@@ -67,13 +67,13 @@ rápido; a fonte são os arquivos de `ledger/`.
 
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
-| medição (13) | 8 | 2 (D1, D2) | — | — | **3** (0.3, 0.5, 0.7) | — |
-| nascimento (17) | 16 | — | — | — | **1** (1.7) | — |
+| medição (13) | 6 | 2 (D1, D2) | — | — | **5** (0.3, 0.5, 0.7, 0.13, 0.14) | — |
+| nascimento (17) | 14 | — | — | — | **3** (1.7, 1.9, 1.10) | — |
 | constância (15) | 12 | 1 (D3) | — | — | **2** (2.3, 2.9) | — |
 | vínculo (11) | 8 | 2 (D11, D16) | — | — | **1** (3.7) | — |
-| permanência (21) | 16 | 3 (D5, D6 ×2) | — | — | **1** (4.9) | **1** (4.4) |
+| permanência (21) | 14 | 3 (D5, D6 ×2) | — | — | **3** (4.9, 4.17, 4.20) | **1** (4.4) |
 | sustento (9) | 5 | 3 (D7, D10, H.4) | — | — | **1** (5.5) | — |
-| **Total (86)** | **65** | **11** | — | — | **9** | **1** |
+| **Total (86)** | **59** | **11** | — | — | **15** | **1** |
 
 **Oito pacotes esperam decisão do dono** (seção 10 do plano). D1
 (`METRICS_ADMIN_KEY`) é o que destrava mais coisa: sem ele ninguém lê nenhum
@@ -148,4 +148,23 @@ transversal**: `needsIntervention`, `focusComplete`, `BOND_REWARDS`,
 `SEASON_PATHS`, `sleepReminderAt`, `triggerMessage` e 7 eventos de telemetria
 estão escritos, testados e mudos.
 
-_Última consolidação: 03/09/2026 (rodada 4)._
+**Sprint 2, lote 1 (06/09/2026):** seis pacotes verificados — WP4.17, WP4.20
+(permanência), WP1.9, WP1.10 (nascimento), WP0.13, WP0.14 (medição). Três deles
+renderam achado maior que o próprio pacote:
+
+- **WP4.17** ia ser uma troca de constante no guia. O `CompanionHUD` recebia
+  **três props do mesmo número e não desenhava nenhuma** — a quarta ocorrência
+  do "código sem consumidor" da rodada 4, agora dentro do componente que o
+  jogador tem na frente o tempo todo. As três saíram.
+- **WP0.14** ia ser um evento novo. Achou que `ONCE_PER_DAY` **valia pela
+  metade**: o dedupe de fila era um `if` literal para `day_active`, então todo
+  membro novo herdava o nome da regra sem herdar a regra — e o membro novo é
+  justamente um denominador, onde repetir mente para baixo.
+- **WP4.20 e WP1.10** tinham **aceite escrito errado**. O do WP4.20 é
+  autodestrutivo pela segunda vez no plano: a nota histórica que explica a
+  correção reproduz as frases que o `grep` procura. O do WP1.10 tinha um `awk`
+  cujo intervalo começava ~700 linhas antes do bloco certo e contava o título
+  do GOAL_STEP como se fosse promessa de criatura melhor. **Aceite que ninguém
+  rodou é hipótese** — é a terceira vez que essa frase se paga.
+
+_Última consolidação: 06/09/2026 (sprint 2, lote 1)._

@@ -94,12 +94,12 @@ describe('allowlist de eventos', () => {
     expect(sanitizeEvent('toString')).toBeNull();
   });
 
-  it('aceita os dezenove eventos declarados, e só eles', () => {
+  it('aceita os vinte e um eventos declarados, e só eles', () => {
     expect(TELEMETRY_EVENTS).toEqual([
       'install', 'onboarding_step', 'demo_pick', 'first_task_done', 'day_active',
       'unlock_view', 'purchase', 'demo_cap_hit', 'activity_create', 'week_active',
       // WP0.5 (rodada 2/3 do PLANO-MELHORIAS)
-      'reveal_seen', 'checkin_commit', 'unlock_dismiss', 'milestone', 'shield_used', 'welcome_back',
+      'reveal_seen', 'checkin_commit', 'unlock_dismiss', 'haunted_done', 'checkin_shown', 'milestone', 'shield_used', 'welcome_back',
       'evolve', 'dungeon_run', 'bond_level',
     ]);
     expect(sanitizeEvent('install')).toEqual({ e: 'install', d: telemetryDayKey() });

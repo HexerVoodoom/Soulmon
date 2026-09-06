@@ -780,6 +780,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {/* GOAL_STEP / STRUGGLE_STEP — o "porquê", antes de qualquer mecânica */}
         {(step === GOAL_STEP || step === STRUGGLE_STEP) && (
           <div style={{ paddingTop: 28 }}>
+            {/* WP1.9 — o eco. A pessoa acabou de escrever por que quer mudar de
+                vida e o texto sumia sem uma palavra: o passo seguinte abria
+                como se nada tivesse sido dito. Uma linha só, e só para quem
+                escreveu — quem pulou não recebe eco de coisa nenhuma, porque
+                aí a frase viraria mentira. Nada disso vira estado no save: o
+                gatilho é o `soulGoal` que já está em memória. */}
+            {step === STRUGGLE_STEP && soulGoal.trim().length > 0 && (
+              <p style={{ ...sm2Hint, marginBottom: 10, color: 'var(--sm2-accent-ink)' }}>
+                {isPt ? 'Anotado. Seu Soulmon vai lembrar disso.' : 'Noted. Your Soulmon will remember.'}
+              </p>
+            )}
             <h2 className="sm2-title" style={{ ...sm2TitleStyle, marginBottom: 8 }}>
               {step === GOAL_STEP
                 ? (isPt ? 'O que você quer melhorar na sua vida?' : 'What do you want to improve in your life?')
@@ -1082,9 +1093,19 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               ? 'Esta escolha não tem volta — não dá para responder o teste depois.'
               : "This choice is final — there's no answering the test later."}>
             <p style={{ ...sm2Text, color: 'var(--sm2-muted)', margin: '0 0 18px' }}>
+              {/* WP1.10 — o que muda e quanto custa. A copy anterior prometia
+                  que o teste longo "afinava" a criatura: uma palavra que não
+                  diz nada e não deixa ninguém decidir. (Ela não é reproduzida
+                  aqui de propósito — o aceite do WP1.10 procura a frase antiga
+                  neste arquivo, e um comentário que a repete reprova o próprio
+                  pacote. É a terceira vez que essa armadilha aparece.) Os
+                  DOIS caminhos são legítimos (as 6 respostas do ritual entram
+                  na leitura nos dois), então a copy não promete criatura
+                  vantagem nenhuma — promete uma leitura com MAIS FONTES. O nº sai
+                  da constante; o tempo é a única estimativa, e é conservadora. */}
               {isPt
-                ? `Seu Soulmon já pode nascer agora. Se quiser, dá para responder mais ${SOUL_TEST_ITEMS.length} perguntas sobre você — elas afinam quem seu Soulmon vai ser.`
-                : `Your Soulmon can be born right now. If you like, you can answer ${SOUL_TEST_ITEMS.length} more questions about yourself — they sharpen who it turns out to be.`}
+                ? `Seu Soulmon já pode nascer agora. Com mais ${SOUL_TEST_ITEMS.length} perguntas (~2 min), a leitura usa seus traços de personalidade além das respostas de agora.`
+                : `Your Soulmon can be born right now. With ${SOUL_TEST_ITEMS.length} more questions (~2 min), the reading uses your personality traits on top of the answers you just gave.`}
             </p>
             <button type="button" style={{ ...sm2Button('primary'), width: '100%', marginBottom: 8 }}
               onClick={() => chooseRefine(true)}>

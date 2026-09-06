@@ -98,6 +98,14 @@ export type TelemetryEvent =
   | 'reveal_seen'
   /** Fechou o check-in assumindo a meta (WP2.3). `focus_count` = focos escolhidos. */
   | 'checkin_commit'
+  /** Concluiu uma tarefa que estava ASSOMBRADA (WP0.13). O numerador de
+   *  "a pilha de culpa virou loop de jogo?" — `haunted_done / day_active`.
+   *  Nunca o nome nem o id da tarefa. */
+  | 'haunted_done'
+  /** O ritual do dia FOI OFERECIDO (WP0.14). Existe para ser o DENOMINADOR de
+   *  `checkin_commit`: sem ele, "80% assumem a meta" é uma fração sem debaixo,
+   *  e um número desses decide errado com toda a confiança do mundo. */
+  | 'checkin_shown'
   /** Fechou a tela de compra pelo "Agora não" (WP5.5), com o mesmo `reason`
    *  do `unlock_view`. É o DENOMINADOR honesto da oferta: sem ele, quem sai
    *  pelo X e quem sai pelo botão declarado somem no mesmo silêncio. */
@@ -141,6 +149,8 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   reveal_seen: { has_sprite: { min: 0, max: 1 }, funnel: { min: 0, max: 2 } },
   checkin_commit: { focus_count: { min: 0, max: 3 } },
   unlock_dismiss: { reason: { min: 0, max: 3 } },
+  haunted_done: null,
+  checkin_shown: null,
   milestone: { tier: { min: 1, max: 3 } },
   shield_used: null,
   welcome_back: { days: { min: 0, max: 3 } },
@@ -333,7 +343,11 @@ const K_WEEK = 'soulmon-telemetry-week';
 /** Eventos que acontecem UMA VEZ NA VIDA deste aparelho. */
 const ONCE_EVER: TelemetryEvent[] = ['install', 'first_task_done'];
 /** Eventos que acontecem UMA VEZ POR DIA. */
-const ONCE_PER_DAY: TelemetryEvent[] = ['day_active'];
+// `checkin_shown` entra aqui (WP0.14) porque o ritual é 1×/dia por construção
+// (`lastCheckInDate`) — mas o EFEITO que o oferece depende de `gameState`, e um
+// re-render antes de a trava gravar contaria a mesma oferta duas vezes. Um
+// denominador inflado mente para BAIXO em toda taxa que o usa.
+const ONCE_PER_DAY: TelemetryEvent[] = ['day_active', 'checkin_shown'];
 
 // ---------------------------------------------------------------------------
 // Funções puras (o que os testes travam)
@@ -695,8 +709,22 @@ export function track(event: TelemetryEvent, props?: TelemetryProps, day?: strin
     if (seenKey && readSeen().includes(seenKey)) return;
 
     let queue = readQueue();
-    if (record.e === 'day_active') {
-      queue = queue.filter(r => !(r.e === 'day_active' && r.d === record.d));
+    // Dedupe NA FILA, para todo evento de `ONCE_PER_DAY`.
+    //
+    // A marca de `seen` só é gravada no FLUSH (ver `markSeen`), então ela impede
+    // o reenvio depois de um despacho — não a repetição dentro da mesma sessão.
+    // Esta linha era `record.e === 'day_active'` literal, e por isso a lista
+    // `ONCE_PER_DAY` valia pela metade: qualquer membro novo herdava o nome da
+    // regra sem herdar a regra. `checkin_shown` (WP0.14) é o primeiro membro
+    // novo desde então, e é justamente um DENOMINADOR — repetir infla a fração
+    // para baixo e o número mente com toda a confiança do mundo.
+    //
+    // A substituição (tira o antigo, põe o novo) e não "mantém o primeiro" é
+    // exigência do `day_active`: ele carrega o `effort` do dia, que CRESCE ao
+    // longo do dia, e o registro válido é o último. Para evento sem props os
+    // dois comportamentos são idênticos.
+    if (ONCE_PER_DAY.includes(record.e)) {
+      queue = queue.filter(r => !(r.e === record.e && r.d === record.d));
     }
     const next = enqueueCapped(queue, record);
     if (next === queue) return; // fila cheia: descarta o novo, preserva o funil

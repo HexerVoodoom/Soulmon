@@ -1915,6 +1915,9 @@ export default function App() {
        * 2× no StrictMode (footgun 6) e daria comida em dobro.
        */
       const relief = isHaunted(task, new Date());
+      // WP0.13: o numerador de "a pilha de culpa virou loop de jogo?". Aqui,
+      // FORA do updater (footgun 6), e sem nada da tarefa — só o fato.
+      if (relief) track('haunted_done');
 
       // Mark task as completed first
       setGameState(prev => ({
@@ -2872,6 +2875,10 @@ export default function App() {
     const plan = checkInPlan(gameState, now);
     if (plan.habitsToday.length === 0 && plan.suggestedFocus.length === 0 && plan.carryOver.length === 0) return;
     checkInPromptedRef.current = hoje;
+    // WP0.14: o DENOMINADOR de `checkin_commit`, emitido no único ponto que
+    // sabe que a oferta chegou à tela — depois de todos os gates, antes do
+    // modal. Dedupe diário em `ONCE_PER_DAY`.
+    track('checkin_shown');
     setCheckInPlanData(plan);
   }, [gameState, hasCompletedOnboarding, hasCompletedTutorial]);
 
@@ -4015,10 +4022,7 @@ export default function App() {
                 equippedDecor={gameState.equippedDecor ?? EMPTY_DECOR}
                 trophies={gameState.trophies ?? EMPTY_TROPHIES}
                 fullSignal={fullSignal}
-                digivolutionSegments={gameState.digivolutionSegments}
-                digivolutionSegmentsNeeded={gameState.digivolutionSegmentsNeeded}
                 perfectDays={gameState.perfectDays}
-                requiredDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
                   const req = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
@@ -4398,7 +4402,7 @@ export default function App() {
               dataPoints={gameState.dataPoints}
               vaccinePoints={gameState.vaccinePoints}
               digivolutionSegments={gameState.perfectDays}
-              digivolutionSegmentsNeeded={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].daysToEvolve}
+              digivolutionSegmentsNeeded={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
               onDegenerate={handleDegenerate}
               stages={gameState.soulmonStages ?? []}
               eggType={gameState.eggType}

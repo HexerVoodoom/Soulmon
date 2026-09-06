@@ -75,8 +75,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Rookie→Champion pede ${R.rookie.daysToEvolve} dias perfeitos; Champion→Ultimate ${R.champion.daysToEvolve}; Ultimate→Mega ${R.ultimate.daysToEvolve}; Mega→Ultra ${R.mega.daysToEvolve}.`,
-              `Rookie→Champion needs ${R.rookie.daysToEvolve} perfect days; Champion→Ultimate ${R.champion.daysToEvolve}; Ultimate→Mega ${R.ultimate.daysToEvolve}; Mega→Ultra ${R.mega.daysToEvolve}.`,
+              // WP4.17: `required` é o número que os DOIS portões de evolução
+              // manual leem (`handleEvolve` e o `canEvolve` do HUD). O guia
+              // citava `daysToEvolve` (10/20/30/40) — um campo que nenhuma
+              // regra consulta — e prometia uma escada 2,5× mais longa que a
+              // real. Quem lia o guia achava que estava a 6 dias de evoluir
+              // quando o botão já estava aceso.
+              `Rookie→Champion pede ${R.rookie.required} dias perfeitos; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
+              `Rookie→Champion needs ${R.rookie.required} perfect days; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
             )}
           </p>
           <p style={para}>
