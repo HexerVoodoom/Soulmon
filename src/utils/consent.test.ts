@@ -120,11 +120,27 @@ describe('superfícies novas em PT-BR e EN', () => {
     }
   });
 
-  it('o reroll declara a equivalência mecânica nos dois idiomas (D-05)', () => {
+  /**
+   * ⚠️ Este caso pedia que a tela dissesse "sorteado aleatoriamente" — porque,
+   * enquanto o sorteio existia, **declará-lo era a obrigação** (D-05: vender
+   * aleatoriedade sem dizer que é aleatória é vender a ilusão de que existe um
+   * resultado melhor).
+   *
+   * Em 06/09/2026 o sorteio foi REMOVIDO (WP5.7 / decisão H.4): a criatura sai
+   * das respostas, e a mesma resposta devolve a mesma criatura. A obrigação de
+   * declarar a aleatoriedade some junto com ela — e a exigência se inverte: a
+   * palavra não pode mais aparecer, porque agora ela seria falsa.
+   *
+   * A equivalência mecânica continua sendo obrigatória, e por outro motivo: ela
+   * não é sobre o sorteio, é sobre dinheiro nunca comprar poder.
+   */
+  it('a Nova Leitura não promete sorteio nenhum, e mantém a equivalência mecânica', () => {
     expect(credits).toContain('Todo pet é mecanicamente igual');
     expect(credits).toContain('Every pet is mechanically equal');
-    expect(credits).toContain('sorteado aleatoriamente');
-    expect(credits).toContain('randomly rolled');
+    expect(credits, 'a criatura voltou a ser sorteada').not.toContain('sorteado aleatoriamente');
+    expect(credits).not.toContain('randomly rolled');
+    expect(credits).toContain('Mesmas respostas, mesma criatura');
+    expect(credits).toContain('Same answers, same creature');
   });
 });
 

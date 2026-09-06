@@ -41,7 +41,8 @@ interface CreditsModalProps {
   canReroll: boolean;
   onWatchAd: () => Promise<boolean>;
   onBuyPack: (pack: CreditPack) => Promise<boolean>;
-  onReroll: () => Promise<boolean>;
+  /** Abre a Nova Leitura (WP5.7). Não cobra nada — é navegação. */
+  onReroll: () => void;
   onClose: () => void;
 }
 
@@ -195,53 +196,32 @@ export function CreditsModal({
           com ela o único uso de Créditos que não era cosmético nem identidade.
           Dinheiro não compra a barra de cuidado, sem asterisco. */}
 
-      {accountTier === 'paid' && canReroll && !confirmingReroll && (
+      {/* WP5.7 (H.4) — "Reroll" virou **Nova Leitura**, e a linha virou uma
+          NAVEGAÇÃO em vez de uma compra: quem confirma é a tela que mostra as
+          perguntas, porque é lá que a pessoa vê o que muda antes de pagar.
+          Sortear e cobrar na mesma linha era o formato de caça-níquel. */}
+      {accountTier === 'paid' && canReroll && (
         <Row
-          icon="replay"
+          icon="auto_awesome"
           tone="gold"
-          disabled={!canAffordReroll || busy !== null}
-          onClick={() => setConfirmingReroll(true)}
-          title={isPt ? 'Reroll de personagem' : 'Character reroll'}
+          disabled={busy !== null}
+          onClick={onReroll}
+          title={isPt ? 'Nova Leitura' : 'New Reading'}
+          /* A declaração de EQUIVALÊNCIA MECÂNICA (D-05) fica aqui, onde o
+             dinheiro é pedido — ela sobreviveu à remoção do sorteio porque não
+             é sobre sorteio: é sobre dinheiro nunca comprar poder. Mesmas
+             respostas, mesma criatura, e todo pet ajuda igual. */
           hint={isPt
-            ? `${REROLL_COST_CREDITS} créditos — volta pra Rookie com um Soulmon novo. Todo pet é igual em atributos: muda a identidade, não o poder.`
-            : `${REROLL_COST_CREDITS} credits — resets to Rookie with a brand-new Soulmon. Every pet is equal in stats: it changes identity, not power.`}
+            ? `${REROLL_COST_CREDITS} créditos — responda de novo as 6 perguntas e a leitura sai delas. Mesmas respostas, mesma criatura. Todo pet é mecanicamente igual: muda quem sua criatura é, nunca o quanto ela te ajuda.`
+            : `${REROLL_COST_CREDITS} credits — answer the 6 questions again and the reading comes from them. Same answers, same creature. Every pet is mechanically equal: it changes who your creature is, never how much it helps you.`}
         />
       )}
 
-      {/* Confirmação NA LINHA: ação destrutiva continua confirmada, sem abrir
-          uma segunda camada por cima de uma camada. */}
-      {confirmingReroll && (
-        <div style={{ padding: 12, borderRadius: 16, backgroundColor: 'var(--sm2-surface-2)', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <p style={{ ...sm2Text, margin: 0, display: 'flex', gap: 10 }}>
-            <Icon name="warning" size={20} tone="danger" />
-            {/* O reroll é SORTEIO: o texto diz isso e diz que o resultado não
-                muda o poder do pet — todo pet é mecanicamente igual (regra do
-                jogo). Vender aleatoriedade sem essa frase é vender a ilusão de
-                que existe um resultado melhor. */}
-            {isPt
-              ? `Troca seu Soulmon por um NOVO, sorteado aleatoriamente — e reseta a evolução pra Rookie. Atividades, tarefas e Bits continuam. Todo pet é mecanicamente igual: o sorteio muda quem sua criatura é, nunca o quanto sua criatura ajuda. Custa ${REROLL_COST_CREDITS} créditos.`
-              : `Swaps your Soulmon for a brand-new, randomly rolled one — and resets evolution to Rookie. Activities, tasks and Bits stay. Every pet is mechanically equal: the roll changes who your creature is, never how much it helps. Costs ${REROLL_COST_CREDITS} credits.`}
-          </p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" style={{ ...sm2Button('ghost'), flex: 1 }} onClick={() => setConfirmingReroll(false)}>
-              {isPt ? 'Cancelar' : 'Cancel'}
-            </button>
-            <button
-              type="button"
-              style={{ ...sm2Button('primary', busy === 'reroll'), flex: 1 }}
-              disabled={busy === 'reroll'}
-              onClick={() => {
-                setConfirmingReroll(false);
-                void run('reroll', onReroll,
-                  isPt ? 'Novo personagem gerado — você voltou pra Rookie.' : 'New character generated — back to Rookie.',
-                  isPt ? 'Não foi possível fazer o reroll agora.' : 'Could not reroll right now.');
-              }}
-            >
-              {busy === 'reroll' ? (isPt ? 'Gerando…' : 'Generating…') : (isPt ? 'Sim, fazer reroll' : 'Yes, reroll')}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* ⚰️ Aqui havia a confirmação em linha do reroll, com o texto "sorteado
+          aleatoriamente" e "o sorteio muda quem sua criatura é". Saiu inteira
+          em 06/09/2026 (WP5.7 / H.4): não existe mais sorteio, e a confirmação
+          mora na `NewReadingModal`, junto das perguntas — confirmar longe do
+          que vai mudar é confirmar no escuro. */}
 
       {accountTier === 'demo' && (
         <p style={{ ...sm2Hint, textAlign: 'center' }}>

@@ -88,6 +88,7 @@ import {
 import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
+import { readingSeed } from './utils/newReading';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
@@ -547,6 +548,7 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 
 const EvolutionPath = lazy(() => import('./components/EvolutionPath').then(m => ({ default: m.EvolutionPath })));
 const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({ default: m.CreditsModal })));
+const NewReadingModal = lazy(() => import('./components/NewReadingModal').then(m => ({ default: m.NewReadingModal })));
 const GameTutorialFlow = lazy(() => import('./components/GameTutorialFlow').then(m => ({ default: m.GameTutorialFlow })));
 const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
@@ -601,6 +603,8 @@ export default function App() {
   // Loja — fica fora do minigame: modal próprio, não uma view (ver BottomNav).
   // Créditos (monetização) — modal próprio, aberto pelo menu sanduíche.
   const [creditsOpen, setCreditsOpen] = useState(false);
+  /** WP5.7 — a Nova Leitura (o que era o reroll por sorteio). */
+  const [newReadingOpen, setNewReadingOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
   const [resetOnboardingOpen, setResetOnboardingOpen] = useState(false);
@@ -2653,12 +2657,28 @@ export default function App() {
   // de nascimento salvos no onboarding) — recomeça do Rookie, mantém
   // atividades/tarefas e Bits. Só existe pra contas 'paid' (modo demo não tem
   // perfil de oráculo salvo).
-  const handleRerollCharacter = useCallback(async (): Promise<boolean> => {
-    const saved = readJson<(OracleInput & { seed: number }) | null>(
+  /**
+   * NOVA LEITURA (WP5.7 / decisão H.4) — o que era um sorteio pago.
+   *
+   * A semente vinha de `Math.random()`: 50 Créditos de dinheiro real por um
+   * resultado aleatório, que o próprio `termos.html` chamava de "sorteio pago".
+   * Era a única violação declarada da lista de proibições ainda de pé no
+   * código, e ela desmentia a promessa central do produto ("a criatura veio de
+   * VOCÊ") exatamente no momento em que essa promessa custa mais caro.
+   *
+   * Agora a semente sai das RESPOSTAS (`utils/newReading.ts`), e a tela diz a
+   * regra antes de cobrar. `readings` é um contador que só avança quando uma
+   * leitura é CONCLUÍDA — abrir a tela e desistir não muda nada, e por isso
+   * repetir a mesma resposta continua devolvendo a mesma criatura.
+   */
+  const handleNewReading = useCallback(async (novasRespostas: Record<string, string>): Promise<boolean> => {
+    const saved = readJson<(OracleInput & { seed: number; readings?: number }) | null>(
       STORAGE_KEYS.SOULMON_PROFILE, null);
     // Confere o perfil ANTES de cobrar — cobrar e depois falhar seria roubo.
     if (!saved) return false;
-    const newSeed = Math.floor(Math.random() * 2 ** 31);
+    const leituras = Number(saved.readings ?? 0) + 1;
+    const newSeed = readingSeed(novasRespostas, leituras);
+    saved.answers = novasRespostas;
     // GERA ANTES DE COBRAR. Conferir só a existência do perfil não bastava: um
     // perfil salvo corrompido (sem `oracle.classElements`, sem `psychometric`,
     // sem `astrology`) faz a geração lançar — e a ordem antiga já tinha
@@ -2683,7 +2703,7 @@ export default function App() {
     if (!ent) return false;
     // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
     // perder o que a pessoa pagou. AVISA.
-    writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed });
+    writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed, readings: leituras });
     const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
@@ -3777,8 +3797,31 @@ export default function App() {
               canReroll={!!readLocal(STORAGE_KEYS.SOULMON_PROFILE)}
               onWatchAd={handleWatchAd}
               onBuyPack={handleBuyCreditPack}
-              onReroll={handleRerollCharacter}
+              /* WP5.7 — a linha da Loja de Créditos apenas ABRE a Nova
+                 Leitura; quem cobra é a tela que mostra as perguntas. */
+              onReroll={() => { setCreditsOpen(false); setNewReadingOpen(true); }}
               onClose={() => setCreditsOpen(false)}
+            />
+          </Suspense>
+        )}
+
+        {/* WP5.7 (H.4) — a Nova Leitura. O que era um sorteio pago com
+            `Math.random()` (e que o `termos.html` chamava de "sorteio pago")
+            passou a ser uma leitura DETERMINÍSTICA das respostas. */}
+        {newReadingOpen && (
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+            <NewReadingModal
+              language={language}
+              credits={gameState.credits ?? 0}
+              answers={readJson<{ answers?: Record<string, string> }>(
+                STORAGE_KEYS.SOULMON_PROFILE, {},
+              ).answers ?? {}}
+              onConfirm={async respostas => {
+                const ok = await handleNewReading(respostas);
+                if (ok) setNewReadingOpen(false);
+                return ok;
+              }}
+              onClose={() => setNewReadingOpen(false)}
             />
           </Suspense>
         )}
