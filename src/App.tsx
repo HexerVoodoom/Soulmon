@@ -92,6 +92,10 @@ import { soulmonDisplayName } from './utils/petName';
 import { readingSeed } from './utils/newReading';
 import type { PetVoiceKind } from './utils/petVoice';
 import {
+  emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
+} from './utils/firstDay';
+import { FirstDayCard } from './components/FirstDayCard';
+import {
   applyRebirth, canRebirth, rebirthEscolaOptions, rebirthElementOptions,
 } from './utils/rebirth';
 import type { RebirthChoices } from './utils/rebirth';
@@ -645,6 +649,19 @@ export default function App() {
   /** WP3.2 — os gestos que eram mudos. O `kind` escolhe a tabela de frases
    *  (`utils/petVoice.ts`); o `n` é o que dispara. */
   const [speakSignal, setSpeakSignal] = useState<{ n: number; kind: PetVoiceKind } | undefined>();
+  /** WP1.3 — marca um dos três gestos do primeiro dia. Pura e idempotente
+   *  (`markGesture` devolve a MESMA referência), então pode entrar direto no
+   *  updater sem violar o footgun 6. */
+  const marcarGestoDoDia = useCallback((gesto: FirstDayGesture) => {
+    setGameState(prev => {
+      const hoje = playerDayKey(new Date(), prev.playerDayTz);
+      // Só marca DENTRO do primeiro dia: fora dele o registro nem existe mais.
+      if (!prev.firstDay || prev.firstDay.day !== hoje) return prev;
+      const next = markGesture(prev.firstDay, gesto);
+      return next === prev.firstDay ? prev : { ...prev, firstDay: next };
+    });
+  }, []);
+
   const falar = useCallback((kind: PetVoiceKind) => {
     setSpeakSignal(prev => ({ n: (prev?.n ?? 0) + 1, kind }));
   }, []);
@@ -2062,6 +2079,7 @@ export default function App() {
           // estava te olhando não pode soar igual a concluir qualquer uma —
           // é a peça que transforma a pilha de culpa em recompensa.
           falar(isHaunted(task, new Date()) ? 'haunted' : 'task');
+          marcarGestoDoDia('task');
         });
       }, 3000);
     }
@@ -2408,6 +2426,9 @@ export default function App() {
     // checagem de fora existe só pela recusa, que dispara fala/animação e por
     // isso não pode morar dentro do updater (footgun 6).
     setGameState(prev => applyFeed(prev, foodEmoji, now).state);
+    // WP1.3 — só a comida COMUM conta o gesto: o item especial (coraçãozinho,
+    // chip) sai por outro caminho e não é o que se está ensinando aqui.
+    marcarGestoDoDia('feed');
     setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language]);
 
@@ -3616,6 +3637,7 @@ export default function App() {
       rubFalouRef.current = true;
       falar('rub');
     }
+    marcarGestoDoDia('pet');
     // O teto é reconferido sobre o `prev` — quem manda é a regra pura, sobre o
     // registro que está no save. Antes chegava aqui `{ healed: 0 }` fixo, o que
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
@@ -3752,6 +3774,16 @@ export default function App() {
         petPassive: rollPetPassive(),
         // WP1.16 — a data de nascimento da criatura, no dia do JOGADOR.
         bornAt: playerDayKey(new Date(), prev.playerDayTz),
+        /* WP1.3 — o check-in NÃO dispara no D0.
+           A fila de intersticiais podia abrir o ritual de planejamento em
+           cima de quem tinha acabado de conhecer a criatura: a primeira coisa
+           depois do nascimento seria um formulário de metas. Marcar o dia de
+           hoje como já feito é o jeito honesto — não é uma exceção escondida
+           na fila, é o ritual de hoje considerado cumprido, que é o que ele
+           de fato foi (a pessoa acabou de escolher tudo no onboarding). */
+        lastCheckInDate: playerDayKey(new Date(), prev.playerDayTz),
+        // WP1.3 — o cartão dos três gestos nasce aqui e morre no fim do dia.
+        firstDay: emptyFirstDay(playerDayKey(new Date(), prev.playerDayTz)),
       }));
       return;
     }
@@ -3802,6 +3834,10 @@ export default function App() {
       consent: data.consent ?? prev.consent,
       petPassive: rollPetPassive(),
       bornAt: playerDayKey(new Date(), prev.playerDayTz),
+      // WP1.3 — idem ao caminho demo: o ritual de planejamento não abre em
+      // cima de quem acabou de conhecer a criatura. Ver a nota lá em cima.
+      lastCheckInDate: playerDayKey(new Date(), prev.playerDayTz),
+      firstDay: emptyFirstDay(playerDayKey(new Date(), prev.playerDayTz)),
     }));
   };
 
@@ -3888,6 +3924,11 @@ export default function App() {
           language={language}
           maxActivities={activityCap}
           existingActivitiesCount={gameState.activities.length}
+          /* WP1.4 — o que a pessoa escreveu volta como a PRIMEIRA área da
+             lista. Casamento por palavra-chave, no aparelho: o texto não sai
+             daqui (decisão D8, e `_redact.js` já declarava a mesma linha). */
+          soulGoal={gameState.soulGoal}
+          soulStruggle={gameState.soulStruggle}
           onComplete={handleCompleteTutorial}
         />
       </Suspense>
@@ -4170,6 +4211,17 @@ export default function App() {
 
           {currentView === 'main' && (
             <div className="space-y-4">
+              {/* WP1.3 — o cartão do PRIMEIRO DIA, acima da lista.
+                  O tutorial ensinava conceito e mandava criar uma atividade;
+                  o que ele nunca ensinou foi o que se FAZ com a criatura. Os
+                  três gestos existem desde sempre e nenhum é descobrível — e
+                  o carinho é a única forma de curar coração, então quem não o
+                  descobre vê o pet perder vida sem ter como responder.
+                  Some sozinho na virada do dia, mesmo incompleto. */}
+              {shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz)) && (
+                <FirstDayCard progress={gameState.firstDay!} language={language} />
+              )}
+
               {/* HUD do topo (Ref C): SÓ a marca (o `<h1>` da Home) agora.
                   Vida/Energia migraram para DENTRO do `.sm2-device`
                   (CompanionHUD, `hideBrand compact`) em 27/08/2026 — o dono

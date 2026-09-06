@@ -1,8 +1,9 @@
-import { useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { PixelChoiceChip } from './pixel/PixelKit';
 import type { Language } from '../utils/i18n';
 import type { ActivityCategory } from '../types/attributes';
+import { orderCategoriesForGoal } from '../utils/goalToCategory';
 import { CATEGORY_ICONS, CATEGORY_ICON_IMG, categoryLabel } from '../types/category-icons';
 import { suggestTasks, type SuggestedTask } from '../utils/taskSuggestions';
 
@@ -110,9 +111,16 @@ interface GameTutorialFlowProps {
   /** Atividades que o jogador já tem (normalmente 0 aqui — só por segurança). */
   existingActivitiesCount?: number;
   onComplete: (activities: Array<{ name: string; category: ActivityCategory; emoji: string }>) => void;
+  /** WP1.4 — o que a pessoa escreveu no onboarding. Usado SÓ no aparelho, por
+   *  palavra-chave (`utils/goalToCategory.ts`), para pôr a área de vida que
+   *  ela descreveu na frente da lista. O texto não sai daqui (decisão D8). */
+  soulGoal?: string;
+  soulStruggle?: string;
 }
 
-export function GameTutorialFlow({ language, maxActivities, existingActivitiesCount = 0, onComplete }: GameTutorialFlowProps) {
+export function GameTutorialFlow({
+  language, maxActivities, existingActivitiesCount = 0, onComplete, soulGoal, soulStruggle,
+}: GameTutorialFlowProps) {
   const isPt = language === 'pt-BR';
   const TASK_STEP = PAGES.length;
   const [step, setStep] = useState(0);
@@ -131,6 +139,18 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
       return next;
     });
   };
+
+  /* WP1.4 — a área que a pessoa DESCREVEU vem primeiro.
+     `soulGoal`/`soulStruggle` eram escritos no onboarding e nunca lidos por
+     ninguém: quem escrevia "quero dormir melhor" recebia, na tela seguinte,
+     as oito áreas em ordem fixa — e aprendia ali que o que escreveu não
+     importa. O casamento é por palavra-chave, no aparelho; o texto não vai
+     para a rede (decisão D8). REORDENA, nunca esconde: um palpite por
+     palavra-chave não pode virar decisão tomada no lugar da pessoa. */
+  const categoriasOrdenadas = useMemo(
+    () => orderCategoriesForGoal(CATEGORIES, soulGoal, soulStruggle),
+    [soulGoal, soulStruggle],
+  );
 
   const customCategory = selectedCats.size > 0 ? [...selectedCats][0] : 'Wellness';
   const customKey = 'custom:' + goalText.trim();
@@ -311,7 +331,7 @@ export function GameTutorialFlow({ language, maxActivities, existingActivitiesCo
               {isPt ? 'Áreas da vida (opcional)' : 'Life areas (optional)'}
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-              {CATEGORIES.map(cat => {
+              {categoriasOrdenadas.map(cat => {
                 const active = selectedCats.has(cat);
                 return (
                   <PixelChoiceChip

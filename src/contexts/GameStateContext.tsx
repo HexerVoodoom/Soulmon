@@ -30,6 +30,7 @@ import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
+import { normalizeFirstDay } from '../utils/firstDay';
 import {
   readLocal,
   writeLocal,
@@ -192,6 +193,9 @@ export interface GameState {
   poopEventsCompleted: number[];
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
+  /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
+   *  sozinho na virada; nunca vira lista de pendências. */
+  firstDay?: import('../utils/firstDay').FirstDayProgress | null;
   /** WP4.19 — o pet já caiu por HP 0 e SUBIU de novo. É cosmético e só existe
    *  no sentido positivo: nada no app lê isto como "já caiu". */
   redeemed?: boolean;
@@ -823,6 +827,7 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           return u.length > 0 ? u : ['rookie'];
         })(),
         degeneratedByHP: loadedState.degeneratedByHP === true,
+        firstDay: normalizeFirstDay(loadedState.firstDay) ?? undefined,
         redeemed: loadedState.redeemed === true,
         showRedeemed: loadedState.showRedeemed === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/
