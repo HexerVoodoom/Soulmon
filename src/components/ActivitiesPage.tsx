@@ -69,7 +69,7 @@ interface GameCard {
   onClick: () => void;
 }
 
-export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onOpenTournament }: {
+export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onSpendBits, onOpenTournament }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet nos minijogos. */
   demoCharacterId?: string;
@@ -82,6 +82,8 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   onDungeonEnemyDefeated: () => void;
   onDinoScore: (score: number) => void;
   onEarnPoints: (pts: number) => void;
+  /** WP4.5 — cobra Bits (sumidouro da masmorra). Devolve `false` se não deu. */
+  onSpendBits?: (pts: number) => boolean;
   onOpenTournament: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -231,6 +233,9 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
           onGlitchtama={onGlitchtama}
           onEnemyDefeated={onDungeonEnemyDefeated}
           onEarnPoints={onEarnPoints}
+          /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
+          bits={totalPoints}
+          onSpendBits={onSpendBits}
           onExit={() => setOpenGame(null)}
         />
       )}

@@ -143,7 +143,14 @@ export function ShopModal({
     const m = MISSIONS.find(x => x.id === item.unlock?.missionId);
     if (!m) return '';
     const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
-    const prog = m.target > 1 ? ` · ${cur}/${m.target}` : '';
+    /* WP4.12 (achado E4) — ZERO NÃO É PROGRESSO, é a ausência dele.
+       A aba mostrava `0/100`, `0/3`, `0/1000`, `0/30` um embaixo do outro:
+       uma coluna de zeros que lê como boletim, e o cadeado ao lado dizia a
+       mesma coisa uma segunda vez. Quem nunca entrou na masmorra não precisa
+       ver quantos inimigos faltam — precisa saber o que fazer.
+       Com progresso REAL o número volta, porque aí ele descreve um caminho
+       que já começou. */
+    const prog = m.target > 1 && cur > 0 ? ` · ${cur}/${m.target}` : '';
     return `${isPt ? m.descPt : m.descEn}${prog}`;
   };
 

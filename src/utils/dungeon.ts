@@ -116,6 +116,42 @@ export function getDungeonDifficulty(): number {
   return 1;
 }
 
+/**
+ * WP4.5 — O SUMIDOURO RECORRENTE DE BITS: descer mais fundo.
+ *
+ * Até aqui os Bits só tinham compras ÚNICAS (decoração, cenários), então quem
+ * joga muito acumula uma moeda que não compra mais nada — e moeda que não
+ * compra nada deixa de ser recompensa.
+ *
+ * O sumidouro escolhido é o único que o `CLAUDE.md` já declara legítimo:
+ * **custo de ENTRADA em Bits, nunca cobrar da barra que representa o cuidado
+ * que a pessoa teve consigo mesma**. Comprar um nível de base começa a run
+ * mais fundo (mais Bits por andar, e o andar 1 deixa de ser trivial para quem
+ * já subiu). Ele é RECORRENTE de graça, sem inventar mecânica nova: a base
+ * reseta toda semana, então a compra é semanal por construção.
+ *
+ * O preço sobe com o nível para o sumidouro acompanhar quem farma mais — e
+ * porque o valor do que se compra também sobe (o bônus de andar é escalado).
+ */
+export const DEEP_START_BASE_COST = 40;
+
+export function deepStartCost(currentLevel: number): number {
+  const n = Math.max(1, Math.floor(currentLevel));
+  return DEEP_START_BASE_COST * n;
+}
+
+/**
+ * Teto do que se pode comprar. Sem ele, alguém com Bits suficientes começaria
+ * numa base impossível e perderia a run no primeiro inimigo — o que não é
+ * desafio, é dinheiro queimado por uma tela que deixou.
+ */
+export const DEEP_START_MAX_LEVEL = 5;
+
+export function canBuyDeepStart(currentLevel: number, bits: number): boolean {
+  if (currentLevel >= DEEP_START_MAX_LEVEL) return false;
+  return bits >= deepStartCost(currentLevel);
+}
+
 /** Raise the persisted base level to at least `level` (called on run completion). */
 export function setDungeonDifficultyAtLeast(level: number): number {
   const next = Math.max(getDungeonDifficulty(), level);

@@ -5191,6 +5191,16 @@ export default function App() {
                 onDungeonEnemyDefeated={handleDungeonEnemyDefeated}
                 onDinoScore={handleDinoScore}
                 onEarnPoints={handleEarnGamePoints}
+                /* WP4.5 — o sumidouro. A cobrança é conferida sobre o `prev`
+                   (dois toques no mesmo lote do React leriam o mesmo saldo e
+                   comprariam duas vezes com o dinheiro de uma). */
+                onSpendBits={(pts) => {
+                  if ((gameState.gamePoints ?? 0) < pts) return false;
+                  setGameState(prev => (prev.gamePoints ?? 0) < pts
+                    ? prev
+                    : { ...prev, gamePoints: (prev.gamePoints ?? 0) - pts });
+                  return true;
+                }}
                 onOpenTournament={() => setCurrentView('tournament')}
               />
             </Suspense>

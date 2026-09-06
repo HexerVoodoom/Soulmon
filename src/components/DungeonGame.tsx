@@ -7,6 +7,7 @@ import { getStageLevel } from '../types/progression';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
+  deepStartCost, canBuyDeepStart, DEEP_START_MAX_LEVEL,
   type DungeonEnemy,
 } from '../utils/dungeon';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
@@ -105,7 +106,7 @@ function TimingBar({ speed, color, label, onStop }: {
 }
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -122,6 +123,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   onEnemyDefeated: () => void;
   /** Grants Bits. */
   onEarnPoints: (pts: number) => void;
+  /** WP4.5 — Bits em caixa, para a compra de profundidade. */
+  bits?: number;
+  /** WP4.5 — cobra os Bits e devolve se deu. Quem decide é quem tem o save. */
+  onSpendBits?: (pts: number) => boolean;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -471,6 +476,39 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
               {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
             </PixelButton>
           </span>
+
+          {/* WP4.5 — DESCER MAIS FUNDO: o sumidouro recorrente de Bits.
+              Os Bits só tinham compras ÚNICAS, então quem joga muito acumulava
+              moeda que não compra nada — e moeda que não compra nada deixa de
+              ser recompensa. Este é o único sumidouro que o CLAUDE.md declara
+              legítimo: custo de ENTRADA, nunca cobrar da barra de cuidado.
+              Recorrente sem mecânica nova, porque a base reseta toda semana.
+              Some ao chegar no teto: oferta que não pode ser aceita é ruído. */}
+          {onSpendBits && baseLevel < DEEP_START_MAX_LEVEL && (
+            <span style={{ width: '100%', maxWidth: 320 }}>
+              <PixelButton
+                size="md"
+                variant="default"
+                disabled={!canBuyDeepStart(baseLevel, bits)}
+                onClick={() => {
+                  if (!canBuyDeepStart(baseLevel, bits)) return;
+                  if (!onSpendBits(deepStartCost(baseLevel))) return;
+                  setBaseLevel(setDungeonDifficultyAtLeast(baseLevel + 1));
+                }}
+              >
+                {isPt
+                  ? `Descer mais fundo — ${deepStartCost(baseLevel)} Bits`
+                  : `Go deeper — ${deepStartCost(baseLevel)} Bits`}
+              </PixelButton>
+              <p style={{ fontSize: '0.72rem', color: '#9fb2d8', marginTop: 6 }}>
+                {canBuyDeepStart(baseLevel, bits)
+                  ? (isPt
+                    ? 'Começa a run um nível abaixo. Vale até o reset da semana.'
+                    : 'Starts the run one level deeper. Lasts until the weekly reset.')
+                  : (isPt ? 'Bits insuficientes.' : 'Not enough Bits.')}
+              </p>
+            </span>
+          )}
         </div>
       )}
 
