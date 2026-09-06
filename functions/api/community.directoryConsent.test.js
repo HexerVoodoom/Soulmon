@@ -111,10 +111,19 @@ describe('N-4 — o que NÃO pode mudar', () => {
     expect(opponents.map(o => o.name)).toEqual([`n-${CAROL.slice(0, 4)}`]);
   });
 
-  it('quem ligou o PvP continua no diretório com os mesmos campos de antes', async () => {
-    // A correção é um filtro, não uma poda de campos. Se alguém "consertar"
-    // N-4 removendo `tasksDone`/`daysPlaying`, a Biblioteca quebra e este
-    // teste avisa.
+  it('quem ligou o PvP continua no diretório — com PRESENÇA, sem desempenho', async () => {
+    // O N-4 era um filtro de CONSENTIMENTO (só entra quem ligou o PvP) e
+    // continua sendo: nada aqui poda quem aparece.
+    //
+    // O que mudou em 06/09/2026 é o QUE cada linha carrega. `tasksDone` e
+    // `rankPoints` saíram do fio (WP4.11, exposição E3, proibição #21): são
+    // métrica de desempenho de outra pessoa, e um diretório pesquisável é o
+    // pior lugar possível para elas. Este teste dizia "se alguém remover
+    // `tasksDone`, a Biblioteca quebra" — não quebra: nenhuma tela o
+    // renderizava desde antes disto, ele só trafegava.
+    //
+    // O corte é no SERVIDOR de propósito. Escondido na UI, o campo volta no dia
+    // em que alguém desenhar um cartão novo; ausente do fio, não tem como.
     const env = {
       DIGIAPP_SAVES: fakeKV({ [`profile:${ALICE}`]: perfil(ALICE, { pvpEnabled: true }) }),
     };
@@ -122,8 +131,11 @@ describe('N-4 — o que NÃO pode mudar', () => {
     expect(players).toHaveLength(1);
     expect(players[0]).toMatchObject({
       name: `n-${ALICE.slice(0, 4)}`, petName: 'pet', stage: 'rookie',
-      pvpEnabled: true, tasksDone: 7, daysPlaying: 1, rankPoints: 0,
+      pvpEnabled: true, daysPlaying: 1,
     });
     expect(players[0].id).toMatch(/^[0-9a-f]{24}$/);
+    // As duas que não podem voltar.
+    expect(players[0]).not.toHaveProperty('tasksDone');
+    expect(players[0]).not.toHaveProperty('rankPoints');
   });
 });

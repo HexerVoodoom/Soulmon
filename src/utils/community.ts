@@ -62,10 +62,16 @@ export interface ProfilePushResult {
 export const pushProfile = (p: PublicProfileInput) =>
   call<ProfilePushResult>('profile', { method: 'POST', body: p });
 
+/**
+ * O que o diretório devolve de OUTRA pessoa. `rankPoints` e `tasksDone` saíram
+ * em 06/09/2026 (WP4.11 / proibição #21): desempenho alheio não trafega, e o
+ * corte é no servidor justamente para que uma UI futura não consiga
+ * reintroduzi-lo por descuido. O que resta é presença — quem é, que criatura
+ * tem, há quanto tempo joga.
+ */
 export interface DirectoryPlayer {
   id: string; name: string; petName: string; stage: string;
-  unlockedStages: string[]; pvpEnabled: boolean; rankPoints: number; daysPlaying: number;
-  tasksDone: number;
+  unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
 }
 export const listPlayers = (search = '') =>
   call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });

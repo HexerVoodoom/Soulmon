@@ -52,7 +52,7 @@ const amigoNaoResolvido = (id: string, isPt: boolean): LibraryEntry => ({
   id,
   name: isPt ? 'Amigo (nao carregou)' : "Friend (didn't load)",
   petName: '', stage: 'rookie', unlockedStages: [],
-  pvpEnabled: false, rankPoints: 0, daysPlaying: 0, tasksDone: 0,
+  pvpEnabled: false, daysPlaying: 0,
   unresolved: true,
 });
 
@@ -336,9 +336,12 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                   <span className="sm2-num" style={{ ...sm2Hint, display: 'block' }}>
                     {p.unresolved
                       ? (isPt ? 'Nao deu para carregar o perfil agora.' : "Couldn't load this profile right now.")
+                      // WP4.11 / proibição #21: o `rank` saiu. Número que sobe
+                      // e desce conforme o outro joga é métrica de desempenho
+                      // alheio, e um diretório de amigos é o pior lugar para ela.
                       : isPt
-                        ? `${p.daysPlaying} dias jogando · rank ${p.rankPoints}`
-                        : `${p.daysPlaying} days playing · rank ${p.rankPoints}`}
+                        ? `${p.daysPlaying} dias jogando`
+                        : `${p.daysPlaying} days playing`}
                   </span>
                 </span>
               </button>

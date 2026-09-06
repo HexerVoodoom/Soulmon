@@ -14,19 +14,19 @@ export const LIBRARY_NPCS: LibraryNpc[] = [
   {
     id: 'npc-pyraka', name: 'Pyraka', petName: 'Pyrakamon',
     stage: 'champion-virus', unlockedStages: ['rookie', 'champion-virus'],
-    pvpEnabled: false, rankPoints: 340, daysPlaying: 47, tasksDone: 212,
+    pvpEnabled: false, daysPlaying: 47,
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.kaelen.champion,
   },
   {
     id: 'npc-orrin', name: 'Orrin', petName: 'Akashaoimon',
     stage: 'ultimate-data', unlockedStages: ['rookie', 'champion-data', 'ultimate-data'],
-    pvpEnabled: false, rankPoints: 512, daysPlaying: 88, tasksDone: 401,
+    pvpEnabled: false, daysPlaying: 88,
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.orrin.ultimate,
   },
   {
     id: 'npc-thalindra', name: 'Thalindra', petName: 'Nimbratamon',
     stage: 'mega-vaccine', unlockedStages: ['rookie', 'champion-vaccine', 'ultimate-vaccine', 'mega-vaccine'],
-    pvpEnabled: false, rankPoints: 705, daysPlaying: 133, tasksDone: 689,
+    pvpEnabled: false, daysPlaying: 133,
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.thalindra.mega,
   },
 ];

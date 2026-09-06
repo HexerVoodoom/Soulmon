@@ -95,20 +95,30 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
               {isPt ? 'Personagem de demonstração' : 'Demo character'}
             </p>
           )}
-          {/* `tasksDone` SAIU daqui de propósito: expor "X tarefas feitas" de
-              outro jogador num diretório pesquisável é exatamente o score de
-              vida real que `docs/PLANO-PRODUTO.md:69-71` proíbe — o Torneio
-              mede por FAIXA (utils/tournamentTiers.ts) pelo mesmo motivo.
-              Ficam os dois números que são do JOGO, não da vida. */}
+          {/* `tasksDone` saiu daqui há tempos (score de vida real). Em
+              06/09/2026 o `rank` saiu junto (WP4.11, exposição E3): a
+              **proibição #21** diz que nenhuma tela mostra métrica de
+              DESEMPENHO de outro jogador, e um número que sobe e desce conforme
+              o outro joga é exatamente isso. O Torneio já media por FAIXA pelo
+              mesmo motivo — a tela do amigo tinha ficado para trás.
+
+              `daysPlaying` fica: é duração, só cresce, e não ordena ninguém. */}
           <p className="sm2-num" style={{ ...sm2Hint, marginTop: 6 }}>
-            {isPt
-              ? `${player.daysPlaying} dias jogando · rank ${player.rankPoints}`
-              : `${player.daysPlaying} days playing · rank ${player.rankPoints}`}
+            {isPt ? `${player.daysPlaying} dias jogando` : `${player.daysPlaying} days playing`}
           </p>
         </div>
       </div>
 
-      {/* Caminho do pet — TODO o branch já desbloqueado, não só o nível atual */}
+      {/* Caminho do pet — o GALHO, e só o galho.
+
+          Aqui havia a escada inteira (Rookie→Mega) com o estágio atual
+          preenchido. Ela dizia ao visitante QUÃO LONGE o outro chegou, que é a
+          armadilha do Mimo e a leitura que a proibição #21 fecha: o galho é
+          IDENTIDADE (que caminho essa criatura seguiu), a altura é PLACAR.
+          A decisão 8b do dono foi ratificada com essa condição exata (D13):
+          mostrar a criatura do amigo no estágio real, desde que a UI mostre
+          galho e não altura. É por isso que o sprite continua inteiro logo
+          acima — ele já diz quem a criatura é, sem ranquear ninguém. */}
       <div>
         <p style={{ ...sm2Hint, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>
           {isPt ? 'Caminho do pet' : "Pet's path"}
@@ -123,35 +133,6 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
           </p>
         )}
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {branchLevels.length === 0 ? (
-            <span style={sm2Hint}>{isPt ? 'Ainda não escolhido' : 'Not chosen yet'}</span>
-          ) : branchLevels.map(stage => {
-            const level = getStageLevel(stage);
-            const isCurrent = stage === player.stage;
-            return (
-              /* O estágio ATUAL é o único preenchido, e nunca o contrário — as
-                 pílulas anteriores davam ao não-atual um fundo sólido que no
-                 tema claro chamava tanto quanto o atual. */
-              <span
-                key={stage}
-                style={{
-                  fontFamily: 'var(--sm2-font-text)',
-                  fontSize: 'var(--sm2-text-xs)',
-                  fontWeight: 500,
-                  padding: '4px 10px',
-                  borderRadius: 999,
-                  ...(isCurrent
-                    ? { backgroundColor: 'var(--sm2-primary-fill)', color: 'var(--sm2-on-primary)', border: '1px solid transparent' }
-                    : { border: '1px solid var(--sm2-line)', color: 'var(--sm2-muted)' }),
-                }}
-              >
-                {isPt ? LEVEL_LABEL[level].pt : LEVEL_LABEL[level].en}
-                {isCurrent && ` · ${isPt ? 'atual' : 'current'}`}
-              </span>
-            );
-          })}
-        </div>
       </div>
     </ModalSheet>
   );

@@ -183,8 +183,13 @@ async function publicProfile(env, p, extra = {}) {
     id: pid,
     name: p.name, petName: p.petName, stage: p.stage,
     unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
+    // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
+    // "X tarefas feitas" de outro jogador é score de vida real num diretório
+    // pesquisável — e como o corte tem de ser no SERVIDOR e não na tela, o
+    // campo simplesmente não trafega: uma UI futura não consegue reintroduzi-lo
+    // por descuido. `daysPlaying` fica: é duração, só cresce, e não ordena
+    // ninguém contra ninguém.
     daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 86400000) + 1),
-    tasksDone: p.tasksDone || 0,
     ...extra,
   };
 }
@@ -381,7 +386,7 @@ async function handleCommunity({ request, env }) {
     const search = (url.searchParams.get('search') || '').toLowerCase();
     const keys = await listPrefix(env, 'profile:', 300);
     const season = currentSeason();
-    /** @type {Array<{ rankPoints?: number }>} */
+    /** @type {Array<{ name?: string }>} */
     const players = [];
     for (const k of keys) {
       const raw = await env.DIGIAPP_SAVES.get(k);
@@ -401,11 +406,21 @@ async function handleCommunity({ request, env }) {
       // social como efeito colateral — não se emite para quem não pediu.
       if (!p.pvpEnabled) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
-      const rank = await getRank(env, season, p.id);
-      players.push(await publicProfile(env, p, { rankPoints: rank.points }));
+      players.push(await publicProfile(env, p));
       if (players.length >= 50) break;
     }
-    players.sort((a, b) => (b.rankPoints ?? 0) - (a.rankPoints ?? 0));
+    /* WP4.11 (exposição E3, proibição #21) — o diretório deixou de ser um
+       ranking.
+
+       Ele devolvia `rankPoints` de cada pessoa E ordenava por ele. Mesmo sem
+       o número na tela, ordenar por desempenho faz da lista um placar: quem
+       está no topo é "o melhor", e a leitura acontece sozinha. É a armadilha
+       do Mimo, e é o que a #21 fecha.
+
+       A ordem passa a ser por NOME: um diretório é para encontrar alguém, não
+       para saber quem ganhou. `getRank` sai daqui junto — o dado não é só
+       escondido, ele não é buscado. */
+    players.sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
     return json({ players });
   }
 

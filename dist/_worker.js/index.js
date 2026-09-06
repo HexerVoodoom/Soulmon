@@ -1479,8 +1479,13 @@ async function publicProfile(env, p, extra = {}) {
     stage: p.stage,
     unlockedStages: p.unlockedStages,
     pvpEnabled: p.pvpEnabled,
+    // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
+    // "X tarefas feitas" de outro jogador é score de vida real num diretório
+    // pesquisável — e como o corte tem de ser no SERVIDOR e não na tela, o
+    // campo simplesmente não trafega: uma UI futura não consegue reintroduzi-lo
+    // por descuido. `daysPlaying` fica: é duração, só cresce, e não ordena
+    // ninguém contra ninguém.
     daysPlaying: Math.max(1, Math.floor((Date.now() - (p.createdAt || Date.now())) / 864e5) + 1),
-    tasksDone: p.tasksDone || 0,
     ...extra
   };
 }
@@ -1620,11 +1625,10 @@ async function handleCommunity({ request, env }) {
       const p = JSON.parse(raw);
       if (!p.pvpEnabled) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
-      const rank = await getRank(env, season, p.id);
-      players.push(await publicProfile(env, p, { rankPoints: rank.points }));
+      players.push(await publicProfile(env, p));
       if (players.length >= 50) break;
     }
-    players.sort((a, b) => (b.rankPoints ?? 0) - (a.rankPoints ?? 0));
+    players.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")));
     return json3({ players });
   }
   if (action === "player" && method === "GET") {
@@ -2957,7 +2961,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-Y3mCFb/functionsRoutes-0.721730230071852.mjs
+// ../.wrangler/tmp/pages-SZ5wwx/functionsRoutes-0.7859282183769225.mjs
 var routes = [
   {
     routePath: "/api/account",

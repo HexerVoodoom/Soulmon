@@ -43,8 +43,8 @@ import { listPlayers, getPlayer } from '../utils/community';
 
 const perfil = (over: Partial<PlayerDetail> = {}): PlayerDetail => ({
   id: 'pid-x', name: 'Fulano', petName: 'Bichinho', stage: 'rookie',
-  unlockedStages: ['rookie'], pvpEnabled: true, rankPoints: 0,
-  daysPlaying: 3, tasksDone: 5, friends: [], wins: 0, losses: 0,
+  unlockedStages: ['rookie'], pvpEnabled: true, 
+  daysPlaying: 3, friends: [], wins: 0, losses: 0,
   ...over,
 });
 
