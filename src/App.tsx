@@ -103,6 +103,7 @@ import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { stampCollected } from './utils/collectionDates';
 import { shouldPrimePush, pushPrimingLine } from './utils/pushPriming';
+import { shouldOfferAtValueMoment, isoWeekKey } from './utils/offerMoment';
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
@@ -3976,6 +3977,27 @@ export default function App() {
     notificationsEnabled, primingDispensado,
   ]);
 
+  /* WP5.1 — a oferta no primeiro dia perfeito. Quatro travas, e nenhuma delas
+     mora nesta tela: nunca no D0 (vender antes de entregar), nunca em cima de
+     quem voltou de uma ausência (quem some e volta encontra saudade, não
+     vitrine), no máximo 1×/semana e só para quem ainda não comprou. */
+  const ofereceNoRelatorio = useMemo(() => {
+    const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+    const semana = isoWeekKey(hoje);
+    if (!semana) return false;
+    return shouldOfferAtValueMoment({
+      tier: gameState.accountTier,
+      wasPerfect: gameState.lastDayReport?.wasPerfect === true,
+      welcomeBack: gameState.lastDayReport?.welcomeBack === true,
+      daysWithPet: daysTogether(gameState.bornAt, hoje),
+      lastShownWeek: gameState.offerShownWeek ?? null,
+      currentWeek: semana,
+    });
+  }, [
+    gameState.accountTier, gameState.lastDayReport, gameState.bornAt,
+    gameState.playerDayTz, gameState.offerShownWeek,
+  ]);
+
   const dispensarPriming = useCallback(() => {
     setPrimingDispensado(true);
     writeFlag(STORAGE_KEYS.NOTIFICATION_PRIMING_DISMISSED, true, { silent: true });
@@ -5567,6 +5589,17 @@ export default function App() {
           moodNote={moodSummary(gameState.moodLog, language === 'pt-BR' ? 'pt-BR' : 'en-US')}
           language={language}
           soulGoal={gameState.soulGoal}
+          /* WP5.1 — o convite no VALUE MOMENT (o primeiro dia perfeito). A
+             regra de quando ele pode aparecer é de `utils/offerMoment.ts`;
+             aqui só chega o resultado dela. */
+          showOffer={ofereceNoRelatorio}
+          onOpenOffer={() => {
+            // Marca a semana ANTES de abrir: o cap é sobre ter oferecido, não
+            // sobre a pessoa ter comprado.
+            const semana = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
+            if (semana) setGameState(prev => ({ ...prev, offerShownWeek: semana }));
+            setUnlockReason('evolution');
+          }}
         />
       )}
       {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia e pulável sem

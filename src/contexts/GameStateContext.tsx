@@ -193,6 +193,9 @@ export interface GameState {
   poopEventsCompleted: number[];
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
+  /** WP5.1 — semana ISO em que a oferta do value moment foi mostrada. O cap é
+   *  sobre ter OFERECIDO, não sobre ter comprado. */
+  offerShownWeek?: string;
   /** WP4.10 — quando cada FORMA foi alcançada (dia do jogador). Insumo do
    *  álbum: a coleção deixa de ser lista e vira história. Save antigo não
    *  tem, e aí a forma aparece sem data — nunca com uma data inventada. */
@@ -838,6 +841,7 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // não tem: ausência é "ainda não", nunca erro.
         formReachedAt: (loadedState.formReachedAt as Record<string, string>) ?? {},
         bestiary: strArr(loadedState.bestiary),
+        offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         redeemed: loadedState.redeemed === true,
         showRedeemed: loadedState.showRedeemed === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/

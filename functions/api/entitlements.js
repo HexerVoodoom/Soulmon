@@ -82,7 +82,10 @@ export async function onRequestPost({ request, env }) {
 
   if (action === 'spend') {
     const amount = Number(body?.amount);
-    const ent = await spendCredits(env, saveId, amount);
+    // WP5.3 — `opId` é por GESTO. Repetir o mesmo gesto (retry de rede, dois
+    // toques, aba duplicada) devolve o mesmo resultado em vez de cobrar de
+    // novo dinheiro real.
+    const ent = await spendCredits(env, saveId, amount, body?.opId);
     if (!ent) return json({ ok: false, reason: 'insufficient' }, 402);
     return json({ ok: true, ...publicView(ent) });
   }

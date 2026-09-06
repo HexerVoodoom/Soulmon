@@ -430,3 +430,80 @@ describe('resgate de comprovante — atomicidade', () => {
     expect(env._rows.size).toBe(1);
   });
 });
+
+describe('WP5.3 — gastar créditos é IDEMPOTENTE por gesto', () => {
+  // Créditos são comprados com DINHEIRO REAL. Até aqui a única proteção
+  // contra o débito duplo era uma guarda de CLIENTE (`healInFlightRef`), e
+  // guarda de cliente não protege dinheiro: o cliente é editável e a rede
+  // repete sozinha.
+  const SAVE = 'a'.repeat(32);
+
+  function envComCreditos(creditos) {
+    const store = new Map();
+    store.set(`ent:${SAVE}`, JSON.stringify({ tier: 'paid', credits: creditos }));
+    return {
+      DIGIAPP_SAVES: {
+        store,
+        get: async k => store.get(k) ?? null,
+        put: async (k, v) => { store.set(k, v); },
+        delete: async k => { store.delete(k); },
+      },
+    };
+  }
+
+  const saldo = env => JSON.parse(env.DIGIAPP_SAVES.store.get(`ent:${SAVE}`)).credits;
+
+  it('o MESMO gesto repetido debita UMA vez', async () => {
+    const env = envComCreditos(100);
+    const um = await spendCredits(env, SAVE, 50, 'gesto-abc123');
+    const dois = await spendCredits(env, SAVE, 50, 'gesto-abc123');
+    expect(um.credits).toBe(50);
+    // A repetição devolve o MESMO resultado — para quem chamou duas vezes o
+    // correto é "sua compra foi feita", não "falhou".
+    expect(dois.credits).toBe(50);
+    expect(saldo(env)).toBe(50);
+  });
+
+  it('gestos DIFERENTES debitam cada um', async () => {
+    const env = envComCreditos(100);
+    await spendCredits(env, SAVE, 50, 'gesto-aaa11111');
+    await spendCredits(env, SAVE, 50, 'gesto-bbb22222');
+    expect(saldo(env)).toBe(0);
+  });
+
+  it('sem `opId` (cliente antigo) o comportamento é o de antes', async () => {
+    // Nunca uma recusa por causa de um campo que o APK instalado não manda.
+    const env = envComCreditos(100);
+    await spendCredits(env, SAVE, 50);
+    await spendCredits(env, SAVE, 50);
+    expect(saldo(env)).toBe(0);
+  });
+
+  it('`opId` malformado não vira chave — e não cobra duas vezes por engano', async () => {
+    const env = envComCreditos(100);
+    await spendCredits(env, SAVE, 50, 'x');
+    expect(saldo(env)).toBe(50);
+  });
+
+  it('sem saldo, recusa — e a recusa NÃO é memorizada como sucesso', async () => {
+    const env = envComCreditos(10);
+    expect(await spendCredits(env, SAVE, 50, 'gesto-ccc33333')).toBeNull();
+    expect(saldo(env)).toBe(10);
+    // Depois de recarregar, o mesmo gesto pode acontecer de verdade.
+    env.DIGIAPP_SAVES.store.set(`ent:${SAVE}`, JSON.stringify({ tier: 'paid', credits: 100 }));
+    const agora = await spendCredits(env, SAVE, 50, 'gesto-ccc33333');
+    expect(agora?.credits).toBe(50);
+  });
+
+  it('a marca do gesto expira — não vira lista infinita', async () => {
+    const env = envComCreditos(100);
+    let ttl = null;
+    env.DIGIAPP_SAVES.put = async (k, v, opts) => {
+      if (k.startsWith('spend:')) ttl = opts?.expirationTtl ?? null;
+      env.DIGIAPP_SAVES.store.set(k, v);
+    };
+    await spendCredits(env, SAVE, 10, 'gesto-ddd44444');
+    expect(ttl).toBeGreaterThan(0);
+    expect(ttl).toBeLessThanOrEqual(48 * 60 * 60);
+  });
+});

@@ -25,7 +25,10 @@ import { track, TELEMETRY_UNLOCK_REASON } from '../utils/telemetry';
 // oferta, e por isso sussurra (`quiet`).
 // ---------------------------------------------------------------------------
 
-export type UnlockReason = 'task-limit' | 'evolution';
+/** WP5.1 — `report` é o VALUE MOMENT: o primeiro dia perfeito. É o terceiro
+ *  motivo, e o único que não nasce de um limite batido — os outros dois
+ *  aparecem quando a pessoa esbarra em algo, este quando ela conseguiu. */
+export type UnlockReason = 'task-limit' | 'evolution' | 'report';
 
 interface UnlockAccountModalProps {
   language: Language;
@@ -240,7 +243,10 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
     ? (isPt ? 'Falta revelar a sua criatura' : 'Your creature is still unrevealed')
     : reason === 'task-limit'
       ? (isPt ? 'Quer criar sem limite?' : 'Want to create without limits?')
-      : (isPt ? 'Quer a SUA árvore de evoluções?' : 'Want YOUR own evolution tree?');
+      : reason === 'report'
+        // Fala do resultado que a pessoa acabou de ter, não do que falta a ela.
+        ? (isPt ? 'Quer uma criatura que seja só sua?' : 'Want a creature that is only yours?')
+        : (isPt ? 'Quer a SUA árvore de evoluções?' : 'Want YOUR own evolution tree?');
 
   const sub = variant === 'reveal'
     ? (isPt

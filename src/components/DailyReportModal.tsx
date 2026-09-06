@@ -1,6 +1,7 @@
 import { Icon } from './ui/Icon';
 import { SM2_SHADOW_CARD, sm2Button, sm2Hint, sm2TitleStyle } from './form/FormKit';
 import { useDialogA11y } from '../hooks/useDialogA11y';
+import { UnlockNudge } from './UnlockAccountModal';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
@@ -19,7 +20,11 @@ interface DailyReportModalProps {
   moodToday?: MoodValue | null;
   onPickMood?: (mood: MoodValue) => void;
   moodNote?: string | null;
-}
+  /** WP5.1 — o convite no VALUE MOMENT (o primeiro dia perfeito). A REGRA de
+   *  quando ele pode aparecer é de `utils/offerMoment.ts`; aqui só chega o
+   *  resultado dela, para a tela não virar dona de uma decisão de ética. */
+  showOffer?: boolean;
+  onOpenOffer?: () => void;}
 
 const hint = sm2Hint;
 type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
@@ -36,7 +41,7 @@ type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
  * LINHA saíram — eles desenhavam de novo a palavra ao lado ("Corações" com um
  * coração), que é o tipo de repetição que esta onda existe para cortar.
  */
-export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote }: DailyReportModalProps) {
+export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
@@ -216,6 +221,27 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
               })}
             </div>
             {moodNote && <p style={{ ...hint, marginTop: 8 }}>{moodNote}</p>}
+          </div>
+        )}
+
+        {/* WP5.1 — O CONVITE NO VALUE MOMENT.
+            O momento em que este produto prova o que vende não é o reveal (ali
+            a pessoa ainda não sabe se isso vai servir para alguma coisa): é o
+            primeiro DIA PERFEITO — ela cumpriu o que combinou consigo mesma e
+            viu a criatura responder. O convite existia em dois lugares e em
+            nenhum deles.
+            Fica ANTES do botão de fechar e depois do relatório inteiro: quem
+            veio ver o próprio dia vê o dia primeiro. As travas (nunca no D0,
+            nunca em cima de quem voltou de ausência, 1×/semana, só para quem
+            não comprou) são de `utils/offerMoment.ts`. */}
+        {showOffer && onOpenOffer && (
+          <div style={{ padding: '0 20px' }}>
+            <p style={{ ...hint, marginBottom: 8 }}>
+              {isPt
+                ? 'Foi um dia inteiro do jeito que você quis. Seu Soulmon sentiu.'
+                : 'That was a whole day the way you wanted it. Your Soulmon felt it.'}
+            </p>
+            <UnlockNudge language={language} reason="report" onOpen={onOpenOffer} />
           </div>
         )}
 

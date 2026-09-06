@@ -188,13 +188,47 @@ export function publicView(ent) {
 /**
  * Gasta créditos. Retorna null se não houver saldo — quem chama deve tratar
  * isso como "compra recusada" e NÃO aplicar o efeito no jogo.
+ *
+ * WP5.3 — IDEMPOTÊNCIA POR `opId`.
+ *
+ * Créditos são comprados com DINHEIRO REAL, e até aqui a única proteção
+ * contra debitar duas vezes era `healInFlightRef`, uma guarda de CLIENTE: dois
+ * toques rápidos, um retry de rede ou uma aba duplicada cobravam duas vezes
+ * pelo mesmo gesto. Guarda de cliente não protege dinheiro — o cliente é
+ * editável e a rede repete sozinha.
+ *
+ * Agora cada GESTO carrega um `opId`, e o servidor guarda `spend:<saveId>:<opId>`
+ * com o resultado. A repetição devolve **o mesmo resultado**, sem debitar de
+ * novo — e sem devolver erro, porque para quem chamou duas vezes o correto é
+ * "sua compra foi feita", não "falhou".
+ *
+ * TTL de 24h: a janela de retry de qualquer cliente razoável é de segundos, e
+ * guardar para sempre transformaria a chave numa lista infinita de gestos.
+ * Sem `opId` (cliente antigo), o comportamento é o de antes — nunca uma recusa
+ * por causa de um campo que o app instalado não manda.
  */
-export async function spendCredits(env, saveId, amount) {
-  const ent = await readEntitlement(env, saveId);
+const SPEND_TTL_SECONDS = 24 * 60 * 60;
+
+export async function spendCredits(env, saveId, amount, opId) {
   if (!Number.isInteger(amount) || amount <= 0) return null;
+
+  const chave = opId && /^[A-Za-z0-9_-]{8,64}$/.test(opId)
+    ? `spend:${saveId}:${opId}`
+    : null;
+  if (chave) {
+    const anterior = await env.DIGIAPP_SAVES.get(chave);
+    // Repetição do MESMO gesto: devolve o que já aconteceu. Debitar de novo
+    // seria cobrar duas vezes; recusar seria mentir sobre uma compra feita.
+    if (anterior) { try { return JSON.parse(anterior); } catch { return null; } }
+  }
+
+  const ent = await readEntitlement(env, saveId);
   if (ent.credits < amount) return null;
   ent.credits -= amount;
   await writeEntitlement(env, saveId, ent);
+  if (chave) {
+    await env.DIGIAPP_SAVES.put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+  }
   return ent;
 }
 

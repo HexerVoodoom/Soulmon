@@ -38,18 +38,39 @@ export async function fetchEntitlement(): Promise<Entitlement | null> {
 }
 
 /**
+ * WP5.3 — um id por GESTO. `crypto.randomUUID` quando existe; senão, uma
+ * composição de tempo + aleatório, que basta: o id só precisa ser único
+ * dentro da janela de retry de um aparelho, não no universo.
+ */
+function newOpId(): string {
+  try {
+    const uuid = globalThis.crypto?.randomUUID?.();
+    if (uuid) return uuid.replace(/-/g, '');
+  } catch { /* segue para o fallback */ }
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
  * Gasta créditos NO SERVIDOR. Só aplique o efeito no jogo se isto devolver o
  * novo saldo — null significa recusado (sem saldo, offline) e o efeito não
  * pode acontecer.
  */
-export async function spendCredits(amount: number, reason: string): Promise<Entitlement | null> {
+export async function spendCredits(
+  amount: number,
+  reason: string,
+  /** WP5.3 — id do GESTO. Repetir o mesmo gesto (retry de rede, dois toques,
+   *  aba duplicada) devolve o mesmo resultado em vez de cobrar de novo. Quem
+   *  não passa continua funcionando como antes: o id é opcional para não
+   *  quebrar o APK já instalado. */
+  opId: string = newOpId(),
+): Promise<Entitlement | null> {
   const id = currentSaveId();
   if (!id) return null;
   try {
     const res = await fetch('/api/entitlements?action=spend', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
-      body: JSON.stringify({ id, amount, reason }),
+      body: JSON.stringify({ id, amount, reason, opId }),
     });
     if (!res.ok) return null;
     const data = await res.json();

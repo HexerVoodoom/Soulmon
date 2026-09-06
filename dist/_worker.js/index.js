@@ -94,12 +94,27 @@ function publicView(ent) {
   };
 }
 __name(publicView, "publicView");
-async function spendCredits(env, saveId, amount) {
-  const ent = await readEntitlement(env, saveId);
+var SPEND_TTL_SECONDS = 24 * 60 * 60;
+async function spendCredits(env, saveId, amount, opId) {
   if (!Number.isInteger(amount) || amount <= 0) return null;
+  const chave = opId && /^[A-Za-z0-9_-]{8,64}$/.test(opId) ? `spend:${saveId}:${opId}` : null;
+  if (chave) {
+    const anterior = await env.DIGIAPP_SAVES.get(chave);
+    if (anterior) {
+      try {
+        return JSON.parse(anterior);
+      } catch {
+        return null;
+      }
+    }
+  }
+  const ent = await readEntitlement(env, saveId);
   if (ent.credits < amount) return null;
   ent.credits -= amount;
   await writeEntitlement(env, saveId, ent);
+  if (chave) {
+    await env.DIGIAPP_SAVES.put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+  }
   return ent;
 }
 __name(spendCredits, "spendCredits");
@@ -1903,7 +1918,7 @@ async function onRequestPost3({ request, env }) {
   if (!auth.ok) return json4({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   if (action === "spend") {
     const amount = Number(body?.amount);
-    const ent = await spendCredits(env, saveId, amount);
+    const ent = await spendCredits(env, saveId, amount, body?.opId);
     if (!ent) return json4({ ok: false, reason: "insufficient" }, 402);
     return json4({ ok: true, ...publicView(ent) });
   }
@@ -3000,7 +3015,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-2sbSVN/functionsRoutes-0.41724002478378996.mjs
+// ../.wrangler/tmp/pages-phl2BA/functionsRoutes-0.03162429996497851.mjs
 var routes = [
   {
     routePath: "/api/account",
