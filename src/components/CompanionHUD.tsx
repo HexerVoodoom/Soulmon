@@ -154,6 +154,9 @@ interface CompanionHUDProps {
   /** WP3.3 — o título do Vínculo, já resolvido no idioma. DERIVADO de
    *  `totalXP` por quem chama; nunca leia isto de um campo do save. */
   bondTitleText?: string | null;
+  /** WP4.19 — marca cosmética da recuperação, e só quando o jogador escolheu
+   *  exibi-la (`showRedeemed`). Nunca é marca de queda. */
+  redeemedMark?: boolean;
   /** WP3.2 — há tarefa assombrada na lista? O sprite VIRA O OLHAR enquanto
    *  houver. É o "o pet olha" que o `CLAUDE.md` prometia e não existia. */
   hauntedWatching?: boolean;
@@ -221,6 +224,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   hauntedWatching = false,
   petDisplayName,
   bondTitleText,
+  redeemedMark = false,
   equippedBackground = null,
   equippedDecor = {},
   trophies = [],
@@ -977,7 +981,7 @@ export const CompanionHUD = memo(function CompanionHUD({
           persistido — guardar `bondLevel` no save é o footgun 9 na forma mais
           cara (ver `utils/bond.ts`). Uma linha só: cada pixel aqui é um pixel
           a menos de lista de atividades. */}
-      {(petDisplayName || bondTitleText) && (
+      {(petDisplayName || bondTitleText || redeemedMark) && (
         <div style={{
           textAlign: 'center', lineHeight: 1.15, marginBottom: 2,
           fontFamily: 'var(--sm2-font-text)',
@@ -990,6 +994,14 @@ export const CompanionHUD = memo(function CompanionHUD({
           {bondTitleText && (
             <div style={{ fontSize: 'var(--sm2-text-xs)', opacity: .75, color: 'var(--sm-ink)' }}>
               {bondTitleText}
+            </div>
+          )}
+          {/* WP4.19 — a marca da VOLTA. Lê como prestígio e nunca como queda:
+              não diz o que aconteceu, só que houve recuperação. Aparece só se
+              o jogador ligou (padrão desligado) — a história é dele. */}
+          {redeemedMark && (
+            <div style={{ fontSize: 'var(--sm2-text-xs)', opacity: .85, color: 'var(--sm2-accent-ink, var(--sm-ink))' }}>
+              {language === 'pt-BR' ? '✦ Voltou inteiro' : '✦ Came back whole'}
             </div>
           )}
         </div>

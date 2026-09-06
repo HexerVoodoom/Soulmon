@@ -37,6 +37,11 @@ interface SettingsPageProps {
   onToggleNotifications: () => void;
   onRestoreFromCloud: (saveId: string) => Promise<boolean>;
   onLoginWithEmail: (email: string) => Promise<'loaded' | 'created'>;
+  /** WP4.19 — o pet já caiu e voltou? A linha da marca só existe para quem
+   *  tem a volta; para os outros ela seria um ajuste sobre nada. */
+  redeemed?: boolean;
+  showRedeemed?: boolean;
+  onToggleShowRedeemed?: () => void;
 }
 
 /**
@@ -133,6 +138,9 @@ export function SettingsPage({
   onOpenGlossary,
   notificationsEnabled,
   onToggleNotifications,
+  redeemed = false,
+  showRedeemed = false,
+  onToggleShowRedeemed,
   onRestoreFromCloud,
   onLoginWithEmail,
 }: SettingsPageProps) {
@@ -297,6 +305,24 @@ export function SettingsPage({
         <AccountDataSection language={language} />
         <TelemetrySection language={language} />
       </Group>
+
+      {/* ── A MARCA DA VOLTA (WP4.19) ───────────────────────────────────────
+             Só aparece para quem TEM a volta. E vem desligada: quem caiu e
+             subiu de novo decide se quer contar isso — o app não conta por
+             ninguém. Nada aqui é marca de QUEDA: não existe tela dizendo
+             "este bicho já caiu", e desligar não apaga nada do save. */}
+      {redeemed && onToggleShowRedeemed && (
+        <Group title={isPt ? 'Sua história' : 'Your story'}>
+          <SwitchRow
+            checked={showRedeemed}
+            onToggle={onToggleShowRedeemed}
+            label={isPt ? 'Mostrar a marca da volta' : 'Show the comeback mark'}
+            hint={isPt
+              ? 'Seu Soulmon já se recuperou por inteiro. Mostrar isso é escolha sua.'
+              : 'Your Soulmon has fully recovered before. Showing it is up to you.'}
+          />
+        </Group>
+      )}
 
       {/* ── O QUE O SOULMON TE MANDA ──────────────────────────────────────── */}
       <Group title={isPt ? 'O que o Soulmon te manda' : 'What Soulmon sends you'}>

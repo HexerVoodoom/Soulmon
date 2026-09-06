@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { Language } from '../utils/i18n';
 import { MAX_DAILY_FOCUS, normalizeEffort } from '../types/taskModel';
+import { tinyOfferIntro } from '../utils/tinyOffer';
 import { isOvercommitted } from '../utils/taskTriage';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { Icon } from './ui/Icon';
@@ -87,6 +88,10 @@ export interface MorningCheckInProps {
   onSkip: () => void;
   /** Aceitar a versão reduzida — conta como FEITO, pelo mesmo caminho de sempre. */
   onTinyHabit?: (activityId: string) => void;
+  /** WP2.5 — o "o que costuma atrapalhar?" do onboarding, para a oferta
+   *  reduzida reconhecer o que a pessoa contou. Opcional: quem pulou a
+   *  pergunta vê a oferta genérica, nunca um vazio. */
+  soulStruggle?: string;
 }
 
 const EFFORT_WORD: Record<number, { pt: string; en: string }> = {
@@ -100,8 +105,9 @@ const body = sm2Text;
 
 const sectionTitle: CSSProperties = { ...sm2Hint, margin: '0 0 8px', fontWeight: 500, letterSpacing: '.02em' };
 
-export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTinyHabit }: MorningCheckInProps) {
+export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTinyHabit, soulStruggle }: MorningCheckInProps) {
   const isPt = language === 'pt-BR';
+  const introStruggle = tinyOfferIntro(soulStruggle, isPt);
 
   const carryOver = plan.carryOver ?? [];
   const habits = plan.habitsToday ?? [];
@@ -328,6 +334,12 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
                   nada nem aparece em lugar nenhum. */}
             {onTinyHabit && ofertaReduzida.length > 0 && (
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {/* WP2.5 — o que a pessoa contou no onboarding volta AQUI, e
+                    só aqui: no momento em que o hábito custa, não numa tela de
+                    resumo. `soulStruggle` era escrito e nunca lido — perguntar
+                    algo pessoal, guardar e não devolver é extração. A frase é
+                    LOCAL (nada vai para a IA) e não repete o que falhou. */}
+                {introStruggle && <p style={hint}>{introStruggle}</p>}
                 {ofertaReduzida.map(h => (
                   <button
                     key={h.id}

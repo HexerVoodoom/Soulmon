@@ -57,7 +57,7 @@ import { PET_BACKGROUNDS } from './utils/backgrounds';
 const ACTIVITY_LOG_CAP = 90;
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss } from './utils/dailyReset';
+import { getNextEvolution, dailyGoalFor, degeneratedPerfectDays, registeredForDay, tasksToAvoidHeartLoss, applyRedemption } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -2300,8 +2300,12 @@ export default function App() {
       newEvolutionStage = alvo.stage;
       newHP = getMaxHPForStage(newEvolutionStage);
 
+      // WP4.19 — subir de novo depois de uma queda por HP apaga a marca da
+      // queda e acende a da volta. A regra é de `dailyReset.ts` (dona), não
+      // daqui: `App.tsx` só delega. Cosmética, opt-in, e nunca marca de queda.
+      const base = applyRedemption(prev, newEvolutionStage !== prev.evolutionStage);
       return {
-        ...prev,
+        ...base,
         evolutionStage: newEvolutionStage,
         currentBranch: newCurrentBranch,
         healthPoints: newHP,
@@ -4353,6 +4357,7 @@ export default function App() {
                    save seria duas fontes para o mesmo número (footgun 9). */
                 petDisplayName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
                 bondTitleText={bondTitle(bondLevelFor(gameState.totalXP ?? 0), language)}
+                redeemedMark={!!gameState.redeemed && !!gameState.showRedeemed}
                 hauntedWatching={hauntedWatching}
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
@@ -4830,6 +4835,12 @@ export default function App() {
 
           {currentView === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
+              /* WP4.19 — a marca da volta. Só existe para quem já caiu e
+                 subiu de novo, e vem desligada: contar isso é escolha do
+                 jogador, não do app. */
+              redeemed={gameState.redeemed}
+              showRedeemed={gameState.showRedeemed}
+              onToggleShowRedeemed={() => setGameState(prev => ({ ...prev, showRedeemed: !prev.showRedeemed }))}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               aiSettings={aiSettings}
@@ -5250,6 +5261,11 @@ export default function App() {
         <MorningCheckIn
           open
           plan={checkInPlanData}
+          /* WP2.5 — `soulStruggle` era escrito no onboarding e NUNCA lido em
+             lugar nenhum do app. Ele volta aqui, no único momento em que
+             reconhecer o que a pessoa contou não é enfeite: a segunda falta
+             seguida, quando o pet oferece a versão de 5 minutos. */
+          soulStruggle={gameState.soulStruggle}
           /* WP2.10 — aceitar a versão reduzida usa o MESMO caminho de conclusão
              de sempre. "Conta como feito" é literal: mesma constância, mesmos
              atributos, mesmo XP de Vínculo. Um caminho paralelo aqui seria uma

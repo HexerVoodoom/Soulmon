@@ -192,6 +192,12 @@ export interface GameState {
   poopEventsCompleted: number[];
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
+  /** WP4.19 — o pet já caiu por HP 0 e SUBIU de novo. É cosmético e só existe
+   *  no sentido positivo: nada no app lê isto como "já caiu". */
+  redeemed?: boolean;
+  /** WP4.19 — exibir a marca da volta é escolha do jogador (padrão: não).
+   *  O app não decide contar isso por ninguém. */
+  showRedeemed?: boolean;
   currentBranch: 'virus' | 'data' | 'vaccine';
   lastDayWasPerfect: boolean;
   maxActivityCap: number;
@@ -817,6 +823,8 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           return u.length > 0 ? u : ['rookie'];
         })(),
         degeneratedByHP: loadedState.degeneratedByHP === true,
+        redeemed: loadedState.redeemed === true,
+        showRedeemed: loadedState.showRedeemed === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/
         // sprites como galho inexistente.
         currentBranch: (loadedState.currentBranch === 'virus' || loadedState.currentBranch === 'data'

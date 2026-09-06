@@ -259,6 +259,35 @@ export function daysSinceLastReset(lastResetDate: string | undefined, now: Date)
 //      o jogo não julgou.
 // ---------------------------------------------------------------------------
 
+/**
+ * WP4.19 — A ROTA DE REDENÇÃO.
+ *
+ * Quem chega a HP 0 cai um estágio (`degeneratedByHP`), e até aqui essa queda
+ * não tinha VOLTA narrada: subir de novo era só subir, e o save carregava a
+ * marca da queda sem carregar a da recuperação. Um produto que registra o
+ * tombo e não registra o levantar está escolhendo qual metade da história
+ * contar.
+ *
+ * A regra é uma linha: **evoluir enquanto `degeneratedByHP` está de pé apaga
+ * a marca da queda e acende a da volta** (`redeemed`). Três limites,
+ * herdados da ressalva #21 da revisão:
+ *  · `redeemed` **nunca** é marca de queda — ele só existe no sentido
+ *    positivo, e nada no app diz "este bicho já caiu";
+ *  · **exibir é escolha do jogador** (`showRedeemed`, desligado por padrão):
+ *    o app não decide contar isso por ninguém;
+ *  · é **cosmético**. Não dá ponto, não muda requisito, não entra em ranking.
+ *
+ * Função PURA e idempotente: chamar duas vezes não muda nada depois da
+ * primeira (footgun 6).
+ */
+export function applyRedemption<T extends { degeneratedByHP?: boolean; redeemed?: boolean }>(
+  prev: T,
+  evoluiu: boolean,
+): T {
+  if (!evoluiu || !prev.degeneratedByHP) return prev;
+  return { ...prev, degeneratedByHP: false, redeemed: true };
+}
+
 /** Sinais de que este save JÁ VIVEU — qualquer um basta para não ser novo. */
 export function looksLikeVeteranSave(state: Record<string, any>): boolean {
   if ((state.totalPerfectDays ?? 0) > 0) return true;

@@ -68,3 +68,23 @@ describe('CompanionHUD — nome e título do Vínculo (WP3.3)', () => {
     expect(screen.getByText(en!)).toBeTruthy();
   });
 });
+
+describe('CompanionHUD — a marca da volta é OPT-IN (WP4.19)', () => {
+  it('não aparece sozinha: quem decide contar é o jogador', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} redeemedMark={false} />);
+    expect(container.textContent).not.toContain('Voltou inteiro');
+  });
+
+  it('aparece quando o jogador ligou', () => {
+    renderWithCss(<CompanionHUD {...base} redeemedMark />);
+    expect(screen.getByText('✦ Voltou inteiro')).toBeTruthy();
+  });
+
+  it('lê como prestígio, nunca como queda: não diz que o pet caiu', () => {
+    const { container } = renderWithCss(<CompanionHUD {...base} redeemedMark />);
+    const texto = (container.textContent ?? '').toLowerCase();
+    for (const p of ['caiu', 'degenerou', 'regrediu', 'perdeu']) {
+      expect(texto, `a marca da volta virou marca de queda ("${p}")`).not.toContain(p);
+    }
+  });
+});
