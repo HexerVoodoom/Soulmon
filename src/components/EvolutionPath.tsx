@@ -37,7 +37,7 @@ import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type Spri
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
-import { AVAILABLE_BRANCHES, clampBranch } from '../types/progression';
+import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_DAYS } from '../types/progression';
 import { ALIGN_TO_ATTR, ATTR_COLOR, ATTR_INK, ATTR_LABEL, ATTR_ON_FILL_INK } from '../types/attributes';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
    (`ui/Viewport.tsx`), porque a spec pede a MESMA sintonia em dois call-sites
@@ -215,6 +215,12 @@ export function EvolutionPath({
 
   const megaIds = ATTR_ORDER.map(a => `mega-${a}`);
   const areAllMegasUnlocked = megaIds.every(id => unlockedSet.has(id));
+  /* WP4.2 (decisão D6) — o Ultra deixou de exigir que o jogador machucasse a
+     criatura de propósito. São DOIS caminhos agora, e o cartão tem de mostrar
+     os dois: coleção (as três megas) ou permanência (`ULTRA_PATIENCE_DAYS` dias
+     perfeitos como mega). A regra é de `canReachUltra`, dona da árvore — aqui
+     não se decide critério nenhum. */
+  const podeChegarAoUltra = canReachUltra({ unlockedEvolutions, perfectDays });
 
   const branchPath = getBranchPath(selectedBranch);
   const branchHex = ATTR_COLOR[selectedBranch];
@@ -556,7 +562,7 @@ export function EvolutionPath({
     const stageId = creatureFormId(evolution);
     const isCurrent = stageId === currentStageId;
     const isUltra = evolution.stage === 'ultra';
-    const isUltraMode = isUltra && !areAllMegasUnlocked;
+    const isUltraMode = isUltra && !podeChegarAoUltra;
     const isRevealed = revealed.has(stageId);
     // "Reached" (shown) = the current form, an already-unlocked form, the
     // shared rookie trunk, or — for Ultra — once all 3 megas are unlocked.
@@ -565,7 +571,7 @@ export function EvolutionPath({
       isCurrent
       || unlockedSet.has(stageId)
       || evolution.stage === 'rookie'
-      || (isUltra && areAllMegasUnlocked);
+      || (isUltra && podeChegarAoUltra);
     const hidden = !isReached && !isRevealed;
     // A stage the pet already passed through, on the branch it's CURRENTLY
     // on — offer to degenerate back to it.
@@ -698,6 +704,21 @@ export function EvolutionPath({
           </div>
           {/* O estado da ARTE desta forma (§2.2). */}
           {linhaDeEstado(stageId, estadoDoNo(stageId, isCurrent, isForecast), hidden)}
+
+          {/* WP4.2 — os DOIS caminhos, ditos no lugar onde a pergunta nasce.
+
+              Sem esta linha, quem olha o Ultra trancado conclui a mesma coisa
+              que antes: "preciso das três megas", ou seja, "preciso descer".
+              A ordem é deliberada — a PERMANÊNCIA vem primeiro, porque é o
+              caminho que não pede nenhum ato de descuido. */}
+          {isUltraMode && (
+            <p style={{ ...sm2Hint, marginTop: 6 }}>
+              {isPt
+                ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_DAYS} dias perfeitos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
+                : `Two paths reach this form: ${ULTRA_PATIENCE_DAYS} perfect days as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
+            </p>
+          )}
+
           {isPreviousStage && (
             <button
               type="button"

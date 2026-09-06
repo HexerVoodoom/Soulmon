@@ -2214,7 +2214,7 @@ export default function App() {
    * empate vírus/vacina com leitura confiável anunciava `ultimate-data` e
    * gravava `ultimate-virus`. Ver `utils/evolutionTarget.ts` (footgun 9).
    */
-  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch } = gameState;
+  const { virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays } = gameState;
   const handleEvolveRequest = useCallback(() => {
     const { stage: next } = evolutionTarget({
       points: { virus: virusPoints, data: dataPoints, vaccine: vaccinePoints },
@@ -2222,9 +2222,10 @@ export default function App() {
       currentBranch,
       evolutionStage,
       unlockedEvolutions,
+      perfectDays,
     });
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next });
-  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, carePatternReading]);
+  }, [virusPoints, dataPoints, vaccinePoints, evolutionStage, unlockedEvolutions, currentBranch, perfectDays, carePatternReading]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -2251,6 +2252,7 @@ export default function App() {
         currentBranch: prev.currentBranch,
         evolutionStage: prev.evolutionStage,
         unlockedEvolutions: prev.unlockedEvolutions,
+        perfectDays: prev.perfectDays,
       });
       const newCurrentBranch = alvo.branch;
       newEvolutionStage = alvo.stage;
@@ -4116,6 +4118,7 @@ export default function App() {
                     currentBranch: gameState.currentBranch,
                     evolutionStage: gameState.evolutionStage,
                     unlockedEvolutions: gameState.unlockedEvolutions,
+                    perfectDays: gameState.perfectDays,
                   });
                   return next !== gameState.evolutionStage;
                 })()}

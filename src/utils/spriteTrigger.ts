@@ -64,6 +64,7 @@ export function targetFormId(input: SpriteTriggerInput): string | null {
     currentBranch: input.currentBranch,
     evolutionStage: input.evolutionStage,
     unlockedEvolutions: input.unlockedEvolutions,
+    perfectDays: input.perfectDays,
   });
   // `getNextEvolution` devolve o PRÓPRIO estágio quando não há destino (mega sem
   // as 3 megas, e o ultra). Isso é o estado `DISTANTE`, e ele não gera nada.
@@ -112,7 +113,7 @@ export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
 function vesperForms(input: SpriteTriggerInput, target: string): string[] {
   const leaders = branchLeaders(input.points);
   if (leaders.length < 2) return [target];
-  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions));
+  const forms = leaders.map(b => getNextEvolution(input.evolutionStage, b, input.unlockedEvolutions, input.perfectDays));
   // `ultra` não tem galho: os três líderes resolvem para a MESMA forma. Dedup
   // aqui evita três pedidos idênticos ao servidor pela mesma imagem.
   const unique = Array.from(new Set(forms.filter(f => f !== input.evolutionStage)));

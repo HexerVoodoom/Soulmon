@@ -3,7 +3,7 @@ import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Hint, sm2Text } from './form/FormKit';
 import { FOOD_LIMIT_PER_HOUR } from '../utils/careRules';
 import type { Language } from '../utils/i18n';
-import { FORM_REQUIREMENTS } from '../types/progression';
+import { FORM_REQUIREMENTS, ULTRA_PATIENCE_DAYS } from '../types/progression';
 import { MAX_HEARTS_LOST_PER_DAY, ABSENCE_FORGIVENESS_DAYS, WEEKLY_RELIEF_HEARTS } from '../utils/dailyReset';
 import {
   HABIT_MILESTONES,
@@ -83,6 +83,17 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               // quando o botão já estava aceso.
               `Rookie→Champion pede ${R.rookie.required} dias perfeitos; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
               `Rookie→Champion needs ${R.rookie.required} perfect days; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
+            )}
+          </p>
+          {/* WP4.2 — o requisito do Ultra nunca esteve no guia, e ele é o único
+              da árvore que não é só "dias perfeitos". Enquanto o único caminho
+              era a coleção das três megas, a omissão escondia que o topo pedia
+              DUAS quedas deliberadas. Agora são dois caminhos e os dois são
+              ditos — com a permanência primeiro, que é a que não pede descer. */}
+          <p style={para}>
+            {L(
+              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_DAYS} dias perfeitos como mega, ou conhecer os três galhos. Nenhum é melhor, e nenhum pede que você degenere.`,
+              `The Ultra has two paths: ${ULTRA_PATIENCE_DAYS} perfect days as a mega, or knowing all three branches. Neither is better, and neither asks you to degenerate.`,
             )}
           </p>
           <p style={para}>

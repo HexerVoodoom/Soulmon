@@ -5,6 +5,7 @@
  * destes cair, alguém gastou dinheiro na forma errada, ou não gastou na certa.
  */
 import { describe, it, expect } from 'vitest';
+import { ULTRA_PATIENCE_DAYS } from '../types/progression';
 import { spriteBatch, birthBatch, pointsToEvolve, targetFormId, type SpriteTriggerInput } from './spriteTrigger';
 import { emptySpriteLibrary, recordSprite, recordFailure, type SpriteLibrary } from './spriteLibrary';
 import { CARE_PATTERNS, type CareReading } from './carePattern';
@@ -78,11 +79,32 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
     expect(t).toBe('champion-vaccine');
   });
 
-  it('mega SEM as 3 megas não tem destino — nada gera (é o estado DISTANTE)', () => {
+  /**
+   * ⚠️ Esta era a trava da regra ANTIGA, e ela mudou em 06/09/2026 (WP4.2 /
+   * decisão D6). O mega sem as três megas continua sem destino — mas só
+   * enquanto o segundo caminho não abriu.
+   *
+   * O caminho novo é `ULTRA_PATIENCE_DAYS` dias perfeitos como mega. Antes,
+   * chegar ao Ultra exigia descer e subir duas vezes, ou seja: o topo do jogo
+   * pedia que o jogador machucasse a criatura de propósito. A linha
+   * `perfectDays: 99` abaixo esperava `null` justamente porque a permanência
+   * não valia nada — hoje ela vale, e a forma passa a ser gerável.
+   */
+  it('mega sem as 3 megas E sem permanência não tem destino (estado DISTANTE)', () => {
     const i = input({ evolutionStage: 'mega-virus', perfectDays: 5, unlockedEvolutions: ['mega-virus'] });
     expect(targetFormId(i)).toBeNull();
     expect(spriteBatch(i)).toBeNull();
-    expect(spriteBatch({ ...i, perfectDays: 99 })).toBeNull();
+    // Logo abaixo do corte também não: o caminho abre no número, não perto dele.
+    expect(targetFormId({ ...i, perfectDays: ULTRA_PATIENCE_DAYS - 1 })).toBeNull();
+  });
+
+  it('mega com PERMANÊNCIA alcança o ultra sem nunca ter degenerado', () => {
+    const i = input({
+      evolutionStage: 'mega-virus',
+      perfectDays: ULTRA_PATIENCE_DAYS,
+      unlockedEvolutions: ['mega-virus'],
+    });
+    expect(targetFormId(i), 'o segundo caminho para o Ultra sumiu').toBe('ultra');
   });
 
   it('ultra é topo da árvore: nunca gera nada', () => {

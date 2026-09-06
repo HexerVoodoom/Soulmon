@@ -31,6 +31,56 @@ export const FORM_REQUIREMENTS = {
   ultra: { required: 6, cap: 10 },
 } as const;
 
+/**
+ * O SEGUNDO CAMINHO PARA O ULTRA (WP4.2 — decisão D6, 06/09/2026).
+ *
+ * ─── O que havia antes ────────────────────────────────────────────────────
+ * O Ultra abria com as TRÊS megas desbloqueadas. Como a árvore sobe por um
+ * galho de cada vez, ter as três exigia **descer e subir de novo, duas vezes** —
+ * ou seja, o topo do jogo pedia que o jogador machucasse a criatura de
+ * propósito. A tela da degeneração manual diz "você vai perder o progresso" e
+ * "NÃO pode ser desfeita": um enquadramento de PERDA num passo que era
+ * obrigatório.
+ *
+ * Isso contradizia a tese em dois lugares ao mesmo tempo. A criatura é
+ * declaradamente "o que dói perder" (guia I.1.2), e a indústria abandonou perda
+ * de nível como mecânica há tempos (GDC, loss aversion). Um jogo de cuidado que
+ * exige um ato de descuido para progredir está pedindo a coisa errada.
+ *
+ * ─── O que existe agora ───────────────────────────────────────────────────
+ * DOIS caminhos, e nenhum deles é melhor:
+ *  · **coleção** — as três megas, para quem quiser conhecer os três galhos.
+ *    Continua valendo, e continua sendo escolha.
+ *  · **permanência** — `ULTRA_PATIENCE_DAYS` dias perfeitos acumulados como
+ *    mega. É consistência ao longo de semanas, que é o recurso que a pesquisa
+ *    de v-pet aponta como o único que não cresce indefinidamente.
+ *
+ * ─── Por que 45, e por que UM número ──────────────────────────────────────
+ * O caminho da coleção custa ~26 dias perfeitos mais duas quedas. 45 dias
+ * perfeitos como mega é mais longo em tempo e mais barato em dor — que é
+ * exatamente a troca que se quer oferecer. É um número só, tunável, e ele NÃO
+ * é uma segunda tabela ao lado de `required`: `required` continua sendo o gate
+ * de toda evolução, inclusive esta. Aqui só se responde "existe destino?".
+ * (Ver a lápide de `daysToEvolve` acima: a lição foi não pôr um segundo número
+ * ao lado do vivo. Este mora sozinho, tem um leitor só, e está testado.)
+ */
+export const ULTRA_PATIENCE_DAYS = 45;
+
+/**
+ * Existe caminho para o Ultra a partir do mega? `perfectDays` são os
+ * acumulados DESDE a última evolução (o contador zera ao evoluir).
+ */
+export function canReachUltra(input: {
+  unlockedEvolutions?: readonly string[];
+  perfectDays?: number;
+}): boolean {
+  const desbloqueadas = input.unlockedEvolutions ?? [];
+  const colecao = (['virus', 'data', 'vaccine'] as const)
+    .every(a => desbloqueadas.includes(`mega-${a}`));
+  const permanencia = (input.perfectDays ?? 0) >= ULTRA_PATIENCE_DAYS;
+  return colecao || permanencia;
+}
+
 // HP máximo por nível (corações)
 export const MAX_HP_BY_FORM = {
   rookie: 3,
