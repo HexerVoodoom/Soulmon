@@ -100,6 +100,7 @@ import {
 } from './utils/rebirth';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
+import { shouldPrimePush, pushPrimingLine } from './utils/pushPriming';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
@@ -3872,6 +3873,39 @@ export default function App() {
     window.location.reload();
   };
 
+  /* ── WP1.5 — O SEGUNDO CONVITE DE NOTIFICAÇÃO ─────────────────────────
+     O primeiro convite já estava certo: só depois da PRIMEIRA conclusão real.
+     O que faltava era o segundo — quem dispensou no dia 1 nunca mais era
+     convidado, e no dia 1 ninguém ainda sabe se este app vai importar.
+     A regra (as quatro travas: nunca no D0/D1, nunca depois do D3, uma vez
+     só, nunca em cima de quem voltou de ausência) mora em `utils/pushPriming.ts`
+     e é testada lá; aqui fica só a leitura do estado e a tela. */
+  const [primingDispensado, setPrimingDispensado] = useState(
+    () => readFlag(STORAGE_KEYS.NOTIFICATION_PRIMING_DISMISSED),
+  );
+  const mostrarPrimingDePush = useMemo(() => shouldPrimePush({
+    daysWithPet: daysTogether(gameState.bornAt, playerDayKey(new Date(), gameState.playerDayTz)),
+    notificationsEnabled,
+    // Sem o carimbo de hora (dispensou antes desta versão) a espera de 24h já
+    // passou — é a leitura segura, e não reperguntar seria pior que perguntar.
+    firstDismissedAt: (() => {
+      const at = Number(readLocal(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED_AT));
+      if (Number.isFinite(at) && at > 0) return at;
+      return readFlag(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED) ? 0 : null;
+    })(),
+    secondDismissed: primingDispensado,
+    returningFromAbsence: gameState.lastDayReport?.welcomeBack === true,
+    now: Date.now(),
+  }), [
+    gameState.bornAt, gameState.playerDayTz, gameState.lastDayReport?.welcomeBack,
+    notificationsEnabled, primingDispensado,
+  ]);
+
+  const dispensarPriming = useCallback(() => {
+    setPrimingDispensado(true);
+    writeFlag(STORAGE_KEYS.NOTIFICATION_PRIMING_DISMISSED, true, { silent: true });
+  }, []);
+
   // Handle toggle notifications
   const handleToggleNotifications = async () => {
     if (!notificationsEnabled) {
@@ -4220,6 +4254,39 @@ export default function App() {
                   Some sozinho na virada do dia, mesmo incompleto. */}
               {shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz)) && (
                 <FirstDayCard progress={gameState.firstDay!} language={language} />
+              )}
+
+              {/* WP1.5 — o SEGUNDO convite de notificação, na voz do PET.
+                  Cartão na Home e não modal: o primeiro pedido já foi um
+                  modal e foi recusado; repetir a mesma interrupção seria
+                  insistir. Quem pergunta é a criatura, e é PERGUNTA — "ative
+                  as notificações para não perder seu progresso" é o app
+                  falando de si. Aparece uma vez só; "agora não" encerra. */}
+              {mostrarPrimingDePush && (
+                <section
+                  style={{
+                    padding: 14, borderRadius: 12, marginBottom: 12,
+                    border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
+                  }}
+                >
+                  <p style={{ ...sm2Text, margin: '0 0 10px' }}>{pushPrimingLine(language === 'pt-BR')}</p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      type="button"
+                      style={{ ...sm2Button('primary'), flex: 1 }}
+                      onClick={() => { dispensarPriming(); void handleToggleNotifications(); }}
+                    >
+                      {language === 'pt-BR' ? 'Pode sim' : 'Yes, please'}
+                    </button>
+                    <button
+                      type="button"
+                      style={{ ...sm2Button('ghost'), flex: 1 }}
+                      onClick={dispensarPriming}
+                    >
+                      {language === 'pt-BR' ? 'Agora não' : 'Not now'}
+                    </button>
+                  </div>
+                </section>
               )}
 
               {/* HUD do topo (Ref C): SÓ a marca (o `<h1>` da Home) agora.

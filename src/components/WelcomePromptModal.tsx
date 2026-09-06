@@ -4,7 +4,7 @@ import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { readFlag, writeFlag } from '../utils/safeStorage';
+import { readFlag, writeFlag, writeLocal } from '../utils/safeStorage';
 import { checkNotificationPermission } from '../utils/notifications';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -122,6 +122,11 @@ export function WelcomePromptModal({
   const handleDismissNotif = () => {
     setNotifDismissed(true);
     writeFlag(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED, true, { silent: true });
+    // WP1.5 — o SEGUNDO convite (D2–D3) precisa saber QUANDO isto aconteceu,
+    // para não chegar no mesmo dia. A chave booleana acima continua sendo
+    // escrita: quem já dispensou antes desta versão não pode ser reperguntado
+    // por causa de um campo novo que o save dele não tem.
+    writeLocal(STORAGE_KEYS.NOTIFICATION_PROMPT_DISMISSED_AT, String(Date.now()), { silent: true });
     setStep(null);
   };
 

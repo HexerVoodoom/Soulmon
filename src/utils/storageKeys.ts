@@ -14,6 +14,13 @@ export const STORAGE_KEYS = {
   NOTIFICATIONS_ENABLED: 'digiapp-notifications-enabled',
   PWA_INSTALL_DISMISSED: 'digiapp-pwa-install-dismissed',
   NOTIFICATION_PROMPT_DISMISSED: 'digiapp-notification-prompt-dismissed',
+  /** WP1.5 — QUANDO o primeiro convite foi dispensado (epoch ms). A chave
+   *  acima é booleana e continua sendo escrita; esta existe porque o segundo
+   *  convite precisa das 24h. Ausente com a booleana ligada = dispensou antes
+   *  desta versão, e aí a espera já passou (é a leitura segura). */
+  NOTIFICATION_PROMPT_DISMISSED_AT: 'digiapp-notification-prompt-dismissed-at',
+  /** WP1.5 — o SEGUNDO convite foi dispensado. Não existe terceiro. */
+  NOTIFICATION_PRIMING_DISMISSED: 'digiapp-notification-priming-dismissed',
   SCHEDULED_NOTIFICATIONS: 'digiapp-scheduled-notifications',
   DAILY_NOTIFICATION_CHECK: 'digiapp-daily-notification-check',
   SAVE_ID: 'digiapp-save-id',

@@ -1256,6 +1256,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </p>
             )}
 
+            {/* WP1.2 — O "PORQUÊ" ECOADO.
+                A pergunta aberta do começo do ritual volta aqui, ao lado da
+                criatura, com as palavras da própria pessoa. É o que prova que
+                a criatura veio DELA e não de um gerador: sem esta linha, o
+                reveal é um resultado; com ela, é uma consequência.
+                Ausente para quem pulou — e pular é permitido de propósito,
+                então a ausência não pode virar buraco na tela. */}
+            {soulGoal.trim() && (
+              <p style={{ ...sm2Text, margin: '0 0 16px', color: 'var(--sm2-muted)' }}>
+                {isPt
+                  ? `Você disse: “${soulGoal.trim()}”. ${result.creature.baseName} nasceu disso.`
+                  : `You said: “${soulGoal.trim()}”. ${result.creature.baseName} was born from that.`}
+              </p>
+            )}
+
             {/* WP1.1 — O CASULO, e depois a criatura.
                 Enquanto o desenho vem, o que se vê é um casulo pulsando: a
                 espera vira parte do ritual em vez de um vazio onde deveria
