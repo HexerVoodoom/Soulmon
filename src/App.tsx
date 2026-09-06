@@ -138,7 +138,7 @@ import {
 } from './utils/rituals';
 import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
-  shrink, effortOf,
+  shrink, effortOf, focusComplete,
 } from './utils/taskTriage';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
@@ -1396,6 +1396,22 @@ export default function App() {
   };
 
   // Get companion message based on progress and HP
+  /**
+   * WP2.12 — os três focos do dia foram concluídos?
+   *
+   * `useMemo` e não estado: é uma LEITURA do que já está no save, e guardar a
+   * resposta criaria uma segunda fonte para um fato derivável — o mesmo erro
+   * que `bondLevel` evita (footgun 9). Some sozinho na virada porque o
+   * `dayKey` muda; nada a limpar, nada a expirar.
+   */
+  const focoDoDiaCompleto = useMemo(
+    () => focusComplete(
+      gameState.tasks, gameState.completedTasks,
+      playerDayKey(new Date(), gameState.playerDayTz),
+    ),
+    [gameState.tasks, gameState.completedTasks, gameState.playerDayTz],
+  );
+
   const getCompanionMessage = (): string => {
     if (gameState.healthPoints <= 1) {
       return t.main.companionNeedHelp;
@@ -3890,6 +3906,10 @@ export default function App() {
                   components/pixel/HomeHud.tsx para a nota sobre o rótulo da
                   moeda ("SOUL CRYSTAL" da referência vs. Créditos). */}
               <HomeHud
+                /* WP2.12 — o selo do dia. `focusComplete` existia com teste e
+                   nenhum chamador, e o guia prometia "completar os 3 rende o
+                   selo". Binário de propósito: nunca "2 de 3". */
+                focusSealed={focoDoDiaCompleto}
                 energyPoints={gameState.energyPoints}
                 maxEnergyPoints={getMaxEnergyForStage(gameState.evolutionStage)}
                 healthPoints={gameState.healthPoints}
@@ -4972,6 +4992,12 @@ export default function App() {
         <MorningCheckIn
           open
           plan={checkInPlanData}
+          /* WP2.10 — aceitar a versão reduzida usa o MESMO caminho de conclusão
+             de sempre. "Conta como feito" é literal: mesma constância, mesmos
+             atributos, mesmo XP de Vínculo. Um caminho paralelo aqui seria uma
+             segunda regra de conclusão (footgun 9) e um "meio-feito" que a
+             tese do produto não tem. */
+          onTinyHabit={handleToggleActivityCompletion}
           language={language}
           onConfirm={handleCheckInConfirm}
           onSkip={handleCheckInSkip}

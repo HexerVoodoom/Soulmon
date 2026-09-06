@@ -51,6 +51,17 @@ interface HomeHudProps {
   /** Some os medidores — usado pela instância que só carrega a marca/h1. */
   hideMeters?: boolean;
   /**
+   * O SELO DO DIA (WP2.12): os três focos escolhidos no check-in foram
+   * concluídos. `focusComplete` (`utils/taskTriage.ts`) existia com teste e
+   * nenhum chamador, enquanto o guia e o glossário prometiam o selo.
+   *
+   * É estado do DIA, não conquista: some na virada sozinho, sem toast de
+   * perda e sem histórico. E é binário — nunca "2 de 3", porque um placar
+   * parcial de um objetivo de três itens é a fatura que este produto não
+   * emite. Ou está completo, ou não há selo.
+   */
+  focusSealed?: boolean;
+  /**
    * Medidores mais apertados, para caber no corpo do aparelho sem competir
    * com o pet. Aperta só a MOLDURA: padding, gap e a altura do trilho da
    * barra (12px → 7px). **O rótulo continua sempre visível** e **o ícone
@@ -111,6 +122,7 @@ export function HomeHud({
   language = 'en-US',
   hideBrand = false,
   hideMeters = false,
+  focusSealed = false,
   compact = false,
 }: HomeHudProps) {
   const isPt = language === 'pt-BR';
@@ -144,8 +156,21 @@ export function HomeHud({
           (27/08/2026) não repete o `<h1>` — ele continua único, sozinho, no
           topo da Home. */}
       {!hideBrand && (
-        <div className="sm2-hud-brand">
+        <div className="sm2-hud-brand" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <h1 className="sm2-hud-wordmark" style={{ margin: 0 }}>Soulmon</h1>
+          {/* Ícone pelado, sem moldura nem placa — a regra visual do dono vale
+              aqui como em todo lugar. */}
+          {focusSealed && (
+            <span
+              title={language === 'pt-BR' ? 'Foco do dia completo' : "Today's focus complete"}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--sm2-primary-ink)' }}
+            >
+              <Icon name="check_circle" size={20} fill={1} tone="primary" />
+              <span style={{ fontSize: 'var(--sm2-text-xs)', fontWeight: 500 }}>
+                {language === 'pt-BR' ? 'foco do dia' : 'focus done'}
+              </span>
+            </span>
+          )}
         </div>
       )}
 

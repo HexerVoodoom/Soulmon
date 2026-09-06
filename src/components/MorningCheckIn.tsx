@@ -75,6 +75,8 @@ export interface CheckInPlanShape {
   carryOver: CheckInTaskItem[];
   plannedEffort: number;
   overcommitted: boolean;
+  /** Hábitos que faltaram 2× seguidas e ganham a oferta reduzida (WP2.10). */
+  tinyOffer?: string[];
 }
 
 export interface MorningCheckInProps {
@@ -83,6 +85,8 @@ export interface MorningCheckInProps {
   language: Language;
   onConfirm: (focusIds: string[]) => void;
   onSkip: () => void;
+  /** Aceitar a versão reduzida — conta como FEITO, pelo mesmo caminho de sempre. */
+  onTinyHabit?: (activityId: string) => void;
 }
 
 const EFFORT_WORD: Record<number, { pt: string; en: string }> = {
@@ -96,11 +100,13 @@ const body = sm2Text;
 
 const sectionTitle: CSSProperties = { ...sm2Hint, margin: '0 0 8px', fontWeight: 500, letterSpacing: '.02em' };
 
-export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: MorningCheckInProps) {
+export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTinyHabit }: MorningCheckInProps) {
   const isPt = language === 'pt-BR';
 
   const carryOver = plan.carryOver ?? [];
   const habits = plan.habitsToday ?? [];
+  /** Os que faltaram 2× seguidas (`needsIntervention`, calculado no `checkInPlan`). */
+  const ofertaReduzida = habits.filter(h => (plan.tinyOffer ?? []).includes(h.id));
   const suggested = plan.suggestedFocus ?? [];
 
   // Candidatos ao foco: pendência de ontem primeiro (é o que já custou um dia),
@@ -301,6 +307,44 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip }: Morn
                     {h.name || (isPt ? 'Hábito' : 'Habit')}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* WP2.10 — A OFERTA REDUZIDA (never miss twice).
+                `needsIntervention` existia com teste, 40 linhas de comentário e
+                NENHUM chamador: o guia e o `CLAUDE.md` prometiam que "o pet
+                oferece uma versão bem menor do hábito — aceitar já conta como
+                feito", e o pet nunca ofereceu nada. A primeira falha continua
+                não gerando nada visível; a segunda gera isto.
+
+                Três travas de forma, e as três são a diferença entre companhia
+                e cobrança:
+                · NENHUM dígito de falta. Nunca "você falhou 2 dias" — a pessoa
+                  sabe. O único número na frase é o 5 dos minutos.
+                · aceitar chama o MESMO caminho de conclusão de sempre
+                  (`onTinyHabit` → `handleToggleActivityCompletion`), com os
+                  mesmos ganhos. "Conta como feito" é literal, não simbólico.
+                · não há botão de recusar. Ignorar é a recusa, e ela não custa
+                  nada nem aparece em lugar nenhum. */}
+            {onTinyHabit && ofertaReduzida.length > 0 && (
+              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {ofertaReduzida.map(h => (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => onTinyHabit(h.id)}
+                    style={{ ...sm2Button('ghost'), width: '100%', justifyContent: 'flex-start' }}
+                  >
+                    {isPt
+                      ? `${h.name || 'Esse hábito'}: hoje, só 5 minutos?`
+                      : `${h.name || 'This habit'}: just 5 minutes today?`}
+                  </button>
+                ))}
+                <p style={hint}>
+                  {isPt
+                    ? 'Aceitar já conta como feito.'
+                    : 'Saying yes already counts as done.'}
+                </p>
               </div>
             )}
           </section>

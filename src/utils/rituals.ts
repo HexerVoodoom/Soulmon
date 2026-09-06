@@ -46,7 +46,7 @@ import {
   sameDay,
 } from './taskTriage';
 import type { TriageTask } from './taskTriage';
-import { constancy, habitTier, dayKeyOf, weekStart, habitCountsOn } from './habitRhythm';
+import { constancy, habitTier, dayKeyOf, weekStart, habitCountsOn, needsIntervention } from './habitRhythm';
 import type { Schedule } from '../types/taskModel';
 import type { HabitRhythm } from './habitRhythm';
 import type { RestState } from './restWindow';
@@ -172,6 +172,15 @@ export interface CheckInPlan {
   carryOver: TriageTask[];
   overcommitted: boolean;
   plannedEffort: number;
+  /**
+   * Ids dos hábitos de hoje que faltaram DUAS vezes seguidas e por isso ganham
+   * a oferta reduzida ("hoje, só 5 minutos?") — a regra never-miss-twice.
+   *
+   * Vem como lista de ids e não como campo dentro de cada hábito de propósito:
+   * `habitsToday` é a atividade do save, e pendurar nela um estado de UI faria
+   * a fatia do save carregar julgamento sobre a pessoa.
+   */
+  tinyOffer: string[];
 }
 
 /**
@@ -209,6 +218,13 @@ export function checkInPlan(state: RitualState, now: Date): CheckInPlan {
   // widget Android. O check-in mostrava um `everyNDays` todo dia como se fosse
   // devido — e a virada, corretamente, não o cobrava.
   const habitsToday = activities.filter(a => habitCountsOn(a, rhythms[a.id], now));
+  /* WP2.10 — a primeira falta não gera NADA visível; a segunda gera uma oferta.
+     `needsIntervention` existia com teste e 40 linhas de comentário e nenhum
+     componente o chamava: o guia e o `CLAUDE.md` prometiam que "o pet oferece
+     uma versão bem menor do hábito" e o pet nunca ofereceu nada. */
+  const tinyOffer = habitsToday
+    .filter(a => rhythms[a.id] && needsIntervention(rhythms[a.id], now))
+    .map(a => a.id);
 
   const live = tasks.filter(t => isActive(t) && !t.completed);
 
@@ -240,6 +256,7 @@ export function checkInPlan(state: RitualState, now: Date): CheckInPlan {
 
   return {
     habitsToday,
+    tinyOffer,
     suggestedFocus,
     carryOver,
     overcommitted: isOvercommitted(effort),
