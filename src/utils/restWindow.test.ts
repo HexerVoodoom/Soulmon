@@ -378,3 +378,27 @@ describe('NENHUMA função devolve penalidade ou perda', () => {
     expect(dexProgress(escondido)).toEqual(dexProgress(visivel));
   });
 });
+
+describe('WP4.10 — o sonho guarda a data da PRIMEIRA coleta', () => {
+  it('grava o dia quando ele é informado', () => {
+    const estado = createRestState();
+    const primeiro = DREAM_CATALOG[0].id;
+    const depois = collectDream(estado, primeiro, '2026-09-06');
+    expect(depois.dreamDates?.[primeiro]).toBe('2026-09-06');
+  });
+
+  it('recoletar não muda a data nem duplica o sonho', () => {
+    const primeiro = DREAM_CATALOG[0].id;
+    const um = collectDream(createRestState(), primeiro, '2026-09-06');
+    const dois = collectDream(um, primeiro, '2026-12-25');
+    expect(dois).toBe(um);
+    expect(dois.dreams).toHaveLength(1);
+  });
+
+  it('sem dia informado, a coleção funciona igual — save antigo não quebra', () => {
+    const primeiro = DREAM_CATALOG[0].id;
+    const depois = collectDream(createRestState(), primeiro);
+    expect(depois.dreams).toContain(primeiro);
+    expect(depois.dreamDates?.[primeiro]).toBeUndefined();
+  });
+});

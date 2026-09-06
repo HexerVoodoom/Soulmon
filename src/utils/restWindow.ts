@@ -105,6 +105,9 @@ export interface RestState {
   nights: RestNight[];
   /** Ids de sonhos coletados. */
   dreams: string[];
+  /** WP4.10 — quando cada sonho foi coletado (dia do JOGADOR). Ausente em save
+   *  antigo: a coleção continua inteira, só sem data. */
+  dreamDates?: Record<string, string>;
   /** O switch "não quero ver métricas" — esconde números, preserva prêmios. */
   hideMetrics?: boolean;
   /**
@@ -546,11 +549,27 @@ export function rollDream(
   return pool[start].id;
 }
 
-/** Guarda o sonho no Dex. Idempotente: coletar de novo não duplica nem tira nada. */
-export function collectDream(state: RestState, dreamId: string): RestState {
+/**
+ * Guarda o sonho no Dex. Idempotente: coletar de novo não duplica nem tira nada.
+ *
+ * WP4.10 — grava também QUANDO. A coleção existia sem data, e sem data ela é
+ * uma lista; com data ela vira história ("esse foi na primeira semana"). O
+ * `dayKey` é o do JOGADOR e entra por parâmetro, nunca lido do relógio aqui:
+ * este módulo é puro, e o dia do aparelho é justamente o que o
+ * `playerDay.ts` existe para não usar.
+ *
+ * A data NUNCA é reescrita: recoletar mantém a primeira. Uma data que se
+ * atualiza registra a última vez, e o que a coleção conta é a PRIMEIRA.
+ */
+export function collectDream(state: RestState, dreamId: string, dayKey?: string): RestState {
   if (!DREAM_CATALOG.some((d) => d.id === dreamId)) return state;
   if (state.dreams.includes(dreamId)) return state;
-  return { ...state, dreams: [...state.dreams, dreamId] };
+  const dates = state.dreamDates ?? {};
+  return {
+    ...state,
+    dreams: [...state.dreams, dreamId],
+    dreamDates: dayKey && !dates[dreamId] ? { ...dates, [dreamId]: dayKey } : dates,
+  };
 }
 
 /** Completude do Dex. Só cresce — é barra de coleção, não de desempenho. */

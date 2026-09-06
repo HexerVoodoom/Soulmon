@@ -193,6 +193,12 @@ export interface GameState {
   poopEventsCompleted: number[];
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
+  /** WP4.10 — quando cada FORMA foi alcançada (dia do jogador). Insumo do
+   *  álbum: a coleção deixa de ser lista e vira história. Save antigo não
+   *  tem, e aí a forma aparece sem data — nunca com uma data inventada. */
+  formReachedAt?: Record<string, string>;
+  /** WP4.6 — inimigos da masmorra já enfrentados. Só cresce. */
+  bestiary?: string[];
   /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
    *  sozinho na virada; nunca vira lista de pendências. */
   firstDay?: import('../utils/firstDay').FirstDayProgress | null;
@@ -828,6 +834,10 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         })(),
         degeneratedByHP: loadedState.degeneratedByHP === true,
         firstDay: normalizeFirstDay(loadedState.firstDay) ?? undefined,
+        // WP4.10/WP4.6 — coleções novas. `?? {}` / `?? []` porque save antigo
+        // não tem: ausência é "ainda não", nunca erro.
+        formReachedAt: (loadedState.formReachedAt as Record<string, string>) ?? {},
+        bestiary: strArr(loadedState.bestiary),
         redeemed: loadedState.redeemed === true,
         showRedeemed: loadedState.showRedeemed === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/

@@ -119,8 +119,12 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   onHeartDrop: () => boolean;
   /** Completing all 5 floors grants a Glitchtama (added to Items). */
   onGlitchtama: () => void;
-  /** Mission counter: called once per defeated enemy. */
-  onEnemyDefeated: () => void;
+  /** Mission counter: called once per defeated enemy.
+   *  WP4.6 — recebe também a CHAVE do inimigo, para o bestiário registrar o
+   *  que o jogador enfrentou. A chave é a mesma do sprite (`stage`), que já é
+   *  única por linha e tier — inventar um id novo aqui criaria uma segunda
+   *  identidade para a mesma criatura. */
+  onEnemyDefeated: (enemyKey?: string) => void;
   /** Grants Bits. */
   onEarnPoints: (pts: number) => void;
   /** WP4.5 — Bits em caixa, para a compra de profundidade. */
@@ -202,7 +206,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   // Enemy defeated: grant points + roll a heart drop, then confirm.
   const defeatEnemy = (finalMsg: Popup) => {
     playTaskComplete();
-    onEnemyDefeated();
+    onEnemyDefeated(enemy.stage);
     addPoints(enemy.points);
     const gotHeart = onHeartDrop();
     setRewardMsg(

@@ -100,6 +100,7 @@ import {
 } from './utils/rebirth';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
+import { stampCollected } from './utils/collectionDates';
 import { shouldPrimePush, pushPrimingLine } from './utils/pushPriming';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
@@ -2342,6 +2343,13 @@ export default function App() {
         unlockedEvolutions: prev.unlockedEvolutions.includes(newEvolutionStage)
           ? prev.unlockedEvolutions
           : [...prev.unlockedEvolutions, newEvolutionStage],
+        // WP4.10 — a data da forma. Sem ela a coleção é uma lista; com ela é
+        // uma história ("essa foi na primeira semana"). Nunca reescrita.
+        formReachedAt: stampCollected(
+          prev.formReachedAt,
+          newEvolutionStage,
+          playerDayKey(new Date(), prev.playerDayTz),
+        ),
       };
     });
     playEvolve();
@@ -2541,8 +2549,19 @@ export default function App() {
   }, []);
 
   // 🏅 Mission counters
-  const handleDungeonEnemyDefeated = useCallback(() => {
-    setGameState(prev => ({ ...prev, dungeonKills: (prev.dungeonKills ?? 0) + 1 }));
+  const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
+    setGameState(prev => ({
+      ...prev,
+      dungeonKills: (prev.dungeonKills ?? 0) + 1,
+      /* WP4.6 — o BESTIÁRIO. A masmorra tem seis linhas × seis tiers e o jogo
+         não guardava NADA do que o jogador enfrentou: cada run apagava a
+         anterior. Registrar é o que transforma "matei uns bichos" em coleção.
+         Só cresce, e o `Set` mantém a idempotência (matar o mesmo tipo cem
+         vezes é uma entrada). */
+      bestiary: enemyKey && !(prev.bestiary ?? []).includes(enemyKey)
+        ? [...(prev.bestiary ?? []), enemyKey]
+        : prev.bestiary,
+    }));
   }, []);
 
   const handleDinoScore = useCallback((score: number) => {
@@ -3340,7 +3359,16 @@ export default function App() {
     const isNew = !rest.dreams.includes(dreamId);
     dreamShownRef.current = key;
     writeLocal(STORAGE_KEYS.MORNING_DREAM_SHOWN, key, { silent: true });
-    setGameState(prev => ({ ...prev, rest: collectDream(prev.rest ?? createRestState(), dreamId) }));
+    // WP4.10 — a data entra junto: coleção sem data é lista; com data é
+    // história. Dia do JOGADOR, nunca do aparelho.
+    setGameState(prev => ({
+      ...prev,
+      rest: collectDream(
+        prev.rest ?? createRestState(),
+        dreamId,
+        playerDayKey(new Date(), prev.playerDayTz),
+      ),
+    }));
     setMorningDream({ dream: DREAM_CATALOG.find(d => d.id === dreamId) ?? null, isNew });
   }, [gameState.rest, isSleeping, setGameState]);
 
@@ -4978,6 +5006,13 @@ export default function App() {
                 soulGoal: gameState.soulGoal ?? null,
                 bornAt: gameState.bornAt ?? null,
               } : null}
+              /* WP4.6/WP4.10 — o álbum das formas: as onze da árvore, com a
+                 arte que já existe e a data de quando cada uma chegou. */
+              album={(gameState.soulmonStages ?? []).map(st => {
+                const id = st.branch ? `${st.stage}-${st.branch}` : st.stage;
+                return { id, name: st.name, spriteUrl: displaySprite(spriteAcervo, id)?.url ?? null };
+              })}
+              formReachedAt={gameState.formReachedAt}
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
               language={language}

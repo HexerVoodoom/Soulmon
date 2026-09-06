@@ -36,6 +36,7 @@ import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import { BirthCard } from './BirthCard';
+import { FormAlbum } from './FormAlbum';
 import type { CarePattern } from '../utils/carePattern';
 import {
   seasonProgress, seasonLabel, seasonMedalStatus,
@@ -103,6 +104,11 @@ interface StatsPageProps {
     soulGoal?: string | null;
     bornAt?: string | null;
   } | null;
+  /** WP4.6 — as onze formas da árvore, para o álbum. Ausente = a linha de
+   *  texto antiga continua valendo (save sem árvore gerada). */
+  album?: Array<{ id: string; name: string; spriteUrl?: string | null }>;
+  /** WP4.10 — quando cada forma foi alcançada. */
+  formReachedAt?: Record<string, string>;
   /** Estado da estação (`utils/seasons.ts`) + contadores para os três caminhos. */
   season?: {
     state?: SeasonProgressState;
@@ -159,6 +165,8 @@ export function StatsPage({
   journey,
   daysTogether,
   birth,
+  album,
+  formReachedAt,
   season,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
@@ -364,7 +372,23 @@ export function StatsPage({
           </div>
         )}
 
-        {formNames.length > 0 && (
+        {/* WP4.6 — O ÁLBUM substitui a LINHA DE TEXTO.
+            A coisa mais cara que o jogador constrói (meses de cuidado virando
+            formas) era uma string com nomes separados por ponto. O álbum
+            mostra as onze, com arte, silhueta para o que ainda não veio, e a
+            data de quando cada uma chegou (WP4.10). */}
+        {album && album.length > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <FormAlbum
+              forms={album}
+              reached={journey?.unlockedEvolutions ?? []}
+              reachedAt={formReachedAt}
+              language={language}
+            />
+          </div>
+        )}
+
+        {!album && formNames.length > 0 && (
           <p style={{ ...sm2Text, marginTop: 12 }}>
             {isPt ? 'Formas já alcançadas: ' : 'Forms reached so far: '}
             <span style={{ color: 'var(--sm2-primary-ink)' }}>{formNames.join(' · ')}</span>
