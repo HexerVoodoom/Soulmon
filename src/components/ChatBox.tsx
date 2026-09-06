@@ -1,4 +1,5 @@
 import { aiFetch } from '../utils/aiClient';
+import { chatSafetyDecision } from '../utils/chatSafety';
 import { useState } from 'react';
 import { Icon } from './ui/Icon';
 import { toast } from 'sonner';
@@ -163,6 +164,18 @@ export function ChatBox({
 
     const userMessage = inputValue;
     setInputValue('');
+
+    /* WP3.9 (decisão D16) — A PONTE, antes de tudo.
+       A checagem vem ANTES do `setIsLoading` e antes de qualquer rede: se a
+       mensagem pede a ponte, ela **não sai do aparelho**. Nem para a IA, nem
+       para telemetria, nem para o save. Quem escreveu aquilo não vira dado.
+       A resposta é local, fixa, na voz do pet, sem alarme e sem push. */
+    const safety = chatSafetyDecision(userMessage, language === 'pt-BR' ? 'pt-BR' : 'en-US');
+    if (safety.kind === 'local') {
+      onSendMessage(safety.reply);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
