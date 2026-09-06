@@ -144,6 +144,7 @@
   <tr><td><code>after_bad_day</code></td><td>Que você voltou depois de um dia ruim, com a distância em FAIXA (<code>gap</code>, 0 a 3 — nunca a data) e se o app foi aberto (<code>kind</code>). Serve para saber se o convite de carinho funciona; a marca do dia ruim fica no seu aparelho e nunca é enviada.</td></tr>
   <tr><td><code>app_open</code></td><td>De onde o app foi aberto (<code>source</code>: direto, notificação, widget ou atalho). Existe para uma decisão só: cortar notificação que traz gente e não serve para nada.</td></tr>
   <tr><td><code>push_optout</code></td><td>Que você desligou as notificações. Sem detalhe nenhum — é o fato, não o motivo.</td></tr>
+  <tr><td><code>retained</code></td><td>Que você abriu o app depois de 1, 7 ou 30 dias da instalação (<code>bucket</code>, 0 a 2). <strong>A data em que você instalou fica no seu aparelho e nunca é enviada</strong> — a conta é feita aí e o que sai é só o número do marco, uma vez cada.</td></tr>
   <tr><td colspan="2">Além disso, os eventos acima que dizem respeito à sua conta carregam a propriedade <code>tier</code>: se você está no modo grátis ou no completo. Só isso — nada mais da sua conta.</td></tr>
 </table>
 <p>
@@ -331,6 +332,7 @@
   <tr><td><code>after_bad_day</code></td><td>That you came back after a bad day, with the distance as a RANGE (<code>gap</code>, 0 to 3 — never a date) and whether the app was opened (<code>kind</code>). It exists to tell whether the care invitation works; the bad-day marker stays on your device and is never sent.</td></tr>
   <tr><td><code>app_open</code></td><td>Where the app was opened from (<code>source</code>: direct, notification, widget or shortcut). It exists for one decision only: cutting notifications that bring people in for nothing.</td></tr>
   <tr><td><code>push_optout</code></td><td>That you turned notifications off. No detail at all — the fact, not the reason.</td></tr>
+  <tr><td><code>retained</code></td><td>That you opened the app 1, 7 or 30 days after installing (<code>bucket</code>, 0 to 2). <strong>The date you installed stays on your device and is never sent</strong> — the math happens there and only the milestone number leaves, once each.</td></tr>
   <tr><td colspan="2">In addition, the events above that concern your account carry the <code>tier</code> property: whether you are on the free or the full mode. That alone — nothing else from your account.</td></tr>
 </table>
 <p>

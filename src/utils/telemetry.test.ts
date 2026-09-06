@@ -34,6 +34,8 @@ import {
   openSourceFromUrl,
   afterBadDayGapBucket,
   revealDurationBucket,
+  trackRetentionOnOpen,
+  retentionBucketFor,
   TELEMETRY_UNLOCK_REASON,
   TELEMETRY_ACTIVITY_KIND,
   TELEMETRY_CREATE_PATH,
@@ -99,7 +101,7 @@ describe('allowlist de eventos', () => {
     expect(sanitizeEvent('toString')).toBeNull();
   });
 
-  it('aceita os vinte e quatro eventos declarados, e só eles', () => {
+  it('aceita os vinte e cinco eventos declarados, e só eles', () => {
     expect(TELEMETRY_EVENTS).toEqual([
       'install', 'onboarding_step', 'demo_pick', 'first_task_done', 'day_active',
       'unlock_view', 'purchase', 'demo_cap_hit', 'activity_create', 'week_active',
@@ -108,6 +110,8 @@ describe('allowlist de eventos', () => {
       'evolve', 'dungeon_run', 'bond_level',
       // WP0.10 / WP0.11 (rodada 4)
       'after_bad_day', 'app_open', 'push_optout',
+      // WP0.2 (retenção fechada no aparelho)
+      'retained',
     ]);
     expect(sanitizeEvent('install')).toEqual({ e: 'install', d: telemetryDayKey() });
   });
@@ -802,5 +806,64 @@ describe('WP0.9/0.10/0.11/0.12 — os eventos novos e seus limites', () => {
     expect(revealDurationBucket(30)).toBe(2);
     expect(revealDurationBucket(300)).toBe(3);
     expect(sanitizeEvent('reveal_seen', { has_sprite: 1, funnel: 1, duration: 4 })).toBeNull();
+  });
+});
+
+describe('WP0.2 — retenção sem trair a privacidade', () => {
+  beforeEach(() => { localStorage.clear(); setTelemetryEnabled(true); });
+
+  const D = (iso: string) => new Date(`${iso}T12:00:00Z`);
+
+  it('a primeira abertura só GRAVA o dia — não emite nada', () => {
+    trackRetentionOnOpen(D('2026-09-01'));
+    expect(pendingTelemetry().filter(r => r.e === 'retained')).toHaveLength(0);
+  });
+
+  it('emite o marco quando ele é cruzado', () => {
+    trackRetentionOnOpen(D('2026-09-01'));
+    trackRetentionOnOpen(D('2026-09-02'));
+    const r = pendingTelemetry().filter(x => x.e === 'retained');
+    expect(r).toHaveLength(1);
+    expect(r[0].p?.bucket).toBe(0);
+  });
+
+  it('cada marco sai UMA vez na vida', () => {
+    // Repetir infla a fração de retenção, e retenção inflada é pior que
+    // nenhuma: mente para cima na métrica que decide se o produto continua.
+    trackRetentionOnOpen(D('2026-09-01'));
+    trackRetentionOnOpen(D('2026-09-02'));
+    trackRetentionOnOpen(D('2026-09-03'));
+    flush();
+    trackRetentionOnOpen(D('2026-09-04'));
+    expect(pendingTelemetry().filter(x => x.e === 'retained')).toHaveLength(0);
+  });
+
+  it('quem some 40 dias e volta emite o marco MAIOR, não os três', () => {
+    trackRetentionOnOpen(D('2026-09-01'));
+    trackRetentionOnOpen(D('2026-10-15'));
+    const r = pendingTelemetry().filter(x => x.e === 'retained');
+    expect(r).toHaveLength(1);
+    expect(r[0].p?.bucket).toBe(2);
+  });
+
+  it('a DATA de instalação NUNCA aparece no corpo do lote', () => {
+    // É a trava do pacote: a decisão D1/D2 foi ledger local, nada de id — a
+    // data mora no aparelho e o que sai é um inteiro.
+    trackRetentionOnOpen(D('2026-09-01'));
+    trackRetentionOnOpen(D('2026-09-08'));
+    const corpo = JSON.stringify(pendingTelemetry());
+    expect(corpo).not.toContain('2026-09-01');
+    expect(corpo).not.toContain('soulmon-telemetry-install');
+    // E a chave existe MESMO — senão este teste passaria medindo o nada.
+    expect(localStorage.getItem('soulmon-telemetry-install')).toContain('2026-09-01');
+  });
+
+  it('`retentionBucketFor` não inventa marco antes da hora', () => {
+    expect(retentionBucketFor(0)).toBeNull();
+    expect(retentionBucketFor(1)).toBe(0);
+    expect(retentionBucketFor(6)).toBe(0);
+    expect(retentionBucketFor(7)).toBe(1);
+    expect(retentionBucketFor(30)).toBe(2);
+    expect(retentionBucketFor(NaN)).toBeNull();
   });
 });

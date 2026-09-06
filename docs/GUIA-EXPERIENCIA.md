@@ -681,12 +681,20 @@ As táticas menos óbvias dos relatórios — o que um leitor apressado não ext
 
 ## E. Roadmap consolidado
 
-> 📋 **A execução deste roadmap vive em `docs/PLANO-MELHORIAS.md`** (36 pacotes
-> em 5 ondas, 6 sprints, cada item com arquivo + símbolo verificado). Dois
-> itens abaixo estavam **errados** à luz do código e foram corrigidos lá (#1 e
-> #14, marcados). O plano também acrescenta o que nenhum relatório viu:
-> `daysToEvolve` morto, ultra por degeneração, Vínculo sem recompensa após L13,
-> estações que expiram, Bits esgotando em D15–D23.
+> 📋 **A execução deste roadmap vive em `docs/PLANO-MELHORIAS.md`** — hoje
+> **87 pacotes** (eram 36 quando esta linha foi escrita; as rodadas 3 e 4
+> acrescentaram o resto), com o estado de cada um em
+> `docs/plano-melhorias/LEDGER.md`. Dois itens abaixo estavam **errados** à luz
+> do código e foram corrigidos lá (#1 e #14, marcados).
+>
+> ⚠️ **06/09/2026 — o que este parágrafo listava como "o que nenhum relatório
+> viu" já foi RESOLVIDO, e deixar a lista no presente faria alguém procurar
+> defeito que não existe mais:** `daysToEvolve` morto foi apagado (WP4.1);
+> ultra por degeneração deixou de ser o único caminho (WP4.2 — hoje são
+> coleção OU permanência); o Vínculo sem recompensa após o nível 13 e as
+> estações que expiravam entraram nos WP4.3/WP4.16; e os Bits esgotando em
+> D15–D23 ganharam sumidouro recorrente (WP4.5). O que segue aberto está no
+> LEDGER, não aqui.
 
 Deduplicado entre os sete relatórios. Ordenado por prioridade e, dentro dela, por
 impacto ÷ esforço.

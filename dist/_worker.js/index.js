@@ -2381,7 +2381,8 @@ var EVENT_SCHEMA = {
   bond_level: { level: { min: 1, max: 30 } },
   after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
   app_open: { source: { min: 0, max: 3 } },
-  push_optout: null
+  push_optout: null,
+  retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } }
 };
 var MAX_BODY_BYTES = 16 * 1024;
 var MAX_EVENTS = 100;
@@ -3015,7 +3016,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-phl2BA/functionsRoutes-0.03162429996497851.mjs
+// ../.wrangler/tmp/pages-lcKu2e/functionsRoutes-0.6553152109060998.mjs
 var routes = [
   {
     routePath: "/api/account",

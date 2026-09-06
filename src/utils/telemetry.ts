@@ -84,6 +84,7 @@ export type TelemetryEvent =
   | 'after_bad_day'
   | 'app_open'
   | 'push_optout'
+  | 'retained'
   /** Bateu no teto diário de criação do modo demo. É o DENOMINADOR da pergunta
    *  "o cap é a fronteira certa?": sem ele, `unlock_view` de `task-limit` é um
    *  numerador sem denominador, e nenhuma taxa é calculável. */
@@ -182,6 +183,11 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   app_open: { source: { min: 0, max: 3 } },
   /** WP0.11 — desligou o push. Sem prop: é o fato, não o motivo. */
   push_optout: null,
+  /* WP0.2 — RETENÇÃO por marco, fechada no aparelho. `bucket` 0 = D1, 1 = D7,
+     2 = D30. Sem data, sem id, sem série: o servidor agrega por dia como
+     sempre, e a leitura (retained[1] da semana W+1 ÷ install da semana W) é
+     APROXIMADA — e é declarada como aproximada. */
+  retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -342,6 +348,8 @@ export interface TelemetryProps {
   level?: number;
   /** `app_open`: origem da abertura (`TELEMETRY_OPEN_SOURCE`). */
   source?: number;
+  /** `retained`: qual marco (0 = D1, 1 = D7, 2 = D30). */
+  bucket?: number;
   /** `after_bad_day`: distância até o retorno, em FAIXA de dias — nunca data. */
   gap?: number;
   /** `reveal_seen`: quanto tempo o reveal ficou na tela, em faixa. */
@@ -410,6 +418,16 @@ const K_SEEN = 'soulmon-telemetry-seen';
 const K_TIER = 'soulmon-telemetry-tier';
 /** Contagem da semana EM CURSO (ver `trackDayClosed`). Nunca sai daqui. */
 const K_WEEK = 'soulmon-telemetry-week';
+/**
+ * WP0.2 — DIA DA INSTALAÇÃO, e ele **NUNCA é enviado**.
+ *
+ * Coorte por data é o que o cabeçalho deste módulo declara como trade-off do
+ * dono, e a decisão (D1/D2) foi: ledger local, nada de id. Então a data mora
+ * aqui, no aparelho, e o que sai é um INTEIRO de bucket — o mesmo desenho do
+ * `WeekLedger`, que fecha a conta no aparelho e despacha só o resultado.
+ * Há teste provando que esta chave não aparece no corpo do lote.
+ */
+const K_INSTALL_DAY = 'soulmon-telemetry-install';
 
 /** Eventos que acontecem UMA VEZ NA VIDA deste aparelho. */
 const ONCE_EVER: TelemetryEvent[] = ['install', 'first_task_done'];
@@ -710,6 +728,54 @@ function readSeen(): string[] {
   return Array.isArray(s) ? s : [];
 }
 
+/**
+ * WP0.2 — os três marcos de retenção, em DIAS desde a instalação.
+ *
+ * D1/D7/D30 é a régua padrão da indústria, e é a única leitura de retenção que
+ * este app pode ter sem coorte: cada marco vira um inteiro, uma vez na vida.
+ */
+export const RETENTION_MARKS = [1, 7, 30] as const;
+
+/** O bucket que a idade do save cruza, ou `null`. Puro, para o teste. */
+export function retentionBucketFor(daysSinceInstall: number): 0 | 1 | 2 | null {
+  const d = Number.isFinite(daysSinceInstall) ? Math.floor(daysSinceInstall) : -1;
+  // O MAIOR marco já cruzado — quem some por 40 dias e volta emite o de 30, e
+  // não os três de uma vez. `seenKeyFor` impede que ele repita depois.
+  for (let i = RETENTION_MARKS.length - 1; i >= 0; i -= 1) {
+    if (d >= RETENTION_MARKS[i]) return i as 0 | 1 | 2;
+  }
+  return null;
+}
+
+/**
+ * Emite `retained` NA ABERTURA do app, se um marco foi cruzado.
+ *
+ * **Na abertura, e não no fechamento**, de propósito: o `WeekLedger` só
+ * despacha no dia seguinte, então quem abandona nunca despacha — viés
+ * aceitável para a métrica-norte e inaceitável justamente para retenção, que
+ * mede quem ficou contra quem foi embora.
+ *
+ * A data de instalação fica no aparelho e nunca sai (`K_INSTALL_DAY`). Se ela
+ * não existir ainda, este é o dia 0: grava e não emite nada.
+ */
+export function trackRetentionOnOpen(now: Date = new Date()): void {
+  try {
+    const hoje = telemetryDayKey(now);
+    const inicio = readJson<string | null>(K_INSTALL_DAY, null);
+    if (typeof inicio !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(inicio)) {
+      writeJson(K_INSTALL_DAY, hoje, { silent: true });
+      return;
+    }
+    const dias = Math.floor((Date.parse(`${hoje}T00:00:00Z`) - Date.parse(`${inicio}T00:00:00Z`)) / 86400000);
+    const bucket = retentionBucketFor(dias);
+    if (bucket === null) return;
+    // `seenKeyFor` faz cada bucket sair UMA vez na vida (`ONCE_EVER_PREFIX`).
+    track('retained', { bucket });
+  } catch {
+    /* princípio 5: telemetria não tem permissão de falhar em voz alta */
+  }
+}
+
 /** Marca de dedupe de um evento, ou `null` se ele pode repetir livremente. */
 function seenKeyFor(record: TelemetryRecord): string | null {
   if (ONCE_EVER.includes(record.e)) return record.e;
@@ -719,6 +785,10 @@ function seenKeyFor(record: TelemetryRecord): string | null {
   // única pergunta que este evento existe para responder (o push traz gente
   // que faz alguma coisa?) ficaria sem denominador.
   if (record.e === 'app_open') return `app_open:${record.d}:${record.p?.source ?? 0}`;
+  // WP0.2 — cada marco de retenção sai UMA vez na vida. Repetir infla a
+  // fração de retenção, e uma retenção inflada é pior que nenhuma: ela mente
+  // para cima justamente na métrica que decide se o produto continua.
+  if (record.e === 'retained') return `retained:${record.p?.bucket ?? 0}`;
   return null;
 }
 

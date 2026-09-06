@@ -119,6 +119,7 @@ export const EVENT_SCHEMA = {
   after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
   app_open: { source: { min: 0, max: 3 } },
   push_optout: null,
+  retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
 };
 
 /**

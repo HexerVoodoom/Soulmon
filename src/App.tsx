@@ -11,7 +11,7 @@ import {
   track, flush as flushTelemetry, installTelemetryAutoFlush,
   setTelemetryTier, trackDayClosed, telemetryDayKey,
   TELEMETRY_UNLOCK_REASON, TELEMETRY_PURCHASE_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
-  openSourceFromUrl, afterBadDayGapBucket,
+  openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
 } from './utils/telemetry';
 import { BottomNav } from './components/BottomNav';
 import { CompanionHUD } from './components/CompanionHUD';
@@ -1109,6 +1109,13 @@ export default function App() {
        dia ativo — comparar `app_open.1` com `day_active` responde isso, e
        nenhuma outra leitura é o propósito declarado desta métrica. */
     track('app_open', { source: openSourceFromUrl(window.location.search) });
+    /* WP0.2 — RETENÇÃO. Emitida NA ABERTURA e não no fechamento: o ledger
+       semanal só despacha no dia seguinte, então quem abandona nunca despacha
+       — viés aceitável para a métrica-norte e inaceitável justamente para
+       retenção, que mede quem ficou contra quem foi embora.
+       A data de instalação fica no aparelho e NUNCA é enviada (decisão D1/D2:
+       ledger local, nada de id); o que sai é um inteiro de marco. */
+    trackRetentionOnOpen();
     const stop = installTelemetryAutoFlush();
     return stop;
   }, []);
