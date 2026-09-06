@@ -649,3 +649,57 @@ o código mediu custo e o relatório não. Trial: rel. 06 contradiz a si mesmo
 dono. Priming de push: 05 rec.10 "após a 1ª tarefa (D0)" × guia S-7 "D2–D3" —
 mantido D2–D3 (D0 é o dia de maior risco, pela própria fonte). Widget: rel. 07
 "2/4 hoje" × Mobbin sem dígito abaixo da meta — decidido, Mobbin.
+
+## 15. As decisões do dono — RESPONDIDAS (06/09/2026)
+
+As dezesseis perguntas em aberto das seções 10, 13.6 e 14.4 foram respondidas de
+uma vez. **Nenhum pacote continua bloqueado por decisão** — o plano sai de 11
+bloqueados para zero. O que segue é a resposta e o que ela manda fazer.
+
+| # | Resposta | O que muda no código |
+|---|---|---|
+| **D1** | **Escrever o leitor primeiro, chave depois** | `tools/metrics-read.mjs` nasce agora, testado, com as 5 regras de Greer embutidas (`n` em toda linha, mediana, eixo em zero, razões só na mesma janela, nada de conversão com < 30 dias). A chave entra quando o dono quiser e a leitura já está pronta. WP0.1 sai do bloqueio sem depender de ninguém |
+| **D2** | **Aprovado o ledger local** | WP0.2 destravado. A conta de retenção fecha NO APARELHO (precedente `WeekLedger`) e só inteiros saem. Nenhum id, nenhuma coorte no servidor |
+| **D3** | **Escudo fica em 3** | WP2.1 **RECUSADO**, com motivo registrado: os escudos do Duolingo são DADOS, os nossos são CONQUISTADOS (1 a cada 7 dias de boa constância). O 3º só existe para quem teve 21 dias bons — exatamente o público que o dado deles diz que não precisa dele. O dado não transfere |
+| **D4** | **A aura é o que dói, e só ela** | É a régua das ondas 2 e 4. A aura (`steadyWindow`) some em silêncio, sem toast, sem número, sem aviso prévio. **Nenhuma outra mecânica ganha peso de perda** — e nenhum perdão novo entra sem passar por esta régua (o `BLOQUEADO:D4` genérico do `vetos.md` está respondido) |
+| **D5** | **Apagar `daysToEvolve`** (opção b) | O gate é `required` (4/5/5/6) e ponto final. O campo sai de `FORM_REQUIREMENTS`, do teste de progressão e do save. A escada fica curta e honesta. WP4.1 vira uma remoção, não um redesenho |
+| **D6** | **Ultra sem degeneração forçada** | WP4.2 destravado: o topo deixa de exigir que o jogador machuque a criatura de propósito. WP4.19 (rota de redenção) volta a ser o que devia — o capítulo de quem caiu, não o caminho oficial — e segue DEPOIS dele |
+| **D7 + D15** | **Fechar os DOIS caminhos** | A opção máxima. Remover a cura instantânea por Créditos **e** tirar o 💗 da loja de Bits (fica só como drop da masmorra). O câmbio Créditos→Bits serve a cosmético. É a única resposta que deixa "dinheiro nunca compra cuidado" verdadeiro **sem asterisco** |
+| **D8** | **Enum, nunca texto** | A camada 2 do WP1.4 e do WP3.1 volta a viver, mas o que a pessoa escreveu **nunca sai do aparelho**: o app classifica localmente em categorias fechadas e manda só o código. `_redact.js` continua barrando texto livre |
+| **D9** | (não é pergunta) | Continua sendo ordem: ligar `PLAY_REQUIRE_ACCOUNT_BINDING` só DEPOIS do APK do WP0.6 |
+| **D10** | **Vitalício + cosmético trimestral** | WP5.4 destravado, e a spec já sai decidida: ~R$ 9,90/trimestre **só de cosmético**, nunca mecânica nem cuidado; sem trial; nada expira (regra 1 das estações). Quem não assina não perde nada |
+| **D11** | **Som só em resposta a gesto** | WP3.5 destravado com a fronteira escrita: som quando o jogador toca, chega ou faz carinho — nunca idle, nunca com `document.hidden`, 1× por sessão. É o que separa "vivo" de "alarme" |
+| **D12** | **A árvore grátis NÃO ramifica — e a copy muda** | O `UnlockAccountModal` para de prometer que a árvore demo "leva ao mesmo lugar". O modo grátis passa a ser uma demonstração declarada, sem eufemismo. **Trabalho novo: WP5.9** |
+| **D13** | **Ratificadas as duas ressalvas** | Escudo continua ">0 only" (o código já é melhor que a decisão original). A criatura do amigo no estágio real fica **vetada no código até WP4.11 fechar** — a tela só pode mostrar GALHO, nunca ALTURA |
+| **D14** | **Só meta somada + kudos** | Parceria aprovada só nessa forma. Ninguém vê o déficit do outro, ninguém é notificado da falha alheia. Nenhum WP atual depende disto |
+| **D15** | ver **D7** | — |
+| **D16** | **PARCIAL: só a ponte, sem o aviso** | WP3.9 destravado em forma reduzida. Entra o `chatSafety.ts` (léxico local desvia da IA, resposta fixa na voz do pet, CVV 188 em PT / linha internacional em EN, sem alarme e sem push). **NÃO** entra a linha "sou companhia, não tratamento" — a escolha foi não quebrar a magia na primeira fala. Continua sendo condição de saída do WP3.1 |
+| **D17** | **Trocou de pele — mantém a data** | `handleUpgradeRevealed` **não** reescreve `bornAt`. Quem joga há 40 dias continua tendo 40 dias juntos depois de comprar. WP1.16 sai com a spec fechada |
+| **H.4** | **"Nova Leitura" determinística** | WP5.7 destravado. A semente passa a vir das respostas, não do acaso: mesma resposta, mesma criatura. Fecha a **única violação declarada da lista de proibições que ainda estava de pé no código** (#16, sorteio pago) e tira o vocabulário de gacha do `CreditsModal` e do `termos.html` §5 |
+
+### 15.1 O que as respostas dizem juntas
+
+Três delas formam uma posição, e vale registrar que ela é coerente:
+
+**D4 + D7/D15 fecham a tensão que o plano carregava desde a rodada 3.** O
+produto empilhava perdões para o coração não doer **e** vendia a cura por
+dinheiro — se não dói, a cura não vale 10 Créditos; se vale, há incentivo para
+fazer doer. A resposta corta pelos dois lados: o que dói passa a ser a aura
+(cosmética, que ninguém pode comprar de volta) e o coração deixa de ser
+comprável por qualquer caminho. Depois disto, "dinheiro nunca compra cuidado"
+para de precisar de nota de rodapé.
+
+**D3 e D5 são as duas recusas, e as duas são recusas de acrescentar.** Manter o
+escudo em 3 recusa importar um dado que não transfere; apagar `daysToEvolve`
+recusa esticar o jogo com um campo que já enganou três consumidores diferentes.
+
+**D12 e D16 são as duas respostas que abrem mão de algo.** O modo grátis assume
+que é demonstração em vez de fingir paridade, e o chat abre mão do disclaimer
+para não quebrar a ilusão logo na abertura — mantendo a rede de proteção, que é
+a parte que protege a pessoa e não o produto.
+
+### 15.2 Pacote novo que nasceu das respostas
+
+| WP | Área | Spec | Aceite |
+|---|---|---|---|
+| WP5.9 | sustento | **D12:** o `UnlockAccountModal` para de dizer que a árvore demo "leva ao mesmo lugar". A copy passa a nomear o modo grátis como demonstração — sem eufemismo e sem tom de punição. Cruza com WP5.6 (a copy do mesmo modal), então sai no mesmo lote | `grep -c "mesmo lugar" src/components/UnlockAccountModal.tsx` → 0 + render test PT/EN |

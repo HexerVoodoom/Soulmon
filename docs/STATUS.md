@@ -16,6 +16,34 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > seção final do guia. Gate na árvore desta mudança: `tsc` EXIT=0,
 > `vitest` 2852 passed · 2 skipped.
 
+> **06/09/2026 — AS 16 DECISÕES DO DONO, RESPONDIDAS. A coluna BLOQUEADO zerou.**
+> Estavam abertas desde a criação do plano; foram respondidas de uma vez (§15 do
+> `PLANO-MELHORIAS.md`). Onze pacotes saíram do bloqueio, um virou RECUSADO com
+> motivo, um nasceu — o plano vai a **87 pacotes, zero esperando por você**.
+> As de maior consequência:
+> · **D7+D15 — dinheiro para de comprar coração pelos DOIS caminhos**: sai a cura
+> instantânea por Créditos E o 💗 sai da loja de Bits (fica só como drop da
+> masmorra). Era a única forma de "dinheiro nunca compra cuidado" virar verdade
+> sem asterisco, porque o trilho Créditos→Bits→💗 vendia +1 coração por 15
+> Créditos sem cap.
+> · **D4 — a AURA é o que dói, e só ela.** É a régua das ondas 2 e 4: nenhuma
+> outra mecânica ganha peso de perda, e nenhum perdão novo entra sem passar por
+> ela. Junto com D7, fecha a tensão que o plano carregava desde a rodada 3 (o
+> produto empilhava perdões para o coração não doer **e** vendia a cura).
+> · **D5 — `daysToEvolve` será APAGADO.** O gate é `required` (4/5/5/6) e ponto.
+> · **D6 — Ultra sem degeneração forçada**: o topo deixa de exigir que o jogador
+> machuque a criatura de propósito.
+> · **H.4 — o reroll vira "Nova Leitura" determinística**, fechando a única
+> violação declarada da lista de proibições que ainda estava de pé no código.
+> · **D1 resolvida sem depender de você**: o leitor de métricas é escrito e
+> testado ANTES da chave, e passa a esperar por ela.
+> · **D3 — escudo fica em 3** (nossos escudos são conquistados, os do Duolingo
+> são dados: o dado não transfere) e **D12 — a árvore grátis não ramifica, e a
+> copy muda** (o modo grátis assume que é demonstração em vez de fingir paridade).
+> · **D16 PARCIAL**: entra a ponte de ajuda no chat (CVV 188), não entra a linha
+> de disclaimer. Só docs; nenhuma regra de jogo mudou ainda — a implementação é
+> o próximo sprint.
+
 > **06/09/2026 — SPRINT 2, LOTE 1 (6 pacotes VERIFICADOS)** — **WP4.17: o guia
 > mentia sobre a regra mais importante do jogo.** Ele dizia "Rookie→Champion
 > pede 10 dias perfeitos" lendo `daysToEvolve`, um campo que NENHUMA regra

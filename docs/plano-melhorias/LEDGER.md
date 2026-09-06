@@ -67,17 +67,24 @@ rápido; a fonte são os arquivos de `ledger/`.
 
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
-| medição (13) | 6 | 2 (D1, D2) | — | — | **5** (0.3, 0.5, 0.7, 0.13, 0.14) | — |
+| medição (13) | 8 | — | — | — | **5** (0.3, 0.5, 0.7, 0.13, 0.14) | — |
 | nascimento (17) | 14 | — | — | — | **3** (1.7, 1.9, 1.10) | — |
-| constância (15) | 12 | 1 (D3) | — | — | **2** (2.3, 2.9) | — |
-| vínculo (11) | 8 | 2 (D11, D16) | — | — | **1** (3.7) | — |
-| permanência (21) | 14 | 3 (D5, D6 ×2) | — | — | **3** (4.9, 4.17, 4.20) | **1** (4.4) |
-| sustento (9) | 5 | 3 (D7, D10, H.4) | — | — | **1** (5.5) | — |
-| **Total (86)** | **59** | **11** | — | — | **15** | **1** |
+| constância (15) | 12 | — | — | — | **2** (2.3, 2.9) | **1** (2.1, por D3) |
+| vínculo (11) | 10 | — | — | — | **1** (3.7) | — |
+| permanência (21) | 17 | — | — | — | **3** (4.9, 4.17, 4.20) | **1** (4.4) |
+| sustento (9) | 8 | — | — | — | **1** (5.5) | — |
+| **Total (87)** | **69** | **ZERO** | — | — | **15** | **2** |
 
-**Oito pacotes esperam decisão do dono** (seção 10 do plano). D1
-(`METRICS_ADMIN_KEY`) é o que destrava mais coisa: sem ele ninguém lê nenhum
-número, e as metas de todas as ondas ficam sem régua.
+> **06/09/2026 — a coluna BLOQUEADO zerou.** As dezesseis decisões do dono foram
+> respondidas de uma vez (§15 do plano). Onze pacotes saíram do bloqueio; um
+> virou RECUSADO com motivo (WP2.1, por D3); um pacote novo nasceu das respostas
+> (WP5.9, por D12), o que leva o total a 87. **Nada mais no plano espera por
+> uma decisão** — o que sobra é trabalho.
+
+~~**Oito pacotes esperam decisão do dono**~~ — **respondidas em 06/09/2026**
+(§15). D1 foi resolvida pelo caminho que não dependia de ninguém: o leitor
+(`tools/metrics-read.mjs`) é escrito e testado ANTES da chave, e passa a
+esperar por ela em vez de o plano inteiro esperar pelo dono.
 
 ## Linha de base medida em 02/09/2026
 
@@ -167,4 +174,4 @@ renderam achado maior que o próprio pacote:
   do GOAL_STEP como se fosse promessa de criatura melhor. **Aceite que ninguém
   rodou é hipótese** — é a terceira vez que essa frase se paga.
 
-_Última consolidação: 06/09/2026 (sprint 2, lote 1)._
+_Última consolidação: 06/09/2026 (sprint 2, lote 1 + as 16 decisões do dono)._
