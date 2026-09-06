@@ -70,3 +70,35 @@ describe('petVoice — a escolha', () => {
     expect(todas).toMatch(/respira|leve|passado/);
   });
 });
+
+describe('WP3.10 — o traço de nascimento na voz', () => {
+  it('o traço substitui a fala genérica onde tem fala própria', () => {
+    const generica = petVoiceLine('rub', true, 0);
+    const carinhoso = petVoiceLine('rub', true, 0, 'carinhoso');
+    expect(carinhoso).not.toBe(generica);
+  });
+
+  it('sem fala para AQUELE gesto, cai na genérica — nada de enchimento', () => {
+    // Preencher a matriz inteira só para ela existir produz frase forçada, e
+    // frase forçada lê como enchimento.
+    expect(petVoiceLine('shower', true, 0, 'carinhoso')).toBe(petVoiceLine('shower', true, 0));
+  });
+
+  it('traço desconhecido (save de outra versão) não quebra nem cala o pet', () => {
+    expect(petVoiceLine('task', true, 0, 'inexistente')).toBe(petVoiceLine('task', true, 0));
+    expect(petVoiceLine('task', true, 0, undefined)).toBeTruthy();
+  });
+
+  it('as falas de traço também não cobram, e existem nos dois idiomas', () => {
+    for (const [traco, gesto] of [['guloso', 'task'], ['teimoso', 'haunted'], ['sortudo', 'rare'], ['madrugador', 'shower'], ['carinhoso', 'rub']] as const) {
+      for (const isPt of [true, false]) {
+        const l = petVoiceLine(gesto, isPt, 0, traco);
+        expect(l).toBeTruthy();
+        expect(l).not.toBe(petVoiceLine(gesto, isPt, 0));
+        for (const p of ['deveria', 'should', 'falhou', 'failed', 'finally', 'finalmente']) {
+          expect(l.toLowerCase()).not.toContain(p);
+        }
+      }
+    }
+  });
+});

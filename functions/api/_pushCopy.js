@@ -32,6 +32,36 @@ export const PUSH_HOURS_BRT = [10, 16, 22];
 export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) => a - b);
 
 /**
+ * WP3.11 — O LEMBRETE DE DEITAR, e é o ÚNICO push que esta mecânica manda.
+ *
+ * A hora dele não é fixa: sai da janela que a PESSOA escolheu
+ * (`sleepReminderAt`, `src/utils/restWindow.ts`), 30 min antes do início. Por
+ * isso ele não entra em `pushCopy(hora)` — a copy fica aqui, no mesmo dono, e
+ * quem tem a hora é quem tem a janela.
+ *
+ * Três coisas que ele NÃO faz, e as três são a regra da Janela de Descanso:
+ *  · **não diz a hora.** "São 22h30" é um relógio cobrando; o convite é o
+ *    convite.
+ *  · **não fala de desempenho.** Nada de "sua regularidade caiu", nada de
+ *    "você dormiu tarde" — todo feedback desta mecânica é de MANHÃ, dentro do
+ *    app, em forma de sonho colecionado.
+ *  · **não condiciona a nada.** Não pergunta se a meta do dia foi cumprida:
+ *    um push de cobrança perto da hora de dormir é exatamente o estímulo que
+ *    atrapalha o sono que ele alega proteger.
+ */
+export function sleepReminderCopy(petName, language) {
+  const pt = language === 'pt-BR';
+  const name = petName || 'Soulmon';
+  return {
+    title: pt ? `${name} está ficando com sono` : `${name} is getting sleepy`,
+    body: pt
+      ? 'Daqui a pouco é a sua hora também. Sem pressa.'
+      : 'Your time is coming up too. No rush.',
+    tag: 'pet-sleep-reminder',
+  };
+}
+
+/**
  * Texto da notificação para uma hora BRT.
  *
  * Devolve `null` quando a hora não tem notificação — quem chama NÃO deve

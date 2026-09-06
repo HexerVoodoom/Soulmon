@@ -102,6 +102,7 @@ import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { stampCollected } from './utils/collectionDates';
 import { shouldPrimePush, pushPrimingLine } from './utils/pushPriming';
+import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
@@ -4577,6 +4578,10 @@ export default function App() {
                 onPet={handlePet}
                 healCapSignal={healCapSignal}
                 speakSignal={speakSignal}
+                /* WP3.10 — o traço de nascimento chega à VOZ. Ele existia só
+                   como efeito de regra e uma linha em Estatísticas: dois pets
+                   do mesmo estágio se comportavam diferente e falavam igual. */
+                petPassive={gameState.petPassive}
                 /* WP3.3 — nome e título do Vínculo na home. O título é
                    DERIVADO na leitura (`bondLevelFor(totalXP)`); guardá-lo no
                    save seria duas fontes para o mesmo número (footgun 9). */
@@ -5154,6 +5159,16 @@ export default function App() {
                   language={language}
                   onChangeWindow={handleChangeRestWindow}
                   onToggleMetrics={handleToggleRestMetrics}
+                  /* WP1.8 — a permissão de push pedida no MOMENTO-OURO: a
+                     pessoa acabou de escolher a hora de deitar. Antes ela só
+                     saía do interruptor geral, em Configurações, longe de
+                     qualquer motivo. */
+                  notificationsEnabled={notificationsEnabled}
+                  onEnableReminder={() => { void handleToggleNotifications(); }}
+                  reminderPreview={sleepReminderCopy(
+                    getCurrentStageName(),
+                    language,
+                  ).body}
                 />
               </Suspense>
             </div>
@@ -5483,6 +5498,11 @@ export default function App() {
         /* WP1.17 — a idade da criatura viaja com a inscrição de push, e morre
            com ela: cancelar o push apaga a idade junto. */
         bornAt={gameState.bornAt}
+        /* WP3.11 — a janela da PESSOA é quem dá a hora do único push que esta
+           mecânica manda. `sleepReminderAt` existia, com teste, e nunca tinha
+           sido chamado por ninguém. */
+        restWindow={gameState.rest?.window ?? null}
+        isSleeping={isSleeping}
         language={language}
         enabled={notificationsEnabled}
         healthPoints={gameState.healthPoints}

@@ -5,7 +5,8 @@ import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
 // WP3.4 — dono único do texto e do horário das notificações agendadas. Este
 // import é a fronteira que faltava: as três árvores (cliente, worker, cron)
 // passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
-import { pushCopy } from '../../functions/api/_pushCopy.js';
+import { pushCopy, sleepReminderCopy } from '../../functions/api/_pushCopy.js';
+import { sleepReminderAt } from '../utils/restWindow';
 import {
   checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms,
   unsubscribeFromPush, registerForPushNotifications, unregisterFromPushNotifications,
@@ -32,6 +33,11 @@ interface NotificationManagerProps {
   petName: string;
   /** WP1.17 — `bornAt` do save, para a copy dos primeiros dias. */
   bornAt?: string;
+  /** WP3.11 — a janela de descanso escolhida pela pessoa. Ausente = sem
+   *  lembrete de deitar (a mecânica é opt-in inteira). */
+  restWindow?: { start: string; end: string } | null;
+  /** WP3.11 — o pet está dormindo? Já deitou: não há o que lembrar. */
+  isSleeping?: boolean;
   language: 'pt-BR' | 'en-US';
   enabled: boolean;
   healthPoints: number;
@@ -46,6 +52,8 @@ export function NotificationManager({
   userName,
   petName,
   bornAt,
+  restWindow,
+  isSleeping = false,
   language,
   enabled,
   healthPoints,
@@ -57,6 +65,8 @@ export function NotificationManager({
   const lastNudge10Date = useRef<string>('');
   const lastNudge16Date = useRef<string>('');
   const lastGoodnightDate = useRef<string>('');
+  /** WP3.11 — o lembrete de deitar é 1×/dia, como os outros. */
+  const lastSleepReminderDate = useRef<string>('');
 
   // Push subscription — register/unregister when notifications toggle. Native
   // Android uses FCM (the WebView has no Web Push support); browsers/PWA use
@@ -247,6 +257,22 @@ export function NotificationManager({
         const c = copia(16);
         if (c) {
           lastNudge16Date.current = today;
+          showNotification(c.title, { body: c.body, tag: c.tag });
+        }
+      }
+
+      /* WP3.11 — O LEMBRETE DE DEITAR.
+         `sleepReminderAt` existia, com teste, e NUNCA foi chamado por
+         ninguém: a Janela de Descanso declarava que o único push possível é o
+         de deitar, e esse push não existia. A hora sai da janela que a PESSOA
+         escolheu (30 min antes do início), então ele não cabe no relógio fixo
+         das outras três.
+         Não dispara dormindo (já deitou, não há o que lembrar) e é 1×/dia. */
+      if (restWindow && !isSleeping && lastSleepReminderDate.current !== today) {
+        const alvo = sleepReminderAt(restWindow, now);
+        if (alvo && Math.abs(alvo.getTime() - now.getTime()) <= 60_000) {
+          const c = sleepReminderCopy(petName, ispt ? 'pt-BR' : 'en-US');
+          lastSleepReminderDate.current = today;
           showNotification(c.title, { body: c.body, tag: c.tag });
         }
       }

@@ -97,12 +97,68 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
 };
 
 /**
+ * WP3.10 — O TRAÇO DE NASCIMENTO NA VOZ.
+ *
+ * Todo pet nasce com um traço sorteado (`utils/passives.ts`) e ele só existia
+ * como EFEITO de regra e uma linha em Estatísticas. Dois pets do mesmo estágio
+ * se comportam diferente e falavam exatamente igual — o traço era invisível
+ * justamente no canal em que personalidade aparece.
+ *
+ * Uma fala por traço, por gesto. Substitui a genérica quando existe; onde não
+ * existe, a genérica continua valendo (nada de preencher a matriz inteira só
+ * para ela existir — frase forçada lê como enchimento).
+ *
+ * ⚠️ O traço é lido do ESTADO, nunca por parâmetro novo: é isso que faz o
+ * desktop herdar sem uma segunda implementação (a mesma regra dos passivos).
+ */
+const TRAIT_LINES: Partial<Record<string, Partial<Record<PetVoiceKind, VoiceLines>>>> = {
+  guloso: {
+    task: {
+      pt: ['Fez! Isso vira comida, né?', 'Boa! Já deu fome.'],
+      en: ['Done! That turns into food, right?', 'Nice! I am hungry already.'],
+    },
+  },
+  carinhoso: {
+    rub: {
+      pt: ['Não para, não para…', 'Isso aqui é a melhor parte do dia.'],
+      en: ['Do not stop, do not stop…', 'This is the best part of the day.'],
+    },
+  },
+  teimoso: {
+    haunted: {
+      pt: ['Eu sabia que você ia encarar essa.', 'Essa aí resistiu. Você resistiu mais.'],
+      en: ['I knew you would face that one.', 'That one held on. You held on longer.'],
+    },
+  },
+  sortudo: {
+    rare: {
+      pt: ['Hoje o dia está do nosso lado. Sinto isso.', 'Tem alguma coisa boa no ar.'],
+      en: ['Today is on our side. I can feel it.', 'There is something good in the air.'],
+    },
+  },
+  madrugador: {
+    shower: {
+      pt: ['Limpo e acordado. Assim que se faz.', 'Pronto pro dia inteiro.'],
+      en: ['Clean and awake. That is how it is done.', 'Ready for the whole day.'],
+    },
+  },
+};
+
+/**
  * Escolhe a frase. `pick` entra por parâmetro (0..1) para o teste ser
  * determinístico sem precisar mexer no `Math.random` global — o chamador em
  * runtime passa `Math.random()`.
  */
-export function petVoiceLine(kind: PetVoiceKind, isPt: boolean, pick: number): string {
-  const linhas = PET_VOICE_LINES[kind][isPt ? 'pt' : 'en'];
+export function petVoiceLine(
+  kind: PetVoiceKind,
+  isPt: boolean,
+  pick: number,
+  /** WP3.10 — `petPassive` do estado. Sem traço, ou sem fala para este gesto,
+   *  cai na genérica: matriz cheia por obrigação vira enchimento. */
+  trait?: string,
+): string {
+  const doTraco = trait ? TRAIT_LINES[trait]?.[kind] : undefined;
+  const linhas = (doTraco ?? PET_VOICE_LINES[kind])[isPt ? 'pt' : 'en'];
   const i = Math.min(linhas.length - 1, Math.max(0, Math.floor(pick * linhas.length)));
   return linhas[i];
 }

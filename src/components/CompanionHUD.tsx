@@ -158,6 +158,8 @@ interface CompanionHUDProps {
   /** WP4.19 — marca cosmética da recuperação, e só quando o jogador escolheu
    *  exibi-la (`showRedeemed`). Nunca é marca de queda. */
   redeemedMark?: boolean;
+  /** WP3.10 — traço de nascimento (`utils/passives.ts`), para a voz. */
+  petPassive?: string;
   /** WP2.7 — dias fora, de `lastDayReport.daysAway`. 0 = não houve ausência. */
   daysAway?: number;
   /** WP3.2 — há tarefa assombrada na lista? O sprite VIRA O OLHAR enquanto
@@ -226,6 +228,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   speakSignal,
   hauntedWatching = false,
   daysAway = 0,
+  petPassive,
   petDisplayName,
   bondTitleText,
   redeemedMark = false,
@@ -461,7 +464,10 @@ export const CompanionHUD = memo(function CompanionHUD({
   // contador: a fala é do gesto, e o `kind` escolhe a tabela.
   useEffect(() => {
     if (!speakSignal?.n) return;
-    speak(petVoiceLine(speakSignal.kind, language === 'pt-BR', Math.random()), 3500);
+    // WP3.10 — o traço entra aqui, lido do ESTADO (nunca por parâmetro que
+    // quem chama possa esquecer). Sem traço, ou sem fala para este gesto, cai
+    // na genérica.
+    speak(petVoiceLine(speakSignal.kind, language === 'pt-BR', Math.random(), petPassive), 3500);
     // `kind` fora das deps de propósito: quem dispara é a mudança do CONTADOR.
     // Com `kind` na lista, trocar de idioma ou remontar repetiria a fala.
     // eslint-disable-next-line react-hooks/exhaustive-deps

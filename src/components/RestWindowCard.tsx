@@ -47,6 +47,7 @@ import {
 import { REST_WINDOW_DAYS } from '../types/taskModel';
 import type { Language } from '../utils/i18n';
 import { PixelPanel, PixelMeter, PixelSwitch, PixelTag } from './pixel/PixelKit';
+import { sm2Button, sm2Hint } from './form/FormKit';
 
 export interface RestWindowCardProps {
   rest: RestState;
@@ -54,6 +55,13 @@ export interface RestWindowCardProps {
   now: Date;
   language: Language;
   onChangeWindow: (window: RestWindow) => void;
+  /** WP1.8 — pede a permissão de push AQUI, onde ela faz sentido. Ausente =
+   *  o convite não aparece (é o estado de quem já tem push ligado). */
+  onEnableReminder?: () => void;
+  notificationsEnabled?: boolean;
+  /** O corpo da frase que vai chegar — pedir permissão sem dizer o que chega
+   *  é pedir um cheque em branco. */
+  reminderPreview?: string;
   /** `true` = esconder os números. Preserva os prêmios. */
   onToggleMetrics: (hide: boolean) => void;
 }
@@ -116,6 +124,7 @@ const timeInputStyle: CSSProperties = {
 
 export function RestWindowCard({
   rest, now, language, onChangeWindow, onToggleMetrics,
+  onEnableReminder, notificationsEnabled = false, reminderPreview,
 }: RestWindowCardProps) {
   const isPt = language === 'pt-BR';
   const hidden = rest.hideMetrics === true;
@@ -165,6 +174,32 @@ export function RestWindowCard({
           />
         </div>
       </div>
+
+      {/* WP1.8 — O MOMENTO-OURO DA PERMISSÃO DE PUSH.
+          O pedido de permissão só saía do interruptor geral de notificações,
+          em Configurações — longe de qualquer motivo. Aqui a pessoa acabou de
+          escolher a hora de deitar: é o único instante em que "posso te
+          lembrar disso?" é uma pergunta óbvia em vez de uma interrupção.
+          Aparece só para quem NÃO tem push ligado, e o convite mostra a
+          própria frase que chegaria — pedir permissão sem dizer o que vai
+          chegar é pedir um cheque em branco. */}
+      {onEnableReminder && !notificationsEnabled && (
+        <div style={{ marginBottom: 14 }}>
+          <button
+            type="button"
+            onClick={onEnableReminder}
+            style={{ ...sm2Button('ghost'), width: '100%' }}
+          >
+            {isPt ? 'Quero um lembrete de deitar' : 'Remind me to lie down'}
+          </button>
+          {reminderPreview && (
+            <p style={{ ...sm2Hint, marginTop: 6 }}>
+              {isPt ? 'Vai chegar assim: ' : 'It will arrive like this: '}
+              “{reminderPreview}”
+            </p>
+          )}
+        </div>
+      )}
 
       {/* CONSTÂNCIA DE HORÁRIO — nunca qualidade de sono.
           Média móvel das últimas REST_WINDOW_DAYS manhãs; noite sem registro

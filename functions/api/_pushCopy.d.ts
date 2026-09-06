@@ -16,6 +16,12 @@ export interface PushCopy {
 }
 
 /** `null` quando a hora não tem notificação — quem chama NÃO inventa fallback. */
+/** WP3.11 — o lembrete de deitar. A hora sai da janela da pessoa, não daqui. */
+export declare function sleepReminderCopy(
+  petName: string,
+  language: string,
+): PushCopy;
+
 export declare function pushCopy(
   brtHour: number,
   petName: string,
