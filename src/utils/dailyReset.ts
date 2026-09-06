@@ -761,8 +761,6 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     perfectDays: newPerfectDays,
     lastResetDate: now.toDateString(),
     evolutionStage: newEvolutionStage,
-    digivolutionSegments: 0,
-    digivolutionSegmentsNeeded: 999,
     poopEventsScheduled: [],
     poopEventsCompleted: [],
     poopEventsShown: [],

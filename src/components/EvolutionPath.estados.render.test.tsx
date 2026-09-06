@@ -42,8 +42,8 @@ const base = {
   currentStageId: 'rookie',
   currentBranch: 'data' as const,
   virusPoints: 1, dataPoints: 3, vaccinePoints: 0,
-  digivolutionSegments: 2,
-  digivolutionSegmentsNeeded: 10,
+  perfectDays: 2,
+  gateDays: 10,
   stages,
   unlockedEvolutions: ['rookie'],
   language: 'pt-BR' as const,
@@ -99,7 +99,7 @@ describe('§2.2 — cada forma diz em que estado a arte dela está', () => {
         {...base}
         // `required` do rookie é 4 → `faltam === 1` é a véspera. O gatilho lê
         // `required`, nunca `daysToEvolve` (§3.1).
-        digivolutionSegments={3}
+        perfectDays={3}
         spriteLibrary={falhou()}
         onRetrySprite={() => {}}
       />,

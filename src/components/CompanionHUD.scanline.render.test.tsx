@@ -46,8 +46,6 @@ const base = {
   dominantBranch: 'balanced' as const,
   currentXP: 0,
   nextLevelXP: 10,
-  digivolutionSegments: 1,
-  digivolutionSegmentsNeeded: 3,
   useAI: false,
   language: 'pt-BR' as const,
 };

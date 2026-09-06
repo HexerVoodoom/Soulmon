@@ -180,8 +180,13 @@ export interface GameState {
   /** Id da forma atual na árvore do Soulmon: 'rookie' | '{champion|ultimate|mega}-{virus|data|vaccine}' | 'ultra'
    *  (ver types/progression.ts). Único por jogador — o NOME de exibição vem de soulmonStages. */
   evolutionStage: string;
-  digivolutionSegments: number;
-  digivolutionSegmentsNeeded: number;
+  /* ⚰️ `digivolutionSegments` e `digivolutionSegmentsNeeded` saíram em
+     06/09/2026 (D5/WP4.1). Eram escritos em todo save e lidos por ninguém —
+     o único consumidor era um par de props do `CompanionHUD` que o componente
+     nunca desenhava. A chave continua no `localStorage` de quem já jogou; ela
+     é órfã inofensiva, e está registrada aqui para ninguém reaproveitar o nome
+     achando que herda um número vivo. O gate de evolução é
+     `FORM_REQUIREMENTS[…].required` × `perfectDays`. */
   poopEventsScheduled: number[];
   poopEventsCompleted: number[];
   unlockedEvolutions: string[];
@@ -770,8 +775,6 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         virusPoints: num(loadedState.virusPoints, 0),
         dataPoints: num(loadedState.dataPoints, 0),
         vaccinePoints: num(loadedState.vaccinePoints, 0),
-        digivolutionSegments: num(loadedState.digivolutionSegments, 0),
-        digivolutionSegmentsNeeded: num(loadedState.digivolutionSegmentsNeeded, 999),
         lastResetDate: typeof loadedState.lastResetDate === 'string'
           ? loadedState.lastResetDate : new Date().toDateString(),
         evolutionStage: typeof loadedState.evolutionStage === 'string'
@@ -1000,8 +1003,6 @@ function freshGameState(): GameState {
       vaccinePoints: 0,
       lastResetDate: new Date().toDateString(),
       evolutionStage: 'rookie',
-      digivolutionSegments: 0,
-      digivolutionSegmentsNeeded: 1,
       poopEventsScheduled: [],
       poopEventsCompleted: [],
       unlockedEvolutions: ['rookie'],

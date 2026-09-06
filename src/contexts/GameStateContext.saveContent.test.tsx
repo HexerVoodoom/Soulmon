@@ -96,8 +96,11 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.energyPoints).toBe(0);
     expect(s.perfectDays).toBe(0);
     expect(s.totalXP).toBe(0);
-    expect(s.digivolutionSegments).toBe(0);
-    expect(s.digivolutionSegmentsNeeded).toBe(999);
+    // ⚰️ `digivolutionSegments`/`…Needed` saíram do `GameState` em 06/09/2026
+    // (D5/WP4.1): eram escritos em todo save e lidos por ninguém. O guard agora
+    // é o oposto — eles não podem voltar a existir no estado hidratado.
+    expect(s).not.toHaveProperty('digivolutionSegments');
+    expect(s).not.toHaveProperty('digivolutionSegmentsNeeded');
     expect(s.unlockedEvolutions).toEqual(['rookie']);
     expect(s.maxActivityCap).toBe(6);         // teto de atividades do rookie
     expect(s.degeneratedByHP).toBe(false);
@@ -138,6 +141,8 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     const s = abrirComSave({
       activities: [], tasks: [], evolutionStage: 'mega-virus',
       healthPoints: 2.5, energyPoints: 4, perfectDays: 33, totalXP: 1200,
+      // Campos aposentados: um save VELHO ainda os traz, e o load tem de
+      // simplesmente ignorá-los sem quebrar (é o caso interessante deste teste).
       digivolutionSegments: 2, digivolutionSegmentsNeeded: 40,
       virusPoints: 9, dataPoints: 4, vaccinePoints: 1, currentBranch: 'virus',
       gamePoints: 777, emblems: 42, credits: 60, poopPenaltyClockAt: 1700000000000,
@@ -154,8 +159,12 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.energyPoints).toBe(4);
     expect(s.perfectDays).toBe(33);
     expect(s.totalXP).toBe(1200);
-    expect(s.digivolutionSegments).toBe(2);
-    expect(s.digivolutionSegmentsNeeded).toBe(40);
+    // O campo aposentado (D5/WP4.1) RIDE junto como passageiro: o load faz
+    // spread do save cru, então a chave de um save velho continua no objeto.
+    // Isso é inofensivo e deliberado — apagá-la exigiria uma migração para
+    // limpar bytes que ninguém lê. O que importa é que ninguém a LEIA, e disso
+    // cuida o guard de fonte abaixo. Aqui só se registra que ela não quebra nada.
+    expect(s.evolutionStage).toBe('mega-virus');
     expect(s.virusPoints).toBe(9);
     expect(s.currentBranch).toBe('virus');
     expect(s.gamePoints).toBe(777);
@@ -357,8 +366,7 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
     expect(s.energyPoints).toBe(0);
     expect(s.perfectDays).toBe(0);
     expect(s.totalXP).toBe(0);
-    expect(s.digivolutionSegments).toBe(0);
-    expect(s.digivolutionSegmentsNeeded).toBe(1);
+    expect(s).not.toHaveProperty('digivolutionSegments');
     expect(s.maxActivityCap).toBe(6);
     expect(s.virusPoints).toBe(0);
     expect(s.dataPoints).toBe(0);

@@ -59,13 +59,11 @@ describe('GuideModal — o guia cita o gate real (WP4.17)', () => {
       FORM_REQUIREMENTS.ultimate.required,
       FORM_REQUIREMENTS.mega.required,
     ]);
-    // A escada antiga (10/20/30/40) não pode sobreviver em lugar nenhum da frase.
-    for (const morto of [
-      FORM_REQUIREMENTS.rookie.daysToEvolve,
-      FORM_REQUIREMENTS.champion.daysToEvolve,
-      FORM_REQUIREMENTS.ultimate.daysToEvolve,
-      FORM_REQUIREMENTS.mega.daysToEvolve,
-    ]) {
+    // A escada antiga não pode sobreviver em lugar nenhum da frase. Os valores
+    // vão LITERAIS aqui porque o campo que os continha (`daysToEvolve`) foi
+    // apagado pelo WP4.1 — é a lápide dele, e é de propósito que ela não
+    // referencie mais nenhum símbolo vivo.
+    for (const morto of [10, 20, 30, 40]) {
       expect(numeros, `${morto} é \`daysToEvolve\`, não o gate`).not.toContain(morto);
     }
   });

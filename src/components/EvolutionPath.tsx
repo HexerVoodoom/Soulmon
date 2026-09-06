@@ -74,8 +74,8 @@ interface EvolutionPathProps {
   virusPoints: number;
   dataPoints: number;
   vaccinePoints: number;
-  digivolutionSegments: number;
-  digivolutionSegmentsNeeded: number;
+  perfectDays: number;
+  gateDays: number;
   onDegenerate?: (targetStageId: string) => void;
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
@@ -170,8 +170,8 @@ export function EvolutionPath({
   virusPoints,
   dataPoints,
   vaccinePoints,
-  digivolutionSegments,
-  digivolutionSegmentsNeeded,
+  perfectDays,
+  gateDays,
   onDegenerate,
   stages,
   demoCharacterId,
@@ -268,8 +268,11 @@ export function EvolutionPath({
     if (varrendoSintonia) playVisorTune();
   }, [varrendoSintonia]);
   // "Iminente" é contra `required` (4/5/5/6) — o número que os dois portões de
-  // evolução manual leem — e NÃO contra `daysToEvolve`, que sobrevive só como
-  // rótulo da barra desta página (`spec-geracao-incremental.md` §3.1).
+  // evolução manual leem. Desde 06/09/2026 a BARRA desta página também: a prop
+  // se chama `gateDays` e recebe o mesmo `required`. Enquanto ela era alimentada
+  // por `daysToEvolve` (o campo morto que o WP4.1 apagou), "iminente" e "faltam
+  // N" mediam réguas diferentes na MESMA tela — o cartão dizia que a evolução
+  // estava a um dia enquanto a barra dizia que faltavam seis.
   /* O lote vivo e a rede: os dois eram LITERAIS aqui (`[]` e `true`), e por
      isso `GERANDO` e `OFFLINE` — que existem na copy e em `cardState` desde o
      começo — nunca podiam aparecer. Nenhum estado novo foi inventado; o que
@@ -278,7 +281,7 @@ export function EvolutionPath({
   const online = useIsOnline();
   const estadoAtual = cardState(acervo, currentStageId, {
     generating: gerando,
-    imminent: pointsToEvolve(currentStageId, digivolutionSegments) <= 1,
+    imminent: pointsToEvolve(currentStageId, perfectDays) <= 1,
     reachable: true,
     online,
     // X-3: o selo `NOVO` existia na copy e em `cardState`, mas era INALCANÇÁVEL
@@ -388,10 +391,10 @@ export function EvolutionPath({
   // ── O progresso, em PALAVRAS. `Math.max(0, …)` porque `perfectDays` pode
   //    passar do requisito enquanto a evolução está travada — e "faltam -2"
   //    seria um jeito criativo de dizer "pronto". ──
-  const faltam = Math.max(0, digivolutionSegmentsNeeded - digivolutionSegments);
+  const faltam = Math.max(0, gateDays - perfectDays);
   const prontoParaEvoluir = faltam === 0;
-  const ratio = digivolutionSegmentsNeeded > 0
-    ? Math.min(1, digivolutionSegments / digivolutionSegmentsNeeded)
+  const ratio = gateDays > 0
+    ? Math.min(1, perfectDays / gateDays)
     : 1;
   const fraseProgresso = prontoParaEvoluir
     ? (evolutionLocked
@@ -423,11 +426,10 @@ export function EvolutionPath({
       generating: gerando,
       /* A véspera promove o "Tentar de novo" a botão de texto real, e só na
          forma ATUAL e na próxima prevista — nas outras não há urgência a
-         comunicar. Contra `required` (`pointsToEvolve`), nunca contra o
-         `digivolutionSegmentsNeeded` desta página, que é rótulo de barra
-         (`daysToEvolve`) e dispararia num limiar que o jogo nunca alcança
-         antes de já ter evoluído (§3.1). */
-      imminent: (isCurrent || isForecast) && pointsToEvolve(currentStageId, digivolutionSegments) <= 1,
+         comunicar. Continua saindo de `pointsToEvolve`, que é o dono da conta
+         contra `required`; hoje `gateDays` traz o mesmo número, mas quem manda
+         é a função, não a prop (§3.1). */
+      imminent: (isCurrent || isForecast) && pointsToEvolve(currentStageId, perfectDays) <= 1,
       reachable: teveOcasiao(stageId, isCurrent, isForecast),
       online,
       unseen: acervo.tunedUnseen.includes(stageId),
@@ -836,8 +838,8 @@ export function EvolutionPath({
           <div
             role="progressbar"
             aria-valuemin={0}
-            aria-valuemax={digivolutionSegmentsNeeded}
-            aria-valuenow={Math.min(digivolutionSegments, digivolutionSegmentsNeeded)}
+            aria-valuemax={gateDays}
+            aria-valuenow={Math.min(perfectDays, gateDays)}
             aria-label={isPt ? 'Progresso até a próxima evolução' : 'Progress to the next evolution'}
             style={{
               margin: '12px auto 0', width: 200, height: 8, borderRadius: 999,

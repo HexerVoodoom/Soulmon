@@ -2,21 +2,33 @@
 // ovo/baby (o oráculo do onboarding já É o ritual de nascimento — o pet
 // nasce direto Rookie). Cada linha de evolução é ÚNICA por jogador (gerada
 // pelo oráculo, ver utils/oracle.ts); o que é fixo aqui é só o NÍVEL.
-// `required` = tarefas por dia (e barras de energia). `daysToEvolve` = dias
-// perfeitos acumulados até a próxima forma.
+// `required` = tarefas por dia (e barras de energia) **e o gate de evolução**:
+// é o número que `handleEvolve` e o `canEvolve` do HUD comparam com
+// `perfectDays`. `cap` = teto de atividades cadastradas com que o save nasce.
 //
 // A escada diária ACHATA no topo de propósito. Antes ela subia 4→5→6→7→8, e a
 // exigência diária crescia sem parar junto com a vida do jogador — foi o que fez
 // a maioria dos donos de Vital Bracelet parar nos estágios médios: o custo real
-// ultrapassa a vontade justamente no terço final. No topo, o que deve escalar é
-// a CONSISTÊNCIA ao longo de semanas (`daysToEvolve`), que é o único recurso que
-// não cresce indefinidamente, e não quantas tarefas cabem num dia.
+// ultrapassa a vontade justamente no terço final.
+//
+// ⚰️ **`daysToEvolve` (10/20/30/40/999) FOI APAGADO em 06/09/2026** (decisão D5).
+// Ele parecia o gate e não era: NENHUMA regra o consultava, e mesmo assim
+// enganou três consumidores diferentes, um de cada vez — o gate de geração de
+// sprite (o lote de véspera nunca partia), o rótulo da barra da página de
+// Evolução, e o guia, que prometia "Rookie→Champion pede 10 dias perfeitos"
+// quando o botão acende com 4. Cada engano foi consertado sozinho, sem ninguém
+// perguntar por que o campo existia.
+//
+// **A regra agora tem UMA fonte, e é esta linha.** Se um dia a evolução tiver
+// de escalar por semanas em vez de dias (que é o que o Vital Bracelet faz, e o
+// que a opção (a) do WP4.1 propunha), o lugar de fazer isso é MUDAR `required`
+// ou o que o compara — nunca acrescentar um segundo número ao lado dele.
 export const FORM_REQUIREMENTS = {
-  rookie: { required: 4, cap: 6, daysToEvolve: 10 },
-  champion: { required: 5, cap: 7, daysToEvolve: 20 },
-  ultimate: { required: 5, cap: 8, daysToEvolve: 30 },
-  mega: { required: 6, cap: 9, daysToEvolve: 40 },
-  ultra: { required: 6, cap: 10, daysToEvolve: 999 },
+  rookie: { required: 4, cap: 6 },
+  champion: { required: 5, cap: 7 },
+  ultimate: { required: 5, cap: 8 },
+  mega: { required: 6, cap: 9 },
+  ultra: { required: 6, cap: 10 },
 } as const;
 
 // HP máximo por nível (corações)

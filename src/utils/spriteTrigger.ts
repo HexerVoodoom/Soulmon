@@ -37,7 +37,7 @@ export interface SpriteTriggerInput {
   evolutionStage: string;
   currentBranch: Branch;
   unlockedEvolutions: string[];
-  /** `perfectDays` acumulados desde a última evolução (`digivolutionSegments`). */
+  /** `perfectDays` acumulados desde a última evolução. */
   perfectDays: number;
   points: AttrPoints;
   reading: CareReading;

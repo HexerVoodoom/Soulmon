@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   getStageLevel, getStageBranch, canSelectWeekdays, FORM_REQUIREMENTS, MAX_HP_BY_FORM,
   clampBranch, AVAILABLE_BRANCHES,
@@ -61,21 +63,37 @@ describe('FORM_REQUIREMENTS consistency', () => {
   // ATENÇÃO — este é o único caso que olha para os NÚMEROS. Todos os outros
   // deste bloco afirmam RELAÇÕES (`>=`, `>`), e relação sobrevive a quase
   // qualquer valor: a rodada 7 (mutation testing, `scripts/mutation-sweep.mjs`)
-  // trocou `rookie.cap` de 6 para 0, `rookie.daysToEvolve` de 10 para 0 e
-  // `ultra.daysToEvolve` de 999 para 0 e os 829 testes continuaram VERDES.
-  // `cap` é o teto de atividades cadastradas que o save nasce com
-  // (`GameStateContext` linha do `maxActivityCap`) e `daysToEvolve` é o número
-  // que o guia mostra ao jogador — errar qualquer um muda o jogo em silêncio.
+  // trocou `rookie.cap` de 6 para 0 e os 829 testes continuaram VERDES. `cap` é
+  // o teto de atividades cadastradas que o save nasce com (`GameStateContext`,
+  // linha do `maxActivityCap`) e `required` é o GATE de evolução — errar
+  // qualquer um muda o jogo em silêncio.
   it('a TABELA é o contrato: os números exatos, não só a ordem entre eles', () => {
     expect(FORM_REQUIREMENTS).toEqual({
-      rookie:   { required: 4, cap: 6,  daysToEvolve: 10 },
-      champion: { required: 5, cap: 7,  daysToEvolve: 20 },
-      ultimate: { required: 5, cap: 8,  daysToEvolve: 30 },
-      mega:     { required: 6, cap: 9,  daysToEvolve: 40 },
-      // 999 é SENTINELA de "não há próximo estágio", e o laço de monotonia
-      // abaixo pula justamente o último índice — por isso ele passava com 0.
-      ultra:    { required: 6, cap: 10, daysToEvolve: 999 },
+      rookie:   { required: 4, cap: 6 },
+      champion: { required: 5, cap: 7 },
+      ultimate: { required: 5, cap: 8 },
+      mega:     { required: 6, cap: 9 },
+      ultra:    { required: 6, cap: 10 },
     });
+  });
+
+  /**
+   * ⚰️ `daysToEvolve` foi APAGADO em 06/09/2026 (decisão D5).
+   *
+   * Este teste existe para ele não voltar de fininho, e o motivo vale o
+   * espaço: o campo parecia o gate e não era — nenhuma regra o consultava — e
+   * mesmo morto enganou TRÊS consumidores diferentes, um por vez, cada um
+   * consertado isoladamente sem ninguém perguntar por que o campo existia.
+   * Um número morto ao lado do número vivo é um convite permanente ao engano,
+   * e a mutação da rodada 7 mostrou que ele podia virar 0 sem quebrar nada.
+   *
+   * Se a evolução precisar escalar por semanas, mude `required` ou quem o
+   * compara. **Não acrescente um segundo número a esta tabela.**
+   */
+  it('nenhum número de evolução paralelo volta para a tabela', () => {
+    for (const level of order) {
+      expect(Object.keys(FORM_REQUIREMENTS[level]).sort()).toEqual(['cap', 'required']);
+    }
   });
 
   it('MAX_HP_BY_FORM também é contrato de números', () => {
@@ -84,13 +102,15 @@ describe('FORM_REQUIREMENTS consistency', () => {
     });
   });
 
-  it('ultra é terminal: exige mais dias que qualquer estágio anterior', () => {
-    // O laço de `daysToEvolve` crescente termina em `order.length - 1`, ou seja
-    // NUNCA olha para ultra. Sem esta linha, ultra podia evoluir "de graça".
-    for (const level of order) {
-      if (level === 'ultra') continue;
-      expect(FORM_REQUIREMENTS.ultra.daysToEvolve).toBeGreaterThan(FORM_REQUIREMENTS[level].daysToEvolve);
-    }
+  it('ultra é terminal — e quem garante isso é a ÁRVORE, não um número', () => {
+    // Antes, "ultra é o fim" era afirmado por `daysToEvolve: 999`, uma
+    // sentinela num campo que nada lia: a garantia era decorativa. Quem de
+    // fato termina a linha é `getNextEvolution`, que devolve o PRÓPRIO estágio
+    // quando não há para onde ir (ver `spriteTrigger.targetFormId`). O gate de
+    // ultra é o mesmo `required` de todo mundo, e é por isso que ele não pode
+    // ser menor que o do mega.
+    expect(FORM_REQUIREMENTS.ultra.required)
+      .toBeGreaterThanOrEqual(FORM_REQUIREMENTS.mega.required);
   });
 
   // A carga DIÁRIA nunca diminui, mas achata no topo de propósito: o que deve
@@ -115,13 +135,11 @@ describe('FORM_REQUIREMENTS consistency', () => {
     }
   });
 
-  it('a consistência ao longo de semanas é o que escala no topo', () => {
-    for (let i = 1; i < order.length - 1; i++) {
-      expect(FORM_REQUIREMENTS[order[i]].daysToEvolve).toBeGreaterThan(
-        FORM_REQUIREMENTS[order[i - 1]].daysToEvolve,
-      );
-    }
-  });
+  // ⚰️ Aqui havia "a consistência ao longo de semanas é o que escala no topo",
+  // afirmada sobre `daysToEvolve`. O teste passava e a afirmação era falsa: NADA
+  // escalava, porque nada lia o campo. A escada real é `required`, que achata de
+  // propósito (testado logo acima). Escalar por semanas continua sendo uma
+  // opção de design legítima — mas terá de ser implementada, não declarada.
 
   it('cap increases monotonically across stages', () => {
     for (let i = 1; i < order.length; i++) {
@@ -158,5 +176,47 @@ describe('MAX_HP_BY_FORM', () => {
 
   it('ultra has highest HP', () => {
     expect(MAX_HP_BY_FORM['ultra']).toBeGreaterThan(MAX_HP_BY_FORM['mega']);
+  });
+});
+
+/**
+ * ⚰️ O SUBSISTEMA DE NÚMEROS DE EVOLUÇÃO MORTOS (D5 / WP4.1, 06/09/2026).
+ *
+ * Eram QUATRO tabelas de números para uma regra só:
+ *  1. `FORM_REQUIREMENTS.required` — a viva, comparada com `perfectDays`;
+ *  2. `FORM_REQUIREMENTS.daysToEvolve` (10/20/30/40/999) — lida por ninguém;
+ *  3. `EVOLVE_SEGMENTS` (7/9/11/14/999) no `App.tsx` — alimentava…
+ *  4. …`digivolutionSegments`/`digivolutionSegmentsNeeded` no save, escritos em
+ *     todo save de todo jogador e lidos por ninguém.
+ *
+ * As três últimas saíram juntas. Este guard existe porque a única defesa contra
+ * um número morto é não deixar nascer o segundo: enquanto (2) existiu, ela
+ * enganou o gate de sprite, o rótulo da barra da Evolução e o guia do jogador —
+ * três consertos separados, nenhum deles perguntando por que o campo existia.
+ */
+describe('não existe segundo número de evolução (D5 / WP4.1)', () => {
+  const ler = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf-8');
+  const semComentarios = (s: string) =>
+    s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+  it('`daysToEvolve` não existe em lugar nenhum do código de produção', () => {
+    for (const f of ['src/types/progression.ts', 'src/App.tsx', 'src/components/GuideModal.tsx',
+      'src/components/EvolutionPath.tsx', 'src/utils/dailyReset.ts']) {
+      expect(semComentarios(ler(f)), `${f} ressuscitou \`daysToEvolve\``).not.toContain('daysToEvolve');
+    }
+  });
+
+  it('`EVOLVE_SEGMENTS` e os campos de save que ele alimentava não voltaram', () => {
+    const app = semComentarios(ler('src/App.tsx'));
+    expect(app).not.toContain('EVOLVE_SEGMENTS');
+    expect(app).not.toContain('digivolutionSegmentsNeeded');
+    const ctx = semComentarios(ler('src/contexts/GameStateContext.tsx'));
+    expect(ctx, 'o campo morto voltou ao GameState').not.toContain('digivolutionSegmentsNeeded');
+  });
+
+  it('quem decide a evolução manual continua sendo `required`', () => {
+    const app = ler('src/App.tsx');
+    const corpo = app.slice(app.indexOf('const handleEvolve = useCallback'));
+    expect(corpo.slice(0, 600)).toMatch(/FORM_REQUIREMENTS\[getStageLevel\(prev\.evolutionStage\)\]\.required/);
   });
 });

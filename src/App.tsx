@@ -92,9 +92,18 @@ import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
 
-const EVOLVE_SEGMENTS: Record<string, number> = {
-  rookie: 7, champion: 9, ultimate: 11, mega: 14, ultra: 999,
-};
+/* ⚰️ `EVOLVE_SEGMENTS` (7/9/11/14/999) saiu em 06/09/2026, junto com
+   `digivolutionSegments`/`digivolutionSegmentsNeeded` do `GameState`.
+
+   Era a QUARTA tabela de números de evolução do projeto, e alimentava dois
+   campos do save que ninguém lia — o `CompanionHUD` recebia os dois como props
+   e não desenhava nenhum (WP4.17). Um número escrito em todo save de todo
+   jogador, por anos, sem um único leitor.
+
+   O gate é `FORM_REQUIREMENTS[…].required` comparado com `perfectDays`. Uma
+   fonte. Se aparecer a vontade de guardar "quanto falta" no save, lembre que
+   ela é derivável na leitura — e que o `bondLevel` (utils/bond.ts) já é
+   derivado exatamente por esse motivo. */
 
 /** XP alvo do próximo nível, por nível atual (ver getNextLevelXP). */
 const XP_BY_LEVEL: Record<string, number> = {
@@ -2210,7 +2219,6 @@ export default function App() {
       if (prev.perfectDays < req) return prev;
       let newEvolutionStage = prev.evolutionStage;
       let newHP = prev.healthPoints;
-      let newSegmentsNeeded = prev.digivolutionSegmentsNeeded;
 
       // O galho vem dos atributos (que vêm da comida, e portanto da CATEGORIA
       // das tarefas). No EMPATE, quem decide é o padrão de cuidado do jogador —
@@ -2230,7 +2238,6 @@ export default function App() {
       });
       const newCurrentBranch = alvo.branch;
       newEvolutionStage = alvo.stage;
-      newSegmentsNeeded = EVOLVE_SEGMENTS[getStageLevel(newEvolutionStage)] ?? newSegmentsNeeded;
       newHP = getMaxHPForStage(newEvolutionStage);
 
       return {
@@ -2239,8 +2246,6 @@ export default function App() {
         currentBranch: newCurrentBranch,
         healthPoints: newHP,
         maxHealthPoints: getMaxHPForStage(newEvolutionStage),
-        digivolutionSegments: 0,
-        digivolutionSegmentsNeeded: newSegmentsNeeded,
         perfectDays: 0,
         attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
         unlockedEvolutions: prev.unlockedEvolutions.includes(newEvolutionStage)
@@ -2674,7 +2679,6 @@ export default function App() {
       healthPoints: getMaxHPForStage('rookie'),
       maxHealthPoints: getMaxHPForStage('rookie'),
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
-      digivolutionSegments: 0,
       perfectDays: 0,
       virusPoints: 0,
       dataPoints: 0,
@@ -3325,7 +3329,6 @@ export default function App() {
         evolutionStage: targetStage,
         healthPoints: newHP,
         maxHealthPoints: newHP,
-        digivolutionSegments: 0,
         perfectDays: newPerfectDays,
         degeneratedByHP: false,
         // Reset recent branch window — next evolution reflects habits going forward
@@ -3347,7 +3350,6 @@ export default function App() {
         evolutionStage: targetStage,
         healthPoints: newHP,
         maxHealthPoints: newHP,
-        digivolutionSegments: 0,
         degeneratedByHP: false,
       };
     });
@@ -4378,8 +4380,8 @@ export default function App() {
               virusPoints={gameState.virusPoints}
               dataPoints={gameState.dataPoints}
               vaccinePoints={gameState.vaccinePoints}
-              digivolutionSegments={gameState.perfectDays}
-              digivolutionSegmentsNeeded={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
+              perfectDays={gameState.perfectDays}
+              gateDays={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
               onDegenerate={handleDegenerate}
               stages={gameState.soulmonStages ?? []}
               eggType={gameState.eggType}
