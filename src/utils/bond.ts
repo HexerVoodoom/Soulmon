@@ -494,3 +494,84 @@ export function meetsPvpBond(totalXP: number): boolean {
 export function xpToPvpBond(totalXP: number): number {
   return Math.max(0, xpForLevel(BOND_PVP_MIN_LEVEL) - Math.max(0, safe(totalXP)));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// A ENTREGA DA ESCADA (WP4.15)
+//
+// `BOND_REWARDS` e `unclaimedBondRewards` foram escritos, testados e ficaram
+// **sem consumidor**: `bondRewardsClaimed` nunca era escrito por ninguém, e as
+// doze recompensas dos níveis 2 a 13 nunca chegavam ao jogador. O que chegava
+// era só o `bondTitle`, que é derivado e por isso funcionava sozinho. Um
+// jogador no nível 11 tinha três decorações, dois cenários e três sonhos
+// esperando por ele desde sempre, e não sabia.
+//
+// Estender essa escada (WP4.3) antes de entregá-la seria estender código morto,
+// e é por isso que este pacote vem antes.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** O mínimo do GameState que a entrega toca. */
+export interface BondRewardTarget {
+  totalXP?: number;
+  bondRewardsClaimed?: string[];
+  ownedFurniture?: string[];
+  ownedBackgrounds?: string[];
+  /* Só o campo que a entrega toca. Nada de `Record<string, unknown>` aqui:
+     interface não ganha índice implícito em TS, e o `GameState` deixaria de
+     casar com este alvo — o genérico cairia para o tipo largo e o `setGameState`
+     do chamador pararia de compilar. */
+  rest?: { dreams?: string[] };
+}
+
+/**
+ * Entrega o que o nível do Vínculo já garantiu, e devolve o MESMO objeto
+ * quando não há nada a entregar.
+ *
+ * **Idempotente por construção**, e isso não é elegância: o chamador é um
+ * `setGameState`, o StrictMode invoca updater duas vezes (footgun 6), e uma
+ * entrega que duplicasse itens ali seria invisível em desenvolvimento e
+ * permanente no save de quem joga.
+ *
+ * **Item já possuído marca `claimed` do mesmo jeito, e não devolve Bits.** É a
+ * ressalva da linha vermelha: quem comprou a plantinha antes de chegar ao nível
+ * 3 não recebe 100 Bits de troco — recebe o registro de que aquele degrau está
+ * cumprido. Reembolso transformaria a escada num gerador de moeda.
+ *
+ * `title` não entrega nada: o título é `bondTitle(totalXP)`, derivado na
+ * leitura. Ele entra em `claimed` só para a UI saber que já foi anunciado.
+ */
+export function applyBondRewards<T extends BondRewardTarget>(
+  prev: T,
+): { state: T; delivered: readonly BondReward[] } {
+  const claimed = Array.isArray(prev.bondRewardsClaimed) ? prev.bondRewardsClaimed : [];
+  const pending = unclaimedBondRewards(safe(prev.totalXP ?? 0), claimed);
+  if (pending.length === 0) return { state: prev, delivered: [] };
+
+  const furniture = new Set(Array.isArray(prev.ownedFurniture) ? prev.ownedFurniture : []);
+  const backgrounds = new Set(Array.isArray(prev.ownedBackgrounds) ? prev.ownedBackgrounds : []);
+  const dreams = new Set(Array.isArray(prev.rest?.dreams) ? prev.rest!.dreams! : []);
+
+  for (const r of pending) {
+    if (!r.refId) continue;              // `title` — nada a entregar
+    if (r.kind === 'decor') furniture.add(r.refId);
+    else if (r.kind === 'bg') backgrounds.add(r.refId);
+    else if (r.kind === 'dream') dreams.add(r.refId);
+  }
+
+  return {
+    // O `as T`: o spread produz um objeto estruturalmente igual, mas o TS não
+    // consegue provar que ele ainda é o `T` do chamador. Mesmo padrão dos
+    // outros aplicadores puros do projeto.
+    state: {
+      ...prev,
+      bondRewardsClaimed: [...claimed, ...pending.map((r) => r.id)],
+      ownedFurniture: [...furniture],
+      ownedBackgrounds: [...backgrounds],
+      // `rest` pode não existir num save antigo: nesse caso o sonho não tem
+      // onde morar, e inventar um `rest` aqui seria este módulo virando dono de
+      // um estado que é do `restWindow`. O degrau conta como cumprido de todo
+      // jeito — o alternativo é ficar tentando entregar para sempre.
+      ...(prev.rest ? { rest: { ...prev.rest, dreams: [...dreams] } } : {}),
+    } as T,
+    delivered: pending,
+  };
+}

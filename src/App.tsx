@@ -66,7 +66,7 @@ import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey } from './utils/playerDay';
-import { awardBondXP, bondLevelFor } from './utils/bond';
+import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
@@ -2817,6 +2817,33 @@ export default function App() {
    * nível DERIVADO agora contra o da renderização anterior. Emitir na subida e
    * só na subida — o nível não desce, e um evento por render seria ruído.
    */
+  /**
+   * WP4.15 — a escada do Vínculo passa a ENTREGAR.
+   *
+   * `BOND_REWARDS` (12 itens, níveis 2–13) e `unclaimedBondRewards` estavam
+   * escritos e testados, e `bondRewardsClaimed` nunca era escrito por ninguém:
+   * um jogador no nível 11 tinha três decorações, dois cenários e três sonhos
+   * esperando desde sempre e não sabia. Só o título chegava, porque é derivado.
+   *
+   * A regra mora em `applyBondRewards` (utils/bond.ts), que é PURA e
+   * IDEMPOTENTE — rodar duas vezes no StrictMode não duplica nada. O anúncio
+   * (fala do pet) fica FORA do updater, calculado do `gameState` de agora.
+   */
+  useEffect(() => {
+    const pendentes = unclaimedBondRewards(
+      gameState.totalXP ?? 0, gameState.bondRewardsClaimed ?? [],
+    );
+    if (pendentes.length === 0) return;
+    setGameState(prev => applyBondRewards(prev).state);
+    // Uma frase só, mesmo quando vários degraus caem juntos (save antigo que
+    // nasce no nível 9): um toast por item viraria fila de notificação.
+    const nomes = pendentes.map(r => (language === 'pt-BR' ? r.namePt : r.nameEn)).join(', ');
+    toast(language === 'pt-BR'
+      ? `O Vínculo de vocês rendeu: ${nomes}`
+      : `Your bond brought you: ${nomes}`);
+    setMessageTrigger(prev => prev + 1);
+  }, [gameState.totalXP, gameState.bondRewardsClaimed, language, setGameState]);
+
   const bondLevelRef = useRef<number | null>(null);
   useEffect(() => {
     const nivel = bondLevelFor(gameState.totalXP ?? 0);
