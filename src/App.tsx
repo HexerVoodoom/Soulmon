@@ -5406,6 +5406,9 @@ export default function App() {
         tasks={gameState.tasks}
         userName={userName}
         petName={getCurrentStageName()}
+        /* WP1.17 — a idade da criatura viaja com a inscrição de push, e morre
+           com ela: cancelar o push apaga a idade junto. */
+        bornAt={gameState.bornAt}
         language={language}
         enabled={notificationsEnabled}
         healthPoints={gameState.healthPoints}

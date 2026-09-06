@@ -2,6 +2,10 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
+// WP3.4 — dono único do texto e do horário das notificações agendadas. Este
+// import é a fronteira que faltava: as três árvores (cliente, worker, cron)
+// passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
+import { pushCopy } from '../../functions/api/_pushCopy.js';
 import {
   checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms,
   unsubscribeFromPush, registerForPushNotifications, unregisterFromPushNotifications,
@@ -26,6 +30,8 @@ interface NotificationManagerProps {
   tasks: Task[];
   userName: string;
   petName: string;
+  /** WP1.17 — `bornAt` do save, para a copy dos primeiros dias. */
+  bornAt?: string;
   language: 'pt-BR' | 'en-US';
   enabled: boolean;
   healthPoints: number;
@@ -39,6 +45,7 @@ export function NotificationManager({
   tasks,
   userName,
   petName,
+  bornAt,
   language,
   enabled,
   healthPoints,
@@ -63,7 +70,8 @@ export function NotificationManager({
           toast(title, { description: body });
         });
       } else {
-        subscribeToPush(petName, language);
+        // WP1.17 — a idade vai junto: é ela que dá voz própria aos dias 1 e 2.
+        subscribeToPush(petName, language, bornAt);
       }
     } else {
       if (isNativeAndroid) {
@@ -162,16 +170,21 @@ export function NotificationManager({
 
     // Native Android: schedule via AlarmManager so they fire even with app closed
     if (Capacitor.isNativePlatform()) {
-      const ispt = language === 'pt-BR';
-      const nudgeTitle = ispt ? `${petName} passou pra dizer oi` : `${petName} stopped by to say hi`;
-      const nudgeBody = ispt ? 'Tem algo do seu dia que você já fez?' : 'Anything from your day you already did?';
+      const lang = language === 'pt-BR' ? 'pt-BR' : 'en-US';
+      /* WP3.4 — o alarme nativo também lê o DONO ÚNICO. Este caminho era a
+         SEGUNDA cópia da copy dentro do mesmo arquivo (a outra era o poll
+         web), e por ser Android puro ninguém olhava para ele: um texto
+         corrigido no worker e no poll continuaria errado no APK instalado. */
+      const nudge10 = pushCopy(10, petName, lang);
+      const nudge16 = pushCopy(16, petName, lang);
+      const boaNoite = pushCopy(22, petName, lang);
 
       // O nudge das 21h saiu: a auditoria de carga do plano conclui que nada
       // deve pedir uma quarta visita ao app, e cobrar tarefa na hora de dormir
       // é o oposto de um companheiro.
       if (completedSteps < totalRequired) {
-        DigiAlarm.scheduleAlarm({ id: 'pet-nudge-10', title: nudgeTitle, body: nudgeBody, scheduledTime: '10:00' }).catch(() => {});
-        DigiAlarm.scheduleAlarm({ id: 'pet-nudge-16', title: nudgeTitle, body: nudgeBody, scheduledTime: '16:00' }).catch(() => {});
+        if (nudge10) DigiAlarm.scheduleAlarm({ id: nudge10.tag, title: nudge10.title, body: nudge10.body, scheduledTime: '10:00' }).catch(() => {});
+        if (nudge16) DigiAlarm.scheduleAlarm({ id: nudge16.tag, title: nudge16.title, body: nudge16.body, scheduledTime: '16:00' }).catch(() => {});
         DigiAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
       } else {
         DigiAlarm.cancelAlarm({ id: 'pet-nudge-10' }).catch(() => {});
@@ -179,13 +192,24 @@ export function NotificationManager({
         DigiAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
       }
 
-      DigiAlarm.scheduleAlarm({
-        id: 'pet-goodnight',
-        title: ispt ? `🌙 ${petName} está indo dormir` : `🌙 ${petName} is going to sleep`,
-        body: ispt ? 'Boa noite. O que ficou pra trás fica pra amanhã. 😴' : "Good night. What's left can wait for tomorrow. 😴",
-        scheduledTime: '22:00',
-      }).catch(() => {});
+      if (boaNoite) {
+        DigiAlarm.scheduleAlarm({
+          id: boaNoite.tag,
+          title: boaNoite.title,
+          body: boaNoite.body,
+          scheduledTime: '22:00',
+        }).catch(() => {});
+      }
     }
+
+    /* WP3.4 — DEDUPE PWA × APK.
+       No Android nativo os alarmes acima JÁ agendam as três notificações pelo
+       AlarmManager (e o Web Push do worker chega pelo mesmo aparelho). O poll
+       abaixo disparava mais uma vez, do mesmo aparelho, com o mesmo texto: a
+       pessoa recebia a mesma frase duas ou três vezes seguidas às 10h.
+       Notificação repetida não é um bug cosmético — é a razão número um pela
+       qual alguém desliga push, e desligar push é irreversível na prática. */
+    if (Capacitor.isNativePlatform()) return;
 
     // Web/PWA: poll every minute and fire when the clock hits the target hour
     const checkPetNotifications = () => {
@@ -198,31 +222,42 @@ export function NotificationManager({
       // Allow a 1-minute grace window so we don't miss if the interval fires at :01
       if (mm > 1) return;
 
+      /* WP3.4 — O TEXTO VEM DO DONO ÚNICO (`functions/api/_pushCopy.js`).
+         Esta função REIMPLEMENTAVA as três cópias, palavra por palavra, numa
+         árvore que sobe sozinha no push da `main` — enquanto o worker é
+         deploy manual. Foi exatamente assim que o nudge das 21h ficou vivo
+         num lado depois de ter sido removido do outro, e o
+         `pushCopy.parity.test.js` só cobria worker × módulo, nunca o cliente.
+         Agora as TRÊS árvores leem a mesma função. O que continua sendo
+         daqui é a CONDIÇÃO (só nudge com meta em aberto) e o dedupe por dia —
+         condição é comportamento do cliente, texto é copy. */
+      const copia = (h: number) => pushCopy(h, petName, ispt ? 'pt-BR' : 'en-US');
+
       // 10:00 — incomplete tasks nudge
       if (hh === 10 && completedSteps < totalRequired && lastNudge10Date.current !== today) {
-        lastNudge10Date.current = today;
-        showNotification(
-          ispt ? `${petName} passou pra dizer oi` : `${petName} stopped by to say hi`,
-          { body: ispt ? 'Tem algo do seu dia que você já fez?' : 'Anything from your day you already did?', tag: 'pet-nudge-10' },
-        );
+        const c = copia(10);
+        if (c) {
+          lastNudge10Date.current = today;
+          showNotification(c.title, { body: c.body, tag: c.tag });
+        }
       }
 
       // 16:00 — incomplete tasks nudge
       if (hh === 16 && completedSteps < totalRequired && lastNudge16Date.current !== today) {
-        lastNudge16Date.current = today;
-        showNotification(
-          ispt ? `${petName} pensou em você` : `${petName} thought of you`,
-          { body: ispt ? 'Se sobrar um minuto hoje, seu Soulmon adora companhia.' : 'If you get a minute today, it loves the company.', tag: 'pet-nudge-16' },
-        );
+        const c = copia(16);
+        if (c) {
+          lastNudge16Date.current = today;
+          showNotification(c.title, { body: c.body, tag: c.tag });
+        }
       }
 
       // 22:00 — goodnight (always fires regardless of tasks)
       if (hh === 22 && lastGoodnightDate.current !== today) {
-        lastGoodnightDate.current = today;
-        showNotification(
-          ispt ? `🌙 ${petName} está indo dormir` : `🌙 ${petName} is going to sleep`,
-          { body: ispt ? 'Boa noite. O que ficou pra trás fica pra amanhã. 😴' : "Good night. What's left can wait for tomorrow. 😴", tag: 'pet-goodnight' },
-        );
+        const c = copia(22);
+        if (c) {
+          lastGoodnightDate.current = today;
+          showNotification(c.title, { body: c.body, tag: c.tag });
+        }
       }
     };
 

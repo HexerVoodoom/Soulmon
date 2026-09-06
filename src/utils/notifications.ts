@@ -130,7 +130,10 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 
 export const subscribeToPush = async (
   petName: string,
-  language: 'pt-BR' | 'en-US'
+  language: 'pt-BR' | 'en-US',
+  /** WP1.17 — `bornAt` do save (`YYYY-MM-DD`), para a copy dos dias 1 e 2.
+   *  Opcional: quem não tem (save antigo) recebe a copy de sempre. */
+  bornAt?: string
 ): Promise<boolean> => {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
   if (Notification.permission !== 'granted') return false;
@@ -150,6 +153,7 @@ export const subscribeToPush = async (
       ...sub.toJSON(),
       petName,
       language,
+      bornAt,
     };
 
     const res = await fetch('/api/subscribe', {

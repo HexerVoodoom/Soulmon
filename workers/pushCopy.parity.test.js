@@ -132,25 +132,41 @@ describe('o worker não cobra tarefa na hora de dormir', () => {
 // ---------------------------------------------------------------------------
 // 3. O cliente (src/) e o worker dizem a MESMA coisa
 // ---------------------------------------------------------------------------
-describe('cliente e servidor entregam o mesmo texto', () => {
+describe('o cliente IMPORTA a copy — não existe mais cópia para comparar', () => {
   const nm = ler('src/components/NotificationManager.tsx');
 
-  it('cada string de `_pushCopy` existe literalmente no NotificationManager', () => {
+  /* WP3.4 — este bloco MUDOU DE PERGUNTA, e a mudança é a melhoria.
+     Antes ele comparava as strings do cliente com as do dono, uma a uma: era
+     o melhor possível enquanto o cliente REIMPLEMENTAVA a copy, mas guard de
+     igualdade só pega quem edita um lado — não pega quem acrescenta uma
+     notificação nova só no cliente, e não impede a cópia de existir.
+     Agora o cliente importa `pushCopy`, e o guard cobra a AUSÊNCIA de cópia,
+     que é uma pergunta mais forte. */
+
+  it('o cliente importa o dono único', () => {
+    expect(nm).toMatch(/import \{[^}]*pushCopy[^}]*\} from '\.\.\/\.\.\/functions\/api\/_pushCopy(\.js)?'/);
+  });
+
+  it('nenhum texto de notificação foi reescrito no cliente', () => {
+    // Se alguém voltar a escrever a copy aqui, é aqui que quebra.
     const faltando = [];
     for (const h of PUSH_HOURS_BRT) {
       for (const lang of ['pt-BR', 'en-US']) {
-        const { title, body } = pushCopy(h, 'PET', lang);
-        // O nome do pet é interpolado nos dois lados; comparamos os pedaços
-        // FIXOS do título em volta dele, e o corpo inteiro.
-        for (const trecho of [...title.split('PET').map(s => s.trim()), body]) {
-          if (trecho && !nm.includes(trecho)) faltando.push(`${h}h/${lang}: ${JSON.stringify(trecho)}`);
-        }
+        const { body } = pushCopy(h, 'PET', lang);
+        if (nm.includes(body)) faltando.push(`${h}h/${lang}: o corpo foi copiado para o cliente`);
       }
     }
     expect(faltando).toEqual([]);
   });
 
-  it('AUTOVERIFICAÇÃO: o guard reprova um texto que o cliente NÃO tem', () => {
+  it('AUTOVERIFICAÇÃO: o guard enxerga o arquivo certo', () => {
+    // Sem isto, um caminho errado deixaria os dois casos acima passarem
+    // medindo uma string vazia.
+    expect(nm.length).toBeGreaterThan(1000);
+    expect(nm).toContain('showNotification');
+  });
+
+  it('o texto das 21h continua não existindo em lugar nenhum', () => {
     expect(nm.includes('Ainda dá tempo! Complete suas tarefas antes de dormir 🌙')).toBe(false);
   });
 
@@ -199,5 +215,82 @@ describe('regras compartilhadas são importadas, nunca copiadas', () => {
     const src = ler('workers/push-scheduler.js');
     expect(src).not.toMatch(/function\s+getNotification/);
     expect(src).toMatch(/import \{ pushCopy \} from '\.\.\/functions\/api\/_pushCopy\.js'/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. WP1.17 — os primeiros dias têm voz própria
+// ---------------------------------------------------------------------------
+describe('a copy dos dias 1 e 2 (WP1.17)', () => {
+  const dez = (idade, lang = 'pt-BR') => pushCopy(10, 'Bito', lang, idade);
+
+  it('D1 e D2 falam da criatura, não da lista', () => {
+    for (const idade of [1, 2]) {
+      const c = dez(idade);
+      expect(c.tag).toBe('pet-newborn');
+      expect(c.title).toContain('Bito');
+    }
+    // E as duas frases são DIFERENTES: repetir a mesma no dia seguinte
+    // desfaz a ideia de que alguma coisa está acontecendo ali.
+    expect(dez(1).body).not.toBe(dez(2).body);
+  });
+
+  it('NUNCA no D0 — o dia do nascimento é o dia em que a pessoa está no app', () => {
+    expect(dez(0).tag).not.toBe('pet-newborn');
+  });
+
+  it('do D3 em diante volta a copy de sempre', () => {
+    expect(dez(3).tag).not.toBe('pet-newborn');
+    expect(dez(40).tag).not.toBe('pet-newborn');
+  });
+
+  it('sem idade conhecida (inscrição antiga), copy de sempre — nunca meio texto', () => {
+    expect(pushCopy(10, 'Bito', 'pt-BR').tag).not.toBe('pet-newborn');
+    expect(pushCopy(10, 'Bito', 'pt-BR', null).tag).not.toBe('pet-newborn');
+    expect(pushCopy(10, 'Bito', 'pt-BR', NaN).tag).not.toBe('pet-newborn');
+  });
+
+  it('só na hora da manhã: boas-vindas às 22h não são boas-vindas', () => {
+    expect(pushCopy(22, 'Bito', 'pt-BR', 1).tag).toBe('pet-goodnight');
+    expect(pushCopy(16, 'Bito', 'pt-BR', 1).tag).toBe('pet-nudge-16');
+  });
+
+  it('não cobra: nenhuma das duas fala de tarefa, meta ou atraso', () => {
+    // No dia 1 não existe "atrasado", e a primeira notificação da vida do app
+    // não pode ser uma cobrança.
+    for (const idade of [1, 2]) {
+      for (const lang of ['pt-BR', 'en-US']) {
+        const t = `${dez(idade, lang).title} ${dez(idade, lang).body}`.toLowerCase();
+        for (const p of ['tarefa', 'task', 'meta', 'goal', 'atras', 'late', 'falt']) {
+          expect(t, `a copy do dia ${idade} cobra ("${p}")`).not.toContain(p);
+        }
+      }
+    }
+  });
+
+  it('os dois idiomas existem', () => {
+    expect(dez(1, 'en-US').body).not.toBe(dez(1, 'pt-BR').body);
+    expect(dez(1, 'en-US').body).not.toMatch(/[áàâãéêíóôõúç]/i);
+  });
+});
+
+describe('a idade vem da inscrição e morre com ela (WP1.17)', () => {
+  it('`ageDaysOf` lê o `bornAt` da subscription', async () => {
+    const { ageDaysOf } = await import('./push-scheduler.js');
+    const agora = new Date('2026-09-08T13:00:00Z');
+    expect(ageDaysOf({ bornAt: '2026-09-07' }, agora)).toBe(1);
+    expect(ageDaysOf({ bornAt: '2026-09-08' }, agora)).toBe(0);
+  });
+
+  it('sem `bornAt`, ou com lixo, devolve null — nunca dia 0 por engano', () => {
+    // Um `bornAt` torto viraria "dia 1" para sempre, e a pessoa receberia a
+    // mensagem de recém-nascido todo dia.
+    return import('./push-scheduler.js').then(({ ageDaysOf }) => {
+      const agora = new Date('2026-09-08T13:00:00Z');
+      expect(ageDaysOf({}, agora)).toBeNull();
+      expect(ageDaysOf({ bornAt: 'ontem' }, agora)).toBeNull();
+      // Data no futuro (relógio do aparelho errado) também não vira idade.
+      expect(ageDaysOf({ bornAt: '2027-01-01' }, agora)).toBeNull();
+    });
   });
 });

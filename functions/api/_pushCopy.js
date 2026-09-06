@@ -38,9 +38,36 @@ export const PUSH_HOURS_UTC = PUSH_HOURS_BRT.map(h => (h + 3) % 24).sort((a, b) 
  * inventar um texto de fallback: mandar algo genérico numa hora não prevista é
  * como o nudge das 21h voltaria.
  */
-export function pushCopy(brtHour, petName, language) {
+export function pushCopy(brtHour, petName, language, ageDays) {
   const pt = language === 'pt-BR';
   const name = petName || 'Soulmon';
+
+  /* WP1.17 — OS PRIMEIROS DIAS TÊM VOZ PRÓPRIA.
+     A frase padrão ("tem algo do seu dia que você já fez?") pressupõe uma
+     rotina que quem tem a criatura há um dia ainda não tem. Nos dias 1 e 2 o
+     que existe é a criatura nova, e é dela que a notificação fala.
+
+     Três travas, e as três importam:
+      · **nunca no D0.** O dia do nascimento é o dia em que a pessoa está
+        dentro do app; mandar push nele é interromper quem já está aqui.
+      · **sem condição de meta.** Estas duas não perguntam se a pessoa fez
+        alguma coisa — no dia 1 não existe "atrasado", e cobrar aqui é a
+        forma mais rápida de a primeira notificação da vida do app ser uma
+        cobrança.
+      · **só na hora da manhã.** Uma frase de boas-vindas às 22h não é
+        boas-vindas.
+     `ageDays` é opcional: quem não sabe a idade (subscription antiga) recebe
+     a copy de sempre, nunca um texto pela metade. */
+  const idade = Number.isFinite(ageDays) ? ageDays : null;
+  if (brtHour === 10 && (idade === 1 || idade === 2)) {
+    return {
+      title: pt ? `${name} acordou` : `${name} woke up`,
+      body: idade === 1
+        ? (pt ? 'Primeiro dia inteiro por aqui. Vem ver.' : 'First full day here. Come see.')
+        : (pt ? 'Já está reconhecendo você.' : 'They are starting to recognize you.'),
+      tag: 'pet-newborn',
+    };
+  }
 
   if (brtHour === 22) {
     return {

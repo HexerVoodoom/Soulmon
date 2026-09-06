@@ -40,7 +40,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { endpoint, keys, petName, digimonName, language } = body;
+  const { endpoint, keys, petName, digimonName, language, bornAt } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
@@ -63,6 +63,13 @@ export async function onRequestPost({ request, env }) {
     endpoint,
     keys,
     petName: petName || digimonName || 'Soulmon',
+    /* WP1.17 — a idade da criatura, para a copy dos dias 1 e 2. É `YYYY-MM-DD`
+       e só isso: dia, sem hora e sem fuso, porque a única pergunta é "faz
+       quantos dias". Guardado NA SUBSCRIPTION de propósito — cancelar o push
+       apaga a idade junto, e não existe registro separado sobrevivendo a
+       isso. Formato inválido é DESCARTADO em vez de corrigido: um `bornAt`
+       torto viraria dia 1 para sempre. */
+    bornAt: /^\d{4}-\d{2}-\d{2}$/.test(String(bornAt ?? '')) ? bornAt : undefined,
     language: language || 'en-US',
   };
 

@@ -29,6 +29,20 @@ const CONTACT = 'mailto:contact@digiapp.app';
 // Drains every key under `prefix`, running `handle(sub, name)` for each —
 // `handle` returns 'sent' | 'failed' | 'removed' (and deletes the KV entry
 // itself when 'removed', mirroring the stale-subscription cleanup).
+/**
+ * WP1.17 — idade da criatura em dias, se a inscrição souber (`bornAt`).
+ *
+ * O dado morre junto com a subscription: não existe registro separado, e
+ * cancelar o push apaga a idade junto. Ausente ou ilegível devolve `null`, e
+ * `pushCopy` entende `null` como "copy de sempre" — nunca como dia 0.
+ */
+export function ageDaysOf(sub, now) {
+  const nascimento = Date.parse(`${sub?.bornAt ?? ''}T00:00:00Z`);
+  if (!Number.isFinite(nascimento)) return null;
+  const dias = Math.floor((now.getTime() - nascimento) / 86_400_000);
+  return dias >= 0 ? dias : null;
+}
+
 async function drainPrefix(env, prefix, handle, counts) {
   let cursor;
   do {
@@ -139,7 +153,7 @@ export default {
           await env.PUSH_SUBSCRIPTIONS.delete(name);
           return 'removed';
         }
-        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language);
+        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language, ageDaysOf(sub, date));
         if (!notif) return 'skipped';
         const result = await sendWebPush(
           { endpoint: sub.endpoint, keys: sub.keys },
@@ -168,7 +182,7 @@ export default {
     if (serviceAccount) {
       const accessToken = await getFcmAccessToken(serviceAccount);
       await drainPrefix(env, 'fcm:', async (sub, name) => {
-        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language);
+        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language, ageDaysOf(sub, date));
         if (!notif) return 'skipped';
         const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
         if (result.ok) return 'sent';
