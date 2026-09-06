@@ -319,6 +319,46 @@ export function constancy(
 }
 
 /**
+ * WP2.2 — A JANELA PURA (prestígio no modelo do Perfect Streak).
+ *
+ * O dilema que este pacote resolve: o produto recusa streak que zera, mas
+ * quem cumpre 28 dias sem falhar merece que isso apareça — e a única forma
+ * de mostrar sem punir é a que o Perfect Streak usa: **puramente estético**.
+ * Aparece como aura, some quando deixa de valer, e não vale ponto nenhum.
+ *
+ * "Pura" = nenhum dia PERDIDO e nenhum dia PROTEGIDO por escudo na janela.
+ * O escudo entra porque a aura é sobre não ter falhado, e o dia protegido é
+ * um dia em que se falhou (o escudo repara a CONSTÂNCIA, que é outra coisa,
+ * e continua reparando).
+ *
+ * Três travas, e as três são o pacote:
+ *  · **não bloqueia o escudo.** Ele continua sendo gasto automaticamente; o
+ *    que muda é só a aura sumir.
+ *  · **sumir é SILENCIOSO.** Nenhuma fala, nenhum toast, nenhum texto de
+ *    perda — anunciar a perda é exatamente a punição que a streak faz.
+ *  · **não dá nada.** Nem Bits, nem atributo, nem ponto de evolução.
+ *
+ * Mesma janela e mesmo denominador de `constancy`: só dias DEVIDOS contam, e
+ * hábito novo (janela vazia) não tem aura — ela é conquistada, não dotada.
+ */
+export const PURE_WINDOW_DAYS = 28;
+
+export function pureWindow(
+  rhythm: HabitRhythm,
+  now: Date,
+  windowDays: number = PURE_WINDOW_DAYS,
+): boolean {
+  const oldest = addDays(now, -(windowDays - 1));
+  const inWindow = (key: string) => {
+    const d = dayKeyToDate(key);
+    return d >= oldest && d <= midnight(now);
+  };
+  // Janela vazia não é pureza: é ausência de história. A aura é conquistada.
+  if (!rhythm.done.some(inWindow)) return false;
+  return !rhythm.missed.some(inWindow) && !rhythm.shielded.some(inWindow);
+}
+
+/**
  * O marco de maturidade, em dias efetivos.
  *
  * Os cortes são os de `HABIT_MILESTONES` (7/21/66, de Lally et al.), não os

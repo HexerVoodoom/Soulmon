@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
 import { getSpriteForStage } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
+import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelButton } from './pixel/PixelKit';
 import { HomeHud } from './pixel/HomeHud';
 import { Icon } from './ui/Icon';
@@ -157,6 +158,8 @@ interface CompanionHUDProps {
   /** WP4.19 — marca cosmética da recuperação, e só quando o jogador escolheu
    *  exibi-la (`showRedeemed`). Nunca é marca de queda. */
   redeemedMark?: boolean;
+  /** WP2.7 — dias fora, de `lastDayReport.daysAway`. 0 = não houve ausência. */
+  daysAway?: number;
   /** WP3.2 — há tarefa assombrada na lista? O sprite VIRA O OLHAR enquanto
    *  houver. É o "o pet olha" que o `CLAUDE.md` prometia e não existia. */
   hauntedWatching?: boolean;
@@ -222,6 +225,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   healCapSignal = 0,
   speakSignal,
   hauntedWatching = false,
+  daysAway = 0,
   petDisplayName,
   bondTitleText,
   redeemedMark = false,
@@ -353,8 +357,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const [feedOpen, setFeedOpen] = useState(false);
 
   // Always-current snapshot of props for stable intervals
-  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping });
-  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping };
+  const propsRef = useRef({ useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway });
+  propsRef.current = { useAI, language, currentStage, companionMood, evolutionStage, dominantBranch, aiSettings, healthPoints, energyPoints, maxEnergy, maxHealthPoints, careEvent, isSleeping, daysAway };
 
   // speak: strips all emojis, shows bubble, auto-hides after durationMs
   const speak = useCallback((text: string, durationMs = 4000) => {
@@ -578,9 +582,6 @@ export const CompanionHUD = memo(function CompanionHUD({
   const ultimaSaudacaoRef = useRef(0);
   useEffect(() => {
     const isPt = language === 'pt-BR';
-    const linhas = isPt
-      ? ['Você voltou!', 'Oi! Senti sua falta.', 'Que bom te ver!', 'Oi oi! Tudo bem?']
-      : ['You came back!', 'Hi! I missed you.', 'Good to see you!', 'Hey hey! How are you?'];
     const saudar = () => {
       if (document.hidden || propsRef.current.isSleeping) return;
       ultimaSaudacaoRef.current = Date.now();
@@ -588,7 +589,12 @@ export const CompanionHUD = memo(function CompanionHUD({
         setIsGreeting(true);
         setTimeout(() => setIsGreeting(false), 800);
       }
-      speak(linhas[Math.floor(Math.random() * linhas.length)], 3500);
+      /* WP2.7 — o reencontro é por DIAS. A mesma frase servia para quem
+         voltou 11 minutos depois e para quem sumiu três semanas, e as duas
+         coisas não são a mesma: uma é continuar, a outra é voltar.
+         A regra do perdão por ausência já existia do lado do DADO
+         (`ABSENCE_FORGIVENESS_DAYS`) e nunca tinha chegado à VOZ. */
+      speak(welcomeBackLine(propsRef.current.daysAway ?? 0, isPt, Math.random()), 3500);
     };
     const t = setTimeout(saudar, 700);
     const onVis = () => {

@@ -21,7 +21,23 @@
 // (`speakRaw()` preserva, e é para "+1⚡", não para frase).
 // ---------------------------------------------------------------------------
 
-export type PetVoiceKind = 'task' | 'haunted' | 'rub' | 'shower' | 'milestone';
+export type PetVoiceKind = 'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare';
+
+/**
+ * WP2.14 — a taxa da fala rara. ~5% das conclusões.
+ *
+ * ⚠️ **A taxa NUNCA vira alavanca.** Ela não é ajustável por evento, não sobe
+ * com nada e não desce com nada — se um dia virar botão de engajamento, é uma
+ * recompensa variável de valor zero sendo usada como isca, que é o desenho
+ * que este produto recusa. Vale zero de propósito: o prêmio é a frase.
+ */
+export const RARE_CHEER_RATE = 0.05;
+
+/** `pick` é 0..1 (o chamador passa `Math.random()`). PURA para o teste poder
+ *  provar que a recompensa é idêntica com e sem o sorteio. */
+export function rolledRareCheer(pick: number): boolean {
+  return pick < RARE_CHEER_RATE;
+}
 
 export interface PetVoiceSignal {
   /** Contador que só cresce — o padrão de `feedAnim`/`fullSignal`. */
@@ -56,6 +72,23 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
   shower: {
     pt: ['Limpinho!', 'Água boa, hein.', 'Agora sim.'],
     en: ['All clean!', 'That water was nice.', 'Much better.'],
+  },
+  /* WP2.13 — os dias do meio do caminho (`HABIT_CHEER_AT`). Entre o marco de
+     21 e o de 66 há quarenta e cinco dias em que nada acontece, e é ali que a
+     maioria para. Estas falas não valem NADA — se valessem, teriam virado
+     marco por acidente. E nenhuma diz quanto falta: o número que falta é a
+     conta que transforma constância em cobrança. */
+  cheer: {
+    pt: ['Esse aí você não larga, né?', 'Já virou parte do dia.', 'Continua acontecendo. Gosto disso.'],
+    en: ['You keep coming back to this one, huh?', 'It became part of the day.', 'It keeps happening. I like that.'],
+  },
+  /* WP2.14 — a fala RARA. Aparece em ~5% das conclusões e não é anunciada em
+     lugar nenhum: sem contador, sem "raro!", sem coleção. Uma surpresa que
+     tem medidor deixa de ser surpresa e vira mais uma barra para encher.
+     Valor material: ZERO, e há teste. */
+  rare: {
+    pt: ['Ei… hoje você me parece diferente. Do bem.', 'Guardei esse momento.', 'Acho que estou orgulhoso. É isso?'],
+    en: ['Hey… you seem different today. In a good way.', 'I kept this moment.', 'I think I am proud. Is that it?'],
   },
   milestone: {
     pt: ['Olha o tamanho disso agora!', 'Isso aqui virou raiz.', 'Você repetiu tanto que virou seu.'],

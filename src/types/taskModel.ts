@@ -152,6 +152,33 @@ export const OVERCOMMIT_EFFORT = 7;
  */
 export const HABIT_MILESTONES = [7, 21, 66] as const;
 
+/**
+ * WP2.13 — os DIAS EM QUE O PET COMENTA, e que não são marcos.
+ *
+ * Entre o 21 e o 66 há quarenta e cinco dias em que nada acontece — e é
+ * exatamente ali que a maioria das pessoas para. Estes três números existem
+ * para o pet falar no meio do caminho.
+ *
+ * A distinção é o pacote inteiro, e há teste travando:
+ *  · `HABIT_MILESTONES` são MARCOS: mudam o ícone, aumentam o rendimento de
+ *    atributo, e a lista NÃO muda;
+ *  · `HABIT_CHEER_AT` são FALAS: não dão nada. Nem bônus, nem ícone, nem
+ *    ponto. Se um dia derem, viraram marco por acidente, e a escada de
+ *    maturidade passa a ter seis degraus sem ninguém ter decidido isso.
+ * E nenhuma fala diz "faltam N" — o número que falta é a conta que
+ * transforma constância em cobrança.
+ */
+export const HABIT_CHEER_AT = [3, 36, 51] as const;
+
+/** O dia de fala que ACABOU de ser cruzado, ou `null`. Mesma forma de
+ *  `milestoneReached`: existe para a fala tocar UMA vez. */
+export function cheerReached(before: number, after: number): number | null {
+  for (const n of HABIT_CHEER_AT) {
+    if (before < n && after >= n) return n;
+  }
+  return null;
+}
+
 export type HabitTier = 'seed' | 'sprout' | 'sapling' | 'tree';
 
 /** Rendimento extra de atributo por marco atingido (0%, +10%, +20%, +30%). */

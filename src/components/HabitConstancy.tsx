@@ -5,6 +5,7 @@ import {
   constancy,
   habitTier,
   dayKeyOf,
+  pureWindow,
   type HabitRhythm,
 } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
@@ -177,6 +178,9 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
   // a janela fica vazia): o relatório dizia "você não perdeu nada" e a linha
   // logo abaixo dizia zero, na mesma tela. `WeeklyReportCard` já filtrava
   // `window > 0` pelo motivo certo — "0 de 0 não descreve nada".
+  /* WP2.2 — a aura. Calculada aqui, do mesmo `rhythm` que já chega: não há
+     estado novo no save, e sem estado não há o que ficar desatualizado. */
+  const aura = pureWindow(rhythm, now);
   const semJanela = window === 0;
   const total = window || CONSTANCY_WINDOW_DAYS;
   const headline = semJanela
@@ -205,12 +209,20 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
         color: 'var(--sm2-muted)',
       }}
     >
-      {/* Maturidade. Glifo pelado, sem moldura — ícone nunca dentro de box. */}
+      {/* Maturidade. Glifo pelado, sem moldura — ícone nunca dentro de box.
+          WP2.2 — a AURA de janela pura: 28 dias devidos sem falha e sem
+          escudo gasto. É estética e só: não dá ponto, não bloqueia o escudo, e
+          quando deixa de valer ela some EM SILÊNCIO — anunciar a perda é
+          exatamente a punição que a streak que zera faz. */}
       <span
         title={hideMetrics
           ? (isPt ? `Maturidade: ${tierName[tier].pt}` : `Maturity: ${tierName[tier].en}`)
           : (isPt ? `Maturidade: ${tierName[tier].pt} (${rhythm.totalDone} dias)` : `Maturity: ${tierName[tier].en} (${rhythm.totalDone} days)`)}
-        style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500, color: 'var(--sm2-ink)' }}
+        style={{
+          display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500,
+          color: 'var(--sm2-ink)',
+          ...(aura ? { filter: 'drop-shadow(0 0 4px var(--sm2-gold-ink, #d4a017))' } : null),
+        }}
       >
         <Icon
           name="eco"

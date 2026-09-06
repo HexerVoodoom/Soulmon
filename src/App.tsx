@@ -90,7 +90,7 @@ import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
 import { readingSeed } from './utils/newReading';
-import type { PetVoiceKind } from './utils/petVoice';
+import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
@@ -159,7 +159,7 @@ import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
 } from './utils/habitRhythm';
-import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS } from './types/taskModel';
+import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 
 /**
  * O rótulo de frequência de um hábito na lista.
@@ -551,6 +551,21 @@ function habitMilestoneOf(state: GameState, activityId: string, todayKey: string
   const before = state.habitRhythms?.[activityId] ?? EMPTY_RHYTHM;
   const after = completeHabit(before, todayKey);
   return milestoneReached(before.totalDone, after.totalDone);
+}
+
+/**
+ * WP2.13 — o dia de FALA que acabou de ser cruzado (3/36/51), ou `null`.
+ *
+ * Mesma leitura de `habitMilestoneOf` e mesmo motivo de estar aqui fora: o
+ * updater roda 2× no StrictMode, e a fala tocaria duas vezes lá dentro.
+ * Estes números NÃO são marcos: não mudam ícone, não mudam rendimento, não
+ * dão nada. Existem porque entre o marco de 21 e o de 66 há quarenta e cinco
+ * dias em que nada acontece, e é ali que a maioria das pessoas para.
+ */
+function habitCheerOf(state: GameState, activityId: string, todayKey: string) {
+  const before = state.habitRhythms?.[activityId] ?? EMPTY_RHYTHM;
+  const after = completeHabit(before, todayKey);
+  return cheerReached(before.totalDone, after.totalDone);
 }
 
 const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
@@ -1547,7 +1562,12 @@ export default function App() {
    */
   const celebrateHabitMilestone = useCallback((activityId: string, name: string, todayKey: string) => {
     const tier = habitMilestoneOf(gameState, activityId, todayKey);
-    if (!tier) return;
+    if (!tier) {
+      // WP2.13 — não é marco, mas pode ser um dos dias em que o pet comenta.
+      // Sem toast e sem som: é só uma fala, e o valor dela é ser só isso.
+      if (habitCheerOf(gameState, activityId, todayKey)) falar('cheer');
+      return;
+    }
     const text = MILESTONE_TEXT[tier];
     if (!text) return;
     playEvolve();
@@ -2080,7 +2100,13 @@ export default function App() {
           // A assombrada tem fala PRÓPRIA, e é de alívio. Concluir a que
           // estava te olhando não pode soar igual a concluir qualquer uma —
           // é a peça que transforma a pilha de culpa em recompensa.
-          falar(isHaunted(task, new Date()) ? 'haunted' : 'task');
+          /* WP2.14 — a fala RARA (~5%), que não vale NADA e não é anunciada
+             em lugar nenhum: sem contador, sem "raro!", sem coleção. Uma
+             surpresa com medidor deixa de ser surpresa e vira mais uma barra
+             para encher. A assombrada tem fala própria e vence o sorteio —
+             o alívio dela é mais específico que uma frase bonita. */
+          const assombrada = isHaunted(task, new Date());
+          falar(assombrada ? 'haunted' : rolledRareCheer(Math.random()) ? 'rare' : 'task');
           marcarGestoDoDia('task');
         });
       }, 3000);
@@ -4558,6 +4584,9 @@ export default function App() {
                 bondTitleText={bondTitle(bondLevelFor(gameState.totalXP ?? 0), language)}
                 redeemedMark={!!gameState.redeemed && !!gameState.showRedeemed}
                 hauntedWatching={hauntedWatching}
+                /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
+                   já sabia quantos; a VOZ é que não sabia. */
+                daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
                 aiSettings={aiSettings}

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   emptyRhythm,
+  pureWindow,
   dayKeyOf,
   isDueOn,
   weeklyProgress,
@@ -338,5 +339,54 @@ describe('completeHabit', () => {
     // O totalDone (que alimenta marcos e atributo) é intocado pela falha.
     expect(r.totalDone).toBe(7);
     expect(Object.keys(r)).not.toContain('streak');
+  });
+});
+
+describe('WP2.2 — a aura de janela pura é estética, e só', () => {
+  const HOJE = new Date('2026-09-06T12:00:00');
+  const diaAtras = (n: number) => dayKeyOf(new Date(HOJE.getTime() - n * 86400000));
+
+  /** Hábito feito todos os dias da janela. */
+  function puro() {
+    let r = emptyRhythm();
+    for (let i = 27; i >= 0; i -= 1) r = completeHabit(r, diaAtras(i));
+    return r;
+  }
+
+  it('28 dias devidos sem falha e sem escudo acendem a aura', () => {
+    expect(pureWindow(puro(), HOJE)).toBe(true);
+  });
+
+  it('um dia PERDIDO na janela apaga', () => {
+    const r = { ...puro(), missed: [diaAtras(3)] };
+    expect(pureWindow(r, HOJE)).toBe(false);
+  });
+
+  it('um dia PROTEGIDO por escudo também apaga — a aura é sobre não ter falhado', () => {
+    // O escudo repara a CONSTÂNCIA, que é outra coisa, e continua reparando.
+    const r = { ...puro(), shielded: [diaAtras(5)] };
+    expect(pureWindow(r, HOJE)).toBe(false);
+  });
+
+  it('hábito novo NÃO nasce com aura — ela é conquistada, não dotada', () => {
+    // `constancy` devolve ratio 1 sem histórico (progresso dotado); a aura é
+    // o oposto disso de propósito: ela representa 28 dias que aconteceram.
+    expect(pureWindow(emptyRhythm(), HOJE)).toBe(false);
+  });
+
+  it('falha ANTIGA, fora da janela, não impede a aura', () => {
+    const r = { ...puro(), missed: [diaAtras(60)] };
+    expect(pureWindow(r, HOJE)).toBe(true);
+  });
+
+  it('a aura NÃO mexe em escudo, constância nem nada material', () => {
+    // Se um dia ela valer alguma coisa, deixou de ser o Perfect Streak e
+    // virou a streak que este produto recusa.
+    const r = puro();
+    const antesShields = r.shields;
+    const antesConst = constancy(r, HOJE);
+    pureWindow(r, HOJE);
+    expect(r.shields).toBe(antesShields);
+    expect(constancy(r, HOJE)).toEqual(antesConst);
   });
 });
