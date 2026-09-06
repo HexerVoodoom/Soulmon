@@ -67,13 +67,15 @@ rápido; a fonte são os arquivos de `ledger/`.
 
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
-| medição (13) | 7 | — | — | **1** (0.1, falta a chave) | **5** (0.3, 0.5, 0.7, 0.13, 0.14) | — |
-| nascimento (17) | 14 | — | — | — | **3** (1.7, 1.9, 1.10) | — |
-| constância (15) | 9 | — | — | — | **5** (2.3, 2.9, 2.10, 2.12, 2.15) | **1** (2.1, por D3) |
-| vínculo (11) | 9 | — | — | — | **2** (3.7, 3.8) | — |
-| permanência (21) | 13 | — | — | — | **7** (4.9, 4.11, 4.15, 4.16, 4.17, 4.20 + 4.4 recusado à parte) | **1** (4.4) |
-| sustento (10) | 6 | — | — | — | **4** (5.2, 5.5, 5.6, 5.9) | — |
-| **Total (88)** | **58** | **ZERO** | — | **1** | **26** | **2** |
+| medição (13) | 6 | — | — | **1** (0.1, falta a chave) | **6** (0.3, 0.5, 0.7, 0.8, 0.13, 0.14) | — |
+| nascimento (17) | 13 | — | — | — | **4** (1.7, 1.9, 1.10, 1.16) | — |
+| constância (15) | 8 | — | — | — | **6** (2.3, 2.9, 2.10, 2.11, 2.12, 2.15) | **1** (2.1, por D3) |
+| vínculo (11) | 8 | — | — | — | **3** (3.7, 3.8, 3.9) | — |
+| permanência (21) | 11 | — | — | — | **9** (4.1, 4.2, 4.9, 4.11, 4.15, 4.16, 4.17, 4.18, 4.20) | **1** (4.4) |
+| sustento (10) | 5 | — | — | — | **5** (5.2, 5.5, 5.6, 5.7, 5.9) | — |
+| **Total (87)** | **51** | **ZERO** | — | **1** | **33** | **2** |
+
+> ⚠️ **O total dizia 88 e o plano tem 87** (`grep -o 'WP[0-9]\+\.[0-9]\+' docs/PLANO-MELHORIAS.md | sort -u | wc -l`). O 88 veio de somar o WP5.9 sem descontar nada; contado em 06/09/2026.
 
 > **06/09/2026 — a coluna BLOQUEADO zerou.** As dezesseis decisões do dono foram
 > respondidas de uma vez (§15 do plano). Onze pacotes saíram do bloqueio; um

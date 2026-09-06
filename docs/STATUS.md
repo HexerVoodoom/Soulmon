@@ -40,6 +40,40 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > Gate em cada lote: tsc app + desktop EXIT=0, vitest **193 arquivos · 2998
 > passed · 2 skipped**, build OK.
 
+> **06/09/2026 — SPRINT 3 COMPLETO: 5 lotes, 7 pacotes verificados** (WP4.2,
+> WP5.7, WP3.9, WP1.16, WP2.11, WP0.8, WP4.18). O fio condutor mudou: no Sprint 2
+> era código mudo; aqui é **promessa que dependia de alguém lembrar**.
+> · **WP4.2 (D6) — o Ultra deixa de exigir degeneração.** `canReachUltra` abre a
+> forma por COLEÇÃO (os três megas) **ou** por PERMANÊNCIA (`ULTRA_PATIENCE_DAYS`
+> = 45 dias perfeitos). O único caminho antes passava por deixar o pet chegar a
+> HP 0 — o jogo pedindo descuido para dar a maior recompensa.
+> · **WP5.7 — o reroll virou Nova Leitura, e é DETERMINÍSTICA.** Pagava-se 50
+> Créditos por um `Math.random`; agora o resultado sai das 6 respostas (semente
+> FNV-1a sobre a ordem FIXA de `ORACLE_QUESTIONS`, nunca `Object.keys`) e o botão
+> fica desligado enquanto nada mudou. A regra é dita ANTES de cobrar, e os termos
+> (`public/termos.html` §5) foram reescritos nos dois idiomas.
+> · **WP3.9 — ponte de ajuda no chat.** A checagem roda ANTES de qualquer rede,
+> num módulo puro (`chatSafety.ts`); a distinção entre desabafo e declaração é
+> pelo COMPLEMENTO ("morrer de sono" ≠ "morrer"), com a única exceção do PT-BR
+> ("de vez") escrita como regra e não como lista de frases.
+> · **WP1.16 + WP2.11 — `bornAt`, aniversário e "dias juntos".** Nunca inferido
+> de save antigo: sem o campo, não há aniversário; `daysTogether` devolve `null`
+> se o relógio andou para trás, nunca número negativo.
+> · **WP0.8 — o esforço virou HISTOGRAMA no servidor.** A média era dominada por
+> quem cadastra projeto e era ela que decidia leitura de produto; agora o leitor
+> imprime MEDIANA de verdade, com a média rebaixada a nota. O balde é derivado do
+> `effort` que já chegava — **nada de novo sai do aparelho**.
+> · **WP4.18 — a season do Torneio fecha sozinha.** Os troféus 🥇🥈🥉 existiam
+> inteiros (rota, vitrines no palco) e só chegavam se o dono lembrasse de
+> disparar a rota à mão. Cron das 10h BRT do dia 1, rodando ANTES do `return` de
+> hora sem push declarado, com a idempotência (`closed:<season>`) no SERVIDOR —
+> cron repete, e a trava tem de morar onde a escrita acontece.
+> Gate: tsc app + desktop EXIT=0, vitest **197 arquivos · 3080 passed · 2
+> skipped**, build OK. Ledger: **33 VERIFICADO, 1 IMPLEMENTADO, ZERO BLOQUEADO**.
+> ⚠️ **Depende de você**: `SEASON_ADMIN_KEY` (secret do wrangler no worker de
+> push, mesmo valor do Pages) — sem ela o fechamento é pulado com log; e
+> `METRICS_ADMIN_KEY` no Pages, que segue pendente do Sprint 2.
+
 > **06/09/2026 — AS 16 DECISÕES DO DONO, RESPONDIDAS. A coluna BLOQUEADO zerou.**
 > Estavam abertas desde a criação do plano; foram respondidas de uma vez (§15 do
 > `PLANO-MELHORIAS.md`). Onze pacotes saíram do bloqueio, um virou RECUSADO com
@@ -1488,7 +1522,7 @@ decisão sua.
 | # | O quê | Por quê |
 |---|---|---|
 | ✅ | **Licença dos sprites DMC e uso dos nomes Digimon** — RESOLVIDO em 09/08/2026. Foi a opção (b): substituir por arte e nomenclatura originais. Saíram do repositório os 25 `*_dmc.png` (arte da Bandai, via `furudbat/wayland-vpets`) e os 49 `figma:asset/*` das linhas Tapirmon/Veemon/Salamon, junto com os itens de digievolução da loja, os Digimentais e o roster nominal da masmorra. `getSpriteForStage` responde sempre com arte de `src/assets/soulmon/`; save antigo cai num fallback determinístico que também usa arte nossa. Os nomes de franquia saíram até do prompt do gerador (`utils/oracle.ts`), com teste travando a ausência. Detalhes em `docs/Attributions.md`. |
-| 🟠 | **Reroll por Créditos = resultado aleatório pago com dinheiro real** | `monetization.ts:76` + `oracle.ts` (`Math.random()`). Atenuante forte: todo pet gerado é mecanicamente equivalente — é identidade, não poder. Mas a Lei 15.211/2025 (ECA Digital) vale desde 17/03/2026, houve condenação de R$ 333M em jun/2026, e o Pokémon GO teve incubadoras removidas no Brasil. Pode bastar deixar explícito que os resultados são equivalentes. |
+| ✅ | ~~**Reroll por Créditos = resultado aleatório pago com dinheiro real**~~ — RESOLVIDO em 06/09/2026 (WP5.7). Deixou de ser sorteio: virou **Nova Leitura**, DETERMINÍSTICA sobre as 6 respostas do Oráculo (`src/utils/newReading.ts`, semente FNV-1a na ordem fixa de `ORACLE_QUESTIONS`). Não há `Math.random` no caminho, o botão fica desligado enquanto nenhuma resposta mudou, a regra é dita **antes** de cobrar e `public/termos.html` §5 foi reescrito nos dois idiomas. Com isso não é mais loot box sob a Lei 15.211/2025: o que se compra é uma releitura declarada, não uma chance. |
 | 🟡 | ~~**Decidir sobre as keystores no histórico do git**~~ → **rebaixado de 🔴 para 🟡 pela análise de 26/08** (§1.4) | Os keystores são do **DigiApp**, não do Soulmon, e o DigiApp usa **Play App Signing** — a chave vazada é a de **upload**, e a rotação é um formulário de ~5 min no Play Console (Assinatura do app → *Solicitar troca da chave de upload*). **Nada a rotacionar do lado do Soulmon.** `git filter-repo` deixou de ser a opção óbvia: ele reescreve todos os commits, exige force push, quebra clones — **e não muda o risco**, porque quem já clonou já tem. O risco real é instalação lateral de um APK que o Android aceita como atualização do DigiApp; **não** é publicação na loja (isso exige credencial de conta, que nunca esteve no repo). |
 | 🟠 | **Ligar o `FIREBASE_PROJECT_ID`** | É o que fecha `save.js`, `billing.js` e `entitlements.js`. **Só depois** que `VITE_FIREBASE_*` estiver configurado e o build do desktop com login tiver saído — ligar antes derruba o login de todo mundo. |
 
@@ -1508,6 +1542,7 @@ decisão sua.
 | 🟡 | Endereço de contato do VAPID (`workers/push-scheduler.js` → `CONTACT`) — hoje é `contact@digiapp.app`; precisa ser um que você controle |
 | 🟠 | **Decidir se a Fase 4 (sensores via Health Connect) vale o custo** — só o dono pode: exige **conta de organização verificada** no Play (enforcement jan/2026; conta pessoal é bloqueador), declaração de health app, política de privacidade dedicada e consentimento LGPD art. 11 específico por finalidade, além de APK novo. A Fase 3 (Janela de Descanso + Sonhos) já roda **sem sensor nenhum**, igual na PWA e no APK — a Fase 4 é opt-in, só Android, e o plano só a previa **se** a Fase 3 provar que move retenção. Caminho técnico, se aprovada: `@capgo/capacitor-health` (único plugin Capacitor vivo em 2026 que expõe sono). **Google Fit está morrendo (APIs até o fim de 2026) — nada deve ser escrito contra ele.** |
 | 🟡 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` no Pages (fingerprint sai do Play Console → Integridade do app) |
+| 🟡 | 🆕 **`SEASON_ADMIN_KEY` como secret do worker de push** (`wrangler secret put SEASON_ADMIN_KEY` dentro de `workers/`, com o MESMO valor que está no Pages) — a partir do WP4.18 o cron das 10h BRT do dia 1 fecha a season do Torneio e entrega os troféus 🥇🥈🥉. Sem o secret (ou sem `APP_URL`, que já vai versionado em `wrangler.toml`) o fechamento é **pulado com log**, nunca tentado às cegas — e os troféus voltam a depender de você lembrar. Exige um `wrangler deploy` dentro de `workers/`: aquele worker **não** builda no push da `main`. |
 | 🟡 | **`METRICS_ADMIN_KEY` no Pages** — a rota de leitura das métricas (`functions/api/metrics.js`) é **fail-closed**: sem o secret ela responde **404**, não 401, de propósito (401 confirmaria que o endpoint existe). Ou seja: a métrica-norte está instrumentada e agregada, mas **você não consegue ler nada até definir esse segredo**. |
 
 ### 3.3 Steam
