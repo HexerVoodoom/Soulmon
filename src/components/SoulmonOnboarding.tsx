@@ -23,7 +23,7 @@ import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_L
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
-import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON } from '../utils/telemetry';
+import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON, revealDurationBucket } from '../utils/telemetry';
 import type { ActivityCategory } from '../types/attributes';
 
 // Ferramenta interna de dev — não entra no bundle inicial da intro (mesmo
@@ -114,7 +114,15 @@ export type OnboardingCompleteData = {
    */
   consent?: ConsentRecord;
 } & (
-  | { mode: 'oracle'; oracleResult: OracleResult }
+  | {
+      mode: 'oracle';
+      oracleResult: OracleResult;
+      /** WP1.1 — o sprite da forma inicial, quando ele chegou a tempo do
+       *  reveal. Vem daqui para o app poder ADOTAR o mesmo desenho que a
+       *  pessoa acabou de ver: gerar de novo depois entregaria outro bicho no
+       *  primeiro minuto, que é o oposto do que a cerimônia promete. */
+      revealSprite?: { url: string; formId: string; at: number };
+    }
   | { mode: 'demo'; demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' }
 );
 
@@ -134,6 +142,16 @@ interface SoulmonOnboardingProps {
   /** Só em 'upgrade': desistir e voltar ao jogo. */
   onCancel?: () => void;
 }
+
+/**
+ * WP1.1 — quanto o reveal espera pelo desenho antes de seguir só com o texto.
+ *
+ * 12s e não "o tempo que precisar": a espera é cerimônia enquanto tem fim
+ * anunciado; sem teto ela vira tela travada, e travar alguém no primeiro
+ * minuto de uso é o pior lugar possível para isso acontecer. Se o desenho
+ * chegar depois, ele entra no jogo pelo caminho normal do acervo.
+ */
+export const REVEAL_WAIT_MS = 12_000;
 
 interface SavedProfile extends OracleInput { seed: number }
 
@@ -252,6 +270,18 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** Essência do class-system + ofício, calculados pelo pipeline completo —
    *  aparecem como UMA linha no reveal. Pontuações continuam invisíveis. */
   const [essence, setEssence] = useState<{ pt: string; en: string } | null>(null);
+  /* ── WP1.1 — A CERIMÔNIA DE ESPERA DO REVEAL ────────────────────────────
+     O reveal é o momento mais importante do app e acontecia SEM a criatura:
+     nome, descrição e nenhuma imagem — o desenho só chegava depois, já dentro
+     do jogo. Agora ele segura alguns segundos com a cerimônia do casulo
+     enquanto a forma inicial é gerada.
+     A SAÍDA é a metade que importa: `REVEAL_WAIT_MS` corre contra a geração e
+     o que vier primeiro manda. Geração que falha, ou que demora, não pode
+     virar tela travada no primeiro minuto de uso de alguém. */
+  const [revealSprite, setRevealSprite] = useState<{ url: string; formId: string; at: number } | null>(null);
+  const [revealEsperando, setRevealEsperando] = useState(false);
+  /** Quando o reveal apareceu — vira FAIXA em `reveal_seen.duration` (WP0.12). */
+  const revealAbertoEmRef = useRef(0);
   const [nickname, setNickname] = useState('');
   /** Batismo do Soulmon. `null` = a pessoa não encostou no campo, e o que
    *  aparece na tela é a sugestão (`registerDisplayName`). Guardar assim, em
@@ -432,6 +462,45 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // jogador o reroll pelo qual ele pode ter pagado. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, profile);
     setStep(REVEAL);
+    revealAbertoEmRef.current = Date.now();
+    iniciarCerimoniaDoReveal(r);
+  };
+
+  /**
+   * WP1.1 — pede o desenho da forma INICIAL e corre contra o relógio.
+   *
+   * Só a forma inicial: as outras dez são geradas depois, dentro do jogo, pelo
+   * acervo (`useSpriteGeneration`). Pedir onze aqui multiplicaria por onze o
+   * custo e a espera no exato ponto em que a pessoa ainda não sabe se fica.
+   *
+   * Nunca lança: qualquer falha simplesmente encerra a espera, e o reveal
+   * segue com o texto — que é o comportamento que existia antes desta peça.
+   */
+  const iniciarCerimoniaDoReveal = (r: OracleResult) => {
+    const inicial = r.creature.stages.find(st => st.stage === 'rookie') ?? r.creature.stages[0];
+    if (!inicial) return;
+    setRevealEsperando(true);
+    let encerrado = false;
+    const encerra = () => { if (!encerrado) { encerrado = true; setRevealEsperando(false); } };
+    const relogio = setTimeout(encerra, REVEAL_WAIT_MS);
+    void (async () => {
+      try {
+        const { requestSprite } = await import('../utils/spriteGen');
+        const { image } = await requestSprite(inicial.imagePrompt, {
+          promptFallback: inicial.imagePromptFallback,
+          formId: 'rookie',
+        });
+        // Chegou DEPOIS do teto: não empurra o desenho numa tela que a pessoa
+        // já leu como "sem imagem" — o acervo entrega no jogo, no tempo dele.
+        if (encerrado) return;
+        setRevealSprite({ url: image, formId: 'rookie', at: Date.now() });
+      } catch {
+        /* falha de geração não é falha do ritual */
+      } finally {
+        clearTimeout(relogio);
+        encerra();
+      }
+    })();
   };
 
   const next = () => {
@@ -579,6 +648,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         petName: petNameFinal,
         email: email.trim().toLowerCase(),
         oracleResult: result,
+        // WP1.1 — o MESMO desenho que a pessoa viu no reveal. Sem isto o app
+        // geraria de novo e entregaria outra criatura no primeiro minuto.
+        revealSprite: revealSprite ?? undefined,
         initialActivities: [],
         soulGoal: soulGoal.trim(),
         soulStruggle: soulStruggle.trim(),
@@ -1184,6 +1256,33 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               </p>
             )}
 
+            {/* WP1.1 — O CASULO, e depois a criatura.
+                Enquanto o desenho vem, o que se vê é um casulo pulsando: a
+                espera vira parte do ritual em vez de um vazio onde deveria
+                estar a criatura. Quando o desenho chega, ele TROCA o casulo
+                ali mesmo. Se o tempo acabar antes, nada disso fica na tela —
+                um casulo parado seria a promessa de algo que não vem. */}
+            {(revealEsperando || revealSprite) && (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 16px' }}>
+                {revealSprite ? (
+                  <img
+                    src={revealSprite.url}
+                    alt={result.creature.baseName}
+                    width={128}
+                    height={128}
+                    className="sm-visor-swap"
+                    style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
+                  />
+                ) : (
+                  <span
+                    className="sm-reveal-cocoon"
+                    role="status"
+                    aria-label={isPt ? 'A criatura está tomando forma' : 'The creature is taking shape'}
+                  />
+                )}
+              </div>
+            )}
+
             <div style={{
               padding: '16px 16px', marginBottom: 24, borderRadius: 12,
               border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
@@ -1195,7 +1294,20 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <button
               type="button"
               style={{ ...sm2Button('primary'), width: '100%' }}
-              onClick={() => { if (isUpgrade) onRevealed?.(result); else setStep(REGISTER); }}
+              onClick={() => {
+                /* WP0.12 — `reveal_seen` com a FAIXA de tempo. O schema
+                   existia desde o WP0.5 com `has_sprite`, e a duração entrou
+                   no WP0.8/0.12 esperando exatamente esta fiação: sem ela não
+                   dava para saber se o reveal foi OLHADO ou pulado — que é a
+                   única pergunta que justifica ter feito a cerimônia. */
+                const seg = (Date.now() - (revealAbertoEmRef.current || Date.now())) / 1000;
+                track('reveal_seen', {
+                  has_sprite: revealSprite ? 1 : 0,
+                  funnel: TELEMETRY_FUNNEL.paid,
+                  duration: revealDurationBucket(seg),
+                });
+                if (isUpgrade) onRevealed?.(result); else setStep(REGISTER);
+              }}
             >
               {isUpgrade
                 ? (isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`)

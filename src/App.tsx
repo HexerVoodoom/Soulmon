@@ -26,7 +26,7 @@ import { EvolveTaskModal } from './components/EvolveTaskModal';
 import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { spriteText } from './utils/spriteCopy';
-import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, type SpriteLibrary } from './utils/spriteLibrary';
+import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
@@ -3776,6 +3776,14 @@ export default function App() {
       maxHealthPoints: getMaxHPForStage('rookie'),
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       soulmonStages: data.oracleResult.creature.stages,
+      /* WP1.1 — ADOTA o desenho que a pessoa acabou de ver no reveal.
+         Sem isto o acervo geraria a forma inicial de novo, e a criatura que
+         entra no jogo seria OUTRA — a cerimônia teria mostrado um bicho que
+         não é o dela. `adopt: 'now'` porque no nascimento não há história a
+         proteger (é a exceção que a regra da adoção já prevê). */
+      spriteLibrary: data.revealSprite
+        ? recordSprite(prev.spriteLibrary ?? emptySpriteLibrary(), data.revealSprite, { adopt: 'now' })
+        : prev.spriteLibrary,
       soulmonMeta: {
         seed: data.oracleResult.seed,
         baseName: data.oracleResult.creature.baseName,

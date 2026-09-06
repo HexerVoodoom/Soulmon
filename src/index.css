@@ -7061,6 +7061,8 @@ button.sm-px-node {
   /* WP3.2: o olhar para a assombrada perde o BALANÇO, não a inclinação — a
      leitura ("ele reparou naquilo") sobrevive parada. */
   .sm-pet-haunted { animation: none !important; transform: rotate(-4deg); }
+  /* WP1.1: o casulo do reveal para de pulsar e continua sendo um casulo. */
+  .sm-reveal-cocoon { animation: none !important; }
   .sm2-viewport { animation: none !important; }
   .sm2-icon { transition: none !important; }
   /* A sintonia do Visor (troca da arte de reserva pelo sprite próprio) vira
@@ -7620,4 +7622,24 @@ body {
   border-radius: 50%;
   background: rgba(0, 0, 0, .28);
   filter: blur(3px);
+}
+
+/* WP1.1 — O CASULO do reveal.
+   A espera pelo desenho da criatura vira cerimônia: um casulo que pulsa
+   enquanto a forma vem. Nada de spinner — spinner diz "o sistema está
+   ocupado", e o que está acontecendo ali é a criatura tomando forma.
+   Movimento reduzido: o casulo fica parado (a regra mora no bloco canônico). */
+@keyframes sm-reveal-cocoon-pulse {
+  0%, 100% { transform: scale(1); opacity: .85; }
+  50%      { transform: scale(1.06); opacity: 1; }
+}
+.sm-reveal-cocoon {
+  display: block;
+  width: 96px;
+  height: 128px;
+  border-radius: 48px / 64px;
+  background: radial-gradient(60% 55% at 50% 40%, var(--sm2-primary-fill, #6ee7d7), transparent 70%),
+              var(--sm2-surface, #1d2b2e);
+  border: 2px solid var(--sm2-line, #2f4145);
+  animation: sm-reveal-cocoon-pulse 1.6s ease-in-out infinite;
 }
