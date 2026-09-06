@@ -88,8 +88,8 @@ describe('janela e a recusa de conversão (regra 5)', () => {
 describe('o relatório inteiro', () => {
   it('abre dizendo o que NÃO sabe, antes de qualquer número', () => {
     const linhas = renderRelatorio(resposta({ day_active: 40 }));
-    const iAusencia = linhas.findIndex(l => l.includes('NÃO é calculável'));
-    const iNumero = linhas.findIndex(l => l.includes('dias-ativos contados'));
+    const iAusencia = linhas.findIndex((l: string) => l.includes('NÃO é calculável'));
+    const iNumero = linhas.findIndex((l: string) => l.includes('dias-ativos contados'));
     expect(iAusencia).toBeGreaterThan(-1);
     expect(iAusencia, 'a ausência tem de estar nos dez primeiros segundos de leitura')
       .toBeLessThan(iNumero);
