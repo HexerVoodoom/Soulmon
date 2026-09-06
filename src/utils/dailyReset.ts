@@ -16,6 +16,7 @@ import {
   earnShield,
   type HabitRhythm,
 } from './habitRhythm';
+import { ensureSeasonProgress, applySeasonMedal } from './seasons';
 
 // Tipos necessários para o reset
 interface Activity {
@@ -782,6 +783,21 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
     lastDayWasPerfect: dayWasPerfect,
     // Contador vitalício de dias perfeitos (missões) — nunca zera ao evoluir.
     totalPerfectDays: (prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0),
+    /* WP4.16 — a estação passa a existir para o jogador.
+       `seasons.ts` estava escrito, testado e SEM CONSUMIDOR: ninguém chamava
+       `ensureSeasonProgress`, ninguém chamava `applySeasonMedal`, e por isso a
+       medalha da estação nunca podia ser ganha por ninguém.
+       A ordem importa: `ensure` primeiro (entrar numa estação nova tira foto
+       nova preservando `earnedMedals`), `apply` depois, sobre os contadores JÁ
+       atualizados desta virada — senão a medalha chega sempre um dia tarde. */
+    season: (() => {
+      const contadores = {
+        totalPerfectDays: (prev.totalPerfectDays ?? 0) + (dayWasPerfect ? 1 : 0),
+        dungeonRunsCompleted: prev.dungeonRunsCompleted ?? 0,
+      };
+      const alinhado = ensureSeasonProgress(prev.season, contadores, now);
+      return applySeasonMedal(alinhado, contadores, prev.rest, now);
+    })(),
     maxActivityCap: newMaxActivityCap,
     attributesSinceLastEvolution: newRecentAttrs,
     habitRhythms: rhythms,

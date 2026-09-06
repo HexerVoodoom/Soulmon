@@ -36,6 +36,11 @@ import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import type { CarePattern } from '../utils/carePattern';
+import {
+  seasonProgress, seasonLabel, seasonMedalStatus,
+  type SeasonProgressState, type SeasonCounters,
+} from '../utils/seasons';
+import type { RestState } from '../utils/restWindow';
 import { bondProgress, bondTitle } from '../utils/bond';
 import { Icon } from './ui/Icon';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
@@ -85,6 +90,12 @@ interface StatsPageProps {
     droppedItems?: string[];
     soulGoal?: string;
   };
+  /** Estado da estação (`utils/seasons.ts`) + contadores para os três caminhos. */
+  season?: {
+    state?: SeasonProgressState;
+    counters: SeasonCounters;
+    rest?: RestState;
+  };
 }
 
 /**
@@ -133,6 +144,7 @@ export function StatsPage({
   petPassive,
   carePattern,
   journey,
+  season,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
   const t = useTranslation(language);
@@ -325,6 +337,67 @@ export function StatsPage({
           </p>
         )}
       </section>
+
+      {/* ─────────────── A estação ───────────────
+
+          WP4.16 — `seasons.ts` estava escrito, testado e SEM CONSUMIDOR:
+          `seasonLabel`, `SEASON_PATHS`, `ensureSeasonProgress` e
+          `applySeasonMedal` nunca eram chamados, então o jogador não sabia que
+          estação era e a medalha **não podia ser ganha por ninguém**.
+
+          A spec original mandava isto para a aba Missões da Loja. Essa aba não
+          existe mais — foi removida num redesenho, porque explicava o cadeado
+          longe do cadeado. O bloco veio para cá, ao lado de "dias perfeitos até
+          aqui", que é a outra leitura de jornada da tela.
+
+          DUAS travas de forma, da ressalva #15/E4:
+          · nada de "faltam N dias" e nada de contagem regressiva. A estação é
+            um CALENDÁRIO ("tem mais coisa agora"), nunca um prazo ("corre").
+            É a diferença entre motivo para voltar e medo de perder, e é a
+            regra 1 do cabeçalho de `seasons.ts`.
+          · caminho com progresso ZERO não vira `0/20` na tela. Um placar de
+            zeros é a fatura que este produto não emite; o caminho aparece
+            quando a pessoa já andou nele. */}
+      {season && (() => {
+        const win = seasonProgress();
+        const status = seasonMedalStatus(season.state, season.counters, season.rest);
+        const andados = status.paths.filter(p => p.current >= 1);
+        return (
+          <section style={card}>
+            <h3 style={sectionTitle}>{isPt ? 'A estação' : 'The season'}</h3>
+            <p style={{ ...sm2Text, margin: 0 }}>{seasonLabel(win, isPt ? 'pt-BR' : 'en-US')}</p>
+
+            {andados.length > 0 && (
+              <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {andados.map(p => (
+                  <p key={p.id} className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>
+                    {isPt ? p.labelPt : p.labelEn}
+                    {' · '}
+                    <span style={{ color: p.done ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
+                      {Math.min(p.current, p.target)}/{p.target}
+                    </span>
+                  </p>
+                ))}
+                <p style={sm2Hint}>
+                  {isPt
+                    ? 'Um caminho basta — nunca os três.'
+                    : 'One path is enough — never all three.'}
+                </p>
+              </div>
+            )}
+
+            {(status.earned || (status.season && (season.state?.earnedMedals?.length ?? 0) > 0)) && (
+              <p style={{ ...sm2Text, marginTop: 12 }}>
+                {isPt ? 'Medalhas guardadas: ' : 'Medals kept: '}
+                <span style={{ color: 'var(--sm2-primary-ink)' }}>
+                  {(season.state?.earnedMedals?.length ?? 0) + (status.earned && !season.state?.medalEarned ? 1 : 0)}
+                </span>
+                {isPt ? ' — para sempre.' : ' — forever.'}
+              </p>
+            )}
+          </section>
+        );
+      })()}
 
       {/* ─────────────── O que você mais repete ─────────────── */}
       <section style={card}>

@@ -4529,6 +4529,14 @@ export default function App() {
               vaccinePoints={gameState.vaccinePoints}
               petPassive={gameState.petPassive}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              season={{
+                state: gameState.season,
+                counters: {
+                  totalPerfectDays: gameState.totalPerfectDays ?? 0,
+                  dungeonRunsCompleted: gameState.dungeonRunsCompleted ?? 0,
+                },
+                rest: gameState.rest,
+              }}
               journey={{
                 unlockedEvolutions: gameState.unlockedEvolutions,
                 soulmonStages: gameState.soulmonStages,

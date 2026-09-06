@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useRef, type R
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import type { SeasonProgressState } from '../utils/seasons';
 import { cloudSaveComRetry } from '../utils/cloudSave';
 import { pushProfile } from '../utils/community';
 import type { CreatureStage, ElementId, AlignmentId, RealmId } from '../utils/oracle';
@@ -284,6 +285,9 @@ export interface GameState {
   dungeonRunsCompleted?: number;
   dinoBest?: number;
   totalPerfectDays?: number;
+  /** Estado da estação corrente (`utils/seasons.ts`). Fiado em 06/09/2026
+   *  (WP4.16): o módulo existia inteiro e nunca era chamado por ninguém. */
+  season?: SeasonProgressState;
   /** Shop item ids that have EVER dropped — unlocks their purchase (utils/shop.ts unlock:'drop'). */
   droppedItems?: string[];
   /** Summary of the previous day, written at the daily reset and shown once as a report. */
@@ -911,6 +915,9 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         dungeonRunsCompleted: num(loadedState.dungeonRunsCompleted, 0),
         dinoBest: num(loadedState.dinoBest, 0),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
+        // `?? undefined`: save antigo simplesmente não tem estação, e a
+        // primeira virada tira a foto. Nada a migrar.
+        season: (loadedState as { season?: SeasonProgressState }).season ?? undefined,
         droppedItems: strArr(loadedState.droppedItems),
         // A árvore do oráculo: cada forma é lida por `creatureFormId(s)`, que
         // acessa campos do objeto — um item primitivo aqui derruba a tela do Pet.
