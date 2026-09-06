@@ -89,6 +89,7 @@ import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { soulmonDisplayName } from './utils/petName';
 import { readingSeed } from './utils/newReading';
+import { anniversaryOn, daysTogether } from './utils/anniversary';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
 import { purchase } from './utils/playBilling';
@@ -2767,6 +2768,12 @@ export default function App() {
       accountTier: 'paid',
       eggType: genericLine,
       demoCharacterId: undefined,
+      /* `bornAt` NÃO é tocado aqui, e a ausência é a decisão (D17): o upgrade
+         é "trocou de pele", não "nasceu de novo". Quem joga há 40 dias
+         continua tendo 40 dias juntos depois de comprar — comprar não pode
+         zerar o único número do produto que só sobe. Se um save de antes do
+         WP1.16 chegar aqui sem `bornAt`, ele continua sem: inferir a data de
+         outra coisa seria inventar. */
       soulmonStages: result.creature.stages,
       soulmonMeta: {
         seed: result.seed,
@@ -2881,6 +2888,32 @@ export default function App() {
       : `Your bond brought you: ${nomes}`);
     setMessageTrigger(prev => prev + 1);
   }, [gameState.totalXP, gameState.bondRewardsClaimed, language, setGameState]);
+
+  /**
+   * WP1.16 — o aniversário da criatura.
+   *
+   * Uma fala, uma vez, no dia. Sem XP, sem item, sem push: o Vínculo não pede
+   * ação nova, e um aniversário que rende recompensa vira mais uma coisa a não
+   * perder. Usa o canal de fala que o WP3.8 acabou de religar — antes dele,
+   * isto seria mais um sinal caindo no vazio.
+   */
+  const aniversarioRef = useRef<string | null>(null);
+  useEffect(() => {
+    const hoje = playerDayKey(new Date(), gameState.playerDayTz);
+    if (aniversarioRef.current === hoje) return;
+    const tipo = anniversaryOn(gameState.bornAt, hoje);
+    if (!tipo) return;
+    aniversarioRef.current = hoje;
+    const nome = soulmonDisplayName(gameState.soulmonMeta);
+    toast(language === 'pt-BR'
+      ? (tipo === 'year'
+        ? `Hoje faz um ano que você e ${nome} se conhecem.`
+        : `Hoje faz um mês que você e ${nome} se conhecem.`)
+      : (tipo === 'year'
+        ? `Today is one year since you and ${nome} met.`
+        : `Today is one month since you and ${nome} met.`));
+    setMessageTrigger(prev => prev + 1);
+  }, [gameState.bornAt, gameState.playerDayTz, gameState.soulmonMeta, language]);
 
   const bondLevelRef = useRef<number | null>(null);
   useEffect(() => {
@@ -3554,6 +3587,8 @@ export default function App() {
         // onboarding e entra no save — é o que sobrevive ao cloud save.
         consent: data.consent ?? prev.consent,
         petPassive: rollPetPassive(),
+        // WP1.16 — a data de nascimento da criatura, no dia do JOGADOR.
+        bornAt: playerDayKey(new Date(), prev.playerDayTz),
       }));
       return;
     }
@@ -3595,6 +3630,7 @@ export default function App() {
       soulStruggle: data.soulStruggle,
       consent: data.consent ?? prev.consent,
       petPassive: rollPetPassive(),
+      bornAt: playerDayKey(new Date(), prev.playerDayTz),
     }));
   };
 
@@ -4595,6 +4631,12 @@ export default function App() {
               vaccinePoints={gameState.vaccinePoints}
               petPassive={gameState.petPassive}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
+              /* WP2.11 — "N dias juntos". Lê de `bornAt` (WP1.16) e não de um
+                 segundo contador: três guardas propuseram medir "há quanto
+                 tempo" de três jeitos diferentes, e uma fonte só é o conserto.
+                 `null` quando o save não tem data — e aí a linha não aparece,
+                 em vez de aparecer com um número inventado. */
+              daysTogether={daysTogether(gameState.bornAt, playerDayKey(new Date(), gameState.playerDayTz))}
               season={{
                 state: gameState.season,
                 counters: {

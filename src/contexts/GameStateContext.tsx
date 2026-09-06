@@ -232,6 +232,22 @@ export interface GameState {
     dominantAlignment?: AlignmentId;
     dominantRealm?: RealmId;
   };
+  /**
+   * O DIA em que esta criatura nasceu — dia do JOGADOR (`utils/playerDay.ts`),
+   * gravado UMA vez no fim do onboarding (WP1.16).
+   *
+   * Ausente nos saves anteriores a 06/09/2026, e nesses **nunca é inferido**:
+   * "há 40 dias" calculado de uma data que não é a do nascimento é pior que
+   * não dizer nada, e o app não tem como saber. Sem `bornAt` não há cartão de
+   * nascimento e não há aniversário — e isso é aceitável, porque o campo só
+   * alimenta coisas que ninguém sente falta de não ter.
+   *
+   * **O upgrade NÃO reescreve este campo** (decisão D17: "trocou de pele",
+   * não "nasceu de novo"): quem joga há 40 dias continua tendo 40 dias juntos
+   * depois de comprar. É o único número do produto que só sobe, e comprar não
+   * pode zerá-lo.
+   */
+  bornAt?: string;
   /** Attribute points accumulated since the last evolution — drives branch selection */
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
   /** Version B: food stockpile keyed by food emoji */
@@ -918,6 +934,9 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         // `?? undefined`: save antigo simplesmente não tem estação, e a
         // primeira virada tira a foto. Nada a migrar.
         season: (loadedState as { season?: SeasonProgressState }).season ?? undefined,
+        // `?? undefined` e NUNCA um fallback calculado: ver o comentário do campo.
+        bornAt: typeof (loadedState as { bornAt?: unknown }).bornAt === 'string'
+          ? (loadedState as { bornAt: string }).bornAt : undefined,
         droppedItems: strArr(loadedState.droppedItems),
         // A árvore do oráculo: cada forma é lida por `creatureFormId(s)`, que
         // acessa campos do objeto — um item primitivo aqui derruba a tela do Pet.

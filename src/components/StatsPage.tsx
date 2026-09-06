@@ -90,6 +90,9 @@ interface StatsPageProps {
     droppedItems?: string[];
     soulGoal?: string;
   };
+  /** Dias desde o nascimento da criatura (`utils/anniversary.ts`). `null` em
+   *  save sem `bornAt` — e aí a linha simplesmente não aparece. */
+  daysTogether?: number | null;
   /** Estado da estação (`utils/seasons.ts`) + contadores para os três caminhos. */
   season?: {
     state?: SeasonProgressState;
@@ -144,6 +147,7 @@ export function StatsPage({
   petPassive,
   carePattern,
   journey,
+  daysTogether,
   season,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
@@ -317,6 +321,18 @@ export function StatsPage({
           </span>
           <span style={sm2Hint}>{isPt ? 'dias perfeitos até aqui' : 'perfect days so far'}</span>
         </div>
+
+        {/* WP2.11 — "dias juntos".
+            Admissível como número exibido porque só CRESCE: não existe leitura
+            em que ele desça, então não vira placar de desempenho (C.3 #2). E é
+            o número que responde "estou com ele há quanto tempo?", que a
+            pesquisa aponta como a frase que as pessoas dizem sobre um v-pet de
+            que gostam. Obedece `hideMetrics` como todo o resto. */}
+        {typeof daysTogether === 'number' && (
+          <p className="sm2-num" style={{ ...sm2Hint, marginTop: 6 }}>
+            {isPt ? `${daysTogether} dias juntos` : `${daysTogether} days together`}
+          </p>
+        )}
 
         {formNames.length > 0 && (
           <p style={{ ...sm2Text, marginTop: 12 }}>
