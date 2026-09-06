@@ -40,6 +40,33 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > Gate em cada lote: tsc app + desktop EXIT=0, vitest **193 arquivos · 2998
 > passed · 2 skipped**, build OK.
 
+> **06/09/2026 — O PLANO INTEIRO FOI PERCORRIDO: 87 pacotes, PROPOSTO em ZERO.**
+> Sprints 3 a 7 rodaram na mesma sessão, em lotes com gate completo
+> (`tsc` app + desktop, `vitest`, `build`) e merge ff-only em `main` a cada
+> lote. O estado final: **77 VERIFICADO · 8 IMPLEMENTADO · 2 RECUSADO · ZERO
+> PROPOSTO · ZERO BLOQUEADO** (`docs/plano-melhorias/LEDGER.md`).
+>
+> **Os 8 IMPLEMENTADOS não são pendências esquecidas** — o código está no repo,
+> testado e mergeado, e o que falta em cada um não é código:
+> · **WP0.1** espera `METRICS_ADMIN_KEY` no Pages;
+> · **WP0.6, WP2.6, WP5.8** esperam um APK novo (§3.2);
+> · **WP4.6** tem o álbum e o bestiário e deixou o **Abismo** (andares 6–8)
+> declarado como aberto; **WP4.7** tem o motor de missões semanais e falta a
+> fiação dos contadores; **WP3.1** tem o bloco CONTEXT e falta a memória de
+> sessão; **WP1.2** tem o eco do `soulGoal` e a cerimônia, e falta a régua da
+> bio em `composeBio`.
+>
+> O fio condutor de tudo isso, em uma frase: **o app parou de prometer coisas
+> que não fazia.** O pet olha a assombrada, o título do Vínculo chega na home,
+> o `soulStruggle` volta na hora que dói, o reveal mostra a criatura, a faixa
+> do Torneio não rebaixa mais por motivo que não é do jogador, o lembrete de
+> deitar existe, os Bits têm onde ser gastos, a queda tem volta e a compra não
+> cobra duas vezes. Cada uma dessas era uma frase escrita em algum documento
+> deste repositório e falsa no código.
+>
+> Gate final: tsc app + desktop EXIT=0, vitest **223 arquivos · 3359 passed ·
+> 2 skipped**, build OK.
+
 > **06/09/2026 — NOVA MECÂNICA: RENASCIMENTO (Rebirth).** Pedido do dono nesta
 > sessão, com as quatro decisões de forma respondidas antes do código
 > (**D-R1..D-R4**, em `docs/RENASCIMENTO.md`). Depois do **Ultra**, quem

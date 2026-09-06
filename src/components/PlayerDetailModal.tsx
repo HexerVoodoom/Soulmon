@@ -71,10 +71,20 @@ export function PlayerDetailModal({ player, language, onClose }: PlayerDetailMod
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        {/* WP4.14 — A CRIATURA É VISITÁVEL, e visitar é OLHAR.
+            A tela do outro jogador existia como uma ficha pequena; a única
+            coisa que a comunidade deste jogo tem de interessante — a criatura
+            que a outra pessoa criou — aparecia num quadradinho de 48px.
+            Aqui ela ganha tamanho.
+            E a visita não tem ESTADO nem NÚMERO (decisão 8 + proibição #21):
+            não dá para cutucar, presentear, curtir nem comparar. Uma visita
+            que rende alguma coisa deixa de ser visita e vira loop de
+            engajamento social — que é exatamente o que este produto recusa
+            desde que o `rank` saiu daqui. */}
         <Viewport
           width={48}
           height={48}
-          scale={2}
+          scale={3}
           breathing={false}
           label={isPt ? `Soulmon de ${player.name}` : `${player.name}'s Soulmon`}
           screenStyle={{ position: 'relative' }}

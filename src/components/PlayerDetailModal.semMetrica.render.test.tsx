@@ -82,3 +82,23 @@ describe('PlayerDetailModal — nenhuma métrica de desempenho alheio (WP4.11)',
     expect(acao, 'a ordem por nome sumiu').toMatch(/localeCompare/);
   });
 });
+
+describe('WP4.14 — visitar é OLHAR: sem estado e sem número', () => {
+  it('a criatura aparece grande — é a única coisa interessante da comunidade', () => {
+    const fonte = readFileSync(resolve(process.cwd(), 'src/components/PlayerDetailModal.tsx'), 'utf-8');
+    // 48px de sprite num modal inteiro era uma ficha, não uma visita.
+    expect(fonte).toMatch(/scale=\{3\}/);
+  });
+
+  it('nenhuma AÇÃO sobre a criatura do outro', () => {
+    // Cutucar, presentear, curtir ou comparar transformam a visita num loop
+    // de engajamento social — o oposto do que a saída do `rank` daqui
+    // estabeleceu (WP4.11, proibição #21).
+    const fonte = readFileSync(resolve(process.cwd(), 'src/components/PlayerDetailModal.tsx'), 'utf-8');
+    for (const proibido of ['cutuc', 'poke', 'curtir', 'like', 'presente', 'gift', 'desafiar', 'challenge']) {
+      expect(fonte.toLowerCase(), `a visita ganhou ação ("${proibido}")`).not.toMatch(
+        new RegExp(`onclick[^\\n]*${proibido}`, 'i'),
+      );
+    }
+  });
+});

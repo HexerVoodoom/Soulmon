@@ -67,13 +67,21 @@ rápido; a fonte são os arquivos de `ledger/`.
 
 | Área | PROPOSTO | BLOQUEADO | EM CURSO | IMPLEMENTADO | VERIFICADO | RECUSADO |
 |---|---|---|---|---|---|---|
-| medição (13) | 6 | — | — | **1** (0.1, falta a chave) | **6** (0.3, 0.5, 0.7, 0.8, 0.13, 0.14) | — |
-| nascimento (17) | 13 | — | — | — | **4** (1.7, 1.9, 1.10, 1.16) | — |
-| constância (15) | 8 | — | — | — | **6** (2.3, 2.9, 2.10, 2.11, 2.12, 2.15) | **1** (2.1, por D3) |
-| vínculo (11) | 8 | — | — | — | **3** (3.7, 3.8, 3.9) | — |
-| permanência (21) | 11 | — | — | — | **9** (4.1, 4.2, 4.9, 4.11, 4.15, 4.16, 4.17, 4.18, 4.20) | **1** (4.4) |
-| sustento (10) | 5 | — | — | — | **5** (5.2, 5.5, 5.6, 5.7, 5.9) | — |
-| **Total (87)** | **51** | **ZERO** | — | **1** | **33** | **2** |
+| medição (13) | — | — | — | **1** (0.1, falta a chave) | **12** | — |
+| nascimento (17) | — | — | — | **1** (1.2, falta a régua da bio) | **16** | — |
+| constância (15) | — | — | — | **1** (2.6, requer APK) | **13** | **1** (2.1, por D3) |
+| vínculo (11) | — | — | — | **1** (3.1, falta a memória de sessão) | **10** | — |
+| permanência (21) | — | — | — | **2** (4.6 abismo, 4.7 fiação) | **18** | **1** (4.4) |
+| sustento (10) | — | — | — | **2** (0.6 e 5.8, requerem APK) | **8** | — |
+| **Total (87)** | **ZERO** | **ZERO** | — | **8** | **77** | **2** |
+
+> **06/09/2026 — a coluna PROPOSTO zerou.** Os 87 pacotes do plano foram
+> percorridos. Os **8 IMPLEMENTADOS** não são pendências esquecidas: são
+> pacotes cujo código está no repo, testado e mergeado, e cujo aceite depende
+> de algo que não é código — a chave `METRICS_ADMIN_KEY` (0.1), um APK novo
+> (0.6, 2.6, 5.8) — ou de uma fatia declarada como aberta no próprio ledger
+> (o Abismo do 4.6, a fiação dos contadores do 4.7, a memória de sessão do
+> 3.1). Cada um diz no seu ledger o que falta e por quê.
 
 > ⚠️ **O total dizia 88 e o plano tem 87** (`grep -o 'WP[0-9]\+\.[0-9]\+' docs/PLANO-MELHORIAS.md | sort -u | wc -l`). O 88 veio de somar o WP5.9 sem descontar nada; contado em 06/09/2026.
 
