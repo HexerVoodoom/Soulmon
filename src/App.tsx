@@ -4673,6 +4673,8 @@ export default function App() {
                    como efeito de regra e uma linha em Estatísticas: dois pets
                    do mesmo estágio se comportavam diferente e falavam igual. */
                 petPassive={gameState.petPassive}
+                /* WP3.1 — o chat passa a saber há quanto tempo estão juntos. */
+                bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 /* WP3.3 — nome e título do Vínculo na home. O título é
                    DERIVADO na leitura (`bondLevelFor(totalXP)`); guardá-lo no
                    save seria duas fontes para o mesmo número (footgun 9). */

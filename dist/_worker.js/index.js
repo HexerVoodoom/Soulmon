@@ -1196,7 +1196,47 @@ var CORS3 = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
-function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, language, aiSettings }) {
+var CONTEXT_SCHEMA = {
+  hp: { min: 0, max: 4 },
+  energy: { min: 0, max: 4 },
+  bond: { min: 1, max: 31 },
+  daysAway: { min: 0, max: 3 },
+  moodToday: { min: 0, max: 4 },
+  goalCategory: { min: 0, max: 7 }
+};
+function sanitizeChatContext(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const regra = Object.prototype.hasOwnProperty.call(CONTEXT_SCHEMA, k) ? CONTEXT_SCHEMA[k] : null;
+    if (!regra) return null;
+    if (typeof v !== "number" || !Number.isFinite(v)) return null;
+    const n = Math.round(v);
+    if (n < regra.min || n > regra.max) return null;
+    out[k] = n;
+  }
+  return Object.keys(out).length ? out : null;
+}
+__name(sanitizeChatContext, "sanitizeChatContext");
+function contextBlock(ctx) {
+  if (!ctx) return "";
+  const linhas = [];
+  if (typeof ctx.hp === "number") {
+    linhas.push(ctx.hp <= 1 ? "You are hurt right now." : ctx.hp >= 4 ? "You feel healthy." : "You feel okay.");
+  }
+  if (typeof ctx.energy === "number" && ctx.energy <= 1) linhas.push("You are low on energy.");
+  if (typeof ctx.bond === "number" && ctx.bond >= 10) linhas.push("You two have been together for a long time.");
+  if (typeof ctx.daysAway === "number" && ctx.daysAway >= 1) {
+    linhas.push("They were away for a while and just came back. Be glad, never reproachful, and do not mention what was left undone.");
+  }
+  if (!linhas.length) return "";
+  return `
+CONTEXT (facts about right now \u2014 never read numbers out loud):
+- ${linhas.join("\n- ")}
+`;
+}
+__name(contextBlock, "contextBlock");
+function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, language, aiSettings, context }) {
   const s = aiSettings || { tone: "casual", emojiIntensity: "medium", motivationStyle: "balanced", customKeywords: "", temperature: 0.85 };
   const ispt = language === "pt-BR";
   const branch = {
@@ -1239,7 +1279,7 @@ ${FECHA_ESTILO}
 BRANCH (${dominantBranch}): ${branch.trait} ${branch.style} Emojis: ${branch.emojis}
 MOOD (${mood}): ${moodCtx}
 MATURITY: ${maturity} Stage: ${evolutionStage}
-
+${contextBlock(context)}
 RESPONSE RULES:
 - Tone: ${toneMap[s.tone] || "Casual"}
 - Emojis: ${emojiMap[s.emojiIntensity] || "2-3 emojis"}
@@ -1297,7 +1337,7 @@ async function onRequestPost2({ request, env }) {
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
           messages: [
-            { role: "system", content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || "Soulmon").slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings }) },
+            { role: "system", content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || "Soulmon").slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
             { role: "user", content: safeMessage }
           ],
           max_tokens: 120,
@@ -3016,7 +3056,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-uXuoSd/functionsRoutes-0.6200480323060369.mjs
+// ../.wrangler/tmp/pages-xPaso0/functionsRoutes-0.23620876943209934.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -101,7 +101,69 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, language, aiSettings }) {
+/**
+ * WP3.1 — CONTEXTO NUMÉRICO, ALLOWLISTED.
+ *
+ * O prompt não recebia NADA sobre o estado: nem HP, nem Vínculo, nem se a
+ * pessoa acabou de voltar de uma ausência. O pet respondia igual no dia em que
+ * ela voltou depois de duas semanas e no dia em que ela fechou tudo — e essa
+ * indiferença é o que separa "companheiro" de "chatbot com fantasia".
+ *
+ * A allowlist é o mesmo padrão de `metrics.js`, e pela mesma razão: **só
+ * INTEIRO entra**. Prop desconhecida ou valor fora da faixa descarta o bloco
+ * INTEIRO em vez de aceitar metade — meio contexto é pior que nenhum, porque
+ * ninguém sabe qual metade chegou.
+ *
+ * ⚠️ Nada de TEXTO aqui, nunca: `soulGoal`/`soulStruggle` não passam por rota
+ * de IA (`_redact.js`, decisão D8), e a categoria derivada deles entra como
+ * enum, não como frase.
+ */
+const CONTEXT_SCHEMA = {
+  hp: { min: 0, max: 4 },
+  energy: { min: 0, max: 4 },
+  bond: { min: 1, max: 31 },
+  daysAway: { min: 0, max: 3 },
+  moodToday: { min: 0, max: 4 },
+  goalCategory: { min: 0, max: 7 },
+};
+
+export function sanitizeChatContext(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out = {};
+  for (const [k, v] of Object.entries(raw)) {
+    const regra = Object.prototype.hasOwnProperty.call(CONTEXT_SCHEMA, k) ? CONTEXT_SCHEMA[k] : null;
+    if (!regra) return null;                       // prop desconhecida derruba o bloco
+    if (typeof v !== 'number' || !Number.isFinite(v)) return null;
+    const n = Math.round(v);
+    if (n < regra.min || n > regra.max) return null;
+    out[k] = n;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/** O bloco que entra no prompt. Frases curtas e SEM número cru: o modelo não
+ *  precisa saber "hp 2 de 4", precisa saber que o bicho está meio machucado. */
+function contextBlock(ctx) {
+  if (!ctx) return '';
+  const linhas = [];
+  if (typeof ctx.hp === 'number') {
+    linhas.push(ctx.hp <= 1 ? 'You are hurt right now.' : ctx.hp >= 4 ? 'You feel healthy.' : 'You feel okay.');
+  }
+  if (typeof ctx.energy === 'number' && ctx.energy <= 1) linhas.push('You are low on energy.');
+  if (typeof ctx.bond === 'number' && ctx.bond >= 10) linhas.push('You two have been together for a long time.');
+  if (typeof ctx.daysAway === 'number' && ctx.daysAway >= 1) {
+    // NUNCA cobrar a ausência: a regra do produto é que quem volta encontra
+    // saudade, não fatura — e o prompt é onde isso mais escorrega.
+    linhas.push('They were away for a while and just came back. Be glad, never reproachful, and do not mention what was left undone.');
+  }
+  if (!linhas.length) return '';
+  return `
+CONTEXT (facts about right now — never read numbers out loud):
+- ${linhas.join('\n- ')}
+`;
+}
+
+function buildSystemPrompt({ petName, mood, evolutionStage, dominantBranch, language, aiSettings, context }) {
   const s = aiSettings || { tone: 'casual', emojiIntensity: 'medium', motivationStyle: 'balanced', customKeywords: '', temperature: 0.85 };
   const ispt = language === 'pt-BR';
 
@@ -160,7 +222,7 @@ ${FECHA_ESTILO}
 BRANCH (${dominantBranch}): ${branch.trait} ${branch.style} Emojis: ${branch.emojis}
 MOOD (${mood}): ${moodCtx}
 MATURITY: ${maturity} Stage: ${evolutionStage}
-
+${contextBlock(context)}
 RESPONSE RULES:
 - Tone: ${toneMap[s.tone] || 'Casual'}
 - Emojis: ${emojiMap[s.emojiIntensity] || '2-3 emojis'}
@@ -240,7 +302,7 @@ export async function onRequestPost({ request, env }) {
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         messages: [
-          { role: 'system', content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || 'Soulmon').slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings }) },
+          { role: 'system', content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || 'Soulmon').slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
           { role: 'user', content: safeMessage },
         ],
         max_tokens: 120,

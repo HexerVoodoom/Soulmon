@@ -4,7 +4,7 @@ Dono: `soulmon-guarda-vinculo`. Anexo: `../C-presenca.md`.
 
 | WP | O quê | Estado | Comando de verificação | Evidência |
 |---|---|---|---|---|
-| WP3.1 | Contexto + memória curta no chat | `PROPOSTO` (camada `soulGoal` em texto: `PROPOSTO` (D8: só ENUM ao servidor; texto nunca sai do aparelho) (decisão do dono, 06/09/2026 — §15 do plano)) | `grep -q "CONTEXT" functions/api/chat.js` + teste do servidor rejeitando `context` com string + teste do cliente: `context` nunca contém texto de tarefa | hoje `messages=[system,user]`, sem memória |
+| WP3.1 | Contexto + memória curta no chat | `IMPLEMENTADO` (06/09/2026 — bloco CONTEXT allowlisted e fiado no toque; a memória de sessão (3 trocas) fica para o ChatModal) | `grep -q "CONTEXT" functions/api/chat.js` + teste do servidor rejeitando `context` com string + teste do cliente: `context` nunca contém texto de tarefa | hoje `messages=[system,user]`, sem memória |
 | WP3.2 | Voz nos momentos mudos + o pet olha a assombrada | `VERIFICADO` (06/09/2026) | `grep -c "haunted" src/components/CompanionHUD.tsx` → ≥1; teste por kind; nenhuma frase com "deveria/atrasou/falhou" | `CLAUDE.md` prometia e não existia |
 | WP3.3 | Título do Vínculo sob o nome + micro-cerimônia | `VERIFICADO` (06/09/2026) | `grep -q "bondTitle" src/components/CompanionHUD.tsx` + `bond_level` emitido | comentário de `BOND_REWARDS` mentia |
 | WP3.4 | Push: fonte única, sem dedup PWA×APK, com win-back | `VERIFICADO` (06/09/2026 — código pronto; exige `wrangler deploy` do worker) | `! grep -q "passou pra dizer oi" src/components/NotificationManager.tsx` (copy só em `_pushCopy.js`) + teste do scheduler com `refreshedAt` 3/6/15/40 dias → 0/1/1/0 + `wrangler deploy` manual | copy duplicada hoje (footgun 9) |

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { onRequestPost as chat, sanitizeCustomKeywords, clampTemperature } from './chat.js';
+import { onRequestPost as chat, sanitizeCustomKeywords, clampTemperature, sanitizeChatContext } from './chat.js';
 import { ENT_PREFIX } from './_entitlements.js';
 
 /**
@@ -196,5 +196,39 @@ describe('temperature: parâmetro do corpo não manda no custo', () => {
     const corpo = await corpoEnviado({ ...base, temperature: 0.3 });
     expect(corpo.temperature).toBe(0.3);
     expect(clampTemperature(1.2)).toBe(1.2);
+  });
+});
+
+describe('WP3.1 — o bloco CONTEXT só aceita INTEIRO, e descarta tudo se algo não bate', () => {
+  it('aceita o que está na allowlist, dentro da faixa', () => {
+    expect(sanitizeChatContext({ hp: 2, energy: 0, bond: 12, daysAway: 3 }))
+      .toEqual({ hp: 2, energy: 0, bond: 12, daysAway: 3 });
+  });
+
+  it('prop desconhecida derruba o bloco INTEIRO', () => {
+    // Meio contexto é pior que nenhum: ninguém saberia qual metade chegou. E
+    // é aqui que um `taskName` entraria de carona se a allowlist fosse frouxa.
+    expect(sanitizeChatContext({ hp: 2, taskName: 'ligar pro médico' })).toBeNull();
+    expect(sanitizeChatContext({ hp: 2, soulGoal: 'dormir melhor' })).toBeNull();
+  });
+
+  it('TEXTO nunca passa, nem no campo certo', () => {
+    // `soulGoal`/`soulStruggle` não passam por rota de IA (decisão D8) — o que
+    // pode entrar é enum derivado localmente, nunca a frase.
+    expect(sanitizeChatContext({ hp: '2' })).toBeNull();
+    expect(sanitizeChatContext({ goalCategory: 'Health' })).toBeNull();
+  });
+
+  it('valor fora da faixa derruba o bloco', () => {
+    expect(sanitizeChatContext({ hp: 9 })).toBeNull();
+    expect(sanitizeChatContext({ bond: 0 })).toBeNull();
+    expect(sanitizeChatContext({ energy: NaN })).toBeNull();
+  });
+
+  it('ausência é ausência — não vira bloco vazio', () => {
+    expect(sanitizeChatContext(null)).toBeNull();
+    expect(sanitizeChatContext({})).toBeNull();
+    expect(sanitizeChatContext([1, 2])).toBeNull();
+    expect(sanitizeChatContext('hp=2')).toBeNull();
   });
 });

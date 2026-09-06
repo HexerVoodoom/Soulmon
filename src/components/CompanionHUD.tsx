@@ -158,6 +158,9 @@ interface CompanionHUDProps {
   /** WP4.19 — marca cosmética da recuperação, e só quando o jogador escolheu
    *  exibi-la (`showRedeemed`). Nunca é marca de queda. */
   redeemedMark?: boolean;
+  /** WP3.1 — nível do Vínculo, para o chat saber há quanto tempo estão
+   *  juntos. Derivado de `totalXP` por quem chama; nunca persistido. */
+  bondLevel?: number;
   /** WP3.10 — traço de nascimento (`utils/passives.ts`), para a voz. */
   petPassive?: string;
   /** WP2.7 — dias fora, de `lastDayReport.daysAway`. 0 = não houve ausência. */
@@ -229,6 +232,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   hauntedWatching = false,
   daysAway = 0,
   petPassive,
+  bondLevel,
   petDisplayName,
   bondTitleText,
   redeemedMark = false,
@@ -717,7 +721,22 @@ export const CompanionHUD = memo(function CompanionHUD({
       ? `[TOQUE] O usuário tocou em você. Energia: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Responda como ${currentStage} com 1 frase curta e fofa (máx 15 palavras).`
       : `[TOUCH] User tapped you. Energy: ${Math.round(ratio * 100)}%, HP: ${healthPoints}/${maxHealthPoints}. Reply as ${currentStage} with 1 short cute sentence (max 15 words).`;
 
-    aiFetch('/api/chat', { message: contextMsg, petName: currentStage, mood: companionMood, evolutionStage, dominantBranch, language, aiSettings })
+    /* WP3.1 — o CONTEXTO vai junto, e é só INTEIRO.
+       O prompt não recebia nada do estado: o pet respondia igual no dia em que
+       a pessoa voltou depois de duas semanas e no dia em que ela fechou tudo.
+       Nada de texto aqui — `soulGoal`/`soulStruggle` não passam por rota de IA
+       (decisão D8), e o servidor descarta o bloco inteiro se vier prop
+       desconhecida ou valor fora da faixa. */
+    aiFetch('/api/chat', {
+      message: contextMsg, petName: currentStage, mood: companionMood,
+      evolutionStage, dominantBranch, language, aiSettings,
+      context: {
+        hp: Math.max(0, Math.min(4, Math.round(hpRatio * 4))),
+        energy: Math.max(0, Math.min(4, Math.round(ratio * 4))),
+        ...(bondLevel ? { bond: Math.max(1, Math.min(31, bondLevel)) } : {}),
+        ...(daysAway ? { daysAway: Math.max(0, Math.min(3, daysAway)) } : {}),
+      },
+    })
       .then(r => r.ok ? r.json() : null)
       .then(data => { if (data?.response) speak(data.response, 5000); })
       .catch(() => {});
