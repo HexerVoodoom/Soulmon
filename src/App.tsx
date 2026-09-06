@@ -4971,6 +4971,13 @@ export default function App() {
 
           {currentView === 'stats' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
+              /* WP1.6 — a MESMA peça do reveal, agora como lembrança. */
+              birth={gameState.bornAt || gameState.soulmonMeta?.baseName ? {
+                spriteUrl: displaySprite(spriteAcervo, 'rookie')?.url ?? null,
+                name: soulmonDisplayName(gameState.soulmonMeta) || '—',
+                soulGoal: gameState.soulGoal ?? null,
+                bornAt: gameState.bornAt ?? null,
+              } : null}
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
               language={language}

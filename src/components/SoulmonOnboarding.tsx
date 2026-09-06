@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense, type CSSProperties } from 'react';
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { Icon } from './ui/Icon';
+import { BirthCard } from './BirthCard';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -1240,71 +1241,70 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <p style={{ ...sm2Hint, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 500 }}>
               {isPt ? 'A criatura da sua alma' : 'Your soul\'s creature'}
             </p>
-            <h1 style={{
-              fontFamily: 'var(--sm2-font-display)',
-              fontSize: 'var(--sm2-text-2xl)',
-              lineHeight: 'var(--sm2-leading-title)',
-              fontWeight: 600, color: 'var(--sm2-ink)',
-              margin: '8px 0 8px',
-            }}>
-              {result.creature.baseName}
-            </h1>
-
-            {essence && (
-              <p style={{ ...sm2Hint, color: 'var(--sm2-gold-ink)', fontWeight: 500, margin: '0 0 16px' }}>
-                {isPt ? essence.pt : essence.en}
-              </p>
-            )}
-
-            {/* WP1.2 — O "PORQUÊ" ECOADO.
-                A pergunta aberta do começo do ritual volta aqui, ao lado da
-                criatura, com as palavras da própria pessoa. É o que prova que
-                a criatura veio DELA e não de um gerador: sem esta linha, o
-                reveal é um resultado; com ela, é uma consequência.
-                Ausente para quem pulou — e pular é permitido de propósito,
-                então a ausência não pode virar buraco na tela. */}
-            {soulGoal.trim() && (
-              <p style={{ ...sm2Text, margin: '0 0 16px', color: 'var(--sm2-muted)' }}>
-                {isPt
-                  ? `Você disse: “${soulGoal.trim()}”. ${result.creature.baseName} nasceu disso.`
-                  : `You said: “${soulGoal.trim()}”. ${result.creature.baseName} was born from that.`}
-              </p>
-            )}
 
             {/* WP1.1 — O CASULO, e depois a criatura.
                 Enquanto o desenho vem, o que se vê é um casulo pulsando: a
                 espera vira parte do ritual em vez de um vazio onde deveria
-                estar a criatura. Quando o desenho chega, ele TROCA o casulo
-                ali mesmo. Se o tempo acabar antes, nada disso fica na tela —
-                um casulo parado seria a promessa de algo que não vem. */}
-            {(revealEsperando || revealSprite) && (
-              <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 16px' }}>
-                {revealSprite ? (
-                  <img
-                    src={revealSprite.url}
-                    alt={result.creature.baseName}
-                    width={128}
-                    height={128}
-                    className="sm-visor-swap"
-                    style={{ objectFit: 'contain', imageRendering: 'pixelated' }}
-                  />
-                ) : (
-                  <span
-                    className="sm-reveal-cocoon"
-                    role="status"
-                    aria-label={isPt ? 'A criatura está tomando forma' : 'The creature is taking shape'}
-                  />
-                )}
+                estar a criatura. Quando o tempo acaba sem desenho, nada disso
+                fica na tela — um casulo parado seria a promessa de algo que
+                não vem, e o cartão abaixo segue sem imagem. */}
+            {revealEsperando && !revealSprite && (
+              <div style={{ display: 'flex', justifyContent: 'center', margin: '12px 0' }}>
+                <span
+                  className="sm-reveal-cocoon"
+                  role="status"
+                  aria-label={isPt ? 'A criatura está tomando forma' : 'The creature is taking shape'}
+                />
               </div>
             )}
 
+            {/* WP1.6 — o cartão de nascimento é a MESMA peça que aparece
+                depois nas Estatísticas. Ser a mesma coisa é o ponto: um
+                cartão desenhado duas vezes divergiria, e o que a pessoa
+                guarda na memória não seria o que ela reencontra. */}
+            <div style={{ margin: '8px 0 20px' }}>
+              <BirthCard
+                spriteUrl={revealSprite?.url}
+                name={result.creature.baseName}
+                epithet={essence ? (isPt ? essence.pt : essence.en) : null}
+                soulGoal={soulGoal}
+                language={isPt ? 'pt-BR' : 'en-US'}
+              />
+            </div>
+
             <div style={{
-              padding: '16px 16px', marginBottom: 24, borderRadius: 12,
+              padding: '16px 16px', marginBottom: 20, borderRadius: 12,
               border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
               textAlign: 'left',
             }}>
               <p style={{ ...sm2Text, margin: 0 }}>{L(result.creature.bio)}</p>
             </div>
+
+            {/* WP1.15 — O BATISMO ACONTECE AQUI, e não no cadastro.
+                Batizar é o gesto de posse do momento em que a criatura
+                aparece; no meio de "últimos detalhes", entre apelido e
+                e-mail, ele lia como mais um campo de formulário. O campo vem
+                PREENCHIDO com o nome sugerido: manter é seguir em frente,
+                trocar é digitar por cima. */}
+            {!isUpgrade && (
+              <div style={{ textAlign: 'left', marginBottom: 20 }}>
+                <label style={sm2Label} htmlFor="onb-petname">
+                  {isPt ? 'Batize seu Soulmon' : 'Name your Soulmon'}
+                </label>
+                <Field
+                  id="onb-petname"
+                  type="text"
+                  value={petNameValue}
+                  maxLength={24}
+                  onChange={e => setPetNameEdit(e.target.value)}
+                />
+                <p style={{ ...sm2Hint, margin: '6px 0 0' }}>
+                  {isPt
+                    ? `${registerDisplayName} é o nome que veio com ele. Se quiser dar outro, é só escrever por cima.`
+                    : `${registerDisplayName} is the name it came with. Want to give it another? Just type over it.`}
+                </p>
+              </div>
+            )}
 
             <button
               type="button"
@@ -1325,8 +1325,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               }}
             >
               {isUpgrade
-                ? (isPt ? `Nascer ${result.creature.baseName}` : `Hatch ${result.creature.baseName}`)
-                : (isPt ? 'Continuar' : 'Continue')}
+                ? (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)
+                : (isPt ? `Nascer ${registerDisplayName}` : `Hatch ${registerDisplayName}`)}
               <Icon name="arrow_forward" size={20} />
             </button>
           </div>
@@ -1339,21 +1339,26 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               {isPt ? 'Últimos detalhes' : 'Last details'}
             </h2>
 
-            {/* BATISMO — o Soulmon já foi gerado e já tem nome sugerido; o
-                campo vem PREENCHIDO com ele. Manter é seguir em frente, trocar
-                é digitar por cima. Um formulário vazio aqui obrigaria a
-                inventar um nome no meio do cadastro. */}
-            <label style={sm2Label} htmlFor="onb-petname">
-              {isPt ? 'Batize seu Soulmon' : 'Name your Soulmon'}
-            </label>
-            <Field id="onb-petname" type="text" value={petNameValue} maxLength={24}
-              onChange={e => setPetNameEdit(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
-            <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
-              {isPt
-                ? `${registerDisplayName} é o nome que veio com seu Soulmon. Se quiser dar outro, é só escrever por cima.`
-                : `${registerDisplayName} is the name it came with. Want to give it another? Just type over it.`}
-            </p>
+            {/* WP1.15 — o BATISMO saiu daqui e foi para o REVEAL. Batizar é
+                o gesto de posse do momento em que a criatura aparece; entre
+                apelido e e-mail ele lia como mais um campo de formulário.
+                Quem chega do caminho DEMO não passa pelo reveal, então para
+                ele o campo continua aqui. */}
+            {demoChar && (
+              <>
+                <label style={sm2Label} htmlFor="onb-petname">
+                  {isPt ? 'Batize seu Soulmon' : 'Name your Soulmon'}
+                </label>
+                <Field id="onb-petname" type="text" value={petNameValue} maxLength={24}
+                  onChange={e => setPetNameEdit(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
+                <p style={{ ...sm2Hint, margin: '6px 0 18px' }}>
+                  {isPt
+                    ? `${registerDisplayName} é o nome que veio com seu Soulmon. Se quiser dar outro, é só escrever por cima.`
+                    : `${registerDisplayName} is the name it came with. Want to give it another? Just type over it.`}
+                </p>
+              </>
+            )}
 
             <label style={sm2Label} htmlFor="onb-nick">
               {isPt ? 'Seu apelido' : 'Your nickname'}

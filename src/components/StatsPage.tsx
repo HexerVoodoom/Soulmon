@@ -35,6 +35,7 @@ import { useMemo } from 'react';
 import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
+import { BirthCard } from './BirthCard';
 import type { CarePattern } from '../utils/carePattern';
 import {
   seasonProgress, seasonLabel, seasonMedalStatus,
@@ -93,6 +94,15 @@ interface StatsPageProps {
   /** Dias desde o nascimento da criatura (`utils/anniversary.ts`). `null` em
    *  save sem `bornAt` — e aí a linha simplesmente não aparece. */
   daysTogether?: number | null;
+  /** WP1.6 — o cartão de nascimento. Ausente para save antigo (sem `bornAt`
+   *  nem sprite próprio) — e aí a seção simplesmente não existe. */
+  birth?: {
+    spriteUrl?: string | null;
+    name: string;
+    epithet?: string | null;
+    soulGoal?: string | null;
+    bornAt?: string | null;
+  } | null;
   /** Estado da estação (`utils/seasons.ts`) + contadores para os três caminhos. */
   season?: {
     state?: SeasonProgressState;
@@ -148,6 +158,7 @@ export function StatsPage({
   carePattern,
   journey,
   daysTogether,
+  birth,
   season,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
@@ -332,6 +343,25 @@ export function StatsPage({
           <p className="sm2-num" style={{ ...sm2Hint, marginTop: 6 }}>
             {isPt ? `${daysTogether} dias juntos` : `${daysTogether} days together`}
           </p>
+        )}
+
+        {/* WP1.6 — o CARTÃO DE NASCIMENTO, a mesma peça do reveal.
+            Aqui ele é a lembrança do momento; lá era o momento. Ser o mesmo
+            componente é o ponto: dois cartões desenhados separadamente
+            divergiriam, e o que a pessoa guardou na memória não seria o que
+            ela reencontra. Sem número por dentro — a contagem de dias fica na
+            linha acima, que é outra coisa e obedece `hideMetrics`. */}
+        {birth && (
+          <div style={{ marginTop: 16 }}>
+            <BirthCard
+              spriteUrl={birth.spriteUrl}
+              name={birth.name}
+              epithet={birth.epithet}
+              soulGoal={birth.soulGoal}
+              bornAt={birth.bornAt}
+              language={language}
+            />
+          </div>
         )}
 
         {formNames.length > 0 && (

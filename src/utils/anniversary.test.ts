@@ -84,9 +84,14 @@ describe('D17 — o upgrade não reescreve a data', () => {
 
   it('o nascimento grava a data no dia do JOGADOR, não do aparelho', () => {
     const app = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf-8');
-    const gravacoes = app.match(/bornAt: [^,\n]+/g) ?? [];
-    expect(gravacoes.length, 'os dois caminhos de nascimento gravam a data').toBe(2);
-    for (const g of gravacoes) {
+    // LEITURA não conta: `bornAt: gameState.bornAt` é passar o campo adiante
+    // (o cartão de nascimento do WP1.6 faz isso), e cobrar `playerDayKey` de
+    // uma leitura faria este guard proibir consumir o campo. O que ele mede é
+    // ESCRITA: `bornAt: <algo derivado de agora>`.
+    const todas = app.match(/bornAt: [^,\n]+/g) ?? [];
+    const escritas = todas.filter(g => !/bornAt: (gameState|prev|data|loadedState)\./.test(g));
+    expect(escritas.length, 'os dois caminhos de nascimento gravam a data').toBe(2);
+    for (const g of escritas) {
       expect(g, 'usou o dia do aparelho — dois celulares discordariam').toMatch(/playerDayKey/);
     }
   });
