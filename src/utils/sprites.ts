@@ -1,3 +1,23 @@
+/**
+ * WP1.12 — O FILTRO DE TONALIDADE DO DEMO.
+ *
+ * Quem entra pelo caminho grátis recebe um dos três personagens pré-prontos —
+ * iguais para todo mundo. O tint é a menor coisa possível que transforma um
+ * personagem emprestado em algo escolhido, e é o oposto de uma mecânica:
+ * nenhuma regra, nenhum atributo, nenhum preço e nenhuma evolução olham para
+ * ele. Some inteiro quando a pessoa gera a criatura dela.
+ *
+ * `hue-rotate` e não sprites novos: são três variações de graça sobre a arte
+ * que já existe, sem um byte a mais no bundle.
+ */
+export const DEMO_TINTS = [0, 40, 200, 300] as const;
+
+export function demoTintFilter(tint: number | undefined): string | undefined {
+  const i = Math.max(0, Math.min(DEMO_TINTS.length - 1, Math.floor(tint ?? 0)));
+  const graus = DEMO_TINTS[i];
+  return graus ? `hue-rotate(${graus}deg)` : undefined;
+}
+
 // Stage → sprite map, shared by CompanionHUD and the dungeon minigame.
 // Árvore jogável do Soulmon: sprites placeholder gerados
 // (scripts/gen-soulmon-placeholders.mjs) até a integração com o Higgsfield.

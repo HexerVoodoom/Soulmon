@@ -3878,6 +3878,8 @@ export default function App() {
           : undefined,
         accountTier: 'demo',
         demoCharacterId: data.demoCharacterId,
+        // WP1.12 — a tonalidade escolhida. Cosmética: nenhuma regra a lê.
+        demoTint: data.demoTint ?? 0,
         soulGoal: data.soulGoal,
         soulStruggle: data.soulStruggle,
         // Prova do consentimento (timestamp + versão dos documentos). Vem do
@@ -4675,6 +4677,8 @@ export default function App() {
                 petPassive={gameState.petPassive}
                 /* WP3.1 — o chat passa a saber há quanto tempo estão juntos. */
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
+                /* WP1.12 — a tonalidade do demo. Cosmética e só. */
+                demoTint={gameState.demoTint}
                 /* WP3.3 — nome e título do Vínculo na home. O título é
                    DERIVADO na leitura (`bondLevelFor(totalXP)`); guardá-lo no
                    save seria duas fontes para o mesmo número (footgun 9). */

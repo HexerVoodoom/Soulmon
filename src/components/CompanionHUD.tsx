@@ -1,7 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useCallback, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { aiFetch } from '../utils/aiClient';
-import { getSpriteForStage } from '../utils/sprites';
+import { getSpriteForStage, demoTintFilter } from '../utils/sprites';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelButton } from './pixel/PixelKit';
@@ -158,6 +158,9 @@ interface CompanionHUDProps {
   /** WP4.19 — marca cosmética da recuperação, e só quando o jogador escolheu
    *  exibi-la (`showRedeemed`). Nunca é marca de queda. */
   redeemedMark?: boolean;
+  /** WP1.12 — tonalidade escolhida no modo demo (0 = original). COSMÉTICO:
+   *  nenhuma regra, atributo ou preço olha para isto. */
+  demoTint?: number;
   /** WP3.1 — nível do Vínculo, para o chat saber há quanto tempo estão
    *  juntos. Derivado de `totalXP` por quem chama; nunca persistido. */
   bondLevel?: number;
@@ -233,6 +236,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   daysAway = 0,
   petPassive,
   bondLevel,
+  demoTint,
   petDisplayName,
   bondTitleText,
   redeemedMark = false,
@@ -959,7 +963,14 @@ export const CompanionHUD = memo(function CompanionHUD({
           return `drop-shadow(0 0 8px ${auraColor})`;
       }
     })();
-    return isBlinking ? `${base} brightness(.86)` : base;
+    /* WP1.12 — a tonalidade escolhida no modo demo. Entra AQUI, junto do
+       resto do filtro, e não numa camada nova: `filter` não se acumula entre
+       regras, e uma segunda declaração apagaria a aura e a piscada (é o mesmo
+       erro que as duas tentativas anteriores de animar `filter` cometeram —
+       ver a nota grande abaixo). Some sozinha quando não há tint. */
+    const tint = demoTintFilter(demoTint);
+    const comTint = tint ? `${base} ${tint}` : base;
+    return isBlinking ? `${comTint} brightness(.86)` : comTint;
   };
 
 

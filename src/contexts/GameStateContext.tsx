@@ -193,6 +193,18 @@ export interface GameState {
   poopEventsCompleted: number[];
   unlockedEvolutions: string[];
   degeneratedByHP: boolean;
+  /**
+   * WP1.12 — MICRO-POSSE NO DEMO.
+   *
+   * Quem entra pelo caminho grátis recebe um personagem PRÉ-PRONTO: os três
+   * são iguais para todo mundo, e "meu bichinho" começa sendo o bichinho de
+   * todo mundo. O tint é a menor coisa que transforma um personagem
+   * emprestado em algo escolhido — e é COSMÉTICO, zero mecânica: nenhuma
+   * regra, nenhum atributo e nenhum preço olham para ele.
+   *
+   * 0 = sem tint (o original). 1..3 = as três tonalidades.
+   */
+  demoTint?: number;
   /** WP5.1 — semana ISO em que a oferta do value moment foi mostrada. O cap é
    *  sobre ter OFERECIDO, não sobre ter comprado. */
   offerShownWeek?: string;
@@ -842,6 +854,7 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         formReachedAt: (loadedState.formReachedAt as Record<string, string>) ?? {},
         bestiary: strArr(loadedState.bestiary),
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
+        demoTint: num(loadedState.demoTint, 0),
         redeemed: loadedState.redeemed === true,
         showRedeemed: loadedState.showRedeemed === true,
         // Enum de 3 valores: qualquer outra coisa cairia em `getStageLevel`/

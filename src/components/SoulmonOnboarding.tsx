@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, lazy, Suspense, type CSSProperties } from 
 import ravenMascot from '../assets/soulmon/mascot-raven.png';
 import { Icon } from './ui/Icon';
 import { BirthCard } from './BirthCard';
+import { DEMO_TINTS, demoTintFilter, getSpriteForStage } from '../utils/sprites';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
 import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow } from './form/FormKit';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -124,7 +125,12 @@ export type OnboardingCompleteData = {
        *  primeiro minuto, que é o oposto do que a cerimônia promete. */
       revealSprite?: { url: string; formId: string; at: number };
     }
-  | { mode: 'demo'; demoCharacterId: 'kaelen' | 'orrin' | 'thalindra' }
+  | {
+      mode: 'demo';
+      demoCharacterId: 'kaelen' | 'orrin' | 'thalindra';
+      /** WP1.12 — tonalidade escolhida. Cosmética; 0 = arte original. */
+      demoTint?: number;
+    }
 );
 
 interface SoulmonOnboardingProps {
@@ -224,6 +230,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [step, setStep] = useState(draft ? draft.step : isUpgrade ? 1 : 0);
   const [flow, setFlow] = useState<'oracle' | 'demo' | null>(draft || isUpgrade ? 'oracle' : null);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
+  /** WP1.12 — tonalidade escolhida no demo. 0 = a arte original. */
+  const [demoTint, setDemoTint] = useState(0);
   const [unlockLoading, setUnlockLoading] = useState(false);
   const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
   /** A caixa de consentimento vive FORA do texto legal: é elemento de UI
@@ -1356,6 +1364,43 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 apelido e e-mail ele lia como mais um campo de formulário.
                 Quem chega do caminho DEMO não passa pelo reveal, então para
                 ele o campo continua aqui. */}
+            {/* WP1.12 — MICRO-POSSE NO DEMO.
+                Os três personagens pré-prontos são iguais para todo mundo, e
+                "meu bichinho" começa sendo o bichinho de todo mundo. O tint é
+                a menor coisa possível que transforma um personagem emprestado
+                em algo escolhido — e é o oposto de uma mecânica: nenhuma
+                regra, atributo ou preço olha para ele. */}
+            {demoChar && (
+              <div style={{ marginBottom: 18 }}>
+                <span style={sm2Label}>{isPt ? 'Tonalidade' : 'Tint'}</span>
+                <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                  {DEMO_TINTS.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      aria-pressed={demoTint === i}
+                      aria-label={isPt ? `Tonalidade ${i + 1}` : `Tint ${i + 1}`}
+                      onClick={() => setDemoTint(i)}
+                      style={{
+                        width: 48, height: 48, borderRadius: 10, cursor: 'pointer',
+                        border: demoTint === i ? '2px solid var(--sm2-primary-ink)' : '1px solid var(--sm2-line)',
+                        backgroundColor: 'var(--sm2-surface)',
+                        display: 'grid', placeItems: 'center',
+                      }}
+                    >
+                      <img
+                        src={getSpriteForStage('rookie', demoChar.id)}
+                        alt=""
+                        width={36}
+                        height={36}
+                        style={{ objectFit: 'contain', imageRendering: 'pixelated', filter: demoTintFilter(i) }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {demoChar && (
               <>
                 <label style={sm2Label} htmlFor="onb-petname">
