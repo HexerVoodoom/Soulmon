@@ -161,6 +161,7 @@ import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormK
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
+  constancy, needsIntervention,
 } from './utils/habitRhythm';
 import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
 
@@ -1437,10 +1438,37 @@ export default function App() {
       maxHealthPoints: gameState.maxHealthPoints,
       energyPoints: gameState.energyPoints ?? 0,
       hasPoop: (gameState.poopEventsShown || []).some(i => !(gameState.poopEventsCompleted || []).includes(i)),
+      /* WP2.6 — o widget passa a saber de HÁBITO. Ele mostrava só tarefas do
+         dia, HP e energia: o motor de constância, a peça mais central do
+         produto, era invisível na única superfície que a pessoa vê sem abrir
+         o app. Chaves ACRESCENTADAS, nunca renomeadas. */
+      ...(() => {
+        const agora = new Date();
+        const ritmos = gameState.habitRhythms ?? {};
+        const devidos = Object.values(ritmos).map(r => constancy(r, agora)).filter(c => c.window > 0);
+        const media = devidos.length
+          ? devidos.reduce((soma, c) => soma + c.ratio, 0) / devidos.length
+          : null;
+        const escudos = Object.values(ritmos).reduce((max, r) => Math.max(max, r.shields ?? 0), 0);
+        const marco = Object.values(ritmos).reduce((max, r) => {
+          const t = habitTier(r.totalDone ?? 0);
+          return Math.max(max, t === 'tree' ? 3 : t === 'sapling' ? 2 : t === 'sprout' ? 1 : 0);
+        }, 0);
+        return {
+          // `null` vira ausência (o campo some), não zero: 0% para quem ainda
+          // não tem histórico é a mesma mentira que a constância dotada evita.
+          ...(media === null ? {} : { constancyPct: Math.round(media * 100) }),
+          shields: escudos,
+          habitTierMax: marco,
+          bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+          needsIntervention: Object.values(ritmos).some(r => needsIntervention(r, agora)),
+        };
+      })(),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
-      gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal]);
+      gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
+      gameState.habitRhythms, gameState.totalXP]);
 
   /**
    * A fatia que `utils/petNeeds.ts` lê. `hasPoop` é DERIVADO (o dono do cocô é

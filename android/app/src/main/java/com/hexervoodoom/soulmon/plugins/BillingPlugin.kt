@@ -102,6 +102,20 @@ class BillingPlugin : Plugin() {
     @PluginMethod
     fun purchase(call: PluginCall) {
         val productId = call.getString("productId") ?: run { call.reject("Missing productId"); return }
+        /*
+         * WP0.6 — O VÍNCULO DA COMPRA COM O SAVE.
+         *
+         * `setObfuscatedAccountId` amarra a compra do Play à conta do jogo. Sem
+         * ele, `isPlayPurchaseBoundTo` (functions/api/_billing.js) não tem o que
+         * conferir, e um mesmo comprovante pode ser apresentado por saves
+         * diferentes — `claimOrder` barra a REUTILIZAÇÃO, mas não sabe dizer de
+         * QUEM era a compra.
+         *
+         * É opcional aqui de propósito: o servidor só passa a EXIGIR o vínculo
+         * quando `PLAY_REQUIRE_ACCOUNT_BINDING=true`, e ligar isso antes de o
+         * APK com esta linha estar publicado recusaria toda compra.
+         */
+        val saveId = call.getString("saveId")
         val activity = activity ?: run { call.reject("no-activity"); return }
 
         connect { ready ->
@@ -135,11 +149,54 @@ class BillingPlugin : Plugin() {
                             .setProductDetails(details)
                             .build(),
                     ))
+                    .also { builder ->
+                        // WP0.6 — só quando o cliente mandou. O Play recusa id
+                        // vazio, e um `saveId` ausente não pode virar recusa de
+                        // compra para quem está com um app mais antigo.
+                        if (!saveId.isNullOrBlank()) builder.setObfuscatedAccountId(saveId)
+                    }
                     .build()
 
                 pendingPurchaseCall = call
                 call.setKeepAlive(true)
                 activity.runOnUiThread { client.launchBillingFlow(activity, flowParams) }
+            }
+        }
+    }
+
+    /**
+     * WP5.8 — O PREÇO QUE O PLAY VAI COBRAR, na moeda de quem está olhando.
+     *
+     * O app mostrava um rótulo de preço fixo em BRL, escrito no cliente. Para
+     * quem está fora do Brasil isso é um número errado na tela de compra — e
+     * um preço errado na tela de compra é a pior linha de texto possível: ela
+     * é lida como promessa.
+     *
+     * `formattedPrice` vem do próprio Play, já com moeda e formatação do país
+     * da conta. Devolve vazio quando não dá para consultar; quem chama trata
+     * isso caindo no rótulo de sempre, nunca mostrando uma tela em branco.
+     */
+    @PluginMethod
+    fun getLocalizedPrice(call: PluginCall) {
+        val productId = call.getString("productId") ?: run { call.reject("Missing productId"); return }
+        connect { ready ->
+            if (!ready) { call.resolve(JSObject().put("formattedPrice", "")); return@connect }
+            val client = billingClient ?: run {
+                call.resolve(JSObject().put("formattedPrice", "")); return@connect
+            }
+            val queryParams = QueryProductDetailsParams.newBuilder()
+                .setProductList(listOf(
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(productId)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build(),
+                ))
+                .build()
+            client.queryProductDetailsAsync(queryParams) { result, list ->
+                val preco = if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                    list.firstOrNull()?.oneTimePurchaseOfferDetails?.formattedPrice ?: ""
+                } else ""
+                call.resolve(JSObject().put("formattedPrice", preco))
             }
         }
     }

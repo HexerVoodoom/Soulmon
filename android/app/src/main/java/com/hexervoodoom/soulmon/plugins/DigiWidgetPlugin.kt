@@ -36,6 +36,33 @@ class DigiWidgetPlugin : Plugin() {
         if (energyPoints >= 0) editor.putInt("energy_points", energyPoints)
         editor.putBoolean("has_poop", call.data.optBoolean("hasPoop", false))
 
+        /*
+         * WP2.6 — O WIDGET PASSA A SABER DE HÁBITO.
+         *
+         * Ele recebia só tarefas do dia, HP e energia: o motor de constância
+         * inteiro (a peça mais central do produto) era invisível na superfície
+         * que a pessoa vê SEM abrir o app — e a pesquisa aponta o widget como
+         * tão eficaz quanto push.
+         *
+         * ⚠️ As chaves do bridge são CONGELADAS: só se ACRESCENTA. Um widget
+         * antigo instalado continua lendo as antigas, e renomear uma quebraria
+         * a tela de quem não atualizou.
+         *
+         * `-1` = "não informado" e é diferente de zero: o renderer trata como
+         * ausência de dado, não como "constância zero" — mostrar 0% para quem
+         * ainda não tem histórico é a mesma mentira que a constância dotada
+         * existe para evitar.
+         */
+        val constancyPct = call.data.optInt("constancyPct", -1)
+        val shields = call.data.optInt("shields", -1)
+        val habitTierMax = call.data.optInt("habitTierMax", -1)
+        val bondLevel = call.data.optInt("bondLevel", -1)
+        if (constancyPct >= 0) editor.putInt("constancy_pct", constancyPct)
+        if (shields >= 0) editor.putInt("shields", shields)
+        if (habitTierMax >= 0) editor.putInt("habit_tier_max", habitTierMax)
+        if (bondLevel >= 0) editor.putInt("bond_level", bondLevel)
+        editor.putBoolean("needs_intervention", call.data.optBoolean("needsIntervention", false))
+
         editor.apply()
 
         // Push update to all active widget instances (all 3 variants)

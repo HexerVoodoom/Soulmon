@@ -29,7 +29,16 @@ object WidgetRenderer {
         views.setTextViewText(R.id.widget_digimon_name, digimonName)
         views.setTextViewText(R.id.widget_stage, stageLabel(currentStage))
         views.setTextViewText(R.id.widget_tasks, if (totalTasks > 0) "$completedTasks/$totalTasks" else "—")
-        views.setTextViewText(R.id.widget_message, contextualMessage(completedTasks, totalTasks, hp))
+        views.setTextViewText(
+            R.id.widget_message,
+            contextualMessage(
+                completedTasks,
+                totalTasks,
+                hp,
+                prefs.getBoolean("needs_intervention", false),
+                prefs.getInt("constancy_pct", -1),
+            ),
+        )
         attachClick(context, views)
         mgr.updateAppWidget(appWidgetId, views)
     }
@@ -214,9 +223,39 @@ object WidgetRenderer {
         else -> stage.replaceFirstChar { it.uppercase() }
     }
 
-    private fun contextualMessage(completed: Int, total: Int, hp: Int): String {
+    /**
+     * WP2.6 — a frase do widget passa a saber de HÁBITO.
+     *
+     * Ela só sabia de tarefas do dia e HP: o motor de constância — a peça mais
+     * central do produto — era invisível na única superfície que a pessoa vê
+     * sem abrir o app.
+     *
+     * Duas regras herdadas do app, e as duas importam aqui mais do que lá,
+     * porque o widget fica na tela inicial o dia inteiro:
+     *  · **nada de "%" cru na tela.** A constância entra como ESTADO ("de pé
+     *    firme"), nunca como nota — porcentagem num quadradinho da tela
+     *    inicial é um boletim permanente.
+     *  · **a intervenção vem antes de tudo**, e é convite: quem faltou duas
+     *    vezes seguidas recebe a versão de cinco minutos, não uma cobrança.
+     * `-1` é AUSÊNCIA de dado (app antigo, sem hábito) e cai no texto de
+     * sempre — nunca em "0%".
+     */
+    private fun contextualMessage(
+        completed: Int,
+        total: Int,
+        hp: Int,
+        needsIntervention: Boolean = false,
+        constancyPct: Int = -1,
+    ): String {
         if (hp <= 20) return "⚠️ Cuide de mim!"
-        if (total == 0) return "📋 Adicione tarefas!"
+        // Antes das tarefas do dia: quem faltou duas vezes seguidas precisa da
+        // porta pequena, não do placar.
+        if (needsIntervention) return "🌱 Hoje, só 5 minutos?"
+        if (total == 0) {
+            // Sem tarefa hoje, a constância ainda tem o que dizer.
+            if (constancyPct >= 71) return "🌳 Você tem estado firme"
+            return "📋 Adicione tarefas!"
+        }
         val ratio = if (total > 0) completed.toDouble() / total else 0.0
         return when {
             ratio >= 1.0 -> "✨ Dia perfeito!"

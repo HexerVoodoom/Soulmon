@@ -1,4 +1,6 @@
 import { verifyPurchase, type Entitlement } from './entitlements';
+import { readLocal } from './safeStorage';
+import { STORAGE_KEYS } from './storageKeys';
 
 // Google Play Billing — ponte com o plugin nativo.
 //
@@ -23,7 +25,10 @@ import { verifyPurchase, type Entitlement } from './entitlements';
 
 /** Forma mínima que o plugin nativo precisa expor para esta ponte funcionar. */
 interface BillingPlugin {
-  purchase(options: { productId: string }): Promise<{ purchaseToken: string }>;
+  /** WP0.6 — `saveId` amarra a compra à conta do jogo (obfuscatedAccountId). */
+  purchase(options: { productId: string; saveId?: string }): Promise<{ purchaseToken: string }>;
+  /** WP5.8 — preço do Play já formatado na moeda do país da conta. */
+  getLocalizedPrice?(options: { productId: string }): Promise<{ formattedPrice: string }>;
   consume(options: { purchaseToken: string }): Promise<void>;
   /** Compras não consumidas/não consumíveis da conta — usado no "restaurar compras". */
   getPurchases?(): Promise<{ purchases: Array<{ productId: string; purchaseToken: string }> }>;
@@ -42,6 +47,27 @@ function getPlugin(): BillingPlugin | null {
   const plugin = cap.Plugins?.Billing as BillingPlugin | undefined;
   if (!plugin || typeof plugin.purchase !== 'function') return null;
   return plugin;
+}
+
+/**
+ * WP5.8 — o preço que o Play VAI cobrar, na moeda de quem está olhando.
+ *
+ * O app mostrava um rótulo fixo em BRL escrito no cliente; fora do Brasil isso
+ * é um número errado numa tela de compra, e número errado ali é lido como
+ * promessa. Devolve `null` quando não dá para consultar (web, plugin antigo,
+ * Play indisponível) — e aí quem chama CAI NO RÓTULO de sempre, nunca numa
+ * tela em branco.
+ */
+export async function getLocalizedPrice(productId: string): Promise<string | null> {
+  const plugin = getPlugin();
+  if (!plugin || typeof plugin.getLocalizedPrice !== 'function') return null;
+  try {
+    const r = await plugin.getLocalizedPrice({ productId });
+    const preco = r?.formattedPrice;
+    return typeof preco === 'string' && preco.trim() ? preco : null;
+  } catch {
+    return null;
+  }
 }
 
 /** true só quando dá para comprar de verdade (app Android + plugin presente). */
@@ -63,7 +89,13 @@ export async function purchase(productId: string): Promise<PurchaseResult> {
 
   let purchaseToken: string;
   try {
-    const result = await plugin.purchase({ productId });
+    /* WP0.6 — o `saveId` viaja com a compra (`setObfuscatedAccountId`), para
+       o servidor poder conferir DE QUEM ela é. `claimOrder` já impedia
+       reutilizar um comprovante, mas não sabia dizer a quem ele pertencia.
+       Ausente (usuário sem save derivado ainda) não bloqueia nada: o servidor
+       só EXIGE o vínculo com `PLAY_REQUIRE_ACCOUNT_BINDING=true`, e ligar isso
+       antes do APK com esta linha recusaria toda compra. */
+    const result = await plugin.purchase({ productId, saveId: readLocal(STORAGE_KEYS.SAVE_ID) ?? undefined });
     purchaseToken = result?.purchaseToken;
     if (!purchaseToken) return { ok: false, reason: 'cancelled' };
   } catch (err) {
