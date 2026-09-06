@@ -116,11 +116,17 @@ export const SHOP_ITEMS: ShopItem[] = [
   { id: 'chip-vaccine', kind: 'chip', icon: CHIP_EMOJI.vaccine, attr: 'vaccine',
     namePt: 'Chip de Benevolência', nameEn: 'Benevolence Chip',
     descPt: `Vai pra pastinha; usar dá +${CHIP_BOOST} de Benevolência`, descEn: `Goes to Items; use for +${CHIP_BOOST} Benevolence`, price: 120 },
-  // Heart item — the ONLY buyable HP heal. Goes to the Items folder; using it
-  // restores a heart. Also drops (rarely) in the dungeon.
-  { id: 'heart-item', kind: 'heart', icon: HEART_ITEM_EMOJI,
-    namePt: 'Coraçãozinho', nameEn: 'Little Heart',
-    descPt: `Vai pra pastinha; usar cura ${HEART_HEAL} coração`, descEn: `Goes to Items; use to heal ${HEART_HEAL} heart`, price: 150 },
+  // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
+  // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
+  // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a
+  // punição tira, só que por um caminho indireto. Indireto não é melhor: é o
+  // mesmo, escondido.
+  //
+  // O item CONTINUA existindo e curando. Ele vive em `SPECIAL_ITEMS` (abaixo),
+  // que é o catálogo de USO e não o de COMPRA — por isso quem já tem um no
+  // `foodInventory` não perde nada, e a `ItemsWindow` segue desenhando. A fonte
+  // passa a ser só a masmorra (drop raro, teto diário), que é esforço e não
+  // dinheiro.
   // (Glitchtama is deliberately NOT sold — the only way to get one is
   // clearing all 5 dungeon floors.)
   // Decoração equipável no box do pet. Cada uma ocupa um ESPAÇO do palco

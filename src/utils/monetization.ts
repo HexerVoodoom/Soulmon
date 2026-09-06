@@ -74,7 +74,9 @@ export function getDemoCreatureStages(character: PremadeCharacter): CreatureStag
 
 // ── Créditos (moeda premium, dinheiro real) ─────────────────────────────────
 export const REROLL_COST_CREDITS = 50;   // regenerar personagem (novo oráculo)
-export const HEART_COST_CREDITS = 10;    // curar 1 coração na hora
+// ⚰️ `HEART_COST_CREDITS = 10` saiu em 06/09/2026 (D7+D15). Era o preço de
+// curar 1 coração na hora. A peça inteira foi removida; se alguém for
+// reintroduzir um preço em Créditos, que NÃO seja para HP.
 
 /** Um pacote à venda. `id` é o SKU no Google Play Console (tem que bater
  *  EXATAMENTE com PRODUCTS em functions/api/billing.js). O preço mostrado aqui

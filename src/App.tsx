@@ -82,12 +82,11 @@ import { getMissionProgress, isShopItemUnlocked } from './utils/missions';
 import { getGifts, getPendingTrophies } from './utils/community';
 import {
   PREMADE_CHARACTERS, getDemoCreatureStages, canCreateActivity, activityCapFor,
-  REROLL_COST_CREDITS, HEART_COST_CREDITS,
+  REROLL_COST_CREDITS,
   type CreditPack, type AccountTier,
 } from './utils/monetization';
 import { fitHabitCreates } from './utils/habitCreate';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
-import { applyInstantHeal, instantHealRefusal } from './utils/instantHeal';
 import { soulmonDisplayName } from './utils/petName';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
@@ -2608,43 +2607,24 @@ export default function App() {
     return true;
   }, [syncEntitlement]);
 
-  /**
-   * A cura instantânea por Créditos — X-6 instância 1, a de DINHEIRO REAL.
-   *
-   * Duas peças, porque há um `await` no meio e a janela é maior que um lote do
-   * React (ver o cabeçalho de utils/instantHeal.ts):
-   *
-   *  1. `healInFlightRef` TRAVA ANTES DE GASTAR. É a única peça que impede a
-   *     COBRANÇA dupla: com 4/5 de vida, dois toques enquanto o primeiro
-   *     `spendCredits` ainda está no ar liam `4 < 5` e cobravam 10 Créditos
-   *     DUAS vezes — a segunda curando ZERO. Reconferir só dentro do updater
-   *     evitaria a cura dupla, mas o Crédito já teria ido embora.
-   *  2. `applyInstantHeal` reconfere sobre o `prev`, para o que a trava não
-   *     cobre (duas abas, dois aparelhos, recarga no meio do pedido).
-   *
-   * O que NÃO dá para fazer daqui: estornar. Estorno de verdade é idempotência
-   * no servidor (`functions/api/_entitlements.js`), fora desta frente. Por isso
-   * o saldo confirmado é escrito no estado mesmo na recusa — espelho que
-   * esconde débito mente até o próximo sync.
-   */
-  const healInFlightRef = useRef(false);
-  const handleInstantHealWithCredits = useCallback(async (): Promise<boolean> => {
-    if (healInFlightRef.current) return false;
-    if (instantHealRefusal(gameState)) return false;
-    healInFlightRef.current = true;
-    try {
-      const ent = await spendCredits(HEART_COST_CREDITS, 'instant-heal');
-      if (!ent) return false;
-      // Devolve `true` porque o servidor confirmou o gasto: é isso que a UI
-      // precisa saber. Se o updater ainda assim recusar (o caso da segunda
-      // peça), quem conta a verdade é o estado, não este retorno — e o updater
-      // roda DEPOIS deste `return`, então ler a recusa daqui seria mentira.
-      setGameState(prev => applyInstantHeal(prev, ent).state);
-      return true;
-    } finally {
-      healInFlightRef.current = false;
-    }
-  }, [gameState.healthPoints, gameState.maxHealthPoints]);
+  /* ⚰️ D7 + D15 (06/09/2026) — a CURA INSTANTÂNEA por Créditos foi REMOVIDA,
+     junto com `utils/instantHeal.ts` e o coraçãozinho na loja de Bits.
+
+     O produto vendia a volta do coração por dois caminhos: 10 Créditos aqui, e
+     15 Créditos pelo câmbio Créditos→Bits→💗 (sem cap). Enquanto existiam, a
+     tese "dinheiro nunca compra a barra de cuidado" precisava de um asterisco,
+     e havia incentivo estrutural para o coração doer — se não dói, a cura não
+     vale 10 Créditos; se vale, alguém vai querer que doa mais.
+
+     O coraçãozinho CONTINUA existindo e curando: ele só deixou de ser
+     comprável. Vem da masmorra (`handleDungeonHeartDrop`, drop raro) e se usa
+     na pastinha por `SPECIAL_ITEMS` — catálogo diferente de `SHOP_ITEMS`, e foi
+     isso que permitiu cortar a compra sem quebrar o item de quem já tem um.
+     Cura mesmo continua sendo CARINHO.
+
+     Não reintroduza por nenhum dos dois caminhos. Ver §15 do
+     `docs/PLANO-MELHORIAS.md`. */
+
 
   // Reroll: regenera o personagem do oráculo com uma seed NOVA (mesmos dados
   // de nascimento salvos no onboarding) — recomeça do Rookie, mantém
@@ -3693,12 +3673,9 @@ export default function App() {
               language={language}
               credits={gameState.credits ?? 0}
               accountTier={gameState.accountTier ?? 'paid'}
-              healthPoints={gameState.healthPoints}
-              maxHealthPoints={gameState.maxHealthPoints}
               canReroll={!!readLocal(STORAGE_KEYS.SOULMON_PROFILE)}
               onWatchAd={handleWatchAd}
               onBuyPack={handleBuyCreditPack}
-              onInstantHeal={handleInstantHealWithCredits}
               onReroll={handleRerollCharacter}
               onClose={() => setCreditsOpen(false)}
             />

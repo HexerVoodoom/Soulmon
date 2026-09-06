@@ -3,7 +3,7 @@ import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
 import {
   CREDIT_PACKS, type CreditPack, ADS_ENABLED, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
-  HEART_COST_CREDITS, FULL_UNLOCK_PRICE_LABEL,
+  FULL_UNLOCK_PRICE_LABEL,
 } from '../utils/monetization';
 import { fetchEntitlement } from '../utils/entitlements';
 import { isBillingAvailable } from '../utils/playBilling';
@@ -37,20 +37,17 @@ interface CreditsModalProps {
   language: Language;
   credits: number;
   accountTier: 'demo' | 'paid';
-  healthPoints: number;
-  maxHealthPoints: number;
   /** Tem um perfil de oráculo salvo (utils/oracle.ts) — só contas 'paid' têm. */
   canReroll: boolean;
   onWatchAd: () => Promise<boolean>;
   onBuyPack: (pack: CreditPack) => Promise<boolean>;
-  onInstantHeal: () => Promise<boolean>;
   onReroll: () => Promise<boolean>;
   onClose: () => void;
 }
 
 export function CreditsModal({
-  language, credits, accountTier, healthPoints, maxHealthPoints, canReroll,
-  onWatchAd, onBuyPack, onInstantHeal, onReroll, onClose,
+  language, credits, accountTier, canReroll,
+  onWatchAd, onBuyPack, onReroll, onClose,
 }: CreditsModalProps) {
   const isPt = language === 'pt-BR';
   const [busy, setBusy] = useState<string | null>(null);
@@ -76,7 +73,6 @@ export function CreditsModal({
   }, [credits]);
 
   const billingAvailable = isBillingAvailable();
-  const canHeal = credits >= HEART_COST_CREDITS && healthPoints < maxHealthPoints;
   const canAffordReroll = credits >= REROLL_COST_CREDITS;
 
   const flash = (text: string, ok: boolean) => {
@@ -195,18 +191,9 @@ export function CreditsModal({
 
       {sectionTitle(isPt ? 'Gastar' : 'Spend')}
 
-      <Row
-        icon="favorite"
-        tone="danger"
-        disabled={!canHeal || busy !== null}
-        onClick={() => run('heal', onInstantHeal,
-          isPt ? '+1 coração curado.' : '+1 heart healed.',
-          isPt ? 'Não foi possível curar agora.' : 'Could not heal right now.')}
-        title={isPt ? 'Curar 1 coração agora' : 'Heal 1 heart now'}
-        hint={healthPoints >= maxHealthPoints
-          ? (isPt ? 'Coração já está cheio.' : 'Heart is already full.')
-          : (isPt ? `${HEART_COST_CREDITS} créditos` : `${HEART_COST_CREDITS} credits`)}
-      />
+      {/* ⚰️ D7+D15: aqui havia "Curar 1 coração agora — 10 créditos". Saiu, e
+          com ela o único uso de Créditos que não era cosmético nem identidade.
+          Dinheiro não compra a barra de cuidado, sem asterisco. */}
 
       {accountTier === 'paid' && canReroll && !confirmingReroll && (
         <Row

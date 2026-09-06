@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { ts, fonteDe, type No } from '../test/tsAst';
 
@@ -46,12 +47,10 @@ const DELEGACOES = [
     'saldo exatamente igual ao preço + dois cliques = Bits/Emblemas NEGATIVOS, '
     + 'e o cenário entrando duas vezes na lista de posse',
   ],
-  [
-    'handleInstantHealWithCredits',
-    /applyInstantHeal\s*\(/,
-    'dois toques com a vida quase cheia = 10 Créditos de DINHEIRO REAL cobrados '
-    + 'duas vezes, e a segunda cura ZERO',
-  ],
+  // ⚰️ `handleInstantHealWithCredits` estava aqui até 06/09/2026. A peça foi
+  // REMOVIDA (D7+D15), então o guard de delegação virou o guard de ausência,
+  // logo abaixo — que é mais forte: em vez de exigir que a cobrança dupla seja
+  // impossível, exige que a cobrança não exista.
 ] as const;
 
 /** Aritmética que era feita à mão dentro do updater, e não pode voltar. */
@@ -123,16 +122,40 @@ describe('X-6: o updater reconfere a recusa sobre o `prev`, delegando ao dono da
     });
   }
 
-  it('a cura por Créditos TRAVA antes de gastar — a reconferência sozinha não devolve dinheiro', () => {
-    const corpo = corpoDe(fonte(), 'handleInstantHealWithCredits')!;
-    // O `await spendCredits` faz a janela ser maior que um lote do React, e o
-    // gasto acontece no servidor ANTES do updater. Sem a trava, reconferir
-    // impede a cura dupla e não impede a COBRANÇA dupla.
-    expect(corpo, 'a trava de pedido em voo sumiu: dois toques voltam a cobrar duas vezes')
-      .toMatch(/healInFlightRef\.current/);
-    expect(
-      corpo.indexOf('healInFlightRef.current = true'),
-      'a trava tem de ser fechada ANTES do spendCredits, senão ela não trava nada',
-    ).toBeLessThan(corpo.indexOf('spendCredits'));
+  /**
+   * D7 + D15 (06/09/2026) — **dinheiro não compra a barra de cuidado, e não é
+   * mais uma questão de teto ou de trava: a venda não existe.**
+   *
+   * Eram DOIS caminhos, e é por isso que este guard tem duas metades. O direto
+   * cobrava 10 Créditos por um coração. O indireto ninguém tinha notado: o
+   * câmbio `BITS_EXCHANGE` troca 1 Crédito por 10 Bits, e o coraçãozinho
+   * custava 150 Bits na loja — 15 Créditos por +1 coração, sem cap. Remover só
+   * o primeiro deixaria o segundo, que é o mesmo negócio com um passo a mais.
+   *
+   * O item continua existindo: ele só não se compra. Vem da masmorra e se usa
+   * pela pastinha (`SPECIAL_ITEMS`, catálogo de USO), então ninguém perde o que
+   * já tinha.
+   */
+  it('não existe caminho de dinheiro para HP: nem o direto, nem o câmbio', () => {
+    expect(corpoDe(fonte(), 'handleInstantHealWithCredits'),
+      'a cura instantânea por Créditos voltou ao App.tsx').toBeNull();
+    const appTexto = readFileSync(path.join(SRC, 'App.tsx'), 'utf-8');
+    expect(appTexto.replace(/\/\*[\s\S]*?\*\//g, ''),
+      'o módulo da cura paga voltou a ser importado').not.toMatch(/instantHeal/);
+
+    const shop = readFileSync(path.join(SRC, 'utils/shop.ts'), 'utf-8');
+    const catalogo = shop.slice(shop.indexOf('SHOP_ITEMS'), shop.indexOf('SPECIAL_ITEMS'));
+    expect(catalogo, 'o coraçãozinho voltou à loja — e Créditos compram Bits')
+      .not.toMatch(/id: 'heart-item'/);
+
+    // A outra metade da verdade: o item CONTINUA curável fora da loja.
+    expect(shop, 'o coraçãozinho sumiu do catálogo de USO — isso quebraria quem já tem um')
+      .toMatch(/\[HEART_ITEM_EMOJI\]:/);
+  });
+
+  it('nenhum preço em Créditos aponta para HP', () => {
+    const mon = readFileSync(path.join(SRC, 'utils/monetization.ts'), 'utf-8');
+    const vivos = mon.replace(/\/\/.*$/gm, '');
+    expect(vivos, 'um custo em Créditos para curar voltou a existir').not.toMatch(/HEART_COST_CREDITS\s*=/);
   });
 });

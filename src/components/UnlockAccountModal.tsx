@@ -113,7 +113,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
       open
       onClose={onClose}
       language={language}
-      title={isPt ? 'Soulmon completo' : 'Full Soulmon'}
+      title={isPt ? 'Seu Soulmon cresce porque você cresce' : 'Your Soulmon grows because you do'}
       maxWidth={440}
       footer={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -162,26 +162,47 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             : `The free mode holds ${DEMO_ACTIVITY_TOTAL_CAP} active habits — the whole Rookie routine. `
               + 'Evolving your own Soulmon is what takes you past that ceiling.')
           : (isPt
-            ? 'Esta é a árvore de um personagem de demonstração — os três caminhos levam ao mesmo lugar.'
-            : "This is a demo character's tree — all three paths lead to the same place.")}
+            // WP5.9 (decisão D12): a copy dizia que os três caminhos "levam ao
+            // mesmo lugar", como se fosse equivalência. `getDemoCreatureStages`
+            // monta três galhos com o MESMO nome e a MESMA descrição: a forma
+            // existe, a diferença não. Dizer isso é mais honesto que prometer
+            // paridade — e não é castigo, é a descrição do que a demonstração é.
+            ? 'Esta é a árvore de um personagem de demonstração: os três caminhos existem, mas terminam na mesma criatura. A do oráculo nasce de você, e cada galho leva a uma forma diferente.'
+            : "This is a demo character's tree: the three paths exist, but they end at the same creature. An oracle creature is born from you, and each branch leads to a different form.")}
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <Perk icon="auto_awesome"
           title={isPt ? 'Sua criatura, só sua' : 'Your creature, yours alone'}
           desc={isPt ? 'O ritual do oráculo gera um Soulmon a partir de quem você é' : 'The oracle ritual generates a Soulmon from who you are'} />
-        <Perk icon="add"
-          title={isPt ? 'Atividades sem limite' : 'Unlimited activities'}
-          desc={isPt ? 'Cadastre quantas rotinas quiser, todo dia' : 'Add as many routines as you like, every day'} />
-        <Perk icon="refresh"
-          title={isPt ? 'Reroll liberado' : 'Reroll unlocked'}
-          desc={isPt ? 'Gere uma criatura nova quando quiser (custa Créditos)' : 'Generate a brand-new creature whenever you want (costs Credits)'} />
+        <Perk icon="account_tree"
+          title={isPt ? 'A árvore inteira' : 'The whole tree'}
+          desc={isPt ? 'Cada galho leva a uma forma diferente, decidida por como você cuida' : 'Each branch leads to a different form, decided by how you care'} />
+        {/* C-S1: o terceiro perk era "Reroll liberado (custa Créditos)" —
+            vender gasto FUTURO dentro da própria oferta. Trocado pelo modelo
+            do Finch: o que se compra é a continuidade do app, dita sem drama. */}
+        <Perk icon="volunteer_activism"
+          title={isPt ? 'Ajuda o Soulmon a existir' : 'Keeps Soulmon alive'}
+          desc={isPt ? 'Uma pessoa faz este app; a compra é o que paga as contas dele' : 'One person makes this app; the purchase is what pays its bills'} />
       </div>
 
       <p style={sm2Hint}>
         {isPt
           ? 'Compra única — seu progresso atual continua exatamente como está.'
           : 'One-time purchase — your current progress stays exactly as it is.'}
+      </p>
+
+      {/* A frase que fecha a oferta, e que só pôde ser escrita HOJE.
+          O C-S1 pediu esta linha e o próprio guarda a barrou: enquanto os
+          Créditos compravam coração (direto por 10, ou por 15 via
+          Créditos→Bits→💗), ela seria mentira dita no lugar mais caro possível
+          — dentro do pedido de dinheiro. As duas peças saíram neste mesmo lote
+          (D7+D15), e a frase virou verdade verificável. Se alguém reintroduzir
+          qualquer venda que toque HP, é esta linha que passa a mentir. */}
+      <p style={{ ...sm2Hint, fontWeight: 500 }}>
+        {isPt
+          ? 'Pagar nunca deixa sua criatura mais forte. Não tem como.'
+          : "Paying never makes your creature stronger. It can't."}
       </p>
 
       {/* Estado de erro do fluxo de compra. Tinta de perigo, sem placa
