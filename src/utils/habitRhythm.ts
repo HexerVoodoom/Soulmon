@@ -341,12 +341,20 @@ export function constancy(
  * Mesma janela e mesmo denominador de `constancy`: só dias DEVIDOS contam, e
  * hábito novo (janela vazia) não tem aura — ela é conquistada, não dotada.
  */
-export const PURE_WINDOW_DAYS = 28;
+/**
+ * ⚠️ Chamava-se `PURE_WINDOW_DAYS` / `pureWindow`, e o nome foi trocado em
+ * 06/09/2026 pelo motivo que o dossiê escreveu: **um selo que nomeia a PUREZA
+ * fabrica a impureza**. Era interno, mas nome interno é o que vaza para a
+ * próxima copy — e "impuro" é a palavra que este produto não pode dizer sobre
+ * alguém que usou um escudo de descanso, que é uma proteção automática e
+ * deliberada. "Firme" descreve o ritmo sem julgar quem não está nele.
+ */
+export const STEADY_WINDOW_DAYS = 28;
 
-export function pureWindow(
+export function steadyWindow(
   rhythm: HabitRhythm,
   now: Date,
-  windowDays: number = PURE_WINDOW_DAYS,
+  windowDays: number = STEADY_WINDOW_DAYS,
 ): boolean {
   const oldest = addDays(now, -(windowDays - 1));
   const inWindow = (key: string) => {

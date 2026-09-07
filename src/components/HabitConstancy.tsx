@@ -5,7 +5,7 @@ import {
   constancy,
   habitTier,
   dayKeyOf,
-  pureWindow,
+  steadyWindow, STEADY_WINDOW_DAYS,
   type HabitRhythm,
 } from '../utils/habitRhythm';
 import { Icon } from './ui/Icon';
@@ -180,7 +180,7 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
   // `window > 0` pelo motivo certo — "0 de 0 não descreve nada".
   /* WP2.2 — a aura. Calculada aqui, do mesmo `rhythm` que já chega: não há
      estado novo no save, e sem estado não há o que ficar desatualizado. */
-  const aura = pureWindow(rhythm, now);
+  const aura = steadyWindow(rhythm, now);
   const semJanela = window === 0;
   const total = window || CONSTANCY_WINDOW_DAYS;
   const headline = semJanela
@@ -214,10 +214,35 @@ export function HabitConstancy({ rhythm, schedule, now, language, compact = fals
           escudo gasto. É estética e só: não dá ponto, não bloqueia o escudo, e
           quando deixa de valer ela some EM SILÊNCIO — anunciar a perda é
           exatamente a punição que a streak que zera faz. */}
+      {/* ⚠️ A aura precisa ser LEGÍVEL, e não era (auditoria de 06/09/2026):
+          um `drop-shadow` de 4px num ícone de 20px, sem nome, sem rótulo, fora
+          do guia. Prestígio funciona por ser reconhecível — um brilho que
+          ninguém nomeia não produz orgulho nenhum, então o produto pagava o
+          risco e não recebia o benefício. E a decisão D4 diz que a aura é a
+          régua de perda de TODO o produto: uma régua que o jogador não percebe
+          ganhando não pode ser a régua de nada.
+          O que NÃO muda: ela some em silêncio quando deixa de valer — anunciar
+          a perda é exatamente a punição que a streak que zera faz. */}
       <span
-        title={hideMetrics
-          ? (isPt ? `Maturidade: ${tierName[tier].pt}` : `Maturity: ${tierName[tier].en}`)
-          : (isPt ? `Maturidade: ${tierName[tier].pt} (${rhythm.totalDone} dias)` : `Maturity: ${tierName[tier].en} (${rhythm.totalDone} days)`)}
+        title={[
+          hideMetrics
+            ? (isPt ? `Maturidade: ${tierName[tier].pt}` : `Maturity: ${tierName[tier].en}`)
+            : (isPt ? `Maturidade: ${tierName[tier].pt} (${rhythm.totalDone} dias)` : `Maturity: ${tierName[tier].en} (${rhythm.totalDone} days)`),
+          /* `hideMetrics` tira o NÚMERO e preserva a recompensa — é a regra da
+             Janela de Descanso aplicada aqui, e o guard de tooltips a pegou na
+             primeira execução: "28 dias" é um número, e quem pediu para não
+             ver números não pode recebê-los de volta pela porta da aura. */
+          aura
+            ? (hideMetrics
+              ? (isPt ? 'Ritmo firme' : 'Steady rhythm')
+              : (isPt ? `Ritmo firme nos últimos ${STEADY_WINDOW_DAYS} dias` : `Steady rhythm over the last ${STEADY_WINDOW_DAYS} days`))
+            : null,
+        ].filter(Boolean).join(' · ')}
+        aria-label={aura
+          ? (hideMetrics
+            ? (isPt ? 'Ritmo firme' : 'Steady rhythm')
+            : (isPt ? `Ritmo firme nos últimos ${STEADY_WINDOW_DAYS} dias` : `Steady rhythm over the last ${STEADY_WINDOW_DAYS} days`))
+          : undefined}
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500,
           color: 'var(--sm2-ink)',

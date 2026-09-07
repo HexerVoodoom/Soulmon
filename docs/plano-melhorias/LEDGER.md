@@ -73,8 +73,29 @@ rápido; a fonte são os arquivos de `ledger/`.
 | vínculo (11) | — | — | — | **1** (3.1, falta a memória de sessão) | **10** | — |
 | permanência (21) | — | — | — | **2** (4.6 abismo, 4.7 fiação) | **18** | **1** (4.4) |
 | sustento (10) | — | — | — | **2** (0.6 e 5.8, requerem APK) | **8** | — |
-| **Total (87)** | **ZERO** | **ZERO** | — | **8** | **77** | **2** |
+| **Total (87)** | **ZERO** | **ZERO** | — | **5** | **79** | **3** |
 
+> ### ⚠️ 07/09/2026 — a auditoria de alinhamento, e o que ela achou no PRÓPRIO ledger
+>
+> Sete agentes releram o corpus de pesquisa e o dossiê Mobbin contra o código
+> de hoje (não contra este arquivo). O achado central é sobre este arquivo:
+> **seis pacotes estavam carimbados com comandos de aceite que falhavam.**
+>
+> Não é desleixo, e a causa é identificável: são exatamente os pacotes cuja
+> spec a rodada Mobbin **revisou**. O código foi escrito contra a spec antiga e
+> o carimbo foi lido contra a nova. Eram WP5.1, WP2.2, WP2.4, WP2.6, WP4.5 e
+> WP4.6 — todos corrigidos em 07/09, com o comando rodado e a saída colada na
+> linha de cada um.
+>
+> **A lição de método, que vale mais que os seis:** `grep -q A B` é **OR**, não
+> AND — sai 0 se qualquer um dos arquivos casar. Foi assim que o WP5.1 passou
+> verde com metade do pacote faltando. **Um comando de aceite tem de FALHAR
+> quando o pacote está pela metade**; se não falha, é pior que aceite nenhum,
+> porque ninguém volta a olhar.
+>
+> O relatório completo (17 achados em três prioridades) está em
+> `docs/AUDITORIA-ALINHAMENTO.md`.
+>
 > **06/09/2026 — a coluna PROPOSTO zerou.** Os 87 pacotes do plano foram
 > percorridos. Os **8 IMPLEMENTADOS** não são pendências esquecidas: são
 > pacotes cujo código está no repo, testado e mergeado, e cujo aceite depende
