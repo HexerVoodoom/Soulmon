@@ -11,3 +11,11 @@ squad-alpha-runs/
 # Artefatos locais de ferramenta (worktrees de agente, estado de sessao)
 .claude/worktrees/
 state/
+
+# Variáveis de build do front (VITE_*). Elas são INLINADAS no bundle pelo Vite
+# — não são segredo de servidor —, mas o arquivo é de máquina e não de repo:
+# cada um tem o seu, e commitar um congela a config de quem buildar depois.
+# O template versionado é `.env.example`.
+.env
+.env.*
+!.env.example

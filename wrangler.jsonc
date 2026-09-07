@@ -8,12 +8,24 @@
     "not_found_handling": "single-page-application"
   },
   "kv_namespaces": [
-    // O nome novo primeiro: `_kv.js` prefere `SOULMON_SAVES` e cai no antigo.
-    // Os DOIS apontam para o mesmo namespace hoje — é o que permite trocar o
-    // painel do Cloudflare sem sincronizar com o merge, e sem janela de queda.
-    // O `DIGIAPP_SAVES` sai daqui quando o painel já tiver o nome novo.
-    { "binding": "SOULMON_SAVES", "id": "aed229e069fd40d8a141fb1124763d9d" },
+    // 07/09/2026 — `SOULMON_SAVES` passou a apontar para um namespace PRÓPRIO
+    // e VAZIO (decisão do dono: separar sem migrar, já que ninguém usou o app
+    // em produção). `_kv.js` PREFERE este, então é ele que vale a partir do
+    // próximo deploy.
+    { "binding": "SOULMON_SAVES", "id": "20b3ba78a3e84265b5e2d4cd0d411d43" },
+    // O antigo fica declarado só enquanto for útil como rede: hoje ele não é
+    // lido (o de cima ganha), e existe para o dado herdado continuar
+    // alcançável por um `wrangler kv key get` se alguém precisar conferir
+    // alguma coisa. Pode sair a qualquer momento.
     { "binding": "DIGIAPP_SAVES", "id": "aed229e069fd40d8a141fb1124763d9d" },
     { "binding": "PUSH_SUBSCRIPTIONS", "id": "12dd88d3282140e786a5b2c5b5b940cf" }
+  ],
+  // WP5.3 / SEC-3 — a trava "um recibo, uma conta". `claimOrder` só é ATÔMICO
+  // quando existe `env.DB`; sem ele cai no caminho KV, que é eventualmente
+  // consistente (~60s) e deixa o mesmo comprovante valer para N contas. O
+  // banco não existia até 07/09/2026 — a proteção nunca esteve ligada.
+  // Schema versionado em `migrations/`.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "soulmon-billing", "database_id": "43546903-7f12-4541-9a67-4b0e8ac736da" }
   ]
 }

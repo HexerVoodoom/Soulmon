@@ -36,6 +36,14 @@ O repositório está verde e o usuário recebe assim mesmo.
 ---
 
 ### 2. Ligar `FIREBASE_PROJECT_ID` no painel do Cloudflare
+
+> ⚠️ **Correção de 07/09/2026:** este item e o 13 diziam "projeto Pages". O app
+> **é um Worker** (`wrangler.jsonc` na raiz, `soulmon.mateus-sprnd.workers.dev`)
+> — as variáveis de runtime ficam em Workers & Pages → soulmon → Settings.
+> E as `VITE_FIREBASE_*` **não são de runtime**: o Vite as inlina no bundle,
+> então elas moram num `.env` da máquina que roda `npm run build`. Pôr as
+> `VITE_*` no painel não tem efeito nenhum, e foi o que esta lista mandou fazer
+> por semanas.
 **Por quê:** é o que faz a autorização de save existir. Sem ele, `_auth.js:112`
 devolve `{ ok: true }` e **todo o `denyUnlessOwner` é um no-op**. Quem souber um
 e-mail deriva o `saveId` (algoritmo público) e:
@@ -156,7 +164,7 @@ equivalentes.**
 | 10 | Registrar o pacote no Firebase + baixar `google-services.json` | push nativo |
 | 11 | Criar os 4 produtos no Play Console (`soulmon.unlock.full` + 3 pacotes de crédito) | compras |
 | 12 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` | compras |
-| 13 | `VITE_FIREBASE_*` no projeto Pages (e o `FIREBASE_PROJECT_ID` **por último**) | login |
+| 13 | `VITE_FIREBASE_*` **num `.env` na máquina que builda** (não no painel! são de BUILD — o Vite as inlina no bundle, ver `.env.example`), depois `npm run build` + deploy. Só então o `FIREBASE_PROJECT_ID` no painel do worker, que é runtime e vai **por último** | login |
 | 14 | Conta Steamworks + US$ 100 · **App ID e Depot ID** | cliente Steam |
 | 15 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` | microtransação Steam |
 | ~~16~~ | ~~E-mail de contato do VAPID~~ — **decidido em 07/09/2026**: `mateus.sprnd@gmail.com`, já no código. Só falta o `wrangler deploy` dentro de `workers/` | push |
