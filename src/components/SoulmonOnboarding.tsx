@@ -21,7 +21,8 @@ import type { Answers as SoulAnswers } from '../utils/soulProfile/personality/ty
 import { cityLabel, type City } from '../utils/soulProfile/cities';
 import { CityPicker } from './CityPicker';
 import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
-import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL } from '../utils/monetization';
+import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU } from '../utils/monetization';
+import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
 import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
@@ -163,6 +164,9 @@ export const REVEAL_WAIT_MS = 12_000;
 interface SavedProfile extends OracleInput { seed: number }
 
 export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel }: SoulmonOnboardingProps) {
+  // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
+  // nativo cai na constante publicada (`utils/priceLabel.ts`).
+  const precoLabel = useUnlockPriceLabel();
   const isUpgrade = mode === 'upgrade';
   const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
   const L = (t: LText) => (isPt ? t.pt : t.en);
@@ -535,7 +539,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === DEEP_END - 1) {
       // último item do teste longo respondido → tela de geração e gera
       setStep(GENERATING);
-      setTimeout(runGenerate, 1400); // deixa a animação respirar
+      runGenerate();
       return;
     }
     setStep(s => s + 1);
@@ -546,7 +550,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setRefine(yes);
     if (yes) { setStep(DEEP_START); return; }
     setStep(GENERATING);
-    setTimeout(runGenerate, 1400);
+    /* ⚠️ Havia 1,4s de `setTimeout` aqui "para a animação respirar", e a
+       auditoria de 06/09/2026 mostrou o custo: o pedido do SPRITE só sai
+       depois de `doGenerate` terminar, e ele corre contra `REVEAL_WAIT_MS`
+       (12s). A encenação comprava ~12% do orçamento da corrida que o WP1.1
+       existe para vencer — decoração cobrando do `has_sprite`.
+       A espera real não sumiu: a leitura do soulProfile e o import DINÂMICO do
+       motor de efemérides (astronomy-engine, pesado de propósito) já produzem
+       tempo de tela suficiente para a animação. */
+    runGenerate();
   };
   // No upgrade não existe passo 0 (intro): voltar da primeira pergunta é
   // desistir do ritual e voltar ao jogo.
@@ -849,7 +861,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             >
               {unlockLoading
                 ? <Spinner />
-                : (isPt ? `Quero o completo — ${FULL_UNLOCK_PRICE_LABEL}` : `Get the full game — ${FULL_UNLOCK_PRICE_LABEL}`)}
+                : (isPt ? `Quero o completo — ${precoLabel}` : `Get the full game — ${precoLabel}`)}
             </button>
             {unlockMessage && (
               <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 16 }}>

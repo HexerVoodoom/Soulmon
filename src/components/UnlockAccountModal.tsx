@@ -1,7 +1,8 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_TOTAL_CAP } from '../utils/monetization';
+import { FULL_UNLOCK_SKU, DEMO_ACTIVITY_TOTAL_CAP } from '../utils/monetization';
+import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
 import type { Entitlement } from '../utils/entitlements';
 import type { Language } from '../utils/i18n';
@@ -52,6 +53,9 @@ function Perk({ icon, title, desc }: { icon: string; title: string; desc: string
 }
 
 export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: UnlockAccountModalProps) {
+  // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
+  // nativo cai na constante publicada (`utils/priceLabel.ts`).
+  const precoLabel = useUnlockPriceLabel();
   const isPt = language === 'pt-BR';
   const [loading, setLoading] = useState<'buy' | 'restore' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -129,7 +133,7 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
           >
             {loading === 'buy'
               ? <><Icon name="sync" size={20} className="animate-spin" />{isPt ? 'Comprando…' : 'Purchasing…'}</>
-              : (isPt ? `Desbloquear — ${FULL_UNLOCK_PRICE_LABEL}` : `Unlock — ${FULL_UNLOCK_PRICE_LABEL}`)}
+              : (isPt ? `Desbloquear — ${precoLabel}` : `Unlock — ${precoLabel}`)}
           </button>
           {/* WP5.5 — "Agora não" com a MESMA largura do primário, logo abaixo
               dele (Mobbin, Character AI). Uma oferta cuja única saída visível é
@@ -231,6 +235,9 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
   variant?: 'buy' | 'reveal';
   onOpen: () => void;
 }) {
+  // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
+  // nativo cai na constante publicada (`utils/priceLabel.ts`).
+  const precoLabel = useUnlockPriceLabel();
   const isPt = language === 'pt-BR';
 
   const nudgeStyle: CSSProperties = {
@@ -254,8 +261,8 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
       ? 'Você já desbloqueou o completo — responda o ritual quando quiser.'
       : 'You already unlocked the full game — answer the ritual whenever you like.')
     : (isPt
-      ? `Desbloqueie o Soulmon completo por ${FULL_UNLOCK_PRICE_LABEL} — seu progresso continua.`
-      : `Unlock the full Soulmon for ${FULL_UNLOCK_PRICE_LABEL} — your progress stays.`);
+      ? `Desbloqueie o Soulmon completo por ${precoLabel} — seu progresso continua.`
+      : `Unlock the full Soulmon for ${precoLabel} — your progress stays.`);
 
   return (
     <button type="button" onClick={onOpen} style={nudgeStyle}>

@@ -1,9 +1,9 @@
+import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { useState, useEffect } from 'react';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
 import {
   CREDIT_PACKS, type CreditPack, ADS_ENABLED, AD_REWARD_CREDITS, AD_DAILY_CAP, REROLL_COST_CREDITS,
-  FULL_UNLOCK_PRICE_LABEL,
 } from '../utils/monetization';
 import { fetchEntitlement } from '../utils/entitlements';
 import { isBillingAvailable } from '../utils/playBilling';
@@ -50,6 +50,9 @@ export function CreditsModal({
   language, credits, accountTier, canReroll,
   onWatchAd, onBuyPack, onReroll, onClose,
 }: CreditsModalProps) {
+  // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
+  // nativo cai na constante publicada (`utils/priceLabel.ts`).
+  const precoLabel = useUnlockPriceLabel();
   const isPt = language === 'pt-BR';
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
@@ -226,8 +229,8 @@ export function CreditsModal({
       {accountTier === 'demo' && (
         <p style={{ ...sm2Hint, textAlign: 'center' }}>
           {isPt
-            ? `Reroll é exclusivo de contas completas — desbloqueie por ${FULL_UNLOCK_PRICE_LABEL}.`
-            : `Reroll is exclusive to unlocked accounts — unlock for ${FULL_UNLOCK_PRICE_LABEL}.`}
+            ? `Reroll é exclusivo de contas completas — desbloqueie por ${precoLabel}.`
+            : `Reroll is exclusive to unlocked accounts — unlock for ${precoLabel}.`}
         </p>
       )}
     </ModalSheet>

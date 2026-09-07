@@ -20,7 +20,20 @@
 
 export type FirstDayGesture = 'pet' | 'feed' | 'task';
 
-export const FIRST_DAY_GESTURES: readonly FirstDayGesture[] = ['pet', 'feed', 'task'];
+/**
+ * Os três gestos, **na ordem em que são POSSÍVEIS**.
+ *
+ * ⚠️ A ordem era `['pet', 'feed', 'task']` e pedia, no item 2, uma coisa
+ * impossível: o save nasce com `foodInventory: {}` e o `handleFeed` retorna
+ * cedo com estoque zero — comida vem de CONCLUIR atividade, então o gesto 2 só
+ * existia depois do gesto 3. A própria dica do cartão admitia isso.
+ *
+ * Um convite que não responde ao toque no minuto zero ensina que o app não
+ * responde, e o gesto mais gratificante dos três ficava atrás de uma porta
+ * invisível. `shouldShowFirstDay` compara por CONJUNTO, não por ordem, então
+ * reordenar não muda nenhuma regra — só a leitura.
+ */
+export const FIRST_DAY_GESTURES: readonly FirstDayGesture[] = ['pet', 'task', 'feed'];
 
 export interface FirstDayProgress {
   /** Dia do JOGADOR em que o cartão nasceu (`playerDayKey`). */

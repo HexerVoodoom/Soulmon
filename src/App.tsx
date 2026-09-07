@@ -28,6 +28,7 @@ import { EvolutionCeremony } from './components/EvolutionCeremony';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { spriteText } from './utils/spriteCopy';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
+import { getSpriteForStage } from './utils/sprites';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
@@ -5303,8 +5304,21 @@ export default function App() {
           {currentView === 'stats' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
               /* WP1.6 — a MESMA peça do reveal, agora como lembrança. */
-              birth={gameState.bornAt || gameState.soulmonMeta?.baseName ? {
-                spriteUrl: displaySprite(spriteAcervo, 'rookie')?.url ?? null,
+              birth={gameState.bornAt || gameState.soulmonMeta?.baseName || gameState.demoCharacterId ? {
+                /* ⚠️ O jogador GRÁTIS tinha o cartão de nascimento
+                   permanentemente sem criatura (auditoria de 06/09/2026):
+                   `displaySprite` lê o ACERVO, e o demo nunca gera sprite —
+                   embora a arte dele exista e seja desenhada todo dia na Home
+                   por `getSpriteForStage`.
+                   A regra "nunca arte de reserva" no `BirthCard` foi escrita
+                   para o oráculo, onde reserva significa OUTRA criatura. No
+                   demo o pré-pronto É a criatura da pessoa, então a regra
+                   estava bloqueando justamente o caso em que ela não se
+                   aplica — e a faixa grátis é a que menos posse recebe. */
+                spriteUrl: displaySprite(spriteAcervo, 'rookie')?.url
+                  ?? (gameState.demoCharacterId
+                    ? getSpriteForStage('rookie', gameState.demoCharacterId)
+                    : null),
                 name: soulmonDisplayName(gameState.soulmonMeta) || '—',
                 soulGoal: gameState.soulGoal ?? null,
                 bornAt: gameState.bornAt ?? null,

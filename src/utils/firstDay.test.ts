@@ -16,8 +16,14 @@ const HOJE = '2026-09-06';
 const AMANHA = '2026-09-07';
 
 describe('firstDay — os três gestos', () => {
-  it('são exatamente carinho, comida e uma conclusão', () => {
-    expect([...FIRST_DAY_GESTURES]).toEqual(['pet', 'feed', 'task']);
+  it('são exatamente carinho, uma conclusão e comida — NESTA ordem', () => {
+    // ⚠️ A ordem importa e era `['pet','feed','task']`, que pedia no item 2
+    // uma coisa impossível: o save nasce com `foodInventory: {}` e comida vem
+    // de CONCLUIR atividade, então o gesto 2 só existia depois do gesto 3.
+    // Um convite que não responde ao toque no minuto zero ensina que o app
+    // não responde.
+    expect([...FIRST_DAY_GESTURES]).toEqual(['pet', 'task', 'feed']);
+    expect(FIRST_DAY_GESTURES.indexOf('task')).toBeLessThan(FIRST_DAY_GESTURES.indexOf('feed'));
   });
 
   it('marcar é idempotente e devolve a MESMA referência (footgun 6)', () => {
