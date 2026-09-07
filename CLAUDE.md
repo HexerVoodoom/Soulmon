@@ -134,7 +134,7 @@ repetir) · **tarefa = EXECUÇÃO** (o valor está em terminar e sair da cabeça
 | 📈 Constância | **"N das últimas 7"** (`CONSTANCY_WINDOW_DAYS`), nunca streak que zera — uma falha custa ~14%, não 100%. Denominador = só os dias em que o hábito ERA DEVIDO (senão um 3x/semana apareceria como 43%). Dia protegido por escudo conta como FEITO. Hábito novo devolve ratio 1 (*progresso dotado*, Nunes & Drèze — ninguém começa em 0%). **Se alguém acrescentar um `streak` que zera, desfez a tese do produto** — há teste travando. Dono: `utils/habitRhythm.ts`. |
 | 🛡️ Escudos de descanso | 1 a cada `REST_SHIELD_EARN_EVERY_DAYS` (7) dias de boa constância (`GOOD_CONSTANCY_RATIO` = 5/7), teto `REST_SHIELD_MAX` (3). **Consumidos AUTOMATICAMENTE** em `applyMissedDay` — proteção que exige lembrar de ativar antes de falhar não protege ninguém (é o defeito da Pousada do Habitica; o Streak Freeze só funcionou quando veio equipado por padrão). Idempotente por dayKey: a virada pode rodar 2× e não gasta dois escudos. Conclusão tardia NÃO devolve escudo já gasto. |
 | 🚫 Never miss twice | A **primeira falha não gera nada visível**. `needsIntervention` só em `MISS_INTERVENTION_AT` (2) faltas seguidas, e aí o pet oferece uma **versão reduzida** ("hoje, só 5 minutos?") — aceitar conta como feito. Modelo do Finch; oposto exato do dano de HP do Habitica. |
-| 🌳 Marcos de hábito | `HABIT_MILESTONES` = **7 / 21 / 66** dias efetivos (Lally et al. 2010, mediana real 66 — os "21 dias" são de Maxwell Maltz/1960, sobre cirurgia plástica, e não têm a ver com hábito). Tiers seed→sprout→sapling→tree, ícone evolui na lista, e `HABIT_TIER_BONUS` dá **+0/10/20/30%** de rendimento de atributo. Multiplicador **sempre ≥ 1**: esforço antigo vale MAIS, nunca menos. `milestoneReached` existe para a celebração tocar UMA vez (nada de estado de UI no save). |
+| 🌳 Marcos de hábito | A cerimônia **espera o gesto** (`MilestoneCeremony`): botão com saída relacional + a DATA, z-index **300**. ⚠️ Ela fechava sozinha em 2,5s, sem botão, em z-60 — contra o aceite escrito no ledger ("o modal não fecha sozinho") e contra o dossiê: o que faz a pessoa REGISTRAR o marco é a saída pertencer a ela, e o de 66 dias era comemorado sob o check-in. **Movimento reduzido reduz o MOVIMENTO, nunca a pausa** — caía para um `toast.success` igual ao de qualquer tarefa, entregando menos cerimônia a quem tem mais chance de precisar de acessibilidade. `HABIT_MILESTONES` = **7 / 21 / 66** dias efetivos (Lally et al. 2010, mediana real 66 — os "21 dias" são de Maxwell Maltz/1960, sobre cirurgia plástica, e não têm a ver com hábito). Tiers seed→sprout→sapling→tree, ícone evolui na lista, e `HABIT_TIER_BONUS` dá **+0/10/20/30%** de rendimento de atributo. Multiplicador **sempre ≥ 1**: esforço antigo vale MAIS, nunca menos. `milestoneReached` existe para a celebração tocar UMA vez (nada de estado de UI no save). |
 | 👻 Assombrada | Tarefa ativa vencida OU parada há `HAUNTED_AFTER_DAYS` (7) dias. Esmaece + partícula escura; **o pet OLHA** (`hauntedWatching` → classe `sm-pet-haunted`, WP3.2, 06/09/2026 — até então esta linha prometia o olhar e não havia UMA ocorrência de `haunted` no `CompanionHUD.tsx`; é gesto, sem texto junto, e há teste exigindo que nenhuma palavra de cobrança acompanhe); **concluir dá bônus de alívio** (comemoração maior). É a peça mais Soulmon do plano: a pilha de culpa vira loop de jogo com recompensa, em vez de vermelho de cobrança. `someday`/`dropped` **nunca** assombram. Sem `lastTouchedAt`/`createdAt` a idade é **0** — nunca assombrar em massa o backlog de quem só atualizou o app. |
 | 🕒 Adiamentos | Contador visível (Sunsama, "movida 7 vezes"). `POSTPONE_NUDGE_AT` = 3 → o pet oferece **decompor / encolher / deixar pra lá**. `shrink` rebaixa o effort em 1 (piso 1) e **ZERA o contador** (a tarefa mudou; carregar a marca puniria a decisão certa). |
 | 💤 Algum dia / 🌙 Deixar pra lá | `TaskStatus` = `open \| someday \| dropped`. **`someday`** é o Someday do Things 3: deliberadamente INERTE — fora da meta, não envelhece, não assombra (permissão formal para não fazer). **`dropped`** é o Won't Do do TickTick: terminal COM volta atrás (`restore`) — não é deletar (perde contexto) nem concluir (é mentira). É essa saída que quebra o ciclo de **falência periódica** (apagar tudo e recomeçar), o padrão de uso dominante do mercado. |
@@ -389,6 +389,21 @@ ficam valendo:
   BOTÕES DE TEXTO — a regra é sobre ícones.
 - **A área do pet não rola para fora da tela** — `.sm-pet-sticky` (rodada 4);
   o scroll acontece só na lista de atividades abaixo dela.
+- **DUAS FILAS, e nada monta fora delas** (`src/components/filaDeAvisos.contract.test.ts`).
+  Os **intersticiais** (`const interstitial` no `App.tsx`) montam UM por vez,
+  em ordem declarada; o **slot de avisos da Home** renderiza só o PRIMEIRO e
+  colapsa o resto em "+N" (ordem: primeiro dia → HP → semanal → triagem →
+  priming → recomeço — o semanal vem antes da triagem porque é raro e a
+  triagem aparece todo dia). ⚠️ A auditoria de 06/09/2026 achou quatro
+  superfícies FORA das filas, e é ali que empilhava: o
+  `ProtectProgressModal` montava em z-120 sob os intersticiais (z-200) com um
+  `setTimeout(15s)` no lugar de um gate — contra um check-in de ~20s por
+  design; a cerimônia de marco vivia em **z-60**, sob o check-in (hoje 300);
+  evoluir abria a cerimônia (z-500) **e** o `EvolveTaskModal` por baixo, que
+  reaparecia cobrando "crie mais atividades" quando ela fechava; e
+  `FirstDayCard` + priming de push eram dois `&&` soltos logo acima do
+  comentário que manda entrar na fila. **Superfície nova entra numa das duas,
+  com posição declarada.**
 
 ## Idioma: inglês é a base, PT-BR é localização
 

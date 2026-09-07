@@ -647,7 +647,7 @@ export default function App() {
   const [rebirthOpen, setRebirthOpen] = useState(false);
   /** WP2.4 — a cerimônia do marco. `null` = nenhuma acontecendo. */
   const [milestoneCeremony, setMilestoneCeremony] = useState<
-    { tierIcon: string; habitName: string; text: string } | null
+    { tierIcon: string; habitName: string; text: string; dateLabel: string; reducedMotion: boolean } | null
   >(null);
   const [editingActivity, setEditingActivity] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<string | null>(null);
@@ -1620,19 +1620,25 @@ export default function App() {
     /* WP2.4 — a CERIMÔNIA. Cruzar 7/21/66 dias era um som, um toast e uma
        fala: três coisas que o app faz o tempo todo por qualquer motivo, ou
        seja, o momento mais raro da constância era indistinguível de concluir
-       uma tarefa. Em movimento reduzido cai para o toast de sempre — quem
-       pediu menos movimento não recebe um overlay animado como consolo. */
+       uma tarefa.
+       ⚠️ Em movimento reduzido isto CAÍA para o `toast.success` de sempre — o
+       mesmo de concluir qualquer tarefa. Entregava MENOS cerimônia justamente
+       a quem tem mais chance de precisar de acessibilidade, e o que se reduz é
+       o MOVIMENTO, nunca a pausa (auditoria de 06/09/2026). A cerimônia é a
+       mesma; a flag só desliga as animações e o háptico. */
     const movimentoReduzido = typeof window !== 'undefined'
-      && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (movimentoReduzido) {
-      toast.success(`${name} — ${language === 'pt-BR' ? text.pt : text.en}`);
-    } else {
-      setMilestoneCeremony({
-        tierIcon: HABIT_TIER_ICONS[tier as keyof typeof HABIT_TIER_ICONS] ?? '🌱',
-        habitName: name,
-        text: language === 'pt-BR' ? text.pt : text.en,
-      });
-    }
+      && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    setMilestoneCeremony({
+      tierIcon: HABIT_TIER_ICONS[tier as keyof typeof HABIT_TIER_ICONS] ?? '🌱',
+      habitName: name,
+      text: language === 'pt-BR' ? text.pt : text.en,
+      // A data do marco: marco é permanente, e a data é o que o torna memória
+      // em vez de notificação.
+      dateLabel: new Date().toLocaleDateString(language === 'pt-BR' ? 'pt-BR' : 'en-US', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      }),
+      reducedMotion: movimentoReduzido,
+    });
   }, [gameState, language, falar]);
 
   const handleUpdateStep = (activityId: string, stepId: string) => {
@@ -4289,7 +4295,17 @@ export default function App() {
             onClose={() => setUnlockReason(null)}
           />
         )}
-        {protectPrompt && (
+        {/* ⚠️ `interstitial === 'welcome'` (= nenhum intersticial na tela) é o
+            gate, e ele substitui a esperança depositada no `setTimeout(15s)`.
+            Este modal monta em z-120 (`ModalSheet`), ABAIXO do relatório
+            diário e do check-in (200): numa manhã cheia ele aparecia debaixo,
+            com focus-trap próprio, e a pessoa perdia o único pedido semanal
+            de proteger o save — o bug que a fila de intersticiais foi criada
+            para matar, reintroduzido por uma porta lateral (auditoria de
+            06/09/2026). O timer fica: ele evita a montagem instantânea na
+            abertura. Quem decide agora é a fila, e o gate é REATIVO — quando
+            o último intersticial fecha, o pedido aparece sozinho. */}
+        {protectPrompt && interstitial === 'welcome' && (
           <ProtectProgressModal
             language={language}
             reason={protectPrompt}
@@ -4362,6 +4378,8 @@ export default function App() {
             tierIcon={milestoneCeremony.tierIcon}
             habitName={milestoneCeremony.habitName}
             text={milestoneCeremony.text}
+            dateLabel={milestoneCeremony.dateLabel}
+            reducedMotion={milestoneCeremony.reducedMotion}
             spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
             language={language}
             onDone={() => setMilestoneCeremony(null)}
@@ -4500,50 +4518,6 @@ export default function App() {
 
           {currentView === 'main' && (
             <div className="space-y-4">
-              {/* WP1.3 — o cartão do PRIMEIRO DIA, acima da lista.
-                  O tutorial ensinava conceito e mandava criar uma atividade;
-                  o que ele nunca ensinou foi o que se FAZ com a criatura. Os
-                  três gestos existem desde sempre e nenhum é descobrível — e
-                  o carinho é a única forma de curar coração, então quem não o
-                  descobre vê o pet perder vida sem ter como responder.
-                  Some sozinho na virada do dia, mesmo incompleto. */}
-              {shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz)) && (
-                <FirstDayCard progress={gameState.firstDay!} language={language} />
-              )}
-
-              {/* WP1.5 — o SEGUNDO convite de notificação, na voz do PET.
-                  Cartão na Home e não modal: o primeiro pedido já foi um
-                  modal e foi recusado; repetir a mesma interrupção seria
-                  insistir. Quem pergunta é a criatura, e é PERGUNTA — "ative
-                  as notificações para não perder seu progresso" é o app
-                  falando de si. Aparece uma vez só; "agora não" encerra. */}
-              {mostrarPrimingDePush && (
-                <section
-                  style={{
-                    padding: 14, borderRadius: 12, marginBottom: 12,
-                    border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
-                  }}
-                >
-                  <p style={{ ...sm2Text, margin: '0 0 10px' }}>{pushPrimingLine(language === 'pt-BR')}</p>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      type="button"
-                      style={{ ...sm2Button('primary'), flex: 1 }}
-                      onClick={() => { dispensarPriming(); void handleToggleNotifications(); }}
-                    >
-                      {language === 'pt-BR' ? 'Pode sim' : 'Yes, please'}
-                    </button>
-                    <button
-                      type="button"
-                      style={{ ...sm2Button('ghost'), flex: 1 }}
-                      onClick={dispensarPriming}
-                    >
-                      {language === 'pt-BR' ? 'Agora não' : 'Not now'}
-                    </button>
-                  </div>
-                </section>
-              )}
-
               {/* HUD do topo (Ref C): SÓ a marca (o `<h1>` da Home) agora.
                   Vida/Energia migraram para DENTRO do `.sm2-device`
                   (CompanionHUD, `hideBrand compact`) em 27/08/2026 — o dono
@@ -4584,10 +4558,15 @@ export default function App() {
 
                   A ordem não é estética, é de CONSEQUÊNCIA:
                    1. HP — é a única com dano de jogo em curso hoje;
-                   2. TRIAGEM — é a única acionável em um toque, e planejar é o
+                   0. PRIMEIRO DIA — o mais perecível: morre na virada;
+                   1. HP;
+                   2. SEMANAL — raro (1×/semana) e é a única superfície
+                      reflexiva da constância; por isso vem ANTES da triagem,
+                      que aparece todo dia;
+                   3. TRIAGEM — a única acionável em um toque, e planejar é o
                       que alivia (Masicampo & Baumeister);
-                   3. SEMANAL — leitura, não ação; só domingo;
-                   4. RECOMEÇO — convite, e o mais adiável dos quatro.
+                   4. PRIMING DE PUSH — pedido do app, e pedido cede a vez;
+                   5. RECOMEÇO — convite, e o mais adiável de todos.
 
                   **Cartão novo na Home entra NESTA fila, com posição
                   declarada — nunca como mais um `&&` solto.** É a mesma
@@ -4603,6 +4582,24 @@ export default function App() {
                   && dailyDone < hpSafeToday && !hpBannerDismissed;
 
                 const avisos: { key: string; node: ReactNode }[] = [];
+
+                /* ── 0. PRIMEIRO DIA ──────────────────────────────────────
+                   Entra na fila em PRIMEIRO porque é o mais perecível de
+                   todos: ele morre na virada, completo ou não. Um cartão que
+                   tem um dia de vida não pode ceder a vez para outro que
+                   volta amanhã.
+                   ⚠️ Ele e o priming abaixo eram dois `&&` SOLTOS acima do
+                   HUD — furando a fila logo abaixo do comentário que manda
+                   entrar nela (auditoria de 06/09/2026). */
+                if (shouldShowFirstDay(gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz))) {
+                  avisos.push({
+                    key: 'firstDay',
+                    node: (
+  gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz)) && (
+                  <FirstDayCard progress={gameState.firstDay!} language={language} />
+                    ),
+                  });
+                }
 
                 // ── 1. HP ────────────────────────────────────────────────
                 // O número vem de `tasksToAvoidHeartLoss`, dono da regra.
@@ -4633,7 +4630,26 @@ export default function App() {
                   ),
                 });
 
-                // ── 2. TRIAGEM ───────────────────────────────────────────
+                /* ── 2. SEMANAL (domingo) ─────────────────────────────────
+                   ⚠️ Ele vinha DEPOIS da triagem, e a auditoria de 06/09/2026
+                   mostrou o efeito: `triageQueue` quase nunca está vazia para
+                   quem tem histórico, e o slot renderiza só o PRIMEIRO — então
+                   num domingo típico a única superfície reflexiva da semana já
+                   nascia colapsada atrás do "+N". O adiável estava ganhando do
+                   raro. A triagem volta amanhã; o relatório da semana, não. */
+                if (semanaA) avisos.push({
+                  key: 'semanal',
+                  node: (
+                    <WeeklyReportCard
+                      report={weeklyReport(gameState, agoraA)}
+                      suggestion={stackingSuggestion(gameState, agoraA, language)}
+                      language={language}
+                      onDismiss={handleDismissWeeklyReport}
+                    />
+                  ),
+                });
+
+                // ── 3. TRIAGEM ───────────────────────────────────────────
                 // 200 itens vermelhos viram uma sequência de decisões de um
                 // clique. Só existe com pilha de verdade — um botão de arrumar
                 // sobre uma lista limpa é cobrança gratuita.
@@ -4653,20 +4669,44 @@ export default function App() {
                   ),
                 });
 
-                // ── 3. SEMANAL (domingo) ─────────────────────────────────
-                if (semanaA) avisos.push({
-                  key: 'semanal',
+                /* ── 4. PRIMING DE PUSH ──────────────────────────────────
+                   O segundo convite de notificação, na voz do PET. Cartão e
+                   não modal: o primeiro pedido já foi um modal e foi recusado,
+                   e repetir a mesma interrupção seria insistir. Aparece uma
+                   vez só; "agora não" encerra. Fica abaixo do que descreve o
+                   DIA porque é um pedido do app, e pedido cede a vez. */
+                if (mostrarPrimingDePush) avisos.push({
+                  key: 'priming',
                   node: (
-                    <WeeklyReportCard
-                      report={weeklyReport(gameState, agoraA)}
-                      suggestion={stackingSuggestion(gameState, agoraA, language)}
-                      language={language}
-                      onDismiss={handleDismissWeeklyReport}
-                    />
+
+                  <section
+                    style={{
+                      padding: 14, borderRadius: 12, marginBottom: 12,
+                      border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)',
+                    }}
+                  >
+                    <p style={{ ...sm2Text, margin: '0 0 10px' }}>{pushPrimingLine(language === 'pt-BR')}</p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        style={{ ...sm2Button('primary'), flex: 1 }}
+                        onClick={() => { dispensarPriming(); void handleToggleNotifications(); }}
+                      >
+                        {language === 'pt-BR' ? 'Pode sim' : 'Yes, please'}
+                      </button>
+                      <button
+                        type="button"
+                        style={{ ...sm2Button('ghost'), flex: 1 }}
+                        onClick={dispensarPriming}
+                      >
+                        {language === 'pt-BR' ? 'Agora não' : 'Not now'}
+                      </button>
+                    </div>
+                  </section>
                   ),
                 });
 
-                // ── 4. RECOMEÇO (segunda / dia 1) ────────────────────────
+                // ── 5. RECOMEÇO (segunda / dia 1) ────────────────────────
                 // Cartão discreto, JAMAIS um modal que tranca a tela: o *fresh
                 // start effect* funciona porque relega as imperfeições ao
                 // período anterior; um convite que bloqueia o app viraria mais
@@ -5719,8 +5759,16 @@ export default function App() {
         onDecompose={handleDecomposeTask}
       />
 
+      {/* ⚠️ `evolutionCeremony === null` é o encadeamento, e ele faltava
+          (auditoria de 06/09/2026): evoluir abria a CERIMÔNIA (z-500) e este
+          modal montava por baixo (z-50), reaparecendo assim que ela fechava.
+          O momento mais emocional do produto terminava num modal cobrando
+          "crie mais atividades" — a cerimônia entrega identidade e o modal
+          seguinte cobra requisito, na ordem emocionalmente invertida. O gate
+          é reativo: quando a cerimônia fecha, o modal aparece se ainda fizer
+          sentido. */}
       <EvolveTaskModal
-        isOpen={evolveModalStage !== null}
+        isOpen={evolveModalStage !== null && evolutionCeremony === null}
         onClose={() => setEvolveModalStage(null)}
         onCreateTask={() => { setEvolveModalStage(null); setCreateModalOpen(true); }}
         requiredTasks={FORM_REQUIREMENTS[getStageLevel(evolveModalStage ?? gameState.evolutionStage)].required}

@@ -1,1 +1,0 @@
-import{cy as e}from"./index-DPd5nJ2b.js";import"./vendor-DDxydHEc.js";function o(r){return[e(r.fullName),r.birthDate,r.birthTime,r.birthPlace.trim().toLowerCase(),JSON.stringify(r.soulProfile?.psychometric.traitPoints??{}),JSON.stringify(r.answers??{})].join("|")}export{o as identityKey};
