@@ -206,7 +206,7 @@ Boa noite (22h) sempre é enviada.
 
 **Public Key (hardcoded em `src/utils/vapid.ts` e `workers/wrangler.toml`):**
 ```
-BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY
+BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwRi4lvarHEeAR5hD6aawtb_QYIy4Ir16zdo
 ```
 
 **Private Key JWK** — salvar como secret no CF Worker:
@@ -214,7 +214,8 @@ BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNf
 cd workers
 npx wrangler secret put VAPID_JWK
 # Colar o JWK completo quando solicitado:
-# {"key_ops":["sign"],"ext":true,"kty":"EC","x":"rYywlm03pqdxAG0plgsXF79q9d8g-pGzbyzOWBFckZ8","y":"QcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY","crv":"P-256","d":"nUiUk84giV_Do7fho0QVk30ZoagvhB5ES52O5JSmM7g"}
+# (cole o JWK privado impresso por `node scripts/gerar-vapid.mjs`;
+#  NUNCA escreva o valor real aqui — este arquivo e versionado)
 ```
 
 ---

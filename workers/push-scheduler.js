@@ -23,7 +23,7 @@ import { isAllowedPushEndpoint } from '../functions/api/_pushTargets.js';
 import { getFcmAccessToken, sendFcmPush } from './fcm.js';
 import { pushCopy } from '../functions/api/_pushCopy.js';
 
-const VAPID_PUBLIC_KEY = 'BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY';
+const VAPID_PUBLIC_KEY = 'BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwRi4lvarHEeAR5hD6aawtb_QYIy4Ir16zdo';
 // Endereço de contato do VAPID (RFC 8292 `sub`): é para onde o SERVIÇO DE
 // PUSH escreve quando há problema de entrega — nunca aparece para o usuário.
 // Era `contact@digiapp.app`, endereço de outro projeto: um aviso de entrega
