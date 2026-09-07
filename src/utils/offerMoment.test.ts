@@ -66,3 +66,32 @@ describe('offerMoment — a semana é a MESMA da métrica-norte', () => {
     expect(isoWeekKey('ontem')).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// A JUNÇÃO, que é onde o teste de unidade não olhava.
+//
+// Achado de 06/09/2026: `isoWeekKey` só aceitava `YYYY-MM-DD`, e os dois
+// chamadores do `App.tsx` passam `playerDayKey(...)`, que devolve
+// `"Mon Sep 07 2026"`. A função devolvia `null`, `shouldOfferAtValueMoment`
+// saía por `if (!semana) return false`, e **a oferta do primeiro dia perfeito
+// nunca apareceu para ninguém** — nem o `offerShownWeek` foi gravado uma vez.
+//
+// Nada ficava vermelho porque os testes deste módulo sempre passaram o formato
+// que ele sabia ler. Dois módulos corretos, uma junção quebrada.
+// ---------------------------------------------------------------------------
+describe('isoWeekKey aceita o formato do playerDayKey', () => {
+  it('lê "Www Mmm DD YYYY" e concorda com o ISO do mesmo dia', () => {
+    expect(isoWeekKey('Mon Sep 07 2026')).toBe(isoWeekKey('2026-09-07'));
+    expect(isoWeekKey('Mon Sep 07 2026')).not.toBeNull();
+  });
+
+  it('a semana do playerDayKey vira a MESMA chave de segunda a domingo', () => {
+    expect(isoWeekKey('Mon Sep 07 2026')).toBe(isoWeekKey('Sun Sep 13 2026'));
+    expect(isoWeekKey('Mon Sep 07 2026')).not.toBe(isoWeekKey('Sun Sep 06 2026'));
+  });
+
+  it('continua recusando lixo', () => {
+    expect(isoWeekKey('Xyz Abc 99 0000')).toBeNull();
+    expect(isoWeekKey('')).toBeNull();
+  });
+});

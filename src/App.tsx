@@ -106,6 +106,10 @@ import { memoryToShow, markMemoryShown } from './utils/memories';
 import { stampCollected } from './utils/collectionDates';
 import { shouldPrimePush, pushPrimingLine } from './utils/pushPriming';
 import { shouldOfferAtValueMoment, isoWeekKey } from './utils/offerMoment';
+import {
+  bumpWeekly, forWeek, claimWeekly, weeklyMissionsFor,
+  type WeeklyMissionId,
+} from './utils/weeklyMissions';
 import { sleepReminderCopy } from '../functions/api/_pushCopy.js';
 import { BITS_EXCHANGE } from './utils/currencies';
 import { fetchEntitlement, spendCredits, claimAdReward, type Entitlement } from './utils/entitlements';
@@ -201,7 +205,7 @@ function frequencyLabel(
 }
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
-  createRestState, recordNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG,
+  createRestState, recordNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
 
@@ -2078,6 +2082,7 @@ export default function App() {
       // WP0.13: o numerador de "a pilha de culpa virou loop de jogo?". Aqui,
       // FORA do updater (footgun 6), e sem nada da tarefa — só o fato.
       if (relief) track('haunted_done');
+      if (relief) contarMissao('haunted-done');
 
       // Mark task as completed first
       setGameState(prev => ({
@@ -2534,6 +2539,7 @@ export default function App() {
 
   // Shower: cosmetic wash (no energy cost). Also properly completes an active poop event.
   const handleShower = useCallback(() => {
+    contarMissao('shower');
     if (careEvent?.type === 'poop') {
       handleCareEventComplete();
     }
@@ -2624,6 +2630,29 @@ export default function App() {
     return true;
   }, [gameState.petPassive]);
 
+  /**
+   * WP4.7 — o ÚNICO ponto que conta missão semanal.
+   *
+   * ⚠️ `utils/weeklyMissions.ts` existia completo, testado e com **zero
+   * consumidores** (auditoria de 06/09/2026) — a terceira repetição do padrão
+   * que o WP4.15 consertou no Vínculo e o WP4.16 nas estações: quanto mais
+   * completo o módulo, menos óbvio que ele está mudo. E o custo aqui era de
+   * economia: `TOURNAMENT_ITEMS` somam 245 Emblemas, a 3 por vitória são ~82
+   * vitórias, e depois disso a moeda do Torneio **nunca mais compra nada**.
+   * As missões semanais são a torneira e o ralo ao mesmo tempo.
+   *
+   * Um ponto só, e não um `bumpWeekly` espalhado por doze handlers, porque a
+   * virada de semana (`forWeek`) tem de acontecer no MESMO updater que soma —
+   * senão um contador de semana passada recebe +1 antes de ser zerado.
+   */
+  const contarMissao = useCallback((id: WeeklyMissionId) => {
+    setGameState(prev => {
+      const semana = isoWeekKey(playerDayKey(new Date(), prev.playerDayTz));
+      if (!semana) return prev;
+      return { ...prev, weeklyMissions: bumpWeekly(forWeek(prev.weeklyMissions, semana), id) };
+    });
+  }, []);
+
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
   const handleGlitchtama = useCallback(() => {
@@ -2637,7 +2666,8 @@ export default function App() {
       foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
       dungeonRunsCompleted: (prev.dungeonRunsCompleted ?? 0) + 1,
     }));
-  }, []);
+    contarMissao('dungeon-runs');
+  }, [contarMissao]);
 
   // 🏅 Mission counters
   const handleDungeonEnemyDefeated = useCallback((enemyKey?: string) => {
@@ -2731,6 +2761,7 @@ export default function App() {
       setMessageTrigger(prev => prev + 1);
       return;
     }
+    contarMissao('play-days');
     setGameState(prev => play(prev, todayKey, now).state);
     playFeed();
     playBuffSpentRef.current = false; // buff novo, pronto para o próximo minijogo
@@ -3269,6 +3300,7 @@ export default function App() {
     // dia rendia DUAS entradas em fusos diferentes (ver `utils/mood.ts`).
     const today = playerDayKey(new Date(), gameState.playerDayTz);
     setGameState(prev => ({ ...prev, moodLog: recordMood(prev.moodLog, today, mood) }));
+    contarMissao('mood-checkins');
   }, [gameState.playerDayTz]);
 
   const handleCloseDailyReport = useCallback(() => {
@@ -3338,6 +3370,7 @@ export default function App() {
     // deixaria a leitura e a escrita em réguas diferentes — o pior dos dois
     // mundos, porque o ritual reabriria no MESMO aparelho.
     const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
+    contarMissao('checkins');
     // 🔗 Vínculo: o check-in é evento de esforço que JÁ existia (`bondXP`), e
     // ele é naturalmente 1×/dia — `lastCheckInDate` é a mesma trava que impede
     // o ritual de reabrir, então não há teto a inventar aqui.
@@ -3422,6 +3455,10 @@ export default function App() {
       // Perder isto só custa a hora de deitar da noite em curso. Silencioso.
       writeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, now.toISOString(), { silent: true });
       setGameState(prev => ({ ...prev, rest: recordNight(prev.rest ?? createRestState(), now) }));
+      // Conta a noite só quando o deitar caiu DENTRO da janela escolhida: a
+      // missão premia o comportamento, exatamente como a Janela de Descanso —
+      // contar toda noite pagaria por ir dormir, não por ir no horário.
+      if (isWithinWindow((gameState.rest ?? createRestState()).window, now)) contarMissao('rest-nights');
       return;
     }
     const startedIso = readLocal(STORAGE_KEYS.SLEEP_STARTED_AT);
@@ -3482,6 +3519,9 @@ export default function App() {
         playerDayKey(new Date(), prev.playerDayTz),
       ),
     }));
+    // Só o sonho INÉDITO conta: a missão é de coleção, e repetir um que já
+    // está no dex não acrescenta nada ao acervo.
+    if (isNew) contarMissao('dream-new');
     setMorningDream({ dream: DREAM_CATALOG.find(d => d.id === dreamId) ?? null, isNew });
   }, [gameState.rest, isSleeping, setGameState]);
 
@@ -3775,6 +3815,7 @@ export default function App() {
       return;
     }
     playFeed();
+    contarMissao('rub-days');
     if (!rubFalouRef.current) {
       rubFalouRef.current = true;
       falar('rub');
@@ -4043,6 +4084,42 @@ export default function App() {
     gameState.bornAt, gameState.playerDayTz, gameState.lastDayReport?.welcomeBack,
     notificationsEnabled, primingDispensado,
   ]);
+
+  /**
+   * As 3 missões da semana, prontas para a tela. DETERMINÍSTICO por semana: a
+   * mesma `weekKey` devolve as mesmas três em qualquer aparelho — se a lista
+   * mudasse a cada abertura, a pessoa aprenderia a reabrir o app até cair uma
+   * fácil, que é o oposto do que missão semanal existe para fazer.
+   */
+  const missoesDaSemana = useMemo(() => {
+    const semana = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
+    if (!semana) return [];
+    const progresso = forWeek(gameState.weeklyMissions, semana);
+    return weeklyMissionsFor(semana).map(mission => {
+      const count = progresso.counts[mission.id] ?? 0;
+      return {
+        mission,
+        count,
+        done: count >= mission.target,
+        claimed: progresso.claimed.includes(mission.id),
+      };
+    });
+  }, [gameState.weeklyMissions, gameState.playerDayTz]);
+
+  /** Paga os Emblemas de uma missão pronta. `claimWeekly` é idempotente e
+   *  devolve 0 se já estava paga — pagar duas vezes é bug de economia. */
+  const resgatarMissao = useCallback((id: WeeklyMissionId) => {
+    setGameState(prev => {
+      const semana = isoWeekKey(playerDayKey(new Date(), prev.playerDayTz));
+      if (!semana) return prev;
+      const progresso = forWeek(prev.weeklyMissions, semana);
+      const missao = weeklyMissionsFor(semana).find(m => m.id === id);
+      if (!missao) return prev;
+      const { progress, emblems } = claimWeekly(progresso, missao);
+      if (emblems === 0) return prev;
+      return { ...prev, weeklyMissions: progress, emblems: (prev.emblems ?? 0) + emblems };
+    });
+  }, []);
 
   /* WP5.1 — a oferta no primeiro dia perfeito. Quatro travas, e nenhuma delas
      mora nesta tela: nunca no D0 (vender antes de entregar), nunca em cima de
@@ -5364,7 +5441,13 @@ export default function App() {
                 trophies={gameState.trophies ?? []}
                 language={language}
                 emblems={gameState.emblems ?? 0}
-                onEarnEmblems={amount => setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }))}
+                onEarnEmblems={amount => {
+                  setGameState(prev => ({ ...prev, emblems: (prev.emblems ?? 0) + amount }));
+                  // A missão conta a PARTIDA, não a vitória: pagar só por
+                  // vitória faria a missão semanal recompensar resultado, e o
+                  // Torneio já mede o jogador contra ele mesmo pela faixa.
+                  contarMissao('tournament-match');
+                }}
                 totalXP={gameState.totalXP}
                 onMatchPlayed={won => setGameState(prev => awardBondXP(
                   prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
@@ -5381,6 +5464,7 @@ export default function App() {
                 canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
                 onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
                 onGiftSent={() => {}}
+                onVisitPlayer={() => contarMissao('friend-visit')}
                 language={language}
               />
             </Suspense>
@@ -5390,6 +5474,8 @@ export default function App() {
             <Suspense fallback={<ScreenSkeleton language={language} />}>
               <ShopModal
                 asPage
+                weeklyMissions={missoesDaSemana}
+                onClaimWeekly={resgatarMissao}
                 language={language}
                 points={gameState.gamePoints ?? 0}
                 ownedBackgrounds={gameState.ownedBackgrounds ?? []}
@@ -5452,7 +5538,13 @@ export default function App() {
           curto quando o foco já entrou na lista. */}
       <BottomNav
         currentView={currentView}
-        onNavigate={setCurrentView}
+        onNavigate={(v) => {
+          // A missão "visite a árvore de evolução" conta a NAVEGAÇÃO, e é a
+          // mais barata do pool de propósito: ela existe para levar quem nunca
+          // abriu a página até ela, não para pagar por esforço.
+          if (v === 'evolution') contarMissao('evolve-view');
+          setCurrentView(v);
+        }}
         onResetOnboarding={handleResetOnboarding}
         onOpenCredits={openCredits}
         language={language}

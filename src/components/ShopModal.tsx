@@ -8,6 +8,7 @@ import { DECOR_ART } from '../utils/decorArt';
 import { ITEM_ART } from '../utils/itemArt';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
 import { decorFitsSetting, type SlotId } from '../utils/petStage';
+import type { WeeklyMission, WeeklyMissionId } from '../utils/weeklyMissions';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -94,6 +95,7 @@ const emblemNum = emblemStyle;
 export function ShopModal({
   language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor,
   missionProgress, emblems, credits, onBuy, onExchangeCredits, onEquip, onEquipFurniture, onClose,
+  weeklyMissions, onClaimWeekly,
   asPage = false,
 }: {
   language: Language;
@@ -115,6 +117,11 @@ export function ShopModal({
   /** `id` null limpa o espaço; o slot é sempre obrigatório. */
   onEquipFurniture: (id: string | null, slot: SlotId) => void;
   onClose: () => void;
+  /** WP4.7 — as 3 missões da semana + o progresso, prontos. Vêm de fora porque
+   *  a semana e o progresso moram no save e esta tela não decide nada. */
+  weeklyMissions?: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
+  /** Paga os Emblemas de uma missão pronta. Idempotente do outro lado. */
+  onClaimWeekly?: (id: WeeklyMissionId) => void;
   /** Renderiza como página cheia dentro do fluxo normal em vez de folha. */
   asPage?: boolean;
 }) {
@@ -362,6 +369,62 @@ export function ShopModal({
           ? (isPt ? 'Emblemas só vêm do Torneio — e só compram aqui.' : 'Emblems only come from the Tournament — and only buy here.')
           : (isPt ? 'Ganhe Bits nos minijogos.' : 'Earn Bits in the minigames.'))}
       </p>
+
+      {/* ─── AS MISSÕES DA SEMANA ────────────────────────────────────────
+          Ficam no TOPO do segmento Torneio, e a posição é o argumento: aqui
+          é onde os Emblemas são gastos, e a missão é de onde eles vêm. A
+          torneira e o ralo na mesma tela.
+
+          ⚠️ `weeklyMissions.ts` existia completo, testado e com ZERO
+          consumidores (auditoria de 06/09/2026). E o custo era de economia:
+          `TOURNAMENT_ITEMS` somam 245 Emblemas — a 3 por vitória, ~82
+          vitórias e a moeda do Torneio nunca mais compra nada.
+
+          Nenhuma missão premia CONTAGEM DE TAREFAS: é proibição escrita do
+          `CLAUDE.md`, e o pool inteiro é de cuidado e presença (há teste
+          varrendo). Por isso elas cabem numa tela de loja sem virar cobrança:
+          o que se pede é aparecer, não produzir. */}
+      {seg === 'tournament' && (weeklyMissions?.length ?? 0) > 0 && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2 className="sm2-title" style={sm2TitleStyle}>{isPt ? 'Missões da semana' : 'This week'}</h2>
+          {weeklyMissions!.map(({ mission, count, done, claimed }) => (
+            <div
+              key={mission.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                borderRadius: 12, border: '1px solid var(--sm2-line)',
+                backgroundColor: 'var(--sm2-surface)',
+                // Missão paga esmaece — ela vira registro do que foi feito, e
+                // não some: sumir apagaria a única prova de que a semana rendeu.
+                opacity: claimed ? 0.55 : 1,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...sm2Text, margin: 0 }}>{isPt ? mission.descPt : mission.descEn}</p>
+                {/* Progresso só quando ele JÁ COMEÇOU — mesma régua do WP4.12
+                    (achado E4): `0/3` é a ausência de progresso, não o
+                    progresso, e uma coluna de zeros lê como boletim. */}
+                {!done && count > 0 && (
+                  <p style={{ ...sm2Hint, margin: '2px 0 0' }}>{count}/{mission.target}</p>
+                )}
+              </div>
+              {claimed ? (
+                <span style={{ ...sm2Hint, whiteSpace: 'nowrap' }}>{isPt ? 'recebido' : 'claimed'}</span>
+              ) : done ? (
+                <button
+                  type="button"
+                  onClick={() => onClaimWeekly?.(mission.id)}
+                  style={{ ...sm2Button('primary'), whiteSpace: 'nowrap' }}
+                >
+                  <span style={emblemNum}>+{mission.emblems}</span>
+                </button>
+              ) : (
+                <span style={{ ...emblemNum, opacity: 0.6, whiteSpace: 'nowrap' }}>+{mission.emblems}</span>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
       {sections.map(sec => (
         <section key={sec.key} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

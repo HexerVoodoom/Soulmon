@@ -30,6 +30,9 @@ interface LibraryPageProps {
   canGiftToday: boolean; // energia cheia
   onFriendsChange: (friends: string[]) => void;
   onGiftSent: (friendId: string) => void;
+  /** WP4.7 — abriu a criatura de alguém. A missão é sobre VISITAR, então o
+   *  gatilho é a abertura do detalhe, não a amizade nem o presente. */
+  onVisitPlayer?: () => void;
   language: Language;
 }
 
@@ -106,7 +109,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, language }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, language }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -315,7 +318,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                   e um `<div onClick>` não é alcançável pelo teclado. */}
               <button
                 type="button"
-                onClick={() => setSelectedPlayer(p)}
+                onClick={() => { setSelectedPlayer(p); onVisitPlayer?.(); }}
                 aria-label={isPt ? `Ver o perfil de ${p.name}` : `View ${p.name}'s profile`}
                 style={rowStyle}
               >

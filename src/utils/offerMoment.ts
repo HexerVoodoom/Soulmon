@@ -53,8 +53,8 @@ export function shouldOfferAtValueMoment(input: OfferMomentInput): boolean {
  * semana" mediria uma semana diferente da que o produto lê.
  */
 export function isoWeekKey(dayKey: string): string | null {
-  const t = Date.parse(`${dayKey}T00:00:00Z`);
-  if (!Number.isFinite(t)) return null;
+  const t = parseDayKey(dayKey);
+  if (t === null) return null;
   const d = new Date(t);
   const dayNum = (d.getUTCDay() + 6) % 7; // segunda = 0
   d.setUTCDate(d.getUTCDate() - dayNum + 3);
@@ -63,4 +63,33 @@ export function isoWeekKey(dayKey: string): string | null {
   ft.setUTCDate(ft.getUTCDate() - ((ft.getUTCDay() + 6) % 7) + 3);
   const week = 1 + Math.round((d.getTime() - ft.getTime()) / (7 * 86400000));
   return `${isoYear}-W${String(week).padStart(2, '0')}`;
+}
+
+/**
+ * Os DOIS formatos de dia que circulam no app, lidos como UTC.
+ *
+ * ⚠️ Este parse existe por causa de um defeito encontrado em 06/09/2026, e ele
+ * era **silencioso e total**: `isoWeekKey` só aceitava `YYYY-MM-DD`, mas os
+ * dois chamadores do `App.tsx` passam `playerDayKey(...)`, que devolve
+ * `"Mon Sep 07 2026"`. `Date.parse("Mon Sep 07 2026T00:00:00Z")` é `NaN`, a
+ * função devolvia `null`, e o `shouldOfferAtValueMoment` saía por
+ * `if (!semana) return false` — ou seja, **a oferta do primeiro dia perfeito
+ * nunca apareceu para ninguém**, e o `offerShownWeek` nunca foi gravado.
+ *
+ * Nada ficava vermelho: os testes do módulo passam `YYYY-MM-DD`, que é o
+ * formato que a função sempre soube ler. O defeito morava na JUNÇÃO entre dois
+ * módulos corretos — que é onde teste de unidade não olha.
+ *
+ * Aceitar os dois é melhor que converter no chamador: chamador que converte é
+ * a regra de novo espalhada, e o próximo a chamar erraria igual.
+ */
+function parseDayKey(dayKey: string): number | null {
+  if (typeof dayKey !== 'string' || !dayKey) return null;
+  // `YYYY-MM-DD` — o formato canônico, ancorado em UTC de propósito.
+  const iso = Date.parse(`${dayKey}T00:00:00Z`);
+  if (Number.isFinite(iso)) return iso;
+  // `Www Mmm DD YYYY` — o que `playerDayKey` devolve (é o formato do
+  // `Date.prototype.toDateString`, que ele imita para o dia do jogador).
+  const nativo = Date.parse(`${dayKey} UTC`);
+  return Number.isFinite(nativo) ? nativo : null;
 }

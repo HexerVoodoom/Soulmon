@@ -31,6 +31,7 @@ import type { StepsRecord } from '../utils/steps';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
 import { normalizeFirstDay } from '../utils/firstDay';
+import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import {
   readLocal,
   writeLocal,
@@ -310,6 +311,9 @@ export interface GameState {
   /** Emblemas: moeda do Torneio (utils/currencies.ts). Só compra itens da aba
    *  de torneio da loja — não se mistura com Bits nem Créditos. */
   emblems?: number;
+  /** WP4.7 — progresso das 3 missões da semana (`utils/weeklyMissions.ts`).
+   *  Semana nova zera sozinha na leitura (`forWeek`), então não há migração. */
+  weeklyMissions?: WeeklyMissionProgress;
   /** Shop: pet-box backgrounds owned (ids from utils/shop.ts). */
   ownedBackgrounds: string[];
   /** Shop: equipped pet-box background id, or null for the default. */
@@ -936,6 +940,17 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         })(),
         gamePoints: num(loadedState.gamePoints, 0),
         emblems: num(loadedState.emblems, 0),
+        // Higienização mínima: se a semana não for string o registro inteiro
+        // cai fora, e `forWeek` devolve uma semana vazia na leitura seguinte.
+        weeklyMissions: (() => {
+          const w = obj<unknown>(loadedState.weeklyMissions);
+          if (typeof w.week !== 'string') return undefined;
+          return {
+            week: w.week,
+            counts: obj<number>(w.counts) as WeeklyMissionProgress['counts'],
+            claimed: Array.isArray(w.claimed) ? (w.claimed.filter(x => typeof x === 'string') as WeeklyMissionProgress['claimed']) : [],
+          };
+        })(),
         pvpEnabled: loadedState.pvpEnabled ?? false,
         // `PetStageDecor` lê `.place`/`.season` de cada troféu para desenhar
         // 🥇🥈🥉 — item que não é objeto vira medalha fantasma.
