@@ -24,6 +24,26 @@ via `language === 'pt-BR'`).
 > aberto, o que já foi corrigido e a lista do que depende do dono. Leia no
 > começo da sessão e **atualize ao terminar qualquer coisa relevante**.
 
+> ## ⚠️ NINGUÉM NUNCA USOU O APP EM PRODUÇÃO (07/09/2026, informado pelo dono)
+>
+> **Leia isto antes de aceitar qualquer justificativa deste arquivo que comece
+> com "quebraria o save de quem já joga" ou "os APKs já instalados".** São 44
+> pontos entre código e docs, e todos decidem sobre uma premissa falsa: o
+> namespace KV `DIGIAPP_SAVES`, as chaves `digiapp_*`, o `digimonName` do
+> bridge, o `legacySpriteForStage`, o chat aceitando dois nomes de campo, e
+> principalmente `LEGACY_FORM_TIERS` — **57 nomes de personagem registrado da
+> Bandai que estão no bundle de produção agora**, quando `docs/Attributions.md`
+> declara que "saiu tudo" (a arte saiu; os nomes não).
+>
+> Isso **não autoriza apagar nada por conta própria**: o dono pode ter o save
+> dele num aparelho, e "ninguém em produção" ≠ "nenhum save existe". O que
+> autoriza é **parar de tratar essas justificativas como intocáveis** e levar a
+> decisão ao dono com a conta na mão, em vez de repetir a frase.
+>
+> Consequência de prioridade: sem usuários não há telemetria para ler, e a
+> curva de retenção D1/D7/D30 e o desenho D30–D90 são **hipótese não
+> confrontada**. O gargalo do projeto hoje é distribuição, não produto.
+
 ## Comandos (rode ANTES de todo commit)
 
 ```bash

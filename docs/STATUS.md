@@ -7,6 +7,37 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## ⚠️ 07/09/2026 — NINGUÉM NUNCA USOU O APP EM PRODUÇÃO
+>
+> Informado pelo dono. É o fato mais consequente registrado aqui, porque **44
+> pontos do código e da documentação decidem coisas com base na premissa
+> contrária** — "renomear quebraria o save de quem já joga", "os APKs já
+> instalados", "quem não atualizou". Não há quem.
+>
+> O que isso muda, em ordem de peso:
+>
+> 1. **57 nomes de personagem registrado da Bandai estão no bundle de
+>    produção** (`LEGACY_FORM_TIERS`, `src/types/progression.ts` — `agumon`,
+>    `greymon`, `veemon`, `tapirmon`, `salamon`…, conferido no `dist/`). A
+>    ÚNICA justificativa escrita para eles é compatibilidade de save. O
+>    `docs/Attributions.md` declara que "saiu tudo" da Bandai: a arte saiu, os
+>    **nomes não**. Com zero saves de terceiros, isso é superfície de risco de
+>    IP sem nenhum benefício — e vai para a Play Store junto.
+> 2. **A telemetria não tem urgência.** Sem usuários não há dado: as chaves
+>    `METRICS_ADMIN_KEY`/`SEASON_ADMIN_KEY` da seção 3.2 deixam de ser
+>    bloqueio e viram pré-requisito de lançamento. Nada se perdeu — a escrita
+>    funciona e o KV guarda por 730 dias.
+> 3. **Toda a régua de retenção D1/D7/D30 e a curva D30–D90 são HIPÓTESE.**
+>    Estão implementadas e coerentes com a pesquisa, e nenhuma foi confrontada
+>    com um usuário real. Nenhum número do produto foi observado.
+> 4. **O gargalo não é mais o produto, é a DISTRIBUIÇÃO.** Sete sprints de
+>    polimento foram feitos para zero pessoas.
+>
+> O que isto NÃO autoriza: apagar a compatibilidade de save por conta própria.
+> O dono pode ter o próprio save no aparelho dele, e "ninguém em produção" não
+> é o mesmo que "nenhum save existe". É decisão dele, e o custo de errar é o
+> save dele — recuperável, mas dele.
+
 > **01/09/2026** — entrou o **`docs/GUIA-EXPERIENCIA.md`** (guia mestre de
 > melhoria de experiência: onboarding/Oráculo, "streak" sem punição, vínculo,
 > paywall, retenção, DON'Ts e roadmap P0→P3) + 7 relatórios de pesquisa em
