@@ -18,8 +18,30 @@ O `saveId` **so existe derivado do e-mail** (`emailToSaveId` = SHA-256 de
 `soulmon:<email>`, `src/utils/cloudSave.ts`). Nao ha id anonimo nem por
 aparelho. E o e-mail so e pedido no ULTIMO passo do onboarding.
 
-Logo: usuario novo que toca em "Quero o completo" compra com `saveId:
-undefined`, e a compra chega ao Google Play **sem `obfuscatedExternalAccountId`**.
+> ### ⚠️ CORRECAO de 07/09/2026 — o defeito e PIOR do que este documento dizia
+>
+> Este texto afirmava que a compra saia com `saveId: undefined`. **Errado**, e
+> descoberto ao rodar o app de verdade: `App.tsx` gera um `saveId` **UUID
+> aleatorio** na primeira abertura (`if (!id) { id = crypto.randomUUID(); ... }`).
+>
+> Entao a compra nao vai "sem vinculo" — vai amarrada a um id DESCARTAVEL. Ao
+> entrar com e-mail, o saveId e SUBSTITUIDO pelo SHA-256 do endereco, e
+> `isPlayPurchaseBoundTo` compara os dois por igualdade:
+>
+> ```js
+> if (bound) return !!saveId && String(bound) === String(saveId);
+> ```
+>
+> Como o campo vem PREENCHIDO, cai no ramo da igualdade e a comparacao falha —
+> ou seja, **a compra e recusada mesmo com `PLAY_REQUIRE_ACCOUNT_BINDING`
+> desligado**. O defeito e ATUAL, nao futuro, e a flag nao o protege.
+>
+> Consequencia pratica no codigo: a guarda em `handleUnlockFull` olha o E-MAIL
+> comprovado, e nao a presenca do saveId — o saveId sempre existe, entao uma
+> guarda por presenca nunca dispararia.
+
+Logo: usuario novo que toca em "Quero o completo" compra com um `saveId`
+descartavel, e o recibo fica amarrado a um id que a conta abandona no login.
 
 O servidor ja tem a trava correspondente (`functions/api/_billing.js`):
 

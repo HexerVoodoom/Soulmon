@@ -18,7 +18,7 @@ import { SoulmonOnboarding } from './SoulmonOnboarding';
 
 /** Vai da intro até a tela "Before we start", pelo caminho grátis (demo). */
 function ateOConsentimento() {
-  fireEvent.click(screen.getByText('Start now — it’s free'));
+  fireEvent.click(screen.getByText('Get started'));
   fireEvent.click(screen.getByText('I’d rather not say right now')); // GOAL
   fireEvent.click(screen.getByText('I’d rather not say right now')); // STRUGGLE
   expect(screen.getByText('Before we start')).toBeTruthy();
@@ -29,9 +29,18 @@ const caixa = () =>
 const campoIdade = () =>
   screen.getByLabelText('What month and year were you born?') as HTMLInputElement;
 const continuar = () => screen.getByText('Continue').closest('button') as HTMLButtonElement;
+/** Passar do consentimento agora cai na ESCOLHA grátis/completo, que desceu do
+ *  passo 0 para depois do 18+ e do portão de e-mail (07/09/2026). Com a auth
+ *  desligada no teste, o portão não existe e o consentimento leva direto aqui. */
+const escolherGratis = () => fireEvent.click(screen.getByText('Start now — it’s free'));
 
 describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
   beforeEach(() => {
+    // O rascunho do portão (`utils/gateDraft.ts`) guarda o ACEITE, então sem
+    // esta limpeza o caso seguinte abriria com a caixa já marcada e o clique
+    // do teste a DESMARCARIA. Em produção isso é o comportamento certo — quem
+    // já aceitou não reaceita —, mas entre casos é vazamento de estado.
+    localStorage.clear();
     // 25/08/2026: a mesma data-base dos casos de `consent.test.ts`.
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-25T12:00:00Z'));
@@ -68,7 +77,7 @@ describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
     expect(screen.queryByText('Choose your Soulmon')).toBeNull();
     // A saída é o início do ritual, não um beco sem saída.
     fireEvent.click(screen.getByText('Back to start'));
-    expect(screen.getByText('Start now — it’s free')).toBeTruthy();
+    expect(screen.getByText('Get started')).toBeTruthy();
   });
 
   it('demo com 18 ou mais passa direto para a escolha do personagem', () => {
@@ -77,6 +86,7 @@ describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
     fireEvent.click(caixa());
     fireEvent.change(campoIdade(), { target: { value: '012000' } }); // 01/2000 → 26 anos
     fireEvent.click(continuar());
+    escolherGratis();
     expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
     expect(screen.queryByText('Not quite yet')).toBeNull();
   });
@@ -87,6 +97,7 @@ describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
     fireEvent.click(caixa());
     fireEvent.change(campoIdade(), { target: { value: '082008' } }); // faz 18 neste mês
     fireEvent.click(continuar());
+    escolherGratis();
     expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
   });
 

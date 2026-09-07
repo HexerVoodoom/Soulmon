@@ -23,9 +23,9 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 
 /** Caminho demo: intro -> objetivo -> dificuldade -> consentimento -> escolha
- *  do personagem -> cadastro. O mais curto que chega ao passo do batismo. */
+ *  grátis/completo -> personagem -> cadastro. O mais curto até o batismo. */
 function ateOCadastro(pt: boolean) {
-  fireEvent.click(screen.getByText(pt ? 'Começar agora — é grátis' : 'Start now — it’s free'));
+  fireEvent.click(screen.getByText(pt ? 'Começar' : 'Get started'));
   const pular = pt ? 'Prefiro não responder agora' : 'I’d rather not say right now';
   fireEvent.click(screen.getByText(pular)); // objetivo
   fireEvent.click(screen.getByText(pular)); // dificuldade
@@ -39,6 +39,10 @@ function ateOCadastro(pt: boolean) {
     { target: { value: '012000' } },
   );
   fireEvent.click(screen.getByText(pt ? 'Continuar' : 'Continue').closest('button')!);
+  // A escolha grátis/completo desceu do passo 0 para DEPOIS do consentimento e
+  // do portão de e-mail (07/09/2026) — com a auth desligada no teste, o portão
+  // não existe e o consentimento cai direto aqui.
+  fireEvent.click(screen.getByText(pt ? 'Começar agora — é grátis' : 'Start now — it’s free'));
   // Escolhe o primeiro personagem pré-pronto — leva direto ao cadastro.
   fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
 }

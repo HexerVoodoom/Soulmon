@@ -194,8 +194,13 @@ describe('gate de idade no caminho DEMO — mês/ano no passo de consentimento',
     // Coleta declarada: a tela diz a finalidade e que a resposta não é guardada.
     expect(onboarding).toContain('não guardamos essa resposta');
     expect(onboarding).toContain("we don't store this answer");
-    // O campo só aparece no demo — no Oráculo a data cheia já confere.
-    expect(onboarding).toMatch(/const demoNeedsAge = flow === 'demo'/);
+    // 07/09/2026 — o campo passou a valer para TODO o onboarding, não só para
+    // o demo. Motivo: a escolha grátis/completo desceu para depois do portão
+    // de e-mail, então no consentimento o `flow` ainda é desconhecido — e o
+    // 18+ tem de estar decidido ANTES de qualquer link de e-mail sair, senão
+    // o app escreveria para um menor antes de conferir a idade. O caminho pago
+    // segue reconferindo pela data cheia (`isAgeBlocked`), que é mais estrita.
+    expect(onboarding).toMatch(/const demoNeedsAge = !isUpgrade/);
     // E o avanço do passo de consentimento passa pelo gate.
     expect(onboarding).toMatch(/isAgeBlockedByMonth\(demoAgeMonth\)/);
     // A resposta NÃO é persistida: nada de writeJson/STORAGE_KEYS com ela.

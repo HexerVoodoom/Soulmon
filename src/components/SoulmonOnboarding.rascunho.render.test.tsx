@@ -34,7 +34,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     expect(screen.getByText('What is your full name?')).toBeTruthy();
     expect((screen.getByPlaceholderText('E.g.: Jane Doe') as HTMLInputElement).value).toBe('Maria da Silva');
     // E a intro NÃO aparece: retomar é retomar.
-    expect(screen.queryByText('Start now — it’s free')).toBeNull();
+    expect(screen.queryByText('Get started')).toBeNull();
   });
 
   it('digitar mais no ritual regrava o rascunho (a cada mudança, não só ao sair)', () => {
@@ -49,19 +49,23 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
 
   it('o caminho grátis (demo) nunca grava rascunho', () => {
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
-    fireEvent.click(screen.getByText('Start now — it’s free'));
+    fireEvent.click(screen.getByText('Get started'));
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
     fireEvent.change(screen.getByLabelText('What month and year were you born?'), { target: { value: '012000' } });
     fireEvent.click(screen.getByText('Continue').closest('button')!);
+    fireEvent.click(screen.getByText('Start now — it’s free'));
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
+    // O rascunho do RITUAL continua sem existir no caminho grátis. O do
+    // PORTÃO (`GATE_DRAFT`) é outra coisa e existe de propósito — ele é o que
+    // faz a viagem até o e-mail não cobrar de volta o aceite dos Termos.
     expect(localStorage.getItem(STORAGE_KEYS.ORACLE_DRAFT)).toBeNull();
   });
 
   it('um rascunho de outro modo é ignorado: o onboarding abre na intro', () => {
     writeOracleDraft({ ...rascunho, mode: 'upgrade' });
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
-    expect(screen.getByText('Start now — it’s free')).toBeTruthy();
+    expect(screen.getByText('Get started')).toBeTruthy();
   });
 });

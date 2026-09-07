@@ -8,6 +8,7 @@ import { sm2Button, sm2Hint, sm2Label, sm2Text, sm2TitleStyle, Field, CheckRow }
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeJson, removeLocal } from '../utils/safeStorage';
 import { readOracleDraft, writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
+import { readGateDraft, writeGateDraft, clearGateDraft } from '../utils/gateDraft';
 import {
   buildConsentRecord, isAgeBlocked, isAgeBlockedByMonth, monthYearFromText, MIN_AGE_YEARS,
   type ConsentRecord,
@@ -223,6 +224,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // Muro de idade: aparece ao AVANÇAR do passo da data, quando ela dá <18.
   // Não é alerta genérico — é um passo próprio, com o mesmo casco dos outros.
   const AGE_BLOCK = -5;
+  // PORTÃO DE IDENTIDADE — e-mail comprovado antes de QUALQUER decisão de
+  // dinheiro. Vem depois do consentimento e do 18+ de propósito: e-mail é dado
+  // pessoal (D-07 exige os Termos antes) e mandar link para menor antes de
+  // conferir a idade seria escrever para quem o app não pode atender.
+  const IDENTITY_STEP = -6;
+  // A escolha grátis/completo, que MORAVA no passo 0. Desceu para cá porque
+  // `handleUnlockFull` compra com `saveId` — e o saveId só existe derivado do
+  // e-mail. Comprar antes do portão mandava a compra ao Play sem
+  // `obfuscatedExternalAccountId`, e com `PLAY_REQUIRE_ACCOUNT_BINDING` ligado
+  // ela seria RECUSADA: a pessoa pagaria e não receberia.
+  const CHOICE_STEP = -7;
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
@@ -231,8 +243,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // mesmo passo com tudo que já respondeu. Nunca retoma na geração ou depois
   // (`DEEP_END - 1` é o último item do teste), e só no mesmo modo.
   const [draft] = useState(() => readOracleDraft(mode, DEEP_END - 1));
+  /** Rascunho do trecho ANTES da escolha (`utils/gateDraft.ts`). Existe por
+   *  causa do portão: abrir o link de e-mail leva a pessoa para FORA do app, e
+   *  `App.tsx` recarrega a página ao concluir o login — sem isto, a viagem
+   *  cobraria de volta o objetivo, a dificuldade e o aceite dos Termos. */
+  const [gate] = useState(() => (isUpgrade ? null : readGateDraft()));
   const [step, setStep] = useState(draft ? draft.step : isUpgrade ? 1 : 0);
   const [flow, setFlow] = useState<'oracle' | 'demo' | null>(draft || isUpgrade ? 'oracle' : null);
+  /** `null` = ainda não sabemos (a checagem é assíncrona); string = e-mail já
+   *  comprovado; `''` = deslogado. O portão só decide depois de saber. */
+  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authUsavel, setAuthUsavel] = useState(false);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
   /** WP1.12 — tonalidade escolhida no demo. 0 = a arte original. */
   const [demoTint, setDemoTint] = useState(0);
@@ -242,8 +263,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  próprio, com rótulo e foco, e o botão de avançar só liga com ela marcada.
    *  Caixa embutida dentro do parágrafo dos Termos não é consentimento
    *  específico (achado do run 01, PLANO-TAREFAS.md:187). */
-  const [consentChecked, setConsentChecked] = useState(!!draft?.consent);
-  const [consent, setConsent] = useState<ConsentRecord | null>(draft?.consent ?? null);
+  const [consentChecked, setConsentChecked] = useState(!!(draft?.consent ?? gate?.consent));
+  const [consent, setConsent] = useState<ConsentRecord | null>(draft?.consent ?? gate?.consent ?? null);
   /** Mês/ano de nascimento pedido SÓ no caminho demo, e SÓ para conferir 18+
    *  (utils/consent.ts). O demo pula o Oráculo inteiro e nunca chega ao passo
    *  da data — sem isto, o 18+ do dono valeria só para quem paga. Fica em
@@ -254,9 +275,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   /** O passo de consentimento é o ponto comum aos dois caminhos e vem ANTES da
    *  bifurcação — é onde a idade custa menos fricção no demo. No caminho do
    *  Oráculo o campo não aparece: a data cheia do mapa astral já confere. */
-  const demoNeedsAge = flow === 'demo';
-  const [soulGoal, setSoulGoal] = useState(draft?.soulGoal ?? '');
-  const [soulStruggle, setSoulStruggle] = useState(draft?.soulStruggle ?? '');
+  // Antes valia só para o caminho demo, porque a escolha grátis/completo
+  // acontecia no passo 0 e o `flow` já era conhecido no consentimento. Com a
+  // escolha DEPOIS do portão, o fluxo ainda é desconhecido aqui — e o 18+ tem
+  // de valer para todo mundo antes de qualquer e-mail sair. O caminho pago
+  // reconfere pela data de nascimento mais adiante (`isAgeBlocked`).
+  const demoNeedsAge = !isUpgrade;
+  const [soulGoal, setSoulGoal] = useState(draft?.soulGoal ?? gate?.soulGoal ?? '');
+  const [soulStruggle, setSoulStruggle] = useState(draft?.soulStruggle ?? gate?.soulStruggle ?? '');
   const [fullName, setFullName] = useState(draft?.fullName ?? '');
   const [birthDate, setBirthDate] = useState(draft?.birthDate ?? '');
   const [birthDateText, setBirthDateText] = useState(draft?.birthDateText ?? '');
@@ -314,10 +340,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // Ele é pedido depois, quando já existe progresso a proteger (ver
   // ProtectProgressModal). No caminho pago continua obrigatório — a compra fica
   // amarrada ao saveId derivado do e-mail, e perder isso é bem pior.
-  const emailRequired = flow !== 'demo';
-  const canFinish = nickname.trim().length >= 2
-    && (!emailRequired || email.trim().length > 0)
-    && !submitting;
+  // `emailRequired` saiu junto com o campo de e-mail deste passo: com o portão
+  // antes da escolha, TODO onboarding chega aqui com e-mail comprovado (ou com
+  // a auth desligada, e aí não há e-mail nenhum a exigir). A regra virou
+  // pré-condição do fluxo em vez de validação de formulário.
+  const canFinish = nickname.trim().length >= 2 && !submitting;
   const demoChar = flow === 'demo' && demoCharacterId ? PREMADE_CHARACTERS.find(c => c.id === demoCharacterId) ?? null : null;
   const registerDisplayName = demoChar?.name ?? result?.creature.baseName ?? '';
   /** O que o campo do batismo mostra. */
@@ -381,6 +408,43 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   }, [step, funnel]);
 
   const [generateError, setGenerateError] = useState(false);
+
+  // PORTÃO — resolve o estado de autenticação UMA vez, na montagem.
+  //
+  // `authUsavel` é falso quando `isAuthConfigured()` é falso (build sem as
+  // `VITE_FIREBASE_*`). Nesse caso o portão NÃO EXISTE: um passo obrigatório
+  // que depende de um serviço não configurado trancaria o app inteiro, e um
+  // build de contribuidor sem `.env` deixaria de abrir. Falta de config vira
+  // ausência de portão, nunca porta trancada.
+  //
+  // Se a pessoa já está autenticada (voltou pelo link, ou já entrou antes), o
+  // portão também não aparece — e, com o aceite já guardado no rascunho, o
+  // fluxo retoma direto na escolha grátis/completo, que é onde ela parou.
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      if (isUpgrade) return;
+      const usavel = isAuthConfigured();
+      const atual = usavel ? await getCurrentEmail() : null;
+      if (cancelado) return;
+      setAuthUsavel(usavel);
+      setAuthEmail(atual ?? '');
+      // Retomada da viagem ao e-mail: autenticado + aceite já provado = a
+      // pessoa já passou pelo consentimento e pelo 18+ nesta instalação.
+      if (atual && (gate?.consent ?? null) && step === 0) setStep(CHOICE_STEP);
+    })();
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Rascunho do portão: gravado enquanto a pessoa está no trecho anterior à
+  // escolha. Some assim que o onboarding termina (ver `finish`).
+  const noPortao = !isUpgrade
+    && [GOAL_STEP, STRUGGLE_STEP, CONSENT_STEP, IDENTITY_STEP, CHOICE_STEP].includes(step);
+  useEffect(() => {
+    if (!noPortao) return;
+    writeGateDraft({ soulGoal, soulStruggle, consent });
+  }, [noPortao, soulGoal, soulStruggle, consent]);
 
   // WP1.7 — grava o rascunho a cada mudança, só DENTRO do ritual pago (do nome
   // ao último item do teste) e só enquanto não existe resultado. Fora disso o
@@ -528,7 +592,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       // O carimbo é feito no MOMENTO do aceite, não no fim do onboarding: é
       // esse instante que a prova precisa registrar.
       setConsent(buildConsentRecord());
-      setStep(flow === 'demo' ? DEMO_PICK : 1);
+      // Portão: só existe se a auth estiver configurada E a pessoa ainda não
+      // tiver e-mail comprovado. Nos outros casos vai direto para a escolha.
+      setStep(authUsavel && !authEmail ? IDENTITY_STEP : CHOICE_STEP);
+      return;
+    }
+    if (step === IDENTITY_STEP) {
+      // Avançar do portão só acontece por já estar autenticado — o caminho
+      // normal é o link de e-mail, que sai do app e volta pelo `App.tsx`.
+      if (!authEmail) return;
+      setStep(CHOICE_STEP);
       return;
     }
     if (!canAdvance()) return;
@@ -567,8 +640,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === GOAL_STEP) { setStep(0); return; }
     if (step === STRUGGLE_STEP) { setStep(GOAL_STEP); return; }
     if (step === CONSENT_STEP) { setStep(STRUGGLE_STEP); return; }
-    if (step === DEMO_PICK) { setStep(CONSENT_STEP); return; }
-    if (step === 1 && !isUpgrade) { setStep(CONSENT_STEP); return; }
+    if (step === IDENTITY_STEP) { setStep(CONSENT_STEP); return; }
+    if (step === CHOICE_STEP) { setStep(authUsavel && !authEmail ? IDENTITY_STEP : CONSENT_STEP); return; }
+    if (step === DEMO_PICK) { setStep(CHOICE_STEP); return; }
+    if (step === 1 && !isUpgrade) { setStep(CHOICE_STEP); return; }
     // Voltar de dentro do teste longo devolve a escolha: quem entrou sem
     // querer não fica preso em 20 perguntas.
     if (step === DEEP_START) { setRefine(null); setStep(REFINE_OFFER); return; }
@@ -622,40 +697,54 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     }
   };
 
+  /** PORTÃO — manda o link de acesso.
+   *
+   *  Não avança passo nenhum: quem avança é a volta pelo link, que sai do app,
+   *  reabre pelo e-mail e faz `App.tsx` concluir o login e recarregar. O
+   *  rascunho do portão (`utils/gateDraft.ts`) é o que garante que essa volta
+   *  não cobre de novo o objetivo, a dificuldade e o aceite. */
+  const enviarLinkDoPortao = async () => {
+    if (submitting) return;
+    const alvo = email.trim().toLowerCase();
+    if (!isValidEmail(alvo)) { setEmailError(true); return; }
+    setSubmitting(true);
+    setUnlockMessage(null);
+    const enviado = await sendLoginLink(alvo);
+    setSubmitting(false);
+    setLinkSent(enviado.ok);
+    if (!enviado.ok) {
+      setEmailError(true);
+      // Nunca um beco sem saída: a mensagem diz o que fazer, e o campo segue
+      // editável para corrigir o endereço e tentar de novo.
+      setUnlockMessage(isPt
+        ? 'Não foi possível enviar o link de acesso. Confira o e-mail e tente de novo.'
+        : "Couldn't send the sign-in link. Check the address and try again.");
+    }
+  };
+
   const finish = async () => {
     if (!canFinish) return;
     if (flow === 'demo' && !demoCharacterId) return;
     if (flow === 'oracle' && !result) return;
-    // Vazio é permitido no caminho grátis; se digitou algo, tem que ser válido.
-    if (email.trim().length > 0 && !isValidEmail(email)) { setEmailError(true); return; }
-    if (emailRequired && !isValidEmail(email)) { setEmailError(true); return; }
     setSubmitting(true);
 
-    // Com o login por e-mail ligado, é preciso PROVAR a posse do e-mail antes
-    // de criar o save — senão qualquer um poderia reivindicar o e-mail alheio
-    // (o saveId é derivado dele). Manda o link e aguarda o retorno; o resto do
-    // onboarding continua quando o app reabrir pelo link.
-    if (email.trim().length > 0 && isAuthConfigured() && !(await getCurrentEmail())) {
-      const sent = await sendLoginLink(email.trim().toLowerCase());
-      setSubmitting(false);
-      setLinkSent(sent.ok);
-      if (!sent.ok) {
-        setEmailError(true);
-        setUnlockMessage(isPt
-          ? 'Não foi possível enviar o link de acesso. Confira o e-mail e tente de novo.'
-          : "Couldn't send the sign-in link. Check the address and try again.");
-      }
-      return;
-    }
+    // O e-mail NAO e mais pedido aqui: quem prova a posse dele e o PORTAO
+    // (`IDENTITY_STEP`), antes da escolha gratis/completo. Dois campos para o
+    // mesmo dado divergem, e o de baixo nao provava nada — criava save com um
+    // e-mail apenas DIGITADO, e o saveId e derivado dele: bastava digitar o
+    // endereco alheio para reivindicar o save do outro.
 
-    // Defensivo: a geração já apagou o rascunho; o demo nunca cria um.
+    // Defensivo: a geracao ja apagou o rascunho; o demo nunca cria um.
     clearOracleDraft();
+    // O trecho do portao acabou. Rascunho velho aqui faria uma instalacao
+    // seguinte retomar um portao que esta pessoa ja atravessou.
+    clearGateDraft();
     if (flow === 'demo' && demoCharacterId) {
       await onComplete({
         mode: 'demo',
         userName: nickname.trim(),
         petName: petNameFinal,
-        email: email.trim().toLowerCase(),
+        email: authEmail ?? '',
         demoCharacterId,
         initialActivities: [],
         soulGoal: soulGoal.trim(),
@@ -667,7 +756,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         mode: 'oracle',
         userName: nickname.trim(),
         petName: petNameFinal,
-        email: email.trim().toLowerCase(),
+        email: authEmail ?? '',
         oracleResult: result,
         // WP1.1 — o MESMO desenho que a pessoa viu no reveal. Sem isto o app
         // geraria de novo e entregaria outra criatura no primeiro minuto.
@@ -691,6 +780,29 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         : 'Purchases are available in the Android app (Google Play). Try the demo in the meantime.');
       return;
     }
+    // SEM E-MAIL COMPROVADO NÃO SE COBRA.
+    //
+    // `purchase()` manda o `saveId` como `obfuscatedAccountId`. Antes do
+    // login esse saveId é um UUID ALEATÓRIO gerado por `App.tsx` na primeira
+    // abertura — e ao entrar com e-mail ele é SUBSTITUÍDO pelo SHA-256 do
+    // endereço. `isPlayPurchaseBoundTo` compara os dois por igualdade:
+    //
+    //     if (bound) return !!saveId && String(bound) === String(saveId);
+    //
+    // Comprar antes do login amarra o recibo a um id que a conta abandona no
+    // login seguinte, e o resgate é RECUSADO — inclusive com
+    // `PLAY_REQUIRE_ACCOUNT_BINDING` desligado, porque o campo vem preenchido
+    // e cai no ramo da igualdade. A pessoa paga e não recebe.
+    //
+    // Por isso a guarda é o E-MAIL, não a presença do saveId: o saveId sempre
+    // existe. O portão já torna isto inalcançável pela UI; esta linha existe
+    // para que uma refatoração não reabra o furo em silêncio.
+    if (authUsavel && !authEmail) {
+      setUnlockMessage(isPt
+        ? 'Entre com seu e-mail antes de comprar — é ele que amarra a compra à sua conta.'
+        : 'Sign in with your email before buying — it is what ties the purchase to your account.');
+      return;
+    }
     setUnlockLoading(true);
     setUnlockMessage(null);
     const result = await purchase(FULL_UNLOCK_SKU);
@@ -701,7 +813,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       track('purchase', { reason: TELEMETRY_PURCHASE_REASON.onboarding });
       flushTelemetry();
       setFlow('oracle');
-      setStep(GOAL_STEP);
+      // O "porquê" e o consentimento já aconteceram antes do portão; a compra
+      // entra direto no ritual.
+      setStep(1);
       return;
     }
     setUnlockMessage(
@@ -841,18 +955,110 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 ? 'Toda alma carrega uma criatura. Responda algumas perguntas e revele a SUA.'
                 : 'Every soul carries a creature. Answer a few questions and reveal YOURS.'}
             </p>
-            {/* Começar grátis é o caminho PRINCIPAL. Pedir R$ 29,90 de quem
-                ainda não viu o app funcionar é o jeito mais caro de perder o
-                usuário; quem gostar encontra a compra no app inteiro. */}
+            {/* UMA acao. A escolha gratis/completo MUDOU DE LUGAR: ela agora
+                vive no `CHOICE_STEP`, depois do consentimento, do 18+ e do
+                portao de e-mail. O motivo nao e estetico — `handleUnlockFull`
+                compra mandando o `saveId` como `obfuscatedAccountId`, e o
+                saveId so existe derivado do e-mail comprovado. Enquanto a
+                compra morava aqui, ela saia para o Play SEM vinculo de conta. */}
             <button
               type="button"
               style={{ ...sm2Button('primary'), width: '100%' }}
-              onClick={() => { setFlow('demo'); setStep(GOAL_STEP); }}
+              onClick={() => setStep(GOAL_STEP)}
+            >
+              {isPt ? 'Começar' : 'Get started'}
+            </button>
+          </div>
+        )}
+
+        {/* PORTAO DE IDENTIDADE — uma tela, um campo.
+            "Entrar" e "criar conta" sao a MESMA acao: o login e link por
+            e-mail, sem senha, e o mesmo endereco ou reencontra o save (o
+            saveId e derivado dele) ou comeca um novo. Duas portas seriam uma
+            diferenca que o sistema nao tem. */}
+        {step === IDENTITY_STEP && (
+          <StepShell
+            title={isPt ? 'Seu e-mail' : 'Your email'}
+            hint={isPt
+              ? 'É ele que guarda seu progresso e amarra qualquer compra à sua conta. Não tem senha: mandamos um link.'
+              : 'It keeps your progress and ties any purchase to your account. No password: we send you a link.'}>
+            {linkSent ? (
+              <div style={{ padding: 16, borderRadius: 12, backgroundColor: 'var(--sm2-primary-soft)' }}>
+                <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: 'var(--sm2-primary-ink)' }}>
+                  {isPt ? 'Confira seu e-mail' : 'Check your email'}
+                </p>
+                <p style={{ ...sm2Hint, marginTop: 6 }}>
+                  {isPt
+                    ? `Mandamos um link de acesso para ${email.trim().toLowerCase()}. Abra o link NESTE aparelho — é ele que confirma que o e-mail é seu.`
+                    : `We sent a sign-in link to ${email.trim().toLowerCase()}. Open it ON THIS DEVICE — that is what proves the address is yours.`}
+                </p>
+                <p style={{ ...sm2Hint, marginTop: 6 }}>
+                  {isPt
+                    ? 'Não chegou? Pode levar um minuto, e às vezes cai no spam.'
+                    : "Didn't arrive? It can take a minute, and it sometimes lands in spam."}
+                </p>
+                <button
+                  type="button"
+                  style={{ ...sm2Button('ghost'), width: '100%', marginTop: 14 }}
+                  onClick={() => { setLinkSent(false); setUnlockMessage(null); }}
+                >
+                  {isPt ? 'Usar outro e-mail' : 'Use a different email'}
+                </button>
+              </div>
+            ) : (
+              <>
+                <label style={sm2Label} htmlFor="onb-gate-email">
+                  {isPt ? 'E-mail' : 'Email'}
+                </label>
+                <Field id="onb-gate-email" type="email" value={email} autoComplete="email" autoFocus
+                  aria-invalid={emailError || undefined}
+                  onChange={e => { setEmail(e.target.value); setEmailError(false); }}
+                  placeholder="voce@exemplo.com"
+                  onKeyDown={e => e.key === 'Enter' && enviarLinkDoPortao()} />
+                <p style={{ ...sm2Hint, color: emailError ? 'var(--sm2-danger-ink)' : 'var(--sm2-muted)', margin: '6px 0 0' }}>
+                  {emailError
+                    ? (isPt ? 'Digite um e-mail válido.' : 'Enter a valid email.')
+                    : (isPt
+                      ? 'Já tem conta? É o mesmo campo — o mesmo e-mail traz seu Soulmon de volta.'
+                      : 'Already have an account? Same field — the same email brings your Soulmon back.')}
+                </p>
+                <button
+                  type="button"
+                  style={{ ...sm2Button('primary', submitting), width: '100%', marginTop: 24 }}
+                  onClick={enviarLinkDoPortao}
+                  disabled={submitting}
+                >
+                  {submitting ? <Spinner /> : (isPt ? 'Enviar link de acesso' : 'Send sign-in link')}
+                </button>
+                {unlockMessage && (
+                  <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 12 }}>
+                    {unlockMessage}
+                  </p>
+                )}
+              </>
+            )}
+          </StepShell>
+        )}
+
+        {/* ESCOLHA gratis/completo — depois da identidade, nunca antes. */}
+        {step === CHOICE_STEP && (
+          <StepShell
+            title={isPt ? 'Como você quer começar?' : 'How do you want to start?'}
+            hint={isPt
+              ? 'Dá para mudar depois: a compra continua disponível dentro do app.'
+              : 'You can change later: the purchase stays available inside the app.'}>
+            {/* Comecar gratis segue sendo o caminho PRINCIPAL. Pedir dinheiro
+                de quem ainda nao viu o app funcionar e o jeito mais caro de
+                perder o usuario. */}
+            <button
+              type="button"
+              style={{ ...sm2Button('primary'), width: '100%' }}
+              onClick={() => { setFlow('demo'); setStep(DEMO_PICK); }}
             >
               {isPt ? 'Começar agora — é grátis' : 'Start now — it’s free'}
             </button>
-            {/* A compra continua acessível, mas em voz baixa: é a segunda ação
-                da tela, e duas ações do mesmo peso não têm ação dominante. */}
+            {/* A compra em voz baixa: duas acoes do mesmo peso nao tem acao
+                dominante. */}
             <button
               type="button"
               style={{ ...sm2Button('quiet', unlockLoading), width: '100%', marginTop: 8 }}
@@ -868,8 +1074,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 {unlockMessage}
               </p>
             )}
-          </div>
+          </StepShell>
         )}
+
 
         {/* GOAL_STEP / STRUGGLE_STEP — o "porquê", antes de qualquer mecânica */}
         {(step === GOAL_STEP || step === STRUGGLE_STEP) && (
@@ -1452,89 +1659,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 ? 'Aparece para outros jogadores na Biblioteca e no Torneio. Pode ser um apelido inventado — não precisa ser seu nome real.'
                 : "Shown to other players in the Library and Tournament. It can be a made-up name — it doesn't have to be your real name."}
             </p>
-
-            <label style={sm2Label} htmlFor="onb-email">
-              {isPt ? 'Seu e-mail' : 'Your email'}
-              {!emailRequired && (isPt ? ' (opcional)' : ' (optional)')}
-            </label>
-            <Field id="onb-email" type="email" value={email} autoComplete="email"
-              aria-invalid={emailError || undefined}
-              onChange={e => { setEmail(e.target.value); setEmailError(false); }}
-              placeholder="voce@exemplo.com"
-              onKeyDown={e => e.key === 'Enter' && canFinish && finish()} />
-            <p style={{ ...sm2Hint, color: emailError ? 'var(--sm2-danger-ink)' : 'var(--sm2-muted)', margin: '6px 0 0' }}>
-              {emailError
-                ? (isPt ? 'Digite um e-mail válido.' : 'Enter a valid email.')
-                : emailRequired
-                  ? (isPt ? 'Garante que seu progresso não se perca ao trocar de aparelho.' : 'Makes sure your progress survives a device change.')
-                  : (isPt ? 'Só serve para não perder o progresso. Dá para deixar em branco.' : 'Only used so your progress survives a device change. You can leave it blank.')}
-            </p>
-
-            {linkSent ? (
-              // Link enviado: o onboarding continua quando o usuário voltar
-              // pelo e-mail (App.tsx detecta o link e conclui o login).
-              <div style={{
-                marginTop: 24, padding: 16, borderRadius: 12,
-                backgroundColor: 'var(--sm2-primary-soft)',
-              }}>
-                {/* WP1.14 — A CRIATURA FICA PRESENTE NA ESPERA.
-                    Esta é a tela onde a pessoa SAI do app para abrir o e-mail,
-                    e ela era só texto: quem sai daqui sai de um formulário. Com
-                    o desenho e uma fala do pet, quem sai deixa alguém
-                    esperando — e é isso que faz voltar. Sem sprite próprio,
-                    nada é desenhado (arte de reserva seria outra criatura). */}
-                {revealSprite && (
-                  <img
-                    src={revealSprite.url}
-                    alt={registerDisplayName}
-                    width={72}
-                    height={72}
-                    style={{ objectFit: 'contain', imageRendering: 'pixelated', display: 'block', margin: '0 auto 8px' }}
-                  />
-                )}
-                <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: 'var(--sm2-primary-ink)' }}>
-                  {isPt ? 'Confira seu e-mail' : 'Check your email'}
-                </p>
-                {result && (
-                  <p style={{ ...sm2Hint, margin: '4px 0 0' }}>
-                    {isPt
-                      ? `${registerDisplayName} está esperando aqui.`
-                      : `${registerDisplayName} is waiting right here.`}
-                  </p>
-                )}
-                <p style={{ ...sm2Hint, marginTop: 6 }}>
-                  {isPt
-                    ? `Mandamos um link de acesso para ${email.trim().toLowerCase()}. Abra o link NESTE aparelho para continuar.`
-                    : `We sent a sign-in link to ${email.trim().toLowerCase()}. Open it ON THIS DEVICE to continue.`}
-                </p>
-                <button
-                  type="button"
-                  style={{ ...sm2Button('ghost'), width: '100%', marginTop: 14 }}
-                  onClick={() => { setLinkSent(false); setUnlockMessage(null); }}
-                >
-                  {isPt ? 'Usar outro e-mail' : 'Use a different email'}
-                </button>
-              </div>
-            ) : (
-              <>
-                <button type="button" style={{ ...sm2Button('primary', !canFinish), width: '100%', marginTop: 24 }}
-                  onClick={finish} disabled={!canFinish}>
-                  {submitting
-                    ? <Spinner />
-                    : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
-                </button>
-                {/* Sem isto o botão só ficava apagado e o toque não fazia nada —
-                    o usuário não tinha como saber o que faltava. */}
-                {!canFinish && !submitting && (
-                  <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
-                    {nickname.trim().length < 2
-                      ? (isPt ? 'Escolha um apelido com pelo menos 2 letras.' : 'Pick a nickname with at least 2 letters.')
-                      : (isPt ? 'Falta o e-mail.' : 'Your email is missing.')}
-                  </p>
-                )}
-              </>
+            <button type="button" style={{ ...sm2Button('primary', !canFinish), width: '100%', marginTop: 24 }}
+              onClick={finish} disabled={!canFinish}>
+              {submitting
+                ? <Spinner />
+                : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
+            </button>
+            {/* Sem isto o botao so ficava apagado e o toque nao fazia nada —
+                o usuario nao tinha como saber o que faltava. O e-mail saiu da
+                lista de pendencias: ele ja foi comprovado no portao. */}
+            {!canFinish && !submitting && (
+              <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
+                {isPt ? 'Escolha um apelido com pelo menos 2 letras.' : 'Pick a nickname with at least 2 letters.'}
+              </p>
             )}
-            {unlockMessage && !linkSent && (
+            {unlockMessage && (
               <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 12 }}>{unlockMessage}</p>
             )}
           </div>

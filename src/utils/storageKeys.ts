@@ -71,6 +71,8 @@ export const STORAGE_KEYS = {
    *  `finish()` e no muro de idade. Nunca guarda e-mail, consentimento, idade
    *  do demo nem o resultado. */
   ORACLE_DRAFT: 'soulmon-oracle-draft',
+  /** Rascunho do trecho ANTES da escolha gratis/completo — ver utils/gateDraft.ts. */
+  GATE_DRAFT: 'soulmon-gate-draft',
   // Soulmon: perfil da alma gerado no onboarding (input + seed p/ regenerar)
   SOULMON_PROFILE: 'soulmon-profile',
   // ⚰️ APOSENTADA em 26/08/2026 — `soulmon-demo-tasks-created-today`

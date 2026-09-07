@@ -38,7 +38,7 @@ const ECO_PT = 'Anotado. Seu Soulmon vai lembrar disso.';
 /** Intro → GOAL_STEP. O caminho grátis é o mais curto que passa pelo "porquê". */
 function ateOPorque(pt: boolean) {
   renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
-  fireEvent.click(screen.getByText(pt ? 'Começar agora — é grátis' : 'Start now — it’s free'));
+  fireEvent.click(screen.getByText(pt ? 'Começar' : 'Get started'));
 }
 
 describe('SoulmonOnboarding — o eco do "porquê" (WP1.9)', () => {
