@@ -1,7 +1,7 @@
 // Notification utilities for Soulmon
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
+import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
 import { VAPID_PUBLIC_KEY } from './vapid';
 import { STORAGE_KEYS } from './storageKeys';
 import { readJson, readLocal, removeLocal, writeJson, writeLocal } from './safeStorage';
@@ -106,7 +106,7 @@ export const removeScheduledNotification = (id: string) => {
   const stored = getScheduledNotifications();
   writeJson(STORAGE_KEY, stored.filter(n => n.id !== id));
   if (Capacitor.isNativePlatform()) {
-    DigiAlarm.cancelAlarm({ id }).catch(() => {});
+    SoulmonAlarm.cancelAlarm({ id }).catch(() => {});
   }
 };
 
@@ -330,7 +330,7 @@ export const syncActivityAlarms = (
     scheduleNotification({ id, title, body, scheduledTime: activity.alarm.time, activityId: activity.id, type: 'alarm' });
 
     if (isNative) {
-      DigiAlarm.scheduleAlarm({ id, title, body, scheduledTime: activity.alarm.time }).catch(() => {});
+      SoulmonAlarm.scheduleAlarm({ id, title, body, scheduledTime: activity.alarm.time }).catch(() => {});
     }
   });
 };
@@ -377,7 +377,7 @@ export const syncTaskAlarms = (
     scheduleNotification({ id, title, body, scheduledTime: alarmTime, taskId: task.id, type: 'alarm' });
 
     if (isNative) {
-      DigiAlarm.scheduleAlarm({ id, title, body, scheduledTime: alarmTime }).catch(() => {});
+      SoulmonAlarm.scheduleAlarm({ id, title, body, scheduledTime: alarmTime }).catch(() => {});
     }
   });
 };

@@ -243,21 +243,23 @@ describe('push-scheduler — IDIOMA da notificação (o bug que já aconteceu)',
     expect(texto).toContain('Soulmon');
   });
 
-  it('APK antigo (campo `digimonName`) continua recebendo o nome certo', async () => {
-    // O CLAUDE.md registra que o servidor aceita `petName` E `digimonName` por
-    // causa dos APKs já instalados. Se alguém "limpar" isso, quem não atualizou
-    // passa a receber "Soulmon" genérico — sem erro nenhum aparecendo.
+  it('assinatura sem nome cai no padrão, e não num campo alternativo', async () => {
+    /* ⚠️ Este caso testava o campo alternativo `digimonName`, aceito "por
+       causa dos APKs já instalados". Não havia APK instalado (07/09/2026), e
+       um campo com DOIS nomes é um campo que diverge — o segundo é sempre o
+       que alguém esquece de atualizar. Hoje o servidor conhece `petName` e
+       mais nada; sem nome, cai no padrão. */
     vi.stubGlobal('fetch', vi.fn(async (url, init) => {
       if (String(url).includes('oauth2.googleapis.com')) return Response.json({ access_token: 'tk', expires_in: 3600 });
       pushed.push(JSON.parse(init.body));
       return Response.json({ name: 'ok' });
     }));
     const env = {
-      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: 't', digimonName: 'Velhinho', language: 'en-US' }) }),
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: 't', language: 'en-US' }) }),
       FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
     };
     await worker.scheduled(brt(10), env);
-    expect(JSON.stringify(pushed[0])).toContain('Velhinho');
+    expect(JSON.stringify(pushed[0])).toContain('Soulmon');
   });
 });
 

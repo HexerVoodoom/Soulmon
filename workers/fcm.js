@@ -103,7 +103,7 @@ export async function sendFcmPush(token, notif, projectId, accessToken) {
           notification: { title: notif.title, body: notif.body },
           android: {
             priority: 'high',
-            notification: { channel_id: 'digiapp_push', tag: notif.tag },
+            notification: { channel_id: 'soulmon_push', tag: notif.tag },
           },
         },
       }),

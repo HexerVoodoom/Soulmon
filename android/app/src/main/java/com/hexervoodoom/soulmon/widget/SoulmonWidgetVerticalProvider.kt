@@ -1,0 +1,17 @@
+package com.hexervoodoom.soulmon.widget
+
+import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.Context
+import com.hexervoodoom.soulmon.R
+
+// Variant B — vertical: sprite on top, info below.
+class SoulmonWidgetVerticalProvider : AppWidgetProvider() {
+    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+        for (id in appWidgetIds) WidgetRenderer.renderFull(context, appWidgetManager, id, R.layout.widget_soulmon_vertical)
+    }
+
+    override fun onEnabled(context: Context) {
+        WidgetRefreshWorker.schedule(context)
+    }
+}

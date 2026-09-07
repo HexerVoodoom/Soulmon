@@ -247,7 +247,11 @@ export async function onRequestOptions() {
 export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
-    const { message, petName: petNameRaw, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
+    /* ⚠️ Havia um segundo nome para este campo (`digimonName`), aceito "por
+       causa dos APKs já instalados". Não havia APK instalado — ninguém nunca
+       usou o app em produção (07/09/2026) — e um campo com dois nomes é um
+       campo que diverge: o segundo é sempre o que alguém esquece. */
+    const { message, petName: petNameRaw, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
 
     if (!message) return Response.json({ error: 'Message required' }, { status: 400, headers: CORS });
 
@@ -302,7 +306,7 @@ export async function onRequestPost({ request, env }) {
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         messages: [
-          { role: 'system', content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || 'Soulmon').slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
+          { role: 'system', content: buildSystemPrompt({ petName: String(petNameRaw || 'Soulmon').slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
           { role: 'user', content: safeMessage },
         ],
         max_tokens: 120,

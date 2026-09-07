@@ -16,7 +16,7 @@ object WidgetRenderer {
     // share the same view IDs, so they reuse this renderer with a different layout resource.
     fun renderFull(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val digimonName = prefs.getString("digimon_name", "Soulmon") ?: "Soulmon"
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
         val currentStage = prefs.getString("current_stage", "rookie") ?: "rookie"
         val completedTasks = prefs.getInt("completed_tasks", 0)
         val totalTasks = prefs.getInt("total_tasks", 0)
@@ -26,7 +26,7 @@ object WidgetRenderer {
 
         val views = RemoteViews(context.packageName, layoutId)
         setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
-        views.setTextViewText(R.id.widget_digimon_name, digimonName)
+        views.setTextViewText(R.id.widget_pet_name, petName)
         views.setTextViewText(R.id.widget_stage, stageLabel(currentStage))
         views.setTextViewText(R.id.widget_tasks, if (totalTasks > 0) "$completedTasks/$totalTasks" else "—")
         views.setTextViewText(
@@ -85,7 +85,7 @@ object WidgetRenderer {
     // Chat widget (4x2): animated sprite + auto-rotating phrases.
     fun renderChat(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val digimonName = prefs.getString("digimon_name", "Soulmon") ?: "Soulmon"
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
         val currentStage = prefs.getString("current_stage", "rookie") ?: "rookie"
         val eggType = prefs.getString("egg_type", "") ?: ""
         val branchType = prefs.getString("branch_type", "data") ?: "data"
@@ -95,7 +95,7 @@ object WidgetRenderer {
 
         val views = RemoteViews(context.packageName, layoutId)
         setSprite(views, resolveSprite(context, currentStage, eggType, branchType))
-        views.setTextViewText(R.id.widget_digimon_name, digimonName)
+        views.setTextViewText(R.id.widget_pet_name, petName)
         views.setTextViewText(R.id.widget_tasks, if (total > 0) "$completed/$total" else "—")
 
         val phrases = buildChatPhrases(currentStage, completed, total, hp)
@@ -182,16 +182,16 @@ object WidgetRenderer {
     // Refresh every active instance of all widget variants.
     fun updateAll(context: Context) {
         val mgr = AppWidgetManager.getInstance(context)
-        for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetProvider::class.java)))
-            renderFull(context, mgr, id, R.layout.widget_digiapp)
-        for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetVerticalProvider::class.java)))
-            renderFull(context, mgr, id, R.layout.widget_digiapp_vertical)
-        for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetPetProvider::class.java)))
-            renderPet(context, mgr, id, R.layout.widget_digiapp_pet)
-        for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetChatProvider::class.java)))
-            renderChat(context, mgr, id, R.layout.widget_digiapp_chat)
-        for (id in mgr.getAppWidgetIds(ComponentName(context, DigiAppWidgetScreenProvider::class.java)))
-            renderScreen(context, mgr, id, R.layout.widget_digiapp_screen)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetProvider::class.java)))
+            renderFull(context, mgr, id, R.layout.widget_soulmon)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetVerticalProvider::class.java)))
+            renderFull(context, mgr, id, R.layout.widget_soulmon_vertical)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetPetProvider::class.java)))
+            renderPet(context, mgr, id, R.layout.widget_soulmon_pet)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetChatProvider::class.java)))
+            renderChat(context, mgr, id, R.layout.widget_soulmon_chat)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetScreenProvider::class.java)))
+            renderScreen(context, mgr, id, R.layout.widget_soulmon_screen)
     }
 
     private fun attachClick(context: Context, views: RemoteViews) {

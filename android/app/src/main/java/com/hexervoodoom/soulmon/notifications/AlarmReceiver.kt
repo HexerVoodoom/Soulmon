@@ -12,7 +12,7 @@ import com.hexervoodoom.soulmon.R
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val title = intent.getStringExtra(EXTRA_TITLE) ?: "DigiApp"
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: "Soulmon"
         val body = intent.getStringExtra(EXTRA_BODY) ?: ""
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
         // A TAG é a identidade que o FCM usa (`workers/fcm.js` manda
@@ -49,10 +49,10 @@ class AlarmReceiver : BroadcastReceiver() {
             if (manager.getNotificationChannel(CHANNEL_ID) == null) {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
-                    "DigiApp Alarms",
+                    "Soulmon Alarms",
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Alarm notifications for DigiApp tasks"
+                    description = "Alarm notifications for Soulmon tasks"
                 }
                 manager.createNotificationChannel(channel)
             }
@@ -60,7 +60,7 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val CHANNEL_ID = "digiapp_alarms"
+        const val CHANNEL_ID = "soulmon_alarms"
         const val EXTRA_TITLE = "title"
         const val EXTRA_BODY = "body"
         const val EXTRA_NOTIFICATION_ID = "notification_id"

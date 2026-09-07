@@ -153,7 +153,7 @@ export default {
           await env.PUSH_SUBSCRIPTIONS.delete(name);
           return 'removed';
         }
-        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language, ageDaysOf(sub, date));
+        const notif = pushCopy(brtHour, sub.petName, sub.language, ageDaysOf(sub, date));
         if (!notif) return 'skipped';
         const result = await sendWebPush(
           { endpoint: sub.endpoint, keys: sub.keys },
@@ -182,7 +182,7 @@ export default {
     if (serviceAccount) {
       const accessToken = await getFcmAccessToken(serviceAccount);
       await drainPrefix(env, 'fcm:', async (sub, name) => {
-        const notif = pushCopy(brtHour, sub.petName || sub.digimonName, sub.language, ageDaysOf(sub, date));
+        const notif = pushCopy(brtHour, sub.petName, sub.language, ageDaysOf(sub, date));
         if (!notif) return 'skipped';
         const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
         if (result.ok) return 'sent';

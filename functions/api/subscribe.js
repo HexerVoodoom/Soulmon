@@ -40,7 +40,7 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
-  const { endpoint, keys, petName, digimonName, language, bornAt } = body;
+  const { endpoint, keys, petName, language, bornAt } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), {
       status: 400,
@@ -62,7 +62,7 @@ export async function onRequestPost({ request, env }) {
   const record = {
     endpoint,
     keys,
-    petName: petName || digimonName || 'Soulmon',
+    petName: petName || 'Soulmon',
     /* WP1.17 — a idade da criatura, para a copy dos dias 1 e 2. É `YYYY-MM-DD`
        e só isso: dia, sem hora e sem fuso, porque a única pergunta é "faz
        quantos dias". Guardado NA SUBSCRIPTION de propósito — cancelar o push

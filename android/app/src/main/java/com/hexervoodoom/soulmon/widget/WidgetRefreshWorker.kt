@@ -15,7 +15,7 @@ class WidgetRefreshWorker(context: Context, params: WorkerParameters) : Coroutin
     }
 
     companion object {
-        private const val WORK_NAME = "digiapp_widget_refresh"
+        private const val WORK_NAME = "soulmon_widget_refresh"
         fun schedule(context: Context) {
             val request = PeriodicWorkRequestBuilder<WidgetRefreshWorker>(60, TimeUnit.MINUTES).build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(

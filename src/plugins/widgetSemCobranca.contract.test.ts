@@ -23,7 +23,7 @@ const renderer = readFileSync(
   'utf8',
 );
 const plugin = readFileSync(
-  'android/app/src/main/java/com/hexervoodoom/soulmon/plugins/DigiWidgetPlugin.kt',
+  'android/app/src/main/java/com/hexervoodoom/soulmon/plugins/SoulmonWidgetPlugin.kt',
   'utf8',
 );
 

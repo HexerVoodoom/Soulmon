@@ -41,7 +41,7 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, getStageBranch, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { DigiWidget } from './plugins/DigiWidgetPlugin';
+import { SoulmonWidget } from './plugins/SoulmonWidgetPlugin';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import {
@@ -1425,12 +1425,14 @@ export default function App() {
   // Sync game state to Android home screen widget
   useEffect(() => {
     const petName = gameState.evolutionStage.charAt(0).toUpperCase() + gameState.evolutionStage.slice(1);
-    DigiWidget.updateWidgetData({
-      // Chave do bridge nativo, NÃO renomeada de propósito (mesma lógica das
-      // chaves `digiapp_*` do localStorage): o APK instalado lê `digimonName`
-      // no Kotlin, e o app carrega a URL de produção — trocar aqui quebraria o
-      // widget de quem não atualizasse o APK.
-      digimonName: petName,
+    SoulmonWidget.updateWidgetData({
+      /* ⚠️ Este campo se chamava `digimonName`, e o comentário aqui dizia que
+         ele NÃO era renomeado de propósito, "porque o APK instalado lê
+         `digimonName` no Kotlin e trocar quebraria o widget de quem não
+         atualizasse". Não havia APK instalado: ninguém nunca usou o app em
+         produção (07/09/2026). O Kotlin foi renomeado junto (`pet_name`), e o
+         widget exige APK novo de qualquer forma. */
+      petName: petName,
       currentStage: gameState.evolutionStage,
       eggType: gameState.eggType ?? 'ignar',
       branchType: gameState.currentBranch,
@@ -1458,7 +1460,7 @@ export default function App() {
         }, 0);
         return {
           // Vai uma FAIXA, nunca o percentual — ver o cabeçalho de
-          // `DigiWidgetData.habitSteady`. `null` (sem histórico) vira ausência
+          // `SoulmonWidgetData.habitSteady`. `null` (sem histórico) vira ausência
           // do campo, que é diferente de "não está firme": 0% para quem ainda
           // não tem histórico é a mesma mentira que a constância dotada evita.
           ...(media === null ? {} : { habitSteady: media >= GOOD_CONSTANCY_RATIO }),

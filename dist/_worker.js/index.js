@@ -1310,7 +1310,7 @@ __name(onRequestOptions3, "onRequestOptions");
 async function onRequestPost2({ request, env }) {
   try {
     const body = await request.json();
-    const { message, petName: petNameRaw, digimonName, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
+    const { message, petName: petNameRaw, mood, evolutionStage, dominantBranch, language, aiSettings } = body;
     if (!message) return Response.json({ error: "Message required" }, { status: 400, headers: CORS3 });
     const groqKey = env.GROQ_API_KEY;
     if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS3 });
@@ -1343,7 +1343,7 @@ async function onRequestPost2({ request, env }) {
         body: JSON.stringify({
           model: "llama-3.1-8b-instant",
           messages: [
-            { role: "system", content: buildSystemPrompt({ petName: String(petNameRaw || digimonName || "Soulmon").slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
+            { role: "system", content: buildSystemPrompt({ petName: String(petNameRaw || "Soulmon").slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
             { role: "user", content: safeMessage }
           ],
           max_tokens: 120,
@@ -2000,7 +2000,7 @@ async function onRequestPost4({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS7 }
     });
   }
-  const { token, petName, digimonName, language } = body;
+  const { token, petName, language } = body;
   if (!token) {
     return new Response(JSON.stringify({ error: "Missing token" }), {
       status: 400,
@@ -2010,7 +2010,7 @@ async function onRequestPost4({ request, env }) {
   const kvKey = `fcm:${await hashToken(token)}`;
   await env.PUSH_SUBSCRIPTIONS.put(
     kvKey,
-    JSON.stringify({ token, petName: petName || digimonName || "Soulmon", language: language || "en-US" }),
+    JSON.stringify({ token, petName: petName || "Soulmon", language: language || "en-US" }),
     { expirationTtl: 60 * 60 * 24 * 365 }
   );
   return new Response(JSON.stringify({ ok: true }), {
@@ -2912,7 +2912,7 @@ async function onRequestPost6({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
-  const { endpoint, keys, petName, digimonName, language, bornAt } = body;
+  const { endpoint, keys, petName, language, bornAt } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
@@ -2929,7 +2929,7 @@ async function onRequestPost6({ request, env }) {
   const record = {
     endpoint,
     keys,
-    petName: petName || digimonName || "Soulmon",
+    petName: petName || "Soulmon",
     /* WP1.17 — a idade da criatura, para a copy dos dias 1 e 2. É `YYYY-MM-DD`
        e só isso: dia, sem hora e sem fuso, porque a única pergunta é "faz
        quantos dias". Guardado NA SUBSCRIPTION de propósito — cancelar o push
@@ -3102,7 +3102,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-ftvUA0/functionsRoutes-0.18716881299320653.mjs
+// ../.wrangler/tmp/pages-8egvzh/functionsRoutes-0.7182334982846006.mjs
 var routes = [
   {
     routePath: "/api/account",

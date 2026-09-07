@@ -448,10 +448,21 @@ ficam valendo:
   Omnimon, a própria fusão dos 3 Megas — exatamente o conceito do Ultra
   aqui). Prefixos sozinhos (War/Chaos/Omega…) são genéricos e ficam; o que
   NÃO pode voltar é o sufixo fixo somado a eles.
-- **`digimonName` (bridge do widget) e as chaves `digiapp_*` ficam**, pelo mesmo
-  motivo de sempre: são internos, nunca aparecem pro usuário, e renomear
-  quebraria o widget/save de quem já joga. O servidor de chat e de push aceita
-  `petName` **e** `digimonName` justamente por causa dos APKs já instalados.
+- ⚠️ **`digimonName` NÃO EXISTE MAIS** (07/09/2026). Este item dizia que ele e
+  as chaves `digiapp_*` ficavam "porque renomear quebraria o widget/save de quem
+  já joga", e que o servidor aceitava DOIS nomes de campo "por causa dos APKs já
+  instalados". Não havia APK instalado nem save de terceiro. Hoje o campo é
+  `petName` em todo lugar — cliente, bridge (`pet_name` no Kotlin), chat e push
+  —, e o servidor conhece **um** nome: campo com dois nomes é campo que diverge,
+  e o segundo é sempre o que alguém esquece de atualizar.
+- ⚠️ **O manifesto Android anunciava os widgets como "DigiApp"** —
+  `android:label`, que é o texto que a pessoa lê na LISTA DE WIDGETS do
+  celular. Cinco rótulos, todos visíveis ao usuário, todos com o nome do outro
+  app. Junto foram as classes (`SoulmonWidget*Provider`), os layouts
+  (`widget_soulmon*`), o canal de push (`soulmon_push`) e o de alarme
+  (`soulmon_alarms`). Os plugins do Capacitor viraram `SoulmonWidget` /
+  `SoulmonAlarm` — o nome é string casada nos dois lados, então mudou nos dois
+  no mesmo commit.
 
 ## UI: regras visuais do dono (não regredir)
 

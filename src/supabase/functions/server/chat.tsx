@@ -4,18 +4,11 @@ import { Context } from "npm:hono";
 export async function handleChatRequest(c: Context) {
   try {
     const body = await c.req.json();
-    const { 
-      message, 
-      // `digimonName` é o nome antigo do campo — clientes já publicados ainda
-      // mandam ele. Aceita os dois enquanto houver APK velho na rua.
-      petName: petNameRaw, 
-      digimonName, 
-      mood, 
-      evolutionStage, 
-      dominantBranch,
-      aiSettings 
-    } = body;
-    const petName = petNameRaw || digimonName;
+    /* ⚠️ Havia aqui um segundo nome para o mesmo campo, aceito "enquanto
+       houver APK velho na rua". Não havia APK velho na rua: ninguém nunca usou
+       o app em produção (07/09/2026). Um campo com dois nomes é um campo que
+       diverge — o servidor tem de dizer UM. */
+    const { message, petName, mood, evolutionStage, dominantBranch, aiSettings } = body;
     
     // Default AI settings if not provided
     const settings = aiSettings || {

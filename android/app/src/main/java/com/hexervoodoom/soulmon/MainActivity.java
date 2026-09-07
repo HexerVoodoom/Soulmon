@@ -5,15 +5,15 @@ import android.app.NotificationManager;
 import android.os.Build;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
-import com.hexervoodoom.soulmon.plugins.DigiWidgetPlugin;
-import com.hexervoodoom.soulmon.plugins.DigiAlarmPlugin;
+import com.hexervoodoom.soulmon.plugins.SoulmonWidgetPlugin;
+import com.hexervoodoom.soulmon.plugins.SoulmonAlarmPlugin;
 import com.hexervoodoom.soulmon.plugins.BillingPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        registerPlugin(DigiWidgetPlugin.class);
-        registerPlugin(DigiAlarmPlugin.class);
+        registerPlugin(SoulmonWidgetPlugin.class);
+        registerPlugin(SoulmonAlarmPlugin.class);
         registerPlugin(BillingPlugin.class);
         super.onCreate(savedInstanceState);
         createPushNotificationChannel();
@@ -24,9 +24,9 @@ public class MainActivity extends BridgeActivity {
     private void createPushNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null && manager.getNotificationChannel("digiapp_push") == null) {
+            if (manager != null && manager.getNotificationChannel("soulmon_push") == null) {
                 NotificationChannel channel = new NotificationChannel(
-                    "digiapp_push",
+                    "soulmon_push",
                     "Soulmon",
                     NotificationManager.IMPORTANCE_HIGH
                 );

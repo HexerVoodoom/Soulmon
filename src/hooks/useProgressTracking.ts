@@ -142,7 +142,7 @@ export function useProgressTracking(gameState: ProgressState) {
   //
   // Era `availableActivities.length + tasks.length + tasksCompletedToday.length`
   // — o cadastro inteiro. Esse número vai para o widget Android (App.tsx →
-  // DigiWidgetPlugin → WidgetRenderer: "$completedTasks/$totalTasks" e a
+  // SoulmonWidgetPlugin → WidgetRenderer: "$completedTasks/$totalTasks" e a
   // mensagem contextual). Um mega com meta 6 e 9 itens cadastrados que fizesse
   // 6 CUMPRIU a meta, não perde nada e ganha o dia perfeito — e mesmo assim via
   // "6/9" e "💪 Quase lá!" na tela de bloqueio o dia inteiro. O jogo não cobra;

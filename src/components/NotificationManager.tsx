@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
-import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
+import { SoulmonAlarm } from '../plugins/SoulmonAlarmPlugin';
 // WP3.4 — dono único do texto e do horário das notificações agendadas. Este
 // import é a fronteira que faltava: as três árvores (cliente, worker, cron)
 // passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
@@ -183,17 +183,17 @@ export function NotificationManager({
       // deve pedir uma quarta visita ao app, e cobrar tarefa na hora de dormir
       // é o oposto de um companheiro.
       if (completedSteps < totalRequired) {
-        if (nudge10) DigiAlarm.scheduleAlarm({ id: nudge10.tag, title: nudge10.title, body: nudge10.body, scheduledTime: '10:00' }).catch(() => {});
-        if (nudge16) DigiAlarm.scheduleAlarm({ id: nudge16.tag, title: nudge16.title, body: nudge16.body, scheduledTime: '16:00' }).catch(() => {});
-        DigiAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
+        if (nudge10) SoulmonAlarm.scheduleAlarm({ id: nudge10.tag, title: nudge10.title, body: nudge10.body, scheduledTime: '10:00' }).catch(() => {});
+        if (nudge16) SoulmonAlarm.scheduleAlarm({ id: nudge16.tag, title: nudge16.title, body: nudge16.body, scheduledTime: '16:00' }).catch(() => {});
+        SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
       } else {
-        DigiAlarm.cancelAlarm({ id: 'pet-nudge-10' }).catch(() => {});
-        DigiAlarm.cancelAlarm({ id: 'pet-nudge-16' }).catch(() => {});
-        DigiAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
+        SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-10' }).catch(() => {});
+        SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-16' }).catch(() => {});
+        SoulmonAlarm.cancelAlarm({ id: 'pet-nudge-21' }).catch(() => {});
       }
 
       if (boaNoite) {
-        DigiAlarm.scheduleAlarm({
+        SoulmonAlarm.scheduleAlarm({
           id: boaNoite.tag,
           title: boaNoite.title,
           body: boaNoite.body,
