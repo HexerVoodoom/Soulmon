@@ -14,7 +14,7 @@
  *
  * Funções PURAS: `dayKey` e `now` entram por parâmetro, sem React, sem
  * localStorage. Só a URL vai ao save (`custo-geracao-sprite.md` §4): base64 no
- * `GameState` estoura a cota de `localStorage` compartilhada com o DigiApp.
+ * `GameState` estoura a cota de `localStorage` da origem.
  *
  * ⚠️ **Reverter e re-sintonizar NÃO consomem teto** (gate, "Para o
  * `alpha-frontend`"): nenhuma função de adoção aqui toca `attempts`.

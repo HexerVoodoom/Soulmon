@@ -56,9 +56,13 @@ export const ATTR_COLOR: Record<BranchType, string> = {
 /**
  * NOME que o jogador vê — FONTE ÚNICA DA VERDADE, pelo mesmo motivo da cor.
  *
- * `virus`/`data`/`vaccine` são identificadores INTERNOS, herdados do DigiApp e
- * mantidos de propósito (aparecem em save de quem já joga). Eles NUNCA devem
- * chegar à tela: o jogador conhece Poder, Harmonia e Benevolência.
+ * `virus`/`data`/`vaccine` são identificadores INTERNOS, herdados do fork.
+ * ⚠️ Este comentário justificava mantê-los "porque aparecem em save de quem já
+ * joga" — não havia quem (07/09/2026). O motivo real de ficarem é outro e é
+ * bom: são palavras genéricas (não são marca de ninguém), estão em dezenas de
+ * arquivos e nos três campos do save, e trocá-las não entrega nada ao jogador,
+ * que **nunca as vê**. Ele conhece Poder, Harmonia e Benevolência — e é isso
+ * que esta tabela garante.
  *
  * Este mapa estava DUPLICADO em `EvolutionPath.tsx` e `PlayerDetailModal.tsx`,
  * e a `StatsPage` não usava nenhum dos dois — mostrava "Virus / Data / Vaccine"

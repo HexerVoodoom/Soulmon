@@ -3081,19 +3081,19 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
 __name(onRequestPost7, "onRequestPost");
 
 // .well-known/assetlinks.json.js
-var DEFAULT_PACKAGE = "com.digipartner.digiapp";
-var DEFAULT_SHA256 = "F5:10:2B:09:7B:B3:5C:81:FA:DC:FE:AB:A9:32:E6:8D:7F:F8:50:FB:1C:71:F0:7B:29:95:CC:86:A4:AA:7B:84";
+var DEFAULT_PACKAGE = "com.hexervoodoom.soulmon";
 async function onRequest5({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
-  const fingerprint = env?.ASSETLINKS_SHA256 || DEFAULT_SHA256;
-  return new Response(JSON.stringify([{
+  const fingerprint = env?.ASSETLINKS_SHA256;
+  const alvos = fingerprint ? [{
     relation: ["delegate_permission/common.handle_all_urls"],
     target: {
       namespace: "android_app",
       package_name: packageName,
       sha256_cert_fingerprints: [fingerprint]
     }
-  }]), {
+  }] : [];
+  return new Response(JSON.stringify(alvos), {
     headers: {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*"
@@ -3102,7 +3102,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-8egvzh/functionsRoutes-0.7182334982846006.mjs
+// ../.wrangler/tmp/pages-K1G1yI/functionsRoutes-0.4216693547374637.mjs
 var routes = [
   {
     routePath: "/api/account",

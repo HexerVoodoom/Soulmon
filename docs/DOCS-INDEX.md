@@ -1,4 +1,9 @@
-# 📚 Índice de Documentação - DigiApp v1.0.1
+# 📚 Índice de Documentação — Soulmon
+
+> ⚠️ **07/09/2026** — as entradas de `/guidelines/` e `src/android/` saíram
+> junto com os diretórios: eram documentação do **DigiApp** morando dentro do
+> `src/` (a de widget descrevia a implementação antiga, a de IA descrevia um
+> endpoint que não existe mais). Nada as importava.
 
 ## 🗂️ Documentos Criados Nesta Atualização
 
@@ -147,10 +152,7 @@
 
 ---
 
-### 🎨 /guidelines/*
 **Arquivos**:
-- AI-Personality.md
-- Como-Configurar-IA.md
 - Guidelines.md
 
 **Propósito**: Guias de uso e configuração  
@@ -185,7 +187,6 @@ DigiApp Docs
 │  └─ APK-BUILD-INFO.md ...... [Configuração inicial]
 │
 ├─ 📚 Referência & Guidelines
-│  ├─ /guidelines/............ [Como usar features]
 │  └─ /public/PWA-*........... [Setup PWA]
 │
 └─ 🗂️ Índice
@@ -204,7 +205,6 @@ DigiApp Docs
 | Ver o que mudou | `CHANGELOG-v1.0.1.md` |
 | Planejar próxima feature | `BACKLOG.md` |
 | Entender mudanças visuais | `VISUAL-CHANGES-v1.0.1.md` |
-| Configurar IA | `/guidelines/Como-Configurar-IA.md` |
 | Setup PWA | `/public/PWA-SETUP.md` |
 | Credenciais API | `APK-BUILD-INFO.md` |
 | Reportar bug | `BACKLOG.md` (template) |
@@ -282,7 +282,6 @@ Sempre que:
 ### Dia 1: Entender o Projeto
 ```
 1. Ler APK-BUILD-INFO.md (overview técnico)
-2. Ler /guidelines/Guidelines.md (como usar app)
 3. Explorar código (App.tsx, componentes principais)
 ```
 

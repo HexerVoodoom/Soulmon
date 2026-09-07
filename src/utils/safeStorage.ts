@@ -5,7 +5,9 @@
 // fosse memória — e ela não é. Três modos de falha REAIS, todos medidos:
 //
 //   1. `setItem` lança `QuotaExceededError` quando o storage enche. A origem é
-//      COMPARTILHADA com o DigiApp (mesmo `pages.dev`), então o orçamento não é
+//      da ORIGEM (⚠️ este comentário dizia "COMPARTILHADA com o DigiApp,
+//      mesmo `pages.dev`" — a URL de produção é própria desde a migração, e
+//      `localStorage` é por origem), então o orçamento não é
 //      só nosso. Sem try/catch dentro de um efeito do React, isso não é "perda
 //      silenciosa": a árvore inteira é desmontada e o usuário vê tela branca.
 //   2. `getItem` lança `SecurityError` com storage bloqueado — Safari com

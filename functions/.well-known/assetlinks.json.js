@@ -1,35 +1,50 @@
 // Digital Asset Links — prova para o Android que este domínio e o app Android
 // pertencem ao mesmo dono (usado por App Links / TWA).
 //
-// ⚠️ Os valores PADRÃO abaixo ainda são do **DigiApp**, porque este endpoint é
-// servido no domínio compartilhado com ele (ver docs/SEPARACAO-DIGIAPP.md).
-// Trocá-los às cegas quebraria a verificação do app que está no ar hoje, e o
-// fingerprint do Soulmon depende da keystore de release — não dá para inventar.
+// ⚠️ **Este endpoint declarava o pacote do DIGIAPP como padrão**, com o
+// fingerprint dele, e o comentário justificava assim: "este endpoint é servido
+// no domínio compartilhado com ele; trocar às cegas quebraria a verificação do
+// app que está no ar hoje".
 //
-// Por isso os dois campos vêm de variáveis do projeto Pages:
+// O domínio não é mais compartilhado — a URL de produção do Soulmon é própria
+// desde a migração —, e o efeito do padrão era afirmar, no nosso domínio, que
+// **outro app** tem permissão para tratar os nossos links. Uma declaração
+// falsa de propriedade, servida publicamente.
 //
-//   ASSETLINKS_PACKAGE_NAME  → com.hexervoodoom.soulmon
-//   ASSETLINKS_SHA256        → SHA-256 do certificado de assinatura do release
-//                              (Play Console → Configuração → Integridade do app
-//                              → Certificado da chave de assinatura do app)
+// A regra nova é simples: **na dúvida, não declarar nada.** Sem o fingerprint
+// o endpoint responde uma lista VAZIA, que é o que "nenhum app verificado"
+// significa em Digital Asset Links — os links deixam de abrir direto no app e
+// mais nada. Um vínculo ausente é um inconveniente; um vínculo mentindo é um
+// problema de segurança.
 //
-// Definidas: passa a valer o Soulmon. Ausentes: sai exatamente o que saía antes.
-const DEFAULT_PACKAGE = 'com.digipartner.digiapp';
-const DEFAULT_SHA256 =
-  'F5:10:2B:09:7B:B3:5C:81:FA:DC:FE:AB:A9:32:E6:8D:7F:F8:50:FB:1C:71:F0:7B:29:95:CC:86:A4:AA:7B:84';
+// Para ligar o App Link do Soulmon, defina no projeto Pages:
+//
+//   ASSETLINKS_SHA256  → SHA-256 do certificado de assinatura do release
+//                        (Play Console → Configuração → Integridade do app →
+//                         Certificado da chave de assinatura do app)
+//
+// `ASSETLINKS_PACKAGE_NAME` continua existindo para um pacote diferente do
+// padrão (build interno, sabor de teste), mas o padrão agora é o nosso.
+const DEFAULT_PACKAGE = 'com.hexervoodoom.soulmon';
 
 export async function onRequest({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
-  const fingerprint = env?.ASSETLINKS_SHA256 || DEFAULT_SHA256;
+  const fingerprint = env?.ASSETLINKS_SHA256;
 
-  return new Response(JSON.stringify([{
-    relation: ['delegate_permission/common.handle_all_urls'],
-    target: {
-      namespace: 'android_app',
-      package_name: packageName,
-      sha256_cert_fingerprints: [fingerprint],
-    },
-  }]), {
+  // Sem fingerprint não há o que provar. Lista vazia, 200 — o Android trata
+  // como "nenhuma associação", que é a verdade.
+  const alvos = fingerprint
+    ? [{
+      relation: ['delegate_permission/common.handle_all_urls'],
+      target: {
+        namespace: 'android_app',
+        package_name: packageName,
+        sha256_cert_fingerprints: [fingerprint],
+      },
+    }]
+    : [];
+
+  return new Response(JSON.stringify(alvos), {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',

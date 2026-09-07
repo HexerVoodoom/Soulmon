@@ -241,7 +241,7 @@ export interface GameState {
   /** Acervo de sprites GERADOS por forma + estado da adoção do visor
    *  (`utils/spriteLibrary.ts`, spec `soulmon-02/spec-geracao-incremental.md`).
    *  Guarda **só a URL** de cada forma (~120 bytes): base64 aqui iria ao
-   *  localStorage — cota compartilhada com o DigiApp — e subiria à KV a cada
+   *  localStorage e subiria à KV a cada
    *  debounce de 3 s (`custo-geracao-sprite.md` §4). */
   spriteLibrary?: SpriteLibrary;
   /** As duas skills de cada estágio. Persistidas junto das formas porque o
@@ -807,10 +807,13 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         completedTasks: arr<unknown>(loadedState.completedTasks)
           .map(hydrateCompletedTask).filter((t) => t !== null) as CompletedTask[],
         // Só a entrada NULLISH sai (`null.completionCount` lança); o resto é
-        // completado, nunca descartado. Save legado do DigiApp guardava um
-        // NÚMERO cru por atividade (`{a1: 12}`) — apagar isso seria perder
-        // histórico de quem já joga, e ninguém lança lendo `.completionCount`
-        // de um número.
+        // completado, nunca descartado. Uma forma antiga guardava um NÚMERO
+        // cru por atividade (`{a1: 12}`); a leitura defensiva fica porque save
+        // é dado NÃO CONFIÁVEL (vem da nuvem, pode ter sido editado à mão),
+        // e ninguém lança lendo `.completionCount` de um número.
+        // ⚠️ A justificativa antiga era "perder histórico de quem já joga" —
+        // não havia quem (07/09/2026). O motivo que sobra é robustez, e ele
+        // basta.
         activityStats: Object.fromEntries(
           Object.entries(obj<unknown>(loadedState.activityStats))
             .filter(([, s]) => s !== null && s !== undefined)

@@ -5,14 +5,14 @@ React 18 + TypeScript + Vite 6 (web), Capacitor 8.4 (APK Android) e um overlay
 Electron separado (`desktop/`). UI/textos do app em PT-BR e EN (sempre os dois,
 via `language === 'pt-BR'`).
 
-> O Soulmon nasceu de um **fork do DigiApp** e ainda divide infraestrutura com
-> ele (namespace KV, projeto Firebase). O inventário, o risco de cada item e a
-> ordem segura de separar estão em `docs/SEPARACAO-DIGIAPP.md` — leia antes de
-> mexer em qualquer coisa de deploy.
-> ⚠️ **Este parágrafo dizia que os nomes "digiapp" eram mantidos de propósito
-> "porque renomear quebraria o save de quem já joga".** Ninguém nunca jogou
-> (07/09/2026). As chaves de localStorage já foram renomeadas; o que sobra da
-> herança está sendo removido em fatias.
+> O Soulmon nasceu de um **fork do DigiApp**, e a limpeza da herança foi feita
+> em 07/09/2026 — chaves de localStorage, binding KV, canal de push, campo do
+> bridge, classes e rótulos dos widgets, Digital Asset Links, o chat paralelo
+> do Supabase e toda a arte/nomes de franquia. O inventário e o que sobra estão
+> em `docs/SEPARACAO-DIGIAPP.md`.
+> **O que resta depende do painel, não do código**: o namespace KV ainda é o
+> mesmo fisicamente e o projeto Firebase ainda é compartilhado — os dois só o
+> dono separa.
 
 > **`docs/PLANO-EVOLUCAO.md`** traz o benchmark de agosto/2026 (Habitica, Finch,
 > Catzy, Forest, V-Pet/Vital Bracelet, Pokémon Sleep/GO, Palworld + psicologia do

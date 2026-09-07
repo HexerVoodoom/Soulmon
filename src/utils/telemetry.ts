@@ -421,7 +421,7 @@ export const ENDPOINT = '/api/metrics';
 
 /**
  * Teto da fila. A fila mora no localStorage (que é COMPARTILHADO com o save do
- * jogo e com o DigiApp na mesma origem — ver `safeStorage`), então uma fila sem
+ * jogo na mesma origem — ver `safeStorage`), então uma fila sem
  * teto acaba estourando a cota e derrubando a gravação do PROGRESSO. Métrica
  * jamais pode custar o save de ninguém.
  *

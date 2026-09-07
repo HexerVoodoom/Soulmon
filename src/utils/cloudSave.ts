@@ -2,13 +2,15 @@
 // save on any device, no manual code copying. Matches the server's VALID_ID
 // regex (^[a-zA-Z0-9_-]{8,64}$): we return 32 hex chars.
 //
-// The salt namespaces the hash to THIS product. Soulmon's KV binding
-// (DIGIAPP_SAVES) still points at the same underlying namespace as the old
-// DigiApp product it was forked from — with a shared "digiapp:" salt, the
-// same email hashed to the SAME key in both apps, so logging into Soulmon
-// with an email already used in DigiApp loaded DigiApp's (foreign-shaped)
-// save instead of creating a fresh Soulmon one. "soulmon:" makes the two
-// products derive different keys even while the raw KV storage is shared.
+// The salt namespaces the hash to THIS product. The KV still points at the
+// namespace inherited from the fork — the BINDING name stopped being a
+// constraint on 2026-09-07 (`functions/api/_kv.js` accepts both), but the
+// underlying namespace is still shared until the owner splits it in the
+// Cloudflare dashboard. With a shared "digiapp:" salt the same email hashed to
+// the SAME key in both products; "soulmon:" makes the two derive different
+// keys even while the raw storage is shared. Locked, behaviourally, by
+// `functions/api/saveId.parity.test.js` — three implementations, three deploy
+// cycles, one rule.
 import { authHeaders } from './auth';
 import { STORAGE_KEYS, RECONCILE_KEYS } from './storageKeys';
 import { writeLocal, readLocal } from './safeStorage';
@@ -100,7 +102,7 @@ function falha(status: number): CloudSaveFailure {
 /**
  * Envia o save para a nuvem. `ok: true` só quando o SERVIDOR confirmou.
  *
- * O carimbo `digiapp-last-cloud-sync` é o que o app mostra como "sincronizado":
+ * O carimbo `soulmon-last-cloud-sync` é o que o app mostra como "sincronizado":
  * gravá-lo sem checar `res.ok` fazia o app afirmar que o progresso estava na
  * nuvem depois de um 401 (token expirado), 403 ou 500 — o jogador trocava de
  * aparelho confiando nisso e perdia tudo. Falhou = não carimba, e quem chama
@@ -253,7 +255,12 @@ export async function cloudLoad(saveId: string): Promise<unknown | null> {
 //   localStorage.setItem(GAME_STATE, gigante);    // ← lança com storage cheio
 //   window.location.reload();                     // ← nunca acontece
 //
-// Com o storage cheio (origem COMPARTILHADA com o DigiApp) ou bloqueado, o
+// ⚠️ Este comentário dizia "origem COMPARTILHADA com o DigiApp". Não é mais:
+// o `localStorage` é por ORIGEM, e a URL de produção do Soulmon é própria
+// desde a migração. A cota é do app, e só dele. O cuidado abaixo continua
+// valendo pelo motivo genérico — storage cheio ou bloqueado acontece (aba
+// privada, modo estrito, quota estourada por um save grande demais).
+// Com o storage cheio ou bloqueado, o
 // `QuotaExceededError` subia numa função async passada como prop: rejeição não
 // tratada, sem reload, sem mensagem — o botão parecia não fazer nada. E o dano
 // não era só cosmético: a IDENTIDADE já tinha trocado sem o dado. O provider

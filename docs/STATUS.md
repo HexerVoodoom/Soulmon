@@ -33,6 +33,20 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > 4. **O gargalo não é mais o produto, é a DISTRIBUIÇÃO.** Sete sprints de
 >    polimento foram feitos para zero pessoas.
 >
+> **A limpeza foi feita no mesmo dia** (fatias 1 a 5, oito commits em `main`).
+> Além dos quatro itens acima, ela achou três coisas que ninguém tinha visto:
+> o `AndroidManifest` anunciava os cinco widgets como **"DigiApp"** na lista de
+> widgets do celular (texto que o usuário lê); o `assetlinks.json` servia o
+> **pacote do DigiApp como padrão** no nosso domínio, ou seja, uma declaração
+> falsa de propriedade; e `src/supabase/.../chat.tsx` era um **segundo endpoint
+> de LLM, publicado, sem autenticação e sem nenhuma** das treze proteções do
+> `functions/api/chat.js` (bloco NEVER, redação, allowlist de contexto, teto de
+> custo do `_aiGuard`). Os três foram fechados.
+>
+> **O que sobra depende de você, não do código:** separar o namespace KV
+> (`docs/SEPARACAO-DIGIAPP.md`, passo 2 — o NOME do binding já não trava, o
+> `_kv.js` aceita os dois) e o projeto Firebase (passo 4).
+>
 > O que isto NÃO autoriza: apagar a compatibilidade de save por conta própria.
 > O dono pode ter o próprio save no aparelho dele, e "ninguém em produção" não
 > é o mesmo que "nenhum save existe". É decisão dele, e o custo de errar é o

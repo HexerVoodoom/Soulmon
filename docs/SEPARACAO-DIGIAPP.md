@@ -4,23 +4,31 @@ O Soulmon nasceu de um fork do DigiApp e ainda divide infraestrutura com ele.
 Este é o inventário do que continua compartilhado, o risco de cada item e a
 ordem segura de separar.
 
-## Situação atual
+## Situação atual (07/09/2026)
+
+> ⚠️ **A limpeza inteira foi feita em 07/09/2026**, depois de o dono informar
+> que **ninguém nunca usou o app em produção**. Metade desta tabela justificava
+> manter herança "para não quebrar quem já joga" — não havia quem.
 
 | Item | Onde | Estado |
 |---|---|---|
-| `applicationId` Android | `android/app/build.gradle` | ✅ **Separado** — `com.hexervoodoom.soulmon` |
-| Nome do app | `strings.xml`, `capacitor.config.json` | ✅ **Separado** — "Soulmon" |
-| Chave dos saves | `utils/cloudSave.ts` (salt `soulmon:`) | ✅ **Separado** — e-mail igual gera chave diferente nos dois apps |
-| Namespace KV | `wrangler.jsonc` → `DIGIAPP_SAVES` | ⚠️ **Compartilhado** — mesmo namespace físico |
-| URL de produção | `capacitor.config.json` → `server.url` | ⚠️ **Compartilhado** — aponta para `digiapp-a5e.pages.dev` |
-| Projeto Firebase | `google-services.json` | ⚠️ **Compartilhado** |
-| Chaves de localStorage | `utils/storageKeys.ts` (prefixo `digiapp-`) | ⚠️ Herdado (só cosmético — o armazenamento é por origem) |
-| Canal de notificação | `MainActivity.java` → id `digiapp_push` | ⚠️ Herdado (só interno; o nome exibido já é "Soulmon") |
+| `applicationId` Android | `android/app/build.gradle` | ✅ Separado — `com.hexervoodoom.soulmon` |
+| Nome do app | `strings.xml`, `capacitor.config.json` | ✅ Separado — "Soulmon" |
+| Chave dos saves | `utils/cloudSave.ts` (salt `soulmon:`) | ✅ Separado |
+| URL de produção | `capacitor.config.json` → `server.url` | ✅ Separado — `soulmon.mateus-sprnd.workers.dev` |
+| **Nome do binding KV** | `functions/api/_kv.js` → `kv(env)` | ✅ Separado — aceita `SOULMON_SAVES` **e** `DIGIAPP_SAVES`, então trocar no painel não exige sincronia |
+| **Chaves de localStorage** | `utils/storageKeys.ts` | ✅ Separado — prefixo `soulmon-`, com migração one-shot |
+| **Canal de notificação** | `MainActivity.java` | ✅ Separado — `soulmon_push` (e `soulmon_alarms`) |
+| **Campo do bridge** | `SoulmonWidgetPlugin` | ✅ Separado — `petName` / `pet_name` |
+| **Widgets Android** | classes, layouts, `android:label` | ✅ Separado — os cinco rótulos diziam "DigiApp" na LISTA DE WIDGETS do celular |
+| **Digital Asset Links** | `functions/.well-known/` | ✅ Separado — o padrão era o **pacote do DigiApp**, ou seja, uma declaração falsa de propriedade do nosso domínio. Sem fingerprint, hoje responde vazio |
+| **Chat paralelo** | `src/supabase/.../chat.tsx` | ✅ Apagado — segundo endpoint de LLM, publicado, sem autenticação e sem NENHUMA das travas do `functions/api/chat.js` |
+| **Arte e nomes de franquia** | bundle, APK, bestiário | ✅ Removidos — ver `docs/Attributions.md` |
+| Namespace KV (os DADOS) | Cloudflare → KV | ⚠️ **Ainda o mesmo namespace físico.** Só o dono separa (passo 2) |
+| Projeto Firebase | `google-services.json` | ⚠️ **Ainda compartilhado.** Só o dono separa (passo 4) |
+| `virus`/`data`/`vaccine` | `types/attributes.ts` | ⚪ Mantidos DE PROPÓSITO — palavras genéricas, em dezenas de arquivos, e o jogador nunca as vê (ele lê Poder/Harmonia/Benevolência) |
 
-> As chaves de localStorage e o id do canal são **intencionalmente** mantidos:
-> trocá-los faria os usuários atuais perderem o progresso local e as
-> preferências de notificação. Renomear exigiria uma migração — só vale a pena
-> se houver outro motivo.
+**O que sobra depende do painel do Cloudflare e do Firebase — não do código.**
 
 ---
 
