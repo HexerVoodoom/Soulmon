@@ -2,6 +2,14 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
+<!-- doc-historico -->
+> ⚠️ **As entradas até a v1.0.x são do DigiApp**, antes do fork virar Soulmon —
+> falam de `DigiEgg`, de tabelas de HP e de evolução automática que **não são
+> mais as regras**. Ficam porque changelog é registro, e registro não se
+> reescreve; para saber o que vale hoje, `CLAUDE.md`. O inventário do que a
+> documentação daquela época ensinava de errado está em
+> `docs/historico-digiapp/LEIA-ANTES.md`.
+
 ---
 
 ## [1.0.0] - 2024-12-28

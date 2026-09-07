@@ -85,9 +85,15 @@ Cloud save por hash de e-mail.
    repo `furudbat/wayland-vpets`). A migração para criaturas originais começou
    (ex.: `Pyrakamon`, linhas Kaelen/Orrin/Thalindra) mas está incompleta. Isso é
    bloqueante para lançamento em loja e para qualquer monetização.
-2. **Documentação desalinhada.** `CLAUDE.md`, `PROJETO.md` e `docs/` ainda descrevem o
-   produto como "DigiApp"; `docs/00-START-HERE.md` afirma "100% completo, 0 bugs".
-   Trate documentação antiga como histórico, não como verdade.
+2. **Documentação desalinhada — RESOLVIDO em 07/09/2026.** Este item dizia que
+   `docs/` ainda descrevia o produto como "DigiApp" e que o `00-START-HERE.md`
+   se declarava "100% completo, 0 bugs", e concluía: "trate documentação antiga
+   como histórico". **O aviso não funcionava**: ele morava aqui, e os onze
+   documentos mentirosos moravam em `docs/` com títulos de autoridade
+   (`00-START-HERE`, `README`, `DOCS-INDEX`) — este mesmo parágrafo mandava
+   começar pelo pior deles. Todos foram para `docs/historico-digiapp/`, atrás de
+   um `LEIA-ANTES.md` que tabela regra por regra o que cada um ensinava de
+   errado. O `docs/00-START-HERE.md` de hoje é um índice real.
 3. **Complexidade de sistemas alta para um produto sem validação de usuário.** Há mais
    sistemas de camada 3 do que evidência de que o loop da camada 1 retém.
 4. `App.tsx` monolítico; cobertura de testes concentrada em reset diário/oráculo.

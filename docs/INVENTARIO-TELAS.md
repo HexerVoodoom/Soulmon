@@ -709,7 +709,9 @@ Prioridade = frequência × gravidade. `P0` = todo dia + quebra a linguagem;
 
 1. Rodar com **captura de tela habilitada** — nada aqui afirma nada sobre cor,
    espaçamento, contraste ou alinhamento.
-2. **Semear `digiapp_state_v3`** com save cheio (muitas tarefas, hábitos com
+2. **Semear `soulmon_state_v1`** (era `digiapp_state_v3`, renomeada em
+   07/09/2026 — quem seguisse a instrução antiga semearia uma chave que o app
+   não lê mais e mediria os estados "cheio" num app VAZIO) com save cheio (muitas tarefas, hábitos com
    marcos, itens, cenários, troféus) para medir os estados "cheio".
 3. **Viajar no tempo** (segunda-feira, domingo, madrugada) para acionar fresh
    start, relatório semanal, sonho e pesadelo.
