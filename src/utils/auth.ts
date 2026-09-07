@@ -71,7 +71,8 @@ async function garantirPersistencia(
 export type AuthErro =
   | 'email-invalido' | 'senha-fraca' | 'credencial-invalida'
   | 'email-em-uso' | 'nao-encontrado' | 'muitas-tentativas'
-  | 'rede' | 'popup-fechado' | 'provedor-desligado' | 'desconhecido';
+  | 'rede' | 'popup-fechado' | 'popup-bloqueado' | 'dominio-nao-autorizado'
+  | 'provedor-desligado' | 'desconhecido';
 
 export function traduzErroAuth(code: string): AuthErro {
   switch (code) {
@@ -88,6 +89,11 @@ export function traduzErroAuth(code: string): AuthErro {
     case 'auth/network-request-failed': return 'rede';
     case 'auth/popup-closed-by-user':
     case 'auth/cancelled-popup-request': return 'popup-fechado';
+    // O navegador recusou abrir a janela. Não é erro da pessoa, e sobretudo
+    // não é "tente de novo em instantes": tentar de novo dá no mesmo. Ganhou
+    // código próprio para virar uma saída de verdade — o redirecionamento.
+    case 'auth/popup-blocked': return 'popup-bloqueado';
+    case 'auth/unauthorized-domain': return 'dominio-nao-autorizado';
     case 'auth/operation-not-allowed': return 'provedor-desligado';
     default: return 'desconhecido';
   }
@@ -131,14 +137,43 @@ export async function criarContaComSenha(email: string, senha: string): Promise<
  */
 export async function entrarComGoogle(): Promise<ResultadoAuth> {
   if (!isAuthConfigured()) return { ok: false, erro: 'desconhecido' };
+  // Fora do `try` de proposito: o `catch` precisa deles para poder cair no
+  // redirecionamento quando o popup e bloqueado.
+  const { auth, authMod } = await getAuth();
+  const provider = new authMod.GoogleAuthProvider();
   try {
-    const { auth, authMod } = await getAuth();
     await garantirPersistencia(auth, authMod);
-    const provider = new authMod.GoogleAuthProvider();
     const cred = await authMod.signInWithPopup(auth, provider);
     return { ok: true, email: cred.user.email ?? undefined };
   } catch (err) {
-    return { ok: false, erro: traduzErroAuth(String((err as { code?: string })?.code ?? '')) };
+    const code = String((err as { code?: string })?.code ?? '');
+    // O CÓDIGO CRU VAI PARA O CONSOLE, sempre — inclusive em produção.
+    //
+    // Em 07/09/2026 o login com Google falhou com a mensagem genérica ("não
+    // deu para entrar agora") e não havia como saber por quê: o `catch`
+    // engolia o código e o console ficava limpo. Diagnosticar virou adivinhar
+    // entre popup bloqueado, domínio não autorizado e provedor desligado —
+    // três causas com correções completamente diferentes. Isto não é ruído:
+    // é a única pista que existe quando o login quebra na máquina de alguém.
+    console.warn('[auth] entrarComGoogle falhou', { code });
+
+    const erro = traduzErroAuth(code);
+    // POPUP BLOQUEADO TEM SAÍDA, e ela não é "tente de novo".
+    //
+    // Bloqueio de popup é decisão do navegador e não muda tentando outra vez.
+    // O redirecionamento faz o mesmo login sem abrir janela nenhuma: a página
+    // sai para o Google e volta. `App.tsx` já conclui o login no retorno, pelo
+    // mesmo caminho do link de e-mail.
+    if (erro === 'popup-bloqueado') {
+      try {
+        await authMod.signInWithRedirect(auth, provider);
+        // A página está saindo; nada depois disto roda.
+        return { ok: false, erro: 'popup-bloqueado' };
+      } catch {
+        /* Se nem o redirect vai, a mensagem do popup bloqueado é a verdade. */
+      }
+    }
+    return { ok: false, erro };
   }
 }
 

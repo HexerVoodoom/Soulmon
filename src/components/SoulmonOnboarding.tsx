@@ -727,6 +727,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'muitas-tentativas': 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
       'rede': 'Sem conexão agora. Confira a internet e tente de novo.',
       'popup-fechado': 'A janela do Google fechou antes de terminar. Pode tentar de novo.',
+      'popup-bloqueado': 'Seu navegador bloqueou a janela do Google. Estamos te levando para lá — se não for, libere pop-ups para este site.',
+      'dominio-nao-autorizado': 'Este endereço ainda não está liberado para entrar com Google. Use e-mail e senha por enquanto.',
       'provedor-desligado': 'Esse jeito de entrar está indisponível agora.',
       'desconhecido': 'Não deu para entrar agora. Tente de novo em instantes.',
     };
@@ -739,6 +741,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'muitas-tentativas': 'Too many attempts in a row. Wait a moment and try again.',
       'rede': 'No connection right now. Check the internet and try again.',
       'popup-fechado': 'The Google window closed before finishing. You can try again.',
+      'popup-bloqueado': 'Your browser blocked the Google window. We are taking you there instead — if that fails, allow pop-ups for this site.',
+      'dominio-nao-autorizado': 'This address is not approved for Google sign-in yet. Use email and password for now.',
       'provedor-desligado': 'That way of signing in is unavailable right now.',
       'desconhecido': "Couldn't sign in right now. Please try again shortly.",
     };
@@ -810,24 +814,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  legal não vale como consentimento específico (achado do run 01). */
   const blocoLegal = (
     <>
-      {/* DUAS caixas, e não uma. Juntar "sou maior" com "aceito os Termos"
-          numa frase só faz um marcar o outro por tabela, e nenhum dos dois
-          fica sendo uma declaração específica — que é justamente o que o
-          aceite precisa ser (achado do run 01). São perguntas diferentes. */}
-      {precisaDeclararIdade && (
-        <div style={{ marginBottom: 12 }}>
-          <CheckRow checked={maiorIdadeChecked} onChange={setMaiorIdadeChecked}>
-            {isPt
-              ? `Tenho ${MIN_AGE_YEARS} anos ou mais`
-              : `I am ${MIN_AGE_YEARS} or older`}
-          </CheckRow>
-          <p style={{ ...sm2Hint, marginTop: 6 }}>
-            {isPt
-              ? `${MIN_AGE_YEARS} anos é a idade mínima do Soulmon. Não pedimos nem guardamos sua data de nascimento.`
-              : `${MIN_AGE_YEARS} is Soulmon's minimum age. We don't ask for or store your date of birth.`}
-          </p>
-        </div>
-      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
         <a
           href={isPt ? '/termos.html' : '/termos.html#en'}
@@ -844,11 +830,31 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           {isPt ? 'Ler a Política de Privacidade' : 'Read the Privacy Policy'}
         </a>
       </div>
+      {/* AS DUAS CAIXAS JUNTAS, aceite em cima e idade logo abaixo — pedido
+          do dono. Continuam sendo DUAS, e não uma frase só: juntar "sou
+          maior" com "aceito os Termos" faz um marcar o outro por tabela, e aí
+          nenhum dos dois é uma declaração específica, que é justamente o que
+          o aceite precisa ser (achado do run 01). São perguntas diferentes;
+          ficam vizinhas, não fundidas. */}
       <CheckRow checked={consentChecked} onChange={setConsentChecked}>
         {isPt
           ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
           : 'I have read and agree to the Terms of Use and the Privacy Policy'}
       </CheckRow>
+      {precisaDeclararIdade && (
+        <div style={{ marginTop: 10 }}>
+          <CheckRow checked={maiorIdadeChecked} onChange={setMaiorIdadeChecked}>
+            {isPt
+              ? `Tenho ${MIN_AGE_YEARS} anos ou mais`
+              : `I am ${MIN_AGE_YEARS} or older`}
+          </CheckRow>
+          <p style={{ ...sm2Hint, marginTop: 6 }}>
+            {isPt
+              ? `${MIN_AGE_YEARS} anos é a idade mínima do Soulmon. Não pedimos nem guardamos sua data de nascimento.`
+              : `${MIN_AGE_YEARS} is Soulmon's minimum age. We don't ask for or store your date of birth.`}
+          </p>
+        </div>
+      )}
     </>
   );
 
