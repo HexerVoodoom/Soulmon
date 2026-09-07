@@ -540,7 +540,13 @@ export const CompanionHUD = memo(function CompanionHUD({
     return () => { ro?.disconnect(); window.removeEventListener('resize', medir); };
   }, []);
 
-  /* O PASSEIO. O `WalkingPetStrip` já provava que dá — aqui o passo é em
+  /* O PASSEIO. ⚰️ O protótipo `WalkingPetStrip.tsx` foi apagado em
+     07/09/2026: esta menção era a ÚNICA ocorrência dele no repositório
+     inteiro — um componente de 63 linhas que já tinha sido absorvido aqui e
+     sobrevivia por ser citado num comentário. Junto foi o `EnergyBar.tsx`,
+     que não era citado nem em comentário (zero referências); a barra viva é
+     a segmentada deste arquivo.
+     O passo aqui é em
      pixel inteiro e o pet ALTERNA andar e parar, com pausas de duração
      irregular: andar sem parar lê como carrossel, e é o que faz um sprite
      parecer um GIF em vez de um bicho. Ele vira ao bater na parede e às
