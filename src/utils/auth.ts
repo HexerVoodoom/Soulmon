@@ -48,6 +48,116 @@ async function getAuth() {
 }
 
 /**
+ * PERSISTÊNCIA DA SESSÃO — "não refazer login toda vez".
+ *
+ * O Firebase já usa `browserLocalPersistence` por padrão, mas "por padrão" é
+ * exatamente o tipo de coisa que muda numa atualização de SDK sem ninguém
+ * notar, e o sintoma seria o pior possível: o jogador perde o acesso ao save
+ * a cada abertura. Declarado explicitamente e travado por teste.
+ */
+async function garantirPersistencia(
+  auth: import('firebase/auth').Auth,
+  authMod: typeof import('firebase/auth'),
+): Promise<void> {
+  try {
+    await authMod.setPersistence(auth, authMod.browserLocalPersistence);
+  } catch {
+    /* Aba privada/storage bloqueado: a sessão vira de memória. Melhor logar
+       nesta sessão do que recusar o login. */
+  }
+}
+
+/** Traduz o código do Firebase para algo que a interface possa dizer. */
+export type AuthErro =
+  | 'email-invalido' | 'senha-fraca' | 'credencial-invalida'
+  | 'email-em-uso' | 'nao-encontrado' | 'muitas-tentativas'
+  | 'rede' | 'popup-fechado' | 'provedor-desligado' | 'desconhecido';
+
+export function traduzErroAuth(code: string): AuthErro {
+  switch (code) {
+    case 'auth/invalid-email': return 'email-invalido';
+    case 'auth/weak-password': return 'senha-fraca';
+    // O Firebase moderno colapsa "senha errada" e "usuário inexistente" no
+    // mesmo código DE PROPÓSITO: distinguir os dois entrega ao atacante uma
+    // sonda de "este e-mail tem conta aqui". Não desfazemos isso na UI.
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return 'credencial-invalida';
+    case 'auth/email-already-in-use': return 'email-em-uso';
+    case 'auth/user-not-found': return 'nao-encontrado';
+    case 'auth/too-many-requests': return 'muitas-tentativas';
+    case 'auth/network-request-failed': return 'rede';
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request': return 'popup-fechado';
+    case 'auth/operation-not-allowed': return 'provedor-desligado';
+    default: return 'desconhecido';
+  }
+}
+
+export interface ResultadoAuth { ok: boolean; email?: string; erro?: AuthErro }
+
+/** Entrar com e-mail e senha numa conta que já existe. */
+export async function entrarComSenha(email: string, senha: string): Promise<ResultadoAuth> {
+  if (!isAuthConfigured()) return { ok: false, erro: 'desconhecido' };
+  try {
+    const { auth, authMod } = await getAuth();
+    await garantirPersistencia(auth, authMod);
+    const cred = await authMod.signInWithEmailAndPassword(auth, email.trim().toLowerCase(), senha);
+    return { ok: true, email: cred.user.email ?? undefined };
+  } catch (err) {
+    return { ok: false, erro: traduzErroAuth(String((err as { code?: string })?.code ?? '')) };
+  }
+}
+
+/** Criar conta nova com e-mail e senha. */
+export async function criarContaComSenha(email: string, senha: string): Promise<ResultadoAuth> {
+  if (!isAuthConfigured()) return { ok: false, erro: 'desconhecido' };
+  try {
+    const { auth, authMod } = await getAuth();
+    await garantirPersistencia(auth, authMod);
+    const cred = await authMod.createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), senha);
+    return { ok: true, email: cred.user.email ?? undefined };
+  } catch (err) {
+    return { ok: false, erro: traduzErroAuth(String((err as { code?: string })?.code ?? '')) };
+  }
+}
+
+/**
+ * Entrar com Google.
+ *
+ * Não depende de e-mail CHEGAR — e isso importa: o link por e-mail deste
+ * projeto cai no spam do Gmail (remetente `firebaseapp.com` sem domínio
+ * próprio, verificado em 07/09/2026). Um caminho de entrada que não passa por
+ * caixa de entrada é o que garante que dá para entrar no app.
+ */
+export async function entrarComGoogle(): Promise<ResultadoAuth> {
+  if (!isAuthConfigured()) return { ok: false, erro: 'desconhecido' };
+  try {
+    const { auth, authMod } = await getAuth();
+    await garantirPersistencia(auth, authMod);
+    const provider = new authMod.GoogleAuthProvider();
+    const cred = await authMod.signInWithPopup(auth, provider);
+    return { ok: true, email: cred.user.email ?? undefined };
+  } catch (err) {
+    return { ok: false, erro: traduzErroAuth(String((err as { code?: string })?.code ?? '')) };
+  }
+}
+
+/**
+ * Recuperar senha. SEM isto, senha vira armadilha: quem esquece perde o save,
+ * porque o `saveId` é derivado do e-mail e não há outro caminho de volta.
+ */
+export async function mandarResetDeSenha(email: string): Promise<ResultadoAuth> {
+  if (!isAuthConfigured()) return { ok: false, erro: 'desconhecido' };
+  try {
+    const { auth, authMod } = await getAuth();
+    await authMod.sendPasswordResetEmail(auth, email.trim().toLowerCase());
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, erro: traduzErroAuth(String((err as { code?: string })?.code ?? '')) };
+  }
+}
+
+/**
  * Manda o link de acesso para o e-mail. O e-mail fica guardado localmente
  * porque o Firebase exige confirmá-lo ao completar o login (proteção contra
  * alguém interceptar o link).
@@ -111,6 +221,13 @@ export async function getCurrentEmail(): Promise<string | null> {
   if (!isAuthConfigured()) return null;
   try {
     const { auth } = await getAuth();
+    // `authStateReady()` NÃO é opcional aqui. O Firebase restaura a sessão de
+    // forma ASSÍNCRONA ao carregar a página: logo depois de um reload,
+    // `currentUser` ainda é `null` mesmo para quem está perfeitamente logado.
+    // Ler direto devolvia "deslogado" para quem acabara de entrar — foi assim
+    // que a volta do link de e-mail recomeçava o onboarding do zero
+    // (07/09/2026). Quem pergunta cedo demais recebe a resposta errada.
+    await auth.authStateReady();
     return auth.currentUser?.email ?? null;
   } catch {
     return null;
@@ -125,6 +242,12 @@ export async function getIdToken(): Promise<string | null> {
   if (!isAuthConfigured()) return null;
   try {
     const { auth } = await getAuth();
+    // Mesmo motivo do `getCurrentEmail`: sem esperar a restauração da sessão,
+    // toda chamada de API feita logo após o carregamento saía SEM token. Com
+    // o servidor em modo estrito (FIREBASE_PROJECT_ID ligado em 07/09/2026)
+    // isso vira 401 no primeiro save do dia, e o app trataria como falha de
+    // rede.
+    await auth.authStateReady();
     const user = auth.currentUser;
     if (!user) return null;
     return await user.getIdToken();

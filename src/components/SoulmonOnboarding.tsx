@@ -25,7 +25,10 @@ import { SoulTestItem, itemHint, itemPrompt } from './SoulTestItem';
 import { PREMADE_CHARACTERS, getDemoSprite, FULL_UNLOCK_SKU } from '../utils/monetization';
 import { useUnlockPriceLabel } from '../utils/priceLabel';
 import { purchase, isBillingAvailable } from '../utils/playBilling';
-import { isAuthConfigured, sendLoginLink, getCurrentEmail } from '../utils/auth';
+import {
+  isAuthConfigured, getCurrentEmail, entrarComSenha, criarContaComSenha,
+  entrarComGoogle, mandarResetDeSenha, type AuthErro,
+} from '../utils/auth';
 import { resolveLanguage } from '../utils/i18n';
 import { track, flush as flushTelemetry, onboardingStepCode, TELEMETRY_FUNNEL, TELEMETRY_PURCHASE_REASON, revealDurationBucket } from '../utils/telemetry';
 import type { ActivityCategory } from '../types/attributes';
@@ -254,6 +257,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  comprovado; `''` = deslogado. O portão só decide depois de saber. */
   const [authEmail, setAuthEmail] = useState<string | null>(null);
   const [authUsavel, setAuthUsavel] = useState(false);
+  const [senha, setSenha] = useState('');
+  const [criandoConta, setCriandoConta] = useState(false);
+  const [authErro, setAuthErro] = useState<AuthErro | null>(null);
+  const [authOcupado, setAuthOcupado] = useState(false);
+  const [resetEnviado, setResetEnviado] = useState(false);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
   /** WP1.12 — tonalidade escolhida no demo. 0 = a arte original. */
   const [demoTint, setDemoTint] = useState(0);
@@ -332,7 +340,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [emailError, setEmailError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   /** Link de acesso enviado — a tela passa a pedir que o usuário abra o e-mail. */
-  const [linkSent, setLinkSent] = useState(false);
 
   const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
   // No caminho grátis o e-mail é OPCIONAL: pedir dado de contato antes de a
@@ -696,30 +703,86 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       setBirthDate('');
     }
   };
+  /** Texto do erro de autenticação, nos dois idiomas. */
+  const textoErroAuth = (() => {
+    if (!authErro) return '';
+    const pt: Record<AuthErro, string> = {
+      'email-invalido': 'Digite um e-mail válido.',
+      'senha-fraca': 'A senha precisa de pelo menos 6 caracteres.',
+      'credencial-invalida': 'E-mail ou senha não conferem.',
+      'email-em-uso': 'Já existe conta com esse e-mail. Toque em "Já tenho conta — entrar".',
+      'nao-encontrado': 'Não achamos conta com esse e-mail. Toque em "Criar conta".',
+      'muitas-tentativas': 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
+      'rede': 'Sem conexão agora. Confira a internet e tente de novo.',
+      'popup-fechado': 'A janela do Google fechou antes de terminar. Pode tentar de novo.',
+      'provedor-desligado': 'Esse jeito de entrar está indisponível agora.',
+      'desconhecido': 'Não deu para entrar agora. Tente de novo em instantes.',
+    };
+    const en: Record<AuthErro, string> = {
+      'email-invalido': 'Enter a valid email.',
+      'senha-fraca': 'The password needs at least 6 characters.',
+      'credencial-invalida': "Email or password don't match.",
+      'email-em-uso': 'An account with that email already exists. Tap "I already have an account".',
+      'nao-encontrado': 'No account found with that email. Tap "Create account".',
+      'muitas-tentativas': 'Too many attempts in a row. Wait a moment and try again.',
+      'rede': 'No connection right now. Check the internet and try again.',
+      'popup-fechado': 'The Google window closed before finishing. You can try again.',
+      'provedor-desligado': 'That way of signing in is unavailable right now.',
+      'desconhecido': "Couldn't sign in right now. Please try again shortly.",
+    };
+    return isPt ? pt[authErro] : en[authErro];
+  })();
 
-  /** PORTÃO — manda o link de acesso.
-   *
-   *  Não avança passo nenhum: quem avança é a volta pelo link, que sai do app,
-   *  reabre pelo e-mail e faz `App.tsx` concluir o login e recarregar. O
-   *  rascunho do portão (`utils/gateDraft.ts`) é o que garante que essa volta
-   *  não cobre de novo o objetivo, a dificuldade e o aceite. */
-  const enviarLinkDoPortao = async () => {
-    if (submitting) return;
-    const alvo = email.trim().toLowerCase();
-    if (!isValidEmail(alvo)) { setEmailError(true); return; }
-    setSubmitting(true);
-    setUnlockMessage(null);
-    const enviado = await sendLoginLink(alvo);
-    setSubmitting(false);
-    setLinkSent(enviado.ok);
-    if (!enviado.ok) {
-      setEmailError(true);
-      // Nunca um beco sem saída: a mensagem diz o que fazer, e o campo segue
-      // editável para corrigir o endereço e tentar de novo.
-      setUnlockMessage(isPt
-        ? 'Não foi possível enviar o link de acesso. Confira o e-mail e tente de novo.'
-        : "Couldn't send the sign-in link. Check the address and try again.");
-    }
+  /** Depois de autenticar, `App.tsx` recarrega a página e conclui a adoção do
+   *  save. Aqui só registramos o e-mail e seguimos para a escolha — se o
+   *  reload vier antes, melhor ainda. */
+  const aposAutenticar = (mail?: string) => {
+    setAuthEmail(mail ?? '');
+    setResetEnviado(false);
+    setStep(CHOICE_STEP);
+  };
+
+  const aoEntrarComGoogle = async () => {
+    if (authOcupado) return;
+    setAuthOcupado(true);
+    setAuthErro(null);
+    const r = await entrarComGoogle();
+    setAuthOcupado(false);
+    if (r.ok) { aposAutenticar(r.email); return; }
+    setAuthErro(r.erro ?? 'desconhecido');
+  };
+
+  const aoEnviarSenha = async () => {
+    if (authOcupado) return;
+    const mail = email.trim().toLowerCase();
+    if (!isValidEmail(mail)) { setEmailError(true); setAuthErro('email-invalido'); return; }
+    // O piso de 6 é do próprio Firebase; conferir aqui evita uma ida à rede
+    // só para receber `auth/weak-password`.
+    if (criandoConta && senha.length < 6) { setAuthErro('senha-fraca'); return; }
+    if (!senha) { setAuthErro('credencial-invalida'); return; }
+    setAuthOcupado(true);
+    setAuthErro(null);
+    const r = criandoConta
+      ? await criarContaComSenha(mail, senha)
+      : await entrarComSenha(mail, senha);
+    setAuthOcupado(false);
+    if (r.ok) { aposAutenticar(r.email ?? mail); return; }
+    setAuthErro(r.erro ?? 'desconhecido');
+  };
+
+  const aoEsquecerSenha = async () => {
+    if (authOcupado) return;
+    const mail = email.trim().toLowerCase();
+    if (!isValidEmail(mail)) { setEmailError(true); setAuthErro('email-invalido'); return; }
+    setAuthOcupado(true);
+    setAuthErro(null);
+    const r = await mandarResetDeSenha(mail);
+    setAuthOcupado(false);
+    // Sucesso e "não existe conta" dão a MESMA resposta de propósito: dizer
+    // "não achamos esse e-mail" aqui entregaria a quem perguntar quais
+    // endereços têm conta no app.
+    if (r.ok || r.erro === 'nao-encontrado') { setResetEnviado(true); return; }
+    setAuthErro(r.erro ?? 'desconhecido');
   };
 
   const finish = async () => {
@@ -970,75 +1033,106 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             </button>
           </div>
         )}
-
-        {/* PORTAO DE IDENTIDADE — uma tela, um campo.
-            "Entrar" e "criar conta" sao a MESMA acao: o login e link por
-            e-mail, sem senha, e o mesmo endereco ou reencontra o save (o
-            saveId e derivado dele) ou comeca um novo. Duas portas seriam uma
-            diferenca que o sistema nao tem. */}
+        {/* PORTAO DE IDENTIDADE.
+            Entrar com Google, ou e-mail + senha com "Entrar" e "Criar conta".
+            O Google existe porque nao depende de e-mail CHEGAR: o link deste
+            projeto cai no spam do Gmail (remetente `firebaseapp.com` sem
+            dominio proprio). Um caminho que nao passa por caixa de entrada e
+            o que garante que da para entrar no app. */}
         {step === IDENTITY_STEP && (
           <StepShell
-            title={isPt ? 'Seu e-mail' : 'Your email'}
+            title={criandoConta
+              ? (isPt ? 'Criar sua conta' : 'Create your account')
+              : (isPt ? 'Entrar' : 'Sign in')}
             hint={isPt
-              ? 'É ele que guarda seu progresso e amarra qualquer compra à sua conta. Não tem senha: mandamos um link.'
-              : 'It keeps your progress and ties any purchase to your account. No password: we send you a link.'}>
-            {linkSent ? (
-              <div style={{ padding: 16, borderRadius: 12, backgroundColor: 'var(--sm2-primary-soft)' }}>
-                <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: 'var(--sm2-primary-ink)' }}>
-                  {isPt ? 'Confira seu e-mail' : 'Check your email'}
-                </p>
-                <p style={{ ...sm2Hint, marginTop: 6 }}>
-                  {isPt
-                    ? `Mandamos um link de acesso para ${email.trim().toLowerCase()}. Abra o link NESTE aparelho — é ele que confirma que o e-mail é seu.`
-                    : `We sent a sign-in link to ${email.trim().toLowerCase()}. Open it ON THIS DEVICE — that is what proves the address is yours.`}
-                </p>
-                <p style={{ ...sm2Hint, marginTop: 6 }}>
-                  {isPt
-                    ? 'Não chegou? Pode levar um minuto, e às vezes cai no spam.'
-                    : "Didn't arrive? It can take a minute, and it sometimes lands in spam."}
-                </p>
-                <button
-                  type="button"
-                  style={{ ...sm2Button('ghost'), width: '100%', marginTop: 14 }}
-                  onClick={() => { setLinkSent(false); setUnlockMessage(null); }}
-                >
-                  {isPt ? 'Usar outro e-mail' : 'Use a different email'}
-                </button>
-              </div>
-            ) : (
-              <>
-                <label style={sm2Label} htmlFor="onb-gate-email">
-                  {isPt ? 'E-mail' : 'Email'}
-                </label>
-                <Field id="onb-gate-email" type="email" value={email} autoComplete="email" autoFocus
-                  aria-invalid={emailError || undefined}
-                  onChange={e => { setEmail(e.target.value); setEmailError(false); }}
-                  placeholder="voce@exemplo.com"
-                  onKeyDown={e => e.key === 'Enter' && enviarLinkDoPortao()} />
-                <p style={{ ...sm2Hint, color: emailError ? 'var(--sm2-danger-ink)' : 'var(--sm2-muted)', margin: '6px 0 0' }}>
-                  {emailError
-                    ? (isPt ? 'Digite um e-mail válido.' : 'Enter a valid email.')
-                    : (isPt
-                      ? 'Já tem conta? É o mesmo campo — o mesmo e-mail traz seu Soulmon de volta.'
-                      : 'Already have an account? Same field — the same email brings your Soulmon back.')}
-                </p>
-                <button
-                  type="button"
-                  style={{ ...sm2Button('primary', submitting), width: '100%', marginTop: 24 }}
-                  onClick={enviarLinkDoPortao}
-                  disabled={submitting}
-                >
-                  {submitting ? <Spinner /> : (isPt ? 'Enviar link de acesso' : 'Send sign-in link')}
-                </button>
-                {unlockMessage && (
-                  <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', marginTop: 12 }}>
-                    {unlockMessage}
-                  </p>
-                )}
-              </>
+              ? 'Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez.'
+              : 'Your account keeps your progress and ties any purchase to you. The session is saved — no need to sign in every time.'}>
+
+            <button
+              type="button"
+              style={{ ...sm2Button('quiet', authOcupado), width: '100%' }}
+              onClick={aoEntrarComGoogle}
+              disabled={authOcupado}
+            >
+              {authOcupado ? <Spinner /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0' }}>
+              <span style={{ flex: 1, height: 1, backgroundColor: 'var(--sm2-line)' }} />
+              <span style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'ou' : 'or'}</span>
+              <span style={{ flex: 1, height: 1, backgroundColor: 'var(--sm2-line)' }} />
+            </div>
+
+            <label style={sm2Label} htmlFor="onb-gate-email">
+              {isPt ? 'E-mail' : 'Email'}
+            </label>
+            <Field id="onb-gate-email" type="email" value={email} autoComplete="email"
+              aria-invalid={emailError || undefined}
+              onChange={e => { setEmail(e.target.value); setEmailError(false); setAuthErro(null); }}
+              placeholder="voce@exemplo.com" />
+
+            <label style={{ ...sm2Label, marginTop: 14 }} htmlFor="onb-gate-senha">
+              {isPt ? 'Senha' : 'Password'}
+            </label>
+            <Field id="onb-gate-senha" type="password" value={senha}
+              autoComplete={criandoConta ? 'new-password' : 'current-password'}
+              onChange={e => { setSenha(e.target.value); setAuthErro(null); }}
+              placeholder={isPt ? 'Mínimo de 6 caracteres' : 'At least 6 characters'}
+              onKeyDown={e => e.key === 'Enter' && aoEnviarSenha()} />
+
+            {authErro && (
+              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', margin: '10px 0 0' }}>
+                {textoErroAuth}
+              </p>
+            )}
+            {resetEnviado && (
+              <p role="status" style={{ ...sm2Hint, color: 'var(--sm2-primary-ink)', margin: '10px 0 0' }}>
+                {isPt
+                  ? 'Mandamos um e-mail para trocar a senha. Se não aparecer, olhe no spam.'
+                  : 'We sent an email to reset your password. If it does not show up, check your spam.'}
+              </p>
+            )}
+
+            <button
+              type="button"
+              style={{ ...sm2Button('primary', authOcupado), width: '100%', marginTop: 24 }}
+              onClick={aoEnviarSenha}
+              disabled={authOcupado}
+            >
+              {authOcupado
+                ? <Spinner />
+                : criandoConta
+                  ? (isPt ? 'Criar conta' : 'Create account')
+                  : (isPt ? 'Entrar' : 'Sign in')}
+            </button>
+
+            <button
+              type="button"
+              style={{ ...sm2Button('ghost'), width: '100%', marginTop: 8 }}
+              onClick={() => { setCriandoConta(v => !v); setAuthErro(null); setResetEnviado(false); }}
+            >
+              {criandoConta
+                ? (isPt ? 'Já tenho conta — entrar' : 'I already have an account — sign in')
+                : (isPt ? 'Criar conta' : 'Create account')}
+            </button>
+
+            {/* Sem recuperacao, senha vira armadilha: quem esquece perde o
+                save, porque o saveId e derivado do e-mail e nao ha outro
+                caminho de volta. So aparece no modo ENTRAR — oferecer "esqueci
+                a senha" a quem esta criando conta nao faz sentido. */}
+            {!criandoConta && (
+              <button
+                type="button"
+                style={{ ...sm2Button('ghost'), width: '100%', marginTop: 4 }}
+                onClick={aoEsquecerSenha}
+                disabled={authOcupado}
+              >
+                {isPt ? 'Esqueci minha senha' : 'I forgot my password'}
+              </button>
             )}
           </StepShell>
         )}
+
 
         {/* ESCOLHA gratis/completo — depois da identidade, nunca antes. */}
         {step === CHOICE_STEP && (
