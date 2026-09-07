@@ -24,6 +24,7 @@ import {
 } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
+import { kv } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -44,7 +45,7 @@ export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get('id');
   if (!saveId || !VALID_ID.test(saveId)) return json({ error: 'Invalid save ID' }, 400);
-  if (!env.DIGIAPP_SAVES) return json({ error: 'Storage not bound' }, 500);
+  if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
 
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json({ error: auth.reason }, auth.reason === 'forbidden' ? 403 : 401);
@@ -70,7 +71,7 @@ export async function onRequestGet({ request, env }) {
 export async function onRequestPost({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
-  if (!env.DIGIAPP_SAVES) return json({ error: 'Storage not bound' }, 500);
+  if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
 
   const body = await request.json().catch(() => null);
   const saveId = body?.id;

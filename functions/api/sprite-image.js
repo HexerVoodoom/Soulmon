@@ -1,3 +1,4 @@
+import { kv } from './_kv.js';
 // Serve a imagem REPUBLICADA pelo `generate-sprite.js`.
 //
 // Por que existe: o contrato de `/api/generate-sprite` é que `image` seja
@@ -16,7 +17,7 @@
 // GET /api/sprite-image?k=<32 hex>  → 200 image/*  |  400  |  404
 //
 // ⚠️ Enquanto não houver R2 no projeto (`wrangler.jsonc` só tem KV), o binário
-// mora na KV `DIGIAPP_SAVES`. Ver o achado B-2 do resumo desta fatia: é decisão
+// mora na KV de saves (`kv(env)`). Ver o achado B-2 do resumo desta fatia: é decisão
 // do dono, não minha.
 
 const IMMUTABLE = 'public, max-age=31536000, immutable';
@@ -31,13 +32,13 @@ export async function onRequestGet({ request, env }) {
   if (!TOKEN.test(token)) {
     return Response.json({ error: 'invalid token' }, { status: 400 });
   }
-  if (!env?.DIGIAPP_SAVES) {
+  if (!kv(env)) {
     return Response.json({ error: 'storage-not-bound' }, { status: 503 });
   }
 
   let found;
   try {
-    found = await env.DIGIAPP_SAVES.getWithMetadata(`sprite:blob:${token}`, 'arrayBuffer');
+    found = await kv(env).getWithMetadata(`sprite:blob:${token}`, 'arrayBuffer');
   } catch (err) {
     console.error('sprite-image: falha ao ler o blob', err?.message);
     return Response.json({ error: 'internal error' }, { status: 500 });

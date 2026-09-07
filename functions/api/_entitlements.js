@@ -1,3 +1,4 @@
+import { kv } from './_kv.js';
 // Entitlements — FONTE DA VERDADE de tudo que envolve dinheiro real.
 //
 // Regra de ouro: o cliente NUNCA dita tier nem saldo de créditos. O save do
@@ -92,7 +93,7 @@ export async function requirePaidTier(env, saveId) {
   if (!saveId || !VALID_ID.test(saveId)) {
     return { ok: false, status: 400, reason: 'missing-save-id' };
   }
-  if (!env?.DIGIAPP_SAVES) {
+  if (!kv(env)) {
     return { ok: false, status: 503, reason: 'tier-unavailable' };
   }
   let ent;
@@ -151,7 +152,7 @@ function emptyEntitlement() {
 }
 
 export async function readEntitlement(env, saveId) {
-  const raw = await env.DIGIAPP_SAVES.get(ENT_PREFIX + saveId);
+  const raw = await kv(env).get(ENT_PREFIX + saveId);
   if (!raw) return emptyEntitlement();
   try {
     const parsed = JSON.parse(raw);
@@ -166,7 +167,7 @@ export async function writeEntitlement(env, saveId, ent) {
   // O TTL vai em TODA escrita, e não só na primeira: é assim que ele renova.
   // Ver RETENTION_TTL_SECONDS — sem a renovação, o teto vitalício de IA e o
   // tier pago passariam a expirar em 5 anos para quem nunca parou de jogar.
-  await env.DIGIAPP_SAVES.put(
+  await kv(env).put(
     ENT_PREFIX + saveId,
     JSON.stringify(ent),
     { expirationTtl: RETENTION_TTL_SECONDS },
@@ -216,7 +217,7 @@ export async function spendCredits(env, saveId, amount, opId) {
     ? `spend:${saveId}:${opId}`
     : null;
   if (chave) {
-    const anterior = await env.DIGIAPP_SAVES.get(chave);
+    const anterior = await kv(env).get(chave);
     // Repetição do MESMO gesto: devolve o que já aconteceu. Debitar de novo
     // seria cobrar duas vezes; recusar seria mentir sobre uma compra feita.
     if (anterior) { try { return JSON.parse(anterior); } catch { return null; } }
@@ -227,7 +228,7 @@ export async function spendCredits(env, saveId, amount, opId) {
   ent.credits -= amount;
   await writeEntitlement(env, saveId, ent);
   if (chave) {
-    await env.DIGIAPP_SAVES.put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+    await kv(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
   }
   return ent;
 }
@@ -294,7 +295,7 @@ export async function claimOrder(env, saveId, orderId) {
   if (env.DB) return claimOrderAtomic(env, saveId, orderId);
 
   const key = ORDER_PREFIX + orderId;
-  const owner = await env.DIGIAPP_SAVES.get(key);
+  const owner = await kv(env).get(key);
   if (owner && owner !== saveId) return { ok: false, reason: 'order-in-use' };
   // Reivindicação nova OU do MESMO dono: as duas gravam, e a segunda existe só
   // para RENOVAR o prazo. Reprocessar na mesma conta é o "restaurar compras" —
@@ -305,7 +306,7 @@ export async function claimOrder(env, saveId, orderId) {
   //
   // A escrita não muda o dono: `owner === saveId` ou não existe dono. Tentativa
   // alheia recusa ANTES desta linha, e portanto nem renova nem reescreve.
-  await env.DIGIAPP_SAVES.put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
+  await kv(env).put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
   return { ok: true };
 }
 

@@ -9,6 +9,7 @@
 
 import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
+import { kv } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,8 +59,8 @@ export async function onRequest({ request, env }) {
     return Response.json({ error: 'Invalid save ID' }, { status: 400, headers: CORS });
   }
 
-  if (!env.DIGIAPP_SAVES) {
-    return Response.json({ error: 'Storage not bound — add KV binding DIGIAPP_SAVES in Cloudflare dashboard' }, { status: 500, headers: CORS });
+  if (!kv(env)) {
+    return Response.json({ error: 'Storage not bound — add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard' }, { status: 500, headers: CORS });
   }
 
   // Só o dono do e-mail que gerou este saveId pode ler ou escrever. Enquanto
@@ -70,7 +71,7 @@ export async function onRequest({ request, env }) {
   }
 
   if (request.method === 'GET') {
-    const raw = await env.DIGIAPP_SAVES.get(saveId);
+    const raw = await kv(env).get(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS });
     const state = JSON.parse(raw);
     // Sobrepõe com a verdade do servidor — o que estiver gravado no save é
@@ -98,7 +99,7 @@ export async function onRequest({ request, env }) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });
       return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
     }
-    await env.DIGIAPP_SAVES.put(saveId, serialized, { expirationTtl: 86400 * 365 });
+    await kv(env).put(saveId, serialized, { expirationTtl: 86400 * 365 });
     return Response.json({ ok: true }, { headers: CORS });
   }
 

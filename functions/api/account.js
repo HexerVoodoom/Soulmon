@@ -53,6 +53,7 @@ import {
   VALID_ID, ENT_PREFIX, ORDER_PREFIX, RETENTION_TTL_SECONDS, readEntitlement,
 } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
+import { kv } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -92,7 +93,7 @@ async function listPrefix(env, prefix) {
   const out = [];
   let cursor;
   for (let page = 0; page < MAX_SCAN_PAGES; page++) {
-    const res = await env.DIGIAPP_SAVES.list({ prefix, cursor, limit: 1000 });
+    const res = await kv(env).list({ prefix, cursor, limit: 1000 });
     for (const k of res.keys || []) out.push(k.name);
     if (res.list_complete || !res.cursor) break;
     cursor = res.cursor;
@@ -173,22 +174,22 @@ const NOT_INCLUDED = [
 
 /** Junta tudo que o servidor tem sob este saveId. Fonte única da exportação E do inventário. */
 async function collect(env, saveId) {
-  const kv = env.DIGIAPP_SAVES;
+  const store = kv(env);
   const pid = await publicIdFor(saveId);
 
   let state = null;
-  try { state = JSON.parse((await kv.get(saveId)) || 'null'); } catch { state = null; }
+  try { state = JSON.parse((await store.get(saveId)) || 'null'); } catch { state = null; }
 
   let profile = null;
-  try { profile = JSON.parse((await kv.get(`profile:${saveId}`)) || 'null'); } catch { profile = null; }
+  try { profile = JSON.parse((await store.get(`profile:${saveId}`)) || 'null'); } catch { profile = null; }
 
   let gifts = null;
-  try { gifts = JSON.parse((await kv.get(`gifts:${saveId}`)) || 'null'); } catch { gifts = null; }
+  try { gifts = JSON.parse((await store.get(`gifts:${saveId}`)) || 'null'); } catch { gifts = null; }
 
   // `readEntitlement` devolve um registro VAZIO quando não existe — o que é
   // certo para o jogo e errado para exportação. Exportar um entitlement que
   // nunca existiu inventa dado. Por isso a checagem crua antes.
-  const entRaw = await kv.get(ENT_PREFIX + saveId);
+  const entRaw = await store.get(ENT_PREFIX + saveId);
   const entitlement = entRaw ? await readEntitlement(env, saveId) : null;
 
   const rankKeys = (await listPrefix(env, 'rank:')).filter(k => k.endsWith(`:${saveId}`));
@@ -198,12 +199,12 @@ async function collect(env, saveId) {
     try {
       ranks.push({
         season: k.slice('rank:'.length, k.length - saveId.length - 1),
-        record: JSON.parse((await kv.get(k)) || 'null'),
+        record: JSON.parse((await store.get(k)) || 'null'),
       });
     } catch { /* registro corrompido não impede a exportação do resto */ }
   }
 
-  const pidIndexed = (await kv.get(`pid:${pid}`)) === saveId;
+  const pidIndexed = (await store.get(`pid:${pid}`)) === saveId;
 
   return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed };
 }
@@ -257,7 +258,7 @@ async function handleDeleteRequest(env, saveId) {
   const c = await collect(env, saveId);
   const token = [...crypto.getRandomValues(new Uint8Array(16))]
     .map(b => b.toString(16).padStart(2, '0')).join('');
-  await env.DIGIAPP_SAVES.put(
+  await kv(env).put(
     DEL_PREFIX + saveId,
     JSON.stringify({ token, createdAt: Date.now() }),
     { expirationTtl: CONFIRM_TTL_SECONDS },
@@ -282,10 +283,10 @@ function tokenMatches(a, b) {
 }
 
 async function handleDeleteConfirm(env, saveId, body) {
-  const kv = env.DIGIAPP_SAVES;
+  const store = kv(env);
 
   let pending = null;
-  try { pending = JSON.parse((await kv.get(DEL_PREFIX + saveId)) || 'null'); } catch { pending = null; }
+  try { pending = JSON.parse((await store.get(DEL_PREFIX + saveId)) || 'null'); } catch { pending = null; }
   if (!pending || !tokenMatches(pending.token, body?.confirmToken)) {
     log('account.delete.refused', saveId, { reason: 'confirmation-required' });
     return json({ error: 'confirmation-required', aviso: COPY.confirmMissing }, 409);
@@ -295,11 +296,11 @@ async function handleDeleteConfirm(env, saveId, body) {
   const executed = plan(c, saveId);
 
   // 1) O que é do titular e só dele.
-  if (c.state) await kv.delete(saveId);
-  if (c.profile) await kv.delete(`profile:${saveId}`);
-  if (c.pidIndexed) await kv.delete(`pid:${c.pid}`);
-  if (c.gifts) await kv.delete(`gifts:${saveId}`);
-  for (const k of c.rankKeys) await kv.delete(k);
+  if (c.state) await store.delete(saveId);
+  if (c.profile) await store.delete(`profile:${saveId}`);
+  if (c.pidIndexed) await store.delete(`pid:${c.pid}`);
+  if (c.gifts) await store.delete(`gifts:${saveId}`);
+  for (const k of c.rankKeys) await store.delete(k);
 
   // 2) Menções em perfis de terceiros. O saveId da pessoa mora dentro do
   //    `friends[]` alheio — apagar só o que é "dela" deixaria o identificador
@@ -308,10 +309,10 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const key of await listPrefix(env, 'profile:')) {
     if (key === `profile:${saveId}`) continue;
     let p;
-    try { p = JSON.parse((await kv.get(key)) || 'null'); } catch { continue; }
+    try { p = JSON.parse((await store.get(key)) || 'null'); } catch { continue; }
     if (!p || !Array.isArray(p.friends) || !p.friends.includes(saveId)) continue;
     p.friends = p.friends.filter(f => f !== saveId);
-    await kv.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
+    await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
     scrubbed++;
   }
 
@@ -320,7 +321,7 @@ async function handleDeleteConfirm(env, saveId, body) {
   //    O que sai é USO (não prova nada); o que fica é DINHEIRO.
   if (c.entitlement) {
     const ent = c.entitlement;
-    await kv.put(ENT_PREFIX + saveId, JSON.stringify({
+    await store.put(ENT_PREFIX + saveId, JSON.stringify({
       tier: ent.tier,
       credits: ent.credits,
       consumedOrders: ent.consumedOrders,
@@ -338,7 +339,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     // sobrava de uma conta APAGADA seria justamente o imortal.
   }
 
-  await kv.delete(DEL_PREFIX + saveId);
+  await store.delete(DEL_PREFIX + saveId);
 
   log('account.delete.done', saveId, {
     deletedKeys: executed.apaga.length,
@@ -368,8 +369,8 @@ export async function onRequest({ request, env }) {
   if (!saveId || !VALID_ID.test(saveId)) {
     return json({ error: 'Invalid save ID' }, 400);
   }
-  if (!env.DIGIAPP_SAVES) {
-    return json({ error: 'Storage not bound — add KV binding DIGIAPP_SAVES in Cloudflare dashboard' }, 500);
+  if (!kv(env)) {
+    return json({ error: 'Storage not bound — add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard' }, 500);
   }
 
   // FAIL-CLOSED, e vem ANTES de qualquer leitura do KV — por isso a resposta a

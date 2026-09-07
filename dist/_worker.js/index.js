@@ -1,6 +1,12 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
+// api/_kv.js
+function kv(env) {
+  return env?.SOULMON_SAVES ?? env?.DIGIAPP_SAVES;
+}
+__name(kv, "kv");
+
 // api/_entitlements.js
 var ENT_PREFIX = "ent:";
 var ORDER_PREFIX = "ord:";
@@ -10,7 +16,7 @@ async function requirePaidTier(env, saveId) {
   if (!saveId || !VALID_ID.test(saveId)) {
     return { ok: false, status: 400, reason: "missing-save-id" };
   }
-  if (!env?.DIGIAPP_SAVES) {
+  if (!kv(env)) {
     return { ok: false, status: 503, reason: "tier-unavailable" };
   }
   let ent;
@@ -64,7 +70,7 @@ function emptyEntitlement() {
 }
 __name(emptyEntitlement, "emptyEntitlement");
 async function readEntitlement(env, saveId) {
-  const raw = await env.DIGIAPP_SAVES.get(ENT_PREFIX + saveId);
+  const raw = await kv(env).get(ENT_PREFIX + saveId);
   if (!raw) return emptyEntitlement();
   try {
     const parsed = JSON.parse(raw);
@@ -76,7 +82,7 @@ async function readEntitlement(env, saveId) {
 __name(readEntitlement, "readEntitlement");
 async function writeEntitlement(env, saveId, ent) {
   ent.updatedAt = Date.now();
-  await env.DIGIAPP_SAVES.put(
+  await kv(env).put(
     ENT_PREFIX + saveId,
     JSON.stringify(ent),
     { expirationTtl: RETENTION_TTL_SECONDS }
@@ -99,7 +105,7 @@ async function spendCredits(env, saveId, amount, opId) {
   if (!Number.isInteger(amount) || amount <= 0) return null;
   const chave = opId && /^[A-Za-z0-9_-]{8,64}$/.test(opId) ? `spend:${saveId}:${opId}` : null;
   if (chave) {
-    const anterior = await env.DIGIAPP_SAVES.get(chave);
+    const anterior = await kv(env).get(chave);
     if (anterior) {
       try {
         return JSON.parse(anterior);
@@ -113,7 +119,7 @@ async function spendCredits(env, saveId, amount, opId) {
   ent.credits -= amount;
   await writeEntitlement(env, saveId, ent);
   if (chave) {
-    await env.DIGIAPP_SAVES.put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+    await kv(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
   }
   return ent;
 }
@@ -134,9 +140,9 @@ __name(grantAdReward, "grantAdReward");
 async function claimOrder(env, saveId, orderId) {
   if (env.DB) return claimOrderAtomic(env, saveId, orderId);
   const key = ORDER_PREFIX + orderId;
-  const owner = await env.DIGIAPP_SAVES.get(key);
+  const owner = await kv(env).get(key);
   if (owner && owner !== saveId) return { ok: false, reason: "order-in-use" };
-  await env.DIGIAPP_SAVES.put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
+  await kv(env).put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
   return { ok: true };
 }
 __name(claimOrder, "claimOrder");
@@ -345,7 +351,7 @@ async function listPrefix(env, prefix) {
   const out = [];
   let cursor;
   for (let page = 0; page < MAX_SCAN_PAGES; page++) {
-    const res = await env.DIGIAPP_SAVES.list({ prefix, cursor, limit: 1e3 });
+    const res = await kv(env).list({ prefix, cursor, limit: 1e3 });
     for (const k of res.keys || []) out.push(k.name);
     if (res.list_complete || !res.cursor) break;
     cursor = res.cursor;
@@ -410,27 +416,27 @@ var NOT_INCLUDED = [
   }
 ];
 async function collect(env, saveId) {
-  const kv = env.DIGIAPP_SAVES;
+  const store = kv(env);
   const pid = await publicIdFor(saveId);
   let state = null;
   try {
-    state = JSON.parse(await kv.get(saveId) || "null");
+    state = JSON.parse(await store.get(saveId) || "null");
   } catch {
     state = null;
   }
   let profile = null;
   try {
-    profile = JSON.parse(await kv.get(`profile:${saveId}`) || "null");
+    profile = JSON.parse(await store.get(`profile:${saveId}`) || "null");
   } catch {
     profile = null;
   }
   let gifts = null;
   try {
-    gifts = JSON.parse(await kv.get(`gifts:${saveId}`) || "null");
+    gifts = JSON.parse(await store.get(`gifts:${saveId}`) || "null");
   } catch {
     gifts = null;
   }
-  const entRaw = await kv.get(ENT_PREFIX + saveId);
+  const entRaw = await store.get(ENT_PREFIX + saveId);
   const entitlement = entRaw ? await readEntitlement(env, saveId) : null;
   const rankKeys = (await listPrefix(env, "rank:")).filter((k) => k.endsWith(`:${saveId}`));
   const ranks = [];
@@ -438,12 +444,12 @@ async function collect(env, saveId) {
     try {
       ranks.push({
         season: k.slice("rank:".length, k.length - saveId.length - 1),
-        record: JSON.parse(await kv.get(k) || "null")
+        record: JSON.parse(await store.get(k) || "null")
       });
     } catch {
     }
   }
-  const pidIndexed = await kv.get(`pid:${pid}`) === saveId;
+  const pidIndexed = await store.get(`pid:${pid}`) === saveId;
   return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed };
 }
 __name(collect, "collect");
@@ -493,7 +499,7 @@ __name(plan, "plan");
 async function handleDeleteRequest(env, saveId) {
   const c = await collect(env, saveId);
   const token = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
-  await env.DIGIAPP_SAVES.put(
+  await kv(env).put(
     DEL_PREFIX + saveId,
     JSON.stringify({ token, createdAt: Date.now() }),
     { expirationTtl: CONFIRM_TTL_SECONDS }
@@ -517,10 +523,10 @@ function tokenMatches(a, b) {
 }
 __name(tokenMatches, "tokenMatches");
 async function handleDeleteConfirm(env, saveId, body) {
-  const kv = env.DIGIAPP_SAVES;
+  const store = kv(env);
   let pending = null;
   try {
-    pending = JSON.parse(await kv.get(DEL_PREFIX + saveId) || "null");
+    pending = JSON.parse(await store.get(DEL_PREFIX + saveId) || "null");
   } catch {
     pending = null;
   }
@@ -530,28 +536,28 @@ async function handleDeleteConfirm(env, saveId, body) {
   }
   const c = await collect(env, saveId);
   const executed = plan(c, saveId);
-  if (c.state) await kv.delete(saveId);
-  if (c.profile) await kv.delete(`profile:${saveId}`);
-  if (c.pidIndexed) await kv.delete(`pid:${c.pid}`);
-  if (c.gifts) await kv.delete(`gifts:${saveId}`);
-  for (const k of c.rankKeys) await kv.delete(k);
+  if (c.state) await store.delete(saveId);
+  if (c.profile) await store.delete(`profile:${saveId}`);
+  if (c.pidIndexed) await store.delete(`pid:${c.pid}`);
+  if (c.gifts) await store.delete(`gifts:${saveId}`);
+  for (const k of c.rankKeys) await store.delete(k);
   let scrubbed = 0;
   for (const key of await listPrefix(env, "profile:")) {
     if (key === `profile:${saveId}`) continue;
     let p;
     try {
-      p = JSON.parse(await kv.get(key) || "null");
+      p = JSON.parse(await store.get(key) || "null");
     } catch {
       continue;
     }
     if (!p || !Array.isArray(p.friends) || !p.friends.includes(saveId)) continue;
     p.friends = p.friends.filter((f) => f !== saveId);
-    await kv.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
+    await store.put(key, JSON.stringify(p), { expirationTtl: 86400 * 365 });
     scrubbed++;
   }
   if (c.entitlement) {
     const ent = c.entitlement;
-    await kv.put(ENT_PREFIX + saveId, JSON.stringify({
+    await store.put(ENT_PREFIX + saveId, JSON.stringify({
       tier: ent.tier,
       credits: ent.credits,
       consumedOrders: ent.consumedOrders,
@@ -564,7 +570,7 @@ async function handleDeleteConfirm(env, saveId, body) {
       updatedAt: Date.now()
     }), { expirationTtl: RETENTION_TTL_SECONDS });
   }
-  await kv.delete(DEL_PREFIX + saveId);
+  await store.delete(DEL_PREFIX + saveId);
   log("account.delete.done", saveId, {
     deletedKeys: executed.apaga.length,
     scrubbedFriendLists: scrubbed,
@@ -590,8 +596,8 @@ async function onRequest({ request, env }) {
   if (!saveId || !VALID_ID.test(saveId)) {
     return json({ error: "Invalid save ID" }, 400);
   }
-  if (!env.DIGIAPP_SAVES) {
-    return json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, 500);
+  if (!kv(env)) {
+    return json({ error: "Storage not bound \u2014 add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard" }, 500);
   }
   const auth = await requireVerifiedOwner(request, env, saveId);
   if (!auth.ok) {
@@ -898,7 +904,7 @@ async function onRequestPost({ request, env }) {
   if (url.searchParams.get("action") !== "verify") return json2({ error: "Unknown action" }, 400);
   const provider = url.searchParams.get("provider") ?? "play";
   if (provider !== "play" && provider !== "steam") return json2({ error: "Unknown provider" }, 400);
-  if (!env.DIGIAPP_SAVES) return json2({ error: "Storage not bound" }, 500);
+  if (!kv(env)) return json2({ error: "Storage not bound" }, 500);
   const body = await request.json().catch(() => null);
   const saveId = body?.id;
   if (!saveId || !VALID_ID.test(saveId)) return json2({ error: "Invalid save ID" }, 400);
@@ -1012,7 +1018,7 @@ var refuse = /* @__PURE__ */ __name((status, reason) => ({
   ...AI_REFUSAL_MESSAGES[reason] ? { message: AI_REFUSAL_MESSAGES[reason] } : {}
 }), "refuse");
 async function readCounter(env, key) {
-  const raw = await env.DIGIAPP_SAVES.get(key);
+  const raw = await kv(env).get(key);
   if (raw === null || raw === void 0) return 0;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) throw new Error(`contador ileg\xEDvel em ${key}: ${raw}`);
@@ -1033,7 +1039,7 @@ function formUsed(ent, formId) {
 }
 __name(formUsed, "formUsed");
 async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
-  if (!env.DIGIAPP_SAVES) return refuse(500, "storage-not-bound");
+  if (!kv(env)) return refuse(500, "storage-not-bound");
   const limits = AI_LIMITS[bucket];
   if (!limits) return refuse(500, "unknown-bucket");
   if (!saveId || !VALID_ID.test(saveId)) {
@@ -1093,8 +1099,8 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
       if (hasFormCap) ent.aiForms = { ...ent.aiForms || {}, [formId]: usedForm + units };
       await writeEntitlement(env, saveId, ent);
     }
-    await env.DIGIAPP_SAVES.put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
-    await env.DIGIAPP_SAVES.put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
+    await kv(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
+    await kv(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
   } catch (err) {
     console.error("aiGuard: falha ao debitar cota, recusando", err?.message);
     return refuse(503, "ai-quota-unavailable");
@@ -1117,8 +1123,8 @@ function makeRelease(env, ctx) {
         await writeEntitlement(env, saveId, ent);
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
-      await env.DIGIAPP_SAVES.put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
-      await env.DIGIAPP_SAVES.put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
+      await kv(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
+      await kv(env).put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
       console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? "-"} \u2014 ${motivo}`);
     } catch (err) {
       console.error("aiGuard: falha ao devolver cota reservada", err?.message);
@@ -1451,7 +1457,7 @@ function bondLevelFor(totalXP) {
 __name(bondLevelFor, "bondLevelFor");
 async function bondLevelOf(env, saveId) {
   try {
-    const raw = await env.DIGIAPP_SAVES.get(saveId);
+    const raw = await kv(env).get(saveId);
     if (!raw) return 0;
     const state = JSON.parse(raw);
     if (!state || typeof state !== "object") return 0;
@@ -1503,18 +1509,18 @@ async function ensurePid(env, p) {
   p.pid = newPid();
   await putProfile(env, p.id, p);
   await indexPublicId(env, p.id, p.pid);
-  if (antigo) await env.DIGIAPP_SAVES.delete(`${PID_PREFIX}${antigo}`);
+  if (antigo) await kv(env).delete(`${PID_PREFIX}${antigo}`);
   return p.pid;
 }
 __name(ensurePid, "ensurePid");
 async function indexPublicId(env, saveId, pid) {
-  await env.DIGIAPP_SAVES.put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
+  await kv(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
 __name(indexPublicId, "indexPublicId");
 var PID_PLACEHOLDER = "0".repeat(32);
 async function saveIdForPublicId(env, pid) {
   if (!VALID_ID2.test(pid || "")) return null;
-  const saveId = await env.DIGIAPP_SAVES.get(`${PID_PREFIX}${pid}`);
+  const saveId = await kv(env).get(`${PID_PREFIX}${pid}`);
   const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
   if (!saveId || pid === legado) return null;
   return saveId;
@@ -1546,28 +1552,28 @@ async function publicProfile(env, p, extra = {}) {
 }
 __name(publicProfile, "publicProfile");
 async function getProfile(env, id) {
-  const raw = await env.DIGIAPP_SAVES.get(`profile:${id}`);
+  const raw = await kv(env).get(`profile:${id}`);
   return raw ? JSON.parse(raw) : null;
 }
 __name(getProfile, "getProfile");
 async function putProfile(env, id, profile) {
-  await env.DIGIAPP_SAVES.put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
+  await kv(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
 }
 __name(putProfile, "putProfile");
 async function getRank(env, season, id) {
-  const raw = await env.DIGIAPP_SAVES.get(`rank:${season}:${id}`);
+  const raw = await kv(env).get(`rank:${season}:${id}`);
   return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today2(), matchesToday: 0 };
 }
 __name(getRank, "getRank");
 async function putRank(env, season, id, rec) {
-  await env.DIGIAPP_SAVES.put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
+  await kv(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
 }
 __name(putRank, "putRank");
 async function listPrefix2(env, prefix, limit = 100) {
   const out = [];
   let cursor;
   do {
-    const page = await env.DIGIAPP_SAVES.list({ prefix, cursor, limit: 1e3 });
+    const page = await kv(env).list({ prefix, cursor, limit: 1e3 });
     for (const k of page.keys) {
       out.push(k.name);
       if (out.length >= limit) return out;
@@ -1613,7 +1619,7 @@ async function onRequest2(context) {
 }
 __name(onRequest2, "onRequest");
 async function handleCommunity({ request, env }) {
-  if (!env.DIGIAPP_SAVES) return json3({ error: "Storage not bound" }, 500);
+  if (!kv(env)) return json3({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
   const method = request.method;
@@ -1661,7 +1667,7 @@ async function handleCommunity({ request, env }) {
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    if (pidLegado) await env.DIGIAPP_SAVES.delete(`${PID_PREFIX}${pidAntigo}`);
+    if (pidLegado) await kv(env).delete(`${PID_PREFIX}${pidAntigo}`);
     return json3({
       ok: true,
       id: profile.pid,
@@ -1675,7 +1681,7 @@ async function handleCommunity({ request, env }) {
     const season = currentSeason();
     const players = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled) continue;
@@ -1707,7 +1713,7 @@ async function handleCommunity({ request, env }) {
     const me = id;
     const pool = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
@@ -1782,7 +1788,7 @@ async function handleCommunity({ request, env }) {
     const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
       const ownerSave = k.slice(`rank:${season}:`.length);
@@ -1810,13 +1816,13 @@ async function handleCommunity({ request, env }) {
     if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json3({ error: "unauthorized" }, 401);
     if (!/^\d{4}-\d{2}$/.test(season || "")) return json3({ error: "invalid season" }, 400);
     const closedKey = `closed:${season}`;
-    if (await env.DIGIAPP_SAVES.get(closedKey)) {
+    if (await kv(env).get(closedKey)) {
       return json3({ ok: true, season, awarded: 0, already: true });
     }
     const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
     }
@@ -1829,7 +1835,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    await env.DIGIAPP_SAVES.put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
+    await kv(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
     return json3({ ok: true, season, awarded: top3.length });
   }
   if (action === "trophies" && method === "GET") {
@@ -1877,19 +1883,19 @@ async function handleCommunity({ request, env }) {
     if (me.giftLog[friendSave] === today2()) return json3({ error: "already gifted today" }, 429);
     me.giftLog[friendSave] = today2();
     await putProfile(env, id, me);
-    const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendSave}`);
+    const raw = await kv(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
-    await env.DIGIAPP_SAVES.put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+    await kv(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json3({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const raw = await env.DIGIAPP_SAVES.get(`gifts:${id}`);
+    const raw = await kv(env).get(`gifts:${id}`);
     const gifts = raw ? JSON.parse(raw) : [];
     if (url.searchParams.get("claim") === "1" && gifts.length) {
-      await env.DIGIAPP_SAVES.delete(`gifts:${id}`);
+      await kv(env).delete(`gifts:${id}`);
     }
     return json3({ gifts });
   }
@@ -1935,7 +1941,7 @@ async function onRequestGet2({ request, env }) {
   const url = new URL(request.url);
   const saveId = url.searchParams.get("id");
   if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
-  if (!env.DIGIAPP_SAVES) return json4({ error: "Storage not bound" }, 500);
+  if (!kv(env)) return json4({ error: "Storage not bound" }, 500);
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) return json4({ error: auth.reason }, auth.reason === "forbidden" ? 403 : 401);
   const { ent } = await auditRefunds(env, saveId, (order) => {
@@ -1950,7 +1956,7 @@ __name(onRequestGet2, "onRequestGet");
 async function onRequestPost3({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
-  if (!env.DIGIAPP_SAVES) return json4({ error: "Storage not bound" }, 500);
+  if (!kv(env)) return json4({ error: "Storage not bound" }, 500);
   const body = await request.json().catch(() => null);
   const saveId = body?.id;
   if (!saveId || !VALID_ID.test(saveId)) return json4({ error: "Invalid save ID" }, 400);
@@ -2063,7 +2069,7 @@ var lockKey = /* @__PURE__ */ __name((saveId, formId) => `${LOCK_PREFIX}${saveId
 async function destravar(env, key) {
   if (!key) return;
   try {
-    await env.DIGIAPP_SAVES.delete(key);
+    await kv(env).delete(key);
   } catch (err) {
     console.error("generate-sprite: falha ao soltar o lock", err?.message);
   }
@@ -2076,7 +2082,7 @@ async function guardarBlob(env, request, bytes, contentType) {
   }
   const token = crypto.randomUUID().replace(/-/g, "");
   try {
-    await env.DIGIAPP_SAVES.put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
+    await kv(env).put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
       metadata: { contentType }
     });
   } catch (err) {
@@ -2283,8 +2289,8 @@ async function onRequestPost5({ request, env }) {
       let pronta = null;
       let ocupada = null;
       try {
-        pronta = await env.DIGIAPP_SAVES.get(cacheKey(id, formId));
-        ocupada = pronta ? null : await env.DIGIAPP_SAVES.get(lockKey(id, formId));
+        pronta = await kv(env).get(cacheKey(id, formId));
+        ocupada = pronta ? null : await kv(env).get(lockKey(id, formId));
       } catch (err) {
         console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err?.message);
         return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS8 });
@@ -2311,7 +2317,7 @@ async function onRequestPost5({ request, env }) {
       }
       lock = lockKey(id, formId);
       try {
-        await env.DIGIAPP_SAVES.put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
+        await kv(env).put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
       } catch (err) {
         console.error("generate-sprite: falha ao gravar o lock, recusando", err?.message);
         lock = null;
@@ -2336,7 +2342,7 @@ async function onRequestPost5({ request, env }) {
       }
       if (typeof formId === "string" && formId.length > 0) {
         try {
-          await env.DIGIAPP_SAVES.put(
+          await kv(env).put(
             cacheKey(id, formId),
             JSON.stringify({ image, provider: out.provider, at: Date.now() })
           );
@@ -2675,12 +2681,12 @@ async function onRequestGet3({ request, env }) {
       { status: 400, headers: CORS9 }
     );
   }
-  if (!env.DIGIAPP_SAVES) {
+  if (!kv(env)) {
     return Response.json({ error: "Unavailable" }, { status: 503, headers: CORS9 });
   }
   const byDay = {};
   for (const day2 of days) {
-    const agg = await env.DIGIAPP_SAVES.get(METRICS_PREFIX + day2, { type: "json" }).catch(() => null);
+    const agg = await kv(env).get(METRICS_PREFIX + day2, { type: "json" }).catch(() => null);
     if (agg && typeof agg === "object" && !Array.isArray(agg)) byDay[day2] = agg;
   }
   const totals = mergeTotals(byDay);
@@ -2725,17 +2731,17 @@ async function onRequest3({ request, env }) {
   if (result.events.length === 0) {
     return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS9 });
   }
-  if (!env?.DIGIAPP_SAVES) {
-    console.warn("metrics: KV DIGIAPP_SAVES n\xE3o vinculado \u2014 agregado descartado");
+  if (!kv(env)) {
+    console.warn("metrics: KV de saves n\xE3o vinculada \u2014 agregado descartado");
     return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS9 });
   }
   let accepted = 0;
   for (const [day2, records] of groupByDay(result.events)) {
     const key = METRICS_PREFIX + day2;
     try {
-      const current = await env.DIGIAPP_SAVES.get(key, { type: "json" }).catch(() => null);
+      const current = await kv(env).get(key, { type: "json" }).catch(() => null);
       const next = applyAggregate(current, records);
-      await env.DIGIAPP_SAVES.put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
+      await kv(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
       accepted += records.length;
     } catch (err) {
       console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err?.name ?? err) });
@@ -2773,15 +2779,15 @@ async function onRequest4({ request, env }) {
   if (!saveId || !VALID_ID.test(saveId)) {
     return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS10 });
   }
-  if (!env.DIGIAPP_SAVES) {
-    return Response.json({ error: "Storage not bound \u2014 add KV binding DIGIAPP_SAVES in Cloudflare dashboard" }, { status: 500, headers: CORS10 });
+  if (!kv(env)) {
+    return Response.json({ error: "Storage not bound \u2014 add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard" }, { status: 500, headers: CORS10 });
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
     return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS10 });
   }
   if (request.method === "GET") {
-    const raw = await env.DIGIAPP_SAVES.get(saveId);
+    const raw = await kv(env).get(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS10 });
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
@@ -2802,7 +2808,7 @@ async function onRequest4({ request, env }) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
       return Response.json({ error: "State too large" }, { status: 413, headers: CORS10 });
     }
-    await env.DIGIAPP_SAVES.put(saveId, serialized, { expirationTtl: 86400 * 365 });
+    await kv(env).put(saveId, serialized, { expirationTtl: 86400 * 365 });
     return Response.json({ ok: true }, { headers: CORS10 });
   }
   return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS10 });
@@ -2817,12 +2823,12 @@ async function onRequestGet4({ request, env }) {
   if (!TOKEN.test(token)) {
     return Response.json({ error: "invalid token" }, { status: 400 });
   }
-  if (!env?.DIGIAPP_SAVES) {
+  if (!kv(env)) {
     return Response.json({ error: "storage-not-bound" }, { status: 503 });
   }
   let found;
   try {
-    found = await env.DIGIAPP_SAVES.getWithMetadata(`sprite:blob:${token}`, "arrayBuffer");
+    found = await kv(env).getWithMetadata(`sprite:blob:${token}`, "arrayBuffer");
   } catch (err) {
     console.error("sprite-image: falha ao ler o blob", err?.message);
     return Response.json({ error: "internal error" }, { status: 500 });
@@ -3096,7 +3102,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-T7vIcC/functionsRoutes-0.34400388703107887.mjs
+// ../.wrangler/tmp/pages-ftvUA0/functionsRoutes-0.18716881299320653.mjs
 var routes = [
   {
     routePath: "/api/account",

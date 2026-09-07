@@ -1,3 +1,4 @@
+import { kv } from './_kv.js';
 /**
  * A curva do Vínculo, do lado do SERVIDOR — e só a parte que o gate precisa.
  *
@@ -67,12 +68,12 @@ export function bondLevelFor(totalXP) {
  * — não o que forja o save inteiro. Fechar isso exige o servidor virar dono do
  * XP (fatia de confiança do save na nuvem), e é outro trabalho.
  *
- * @param {{ DIGIAPP_SAVES: { get: (k: string) => Promise<string | null> } }} env
+ * @param {{ SOULMON_SAVES?: { get: (k: string) => Promise<string | null> }, DIGIAPP_SAVES?: { get: (k: string) => Promise<string | null> } }} env
  * @param {string} saveId
  */
 export async function bondLevelOf(env, saveId) {
   try {
-    const raw = await env.DIGIAPP_SAVES.get(saveId);
+    const raw = await kv(env).get(saveId);
     if (!raw) return 0;
     const state = JSON.parse(raw);
     if (!state || typeof state !== 'object') return 0;

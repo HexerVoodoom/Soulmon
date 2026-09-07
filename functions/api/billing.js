@@ -29,6 +29,7 @@
 import { VALID_ID, publicView, applyVerifiedPurchase, claimOrder } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
 import { verifyPlayPurchase, verifySteamOwnership, verifySteamPurchase } from './_billing.js';
+import { kv } from './_kv.js';
 
 export { PRODUCTS } from './_billing.js';
 
@@ -65,7 +66,7 @@ export async function onRequestPost({ request, env }) {
   const provider = url.searchParams.get('provider') ?? 'play';
   if (provider !== 'play' && provider !== 'steam') return json({ error: 'Unknown provider' }, 400);
 
-  if (!env.DIGIAPP_SAVES) return json({ error: 'Storage not bound' }, 500);
+  if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
 
   const body = await request.json().catch(() => null);
   const saveId = body?.id;

@@ -51,6 +51,7 @@
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { requirePaidTier } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
+import { kv } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -101,7 +102,7 @@ const lockKey = (saveId, formId) => `${LOCK_PREFIX}${saveId}:${formId}`;
 async function destravar(env, key) {
   if (!key) return;
   try {
-    await env.DIGIAPP_SAVES.delete(key);
+    await kv(env).delete(key);
   } catch (err) {
     console.error('generate-sprite: falha ao soltar o lock', err?.message);
   }
@@ -118,7 +119,7 @@ async function guardarBlob(env, request, bytes, contentType) {
   try {
     // Sem TTL: é arte PAGA. Um sprite que some meses depois some em silêncio —
     // o visor não tem estado de erro por spec (§2.1), então ninguém veria.
-    await env.DIGIAPP_SAVES.put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
+    await kv(env).put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
       metadata: { contentType },
     });
   } catch (err) {
@@ -399,8 +400,8 @@ export async function onRequestPost({ request, env }) {
       let pronta = null;
       let ocupada = null;
       try {
-        pronta = await env.DIGIAPP_SAVES.get(cacheKey(id, formId));
-        ocupada = pronta ? null : await env.DIGIAPP_SAVES.get(lockKey(id, formId));
+        pronta = await kv(env).get(cacheKey(id, formId));
+        ocupada = pronta ? null : await kv(env).get(lockKey(id, formId));
       } catch (err) {
         // Não deu para ler o dedupe → seguir gerando duplicaria a cobrança.
         // FAIL-CLOSED, mesma regra do `_aiGuard`.
@@ -433,7 +434,7 @@ export async function onRequestPost({ request, env }) {
       }
       lock = lockKey(id, formId);
       try {
-        await env.DIGIAPP_SAVES.put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
+        await kv(env).put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
       } catch (err) {
         // Lock que não gravou é dedupe que não dedupa — e o próximo aparelho
         // geraria a mesma forma pagando de novo. Numa rota que queima dinheiro,
@@ -480,7 +481,7 @@ export async function onRequestPost({ request, env }) {
       }
       if (typeof formId === 'string' && formId.length > 0) {
         try {
-          await env.DIGIAPP_SAVES.put(
+          await kv(env).put(
             cacheKey(id, formId),
             JSON.stringify({ image, provider: out.provider, at: Date.now() }),
           );

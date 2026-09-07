@@ -61,7 +61,7 @@
 // ninguém previu, que é justamente o campo pelo qual um texto de usuário
 // entraria aqui.
 //
-// BINDING: reusa `DIGIAPP_SAVES`, com prefixo `m:` — de propósito. O aviso do
+// BINDING: reusa a KV de saves (`kv(env)`), com prefixo `m:` — de propósito. O aviso do
 // CLAUDE.md é que `wrangler deploy` remove binding não declarado; pedir um
 // namespace novo transformaria "instrumentar o funil" num risco de deploy.
 // Prefixo próprio no namespace que já existe custa zero e não colide com
@@ -73,6 +73,7 @@
 // ---------------------------------------------------------------------------
 
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+import { kv } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -626,7 +627,7 @@ export async function onRequestGet({ request, env }) {
     );
   }
 
-  if (!env.DIGIAPP_SAVES) {
+  if (!kv(env)) {
     return Response.json({ error: 'Unavailable' }, { status: 503, headers: CORS });
   }
 
@@ -634,7 +635,7 @@ export async function onRequestGet({ request, env }) {
   for (const day of days) {
     // Só `METRICS_PREFIX + day`. A chave é CONSTRUÍDA aqui a partir de um dia já
     // validado pelo regex — não existe caminho por onde o cliente escolha a chave.
-    const agg = await env.DIGIAPP_SAVES.get(METRICS_PREFIX + day, { type: 'json' }).catch(() => null);
+    const agg = await kv(env).get(METRICS_PREFIX + day, { type: 'json' }).catch(() => null);
     if (agg && typeof agg === 'object' && !Array.isArray(agg)) byDay[day] = agg;
   }
 
@@ -696,8 +697,8 @@ export async function onRequest({ request, env }) {
   // Sem binding, a telemetria simplesmente não grava. NÃO é 500: o cliente
   // dispara e esquece, e um endpoint de métrica não tem o direito de parecer
   // uma falha do app. O `console.warn` é para quem opera, não para o usuário.
-  if (!env?.DIGIAPP_SAVES) {
-    console.warn('metrics: KV DIGIAPP_SAVES não vinculado — agregado descartado');
+  if (!kv(env)) {
+    console.warn('metrics: KV de saves não vinculada — agregado descartado');
     return Response.json({ ok: true, accepted: 0 }, { status: 202, headers: CORS });
   }
 
@@ -709,11 +710,11 @@ export async function onRequest({ request, env }) {
   for (const [day, records] of groupByDay(result.events)) {
     const key = METRICS_PREFIX + day;
     try {
-      const current = await env.DIGIAPP_SAVES.get(key, { type: 'json' }).catch(() => null);
+      const current = await kv(env).get(key, { type: 'json' }).catch(() => null);
       const next = applyAggregate(current, records);
       // TTL de 2 anos: agregado sem dono é lixo com custo. Renovado a cada
       // escrita, então um dia ativo nunca expira no meio da coleta.
-      await env.DIGIAPP_SAVES.put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
+      await kv(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
       accepted += records.length;
     } catch (err) {
       console.warn('metrics: falha ao gravar agregado', { day, error: String(err?.name ?? err) });

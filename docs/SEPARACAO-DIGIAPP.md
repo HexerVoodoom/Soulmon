@@ -50,12 +50,25 @@ mas os dados moram no mesmo lugar.
 2. No projeto Pages: **Settings → Functions → KV namespace bindings** →
    vincular o namespace novo ao nome `DIGIAPP_SAVES`.
 
-> **Por que manter o nome do binding `DIGIAPP_SAVES`?** É o nome usado no
-> código (`env.DIGIAPP_SAVES`). Trocar o binding exigiria alterar todos os
-> arquivos em `functions/api/` **e** acertar o Cloudflare no mesmo instante —
-> qualquer descompasso derruba save, créditos e compras ao mesmo tempo. O
-> nome é feio, mas é só um rótulo. Se quiser renomear depois, faça isolado,
-> com o app fora do ar por alguns minutos.
+> ⚠️ **Este parágrafo dizia para manter o nome `DIGIAPP_SAVES`** porque trocá-lo
+> "exigiria alterar todos os arquivos em `functions/api/` **e** acertar o
+> Cloudflare no mesmo instante — qualquer descompasso derruba save, créditos e
+> compras ao mesmo tempo", e concluía que a troca exigiria o app fora do ar.
+>
+> **O risco estava certo; a conclusão, não.** Desde 07/09/2026 o binding é
+> resolvido em um lugar só — `functions/api/_kv.js` (`kv(env)`) —, que prefere
+> `SOULMON_SAVES` e cai em `DIGIAPP_SAVES`. A ordem entre mergear e clicar no
+> painel deixou de importar, e não existe janela de queda:
+>
+> 1. no painel, acrescente um binding `SOULMON_SAVES` para o MESMO namespace
+>    (ou para um novo, se quiser separar os dados de vez);
+> 2. confirme que o app segue funcionando;
+> 3. remova o `DIGIAPP_SAVES` do painel;
+> 4. só então apague o fallback de `_kv.js` e o caso do `_kv.test.js`.
+>
+> Há teste varrendo `functions/api/` contra qualquer leitura direta de
+> `env.*_SAVES` — um acesso solto continuaria funcionando hoje e quebraria no
+> passo 3, que é a pior hora para descobrir.
 
 **Migrar os saves existentes?** Só se quiser preservar quem já joga. As chaves
 do Soulmon no namespace antigo começam com o hash do salt `soulmon:` e os

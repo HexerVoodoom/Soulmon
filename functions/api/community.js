@@ -1,6 +1,6 @@
 // Cloudflare Pages Function — comunidade do Soulmon: perfis públicos,
 // Tournament (PvP assíncrono) e Biblioteca (diretório + amigos + presentes).
-// Usa o MESMO KV dos saves (DIGIAPP_SAVES) com prefixos:
+// Usa o MESMO KV dos saves (`kv(env)`, ver `_kv.js`) com prefixos:
 //   profile:<saveId>          → perfil público (nome, pet, formas, pvp, amigos…)
 //   pid:<pid>                 → índice reverso da identidade pública → saveId
 //   rank:<season>:<saveId>    → pontos de rank da season (season = YYYY-MM)
@@ -28,6 +28,7 @@
 import { authorizeSaveAccess } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
+import { kv } from './_kv.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -126,13 +127,13 @@ async function ensurePid(env, p) {
   p.pid = newPid();
   await putProfile(env, p.id, p);
   await indexPublicId(env, p.id, p.pid);
-  if (antigo) await env.DIGIAPP_SAVES.delete(`${PID_PREFIX}${antigo}`);
+  if (antigo) await kv(env).delete(`${PID_PREFIX}${antigo}`);
   return p.pid;
 }
 
 /** Grava o mapa reverso. Idempotente; roda a cada upsert de perfil. */
 async function indexPublicId(env, saveId, pid) {
-  await env.DIGIAPP_SAVES.put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
+  await kv(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
 
 /**
@@ -151,7 +152,7 @@ async function indexPublicId(env, saveId, pid) {
 const PID_PLACEHOLDER = '0'.repeat(32);
 async function saveIdForPublicId(env, pid) {
   if (!VALID_ID.test(pid || '')) return null;
-  const saveId = await env.DIGIAPP_SAVES.get(`${PID_PREFIX}${pid}`);
+  const saveId = await kv(env).get(`${PID_PREFIX}${pid}`);
   const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
   if (!saveId || pid === legado) return null;
   return saveId;
@@ -195,24 +196,24 @@ async function publicProfile(env, p, extra = {}) {
 }
 
 async function getProfile(env, id) {
-  const raw = await env.DIGIAPP_SAVES.get(`profile:${id}`);
+  const raw = await kv(env).get(`profile:${id}`);
   return raw ? JSON.parse(raw) : null;
 }
 async function putProfile(env, id, profile) {
-  await env.DIGIAPP_SAVES.put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
+  await kv(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
 }
 async function getRank(env, season, id) {
-  const raw = await env.DIGIAPP_SAVES.get(`rank:${season}:${id}`);
+  const raw = await kv(env).get(`rank:${season}:${id}`);
   return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today(), matchesToday: 0 };
 }
 async function putRank(env, season, id, rec) {
-  await env.DIGIAPP_SAVES.put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
+  await kv(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
 }
 async function listPrefix(env, prefix, limit = 100) {
   const out = [];
   let cursor;
   do {
-    const page = await env.DIGIAPP_SAVES.list({ prefix, cursor, limit: 1000 });
+    const page = await kv(env).list({ prefix, cursor, limit: 1000 });
     for (const k of page.keys) {
       out.push(k.name);
       if (out.length >= limit) return out;
@@ -287,7 +288,7 @@ export async function onRequest(context) {
 }
 
 async function handleCommunity({ request, env }) {
-  if (!env.DIGIAPP_SAVES) return json({ error: 'Storage not bound' }, 500);
+  if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
   const method = request.method;
@@ -374,7 +375,7 @@ async function handleCommunity({ request, env }) {
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    if (pidLegado) await env.DIGIAPP_SAVES.delete(`${PID_PREFIX}${pidAntigo}`);
+    if (pidLegado) await kv(env).delete(`${PID_PREFIX}${pidAntigo}`);
     return json({
       ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled,
       ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}),
@@ -389,7 +390,7 @@ async function handleCommunity({ request, env }) {
     /** @type {Array<{ name?: string }>} */
     const players = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       // N-4: o diretório respeita o MESMO gate que `opponents` — só entra
@@ -462,7 +463,7 @@ async function handleCommunity({ request, env }) {
     const me = id;
     const pool = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
@@ -555,7 +556,7 @@ async function handleCommunity({ request, env }) {
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
       // Atenção: a chave do rank é o saveId. Esta variável já se chamou `pid`,
@@ -590,13 +591,13 @@ async function handleCommunity({ request, env }) {
     // MESMO troféu de novo para `pendingTrophies` — o campeão receberia dois
     // 🥇 da mesma season e a vitrine mentiria.
     const closedKey = `closed:${season}`;
-    if (await env.DIGIAPP_SAVES.get(closedKey)) {
+    if (await kv(env).get(closedKey)) {
       return json({ ok: true, season, awarded: 0, already: true });
     }
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await env.DIGIAPP_SAVES.get(k);
+      const raw = await kv(env).get(k);
       if (!raw) continue;
       rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
     }
@@ -609,7 +610,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    await env.DIGIAPP_SAVES.put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
+    await kv(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
     return json({ ok: true, season, awarded: top3.length });
   }
 
@@ -672,10 +673,10 @@ async function handleCommunity({ request, env }) {
     me.giftLog[friendSave] = today();
     await putProfile(env, id, me);
 
-    const raw = await env.DIGIAPP_SAVES.get(`gifts:${friendSave}`);
+    const raw = await kv(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
-    await env.DIGIAPP_SAVES.put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+    await kv(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json({ ok: true });
   }
 
@@ -683,10 +684,10 @@ async function handleCommunity({ request, env }) {
     // Mesmo caso do `trophies`: `claim=1` apaga a fila do jogador.
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const raw = await env.DIGIAPP_SAVES.get(`gifts:${id}`);
+    const raw = await kv(env).get(`gifts:${id}`);
     const gifts = raw ? JSON.parse(raw) : [];
     if (url.searchParams.get('claim') === '1' && gifts.length) {
-      await env.DIGIAPP_SAVES.delete(`gifts:${id}`);
+      await kv(env).delete(`gifts:${id}`);
     }
     return json({ gifts });
   }

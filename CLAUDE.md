@@ -93,8 +93,10 @@ Repositório: `HexerVoodoom/Soulmon`.
   tinha acontecido, e a mesma mentira estava no `docs/PLANO-DESKTOP-STEAM.md`
   (item 15). Um agente que lesse isto decidiria errado sobre deploy. Verificado
   nas três fontes antes de corrigir.
-  O que **continua** valendo: o KV `DIGIAPP_SAVES` ainda é o namespace herdado
-  e compartilhado, e é a fatia 1 que resolve isso (`docs/SEPARACAO-DIGIAPP.md`).
+  O KV ainda aponta para o namespace herdado, mas o NOME do binding deixou de
+  ser uma trava: `functions/api/_kv.js` aceita `SOULMON_SAVES` e `DIGIAPP_SAVES`
+  (07/09/2026). Separar os DADOS continua sendo decisão do dono — ver
+  `docs/SEPARACAO-DIGIAPP.md`, passo 2.
 - O **APK carrega a URL de produção**, então mudança web NÃO precisa de APK
   novo. Só mudanças em `android/` precisam — o GitHub Actions
   (`android-build.yml`) builda no push e o artefato fica em
@@ -195,8 +197,16 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   07/09/2026) e agenda cloud save (3s debounce).
   **Cuidado**: qualquer efeito que grave estado em timer vira spam de cloud save —
   throttle (ex.: relógio do cocô dormindo só grava a cada ≥5min).
-- Cloud save: `src/utils/cloudSave.ts` → `functions/api/save.js` (Cloudflare KV
-  `DIGIAPP_SAVES`). saveId = SHA-256 do e-mail (mesmo e-mail = mesmo save).
+- Cloud save: `src/utils/cloudSave.ts` → `functions/api/save.js`. **O namespace
+  KV é resolvido em UM lugar: `functions/api/_kv.js` (`kv(env)`)**, que prefere
+  `SOULMON_SAVES` e cai em `DIGIAPP_SAVES`. ⚠️ O `SEPARACAO-DIGIAPP.md` dizia
+  que renomear o binding "exigiria alterar todos os arquivos em `functions/api/`
+  **e** acertar o Cloudflare no mesmo instante — qualquer descompasso derruba
+  save, créditos e compras ao mesmo tempo". O risco era real; a conclusão de que
+  não dava para trocar, não. Com o acessor aceitando os dois nomes, a ordem
+  entre mergear e clicar no painel deixa de importar e não há janela de queda.
+  **Nunca leia `env.*_SAVES` direto** — há teste varrendo `functions/api/`.
+  saveId = SHA-256 do e-mail (mesmo e-mail = mesmo save).
   Campos novos sincronizam sozinhos; no load use fallback `?? padrão` SEMPRE.
 - `src/hooks/useDailyReset.ts` — só agenda o check da virada (a cada 30s). NÃO reintroduzir
   ticker de 1s (re-renderizava o app inteiro). **A regra em si vive em

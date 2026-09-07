@@ -57,6 +57,7 @@
 
 import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
+import { kv } from './_kv.js';
 
 /**
  * Tetos. Chat é barato (llama-8b) e acontece o tempo todo; geração de imagem é
@@ -146,7 +147,7 @@ const refuse = (status, reason) => ({
  * ilegível é o mesmo que contador ausente, e contador ausente não libera nada.
  */
 async function readCounter(env, key) {
-  const raw = await env.DIGIAPP_SAVES.get(key);
+  const raw = await kv(env).get(key);
   if (raw === null || raw === undefined) return 0;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) throw new Error(`contador ilegível em ${key}: ${raw}`);
@@ -215,7 +216,7 @@ function formUsed(ent, formId) {
  *   a geração não aconteceu. Ver `makeRelease` — recusa de conteúdo não devolve.
  */
 export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null) {
-  if (!env.DIGIAPP_SAVES) return refuse(500, 'storage-not-bound');
+  if (!kv(env)) return refuse(500, 'storage-not-bound');
 
   const limits = AI_LIMITS[bucket];
   if (!limits) return refuse(500, 'unknown-bucket');
@@ -300,8 +301,8 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
       if (hasFormCap) ent.aiForms = { ...(ent.aiForms || {}), [formId]: usedForm + units };
       await writeEntitlement(env, saveId, ent);
     }
-    await env.DIGIAPP_SAVES.put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
-    await env.DIGIAPP_SAVES.put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
+    await kv(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
+    await kv(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
   } catch (err) {
     // Débito que não gravou é chamada sem teto. Recusa.
     console.error('aiGuard: falha ao debitar cota, recusando', err?.message);
@@ -355,8 +356,8 @@ function makeRelease(env, ctx) {
         await writeEntitlement(env, saveId, ent);
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
-      await env.DIGIAPP_SAVES.put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
-      await env.DIGIAPP_SAVES.put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
+      await kv(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
+      await kv(env).put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
       console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? '-'} — ${motivo}`);
     } catch (err) {
       console.error('aiGuard: falha ao devolver cota reservada', err?.message);

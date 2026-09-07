@@ -8,6 +8,11 @@
     "not_found_handling": "single-page-application"
   },
   "kv_namespaces": [
+    // O nome novo primeiro: `_kv.js` prefere `SOULMON_SAVES` e cai no antigo.
+    // Os DOIS apontam para o mesmo namespace hoje — é o que permite trocar o
+    // painel do Cloudflare sem sincronizar com o merge, e sem janela de queda.
+    // O `DIGIAPP_SAVES` sai daqui quando o painel já tiver o nome novo.
+    { "binding": "SOULMON_SAVES", "id": "aed229e069fd40d8a141fb1124763d9d" },
     { "binding": "DIGIAPP_SAVES", "id": "aed229e069fd40d8a141fb1124763d9d" },
     { "binding": "PUSH_SUBSCRIPTIONS", "id": "12dd88d3282140e786a5b2c5b5b940cf" }
   ]
