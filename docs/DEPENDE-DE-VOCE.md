@@ -4,8 +4,18 @@
 > pode ser feito por mim**: exige conta, cartão, painel, aparelho físico ou uma
 > decisão de produto/negócio que não é minha para tomar.
 >
-> Última atualização: **rodada 8 de QA** (2026-08-14).
-> Ordem = **impacto**, não facilidade. O item 1 é o que mais dói hoje.
+> Última atualização: **07/09/2026** (reconciliação). Antes disso, rodada 8 de
+> QA (2026-08-14).
+> Ordem = **impacto**, não facilidade.
+>
+> ⚠️ **A seção "URGENTE — está afetando usuário agora" foi escrita antes de o
+> dono informar que NINGUÉM NUNCA USOU O APP EM PRODUÇÃO.** Nada aqui está
+> afetando usuário nenhum, porque não há usuário. Isso não apaga os itens —
+> muda o que eles são: deixam de ser incêndio e viram **pré-requisito de
+> lançamento**. O item 1, em particular, envelheceu duas vezes: o nudge das
+> 21h que ele cita **já saiu do código** (`PUSH_HOURS_BRT = [10, 16, 22]`), e
+> o que resta é que a borda roda uma versão de meses atrás — o `workers/` não
+> builda no push da `main`. O deploy continua necessário; a urgência, não.
 
 ---
 
