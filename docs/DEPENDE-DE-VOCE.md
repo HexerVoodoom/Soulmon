@@ -21,7 +21,12 @@
 
 ## 🔴 URGENTE — está afetando usuário agora
 
-### 1. Deploy do worker de push
+> ## ✅ Itens 1, 2, 13 e 16 foram FEITOS em 07/09/2026 (sessão local)
+>
+> Ficam abaixo, riscados, com o que mudou. Ver `docs/STATUS.md` e
+> `docs/HANDOFF-SESSAO-LOCAL.md`.
+
+### ~~1. Deploy do worker de push~~ — ✅ FEITO em 07/09/2026
 ```bash
 cd D:\Soulmon\repo\workers && npx wrangler deploy
 ```
@@ -33,9 +38,21 @@ O repositório está verde e o usuário recebe assim mesmo.
 
 **Custo:** um comando. **Achado na rodada 5.**
 
+> ✅ **Feito.** `npx wrangler deploy -c wrangler.toml` dentro de `workers/`.
+> Na mesma passada o `VAPID_JWK` foi criado — ele **nunca existiu**, e sem ele
+> `push-scheduler.js` pulava o envio inteiro em silêncio. O Web Push só passou
+> a existir de fato agora.
+
 ---
 
-### 2. Ligar `FIREBASE_PROJECT_ID` no painel do Cloudflare
+### ~~2. Ligar `FIREBASE_PROJECT_ID`~~ — ✅ FEITO em 07/09/2026
+
+> ✅ Projeto Firebase **próprio** criado (`soulmon-app`); o Soulmon não divide
+> mais o do DigiApp. `FIREBASE_PROJECT_ID` ligado — e **no `wrangler.jsonc`,
+> não no painel**: variável de runtime comum é substituída pelo arquivo a cada
+> `wrangler deploy`, então posta só no painel o próximo deploy a apagaria e o
+> servidor voltaria ao modo aberto em silêncio. Verificado na borda:
+> `/api/save` sem token devolve 401, e `/api/account` saiu do 503.
 
 > ⚠️ **Correção de 07/09/2026:** este item e o 13 diziam "projeto Pages". O app
 > **é um Worker** (`wrangler.jsonc` na raiz, `soulmon.mateus-sprnd.workers.dev`)
@@ -86,6 +103,15 @@ armazenamento.
 ### 4. Decidir sobre as keystores no histórico do git
 `bubblewrap_build/android.keystore` e `signing.keystore` foram removidos do HEAD
 no commit `c47776e5` — **mas continuam no histórico**, e quem clonar recupera.
+
+> 🔎 **Contexto levantado em 07/09/2026, que pode dissolver a decisão:** as duas
+> entraram no commit `12cb739a` (08/03/2026) dentro de `bubblewrap_build/`, que
+> era o artefato de um build **TWA do DigiApp**. O Soulmon **não tem keystore de
+> release nenhuma** — `android/app/build.gradle` só assina se a propriedade
+> `RELEASE_STORE_FILE` existir, e a CI roda apenas `assembleDebug`. Ou seja: a
+> chave exposta é a do **DigiApp**, não a deste app, e o Soulmon nunca foi
+> assinado para release. A pergunta real é se a chave de upload do DigiApp
+> precisa girar — decisão sobre aquele produto, não sobre este.
 
 Duas saídas: rotacionar a chave de upload no Play Console, ou limpar o histórico
 com `git filter-repo` (reescreve todos os commits, exige force push e quebra
@@ -164,17 +190,24 @@ equivalentes.**
 | 10 | Registrar o pacote no Firebase + baixar `google-services.json` | push nativo |
 | 11 | Criar os 4 produtos no Play Console (`soulmon.unlock.full` + 3 pacotes de crédito) | compras |
 | 12 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` | compras |
-| 13 | `VITE_FIREBASE_*` **num `.env` na máquina que builda** (não no painel! são de BUILD — o Vite as inlina no bundle, ver `.env.example`), depois `npm run build` + deploy. Só então o `FIREBASE_PROJECT_ID` no painel do worker, que é runtime e vai **por último** | login |
+| ~~13~~ | ~~`VITE_FIREBASE_*`~~ — ✅ **FEITO em 07/09/2026**. `.env` local do projeto `soulmon-app`, `npm run build` + `wrangler deploy`, e só então o `FIREBASE_PROJECT_ID`. A chave foi **validada contra a API do Firebase**, não só transcrita. | ✅ |
 | 14 | Conta Steamworks + US$ 100 · **App ID e Depot ID** | cliente Steam |
 | 15 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` | microtransação Steam |
 | ~~16~~ | ~~E-mail de contato do VAPID~~ — **decidido em 07/09/2026**: `mateus.sprnd@gmail.com`, já no código. Só falta o `wrangler deploy` dentro de `workers/` | push |
-| 17 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` (fingerprint sai do Play Console) | deep links |
+| 17 | `ASSETLINKS_SHA256` (o `PACKAGE_NAME` já tem padrão certo). ⚠️ **Levantado em 07/09/2026:** não dá para produzir hoje. O fingerprint que vale é o do **Play App Signing**, que só existe depois do app criado no Play Console e de um bundle enviado — e o Soulmon **não tem keystore de release** (a CI só faz `assembleDebug`). Encadeia com os itens 11 e 12. | deep links **e o portão de e-mail no APK** (`docs/PLANO-TELA-IDENTIDADE.md` §6.1) |
 
 ---
 
 ## 🟢 AMBIENTE — destravam trabalho meu
 
-### 18. Trazer a janela do Chrome para a frente
+### ~~18. Trazer a janela do Chrome para a frente~~ — parcialmente resolvido
+
+> Em 07/09/2026 o Chrome respondeu normalmente pela extensão. Uma vez o
+> viewport colapsou para 735x49 no meio do fluxo e o `resize_window` não
+> corrigiu — o que destravou foi recarregar a página. Fica registrado como
+> sintoma conhecido, não como bloqueio.
+
+#### Sintoma original
 Minimizada ela reporta `Viewport: 0x0`: navega e está logada, mas **cliques e
 digitação não chegam**. É o que trava a geração de arte no Gemini
 (`docs/BACKLOG-ARTE-GERAR.md`).
