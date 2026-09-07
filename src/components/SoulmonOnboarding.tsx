@@ -235,6 +235,16 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // `obfuscatedExternalAccountId`, e com `PLAY_REQUIRE_ACCOUNT_BINDING` ligado
   // ela seria RECUSADA: a pessoa pagaria e não receberia.
   const CHOICE_STEP = -7;
+  // A segunda tela da conta: e-mail e senha. Separada da primeira a pedido do
+  // dono — a primeira oferece só Google ou "New User", e o formulário vive
+  // aqui em vez de empilhar tudo numa tela só.
+  const EMAIL_STEP = -8;
+  // A tela do Google. Existe porque o aceite dos Termos e o 18+ SAÍRAM da
+  // primeira tela (pedido do dono: ela mostra só as duas portas) — e entrar
+  // com Google TAMBÉM cria conta. Sem esta tela, esse caminho abriria conta
+  // sem aceite e sem checagem de idade, que é exatamente o que as duas travas
+  // existem para impedir.
+  const GOOGLE_STEP = -9;
 
   // No upgrade o ritual começa direto na primeira pergunta: a intro só existe
   // para escolher entre grátis e completo, e essa escolha já foi feita (paga).
@@ -460,7 +470,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // Rascunho do portão: gravado enquanto a pessoa está no trecho anterior à
   // escolha. Some assim que o onboarding termina (ver `finish`).
   const noPortao = !isUpgrade
-    && [IDENTITY_STEP, GOAL_STEP, STRUGGLE_STEP, CHOICE_STEP].includes(step);
+    && [IDENTITY_STEP, GOOGLE_STEP, EMAIL_STEP, GOAL_STEP, STRUGGLE_STEP, CHOICE_STEP].includes(step);
   useEffect(() => {
     if (!noPortao) return;
     writeGateDraft({ soulGoal, soulStruggle, consent });
@@ -601,9 +611,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   };
 
   const next = () => {
-    // O portão é o primeiro passo e não avança por `next()`: quem o atravessa
-    // é uma autenticação bem-sucedida (ver `aposAutenticar`).
-    if (step === IDENTITY_STEP) return;
+    // O portão não avança por `next()`: quem o atravessa é uma autenticação
+    // bem-sucedida (ver `aposAutenticar`).
+    if (step === IDENTITY_STEP || step === EMAIL_STEP || step === GOOGLE_STEP) return;
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(CHOICE_STEP); return; }
     if (!canAdvance()) return;
@@ -639,6 +649,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // desistir do ritual e voltar ao jogo.
   const back = () => {
     if (isUpgrade && step === 1) { onCancel?.(); return; }
+    // Das duas telas de conta volta-se para a primeira do portão.
+    if (step === EMAIL_STEP || step === GOOGLE_STEP) { setStep(IDENTITY_STEP); return; }
     // Do "porquê" não se volta para o portão: a conta já existe, e desfazê-la
     // não é o que um botão de voltar deve sugerir.
     if (step === GOAL_STEP) return;
@@ -767,6 +779,77 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (demoNeedsAge && isAgeBlockedByMonth(demoAgeMonth)) { setStep(AGE_BLOCK); return true; }
     return false;
   };
+
+  /** "New User" → formulário de e-mail e senha, já em modo de criação. */
+  const aoAbrirEmail = () => {
+    setCriandoConta(true);
+    setAuthErro(null);
+    setResetEnviado(false);
+    setStep(EMAIL_STEP);
+  };
+
+  /** "Continue with Google" → tela com o aceite e a idade, e só então o
+   *  popup. A ordem importa: uma vez aberta a conta no Google, desfazê-la é
+   *  bem mais difícil do que perguntar antes. */
+  const aoAbrirGoogle = () => {
+    setAuthErro(null);
+    setStep(GOOGLE_STEP);
+  };
+
+  /** O que ainda falta para deixar uma conta nascer. Sem isto o botão só fica
+   *  apagado e o toque não faz nada — a pessoa não tem como saber o motivo. */
+  const faltaParaAutenticar = !consentChecked
+    ? (isPt ? 'Marque a caixa acima para continuar.' : 'Check the box above to continue.')
+    : (isPt ? 'Preencha o mês e o ano (MM/AAAA) para continuar.' : 'Fill in the month and year (MM/YYYY) to continue.');
+
+  /** TERMOS + 18+, um só bloco usado nas DUAS telas que criam conta.
+   *
+   *  Escrito uma vez e reusado de propósito: duas cópias do mesmo bloco legal
+   *  divergem em silêncio, e a que divergir vai ser justamente a que ninguém
+   *  olhou. A caixa de aceite fica FORA do bloco dos links — embutida no texto
+   *  legal não vale como consentimento específico (achado do run 01). */
+  const blocoLegal = (
+    <>
+      {demoNeedsAge && (
+        <div style={{ marginBottom: 14 }}>
+          <label htmlFor="sm-demo-age" style={{ ...sm2Label, display: 'block', marginBottom: 6 }}>
+            {isPt ? 'Em que mês e ano você nasceu?' : 'What month and year were you born?'}
+          </label>
+          <Field id="sm-demo-age" type="text" inputMode="numeric" autoComplete="off"
+            value={demoAgeText}
+            placeholder={isPt ? '__/____ (MM/AAAA)' : '__/____ (MM/YYYY)'}
+            onChange={e => handleDemoAgeChange(e.target.value)}
+            maxLength={7} />
+          <p style={{ ...sm2Hint, marginTop: 6 }}>
+            {isPt
+              ? `Serve só para confirmar que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima do Soulmon. Por isso pedimos só o mês e o ano — não guardamos essa resposta e ela não é usada para mais nada.`
+              : `This is only to confirm you're ${MIN_AGE_YEARS} or older, Soulmon's minimum age. That's why we ask for the month and year only — we don't store this answer and it isn't used for anything else.`}
+          </p>
+        </div>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+        <a
+          href={isPt ? '/termos.html' : '/termos.html#en'}
+          target="_blank" rel="noopener noreferrer"
+          style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
+        >
+          {isPt ? 'Ler os Termos de Uso' : 'Read the Terms of Use'}
+        </a>
+        <a
+          href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
+          target="_blank" rel="noopener noreferrer"
+          style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
+        >
+          {isPt ? 'Ler a Política de Privacidade' : 'Read the Privacy Policy'}
+        </a>
+      </div>
+      <CheckRow checked={consentChecked} onChange={setConsentChecked}>
+        {isPt
+          ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
+          : 'I have read and agree to the Terms of Use and the Privacy Policy'}
+      </CheckRow>
+    </>
+  );
 
   const aoEntrarComGoogle = async () => {
     if (authOcupado || !podeAutenticar) return;
@@ -1013,13 +1096,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             projeto cai no spam do Gmail (remetente `firebaseapp.com` sem
             dominio proprio). Um caminho que nao passa por caixa de entrada e
             o que garante que da para entrar no app. */}
+        {/* PORTÃO — TELA 1: SÓ as duas portas.
+            "Continue with Google" ou "New User", e nada mais. O aceite dos
+            Termos e o 18+ saíram daqui a pedido do dono e vivem nas telas
+            seguintes — nas DUAS, porque entrar com Google também cria conta:
+            deixar o aceite só no caminho do e-mail abriria conta sem aceite e
+            sem checagem de idade por um lado da bifurcação. */}
         {step === IDENTITY_STEP && (
           <StepShell
             title={!mostrarAuth
               ? (isPt ? 'Antes de começar' : 'Before we start')
-              : criandoConta
-                ? (isPt ? 'Criar sua conta' : 'Create your account')
-                : (isPt ? 'Entrar' : 'Sign in')}
+              : (isPt ? 'Entrar no Soulmon' : 'Sign in to Soulmon')}
             hint={!mostrarAuth
               ? (isPt
                 ? 'Você pode ler os dois documentos agora — eles abrem numa aba nova e seu progresso aqui não se perde.'
@@ -1028,10 +1115,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 ? 'Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez.'
                 : 'Your account keeps your progress and ties any purchase to you. The session is saved — no need to sign in every time.')}>
 
-            {/* A marca vinha numa tela só dela, antes desta. Virou o cabeçalho
-                daqui porque a conta passou a ser a PRIMEIRA coisa depois do
-                carregamento — uma tela intermediária só para dizer "Começar"
-                era um toque a mais entre o app e a entrada. */}
             <div style={{ textAlign: 'center', marginBottom: 22 }}>
               <img src={ravenMascot} alt="" width={56} height={56}
                 style={{ display: 'block', margin: '0 auto 8px', objectFit: 'contain', imageRendering: 'pixelated' }}
@@ -1042,15 +1125,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               }}>Soulmon</span>
             </div>
 
-            {mostrarAuth && (
+            {mostrarAuth ? (
               <>
                 <button
                   type="button"
-                  style={{ ...sm2Button('quiet', authOcupado || !podeAutenticar), width: '100%' }}
-                  onClick={aoEntrarComGoogle}
-                  disabled={authOcupado || !podeAutenticar}
+                  style={{ ...sm2Button('primary'), width: '100%' }}
+                  onClick={aoAbrirGoogle}
                 >
-                  {authOcupado ? <Spinner /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
+                  {isPt ? 'Entrar com Google' : 'Continue with Google'}
                 </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0' }}>
@@ -1058,10 +1140,80 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   <span style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'ou' : 'or'}</span>
                   <span style={{ flex: 1, height: 1, backgroundColor: 'var(--sm2-line)' }} />
                 </div>
+
+                <button
+                  type="button"
+                  style={{ ...sm2Button('quiet'), width: '100%' }}
+                  onClick={aoAbrirEmail}
+                >
+                  {isPt ? 'Novo usuário' : 'New User'}
+                </button>
+              </>
+            ) : (
+              /* Sem auth configurada não há conta a oferecer, e quem já está
+                 autenticado não tem o que fazer com um formulário. Nos dois
+                 casos o portão vira só o aceite e a idade: falta de
+                 configuração nunca pode virar porta trancada. */
+              <>
+                {blocoLegal}
+                <button
+                  type="button"
+                  style={{ ...sm2Button('primary', !podeAutenticar), width: '100%', marginTop: 20 }}
+                  onClick={aoContinuarSemConta}
+                  disabled={!podeAutenticar}
+                >
+                  {isPt ? 'Continuar' : 'Continue'}
+                </button>
+                {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
               </>
             )}
+          </StepShell>
+        )}
 
-            {mostrarAuth && (<>
+        {/* PORTÃO — TELA DO GOOGLE: aceite e idade ANTES do popup.
+            Perguntar antes é o que evita ter de desfazer uma conta já criada
+            no Google, que é bem mais difícil do que uma pergunta a mais. */}
+        {step === GOOGLE_STEP && (
+          <StepShell
+            title={isPt ? 'Entrar com Google' : 'Continue with Google'}
+            hint={isPt
+              ? 'Antes de criar sua conta, confirme os dois documentos e sua idade.'
+              : 'Before your account is created, confirm the two documents and your age.'}>
+            {blocoLegal}
+            {authErro && (
+              <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', margin: '12px 0 0' }}>
+                {textoErroAuth}
+              </p>
+            )}
+            <button
+              type="button"
+              style={{ ...sm2Button('primary', authOcupado || !podeAutenticar), width: '100%', marginTop: 20 }}
+              onClick={aoEntrarComGoogle}
+              disabled={authOcupado || !podeAutenticar}
+            >
+              {authOcupado ? <Spinner /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
+            </button>
+            {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 8 }} onClick={back}>
+              <Icon name="arrow_back" size={20} />
+              {isPt ? 'Voltar' : 'Back'}
+            </button>
+          </StepShell>
+        )}
+
+        {/* PORTÃO — TELA DO E-MAIL: formulário, aceite e idade.
+            O modo abre em "criar conta", que é o que o botão prometeu, e
+            alterna para entrar: quem já tem conta de e-mail precisa de um
+            caminho, e ele não pode ser um beco sem saída. */}
+        {step === EMAIL_STEP && (
+          <StepShell
+            title={criandoConta
+              ? (isPt ? 'Criar sua conta' : 'Create your account')
+              : (isPt ? 'Entrar' : 'Sign in')}
+            hint={isPt
+              ? 'A sessão fica salva neste aparelho — não precisa entrar de novo a cada vez.'
+              : 'The session is saved on this device — no need to sign in every time.'}>
+
             <label style={sm2Label} htmlFor="onb-gate-email">
               {isPt ? 'E-mail' : 'Email'}
             </label>
@@ -1078,56 +1230,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               onChange={e => { setSenha(e.target.value); setAuthErro(null); }}
               placeholder={isPt ? 'Mínimo de 6 caracteres' : 'At least 6 characters'}
               onKeyDown={e => e.key === 'Enter' && aoEnviarSenha()} />
-            </>)}
 
-            {/* TERMOS + 18+ VIVEM AQUI, e não numa tela anterior.
-                A conta é a primeira coisa que o app pede, e criar conta é
-                coletar dado pessoal: o aceite precisa vir ANTES dela (D-07), e
-                a idade também — abrir conta para menor é o que o 18+ existe
-                para impedir. Mantidos os dois links separados e a caixa FORA
-                do bloco deles: caixa embutida no texto legal não vale como
-                consentimento específico (achado do run 01). */}
             <div style={{ height: 1, backgroundColor: 'var(--sm2-line)', margin: '22px 0 14px' }} />
-
-            {demoNeedsAge && (
-              <div style={{ marginBottom: 14 }}>
-                <label htmlFor="sm-demo-age" style={{ ...sm2Label, display: 'block', marginBottom: 6 }}>
-                  {isPt ? 'Em que mês e ano você nasceu?' : 'What month and year were you born?'}
-                </label>
-                <Field id="sm-demo-age" type="text" inputMode="numeric" autoComplete="off"
-                  value={demoAgeText}
-                  placeholder={isPt ? '__/____ (MM/AAAA)' : '__/____ (MM/YYYY)'}
-                  onChange={e => handleDemoAgeChange(e.target.value)}
-                  maxLength={7} />
-                <p style={{ ...sm2Hint, marginTop: 6 }}>
-                  {isPt
-                    ? `Serve só para confirmar que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima do Soulmon. Por isso pedimos só o mês e o ano — não guardamos essa resposta e ela não é usada para mais nada.`
-                    : `This is only to confirm you're ${MIN_AGE_YEARS} or older, Soulmon's minimum age. That's why we ask for the month and year only — we don't store this answer and it isn't used for anything else.`}
-                </p>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-              <a
-                href={isPt ? '/termos.html' : '/termos.html#en'}
-                target="_blank" rel="noopener noreferrer"
-                style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
-              >
-                {isPt ? 'Ler os Termos de Uso' : 'Read the Terms of Use'}
-              </a>
-              <a
-                href={isPt ? '/privacidade.html' : '/privacidade.html#en'}
-                target="_blank" rel="noopener noreferrer"
-                style={{ ...sm2Button('ghost'), width: '100%', textDecoration: 'none' }}
-              >
-                {isPt ? 'Ler a Política de Privacidade' : 'Read the Privacy Policy'}
-              </a>
-            </div>
-            <CheckRow checked={consentChecked} onChange={setConsentChecked}>
-              {isPt
-                ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
-                : 'I have read and agree to the Terms of Use and the Privacy Policy'}
-            </CheckRow>
+            {blocoLegal}
 
             {authErro && (
               <p role="alert" style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)', margin: '12px 0 0' }}>
@@ -1145,29 +1250,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <button
               type="button"
               style={{ ...sm2Button('primary', authOcupado || !podeAutenticar), width: '100%', marginTop: 20 }}
-              onClick={mostrarAuth ? aoEnviarSenha : aoContinuarSemConta}
+              onClick={aoEnviarSenha}
               disabled={authOcupado || !podeAutenticar}
             >
               {authOcupado
                 ? <Spinner />
-                : !mostrarAuth
-                  ? (isPt ? 'Continuar' : 'Continue')
-                  : criandoConta
-                    ? (isPt ? 'Criar conta' : 'Create account')
-                    : (isPt ? 'Entrar' : 'Sign in')}
+                : criandoConta
+                  ? (isPt ? 'Criar conta' : 'Create account')
+                  : (isPt ? 'Entrar' : 'Sign in')}
             </button>
+            {!podeAutenticar && <p style={{ ...sm2Hint, marginTop: 12, textAlign: 'center' }}>{faltaParaAutenticar}</p>}
 
-            {/* Sem isto o botão só fica apagado e o toque não faz nada — a
-                pessoa não tem como saber o que falta. */}
-            {!podeAutenticar && (
-              <p style={{ ...sm2Hint, marginTop: 8, textAlign: 'center' }}>
-                {!consentChecked
-                  ? (isPt ? 'Marque a caixa acima para continuar.' : 'Check the box above to continue.')
-                  : (isPt ? 'Preencha o mês e o ano (MM/AAAA) para continuar.' : 'Fill in the month and year (MM/YYYY) to continue.')}
-              </p>
-            )}
-
-            {mostrarAuth && (
             <button
               type="button"
               style={{ ...sm2Button('ghost'), width: '100%', marginTop: 8 }}
@@ -1177,12 +1270,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 ? (isPt ? 'Já tenho conta — entrar' : 'I already have an account — sign in')
                 : (isPt ? 'Criar conta' : 'Create account')}
             </button>
-            )}
 
-            {/* Sem recuperação, senha vira armadilha: quem esquece perde o
-                save, porque o saveId é derivado do e-mail e não há outro
-                caminho de volta. */}
-            {mostrarAuth && !criandoConta && (
+            {!criandoConta && (
               <button
                 type="button"
                 style={{ ...sm2Button('ghost'), width: '100%', marginTop: 4 }}
@@ -1192,9 +1281,13 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 {isPt ? 'Esqueci minha senha' : 'I forgot my password'}
               </button>
             )}
+
+            <button type="button" style={{ ...sm2Button('quiet'), width: '100%', marginTop: 4 }} onClick={back}>
+              <Icon name="arrow_back" size={20} />
+              {isPt ? 'Voltar' : 'Back'}
+            </button>
           </StepShell>
         )}
-
 
         {/* ESCOLHA gratis/completo — depois da identidade, nunca antes. */}
         {step === CHOICE_STEP && (
