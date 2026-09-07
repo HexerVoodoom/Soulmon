@@ -32,9 +32,24 @@
 # `sonner` injeta <style>. Atributo de estilo não executa script.
 # `img-src https:` cobre o sprite gerado pelo Higgsfield, que volta como URL
 # externa. `connect-src` cobre o próprio worker (self) + Firebase Auth.
+#
+# ⚠️ `https://apis.google.com` em `script-src` NÃO É OPCIONAL, e tirá-lo quebra
+# o login com Google — em silêncio, e de um jeito que não parece CSP.
+#
+# Medido em 07/09/2026: entrar com Google falhava com `auth/internal-error` e
+# nenhuma pista. O `signInWithPopup` carrega `https://apis.google.com/js/api.js`
+# para orquestrar o popup; a CSP bloqueava esse script e o SDK do Firebase
+# converte a falha em "internal error", que não menciona CSP em lugar nenhum.
+# Foram precisos: ler o código cru do erro no console, descartar domínio
+# autorizado, cliente OAuth, handler `/__/auth/handler` e provedor — e só então
+# olhar os cabeçalhos.
+#
+# `frame-src` ganhou `apis.google.com` e `accounts.google.com` pelo mesmo
+# motivo: o fluxo do popup cria frames nos dois. Travado em
+# `src/security/csp.test.ts`.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=31536000; includeSubDomains
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'sha256-aqX/OLUjckiwmTl42drowEB7qW3kNXbVxMRvhwLS3E8=' 'sha256-c6QQgFbjfCzeF0+hvpAF/HkyXkTYWEchvMDHPeDGxFQ=' 'sha256-yXojjaY5oUBR7lkpGB0N4v0nVK1JIwueCJJgrTrmPhM=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://apis.google.com 'sha256-aqX/OLUjckiwmTl42drowEB7qW3kNXbVxMRvhwLS3E8=' 'sha256-c6QQgFbjfCzeF0+hvpAF/HkyXkTYWEchvMDHPeDGxFQ=' 'sha256-yXojjaY5oUBR7lkpGB0N4v0nVK1JIwueCJJgrTrmPhM=' 'sha256-9dTtYE4pgtpNvqECJDrGuRpL2eDNBOmoCFJlP4iQ/Mo='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; media-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com https://*.firebaseio.com wss://*.firebaseio.com; worker-src 'self'; manifest-src 'self'; frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://accounts.google.com

@@ -88,6 +88,26 @@ describe('CSP existe e não é decorativa', () => {
     expect(diretiva('form-action')).toBe("'self'");
   });
 
+  it('o login com Google continua possível — `apis.google.com` liberado', () => {
+    // FALHA MEDIDA em 07/09/2026, e ela não parece CSP nenhuma.
+    //
+    // `signInWithPopup` carrega `https://apis.google.com/js/api.js` para
+    // orquestrar o popup. Sem essa origem em `script-src`, o navegador bloqueia
+    // o script e o SDK do Firebase converte o resultado em
+    // `auth/internal-error` — uma mensagem que não menciona CSP e manda quem
+    // depura procurar domínio autorizado, cliente OAuth e provedor, tudo em
+    // vão. O login simplesmente não acontece, sem explicação.
+    //
+    // Este teste existe para que "limpar a CSP" nunca mais derrube o login em
+    // silêncio: se alguém remover a origem, quebra aqui, e não em produção.
+    expect(diretiva('script-src')).toContain('https://apis.google.com');
+    // Os frames do fluxo de popup vivem nos dois domínios.
+    const frame = diretiva('frame-src');
+    expect(frame).toContain('https://apis.google.com');
+    expect(frame).toContain('https://accounts.google.com');
+    expect(frame).toContain('firebaseapp.com');
+  });
+
   it('connect-src permite o próprio worker e o Firebase — e não o mundo', () => {
     const connect = diretiva('connect-src');
     expect(connect).toContain("'self'");
