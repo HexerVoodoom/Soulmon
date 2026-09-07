@@ -1110,8 +1110,13 @@ function freshGameState(): GameState {
       tasks: [],
       completedTasks: [],
       activityStats: {},
-      healthPoints: 1,
-      maxHealthPoints: 1,
+      // Derivado do estagio, nunca literal. Nascia 1/1 enquanto rookie vale 3:
+      // quem fechava o app no meio do onboarding voltava com 1/3 e nao tinha
+      // como saber por que. O onboarding ainda grava a vida cheia ao terminar
+      // (o nascimento e ritual), mas o estado inicial deixa de MENTIR enquanto
+      // ele nao termina. Decisao do dono em 07/09/2026.
+      healthPoints: getMaxHPForStage('rookie'),
+      maxHealthPoints: getMaxHPForStage('rookie'),
       energyPoints: 0,
       perfectDays: 0,
       totalXP: 0,

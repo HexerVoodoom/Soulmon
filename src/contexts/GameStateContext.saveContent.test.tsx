@@ -357,8 +357,13 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
 
   it('instalação nova (sem save nenhum) tem exatamente estes valores', () => {
     const s = abrirComSave(undefined);
-    expect(s.healthPoints).toBe(1);
-    expect(s.maxHealthPoints).toBe(1);
+    // 3/3, e nao 1/1: `freshGameState` passou a derivar do estagio
+    // (`getMaxHPForStage('rookie')`) em 07/09/2026, por decisao do dono. O
+    // 1/1 anterior fazia quem fechasse o app no meio do onboarding voltar
+    // com 1/3 sem explicacao. Continua travado aqui pelo MESMO motivo de
+    // antes: mudar esses numeros tem que ser DECISAO, nunca acidente.
+    expect(s.healthPoints).toBe(3);
+    expect(s.maxHealthPoints).toBe(3);
     expect(s.energyPoints).toBe(0);
     expect(s.perfectDays).toBe(0);
     expect(s.totalXP).toBe(0);
@@ -387,9 +392,9 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
     expect(s.activities).toEqual([]);
     expect(s.tasks).toEqual([]);
     expect(s.eggType).toBe('ignar');
-    // O 1/1 acima é transitório de propósito: o onboarding é o ritual de
-    // nascimento e grava 3/3 ao terminar (App.tsx). Fica travado aqui para
-    // que uma mudança nesses números seja uma DECISÃO, não um acidente.
+    // O onboarding segue gravando a vida cheia ao terminar (App.tsx) — o
+    // nascimento é ritual. O que mudou é que o estado inicial deixou de
+    // MENTIR enquanto o ritual não termina.
   });
 });
 

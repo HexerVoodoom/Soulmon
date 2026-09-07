@@ -9,11 +9,25 @@ const EMAIL = 'mateus@exemplo.com';
 
 function fakeKV(seed: Record<string, string> = {}) {
   const store = new Map(Object.entries(seed));
+  const meta = new Map<string, unknown>();
   return {
     store,
+    meta,
     get: async (k: string) => store.get(k) ?? null,
-    put: async (k: string, v: string) => { store.set(k, v); },
-    delete: async (k: string) => { store.delete(k); },
+    // `getWithMetadata` entrou junto com a renovacao preguicosa do TTL do save
+    // (`SAVE_TTL_SECONDS` em functions/api/save.js): o GET le a data de
+    // gravacao para decidir se reescreve. Sem isto aqui, o falso divergia da
+    // API real do KV e o teste do desktop quebrava por motivo que nao tem
+    // nada a ver com o desktop.
+    getWithMetadata: async (k: string) => ({
+      value: store.get(k) ?? null,
+      metadata: meta.get(k) ?? null,
+    }),
+    put: async (k: string, v: string, opts?: { metadata?: unknown }) => {
+      store.set(k, v);
+      if (opts?.metadata !== undefined) meta.set(k, opts.metadata);
+    },
+    delete: async (k: string) => { store.delete(k); meta.delete(k); },
   };
 }
 

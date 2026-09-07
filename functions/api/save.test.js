@@ -11,14 +11,34 @@ import { onRequest, onRequestOptions } from './save.js';
 
 const ID = 'a'.repeat(32);
 
-/** KV de mentira com o mínimo que o save.js usa. */
+/**
+ * KV de mentira com o mínimo que o save.js usa.
+ *
+ * `getWithMetadata` e o `metadata` do `put` entraram junto com a renovação
+ * preguiçosa do TTL (`SAVE_TTL_SECONDS`): o GET precisa saber QUANDO o
+ * registro foi gravado para decidir se reescreve. O falso guarda metadata de
+ * verdade — um falso que devolvesse metadata vazia faria a renovação disparar
+ * em todo GET no teste e nunca no produto, que é o pior tipo de falso.
+ */
 function fakeKV(seed = {}) {
   const store = new Map(Object.entries(seed));
+  const meta = new Map();
+  const ttls = new Map();
   return {
     store,
+    meta,
     get: async k => store.get(k) ?? null,
-    put: async (k, v) => { store.set(k, v); },
-    delete: async k => { store.delete(k); },
+    getWithMetadata: async k => ({
+      value: store.get(k) ?? null,
+      metadata: meta.get(k) ?? null,
+    }),
+    put: async (k, v, opts) => {
+      store.set(k, v);
+      if (opts?.metadata !== undefined) meta.set(k, opts.metadata);
+      if (opts?.expirationTtl !== undefined) ttls.set(k, opts.expirationTtl);
+    },
+    delete: async k => { store.delete(k); meta.delete(k); },
+    ttls: (() => ttls)(),
   };
 }
 
@@ -180,5 +200,53 @@ describe('o preflight de CORS permite o header Authorization', () => {
   it('OPTIONS anuncia Authorization', async () => {
     const res = await onRequestOptions();
     expect(res.headers.get('Access-Control-Allow-Headers')).toContain('Authorization');
+  });
+});
+
+describe('TTL do save — renovado a cada acesso (decisão do dono, 07/09/2026)', () => {
+  // O prazo era efeito colateral de um literal `86400 * 365` no `put`, e SÓ a
+  // escrita o renovava. Quem abre o app, olha o bicho e fecha sem gerar
+  // escrita envelhecia o próprio save até perdê-lo — contra o guardrail nº 1
+  // ("quem volta encontra saudade, não fatura"). Estes testes travam a
+  // decisão para ela não voltar a ser acidente.
+  const ANO = 86400 * 365;
+
+  it('a ESCRITA grava o prazo cheio e a data', async () => {
+    const e = env();
+    await onRequest({ request: post(`https://x/api/save?id=${ID}`, { state: { perfectDays: 1 } }), env: e });
+    expect(e.DIGIAPP_SAVES.ttls.get(ID)).toBe(ANO);
+    expect(Number(e.DIGIAPP_SAVES.meta.get(ID).t)).toBeGreaterThan(0);
+  });
+
+  it('a LEITURA de um save VELHO renova o prazo', async () => {
+    const e = env({ [ID]: JSON.stringify({ perfectDays: 7 }) });
+    // 40 dias atrás: passou do limiar de renovação (30 dias).
+    e.DIGIAPP_SAVES.meta.set(ID, { t: Date.now() - 40 * 86400 * 1000 });
+    const res = await onRequest({ request: new Request(`https://x/api/save?id=${ID}`), env: e });
+    expect(res.status).toBe(200);
+    expect(e.DIGIAPP_SAVES.ttls.get(ID)).toBe(ANO);
+    // E o dado não pode ter sido corrompido pela renovação.
+    expect(JSON.parse(e.DIGIAPP_SAVES.store.get(ID)).perfectDays).toBe(7);
+  });
+
+  it('a LEITURA de um save RECENTE não gasta escrita', async () => {
+    const e = env({ [ID]: JSON.stringify({ perfectDays: 7 }) });
+    e.DIGIAPP_SAVES.meta.set(ID, { t: Date.now() - 2 * 86400 * 1000 });
+    await onRequest({ request: new Request(`https://x/api/save?id=${ID}`), env: e });
+    expect(e.DIGIAPP_SAVES.ttls.has(ID)).toBe(false);
+  });
+
+  it('save SEM metadata (gravado antes desta mudança) renova na primeira leitura', async () => {
+    const e = env({ [ID]: JSON.stringify({ perfectDays: 3 }) });
+    await onRequest({ request: new Request(`https://x/api/save?id=${ID}`), env: e });
+    expect(e.DIGIAPP_SAVES.ttls.get(ID)).toBe(ANO);
+  });
+
+  it('falha ao renovar NÃO derruba a leitura — o jogador veio buscar o save', async () => {
+    const e = env({ [ID]: JSON.stringify({ perfectDays: 9 }) });
+    e.DIGIAPP_SAVES.put = async () => { throw new Error('KV fora do ar'); };
+    const res = await onRequest({ request: new Request(`https://x/api/save?id=${ID}`), env: e });
+    expect(res.status).toBe(200);
+    expect((await res.json()).state.perfectDays).toBe(9);
   });
 });

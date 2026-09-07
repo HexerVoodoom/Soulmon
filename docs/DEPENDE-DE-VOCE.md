@@ -122,7 +122,13 @@ clones existentes). **Posso preparar o comando; a decisão de reescrever histór
 
 ## 🟡 DECISÕES DE PRODUTO (não são técnicas)
 
-### 5. `minSdkVersion = 24` é uma promessa que o app não cumpre
+### ~~5. `minSdkVersion`~~ — ✅ DECIDIDO em 07/09/2026: **26** (Android 8)
+
+> O dono escolheu 26, e não o 30 que eu tinha palpitado — alcance maior, com a
+> tela de aviso do WebView (já implementada) cobrindo quem cair fora. Aplicado
+> em `android/variables.gradle`. ⚠️ Só vale em APK novo.
+
+#### Contexto original
 O app declara suportar Android 7+, mas usa `oklch()` (87×), `color-mix()` (97×),
 aninhamento `&:hover` (18×) e builda com `target: 'esnext'` — tudo Chromium
 111/112+. A Play Store usa o `minSdk` para decidir quem pode instalar, então
@@ -134,7 +140,13 @@ travado quebra igual. **Subir o `minSdk` sozinho não resolve.**
 Já implementado: tela de aviso ("atualize o Android System WebView") no lugar da
 tela branca. Falta **você decidir o `minSdk` real** — meu palpite é 30.
 
-### 6. `freshGameState()` nasce com 1/1 corações
+### ~~6. `freshGameState()` nasce com 1/1 corações~~ — ✅ CORRIGIDO em 07/09/2026
+
+> Passou a derivar do estágio (`getMaxHPForStage('rookie')` — a função já
+> existia no arquivo; nada foi duplicado). O teste que travava o 1/1 agora
+> trava 3/3, pelo mesmo motivo de antes: mudar tem que ser decisão.
+
+#### Contexto original
 Rookie vale 3, mas o estado inicial grava `healthPoints: 1, maxHealthPoints: 1`
 no mount: **quem fecha o app no meio do onboarding volta com 1/3 corações.**
 Sem dano hoje (o onboarding corrige, e a virada não cobra de quem tem 0
@@ -142,7 +154,14 @@ atividades). Recomendação: `getMaxHPForStage('rookie')` nos dois campos.
 Os valores atuais estão **travados por teste** para que mudar seja decisão, não
 acidente. **Achado na rodada 8.**
 
-### 6b. Balanceamento da carga diária — 4 propostas esperando seu sim/não
+### 6b. Balanceamento da carga diária — ✅ ESCOLHIDO em 07/09/2026: **P4**
+
+> O dono escolheu a **P4** (presets de rotina + "Equilibrar minha semana"),
+> que é a recomendação do time e **não mexe em regra nenhuma**. P1–P3 seguem
+> na mesa, para depois de testar a P4 com usuários. **Ainda não implementada** —
+> é feature, não ajuste; precisa de plano próprio.
+
+#### Contexto original
 Vem do **seu teste com usuários** ("nem todo dia consigo fazer as 6 tarefas";
 "tenho preguiça de planejar"; "cadastro mais e sou penalizado"). Diagnóstico
 completo em `product/soulmon-01/balance/carga-diaria.md`.
@@ -168,7 +187,15 @@ mesa: **só os bugs corrigidos podem resolver 60% da queixa 1 e 100% da queixa 3
 streak visível · folga vendável · notificação nova de cobrança · meta que sobe ·
 reduzir o teto de atividades · humor alimentando meta.
 
-### 7. TTL de 365 dias no save
+### ~~7. TTL de 365 dias no save~~ — ✅ DECIDIDO em 07/09/2026: **renova a cada acesso**
+
+> A escrita já renovava; a LEITURA não. Agora renova também na leitura, de
+> forma preguiçosa (metadado de data + limiar de 30 dias), para não pagar uma
+> escrita de KV por leitura. Save gravado antes da mudança renova na primeira
+> leitura. Falha na renovação não derruba a leitura. Cinco testes travam isso,
+> um deles provado vermelho por mutação.
+
+#### Contexto original
 Colide com o guardrail nº 1 do produto ("quem volta encontra saudade, não
 fatura"): quem some por mais de um ano perde o save. Precisa de um "sim, é isso
 mesmo" escrito — hoje é efeito colateral, não decisão.

@@ -2797,6 +2797,8 @@ var CORS10 = {
 };
 var SERVER_OWNED_FIELDS = ["accountTier", "credits"];
 var MAX_STATE_BYTES = 5 * 1024 * 1024;
+var SAVE_TTL_SECONDS = 86400 * 365;
+var RENEW_AFTER_SECONDS = 86400 * 30;
 async function onRequestOptions10() {
   return new Response(null, { headers: CORS10 });
 }
@@ -2821,8 +2823,19 @@ async function onRequest4({ request, env }) {
     return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS10 });
   }
   if (request.method === "GET") {
-    const raw = await kv(env).get(saveId);
+    const { value: raw, metadata } = await kv(env).getWithMetadata(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS10 });
+    const gravadoEm = Number(metadata?.t) || 0;
+    if ((Date.now() - gravadoEm) / 1e3 > RENEW_AFTER_SECONDS) {
+      try {
+        await kv(env).put(saveId, raw, {
+          expirationTtl: SAVE_TTL_SECONDS,
+          metadata: { t: Date.now() }
+        });
+      } catch (err) {
+        console.warn("save: renova\xE7\xE3o de TTL falhou, leitura segue", { saveId, err: String(err) });
+      }
+    }
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
     state.accountTier = ent.tier;
@@ -2842,7 +2855,10 @@ async function onRequest4({ request, env }) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
       return Response.json({ error: "State too large" }, { status: 413, headers: CORS10 });
     }
-    await kv(env).put(saveId, serialized, { expirationTtl: 86400 * 365 });
+    await kv(env).put(saveId, serialized, {
+      expirationTtl: SAVE_TTL_SECONDS,
+      metadata: { t: Date.now() }
+    });
     return Response.json({ ok: true }, { headers: CORS10 });
   }
   return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS10 });
@@ -3136,7 +3152,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-oG3hT0/functionsRoutes-0.27571356077866116.mjs
+// ../.wrangler/tmp/pages-H45Hr7/functionsRoutes-0.3532156505781672.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -31,6 +31,28 @@ const SERVER_OWNED_FIELDS = ['accountTier', 'credits'];
  */
 const MAX_STATE_BYTES = 5 * 1024 * 1024;
 
+/**
+ * Prazo do save na nuvem, RENOVADO A CADA ACESSO (decisão do dono, 07/09/2026).
+ *
+ * O prazo existia como efeito colateral de um literal no `put`, e só a ESCRITA
+ * o renovava. Uma leitura não renovava nada: quem abre o app, olha o bicho e
+ * fecha sem gerar escrita ia envelhecendo o próprio save até perdê-lo. Isso
+ * colide de frente com o guardrail nº 1 do produto — "quem volta encontra
+ * saudade, não fatura".
+ *
+ * Agora a LEITURA também renova, mas de forma preguiçosa: renovar a cada GET
+ * custaria uma escrita de KV por leitura. O `put` grava a data em metadata e o
+ * GET só reescreve quando o registro passou de `RENEW_AFTER_SECONDS` — no
+ * máximo uma escrita extra por mês por save, e o prazo nunca chega perto de
+ * vencer para quem usa o app.
+ *
+ * Save sem metadata é save gravado ANTES desta mudança: renova na primeira
+ * leitura, que é exatamente o comportamento desejado para quem estava perto de
+ * expirar.
+ */
+const SAVE_TTL_SECONDS = 86400 * 365;
+const RENEW_AFTER_SECONDS = 86400 * 30;
+
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
@@ -71,8 +93,22 @@ export async function onRequest({ request, env }) {
   }
 
   if (request.method === 'GET') {
-    const raw = await kv(env).get(saveId);
+    const { value: raw, metadata } = await kv(env).getWithMetadata(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS });
+    // Renovação preguiçosa do prazo — ver SAVE_TTL_SECONDS. Falha aqui não
+    // pode derrubar a leitura: o jogador veio buscar o save, e não conseguir
+    // esticar o prazo é um problema de amanhã, não de agora.
+    const gravadoEm = Number(metadata?.t) || 0;
+    if ((Date.now() - gravadoEm) / 1000 > RENEW_AFTER_SECONDS) {
+      try {
+        await kv(env).put(saveId, raw, {
+          expirationTtl: SAVE_TTL_SECONDS,
+          metadata: { t: Date.now() },
+        });
+      } catch (err) {
+        console.warn('save: renovação de TTL falhou, leitura segue', { saveId, err: String(err) });
+      }
+    }
     const state = JSON.parse(raw);
     // Sobrepõe com a verdade do servidor — o que estiver gravado no save é
     // apenas um espelho e pode estar desatualizado (ou ter sido forjado).
@@ -99,7 +135,10 @@ export async function onRequest({ request, env }) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });
       return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
     }
-    await kv(env).put(saveId, serialized, { expirationTtl: 86400 * 365 });
+    await kv(env).put(saveId, serialized, {
+      expirationTtl: SAVE_TTL_SECONDS,
+      metadata: { t: Date.now() },
+    });
     return Response.json({ ok: true }, { headers: CORS });
   }
 
