@@ -171,8 +171,8 @@ function montar(
 
 /** Nome do cache estatico atual, lido do proprio arquivo (segue o bump). */
 const VERSAO = fonteSw.match(/const CACHE_VERSION = '([^']+)'/)?.[1] ?? '';
-const STATIC = `digiapp-static-${VERSAO}`;
-const RUNTIME = `digiapp-runtime-${VERSAO}`;
+const STATIC = `soulmon-static-${VERSAO}`;
+const RUNTIME = `soulmon-runtime-${VERSAO}`;
 
 describe('0. AUTOVERIFICACAO do ambiente falso', () => {
   it('a versao foi lida e o caminho feliz grava no cache', async () => {
@@ -262,7 +262,10 @@ describe('4. o que ja estava CERTO continua certo (nao regredir ao consertar)', 
 
 describe('5. a limpeza de cache velho e melhor-esforco — o claim nao e', () => {
   it('apaga as versoes anteriores e assume o controle', async () => {
-    const amb = montar({}, ['digiapp-static-v1', 'digiapp-runtime-v1', STATIC, 'outro-app-cache']);
+    // Os dois prefixos entram: os caches `digiapp-*` existem no navegador de
+    // quem abriu uma versão anterior ao rename de 07/09/2026, e só esta
+    // limpeza os alcança. `outro-app-cache` é de outra origem e fica.
+    const amb = montar({}, ['digiapp-static-v1', 'soulmon-runtime-v1', STATIC, 'outro-app-cache']);
     await amb.ativar();
     expect([...amb.todosOsCaches().keys()]).toEqual([STATIC, 'outro-app-cache']);
     expect(amb.claims).toBe(1);
@@ -274,11 +277,11 @@ describe('5. a limpeza de cache velho e melhor-esforco — o claim nao e', () =>
     // controle ate um recarregamento — o oposto exato do que o par
     // skipWaiting/claim existe para garantir. Falha de `caches.delete` nao e
     // hipotetica: cache em uso, quota estourada, storage em modo estrito.
-    const amb = montar({}, ['digiapp-static-v1', 'digiapp-runtime-v1', STATIC], 'digiapp-static-v1');
+    const amb = montar({}, ['digiapp-static-v1', 'soulmon-runtime-v1', STATIC], 'digiapp-static-v1');
     await amb.ativar();
     // a que falhou continua la; a outra foi apagada assim mesmo
     expect(amb.todosOsCaches().has('digiapp-static-v1')).toBe(true);
-    expect(amb.todosOsCaches().has('digiapp-runtime-v1')).toBe(false);
+    expect(amb.todosOsCaches().has('soulmon-runtime-v1')).toBe(false);
     expect(amb.claims, 'o claim tem que acontecer mesmo com a limpeza falhando').toBe(1);
   });
 });

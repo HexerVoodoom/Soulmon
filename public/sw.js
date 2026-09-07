@@ -1,8 +1,8 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v102';
-const STATIC_CACHE = `digiapp-static-${CACHE_VERSION}`;
-const RUNTIME_CACHE = `digiapp-runtime-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v103';
+const STATIC_CACHE = `soulmon-static-${CACHE_VERSION}`;
+const RUNTIME_CACHE = `soulmon-runtime-${CACHE_VERSION}`;
 
 // Core shell — always cache on install
 const PRECACHE_URLS = [
@@ -47,7 +47,12 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => k.startsWith('digiapp-') && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
+          // O prefixo antigo (`digiapp-`) continua na varredura DE PROPÓSITO:
+          // os caches com o nome velho existem no navegador de quem abriu uma
+          // versão anterior, e só esta limpeza os alcança. Tirá-lo da lista
+          // deixaria lixo permanente na origem — a única coisa que o rename de
+          // 07/09/2026 poderia quebrar, e ela fica coberta.
+          .filter((k) => (k.startsWith('soulmon-') || k.startsWith('digiapp-')) && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
           // `.catch` por chave: se UMA delecao falhar (cache em uso, quota,
           // storage em modo estrito), o `Promise.all` rejeitaria e o
           // `self.clients.claim()` abaixo — que esta no `.then` — nunca

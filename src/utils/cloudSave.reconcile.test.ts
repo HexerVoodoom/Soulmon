@@ -87,18 +87,18 @@ function servidor(nuvem: Record<string, unknown> = {}) {
 
 describe('quem nunca logou: UUID local + login → migra para a chave derivada', () => {
   it('reaponta o SAVE_ID para emailToSaveId e NÃO fica com o UUID', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     servidor();
 
     const r = await reconcileSaveId(EMAIL, { gamePoints: 7 });
 
     expect(r.estado).toBe('migrado');
-    expect(memoria.get('digiapp-save-id')).toBe(await emailToSaveId(EMAIL));
-    expect(memoria.get('digiapp-save-id')).not.toBe(UUID_ANTIGO);
+    expect(memoria.get('soulmon-save-id')).toBe(await emailToSaveId(EMAIL));
+    expect(memoria.get('soulmon-save-id')).not.toBe(UUID_ANTIGO);
   });
 
   it('SOBE o estado que a pessoa já tinha, sob a chave nova — progresso não some', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     const { posts } = servidor();
 
     await reconcileSaveId(EMAIL, { gamePoints: 7, evolutionStage: 'champion' });
@@ -109,17 +109,17 @@ describe('quem nunca logou: UUID local + login → migra para a chave derivada',
   });
 
   it('grava o e-mail e guarda o id anterior — a chave antiga não é apagada', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     servidor();
 
     await reconcileSaveId(EMAIL, { gamePoints: 7 });
 
-    expect(memoria.get('digiapp-user-email')).toBe(EMAIL);
+    expect(memoria.get('soulmon-user-email')).toBe(EMAIL);
     expect(memoria.get(RECONCILE_KEYS.PREVIOUS_SAVE_ID)).toBe(UUID_ANTIGO);
   });
 
   it('o resultado nomeia o id anterior, para o app poder registrar/diagnosticar', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     servidor();
     const r = await reconcileSaveId(EMAIL, {});
     expect(r).toMatchObject({ estado: 'migrado', anterior: UUID_ANTIGO });
@@ -130,20 +130,20 @@ describe('quem nunca logou: UUID local + login → migra para a chave derivada',
 
 describe('conflito: chave derivada JÁ ocupada + estado local sob o UUID', () => {
   it('adota o save da NUVEM (o outro aparelho não pode ser destruído)', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
-    memoria.set('digiapp_state_v3', JSON.stringify({ gamePoints: 1 }));
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
+    memoria.set('soulmon_state_v1', JSON.stringify({ gamePoints: 1 }));
     const derivado = await emailToSaveId(EMAIL);
     servidor({ [derivado]: { gamePoints: 500, evolutionStage: 'ultra' } });
 
     const r = await reconcileSaveId(EMAIL, { gamePoints: 1 });
 
     expect(r.estado).toBe('adotado');
-    expect(JSON.parse(memoria.get('digiapp_state_v3')!)).toMatchObject({ gamePoints: 500 });
-    expect(memoria.get('digiapp-save-id')).toBe(derivado);
+    expect(JSON.parse(memoria.get('soulmon_state_v1')!)).toMatchObject({ gamePoints: 500 });
+    expect(memoria.get('soulmon-save-id')).toBe(derivado);
   });
 
   it('NÃO sobrescreve a nuvem com o estado local — nenhum POST na adoção', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     const derivado = await emailToSaveId(EMAIL);
     const { posts } = servidor({ [derivado]: { gamePoints: 500 } });
 
@@ -153,7 +153,7 @@ describe('conflito: chave derivada JÁ ocupada + estado local sob o UUID', () =>
   });
 
   it('GUARDA o estado local antes de trocar — nada é perdido em nenhum caminho', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     const derivado = await emailToSaveId(EMAIL);
     servidor({ [derivado]: { gamePoints: 500 } });
 
@@ -170,7 +170,7 @@ describe('conflito: chave derivada JÁ ocupada + estado local sob o UUID', () =>
 describe('quem já está logado hoje NÃO pode ser mexido', () => {
   it('SAVE_ID já derivado → sem-mudanca, sem rede, sem reescrita', async () => {
     const derivado = await emailToSaveId(EMAIL);
-    memoria.set('digiapp-save-id', derivado);
+    memoria.set('soulmon-save-id', derivado);
     const chamadas: string[] = [];
     vi.stubGlobal('fetch', async (url: string) => { chamadas.push(url); return Response.json({ found: false }); });
 
@@ -182,7 +182,7 @@ describe('quem já está logado hoje NÃO pode ser mexido', () => {
   });
 
   it('caixa e espaços no e-mail não fazem o alinhado parecer desalinhado', async () => {
-    memoria.set('digiapp-save-id', await emailToSaveId(EMAIL));
+    memoria.set('soulmon-save-id', await emailToSaveId(EMAIL));
     vi.stubGlobal('fetch', async () => { throw new Error('não deveria ir à rede'); });
     expect((await reconcileSaveId('  Jogadora@Exemplo.COM ', {})).estado).toBe('sem-mudanca');
   });
@@ -192,19 +192,19 @@ describe('quem já está logado hoje NÃO pode ser mexido', () => {
 
 describe('degradação — nunca deixar o app apontado para um save que não existe', () => {
   it('e-mail vazio não move nada', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     vi.stubGlobal('fetch', async () => { throw new Error('não deveria ir à rede'); });
     expect((await reconcileSaveId('   ', {})).estado).toBe('sem-email');
-    expect(memoria.get('digiapp-save-id')).toBe(UUID_ANTIGO);
+    expect(memoria.get('soulmon-save-id')).toBe(UUID_ANTIGO);
   });
 
   it('storage recusando a gravação: a IDENTIDADE não troca (dado antes de id)', async () => {
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     servidor();
     vi.stubGlobal('localStorage', {
       getItem: (k: string) => memoria.get(k) ?? null,
       setItem: (k: string, v: string) => {
-        if (k === 'digiapp-save-id') throw new DOMException('cheio', 'QuotaExceededError');
+        if (k === 'soulmon-save-id') throw new DOMException('cheio', 'QuotaExceededError');
         memoria.set(k, v);
       },
       removeItem: (k: string) => { memoria.delete(k); },
@@ -213,13 +213,13 @@ describe('degradação — nunca deixar o app apontado para um save que não exi
     const r = await reconcileSaveId(EMAIL, { gamePoints: 7 });
 
     expect(r.estado).toBe('storage');
-    expect(memoria.get('digiapp-save-id')).toBe(UUID_ANTIGO);
+    expect(memoria.get('soulmon-save-id')).toBe(UUID_ANTIGO);
   });
 
   it('nuvem fora do ar na LEITURA não migra às cegas — 500 não é "chave vazia"', async () => {
     // Tratar 500 como "não existe save lá" faria o cliente SOBRESCREVER o save
     // do outro aparelho assim que a rede voltasse. Dúvida não migra.
-    memoria.set('digiapp-save-id', UUID_ANTIGO);
+    memoria.set('soulmon-save-id', UUID_ANTIGO);
     const posts: unknown[] = [];
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
       if (init?.method === 'POST') { posts.push(url); return Response.json({ ok: true }); }
@@ -229,7 +229,7 @@ describe('degradação — nunca deixar o app apontado para um save que não exi
     const r = await reconcileSaveId(EMAIL, { gamePoints: 7 });
 
     expect(r.estado).toBe('indeterminado');
-    expect(memoria.get('digiapp-save-id')).toBe(UUID_ANTIGO);
+    expect(memoria.get('soulmon-save-id')).toBe(UUID_ANTIGO);
     expect(posts).toHaveLength(0);
   });
 });

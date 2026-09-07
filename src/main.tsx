@@ -13,6 +13,13 @@
   import { ErrorBoundary } from './components/ErrorBoundary';
   import { GameStateProvider } from './contexts/GameStateContext';
   import { ThemeProvider } from './contexts/ThemeContext';
+  import { migrateLegacyStorageKeys } from './utils/storageKeys';
+
+  // ANTES de montar qualquer provider: o `GameStateProvider` lê o save no
+  // inicializador do próprio estado, então uma migração que rodasse depois
+  // chegaria tarde. Copia as chaves `digiapp-*` para os nomes novos, uma vez,
+  // sem apagar nada — ver o cabeçalho de `migrateLegacyStorageKeys`.
+  migrateLegacyStorageKeys();
 
   createRoot(document.getElementById("root")!).render(
     <ErrorBoundary>

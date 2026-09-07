@@ -69,7 +69,7 @@ describe('SoulmonOnboarding — o eco do "porquê" (WP1.9)', () => {
   });
 
   it('o eco existe em português também', () => {
-    localStorage.setItem('digiapp-language', 'pt-BR');
+    localStorage.setItem('soulmon-language', 'pt-BR');
     ateOPorque(true);
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'dormir melhor' } });
     fireEvent.click(screen.getByText('Continuar').closest('button')!);

@@ -113,14 +113,14 @@ describe('cloudSave devolve o resultado TIPADO, não um booleano', () => {
     servidorFixo(200);
     const r = await cloudSave(ID, { healthPoints: 3 });
     expect(r.ok).toBe(true);
-    expect(memoria.get('digiapp-last-cloud-sync')).toBeTruthy();
+    expect(memoria.get('soulmon-last-cloud-sync')).toBeTruthy();
   });
 
   it('403 → identity, status 403, e NENHUM carimbo', async () => {
     servidorFixo(403);
     const r = await cloudSave(ID, { healthPoints: 3 });
     expect(r).toMatchObject({ ok: false, kind: 'identity', status: 403, retentavel: false, avisaJogador: true });
-    expect(memoria.get('digiapp-last-cloud-sync')).toBeUndefined();
+    expect(memoria.get('soulmon-last-cloud-sync')).toBeUndefined();
   });
 
   it('409 → conflict, e o chamador consegue distinguir de 500', async () => {
@@ -138,7 +138,7 @@ describe('cloudSave devolve o resultado TIPADO, não um booleano', () => {
   it('fetch que lança (offline) → offline com status 0, não um 500 inventado', async () => {
     vi.stubGlobal('fetch', async () => { throw new TypeError('Failed to fetch'); });
     expect(await cloudSave(ID, {})).toMatchObject({ ok: false, kind: 'offline', status: 0, retentavel: true });
-    expect(memoria.get('digiapp-last-cloud-sync')).toBeUndefined();
+    expect(memoria.get('soulmon-last-cloud-sync')).toBeUndefined();
   });
 });
 

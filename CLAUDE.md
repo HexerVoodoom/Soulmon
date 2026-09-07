@@ -6,13 +6,13 @@ Electron separado (`desktop/`). UI/textos do app em PT-BR e EN (sempre os dois,
 via `language === 'pt-BR'`).
 
 > O Soulmon nasceu de um **fork do DigiApp** e ainda divide infraestrutura com
-> ele (URL de produção, namespace KV, projeto Firebase). O inventário do que é
-> compartilhado, o risco de cada item e a ordem segura de separar estão em
-> `docs/SEPARACAO-DIGIAPP.md` — leia antes de mexer em qualquer coisa de
-> deploy. É por isso que sobram nomes com "digiapp" pelo código: alguns são
-> herança cosmética, outros (o binding `DIGIAPP_SAVES`, as chaves de
-> localStorage) são mantidos **de propósito**, porque renomear quebraria o
-> save de quem já joga.
+> ele (namespace KV, projeto Firebase). O inventário, o risco de cada item e a
+> ordem segura de separar estão em `docs/SEPARACAO-DIGIAPP.md` — leia antes de
+> mexer em qualquer coisa de deploy.
+> ⚠️ **Este parágrafo dizia que os nomes "digiapp" eram mantidos de propósito
+> "porque renomear quebraria o save de quem já joga".** Ninguém nunca jogou
+> (07/09/2026). As chaves de localStorage já foram renomeadas; o que sobra da
+> herança está sendo removido em fatias.
 
 > **`docs/PLANO-EVOLUCAO.md`** traz o benchmark de agosto/2026 (Habitica, Finch,
 > Catzy, Forest, V-Pet/Vital Bracelet, Pokémon Sleep/GO, Palworld + psicologia do
@@ -191,7 +191,8 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   vermelha. Quando este número importar, meça: `wc -l src/App.tsx`) — orquestra tudo: handlers (feed/pet/shower/sleep),
   efeitos de jogo (dreno de cocô, sono automático, relatório), navegação de páginas.
 - `src/contexts/GameStateContext.tsx` — `GameState` + persistência: todo setGameState
-  grava no localStorage (`digiapp_state_v3`) e agenda cloud save (3s debounce).
+  grava no localStorage (`soulmon_state_v1` — era `digiapp_state_v3` até
+  07/09/2026) e agenda cloud save (3s debounce).
   **Cuidado**: qualquer efeito que grave estado em timer vira spam de cloud save —
   throttle (ex.: relógio do cocô dormindo só grava a cada ≥5min).
 - Cloud save: `src/utils/cloudSave.ts` → `functions/api/save.js` (Cloudflare KV
@@ -207,6 +208,15 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
 - `src/components/CompanionHUD.tsx` — área do pet: sprites, gesto de esfregar,
   falas (idle a cada 3min chama `/api/chat` — Groq; TEM guard de `document.hidden`).
 - `src/utils/storageKeys.ts` — TODAS as chaves de localStorage passam por aqui.
+  ⚠️ **O prefixo é `soulmon-` desde 07/09/2026** (era `digiapp-`, e este arquivo
+  dizia que era mantido de propósito "porque renomear faria os usuários atuais
+  perderem o progresso local" — não havia usuários atuais). `migrateLegacyStorageKeys`
+  roda no `main.tsx` ANTES dos providers, porque o `GameStateProvider` lê o save
+  no inicializador do próprio estado: ela **copia** (não move), **nunca
+  sobrescreve** a chave nova e passa por `safeStorage`. Existe só pelo save do
+  DONO, e pode ser apagada quando ele confirmar que abriu o app depois desta
+  versão. O `sw.js` continua varrendo os DOIS prefixos na limpeza de cache —
+  tirar o antigo deixaria lixo permanente na origem.
 - IA: `functions/api/chat.js` (Groq llama-3.1-8b-instant, personalidade via aiSettings).
 - Push: **dois canais**, mesma KV (`PUSH_SUBSCRIPTIONS`), mesmo cron
   (`workers/push-scheduler.js`, deploy manual via `wrangler deploy` dentro de
@@ -319,7 +329,7 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   decide nada de regra (não tem constante de teto, não reimplementa a janela de
   1h; há teste travando). Guarda `careCaps` no GameState, higieniza o que vem da
   nuvem e faz a migração idempotente das chaves antigas
-  (`digiapp-food-feed-times`/`digiapp-rub-heal-day`), que são apagadas no load.
+  (`soulmon-food-feed-times`/`soulmon-rub-heal-day`), que são apagadas no load.
   Ver a linha 🧮 da tabela de regras.
 - **Dinheiro** (`functions/api/_entitlements.js` + `_billing.js`): o cliente
   nunca decide tier/créditos, e **um comprovante de compra vale para uma conta

@@ -50,7 +50,7 @@ describe('cloudLoad trata rede instável sem derrubar o app', () => {
 describe('[BUG] cloudSave declara sucesso mesmo quando o servidor recusa', () => {
   // `cloudSave` só protege contra exceção do `fetch`. Uma resposta 401/403/500
   // é um Response normal — o `await` resolve, nada lança, e a linha seguinte
-  // grava `digiapp-last-cloud-sync = agora`. O app então mostra "sincronizado
+  // grava `soulmon-last-cloud-sync = agora`. O app então mostra "sincronizado
   // agora" para um save que o servidor JOGOU FORA.
   //
   // Cenários concretos, ambos previstos no docs/STATUS.md §3:
@@ -64,24 +64,24 @@ describe('[BUG] cloudSave declara sucesso mesmo quando o servidor recusa', () =>
   it('403 do servidor não pode virar carimbo de sincronização', async () => {
     vi.stubGlobal('fetch', async () => Response.json({ error: 'forbidden' }, { status: 403 }));
     await cloudSave('a'.repeat(32), { healthPoints: 3 });
-    expect(memoria.get('digiapp-last-cloud-sync')).toBeUndefined();
+    expect(memoria.get('soulmon-last-cloud-sync')).toBeUndefined();
   });
 
   it('500 do servidor não pode virar carimbo de sincronização', async () => {
     vi.stubGlobal('fetch', async () => Response.json({ error: 'kv down' }, { status: 500 }));
     await cloudSave('a'.repeat(32), { healthPoints: 3 });
-    expect(memoria.get('digiapp-last-cloud-sync')).toBeUndefined();
+    expect(memoria.get('soulmon-last-cloud-sync')).toBeUndefined();
   });
 
   it('200 legítimo continua carimbando (não regredir para o outro extremo)', async () => {
     vi.stubGlobal('fetch', async () => Response.json({ ok: true }));
     await cloudSave('a'.repeat(32), { healthPoints: 3 });
-    expect(memoria.get('digiapp-last-cloud-sync')).toBeTruthy();
+    expect(memoria.get('soulmon-last-cloud-sync')).toBeTruthy();
   });
 
   it('offline (fetch lança) não carimba — este já está correto hoje', async () => {
     vi.stubGlobal('fetch', async () => { throw new TypeError('Failed to fetch'); });
     await cloudSave('a'.repeat(32), { healthPoints: 3 });
-    expect(memoria.get('digiapp-last-cloud-sync')).toBeUndefined();
+    expect(memoria.get('soulmon-last-cloud-sync')).toBeUndefined();
   });
 });
