@@ -19,3 +19,20 @@ state/
 .env
 .env.*
 !.env.example
+# EXCECAO de 07/09/2026 — `.env.production` E versionado, de proposito.
+#
+# O push na `main` dispara um build automatico da Cloudflare, e esse build NAO
+# tem o `.env` local (ele e ignorado aqui). Resultado medido: cada `wrangler
+# deploy` manual era sobrescrito ~1 minuto depois por um build sem as
+# `VITE_FIREBASE_*`, e o login de producao morria EM SILENCIO — sem erro, sem
+# alarme, so a tela de conta sumindo.
+#
+# Por que da para versionar: a config web do Firebase e PUBLICA por desenho —
+# o Vite a inlina no bundle que todo visitante baixa. Ela identifica o projeto
+# e nao autoriza nada; quem autoriza e o `FIREBASE_PROJECT_ID` do servidor,
+# que continua fora daqui. Ver o cabecalho do `.env.example`.
+#
+# Mesma licao do `FIREBASE_PROJECT_ID`: estado que mora so no painel some sem
+# avisar. No arquivo, todo build — CI, contribuidor, esta maquina — produz um
+# bundle que funciona.
+!.env.production
