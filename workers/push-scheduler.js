@@ -24,7 +24,14 @@ import { getFcmAccessToken, sendFcmPush } from './fcm.js';
 import { pushCopy } from '../functions/api/_pushCopy.js';
 
 const VAPID_PUBLIC_KEY = 'BK2MsJZtN6ancQBtKZYLFxe_avXfIPqRs28szlgRXJGfQcJlrd4wtBhzMr6t2zPvz7HUeJv-jpleDaNfmRZIlXY';
-const CONTACT = 'mailto:contact@digiapp.app';
+// Endereço de contato do VAPID (RFC 8292 `sub`): é para onde o SERVIÇO DE
+// PUSH escreve quando há problema de entrega — nunca aparece para o usuário.
+// Era `contact@digiapp.app`, endereço de outro projeto: um aviso de entrega
+// quebrada chegaria a quem não pode consertar. Decisão do dono em 07/09/2026.
+// Trocar por um endereço do domínio do Soulmon quando ele existir; o campo é
+// de CONTATO, não de autenticação, então a troca não invalida subscription
+// nenhuma.
+const CONTACT = 'mailto:mateus.sprnd@gmail.com';
 
 // Drains every key under `prefix`, running `handle(sub, name)` for each —
 // `handle` returns 'sent' | 'failed' | 'removed' (and deletes the KV entry

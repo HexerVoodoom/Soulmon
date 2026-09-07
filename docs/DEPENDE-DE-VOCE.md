@@ -149,7 +149,7 @@ equivalentes.**
 | 13 | `VITE_FIREBASE_*` no projeto Pages (e o `FIREBASE_PROJECT_ID` **por último**) | login |
 | 14 | Conta Steamworks + US$ 100 · **App ID e Depot ID** | cliente Steam |
 | 15 | `STEAM_PUBLISHER_KEY` e `STEAM_APP_ID` | microtransação Steam |
-| 16 | E-mail de contato do VAPID — hoje é `contact@digiapp.app`, que você não controla | push |
+| ~~16~~ | ~~E-mail de contato do VAPID~~ — **decidido em 07/09/2026**: `mateus.sprnd@gmail.com`, já no código. Só falta o `wrangler deploy` dentro de `workers/` | push |
 | 17 | `ASSETLINKS_PACKAGE_NAME` e `ASSETLINKS_SHA256` (fingerprint sai do Play Console) | deep links |
 
 ---

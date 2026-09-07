@@ -54,9 +54,24 @@ Hoje `DIGIAPP_SAVES` aponta para o namespace `aed229e069fd40d8a141fb1124763d9d`,
 o mesmo do DigiApp. O salt `soulmon:` já garante que as **chaves** não colidem,
 mas os dados moram no mesmo lugar.
 
-1. Cloudflare → **Workers & Pages → KV** → criar `SOULMON_SAVES`.
+> ### ✅ Decidido em 07/09/2026: **namespace NOVO e VAZIO**
+>
+> O dono escolheu criar um `SOULMON_SAVES` limpo, sem migrar dado nenhum. O
+> que torna isso seguro é o fato registrado no topo do `CLAUDE.md`: **ninguém
+> nunca usou o app em produção**, então não existe save de terceiro para
+> perder. O save do próprio dono, se houver, reaparece ao logar com o mesmo
+> e-mail (o `saveId` é derivado do e-mail, não do aparelho) — e se ele
+> preferir garantir antes, o caminho é um script de cópia, não a manutenção
+> do namespace compartilhado.
+>
+> **O que isso deixa de exigir:** nada de janela de manutenção, nada de
+> sincronizar merge com clique no painel. O `kv(env)` aceita os dois nomes.
+
+1. Cloudflare → **Workers & Pages → KV** → criar `SOULMON_SAVES` (namespace
+   novo, vazio).
 2. No projeto Pages: **Settings → Functions → KV namespace bindings** →
-   vincular o namespace novo ao nome `DIGIAPP_SAVES`.
+   vincular o namespace novo ao nome **`SOULMON_SAVES`** (o nome novo — o
+   `_kv.js` o prefere; o binding antigo pode ficar durante a transição).
 
 > ⚠️ **Este parágrafo dizia para manter o nome `DIGIAPP_SAVES`** porque trocá-lo
 > "exigiria alterar todos os arquivos em `functions/api/` **e** acertar o
@@ -136,10 +151,11 @@ responde exatamente como respondia antes.
 
 ### 7. Sobras que precisam de decisão sua
 
-- `workers/push-scheduler.js` → `CONTACT = 'mailto:contact@digiapp.app'`. É o
-  endereço de contato do VAPID, enviado aos serviços de push. Não troquei porque
-  precisa ser um endereço que você controle de verdade — inventar um é pior que
-  manter o antigo.
+- ✅ `workers/push-scheduler.js` → `CONTACT`. **Decidido em 07/09/2026:**
+  `mailto:mateus.sprnd@gmail.com`. O item ficou aberto por meses com a
+  justificativa "precisa ser um endereço que você controle" — e a resposta era
+  o e-mail do dono, que sempre esteve disponível. Fica pendente só o
+  `wrangler deploy` dentro de `workers/`.
 - `wrangler.jsonc` diz `"name": "soulmon"`, mas `capacitor.config.json` aponta o
   APK para `digiapp-a5e.pages.dev`. Ou já existe um projeto Pages `soulmon` (e aí
   falta só o passo 3 abaixo), ou o nome do wrangler está adiantado. **Confira no

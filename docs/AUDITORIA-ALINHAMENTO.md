@@ -188,3 +188,23 @@ apareceram no caminho, e nenhum estava na lista:
 
 O binding aceita os DOIS nomes (`kv(env)`), então a ordem entre mergear e
 clicar no painel não importa e não existe janela de queda.
+
+## Decisões do dono, 07/09/2026 (fecham achados desta auditoria)
+
+Perguntadas em modal ao fim da sessão, e registradas aqui para ninguém
+reabri-las por conta própria:
+
+- **Achado 9 (a aura da D4) fica SUTIL, como está.** A auditoria dizia que ela
+  é evidente de menos para ser régua de nada — o dono decidiu que esse é o
+  ponto. A aura é reconhecimento, não placar: quanto mais ela pesa, mais
+  perdê-la dói, e a tese do produto é que nada aqui pode doer ao ser perdido.
+  **Sutil demais erra pouco; chamativa demais vira o medidor de desempenho que
+  o produto inteiro existe para evitar.** Não subir sem pedido explícito.
+- **VAPID:** `mailto:mateus.sprnd@gmail.com`, já no código. Falta só o
+  `wrangler deploy` dentro de `workers/`.
+- **Namespace KV:** novo e vazio, sem migração (ver `SEPARACAO-DIGIAPP.md`).
+- **Próximo foco: continuar melhorando o produto**, não preparar o lançamento.
+  Registrado com a ressalva que o dono ouviu e decidiu contra: mais polimento
+  sem usuário é mais hipótese não confrontada, e a curva D1/D7/D30 segue sendo
+  chute. A decisão é dele; o que este parágrafo evita é a próxima sessão
+  reabrir o argumento como se fosse novidade.
