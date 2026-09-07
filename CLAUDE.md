@@ -201,6 +201,24 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   Firebase Console → Configurações do projeto → Contas de serviço). Exige
   `android/app/google-services.json` (commitado; API key restrita por pacote,
   não é segredo) e canal `digiapp_push` criado em `MainActivity.java`.
+  ⚠️ **Os dois canais compartilham a TAG da copy, e é ela que impede a
+  duplicata** (06/09/2026): o `AlarmReceiver.kt` notificava por
+  `id.hashCode()` e o `workers/fcm.js` por `android.notification.tag` — tag ≠
+  id, então o Android tratava as duas como notificações diferentes e o mesmo
+  aviso chegava DUAS vezes no mesmo aparelho, às 10h, 16h e 22h. Hoje o
+  receiver usa `notify(tag, 0, …)` com a tag vinda do `id` que o cliente passa
+  (que É a tag da copy), casando com o padrão do FCM: a segunda a chegar
+  substitui a primeira. O dedupe do WP3.4 (`isNativePlatform()` antes do poll
+  web) matou a TERCEIRA cópia; esta era a segunda.
+  ⚠️ **A copy das 20h mora em `_pushCopy.js`** (`eveningCopy`), não no
+  `NotificationManager.tsx`. Ela era inline no componente e por isso sobreviveu
+  inteira ao WP3.4 — o teste de paridade compara as horas de `PUSH_HOURS_BRT`
+  e não existe hora 20 para comparar. Só o TEXTO veio; a CONDIÇÃO continua no
+  cliente, porque o worker não sabe se a meta do dia foi cumprida. **E ela cede
+  a vez quando há janela de descanso**: com a janela padrão (23:00) a noite
+  mandava três pushes em 2h30 — 20h pedindo execução, 22h "boa noite" e 22h30
+  o lembrete de deitar —, e o das 22h afirmava que o pet já tinha dormido meia
+  hora ANTES do lembrete. O título das 22h também parou de alegar horário.
   **Histórico:** o FCM já foi implementado e depois revertido uma vez (commit
   `056a6b06`) com a tese de que o Web Push sozinho já é entregue de forma
   confiável mesmo com o app fechado (o WebView delega ao FCM por baixo dos

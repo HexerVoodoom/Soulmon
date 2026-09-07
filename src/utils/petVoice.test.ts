@@ -102,3 +102,36 @@ describe('WP3.10 — o traço de nascimento na voz', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// A FALA DO DIA RUIM (auditoria de 06/09/2026).
+//
+// O `CompanionHUD` tinha duas escadas de `pick()` inline com as frases de HP
+// baixo e de ócio — fora do alcance deste arquivo e, portanto, fora do teste
+// de palavras de cobrança que existe logo acima. A pior delas era
+// `'HP baixo...'`: a criatura-alma da pessoa anunciando o próprio dano com o
+// nome da variável, no dia em que a pessoa não conseguiu cuidar de si.
+// ---------------------------------------------------------------------------
+describe('a fala de HP baixo vira a atenção para a pessoa', () => {
+  it('nenhuma frase lê o medidor em voz alta', () => {
+    const todas = [...PET_VOICE_LINES.lowHp.pt, ...PET_VOICE_LINES.lowHp.en];
+    for (const f of todas) {
+      expect(f).not.toMatch(/\bHP\b/i);
+      expect(f).not.toMatch(/coraç|heart|energia|energy|barra|bar\b/i);
+    }
+  });
+
+  it('pelo menos uma pergunta pela PESSOA, não pelo pet', () => {
+    const pt = PET_VOICE_LINES.lowHp.pt.join(' ');
+    const en = PET_VOICE_LINES.lowHp.en.join(' ');
+    expect(pt).toMatch(/VOCÊ|você/);
+    expect(en).toMatch(/YOU|you/);
+  });
+
+  it('o ócio convida, nunca lista o que falta', () => {
+    const todas = [...PET_VOICE_LINES.idle.pt, ...PET_VOICE_LINES.idle.en];
+    for (const f of todas) {
+      expect(f).not.toMatch(/tarefa|task|falta|left|complet/i);
+    }
+  });
+});

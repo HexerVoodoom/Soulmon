@@ -21,7 +21,7 @@
 // (`speakRaw()` preserva, e é para "+1⚡", não para frase).
 // ---------------------------------------------------------------------------
 
-export type PetVoiceKind = 'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare';
+export type PetVoiceKind = 'task' | 'haunted' | 'rub' | 'shower' | 'milestone' | 'cheer' | 'rare' | 'lowHp' | 'idle';
 
 /**
  * WP2.14 — a taxa da fala rara. ~5% das conclusões.
@@ -64,6 +64,30 @@ export const PET_VOICE_LINES: Record<PetVoiceKind, VoiceLines> = {
       'That one was heavy. Now it is just past.',
       'It got lighter in here. Probably out there too.',
     ],
+  },
+  /**
+   * HP BAIXO — e este é o kind mais importante do arquivo.
+   *
+   * ⚠️ O `CompanionHUD` dizia `'Não me sinto bem...'`, `'Preciso de
+   * cuidados!'` e **`'HP baixo...'`** — a criatura-alma da pessoa anunciando o
+   * próprio dano com o NOME DA VARIÁVEL, no exato dia em que a pessoa não
+   * conseguiu cuidar de si. Isso converte culpa (reparável, motiva ação) em
+   * vergonha (é sobre o self, motiva fuga — desinstalar).
+   *
+   * As frases viraram estas em 06/09/2026, e a régua é: **a atenção vira para
+   * a PESSOA**, não para o medidor. O gatilho de cuidado continua o mesmo — o
+   * pet quer companhia —, e o teste de palavras de cobrança que já varre este
+   * arquivo passa a alcançá-las, o que era impossível enquanto viviam numa
+   * escada de `pick()` dentro do componente.
+   */
+  lowHp: {
+    pt: ['Tô com saudade. Como VOCÊ está?', 'Senta aqui comigo um pouquinho?', 'Só queria te ver hoje.'],
+    en: ['I miss you. How are YOU doing?', 'Sit here with me a bit?', 'I just wanted to see you today.'],
+  },
+  /** O ócio de barriga cheia: convite, nunca lista do que falta. */
+  idle: {
+    pt: ['Que bom que você veio.', 'Como foi seu dia até agora?', 'Tô aqui, no meu canto.'],
+    en: ['Glad you came by.', 'How has your day been?', 'I am here, in my corner.'],
   },
   rub: {
     pt: ['Ahh, isso é bom...', 'Fica mais um pouquinho?', 'Eu gosto de quando você aparece.'],
@@ -119,7 +143,31 @@ const TRAIT_LINES: Partial<Record<string, Partial<Record<PetVoiceKind, VoiceLine
     },
   },
   carinhoso: {
-    rub: {
+    /**
+   * HP BAIXO — e este é o kind mais importante do arquivo.
+   *
+   * ⚠️ O `CompanionHUD` dizia `'Não me sinto bem...'`, `'Preciso de
+   * cuidados!'` e **`'HP baixo...'`** — a criatura-alma da pessoa anunciando o
+   * próprio dano com o NOME DA VARIÁVEL, no exato dia em que a pessoa não
+   * conseguiu cuidar de si. Isso converte culpa (reparável, motiva ação) em
+   * vergonha (é sobre o self, motiva fuga — desinstalar).
+   *
+   * As frases viraram estas em 06/09/2026, e a régua é: **a atenção vira para
+   * a PESSOA**, não para o medidor. O gatilho de cuidado continua o mesmo — o
+   * pet quer companhia —, e o teste de palavras de cobrança que já varre este
+   * arquivo passa a alcançá-las, o que era impossível enquanto viviam numa
+   * escada de `pick()` dentro do componente.
+   */
+  lowHp: {
+    pt: ['Tô com saudade. Como VOCÊ está?', 'Senta aqui comigo um pouquinho?', 'Só queria te ver hoje.'],
+    en: ['I miss you. How are YOU doing?', 'Sit here with me a bit?', 'I just wanted to see you today.'],
+  },
+  /** O ócio de barriga cheia: convite, nunca lista do que falta. */
+  idle: {
+    pt: ['Que bom que você veio.', 'Como foi seu dia até agora?', 'Tô aqui, no meu canto.'],
+    en: ['Glad you came by.', 'How has your day been?', 'I am here, in my corner.'],
+  },
+  rub: {
       pt: ['Não para, não para…', 'Isso aqui é a melhor parte do dia.'],
       en: ['Do not stop, do not stop…', 'This is the best part of the day.'],
     },

@@ -5,7 +5,7 @@ import { DigiAlarm } from '../plugins/DigiAlarmPlugin';
 // WP3.4 — dono único do texto e do horário das notificações agendadas. Este
 // import é a fronteira que faltava: as três árvores (cliente, worker, cron)
 // passam a ler a MESMA função. Ver o cabeçalho de `_pushCopy.js`.
-import { pushCopy, sleepReminderCopy } from '../../functions/api/_pushCopy.js';
+import { pushCopy, sleepReminderCopy, eveningCopy } from '../../functions/api/_pushCopy.js';
 import { sleepReminderAt } from '../utils/restWindow';
 import {
   checkAndShowNotifications, showNotification, subscribeToPush, syncActivityAlarms, syncTaskAlarms,
@@ -143,32 +143,22 @@ export function NotificationManager({
 
       const ispt = language === 'pt-BR';
       const hpBaixo = healthPoints <= 1 && healthPoints > 0;
-      lastEveningWarnDate.current = today;
 
-      if (hpBaixo) {
-        showNotification(
-          ispt ? `${petName} está meio pra baixo` : `${petName} is a bit low`,
-          {
-            body: ispt
-              ? 'Se der, marque o que você já fez hoje. Se não der, amanhã seu Soulmon ainda vai estar aqui.'
-              : "If you can, log what you did today. If not, it'll still be here tomorrow.",
-            tag: 'hp-critical-evening',
-          },
-        );
-      } else {
-        // Diz O QUE fazer, e diz a regra de verdade: energia cheia é condição
-        // do dia perfeito, e energia só enche comendo. Sem isso o lembrete
-        // manda "abra o app" sem dizer para quê.
-        showNotification(
-          ispt ? `🌙 ${petName} está te esperando` : `🌙 ${petName} is waiting for you`,
-          {
-            body: ispt
-              ? 'Marque o que você fez hoje e dê uma comidinha pro seu Soulmon — energia cheia fecha o dia perfeito.'
-              : 'Log what you did today and feed it — a full energy bar completes a perfect day.',
-            tag: 'evening-reminder',
-          },
-        );
-      }
+      /* ⚠️ O lembrete de DEITAR tem precedência sobre este.
+         Com a janela padrão (23:00) a noite mandava TRÊS pushes em 2h30 —
+         20h "marque o que você fez", 22h "boa noite", 22h30 "é a sua hora
+         também". Push repetido no mesmo intervalo produz habituação, e
+         desligar push é irreversível na prática.
+         Este é o que cede porque é o único dos três que pede EXECUÇÃO, e a
+         faixa noturna é onde o produto já removeu o nudge das 21h pelo mesmo
+         motivo. Quem não configurou janela continua recebendo. */
+      if (restWindow) return;
+
+      lastEveningWarnDate.current = today;
+      // A copy mora no DONO ÚNICO (`_pushCopy.js`). Ela era inline aqui, e foi
+      // assim que sobreviveu inteira ao WP3.4 — footgun 9 em estado puro.
+      const c = eveningCopy(petName, ispt ? 'pt-BR' : 'en-US', hpBaixo);
+      showNotification(c.title, { body: c.body, tag: c.tag });
     }, 60000);
 
     return () => clearInterval(interval);

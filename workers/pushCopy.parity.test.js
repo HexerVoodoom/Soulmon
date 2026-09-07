@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import worker from './push-scheduler.js';
-import { pushCopy, PUSH_HOURS_BRT, PUSH_HOURS_UTC } from '../functions/api/_pushCopy.js';
+import { pushCopy, eveningCopy, PUSH_HOURS_BRT, PUSH_HOURS_UTC } from '../functions/api/_pushCopy.js';
 
 const RAIZ = resolve(__dirname, '..');
 const ler = p => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -292,5 +292,67 @@ describe('a idade vem da inscrição e morre com ela (WP1.17)', () => {
       // Data no futuro (relógio do aparelho errado) também não vira idade.
       expect(ageDaysOf({ bornAt: '2027-01-01' }, agora)).toBeNull();
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A COPY DAS 20h, que sobreviveu inteira ao WP3.4 por morar em outro arquivo.
+//
+// O WP3.4 existe para haver UMA fonte de copy de push, e este teste de
+// paridade compara as horas que `PUSH_HOURS_BRT` declara — 10, 16 e 22. O
+// aviso das 20h é do CLIENTE (a condição depende da meta do dia, que o worker
+// não conhece), vivia inline no `NotificationManager.tsx`, e por isso não
+// existia hora 20 para comparar: o guard não podia vê-lo.
+//
+// É footgun 9 em estado puro — regra que diverge em silêncio por estar num
+// arquivo que ninguém compara. A condição segue no cliente; o TEXTO veio para
+// cá, e este teste garante que ele não volte.
+// ---------------------------------------------------------------------------
+describe('o aviso das 20h tem dono único', () => {
+  const manager = readFileSync('src/components/NotificationManager.tsx', 'utf8');
+
+  it('o cliente IMPORTA a copy em vez de escrevê-la', () => {
+    expect(manager).toMatch(/import \{[^}]*eveningCopy[^}]*\} from '\.\.\/\.\.\/functions\/api\/_pushCopy\.js'/);
+  });
+
+  it('nenhuma das duas frases das 20h existe no componente', () => {
+    expect(manager).not.toContain('está te esperando');
+    expect(manager).not.toContain('is waiting for you');
+    expect(manager).not.toContain('está meio pra baixo');
+    expect(manager).not.toContain('energia cheia fecha o dia perfeito');
+  });
+
+  it('as duas variantes existem nos dois idiomas', () => {
+    for (const lang of ['pt-BR', 'en-US']) {
+      for (const hpBaixo of [true, false]) {
+        const c = eveningCopy('Pixel', lang, hpBaixo);
+        expect(c.title).toBeTruthy();
+        expect(c.body).toBeTruthy();
+        expect(c.tag).toBeTruthy();
+      }
+    }
+    // Idiomas diferentes, textos diferentes: já houve título chegando em PT
+    // para quem escolheu inglês (STATUS §2).
+    expect(eveningCopy('Pixel', 'pt-BR', false).body)
+      .not.toBe(eveningCopy('Pixel', 'en-US', false).body);
+  });
+});
+
+describe('a noite não se contradiz', () => {
+  it('o boa-noite das 22h não afirma que o pet já dormiu', () => {
+    // As 22h são fixas (cron) e a janela de descanso é escolhida pela pessoa:
+    // com a janela padrão (23:00) o lembrete de deitar sai às 22h30, MEIA HORA
+    // depois de o app ter anunciado que o pet foi dormir.
+    for (const lang of ['pt-BR', 'en-US']) {
+      const c = pushCopy(22, 'Pixel', lang);
+      expect(c.title).not.toMatch(/indo dormir|going to sleep/i);
+    }
+  });
+
+  it('o aviso das 20h cede a vez quando existe janela de descanso', () => {
+    // Três pushes em 2h30 produzem habituação, e desligar push é irreversível
+    // na prática. O das 20h é o que cede porque é o único que pede EXECUÇÃO.
+    const manager = readFileSync('src/components/NotificationManager.tsx', 'utf8');
+    expect(manager).toContain('if (restWindow) return;');
   });
 });

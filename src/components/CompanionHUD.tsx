@@ -646,8 +646,11 @@ export const CompanionHUD = memo(function CompanionHUD({
         ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!'])
         : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
       if (hpRatio <= 0.25) return isPt
-        ? pick(['Não me sinto bem...', 'Preciso de cuidados!', 'HP baixo...'])
-        : pick(['Not feeling great...', 'Need some care!', 'My HP is low...']);
+        // A voz mora no DONO (`utils/petVoice.ts`), onde o teste de palavras
+        // de cobrança varre. Estas três frases ('HP baixo...' entre elas) eram
+        // o pet lendo a própria UI — ver o cabeçalho do kind `lowHp`.
+        ? petVoiceLine('lowHp', true, Math.random())
+        : petVoiceLine('lowHp', false, Math.random());
       if (ratio >= 1) return isPt
         ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!'])
         : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
@@ -655,8 +658,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         ? pick(['Me sentindo bem!', 'Tudo certo!', 'Energia boa!'])
         : pick(['Feeling great!', 'All good!', 'Good energy!']);
       if (ratio >= 0.35) return isPt
-        ? pick(['Podia comer algo...', 'Como está seu dia?', 'Vamos completar tarefas!'])
-        : pick(['Could use a snack...', "How's your day?", "Let's complete tasks!"]);
+        ? petVoiceLine('idle', true, Math.random())
+        : petVoiceLine('idle', false, Math.random());
       if (ratio >= 0.1) return isPt
         ? pick(['Ficando com fome...', 'Preciso de comida!', 'Pouca energia...'])
         : pick(['Getting hungry...', 'Need food!', 'Low energy...']);
@@ -711,10 +714,10 @@ export const CompanionHUD = memo(function CompanionHUD({
     let fallback: string;
     if (careEvent?.type === 'poop') fallback = isPt ? pick(['Preciso de banho!', 'Estou sujo!', 'Me limpa!']) : pick(['Need a shower!', 'I made a mess!', 'Clean me!']);
     else if (careEvent?.type === 'food') fallback = isPt ? pick(['Estou com fome!', 'Me alimenta!', 'Com fome!']) : pick(["I'm hungry!", 'Feed me!', 'So hungry!']);
-    else if (hpRatio <= 0.25) fallback = isPt ? pick(['Não me sinto bem...', 'Preciso de cuidados!', 'HP baixo...']) : pick(['Not feeling great...', 'Need some care!', 'My HP is low...']);
+    else if (hpRatio <= 0.25) fallback = petVoiceLine('lowHp', isPt, Math.random());
     else if (ratio >= 1) fallback = isPt ? pick(['Cheio de energia!', 'Pronto para tudo!', 'Totalmente carregado!']) : pick(['Full power!', 'Ready for anything!', 'Fully charged!']);
     else if (ratio >= 0.6) fallback = isPt ? pick(['Me sentindo bem!', 'Tudo certo!', 'Energia boa!']) : pick(['Feeling great!', 'All good!', 'Good energy!']);
-    else if (ratio >= 0.35) fallback = isPt ? pick(['Podia comer algo...', 'Como está seu dia?', 'Vamos completar tarefas!']) : pick(['Could use a snack...', "How's your day?", "Let's complete tasks!"]);
+    else if (ratio >= 0.35) fallback = petVoiceLine('idle', isPt, Math.random());
     else if (ratio >= 0.1) fallback = isPt ? pick(['Ficando com fome...', 'Preciso de comida!', 'Pouca energia...']) : pick(['Getting hungry...', 'Need food!', 'Low energy...']);
     else fallback = isPt ? pick(['Com muita fome...', 'Me alimenta por favor!', 'Estômago vazio...']) : pick(['So hungry...', 'Please feed me!', 'Empty stomach...']);
     speak(fallback, 4000);

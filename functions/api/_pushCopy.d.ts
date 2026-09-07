@@ -29,3 +29,11 @@ export declare function pushCopy(
   /** WP1.17 — idade da criatura em dias. Ausente = copy de sempre. */
   ageDays?: number | null,
 ): PushCopy | null;
+
+/** O aviso das 20h. Só o TEXTO mora aqui; a condição fica no cliente, porque
+ *  o worker não sabe se a meta do dia foi cumprida. */
+export declare function eveningCopy(
+  petName: string,
+  language: string,
+  hpBaixo: boolean,
+): PushCopy;

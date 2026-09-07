@@ -15,6 +15,15 @@ class AlarmReceiver : BroadcastReceiver() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "DigiApp"
         val body = intent.getStringExtra(EXTRA_BODY) ?: ""
         val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
+        // A TAG é a identidade que o FCM usa (`workers/fcm.js` manda
+        // `android.notification.tag`). Sem ela, o mesmo aviso chegava DUAS
+        // vezes no mesmo aparelho — uma pelo AlarmManager (por id) e outra
+        // pelo FCM (por tag) —, porque tag ≠ id e o Android trata as duas
+        // como notificações diferentes. Com a mesma tag, a segunda a chegar
+        // SUBSTITUI a primeira, qualquer que seja a ordem.
+        // Notificação repetida é a razão nº 1 pela qual alguém desliga push,
+        // e desligar push é irreversível na prática.
+        val tag = intent.getStringExtra(EXTRA_TAG)
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -29,7 +38,10 @@ class AlarmReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(notificationId, notification)
+        // O id vai ZERO quando há tag, para casar com o padrão do FCM: o par
+        // (tag, id) é a chave de substituição do Android, e o FCM não define id.
+        if (tag != null) notificationManager.notify(tag, 0, notification)
+        else notificationManager.notify(notificationId, notification)
     }
 
     private fun createChannelIfNeeded(manager: NotificationManager) {
@@ -52,5 +64,6 @@ class AlarmReceiver : BroadcastReceiver() {
         const val EXTRA_TITLE = "title"
         const val EXTRA_BODY = "body"
         const val EXTRA_NOTIFICATION_ID = "notification_id"
+        const val EXTRA_TAG = "notification_tag"
     }
 }

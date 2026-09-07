@@ -57,6 +57,10 @@ class DigiAlarmPlugin : Plugin() {
                 putExtra(AlarmReceiver.EXTRA_TITLE, title)
                 putExtra(AlarmReceiver.EXTRA_BODY, body)
                 putExtra(AlarmReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+                // O `id` que o cliente passa É a tag da copy (`pet-nudge-10`,
+                // `pet-goodnight`…), a mesma que o worker manda no FCM. Ver
+                // `AlarmReceiver`: é o que impede o aviso duplicado.
+                putExtra(AlarmReceiver.EXTRA_TAG, id)
             }
             val pendingIntent = PendingIntent.getBroadcast(
                 context, notificationId, intent,

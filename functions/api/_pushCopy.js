@@ -68,6 +68,43 @@ export function sleepReminderCopy(petName, language) {
  * inventar um texto de fallback: mandar algo genérico numa hora não prevista é
  * como o nudge das 21h voltaria.
  */
+/**
+ * O aviso das 20h — a copy que ficou de FORA deste arquivo até 06/09/2026.
+ *
+ * ⚠️ Ela vivia inline no `NotificationManager.tsx`, e por isso sobreviveu
+ * inteira ao WP3.4, que existe justamente para haver uma fonte só de copy de
+ * push (footgun 9). O teste de paridade não podia vê-la: ele compara as horas
+ * que `PUSH_HOURS_BRT` declara, e não existe hora 20 para comparar.
+ *
+ * A CONDIÇÃO continua no cliente, e tem de continuar: o worker não sabe se a
+ * meta do dia foi cumprida (a assinatura guarda só endpoint, chaves, nome e
+ * idioma), e foi assim que o nudge das 21h passou a cobrar quem já tinha feito
+ * tudo. Aqui mora só o TEXTO.
+ *
+ * `hpBaixo` troca o pedido por acolhimento — com um coração, o que a pessoa
+ * menos precisa é de mais uma tarefa na frase.
+ */
+export function eveningCopy(petName, language, hpBaixo) {
+  const pt = language === 'pt-BR';
+  const name = petName || 'Soulmon';
+  if (hpBaixo) {
+    return {
+      title: pt ? `${name} está meio pra baixo` : `${name} is a bit low`,
+      body: pt
+        ? 'Se der, marque o que você já fez hoje. Se não der, amanhã seu Soulmon ainda vai estar aqui.'
+        : "If you can, log what you did today. If not, it'll still be here tomorrow.",
+      tag: 'hp-critical-evening',
+    };
+  }
+  return {
+    title: pt ? `🌙 ${name} está te esperando` : `🌙 ${name} is waiting for you`,
+    body: pt
+      ? 'Marque o que você fez hoje e dê uma comidinha pro seu Soulmon — energia cheia fecha o dia perfeito.'
+      : 'Log what you did today and feed it — a full energy bar completes a perfect day.',
+    tag: 'evening-reminder',
+  };
+}
+
 export function pushCopy(brtHour, petName, language, ageDays) {
   const pt = language === 'pt-BR';
   const name = petName || 'Soulmon';
@@ -101,8 +138,14 @@ export function pushCopy(brtHour, petName, language, ageDays) {
 
   if (brtHour === 22) {
     return {
-      // O título já chegou em PT para quem escolheu inglês (STATUS §2).
-      title: pt ? `🌙 ${name} está indo dormir` : `🌙 ${name} is going to sleep`,
+      /* ⚠️ O título dizia "está indo dormir", e às 22h isso CONTRADIZ o
+         lembrete de deitar: a janela padrão começa às 23h, então o lembrete
+         sai às 22h30 — meia hora DEPOIS de o app ter anunciado que o pet já
+         foi dormir. As 22h são fixas (cron do worker) e a janela é escolhida
+         pela pessoa, então a frase não pode afirmar o horário de ninguém.
+         Agora ela fecha o dia sem alegar hora — vale antes ou depois.
+         (O título já chegou em PT para quem escolheu inglês — STATUS §2.) */
+      title: pt ? `🌙 ${name} te deseja boa noite` : `🌙 ${name} says good night`,
       body: pt
         ? 'Boa noite. O que ficou pra trás fica pra amanhã. 😴'
         : "Good night. What's left can wait for tomorrow. 😴",
