@@ -50,7 +50,7 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
   it('o caminho grátis (demo) nunca grava rascunho', () => {
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
       fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
-    fireEvent.change(screen.getByLabelText('What month and year were you born?'), { target: { value: '012000' } });
+    fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('I’d rather not say right now'));

@@ -10,7 +10,7 @@ import { readLocal, writeJson, removeLocal } from '../utils/safeStorage';
 import { readOracleDraft, writeOracleDraft, clearOracleDraft } from '../utils/oracleDraft';
 import { readGateDraft, writeGateDraft, clearGateDraft } from '../utils/gateDraft';
 import {
-  buildConsentRecord, isAgeBlocked, isAgeBlockedByMonth, monthYearFromText, MIN_AGE_YEARS,
+  buildConsentRecord, isAgeBlocked, MIN_AGE_YEARS,
   type ConsentRecord,
 } from '../utils/consent';
 import {
@@ -288,8 +288,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  da data — sem isto, o 18+ do dono valeria só para quem paga. Fica em
    *  estado de componente e NÃO é persistido: aqui ele não alimenta mapa astral
    *  nenhum, então guardar seria coletar sem finalidade. */
-  const [demoAgeText, setDemoAgeText] = useState('');
-  const demoAgeMonth = monthYearFromText(demoAgeText);
+  /** 07/09/2026 — o campo de mês/ano virou uma CAIXA de maioridade, por
+   *  decisão do dono. O Google NÃO informa a idade (o login devolve e-mail,
+   *  nome e foto; data de nascimento não vem), então não havia como delegar a
+   *  checagem a ele — a alternativa real era declarar, e declarar cabe numa
+   *  caixa. O caminho PAGO segue conferindo pela data cheia do mapa astral
+   *  (`isAgeBlocked`, passo 2), que é mais estrita e continua levando ao
+   *  `AGE_BLOCK`. */
+  const [maiorIdadeChecked, setMaiorIdadeChecked] = useState(false);
   /** O passo de consentimento é o ponto comum aos dois caminhos e vem ANTES da
    *  bifurcação — é onde a idade custa menos fricção no demo. No caminho do
    *  Oráculo o campo não aparece: a data cheia do mapa astral já confere. */
@@ -298,14 +304,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // escolha DEPOIS do portão, o fluxo ainda é desconhecido aqui — e o 18+ tem
   // de valer para todo mundo antes de qualquer e-mail sair. O caminho pago
   // reconfere pela data de nascimento mais adiante (`isAgeBlocked`).
-  const demoNeedsAge = !isUpgrade;
+  const precisaDeclararIdade = !isUpgrade;
   /** Nada de autenticar sem aceite dos Termos e sem a idade preenchida: criar
    *  conta é coletar dado pessoal (D-07) e abrir conta para menor é o que o
    *  18+ existe para impedir. Vale para TODOS os caminhos do portão — senha,
    *  criação e Google —, porque o Google também cria conta quando ela não
    *  existe. Se a idade declarada for de menor, quem barra é `aoAutenticar`,
    *  que manda para o `AGE_BLOCK` antes de tocar na rede. */
-  const podeAutenticar = consentChecked && (!demoNeedsAge || !!demoAgeMonth);
+  const podeAutenticar = consentChecked && (!precisaDeclararIdade || maiorIdadeChecked);
   /** Os controles de conta só aparecem para quem PRECISA deles: sem auth
    *  configurada não há conta a oferecer, e quem já está autenticado não tem o
    *  que fazer com um formulário de login. Nos dois casos a tela vira só o
@@ -677,7 +683,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setRefine(null);
     setConsentChecked(false);
     setConsent(null);
-    setDemoAgeText('');
+    setMaiorIdadeChecked(false);
     setFlow(null);
     removeLocal(STORAGE_KEYS.SOULMON_PROFILE);
     clearOracleDraft();
@@ -688,11 +694,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     setStep(IDENTITY_STEP);
   };
 
-  /** Máscara MM/AAAA do campo de idade do demo. Só dígitos, barra sozinha. */
-  const handleDemoAgeChange = (raw: string) => {
-    const digits = raw.replace(/\D/g, '').slice(0, 6);
-    setDemoAgeText(digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits);
-  };
 
   // Máscara DD/MM/AAAA: só dígitos, insere as barras sozinho enquanto digita.
   const handleBirthDateChange = (raw: string) => {
@@ -767,18 +768,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  dependem do Firebase. */
   const aoContinuarSemConta = () => {
     if (!podeAutenticar) return;
-    if (barrouPorIdade()) return;
     if (!consent) setConsent(buildConsentRecord());
     setStep(GOAL_STEP);
   };
 
-  /** Portão de idade, ANTES de tocar na rede. Mesma trava de sempre: mês/ano
-   *  ausente ou ilegível NÃO bloqueia — só bloqueia declaração legível de
-   *  menor. Devolve `true` quando barrou. */
-  const barrouPorIdade = (): boolean => {
-    if (demoNeedsAge && isAgeBlockedByMonth(demoAgeMonth)) { setStep(AGE_BLOCK); return true; }
-    return false;
-  };
+  /* O portão não tem mais muro de idade próprio: com uma CAIXA, quem não tem
+     a idade mínima simplesmente não a marca, e sem ela nenhuma conta nasce
+     (ver `podeAutenticar`). Não há declaração de menoridade a interceptar. O
+     `AGE_BLOCK` continua existindo para o caminho PAGO, onde a data cheia do
+     mapa astral pode revelar um menor que já preencheu meia dúzia de telas. */
 
   /** "New User" → formulário de e-mail e senha, já em modo de criação. */
   const aoAbrirEmail = () => {
@@ -798,9 +796,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   /** O que ainda falta para deixar uma conta nascer. Sem isto o botão só fica
    *  apagado e o toque não faz nada — a pessoa não tem como saber o motivo. */
-  const faltaParaAutenticar = !consentChecked
-    ? (isPt ? 'Marque a caixa acima para continuar.' : 'Check the box above to continue.')
-    : (isPt ? 'Preencha o mês e o ano (MM/AAAA) para continuar.' : 'Fill in the month and year (MM/YYYY) to continue.');
+  const faltaParaAutenticar = !maiorIdadeChecked
+    ? (isPt
+      ? `Confirme que você tem ${MIN_AGE_YEARS} anos ou mais para continuar.`
+      : `Confirm you are ${MIN_AGE_YEARS} or older to continue.`)
+    : (isPt ? 'Marque a caixa dos Termos para continuar.' : 'Check the Terms box to continue.');
 
   /** TERMOS + 18+, um só bloco usado nas DUAS telas que criam conta.
    *
@@ -810,20 +810,21 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  legal não vale como consentimento específico (achado do run 01). */
   const blocoLegal = (
     <>
-      {demoNeedsAge && (
-        <div style={{ marginBottom: 14 }}>
-          <label htmlFor="sm-demo-age" style={{ ...sm2Label, display: 'block', marginBottom: 6 }}>
-            {isPt ? 'Em que mês e ano você nasceu?' : 'What month and year were you born?'}
-          </label>
-          <Field id="sm-demo-age" type="text" inputMode="numeric" autoComplete="off"
-            value={demoAgeText}
-            placeholder={isPt ? '__/____ (MM/AAAA)' : '__/____ (MM/YYYY)'}
-            onChange={e => handleDemoAgeChange(e.target.value)}
-            maxLength={7} />
+      {/* DUAS caixas, e não uma. Juntar "sou maior" com "aceito os Termos"
+          numa frase só faz um marcar o outro por tabela, e nenhum dos dois
+          fica sendo uma declaração específica — que é justamente o que o
+          aceite precisa ser (achado do run 01). São perguntas diferentes. */}
+      {precisaDeclararIdade && (
+        <div style={{ marginBottom: 12 }}>
+          <CheckRow checked={maiorIdadeChecked} onChange={setMaiorIdadeChecked}>
+            {isPt
+              ? `Tenho ${MIN_AGE_YEARS} anos ou mais`
+              : `I am ${MIN_AGE_YEARS} or older`}
+          </CheckRow>
           <p style={{ ...sm2Hint, marginTop: 6 }}>
             {isPt
-              ? `Serve só para confirmar que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima do Soulmon. Por isso pedimos só o mês e o ano — não guardamos essa resposta e ela não é usada para mais nada.`
-              : `This is only to confirm you're ${MIN_AGE_YEARS} or older, Soulmon's minimum age. That's why we ask for the month and year only — we don't store this answer and it isn't used for anything else.`}
+              ? `${MIN_AGE_YEARS} anos é a idade mínima do Soulmon. Não pedimos nem guardamos sua data de nascimento.`
+              : `${MIN_AGE_YEARS} is Soulmon's minimum age. We don't ask for or store your date of birth.`}
           </p>
         </div>
       )}
@@ -853,7 +854,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const aoEntrarComGoogle = async () => {
     if (authOcupado || !podeAutenticar) return;
-    if (barrouPorIdade()) return;
     setAuthOcupado(true);
     setAuthErro(null);
     const r = await entrarComGoogle();
@@ -864,7 +864,6 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
 
   const aoEnviarSenha = async () => {
     if (authOcupado || !podeAutenticar) return;
-    if (barrouPorIdade()) return;
     const mail = email.trim().toLowerCase();
     if (!isValidEmail(mail)) { setEmailError(true); setAuthErro('email-invalido'); return; }
     // O piso de 6 é do próprio Firebase; conferir aqui evita uma ida à rede

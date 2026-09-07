@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
   ageOn, isAdult, isAgeBlocked, buildConsentRecord, normalizeConsent,
-  ageOnMonth, isAgeBlockedByMonth, monthYearFromText,
   MIN_AGE_YEARS, TERMS_VERSION, PRIVACY_VERSION,
 } from './consent';
 
@@ -144,66 +143,39 @@ describe('superfícies novas em PT-BR e EN', () => {
   });
 });
 
-describe('gate de idade no caminho DEMO — mês/ano no passo de consentimento', () => {
-  // O buraco que estes casos fecham: o demo pula o Oráculo inteiro
-  // (STRUGGLE_STEP → CONSENT_STEP → DEMO_PICK) e nunca chega ao passo da data,
-  // então o 18+ existia SÓ para quem pagava. A decisão do dono é 18+ para o
-  // produto.
-  it('demo com menos de 18 é barrado', () => {
-    expect(isAgeBlockedByMonth('2012-03', AGORA)).toBe(true);
-    expect(ageOnMonth('2012-03', AGORA)).toBe(14);
-  });
-
-  it('demo com 18 ou mais passa', () => {
-    expect(isAgeBlockedByMonth('2000-01', AGORA)).toBe(false);
-    expect(ageOnMonth('2000-01', AGORA)).toBe(26);
-  });
-
-  it('a folga do mês é resolvida para o lado generoso (assume o dia 1º)', () => {
-    // Nasceu em agosto/2008: em 25/08/2026 pode ter 17 (nasceu dia 26+) ou 18.
-    // Autodeclaração não ganha nada apertando a folga — quem quiser passar
-    // digita outro ano; apertar só criaria o risco de barrar adulto de verdade
-    // no mês do aniversário dele. Ver a nota em consent.ts.
-    expect(ageOnMonth('2008-08', AGORA)).toBe(MIN_AGE_YEARS);
-    expect(isAgeBlockedByMonth('2008-08', AGORA)).toBe(false);
-    // O mês seguinte inteiro ainda é de menor, e aí bloqueia.
-    expect(isAgeBlockedByMonth('2008-09', AGORA)).toBe(true);
-  });
-
-  it('mês/ano ausente ou ilegível NÃO barra — save antigo e quem já joga seguem', () => {
-    expect(isAgeBlockedByMonth(undefined, AGORA)).toBe(false);
-    expect(isAgeBlockedByMonth('', AGORA)).toBe(false);
-    expect(isAgeBlockedByMonth('2008', AGORA)).toBe(false);
-    expect(isAgeBlockedByMonth('13-2008', AGORA)).toBe(false);
-    expect(isAgeBlockedByMonth('não sei', AGORA)).toBe(false);
-  });
-
-  it('a máscara MM/AAAA só vira data quando está completa e o mês existe', () => {
-    expect(monthYearFromText('05/2000')).toBe('2000-05');
-    expect(monthYearFromText('12/1999')).toBe('1999-12');
-    expect(monthYearFromText('')).toBe('');
-    expect(monthYearFromText('05/20')).toBe('');
-    expect(monthYearFromText('00/2000')).toBe('');
-    expect(monthYearFromText('13/2000')).toBe('');
-  });
-
-  it('a tela do demo pede mês/ano, diz para que serve, e nos dois idiomas', () => {
+describe('gate de idade — a declaração por CAIXA (07/09/2026)', () => {
+  // O campo de mês/ano saiu: o dono trocou por uma caixa "Tenho 18 anos ou
+  // mais". O que motivou é um fato sobre o provedor, e por isso fica escrito
+  // aqui: o login com Google NÃO informa a idade — devolve e-mail, nome e
+  // foto —, então nunca houve como delegar a checagem a ele.
+  //
+  // São DUAS caixas, e não uma frase só: juntar "sou maior" com "aceito os
+  // Termos" faz um marcar o outro por tabela, e aí nenhum dos dois é uma
+  // declaração específica — que é o que o aceite precisa ser (run 01).
+  it('a caixa de maioridade e a de Termos são separadas, nos dois idiomas', () => {
     const onboarding = ler('src/components/SoulmonOnboarding.tsx');
-    expect(onboarding).toContain('Em que mês e ano você nasceu?');
-    expect(onboarding).toContain('What month and year were you born?');
-    // Coleta declarada: a tela diz a finalidade e que a resposta não é guardada.
-    expect(onboarding).toContain('não guardamos essa resposta');
-    expect(onboarding).toContain("we don't store this answer");
-    // 07/09/2026 — o campo passou a valer para TODO o onboarding, não só para
-    // o demo. Motivo: a escolha grátis/completo desceu para depois do portão
-    // de e-mail, então no consentimento o `flow` ainda é desconhecido — e o
-    // 18+ tem de estar decidido ANTES de qualquer link de e-mail sair, senão
-    // o app escreveria para um menor antes de conferir a idade. O caminho pago
-    // segue reconferindo pela data cheia (`isAgeBlocked`), que é mais estrita.
-    expect(onboarding).toMatch(/const demoNeedsAge = !isUpgrade/);
-    // E o avanço do passo de consentimento passa pelo gate.
-    expect(onboarding).toMatch(/isAgeBlockedByMonth\(demoAgeMonth\)/);
-    // A resposta NÃO é persistida: nada de writeJson/STORAGE_KEYS com ela.
-    expect(onboarding).not.toMatch(/writeJson\([^)]*demoAge/);
+    expect(onboarding).toContain('Tenho ${MIN_AGE_YEARS} anos ou mais');
+    expect(onboarding).toContain('I am ${MIN_AGE_YEARS} or older');
+    expect(onboarding).toContain('Li e concordo com os Termos de Uso e a Política de Privacidade');
+    expect(onboarding).toContain('I have read and agree to the Terms of Use and the Privacy Policy');
+    // As duas travam o mesmo portão, e as duas precisam estar marcadas.
+    expect(onboarding).toMatch(/podeAutenticar = consentChecked && \(!precisaDeclararIdade \|\| maiorIdadeChecked\)/);
+  });
+
+  it('nada mais pede mês e ano de nascimento', () => {
+    const onboarding = ler('src/components/SoulmonOnboarding.tsx');
+    expect(onboarding).not.toContain('Em que mês e ano você nasceu?');
+    expect(onboarding).not.toContain('What month and year were you born?');
+    // E as funções que serviam só a esse campo saíram do utilitário.
+    const utilitario = ler('src/utils/consent.ts');
+    expect(utilitario).not.toMatch(/export function isAgeBlockedByMonth/);
+    expect(utilitario).not.toMatch(/export function monthYearFromText/);
+  });
+
+  it('o caminho PAGO continua conferindo pela data cheia', () => {
+    // Ali existe data de nascimento de verdade (mapa astral), e ela é mais
+    // estrita que uma declaração — não faz sentido abrir mão dela.
+    const onboarding = ler('src/components/SoulmonOnboarding.tsx');
+    expect(onboarding).toMatch(/isAgeBlocked\(birthDate\)/);
   });
 });

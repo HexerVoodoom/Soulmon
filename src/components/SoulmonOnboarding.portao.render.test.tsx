@@ -71,23 +71,21 @@ async function montar() {
 
 /** Aceite dos Termos + idade. Vive nas telas que CRIAM conta (Google e
  *  e-mail), não na primeira — a primeira mostra só as duas portas. */
-function aceitarERevelarIdade(mesAno = '011990') {
+function aceitarERevelarIdade() {
+  ir('I am 18 or older');
   ir('I have read and agree to the Terms of Use and the Privacy Policy');
-  fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
-    target: { value: mesAno },
-  });
 }
 
 /** TELA 1 → formulário de e-mail e senha, por "New User". */
-function abrirFormulario(mesAno = '011990') {
+function abrirFormulario() {
   botao('New User');
-  aceitarERevelarIdade(mesAno);
+  aceitarERevelarIdade();
 }
 
 /** TELA 1 → tela do Google. */
-function abrirGoogle(mesAno = '011990') {
+function abrirGoogle() {
   botao('Continue with Google');
-  aceitarERevelarIdade(mesAno);
+  aceitarERevelarIdade();
 }
 
 const campoEmail = () => screen.getByLabelText('Email');
@@ -124,7 +122,7 @@ describe('portão de identidade', () => {
     expect(btn('Create account')).toBeTruthy();
     // O aceite e a idade acompanham a tela que cria a conta.
     expect(screen.getByText('Read the Terms of Use')).toBeTruthy();
-    expect(screen.getByLabelText('What month and year were you born?')).toBeTruthy();
+    expect(screen.getByText('I am 18 or older')).toBeTruthy();
   });
 
   it('o caminho do GOOGLE também passa pelo aceite e pelo 18+', async () => {
@@ -133,7 +131,7 @@ describe('portão de identidade', () => {
     await montar();
     botao('Continue with Google');
     expect(screen.getByText('Read the Terms of Use')).toBeTruthy();
-    expect(screen.getByLabelText('What month and year were you born?')).toBeTruthy();
+    expect(screen.getByText('I am 18 or older')).toBeTruthy();
     expect(btn('Continue with Google').disabled).toBe(true);
     expect(chamadas).toEqual([]);
   });
@@ -157,21 +155,22 @@ describe('portão de identidade', () => {
     ir('I have read and agree to the Terms of Use and the Privacy Policy');
     expect(btn('Create account').disabled).toBe(true);
 
-    fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
-      target: { value: '011990' },
-    });
+    fireEvent.click(screen.getByText('I am 18 or older'));
     expect(btn('Create account').disabled).toBe(false);
     // E nada foi tocado na rede enquanto os requisitos não estavam completos.
     expect(chamadas).toEqual([]);
   });
 
-  it('menor de 18 é barrado ANTES de qualquer autenticação', async () => {
+  it('sem declarar maioridade NENHUMA conta nasce — nem pelo Google', async () => {
+    // Com uma CAIXA no lugar do campo de data não existe "declarar
+    // menoridade" a interceptar: quem não tem a idade simplesmente não marca,
+    // e sem a marca nada avança. A trava mudou de forma, não de efeito — e o
+    // Google é o caminho que cria conta sem passar por formulário nenhum.
     await montar();
-    abrirGoogle('032015');
+    botao('Continue with Google');
+    ir('I have read and agree to the Terms of Use and the Privacy Policy');
+    expect(btn('Continue with Google').disabled).toBe(true);
     await act(async () => { botao('Continue with Google'); });
-    expect(screen.getByText('Not quite yet')).toBeTruthy();
-    // A regra que importa: NENHUMA conta foi criada para um menor — nem pelo
-    // Google, que é o caminho que cria conta sem passar por formulário.
     expect(chamadas).toEqual([]);
   });
 
@@ -313,5 +312,10 @@ describe('portão de identidade', () => {
     ]) {
       for (const t of par) expect(fonte).toContain(t);
     }
+    // A caixa de maioridade interpola `MIN_AGE_YEARS` em vez de fixar "18":
+    // o numero mora em `utils/consent.ts` e nao pode ser copiado para a tela,
+    // senao os dois divergem no dia em que a idade minima mudar.
+    expect(fonte).toContain('Tenho ${MIN_AGE_YEARS} anos ou mais');
+    expect(fonte).toContain('I am ${MIN_AGE_YEARS} or older');
   });
 });

@@ -45,9 +45,7 @@ describe('fiação da telemetria — onboarding', () => {
     fireEvent.click(screen.getByText(
       'I have read and agree to the Terms of Use and the Privacy Policy',
     ));
-    fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
-      target: { value: '011990' },
-    });
+    fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     fireEvent.click(screen.getByText('I’d rather not say right now')); // GOAL
     fireEvent.click(screen.getByText('I’d rather not say right now')); // STRUGGLE
@@ -80,9 +78,16 @@ describe('fiação da telemetria — onboarding', () => {
 
   it('o payload não carrega nada que a pessoa escreveu', () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-      const campo = screen.getByRole('textbox') as HTMLTextAreaElement;
+    // O "porquê" vem DEPOIS do portão (07/09/2026): é preciso atravessá-lo
+    // para chegar ao campo de texto livre.
+    fireEvent.click(screen.getByText('I am 18 or older'));
+    fireEvent.click(screen.getByText(
+      'I have read and agree to the Terms of Use and the Privacy Policy',
+    ));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    const campo = screen.getByRole('textbox') as HTMLTextAreaElement;
     fireEvent.change(campo, { target: { value: 'quero parar de beber' } });
-    fireEvent.click(screen.getByText('Continue').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: /Continue/ }));
 
     const corpo = JSON.stringify(pendingTelemetry());
     expect(corpo).not.toContain('beber');
@@ -98,9 +103,7 @@ describe('fiação da telemetria — onboarding', () => {
       fireEvent.click(screen.getByText(
       'I have read and agree to the Terms of Use and the Privacy Policy',
     ));
-    fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
-      target: { value: '01/1990' },
-    });
+    fireEvent.click(screen.getByText('I am 18 or older'));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('I’d rather not say right now'));

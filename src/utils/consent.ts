@@ -95,60 +95,17 @@ export function normalizeConsent(raw: unknown): ConsentRecord | undefined {
 }
 
 // ---------------------------------------------------------------------------
-// Verificação de idade no caminho DEMO
+// A CHECAGEM POR MES/ANO FOI REMOVIDA EM 07/09/2026.
 //
-// O caminho demo pula o Oráculo inteiro e NUNCA chega ao passo da data de
-// nascimento — então, enquanto a única checagem era `isAgeBlocked(birthDate)`,
-// o 18+ só valia para quem pagava. A decisão do dono é 18+ para o PRODUTO.
+// O onboarding pedia mes e ano de nascimento so para conferir a idade minima.
+// Virou uma CAIXA de declaracao ("Tenho 18 anos ou mais"), por decisao do
+// dono. Motivo de fundo: o login com Google NAO informa a idade — devolve
+// e-mail, nome e foto, e data de nascimento nao vem —, entao nao havia como
+// delegar a checagem ao provedor. Entre pedir um dado que nao guardamos e
+// pedir uma declaracao, a declaracao entrega a mesma garantia legal com menos
+// coleta.
 //
-// A data cheia ali não teria uso: no demo ela não alimenta mapa astral nenhum,
-// serviria só para conferir a idade. Pedir dia/mês/ano para isso seria coletar
-// um identificador forte sem necessidade — então o demo pede **mês e ano**, o
-// mínimo que responde a pergunta, e a tela diz para que serve.
-//
-// A granularidade de mês tem uma folga inevitável de até ~1 mês. Ela é resolvida
-// para o lado GENEROSO (assume o dia 1º, ou seja, a idade MAIOR possível dentro
-// do mês declarado). O motivo: a verificação é autodeclaração — quem quiser
-// passar digita outro ano, então apertar a folga não ganha enforcement nenhum;
-// ganha só o risco de barrar um adulto de verdade durante o mês do aniversário
-// dele. Barrar quem tem direito é o único dano real disponível aqui.
+// `ageOnMonth`, `isAgeBlockedByMonth` e `monthYearFromText` sairam junto com o
+// campo: sem chamador, eram codigo morto. O caminho PAGO continua conferindo
+// pela data cheia do mapa astral (`isAgeBlocked` acima), que e mais estrita.
 // ---------------------------------------------------------------------------
-
-/**
- * Idade em anos completos a partir de `AAAA-MM`, assumindo o dia 1º (ver a nota
- * acima sobre a folga generosa). Entrada ilegível devolve `null`.
- */
-export function ageOnMonth(yearMonth: string, now: Date = new Date()): number | null {
-  const m = /^(\d{4})-(\d{2})$/.exec(yearMonth ?? '');
-  if (!m) return null;
-  return ageOn(`${m[1]}-${m[2]}-01`, now);
-}
-
-/**
- * A pergunta que o passo de consentimento faz no caminho demo: **este mês/ano
- * bloqueia?** Mesma trava do `isAgeBlocked`: ausente ou ilegível NÃO bloqueia —
- * é o que garante que save antigo e quem já joga nunca sejam barrados por um
- * dado que nunca existiu no save deles.
- */
-export function isAgeBlockedByMonth(
-  yearMonth: string | undefined | null,
-  now: Date = new Date(),
-): boolean {
-  if (!yearMonth) return false;
-  const age = ageOnMonth(yearMonth, now);
-  if (age === null) return false;
-  return age < MIN_AGE_YEARS;
-}
-
-/**
- * Converte o texto mascarado `MM/AAAA` da tela em `AAAA-MM`. Texto incompleto
- * ou com mês fora de 01–12 devolve `''` — o botão de avançar fica desligado, em
- * vez de o app adivinhar uma data.
- */
-export function monthYearFromText(masked: string): string {
-  const m = /^(\d{2})\/(\d{4})$/.exec((masked ?? '').trim());
-  if (!m) return '';
-  const mes = Number(m[1]);
-  if (mes < 1 || mes > 12) return '';
-  return `${m[2]}-${m[1]}`;
-}

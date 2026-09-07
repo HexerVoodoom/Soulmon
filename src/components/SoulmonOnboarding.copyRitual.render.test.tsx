@@ -46,10 +46,7 @@ function ateOPorque(pt: boolean) {
       ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
       : 'I have read and agree to the Terms of Use and the Privacy Policy',
   ));
-  fireEvent.change(
-    screen.getByLabelText(pt ? 'Em que mês e ano você nasceu?' : 'What month and year were you born?'),
-    { target: { value: '012000' } },
-  );
+  fireEvent.click(screen.getByText(pt ? 'Tenho 18 anos ou mais' : 'I am 18 or older'));
   fireEvent.click(screen.getByRole('button', { name: pt ? 'Continuar' : 'Continue' }));
 }
 
