@@ -19,7 +19,13 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const ler = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf-8');
+// Normaliza CRLF antes de qualquer recorte. O guard delimita corpo de funcao
+// procurando a LINHA EM BRANCO; num checkout Windows ela e CRLF, a busca
+// falhava, o recorte pegava quase o arquivo inteiro e o teste acusava
+// `healthPoints` de uma funcao VIZINHA. Falso positivo so fora do Linux.
+const ler = (p: string) =>
+  readFileSync(resolve(process.cwd(), p), 'utf-8')
+    .replace(/\r\n/g, '\n');
 
 describe('masmorra — perder não cobra coração (WP4.20)', () => {
   it('o cabeçalho não afirma nenhuma das três coisas falsas', () => {

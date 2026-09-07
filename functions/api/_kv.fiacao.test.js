@@ -14,8 +14,12 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIR = new URL('.', import.meta.url).pathname;
+// `URL.pathname` devolve `/D:/...` no Windows, e o `join` derivado vira
+// `D:\D:\...` (ENOENT). `fileURLToPath` e o unico conversor correto nas
+// duas plataformas — este guard rodava so no Linux ate 07/09/2026.
+const DIR = fileURLToPath(new URL('.', import.meta.url));
 
 describe('fiação do KV', () => {
   it('só `_kv.js` lê o binding direto do env', () => {
