@@ -35,10 +35,22 @@ import { items as SOUL_TEST_ITEMS } from '../utils/soulProfile/personality/quest
 const ECO_EN = 'Noted. Your Soulmon will remember.';
 const ECO_PT = 'Anotado. Seu Soulmon vai lembrar disso.';
 
-/** Intro → GOAL_STEP. O caminho grátis é o mais curto que passa pelo "porquê". */
+/** Portão (aceite + 18+) → GOAL_STEP.
+ *  07/09/2026 — o portão de identidade passou a ser o PRIMEIRO passo e leva os
+ *  Termos e a idade dentro dele; o "porquê" vem logo depois. Com a auth
+ *  desligada no teste, o portão mostra só aceite, idade e "Continue". */
 function ateOPorque(pt: boolean) {
   renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
-  fireEvent.click(screen.getByText(pt ? 'Começar' : 'Get started'));
+  fireEvent.click(screen.getByText(
+    pt
+      ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
+      : 'I have read and agree to the Terms of Use and the Privacy Policy',
+  ));
+  fireEvent.change(
+    screen.getByLabelText(pt ? 'Em que mês e ano você nasceu?' : 'What month and year were you born?'),
+    { target: { value: '012000' } },
+  );
+  fireEvent.click(screen.getByRole('button', { name: pt ? 'Continuar' : 'Continue' }));
 }
 
 describe('SoulmonOnboarding — o eco do "porquê" (WP1.9)', () => {

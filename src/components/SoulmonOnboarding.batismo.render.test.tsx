@@ -22,13 +22,11 @@ import { SoulmonOnboarding, type OnboardingCompleteData } from './SoulmonOnboard
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
 
-/** Caminho demo: intro -> objetivo -> dificuldade -> consentimento -> escolha
- *  grátis/completo -> personagem -> cadastro. O mais curto até o batismo. */
+/** Caminho demo: portão (aceite + idade) -> objetivo -> dificuldade ->
+ *  escolha grátis/completo -> personagem -> cadastro. O mais curto até o
+ *  batismo, na ordem de 07/09/2026. */
 function ateOCadastro(pt: boolean) {
-  fireEvent.click(screen.getByText(pt ? 'Começar' : 'Get started'));
-  const pular = pt ? 'Prefiro não responder agora' : 'I’d rather not say right now';
-  fireEvent.click(screen.getByText(pular)); // objetivo
-  fireEvent.click(screen.getByText(pular)); // dificuldade
+  // Portão primeiro: aceite + idade vivem nele, e ele abre o app.
   fireEvent.click(screen.getByText(
     pt
       ? 'Li e concordo com os Termos de Uso e a Política de Privacidade'
@@ -38,7 +36,10 @@ function ateOCadastro(pt: boolean) {
     screen.getByLabelText(pt ? 'Em que mês e ano você nasceu?' : 'What month and year were you born?'),
     { target: { value: '012000' } },
   );
-  fireEvent.click(screen.getByText(pt ? 'Continuar' : 'Continue').closest('button')!);
+  fireEvent.click(screen.getByRole('button', { name: pt ? 'Continuar' : 'Continue' }));
+  const pular = pt ? 'Prefiro não responder agora' : 'I’d rather not say right now';
+  fireEvent.click(screen.getByText(pular)); // objetivo
+  fireEvent.click(screen.getByText(pular)); // dificuldade
   // A escolha grátis/completo desceu do passo 0 para DEPOIS do consentimento e
   // do portão de e-mail (07/09/2026) — com a auth desligada no teste, o portão
   // não existe e o consentimento cai direto aqui.

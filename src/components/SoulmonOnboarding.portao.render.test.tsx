@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
 /**
- * O PORTÃO DE IDENTIDADE (07/09/2026)
- * ===================================
+ * O PORTÃO DE IDENTIDADE — A PRIMEIRA TELA DO APP (07/09/2026)
+ * ===========================================================
  *
- * Por que ele existe — e não é UX, é dinheiro:
+ * Pedido do dono: logo depois do carregamento, o app pergunta e-mail e senha
+ * ou login com Google, com a opção de criar conta, ANTES de entrar no jogo.
+ *
+ * Por que isso também é dinheiro, e não só UX:
  *
  * `handleUnlockFull` compra chamando `purchase()`, que manda o `saveId` como
  * `obfuscatedAccountId`. Antes do login esse saveId é um UUID ALEATÓRIO gerado
@@ -14,23 +17,18 @@
  *
  * Como o campo vem PREENCHIDO, cai no ramo da igualdade e falha — a compra é
  * recusada INCLUSIVE com `PLAY_REQUIRE_ACCOUNT_BINDING` desligado. A pessoa
- * paga e não recebe.
+ * paga e não recebe. Com a conta antes da escolha, isso deixa de existir.
  *
- * A ORDEM também é regra, não gosto:
- *
- *  · o portão vem DEPOIS do consentimento — e-mail é dado pessoal, e o
- *    `CONSENT_STEP` existe para os Termos virem antes da coleta (D-07);
- *  · e DEPOIS do 18+ — autenticar antes de conferir a idade seria abrir conta
- *    para quem o app não pode atender.
- *
- * FORMATO (decidido pelo dono em 07/09/2026): entrar com Google, ou e-mail +
- * senha com "Entrar" e "Criar conta". O Google importa porque não depende de
- * e-mail CHEGAR: o link deste projeto cai no spam do Gmail (remetente
- * `firebaseapp.com` sem domínio próprio, medido no mesmo dia).
+ * OS TERMOS E O 18+ VIVEM DENTRO DESTA TELA, e não numa anterior: criar conta
+ * é coletar dado pessoal, então o aceite precisa vir antes dela (D-07), e
+ * abrir conta para menor é o que o 18+ existe para impedir. Foi assim que deu
+ * para atender "a conta é a primeira coisa" sem perder nenhuma das duas
+ * proteções.
  *
  * E o portão NÃO pode virar porta trancada: sem `VITE_FIREBASE_*` a auth não
  * existe, e um passo obrigatório que dependesse dela deixaria um build sem
- * `.env` sem abrir.
+ * `.env` sem abrir. Falta de configuração vira ausência de conta — o aceite e
+ * a idade continuam obrigatórios, porque não dependem do Firebase.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -62,25 +60,21 @@ const ir = (t: string) => fireEvent.click(screen.getByText(t));
  *  ("Entrar"/"Sign in", "Criar conta"/"Create account"), então `getByText`
  *  acha dois nós — e o `<h2>` não é clicável. */
 const botao = (nome: string) => fireEvent.click(screen.getByRole('button', { name: nome }));
+const btn = (nome: string) => screen.getByRole('button', { name: nome }) as HTMLButtonElement;
 
 /** Monta e ESPERA a resolução da auth, que é assíncrona (efeito de montagem).
- *  Sem este flush o teste avançaria antes de o componente saber se o portão
- *  existe — e mediria um estado que o usuário real nunca vê. */
+ *  Sem este flush o teste mediria um estado que o usuário real nunca vê. */
 async function montar() {
   renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
   await act(async () => {});
 }
 
-/** Intro → objetivo → dificuldade → consentimento + 18+ → (portão | escolha). */
-function ateDepoisDoConsentimento() {
-  ir('Get started');
-  ir('I’d rather not say right now');
-  ir('I’d rather not say right now');
+/** Requisitos que o portão exige antes de deixar autenticar. */
+function aceitarERevelarIdade(mesAno = '011990') {
   ir('I have read and agree to the Terms of Use and the Privacy Policy');
   fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
-    target: { value: '011990' },
+    target: { value: mesAno },
   });
-  fireEvent.click(screen.getByText('Continue').closest('button')!);
 }
 
 const campoEmail = () => screen.getByLabelText('Email');
@@ -95,62 +89,61 @@ describe('portão de identidade', () => {
     chamadas = [];
   });
 
-  it('a escolha grátis/completo NÃO é alcançável antes do portão', async () => {
+  it('o app ABRE no portão, e a compra não é alcançável dali', async () => {
     await montar();
-    // O passo 0 tem UMA ação, e nenhuma delas é comprar.
+    // A PRIMEIRA tela é a da conta. Não há intro nem passo de consentimento
+    // separado antes dela.
+    expect(screen.getByText('Continue with Google')).toBeTruthy();
+    expect(campoEmail()).toBeTruthy();
+    expect(campoSenha()).toBeTruthy();
     expect(screen.queryByText(/Get the full game/)).toBeNull();
     expect(screen.queryByText('Start now — it’s free')).toBeNull();
-
-    ateDepoisDoConsentimento();
-    expect(screen.getByText('Continue with Google')).toBeTruthy();
-    expect(screen.queryByText(/Get the full game/)).toBeNull();
   });
 
-  it('o portão NÃO é alcançável antes do consentimento e do 18+', async () => {
+  it('NÃO autentica sem aceite dos Termos e sem a idade', async () => {
     await montar();
-    ir('Get started');
-    ir('I’d rather not say right now');
-    ir('I’d rather not say right now');
-    expect(screen.getByText('Before we start')).toBeTruthy();
-    expect(screen.queryByText('Continue with Google')).toBeNull();
+    // Nada marcado: as duas portas estão fechadas.
+    expect(btn('Continue with Google').disabled).toBe(true);
+    expect(btn('Sign in').disabled).toBe(true);
 
-    // Marcar a caixa sem informar a idade não passa.
+    // Só o aceite não basta — falta a idade.
     ir('I have read and agree to the Terms of Use and the Privacy Policy');
-    expect((screen.getByText('Continue').closest('button') as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.queryByText('Continue with Google')).toBeNull();
+    expect(btn('Continue with Google').disabled).toBe(true);
+
+    fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
+      target: { value: '011990' },
+    });
+    expect(btn('Continue with Google').disabled).toBe(false);
+    expect(btn('Sign in').disabled).toBe(false);
+    // E nada foi tocado na rede enquanto os requisitos não estavam completos.
+    expect(chamadas).toEqual([]);
   });
 
   it('menor de 18 é barrado ANTES de qualquer autenticação', async () => {
     await montar();
-    ir('Get started');
-    ir('I’d rather not say right now');
-    ir('I’d rather not say right now');
-    ir('I have read and agree to the Terms of Use and the Privacy Policy');
-    fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
-      target: { value: '032015' },
-    });
-    fireEvent.click(screen.getByText('Continue').closest('button')!);
+    aceitarERevelarIdade('032015');
+    await act(async () => { botao('Continue with Google'); });
     expect(screen.getByText('Not quite yet')).toBeTruthy();
-    expect(screen.queryByText('Continue with Google')).toBeNull();
-    // A regra que importa: NENHUMA conta foi tocada para um menor.
+    // A regra que importa: NENHUMA conta foi criada para um menor — nem pelo
+    // Google, que é o caminho que cria conta sem passar por formulário.
     expect(chamadas).toEqual([]);
   });
 
-  it('entrar com senha: normaliza o e-mail e leva à escolha', async () => {
+  it('entrar com senha: normaliza o e-mail e leva ao "porquê"', async () => {
     await montar();
-    ateDepoisDoConsentimento();
+    aceitarERevelarIdade();
     fireEvent.change(campoEmail(), { target: { value: '  Alguem@Exemplo.COM ' } });
     fireEvent.change(campoSenha(), { target: { value: 'segredo123' } });
     await act(async () => { botao('Sign in'); });
     // Normalizado: o saveId é derivado do e-mail, então caixa e espaço não
     // podem gerar duas contas para a mesma pessoa.
     expect(chamadas).toEqual(['entrar:alguem@exemplo.com:segredo123']);
-    expect(screen.getByText('Start now — it’s free')).toBeTruthy();
+    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
   });
 
   it('"Criar conta" é uma ação DIFERENTE de entrar', async () => {
     await montar();
-    ateDepoisDoConsentimento();
+    aceitarERevelarIdade();
     botao('Create account');
     fireEvent.change(campoEmail(), { target: { value: 'novo@exemplo.com' } });
     fireEvent.change(campoSenha(), { target: { value: 'segredo123' } });
@@ -160,7 +153,7 @@ describe('portão de identidade', () => {
 
   it('senha curta nem chega à rede', async () => {
     await montar();
-    ateDepoisDoConsentimento();
+    aceitarERevelarIdade();
     botao('Create account');
     fireEvent.change(campoEmail(), { target: { value: 'novo@exemplo.com' } });
     fireEvent.change(campoSenha(), { target: { value: '123' } });
@@ -171,21 +164,21 @@ describe('portão de identidade', () => {
 
   it('entrar com Google não pede e-mail nenhum', async () => {
     await montar();
-    ateDepoisDoConsentimento();
+    aceitarERevelarIdade();
     await act(async () => { botao('Continue with Google'); });
     expect(chamadas).toEqual(['google']);
-    expect(screen.getByText('Start now — it’s free')).toBeTruthy();
+    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
   });
 
   it('falha de credencial mostra recado acionável e NÃO avança', async () => {
     resposta = { ok: false, erro: 'credencial-invalida' };
     await montar();
-    ateDepoisDoConsentimento();
+    aceitarERevelarIdade();
     fireEvent.change(campoEmail(), { target: { value: 'a@b.com' } });
     fireEvent.change(campoSenha(), { target: { value: 'errada' } });
     await act(async () => { botao('Sign in'); });
     expect(screen.getByRole('alert').textContent).toContain("Email or password don't match");
-    expect(screen.queryByText('Start now — it’s free')).toBeNull();
+    expect(screen.queryByText('What do you want to improve in your life?')).toBeNull();
     // O campo continua editável: nunca um beco sem saída.
     expect(campoSenha()).toBeTruthy();
   });
@@ -194,37 +187,47 @@ describe('portão de identidade', () => {
     // Dizer "não achamos esse e-mail" entregaria a quem perguntar quais
     // endereços têm conta no app.
     await montar();
-    ateDepoisDoConsentimento();
+    aceitarERevelarIdade();
     fireEvent.change(campoEmail(), { target: { value: 'a@b.com' } });
     await act(async () => { botao('I forgot my password'); });
     const comConta = screen.getByRole('status').textContent;
 
     resposta = { ok: false, erro: 'nao-encontrado' };
-    // Desmonta o primeiro: sem isto os dois onboardings coexistem no mesmo
-    // container e a busca acha dois botões com o mesmo nome.
     cleanup();
     localStorage.clear();
     await montar();
-    ateDepoisDoConsentimento();
+    aceitarERevelarIdade();
     fireEvent.change(campoEmail(), { target: { value: 'nao-existe@b.com' } });
     await act(async () => { botao('I forgot my password'); });
     expect(screen.getByRole('status').textContent).toBe(comConta);
   });
 
-  it('sem auth configurada o portão NÃO EXISTE — o app não pode ficar trancado', async () => {
+  it('sem auth configurada o portão NÃO TRANCA — mas o aceite e o 18+ ficam', async () => {
     authLigada = false;
     await montar();
-    ateDepoisDoConsentimento();
+    // Nenhuma forma de conta é oferecida...
     expect(screen.queryByText('Continue with Google')).toBeNull();
-    expect(await screen.findByText('Start now — it’s free')).toBeTruthy();
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    // ...e mesmo assim os Termos e a idade continuam obrigatórios, porque não
+    // dependem do Firebase.
+    expect(btn('Continue').disabled).toBe(true);
+    aceitarERevelarIdade();
+    expect(btn('Continue').disabled).toBe(false);
+    await act(async () => { botao('Continue'); });
+    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
   });
 
-  it('quem já está autenticado não vê o portão', async () => {
+  it('quem já está autenticado não vê formulário de conta nenhum', async () => {
     emailAtual = 'ja@logado.com';
     await montar();
-    ateDepoisDoConsentimento();
     expect(screen.queryByText('Continue with Google')).toBeNull();
-    expect(await screen.findByText('Start now — it’s free')).toBeTruthy();
+    expect(screen.queryByLabelText('Password')).toBeNull();
+    // Mas o aceite continua sendo pedido: sem prova local dele, presumir
+    // consentimento seria inventar a prova que o CONSENT existe para produzir.
+    expect(btn('Continue').disabled).toBe(true);
+    aceitarERevelarIdade();
+    await act(async () => { botao('Continue'); });
+    expect(screen.getByText('What do you want to improve in your life?')).toBeTruthy();
   });
 
   it('a guarda da compra olha o E-MAIL, não a presença do saveId', () => {
@@ -254,7 +257,8 @@ describe('portão de identidade', () => {
       ['Criar conta', 'Create account'],
       ['Esqueci minha senha', 'I forgot my password'],
       ['Senha', 'Password'],
-      ['Como você quer começar?', 'How do you want to start?'],
+      ['Li e concordo com os Termos de Uso e a Política de Privacidade',
+        'I have read and agree to the Terms of Use and the Privacy Policy'],
     ]) {
       for (const t of par) expect(fonte).toContain(t);
     }

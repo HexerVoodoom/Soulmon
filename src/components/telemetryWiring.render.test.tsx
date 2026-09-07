@@ -36,36 +36,33 @@ describe('fiação da telemetria — onboarding', () => {
 
   it('antes da escolha o funil é UNKNOWN; depois dela, DEMO', () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    // A intro é ANTERIOR à bifurcação: não dá para rotular o caminho ainda.
+    // A PRIMEIRA tela é o portão de identidade (07/09/2026), e ela é anterior
+    // à bifurcação: não dá para rotular o caminho ainda.
     expect(only('onboarding_step')).toEqual([
-      expect.objectContaining({ p: { step: 0, funnel: TELEMETRY_FUNNEL.unknown } }),
+      expect.objectContaining({ p: { step: onboardingStepCode(-6), funnel: TELEMETRY_FUNNEL.unknown } }),
     ]);
 
-    fireEvent.click(screen.getByText('Get started'));
-    fireEvent.click(screen.getByText('I’d rather not say right now')); // GOAL
-    fireEvent.click(screen.getByText('I’d rather not say right now')); // STRUGGLE
-
-    const antesDaEscolha = only('onboarding_step');
-    // 07/09/2026 — A BIFURCAÇÃO MUDOU DE LUGAR e a telemetria conta isso.
-    // A escolha grátis/completo desceu para depois do consentimento e do
-    // portão de e-mail, então objetivo, dificuldade e consentimento acontecem
-    // com o caminho AINDA DESCONHECIDO. `unknown` aqui não é acidente: é o
-    // estado verdadeiro, e marcá-los como `demo` seria inventar uma intenção
-    // que a pessoa ainda não declarou.
-    for (const r of antesDaEscolha) expect(r.p?.funnel).toBe(TELEMETRY_FUNNEL.unknown);
-    // Um evento por tela alcançada — sem repetição na mesma tela.
-    expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
-      0, onboardingStepCode(-2), onboardingStepCode(-3), onboardingStepCode(-4),
-    ]);
-
-    // E, escolhido o grátis, o funil passa a ser DEMO de fato.
     fireEvent.click(screen.getByText(
       'I have read and agree to the Terms of Use and the Privacy Policy',
     ));
     fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
       target: { value: '011990' },
     });
-    fireEvent.click(screen.getByText('Continue').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(screen.getByText('I’d rather not say right now')); // GOAL
+    fireEvent.click(screen.getByText('I’d rather not say right now')); // STRUGGLE
+
+    const antesDaEscolha = only('onboarding_step');
+    // A BIFURCAÇÃO acontece DEPOIS do portão e do "porquê", e a telemetria
+    // conta isso: `unknown` aqui não é acidente, é o estado verdadeiro.
+    // Marcá-los como `demo` seria inventar uma intenção não declarada.
+    for (const r of antesDaEscolha) expect(r.p?.funnel).toBe(TELEMETRY_FUNNEL.unknown);
+    // Um evento por tela alcançada — sem repetição na mesma tela.
+    expect(antesDaEscolha.map(r => r.p?.step)).toEqual([
+      onboardingStepCode(-6), onboardingStepCode(-2), onboardingStepCode(-3), onboardingStepCode(-7),
+    ]);
+
+    // E, escolhido o grátis, o funil passa a ser DEMO de fato.
     fireEvent.click(screen.getByText('Start now — it’s free'));
     const depois = only('onboarding_step');
     expect(depois[depois.length - 1].p?.funnel).toBe(TELEMETRY_FUNNEL.demo);
@@ -83,8 +80,7 @@ describe('fiação da telemetria — onboarding', () => {
 
   it('o payload não carrega nada que a pessoa escreveu', () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    fireEvent.click(screen.getByText('Get started'));
-    const campo = screen.getByRole('textbox') as HTMLTextAreaElement;
+      const campo = screen.getByRole('textbox') as HTMLTextAreaElement;
     fireEvent.change(campo, { target: { value: 'quero parar de beber' } });
     fireEvent.click(screen.getByText('Continue').closest('button')!);
 
@@ -99,16 +95,15 @@ describe('fiação da telemetria — onboarding', () => {
 
   it('escolher um personagem pronto emite demo_pick uma vez', () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
-    fireEvent.click(screen.getByText('Get started'));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
-    fireEvent.click(screen.getByText(
+      fireEvent.click(screen.getByText(
       'I have read and agree to the Terms of Use and the Privacy Policy',
     ));
     fireEvent.change(screen.getByLabelText('What month and year were you born?'), {
       target: { value: '01/1990' },
     });
-    fireEvent.click(screen.getByText('Continue').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(screen.getByText('I’d rather not say right now'));
+    fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('Start now — it’s free'));
     expect(only('demo_pick')).toHaveLength(0);
 

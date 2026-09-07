@@ -49,12 +49,11 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
 
   it('o caminho grátis (demo) nunca grava rascunho', () => {
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
-    fireEvent.click(screen.getByText('Get started'));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
-    fireEvent.click(screen.getByText('I’d rather not say right now'));
-    fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
+      fireEvent.click(screen.getByText('I have read and agree to the Terms of Use and the Privacy Policy'));
     fireEvent.change(screen.getByLabelText('What month and year were you born?'), { target: { value: '012000' } });
-    fireEvent.click(screen.getByText('Continue').closest('button')!);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(screen.getByText('I’d rather not say right now'));
+    fireEvent.click(screen.getByText('I’d rather not say right now'));
     fireEvent.click(screen.getByText('Start now — it’s free'));
     fireEvent.click(screen.getByText(PREMADE_CHARACTERS[0].name).closest('button')!);
     // O rascunho do RITUAL continua sem existir no caminho grátis. O do
@@ -63,9 +62,11 @@ describe('SoulmonOnboarding — rascunho do ritual (WP1.7)', () => {
     expect(localStorage.getItem(STORAGE_KEYS.ORACLE_DRAFT)).toBeNull();
   });
 
-  it('um rascunho de outro modo é ignorado: o onboarding abre na intro', () => {
+  it('um rascunho de outro modo é ignorado: o onboarding abre no portão', () => {
     writeOracleDraft({ ...rascunho, mode: 'upgrade' });
     renderWithCss(<SoulmonOnboarding onComplete={async () => {}} />);
-    expect(screen.getByText('Get started')).toBeTruthy();
+    // 07/09/2026 — o primeiro passo passou a ser o portão de identidade; a
+    // tela de intro deixou de existir e a marca virou o cabeçalho dele.
+    expect(screen.getByText('Before we start')).toBeTruthy();
   });
 });

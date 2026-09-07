@@ -16,12 +16,20 @@ import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 
-/** Vai da intro até a tela "Before we start", pelo caminho grátis (demo). */
+/** 07/09/2026 — o aceite e o 18+ passaram a viver DENTRO do portão de
+ *  identidade, que é o PRIMEIRO passo do onboarding. Não há mais intro nem
+ *  tela de consentimento separada, então não há nada a percorrer: a tela já
+ *  está na frente. Com a auth desligada no teste, o portão mostra só os
+ *  documentos, a idade e um "Continue". */
 function ateOConsentimento() {
-  fireEvent.click(screen.getByText('Get started'));
-  fireEvent.click(screen.getByText('I’d rather not say right now')); // GOAL
-  fireEvent.click(screen.getByText('I’d rather not say right now')); // STRUGGLE
   expect(screen.getByText('Before we start')).toBeTruthy();
+}
+
+/** Depois do portão vem o "porquê", e só então a escolha grátis/completo. */
+function ateAEscolha() {
+  const pular = 'I’d rather not say right now';
+  fireEvent.click(screen.getByText(pular)); // objetivo
+  fireEvent.click(screen.getByText(pular)); // dificuldade
 }
 
 const caixa = () =>
@@ -29,9 +37,6 @@ const caixa = () =>
 const campoIdade = () =>
   screen.getByLabelText('What month and year were you born?') as HTMLInputElement;
 const continuar = () => screen.getByText('Continue').closest('button') as HTMLButtonElement;
-/** Passar do consentimento agora cai na ESCOLHA grátis/completo, que desceu do
- *  passo 0 para depois do 18+ e do portão de e-mail (07/09/2026). Com a auth
- *  desligada no teste, o portão não existe e o consentimento leva direto aqui. */
 const escolherGratis = () => fireEvent.click(screen.getByText('Start now — it’s free'));
 
 describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
@@ -76,8 +81,10 @@ describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
     // Não chegou ao demo.
     expect(screen.queryByText('Choose your Soulmon')).toBeNull();
     // A saída é o início do ritual, não um beco sem saída.
+    // A saída do muro devolve ao portão, que é o início — e o aceite é
+    // desmarcado: quem foi barrado não volta com ele dado de brinde.
     fireEvent.click(screen.getByText('Back to start'));
-    expect(screen.getByText('Get started')).toBeTruthy();
+    expect(screen.getByText('Before we start')).toBeTruthy();
   });
 
   it('demo com 18 ou mais passa direto para a escolha do personagem', () => {
@@ -86,6 +93,7 @@ describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
     fireEvent.click(caixa());
     fireEvent.change(campoIdade(), { target: { value: '012000' } }); // 01/2000 → 26 anos
     fireEvent.click(continuar());
+    ateAEscolha();
     escolherGratis();
     expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
     expect(screen.queryByText('Not quite yet')).toBeNull();
@@ -97,6 +105,7 @@ describe('caminho DEMO — o 18+ existe fora do caminho pago', () => {
     fireEvent.click(caixa());
     fireEvent.change(campoIdade(), { target: { value: '082008' } }); // faz 18 neste mês
     fireEvent.click(continuar());
+    ateAEscolha();
     escolherGratis();
     expect(screen.getByText('Choose your Soulmon')).toBeTruthy();
   });
