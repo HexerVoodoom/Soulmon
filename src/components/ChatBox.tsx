@@ -17,6 +17,18 @@ interface ChatBoxProps {
   aiSettings?: AISettings;
   onOpenAISettings?: () => void;
   language?: Language;
+  /** WP3.1 — o estado de AGORA, em INTEIROS (contrato `CONTEXT_SCHEMA` de
+   *  `functions/api/chat.js`). Nunca texto: `soulGoal`/`soulStruggle` não
+   *  passam por rota de IA (D8). Ausente = o pet responde sem contexto, que é
+   *  o comportamento antigo e continua válido. */
+  chatContext?: {
+    hp?: number;
+    energy?: number;
+    bond?: number;
+    daysAway?: number;
+    /** Humor do dia normalizado para 0..4 (a `MoodValue` é 1..5). */
+    moodToday?: number;
+  };
   onCreateActivity?: (activity: {
     name: string;
     category: string;
@@ -34,9 +46,20 @@ export function ChatBox({
   aiSettings,
   onOpenAISettings,
   onCreateActivity,
+  chatContext,
   language = 'en-US',
 }: ChatBoxProps) {
   const [inputValue, setInputValue] = useState('');
+  /* WP3.1 — MEMÓRIA DE SESSÃO, e só de sessão.
+     Sem isto o `getPetResponse` perguntava "E você?" e processava a resposta
+     como se fosse a primeira frase da conversa — o pet perguntava e não
+     escutava. Três trocas é o que o servidor aceita (`CHAT_MEMORY_TURNS`), e
+     quem corta de verdade é ELE: este estado é conveniência, não contrato.
+     Mora em `useState` de propósito — nada disto vai para o save nem para o
+     `localStorage`. Fechou o app, a conversa acabou. */
+  const [history, setHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const lembrar = (papel: 'user' | 'assistant', texto: string) =>
+    setHistory(prev => [...prev, { role: papel, content: texto }].slice(-6));
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -130,6 +153,8 @@ export function ChatBox({
         dominantBranch,
         language,
         aiSettings,
+        context: chatContext,
+        history,
       }, { signal: controller.signal });
 
       if (!response.ok) {
@@ -190,6 +215,8 @@ export function ChatBox({
         response = getPetResponse(userMessage);
       }
 
+      lembrar('user', userMessage);
+      lembrar('assistant', response);
       onSendMessage(response);
     } catch (error) {
       if (import.meta.env.DEV) console.error('Error sending message:', error);

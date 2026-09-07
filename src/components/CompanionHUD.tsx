@@ -168,6 +168,10 @@ interface CompanionHUDProps {
   petPassive?: string;
   /** WP2.7 — dias fora, de `lastDayReport.daysAway`. 0 = não houve ausência. */
   daysAway?: number;
+  /** WP3.1 — humor do check-in de hoje (`MoodValue` 1..5), ou `null`. O chat
+   *  normaliza para 0..4 antes de enviar. **Nunca vira pontuação**: entra só
+   *  para o pet não responder animado a quem disse que o dia foi ruim. */
+  moodToday?: number | null;
   /** WP3.2 — há tarefa assombrada na lista? O sprite VIRA O OLHAR enquanto
    *  houver. É o "o pet olha" que o `CLAUDE.md` prometia e não existia. */
   hauntedWatching?: boolean;
@@ -236,6 +240,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   daysAway = 0,
   petPassive,
   bondLevel,
+  moodToday,
   demoTint,
   petDisplayName,
   bondTitleText,
@@ -1007,6 +1012,25 @@ export const CompanionHUD = memo(function CompanionHUD({
     ? PET_BACKGROUNDS[equippedBackground]?.baseColor
     : undefined;
 
+  /* WP3.1 — o contexto do chat, montado AQUI porque é aqui que os números já
+     existem. Duas cautelas, e as duas vêm do contrato do servidor
+     (`sanitizeChatContext`): ele descarta o bloco INTEIRO se qualquer valor
+     não for inteiro finito ou sair da faixa — então (a) chave ausente não
+     entra como `undefined`, ela simplesmente não entra, e (b) tudo é preso na
+     faixa. A energia é o caso real: as barras são o requisito do estágio e
+     chegam a 6, contra o teto 4 do schema — sem o clamp, um mega derrubaria
+     todo o contexto e ninguém veria erro nenhum. */
+  const chatContext = (() => {
+    const faixa = (n: number, min: number, max: number) => Math.min(Math.max(Math.round(n), min), max);
+    const ctx: Record<string, number> = {};
+    if (typeof healthPoints === 'number') ctx.hp = faixa(healthPoints, 0, 4);
+    if (typeof energyPoints === 'number') ctx.energy = faixa(energyPoints, 0, 4);
+    if (typeof bondLevel === 'number') ctx.bond = faixa(bondLevel, 1, 31);
+    if (typeof daysAway === 'number') ctx.daysAway = faixa(daysAway, 0, 3);
+    if (typeof moodToday === 'number') ctx.moodToday = faixa(moodToday - 1, 0, 4);
+    return ctx;
+  })();
+
   const chatDock = (
     <div className="sm-chat-fixed">
       <ChatBox
@@ -1019,6 +1043,7 @@ export const CompanionHUD = memo(function CompanionHUD({
         aiSettings={aiSettings}
         onOpenAISettings={onOpenAISettings}
         onCreateActivity={onCreateActivity}
+        chatContext={chatContext}
         language={language}
       />
     </div>

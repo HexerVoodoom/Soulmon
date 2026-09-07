@@ -123,9 +123,63 @@ const CONTEXT_SCHEMA = {
   energy: { min: 0, max: 4 },
   bond: { min: 1, max: 31 },
   daysAway: { min: 0, max: 3 },
+  // `moodToday` é o check-in de humor NORMALIZADO para 0..4 (a `MoodValue` é
+  // 1..5; quem envia subtrai 1). Opcional por natureza: o humor é opcional no
+  // produto e nunca alimenta pontuação — aqui ele serve só para o pet não
+  // responder animado a quem acabou de dizer que o dia foi ruim.
   moodToday: { min: 0, max: 4 },
-  goalCategory: { min: 0, max: 7 },
+  // ⚰️ `goalCategory` saiu em 07/09/2026. Estava declarado aqui, ninguém
+  // enviava e o `contextBlock` não lia — a terceira ponta de um campo que só
+  // existia no schema. Derivar categoria de `soulGoal` esbarra na decisão D8
+  // (texto do usuário não passa por rota de IA); se um dia voltar, volta com
+  // enum próprio e com quem o escreve.
 };
+
+/**
+ * WP3.1 — A MEMÓRIA DE SESSÃO: as últimas trocas, e no MÁXIMO três.
+ *
+ * ⚠️ Sem isto o pet pergunta e não escuta. As falas locais dizem "E você?" /
+ * "Me conta mais", e a resposta seguinte chegava ao modelo como se fosse a
+ * primeira frase da conversa — o padrão que mata a ilusão de contingência, que
+ * é justamente o que o Tamagotchi effect (relatório 02, §2) aponta como o
+ * mecanismo do apego.
+ *
+ * Três decisões, e as três são de segurança e de custo:
+ *
+ *  · **TRÊS trocas, e o limite é do servidor.** O cliente pede; quem corta é
+ *    quem paga. Uma janela que o cliente escolhe é uma janela que um cliente
+ *    editado faz crescer até o teto de tokens virar conta.
+ *  · **cada turno passa pela MESMA minimização da mensagem atual**
+ *    (`minimizeForAi`). O histórico é texto livre do usuário como qualquer
+ *    outro — tratá-lo como "já foi checado" seria abrir a porta que o
+ *    `_redact.js` fecha, uma mensagem atrás.
+ *  · **a fala do PET volta como veio.** Ela foi gerada aqui e já passou pelo
+ *    prompt; re-redigir a própria resposta só a deformaria.
+ *
+ * Nada disso persiste: a memória é da SESSÃO, mora no cliente, e some quando o
+ * app fecha. Guardar conversa no servidor seria coletar o que o produto
+ * declara não coletar.
+ */
+export const CHAT_MEMORY_TURNS = 3;
+
+export function sanitizeChatHistory(raw, minimize) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  // Do fim para o começo: o que importa é o RECENTE, e cortar pelo começo
+  // deixaria o pet lembrando do início e esquecendo do que acabou de ouvir.
+  for (const turno of raw.slice(-CHAT_MEMORY_TURNS * 2)) {
+    if (!turno || typeof turno !== 'object') continue;
+    const papel = turno.role === 'assistant' ? 'assistant' : turno.role === 'user' ? 'user' : null;
+    if (!papel) continue;
+    const texto = typeof turno.content === 'string' ? turno.content : '';
+    if (!texto.trim()) continue;
+    out.push({
+      role: papel,
+      content: papel === 'user' ? minimize(texto, 500).text : texto.slice(0, 500),
+    });
+  }
+  return out.slice(-CHAT_MEMORY_TURNS * 2);
+}
 
 export function sanitizeChatContext(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -150,6 +204,11 @@ function contextBlock(ctx) {
     linhas.push(ctx.hp <= 1 ? 'You are hurt right now.' : ctx.hp >= 4 ? 'You feel healthy.' : 'You feel okay.');
   }
   if (typeof ctx.energy === 'number' && ctx.energy <= 1) linhas.push('You are low on energy.');
+  if (typeof ctx.moodToday === 'number' && ctx.moodToday <= 1) {
+    // Nunca tentar consertar o humor: acolher e ficar. É o mesmo registro que
+    // `utils/mood.ts` já exige do resumo — nada de "anima aí".
+    linhas.push('They said today has been a rough day. Be warm and present, never cheerful at them, and never ask them to do anything.');
+  }
   if (typeof ctx.bond === 'number' && ctx.bond >= 10) linhas.push('You two have been together for a long time.');
   if (typeof ctx.daysAway === 'number' && ctx.daysAway >= 1) {
     // NUNCA cobrar a ausência: a regra do produto é que quem volta encontra
@@ -307,6 +366,11 @@ export async function onRequestPost({ request, env }) {
         model: 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: buildSystemPrompt({ petName: String(petNameRaw || 'Soulmon').slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
+          // A memória de sessão entra ENTRE o sistema e a mensagem nova, que é
+          // onde o histórico de uma conversa vai. O bloco `NEVER` continua no
+          // fim do system prompt, então nada que venha aqui tem precedência
+          // sobre ele — é o que impede o histórico de virar vetor de injeção.
+          ...sanitizeChatHistory(body?.history, minimizeForAi),
           { role: 'user', content: safeMessage },
         ],
         max_tokens: 120,

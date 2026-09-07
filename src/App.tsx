@@ -4840,6 +4840,10 @@ export default function App() {
                 /* WP2.7 — o reencontro é por DIAS. `welcomeBack` do relatório
                    já sabia quantos; a VOZ é que não sabia. */
                 daysAway={gameState.lastDayReport?.welcomeBack ? (gameState.lastDayReport.daysAway ?? 0) : 0}
+                /* WP3.1 — humor de HOJE para o chat. Mesma leitura do
+                   DailyReportModal; opcional por definição (o check-in é
+                   opcional) e nunca alimenta pontuação. */
+                moodToday={moodFor(gameState.moodLog, playerDayKey(new Date(), gameState.playerDayTz))}
                 equippedBackground={gameState.equippedBackground ?? null}
                 useAI={useAI}
                 aiSettings={aiSettings}

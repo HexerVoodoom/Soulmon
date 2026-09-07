@@ -1207,9 +1207,35 @@ var CONTEXT_SCHEMA = {
   energy: { min: 0, max: 4 },
   bond: { min: 1, max: 31 },
   daysAway: { min: 0, max: 3 },
-  moodToday: { min: 0, max: 4 },
-  goalCategory: { min: 0, max: 7 }
+  // `moodToday` é o check-in de humor NORMALIZADO para 0..4 (a `MoodValue` é
+  // 1..5; quem envia subtrai 1). Opcional por natureza: o humor é opcional no
+  // produto e nunca alimenta pontuação — aqui ele serve só para o pet não
+  // responder animado a quem acabou de dizer que o dia foi ruim.
+  moodToday: { min: 0, max: 4 }
+  // ⚰️ `goalCategory` saiu em 07/09/2026. Estava declarado aqui, ninguém
+  // enviava e o `contextBlock` não lia — a terceira ponta de um campo que só
+  // existia no schema. Derivar categoria de `soulGoal` esbarra na decisão D8
+  // (texto do usuário não passa por rota de IA); se um dia voltar, volta com
+  // enum próprio e com quem o escreve.
 };
+var CHAT_MEMORY_TURNS = 3;
+function sanitizeChatHistory(raw, minimize) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const turno of raw.slice(-CHAT_MEMORY_TURNS * 2)) {
+    if (!turno || typeof turno !== "object") continue;
+    const papel = turno.role === "assistant" ? "assistant" : turno.role === "user" ? "user" : null;
+    if (!papel) continue;
+    const texto = typeof turno.content === "string" ? turno.content : "";
+    if (!texto.trim()) continue;
+    out.push({
+      role: papel,
+      content: papel === "user" ? minimize(texto, 500).text : texto.slice(0, 500)
+    });
+  }
+  return out.slice(-CHAT_MEMORY_TURNS * 2);
+}
+__name(sanitizeChatHistory, "sanitizeChatHistory");
 function sanitizeChatContext(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const out = {};
@@ -1231,6 +1257,9 @@ function contextBlock(ctx) {
     linhas.push(ctx.hp <= 1 ? "You are hurt right now." : ctx.hp >= 4 ? "You feel healthy." : "You feel okay.");
   }
   if (typeof ctx.energy === "number" && ctx.energy <= 1) linhas.push("You are low on energy.");
+  if (typeof ctx.moodToday === "number" && ctx.moodToday <= 1) {
+    linhas.push("They said today has been a rough day. Be warm and present, never cheerful at them, and never ask them to do anything.");
+  }
   if (typeof ctx.bond === "number" && ctx.bond >= 10) linhas.push("You two have been together for a long time.");
   if (typeof ctx.daysAway === "number" && ctx.daysAway >= 1) {
     linhas.push("They were away for a while and just came back. Be glad, never reproachful, and do not mention what was left undone.");
@@ -1344,6 +1373,11 @@ async function onRequestPost2({ request, env }) {
           model: "llama-3.1-8b-instant",
           messages: [
             { role: "system", content: buildSystemPrompt({ petName: String(petNameRaw || "Soulmon").slice(0, 40), mood, evolutionStage, dominantBranch, language, aiSettings, context: sanitizeChatContext(body?.context) }) },
+            // A memória de sessão entra ENTRE o sistema e a mensagem nova, que é
+            // onde o histórico de uma conversa vai. O bloco `NEVER` continua no
+            // fim do system prompt, então nada que venha aqui tem precedência
+            // sobre ele — é o que impede o histórico de virar vetor de injeção.
+            ...sanitizeChatHistory(body?.history, minimizeForAi),
             { role: "user", content: safeMessage }
           ],
           max_tokens: 120,
@@ -3102,7 +3136,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-n6F2VG/functionsRoutes-0.760324961409601.mjs
+// ../.wrangler/tmp/pages-SpwaLs/functionsRoutes-0.6609525760763617.mjs
 var routes = [
   {
     routePath: "/api/account",
