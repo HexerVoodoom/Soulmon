@@ -48,6 +48,24 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > `_kv.js` aceita os dois) e o projeto Firebase (passo 4).
 >
 > O que isto NÃO autoriza: apagar a compatibilidade de save por conta própria.
+>
+> **Fecho da sessão (07/09/2026, noite).** Os 17 achados da
+> `docs/AUDITORIA-ALINHAMENTO.md` foram trabalhados até o fim e o arquivo
+> ganhou a tabela de verificação, com o comando que responde por cada um.
+> Depois da limpeza, três coisas a mais:
+>
+> - **WP3.1 fechou de verdade**: o chat agora manda o estado de agora (HP,
+>   energia, Vínculo, dias fora, humor do dia) e as últimas trocas. Quem corta
+>   a memória é o SERVIDOR, e toda fala do usuário no histórico passa pela
+>   mesma minimização da mensagem atual. `goalCategory` saiu do schema — era
+>   declarado, enviado por ninguém e lido por ninguém.
+> - **Guard de fiação do KV** (`_kv.fiacao.test.js`): todo teste de rota semeia
+>   o binding ANTIGO e passa pelo fallback, então um `env.DIGIAPP_SAVES` cru
+>   reintroduzido ficaria verde até o dia em que o painel expusesse só o nome
+>   novo. Agora uma rota real é exercida com **só** `SOULMON_SAVES`.
+> - **Lixo de edição no `App.tsx`**: o nó do `FirstDayCard` carregava uma
+>   expressão-vírgula sobrando de um `sed` malfeito. Compilava e funcionava por
+>   acidente (a vírgula devolvia a `dayKey`, sempre verdadeira). Apagado.
 > O dono pode ter o próprio save no aparelho dele, e "ninguém em produção" não
 > é o mesmo que "nenhum save existe". É decisão dele, e o custo de errar é o
 > save dele — recuperável, mas dele.

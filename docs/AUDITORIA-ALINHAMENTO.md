@@ -127,3 +127,64 @@ intersticiais serializa sem descartar nada.
 perdeu. A leitura é 100% inerte: **25/25 graváveis, 0/25 legíveis.** Um `curl`
 autenticado responde em dez segundos e depende de uma variável que só o dono
 define.
+
+---
+
+# Fecho da auditoria — 07/09/2026
+
+Os 17 achados foram trabalhados até o fim, mais a limpeza da herança do
+DigiApp que o dono autorizou depois ("ninguém nunca usou o app em produção").
+Suíte no fecho: **235 arquivos, 3456 testes, verde**; `tsc` do app e do
+overlay limpos; `npm run build` OK.
+
+## Os 17, com o comando que agora responde
+
+| # | Achado | Verificação |
+|---|---|---|
+| 1 | Glitchtama sem teto | `GLITCHTAMA_PER_DAY` em `specialItemUse.ts`, recusa `'daily-cap'` ANTES do decremento |
+| 2 | Reveal pago entrega outra criatura | `revealSprite` atravessa `handleUpgradeRevealed` |
+| 3 | Widget cobra | `grep -c 'constancy_pct\|"shields"' android/**/widget/*.kt` → **0 em todos**; guard em `widgetSemCobranca.contract.test.ts` |
+| 4 | Renascimento invisível | `rebirthRefusal` consumido no `App.tsx`; `not-paid` renderiza `UnlockNudge` |
+| 5 | `weeklyMissions` mudo | consumido em `ShopModal.tsx` + `App.tsx`; guard de fiação exige gatilho por missão |
+| 6 | `bestiary` escrito e não lido | `BestiaryCard.tsx`, com condição PRÓPRIA (não aninhada no álbum de formas) |
+| 7 | Preço localizado inerte | `priceLabel.ts` consumido nas telas de compra |
+| 8 | `applyAggregate` descartava props | buckets por prop em `metrics.js`; teste de cobertura evento a evento |
+| 9 | Aura da D4 inerte | `pureWindow` nomeado, com rótulo, respeitando `hideMetrics` |
+| 10 | `ProtectProgressModal` sob os intersticiais | gate REATIVO `interstitial === 'welcome'`, no lugar do `setTimeout(15s)` |
+| 11 | Marco em z-60 e auto-dismiss | z-**300**, espera o gesto; o teste foi invertido para afirmar o aceite escrito |
+| 12 | `EvolveTaskModal` por baixo da cerimônia | resolvido na fila |
+| 13 | `FirstDayCard` pedia comida antes de existir | entrou na fila de avisos, em primeiro (é o mais perecível) |
+| 14 | Três pushes que se contradizem | copy das 20h em `_pushCopy.js`; a noite cede a vez à janela de descanso |
+| 15 | Nudge duplicado no Android | `notify(tag, 0, …)` no `AlarmReceiver`, casando com a tag do FCM |
+| 16 | `'HP baixo...'` | frase removida; guard de tom em `petVoice.test.ts` |
+| 17 | Inflação de celebração | canais rebaixados em vez de somado um quarto |
+
+## Dois achados que nenhum agente pegou, e o método que os pegou
+
+- **`isoWeekKey` rejeitava o formato de `playerDayKey`** (`Www Mmm DD YYYY` ≠
+  `YYYY-MM-DD`): a oferta do WP5.1 **nunca apareceu para ninguém**, e nada
+  ficava vermelho. Falha silenciosa total.
+- **`purchase.reason` era descartado** pelo agregador — achado pelo teste de
+  cobertura que se escreveu para o achado 8, não por leitura.
+
+A lição de método do topo deste arquivo (`grep -q A B` é OR) tem uma segunda
+metade: **aceite que só lê o código não pega parâmetro que atravessa dois
+formatos.** Os dois casos acima só apareceram executando.
+
+## Limpeza da herança do DigiApp (autorizada em 07/09/2026)
+
+Os 57 nomes da Bandai, as 34 chaves `digiapp-*`, o binding KV, a bridge do
+widget, o canal de push e as sobras de doc. Três problemas **não cosméticos**
+apareceram no caminho, e nenhum estava na lista:
+
+1. O widget Android desenhava **um personagem da Bandai** como fallback, para
+   todo usuário, sempre (`R.drawable.triceramon_dot`).
+2. `src/supabase/functions/server/chat.tsx` era um **segundo endpoint de LLM,
+   publicado e sem autenticação**, sem nenhuma das 13 proteções da rota real e
+   sem o teto de custo do `_aiGuard`. Apagado.
+3. `assetlinks.json` declarava, no nosso domínio, que **outro app** é dono dos
+   nossos links. Hoje, sem fingerprint, responde lista vazia — ausência é
+   inconveniente; mentira é problema de segurança.
+
+O binding aceita os DOIS nomes (`kv(env)`), então a ordem entre mergear e
+clicar no painel não importa e não existe janela de queda.

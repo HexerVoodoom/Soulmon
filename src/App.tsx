@@ -4599,8 +4599,7 @@ export default function App() {
                   avisos.push({
                     key: 'firstDay',
                     node: (
-  gameState.firstDay ?? null, playerDayKey(new Date(), gameState.playerDayTz)) && (
-                  <FirstDayCard progress={gameState.firstDay!} language={language} />
+                      <FirstDayCard progress={gameState.firstDay!} language={language} />
                     ),
                   });
                 }

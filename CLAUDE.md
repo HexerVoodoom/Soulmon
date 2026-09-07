@@ -181,7 +181,7 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
 
 ## Arquitetura
 
-- `src/App.tsx` (**5772 linhas**, medido em 06/09/2026 na auditoria de alinhamento; dizia **4921** desde 26/08/2026 e envelheceu sete sprints —
+- `src/App.tsx` (**5991 linhas**, medido em 07/09/2026 no fecho da auditoria — dizia **5772** um dia antes, e o número apodreceu de novo, que é exatamente o que este parêntese vem avisando; dizia **4921** desde 26/08/2026 e envelheceu sete sprints —
   dizia "~1500" de manhã, "~4700" à tarde e **"4489" à noite**, número que ficou
   falso poucos merges depois; a diferença importa porque quem lê "1500" acha que
   cabe num contexto e lê o arquivo inteiro à toa. A trajetória do dia é útil:
