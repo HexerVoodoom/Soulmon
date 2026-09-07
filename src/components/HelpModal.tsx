@@ -86,8 +86,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from clearing all 5 dungeon floors. Using it grants one perfect day.',
-    descPt: 'Item raro de concluir os 5 andares da masmorra. Usar concede um dia perfeito.',
+    descEn: 'Rare item from clearing all 5 dungeon floors. Using it grants one perfect day — one a day, so the ladder stays measured in days.',
+    descPt: 'Item raro de concluir os 5 andares da masmorra. Usar concede um dia perfeito — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
     icon: '💗', en: 'Little Heart', pt: 'Coraçãozinho',

@@ -36,7 +36,7 @@ object WidgetRenderer {
                 totalTasks,
                 hp,
                 prefs.getBoolean("needs_intervention", false),
-                prefs.getInt("constancy_pct", -1),
+                if (prefs.contains("habit_steady")) prefs.getBoolean("habit_steady", false) else null,
             ),
         )
         attachClick(context, views)
@@ -108,13 +108,16 @@ object WidgetRenderer {
     }
 
     private fun buildChatPhrases(stage: String, completed: Int, total: Int, hp: Int): List<String> {
+        // Mesma régua da `contextualMessage`: o pet fala com a pessoa, não lê
+        // o placar dela. "N task(s) left, let's go!" saiu na auditoria de
+        // 06/09/2026 — contar o que falta, na tela inicial, é cobrança.
         val contextual = mutableListOf<String>()
-        if (hp <= 20) contextual.add("I need some care...")
+        if (hp <= 20) contextual.add("I miss you...")
         if (stage == "digiegg") contextual.add("I'll hatch soon!")
         when {
             total == 0 -> contextual.add("Let's add a task?")
             completed >= total -> contextual.add("We crushed it today! ✨")
-            else -> contextual.add("${total - completed} task(s) left, let's go!")
+            else -> contextual.add("Whenever you're ready, I'm here.")
         }
         val result = (contextual + CHAT_FIXED_PHRASES.shuffled()).toMutableList()
         while (result.size < CHAT_PHRASE_SLOTS.size) result.add(CHAT_FIXED_PHRASES.random())
@@ -245,23 +248,44 @@ object WidgetRenderer {
         total: Int,
         hp: Int,
         needsIntervention: Boolean = false,
-        constancyPct: Int = -1,
+        habitSteady: Boolean? = null,
     ): String {
-        if (hp <= 20) return "⚠️ Cuide de mim!"
-        // Antes das tarefas do dia: quem faltou duas vezes seguidas precisa da
-        // porta pequena, não do placar.
+        /*
+         * ⚠️ Esta função foi reescrita na auditoria de 06/09/2026, e o motivo
+         * precisa ficar aqui porque a tentação de reverter é grande.
+         *
+         * Ela dizia "⚠️ Cuide de mim!" com HP baixo e "📋 $completed de $total
+         * feitas" no fim da escada. As duas são COBRANÇA, e o widget é a
+         * superfície mais exposta do telefone — vista dezenas de vezes por dia,
+         * sem que a pessoa tenha decidido abrir nada. É o `Save your streak!`
+         * do Duolingo em tom baixo, e a spec do dossiê mandou REMOVER, não
+         * acrescentar.
+         *
+         * O caso do "N de M feitas" é o mais instrutivo: ele só aparece quando
+         * a razão é BAIXA, ou seja, exatamente no dia em que a pessoa menos
+         * conseguiu. O placar aparece para quem está perdendo.
+         *
+         * A régua da reescrita: nada que conte o que falta, nada que peça, e
+         * a voz é do PET falando com a pessoa — não do app lendo a própria UI.
+         */
+        // HP baixo é saudade, nunca alarme: o HP representa o cuidado que a
+        // pessoa teve consigo mesma, e um ⚠️ ali converte culpa em vergonha.
+        if (hp <= 20) return "💛 Tô com saudade de você"
+        // Quem faltou duas vezes seguidas precisa da porta pequena, não do placar.
         if (needsIntervention) return "🌱 Hoje, só 5 minutos?"
         if (total == 0) {
-            // Sem tarefa hoje, a constância ainda tem o que dizer.
-            if (constancyPct >= 71) return "🌳 Você tem estado firme"
-            return "📋 Adicione tarefas!"
+            // Sem tarefa hoje, a FAIXA de constância ainda tem o que dizer —
+            // e ela é uma faixa, nunca o percentual (ver `habit_steady`).
+            if (habitSteady == true) return "🌳 Você tem estado firme"
+            return "🌤️ Um dia de cada vez"
         }
         val ratio = if (total > 0) completed.toDouble() / total else 0.0
         return when {
             ratio >= 1.0 -> "✨ Dia perfeito!"
             ratio >= 0.7 -> "💪 Quase lá!"
             ratio >= 0.4 -> "🔥 Continue assim!"
-            else -> "📋 $completed de $total feitas"
+            // O degrau de baixo NÃO conta o que falta. Começar já é o passo.
+            else -> "🌱 Começou — isso já conta"
         }
     }
 }

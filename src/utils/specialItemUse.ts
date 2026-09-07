@@ -1,4 +1,5 @@
 import { CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, type Attr } from './shop';
+import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 
 /**
  * O USO de um item especial da pastinha — glitchtama, coraçãozinho, chip.
@@ -36,7 +37,48 @@ import { CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, type Attr } from './shop';
  * roda 2× no StrictMode.
  */
 
-export type SpecialRefusal = 'no-stock' | 'already-full';
+export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap';
+
+/**
+ * Quantos 🌀 Glitchtama o jogador pode CONSUMIR por dia do jogador.
+ *
+ * ⚠️ Este teto não é economia, é a espinha da progressão — e ele foi
+ * acrescentado depois de uma auditoria fazer a conta (06/09/2026).
+ *
+ * O Glitchtama dá +1 `perfectDays`, que é a moeda que a escada de evolução
+ * consome. Rookie→mega custa 14 dias perfeitos e o Ultra custa mais
+ * `ULTRA_PATIENCE_DAYS` (45): **59 no total**. A masmorra declara, por escrito,
+ * que não tem limite diário nem gate de entrada, e concluir os 5 andares
+ * sempre dropa um Glitchtama — então 59 runs seguidas compravam a escada
+ * inteira, e elas cabem num fim de semana.
+ *
+ * O `progression.ts` justifica os 45 dias do Ultra assim: *"consistência ao
+ * longo de semanas, que é o recurso que a pesquisa de v-pet aponta como o
+ * único que não cresce indefinidamente"*. Sem este teto, ele crescia.
+ *
+ * O conserto é um teto por DIA, e não um limite de estoque nem um custo de
+ * entrada, por três razões: (a) o item continua caindo e continua valendo —
+ * ninguém perde nada do que já tem; (b) o recurso que a tese protege é TEMPO
+ * DE CALENDÁRIO, e só um teto por dia converte o atalho de volta em dias; (c) a
+ * masmorra segue sem cobrar coração, que é a linha vermelha de verdade.
+ *
+ * Um por dia significa que o Glitchtama, no melhor caso, DOBRA o ritmo de quem
+ * já faz o dia perfeito — é generoso, e é finito.
+ */
+export const GLITCHTAMA_PER_DAY = 1;
+
+/**
+ * O registro do teto, no SAVE (`glitchtamaUse`), nunca no localStorage.
+ *
+ * Mesmo motivo do `careCaps` e do `poopDrainCharge`: um teto que se fura
+ * trocando de aparelho não é um teto. E o DIA aqui é o **dia do jogador**
+ * (`playerDayKey` + `playerDayTz`), não o do aparelho — senão dois celulares em
+ * fusos diferentes discordariam do nome do dia e o teto valeria duas vezes.
+ */
+export interface GlitchtamaUse {
+  day: string;
+  used: number;
+}
 
 /** Fatia do GameState que o uso de item especial lê e escreve. */
 export interface SpecialItemState {
@@ -50,6 +92,19 @@ export interface SpecialItemState {
   vaccinePoints: number;
   totalXP: number;
   attributesSinceLastEvolution: { virus: number; data: number; vaccine: number };
+  glitchtamaUse?: GlitchtamaUse;
+  playerDayTz?: PlayerDayAnchor;
+}
+
+/**
+ * Quantos Glitchtama já foram usados HOJE. Dia diferente = zero — o registro
+ * antigo não é apagado, é simplesmente ignorado, que é o que torna esta leitura
+ * idempotente sob a virada.
+ */
+export function glitchtamaUsedToday(state: SpecialItemState, now: Date): number {
+  const hoje = playerDayKey(now, state.playerDayTz);
+  const reg = state.glitchtamaUse;
+  return reg && reg.day === hoje ? reg.used : 0;
 }
 
 /**
@@ -60,10 +115,14 @@ export interface SpecialItemState {
  * O `petPassive` não entra aqui de propósito: nenhum traço mexe em item
  * especial hoje. Se um dia mexer, ele vem do ESTADO, como em `rubDecision`.
  */
-export function specialRefusal(state: SpecialItemState, emoji: string): SpecialRefusal | undefined {
+export function specialRefusal(state: SpecialItemState, emoji: string, now: Date): SpecialRefusal | undefined {
   const special = SPECIAL_ITEMS[emoji];
   if (!special) return undefined;
   if ((state.foodInventory[emoji] ?? 0) <= 0) return 'no-stock';
+  // O teto do Glitchtama recusa ANTES do decremento: o item volta para a
+  // pastinha intacto e vale amanhã. Recusar depois de consumir seria a família
+  // de bug do X-6 ao contrário — gastar para não receber nada.
+  if (special.kind === 'glitchtama' && glitchtamaUsedToday(state, now) >= GLITCHTAMA_PER_DAY) return 'daily-cap';
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
   if (special.kind === 'heart' && state.healthPoints >= state.maxHealthPoints) return 'already-full';
@@ -89,11 +148,12 @@ export function specialRefusal(state: SpecialItemState, emoji: string): SpecialR
 export function applySpecialItem<T extends SpecialItemState>(
   prev: T,
   emoji: string,
+  now: Date,
 ): { state: T; refused?: SpecialRefusal } {
   const special = SPECIAL_ITEMS[emoji];
   if (!special) return { state: prev };
 
-  const refused = specialRefusal(prev, emoji);
+  const refused = specialRefusal(prev, emoji, now);
   if (refused) return { state: prev, refused };
 
   // Decremento do inventário — era esta a linha copiada três vezes inline.
@@ -106,12 +166,20 @@ export function applySpecialItem<T extends SpecialItemState>(
     // isto é PONTO DE EVOLUÇÃO, não enfeite. `perfectDays` é o contador que a
     // escada consome; `totalPerfectDays` é o vitalício das missões, e por isso
     // ele NÃO é decrementado na evolução (ver `degeneratedPerfectDays`).
+    //
+    // O contador do teto é escrito no MESMO retorno que dá o ponto: um lote do
+    // React que aplicasse o ponto sem gravar o uso deixaria o próximo toque
+    // passar de novo, que é exatamente o furo do X-6.
     return {
       state: {
         ...prev,
         foodInventory,
         perfectDays: prev.perfectDays + 1,
         totalPerfectDays: (prev.totalPerfectDays ?? 0) + 1,
+        glitchtamaUse: {
+          day: playerDayKey(now, prev.playerDayTz),
+          used: glitchtamaUsedToday(prev, now) + 1,
+        },
       },
     };
   }

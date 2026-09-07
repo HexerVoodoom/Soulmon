@@ -235,6 +235,28 @@ export const TELEMETRY_UNLOCK_REASON = { taskLimit: 0, evolution: 1, report: 2, 
  *  comparáveis); `onboarding` é o caminho que não passa por convite nenhum. */
 export const TELEMETRY_PURCHASE_REASON = { ...TELEMETRY_UNLOCK_REASON, onboarding: 4 } as const;
 
+/**
+ * O motivo do convite, traduzido para o número do schema.
+ *
+ * ⚠️ Existe porque os DOIS emissores eram ternários de duas pernas contra um
+ * mapa de quatro (auditoria de 06/09/2026): um convite vindo do relatório
+ * diário era gravado como `evolution`, e um dispensar vindo de lá virava
+ * `task-limit`. O valor `report` (2) nunca era emitido por ninguém.
+ *
+ * O dano é do tipo que não fica vermelho: os números gravados eram válidos, só
+ * eram o BALDE ERRADO — e o WP5.1 existe justamente para ser julgado por
+ * origem daqui a 30 dias. Uma tradução com dono único é o que impede a
+ * terceira perna de ser esquecida na próxima vez.
+ */
+export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop'): number {
+  switch (reason) {
+    case 'task-limit': return TELEMETRY_UNLOCK_REASON.taskLimit;
+    case 'evolution': return TELEMETRY_UNLOCK_REASON.evolution;
+    case 'report': return TELEMETRY_UNLOCK_REASON.report;
+    case 'shop': return TELEMETRY_UNLOCK_REASON.shop;
+  }
+}
+
 /** WP0.11 — origem da abertura. */
 export const TELEMETRY_OPEN_SOURCE = { direct: 0, push: 1, widget: 2, shortcut: 3 } as const;
 

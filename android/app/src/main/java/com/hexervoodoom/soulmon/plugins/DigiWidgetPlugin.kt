@@ -53,14 +53,28 @@ class DigiWidgetPlugin : Plugin() {
          * ainda não tem histórico é a mesma mentira que a constância dotada
          * existe para evitar.
          */
-        val constancyPct = call.data.optInt("constancyPct", -1)
-        val shields = call.data.optInt("shields", -1)
         val habitTierMax = call.data.optInt("habitTierMax", -1)
-        val bondLevel = call.data.optInt("bondLevel", -1)
-        if (constancyPct >= 0) editor.putInt("constancy_pct", constancyPct)
-        if (shields >= 0) editor.putInt("shields", shields)
         if (habitTierMax >= 0) editor.putInt("habit_tier_max", habitTierMax)
-        if (bondLevel >= 0) editor.putInt("bond_level", bondLevel)
+        /*
+         * ⚠️ `constancy_pct`, `shields` e `bond_level` NÃO são mais gravados
+         * (auditoria de 06/09/2026). Os dois últimos eram escritos e nunca
+         * lidos pelo renderer; os dois primeiros são o que a spec do dossiê
+         * vetou na tela inicial — percentual cru é linha vermelha, e escudo
+         * exposto vira placar da proteção que só funciona sendo silenciosa.
+         *
+         * O que substitui é uma FAIXA (`habit_steady`), chave NOVA: as chaves
+         * do bridge são congeladas, então só se acrescenta. Um widget velho
+         * lendo `constancy_pct` ausente cai no -1, que ele já trata como
+         * "não informado" — nada quebra na tela de quem não atualizou.
+         */
+        if (call.data.has("habitSteady")) {
+            editor.putBoolean("habit_steady", call.data.optBoolean("habitSteady", false))
+        } else {
+            editor.remove("habit_steady")
+        }
+        editor.remove("constancy_pct")
+        editor.remove("shields")
+        editor.remove("bond_level")
         editor.putBoolean("needs_intervention", call.data.optBoolean("needsIntervention", false))
 
         editor.apply()

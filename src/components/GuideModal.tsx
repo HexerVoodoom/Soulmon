@@ -102,8 +102,13 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               ganho é anúncio. */}
           <p style={para}>
             {L(
-              'Depois do Ultra existe o Renascimento: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e dias perfeitos continuam intactos. Acontece uma vez só.',
-              'After the Ultra comes Rebirth: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and perfect days stay intact. It happens only once.',
+              /* ⚠️ "de conta completa" entrou na auditoria de 06/09/2026: este
+                 parágrafo prometia o Renascimento a TODOS sem dizer que é
+                 exclusivo de quem comprou, e a página de Evolução não mostrava
+                 nada para quem não podia — o guia criava a expectativa e a tela
+                 entregava silêncio. */
+              'Depois do Ultra existe o Renascimento, para quem tem a conta completa: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e dias perfeitos continuam intactos. Acontece uma vez só.',
+              'After the Ultra comes Rebirth, for full accounts: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and perfect days stay intact. It happens only once.',
             )}
           </p>
           <p style={para}>

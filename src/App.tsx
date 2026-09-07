@@ -11,6 +11,7 @@ import {
   track, flush as flushTelemetry, installTelemetryAutoFlush,
   setTelemetryTier, trackDayClosed, telemetryDayKey,
   TELEMETRY_UNLOCK_REASON, TELEMETRY_PURCHASE_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
+  unlockReasonCode,
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
 } from './utils/telemetry';
 import { BottomNav } from './components/BottomNav';
@@ -97,7 +98,7 @@ import {
 import { FirstDayCard } from './components/FirstDayCard';
 import { MilestoneCeremony } from './components/MilestoneCeremony';
 import {
-  applyRebirth, canRebirth, rebirthEscolaOptions, rebirthElementOptions,
+  applyRebirth, canRebirth, rebirthRefusal, rebirthEscolaOptions, rebirthElementOptions,
 } from './utils/rebirth';
 import type { RebirthChoices } from './utils/rebirth';
 import { anniversaryOn, daysTogether } from './utils/anniversary';
@@ -162,7 +163,7 @@ import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormK
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
-  constancy, needsIntervention,
+  constancy, needsIntervention, GOOD_CONSTANCY_RATIO,
 } from './utils/habitRhythm';
 import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
 
@@ -1318,11 +1319,7 @@ export default function App() {
    *  Montar É ver: este modal nunca abre sozinho (ver o cabeçalho dele). */
   useEffect(() => {
     if (!unlockReason) return;
-    track('unlock_view', {
-      reason: unlockReason === 'task-limit'
-        ? TELEMETRY_UNLOCK_REASON.taskLimit
-        : TELEMETRY_UNLOCK_REASON.evolution,
-    });
+    track('unlock_view', { reason: unlockReasonCode(unlockReason) });
   }, [unlockReason]);
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1450,18 +1447,17 @@ export default function App() {
         const media = devidos.length
           ? devidos.reduce((soma, c) => soma + c.ratio, 0) / devidos.length
           : null;
-        const escudos = Object.values(ritmos).reduce((max, r) => Math.max(max, r.shields ?? 0), 0);
         const marco = Object.values(ritmos).reduce((max, r) => {
           const t = habitTier(r.totalDone ?? 0);
           return Math.max(max, t === 'tree' ? 3 : t === 'sapling' ? 2 : t === 'sprout' ? 1 : 0);
         }, 0);
         return {
-          // `null` vira ausência (o campo some), não zero: 0% para quem ainda
+          // Vai uma FAIXA, nunca o percentual — ver o cabeçalho de
+          // `DigiWidgetData.habitSteady`. `null` (sem histórico) vira ausência
+          // do campo, que é diferente de "não está firme": 0% para quem ainda
           // não tem histórico é a mesma mentira que a constância dotada evita.
-          ...(media === null ? {} : { constancyPct: Math.round(media * 100) }),
-          shields: escudos,
+          ...(media === null ? {} : { habitSteady: media >= GOOD_CONSTANCY_RATIO }),
           habitTierMax: marco,
-          bondLevel: bondLevelFor(gameState.totalXP ?? 0),
           needsIntervention: Object.values(ritmos).some(r => needsIntervention(r, agora)),
         };
       })(),
@@ -2480,8 +2476,19 @@ export default function App() {
       // efeito colateral dentro de updater roda 2× no StrictMode (footgun 6).
       // O `applySpecialItem` reconfere a recusa sobre o `prev`: era o furo do
       // coraçãozinho, que dois toques no mesmo lote queimavam curando zero.
-      const refused = specialRefusal(gameState, foodEmoji);
+      const agora = new Date();
+      const refused = specialRefusal(gameState, foodEmoji, agora);
       if (refused === 'no-stock') return;
+      if (refused === 'daily-cap') {
+        // O item VOLTA para a pastinha e vale amanhã — por isso a mensagem diz
+        // o que fazer, e não o que foi negado. Nada de toast de erro: o teto do
+        // Glitchtama existe para devolver o atalho ao calendário, não para
+        // repreender quem farmou a masmorra.
+        toast(language === 'pt-BR'
+          ? '🌀 Um Glitchtama por dia. Ele te espera amanhã.'
+          : '🌀 One Glitchtama a day. It will wait for you tomorrow.');
+        return;
+      }
       if (refused === 'already-full') {
         setHealCapSignal(n => n + 1);
         return;
@@ -2491,7 +2498,7 @@ export default function App() {
       else if (special.kind === 'heart') playTaskComplete();
       else playFeed();
 
-      setGameState(prev => applySpecialItem(prev, foodEmoji).state);
+      setGameState(prev => applySpecialItem(prev, foodEmoji, agora).state);
       setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
 
       if (special.kind === 'glitchtama') {
@@ -3000,11 +3007,7 @@ export default function App() {
     // WP0.9 — `reason` com o MESMO vocabulário do convite, para compra e
     // convite serem comparáveis: sem ele, todas as compras eram um número só
     // e não dava para saber qual convite trouxe cada uma.
-    track('purchase', {
-      reason: unlockReason === 'task-limit'
-        ? TELEMETRY_PURCHASE_REASON.taskLimit
-        : TELEMETRY_PURCHASE_REASON.evolution,
-    });
+    track('purchase', { reason: unlockReasonCode(unlockReason ?? 'task-limit') });
     flushTelemetry();
     syncEntitlement(ent);
     setUnlockReason(null);
@@ -3018,7 +3021,10 @@ export default function App() {
   // tarefas, Bits e histórico continuam de pé — mandar quem acabou de pagar de
   // volta pro Rookie seria punir a compra (diferente do reroll, que é escolha
   // explícita e avisa que reseta).
-  const handleUpgradeRevealed = useCallback((result: OracleResult) => {
+  const handleUpgradeRevealed = useCallback((
+    result: OracleResult,
+    revealSprite?: { url: string; formId: string; at: number },
+  ) => {
     setUpgradeRitual(false);
     const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
@@ -3035,6 +3041,14 @@ export default function App() {
          WP1.16 chegar aqui sem `bornAt`, ele continua sem: inferir a data de
          outra coisa seria inventar. */
       soulmonStages: result.creature.stages,
+      /* Adota o desenho do reveal, exatamente como o nascimento faz. Sem isto
+         o acervo de quem acabou de comprar (que nasce VAZIO — o demo nunca
+         gera sprite) pediria a forma inicial de novo e entregaria outro bicho.
+         `adopt: 'now'` porque aqui também não há história a proteger: é a
+         primeira criatura autoral deste save. */
+      spriteLibrary: revealSprite
+        ? recordSprite(prev.spriteLibrary ?? emptySpriteLibrary(), revealSprite, { adopt: 'now' })
+        : prev.spriteLibrary,
       soulmonMeta: {
         seed: result.seed,
         baseName: result.creature.baseName,
@@ -5091,6 +5105,31 @@ export default function App() {
               >
                 {language === 'pt-BR' ? 'Renascimento' : 'Rebirth'}
               </button>
+            </div>
+          )}
+          {/* ⚠️ A recusa MOTIVADA, que a auditoria de 06/09/2026 achou morta.
+              `rebirthRefusal` distingue `not-paid` de `not-ultra` justamente
+              porque cada motivo tem uma saída diferente — e o app só usava
+              `canRebirth`, então um jogador `demo` no ultra via NADA, enquanto
+              o guia prometia o Renascimento a todos sem dizer que é pago.
+              Beco sem saída no ponto mais alto da escada, para o usuário mais
+              engajado que existe.
+              Só o `not-paid` vira convite: `not-ultra` é "continue subindo" (a
+              própria página já conta isso) e `already-used` é registro, não
+              oferta repetida. O motivo de telemetria continua sendo
+              `evolution` porque é literalmente onde o card está. */}
+          {currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && (
+            <div style={{ marginTop: 16 }}>
+              <p style={{ ...sm2Hint, margin: '0 0 8px' }}>
+                {language === 'pt-BR'
+                  ? 'Sua criatura chegou ao topo. Quem tem a conta completa pode devolvê-la ao ovo e escolher criatura, escola e elemento do renascimento.'
+                  : 'Your creature reached the top. With the full account you can return them to the egg and choose the creature, school and element they are reborn with.'}
+              </p>
+              <UnlockNudge
+                language={language}
+                reason="evolution"
+                onOpen={() => setUnlockReason('evolution')}
+              />
             </div>
           )}
           {currentView === 'evolution' && gameState.rebirth && (

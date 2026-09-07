@@ -293,6 +293,9 @@ export interface GameState {
   /** Quanto o dreno de cocô já cobrou no dia civil — é o que faz o teto ser
    *  DIÁRIO (regra em `utils/poopDrain.ts`). */
   poopDrainCharge?: { day: string; hearts: number };
+  /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
+   *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
+  glitchtamaUse?: { day: string; used: number };
   /**
    * Tetos de cuidado — comida por hora e carinho por dia (`utils/careCaps.ts`).
    *
@@ -903,6 +906,13 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         poopDrainCharge: (() => {
           const c = obj<unknown>(loadedState.poopDrainCharge);
           return typeof c.day === 'string' ? { day: c.day, hearts: num(c.hearts, 0) } : undefined;
+        })(),
+        // Teto diário do Glitchtama. Save antigo não tem o campo e entra como
+        // `undefined`, que `glitchtamaUsedToday` lê como zero — quem já jogava
+        // ganha o dia de hoje inteiro, nunca uma dívida retroativa.
+        glitchtamaUse: (() => {
+          const g = obj<unknown>(loadedState.glitchtamaUse);
+          return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
         // Migração dos tetos de cuidado (D-33): o que sobrou no localStorage
         // deste aparelho é fundido com o que já está no save. `mergeCareCaps` é

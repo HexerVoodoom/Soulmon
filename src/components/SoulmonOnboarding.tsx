@@ -145,7 +145,7 @@ interface SoulmonOnboardingProps {
    */
   mode?: 'onboarding' | 'upgrade';
   /** Só em 'upgrade': entrega o resultado do oráculo e encerra. */
-  onRevealed?: (result: OracleResult) => void;
+  onRevealed?: (result: OracleResult, revealSprite?: { url: string; formId: string; at: number }) => void;
   /** Só em 'upgrade': desistir e voltar ao jogo. */
   onCancel?: () => void;
 }
@@ -1341,7 +1341,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                   funnel: TELEMETRY_FUNNEL.paid,
                   duration: revealDurationBucket(seg),
                 });
-                if (isUpgrade) onRevealed?.(result); else setStep(REGISTER);
+                // ⚠️ O `revealSprite` viaja JUNTO, e a auditoria de 06/09/2026
+                // achou esta assinatura sem ele: o upgrade mostrava um bicho no
+                // reveal e o app gerava outro logo depois, porque a biblioteca
+                // do recém-comprador nasce vazia (o demo nunca gera sprite) e o
+                // `birthBatch` pedia a forma inicial do zero. É o MESMO dano
+                // que o WP1.1 consertou no nascimento, sobrevivendo na única
+                // rota de quem acabou de pagar pela criatura própria.
+                if (isUpgrade) onRevealed?.(result, revealSprite ?? undefined); else setStep(REGISTER);
               }}
             >
               {isUpgrade

@@ -5,7 +5,7 @@ import { FULL_UNLOCK_SKU, FULL_UNLOCK_PRICE_LABEL, DEMO_ACTIVITY_TOTAL_CAP } fro
 import { purchase, restorePurchases, isBillingAvailable } from '../utils/playBilling';
 import type { Entitlement } from '../utils/entitlements';
 import type { Language } from '../utils/i18n';
-import { track, TELEMETRY_UNLOCK_REASON } from '../utils/telemetry';
+import { track, TELEMETRY_UNLOCK_REASON, unlockReasonCode } from '../utils/telemetry';
 
 // ---------------------------------------------------------------------------
 // Desbloqueio completo DENTRO do jogo.
@@ -69,9 +69,10 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
     : 'Purchases go through Google Play, inside the Android app. The browser cannot charge you.';
 
   const handleDismiss = () => {
-    track('unlock_dismiss', {
-      reason: reason === 'evolution' ? TELEMETRY_UNLOCK_REASON.evolution : TELEMETRY_UNLOCK_REASON.taskLimit,
-    });
+    // Tradução com dono único (`unlockReasonCode`): o ternário de duas pernas
+    // que existia aqui gravava um dispensar vindo do relatório como
+    // `task-limit`, contaminando o funil por origem em silêncio.
+    track('unlock_dismiss', { reason: unlockReasonCode(reason) });
     onClose();
   };
 
