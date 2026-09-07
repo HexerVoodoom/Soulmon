@@ -2,7 +2,14 @@
 // Provedor primário: HIGGSFIELD (platform.higgsfield.ai, modelo Soul).
 //   Secrets: HF_API_KEY + HF_SECRET (já configurados via `wrangler secret`).
 //   Suporta referência de imagem (cadeia de evolução: champion parte do
-//   rookie etc. — ver src/utils/spritePrompts.ts).
+//   rookie etc. — ver `composeSpritePrompts` em `src/utils/oracle.ts`).
+//   ⚠️ Esta linha apontava para `src/utils/spritePrompts.ts`, um SEGUNDO
+//   compositor de prompt que existia em paralelo, tinha zero consumidores e
+//   **não carregava a cláusula "Do not copy any existing franchise
+//   character"**. Ninguém o chamava, mas o comentário aqui mandava o leitor
+//   para ele — e quem fosse ligá-lo publicaria prompts sem a única trava que
+//   impede o gerador de devolver personagem registrado. Apagado em
+//   07/09/2026; o dono do prompt é, e sempre foi, o `oracle.ts`.
 // Fallback: Gemini (GEMINI_API_KEY, modelo gemini-2.5-flash-image), texto puro.
 //
 // DUAS TENTATIVAS DE PROMPT (decisão do dono do projeto): `prompt` cita as

@@ -1,3 +1,19 @@
+// ⚠️ **SEM CONSUMIDOR — nenhuma tela chama nada daqui** (verificado em
+// 07/09/2026: `grep` por `utils/arena` em `src/`, `desktop/` e `functions/`
+// devolve só o próprio arquivo e o `arena.test.ts`).
+//
+// Isso é DECLARADO, não descoberto: são 501 linhas de sistema pronto e
+// simulado, esperando uma decisão de produto sobre entrar ou não. O registro
+// existe porque este repositório já foi mordido quatro vezes pelo mesmo
+// padrão — `weeklyMissions`, `bestiary`, `getLocalizedPrice`, `rebirthRefusal`
+// —, e nas quatro o custo não foi o código parado: foi ele parecer ligado.
+// Duas delas gravavam campo no save de TODO jogador sem ninguém ler.
+//
+// **A diferença entre este arquivo e aqueles quatro é que este não escreve
+// nada** — é puro, não toca o `GameState`, não custa byte no save de ninguém.
+// Enquanto for assim, esperar não tem preço. Se alguém for ligá-lo, ligue
+// inteiro; se decidirem que não entra, apague, não deixe morno.
+//
 // 🏟️ Arena logic — a SECOND, experimental dungeon that battle-tests the
 // class-system: the player's ficha (elements + school) drives damage, defense
 // and the special-skill archetype, and the enemies come from the bestiary
