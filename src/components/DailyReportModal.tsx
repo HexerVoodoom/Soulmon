@@ -26,6 +26,9 @@ interface DailyReportModalProps {
    *  resultado dela, para a tela não virar dona de uma decisão de ética. */
   showOffer?: boolean;
   onOpenOffer?: () => void;
+  /** Dispensa o convite PARA SEMPRE (`offerDismissed` no save). O `×` do card
+   *  é o único padrão POSITIVO que o dossiê achou em onze apps de paywall. */
+  onDismissOffer?: () => void;
   /** WP4.8 — as memórias de 30/90 dias, quando este é o dia. */
   memories?: {
     mark: number;
@@ -52,7 +55,7 @@ type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
  * LINHA saíram — eles desenhavam de novo a palavra ao lado ("Corações" com um
  * coração), que é o tipo de repetição que esta onda existe para cortar.
  */
-export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, memories }: DailyReportModalProps) {
+export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, memories }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
@@ -256,13 +259,49 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
             nunca em cima de quem voltou de ausência, 1×/semana, só para quem
             não comprou) são de `utils/offerMoment.ts`. */}
         {showOffer && onOpenOffer && (
-          <div style={{ padding: '0 20px' }}>
-            <p style={{ ...hint, marginBottom: 8 }}>
+          /* A FORMA do card, e ela é a metade que faltava (auditoria de
+             06/09/2026). O dossiê achou UM padrão positivo em onze apps de
+             paywall (Garmin) e ele são quatro decisões JUNTAS: `×` no próprio
+             card, botão de largura PARCIAL contra os CTAs de largura total,
+             container irmão (não empilhado no fluxo da ação), e removível de
+             vez. Sem o `×`, a única forma de nunca mais ver o convite era
+             comprar ou nunca mais ter um dia perfeito na semana. */
+          <div
+            style={{
+              margin: '0 20px',
+              padding: 12,
+              borderRadius: 12,
+              border: '1px solid var(--sm2-line)',
+              backgroundColor: 'var(--sm2-surface)',
+              position: 'relative',
+            }}
+          >
+            {onDismissOffer && (
+              <button
+                type="button"
+                onClick={onDismissOffer}
+                aria-label={isPt ? 'Não mostrar de novo' : 'Do not show again'}
+                style={{
+                  position: 'absolute', top: 4, right: 4, width: 32, height: 32,
+                  display: 'grid', placeItems: 'center',
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--sm2-muted)', fontSize: 16, lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            )}
+            <p style={{ ...hint, margin: '0 24px 8px 0' }}>
               {isPt
                 ? 'Foi um dia inteiro do jeito que você quis. Seu Soulmon sentiu.'
                 : 'That was a whole day the way you wanted it. Your Soulmon felt it.'}
             </p>
-            <UnlockNudge language={language} reason="report" onOpen={onOpenOffer} />
+            {/* Largura PARCIAL de propósito: os botões de ação do relatório
+                ("Começar o dia") ocupam a largura toda, e um convite com o
+                mesmo peso compete com a ação que fecha o ritual do dia. */}
+            <div style={{ maxWidth: 260 }}>
+              <UnlockNudge language={language} reason="report" onOpen={onOpenOffer} />
+            </div>
           </div>
         )}
 

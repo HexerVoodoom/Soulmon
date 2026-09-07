@@ -212,6 +212,11 @@ export interface GameState {
   /** WP5.1 — semana ISO em que a oferta do value moment foi mostrada. O cap é
    *  sobre ter OFERECIDO, não sobre ter comprado. */
   offerShownWeek?: string;
+  /** WP5.1 — o jogador dispensou o convite PARA SEMPRE (o `×` do card). É
+   *  terminal de propósito: um "não" que o app pergunta de novo não era um
+   *  não. Só o canal PROATIVO obedece; o card permanente da Loja fica, porque
+   *  ele é a porta de descoberta VOLUNTÁRIA e ninguém tropeça nela. */
+  offerDismissed?: boolean;
   /** WP4.10 — quando cada FORMA foi alcançada (dia do jogador). Insumo do
    *  álbum: a coleção deixa de ser lista e vira história. Save antigo não
    *  tem, e aí a forma aparece sem data — nunca com uma data inventada. */
@@ -867,6 +872,7 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         formReachedAt: (loadedState.formReachedAt as Record<string, string>) ?? {},
         bestiary: strArr(loadedState.bestiary),
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
+        offerDismissed: loadedState.offerDismissed === true,
         demoTint: num(loadedState.demoTint, 0),
         memoriesShown: Array.isArray(loadedState.memoriesShown)
           ? loadedState.memoriesShown.filter((n: unknown) => typeof n === 'number')

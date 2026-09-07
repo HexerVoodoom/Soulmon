@@ -16,6 +16,7 @@
 //    convite; e a semana é a mesma unidade da métrica-norte.
 //  · **só para quem ainda não comprou.** Óbvio, e mesmo assim é a trava que
 //    mais quebra em refatoração.
+//  · **e o `×` é para sempre.** Ver `dismissed`.
 // ---------------------------------------------------------------------------
 
 export interface OfferMomentInput {
@@ -28,12 +29,19 @@ export interface OfferMomentInput {
   daysWithPet: number | null;
   /** Semana ISO da última oferta mostrada (`offerShownWeek` no save). */
   lastShownWeek?: string | null;
+  /** O jogador fechou o card no `×` (`offerDismissed` no save). Terminal. */
+  dismissed?: boolean;
   /** Semana ISO de hoje. */
   currentWeek: string;
 }
 
 export function shouldOfferAtValueMoment(input: OfferMomentInput): boolean {
   if (input.tier !== 'demo') return false;
+  /* O `×` é TERMINAL, e essa é a quinta trava. Um "não" que o app pergunta de
+     novo na semana seguinte não era um não — era um adiamento imposto. O card
+     permanente da Loja continua existindo depois disto, e é a diferença entre
+     as duas portas: aquela a pessoa ABRE, esta aparece sozinha. */
+  if (input.dismissed) return false;
   if (!input.wasPerfect) return false;
   // Quem volta de uma ausência encontra saudade, não vitrine — é a mesma
   // regra do perdão por ausência, aplicada à oferta.

@@ -9,6 +9,7 @@ import { ITEM_ART } from '../utils/itemArt';
 import { MISSIONS, isShopItemUnlocked } from '../utils/missions';
 import { decorFitsSetting, type SlotId } from '../utils/petStage';
 import type { WeeklyMission, WeeklyMissionId } from '../utils/weeklyMissions';
+import { UnlockNudge } from './UnlockAccountModal';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -95,7 +96,7 @@ const emblemNum = emblemStyle;
 export function ShopModal({
   language, points, ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor,
   missionProgress, emblems, credits, onBuy, onExchangeCredits, onEquip, onEquipFurniture, onClose,
-  weeklyMissions, onClaimWeekly,
+  weeklyMissions, onClaimWeekly, accountTier, onUnlock,
   asPage = false,
 }: {
   language: Language;
@@ -122,6 +123,9 @@ export function ShopModal({
   weeklyMissions?: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
   /** Paga os Emblemas de uma missão pronta. Idempotente do outro lado. */
   onClaimWeekly?: (id: WeeklyMissionId) => void;
+  /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente aqui. */
+  accountTier?: 'demo' | 'paid';
+  onUnlock?: () => void;
   /** Renderiza como página cheia dentro do fluxo normal em vez de folha. */
   asPage?: boolean;
 }) {
@@ -434,6 +438,31 @@ export function ShopModal({
             : sec.items.map(renderItem)}
         </section>
       ))}
+
+      {/* ─── O CONVITE PERMANENTE (WP5.1, canal PASSIVO) ─────────────────
+          A metade que faltava do pacote, e ela tem forma própria.
+
+          O canal PROATIVO (relatório diário, 1×/semana, só no 1º dia perfeito,
+          com `×` terminal) aparece sozinho; este a pessoa ENCONTRA. É por isso
+          que ele fica FORA do cap semanal e não some com o `offerDismissed`:
+          dispensar o que te interrompe não é dizer que você nunca mais quer
+          procurar — e sem esta porta, quem não tem um dia perfeito na semana
+          nunca via oferta que não fosse uma RECUSA (bateu o teto de criação).
+
+          Fica no fim da lista, depois do que a pessoa veio ver. Loja que abre
+          na vitrine paga é loja que não confia no próprio catálogo. */}
+      {seg === 'shop' && accountTier === 'demo' && onUnlock && (
+        <section style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+          <p style={{ ...sm2Hint, margin: 0 }}>
+            {isPt
+              ? 'Sem pressa: isto fica aqui sempre que você quiser olhar.'
+              : 'No rush — this stays here whenever you want to look.'}
+          </p>
+          <div style={{ maxWidth: 280 }}>
+            <UnlockNudge language={language} reason="shop" onOpen={onUnlock} />
+          </div>
+        </section>
+      )}
 
       {seg === 'shop' && exchange}
     </div>

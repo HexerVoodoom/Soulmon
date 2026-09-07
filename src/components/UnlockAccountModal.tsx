@@ -29,7 +29,7 @@ import { track, TELEMETRY_UNLOCK_REASON, unlockReasonCode } from '../utils/telem
 /** WP5.1 — `report` é o VALUE MOMENT: o primeiro dia perfeito. É o terceiro
  *  motivo, e o único que não nasce de um limite batido — os outros dois
  *  aparecem quando a pessoa esbarra em algo, este quando ela conseguiu. */
-export type UnlockReason = 'task-limit' | 'evolution' | 'report';
+export type UnlockReason = 'task-limit' | 'evolution' | 'report' | 'shop';
 
 interface UnlockAccountModalProps {
   language: Language;
@@ -254,7 +254,13 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
       : reason === 'report'
         // Fala do resultado que a pessoa acabou de ter, não do que falta a ela.
         ? (isPt ? 'Quer uma criatura que seja só sua?' : 'Want a creature that is only yours?')
-        : (isPt ? 'Quer a SUA árvore de evoluções?' : 'Want YOUR own evolution tree?');
+        : reason === 'shop'
+          /* O canal PASSIVO (WP5.1): a pessoa veio à Loja por conta própria,
+             então o convite não precisa convencer de nada — só estar ali. Sem
+             urgência, sem "última chance": este card não tem prazo, e dizer
+             isso é o que o separa de uma faixa promocional. */
+          ? (isPt ? 'A criatura própria fica por aqui' : 'The custom creature lives here')
+          : (isPt ? 'Quer a SUA árvore de evoluções?' : 'Want YOUR own evolution tree?');
 
   const sub = variant === 'reveal'
     ? (isPt

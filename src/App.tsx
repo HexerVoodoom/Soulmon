@@ -4139,6 +4139,7 @@ export default function App() {
     const semana = isoWeekKey(hoje);
     if (!semana) return false;
     return shouldOfferAtValueMoment({
+      dismissed: gameState.offerDismissed === true,
       tier: gameState.accountTier,
       wasPerfect: gameState.lastDayReport?.wasPerfect === true,
       welcomeBack: gameState.lastDayReport?.welcomeBack === true,
@@ -5533,6 +5534,8 @@ export default function App() {
                 asPage
                 weeklyMissions={missoesDaSemana}
                 onClaimWeekly={resgatarMissao}
+                accountTier={gameState.accountTier}
+                onUnlock={() => setUnlockReason('shop')}
                 language={language}
                 points={gameState.gamePoints ?? 0}
                 ownedBackgrounds={gameState.ownedBackgrounds ?? []}
@@ -5892,8 +5895,9 @@ export default function App() {
             // sobre a pessoa ter comprado.
             const semana = isoWeekKey(playerDayKey(new Date(), gameState.playerDayTz));
             if (semana) setGameState(prev => ({ ...prev, offerShownWeek: semana }));
-            setUnlockReason('evolution');
+            setUnlockReason('report');
           }}
+          onDismissOffer={() => setGameState(prev => ({ ...prev, offerDismissed: true }))}
         />
       )}
       {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia e pulável sem
