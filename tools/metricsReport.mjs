@@ -196,11 +196,85 @@ export function renderRelatorio(payload) {
   const viu = n(totais, 'unlock_view');
   const recusou = n(totais, 'unlock_dismiss');
   out.push(`  ${linhaDeRazao('recusas declaradas ÷ visualizações', razao(recusou, viu))}`);
+  // POR ORIGEM: o WP5.1 pôs a oferta no primeiro dia perfeito e só se pode
+  // julgá-la contra os convites de RECUSA se os baldes forem separados. Até
+  // 06/09/2026 os emissores colapsavam `report` em `evolution`.
+  for (const origem of ['task_limit', 'evolution', 'report', 'shop']) {
+    const v = n(totais, `unlock_view.${origem}`);
+    if (v === 0) continue;
+    const c = n(totais, `purchase.${origem}`);
+    out.push(`    ${origem.padEnd(11)} │ viu ${String(v).padStart(5)} │ recusou ${String(n(totais, `unlock_dismiss.${origem}`)).padStart(5)} │ comprou ${String(c).padStart(4)}`);
+  }
   if (dias >= MIN_DIAS_CONVERSAO) {
     out.push(`  ${linhaDeRazao('compras ÷ visualizações', razao(n(totais, 'purchase'), viu))}`);
   } else {
     out.push(`  conversão: NÃO IMPRESSA — janela de ${dias} dia(s), mínimo ${MIN_DIAS_CONVERSAO}.`);
     out.push('    Não é aviso: com janela curta o número existe e engana. Espere.');
+  }
+  out.push('');
+
+  // ── O FUNIL DO NASCIMENTO ────────────────────────────────────────────────
+  //
+  // ⚠️ Esta seção não existia, e o dado era gravado por funil desde sempre
+  // (auditoria de 06/09/2026). O cabeçalho de `telemetry.ts` diz que
+  // `onboarding_step` existe porque TRÊS auditorias erraram a contagem de
+  // telas do onboarding — e o único leitor não mostrava onde as pessoas
+  // desistem. Por funil, porque o demo e o ritual pago são populações que
+  // nunca se encontram: a média das duas não descreve nenhuma.
+  out.push('FUNIL DO NASCIMENTO');
+  for (const funil of ['demo', 'paid']) {
+    const passos = Object.keys(totais)
+      .filter(k => k.startsWith(`onboarding_step.${funil}.`))
+      .map(k => [Number(k.slice(`onboarding_step.${funil}.`.length)), totais[k]])
+      .filter(([passo]) => Number.isFinite(passo))
+      .sort((a, b) => a[0] - b[0]);
+    if (passos.length === 0) continue;
+    const primeiro = passos[0][1];
+    out.push(`  ${funil}:`);
+    for (const [passo, quantos] of passos) {
+      const pct = primeiro > 0 ? Math.round((quantos / primeiro) * 100) : 0;
+      out.push(`    passo ${String(passo).padStart(3)} │ ${String(quantos).padStart(5)} │ ${pct}% de quem começou`);
+    }
+  }
+  if (!Object.keys(totais).some(k => k.startsWith('onboarding_step.'))) {
+    out.push('  sem dados');
+  }
+  // O reveal é o número que julga o WP1.1. ⚠️ `has_sprite` sozinho é ENVIESADO
+  // PARA CIMA: `reveal_seen` só é emitido por quem AVANÇA, então quem abandona
+  // no reveal não aparece. A taxa honesta é `reveal_seen ÷ onboarding_step` no
+  // passo do reveal — por isso as duas leituras ficam na mesma seção.
+  const comSprite = n(totais, 'reveal_seen.demo.sprite_yes') + n(totais, 'reveal_seen.paid.sprite_yes');
+  const semSprite = n(totais, 'reveal_seen.demo.sprite_no') + n(totais, 'reveal_seen.paid.sprite_no');
+  if (comSprite + semSprite > 0) {
+    out.push(`  ${linhaDeRazao('reveal COM o desenho ÷ reveals', razao(comSprite, comSprite + semSprite))}`);
+    out.push('    ⚠️ entre quem AVANÇOU. Quem desistiu no reveal não emite.');
+  }
+  out.push('');
+
+  // ── RETENÇÃO ─────────────────────────────────────────────────────────────
+  //
+  // ⚠️ Também não existia. O WP0.2 estava VERIFICADO e a retenção era
+  // ilegível por DOIS motivos independentes: o agregado colapsava os marcos
+  // num contador único (consertado no servidor) e o leitor não os imprimia.
+  out.push('RETENÇÃO');
+  const marcos = [['d1', 'D1'], ['d7', 'D7'], ['d30', 'D30']];
+  const temRetencao = marcos.some(([k]) => n(totais, `retained.${k}`) > 0);
+  if (temRetencao) {
+    for (const [chave, rotulo] of marcos) {
+      out.push(`  ${rotulo.padEnd(4)} │ ${String(n(totais, `retained.${chave}`)).padStart(5)}`);
+    }
+    out.push('  ⚠️ é CONTAGEM de marcos cruzados na janela, não coorte: o');
+    out.push('     denominador (quantos instalaram no dia certo) não existe por');
+    out.push('     desenho — ver a lista de cegueiras no topo.');
+  } else {
+    out.push('  sem dados');
+  }
+  // WP0.11: a decisão é uma só — cortar push que abre o app e não vira dia
+  // ativo. Sem a origem no agregado, push e abertura direta eram um número só.
+  const origens = ['direct', 'push', 'widget', 'shortcut'];
+  if (origens.some(o => n(totais, `app_open.${o}`) > 0)) {
+    out.push('  aberturas por origem:');
+    for (const o of origens) out.push(`    ${o.padEnd(9)} │ ${String(n(totais, `app_open.${o}`)).padStart(5)}`);
   }
   out.push('');
 

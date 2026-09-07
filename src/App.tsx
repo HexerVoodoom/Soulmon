@@ -11,7 +11,7 @@ import {
   track, flush as flushTelemetry, installTelemetryAutoFlush,
   setTelemetryTier, trackDayClosed, telemetryDayKey,
   TELEMETRY_UNLOCK_REASON, TELEMETRY_PURCHASE_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
-  unlockReasonCode,
+  unlockReasonCode, TELEMETRY_BAD_DAY,
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
 } from './utils/telemetry';
 import { BottomNav } from './components/BottomNav';
@@ -3135,12 +3135,26 @@ export default function App() {
        A marca do dia ruim (`LAST_BAD_DAY`) fica no localStorage e não sai
        daqui: o que é despachado é a DISTÂNCIA em faixa. Data de dia ruim,
        cruzada com o resto, descreve uma pessoa. */
-    const ultimoRuim = readLocal(STORAGE_KEYS.LAST_BAD_DAY);
-    if (ultimoRuim && ultimoRuim !== report.date) {
-      const dias = Math.round((Date.parse(report.date) - Date.parse(ultimoRuim)) / 86400000);
+    /* A marca é `<data>|<kind>`: a data para medir a distância, e o TIPO do
+       dia ruim que ficou para trás.
+       ⚠️ O `kind` era a constante `1` — um bit que só assume um valor não
+       carrega informação nenhuma, e mesmo assim ocupava schema e uma linha na
+       política em PT e EN (auditoria de 06/09/2026: o exemplar mais limpo de
+       coleta ociosa do repositório). A distinção que o estudo especificou é a
+       que importa: perder coração é a hipótese nº1 de churn; a DEGENERAÇÃO é
+       outro evento, muito mais raro e muito mais caro. Voltar depois de uma
+       não diz nada sobre voltar depois da outra. */
+    const marca = readLocal(STORAGE_KEYS.LAST_BAD_DAY);
+    const [diaRuim, kindRuim] = (marca ?? '').split('|');
+    if (diaRuim && diaRuim !== report.date) {
+      const dias = Math.round((Date.parse(report.date) - Date.parse(diaRuim)) / 86400000);
       if (Number.isFinite(dias) && dias > 0) {
-        // `kind` 1 = o app foi aberto (é o que faz este efeito rodar).
-        track('after_bad_day', { gap: afterBadDayGapBucket(dias), kind: 1 });
+        track('after_bad_day', {
+          gap: afterBadDayGapBucket(dias),
+          // Marca antiga (sem o `|`) cai em `heart`, que era o caso comum — e
+          // nunca inventa uma degeneração que não se sabe se houve.
+          kind: kindRuim === '1' ? TELEMETRY_BAD_DAY.degeneration : TELEMETRY_BAD_DAY.heart,
+        });
       }
       removeLocal(STORAGE_KEYS.LAST_BAD_DAY);
     }
@@ -3148,7 +3162,8 @@ export default function App() {
     // dia perfeito é a maioria dos dias de qualquer pessoa; marcar todos eles
     // como ruins transformaria a métrica num contador de vida normal.
     if (Number(report.heartsLost ?? 0) > 0) {
-      writeLocal(STORAGE_KEYS.LAST_BAD_DAY, report.date, { silent: true });
+      const tipo = report.degenerated ? TELEMETRY_BAD_DAY.degeneration : TELEMETRY_BAD_DAY.heart;
+      writeLocal(STORAGE_KEYS.LAST_BAD_DAY, `${report.date}|${tipo}`, { silent: true });
     }
   }, [gameState.lastDayReport]);
 

@@ -163,7 +163,10 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   unlock_dismiss: { reason: { min: 0, max: 3 } },
   haunted_done: null,
   checkin_shown: null,
-  milestone: { tier: { min: 1, max: 3 } },
+  /* ⚠️ `level`, NÃO `tier`: enquanto se chamava `tier`, o `applyAggregate`
+     capturava a propriedade com a regra genérica de TIER DE CONTA e gravava o
+     marco de 7 dias como `milestone.demo`. Ver o comentário no servidor. */
+  milestone: { level: { min: 1, max: 3 } },
   shield_used: null,
   welcome_back: { days: { min: 0, max: 3 } },
   evolve: { level: { min: 1, max: 4 } },
@@ -256,6 +259,16 @@ export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' |
     case 'shop': return TELEMETRY_UNLOCK_REASON.shop;
   }
 }
+
+/**
+ * WP0.10 — que TIPO de dia ruim ficou para trás.
+ *
+ * `heart` é perder coração na virada — a hipótese nº1 de churn do relatório
+ * 07. `degeneration` é cair de estágio, que é raro e caro. Voltar depois de um
+ * não diz nada sobre voltar depois do outro, e é por isso que o estudo pediu
+ * os dois baldes. Até 06/09/2026 o emissor mandava a constante `1`.
+ */
+export const TELEMETRY_BAD_DAY = { heart: 0, degeneration: 1 } as const;
 
 /** WP0.11 — origem da abertura. */
 export const TELEMETRY_OPEN_SOURCE = { direct: 0, push: 1, widget: 2, shortcut: 3 } as const;
@@ -366,7 +379,7 @@ export interface TelemetryProps {
   focus_count?: number;
   /** `reveal_seen`: viu a criatura desenhada (1) ou só texto (0). */
   has_sprite?: number;
-  /** `milestone`: tier do marco (1–3). `bond_level`: nível do Vínculo. `evolve`: nível alcançado. */
+  /** `milestone`: marco do hábito (1–3). `bond_level`: nível do Vínculo. `evolve`: nível alcançado. */
   level?: number;
   /** `app_open`: origem da abertura (`TELEMETRY_OPEN_SOURCE`). */
   source?: number;

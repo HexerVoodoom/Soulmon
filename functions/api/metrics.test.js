@@ -535,3 +535,77 @@ describe('allowlist fechada tambem para os eventos NOVOS', () => {
     expect(res.status).toBe(404); // sem segredo configurado: fail-closed
   });
 });
+
+// ---------------------------------------------------------------------------
+// TODA PROPRIEDADE DECLARADA VIRA CONTADOR.
+//
+// A auditoria de 06/09/2026 achou nove eventos cujas props morriam no
+// `applyAggregate`: o `bump(record.e)` do topo contava o evento e a
+// propriedade sumia. Isso não é economia — é custo de privacidade sem
+// retorno: o dado sai do aparelho, é declarado na política em PT e EN, e não
+// responde pergunta nenhuma.
+//
+// O caso caro era o `retained`: o WP0.2 estava VERIFICADO e a retenção
+// D1/D7/D30 continuava ilegível, porque os três marcos colapsavam num
+// contador único.
+//
+// Este é um guard de COBERTURA, não de valor: ele não sabe qual balde é o
+// certo, só que a propriedade precisa aparecer em ALGUMA chave além do nome
+// do evento. É o suficiente para a próxima prop acrescentada não nascer muda.
+// ---------------------------------------------------------------------------
+describe('nenhuma propriedade declarada morre no agregado', () => {
+  /** Um valor válido para cada faixa do schema — o mínimo serve. */
+  const exemplo = (schema) => {
+    const p = {};
+    for (const [prop, faixa] of Object.entries(schema)) p[prop] = faixa.min;
+    return p;
+  };
+
+  for (const [evento, schema] of Object.entries(EVENT_SCHEMA)) {
+    // Evento sem propriedade nenhuma é um contador puro (`shield_used`), e não
+    // tem o que perder: o schema vem `null`/vazio e ele sai do laço.
+    if (!schema || typeof schema !== 'object') continue;
+    const props = Object.keys(schema).filter(k => k !== 'tier');
+    if (props.length === 0) continue;
+    it(`${evento} produz chave além do próprio nome`, () => {
+      const agg = applyAggregate({}, [{ e: evento, d: '2026-09-07', p: exemplo(schema) }]);
+      // Só o nome cru do evento é excluído. Um balde `.unknown` CONTA como
+      // cobertura: ele é o que aparece quando a prop tem valor fora do rótulo,
+      // e é justamente o sinal de que a propriedade foi lida.
+      const chaves = Object.keys(agg).filter(k => k !== evento);
+      expect(chaves.length).toBeGreaterThan(0);
+    });
+  }
+});
+
+describe('milestone não é confundido com tier de conta', () => {
+  it('o marco de hábito vira o próprio balde, não demo/unknown', () => {
+    // Enquanto a prop se chamava `tier`, a regra genérica de TIER DE CONTA a
+    // capturava: o marco de 7 dias virava `milestone.demo` e o de 66 virava
+    // `milestone.unknown`. Inofensivo enquanto ninguém emite; venenoso no dia
+    // em que o emissor ligar, e aí o dado errado já estaria no KV por 730 dias.
+    const agg = applyAggregate({}, [
+      { e: 'milestone', d: '2026-09-07', p: { level: 1 } },
+      { e: 'milestone', d: '2026-09-07', p: { level: 3 } },
+    ]);
+    expect(agg['milestone.days_1']).toBe(1);
+    expect(agg['milestone.days_3']).toBe(1);
+    expect(agg['milestone.demo']).toBeUndefined();
+    expect(agg['milestone.unknown']).toBeUndefined();
+  });
+});
+
+describe('a retenção fica legível por marco', () => {
+  it('D1, D7 e D30 são baldes separados', () => {
+    const agg = applyAggregate({}, [
+      { e: 'retained', d: '2026-09-07', p: { bucket: 0, tier: 1 } },
+      { e: 'retained', d: '2026-09-07', p: { bucket: 1, tier: 1 } },
+      { e: 'retained', d: '2026-09-07', p: { bucket: 1, tier: 2 } },
+    ]);
+    expect(agg['retained.d1']).toBe(1);
+    expect(agg['retained.d7']).toBe(2);
+    expect(agg['retained.demo.d7']).toBe(1);
+    expect(agg['retained.paid.d7']).toBe(1);
+    expect(agg['retained.d30']).toBeUndefined();
+  });
+});

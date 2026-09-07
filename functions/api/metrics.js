@@ -110,7 +110,7 @@ export const EVENT_SCHEMA = {
   unlock_dismiss: { reason: { min: 0, max: 3 } },
   haunted_done: null,
   checkin_shown: null,
-  milestone: { tier: { min: 1, max: 3 } },
+  milestone: { level: { min: 1, max: 3 } },
   shield_used: null,
   welcome_back: { days: { min: 0, max: 3 } },
   evolve: { level: { min: 1, max: 4 } },
@@ -278,6 +278,9 @@ export function effortBucket(effort) {
  *  rótulos para um schema que já aceitava 0–3: `report` e `shop` caíam em
  *  `unknown` sem erro nenhum. */
 const REASON_LABEL = ['task_limit', 'evolution', 'report', 'shop'];
+/* WP0.9 — a compra usa os MESMOS rótulos do convite (por isso é o mesmo array
+   mais o `onboarding`), para convite e compra serem comparáveis balde a balde. */
+const PURCHASE_REASON_LABEL = [...REASON_LABEL, 'onboarding'];
 
 /** Espelha `TELEMETRY_CREATE_PATH`. Os caminhos NÃO são equivalentes: só
  *  `create_modal` consulta o teto do modo demo. Ver o comentário lá. */
@@ -285,6 +288,14 @@ const PATH_LABEL = ['create_modal', 'home_edit', 'ai_chat', 'tutorial', 'onboard
 
 /** Espelha `TELEMETRY_ACTIVITY_KIND`. */
 const KIND_LABEL = ['task', 'habit'];
+
+/* WP0.2 — os marcos de retenção, na ORDEM de `RETENTION_MARKS`. */
+const RETENTION_LABEL = ['d1', 'd7', 'd30'];
+/* WP0.11 — de onde a abertura veio. */
+const OPEN_SOURCE_LABEL = ['direct', 'push', 'widget', 'shortcut'];
+/* Faixas de dias fora (`welcome_back`) e de dias até voltar depois de um dia
+   ruim (`after_bad_day`). */
+const BUCKET_LABEL = ['0', '1', '2', '3'];
 
 /** Prefixo do histograma da métrica-norte dentro do agregado. */
 export const WEEK_GOAL_PREFIX = 'week_active';
@@ -362,6 +373,75 @@ export function applyAggregate(agg, events) {
     // é a taxa que diz se a oferta chegou cedo demais.
     if (record.e === 'unlock_dismiss') {
       bump(`unlock_dismiss.${REASON_LABEL[p.reason] ?? 'unknown'}`);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────
+       AS PROPRIEDADES QUE O AGREGADO JOGAVA FORA.
+
+       ⚠️ Até 06/09/2026, nove eventos mandavam propriedade e ela morria aqui:
+       o `bump(record.e)` do topo contava o evento e mais nada. Isso não era
+       economia de espaço, era **custo de privacidade sem retorno** — a
+       propriedade saía do aparelho, era declarada na política em PT e EN, e
+       não virava contador nenhum.
+
+       O caso mais caro é o `retained`: o WP0.2 está VERIFICADO e a retenção
+       D1/D7/D30 continuava ILEGÍVEL, porque os três marcos colapsavam num
+       contador único. "Quantos chegaram a D7" não era calculável nem com a
+       chave da rota. O `app_open.source` é o segundo: o WP0.11 declara existir
+       "para UMA decisão — cortar push que abre o app e não vira `day_active`",
+       e sem a origem, push e abertura direta eram o mesmo número.
+
+       Nada muda no cliente: são baldes derivados do que já chega. ───────── */
+    if (record.e === 'retained' && p) {
+      bump(`retained.${RETENTION_LABEL[p.bucket] ?? 'unknown'}`);
+      if (tier) bump(`retained.${tier}.${RETENTION_LABEL[p.bucket] ?? 'unknown'}`);
+    }
+    if (record.e === 'app_open' && p) {
+      bump(`app_open.${OPEN_SOURCE_LABEL[p.source] ?? 'unknown'}`);
+    }
+    if (record.e === 'welcome_back' && p) {
+      bump(`welcome_back.${BUCKET_LABEL[p.days] ?? 'unknown'}`);
+    }
+    if (record.e === 'after_bad_day' && p) {
+      bump(`after_bad_day.${BUCKET_LABEL[p.gap] ?? 'unknown'}`);
+    }
+    /* O reveal, que é o número que decide o WP1.1: o casulo está entregando a
+       criatura a tempo, ou o reveal ainda é texto para a maioria? Por funil,
+       porque o demo e o ritual pago são populações que nunca se encontram. */
+    if (record.e === 'reveal_seen' && p) {
+      const funnel = FUNNEL_LABEL[p.funnel] ?? 'unknown';
+      bump(`reveal_seen.${funnel}.sprite_${p.has_sprite ? 'yes' : 'no'}`);
+      bump(`reveal_seen.duration.${p.duration}`);
+    }
+    if (record.e === 'checkin_commit' && p) {
+      bump(`checkin_commit.focus_${p.focus_count}`);
+    }
+    if (record.e === 'dungeon_run' && p) {
+      bump(`dungeon_run.floors_${p.floors}`);
+    }
+    if (record.e === 'evolve' && p) {
+      bump(`evolve.level_${p.level}`);
+    }
+    if (record.e === 'bond_level' && p) {
+      bump(`bond_level.level_${p.level}`);
+    }
+    /* ⚠️ `milestone` usa `level`, NÃO `tier` — e a razão é um bug que quase
+       aconteceu. Enquanto a propriedade se chamava `tier`, ela era capturada
+       pela regra genérica de TIER DE CONTA logo acima: um hábito que cruzou 7
+       dias virava `milestone.demo` e o de 66 dias virava `milestone.unknown`.
+       Inofensivo enquanto ninguém emite o evento; venenoso no dia em que o
+       WP2.4 ligar o emissor, e aí o dado errado já estaria no KV com TTL de
+       730 dias. `level` é o nome que `evolve` e `bond_level` já usam. */
+    if (record.e === 'milestone' && p) {
+      bump(`milestone.days_${p.level}`);
+    }
+
+    /* A compra POR ORIGEM. Sem isto, todas as compras eram um número só —
+       exatamente o que o WP0.9 existe para desfazer — e a taxa
+       `purchase / unlock_view` por convite, que é a única forma de saber qual
+       convite converte, não era calculável. */
+    if (record.e === 'purchase' && p) {
+      bump(`purchase.${PURCHASE_REASON_LABEL[p.reason] ?? 'unknown'}`);
     }
 
     if (record.e === 'demo_cap_hit') {

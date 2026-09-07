@@ -2413,7 +2413,7 @@ var EVENT_SCHEMA = {
   unlock_dismiss: { reason: { min: 0, max: 3 } },
   haunted_done: null,
   checkin_shown: null,
-  milestone: { tier: { min: 1, max: 3 } },
+  milestone: { level: { min: 1, max: 3 } },
   shield_used: null,
   welcome_back: { days: { min: 0, max: 3 } },
   evolve: { level: { min: 1, max: 4 } },
@@ -2509,8 +2509,12 @@ function effortBucket(effort) {
 }
 __name(effortBucket, "effortBucket");
 var REASON_LABEL = ["task_limit", "evolution", "report", "shop"];
+var PURCHASE_REASON_LABEL = [...REASON_LABEL, "onboarding"];
 var PATH_LABEL = ["create_modal", "home_edit", "ai_chat", "tutorial", "onboarding"];
 var KIND_LABEL = ["task", "habit"];
+var RETENTION_LABEL = ["d1", "d7", "d30"];
+var OPEN_SOURCE_LABEL = ["direct", "push", "widget", "shortcut"];
+var BUCKET_LABEL = ["0", "1", "2", "3"];
 var WEEK_GOAL_PREFIX = "week_active";
 var NORTH_STAR_GOAL_DAYS = 4;
 function applyAggregate(agg, events) {
@@ -2539,6 +2543,42 @@ function applyAggregate(agg, events) {
     }
     if (record.e === "unlock_dismiss") {
       bump(`unlock_dismiss.${REASON_LABEL[p.reason] ?? "unknown"}`);
+    }
+    if (record.e === "retained" && p) {
+      bump(`retained.${RETENTION_LABEL[p.bucket] ?? "unknown"}`);
+      if (tier) bump(`retained.${tier}.${RETENTION_LABEL[p.bucket] ?? "unknown"}`);
+    }
+    if (record.e === "app_open" && p) {
+      bump(`app_open.${OPEN_SOURCE_LABEL[p.source] ?? "unknown"}`);
+    }
+    if (record.e === "welcome_back" && p) {
+      bump(`welcome_back.${BUCKET_LABEL[p.days] ?? "unknown"}`);
+    }
+    if (record.e === "after_bad_day" && p) {
+      bump(`after_bad_day.${BUCKET_LABEL[p.gap] ?? "unknown"}`);
+    }
+    if (record.e === "reveal_seen" && p) {
+      const funnel = FUNNEL_LABEL[p.funnel] ?? "unknown";
+      bump(`reveal_seen.${funnel}.sprite_${p.has_sprite ? "yes" : "no"}`);
+      bump(`reveal_seen.duration.${p.duration}`);
+    }
+    if (record.e === "checkin_commit" && p) {
+      bump(`checkin_commit.focus_${p.focus_count}`);
+    }
+    if (record.e === "dungeon_run" && p) {
+      bump(`dungeon_run.floors_${p.floors}`);
+    }
+    if (record.e === "evolve" && p) {
+      bump(`evolve.level_${p.level}`);
+    }
+    if (record.e === "bond_level" && p) {
+      bump(`bond_level.level_${p.level}`);
+    }
+    if (record.e === "milestone" && p) {
+      bump(`milestone.days_${p.level}`);
+    }
+    if (record.e === "purchase" && p) {
+      bump(`purchase.${PURCHASE_REASON_LABEL[p.reason] ?? "unknown"}`);
     }
     if (record.e === "demo_cap_hit") {
       bump(`demo_cap_hit.${PATH_LABEL[p.path] ?? "unknown"}`);
@@ -3056,7 +3096,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-jMibS2/functionsRoutes-0.8789777821741722.mjs
+// ../.wrangler/tmp/pages-Gy2xYE/functionsRoutes-0.18241443625050002.mjs
 var routes = [
   {
     routePath: "/api/account",
