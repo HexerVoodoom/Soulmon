@@ -18,13 +18,18 @@ describe('missions — progress', () => {
     expect(p0['mission-champion']).toBe(0);
     expect(p0['mission-mega']).toBe(0);
 
+    /* ⚠️ Este caso usava ids de espécie de outra franquia ('greymon',
+       'veemon', 'imperialdramon') porque `getStageLevel` os reconhecia por
+       `LEGACY_FORM_TIERS`. A tabela foi apagada em 07/09/2026 — ver
+       `types/progression.ts`. Os ids do ESQUEMA DA ÁRVORE testam a mesma
+       regra e são os únicos que um save real carrega. */
     // Current form at champion (item form counts too)
-    const champ = getMissionProgress({ ...base, evolutionStage: 'greymon' });
+    const champ = getMissionProgress({ ...base, evolutionStage: 'champion-virus' });
     expect(champ['mission-champion']).toBe(1);
     expect(champ['mission-mega']).toBe(0);
 
     // Ever-unlocked mega counts even after degeneration back to rookie
-    const mega = getMissionProgress({ ...base, evolutionStage: 'veemon', unlockedEvolutions: ['imperialdramon'] });
+    const mega = getMissionProgress({ ...base, evolutionStage: 'rookie', unlockedEvolutions: ['champion-virus', 'mega-data'] });
     expect(mega['mission-champion']).toBe(1);
     expect(mega['mission-mega']).toBe(1);
   });

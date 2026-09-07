@@ -8,7 +8,7 @@ import android.view.View
 import android.widget.RemoteViews
 import com.hexervoodoom.soulmon.R
 
-// Shared rendering for all DigiApp widget variants (horizontal, vertical, pet-only).
+// Shared rendering for all Soulmon widget variants (horizontal, vertical, pet-only).
 object WidgetRenderer {
     const val PREFS_NAME = "DigiWidgetPrefs"
 
@@ -17,11 +17,11 @@ object WidgetRenderer {
     fun renderFull(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val digimonName = prefs.getString("digimon_name", "Soulmon") ?: "Soulmon"
-        val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
+        val currentStage = prefs.getString("current_stage", "rookie") ?: "rookie"
         val completedTasks = prefs.getInt("completed_tasks", 0)
         val totalTasks = prefs.getInt("total_tasks", 0)
         val hp = prefs.getInt("hp", 100)
-        val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
+        val eggType = prefs.getString("egg_type", "") ?: ""
         val branchType = prefs.getString("branch_type", "data") ?: "data"
 
         val views = RemoteViews(context.packageName, layoutId)
@@ -46,8 +46,8 @@ object WidgetRenderer {
     // Pet-only widget: just the sprite (+ needs-cleaning indicator).
     fun renderPet(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
-        val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
+        val currentStage = prefs.getString("current_stage", "rookie") ?: "rookie"
+        val eggType = prefs.getString("egg_type", "") ?: ""
         val branchType = prefs.getString("branch_type", "data") ?: "data"
         val hasPoop = prefs.getBoolean("has_poop", false)
 
@@ -86,8 +86,8 @@ object WidgetRenderer {
     fun renderChat(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val digimonName = prefs.getString("digimon_name", "Soulmon") ?: "Soulmon"
-        val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
-        val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
+        val currentStage = prefs.getString("current_stage", "rookie") ?: "rookie"
+        val eggType = prefs.getString("egg_type", "") ?: ""
         val branchType = prefs.getString("branch_type", "data") ?: "data"
         val completed = prefs.getInt("completed_tasks", 0)
         val total = prefs.getInt("total_tasks", 0)
@@ -113,7 +113,8 @@ object WidgetRenderer {
         // 06/09/2026 — contar o que falta, na tela inicial, é cobrança.
         val contextual = mutableListOf<String>()
         if (hp <= 20) contextual.add("I miss you...")
-        if (stage == "digiegg") contextual.add("I'll hatch soon!")
+        // (o ramo "digiegg" saiu junto com os nomes da Bandai: a árvore nasce
+        //  em rookie desde `types/progression.ts`, não existe estágio de ovo)
         when {
             total == 0 -> contextual.add("Let's add a task?")
             completed >= total -> contextual.add("We crushed it today! ✨")
@@ -137,8 +138,8 @@ object WidgetRenderer {
     // Pet-screen widget: green grid + hearts (health) + animated pet + energy bar.
     fun renderScreen(context: Context, mgr: AppWidgetManager, appWidgetId: Int, layoutId: Int) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val currentStage = prefs.getString("current_stage", "digiegg") ?: "digiegg"
-        val eggType = prefs.getString("egg_type", "agumon") ?: "agumon"
+        val currentStage = prefs.getString("current_stage", "rookie") ?: "rookie"
+        val eggType = prefs.getString("egg_type", "") ?: ""
         val branchType = prefs.getString("branch_type", "data") ?: "data"
         val maxH = prefs.getInt("max_health_points", 2).coerceIn(1, SCREEN_HEART_IDS.size)
         val health = prefs.getInt("health_points", maxH).coerceIn(0, maxH)
@@ -202,27 +203,50 @@ object WidgetRenderer {
         views.setOnClickPendingIntent(R.id.widget_root, pi)
     }
 
+    /**
+     * O sprite do estágio, SEMPRE arte nossa.
+     *
+     * ⚠️ Até 07/09/2026 o fallback era `R.drawable.triceramon_dot` — arte da
+     * Bandai —, e ele não era um caso de borda: os drawables existentes eram
+     * os 40 nomes da franquia (`sprite_agumon`, `sprite_veemon`…) e nenhum
+     * casava com os estágios REAIS da árvore de hoje (`rookie`,
+     * `champion-virus`, `ultra`…). Ou seja, `getIdentifier` falhava sempre e
+     * **o widget mostrava um personagem registrado para todo usuário, o
+     * tempo todo** — no APK que vai para a Play Store.
+     *
+     * O `docs/Attributions.md` declarava que a arte da Bandai "saiu tudo".
+     * Saiu do bundle WEB; `android/res/drawable` é outra árvore e ninguém
+     * olhou. Os 40 arquivos foram apagados e os 11 estágios da árvore ganharam
+     * a arte de `src/assets/soulmon/`.
+     *
+     * `eggType` e `branchType` continuam na assinatura porque os dois
+     * chamadores os passam, mas o id do estágio já carrega o galho
+     * (`champion-virus`) — não há o que resolver a mais.
+     */
     private fun resolveSprite(context: Context, stage: String, eggType: String, branchType: String): Int {
         val candidateName = "sprite_${stage.replace("-", "_")}"
         val id = context.resources.getIdentifier(candidateName, "drawable", context.packageName)
-        return if (id != 0) id else R.drawable.triceramon_dot
+        // Sem correspondência (save adulterado, estágio de uma versão futura):
+        // o rookie, que é onde a árvore nasce. NUNCA arte de terceiro.
+        return if (id != 0) id else R.drawable.sprite_rookie
     }
 
-    private fun stageLabel(stage: String): String = when (stage) {
-        "digiegg" -> "Ovo Digital"
-        "pichimon", "chicomon", "yukimibotamon" -> "Baby I"
-        "pukamon", "chibimon", "nyaromon" -> "Baby II"
-        "tapirmon", "veemon", "plotmon" -> "Rookie"
-        "monochromon", "tuskmon", "bakemon",
-        "exveemon", "veedramon", "flamdramon",
-        "gatomon", "blackgatomon", "mikemon" -> "Champion"
-        "gigadramon", "triceramon", "digitamamon",
-        "paildramon", "aeroveedramon", "raidramon",
-        "angewomon", "ladydevimon", "nefertimon" -> "Ultimate"
-        "gaioumon", "ultimatebrachiomon", "titamon",
-        "imperialdramon", "ulforceveemon", "magnamon",
-        "ophanimon", "lilithmon", "holydramon" -> "Mega"
-        "gaioumon-itto", "imperialdramonpaladin", "mastemon" -> "Ultra"
+    /**
+     * O rótulo do estágio, lido do PREFIXO do id.
+     *
+     * ⚠️ Isto era uma tabela com ~30 nomes de personagem da Bandai mapeando
+     * espécie → nível, apagada em 07/09/2026 pelo mesmo motivo dos drawables.
+     * Ela nem funcionava: a árvore de hoje nasce em `rookie` e usa
+     * `champion-virus` / `mega-data` / `ultra`, então TODO estágio real caía
+     * no `else`. Trinta nomes de terceiro no APK para descrever criaturas que
+     * o app não tem mais.
+     */
+    private fun stageLabel(stage: String): String = when (stage.substringBefore('-')) {
+        "rookie" -> "Rookie"
+        "champion" -> "Champion"
+        "ultimate" -> "Ultimate"
+        "mega" -> "Mega"
+        "ultra" -> "Ultra"
         else -> stage.replaceFirstChar { it.uppercase() }
     }
 

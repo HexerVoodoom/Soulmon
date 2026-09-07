@@ -1432,7 +1432,7 @@ export default function App() {
       // widget de quem não atualizasse o APK.
       digimonName: petName,
       currentStage: gameState.evolutionStage,
-      eggType: gameState.eggType ?? 'tapirmon',
+      eggType: gameState.eggType ?? 'ignar',
       branchType: gameState.currentBranch,
       completedTasks: dailyDone,
       totalTasks: dailyTotal,
@@ -2925,7 +2925,7 @@ export default function App() {
     // Reroll JA COBRADO em Creditos (dinheiro real): perder a seed nova e
     // perder o que a pessoa pagou. AVISA.
     writeJson(STORAGE_KEYS.SOULMON_PROFILE, { ...saved, seed: result.seed, readings: leituras });
-    const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
+    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
@@ -3064,7 +3064,7 @@ export default function App() {
     revealSprite?: { url: string; formId: string; at: number },
   ) => {
     setUpgradeRitual(false);
-    const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
+    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
     const genericLine = GENERIC_LINES[hashString(String(result.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
     setGameState(prev => ({
@@ -3937,12 +3937,12 @@ export default function App() {
     // via demoCharacterId, ver utils/sprites.ts).
     if (data.mode === 'demo') {
       const premade = PREMADE_CHARACTERS.find(c => c.id === data.demoCharacterId);
-      writeLocal(STORAGE_KEYS.EGG_TYPE, 'tapirmon');
+      writeLocal(STORAGE_KEYS.EGG_TYPE, 'ignar');
       setGameState(prev => ({
         ...prev,
         activities: newActivities,
         tasks: [],
-        eggType: 'tapirmon',
+        eggType: 'ignar',
         evolutionStage: 'rookie',
         unlockedEvolutions: ['rookie'],
         healthPoints: getMaxHPForStage('rookie'),
@@ -3983,7 +3983,7 @@ export default function App() {
     // Linha de sprite GENÉRICA (visual provisório até a Fase 2 assumir) —
     // sorteada uma vez, determinística pela seed do oráculo. Não é mais uma
     // escolha do jogador; a árvore de verdade é a de soulmonStages.
-    const GENERIC_LINES = ['tapirmon', 'veemon', 'salamon'] as const;
+    const GENERIC_LINES = ['ignar', 'lumel', 'serah'] as const;
     const genericLine = GENERIC_LINES[hashString(String(data.oracleResult.seed)) % GENERIC_LINES.length];
     writeLocal(STORAGE_KEYS.EGG_TYPE, genericLine);
 

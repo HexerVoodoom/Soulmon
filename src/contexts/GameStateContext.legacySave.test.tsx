@@ -4,7 +4,7 @@
  *
  * O Soulmon é fork do DigiApp e divide a chave `digiapp_state_v3` com ele.
  * Existem três caminhos de migração no código (`equippedFurniture`→
- * `equippedDecor`, `LEGACY_FORM_TIERS`, `legacySpriteForStage`) e **nenhuma
+ * `equippedDecor`, `fallbackSpriteForStage`) e **nenhuma
  * fixture de save real em teste**. O dano previsto: o primeiro APK novo quebra
  * o save de quem já joga — violando o guardrail nº 1 no dia do lançamento.
  *
@@ -48,7 +48,7 @@ const SAVE_LEGADO = {
   equippedFurniture: 'furn-sofa',
   foodInventory: { '💗': 2, '🦠': 1 },
   trophies: [{ season: '2026-W30', place: 1 }],
-  eggType: 'agumon',
+  eggType: 'lumel',
 };
 
 function Espiao() {
@@ -138,8 +138,13 @@ describe('save legado do DigiApp — nada de valor pode sumir na primeira carga'
     expect(s.equippedDecor).toBeTruthy();
   });
 
-  it('espécie legada (`agumon`, arte de terceiro) é traduzida para linha nossa', () => {
-    expect(montar().eggType).toBe('tapirmon');
+  it('a linha do save é preservada', () => {
+    // ⚠️ Este caso testava a tradução `'agumon' → 'tapirmon'`: um nome de
+    // franquia virando OUTRO nome de franquia. Os três ids de linha genérica
+    // eram `tapirmon`/`veemon`/`salamon` e o migrador cobria um quarto. Todos
+    // saíram em 07/09/2026 — hoje as linhas são as nossas (`ignar`/`lumel`/
+    // `serah`, de `DUNGEON_LINE_SPRITES`) e não há o que traduzir.
+    expect(montar().eggType).toBe('lumel');
   });
 
   it('a primeira carga NÃO dispara cloud save (não sobrescreve a nuvem com o local)', () => {

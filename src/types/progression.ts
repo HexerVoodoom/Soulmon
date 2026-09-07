@@ -116,50 +116,28 @@ export const MAX_STAGE_REQUIREMENT: number = Math.max(
 // tabela por espécie, porque cada jogador tem nomes únicos.
 // ---------------------------------------------------------------------------
 
-// SÓ compatibilidade de save: mapeia id de espécie LEGADA → nível, para um
-// save antigo em 'gaioumon' continuar mega em vez de virar rookie
-// (`LEGACY_LEVEL_OF`, abaixo — o único consumidor). NÃO é roster de nada:
-// a masmorra sorteia de `DUNGEON_LINE_SPRITES` (utils/sprites.ts — 6 linhas
-// nossas × 4 artes) e o fallback de sprite é `legacySpriteForStage`. Até
-// 02/09/2026 este comentário dizia "roster selvagem da masmorra", e a frase
-// contaminou o PLANO-MELHORIAS com um "bestiário de 60 nomes" que não existe
-// (WP4.9). Não acrescente nomes aqui (CLAUDE.md, seção "Arte e nomes").
-export const LEGACY_FORM_TIERS: Record<Exclude<EvolutionStage, 'ultra'> | 'ultra', readonly string[]> = {
-  rookie: [
-    'tapirmon', 'veemon', 'plotmon',
-    'agumon', 'gabumon', 'piyomon', 'tentomon', 'patamon', 'palmon',
-  ],
-  champion: [
-    'monochromon', 'tuskmon', 'bakemon',
-    'exveemon', 'veedramon', 'flamedramon',
-    'gatomon', 'gatomon-black', 'mikemon',
-    'greymon', 'garurumon', 'meramon', 'devimon',
-    'angemon', 'birdramon', 'kabuterimon', 'seadramon',
-    'airdramon', 'ogremon', 'kuwagamon', 'numemon',
-    'raidramon-armor', 'betamon',
-  ],
-  ultimate: [
-    'gigadramon', 'triceramon', 'digitamamon',
-    'paildramon', 'aeroveedramon', 'raidramon',
-    'angewomon', 'ladydevimon', 'nefertimon',
-    'monzaemon', 'etemon', 'andromon',
-    'megadramon', 'vademon', 'nanimon',
-  ],
-  mega: [
-    'gaioumon', 'ultimatebrachiomon', 'titamon',
-    'imperialdramon', 'ulforceveedramon', 'magnamon',
-    'ophanimon', 'lilithmon', 'holydramon',
-  ],
-  ultra: ['gaioumon-itto', 'imperialdramon-paladin', 'mastemon'],
-};
+/* ─────────────────────────────────────────────────────────────────────────
+   AQUI VIVIA `LEGACY_FORM_TIERS`, E ELA FOI APAGADA EM 07/09/2026.
 
-const LEGACY_LEVEL_OF: Record<string, EvolutionStage> = Object.fromEntries(
-  (Object.entries(LEGACY_FORM_TIERS) as Array<[EvolutionStage, readonly string[]]>)
-    .flatMap(([level, names]) => names.map(name => [name, level])),
-);
+   Eram **57 ids de espécie de outra franquia** (agumon, greymon, veemon,
+   tapirmon, salamon…) mapeando id → nível, e a única justificativa escrita
+   era compatibilidade de save: "pra um save em `gaioumon` continuar mega em
+   vez de virar rookie".
 
-/** Nível do estágio: lê o prefixo do id ('champion-virus' → 'champion'),
- *  com fallback pro roster legado (masmorra / sprite genérico). */
+   O dono informou que **ninguém nunca usou o app em produção**. Esse save não
+   existe, nunca existiu, e os 57 nomes estavam indo no `dist/` que a
+   Cloudflare serve — conferido com `grep` no bundle — enquanto o
+   `docs/Attributions.md` declarava que "saiu tudo" da Bandai. A arte saiu; os
+   nomes ficaram, e iriam junto para a Play Store.
+
+   **Não recrie a tabela.** Um id desconhecido cai em `'rookie'` e o sprite cai
+   em `fallbackSpriteForStage` (`utils/sprites.ts`), que responde com arte
+   NOSSA por hash do id — determinístico, então o mesmo save desenha sempre a
+   mesma criatura. É tudo que a robustez exige; nomes de terceiro não são.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/** Nível do estágio: lê o prefixo do id ('champion-virus' → 'champion').
+ *  Id que não casa com o esquema cai em `'rookie'` — ver o bloco acima. */
 export function getStageLevel(stage: string): EvolutionStage {
   // O save vem do localStorage E da nuvem — os dois são dado NÃO confiável, e
   // `/api/save` só valida que `state` é um objeto, não o tipo de cada campo.
@@ -171,7 +149,7 @@ export function getStageLevel(stage: string): EvolutionStage {
   if (stage === 'ultra') return 'ultra';
   const prefix = stage.split('-')[0];
   if (prefix === 'champion' || prefix === 'ultimate' || prefix === 'mega') return prefix;
-  return LEGACY_LEVEL_OF[stage] ?? 'rookie';
+  return 'rookie';
 }
 
 /** Atributo (virus/data/vaccine) embutido no id, se houver. */

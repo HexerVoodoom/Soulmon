@@ -19,14 +19,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
-            android:src="@drawable/triceramon_dot" />
+            android:src="@drawable/sprite_rookie" />
         <ImageView
             android:id="@+id/widget_sprite_2"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="fitEnd"
             android:paddingTop="5dp"
-            android:src="@drawable/triceramon_dot" />
+            android:src="@drawable/sprite_rookie" />
     </ViewFlipper>
 
     <!-- Text column (right) -->

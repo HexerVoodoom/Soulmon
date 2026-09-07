@@ -125,7 +125,7 @@ describe('save da nuvem sem os campos novos → os valores que o jogador vê', (
     expect(s.equippedDecor).toEqual({});
     expect(s.equippedBackground).toBeNull();
     expect(s.ownedBackgrounds).toEqual(['bg-room']);
-    expect(s.eggType).toBe('tapirmon');
+    expect(s.eggType).toBe('ignar');
 
     // Conta e "porquê": save antigo é adotado como PAGO — nunca rebaixado.
     expect(s.accountTier).toBe('paid');
@@ -261,36 +261,32 @@ describe('atributos de galho carregados campo a campo', () => {
 // ─────────────────────────────────────────────── linha de sprite (eggType)
 
 describe('linha de sprite genérica na carga', () => {
-  it('linha legada `agumon` do save vira tapirmon (arte nossa)', () => {
-    expect(abrirComSave({ activities: [], tasks: [], eggType: 'agumon' }).eggType).toBe('tapirmon');
+  /* ⚠️ Três casos daqui testavam a tradução `'agumon' → 'ignar'` — um nome
+     de franquia virando outro nome de franquia. Os ids de linha genérica eram
+     `tapirmon`/`veemon`/`salamon` e o migrador cobria um quarto; os quatro
+     saíram em 07/09/2026 (ninguém nunca usou o app em produção, então não há
+     save para migrar). Hoje as linhas são `ignar`/`lumel`/`serah`, de
+     `DUNGEON_LINE_SPRITES`, e o que ficou testado é a PRECEDÊNCIA — que é a
+     regra de verdade, e continua valendo. */
+  it('linha desconhecida do save é preservada como veio', () => {
+    // Sem tradução: o que o save disser vale. Um id que a arte não conhece cai
+    // em `fallbackSpriteForStage`, que responde com arte NOSSA por hash.
+    expect(abrirComSave({ activities: [], tasks: [], eggType: 'ignar' }).eggType).toBe('ignar');
   });
 
   it('linha do save manda sobre a do storage', () => {
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'salamon');
-    expect(abrirComSave({ activities: [], tasks: [], eggType: 'veemon' }).eggType).toBe('veemon');
+    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'serah');
+    expect(abrirComSave({ activities: [], tasks: [], eggType: 'lumel' }).eggType).toBe('lumel');
   });
 
   it('sem linha no save, usa a do storage', () => {
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'salamon');
-    expect(abrirComSave({ activities: [], tasks: [] }).eggType).toBe('salamon');
-  });
-
-  it('`agumon` no storage também vira tapirmon', () => {
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'agumon');
-    expect(abrirComSave({ activities: [], tasks: [] }).eggType).toBe('tapirmon');
-  });
-
-  it('INSTALAÇÃO NOVA com `agumon` no storage também vira tapirmon', () => {
-    // Caminho diferente do de cima: aqui não há save nenhum, então quem decide
-    // é `freshGameState`, que tem a própria cópia da conversão. Reinstalar o app
-    // por cima de um storage antigo cai exatamente aqui.
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'agumon');
-    expect(abrirComSave(undefined).eggType).toBe('tapirmon');
+    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'serah');
+    expect(abrirComSave({ activities: [], tasks: [] }).eggType).toBe('serah');
   });
 
   it('INSTALAÇÃO NOVA respeita a linha própria já guardada no storage', () => {
-    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'salamon');
-    expect(abrirComSave(undefined).eggType).toBe('salamon');
+    localStorage.setItem(STORAGE_KEYS.EGG_TYPE, 'serah');
+    expect(abrirComSave(undefined).eggType).toBe('serah');
   });
 });
 
@@ -390,7 +386,7 @@ describe('save ilegível/hostil cai para instalação nova, e nada é adotado de
     expect(s.pvpEnabled).toBe(false);
     expect(s.activities).toEqual([]);
     expect(s.tasks).toEqual([]);
-    expect(s.eggType).toBe('tapirmon');
+    expect(s.eggType).toBe('ignar');
     // O 1/1 acima é transitório de propósito: o onboarding é o ritual de
     // nascimento e grava 3/3 ao terminar (App.tsx). Fica travado aqui para
     // que uma mudança nesses números seja uma DECISÃO, não um acidente.

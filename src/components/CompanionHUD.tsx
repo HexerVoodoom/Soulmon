@@ -128,7 +128,7 @@ interface CompanionHUDProps {
   currentStage: string;
   evolutionStage: string;
   /** Linha genérica de sprite (fallback visual até a Fase 2 assumir) — ver utils/sprites.ts. */
-  eggType?: 'tapirmon' | 'veemon' | 'salamon';
+  eggType?: 'ignar' | 'lumel' | 'serah';
   /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
   demoCharacterId?: string;
   /** Sprite PRÓPRIO da forma atual, quando existe **e já foi adotado**
@@ -218,7 +218,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   message, 
   currentStage,
   evolutionStage,
-  eggType = 'tapirmon',
+  eggType = 'ignar',
   demoCharacterId,
   ownSpriteUrl,
   healthPoints,

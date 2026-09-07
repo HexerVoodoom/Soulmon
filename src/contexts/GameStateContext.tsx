@@ -233,7 +233,7 @@ export interface GameState {
   /** Não é mais escolha do jogador (era o "tipo de ovo") — hoje é a linha de
    *  sprite GENÉRICO sorteada uma vez no onboarding (utils/sprites.ts), usada
    *  como visual provisório até a Fase 2 (imagem gerada por IA) assumir. */
-  eggType?: 'tapirmon' | 'veemon' | 'salamon';
+  eggType?: 'ignar' | 'lumel' | 'serah';
   /** A árvore de 11 formas ÚNICA do jogador, gerada pelo oráculo no onboarding
    *  (utils/oracle.ts generateOracle().creature.stages) e congelada — nomes,
    *  descrições e prompts de imagem de cada forma. */
@@ -878,13 +878,15 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           loadedState.maxActivityCap,
           FORM_REQUIREMENTS[getStageLevel(typeof loadedState.evolutionStage === 'string' ? loadedState.evolutionStage : 'rookie')].cap,
         ),
-        eggType: (
-          (loadedState.eggType as string) === 'agumon' ? 'tapirmon'
-          : loadedState.eggType
-        ) ?? (
-          (savedEggType as string) === 'agumon' ? 'tapirmon'
-          : savedEggType
-        ) ?? 'tapirmon',
+        /* ⚠️ Havia aqui uma migração de um id de espécie de outra franquia
+           para a linha genérica, apagada em 07/09/2026: os três ids de linha
+           também ERAM nomes de franquia, então o migrador traduzia um nome
+           proibido em outro. Hoje as linhas são as nossas (`ignar`/`lumel`/
+           `serah`, de `DUNGEON_LINE_SPRITES`) e não há save de terceiro para
+           migrar — ninguém nunca usou o app em produção. Um id que a arte não
+           conheça cai em `fallbackSpriteForStage`, que responde com arte
+           NOSSA por hash do id. */
+        eggType: loadedState.eggType ?? savedEggType ?? 'ignar',
         attributesSinceLastEvolution: {
           virus: num(loadedState.attributesSinceLastEvolution?.virus, 0),
           data: num(loadedState.attributesSinceLastEvolution?.data, 0),
@@ -1118,7 +1120,7 @@ function freshGameState(): GameState {
       currentBranch: 'data',
       lastDayWasPerfect: false,
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
-      eggType: ((savedEggType as string) === 'agumon' ? 'tapirmon' : savedEggType) ?? 'tapirmon',
+      eggType: savedEggType ?? 'ignar',
       attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       foodInventory: {},
       poopEventsShown: [],

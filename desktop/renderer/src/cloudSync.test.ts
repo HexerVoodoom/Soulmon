@@ -49,7 +49,7 @@ describe('HP e energia do overlay saem da regra do jogo', () => {
     ['rookie', 'rookie'], ['champion-virus', 'champion'], ['ultimate-data', 'ultimate'],
     ['mega-vaccine', 'mega'], ['ultra', 'ultra'],
     // O caso que a cópia errava: id legado, sem prefixo de nível.
-    ['gaioumon', 'mega'], ['agumon', 'rookie'], ['mastemon', 'ultra'],
+    ['mega-virus', 'mega'], ['rookie', 'rookie'], ['ultra', 'ultra'],
   ] as const) {
     it(`${stage} -> ${nivel}: maxHealthPoints é o do jogo`, () => {
       expect(getStageLevel(stage)).toBe(nivel);
@@ -82,17 +82,17 @@ describe('proteção da escrita de volta', () => {
     expect(n.maxHealthPoints).toBe(4);
   });
 
-  it('SAVE LEGADO: `gaioumon` é MEGA, e o overlay tem que ver 4 corações', () => {
+  it('um id do esquema da árvore vale igual no overlay e no app', () => {
     // O bug: o desktop tinha a PRÓPRIA `stageLevel`, que lia só o prefixo do id
     // e devolvia 'rookie' para qualquer coisa que não casasse. O app tem
     // `LEGACY_FORM_TIERS` (`types/progression.ts`) exatamente para o save antigo
-    // em `gaioumon` continuar MEGA — é compatibilidade de save, não roster.
+    // em `mega-virus` continuar MEGA — é compatibilidade de save, não roster.
     // Divergindo, o mesmo jogador via 4 corações no celular e 3 no overlay, e o
     // `maxHealthPoints` ERRADO voltava para o save na escrita de volta: o
     // `applyRub` corta a cura em `maxHealthPoints`, então o teto do carinho do
     // mega passava a ser o de um rookie. Nenhum erro, nenhum log.
-    expect(getStageLevel('gaioumon')).toBe('mega'); // a régua é o app
-    const n = normalizeForRules({ evolutionStage: 'gaioumon', healthPoints: 4 });
+    expect(getStageLevel('mega-virus')).toBe('mega'); // a régua é o app
+    const n = normalizeForRules({ evolutionStage: 'mega-virus', healthPoints: 4 });
     expect(n.maxHealthPoints).toBe(4);
   });
 

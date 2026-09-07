@@ -1,3 +1,32 @@
+# ⚠️ 07/09/2026 — "saiu tudo" era MEIA VERDADE
+
+Este documento declarava que a arte e os nomes da Bandai tinham saído. Saíram
+do **bundle web**. A limpeza de 07/09/2026 encontrou mais três árvores que
+ninguém tinha olhado, e todas iam para produção:
+
+| Onde | O que havia | Como estava |
+|---|---|---|
+| `src/types/progression.ts` | **57 ids** de espécie da Bandai (`LEGACY_FORM_TIERS`) | no bundle servido, justificados por compat de save |
+| `android/res/drawable/` | **40 sprites** da Bandai + `triceramon_dot` | no APK, e `resolveSprite` caía neles **para todo usuário, sempre** — nenhum drawable casava com os estágios reais da árvore |
+| `WidgetRenderer.kt` | ~30 nomes em `stageLabel` | tabela morta: todo estágio real caía no `else` |
+| `soulProfile/bestiary/pool.json` | **242 criaturas** de franquia protegida com a DESCRIÇÃO OFICIAL copiada | Pokémon 50 · D&D 78 · Warcraft 26 · Digimon 22 · Ragnarok · Final Fantasy · Warhammer · Senhor dos Anéis — num JSON de 947 KB no bundle |
+
+O caso do widget é o mais grave e o mais silencioso: o APK que iria para a Play
+Store desenhava um personagem registrado como se fosse a criatura do jogador.
+
+**A única justificativa escrita para a primeira linha era compatibilidade de
+save.** O dono confirmou em 07/09/2026 que ninguém nunca usou o app em
+produção — o save que aquilo protegia não existe.
+
+Hoje há régua, e ela é executável: `src/utils/sprites.dungeonRoster.test.ts`
+varre o **bundle construído** (não o fonte — comentário é apagado no build, e
+os comentários-lápide CITAM os nomes de propósito) e o diretório de drawables
+do Android; `pipeline.test.ts` varre o pool do bestiário. O filtro de origem
+mora em `scripts/sync-oracle-data.mjs`, na FONTE, para não voltar no próximo
+`npm run sync:oracle-data`.
+
+---
+
 # Atribuições
 
 ## Código e componentes

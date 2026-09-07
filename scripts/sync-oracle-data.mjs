@@ -182,6 +182,41 @@ const keys = [...strata.keys()].sort();
 // Dedup por nome DURANTE a colheita: o corpus tem variantes homônimas entre
 // arquivos, e nome duplicado no pool vira criatura que "não existe" para a
 // cobertura (o sorteio nunca distingue as duas).
+/**
+ * ⚠️ ORIGENS PROIBIDAS — o filtro que faltava, acrescentado em 07/09/2026.
+ *
+ * O pool commitado tinha **242 criaturas de franquia protegida** com a
+ * DESCRIÇÃO OFICIAL copiada palavra por palavra: Pokémon (50), D&D (78),
+ * Warcraft (26), Digimon (22), Ragnarok Online, Final Fantasy, Warhammer,
+ * Senhor dos Anéis. Tudo isso ia no `pool.json` de 947 KB que entra no bundle
+ * servido pela Cloudflare, e o `CLAUDE.md` declara em duas seções que "nada de
+ * terceiro entra no bundle".
+ *
+ * A regra do produto é sobre INSPIRAÇÃO, e inspiração não precisa do nome nem
+ * do texto de ninguém: o que a criatura-inspiração entrega ao pipeline é
+ * elemento, família, bioma, tamanho e atributos — tudo genérico. O que fica é
+ * o que é nosso ou é do mundo: geração procedural, fauna e flora reais, e
+ * mitologia (que é domínio público).
+ *
+ * Filtrar AQUI e não no consumidor é o ponto: o dado não pode chegar ao
+ * repositório, senão volta no próximo `npm run sync:oracle-data`.
+ */
+const ORIGENS_PERMITIDAS = [
+  /procedural/i,
+  /fauna/i,
+  /flora/i,
+  /mitolog/i,
+];
+/** Nomes que aparecem DENTRO de entradas procedurais ("Titânico Agumon de
+ *  Gravidade"): a origem é limpa e o nome não. */
+const NOMES_PROIBIDOS = /\b(agumon|greymon|veemon|gatomon|patamon|gabumon|taichi|digimon|pokemon|pikachu|charizard|goku)\b/i;
+
+const origemPermitida = (c) => {
+  const origem = String(c.origem ?? '');
+  if (!ORIGENS_PERMITIDAS.some(re => re.test(origem))) return false;
+  return !NOMES_PROIBIDOS.test(`${c.nome ?? ''} ${c.descricao ?? ''}`);
+};
+
 const picked = [];
 const nomesVistos = new Set();
 for (let round = 0; picked.length < POOL_TARGET; round++) {
@@ -191,6 +226,7 @@ for (let round = 0; picked.length < POOL_TARGET; round++) {
     if (round < list.length && picked.length < POOL_TARGET) {
       took = true;
       const c = list[round];
+      if (!origemPermitida(c)) continue;
       if (nomesVistos.has(c.nome)) continue;
       nomesVistos.add(c.nome);
       picked.push(c);

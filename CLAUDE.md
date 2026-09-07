@@ -392,9 +392,25 @@ ficam valendo:
   sempre com arte nossa; save antigo com id de espécie legada cai em
   `legacySpriteForStage`, que escolhe uma das nossas linhas por hash do id
   (determinístico: o mesmo save renderiza sempre a mesma criatura).
-- **`LEGACY_FORM_TIERS` (`types/progression.ts`) é só compatibilidade de save** —
-  mapeia id antigo → nível, pra um save em `gaioumon` continuar mega em vez de
-  virar rookie. Não é roster de nada. Não acrescente nomes ali.
+- ⚠️ **`LEGACY_FORM_TIERS` NÃO EXISTE MAIS** (07/09/2026). Eram 57 ids de
+  espécie da Bandai no bundle de produção, e a única justificativa era compat
+  de save — para jogadores que nunca existiram. Um id fora do esquema da árvore
+  cai em `'rookie'` e o sprite cai em `fallbackSpriteForStage`, que responde com
+  arte NOSSA por hash. **Não recrie a tabela.**
+- ⚠️ **O APK também embarcava a arte, e o `Attributions.md` dizia que não.**
+  `android/res/drawable` tinha **40 sprites** da Bandai, e `resolveSprite` caía
+  em `triceramon_dot` **para todo usuário, sempre** — nenhum drawable casava com
+  os estágios reais (`rookie`, `champion-virus`…). Os 11 estágios ganharam a
+  arte de `src/assets/soulmon/`; o fallback hoje é `sprite_rookie`.
+- ⚠️ **O pool do bestiário tinha 242 criaturas de franquia protegida** com a
+  descrição oficial copiada (Pokémon, D&D, Warcraft, Digimon, Ragnarok, FF,
+  Warhammer, LotR), num JSON de 947 KB que entra no bundle. O filtro de origem
+  está em `scripts/sync-oracle-data.mjs` — na FONTE, senão volta no próximo
+  sync. Só ficam procedural, fauna/flora real e mitologia.
+- **A régua é EXECUTÁVEL, e olha o BUNDLE**: `sprites.dungeonRoster.test.ts`
+  varre `dist/assets/*.js` e `android/res/drawable`; `pipeline.test.ts` varre o
+  pool. O fonte não é varrido de propósito — comentário some no build, e os
+  comentários-lápide citam os nomes para registrar o que não pode voltar.
 - **Prompt do gerador tem DUAS variantes** (`utils/oracle.ts`, `composeSpritePrompts`):
   `imagePrompt` **cita** as referências de gênero (Digimon/Pokémon/Palworld/…)
   porque o resultado sai visivelmente melhor, e `imagePromptFallback` é o mesmo

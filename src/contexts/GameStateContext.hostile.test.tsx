@@ -66,7 +66,7 @@ describe('save hostil: campo com tipo errado não pode dar tela branca', () => {
 
   it('as funções puras que levaram o fix continuam corretas para entrada boa', () => {
     expect(getStageLevel('champion-virus')).toBe('champion');
-    expect(getStageLevel('gaioumon')).toBe('mega');   // roster legado
+    expect(getStageLevel('mega-virus')).toBe('mega');  // id do esquema da árvore
     expect(getStageLevel('rookie')).toBe('rookie');
     expect(getStageBranch('champion-virus')).toBe('virus');
     // e o fix não inventa resposta para lixo
@@ -75,7 +75,7 @@ describe('save hostil: campo com tipo errado não pode dar tela branca', () => {
   });
 });
 
-describe('quota de localStorage — o storage é compartilhado com o DigiApp', () => {
+describe('quota de localStorage — o storage pode estar cheio ou bloqueado', () => {
   it('QuotaExceededError na persistência NÃO derruba mais a árvore — o jogo segue em memória', () => {
     // `GameStateContext.tsx:359` faz `localStorage.setItem(...)` dentro de um
     // useEffect, SEM try/catch. Quando o storage enche — `activityLog` (90) +
@@ -118,7 +118,7 @@ describe('quota de localStorage — o storage é compartilhado com o DigiApp', (
     });
     const s = montar();
     expect(s.evolutionStage).toBe('rookie');
-    expect(s.eggType).toBe('tapirmon');   // o fallback do EGG_TYPE também aguenta
+    expect(s.eggType).toBe('ignar');      // o fallback do EGG_TYPE também aguenta
   });
 
   it('save ilegível com storage FUNCIONANDO continua degradando bem (não regrediu)', () => {

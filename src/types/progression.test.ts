@@ -23,12 +23,15 @@ describe('getStageLevel', () => {
     expect(getStageLevel('ultra')).toBe('ultra');
   });
 
-  it('classifies legacy static names (dungeon wild roster / sprite fallback)', () => {
-    expect(getStageLevel('tapirmon')).toBe('rookie');
-    expect(getStageLevel('tuskmon')).toBe('champion');
-    expect(getStageLevel('gigadramon')).toBe('ultimate');
-    expect(getStageLevel('gaioumon')).toBe('mega');
-    expect(getStageLevel('gaioumon-itto')).toBe('ultra');
+  it('um id de espécie desconhecida cai em rookie — não existe mais tabela', () => {
+    // ⚠️ Este caso afirmava que 57 ids de espécie de OUTRA FRANQUIA tinham
+    // nível próprio (`LEGACY_FORM_TIERS`). A tabela foi apagada em
+    // 07/09/2026: era a única coisa mantendo aqueles nomes no bundle de
+    // produção, e a justificativa — compat de save — descreve jogadores que
+    // nunca existiram. Qualquer id fora do esquema da árvore cai no estágio
+    // inicial, que é o comportamento seguro e o único que precisa existir.
+    expect(getStageLevel('qualquer-coisa')).toBe('rookie');
+    expect(getStageLevel('especie-de-versao-futura')).toBe('rookie');
   });
 
   it('falls back to rookie for unknown stages', () => {

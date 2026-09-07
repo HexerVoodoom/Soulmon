@@ -80,7 +80,7 @@ interface EvolutionPathProps {
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
-  eggType?: 'tapirmon' | 'veemon' | 'salamon';
+  eggType?: 'ignar' | 'lumel' | 'serah';
   /** Modo demo (utils/monetization.ts): personagem pré-pronto escolhido — sobrepõe eggType no sprite. */
   demoCharacterId?: string;
   unlockedEvolutions?: string[];

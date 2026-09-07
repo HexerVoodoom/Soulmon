@@ -101,7 +101,21 @@ describe('simulação de balance — os coeficientes obedecem a este teste', () 
   const ESCOLAS: EscolaId[] = [
     'combate_fisico', 'longo_alcance', 'conjuracao', 'evocacao', 'benca', 'maldicao',
   ];
-  const RUNS = 300;
+  /**
+   * ⚠️ Eram 300, e 300 é RUÍDO DEMAIS para o limite que este teste afirma.
+   *
+   * A taxa é uma proporção binomial: com 300 amostras o erro padrão perto de
+   * 50% é ~2,9pp, e o teste exige um piso de 40%. Ou seja, a medição balançava
+   * ±3pp contra uma régua de 1pp de folga — ele passava por sorte.
+   *
+   * A conta apareceu em 07/09/2026, quando o pool do bestiário perdeu 282
+   * criaturas de franquia protegida: a sequência que o RNG semeado sorteia
+   * mudou, `maldicao` marcou 0,39 e o teste quebrou. Não era regressão de
+   * balanço — com 3000 runs (SE ~0,9pp) a mesma configuração passa. Aumentar a
+   * AMOSTRA é o conserto; afrouxar o piso seria apagar a régua para caber no
+   * ruído. Custo: ~0,8s.
+   */
+  const RUNS = 3000;
 
   it('taxa de vitória de cada arquétipo entre 40% e 80%, spread ≤ 20pp', () => {
     const rates: Record<string, number> = {};

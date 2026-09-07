@@ -268,8 +268,30 @@ describe('dados sincronizados dos repositórios', () => {
     expect(Object.keys(CLASS_DATA.familias).length).toBeGreaterThanOrEqual(14);
   });
 
+  it('nenhuma criatura do pool vem de franquia protegida', () => {
+    // O pipeline usa a criatura-inspiração por ELEMENTO, família, bioma,
+    // tamanho e atributos — tudo genérico. Nome e descrição de terceiro nunca
+    // foram necessários, e o nome já era proibido em prompt (teste abaixo);
+    // o que faltava era ele não estar no repositório.
+    const permitidas = [/procedural/i, /fauna/i, /flora/i, /mitolog/i];
+    const proibidos = /\b(agumon|greymon|veemon|gatomon|patamon|gabumon|taichi|digimon|pokemon|pikachu|charizard|goku)\b/i;
+    const sujas = BESTIARY_POOL.filter(c =>
+      !permitidas.some(re => re.test(String(c.origem ?? '')))
+      || proibidos.test(`${c.nome} ${c.descricao ?? ''}`));
+    expect(sujas.map(c => `${c.origem}: ${c.nome}`)).toEqual([]);
+  });
+
   it('o pool do bestiário é grande, único por nome e com descrição real', () => {
-    expect(BESTIARY_POOL.length).toBeGreaterThanOrEqual(2000);
+    /* ⚠️ Era 2000, e o alvo caiu para 1700 em 07/09/2026 porque **282
+       criaturas saíram do pool**: 242 de franquia protegida (Pokémon, D&D,
+       Warcraft, Digimon, Ragnarok, Final Fantasy, Warhammer, Senhor dos
+       Anéis) com a DESCRIÇÃO OFICIAL copiada palavra por palavra, mais 40
+       procedurais que carregavam nome de franquia no próprio nome. Tudo isso
+       ia no `pool.json` de 947 KB que entra no bundle servido — contra a
+       regra escrita em duas seções do `CLAUDE.md`.
+       O filtro está no `scripts/sync-oracle-data.mjs` (na FONTE, para não
+       voltar no próximo sync) e o guard está logo abaixo. */
+    expect(BESTIARY_POOL.length).toBeGreaterThanOrEqual(1700);
     expect(new Set(BESTIARY_POOL.map(c => c.nome)).size).toBe(BESTIARY_POOL.length);
     for (const c of BESTIARY_POOL.slice(0, 50)) {
       expect(c.descricao.length).toBeGreaterThan(10);
