@@ -25,6 +25,24 @@
   // consistente (~60s) e deixa o mesmo comprovante valer para N contas. O
   // banco não existia até 07/09/2026 — a proteção nunca esteve ligada.
   // Schema versionado em `migrations/`.
+  // 07/09/2026 — o Soulmon ganhou projeto Firebase PROPRIO (`soulmon-app`);
+  // ate entao dividia o do DigiApp. Esta variavel e o que tira
+  // `functions/api/_auth.js` do MODO ABERTO: sem ela, `denyUnlessOwner` vira
+  // no-op e, como o `saveId` e SHA-256("soulmon:" + e-mail) por algoritmo
+  // publico, quem souber um e-mail le e sobrescreve o save alheio.
+  //
+  // Mora AQUI, e nao no painel, de proposito: variavel de runtime comum (ao
+  // contrario de secret) e substituida pelo conteudo deste arquivo a cada
+  // `wrangler deploy`. Posta so no painel, o proximo deploy a partir do repo
+  // a APAGARIA e o servidor voltaria ao modo aberto em silencio — sem erro,
+  // sem alarme. O valor nao e segredo: e o id publico do projeto.
+  //
+  // ORDEM: so pode ser ligada DEPOIS de um bundle que carregue as `VITE_*`
+  // (elas sao inlinadas no build). Ligar antes derruba o login de todos: o
+  // servidor passa a exigir token e o cliente nao sabe emitir nenhum.
+  "vars": {
+    "FIREBASE_PROJECT_ID": "soulmon-app"
+  },
   "d1_databases": [
     { "binding": "DB", "database_name": "soulmon-billing", "database_id": "43546903-7f12-4541-9a67-4b0e8ac736da" }
   ]

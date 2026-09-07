@@ -7,6 +7,54 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## ✅ 07/09/2026 (sessão LOCAL) — a infra que dependia do dono FOI LIGADA
+>
+> A sessão anterior rodava na nuvem, sem navegador logado, e parou no Firebase.
+> Esta rodou na máquina do dono e terminou o `docs/HANDOFF-SESSAO-LOCAL.md`,
+> seções 2.1 a 2.4. O que mudou **em produção**:
+>
+> 1. **Projeto Firebase PRÓPRIO** — `soulmon-app` (nome "Soulmon"). O id
+>    `soulmon` estava tomado por outra conta. Gemini no Firebase e Google
+>    Analytics ficaram DESLIGADOS. Provedor **E-mail/senha com link de e-mail**
+>    ativado (os dois são acoplados no console: não dá para ter o link sem o
+>    pai). Domínio `soulmon.mateus-sprnd.workers.dev` autorizado.
+> 2. **`FIREBASE_PROJECT_ID` LIGADO** → `_auth.js` saiu do MODO ABERTO.
+>    Verificado na borda: `GET`/`POST /api/save?id=…` sem token devolve **401
+>    `unauthenticated`** (antes devolvia 200 e gravava), e `/api/account` saiu
+>    do 503 — exportação e exclusão de conta estão vivas. Isso fecha o SEC-1
+>    em produção, não só no código.
+> 3. **VAPID girado e o Web Push saiu do zero.** O `VAPID_JWK` nunca existiu no
+>    scheduler, então o envio era pulado inteiro, em silêncio. Par novo gerado;
+>    privada só no secret. ⚠️ Achado no caminho: o `PROJETO.md` tinha a chave
+>    **privada** do par antigo em texto plano, commitada — girar o par
+>    neutralizou o vazamento, e o exemplo virou placeholder.
+> 4. **`SEASON_ADMIN_KEY` nos DOIS lados** (worker `soulmon` + scheduler), com
+>    valor novo. O fechamento de season deixa de dar 401.
+> 5. **KV próprio e D1 ativos** — o deploy da raiz passou a expor
+>    `env.SOULMON_SAVES` e `env.DB`, e a trava "um recibo, uma conta" saiu do
+>    papel.
+>
+> **Duas coisas que o handoff errava e ficam registradas:**
+>
+> - A chave pública do VAPID estava fixada em **QUATRO** lugares, não três — o
+>   `PROJETO.md` também, e o teste de paridade não o cobre.
+> - O `FIREBASE_PROJECT_ID` mora no **`wrangler.jsonc`**, não no painel.
+>   Variável de runtime comum (ao contrário de secret) é substituída pelo
+>   conteúdo do arquivo a cada `wrangler deploy`: posta só no painel, o próximo
+>   deploy a partir do repo a apagaria e o servidor voltaria ao modo aberto
+>   **em silêncio**.
+>
+> **Ambiente:** esta máquina roda Node 25, e o projeto declara Node 22
+> (`.nvmrc`, e as 5 workflows). O Node 25 cria um `localStorage` global vazio
+> que sombreia o do jsdom e derruba 7 testes. Há um Node 22 portátil em
+> `E:/tools/node/node-v22.23.2-win-x64` — **use ele para rodar o gate**, senão
+> a suíte mente. Dois guards que só passavam no Linux foram consertados no
+> caminho (montagem de caminho no Windows e CRLF).
+>
+> **O que ainda depende do dono:** o teste ponta-a-ponta do login (pedir o link
+> por e-mail, receber e completar — só o dono tem o e-mail), a seção 2.5 (FCM
+> nativo) e a 2.6 (Play Console). E as decisões da seção 3, intocadas.
+
 > ## ⚠️ 07/09/2026 — NINGUÉM NUNCA USOU O APP EM PRODUÇÃO
 >
 > Informado pelo dono. É o fato mais consequente registrado aqui, porque **44
@@ -1065,6 +1113,10 @@ que lado estava**. Saída real e o tropeço do caminho em `desktop/STEAM.md`.
 
 Veredito, para ninguém "consertar" o que não está quebrado:
 `startDesktopAuthBridge` (`src/utils/auth.ts`) sai na primeira linha porque
+⚠️ **Desatualizado desde 07/09/2026** — as `VITE_FIREBASE_*` agora existem
+(projeto `soulmon-app`, no `.env` local) e o login está configurado. O texto
+abaixo descreve o estado ANTERIOR.
+
 `isAuthConfigured()` exige três `VITE_FIREBASE_*` que **não existem em lugar
 nenhum desta árvore** (nem `.env`, nem CI, nem vite config) — e o próprio
 arquivo documenta que isso é proposital. O chamador existe e roda (`App.tsx`).
@@ -1123,7 +1175,7 @@ entrar aqui. Filtro aplicado: só confiança ≥ 8, sem DoS, sem rate limit, sem
 
 | # | Onde (símbolo) | O quê | Status em `e8aef62a` |
 |---|---|---|---|
-| SEC-1 | `denyUnlessOwner` em `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ⚠️ **corrigido no código, INERTE em produção** — inalterado hoje. Depende do `FIREBASE_PROJECT_ID` (Bloco 2 do dono) |
+| SEC-1 | `denyUnlessOwner` em `functions/api/community.js` | 5 de 11 ações sem autorização nenhuma | ✅ **FECHADO EM PRODUÇÃO em 07/09/2026** — `FIREBASE_PROJECT_ID=soulmon-app` ligado no `wrangler.jsonc`. Verificado na borda: `/api/save` sem token devolve 401 `unauthenticated` |
 | SEC-2 | `pidFor` / `PID_PREFIX` / `putProfile` em `functions/api/community.js` | o `saveId` era publicado como identidade social | ✅ **corrigido, e a correção MUDOU de natureza hoje** — ver N-3 abaixo |
 | SEC-5 | `isAllowedPushEndpoint` em `functions/api/subscribe.js` (a trava); `costGate` na entrada | SSRF: qualquer `endpoint` aceito, worker faz `fetch` nele 4×/dia | ✅ corrigido (⚠️ o worker é deploy MANUAL — a versão rodando hoje **não é verificável por leitura**; inalterado hoje) |
 
@@ -1641,7 +1693,7 @@ decisão sua.
 | ✅ | **Licença dos sprites DMC e uso dos nomes Digimon** — RESOLVIDO em 09/08/2026. Foi a opção (b): substituir por arte e nomenclatura originais. Saíram do repositório os 25 `*_dmc.png` (arte da Bandai, via `furudbat/wayland-vpets`) e os 49 `figma:asset/*` das linhas Tapirmon/Veemon/Salamon, junto com os itens de digievolução da loja, os Digimentais e o roster nominal da masmorra. `getSpriteForStage` responde sempre com arte de `src/assets/soulmon/`; save antigo cai num fallback determinístico que também usa arte nossa. Os nomes de franquia saíram até do prompt do gerador (`utils/oracle.ts`), com teste travando a ausência. Detalhes em `docs/Attributions.md`. |
 | ✅ | ~~**Reroll por Créditos = resultado aleatório pago com dinheiro real**~~ — RESOLVIDO em 06/09/2026 (WP5.7). Deixou de ser sorteio: virou **Nova Leitura**, DETERMINÍSTICA sobre as 6 respostas do Oráculo (`src/utils/newReading.ts`, semente FNV-1a na ordem fixa de `ORACLE_QUESTIONS`). Não há `Math.random` no caminho, o botão fica desligado enquanto nenhuma resposta mudou, a regra é dita **antes** de cobrar e `public/termos.html` §5 foi reescrito nos dois idiomas. Com isso não é mais loot box sob a Lei 15.211/2025: o que se compra é uma releitura declarada, não uma chance. |
 | 🟡 | ~~**Decidir sobre as keystores no histórico do git**~~ → **rebaixado de 🔴 para 🟡 pela análise de 26/08** (§1.4) | Os keystores são do **DigiApp**, não do Soulmon, e o DigiApp usa **Play App Signing** — a chave vazada é a de **upload**, e a rotação é um formulário de ~5 min no Play Console (Assinatura do app → *Solicitar troca da chave de upload*). **Nada a rotacionar do lado do Soulmon.** `git filter-repo` deixou de ser a opção óbvia: ele reescreve todos os commits, exige force push, quebra clones — **e não muda o risco**, porque quem já clonou já tem. O risco real é instalação lateral de um APK que o Android aceita como atualização do DigiApp; **não** é publicação na loja (isso exige credencial de conta, que nunca esteve no repo). |
-| 🟠 | **Ligar o `FIREBASE_PROJECT_ID`** | É o que fecha `save.js`, `billing.js` e `entitlements.js`. **Só depois** que `VITE_FIREBASE_*` estiver configurado e o build do desktop com login tiver saído — ligar antes derruba o login de todo mundo. |
+| ✅ | ~~**Ligar o `FIREBASE_PROJECT_ID`**~~ — **feito em 07/09/2026** (`soulmon-app`), na ordem segura: `.env` → `npm run build` → `wrangler deploy` → só então a variável. Mora no `wrangler.jsonc`, não no painel, porque variável comum é substituída pelo arquivo a cada deploy. |
 
 ### 3.2 Lançamento
 
@@ -1653,7 +1705,7 @@ decisão sua.
 | 🔴 | **`PLAY_REQUIRE_ACCOUNT_BINDING = true`** — depois de publicar o app que manda `setObfuscatedAccountId(saveId)`. É o que impede um recibo de virar N contas pagas (ver docs/BILLING-SETUP.md) |
 | 🟠 | ~~Opcional:~~ banco **D1** vinculado como `DB` + tabela `order_claims`. ⚠️ **"Opcional" é otimista e a palavra sai.** Este é o conserto do **SEC-3**, que a §1.2 chama de *maior risco de dinheiro que sobrou*, e o `wrangler.jsonc` **não tem binding `d1_databases`** — conferido em `e8aef62a`. Enquanto não tiver, `env.DB` é `undefined`, `claimOrderAtomic` **nunca roda** e o resgate é read-then-write sem CAS sobre KV eventualmente consistente. ✅ **O que a squad já preparou:** `migrations/0001_order_claims.sql` e `0002_order_claims_expires_at.sql` (com o prazo em coluna, respondendo à pendência C). Falta **ligar** |
 | 🔴 | URL da política de privacidade + formulário de Segurança de Dados |
-| 🟠 | `VITE_FIREBASE_*` no projeto Pages (e o `FIREBASE_PROJECT_ID` **por último**) |
+| ✅ | ~~`VITE_FIREBASE_*`~~ — **feito em 07/09/2026**, no `.env` LOCAL (não no painel: são de BUILD, o Vite as inlina). Projeto `soulmon-app`. Chave conferida contra a API do Firebase, não só transcrita. |
 | 🟠 | Conferir no painel do Cloudflare se já existe o projeto Pages `soulmon` — o `wrangler.jsonc` diz que sim. ⚠️ **A segunda metade desta linha era FALSA e saiu**: dizia que `capacitor.config.json` "ainda aponta o APK para `digiapp-a5e.pages.dev`". Conferido em `e8aef62a` — ele aponta para `https://soulmon.mateus-sprnd.workers.dev`, e as três fontes concordam (`capacitor.config.json`, `desktop/renderer/src/config.ts`, `desktop/electron/main.js`). É a **mesma mentira** que o `CLAUDE.md` e o `docs/PLANO-DESKTOP-STEAM.md` carregaram até 26/08 e que faria um agente decidir errado sobre deploy |
 | 🐛 | 🆕 **Comentário mentiroso encontrado e NÃO consertado** (é `src/`, fora do escopo desta frente): `desktop/renderer/src/config.ts:3` diz *"A URL ainda aponta pro Pages herdado do DigiApp"* — **a linha logo abaixo é `soulmon.mateus-sprnd.workers.dev`**. É o mesmo dano de sempre: comentário que descreve um estado anterior e não fica vermelho. Conserto de 1 linha, para quem tocar `desktop/renderer/` |
 | ✅ | ~~Endereço de contato do VAPID~~ — **resolvido em 07/09/2026**: o dono escolheu `mateus.sprnd@gmail.com`. É endereço de CONTATO (RFC 8292 `sub`), para onde o serviço de push escreve em caso de falha de entrega; nunca aparece para o usuário e trocá-lo não invalida subscription nenhuma. Substituir por um endereço do domínio do Soulmon quando ele existir. ⚠️ **Só vale na borda depois de um `wrangler deploy` dentro de `workers/`** — aquele worker não builda no push da `main`. |
