@@ -37,6 +37,7 @@ import { useTranslation, Language } from '../utils/i18n';
 import { getPassive } from '../utils/passives';
 import { BirthCard } from './BirthCard';
 import { FormAlbum } from './FormAlbum';
+import { BestiaryCard } from './BestiaryCard';
 import type { CarePattern } from '../utils/carePattern';
 import {
   seasonProgress, seasonLabel, seasonMedalStatus,
@@ -109,6 +110,9 @@ interface StatsPageProps {
   album?: Array<{ id: string; name: string; spriteUrl?: string | null }>;
   /** WP4.10 — quando cada forma foi alcançada. */
   formReachedAt?: Record<string, string>;
+  /** WP4.6(b) — chaves `linha-tier` já enfrentadas na masmorra (`bestiary`).
+   *  Só cresce; a tela mostra silhueta para o que ainda não apareceu. */
+  bestiary?: readonly string[];
   /** Estado da estação (`utils/seasons.ts`) + contadores para os três caminhos. */
   season?: {
     state?: SeasonProgressState;
@@ -167,6 +171,7 @@ export function StatsPage({
   birth,
   album,
   formReachedAt,
+  bestiary,
   season,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
@@ -372,6 +377,17 @@ export function StatsPage({
           </div>
         )}
 
+        {/* WP4.6(b) — os ENCONTROS. Vizinho do álbum de formas, porque os dois
+            são acervo, mas com condição PRÓPRIA e não aninhado nele: o álbum
+            depende de `soulmonStages`, que o jogador GRÁTIS não tem — e ele é
+            justamente quem mais roda masmorra. Aninhar deixaria o bestiário
+            invisível para quem mais o preenche. */}
+        {(bestiary?.length ?? 0) > 0 && (
+          <div style={{ marginTop: 16 }}>
+            <BestiaryCard encountered={bestiary ?? []} language={language} />
+          </div>
+        )}
+
         {/* WP4.6 — O ÁLBUM substitui a LINHA DE TEXTO.
             A coisa mais cara que o jogador constrói (meses de cuidado virando
             formas) era uma string com nomes separados por ponto. O álbum
@@ -385,6 +401,7 @@ export function StatsPage({
               reachedAt={formReachedAt}
               language={language}
             />
+
           </div>
         )}
 

@@ -5323,6 +5323,7 @@ export default function App() {
                 soulGoal: gameState.soulGoal ?? null,
                 bornAt: gameState.bornAt ?? null,
               } : null}
+              bestiary={gameState.bestiary ?? []}
               /* WP4.6/WP4.10 — o álbum das formas: as onze da árvore, com a
                  arte que já existe e a data de quando cada uma chegou. */
               album={(gameState.soulmonStages ?? []).map(st => {

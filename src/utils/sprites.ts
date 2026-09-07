@@ -69,7 +69,7 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
   orrin: { rookie: orrinRookie, champion: orrinChampion, ultimate: orrinUltimate, mega: orrinMega },
   thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
 };
-const DUNGEON_LINE_NAMES: Record<string, string> = {
+export const DUNGEON_LINE_NAMES: Record<string, string> = {
   ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah',
   kaelen: 'Pyrakamon', orrin: 'Akashaoimon', thalindra: 'Nimbratamon',
 };
