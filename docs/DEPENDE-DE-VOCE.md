@@ -200,7 +200,27 @@ Colide com o guardrail nº 1 do produto ("quem volta encontra saudade, não
 fatura"): quem some por mais de um ano perde o save. Precisa de um "sim, é isso
 mesmo" escrito — hoje é efeito colateral, não decisão.
 
-### 8. Reroll por Créditos = aleatório pago com dinheiro real
+### ~~8. Reroll por Créditos = aleatório pago~~ — ✅ JÁ RESOLVIDO (e melhor)
+
+> ⚠️ **Esta entrada estava DESATUALIZADA e me fez pedir ao dono, em
+> 07/09/2026, uma decisão sobre algo já feito.** Fica o registro para ninguém
+> repetir.
+>
+> O reroll deixou de ser sorteio. Virou a **Nova Leitura** (WP5.7): a pessoa
+> responde as 6 perguntas de novo e a leitura sai DELAS — a semente é
+> `readingSeed(respostas, leituras)`, determinística, com teste travando
+> ("mesma resposta e mesma leitura dão a mesma semente",
+> `src/utils/newReading.test.ts`). Não há `Math.random` em
+> `utils/monetization.ts`.
+>
+> O texto de equivalência que faltaria também já está na tela, nos dois
+> idiomas (`CreditsModal.tsx`): *"Todo pet é mecanicamente igual: muda quem
+> sua criatura é, nunca o quanto ela te ajuda."*
+>
+> Isso responde à exposição da Lei 15.211/2025 melhor do que um aviso: em vez
+> de avisar que a aposta é justa, tiraram a aposta.
+
+#### Contexto original
 `monetization.ts:76` + `Math.random()`. Atenuante forte: todo pet gerado é
 mecanicamente equivalente — é identidade, não poder. Mas a Lei 15.211/2025 (ECA
 Digital) vale desde 17/03/2026, e o Pokémon GO teve incubadoras removidas no
@@ -276,9 +296,31 @@ lista de amigos de terceiros. **Duas coisas eu deixei em pé, e a decisão é su
 | **B** | Substituir o valor de `ord:` por uma marca opaca de "já resgatado" | Mantém a anti-fraude, mas **quem voltar perde a compra** — não há como reconhecer o dono |
 | **C** | Apagar `ord:` e `ent:` | Exclusão completa, e **o mesmo recibo passa a valer para N contas** |
 
-**O que eu preciso de você:** A, B ou C. E, se for A, **por quanto tempo** o
-`ord:`/`ent:` fica (hoje os dois são gravados **sem TTL** — retenção infinita por
-construção). Eu não afirmo norma; a escolha é sua e vira texto na política.
+> ⚠️ **DESATUALIZADO — decidido e IMPLEMENTADO antes de 07/09/2026.**
+>
+> A saída é a **A, com retenção de 5 anos**, e ela já está no código:
+> `RETENTION_TTL_SECONDS = 5 * 365 * 24 * 60 * 60` em
+> `functions/api/_entitlements.js`, com o raciocínio do dono registrado ali
+> (item 3.1 do `GUIA-DO-DONO.md`): cinco anos cobrem o prazo do CDC e o fiscal
+> usual, e depois o dado some sozinho.
+>
+> O prazo é **renovado a cada escrita**, de propósito — a pergunta que ele
+> responde é "essa conta ainda existe?", não "quando ela nasceu?". Sem isso, um
+> prazo fixo tiraria o `paid` de quem comprou e continua jogando, e resetaria o
+> teto vitalício de IA.
+>
+> O caminho D1 obedece à mesma decisão por outro mecanismo: a linha carrega
+> `expires_at` (`migrations/0002_order_claims_expires_at.sql`). Testes:
+> `_entitlements.ttl.test.js` e `_entitlements.d1Retencao.test.js`.
+>
+> Em 07/09/2026 esta seção ainda dizia "sem TTL, retenção infinita" e me levou
+> a pedir ao dono uma decisão já tomada. Corrigido.
+
+#### Texto original da pergunta
+
+**O que eu precisava de você:** A, B ou C. E, se for A, **por quanto tempo** o
+`ord:`/`ent:` fica. Eu não afirmo norma; a escolha é sua e vira texto na
+política.
 
 ---
 
