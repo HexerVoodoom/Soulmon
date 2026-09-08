@@ -168,7 +168,7 @@ Onde o V-Pet de 97 e o Vital Bracelet têm mais a ensinar.
 
 ---
 
-## Fase 4 — Ritual e social ◐ PARCIAL (falta só o modo cooperativo)
+## Fase 4 — Ritual e social ✅ IMPLEMENTADA
 
 O estudo do BMJ sobre Pokémon GO é inequívoco: o efeito da novidade sobre
 comportamento **morre em ~6 semanas**. Depois disso, só ritual e vínculo seguram.
@@ -177,7 +177,7 @@ comportamento **morre em ~6 semanas**. Depois disso, só ritual e vínculo segur
 |---|---|---|
 | 4.1 ✅ | **Janela fixa e previsível para o Torneio** (dias, nunca horas) | Community Day é o motor de retenção do Pokémon GO, não o loop de caminhar. Janelas curtas excluem quem trabalha |
 | 4.2 ✅ | **Faixas/tiers em vez de ranking global cru** | Em ambientes só-de-leaderboard, 31,3% relataram efeito psicológico negativo de comparação |
-| 4.3 ⬜ | **Modo cooperativo leve** (2–4 treinadores, meta coletiva) | Cooperação tem evidência mais forte que competição para adesão a hábito. Precisa de saída limpa do grupo, sem penalidade |
+| 4.3 ✅ | **Modo cooperativo leve** (2–4 treinadores, meta coletiva) — entregue em 07/09/2026; o desenho e as decisões que sobraram para o dono estão em `docs/PLANO-COOP.md` | Cooperação tem evidência mais forte que competição para adesão a hábito. Precisa de saída limpa do grupo, sem penalidade |
 | 4.4 ✅ | **Uma ação, várias barras** — concluir uma tarefa deve alimentar visivelmente energia + comida + evolução + missão numa animação só | Um km no Pokémon GO avança ovo, candy, missão e recompensa semanal ao mesmo tempo |
 | 4.5 ✅ | **Auditar a carga diária** (resultado abaixo) — cocô 2×/dia + comida 5/h + carinho + banho + sono + masmorra: cabe em ~3 aberturas de app por dia? | "Cheque a cada 2h" é um segundo emprego |
 
