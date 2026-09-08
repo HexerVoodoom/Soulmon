@@ -219,10 +219,136 @@ describe('coop — check-in', () => {
     await checkin(e, ANA);
     const kv = e.DIGIAPP_SAVES;
     const gid = await kv.get(`coopOf:${ANA}`);
+    // A semana mora em DOIS lugares e os dois viram sozinhos: no blob do grupo
+    // (que é o que a vista mostra) e dentro do registro de cada membro (que é
+    // quem manda no progresso desde que os check-ins ganharam chave própria).
     const g = JSON.parse(await kv.get(`coop:${gid}`));
     g.weekKey = '1999-W01';
     await kv.put(`coop:${gid}`, JSON.stringify(g));
+    const meu = JSON.parse(await kv.get(`coopCk:${gid}:${ANA}`));
+    expect(meu.days.length).toBe(1);                 // marcou mesmo
+    await kv.put(`coopCk:${gid}:${ANA}`, JSON.stringify({ ...meu, weekKey: '1999-W01' }));
     expect((await ver(e, ANA)).progress).toBe(0);
+  });
+});
+
+/**
+ * A CORRIDA QUE O KV NÃO RESOLVE SOZINHO.
+ *
+ * O KV da Cloudflare não tem transação nem compare-and-set. Enquanto os
+ * check-ins moravam dentro do blob do grupo, `coopCheckin` era um
+ * ler-modificar-gravar sobre o objeto INTEIRO — e dois membros marcando
+ * presença na mesma noite (o caso normal de um grupo de 4) liam a mesma versão
+ * e a segunda gravação apagava a primeira, em silêncio.
+ *
+ * O teste abaixo força o entrelaçamento exato: as duas requisições são
+ * disparadas sem `await` entre elas, sobre um KV cujo `put` só materializa no
+ * fim do tick. Com os check-ins no blob compartilhado, o progresso saía 1.
+ */
+describe('coop — dois membros marcando presença ao MESMO tempo', () => {
+  function kvComAtraso(seed) {
+    const base = fakeKV(seed);
+    return {
+      ...base,
+      store: base.store,
+      // `put` que só grava depois de ceder o controle: é o que abre a janela
+      // entre ler e gravar, que é exatamente onde a corrida vive.
+      put: async (k, v) => { await Promise.resolve(); base.store.set(k, v); },
+    };
+  }
+
+  it('nenhum dos dois check-ins se perde', async () => {
+    const e = env();
+    const g = await criar(e, ANA);
+    await entrar(e, BIA, g.code);
+    // Troca o KV por um que cede o controle no meio da gravação.
+    e.DIGIAPP_SAVES = kvComAtraso(Object.fromEntries(e.DIGIAPP_SAVES.store));
+
+    await Promise.all([checkin(e, ANA), checkin(e, BIA)]);
+
+    const vista = await ver(e, ANA);
+    expect(vista.progress).toBe(2);                       // 1 + 1, nenhum perdido
+    expect(vista.members.every(m => m.apareceuHoje)).toBe(true);
+  });
+});
+
+/**
+ * TTL — as três chaves do grupo têm de envelhecer juntas.
+ *
+ * `coop:<gid>` era reescrita a cada movimento e portanto renovava o TTL, mas
+ * `coopOf:<save>` e `coopCode:<code>` eram gravadas UMA vez, na entrada. Um
+ * grupo ativo, passados 120 dias, perdia os dois índices com o blob ainda vivo:
+ * todo mundo passava a ver "você não está em nenhum grupo" e o código de
+ * convite parava de abrir — sem erro nenhum que explicasse.
+ */
+describe('coop — duas pessoas entrando na ÚLTIMA vaga ao mesmo tempo', () => {
+  function kvComAtraso(seed) {
+    const base = fakeKV(seed);
+    return {
+      ...base, store: base.store,
+      put: async (k, v) => { await Promise.resolve(); base.store.set(k, v); },
+    };
+  }
+
+  it('ninguém recebe um "você entrou" que era mentira', async () => {
+    // Grupo com 3 de 4. CAU e DAN disparam a entrada ao mesmo tempo.
+    const e = env();
+    const g = await criar(e, ANA);
+    await entrar(e, BIA, g.code);
+    await entrar(e, ELI, g.code);
+    e.DIGIAPP_SAVES = kvComAtraso(Object.fromEntries(e.DIGIAPP_SAVES.store));
+
+    const [r1, r2] = await Promise.all([entrar(e, CAU, g.code), entrar(e, DAN, g.code)]);
+
+    // A verdade do servidor: quem está na lista, e só isso.
+    const gid = await e.DIGIAPP_SAVES.get(`coop:${g.id}`);
+    const membros = JSON.parse(gid).members;
+    expect(membros.length).toBeLessThanOrEqual(4);          // o teto nunca estoura
+
+    // E toda resposta 200 corresponde a alguém que ESTÁ na lista. Antes da
+    // confirmação, o perdedor da corrida recebia 200 e sumia do grupo na
+    // abertura seguinte.
+    for (const [quem, r] of [[CAU, r1], [DAN, r2]]) {
+      if (r.status === 200) expect(membros).toContain(quem);
+      else expect(r.status).toBe(409);
+    }
+    // E quem levou 409 não fica com um ponteiro órfão apontando para o grupo.
+    for (const [quem, r] of [[CAU, r1], [DAN, r2]]) {
+      if (r.status !== 200) expect(await e.DIGIAPP_SAVES.get(`coopOf:${quem}`)).toBeNull();
+    }
+  });
+});
+
+describe('coop — o grupo ativo não expira por partes', () => {
+  function kvComTtl(seed) {
+    const base = fakeKV(seed);
+    const ttls = new Map();
+    return {
+      ...base, store: base.store, ttls,
+      put: async (k, v, opts) => { base.store.set(k, v); ttls.set(k, opts?.expirationTtl ?? null); },
+      delete: async k => { base.store.delete(k); ttls.delete(k); },
+    };
+  }
+
+  it('marcar presença renova o ponteiro do membro E o código de convite', async () => {
+    const e = env();
+    e.DIGIAPP_SAVES = kvComTtl(Object.fromEntries(e.DIGIAPP_SAVES.store));
+    const g = await criar(e, ANA);
+    await entrar(e, BIA, g.code);
+    const kv = e.DIGIAPP_SAVES;
+    const gid = await kv.get(`coopOf:${ANA}`);
+
+    // Apaga o TTL registrado para provar que a próxima escrita o repõe.
+    kv.ttls.set(`coopOf:${ANA}`, null);
+    kv.ttls.set(`coopCode:${g.code}`, null);
+    await checkin(e, BIA);
+
+    expect(kv.ttls.get(`coop:${gid}`)).toBeGreaterThan(0);
+    expect(kv.ttls.get(`coopOf:${ANA}`)).toBeGreaterThan(0);   // o do OUTRO membro também
+    expect(kv.ttls.get(`coopCode:${g.code}`)).toBeGreaterThan(0);
+    // E as três envelhecem no MESMO prazo — não adianta renovar com prazo menor.
+    expect(kv.ttls.get(`coopOf:${ANA}`)).toBe(kv.ttls.get(`coop:${gid}`));
+    expect(kv.ttls.get(`coopCode:${g.code}`)).toBe(kv.ttls.get(`coop:${gid}`));
   });
 });
 

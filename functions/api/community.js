@@ -338,6 +338,23 @@ function semanaDe(d = new Date()) {
 const coopKey = gid => `coop:${gid}`;
 const coopOfKey = save => `coopOf:${save}`;
 const coopCodeKey = code => `coopCode:${code}`;
+/**
+ * Os check-ins de UM membro, numa chave só dele.
+ *
+ * ⚠️ ELES NÃO MORAM MAIS DENTRO DO BLOB DO GRUPO, e o motivo é uma corrida
+ * real. O KV da Cloudflare não tem transação nem compare-and-set: `coopCheckin`
+ * fazia ler-modificar-gravar sobre o objeto do grupo INTEIRO, então dois
+ * membros marcando presença na mesma noite (o caso normal de um grupo de 4,
+ * não um caso exótico) liam a mesma versão e a segunda gravação apagava a
+ * primeira. O check-in sumia **em silêncio**: ninguém via erro, e o progresso
+ * do grupo — que é a única coisa que o modo inteiro entrega — ficava menor que
+ * a verdade.
+ *
+ * Com uma chave por membro, cada pessoa só escreve sobre si mesma e a corrida
+ * deixa de existir: não há mais campo compartilhado no caminho quente. O blob
+ * do grupo passa a mudar só em criar/entrar/sair, que são eventos raros.
+ */
+const coopCkKey = (gid, save) => `coopCk:${gid}:${save}`;
 
 function novoCodigo() {
   // Sem 0/O/1/I: o código é lido em voz alta e digitado à mão.
@@ -352,8 +369,64 @@ async function lerGrupo(env, groupId) {
   return raw ? JSON.parse(raw) : null;
 }
 
+/**
+ * Grava o grupo E RENOVA OS DOIS ÍNDICES que apontam para ele.
+ *
+ * ⚠️ Renovar os índices junto não é zelo, é correção. As três chaves nascem com
+ * o mesmo `COOP_TTL`, mas só `coop:<gid>` era reescrita a cada movimento — e
+ * `coopOf:<save>` e `coopCode:<code>` eram escritas UMA vez, na entrada. Um
+ * grupo vivo e ativo, passados 120 dias, perdia os dois índices enquanto o
+ * blob seguia lá: cada membro passava a ver "você não está em nenhum grupo"
+ * (`grupoDe` não acha o ponteiro, e ainda apaga o que sobrou), e o código de
+ * convite deixava de abrir o grupo. Nada disso dá erro — o modo simplesmente
+ * evapora para todo mundo ao mesmo tempo, sem nenhum evento que explique.
+ */
 async function gravarGrupo(env, g) {
   await kv(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+  await Promise.all([
+    kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
+    ...g.members.map(m => kv(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL })),
+  ]);
+}
+
+/**
+ * Os check-ins de um membro na semana corrente. Chave própria (ver `coopCkKey`),
+ * com a semana DENTRO do registro: assim a virada de semana é lida, e não
+ * escrita — quem abrir primeiro na semana nova simplesmente enxerga uma lista
+ * vazia, sem job agendado e sem gravação de limpeza.
+ */
+/**
+ * Renova o prazo das três chaves do grupo, sem mudar nada.
+ *
+ * A RELEITURA IMEDIATAMENTE ANTES DA GRAVAÇÃO é o ponto: gravar de volta a
+ * cópia que o handler leu no começo da requisição desfaria uma entrada que
+ * tivesse acontecido no meio dela. Reler encolhe essa janela para o intervalo
+ * entre o `get` e o `put` — não a fecha (o KV não tem compare-and-set), e é por
+ * isso que `coopJoin` confere a própria entrada depois de gravar.
+ *
+ * As duas chaves de índice não correm risco nenhum: o valor delas é constante
+ * (o id do grupo), então duas gravações concorrentes escrevem o mesmo byte.
+ */
+async function renovarPrazos(env, gid) {
+  const fresco = await lerGrupo(env, gid);
+  if (fresco) await gravarGrupo(env, fresco);
+}
+
+async function lerCheckins(env, gid, save) {
+  const raw = await kv(env).get(coopCkKey(gid, save));
+  if (!raw) return [];
+  try {
+    const r = JSON.parse(raw);
+    return r && r.weekKey === semanaDe() && Array.isArray(r.days) ? r.days : [];
+  } catch { return []; }
+}
+
+async function gravarCheckins(env, gid, save, days) {
+  await kv(env).put(
+    coopCkKey(gid, save),
+    JSON.stringify({ weekKey: semanaDe(), days }),
+    { expirationTtl: COOP_TTL },
+  );
 }
 
 /**
@@ -362,6 +435,9 @@ async function gravarGrupo(env, g) {
  */
 function rolarSemana(g) {
   const agora = semanaDe();
+  // `g.checkins` é resíduo de grupo criado antes de os check-ins ganharem chave
+  // própria. Ele é lido como fallback em `vistaDoGrupo` e some na virada da
+  // semana, como sempre somiu — nenhum caminho novo volta a escrever nele.
   if (g.weekKey !== agora) { g.weekKey = agora; g.checkins = {}; }
   return g;
 }
@@ -383,21 +459,27 @@ async function grupoDe(env, saveId) {
  */
 async function vistaDoGrupo(env, g, euSave) {
   const hoje = today();
-  const membros = await Promise.all(g.members.map(async m => {
+  // Os dias de cada membro vêm da chave dele (ver `coopCkKey`); `g.checkins` é
+  // só o fallback dos grupos criados antes da mudança.
+  const dias = await Promise.all(g.members.map(async m => {
+    const proprios = await lerCheckins(env, g.id, m);
+    return proprios.length > 0 ? proprios : (g.checkins?.[m] || []);
+  }));
+  const membros = await Promise.all(g.members.map(async (m, i) => {
     const perfil = await getProfile(env, m);
     return {
       id: perfil ? await ensurePid(env, perfil) : null,
       name: perfil?.name ?? null,
       stage: perfil?.stage ?? null,
       // Binário, de propósito: presença não ordena ninguém contra ninguém.
-      apareceuHoje: (g.checkins?.[m] || []).includes(hoje),
+      apareceuHoje: dias[i].includes(hoje),
       euMesmo: m === euSave,
     };
   }));
   // A meta é DERIVADA do tamanho do grupo, nunca gravada — assim sair encolhe a
   // meta junto, e sair deixa de ser sabotagem (`PLANO-COOP.md` §3.4).
   const target = g.members.length * COOP_CHECKINS_POR_MEMBRO;
-  const feitos = g.members.reduce((n, m) => n + (g.checkins?.[m] || []).length, 0);
+  const feitos = dias.reduce((n, d) => n + d.length, 0);
   return {
     id: g.id, name: g.name, weekKey: g.weekKey,
     // O código só é útil para quem já está dentro — e é assim que se convida.
@@ -834,13 +916,26 @@ async function handleCommunity({ request, env }) {
     // footgun 9 em miniatura. Se um dia isto pedir filtro, pede nos DOIS lugares.
     const nome = String(body.name ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
     if (!nome) return json({ error: 'invalid name' }, 400);
+    // Código já em uso é resorteado. São 8 caracteres de um alfabeto de 32
+    // (~40 bits), então a colisão é remota — mas a consequência não é: o
+    // `put` cego roubaria o código do grupo anterior, que ficaria inalcançável
+    // por convite, e a saída do último membro do grupo NOVO apagaria a chave do
+    // VELHO junto. Três tentativas bastam: se as três colidirem, o problema não
+    // é sorte.
+    let codigo = null;
+    for (let i = 0; i < 3 && !codigo; i++) {
+      const tentativa = novoCodigo();
+      if (!(await kv(env).get(coopCodeKey(tentativa)))) codigo = tentativa;
+    }
+    if (!codigo) return json({ error: 'try again' }, 503);
     const g = {
-      id: newPid(), name: nome, code: novoCodigo(), createdAt: Date.now(),
+      id: newPid(), name: nome, code: codigo, createdAt: Date.now(),
       members: [id], weekKey: semanaDe(), checkins: {},
     };
+    // `gravarGrupo` já grava o blob, o índice do código e o ponteiro de cada
+    // membro — com o MESMO prazo. Não repita as escritas aqui: foi separá-las
+    // que fez os índices envelhecerem sozinhos.
     await gravarGrupo(env, g);
-    await kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL });
-    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
     return json({ group: await vistaDoGrupo(env, g, id) });
   }
 
@@ -860,8 +955,38 @@ async function handleCommunity({ request, env }) {
     if (g.members.length >= COOP_MAX_MEMBERS) return json({ error: 'group full' }, 409);
     g.members.push(id);
     await gravarGrupo(env, g);
-    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
-    return json({ group: await vistaDoGrupo(env, g, id) });
+
+    // ── DUAS PESSOAS ENTRANDO AO MESMO TEMPO NA ÚLTIMA VAGA ──────────────────
+    //
+    // O KV não tem transação: as duas leem a mesma lista, as duas se acrescentam
+    // e a última gravação vence. O teto NUNCA é estourado (as duas partiram de
+    // uma lista que cabia), mas quem perde a corrida recebia `200` com a vista
+    // do grupo — ou seja, "você entrou" — e o `coopOf` gravado. Na abertura
+    // seguinte, `grupoDe` não encontrava a pessoa em `members`, limpava o
+    // ponteiro e devolvia `null`: o grupo simplesmente sumia, sem nenhum evento
+    // que explicasse.
+    //
+    // A confirmação abaixo relê e, se a entrada tiver se perdido, tenta UMA vez
+    // mais. Duas tentativas e não um laço: um laço sobre uma escrita sem CAS é
+    // só uma corrida mais longa, e o caso de dois entrando no mesmo milissegundo
+    // não se repete na segunda passada. Perdendo as duas, a resposta é um erro
+    // HONESTO (`409 join collision`) em vez de um sucesso falso — o app pede
+    // para tentar de novo, que é a única coisa verdadeira a dizer aqui.
+    let confirmado = await lerGrupo(env, g.id);
+    if (confirmado && !confirmado.members.includes(id)) {
+      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
+        await kv(env).delete(coopOfKey(id));
+        return json({ error: 'group full' }, 409);
+      }
+      confirmado.members.push(id);
+      await gravarGrupo(env, confirmado);
+      confirmado = await lerGrupo(env, g.id);
+    }
+    if (!confirmado || !confirmado.members.includes(id)) {
+      await kv(env).delete(coopOfKey(id));
+      return json({ error: 'join collision' }, 409);
+    }
+    return json({ group: await vistaDoGrupo(env, confirmado, id) });
   }
 
   if (action === 'coopCheckin' && method === 'POST') {
@@ -869,13 +994,21 @@ async function handleCommunity({ request, env }) {
     if (denied) return denied;
     const g = await grupoDe(env, id);
     if (!g) return json({ error: 'no group' }, 404);
-    g.checkins = g.checkins || {};
-    const meus = g.checkins[id] || [];
+    // A ESCRITA É SÓ NA CHAVE DESTE MEMBRO. O blob do grupo não é tocado aqui,
+    // e é isso que mata a corrida: dois membros marcando presença na mesma noite
+    // escrevem em chaves diferentes, e nenhuma das duas gravações apaga a outra.
+    const proprios = await lerCheckins(env, g.id, id);
+    const meus = proprios.length > 0 ? proprios : (g.checkins?.[id] || []);
     // Idempotente: é a única garantia que o servidor consegue dar sozinho sobre
     // um fato que ele não observa (ver o comentário do bloco).
     if (!meus.includes(today())) {
-      g.checkins[id] = [...meus, today()];
-      await gravarGrupo(env, g);
+      await gravarCheckins(env, g.id, id, [...meus, today()]);
+      // E renova o prazo das três chaves do grupo. Marcar presença é o único
+      // evento DIÁRIO do modo: sem esta linha, um grupo cujos membros só fazem
+      // check-in (ou seja, um grupo que está funcionando) expiraria em 120 dias
+      // com todo mundo ativo. A releitura antes de gravar é de propósito — ver
+      // `renovarPrazos`.
+      await renovarPrazos(env, g.id);
     }
     return json({ group: await vistaDoGrupo(env, g, id) });
   }
@@ -891,6 +1024,9 @@ async function handleCommunity({ request, env }) {
     g.members = g.members.filter(m => m !== id);
     if (g.checkins) delete g.checkins[id];
     await kv(env).delete(coopOfKey(id));
+    // O progresso de quem saiu some junto — a meta encolhe com o grupo, então o
+    // que ele fez não pode continuar contando (`PLANO-COOP.md` §3.4).
+    await kv(env).delete(coopCkKey(g.id, id));
     if (g.members.length === 0) {
       // Grupo vazio some na hora — sem lápide, sem "seu grupo morreu".
       await kv(env).delete(coopKey(g.id));
