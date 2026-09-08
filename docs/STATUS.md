@@ -122,7 +122,25 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > **`docs/REGISTRO-DE-DECISOES.md`** (08/09/2026) consolida toda a pesquisa —
 > benchmark, literatura, transcrições, Mobbin — e cada decisão tomada a partir
 > dela, com a alternativa que perdeu e o gatilho para rever. É o lugar para
-> conferir se uma escolha ainda faz sentido antes de rediscuti-la.
+> conferir se uma escolha ainda faz sentido antes de rediscuti-la. A **§7** traz
+> as 12 apostas falseáveis, com limiar e instrumento, para o dia em que houver
+> telemetria; a **§12** traz o que a revisão adversarial confirmou e derrubou.
+>
+> ### ⬜ O que sobrou aberto e é do dono (08/09/2026, fim da revisão)
+>
+> Nenhum destes é bug a consertar — os quatro são decisão:
+>
+> 1. **Os nove emojis que renderizam caixa vazia** (▯) em aparelho com fonte
+>    anterior ao Emoji 12.0 — atingem o marco de 21 dias, 5 mobílias, 3 cenas da
+>    aventura e 4 sonhos. O guard `emojiSuportado.contract.test.ts` congela a
+>    dívida e lista a troca proposta; **escolher o glifo é seu**.
+> 2. **A hipótese do `signInWithRedirect`** — a única saída para popup bloqueado
+>    pode estar barrada pela mesma proteção de armazenamento de terceiros
+>    (`authDomain` ≠ domínio do app). Precisa de conta Google real e popup
+>    barrado para confirmar. **É a mais grave**: o portão é a primeira tela.
+> 3. **A folga semanal não cobre o dreno de cocô** — ou passa a cobrir, ou fica
+>    escrito que cocô é a única cobrança que sobrevive ao descanso.
+> 4. **O preço aparece em R$ para quem usa o app em inglês.**
 
 > ## 🔎 08/09/2026 — sessão de QA e revisão do app inteiro
 >
