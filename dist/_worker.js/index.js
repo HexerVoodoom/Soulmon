@@ -1652,6 +1652,83 @@ async function onRequest2(context) {
   return res;
 }
 __name(onRequest2, "onRequest");
+var COOP_MAX_MEMBERS = 4;
+var COOP_CHECKINS_POR_MEMBRO = 5;
+var COOP_TTL = 86400 * 120;
+function semanaDe(d = /* @__PURE__ */ new Date()) {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const inicio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const n = Math.ceil(((t - inicio) / 864e5 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(n).padStart(2, "0")}`;
+}
+__name(semanaDe, "semanaDe");
+var coopKey = /* @__PURE__ */ __name((gid) => `coop:${gid}`, "coopKey");
+var coopOfKey = /* @__PURE__ */ __name((save) => `coopOf:${save}`, "coopOfKey");
+var coopCodeKey = /* @__PURE__ */ __name((code) => `coopCode:${code}`, "coopCodeKey");
+function novoCodigo() {
+  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x) => alfabeto[x % alfabeto.length]).join("");
+}
+__name(novoCodigo, "novoCodigo");
+async function lerGrupo(env, groupId) {
+  if (!VALID_ID2.test(groupId || "")) return null;
+  const raw = await kv(env).get(coopKey(groupId));
+  return raw ? JSON.parse(raw) : null;
+}
+__name(lerGrupo, "lerGrupo");
+async function gravarGrupo(env, g) {
+  await kv(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+}
+__name(gravarGrupo, "gravarGrupo");
+function rolarSemana(g) {
+  const agora = semanaDe();
+  if (g.weekKey !== agora) {
+    g.weekKey = agora;
+    g.checkins = {};
+  }
+  return g;
+}
+__name(rolarSemana, "rolarSemana");
+async function grupoDe(env, saveId) {
+  const groupId = await kv(env).get(coopOfKey(saveId));
+  if (!groupId) return null;
+  const g = await lerGrupo(env, groupId);
+  if (!g || !g.members.includes(saveId)) {
+    await kv(env).delete(coopOfKey(saveId));
+    return null;
+  }
+  return rolarSemana(g);
+}
+__name(grupoDe, "grupoDe");
+async function vistaDoGrupo(env, g, euSave) {
+  const hoje = today2();
+  const membros = await Promise.all(g.members.map(async (m) => {
+    const perfil = await getProfile(env, m);
+    return {
+      id: perfil ? await ensurePid(env, perfil) : null,
+      name: perfil?.name ?? null,
+      stage: perfil?.stage ?? null,
+      // Binário, de propósito: presença não ordena ninguém contra ninguém.
+      apareceuHoje: (g.checkins?.[m] || []).includes(hoje),
+      euMesmo: m === euSave
+    };
+  }));
+  const target = g.members.length * COOP_CHECKINS_POR_MEMBRO;
+  const feitos = g.members.reduce((n, m) => n + (g.checkins?.[m] || []).length, 0);
+  return {
+    id: g.id,
+    name: g.name,
+    weekKey: g.weekKey,
+    // O código só é útil para quem já está dentro — e é assim que se convida.
+    code: g.code,
+    members: membros,
+    progress: Math.min(feitos, target),
+    target,
+    full: g.members.length >= COOP_MAX_MEMBERS
+  };
+}
+__name(vistaDoGrupo, "vistaDoGrupo");
 async function handleCommunity({ request, env }) {
   if (!kv(env)) return json3({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
@@ -1932,6 +2009,77 @@ async function handleCommunity({ request, env }) {
       await kv(env).delete(`gifts:${id}`);
     }
     return json3({ gifts });
+  }
+  if (action === "coop" && method === "GET") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const g = await grupoDe(env, id);
+    return json3({ group: g ? await vistaDoGrupo(env, g, id) : null });
+  }
+  if (action === "coopCreate" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (await grupoDe(env, id)) return json3({ error: "already in a group" }, 409);
+    const nome = String(body.name ?? "").replace(/\s+/g, " ").trim().slice(0, 24);
+    if (!nome) return json3({ error: "invalid name" }, 400);
+    const g = {
+      id: newPid(),
+      name: nome,
+      code: novoCodigo(),
+      createdAt: Date.now(),
+      members: [id],
+      weekKey: semanaDe(),
+      checkins: {}
+    };
+    await gravarGrupo(env, g);
+    await kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL });
+    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
+    return json3({ group: await vistaDoGrupo(env, g, id) });
+  }
+  if (action === "coopJoin" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (await grupoDe(env, id)) return json3({ error: "already in a group" }, 409);
+    const code = String(body.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const groupId = code ? await kv(env).get(coopCodeKey(code)) : null;
+    const g = groupId ? await lerGrupo(env, groupId) : null;
+    if (!g) return json3({ error: "invalid code" }, 404);
+    rolarSemana(g);
+    if (g.members.includes(id)) return json3({ group: await vistaDoGrupo(env, g, id) });
+    if (g.members.length >= COOP_MAX_MEMBERS) return json3({ error: "group full" }, 409);
+    g.members.push(id);
+    await gravarGrupo(env, g);
+    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
+    return json3({ group: await vistaDoGrupo(env, g, id) });
+  }
+  if (action === "coopCheckin" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const g = await grupoDe(env, id);
+    if (!g) return json3({ error: "no group" }, 404);
+    g.checkins = g.checkins || {};
+    const meus = g.checkins[id] || [];
+    if (!meus.includes(today2())) {
+      g.checkins[id] = [...meus, today2()];
+      await gravarGrupo(env, g);
+    }
+    return json3({ group: await vistaDoGrupo(env, g, id) });
+  }
+  if (action === "coopLeave" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const g = await grupoDe(env, id);
+    if (!g) return json3({ ok: true });
+    g.members = g.members.filter((m) => m !== id);
+    if (g.checkins) delete g.checkins[id];
+    await kv(env).delete(coopOfKey(id));
+    if (g.members.length === 0) {
+      await kv(env).delete(coopKey(g.id));
+      await kv(env).delete(coopCodeKey(g.code));
+    } else {
+      await gravarGrupo(env, g);
+    }
+    return json3({ ok: true });
   }
   return json3({ error: "unknown action" }, 400);
 }
@@ -3152,7 +3300,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-3UsVqJ/functionsRoutes-0.1626908136869858.mjs
+// ../.wrangler/tmp/pages-GsFw88/functionsRoutes-0.002571331136321575.mjs
 var routes = [
   {
     routePath: "/api/account",

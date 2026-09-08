@@ -20,6 +20,7 @@ import { isSafeSpriteSrc } from '../utils/spriteLibrary';
 import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
+import { CoopPanel } from './CoopPanel';
 import { Icon } from './ui/Icon';
 import { Field, sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import type { Language } from '../utils/i18n';
@@ -33,6 +34,10 @@ interface LibraryPageProps {
   /** WP4.7 — abriu a criatura de alguém. A missão é sobre VISITAR, então o
    *  gatilho é a abertura do detalhe, não a amizade nem o presente. */
   onVisitPlayer?: () => void;
+  /** Fase 4.3 — passa direto ao `CoopPanel`: é o que autoriza o check-in do
+   *  dia. Fica aqui, e não dentro do painel, porque a meta do dia é do motor
+   *  (`useProgressTracking`) e o painel não pode ter uma segunda cópia dela. */
+  metaDoDiaCumprida?: boolean;
   language: Language;
 }
 
@@ -109,7 +114,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, language }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, language }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -119,7 +124,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
    *  em cima de um app de bichinho, e sem par PT/EN garantido. */
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'directory' | 'friends'>('directory');
+  const [tab, setTab] = useState<'directory' | 'friends' | 'coop'>('directory');
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -206,13 +211,17 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
   const searchLower = search.toLowerCase();
   const npcMatches: LibraryEntry[] = LIBRARY_NPCS.filter(p => !searchLower || p.name.toLowerCase().includes(searchLower) || p.petName.toLowerCase().includes(searchLower));
   const directoryList: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...npcMatches];
-  const list = tab === 'friends' ? friendPlayers : directoryList;
+  // A aba do grupo não é uma lista de jogadores — tem fonte, estados e vazio
+  // próprios. Por isso ela não entra em `list`: entrar faria o esqueleto e o
+  // "nenhum jogador com esse nome" do diretório aparecerem por cima dela.
+  const list = tab === 'coop' ? [] : tab === 'friends' ? friendPlayers : directoryList;
   /** Carregando e por ABA: cada uma tem a sua fonte e o seu `null`. */
   const carregando = list === null;
 
   const TABS = [
     { key: 'directory' as const, icon: 'person', label: isPt ? 'Todos' : 'All' },
     { key: 'friends' as const, icon: 'volunteer_activism', label: isPt ? `Amigos ${friends.length}/${MAX_FRIENDS}` : `Friends ${friends.length}/${MAX_FRIENDS}` },
+    { key: 'coop' as const, icon: 'flag', label: isPt ? 'Grupo' : 'Group' },
   ];
 
   return (
@@ -235,6 +244,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         </p>
       </div>
 
+      {tab !== 'coop' && (
       <div style={{ position: 'relative' }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none' }}>
           <Icon name="search" size={20} tone="muted" />
@@ -247,6 +257,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
           style={{ paddingLeft: 40 }}
         />
       </div>
+      )}
 
       {/* As duas abas: a selecionada é a ÚNICA preenchida. */}
       <div role="tablist" aria-label={isPt ? 'Filtro de jogadores' : 'Player filter'} style={{ display: 'flex', gap: 8 }}>
@@ -268,12 +279,17 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         })}
       </div>
 
-      {actionError && (
+      {/* ── Grupo (Fase 4.3) ── */}
+      {tab === 'coop' && (
+        <CoopPanel saveId={saveId} language={language} metaDoDiaCumprida={metaDoDiaCumprida} />
+      )}
+
+      {actionError && tab !== 'coop' && (
         <p role="alert" style={{ ...sm2Text, color: 'var(--sm2-danger-ink)' }}>{actionError}</p>
       )}
 
       {/* ── Carregando ── */}
-      {carregando && (
+      {carregando && tab !== 'coop' && (
         <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 8, padding: '24px 0', justifyContent: 'center' }}>
           <Icon name="sync" size={24} tone="primary" className="animate-spin" />
           {isPt ? 'Procurando jogadores…' : 'Looking for players…'}
@@ -299,7 +315,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       )}
 
       {/* ── Vazio ── */}
-      {list && list.length === 0 && !(loadError && tab === 'directory') && (
+      {list && list.length === 0 && tab !== 'coop' && !(loadError && tab === 'directory') && (
         <p style={{ ...sm2Hint, textAlign: 'center', padding: '24px 0' }}>
           {tab === 'friends'
             ? (isPt ? 'Você ainda não tem amigos. Toque em alguém na aba Todos.' : 'You have no friends yet. Tap someone in the All tab.')

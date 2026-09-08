@@ -183,7 +183,10 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
         <Perk icon="auto_awesome"
           title={isPt ? 'Sua criatura, só sua' : 'Your creature, yours alone'}
           desc={isPt ? 'O ritual do oráculo gera um Soulmon a partir de quem você é' : 'The oracle ritual generates a Soulmon from who you are'} />
-        <Perk icon="account_tree"
+        {/* `park` (uma árvore) e não `account_tree`: a fonte é subsetada por
+            `icon_names` e este nome NÃO está no inventário — o ícone saía
+            vazio. Ver `src/styles/iconInventory.contract.test.ts`. */}
+        <Perk icon="park"
           title={isPt ? 'A árvore inteira' : 'The whole tree'}
           desc={isPt ? 'Cada galho leva a uma forma diferente, decidida por como você cuida' : 'Each branch leads to a different form, decided by how you care'} />
         {/* C-S1: o terceiro perk era "Reroll liberado (custa Créditos)" —

@@ -74,6 +74,13 @@ const ACOES_COM_ATOR = [
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'trophies', method: 'GET', params: { id: VITIMA, claim: '1' } },
   { action: 'gifts', method: 'GET', params: { id: VITIMA, claim: '1' } },
+  // Cooperativo (Fase 4.3). `coopLeave` entra aqui por ser DESTRUTIVO — sem
+  // autorização, uma requisição expulsaria qualquer pessoa do grupo dela.
+  { action: 'coop', method: 'GET', params: { id: VITIMA } },
+  { action: 'coopCreate', method: 'POST', body: { id: VITIMA, name: 'grupo' } },
+  { action: 'coopJoin', method: 'POST', body: { id: VITIMA, code: 'ABCDEFGH' } },
+  { action: 'coopCheckin', method: 'POST', body: { id: VITIMA } },
+  { action: 'coopLeave', method: 'POST', body: { id: VITIMA } },
 ];
 
 describe('community — nenhuma ação age em nome de outro sem autorização', () => {

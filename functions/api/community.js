@@ -24,6 +24,12 @@
 //   POST friends   {id, friendId, remove?} → até 5 amigos
 //   POST gift      {id, friendId}      → 20 bits (1x/dia por amigo; grátis)
 //   GET  gifts     ?id=&claim=1        → lê (e zera) presentes pendentes
+// COOPERATIVO (Fase 4.3 — `docs/PLANO-COOP.md`):
+//   POST coopCreate  {id, name}        → cria o grupo e devolve o código de convite
+//   POST coopJoin    {id, code}        → entra num grupo com vaga
+//   GET  coop        ?id=              → o grupo de quem pergunta (ou null)
+//   POST coopCheckin {id}              → "apareci hoje" (idempotente no dia)
+//   POST coopLeave   {id}              → sai, sem penalidade e sem confirmação
 
 import { authorizeSaveAccess } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -285,6 +291,121 @@ export async function onRequest(context) {
     return copy;
   }
   return res;
+}
+
+// ── Cooperativo (Fase 4.3) ────────────────────────────────────────
+//
+// A restrição que manda neste bloco não é técnica, é a do `docs/PLANO-COOP.md`
+// §1: o item 4.2 do `PLANO-EVOLUCAO.md` registra que **31,3% relataram efeito
+// psicológico negativo de comparação** em ambiente de leaderboard, e um grupo
+// que mostrasse quanto cada membro contribuiu reinventaria o leaderboard entre
+// amigos — onde a comparação dói MAIS, porque o outro não é um estranho.
+//
+// Por isso o que sai daqui é: o progresso do GRUPO (um número só) e, por
+// membro, um booleano "apareceu hoje". **Nunca** o quanto cada um fez. Isso é
+// invariante de SERVIDOR, e não de tela: `vistaDoGrupo` é o único lugar que
+// monta a resposta, então nenhuma rota futura reintroduz a contagem individual
+// por descuido — a mesma técnica que `publicProfile` usa para `tasksDone`.
+//
+// ⚠️ **Fronteira de confiança, declarada:** o check-in é uma AFIRMAÇÃO do
+// cliente ("cumpri a minha meta hoje"), não uma verificação do servidor. É
+// deliberado: recalcular a meta do dia aqui exigiria uma segunda cópia de
+// `dailyGoalFor` no servidor, que é exatamente o footgun 9 (regra copiada
+// diverge em silêncio) — e o save inteiro já é escrito pelo cliente, então a
+// cópia não compraria confiança nenhuma, só divergência. O que o servidor
+// garante é o que ele PODE garantir sozinho: **um check-in por pessoa por
+// dia**, e só sobre si mesma. E nada de economia depende disso — bater a meta
+// do grupo não paga Bits nem item (§5.2 do plano é decisão do dono, em
+// aberto), então não há o que farmar.
+
+const COOP_MAX_MEMBERS = 4;
+/** Check-ins por membro por semana. 5 e não 7: exigir dia perfeito por pressão
+ *  social desfaz o perdão de ausência da Fase 1 (`PLANO-EVOLUCAO.md` §1.2). */
+const COOP_CHECKINS_POR_MEMBRO = 5;
+const COOP_TTL = 86400 * 120;
+
+/** Semana ISO (`YYYY-Www`) — a chave que faz o progresso rolar sozinho na
+ *  virada, sem job agendado. Mesmo padrão da season. */
+function semanaDe(d = new Date()) {
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  // A quinta-feira da mesma semana define o ano ISO.
+  t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+  const inicio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const n = Math.ceil(((t - inicio) / 86400000 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(n).padStart(2, '0')}`;
+}
+
+const coopKey = gid => `coop:${gid}`;
+const coopOfKey = save => `coopOf:${save}`;
+const coopCodeKey = code => `coopCode:${code}`;
+
+function novoCodigo() {
+  // Sem 0/O/1/I: o código é lido em voz alta e digitado à mão.
+  const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  return Array.from(crypto.getRandomValues(new Uint8Array(8)))
+    .map(x => alfabeto[x % alfabeto.length]).join('');
+}
+
+async function lerGrupo(env, groupId) {
+  if (!VALID_ID.test(groupId || '')) return null;
+  const raw = await kv(env).get(coopKey(groupId));
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function gravarGrupo(env, g) {
+  await kv(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+}
+
+/**
+ * Zera o progresso quando a semana virou. Leitura preguiçosa, sem cron: quem
+ * abrir primeiro na semana nova paga o custo, e ninguém precisa operar nada.
+ */
+function rolarSemana(g) {
+  const agora = semanaDe();
+  if (g.weekKey !== agora) { g.weekKey = agora; g.checkins = {}; }
+  return g;
+}
+
+/** O grupo de quem pergunta, já rolado para a semana corrente. `null` se não há. */
+async function grupoDe(env, saveId) {
+  const groupId = await kv(env).get(coopOfKey(saveId));
+  if (!groupId) return null;
+  const g = await lerGrupo(env, groupId);
+  // Índice apontando para grupo morto (ou do qual a pessoa já saiu) se limpa
+  // aqui: é o mesmo custo de uma leitura e evita fantasma permanente no KV.
+  if (!g || !g.members.includes(saveId)) { await kv(env).delete(coopOfKey(saveId)); return null; }
+  return rolarSemana(g);
+}
+
+/**
+ * A ÚNICA montagem de resposta do cooperativo. Ver o comentário do bloco: o
+ * que não passa por aqui não sai — nem saveId, nem contagem individual.
+ */
+async function vistaDoGrupo(env, g, euSave) {
+  const hoje = today();
+  const membros = await Promise.all(g.members.map(async m => {
+    const perfil = await getProfile(env, m);
+    return {
+      id: perfil ? await ensurePid(env, perfil) : null,
+      name: perfil?.name ?? null,
+      stage: perfil?.stage ?? null,
+      // Binário, de propósito: presença não ordena ninguém contra ninguém.
+      apareceuHoje: (g.checkins?.[m] || []).includes(hoje),
+      euMesmo: m === euSave,
+    };
+  }));
+  // A meta é DERIVADA do tamanho do grupo, nunca gravada — assim sair encolhe a
+  // meta junto, e sair deixa de ser sabotagem (`PLANO-COOP.md` §3.4).
+  const target = g.members.length * COOP_CHECKINS_POR_MEMBRO;
+  const feitos = g.members.reduce((n, m) => n + (g.checkins?.[m] || []).length, 0);
+  return {
+    id: g.id, name: g.name, weekKey: g.weekKey,
+    // O código só é útil para quem já está dentro — e é assim que se convida.
+    code: g.code,
+    members: membros,
+    progress: Math.min(feitos, target), target,
+    full: g.members.length >= COOP_MAX_MEMBERS,
+  };
 }
 
 async function handleCommunity({ request, env }) {
@@ -690,6 +811,94 @@ async function handleCommunity({ request, env }) {
       await kv(env).delete(`gifts:${id}`);
     }
     return json({ gifts });
+  }
+
+  // ── Cooperativo (Fase 4.3) ────────────────────────────────────
+  if (action === 'coop' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const g = await grupoDe(env, id);
+    return json({ group: g ? await vistaDoGrupo(env, g, id) : null });
+  }
+
+  if (action === 'coopCreate' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    // Um grupo por pessoa. Não é limitação técnica: três grupos são três
+    // cobranças, e a auditoria de carga diária (4.5) existe para o app não
+    // virar segundo emprego.
+    if (await grupoDe(env, id)) return json({ error: 'already in a group' }, 409);
+    // Nome é TEXTO DO JOGADOR lido por outras pessoas. Recebe o MESMO
+    // tratamento que o apelido do perfil já recebe neste arquivo (teto de 24) e
+    // nada além disso: duas regras diferentes para o mesmo tipo de campo é o
+    // footgun 9 em miniatura. Se um dia isto pedir filtro, pede nos DOIS lugares.
+    const nome = String(body.name ?? '').replace(/\s+/g, ' ').trim().slice(0, 24);
+    if (!nome) return json({ error: 'invalid name' }, 400);
+    const g = {
+      id: newPid(), name: nome, code: novoCodigo(), createdAt: Date.now(),
+      members: [id], weekKey: semanaDe(), checkins: {},
+    };
+    await gravarGrupo(env, g);
+    await kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL });
+    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
+    return json({ group: await vistaDoGrupo(env, g, id) });
+  }
+
+  if (action === 'coopJoin' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (await grupoDe(env, id)) return json({ error: 'already in a group' }, 409);
+    // Entra-se por CÓDIGO, nunca por busca no diretório: grupo achável é raide
+    // de estranho, e o diretório já respeita o consentimento (N-4 do STATUS).
+    // Uma porta nova não pode furar isso.
+    const code = String(body.code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const groupId = code ? await kv(env).get(coopCodeKey(code)) : null;
+    const g = groupId ? await lerGrupo(env, groupId) : null;
+    if (!g) return json({ error: 'invalid code' }, 404);
+    rolarSemana(g);
+    if (g.members.includes(id)) return json({ group: await vistaDoGrupo(env, g, id) });
+    if (g.members.length >= COOP_MAX_MEMBERS) return json({ error: 'group full' }, 409);
+    g.members.push(id);
+    await gravarGrupo(env, g);
+    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
+    return json({ group: await vistaDoGrupo(env, g, id) });
+  }
+
+  if (action === 'coopCheckin' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const g = await grupoDe(env, id);
+    if (!g) return json({ error: 'no group' }, 404);
+    g.checkins = g.checkins || {};
+    const meus = g.checkins[id] || [];
+    // Idempotente: é a única garantia que o servidor consegue dar sozinho sobre
+    // um fato que ele não observa (ver o comentário do bloco).
+    if (!meus.includes(today())) {
+      g.checkins[id] = [...meus, today()];
+      await gravarGrupo(env, g);
+    }
+    return json({ group: await vistaDoGrupo(env, g, id) });
+  }
+
+  if (action === 'coopLeave' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const g = await grupoDe(env, id);
+    // Sair é UM TOQUE, sem confirmação de ninguém e sem penalidade: nada de XP,
+    // item ou streak se perde. Sem isso o grupo pressiona para ficar, que é o
+    // oposto do que a Fase 4.3 pede.
+    if (!g) return json({ ok: true });
+    g.members = g.members.filter(m => m !== id);
+    if (g.checkins) delete g.checkins[id];
+    await kv(env).delete(coopOfKey(id));
+    if (g.members.length === 0) {
+      // Grupo vazio some na hora — sem lápide, sem "seu grupo morreu".
+      await kv(env).delete(coopKey(g.id));
+      await kv(env).delete(coopCodeKey(g.code));
+    } else {
+      await gravarGrupo(env, g);
+    }
+    return json({ ok: true });
   }
 
   return json({ error: 'unknown action' }, 400);

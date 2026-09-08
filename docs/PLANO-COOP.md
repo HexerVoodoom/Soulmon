@@ -1,6 +1,12 @@
 # Plano — modo cooperativo leve (Fase 4.3)
 
-> **Status:** proposta. Nada implementado ainda.
+> **Status: IMPLEMENTADO em 07/09/2026.** Servidor em `functions/api/community.js`
+> (ações `coop*`), cliente em `src/utils/community.ts`, tela em
+> `src/components/CoopPanel.tsx` (aba "Grupo" da Biblioteca).
+> Duas coisas mudaram em relação ao que esta página propunha, e estão marcadas
+> no texto: o **check-in é afirmação do cliente**, não verificação de servidor
+> (§4.6), e **bater a meta não paga nada** — a recompensa continua sendo sua
+> decisão (§5.2), e sem ela não há o que farmar.
 > É o **último item aberto** da `docs/PLANO-EVOLUCAO.md` que não depende de arte
 > (5.1) nem de decisão de balanceamento do dono (P1–P3, P5).
 
@@ -91,7 +97,10 @@ apareceu — isso é o cobrador da essência declarada, entregue por terceiro.
 - Grupo que fica sem membros é apagado na primeira leitura. Grupo sem check-in
   por 4 semanas idem — sem tombstone, sem "seu grupo morreu".
 
-## 4. Segurança e privacidade — o que precisa ser travado por teste
+## 4. Segurança e privacidade — travado por teste
+
+Tudo abaixo tem teste em `functions/api/community.coop.test.js` e
+`src/components/CoopPanel.render.test.tsx`.
 
 1. Nenhuma resposta de `coop` devolve `saveId` (o teste que já existe para
    `community` precisa cobrir as rotas novas).
@@ -103,13 +112,24 @@ apareceu — isso é o cobrador da essência declarada, entregue por terceiro.
    `_redact.js`.
 4. Escrever `progress` é sempre sobre **si mesmo**, autorizado por token. Um
    membro não escreve o progresso do outro nem lê o e-mail de ninguém.
-5. Rate limit: `coop` de leitura é LIGHT; criar/entrar é HEAVY (varre índice).
+5. Rate limit: as ações `coop*` leem uma ou duas chaves, então caem na classe
+   LIGHT já existente — nenhuma delas varre o KV, ao contrário de `players`.
+
+### 4.6 A fronteira de confiança, declarada
+
+O check-in é uma **afirmação do cliente** ("cumpri a minha meta hoje"), não uma
+verificação. Recalcular a meta do dia no servidor exigiria uma segunda cópia de
+`dailyGoalFor` lá — o footgun 9 — e não compraria confiança nenhuma, porque o
+save inteiro já é escrito pelo cliente. O que o servidor garante é o que ele
+consegue garantir sozinho: **um check-in por pessoa por dia, e só sobre si
+mesma**. Como nada de economia depende do resultado, não há o que farmar.
 
 ## 5. O que eu preciso de você (dono)
 
 1. **A meta é `5 × membros` check-ins por semana?** É o único número inventado
    aqui. As alternativas honestas são 4 (mais perdão) ou "metade dos dias".
-2. **Recompensa:** o grupo que bate a meta ganha o quê? Minha recomendação é
+2. **Recompensa (o modo está no ar SEM nenhuma):** o grupo que bate a meta ganha
+   hoje só a frase de comemoração. Ganha o quê, além disso? Minha recomendação é
    **Bits para os dois lados e nada exclusivo** — item exclusivo de grupo obriga
    quem joga sozinho a arranjar gente, e o app é para uma pessoa. Precisa da sua
    palavra porque mexe em economia.

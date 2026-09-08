@@ -5025,7 +5025,11 @@ export default function App() {
                         fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
                       }}
                     >
-                      <Icon name="balance" size={20} />
+                      {/* `eco` e não `balance`: a fonte é SUBSETADA por
+                          `icon_names` e um nome fora do inventário renderiza
+                          VAZIO, sem erro (`src/styles/tokens.md`). `balance`
+                          não está lá — este botão saiu sem ícone. */}
+                      <Icon name="eco" size={20} />
                       {language === 'pt-BR' ? 'Equilibrar minha semana' : 'Balance my week'}
                     </button>
                   )}
@@ -5601,6 +5605,7 @@ export default function App() {
                 onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
                 onGiftSent={() => {}}
                 onVisitPlayer={() => contarMissao('friend-visit')}
+                metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
                 language={language}
               />
             </Suspense>

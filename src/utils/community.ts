@@ -118,3 +118,58 @@ export const getGifts = (id: string, claim = false) =>
 
 export const getPendingTrophies = (id: string, claim = false) =>
   call<{ trophies: Array<{ season: string; place: 1 | 2 | 3 }> }>('trophies', { params: { id, ...(claim ? { claim: '1' } : {}) } });
+
+// ── Cooperativo (Fase 4.3 — `docs/PLANO-COOP.md`) ────────────────────────────
+//
+// O tipo abaixo é a razão do modo existir, escrita em TypeScript: um membro do
+// grupo tem `apareceuHoje: boolean` e **nada mais que se possa ordenar**. O
+// servidor também não manda quanto cada um fez (`vistaDoGrupo`, em
+// `functions/api/community.js`) — as duas travas são de propósito. O item 4.2
+// do `docs/PLANO-EVOLUCAO.md` registra que 31,3% relataram efeito psicológico
+// negativo de comparação em ambiente de leaderboard; um grupo que mostrasse a
+// contribuição individual reinventaria o leaderboard entre amigos, onde a
+// comparação dói mais, não menos.
+
+export interface CoopMember {
+  /** pid público, nunca o saveId. `null` quando a pessoa ainda não tem perfil. */
+  id: string | null;
+  name: string | null;
+  stage: string | null;
+  apareceuHoje: boolean;
+  euMesmo: boolean;
+}
+
+export interface CoopGroup {
+  id: string;
+  name: string;
+  weekKey: string;
+  /** O código de convite. Só quem já está dentro o recebe. */
+  code: string;
+  members: CoopMember[];
+  /** Progresso COLETIVO da semana, já limitado a `target`. */
+  progress: number;
+  /** Derivado do tamanho do grupo — por isso sair encolhe a meta junto. */
+  target: number;
+  full: boolean;
+}
+
+/** O grupo de quem pergunta, ou `null`. Não ter grupo NÃO é erro. */
+export const getCoop = (id: string) =>
+  call<{ group: CoopGroup | null }>('coop', { params: { id } }).then(r => r.group);
+
+export const createCoop = (id: string, name: string) =>
+  call<{ group: CoopGroup }>('coopCreate', { method: 'POST', body: { id, name } }).then(r => r.group);
+
+export const joinCoop = (id: string, code: string) =>
+  call<{ group: CoopGroup }>('coopJoin', { method: 'POST', body: { id, code } }).then(r => r.group);
+
+/**
+ * "Apareci hoje". Idempotente no servidor — chamar de novo no mesmo dia não
+ * conta duas vezes, então o cliente pode chamar sem guardar estado.
+ */
+export const coopCheckin = (id: string) =>
+  call<{ group: CoopGroup }>('coopCheckin', { method: 'POST', body: { id } }).then(r => r.group);
+
+/** Sair. Um toque, sem confirmação de ninguém e sem penalidade nenhuma. */
+export const leaveCoop = (id: string) =>
+  call<{ ok: true }>('coopLeave', { method: 'POST', body: { id } });
