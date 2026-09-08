@@ -149,8 +149,15 @@ export function QuickAddBar({ language, onCommit }: QuickAddBarProps) {
         onClick={() => setAjudaAberta(a => !a)}
         aria-expanded={ajudaAberta}
         style={{
-          ...sm2Hint, marginTop: 6, background: 'none', border: 'none',
-          padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+          ...sm2Hint, marginTop: 2, background: 'none', border: 'none',
+          // 44 px de altura de TOQUE (WCAG 2.2 AA 2.5.8 e a régua do resto do
+          // app). Com `padding: 0` este era o único alvo abaixo da linha na
+          // tela inicial: 20 px de altura, medido no aparelho de 375 px. O
+          // `marginTop` desceu de 6 para 2 e o `padding` vertical compensa, de
+          // modo que a POSIÇÃO do texto na tela não muda — só a área que
+          // recebe o dedo.
+          padding: '10px 8px 10px 0', minHeight: 44,
+          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
         }}
       >
         <Icon name={ajudaAberta ? 'expand_less' : 'expand_more'} size={20} tone="muted" />

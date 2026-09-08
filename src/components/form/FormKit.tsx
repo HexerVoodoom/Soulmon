@@ -211,7 +211,13 @@ export function CheckRow({
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        style={{ width: 20, height: 20, accentColor: 'var(--sm2-primary-fill)' }}
+        /* `flexShrink: 0` NÃO é zelo. O `label` é um flex row, e sem isto a
+           caixa é o item que cede quando o rótulo quebra em duas linhas:
+           medido no aparelho de 375 px, no portão de conta, a caixa dos Termos
+           renderiza 14,95 × 20 e a do 18+ renderiza 20 × 20 — duas caixas de
+           tamanhos diferentes, uma achatada, lado a lado, no controle que
+           carrega o aceite legal. Em tela de 320 px o esmagamento é maior. */
+        style={{ width: 20, height: 20, flexShrink: 0, accentColor: 'var(--sm2-primary-fill)' }}
       />
       <span style={sm2Text}>{children}</span>
     </label>
