@@ -21,7 +21,7 @@ import { renderWithCss } from '../test/renderEnv';
 import { QuickAddBar } from './QuickAddBar';
 
 function abrir(aceita = true, language: 'pt-BR' | 'en-US' = 'pt-BR') {
-  const onCommit = vi.fn(() => aceita);
+  const onCommit = vi.fn((_r: unknown) => aceita);
   renderWithCss(<QuickAddBar language={language} onCommit={onCommit} />);
   const campo = screen.getByLabelText(
     language === 'pt-BR'

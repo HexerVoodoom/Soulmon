@@ -32,6 +32,7 @@ import { getSpriteForStage } from './utils/sprites';
 import { ContentModals } from './components/ContentModals';
 import { NotificationManager } from './components/NotificationManager';
 import { DailyReportModal } from './components/DailyReportModal';
+import { adventureOfDay, collectAdventure } from './utils/adventure';
 import { WelcomePromptModal } from './components/WelcomePromptModal';
 import { IntroScreen } from './components/IntroScreen';
 import { ItemsWindow } from './components/ItemsWindow';
@@ -484,6 +485,7 @@ function PostponeNudgeSheet({
 
 const RestWindowCard = lazy(() => import('./components/RestWindowCard').then(m => ({ default: m.RestWindowCard })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
+const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
 
 /** Ritmo vazio ESTÁVEL para hábito sem histórico — um `emptyRhythm()` inline na
  *  prop cria objeto novo a cada render (mesmo motivo de `EMPTY_DECOR`). */
@@ -3421,6 +3423,53 @@ export default function App() {
     contarMissao('mood-checkins');
   }, [gameState.playerDayTz]);
 
+  /**
+   * A AVENTURA DA NOITE (`utils/adventure.ts`, `docs/PLANO-TAREFAS.md` §2.4).
+   *
+   * Derivada, nunca sorteada aqui: a seed é o `date` do próprio relatório, então
+   * reabrir a tela devolve sempre o mesmo achado. Se o sorteio morasse num
+   * `useState`, cada reabertura daria um achado novo — e a pessoa aprenderia a
+   * reabrir o relatório em vez de viver o dia.
+   *
+   * `done` e `required` vêm do relatório, que é quem já sabe o que o dia foi.
+   * Recalcular a meta aqui seria uma segunda cópia da regra (footgun 9).
+   */
+  const aventuraDaNoite = useMemo(() => {
+    const r = gameState.lastDayReport;
+    if (!r) return null;
+    return adventureOfDay(
+      (gameState.adventures ?? []).map(e => e.id),
+      r.done,
+      r.required,
+      r.date,
+    );
+  }, [gameState.lastDayReport, gameState.adventures]);
+
+  /** Inédito = ainda não está no diário. Só muda o rótulo na tela. */
+  const aventuraInedita = useMemo(
+    () => !!aventuraDaNoite && !(gameState.adventures ?? []).some(e => e.id === aventuraDaNoite.id),
+    [aventuraDaNoite, gameState.adventures],
+  );
+
+  /**
+   * Guarda no diário assim que o relatório aparece.
+   *
+   * Ao ABRIR e não ao fechar, ao contrário da memória de marco logo abaixo: a
+   * memória é um evento raro que seria desperdiçado se contasse sem ser vista, e
+   * o achado é o oposto — ele é o conteúdo da tela, e perdê-lo por fechar rápido
+   * seria tirar da pessoa a única coisa que ela ganhou naquele dia.
+   * `collectAdventure` é idempotente, então rodar de novo não duplica.
+   */
+  useEffect(() => {
+    if (!showDailyReport || !aventuraDaNoite || !gameState.lastDayReport) return;
+    const id = aventuraDaNoite.id;
+    const dia = gameState.lastDayReport.date;
+    setGameState(prev => ({
+      ...prev,
+      adventures: collectAdventure(prev.adventures ?? [], id, dia),
+    }));
+  }, [showDailyReport, aventuraDaNoite, gameState.lastDayReport, setGameState]);
+
   const handleCloseDailyReport = useCallback(() => {
     if (gameState.lastDayReport) {
       // "ja mostrei o relatorio hoje": no pior caso ele reabre. Silencioso.
@@ -5449,6 +5498,17 @@ export default function App() {
             </div>
           )}
 
+          {/* O diário de aventuras fica ao lado do Dex pelo mesmo motivo dele:
+              é coleção DA CRIATURA, não métrica do jogador. Numa tela de
+              estatísticas viraria painel de desempenho. */}
+          {currentView === 'pet' && (
+            <div style={{ marginTop: 16 }}>
+              <Suspense fallback={<ScreenSkeleton language={language} />}>
+                <AdventureDiary entries={gameState.adventures ?? []} language={language} />
+              </Suspense>
+            </div>
+          )}
+
           {currentView === 'stats' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><StatsPage
               /* WP1.6 — a MESMA peça do reveal, agora como lembrança. */
@@ -5999,6 +6059,8 @@ export default function App() {
       {interstitial === 'dailyReport' && gameState.lastDayReport && (
         <DailyReportModal
           report={gameState.lastDayReport}
+          adventure={aventuraDaNoite}
+          adventureIsNew={aventuraInedita}
           onClose={() => {
             /* WP4.8 — o marco é registrado ao FECHAR: se fosse ao abrir, um
                relatório reaberto no mesmo dia gastaria a memória sem ela ter

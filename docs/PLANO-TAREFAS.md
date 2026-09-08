@@ -345,7 +345,15 @@ Recorrência flexível com `from: 'completion'` · esforço nas tarefas · meta 
 **Fase 2 — os rituais** — 🟡 **parcial**
 ✅ Check-in · relatório semanal com sugestão de habit stacking · estações/fresh start · "Arrumar a pilha" (`triageQueue`).
 ✅ **Quick Add de uma linha** — o parser (`utils/quickAdd.ts`) já existia e alimentava o `CreateModal`; em 08/09/2026 ele ganhou a `QuickAddBar` **na tela inicial**, que era o que faltava de verdade: dentro do modal, anotar ainda custava abrir → digitar → aplicar → salvar. A gravação reusa `commitTaskCreate`/`commitHabitCreate`, que são quem conhece o teto do modo grátis.
-⬜ Falta: a **aventura narrada** no relatório noturno.
+✅ **Aventura narrada** — entregue em 08/09/2026 (`utils/adventure.ts`, o card no `DailyReportModal`, e o `AdventureDiary` na página do pet). 24 cenas em PT e EN, sorteio determinístico pelo dia (reabrir não re-sorteia).
+
+**As três decisões do dono, tomadas em 08/09/2026, e que definem o que isto é:**
+
+1. **Não paga nada.** Sem Bits, item ou atributo — a recompensa é a cena, como no Finch. Recompensa material transformaria o relatório num lugar que a pessoa PRECISA abrir para não perder coisa, o oposto de um ritual tranquilo. Há teste travando que o catálogo não ganhe campo de recompensa.
+2. **O dia mexe na CHANCE, nunca no acesso.** Cumprir a meta aumenta a probabilidade de um achado raro; um dia parado reduz e **nunca zera** — não existe cena reservada a quem teve um dia bom. Há teste provando que o catálogo inteiro é alcançável por quem só teve dias ruins.
+3. **Nenhum dia volta de mãos vazias**, inclusive o dia zerado, o dia que degenerou e o retorno depois de uma ausência. O relatório do dia ruim é o momento mais frágil do app, e é justamente nele que a única coisa boa da tela não pode faltar.
+
+⬜ Falta só a **arte** das 24 cenas (hoje são emoji) — está em `docs/BACKLOG-ARTE-GERAR.md`.
 
 **Fase 3 — sono (sem sensor)** — ✅ **implementada**
 Janela de Descanso · média móvel · 18 Sonhos no `DREAM_CATALOG`. **Roda igual na PWA e no Android** — não depende de nada nativo.

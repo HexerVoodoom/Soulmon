@@ -400,6 +400,36 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 ---
 
+## A20 · Cenas da aventura da noite (24 peças) — ⬜ pendente
+
+**Contexto:** `utils/adventure.ts` (08/09/2026). Cada achado que a criatura traz
+do dia tem hoje um **emoji**, e a estrutura já aceita PNG — o mesmo caminho que
+os Sonhos e a decoração percorreram (nasceram emoji, ganharam arte depois, sem
+reescrever nada). O emoji **fica** mesmo depois da arte: é o único glifo que
+cabe num push, num título de notificação ou num log, onde não há `<img>`.
+
+**Onde aparece:** o card do `DailyReportModal` (28 px) e a lista do
+`AdventureDiary` (24 px). Peças pequenas, lidas em miniatura — o mesmo tamanho
+dos ícones de sonho.
+
+**Destino:** `src/assets/soulmon/adventures/<id>.png`, com um mapa
+`ADVENTURE_ART` espelhando `dreamArt.ts` (o `id` é a chave; ver o comentário de
+lá sobre por que o mapa não mora no módulo puro).
+
+**A lista de ids está no catálogo**, e é a fonte da verdade — não copie os nomes
+para cá, que é como duas listas divergem. `ADVENTURE_CATALOG` traz `id`, `emoji`
+e o texto da cena nos dois idiomas; o texto é o briefing de cada peça.
+
+⚠️ **Tom:** são objetos e paisagens **sem a criatura dentro**. Quem viajou foi
+ela, e quem lê ficou em casa — a cena é o que ela viu, não um retrato dela. Uma
+peça com o pet no meio vira ilustração de mascote e desfaz o ponto.
+
+**Como gerar:** folha única em grade sobre fundo branco (são 24 itens pequenos e
+relacionados — ver a regra de "gerar em FOLHA" no topo deste arquivo), fatiada
+por projeção de pixels depois.
+
+---
+
 ## Estado da conta de geração (atualizar ao usar)
 
 - **Higgsfield CLI:** `mateus.sprnd@gmail.com`, plano pro — **1,5 crédito**

@@ -313,6 +313,15 @@ export interface GameState {
   /** A semana (segunda, `AAAA-MM-DD`) a que `restDaysLeft` pertence. */
   restWeekKey?: string;
   /**
+   * O diário de aventuras (`utils/adventure.ts`) — o que a criatura trouxe de
+   * cada noite, com a data da PRIMEIRA vez. É coleção narrativa e **não paga
+   * nada**: nenhum Bit, item ou atributo depende deste campo, e nada no jogo o
+   * lê para conceder recompensa. Se um dia alguém amarrar economia aqui, terá
+   * transformado o relatório noturno num lugar onde a pessoa perde coisa por
+   * não abrir.
+   */
+  adventures?: Array<{ id: string; day: string }>;
+  /**
    * Tetos de cuidado — comida por hora e carinho por dia (`utils/careCaps.ts`).
    *
    * Moravam no `localStorage`, ou seja, UM contador por APARELHO: com PWA e APK
@@ -950,6 +959,13 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'
           ? Math.max(0, num(loadedState.restDaysLeft, 0)) : undefined,
         restWeekKey: str(loadedState.restWeekKey) ?? undefined,
+        // Diário de aventuras. Entrada malformada é DESCARTADA em vez de
+        // derrubar o load: é coleção, e perder uma linha vale infinitamente
+        // menos que perder o save.
+        adventures: arr<unknown>(loadedState.adventures)
+          .map(e => (e ?? {}) as { id?: unknown; day?: unknown })
+          .filter((e): e is { id: string; day: string } =>
+            typeof e.id === 'string' && typeof e.day === 'string'),
         // Migração dos tetos de cuidado (D-33): o que sobrou no localStorage
         // deste aparelho é fundido com o que já está no save. `mergeCareCaps` é
         // idempotente, então rodar aqui no save local E de novo quando a nuvem

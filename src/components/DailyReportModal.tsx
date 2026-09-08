@@ -4,12 +4,24 @@ import { useDialogA11y } from '../hooks/useDialogA11y';
 import { UnlockNudge } from './UnlockAccountModal';
 import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
+import type { AdventureFind } from '../utils/adventure';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
 import confettiBurst from '../assets/icons/confetti-burst.png';
 
 interface DailyReportModalProps {
   report: NonNullable<GameState['lastDayReport']>;
+  /**
+   * O que a criatura trouxe da aventura do dia (`utils/adventure.ts`).
+   *
+   * Chega PRONTO de fora, e isso não é detalhe: o sorteio é determinístico pelo
+   * dia, e um `useState` aqui daria um achado novo a cada reabertura — a tela
+   * viraria caça-níquel e ensinaria a pessoa a reabrir o relatório em vez de
+   * viver o dia.
+   */
+  adventure?: AdventureFind | null;
+  /** Ainda não estava no diário. Muda só o rótulo. */
+  adventureIsNew?: boolean;
   onClose: () => void;
   language: Language;
   /** O "porquê" que o usuário escreveu no onboarding. O pet devolve isso em
@@ -55,7 +67,7 @@ type Row = { label: string; value: string; highlight?: 'good' | 'soft' };
  * LINHA saíram — eles desenhavam de novo a palavra ao lado ("Corações" com um
  * coração), que é o tipo de repetição que esta onda existe para cortar.
  */
-export function DailyReportModal({ report, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, memories }: DailyReportModalProps) {
+export function DailyReportModal({ report, adventure, adventureIsNew = false, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, memories }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
@@ -251,6 +263,53 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
             HISTÓRIA. Fica dentro do relatório que a pessoa já ia ver: não
             gera push, badge nem lembrete — um "momento" que persegue deixa de
             ser momento. */}
+        {/* ── A AVENTURA DA NOITE ──────────────────────────────────────────
+            O pet saiu durante o dia e voltou com uma cena. É o loop de duas
+            visitas do Finch, e a razão de ele ser narrativo está no benchmark
+            do `docs/PLANO-TAREFAS.md`: **narrativa não satura** — um número que
+            sobe todo dia vira ruído em duas semanas; uma cena inédita, não.
+
+            APARECE EM TODO RELATÓRIO, inclusive no do dia ruim e no de quem
+            voltou depois de sumir. É deliberado: o dia ruim é o momento mais
+            frágil do app, e é justamente nele que a única coisa boa da tela não
+            pode faltar. Um dia parado traz uma cena mais silenciosa — nunca
+            nada.
+
+            NÃO PAGA NADA (decisão do dono, 08/09/2026). Sem Bits, sem item, sem
+            atributo. Recompensa material aqui transformaria o relatório num
+            lugar que a pessoa PRECISA abrir para não perder coisa, que é o
+            oposto de um ritual tranquilo. */}
+        {adventure && (
+          <div style={{ padding: '0 20px 8px' }}>
+            <div
+              style={{
+                display: 'flex', gap: 12, alignItems: 'flex-start',
+                padding: 14, borderRadius: 14,
+                backgroundColor: 'var(--sm2-surface-2)',
+                border: '1px solid var(--sm2-line)',
+              }}
+            >
+              <span aria-hidden style={{ fontSize: 28, lineHeight: 1 }}>{adventure.emoji}</span>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ ...hint, margin: 0 }}>
+                  {isPt ? 'Da aventura de hoje' : "From today's adventure"}
+                  {adventureIsNew && (
+                    <span style={{ color: 'var(--sm2-primary-ink)' }}>
+                      {isPt ? ' · inédito' : ' · new'}
+                    </span>
+                  )}
+                </p>
+                <p style={{ ...sm2TitleStyle, fontSize: 'var(--sm2-text-sm)', margin: '2px 0 4px' }}>
+                  {isPt ? adventure.titlePt : adventure.titleEn}
+                </p>
+                <p style={{ ...hint, margin: 0 }}>
+                  {isPt ? adventure.textPt : adventure.textEn}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {memories && (
           <div style={{ padding: '0 20px 8px' }}>
             <MemoriesCard {...memories} language={language} />
