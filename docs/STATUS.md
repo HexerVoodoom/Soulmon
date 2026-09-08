@@ -124,6 +124,106 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > dela, com a alternativa que perdeu e o gatilho para rever. É o lugar para
 > conferir se uma escolha ainda faz sentido antes de rediscuti-la.
 
+> ## 🔎 08/09/2026 — sessão de QA e revisão do app inteiro
+>
+> Rodada a partir de `docs/HANDOFF-QA-REVISAO.md`, com Node 22 portátil. Gate
+> final: **255 arquivos, 3659 testes passando, 1 pulado**, `tsc` limpo nos dois
+> projetos e `npm run build` refeito (o `dist/` commitado está em dia).
+>
+> ### Item 1 — os guards de P1/P2 NÃO foram ensinados a concordar
+>
+> Onze mutações no código de produção, cada uma com a suíte inteira rodando.
+> **Nenhuma sobreviveu.** A prova que interessava: tornar a folga da semana
+> sempre disponível derruba **10 arquivos e 37 testes**, e os OITO que ganharam
+> `restDaysLeft: 0` no `44b7a7c3` estão todos entre eles — ou seja, nenhum
+> deles estava passando através da folga. O inverso fecha junto: desligar a
+> absorção da folga só derruba o `restDay.test.ts`, então nenhum guard estava
+> sendo carregado por ela. E quem pega a virada trocando de régua (o footgun 9)
+> é o guard diferencial de `dailyGoalSources.test.ts`, que é **anterior** ao
+> commit da regra.
+>
+> ### Item 2 — a degeneração continua alcançável por negligência real
+>
+> Simulado dia a dia, duas semanas, em `src/utils/degeneracao.cenarios.test.ts`
+> (novo, e agora é guard permanente): mega que não faz nada cai de estágio em
+> menos de uma semana mesmo com a folga e desce dois em quatorze dias; 2 de 6
+> por dia também derruba; e 4 de 6 todo dia atravessa duas semanas sem perder
+> um coração, como a P1 prometeu.
+>
+> ⚠️ **O que a simulação achou de errado é anterior a P1/P2 e é decisão sua:**
+> quem abre o app **a cada 3 dias** e não faz NADA nunca perde um coração —
+> `ABSENCE_FORGIVENESS_DAYS` perdoa a virada e a rampa de retorno cobre as
+> seguintes. O padrão MAIS negligente do jogo é o único imune, e a folga sequer
+> é tocada. Está afirmado em teste como FATO OBSERVADO para ninguém "consertar"
+> a folga achando que a culpa é dela.
+>
+> ### Corrigido nesta sessão
+>
+> | O quê | Onde | Gravidade |
+> |---|---|---|
+> | `restWeekKeyFor` andava para trás no horário de verão (folga extra de graça, 1×/ano, todo fuso com DST) | `utils/dailyReset.ts` | borda |
+> | O relatório anunciava perda de coração que o piso da raiz já tinha engolido — todas as noites, para o jogador mais frágil, com botão de "recuperar" junto | `utils/dailyReset.ts` | produção |
+> | O relatório anunciava o alívio de segunda sem ele ter acontecido | `utils/dailyReset.ts` | produção |
+> | Check-in do coop perdido quando dois membros marcavam na mesma noite (ler-modificar-gravar sobre o blob; KV não tem CAS) | `functions/api/community.js` | produção |
+> | "Você entrou" falso na corrida por uma vaga: 200 + ponteiro gravado, e o grupo sumia na abertura seguinte | `functions/api/community.js` | borda |
+> | Grupo coop ativo expirava por partes: só o blob renovava TTL, os dois índices não | `functions/api/community.js` | borda |
+> | Código de convite sorteado por cima de outro, sem conferir | `functions/api/community.js` | dívida |
+> | A manchete do "dia completo" ficava ATRÁS do confete (elemento posicionado pinta sobre o estático) | `DailyReportModal` | produção |
+> | O `×` que dispensa o convite de compra PARA SEMPRE tinha 32 px | `DailyReportModal` | borda |
+> | A caixa do aceite dos Termos renderizava achatada (14,95 × 20) por falta de `flexShrink: 0` | `form/FormKit` (`CheckRow`) | borda |
+> | "Atalhos" da barra de Quick Add com 20 px de alvo de toque | `QuickAddBar` | dívida |
+> | `back()` do onboarding tinha piso 0 — o passo da intro apagada, que não renderiza nada | `SoulmonOnboarding` | dívida |
+> | `utils/auth.ts` sem NENHUM teste; o fallback de popup bloqueado não era vigiado | novo `auth.popupBloqueado.test.ts` | dívida |
+> | Colisão latente de código de telemetria: `GOOGLE_STEP` e `REGISTER` a UM número de distância | `telemetry.test.ts` (guard) | borda |
+> | Referências a `CONSENT_STEP`, apagado no dia anterior | `gateDraft`, `oracleDraft`, `telemetry` | dívida |
+> | `.claude/launch.json` apontava para a porta 5173; o dev sobe na 3000 | — | dívida |
+>
+> ### Aberto — precisa de você
+>
+> 1. **Nove emojis renderizam como caixa vazia** (bloco U+1FA70–U+1FAFF, Emoji
+>    12+). Atinge o marco de 21 dias de hábito, o traço Carinhoso, cinco
+>    mobílias da loja, três cenas da aventura, quatro sonhos, um reino do
+>    Oráculo e dois controles do overlay. **Não troquei nenhum** — são catálogos
+>    que você curou. A lista completa, com a troca proposta para cada um, está
+>    em `src/styles/emojiSuportado.contract.test.ts`, que também impede a dívida
+>    de crescer. O 🪙 dos Bits é falso alarme: só existe em comentário.
+> 2. **`signInWithRedirect` pode estar morto no navegador do usuário.** É a
+>    única saída quando o popup do Google é bloqueado, e o `authDomain`
+>    (`soulmon-app.firebaseapp.com`) é um domínio diferente do app: desde o SDK
+>    9.19 o Firebase avisa que o redirecionamento não funciona onde o
+>    armazenamento de terceiros é bloqueado (Chrome, Safari/ITP, Firefox/ETP), a
+>    menos que `/__/auth/handler` seja servido pelo domínio do próprio app.
+>    **HIPÓTESE** — não dá para reproduzir sem conta Google real e popup barrado.
+>    Se confirmar, a correção é servir o handler no domínio do app.
+> 3. **A folga da semana não cobre o dreno de cocô.** `applyPoopDrain` respeita
+>    teto diário, Teimoso e perdão de ausência, mas não a folga — e o docstring
+>    da P2 diz que ela protege "o CORAÇÃO... do save inteiro". Ou o texto está
+>    grande demais, ou falta a fiação. É mudança de REGRA: não toquei.
+> 4. **Preço em R$ para quem está em inglês** ("Get the full game — R$ 29,90").
+> 5. Os três personagens prontos terminam em `-mon` (Pyrakamon, Akashaoimon,
+>    Nimbratamon) e o `CLAUDE.md` diz que nenhum nome de criatura leva sufixo
+>    fixo `-mon`. Provavelmente é exceção deliberada (o app se chama Soulmon),
+>    mas a regra escrita não abre exceção — confirme e ajuste um dos dois.
+>
+> ### O que foi conferido e está CERTO (para ninguém revisitar à toa)
+>
+> - Contraste: **nenhuma falha** em nenhuma tela, medido sobre a cor composta.
+>   Menor razão por tela: 6,46 · 5,57 · 7,43 · 6,30 · 6,30.
+> - Nenhum controle sem nome acessível; nenhuma rolagem horizontal em 375 px;
+>   nenhum alvo de toque abaixo de 44 px depois dos dois consertos.
+> - **Texto num idioma só: nada encontrado** em `src`, `functions`, `workers` e
+>   `desktop/renderer`.
+> - Build sem `.env` conferido NO NAVEGADOR: o portão degrada e dá para
+>   atravessar o app inteiro.
+> - Nenhuma rota `coop*` devolve `saveId`; as cinco passam por
+>   `denyUnlessOwner`; `coopOf:` órfão se autolimpa; força bruta do código de
+>   convite é inviável (32^8 contra 120 req/min/IP).
+> - A tela cheia do relatório não é o empilhamento que se temia: `restDayUsed` e
+>   o convite de compra **nunca** aparecem juntos (a folga exige perda; o
+>   convite exige dia completo; dia completo não perde). Piores casos reais:
+>   1,11 e 1,37 tela.
+> - Nenhuma tela órfã alcançável depois da remoção do consentimento e da intro.
+
 > ## ⚠️ 07/09/2026 — NINGUÉM NUNCA USOU O APP EM PRODUÇÃO
 >
 > Informado pelo dono. É o fato mais consequente registrado aqui, porque **44
