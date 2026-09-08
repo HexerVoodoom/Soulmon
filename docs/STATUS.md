@@ -114,7 +114,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > bundle assinado no CI, inerte até o dono criar a keystore.
 >
 > **Adiado por decisão do dono:** a **P3** e a **arte** (A20 — as 24 cenas da
-> aventura — e o 5.1 da decoração), esta última para uma sessão dedicada.
+> aventura — e o 5.1 da decoração), esta última para uma sessão dedicada, cujo
+> handoff pronto (com prompts, critérios de aceitação e o prompt de abertura)
+> é **`docs/HANDOFF-ARTE-GEMINI.md`**.
 >
 > **O gargalo continua sendo distribuição, não produto:** a corrente do
 > lançamento inteira depende da keystore de release, que só o dono pode gerar.

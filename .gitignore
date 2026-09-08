@@ -36,3 +36,6 @@ state/
 # avisar. No arquivo, todo build — CI, contribuidor, esta maquina — produz um
 # bundle que funciona.
 !.env.production
+
+# Scratch de medição de asset (sessões de arte/QA escrevem esses na raiz)
+*.tmp.mjs

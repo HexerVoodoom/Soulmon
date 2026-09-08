@@ -135,9 +135,18 @@ tela quadrada de `<tamanho>`. Ele imprime um JSON com `killed` (pixels de ruído
 descartados) e a bbox — **se `killed` vier alto, a geração tinha ruído e vale
 regerar**.
 
-⚠️ Para a decoração as caixas **não são quadradas** (ex.: `104×16` do tapete).
-O script centraliza em quadrado — para essas, recorte e redimensione à mão para
-a caixa exata da tabela.
+⚠️ O `chroma-key.mjs` centraliza em **quadrado**, e as caixas da decoração não
+são quadradas (ex.: `104×16` do tapete). Para elas use o irmão dele, escrito na
+auditoria de 08/09/2026 exatamente para isso:
+
+```bash
+node scripts/decor-para-caixa.mjs <entrada.png> <saida.png> <L> <A> [--chao]
+```
+
+Mesmo algoritmo de recorte, com a tela de saída **retangular** no tamanho do
+slot × 2. O `--chao` ancora a peça embaixo, que é o certo para tudo que fica
+apoiado no chão (o `rug`, o `floor-left`, o `floor-right` e o `trophy`) — sem
+ele a peça flutua dentro da caixa.
 
 ### 4.2 O guard — ele é a régua, não o teste
 
