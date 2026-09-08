@@ -21,8 +21,10 @@ import {
   rawHeartsLostFor,
   tasksToAvoidHeartLoss,
   dailyGoalFor,
+  heartGoalFor,
   daysSinceLastReset,
   MAX_HEARTS_LOST_PER_DAY,
+  restWeekKeyFor,
 } from './dailyReset';
 import { feedFood, rubHeal, completeTask, feedsLeft, FOOD_LIMIT_PER_HOUR } from './careRules';
 import { computeCarePattern, resolveBranch, careHistory } from './carePattern';
@@ -90,6 +92,12 @@ function genState(r: () => number, now: Date): Record<string, any> {
     attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
     foodInventory: {},
     petPassive: pick(r, [undefined, 'guloso', 'teimoso', 'carinhoso', 'sortudo', 'madrugador']),
+    // P2 — a folga da semana. Sorteada, e com peso em ZERO: com a folga sempre
+    // disponível o gerador nunca produziria o desfecho "perdeu coração" (a
+    // autoverificação lá embaixo cobra exatamente isso), e os invariantes de
+    // perda mediriam o nada. `undefined` no meio é o save antigo.
+    restDaysLeft: pick(r, [0, 0, 0, 1, undefined]),
+    restWeekKey: restWeekKeyFor(new Date(now.getTime() - 86400000)),
   };
 }
 
@@ -237,6 +245,12 @@ describe('computeDailyReset — invariantes sobre estado gerado', () => {
       degeneratedByHP: false, currentBranch: 'virus', lastDayWasPerfect: false,
       maxActivityCap: 7, attributesSinceLastEvolution: { virus: 0, data: 0, vaccine: 0 },
       lastResetDate: new Date(2026, 7, 4).toDateString(),
+      // A folga da semana (P2) JÁ foi gasta — senão ela absorve a perda, o HP
+      // não zera e a degeneração que este caso existe para declarar não
+      // acontece. A semana tem de ser a do dia julgado: semana que não bate é
+      // lida como "folga inteira".
+      restDaysLeft: 0,
+      restWeekKey: restWeekKeyFor(new Date(2026, 7, 4)),
     };
     const now = new Date(2026, 7, 5, 3, 0, 0); // quarta, fora do alívio de segunda
     const nadaFeito = computeDailyReset(base, { now });
@@ -281,7 +295,12 @@ describe('a resposta "quanto falta para não perder coração?" é a mesma conta
     const fails = varrer(2000, 7000, (s, now, seed) => {
       const weekDay = new Date(now.getTime() - 86400000).getDay();
       const dayKey = new Date(now.getTime() - 86400000).toDateString();
-      const goal = dailyGoalFor(s as any, weekDay, dayKey);
+      // P1: a régua da PERDA é a meta de coração (60% da meta do dia), não a
+      // meta do dia completo — que continua sendo o que o dia completo exige.
+      // Este teste existe justamente para as duas não divergirem em silêncio:
+      // ele caiu na hora em que o `tasksToAvoidHeartLoss` mudou de régua, que
+      // é o comportamento certo dele.
+      const goal = heartGoalFor(s as any, weekDay, dayKey);
       const n = tasksToAvoidHeartLoss(s as any, weekDay, dayKey);
       const maxHP = s.maxHealthPoints;
       const bad: string[] = [];

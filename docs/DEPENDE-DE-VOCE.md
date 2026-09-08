@@ -164,10 +164,29 @@ acidente. **Achado na rodada 8.**
 > só escreve com confirmação e **avisa quando a carga não cabe** em vez de
 > prometer alívio.
 >
-> **P1–P3 e P5 continuam na sua mesa** — cada um mexe em ❤️ ou no nome do "dia
-> perfeito", e a fila está em `product/soulmon-01/balance/carga-diaria.md`,
-> seção 3. O ideal é decidi-los depois de a P4 rodar com usuários de verdade —
-> o que ainda esbarra em não haver usuários (itens 9 a 12 desta lista).
+> **P1, P2 e P5 foram aprovados e entregues em 07/09/2026**, na mesma sessão:
+>
+> - **P1** — a meta que protege o coração passa a ser 60% da meta do dia
+>   (`HEART_GOAL_RATIO`). Mega precisava de 5 de 6 para não perder coração e
+>   passa a precisar de 4. **A excelência não mudou**: o dia completo continua
+>   custando a meta inteira, e o caminho de evolução não cedeu um milímetro.
+> - **P2** — um dia de folga por semana, grátis, gasto sozinho na virada. Não
+>   acumula, não vira dia completo, e o relatório do dia avisa que foi usada.
+> - **P5** — "dia perfeito" virou **"dia completo"** nos textos PT/EN. Só o
+>   nome; `perfectDays` e `wasPerfect` seguem iguais no código.
+>
+> **Só a P3 continua na sua mesa** (alívio adaptativo: a meta de coração cai 1
+> após 2 dias falhos). Recomendo decidi-la **depois** de ver P1+P2 rodando: os
+> dois já entregam boa parte do alívio que a P3 buscava, e empilhar um terceiro
+> perdão sem medir é afrouxar no escuro. Medir, porém, esbarra em não haver
+> usuários — itens 9 a 12 desta lista.
+>
+> ⚠️ Efeito combinado, declarado para você não ser surpreendido: com P1 + P2,
+> um jogador mega pode fazer 4 de 6 em seis dias e 0 no sétimo **sem nunca
+> perder um coração**. Isso é intencional — a degeneração passa a exigir
+> negligência real, não um dia de gripe. Se achar generoso demais, o botão de
+> ajuste é `HEART_GOAL_RATIO` (0,6 → 0,7 devolve o mega a 5 de 6), **não**
+> tirar a folga.
 
 #### Contexto original
 Vem do **seu teste com usuários** ("nem todo dia consigo fazer as 6 tarefas";

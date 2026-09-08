@@ -303,6 +303,16 @@ export interface GameState {
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
   /**
+   * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
+   *
+   * Opcionais porque save antigo não os tem, e a ausência tem de significar
+   * "folga inteira", nunca "folga já gasta": quem já jogava não pode herdar uma
+   * dívida retroativa de um mecanismo que nem existia.
+   */
+  restDaysLeft?: number;
+  /** A semana (segunda, `AAAA-MM-DD`) a que `restDaysLeft` pertence. */
+  restWeekKey?: string;
+  /**
    * Tetos de cuidado — comida por hora e carinho por dia (`utils/careCaps.ts`).
    *
    * Moravam no `localStorage`, ou seja, UM contador por APARELHO: com PWA e APK
@@ -372,6 +382,12 @@ export interface GameState {
     weeklyRelief?: boolean;
     /** Já usou o "esqueci de marcar" deste relatório (1× por dia). */
     heartsRecovered?: boolean;
+    /** P2 — a folga da semana absorveu a perda desta virada. A UI CONTA isso:
+     *  perdão que a pessoa não soube que recebeu não acalma, e faz a cobrança
+     *  da semana seguinte parecer arbitrária. */
+    restDayUsed?: boolean;
+    /** Folgas restantes na semana, depois desta virada. */
+    restDaysLeft?: number;
   };
   /**
    * O "porquê" do usuário, respondido no onboarding ANTES de qualquer mecânica
@@ -929,6 +945,11 @@ function hydrateSave(loadedState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        // Folga da semana (P2). `undefined` é o certo para save antigo: a
+        // virada lê isso como "a folga daquela semana estava inteira".
+        restDaysLeft: typeof loadedState.restDaysLeft === 'number'
+          ? Math.max(0, num(loadedState.restDaysLeft, 0)) : undefined,
+        restWeekKey: str(loadedState.restWeekKey) ?? undefined,
         // Migração dos tetos de cuidado (D-33): o que sobrou no localStorage
         // deste aparelho é fundido com o que já está no save. `mergeCareCaps` é
         // idempotente, então rodar aqui no save local E de novo quando a nuvem

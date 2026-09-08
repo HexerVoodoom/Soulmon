@@ -9,8 +9,7 @@ import {
   NEW_SAVE_GRACE_DAYS,
   RETURN_GRACE_DAYS,
   looksLikeVeteranSave,
-  degeneratedPerfectDays,
-} from '../utils/dailyReset';
+  degeneratedPerfectDays, restWeekKeyFor } from '../utils/dailyReset';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -51,6 +50,13 @@ const baseState = () => ({
   // save mora dentro de `lastDayReport` porque é o único objeto que atravessa
   // `hydrateSave` inteiro (ver o bloco "IDADE DO SAVE" em utils/dailyReset.ts).
   lastDayReport: { date: new Date('2026-08-03T12:00:00').toDateString(), saveDay: 90 },
+  // P2 — ESTE SAVE JÁ GASTOU A FOLGA DA SEMANA. Sem isto ela absorveria a
+  // primeira perda de coração de cada virada, e todo teste de perda daqui
+  // mediria a folga em vez da regra. A semana tem de ser a do dia JULGADO: uma
+  // semana que não bate é lida pela virada como "a folga estava inteira", que é
+  // o certo para save antigo e o oposto do que estes testes precisam.
+  restDaysLeft: 0,
+  restWeekKey: restWeekKeyFor(new Date('2026-08-04T12:00:00')),
 });
 
 describe('performDailyReset — proportional HP loss', () => {
@@ -574,7 +580,7 @@ describe('computeDailyReset — alívio semanal de segunda', () => {
   it('devolve meio coração na virada de segunda', () => {
     const tasks = Array.from({ length: 5 }, (_, i) => ({ id: `t${i}`, completed: false }));
     const sunday = new Date('2026-08-02T12:00:00').toDateString();
-    const result = runReset({ ...baseState(), tasks, lastResetDate: sunday, healthPoints: 3 }, MONDAY);
+    const result = runReset({ ...baseState(), tasks, lastResetDate: sunday, healthPoints: 3, restWeekKey: restWeekKeyFor(new Date(sunday)) }, MONDAY);
     // Perde 1 pelo dia zerado e recebe 0.5 de volta pela semana nova.
     //
     // O NÚMERO É CRU DE PROPÓSITO. Esta linha já foi
@@ -607,6 +613,9 @@ describe('computeDailyReset — alívio semanal de segunda', () => {
     const result = runReset({
       ...baseState(), tasks, lastResetDate: sunday,
       healthPoints: 1, evolutionStage: 'champion-virus', currentBranch: 'virus',
+      // A folga da SEMANA DO DOMINGO já foi gasta — senão ela absorve a perda,
+      // o HP não zera e não há degeneração para este teste observar.
+      restWeekKey: restWeekKeyFor(new Date(sunday)),
     }, MONDAY);
     // Perde o único coração → zera → degenera (e o alívio NÃO impede isso).
     expect(result.degeneratedByHP).toBe(true);

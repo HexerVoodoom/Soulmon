@@ -69,8 +69,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
-              'Dia perfeito = você cumpriu a meta do dia e a energia do seu Soulmon fechou cheia. A meta é o que você cadastrou, até o requisito do estágio.',
-              'A perfect day = you met your daily goal and its energy ended full. The goal is what you registered, capped at your stage requirement.',
+              'Dia completo = você cumpriu a meta do dia e a energia do seu Soulmon fechou cheia. A meta é o que você cadastrou, até o requisito do estágio.',
+              'A complete day = you met your daily goal and its energy ended full. The goal is what you registered, capped at your stage requirement.',
             )}
           </p>
           <p style={para}>
@@ -81,19 +81,19 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               // regra consulta — e prometia uma escada 2,5× mais longa que a
               // real. Quem lia o guia achava que estava a 6 dias de evoluir
               // quando o botão já estava aceso.
-              `Rookie→Champion pede ${R.rookie.required} dias perfeitos; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
-              `Rookie→Champion needs ${R.rookie.required} perfect days; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
+              `Rookie→Champion pede ${R.rookie.required} dias completos; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
+              `Rookie→Champion needs ${R.rookie.required} complete days; Champion→Ultimate ${R.champion.required}; Ultimate→Mega ${R.ultimate.required}; Mega→Ultra ${R.mega.required}.`,
             )}
           </p>
           {/* WP4.2 — o requisito do Ultra nunca esteve no guia, e ele é o único
-              da árvore que não é só "dias perfeitos". Enquanto o único caminho
+              da árvore que não é só "dias completos". Enquanto o único caminho
               era a coleção das três megas, a omissão escondia que o topo pedia
               DUAS quedas deliberadas. Agora são dois caminhos e os dois são
               ditos — com a permanência primeiro, que é a que não pede descer. */}
           <p style={para}>
             {L(
-              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_DAYS} dias perfeitos como mega, ou conhecer os três galhos. Nenhum é melhor, e nenhum pede que você degenere.`,
-              `The Ultra has two paths: ${ULTRA_PATIENCE_DAYS} perfect days as a mega, or knowing all three branches. Neither is better, and neither asks you to degenerate.`,
+              `O Ultra tem dois caminhos: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor, e nenhum pede que você degenere.`,
+              `The Ultra has two paths: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better, and neither asks you to degenerate.`,
             )}
           </p>
           {/* Renascimento: o degrau depois do topo. Fica logo abaixo do Ultra
@@ -107,14 +107,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
                  exclusivo de quem comprou, e a página de Evolução não mostrava
                  nada para quem não podia — o guia criava a expectativa e a tela
                  entregava silêncio. */
-              'Depois do Ultra existe o Renascimento, para quem tem a conta completa: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e dias perfeitos continuam intactos. Acontece uma vez só.',
-              'After the Ultra comes Rebirth, for full accounts: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and perfect days stay intact. It happens only once.',
+              'Depois do Ultra existe o Renascimento, para quem tem a conta completa: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e dias completos continuam intactos. Acontece uma vez só.',
+              'After the Ultra comes Rebirth, for full accounts: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and complete days stay intact. It happens only once.',
             )}
           </p>
           <p style={para}>
             {L(
-              'Dias perfeitos só acumulam. A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',
-              'Perfect days only accumulate. Evolution is yours to trigger: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
+              'Dias completos só acumulam. A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',
+              'Complete days only accumulate. Evolution is yours to trigger: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
             )}
           </p>
         </>

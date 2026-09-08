@@ -4,7 +4,7 @@ import {
   rubDailyCap, heartLossCap, heartDropBonus, earliestPoopHour,
 } from './passives';
 import { feedFood, rubHeal, RUB_HEAL_DAILY_CAP, type CareState } from './careRules';
-import { computeDailyReset, MAX_HEARTS_LOST_PER_DAY } from './dailyReset';
+import { computeDailyReset, MAX_HEARTS_LOST_PER_DAY, restWeekKeyFor } from './dailyReset';
 
 const WEDNESDAY = new Date('2026-08-05T12:00:00');
 
@@ -34,6 +34,11 @@ const resetBase = () => ({
   // (`NEW_SAVE_GRACE_DAYS`, utils/dailyReset.ts), que não cobra HP nas primeiras
   // viradas — e um teste de perda de coração passaria a medir a carência.
   lastDayReport: { date: 'seed', saveDay: 90 },
+  // P2 — a folga da semana já foi gasta. Ela absorve a perda INTEIRA, então
+  // com ela disponível o Teimoso e o pet comum sairiam os dois com zero e o
+  // teste do traço não mediria traço nenhum.
+  restDaysLeft: 0,
+  restWeekKey: restWeekKeyFor(new Date('2026-08-04T12:00:00')),
 });
 
 describe('passives — catálogo', () => {

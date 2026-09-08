@@ -13,7 +13,7 @@
  * inteiro, e nenhum dos três é para a UI.
  */
 import { describe, it, expect } from 'vitest';
-import { computeDailyReset } from './dailyReset';
+import { computeDailyReset, restWeekKeyFor } from './dailyReset';
 import { emptyRhythm, completeHabit } from './habitRhythm';
 import { REST_SHIELD_EARN_EVERY_DAYS } from '../types/taskModel';
 
@@ -45,6 +45,13 @@ const estado = (over: Record<string, unknown> = {}) => ({
   maxActivityCap: 6,
   lastResetDate: ONTEM.toDateString(),
   lastDayReport: { date: new Date('2026-08-03T12:00:00').toDateString(), saveDay: 90 },
+  // P2 — ESTE SAVE JÁ GASTOU A FOLGA DA SEMANA.
+  // Sem isto a folga (`REST_DAYS_PER_WEEK`) absorveria a primeira perda de
+  // coração da virada e os testes abaixo mediriam a folga em vez da regra que
+  // eles existem para provar. Declarado, e não escondido: a folga é real e
+  // vale para o jogador — aqui ela está desligada de propósito.
+  restDaysLeft: 0,
+  restWeekKey: restWeekKeyFor(new Date('2026-08-03T12:00:00')),
   ...over,
 });
 

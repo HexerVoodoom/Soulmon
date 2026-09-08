@@ -34,8 +34,8 @@ export function EvolveTaskModal({
     : `Your partner evolved into ${stageName}!`;
 
   const goal = isPt
-    ? `Nesta nova fase, complete ${requiredTasks} tarefa(s) por dia (com energia cheia) para garantir um ponto de evolução — o dia perfeito.`
-    : `In this new stage, complete ${requiredTasks} task(s) per day (with full energy) to guarantee an evolution point — a perfect day.`;
+    ? `Nesta nova fase, complete ${requiredTasks} tarefa(s) por dia (com energia cheia) para garantir um ponto de evolução — o dia completo.`
+    : `In this new stage, complete ${requiredTasks} task(s) per day (with full energy) to guarantee an evolution point — a complete day.`;
 
   const statusOk = isPt
     ? `Você já tem ${registeredTasks} tarefa(s) cadastrada(s). Continue assim!`

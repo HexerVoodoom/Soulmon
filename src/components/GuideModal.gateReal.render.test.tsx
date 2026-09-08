@@ -41,8 +41,8 @@ describe('GuideModal — o guia cita o gate real (WP4.17)', () => {
     for (const pt of [true, false]) {
       const texto = textoDoCapitulo(pt);
       const casou = pt
-        ? /Rookie→Champion pede (\d+) dias perfeitos/.exec(texto)
-        : /Rookie→Champion needs (\d+) perfect days/.exec(texto);
+        ? /Rookie→Champion pede (\d+) dias completos/.exec(texto)
+        : /Rookie→Champion needs (\d+) complete days/.exec(texto);
       expect(casou, `frase da escada não encontrada (${pt ? 'PT' : 'EN'}): ${texto}`).toBeTruthy();
       expect(Number(casou![1])).toBe(FORM_REQUIREMENTS.rookie.required);
       document.body.innerHTML = '';

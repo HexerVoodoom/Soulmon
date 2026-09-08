@@ -86,7 +86,7 @@ export const MISSIONS: Mission[] = [
   {
     id: 'mission-perfect-30', icon: '⭐', iconName: 'star', target: 30, bgReward: 'bg-mission-aurora',
     namePt: 'Constância Perfeita', nameEn: 'Perfect Consistency',
-    descPt: 'Acumule 30 dias perfeitos (total)', descEn: 'Earn 30 perfect days (lifetime)',
+    descPt: 'Acumule 30 dias completos (total)', descEn: 'Earn 30 complete days (lifetime)',
     progress: s => s.totalPerfectDays,
   },
 ];

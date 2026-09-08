@@ -142,6 +142,48 @@ export const ABSENCE_FORGIVENESS_DAYS = 2;
 export const WEEKLY_RELIEF_HEARTS = 0.5;
 
 /**
+ * P2 — UM DIA DE FOLGA POR SEMANA, GRÁTIS E AUTOMÁTICO.
+ *
+ * Modelo: o Inn do Habitica (não punir) + o congelamento do Duolingo (já está
+ * no bolso) + o Pokémon Sleep (você não ganha, mas nunca perde) — que é o
+ * produto do benchmark com a menor queda no ano 3.
+ *
+ * **Automático e retroativo, e não "marque folga hoje".** Quem precisou de
+ * folga não abriu o app; uma folga que precisa ser declarada de antemão é mais
+ * um item de planejamento, ou seja, exatamente a fricção que a auditoria de
+ * carga diária mandou tirar. Então ela é gasta sozinha, na virada, sobre um dia
+ * que JÁ terminou.
+ *
+ * Sem acúmulo (teto 1): folga que empilha vira saldo a administrar, e
+ * administrar saldo é trabalho.
+ *
+ * O que a folga NÃO faz, de propósito:
+ *  - **não vira dia completo** (`dayWasPerfect` não sabe que ela existe). Não
+ *    ganha, não perde — é o formato do Pokémon Sleep. O caminho de evolução
+ *    continua custando o mesmo.
+ *  - **não desliga o dia**: o que a pessoa fez naquele dia valeu normalmente
+ *    (comida, atributos, Bits). É a lição do Inn — descansar não é sair do jogo.
+ *
+ * NÃO CONFUNDIR com os escudos de `habitRhythm.ts`: aqueles protegem o RITMO de
+ * um hábito específico e nunca tocaram em HP (está escrito lá: "falta não gera
+ * perda de HP própria"). Este protege o CORAÇÃO, uma vez por semana, do save
+ * inteiro. São duas coisas, e é por isso que são dois mecanismos.
+ */
+export const REST_DAYS_PER_WEEK = 1;
+
+/**
+ * A semana à qual a folga pertence, ancorada na SEGUNDA — a mesma virada do
+ * `WEEKLY_RELIEF_HEARTS`. Ter duas semanas diferentes no mesmo arquivo faria o
+ * jogador ganhar fôlego num dia e folga noutro, sem nada que explicasse.
+ */
+export function restWeekKeyFor(d: Date): string {
+  const dia = d.getDay();
+  const desdeSegunda = (dia + 6) % 7;           // segunda = 0, domingo = 6
+  const segunda = new Date(d.getTime() - desdeSegunda * 86400000);
+  return `${segunda.getFullYear()}-${String(segunda.getMonth() + 1).padStart(2, '0')}-${String(segunda.getDate()).padStart(2, '0')}`;
+}
+
+/**
  * Carência de HP nas primeiras viradas de vida do save.
  *
  * É o MESMO mecanismo de `ABSENCE_FORGIVENESS_DAYS`, apontado para o começo em
@@ -474,6 +516,56 @@ export function dailyGoalFor(state: DailyGoalState, weekDay: number, dayKey?: st
 }
 
 /**
+ * P1 — A META QUE PROTEGE O CORAÇÃO É MENOR QUE A META DO DIA COMPLETO.
+ *
+ * O Habitica separa **Dailies** (obrigatório, machuca) de **Habits** (bônus,
+ * não machuca). O Soulmon tinha os dois eixos escondidos num número só: a mesma
+ * `dailyGoal` decidia se o dia foi completo E se a criatura perdia coração.
+ * Consequência: não havia nenhum lugar entre "fiz tudo" e "regredi".
+ *
+ * Agora há duas réguas, e é de propósito que sejam duas:
+ *
+ *   - **a excelência continua custando a meta inteira** — `dayWasPerfect` NÃO
+ *     usa esta função, e o caminho de evolução (`perfectDays`) não cede um
+ *     milímetro. Princípio permanente #3: modernizar o atrito, nunca a
+ *     dificuldade.
+ *   - **a segurança passa a custar 60%** — o jogador que teve um dia ruim para
+ *     de perder coração; o que quer evoluir continua tendo que fazer tudo.
+ *
+ * Em número (`maxHP` do estágio à parte): mega com meta 6 precisava de 5 itens
+ * para não perder coração e passa a precisar de 4. Rookie com meta 4 continua
+ * em 3 — o piso `max(1, …)` e o arredondamento para cima impedem que o alívio
+ * vire "não precisa fazer nada".
+ *
+ * O coração vira o que a essência declarada diz que ele é: o retrato do
+ * cuidado, não a fatura.
+ *
+ * **O botão de ajuste é este número.** Se o conjunto ficar generoso demais,
+ * 0,6 → 0,7 devolve o mega a 5/6. Ver `product/soulmon-01/balance/carga-diaria.md`, P1.
+ */
+export const HEART_GOAL_RATIO = 0.6;
+
+/**
+ * Meta de CORAÇÃO do dia — a que a perda de HP cobra. Dono único da fórmula:
+ * `computeDailyReset` e `tasksToAvoidHeartLoss` chamam esta função, e nenhum
+ * dos dois recalcula 0,6 na mão (footgun 9).
+ */
+export function heartGoalFor(state: DailyGoalState, weekDay: number, dayKey?: string): number {
+  return heartGoalFromDailyGoal(dailyGoalFor(state, weekDay, dayKey));
+}
+
+/**
+ * A conversão pura, para quem JÁ tem a meta do dia em mãos e não pode pagar
+ * uma segunda varredura das atividades (é o caso do `computeDailyReset`).
+ * `0` continua `0`: sem nada cadastrado não há o que falhar, e o piso de 1 não
+ * pode inventar uma cobrança onde não havia nenhuma.
+ */
+export function heartGoalFromDailyGoal(dailyGoal: number): number {
+  if (dailyGoal <= 0) return 0;
+  return Math.max(1, Math.ceil(dailyGoal * HEART_GOAL_RATIO));
+}
+
+/**
  * Corações perdidos ANTES do teto diário: proporcional ao que não foi feito.
  * Dono único da fórmula — `computeDailyReset` e `tasksToAvoidHeartLoss` (a
  * resposta que a UI dá) chamam esta mesma função, para o número prometido não
@@ -504,7 +596,11 @@ export function tasksToAvoidHeartLoss(
   weekDay: number,
   dayKey?: string,
 ): number {
-  const goal = dailyGoalFor(state, weekDay, dayKey);
+  // P1: a pergunta é "quanto falta para eu NÃO REGREDIR", e quem responde isso
+  // é a meta de coração — não a do dia completo. Trocar aqui e esquecer o
+  // `computeDailyReset` (ou o contrário) faria a UI prometer um número e o jogo
+  // cobrar outro, que é exatamente o footgun 9.
+  const goal = heartGoalFor(state, weekDay, dayKey);
   const maxHP = state.maxHealthPoints ?? 3;
   if (goal <= 0 || maxHP <= 0) return 0;
   // Procurado PELA PRÓPRIA fórmula da perda, e não por álgebra equivalente.
@@ -639,10 +735,40 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
 
   // Perda de HP: proporcional ao que NÃO foi feito, medido contra a mesma meta,
   // e limitada a MAX_HEARTS_LOST_PER_DAY. Sem tarefas cadastradas, nada a falhar.
-  const rawHeartsLost = rawHeartsLostFor(dailyDone, dailyGoal, prev.maxHealthPoints);
+  // P1: contra a meta de CORAÇÃO (60% da meta do dia), não contra a meta
+  // inteira — que continua sendo o que `dayWasPerfect` exige, logo acima.
+  const heartGoal = heartGoalFromDailyGoal(dailyGoal);
+  const rawHeartsLost = rawHeartsLostFor(dailyDone, heartGoal, prev.maxHealthPoints);
   // Teimoso (utils/passives.ts) aguenta melhor um dia ruim.
   const lossCap = heartLossCap(prev.petPassive, MAX_HEARTS_LOST_PER_DAY);
-  const heartsLost = forgivesHP ? 0 : Math.min(rawHeartsLost, lossCap);
+  const heartsAntesDaFolga = forgivesHP ? 0 : Math.min(rawHeartsLost, lossCap);
+
+  // ── P2: a folga da semana ────────────────────────────────────────────────
+  // A ORDEM IMPORTA e é esta: gasta-se PRIMEIRO, recarrega-se DEPOIS. A perda
+  // sendo julgada aqui é de ONTEM, então ela pertence à semana de ontem e tem
+  // de ser paga com a folga daquela semana. Recarregar antes daria, na virada
+  // de segunda, duas folgas para a mesma pessoa: a que sobrou do domingo e a
+  // da semana nova.
+  const semanaDeOntem = restWeekKeyFor(yesterday);
+  const folgasAntes = prev.restWeekKey === semanaDeOntem
+    // Limitado ao teto NA LEITURA, não só na recarga: o save é escrito pelo
+    // cliente e viaja pela nuvem, então um `restDaysLeft` inflado (edição,
+    // save forjado, bug futuro) viraria folga infinita — ou seja, imunidade a
+    // perda de coração, em silêncio.
+    ? Math.min(REST_DAYS_PER_WEEK, Math.max(0, prev.restDaysLeft ?? REST_DAYS_PER_WEEK))
+    // Semana diferente (ou save antigo, sem o campo): a folga daquela semana
+    // ainda estava inteira. Save antigo nunca começa devendo.
+    : REST_DAYS_PER_WEEK;
+  const usouFolga = heartsAntesDaFolga > 0 && folgasAntes > 0;
+  const heartsLost = usouFolga ? 0 : heartsAntesDaFolga;
+
+  const semanaAgora = restWeekKeyFor(now);
+  const restWeekKey = semanaAgora;
+  const restDaysLeft = semanaAgora !== semanaDeOntem
+    // Virou a semana: recarrega cheio, sem acúmulo.
+    ? REST_DAYS_PER_WEEK
+    : Math.max(0, folgasAntes - (usouFolga ? 1 : 0));
+
   if (heartsLost > 0) {
     newHP = Math.max(0, prev.healthPoints - heartsLost);
   }
@@ -803,6 +929,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   return {
     ...prev,
     activities: resetActivities,
+    // P2 — a folga vive no save (um contador por JOGADOR, não por aparelho).
+    restDaysLeft,
+    restWeekKey,
     tasks: resetTasks,
     healthPoints: Math.min(newHP, newMaxHP),
     maxHealthPoints: newMaxHP,
@@ -866,6 +995,13 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       shieldsSpent,
       /** Esta virada não cobrou HP por carência (novo save / rampa de retorno). */
       forgiven: forgivesHP,
+      /** P2 — a folga da semana absorveu a perda desta virada. A UI usa isto
+       *  para CONTAR o que aconteceu: uma folga gasta em silêncio é um perdão
+       *  que a pessoa nunca soube que recebeu, e perdão invisível não acalma
+       *  ninguém. */
+      restDayUsed: usouFolga,
+      /** Quantas folgas ainda restam nesta semana, depois desta virada. */
+      restDaysLeft,
     },
   };
 }

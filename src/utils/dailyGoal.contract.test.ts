@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { dailyGoalFor, registeredForDay, computeDailyReset } from './dailyReset';
+import { dailyGoalFor, registeredForDay, computeDailyReset, restWeekKeyFor } from './dailyReset';
 import { FORM_REQUIREMENTS, getStageLevel } from '../types/progression';
 
 // ===========================================================================
@@ -118,6 +118,13 @@ describe('a meta que a UI anuncia é a que a virada do dia cobra', () => {
     // (`NEW_SAVE_GRACE_DAYS`, utils/dailyReset.ts), que não cobra HP nas
     // primeiras viradas — e a autoverificação abaixo mediria a carência.
     lastDayReport: { date: 'seed', saveDay: 90 },
+    // P2 — ESTE SAVE JÁ GASTOU A FOLGA DA SEMANA.
+    // Sem isto a folga (`REST_DAYS_PER_WEEK`) absorveria a primeira perda de
+    // coração da virada e os testes abaixo mediriam a folga em vez da regra que
+    // eles existem para provar. Declarado, e não escondido: a folga é real e
+    // vale para o jogador — aqui ela está desligada de propósito.
+    restDaysLeft: 0,
+    restWeekKey: restWeekKeyFor(new Date(DOMINGO_DE_MADRUGADA.getTime() - 86400000)),
   };
 
   it('cumpriu a meta do sábado → a virada NÃO tira coração', () => {

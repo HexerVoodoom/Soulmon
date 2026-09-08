@@ -343,7 +343,7 @@ export function StatsPage({
           >
             {streakDays}
           </span>
-          <span style={sm2Hint}>{isPt ? 'dias perfeitos até aqui' : 'perfect days so far'}</span>
+          <span style={sm2Hint}>{isPt ? 'dias completos até aqui' : 'complete days so far'}</span>
         </div>
 
         {/* WP2.11 — "dias juntos".

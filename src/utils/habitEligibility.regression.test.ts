@@ -4,6 +4,7 @@ import {
   activitiesForWeekDay,
   registeredForDay,
   dailyGoalFor,
+  restWeekKeyFor,
 } from './dailyReset';
 import {
   habitCountsOn,
@@ -54,6 +55,17 @@ function save(over: Record<string, any> = {}): any {
     currentBranch: 'data',
     lastDayWasPerfect: false,
     maxActivityCap: 4,
+    // P2 — ESTE SAVE JÁ GASTOU A FOLGA DA SEMANA. Sem isto ela absorveria a
+    // primeira perda de coração e os testes de cobrança abaixo mediriam a
+    // folga, não a regra de elegibilidade que eles existem para provar.
+    // `restWeekKey: undefined` NÃO serve: a virada lê ausência de semana como
+    // "a folga daquela semana estava inteira", que é o certo para save antigo.
+    restDaysLeft: 0,
+    // A semana tem de ser a do dia JULGADO (o `lastResetDate` deste save):
+    // semana que não bate é lida pela virada como "a folga daquela semana
+    // estava inteira" — que é o certo para save antigo, e o oposto do que
+    // estes testes precisam.
+    restWeekKey: restWeekKeyFor(new Date(over.lastResetDate ?? Date.now())),
     ...over,
   };
 }

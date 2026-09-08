@@ -112,8 +112,8 @@ export function RebirthModal({ language, onConfirm, onClose }: RebirthModalProps
 
       <p style={sm2Hint}>
         {isPt
-          ? 'Nada mais é perdido: Bits, Emblemas, Créditos, decoração, cenários, sonhos, hábitos, tarefas, dias perfeitos e as formas que você já viu continuam exatamente como estão.'
-          : 'Nothing else is lost: Bits, Emblems, Credits, decorations, scenes, dreams, habits, tasks, perfect days and the forms you already unlocked all stay exactly as they are.'}
+          ? 'Nada mais é perdido: Bits, Emblemas, Créditos, decoração, cenários, sonhos, hábitos, tarefas, dias completos e as formas que você já viu continuam exatamente como estão.'
+          : 'Nothing else is lost: Bits, Emblems, Credits, decorations, scenes, dreams, habits, tasks, complete days and the forms you already unlocked all stay exactly as they are.'}
       </p>
 
       <p style={{ ...sm2Hint, color: 'var(--sm2-danger-ink)' }}>

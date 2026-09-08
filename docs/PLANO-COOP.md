@@ -5,8 +5,9 @@
 > `src/components/CoopPanel.tsx` (aba "Grupo" da Biblioteca).
 > Duas coisas mudaram em relação ao que esta página propunha, e estão marcadas
 > no texto: o **check-in é afirmação do cliente**, não verificação de servidor
-> (§4.6), e **bater a meta não paga nada** — a recompensa continua sendo sua
-> decisão (§5.2), e sem ela não há o que farmar.
+> (§4.6), e **bater a meta não paga nada** — o que o dono confirmou como
+> decisão em 07/09/2026 (§5), e sem valor econômico não há o que farmar.
+> **Nenhuma decisão do modo cooperativo continua em aberto.**
 > É o **último item aberto** da `docs/PLANO-EVOLUCAO.md` que não depende de arte
 > (5.1) nem de decisão de balanceamento do dono (P1–P3, P5).
 
@@ -124,7 +125,22 @@ save inteiro já é escrito pelo cliente. O que o servidor garante é o que ele
 consegue garantir sozinho: **um check-in por pessoa por dia, e só sobre si
 mesma**. Como nada de economia depende do resultado, não há o que farmar.
 
-## 5. O que eu preciso de você (dono)
+## 5. Decidido pelo dono em 07/09/2026
+
+As três perguntas abaixo foram respondidas, e as três **confirmaram o que já
+estava no ar** — nenhuma linha de código mudou por causa delas:
+
+1. **Meta = `5 × membros`.** Mantida.
+2. **Recompensa: nenhuma além da comemoração.** O grupo que bate a meta não
+   ganha Bits nem item. Foi a recomendação e é a resposta: item exclusivo de
+   grupo obriga quem joga sozinho a arranjar gente para completar a coleção, e
+   o app é para uma pessoa. Efeito colateral bom: sem valor econômico no
+   check-in, não há o que farmar — que é o que sustenta a fronteira de
+   confiança da §4.6.
+3. **Sem gate de Vínculo.** Entrar já exige código de convite; uma trava a mais
+   só atrasaria quem foi convidado por um amigo no primeiro dia.
+
+### O texto original das perguntas
 
 1. **A meta é `5 × membros` check-ins por semana?** É o único número inventado
    aqui. As alternativas honestas são 4 (mais perdão) ou "metade dos dias".

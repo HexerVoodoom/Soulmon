@@ -368,10 +368,10 @@ Decisão do dono, baixo custo, não muda nada mecânico.
 |---|---|---|---|---|
 | P0 | Corrigir BUG-1…6 | só ⚡/⭐ (BUG-3) | conserto óbvio | ✅ **feito** — conferido no código em 07/09/2026: `dailyTotal` sai de `dailyGoalFor` e `dailyDone` é limitado à meta (BUG-1/2), `energyWasFull >= dailyGoal` (BUG-3), `FOOD_LIMIT_PER_HOUR = MAX_STAGE_REQUIREMENT` (BUG-4), `isDayPerfect` apagado e travado por teste (BUG-5), `registeredForDay(...)` no `EvolveTaskModal` (BUG-6) |
 | P4 | Presets de rotina + "Equilibrar minha semana" | não | conserto óbvio (é UI) | ✅ **feito em 07/09/2026** — `src/utils/weekBalance.ts`, `ROUTINE_PRESETS` em `taskModel.ts`, `BalanceWeekModal` |
-| P1 | `HEART_GOAL_RATIO = 0,6` | ❤️ | **dono** | ⬜ aguarda |
-| P2 | 1 dia de folga/semana, automático | ❤️ | **dono** | ⬜ aguarda |
-| P3 | Alívio adaptativo (−1 após 2 dias falhos) | ❤️ | **dono** | ⬜ aguarda |
-| P5 | "dia perfeito" → "dia completo" | ⭐ (só o nome) | **dono** | ⬜ aguarda |
+| P1 | `HEART_GOAL_RATIO = 0,6` | ❤️ | **dono** | ✅ **aprovado e entregue em 07/09/2026** — `heartGoalFor`/`heartGoalFromDailyGoal` em `dailyReset.ts`, com `heartGoal.test.ts` travando que o desconto NÃO vaza para o dia completo |
+| P2 | 1 dia de folga/semana, automático | ❤️ | **dono** | ✅ **aprovado e entregue em 07/09/2026** — `REST_DAYS_PER_WEEK`/`restWeekKeyFor`, campos `restDaysLeft`/`restWeekKey` no save, e o relatório do dia CONTA que a folga foi usada (`restDay.test.ts`) |
+| P3 | Alívio adaptativo (−1 após 2 dias falhos) | ❤️ | **dono** | ⬜ **o único que sobrou.** Vale reavaliar DEPOIS de P1+P2 rodarem: os dois juntos já entregam boa parte do alívio que a P3 buscava, e empilhar um terceiro sem medir é afrouxar no escuro |
+| P5 | "dia perfeito" → "dia completo" | ⭐ (só o nome) | **dono** | ✅ **aprovado e entregue em 07/09/2026** — 13 arquivos, só dentro de literais de string; `perfectDays`/`wasPerfect` intocados no código |
 
 ---
 

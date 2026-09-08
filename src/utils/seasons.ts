@@ -330,8 +330,8 @@ export const SEASON_PATHS: readonly SeasonPath[] = [
   {
     id: 'perfect-days',
     target: 20,
-    labelPt: '20 dias perfeitos na estação',
-    labelEn: '20 perfect days during the season',
+    labelPt: '20 dias completos na estação',
+    labelEn: '20 complete days during the season',
   },
   {
     id: 'dungeon-runs',

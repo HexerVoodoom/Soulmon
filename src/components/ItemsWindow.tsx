@@ -82,7 +82,7 @@ function effectLine(emoji: string, isPt: boolean): string {
     return `+${CHIP_BOOST} ${isPt ? ATTR_LABEL[special.attr].pt : ATTR_LABEL[special.attr].en}`;
   }
   if (special?.kind === 'heart') return isPt ? `+${HEART_HEAL} coração` : `+${HEART_HEAL} heart`;
-  if (special?.kind === 'glitchtama') return isPt ? '+1 dia perfeito' : '+1 perfect day';
+  if (special?.kind === 'glitchtama') return isPt ? '+1 dia completo' : '+1 complete day';
   const food = Object.values(FOOD_BY_CATEGORY).find(f => f.emoji === emoji);
   if (!food) return '';
   const attrs = CATEGORY_ATTRIBUTES[food.category];

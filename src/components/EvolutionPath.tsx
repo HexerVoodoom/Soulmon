@@ -12,7 +12,7 @@
  *    estado, dito em palavras, para quem não descobre o gesto.
  *
  * 2. **O progresso virou PALAVRA.** Era `3/7 dias` numa barra. Agora é
- *    "Faltam 4 dias perfeitos" / "Pronto para evoluir" — a frase que responde à
+ *    "Faltam 4 dias completos" / "Pronto para evoluir" — a frase que responde à
  *    única pergunta que o jogador faz nesta tela. A barra ficou como apoio
  *    visual, não como o portador do dado.
  *
@@ -913,8 +913,8 @@ export function EvolutionPath({
         <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
           {evolutionLocked
             ? (isPt
-                ? 'Os dias perfeitos continuam somando. Seu Soulmon só espera você dizer quando.'
-                : 'Perfect days keep adding up. It just waits for your go-ahead.')
+                ? 'Os dias completos continuam somando. Seu Soulmon só espera você dizer quando.'
+                : 'Complete days keep adding up. It just waits for your go-ahead.')
             : (isPt
                 ? 'Seu Soulmon vai evoluir sozinho assim que o dia virar.'
                 : 'It will evolve on its own at the next day’s turn.')}

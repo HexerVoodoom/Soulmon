@@ -81,13 +81,13 @@ const TERMS: Term[] = [
   },
   {
     icon: '🔒', en: 'Evolution padlock', pt: 'Cadeado de evolução',
-    descEn: 'Tap your current Soulmon on the Evolution page. Locked, it never evolves — perfect days keep counting.',
-    descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — os dias perfeitos seguem contando.',
+    descEn: 'Tap your current Soulmon on the Evolution page. Locked, it never evolves — complete days keep counting.',
+    descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — os dias completos seguem contando.',
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from clearing all 5 dungeon floors. Using it grants one perfect day — one a day, so the ladder stays measured in days.',
-    descPt: 'Item raro de concluir os 5 andares da masmorra. Usar concede um dia perfeito — um por dia, para a escada continuar sendo medida em dias.',
+    descEn: 'Rare item from clearing all 5 dungeon floors. Using it grants one complete day — one a day, so the ladder stays measured in days.',
+    descPt: 'Item raro de concluir os 5 andares da masmorra. Usar concede um dia completo — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
     icon: '💗', en: 'Little Heart', pt: 'Coraçãozinho',

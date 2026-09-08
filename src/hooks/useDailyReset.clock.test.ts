@@ -12,7 +12,7 @@
  * frente, nem que tenha passado um dia de verdade.
  */
 import { describe, it, expect } from 'vitest';
-import { computeDailyReset } from '../utils/dailyReset';
+import { computeDailyReset, restWeekKeyFor } from '../utils/dailyReset';
 
 const base = () => ({
   activities: [],
@@ -44,6 +44,11 @@ const base = () => ({
   // (`NEW_SAVE_GRACE_DAYS`, utils/dailyReset.ts), que não cobra HP nas primeiras
   // viradas — e um teste de perda de coração passaria a medir a carência.
   lastDayReport: { date: 'seed', saveDay: 90 },
+  // P2 — a folga da semana já foi gasta. O teste de perdão abaixo compara um
+  // dia ruim COBRADO com um dia ruim perdoado por ausência; com a folga
+  // disponível os dois sairiam perdoados e a comparação não mediria nada.
+  restDaysLeft: 0,
+  restWeekKey: restWeekKeyFor(new Date('2026-08-14T12:00:00Z')),
 });
 
 /** Recompleta as tarefas e reenche a energia — o que o jogador faz num toque. */

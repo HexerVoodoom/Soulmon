@@ -79,7 +79,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
   const rows: Row[] = welcome
     ? [
         { label: isPt ? 'Corações' : 'Hearts', value: isPt ? 'intactos' : 'untouched', highlight: 'good' },
-        { label: isPt ? 'Dias perfeitos guardados' : 'Perfect days saved', value: `${report.perfectDays}`, highlight: 'good' },
+        { label: isPt ? 'Dias completos guardados' : 'Complete days saved', value: `${report.perfectDays}`, highlight: 'good' },
       ]
     : [
         {
@@ -88,7 +88,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
           highlight: report.wasPerfect ? 'good' : undefined,
         },
         { label: isPt ? 'Corações' : 'Hearts', value: heartsValue, highlight: report.heartsLost > 0 ? 'soft' : 'good' },
-        { label: isPt ? 'Dias perfeitos' : 'Perfect days', value: `${report.perfectDays}`, highlight: report.wasPerfect ? 'good' : undefined },
+        { label: isPt ? 'Dias completos' : 'Complete days', value: `${report.perfectDays}`, highlight: report.wasPerfect ? 'good' : undefined },
       ];
 
   // Coração partido + vermelho + fundo rosa era uma composição de LUTO para um
@@ -108,7 +108,7 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
     : report.degenerated
       ? (isPt ? 'Seu Soulmon voltou um estágio' : 'Your Soulmon stepped back a stage')
       : report.wasPerfect
-        ? (isPt ? 'Dia perfeito!' : 'Perfect day!')
+        ? (isPt ? 'Dia completo!' : 'Complete day!')
         : report.heartsLost > 0
           ? (isPt ? 'Um dia mais devagar' : 'A slower day')
           : (isPt ? 'Novo dia!' : 'New day!');
@@ -121,6 +121,15 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
       ? `Você ficou ${report.daysAway} dias fora e seu Soulmon não perdeu nada esperando — só estava com saudade. Comece de onde parou.`
       : `You were away ${report.daysAway} days and your Soulmon lost nothing waiting. It just missed you. Pick up where you left off.`);
   }
+  // P2 — a folga da semana entrou. **Contar é obrigatório**: uma folga gasta em
+  // silêncio é um perdão que a pessoa nunca soube que recebeu — e na semana
+  // seguinte ela é cobrada sem entender por que desta vez doeu. O texto diz o
+  // que aconteceu e que a folga volta, sem sugerir que ela "deveria" ter feito.
+  if (report.restDayUsed) {
+    notes.push(isPt
+      ? 'Hoje seu Soulmon usou a folga da semana: nada foi cobrado. Ela volta na segunda.'
+      : "Your Soulmon used this week's day off, so nothing was charged. It comes back on Monday.");
+  }
   if (report.weeklyRelief) {
     notes.push(isPt
       ? 'Semana nova: seu Soulmon recuperou meio coração. O que passou, passou.'
@@ -130,8 +139,8 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
     notes.push(isPt
       // "Faltou" para quem cumpriu 100% da própria meta é a palavra de quem
       // cobra. Vira dica para amanhã, que é o que ela de fato é.
-      ? 'Tarefas em dia! Fica a dica pra amanhã: encher a energia também fecha o dia perfeito.'
-      : 'Tasks done! A tip for tomorrow: filling the energy bar also seals a perfect day.');
+      ? 'Tarefas em dia! Fica a dica pra amanhã: encher a energia também fecha o dia completo.'
+      : 'Tasks done! A tip for tomorrow: filling the energy bar also seals a complete day.');
   }
   if (!welcome && report.heartsLost > 0 && !report.degenerated) {
     notes.push(isPt
@@ -314,8 +323,8 @@ export function DailyReportModal({ report, onClose, language, soulGoal, onRecove
               </button>
               <p style={{ ...hint, textAlign: 'center' }}>
                 {isPt
-                  ? 'Devolve os corações. O dia perfeito não volta — esse já passou.'
-                  : 'Gives the hearts back. The perfect day doesn’t return — that one’s gone.'}
+                  ? 'Devolve os corações. O dia completo não volta — esse já passou.'
+                  : 'Gives the hearts back. The complete day doesn’t return — that one’s gone.'}
               </p>
             </>
           )}

@@ -74,7 +74,7 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   [GLITCHTAMA_EMOJI]: {
     emoji: GLITCHTAMA_EMOJI, kind: 'glitchtama',
     namePt: 'Glitchtama', nameEn: 'Glitchtama',
-    descPt: 'Usar concede 1 dia perfeito (+1 ponto de evolução)', descEn: 'Use to gain 1 perfect day (+1 evolution point)',
+    descPt: 'Usar concede 1 dia completo (+1 ponto de evolução)', descEn: 'Use to gain 1 complete day (+1 evolution point)',
   },
   [CHIP_EMOJI.virus]: {
     emoji: CHIP_EMOJI.virus, kind: 'chip', attr: 'virus',

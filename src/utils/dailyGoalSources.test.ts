@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  computeDailyReset, dailyGoalFor, registeredForDay, tasksCompletedOn, tasksToAvoidHeartLoss,
-} from './dailyReset';
+  computeDailyReset, dailyGoalFor, registeredForDay, tasksCompletedOn, tasksToAvoidHeartLoss, restWeekKeyFor, } from './dailyReset';
 import { completeTask } from './careRules';
 
 // ===========================================================================
@@ -13,6 +12,8 @@ import { completeTask } from './careRules';
 
 const ONTEM = new Date('2026-08-13T12:00:00');
 const VIRADA = new Date('2026-08-14T04:00:00');
+/** A semana da folga (P2) a que o dia julgado por `VIRADA` pertence. */
+const SEMANA_DE_ONTEM = restWeekKeyFor(new Date(VIRADA.getTime() - 86400000));
 const ontemStr = ONTEM.toDateString();
 
 const base = {
@@ -33,6 +34,13 @@ const base = {
   // (`NEW_SAVE_GRACE_DAYS`, utils/dailyReset.ts), que não cobra HP nas primeiras
   // viradas — e um teste de perda de coração passaria a medir a carência.
   lastDayReport: { date: 'seed', saveDay: 90 },
+  // P2 — ESTE SAVE JÁ GASTOU A FOLGA DA SEMANA.
+  // Sem isto a folga (`REST_DAYS_PER_WEEK`) absorveria a primeira perda de
+  // coração da virada e os testes abaixo mediriam a folga em vez da regra que
+  // eles existem para provar. Declarado, e não escondido: a folga é real e
+  // vale para o jogador — aqui ela está desligada de propósito.
+  restDaysLeft: 0,
+  restWeekKey: SEMANA_DE_ONTEM,
 };
 
 // ---------------------------------------------------------------------------
