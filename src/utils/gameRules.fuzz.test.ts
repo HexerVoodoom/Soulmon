@@ -297,9 +297,18 @@ describe('a resposta "quanto falta para não perder coração?" é a mesma conta
       const dayKey = new Date(now.getTime() - 86400000).toDateString();
       // P1: a régua da PERDA é a meta de coração (60% da meta do dia), não a
       // meta do dia completo — que continua sendo o que o dia completo exige.
-      // Este teste existe justamente para as duas não divergirem em silêncio:
-      // ele caiu na hora em que o `tasksToAvoidHeartLoss` mudou de régua, que
-      // é o comportamento certo dele.
+      //
+      // ⚠️ O QUE ESTE TESTE COBRE, E O QUE ELE NÃO COBRE. Ele prova que
+      // `tasksToAvoidHeartLoss` é coerente com `rawHeartsLostFor` SOB A MESMA
+      // meta — ou seja, que a UI não promete um número que a própria fórmula
+      // da perda desmente. Ele NÃO chama `computeDailyReset`, então não pega
+      // a virada trocando de régua por baixo: mutar a virada para cobrar
+      // contra `dailyGoal` deixa este teste VERDE.
+      // Quem trava o footgun 9 de verdade (UI promete X, a virada cobra Y) é
+      // `dailyGoalSources.test.ts` → "a fórmula bate com a virada em TODA
+      // combinação de estágio e meta", que roda os dois lado a lado. Verificado
+      // por mutação em 08/09/2026; se você veio aqui procurando esse guard, é
+      // lá que ele mora.
       const goal = heartGoalFor(s as any, weekDay, dayKey);
       const n = tasksToAvoidHeartLoss(s as any, weekDay, dayKey);
       const maxHP = s.maxHealthPoints;

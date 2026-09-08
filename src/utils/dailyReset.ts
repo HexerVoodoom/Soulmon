@@ -179,7 +179,15 @@ export const REST_DAYS_PER_WEEK = 1;
 export function restWeekKeyFor(d: Date): string {
   const dia = d.getDay();
   const desdeSegunda = (dia + 6) % 7;           // segunda = 0, domingo = 6
-  const segunda = new Date(d.getTime() - desdeSegunda * 86400000);
+  // Aritmética de CALENDÁRIO, não de milissegundos. `getTime() - n * 86400000`
+  // subtrai blocos de 24 h exatas, e na virada do horário de verão a hora local
+  // anda 1 h: o resultado cai no DOMINGO anterior e a chave passa a ser a da
+  // semana passada. Acontece uma vez por ano, em todo fuso com DST (verificado
+  // em America/New_York, Europe/London, Australia/Sydney e America/Santiago —
+  // o Brasil não tem mais DST, que é por isso que passou despercebido), e o
+  // efeito era uma folga extra de graça mais uma recarga fantasma. O construtor
+  // (ano, mês, dia) normaliza pelo calendário local e não tem esse buraco.
+  const segunda = new Date(d.getFullYear(), d.getMonth(), d.getDate() - desdeSegunda);
   return `${segunda.getFullYear()}-${String(segunda.getMonth() + 1).padStart(2, '0')}-${String(segunda.getDate()).padStart(2, '0')}`;
 }
 

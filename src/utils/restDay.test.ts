@@ -18,6 +18,7 @@
  *     cobrada sem entender por que desta vez doeu.
  */
 import { describe, it, expect } from 'vitest';
+import { execFileSync } from 'node:child_process';
 import { computeDailyReset, restWeekKeyFor, REST_DAYS_PER_WEEK } from './dailyReset';
 
 const TODO_DIA = [0, 1, 2, 3, 4, 5, 6];
@@ -134,5 +135,57 @@ describe('o que a folga NÃO faz', () => {
     const d = virada();
     expect(d.lastDayReport).toHaveProperty('restDayUsed', true);
     expect(d.lastDayReport).toHaveProperty('restDaysLeft', 0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+describe('a chave da semana sobrevive ao horário de verão', () => {
+  /**
+   * `restWeekKeyFor` andava para trás com `getTime() - n * 86400000`, que
+   * subtrai blocos de 24 h EXATAS. Na virada do horário de verão a hora local
+   * anda 1 h, então às 23h30 de domingo o resultado caía no domingo anterior e
+   * a chave virava a da semana passada — dando uma folga extra de graça, uma
+   * vez por ano, em todo fuso com DST. O Brasil não tem mais DST: por isso o
+   * bug era invisível na máquina de quem escreveu a regra.
+   *
+   * Este teste roda o ano inteiro, em quatro horários por dia, num processo
+   * filho por fuso — `TZ` só é lido na inicialização do processo, então não dá
+   * para trocar de fuso dentro do teste.
+   */
+  const FUSOS = ['America/New_York', 'Europe/London', 'Australia/Sydney', 'America/Santiago'];
+
+  const filho = `
+    ${restWeekKeyFor.toString()}
+    let ruins = [];
+    for (let i = 0; i < 400; i++) {
+      for (const h of [0, 1, 4, 12, 23]) {
+        const d = new Date(2026, 0, 1, h, 30, 0);
+        d.setDate(d.getDate() + i);
+        const esperada = new Date(d.getFullYear(), d.getMonth(), d.getDate() - ((d.getDay() + 6) % 7));
+        const esperadaK = esperada.getFullYear() + '-'
+          + String(esperada.getMonth() + 1).padStart(2, '0') + '-'
+          + String(esperada.getDate()).padStart(2, '0');
+        const k = restWeekKeyFor(d);
+        if (k !== esperadaK) ruins.push(d.toString() + ' -> ' + k + ' (esperado ' + esperadaK + ')');
+      }
+    }
+    console.log(JSON.stringify(ruins.slice(0, 5)));
+  `;
+
+  for (const tz of FUSOS) {
+    it(`${tz}: a segunda-feira da semana é sempre uma segunda-feira`, () => {
+      const saida = execFileSync(process.execPath, ['-e', filho], {
+        env: { ...process.env, TZ: tz },
+        encoding: 'utf8',
+      });
+      expect(JSON.parse(saida.trim())).toEqual([]);
+    });
+  }
+
+  it('a âncora continua sendo a SEGUNDA, e a semana inteira dá a mesma chave', () => {
+    // Domingo 13/09/2026 pertence à semana da segunda 07/09 — e não à do dia 14.
+    expect(restWeekKeyFor(new Date(2026, 8, 13, 23, 30))).toBe('2026-09-07');
+    expect(restWeekKeyFor(new Date(2026, 8, 7, 0, 1))).toBe('2026-09-07');
+    expect(restWeekKeyFor(new Date(2026, 8, 14, 4, 0))).toBe('2026-09-14');
   });
 });
