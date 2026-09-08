@@ -198,15 +198,47 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > | Referências a `CONSENT_STEP`, apagado no dia anterior | `gateDraft`, `oracleDraft`, `telemetry` | dívida |
 > | `.claude/launch.json` apontava para a porta 5173; o dev sobe na 3000 | — | dívida |
 >
+> ### ✅ Segunda rodada (mesma sessão) — as decisões do dono, aplicadas
+>
+> | Decisão | O que foi feito |
+> |---|---|
+> | **Preço**: "se não der para ser USD, explica que é BRL" | **Dava, e já era pela metade.** `getLocalizedPrice` (WP5.8) devolve o preço do Play na moeda da conta e o desbloqueio já usava; **os pacotes de crédito não** — imprimiam a constante em real para o planeta, na mesma tela, um andar abaixo. Corrigido. E onde a loja não responde (web/PWA/desktop) o fallback agora carimba `BRL` **só em inglês e só quando é fallback** (`precoComMoeda`) — carimbar sobre um preço vindo do Play seria transformar um preço certo em mentira, e isso tem caso próprio. |
+> | **Folga × cocô**: corrigir o texto | O docstring de `REST_DAYS_PER_WEEK` dizia "do save inteiro"; agora diz "na VIRADA DO DIA", com o porquê — o dreno cobra presença com descuido, a folga perdoa ausência —, e o mesmo parágrafo foi para o cabeçalho de `poopDrain.ts`, com o aviso de mudar os dois juntos. **Nenhuma regra mudou.** |
+> | **Login**: só melhorar a mensagem | Parou de prometer "estamos te levando para lá" (o redirecionamento pode não concluir). Agora oferece as duas saídas que sempre funcionam: liberar o pop-up, ou entrar com e-mail e senha, que não abre janela nenhuma. |
+> | **Emoji**: gerar prompts de arte | Entrada **A21** em `docs/BACKLOG-ARTE-GERAR.md`, com prompts prontos (folha única, fundo verde `#00FF00`, `Square 1:1` no fim, recorte por chroma-key). |
+> | **Marco de 21 dias** | 🪴 → **🌾**. Era o único caso em que arte não resolve: o glifo está dentro da frase, e texto inline não aceita `<img>`. |
+> | **Sufixo `-mon`** | Pyrakamon/Akashaoimon/Nimbratamon → **Pyraka/Akashaoi/Nimbrata**. O `id` da linha não mudou. A regra do `CLAUDE.md` virou executável em `sprites.dungeonRoster.test.ts`. |
+>
+> ⚠️ **Correção do que a primeira rodada reportou.** Eu disse "9 emojis na
+> tela"; conferindo um a um, são menos. **Não** chegam à tela: os 4 sonhos (o
+> DreamDex já renderiza o PNG de `dreamArt.ts`), o `HABIT_TIER_EMOJI` (mapa sem
+> consumidor) e o 🪙 dos Bits (só em comentário). O guard foi corrigido caso a
+> caso.
+>
+> ⚠️ **Ao renomear apareceu um footgun 9 que ninguém tinha visto**: os três
+> nomes estavam escritos à mão em TRÊS arquivos (`sprites.ts`,
+> `monetization.ts`, `libraryNpcs.ts`). Renomear num só deixaria o inimigo da
+> masmorra e o NPC da Biblioteca chamando a mesma criatura por outro nome, em
+> silêncio. Hoje `DUNGEON_LINE_NAMES` é o dono único e os outros dois leem dele.
+>
+> ⚠️ **`dist/` ficou para trás de propósito nesta segunda rodada.** Havia outro
+> agente trabalhando na MESMA árvore (arte de decoração, `vitest.config.ts`,
+> `sw.js`), e um build meu levaria o trabalho dele pela metade junto. **Rode
+> `npm run build` e commite o `dist/` quando as duas frentes fecharem.** Pelo
+> mesmo motivo, o `assets.contract.test.ts` fica vermelho de forma intermitente
+> na suíte cheia enquanto ele reescreve os PNGs de decoração — passa sozinho,
+> não é defeito do repositório.
+>
 > ### Aberto — precisa de você
 >
-> 1. **Nove emojis renderizam como caixa vazia** (bloco U+1FA70–U+1FAFF, Emoji
->    12+). Atinge o marco de 21 dias de hábito, o traço Carinhoso, cinco
->    mobílias da loja, três cenas da aventura, quatro sonhos, um reino do
->    Oráculo e dois controles do overlay. **Não troquei nenhum** — são catálogos
->    que você curou. A lista completa, com a troca proposta para cada um, está
->    em `src/styles/emojiSuportado.contract.test.ts`, que também impede a dívida
->    de crescer. O 🪙 dos Bits é falso alarme: só existe em comentário.
+> 1. **Emojis que renderizam como caixa vazia** (bloco U+1FA70–U+1FAFF, Emoji
+>    12+). O que ainda falta, depois da 2ª rodada, é ARTE — e cada um já tem
+>    entrada de backlog: 3 cenas da aventura (**A20**), 5 mobílias da loja e do
+>    palco (**A7** — que o agente de arte fechou em 08/09/2026, conferir), o
+>    traço Carinhoso (**A15**) e os dois controles do overlay de desktop
+>    (**A21.1**, com o prompt pronto). O inventário caso a caso, e o que NÃO
+>    chega à tela, está em `src/styles/emojiSuportado.contract.test.ts`, que
+>    também impede a dívida de crescer.
 > 2. **`signInWithRedirect` pode estar morto no navegador do usuário.** É a
 >    única saída quando o popup do Google é bloqueado, e o `authDomain`
 >    (`soulmon-app.firebaseapp.com`) é um domínio diferente do app: desde o SDK
@@ -215,15 +247,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >    menos que `/__/auth/handler` seja servido pelo domínio do próprio app.
 >    **HIPÓTESE** — não dá para reproduzir sem conta Google real e popup barrado.
 >    Se confirmar, a correção é servir o handler no domínio do app.
-> 3. **A folga da semana não cobre o dreno de cocô.** `applyPoopDrain` respeita
->    teto diário, Teimoso e perdão de ausência, mas não a folga — e o docstring
->    da P2 diz que ela protege "o CORAÇÃO... do save inteiro". Ou o texto está
->    grande demais, ou falta a fiação. É mudança de REGRA: não toquei.
-> 4. **Preço em R$ para quem está em inglês** ("Get the full game — R$ 29,90").
-> 5. Os três personagens prontos terminam em `-mon` (Pyrakamon, Akashaoimon,
->    Nimbratamon) e o `CLAUDE.md` diz que nenhum nome de criatura leva sufixo
->    fixo `-mon`. Provavelmente é exceção deliberada (o app se chama Soulmon),
->    mas a regra escrita não abre exceção — confirme e ajuste um dos dois.
+> 3. ~~A folga da semana não cobre o dreno de cocô~~ — ✅ decidido na 2ª
+>    rodada: o TEXTO estava errado, não a regra. Corrigido nos dois arquivos.
+> 4. ~~Preço em R$ para quem está em inglês~~ — ✅ resolvido na 2ª rodada.
+> 5. ~~Sufixo `-mon` nos três personagens prontos~~ — ✅ resolvido na 2ª rodada.
 >
 > ### O que foi conferido e está CERTO (para ninguém revisitar à toa)
 >
