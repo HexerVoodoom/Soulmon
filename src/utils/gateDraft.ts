@@ -40,7 +40,10 @@ export interface GateDraft {
   v: typeof GATE_DRAFT_VERSION;
   soulGoal: string;
   soulStruggle: string;
-  /** Prova do aceite dos Termos, tirada no `CONSENT_STEP`. */
+  /** Prova do aceite dos Termos, tirada nas caixas do portão
+   *  (`IDENTITY_STEP`/`GOOGLE_STEP`/`EMAIL_STEP`). O `CONSENT_STEP` que este
+   *  comentário citava foi APAGADO em 07/09/2026, quando o aceite desceu para
+   *  a própria tela de conta — a referência sobreviveu ao passo. */
   consent: ConsentRecord | null;
   /** ISO de quando foi gravado — só para o leitor humano do storage. */
   savedAt: string;
@@ -59,7 +62,7 @@ export function readGateDraft(): GateDraft | null {
     v: GATE_DRAFT_VERSION,
     soulGoal: typeof d.soulGoal === 'string' ? d.soulGoal : '',
     soulStruggle: typeof d.soulStruggle === 'string' ? d.soulStruggle : '',
-    // O consent é a peça que o CONSENT_STEP existe para produzir. Se vier
+    // O consent é a peça que as caixas do portão produzem. Se vier
     // quebrado, vale `null`: o onboarding pede o aceite de novo, que é o
     // comportamento seguro. Consentimento presumido não é consentimento.
     consent: d.consent && typeof d.consent === 'object' ? (d.consent as ConsentRecord) : null,

@@ -667,7 +667,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     // Voltar de dentro do teste longo devolve a escolha: quem entrou sem
     // querer não fica preso em 20 perguntas.
     if (step === DEEP_START) { setRefine(null); setStep(REFINE_OFFER); return; }
-    setStep(s => Math.max(isUpgrade ? 1 : 0, s - 1));
+    // O PISO É 1 NOS DOIS MODOS. Era `0` fora do upgrade, e o passo 0 era a
+    // intro de marca — que foi APAGADA quando o portão virou a primeira tela.
+    // Hoje nada renderiza no 0: quem caísse ali veria o casco do onboarding
+    // vazio, sem título, sem botão e sem saída. Não há caminho vivo que chegue
+    // lá (o passo 1 e todos os negativos têm ramo próprio acima), então isto é
+    // uma trava, não um conserto de sintoma — o próximo `back` de uma tela nova
+    // não vai estrear numa tela em branco.
+    setStep(s => Math.max(1, s - 1));
   };
 
   /** Saída do muro de idade: nada de nome/data fica guardado, e o ritual

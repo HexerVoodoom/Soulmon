@@ -544,6 +544,35 @@ describe('funil: demo e pago nunca caem no mesmo contador', () => {
     expect(onboardingStepCode(NaN)).toBeNull();
   });
 
+  it('🔴 o passo negativo MAIS FUNDO ainda tem folga sobre o maior positivo', () => {
+    // O TETO ANDOU E NINGUÉM MEDIU. Quando este mapeamento nasceu o passo mais
+    // fundo era `AGE_BLOCK` (-5); o portão de conta trouxe mais três telas e
+    // hoje o fundo é `GOOGLE_STEP` (-9) → código 36. O maior passo positivo é
+    // `REGISTER`, que NÃO é um literal: vale
+    // `5 + 1 + |ORACLE_QUESTIONS| + 1 + |SOUL_TEST_ITEMS| + 3`, hoje 35.
+    //
+    // Ou seja: a folga inteira é de UM. Um item novo no teste psicométrico
+    // empurra REGISTER para 36 e ele passa a reportar o MESMO código de
+    // `GOOGLE_STEP` — duas telas distintas do funil somando no mesmo contador,
+    // sem erro, sem aviso, e com os dados parecendo plausíveis. É o footgun 9
+    // em forma de número.
+    //
+    // Este teste é o alarme. Se ele ficar vermelho, a correção NÃO é afrouxar
+    // a asserção: é subir `NEGATIVE_STEP_BASE` (e o `max` de `onboarding_step`
+    // em `EVENT_SCHEMA`, que hoje vale exatamente a base) para longe do topo
+    // dos positivos.
+    const MAIS_FUNDO = -9;                  // GOOGLE_STEP, SoulmonOnboarding.tsx
+    const MAIOR_POSITIVO = 35;              // REGISTER, derivado dos dois catálogos
+    const codigoDoFundo = onboardingStepCode(MAIS_FUNDO);
+    expect(codigoDoFundo).not.toBeNull();
+    expect(codigoDoFundo!).toBeGreaterThan(MAIOR_POSITIVO);
+    // E o maior positivo continua sendo o que este arquivo acredita que ele é.
+    expect(onboardingStepCode(MAIOR_POSITIVO)).toBe(MAIOR_POSITIVO);
+    // A allowlist tem de aceitar o código do fundo — senão a tela mais crítica
+    // do funil (a primeira do app) seria descartada pelo próprio validador.
+    expect(EVENT_SCHEMA.onboarding_step!.step.max).toBeGreaterThanOrEqual(codigoDoFundo!);
+  });
+
   it('os três rótulos de funil passam pela allowlist e chegam distintos', () => {
     for (const funnel of Object.values(TELEMETRY_FUNNEL)) {
       expect(sanitizeEvent('onboarding_step', { step: 7, funnel })?.p).toEqual({ step: 7, funnel });

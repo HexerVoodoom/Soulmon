@@ -13,7 +13,8 @@
  * nascimento — exatamente o que o `SOULMON_PROFILE` já guarda no aparelho
  * depois da geração — e o REGISTRO de consentimento (data + versões dos
  * Termos): sem ele, um ritual retomado terminaria num save sem a prova do
- * aceite, que é a peça que o `CONSENT_STEP` existe para produzir. O que NUNCA
+ * aceite, que é a peça que as caixas do portão produzem (o `CONSENT_STEP` foi
+ * apagado em 07/09/2026 e o aceite desceu para a própria tela de conta). O que NUNCA
  * entra: e-mail, o mês/ano do demo (que não é persistido de propósito — ver `demoAgeText` no onboarding),
  * o resultado gerado (a geração custa; quem chegou ao reveal tem o perfil com
  * `seed` para regenerar) e nada do cadastro.
@@ -49,7 +50,7 @@ export interface OracleDraft {
   answers: Record<string, string>;
   testAnswers: SoulAnswers;
   refine: boolean | null;
-  /** Prova do aceite dos Termos, tirada no `CONSENT_STEP`. */
+  /** Prova do aceite dos Termos, tirada nas caixas do portão de conta. */
   consent: ConsentRecord | null;
   /** ISO de quando foi gravado — só para o leitor humano do storage. */
   savedAt: string;

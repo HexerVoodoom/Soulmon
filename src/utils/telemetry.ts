@@ -336,8 +336,9 @@ export const TELEMETRY_CREATE_PATH = {
 
 /**
  * Passos do onboarding são ids do componente e alguns são NEGATIVOS de
- * propósito (`DEMO_PICK`, `GOAL_STEP`, `STRUGGLE_STEP`, `CONSENT_STEP`,
- * `AGE_BLOCK` — ver `SoulmonOnboarding.tsx`), para telas novas não renumerarem
+ * propósito (`DEMO_PICK`, `GOAL_STEP`, `STRUGGLE_STEP`, `AGE_BLOCK`,
+ * `IDENTITY_STEP`, `CHOICE_STEP`, `EMAIL_STEP`, `GOOGLE_STEP` — ver
+ * `SoulmonOnboarding.tsx`), para telas novas não renumerarem
  * o ritual. A allowlist só aceita número não-negativo dentro de faixa, então o
  * id vira um CÓDIGO estável aqui, num lugar só: `-1 → 44 … -5 → 40`, acima do
  * maior passo positivo que existe (REGISTER = 35). Mapear em cada call site
