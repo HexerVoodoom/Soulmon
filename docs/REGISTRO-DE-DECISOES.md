@@ -378,6 +378,51 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 > de ajuste é `HEART_GOAL_RATIO` (0,6 → 0,7 devolve o mega a 5 de 6), **não** tirar
 > a folga.
 
+### 6.1 As decisões de SOM (08/09/2026)
+
+Contexto: até esta data o app tinha **11 sons, 100% sintetizados em runtime** por
+osciladores (`src/utils/sounds.ts`), **zero arquivo de áudio**, **zero música**,
+**zero mixer** (cada som abre um `AudioContext` próprio e o fecha em 2 s) e um
+único `mute` booleano. Ganhos hardcoded entre 0,045 e 0,12, **nunca medidos**.
+Dois sons — `playPoopAlert` e `playMenuOpen` — estão exportados com **zero
+chamadores** (contagem por `grep` nos 7 arquivos que importam o módulo).
+
+O eixo sonoro do produto foi aberto por um run próprio (`squad-alpha-runs/som-01/`),
+com uma squad instanciada a partir da SQUAD-Alpha e cinco loops de refino
+adversarial. As decisões que saíram dali:
+
+| Decisão | Argumento vencedor | O que teria de ser derrubado para reabrir |
+|---|---|---|
+| **S1 — a fonte do som novo é GERAÇÃO POR IA** (Higgsfield / Seed Audio) | Decisão do dono. Dá paleta tímbrica, ambiente e variação que dois osciladores não alcançam | Ver a alternativa que perdeu, abaixo — ela tem gatilho declarado |
+| **S2 — a trilha EXISTE, mas nasce DESLIGADA e só começa por gesto** | Trilha com **autoplay viola a D11 por extensão**: `sounds.ts` declara que *"a fronteira da D11 é o pacote inteiro"* e que a taxonomia é presença + confirmação de ação — música contínua não é nenhuma das duas, e cai no predicado literal *"som que sai sozinho não é presença, é alarme"*. Iniciada por gesto, ela deixa de ser som não solicitado e passa a ser escolha, como o Forest | Evidência de que a trilha ligada por padrão **não** aumenta abandono no perfil "usuário em público" — e ela não existe hoje, porque **ninguém nunca usou o app** |
+| **S3 — o alvo de loudness é AES / EBU R 128: ≤ −16 LUFS integrado, true peak ≤ −1 dBTP** | É o padrão com norma citada (ITU-R BS.1770 K-weighting; EBU R 128). A alternativa (−10/−12 **dBFS**, de `references/audio.md` da skill de geração) mistura régua de PICO com régua de LOUDNESS — e as duas estão a **3,017 dB medidos** uma da outra, diferença aferida no protótipo de medição deste run | Medição mostrando que −16 LUFS deixa o app inaudível no alto-falante de celular em ambiente ruidoso — **medida**, não impressão |
+| **S4 — nenhum som pode reintroduzir PI de terceiro** | O bundle já carregou 74 sprites e 57 nomes registrados da Bandai. Vale para jingle reconhecível e para timbre-assinatura de franquia | Nada. É linha vermelha, não trade-off |
+| **S5 — texto do usuário NUNCA entra em prompt de geração de áudio** | Extensão direta da regra já vigente para geração de sprite. Agora o áudio também é gerado por IA, então a mesma superfície de injeção existe | Nada |
+
+> **A alternativa que perdeu, e o gatilho para ela voltar.** O caminho não
+> escolhido é **melhorar o sintetizador procedural** (ADSR, segundo oscilador,
+> filtro, round-robin por detune) em vez de embarcar arquivos. Ele é gratuito em
+> todas as moedas que este projeto de fato paga: **zero byte permanente** num repo
+> onde `dist/` é commitado (todo asset é imortal no histórico), **zero exposição
+> de PI**, **zero latência de decode** (MP3 carrega ≥100 ms, e SFX de UI precisam
+> ser buffers curtos pré-decodificados), **zero dependência de fornecedor** — e os
+> termos de uso comercial da saída do gerador são **lacuna aberta, num projeto sem
+> jurídico**. Perdeu porque o caso é forte para SFX de UI e **fraco para trilha e
+> ambiente**: ninguém sintetiza ambiente de sessão longa com dois osciladores.
+>
+> **Gatilho para reabrir:** um teste cego A/B (mesmo evento, loudness normalizado,
+> ordem sorteada) em que o procedural vença ou empate em **≥2 de 3** pares de SFX
+> de UI. Se isso acontecer **e** os termos do gerador voltarem restritivos, S1 cai
+> para SFX e sobrevive só para trilha e ambiente. **O escopo híbrido — SFX de UI
+> procedurais + IA para trilha, ambiente e stingers — é admissível desde já**, e é
+> o desfecho mais provável.
+
+> ⚠️ **Nada nesta subseção foi medido no Soulmon.** §1 vale aqui inteira: ninguém
+> nunca usou o app, não há telemetria de áudio nenhuma (nem evento de mute, nem de
+> volume, nem de sessão com som ligado). Toda afirmação sobre como o usuário reage
+> a som é `[hipótese]`, e criar essa instrumentação é entregável do run, não
+> pré-requisito dele.
+
 ---
 
 ## 7. Falseabilidade — as 12 apostas, com número e instrumento

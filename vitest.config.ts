@@ -5,6 +5,45 @@ import viteConfig from './vite.config';
 // quem está perto dele). Ver o cabeçalho de lá.
 import { TEST_TIMEOUT_MS } from './vitest.budget.mjs';
 
+// ── O `localStorage` DO NODE ≥25 SOMBREIA O DO JSDOM ──────────────────────────
+//
+// Em 08/09/2026, com Node v25.2.1, 28 testes de 3 arquivos `@vitest-environment
+// jsdom` ficaram vermelhos numa árvore em que ninguém tinha mexido — `tsc`
+// limpo — com `TypeError: localStorage.clear is not a function`.
+//
+// O Node passou a expor `localStorage`/`sessionStorage` como globais SEM FLAG.
+// Sem `--localstorage-file <caminho>`, esse objeto nasce inútil (medido:
+// `Object.getOwnPropertyNames(localStorage)` → `[]`, `typeof clear` →
+// `undefined`, mais um `Warning: --localstorage-file was provided without a
+// valid path`). No ambiente jsdom do Vitest o `window` É o `globalThis`, e o
+// acessor que o Node já definiu vence — então `window.localStorage` e
+// `globalThis.localStorage` apontam os DOIS para o objeto morto, e o do jsdom
+// nunca chega. Não há como consertar por reatribuição no `setupFiles`: não
+// existe referência para o objeto certo.
+//
+// Provado por execução, no mesmo probe, com e sem a flag:
+//   sem  → { dvLSproto: 'Object',  dvLSclear: 'undefined' }
+//   com  → { dvLSproto: 'Storage', dvLSclear: 'function'  }
+//
+// Por que aqui e não num script do `package.json`: o `CLAUDE.md` manda rodar
+// **`npx vitest run`** antes de todo commit — invocação que não passa por
+// script nenhum e não herdaria a variável. A regra ficaria verde para quem usa
+// o script e vermelha para quem segue o guia, que é o footgun 9 ("regra copiada
+// diverge em silêncio") entre duas formas de rodar a MESMA suíte. Este arquivo
+// é a única camada por onde toda invocação passa, e ele é avaliado no processo
+// principal ANTES de os workers nascerem — que é o que faz eles herdarem.
+//
+// `poolOptions.*.execArgv` NÃO serve: o Vitest monta a própria lista de
+// `execArgv` do worker e a nossa não sobrevive (verificado no mesmo probe).
+//
+// Some sozinho quando o Node der jeito de a webstorage dele não sombrear o
+// ambiente de teste: a checagem de idempotência evita duplicar a flag, e a flag
+// num Node que não tem mais a global é inofensiva.
+const FLAG_WEBSTORAGE = '--no-experimental-webstorage';
+if (!(process.env.NODE_OPTIONS ?? '').includes(FLAG_WEBSTORAGE)) {
+  process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS ?? ''} ${FLAG_WEBSTORAGE}`.trim();
+}
+
 // FRONTEIRA: este arquivo é um config INDEPENDENTE do `vite.config.ts`. Os
 // aliases (`figma:asset/*`, `@/*`, os pacotes com versão no nome) vivem só lá,
 // então qualquer teste que importasse um componente com `figma:asset` morria em
