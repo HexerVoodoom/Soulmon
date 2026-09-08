@@ -364,14 +364,14 @@ Decisão do dono, baixo custo, não muda nada mecânico.
 
 ### Resumo da fila
 
-| # | O quê | Muda `CLAUDE.md`? | Quem decide |
-|---|---|---|---|
-| P0 | Corrigir BUG-1…6 | só ⚡/⭐ (BUG-3) | conserto óbvio |
-| P4 | Presets de rotina + "Equilibrar minha semana" | não | conserto óbvio (é UI) |
-| P1 | `HEART_GOAL_RATIO = 0,6` | ❤️ | **dono** |
-| P2 | 1 dia de folga/semana, automático | ❤️ | **dono** |
-| P3 | Alívio adaptativo (−1 após 2 dias falhos) | ❤️ | **dono** |
-| P5 | "dia perfeito" → "dia completo" | ⭐ (só o nome) | **dono** |
+| # | O quê | Muda `CLAUDE.md`? | Quem decide | Estado |
+|---|---|---|---|---|
+| P0 | Corrigir BUG-1…6 | só ⚡/⭐ (BUG-3) | conserto óbvio | ✅ **feito** — conferido no código em 07/09/2026: `dailyTotal` sai de `dailyGoalFor` e `dailyDone` é limitado à meta (BUG-1/2), `energyWasFull >= dailyGoal` (BUG-3), `FOOD_LIMIT_PER_HOUR = MAX_STAGE_REQUIREMENT` (BUG-4), `isDayPerfect` apagado e travado por teste (BUG-5), `registeredForDay(...)` no `EvolveTaskModal` (BUG-6) |
+| P4 | Presets de rotina + "Equilibrar minha semana" | não | conserto óbvio (é UI) | ✅ **feito em 07/09/2026** — `src/utils/weekBalance.ts`, `ROUTINE_PRESETS` em `taskModel.ts`, `BalanceWeekModal` |
+| P1 | `HEART_GOAL_RATIO = 0,6` | ❤️ | **dono** | ⬜ aguarda |
+| P2 | 1 dia de folga/semana, automático | ❤️ | **dono** | ⬜ aguarda |
+| P3 | Alívio adaptativo (−1 após 2 dias falhos) | ❤️ | **dono** | ⬜ aguarda |
+| P5 | "dia perfeito" → "dia completo" | ⭐ (só o nome) | **dono** | ⬜ aguarda |
 
 ---
 
