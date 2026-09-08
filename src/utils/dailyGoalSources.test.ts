@@ -135,27 +135,57 @@ describe('o número que o banner de 1 coração promete é o número que salva',
   });
 
   it('PROVA pela própria virada: com 2 de 4 o coração CAI mesmo assim', () => {
+    // Rookie com o HP CHEIO: é aqui que a tese se prova sem o piso da raiz no
+    // meio do caminho. Com 2 de 4 (a "metade" que o banner prometia bastar) o
+    // coração cai de verdade — 3 → 2.
     const comDuas = {
+      ...rookie4,
+      healthPoints: 3,
+      tasks: [1, 2, 3, 4].map(i => ({ id: `t${i}`, completed: i <= 2 })),
+    };
+    const depois: any = computeDailyReset(comDuas as any, { now: VIRADA });
+    expect(depois.lastDayReport.heartsLost).toBe(1);
+    expect(depois.healthPoints).toBe(2);                 // o HP se moveu MESMO
+    expect(depois.degeneratedByHP).toBe(false);
+    expect(depois.perfectDays).toBe(comDuas.perfectDays ?? 0);
+  });
+
+  it('…e no PISO da raiz o relatório não anuncia uma perda que não aconteceu', () => {
+    // O mesmo dia ruim, com o rookie já em HP 1. A conta cobra 1, o HP vai a
+    // zero e o piso da raiz o devolve para 1 — o coração NÃO se move.
+    //
+    // O relatório anunciava `heartsLost: 1` assim mesmo, todas as noites, para
+    // sempre, e o `DailyReportModal` ainda oferecia o botão de recuperar
+    // corações que nunca foram perdidos (`canRecover` liga em
+    // `report.heartsLost > 0`). Era o jogador mais frágil do jogo levando uma
+    // cobrança fantasma diária — o oposto exato da essência declarada.
+    //
+    // Não relaxa regra nenhuma: o que mudou é o NÚMERO ANUNCIADO, e ele agora
+    // é o que de fato saiu do coração.
+    const noPiso = {
       ...rookie4,
       healthPoints: 1,
       tasks: [1, 2, 3, 4].map(i => ({ id: `t${i}`, completed: i <= 2 })),
     };
-    const depois: any = computeDailyReset(comDuas as any, { now: VIRADA });
-    // A TESE deste caso — com 2 de 4 o coração cai mesmo assim, e era isso que
-    // o banner prometia evitar — continua sendo esta linha:
-    expect(depois.lastDayReport.heartsLost).toBe(1);
+    const depois: any = computeDailyReset(noPiso as any, { now: VIRADA });
+    expect(depois.healthPoints).toBe(1);                 // o piso segurou
+    expect(depois.degeneratedByHP).toBe(false);          // raiz não degenera
+    expect(depois.lastDayReport.heartsLost).toBe(0);     // …e o relatório conta isso
+    expect(depois.perfectDays).toBe(noPiso.perfectDays ?? 0);
+  });
 
-    // As duas linhas abaixo mudaram junto com a regra, e o caso ficou MAIS
-    // apertado, não mais frouxo. Antes afirmavam `degeneratedByHP === true` e
-    // HP de volta a 3: o rookie "degenerava" para si mesmo (é a raiz da
-    // árvore, `getPreviousForm` devolve o próprio estágio) e ganhava HP cheio
-    // + `perfectDays = 2` de brinde. Medido na época: quem NÃO fazia nada
-    // terminava melhor que quem fazia tudo.
-    // Agora, na raiz, não há degeneração nenhuma — só um coração de volta,
-    // para o jogador não ficar preso em HP 0.
-    expect(depois.degeneratedByHP).toBe(false);
+  it('teimoso em 0,5 no piso da raiz TERMINA com mais HP — e nada de perda é anunciado', () => {
+    // O caso extremo do mesmo piso: o HP SOBE (0,5 → 1). Anunciar "0,5 em
+    // recuperação" aqui seria mentir na direção mais cruel possível.
+    const meio = {
+      ...rookie4,
+      healthPoints: 0.5,
+      petPassive: 'teimoso',
+      tasks: [1, 2, 3, 4].map(i => ({ id: `t${i}`, completed: false })),
+    };
+    const depois: any = computeDailyReset(meio as any, { now: VIRADA });
     expect(depois.healthPoints).toBe(1);
-    expect(depois.perfectDays).toBe(comDuas.perfectDays ?? 0);
+    expect(depois.lastDayReport.heartsLost).toBe(0);
   });
 
   it('e com 3 de 4 o coração NÃO cai — o número novo é o número certo', () => {

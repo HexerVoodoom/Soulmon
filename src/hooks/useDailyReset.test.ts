@@ -622,6 +622,35 @@ describe('computeDailyReset — alívio semanal de segunda', () => {
     expect(result.evolutionStage).toBe('rookie');
   });
 
+  it('o relatório só ANUNCIA o alívio quando ele de fato aconteceu', () => {
+    // `weeklyRelief` era literalmente `isMonday`: toda segunda o relatório
+    // contava o meio coração de volta, inclusive para quem estava com o HP
+    // CHEIO (não havia o que devolver) e para quem estava em zero (a regra
+    // pula de propósito, para não ressuscitar ninguém). Presente anunciado e
+    // não entregue é o relatório mentindo na direção mais fácil de acreditar —
+    // e some junto com o bloco na tela do relatório, que é o item 4 do QA.
+    const sunday = new Date('2026-08-02T12:00:00').toDateString();
+    const feitas = Array.from({ length: 4 }, (_, i) => ({ id: `t${i}`, completed: true }));
+
+    // (a) HP CHEIO numa segunda: nada a devolver, nada a anunciar.
+    const cheio = runReset({
+      ...baseState(), tasks: feitas, lastResetDate: sunday, healthPoints: 3, maxHealthPoints: 3,
+    }, MONDAY);
+    expect(cheio.healthPoints).toBe(3);
+    expect(cheio.lastDayReport.weeklyRelief).toBe(false);
+
+    // (b) HP com espaço numa segunda: aconteceu, e é anunciado.
+    const comEspaco = runReset({
+      ...baseState(), tasks: feitas, lastResetDate: sunday, healthPoints: 2, maxHealthPoints: 3,
+    }, MONDAY);
+    expect(comEspaco.healthPoints).toBe(2.5);
+    expect(comEspaco.lastDayReport.weeklyRelief).toBe(true);
+
+    // (c) Qualquer dia que não é segunda: nunca.
+    const naSemana = runReset({ ...baseState(), tasks: feitas, healthPoints: 2 });
+    expect(naSemana.lastDayReport.weeklyRelief).toBe(false);
+  });
+
   it('não estoura o máximo do estágio', () => {
     const sunday = new Date('2026-08-02T12:00:00').toDateString();
     const result = runReset({ ...baseState(), lastResetDate: sunday, healthPoints: 3 }, MONDAY);

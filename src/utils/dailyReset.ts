@@ -733,6 +733,8 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   let newEvolutionStage = prev.evolutionStage;
   const finalUnlockedEvolutions = [...prev.unlockedEvolutions];
   let wasDegeneratedByHP = false;
+  /** O piso da raiz (rookie) engoliu a perda desta virada — ver mais abaixo. */
+  let pisoDaRaizAbsorveu = false;
   let newMaxActivityCap = prev.maxActivityCap;
   let newCurrentBranch = prev.currentBranch as Attr;
   let newRecentAttrs = {
@@ -785,9 +787,20 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
   // estágio. Semana nova começa com fôlego (o Snorlax do Pokémon Sleep reinicia
   // toda segunda pelo mesmo motivo).
   const isMonday = now.getDay() === 1;
+  const hpAntesDoAlivio = newHP;
   if (isMonday && newHP > 0) {
     newHP = Math.min(prev.maxHealthPoints, newHP + WEEKLY_RELIEF_HEARTS);
   }
+  /**
+   * O alívio ACONTECEU, e não apenas "hoje é segunda".
+   *
+   * O relatório anunciava `weeklyRelief: isMonday` — ou seja, contava o meio
+   * coração de volta toda segunda, inclusive para quem já estava com o HP
+   * cheio (nada a devolver) e para quem estava em zero (a regra pula de
+   * propósito, para não ressuscitar ninguém). Anunciar um presente que não foi
+   * dado é o relatório mentindo na direção mais fácil de acreditar.
+   */
+  const weeklyReliefApplied = newHP > hpAntesDoAlivio;
 
   if (dayWasPerfect) {
     newPerfectDays++;
@@ -874,6 +887,16 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       // jogador fica presoem HP 0 para sempre), sem presente e sem custo extra
       // — cobrar dias de quem ainda nem tem estágio abaixo seria punir
       // justamente quem o produto diz que não quer punir.
+      //
+      // ⚠️ E É AQUI QUE O RELATÓRIO MENTIA. Um rookie parado em HP 1 que não
+      // faz nada perde 1 coração na conta, cai para 0, e este piso o devolve
+      // para 1 — o HP não se move. Mesmo assim o relatório anunciava
+      // "1 coração em recuperação" todas as noites, para sempre, e ainda
+      // oferecia o botão de recuperar corações que não foram perdidos. Quem
+      // recebia esse aviso todo dia era exatamente o jogador mais frágil do
+      // jogo, e o Soulmon não é cobrador. O piso da RAIZ absorve a perda:
+      // então a perda não aconteceu, e o número anunciado é o que de fato saiu.
+      pisoDaRaizAbsorveu = true;
       newHP = 1;
     }
   }
@@ -981,7 +1004,23 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       done: dailyDone,
       total: totalTasks,
       required: dailyGoal,
-      heartsLost,
+      /**
+       * O que o coração REALMENTE perdeu nesta virada.
+       *
+       * Igual a `heartsLost` em todo caso normal. Difere só quando o piso da
+       * raiz (rookie, `pisoDaRaizAbsorveu`) devolveu o HP para 1: ali a conta
+       * cobrou e o piso desfez, então o número honesto é o que sobrou da
+       * subtração — zero para quem já estava em 1, e nunca negativo para quem
+       * estava abaixo (teimoso em 0,5 termina em 1, ou seja, GANHOU).
+       *
+       * Quem lê isto: o `DailyReportModal` (o texto, o tom da tela e a oferta
+       * de recuperar corações) e as missões. A degeneração de verdade continua
+       * anunciando a perda cheia — lá o HP volta ao máximo do estágio novo, e
+       * `degenerated` é o campo que conta essa história.
+       */
+      heartsLost: pisoDaRaizAbsorveu
+        ? Math.max(0, prev.healthPoints - 1)
+        : heartsLost,
       wasPerfect: dayWasPerfect,
       energyWasFull,
       perfectDays: newPerfectDays,
@@ -989,7 +1028,9 @@ export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: 
       // Modo boas-vindas: a UI deve receber quem voltou sem nenhuma cobrança.
       welcomeBack: wasAway,
       daysAway: wasAway ? daysAway : 0,
-      weeklyRelief: isMonday,
+      /** O meio coração de segunda foi mesmo devolvido (ver
+       *  `weeklyReliefApplied`) — e não apenas "hoje é segunda". */
+      weeklyRelief: weeklyReliefApplied,
       // --- estado de carência, carregado DENTRO do relatório de propósito ---
       // `hydrateSave` monta o GameState com campos explícitos (campo de topo
       // desconhecido é descartado no reload), e `lastDayReport` é o único
