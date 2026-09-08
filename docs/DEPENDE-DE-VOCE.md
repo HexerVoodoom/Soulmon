@@ -175,11 +175,23 @@ acidente. **Achado na rodada 8.**
 > - **P5** — "dia perfeito" virou **"dia completo"** nos textos PT/EN. Só o
 >   nome; `perfectDays` e `wasPerfect` seguem iguais no código.
 >
-> **Só a P3 continua na sua mesa** (alívio adaptativo: a meta de coração cai 1
-> após 2 dias falhos). Recomendo decidi-la **depois** de ver P1+P2 rodando: os
-> dois já entregam boa parte do alívio que a P3 buscava, e empilhar um terceiro
-> perdão sem medir é afrouxar no escuro. Medir, porém, esbarra em não haver
-> usuários — itens 9 a 12 desta lista.
+> **A P3 foi ADIADA em 08/09/2026** (decisão sua, e não é recusa): o alívio
+> adaptativo fica fora por enquanto, e a existência dele volta à mesa quando
+> houver com o que medir. Dois motivos, os dois registrados em
+> `product/soulmon-01/balance/carga-diaria.md`, seção "P3 → ADIADA":
+>
+> 1. **A proposta tem duas leituras incompatíveis** ("volta ao valor cheio na
+>    primeira virada em que cumprir" — cumprir a meta reduzida ou a cheia?). Uma
+>    delas ainda deixa o jogador degenerar, só mais devagar; a outra cria um
+>    patamar em que o jogo para de cobrar para sempre. São decisões diferentes.
+> 2. **A pergunta que decide não é de design, é de fato**: o jogador que faz 3
+>    de 6 é o caso comum ou a exceção? Se for exceção, a P3 é mecanismo
+>    permanente para caso raro; se for a regra, o conserto certo é baixar o
+>    `required: 6` do mega, não empilhar um sexto perdão.
+>
+> **Nada disso é respondível sem um usuário.** A P3 fica encostada até os itens
+> 9 a 12 desta lista destravarem — ou seja, ela não depende de você decidir
+> agora, depende de você publicar.
 >
 > ⚠️ Efeito combinado, declarado para você não ser surpreendido: com P1 + P2,
 > um jogador mega pode fazer 4 de 6 em seis dias e 0 no sétimo **sem nunca

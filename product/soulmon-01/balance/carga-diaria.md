@@ -326,6 +326,56 @@ competitiva em HP, e o caminho de evolução (`perfectDays`) não cede um milím
 Quem "gameia" o alívio só está optando por não evoluir, o que é uma escolha
 legítima.
 
+#### ⏸️ ADIADA em 08/09/2026 — decisão do dono, e o que reabre
+
+**Não é recusa.** É "ainda não", e o motivo é que decidir agora seria decidir no
+escuro. Leia isto antes de implementar a P3 em qualquer sessão futura.
+
+**1. A proposta acima tem DUAS leituras incompatíveis, e ninguém escolheu.**
+A frase é *"volta ao valor cheio na primeira virada em que o jogador cumprir"* —
+cumprir o quê?
+
+| Leitura | O que acontece com um mega fazendo 3 de 6 todo dia |
+|---|---|
+| **A — cumprir a meta REDUZIDA** | serrilhado: o alívio liga no dia 3, zera no mesmo dia, e a meta volta a 4 no dia 4. Ele **ainda degenera**, ~40% mais devagar. Pior dos dois mundos: não salva quem afunda e ainda faz o número da tela oscilar sem explicação |
+| **B — cumprir a meta CHEIA** | o alívio fica ligado até ele fazer 4 de verdade. **3 de 6 para sempre passa a ser sustentável** — nunca mais perde coração |
+
+A B não é ajuste, é decisão de produto: significa que existe um patamar em que o
+jogo **para de cobrar, indefinidamente**.
+
+**2. Os números da proposta são PRÉ-P1 e PRÉ-P2.** Quando ela foi escrita, o
+mega precisava de 5 de 6 e não havia folga semanal. Hoje precisa de 4, e a
+primeira falha da semana já é absorvida. Além disso, **o dia perdoado pela folga
+continua contando como dia falho** para o contador da P3 — então o alívio
+chegaria um dia antes do que a proposta imaginava. Refaça as contas antes de
+usar qualquer número desta seção.
+
+**3. Custo escondido na UI.** `tasksToAvoidHeartLoss` é dono único do número que
+a tela promete. Com a P3 ele cai de 4 para 3 sozinho depois de dois dias ruins.
+Ou o app **conta** isso — e "baixei sua meta porque você falhou duas vezes" é
+difícil de escrever sem soar condescendente — ou fica em silêncio, que é
+mecânica escondida, exatamente o que foi recusado para a folga (por isso existe
+`lastDayReport.restDayUsed`).
+
+**4. Seria o SEXTO perdão empilhado**: teto de 1 coração/dia, perdão de
+ausência, alívio de segunda, P1 (meta de coração a 60%) e P2 (folga semanal).
+
+#### O gatilho para reabrir
+
+A pergunta que decide a P3 não é de design, é de fato: **o jogador que faz 3 de
+6 é o caso comum ou a exceção?**
+
+- **Se for exceção** → a P3 é um mecanismo permanente para um caso raro. Não vale.
+- **Se for a regra** → o problema nunca foi o perdão, e sim o `required: 6` do
+  mega estar alto demais. O conserto certo é mexer em `FORM_REQUIREMENTS`, não
+  empilhar um sexto perdão por cima.
+
+E não dá para responder isso hoje **porque não há um único usuário para medir**
+(ver `docs/STATUS.md`, "ninguém nunca usou o app em produção"). Logo: reabra a
+P3 quando houver telemetria de distribuição de `dailyDone/heartGoal` por
+estágio — o que depende dos itens 9 a 12 de `docs/DEPENDE-DE-VOCE.md`, não de
+código.
+
 ### P4 — Presets de rotina de 1 toque (mata a queixa 2, sem tocar em regra)
 
 A pesquisa foi clara: **ninguém planeja a semana.** Então não peça planejamento
@@ -370,7 +420,7 @@ Decisão do dono, baixo custo, não muda nada mecânico.
 | P4 | Presets de rotina + "Equilibrar minha semana" | não | conserto óbvio (é UI) | ✅ **feito em 07/09/2026** — `src/utils/weekBalance.ts`, `ROUTINE_PRESETS` em `taskModel.ts`, `BalanceWeekModal` |
 | P1 | `HEART_GOAL_RATIO = 0,6` | ❤️ | **dono** | ✅ **aprovado e entregue em 07/09/2026** — `heartGoalFor`/`heartGoalFromDailyGoal` em `dailyReset.ts`, com `heartGoal.test.ts` travando que o desconto NÃO vaza para o dia completo |
 | P2 | 1 dia de folga/semana, automático | ❤️ | **dono** | ✅ **aprovado e entregue em 07/09/2026** — `REST_DAYS_PER_WEEK`/`restWeekKeyFor`, campos `restDaysLeft`/`restWeekKey` no save, e o relatório do dia CONTA que a folga foi usada (`restDay.test.ts`) |
-| P3 | Alívio adaptativo (−1 após 2 dias falhos) | ❤️ | **dono** | ⬜ **o único que sobrou.** Vale reavaliar DEPOIS de P1+P2 rodarem: os dois juntos já entregam boa parte do alívio que a P3 buscava, e empilhar um terceiro sem medir é afrouxar no escuro |
+| P3 | Alívio adaptativo (−1 após 2 dias falhos) | ❤️ | **dono** | ⏸️ **ADIADA em 08/09/2026** — não recusada. O gatilho para reabrir e as duas leituras incompatíveis da proposta estão na seção 3-P3 abaixo |
 | P5 | "dia perfeito" → "dia completo" | ⭐ (só o nome) | **dono** | ✅ **aprovado e entregue em 07/09/2026** — 13 arquivos, só dentro de literais de string; `perfectDays`/`wasPerfect` intocados no código |
 
 ---
