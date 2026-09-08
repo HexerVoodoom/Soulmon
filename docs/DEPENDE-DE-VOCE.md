@@ -154,12 +154,20 @@ atividades). Recomendação: `getMaxHPForStage('rookie')` nos dois campos.
 Os valores atuais estão **travados por teste** para que mudar seja decisão, não
 acidente. **Achado na rodada 8.**
 
-### 6b. Balanceamento da carga diária — ✅ ESCOLHIDO em 07/09/2026: **P4**
+### 6b. Balanceamento da carga diária — ✅ ESCOLHIDO **e ENTREGUE** em 07/09/2026: **P4**
 
 > O dono escolheu a **P4** (presets de rotina + "Equilibrar minha semana"),
-> que é a recomendação do time e **não mexe em regra nenhuma**. P1–P3 seguem
-> na mesa, para depois de testar a P4 com usuários. **Ainda não implementada** —
-> é feature, não ajuste; precisa de plano próprio.
+> que é a recomendação do time e **não mexe em regra nenhuma**.
+> **Implementada no mesmo dia**: `src/utils/weekBalance.ts` (o motor, que
+> preserva a frequência semanal de cada hábito), `ROUTINE_PRESETS` em
+> `src/types/taskModel.ts`, e o `BalanceWeekModal` — que mostra antes/depois,
+> só escreve com confirmação e **avisa quando a carga não cabe** em vez de
+> prometer alívio.
+>
+> **P1–P3 e P5 continuam na sua mesa** — cada um mexe em ❤️ ou no nome do "dia
+> perfeito", e a fila está em `product/soulmon-01/balance/carga-diaria.md`,
+> seção 3. O ideal é decidi-los depois de a P4 rodar com usuários de verdade —
+> o que ainda esbarra em não haver usuários (itens 9 a 12 desta lista).
 
 #### Contexto original
 Vem do **seu teste com usuários** ("nem todo dia consigo fazer as 6 tarefas";
@@ -234,7 +242,7 @@ equivalentes.**
 | # | O quê | Trava |
 |---|---|---|
 | 9 | URL da política de privacidade + formulário de Segurança de Dados | Play Store |
-| 10 | Registrar o pacote no Firebase + baixar `google-services.json` | push nativo |
+| 10 | Registrar o pacote **no projeto novo `soulmon-app`** + baixar `google-services.json` (o atual ainda é do projeto do DigiApp) e refazer a chave do FCM / o secret `FIREBASE_SERVICE_ACCOUNT`. ⚠️ **Mudou em 07/09/2026:** o Firebase foi separado, então isto deixou de ser "registrar mais um app" e virou migração do lado Android. O lado **web** já está pronto. | push nativo |
 | 11 | Criar os 4 produtos no Play Console (`soulmon.unlock.full` + 3 pacotes de crédito) | compras |
 | 12 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` | compras |
 | ~~13~~ | ~~`VITE_FIREBASE_*`~~ — ✅ **FEITO em 07/09/2026**. `.env` local do projeto `soulmon-app`, `npm run build` + `wrangler deploy`, e só então o `FIREBASE_PROJECT_ID`. A chave foi **validada contra a API do Firebase**, não só transcrita. | ✅ |
