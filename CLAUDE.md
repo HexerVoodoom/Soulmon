@@ -24,6 +24,12 @@ via `language === 'pt-BR'`).
 > rege as decisões de regra: o Soulmon é um avatar que evolui COM o usuário e o
 > encoraja — nunca um cobrador.
 
+> **`docs/REGISTRO-DE-DECISOES.md`** consolida, por tema, cada escolha de produto
+> ao lado da evidência que a sustentou, da alternativa que perdeu e do gatilho
+> para rever. **Antes de propor mudar uma regra de jogo, procure a linha dela
+> lá**: se a mudança for a alternativa que já perdeu, a pergunta não é "por que
+> não fazemos X?", é "o que mudou desde que X perdeu?".
+
 > **`docs/STATUS.md` é o registro vivo do projeto**: achados de segurança em
 > aberto, o que já foi corrigido e a lista do que depende do dono. Leia no
 > começo da sessão e **atualize ao terminar qualquer coisa relevante**.

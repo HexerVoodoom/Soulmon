@@ -118,6 +118,11 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >
 > **O gargalo continua sendo distribuição, não produto:** a corrente do
 > lançamento inteira depende da keystore de release, que só o dono pode gerar.
+>
+> **`docs/REGISTRO-DE-DECISOES.md`** (08/09/2026) consolida toda a pesquisa —
+> benchmark, literatura, transcrições, Mobbin — e cada decisão tomada a partir
+> dela, com a alternativa que perdeu e o gatilho para rever. É o lugar para
+> conferir se uma escolha ainda faz sentido antes de rediscuti-la.
 
 > ## ⚠️ 07/09/2026 — NINGUÉM NUNCA USOU O APP EM PRODUÇÃO
 >
