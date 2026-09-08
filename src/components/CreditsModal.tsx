@@ -1,4 +1,4 @@
-import { useUnlockPriceLabel } from '../utils/priceLabel';
+import { useCreditPackLabels, useUnlockPriceLabel } from '../utils/priceLabel';
 import { useState, useEffect } from 'react';
 import { Icon } from './ui/Icon';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text, sm2TitleStyle } from './form/FormKit';
@@ -52,8 +52,9 @@ export function CreditsModal({
 }: CreditsModalProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
-  const precoLabel = useUnlockPriceLabel();
   const isPt = language === 'pt-BR';
+  const precoLabel = useUnlockPriceLabel(isPt);
+  const precosDosPacotes = useCreditPackLabels(isPt);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [confirmingReroll, setConfirmingReroll] = useState(false);
@@ -189,7 +190,11 @@ export function CreditsModal({
             isPt ? `+${pack.credits} créditos.` : `+${pack.credits} credits.`,
             isPt ? 'Compra não concluída.' : 'Purchase not completed.')}
           title={`${pack.credits} ${isPt ? 'Créditos' : 'Credits'}`}
-          hint={busy === pack.id ? (isPt ? 'Processando…' : 'Processing…') : pack.priceLabel}
+          /* O preço do PACOTE também vem da loja quando ela responde. Era
+             `pack.priceLabel` cru — a constante em real, para o planeta
+             inteiro. O WP5.8 consertou isso para o desbloqueio completo e
+             esqueceu os pacotes, na mesma tela, um andar abaixo. */
+          hint={busy === pack.id ? (isPt ? 'Processando…' : 'Processing…') : (precosDosPacotes[pack.id] ?? pack.priceLabel)}
         />
       ))}
 

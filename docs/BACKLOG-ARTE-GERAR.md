@@ -453,6 +453,73 @@ por projeção de pixels depois.
 
 ---
 
+## A21 · Os glifos que renderizam VAZIO — ⬜ pendente
+
+**Contexto (sessão de QA, 08/09/2026).** Nove emojis do app são do bloco
+`Symbols and Pictographs Extended-A` (U+1FA70–U+1FAFF), que começa no Emoji 12.0
+(Android 10, set/2019). Fonte de sistema mais velha **não desenha nada**: sai
+uma caixa vazia `▯`, sem erro e sem log. Medido por canvas, comparando o desenho
+de cada glifo com o de um caractere garantidamente ausente da fonte — na máquina
+do dono nem o Emoji 12.0 desenha. Guard: `src/styles/emojiSuportado.contract.test.ts`,
+que também impede a lista de crescer.
+
+**Isto não é um item de arte novo — é a PRIORIDADE dos que já existem.** Cada
+glifo quebrado já tinha destino:
+
+| glifo | onde o jogador vê a caixa vazia | quem já cobre |
+|---|---|---|
+| 🪨 🪞 🪜 | 3 das 24 cenas da aventura (card do relatório + diário) | **A20** |
+| 🪑 🪴 🪨 🪵 🪟 | 5 mobílias, na loja **e** no palco do pet | **A7** |
+| 🫶 | traço Carinhoso, cartão de Estatísticas | **A15** |
+| 🫶 🫧 | botão de Carinho e efeito de banho do **overlay de desktop** | ⬅️ nada cobria |
+| 🪴 | o **texto** do marco de 21 dias (`App.tsx`, PT e EN) | ⬅️ arte não resolve |
+
+E três que estão no código mas **não chegam à tela** — ficam registrados para
+ninguém gerar arte à toa: os 4 sonhos (`restWindow.ts`) já renderizam o PNG de
+`dreamArt.ts` e o emoji sobrevive só como glifo de push; `HABIT_TIER_EMOJI` não
+tem consumidor nenhum; e o 🪙 dos Bits só existe em comentário.
+
+### A21.1 · Os dois glifos do overlay de desktop
+
+- **Destino:** `src/assets/soulmon/icons/desktop/{carinho,banho}.png` (32×32 —
+  a faixa do overlay é baixa; ver `desktop/renderer/src/menu.ts`, `careButton`)
+- **Uso:** rótulo do botão de Carinho e o efeito de banho, hoje `🫶` e `🫧`
+- **Anexar:** `REF-kit-v12.png` (bloco "Icons & Items")
+- **Prompt:**
+  > Pixel-art icon, 32×32, solid pure green background `#00FF00`: SÍMBOLO,
+  > crisp 16-bit pixel art, near-black outline, hard edges, no frame. The
+  > subject must contain NO green at all and must not have any green fringe
+  > around it. STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D plus natural
+  > accent tones. NO magenta, purple, violet or pink — not even in glow, halo,
+  > border or anti-aliasing. Square 1:1 full-bleed composition.
+  > - **Carinho** → `two hands cupping a small glowing heart`
+  > - **Banho** → `three rising soap bubbles with a highlight in each`
+
+### A21.2 · O marco de 21 dias — **isto é TROCA DE GLIFO, não arte**
+
+O 🪴 do marco de 21 dias está **dentro de uma frase** (`App.tsx`, mensagem PT e
+EN do tier `sapling`), e texto inline não aceita `<img>`. Arte não resolve: a
+frase precisa de um glifo que exista em qualquer aparelho.
+
+⚠️ **Decisão do dono, ainda em aberto.** A troca natural é `🌿` (Emoji 1.0),
+que já é o glifo do tier anterior (`sprout`) — usar o mesmo nos dois tiers
+apagaria a progressão visual. As alternativas sem esse problema: `🌾`, `☘️` ou
+`🎍`. Enquanto não houver decisão, o marco de 21 dias — que é um dos momentos
+que o produto trata como alto — aparece com uma caixa vazia no meio da frase.
+
+### Como gerar esta folha
+
+São peças pequenas e relacionadas: **uma folha só**, em grade sobre fundo verde
+chapado, fatiada por projeção de pixels depois (linhas e colunas totalmente
+vazias), nunca por grade fixa. E **fundo verde, não "transparente"**: o gerador
+assa o xadrez de transparência nos pixels em vez de entregar alfa de verdade —
+já entrou asset assim neste repositório, e é o que o
+`src/assets/assets.contract.test.ts` barra. O recorte é por chroma-key depois
+(chroma-key → despill → descarte de ilhas de ruído → recorte da bounding box →
+reescala *nearest*).
+
+---
+
 ## Estado da conta de geração (atualizar ao usar)
 
 - **Higgsfield CLI:** `mateus.sprnd@gmail.com`, plano pro — **1,5 crédito**

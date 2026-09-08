@@ -55,8 +55,8 @@ function Perk({ icon, title, desc }: { icon: string; title: string; desc: string
 export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: UnlockAccountModalProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
-  const precoLabel = useUnlockPriceLabel();
   const isPt = language === 'pt-BR';
+  const precoLabel = useUnlockPriceLabel(isPt);
   const [loading, setLoading] = useState<'buy' | 'restore' | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -240,8 +240,8 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen }: {
 }) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
-  const precoLabel = useUnlockPriceLabel();
   const isPt = language === 'pt-BR';
+  const precoLabel = useUnlockPriceLabel(isPt);
 
   const nudgeStyle: CSSProperties = {
     width: '100%', minHeight: 44, display: 'flex', alignItems: 'center', gap: 10,

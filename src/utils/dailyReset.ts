@@ -166,8 +166,27 @@ export const WEEKLY_RELIEF_HEARTS = 0.5;
  *
  * NÃO CONFUNDIR com os escudos de `habitRhythm.ts`: aqueles protegem o RITMO de
  * um hábito específico e nunca tocaram em HP (está escrito lá: "falta não gera
- * perda de HP própria"). Este protege o CORAÇÃO, uma vez por semana, do save
- * inteiro. São duas coisas, e é por isso que são dois mecanismos.
+ * perda de HP própria"). Este protege o CORAÇÃO na VIRADA DO DIA, uma vez por
+ * semana. São duas coisas, e é por isso que são dois mecanismos.
+ *
+ * ⚠️ **O ALCANCE, escrito com precisão porque já foi escrito grande demais.**
+ * Esta linha dizia que a folga protege o coração "do save inteiro", e isso não
+ * é verdade: ela absorve a perda que `computeDailyReset` cobra pelo dia que
+ * terminou, e **só ela**. O dreno de cocô (`utils/poopDrain.ts`) cobra HP por
+ * fora da virada e NÃO consulta a folga.
+ *
+ * Isso é decisão do dono (08/09/2026), e não esquecimento: o dreno já tem as
+ * três travas próprias dele — `MAX_HEARTS_LOST_PER_DAY`, o traço Teimoso
+ * (`heartLossCap`) e o perdão por ausência (`ABSENCE_FORGIVENESS_DAYS`) —, e
+ * ele só cobra de quem ABRIU o app, viu o cocô e não deu banho. Ou seja: cobra
+ * presença com descuido, não ausência, que é exatamente o que a folga existe
+ * para perdoar. Ligar um no outro tornaria a folga um saldo compartilhado entre
+ * dois relógios diferentes (um por virada, outro por tique de 6 h) — mais
+ * mecanismo para o jogador administrar, que é a fricção que a auditoria de
+ * carga diária mandou tirar.
+ *
+ * **Se um dia isto mudar, mude os dois lugares**: aqui e o cabeçalho de
+ * `utils/poopDrain.ts`, que lista o que o dreno respeita.
  */
 export const REST_DAYS_PER_WEEK = 1;
 

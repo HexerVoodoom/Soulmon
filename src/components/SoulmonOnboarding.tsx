@@ -170,9 +170,9 @@ interface SavedProfile extends OracleInput { seed: number }
 export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel }: SoulmonOnboardingProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
-  const precoLabel = useUnlockPriceLabel();
   const isUpgrade = mode === 'upgrade';
   const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+  const precoLabel = useUnlockPriceLabel(isPt);
   const L = (t: LText) => (isPt ? t.pt : t.en);
 
   // Atalho oculto pro dono: segurar o mascote na intro (~1.8s) abre a
@@ -734,7 +734,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'muitas-tentativas': 'Muitas tentativas seguidas. Espere um pouco e tente de novo.',
       'rede': 'Sem conexão agora. Confira a internet e tente de novo.',
       'popup-fechado': 'A janela do Google fechou antes de terminar. Pode tentar de novo.',
-      'popup-bloqueado': 'Seu navegador bloqueou a janela do Google. Estamos te levando para lá — se não for, libere pop-ups para este site.',
+      /* ⚠️ A PROMESSA FOI TIRADA DAQUI, e o motivo está registrado no
+         `docs/STATUS.md`: o redirecionamento é tentado, mas pode não concluir.
+         O `authDomain` é `soulmon-app.firebaseapp.com` e o app roda noutro
+         domínio, e desde o SDK 9.19 o Firebase avisa que `signInWithRedirect`
+         para de funcionar onde o armazenamento de terceiros é bloqueado —
+         Chrome, Safari/ITP e Firefox/ETP, que são exatamente os navegadores
+         que também bloqueiam pop-up. Prometer "estamos te levando para lá" a
+         quem talvez não chegue a lugar nenhum deixa a pessoa esperando por uma
+         tela que não vem. A saída que SEMPRE funciona é a que aparece primeiro:
+         liberar o pop-up, ou entrar com e-mail e senha. */
+      'popup-bloqueado': 'Seu navegador bloqueou a janela do Google. Libere pop-ups para este site e toque de novo — ou entre com e-mail e senha, que não abre janela nenhuma.',
       'dominio-nao-autorizado': 'Este endereço ainda não está liberado para entrar com Google. Use e-mail e senha por enquanto.',
       'provedor-desligado': 'Esse jeito de entrar está indisponível agora.',
       'desconhecido': 'Não deu para entrar agora. Tente de novo em instantes.',
@@ -748,7 +758,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'muitas-tentativas': 'Too many attempts in a row. Wait a moment and try again.',
       'rede': 'No connection right now. Check the internet and try again.',
       'popup-fechado': 'The Google window closed before finishing. You can try again.',
-      'popup-bloqueado': 'Your browser blocked the Google window. We are taking you there instead — if that fails, allow pop-ups for this site.',
+      'popup-bloqueado': 'Your browser blocked the Google window. Allow pop-ups for this site and tap again — or sign in with email and password, which opens no window at all.',
       'dominio-nao-autorizado': 'This address is not approved for Google sign-in yet. Use email and password for now.',
       'provedor-desligado': 'That way of signing in is unavailable right now.',
       'desconhecido': "Couldn't sign in right now. Please try again shortly.",

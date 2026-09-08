@@ -19,6 +19,14 @@ import {
 // exatamente o instante que o perdão foi criado para proteger.
 // Ver `squad-alpha-runs/soulmon-01/discovery/verificacao-V1.md` (decisão D-09).
 //
+// ⚠️ O QUE O DRENO **NÃO** RESPEITA, e é decisão do dono (08/09/2026): a folga
+// da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`). Ela absorve a perda
+// da VIRADA DO DIA e só ela. O motivo é que o dreno cobra presença com
+// descuido — só tira coração de quem abriu o app, viu o cocô e não deu banho —
+// enquanto a folga existe para perdoar AUSÊNCIA. E as três travas de cima já
+// limitam o estrago. Se isto mudar, mude o docstring de `REST_DAYS_PER_WEEK`
+// junto: as duas explicações têm de contar a mesma história.
+//
 // Aqui, como em `careRules.ts`: recebe estado e devolve estado, sem React, sem
 // `Date.now()` interno, sem localStorage. Quem chama cuida de efeito e
 // persistência. Este arquivo NÃO inventa número nenhum — as constantes

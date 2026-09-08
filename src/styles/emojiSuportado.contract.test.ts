@@ -11,11 +11,19 @@
  *   🪜 🪞 🪟 🪨 🪴 🪵 (13.0) CAIXA VAZIA, e todos SÃO exibidos
  *   🫧 (14.0) e 🫶 (14.0) CAIXA VAZIA, e também são exibidos
  *
- * O que isso significa em tela, hoje: 3 das 24 cenas da aventura, 5 das
- * mobílias da loja (na loja E no palco do pet), 4 dos 30 sonhos do DreamDex,
- * um reino do Oráculo, o ícone do traço Carinhoso em Estatísticas, o botão de
- * Carinho e o efeito de banho do overlay — e o MARCO DE 21 DIAS de hábito,
- * que é um dos momentos que o produto trata como alto.
+ * ⚠️ NEM TODO GLIFO DESTE BLOCO CHEGA À TELA, e a diferença importa porque
+ * decide o que precisa de ARTE e o que precisa de TROCA DE GLIFO. Conferido um
+ * a um em 08/09/2026 — a lista abaixo diz caso a caso.
+ *
+ * O que o jogador REALMENTE vê como caixa vazia hoje: 3 das 24 cenas da
+ * aventura, 5 mobílias da loja (na loja E no palco do pet), o ícone do traço
+ * Carinhoso em Estatísticas, o botão de Carinho e o efeito de banho do overlay
+ * de desktop — e o texto do MARCO DE 21 DIAS de hábito.
+ *
+ * O que NÃO chega à tela, apesar de estar no código: os quatro sonhos (o
+ * DreamDex já renderiza o PNG de `dreamArt.ts`; o emoji sobrevive como glifo de
+ * push, onde não existe `<img>`), o `HABIT_TIER_EMOJI.sapling` (mapa com ZERO
+ * consumidores) e o 🪙 dos Bits (só em comentário).
  *
  * É a mesma família de dano da fonte de ícones subsetada que o
  * `iconInventory.contract.test.ts` guarda: **renderiza vazio, sem erro**. E
@@ -47,18 +55,18 @@ const EXTENSOES = ['.ts', '.tsx', '.js', '.jsx'];
  * trocar. Tirar uma linha daqui só depois de trocar o emoji no código.
  */
 const DIVIDA_CONHECIDA: Record<string, string> = {
-  'U+1FA81': '🪁 (Emoji 12.0) — utils/restWindow.ts, sonho `dream-paper-kite` (DreamDex). RENDERIZA nesta máquina; risco só em Android 9.',
-  'U+1FA91': '🪑 (12.0) — utils/shop.ts, `furn-chair`. RENDERIZA nesta máquina.',
-  'U+1FA94': '🪔 (12.0) — utils/restWindow.ts, sonho `dream-firefly-jar`. RENDERIZA nesta máquina.',
-  'U+1FA99': '🪙 (12.0) — Bits. SÓ EM COMENTÁRIO (App.tsx, DinoGame, RPSGame, GameStateContext, dungeon): nunca chega à tela, porque a moeda é exibida sem ícone por decisão de design. Zero impacto no usuário; fica listado para o dia em que alguém colar o glifo num texto.',
-  'U+1FA9C': '🪜 (13.0) — utils/adventure.ts, cena `adv-escada`. CAIXA VAZIA no card da aventura. Troca: 🧗 ou ⛏️.',
-  'U+1FA9E': '🪞 (13.0) — utils/adventure.ts, cena `adv-lago-espelho`. CAIXA VAZIA. Troca: 💠 ou 🌊.',
-  'U+1FA9F': '🪟 (13.0) — utils/shop.ts, `furn-window`. CAIXA VAZIA na loja E no palco do pet. Troca: 🖼️.',
-  'U+1FAA8': '🪨 (13.0) — utils/adventure.ts (`adv-pedra-lisa`), utils/oracle.ts (reino Cavernas Rochosas), utils/shop.ts (`furn-rock`). CAIXA VAZIA nos três. Troca: 🗿 (já usado no mesmo catálogo) ou ⛰️.',
-  'U+1FAB4': '🪴 (13.0) — o MARCO DE 21 DIAS de hábito (App.tsx, mensagem PT e EN) e o ícone do tier `sapling` na lista de atividades (types/taskModel.ts), mais `furn-plant` da loja. CAIXA VAZIA na cerimônia que o produto trata como momento alto. Troca: 🌱 (já usado no tier anterior… então 🌿).',
-  'U+1FAB5': '🪵 (13.0) — utils/restWindow.ts (sonho `dream-ember-circle`) e utils/shop.ts (`furn-deck`). CAIXA VAZIA. Troca: 🍂 ou 🔥.',
-  'U+1FAE7': '🫧 (14.0) — sonho `dream-sea-glass` (restWindow.ts) e o EFEITO DE BANHO do overlay (desktop/menu.ts). CAIXA VAZIA. Troca: 💧 ou 🚿 (já é o ícone da ação).',
-  'U+1FAF6': '🫶 (14.0) — o ÍCONE DO TRAÇO CARINHOSO (utils/passives.ts, visível em Estatísticas) e o rótulo do botão de Carinho do overlay (desktop/menu.ts). CAIXA VAZIA nos dois. Troca: 💗 (Emoji 6.0, já usado no jogo como coraçãozinho) ou 🤲.',
+  'U+1FA81': '🪁 (Emoji 12.0) — utils/restWindow.ts, sonho `dream-paper-kite`. NÃO chega à tela: o DreamDex renderiza o PNG de `dreamArt.ts`. O emoji é só o glifo de push/log.',
+  'U+1FA91': '🪑 (12.0) — utils/shop.ts, `furn-chair`. EXIBIDO na loja e no palco. Desenha nesta máquina; some em Android 9. Arte pendente: backlog A7.',
+  'U+1FA94': '🪔 (12.0) — utils/restWindow.ts, sonho `dream-firefly-jar`. NÃO chega à tela (PNG em `dreamArt.ts`).',
+  'U+1FA99': '🪙 (12.0) — Bits. SÓ EM COMENTÁRIO (App.tsx, DinoGame, RPSGame, GameStateContext, dungeon): a moeda é exibida sem ícone por decisão de design. Zero impacto.',
+  'U+1FA9C': '🪜 (13.0) — utils/adventure.ts, cena `adv-escada`. CAIXA VAZIA no card do relatório e no diário. Arte pendente: backlog A20.',
+  'U+1FA9E': '🪞 (13.0) — utils/adventure.ts, cena `adv-lago-espelho`. CAIXA VAZIA. Arte pendente: backlog A20.',
+  'U+1FA9F': '🪟 (13.0) — utils/shop.ts, `furn-window`. CAIXA VAZIA na loja E no palco do pet. Arte pendente: backlog A7.',
+  'U+1FAA8': '🪨 (13.0) — utils/adventure.ts (`adv-pedra-lisa`, CAIXA VAZIA, arte em A20), utils/shop.ts (`furn-rock`, CAIXA VAZIA, arte em A7) e utils/oracle.ts (reino Cavernas Rochosas — só na OraclePage, que é ferramenta interna sem entrada na navegação).',
+  'U+1FAB4': '🪴 (13.0) — DOIS casos diferentes. (a) types/taskModel.ts, `HABIT_TIER_EMOJI.sapling`: NÃO chega à tela, o mapa tem ZERO consumidores. (b) App.tsx, o texto do MARCO DE 21 DIAS (PT e EN): CAIXA VAZIA no meio de uma frase, e arte não resolve texto inline — precisa de troca de glifo. É o único caso da lista que não tem entrada de arte possível.',
+  'U+1FAB5': '🪵 (13.0) — utils/restWindow.ts (sonho `dream-ember-circle`, NÃO chega à tela: PNG em `dreamArt.ts`) e utils/shop.ts (`furn-deck`, CAIXA VAZIA, arte em A7).',
+  'U+1FAE7': '🫧 (14.0) — utils/restWindow.ts (sonho `dream-sea-glass`, NÃO chega à tela) e o EFEITO DE BANHO do overlay de desktop (desktop/menu.ts): CAIXA VAZIA, e o overlay não está coberto por entrada de arte nenhuma. Ver backlog A21.',
+  'U+1FAF6': '🫶 (14.0) — o traço CARINHOSO (utils/passives.ts, cartão em Estatísticas, CAIXA VAZIA, arte pendente em A15) e o rótulo do botão de Carinho do overlay (desktop/menu.ts, CAIXA VAZIA, ver A21).',
 };
 
 /** U+1FA70–U+1FAFF: o bloco inteiro é Emoji 12.0 ou mais novo. */
