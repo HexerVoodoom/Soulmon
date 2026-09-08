@@ -205,7 +205,23 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
             )}
             <Icon name={headIcon} size={48} fill={1} tone={headTone} style={{ position: 'relative' }} />
           </div>
-          <p className="sm2-title" style={sm2TitleStyle}>{headline}</p>
+          {/* `position: relative` NÃO é enfeite. O estouro de confete é
+              `position: absolute` e o título era estático: elemento posicionado
+              pinta POR CIMA do não-posicionado no mesmo contexto, então a arte
+              cobria o texto. Medido no aparelho de 375 px: o confete ocupa
+              y 19→159 e o título y 123→147 — as 24 px de altura da manchete
+              ficavam 100% atrás da explosão colorida, no dia mais comemorativo
+              do app. Nenhuma conta de contraste por `getComputedStyle` pega
+              isso (footgun 10): só a geometria e o pixel renderizado. A sombra
+              na cor do painel dá o descolamento das letras, e só existe no dia
+              completo — nas outras noites não há confete atrás. */}
+          <p className="sm2-title" style={{
+            ...sm2TitleStyle,
+            position: 'relative',
+            ...(report.wasPerfect
+              ? { textShadow: '0 1px 2px var(--sm2-surface), 0 0 10px var(--sm2-surface)' }
+              : null),
+          }}>{headline}</p>
         </div>
 
         {/* Linhas */}
@@ -349,8 +365,17 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
                 type="button"
                 onClick={onDismissOffer}
                 aria-label={isPt ? 'Não mostrar de novo' : 'Do not show again'}
+                // 44×44, como o `×` de fechar o modal logo acima e como todo
+                // alvo de toque do app. Era 32×32 — o ÚNICO alvo abaixo da
+                // régua nesta tela (medido no aparelho de 375 px), e logo o
+                // deste: a ação dele é TERMINAL (`offerDismissed` no save, e o
+                // convite não volta nunca mais). Alvo pequeno para ação sem
+                // volta é a combinação errada, ainda mais encostado num card
+                // que leva à compra — errar o toque aqui abre o paywall.
+                // O `top`/`right` negativos mantêm o × visualmente no canto: a
+                // área cresceu para fora, não para dentro do texto.
                 style={{
-                  position: 'absolute', top: 4, right: 4, width: 32, height: 32,
+                  position: 'absolute', top: -2, right: -2, width: 44, height: 44,
                   display: 'grid', placeItems: 'center',
                   background: 'none', border: 'none', cursor: 'pointer',
                   color: 'var(--sm2-muted)', fontSize: 16, lineHeight: 1,

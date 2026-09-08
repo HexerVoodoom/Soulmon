@@ -1666,6 +1666,7 @@ __name(semanaDe, "semanaDe");
 var coopKey = /* @__PURE__ */ __name((gid) => `coop:${gid}`, "coopKey");
 var coopOfKey = /* @__PURE__ */ __name((save) => `coopOf:${save}`, "coopOfKey");
 var coopCodeKey = /* @__PURE__ */ __name((code) => `coopCode:${code}`, "coopCodeKey");
+var coopCkKey = /* @__PURE__ */ __name((gid, save) => `coopCk:${gid}:${save}`, "coopCkKey");
 function novoCodigo() {
   const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x) => alfabeto[x % alfabeto.length]).join("");
@@ -1679,8 +1680,36 @@ async function lerGrupo(env, groupId) {
 __name(lerGrupo, "lerGrupo");
 async function gravarGrupo(env, g) {
   await kv(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+  await Promise.all([
+    kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
+    ...g.members.map((m) => kv(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL }))
+  ]);
 }
 __name(gravarGrupo, "gravarGrupo");
+async function renovarPrazos(env, gid) {
+  const fresco = await lerGrupo(env, gid);
+  if (fresco) await gravarGrupo(env, fresco);
+}
+__name(renovarPrazos, "renovarPrazos");
+async function lerCheckins(env, gid, save) {
+  const raw = await kv(env).get(coopCkKey(gid, save));
+  if (!raw) return [];
+  try {
+    const r = JSON.parse(raw);
+    return r && r.weekKey === semanaDe() && Array.isArray(r.days) ? r.days : [];
+  } catch {
+    return [];
+  }
+}
+__name(lerCheckins, "lerCheckins");
+async function gravarCheckins(env, gid, save, days) {
+  await kv(env).put(
+    coopCkKey(gid, save),
+    JSON.stringify({ weekKey: semanaDe(), days }),
+    { expirationTtl: COOP_TTL }
+  );
+}
+__name(gravarCheckins, "gravarCheckins");
 function rolarSemana(g) {
   const agora = semanaDe();
   if (g.weekKey !== agora) {
@@ -1703,19 +1732,23 @@ async function grupoDe(env, saveId) {
 __name(grupoDe, "grupoDe");
 async function vistaDoGrupo(env, g, euSave) {
   const hoje = today2();
-  const membros = await Promise.all(g.members.map(async (m) => {
+  const dias = await Promise.all(g.members.map(async (m) => {
+    const proprios = await lerCheckins(env, g.id, m);
+    return proprios.length > 0 ? proprios : g.checkins?.[m] || [];
+  }));
+  const membros = await Promise.all(g.members.map(async (m, i) => {
     const perfil = await getProfile(env, m);
     return {
       id: perfil ? await ensurePid(env, perfil) : null,
       name: perfil?.name ?? null,
       stage: perfil?.stage ?? null,
       // Binário, de propósito: presença não ordena ninguém contra ninguém.
-      apareceuHoje: (g.checkins?.[m] || []).includes(hoje),
+      apareceuHoje: dias[i].includes(hoje),
       euMesmo: m === euSave
     };
   }));
   const target = g.members.length * COOP_CHECKINS_POR_MEMBRO;
-  const feitos = g.members.reduce((n, m) => n + (g.checkins?.[m] || []).length, 0);
+  const feitos = dias.reduce((n, d) => n + d.length, 0);
   return {
     id: g.id,
     name: g.name,
@@ -2022,18 +2055,22 @@ async function handleCommunity({ request, env }) {
     if (await grupoDe(env, id)) return json3({ error: "already in a group" }, 409);
     const nome = String(body.name ?? "").replace(/\s+/g, " ").trim().slice(0, 24);
     if (!nome) return json3({ error: "invalid name" }, 400);
+    let codigo = null;
+    for (let i = 0; i < 3 && !codigo; i++) {
+      const tentativa = novoCodigo();
+      if (!await kv(env).get(coopCodeKey(tentativa))) codigo = tentativa;
+    }
+    if (!codigo) return json3({ error: "try again" }, 503);
     const g = {
       id: newPid(),
       name: nome,
-      code: novoCodigo(),
+      code: codigo,
       createdAt: Date.now(),
       members: [id],
       weekKey: semanaDe(),
       checkins: {}
     };
     await gravarGrupo(env, g);
-    await kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL });
-    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
     return json3({ group: await vistaDoGrupo(env, g, id) });
   }
   if (action === "coopJoin" && method === "POST") {
@@ -2049,19 +2086,32 @@ async function handleCommunity({ request, env }) {
     if (g.members.length >= COOP_MAX_MEMBERS) return json3({ error: "group full" }, 409);
     g.members.push(id);
     await gravarGrupo(env, g);
-    await kv(env).put(coopOfKey(id), g.id, { expirationTtl: COOP_TTL });
-    return json3({ group: await vistaDoGrupo(env, g, id) });
+    let confirmado = await lerGrupo(env, g.id);
+    if (confirmado && !confirmado.members.includes(id)) {
+      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
+        await kv(env).delete(coopOfKey(id));
+        return json3({ error: "group full" }, 409);
+      }
+      confirmado.members.push(id);
+      await gravarGrupo(env, confirmado);
+      confirmado = await lerGrupo(env, g.id);
+    }
+    if (!confirmado || !confirmado.members.includes(id)) {
+      await kv(env).delete(coopOfKey(id));
+      return json3({ error: "join collision" }, 409);
+    }
+    return json3({ group: await vistaDoGrupo(env, confirmado, id) });
   }
   if (action === "coopCheckin" && method === "POST") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const g = await grupoDe(env, id);
     if (!g) return json3({ error: "no group" }, 404);
-    g.checkins = g.checkins || {};
-    const meus = g.checkins[id] || [];
+    const proprios = await lerCheckins(env, g.id, id);
+    const meus = proprios.length > 0 ? proprios : g.checkins?.[id] || [];
     if (!meus.includes(today2())) {
-      g.checkins[id] = [...meus, today2()];
-      await gravarGrupo(env, g);
+      await gravarCheckins(env, g.id, id, [...meus, today2()]);
+      await renovarPrazos(env, g.id);
     }
     return json3({ group: await vistaDoGrupo(env, g, id) });
   }
@@ -2073,6 +2123,7 @@ async function handleCommunity({ request, env }) {
     g.members = g.members.filter((m) => m !== id);
     if (g.checkins) delete g.checkins[id];
     await kv(env).delete(coopOfKey(id));
+    await kv(env).delete(coopCkKey(g.id, id));
     if (g.members.length === 0) {
       await kv(env).delete(coopKey(g.id));
       await kv(env).delete(coopCodeKey(g.code));
@@ -3300,7 +3351,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-De1i9z/functionsRoutes-0.2551404513704507.mjs
+// ../.wrangler/tmp/pages-xw88Jp/functionsRoutes-0.4991087296542063.mjs
 var routes = [
   {
     routePath: "/api/account",
