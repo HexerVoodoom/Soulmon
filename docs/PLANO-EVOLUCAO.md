@@ -187,7 +187,7 @@ comportamento **morre em ~6 semanas**. Depois disso, só ritual e vínculo segur
 
 | # | O quê | Por quê |
 |---|---|---|
-| 5.1 ⬜ | **Arte real de decoração** (hoje são emoji; a estrutura de `PALCO-E-DECORACAO.md` já aceita PNG) | Maior retorno visual disponível. "Casa que cresce" é o diferencial citado do Catzy |
+| 5.1 ⏸️ | **Arte real de decoração** (hoje são emoji; a estrutura de `PALCO-E-DECORACAO.md` já aceita PNG). ⏸️ **Adiada em 08/09/2026** — decisão do dono: fazer numa sessão de arte dedicada, junto com o A20 (as 24 cenas da aventura). Ver `docs/BACKLOG-ARTE-GERAR.md`. | Maior retorno visual disponível. "Casa que cresce" é o diferencial citado do Catzy |
 | 5.2 ✅ | **Tela de jornada** (vitrine no topo de Estatísticas) — registro visual persistente de estágios vividos, cenários visitados, itens obtidos | Catzy usa biomas como forma espacial do progresso; mais forte que um número subindo |
 | 5.3 ✅ | **Separação visual das três moedas** (já é regra travada por teste) — manter | É a clareza que os Tamagotchis modernos não têm e que gera desconfiança |
 

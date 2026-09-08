@@ -4,6 +4,25 @@
 > dentro do projeto**, **onde é usado** e **o que anexar como referência**.
 > Ao concluir um item: marque `✅ feito`, com a data e o gerador usado.
 
+> ## 🎨 A ARTE FOI ADIADA — decisão do dono, 08/09/2026
+>
+> Não é falta de método nem de item: é ordem de trabalho. As duas frentes
+> abertas continuam aqui, prontas para uma sessão dedicada:
+>
+> - **A20 — as 24 cenas da aventura da noite** (novo, 08/09/2026). Hoje são
+>   emoji; a estrutura já aceita PNG.
+> - **5.1 — arte de decoração** (`docs/PLANO-EVOLUCAO.md`, Fase 5). É o último
+>   item aberto daquela fase.
+>
+> **O que a próxima sessão precisa saber para não redescobrir:** o método de
+> gerar em lote pelo **Gemini no navegador** está validado e escrito nas
+> instruções globais do dono (fundo verde `#00FF00` + chroma-key em vez de
+> "transparente", proporção declarada no FIM do prompt, folha única fatiada por
+> projeção de pixels para itens pequenos, uma conversa nova por variação).
+> A condição operacional que trava tudo se esquecida: **a janela do Chrome tem
+> de estar visível na tela** — minimizada, ela reporta `Viewport: 0x0` e nem
+> clique nem digitação chegam.
+
 ## Como gerar (leia antes)
 
 **Sempre anexe a referência.** Sem ela o gerador inventa um estilo próprio e o

@@ -99,6 +99,26 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > com confirmação explícita, e avisa quando não cabe em vez de prometer alívio.
 
 
+> ## 📋 08/09/2026 — o que a sessão local entregou, e o handoff do QA
+>
+> Duas sessões seguidas mudaram muita coisa. O inventário do que entrou, o que
+> merece desconfiança e o **prompt pronto para abrir a sessão de QA** estão em
+> **`docs/HANDOFF-QA-REVISAO.md`** — inclusive a lista honesta de onde eu
+> provavelmente errei (guards ajustados pela mesma sessão que mudou a regra).
+>
+> Entregue em 08/09/2026: **P1** (meta de coração a 60%), **P2** (folga
+> semanal), **P5** ("dia perfeito" → "dia completo"), a **barra de Quick Add**
+> na tela inicial e a **aventura narrada** da noite — que fecha a Fase 2 do
+> `PLANO-TAREFAS.md`. Mais a política de privacidade corrigida, as respostas do
+> formulário de Segurança de Dados (`docs/PLAY-DATA-SAFETY.md`) e o passo de
+> bundle assinado no CI, inerte até o dono criar a keystore.
+>
+> **Adiado por decisão do dono:** a **P3** e a **arte** (A20 — as 24 cenas da
+> aventura — e o 5.1 da decoração), esta última para uma sessão dedicada.
+>
+> **O gargalo continua sendo distribuição, não produto:** a corrente do
+> lançamento inteira depende da keystore de release, que só o dono pode gerar.
+
 > ## ⚠️ 07/09/2026 — NINGUÉM NUNCA USOU O APP EM PRODUÇÃO
 >
 > Informado pelo dono. É o fato mais consequente registrado aqui, porque **44
