@@ -81,6 +81,40 @@ export const DEFAULT_EFFORT: Effort = 1;
  */
 export const HABIT_WEIGHT = 1;
 
+/**
+ * PRESETS DE ROTINA — P4 do `product/soulmon-01/balance/carga-diaria.md`.
+ *
+ * A pesquisa do dossiê foi conclusiva: **ninguém planeja a semana** num app de
+ * hábito, e nenhum benchmark resolve isso com um planejador — todos resolvem
+ * com preset de um toque na criação. A grade de 7 caixinhas não é difícil; ela
+ * é uma DECISÃO de sete partes cobrada de quem só queria começar a correr.
+ *
+ * Então não se pede planejamento: pede-se UMA escolha. A grade completa
+ * continua existindo atrás de "Personalizar" — quem quer a precisão não a
+ * perde, e quem não quer não paga por ela.
+ *
+ * Domingo = 0, como `Date.getDay()` e como `Schedule.days` já usa.
+ */
+export const ROUTINE_PRESETS = {
+  /** Todo dia. */
+  diario: [0, 1, 2, 3, 4, 5, 6],
+  /** Segunda a sexta. */
+  uteis: [1, 2, 3, 4, 5],
+  /** Segunda, quarta e sexta — dia sim, dia não, com o fim de semana livre. */
+  leve: [1, 3, 5],
+} as const;
+
+export type RoutinePreset = keyof typeof ROUTINE_PRESETS;
+
+/** Qual preset descreve exatamente esta seleção? `null` = personalizada. */
+export function presetDeRotina(days: number[]): RoutinePreset | null {
+  const alvo = [...new Set(days)].sort((a, b) => a - b).join(',');
+  for (const [nome, dias] of Object.entries(ROUTINE_PRESETS)) {
+    if ([...dias].join(',') === alvo) return nome as RoutinePreset;
+  }
+  return null;
+}
+
 /** Esforço válido, com o padrão para saves antigos (que não têm o campo). */
 export function normalizeEffort(value: unknown): Effort {
   return value === 2 || value === 3 ? value : DEFAULT_EFFORT;

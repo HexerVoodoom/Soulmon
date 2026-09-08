@@ -8,6 +8,7 @@ import { CATEGORY_ICONS, categoryLabel } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
 import { Language, useTranslation } from '../utils/i18n';
 import { WEEKDAY_INDEXES, weekdayFull, weekdayShort } from '../utils/weekdays';
+import { ROUTINE_PRESETS, presetDeRotina, type RoutinePreset } from '../types/taskModel';
 import {
   CheckRow, Chip, Field, ModalSheet, Segment, sm2Button, sm2Hint, sm2Label,
 } from './form/FormKit';
@@ -85,6 +86,12 @@ type HabitScheduleState = ReturnType<typeof useHabitSchedule>;
  */
 export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleState; language: Language }) {
   const isPt = language === 'pt-BR';
+  /** Qual preset descreve a seleção atual — `null` quando é personalizada. */
+  const presetAtual = presetDeRotina(sched.weekDays);
+  /** A grade só é escondida quando um preset descreve a escolha. Quem está
+   *  editando algo personalizado abre com a grade JÁ aberta, senão o controle
+   *  esconderia a própria configuração da pessoa. */
+  const [gradeAberta, setGradeAberta] = useState(false);
   const t = {
     repeat: isPt ? 'Repetição' : 'Repeat',
     weekdays: isPt ? 'Dias da semana' : 'Weekdays',
@@ -93,6 +100,12 @@ export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleS
     timesHelp: isPt
       ? 'Você escolhe os dias na hora — um dia ruim é uma remarcação, não uma falha.'
       : 'You pick the days as you go — a bad day is a reschedule, not a failure.',
+    diario: isPt ? 'Todo dia' : 'Every day',
+    uteis: isPt ? 'Dias úteis' : 'Weekdays',
+    leve: isPt ? 'Leve' : 'Light',
+    personalizar: isPt ? 'Personalizar' : 'Customize',
+    levePista: isPt ? 'Seg · Qua · Sex' : 'Mon · Wed · Fri',
+    uteisPista: isPt ? 'Seg a Sex' : 'Mon to Fri',
     fromCompletion: isPt ? 'Contar de quando eu concluir' : 'Count from when I complete it',
     fromCompletionOn: isPt ? 'Nunca acumula atrasadas.' : 'It never piles up overdue copies.',
     fromCompletionOff: isPt
@@ -113,21 +126,59 @@ export function HabitScheduleFields({ sched, language }: { sched: HabitScheduleS
         ))}
       </div>
 
-      {/* Sem rótulo repetindo "Dias da semana": o modo selecionado logo acima já diz. */}
+      {/* PRESETS DE ROTINA (P4) — três escolhas de um toque no lugar de uma
+          decisão de sete partes. A pesquisa do dossiê é conclusiva: ninguém
+          planeja a semana num app de hábito, e nenhum benchmark resolve isso
+          com um planejador; todos resolvem com preset na criação.
+          A grade completa NÃO sumiu — ela fica atrás de "Personalizar", e
+          abre sozinha quando os dias escolhidos não são nenhum preset (é o
+          caso de quem está editando algo que já era personalizado). */}
       {sched.kind === 'weekdays' && (
-        <div role="group" aria-label={t.weekdays} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6 }}>
-          {WEEKDAY_INDEXES.map(index => (
+        <div>
+          <div role="group" aria-label={t.repeat} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {(['diario', 'uteis', 'leve'] as RoutinePreset[]).map(nome => (
+              <Chip
+                key={nome}
+                selected={presetAtual === nome}
+                onToggle={() => { sched.setWeekDays([...ROUTINE_PRESETS[nome]]); setGradeAberta(false); }}
+                title={nome === 'uteis' ? t.uteisPista : nome === 'leve' ? t.levePista : t.diario}
+                ariaLabel={t[nome]}
+                style={{ padding: '8px 14px', borderRadius: 10 }}
+              >
+                {t[nome]}
+              </Chip>
+            ))}
             <Chip
-              key={index}
-              selected={sched.weekDays.includes(index)}
-              onToggle={() => sched.toggleWeekDay(index)}
-              title={weekdayFull(index, language)}
-              ariaLabel={weekdayFull(index, language)}
-              style={{ padding: '8px 0', borderRadius: 10 }}
+              selected={gradeAberta || presetAtual === null}
+              onToggle={() => setGradeAberta(v => !v)}
+              title={t.personalizar}
+              ariaLabel={t.personalizar}
+              style={{ padding: '8px 14px', borderRadius: 10 }}
             >
-              {weekdayShort(index, language)}
+              {t.personalizar}
             </Chip>
-          ))}
+          </div>
+
+          {(gradeAberta || presetAtual === null) && (
+            <div
+              role="group"
+              aria-label={t.weekdays}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 6, marginTop: 10 }}
+            >
+              {WEEKDAY_INDEXES.map(index => (
+                <Chip
+                  key={index}
+                  selected={sched.weekDays.includes(index)}
+                  onToggle={() => sched.toggleWeekDay(index)}
+                  title={weekdayFull(index, language)}
+                  ariaLabel={weekdayFull(index, language)}
+                  style={{ padding: '8px 0', borderRadius: 10 }}
+                >
+                  {weekdayShort(index, language)}
+                </Chip>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
