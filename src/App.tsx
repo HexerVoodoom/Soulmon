@@ -19,7 +19,7 @@ import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { RitualPanel, RitualRow } from './components/pixel/RitualPanel';
 import { StepRow } from './components/StepRow';
-import { categoryIconName, categoryLabel } from './types/category-icons';
+import { categoryIconName, categoryLabel, CATEGORY_ICONS } from './types/category-icons';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
@@ -170,7 +170,7 @@ import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
   constancy, needsIntervention, GOOD_CONSTANCY_RATIO,
 } from './utils/habitRhythm';
-import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
+import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 
 /**
@@ -592,6 +592,10 @@ const CreditsModal = lazy(() => import('./components/CreditsModal').then(m => ({
 const NewReadingModal = lazy(() => import('./components/NewReadingModal').then(m => ({ default: m.NewReadingModal })));
 const GameTutorialFlow = lazy(() => import('./components/GameTutorialFlow').then(m => ({ default: m.GameTutorialFlow })));
 const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ default: m.CreateModal })));
+// A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
+// justamente não ter espera nenhuma entre lembrar e anotar.
+import { QuickAddBar } from './components/QuickAddBar';
+import type { QuickAddResult } from './utils/quickAdd';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ActivitiesPage = lazy(() => import('./components/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
@@ -2400,6 +2404,60 @@ export default function App() {
     setEditingTask(taskId);
     setTaskEditModalOpen(true);
   }, []);
+
+  /**
+   * Grava o que a barra de captura de uma linha entendeu.
+   *
+   * Reusa `commitTaskCreate` / `commitHabitCreate` de propósito: são eles que
+   * conhecem o teto do modo grátis, o teto do estágio e a telemetria de
+   * criação. Uma segunda rota de gravação que não os consultasse seria um jeito
+   * de furar o teto sem ninguém perceber (footgun 9).
+   *
+   * `false` significa "não coube" — a barra mostra o aviso e mantém o texto,
+   * para a pessoa não perder o que digitou.
+   */
+  const handleQuickAdd = useCallback((r: QuickAddResult): boolean => {
+    const categoria = (r.category ?? 'Discipline') as ActivityCategory;
+    const emoji = CATEGORY_ICONS[categoria];
+    const agora = new Date().toISOString();
+
+    if (r.kind === 'activity' && r.schedule) {
+      const dias = weekDaysForSchedule(r.schedule);
+      const nova: Activity = {
+        id: `activity-${Date.now()}`,
+        name: r.name,
+        category: categoria,
+        emoji,
+        steps: [],
+        // `weekDays` E `schedule` juntos: o campo antigo é o que o widget
+        // Android e o overlay de desktop leem, e nenhum dos dois carrega o
+        // motor novo. Gravar só um faria o hábito cobrar num ritmo na tela e
+        // noutro no widget.
+        weekDays: dias,
+        schedule: r.schedule,
+      };
+      return commitHabitCreate([nova], TELEMETRY_CREATE_PATH.home_edit) > 0;
+    }
+
+    // Data solta é `startDate` ("quando pretendo fazer"), NÃO prazo — é o que
+    // traz a tarefa para o Hoje. A regra é do `CreateModal.applyQuickAdd`, e
+    // repeti-la diferente aqui faria a MESMA linha digitada produzir coisas
+    // distintas conforme a tela (footgun 9). Quem quer prazo marca prazo, que
+    // é outra decisão e continua no modal.
+    const nova: Task = {
+      id: `task-${Date.now()}`,
+      name: r.name,
+      category: categoria,
+      emoji,
+      completed: false,
+      startDate: r.date,
+      effort: r.effort,
+      status: 'open',
+      createdAt: agora,
+      lastTouchedAt: agora,
+    };
+    return commitTaskCreate(nova, TELEMETRY_CREATE_PATH.home_edit, 'topo');
+  }, [commitTaskCreate, commitHabitCreate]);
 
   const handleAddNewActivity = useCallback(() => {
     setEditingActivity(null);
@@ -5005,6 +5063,11 @@ export default function App() {
                     />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Captura de uma linha (`docs/PLANO-TAREFAS.md` §2.5). Fica
+                      ACIMA de tudo porque o custo de anotar é o que decide se a
+                      pessoa continua usando o app na segunda semana. */}
+                  <QuickAddBar language={language} onCommit={handleQuickAdd} />
+
                   {/* P4 — "Equilibrar minha semana". Convite, nunca alarme:
                       aparece só quando algum dia passou do requisito E a
                       proposta melhora de fato (`valeEquilibrar`). Oferecer

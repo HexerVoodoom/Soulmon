@@ -344,7 +344,8 @@ Recorrência flexível com `from: 'completion'` · esforço nas tarefas · meta 
 
 **Fase 2 — os rituais** — 🟡 **parcial**
 ✅ Check-in · relatório semanal com sugestão de habit stacking · estações/fresh start · "Arrumar a pilha" (`triageQueue`).
-⬜ Falta: **Quick Add de uma linha** e a **aventura narrada** no relatório noturno.
+✅ **Quick Add de uma linha** — o parser (`utils/quickAdd.ts`) já existia e alimentava o `CreateModal`; em 08/09/2026 ele ganhou a `QuickAddBar` **na tela inicial**, que era o que faltava de verdade: dentro do modal, anotar ainda custava abrir → digitar → aplicar → salvar. A gravação reusa `commitTaskCreate`/`commitHabitCreate`, que são quem conhece o teto do modo grátis.
+⬜ Falta: a **aventura narrada** no relatório noturno.
 
 **Fase 3 — sono (sem sensor)** — ✅ **implementada**
 Janela de Descanso · média móvel · 18 Sonhos no `DREAM_CATALOG`. **Roda igual na PWA e no Android** — não depende de nada nativo.
