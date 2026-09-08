@@ -14,6 +14,10 @@
 > - **5.1 — arte de decoração** (`docs/PLANO-EVOLUCAO.md`, Fase 5). É o último
 >   item aberto daquela fase.
 >
+> 👉 **O handoff completo dessa sessão é `docs/HANDOFF-ARTE-GEMINI.md`** — tem
+> os prompts prontos das duas frentes, os critérios de aceitação de cada peça e
+> o prompt de abertura para colar numa instância nova.
+>
 > **O que a próxima sessão precisa saber para não redescobrir:** o método de
 > gerar em lote pelo **Gemini no navegador** está validado e escrito nas
 > instruções globais do dono (fundo verde `#00FF00` + chroma-key em vez de
