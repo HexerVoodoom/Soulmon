@@ -1,7 +1,11 @@
 # Plano — tela de identidade antes da escolha free/full
 
-> **Status:** proposta, aguardando aprovacao do dono. Nada implementado.
-> Decisao registrada em 07/09/2026: **e-mail obrigatorio para todos**.
+> **Status: IMPLEMENTADO em 07/09/2026 — e este documento e o registro do que
+> foi ENTREGUE, nao mais a proposta.** O que a secao 3 propunha (identidade
+> DEPOIS do consentimento) foi **recusado pelo dono** e o desenho mudou; as
+> secoes 3 e 4 abaixo ficam preservadas como historico do raciocinio, e a
+> secao 3-bis descreve o que realmente esta no ar. Decisao de 07/09/2026:
+> **e-mail obrigatorio para todos**.
 
 ## 1. Por que isto existe
 
@@ -106,6 +110,48 @@ escritos no proprio codigo:
 Colocar a identidade logo DEPOIS do consentimento satisfaz o seu pedido
 ("antes de decidir free ou full") sem desfazer nenhum dos dois.
 
+## 3-bis. O que FOI ao ar (07/09/2026) — substitui a secao 3
+
+O dono manteve o pedido literal: a conta e a **primeira** tela, antes de
+qualquer outra coisa. O argumento da secao 3 (D-07, portao de idade) estava
+correto no diagnostico e errado na conclusao: a saida nao era adiar a
+identidade, era **trazer o bloco legal para dentro da tela de conta**.
+
+Tres telas, nesta ordem, todas antes do free/full:
+
+| Passo | Constante | O que mostra |
+|---|---|---|
+| 1 | `IDENTITY_STEP` (-6) | So `Continue com Google` / `ou` / `Novo usuario`. Nada de Termos aqui — a pedido do dono. |
+| 2 | `CHOICE_STEP` (-7) | Escolha entre e-mail e Google, ja com o bloco legal. |
+| 3 | `EMAIL_STEP` (-8) / `GOOGLE_STEP` (-9) | O formulario propriamente dito. |
+
+O `CONSENT_STEP` e o antigo passo 0 (intro) foram **removidos**. O bloco legal
+(`blocoLegal`) e um JSX unico compartilhado pelos passos que autenticam, com
+duas caixas, nesta ordem: **"Li e concordo"** e, logo abaixo, **"sou maior de
+idade"**. Nada de autenticacao acontece sem `podeAutenticar` — as duas caixas.
+
+### O portao de idade virou caixa, nao formulario
+
+`demoAgeMonth` / `isAgeBlockedByMonth` / `ageOnMonth` / `monthYearFromText`
+foram **deletados** de `src/utils/consent.ts` (decisao do dono: "deixe que o
+Google mesmo verifique, ou no maximo um checkbox"). Coletar mes/ano de
+nascimento para depois so comparar com uma constante era pedir dado pessoal
+sensivel a mais para obter um booleano que a propria pessoa ja podia declarar
+— menos dado, mesmo efeito legal.
+
+`src/utils/gateDraft.ts` guarda `soulGoal`, `soulStruggle` e `consent` durante
+a ida e volta do `signInWithRedirect`, e **nunca** o e-mail nem data alguma.
+
+### Achados de producao desta entrega
+
+- **CSP bloqueava o login com Google.** `auth/internal-error` generico; a causa
+  real era `script-src` sem `https://apis.google.com` em `public/_headers`.
+  Travado por `src/security/csp.test.ts`.
+- **O build do CI apagava o login a cada push** — ver a nota do `.env.production`
+  no `CLAUDE.md`.
+- **A compra nao ia sem vinculo, ia com vinculo DESCARTAVEL** — ver a correcao
+  na secao 1.
+
 ## 4. A tela
 
 Uma tela, um campo. Como o login e **link por e-mail sem senha**, "entrar" e
@@ -177,9 +223,11 @@ teste travando isso.
 5. Cada estado da tela em PT e EN.
 6. E-mail ja logado → tela pulada.
 
-## 8. O que eu preciso de voce
+## 8. O que ainda depende de voce
 
-1. **A ordem da secao 3** (identidade DEPOIS do consentimento, nao antes) — e o
-   unico jeito de nao regredir D-07 e o portao de idade.
-2. **O Android da secao 6.1.** Ou o portao sai so na web por enquanto, ou App
-   Links entra antes. Nao da para as duas coisas ao mesmo tempo.
+1. ~~A ordem da secao 3~~ — **respondido**: a conta e a primeira tela; ver 3-bis.
+2. **O Android da secao 6.1.** Continua aberto: o portao esta **so na web**. Ele
+   so vale no APK depois de App Links, que depende do Play Console e da service
+   account (itens 11/12 do `docs/DEPENDE-DE-VOCE.md`). Ate la,
+   `PLAY_REQUIRE_ACCOUNT_BINDING` **fica desligado** — liga-lo antes de publicar
+   o APK novo quebraria a compra de quem instalasse o antigo.

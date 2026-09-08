@@ -54,6 +54,50 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > **O que ainda depende do dono:** o teste ponta-a-ponta do login (pedir o link
 > por e-mail, receber e completar — só o dono tem o e-mail), a seção 2.5 (FCM
 > nativo) e a 2.6 (Play Console). E as decisões da seção 3, intocadas.
+>
+> ### ✅ Continuação da mesma sessão — o login FOI ao ar e foi usado
+>
+> O parágrafo acima envelheceu no mesmo dia. **O desenho de login mudou de
+> link-por-e-mail para Google + e-mail/senha**, e o dono se cadastrou com o
+> Google em produção com sucesso ("entrou, deu certo"). O portão de conta é
+> agora a **primeira** tela do app, em três passos — ver
+> `docs/PLANO-TELA-IDENTIDADE.md`, seção 3-bis.
+>
+> **Três defeitos de produção que só apareceram porque o fluxo foi exercido de
+> ponta a ponta**, e que nenhum teste unitário teria pego:
+>
+> 1. **A CSP bloqueava o login com Google.** `public/_headers` não tinha
+>    `https://apis.google.com` em `script-src`; o Firebase reporta isso como
+>    `auth/internal-error` **genérico**, sem dizer que foi a CSP. Só foi achado
+>    depois de logar o `err.code` cru. Travado agora por
+>    `src/security/csp.test.ts`.
+> 2. **Cada push matava o login em produção.** As `VITE_*` são inlinadas em
+>    BUILD; o CI rebuilda sem o `.env` da máquina do dono, então o deploy manual
+>    correto das 19:51:16 foi desfeito pelo build do CI das 19:52:19. Correção:
+>    `.env.production` passou a ser **commitado** (`!.env.production` no
+>    `.gitignore`), guardado por `src/deploy/firebaseNoBuild.contract.test.ts`.
+>    São só as quatro chaves públicas do cliente — nenhum segredo de servidor.
+> 3. **`getCurrentEmail`/`getIdToken` liam o estado de auth de forma síncrona**,
+>    antes de o Firebase reidratar do IndexedDB. Resultado: chamadas de API sem
+>    token logo após abrir o app. Agora esperam `auth.authStateReady()`.
+>
+> **A verificação de 403 fechou** (o dono pediu para fazer):
+> `{"meuComToken":200,"alheioComToken":403,"meuSemToken":401,"tokenFalso":401}`
+> — save alheio é recusado com token válido, e token forjado não passa.
+>
+> **A verificação de idade virou checkbox** (decisão do dono): `ageOnMonth`,
+> `isAgeBlockedByMonth` e `monthYearFromText` foram removidos de
+> `src/utils/consent.ts`. Menos dado pessoal coletado para o mesmo efeito.
+>
+> **Duas "decisões pendentes" da seção 3 já estavam IMPLEMENTADAS** e o doc
+> mentia ao pedi-las de novo: a retenção de 5 anos e a aleatoriedade do reroll.
+> Conferido no código antes de riscar.
+>
+> **P4 entregue** — "Equilibrar minha semana" (`src/utils/weekBalance.ts`,
+> presets de rotina em `taskModel.ts`, `BalanceWeekModal`): espalha os hábitos
+> de dias fixos pela semana **sem mudar a frequência semanal de nenhum**, só
+> com confirmação explícita, e avisa quando não cabe em vez de prometer alívio.
+
 
 > ## ⚠️ 07/09/2026 — NINGUÉM NUNCA USOU O APP EM PRODUÇÃO
 >

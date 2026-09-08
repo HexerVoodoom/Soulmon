@@ -25,7 +25,7 @@ ordem segura de separar.
 | **Chat paralelo** | `src/supabase/.../chat.tsx` | ✅ Apagado — segundo endpoint de LLM, publicado, sem autenticação e sem NENHUMA das travas do `functions/api/chat.js` |
 | **Arte e nomes de franquia** | bundle, APK, bestiário | ✅ Removidos — ver `docs/Attributions.md` |
 | Namespace KV (os DADOS) | Cloudflare → KV | ⚠️ **Ainda o mesmo namespace físico.** Só o dono separa (passo 2) |
-| Projeto Firebase | `google-services.json` | ⚠️ **Ainda compartilhado.** Só o dono separa (passo 4) |
+| Projeto Firebase | `google-services.json` | ✅ **Separado em 07/09/2026** — projeto próprio `soulmon-app` (passo 4 feito) |
 | `virus`/`data`/`vaccine` | `types/attributes.ts` | ⚪ Mantidos DE PROPÓSITO — palavras genéricas, em dezenas de arquivos, e o jogador nunca as vê (ele lê Poder/Harmonia/Benevolência) |
 
 **O que sobra depende do painel do Cloudflare e do Firebase — não do código.**
@@ -110,18 +110,26 @@ Depois que o Pages novo estiver no ar, atualizar `capacitor.config.json`:
 > Android continua servindo o deploy antigo — mesmo com o código novo aqui.
 > Trocar exige **gerar um APK novo** e publicar.
 
-### 4. Projeto Firebase próprio (recomendado)
+### 4. Projeto Firebase próprio — ✅ FEITO em 07/09/2026
 
-Dá para só adicionar o pacote novo ao projeto atual, mas com projetos
-separados as notificações, o login e as métricas de cada app ficam isolados.
+Projeto **`soulmon-app`**, criado pelo dono. O que ficou pronto:
 
-Se criar um projeto novo:
-1. Registrar o app **Android** `com.hexervoodoom.soulmon` → novo
-   `google-services.json`.
-2. Registrar o app **Web** → chaves `VITE_FIREBASE_*`.
-3. Habilitar **Authentication → Link de e-mail**.
-4. Refazer a chave do FCM e o secret `FIREBASE_SERVICE_ACCOUNT` do worker de
-   push (`workers/`).
+1. ✅ App **Web** registrado → as quatro `VITE_FIREBASE_*`, gravadas em `.env`
+   **e** em `.env.production` (este é commitado de propósito — ver `CLAUDE.md`,
+   seção Deploy, e `src/deploy/firebaseNoBuild.contract.test.ts`).
+2. ✅ **Authentication** com **Google** e **e-mail/senha** habilitados
+   (o desenho mudou de link-por-e-mail para senha; ver
+   `docs/PLANO-TELA-IDENTIDADE.md`, seção 3-bis).
+3. ✅ Domínios de produção autorizados, e `apis.google.com` liberado na CSP
+   (`public/_headers`) — sem isso o popup do Google falha com um
+   `auth/internal-error` genérico.
+
+Falta, e **depende do dono**:
+
+4. ⬜ Registrar o app **Android** `com.hexervoodoom.soulmon` → novo
+   `google-services.json` (o atual ainda é do projeto do DigiApp).
+5. ⬜ Refazer a chave do FCM e o secret `FIREBASE_SERVICE_ACCOUNT` do worker de
+   push (`workers/`) para o projeto novo.
 
 ### 5. Limpeza
 

@@ -11,8 +11,12 @@ via `language === 'pt-BR'`).
 > do Supabase e toda a arte/nomes de franquia. O inventário e o que sobra estão
 > em `docs/SEPARACAO-DIGIAPP.md`.
 > **O que resta depende do painel, não do código**: o namespace KV ainda é o
-> mesmo fisicamente e o projeto Firebase ainda é compartilhado — os dois só o
-> dono separa.
+> mesmo fisicamente — só o dono separa.
+> **O Firebase JÁ FOI separado (07/09/2026)**: o Soulmon tem projeto próprio
+> `soulmon-app`, com Google e e-mail/senha habilitados e os domínios de
+> produção autorizados. Se algum doc ainda disser "compartilhado com o
+> DigiApp", ele está velho — a régua viva é
+> `src/deploy/firebaseNoBuild.contract.test.ts`.
 
 > **`docs/PLANO-EVOLUCAO.md`** traz o benchmark de agosto/2026 (Habitica, Finch,
 > Catzy, Forest, V-Pet/Vital Bracelet, Pokémon Sleep/GO, Palworld + psicologia do
@@ -75,6 +79,15 @@ Repositório: `HexerVoodoom/Soulmon`.
 - `main` é a branch de produção do **Cloudflare Pages**; o push publica sozinho
   em ~2 min. `dist/` **é commitado** (o CF também builda, mas o commit é o que
   garante o conteúdo).
+  ⚠️ **Por isso `.env.production` é COMMITADO** (`.gitignore` tem `!.env.production`).
+  As `VITE_*` são inlinadas em BUILD, não lidas em runtime; como o CI builda de
+  novo a cada push sem o `.env` da máquina do dono, um deploy manual correto era
+  desfeito ~1 min depois pelo build do CI e **o login morria em produção a cada
+  push** (medido em 07/09/2026: deploy 19:51:16, build do CI 19:52:19, login
+  quebrado). Ali só entram as quatro `VITE_FIREBASE_*`, que são públicas por
+  design (vão no bundle de qualquer jeito); segredo de servidor continua em
+  `wrangler secret put`. Quem guarda a regra:
+  `src/deploy/firebaseNoBuild.contract.test.ts`.
 - A URL de produção é **`soulmon.mateus-sprnd.workers.dev`**, e as três fontes
   já concordam: `capacitor.config.json` (chave `url`),
   `desktop/renderer/src/config.ts` (`APP_URL`) e
