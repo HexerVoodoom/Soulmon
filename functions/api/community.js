@@ -331,7 +331,11 @@ function semanaDe(d = new Date()) {
   // A quinta-feira da mesma semana define o ano ISO.
   t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
   const inicio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  const n = Math.ceil(((t - inicio) / 86400000 + 1) / 7);
+  // `.getTime()` explícito: subtrair dois `Date` funciona em runtime (o JS
+  // coage por `valueOf`), mas o typecheck do servidor recusa — eram os outros
+  // 2 dos 5 erros que deixavam o CI vermelho. Mesma aritmética, zero mudança
+  // de comportamento.
+  const n = Math.ceil(((t.getTime() - inicio.getTime()) / 86400000 + 1) / 7);
   return `${t.getUTCFullYear()}-W${String(n).padStart(2, '0')}`;
 }
 
