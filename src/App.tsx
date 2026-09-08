@@ -171,6 +171,7 @@ import {
   constancy, needsIntervention, GOOD_CONSTANCY_RATIO,
 } from './utils/habitRhythm';
 import { normalizeSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached, HABIT_TIER_ICONS } from './types/taskModel';
+import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 
 /**
  * O rótulo de frequência de um hábito na lista.
@@ -595,6 +596,7 @@ const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ defau
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ActivitiesPage = lazy(() => import('./components/ActivitiesPage').then(m => ({ default: m.ActivitiesPage })));
 const SoulmonOnboarding = lazy(() => import('./components/SoulmonOnboarding').then(m => ({ default: m.SoulmonOnboarding })));
+const BalanceWeekModal = lazy(() => import('./components/BalanceWeekModal').then(m => ({ default: m.BalanceWeekModal })));
 const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
 const EditModal = lazy(() => import('./components/EditModal').then(m => ({ default: m.EditModal })));
 const TaskEditModal = lazy(() => import('./components/TaskEditModal').then(m => ({ default: m.TaskEditModal })));
@@ -622,6 +624,9 @@ export default function App() {
     return id;
   });
   const [editModalOpen, setEditModalOpen] = useState(false);
+  /** P4 — "Equilibrar minha semana". Só abre por gesto; nunca sozinho. */
+  const [balanceOpen, setBalanceOpen] = useState(false);
+
   const [taskEditModalOpen, setTaskEditModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [evolveModalStage, setEvolveModalStage] = useState<string | null>(null);
@@ -821,6 +826,52 @@ export default function App() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
     return readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE);
   });
+  /**
+   * P4 — as atividades que o "Equilibrar minha semana" pode reorganizar.
+   *
+   * SÓ as de dias fixos. `timesPerWeek` e `everyNDays` ficam de fora porque já
+   * carregam perdão embutido: fixar dias para elas seria TIRAR flexibilidade
+   * em nome de equilíbrio (ver `utils/weekBalance.ts`).
+   */
+  const atividadesDeDiasFixos = useMemo(
+    () => gameState.activities
+      .filter(a => (normalizeSchedule(a).kind) === 'weekdays')
+      .map(a => ({ id: a.id, name: a.name, weekDays: a.weekDays ?? [] })),
+    [gameState.activities],
+  );
+
+  /** Aparece só quando há um dia acima do requisito E a proposta melhora —
+   *  oferecer "equilibrar" a quem já está bem insinua falha onde não há. */
+  const podeEquilibrar = useMemo(() => {
+    const teto = FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required;
+    const p = equilibrarSemana(
+      atividadesDeDiasFixos.map(a => ({ id: a.id, days: a.weekDays })),
+      teto,
+    );
+    return valeEquilibrar(p, teto);
+  }, [atividadesDeDiasFixos, gameState.evolutionStage]);
+
+  /**
+   * Aplica a proposta JÁ CONFIRMADA pelo jogador.
+   *
+   * Escreve `weekDays` e o `schedule` juntos: o campo antigo continua sendo
+   * lido pelo widget Android e pelo overlay de desktop, que não carregam o
+   * motor novo — deixar um dos dois para trás faria o hábito cobrar num ritmo
+   * na tela e noutro no widget.
+   */
+  const handleAplicarEquilibrio = useCallback((mudancas: { id: string; days: number[] }[]) => {
+    const porId = new Map(mudancas.map(m => [m.id, m.days]));
+    setGameState(prev => ({
+      ...prev,
+      activities: prev.activities.map(a => {
+        const dias = porId.get(a.id);
+        if (!dias) return a;
+        return { ...a, weekDays: dias, schedule: { kind: 'weekdays' as const, days: dias } };
+      }),
+    }));
+    toast.success(language === 'pt-BR' ? 'Semana espalhada 🌿' : 'Week spread out 🌿');
+  }, [setGameState, language]);
+
   // Segundo onboarding: tutorial do jogo (estilo RPG) + criação obrigatória
   // da 1ª tarefa — mostrado uma vez, logo após o ritual de nascimento.
   const [hasCompletedTutorial, setHasCompletedTutorial] = useState(() => {
@@ -4954,6 +5005,30 @@ export default function App() {
                     />
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* P4 — "Equilibrar minha semana". Convite, nunca alarme:
+                      aparece só quando algum dia passou do requisito E a
+                      proposta melhora de fato (`valeEquilibrar`). Oferecer
+                      isso a quem já está equilibrado insinuaria falha onde não
+                      há — e a voz do produto encoraja, nunca cobra. */}
+                  {podeEquilibrar && (
+                    <button
+                      type="button"
+                      onClick={() => setBalanceOpen(true)}
+                      style={{
+                        width: '100%', marginBottom: 10, minHeight: 44,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        borderRadius: 12, cursor: 'pointer',
+                        border: '1px solid var(--sm2-line)',
+                        backgroundColor: 'var(--sm2-surface-2)',
+                        color: 'var(--sm2-ink)',
+                        fontFamily: 'var(--sm2-font-text)',
+                        fontSize: 'var(--sm2-text-sm)', fontWeight: 500,
+                      }}
+                    >
+                      <Icon name="balance" size={20} />
+                      {language === 'pt-BR' ? 'Equilibrar minha semana' : 'Balance my week'}
+                    </button>
+                  )}
                   <RitualPanel
                     done={feitos}
                     total={total}
@@ -5612,6 +5687,21 @@ export default function App() {
         onOpenCredits={openCredits}
         language={language}
       />
+
+      {/* P4 — a tela de antes/depois. Nunca monta sozinha: só por gesto no
+          convite acima, e aplicar exige confirmação dentro dela. */}
+      {balanceOpen && (
+        <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <BalanceWeekModal
+            open={balanceOpen}
+            onClose={() => setBalanceOpen(false)}
+            language={language}
+            atividades={atividadesDeDiasFixos}
+            teto={FORM_REQUIREMENTS[getStageLevel(gameState.evolutionStage)].required}
+            onAplicar={handleAplicarEquilibrio}
+          />
+        </Suspense>
+      )}
 
       {editModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
