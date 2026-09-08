@@ -467,6 +467,19 @@ ficam valendo:
   Omnimon, a própria fusão dos 3 Megas — exatamente o conceito do Ultra
   aqui). Prefixos sozinhos (War/Chaos/Omega…) são genéricos e ficam; o que
   NÃO pode voltar é o sufixo fixo somado a eles.
+  ⚠️ **A regra vale para os nomes CURADOS também, e até 08/09/2026 não valia
+  na prática**: os três personagens prontos se chamavam Pyrakamon, Akashaoimon
+  e Nimbratamon, e este arquivo os proibia sem nunca ter sido aplicado a eles.
+  A sessão de QA achou a contradição e o dono decidiu pela regra — hoje são
+  **Pyraka, Akashaoi e Nimbrata**. O `id` da linha (`kaelen`, `orrin`,
+  `thalindra`) NÃO mudou: é ele que resolve o sprite, vai para o save
+  (`demoCharacterId`) e nomeia os arquivos de arte.
+  **O dono do nome é `DUNGEON_LINE_NAMES` (`utils/sprites.ts`), e só ele** —
+  os três estavam escritos à mão em TRÊS arquivos (ali, no `PREMADE_CHARACTERS`
+  e no `petName` dos NPCs da Biblioteca), então renomear num lugar deixaria o
+  inimigo da masmorra e o NPC chamando a mesma criatura por outro nome, em
+  silêncio. A régua viva é `src/utils/sprites.dungeonRoster.test.ts`, que
+  reprova o sufixo E a volta da string duplicada — não este parágrafo.
 - ⚠️ **`digimonName` NÃO EXISTE MAIS** (07/09/2026). Este item dizia que ele e
   as chaves `digiapp_*` ficavam "porque renomear quebraria o widget/save de quem
   já joga", e que o servidor aceitava DOIS nomes de campo "por causa dos APKs já

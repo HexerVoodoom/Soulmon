@@ -69,9 +69,28 @@ export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' |
   orrin: { rookie: orrinRookie, champion: orrinChampion, ultimate: orrinUltimate, mega: orrinMega },
   thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
 };
+/**
+ * O NOME DE EXIBIÇÃO DE CADA LINHA — dono único.
+ *
+ * ⚠️ Estes três nomes estavam escritos à mão em TRÊS arquivos: aqui, no
+ * `PREMADE_CHARACTERS` (`monetization.ts`) e no `petName` dos NPCs da
+ * Biblioteca (`libraryNpcs.ts`). É o footgun 9 em forma de string — renomear
+ * num lugar deixaria o inimigo da masmorra e o NPC da Biblioteca chamando a
+ * MESMA criatura por outro nome, sem nada ficar vermelho. Descoberto ao
+ * renomeá-los em 08/09/2026; os outros dois arquivos agora LEEM daqui.
+ *
+ * Este arquivo é o dono porque é o mais baixo da pilha: `monetization.ts` e
+ * `libraryNpcs.ts` já importam dele, e o contrário criaria ciclo.
+ *
+ * ⚠️ **Nada de sufixo `-mon`** (`CLAUDE.md`, seção de arte): eles eram
+ * Pyrakamon / Akashaoimon / Nimbratamon, e prefixo somado a sufixo fixo é o que
+ * soletra nome de franquia alheia. O `id` da linha (`kaelen`, `orrin`,
+ * `thalindra`) não muda — é ele que resolve o sprite, vai para o save e nomeia
+ * os arquivos de arte.
+ */
 export const DUNGEON_LINE_NAMES: Record<string, string> = {
   ignar: 'Ignar', lumel: 'Lumel', serah: 'Serah',
-  kaelen: 'Pyrakamon', orrin: 'Akashaoimon', thalindra: 'Nimbratamon',
+  kaelen: 'Pyraka', orrin: 'Akashaoi', thalindra: 'Nimbrata',
 };
 
 /** Sprite de inimigo de masmorra: sorteia uma das nossas linhas pelo tier

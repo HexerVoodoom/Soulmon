@@ -110,7 +110,7 @@ describe('fiação da telemetria — onboarding', () => {
     fireEvent.click(screen.getByText('Start now — it’s free'));
     expect(only('demo_pick')).toHaveLength(0);
 
-    fireEvent.click(screen.getByText('Pyrakamon').closest('button')!);
+    fireEvent.click(screen.getByText('Pyraka').closest('button')!);
     expect(only('demo_pick')).toHaveLength(1);
   });
 });

@@ -584,7 +584,9 @@ function habitCheerOf(state: GameState, activityId: string, todayKey: string) {
 
 const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
   sprout: { pt: '🌿 7 dias! Este hábito virou broto.', en: '🌿 7 days! This habit is a sprout now.' },
-  sapling: { pt: '🪴 21 dias! Este hábito está criando tronco.', en: '🪴 21 days! This habit is growing a trunk.' },
+  // 🌾 e não 🪴: ver `HABIT_TIER_ICONS` em types/taskModel.ts. O glifo antigo
+  // era Emoji 13.0 e saía como caixa vazia no meio desta frase.
+  sapling: { pt: '🌾 21 dias! Este hábito está criando tronco.', en: '🌾 21 days! This habit is growing a trunk.' },
   tree: { pt: '🌳 66 dias! Este hábito virou parte de quem você é.', en: '🌳 66 days! This habit is part of who you are.' },
 };
 

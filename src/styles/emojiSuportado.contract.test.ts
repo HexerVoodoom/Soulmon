@@ -22,8 +22,10 @@
  *
  * O que NÃO chega à tela, apesar de estar no código: os quatro sonhos (o
  * DreamDex já renderiza o PNG de `dreamArt.ts`; o emoji sobrevive como glifo de
- * push, onde não existe `<img>`), o `HABIT_TIER_EMOJI.sapling` (mapa com ZERO
- * consumidores) e o 🪙 dos Bits (só em comentário).
+ * push, onde não existe `<img>`) e o 🪙 dos Bits (só em comentário).
+ *
+ * E o caso que JÁ FOI RESOLVIDO por troca de glifo, porque arte não o alcança:
+ * o marco de 21 dias de hábito carregava 🪴 dentro da frase, e virou 🌾.
  *
  * É a mesma família de dano da fonte de ícones subsetada que o
  * `iconInventory.contract.test.ts` guarda: **renderiza vazio, sem erro**. E
@@ -63,7 +65,7 @@ const DIVIDA_CONHECIDA: Record<string, string> = {
   'U+1FA9E': '🪞 (13.0) — utils/adventure.ts, cena `adv-lago-espelho`. CAIXA VAZIA. Arte pendente: backlog A20.',
   'U+1FA9F': '🪟 (13.0) — utils/shop.ts, `furn-window`. CAIXA VAZIA na loja E no palco do pet. Arte pendente: backlog A7.',
   'U+1FAA8': '🪨 (13.0) — utils/adventure.ts (`adv-pedra-lisa`, CAIXA VAZIA, arte em A20), utils/shop.ts (`furn-rock`, CAIXA VAZIA, arte em A7) e utils/oracle.ts (reino Cavernas Rochosas — só na OraclePage, que é ferramenta interna sem entrada na navegação).',
-  'U+1FAB4': '🪴 (13.0) — DOIS casos diferentes. (a) types/taskModel.ts, `HABIT_TIER_EMOJI.sapling`: NÃO chega à tela, o mapa tem ZERO consumidores. (b) App.tsx, o texto do MARCO DE 21 DIAS (PT e EN): CAIXA VAZIA no meio de uma frase, e arte não resolve texto inline — precisa de troca de glifo. É o único caso da lista que não tem entrada de arte possível.',
+  'U+1FAB4': '🪴 (13.0) — utils/shop.ts, `furn-plant`. EXIBIDO na loja e no palco do pet; arte pendente no backlog A7. O uso que estava dentro de TEXTO (o marco de 21 dias, App.tsx, e o `HABIT_TIER_ICONS.sapling`) foi trocado por 🌾 em 08/09/2026 — ali arte não resolveria, porque texto inline não aceita <img>.',
   'U+1FAB5': '🪵 (13.0) — utils/restWindow.ts (sonho `dream-ember-circle`, NÃO chega à tela: PNG em `dreamArt.ts`) e utils/shop.ts (`furn-deck`, CAIXA VAZIA, arte em A7).',
   'U+1FAE7': '🫧 (14.0) — utils/restWindow.ts (sonho `dream-sea-glass`, NÃO chega à tela) e o EFEITO DE BANHO do overlay de desktop (desktop/menu.ts): CAIXA VAZIA, e o overlay não está coberto por entrada de arte nenhuma. Ver backlog A21.',
   'U+1FAF6': '🫶 (14.0) — o traço CARINHOSO (utils/passives.ts, cartão em Estatísticas, CAIXA VAZIA, arte pendente em A15) e o rótulo do botão de Carinho do overlay (desktop/menu.ts, CAIXA VAZIA, ver A21).',

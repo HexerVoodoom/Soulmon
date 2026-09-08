@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { DUNGEON_LINE_SPRITES, getDungeonEnemySprite } from './sprites';
+import { DUNGEON_LINE_SPRITES, DUNGEON_LINE_NAMES, getDungeonEnemySprite } from './sprites';
+import { PREMADE_CHARACTERS } from './monetization';
+import { LIBRARY_NPCS } from './libraryNpcs';
 
 /**
  * WP4.9 — o roster da masmorra é `DUNGEON_LINE_SPRITES` (6 linhas NOSSAS).
@@ -99,5 +101,49 @@ describe('nada de terceiro entra no bundle', () => {
     const proibidos = drawables.filter(f =>
       NOMES_DE_FRANQUIA.some(n => f.toLowerCase().includes(n)));
     expect(proibidos).toEqual([]);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+/**
+ * O SUFIXO `-mon` NÃO VOLTA — e agora a regra é executável.
+ *
+ * O `CLAUDE.md` proíbe sufixo fixo `-mon` em nome de criatura desde a limpeza
+ * da herança: prefixo somado a sufixo fixo é o que soletra nome de franquia
+ * alheia (War + -mon = WarGreymon; Omni + -mon = Omnimon, que é a própria
+ * fusão dos três Megas — exatamente o conceito do Ultra aqui). A regra estava
+ * só escrita, e o produto a contradizia: os três personagens prontos se
+ * chamavam Pyrakamon, Akashaoimon e Nimbratamon. Achado na sessão de QA de
+ * 08/09/2026; o dono decidiu que a regra vale para eles também.
+ *
+ * Comentário não impede reincidência — este teste impede.
+ */
+describe('nenhum nome de criatura leva sufixo fixo `-mon`', () => {
+  const proibido = (nome: string) => /mon$/i.test(nome.trim());
+
+  it('as linhas de sprite (o dono dos nomes)', () => {
+    const ruins = Object.entries(DUNGEON_LINE_NAMES)
+      .filter(([, nome]) => proibido(nome))
+      .map(([id, nome]) => `${id} → ${nome}`);
+    expect(ruins).toEqual([]);
+  });
+
+  it('os personagens prontos e os NPCs da Biblioteca LEEM do dono, não repetem', () => {
+    // Se alguém reintroduzir a string à mão em vez de ler `DUNGEON_LINE_NAMES`,
+    // o nome pode divergir sem nada ficar vermelho — foi assim que os três
+    // acabaram escritos em três arquivos. Este caso amarra os três.
+    expect(PREMADE_CHARACTERS.map(c => c.name))
+      .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra]);
+    expect(LIBRARY_NPCS.map(n => n.petName))
+      .toEqual([DUNGEON_LINE_NAMES.kaelen, DUNGEON_LINE_NAMES.orrin, DUNGEON_LINE_NAMES.thalindra]);
+    for (const c of PREMADE_CHARACTERS) expect(proibido(c.name)).toBe(false);
+    for (const n of LIBRARY_NPCS) expect(proibido(String(n.petName))).toBe(false);
+  });
+
+  it('o `id` das linhas NÃO mudou — ele resolve sprite, save e arquivo de arte', () => {
+    // O rótulo é cosmético; o id não é. Trocar um id renomearia arquivo de
+    // arte e quebraria todo save com `demoCharacterId`.
+    expect(Object.keys(DUNGEON_LINE_SPRITES).sort())
+      .toEqual(['ignar', 'kaelen', 'lumel', 'orrin', 'serah', 'thalindra']);
   });
 });

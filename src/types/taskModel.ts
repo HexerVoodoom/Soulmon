@@ -223,10 +223,29 @@ export const HABIT_TIER_BONUS: Record<HabitTier, number> = {
   tree: 0.3,
 };
 
+/**
+ * O glifo de cada degrau do marco de hábito.
+ *
+ * ⚠️ **TODOS TÊM DE SER Emoji 11.0 OU ANTERIOR.** O `sapling` era `🪴`
+ * (U+1FAB4, Emoji 13.0) e renderizava como CAIXA VAZIA em qualquer aparelho
+ * com fonte anterior ao Android 11 — sem erro e sem log, do jeito que só se
+ * descobre olhando a tela. Achado na sessão de QA de 08/09/2026, medido por
+ * canvas; o guard é `src/styles/emojiSuportado.contract.test.ts`.
+ *
+ * A troca é `🌾` (Emoji 1.0), escolhida pelo dono: mantém a metáfora botânica,
+ * mantém a progressão legível (semente → broto → espiga → árvore) e não repete
+ * nenhum degrau vizinho. `🌿` seria a substituição óbvia e está PROIBIDA aqui:
+ * ela já é o `sprout`, e usar o mesmo glifo em dois degraus apagaria justamente
+ * o que a escada existe para mostrar.
+ *
+ * Quem consome isto e o `MILESTONE_TEXT` do `App.tsx` têm de contar a mesma
+ * história — o texto do marco carrega o glifo dentro da frase, e texto inline
+ * não aceita `<img>`, então aqui não existe a saída de "vira arte depois".
+ */
 export const HABIT_TIER_ICONS: Record<HabitTier, string> = {
   seed: '🌱',
   sprout: '🌿',
-  sapling: '🪴',
+  sapling: '🌾',
   tree: '🌳',
 };
 

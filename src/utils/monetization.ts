@@ -6,7 +6,7 @@
 // pra dar pra testar o loop de recompensa fim-a-fim — troque por AdMob (ou
 // equivalente) quando a conta de anúncios existir; a assinatura já serve.
 import { FORM_REQUIREMENTS } from '../types/progression';
-import { getSpriteForStage } from './sprites';
+import { getSpriteForStage, DUNGEON_LINE_NAMES } from './sprites';
 import { STAGE_NAMES, type CreatureStage, type StageId, type AlignmentId } from './oracle';
 
 export type AccountTier = 'demo' | 'paid';
@@ -24,19 +24,35 @@ export interface PremadeCharacter {
   bioEn: string;
 }
 
+/**
+ * Os três personagens prontos do modo grátis.
+ *
+ * ⚠️ **SEM SUFIXO `-mon`, e isto é regra, não gosto** (`CLAUDE.md`, seção de
+ * arte). Eles se chamavam Pyrakamon, Akashaoimon e Nimbratamon até 08/09/2026 —
+ * a sessão de QA achou a contradição entre o produto e a regra escrita, e o
+ * dono decidiu que a regra vale para eles também. Prefixo somado a sufixo fixo
+ * é exatamente o que soletra nome de franquia alheia (War + -mon = WarGreymon),
+ * e o app já se chama Soulmon: repetir o sufixo na criatura não acrescenta
+ * marca, só aproxima do que a regra existe para evitar.
+ *
+ * O `id` NÃO muda e não pode mudar: é ele que vai para o save
+ * (`demoCharacterId`), que resolve o sprite (`getSpriteForStage`) e que nomeia
+ * os arquivos de arte (`thalindra-mega.png`). Só o rótulo de exibição mudou —
+ * e o jogador batiza a criatura dele no choco de qualquer jeito.
+ */
 export const PREMADE_CHARACTERS: PremadeCharacter[] = [
   {
-    id: 'kaelen', name: 'Pyrakamon',
+    id: 'kaelen', name: DUNGEON_LINE_NAMES.kaelen,
     bioPt: 'Um espírito de chamas contidas, forjado em brasa e fúria silenciosa.',
     bioEn: 'A spirit of contained flame, forged in ember and quiet fury.',
   },
   {
-    id: 'orrin', name: 'Akashaoimon',
+    id: 'orrin', name: DUNGEON_LINE_NAMES.orrin,
     bioPt: 'Um guardião etéreo que carrega o eco de tempestades distantes.',
     bioEn: 'An ethereal guardian carrying the echo of distant storms.',
   },
   {
-    id: 'thalindra', name: 'Nimbratamon',
+    id: 'thalindra', name: DUNGEON_LINE_NAMES.thalindra,
     bioPt: 'Uma presença dourada e serena, tecida a partir de luz calma.',
     bioEn: 'A golden, serene presence woven from calm light.',
   },
