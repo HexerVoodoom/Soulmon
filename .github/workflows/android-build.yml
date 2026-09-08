@@ -91,6 +91,106 @@ jobs:
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
+      # ───────────────────────────────────────────────────────────────────────
+      # BUNDLE ASSINADO (.aab) — o que a Play Store aceita
+      #
+      # POR QUE ESTE BLOCO EXISTE E FICA INERTE POR ENQUANTO: nada do
+      # lançamento anda sem um bundle assinado. O `assembleDebug` acima usa a
+      # chave de debug do Android, que a Play Store recusa — e sem um bundle
+      # enviado não existe o fingerprint do **Play App Signing**, que é o que
+      # o `ASSETLINKS_SHA256` precisa (item 17 de `docs/DEPENDE-DE-VOCE.md`).
+      # Sem assetlinks não há App Links; sem App Links o portão de conta não
+      # vale dentro do APK. É uma corrente, e ela começa aqui.
+      #
+      # A keystore é do DONO e **nunca** entra no repositório: ela é a
+      # identidade do app na loja: quem a tem publica no seu lugar, e quem a
+      # perde não consegue mais atualizar o app — nunca. Por isso ela chega
+      # como secret, é escrita em disco só dentro do runner e é apagada logo
+      # depois, mesmo se o build falhar (`if: always()`).
+      #
+      # ENQUANTO OS SECRETS NÃO EXISTIREM o bloco inteiro é pulado, e o push da
+      # `main` segue verde: não faz sentido pintar de vermelho todo push por uma
+      # etapa que depende de uma decisão do dono. Mas quando eles EXISTIREM, uma
+      # falha aqui é falha de verdade e derruba o job — um bundle que não
+      # assina, silenciosamente marcado como sucesso, seria descoberto só no
+      # Play Console.
+      #
+      # ── COMO LIGAR (dono), uma vez só ────────────────────────────────────
+      #  1. Gerar a keystore na SUA máquina (NUNCA no CI, nunca no repo):
+      #       keytool -genkeypair -v -keystore soulmon-release.jks \
+      #         -keyalg RSA -keysize 4096 -validity 10000 -alias soulmon
+      #     Guarde o arquivo E as senhas num gerenciador. Perder = nunca mais
+      #     atualizar o app publicado.
+      #  2. Converter para base64 (o secret é texto):
+      #       # PowerShell
+      #       [Convert]::ToBase64String([IO.File]::ReadAllBytes("soulmon-release.jks")) > ks.txt
+      #  3. Em Settings → Secrets and variables → Actions, criar QUATRO secrets:
+      #       ANDROID_KEYSTORE_BASE64   (o conteúdo de ks.txt)
+      #       ANDROID_KEYSTORE_PASSWORD
+      #       ANDROID_KEY_ALIAS         (soulmon, se seguiu o comando acima)
+      #       ANDROID_KEY_PASSWORD
+      #  4. Pronto. O próximo push da `main` produz `app-release.aab` como
+      #     artefato — é ESSE arquivo que sobe no Play Console.
+      #
+      # As quatro propriedades abaixo são exatamente as que
+      # `android/app/build.gradle` já espera (`signingConfigs.release`); o
+      # `hasProperty('RELEASE_STORE_FILE')` de lá é o que mantém o build de
+      # debug funcionando enquanto elas não existirem.
+      # ───────────────────────────────────────────────────────────────────────
+      # O `secrets` NÃO pode ser lido num `if:` de passo — por isso a decisão
+      # "tem keystore?" é tomada DENTRO do shell e sai como output. Tentar
+      # `if: secrets.X != ''` aqui falha na validação do workflow.
+      - name: Restore release keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "Sem ANDROID_KEYSTORE_BASE64: pulando o bundle assinado."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/soulmon-release.jks"
+          # Confere que o arquivo saiu ANTES de gastar um build: base64
+          # truncado no secret produz arquivo vazio, e o erro do Gradle para
+          # esse caso é opaco.
+          test -s "$RUNNER_TEMP/soulmon-release.jks"
+          echo "path=$RUNNER_TEMP/soulmon-release.jks" >> "$GITHUB_OUTPUT"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build signed release bundle (.aab)
+        if: steps.keystore.outputs.ready == 'true'
+        working-directory: android
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        # As senhas vão por `-P` a partir de env, e NUNCA interpoladas no YAML:
+        # `${{ secrets.X }}` escrito direto na linha de comando aparece no log
+        # se o passo ecoar o comando, e o mascaramento do Actions não cobre
+        # todo caminho. `--no-daemon` pelo mesmo motivo do build acima.
+        run: |
+          ./gradlew bundleRelease --no-daemon \
+            -PRELEASE_STORE_FILE="${{ steps.keystore.outputs.path }}" \
+            -PRELEASE_STORE_PASSWORD="$STORE_PASSWORD" \
+            -PRELEASE_KEY_ALIAS="$KEY_ALIAS" \
+            -PRELEASE_KEY_PASSWORD="$KEY_PASSWORD"
+
+      - name: Upload release bundle
+        if: steps.keystore.outputs.ready == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: soulmon-release-${{ github.sha }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      # SEMPRE, inclusive quando o build falha: a keystore não pode sobreviver
+      # ao job. O runner é efêmero, mas "efêmero" não é uma garantia que valha
+      # a pena testar com a identidade do app na loja.
+      - name: Wipe keystore from the runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/soulmon-release.jks"
+
   # ───────────────────────────────────────────────────────────────────────────
   # SMOKE DO APK — a ponte Capacitor↔web
   #

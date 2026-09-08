@@ -270,9 +270,34 @@ equivalentes.**
 
 ## 🔵 LANÇAMENTO — bloqueiam loja
 
+> ### 🔗 Isto não é uma lista paralela: é uma CORRENTE (mapeada em 08/09/2026)
+>
+> Ler estes itens como tarefas independentes faz perder tempo na ordem errada.
+> A dependência real é:
+>
+> ```
+> keystore de release  ← SÓ VOCÊ (tem senha)
+>    └─ bundle .aab assinado        ← o CI já faz, esperando os 4 secrets
+>        └─ app criado no Play Console + bundle enviado
+>            ├─ fingerprint do Play App Signing → item 17 → assetlinks
+>            │      └─ App Links → o portão de conta passa a valer no APK
+>            ├─ item 11 (os 4 produtos)   ┐
+>            └─ item 12 (service account) ┴─ compras funcionando
+> ```
+>
+> **Tudo começa na keystore, e ela é sua** — exige senha, então nunca vou gerar
+> nem pedir. O passo a passo exato (`keytool`, base64, os quatro secrets) está
+> escrito dentro de `.github/workflows/android-build.yml`, no bloco
+> "BUNDLE ASSINADO". Depois de cadastrar os secrets, o próximo push da `main`
+> cospe o `.aab` como artefato — não há mais nada de código a fazer.
+>
+> ✅ **Conta do Play Console criada e os US$ 25 pagos** (informado em 08/09/2026).
+> ✅ **Item 9 deixou de exigir escrita**: ver a linha dele abaixo.
+
 | # | O quê | Trava |
 |---|---|---|
-| 9 | URL da política de privacidade + formulário de Segurança de Dados | Play Store |
+| **0** | **Keystore de release** — ⚠️ **é o primeiro domínio da corrente e não estava nesta lista.** O Soulmon não tem uma, e a CI só fazia `assembleDebug` (chave de debug, que a Play recusa). O CI já está preparado; falta você gerar o arquivo e cadastrar os quatro secrets. **Guarde a keystore e as senhas num gerenciador: quem a perde não consegue mais atualizar o app publicado, nunca.** | **tudo abaixo** |
+| 9 | ~~URL da política de privacidade~~ ✅ **já está no ar**: `https://soulmon.mateus-sprnd.workers.dev/privacidade` (atualizada em 08/09/2026 para o login com Google/senha, o modo cooperativo, os passos e o humor). **Formulário de Segurança de Dados**: as respostas prontas, campo a campo, estão em `docs/PLAY-DATA-SAFETY.md` — é transcrever. ⚠️ Leia a seção 2.6 de lá antes: o app coleta **passos** e **humor**, e declarar "não" ali é motivo de suspensão | Play Store |
 | 10 | Registrar o pacote **no projeto novo `soulmon-app`** + baixar `google-services.json` (o atual ainda é do projeto do DigiApp) e refazer a chave do FCM / o secret `FIREBASE_SERVICE_ACCOUNT`. ⚠️ **Mudou em 07/09/2026:** o Firebase foi separado, então isto deixou de ser "registrar mais um app" e virou migração do lado Android. O lado **web** já está pronto. | push nativo |
 | 11 | Criar os 4 produtos no Play Console (`soulmon.unlock.full` + 3 pacotes de crédito) | compras |
 | 12 | Conta de serviço do Google Play → `GOOGLE_PLAY_SERVICE_ACCOUNT` e `ANDROID_PACKAGE_NAME` | compras |

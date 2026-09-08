@@ -30,7 +30,7 @@
 <body>
 
 <h1>Política de Privacidade — Soulmon</h1>
-<p class="sub">Última atualização: 25 de agosto de 2026</p>
+<p class="sub">Última atualização: 8 de setembro de 2026</p>
 
 <p class="lang">
   <a href="#en">English version below ↓</a> ·
@@ -64,7 +64,11 @@
   <tr>
     <td>E-mail</td>
     <td>Identificar sua conta e sincronizar o progresso entre aparelhos. Fica
-        guardado como um código derivado (hash) do endereço.</td>
+        guardado como um código derivado (hash) do endereço. Você entra
+        <strong>com a sua conta Google</strong> ou <strong>com e-mail e
+        senha</strong> — em qualquer um dos dois, quem verifica quem você é é o
+        Google (Firebase Authentication). <strong>Nós nunca vemos nem
+        guardamos a sua senha.</strong></td>
   </tr>
   <tr>
     <td>Apelido (nickname)</td>
@@ -93,6 +97,39 @@
     <td>Compras realizadas</td>
     <td>Registrar o que você comprou, para que o benefício continue valendo e
         possa ser restaurado se você reinstalar o app.</td>
+  </tr>
+  <tr>
+    <td>O que você quer melhorar e o que atrapalha (o texto que você escreve no
+        começo)</td>
+    <td>Fazem parte do save e voltam para você em momentos-chave do jogo. É
+        <strong>texto livre escrito por você</strong>, então pode conter o que
+        você quiser — inclusive algo sobre a sua saúde. Fica guardado com o
+        resto do save e <strong>não passa por nenhuma rota de IA</strong> nem
+        entra nas estatísticas de uso.</td>
+  </tr>
+  <tr>
+    <td>Check-in de humor (uma nota de 1 a 5 por dia, se você responder)</td>
+    <td>Faz parte do save, para você ver o próprio histórico. <strong>Nunca
+        entra em pontuação, nem no cálculo do jogo, nem nas estatísticas de
+        uso.</strong></td>
+  </tr>
+  <tr>
+    <td>Contagem de passos do dia — só se você autorizar o sensor</td>
+    <td>Sobe junto do save <strong>apenas o agregado do dia</strong> (o total e
+        a âncora de contagem), nunca uma linha do tempo dos seus movimentos. O
+        app usa o contador de passos do próprio aparelho
+        (<code>ACTIVITY_RECOGNITION</code>), <strong>não</strong> o Health
+        Connect, e <strong>não</strong> lê nenhum outro dado de saúde ou
+        atividade física. Recusar a permissão não trava nada: o app inteiro
+        funciona sem ela.</td>
+  </tr>
+  <tr>
+    <td>Grupo cooperativo — só se você criar ou entrar em um</td>
+    <td>O <strong>nome do grupo</strong> (escrito por quem o criou), quem está
+        nele e, por pessoa, <strong>em quais dias da semana ela apareceu</strong>
+        — apenas o fato, nunca o que ela fez. Serve para o grupo enxergar a
+        própria meta da semana. Some quando você sai, e o grupo inteiro é
+        apagado quando a última pessoa sai.</td>
   </tr>
 </table>
 <p>
@@ -189,6 +226,14 @@
   tarefas, a <strong>quantidade</strong> delas e o seu e-mail
   <strong>nunca</strong> são exibidos para outros jogadores.
 </p>
+<p>
+  Se você entrar em um <strong>grupo cooperativo</strong>, as outras pessoas do
+  grupo veem o seu apelido e <strong>se você apareceu hoje (sim ou não)</strong>.
+  Elas <strong>não</strong> veem quanto você fez, nem a sua meta, nem qualquer
+  ranking entre vocês — o número que o grupo enxerga é do grupo inteiro, nunca
+  de uma pessoa. Entra-se em um grupo <strong>só por código de convite</strong>:
+  grupos não aparecem em busca nem no diretório público.
+</p>
 
 <h2>6. Terceiros que recebem dados</h2>
 <table>
@@ -201,7 +246,10 @@
   </tr>
   <tr>
     <td>Google Firebase</td>
-    <td>Envio do link de acesso por e-mail e entrega de notificações push.</td>
+    <td>Verificação de quem você é no login (com a conta Google ou com e-mail e
+        senha) e entrega de notificações push. Ao entrar com o Google, o
+        Firebase nos informa apenas o <strong>seu e-mail</strong> — nada mais da
+        sua conta Google.</td>
     <td>Se você fizer login e/ou ativar notificações.</td>
   </tr>
   <tr>
@@ -221,12 +269,18 @@
   de 18 anos.
 </p>
 
-<h2>8. Seus direitos</h2>
+<h2 id="exclusao">8. Seus direitos</h2>
 <p>
-  Você pode pedir a <strong>exclusão</strong> da sua conta e de todos os dados
-  associados, ou uma <strong>cópia</strong> deles, escrevendo para o contato
-  abaixo. Apagar o app do aparelho remove os dados locais, mas não apaga
-  automaticamente o save na nuvem — para isso, use o contato.
+  <strong>Dentro do app, sem precisar pedir a ninguém:</strong>
+  <strong>Configurações → Seus dados</strong> tem os dois botões —
+  <strong>baixar uma cópia</strong> de tudo que está guardado sobre você e
+  <strong>excluir a sua conta</strong> junto com os dados associados. A exclusão
+  é imediata e não tem volta.
+</p>
+<p>
+  Apagar o app do aparelho remove os dados locais, mas <strong>não</strong>
+  apaga o save na nuvem — para isso use o botão acima, ou escreva para o contato
+  abaixo, que faz o mesmo por você.
 </p>
 
 <h2>9. Contato</h2>
@@ -237,7 +291,7 @@
 <hr>
 
 <h1 id="en">Privacy Policy — Soulmon</h1>
-<p class="sub">Last updated: August 25, 2026</p>
+<p class="sub">Last updated: September 8, 2026</p>
 
 <p class="lang"><a href="/termos.html#en">Terms of Use</a></p>
 
@@ -267,7 +321,10 @@
   <tr>
     <td>Email</td>
     <td>Identify your account and sync progress across devices. Stored as a
-        derived code (hash) of the address.</td>
+        derived code (hash) of the address. You sign in <strong>with your
+        Google account</strong> or <strong>with an email and password</strong> —
+        either way, it is Google (Firebase Authentication) that verifies who you
+        are. <strong>We never see or store your password.</strong></td>
   </tr>
   <tr>
     <td>Nickname</td>
@@ -290,6 +347,37 @@
         tasks. <strong>It dies with the subscription</strong>: turning
         notifications off deletes it. This is not your birth date — it is the
         pet's.</td>
+  </tr>
+  <tr>
+    <td>What you want to improve and what gets in the way (the text you write at
+        the start)</td>
+    <td>Part of your save; the game gives it back to you at key moments. It is
+        <strong>free text written by you</strong>, so it may contain anything you
+        choose — including something about your health. It is stored with the
+        rest of the save and <strong>never goes through any AI route</strong>,
+        nor into usage stats.</td>
+  </tr>
+  <tr>
+    <td>Mood check-in (one 1-to-5 rating per day, if you answer it)</td>
+    <td>Part of your save, so you can see your own history. It <strong>never
+        counts toward any score, any game rule, or usage stats.</strong></td>
+  </tr>
+  <tr>
+    <td>Daily step count — only if you allow the sensor</td>
+    <td>Only <strong>the daily aggregate</strong> travels with the save (the
+        total and the counting anchor), never a timeline of your movement. The
+        app uses the device's own step counter
+        (<code>ACTIVITY_RECOGNITION</code>), <strong>not</strong> Health Connect,
+        and reads no other health or fitness data. Declining the permission
+        blocks nothing: the whole app works without it.</td>
+  </tr>
+  <tr>
+    <td>Co-op group — only if you create or join one</td>
+    <td>The <strong>group name</strong> (written by whoever created it), who is
+        in it and, per person, <strong>which days of the week they showed
+        up</strong> — only the fact, never what they did. It exists so the group
+        can see its own weekly goal. It is removed when you leave, and the whole
+        group is deleted when the last person leaves.</td>
   </tr>
   <tr>
     <td>Purchases</td>
@@ -375,6 +463,14 @@
   tasks, how <strong>many</strong> of them you've completed and your email are
   <strong>never</strong> shown to other players.
 </p>
+<p>
+  If you join a <strong>co-op group</strong>, the other people in it see your
+  nickname and <strong>whether you showed up today (yes or no)</strong>. They do
+  <strong>not</strong> see how much you did, your goal, or any ranking between
+  you — the number the group sees belongs to the whole group, never to one
+  person. Groups are joined <strong>by invite code only</strong>: they never
+  appear in search or in the public directory.
+</p>
 
 <h2>6. Third parties that receive data</h2>
 <table>
@@ -387,7 +483,10 @@
   </tr>
   <tr>
     <td>Google Firebase</td>
-    <td>Sending the email sign-in link and delivering push notifications.</td>
+    <td>Verifying who you are at sign-in (with your Google account or with email
+        and password) and delivering push notifications. When you sign in with
+        Google, Firebase tells us only <strong>your email address</strong> —
+        nothing else from your Google account.</td>
     <td>If you sign in and/or enable notifications.</td>
   </tr>
   <tr>
@@ -404,12 +503,18 @@
   directed at minors, and we do not knowingly collect data from anyone under 18.
 </p>
 
-<h2>8. Your rights</h2>
+<h2 id="deletion">8. Your rights</h2>
 <p>
-  You may request <strong>deletion</strong> of your account and all associated
-  data, or a <strong>copy</strong> of it, by writing to the contact below.
-  Deleting the app removes local data but does not automatically erase the
-  cloud save — use the contact for that.
+  <strong>Inside the app, without asking anyone:</strong>
+  <strong>Settings → Your data</strong> has both buttons —
+  <strong>download a copy</strong> of everything stored about you, and
+  <strong>delete your account</strong> along with the associated data. Deletion
+  is immediate and cannot be undone.
+</p>
+<p>
+  Deleting the app removes local data but does <strong>not</strong> erase the
+  cloud save — use the button above, or write to the contact below, which does
+  the same for you.
 </p>
 
 <h2>9. Contact</h2>
