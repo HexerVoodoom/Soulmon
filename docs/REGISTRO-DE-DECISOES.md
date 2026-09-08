@@ -17,8 +17,10 @@
 > (`docs/STATUS.md`). Toda afirmação sobre "o usuário" é hipótese informada por
 > terceiros. Este documento não esconde isso — ele marca linha por linha.
 >
-> **Consolidado em 08/09/2026.** As fontes primárias continuam sendo os arquivos
-> citados; este registro aponta para eles em vez de reescrevê-los.
+> **Consolidado em 08/09/2026, e revisado no mesmo dia** por uma sessão de QA
+> independente que atacou as decisões daqui por mutação (§12). As fontes
+> primárias continuam sendo os arquivos citados; este registro aponta para eles
+> em vez de reescrevê-los.
 
 ### Como ler o nível de evidência
 
@@ -48,6 +50,7 @@
 | **9** | A crítica mais forte contra o produto |
 | **10** | O que a pesquisa contradisse, e o que continua em aberto |
 | **11** | Como usar este documento para rever uma decisão |
+| **12** | O que a revisão adversarial de 08/09/2026 fez com este documento |
 
 ---
 
@@ -242,6 +245,7 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 | **Folga semanal automática e retroativa (P2)** | Habitica *Rest in the Inn* 📰: sai a punição, fica a recompensa — "descansar não é sair do jogo". Duolingo 📰: proteção no bolso ANTES de precisar | "Modo férias" com datas — é planejamento, e planejamento é a fricção da queixa nº 2 | `REST_DAYS_PER_WEEK`; `restDay.test.ts` | ✅ 07/09 |
 | **A folga é ANUNCIADA (ao contrário do escudo)** | 🧭 Perdão que a pessoa não soube que recebeu faz a cobrança da semana seguinte parecer arbitrária | Gastar em silêncio | `restDayUsed` no relatório | ✅ |
 | **Chave da semana por aritmética de CALENDÁRIO** | Achado da sessão de QA (`4be07ee9`): `getTime() − n·86400000` caía no domingo anterior na virada do horário de verão — folga extra de graça, 1×/ano, em todo fuso com DST. Invisível no Brasil, que não tem mais DST | `new Date(ano, mês, dia − n)` | `restWeekKeyFor`; teste roda 400 dias em 4 fusos | ✅ corrigido |
+| **A folga NÃO cobre o dreno de cocô** ⚠️ | Achado do QA (08/09): a folga absorve a perda vinda da meta, mas o dreno de cocô cobra por outro caminho — então existe um dia "de folga" em que a pessoa perde coração assim mesmo | — | `poopDrain.ts` | ⬜ **Lacuna conhecida, não decidida.** Ou a folga cobre as duas fontes, ou o produto assume que cocô é a única cobrança que sobrevive ao descanso — e isso precisa estar escrito |
 | **Alívio adaptativo (P3)** | — | — | — | ⏸️ **Adiada**. Duas leituras incompatíveis; seria o 6º perdão empilhado; a pergunta que decide é de fato, não de design |
 | **Degeneração nunca se chama "morte"; sempre reversível, nunca por pagamento** | Tamagotchi original 🎥: morte em <12h deu apego **e** abandono em massa. Luto por pet virtual é genuíno (AIBO) 📚 | "Seu pet morreu" | — | ✅ |
 
@@ -290,6 +294,8 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 | **Vender o resultado, não a feature** | Cravotta, *100 Paywalls* 📰: benefícios concretos, âncora simples, botão de fechar presente mas discreto | Lista de features técnicas | `UnlockAccountModal` | ✅ |
 | **A recusa sempre tem saída** | Tim Gabe sobre dead-ends 📰; caso `24870bf7` do próprio repo | Recusa seca | 3 lugares | ✅ |
 | **"Agora não" com a mesma largura do primário** | Mobbin 🖼️: uma oferta cuja única saída é o X **encurrala** | Só o X no canto | `UnlockAccountModal` | ✅ |
+| **O × que dispensa o convite tem alvo de 44×44** | Achado do QA (08/09): tinha 32×32 — o **único** alvo abaixo da régua no relatório noturno, e justamente o da ação **terminal** (`offerDismissed` grava no save, o convite não volta nunca mais), encostado num card que leva à compra. Errar o toque ali abria o paywall | 32×32 | `UnlockNudge` | ✅ corrigido |
+| **Preço sempre em R$, inclusive para quem está em inglês** | ⚠️ Achado do QA: quem usa o app em EN vê o preço em reais | — | `priceLabel.ts` | ⬜ **Em aberto.** Ligado ao item de preço regionalizado (H2) |
 | **Assinatura recorrente** | Compra única **não cobre custo recorrente de IA**, que escala com DAU. Freemium D60 ~US$ 0,38 vs hard paywall US$ 3,09 📊 — não para virar hard paywall, mas para medir o custo da invisibilidade | — | — | ⏸️ **Dono (H1)**. Admissível com 3 travas: nada de progresso; cancelar não remove nada; conteúdo = IA + cosmético |
 | **Preço regionalizado para o Brasil como prática JUSTA** | Rodada 2 🎥 | Preço US/EU | — | ⏸️ **Dono (H2)** |
 
@@ -306,6 +312,9 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 | **Sair é um toque; a meta ENCOLHE junto** | Exigência escrita do item 4.3 | Confirmação; meta fixa | `target = members × 5` derivado | ✅ |
 | **Entrada só por código de convite** | Grupo achável é raide de estranho; o diretório já respeita consentimento (N-4) | Busca de grupos | `coopJoin` | ✅ |
 | **Meta 5×; sem recompensa; sem gate de Vínculo** | 🧭 dono (08/09). 5 e não 7: exigir dia completo por pressão social desfaz o perdão da Fase 1 | Bits por meta batida | `COOP_CHECKINS_POR_MEMBRO` | ✅ |
+| **Cada membro escreve só a PRÓPRIA presença** (`coopCk:<gid>:<saveId>`) | Achado do QA (08/09): `coopCheckin` fazia ler-modificar-gravar sobre o blob do grupo. **Dois membros marcando na mesma noite — o caso normal de um grupo de quatro** — e a segunda gravação apagava a primeira, sem erro. O progresso do grupo, que é a única coisa que o modo entrega, ficava menor que a verdade | Blob compartilhado no caminho quente | `community.js`; guard provado vermelho por mutação | ✅ **corrigido — a corrida foi removida, não mitigada** |
+| **Entrar confere a própria entrada e admite colisão** | Achado do QA: duas pessoas na última vaga → a última gravação vencia e o perdedor recebia **200 com a vista do grupo**, para depois o grupo sumir sem nenhum evento que explicasse | Sucesso falso | `coopJoin` → `409 join collision` | ✅ corrigido |
+| **As três chaves do grupo renovam JUNTAS** | Achado do QA: só `coop:<gid>` era reescrita; `coopOf:` e `coopCode:` eram gravadas uma vez. Aos 120 dias um grupo **vivo e ativo** perdia os dois índices — todo mundo via "você não está em nenhum grupo" e o convite parava de abrir, ao mesmo tempo, sem erro | TTL por chave | `gravarGrupo` | ✅ corrigido |
 | **O ESTADO da criatura é visível socialmente?** | Mobbin §17 Q7 🖼️: criatura abatida na árvore de amigos é **acusação pública** | — | — | ⏸️ **Em aberto** |
 
 ### 5.6 Recompensa e conteúdo
@@ -324,6 +333,7 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 | **Aventura determinística por dia** | Razão variável 📚 só é saudável se o ATO for previsível e o RESULTADO surpreendente — re-sortear ao reabrir é caça-níquel | Sorteio no `useState` | seed = `dayKey` | ✅ |
 | **Diário NÃO mostra o que falta nem raridade** | 🧭 "Painel de pendências é o Habitica"; rotular a noite de ontem como "comum" é dizer que valeu pouco | Silhuetas do não coletado | `AdventureDiary` | ✅ |
 | **Sonhos sazonais continuam obteníveis fora da estação** | A regra que separa estação de battle pass | Exclusividade sazonal | `SEASON_DREAM_WEIGHT` | ✅ |
+| **Emoji de interface só do bloco que a base de aparelhos desenha** | Achado do QA (08/09): **nove emojis do app renderizam como caixa vazia (▯), sem erro e sem aviso** — todos do bloco `Symbols and Pictographs Extended-A` (Emoji 12.0+). Atingem o **marco de 21 dias**, o traço Carinhoso, cinco mobílias da loja, **três das 24 cenas da aventura**, quatro dos 30 sonhos e um reino do Oráculo. É a **mesma família de dano** da fonte de ícones subsetada: renderiza vazio, sem erro | — | `emojiSuportado.contract.test.ts` congela a dívida e barra um emoji novo desse bloco | ⚠️ **Guard entrou; a troca dos nove é decisão do dono** (são catálogos curados por ele) |
 | **Rota de redenção visível** (o Numemon → Monzaemon) | V-Pet 97 📰: a forma-castigo tem saída, com janela de 48h. *"O bicho ruim não é um beco; é um retrato com saída"* | — | — | ⬜ **Não implementado.** O `carePattern` já é seletor sem "melhor"; falta a narrativa |
 | **Atividades acopladas a alguma necessidade mesmo depois de comprar tudo** | "Motivational sand traps" (Far Cry 3) 🎥: atividade desconectada vira **ruído**, não oportunidade | — | — | ⏸️ **Eixo D30–D90, o mais fraco do produto** |
 
@@ -345,6 +355,7 @@ Formato: **decisão** · evidência · **alternativa que perdeu, e por quê** ·
 | **Tempo de sessão é ANTI-indicador** | Princípio 7: quem abre 3×/dia e conclui 1 tarefa está **pior** que quem abre 1× e conclui 5 | — | — | ✅ |
 | **Nunca coletar**: texto de tarefa, `soulGoal`/`soulStruggle`, psicométrico, nascimento, humor individual, e-mail | LGPD | — | Teste confere a lista de eventos contra o código | ✅ |
 | **Humor NUNCA vira pontuação — mas pode alimentar a FALA** | Emily Greer (GDC) 🎥 sobre o perigo de métrica isolada; conflito C.3 #4: alimentar fala não é alimentar score | Meta adaptada ao humor — **pareceria empatia e faria a pessoa responder o que rende ponto** | Teste roda a virada com e sem humor ruim exigindo resultado idêntico | ✅ |
+| **O código de passo do funil não pode colidir** ⚠️ | Achado do QA (08/09): `onboardingStepCode` mapeia passo negativo para `45 + passo`; o portão trouxe três telas novas e hoje o fundo é `GOOGLE_STEP` (-9) → **36**. O maior passo positivo (`REGISTER`) vale **35**. **A folga inteira é de UM**: um item novo no teste psicométrico faz duas telas do funil somarem no mesmo contador, sem erro e com o dado parecendo plausível | — | Guard novo em `telemetry.test.ts` | ⚠️ **Alarme armado.** Ver §7 — é o instrumento das apostas 5 e 6 |
 | **Passos e humor DECLARADOS no Data Safety** | Achado de 08/09: o save leva `steps` e `moodLog` para a nuvem e a política não nomeava nenhum dos dois | Declarar "não há dado de saúde" | `PLAY-DATA-SAFETY.md` §2.6 | ✅ |
 
 ---
@@ -401,14 +412,28 @@ O Soulmon é híbrido produtividade × pet-sim. **Metas declaradas:**
 | **2** | **O 3º escudo de descanso ajuda** (`REST_SHIELD_MAX = 3`) | Retorno após ausência ≥ o de quem tem 2 | Duolingo 🎥 já mediu o contrário. Se a taxa de retorno de quem gastou 3 escudos for **menor** que a de quem gastou 2 | `shield_used` + retorno D+1..D+4 |
 | **3** | **A folga semanal não treina ausência** (P2) | Quem usou a folga volta no dia seguinte na mesma taxa de quem não usou | Taxa de retorno **menor** entre quem usou — é o mecanismo do escudo nº 3 aplicado a outra peça | `restDayUsed` + retorno D+1 |
 | **4** | **P1+P2 não esvaziam o stake** | Degeneração continua acontecendo, e só depois de negligência real (≥ 3 dias abaixo do heartGoal na mesma semana) | Degeneração cai a ~zero **e** a métrica-farol cai junto — cuidar deixou de importar | `degeneration` + `days_since_install` + farol |
-| **5** | **O reveal do Oráculo vale as 20 telas do teste psicométrico** | Quem aceita o teste longo retém mais que quem pula | Drop-off > 30% na bifurcação — **e aí reordenar o ritual vira P0** (gatilho já declarado) | `onboarding_long_test` (accepted) + drop por passo |
-| **6** | **A conta na primeira tela não mata o funil** ⚠️ **a aposta mais arriscada** | Install → `pet_revealed` acima de ~60% | Drop-off na `IDENTITY_STEP` acima de qualquer outro passo. Contraria diretamente o "valor antes de cadastro" do Duolingo 🖼️ 📰, que é evidência forte | `onboarding_step` no `IDENTITY_STEP` |
+| **5** | **O reveal do Oráculo vale as 20 telas do teste psicométrico** | Quem aceita o teste longo retém mais que quem pula | Drop-off > 30% na bifurcação — **e aí reordenar o ritual vira P0** (gatilho já declarado) | `onboarding_long_test` (accepted) + drop por passo ⚠️ **ver o alerta do instrumento abaixo** |
+| **6** | **A conta na primeira tela não mata o funil** ⚠️ **a aposta mais arriscada** | Install → `pet_revealed` acima de ~60% | Drop-off na `IDENTITY_STEP` acima de qualquer outro passo. Contraria diretamente o "valor antes de cadastro" do Duolingo 🖼️ 📰, que é evidência forte. **E o QA achou um agravante: se o popup do Google for bloqueado, a única saída pode estar bloqueada também** (§10.2) | `onboarding_step` no `IDENTITY_STEP` ⚠️ **ver abaixo** |
 | **7** | **O paywall invisível não custa caro demais** | RPI acima do piso freemium (~US$ 0,38 D60 📊) | RPI no piso **e** `paywall_view` quase zero — ninguém descobre que existe algo pago. Gatilho já declarado: **conversão < 1% reabre o paywall no reveal** | `paywall_view` / `purchase` / RPI |
 | **8** | **A comparação social ramificada não vira placar** | Uso da Biblioteca estável, sem correlação entre visitar amigo e churn | Churn sobe depois de visitar um amigo em estágio mais alto. É o **Problema 2** do dossiê, que a própria fonte diz **não ser consertável por copy** | `layer3_used` (biblioteca) + churn condicional |
 | **9** | **A recompensa narrativa não satura** (aventura, sonhos) | Abertura do relatório noturno estável ao longo de 90 dias | Abertura caindo depois que o catálogo de 24 cenas é visto — aí o eixo D30–D90 é o buraco, e conteúdo novo é a única saída | abertura do relatório por coorte |
 | **10** | **A criatura sustenta significado sem punição** | Retenção de veteranos (D90) acima do piso, com `care_action` ativo | Veteranos param de cuidar assim que a evolução termina — "se cuidar não muda nada, some o motivo de cuidar" (§10.1) | `care_action` + D90 |
 | **11** | **O sinal declarado basta** (Princípio 6) | Conclusões de tarefa por ativo/dia estáveis | Sinal de **inflação de marcação** (marcar sem fazer): conclusões subindo enquanto retenção cai | farol ponderado por esforço + D7 |
 | **12** | **A meta de coop 5× é o número certo** | Grupos que batem a meta ≈ metade; ninguém sai por pressão | Grupos batem quase sempre (fácil demais) ou quase nunca (pressão) | eventos de coop (**a instrumentar** — hoje não existem) |
+
+### ⚠️ O instrumento das apostas 5 e 6 está a UM passo de mentir
+
+Achado do QA (08/09/2026). `onboardingStepCode` traduz passo negativo para
+`45 + passo`; hoje o fundo é `GOOGLE_STEP` (-9) → **36**, e o maior passo
+positivo (`REGISTER`) vale **35**. **A folga é de um.**
+
+Um item novo no teste psicométrico empurra `REGISTER` para 36 e **duas telas do
+funil passam a somar no mesmo contador** — sem erro, e com o dado parecendo
+plausível. As duas apostas que dependem de `onboarding_step` seriam medidas com
+uma régua quebrada, e nada avisaria.
+
+Há guard novo em `telemetry.test.ts` que fica vermelho antes disso acontecer, e
+**a correção certa quando ele cair é subir a base, não afrouxar a asserção**.
 
 ### Como usar esta seção quando houver dado
 
@@ -434,6 +459,12 @@ cairiam primeiro** se estivermos enganados sobre o próprio produto.
 | **Coop sem recompensa nenhuma** | Correto pela tese; **nenhum app do acervo tem grupo cooperativo sem prêmio** para comparar | Aposta 12 |
 | **Meta de coop 5×** | Número inventado. Declarado como tal em `PLANO-COOP.md` | Aposta 12 |
 | **A degeneração continua existindo** | Mantida por tese ("consequência dá sentido ao cuidado"), mas os 10 perdões a tornaram quase inalcançável. **É a peça que mais mudou de significado sem ninguém redecidir** | Aposta 4 |
+
+**O que a revisão de 08/09 tirou deste mapa:** o coop deixou de ser exposição
+*de implementação* (as três corridas do KV foram removidas e travadas por
+mutação), e a suspeita de que eu tivesse ensinado os guards de P1/P2 a
+concordarem **foi testada e descartada** (§12). O que sobra no mapa é exposição
+de **tese**, que é o tipo que só telemetria resolve.
 
 > **O padrão que sai do mapa:** onde estamos expostos não é onde fomos duros — é
 > onde fomos gentis **sem conseguir medir** se a gentileza ainda deixa o cuidado
@@ -508,6 +539,7 @@ puramente cosmético (regra 5 da §3, o *Perfect Streak* dourado). Cria signific
 |---|---|---|
 | `REST_SHIELD_MAX = 3` | Duolingo 🎥 testou: 3 = 2 em ganho, e o 3º **treina ausência** | ⏸️ Experimento (3→2). Não é o mesmo mecanismo (ganho por constância, gasto sozinho), por isso não é correção automática |
 | **Conta na primeira tela** | Gradual engagement 🖼️ 📰: valor antes de cadastro | ✅ decisão do dono, consciente. Aposta 6 |
+| **O fallback de popup bloqueado** (`signInWithRedirect`) | ⚠️ **Hipótese levantada pelo QA (08/09), e é a mais grave em aberto.** `authDomain` é `soulmon-app.firebaseapp.com` e o app roda em `soulmon.mateus-sprnd.workers.dev` — **domínios diferentes**. Desde o SDK 9.19 a documentação do Firebase avisa que `signInWithRedirect` para de funcionar em navegador que bloqueia armazenamento de terceiros (Chrome, Safari/ITP, Firefox/ETP) a menos que `/__/auth/handler` seja servido pelo domínio do próprio app — **e não é**. Ou seja: a única saída para popup bloqueado pode estar barrada pela mesma família de proteção | ⏸️ **Não reproduzível sem conta Google real e popup barrado.** Se confirmar, o portão — que é a PRIMEIRA tela — vira parede para uma fatia de gente, e a aposta 6 falha por um motivo técnico, não de produto. Cinco testes agora cobrem a lógica do fallback; **nenhum prova que o redirecionamento funciona no navegador da pessoa** |
 | **Dez perdões empilhados** | 🎥 acima | ⏸️ §10.1 |
 
 ### 10.3 O que os relatórios não cobriram
@@ -558,3 +590,54 @@ puramente cosmético (regra 5 da §3, o *Perfect Streak* dourado). Cria signific
 E a pergunta que fecha toda revisão, a mesma que abriu o projeto:
 
 > *Isso faz o bichinho parecer mais um companheiro, ou mais um chefe?*
+
+---
+
+## 12. O que a revisão adversarial de 08/09/2026 fez com este documento
+
+Uma sessão de QA independente recebeu instrução explícita de **atacar as
+decisões registradas aqui**, começando pela desconfiança que eu mesmo declarei
+no handoff: *eu ajustei os guards de P1 e P2 na mesma sessão em que mudei as
+regras que eles vigiam — pode ser que eu tenha ensinado o teste a concordar.*
+
+### 12.1 O que RESISTIU (e isto é evidência, não elogio)
+
+| O que foi atacado | Como | Resultado |
+|---|---|---|
+| Os guards de P1 e P2 | **Onze mutações** na regra de HP e de meta | **Nenhuma sobreviveu.** A desconfiança do handoff estava errada — os guards mordem |
+| Contraste, nas 5 telas principais + portão + relatório | Medido no app **rodando**, em 375 px, compondo o alfa camada a camada até a cor sólida | Nenhuma falha. Menor razão 5,57:1 contra 4,5 exigido |
+| Texto num idioma só | Varredura de `src`, `functions`, `workers`, `desktop/renderer` | Nada encontrado. **A disciplina de i18n do repositório está de pé** |
+| O portão sem `.env` | Conferido **no navegador**, não só lendo o código | Vira aceite + 18+ + "Continuar", e dá para atravessar o app. **Falta de configuração não tranca nada** |
+| Rascunho na volta do redirecionamento | Código + teste | O aceite é carimbado antes de sair, e **o e-mail nunca entra no rascunho** |
+
+> **A lição de método:** a desconfiança que eu registrei era razoável e estava
+> errada — e só dá para saber isso porque ela foi **escrita e depois atacada**.
+> Um handoff que só lista o que foi feito não produz esta linha.
+
+### 12.2 O que CAIU, e o que isso diz sobre as decisões
+
+Dezesseis defeitos, quatro deles de produção. Os que tocam decisões registradas
+já estão nas tabelas da §5. O padrão que eles formam vale nomear:
+
+**Nenhum defeito estava na REGRA. Todos estavam na fronteira entre a regra e o
+mundo** — concorrência no KV, ordem de pintura, tamanho de alvo de toque, glifo
+que a fonte não desenha, código de telemetria que colide. As decisões de produto
+deste documento saíram intactas; o que falhou foi a entrega delas.
+
+Isso é reconfortante e enganoso ao mesmo tempo: significa que a pesquisa
+orientou bem o **desenho**, e não diz **nada** sobre o desenho estar certo. Só
+telemetria diz (§7).
+
+### 12.3 O achado que muda uma aposta
+
+O `signInWithRedirect` (§10.2) é o único achado que ataca uma **decisão**, e não
+uma implementação: se ele estiver certo, a conta como primeira tela vira parede
+para quem tem popup bloqueado. **É a aposta 6 podendo falhar por um motivo
+técnico, antes mesmo de a hipótese de produto ser testada.**
+
+### 12.4 O que sobrou para o dono
+
+- Os **nove emojis** que renderizam vazio — a troca é escolha de catálogo (§5.6).
+- A hipótese do **`signInWithRedirect`** (§10.2) — precisa de conta real e popup barrado.
+- A **folga que não cobre o dreno de cocô** (§5.1) — decidir se cobre ou se fica escrito que não cobre.
+- O **preço em R$ para quem está em inglês** (§5.4).
