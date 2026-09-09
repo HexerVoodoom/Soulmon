@@ -99,8 +99,8 @@ export function eveningCopy(petName, language, hpBaixo) {
   return {
     title: pt ? `🌙 ${name} está te esperando` : `🌙 ${name} is waiting for you`,
     body: pt
-      ? 'Marque o que você fez hoje e dê uma comidinha pro seu Soulmon — energia cheia fecha o dia perfeito.'
-      : 'Log what you did today and feed it — a full energy bar completes a perfect day.',
+      ? 'Marque o que você fez hoje e dê uma comidinha pro seu Soulmon — energia cheia fecha o dia completo.'
+      : 'Log what you did today and feed it — a full energy bar completes the day.',
     tag: 'evening-reminder',
   };
 }

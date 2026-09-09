@@ -407,8 +407,12 @@ export function EvolutionPath({
         ? (isPt ? 'Pronto para evoluir — mas você segurou a evolução.' : 'Ready to evolve — but you are holding it back.')
         : (isPt ? 'Pronto para evoluir na virada do dia.' : 'Ready to evolve at the day’s turn.'))
     : (isPt
-        ? `Falta${faltam === 1 ? '' : 'm'} ${faltam} dia${faltam === 1 ? '' : 's'} perfeito${faltam === 1 ? '' : 's'}.`
-        : `${faltam} perfect day${faltam === 1 ? '' : 's'} to go.`);
+        // "completo", não "perfeito" (P5). O docblock deste arquivo já dizia
+        // "Faltam 4 dias completos" — a renomeação passou pelo COMENTÁRIO e
+        // não pela string, no mesmo arquivo. É a frase que responde "quanto
+        // falta para meu bicho evoluir", ou seja, a mais lida da página.
+        ? `Falta${faltam === 1 ? '' : 'm'} ${faltam} dia${faltam === 1 ? '' : 's'} completo${faltam === 1 ? '' : 's'}.`
+        : `${faltam} complete day${faltam === 1 ? '' : 's'} to go.`);
 
   /* ── O ESTADO DA ARTE, forma por forma (§2.2) ──────────────────────────────
      Até aqui a página dizia o estado do sprite só da forma ATUAL. A spec põe o
@@ -729,8 +733,8 @@ export function EvolutionPath({
           {isUltraMode && (
             <p style={{ ...sm2Hint, marginTop: 6 }}>
               {isPt
-                ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_DAYS} dias perfeitos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
-                : `Two paths reach this form: ${ULTRA_PATIENCE_DAYS} perfect days as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
+                ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_DAYS} dias completos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
+                : `Two paths reach this form: ${ULTRA_PATIENCE_DAYS} complete days as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
             </p>
           )}
 
