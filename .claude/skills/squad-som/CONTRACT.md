@@ -147,7 +147,36 @@ com gating) **e true peak ≤ −1 dBTP** com oversampling ≥4× — decidido e
 mesma §6.1, desempatando o conflito em favor da norma citada contra os −10/−12 dBFS de
 `references/audio.md`, que misturava régua de pico com régua de loudness (as duas estão a
 **3,017 dB medidos** uma da outra). O alvo se aplica **por categoria e por estado**, nunca à
-sessão inteira, e `som-engenheiro-audio` é o **dono único** da `spec-de-loudness.md`.
+sessão inteira, e `som-engenheiro-audio` é o **dono único** da política de loudness.
+
+**A escada por categoria já foi aberta — corrigido por medição em 09/09/2026 (Fase 1 do
+`som-01`).** Ela deixou de ser entregável pendente e mora hoje em `src/utils/loudness.ts`, com
+resumo em `docs/SOM.md` §3. Alvos em LUFS-M medidos em P-B: Marco/Presença/**Degeneração**
+−16,0 · **Sintonia**/Cuidado −19,0 · Conclusão/Transação −22,0 · Arcade −25,0 · Trilha −28,0
+LUFS-S (e ≤ −16 LUFS integrado). Tolerância **±1,0 LU**, degrau **3,0 dB sem meio-degrau**. As
+categorias **`degeneracao`** e **`sintonia`** **nasceram neste run**. O critério da escada é
+**repetição, não importância**.
+
+**RS-6 · R-EX — um gesto, uma fonte.** Dois `play*` a ≤ **120 ms** são o mesmo gesto: toca a de
+classe mais alta; empate → a menos repetida; empate → a do gesto (não a da consequência);
+empate → a primeira despachada. A perdedora é **descartada, nunca enfileirada**. Medido: o
+limitador fez **0,00 dB** sobre uma soma de **+4,58 dB** — quem apaga colisão é a regra, não o
+grafo. ⚠️ **Não implementada até 09/09/2026** (achado da Fase 3); dona da regra é o diretor
+sonoro, dono da implementação é o engenheiro.
+
+**RS-7 · R-CAT — categoria vem do EVENTO, nunca do nível medido do arquivo.** Uma categoria
+pode ter um único membro se, e só se, (a) o perfil de repetição do membro não coincidir com o
+de nenhuma outra e (b) ela tiver sido derivada do evento. Foi assim que o `playVisorTune` ficou
+**dois degraus errado** em `arcade` sem nada ficar vermelho.
+
+**RS-8 · R-NOVA — toda superfície nova do app nasce MUDA.** Um `play*` só entra numa superfície
+nova depois de entrar na spotting list. `ArenaGame.tsx` nasceu 21 min antes do commit dos
+cortes e reintroduziu dois sons cortados com **3.974 testes verdes**: o defeito não foi a tela,
+foi a **ausência de régua**.
+
+**O estado do código mudou — corrigido por medição em 09/09/2026.** `src/utils/sounds.ts`
+exporta **8 símbolos `play*`, não 11**, e **o barramento existe** (`src/utils/audioBus.ts`,
+PR #36). A frase *"cada `play()` abre um `AudioContext` e o fecha"* está **obsoleta**.
 
 **Toda afirmação sobre o usuário do Soulmon vem marcada `[hipótese]`.** §1 do contexto:
 ninguém nunca usou o app, e não há telemetria. Regra permanente do run, não pendência a fechar.
@@ -162,8 +191,17 @@ Como no `CONTRACT.md` §5 da Alpha, com dois artefatos próprios:
 - `squad-alpha-runs/som-01/escuta/<fase>.md` — **uma linha por asset**, com as três perguntas
   fechadas do gate humano respondidas por escrito. Asset sem linha de escuta **não entra no
   app**.
-- `squad-alpha-runs/som-01/spec-de-loudness.md` — dono único: `som-engenheiro-audio`.
+- `squad-alpha-runs/som-01/discovery/spec-de-loudness.md` — dono único: `som-engenheiro-audio`.
+  Promovida ao código em `src/utils/loudness.ts` na Fatia 2.
 - `squad-alpha-runs/som-01/sweeper/audio-loudness.log` — saída real do medidor, colada.
+- **Prova de vermelho** — toda assertiva nova do gate nasce com a saída vermelha **gravada em
+  disco**. No `som-01` são três arquivos (`saida-gate-vermelho.txt`,
+  `prova-vermelho-C-amostra-vazia.txt`, `provas-vermelho-pos-ataque.txt`). Assertiva sem prova
+  de vermelho não conta como verificação.
+
+⚠️ **`squad-alpha-runs/` está no `.gitignore`.** Tudo acima é **local e some do git**. O que
+precisa sobreviver ao run vai para `docs/`, com ponteiro no `CLAUDE.md` — foi assim que nasceu
+`docs/SOM.md`. Decida o destino **antes** de escrever, não depois.
 
 ---
 
@@ -177,5 +215,12 @@ Duas travas próprias:
 1. **O gate humano de escuta não é delegável e não é opinião do agente.** Sem `escuta/<fase>.md`
    respondido, a fase não fecha — mas ela também **não trava indefinidamente**: passado o prazo
    combinado, fecha com escopo reduzido e os pendentes ficam registrados como **não aprovados**.
+   ⚠️ **Nunca exercido no `som-01`** (09/09/2026): não houve **um único asset** para escutar,
+   porque a geração por IA ficou bloqueada por crédito. O procedimento continua válido e
+   **não testado** — a squad não pode alegar que o exercitou.
 2. **Taxa de aprovação de 100% é sinal de gate não exercido**, não prova de lote bom. Vigiado
-   por `alpha-governanca`.
+   por `alpha-governanca`. **No `som-01` não existe taxa nenhuma** — não a cite.
+3. **Não despache dois consertos em paralelo quando um consome número do outro.** Aconteceu na
+   Fase 0: a `spec-de-loudness.md` foi calculada sobre um baseline que a objeção **O-8**
+   reprovou no mesmo dia. Erro de orquestração, não de agente. Sequencie, ou declare a
+   dependência de número no briefing.
