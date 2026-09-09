@@ -78,6 +78,72 @@ criatura, sem nunca tocar em arte de terceiro.
 *Nada aqui é aconselhamento jurídico — é o registro de um item que estava em
 aberto no benchmark de agosto/2026 (`docs/PLANO-EVOLUCAO.md`) e foi fechado.*
 
+## Áudio
+
+**Hoje: nenhum arquivo de áudio no projeto.** Todo som do Soulmon é **sintetizado em runtime**
+(`src/utils/sounds.ts`), então não há o que atribuir — zero byte, zero licença de terceiro. A
+decisão que sustenta isso é a **S10 + emenda** do `REGISTRO-DE-DECISOES.md` §6.1.
+
+Esta seção existe **antes** de existir asset, de propósito: quando o primeiro arquivo entrar, ele
+entra com a linha pronta, e não depois. `dist/` é commitado, então **todo byte de áudio é
+permanente no histórico do git** — a diferença entre apagar um arquivo e reescrever histórico.
+
+### A linha obrigatória, por asset
+
+| Campo | O que vai |
+|---|---|
+| Arquivo | caminho e hash SHA-256 |
+| Origem | plataforma e **modelo** (ex.: `seed_audio`) |
+| **Provedor do modelo** | quem realmente treinou e opera o modelo — **não** a plataforma que o revende |
+| Prompt | o texto exato usado |
+| Data | quando foi gerado |
+| **Versão dos termos** | a data de "Last Updated" dos termos vigentes **na geração** |
+| Termos | uso comercial concedido · sem exclusividade · **sem garantia de originalidade** |
+
+As duas colunas em negrito **não são burocracia** — cada uma existe por um achado do levantamento
+de 09/09/2026 (`squad-alpha-runs/som-01/termos-gerador.md`):
+
+- **Provedor do modelo** — a §8 dos termos da plataforma obriga a cumprir **também** a política de
+  uso aceitável do provedor terceiro, e diz que **a mais restritiva prevalece**. Só que a
+  plataforma **não nomeia** o provedor do modelo de áudio em nenhuma fonte pública que se consiga
+  ler. Enquanto a coluna estiver vazia, estamos vinculados a uma política que **não conseguimos
+  identificar nem ler** — e isso precisa ficar visível, não implícito.
+- **Versão dos termos** — os termos mudam. O direito sobre um asset gerado hoje é o dos termos de
+  hoje, e um arquivo permanente no histórico sobrevive a várias revisões deles.
+
+### O que os termos dizem, lido na fonte (09/09/2026)
+
+`higgsfield.ai/terms-of-use-agreement`, *Last Updated* 26/07/2026:
+
+- **§4.4** — uso comercial concedido, **sem trava de plano**, sem cessão de propriedade, com
+  direito de transferir e sublicenciar. E a parte que sustenta o `dist/` commitado, literal:
+  *"Your rights in Outputs you have generated **and exported** survive cancellation of your
+  subscription or deletion or termination of your Account."* O **"and exported"** é condição, não
+  enfeite — asset não exportado não carrega o direito.
+- **§4.4** — **sem exclusividade**: outro usuário pode receber saída idêntica ou similar.
+- **§13.2** — **nega garantia de originalidade ou legalidade**, e põe o *rights clearance* como
+  responsabilidade exclusiva do usuário. Ou seja: **o fornecedor declara por escrito que também
+  não prova originalidade.**
+- **§12** — o usuário indeniza a plataforma. **Não há indemnity a nosso favor.**
+- **Atribuição não é exigida** pelos termos. A que fazemos aqui é **regra interna** (S9), porque
+  procedência é auditável e originalidade não.
+- **Proibido** usar output para treinar, ajustar ou destilar modelo.
+- Procedência dos dados de treino do modelo de áudio: **não encontrado**.
+
+### As condições para embarcar áudio gerado num app de loja
+
+Veredito do levantamento: **sim, com condições** — e elas estão listadas em
+`squad-alpha-runs/som-01/termos-gerador.md` §2. Em resumo: exportar o asset (não só gerar), não
+treinar nada com o output, assumir que clearance e risco financeiro são **nossos**, nenhum prompt
+citando franquia, registrar a versão dos termos junto do asset, e tratar a **§8 como pendência
+aberta** — não como cumprida por presunção.
+
+> ⚠️ **O que exige advogado, e este projeto não tem um:** protegibilidade da saída, alcance da
+> cláusula de indenização sob lei brasileira, as regras de divulgação de conteúdo de IA das lojas,
+> e direito adquirido diante de mudança de termos. Isso está **nomeado, não resolvido** — e o
+> primeiro passo em aberto é administrativo, não jurídico: **perguntar à plataforma, por escrito,
+> qual é o provedor do modelo de áudio e onde fica a política dele.**
+
 ## Tipografia
 
 - **Silkscreen** — Jason Kottke, licença **SIL Open Font License 1.1** (livre
