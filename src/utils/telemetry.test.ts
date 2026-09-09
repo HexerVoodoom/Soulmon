@@ -101,7 +101,7 @@ describe('allowlist de eventos', () => {
     expect(sanitizeEvent('toString')).toBeNull();
   });
 
-  it('aceita os vinte e cinco eventos declarados, e só eles', () => {
+  it('aceita os vinte e sete eventos declarados, e só eles', () => {
     expect(TELEMETRY_EVENTS).toEqual([
       'install', 'onboarding_step', 'demo_pick', 'first_task_done', 'day_active',
       'unlock_view', 'purchase', 'demo_cap_hit', 'activity_create', 'week_active',
@@ -112,6 +112,8 @@ describe('allowlist de eventos', () => {
       'after_bad_day', 'app_open', 'push_optout',
       // WP0.2 (retenção fechada no aparelho)
       'retained',
+      // som-01 (SQUAD-SOM) — a fotografia diária e a transição por gesto
+      'sound_state', 'sound_off',
     ]);
     expect(sanitizeEvent('install')).toEqual({ e: 'install', d: telemetryDayKey() });
   });

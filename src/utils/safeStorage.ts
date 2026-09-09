@@ -238,3 +238,39 @@ export function storageDegradedMessage(
     ? 'Este navegador está bloqueando o armazenamento. Dá para jogar, mas o progresso some ao fechar a aba.'
     : 'This browser is blocking storage. You can play, but progress will be lost when you close the tab.';
 }
+
+/**
+ * Leitura TRI-ESTADO de um flag. Existe por causa de uma armadilha de MEDIÇÃO,
+ * documentada em `squad-alpha-runs/som-01/discovery/metrica-de-som.md` §6.
+ *
+ * `readFlag` acima devolve `false` tanto para "a pessoa escolheu `false`"
+ * quanto para "não conseguimos ler". Para quem TOCA o som isso está certo (o
+ * default permissivo é o comportamento desejado). Para quem MEDE, é o pior
+ * defeito possível: num app que nasce sonoro, "não conseguimos ler" e "escolheu
+ * som" viram o mesmo `muted=0`, e leitura degradada passa a parecer adoção —
+ * um aparelho com storage bloqueado (aba privativa, cota estourada, WebView de
+ * fabricante) reportaria som ligado todo dia, para sempre.
+ *
+ *   · `'on'` / `'off'` — o valor está gravado e foi lido.
+ *   · `'absent'`       — o storage RESPONDEU e a chave não existe: o default do
+ *                        app, que é um valor conhecido, não um buraco.
+ *   · `'unknown'`      — o storage não existe, lançou, ou guarda algo que não é
+ *                        o formato de flag. Quem mede DEVE se calar aqui:
+ *                        evento faltando é honesto, evento no balde errado não.
+ */
+export type FlagState = 'on' | 'off' | 'absent' | 'unknown';
+
+export function readFlagState(key: string): FlagState {
+  try {
+    const ls = globalThis.localStorage;
+    if (!ls) return 'unknown';
+    const raw = ls.getItem(key);
+    if (raw === null || raw === undefined) return 'absent';
+    if (raw === 'true') return 'on';
+    if (raw === 'false') return 'off';
+    return 'unknown';
+  } catch (err) {
+    report('read', key, err);
+    return 'unknown';
+  }
+}
