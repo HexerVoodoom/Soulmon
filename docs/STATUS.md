@@ -307,14 +307,54 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >    (**A21.1**, com o prompt pronto). O inventário caso a caso, e o que NÃO
 >    chega à tela, está em `src/styles/emojiSuportado.contract.test.ts`, que
 >    também impede a dívida de crescer.
+> 1-bis. **⚠️ `Cross-Origin-Opener-Policy` — decisão sua, e é a raiz de um
+>    defeito.** Achado em 09/09/2026, no console de produção do dono, ao testar
+>    o item 2 abaixo (o pop-up NÃO foi bloqueado, então aquele teste não rodou —
+>    mas o console entregou outra coisa):
+>
+>    ```
+>    Cross-Origin-Opener-Policy policy would block the window.closed call.
+>      pollUserCancellation → setTimeout → …
+>    ```
+>
+>    `pollUserCancellation` é o laço do Firebase que lê `popup.closed` de 2 em 2
+>    segundos, e é a ÚNICA coisa que rejeita com `auth/popup-closed-by-user`. O
+>    `accounts.google.com` manda COOP, corta a relação com a janela que o abriu,
+>    e esse `closed` fica ilegível deste lado. Conferido com `curl`: a produção
+>    **não manda cabeçalho `Cross-Origin-Opener-Policy` nenhum**.
+>
+>    O caminho felizo passa (o dono entrou normalmente). O risco é fechar a
+>    janela sem escolher conta: aí a promessa pode não terminar, e o
+>    `authOcupado` nunca voltaria a `false`. **HIPÓTESE, não reprodução** — o
+>    navegador automatizado navega na mesma aba em vez de abrir pop-up, então
+>    não houve janela para fechar, e não foi verificado se o Firebase desiste
+>    sozinho.
+>
+>    Já entrou a REDE DE SEGURANÇA (`GOOGLE_SEM_RESPOSTA_MS`, 2 min): passado o
+>    prazo o botão volta com uma mensagem honesta, **sem cancelar a promessa** —
+>    um login que conclua depois entra normalmente. Isso torna a falha
+>    recuperável mesmo que a causa continue.
+>
+>    **O que falta é seu:** pôr `Cross-Origin-Opener-Policy: same-origin-allow-popups`
+>    no `public/_headers`, que é o valor documentado para quem usa pop-up de
+>    login. Não fiz porque cabeçalho já derrubou este login uma vez (a CSP sem
+>    `apis.google.com`, em 07/09/2026, reportada como `auth/internal-error`
+>    genérico). Se autorizar, o push publica em ~2 min e o login precisa ser
+>    testado em produção depois.
+>
 > 2. **`signInWithRedirect` pode estar morto no navegador do usuário.** É a
 >    única saída quando o popup do Google é bloqueado, e o `authDomain`
 >    (`soulmon-app.firebaseapp.com`) é um domínio diferente do app: desde o SDK
 >    9.19 o Firebase avisa que o redirecionamento não funciona onde o
 >    armazenamento de terceiros é bloqueado (Chrome, Safari/ITP, Firefox/ETP), a
 >    menos que `/__/auth/handler` seja servido pelo domínio do próprio app.
->    **HIPÓTESE** — não dá para reproduzir sem conta Google real e popup barrado.
->    Se confirmar, a correção é servir o handler no domínio do app.
+>    **HIPÓTESE, e AINDA EM ABERTO** — a tentativa de 09/09/2026 não conseguiu
+>    bloquear o pop-up (ele abriu), então o caminho do redirecionamento nunca
+>    foi exercido. Para testar de novo: janela anônima, o site na lista de
+>    bloqueio de pop-up de `chrome://settings/content/popups`, console aberto, e
+>    olhar se a linha `[auth] entrarComGoogle falhou` aparece com
+>    `auth/popup-blocked`. Se confirmar, a correção é servir o handler no
+>    domínio do app — a mesma do item 1-bis.
 > 3. ~~A folga da semana não cobre o dreno de cocô~~ — ✅ decidido na 2ª
 >    rodada: o TEXTO estava errado, não a regra. Corrigido nos dois arquivos.
 > 4. ~~Preço em R$ para quem está em inglês~~ — ✅ resolvido na 2ª rodada.

@@ -165,6 +165,44 @@ interface SoulmonOnboardingProps {
  */
 export const REVEAL_WAIT_MS = 12_000;
 
+/**
+ * REDE DE SEGURANÇA DO LOGIN COM GOOGLE — o botão não pode travar para sempre.
+ *
+ * O fluxo de pop-up do Firebase descobre que a pessoa desistiu de UMA forma só:
+ * `pollUserCancellation`, um laço que lê `popup.closed` de 2 em 2 segundos. É
+ * ele que rejeita com `auth/popup-closed-by-user`, e é a única coisa que faz o
+ * `await entrarComGoogle()` terminar quando a janela é fechada sem escolher
+ * conta.
+ *
+ * Em 09/09/2026 o console de produção mostrou, duas vezes:
+ *
+ *     Cross-Origin-Opener-Policy policy would block the window.closed call.
+ *       pollUserCancellation → setTimeout → …
+ *
+ * O `accounts.google.com` manda COOP e corta a relação com a janela que o
+ * abriu, então esse `closed` fica ilegível deste lado. O caminho felizo passa
+ * (confirmado pelo dono: entrou normalmente), mas se a promessa não terminar
+ * quando alguém fecha a janela, o `authOcupado` nunca volta a `false` e o botão
+ * fica desabilitado, sem mensagem, na PRIMEIRA tela do app — com recarregar a
+ * página como única saída.
+ *
+ * ⚠️ **É hipótese, e não reprodução**: leitura do código (não existe timeout
+ * nenhum em `utils/auth.ts`) mais o aviso do COOP. Não deu para reproduzir o
+ * fechamento da janela em ambiente automatizado, e não verifiquei se o Firebase
+ * desiste sozinho depois de algum tempo.
+ *
+ * Por isso a correção é uma REDE, não um cancelamento: passado este prazo o
+ * botão volta e uma mensagem honesta aparece, **e a promessa original continua
+ * viva**. Se o login concluir depois, `aposAutenticar` roda e a pessoa entra
+ * normalmente — a rede nunca derruba um login de verdade.
+ *
+ * 2 minutos: escolher conta, digitar senha e resolver um segundo fator cabem
+ * folgados. O outro caminho, mexer no `Cross-Origin-Opener-Policy` do
+ * `public/_headers`, é decisão do dono e está registrado em `docs/STATUS.md` —
+ * cabeçalho já derrubou este login uma vez (a CSP, em 07/09/2026).
+ */
+export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
+
 interface SavedProfile extends OracleInput { seed: number }
 
 export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel }: SoulmonOnboardingProps) {
@@ -271,6 +309,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [criandoConta, setCriandoConta] = useState(false);
   const [authErro, setAuthErro] = useState<AuthErro | null>(null);
   const [authOcupado, setAuthOcupado] = useState(false);
+  /** Temporizador da rede de segurança do Google (`GOOGLE_SEM_RESPOSTA_MS`).
+   *  Em ref, e não em estado, porque ele não desenha nada — e porque o
+   *  StrictMode monta o componente duas vezes, então um timer em estado
+   *  ficaria órfão na primeira montagem. */
+  const redeGoogleRef = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (redeGoogleRef.current !== null) clearTimeout(redeGoogleRef.current);
+  }, []);
   const [resetEnviado, setResetEnviado] = useState(false);
   const [demoCharacterId, setDemoCharacterId] = useState<'kaelen' | 'orrin' | 'thalindra' | null>(null);
   /** WP1.12 — tonalidade escolhida no demo. 0 = a arte original. */
@@ -747,6 +793,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'popup-bloqueado': 'Seu navegador bloqueou a janela do Google. Libere pop-ups para este site e toque de novo — ou entre com e-mail e senha, que não abre janela nenhuma.',
       'dominio-nao-autorizado': 'Este endereço ainda não está liberado para entrar com Google. Use e-mail e senha por enquanto.',
       'provedor-desligado': 'Esse jeito de entrar está indisponível agora.',
+      // Serve para os dois casos, porque daqui não se sabe qual é.
+      'sem-resposta': 'A janela do Google não respondeu. Se ela ainda estiver aberta, termine por lá; se não, pode tentar de novo.',
       'desconhecido': 'Não deu para entrar agora. Tente de novo em instantes.',
     };
     const en: Record<AuthErro, string> = {
@@ -761,6 +809,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
       'popup-bloqueado': 'Your browser blocked the Google window. Allow pop-ups for this site and tap again — or sign in with email and password, which opens no window at all.',
       'dominio-nao-autorizado': 'This address is not approved for Google sign-in yet. Use email and password for now.',
       'provedor-desligado': 'That way of signing in is unavailable right now.',
+      'sem-resposta': 'The Google window didn’t respond. If it’s still open, finish there; if not, you can try again.',
       'desconhecido': "Couldn't sign in right now. Please try again shortly.",
     };
     return isPt ? pt[authErro] : en[authErro];
@@ -879,7 +928,22 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (authOcupado || !podeAutenticar) return;
     setAuthOcupado(true);
     setAuthErro(null);
+    // Rede de segurança: ver `GOOGLE_SEM_RESPOSTA_MS`. Ela LIBERA a tela sem
+    // cancelar nada — a promessa segue viva, e um login que conclua depois
+    // entra pelo caminho normal, logo abaixo.
+    if (redeGoogleRef.current !== null) clearTimeout(redeGoogleRef.current);
+    redeGoogleRef.current = window.setTimeout(() => {
+      redeGoogleRef.current = null;
+      setAuthOcupado(false);
+      setAuthErro('sem-resposta');
+    }, GOOGLE_SEM_RESPOSTA_MS);
+
     const r = await entrarComGoogle();
+
+    if (redeGoogleRef.current !== null) {
+      clearTimeout(redeGoogleRef.current);
+      redeGoogleRef.current = null;
+    }
     setAuthOcupado(false);
     if (r.ok) { aposAutenticar(r.email); return; }
     setAuthErro(r.erro ?? 'desconhecido');
@@ -1211,6 +1275,14 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               type="button"
               style={{ ...sm2Button('primary', authOcupado || !podeAutenticar), width: '100%', marginTop: 20 }}
               onClick={aoEntrarComGoogle}
+              /* O rótulo NÃO pode sumir enquanto o botão gira: com só um
+                 `<Spinner />` dentro, o nome acessível vira vazio e o leitor
+                 de tela anuncia "botão, desabilitado" sem dizer de quê. O
+                 `aria-label` fixo mantém o nome, e o `aria-busy` é o que
+                 conta a espera. (QA de 09/09/2026, quatro botões do
+                 onboarding.) */
+              aria-label={isPt ? 'Entrar com Google' : 'Continue with Google'}
+              aria-busy={authOcupado}
               disabled={authOcupado || !podeAutenticar}
             >
               {authOcupado ? <Spinner /> : (isPt ? 'Entrar com Google' : 'Continue with Google')}
@@ -1273,6 +1345,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               type="button"
               style={{ ...sm2Button('primary', authOcupado || !podeAutenticar), width: '100%', marginTop: 20 }}
               onClick={aoEnviarSenha}
+              aria-label={criandoConta ? (isPt ? 'Criar conta' : 'Create account') : (isPt ? 'Entrar' : 'Sign in')}
+              aria-busy={authOcupado}
               disabled={authOcupado || !podeAutenticar}
             >
               {authOcupado
@@ -1334,6 +1408,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               type="button"
               style={{ ...sm2Button('quiet', unlockLoading), width: '100%', marginTop: 8 }}
               onClick={handleUnlockFull}
+              aria-label={isPt ? `Quero o completo — ${precoLabel}` : `Get the full game — ${precoLabel}`}
+              aria-busy={unlockLoading}
               disabled={unlockLoading}
             >
               {unlockLoading
@@ -1842,7 +1918,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 : "Shown to other players in the Library and Tournament. It can be a made-up name — it doesn't have to be your real name."}
             </p>
             <button type="button" style={{ ...sm2Button('primary', !canFinish), width: '100%', marginTop: 24 }}
-              onClick={finish} disabled={!canFinish}>
+              onClick={finish} disabled={!canFinish}
+              aria-label={isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`}
+              aria-busy={submitting}>
               {submitting
                 ? <Spinner />
                 : (isPt ? `Nascer ${petNameFinal}` : `Hatch ${petNameFinal}`)}
