@@ -6,6 +6,12 @@ function kv(env) {
   return env?.SOULMON_SAVES ?? env?.DIGIAPP_SAVES;
 }
 __name(kv, "kv");
+function kvOrThrow(env) {
+  const store = kv(env);
+  if (!store) throw new Error("storage-not-bound");
+  return store;
+}
+__name(kvOrThrow, "kvOrThrow");
 
 // api/_entitlements.js
 var ENT_PREFIX = "ent:";
@@ -70,7 +76,7 @@ function emptyEntitlement() {
 }
 __name(emptyEntitlement, "emptyEntitlement");
 async function readEntitlement(env, saveId) {
-  const raw = await kv(env).get(ENT_PREFIX + saveId);
+  const raw = await kvOrThrow(env).get(ENT_PREFIX + saveId);
   if (!raw) return emptyEntitlement();
   try {
     const parsed = JSON.parse(raw);
@@ -82,7 +88,7 @@ async function readEntitlement(env, saveId) {
 __name(readEntitlement, "readEntitlement");
 async function writeEntitlement(env, saveId, ent) {
   ent.updatedAt = Date.now();
-  await kv(env).put(
+  await kvOrThrow(env).put(
     ENT_PREFIX + saveId,
     JSON.stringify(ent),
     { expirationTtl: RETENTION_TTL_SECONDS }
@@ -105,7 +111,7 @@ async function spendCredits(env, saveId, amount, opId) {
   if (!Number.isInteger(amount) || amount <= 0) return null;
   const chave = opId && /^[A-Za-z0-9_-]{8,64}$/.test(opId) ? `spend:${saveId}:${opId}` : null;
   if (chave) {
-    const anterior = await kv(env).get(chave);
+    const anterior = await kvOrThrow(env).get(chave);
     if (anterior) {
       try {
         return JSON.parse(anterior);
@@ -119,7 +125,7 @@ async function spendCredits(env, saveId, amount, opId) {
   ent.credits -= amount;
   await writeEntitlement(env, saveId, ent);
   if (chave) {
-    await kv(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+    await kvOrThrow(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
   }
   return ent;
 }
@@ -140,9 +146,9 @@ __name(grantAdReward, "grantAdReward");
 async function claimOrder(env, saveId, orderId) {
   if (env.DB) return claimOrderAtomic(env, saveId, orderId);
   const key = ORDER_PREFIX + orderId;
-  const owner = await kv(env).get(key);
+  const owner = await kvOrThrow(env).get(key);
   if (owner && owner !== saveId) return { ok: false, reason: "order-in-use" };
-  await kv(env).put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
+  await kvOrThrow(env).put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
   return { ok: true };
 }
 __name(claimOrder, "claimOrder");
@@ -351,7 +357,7 @@ async function listPrefix(env, prefix) {
   const out = [];
   let cursor;
   for (let page = 0; page < MAX_SCAN_PAGES; page++) {
-    const res = await kv(env).list({ prefix, cursor, limit: 1e3 });
+    const res = await kvOrThrow(env).list({ prefix, cursor, limit: 1e3 });
     for (const k of res.keys || []) out.push(k.name);
     if (res.list_complete || !res.cursor) break;
     cursor = res.cursor;
@@ -416,7 +422,7 @@ var NOT_INCLUDED = [
   }
 ];
 async function collect(env, saveId) {
-  const store = kv(env);
+  const store = kvOrThrow(env);
   const pid = await publicIdFor(saveId);
   let state = null;
   try {
@@ -499,7 +505,7 @@ __name(plan, "plan");
 async function handleDeleteRequest(env, saveId) {
   const c = await collect(env, saveId);
   const token = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
-  await kv(env).put(
+  await kvOrThrow(env).put(
     DEL_PREFIX + saveId,
     JSON.stringify({ token, createdAt: Date.now() }),
     { expirationTtl: CONFIRM_TTL_SECONDS }
@@ -523,7 +529,7 @@ function tokenMatches(a, b) {
 }
 __name(tokenMatches, "tokenMatches");
 async function handleDeleteConfirm(env, saveId, body) {
-  const store = kv(env);
+  const store = kvOrThrow(env);
   let pending = null;
   try {
     pending = JSON.parse(await store.get(DEL_PREFIX + saveId) || "null");
@@ -1018,7 +1024,7 @@ var refuse = /* @__PURE__ */ __name((status, reason) => ({
   ...AI_REFUSAL_MESSAGES[reason] ? { message: AI_REFUSAL_MESSAGES[reason] } : {}
 }), "refuse");
 async function readCounter(env, key) {
-  const raw = await kv(env).get(key);
+  const raw = await kvOrThrow(env).get(key);
   if (raw === null || raw === void 0) return 0;
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) throw new Error(`contador ileg\xEDvel em ${key}: ${raw}`);
@@ -1099,8 +1105,8 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
       if (hasFormCap) ent.aiForms = { ...ent.aiForms || {}, [formId]: usedForm + units };
       await writeEntitlement(env, saveId, ent);
     }
-    await kv(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
-    await kv(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
+    await kvOrThrow(env).put(globalKey, String(usedGlobal + units), { expirationTtl: globalTtl });
+    await kvOrThrow(env).put(accountKey, String(usedAccount + units), { expirationTtl: TTL_SECONDS });
   } catch (err) {
     console.error("aiGuard: falha ao debitar cota, recusando", err?.message);
     return refuse(503, "ai-quota-unavailable");
@@ -1123,8 +1129,8 @@ function makeRelease(env, ctx) {
         await writeEntitlement(env, saveId, ent);
       }
       const [g, a] = [await readCounter(env, globalKey), await readCounter(env, accountKey)];
-      await kv(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
-      await kv(env).put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
+      await kvOrThrow(env).put(globalKey, String(menos(g)), { expirationTtl: globalTtl });
+      await kvOrThrow(env).put(accountKey, String(menos(a)), { expirationTtl: TTL_SECONDS });
       console.warn(`aiGuard: ${units} unidade(s) devolvida(s) em ${bucket}/${formId ?? "-"} \u2014 ${motivo}`);
     } catch (err) {
       console.error("aiGuard: falha ao devolver cota reservada", err?.message);
@@ -1490,7 +1496,7 @@ function bondLevelFor(totalXP) {
 __name(bondLevelFor, "bondLevelFor");
 async function bondLevelOf(env, saveId) {
   try {
-    const raw = await kv(env).get(saveId);
+    const raw = await kvOrThrow(env).get(saveId);
     if (!raw) return 0;
     const state = JSON.parse(raw);
     if (!state || typeof state !== "object") return 0;
@@ -1542,18 +1548,18 @@ async function ensurePid(env, p) {
   p.pid = newPid();
   await putProfile(env, p.id, p);
   await indexPublicId(env, p.id, p.pid);
-  if (antigo) await kv(env).delete(`${PID_PREFIX}${antigo}`);
+  if (antigo) await kvOrThrow(env).delete(`${PID_PREFIX}${antigo}`);
   return p.pid;
 }
 __name(ensurePid, "ensurePid");
 async function indexPublicId(env, saveId, pid) {
-  await kv(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
+  await kvOrThrow(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
 __name(indexPublicId, "indexPublicId");
 var PID_PLACEHOLDER = "0".repeat(32);
 async function saveIdForPublicId(env, pid) {
   if (!VALID_ID2.test(pid || "")) return null;
-  const saveId = await kv(env).get(`${PID_PREFIX}${pid}`);
+  const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
   const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
   if (!saveId || pid === legado) return null;
   return saveId;
@@ -1585,28 +1591,28 @@ async function publicProfile(env, p, extra = {}) {
 }
 __name(publicProfile, "publicProfile");
 async function getProfile(env, id) {
-  const raw = await kv(env).get(`profile:${id}`);
+  const raw = await kvOrThrow(env).get(`profile:${id}`);
   return raw ? JSON.parse(raw) : null;
 }
 __name(getProfile, "getProfile");
 async function putProfile(env, id, profile) {
-  await kv(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
+  await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
 }
 __name(putProfile, "putProfile");
 async function getRank(env, season, id) {
-  const raw = await kv(env).get(`rank:${season}:${id}`);
+  const raw = await kvOrThrow(env).get(`rank:${season}:${id}`);
   return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today2(), matchesToday: 0 };
 }
 __name(getRank, "getRank");
 async function putRank(env, season, id, rec) {
-  await kv(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
+  await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
 }
 __name(putRank, "putRank");
 async function listPrefix2(env, prefix, limit = 100) {
   const out = [];
   let cursor;
   do {
-    const page = await kv(env).list({ prefix, cursor, limit: 1e3 });
+    const page = await kvOrThrow(env).list({ prefix, cursor, limit: 1e3 });
     for (const k of page.keys) {
       out.push(k.name);
       if (out.length >= limit) return out;
@@ -1673,15 +1679,15 @@ function novoCodigo() {
 __name(novoCodigo, "novoCodigo");
 async function lerGrupo(env, groupId) {
   if (!VALID_ID2.test(groupId || "")) return null;
-  const raw = await kv(env).get(coopKey(groupId));
+  const raw = await kvOrThrow(env).get(coopKey(groupId));
   return raw ? JSON.parse(raw) : null;
 }
 __name(lerGrupo, "lerGrupo");
 async function gravarGrupo(env, g) {
-  await kv(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
   await Promise.all([
-    kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
-    ...g.members.map((m) => kv(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL }))
+    kvOrThrow(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
+    ...g.members.map((m) => kvOrThrow(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL }))
   ]);
 }
 __name(gravarGrupo, "gravarGrupo");
@@ -1691,7 +1697,7 @@ async function renovarPrazos(env, gid) {
 }
 __name(renovarPrazos, "renovarPrazos");
 async function lerCheckins(env, gid, save) {
-  const raw = await kv(env).get(coopCkKey(gid, save));
+  const raw = await kvOrThrow(env).get(coopCkKey(gid, save));
   if (!raw) return [];
   try {
     const r = JSON.parse(raw);
@@ -1702,7 +1708,7 @@ async function lerCheckins(env, gid, save) {
 }
 __name(lerCheckins, "lerCheckins");
 async function gravarCheckins(env, gid, save, days) {
-  await kv(env).put(
+  await kvOrThrow(env).put(
     coopCkKey(gid, save),
     JSON.stringify({ weekKey: semanaDe(), days }),
     { expirationTtl: COOP_TTL }
@@ -1719,11 +1725,11 @@ function rolarSemana(g) {
 }
 __name(rolarSemana, "rolarSemana");
 async function grupoDe(env, saveId) {
-  const groupId = await kv(env).get(coopOfKey(saveId));
+  const groupId = await kvOrThrow(env).get(coopOfKey(saveId));
   if (!groupId) return null;
   const g = await lerGrupo(env, groupId);
   if (!g || !g.members.includes(saveId)) {
-    await kv(env).delete(coopOfKey(saveId));
+    await kvOrThrow(env).delete(coopOfKey(saveId));
     return null;
   }
   return rolarSemana(g);
@@ -1810,7 +1816,7 @@ async function handleCommunity({ request, env }) {
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    if (pidLegado) await kv(env).delete(`${PID_PREFIX}${pidAntigo}`);
+    if (pidLegado) await kvOrThrow(env).delete(`${PID_PREFIX}${pidAntigo}`);
     return json3({
       ok: true,
       id: profile.pid,
@@ -1824,7 +1830,7 @@ async function handleCommunity({ request, env }) {
     const season = currentSeason();
     const players = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled) continue;
@@ -1856,7 +1862,7 @@ async function handleCommunity({ request, env }) {
     const me = id;
     const pool = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
@@ -1931,7 +1937,7 @@ async function handleCommunity({ request, env }) {
     const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
       const ownerSave = k.slice(`rank:${season}:`.length);
@@ -1959,13 +1965,13 @@ async function handleCommunity({ request, env }) {
     if (!env.SEASON_ADMIN_KEY || adminKey !== env.SEASON_ADMIN_KEY) return json3({ error: "unauthorized" }, 401);
     if (!/^\d{4}-\d{2}$/.test(season || "")) return json3({ error: "invalid season" }, 400);
     const closedKey = `closed:${season}`;
-    if (await kv(env).get(closedKey)) {
+    if (await kvOrThrow(env).get(closedKey)) {
       return json3({ ok: true, season, awarded: 0, already: true });
     }
     const keys = await listPrefix2(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
     }
@@ -1978,7 +1984,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    await kv(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
+    await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
     return json3({ ok: true, season, awarded: top3.length });
   }
   if (action === "trophies" && method === "GET") {
@@ -2026,19 +2032,19 @@ async function handleCommunity({ request, env }) {
     if (me.giftLog[friendSave] === today2()) return json3({ error: "already gifted today" }, 429);
     me.giftLog[friendSave] = today2();
     await putProfile(env, id, me);
-    const raw = await kv(env).get(`gifts:${friendSave}`);
+    const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
-    await kv(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+    await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json3({ ok: true });
   }
   if (action === "gifts" && method === "GET") {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const raw = await kv(env).get(`gifts:${id}`);
+    const raw = await kvOrThrow(env).get(`gifts:${id}`);
     const gifts = raw ? JSON.parse(raw) : [];
     if (url.searchParams.get("claim") === "1" && gifts.length) {
-      await kv(env).delete(`gifts:${id}`);
+      await kvOrThrow(env).delete(`gifts:${id}`);
     }
     return json3({ gifts });
   }
@@ -2057,7 +2063,7 @@ async function handleCommunity({ request, env }) {
     let codigo = null;
     for (let i = 0; i < 3 && !codigo; i++) {
       const tentativa = novoCodigo();
-      if (!await kv(env).get(coopCodeKey(tentativa))) codigo = tentativa;
+      if (!await kvOrThrow(env).get(coopCodeKey(tentativa))) codigo = tentativa;
     }
     if (!codigo) return json3({ error: "try again" }, 503);
     const g = {
@@ -2077,7 +2083,7 @@ async function handleCommunity({ request, env }) {
     if (denied) return denied;
     if (await grupoDe(env, id)) return json3({ error: "already in a group" }, 409);
     const code = String(body.code ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const groupId = code ? await kv(env).get(coopCodeKey(code)) : null;
+    const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
     const g = groupId ? await lerGrupo(env, groupId) : null;
     if (!g) return json3({ error: "invalid code" }, 404);
     rolarSemana(g);
@@ -2088,7 +2094,7 @@ async function handleCommunity({ request, env }) {
     let confirmado = await lerGrupo(env, g.id);
     if (confirmado && !confirmado.members.includes(id)) {
       if (confirmado.members.length >= COOP_MAX_MEMBERS) {
-        await kv(env).delete(coopOfKey(id));
+        await kvOrThrow(env).delete(coopOfKey(id));
         return json3({ error: "group full" }, 409);
       }
       confirmado.members.push(id);
@@ -2096,7 +2102,7 @@ async function handleCommunity({ request, env }) {
       confirmado = await lerGrupo(env, g.id);
     }
     if (!confirmado || !confirmado.members.includes(id)) {
-      await kv(env).delete(coopOfKey(id));
+      await kvOrThrow(env).delete(coopOfKey(id));
       return json3({ error: "join collision" }, 409);
     }
     return json3({ group: await vistaDoGrupo(env, confirmado, id) });
@@ -2121,11 +2127,11 @@ async function handleCommunity({ request, env }) {
     if (!g) return json3({ ok: true });
     g.members = g.members.filter((m) => m !== id);
     if (g.checkins) delete g.checkins[id];
-    await kv(env).delete(coopOfKey(id));
-    await kv(env).delete(coopCkKey(g.id, id));
+    await kvOrThrow(env).delete(coopOfKey(id));
+    await kvOrThrow(env).delete(coopCkKey(g.id, id));
     if (g.members.length === 0) {
-      await kv(env).delete(coopKey(g.id));
-      await kv(env).delete(coopCodeKey(g.code));
+      await kvOrThrow(env).delete(coopKey(g.id));
+      await kvOrThrow(env).delete(coopCodeKey(g.code));
     } else {
       await gravarGrupo(env, g);
     }
@@ -2340,7 +2346,7 @@ var lockKey = /* @__PURE__ */ __name((saveId, formId) => `${LOCK_PREFIX}${saveId
 async function destravar(env, key) {
   if (!key) return;
   try {
-    await kv(env).delete(key);
+    await kvOrThrow(env).delete(key);
   } catch (err) {
     console.error("generate-sprite: falha ao soltar o lock", err?.message);
   }
@@ -2353,7 +2359,7 @@ async function guardarBlob(env, request, bytes, contentType) {
   }
   const token = crypto.randomUUID().replace(/-/g, "");
   try {
-    await kv(env).put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
+    await kvOrThrow(env).put(`${BLOB_PREFIX}${token}`, bytes.buffer, {
       metadata: { contentType }
     });
   } catch (err) {
@@ -2560,8 +2566,8 @@ async function onRequestPost5({ request, env }) {
       let pronta = null;
       let ocupada = null;
       try {
-        pronta = await kv(env).get(cacheKey(id, formId));
-        ocupada = pronta ? null : await kv(env).get(lockKey(id, formId));
+        pronta = await kvOrThrow(env).get(cacheKey(id, formId));
+        ocupada = pronta ? null : await kvOrThrow(env).get(lockKey(id, formId));
       } catch (err) {
         console.error("generate-sprite: dedupe ileg\xEDvel, recusando", err?.message);
         return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS8 });
@@ -2588,7 +2594,7 @@ async function onRequestPost5({ request, env }) {
       }
       lock = lockKey(id, formId);
       try {
-        await kv(env).put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
+        await kvOrThrow(env).put(lock, String(Date.now()), { expirationTtl: LOCK_TTL_SECONDS });
       } catch (err) {
         console.error("generate-sprite: falha ao gravar o lock, recusando", err?.message);
         lock = null;
@@ -2613,7 +2619,7 @@ async function onRequestPost5({ request, env }) {
       }
       if (typeof formId === "string" && formId.length > 0) {
         try {
-          await kv(env).put(
+          await kvOrThrow(env).put(
             cacheKey(id, formId),
             JSON.stringify({ image, provider: out.provider, at: Date.now() })
           );
@@ -2971,7 +2977,7 @@ async function onRequestGet3({ request, env }) {
   }
   const byDay = {};
   for (const day2 of days) {
-    const agg = await kv(env).get(METRICS_PREFIX + day2, { type: "json" }).catch(() => null);
+    const agg = await kvOrThrow(env).get(METRICS_PREFIX + day2, { type: "json" }).catch(() => null);
     if (agg && typeof agg === "object" && !Array.isArray(agg)) byDay[day2] = agg;
   }
   const totals = mergeTotals(byDay);
@@ -3024,9 +3030,9 @@ async function onRequest3({ request, env }) {
   for (const [day2, records] of groupByDay(result.events)) {
     const key = METRICS_PREFIX + day2;
     try {
-      const current = await kv(env).get(key, { type: "json" }).catch(() => null);
+      const current = await kvOrThrow(env).get(key, { type: "json" }).catch(() => null);
       const next = applyAggregate(current, records);
-      await kv(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
+      await kvOrThrow(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
       accepted += records.length;
     } catch (err) {
       console.warn("metrics: falha ao gravar agregado", { day: day2, error: String(err?.name ?? err) });
@@ -3074,12 +3080,12 @@ async function onRequest4({ request, env }) {
     return Response.json({ error: auth.reason }, { status: auth.reason === "forbidden" ? 403 : 401, headers: CORS10 });
   }
   if (request.method === "GET") {
-    const { value: raw, metadata } = await kv(env).getWithMetadata(saveId);
+    const { value: raw, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS10 });
     const gravadoEm = Number(metadata?.t) || 0;
     if ((Date.now() - gravadoEm) / 1e3 > RENEW_AFTER_SECONDS) {
       try {
-        await kv(env).put(saveId, raw, {
+        await kvOrThrow(env).put(saveId, raw, {
           expirationTtl: SAVE_TTL_SECONDS,
           metadata: { t: Date.now() }
         });
@@ -3106,7 +3112,7 @@ async function onRequest4({ request, env }) {
       console.warn("save: POST recusado, state acima do teto", { saveId, bytes: serialized.length });
       return Response.json({ error: "State too large" }, { status: 413, headers: CORS10 });
     }
-    await kv(env).put(saveId, serialized, {
+    await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
       metadata: { t: Date.now() }
     });
@@ -3129,7 +3135,7 @@ async function onRequestGet4({ request, env }) {
   }
   let found;
   try {
-    found = await kv(env).getWithMetadata(`sprite:blob:${token}`, "arrayBuffer");
+    found = await kvOrThrow(env).getWithMetadata(`sprite:blob:${token}`, "arrayBuffer");
   } catch (err) {
     console.error("sprite-image: falha ao ler o blob", err?.message);
     return Response.json({ error: "internal error" }, { status: 500 });
@@ -3486,7 +3492,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-DdvFqg/functionsRoutes-0.07860790799377604.mjs
+// ../.wrangler/tmp/pages-NARhBl/functionsRoutes-0.4300520611293831.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -3714,7 +3720,7 @@ var routes = [
   }
 ];
 
-// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -4040,7 +4046,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

@@ -11,7 +11,7 @@
  * não existe janela de queda. Este teste é o que mantém a propriedade.
  */
 import { describe, it, expect } from 'vitest';
-import { kv } from './_kv.js';
+import { kv, kvOrThrow } from './_kv.js';
 
 const NS = (nome) => ({ nome });
 
@@ -49,6 +49,38 @@ describe('nenhum arquivo de functions/ lê o binding direto', () => {
     // Um `env.DIGIAPP_SAVES` solto continuaria funcionando hoje e quebraria no
     // dia em que o painel só tivesse o nome novo — falha silenciosa e tardia,
     // que é a pior forma de falhar.
+    expect(suspeitos).toEqual([]);
+  });
+});
+
+describe('kvOrThrow', () => {
+  it('devolve o mesmo namespace que o kv() quando há binding', () => {
+    const ns = { get: async () => null };
+    expect(kvOrThrow({ SOULMON_SAVES: ns })).toBe(ns);
+    expect(kvOrThrow({ DIGIAPP_SAVES: ns })).toBe(ns);
+    // Mesma preferência do `kv()`: o nome novo ganha do herdado.
+    expect(kvOrThrow({ SOULMON_SAVES: ns, DIGIAPP_SAVES: { get: async () => 'x' } })).toBe(ns);
+  });
+
+  it('falha com nome quando NENHUM binding está ligado', () => {
+    // A rede, não o caminho: toda rota já recusa com `storage-not-bound` na
+    // guarda de entrada. Isto só existe para que um uso futuro SEM guarda
+    // falhe com um nome legível em vez de `Cannot read properties of undefined`.
+    expect(() => kvOrThrow({})).toThrow('storage-not-bound');
+    expect(() => kvOrThrow(undefined)).toThrow('storage-not-bound');
+    expect(() => kvOrThrow(null)).toThrow('storage-not-bound');
+  });
+});
+
+describe('a convenção do acessor é uma só', () => {
+  it('quem desreferencia o namespace usa kvOrThrow, nunca kv', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    // `kv(env)` decide resposta HTTP na guarda; `kvOrThrow(env)` é para USAR.
+    // Um `kv(env).get(...)` solto reintroduziria os 79 erros de typecheck que
+    // esta convenção fechou — e a regra em dois lugares é o footgun nº 9.
+    const suspeitos = readdirSync('functions/api')
+      .filter(f => f.endsWith('.js') && !f.endsWith('.test.js'))
+      .filter(f => /\bkv\(env\)\s*\./.test(readFileSync(`functions/api/${f}`, 'utf8')));
     expect(suspeitos).toEqual([]);
   });
 });

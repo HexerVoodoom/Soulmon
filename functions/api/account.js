@@ -53,7 +53,7 @@ import {
   VALID_ID, ENT_PREFIX, ORDER_PREFIX, RETENTION_TTL_SECONDS, readEntitlement,
 } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
-import { kv } from './_kv.js';
+import { kv, kvOrThrow } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -93,7 +93,7 @@ async function listPrefix(env, prefix) {
   const out = [];
   let cursor;
   for (let page = 0; page < MAX_SCAN_PAGES; page++) {
-    const res = await kv(env).list({ prefix, cursor, limit: 1000 });
+    const res = await kvOrThrow(env).list({ prefix, cursor, limit: 1000 });
     for (const k of res.keys || []) out.push(k.name);
     if (res.list_complete || !res.cursor) break;
     cursor = res.cursor;
@@ -174,7 +174,7 @@ const NOT_INCLUDED = [
 
 /** Junta tudo que o servidor tem sob este saveId. Fonte única da exportação E do inventário. */
 async function collect(env, saveId) {
-  const store = kv(env);
+  const store = kvOrThrow(env);
   const pid = await publicIdFor(saveId);
 
   let state = null;
@@ -258,7 +258,7 @@ async function handleDeleteRequest(env, saveId) {
   const c = await collect(env, saveId);
   const token = [...crypto.getRandomValues(new Uint8Array(16))]
     .map(b => b.toString(16).padStart(2, '0')).join('');
-  await kv(env).put(
+  await kvOrThrow(env).put(
     DEL_PREFIX + saveId,
     JSON.stringify({ token, createdAt: Date.now() }),
     { expirationTtl: CONFIRM_TTL_SECONDS },
@@ -283,7 +283,7 @@ function tokenMatches(a, b) {
 }
 
 async function handleDeleteConfirm(env, saveId, body) {
-  const store = kv(env);
+  const store = kvOrThrow(env);
 
   let pending = null;
   try { pending = JSON.parse((await store.get(DEL_PREFIX + saveId)) || 'null'); } catch { pending = null; }

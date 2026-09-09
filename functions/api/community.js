@@ -34,7 +34,7 @@
 import { authorizeSaveAccess } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf, BOND_PVP_MIN_LEVEL } from './_bond.js';
-import { kv } from './_kv.js';
+import { kv, kvOrThrow } from './_kv.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -133,13 +133,13 @@ async function ensurePid(env, p) {
   p.pid = newPid();
   await putProfile(env, p.id, p);
   await indexPublicId(env, p.id, p.pid);
-  if (antigo) await kv(env).delete(`${PID_PREFIX}${antigo}`);
+  if (antigo) await kvOrThrow(env).delete(`${PID_PREFIX}${antigo}`);
   return p.pid;
 }
 
 /** Grava o mapa reverso. Idempotente; roda a cada upsert de perfil. */
 async function indexPublicId(env, saveId, pid) {
-  await kv(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
+  await kvOrThrow(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
 }
 
 /**
@@ -158,7 +158,7 @@ async function indexPublicId(env, saveId, pid) {
 const PID_PLACEHOLDER = '0'.repeat(32);
 async function saveIdForPublicId(env, pid) {
   if (!VALID_ID.test(pid || '')) return null;
-  const saveId = await kv(env).get(`${PID_PREFIX}${pid}`);
+  const saveId = await kvOrThrow(env).get(`${PID_PREFIX}${pid}`);
   const legado = await legacyPidFor(saveId || PID_PLACEHOLDER);
   if (!saveId || pid === legado) return null;
   return saveId;
@@ -202,24 +202,24 @@ async function publicProfile(env, p, extra = {}) {
 }
 
 async function getProfile(env, id) {
-  const raw = await kv(env).get(`profile:${id}`);
+  const raw = await kvOrThrow(env).get(`profile:${id}`);
   return raw ? JSON.parse(raw) : null;
 }
 async function putProfile(env, id, profile) {
-  await kv(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
+  await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
 }
 async function getRank(env, season, id) {
-  const raw = await kv(env).get(`rank:${season}:${id}`);
+  const raw = await kvOrThrow(env).get(`rank:${season}:${id}`);
   return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today(), matchesToday: 0 };
 }
 async function putRank(env, season, id, rec) {
-  await kv(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
+  await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
 }
 async function listPrefix(env, prefix, limit = 100) {
   const out = [];
   let cursor;
   do {
-    const page = await kv(env).list({ prefix, cursor, limit: 1000 });
+    const page = await kvOrThrow(env).list({ prefix, cursor, limit: 1000 });
     for (const k of page.keys) {
       out.push(k.name);
       if (out.length >= limit) return out;
@@ -369,7 +369,7 @@ function novoCodigo() {
 
 async function lerGrupo(env, groupId) {
   if (!VALID_ID.test(groupId || '')) return null;
-  const raw = await kv(env).get(coopKey(groupId));
+  const raw = await kvOrThrow(env).get(coopKey(groupId));
   return raw ? JSON.parse(raw) : null;
 }
 
@@ -386,10 +386,10 @@ async function lerGrupo(env, groupId) {
  * evapora para todo mundo ao mesmo tempo, sem nenhum evento que explique.
  */
 async function gravarGrupo(env, g) {
-  await kv(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
+  await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), { expirationTtl: COOP_TTL });
   await Promise.all([
-    kv(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
-    ...g.members.map(m => kv(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL })),
+    kvOrThrow(env).put(coopCodeKey(g.code), g.id, { expirationTtl: COOP_TTL }),
+    ...g.members.map(m => kvOrThrow(env).put(coopOfKey(m), g.id, { expirationTtl: COOP_TTL })),
   ]);
 }
 
@@ -417,7 +417,7 @@ async function renovarPrazos(env, gid) {
 }
 
 async function lerCheckins(env, gid, save) {
-  const raw = await kv(env).get(coopCkKey(gid, save));
+  const raw = await kvOrThrow(env).get(coopCkKey(gid, save));
   if (!raw) return [];
   try {
     const r = JSON.parse(raw);
@@ -426,7 +426,7 @@ async function lerCheckins(env, gid, save) {
 }
 
 async function gravarCheckins(env, gid, save, days) {
-  await kv(env).put(
+  await kvOrThrow(env).put(
     coopCkKey(gid, save),
     JSON.stringify({ weekKey: semanaDe(), days }),
     { expirationTtl: COOP_TTL },
@@ -448,12 +448,12 @@ function rolarSemana(g) {
 
 /** O grupo de quem pergunta, já rolado para a semana corrente. `null` se não há. */
 async function grupoDe(env, saveId) {
-  const groupId = await kv(env).get(coopOfKey(saveId));
+  const groupId = await kvOrThrow(env).get(coopOfKey(saveId));
   if (!groupId) return null;
   const g = await lerGrupo(env, groupId);
   // Índice apontando para grupo morto (ou do qual a pessoa já saiu) se limpa
   // aqui: é o mesmo custo de uma leitura e evita fantasma permanente no KV.
-  if (!g || !g.members.includes(saveId)) { await kv(env).delete(coopOfKey(saveId)); return null; }
+  if (!g || !g.members.includes(saveId)) { await kvOrThrow(env).delete(coopOfKey(saveId)); return null; }
   return rolarSemana(g);
 }
 
@@ -582,7 +582,7 @@ async function handleCommunity({ request, env }) {
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    if (pidLegado) await kv(env).delete(`${PID_PREFIX}${pidAntigo}`);
+    if (pidLegado) await kvOrThrow(env).delete(`${PID_PREFIX}${pidAntigo}`);
     return json({
       ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled,
       ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: BOND_PVP_MIN_LEVEL } : {}),
@@ -597,7 +597,7 @@ async function handleCommunity({ request, env }) {
     /** @type {Array<{ name?: string }>} */
     const players = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       // N-4: o diretório respeita o MESMO gate que `opponents` — só entra
@@ -670,7 +670,7 @@ async function handleCommunity({ request, env }) {
     const me = id;
     const pool = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
       if (!p.pvpEnabled || p.id === me) continue;
@@ -763,7 +763,7 @@ async function handleCommunity({ request, env }) {
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const rec = JSON.parse(raw);
       // Atenção: a chave do rank é o saveId. Esta variável já se chamou `pid`,
@@ -798,13 +798,13 @@ async function handleCommunity({ request, env }) {
     // MESMO troféu de novo para `pendingTrophies` — o campeão receberia dois
     // 🥇 da mesma season e a vitrine mentiria.
     const closedKey = `closed:${season}`;
-    if (await kv(env).get(closedKey)) {
+    if (await kvOrThrow(env).get(closedKey)) {
       return json({ ok: true, season, awarded: 0, already: true });
     }
     const keys = await listPrefix(env, `rank:${season}:`, 300);
     const rows = [];
     for (const k of keys) {
-      const raw = await kv(env).get(k);
+      const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
     }
@@ -817,7 +817,7 @@ async function handleCommunity({ request, env }) {
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
     }
-    await kv(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
+    await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }));
     return json({ ok: true, season, awarded: top3.length });
   }
 
@@ -880,10 +880,10 @@ async function handleCommunity({ request, env }) {
     me.giftLog[friendSave] = today();
     await putProfile(env, id, me);
 
-    const raw = await kv(env).get(`gifts:${friendSave}`);
+    const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: me.name, bits: 20, at: Date.now() });
-    await kv(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+    await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json({ ok: true });
   }
 
@@ -891,10 +891,10 @@ async function handleCommunity({ request, env }) {
     // Mesmo caso do `trophies`: `claim=1` apaga a fila do jogador.
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const raw = await kv(env).get(`gifts:${id}`);
+    const raw = await kvOrThrow(env).get(`gifts:${id}`);
     const gifts = raw ? JSON.parse(raw) : [];
     if (url.searchParams.get('claim') === '1' && gifts.length) {
-      await kv(env).delete(`gifts:${id}`);
+      await kvOrThrow(env).delete(`gifts:${id}`);
     }
     return json({ gifts });
   }
@@ -929,7 +929,7 @@ async function handleCommunity({ request, env }) {
     let codigo = null;
     for (let i = 0; i < 3 && !codigo; i++) {
       const tentativa = novoCodigo();
-      if (!(await kv(env).get(coopCodeKey(tentativa)))) codigo = tentativa;
+      if (!(await kvOrThrow(env).get(coopCodeKey(tentativa)))) codigo = tentativa;
     }
     if (!codigo) return json({ error: 'try again' }, 503);
     const g = {
@@ -951,7 +951,7 @@ async function handleCommunity({ request, env }) {
     // de estranho, e o diretório já respeita o consentimento (N-4 do STATUS).
     // Uma porta nova não pode furar isso.
     const code = String(body.code ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    const groupId = code ? await kv(env).get(coopCodeKey(code)) : null;
+    const groupId = code ? await kvOrThrow(env).get(coopCodeKey(code)) : null;
     const g = groupId ? await lerGrupo(env, groupId) : null;
     if (!g) return json({ error: 'invalid code' }, 404);
     rolarSemana(g);
@@ -979,7 +979,7 @@ async function handleCommunity({ request, env }) {
     let confirmado = await lerGrupo(env, g.id);
     if (confirmado && !confirmado.members.includes(id)) {
       if (confirmado.members.length >= COOP_MAX_MEMBERS) {
-        await kv(env).delete(coopOfKey(id));
+        await kvOrThrow(env).delete(coopOfKey(id));
         return json({ error: 'group full' }, 409);
       }
       confirmado.members.push(id);
@@ -987,7 +987,7 @@ async function handleCommunity({ request, env }) {
       confirmado = await lerGrupo(env, g.id);
     }
     if (!confirmado || !confirmado.members.includes(id)) {
-      await kv(env).delete(coopOfKey(id));
+      await kvOrThrow(env).delete(coopOfKey(id));
       return json({ error: 'join collision' }, 409);
     }
     return json({ group: await vistaDoGrupo(env, confirmado, id) });
@@ -1027,14 +1027,14 @@ async function handleCommunity({ request, env }) {
     if (!g) return json({ ok: true });
     g.members = g.members.filter(m => m !== id);
     if (g.checkins) delete g.checkins[id];
-    await kv(env).delete(coopOfKey(id));
+    await kvOrThrow(env).delete(coopOfKey(id));
     // O progresso de quem saiu some junto — a meta encolhe com o grupo, então o
     // que ele fez não pode continuar contando (`PLANO-COOP.md` §3.4).
-    await kv(env).delete(coopCkKey(g.id, id));
+    await kvOrThrow(env).delete(coopCkKey(g.id, id));
     if (g.members.length === 0) {
       // Grupo vazio some na hora — sem lápide, sem "seu grupo morreu".
-      await kv(env).delete(coopKey(g.id));
-      await kv(env).delete(coopCodeKey(g.code));
+      await kvOrThrow(env).delete(coopKey(g.id));
+      await kvOrThrow(env).delete(coopCodeKey(g.code));
     } else {
       await gravarGrupo(env, g);
     }

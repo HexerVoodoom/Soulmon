@@ -77,6 +77,7 @@ via `language === 'pt-BR'`).
 
 ```bash
 npx tsc --noEmit     # typecheck — deve sair limpo (exit 0)
+npx tsc -p tsconfig.server.json --noEmit  # functions/ e workers/ (dinheiro, conta, save); roda no CI e já voltou vermelho por ficar de fora daqui
 npx tsc -p desktop/tsconfig.json --noEmit   # o overlay; roda em PR desde 3795020b
 npx vitest run       # testes — todos devem passar
 npm run build        # vite build + conversão PNG→WebP (dist/ é commitado!)
