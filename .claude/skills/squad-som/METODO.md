@@ -8,6 +8,17 @@ níveis de verificação L1/L2/L3, o modo divergente).
 
 Ritmo, princípios e gate humano: **inalterados**. O que muda é o que conta como verificação.
 
+> ⚠️ **Este método foi escrito antes de rodar. O run `som-01` rodou as 6 fases em 08–09/09/2026
+> e corrigiu parte dele por medição.** Onde aparece a marca *corrigido por medição* com data, o
+> texto novo manda. Três fatos que atravessam o documento inteiro:
+> **(a)** a premissa da Fase 1 (A/B cego) segue **NÃO MEDIDA** — bloqueada por falta de crédito
+> no gerador (`0.45 credits`, verificado), não medida **e não refutada**; a **S10 e sua emenda**
+> (`docs/REGISTRO-DE-DECISOES.md` §6.1) tornaram o **procedural a solução vigente**, com os 12
+> prompts prontos e engatilhados. **(b)** o **gate humano de escuta NUNCA foi exercido** — não
+> houve um único asset, logo não há taxa de aprovação a citar. **(c)** `squad-alpha-runs/` está
+> no `.gitignore`: o que precisa sobreviver vai para `docs/`, com ponteiro no `CLAUDE.md` — foi
+> assim que nasceu `docs/SOM.md`, e o runbook completo ficou de fora de propósito.
+
 ---
 
 ## Delta 0 · A premissa fundadora do domínio
@@ -27,10 +38,17 @@ nunca usou o app e não há telemetria (§1).
 
 Encurtada: sem pesquisa de campo e sem analytics (§1/§8). Vira:
 
-- **Inventário sonoro** dos 11 sons e dos 7 chamadores, com uma coluna que a maioria dos runs
+- **Inventário sonoro** dos sons e dos chamadores, com uma coluna que a maioria dos runs
   esquece: **quais eventos passam a NÃO ter som**. *Fase 0 sem nenhum corte proposto é sinal
   de que a pergunta não foi feita.* Revisores obrigatórios do corte:
   `soulmon-behavioral-psychologist` + `alpha-requisitos` — nunca o autor.
+  ✅ **Feito, e o resultado corrigiu o enunciado (09/09/2026):** os 11 sons viraram **8**;
+  placar final **10 call-sites cortados e 3 símbolos apagados** (`playPoopAlert`,
+  `playMenuOpen`, `playPoopClean` — este último provado **inalcançável** exceto pelo banho,
+  `CareSystem.tsx:39`). ⚠️ **Nem a revisão dupla nem o primeiro passe adversarial pegaram o
+  nono corte** — foi preciso um **segundo** passe. E a objeção **O-12** ficou de pé: a pergunta
+  foi respondida **só para os eventos que já tinham som**; sete eventos do produto não foram
+  avaliados nem recusados, apenas ausentes.
 - **Baseline WAV dos 11 sons atuais, gravado ANTES de qualquer geração.** Sem esse arquivo
   não existe comparação na Fase 1, só memória.
 - ~~Desempate do conflito de unidade e de alvo de loudness~~ — **RESOLVIDO em 08/09/2026
@@ -76,6 +94,22 @@ A premissa arriscada é **falseável**, e este é o delta que mais muda o run:
 >
 > **Refuta a premissa:** o procedural vencer **ou empatar** em ≥2 dos 3 pares. Nesse caso o
 > run **muda de tese** na Fase 1 e ataca o sintetizador, **sem gerar o lote da Fase 2**.
+
+⚠️ **O que aconteceu de fato (09/09/2026): a premissa segue NÃO MEDIDA.** O piloto A/B foi
+bloqueado por **falta de crédito** no gerador (`pro plan, 0.45 credits`, verificado pelo
+orquestrador): **zero candidatos gerados, nenhum par montado** — reusar o baseline dos dois
+lados seria fraude de medição. Não medida **e não refutada**. A **S10 e sua emenda**
+(`docs/REGISTRO-DE-DECISOES.md` §6.1) decidiram: o **procedural é a solução vigente**, calibrado
+contra a escada, e os **12 prompts ficam prontos e engatilhados**. O gatilho de reabertura
+permanece o A/B: se a IA vencer em ≥2 de 3 pares, o procedural volta a ser provisório de
+verdade; se empatar ou perder, **S1 cai para SFX** e sobrevive só para trilha e ambiente.
+
+**A infraestrutura da fase, porém, vale para os dois desfechos** — e é o que ela de fato
+entregou: 47 renders no Chromium real, o ADR que decidiu **não** fazer o AudioWorklet limitador
+(nenhum limitador de estoque cumpre −1 dBTP: `WaveShaper` 4× = **+0,50**, sem oversample =
+**+1,51**, `DynamicsCompressor` = **+2,99**), o gate de loudness com prova de vermelho, e a
+calibração procedural que levou a dispersão do lote de **41,63 dB → 8,02 dB** — e os 8,02 que
+sobram **são a escada**, não resíduo.
 
 Um só asset-piloto (**SFX** — a premissa acima é sobre os 11 eventos existentes, que são SFX)
 e um só spike do grafo. A trilha existe desde S2, mas nasce desligada e por gesto: ela não é o
@@ -123,6 +157,30 @@ da squad. Dois runbooks, dois donos:
 ## Delta 2 · L2-som — a verificação executável, corrigida por execução
 
 Obrigatória da Fase 2 em diante. **Quatro camadas**, todas com saída real colada.
+
+> ✅ **A L2-som funcionou e EVOLUIU no run (corrigido por medição, 09/09/2026).** Ela não ficou
+> no papel: a Camada 2 virou um gate executável (`prototyper/gate-loudness.mjs`, exige Chromium)
+> com **seis assertivas — AC-0..AC-5**, cada uma nascida de um verde falso concreto:
+>
+> | | O que exige | Por que existe |
+> |---|---|---|
+> | **AC-0** | a amostra existe (renders contra `RENDERS_ESPERADOS`) | sem ele, **zero medições passavam como zero falhas**. A correção é achar por que o render sumiu — **nunca** ajustar o esperado ao observado |
+> | **AC-1** | teto **−1 dBTP** | o teto do S3 |
+> | **AC-2** | catraca **−3,29 dBTP** (pior caso medido **sobre a distribuição** + 1 dB) | **não é o teto**; é a catraca que impede regressão silenciosa |
+> | **AC-3** | **o medidor se autovalida** com senoide em fs/4 a 45° e **aborta** se falhar | medidor cego aprova tudo; a primeira versão do script do run foi reprovada pela própria autovalidação por **3,017 dB** |
+> | **AC-4** | cobertura — **lê o fonte de `sounds.ts`** e reprova **nomeando o som** sem categoria, alvo na spec ou linha na calibração | `playDegenerate` estava em `classe0`, e `classe0` **removia** o som da medição em vez de reprová-lo: o gate saiu verde sobre um som que nunca mediu |
+> | **AC-5** | `\|offset\| ≤ 20 dB`, nomeando o asset | desvio 0,00 LU podia ser **identidade algébrica**; um asset 20 dB baixo demais sairia com desvio 0,00 do mesmo jeito |
+>
+> **Toda assertiva nova exige prova de vermelho gravada em disco** — no `som-01` são três
+> arquivos (`saida-gate-vermelho.txt`, `prova-vermelho-C-amostra-vazia.txt`,
+> `provas-vermelho-pos-ataque.txt`). Assertiva sem prova de vermelho não conta como verificação.
+> E `--calibrar` passou a **gravar e sair**, exigindo segunda execução em modo gate: calibrar e
+> aferir na mesma passada é a forma canônica de medir a própria resposta.
+>
+> **A regra geral que sai daí:** *alguma assertiva tem de olhar para **quem define a amostra***.
+> Os dois verdes vazios do run foram exatamente isso — um dentro do próprio gate, outro na
+> calibração. E a regra de ouro está escrita na saída do gate: ***"conserte a ESCADA, não a
+> catraca"***. A catraca do AC-2 passou por **0,13 dB** e foi **registrada, não afrouxada**.
 
 **Restrição de localização, medida:** **todo teste de som mora em `src/`.** O `include` do
 `vitest.config.ts` só enxerga `src/` · `functions/` · `workers/` · `desktop/renderer/` ·
@@ -174,6 +232,29 @@ validado contra âncora da norma. Saída em `sweeper/audio-loudness.log`.
 - **Medir sempre no WAV mestre PCM 16-bit, antes de codificar** — medir depois do codec exigiria
   o `ffmpeg` que não existe.
 - **Costura de loop é TRIAGEM, não veredito.** O número acusa; quem absolve é o gate humano.
+- ⚠️ **Fonte estocástica mede-se por DISTRIBUIÇÃO, nunca por uma realização** (corrigido por
+  medição, 09/09/2026). `playVisorTune` usa `Math.random()`: a catraca foi ancorada numa
+  **captura** e anunciou **3,24 dB** de folga ao teto; sobre **12 realizações**, o pior caso era
+  **−1,08 dBTP** e a folga real **0,08 dB**. **N ≥ 12, e o número reportado é o pior caso.**
+- ⚠️ **"O grafo não introduz desvio" ≠ "o lote está calibrado"** (corrigido por medição,
+  09/09/2026). Desvio **0,00 LU** pode ser **identidade algébrica**: com `offset = alvo −
+  medido_em_P-A`, ganhos de categoria em 0 dB e offset aplicado por multiplicação escalar, o
+  caminho P-A→P-B é ganho puro, e LUFS é invariante a ganho por soma em dB. Um asset entregue
+  **20 dB baixo demais** sairia com desvio 0,00.
+- ⚠️ **Categoria não vem do nível medido do arquivo** (**R-CAT**). Foi assim que o
+  `playVisorTune` acabou em `arcade`, **dois degraus errado**, sem nada ficar vermelho — e a
+  categoria certa (`sintonia`, −19,0) saiu do **perfil de repetição do evento**. O conserto
+  também não foi de ganho: duas hipóteses de ganho do próprio autor caíram por medição (**0/12**
+  cada); o que funcionou foi **envelope + duração** (180 → 400 ms com platô): **12/12**,
+  dispersão 2,68 → **0,18 LU**, **+23,3 dB sem tocar no ganho**.
+- ⚠️ **Nunca ancore medição em renderização própria sem validar contra o motor real.** O
+  baseline reimplementado em Node divergiu do Chromium em **7 de 10 sons, 1,44–1,76 dB**, e foi
+  reprovado e substituído pela captura do motor real.
+- ⚠️ **Nunca afirme ausência no código a partir de um `grep` por string literal.** Caso real do
+  run: a busca por `storage-not-bound` concluiu que só 3 arquivos guardavam, e um achado
+  **grave foi escalado com base nisso** — a guarda existia em **três formas** (`'Storage not
+  bound'`, a literal, e a indireta via `requirePaidTier`), e **o achado estava errado**. Procure
+  **variantes** e **confira o caminho de execução** antes de afirmar que algo não existe.
 - ✅ **O alvo está decidido (S3, 08/09/2026): ≤ −16 LUFS integrado** (ITU-R BS.1770-4,
   K-weighting com gating) **e true peak ≤ −1 dBTP** com oversampling ≥4× — AES / EBU R 128,
   desempatando contra os −10/−12 dBFS de `references/audio.md`. Vale **por categoria e por
@@ -222,6 +303,14 @@ de **design** (variação e teto de frequência por evento, declarados no DS son
 
 Não delegável. O agente entrega medição; o julgamento auditivo é do humano.
 
+> ⚠️ **NUNCA EXERCIDO (09/09/2026).** No `som-01` **não houve um único asset** para escutar — a
+> geração por IA ficou bloqueada por crédito, e o procedural vigente por **S10** não passa por
+> este gate como arquivo. Logo: **não existe `escuta/<fase>.md` preenchido, não existe taxa de
+> aprovação, e a squad não pode alegar que exercitou o gate.** Todo o procedimento abaixo
+> continua válido e **não testado** — a primeira vez que ele rodar de verdade será a primeira
+> vez. Consequência já registrada em **S7/S8**: o design system sonoro será aprovado por
+> **N=1**, e esse N=1 aprovou o conceito **antes** de ouvir.
+
 - **Registro por asset** em `escuta/<fase>.md` — as três perguntas fechadas (*companheiro ou
   chefe? · irrita na 20ª repetição? · dá para usar no transporte público sem constrangimento?*)
   mais o par A/B contra o procedural, quando existir. **Asset sem linha de escuta não entra no
@@ -261,4 +350,31 @@ Não delegável. O agente entrega medição; o julgamento auditivo é do humano.
   liderança**. Em dúvida sobre se um som é presença ou sistema, prevalece ele.
 - **Orçamento de bytes é do `alpha-perf-a11y`**, dono único.
 - **O parecer de PI e de termos comerciais é do `soulmon-ip-brand-guardian`**, e o risco
-  residual escala ao dono — não há jurídico (§9).
+  residual escala ao dono — não há jurídico (§9). ⚠️ **Não existe `grep` por melodia:** o guard
+  executável prova **procedência**, nunca **originalidade** (S9). O único controle de
+  originalidade que existe é a escuta humana do dono (S8).
+- **A regra de exclusão de fonte (R-EX) é do `som-diretor-sonoro`**, não do grafo — medido: o
+  limitador fez **0,00 dB** sobre uma soma de **+4,58 dB**. O engenheiro implementa.
+- **A categoria de um som é do EVENTO (R-CAT)**, e superfície nova nasce muda (**R-NOVA**).
+
+---
+
+## Delta 6 · Lições de orquestração — pagas em erro no `som-01`
+
+1. **Todo achado veio de execução contra o código; nenhum de leitura de documento ao lado.**
+   7 erros de fato caíram assim, e a própria Fase 0 corrigiu 4 achados do seu inventário. O
+   maior risco registrado no gate da Fase 0 é o espelho disso: o pedaço do lote que descrevia um
+   sistema **que ainda não existia** era estruturalmente imune ao que pegou todo o resto.
+2. **Não despache dois consertos em paralelo quando um consome número do outro.** A
+   `spec-de-loudness.md` foi calculada sobre um **baseline reprovado no mesmo dia** pela objeção
+   O-8. Erro de orquestração, não de agente: o conserto de baixo não soube que o chão tinha
+   mudado. Sequencie, ou declare a dependência de número no briefing.
+3. **O loop adversarial não é opcional — a Fase 1 provou por falta.** Na Fase 0 o passe
+   adversarial achou, **duas vezes**, o que duas revisões obrigatórias não tinham achado. Na
+   Fase 1 o loop formal não rodou de primeira, e o próprio gate registrou estar *"uma camada
+   abaixo do da Fase 0"*; o passe posterior **derrubou uma conclusão da fase**.
+4. **Verifique contra qual commit você está auditando.** A Fase 3 começou contra `cfd74884`,
+   onde `audioBus.ts` não existia, e a `main` mudou no meio da auditoria (PR #36). Tudo teve de
+   ser reauditado contra `0d84cdcc`. Fixe e declare o alvo no artefato.
+5. **Planeje o destino do artefato antes de escrevê-lo.** `squad-alpha-runs/` está no
+   `.gitignore`: o que precisa sobreviver vai para `docs/`, com ponteiro no `CLAUDE.md`.

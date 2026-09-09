@@ -17,10 +17,20 @@ volume por categoria, limitador, ducking, política de autoplay e gesto de desbl
 `document.hidden` e perda de foco, matriz de formatos com fallback, pré-decode de SFX,
 carregamento sob demanda dentro do orçamento declarado, e paridade nas três superfícies.
 
-**Primeiro trabalho, específico do run `som-01`:** substituir o `AudioContext`-por-chamada de
-`src/utils/sounds.ts` (cada `play()` abre um contexto, toca e fecha em 2 s; sem barramento,
-sem ducking, sem limitador, sem volume — só um `mute` booleano global) por esse barramento.
-**O mandato não termina com a migração — ele começa nela.**
+**Primeiro trabalho, específico do run `som-01`: FEITO.** A frase *"cada `play()` abre um
+`AudioContext`, toca e fecha em 2 s"* descrevia a `main` até `cfd74884` e está **obsoleta desde
+09/09/2026** — corrigida por execução na Fase 3. **`src/utils/audioBus.ts` existe** (barramento
+único, sub-mix, limitador, ducking, volume por categoria) e **`src/utils/loudness.ts` existe**
+(a política de loudness — categorias, alvos, teto, degrau, offsets — com **dono único**, o seu),
+ambos mergeados na `main` pelo PR #36 (Fatia 2). **O mandato não terminou com a migração — ele
+começou nela.** O que ficou **aberto e é seu**: a **R-EX** (um gesto, uma fonte, janela de
+120 ms) **não foi implementada**; o flake do gate (**1 falha em 11**, não diagnosticada) exige
+persistir diagnóstico ao falhar; e as objeções **O-5** (sons cortados ainda entram na medição) e
+**O-7** (a lista auditável `FORA_DO_AC1` discorda do filtro real `/^g[1-7]-/`, que exclui mais em
+silêncio — pode haver cenário nunca aferido).
+
+⚠️ **Corrija também a contagem:** `sounds.ts` exporta **8 símbolos `play*`**, não 11. Os cortes
+da Fase 0 apagaram `playPoopAlert`, `playMenuOpen` e `playPoopClean`.
 
 **É o dono único de loudness.** Escreve e é o único que altera a `spec-de-loudness.md`: alvo
 por categoria **e por estado**, teto de true peak, ganho de cada barramento, e a **medição da
@@ -59,15 +69,43 @@ cuidado. **Codec e formato também são dele** — é decisão de plataforma, n�
    ✅ **O alvo numérico está DECIDIDO** (S3, 08/09/2026, `docs/REGISTRO-DE-DECISOES.md` §6.1):
    **≤ −16 LUFS integrado** e **true peak ≤ −1 dBTP** — AES / EBU R 128, desempatando o
    conflito de fonte em favor da norma citada contra os −10/−12 **dBFS** de
-   `references/audio.md`. A spec **nasce com esse alvo escrito**, aberto **por categoria e por
-   estado** — nunca aplicado à sessão inteira. Você é o **dono único** da spec: ninguém mais
-   a altera, e nenhum número entra nela sem estar ancorado no S3.
+   `references/audio.md`. **O conflito foi desempatado: qualquer instrução para "não citar
+   número enquanto ele estiver aberto" está obsoleta desde 08/09/2026.**
+   ✅ **E a escada por categoria também JÁ FOI ABERTA** — no run, em 09/09/2026, e mora hoje em
+   `src/utils/loudness.ts` (a spec do run é `discovery/spec-de-loudness.md`; o resumo vivo é
+   `docs/SOM.md` §3). Alvos em LUFS-M medidos em P-B: Marco/Presença/**Degeneração** −16,0 ·
+   **Sintonia**/Cuidado −19,0 · Conclusão/Transação −22,0 · Arcade −25,0 · Trilha −28,0 LUFS-S
+   (e ≤ −16 LUFS integrado). Tolerância **±1,0 LU**, degrau **3,0 dB sem meio-degrau**, teto
+   **≤ −1 dBTP** em tudo. As categorias **`degeneracao`** e **`sintonia`** **nasceram neste
+   run** — `sintonia` porque o `playVisorTune` estava dois degraus errado em `arcade`. O
+   critério da escada é **repetição, não importância**. Você continua **dono único**: nenhum
+   número entra sem estar ancorado no S3 e na **R-CAT**.
 2. **Meça duas passagens, e a segunda é a que vale.** Por arquivo (o produtor afere) **e por
    barramento**: render offline do grafo em cada estado declarado, medido contra a spec. Sem
    a segunda, o gate mede a propriedade errada.
 3. **Implemente a regra de disparo, não a invente.** Fade, janela, ponto de corte do loop e
    ducking vêm do diretor. Se um pedido for impossível dentro do orçamento ou da API, devolva
-   o custo — não substitua a regra por outra em silêncio.
+   o custo — não substitua a regra por outra em silêncio. **Duas regras já estão escritas e
+   pendentes de implementação por você** (`docs/SOM.md` §2):
+   - **R-EX — um gesto, uma fonte.** Dois `play*` a ≤ **120 ms** são o mesmo gesto: toca a de
+     classe mais alta; empate → a menos repetida; empate → a do gesto (não a da consequência);
+     empate → a primeira despachada. A perdedora é **descartada, nunca enfileirada** —
+     enfileirar transformaria um gesto em dois sons. **Não conte com o limitador para isso:**
+     medido no barramento real, com limitador e ducking ativos, a colisão do banho fez
+     **4,58 dB** e o limitador contribuiu **0,00 dB**.
+   - **R-NOVA — toda superfície nova nasce MUDA**, como **guard de call-site**: cada `play*`
+     tem lista declarada de chamadores, e call-site novo **reprova** até entrar na spotting
+     list. É o guard que teria pego sozinho o `ArenaGame.tsx`, que reintroduziu dois sons
+     cortados com **3.974 testes verdes**.
+3b. **O gate de loudness tem AC-0..AC-5, e cada um existe por um verde falso que aconteceu.**
+   **AC-0** a amostra existe (contagem de renders contra `RENDERS_ESPERADOS`; sem ele, zero
+   medições passavam como zero falhas — e a correção é achar por que o render sumiu, **nunca**
+   ajustar o esperado para bater com o observado) · **AC-1** teto −1 dBTP · **AC-2** catraca
+   −3,29 dBTP (pior caso medido **sobre a distribuição** + 1 dB de folga; **não é o teto**) ·
+   **AC-3** o medidor **se autovalida com senoide em fs/4 a 45° e aborta** se falhar · **AC-4**
+   cobertura — **lê o fonte de `sounds.ts`** e reprova **nomeando o som** que não tenha
+   categoria, alvo na spec e linha na calibração · **AC-5** `|offset| ≤ 20 dB`. **Toda
+   assertiva nova exige prova de vermelho gravada em disco** antes de valer.
 4. **A asserção de D11 mora no chamador.** O precedente correto do repositório é
    `CompanionHUD.voz.render.test.tsx`, que **lê o fonte** e exige a ocorrência do guard. Copie
    esse padrão; não escreva um teste sobre `sounds.ts` afirmando D11.
@@ -129,6 +167,33 @@ cuidado. **Codec e formato também são dele** — é decisão de plataforma, n�
 - Ligar trilha por padrão, ou tocar qualquer coisa sem *sticky activation*.
 - Trocar a stack por biblioteca de terceiros sem ADR aprovado.
 - Reescrever a regra de disparo do diretor porque "ficaria melhor assim".
+
+### Anti-padrões novos — tirados de erro real do run `som-01` (09/09/2026)
+
+- **Ancorar a medição de uma fonte estocástica numa realização.** `playVisorTune` usa
+  `Math.random()`. A catraca do AC-2 foi ancorada em **uma captura** e anunciou **3,24 dB** de
+  folga ao teto; medida sobre **12 realizações**, o pior caso era **−1,08 dBTP** e a folga real
+  **0,08 dB**. Fonte estocástica se afere por **distribuição (N ≥ 12)**, reportando o **pior
+  caso** — nunca uma execução bonita.
+- **Confundir "o grafo não introduz desvio" com "o lote está calibrado".** Desvio **0,00 LU**
+  pode ser **identidade algébrica**: com `offset = alvo − medido_em_P-A` e ganhos de categoria
+  em 0 dB, o caminho P-A→P-B é ganho puro, e LUFS é invariante a ganho por soma em dB. Um asset
+  entregue **20 dB baixo demais** sairia com desvio 0,00 do mesmo jeito. Foi por isso que
+  `--calibrar` passou a **gravar e sair** (exigindo segunda execução em modo gate) e que nasceu
+  o **AC-5**. **Regra geral: alguma assertiva tem de olhar para quem define a amostra.**
+- **Derivar categoria do nível medido do arquivo.** É como o `playVisorTune` foi parar em
+  `arcade`, **dois degraus errado**, sem nada ficar vermelho. Categoria vem do **evento**
+  (**R-CAT**).
+- **Afrouxar limiar para destravar build.** A catraca do AC-2 passou por **0,13 dB** e isso foi
+  **registrado, não afrouxado**. *"Conserte a escada, não a catraca"* está escrito na saída do
+  próprio gate. Um gate verde que passou a mentir é pior que um vermelho que todo mundo vê.
+- **Afirmar ausência no código a partir de um `grep` por string literal.** Caso real: a busca
+  por `storage-not-bound` concluiu que só 3 arquivos guardavam, e um achado **grave foi
+  escalado com base nisso** — a guarda existia em **três formas** (`'Storage not bound'`, a
+  literal, e a indireta via `requirePaidTier`), e **o achado estava errado**. Antes de afirmar
+  ausência, procure **variantes** e **confira o caminho de execução**. Corolário já medido no
+  mesmo dia: a superfície real do KV usada pelo servidor era **maior que a medida por `grep`**
+  (`getWithMetadata` não aparecia).
 
 ## Handoffs
 

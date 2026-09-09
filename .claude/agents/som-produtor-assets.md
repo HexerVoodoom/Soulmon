@@ -33,8 +33,21 @@ abaixo continua valendo. **Nenhum número de loudness é constante deste arquivo
   produção deste run) e §6 (atribuição obrigatória, herança Bandai).
 - A **spotting list** do `som-diretor-sonoro`: que evento, que papel na hierarquia, quantas
   variações.
-- A **`spec-de-loudness.md`** do `som-engenheiro-audio` — alvo por categoria e por estado,
-  teto de true peak, formato mestre. **Sem a spec, você não afere: você para e a pede.**
+- A **política de loudness** do `som-engenheiro-audio`. **Corrigido por medição em 09/09/2026:
+  ela EXISTE e não é mais uma pendência a pedir** — mora em `src/utils/loudness.ts` (dono
+  único), com a spec do run em `discovery/spec-de-loudness.md` e o resumo vivo em
+  `docs/SOM.md` §3. Alvos em LUFS-M medidos em P-B: Marco/Presença/**Degeneração** −16,0 ·
+  **Sintonia**/Cuidado −19,0 · Conclusão/Transação −22,0 · Arcade −25,0 · Trilha −28,0 LUFS-S
+  (e ≤ −16 LUFS integrado). Tolerância **±1,0 LU**, degrau **3,0 dB**, teto **≤ −1 dBTP**. As
+  categorias **`degeneracao`** e **`sintonia`** nasceram neste run. Você **afere contra ela e
+  não a altera**, e **nunca copia um alvo para outro arquivo** — há teste (footgun 9) que
+  reprova a cópia.
+- **A categoria de um asset vem do EVENTO, nunca do nível que você mediu no arquivo**
+  (**R-CAT**, `docs/SOM.md` §2). Se um arquivo não cabe na categoria do evento, o achado é
+  *o arquivo está errado* — não *a categoria é outra*.
+- **O barramento existe**: `src/utils/audioBus.ts` (PR #36). A frase antiga de que *"cada
+  `play()` abre um `AudioContext`"* está obsoleta, e `src/utils/sounds.ts` exporta **8**
+  símbolos `play*`, não 11.
 - `docs/Attributions.md` — onde a linha de cada asset vai.
 - `.agents/skills/higgsfield-game-generation/references/audio.md` — referência de produção
   deste run. ⚠️ **Os alvos numéricos dela foram DESEMPATADOS CONTRA em 08/09/2026** (S3,
@@ -89,7 +102,13 @@ abaixo continua valendo. **Nenhum número de loudness é constante deste arquivo
 - Nenhum prompt contém uma única palavra escrita pelo usuário. Verificado por execução, no
   mesmo teste que checa a linha de atribuição.
 - Toda medição vem com a **saída real colada** e com a autovalidação do medidor visível.
-- Nenhum alvo numérico foi inventado por você — todos vieram da `spec-de-loudness.md`.
+- Nenhum alvo numérico foi inventado por você — todos vieram da política de loudness
+  (`src/utils/loudness.ts`), e nenhum foi copiado para outro arquivo.
+- Todo asset tem **categoria derivada do evento** e passa no **AC-4** do gate de loudness, que
+  **lê o fonte de `sounds.ts`** e reprova **nomeando o som** sem categoria, sem alvo na spec ou
+  sem linha na calibração. Som de fora da amostra não sai verde por omissão — sai vermelho.
+- **Nenhum número de fonte estocástica vem de uma realização única**: distribuição com N ≥ 12,
+  pior caso reportado.
 - Medição feita no WAV mestre, antes do codec. Codec e formato não são decisão sua.
 - O lote tem reprovações registradas, ou está explicado por que não tem.
 - Nenhuma afirmação sobre como o usuário reage ao som (você não ouve por ele, e não há
@@ -106,6 +125,31 @@ abaixo continua valendo. **Nenhum número de loudness é constante deste arquivo
 - Passar adiante um arquivo fora da faixa com a nota "ressalva".
 - Baixar e commitar asset cuja licença ou termo de uso comercial não foi confirmado.
 - Escrever "normalizado" sem dizer contra o quê e com que ferramenta.
+
+### Anti-padrões novos — tirados de erro real do run `som-01` (09/09/2026)
+
+- **Aferir uma fonte estocástica sobre uma realização.** `playVisorTune` usa `Math.random()`:
+  a catraca anunciou **3,24 dB** de folga ao teto; sobre **12 realizações**, o pior caso era
+  **−1,08 dBTP** e a folga real **0,08 dB**. Fonte estocástica se mede por **distribuição
+  (N ≥ 12)**, e o número que você reporta é o **pior caso** — nunca a execução bonita.
+- **Ler desvio 0,00 LU como prova de lote calibrado.** Pode ser **identidade algébrica**: com o
+  offset derivado da própria medição e ganho de categoria em 0 dB, o caminho é ganho puro e
+  LUFS é invariante a ganho por soma em dB. Um asset entregue **20 dB baixo demais** sai com
+  desvio 0,00 do mesmo jeito. Desconfie de resultado perfeito: pergunte **que entrada faria a
+  assertiva falhar**; se a resposta for "nenhuma", ela não mede nada.
+- **Trocar a categoria do evento pela categoria que faz a medição do arquivo caber.** Foi assim
+  que o `playVisorTune` acabou em `arcade`, **dois degraus errado**, sem nada ficar vermelho.
+- **Afrouxar limiar para destravar build.** Fora da faixa é **FAIL**, não ressalva — e nunca
+  um teto reescrito para o lote passar.
+- **Afirmar ausência a partir de um `grep` por string literal.** Caso real do run: a busca por
+  `storage-not-bound` concluiu que só 3 arquivos guardavam, e um achado **grave foi escalado
+  com base nisso** — a guarda existia em **três formas** (`'Storage not bound'`, a literal, e a
+  indireta via `requirePaidTier`), e **o achado estava errado**. Vale igual para procedência:
+  *"não achei o prompt no repositório"* não é *"o prompt não existe"*. Procure **variantes** e
+  **confira o caminho** antes de afirmar ausência.
+- **Ancorar medição em renderização própria sem validar contra o motor real.** O baseline
+  reimplementado em Node divergiu do Chromium em **7 de 10 sons, 1,44–1,76 dB**, e foi
+  reprovado e substituído pela captura do motor real.
 
 ## Handoffs
 
