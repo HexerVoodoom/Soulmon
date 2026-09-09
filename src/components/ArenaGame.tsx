@@ -42,7 +42,6 @@ import { PixelButton } from './pixel/PixelKit';
 import { TimingBar } from './pixel/TimingBar';
 import { Icon } from './ui/Icon';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
-import { playTaskComplete, playFeed } from '../utils/sounds';
 import {
   ARENA_ROUNDS,
   DEFAULT_ARENA_ATTRIBUTES,
@@ -181,7 +180,29 @@ export function ArenaGame({
   }, []);
 
   const limparRodada = useCallback(() => {
-    playTaskComplete();
+    // C-1 (run `som-01`): a rodada limpa NAO toca `playTaskComplete`. Este
+    // arquivo nasceu 21 minutos antes do commit que aplicou os cortes
+    // (b55ffa5a -> 2eec1a2a, 09/09/2026) e por isso nao foi varrido: ele nao
+    // aparece em nenhuma linha do `inventario-sonoro.md` §1, e os dois `play*`
+    // que tinha reintroduziam cortes ja aplicados em todas as outras
+    // superficies. Isto NAO e um corte novo — e o corte ja decidido alcancando
+    // um arquivo que ele nao tinha visto.
+    //
+    // Por que o C-1 vale aqui: `playTaskComplete` e o simbolo da CONCLUSAO de
+    // tarefa/habito. Pendura-lo em morte de inimigo gasta a celebracao antes do
+    // marco — medido na masmorra, ate 30 disparos por run (`MAX_FLOORS` x
+    // `LADDER_TIERS`). A Arena tem a mesma forma: N inimigos por rodada, N
+    // rodadas por run. Os analogos ja cortados (`DungeonGame.defeatEnemy`,
+    // `NightmareBattle`) ficaram sem esse som pelo mesmo motivo.
+    //
+    // ⚠️ PENDENCIA DE PRODUTO, e ela NAO e do engenheiro: se a Arena deve ter
+    // som PROPRIO no lugar do cortado (as saidas em aberto sao "um som de
+    // classe Arcade proprio da Arena" ou "nenhum som"), quem decide sao os
+    // revisores obrigatorios de corte (`METODO.md` Fase 0: "nunca o autor").
+    // Ate essa decisao fechar, fica **nenhum som** — mesmo padrao que a Fatia 1
+    // usou no `handlePet` do `App.tsx` para o C-4. O feedback da rodada limpa
+    // continua existindo pelo canal visual (`setFase('rodada-limpa')` + o cura
+    // de folego), que e o canal real desta tela.
     const ganho = inimigos.reduce((s, e) => s + e.points, 0);
     setPontos(p => p + ganho);
     // Fôlego entre rodadas — a mesma regra da simulação, e é ela que faz a
@@ -227,7 +248,24 @@ export function ArenaGame({
       if (efeito.weakenTurns) setEnfraquecidos(efeito.weakenTurns);
       if (efeito.echoTurns) setEco(efeito.echoTurns);
       setCarga(0);
-      playFeed();
+      // C-2/C-3 (run `som-01`): a habilidade especial NAO toca `playFeed`.
+      // `playFeed` e o "OK generico" do app — o mesmo som de comer, e por isso
+      // ele foi arrancado da compra na loja (C-3) e do carinho (C-4). Pendura-lo
+      // tambem no especial da Arena e repetir exatamente o defeito que os cortes
+      // fecharam: um simbolo de CUIDADO servindo a um evento de combate.
+      //
+      // Havia um segundo defeito, e ele e o que a R-EX (P-1) veio matar: quando
+      // o especial matava o ULTIMO inimigo da rodada, este `playFeed` e o
+      // `playTaskComplete` de `limparRodada` disparavam na MESMA passagem
+      // sincrona — dois sons num gesto. O barramento continha a soma de ganho,
+      // mas o D-2 so atenua o Arcade em 9 dB; ele nao exclui. A R-EX agora
+      // exclui no despacho (`src/utils/audioBus.ts`), e este corte remove a
+      // colisao na origem: as duas coisas sao necessarias, nenhuma substitui a
+      // outra.
+      //
+      // ⚠️ PENDENCIA DE PRODUTO (mesma do C-1 acima): som proprio da Arena, se
+      // algum, e decisao dos revisores de corte. Ate la, **nenhum som**. O
+      // disparo do especial ja tem popup proprio (`mostrarPopup`, logo abaixo).
       mostrarPopup({
         icon: '✨',
         title: (isPt ? especial?.nome.pt : especial?.nome.en) ?? (isPt ? 'Especial!' : 'Special!'),

@@ -70,6 +70,143 @@ export const D2_PROFUNDIDADE_DB = -9.0;
 /** §6.3 — piso técnico: nenhuma rampa mais curta que isto (clique audível). */
 export const RAMPA_MINIMA_S = 0.005;
 
+/* ── R-EX (P-1) — "um gesto produz no máximo UMA fonte iniciada" ─────────── */
+
+/**
+ * **A JANELA DE COINCIDÊNCIA DA R-EX, em milissegundos.**
+ *
+ * ⚠️ **Não confundir com o D-1.** O `120` que já existia neste arquivo é
+ * `D1_ATAQUE_S = 0.12` — o tempo em que o Marco **abaixa** todo o resto. Isso é
+ * *ducking*: atenua, não exclui. Isto aqui é *despacho*: decide **quantas
+ * fontes começam**. Os dois números coincidem porque vêm da mesma origem, não
+ * porque um é o outro.
+ *
+ * Origem do número (P-1 item 1, `prototyper/decisoes-regra-p1-p4.md`): é o
+ * `--sm-dur-1` do DS visual (`docs/PLANO-DESIGN.md` §1.3, "feedback de toque"),
+ * o mesmo token que já era a janela de fade da regra 1 do §4.3 do inventário.
+ * **Reusado, não inventado** — um número por arquivo é o que a decisão proíbe.
+ *
+ * Por que **relógio de parede** (`Date.now()`) e não `ctx.currentTime`: a janela
+ * mede *gesto humano*, e `ctx.currentTime` **congela** com o contexto suspenso
+ * (aba oculta, autoplay bloqueado). Um relógio que para transformaria dois
+ * gestos separados por minutos numa única janela eterna.
+ */
+export const JANELA_DE_COINCIDENCIA_MS = 120;
+
+/**
+ * **Passo 1 do desempate — a classe do §4.2.** Menor número = classe mais alta.
+ *
+ * Os seis níveis declarados vêm literalmente do §4.2 do `inventario-sonoro.md`
+ * (0 Silêncio protegido — que não é categoria, é ausência de despacho —, 1
+ * Marco, 2 Presença, 3 Cuidado, 4 Conclusão, 5 Arcade), com **Transação como
+ * PAR de Conclusão**: o §4.2 dá às duas exatamente o mesmo perfil de
+ * interrupção ("pode interromper 5 · pode ser interrompida por tudo acima") e
+ * **não** numera Transação. Empatá-las aqui é transcrever a tabela; o desempate
+ * por orçamento (passo 2) então entrega **Transação > Conclusão**, que é a
+ * ordem que a P-1 escreveu em prosa. A ordem sai da regra, não de escolha
+ * minha.
+ *
+ * ⚠️ **`degeneracao` e `sintonia` o §4.2 NÃO classifica** — as duas nasceram
+ * depois, na escada de loudness. Em vez de inventar um nível para elas, cada
+ * uma **empata** com a classe declarada de que a decisão já a aproxima, e o
+ * passo 2 (orçamento) decide:
+ * - `sintonia` empata com **Cuidado**; orçamento 0–2 contra ~6 ⇒ ela vence.
+ *   É exatamente o que a P-4 escreveu: *"fica ENTRE Presença (1/sessão) e
+ *   Cuidado (~6/sessão)"*.
+ * - `degeneracao` empata com **Presença** (ambas ≤1/sessão, ambas a −16 LUFS-M
+ *   na escada). Empatá-la com **Marco** era proibido pela P-4 por escrito
+ *   (*"lhe daria as obrigações do Marco e a poria dentro do motivo"*).
+ *
+ * **O que falsifica esta transcrição:** o §4.2 ganhar linha própria para
+ * `degeneracao` ou `sintonia`. Aí este mapa muda aqui, e só aqui.
+ */
+const CLASSE_R_EX: Record<CategoriaSom, number> = {
+  marco: 1,
+  presenca: 2,
+  degeneracao: 2,
+  sintonia: 3,
+  cuidado: 3,
+  conclusao: 4,
+  transacao: 4,
+  arcade: 5,
+};
+
+/**
+ * **Passo 2 do desempate — orçamento por sessão do §4.2. MENOR VENCE.**
+ * O critério é **repetição**, o mesmo que gera a escada de loudness (§3.2 da
+ * spec): quem repete mais perde, porque quem repete mais vale menos por
+ * disparo. `Infinity` é a transcrição de *"sem teto de contagem"* (Conclusão) e
+ * de *"a única classe onde repetição rápida é esperada"* (Arcade).
+ */
+const ORCAMENTO_POR_SESSAO: Record<CategoriaSom, number> = {
+  marco: 1,
+  presenca: 1,
+  degeneracao: 1,
+  sintonia: 2,
+  transacao: 3,
+  cuidado: 6,
+  conclusao: Number.POSITIVE_INFINITY,
+  arcade: Number.POSITIVE_INFINITY,
+};
+
+/**
+ * **Passo 3 do desempate — gesto vence cascata.** O critério da P-1 é
+ * *sintático*: vence o `play*` escrito no handler do gesto do usuário, perde o
+ * alcançado por cascata a partir dele. O despacho **não consegue inferir isso
+ * em tempo de execução** — quem sabe é quem chama. Por isso é parâmetro, com
+ * `'gesto'` como padrão: um chamador que não sabe da distinção não pode piorar
+ * a decisão, só empatar nela.
+ */
+export type OrigemDoDespacho = 'gesto' | 'cascata';
+
+/** O despacho vivo da janela corrente. `null` fora de qualquer janela. */
+interface DespachoNaJanela {
+  /** Início do GESTO, não do último despacho: a janela não desliza. */
+  inicioMs: number;
+  cat: CategoriaSom;
+  origem: OrigemDoDespacho;
+  /** Ganho próprio da fonte — o que permite silenciá-la se ela perder. */
+  ganho: GainNode | null;
+}
+
+let janelaAtual: DespachoNaJanela | null = null;
+
+/**
+ * O desempate da R-EX, na ordem da P-1. `true` = o CANDIDATO vence quem já está
+ * soando na janela. O empate residual (item 5) devolve `false`: **vence a
+ * primeira despachada**, que é determinismo, não estética.
+ */
+function candidatoVence(
+  cat: CategoriaSom, origem: OrigemDoDespacho, vigente: DespachoNaJanela,
+): boolean {
+  const a = CLASSE_R_EX[cat], b = CLASSE_R_EX[vigente.cat];
+  if (a !== b) return a < b;
+  const oa = ORCAMENTO_POR_SESSAO[cat], ob = ORCAMENTO_POR_SESSAO[vigente.cat];
+  if (oa !== ob) return oa < ob;
+  return origem === 'gesto' && vigente.origem === 'cascata';
+}
+
+/**
+ * A perdedora sai de cena. §4.3 regra 3 chama isso de **substituição**
+ * (retrigger), nunca soma; e a rampa é `RAMPA_MINIMA_S` porque cortar um ganho
+ * em degrau é clique audível (§6.3). Sem este passo, "no máximo uma fonte
+ * iniciada" seria uma frase: a fonte anterior já começou e continuaria soando.
+ */
+function silenciar(ganho: GainNode | null, quando: number): void {
+  if (!ganho) return;
+  try {
+    const p = ganho.gain;
+    p.cancelScheduledValues?.(quando);
+    p.setValueAtTime(p.value, quando);
+    p.linearRampToValueAtTime(0, quando + RAMPA_MINIMA_S);
+  } catch { /* motor sem agendamento: o pior caso é a fonte anterior soar */ }
+}
+
+/** Só para teste: esquece a janela da R-EX. */
+export function esquecerJanelaDeCoincidencia(): void {
+  janelaAtual = null;
+}
+
 /** As classes "superiores": soando, disparam o D-2 sobre o Arcade. */
 const SUPERIORES: CategoriaSom[] = [
   'marco', 'presenca', 'degeneracao', 'cuidado', 'conclusao', 'transacao',
@@ -269,6 +406,9 @@ export function encerrarBarramento(): void {
   const b = barramento;
   barramento = null;
   ctorEmUso = null;
+  // A janela da R-EX é estado do contexto que morreu: mantê-la faria o primeiro
+  // som depois de um `pagehide` disputar com um gesto de outra vida do app.
+  janelaAtual = null;
   if (!b) return;
   try { void b.ctx.close?.(); } catch { /* já fechado */ }
 }
@@ -325,25 +465,67 @@ function abaOculta(): boolean {
 
 /**
  * Toca alguma coisa numa categoria. `montarFonte` recebe o contexto e o nó de
- * ENTRADA da categoria — nunca `ctx.destination`, que é o que fazia cada som
+ * ENTRADA do despacho — nunca `ctx.destination`, que é o que fazia cada som
  * ignorar o mix. Devolve a duração do som em segundos (para os duckings) ou
  * nada.
  *
- * Devolve `false` quando não tocou: sem motor, aba oculta, ou erro do motor.
+ * Devolve `false` quando não tocou: sem motor, aba oculta, erro do motor, **ou
+ * porque a R-EX a descartou** (outro `play*` do mesmo gesto venceu).
+ *
+ * ⚠️ **Este é o ponto único onde a R-EX mora.** A P-1 atribui a regra ao
+ * DESPACHO, não ao grafo, e não existe segunda cópia dela: um `play*` novo
+ * herda a regra por passar por aqui, sem que ninguém precise lembrar dela.
  */
 export function tocarNa(
   cat: CategoriaSom,
   montarFonte: (ctx: AudioContext, destino: AudioNode) => number | void,
+  origem: OrigemDoDespacho = 'gesto',
 ): boolean {
   if (abaOculta()) return false;
   const b = obterBarramento();
   if (!b) return false;
+
+  // ── R-EX (P-1): um gesto produz no máximo UMA fonte iniciada ────────────
+  // A janela é medida em relógio de parede e NÃO desliza: `inicioMs` continua
+  // sendo o do primeiro despacho do gesto, senão uma cascata longa esticaria um
+  // gesto indefinidamente.
+  const agoraMs = Date.now();
+  const dentroDaJanela =
+    janelaAtual !== null && agoraMs - janelaAtual.inicioMs <= JANELA_DE_COINCIDENCIA_MS;
+  const vigente = dentroDaJanela ? janelaAtual : null;
+  if (vigente && !candidatoVence(cat, origem, vigente)) {
+    // Item 6 da P-1, e regra 2 do §4.3: **descartada, nunca enfileirada.**
+    // Enfileirar transformaria um gesto em dois sons, que é o defeito que a
+    // regra existe para apagar.
+    return false;
+  }
+
   try {
-    // Autoplay, explicitamente: um contexto compartilhado pode ter nascido (ou
-    // voltado a ficar) `suspended`. Esta chamada acontece dentro do gesto.
     if (b.ctx.state === 'suspended') void b.ctx.resume?.();
-    const dur = montarFonte(b.ctx, b.busCategoria[cat]) ?? 0;
+
+    // Cada despacho ganha um ganho próprio entre a fonte e o bus da categoria.
+    // Ele existe por UM motivo: sem um nó que eu possa baixar, "a perdedora é
+    // descartada" só valeria para a fonte que ainda não começou — a que já
+    // começou continuaria soando, e a soma que a R-EX veio apagar voltaria pela
+    // porta dos fundos. O bus da categoria segue em 0,00 dB (§6.4 item 1): este
+    // nó nasce em 1 e só se move para silenciar uma perdedora.
+    let ganho: GainNode | null = null;
+    if (typeof b.ctx.createGain === 'function') {
+      ganho = b.ctx.createGain();
+      ganho.gain.value = 1;
+      ganho.connect(b.busCategoria[cat]);
+    }
+    const destino: AudioNode = ganho ?? b.busCategoria[cat];
+
+    const dur = montarFonte(b.ctx, destino) ?? 0;
     const agora = b.ctx.currentTime;
+
+    // A substituição só acontece DEPOIS de a vencedora ter sido montada sem
+    // erro: silenciar antes deixaria o app mudo se `montarFonte` lançasse.
+    if (vigente) silenciar(vigente.ganho, agora);
+
+    janelaAtual = { inicioMs: vigente ? vigente.inicioMs : agoraMs, cat, origem, ganho };
+
     if (cat === 'marco') duckMarco(agora, dur);
     else duckArcadePor(b, cat, agora, dur);
     return true;

@@ -34,6 +34,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import * as sounds from './sounds';
+import { esquecerJanelaDeCoincidencia } from './audioBus';
 
 /* ── 1. Mudo total ──────────────────────────────────────────────────────── */
 
@@ -121,6 +122,10 @@ describe('o mudo é global, não por som', () => {
   it('CONTRAPROVA: com som ligado, todo `play*` de fato cria nó (o guard não passa por inércia)', () => {
     sounds.setMuted(false);
     for (const [nome, fn] of CAMINHOS) {
+      // Cada `play*` deste laco e um GESTO diferente. Sem declarar isso, a
+      // R-EX (P-1) leria os 8 como um gesto so — que e exatamente o que ela
+      // manda fazer — e 7 deles nao criariam no nenhum.
+      esquecerJanelaDeCoincidencia();
       const antes = audio.nos.length;
       fn();
       expect(audio.nos.length, `${nome} não criou nó nenhum: guard verde pelo motivo errado`)
