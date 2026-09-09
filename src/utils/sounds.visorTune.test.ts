@@ -50,6 +50,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { playVisorTune, setMuted } from './sounds';
+import { encerrarBarramento, esquecerJanelaDeCoincidencia } from './audioBus';
 
 /** Uma chamada agendada num `AudioParam`, com o valor e o instante. */
 type Agendamento = { param: string; metodo: string; valor: number };
@@ -136,6 +137,13 @@ beforeEach(() => {
   setMuted(false);
   vi.useFakeTimers();
   audio = instalarAudioFalso();
+  // R-EX (P-1): dois `play*` a menos de 120 ms sao O MESMO GESTO, e o segundo e
+  // descartado. Com `useFakeTimers` o relogio nao anda, entao SEM este reset
+  // todo teste depois do primeiro mediria o descarte da R-EX em vez do chiado.
+  // Cada `it` daqui e um gesto novo por definicao; declarar isso e o conserto,
+  // nao afrouxar a regra.
+  encerrarBarramento();
+  esquecerJanelaDeCoincidencia();
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 
