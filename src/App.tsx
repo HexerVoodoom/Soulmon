@@ -9,7 +9,7 @@ import { useCareSystem } from './hooks/useCareSystem';
 import { useDailyReset } from './hooks/useDailyReset';
 import {
   track, flush as flushTelemetry, installTelemetryAutoFlush,
-  setTelemetryTier, trackDayClosed, telemetryDayKey,
+  setTelemetryTier, trackDayClosed, telemetryDayKey, trackSoundOff,
   TELEMETRY_UNLOCK_REASON, TELEMETRY_PURCHASE_REASON, TELEMETRY_ACTIVITY_KIND, TELEMETRY_CREATE_PATH,
   unlockReasonCode, TELEMETRY_BAD_DAY,
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
@@ -5981,7 +5981,16 @@ export default function App() {
             useAI={useAI}
             onToggleAI={() => setUseAI(!useAI)}
             soundMuted={soundMuted}
-            onToggleSound={() => { setMuted(!soundMuted); setSoundMuted(!soundMuted); }}
+            onToggleSound={() => {
+              const mudo = !soundMuted;
+              setMuted(mudo);
+              setSoundMuted(mudo);
+              // som-01 — só a transição LIGADO → MUDO é medida, e só ela. É o
+              // único evento que mede o perfil "usuário em público" sendo
+              // punido, e ele mede por REJEIÇÃO explícita, nunca por inferência.
+              // Religar o som não emite nada: não há decisão pendurada nisso.
+              if (mudo) trackSoundOff();
+            }}
             aiSettings={aiSettings}
             onSaveAISettings={(settings) => {
               setAiSettings(settings);

@@ -57,7 +57,10 @@
 // evento aqui, acrescente lá; o teste falha se esquecer.
 // ---------------------------------------------------------------------------
 
-import { readLocal, writeLocal, removeLocal, readJson, writeJson } from './safeStorage';
+import { readLocal, writeLocal, removeLocal, readJson, writeJson, readFlagState } from './safeStorage';
+// A ÚNICA chave do app (e não da telemetria) que este módulo lê. Ela é lida,
+// nunca escrita: quem manda no som é `utils/sounds.ts`; aqui só se mede.
+import { STORAGE_KEYS } from './storageKeys';
 
 // ---------------------------------------------------------------------------
 // Contrato de eventos
@@ -125,7 +128,18 @@ export type TelemetryEvent =
   /** Fechou uma run da masmorra com `floors` andares limpos (1..5). */
   | 'dungeon_run'
   /** Subiu de nível de Vínculo (`level` 1..30). */
-  | 'bond_level';
+  | 'bond_level'
+  // ---- som-01 (SQUAD-SOM) — ver `squad-alpha-runs/som-01/discovery/metrica-de-som.md` ----
+  /** Fotografia DIÁRIA do estado de som, no mesmo fechamento do `day_active`.
+   *  `muted` = a preferência gravada no aparelho; `music` = a trilha foi
+   *  iniciada POR GESTO ao menos uma vez no dia. Nunca sai se a preferência não
+   *  puder ser lida com certeza (ver `soundStateProps`). */
+  | 'sound_state'
+  /** A TRANSIÇÃO ligado → mudo, por gesto do usuário, no máximo uma por dia.
+   *  `age` é FAIXA (0 = dia da instalação, 1 = D1–D6, 2 = D7+), fechada no
+   *  aparelho como o `retained` já faz. É o único evento que mede o perfil
+   *  "usuário em público" sendo punido — e ele mede por REJEIÇÃO explícita. */
+  | 'sound_off';
 
 /**
  * Allowlist de props por evento. `null` = evento sem prop nenhuma.
@@ -191,6 +205,18 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
      sempre, e a leitura (retained[1] da semana W+1 ÷ install da semana W) é
      APROXIMADA — e é declarada como aproximada. */
   retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
+  /* som-01 — SEM `tier`, de propósito: a decisão do eixo sonoro ("a trilha
+     fica?", "o som afasta o perfil em público?") não se parte por demo/pago, e
+     prop que não muda decisão nenhuma é coleta gratuita.
+     `muted`/`music` são booleanos 0/1 — não há a folga-de-um do
+     `onboardingStepCode` aqui, e se um dia `music` ganhar um terceiro estado a
+     paridade profunda do teste pega os dois arquivos de uma vez. */
+  sound_state: { muted: { min: 0, max: 1 }, music: { min: 0, max: 1 } },
+  /* som-01 — `age` é FAIXA e nunca data: é ela que separa "o som é rejeitado
+     NO CONTATO" de "o som cansa por REPETIÇÃO" sem carimbar coorte em evento
+     nenhum. Sem prop de "de onde desligou": o produto não vai remover o botão
+     de mudo de nenhum dos dois lugares, então o campo não muda decisão. */
+  sound_off: { age: { min: 0, max: 2 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -386,6 +412,14 @@ export interface TelemetryProps {
   source?: number;
   /** `retained`: qual marco (0 = D1, 1 = D7, 2 = D30). */
   bucket?: number;
+  /** som-01 · `sound_state`: a preferência de som gravada (0/1). Só é
+   *  preenchido quando a leitura é CERTA — ver `soundStateProps`. */
+  muted?: number;
+  /** som-01 · `sound_state`: a trilha foi iniciada por gesto no dia (0/1). */
+  music?: number;
+  /** som-01 · `sound_off`: idade da instalação em FAIXA — nunca data
+   *  (0 = dia da instalação, 1 = D1–D6, 2 = D7+). */
+  age?: number;
   /** `after_bad_day`: distância até o retorno, em FAIXA de dias — nunca data. */
   gap?: number;
   /** `reveal_seen`: quanto tempo o reveal ficou na tela, em faixa. */
@@ -454,6 +488,12 @@ const K_SEEN = 'soulmon-telemetry-seen';
 const K_TIER = 'soulmon-telemetry-tier';
 /** Contagem da semana EM CURSO (ver `trackDayClosed`). Nunca sai daqui. */
 const K_WEEK = 'soulmon-telemetry-week';
+/** som-01 — o ÚLTIMO dia em que a trilha foi iniciada por gesto. Um dia, nunca
+ *  uma série e nunca uma hora; **nunca é enviado** (mesmo desenho de
+ *  `K_INSTALL_DAY`). Existe só para que o fechamento do dia — que acontece na
+ *  virada, possivelmente em outra sessão — saiba o que aconteceu no dia que
+ *  fechou. */
+const K_MUSIC_DAY = 'soulmon-telemetry-music-day';
 /**
  * WP0.2 — DIA DA INSTALAÇÃO, e ele **NUNCA é enviado**.
  *
@@ -472,7 +512,7 @@ const ONCE_EVER: TelemetryEvent[] = ['install', 'first_task_done'];
 // (`lastCheckInDate`) — mas o EFEITO que o oferece depende de `gameState`, e um
 // re-render antes de a trava gravar contaria a mesma oferta duas vezes. Um
 // denominador inflado mente para BAIXO em toda taxa que o usa.
-const ONCE_PER_DAY: TelemetryEvent[] = ['day_active', 'checkin_shown'];
+const ONCE_PER_DAY: TelemetryEvent[] = ['day_active', 'checkin_shown', 'sound_state', 'sound_off'];
 
 // ---------------------------------------------------------------------------
 // Funções puras (o que os testes travam)
@@ -1019,6 +1059,13 @@ export function trackDayClosed({ day, effort, goalMet }: {
     if (active) {
       // `day_active` primeiro: ele é o evento DIÁRIO e tem dedupe próprio.
       track('day_active', { effort }, day);
+      // `sound_state` sai do MESMO ponto de fechamento e só quando `day_active`
+      // sai — por construção, o denominador de S-b é o mesmo conjunto. Mover um
+      // dos dois (para `app_open`, por exemplo) trocaria a população do
+      // denominador sem nenhum erro: a fração passaria a ser "dias em que
+      // abriu" mantendo o nome "dias em que fez algo". Há teste de fiação.
+      const som = soundStateProps(day);
+      if (som) track('sound_state', som, day);
       if (!ledger.d.includes(day)) {
         ledger.d.push(day);
         if (goalMet) ledger.g += 1;
@@ -1036,6 +1083,99 @@ export function trackDayClosed({ day, effort, goalMet }: {
 /** Só para teste/depuração — a semana em curso, que NUNCA é enviada. */
 export function pendingWeekLedger(): WeekLedger | null {
   return readWeekLedger();
+}
+
+// ---------------------------------------------------------------------------
+// SOM — `sound_state` e `sound_off` (run som-01)
+//
+// Desenho aprovado na Fase 0: `squad-alpha-runs/som-01/discovery/metrica-de-som.md`.
+// Três coisas que este bloco NÃO faz, e que são a metade importante dele:
+//
+//  1. **Som não tem métrica-norte própria.** O único número que sobe quando o
+//     som "vai bem" é EXPOSIÇÃO a som, e otimizar exposição é fazer barulho no
+//     ônibus para o gráfico melhorar. O que se lê aqui é a taxa de
+//     DESLIGAMENTO — um número que só pode piorar.
+//  2. **Não há evento por SFX, por toggle, por duração, por volume nem por
+//     dispositivo de saída.** A recusa e o motivo de cada um estão no §2 do
+//     documento. Sequência de toggles reconstrói a rotina física da pessoa; o
+//     agregado é diário e não guardaria a série de qualquer jeito.
+//  3. ⚠️ **PROIBIÇÕES DE USO (normativas, herdadas do §5 e do guardrail G6).**
+//     Estes dois eventos NUNCA podem:
+//       · alimentar pontuação — dia completo, HP, evolução, missão ou Vínculo.
+//         Um jogo que premia som ligado ensina a deixar o som ligado no ônibus;
+//       · voltar para o usuário como número ("você ficou 12 dias com som") — é
+//         o `constancy_pct` vetado com roupa nova;
+//       · **virar nudge de reengajamento.** Nenhum push, copy, badge ou oferta
+//         pode existir por causa de `sound_off`. "Notamos que você desligou o
+//         som, quer tentar de novo?" é o app cobrando por uma escolha da
+//         pessoa — e é precisamente o uso que estes eventos tornam possível e
+//         que o produto proíbe. Há teste de fiação (`telemetry.som.test.ts`)
+//         exigindo que a preferência de som só seja lida por `sounds.ts`, por
+//         este módulo e pelo interruptor da tela de ajustes.
+// ---------------------------------------------------------------------------
+
+/**
+ * As props de `sound_state`, ou `null` quando o estado é DESCONHECIDO.
+ *
+ * Puro e exportado por causa do §6 do documento: `isMuted()` devolve `false`
+ * quando o storage falha, e num app que nasce sonoro isso faz "não conseguimos
+ * ler" e "escolheu som" caírem no mesmo `muted=0` — leitura degradada
+ * parecendo ADOÇÃO. Aqui a leitura é tri-estado e **o evento não sai** quando
+ * não há certeza. É a mesma justificativa escrita em `setTelemetryTier`: um
+ * número errado é pior que um número faltando, porque ninguém percebe.
+ *
+ * `'absent'` conta como 0 (não mudo) de propósito: o storage RESPONDEU e a
+ * chave não existe, que é o default declarado do app — valor conhecido, não
+ * buraco. Só `'unknown'` (storage inexistente, que lançou, ou com conteúdo
+ * fora do formato) cala o evento.
+ */
+export function soundStateProps(day: string): { muted: number; music: number } | null {
+  const estado = readFlagState(STORAGE_KEYS.SOUND_MUTED);
+  if (estado === 'unknown') return null;
+  return {
+    muted: estado === 'on' ? 1 : 0,
+    music: readJson<string | null>(K_MUSIC_DAY, null) === day ? 1 : 0,
+  };
+}
+
+/**
+ * A trilha foi iniciada POR GESTO. Chame do ponto que a inicia — hoje não há
+ * trilha contínua no app, então não há call site, e `music` sai 0 todo dia.
+ * A costura existe para que quem ligar a trilha não precise entrar aqui dentro.
+ *
+ * Grava um DIA e sobrescreve. Não conta quantas vezes: a pergunta de S2 é "em
+ * que fração dos dias ativos ela foi ligada", e contagem por dia seria sinal
+ * comportamental mais fino sem decisão pendurada.
+ */
+export function noteMusicStarted(now: Date = new Date()): void {
+  try {
+    writeJson(K_MUSIC_DAY, telemetryDayKey(now), { silent: true });
+  } catch {
+    /* princípio 5 */
+  }
+}
+
+/**
+ * `sound_off` — a transição ligado → mudo, por gesto.
+ *
+ * A faixa é fechada NO APARELHO a partir de `K_INSTALL_DAY`, que já existe e
+ * nunca sai daqui (mesmo desenho de `retained`). Sem data de instalação
+ * conhecida não há faixa honesta a emitir, e o evento **não sai** — pelo mesmo
+ * motivo da leitura tri-estado acima.
+ */
+export function trackSoundOff(now: Date = new Date()): void {
+  try {
+    const hoje = telemetryDayKey(now);
+    const inicio = readJson<string | null>(K_INSTALL_DAY, null);
+    if (typeof inicio !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(inicio)) return;
+    const dias = Math.floor((Date.parse(`${hoje}T00:00:00Z`) - Date.parse(`${inicio}T00:00:00Z`)) / 86400000);
+    if (!Number.isFinite(dias) || dias < 0) return;
+    // 0 = dia da instalação · 1 = D1–D6 · 2 = D7+.
+    const age = dias === 0 ? 0 : dias < 7 ? 1 : 2;
+    track('sound_off', { age }, hoje);
+  } catch {
+    /* princípio 5 */
+  }
 }
 
 /** Agenda um flush preguiçoso. Nada aqui é urgente o bastante para render. */

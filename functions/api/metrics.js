@@ -121,6 +121,13 @@ export const EVENT_SCHEMA = {
   app_open: { source: { min: 0, max: 3 } },
   push_optout: null,
   retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
+  // som-01 (SQUAD-SOM) — ESPELHO de src/utils/telemetry.ts. Sem `tier` de
+  // propósito: a decisão do eixo sonoro não se parte por demo/pago.
+  // `sound_state` é a fotografia diária (o cliente se cala quando não consegue
+  // ler a preferência: evento faltando é honesto, evento no balde errado não);
+  // `sound_off` é a transição por gesto, com `age` em FAIXA e nunca data.
+  sound_state: { muted: { min: 0, max: 1 }, music: { min: 0, max: 1 } },
+  sound_off: { age: { min: 0, max: 2 } },
 };
 
 /**
@@ -461,6 +468,23 @@ export function applyAggregate(agg, events) {
     // em `src/utils/telemetry.ts`); aqui ela vira HISTOGRAMA. Guardar o
     // histograma inteiro, e não só "bateu/não bateu", é o que permite mudar o
     // alvo (hoje ≥4 de 7) sem reinstrumentar nada nem perder o histórico.
+    /* som-01 — os baldes do eixo sonoro. Derivados aqui e não no cliente, como
+       todo o resto: nenhum dado novo sai do aparelho.
+       ⚠️ REGRA DE USO, e não de coleta: estes contadores existem para DETECTAR
+       DANO (o som está afastando o perfil "em público"? a trilha é código morto
+       e bytes imortais no repo?). Eles NUNCA podem alimentar pontuação, voltar
+       para o usuário como número, nem virar gatilho de reengajamento — um push
+       do tipo "notamos que você desligou o som" é o app cobrando por uma
+       escolha da pessoa, e é o uso que o produto proíbe por escrito
+       (`squad-alpha-runs/som-01/discovery/metrica-de-som.md` §5, guardrail G6). */
+    if (record.e === 'sound_state' && p) {
+      bump(`sound_state.muted_${p.muted ? 'yes' : 'no'}`);
+      bump(`sound_state.music_${p.music ? 'yes' : 'no'}`);
+    }
+    if (record.e === 'sound_off' && p) {
+      bump(`sound_off.age_${p.age}`);
+    }
+
     if (record.e === 'week_active') {
       bump(`week_active.goal_days.${p.goal_days}`);
       if (tier) bump(`week_active.${tier}.goal_days.${p.goal_days}`);
