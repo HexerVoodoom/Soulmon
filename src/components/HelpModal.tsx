@@ -70,7 +70,10 @@ const TERMS: Term[] = [
     descPt: 'Depois do Ultra: sua criatura vira ovo e você escolhe quem ela volta a ser. Uma vez por criatura.',
   },
   {
-    icon: '📊', en: 'Perfect Day', pt: 'Dia Perfeito',
+    // P5: o glossário é uma das duas superfícies que a convenção do CLAUDE.md
+    // manda atualizar junto com regra de jogo (a outra é o `GuideModal`, que
+    // foi atualizado). Esta entrada ficou para trás.
+    icon: '📊', en: 'Complete Day', pt: 'Dia Completo',
     descEn: 'Daily goal met plus full energy. It is the currency of evolution, and it only accumulates.',
     descPt: 'Meta do dia cumprida mais energia cheia. É a moeda da evolução, e só acumula.',
   },

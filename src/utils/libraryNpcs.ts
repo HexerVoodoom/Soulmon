@@ -12,7 +12,11 @@ export interface LibraryNpc extends DirectoryPlayer {
 
 export const LIBRARY_NPCS: LibraryNpc[] = [
   {
-    id: 'npc-pyraka', name: 'Pyraka', petName: DUNGEON_LINE_NAMES.kaelen,
+    // O JOGADOR se chama Kaelen; o PET dele se chama Pyraka. Os outros dois já
+    // seguiam esse padrão (Orrin/Akashaoi, Thalindra/Nimbrata) — este ficou
+    // como 'Pyraka' porque o pet se chamava 'Pyrakamon', e a renomeação de
+    // 08/09/2026 fez os dois campos colidirem na mesma linha da Biblioteca.
+    id: 'npc-pyraka', name: 'Kaelen', petName: DUNGEON_LINE_NAMES.kaelen,
     stage: 'champion-virus', unlockedStages: ['rookie', 'champion-virus'],
     pvpEnabled: false, daysPlaying: 47,
     isNpc: true, spriteUrl: DUNGEON_LINE_SPRITES.kaelen.champion,

@@ -108,7 +108,7 @@ describe('LibraryPage — o sprite do diretorio publico', () => {
     vi.mocked(listPlayers).mockResolvedValue({ players: [] });
     renderWithCss(<LibraryPage {...propsLib} />);
     await vi.advanceTimersByTimeAsync(400);
-    await waitFor(() => expect(screen.getByText('Pyraka')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Kaelen')).toBeTruthy());
 
     const asset = DUNGEON_LINE_SPRITES.kaelen.champion;
     // Forma real do que o Vite entrega: caminho de RAIZ, same-origin.
