@@ -1,4 +1,4 @@
-import { kv } from './_kv.js';
+import { kv, kvOrThrow } from './_kv.js';
 // Serve a imagem REPUBLICADA pelo `generate-sprite.js`.
 //
 // Por que existe: o contrato de `/api/generate-sprite` é que `image` seja
@@ -38,7 +38,7 @@ export async function onRequestGet({ request, env }) {
 
   let found;
   try {
-    found = await kv(env).getWithMetadata(`sprite:blob:${token}`, 'arrayBuffer');
+    found = await kvOrThrow(env).getWithMetadata(`sprite:blob:${token}`, 'arrayBuffer');
   } catch (err) {
     console.error('sprite-image: falha ao ler o blob', err?.message);
     return Response.json({ error: 'internal error' }, { status: 500 });

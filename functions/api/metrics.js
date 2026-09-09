@@ -73,7 +73,7 @@
 // ---------------------------------------------------------------------------
 
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
-import { kv } from './_kv.js';
+import { kv, kvOrThrow } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -659,7 +659,7 @@ export async function onRequestGet({ request, env }) {
   for (const day of days) {
     // Só `METRICS_PREFIX + day`. A chave é CONSTRUÍDA aqui a partir de um dia já
     // validado pelo regex — não existe caminho por onde o cliente escolha a chave.
-    const agg = await kv(env).get(METRICS_PREFIX + day, { type: 'json' }).catch(() => null);
+    const agg = await kvOrThrow(env).get(METRICS_PREFIX + day, { type: 'json' }).catch(() => null);
     if (agg && typeof agg === 'object' && !Array.isArray(agg)) byDay[day] = agg;
   }
 
@@ -734,11 +734,11 @@ export async function onRequest({ request, env }) {
   for (const [day, records] of groupByDay(result.events)) {
     const key = METRICS_PREFIX + day;
     try {
-      const current = await kv(env).get(key, { type: 'json' }).catch(() => null);
+      const current = await kvOrThrow(env).get(key, { type: 'json' }).catch(() => null);
       const next = applyAggregate(current, records);
       // TTL de 2 anos: agregado sem dono é lixo com custo. Renovado a cada
       // escrita, então um dia ativo nunca expira no meio da coleta.
-      await kv(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
+      await kvOrThrow(env).put(key, JSON.stringify(next), { expirationTtl: 86400 * 730 });
       accepted += records.length;
     } catch (err) {
       console.warn('metrics: falha ao gravar agregado', { day, error: String(err?.name ?? err) });

@@ -34,3 +34,31 @@
 export function kv(env) {
   return env?.SOULMON_SAVES ?? env?.DIGIAPP_SAVES;
 }
+
+/**
+ * O MESMO namespace do `kv()`, já ESTREITADO para uso.
+ *
+ * ⚠️ Por que existe: `kv()` devolve `KVNamespace | undefined` de propósito —
+ * é o que permite a guarda `if (!kv(env)) return 'storage-not-bound'` que
+ * TODA rota deste diretório faz na entrada. Só que a guarda mora no handler e
+ * o uso mora nos ajudantes (`readCounter`, `collect`, `getProfile`…), e o
+ * TypeScript não estreita através da fronteira de função: o resultado eram 79
+ * `Object is possibly 'undefined'` num código cujo runtime já estava certo.
+ *
+ * A CONVENÇÃO, uma só, para não repetir a regra em dois lugares:
+ *  • **guarda** (na entrada da rota, decidindo a resposta HTTP): `kv(env)`;
+ *  • **uso** (qualquer `.get/.put/.list/.delete`): `kvOrThrow(env)`.
+ *
+ * O `throw` aqui é uma REDE, não um caminho: toda rota que chega a um uso já
+ * passou pela guarda. Se um dia alguém acrescentar um uso sem guarda, isto
+ * falha com um nome ('storage-not-bound') em vez do `TypeError: Cannot read
+ * properties of undefined` que falharia hoje — mesma falha, mensagem legível.
+ *
+ * @param {{ SOULMON_SAVES?: KVNamespace, DIGIAPP_SAVES?: KVNamespace }} env
+ * @returns {KVNamespace}
+ */
+export function kvOrThrow(env) {
+  const store = kv(env);
+  if (!store) throw new Error('storage-not-bound');
+  return store;
+}

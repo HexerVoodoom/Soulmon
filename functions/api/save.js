@@ -9,7 +9,7 @@
 
 import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
 import { authorizeSaveAccess } from './_auth.js';
-import { kv } from './_kv.js';
+import { kv, kvOrThrow } from './_kv.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -93,7 +93,7 @@ export async function onRequest({ request, env }) {
   }
 
   if (request.method === 'GET') {
-    const { value: raw, metadata } = await kv(env).getWithMetadata(saveId);
+    const { value: raw, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
     if (!raw) return Response.json({ found: false }, { headers: CORS });
     // Renovação preguiçosa do prazo — ver SAVE_TTL_SECONDS. Falha aqui não
     // pode derrubar a leitura: o jogador veio buscar o save, e não conseguir
@@ -101,7 +101,7 @@ export async function onRequest({ request, env }) {
     const gravadoEm = Number(metadata?.t) || 0;
     if ((Date.now() - gravadoEm) / 1000 > RENEW_AFTER_SECONDS) {
       try {
-        await kv(env).put(saveId, raw, {
+        await kvOrThrow(env).put(saveId, raw, {
           expirationTtl: SAVE_TTL_SECONDS,
           metadata: { t: Date.now() },
         });
@@ -135,7 +135,7 @@ export async function onRequest({ request, env }) {
       console.warn('save: POST recusado, state acima do teto', { saveId, bytes: serialized.length });
       return Response.json({ error: 'State too large' }, { status: 413, headers: CORS });
     }
-    await kv(env).put(saveId, serialized, {
+    await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
       metadata: { t: Date.now() },
     });

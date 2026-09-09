@@ -1,4 +1,4 @@
-import { kv } from './_kv.js';
+import { kv, kvOrThrow } from './_kv.js';
 // Entitlements — FONTE DA VERDADE de tudo que envolve dinheiro real.
 //
 // Regra de ouro: o cliente NUNCA dita tier nem saldo de créditos. O save do
@@ -152,7 +152,7 @@ function emptyEntitlement() {
 }
 
 export async function readEntitlement(env, saveId) {
-  const raw = await kv(env).get(ENT_PREFIX + saveId);
+  const raw = await kvOrThrow(env).get(ENT_PREFIX + saveId);
   if (!raw) return emptyEntitlement();
   try {
     const parsed = JSON.parse(raw);
@@ -167,7 +167,7 @@ export async function writeEntitlement(env, saveId, ent) {
   // O TTL vai em TODA escrita, e não só na primeira: é assim que ele renova.
   // Ver RETENTION_TTL_SECONDS — sem a renovação, o teto vitalício de IA e o
   // tier pago passariam a expirar em 5 anos para quem nunca parou de jogar.
-  await kv(env).put(
+  await kvOrThrow(env).put(
     ENT_PREFIX + saveId,
     JSON.stringify(ent),
     { expirationTtl: RETENTION_TTL_SECONDS },
@@ -217,7 +217,7 @@ export async function spendCredits(env, saveId, amount, opId) {
     ? `spend:${saveId}:${opId}`
     : null;
   if (chave) {
-    const anterior = await kv(env).get(chave);
+    const anterior = await kvOrThrow(env).get(chave);
     // Repetição do MESMO gesto: devolve o que já aconteceu. Debitar de novo
     // seria cobrar duas vezes; recusar seria mentir sobre uma compra feita.
     if (anterior) { try { return JSON.parse(anterior); } catch { return null; } }
@@ -228,7 +228,7 @@ export async function spendCredits(env, saveId, amount, opId) {
   ent.credits -= amount;
   await writeEntitlement(env, saveId, ent);
   if (chave) {
-    await kv(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
+    await kvOrThrow(env).put(chave, JSON.stringify(ent), { expirationTtl: SPEND_TTL_SECONDS });
   }
   return ent;
 }
@@ -295,7 +295,7 @@ export async function claimOrder(env, saveId, orderId) {
   if (env.DB) return claimOrderAtomic(env, saveId, orderId);
 
   const key = ORDER_PREFIX + orderId;
-  const owner = await kv(env).get(key);
+  const owner = await kvOrThrow(env).get(key);
   if (owner && owner !== saveId) return { ok: false, reason: 'order-in-use' };
   // Reivindicação nova OU do MESMO dono: as duas gravam, e a segunda existe só
   // para RENOVAR o prazo. Reprocessar na mesma conta é o "restaurar compras" —
@@ -306,7 +306,7 @@ export async function claimOrder(env, saveId, orderId) {
   //
   // A escrita não muda o dono: `owner === saveId` ou não existe dono. Tentativa
   // alheia recusa ANTES desta linha, e portanto nem renova nem reescreve.
-  await kv(env).put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
+  await kvOrThrow(env).put(key, saveId, { expirationTtl: RETENTION_TTL_SECONDS });
   return { ok: true };
 }
 
