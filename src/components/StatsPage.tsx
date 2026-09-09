@@ -34,6 +34,7 @@
 import { useMemo } from 'react';
 import { ActivityCategory } from '../types/attributes';
 import { useTranslation, Language } from '../utils/i18n';
+import { TRAIT_ART } from '../utils/traitArt';
 import { getPassive } from '../utils/passives';
 import { BirthCard } from './BirthCard';
 import { FormAlbum } from './FormAlbum';
@@ -243,10 +244,19 @@ export function StatsPage({
     return form?.name ?? id;
   });
 
-  const traitRow = (iconName: string, name: string, desc: string) => (
+  /**
+   * `artUrl` ganha da fonte de `iconName` quando existe: o traço de nascimento
+   * tem arte pixel (`utils/traitArt.ts`), o ritmo de cuidado ainda não. O
+   * fallback para `Icon` fica de propósito — arte pode faltar num bundle antigo,
+   * e a fileira não pode abrir buraco.
+   */
+  const traitRow = (iconName: string, name: string, desc: string, artUrl?: string) => (
     <div key={name} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
       {/* Ícone PELADO — sem moldura, sem fundo, sem chanfro (regra do dono). */}
-      <Icon name={iconName} size={24} fill={1} tone="primary" />
+      {artUrl
+        ? <img src={artUrl} alt="" width={24} height={24}
+               style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+        : <Icon name={iconName} size={24} fill={1} tone="primary" />}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{name}</p>
         <p style={{ ...sm2Hint, marginTop: 2 }}>{desc}</p>
@@ -315,6 +325,7 @@ export function StatsPage({
               PASSIVE_ICON[passive.id] ?? 'auto_awesome',
               isPt ? passive.namePt : passive.nameEn,
               isPt ? passive.descPt : passive.descEn,
+              TRAIT_ART[passive.id],
             )}
             {carePattern && traitRow(
               PATTERN_ICON[carePattern.id] ?? 'auto_awesome',

@@ -70,6 +70,25 @@ function button(label: string, onClick: () => void, extraClass = ''): HTMLButton
 }
 
 /** Botão redondo de ícone, usado só pelas ações de cuidado (care-row). */
+/**
+ * Glifos de Carinho e Banho em pixel art (item A21.1 do
+ * `docs/BACKLOG-ARTE-GERAR.md`). Eram `🫶` e `🚿` — emoji do SISTEMA, que muda
+ * de desenho por aparelho e não é pixel art nenhuma, na única superfície do
+ * jogo que fica visível sobre a barra de tarefas do Windows.
+ *
+ * REAPROVEITADOS, não gerados de novo: são os mesmos dois símbolos que o app já
+ * tem (o traço Carinhoso e o ícone de banho), reexportados em 32×32 porque a
+ * faixa do overlay é baixa. Gerar um segundo desenho para o mesmo símbolo é o
+ * defeito que o item A3 documenta — dois desenhos da mesma ideia divergem, e
+ * aqui divergiriam entre o app e o overlay.
+ */
+import glifoCarinho from '../../../src/assets/soulmon/icons/desktop/carinho.png';
+import glifoBanho from '../../../src/assets/soulmon/icons/desktop/banho.png';
+
+/** `<img>` do glifo, no lugar do emoji. 20px: a faixa do overlay é baixa. */
+const glifo = (src: string) =>
+  `<img src="${src}" alt="" width="20" height="20" style="image-rendering:pixelated;object-fit:contain;display:block" />`;
+
 function careButton(icon: string, label: string, onClick: () => void): HTMLButtonElement {
   const b = document.createElement('button');
   b.className = 'care-btn';
@@ -130,9 +149,9 @@ function renderMain() {
   const careRow = document.createElement('div');
   careRow.className = 'care-row';
   careRow.append(
-    careButton('🫶', t('Carinho', 'Pet'), doPet),
+    careButton(glifo(glifoCarinho), t('Carinho', 'Pet'), doPet),
     careButton('🍎', t('Comida', 'Feed'), doFeed),
-    careButton('🚿', t('Banho', 'Bath'), doShower),
+    careButton(glifo(glifoBanho), t('Banho', 'Bath'), doShower),
     careButton(state.sleeping ? '☀️' : '💤', state.sleeping ? t('Acordar', 'Wake') : t('Dormir', 'Sleep'), doSleepToggle),
   );
   content.appendChild(careRow);

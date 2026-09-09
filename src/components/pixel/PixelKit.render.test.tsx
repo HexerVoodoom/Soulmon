@@ -13,7 +13,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss, declaredTargetSize, computed } from '../../test/renderEnv';
-import { PixelButton, PixelCheckbox, PixelSegmentedBar, PixelChip, PixelPanel } from './PixelKit';
+import { PixelButton, PixelCheckbox, PixelSegmentedBar, PixelChip, PixelPanel, BAR_MIN_HEIGHT_PX } from './PixelKit';
 
 describe('PixelCheckbox — o componente do bug de 2px', () => {
   it('o ALVO tem 44×44 computados do CSS real (não do que o JSX pretendia)', () => {
@@ -155,5 +155,51 @@ describe('PixelChip / PixelPanel', () => {
   it('o painel com título renderiza o título', () => {
     renderWithCss(<PixelPanel title="DAILY RITUALS">x</PixelPanel>);
     expect(screen.getByText('DAILY RITUALS')).toBeTruthy();
+  });
+});
+
+/**
+ * REGRESSÃO — a barra segmentada some em silêncio quando é baixa demais.
+ *
+ * `.sm-px-bar` é `border-box` com 8px de moldura (2px de borda + 2px de
+ * padding, em cima e embaixo). Com altura ≤ 8 a caixa de conteúdo zera e o
+ * `overflow: hidden` corta os blocos: sobra o sulco escuro. O nó continua com
+ * `role="progressbar"` e `aria-valuenow` correto, então NADA acusa — nem tela,
+ * nem teste de acessibilidade. Era o item A5 do `docs/BACKLOG-ARTE-GERAR.md`,
+ * que pedia trocar a barra por PNG; o defeito não era a arte, era este.
+ *
+ * O piso vive no primitivo porque é propriedade dele. Antes vivia no
+ * `RitualPanel`, como um `height={14}` com comentário — o que protegia UM
+ * chamador e deixava o próximo repetir a falha.
+ */
+describe('PixelSegmentedBar — piso de altura (regressão)', () => {
+  it('altura abaixo do piso é elevada, em vez de apagar os blocos', () => {
+    const { container } = renderWithCss(
+      <PixelSegmentedBar value={2} max={4} segments={4} height={6} />,
+    );
+    const bar = container.querySelector('.sm-px-bar') as HTMLElement;
+    expect(bar).toBeTruthy();
+    expect(parseInt(bar.style.height, 10)).toBe(BAR_MIN_HEIGHT_PX);
+  });
+
+  it('altura acima do piso é respeitada — o piso não vira altura fixa', () => {
+    const { container } = renderWithCss(
+      <PixelSegmentedBar value={2} max={4} segments={4} height={20} />,
+    );
+    const bar = container.querySelector('.sm-px-bar') as HTMLElement;
+    expect(parseInt(bar.style.height, 10)).toBe(20);
+  });
+
+  it('o piso deixa espaço de conteúdo para o bloco aceso existir', () => {
+    // 8px de moldura + pelo menos 3px de bloco: o número que o primitivo usa
+    // não pode cair para dentro da moldura sem ninguém notar.
+    expect(BAR_MIN_HEIGHT_PX).toBeGreaterThanOrEqual(11);
+  });
+
+  it('os blocos acesos seguem a razão, e o piso não mexe nisso', () => {
+    const { container } = renderWithCss(
+      <PixelSegmentedBar value={3} max={4} segments={4} height={4} />,
+    );
+    expect(container.querySelectorAll('.sm-px-bar-seg-on').length).toBe(3);
   });
 });

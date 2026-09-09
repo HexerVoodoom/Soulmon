@@ -134,7 +134,17 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > Absolutely NO magenta, purple, violet or pink anywhere — not in glows,
   > halos, rims or anti-aliasing. Transparent PNG.
 
-### A3 · Ícones dos 3 atributos (nativos 128×128)
+### A3 · Ícones dos 3 atributos — ❌ **FECHADO SEM GERAR (09/09/2026)**
+
+> **Este item manda recriar um bug que o código já removeu.** `types/attributes.ts`
+> diz, em comentário e de propósito: "NÃO EXISTE `ATTR_ICON` AQUI — e a ausência
+> é a decisão". O desenho de cada atributo é UM SÓ no app inteiro: os SVG inline
+> de `components/AlignmentIcons.tsx`, já usados por `EvolutionPath` e
+> `PlayerDetailModal`. O mapa de três PNGs `icon-attr-*` era um SEGUNDO desenho
+> para a mesma ideia, que ninguém renderizava, e ligá-lo colocaria PNG e SVG do
+> mesmo atributo na mesma tela — o bug 4.3 do `docs/PLANO-DESIGN.md`.
+> Gerar arte nativa aqui não conserta nada: reabre o defeito. Se um dia o
+> desenho tiver de mudar, muda no SVG.
 - **Destino:** `src/assets/soulmon/icons/icon-attr-{poder,harmonia,benevolencia}.png`
 - **Uso:** `types/attributes.ts` → `ATTR_ICON`; aparecem em Estatísticas,
   Evolução e no perfil de jogador
@@ -197,7 +207,14 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 > CSS. O que sobrou abaixo é o que SÓ arte resolve — cada item foi visto em
 > screenshot antes de entrar aqui.
 
-### A9 · Fundo do Torneio em TEAL (regerar — hoje é roxo com hue-rotate)
+### A9 · Fundo do Torneio — ❌ **FECHADO SEM GERAR (09/09/2026)**
+
+> **A premissa foi medida e é falsa.** `src/assets/soulmon/bg/tournament.png`
+> (960×540) tem **0,0% de pixels roxos**, e não existe `hue-rotate` em nenhum
+> componente — as únicas ocorrências no `index.css` são as variáveis inertes do
+> scaffold do Tailwind (`--tw-hue-rotate: initial`). O arquivo já está dentro da
+> paleta. Do jeito que este item estava escrito, ele mandava regerar arte
+> correta.
 - **Destino:** `src/assets/soulmon/bg/tournament.png` (substitui)
 - **Uso:** `TournamentPage.tsx` (fundo da página inteira)
 - **Anexar:** `REF-kit-v12.png` + o `tournament.png` atual (composição serve)
@@ -214,7 +231,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > #6EFFF8, copper #C68642, gold accents, near-black #0D0D0D. Absolutely NO
   > magenta, purple, violet or pink anywhere — not in sky, glows or shadows.
 
-### A10 · Ícones BANHO e DORMIR em pixel (hoje são vetor chapado)
+### A10 · Ícones BANHO e DORMIR em pixel — ✅ **feito 09/09/2026**, Gemini (folha F, arcano-tech)
 - **Destino:** `src/assets/soulmon/icons/icon-bath.png` e `icon-sleep.png`
   (substituem; manter também `icon-wake.png` no mesmo estilo)
 - **Uso:** fileira de ações da Home (`CompanionHUD.tsx`) — ao lado do
@@ -254,7 +271,26 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 </details>
 
-### A12 · Berço "sentável" (mais largo e raso — Ref C)
+### A12 · Berço "sentável" — ✅ **feito 09/09/2026**, Gemini (arcano-tech)
+
+> Bacia **440×140** em `assets/soulmon/nest-base.png`, e `BASE_SLOTS.nest` foi
+> de `148×83` para **`220×70`** com `yPx` de 17 para 25 — arte e caixa no mesmo
+> commit, porque 2× a caixa é o que o guard de escala exige.
+>
+> **Isto fechou a dívida de escala do visor inteiro**: com as 14 decorações já
+> em slot × 2, o berço era o ÚLTIMO asset fora da grade, e o
+> `it.skip('DÍVIDA DE ARTE: toda peça do visor é desenhada em escala inteira')`
+> de `src/assets/assets.contract.test.ts` **deixou de ser skip**. A suíte roda
+> hoje com 0 testes pulados.
+>
+> **O z-index 2 do aro NÃO foi retomado, agora com medição.** Este item dizia
+> "se ficar bom, retomar" — não fica. Compondo a pilha real (pet 152 em
+> `PET_TOP_OFFSET` -38, berço em `yPx` 25) e comparando as duas ordens: com o
+> aro na frente, o painel de filigrana da FRENTE da bacia cobre o pet do peito
+> para baixo e sobra só a cabeça. A bacia ficou rasa, mas a frente dela é alta —
+> era o detalhe que faltava na previsão da rodada 5. Com o berço atrás, os pés
+> caem a **0,83** da altura da bacia (a geometria antiga dava 0,80) e o corpo
+> inteiro lê. A medição e o motivo estão no comentário do `CompanionHUD.tsx`.
 - **Destino:** `src/assets/soulmon/nest-base.png` (substitui; manter ~360×~160
   de fonte, reescala nearest)
 - **Uso:** Home — base sob o pet (`CompanionHUD.tsx` + `BASE_SLOTS.nest`)
@@ -319,7 +355,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > STRICT palette: cyan #6EFFF8 at low opacity only. NO magenta, purple,
   > violet or pink. Transparent PNG.
 
-### A15 · Ícones dos traços de nascimento (hoje emoji do sistema)
+### A15 · Ícones dos traços de nascimento — ✅ **feito 09/09/2026**, Gemini (folha F, arcano-tech)
 - **Destino:** `src/assets/soulmon/icons/traits/trait-{guloso,carinhoso,teimoso,sortudo,madrugador}.png` (64×64)
 - **Uso:** `utils/passives.ts` → cartão de identidade em Estatísticas (hoje
   mostra 🍖 🫶 🪨 🍀 🌅 do sistema) e o mesmo emoji no relatório/HUD.
@@ -335,7 +371,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > - **Sortudo** → `a four-leaf clover with a tiny sparkle`
   > - **Madrugador** → `a rising sun over a horizon line`
 
-### A16 · Ícones do relatório diário (cabeçalho por tipo de dia)
+### A16 · Ícones do relatório diário — ✅ **feito 09/09/2026**, Gemini (folha F, arcano-tech)
 - **Destino:** `src/assets/soulmon/icons/report/report-{perfect,good,slow,return}.png` (96×96)
 - **Uso:** `DailyReportModal.tsx` (`headIcon` via `RowIcon` — hoje line-art
   da lucide: estrela/sol/nuvem, o último line-art de destaque que sobrou).
@@ -382,7 +418,20 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > #6EFFF8, #C68642, #0D0D0D. NO magenta, purple, violet or pink.
   > Transparent PNG.
 
-### A5 · Barra segmentada fina
+### A5 · Barra segmentada fina — ✅ **fechado 09/09/2026, com CONSERTO e não com arte**
+
+> **O valor deste item era o bug da nota, não o PNG.** A barra é CSS, funciona,
+> responde a `--sm-px-bar-tone` e escala; trocá-la por bitmap perderia as três
+> coisas. O defeito real: `.sm-px-bar` é `border-box` com 8px de moldura (2px de
+> borda + 2px de padding, em cima e embaixo), então com altura ≤ 8 a caixa de
+> conteúdo zera, o `overflow: hidden` corta os blocos e sobra o sulco escuro —
+> com `role="progressbar"` e `aria-valuenow` corretos, ou seja, **falha
+> silenciosa que nem tela nem teste de acessibilidade acusam**.
+>
+> O `RitualPanel` já contornava com `height={14}` e um comentário: o defeito
+> estava documentado no CHAMADOR, e o próximo chamador o repetiria. Agora o piso
+> vive no primitivo (`BAR_MIN_HEIGHT_PX` em `components/pixel/PixelKit.tsx`) e
+> há quatro testes de regressão em `PixelKit.render.test.tsx`.
 - **Destino:** `src/assets/soulmon/progress/bar-segmented-thin.png`
 - **Uso:** linhas do painel "Rituais Diários" (`PixelSegmentedBar`)
 - **Anexar:** `REF-kit-v12.png` (bloco "Progress Bars & Gauges")
@@ -397,7 +446,14 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D. NO magenta, purple,
   > violet or pink. Transparent PNG.
 
-### A6 · Moldura de cano + vinha em 9-slice
+### A6 · Moldura de cano + vinha em 9-slice — ⏸️ **bloqueado pelo A13 (09/09/2026)**
+
+> Verificado: **zero consumidores** hoje (`grep` por `frames/pipe` em `src/` não
+> acha nada), e o próprio item declara o uso como "só splash e talvez modal".
+> Ou seja, não é peça independente: é subconjunto do A13. Gerar as 6 fatias
+> antes da splash existir produz arte sem chamador — o padrão que já custou o
+> `bestiary` gravado e lido por ninguém, e os três campos do bridge Android.
+> **Fazer junto com o A13, ou não fazer.**
 - **Destino:** `src/assets/soulmon/frames/pipe-{corner-tl,corner-tr,corner-bl,corner-br,edge-h,edge-v}.png`
 - **Uso:** **só splash e talvez modal**
 - **Anexar:** `REF-kit-v12.png` e `REF-splash.png`
@@ -492,7 +548,24 @@ ninguém gerar arte à toa: os 4 sonhos (`restWindow.ts`) já renderizam o PNG d
 `dreamArt.ts` e o emoji sobrevive só como glifo de push; `HABIT_TIER_EMOJI` não
 tem consumidor nenhum; e o 🪙 dos Bits só existe em comentário.
 
-### A21.1 · Os dois glifos do overlay de desktop
+### A21.1 · Os dois glifos do overlay de desktop — ✅ **feito 09/09/2026**
+
+> **Reaproveitados, não gerados.** Os dois símbolos que este item pedia já
+> existiam no lote de ícones desta rodada: "mãos segurando um coração ciano" é o
+> traço Carinhoso e o banho é o `icon-bath`. Reexportados em 32×32 para
+> `assets/soulmon/icons/desktop/` e ligados em `desktop/renderer/src/menu.ts`,
+> que mostrava `🫶` e `🚿` — emoji do SISTEMA, que muda de desenho por aparelho,
+> na única superfície do jogo visível sobre a barra de tarefas.
+>
+> Gerar um segundo desenho para o mesmo símbolo é o defeito que o A3 documenta:
+> divergiriam entre o app e o overlay. Verificado no build do overlay
+> (`npx vite build -c desktop/vite.config.ts`): os dois PNGs entram inline em
+> `dist-renderer/assets/menu-*.js`.
+>
+> ⚠️ **Não foi possível conferir a olho.** O overlay é Electron na máquina do
+> dono, `menu.ts` toca o DOM no topo e nenhum teste em `node` o importa (está
+> escrito no footgun 9 do `CLAUDE.md`). O typecheck do projeto do desktop passa
+> e o bundle contém os glifos; a conferência visual é do dono.
 
 - **Destino:** `src/assets/soulmon/icons/desktop/{carinho,banho}.png` (32×32 —
   a faixa do overlay é baixa; ver `desktop/renderer/src/menu.ts`, `careButton`)

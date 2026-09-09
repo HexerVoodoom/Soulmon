@@ -164,7 +164,17 @@ export const PET_RENDER = SPRITE_SRC_PX / SPRITE_SCALE;
  */
 export const BASE_SLOTS: Record<BaseSlotId, DecorSlot & { yPx: number }> = {
   nest: {
-    id: 'nest', x: 50, w: 148, h: 83, yPx: 17, anchor: 'ground',
+    // 220×70 desde 09/09/2026 (item A12): a bacia ANTIGA era 148×83 e o berço
+    // desaparecia inteiro atrás de um sprite de 200px — tentou-se trazer o aro
+    // para a frente por z-index na rodada 5 e reverteu-se, porque a bacia alta
+    // cobria o corpo do pet. A Ref C resolve com ARTE: bacia mais LARGA e mais
+    // RASA, aro baixo, e o pet senta com o corpo inteiro visível.
+    //
+    // A arte é 440×140 = exatamente 2× esta caixa. Isso não é coincidência nem
+    // gosto: é a condição do guard de escala (`naGrade`), e o berço era o
+    // ÚLTIMO asset do visor fora da grade depois de as 14 decorações irem para
+    // slot × 2. Ao trocar esta caixa, troque a arte no mesmo commit.
+    id: 'nest', x: 50, w: 220, h: 70, yPx: 25, anchor: 'ground',
     namePt: 'Berço', nameEn: 'Nest',
   },
 };
