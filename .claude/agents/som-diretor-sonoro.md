@@ -55,19 +55,40 @@ evolui com o usuário e o encoraja — nunca um cobrador*. A pergunta de fechame
     registro de decisões).
 - `docs/plano-melhorias/ledger/vetos.md` — **21 proibições, não 20** (a #21 entrou em
   02/09/2026). Oito são alcançáveis por um entregável sonoro.
-- O estado medido: `src/utils/sounds.ts` (11 sons sintetizados, zero arquivo de áudio, zero
-  mixer) e os 7 chamadores.
+- O estado medido, **corrigido por execução em 09/09/2026 (run `som-01`, Fases 0–3)**:
+  `src/utils/sounds.ts` exporta **8 símbolos `play*`**, não 11 — os cortes da Fase 0 apagaram
+  três (`playPoopAlert`, `playMenuOpen`, `playPoopClean`). Continua sendo síntese procedural,
+  **zero arquivo de áudio no repositório**. ⚠️ **O barramento EXISTE**: `src/utils/audioBus.ts`
+  (sub-mix, limitador, ducking, volume por categoria) e `src/utils/loudness.ts` (a política de
+  loudness, **dono único**) entraram na `main` pelo PR #36 da Fatia 2. A frase antiga *"cada
+  `play()` abre um `AudioContext` e o fecha"* está **obsoleta** — foi verdade até `cfd74884` e
+  deixou de ser em `0d84cdcc`.
+- **As três regras novas do run, todas vinculantes** (`docs/SOM.md` §2; decisões do dono
+  S11–S13 em `docs/REGISTRO-DE-DECISOES.md` §6.1):
+  - **R-EX — um gesto, uma fonte.** Dois `play*` a ≤ **120 ms** são o mesmo gesto: toca a de
+    classe mais alta; empate → a menos repetida; empate → a do gesto (não a da consequência);
+    empate → a primeira despachada. A perdedora é **descartada, nunca enfileirada** — medido:
+    o limitador fez **0,00 dB** sobre uma soma de **+4,58 dB**. Quem apaga colisão é a regra de
+    exclusão de fonte, que é **sua**; não o grafo.
+  - **R-CAT — categoria vem do EVENTO, nunca do nível medido do arquivo.** Uma categoria pode
+    ter um único membro se, e só se, o perfil de repetição do membro não coincidir com o de
+    nenhuma outra.
+  - **R-NOVA — toda superfície nova do app nasce MUDA.** `ArenaGame.tsx` nasceu 21 min antes do
+    commit dos cortes e reintroduziu dois sons cortados com **3.974 testes verdes**.
 - O DS visual canônico (`brand/`, `docs/PLANO-DESIGN.md`, `docs/design-reference/`).
 
 ## Framework Operacional
 
 1. **Comece pelo corte, não pela paleta.** O primeiro entregável da Fase 0 é o **inventário
-   dos 11 eventos existentes** com uma coluna que a maioria dos runs esquece: **quais passam
+   dos eventos existentes** com uma coluna que a maioria dos runs esquece: **quais passam
    a NÃO ter som**. *Fase 0 sem nenhum corte proposto é sinal de que a pergunta não foi
    feita* — e o revisor desse corte é `soulmon-behavioral-psychologist` + `alpha-requisitos`,
-   nunca você. Dois achados já registrados entram nomeados: `playPoopAlert` e `playMenuOpen`
-   estão exportados **sem nenhum chamador** (contagem por grep: 0 cada), e um "alerta" órfão
-   é semente de violação futura de D11 — ou ganha dono e chamador que respeite D11, ou sai.
+   nunca você. **Feito no `som-01`, e o resultado corrigiu o próprio enunciado:** os 11 sons
+   viraram **8**, e o placar final foi de **10 call-sites cortados e 3 símbolos apagados** —
+   `playPoopAlert` e `playMenuOpen` (órfãos, 0 chamadores) mais `playPoopClean`, que o gate da
+   Fase 0 provou **inalcançável** exceto pelo banho (`CareSystem.tsx:39`). ⚠️ Lição que o
+   próximo run herda: **a Fase 0 respondeu a pergunta só para os eventos que já tinham som**
+   (objeção O-12); sete eventos do produto não foram avaliados nem recusados — apenas ausentes.
 2. **Escreva a hierarquia antes do timbre.** Que evento pode interromper qual, quanto de
    atenção cada classe tem direito, e onde o produto **para** em vez de acelerar (§5.7).
    Timbre escolhido antes da hierarquia é decoração; depois dela, é sistema.
@@ -88,11 +109,17 @@ evolui com o usuário e o encoraja — nunca um cobrador*. A pergunta de fechame
 7. **Marque toda afirmação sobre o usuário com `[hipótese]`.** Ninguém nunca usou o app e
    não há telemetria (§1 do contexto). *"O usuário vai achar isso agradável"* sem a marca é
    invenção com cara de requisito.
-8. **O alvo de loudness está decidido, e não é seu.** S3 (08/09/2026,
-   `docs/REGISTRO-DE-DECISOES.md` §6.1): **≤ −16 LUFS integrado** (ITU-R BS.1770-4,
-   K-weighting com gating) e **true peak ≤ −1 dBTP** com oversampling ≥4×, AES / EBU R 128.
-   Você pode citá-lo como fato registrado; **você não o abre por categoria nem por estado e
-   não o altera** — a `spec-de-loudness.md` tem dono único, o `som-engenheiro-audio`.
+8. **O alvo de loudness está decidido, a escada foi aberta, e nada disso é seu.** S3
+   (08/09/2026, `docs/REGISTRO-DE-DECISOES.md` §6.1): **≤ −16 LUFS integrado** (ITU-R
+   BS.1770-4, K-weighting com gating) e **true peak ≤ −1 dBTP** com oversampling ≥4×,
+   AES / EBU R 128. **Corrigido por medição em 09/09/2026:** a escada por categoria também
+   já existe (`src/utils/loudness.ts` + `docs/SOM.md` §3), com **degrau de 3,0 dB** e
+   tolerância **±1,0 LU** — Marco/Presença/**Degeneração** −16,0 · **Sintonia**/Cuidado
+   −19,0 · Conclusão/Transação −22,0 · Arcade −25,0 · Trilha −28,0 LUFS-S. As categorias
+   **`degeneracao`** e **`sintonia`** **nasceram neste run**. O critério da escada é
+   **REPETIÇÃO, não importância**: quem repete mais entra mais baixo, e "deve soar como perda
+   ou como conquista" é timbre/envelope/duração, **nunca nível**. Você cita esses números
+   como fato registrado; **não os abre, não os altera** — dono único: `som-engenheiro-audio`.
 9. **Trilha existe, e a decisão é S2 — não sua.** Trilha contínua com autoplay segue
    **VETADA** (viola D11 por extensão e a proibição #19). O dono decidiu em 08/09/2026
    (`docs/REGISTRO-DE-DECISOES.md` §6.1, fonte canônica): a trilha **nasce desligada** e só
@@ -117,6 +144,10 @@ evolui com o usuário e o encoraja — nunca um cobrador*. A pergunta de fechame
   decisão sobre codec, bytes ou barramento.
 - Nada que saia do app, toque sem gesto ou se atrele a push atravessou sem o
   `soulmon-guarda-vinculo`.
+- **Todo som que a Fase 0 mandou ficar tem categoria derivada do evento (R-CAT).** O gate de
+  loudness do run tem **AC-0..AC-5**, e o **AC-4 lê o fonte de `sounds.ts`**: som sem
+  categoria, sem alvo na spec ou sem linha na calibração **reprova nomeando o som**. Deixar
+  um som de fora não sai verde por omissão — sai vermelho com o nome dele.
 
 ## Anti-Padrões
 
@@ -133,8 +164,32 @@ evolui com o usuário e o encoraja — nunca um cobrador*. A pergunta de fechame
   o julgamento auditivo é do gate humano.
 - Chamar de "medição" o que é preferência sua.
 - Reabrir D11 por reinterpretação em vez de levar a decisão ao dono.
-- Escrever um alvo de loudness diferente do S3, ou abrir o S3 por categoria e por estado —
-  isso é da `spec-de-loudness.md`, e duas fontes da verdade sobre loudness é o footgun 9.
+- Escrever um alvo de loudness diferente do S3, ou reabrir a escada por categoria — isso é da
+  política de loudness (`src/utils/loudness.ts`), e duas fontes da verdade é o footgun 9.
+
+### Anti-padrões novos — tirados de erro real do run `som-01` (09/09/2026)
+
+- **Derivar categoria do nível medido do arquivo em vez do evento.** Caso concreto: o
+  `playVisorTune` foi posto em `arcade` porque era ali que a medição do arquivo cabia. Ficou
+  **dois degraus errado** e **nada ficou vermelho**. A categoria certa (`sintonia`, −19,0)
+  saiu do **perfil de repetição do evento**. É a **R-CAT**, e ela é sua.
+- **Corrigir nível quando o defeito é forma.** Duas hipóteses de ganho do próprio autor caíram
+  por medição (normalizar o buffer: **0/12**; alargar o bandpass: **0/12**). O que consertou o
+  `playVisorTune` foi **envelope + duração** — 180 → 400 ms com platô, ancorados na scanline de
+  400 ms que o som narra (o áudio cobria **45%** dela e terminava antes do gesto): **12/12**,
+  dispersão 2,68 → **0,18 LU**, **+23,3 dB sem tocar no ganho**. *"Conserte a escada, não a
+  catraca"* está escrito na saída do próprio gate.
+- **Deixar uma superfície nova nascer com som.** `ArenaGame.tsx` reintroduziu dois sons que a
+  Fase 0 tinha cortado, com **3.974 testes verdes**. O defeito não foi a tela — foi a ausência
+  de régua. É a **R-NOVA**.
+- **Contar com o limitador para resolver colisão.** Medido no barramento real, com limitador e
+  ducking ativos, a colisão do banho fez **4,58 dB** — o limitador contribuiu **0,00 dB**.
+  Colisão é **regra de disparo** (R-EX, 120 ms), e ela é sua.
+- **Afirmar ausência no código a partir de um `grep` por string literal.** Caso real do run: a
+  busca por `storage-not-bound` concluiu que só 3 arquivos guardavam, e um achado **grave foi
+  escalado com base nisso** — a guarda existia em **três formas** (`'Storage not bound'`, a
+  literal, e a indireta via `requirePaidTier`), e **o achado estava errado**. Antes de afirmar
+  que algo não existe, procure **variantes** e **confira o caminho de execução**.
 
 ## Handoffs
 
