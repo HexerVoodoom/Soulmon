@@ -17,7 +17,9 @@ import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import worker from './push-scheduler.js';
-import { pushCopy, eveningCopy, PUSH_HOURS_BRT, PUSH_HOURS_UTC } from '../functions/api/_pushCopy.js';
+import {
+  pushCopy, eveningCopy, sleepReminderCopy, PUSH_HOURS_BRT, PUSH_HOURS_UTC,
+} from '../functions/api/_pushCopy.js';
 
 const RAIZ = resolve(__dirname, '..');
 const ler = p => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -354,5 +356,110 @@ describe('a noite não se contradiz', () => {
     // na prática. O das 20h é o que cede porque é o único que pede EXECUÇÃO.
     const manager = readFileSync('src/components/NotificationManager.tsx', 'utf8');
     expect(manager).toContain('if (restWindow) return;');
+  });
+});
+
+describe('🔴 o LEMBRETE DE DEITAR (WP3.11) — o único push desta mecânica', () => {
+  /**
+   * `sleepReminderCopy` estava EXPORTADA e sem uma referência em teste nenhum
+   * (medido em 09/09/2026, varrendo toda a suíte). Ela não entra em
+   * `pushCopy(hora)` porque a hora dela não é fixa — sai da janela que a PESSOA
+   * escolheu, 30 min antes do início — e foi por ficar fora da tabela de horas
+   * que o guard de paridade nunca a viu.
+   *
+   * As três travas abaixo são a regra da Janela de Descanso escrita no dono
+   * único. Cada uma delas é uma frase que alguém pode "melhorar" sem perceber
+   * que está desfazendo a mecânica: um push perto da hora de dormir que cobra,
+   * ou que aponta o relógio, é exatamente o estímulo que atrapalha o sono que
+   * ele alega proteger.
+   */
+  const nasDuasLinguas = f => ['pt-BR', 'en-US'].forEach(l => f(sleepReminderCopy('Pixel', l), l));
+
+  /** "22h30", "22:30", "10 pm", "23h" — qualquer forma de apontar o relogio. */
+  const RELOGIO = new RegExp(String.raw`\d{1,2}\s*[:h]\s*\d{2}|\d{1,2}\s*(?:h|hs|pm|am)\b`, 'i');
+
+  it('AUTOVERIFICACAO: a regra do relogio pega mesmo uma hora escrita', () => {
+    // Sem este caso, um erro de escapamento na expressao deixaria o caso
+    // abaixo verde para sempre, medindo o vacuo. E o escapamento JA falhou
+    // uma vez ao escrever este arquivo: o `\b` virou um byte de
+    // backspace DENTRO da expressao, e nada ficou vermelho.
+    for (const exemplo of ['Sao 22h30', 'It is 10:45', 'ate as 23h', 'at 9 pm']) {
+      expect(RELOGIO.test(exemplo), exemplo).toBe(true);
+    }
+    expect(RELOGIO.test('Sem pressa. Daqui a pouco.')).toBe(false);
+  });
+
+  it('NÃO diz a hora — "são 22h30" é um relógio cobrando, não um convite', () => {
+    nasDuasLinguas((c, l) => {
+      const texto = `${c.title} ${c.body}`;
+      expect(texto, l).not.toMatch(RELOGIO);
+    });
+  });
+
+  it('NÃO fala de desempenho — todo feedback desta mecânica é de manhã, no app', () => {
+    nasDuasLinguas((c, l) => {
+      const texto = `${c.title} ${c.body}`.toLowerCase();
+      for (const palavra of [
+        'regularidade', 'constância', 'constancia', 'sequência', 'sequencia',
+        'atras', 'tarde demais', 'streak', 'consistency', 'you slept', 'late',
+      ]) {
+        expect(texto.includes(palavra), `${l}: "${palavra}" fala de desempenho`).toBe(false);
+      }
+    });
+  });
+
+  it('NÃO condiciona a nada — não pergunta se a meta do dia foi cumprida', () => {
+    nasDuasLinguas((c, l) => {
+      const texto = `${c.title} ${c.body}`.toLowerCase();
+      for (const palavra of ['tarefa', 'meta', 'complete', 'termine', 'task', 'goal', 'finish']) {
+        expect(texto.includes(palavra), `${l}: "${palavra}" é cobrança`).toBe(false);
+      }
+    });
+  });
+
+  it('o nome do pet aparece, e sem nome cai no padrão — nunca "undefined"', () => {
+    expect(sleepReminderCopy('Pixel', 'pt-BR').title).toContain('Pixel');
+    for (const semNome of [undefined, '', null]) {
+      for (const l of ['pt-BR', 'en-US']) {
+        const c = sleepReminderCopy(semNome, l);
+        expect(`${c.title} ${c.body}`).not.toContain('undefined');
+        expect(c.title).toContain('Soulmon');
+      }
+    }
+  });
+
+  it('os dois idiomas existem de verdade — senão os casos acima passariam com uma língua só', () => {
+    const pt = sleepReminderCopy('Pixel', 'pt-BR');
+    const en = sleepReminderCopy('Pixel', 'en-US');
+    expect(pt.title).not.toBe(en.title);
+    expect(pt.body).not.toBe(en.body);
+    // Idioma desconhecido cai em inglês, como no resto do dono único.
+    expect(sleepReminderCopy('Pixel', 'fr').title).toBe(en.title);
+  });
+
+  it('a `tag` é PRÓPRIA — senão ele substitui a notificação de outra mecânica', () => {
+    // Duas notificações com a mesma `tag` se sobrescrevem no sistema. Colidir
+    // com o boa-noite das 22h faria uma das duas sumir sem erro nenhum.
+    const dele = sleepReminderCopy('Pixel', 'pt-BR').tag;
+    const outras = [
+      pushCopy(10, 'Pixel', 'pt-BR').tag,
+      pushCopy(16, 'Pixel', 'pt-BR').tag,
+      pushCopy(22, 'Pixel', 'pt-BR').tag,
+      pushCopy(10, 'Pixel', 'pt-BR', 1).tag,
+      eveningCopy('Pixel', 'pt-BR', false).tag,
+      eveningCopy('Pixel', 'pt-BR', true).tag,
+    ];
+    expect(dele).toBeTruthy();
+    expect(outras).not.toContain(dele);
+    // E as outras também não colidem entre si.
+    expect(new Set(outras).size).toBe(outras.length);
+  });
+
+  it('ele NÃO é entregue pelo cron — a hora é de cada pessoa', () => {
+    // Se um dia alguém plugar esta copy numa hora fixa do worker, ela vira o
+    // que a mecânica proíbe: um horário do servidor mandando alguém dormir.
+    for (const h of PUSH_HOURS_BRT) {
+      expect(pushCopy(h, 'Pixel', 'pt-BR').tag).not.toBe(sleepReminderCopy('Pixel', 'pt-BR').tag);
+    }
   });
 });
