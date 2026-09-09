@@ -4082,8 +4082,26 @@ html {
 /* Rótulo persistente. 8px na Silkscreen com `letter-spacing: 0` — o
    espaçamento de 0.06em usado no resto do kit é o que estourava
    "ATIVIDADES"/"BIBLIOTECA" (10 caracteres, pior caso em PT-BR) na célula
-   de ~63px. `overflow: hidden` é rede de segurança para um idioma futuro:
-   nenhum rótulo atual chega perto de precisar dele. */
+   de ~63px.
+
+   ⚠️ CORREÇÃO (09/09/2026). A frase que estava aqui — "`overflow: hidden` é
+   rede de segurança para um idioma futuro: nenhum rótulo atual chega perto de
+   precisar dele" — era FALSA, e a de baixo ("53px numa célula de 64,7px")
+   também: as duas foram medidas num viewport largo. Em **320px** a célula tem
+   60px, a caixa do rótulo tem 54px e "ATIVIDADES" precisa de 61px. A rede de
+   segurança estava em uso, em PT-BR, todos os dias.
+
+   E o pior não era o corte: era `text-overflow: clip`, que tirava o "S" final
+   SEM sinal nenhum. A pessoa lia "ATIVIDADE" — uma palavra portuguesa
+   completa, no singular — e não tinha como saber que faltava algo. Agora é
+   `ellipsis`: continua cortando (não há folga na barra para os cinco itens em
+   320px, e diminuir a fonte sai da escala), mas passa a DIZER que cortou.
+
+   O conserto de verdade é uma palavra mais curta em PT-BR, e isso é decisão do
+   dono, não minha — está registrado em `docs/STATUS.md`.
+   `src/styles/navRotulo.contract.test.ts` mede a caixa contra o texto nos dois
+   idiomas, para o número nunca mais ser "medido uma vez e afirmado para
+   sempre". */
 .sm-bottom-nav-label {
   font-family: var(--sm-font-pixel);
   font-size: var(--sm2-text-xs);
@@ -4093,6 +4111,8 @@ html {
   text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
+  /* Ver o bloco acima: `clip` escondia o corte; `ellipsis` o declara. */
+  text-overflow: ellipsis;
   max-width: 100%;
   -webkit-font-smoothing: none;
   /* `--sm-ink` (tinta da PÁGINA), não `--sm-px-ink`: a nav fica sobre

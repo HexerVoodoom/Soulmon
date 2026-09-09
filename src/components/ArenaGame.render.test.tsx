@@ -21,6 +21,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { ArenaGame } from './ArenaGame';
 import {
   ARENA_ROUNDS, SPECIAL_CHARGE_TURNS, SPECIAL_EFFECTS, PERFECT_ACC,
@@ -257,6 +259,35 @@ describe('a tela não inventa número de balanceamento', () => {
     // e a tela inteira passariam a medir nada.
     const mults = Object.values(SPECIAL_EFFECTS).map(e => e.mult);
     expect(new Set(mults).size).toBeGreaterThan(1);
+  });
+});
+
+describe('🔴 a Arena TOMA a tela, como as irmãs', () => {
+  it('a raiz carrega `sm-px-arcade-root` — sem ela o jogo nasce fora da dobra', () => {
+    /* Medido no navegador em 320×640: a primeira versão desta tela era inline,
+       montava em `top: 705` (dobra 640) e quem tocasse no cartão via a lista de
+       cartões e NADA MAIS — o jogo existia 700px abaixo, sem nada rolar até
+       ele. Masmorra, Dino e Pedra-Papel-Tesoura já usavam a classe; só a Arena
+       não, porque eu escrevi o contêiner do zero em vez de olhar as irmãs.
+
+       A classe é `position: fixed; inset: 0` mais o respiro da barra de baixo —
+       está em `src/index.css`. `sm-px-dark-ctx` vem no par pelo motivo escrito
+       no `DungeonGame`: peça escura nos dois temas declara o contexto, senão os
+       tokens de estado leem o tema da PÁGINA e o texto some no tema claro. */
+    const { container } = renderWithCss(
+      <ArenaGame evolutionStage="rookie" language="pt-BR" onExit={() => {}} />,
+    );
+    const raiz = container.firstElementChild as HTMLElement;
+    expect(raiz.className).toContain('sm-px-arcade-root');
+    expect(raiz.className).toContain('sm-px-dark-ctx');
+  });
+
+  it('e a MESMA classe é a que as irmãs usam — não uma cópia parecida', () => {
+    // Se alguém criar `sm-px-arena-root` com o mesmo conteúdo, o footgun 9
+    // volta: duas classes para a mesma decisão, e uma delas some no próximo
+    // ajuste do respiro da barra de baixo.
+    const dungeon = readFileSync(resolve(__dirname, 'DungeonGame.tsx'), 'utf8');
+    expect(dungeon).toContain('sm-px-arcade-root');
   });
 });
 

@@ -340,7 +340,23 @@ export function ArenaGame({
   const nomeDe = (e: ArenaEnemy) => (isPt ? e.namePt : e.nameEn);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', position: 'relative' }}>
+    /* ⚠️ `sm-px-arcade-root` NÃO é decoração: é `position: fixed; inset: 0` mais
+       o respiro da barra de baixo, e é o que faz um minijogo TOMAR a tela. A
+       primeira versão desta tela era inline, e o resultado (medido em 320×640)
+       foi a Arena montar em `top: 705` — abaixo da dobra de 640. Quem tocasse
+       no cartão via a lista de cartões e nada mais: o jogo existia 700px
+       abaixo, sem nada rolar até ele. Masmorra, Dino e Pedra-Papel-Tesoura já
+       usavam esta classe; só a Arena não, porque eu escrevi o contêiner do
+       zero em vez de olhar as irmãs.
+
+       `sm-px-dark-ctx` vem no mesmo par e pelo mesmo motivo que está escrito no
+       `DungeonGame`: esta é peça escura nos dois temas, então ela declara o
+       contexto — senão os tokens de estado leem o tema da PÁGINA e o texto
+       some no tema claro. */
+    <div
+      className="sm-px-dark-ctx sm-px-arcade-root"
+      style={{ background: '#07090f', color: '#e8eefc', position: 'fixed' }}
+    >
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
         <span className="sm-px-arcade-label">
           {isPt ? 'Arena' : 'Arena'}
