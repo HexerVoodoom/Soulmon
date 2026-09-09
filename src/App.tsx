@@ -5787,6 +5787,7 @@ export default function App() {
                   return true;
                 }}
                 onOpenTournament={() => setCurrentView('tournament')}
+                soulmonSkills={gameState.soulmonSkills}
               />
             </Suspense>
           )}

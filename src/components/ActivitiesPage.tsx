@@ -37,6 +37,9 @@
  */
 import { useState } from 'react';
 import { DungeonGame } from './DungeonGame';
+import { ArenaGame } from './ArenaGame';
+import type { StageSkills } from '../utils/soulProfile/ficha/skills';
+import type { FichaStage } from '../utils/soulProfile/ficha/types';
 import { DinoGame } from './DinoGame';
 import { RPSGame } from './RPSGame';
 import { bitsStyle } from '../utils/currencies';
@@ -69,7 +72,7 @@ interface GameCard {
   onClick: () => void;
 }
 
-export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onSpendBits, onOpenTournament }: {
+export function ActivitiesPage({ evolutionStage, demoCharacterId, language, totalPoints, onDungeonEnter, onDungeonLose, onDungeonHeartDrop, onGlitchtama, onDungeonEnemyDefeated, onDinoScore, onEarnPoints, onSpendBits, onOpenTournament, soulmonSkills }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet nos minijogos. */
   demoCharacterId?: string;
@@ -85,9 +88,13 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
   /** WP4.5 — cobra Bits (sumidouro da masmorra). Devolve `false` se não deu. */
   onSpendBits?: (pts: number) => boolean;
   onOpenTournament: () => void;
+  /** Skills da ficha por estagio (`gameState.soulmonSkills`). A Arena luta com
+   *  as habilidades do bicho quando elas existem, e com um par generico quando
+   *  nao — o perfil do oraculo vive so no localStorage e nao sobe para a nuvem. */
+  soulmonSkills?: Partial<Record<FichaStage, StageSkills>>;
 }) {
   const isPt = language === 'pt-BR';
-  const [openGame, setOpenGame] = useState<'dungeon' | 'dino' | 'rps' | null>(null);
+  const [openGame, setOpenGame] = useState<'dungeon' | 'arena' | 'dino' | 'rps' | null>(null);
 
   // O Torneio vem primeiro e destacado: é o único que acontece CONTRA outras
   // pessoas e o único com rodada semanal — a coisa que muda de estado sozinha
@@ -112,6 +119,24 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
         : 'Five floors, each one tougher. Losing costs you the run, never your hearts.',
       tag: isPt ? 'Ranking' : 'Ranking',
       onClick: () => setOpenGame('dungeon'),
+    },
+    {
+      // A ARENA fica logo depois da Masmorra porque e a irma dela: mesma barra
+      // de tempo, mesma promessa de "perder nao custa coracao". O que muda e a
+      // FICHA entrar na conta — o elemento e a habilidade especial do bicho —,
+      // e e isso que o texto do cartao precisa dizer, senao ela le como uma
+      // segunda masmorra com outro nome.
+      key: 'arena',
+      // `military_tech` e nao `swords`: `swords` ja e a Masmorra e
+      // `emoji_events` ja e o Torneio. Icone repetido num menu de cartoes faz
+      // dois jogos diferentes lerem como o mesmo.
+      icon: 'military_tech',
+      title: isPt ? 'Arena' : 'Arena',
+      desc: isPt
+        ? 'Cinco rodadas com o elemento e a habilidade especial do seu Soulmon.'
+        : "Five rounds using your Soulmon's element and special skill.",
+      tag: isPt ? 'Sua ficha' : 'Your sheet',
+      onClick: () => setOpenGame('arena'),
     },
     {
       key: 'dino',
@@ -236,6 +261,16 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
           /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
           bits={totalPoints}
           onSpendBits={onSpendBits}
+          onExit={() => setOpenGame(null)}
+        />
+      )}
+      {openGame === 'arena' && (
+        <ArenaGame
+          evolutionStage={evolutionStage}
+          demoCharacterId={demoCharacterId}
+          language={language}
+          skills={soulmonSkills}
+          onEarnPoints={onEarnPoints}
           onExit={() => setOpenGame(null)}
         />
       )}

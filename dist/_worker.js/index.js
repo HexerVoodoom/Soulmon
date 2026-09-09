@@ -2212,68 +2212,102 @@ async function onRequestPost3({ request, env }) {
 }
 __name(onRequestPost3, "onRequestPost");
 
+// api/_pushIdentity.js
+function nomeDePet(v) {
+  return String(v ?? "").replace(/\s+/g, " ").trim().slice(0, 24) || "Soulmon";
+}
+__name(nomeDePet, "nomeDePet");
+function idiomaDePush(v) {
+  return v === "pt-BR" ? "pt-BR" : "en-US";
+}
+__name(idiomaDePush, "idiomaDePush");
+function dataDeNascimento(v) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(v ?? "")) ? v : void 0;
+}
+__name(dataDeNascimento, "dataDeNascimento");
+function ehTokenFcm(v) {
+  return typeof v === "string" && v.length >= 32 && v.length <= 512 && /^[A-Za-z0-9_:.-]+$/.test(v);
+}
+__name(ehTokenFcm, "ehTokenFcm");
+var TTL_INSCRICAO = 60 * 60 * 24 * 365;
+var LIMITE_INSCRICAO = { limit: 10, windowMs: 6e4 };
+var REFRESCA_APOS_MS = 30 * 24 * 60 * 60 * 1e3;
+async function gravarSeMudou(kv2, chave, registro) {
+  let anterior = null;
+  try {
+    anterior = JSON.parse(await kv2.get(chave) || "null");
+  } catch {
+    anterior = null;
+  }
+  const igual = anterior && JSON.stringify({ ...anterior, refreshedAt: void 0 }) === JSON.stringify({ ...registro, refreshedAt: void 0 });
+  const velho = !anterior?.refreshedAt || Date.now() - anterior.refreshedAt > REFRESCA_APOS_MS;
+  if (!igual || velho) {
+    await kv2.put(chave, JSON.stringify({ ...registro, refreshedAt: Date.now() }), {
+      expirationTtl: TTL_INSCRICAO
+    });
+    return true;
+  }
+  return false;
+}
+__name(gravarSeMudou, "gravarSeMudou");
+
 // api/fcm-subscribe.js
 var CORS7 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
+var json5 = /* @__PURE__ */ __name((corpo, status) => new Response(JSON.stringify(corpo), {
+  status,
+  headers: { "Content-Type": "application/json", ...CORS7 }
+}), "json");
+function costGate(request) {
+  const gate = takeToken("fcm-subscribe", clientKey(request), LIMITE_INSCRICAO);
+  if (gate.ok) return null;
+  console.warn("[fcm-subscribe] rate limited", { retryAfter: gate.retryAfter });
+  return tooManyRequests(gate.retryAfter, CORS7);
+}
+__name(costGate, "costGate");
 async function onRequestOptions7() {
   return new Response(null, { status: 204, headers: CORS7 });
 }
 __name(onRequestOptions7, "onRequestOptions");
-async function onRequestPost4({ request, env }) {
-  let body;
+async function corpoDe(request) {
   try {
-    body = await request.json();
+    return await request.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json", ...CORS7 }
-    });
+    return null;
   }
-  const { token, petName, language } = body;
-  if (!token) {
-    return new Response(JSON.stringify({ error: "Missing token" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json", ...CORS7 }
-    });
-  }
-  const kvKey = `fcm:${await hashToken(token)}`;
-  await env.PUSH_SUBSCRIPTIONS.put(
-    kvKey,
-    JSON.stringify({ token, petName: petName || "Soulmon", language: language || "en-US" }),
-    { expirationTtl: 60 * 60 * 24 * 365 }
-  );
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 201,
-    headers: { "Content-Type": "application/json", ...CORS7 }
-  });
+}
+__name(corpoDe, "corpoDe");
+async function onRequestPost4({ request, env }) {
+  const limited = costGate(request);
+  if (limited) return limited;
+  const body = await corpoDe(request);
+  if (!body) return json5({ error: "Invalid JSON" }, 400);
+  const { token, petName, language, bornAt } = body;
+  if (!token) return json5({ error: "Missing token" }, 400);
+  if (!ehTokenFcm(token)) return json5({ error: "Invalid token" }, 400);
+  const registro = {
+    token,
+    petName: nomeDePet(petName),
+    language: idiomaDePush(language),
+    bornAt: dataDeNascimento(bornAt)
+  };
+  await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, `fcm:${await hashToken(token)}`, registro);
+  return json5({ ok: true }, 201);
 }
 __name(onRequestPost4, "onRequestPost");
 async function onRequestDelete({ request, env }) {
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json", ...CORS7 }
-    });
-  }
+  const limited = costGate(request);
+  if (limited) return limited;
+  const body = await corpoDe(request);
+  if (!body) return json5({ error: "Invalid JSON" }, 400);
   const { token } = body;
-  if (!token) {
-    return new Response(JSON.stringify({ error: "Missing token" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json", ...CORS7 }
-    });
-  }
-  const kvKey = `fcm:${await hashToken(token)}`;
-  await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { "Content-Type": "application/json", ...CORS7 }
-  });
+  if (!token) return json5({ error: "Missing token" }, 400);
+  if (typeof token !== "string") return json5({ error: "Invalid token" }, 400);
+  await env.PUSH_SUBSCRIPTIONS.delete(`fcm:${await hashToken(token)}`);
+  return json5({ ok: true }, 200);
 }
 __name(onRequestDelete, "onRequestDelete");
 async function hashToken(token) {
@@ -3131,14 +3165,14 @@ function isAllowedPushEndpoint(endpoint) {
 __name(isAllowedPushEndpoint, "isAllowedPushEndpoint");
 
 // api/subscribe.js
-var SUB_LIMIT = { limit: 10, windowMs: 6e4 };
-function costGate(request) {
+var SUB_LIMIT = LIMITE_INSCRICAO;
+function costGate2(request) {
   const gate = takeToken("subscribe", clientKey(request), SUB_LIMIT);
   if (gate.ok) return null;
   console.warn("[subscribe] rate limited", { retryAfter: gate.retryAfter });
   return tooManyRequests(gate.retryAfter, CORS11);
 }
-__name(costGate, "costGate");
+__name(costGate2, "costGate");
 var CORS11 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
@@ -3149,7 +3183,7 @@ async function onRequestOptions11() {
 }
 __name(onRequestOptions11, "onRequestOptions");
 async function onRequestPost6({ request, env }) {
-  const limited = costGate(request);
+  const limited = costGate2(request);
   if (limited) return limited;
   let body;
   try {
@@ -3189,35 +3223,20 @@ async function onRequestPost6({ request, env }) {
     // guardado em KV por um ano e interpolado no TÍTULO da notificação. Duas
     // regras diferentes para o mesmo tipo de campo é o footgun 9 em miniatura,
     // e está escrito assim no `community.js`, sobre o nome do grupo.
-    petName: String(petName ?? "").replace(/\s+/g, " ").trim().slice(0, 24) || "Soulmon",
+    petName: nomeDePet(petName),
     /* WP1.17 — a idade da criatura, para a copy dos dias 1 e 2. É `YYYY-MM-DD`
        e só isso: dia, sem hora e sem fuso, porque a única pergunta é "faz
        quantos dias". Guardado NA SUBSCRIPTION de propósito — cancelar o push
        apaga a idade junto, e não existe registro separado sobrevivendo a
        isso. Formato inválido é DESCARTADO em vez de corrigido: um `bornAt`
        torto viraria dia 1 para sempre. */
-    bornAt: /^\d{4}-\d{2}-\d{2}$/.test(String(bornAt ?? "")) ? bornAt : void 0,
+    bornAt: dataDeNascimento(bornAt),
     // Dois valores possíveis, e só. `_pushCopy.js` só pergunta se é `pt-BR`,
     // então qualquer outra coisa já caía em inglês — mas gravar a string crua
     // guardava texto de cliente sem teto num registro de um ano.
-    language: language === "pt-BR" ? "pt-BR" : "en-US"
+    language: idiomaDePush(language)
   };
-  const REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1e3;
-  let previous = null;
-  try {
-    previous = JSON.parse(await env.PUSH_SUBSCRIPTIONS.get(kvKey) || "null");
-  } catch {
-    previous = null;
-  }
-  const unchanged = previous && JSON.stringify({ ...previous, refreshedAt: void 0 }) === JSON.stringify({ ...record, refreshedAt: void 0 });
-  const stale = !previous?.refreshedAt || Date.now() - previous.refreshedAt > REFRESH_AFTER_MS;
-  if (!unchanged || stale) {
-    await env.PUSH_SUBSCRIPTIONS.put(
-      kvKey,
-      JSON.stringify({ ...record, refreshedAt: Date.now() }),
-      { expirationTtl: 60 * 60 * 24 * 365 }
-    );
-  }
+  await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, kvKey, record);
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
     headers: { "Content-Type": "application/json", ...CORS11 }
@@ -3225,7 +3244,7 @@ async function onRequestPost6({ request, env }) {
 }
 __name(onRequestPost6, "onRequestPost");
 async function onRequestDelete2({ request, env }) {
-  const limited = costGate(request);
+  const limited = costGate2(request);
   if (limited) return limited;
   let body;
   try {
@@ -3369,7 +3388,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-gbthdO/functionsRoutes-0.642726685967774.mjs
+// ../.wrangler/tmp/pages-Kclvqk/functionsRoutes-0.14474301325496386.mjs
 var routes = [
   {
     routePath: "/api/account",
