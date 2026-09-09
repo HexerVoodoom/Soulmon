@@ -7,6 +7,42 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## ⏳ DEPENDE DO DONO (09/09/2026) — três decisões abertas
+>
+> **1. Criar o projeto Supabase do Soulmon.** O recado falado está pronto e
+> DESLIGADO: sem `SUPABASE_PROJECT_ID` + `SUPABASE_ANON_KEY` no ambiente do
+> servidor, `/api/config` devolve `transcribeAvailable: false` e o botão de
+> microfone **não é desenhado**. Nada quebra sem elas. ⚠️ `ANON_KEY` **não**
+> leva prefixo `VITE_` — o prefixo a colocaria de volta no bundle, que é o
+> defeito que `/api/transcribe` existe para desfazer. A Edge Function a
+> implantar está em `src/supabase/functions/server/`.
+>
+> **2. O redirecionamento do login: `getRedirectResult`.** O app NÃO o usa. A
+> volta do redirect funciona pelo caminho felizmente correto —
+> `getCurrentEmail()` espera `authStateReady()` e o Firebase restaura a sessão
+> do IndexedDB. O que NÃO existe é mensagem quando o redirect FALHA do lado do
+> Google (a pessoa cancela lá, o domínio é recusado lá): ela volta sem sessão e
+> **sem explicação nenhuma**, reencontrando o portão de conta como se nada
+> tivesse acontecido. `getRedirectResult` é o que exporia isso.
+> Não foi acrescentado porque é mudança de comportamento no caminho de
+> autenticação, e ela não é verificável em suíte nem no servidor de
+> desenvolvimento (o redirect exige o handler do Firebase). O que ENTROU foi o
+> que dá para provar: `src/utils/auth.redirect.test.ts` trava a ORDEM
+> (persistência antes de a página sair — inverter faz a pessoa voltar deslogada
+> sem erro nenhum), quais códigos NÃO redirecionam (`unauthorized-domain` é o
+> mais provável aqui, e mandar a pessoa ao Google para voltar ao mesmo erro
+> custa o que ela digitou) e que o código cru sempre chega ao console.
+> ⚠️ E o problema de fundo continua em aberto: `authDomain`
+> (`soulmon-app.firebaseapp.com`) ≠ domínio do app, e desde o SDK 9.19 o
+> redirect para de funcionar em navegador que bloqueia armazenamento de
+> terceiro, a menos que `/__/auth/handler` seja servido pelo domínio do app.
+>
+> **3. A palavra do rótulo do Bestiário na Home.** Não é uma decisão pendente
+> minha — é observação: o Bestiário fica ESCONDIDO até a primeira descoberta
+> (`bestiary?.length > 0 &&`). Isso é defensável ("oferta que não pode ser
+> aceita é ruído") e tem um custo: quem nunca entrou na masmorra não descobre
+> que ela alimenta uma coleção. Mudar é decisão de produto; não mexi.
+
 > ## ✅ RESOLVIDO em 09/09/2026 — o recado falado foi ASSUMIDO, não apagado
 >
 > O achado abaixo foi levado ao dono, e a decisão dele foi **declarar e fazer
