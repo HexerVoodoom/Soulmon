@@ -146,6 +146,29 @@ export function saveState(state: DesktopState): void {
 // DESENHAR (um contador na tela, por exemplo), importe `feedsLeft` de
 // `src/utils/careRules` direto — desenhar não é decidir.
 
+/**
+ * Rótulo da última sincronização — e a razão de ele morar AQUI.
+ *
+ * A formatação estava inline no `menu.ts`, que nenhum teste em `node` consegue
+ * importar (ele toca o DOM no topo). E ela tinha um furo: `loadState` faz
+ * `{ ...defaults(), ...parsed }` sem validar campo nenhum, então um
+ * `lastSyncAt` corrompido no localStorage chegava intacto ao
+ * `new Date(...).toLocaleString()` e a tela imprimia **"Última sincronização:
+ * Invalid Date"** — valor cru do JavaScript na cara do usuário.
+ *
+ * É a mesma classe do vazamento que o `TournamentPage` já registra ter
+ * consertado ("a tela imprimia `undefined partida(s) restante(s) hoje`"):
+ * data ilegível vira AUSÊNCIA de rótulo, nunca um rótulo quebrado.
+ */
+export function formatLastSync(iso: string | null | undefined, isPt: boolean): string {
+  if (typeof iso !== 'string' || !iso) return '';
+  const quando = new Date(iso);
+  if (Number.isNaN(quando.getTime())) return '';
+  return isPt
+    ? `Última sincronização: ${quando.toLocaleString('pt-BR')}`
+    : `Last sync: ${quando.toLocaleString('en-US')}`;
+}
+
 /** Total de comidas no bolso — o que a UI mostra. */
 export function foodCount(inventory: Record<string, number>): number {
   return Object.values(inventory).reduce((sum, n) => sum + (Number(n) || 0), 0);

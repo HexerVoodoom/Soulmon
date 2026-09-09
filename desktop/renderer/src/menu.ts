@@ -4,7 +4,7 @@
 import './menu.css';
 import { petSprite } from './sprites';
 import {
-  loadState, saveState, foodCount, firstFood,
+  loadState, saveState, foodCount, firstFood, formatLastSync,
   type DesktopState,
 } from './state';
 import {
@@ -205,12 +205,13 @@ function renderTasks() {
   content.appendChild(nota);
 }
 
+/* A formatação saiu daqui para `state.ts` (`formatLastSync`), que é
+   importável em teste — este arquivo não é. Ela também deixou de imprimir
+   "Invalid Date" quando o `lastSyncAt` do localStorage está corrompido:
+   `loadState` não valida campo, e data ilegível agora vira ausência de rótulo
+   em vez de um rótulo quebrado. */
 function lastSyncLabel(): string {
-  if (!state.lastSyncAt) return '';
-  return t(
-    `Última sincronização: ${new Date(state.lastSyncAt).toLocaleString('pt-BR')}`,
-    `Last sync: ${new Date(state.lastSyncAt).toLocaleString()}`,
-  );
+  return formatLastSync(state.lastSyncAt, state.language === 'pt-BR');
 }
 
 function renderSettings() {
@@ -336,19 +337,16 @@ async function syncNow(email: string) {
     return;
   }
 
-  const s = result.snapshot;
+  /* ⚠️ Isto copiava os DEZ campos do snapshot à mão, e `applySnapshot` — a 10
+     linhas de distância, no mesmo arquivo — copiava os mesmos dez. Duas cópias
+     da mesma regra, e nenhum teste em `node` consegue importar este arquivo
+     (ele toca o DOM no topo; está escrito no `CLAUDE.md`), então um campo novo
+     em `RemoteSnapshot` chegaria por um caminho e não pelo outro em silêncio.
+     É a forma exata do footgun 9, e o precedente é caro: foi assim que o teto
+     de carinho ficou por aparelho sem ninguém ver.
+     Agora existe UM copiador. `syncNow` só acrescenta o que é dele: o e-mail. */
   state.syncEmail = trimmed;
-  state.stage = s.stage;
-  state.stageName = s.stageName;
-  state.genericLine = s.genericLine;
-  state.demoCharacterId = s.demoCharacterId;
-  state.hearts = s.hearts;
-  state.maxHearts = s.maxHearts;
-  state.energy = s.energy;
-  state.maxEnergy = s.maxEnergy;
-  state.foodInventory = s.foodInventory;
-  state.tasks = s.tasks;
-  state.lastSyncAt = new Date().toISOString();
+  applySnapshot(result.snapshot);
   persist();
   syncMessage = null;
   // Carteira em segundo plano: não atrasa a tela, e falhar aqui não é erro de
@@ -367,7 +365,15 @@ async function syncNow(email: string) {
 // sincronizada — o desktop vira um controle remoto do celular, não um jogo
 // paralelo. Sem conta, ficam locais (é o único jeito de o app fazer algo).
 
-/** Espelha o snapshot devolvido pelo servidor no estado local. */
+/**
+ * Espelha o snapshot devolvido pelo servidor no estado local — **o único
+ * copiador**. `syncNow` (acima) e as ações de cuidado passam as duas por aqui;
+ * era duplicado nas duas até 09/09/2026.
+ *
+ * ⚠️ Ao acrescentar campo em `RemoteSnapshot`, acrescente aqui. A régua é
+ * `desktop/renderer/src/menuSnapshot.contract.test.ts`, que lê o FONTE porque
+ * este arquivo não é importável em teste de nó.
+ */
 function applySnapshot(s: RemoteSnapshot) {
   state.stage = s.stage;
   state.stageName = s.stageName;
