@@ -32,7 +32,7 @@
  */
 import { readJson, writeJson, removeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
-import type { ConsentRecord } from './consent';
+import { normalizeConsent, type ConsentRecord } from './consent';
 
 export const GATE_DRAFT_VERSION = 1;
 
@@ -65,7 +65,15 @@ export function readGateDraft(): GateDraft | null {
     // O consent é a peça que as caixas do portão produzem. Se vier
     // quebrado, vale `null`: o onboarding pede o aceite de novo, que é o
     // comportamento seguro. Consentimento presumido não é consentimento.
-    consent: d.consent && typeof d.consent === 'object' ? (d.consent as ConsentRecord) : null,
+    //
+    // ⚠️ QUEM DECIDE ISSO É `normalizeConsent` (`utils/consent.ts`), e não uma
+    // checagem escrita aqui. Estavam em três lugares com TRÊS rigores
+    // diferentes: o `GameStateContext` usava o dono correto, o `oracleDraft`
+    // tinha uma cópia que também exigia `acceptedAt`, e ESTA aqui aceitava
+    // qualquer objeto — inclusive `[]`, porque `typeof [] === 'object'`. Ou
+    // seja: a checagem MAIS FROUXA das três era a do portão de conta, que é
+    // exatamente onde o aceite nasce. Achado na sessão de QA de 08/09/2026.
+    consent: normalizeConsent(d.consent) ?? null,
     savedAt: typeof d.savedAt === 'string' ? d.savedAt : '',
   };
 }

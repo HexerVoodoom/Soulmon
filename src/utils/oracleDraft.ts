@@ -29,7 +29,7 @@ import { readJson, writeJson, removeLocal } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
 import type { City } from './soulProfile/cities';
 import type { Answers as SoulAnswers } from './soulProfile/personality/types';
-import type { ConsentRecord } from './consent';
+import { normalizeConsent, type ConsentRecord } from './consent';
 
 export const ORACLE_DRAFT_VERSION = 1;
 
@@ -87,8 +87,10 @@ export function readOracleDraft(
     answers: d.answers && typeof d.answers === 'object' ? (d.answers as Record<string, string>) : {},
     testAnswers: d.testAnswers && typeof d.testAnswers === 'object' ? (d.testAnswers as SoulAnswers) : {},
     refine: d.refine === true ? true : d.refine === false ? false : null,
-    consent: d.consent && typeof d.consent === 'object' && typeof (d.consent as ConsentRecord).acceptedAt === 'string'
-      ? (d.consent as ConsentRecord) : null,
+    // Mesmo dono do `gateDraft` e do `GameStateContext`: `normalizeConsent`.
+    // A cópia que morava aqui era equivalente, e "equivalente" é o estado em
+    // que duas regras ficam até a primeira divergir (footgun 9).
+    consent: normalizeConsent(d.consent) ?? null,
     savedAt: typeof d.savedAt === 'string' ? d.savedAt : '',
   };
 }
