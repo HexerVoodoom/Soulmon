@@ -196,6 +196,7 @@ lado certo para errar.
 **Coletado e compartilhado:**
 - E-mail → Firebase (Google)
 - Outras mensagens no app → Groq
+- **Gravações de voz ou som** → serviço de transcrição, via `functions/api/transcribe.js` *(opcional; processamento efêmero — ver 2.4)*
 
 **Coletado, não compartilhado:**
 - Nome de usuário
@@ -205,9 +206,26 @@ lado certo para errar.
 - **Informações de exercícios físicos** *(passos — opcional)* ← **não esqueça**
 - **Informações de saúde** *(humor + texto livre — ver 2.6)*
 
-**Não coletado:** localização, contatos, fotos, vídeo, áudio, arquivos,
+**Não coletado:** localização, contatos, fotos, vídeo, arquivos,
 calendário, IDs de dispositivo/publicidade, diagnóstico, histórico de pesquisa,
 apps instalados, dados de pagamento, documentos.
+
+> ⚠️ **`áudio` saiu desta lista em 09/09/2026, e o motivo importa.** A tabela do
+> §2.4 passou a declarar **"Gravações de voz ou som — ✅ Sim, coletado e
+> compartilhado"** quando o recado falado foi assumido (`06ef9ea0`), mas **esta
+> lista-resumo continuou dizendo "não coletado: áudio"** — o documento se
+> contradizia em duas páginas.
+>
+> Não é detalhe de redação: **é desta lista que se preenche a ficha da Play**, e
+> a tabela do §2.4 é a que ninguém relê na hora de preencher. Uma ficha marcada
+> "não" para áudio, com `RECORD_AUDIO` declarado no manifesto e o áudio saindo
+> para um serviço de transcrição, é exatamente o descompasso que derruba a
+> revisão — e a §2.4 já avisa por escrito que *"responder 'não' porque é só de
+> passagem é o erro clássico"*.
+>
+> **Regra que fica:** ao mudar a tabela do §2.4, mude as duas listas-resumo no
+> mesmo commit. Elas são a mesma verdade escrita duas vezes, e a segunda é a que
+> vai para o formulário.
 
 ---
 
