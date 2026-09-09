@@ -410,6 +410,34 @@ As decisões do dono no gate da Fase 0 (08/09/2026), que fecham quatro pendênci
 
 | **S10 — o som PROCEDURAL é a solução provisória; os prompts de IA ficam prontos e engatilhados** | Decisão do dono em 09/09/2026, com a conta na mão: a conta do gerador está em **0,45 crédito** e o piloto A/B **não rodou** — a premissa do run está **não medida, não refutada**. Em vez de travar o eixo sonoro esperando recarga, o procedural que já existe é melhorado contra a escada de loudness (que agora existe e tem gate), e o pacote de prompts é escrito e guardado para disparar quando houver crédito | O A/B cego, quando rodar. Se o candidato de IA vencer em ≥2 dos 3 pares, o procedural volta a ser provisório de verdade; se empatar ou perder, **S1 cai para SFX** e sobrevive só para trilha e ambiente — que é o híbrido já previsto na alternativa que perdeu, abaixo |
 
+> ### ⚠️ Emenda à S10, em 09/09/2026 — o procedural deixou de ser provisório de dias
+>
+> A S10 nasceu como desvio de rota de curto prazo: *"o procedural vira a solução provisória e os
+> prompts ficam engatilhados"*. **O dono decidiu não recarregar o gerador por ora**, então o prazo
+> deixou de ser curto e passou a ser **indeterminado**.
+>
+> Isso muda o que a decisão significa, e a mudança precisa estar escrita: **o som procedural é a
+> solução VIGENTE do Soulmon**, não um rascunho esperando substituição. Ele foi calibrado contra a
+> escada (dispersão de **41,63 dB → 8,02 dB**), passa nos três critérios do gate, e o subsistema
+> inteiro ocupa **1,9% do orçamento S6 com zero byte de asset**. Não é um remendo pobre: para SFX
+> de UI, é a solução com menos custo em todas as moedas que este projeto paga — byte permanente no
+> histórico, exposição de PI, latência de decode e dependência de fornecedor.
+>
+> **O que continua verdadeiro, e não pode ser esquecido:** a **premissa do run segue NÃO MEDIDA,
+> não refutada**. Ninguém comparou som de IA com o procedural em teste cego. Dizer que "o
+> procedural venceu" seria inventar um resultado que não existe — ele **não venceu, ele ficou**,
+> porque o outro lado nunca entrou em campo.
+>
+> **Gatilho para reabrir, e ele não expira:** haver crédito no gerador. O caminho está engatilhado
+> em `squad-alpha-runs/som-01/prototyper/pacote-prompts.md` (12 prompts prontos + a sequência de 6
+> passos), e o `pos-processar.mjs` já foi testado contra um WAV real. Quando o A/B rodar, valem os
+> critérios já escritos na S10: candidato de IA vencendo em ≥2 de 3 devolve o procedural à condição
+> de provisório; empate ou derrota faz a **S1 cair para SFX** e sobreviver só para trilha e ambiente.
+>
+> ⚠️ **A pendência dos termos comerciais NÃO foi resolvida por esta emenda** — ela só ficou menos
+> urgente. Ela volta a ser bloqueante no minuto em que o primeiro asset for gerado, porque `dist/`
+> é commitado e todo byte é permanente no histórico do git.
+
 > **A alternativa que perdeu, e o gatilho para ela voltar.** O caminho não
 > escolhido é **melhorar o sintetizador procedural** (ADSR, segundo oscilador,
 > filtro, round-robin por detune) em vez de embarcar arquivos. Ele é gratuito em
