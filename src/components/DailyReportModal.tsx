@@ -6,6 +6,7 @@ import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { AdventureFind } from '../utils/adventure';
 import { ADVENTURE_ART } from '../utils/adventureArt';
+import { REPORT_ART, type ReportDayKind } from '../utils/reportArt';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
 import confettiBurst from '../assets/icons/confetti-burst.png';
@@ -110,6 +111,12 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
   const headIcon = welcome ? 'volunteer_activism'
     : report.wasPerfect ? 'star'
       : (report.degenerated || report.heartsLost > 0) ? 'bedtime' : 'wb_sunny';
+  // O MESMO quatro-caminhos acima, agora com arte pixel (`utils/reportArt.ts`).
+  // Deriva do `headIcon` em vez de repetir as condições: duas escadas de `? :`
+  // para a mesma decisão divergiriam na primeira vez que alguém mexesse numa.
+  const headKind: ReportDayKind = welcome ? 'return'
+    : report.wasPerfect ? 'perfect'
+      : (report.degenerated || report.heartsLost > 0) ? 'slow' : 'good';
   const headTone: 'primary' | 'gold' | 'muted' = welcome
     ? 'primary'
     : report.heartsLost > 0 && !report.degenerated
@@ -204,7 +211,12 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
                 width: 140, height: 140, maxWidth: 'none', pointerEvents: 'none', imageRendering: 'pixelated',
               }} />
             )}
-            <Icon name={headIcon} size={48} fill={1} tone={headTone} style={{ position: 'relative' }} />
+            {/* Arte pixel quando existe, line-art quando não — arte pode faltar
+                num bundle antigo, e o cabeçalho não pode abrir buraco. */}
+            {REPORT_ART[headKind]
+              ? <img src={REPORT_ART[headKind]} alt="" width={48} height={48}
+                     style={{ objectFit: 'contain', imageRendering: 'pixelated', position: 'relative' }} />
+              : <Icon name={headIcon} size={48} fill={1} tone={headTone} style={{ position: 'relative' }} />}
           </div>
           {/* `position: relative` NÃO é enfeite. O estouro de confete é
               `position: absolute` e o título era estático: elemento posicionado

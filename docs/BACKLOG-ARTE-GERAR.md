@@ -134,7 +134,17 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > Absolutely NO magenta, purple, violet or pink anywhere — not in glows,
   > halos, rims or anti-aliasing. Transparent PNG.
 
-### A3 · Ícones dos 3 atributos (nativos 128×128)
+### A3 · Ícones dos 3 atributos — ❌ **FECHADO SEM GERAR (09/09/2026)**
+
+> **Este item manda recriar um bug que o código já removeu.** `types/attributes.ts`
+> diz, em comentário e de propósito: "NÃO EXISTE `ATTR_ICON` AQUI — e a ausência
+> é a decisão". O desenho de cada atributo é UM SÓ no app inteiro: os SVG inline
+> de `components/AlignmentIcons.tsx`, já usados por `EvolutionPath` e
+> `PlayerDetailModal`. O mapa de três PNGs `icon-attr-*` era um SEGUNDO desenho
+> para a mesma ideia, que ninguém renderizava, e ligá-lo colocaria PNG e SVG do
+> mesmo atributo na mesma tela — o bug 4.3 do `docs/PLANO-DESIGN.md`.
+> Gerar arte nativa aqui não conserta nada: reabre o defeito. Se um dia o
+> desenho tiver de mudar, muda no SVG.
 - **Destino:** `src/assets/soulmon/icons/icon-attr-{poder,harmonia,benevolencia}.png`
 - **Uso:** `types/attributes.ts` → `ATTR_ICON`; aparecem em Estatísticas,
   Evolução e no perfil de jogador
@@ -197,7 +207,14 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 > CSS. O que sobrou abaixo é o que SÓ arte resolve — cada item foi visto em
 > screenshot antes de entrar aqui.
 
-### A9 · Fundo do Torneio em TEAL (regerar — hoje é roxo com hue-rotate)
+### A9 · Fundo do Torneio — ❌ **FECHADO SEM GERAR (09/09/2026)**
+
+> **A premissa foi medida e é falsa.** `src/assets/soulmon/bg/tournament.png`
+> (960×540) tem **0,0% de pixels roxos**, e não existe `hue-rotate` em nenhum
+> componente — as únicas ocorrências no `index.css` são as variáveis inertes do
+> scaffold do Tailwind (`--tw-hue-rotate: initial`). O arquivo já está dentro da
+> paleta. Do jeito que este item estava escrito, ele mandava regerar arte
+> correta.
 - **Destino:** `src/assets/soulmon/bg/tournament.png` (substitui)
 - **Uso:** `TournamentPage.tsx` (fundo da página inteira)
 - **Anexar:** `REF-kit-v12.png` + o `tournament.png` atual (composição serve)
@@ -214,7 +231,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > #6EFFF8, copper #C68642, gold accents, near-black #0D0D0D. Absolutely NO
   > magenta, purple, violet or pink anywhere — not in sky, glows or shadows.
 
-### A10 · Ícones BANHO e DORMIR em pixel (hoje são vetor chapado)
+### A10 · Ícones BANHO e DORMIR em pixel — ✅ **feito 09/09/2026**, Gemini (folha F, arcano-tech)
 - **Destino:** `src/assets/soulmon/icons/icon-bath.png` e `icon-sleep.png`
   (substituem; manter também `icon-wake.png` no mesmo estilo)
 - **Uso:** fileira de ações da Home (`CompanionHUD.tsx`) — ao lado do
@@ -319,7 +336,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > STRICT palette: cyan #6EFFF8 at low opacity only. NO magenta, purple,
   > violet or pink. Transparent PNG.
 
-### A15 · Ícones dos traços de nascimento (hoje emoji do sistema)
+### A15 · Ícones dos traços de nascimento — ✅ **feito 09/09/2026**, Gemini (folha F, arcano-tech)
 - **Destino:** `src/assets/soulmon/icons/traits/trait-{guloso,carinhoso,teimoso,sortudo,madrugador}.png` (64×64)
 - **Uso:** `utils/passives.ts` → cartão de identidade em Estatísticas (hoje
   mostra 🍖 🫶 🪨 🍀 🌅 do sistema) e o mesmo emoji no relatório/HUD.
@@ -335,7 +352,7 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > - **Sortudo** → `a four-leaf clover with a tiny sparkle`
   > - **Madrugador** → `a rising sun over a horizon line`
 
-### A16 · Ícones do relatório diário (cabeçalho por tipo de dia)
+### A16 · Ícones do relatório diário — ✅ **feito 09/09/2026**, Gemini (folha F, arcano-tech)
 - **Destino:** `src/assets/soulmon/icons/report/report-{perfect,good,slow,return}.png` (96×96)
 - **Uso:** `DailyReportModal.tsx` (`headIcon` via `RowIcon` — hoje line-art
   da lucide: estrela/sol/nuvem, o último line-art de destaque que sobrou).
