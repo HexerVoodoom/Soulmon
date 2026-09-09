@@ -116,6 +116,37 @@ describe('Supabase — o que ainda fala com ele, e de onde', () => {
       .filter(p => p.startsWith('src/utils/supabase/'));
     expect(vivos, 'a chave do provedor não volta para o bundle').toEqual([]);
   });
+
+  it('🔴 nenhum JWT de verdade em lugar NENHUM do repositório — nem em docs/, nem em build velho', () => {
+    // Em 09/09/2026 a SQUAD-DOCS achou o mesmo JWT anônimo da era DigiApp em
+    // DOIS lugares que o caso acima não alcançava: `docs/APK-BUILD-INFO.md`
+    // (texto plano) e `assets/info-*.js` (um build antigo restaurado na raiz,
+    // sem consumidor). O caso acima afirmava "sumiu do repositório" varrendo
+    // só `src/`. Este varre tudo que está no git, de qualquer extensão, e
+    // procura o formato de um JWT HS256 REAL (cabeçalho fixo + dois segmentos
+    // longos) — `'jwt-secreto'` e `eyJ...` truncado com reticências nos testes
+    // não casam de propósito.
+    const JWT_REAL = /eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/;
+    const IGNORAR = new Set(['node_modules', '.git', 'dist', 'dist-renderer', 'vendor']);
+    const tudo: string[] = [];
+    const walk = (dir: string) => {
+      let entradas: string[];
+      try { entradas = readdirSync(dir); } catch { return; }
+      for (const nome of entradas) {
+        if (IGNORAR.has(nome)) continue;
+        const p = join(dir, nome);
+        let st; try { st = statSync(p); } catch { continue; }
+        if (st.isDirectory()) { walk(p); continue; }
+        if (st.size > 5_000_000 || /\.(png|webp|jpg|jpeg|gif|ico|woff2?|ttf|otf|mp3|ogg|wav|zip|jar|keystore|jks|apk|aab)$/i.test(nome)) continue;
+        tudo.push(p);
+      }
+    };
+    walk(RAIZ);
+    const culpados = tudo.filter(p => {
+      try { return JWT_REAL.test(readFileSync(p, 'utf8')); } catch { return false; }
+    }).map(rel);
+    expect(culpados, 'JWT real commitado — redija e revogue').toEqual([]);
+  });
 });
 
 describe('🔴 as quatro peças que têm de andar juntas', () => {

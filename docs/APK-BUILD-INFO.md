@@ -1,3 +1,12 @@
+<!-- doc-historico -->
+> ⚠️ **Documento da era DigiApp (última atualização declarada: 23/12/2024) — não descreve o build atual.**
+> Em 09/09/2026 a SQUAD-DOCS achou aqui, em texto plano, o JWT anônimo do projeto
+> Supabase do fork (que `src/security/supabase.contract.test.ts` afirmava ter
+> sumido do repositório — o guard só varria `src/`). O valor foi **redigido**
+> neste arquivo e o guard passou a varrer o repositório inteiro; o histórico do
+> git ainda o carrega, e revogar a chave é decisão do dono (`docs/STATUS.md`).
+> O build Android de hoje está em `docs/manual/08-INTEGRACOES-E-DEPLOY.md`.
+
 # 📱 DigiApp - Informações Completas para Build APK
 
 > **Última Atualização**: 23 de dezembro de 2024  
@@ -13,7 +22,7 @@
 ```
 Project ID: evvcdsnijxbyctipfnkt
 Project URL: https://evvcdsnijxbyctipfnkt.supabase.co
-Anon Public Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2dmNkc25panhieWN0aXBmbmt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwOTA4MzYsImV4cCI6MjA3ODY2NjgzNn0.XqluSl53fBP9ys_ynSD95_FAVkeLvYVZN65_stE0XDA
+Anon Public Key: <JWT-ANONIMO-REDIGIDO-em-09/09/2026>
 ```
 
 **Edge Function Endpoint**:
@@ -448,7 +457,7 @@ GROQ_API_KEY=[SECRETO - Configurado no Supabase]
 **APENAS** incluir no código do app:
 ```javascript
 export const projectId = "evvcdsnijxbyctipfnkt"
-export const publicAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2dmNkc25panhieWN0aXBmbmt0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwOTA4MzYsImV4cCI6MjA3ODY2NjgzNn0.XqluSl53fBP9ys_ynSD95_FAVkeLvYVZN65_stE0XDA"
+export const publicAnonKey = "<JWT-ANONIMO-REDIGIDO-em-09/09/2026>"
 ```
 
 **🚨 NUNCA incluir no APK:**
