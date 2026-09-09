@@ -1332,10 +1332,18 @@ export const CompanionHUD = memo(function CompanionHUD({
                 imageRendering: 'pixelated',
                 pointerEvents: 'none',
                 /* RODADA 5, tentado e revertido: aro na frente (zIndex 2)
-                   esconde o corpo do pet — o berço de 148px cobre o meio do
-                   sprite de 200px. O "sentado na bacia" da Ref C precisa de
-                   ARTE (berço mais largo/raso), não de z-index — item no
-                   BACKLOG-ARTE-GERAR. */
+                   esconde o corpo do pet. O item A12 do BACKLOG-ARTE-GERAR
+                   dizia que a arte resolveria e mandava "retomar o z-index 2
+                   se ficar bom".
+                   ⚠️ **A arte nova chegou (09/09/2026, bacia 220×70 larga e
+                   rasa) e o z-index CONTINUA revertido — agora com medição.**
+                   Compondo a pilha real (pet 152 em PET_TOP_OFFSET -38, berço
+                   em yPx 25) e comparando as duas ordens: com o aro na frente,
+                   o painel de filigrana da frente da bacia cobre o pet do
+                   peito para baixo e sobra só a cabeça. A bacia ficou rasa, mas
+                   a FRENTE dela é alta — era esse o detalhe que faltava.
+                   O "sentado na bacia" já acontece com o berço ATRÁS: os pés
+                   caem a 0,83 da altura da bacia, e o corpo inteiro lê. */
                 zIndex: 0,
               }}
             />

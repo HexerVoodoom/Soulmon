@@ -463,13 +463,21 @@ describe('guard de asset — ruído pontilhado (fundo mal removido)', () => {
  * olhando aquele arquivo naquele dia. Guard é o que transforma "alguém reparou"
  * em "não passa mais".
  *
- * O conserto NÃO é código: é REDESENHAR a arte para as caixas (nest-base em
- * 296×166 = 2:1, ou 444×249 = 3:1; mobília exportada no tamanho do slot × 2).
- * `utils/petStage.ts` e os PNGs não são desta rodada, então o caso do
- * repositório fica **`skip`, com a lista medida impressa na mensagem** — o
- * valor aqui é travar o problema e documentá-lo, não pintar o CI de vermelho
- * por uma dívida de arte. **Quem redesenhar as peças tira o `.skip` no mesmo
- * commit** — e a partir daí a próxima peça fora da grade não entra.
+ * ✅ **DÍVIDA PAGA em 09/09/2026, e o `.skip` caiu com ela.** O conserto era o
+ * que este bloco previa — redesenhar a arte PARA as caixas, não mexer no
+ * renderer:
+ *
+ *   · as 14 peças de mobília foram reexportadas no **tamanho do slot × 2**
+ *     (112×112, 96×104, 92×100, 112×80 e 208×32) na rodada arcano-tech;
+ *   · `nest-base.png` virou **440×140** e `BASE_SLOTS.nest` virou **220×70**
+ *     (item A12 do backlog) — 2:1 nos dois eixos. A caixa mudou junto porque a
+ *     bacia antiga de 148×83 desaparecia atrás de um sprite de 200px, e a
+ *     correção de ARTE (bacia larga e rasa, Ref C) era a mesma que a correção
+ *     de grade.
+ *
+ * A partir daqui o teste é OBRIGATÓRIO: a próxima peça fora da grade não entra.
+ * Se alguém precisar mexer numa caixa de `utils/petStage.ts`, a arte
+ * correspondente muda no MESMO commit — é isso que este guard passa a cobrar.
  */
 describe('guard de asset — escala de render (uma grade de pixel só)', () => {
   /** Fator de ampliação de um PNG dentro da caixa em que ele é desenhado. */
@@ -756,7 +764,7 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
    * o `skip` deixa o buraco reaberto para a próxima peça. Os dois no mesmo
    * commit. A lista exata sai na mensagem da falha quando rodado.
    */
-  it.skip('DÍVIDA DE ARTE: toda peça do visor é desenhada em escala inteira', async () => {
+  it('DÍVIDA DE ARTE: toda peça do visor é desenhada em escala inteira', async () => {
     const fora: string[] = [];
     for (const p of await pecasDoVisor()) {
       const e = escala(p.src, p.box);

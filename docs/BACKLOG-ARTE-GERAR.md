@@ -271,7 +271,26 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
 
 </details>
 
-### A12 · Berço "sentável" (mais largo e raso — Ref C)
+### A12 · Berço "sentável" — ✅ **feito 09/09/2026**, Gemini (arcano-tech)
+
+> Bacia **440×140** em `assets/soulmon/nest-base.png`, e `BASE_SLOTS.nest` foi
+> de `148×83` para **`220×70`** com `yPx` de 17 para 25 — arte e caixa no mesmo
+> commit, porque 2× a caixa é o que o guard de escala exige.
+>
+> **Isto fechou a dívida de escala do visor inteiro**: com as 14 decorações já
+> em slot × 2, o berço era o ÚLTIMO asset fora da grade, e o
+> `it.skip('DÍVIDA DE ARTE: toda peça do visor é desenhada em escala inteira')`
+> de `src/assets/assets.contract.test.ts` **deixou de ser skip**. A suíte roda
+> hoje com 0 testes pulados.
+>
+> **O z-index 2 do aro NÃO foi retomado, agora com medição.** Este item dizia
+> "se ficar bom, retomar" — não fica. Compondo a pilha real (pet 152 em
+> `PET_TOP_OFFSET` -38, berço em `yPx` 25) e comparando as duas ordens: com o
+> aro na frente, o painel de filigrana da FRENTE da bacia cobre o pet do peito
+> para baixo e sobra só a cabeça. A bacia ficou rasa, mas a frente dela é alta —
+> era o detalhe que faltava na previsão da rodada 5. Com o berço atrás, os pés
+> caem a **0,83** da altura da bacia (a geometria antiga dava 0,80) e o corpo
+> inteiro lê. A medição e o motivo estão no comentário do `CompanionHUD.tsx`.
 - **Destino:** `src/assets/soulmon/nest-base.png` (substitui; manter ~360×~160
   de fonte, reescala nearest)
 - **Uso:** Home — base sob o pet (`CompanionHUD.tsx` + `BASE_SLOTS.nest`)
