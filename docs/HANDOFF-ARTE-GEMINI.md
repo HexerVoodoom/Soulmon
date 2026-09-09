@@ -10,17 +10,34 @@
 
 ---
 
-## 1. O que precisa ser gerado
-
-Duas frentes, nesta ordem de prioridade:
-
-| # | O quê | Peças | Onde aparece | Prioridade |
-|---|---|---|---|---|
-| **A7 / 5.1** | **Decoração do palco** | 14 | os 5 espaços do palco do pet | **Alta** — é o último item aberto da Fase 5, e o `PLANO-EVOLUCAO.md` chama de "maior retorno visual disponível" |
-| **A20** | **Cenas da aventura da noite** | 24 | card do relatório noturno + diário na página do pet | Média — funciona com emoji hoje |
-
-Se der tempo para mais, o `docs/BACKLOG-ARTE-GERAR.md` tem outros itens em
-aberto (A3, A9, A10, A12, A13, A15, A16). **Não comece por eles.**
+> ## ✅ ATUALIZAÇÃO — 08/09/2026: AS DUAS FRENTES ESTÃO FECHADAS
+>
+> Este documento foi escrito supondo que a decoração ainda era emoji e que as
+> cenas da aventura não existiam. As duas coisas mudaram no mesmo dia.
+>
+> **Frente 1 — decoração (14 peças).** Elas já existiam desde 12/08, geradas na
+> Higgsfield; o defeito não era ausência, era escala: **256×256 dentro de caixas
+> não-quadradas**, então o `objectFit: contain` do `PetStageDecor` encolhia cada
+> peça até o menor lado — o tapete virava um selo de 16×16 num slot de 104×16.
+> `furn-books` ainda carregava 2,41% de roxo. Foram refeitas e depois REFEITAS
+> DE NOVO no estilo **arcano-tech** (decisão do dono; prompt canônico em
+> `docs/PROMPT-ARTE-ARCANO-TECH.md`), sempre exportadas no **tamanho do slot ×
+> 2** — escala 2:1 nos dois eixos, que é o que o guard cobra.
+>
+> **Frente 2 — as 24 cenas da aventura.** Prontas, em
+> `src/assets/soulmon/adventures/` (96×96), ligadas por `utils/adventureArt.ts`.
+> 12 comuns geradas em folha única no Gemini; 12 raras/lendárias desenhadas por
+> `scripts/aventura-desenhar.mjs`.
+>
+> **O que este documento ainda vale:** o método da §2 e os bloqueios da §2.4
+> seguem verdadeiros e ganharam três achados novos, todos no
+> `PROMPT-ARTE-ARCANO-TECH.md`: a pasta de download deste perfil é `E:\dowload`
+> (sem o "n"); pedir a **proporção da IMAGEM** funciona onde descrever a forma
+> do objeto falha; e prompt engolido sem criar conversa se diagnostica com
+> `document.visibilityState`, não com `hasFocus()`.
+>
+> **O que continua aberto** são os itens A3, A5, A6, A9, A10, A12, A13, A15,
+> A16 e A21.1 do `docs/BACKLOG-ARTE-GERAR.md`.
 
 ---
 

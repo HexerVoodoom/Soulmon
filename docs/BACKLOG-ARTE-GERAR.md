@@ -9,10 +9,23 @@
 > Não é falta de método nem de item: é ordem de trabalho. As duas frentes
 > abertas continuam aqui, prontas para uma sessão dedicada:
 >
-> - **A20 — as 24 cenas da aventura da noite** (novo, 08/09/2026). Hoje são
->   emoji; a estrutura já aceita PNG.
-> - **5.1 — arte de decoração** (`docs/PLANO-EVOLUCAO.md`, Fase 5). É o último
->   item aberto daquela fase.
+> - ~~**A20 — as 24 cenas da aventura da noite**~~ — ✅ **feito 08/09/2026.**
+>   As 24 estão em `src/assets/soulmon/adventures/` (96×96, o formato das 30
+>   cenas de sonho), ligadas por `utils/adventureArt.ts` e consumidas pelo
+>   `DailyReportModal` (28 px) e pelo `AdventureDiary` (24 px). **12 comuns
+>   geradas** no Gemini; **12 raras/lendárias desenhadas** por
+>   `scripts/aventura-desenhar.mjs` — o cabeçalho daquele script registra por
+>   que o gerador não pôde entregar a folha. O `emoji` FICA no catálogo (push,
+>   título de notificação, log) e o `? :` de fallback continua nos dois
+>   consumidores.
+> - ~~**5.1 — arte de decoração**~~ — ✅ **feito 08/09/2026.** As 14 peças foram
+>   REFEITAS DUAS vezes no mesmo dia. A 1ª rodada corrigiu os defeitos medidos
+>   nas peças de 12/08 (256×256 em caixas não-quadradas, então o `objectFit:
+>   contain` encolhia cada peça até o menor lado — o tapete renderizava como um
+>   selo de 16×16 num slot de 104×16; `furn-books` tinha 2,41% de roxo). A 2ª
+>   rodada trocou o ESTILO para **arcano-tech**, por decisão do dono — ver
+>   `docs/PROMPT-ARTE-ARCANO-TECH.md`. Todas exportadas no **tamanho do slot ×
+>   2**, que dá escala 2:1 nos dois eixos. Detalhe em `_gemini_out/arcano/`.
 >
 > 👉 **O handoff completo dessa sessão é `docs/HANDOFF-ARTE-GEMINI.md`** — tem
 > os prompts prontos das duas frentes, os critérios de aceitação de cada peça e

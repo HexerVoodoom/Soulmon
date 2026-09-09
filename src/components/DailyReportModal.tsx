@@ -5,6 +5,7 @@ import { UnlockNudge } from './UnlockAccountModal';
 import { MemoriesCard } from './MemoriesCard';
 import { MOOD_OPTIONS, type MoodValue } from '../utils/mood';
 import type { AdventureFind } from '../utils/adventure';
+import { ADVENTURE_ART } from '../utils/adventureArt';
 import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
 import confettiBurst from '../assets/icons/confetti-burst.png';
@@ -305,7 +306,14 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, on
                 border: '1px solid var(--sm2-line)',
               }}
             >
-              <span aria-hidden style={{ fontSize: 28, lineHeight: 1 }}>{adventure.emoji}</span>
+              {/* Arte pixel quando existe, emoji quando não — o mesmo `? :` do
+                  `DreamDex`. A cobertura de `ADVENTURE_ART` é parcial (as 12
+                  cenas comuns), e é o emoji do catálogo que segura as demais
+                  sem deixar buraco na tela. */}
+              {ADVENTURE_ART[adventure.id]
+                ? <img src={ADVENTURE_ART[adventure.id]} alt="" width={28} height={28}
+                       style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+                : <span aria-hidden style={{ fontSize: 28, lineHeight: 1 }}>{adventure.emoji}</span>}
               <div style={{ minWidth: 0 }}>
                 <p style={{ ...hint, margin: 0 }}>
                   {isPt ? 'Da aventura de hoje' : "From today's adventure"}
