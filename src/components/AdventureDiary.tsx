@@ -23,6 +23,7 @@
  */
 import type { CSSProperties } from 'react';
 import { findById } from '../utils/adventure';
+import { ADVENTURE_ART } from '../utils/adventureArt';
 import { sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
@@ -102,7 +103,12 @@ export function AdventureDiary({ entries, language }: AdventureDiaryProps) {
         <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {linhas.map(({ e, achado }) => (
             <li key={e.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <span aria-hidden style={{ fontSize: 24, lineHeight: 1.2 }}>{achado.emoji}</span>
+              {/* Arte pixel quando existe, emoji quando não (ver
+                  `utils/adventureArt.ts`: a cobertura é parcial de propósito). */}
+              {ADVENTURE_ART[achado.id]
+                ? <img src={ADVENTURE_ART[achado.id]} alt="" width={24} height={24}
+                       style={{ objectFit: 'contain', imageRendering: 'pixelated', flexShrink: 0 }} />
+                : <span aria-hidden style={{ fontSize: 24, lineHeight: 1.2 }}>{achado.emoji}</span>}
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>
