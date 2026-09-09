@@ -3,11 +3,16 @@
 
 import { isAllowedPushEndpoint } from './_pushTargets.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
+import {
+  nomeDePet, idiomaDePush, dataDeNascimento, gravarSeMudou, LIMITE_INSCRICAO,
+} from './_pushIdentity.js';
 
 // Esta rota ESCREVE em KV sem custo para quem chama, e cada linha gravada vira
 // 4 `fetch` por dia no cron por até um ano. Um laço de shell aqui compra
 // tráfego de saída pago por nós. Ver `_rateLimit.js` para o que este teto não é.
-const SUB_LIMIT = { limit: 10, windowMs: 60_000 };
+// O NÚMERO mora em `_pushIdentity.js` porque tem dois leitores: esta rota e a
+// irmã de FCM. Ver o cabeçalho de lá.
+const SUB_LIMIT = LIMITE_INSCRICAO;
 
 function costGate(request) {
   const gate = takeToken('subscribe', clientKey(request), SUB_LIMIT);
@@ -81,18 +86,18 @@ export async function onRequestPost({ request, env }) {
     // guardado em KV por um ano e interpolado no TÍTULO da notificação. Duas
     // regras diferentes para o mesmo tipo de campo é o footgun 9 em miniatura,
     // e está escrito assim no `community.js`, sobre o nome do grupo.
-    petName: String(petName ?? '').replace(/\s+/g, ' ').trim().slice(0, 24) || 'Soulmon',
+    petName: nomeDePet(petName),
     /* WP1.17 — a idade da criatura, para a copy dos dias 1 e 2. É `YYYY-MM-DD`
        e só isso: dia, sem hora e sem fuso, porque a única pergunta é "faz
        quantos dias". Guardado NA SUBSCRIPTION de propósito — cancelar o push
        apaga a idade junto, e não existe registro separado sobrevivendo a
        isso. Formato inválido é DESCARTADO em vez de corrigido: um `bornAt`
        torto viraria dia 1 para sempre. */
-    bornAt: /^\d{4}-\d{2}-\d{2}$/.test(String(bornAt ?? '')) ? bornAt : undefined,
+    bornAt: dataDeNascimento(bornAt),
     // Dois valores possíveis, e só. `_pushCopy.js` só pergunta se é `pt-BR`,
     // então qualquer outra coisa já caía em inglês — mas gravar a string crua
     // guardava texto de cliente sem teto num registro de um ano.
-    language: language === 'pt-BR' ? 'pt-BR' : 'en-US',
+    language: idiomaDePush(language),
   };
 
   // A chave é o hash do endpoint, então reenviar a MESMA inscrição já era
@@ -104,26 +109,7 @@ export async function onRequestPost({ request, env }) {
   // um jogador ativo com a inscrição inalterada perderia o push exatamente no
   // aniversário dela — silenciosamente, que é o pior modo de falha deste canal.
   // Por isso a gravação também acontece quando o registro está velho.
-  const REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
-  let previous = null;
-  try {
-    previous = JSON.parse((await env.PUSH_SUBSCRIPTIONS.get(kvKey)) || 'null');
-  } catch {
-    previous = null;
-  }
-  const unchanged =
-    previous &&
-    JSON.stringify({ ...previous, refreshedAt: undefined }) ===
-      JSON.stringify({ ...record, refreshedAt: undefined });
-  const stale = !previous?.refreshedAt || Date.now() - previous.refreshedAt > REFRESH_AFTER_MS;
-
-  if (!unchanged || stale) {
-    await env.PUSH_SUBSCRIPTIONS.put(
-      kvKey,
-      JSON.stringify({ ...record, refreshedAt: Date.now() }),
-      { expirationTtl: 60 * 60 * 24 * 365 },
-    );
-  }
+  await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, kvKey, record);
 
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,

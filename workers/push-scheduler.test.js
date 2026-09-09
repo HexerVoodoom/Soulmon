@@ -16,6 +16,14 @@
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import worker, { previousSeasonBrt } from './push-scheduler.js';
 
+/**
+ * Token de registro com a FORMA de um real. Era `'t'` até 09/09/2026, e virou
+ * isto quando o cron passou a APAGAR a linha cujo token não tem forma de token
+ * — com `'t'` estes casos passariam a medir "nada foi enviado" por engano, que
+ * é o mesmo motivo pelo qual `SUB_KEYS` são chaves de verdade.
+ */
+const TOKEN_FCM = `dQw4w9WgXcQ:APA91b${'H'.padEnd(140, 'x')}`;
+
 /** KV de mentira com `list` paginado, que é o que `drainPrefix` usa. */
 function fakeKV(seed = {}) {
   const store = new Map(Object.entries(seed));
@@ -167,7 +175,7 @@ describe('push-scheduler — quem recebe', () => {
   it('sem FIREBASE_SERVICE_ACCOUNT o canal FCM é pulado sem quebrar o Web Push', async () => {
     stubPush();
     const env = {
-      PUSH_SUBSCRIPTIONS: fakeKV({ 'push:1': sub(), 'fcm:1': JSON.stringify({ token: 't', language: 'en-US' }) }),
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'push:1': sub(), 'fcm:1': JSON.stringify({ token: TOKEN_FCM, language: 'en-US' }) }),
       VAPID_JWK: await vapidJwk(),
       FIREBASE_SERVICE_ACCOUNT: undefined,
     };
@@ -193,7 +201,7 @@ describe('push-scheduler — IDIOMA da notificação (o bug que já aconteceu)',
       return Response.json({ name: 'ok' });
     }));
     const env = {
-      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: 't', petName: 'Bito', language }) }),
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: TOKEN_FCM, petName: 'Bito', language }) }),
       VAPID_JWK: undefined,
       FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
     };
@@ -234,7 +242,7 @@ describe('push-scheduler — IDIOMA da notificação (o bug que já aconteceu)',
       return Response.json({ name: 'ok' });
     }));
     const env = {
-      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: 't', language: 'en-US' }) }),
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: TOKEN_FCM, language: 'en-US' }) }),
       FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
     };
     await worker.scheduled(brt(10), env);
@@ -255,11 +263,105 @@ describe('push-scheduler — IDIOMA da notificação (o bug que já aconteceu)',
       return Response.json({ name: 'ok' });
     }));
     const env = {
-      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: 't', language: 'en-US' }) }),
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: TOKEN_FCM, language: 'en-US' }) }),
       FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
     };
     await worker.scheduled(brt(10), env);
     expect(JSON.stringify(pushed[0])).toContain('Soulmon');
+  });
+});
+
+describe('🔴 push-scheduler — a linha de FCM que nunca era apagada', () => {
+  /**
+   * O buraco: `sendFcmPush` devolve o status canônico do Google, e só
+   * `UNREGISTERED` era motivo de remoção. Um token TORTO — que entrava porque
+   * `functions/api/fcm-subscribe.js` não validava nada até 09/09/2026, e
+   * `{"token": []}` passava por ser truthy — devolve `INVALID_ARGUMENT` para
+   * SEMPRE. A linha tem TTL de um ano, o cron roda três vezes por dia: 1095
+   * entregas impossíveis por linha, gastando cota de FCM e inflando o contador
+   * de falhas, que é o único sinal de saúde deste canal.
+   */
+  function stubFcm(corpoDeErro) {
+    vi.stubGlobal('fetch', vi.fn(async url => {
+      if (String(url).includes('oauth2.googleapis.com')) {
+        return Response.json({ access_token: 'tk', expires_in: 3600 });
+      }
+      pushed.push(String(url));
+      return corpoDeErro
+        ? new Response(JSON.stringify({ error: { status: corpoDeErro } }), { status: 400 })
+        : Response.json({ name: 'ok' });
+    }));
+  }
+
+  it('token sem FORMA de token é apagado ANTES de virar chamada ao FCM', async () => {
+    // Removido por exame do PRÓPRIO token, sem depender do que o Google
+    // respondeu — a mesma revalidação-na-saída que a allowlist de endpoint
+    // já fazia do lado do Web Push.
+    stubFcm();
+    const env = {
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:torto': JSON.stringify({ token: 't', language: 'en-US' }) }),
+      FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
+    };
+    await worker.scheduled(brt(10), env);
+    expect(pushed).toHaveLength(0);
+    expect(env.PUSH_SUBSCRIPTIONS.store.has('fcm:torto')).toBe(false);
+  });
+
+  it('`{"token": []}` — a linha que a rota deixava entrar — também sai', async () => {
+    stubFcm();
+    const env = {
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:lixo': JSON.stringify({ token: [], language: 'en-US' }) }),
+      FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
+    };
+    await worker.scheduled(brt(10), env);
+    expect(env.PUSH_SUBSCRIPTIONS.store.has('fcm:lixo')).toBe(false);
+  });
+
+  it('`NOT_FOUND` apaga, do mesmo jeito que `UNREGISTERED` — é o irmão dele na v1', async () => {
+    for (const status of ['UNREGISTERED', 'NOT_FOUND']) {
+      stubFcm(status);
+      const env = {
+        PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: TOKEN_FCM, language: 'en-US' }) }),
+        FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
+      };
+      await worker.scheduled(brt(10), env);
+      expect(env.PUSH_SUBSCRIPTIONS.store.has('fcm:1'), status).toBe(false);
+    }
+  });
+
+  it('⚠️ `INVALID_ARGUMENT` NÃO apaga — ele também sai quando o defeito é NOSSO', async () => {
+    // Um payload malformado por um deploy ruim devolve `INVALID_ARGUMENT`
+    // para TODAS as inscrições ao mesmo tempo. Apagar aqui seria perder a
+    // base inteira de push por causa de um bug nosso de uma hora. O caso
+    // legítimo dele — token torto — já saiu acima, por exame do token.
+    stubFcm('INVALID_ARGUMENT');
+    const env = {
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: TOKEN_FCM, language: 'en-US' }) }),
+      FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
+    };
+    await worker.scheduled(brt(10), env);
+    expect(env.PUSH_SUBSCRIPTIONS.store.has('fcm:1')).toBe(true);
+  });
+
+  it('erro TEMPORÁRIO não apaga — indisponibilidade do Google não é cancelamento', async () => {
+    stubFcm('UNAVAILABLE');
+    const env = {
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: TOKEN_FCM, language: 'en-US' }) }),
+      FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
+    };
+    await worker.scheduled(brt(10), env);
+    expect(env.PUSH_SUBSCRIPTIONS.store.has('fcm:1')).toBe(true);
+  });
+
+  it('e a inscrição BOA continua recebendo — senão tudo acima seria vácuo', async () => {
+    stubFcm();
+    const env = {
+      PUSH_SUBSCRIPTIONS: fakeKV({ 'fcm:1': JSON.stringify({ token: TOKEN_FCM, language: 'en-US' }) }),
+      FIREBASE_SERVICE_ACCOUNT: SERVICE_ACCOUNT,
+    };
+    await worker.scheduled(brt(10), env);
+    expect(pushed).toHaveLength(1);
+    expect(env.PUSH_SUBSCRIPTIONS.store.has('fcm:1')).toBe(true);
   });
 });
 

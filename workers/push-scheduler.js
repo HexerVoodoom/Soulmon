@@ -22,6 +22,7 @@ import { sendWebPush } from './webpush.js';
 import { isAllowedPushEndpoint } from '../functions/api/_pushTargets.js';
 import { getFcmAccessToken, sendFcmPush } from './fcm.js';
 import { pushCopy } from '../functions/api/_pushCopy.js';
+import { ehTokenFcm } from '../functions/api/_pushIdentity.js';
 
 const VAPID_PUBLIC_KEY = 'BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwRi4lvarHEeAR5hD6aawtb_QYIy4Ir16zdo';
 // Endereço de contato do VAPID (RFC 8292 `sub`): é para onde o SERVIÇO DE
@@ -189,11 +190,30 @@ export default {
     if (serviceAccount) {
       const accessToken = await getFcmAccessToken(serviceAccount);
       await drainPrefix(env, 'fcm:', async (sub, name) => {
+        // Revalidação na SAÍDA, do mesmo jeito que o Web Push faz com a
+        // allowlist de endpoint: as linhas gravadas antes de
+        // `functions/api/fcm-subscribe.js` validar o token continuam na KV com
+        // TTL de um ano. Um token torto devolve `INVALID_ARGUMENT` para
+        // SEMPRE, e `INVALID_ARGUMENT` não era caso de remoção — a linha ficava
+        // sendo tentada 3×/dia por um ano inteiro, gastando cota de FCM e
+        // poluindo o contador de falhas que é o único sinal de saúde do canal.
+        if (!ehTokenFcm(sub.token)) {
+          await env.PUSH_SUBSCRIPTIONS.delete(name);
+          return 'removed';
+        }
         const notif = pushCopy(brtHour, sub.petName, sub.language, ageDaysOf(sub, date));
         if (!notif) return 'skipped';
         const result = await sendFcmPush(sub.token, notif, serviceAccount.project_id, accessToken);
         if (result.ok) return 'sent';
-        if (result.error === 'UNREGISTERED') {
+        // `NOT_FOUND` é o irmão de `UNREGISTERED` na v1 do FCM: o registro não
+        // existe mais do lado do Google. Os dois são permanentes e por TOKEN.
+        //
+        // ⚠️ `INVALID_ARGUMENT` NÃO entra nesta lista de propósito. Ele também
+        // sai quando o defeito é NOSSO (payload malformado por um deploy ruim),
+        // e aí apagar significaria apagar TODAS as inscrições de uma vez. O
+        // token torto — que é o caso legítimo dele — já foi removido acima, por
+        // exame do próprio token, sem depender do que o Google respondeu.
+        if (result.error === 'UNREGISTERED' || result.error === 'NOT_FOUND') {
           await env.PUSH_SUBSCRIPTIONS.delete(name);
           return 'removed';
         }
