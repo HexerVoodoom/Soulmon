@@ -24,11 +24,14 @@
  *    por escrito que "o jogo NUNCA cobra da barra que representa o cuidado"
  *    numa derrota de minijogo; o som contradizia a regra escrita.
  *
- * **A D11 não é medida aqui, de propósito.** `sounds.ts` não tem uma ocorrência
- * de `document.hidden` — a fronteira mora no CHAMADOR, e ler o fonte do módulo
- * atrás dela só encontraria a ausência. Quem mede é `som-cortes.render.test.tsx`
- * (e `sintonia-chiado.render.test.tsx`, o precedente): espiona o módulo e
- * renderiza quem chama.
+ * 4. **D11 no choke point.** ⚠️ Este bloco dizia que a D11 "não é medida aqui,
+ *    de propósito" porque a fronteira moraria só no CHAMADOR, e mandava para
+ *    `som-cortes.render.test.tsx` — **arquivo que nunca existiu** (achado A-4
+ *    da Fase 3). Quem mede no chamador é `som-presenca-d11.render.test.tsx`,
+ *    para UM som; e `sintonia-chiado.render.test.tsx` é o precedente de
+ *    espionar o módulo e renderizar quem chama. As duas continuam valendo — o
+ *    que mudou é que `sounds.ts` PASSOU a ter o guard (`abaOculta`), porque a
+ *    regra valia por acidente de fiação. Ver o §4 no fim deste arquivo.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
@@ -189,5 +192,52 @@ describe('nenhum som órfão: todo `play*` exportado tem chamador', () => {
       fonte.includes('playDegenerate'),
       'score < 100 (`pts === 0`) tocava o som de perder a forma — a primeira partida de quem está aprendendo o minijogo era sonorizada como punição',
     ).toBe(false);
+  });
+});
+
+/* ── 4. D11 no CHOKE POINT, não só no chamador ──────────────────────────────
+ *
+ * ⚠️ Achado da Fase 3 (`squad-alpha-runs/som-01/sweeper/qa-report.md`, A-5).
+ *
+ * O cabeçalho deste arquivo dizia que a D11 "não é medida aqui, de propósito"
+ * porque "a fronteira mora no CHAMADOR", e apontava a régua para
+ * `som-cortes.render.test.tsx` — **um arquivo que não existe**. Quem mede a
+ * D11 hoje é `som-presenca-d11.render.test.tsx`, e mede para UM som
+ * (`playPresence`) num call-site.
+ *
+ * O problema não é o teste que falta, é a AUSÊNCIA DE CHOKE POINT. A D11
+ * ("nunca com `document.hidden`") vale hoje por uma propriedade que ninguém
+ * trava: todos os call-sites de produção são gesto. O app já tem caminhos que
+ * rodam em TIMER com a aba oculta — a virada do dia é checada a cada 30 s
+ * (`useDailyReset.ts`) —, então basta um `play*` novo nesse caminho para a D11
+ * cair sem nada ficar vermelho. É a mesma família do footgun 9: a regra vale
+ * por acidente de fiação, não por construção.
+ *
+ * O desenho aprovado da Fase 2 já resolvia isto na origem — o `audioBus`
+ * (`squad-alpha-runs/som-01`, fatia 2) tem "aba oculta não constrói nem toca"
+ * como segunda linha. Aquela fatia **não está na `main`** (achado A-1). Este
+ * guard põe a mesma asserção no ponto único que a `main` de fato tem, o
+ * `play()`, e continua valendo quando o barramento chegar.
+ *
+ * Não substitui a asserção no chamador: lá se prova que o gesto não soa; aqui
+ * se prova que NENHUM caminho soa. As duas juntas é que fecham a D11.
+ */
+describe('D11 · com a aba oculta, nenhum `play*` constrói áudio', () => {
+  it('OCULTA: nenhum `play*` constrói AudioContext nem cria nó', () => {
+    sounds.setMuted(false);
+    vi.stubGlobal('document', { hidden: true });
+    for (const [, fn] of CAMINHOS) fn();
+    expect(audio.contextos, 'algum caminho construiu contexto com a aba oculta').toBe(0);
+    expect(audio.nos, 'algum caminho criou nó de áudio com a aba oculta').toEqual([]);
+  });
+
+  it('CONTRAPROVA: com a aba visível o mesmo caminho soa (o guard não passa por inércia)', () => {
+    sounds.setMuted(false);
+    vi.stubGlobal('document', { hidden: false });
+    for (const [nome, fn] of CAMINHOS) {
+      const antes = audio.nos.length;
+      fn();
+      expect(audio.nos.length, `${nome} não criou nó com a aba visível`).toBeGreaterThan(antes);
+    }
   });
 });

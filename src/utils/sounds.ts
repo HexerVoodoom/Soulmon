@@ -13,8 +13,32 @@ export function setMuted(v: boolean): void {
   writeFlag(MUTED_KEY, v, { silent: true });
 }
 
+/**
+ * D11 no CHOKE POINT — a segunda linha, não a única.
+ *
+ * A D11 diz que som só sai em resposta a GESTO: nunca idle, nunca com a aba
+ * oculta. Até a Fase 3 essa regra valia por uma propriedade que ninguém
+ * travava — todos os call-sites de produção eram, por acaso, gesto. O app já
+ * tem caminho que roda em TIMER com a aba oculta (a virada do dia é checada a
+ * cada 30 s, `useDailyReset.ts`), então bastava um `play*` novo ali para a D11
+ * cair sem nada ficar vermelho. É a família do footgun 9: regra que vale por
+ * fiação, não por construção.
+ *
+ * O guard fica ANTES de qualquer nó, ao lado do mudo, pelo mesmo motivo: som
+ * que não devia sair não pode custar um `AudioContext` sequer. Não substitui a
+ * asserção no chamador (`som-presenca-d11.render.test.tsx`), que prova que o
+ * GESTO não soa; aqui se prova que NENHUM caminho soa.
+ *
+ * `typeof document` porque este módulo é importado em teste de nó puro, onde
+ * `document` não existe — ausência de documento não é aba oculta.
+ */
+function abaOculta(): boolean {
+  return typeof document !== 'undefined' && document.hidden === true;
+}
+
 function play(fn: (ctx: AudioContext) => void): void {
   if (isMuted()) return;
+  if (abaOculta()) return;
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     fn(ctx);
