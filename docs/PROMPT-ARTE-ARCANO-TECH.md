@@ -103,3 +103,66 @@ traz, **só o dono resolve** — clicar na janela do Chrome. A extensão de
 automação não levanta janela, e o `computer-use` deste ambiente não tem o Chrome
 na lista de aplicativos concedíveis (ele aparece só como "Chrome Remote
 Desktop").
+
+## Os três prompts da splash (A13), prontos para colar
+
+Único item de arte que sobrou. Cada um é uma **conversa nova**; o ciclo e o
+pós-processamento são os mesmos das outras peças. Depois de baixar:
+
+```bash
+node scripts/decor-para-caixa.mjs <raw.jfif> src/assets/soulmon/splash/<nome>.png <L> <A> --cores 10 --dist 34
+```
+
+### 1 · `logo-soulmon.png` (wordmark)
+
+```
+Pixel-art game logo on flat chroma green #00FF00, arcane-tech style: the word
+SOUL in hollow letters with a glowing neon cyan outline, and below it the word
+MON in solid deep copper with a dark outline. A cyan soul flame rises behind the
+letters, thin cyan circuit traces drip below like data rain. Hard-edged pixels,
+stepped shading, no anti-aliasing, no gradients, no blur. The lettering contains
+no green and no green fringe. No magenta, purple, violet or pink. Readable at 220
+pixels wide. Wide composition, aspect ratio 3:2, NOT square.
+```
+
+### 2 · `frame-pipes.png` (moldura 9:16 — resolve o A6 também)
+
+```
+Full-screen pixel-art frame on flat chroma green #00FF00, arcane-tech style: an
+ornate deep copper pipe border running along all four edges, with elbow joints
+and glowing cyan crystals at the four corners, and dark teal-green vines with
+small leaves wrapped asymmetrically around the pipes, denser at the top corners.
+THE CENTER IS ENTIRELY CHROMA GREEN AND EMPTY - only the border has art. The
+border contains no green and no green fringe. No magenta, purple, violet or
+pink. Readable at 360 pixels wide. Portrait composition, aspect ratio 9:16, NOT
+square.
+```
+
+### 3 · `crystals-pedestal.png` (os 3 cristais do rodapé)
+
+```
+Pixel-art element on flat chroma green #00FF00, arcane-tech style: three large
+glowing neon cyan crystals standing on small dark stone pedestals, side by side,
+connected to each other by hanging deep copper chains, front view. Stepped
+shading in flat bands, hard-edged pixels, no anti-aliasing, no gradients, no
+blur. The crystals and pedestals contain no green and no green fringe. No
+shadow, no ground line, no scenery. No magenta, purple, violet or pink. Readable
+at 280 pixels wide. Wide composition, aspect ratio 5:2, NOT square.
+```
+
+### Por que estes três não foram gerados nesta rodada
+
+**Seis envios perdidos, todos com `document.visibilityState: "hidden"`.** A
+janela do Chrome estava maximizada (1920×953) mas atrás da janela do app do
+Claude, e nessa condição o Gemini descarta o envio — o texto entra no
+`contenteditable` (confirmado por leitura) e desaparece sem criar conversa.
+
+Tentado e falhado para trazer a janela à frente: `screenshot` na aba (às vezes
+funciona, não funcionou), fechar o grupo de abas e deixar a extensão criar uma
+JANELA nova, e `computer-use` — este último não tem o Chrome na lista de
+aplicativos concedíveis desta máquina (aparece só como "Chrome Remote Desktop").
+
+⚠️ **`hidden` não é bloqueio absoluto**, e é isso que faz valer a pena insistir:
+na mesma condição, nesta sessão, passaram a folha de 12 ícones e as duas
+gerações do berço. É intermitente. O que resolve de vez é o dono clicar na
+janela do Chrome.
