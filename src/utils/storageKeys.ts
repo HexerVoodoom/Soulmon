@@ -63,6 +63,18 @@ export const STORAGE_KEYS = {
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
   DINO_BEST: 'soulmon-dino-best',
   SOUND_MUTED: 'soulmon-sound-muted',
+  /** Volume por categoria (`utils/loudness.ts`), 0..1, JSON. Chave NOVA — a
+   *  proibição #20 vale: `SOUND_MUTED` não é renomeada, só se ACRESCENTA. */
+  SOUND_CATEGORY_VOLUMES: 'soulmon-sound-category-volumes',
+  /** Estado da TRILHA, e ele é SEPARADO do mudo global — decisão S2
+   *  (08/09/2026, `docs/REGISTRO-DE-DECISOES.md` §6.1). Motivo mecânico: o som
+   *  do app NASCE LIGADO, porque `isMuted()` lê `readFlag`, que devolve `false`
+   *  sem a chave. Isso é coerente para SFX (que só saem por gesto) e
+   *  INCOMPATÍVEL com trilha, que é contínua — pendurar a trilha no `mute`
+   *  global a faria nascer tocando, ou seja, autoplay, que a D11 veta.
+   *  Aqui a polaridade é invertida de propósito: a chave guarda LIGADA, então
+   *  `readFlag` sem a chave devolve `false` e a trilha nasce DESLIGADA. */
+  SOUND_TRACK_ENABLED: 'soulmon-sound-track-enabled',
   FCM_TOKEN: 'soulmon-fcm-token',
   LAST_CLOUD_SYNC: 'soulmon-last-cloud-sync',
   ORACLE_FORM: 'soulmon-oracle-form',

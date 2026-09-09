@@ -1,5 +1,7 @@
 import { readFlag, writeFlag } from './safeStorage';
 import { STORAGE_KEYS } from './storageKeys';
+import { tocarNa } from './audioBus';
+import { CATEGORIA_DO_SOM } from './loudness';
 
 const MUTED_KEY = STORAGE_KEYS.SOUND_MUTED;
 
@@ -13,19 +15,28 @@ export function setMuted(v: boolean): void {
   writeFlag(MUTED_KEY, v, { silent: true });
 }
 
-function play(fn: (ctx: AudioContext) => void): void {
+/**
+ * ⚠️ **O `AudioContext`-por-chamada MORREU aqui** (run `som-01`, Fase 2, fatia
+ * 2). Esta função abria um contexto novo a cada som, tocava e fechava em 2 s:
+ * sem barramento, sem sub-mix, sem ducking, sem volume. Hoje ela é só o **gate
+ * de mudo** — e o gate continua vindo ANTES de qualquer construção de nó, que é
+ * o que `sounds.contract.test.ts` mede. Quem constrói e reaproveita o contexto
+ * é `utils/audioBus.ts`; a categoria vem de `utils/loudness.ts`, dono único.
+ *
+ * `fn` recebe o nó de ENTRADA da categoria, nunca `ctx.destination`, e devolve
+ * a duração do som em segundos — é ela que fecha os duckings D-1 e D-2.
+ */
+function play(
+  nomeDoSom: keyof typeof CATEGORIA_DO_SOM,
+  fn: (ctx: AudioContext, destino: AudioNode) => number,
+): void {
   if (isMuted()) return;
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    fn(ctx);
-    setTimeout(() => ctx.close().catch(() => {}), 2000);
-  } catch {
-    // silently ignore — some browsers block AudioContext without user gesture
-  }
+  tocarNa(CATEGORIA_DO_SOM[nomeDoSom], fn);
 }
 
 function beep(
   ctx: AudioContext,
+  destino: AudioNode,
   freq: number,
   startOffset: number,
   duration: number,
@@ -35,7 +46,7 @@ function beep(
   const osc = ctx.createOscillator();
   const vol = ctx.createGain();
   osc.connect(vol);
-  vol.connect(ctx.destination);
+  vol.connect(destino);
   osc.type = type;
   osc.frequency.value = freq;
   const t = ctx.currentTime + startOffset;
@@ -60,46 +71,50 @@ function beep(
       comunica ("estou aqui") só precisa ser dita uma vez.
    O `presencaTocadaRef` do `CompanionHUD` é quem guarda a segunda regra. */
 export function playPresence(): void {
-  play(ctx => {
-    beep(ctx, 587, 0, 0.07, 'sine', 0.399457);
-    beep(ctx, 880, 0.08, 0.12, 'sine', 0.359511);
+  play('playPresence', (ctx, destino) => {
+    beep(ctx, destino, 587, 0, 0.07, 'sine', 0.399457);
+    beep(ctx, destino, 880, 0.08, 0.12, 'sine', 0.359511);
+    return 0.20;
   });
 }
 
 /** Short ascending 3-note arpeggio (C–E–G) */
 export function playTaskComplete(): void {
-  play(ctx => {
-    beep(ctx, 523, 0,    0.08, 'square', 0.112767);
-    beep(ctx, 659, 0.09, 0.08, 'square', 0.112767);
-    beep(ctx, 784, 0.18, 0.15, 'square', 0.112767);
+  play('playTaskComplete', (ctx, destino) => {
+    beep(ctx, destino, 523, 0,    0.08, 'square', 0.112767);
+    beep(ctx, destino, 659, 0.09, 0.08, 'square', 0.112767);
+    beep(ctx, destino, 784, 0.18, 0.15, 'square', 0.112767);
+    return 0.33;
   });
 }
 
 /** Quick 2-note munch */
 export function playFeed(): void {
-  play(ctx => {
-    beep(ctx, 440, 0,    0.06, 'square', 0.250427);
-    beep(ctx, 330, 0.07, 0.09, 'square', 0.250427);
+  play('playFeed', (ctx, destino) => {
+    beep(ctx, destino, 440, 0,    0.06, 'square', 0.250427);
+    beep(ctx, destino, 330, 0.07, 0.09, 'square', 0.250427);
+    return 0.16;
   });
 }
 
 /** Water-drip bursts */
 export function playShower(): void {
-  play(ctx => {
+  play('playShower', (ctx, destino) => {
     const pitches = [600, 750, 520, 680, 580, 720];
     pitches.forEach((freq, i) => {
-      beep(ctx, freq, i * 0.09, 0.06, 'sine', 0.232594);
+      beep(ctx, destino, freq, i * 0.09, 0.06, 'sine', 0.232594);
     });
+    return (pitches.length - 1) * 0.09 + 0.06;
   });
 }
 
 /** Dramatic power-up sweep + two high notes */
 export function playEvolve(): void {
-  play(ctx => {
+  play('playEvolve', (ctx, destino) => {
     const osc = ctx.createOscillator();
     const vol = ctx.createGain();
     osc.connect(vol);
-    vol.connect(ctx.destination);
+    vol.connect(destino);
     osc.type = 'square';
     const t = ctx.currentTime;
     osc.frequency.setValueAtTime(100, t);
@@ -111,27 +126,30 @@ export function playEvolve(): void {
     osc.start(t);
     osc.stop(t + 0.56);
 
-    beep(ctx, 1047, 0.58, 0.08, 'square', 0.180585);
-    beep(ctx, 1319, 0.68, 0.15, 'square', 0.180585);
+    beep(ctx, destino, 1047, 0.58, 0.08, 'square', 0.180585);
+    beep(ctx, destino, 1319, 0.68, 0.15, 'square', 0.180585);
+    return 0.83;
   });
 }
 
 /** Descending sad tones + low thud */
 export function playDegenerate(): void {
-  play(ctx => {
-    beep(ctx, 440, 0,    0.12, 'square', 0.212903);
-    beep(ctx, 349, 0.14, 0.12, 'square', 0.212903);
-    beep(ctx, 262, 0.28, 0.15, 'square', 0.212903);
-    beep(ctx, 147, 0.45, 0.25, 'square', 0.141935);
+  play('playDegenerate', (ctx, destino) => {
+    beep(ctx, destino, 440, 0,    0.12, 'square', 0.212903);
+    beep(ctx, destino, 349, 0.14, 0.12, 'square', 0.212903);
+    beep(ctx, destino, 262, 0.28, 0.15, 'square', 0.212903);
+    beep(ctx, destino, 147, 0.45, 0.25, 'square', 0.141935);
+    return 0.70;
   });
 }
 
 /** Soft descending lullaby notes */
 export function playSleep(): void {
-  play(ctx => {
-    beep(ctx, 523, 0,    0.18, 'sine', 0.201414);
-    beep(ctx, 440, 0.21, 0.18, 'sine', 0.176237);
-    beep(ctx, 349, 0.44, 0.25, 'sine', 0.125884);
+  play('playSleep', (ctx, destino) => {
+    beep(ctx, destino, 523, 0,    0.18, 'sine', 0.201414);
+    beep(ctx, destino, 440, 0.21, 0.18, 'sine', 0.176237);
+    beep(ctx, destino, 349, 0.44, 0.25, 'sine', 0.125884);
+    return 0.69;
   });
 }
 
@@ -207,7 +225,7 @@ export function playSleep(): void {
  * raciocínio em `EvolutionPath.tsx`/`CompanionHUD.tsx`.
  */
 export function playVisorTune(): void {
-  play(ctx => {
+  play('playVisorTune', (ctx, destino) => {
     const DUR = 0.4;
     const taxa = ctx.sampleRate;
     const buffer = ctx.createBuffer(1, Math.ceil(taxa * DUR), taxa);
@@ -231,7 +249,7 @@ export function playVisorTune(): void {
     const vol = ctx.createGain();
     fonte.connect(filtro);
     filtro.connect(vol);
-    vol.connect(ctx.destination);
+    vol.connect(destino);
 
     const t = ctx.currentTime;
     filtro.frequency.setValueAtTime(900, t);
@@ -243,5 +261,6 @@ export function playVisorTune(): void {
 
     fonte.start(t);
     fonte.stop(t + DUR);
+    return DUR;
   });
 }
