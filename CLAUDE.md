@@ -40,6 +40,15 @@ via `language === 'pt-BR'`).
 > lá**: se a mudança for a alternativa que já perdeu, a pergunta não é "por que
 > não fazemos X?", é "o que mudou desde que X perdeu?".
 
+> **`docs/SOM.md`** é o guia do eixo sonoro: onde cada regra mora, quem é o dono,
+> que gate roda e o que ele reprova. **Leia antes de mexer em qualquer som** —
+> `src/utils/sounds.ts`, `audioBus.ts` ou `loudness.ts`. As decisões canônicas são
+> **S1..S10** no `REGISTRO-DE-DECISOES.md` §6.1; o `SOM.md` orienta, não decide.
+> Duas regras que já custaram caro e estão explicadas lá: **a categoria de um som
+> vem do EVENTO, nunca do nível medido do arquivo**, e **o alvo de loudness nunca
+> se escreve à mão no código** (há guard que reprova). O runbook completo vive em
+> `squad-alpha-runs/som-01/maintainer/`, que **não vai para o git**.
+
 > **`docs/STATUS.md` é o registro vivo do projeto**: achados de segurança em
 > aberto, o que já foi corrigido e a lista do que depende do dono. Leia no
 > começo da sessão e **atualize ao terminar qualquer coisa relevante**.
