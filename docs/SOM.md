@@ -5,24 +5,29 @@
 > pasta está no **`.gitignore`**, ou seja, **não vai para o git**. Por isso este arquivo
 > existe: é a parte que precisa sobreviver. Se você precisar de detalhe que não está aqui,
 > ele está lá, na máquina de quem rodou o run.
-> **Origem:** run `som-01` (Fases 0 e 1, 08–09/09/2026). As decisões canônicas são **S1..S10**
+> **Origem:** run `som-01` (Fases 0 a 3, 08–09/09/2026). As decisões canônicas são **S1..S13**
 > em `docs/REGISTRO-DE-DECISOES.md` §6.1 — este documento não decide nada, só orienta.
+> ⚠️ Este arquivo foi escrito na Fase 5, **antes** da Fase 3 e das decisões S11–S13: as
+> seções 2, 2.1 e 5 foram **corrigidas em 09/09/2026** contra o código e contra os
+> artefatos do run, e o que estava obsoleto está marcado onde estava.
 > Nenhum usuário jamais usou o app (`docs/STATUS.md`): tudo sobre "o usuário" é `[hipótese]`.
 
 ## 1. Onde o som mora
 
 | O quê | Arquivo |
 |---|---|
-| Os sons (síntese procedural, um `play*` por evento) | `src/utils/sounds.ts` |
+| Os sons — **8 símbolos** (`playPresence`, `playTaskComplete`, `playFeed`, `playShower`, `playEvolve`, `playDegenerate`, `playSleep`, `playVisorTune`), síntese procedural, zero byte de asset | `src/utils/sounds.ts` |
 | **A política de loudness** (categorias, alvos, teto, degrau, offsets) — **dono único** | `src/utils/loudness.ts` |
-| Barramento e despacho | `src/utils/audioBus.ts` |
+| Barramento único (sub-mix por categoria, limitador, ducking) e **despacho com a R-EX** | `src/utils/audioBus.ts` |
+| Trava da **R-NOVA** — os sons cortados não podem voltar por superfície nova | `src/utils/cortes.contract.test.ts` |
+| Trava da **R-EX** — janela de coincidência e critério de desempate | `src/utils/audioBus.rex.test.ts` |
 | Guards que leem o fonte (AC-4 cobertura, AC-5 plausibilidade, escada) | `src/utils/loudness.contract.test.ts` |
 | Guards de call-site (quem chama `play*`, quando, sob `prefers-reduced-motion`) | `src/utils/sounds.contract.test.ts`, `src/components/sintonia-chiado.render.test.tsx` |
 
 **Nunca copie um alvo, um teto ou um degrau para outro arquivo.** A política tem dono único, e
 há um teste (`footgun 9`) que reprova a cópia.
 
-## 2. As seis regras que não se negociam
+## 2. As sete regras que não se negociam
 
 1. **D11 — som só por gesto do usuário.** Nunca agendado pelo app, nunca com `document.hidden`.
    *Porque* "som que sai sozinho não é presença, é alarme": o perfil `[hipótese]` "usuário em
@@ -47,6 +52,34 @@ há um teste (`footgun 9`) que reprova a cópia.
    um único membro se, e só se, o perfil de repetição do membro não coincidir com o de nenhuma
    outra. *Porque* categoria criada para caber na medição de um arquivo é decoração: foi assim
    que `playVisorTune` ficou **dois degraus errado** sem nada ficar vermelho.
+7. **R-NOVA — toda superfície nova nasce MUDA.** Tela, modo ou fluxo novo entra sem chamar
+   nenhum `play*`; o som só é acrescentado depois, pelo caminho do §4 (evento → categoria →
+   alvo → calibração → gate). *Porque* a régua faltou uma vez e o preço está medido:
+   `ArenaGame.tsx` nasceu **21 minutos antes** do commit dos cortes, reintroduziu dois sons já
+   cortados (`playTaskComplete` e `playFeed`) e **3.974 testes passaram verdes**. O defeito não
+   foi a tela — foi a **ausência de régua para superfície nova**. Hoje existe a régua:
+   `src/utils/cortes.contract.test.ts`.
+
+## 2.1 O que já está decidido, e não se reabre por conta própria
+
+- **S11 — o carinho não ganha som próprio.** O motivo é contraintuitivo e por isso está escrito:
+  o gesto **já tem som**. Tocar e esfregar são o mesmo dedo, então o carinho é coberto pela
+  **Presença**, que toca **1×/sessão** pela **D11**. Dar som ao carinho seria dar som ao evento
+  mais repetido do app — e um motivo que se repete está proibido. **Custo zero**: nenhuma
+  amostra, nenhum byte, nenhuma categoria.
+- **S12 — a Arena é muda.** Se um dia tiver som, será a classe **Arcade** genérica, **sem uma
+  única amostra própria**: pela R-CAT, rodada de combate é impacto e rodada limpa é fim de
+  partida, e as duas já estão na Arcade. A **R-NOVA** (regra 7) saiu daqui.
+- **S13 — o contrato adaptativo E0–E6 está CONGELADO** como proposta não verificada: validar
+  camadas sem nenhuma camada mede só que o barramento sobe e desce um ganho. **Duas peças foram
+  extraídas e valem sozinhas**, porque não são regra de trilha: **E0** (`document.hidden` · app
+  sem foco · `isSleeping` · janela de descanso) é **D11 + S2 sobre o pacote inteiro** e vale para
+  os SFX que existem hoje; e a **chave da trilha separada do `SOUND_MUTED`** é proibição, que não
+  precisa de asset para valer.
+  **O que o descongela — as duas condições juntas:** (1) existirem no repositório **≥2 camadas
+  reais** (`base` + `ritmo`) no mesmo BPM fixo declarado no manifesto, com hash e procedência; **e**
+  (2) o dono ter ligado a trilha por gesto **ao menos uma vez** numa sessão real.
+  ⚠️ **Recarregar crédito no gerador NÃO descongela sozinho.**
 
 ## 3. A escada de loudness (o critério é REPETIÇÃO, não importância)
 
@@ -80,8 +113,21 @@ Prompts (12) e a sequência de 6 passos estão prontos em
 crédito no gerador (a conta estava em **0,45**), **termos comerciais confirmados** (§13.2 nega
 garantia de originalidade e põe o *rights clearance* no usuário) e política de loja sobre IA.
 ⚠️ **`dist/` é commitado: todo byte é permanente no histórico do git.** Orçamento: **S6 — 300 KB
-no total, zero no bundle inicial**. Enquanto isso vale o **S10**: o procedural é a solução
-provisória, calibrado contra a escada.
+no total, zero no bundle inicial**. Enquanto isso vale o **S10**, com a
+emenda de 09/09/2026 embutida abaixo.
+
+**Correção por medição, 09/09/2026 — o S10 mudou de significado.** Este arquivo dizia que o
+procedural era a solução **provisória**; ficou obsoleto no mesmo dia. O dono decidiu **não
+recarregar o gerador por ora**, o prazo virou indeterminado, e a emenda à S10 (§6.1 do registro)
+diz o que passou a valer: **o som procedural é a solução VIGENTE do Soulmon**, não um rascunho
+esperando substituição. Ele foi calibrado contra a escada (dispersão de **41,63 dB → 8,02 dB**),
+passa nos três critérios do gate, e o subsistema inteiro ocupa **1,9% do orçamento S6 com zero
+byte de asset**.
+
+⚠️ **A frase que precisa sobreviver:** a premissa do run segue **não medida, não refutada** —
+ninguém comparou som de IA com o procedural em teste cego. **Ele não venceu, ele ficou** — o
+outro lado nunca entrou em campo. Dizer "o procedural venceu" é inventar um resultado que não
+existe. **Gatilho para reabrir, e ele não expira:** haver crédito no gerador, e o A/B rodar.
 
 ## 6. O gate — e a regra de ouro
 

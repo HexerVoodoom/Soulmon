@@ -43,7 +43,7 @@ via `language === 'pt-BR'`).
 > **`docs/SOM.md`** é o guia do eixo sonoro: onde cada regra mora, quem é o dono,
 > que gate roda e o que ele reprova. **Leia antes de mexer em qualquer som** —
 > `src/utils/sounds.ts`, `audioBus.ts` ou `loudness.ts`. As decisões canônicas são
-> **S1..S10** no `REGISTRO-DE-DECISOES.md` §6.1; o `SOM.md` orienta, não decide.
+> **S1..S13** no `REGISTRO-DE-DECISOES.md` §6.1; o `SOM.md` orienta, não decide.
 > Duas regras que já custaram caro e estão explicadas lá: **a categoria de um som
 > vem do EVENTO, nunca do nível medido do arquivo**, e **o alvo de loudness nunca
 > se escreve à mão no código** (há guard que reprova). O runbook completo vive em
@@ -267,6 +267,22 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   DONO, e pode ser apagada quando ele confirmar que abriu o app depois desta
   versão. O `sw.js` continua varrendo os DOIS prefixos na limpeza de cache —
   tirar o antigo deixaria lixo permanente na origem.
+- Áudio — três arquivos, cada um com um dono, e a referência é sempre por **símbolo** (endereço
+  `arquivo:linha` apodrece mais rápido que o número): `src/utils/sounds.ts` são os **8 sons**,
+  todos sintetizados, zero byte de asset — o **`AudioContext`-por-chamada não existe mais**, ele
+  morreu na Fase 2 do run `som-01`; `src/utils/audioBus.ts` é o **barramento único** (sub-mix por
+  categoria, limitador, ducking) e é onde a **R-EX** vive, no despacho de `tocarNa` — um gesto,
+  uma fonte, janela `JANELA_DE_COINCIDENCIA_MS`, a perdedora é descartada e **nunca**
+  enfileirada; `src/utils/loudness.ts` é a **política, com dono único** — **alvo de loudness
+  nunca se escreve à mão** em outro arquivo, há guard que reprova a cópia. ⚠️ A **D11** (som só
+  por gesto) vale nos **chamadores**, não no módulo: `sounds.ts` não tem uma única checagem de
+  `document.hidden` em código (só a prosa do cabeçalho) — o precedente de teste que prova a D11
+  no call-site é `src/components/sintonia-chiado.render.test.tsx`. Leia **`docs/SOM.md`** antes
+  de mexer em qualquer som; as decisões canônicas são **S1..S13** no `REGISTRO-DE-DECISOES.md`
+  §6.1, e três delas mordem em código: **R-CAT** (categoria vem do EVENTO, nunca do nível medido
+  do arquivo), **R-EX** e **R-NOVA** (**toda superfície nova nasce muda** — `ArenaGame.tsx`
+  reintroduziu dois sons cortados com 3.974 testes verdes; a régua que faltava hoje é
+  `src/utils/cortes.contract.test.ts`).
 - IA: `functions/api/chat.js` (Groq llama-3.1-8b-instant, personalidade via aiSettings).
 - Push: **dois canais**, mesma KV (`PUSH_SUBSCRIPTIONS`), mesmo cron
   (`workers/push-scheduler.js`, deploy manual via `wrangler deploy` dentro de
