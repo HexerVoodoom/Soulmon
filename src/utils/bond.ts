@@ -258,8 +258,27 @@ function stepFor(level: number): number {
  * XP total acumulado necessário para ESTAR no nível `n`. `xpForLevel(1) === 0`
  * — ninguém começa devendo. Monótona e sempre ≥ 0.
  */
+/**
+ * TETO DE NÍVEL — e ele existe por CUSTO DE CPU, não por balanceamento.
+ *
+ * `totalXP` mora no save, e o save é escrito pelo cliente. Sem teto, um
+ * `totalXP` forjado fazia o servidor girar um laço quadrático: medido em
+ * 08/09/2026, `bondLevelFor(1e10)` custava **183 ms de CPU numa chamada**, e a
+ * curva é quadrática (1e12 daria ~18 s). O caminho é o `action=profile` do
+ * `community.js`, que roda a CADA cloud save.
+ *
+ * O comentário que estava aqui afirmava que o laço "converge em poucas dezenas
+ * de voltas mesmo para um save absurdo". A medição diz o contrário — é o tipo
+ * de afirmação que um teste teria derrubado, e é por isso que agora existe um.
+ *
+ * 1000 é generoso ao ponto de ser inalcançável: exige ~5×10⁷ de XP, ou seja
+ * mais de um século jogando 1000 XP por dia. Nível nenhum de jogador real
+ * encosta nisso, e o gate de PvP vive no 5.
+ */
+export const BOND_MAX_LEVEL = 1000;
+
 export function xpForLevel(n: number): number {
-  const level = Math.max(1, Math.floor(safe(n, 1)));
+  const level = Math.min(BOND_MAX_LEVEL, Math.max(1, Math.floor(safe(n, 1))));
   let total = 0;
   for (let k = 1; k < level; k++) total += stepFor(k);
   return total;
@@ -275,10 +294,17 @@ export function xpForLevel(n: number): number {
  */
 export function bondLevelFor(totalXP: number): number {
   const xp = Math.max(0, safe(totalXP));
+  // ACUMULA em vez de recalcular. `xpForLevel` é O(nível), então chamá-la
+  // dentro do laço fazia o custo total ser O(nível²) — e `totalXP` vem do
+  // save, que o cliente escreve. Somar o degrau a cada volta dá o MESMO
+  // número em O(nível), e o teto (`BOND_MAX_LEVEL`) fecha a conta.
   let level = 1;
-  // A curva é quadrática, então isto converge em poucas dezenas de voltas
-  // mesmo para um save absurdo.
-  while (xp >= xpForLevel(level + 1)) level++;
+  let acumulado = 0;
+  while (level < BOND_MAX_LEVEL) {
+    acumulado += stepFor(level);     // == xpForLevel(level + 1)
+    if (xp < acumulado) break;
+    level++;
+  }
   return level;
 }
 

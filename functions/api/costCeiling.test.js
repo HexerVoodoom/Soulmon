@@ -1,4 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+/** Chaves de Web Push com FORMA plausível. `subscribe.js` passou a exigir
+ *  base64url com teto em 08/09/2026: par torto grava uma linha que nunca
+ *  recebe push, e o serviço responde 400 — que a limpeza do cron NÃO trata
+ *  (ela só apaga em 410/404), então a linha ficaria tentando 4×/dia por um
+ *  ano. Placeholders de um caractere não passam mais, e isso é de propósito. */
+const CHAVES = { p256dh: 'BEl'.padEnd(87, 'A'), auth: 'c2VncmVkbzE2Ynl0ZQ' };
 import { onRequest as community } from './community.js';
 import { onRequestPost as subscribePost, onRequestDelete as subscribeDelete } from './subscribe.js';
 import { resetRateLimits } from './_rateLimit.js';
@@ -109,7 +116,7 @@ describe('subscribe: escrita sem teto era custo de KV + fetch do cron por 1 ano'
       headers: { 'Content-Type': 'application/json', ...headers },
       body: JSON.stringify({
         endpoint,
-        keys: { p256dh: 'p', auth: 'a' },
+        keys: { p256dh: CHAVES.p256dh, auth: CHAVES.auth },
         petName: 'Bicho',
         language: 'pt-BR',
       }),
@@ -145,7 +152,7 @@ describe('subscribe: escrita sem teto era custo de KV + fetch do cron por 1 ano'
     const req2 = new Request('https://soulmon.test/api/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...IP },
-      body: JSON.stringify({ endpoint: ep, keys: { p256dh: 'p', auth: 'a' }, petName: 'Bicho', language: 'en-US' }),
+      body: JSON.stringify({ endpoint: ep, keys: { p256dh: CHAVES.p256dh, auth: CHAVES.auth }, petName: 'Bicho', language: 'en-US' }),
     });
     await subscribePost({ request: req2, env });
     expect(env.PUSH_SUBSCRIPTIONS.counts.put).toBe(2);

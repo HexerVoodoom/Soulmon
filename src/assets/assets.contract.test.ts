@@ -261,13 +261,37 @@ describe('guard de asset — integridade dos arquivos', () => {
    * e só aparece quando alguém tenta usá-lo. Checar só o que já está importado
    * pega tarde demais: pega depois de alguém ter ligado o arquivo quebrado.
    */
+  /**
+   * ⚠️ ESTE CASO ERA INSTÁVEL, e o modo de falha era o pior possível.
+   *
+   * O laço decodificava os ~500 assets UM POR UM, com `await` dentro do `for`.
+   * Sozinho ele leva ~3,3 s; na suíte cheia, disputando CPU com 250 outros
+   * arquivos, passava dos 15 s de `TEST_TIMEOUT_MS` e morria com
+   * `Test timed out in 15000ms` — medido em 08/09/2026, reproduzido em três
+   * execuções, e verde nas duas vezes que rodou isolado.
+   *
+   * Guard que pisca vermelho ensina a rodar de novo até passar. E este guard é
+   * justamente o que impede arte corrompida (ou uma página de erro salva como
+   * `.png`) de entrar no repositório — ou seja, a primeira coisa que alguém
+   * ignoraria é a que mais precisa ser lida.
+   *
+   * Duas correções, e as duas importam: as decodificações vão em LOTE (o
+   * trabalho é I/O e a `sharp` libera a thread, então o paralelismo é de graça)
+   * e o caso ganha um prazo próprio, folgado. O prazo maior sozinho esconderia
+   * a lentidão; o lote sozinho ainda poderia estourar numa máquina pior.
+   */
   it('todo asset do repositório é decodificável como imagem', async () => {
+    const LOTE = 24;
     const bad: string[] = [];
-    for (const f of allAssets) {
-      try { await sharp(f).metadata(); } catch { bad.push(rel(f)); }
+    for (let i = 0; i < allAssets.length; i += LOTE) {
+      const fatia = allAssets.slice(i, i + LOTE);
+      const resultados = await Promise.all(fatia.map(async f => {
+        try { await sharp(f).metadata(); return null; } catch { return rel(f); }
+      }));
+      for (const r of resultados) if (r) bad.push(r);
     }
     expect(bad).toEqual([]);
-  });
+  }, 60_000);
 
   it('os arquivos ilegíveis conhecidos continuam ilegíveis E fora do bundle', async () => {
     for (const q of QUARANTINE.unreadable) {

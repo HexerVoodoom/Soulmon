@@ -58,11 +58,30 @@ export async function onRequestPost({ request, env }) {
     });
   }
 
+  // As CHAVES de criptografia entram na assinatura do envio, e um par torto
+  // grava uma linha que NUNCA vai receber push — o cron tenta, o serviço
+  // recusa, e a linha só morre no primeiro 410. Formato exigido em vez de
+  // adivinhado: base64url, com teto. O tamanho exato (65 bytes de `p256dh`,
+  // 16 de `auth`) NÃO é exigido de propósito — errar isso recusaria navegador
+  // legítimo, e o que se quer aqui é barrar lixo, não fiscalizar o padrão.
+  if (!ehChaveWebPush(keys.p256dh) || !ehChaveWebPush(keys.auth)) {
+    return new Response(JSON.stringify({ error: 'Malformed keys' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json', ...CORS },
+    });
+  }
+
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   const record = {
     endpoint,
     keys,
-    petName: petName || 'Soulmon',
+    // TETO DE 24, o MESMO do resto do projeto: o campo do app tem
+    // `maxLength={24}` e o apelido do perfil é cortado em 24 no
+    // `community.js`. Aqui era gravado como veio — texto de cliente sem teto,
+    // guardado em KV por um ano e interpolado no TÍTULO da notificação. Duas
+    // regras diferentes para o mesmo tipo de campo é o footgun 9 em miniatura,
+    // e está escrito assim no `community.js`, sobre o nome do grupo.
+    petName: String(petName ?? '').replace(/\s+/g, ' ').trim().slice(0, 24) || 'Soulmon',
     /* WP1.17 — a idade da criatura, para a copy dos dias 1 e 2. É `YYYY-MM-DD`
        e só isso: dia, sem hora e sem fuso, porque a única pergunta é "faz
        quantos dias". Guardado NA SUBSCRIPTION de propósito — cancelar o push
@@ -70,7 +89,10 @@ export async function onRequestPost({ request, env }) {
        isso. Formato inválido é DESCARTADO em vez de corrigido: um `bornAt`
        torto viraria dia 1 para sempre. */
     bornAt: /^\d{4}-\d{2}-\d{2}$/.test(String(bornAt ?? '')) ? bornAt : undefined,
-    language: language || 'en-US',
+    // Dois valores possíveis, e só. `_pushCopy.js` só pergunta se é `pt-BR`,
+    // então qualquer outra coisa já caía em inglês — mas gravar a string crua
+    // guardava texto de cliente sem teto num registro de um ano.
+    language: language === 'pt-BR' ? 'pt-BR' : 'en-US',
   };
 
   // A chave é o hash do endpoint, então reenviar a MESMA inscrição já era
@@ -138,6 +160,12 @@ export async function onRequestDelete({ request, env }) {
     status: 200,
     headers: { 'Content-Type': 'application/json', ...CORS },
   });
+}
+
+/** Base64url com teto. Ver o comentário no `onRequestPost`. */
+function ehChaveWebPush(v) {
+  return typeof v === 'string' && v.length >= 16 && v.length <= 256
+    && /^[A-Za-z0-9_-]+=*$/.test(v);
 }
 
 async function hashEndpoint(endpoint) {

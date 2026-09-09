@@ -38,8 +38,14 @@ function stepFor(level) {
  * XP acumulado necessário para ESTAR no nível `n`. `xpForLevel(1) === 0`.
  * @param {number} n
  */
+/** Espelho de `BOND_MAX_LEVEL` (`src/utils/bond.ts`) — o porquê está lá, e é
+ *  CUSTO DE CPU: `totalXP` vem do save, que o cliente escreve, e sem teto o
+ *  laço quadrático custava 183 ms de CPU medidos para `1e10`. Este caminho roda
+ *  no `action=profile` do `community.js`, a cada cloud save. */
+export const BOND_MAX_LEVEL = 1000;
+
 export function xpForLevel(n) {
-  const level = Math.max(1, Math.floor(Number.isFinite(n) ? n : 1));
+  const level = Math.min(BOND_MAX_LEVEL, Math.max(1, Math.floor(Number.isFinite(n) ? n : 1)));
   let total = 0;
   for (let k = 1; k < level; k++) total += stepFor(k);
   return total;
@@ -51,8 +57,16 @@ export function xpForLevel(n) {
  */
 export function bondLevelFor(totalXP) {
   const xp = typeof totalXP === 'number' && Number.isFinite(totalXP) ? Math.max(0, totalXP) : 0;
+  // Acumula em vez de recalcular — o mesmo número em O(nível) em vez de
+  // O(nível²). Ver `src/utils/bond.ts`; a paridade é travada por
+  // `bond.parity.test.js`, e é ela que impede as duas curvas de divergirem.
   let level = 1;
-  while (xp >= xpForLevel(level + 1)) level++;
+  let acumulado = 0;
+  while (level < BOND_MAX_LEVEL) {
+    acumulado += stepFor(level);     // == xpForLevel(level + 1)
+    if (xp < acumulado) break;
+    level++;
+  }
   return level;
 }
 

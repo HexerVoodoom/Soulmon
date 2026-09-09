@@ -1475,17 +1475,16 @@ function stepFor(level) {
   return STEP_BASE + STEP_GROWTH * (level - EARLY_STEPS.length);
 }
 __name(stepFor, "stepFor");
-function xpForLevel(n) {
-  const level = Math.max(1, Math.floor(Number.isFinite(n) ? n : 1));
-  let total = 0;
-  for (let k = 1; k < level; k++) total += stepFor(k);
-  return total;
-}
-__name(xpForLevel, "xpForLevel");
+var BOND_MAX_LEVEL = 1e3;
 function bondLevelFor(totalXP) {
   const xp = typeof totalXP === "number" && Number.isFinite(totalXP) ? Math.max(0, totalXP) : 0;
   let level = 1;
-  while (xp >= xpForLevel(level + 1)) level++;
+  let acumulado = 0;
+  while (level < BOND_MAX_LEVEL) {
+    acumulado += stepFor(level);
+    if (xp < acumulado) break;
+    level++;
+  }
   return level;
 }
 __name(bondLevelFor, "bondLevelFor");
@@ -1659,7 +1658,7 @@ function semanaDe(d = /* @__PURE__ */ new Date()) {
   const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
   const inicio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  const n = Math.ceil(((t - inicio) / 864e5 + 1) / 7);
+  const n = Math.ceil(((t.getTime() - inicio.getTime()) / 864e5 + 1) / 7);
   return `${t.getUTCFullYear()}-W${String(n).padStart(2, "0")}`;
 }
 __name(semanaDe, "semanaDe");
@@ -3174,11 +3173,23 @@ async function onRequestPost6({ request, env }) {
       headers: { "Content-Type": "application/json", ...CORS11 }
     });
   }
+  if (!ehChaveWebPush(keys.p256dh) || !ehChaveWebPush(keys.auth)) {
+    return new Response(JSON.stringify({ error: "Malformed keys" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json", ...CORS11 }
+    });
+  }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
   const record = {
     endpoint,
     keys,
-    petName: petName || "Soulmon",
+    // TETO DE 24, o MESMO do resto do projeto: o campo do app tem
+    // `maxLength={24}` e o apelido do perfil é cortado em 24 no
+    // `community.js`. Aqui era gravado como veio — texto de cliente sem teto,
+    // guardado em KV por um ano e interpolado no TÍTULO da notificação. Duas
+    // regras diferentes para o mesmo tipo de campo é o footgun 9 em miniatura,
+    // e está escrito assim no `community.js`, sobre o nome do grupo.
+    petName: String(petName ?? "").replace(/\s+/g, " ").trim().slice(0, 24) || "Soulmon",
     /* WP1.17 — a idade da criatura, para a copy dos dias 1 e 2. É `YYYY-MM-DD`
        e só isso: dia, sem hora e sem fuso, porque a única pergunta é "faz
        quantos dias". Guardado NA SUBSCRIPTION de propósito — cancelar o push
@@ -3186,7 +3197,10 @@ async function onRequestPost6({ request, env }) {
        isso. Formato inválido é DESCARTADO em vez de corrigido: um `bornAt`
        torto viraria dia 1 para sempre. */
     bornAt: /^\d{4}-\d{2}-\d{2}$/.test(String(bornAt ?? "")) ? bornAt : void 0,
-    language: language || "en-US"
+    // Dois valores possíveis, e só. `_pushCopy.js` só pergunta se é `pt-BR`,
+    // então qualquer outra coisa já caía em inglês — mas gravar a string crua
+    // guardava texto de cliente sem teto num registro de um ano.
+    language: language === "pt-BR" ? "pt-BR" : "en-US"
   };
   const REFRESH_AFTER_MS = 30 * 24 * 60 * 60 * 1e3;
   let previous = null;
@@ -3237,6 +3251,10 @@ async function onRequestDelete2({ request, env }) {
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
+function ehChaveWebPush(v) {
+  return typeof v === "string" && v.length >= 16 && v.length <= 256 && /^[A-Za-z0-9_-]+=*$/.test(v);
+}
+__name(ehChaveWebPush, "ehChaveWebPush");
 async function hashEndpoint(endpoint) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
@@ -3351,7 +3369,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-gY84Ep/functionsRoutes-0.8554410540004398.mjs
+// ../.wrangler/tmp/pages-k4YQFe/functionsRoutes-0.6059985807321908.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -3565,7 +3583,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -3891,7 +3909,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
