@@ -399,7 +399,20 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > #6EFFF8, #C68642, #0D0D0D. NO magenta, purple, violet or pink.
   > Transparent PNG.
 
-### A5 · Barra segmentada fina
+### A5 · Barra segmentada fina — ✅ **fechado 09/09/2026, com CONSERTO e não com arte**
+
+> **O valor deste item era o bug da nota, não o PNG.** A barra é CSS, funciona,
+> responde a `--sm-px-bar-tone` e escala; trocá-la por bitmap perderia as três
+> coisas. O defeito real: `.sm-px-bar` é `border-box` com 8px de moldura (2px de
+> borda + 2px de padding, em cima e embaixo), então com altura ≤ 8 a caixa de
+> conteúdo zera, o `overflow: hidden` corta os blocos e sobra o sulco escuro —
+> com `role="progressbar"` e `aria-valuenow` corretos, ou seja, **falha
+> silenciosa que nem tela nem teste de acessibilidade acusam**.
+>
+> O `RitualPanel` já contornava com `height={14}` e um comentário: o defeito
+> estava documentado no CHAMADOR, e o próximo chamador o repetiria. Agora o piso
+> vive no primitivo (`BAR_MIN_HEIGHT_PX` em `components/pixel/PixelKit.tsx`) e
+> há quatro testes de regressão em `PixelKit.render.test.tsx`.
 - **Destino:** `src/assets/soulmon/progress/bar-segmented-thin.png`
 - **Uso:** linhas do painel "Rituais Diários" (`PixelSegmentedBar`)
 - **Anexar:** `REF-kit-v12.png` (bloco "Progress Bars & Gauges")
@@ -414,7 +427,14 @@ estilo dentro da mesma conversa — prefira continuar uma conversa existente.
   > STRICT palette: #0B3A40, #6EFFF8, #C68642, #0D0D0D. NO magenta, purple,
   > violet or pink. Transparent PNG.
 
-### A6 · Moldura de cano + vinha em 9-slice
+### A6 · Moldura de cano + vinha em 9-slice — ⏸️ **bloqueado pelo A13 (09/09/2026)**
+
+> Verificado: **zero consumidores** hoje (`grep` por `frames/pipe` em `src/` não
+> acha nada), e o próprio item declara o uso como "só splash e talvez modal".
+> Ou seja, não é peça independente: é subconjunto do A13. Gerar as 6 fatias
+> antes da splash existir produz arte sem chamador — o padrão que já custou o
+> `bestiary` gravado e lido por ninguém, e os três campos do bridge Android.
+> **Fazer junto com o A13, ou não fazer.**
 - **Destino:** `src/assets/soulmon/frames/pipe-{corner-tl,corner-tr,corner-bl,corner-br,edge-h,edge-v}.png`
 - **Uso:** **só splash e talvez modal**
 - **Anexar:** `REF-kit-v12.png` e `REF-splash.png`
@@ -509,7 +529,24 @@ ninguém gerar arte à toa: os 4 sonhos (`restWindow.ts`) já renderizam o PNG d
 `dreamArt.ts` e o emoji sobrevive só como glifo de push; `HABIT_TIER_EMOJI` não
 tem consumidor nenhum; e o 🪙 dos Bits só existe em comentário.
 
-### A21.1 · Os dois glifos do overlay de desktop
+### A21.1 · Os dois glifos do overlay de desktop — ✅ **feito 09/09/2026**
+
+> **Reaproveitados, não gerados.** Os dois símbolos que este item pedia já
+> existiam no lote de ícones desta rodada: "mãos segurando um coração ciano" é o
+> traço Carinhoso e o banho é o `icon-bath`. Reexportados em 32×32 para
+> `assets/soulmon/icons/desktop/` e ligados em `desktop/renderer/src/menu.ts`,
+> que mostrava `🫶` e `🚿` — emoji do SISTEMA, que muda de desenho por aparelho,
+> na única superfície do jogo visível sobre a barra de tarefas.
+>
+> Gerar um segundo desenho para o mesmo símbolo é o defeito que o A3 documenta:
+> divergiriam entre o app e o overlay. Verificado no build do overlay
+> (`npx vite build -c desktop/vite.config.ts`): os dois PNGs entram inline em
+> `dist-renderer/assets/menu-*.js`.
+>
+> ⚠️ **Não foi possível conferir a olho.** O overlay é Electron na máquina do
+> dono, `menu.ts` toca o DOM no topo e nenhum teste em `node` o importa (está
+> escrito no footgun 9 do `CLAUDE.md`). O typecheck do projeto do desktop passa
+> e o bundle contém os glifos; a conferência visual é do dono.
 
 - **Destino:** `src/assets/soulmon/icons/desktop/{carinho,banho}.png` (32×32 —
   a faixa do overlay é baixa; ver `desktop/renderer/src/menu.ts`, `careButton`)

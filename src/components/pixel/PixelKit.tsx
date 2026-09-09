@@ -195,12 +195,35 @@ const TONE: Record<'cyan' | 'red' | 'gold', string> = {
   gold: 'var(--sm-px-copper)',
 };
 
+/**
+ * `.sm-px-bar` é `border-box` com 2px de borda e 2px de padding em CIMA e
+ * embaixo — 8px de moldura. Abaixo disso a caixa de conteúdo zera, os blocos
+ * são cortados pelo `overflow: hidden` e a barra mostra só o sulco escuro.
+ *
+ * É FALHA SILENCIOSA, e é a pior parte: o nó continua no DOM com
+ * `role="progressbar"` e o `aria-valuenow` certo, então nem a tela nem o teste
+ * de acessibilidade acusam. O `RitualPanel` já passava `height={14}` com um
+ * comentário explicando o buraco — ou seja, o defeito estava documentado no
+ * CHAMADOR, e qualquer chamador novo o repetiria.
+ *
+ * O piso mora AQUI porque é propriedade do primitivo, não de quem o usa: 8px
+ * de moldura + 3px de bloco visível, espelhando o `min-width: 3px` que o
+ * segmento já tem no CSS.
+ */
+const BAR_CHROME_PX = 8;
+const BAR_MIN_SEG_PX = 3;
+export const BAR_MIN_HEIGHT_PX = BAR_CHROME_PX + BAR_MIN_SEG_PX;
+
 export function PixelSegmentedBar({
   value, max, segments, tone = 'cyan', height = 12, label, style,
 }: PixelSegmentedBarProps) {
   const total = Math.max(1, segments ?? Math.min(Math.max(1, Math.round(max)), 12));
   const ratio = max > 0 ? Math.min(1, Math.max(0, value / max)) : 0;
   const on = Math.round(ratio * total);
+  // Nunca abaixo do piso: altura menor não "aperta" a barra, ela APAGA os
+  // blocos. Preferir uma barra 2px mais alta que o pedido a uma barra que
+  // mente.
+  const alturaSegura = Math.max(height, BAR_MIN_HEIGHT_PX);
   return (
     <div
       className="sm-px-bar"
@@ -209,7 +232,7 @@ export function PixelSegmentedBar({
       aria-valuemin={0}
       aria-valuemax={max}
       aria-label={label}
-      style={{ height, '--sm-px-bar-tone': TONE[tone], ...style } as CSSProperties}
+      style={{ height: alturaSegura, '--sm-px-bar-tone': TONE[tone], ...style } as CSSProperties}
     >
       {Array.from({ length: total }, (_, i) => (
         <div key={i} className={i < on ? 'sm-px-bar-seg sm-px-bar-seg-on' : 'sm-px-bar-seg'} />
