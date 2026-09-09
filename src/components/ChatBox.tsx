@@ -63,6 +63,11 @@ export function ChatBox({
     setHistory(prev => [...prev, { role: papel, content: texto }].slice(-6));
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  /* No TOPO de propósito: `isPt` é lido pelos handlers de erro logo abaixo
+     (microfone, transcrição, IA). Declarado no fim do componente, como estava,
+     ele só não explodia porque handler roda depois da pintura — bastava alguém
+     chamar um deles durante o render para virar zona morta temporal. */
+  const isPt = language === 'pt-BR';
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   /* O microfone só EXISTE quando o servidor tem provedor de transcrição
      (`/api/config` → `transcribeAvailable`; ver `utils/serverConfig.ts`).
@@ -197,7 +202,9 @@ export function ChatBox({
       return data.response;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        toast.warning('AI response timed out, using local responses');
+        toast.warning(isPt
+          ? 'A IA demorou demais — usando respostas locais'
+          : 'AI response timed out, using local responses');
       } else {
         if (import.meta.env.DEV) console.error('Failed to get AI response:', error);
         toast.warning(language === 'pt-BR' ? 'IA indisponível — usando respostas locais' : 'AI unavailable, using local responses');
@@ -324,13 +331,17 @@ export function ChatBox({
         if (error instanceof Error) {
           if (error.name === 'NotAllowedError' || error.name === 'NotFoundError') {
             // User denied permission or no microphone available
-            onSendMessage('Microphone access denied or unavailable 🎤');
+            onSendMessage(isPt
+              ? 'Não consegui acessar o microfone. Dá para escrever aqui do mesmo jeito 🎤'
+              : 'I could not reach the microphone. You can still type here 🎤');
             return;
           }
         }
         // Only log other unexpected errors
         if (import.meta.env.DEV) console.warn('Microphone access issue:', error);
-        onSendMessage('Microphone error 🎤');
+        onSendMessage(isPt
+          ? 'Deu algo errado com o microfone 🎤'
+          : 'Something went wrong with the microphone 🎤');
       }
     }
   };
@@ -358,8 +369,24 @@ export function ChatBox({
       });
 
       if (!response.ok) {
-        if (import.meta.env.DEV) console.error('Transcription failed:', await response.text());
-        toast.error('Audio transcription failed. Please try again.');
+        if (import.meta.env.DEV) console.error('Transcription failed:', response.status);
+        /* "Tente de novo" é MENTIRA para dois destes: um áudio de 4 MB vai
+           falhar igual na segunda vez, e quem levou 429 precisa esperar, não
+           repetir. A rota já distingue os casos (ver
+           `functions/api/transcribe.js`); a tela passa a distinguir também. */
+        toast.error(
+          response.status === 413
+            ? (isPt ? 'A gravação ficou longa demais. Tente um recado mais curto.'
+              : 'That recording is too long. Try a shorter message.')
+            : response.status === 429
+              ? (isPt ? 'Muitas gravações seguidas. Espere um pouquinho.'
+                : 'Too many recordings in a row. Give it a moment.')
+              : response.status === 503
+                ? (isPt ? 'O recado falado não está disponível agora.'
+                  : 'Spoken messages are not available right now.')
+                : (isPt ? 'Não consegui transcrever o áudio. Tente de novo.'
+                  : 'Audio transcription failed. Please try again.'),
+        );
         throw new Error('Transcription failed');
       }
 
@@ -369,22 +396,27 @@ export function ChatBox({
       if (transcribedText.trim()) {
         setInputValue(transcribedText);
       } else {
-        onSendMessage('Could not understand the audio 🤔');
+        onSendMessage(isPt
+          ? 'Não consegui entender o áudio 🤔'
+          : 'Could not understand the audio 🤔');
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        toast.error('Transcription timed out. Please try again.');
+        toast.error(isPt
+          ? 'A transcrição demorou demais. Tente de novo.'
+          : 'Transcription timed out. Please try again.');
       } else {
         if (import.meta.env.DEV) console.error('Transcription error:', error);
       }
-      onSendMessage('Error transcribing audio 😅');
+      onSendMessage(isPt
+        ? 'Deu erro ao transcrever o áudio 😅'
+        : 'Error transcribing audio 😅');
     } finally {
       clearTimeout(timeout);
       setIsLoading(false);
     }
   };
 
-  const isPt = language === 'pt-BR';
   const hasText = inputValue.trim().length > 0;
   /* O rótulo acompanha a AÇÃO do botão único (enviar / gravar / parar), e há
      um estado para o envio em curso — antes o spinner ficava com o rótulo

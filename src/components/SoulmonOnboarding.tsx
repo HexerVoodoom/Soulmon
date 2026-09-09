@@ -1314,7 +1314,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             <Field id="onb-gate-email" type="email" value={email} autoComplete="email"
               aria-invalid={emailError || undefined}
               onChange={e => { setEmail(e.target.value); setEmailError(false); setAuthErro(null); }}
-              placeholder="voce@exemplo.com" />
+              placeholder={isPt ? 'voce@exemplo.com' : 'you@example.com'} />
 
             <label style={{ ...sm2Label, marginTop: 14 }} htmlFor="onb-gate-senha">
               {isPt ? 'Senha' : 'Password'}

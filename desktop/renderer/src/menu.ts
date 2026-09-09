@@ -261,7 +261,7 @@ function renderSettings() {
     label.textContent = t('E-mail da sua conta Soulmon', 'Your Soulmon account email');
     const emailInput = document.createElement('input');
     emailInput.type = 'email';
-    emailInput.placeholder = 'voce@email.com';
+    emailInput.placeholder = t('voce@email.com', 'you@example.com');
     emailInput.value = state.syncEmail ?? '';
     const syncBtn = button(`🔄 ${t('Sincronizar agora', 'Sync now')}`, () => syncNow(emailInput.value));
     hint.textContent = lastSyncLabel()

@@ -89,7 +89,7 @@ export function ProtectProgressModal({ language, reason, onDismiss, onConfirm }:
           value={email}
           onChange={e => { setEmail(e.target.value); setError(null); }}
           onKeyDown={e => { if (e.key === 'Enter') void submit(); }}
-          placeholder="voce@exemplo.com"
+          placeholder={isPt ? 'voce@exemplo.com' : 'you@example.com'}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? 'protect-email-error' : undefined}
           // 16px evita o zoom automático do Safari em iOS ao focar o campo.

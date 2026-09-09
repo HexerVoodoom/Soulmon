@@ -2699,7 +2699,14 @@ var EVENT_SCHEMA = {
   after_bad_day: { gap: { min: 0, max: 3 }, kind: { min: 0, max: 1 } },
   app_open: { source: { min: 0, max: 3 } },
   push_optout: null,
-  retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } }
+  retained: { bucket: { min: 0, max: 2 }, tier: { min: 0, max: 2 } },
+  // som-01 (SQUAD-SOM) — ESPELHO de src/utils/telemetry.ts. Sem `tier` de
+  // propósito: a decisão do eixo sonoro não se parte por demo/pago.
+  // `sound_state` é a fotografia diária (o cliente se cala quando não consegue
+  // ler a preferência: evento faltando é honesto, evento no balde errado não);
+  // `sound_off` é a transição por gesto, com `age` em FAIXA e nunca data.
+  sound_state: { muted: { min: 0, max: 1 }, music: { min: 0, max: 1 } },
+  sound_off: { age: { min: 0, max: 2 } }
 };
 var MAX_BODY_BYTES = 16 * 1024;
 var MAX_EVENTS = 100;
@@ -2863,6 +2870,13 @@ function applyAggregate(agg, events) {
     if (record.e === "activity_create") {
       const path = PATH_LABEL[p.path] ?? "unknown";
       bump(`activity_create.${path}.${KIND_LABEL[p.kind] ?? "unknown"}`);
+    }
+    if (record.e === "sound_state" && p) {
+      bump(`sound_state.muted_${p.muted ? "yes" : "no"}`);
+      bump(`sound_state.music_${p.music ? "yes" : "no"}`);
+    }
+    if (record.e === "sound_off" && p) {
+      bump(`sound_off.age_${p.age}`);
     }
     if (record.e === "week_active") {
       bump(`week_active.goal_days.${p.goal_days}`);
@@ -3472,7 +3486,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-DhW4Ax/functionsRoutes-0.40129760878913867.mjs
+// ../.wrangler/tmp/pages-DdvFqg/functionsRoutes-0.07860790799377604.mjs
 var routes = [
   {
     routePath: "/api/account",
