@@ -24,6 +24,41 @@ import { getStageLevel } from '../types/progression';
 import { STORAGE_KEYS } from './storageKeys';
 import { readJson, readNumber, writeJson, writeLocal } from './safeStorage';
 
+/**
+ * HP e dano do JOGADOR por estagio de evolucao — a tabela de combate do lado
+ * de ca, espelho de `buildDungeonWave` do lado de la.
+ *
+ * ## Por que ela mora aqui
+ *
+ * Ela nasceu local em `DungeonGame.tsx` e foi COPIADA para
+ * `NightmareBattle.tsx`, que marcou a copia com um aviso explicito:
+ *
+ *   > "⚠️ DUPLICADO de `DungeonGame.tsx` (nao exportado de la). Ao mover para
+ *   >  `utils/dungeon.ts`, apague esta copia — regra copiada e regra que
+ *   >  diverge em silencio (footgun 9)."
+ *
+ * Este e o lugar que aquela nota indicou: o arquivo que ja e dono das stats de
+ * INIMIGO passa a ser dono das do jogador tambem. As duas copias foram
+ * apagadas na mesma mudanca.
+ *
+ * ⚠️ Numero de balanceamento: mexer aqui muda a Masmorra, o Pesadelo e a
+ * Arena de uma vez, e nenhum dos tres avisa.
+ */
+export const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
+  'baby-i': { hp: 10, dmg: 3 },
+  'baby-ii': { hp: 11, dmg: 3 },
+  rookie: { hp: 12, dmg: 4 },
+  champion: { hp: 14, dmg: 5 },
+  ultimate: { hp: 16, dmg: 6 },
+  mega: { hp: 18, dmg: 7 },
+  ultra: { hp: 20, dmg: 8 },
+};
+
+/** Stats do jogador para um estagio, com `rookie` como piso conhecido. */
+export function playerStatsFor(evolutionStage: string): { hp: number; dmg: number } {
+  return PLAYER_STATS[getStageLevel(evolutionStage)] ?? PLAYER_STATS.rookie;
+}
+
 export interface DungeonEnemy {
   name: string;
   stage: string;       // sprite key

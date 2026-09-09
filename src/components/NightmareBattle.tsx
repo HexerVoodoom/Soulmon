@@ -38,23 +38,28 @@
  *     `recordDungeonScore`, `setDungeonDifficultyAtLeast`). Uma luta de
  *     pesadelo alimentando o recorde e a dificuldade semanal da Masmorra
  *     misturaria duas economias que a regra mantém separadas.
- *  4. **`TimingBar` e `PLAYER_STATS` não são exportados** — são locais do
- *     arquivo. Sem exportá-los não há como herdar nem a mecânica nem a tabela.
+ *  4. ~~**`TimingBar` e `PLAYER_STATS` não são exportados**~~ — ✅ PAGO em
+ *     09/09/2026, quando a Arena precisou da mesma barra e faria a TERCEIRA
+ *     cópia. `TimingBar` virou `components/pixel/TimingBar.tsx` e
+ *     `PLAYER_STATS` virou `utils/dungeon.ts` (que já era dono das stats de
+ *     inimigo). As duas cópias marcadas `⚠️ DUPLICADO` foram apagadas; este
+ *     arquivo e o `DungeonGame` importam o mesmo dono.
  *
- * O caminho de refatoração, quando alguém puder mexer nos dois arquivos:
- * extrair `TimingBar` para `components/pixel/` e `PLAYER_STATS` para
- * `utils/dungeon.ts` (que já é o dono das stats de inimigo), e transformar o
- * miolo de combate num componente que receba `enemies: DungeonEnemy[]` e
- * devolva `onWin/onLose`. Aí `DungeonGame` vira "5 andares disso" e este
- * arquivo vira "2 inimigos disso". Enquanto isso, a duplicação está confinada
- * às ~40 linhas marcadas com `⚠️ DUPLICADO`.
+ * O que CONTINUA valendo dos itens 1–3: o miolo de combate ainda não é um
+ * componente que receba `enemies: DungeonEnemy[]` e devolva `onWin/onLose`.
+ * Enquanto não for, cada jogo desenha o próprio laço — o que é aceitável
+ * porque as REGRAS de cada um são de fato diferentes (a Arena tem elementos,
+ * carga de especial e 5 rodadas; a Masmorra tem andares; o Pesadelo é uma luta
+ * só). O que não podia continuar duplicado era a MECÂNICA, e essa agora tem
+ * dono.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { PixelButton } from './pixel/PixelKit';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { getSpriteForStage } from '../utils/sprites';
-import { getStageLevel } from '../types/progression';
+import { playerStatsFor } from '../utils/dungeon';
+import { TimingBar } from './pixel/TimingBar';
 import { playTaskComplete, playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
@@ -86,20 +91,6 @@ export interface NightmareBattleProps {
   onClose: () => void;
 }
 
-/**
- * ⚠️ DUPLICADO de `DungeonGame.tsx` (não exportado de lá; ver a nota do topo).
- * Ao mover para `utils/dungeon.ts`, apague esta cópia — regra copiada é regra
- * que diverge em silêncio (footgun 9).
- */
-const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
-  'baby-i': { hp: 10, dmg: 3 },
-  'baby-ii': { hp: 11, dmg: 3 },
-  rookie: { hp: 12, dmg: 4 },
-  champion: { hp: 14, dmg: 5 },
-  ultimate: { hp: 16, dmg: 6 },
-  mega: { hp: 18, dmg: 7 },
-  ultra: { hp: 20, dmg: 8 },
-};
 
 const PERFECT = 0.92;
 const DEFEND_TIME = 3.0;
@@ -126,61 +117,6 @@ function prefersReducedMotion(): boolean {
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'won' | 'lost';
 interface Popup { icon: string; title: string; detail: string; color: string }
 
-// ── Barra de tempo (⚠️ DUPLICADO — ver nota do topo) ───────────────────────
-function TimingBar({ speed, color, label, onStop }: {
-  speed: number;
-  color: string;
-  label: string;
-  onStop: (accuracy: number) => void;
-}) {
-  const [pos, setPos] = useState(0);
-  const posRef = useRef(0);
-  const rafRef = useRef(0);
-  const stoppedRef = useRef(false);
-
-  useEffect(() => {
-    const t0 = performance.now();
-    const tick = (t: number) => {
-      const p = (((t - t0) / 1000) * speed) % 2;
-      const x = p < 1 ? p : 2 - p; // vai-e-volta 0..1..0
-      posRef.current = x;
-      setPos(x);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [speed]);
-
-  const stop = () => {
-    if (stoppedRef.current) return;
-    stoppedRef.current = true;
-    cancelAnimationFrame(rafRef.current);
-    onStop(1 - Math.abs(posRef.current - 0.5) * 2); // 1 = centro exato
-  };
-
-  return (
-    <div style={{ width: '100%' }}>
-      <div
-        aria-hidden="true"
-        onPointerDown={stop}
-        style={{
-          position: 'relative', height: 30, background: '#131a26',
-          border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)',
-          overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation',
-        }}
-      >
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: '30%', background: 'rgba(250, 204, 21, 0.22)' }} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '46%', width: '8%', background: 'rgba(74, 222, 128, 0.45)' }} />
-        <div style={{ position: 'absolute', top: 2, bottom: 2, left: `calc(${pos * 100}% - 3px)`, width: 6, background: color, boxShadow: `0 0 8px ${color}` }} />
-      </div>
-      {/* O BOTÃO é o controle de verdade: a barra acima é decorativa e
-          `aria-hidden`, então quem usa teclado tem exatamente a mesma ação. */}
-      <span style={{ display: 'block', marginTop: 8 }}>
-        <PixelButton size="lg" variant="primary" onClick={stop}>{label}</PixelButton>
-      </span>
-    </div>
-  );
-}
 
 function hpBar(cur: number, max: number, color: string, label: string) {
   const pct = max > 0 ? Math.min(1, Math.max(0, cur / max)) : 0;
@@ -204,7 +140,7 @@ export function NightmareBattle({
   open, wave, rarity, petStage, demoCharacterId, language, onWin, onLose, onClose,
 }: NightmareBattleProps) {
   const isPt = language === 'pt-BR';
-  const stats = PLAYER_STATS[getStageLevel(petStage)] ?? PLAYER_STATS.rookie;
+  const stats = playerStatsFor(petStage);
 
   /**
    * G5 — WCAG 2.2.1 (Timing Adjustable, nível A).

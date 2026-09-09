@@ -4,6 +4,8 @@ import { PixelButton } from './pixel/PixelKit';
 import { getSpriteForStage } from '../utils/sprites';
 import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
+import { playerStatsFor } from '../utils/dungeon';
+import { TimingBar } from './pixel/TimingBar';
 import {
   buildDungeonWave, getDungeonDifficulty, getDungeonBest,
   setDungeonDifficultyAtLeast, recordDungeonScore, LADDER_TIERS,
@@ -33,15 +35,6 @@ import { FX_ART } from '../utils/fxArt';
  * nunca corações). Coraçõezinhos (raramente) dropam; o placar alimenta o ranking.
  */
 
-const PLAYER_STATS: Record<string, { hp: number; dmg: number }> = {
-  'baby-i': { hp: 10, dmg: 3 },
-  'baby-ii':{ hp: 11, dmg: 3 },
-  rookie:   { hp: 12, dmg: 4 },
-  champion: { hp: 14, dmg: 5 },
-  ultimate: { hp: 16, dmg: 6 },
-  mega:     { hp: 18, dmg: 7 },
-  ultra:    { hp: 20, dmg: 8 },
-};
 const MAX_FLOORS = 5;
 const PERFECT = 0.92;
 const DEFEND_TIME = 3.0;   // seconds to react on defense
@@ -51,59 +44,6 @@ const clearBonus = (floor: number) => 10 + 5 * (floor - 1);
 
 type Phase = 'intro' | 'attack' | 'defend' | 'result' | 'enemy-down' | 'floor-clear' | 'run-complete' | 'lost';
 interface Popup { icon: string; title: string; detail: string; color: string }
-
-// ── Timing bar ─────────────────────────────────────────────────────────────
-function TimingBar({ speed, color, label, onStop }: {
-  speed: number;
-  color: string;
-  label: string;
-  onStop: (accuracy: number) => void;
-}) {
-  const [pos, setPos] = useState(0);
-  const posRef = useRef(0);
-  const rafRef = useRef(0);
-  const stoppedRef = useRef(false);
-
-  useEffect(() => {
-    const t0 = performance.now();
-    const tick = (t: number) => {
-      const p = (((t - t0) / 1000) * speed) % 2;
-      const x = p < 1 ? p : 2 - p; // ping-pong 0..1..0
-      posRef.current = x;
-      setPos(x);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [speed]);
-
-  const stop = () => {
-    if (stoppedRef.current) return;
-    stoppedRef.current = true;
-    cancelAnimationFrame(rafRef.current);
-    onStop(1 - Math.abs(posRef.current - 0.5) * 2); // 1 = dead center
-  };
-
-  return (
-    <div style={{ width: '100%' }}>
-      <div
-        onPointerDown={stop}
-        style={{ position: 'relative', height: 34, background: '#131a26', border: '1px solid color-mix(in srgb, var(--sm-px-copper) 55%, transparent)', overflow: 'hidden', cursor: 'pointer', touchAction: 'manipulation' }}
-      >
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '35%', width: '30%', background: 'rgba(250, 204, 21, 0.22)' }} />
-        <div style={{ position: 'absolute', top: 0, bottom: 0, left: '46%', width: '8%', background: 'rgba(74, 222, 128, 0.45)' }} />
-        <div style={{ position: 'absolute', top: 2, bottom: 2, left: `calc(${pos * 100}% - 3px)`, width: 6, background: color, boxShadow: `0 0 8px ${color}` }} />
-      </div>
-      <button
-        onPointerDown={stop}
-        className="sm-btn"
-        style={{ width: '100%', marginTop: 8, backgroundColor: color, borderColor: 'color-mix(in srgb, ' + color + ' 55%, black)', ['--sm-cham-line' as string]: 'color-mix(in srgb, ' + color + ' 55%, black)', color: '#0b0f17' } as React.CSSProperties}
-      >
-        {label}
-      </button>
-    </div>
-  );
-}
 
 // ── Game ───────────────────────────────────────────────────────────────────
 export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter, onLose, onHeartDrop, onGlitchtama, onEnemyDefeated, onEarnPoints, onExit, bits = 0, onSpendBits }: {
@@ -134,7 +74,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
-  const playerStats = PLAYER_STATS[getStageLevel(evolutionStage)] ?? PLAYER_STATS.rookie;
+  const playerStats = playerStatsFor(evolutionStage);
 
   const [enemies, setEnemies] = useState<DungeonEnemy[]>([]);
   const [enemyIdx, setEnemyIdx] = useState(0);
