@@ -405,7 +405,12 @@ export function EvolutionPath({
   const fraseProgresso = prontoParaEvoluir
     ? (evolutionLocked
         ? (isPt ? 'Pronto para evoluir — mas você segurou a evolução.' : 'Ready to evolve — but you are holding it back.')
-        : (isPt ? 'Pronto para evoluir na virada do dia.' : 'Ready to evolve at the day’s turn.'))
+        /* ⚠️ Dizia "Pronto para evoluir na virada do dia" — FALSO desde que
+           `MANUAL_EVOLUTION = true` (`types/progression.ts`): a virada NUNCA
+           evolui sozinha, e o ramo que fazia isso em `utils/dailyReset.ts` está
+           atrás do `!MANUAL_EVOLUTION`, morto. Quem espera a virada não vê
+           nada acontecer — e a barra fica cheia, o que faz parecer defeito. */
+        : (isPt ? 'Pronto! Toque no seu Soulmon para evoluir.' : 'Ready! Tap your Soulmon to evolve.'))
     : (isPt
         // "completo", não "perfeito" (P5). O docblock deste arquivo já dizia
         // "Faltam 4 dias completos" — a renomeação passou pelo COMENTÁRIO e
@@ -915,13 +920,20 @@ export function EvolutionPath({
           </button>
         )}
         <p style={{ ...sm2Hint, textAlign: 'center', maxWidth: 340 }}>
+          {/* ⚠️ Os dois textos estavam INVERTIDOS em relação à regra. O de
+              destravado prometia evolução automática ("vai evoluir sozinho
+              assim que o dia virar") — que `MANUAL_EVOLUTION` impede —, e o de
+              travado descrevia justamente o comportamento DESTRAVADO ("só
+              espera você dizer quando"), quando travado é o estado em que
+              dizer não resolve: `handleEvolve` devolve o mesmo estado e
+              `canEvolve` é false. */}
           {evolutionLocked
             ? (isPt
-                ? 'Os dias completos continuam somando. Seu Soulmon só espera você dizer quando.'
-                : 'Complete days keep adding up. It just waits for your go-ahead.')
+                ? 'Os dias completos continuam somando, mas a evolução está segurada. Destrave quando quiser.'
+                : 'Complete days keep adding up, but evolution is on hold. Release it whenever you want.')
             : (isPt
-                ? 'Seu Soulmon vai evoluir sozinho assim que o dia virar.'
-                : 'It will evolve on its own at the next day’s turn.')}
+                ? 'Quando a barra enche, toque no seu Soulmon para evoluir. Nada acontece sem você.'
+                : 'When the bar fills, tap your Soulmon to evolve. Nothing happens without you.')}
         </p>
 
         {/* ── A SINTONIA (spec §2.3.1) ──────────────────────────────────────

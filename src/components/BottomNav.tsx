@@ -191,7 +191,20 @@ export function BottomNav({ currentView, onNavigate, onResetOnboarding, onOpenCr
     { view: 'main', label: isPt ? 'Início' : 'Home', icon: 'home' },
     // D-pad, e não um dado: a página é dungeon + dino + pedra-papel-tesoura +
     // torneio. É o BOTÃO do aparelho, não a aposta.
-    { view: 'games', label: isPt ? 'Atividades' : 'Activities', icon: 'activities' },
+    /* "Jogos", e não "Atividades", por DOIS motivos que apontam para o mesmo
+       lado (09/09/2026):
+         1. **Não cabia.** Medido em 320×640: a célula tem 60px, a caixa do
+            rótulo 54px, e "ATIVIDADES" precisa de 61px — o `overflow: hidden`
+            cortava o "S" e a pessoa lia "ATIVIDADE", palavra completa no
+            singular, sem sinal nenhum de corte. "JOGOS" (5) e "GAMES" (5)
+            cabem com folga nos dois idiomas.
+         2. **Colidia com o motor de tarefas.** `gameState.activities` são os
+            HÁBITOS E TAREFAS do jogador, e esta página não tem nada a ver com
+            eles: é Torneio + os quatro minijogos. Chamar as duas coisas de
+            "atividade" na mesma interface é ambiguidade de vocabulário, não
+            só de largura — e o subtítulo da própria página já dizia "JOGUE
+            com seu Soulmon". */
+    { view: 'games', label: isPt ? 'Jogos' : 'Games', icon: 'activities' },
     // O galho que se divide é literalmente a mecânica: um nó embaixo, dois em
     // cima. `auto_awesome` (brilho) servia a qualquer coisa mágica.
     { view: 'evolution', label: isPt ? 'Evolução' : 'Evolution', icon: 'evolution' },

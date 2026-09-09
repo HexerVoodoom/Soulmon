@@ -219,7 +219,7 @@ export function ActivitiesPage({ evolutionStage, demoCharacterId, language, tota
               margin: 0,
             }}
           >
-            {isPt ? 'Atividades' : 'Activities'}
+            {isPt ? 'Jogos' : 'Games'}
           </h1>
           <p style={{ ...sm2Hint, marginTop: 4 }}>
             {isPt ? 'Jogue com seu Soulmon e ganhe Bits.' : 'Play with your Soulmon and earn Bits.'}

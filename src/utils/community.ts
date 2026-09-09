@@ -17,7 +17,26 @@ async function call<T>(action: string, opts: { method?: 'GET' | 'POST'; params?:
     headers: method === 'POST' ? { 'Content-Type': 'application/json', ...auth } : auth,
     body: method === 'POST' ? JSON.stringify(opts.body ?? {}) : undefined,
   });
-  const data = await res.json().catch(() => ({}));
+  /* ⚠️ 200 com corpo que não é JSON é FALHA, não sucesso vazio.
+     Até 09/09/2026 esta linha era `await res.json().catch(() => ({}))` e o
+     resultado era devolvido como se fosse a resposta: `res.ok` é true, nada
+     lança, e o chamador recebe `{}`. Medido na tela do Torneio — `getRank()`
+     resolvia com `{}`, `setRank(r.rank)` gravava `undefined`, e como os
+     ramos de "vazio" e de "falhou" ambos exigem `rank` verdadeiro, a área do
+     ranking ficava **em branco para sempre**, sem explicação, e o efeito
+     disparava a requisição DUAS vezes (`!rank` continuava true).
+     Não é hipótese de laboratório: 200 com HTML é o que devolve um portal
+     cativo de Wi-Fi, um proxy corporativo, uma página de erro de CDN e o
+     servidor de desenvolvimento. Todas as ações desta rota respondem por
+     `Response.json` (`functions/api/community.js`, o helper `json`), então
+     corpo ilegível aqui nunca é resposta legítima. */
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch {
+    if (!res.ok) throw new Error(`request failed (${res.status})`);
+    throw new Error(`resposta ilegível (${res.status})`);
+  }
   if (!res.ok) throw new Error((data as { error?: string }).error || `request failed (${res.status})`);
   return data as T;
 }

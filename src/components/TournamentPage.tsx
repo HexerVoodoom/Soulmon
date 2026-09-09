@@ -195,7 +195,14 @@ export function TournamentPage({ saveId, petStage, pvpEnabled, onTogglePvp, trop
   useEffect(() => { loadOpponents(); }, [pvpEnabled, saveId]);
   useEffect(() => {
     if (tab === 'rank' && !rank) {
-      getRank().then(r => setRank(r.rank)).catch(() => { setRank([]); setRankFailed(true); });
+      /* `?? []` é DEFESA, não redundância: se a resposta vier sem `rank`,
+         gravar `undefined` deixaria `rank` falso, e os dois ramos de estado
+         vazio/falha exigem `rank` verdadeiro — a área ficaria em branco e o
+         `!rank` deste efeito o disparava de novo. A causa raiz foi fechada no
+         `call()` de `utils/community.ts`; isto é o cinto. */
+      getRank()
+        .then(r => setRank(r.rank ?? []))
+        .catch(() => { setRank([]); setRankFailed(true); });
     }
   }, [tab, rank]);
 

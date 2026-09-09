@@ -88,7 +88,7 @@ describe('🔴 o rótulo da barra de baixo cabe na célula', () => {
     expect(
       longos,
       `Rótulo de nav com mais de ${MAX_CARACTERES} caracteres é cortado na célula em 320px (medido: "ATIVIDADES", 10 caracteres, precisa de 61px numa caixa de 54px). Encurte a palavra; NÃO conte com o \`overflow: hidden\`, que foi o que escondeu este defeito por meses.`,
-    ).toEqual(['Activities', 'Atividades']);
+    ).toEqual([]);
   });
 
   it('🔴 o corte é DECLARADO (`ellipsis`), nunca silencioso (`clip`)', () => {
@@ -145,7 +145,7 @@ describe('🔴 o rótulo da barra de baixo cabe na célula', () => {
       `o botão do Menu mudou de forma; ajuste MENU_NA_FONTE`,
     ).toContain(MENU_NA_FONTE);
     expect(pares.map(p => p.pt).sort()).toEqual(
-      ['Atividades', 'Evolução', 'Início', 'Loja', 'Menu'].sort(),
+      ['Jogos', 'Evolução', 'Início', 'Loja', 'Menu'].sort(),
     );
     // E o par de idioma é REAL em pelo menos um deles (senão o regex casou só
     // o lado português e o teto do inglês nunca seria medido).

@@ -36,11 +36,11 @@ describe('BottomNav', () => {
   it('par PT/EN completo na barra — e os dois conjuntos diferem de fato', () => {
     const en = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} />);
     const enLabels = Array.from(en.container.querySelectorAll('button')).map(b => b.getAttribute('aria-label'));
-    expect(enLabels).toEqual(['Home', 'Activities', 'Evolution', 'Shop', 'Menu']);
+    expect(enLabels).toEqual(['Home', 'Games', 'Evolution', 'Shop', 'Menu']);
     en.unmount();
     const pt = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} language="pt-BR" />);
     const ptLabels = Array.from(pt.container.querySelectorAll('button')).map(b => b.getAttribute('aria-label'));
-    expect(ptLabels).toEqual(['Início', 'Atividades', 'Evolução', 'Loja', 'Menu']);
+    expect(ptLabels).toEqual(['Início', 'Jogos', 'Evolução', 'Loja', 'Menu']);
   });
 
   it('a barra tem altura declarada no CSS real (senão o rodapé colapsa)', () => {
@@ -59,7 +59,7 @@ describe('BottomNav', () => {
     const { container } = renderWithCss(<BottomNav currentView="main" onNavigate={() => {}} language="pt-BR" />);
     const btns = Array.from(container.querySelectorAll('button'));
     const visiveis = btns.map(b => b.querySelector('.sm-bottom-nav-label')?.textContent ?? '');
-    expect(visiveis).toEqual(['Início', 'Atividades', 'Evolução', 'Loja', 'Menu']);
+    expect(visiveis).toEqual(['Início', 'Jogos', 'Evolução', 'Loja', 'Menu']);
     expect(visiveis).toEqual(btns.map(b => b.getAttribute('aria-label')));
   });
 
