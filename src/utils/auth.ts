@@ -72,7 +72,16 @@ export type AuthErro =
   | 'email-invalido' | 'senha-fraca' | 'credencial-invalida'
   | 'email-em-uso' | 'nao-encontrado' | 'muitas-tentativas'
   | 'rede' | 'popup-fechado' | 'popup-bloqueado' | 'dominio-nao-autorizado'
-  | 'provedor-desligado' | 'desconhecido';
+  | 'provedor-desligado' | 'desconhecido'
+  /**
+   * A rede de segurança do pop-up do Google estourou o prazo
+   * (`GOOGLE_SEM_RESPOSTA_MS`). **NÃO vem do Firebase** — nenhum `code` mapeia
+   * para cá; quem o produz é a interface, quando decide liberar o botão em vez
+   * de esperar para sempre. A mensagem tem de servir para os DOIS casos, porque
+   * daqui não se sabe qual é: a janela pode ter sido fechada, ou pode estar
+   * aberta e a pessoa ainda digitando.
+   */
+  | 'sem-resposta';
 
 export function traduzErroAuth(code: string): AuthErro {
   switch (code) {

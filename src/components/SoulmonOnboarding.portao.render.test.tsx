@@ -35,7 +35,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
-import { SoulmonOnboarding } from './SoulmonOnboarding';
+import { SoulmonOnboarding, GOOGLE_SEM_RESPOSTA_MS } from './SoulmonOnboarding';
 
 vi.mock('../utils/auth', async () => {
   const real = await vi.importActual<typeof import('../utils/auth')>('../utils/auth');
@@ -45,7 +45,14 @@ vi.mock('../utils/auth', async () => {
     getCurrentEmail: async () => emailAtual,
     entrarComSenha: async (e: string, s: string) => { chamadas.push(`entrar:${e}:${s}`); return resposta; },
     criarContaComSenha: async (e: string, s: string) => { chamadas.push(`criar:${e}:${s}`); return resposta; },
-    entrarComGoogle: async () => { chamadas.push('google'); return resposta; },
+    entrarComGoogle: async () => {
+      chamadas.push('google');
+      // `googlePendura` reproduz o caso que o COOP cria: a promessa NUNCA
+      // termina, porque o `pollUserCancellation` do Firebase não consegue ler
+      // `popup.closed`. Ver `GOOGLE_SEM_RESPOSTA_MS`.
+      if (googlePendura) return new Promise<never>(() => {});
+      return resposta;
+    },
     mandarResetDeSenha: async (e: string) => { chamadas.push(`reset:${e}`); return resposta; },
   };
 });
@@ -54,6 +61,7 @@ let authLigada = true;
 let emailAtual: string | null = null;
 let resposta: { ok: boolean; email?: string; erro?: string } = { ok: true, email: 'a@b.com' };
 let chamadas: string[] = [];
+let googlePendura = false;
 
 const ir = (t: string) => fireEvent.click(screen.getByText(t));
 /** Clica por PAPEL. O título da tela e o botão principal têm o mesmo texto
@@ -98,6 +106,7 @@ describe('portão de identidade', () => {
     emailAtual = null;
     resposta = { ok: true, email: 'a@b.com' };
     chamadas = [];
+    googlePendura = false;
   });
 
   it('a PRIMEIRA tela tem só as duas portas — nada de formulário', async () => {
@@ -134,6 +143,57 @@ describe('portão de identidade', () => {
     expect(screen.getByText('I am 18 or older')).toBeTruthy();
     expect(btn('Continue with Google').disabled).toBe(true);
     expect(chamadas).toEqual([]);
+  });
+
+  it('🔴 o botão do Google NÃO trava para sempre se a promessa não terminar', async () => {
+    // O caso real: `accounts.google.com` manda COOP, o `popup.closed` fica
+    // ilegível, e o `pollUserCancellation` do Firebase — a única coisa que
+    // rejeita quando a pessoa fecha a janela — nunca conclui. Sem rede de
+    // segurança o `authOcupado` fica preso em `true` e o botão morre
+    // desabilitado, sem mensagem, na PRIMEIRA tela do app: recarregar a
+    // página passa a ser a única saída. Ver `GOOGLE_SEM_RESPOSTA_MS`.
+    googlePendura = true;
+    await montar();
+    abrirGoogle();
+    expect(btn('Continue with Google').disabled).toBe(false);
+    // O relógio falso entra DEPOIS de montar: a resolução da auth na montagem
+    // é assíncrona, e com o relógio já congelado a tela nem chega ao portão.
+    vi.useFakeTimers();
+    try {
+      botao('Continue with Google');
+      expect(chamadas).toEqual(['google']);
+      // Enquanto espera, o botão fica desabilitado — isso é correto.
+      expect(btn('Continue with Google').disabled).toBe(true);
+
+      // Um pouco ANTES do prazo, continua esperando: a rede não pode encurtar
+      // um login de verdade (escolher conta, senha, segundo fator).
+      await act(async () => { vi.advanceTimersByTime(GOOGLE_SEM_RESPOSTA_MS - 1000); });
+      expect(btn('Continue with Google').disabled).toBe(true);
+
+      // Passado o prazo, a tela VOLTA e diz o que sabe.
+      await act(async () => { vi.advanceTimersByTime(2000); });
+      expect(btn('Continue with Google').disabled).toBe(false);
+      expect(screen.getByText(/didn’t respond/i)).toBeTruthy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('a rede NÃO dispara quando o login responde a tempo', async () => {
+    await montar();
+    abrirGoogle();
+    vi.useFakeTimers();
+    try {
+      botao('Continue with Google');
+      await act(async () => {});
+      // Respondeu: nada de mensagem, e o temporizador foi cancelado — avançar
+      // o relógio depois do prazo não pode inventar um erro em cima de um
+      // login que já deu certo.
+      await act(async () => { vi.advanceTimersByTime(GOOGLE_SEM_RESPOSTA_MS + 5000); });
+      expect(screen.queryByText(/didn’t respond/i)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('das duas telas de conta dá para VOLTAR à primeira', async () => {
