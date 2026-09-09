@@ -147,6 +147,32 @@
   <strong>não passam por nenhuma rota de IA</strong>.
 </p>
 
+<h2 id="microfone">2c. O recado falado (microfone)</h2>
+<p>
+  No chat da criatura existe um botão de <strong>gravar</strong>. Ele só aparece
+  quando o recurso está ligado no servidor; se não estiver, o botão não existe.
+</p>
+<ul>
+  <li><strong>O que é coletado:</strong> o áudio que você grava, e só enquanto
+      você está com a gravação aberta. Nada é capturado em segundo plano, com o
+      app fechado ou com a tela desligada.</li>
+  <li><strong>Para onde vai:</strong> o áudio é enviado ao nosso servidor
+      (Cloudflare) e repassado a um serviço de transcrição, que devolve o texto.
+      O texto aparece no campo de escrita para você <strong>revisar antes de
+      enviar</strong> — ele não é mandado para a criatura sozinho.</li>
+  <li><strong>Por quanto tempo fica:</strong> <strong>não guardamos o áudio.</strong>
+      Ele é repassado e descartado; não é gravado no seu aparelho, nem no nosso
+      servidor, nem em backup. O que sobra é o texto, e só se você enviar a
+      mensagem — aí ele vira uma mensagem de chat comum (seção 2b).</li>
+  <li><strong>É obrigatório?</strong> Não. Negar o microfone não bloqueia nada:
+      o campo de texto continua inteiro. Você pode revogar a permissão a
+      qualquer momento nas configurações do seu aparelho.</li>
+</ul>
+<p>
+  Como não guardamos o áudio, não há o que exportar nem apagar dele em
+  <a href="#exclusao">Seus direitos</a> — não existe gravação sua do nosso lado.
+</p>
+
 <h2>3. Base para leitura dos seus dados de uso</h2>
 <p>
   Além de guardar seu progresso, o app <strong>lê</strong> suas tarefas e
@@ -251,6 +277,13 @@
         Firebase nos informa apenas o <strong>seu e-mail</strong> — nada mais da
         sua conta Google.</td>
     <td>Se você fizer login e/ou ativar notificações.</td>
+  </tr>
+  <tr>
+    <td>Serviço de transcrição</td>
+    <td>O <strong>áudio</strong> que você grava no chat, para virar texto. Não
+        guardamos o áudio nem enviamos junto qualquer coisa que identifique
+        você. Ver a <a href="#microfone">seção 2c</a>.</td>
+    <td>Só quando você usa o botão de gravar.</td>
   </tr>
   <tr>
     <td>Google Play</td>
@@ -387,6 +420,34 @@
 </table>
 <p>Storage is hosted on <strong>Cloudflare</strong> infrastructure.</p>
 
+<h2 id="microphone">2c. Spoken messages (microphone)</h2>
+<p>
+  The pet chat has a <strong>record</strong> button. It only appears when the
+  feature is enabled on the server; if it is not, the button does not exist.
+</p>
+<ul>
+  <li><strong>What is collected:</strong> the audio you record, and only while
+      you have recording open. Nothing is captured in the background, with the
+      app closed, or with the screen off.</li>
+  <li><strong>Where it goes:</strong> the audio is sent to our server
+      (Cloudflare) and passed on to a transcription service, which returns the
+      text. The text lands in the input box for you to <strong>review before
+      sending</strong> — it is not sent to your creature on its own.</li>
+  <li><strong>How long it is kept:</strong> <strong>we do not store the audio.</strong>
+      It is passed through and discarded; it is not saved on your device, on our
+      server, or in any backup. What remains is the text, and only if you send
+      the message — at which point it becomes an ordinary chat message
+      (section 2b).</li>
+  <li><strong>Is it required?</strong> No. Denying the microphone blocks
+      nothing: the text field still works. You can revoke the permission at any
+      time in your device settings.</li>
+</ul>
+<p>
+  Because we do not store the audio, there is nothing of it to export or delete
+  under <a href="#deletion">Your rights</a> — no recording of yours exists on
+  our side.
+</p>
+
 <h2>3. Basis for reading your usage data</h2>
 <p>
   Besides storing your progress, the app <strong>reads</strong> your completed
@@ -488,6 +549,13 @@
         Google, Firebase tells us only <strong>your email address</strong> —
         nothing else from your Google account.</td>
     <td>If you sign in and/or enable notifications.</td>
+  </tr>
+  <tr>
+    <td>Transcription service</td>
+    <td>The <strong>audio</strong> you record in the chat, to turn it into text.
+        We do not store the audio and we do not send anything identifying you
+        along with it. See <a href="#microphone">section 2c</a>.</td>
+    <td>Only when you use the record button.</td>
   </tr>
   <tr>
     <td>Google Play</td>

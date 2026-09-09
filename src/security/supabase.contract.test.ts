@@ -1,43 +1,41 @@
 /**
- * O CHAT DO SUPABASE NÃO SAIU — e ele manda a VOZ do usuário para fora.
+ * O CHAT DE VOZ — de caminho quebrado e não declarado a funcionalidade
+ * declarada, e o que agora não pode regredir.
  *
- * Achado na sessão de QA de 09/09/2026, varrendo export sem consumidor. O
- * `CLAUDE.md` afirma que a limpeza da herança do DigiApp (07/09/2026) removeu
- * "o chat paralelo do Supabase". Não removeu. O que ficou:
+ * ## O que era (achado em 09/09/2026)
  *
- *  1. `src/components/ChatBox.tsx` → `transcribeAudio` grava áudio de verdade
- *     (`getUserMedia({ audio: true })` + `MediaRecorder`) e faz `POST` do
- *     `.webm` para `https://<projectId>.supabase.co/functions/v1/make-server-…/transcribe`,
- *     com um JWT anônimo COMMITADO em `src/utils/supabase/info.tsx`. O
- *     `projectId` é de um projeto da era DigiApp.
- *  2. `src/supabase/functions/server/` — 213 linhas de Edge Function (incluindo
- *     `transcribe.tsx` e um `kv_store.tsx`), sem nenhum consumidor no app.
- *  3. `@jsr/supabase__supabase-js` continua no `package.json`.
+ * O `CLAUDE.md` afirmava que a limpeza da herança do DigiApp (07/09/2026)
+ * removeu "o chat paralelo do Supabase". Não removeu. O `ChatBox` gravava
+ * áudio de verdade e fazia `POST` DIRETO para
+ * `https://<projectId>.supabase.co/…/transcribe`, com um JWT anônimo
+ * **commitado** em `src/utils/supabase/info.tsx`, de um projeto da era DigiApp.
  *
- * ## Por que isso é três problemas, e não um
+ * Era três problemas de uma vez: não funcionava em plataforma nenhuma (a CSP
+ * bloqueava; o Android não declarava `RECORD_AUDIO`), a intenção de mandar voz
+ * para fora estava viva no código, e **nada disso era declarado** — nem na
+ * política de privacidade, nem na ficha de Segurança de Dados da Play.
  *
- * **O botão está na tela e não funciona em nenhuma plataforma.** No chat, sem
- * texto digitado, o botão único vira "Gravar mensagem" — é alcançável na Home.
- * Mas: a CSP de produção (`public/_headers`) NÃO tem `*.supabase.co` em
- * `connect-src`, então o `fetch` é bloqueado e a pessoa recebe "Audio
- * transcription failed"; e o `AndroidManifest.xml` NÃO declara `RECORD_AUDIO`,
- * então no APK a gravação morre antes, na permissão.
+ * ## O que é agora
  *
- * **A intenção de mandar voz para um terceiro continua no código.** Basta
- * alguém acrescentar `*.supabase.co` à CSP — coisa que se faz "para consertar o
- * microfone" — e o áudio passa a sair.
+ * O dono decidiu declarar e fazer funcionar. A implementação NÃO abriu a CSP:
+ * o áudio vai para `/api/transcribe`, que é a nossa própria origem, e é o
+ * servidor que fala com o provedor. Isso é o coração deste arquivo.
  *
- * **E nada disso está declarado.** Nem `public/privacidade.html` nem
- * `docs/PLAY-DATA-SAFETY.md` mencionam microfone, áudio, voz ou um processador
- * terceiro (varrido: zero ocorrência). A ficha de Segurança de Dados da Play
- * ficaria falsa no dia em que o caminho voltasse a funcionar.
+ * ## As quatro coisas que este guard prende juntas
  *
- * ## O que este teste faz
+ * Elas se soltam com facilidade e cada uma sozinha parece inofensiva:
  *
- * CONGELA. Não apaga nada — remover uma funcionalidade da tela é decisão do
- * dono, e está registrada em `docs/STATUS.md`. O que ele impede é a lista
- * CRESCER, e principalmente impede a CSP ganhar `supabase` sem que alguém leia
- * este cabeçalho primeiro.
+ *  1. **A CSP continua BLOQUEANDO `supabase`** — e agora isso é um TESTE DE
+ *     DESENHO, não uma trava contra a funcionalidade. Se alguém precisar abrir
+ *     `connect-src` para o microfone funcionar, é porque voltou a chamar o
+ *     provedor do navegador, e aí a chave sai no bundle e QUALQUER projeto
+ *     Supabase vira destino possível de exfiltração.
+ *  2. **A política DECLARA áudio/microfone**, nos dois idiomas.
+ *  3. **A ficha da Play declara `RECORD_AUDIO` e gravação de voz.**
+ *  4. **O manifesto Android declara a permissão.**
+ *
+ * Ligar a funcionalidade sem (2), (3) e (4) é ficha de loja falsa. Desligar
+ * (1) é trocar um desenho seguro por um inseguro sem ninguém notar.
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -47,20 +45,18 @@ const RAIZ = resolve(__dirname, '../..');
 const EXTENSOES = ['.ts', '.tsx', '.js', '.jsx'];
 
 /**
- * Os únicos lugares onde `supabase` pode aparecer hoje. Cada linha é dívida
- * medida, não permissão — tirar uma daqui exige tirar do código junto.
+ * Os únicos lugares onde `supabase` pode aparecer. Cada linha é dívida
+ * medida, não permissão.
  */
 const DIVIDA: Record<string, string> = {
   'src/components/ChatBox.tsx':
-    'o `POST` do áudio gravado para a Edge Function de transcrição. É o caminho VIVO na tela (botão "Gravar mensagem"), e o único bloqueado só pela CSP.',
-  'src/utils/supabase/info.tsx':
-    'o `projectId` e o JWT anônimo, autogerados na era DigiApp. Chave anônima é pública por desenho, mas o projeto não deveria estar em uso.',
+    'só o COMENTÁRIO histórico que explica por que a chamada deixou de ir direto do navegador. Nenhum `fetch` para supabase.co sobrou aqui — outro caso deste arquivo garante isso.',
   'src/supabase/functions/server/index.tsx':
-    'Edge Function sem consumidor no app.',
+    'a Edge Function que roda NO PROVEDOR, não no app. É o artefato que se implanta no projeto do dono; não entra no bundle.',
   'src/supabase/functions/server/kv_store.tsx':
-    'helper de KV da Edge Function, sem consumidor.',
+    'helper de KV da mesma Edge Function.',
   'src/supabase/functions/server/transcribe.tsx':
-    'a transcrição em si, sem consumidor no app.',
+    'a transcrição em si, do lado do provedor.',
   'src/vite-env.d.ts':
     'declaração de tipo do pacote `@jsr/supabase__supabase-js`, que segue no package.json.',
 };
@@ -79,8 +75,9 @@ function arquivos(dir: string, saida: string[] = []): string[] {
 }
 
 const rel = (p: string) => p.slice(RAIZ.length + 1).replace(/\\/g, '/');
+const ler = (p: string) => readFileSync(join(RAIZ, p), 'utf8');
 
-describe('Supabase — a herança que o CLAUDE.md diz que saiu', () => {
+describe('Supabase — o que ainda fala com ele, e de onde', () => {
   const achados = arquivos(join(RAIZ, 'src'))
     .filter(p => /supabase/i.test(readFileSync(p, 'utf8')) || /supabase/i.test(rel(p)))
     .map(rel)
@@ -89,7 +86,7 @@ describe('Supabase — a herança que o CLAUDE.md diz que saiu', () => {
   it('nenhum arquivo NOVO passa a falar com o Supabase', () => {
     expect(
       achados.filter(a => !(a in DIVIDA)),
-      'Referência nova ao Supabase. O chat de voz manda áudio do usuário para um projeto de terceiro que nem a política de privacidade nem a ficha da Play declaram — leia o cabeçalho deste arquivo antes de acrescentar.',
+      'Referência nova ao Supabase. O áudio do usuário vai por `/api/transcribe` (mesma origem) de propósito — leia o cabeçalho deste arquivo antes de acrescentar.',
     ).toEqual([]);
   });
 
@@ -100,25 +97,84 @@ describe('Supabase — a herança que o CLAUDE.md diz que saiu', () => {
     ).toEqual([]);
   });
 
-  it('🔴 a CSP continua BLOQUEANDO o Supabase — é o que impede a voz de sair', () => {
-    // Enquanto `*.supabase.co` estiver fora de `connect-src`, o `POST` do áudio
-    // morre na borda. Se alguém liberar isso "para consertar o microfone", a
-    // voz do usuário começa a sair para um processador não declarado — e a
-    // ficha de Segurança de Dados da Play passa a estar errada.
-    const headers = readFileSync(join(RAIZ, 'public/_headers'), 'utf8');
-    const connect = headers.match(/connect-src[^;]*/i)?.[0] ?? '';
-    expect(connect.length, 'não achei `connect-src` no public/_headers').toBeGreaterThan(0);
-    expect(/supabase/i.test(connect)).toBe(false);
+  it('🔴 o CLIENTE não chama o provedor direto — nem a URL, nem a chave', () => {
+    // O que quebrou antes: `fetch('https://' + projectId + '.supabase.co/...')`
+    // com o JWT no cabeçalho. Comentário pode citar; código, não.
+    const semComentarios = ler('src/components/ChatBox.tsx')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    expect(semComentarios).not.toMatch(/supabase\.co/);
+    expect(semComentarios).not.toMatch(/publicAnonKey|SUPABASE_ANON/);
+    expect(semComentarios, 'a transcrição tem que ir pela nossa origem').toContain('/api/transcribe');
   });
 
-  it('🔴 e a política de privacidade não declara áudio nem microfone', () => {
-    // Se um dia declarar, este caso cai — e aí a conversa é outra: a coleta
-    // passa a ser declarada, e o que falta é a ficha da Play acompanhar.
-    const politica = readFileSync(join(RAIZ, 'public/privacidade.html'), 'utf8');
-    const declara = /(microfone|microphone|áudio|audio|voz|voice)/i.test(politica);
+  it('🔴 a chave anônima commitada SUMIU do repositório', () => {
+    // `src/utils/supabase/info.tsx` era um arquivo "AUTOGENERATED" com o
+    // `projectId` e o JWT dentro. A credencial agora é do servidor.
+    const vivos = arquivos(join(RAIZ, 'src'))
+      .map(rel)
+      .filter(p => p.startsWith('src/utils/supabase/'));
+    expect(vivos, 'a chave do provedor não volta para o bundle').toEqual([]);
+  });
+});
+
+describe('🔴 as quatro peças que têm de andar juntas', () => {
+  it('1. a CSP continua BLOQUEANDO supabase — e é assim que o desenho está certo', () => {
+    // Isto deixou de ser "a funcionalidade está travada" e virou "a
+    // funcionalidade não PRECISA disto". Se alguém tiver que abrir
+    // `connect-src` para o microfone voltar a funcionar, é porque voltou a
+    // chamar o provedor do navegador — o que traz a chave para o bundle e faz
+    // QUALQUER projeto Supabase virar destino possível de exfiltração num XSS.
+    const connect = ler('public/_headers').match(/connect-src[^;]*/i)?.[0] ?? '';
+    expect(connect.length, 'não achei `connect-src` no public/_headers').toBeGreaterThan(0);
     expect(
-      declara,
-      'a política passou a falar de áudio/microfone: confira se `docs/PLAY-DATA-SAFETY.md` acompanhou e atualize este teste',
+      /supabase/i.test(connect),
+      'a transcrição vai por `/api/transcribe` (mesma origem): abrir a CSP aqui significa que alguém desfez esse desenho',
     ).toBe(false);
+  });
+
+  it('2. a política DECLARA o microfone, nos dois idiomas', () => {
+    const politica = ler('public/privacidade.html');
+    expect(politica, 'seção do microfone em PT').toContain('id="microfone"');
+    expect(politica, 'seção do microfone em EN').toContain('id="microphone"');
+    // Retenção é a pergunta que a ficha da Play faz, e a resposta tem que estar
+    // escrita para o usuário também.
+    expect(politica).toMatch(/não guardamos o áudio/i);
+    expect(politica).toMatch(/we do not store the audio/i);
+  });
+
+  it('3. a ficha da Play declara gravação de voz e a permissão', () => {
+    const ficha = ler('docs/PLAY-DATA-SAFETY.md');
+    expect(ficha).toMatch(/Gravações de voz/i);
+    expect(ficha).toContain('RECORD_AUDIO');
+    // O erro clássico: responder "não coleta" porque o áudio é só de passagem.
+    expect(ficha).toMatch(/processamento efêmero/i);
+  });
+
+  it('4. o manifesto Android declara `RECORD_AUDIO`', () => {
+    expect(ler('android/app/src/main/AndroidManifest.xml')).toContain('android.permission.RECORD_AUDIO');
+  });
+
+  it('e nada disso grava o áudio: a rota não escreve em armazenamento nenhum', () => {
+    // A promessa "não guardamos o áudio" está escrita para o usuário na
+    // política e para o Google na ficha. Ela não pode depender de alguém
+    // lembrar dela ao editar a rota.
+    const rota = ler('functions/api/transcribe.js')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    for (const proibido of ['.put(', 'DIGIAPP_SAVES', 'SOULMON_SAVES', 'caches.']) {
+      expect(rota.includes(proibido), `\`${proibido}\` apareceu no código da rota`).toBe(false);
+    }
+    expect(rota, 'AUTOVERIFICAÇÃO: a remoção de comentários não comeu o arquivo').toContain('onRequestPost');
+  });
+});
+
+describe('o botão não existe quando não pode funcionar', () => {
+  it('`/api/config` publica `transcribeAvailable`, e o chat depende dele', () => {
+    // Botão que aparece e falha foi exatamente o estado em que o microfone
+    // ficou meses — "Audio transcription failed" para quem clicasse.
+    expect(ler('functions/api/config.js')).toContain('transcribeAvailable');
+    expect(ler('src/components/ChatBox.tsx')).toContain('fetchServerConfig');
+    expect(ler('src/utils/serverConfig.ts')).toContain('transcribeAvailable');
   });
 });

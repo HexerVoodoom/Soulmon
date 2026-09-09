@@ -21,6 +21,11 @@ export async function onRequestGet({ env }) {
   return Response.json({
     // true = todas as rotas de save/dinheiro exigem ID token do Firebase.
     authRequired: !!env.FIREBASE_PROJECT_ID,
+    // true = `/api/transcribe` tem provedor configurado. O cliente usa isto
+    // para NÃO DESENHAR o botão de microfone quando ele não teria como
+    // funcionar — botão que existe e falha é pior que botão que não existe.
+    // As duas variáveis são conferidas juntas porque a rota exige as duas.
+    transcribeAvailable: !!(env.SUPABASE_PROJECT_ID && env.SUPABASE_ANON_KEY),
   }, {
     headers: { ...CORS, 'Cache-Control': 'public, max-age=300' },
   });

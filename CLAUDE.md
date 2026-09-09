@@ -7,9 +7,19 @@ via `language === 'pt-BR'`).
 
 > O Soulmon nasceu de um **fork do DigiApp**, e a limpeza da herança foi feita
 > em 07/09/2026 — chaves de localStorage, binding KV, canal de push, campo do
-> bridge, classes e rótulos dos widgets, Digital Asset Links, o chat paralelo
-> do Supabase e toda a arte/nomes de franquia. O inventário e o que sobra estão
-> em `docs/SEPARACAO-DIGIAPP.md`.
+> bridge, classes e rótulos dos widgets, Digital Asset Links e toda a
+> arte/nomes de franquia. O inventário e o que sobra estão em
+> `docs/SEPARACAO-DIGIAPP.md`.
+> ⚠️ **Esta linha dizia que "o chat paralelo do Supabase" tinha saído. NÃO
+> tinha** (achado em 09/09/2026): o `ChatBox` seguia gravando áudio e mandando
+> direto para um projeto da era DigiApp, com o JWT commitado — bloqueado pela
+> CSP, sem `RECORD_AUDIO` no Android e declarado em lugar nenhum. Hoje a
+> transcrição é uma funcionalidade DE VERDADE: passa por `/api/transcribe`
+> (mesma origem, credencial no servidor), está declarada na política e na ficha
+> da Play, e as quatro peças estão presas por
+> `src/security/supabase.contract.test.ts`. Fica desligada até
+> `SUPABASE_PROJECT_ID`/`SUPABASE_ANON_KEY` existirem no ambiente — e sem elas
+> o botão de microfone **não é desenhado**.
 > **O que resta depende do painel, não do código**: o namespace KV ainda é o
 > mesmo fisicamente — só o dono separa.
 > **O Firebase JÁ FOI separado (07/09/2026)**: o Soulmon tem projeto próprio

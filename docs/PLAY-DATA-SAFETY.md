@@ -84,7 +84,29 @@ usuário escolhe.
 
 ### 2.4 Fotos, vídeos, áudio, contatos, calendário, arquivos
 
-Todos **❌ Não**. O app não pede nenhuma dessas permissões.
+| Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde no código |
+|---|---|---|---|---|---|
+| **Gravações de voz ou som** | ✅ Sim | ✅ Sim — serviço de transcrição | Funcionalidades do app (falar com a criatura em vez de digitar) | Opcional | `src/components/ChatBox.tsx` → `functions/api/transcribe.js` |
+| Fotos, vídeos, contatos, calendário, arquivos, músicas | ❌ Não | — | — | — | O app não pede nenhuma dessas permissões |
+
+> ⚠️ **Marque "Sim" mesmo não guardando o áudio.** O formulário pergunta se o
+> dado é COLETADO, e coletar inclui transitar pelo servidor — não guardar é
+> outra pergunta (a de retenção). Responder "não" aqui porque "é só de
+> passagem" é o erro clássico que derruba a ficha na revisão.
+>
+> Na pergunta de **processamento efêmero**, responda **sim**: o áudio é
+> repassado ao provedor e descartado, sem gravação em KV, R2, disco ou backup.
+> Há um teste que afirma isso lendo o código da rota
+> (`functions/api/transcribe.test.js` → "a rota NÃO grava o áudio").
+>
+> O botão de gravar **só existe quando o servidor tem provedor configurado**
+> (`/api/config` → `transcribeAvailable`). Enquanto ele estiver desligado o app
+> não pede a permissão nem coleta nada — mas a permissão está no manifesto, e
+> **a ficha tem que ser preenchida pelo que o APK pode fazer**, não pelo que a
+> configuração de hoje faz.
+
+**Declarado na política:** seção **2c** (PT) / **2c** (EN), com destino,
+retenção ("não guardamos o áudio") e como revogar.
 
 **As permissões que o app REALMENTE declara** (conferidas em
 `android/app/src/main/AndroidManifest.xml`, 08/09/2026), para você não ser
@@ -97,6 +119,7 @@ surpreendido pela ficha da loja:
 | `SCHEDULE_EXACT_ALARM` | Lembrete na hora certa | Sim |
 | `RECEIVE_BOOT_COMPLETED` | Reagendar lembretes após reiniciar | Não (normal) |
 | **`ACTIVITY_RECOGNITION`** | **Contador de passos** — ver 2.6 | **Sim, e exige declaração** |
+| **`RECORD_AUDIO`** | **Recado falado no chat** — ver 2.4 | **Sim, e exige declaração** |
 
 > Se o manifesto ganhar uma permissão nova, esta tabela mente e a declaração
 > enviada ao Play fica falsa. Confira antes de cada envio.

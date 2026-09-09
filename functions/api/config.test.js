@@ -28,13 +28,13 @@ const ler = async env => (await onRequestGet({ env })).json();
 
 describe('/api/config — o que o desktop decide a partir daqui', () => {
   it('com Firebase configurado, `authRequired` é true', async () => {
-    expect(await ler({ FIREBASE_PROJECT_ID: 'soulmon-app' })).toEqual({ authRequired: true });
+    expect((await ler({ FIREBASE_PROJECT_ID: 'soulmon-app' })).authRequired).toBe(true);
   });
 
   it('sem Firebase, `authRequired` é false — e é o modo de migração', async () => {
-    expect(await ler({})).toEqual({ authRequired: false });
-    expect(await ler({ FIREBASE_PROJECT_ID: '' })).toEqual({ authRequired: false });
-    expect(await ler({ FIREBASE_PROJECT_ID: undefined })).toEqual({ authRequired: false });
+    for (const env of [{}, { FIREBASE_PROJECT_ID: '' }, { FIREBASE_PROJECT_ID: undefined }]) {
+      expect((await ler(env)).authRequired).toBe(false);
+    }
   });
 
   it('o campo é BOOLEANO, e não o id do projeto vazando na resposta', async () => {
@@ -53,7 +53,7 @@ describe('/api/config — o que o desktop decide a partir daqui', () => {
       VAPID_JWK: '{"d":"segredo"}',
       SEASON_ADMIN_KEY: 'admin-segredo',
     });
-    expect(Object.keys(corpo)).toEqual(['authRequired']);
+    expect(Object.keys(corpo).sort()).toEqual(['authRequired', 'transcribeAvailable']);
     expect(JSON.stringify(corpo)).not.toMatch(/segredo/);
   });
 });
@@ -105,5 +105,33 @@ describe('cabeçalhos', () => {
 
   it('o preflight não devolve corpo', async () => {
     expect(await (await onRequestOptions()).text()).toBe('');
+  });
+});
+
+describe('🔴 `transcribeAvailable` — o botão de microfone depende dele', () => {
+  it('sem as duas variáveis do provedor, é false', async () => {
+    for (const env of [
+      {},
+      { SUPABASE_PROJECT_ID: 'evvcdsnijxbyctipfnkt' },
+      { SUPABASE_ANON_KEY: 'k' },
+      { SUPABASE_PROJECT_ID: '', SUPABASE_ANON_KEY: 'k' },
+    ]) {
+      expect((await ler(env)).transcribeAvailable, JSON.stringify(env)).toBe(false);
+    }
+  });
+
+  it('com as duas, é true', async () => {
+    expect((await ler({ SUPABASE_PROJECT_ID: 'evvcdsnijxbyctipfnkt', SUPABASE_ANON_KEY: 'k' })).transcribeAvailable)
+      .toBe(true);
+  });
+
+  it('🔴 a CHAVE do provedor nunca sai por aqui — só o booleano', async () => {
+    // Esta rota é anônima e cacheada por 5 minutos. Vazar a credencial aqui
+    // seria publicá-la para o mundo com um CDN na frente.
+    const texto = JSON.stringify(await ler({
+      SUPABASE_PROJECT_ID: 'evvcdsnijxbyctipfnkt', SUPABASE_ANON_KEY: 'jwt-secreto',
+    }));
+    expect(texto).not.toContain('jwt-secreto');
+    expect(texto).not.toContain('evvcdsnijxbyctipfnkt');
   });
 });

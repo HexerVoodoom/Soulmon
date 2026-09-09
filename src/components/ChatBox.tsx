@@ -1,6 +1,7 @@
 import { aiFetch } from '../utils/aiClient';
 import { chatSafetyDecision } from '../utils/chatSafety';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { fetchServerConfig } from '../utils/serverConfig';
 import { Icon } from './ui/Icon';
 import { toast } from 'sonner';
 import { type AISettings } from './AISettingsModal';
@@ -63,6 +64,29 @@ export function ChatBox({
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  /* O microfone só EXISTE quando o servidor tem provedor de transcrição
+     (`/api/config` → `transcribeAvailable`; ver `utils/serverConfig.ts`).
+     `null` = ainda não perguntamos.
+
+     ⚠️ O botão nasce OTIMISTA (`null` desenha o microfone) e só some quando o
+     servidor diz que não há. O contrário — nascer escondido e aparecer depois —
+     esconderia o microfone de quem abre o app para gravar e não toca no campo
+     de texto antes, que é justamente o gesto que a funcionalidade existe para
+     servir. Clicar com a resposta ainda desconhecida ESPERA por ela antes de
+     abrir o microfone, então nunca há gravação que morre no envio. */
+  const [micDisponivel, setMicDisponivel] = useState<boolean | null>(null);
+
+  /* ⚠️ NÃO no `mount`. O `CompanionHUD` fica montado na Home o tempo todo, e
+     existe um guard que exige que montá-lo não toque a rede — buscar a
+     configuração ali seria uma requisição por abertura do app para um valor que
+     só importa quando a pessoa vai usar o chat. A busca acontece na primeira
+     INTERAÇÃO com a barra, e como `micDisponivel` começa `false` o botão já
+     nasce no estado certo: nada pisca. */
+  const garantirConfig = useCallback(async () => {
+    const { transcribeAvailable } = await fetchServerConfig();
+    setMicDisponivel(transcribeAvailable);
+    return transcribeAvailable;
+  }, []);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   
   // Anti-autofill trick
@@ -239,6 +263,15 @@ export function ChatBox({
   // Handle audio recording
   const handleMicClick = async () => {
     if (isLoading) return;
+    /* Ainda não sabemos se há provedor: perguntar AQUI é o que impede uma
+       gravação inteira que morreria no envio. `fetchServerConfig` já é uma
+       requisição por sessão, então isto não custa nada depois da primeira. */
+    if (!isRecording && !(await garantirConfig())) {
+      toast.error(isPt
+        ? 'O recado falado não está disponível agora. Dá para escrever aqui do mesmo jeito.'
+        : 'Spoken messages are not available right now. You can still type here.');
+      return;
+    }
     if (isRecording) {
       // Stop recording
       if (mediaRecorder) {
@@ -307,24 +340,22 @@ export function ChatBox({
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
     try {
-      const { projectId, publicAnonKey } = await import('../utils/supabase/info');
-
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
-      // Convert locale code (e.g. 'pt-BR') to base language code ('pt') for Whisper
       formData.append('language', language.split('-')[0]);
 
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-7de212d9/transcribe`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`
-          },
-          body: formData,
-          signal: controller.signal,
-        }
-      );
+      /* MESMA ORIGEM. Ate 09/09/2026 isto era um POST direto para
+         `<projectId>.supabase.co` com o JWT do projeto embarcado no bundle —
+         que a CSP bloqueava, entao NUNCA funcionou em producao. Passar por
+         `/api/transcribe` mantem a credencial no servidor, poe a chamada sob
+         teto por IP e limite de tamanho, e dispensa abrir `connect-src` para
+         `*.supabase.co` (o que deixaria QUALQUER projeto Supabase ser destino
+         de exfiltracao). Ver o cabecalho de `functions/api/transcribe.js`. */
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
 
       if (!response.ok) {
         if (import.meta.env.DEV) console.error('Transcription failed:', await response.text());
@@ -361,7 +392,7 @@ export function ChatBox({
      resposta não chegava. */
   const actionLabel = isLoading
     ? (isPt ? 'Enviando mensagem…' : 'Sending message…')
-    : hasText
+    : hasText || micDisponivel === false
       ? (isPt ? 'Enviar mensagem' : 'Send message')
       : isRecording
         ? (isPt ? 'Parar gravação' : 'Stop recording')
@@ -385,7 +416,7 @@ export function ChatBox({
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsInputReadOnly(false)}
+          onFocus={() => { setIsInputReadOnly(false); void garantirConfig(); }}
           onBlur={() => setIsInputReadOnly(true)}
           readOnly={isInputReadOnly}
           placeholder=">_"
@@ -444,22 +475,28 @@ export function ChatBox({
             primário, não uma placa colorida atrás dele. */}
         <button
           type="button"
-          onClick={hasText ? handleSendMessage : handleMicClick}
+          onClick={hasText || micDisponivel === false ? handleSendMessage : handleMicClick}
           /* `aria-disabled`, nunca `disabled`: ver a nota do campo acima —
              desabilitar de verdade tira o botão da ordem de tabulação no meio
              do uso e derruba o foco. Os dois handlers já ignoram `isLoading`. */
-          aria-disabled={isLoading || undefined}
+          /* Sem texto E sem microfone, o botao nao tem acao nenhuma — mas
+             continua no DOM: o comentario acima explica que o no do foco tem
+             que ser estavel, e sumir com ele no meio da digitacao derrubaria o
+             foco de quem navega por teclado. */
+          aria-disabled={isLoading || (!hasText && micDisponivel === false) || undefined}
           className="sm2-chat-btn"
           /* Paridade exata com o `&:disabled { opacity: .5 }` do
              `.sm2-chat-btn` (index.css), que o `aria-disabled` não dispara. */
-          style={isLoading ? { opacity: 0.5, cursor: 'default' } : undefined}
+          style={isLoading || (!hasText && micDisponivel === false)
+            ? { opacity: 0.5, cursor: 'default' }
+            : undefined}
           title={actionLabel}
           aria-label={actionLabel}
         >
           {isLoading ? (
             <Icon name="sync" size={32} tone="muted" className="animate-spin" />
-          ) : hasText ? (
-            <Icon name="send" size={32} fill={1} tone="primary" />
+          ) : hasText || micDisponivel === false ? (
+            <Icon name="send" size={32} fill={1} tone={hasText ? 'primary' : 'muted'} />
           ) : isRecording ? (
             <Icon name="stop_circle" size={32} fill={1} tone="danger" />
           ) : (

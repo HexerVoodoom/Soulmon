@@ -47,6 +47,13 @@ Reconfigurar **todas** as variáveis nele (elas não vêm junto):
 | `ANDROID_PACKAGE_NAME` | `com.hexervoodoom.soulmon` |
 | `VITE_FIREBASE_*` | Só quando for ligar o login (ver BILLING-SETUP.md) |
 | `FIREBASE_PROJECT_ID` | **Por último** — é o que passa a exigir token |
+| `SUPABASE_PROJECT_ID` | Projeto do provedor de transcrição. **Só o id**, sem `.supabase.co` — ele vira host e a rota recusa qualquer coisa fora de `[a-z0-9]{16,40}` |
+| `SUPABASE_ANON_KEY` | Chave do mesmo projeto. **Do servidor**, nunca `VITE_` — o prefixo a colocaria no bundle, que é o defeito que esta rota existe para desfazer |
+
+> As duas do provedor andam juntas: sem AS DUAS, `/api/config` devolve
+> `transcribeAvailable: false`, o botão de microfone não aparece e
+> `/api/transcribe` responde 503. É o estado desejado enquanto o projeto não
+> existir — o app funciona inteiro sem elas.
 
 ### 2. Namespace KV próprio
 

@@ -2148,7 +2148,12 @@ __name(onRequestOptions5, "onRequestOptions");
 async function onRequestGet({ env }) {
   return Response.json({
     // true = todas as rotas de save/dinheiro exigem ID token do Firebase.
-    authRequired: !!env.FIREBASE_PROJECT_ID
+    authRequired: !!env.FIREBASE_PROJECT_ID,
+    // true = `/api/transcribe` tem provedor configurado. O cliente usa isto
+    // para NÃO DESENHAR o botão de microfone quando ele não teria como
+    // funcionar — botão que existe e falha é pior que botão que não existe.
+    // As duas variáveis são conferidas juntas porque a rota exige as duas.
+    transcribeAvailable: !!(env.SUPABASE_PROJECT_ID && env.SUPABASE_ANON_KEY)
   }, {
     headers: { ...CORS5, "Cache-Control": "public, max-age=300" }
   });
@@ -3366,6 +3371,85 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
 }
 __name(onRequestPost7, "onRequestPost");
 
+// api/transcribe.js
+var CORS13 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+var json6 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS13 }), "json");
+var LIMITE = { limit: 6, windowMs: 6e4 };
+var MAX_BYTES = 4 * 1024 * 1024;
+var TIPOS = /^audio\/(webm|ogg|mp4|mpeg|wav|x-m4a)(;.*)?$/i;
+var IDIOMAS = /* @__PURE__ */ new Set(["pt", "en"]);
+async function onRequestOptions13() {
+  return new Response(null, { headers: CORS13 });
+}
+__name(onRequestOptions13, "onRequestOptions");
+async function onRequestPost8({ request, env }) {
+  const gate = takeToken("transcribe", clientKey(request), LIMITE);
+  if (!gate.ok) {
+    console.warn("[transcribe] rate limited", { retryAfter: gate.retryAfter });
+    return tooManyRequests(gate.retryAfter, CORS13);
+  }
+  const projectId = env.SUPABASE_PROJECT_ID;
+  const anonKey = env.SUPABASE_ANON_KEY;
+  if (!projectId || !anonKey) {
+    return json6({ error: "transcribe-not-configured" }, 503);
+  }
+  if (!/^[a-z0-9]{16,40}$/.test(projectId)) {
+    console.error("[transcribe] SUPABASE_PROJECT_ID fora do formato esperado");
+    return json6({ error: "transcribe-not-configured" }, 503);
+  }
+  let form;
+  try {
+    form = await request.formData();
+  } catch {
+    return json6({ error: "invalid-form" }, 400);
+  }
+  const audio = form.get("audio");
+  if (!audio || typeof audio === "string") {
+    return json6({ error: "missing-audio" }, 400);
+  }
+  if (audio.size === 0) return json6({ error: "empty-audio" }, 400);
+  if (audio.size > MAX_BYTES) return json6({ error: "audio-too-large" }, 413);
+  if (!TIPOS.test(audio.type || "")) return json6({ error: "unsupported-audio-type" }, 415);
+  const bruto = String(form.get("language") ?? "").slice(0, 5).split("-")[0].toLowerCase();
+  const language = IDIOMAS.has(bruto) ? bruto : "en";
+  const repasse = new FormData();
+  repasse.append("audio", audio, "recording.webm");
+  repasse.append("language", language);
+  let upstream;
+  try {
+    upstream = await fetch(
+      `https://${projectId}.supabase.co/functions/v1/make-server-7de212d9/transcribe`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${anonKey}` },
+        body: repasse,
+        // Áudio longo num modelo de fala é lento; sem teto a requisição fica
+        // pendurada até o limite do isolate e o app mostra "falhou" tarde.
+        signal: AbortSignal.timeout(3e4)
+      }
+    );
+  } catch (err) {
+    console.error("[transcribe] falha ao falar com o provedor:", err?.name);
+    return json6({ error: "transcribe-unavailable" }, 502);
+  }
+  if (!upstream.ok) {
+    console.error("[transcribe] provedor respondeu", upstream.status);
+    return json6({ error: "transcribe-failed" }, 502);
+  }
+  let dados;
+  try {
+    dados = await upstream.json();
+  } catch {
+    return json6({ error: "transcribe-failed" }, 502);
+  }
+  return json6({ text: String(dados?.text ?? "").slice(0, 2e3) });
+}
+__name(onRequestPost8, "onRequestPost");
+
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.hexervoodoom.soulmon";
 async function onRequest5({ env }) {
@@ -3388,7 +3472,7 @@ async function onRequest5({ env }) {
 }
 __name(onRequest5, "onRequest");
 
-// ../.wrangler/tmp/pages-wsvvSO/functionsRoutes-0.7498893204313608.mjs
+// ../.wrangler/tmp/pages-DhW4Ax/functionsRoutes-0.40129760878913867.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -3566,6 +3650,20 @@ var routes = [
     modules: [onRequestPost7]
   },
   {
+    routePath: "/api/transcribe",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions13]
+  },
+  {
+    routePath: "/api/transcribe",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost8]
+  },
+  {
     routePath: "/.well-known/assetlinks.json",
     mountPath: "/.well-known",
     method: "",
@@ -3602,7 +3700,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i = 0;
@@ -3928,7 +4026,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

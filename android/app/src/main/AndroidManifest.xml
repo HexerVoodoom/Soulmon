@@ -146,4 +146,22 @@
          dados de saúde ou política dedicada. Opcional: o app roda inteiro sem
          ela (ver src/utils/steps.ts). -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+    <!-- Microfone, para o recado FALADO ao bichinho (ChatBox → /api/transcribe).
+         Runtime, e OPCIONAL do mesmo jeito que o contador de passos: negar não
+         impede nada além de gravar — o campo de texto continua inteiro.
+
+         ⚠️ TRÊS COISAS ANDAM JUNTAS, e separar qualquer uma quebra a ficha do
+         Play sem quebrar o build:
+           1. esta permissão;
+           2. `public/privacidade.html`, que declara a coleta e o destino;
+           3. `docs/PLAY-DATA-SAFETY.md`, que é o que se preenche no console.
+         O guard `src/security/supabase.contract.test.ts` liga as três: se a
+         funcionalidade ligar sem as declarações, ele fica vermelho.
+
+         O áudio NÃO é gravado em disco nem no servidor: é repassado ao
+         provedor de transcrição e o que volta é texto. Não há
+         `FOREGROUND_SERVICE_MICROPHONE` porque nada grava em segundo plano —
+         a gravação existe só enquanto a tela do chat está aberta e a pessoa
+         está com o botão apertado. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 </manifest>
