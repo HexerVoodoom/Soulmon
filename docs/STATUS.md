@@ -7,6 +7,93 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## ✅ RESOLVIDO em 09/09/2026 — o recado falado foi ASSUMIDO, não apagado
+>
+> O achado abaixo foi levado ao dono, e a decisão dele foi **declarar e fazer
+> funcionar**, em vez de remover: `06ef9ea0 feat(voz): o recado falado passou a
+> existir de verdade — e declarado`. O POST direto para `<projectId>.supabase.co`
+> com o JWT no bundle saiu; a transcrição passa a ir por
+> `functions/api/transcribe.js`. A `PLAY-DATA-SAFETY.md` §2.4 passou a declarar
+> **"Gravações de voz ou som — Sim, coletado e compartilhado"**, com processamento
+> efêmero e retenção explicados, e `RECORD_AUDIO` entrou na tabela de permissões.
+>
+> ⚠️ **Sobrou uma contradição, corrigida no mesmo dia** (PR #33): a tabela do §2.4
+> mudou, mas as duas **listas-resumo do fim do documento** ficaram para trás — "não
+> coletado" ainda listava `áudio`, e "coletado e compartilhado" não citava a
+> transcrição. **É da lista-resumo que se preenche a ficha da Play**, não da tabela
+> que ninguém relê na hora do formulário. Regra que ficou escrita lá: ao mudar a
+> §2.4, mudar as duas listas no mesmo commit.
+>
+> O bloco original fica abaixo, para auditoria.
+
+> ## 🔴 08/09/2026 — O APP PEDE O MICROFONE E MANDA O ÁUDIO PARA FORA, E A DATA SAFETY DIZ QUE NÃO
+>
+> Achado por um parecer de privacidade da squad de som, **fora do escopo dela**, e
+> verificado nas quatro pontas. Não é o desenho novo de áudio: **é o app de hoje.**
+>
+> `src/components/ChatBox.tsx` chama `navigator.mediaDevices.getUserMedia({ audio: true })`,
+> grava com `MediaRecorder` e faz POST do blob para um endpoint de **Supabase**:
+> `https://<projectId>.supabase.co/functions/v1/make-server-7de212d9/transcribe`.
+> O componente é montado pelo `CompanionHUD` e **está no bundle servido**
+> (`getUserMedia` presente em `dist/assets/index-*.js`).
+>
+> Contra isso, `docs/PLAY-DATA-SAFETY.md` **§2.4** declara fotos/vídeo/**áudio**
+> como **❌ Não**, com a frase *"O app não pede nenhuma dessas permissões"*, e a
+> lista de "Não coletado" repete **áudio**. **Supabase não aparece como destino
+> declarado em lugar nenhum** — nem na Data Safety, nem em `public/privacidade.html`.
+>
+> ⚠️ O `CLAUDE.md` afirma que "o chat paralelo do Supabase" saiu na limpeza da
+> herança do DigiApp em 07/09/2026. **A transcrição por voz sobreviveu.**
+>
+> `AndroidManifest.xml` **não** declara `RECORD_AUDIO` (grep = 0), então no APK a
+> gravação provavelmente falha em silêncio — mas **PWA e Electron concedem
+> normalmente**, e é a PWA que está no ar.
+>
+> **Isto é decisão do dono, e são três saídas:** (a) remover a gravação por voz e o
+> endpoint; (b) mantê-la e **corrigir a Data Safety, a política de privacidade e o
+> destino declarado** antes de qualquer publicação na Play; (c) mantê-la desligada
+> por flag até (b) estar feito. Enquanto não for decidido, **a declaração da loja
+> está incorreta**, e é a declaração que a Play cobra.
+>
+> Parecer completo, com as perguntas numeradas:
+> `squad-alpha-runs/som-01/discovery/parecer-pi-e-dados.md`.
+
+> ## ✅ 08/09/2026 — o Node 25 e os testes: consertado na raiz, não mais por contorno
+>
+> O bloco de 07/09 abaixo registra que o Node 25 "cria um `localStorage` global
+> vazio que sombreia o do jsdom e derruba 7 testes", e manda usar o Node 22
+> portátil de `E:/tools/node/node-v22.23.2-win-x64` para rodar o gate.
+>
+> **Duas atualizações.** Primeiro, o número cresceu: em 08/09/2026 eram **28 testes
+> em 3 arquivos** (`storageKeys.migration`, `telemetryWiring.render`,
+> `SoulmonOnboarding.portao.render`). Segundo, o contorno tinha dois furos — não
+> ajudava **o CI** (que roda o Node da workflow, não o da máquina do dono) e
+> dependia de todo mundo lembrar de trocar de Node.
+>
+> Consertado no `vitest.config.ts`, que acrescenta `--no-experimental-webstorage`
+> ao `NODE_OPTIONS` do processo principal **antes de os workers nascerem** — a
+> única camada por onde toda invocação passa, inclusive o `npx vitest run` cru que
+> o `CLAUDE.md` manda rodar antes de todo commit. `poolOptions.*.execArgv` **não**
+> funciona: o Vitest monta a própria lista (verificado). Reatribuir no
+> `setupFiles` também não: no jsdom do Vitest o `window` **é** o `globalThis`, então
+> os dois já apontam para o objeto morto e não existe referência para o certo.
+>
+>     npx tsc --noEmit  → exit 0
+>     npx vitest run    → 256/256 arquivos · 3666 testes · 1 skipped
+>
+> **O Node 22 portátil continua útil** para reproduzir o ambiente do CI, mas deixou
+> de ser necessário para a suíte ficar verde.
+>
+> ⚠️ **Achado junto, e este continua ABERTO:** o job `tsc + vitest` roda também
+> `npx tsc -p tsconfig.server.json --noEmit`, que o `CLAUDE.md` **não lista** na
+> seção de comandos pré-commit — e ele reprova. Eram 5 erros; 2 foram consertados
+> (subtração de dois `Date` em `community.js`). Os **3 restantes** são
+> `KVNamespace` citado no JSDoc de `_kv.js` sem nunca ter sido declarado, e
+> **declará-lo de verdade desmascara mais de 90 erros latentes** em nove arquivos,
+> incluindo dinheiro, conta e save — porque enquanto o nome não resolve, `kv(env)`
+> devolve `any` e tudo a jusante passa trivialmente. A conta e os três caminhos
+> estão em `squad-alpha-runs/som-01/sweeper/achado-typecheck-servidor.md`.
+
 > ## ✅ 07/09/2026 (sessão LOCAL) — a infra que dependia do dono FOI LIGADA
 >
 > A sessão anterior rodava na nuvem, sem navegador logado, e parou no Firebase.
