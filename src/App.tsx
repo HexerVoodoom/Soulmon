@@ -72,7 +72,7 @@ import { applySpecialItem, specialRefusal } from './utils/specialItemUse';
 import { playerDayKey } from './utils/playerDay';
 import { awardBondXP, bondLevelFor, unclaimedBondRewards, applyBondRewards, bondTitle } from './utils/bond';
 import { applyPoopDrain, cleanPoop, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
-import { isMuted, setMuted, playTaskComplete, playFeed, playPoopClean, playEvolve, playDegenerate, playSleep } from './utils/sounds';
+import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { requestNotificationPermission, showNotification } from './utils/notifications';
 // `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
@@ -2578,7 +2578,11 @@ export default function App() {
       return cleanPoop(prev, { at: careEvent.requestTime }).state;
     });
 
-    if (careEvent.type === 'poop') playPoopClean();
+    // C-9 (run `som-01`): `playPoopClean` foi apagado. Este call-site era o
+    // unico, e so alcancavel pelo BANHO (`CareSystem.tsx` desliga o clique no
+    // coco por codigo) — o som ja soava junto com `playShower` no mesmo gesto.
+    // O canal que confirma "limpo e dreno parado" e o `setCareEvent(null)`
+    // abaixo, que esconde o sprite no mesmo ciclo de render (R-35).
     setCareEvent(null);
     setMessageTrigger(prev => prev + 1);
   }, [careEvent]);
@@ -2621,8 +2625,12 @@ export default function App() {
         return;
       }
 
-      if (special.kind === 'glitchtama') playEvolve();
-      else if (special.kind === 'heart') playTaskComplete();
+      // C-5 (run `som-01`): o Glitchtama NAO usa mais o som de evolucao. Ele e
+      // um item de inventario sendo usado; a evolucao e o evento identitario do
+      // produto. Emprestar o som da evolucao para um item que da +1 dia completo
+      // e a forma sonora de escalar celebracao com contagem (veto #16). Vai no
+      // mesmo peso do coracaozinho: item especial.
+      if (special.kind === 'glitchtama' || special.kind === 'heart') playTaskComplete();
       else playFeed();
 
       setGameState(prev => applySpecialItem(prev, foodEmoji, agora).state);
@@ -2714,9 +2722,14 @@ export default function App() {
     setIsSleeping(prev => {
       const next = !prev;
       writeFlag(STORAGE_KEYS.IS_SLEEPING, next, { silent: true });
+      // C-7 (run `som-01`): so DEITAR soa. Um som que nao distingue a direcao do
+      // estado nao confirma acao nenhuma — so avisa que um botao foi apertado,
+      // coisa que o botao ja faz. E acordar e o comeco do dia, onde a Janela de
+      // Descanso proibe qualquer feedback avaliativo (veto #12). O estado
+      // dormindo/acordado ja e visivel e persistente na tela do pet.
+      if (next) playSleep();
       return next;
     });
-    playSleep();
   }, []);
 
   // Dungeon: no daily cap — entry is blocked only at ≤1 heart (a loss costs a
@@ -2927,7 +2940,12 @@ export default function App() {
     if (shopBuyRefusal(gameState, item)) return false;
 
     setGameState(prev => applyShopBuy(prev, item).state);
-    playFeed();
+    // C-3 (run `som-01`): comprar deixa de soar como COMER. Era o mesmo som
+    // para o unico evento do app que gasta moeda, e o gasto e irreversivel —
+    // quem nao olha a tela nao tinha como distinguir os dois. Categoria
+    // "transacao" ainda nao tem som proprio; ate ter, o canal e o visual:
+    // `setGameState` roda ANTES daqui e saldo/posse ja aparecem no proximo
+    // render (R-33).
     return true;
     // `gameState` inteiro: a recusa externa lê saldo em DUAS moedas e as duas
     // listas de posse, e `gameState.emblems` estava faltando na lista antiga —
@@ -3983,7 +4001,12 @@ export default function App() {
       if (refused === 'daily-cap') setHealCapSignal(n => n + 1);
       return;
     }
-    playFeed();
+    // C-4 (run `som-01`): o carinho deixa de soar como um mordisco. Medido: o
+    // gesto NAO e pontual — `CompanionHUD.rubTick` chama isto a cada 2 s de
+    // arrasto, entao um arrasto de 10 s disparava `playFeed` cinco vezes. Fica
+    // sem som ate a decisao de vinculo sobre C-4 fechar (as saidas em aberto sao
+    // "variacao do motivo de presenca" ou "nenhum som"); a recusa por teto
+    // continua distinguivel pela fala do pet, que e o canal real (R-34).
     contarMissao('rub-days');
     if (!rubFalouRef.current) {
       rubFalouRef.current = true;

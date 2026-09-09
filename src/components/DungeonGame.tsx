@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Icon } from './ui/Icon';
 import { PixelButton } from './pixel/PixelKit';
 import { getSpriteForStage } from '../utils/sprites';
-import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
+import { playFeed } from '../utils/sounds';
 import { getStageLevel } from '../types/progression';
 import { playerStatsFor } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
@@ -144,8 +144,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
   };
 
   // Enemy defeated: grant points + roll a heart drop, then confirm.
+  // C-1 (run `som-01`): a morte de inimigo NAO usa o som de conclusao. Uma run
+  // sao 5 andares x 6 inimigos = 30 disparos do som que o produto reserva para
+  // "voce concluiu uma coisa real" — gastar celebracao no evento frequente e
+  // gasta-la. O canal visual (inimigo saindo da escada) e sincrono e continua.
   const defeatEnemy = (finalMsg: Popup) => {
-    playTaskComplete();
     onEnemyDefeated(enemy.stage);
     addPoints(enemy.points);
     const gotHeart = onHeartDrop();
@@ -222,7 +225,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, language, onEnter
     setPhase('result');
 
     if (newHp <= 0) {
-      playDegenerate();
+      // C-6 (run `som-01`): sem som de degeneracao. Perder a run nao custa
+      // coracao nenhum, de proposito — sonorizar como perda estrutural inverte
+      // a regra escrita. O fim de partida ja e mostrado em tela.
       // Não custa coração nenhum: `handleDungeonLose` é um callback vazio, de
       // propósito. O que se perde ao cair é a RUN — bônus de andar, Glitchtama
       // e placar. (WP4.20: este comentário afirmava um custo de um coração, e

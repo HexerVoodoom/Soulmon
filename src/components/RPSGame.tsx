@@ -3,7 +3,7 @@ import { PixelButton } from './pixel/PixelKit';
 import { Icon } from './ui/Icon';
 import rpsScene from '../assets/soulmon/bg/minigame-rps.png';
 import { getSpriteForStage } from '../utils/sprites';
-import { playTaskComplete, playDegenerate, playFeed } from '../utils/sounds';
+import { playTaskComplete } from '../utils/sounds';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -63,7 +63,8 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       setPetHand(pet);
       setThinking(false);
       if (pet === hand) {
-        playFeed();
+        // C-2 (run `som-01`): empate e nao-evento — nada mudou de estado, e a UI
+        // ja escreve "Empate!". Som para nada acontecer e ruido.
         setRoundMsg(isPt ? 'Empate!' : 'Draw!');
         return;
       }
@@ -82,7 +83,8 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         setPetWins(w);
         setRoundMsg(isPt ? 'Seu Soulmon venceu a rodada!' : 'Your Soulmon won the round!');
         if (w >= WINS_NEEDED) {
-          playDegenerate();
+          // C-6 (run `som-01`): derrota de minijogo nao usa o som da perda
+          // estrutural. A tela de fim de partida ja diz que perdeu.
           setMatchOver('lost');
         }
       }

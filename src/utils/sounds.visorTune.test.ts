@@ -23,12 +23,30 @@
  *    continua verde — mas o teste que importa é o negativo daqui: com
  *    `SOUND_MUTED` ligado, nenhum `AudioContext` chega a ser construído. Um som
  *    que constrói o contexto e depois "não toca" já vazou plumbing.
- * 2. **Curto.** "Chiado CURTO" é a palavra da spec. Acima de ~0,3 s deixa de ser
- *    um estalo de sintonia e vira estática por cima do bicho.
- * 3. **Discreto e sem alarme.** Ganho no máximo igual ao som mais tímido do
- *    arquivo (`playMenuOpen`, 0.08), e a banda do filtro inteiramente ACIMA da
- *    região grave: grave curto é impacto, e impacto assusta. A sintonia é uma
- *    coisa boa acontecendo.
+ * 2. **A duração é a da varredura, e é EXATA.** ⚠️ Este item dizia "acima de
+ *    ~0,3 s deixa de ser um estalo de sintonia" e travava `<= 0,3`. Caiu por
+ *    medição (09/09/2026, run `som-01`,
+ *    `squad-alpha-runs/som-01/prototyper/decisao-visortune.md` §2.5): a forma
+ *    de 180 ms pedia **+36 dB** para alcançar o alvo de loudness da categoria,
+ *    porque um evento de 180 ms medido na janela de 400 ms perde
+ *    10·log10(400/180) = 3,47 dB por construção e um envelope que decai a zero
+ *    concentra a energia nos primeiros milissegundos (crista ~22 dB). Hoje a
+ *    duração é a **scanline da spec §2.3.1**: 0,400 s, com PLATÔ. O teto virou
+ *    igualdade porque o número deixou de ser estético e passou a ser o da
+ *    imagem que o som acompanha — som e varredura começam e terminam juntos.
+ * 3. **Sem alarme, e o ganho vem da escada — nunca de analogia.** ⚠️ Este item
+ *    dizia "ganho no máximo igual ao som mais tímido do arquivo
+ *    (`playMenuOpen`, 0.08)". Caiu na mesma medição: `playMenuOpen` era um
+ *    oscilador `square` e isto é ruído por bandpass, que descarta quase toda a
+ *    energia — o mesmo dígito de ganho produz níveis a dezenas de dB de
+ *    distância (medido: 26,5 dB entre este som e `playPresence`, ambos em
+ *    0,05). Ganho copiado entre timbres é coincidência de dígito, não
+ *    calibração. (`playMenuOpen` também não existe mais: saiu no corte da
+ *    Fase 0.) O que fica travado é o que a medição de fato sustenta: o ganho é
+ *    o derivado da categoria `sintonia` (−19,0 LUFS-M) e o envelope tem platô,
+ *    que é a intervenção que levou o som de 0/12 a 13/13 no alvo. A banda do
+ *    filtro segue inteiramente ACIMA da região grave: grave curto é impacto, e
+ *    impacto assusta. A sintonia é uma coisa boa acontecendo.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { playVisorTune, setMuted } from './sounds';
@@ -139,23 +157,39 @@ describe('o chiado da sintonia respeita o mudo, e o gate é o do `play()`', () =
 });
 
 describe('o chiado é curto, discreto e nunca alarmante', () => {
-  it('CURTO: o ruído dura no máximo 0,3 s', () => {
+  it('A DURAÇÃO É A DA VARREDURA: 0,400 s exatos, o teto da scanline', () => {
     playVisorTune();
-    expect(audio.duracaoBuffer).toBeGreaterThan(0);
     expect(
       audio.duracaoBuffer,
-      'passou de estalo de sintonia para estática por cima do bicho',
-    ).toBeLessThanOrEqual(0.3);
+      'som e varredura têm de começar e terminar juntos; encurtar aqui reabre o buraco de -36 dB medido na Fase 1',
+    ).toBeCloseTo(0.4, 6);
   });
 
-  it('DISCRETO: o pico de ganho não passa do som mais tímido do arquivo (0.08)', () => {
+  it('O ENVELOPE TEM PLATÔ: sustenta e cai, nunca decai a zero desde o ataque', () => {
+    playVisorTune();
+    const ganhos = audio.de('gain');
+    const pico = Math.max(...ganhos.map(a => a.valor));
+    // Ataque (linear até o pico), platô (set NO pico) e queda: são três eventos,
+    // e o do meio é o que a medição provou ser a diferença entre um asset e um
+    // sorteio — sem ele a dispersão entre realizações é de 2,68 LU.
+    expect(
+      ganhos.filter(a => a.valor === pico).length,
+      'ganho que sobe e já começa a cair é o envelope de 180 ms de volta: pico alto, RMS baixo, crista de ~22 dB',
+    ).toBeGreaterThanOrEqual(2);
+    expect(
+      ganhos.some(a => a.metodo === 'set' && a.valor === pico),
+      'o platô é agendado com `setValueAtTime` no pico — sem ele não há sustentação',
+    ).toBe(true);
+  });
+
+  it('O GANHO É O DA CATEGORIA `sintonia`, não uma analogia com outro timbre', () => {
     playVisorTune();
     const picos = audio.de('gain').map(a => a.valor);
     expect(picos.length, 'sem envelope de ganho o ruído entra e sai no talo').toBeGreaterThan(0);
     expect(
       Math.max(...picos),
-      'chiado mais alto que o clique de menu deixa de ser fundo e vira evento',
-    ).toBeLessThanOrEqual(0.08);
+      'o ganho sai da fórmula §6.4 da `spec-de-loudness.md` contra o alvo -19,0 LUFS-M (13/13 no motor real); ajustá-lo por analogia com outro som é o erro que esta linha registra',
+    ).toBeCloseTo(0.4393463, 7);
   });
 
   it('SEM ALARME: a banda do filtro fica toda acima dos graves', () => {

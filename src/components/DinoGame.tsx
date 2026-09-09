@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Icon } from './ui/Icon';
 import { getSpriteForStage } from '../utils/sprites';
-import { playDegenerate, playTaskComplete } from '../utils/sounds';
+import { playTaskComplete } from '../utils/sounds';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
@@ -187,7 +187,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const pts = Math.floor(score / 100);
       setFinalScore(score);
       setEarned(pts);
-      if (pts > 0) { onEarnPoints(pts); playTaskComplete(); } else { playDegenerate(); }
+      // C-6 (run `som-01`): `pts === 0` significa score ABAIXO de 100 — ou seja,
+      // a primeira partida de quem esta aprendendo o minijogo recebia o som de
+      // perder a forma. Fim de partida sem ponto e silencioso; o placar final
+      // na tela e o canal.
+      if (pts > 0) { onEarnPoints(pts); playTaskComplete(); }
       onScore(score);
       setBest(prev => {
         const nb = Math.max(prev, score);

@@ -60,7 +60,7 @@ import { useDialogA11y } from '../hooks/useDialogA11y';
 import { getSpriteForStage } from '../utils/sprites';
 import { playerStatsFor } from '../utils/dungeon';
 import { TimingBar } from './pixel/TimingBar';
-import { playTaskComplete, playFeed } from '../utils/sounds';
+import { playFeed } from '../utils/sounds';
 import {
   nightmareFlavor,
   nightmareName,
@@ -276,7 +276,8 @@ export function NightmareBattle({
     setPhase('result');
 
     if (next <= 0) {
-      playTaskComplete();
+      // C-1 (run `som-01`): morte de inimigo nao usa o som de conclusao — o
+      // popup de dano + `setPhase('result')` ja carregam o resultado (R-36).
       after(POPUP_MS, () => { setPopup(null); nextEnemy(); });
       return;
     }
@@ -303,7 +304,7 @@ export function NightmareBattle({
       });
       setPhase('result');
       if (next <= 0) {
-        playTaskComplete();
+        // C-1: idem no contra-ataque do desvio perfeito.
         after(POPUP_MS, () => { setPopup(null); nextEnemy(); });
         return;
       }
