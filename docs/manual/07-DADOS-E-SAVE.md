@@ -1,0 +1,701 @@
+# Dados e save
+
+> **Dono:** doc-redator-arquitetura · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Verificação:** `npx vitest run src/contexts src/utils/careCaps.test.ts src/utils/playerDay.contract.test.ts functions/api/save.test.js functions/api/saveId.parity.test.js desktop/renderer/src/cloudSync.test.ts` — em especial `GameStateContext.hydrate.fuzz.test.tsx` (todo campo não-opcional tem linha em `hydrateSave`), `GameStateContext.saveContent.test.tsx`, `GameStateContext.hostile.test.tsx`, `migrateDecor.test.ts` e `functions/api/_kv.fiacao.test.js`.
+> **Não cobre:** o que cada regra FAZ com esses campos (→ `02-REGRAS-DE-NEGOCIO.md`), as rotas e credenciais (→ [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md)), a arquitetura e as quatro superfícies (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), função por função (→ `06-REFERENCIA/`).
+> **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
+
+---
+
+## 1. O caminho do dado, em uma frase
+
+```
+setGameState  →  writeLocal(GAME_STATE)                       [SEMPRE, síncrono]
+              →  debounce  →  POST /api/save?id=<saveId>      [3 s, teto de 15 s]
+                              → functions/api/save.js
+                              → kv(env).put(<saveId>, JSON)   [TTL 1 ano, renovado]
+```
+
+E na volta:
+
+```
+GET /api/save?id=<saveId>  →  kv(env).getWithMetadata(<saveId>)
+                           →  state.accountTier / state.credits SOBRESCRITOS
+                              a partir de `ent:<saveId>`      [o servidor manda]
+                           →  adoptCloudSave()  →  localStorage  →  reload
+```
+
+---
+
+## 2. O `GameState`, campo a campo
+
+**Fonte:** `interface GameState` em `src/contexts/GameStateContext.tsx`.
+**Contagem:** **88 campos de topo** em 09/09/2026 (extraídos do corpo da
+interface, ignorando comentários e campos aninhados). O inventário
+(`node scripts/docs-inventario.mjs`) diz **110** porque conta também as
+sub-chaves de `soulmonMeta` e de `lastDayReport`, que aqui aparecem dentro da
+linha do pai (§2.10 e §2.11).
+
+**Sincroniza para a nuvem?** O corpo do `POST /api/save` é
+`JSON.stringify(gameState)` inteiro, então a resposta padrão é **sim**. As
+exceções são poucas e estão marcadas: `accountTier` e `credits` são apagados
+pelo servidor (`SERVER_OWNED_FIELDS` em `functions/api/save.js`) e devolvidos a
+partir do entitlement; `equippedFurniture` é forçado a `undefined` no load e
+some no primeiro `JSON.stringify`.
+
+**Default no load** é o que `hydrateSave` (mesmo arquivo) escreve. Onde a coluna
+diz "—", o campo é opcional e o padrão É a ausência.
+
+### 2.1 Progresso e vitalidade
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `healthPoints` | `number` | Corações. Aceita frações de 0.5. | `src/utils/careRules.ts`, `dailyReset.ts` | `min(maxHP, max(0, num(…, maxHP)))` — save sem HP nasce **cheio**, nunca 0 | sim |
+| `maxHealthPoints` | `number` | Teto de HP da forma atual. | `src/types/progression.ts` (`MAX_HP_BY_FORM`) | **recalculado** de `evolutionStage` a cada load, nunca lido do save | sim |
+| `energyPoints` | `number` | Barras de energia; enche só comendo, zera na virada. | `src/utils/careRules.ts` | `0` | sim |
+| `perfectDays` | `number` | Dias completos acumulados desde a última evolução. Só cresce. | `src/utils/dailyReset.ts` | `0` | sim |
+| `totalPerfectDays?` | `number` | Contador LIFETIME de dias completos (insumo de missão). | `src/utils/missions.ts` | `0` | sim |
+| `lastDayWasPerfect` | `boolean` | O dia anterior fechou completo. | `src/utils/dailyReset.ts` | `false` | sim |
+| `totalXP` | `number` | XP do Vínculo. O NÍVEL nunca é salvo — é `bondLevelFor(totalXP)`. | `src/utils/bond.ts` | `0` | sim |
+| `virusPoints` · `dataPoints` · `vaccinePoints` | `number` | Os três atributos, que escolhem o galho. | `src/types/attributes.ts` | `0` cada | sim |
+| `attributesSinceLastEvolution` | `{ virus: number; data: number; vaccine: number }` | Atributos ganhos desde a última evolução — é este que decide o galho. | `src/utils/dailyReset.ts` | `{0,0,0}` campo a campo | sim |
+| `evolutionStage` | `string` | Id da forma: `'rookie'`, `'{champion\|ultimate\|mega}-{virus\|data\|vaccine}'`, `'ultra'`. | `src/types/progression.ts` | `'rookie'` se não for string | sim |
+| `currentBranch` | `'virus' \| 'data' \| 'vaccine'` | Galho corrente. | `src/types/progression.ts` | `'data'` para qualquer valor fora do enum | sim |
+| `unlockedEvolutions` | `string[]` | Formas já alcançadas (álbum + missões). | `src/utils/missions.ts` | `['rookie']` quando vazio | sim |
+| `formReachedAt?` | `Record<string, string>` | Quando cada forma foi alcançada (dia do jogador). Save antigo não tem, e a data **nunca é inventada**. | `src/utils/collectionDates.ts` | `{}` | sim |
+| `evolutionLocked?` | `boolean` | O cadeado da página de Evolução. | `src/App.tsx` (`handleEvolve`) | — | sim |
+| `degeneratedByHP` | `boolean` | O pet caiu por HP 0. | `src/utils/dailyReset.ts` | `false` | sim |
+| `redeemed?` | `boolean` | Já caiu por HP 0 **e subiu de novo**. Cosmético e só no sentido positivo. | `src/App.tsx` | `false` | sim |
+| `showRedeemed?` | `boolean` | Exibir a marca da volta — escolha do jogador, padrão não. | `src/App.tsx` | `false` | sim |
+| `maxActivityCap` | `number` | Teto de atividades da forma. | `src/types/progression.ts` (`FORM_REQUIREMENTS[…].cap`) | derivado do estágio | sim |
+| `lastResetDate` | `string` | `toDateString()` da última virada. É a chave do MOTOR de virada (`dayKeyOf`), **não** o dia do jogador. | `src/utils/dailyReset.ts`, `habitRhythm.ts` | `new Date().toDateString()` | sim |
+| `rebirth?` | `RebirthRecord \| null` | O registro do Renascimento. **Nunca é apagado** — é ele que impede a segunda vez. | `src/utils/rebirth.ts` | — (ausência = jamais renasceu, nunca inferido) | sim |
+
+### 2.2 Atividades, tarefas e histórico
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `activities` | `Activity[]` | Os hábitos. Cada um: `id`, `name`, `category`, `emoji`, `steps[]`, `weekDays[]`, `alarm?`, `completedToday?`, `lastCompletedDate?`, `schedule?`, `anchor?`. | `src/types/taskModel.ts` (`normalizeSchedule`) | `[]`; item sem `id` string é **descartado**; `steps` sempre vira array (a virada faz `.length` nele) | sim |
+| `tasks` | `Task[]` | As tarefas. Campos novos todos OPCIONAIS: `effort?`, `status?`, `startDate?`, `postponedCount?`, `createdAt?`, `lastTouchedAt?`, `focusDate?`. | `src/utils/taskTriage.ts` | `[]`; item sem `id` string é **descartado** | sim |
+| `completedTasks` | `CompletedTask[]` | Histórico de tarefas avulsas concluídas, com `effort` **carregado** (sem ele a virada cobraria coração de quem fez tudo) e `wasHaunted?`. | `src/utils/carePattern.ts` | `[]`; régua deliberadamente MAIS frouxa — só o NULLISH sai, porque histórico descartado não volta | sim |
+| `activityStats` | `ActivityStats` | `{ [activityId]: { name, emoji, category, completionCount } }`. | `src/App.tsx` | entrada nullish removida; `name`/`emoji`/`completionCount` completados | sim |
+| `activityLog?` | `string[]` | Timestamps ISO das ATIVIDADES concluídas. Existe porque `completedTasks` só recebe tarefa avulsa — sem isto o ritmo de cuidado ficava cego para o hábito. | `src/utils/carePattern.ts` | `[]` | sim |
+| `habitRhythms?` | `Record<string, HabitRhythm>` | Constância por hábito: `done[]`, `missed[]`, `shielded[]`, `shields`, `totalDone`, `lastCompletedDate?`. Fica FORA da `Activity` porque a virada reescreve o array de atividades inteiro. | `src/utils/habitRhythm.ts` | `{}`; **cada entrada** é normalizada (`{a:{}}` chegava em `applyMissedDay` e derrubava a virada); `totalDone ≥ done.length` | sim |
+
+### 2.3 Cuidado, cocô e tetos
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `careCaps?` | `CareCaps` | **Onde os tetos de cuidado moram**: `feedTimes` (timestamps da janela de 1 h) e `rubHeal` (`{date, healed}` do dia). | `src/utils/careCaps.ts` | `mergeCareCaps(save, legado do localStorage, Date.now())` — idempotente | sim |
+| `foodInventory` | `Record<string, number>` | A pastinha, por emoji de item. | `src/utils/specialItemUse.ts`, `shopBuy.ts` | valores viram inteiro ≥ 0 e entrada zerada é **removida** | sim |
+| `poopEventsScheduled` | `number[]` | Instantes agendados dos cocôs do dia. | `src/hooks/useCareSystem.ts` | só números finitos (`'x'` viraria `NaN` e o cocô nunca mais apareceria) | sim |
+| `poopEventsShown` | `number[]` | Índices que realmente apareceram na tela (o pulado por sono não penaliza). | `src/hooks/useCareSystem.ts` | idem | sim |
+| `poopEventsCompleted` | `number[]` | Índices já limpos. | `src/hooks/useCareSystem.ts` | idem | sim |
+| `poopPenaltyClockAt` | `number` | Relógio (epoch ms) do dreno de 6 h. | `src/utils/poopDrain.ts` | **`0` sempre** — restaurar o timestamp cru fazia o dreno cobrar as horas em que a pessoa não estava lá | sim (mas chega sempre zerado) |
+| `poopDrainCharge?` | `{ day: string; hearts: number }` | Quanto o dreno já cobrou no DIA DO JOGADOR — é o que faz o teto ser diário, e não por tick. | `src/utils/poopDrain.ts` | só sobrevive com `day` string | sim |
+| `glitchtamaUse?` | `{ day: string; used: number }` | Glitchtamas usados no dia do jogador (`GLITCHTAMA_PER_DAY`). | `src/utils/specialItemUse.ts` | só sobrevive com `day` string; ausência = zero, nunca dívida | sim |
+| `restDaysLeft?` · `restWeekKey?` | `number` · `string` | A folga da semana (`REST_DAYS_PER_WEEK`) e a segunda-feira a que ela pertence. | `src/utils/dailyReset.ts` (`restWeekKeyFor`) | `undefined` — ausência tem de significar "folga inteira", nunca "já gasta" | sim |
+| `petPassive?` | `string` | O traço de nascimento. | `src/utils/passives.ts` | **`rollPetPassive()`** quando ausente — save sem traço ganha um no load | sim |
+
+### 2.4 Noite: descanso, sonhos, pesadelos, aventuras
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `rest?` | `RestState` | `window` (a janela escolhida), `nights[]` (`{date, sleptAt?, wokeAt?, onTime}`, cortado em `MAX_NIGHTS`), `dreams[]`, `hideMetrics?`, `playerDayTz`. **Só agregados por noite** — nunca série de sensor. | `src/utils/restWindow.ts` | `hydrateRest`: `rest: {}` derrubava a árvore no primeiro render; noite sem `date` é descartada; `onTime` inválido vira `false` (o valor NEUTRO) | sim |
+| `nightmares?` | `NightmareState` | `fought[]` (manhãs já combatidas, teto de 30) e `pending?`. | `src/utils/nightmares.ts` | `hydrateNightmares`: `fought` sempre array de string | sim |
+| `adventures?` | `Array<{ id: string; day: string }>` | O diário de aventuras, com a data da PRIMEIRA vez. **Não paga nada** — nenhum Bit, item ou atributo depende dele. | `src/utils/adventure.ts` | entrada malformada é descartada, o load nunca cai | sim |
+| `playLog?` | `PlayLog` | `date` da última brincadeira + `buff` de Bits do próximo minijogo. **Nunca** pode ser lido por dia completo, HP ou evolução. | `src/utils/petNeeds.ts` | `hydratePlayLog`: sem `date` string não existe registro; buff com `multiplier` não-numérico é descartado | sim |
+| `steps?` | `StepsRecord` | **Só o agregado do dia**: `{date, baseline, today}`. Nunca série bruta, horário ou localização. | `src/utils/steps.ts` | `hydrateSteps`: sem `date` string, `undefined`; `baseline`/`today` ≥ 0 | sim |
+| `stepsConsent?` | `'granted' \| 'declined'` | A resposta à tela de consentimento de passos. `'declined'` é PERMANENTE. | `src/utils/steps.ts` | só os dois valores conhecidos sobrevivem; o resto vira `undefined` = "ainda não perguntei" | sim |
+
+### 2.5 Rituais e humor
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `lastCheckInDate?` | `string` | Dia do jogador do último check-in concluído. | `src/utils/rituals.ts` (`needsCheckIn`) | `str(…)` | sim |
+| `lastWeeklyReportDate?` | `string` | Dia do último relatório semanal mostrado (checado por SEMANA). | `src/utils/rituals.ts` | `str(…)` | sim |
+| `lastFreshStartDate?` | `string` | Dia do último recomeço aceito. | `src/utils/rituals.ts` (`applyFreshStart`) | `str(…)` | sim |
+| `moodLog?` | `Array<{ date: string; mood: 1..5 }>` | Check-in de humor. **Nunca alimenta pontuação.** | `src/utils/mood.ts` | entrada sem `date` string ou `mood` numérico é filtrada | sim |
+| `lastDayReport?` | objeto (§2.11) | O relatório do dia anterior, escrito na virada. | `src/utils/dailyReset.ts` | só sobrevive como objeto **com `date` string** (lixo truthy abriria o modal vazio) | sim |
+| `firstDay?` | `FirstDayProgress \| null` | Os três gestos do primeiro dia. Some sozinho na virada. | `src/utils/firstDay.ts` | `normalizeFirstDay(…) ?? undefined` | sim |
+| `memoriesShown?` | `number[]` | Marcos de memória (30/90) já mostrados. | `src/utils/memories.ts` | só números | sim |
+
+### 2.6 Economia e coleções
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `gamePoints` | `number` | **Bits** — a moeda dos minijogos (o nome do campo foi mantido). | `src/utils/currencies.ts` | `0` | sim |
+| `emblems?` | `number` | **Emblemas** — a moeda do Torneio. | `src/utils/currencies.ts` | `0` | sim |
+| `credits?` | `number` | **Créditos** — comprados com dinheiro real. Espelho apenas: a verdade é `ent:<saveId>`. | `functions/api/_entitlements.js` | `0` | ❌ **removido no POST**, devolvido pelo servidor no GET |
+| `accountTier?` | `'demo' \| 'paid'` | O tier da conta. Espelho, mesma regra dos Créditos. | `functions/api/_entitlements.js` | `'demo'` só quando o save diz `'demo'`; qualquer outra coisa vira `'paid'` (saves anteriores ao campo são adotados como pagos) | ❌ **removido no POST**, devolvido no GET |
+| `ownedBackgrounds` | `string[]` | Cenários comprados. | `src/utils/backgrounds.ts` | `Set([...lidos, 'bg-room'])` — o cenário grátis é sempre possuído | sim |
+| `equippedBackground` | `string \| null` | Cenário equipado. | `src/utils/backgrounds.ts` | `null` | sim |
+| `ownedFurniture?` | `string[]` | Decorações compradas. | `src/utils/shop.ts` | `[]` | sim |
+| `equippedDecor?` | `Partial<Record<SlotId, string>>` | Um item de decoração por espaço do palco. | `src/utils/petStage.ts` | `hydrateDecor(migrateDecor(loaded))` — §5.2 | sim |
+| `equippedFurniture?` | `string \| null` | ⚰️ **Depreciado.** Só existe para migrar. | — | forçado a `undefined`, some no primeiro `JSON.stringify` | não (some) |
+| `droppedItems?` | `string[]` | Ids de item de loja que JÁ dropou (destrava a compra). | `src/utils/shop.ts` (`unlock:'drop'`) | `[]` | sim |
+| `bestiary?` | `string[]` | Inimigos da masmorra já enfrentados (`linha-tier`). Só cresce. | `src/utils/dungeon.ts` (`enemyKey`) | `[]` | sim |
+| `weeklyMissions?` | `WeeklyMissionProgress` | `{week, counts, claimed}` da semana ISO corrente. | `src/utils/weeklyMissions.ts` (`forWeek`) | `undefined` se `week` não for string — a leitura seguinte devolve semana vazia | sim |
+| `season?` | `SeasonProgressState` | Estado da estação corrente. | `src/utils/seasons.ts` | `undefined` — a primeira virada tira a foto | sim |
+| `dungeonKills?` · `dungeonRunsCompleted?` · `dinoBest?` | `number` | Contadores LIFETIME das missões. | `src/utils/missions.ts` | `0` cada — valor não-numérico viraria `NaN` permanente e a missão ficaria impossível | sim |
+| `trophies?` | `Array<{ season: string; place: 1\|2\|3 }>` | Troféus de season do Torneio. | `src/utils/seasons.ts`, `functions/api/community.js` | item sem `season` string ou `place` fora de 1..3 é filtrado (viraria medalha fantasma no palco) | sim |
+| `bondRewardsClaimed?` | `string[]` | As recompensas COSMÉTICAS da escada de Vínculo já entregues. É a única coisa que a escada persiste. | `src/utils/bond.ts` | `[]` | sim |
+| `bondDaily?` | `BondDailyLedger` | `{day, spent:{dungeon?, tournament?}}` — o teto diário SUAVE das fontes repetíveis. | `src/utils/bond.ts` | `hydrateBondDaily`: tudo que não for número finito e positivo vira zero; fonte desconhecida é descartada | sim |
+
+### 2.7 Identidade da criatura
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `soulmonStages?` | `CreatureStage[]` | A árvore de 11 formas do jogador, gerada pelo Oráculo e congelada. | `src/utils/oracle.ts` | item primitivo é filtrado (derrubaria a tela do Pet) | sim |
+| `soulmonSkills?` | `Record<FichaStage, StageSkills>` | As duas skills de cada estágio. Persistidas porque o perfil do Oráculo mora só no `localStorage` e **não** vai à nuvem. | `src/utils/soulProfile/ficha/skills.ts` | — | sim |
+| `soulmonClassTitles?` | `Record<FichaStage, ClassTitle>` | A classe (arquétipo do class-system) de cada estágio. Mesmo motivo de cache. | `src/utils/soulProfile/ficha/classTitle.ts` | — | sim |
+| `soulmonMeta?` | objeto (§2.10) | Metadados do Oráculo usados fora da árvore. | `src/utils/oracle.ts`, `petName.ts` | — | sim |
+| `spriteLibrary?` | `SpriteLibrary` | O acervo de sprites GERADOS, por forma, e o estado da adoção do visor. **Guarda só a URL** (~120 bytes): base64 aqui iria ao `localStorage` e subiria à KV a cada debounce. | `src/utils/spriteLibrary.ts` | `normalizeSpriteLibrary` devolve acervo vazio para qualquer coisa estranha — e acervo vazio é a arte de RESERVA, que nunca é erro | sim |
+| `eggType?` | `'ignar' \| 'lumel' \| 'serah'` | A linha de sprite GENÉRICO sorteada no onboarding. Não é mais escolha do jogador. | `src/utils/sprites.ts` (`DUNGEON_LINE_SPRITES`) | `loaded ?? localStorage(EGG_TYPE) ?? 'ignar'` | sim |
+| `demoCharacterId?` | `'kaelen' \| 'orrin' \| 'thalindra'` | Qual personagem pré-pronto o modo grátis escolheu. | `src/utils/monetization.ts` | só os três ids conhecidos sobrevivem | sim |
+| `demoTint?` | `number` | Tonalidade do personagem do demo. `0` = original; `1..3` = as três. **Cosmético, zero mecânica.** | `src/utils/monetization.ts` | `0` | sim |
+| `bornAt?` | `string` | O dia (do jogador) em que a criatura nasceu. **Nunca é inferido** em save antigo, e o upgrade não o reescreve. | `src/utils/anniversary.ts` | `undefined` se não for string — jamais um fallback calculado | sim |
+
+### 2.8 Social
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `pvpEnabled?` | `boolean` | Opt-in do PvP assíncrono. É o **portão do `pushProfile`**: com ele falso, nada é publicado no diretório. | `src/utils/community.ts`, `functions/api/community.js` | `false` | sim |
+| `friends?` | `string[]` | Amigos aceitos (até 5), por id de perfil público. | `src/utils/community.ts` | `[]` | sim |
+
+### 2.9 Onboarding, consentimento e oferta
+
+| Campo | Tipo | O que guarda | Módulo dono | Default no load | Nuvem |
+|---|---|---|---|---|---|
+| `soulGoal?` · `soulStruggle?` | `string` | O "porquê" do usuário, respondido antes de qualquer mecânica. **Texto livre sobre a vida da pessoa** — é o campo mais sensível do save. | `src/utils/goalToCategory.ts` | `''` | sim |
+| `consent?` | `ConsentRecord` | Quando (ISO) e QUAL versão de cada documento foi aceita. Um booleano não diz a que texto a pessoa disse sim. | `src/utils/consent.ts` (`normalizeConsent`) | `normalizeConsent(…)`; ausência **nunca** vira bloqueio | sim |
+| `offerShownWeek?` | `string` | Semana ISO em que a oferta do value moment apareceu. O cap é sobre ter OFERECIDO. | `src/utils/offerMoment.ts` | `undefined` | sim |
+| `offerDismissed?` | `boolean` | O jogador dispensou o convite PARA SEMPRE. Terminal de propósito. | `src/utils/offerMoment.ts` | `false` | sim |
+| `playerDayTz?` | `PlayerDayAnchor` | O fuso FIXO em que o dia do jogador é contado. §6. | `src/utils/playerDay.ts` | `resolvePlayerDayAnchor(…)` — a do save VENCE | sim |
+
+### 2.10 `soulmonMeta` (aninhado)
+
+| Sub-chave | Tipo | O que guarda |
+|---|---|---|
+| `seed?` | `number` | A semente do Oráculo (permite regerar). |
+| `baseName` | `string` | O nome da ESPÉCIE, gerado pelo Oráculo. |
+| `petName?` | `string` | O nome que o JOGADOR deu. Ausente em quem manteve a sugestão; quem lê usa `soulmonDisplayName`, que cai no `baseName`. **Nunca sobrescreve `baseName`.** |
+| `dominantElement?` · `dominantAlignment?` · `dominantRealm?` | `ElementId` · `AlignmentId` · `RealmId` | Os eixos dominantes da leitura. |
+
+### 2.11 `lastDayReport` (aninhado)
+
+`date`, `done`, `total`, `required`, `heartsLost`, `wasPerfect`,
+`energyWasFull?`, `perfectDays`, `degenerated`, `welcomeBack?`,
+`shieldsSpent?`, `daysAway?`, `weeklyRelief?`, `heartsRecovered?`,
+`restDayUsed?`, `restDaysLeft?`.
+
+⚠️ `restDayUsed` existe porque **perdão que a pessoa não soube que recebeu faz a
+cobrança da semana seguinte parecer arbitrária** — a UI conta que a folga foi
+usada.
+
+### 2.12 O que a hidratação faz, e por quê
+
+`hydrateSave` não é higiene decorativa: `/api/save` valida apenas que `state` é
+um objeto, então **o TIPO de cada campo é dado não confiável** (vem da nuvem,
+pode ter sido editado à mão). Um `tasks: {}` ou um `activities: 3` passa direto
+por `?? padrão` e só explode dentro do updater da virada, que roda no mount — a
+árvore do React desmonta e o usuário fica na **tela branca PERMANENTE**, porque
+toda carga seguinte lê o mesmo save.
+
+Os quatro ajudantes que fazem o que o `??` não faz: `arr` (é array?), `num` (é
+número finito?), `obj` (é mapa simples, nem array nem null?) e `str` (é string?),
+mais `strArr`/`numArr`.
+
+⚠️ **Regra que não pode ser quebrada:** *todo campo não-opcional de `GameState`
+precisa de linha em `hydrateSave`*. Faltaram `activities` e `healthPoints` por
+muito tempo, e o resultado era literalmente a tela branca — inclusive para um
+`{}` adotado da nuvem, porque `adoptCloudSave` grava qualquer objeto simples.
+O guard é `src/contexts/GameStateContext.hydrate.fuzz.test.tsx`.
+
+Ordem do inicializador: `readLocal(GAME_STATE)` → `JSON.parse` (array e
+primitivo são **recusados**, não convertidos) → `hydrateSave` dentro de
+`try/catch` → em qualquer falha, `freshGameState()`.
+
+### 2.13 O que NUNCA vai para o save
+
+| Coisa | Onde ela vive de verdade | Por quê |
+|---|---|---|
+| **Nível do Vínculo** (`bondLevel`) | derivado sempre: `bondLevelFor(totalXP)` em `src/utils/bond.ts` | Duas fontes para o mesmo número, uma delas gravada no aparelho, é o footgun 9 na forma mais cara. `hydrateSave` escreve `bondLevel: undefined` explicitamente — se um save adulterado trouxer o nível, ele **não entra no estado**. O gate de PvP (`BOND_PVP_MIN_LEVEL`) usa a MESMA derivação nos dois lados, e quem decide é o servidor (`functions/api/_bond.js`), porque o cliente é editável. |
+| **Créditos** e **tier** | `ent:<saveId>` na KV, escrito só por `functions/api/_entitlements.js` | `SERVER_OWNED_FIELDS = ['accountTier', 'credits']` é apagado do POST e sobreposto no GET. Sem isso, bastava editar o `localStorage` para virar assinante. |
+| **A série bruta de sono ou de passos** | não existe | Só agregados por noite/dia. É o que mantém o app fora do escopo de dado sensível da LGPD e das exigências de health app do Google Play. |
+| **Áudio da transcrição** | não existe | `functions/api/transcribe.js` **repassa**, nunca grava: não há `put` de KV nem de R2 no arquivo, e não pode haver. |
+| **`digimonName`** | ⚰️ **não existe mais** (07/09/2026) | O campo é `petName` em todo lugar — cliente, bridge (`pet_name`), chat e push. O servidor conhece **um** nome. |
+| **`LEGACY_FORM_TIERS`** | ⚰️ **não existe mais** (07/09/2026) | Eram 57 ids de espécie de franquia no bundle. Id fora do esquema cai em `'rookie'` e o sprite em `fallbackSpriteForStage`, que responde com arte nossa por hash. |
+| **`digivolutionSegments` / `digivolutionSegmentsNeeded`** | ⚰️ **saíram em 06/09/2026** | Escritos em todo save e lidos por ninguém. A chave continua no `localStorage` de quem já jogou; é órfã inofensiva. |
+
+---
+
+## 3. Persistência local e cloud save
+
+### 3.1 O efeito do `GameStateProvider`
+
+Um `useEffect` com dependência `[gameState]` faz, nesta ordem:
+
+1. `writeLocal(GAME_STATE, JSON.stringify(gameState))` — **sempre**. Storage cheio
+   (`QuotaExceededError`) ou bloqueado não pode derrubar a árvore: o jogo segue em
+   memória e o usuário é avisado **uma vez**.
+2. Pula o cloud save no primeiro render (o load inicial não é mutação).
+3. Garante o `SAVE_ID` (gera `crypto.randomUUID()` se não houver).
+4. Agenda o POST.
+
+### 3.2 O debounce, e o teto contra inanição
+
+| Constante | Valor | Papel |
+|---|---|---|
+| `CLOUD_SAVE_DEBOUNCE_MS` | `3000` | Debounce de **cauda**. É este amortecedor que impede a densidade de gesto de virar densidade de escrita: ~23 mutações de uma sessão cheia colapsam em ~14 POSTs. **Reduzi-lo "para encurtar a janela de conflito" PIORA o 409 e o custo.** |
+| `CLOUD_SAVE_MAX_WAIT_MS` | `15000` | **R-4 — teto absoluto de espera.** Um debounce de cauda reinicia a cada mutação: um fluxo sustentado de mutações a menos de 3 s **nunca dispara o POST**, e a nuvem para de receber em silêncio. Com o teto, o POST sai no máximo 15 s depois da PRIMEIRA mutação pendente. |
+
+⚠️ **R-1: nada no callback do timer pode chamar `setGameState`.** O efeito depende
+de `[gameState]`; tocar o estado ali reiniciaria o debounce e reagendaria o POST
+que acabou de falhar, e **cada gesto do jogador aceleraria o ciclo**. A única
+exceção declarada é a reconciliação do `pvpBlocked`, que DESLIGA `pvpEnabled` — e
+`pvpEnabled` é justamente o portão do `pushProfile`, então ela FECHA a porta em
+vez de bater nela (guard: `GameStateContext.pvpBlocked.test.tsx`).
+
+### 3.3 O caminho de erro tipado (`src/utils/cloudSave.ts`)
+
+`cloudSave` devolvia `boolean`, e todo status colapsava em `false` — save perdido
+sem ninguém ver. Hoje cada código vira uma CLASSE, e cada classe carrega **por
+código** as duas decisões que importam (`CLOUD_SAVE_POLICY`):
+
+| `CloudSaveFailureKind` | Status | `retentavel` | `avisaJogador` |
+|---|---|---|---|
+| `offline` | `0` (a requisição nem saiu) | sim | não |
+| `auth` | `401` | sim | sim |
+| `identity` | `403` | **não** (quem conserta é `reconcileSaveId`) | sim |
+| `conflict` | `409` | **não** (retentar é o loop que se auto-alimenta) | não |
+| `stale` | `412` | não | sim |
+| `too-large` | `413` | não | sim |
+| `server` | `5xx` | sim | não |
+| `client` | outro `4xx` | não | sim |
+
+**Orçamento de retry, por `saveId` e não por chamada**: `CLOUD_SAVE_RETRY_TETO`
+= `3` por `CLOUD_SAVE_RETRY_JANELA_MS` = `10 * 60_000`, com backoff
+`CLOUD_SAVE_RETRY_BACKOFF_MS` = `[2000, 8000, 30000]`. Sucesso devolve o
+orçamento. Um teto por chamada com ~14 saves/dia viraria 42 requisições
+autenticadas/dia contra o Firebase e contra o Pages.
+
+**O carimbo de sincronizado** (`LAST_CLOUD_SYNC`) só é gravado quando o servidor
+confirma. Gravá-lo sem checar `res.ok` fazia o app afirmar que o progresso estava
+na nuvem depois de um 401 — o jogador trocava de aparelho confiando nisso.
+
+### 3.4 Adoção e reconciliação
+
+| Função | Quando | Regra |
+|---|---|---|
+| `adoptCloudSave(saveId, state, email?)` | Único caminho que SUBSTITUI o save inteiro (onboarding, "proteger progresso", restaurar, login por e-mail). | **DADO PRIMEIRO, identidade depois.** Se o `writeLocal` do estado falhar, a identidade NÃO troca. Antes eram quatro call sites à mão, na ordem inversa: a identidade trocava sem o dado e o próximo `setGameState` subia o estado ANTIGO sob o `saveId` NOVO, sobrescrevendo o save do outro aparelho em silêncio. Nunca lança; devolve `'ok' \| 'invalid' \| 'storage'`. |
+| `reconcileSaveId(email, estadoLocal)` | No login. | 1) `SAVE_ID` já é o derivado → **sai sem tocar a rede**. 2) Chave derivada vazia → **migra** (reaponta e sobe). 3) Chave derivada ocupada → **a NUVEM ganha**, e o local vai para `CONFLICT_BACKUP` ANTES de qualquer troca. 4) Nuvem indeterminada (5xx/offline) → **não migra** — dúvida não move dado. **A chave antiga nunca é apagada**, nem no aparelho nem na nuvem. |
+
+O critério de (3) é assimetria de reversão: sobrescrever a nuvem destrói o
+progresso de OUTRO aparelho de forma irrecuperável (`save.js` faz `put` cego, sem
+versão e sem histórico); "perder" o estado local é recuperável porque ele foi
+copiado byte a byte antes.
+
+---
+
+## 4. As chaves de `localStorage`
+
+**Dono único:** `src/utils/storageKeys.ts`. São **44** em `STORAGE_KEYS` mais **2**
+em `RECONCILE_KEYS` = 46 (contagem de 09/09/2026, extraída das duas tabelas do
+arquivo; é o mesmo 46 do inventário).
+
+⚠️ **O prefixo é `soulmon-` desde 07/09/2026** (era `digiapp-`). A única exceção
+de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
+`digiapp_state_v3`).
+
+⚠️ **Nenhum arquivo de `src/` chama `localStorage` direto** — tudo passa por
+`src/utils/safeStorage.ts`, e há guard exigindo isso.
+
+### 4.1 `STORAGE_KEYS`
+
+| Chave | Valor | O que guarda | Quem lê / escreve |
+|---|---|---|---|
+| `GAME_STATE` | `soulmon_state_v1` | O `GameState` serializado. | `GameStateContext.tsx`, `App.tsx`, `cloudSave.ts` |
+| `LAST_BAD_DAY` | `soulmon-last-bad-day` | Dia do último dia ruim, para fechar `after_bad_day` **no aparelho**. Nunca é enviada: o que sai é uma FAIXA de distância. | `App.tsx` |
+| `AI_SETTINGS` | `soulmon-ai-settings` | Personalidade do pet (`customKeywords` etc.) usada no prompt do chat. | `App.tsx` |
+| `THEME` | `soulmon-theme` | `light`/`dark`/`system`. Chave reaproveitada do antigo seletor de skin — valor desconhecido vira `system`. | `ThemeContext.tsx` |
+| `LANGUAGE` | `soulmon-language` | `pt-BR` / `en-US`. | `i18n.ts`, `App.tsx`, `GameStateContext.tsx` e **5** componentes — `ErrorBoundary`, `AISettingsModal`, `ConfirmDialog`, `SettingsModal`, `SoulmonOnboarding` (`grep -rl "STORAGE_KEYS.LANGUAGE" src/components`, 10/09/2026) |
+| `ONBOARDING_COMPLETE` | `soulmon-onboarding-complete` | O ritual do Oráculo terminou. | `App.tsx` |
+| `USER_NAME` | `soulmon-user-name` | O nome do JOGADOR (vai ao ranking público quando o PvP está ligado). | `App.tsx`, `GameStateContext.tsx` |
+| `EGG_TYPE` | `soulmon-egg-type` | Linha de sprite genérico; semente do `eggType` do save. | `App.tsx`, `GameStateContext.tsx` |
+| `FIRST_TASK_POPUP_SHOWN` | `soulmon-first-task-popup-shown` | O aviso da primeira tarefa já apareceu. | `App.tsx` |
+| `NOTIFICATIONS_ENABLED` | `soulmon-notifications-enabled` | O jogador ligou notificações. | `App.tsx` |
+| `PWA_INSTALL_DISMISSED` | `soulmon-pwa-install-dismissed` | Dispensou o convite de instalar a PWA. | `InstallPrompt.tsx`, `WelcomePromptModal.tsx` |
+| `NOTIFICATION_PROMPT_DISMISSED` | `soulmon-notification-prompt-dismissed` | Dispensou o PRIMEIRO convite de push. | `App.tsx`, `WelcomePromptModal.tsx` |
+| `NOTIFICATION_PROMPT_DISMISSED_AT` | `soulmon-notification-prompt-dismissed-at` | QUANDO (epoch ms) — o segundo convite precisa das 24 h. Ausente com a booleana ligada = dispensou antes desta versão, e a espera já passou. | `App.tsx`, `WelcomePromptModal.tsx` |
+| `NOTIFICATION_PRIMING_DISMISSED` | `soulmon-notification-priming-dismissed` | Dispensou o SEGUNDO convite. **Não existe terceiro.** | `App.tsx` |
+| `SCHEDULED_NOTIFICATIONS` | `soulmon-scheduled-notifications` | Fila local de notificações agendadas. | `notifications.ts` |
+| `DAILY_NOTIFICATION_CHECK` | `soulmon-daily-notification-check` | Dia do último varrimento de notificações. | `notifications.ts` |
+| `SAVE_ID` | `soulmon-save-id` | A identidade do save neste aparelho (UUID antes do login; derivado do e-mail depois). | `GameStateContext.tsx`, `cloudSave.ts`, `App.tsx`, `entitlements.ts`, `playBilling.ts`, `aiClient.ts`, `SettingsPage.tsx`, `AccountDataSection.tsx` |
+| `USER_EMAIL` | `soulmon-user-email` | E-mail normalizado do dono do save. | `cloudSave.ts`, `App.tsx`, `SettingsPage.tsx` |
+| `PROTECT_PROMPT_AT` | `soulmon-protect-prompt-at` | Última vez (epoch ms) que o app pediu o e-mail para proteger o progresso. | `App.tsx` |
+| `IS_SLEEPING` | `soulmon-is-sleeping` | O pet está dormindo (a cama é DESTE aparelho). | `App.tsx` |
+| `FOOD_FEED_TIMES` | `soulmon-food-feed-times` | ⚰️ **LEGADO.** Nada escreve nela. Lida uma vez no load e **apagada** pela migração dos tetos. | `GameStateContext.tsx` (só migração) |
+| `RUB_HEAL_DAY` | `soulmon-rub-heal-day` | ⚰️ **LEGADO**, idem. | `GameStateContext.tsx` (só migração) |
+| `DAILY_REPORT_SHOWN` | `soulmon-daily-report-shown` | Dia em que o relatório diário já foi exibido (1×/dia). | `App.tsx` |
+| `RUB_HINT_SHOWN` | `soulmon-rub-hint-shown` | A dica de esfregar já apareceu. | `CompanionHUD.tsx` |
+| `AUTO_SLEEP_ENABLED` · `AUTO_SLEEP_START` · `AUTO_SLEEP_END` | `soulmon-auto-sleep-*` | O sono automático opcional e a janela dele. | `App.tsx`, `SettingsPage.tsx` |
+| `DUNGEON_DIFFICULTY` | `soulmon-dungeon-difficulty` | `{week, level}` — a base semanal da masmorra. Semana nova zera. | `dungeon.ts` |
+| `DUNGEON_BEST` | `soulmon-dungeon-best` | Melhor placar da masmorra. | `dungeon.ts` |
+| `DUNGEON_HEART_DROPS` | `soulmon-dungeon-heart-drops` | `{date, count}` — o teto diário de coraçãozinho dropado (`HEART_DROP_DAILY_CAP`). | `dungeon.ts` |
+| `DINO_BEST` | `soulmon-dino-best` | Melhor placar do Dino. | `DinoGame.tsx`, `App.tsx` |
+| `SOUND_MUTED` | `soulmon-sound-muted` | Mudo global. **Sem a chave, `readFlag` devolve `false` e o som NASCE LIGADO** — coerente para SFX, que só saem por gesto. | `sounds.ts`, `telemetry.ts`, `EvolutionPath.tsx` |
+| `SOUND_CATEGORY_VOLUMES` | `soulmon-sound-category-volumes` | Volume por categoria (0..1, JSON). Chave NOVA: `SOUND_MUTED` não foi renomeada, só se ACRESCENTA. | `audioBus.ts` |
+| `SOUND_TRACK_ENABLED` | `soulmon-sound-track-enabled` | Trilha ligada. **Polaridade invertida de propósito**: a chave guarda LIGADA, então sem ela `readFlag` devolve `false` e a trilha nasce DESLIGADA — pendurar trilha no mudo global seria autoplay, que a D11 veta. | `audioBus.ts` |
+| `FCM_TOKEN` | `soulmon-fcm-token` | O token FCM deste aparelho. | `notifications.ts` |
+| `LAST_CLOUD_SYNC` | `soulmon-last-cloud-sync` | ISO do último save confirmado PELO SERVIDOR. | `cloudSave.ts`, `SettingsPage.tsx` |
+| `ORACLE_FORM` | `soulmon-oracle-form` | Estado do formulário da página do Oráculo (ferramenta de criação). | `OraclePage.tsx` |
+| `ORACLE_DRAFT` | `soulmon-oracle-draft` | Rascunho do ritual: fechar o app no item 15 de 20 não perde as respostas. Apagado na geração, no `finish()` e no muro de idade. **Nunca guarda e-mail, consentimento, idade nem o resultado.** | `oracleDraft.ts` |
+| `GATE_DRAFT` | `soulmon-gate-draft` | Rascunho do trecho ANTES da escolha grátis/completo. | `gateDraft.ts` |
+| `SOULMON_PROFILE` | `soulmon-profile` | O perfil da alma gerado no onboarding (input + seed). **Mora só neste aparelho e NÃO vai à nuvem** — é por isso que `soulmonSkills`/`soulmonClassTitles` são cacheados no save. Contém nome, data, hora e local de nascimento. | `SoulmonOnboarding.tsx`, `PetPage.tsx`, `App.tsx`, `GameStateContext.tsx` (só o fuso, via `onboardingTimeZone`) |
+| `TUTORIAL_COMPLETE` | `soulmon-tutorial-complete` | O segundo onboarding (tutorial + 1ª tarefa) terminou. | `App.tsx` |
+| `PENDING_LOGIN_EMAIL` | `soulmon-pending-login-email` | O e-mail entre o envio do link de login e o retorno (o Firebase exige reconfirmar). | `auth.ts` |
+| `SLEEP_STARTED_AT` | `soulmon-sleep-started-at` | ISO de quando o pet deitou — a "outra ponta" da noite, lida ao acordar para `recordNight` gravar deitar E acordar. | `App.tsx` |
+| `MORNING_DREAM_SHOWN` | `soulmon-morning-dream-shown` | Dia da última manhã em que o sonho foi mostrado. Um por manhã: o feedback de sono é SÓ de manhã e SÓ uma vez. | `App.tsx` |
+
+⚰️ **`soulmon-demo-tasks-created-today` foi aposentada em 26/08/2026** — era o
+contador do cap DIÁRIO de criação no demo, que virou teto TOTAL
+(`DEMO_ACTIVITY_TOTAL_CAP`). A declaração saiu; o valor continua no
+`localStorage` de quem usou o app. Está registrada no próprio `storageKeys.ts`
+para ninguém reaproveitar o nome e herdar um número velho como se fosse novo.
+
+### 4.2 `RECONCILE_KEYS`
+
+Tabela própria de propósito: não são preferência nem estado de jogo, são o rastro
+forense de UMA migração de identidade. Nada as lê no caminho normal do app.
+
+| Chave | Valor | O que guarda |
+|---|---|---|
+| `PREVIOUS_SAVE_ID` | `soulmon-previous-save-id` | O id que o aparelho usava antes da re-derivação. Só diagnóstico. |
+| `CONFLICT_BACKUP` | `soulmon-reconcile-backup` | `{saveId, salvoEm, state}` — a cópia do progresso local descartado quando a nuvem ganhou o conflito. |
+
+⚠️ **O VALOR de cada string é contrato com o aparelho do jogador.** Renomear
+`CONFLICT_BACKUP` não apaga o backup: torna-o inalcançável para sempre, sem erro
+nenhum para avisar. `storageKeys.reconcile.test.ts` trava os dois como literais.
+
+### 4.3 `safeStorage.ts` — a única porta
+
+| Função | O que faz |
+|---|---|
+| `readLocal` / `writeLocal` / `removeLocal` | `localStorage` com `try/catch`. `writeLocal` devolve `boolean` (falhou = `false`, nunca lança) e aceita `{ silent: true }` para não avisar o usuário. |
+| `readJson<T>` / `writeJson` | Idem, com `JSON.parse`/`stringify` e fallback tipado. |
+| `readFlag` / `writeFlag` / `readFlagState` / `readNumber` | Açúcar. `readFlagState` distingue `'on' \| 'off' \| 'absent' \| 'unknown'` — ausência ≠ falha de leitura. |
+| `onStorageDegraded` / `storageDegradedMessage` / `resetStorageNotice` | O canal do aviso ÚNICO por sessão (`read` \| `write` \| `quota`), com par PT/EN. O `GameStateProvider` o assina e emite um `toast.warning`. |
+
+---
+
+## 5. Migrações
+
+### 5.1 Chaves legadas (`migrateLegacyStorageKeys`)
+
+Roda em `src/main.tsx` **antes dos providers**, porque `GameStateProvider` lê o
+save no inicializador do próprio estado. Três decisões, todas sobre não destruir
+nada:
+
+- **copia, não move** — o valor `digiapp-*` fica no `localStorage`; se a migração
+  tiver defeito, o original está lá para recuperar à mão;
+- **nunca sobrescreve** — se a chave nova já tem valor, ela ganha;
+- **falha em silêncio** — `localStorage` lança em aba privada e em modo estrito;
+  uma migração que derruba o boot é infinitamente pior que uma que não acontece.
+
+O mapeamento é `soulmon-x` → `digiapp-x`, com a exceção de `soulmon_state_v1` →
+`digiapp_state_v3`. Passa por `safeStorage` (há guard exigindo). Ela é
+**temporária por natureza** — existe só pelo save do dono, e pode ser apagada
+quando ele confirmar que abriu o app depois desta versão.
+
+⚠️ `public/sw.js` continua varrendo os DOIS prefixos na limpeza de cache; tirar o
+antigo deixaria lixo permanente na origem.
+
+### 5.2 `equippedFurniture` → `equippedDecor`
+
+`migrateDecor(loaded)` em `src/contexts/GameStateContext.tsx`. Roda uma vez, no
+load, e o campo antigo é forçado a `undefined` logo em seguida (senão ele fica no
+save para sempre e a migração reaparece).
+
+A checagem é pela **PRESENÇA** de `equippedDecor`, não por ele estar cheio: um
+mapa vazio é uma decisão do jogador ("desequipei tudo"), não ausência de
+migração. Confundir os dois foi bug real — quem tinha save antigo desequipava o
+item, recarregava e ele voltava sozinho. Guard: `src/contexts/migrateDecor.test.ts`.
+
+O retorno de `migrateDecor` ainda passa por `hydrateDecor`, porque ele devolve
+`loaded.equippedDecor` **cru** quando existe — um array ou um número passaria.
+
+### 5.3 Tetos de cuidado (`careCaps`)
+
+`mergeCareCaps(loadedState.careCaps, { feedTimes, rubHeal }, Date.now())` funde o
+que sobrou no `localStorage` deste aparelho com o que já está no save, e em
+seguida `removeLocal` apaga as duas chaves legadas.
+
+É **idempotente** por construção (união de `feedTimes`, `max` de
+`rubHeal.healed`), porque roda no save local **e de novo** quando a nuvem é
+adotada — é isso que permite apagar as chaves antigas sem criar ponto de não
+retorno.
+
+O `now` da higienização é o relógio DESTE aparelho no instante do load:
+timestamp de comida **no futuro** (relógio adiantado do outro aparelho, que agora
+viaja no save) some na fusão, senão travaria a comida por horas (achado X-5).
+
+⚠️ `src/utils/careCaps.ts` **não redeclara nenhuma constante de teto** e não
+reimplementa a janela de 1 h — as REGRAS seguem em `src/utils/careRules.ts`. Há
+teste travando isso.
+
+### 5.4 Id de espécie legado
+
+⚰️ **A migração de id de espécie de outra franquia foi apagada em 07/09/2026.**
+Os três ids de linha também ERAM nomes de franquia, então o migrador traduzia um
+nome proibido em outro. Hoje as linhas são `ignar`/`lumel`/`serah`
+(`DUNGEON_LINE_SPRITES` em `src/utils/sprites.ts`), e um id que a arte não
+conheça cai em `fallbackSpriteForStage`, que responde com arte NOSSA por hash do
+id — determinístico: o mesmo save renderiza sempre a mesma criatura.
+
+---
+
+## 6. O dia do jogador
+
+**Dono:** `src/utils/playerDay.ts` (`playerDayKey`, `resolvePlayerDayAnchor`,
+`sanitizePlayerDayAnchor`, `anchorOffsetMs`, `deviceOffsetMs`).
+
+**O problema:** `new Date().toDateString()` é o dia do **APARELHO**. Enquanto os
+registros diários moravam no `localStorage`, isso era correto por construção — o
+registro e o relógio eram do mesmo aparelho. Quando eles foram para o SAVE, que é
+sincronizado, a premissa morreu: dois aparelhos em fusos diferentes discordam do
+NOME do dia por `|offsetA − offsetB|` horas TODO DIA (Brasil↔Tóquio: 12 h;
+Brasil↔Portugal: 4 h).
+
+**A solução:** um fuso FIXO gravado no save (`playerDayTz`), resolvido UMA vez no
+load pela ordem: (1) a âncora que **já está no save VENCE**; (2) o fuso IANA da
+cidade de nascimento declarada no onboarding (que sabe de horário de verão); (3)
+o offset DESTE aparelho, congelado.
+
+**O formato** é uma string com a MESMA FORMA de `toDateString()` ("Wed Aug 26
+2026") — o que torna a migração **invisível** para quem está no fuso de casa (a
+string sai idêntica à já gravada) e mantém `Date.parse` funcionando.
+
+### 6.1 As sete famílias de consumidores
+
+| Registro | Símbolo | Módulo |
+|---|---|---|
+| teto diário de **carinho** | `careCaps.rubHeal` (via `rubDecision`) | `src/utils/careUpdaters.ts`, `careCaps.ts` |
+| **check-in** | `lastCheckInDate` | `src/App.tsx` (escrita) e `needsCheckIn` em `src/utils/rituals.ts` |
+| **humor** | `moodLog[].date` | `recordMood`/`moodFor`, `src/utils/mood.ts` |
+| **cocô** | `poopDrainCharge.day` | `applyPoopDrain`/`cleanPoop`, `src/utils/poopDrain.ts` |
+| **brincar** | `playLog.date` | `src/utils/petNeeds.ts` + a IIFE do `PlayCard` no `src/App.tsx` |
+| **a manhã** | `rest.nights[].date` / `restConstancy` | `recordNight`, `src/utils/restWindow.ts` |
+| **o pesadelo** | `nightmares.fought[]` | `src/utils/nightmares.ts` |
+
+Todas passam por `playerDayKey(now, playerDayTz)` — é esse o `grep` que acha a
+família inteira. A régua VIVA da lista é
+`src/utils/playerDay.contract.test.ts`, um guard de AST que pergunta, no ponto de
+uso, quem produz a chave de dia.
+
+### 6.2 Duas coisas que este arquivo deliberadamente NÃO faz
+
+- **Não toca em `dayKeyOf`** (`src/utils/habitRhythm.ts`). Aquela é a chave do
+  motor de hábitos, de `perfectDays`, da streak e do gatilho de virada.
+  Redefini-la mudaria o significado de strings JÁ GRAVADAS em todo save e
+  dispararia uma virada espúria em cada um. Há guard de fiação no AST.
+- **Não usa UTC puro.** Em fuso negativo o dia UTC vira à tarde: para um
+  brasileiro em UTC−3 o teto de carinho zeraria às 21 h.
+
+### 6.3 A comida NÃO entra
+
+`careCaps.feedTimes` é uma janela **DESLIZANTE** de timestamps
+(`FOOD_LIMIT_PER_HOUR`, `src/utils/careRules.ts`), não um registro diário. Um
+instante em ms é o mesmo instante nos dois aparelhos — não tem nome de dia para
+discordar.
+
+### 6.4 A `rest` leva a âncora DENTRO dela
+
+`recordNight`, `restConstancy` e `src/utils/nightmares.ts` leem
+`rest.playerDayTz` **do estado**, nunca por parâmetro. `hydrateRest` recebe a
+MESMA referência de âncora que o `GameState` — duas âncoras resolvidas em pontos
+diferentes do load poderiam divergir (basta o relógio virar entre as duas linhas)
+e passariam a nomear a mesma noite de dois jeitos. Há guard de AST travando essa
+linha.
+
+---
+
+## 7. O `saveId`, e as três implementações
+
+**A regra:** `SHA-256("soulmon:" + e-mail.trim().toLowerCase())`, hex, cortado em
+**32 caracteres**. O corte não é estético: sem ele o hash tem 64 caracteres, a
+comparação do servidor nunca casa e **todo usuário autenticado toma 403**. O
+formato tem de passar no `VALID_ID` do servidor: `/^[a-zA-Z0-9_-]{8,64}$/`.
+
+**O salt namespeia o produto.** Com `digiapp:` o mesmo e-mail hasheava para a
+MESMA chave nos dois produtos; `soulmon:` faz os dois derivarem chaves diferentes
+mesmo enquanto o armazenamento cru é compartilhado.
+
+| # | Implementação | Árvore | Ciclo de deploy |
+|---|---|---|---|
+| 1 | `emailToSaveId` em `src/utils/cloudSave.ts` | app web/PWA/APK | Cloudflare Pages, no push da `main` |
+| 2 | `emailToSaveId` em `desktop/renderer/src/cloudSync.ts` | overlay Electron | tag `v[0-9]+.[0-9]+.[0-9]+` |
+| 3 | `emailToSaveId` em `functions/api/_auth.js` | servidor | Pages Functions, no mesmo push |
+
+**Divergir não dá erro nenhum**: o overlay lê um save inexistente e mostra um
+bicho genérico; a do servidor devolve **403 para todo usuário autenticado**. Já
+aconteceu — o código do desktop veio do fork com o salt `digiapp:`.
+
+**Réguas** (comportamentais, não de texto): `functions/api/saveId.parity.test.js`
+(as três) e `desktop/renderer/src/cloudSync.test.ts` (duas).
+
+⚠️ Quem nunca logou tem `SAVE_ID = crypto.randomUUID()`, que **passa** no
+`VALID_ID`. No dia em que o servidor exigir a derivação (`enforced: true`), esse
+UUID vira 403 — e **re-login não conserta**, porque o erro está no `SAVE_ID`
+gravado no aparelho. Quem conserta é `reconcileSaveId` (§3.4).
+
+---
+
+## 8. O que existe no servidor
+
+### 8.1 KV de saves — `kv(env)` em `functions/api/_kv.js`
+
+**Nunca leia `env.*_SAVES` direto** — há teste varrendo `functions/api/`
+(`_kv.fiacao.test.js`). O acessor prefere `SOULMON_SAVES` e cai em
+`DIGIAPP_SAVES`; `kvOrThrow(env)` é o mesmo namespace já estreitado, para uso
+depois da guarda.
+
+⚠️ **Estado em 09/09/2026:** desde 07/09/2026 o `wrangler.jsonc` declara
+`SOULMON_SAVES` apontando para um namespace **próprio e vazio** (decisão do dono:
+separar sem migrar, já que ninguém usou o app em produção), e `DIGIAPP_SAVES`
+fica declarado só como rede para o dado herdado continuar alcançável por
+`wrangler kv key get`. Como `_kv.js` prefere o primeiro, é ele que vale. O painel
+do Pages tem a própria lista de bindings, e é ela que vale em produção.
+
+| Prefixo de chave | Conteúdo | Escrito por | TTL |
+|---|---|---|---|
+| `<saveId>` | O `GameState` serializado (sem `accountTier`/`credits`), com `metadata: { t: <epoch ms> }`. | `functions/api/save.js` | `SAVE_TTL_SECONDS` = `86400 * 365`. **Renovado a cada acesso**: o `put` grava a data em metadata e o GET só reescreve quando passou de `RENEW_AFTER_SECONDS` = `86400 * 30` — no máximo uma escrita extra por mês por save. Sem isso, quem abre o app, olha o bicho e fecha sem gerar escrita ia envelhecendo o próprio save até perdê-lo. |
+| `ent:<saveId>` | O entitlement: `tier`, `credits`, `consumedOrders[]`, `orderDetails[]`, `auditedAt`, `aiLifetime{}`, `aiForms{}`, `adDate`, `adCount`, `updatedAt`. | `functions/api/_entitlements.js` (e **só** ele) | `RETENTION_TTL_SECONDS` = 5 anos, **renovado em TODA escrita**. Sem a renovação, o tier pago e o teto VITALÍCIO de IA passariam a expirar para quem nunca parou de jogar. |
+| `ord:<orderId>` | O `saveId` que reivindicou aquele comprovante. É a trava "um recibo, uma conta". | `claimOrder` | 5 anos, renovado por reivindicação do MESMO dono ("restaurar compras"). |
+| `profile:<saveId>` | Perfil público (nome, pet, formas, pvp, amigos). | `functions/api/community.js` | — |
+| `pid:<pid>` | Índice reverso identidade pública → `saveId`. **Nenhuma resposta pública devolve `saveId`** — há teste travando. | `community.js` | — |
+| `rank:<season>:<saveId>` | Pontos de rank da season (`YYYY-MM`). | `community.js` | — |
+| `gifts:<saveId>` | Bits pendentes de presente. | `community.js` | — |
+| `m:YYYY-MM-DD` | **Agregado diário** de telemetria — contadores somados de todo mundo. Não há chave por usuário, não há lista de eventos, não há nada de onde reconstruir o comportamento de uma pessoa. | `functions/api/metrics.js` | — |
+| (token de 32 hex) | O binário do sprite republicado, quando o provedor devolve `data:`. A chave é um TOKEN aleatório, **não** o `saveId` — o `saveId` é derivável de um e-mail. | `functions/api/sprite-image.js` | `Cache-Control: public, max-age=31536000, immutable` |
+
+Teto do save: `MAX_STATE_BYTES` = `5 * 1024 * 1024` (o KV aceita 25 MB por
+chave; 5 MB é ~50× o maior save real observado). Acima disso, **413**.
+
+### 8.2 KV de push — `PUSH_SUBSCRIPTIONS`
+
+Namespace separado, compartilhado pelos dois canais e lido pelo mesmo cron.
+
+| Prefixo | Conteúdo | Escrito por |
+|---|---|---|
+| `push:<hash do endpoint>` | `{ endpoint, keys: {p256dh, auth}, petName, bornAt?, language, refreshedAt }` — Web Push. | `functions/api/subscribe.js` |
+| `fcm:<…>` | O token de dispositivo do Android, com os mesmos campos de identidade. | `functions/api/fcm-subscribe.js` |
+
+O que as duas rotas compartilham (teto de 24 do apelido, lista fechada de idioma,
+`bornAt` como `YYYY-MM-DD` sem hora e sem fuso, limite de taxa e a escrita-só-
+quando-muda) mora em `functions/api/_pushIdentity.js` — `gravarSeMudou` só
+reescreve quando o registro mudou **ou** quando passou de `REFRESCA_APOS_MS`, e
+o `put` leva `expirationTtl: TTL_INSCRICAO`.
+
+⚠️ **A idade da criatura morre junto com a subscription**: não existe registro
+separado, e cancelar o push apaga o `bornAt` junto.
+
+### 8.3 D1 — `order_claims`
+
+Binding `DB`, banco `soulmon-billing` (`wrangler.jsonc`). Schema versionado em
+`migrations/`:
+
+```sql
+-- 0001_order_claims.sql
+CREATE TABLE IF NOT EXISTS order_claims (
+  order_id   TEXT PRIMARY KEY,
+  save_id    TEXT NOT NULL,
+  claimed_at INTEGER NOT NULL
+);
+-- 0002_order_claims_expires_at.sql
+ALTER TABLE order_claims ADD COLUMN expires_at INTEGER;
+UPDATE order_claims SET expires_at = claimed_at + 157680000000 WHERE expires_at IS NULL;
+```
+
+`claimOrder` usa D1 quando `env.DB` existe (`claimOrderAtomic`: o `INSERT` **é** a
+disputa, porque `order_id` é PRIMARY KEY) e cai no KV quando não existe — e o KV
+é eventualmente consistente, então o mesmo comprovante pode valer para N contas.
+
+Duas propriedades que o D1 replica do KV de propósito, para não haver duas
+políticas para o mesmo dado: o prazo vira **coluna** (`expires_at`) e a limpeza é
+**na leitura**, ANTES da disputa; e reivindicar pelo mesmo dono **renova** o
+prazo (recibo em uso é recibo vivo), sem mexer em `claimed_at`. Linha legada com
+`expires_at` NULL é prazo **desconhecido**, não vencido — o desempate é a favor de
+manter.
+
+Regras do diretório (`migrations/README.md`): ordem numérica, uma vez cada;
+**migração aplicada não se edita** (escreve-se a próxima); e toda migração declara
+no cabeçalho o que acontece com as linhas existentes.
+
+---
+
+## 9. Os dados das outras superfícies
+
+### 9.1 Overlay Electron
+
+**Namespace PRÓPRIO**: `STORAGE_KEY = 'soulmon_desktop_v1'`
+(`desktop/renderer/src/config.ts`). Separado do save real de propósito — o que
+mora ali é o que é DESTE APARELHO, e misturá-lo com o save corromperia o
+progresso do celular sem chance de desfazer.
+
+`DesktopState` (`desktop/renderer/src/state.ts`) tem duas metades declaradas:
+
+- **espelho do save real** (cache de leitura, preenchido por
+  `fetchRemoteSnapshot`): `stage`, `stageName`, `genericLine`, `demoCharacterId?`,
+  `hearts`, `maxHearts`, `energy`, `maxEnergy`, `foodInventory`, `tasks[]`;
+- **só do desktop**: `language`, `sleeping`, `sleepStartedAt`, e o restante do
+  estado local da faixa.
+
+A escrita de volta existe: `menu.ts` chama `pushCareAction` para carinho, comida,
+tarefa, **banho e sono**, e quem decide cada uma é `desktop/renderer/src/care.ts`,
+que **importa** `careRules`, `careUpdaters`, `careCaps`, `playerDay`,
+`restWindow` e `poopDrain` de `src/utils/` — não são cópia. A fronteira de
+cuidado é o `care.ts`, e não o `menu.ts`: este toca o DOM no topo e por isso
+**nenhum teste em `node` consegue importá-lo**.
+
+⚠️ **Comentário desatualizado encontrado em 09/09/2026:** o cabeçalho de
+`desktop/renderer/src/cloudSync.ts` explica a cópia removida citando
+`LEGACY_FORM_TIERS` como se ela existisse ("a `getStageLevel` do app cai em
+`LEGACY_FORM_TIERS` quando o prefixo não casa"). A tabela foi **apagada em
+07/09/2026** (`src/types/progression.ts` tem a lápide). O comportamento descrito
+— o overlay importar `MAX_HP_BY_FORM`/`getStageLevel`/`getMaxEnergyForStage` em
+vez de reimplementá-los — continua correto; só a justificativa envelheceu.
+
+### 9.2 Widgets Android
+
+O widget **não fala com o servidor**. O app grava em `SharedPreferences`
+(`WidgetRenderer.PREFS_NAME`) pela ponte `SoulmonWidget`
+(`src/plugins/SoulmonWidgetPlugin.ts` → `plugins/SoulmonWidgetPlugin.kt`), e o
+`WidgetRenderer.kt` lê de lá.
+
+**As chaves do bridge são CONGELADAS: só se ACRESCENTA.**
+
+| Chave | Origem no `DigiWidgetData` | Observação |
+|---|---|---|
+| `pet_name` | `petName` | ⚰️ Era `digimonName` até 07/09/2026. |
+| `current_stage` | `currentStage` | |
+| `egg_type` | `eggType` | |
+| `branch_type` | `branchType` | |
+| `completed_tasks` · `total_tasks` | `completedTasks` · `totalTasks` | Só gravadas quando ≥ 0. |
+| `hp` · `health_points` · `max_health_points` · `energy_points` | idem | Só gravadas quando ≥ 0. |
+| `has_poop` | `hasPoop` | |
+| `habit_steady` | `habitSteady?` | Chave **NOVA**: uma FAIXA, nunca o percentual. Ausente = sem histórico, que é diferente de "não está firme" — o plugin faz `editor.remove("habit_steady")` quando o campo não vem. |
+| `habit_tier_max` | `habitTierMax?` | 0 = semente … 3 = árvore. |
+| `needs_intervention` | `needsIntervention?` | A oferta dos 5 minutos. |
+
+⚰️ **`constancy_pct`, `shields` e `bond_level` NÃO EXISTEM MAIS** (06/09/2026). As
+três eram escritas e **nunca lidas** pelo renderer; percentual cru é linha
+vermelha do produto e escudo exposto vira placar de uma proteção que só funciona
+sendo silenciosa. O plugin **remove** as três a cada escrita, porque parar de
+escrever não apaga o que já está no aparelho.
+
+⚠️ **O widget não cobra**, e há régua: `src/plugins/widgetSemCobranca.contract.test.ts`
+— que lê o FONTE Kotlin, porque nenhum teste em `node` alcança Kotlin.
+
+`SoulmonAlarmPlugin.kt` usa a mesma casa para os alarmes, com chaves
+`alarm_<notificationId>`.

@@ -53,6 +53,20 @@ via `language === 'pt-BR'`).
 > aberto, o que já foi corrigido e a lista do que depende do dono. Leia no
 > começo da sessão e **atualize ao terminar qualquer coisa relevante**.
 
+> **`docs/manual/00-MAPA.md`** é a porta de entrada do **manual completo** do
+> Soulmon (17 documentos em `docs/manual/`, escritos em 09–10/09/2026): visão e
+> linhas vermelhas, as regras de negócio sistema por sistema, fluxo de telas,
+> identidade visual e sonora, arquitetura, referência módulo a módulo, dados e
+> save, integrações e deploy, histórico, índice das discussões, glossário e o
+> método de manutenção. O MAPA em si não contém regra nenhuma — ele **aponta**:
+> tem o protocolo de leitura para IA, o índice por assunto, o índice por
+> pergunta ("vou mexer em X → leia Y, dono Z, régua W"), o índice por arquivo de
+> código e a etiqueta de todo `.md` de `docs/` (vivo / registro / pesquisa /
+> plano). **Sessão nova lê o MAPA inteiro antes de trabalhar num assunto** — e é
+> lá que está escrito o que NÃO ler primeiro. Este arquivo continua tendo
+> precedência sobre o manual (código > teste > `CLAUDE.md` > manual); quem
+> guarda o índice é `src/docsManual.contract.test.ts`.
+
 > ## ⚠️ NINGUÉM NUNCA USOU O APP EM PRODUÇÃO (07/09/2026, informado pelo dono)
 >
 > **Leia isto antes de aceitar qualquer justificativa deste arquivo que comece

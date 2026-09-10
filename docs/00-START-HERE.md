@@ -13,11 +13,20 @@ Capacitor (APK Android), overlay Electron em `desktop/`.
 ## Leia nesta ordem
 
 1. **`CLAUDE.md` (raiz)** — regras de jogo, arquitetura, footguns, convenções.
-   É a fonte da verdade e o único doc que se pretende completo.
+   É a fonte da verdade resumida, e precede o manual na hierarquia.
 2. **`docs/STATUS.md`** — registro vivo: o que está no ar, achados em aberto,
    e a lista do que depende do dono. Leia no começo da sessão, atualize no fim.
-3. **`docs/PLANO-EVOLUCAO.md`** — a essência declarada do produto e o benchmark
-   de onde ela saiu. Rege as decisões de regra.
+3. **`docs/manual/00-MAPA.md`** — **a porta de entrada do manual completo**, e o
+   único índice do repositório. Ele tem o protocolo de leitura para IA, o índice
+   por assunto, o índice por pergunta ("vou mexer em X → leia Y, dono Z, régua
+   W"), o índice por arquivo de código e a etiqueta de todo `.md` de `docs/`
+   (vivo / registro / pesquisa / plano). **Leia-o inteiro antes de trabalhar em
+   qualquer assunto** — é ele que diz o que NÃO ler primeiro.
+
+Tudo o que existia neste arquivo como "mapa do resto" foi absorvido pelo
+`docs/manual/00-MAPA.md`, seção 6. Não mantenha índice paralelo aqui: dois
+índices divergem em silêncio, e há guard (`src/docsManual.contract.test.ts`)
+que exige que o mapa alcance todo documento.
 
 ## Comandos
 
@@ -26,28 +35,17 @@ npm install
 npm run dev                                  # desenvolvimento
 
 npx tsc --noEmit                             # ANTES de todo commit
+npx tsc -p tsconfig.server.json --noEmit
 npx tsc -p desktop/tsconfig.json --noEmit
 npx vitest run
 npm run build                                # dist/ É commitado
+
+npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts   # ao mexer em docs/
 ```
-
-## Mapa do resto
-
-| Assunto | Onde |
-|---|---|
-| Motor de tarefas (hábito × tarefa) | `docs/PLANO-TAREFAS.md` |
-| Pacotes de melhoria e o ledger | `docs/PLANO-MELHORIAS.md` · `docs/plano-melhorias/LEDGER.md` |
-| Auditoria de alinhamento mais recente | `docs/AUDITORIA-ALINHAMENTO.md` |
-| Herança do fork e o que falta separar | `docs/SEPARACAO-DIGIAPP.md` |
-| Telas, palco e decoração | `docs/INVENTARIO-TELAS.md` · `docs/PALCO-E-DECORACAO.md` |
-| Oráculo (leitura + criação da criatura) | `docs/ORACULO.md` |
-| Cobrança e compras | `docs/BILLING-SETUP.md` |
-| Overlay Electron | `desktop/README.md` · `docs/PLANO-DESKTOP-STEAM.md` |
-| Arte de terceiro: o que saiu e por quê | `docs/Attributions.md` |
-| O que só o dono pode fazer | `docs/DEPENDE-DE-VOCE.md` |
 
 ## A regra que vale para todos eles
 
 **A régua viva é o teste, não o documento.** Onde uma tabela em markdown
 discordar de um arquivo em `src/`, o arquivo ganha e o documento está com
-defeito — foi assim que a pasta `historico-digiapp/` nasceu.
+defeito — foi assim que a pasta `historico-digiapp/` nasceu. A precedência
+completa é: código > teste > `CLAUDE.md` > manual.
