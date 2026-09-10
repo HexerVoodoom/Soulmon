@@ -1,6 +1,6 @@
 # Mapa do manual do Soulmon — comece por aqui
 
-> **Dono:** doc-bibliotecario · **Data:** 10/09/2026 · **Estado:** rascunho
+> **Dono:** doc-bibliotecario · **Data:** 10/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (guard verde: todo doc citado, todo link resolve)
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts` — o item (a) exige que TODO `.md` de `docs/` (exceto `historico-digiapp/`) esteja citado neste arquivo, e o item (b) exige que todo link relativo do manual resolva. O item (d) proíbe referência `arquivo` + número de linha em qualquer doc do manual.
 > **Não cobre:** o conteúdo de nada. Este documento **aponta**; quem responde é o doc dono de cada assunto. Se você está lendo uma regra AQUI, o índice tem defeito.
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -392,24 +392,24 @@ Lido dos cabeçalhos em 10/09/2026 com `grep -o '\*\*Dono:\*\* [a-z-]*\|\*\*Data
 
 | Doc | Dono | Carimbo | Data |
 |---|---|---|---|
-| [00-MAPA.md](00-MAPA.md) (este) | doc-bibliotecario | rascunho | 10/09/2026 |
-| [01-VISAO.md](01-VISAO.md) | doc-redator-regras | rascunho | 09/09/2026 |
-| [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md) | doc-redator-regras | rascunho | 09/09/2026 |
-| [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md) | doc-redator-telas | rascunho | 09/09/2026 |
-| [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) | doc-redator-identidade | rascunho | 09/09/2026 |
-| [05-ARQUITETURA.md](05-ARQUITETURA.md) | doc-redator-arquitetura | rascunho | 09/09/2026 |
-| [06-REFERENCIA/utils.md](06-REFERENCIA/utils.md) | doc-redator-referencia | rascunho | 09/09/2026 |
-| [06-REFERENCIA/components.md](06-REFERENCIA/components.md) | doc-redator-referencia | rascunho | 09/09/2026 |
-| [06-REFERENCIA/hooks-contexts-types.md](06-REFERENCIA/hooks-contexts-types.md) | doc-redator-referencia | rascunho | 09/09/2026 |
-| [06-REFERENCIA/plugins-constants.md](06-REFERENCIA/plugins-constants.md) | doc-redator-referencia | rascunho | 09/09/2026 |
-| [06-REFERENCIA/api-workers.md](06-REFERENCIA/api-workers.md) | doc-redator-referencia | rascunho | 09/09/2026 |
-| [06-REFERENCIA/desktop.md](06-REFERENCIA/desktop.md) | doc-redator-referencia | rascunho | 09/09/2026 |
-| [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) | doc-redator-arquitetura | rascunho | 09/09/2026 |
-| [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | doc-redator-arquitetura | rascunho | 09/09/2026 |
-| [09-HISTORICO.md](09-HISTORICO.md) | doc-historiador | rascunho | 09/09/2026 |
-| [10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md) | doc-historiador | rascunho | 09/09/2026 |
-| [11-GLOSSARIO.md](11-GLOSSARIO.md) | doc-bibliotecario | rascunho | 09/09/2026 |
-| [12-COMO-MANTER.md](12-COMO-MANTER.md) | doc-bibliotecario | rascunho | 09/09/2026 |
+| [00-MAPA.md (este)](00-MAPA.md) | doc-bibliotecario | verificado em 10/09/2026 | 10/09/2026 |
+| [01-VISAO.md](01-VISAO.md) | doc-redator-regras | verificado em 10/09/2026 | 09/09/2026 |
+| [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md) | doc-redator-regras | verificado em 10/09/2026 | 10/09/2026 |
+| [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md) | doc-redator-telas | verificado em 10/09/2026 | 09/09/2026 |
+| [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) | doc-redator-identidade | verificado em 10/09/2026 | 09/09/2026 |
+| [05-ARQUITETURA.md](05-ARQUITETURA.md) | doc-redator-arquitetura | verificado em 10/09/2026 | 09/09/2026 |
+| [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) | doc-redator-arquitetura | verificado em 10/09/2026 | 09/09/2026 |
+| [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) | doc-redator-arquitetura | verificado em 10/09/2026 | 09/09/2026 |
+| [09-HISTORICO.md](09-HISTORICO.md) | doc-historiador | verificado em 10/09/2026 | 09/09/2026 |
+| [10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md) | doc-historiador | verificado em 10/09/2026 | 09/09/2026 |
+| [11-GLOSSARIO.md](11-GLOSSARIO.md) | doc-bibliotecario | verificado em 10/09/2026 | 09/09/2026 |
+| [12-COMO-MANTER.md](12-COMO-MANTER.md) | doc-bibliotecario | verificado em 10/09/2026 | 09/09/2026 |
+| [06-REFERENCIA/api-workers.md](06-REFERENCIA/api-workers.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
+| [06-REFERENCIA/components.md](06-REFERENCIA/components.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
+| [06-REFERENCIA/desktop.md](06-REFERENCIA/desktop.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
+| [06-REFERENCIA/hooks-contexts-types.md](06-REFERENCIA/hooks-contexts-types.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
+| [06-REFERENCIA/plugins-constants.md](06-REFERENCIA/plugins-constants.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
+| [06-REFERENCIA/utils.md](06-REFERENCIA/utils.md) | doc-redator-referencia | verificado em 10/09/2026 | 09/09/2026 |
 
 ---
 

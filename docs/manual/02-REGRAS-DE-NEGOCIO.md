@@ -1,6 +1,6 @@
 # Regras de negócio — todas as regras do jogo, por sistema
 
-> **Dono:** doc-redator-regras · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-regras · **Data:** 10/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (em duas metades; a devolução V1 — `level-de-conta.md` ausente — foi fechada pelo orquestrador com a medição)
 > **Verificação:** `npx vitest run src/utils src/types src/hooks` — cada sistema abaixo declara a sua régua própria na linha **Régua**. Números medidos trazem o comando na própria linha.
 > **Não cobre:** o porquê estratégico e as linhas vermelhas (→ [`01-VISAO.md`](01-VISAO.md)), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), função por função (→ `06-REFERENCIA/`), formato do save (→ `07-DADOS-E-SAVE.md`), infraestrutura de push, deploy e API (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -281,7 +281,8 @@ Não tem teto diário.
 
 **Onde a UI mostra.** `src/components/ItemsWindow.tsx` (a pastinha),
 `src/components/CompanionHUD.tsx` (a animação de comer),
-`src/components/EnergyBar.tsx`.
+`src/components/pixel/HomeHud.tsx` (a barra segmentada de energia; ⚰️ o
+`EnergyBar.tsx` foi apagado em 07/09/2026, sem uma única referência viva).
 
 ---
 
@@ -424,7 +425,9 @@ o dia completo.
 **O que NÃO faz.** Não enche com o tempo. Não enche com chip (chip dá só
 atributo). Não é gasta por nada além de brincar.
 
-**Onde a UI mostra.** `src/components/EnergyBar.tsx`.
+**Onde a UI mostra.** `src/components/pixel/HomeHud.tsx` — a barra segmentada,
+montada de dentro do `src/components/CompanionHUD.tsx`. ⚰️ O `EnergyBar.tsx`
+foi apagado em 07/09/2026 (zero referências vivas).
 
 ---
 
@@ -1345,7 +1348,7 @@ escada); `already-used` é registro, nunca oferta repetida.
 derivados; **para no 2º nível** porque o motor de ficha só sabe alocar aridade 1
 e 2 — oferecer tripla seria prometer no menu o que a cozinha não faz).
 
-**`applyRebirth(prev, choices, now)`** reescreve **quatro campos e mais nada**:
+**`applyRebirth(prev, choices, now)`** reescreve **cinco campos e mais nada**:
 `evolutionStage: 'rookie'`, `virusPoints`/`dataPoints`/`vaccinePoints` = 0, e
 grava `rebirth: { criatura, escola, elemento, at, fromStage }`. Passam intactos
 pelo spread: Bits, Emblemas, Créditos, decoração, cenários, sonhos,
@@ -3506,7 +3509,7 @@ toca som de compra: a categoria "transação" ainda não tem som próprio, e o c
 <a id="itens-especiais"></a>
 ## 48. 🌀💗🦠 Itens especiais (o uso da pastinha)
 
-**Em uma frase.** Quatro itens que moram na mesma pastinha da comida e se
+**Em uma frase.** Cinco itens que moram na mesma pastinha da comida e se
 comportam de forma completamente diferente dela: chip dá atributo, coraçãozinho
 cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
 
@@ -3519,8 +3522,9 @@ cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
 | 💗 `HEART_ITEM_EMOJI` | `heart` | `+HEART_HEAL` de coração, clampado em `maxHealthPoints` |
 | 🦠 / 💾 / 💉 `CHIP_EMOJI` | `chip` | `+CHIP_BOOST` no atributo, `+CHIP_BOOST × 10` de `totalXP`, e o mesmo no `attributesSinceLastEvolution` |
 
-`CHIP_BOOST` = 3 · `HEART_HEAL` = 1 · `GLITCHTAMA_PER_DAY` = 1
-(`src/utils/specialItemUse.ts`).
+`CHIP_BOOST` = 3 e `HEART_HEAL` = 1 (`src/utils/shop.ts`, junto do catálogo) ·
+`GLITCHTAMA_PER_DAY` = 1 (`src/utils/specialItemUse.ts`, junto do teto que ela
+guarda).
 
 **Dono único do USO: `src/utils/specialItemUse.ts`** (`specialRefusal`,
 `applySpecialItem`, `glitchtamaUsedToday`). **Não é o `careUpdaters.ts`**, de
@@ -3623,8 +3627,10 @@ degenerou, ou renasceu ([§20](#rebirth)), continua com a missão cumprida.
 (`handleDungeonEnemyDefeated`, `handleGlitchtama`, `handleDinoScore`) e na
 virada (`src/utils/dailyReset.ts`, `totalPerfectDays`).
 
-**Régua.** `src/utils/missions.test.ts` (progresso, clamp, "toda missão libera um
-item distinto e todo cenário-prêmio tem CSS", "Glitchtama nunca é vendido").
+**Régua.** `src/utils/missions.test.ts` (progresso, clamp, `every mission unlocks
+a distinct shop item, with CSS defined for bg rewards` e `plain (unlock-less)
+items are always unlocked; Glitchtama is never sold` — os blocos estão em
+inglês, como o resto daquele arquivo).
 
 **Decisão.** [`docs/SHOP-PLAN.md`](../SHOP-PLAN.md);
 [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.6.
@@ -3700,9 +3706,9 @@ do `ShopModal`.
 
 **Decisão.** WP4.7. Até 06/09/2026 o módulo tinha **zero consumidores** — a
 terceira repetição do padrão do `bestiary` e das estações. O custo era de
-economia: os oito `TOURNAMENT_ITEMS` somam **245** Emblemas, e a
-`EMBLEMS_PER_WIN` = 3 por vitória isso dá **82** partidas ganhas — depois disso a moeda do Torneio
-nunca mais compra nada. As missões semanais são a torneira e o ralo ao mesmo
+economia: os oito `TOURNAMENT_ITEMS` somam **245** Emblemas e
+`EMBLEMS_PER_WIN` = 3, o que dá **82** partidas ganhas — depois disso a moeda do
+Torneio nunca mais compra nada. As missões semanais são a torneira e o ralo ao mesmo
 tempo.
 [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.6.
 
@@ -4099,8 +4105,11 @@ do jogador.
 
 **O gate de PvP.** `BOND_PVP_MIN_LEVEL` = **5**, e não é número escolhido: os
 níveis 1–4 são o funil de retenção D1–D7 e o 5 é o primeiro degrau fora dele
-(`xpForLevel(5)` = 700 XP, que a derivação em `level-de-conta.md` §6 estima em
-uma semana de uso real). Pôr o gate dentro do funil contaminaria a
+(`xpForLevel(5)` = 700 XP). O cabeçalho de `src/utils/bond.ts` remete a
+derivação a um `level-de-conta.md` §6 que **não está no repositório** em
+10/09/2026 (`find . -name 'level-de-conta*'` vazio; era artefato de run local,
+fora do git) — a estimativa "uma semana de uso real" vive só nesse comentário
+e não é verificável aqui. Pôr o gate dentro do funil contaminaria a
 calibração de retenção com um objetivo social.
 
 É um **LIMIAR, não uma manutenção**: `bondLevelFor` é monótona e `totalXP` nunca
@@ -4467,7 +4476,8 @@ card de priming na Home (na fila de avisos, ver a regra das DUAS FILAS).
 ## 59. ⚠️ Divergências com o `CLAUDE.md`
 
 O que segue é o que o **código** faz e o `CLAUDE.md` (ou um comentário do próprio
-código) descreve de outro jeito, apurado em 09/09/2026. A precedência do
+código) descreve de outro jeito, apurado em 09 e 10/09/2026 (D1–D12 em
+09/09/2026; D13–D26 em 10/09/2026). A precedência do
 cabeçalho vale: **o código está certo**. Nenhuma linha aqui é proposta de
 mudança — cada uma é um item para o [`STATUS.md`](../STATUS.md), que o
 orquestrador recolhe.
@@ -4478,7 +4488,7 @@ registraram divergência nenhuma**.
 | # | Onde | O `CLAUDE.md` diz | O código faz | Como conferir |
 |---|---|---|---|---|
 | D1 | tabela 🫶 e 🛒 | o **coraçãozinho** é "comprado na loja ou dropado na masmorra", a 150 Bits | ⚰️ **não é mais vendido** desde 06/09/2026 (D7+D15). Continua existindo e curando por `SPECIAL_ITEMS`; a única fonte é o drop da masmorra | `SHOP_ITEMS.filter(i => i.kind === 'heart').length === 0`; a lápide está no lugar do item em `src/utils/shop.ts` |
-| D2 | tabela 💎 | Créditos gastam em "reroll (50), **cura instantânea (10)** e troca por Bits" | ⚰️ a **cura instantânea não existe** — `utils/instantHeal.ts` foi apagado junto. Restam reroll (`REROLL_COST_CREDITS`) e `BITS_EXCHANGE` | `ls src/utils/instantHeal.ts` falha; a lápide D7+D15 está em `src/App.tsx`, acima de `handleBuyCreditPack`. [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.4 já registra "REMOVIDA ✅ resolvido" |
+| D2 | tabela 💎 | Créditos gastam em "reroll (50), **cura instantânea (10)** e troca por Bits" | ⚰️ a **cura instantânea não existe** — `utils/instantHeal.ts` foi apagado junto. Restam reroll (`REROLL_COST_CREDITS`) e `BITS_EXCHANGE` | `ls src/utils/instantHeal.ts` falha; a lápide D7+D15 está em `src/App.tsx`, logo ABAIXO de `handleBuyCreditPack`. [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.4 já registra "REMOVIDA ✅ resolvido" |
 | D3 | tabela 🛒 | "Loja em ABAS (Itens/Cenários/Mobílias/**Torneio**/Missões)" — cinco | **dois segmentos** (`ShopSegment = 'shop' \| 'tournament'`). Itens/Cenários/Mobílias viraram seções de um scroll único, e ⚰️ **a aba Missões morreu** — a explicação do cadeado passou para a linha do próprio item | `grep -n "ShopSegment" src/components/ShopModal.tsx`; o cabeçalho do arquivo documenta os dois cortes |
 | D4 | footgun 9, item do Vínculo | o gate de PvP usa "cliente (**`canPvp`**)" | o símbolo **não existe**. O cliente tem `meetsPvpBond` e `xpToPvpBond` (`src/utils/bond.ts`); o servidor decide em `functions/api/community.js` ação `profile`, com `bondLevelOf` de `functions/api/_bond.js` | `grep -rn canPvp src desktop functions` não devolve nada |
 | D5 | tabela ⚔️ | "`getDungeonEnemySprite(tier, petStage)` tira do sorteio a linha que o jogador está usando, pra ninguém encarar um espelho de si mesmo" | a assinatura é `getDungeonEnemySprite(tier, excludeLine)` e `excludeLine` é comparado com **ids de LINHA** (`ignar`…`thalindra`). `buildDungeonWave(level, petStage)` repassa o **estágio de evolução** (`rookie`, `champion-virus`…), que nunca casa — **a exclusão não dispara em jogo**. O `demoCharacterId`, que É um id de linha, chega ao `DungeonGame` e é usado só para o sprite do próprio jogador | `grep -n "buildDungeonWave(" src/components/DungeonGame.tsx` e `grep -n "getDungeonEnemySprite" src/utils/dungeon.ts`; a função em si está correta e tem teste (`src/utils/sprites.dungeonRoster.test.ts`, "excludeLine tira a linha do jogador do sorteio") — o defeito é do CHAMADOR |
@@ -4494,7 +4504,7 @@ registraram divergência nenhuma**.
 | D15 | §15 / §17 | — | três regras sem leitor vivo: `XP_THRESHOLDS` → `nextLevelXP` (o `CompanionHUD` desestrutura e não desenha); `attributesSinceLastEvolution` (único leitor é o ramo morto); `handleEvolveToUnlocked` sem chamador (`showEvolutionChoice` nunca vira `true`) | `grep -rn "setShowEvolutionChoice" src/` |
 | D16 | 🎯 Foco do dia (§32) | "as 3 completas = selo do dia" (também em `GuideModal.tsx` e `HelpModal.tsx`) | `focusComplete` (`src/utils/taskTriage.ts`) exige TODOS os focos ESCOLHIDOS — quem escolheu 1 e concluiu recebe o selo; `MAX_DAILY_FOCUS` é teto, não requisito | `src/utils/taskTriage.test.ts`, "focusComplete só é verdadeiro com todos os focos feitos" |
 | D17 | 🧹 Triagem (§34) | "Terminar rende recompensa" | não há recompensa material: `handleTriageResolve` (`src/App.tsx`) só troca `status`/`startDate`; a recompensa é a tela `TriageDone` de `TriagePile.tsx` | `grep -n "handleTriageResolve" src/App.tsx` |
-| D18 | 👻 Assombrada (§29) | bônus de alívio = "comemoração maior" | além da fala e do toast, concluir uma assombrada entrega **uma comida** (`FOOD_BY_CATEGORY`) em `handleToggleTaskCompletion` | `grep -n "haunted" src/App.tsx` |
+| D18 | 👻 Assombrada (§29) | bônus de alívio = "comemoração maior" | além da fala e do toast, concluir uma assombrada entrega **uma comida** (`FOOD_BY_CATEGORY`) em `handleToggleTask` | `grep -n "haunted" src/App.tsx` |
 | D19 | 📈 Constância (§25) | — | duas mecânicas vivas e testadas que a tabela omite: a aura `steadyWindow`/`STEADY_WINDOW_DAYS` = 28 (`src/utils/habitRhythm.ts`) e as falas `HABIT_CHEER_AT` = [3, 36, 51]/`cheerReached` (`src/types/taskModel.ts`) | `src/utils/cheer.test.ts` |
 | D20 | ☀️ Rituais (§37) | o check-in tem "hábitos do dia + até 3 focos + **humor**" | `MorningCheckIn.tsx` não tem `mood`; o humor mora no `DailyReportModal` (`handlePickMood`), como a linha 😊 do próprio `CLAUDE.md` diz | `grep -c "mood" src/components/MorningCheckIn.tsx` → 0 |
 | D21 | 🌱 Fresh start (§39) · 📅 semanal (§38) | "Toda segunda ou dia 1" · só o gate de semana | `freshStartOffer` devolve `null` sem tarefa ativa com `postponedCount > 0` (`freshStartHasSomethingToClear`); `needsWeeklyReport` exige também `weeklyReportHasSubstance` | `grep -n "HasSomethingToClear\|HasSubstance" src/utils/rituals.ts` |
@@ -4503,6 +4513,7 @@ registraram divergência nenhuma**.
 | D24 | `docs/PLANO-TAREFAS.md` Parte 4 · comentário de `DailyReportModal.tsx` (§43) | "falta a arte das 24 cenas (hoje são emoji)" · "cobertura parcial (12)" | `adventureArt.ts` cobre as 24 e há 24 PNGs em `src/assets/soulmon/adventures` | `grep -c "'adv-" src/utils/adventureArt.ts` → 24 |
 | D25 | comentário de `handleFeed` (`src/App.tsx`, §3) | "Limited to 5 feedings per rolling hour" | `FOOD_LIMIT_PER_HOUR` é derivado de `MAX_STAGE_REQUIREMENT` = 6 | `grep -n "5 feedings" src/App.tsx` |
 | D26 | `REGISTRO-DE-DECISOES.md` §5.6 (§18) | "rota de redenção visível" marcada como não implementada | `applyRedemption`/`redeemed`/`showRedeemed`/`redeemedMark` estão em produção (WP4.19); o que falta é narrativa, não mecânica | `src/utils/redemption.test.ts` |
+| D27 | comentário de `src/utils/currencies.ts` (§46) | cabeçalho ainda diz "Créditos → reroll, cura instantânea" | a cura instantânea foi removida em 06/09/2026 (D7+D15); há lápide em `App.tsx`, `CreditsModal.tsx`, `monetization.ts` e `shop.ts`, mas não aqui | `grep -n "cura instantânea" src/utils/currencies.ts` |
 
 **Como usar esta tabela.** Antes de "corrigir" qualquer linha, leia a linha
 correspondente do [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md): D1 e
