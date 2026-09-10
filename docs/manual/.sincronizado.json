@@ -1,6 +1,6 @@
 {
-  "sha": "4541bb31b041327648266fb50450a061021e6361",
+  "sha": "cf69b081ba5c325e8d50334a90ddf3d9f109aab8",
   "data": "10/09/2026",
-  "por": "squad-docs rodada 1 (PR #46)",
+  "por": "doc-mantenedor (sessão) — fechamento do PR do coordenador",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
