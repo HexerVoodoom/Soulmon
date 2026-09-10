@@ -7,6 +7,69 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 10/09/2026 — O MANUAL COMPLETO EXISTE: `docs/manual/00-MAPA.md` é a porta de entrada
+>
+> A SQUAD-DOCS (`.claude/skills/squad-docs/`, 9 agentes `doc-*`, comando
+> `/documentar`) escreveu, verificou e travou o manual em `docs/manual/`:
+> mapa central com guia de leitura para IA e três índices (assunto ·
+> pergunta · arquivo), visão e linhas vermelhas, **59 regras de negócio**
+> com dono/régua/decisão, fluxo de telas, identidade visual e sonora,
+> arquitetura, **referência de todos os 268 módulos não-teste** (`node scripts/docs-inventario.mjs`, 10/09/2026; guard
+> exige 100%), dados e save campo a campo, integrações e deploy, histórico
+> (826 commits, por era), índice de discussões, glossário e como manter.
+> Método R1–R10 (`METODO.md`): referência por SÍMBOLO nunca por linha,
+> número com nome de constante, nada morto sem lápide, um dono por doc,
+> **verificação bloqueante por outro agente** antes do carimbo. Régua viva:
+> `src/docsManual.contract.test.ts` (todo doc no mapa, links resolvem,
+> todo módulo na referência, zero `arquivo:linha`, cabeçalho com dono).
+> Inventário medido: `node scripts/docs-inventario.mjs`.
+>
+> **Regra de precedência escrita no mapa: código > teste > `CLAUDE.md` >
+> manual.** A rodada achou **41 divergências** entre o `CLAUDE.md`/comentários
+> e o código — a lista está em `docs/manual/02-REGRAS-DE-NEGOCIO.md` §59
+> (D1–D26) e nas seções de divergência dos docs 03 §6 e 04 §13. **Nenhuma
+> foi "corrigida" no `CLAUDE.md`, que é seu**; as que importam para decidir:
+>
+> 1. 🔴 **JWT do Supabase da era DigiApp ainda estava no repositório** — em
+>    `docs/APK-BUILD-INFO.md` (texto plano) e em `assets/info-*.js`, um build
+>    velho restaurado na raiz sem consumidor. O guard afirmava "sumiu" varrendo
+>    só `src/`. Redigido, pasta removida, guard ampliado para o repositório
+>    inteiro (`571a8b4f`). **Revogar a chave no painel do Supabase é seu** — o
+>    histórico do git a carrega.
+> 2. 🐛 **A exclusão da linha do jogador na masmorra nunca dispara** (D5):
+>    `getDungeonEnemySprite(tier, excludeLine)` espera id de LINHA e
+>    `buildDungeonWave` passa o ESTÁGIO. A função tem teste; o chamador não.
+> 3. 🐛 **Tetos da masmorra moram no `localStorage`** (D10): `DUNGEON_HEART_DROPS`
+>    (2/dia, com `toDateString()`), `DUNGEON_DIFFICULTY`, `DUNGEON_BEST` — o
+>    mesmo furo que `careCaps` fechou para carinho e comida. `stepsDayKey`
+>    também usa o dia do aparelho (D23).
+> 4. 🐛 **Renascimento também derruba `maxActivityCap`** de até 10 para 6
+>    (`handleRebirth`), contra o "estágio e três atributos, e SÓ" (D13).
+> 5. 🐛 **Selo de foco**: `GuideModal`/`HelpModal`/`CLAUDE.md` dizem "3 completas";
+>    `focusComplete` exige todos os ESCOLHIDOS (D16) — decidir qual é a regra.
+> 6. 🐛 **Widget Android** só em PT-BR e ainda diz "Dia perfeito!" (03 §6 #8).
+> 7. ⚰️ **Código morto para decidir apagar**: `LanguageContext`/`translations`
+>    (nunca montados), `PixelFrame`, `figma/ImageWithFallback`,
+>    `CareSystem.scheduleCareEvents`, `handleEvolveToUnlocked`,
+>    `XP_THRESHOLDS`→`nextLevelXP`, `attributesSinceLastEvolution`; `OraclePage`
+>    e `PixelizerCard` **inalcançáveis** (o atalho de segurar o mascote perdeu
+>    os chamadores).
+> 8. 📝 **`CLAUDE.md` para você acertar** (cada um com o comando no doc): loja
+>    tem 2 segmentos, não 5 abas (D3); `canPvp` não existe, é `meetsPvpBond`
+>    (D4); `fallbackSpriteForStage` é `legacySpriteForStage`; cura instantânea
+>    por Créditos foi removida (D2); coraçãozinho não é mais vendido (D1);
+>    escala de ícone é 20/24/32, não 36/42/30; `npm run build` tem três
+>    passos; check-in não tem humor (D20); `UnlockNudge` em 6 lugares, não 3;
+>    `DREAM_CATALOG` citado por linha (D22); `MATCHES_PER_DAY` = 5 e a season
+>    MENSAL do ranking não constam (D7/D8); bestiário grava 36 chaves, lê 24 (D9).
+> 9. 📝 **Docs velhos**: `README.md` e `PROJETO.md` ainda se chamam DigiApp;
+>    `brand/design-system.md` é da Consultech360 (outro produto);
+>    `docs/reviews/2026-08-03/` foi criado em 14/08; §3.2 deste STATUS diz que
+>    `wrangler.jsonc` não tem `d1_databases` — tem (`DB` → `soulmon-billing`).
+>
+> Fechado na rodada: `docs/00-START-HERE.md` aponta para o mapa; o `CLAUDE.md`
+> ganhou UM bloco de ponteiro (nada mais foi tocado).
+
 > ## ⏳ DEPENDE DO DONO (09/09/2026) — três decisões abertas
 >
 > **1. Criar o projeto Supabase do Soulmon.** O recado falado está pronto e
