@@ -1,6 +1,6 @@
 # Referência — plugins, constants, i18n e guards de repositório
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo)
 > **Verificação:** `npx vitest run src/plugins src/constants src/i18nSemPtSozinho.contract.test.ts src/docsSemMentira.contract.test.ts src/docsManual.contract.test.ts src/index.css.contract.test.ts src/security src/deploy src/styles src/test`
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o deploy em si (→ `08-INTEGRACOES-E-DEPLOY.md`), tokens de cor/CSS em detalhe (→ `04-IDENTIDADE-VISUAL.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

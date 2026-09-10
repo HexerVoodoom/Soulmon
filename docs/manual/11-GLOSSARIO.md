@@ -1,6 +1,6 @@
 # Glossário do Soulmon
 
-> **Dono:** doc-bibliotecario · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-bibliotecario · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
 > **Verificação:** `node scripts/docs-inventario.mjs` (todo símbolo citado aqui aparece no inventário medido) + `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** a REGRA por trás de cada termo (é do [02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md)), o motivo pelo qual ela foi escolhida ([10-DISCUSSOES-E-DECISOES.md](10-DISCUSSOES-E-DECISOES.md)), quando mudou ([09-HISTORICO.md](09-HISTORICO.md)) e a assinatura de cada função (`06-REFERENCIA/`). Aqui só se responde "o que essa palavra quer dizer e onde ela mora no código".
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

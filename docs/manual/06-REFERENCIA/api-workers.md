@@ -1,6 +1,6 @@
 # Referência — functions/api e workers
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo)
 > **Verificação:** `npx tsc -p tsconfig.server.json --noEmit && npx vitest run functions/api workers` — cada rota e cada `_*.js` foi lido no corpo, não só no comentário de cabeçalho.
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o schema D1/KV completo (→ `07-DADOS-E-SAVE.md`), como fazer deploy do worker (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

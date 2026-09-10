@@ -1,6 +1,6 @@
 # Referência — desktop (Electron)
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo)
 > **Verificação:** `npx tsc -p desktop/tsconfig.json --noEmit && npx vitest run desktop`
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), o build/release do desktop (→ `08-INTEGRACOES-E-DEPLOY.md`, `desktop/README.md`), as regras de cuidado em si (→ `src/utils/careRules.ts` em `06-REFERENCIA/utils.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

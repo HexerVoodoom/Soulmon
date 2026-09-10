@@ -1,6 +1,6 @@
 # Referência — hooks, contexts, types
 
-> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-referencia · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (mecânico completo)
 > **Verificação:** `npx vitest run src/hooks src/contexts src/types` — cada símbolo abaixo foi lido no corpo do arquivo, não só no JSDoc.
 > **Não cobre:** regra de negócio em profundidade (→ `02-REGRAS-DE-NEGOCIO.md`), `src/App.tsx` (→ `06-REFERENCIA/components.md`), `src/utils/*` que os hooks/contexts importam (→ `06-REFERENCIA/utils.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -109,7 +109,7 @@
 - `ThemeMode` — `'light' | 'dark' | 'system'`.
 - `ThemeProvider({ children })` — lê o modo salvo (`STORAGE_KEYS.THEME`; valor inválido — resíduo do antigo seletor de skin default/win98/glitch — vira `'system'`). Resolve `'system'` sempre para `'dark'` (`resolveSystemPreference` NÃO segue o SO de propósito — comentário: o visual do jogo "só existe pensado pro tema escuro"). Sincroniza `document.documentElement.dataset.theme` a cada mudança de `resolvedTheme`, e escuta `prefers-color-scheme` só quando o modo é `'system'`. `setMode(next)` grava no storage (falha silenciosa — preferência cosmética) e atualiza o estado.
 - `useTheme()` — `useContext`, lança se fora do provider.
-**Chamado por:** `src/main.tsx` (monta `ThemeProvider`); `useTheme` tem 3 consumidores em `src/components/`.
+**Chamado por:** `src/main.tsx` (monta `ThemeProvider`); `useTheme` tem 1 consumidor real em `src/components/` — `SettingsPage.tsx` (`grep -rn "\buseTheme\b" src/components --include=*.tsx --include=*.ts`, 10/09/2026, corrigido de "3 consumidores" por doc-verificador: a única outra ocorrência, em `ui/sonner.tsx`, é um COMENTÁRIO explicando por que aquele arquivo parou de usar `useTheme` — não é uma chamada real).
 **Régua:** nenhum teste próprio deste arquivo; contraste de tokens por tema é travado em `src/styles/tokens.contrast.test.ts` (ver `plugins-constants.md`).
 **Avisos do arquivo:** o `data-theme` inicial já é setado por um script inline em `index.html` (antes do primeiro paint, evita FOUC) — este provider só assume o controle depois que o React monta.
 

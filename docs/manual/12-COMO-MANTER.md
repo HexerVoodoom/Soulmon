@@ -1,6 +1,6 @@
 # Como manter o manual
 
-> **Dono:** doc-bibliotecario · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-bibliotecario · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts` (as duas travas descritas aqui) + `node scripts/docs-inventario.mjs` (a medição que alimenta o ciclo)
 > **Não cobre:** o CONTEÚDO de nenhum doc (cada um tem dono declarado no próprio cabeçalho) e as regras do jogo ([02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md)). Aqui só se responde "como se escreve, verifica e trava documentação neste repositório".
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
