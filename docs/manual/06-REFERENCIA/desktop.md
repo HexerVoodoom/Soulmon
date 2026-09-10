@@ -23,7 +23,7 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 
 ## desktop/electron — processo principal
 
-### `desktop/electron/main.js` (350 linhas)
+### `desktop/electron/main.js` (349 linhas — corrigido de "350" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** o processo principal do Electron — cria a janela do overlay (transparente, sempre no topo, click-through exceto sobre o pet) e a janela de menu, gerencia a bandeja (Tray), o IPC entre as janelas, a sessão de auth capturada da janela do app completo, e o auto-update (delegando a DECISÃO a `updatePolicy.js`).
 **Exports:** nenhum (`module.exports` ausente) — é o entrypoint do processo principal, carregado pelo `package.json` (`main`), sem chamador dentro do próprio repositório em JS.
 **Chamado por:** processo Electron (entrypoint), não por outro módulo.
@@ -77,7 +77,7 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 
 ## desktop/renderer/src — overlay
 
-### `desktop/renderer/src/care.ts` (349 linhas)
+### `desktop/renderer/src/care.ts` (348 linhas — corrigido de "349" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** a FRONTEIRA de cuidado do desktop — adapta o `GameState` cru (vindo do servidor ou do estado local do overlay) para o formato que as regras de `src/utils/careRules.ts`/`careUpdaters.ts`/`playerDay.ts`/`restWindow.ts`/`poopDrain.ts` pedem, e chama a regra. NÃO decide nada de cuidado — cada função é um adaptador fino, deliberadamente, porque `menu.ts` (onde a decisão morava antes) não é importável por teste, e foi assim que o teto de carinho ficou por aparelho sem ninguém ver.
 **Exports:**
 - `RemoteState` — o `GameState` como chega do servidor: `Record<string, unknown>`, sem tipo.
@@ -158,7 +158,7 @@ A separação de responsabilidade é física, não estilística: `desktop/electr
 **Régua:** nenhuma direta — comportamento coberto pelos testes dos módulos que ele orquestra (`sprites.ts`, `state.ts`, `phrases.ts`).
 **Avisos do arquivo:** nenhum comentário de aviso formal; a lógica de caminhada (`tick`, `PET_SIZE=96`, `SPEED=28px/s`) e o espelhamento do sprite (`facesLeft`) estão descritos no corpo.
 
-### `desktop/renderer/src/menu.ts` (637 linhas)
+### `desktop/renderer/src/menu.ts` (636 linhas — corrigido de "637" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** a UI da janela de menu — painéis (principal, tarefas, configurações), os botões de ação de cuidado, e a orquestração de sincronização/carteira. NÃO decide regra de cuidado — delega tudo a `care.ts`/`cloudSync.ts`/`careRules.ts` (`completeTask` importado direto do app). Toca o DOM no topo do módulo (`document.getElementById`), por isso **nenhum teste em `node` consegue importá-lo** — foi assim que o teto de carinho ficou por aparelho sem ninguém ver, antes de `care.ts` existir.
 **Exports:** nenhum (script de entrypoint da janela de menu, sem `export`).
 **Chamado por:** carregado como script pela janela de menu (`createMenuWindow` em `main.js`).

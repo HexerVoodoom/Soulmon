@@ -1,6 +1,6 @@
 # Dados e save
 
-> **Dono:** doc-redator-arquitetura · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-arquitetura · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
 > **Verificação:** `npx vitest run src/contexts src/utils/careCaps.test.ts src/utils/playerDay.contract.test.ts functions/api/save.test.js functions/api/saveId.parity.test.js desktop/renderer/src/cloudSync.test.ts` — em especial `GameStateContext.hydrate.fuzz.test.tsx` (todo campo não-opcional tem linha em `hydrateSave`), `GameStateContext.saveContent.test.tsx`, `GameStateContext.hostile.test.tsx`, `migrateDecor.test.ts` e `functions/api/_kv.fiacao.test.js`.
 > **Não cobre:** o que cada regra FAZ com esses campos (→ `02-REGRAS-DE-NEGOCIO.md`), as rotas e credenciais (→ [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md)), a arquitetura e as quatro superfícies (→ [05-ARQUITETURA.md](05-ARQUITETURA.md)), função por função (→ `06-REFERENCIA/`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

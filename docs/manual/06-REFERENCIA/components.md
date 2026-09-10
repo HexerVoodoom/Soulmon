@@ -16,7 +16,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 - **Jogos:** [`DungeonGame.tsx`](#srccomponentsdungeongametsx) · [`ArenaGame.tsx`](#srccomponentsarenagametsx) · [`DinoGame.tsx`](#srccomponentsdinogametsx) · [`RPSGame.tsx`](#srccomponentsrpsgametsx) · [`pixel/TimingBar.tsx`](#srccomponentspixeltimingbartsx)
 - **Loja e economia:** [`ShopModal.tsx`](#srccomponentsshopmodaltsx) · [`ItemsWindow.tsx`](#srccomponentsitemswindowtsx) · [`CreditsModal.tsx`](#srccomponentscreditsmodaltsx) · [`UnlockAccountModal.tsx`](#srccomponentsunlockaccountmodaltsx)
 - **Rituais e relatórios:** [`DailyReportModal.tsx`](#srccomponentsdailyreportmodaltsx) · [`MemoriesCard.tsx`](#srccomponentsmemoriescardtsx) · [`BalanceWeekModal.tsx`](#srccomponentsbalanceweekmodaltsx) · [`ProtectProgressModal.tsx`](#srccomponentsprotectprogressmodaltsx) · [`StatsPage.tsx`](#srccomponentsstatspagetsx) · [`BirthCard.tsx`](#srccomponentsbirthcardtsx)
-- **Conta e configurações:** [`SettingsPage.tsx`](#srccomponentssettingspagetsx) · [`SettingsModal.tsx`](#srccomponentssettingsmodaltsx) · [`AccountSection.tsx`](#srccomponentsaccountsectiontsx) · [`AccountDataSection.tsx`](#srccomponentsaccountdatasectiontsx) · [`AISettingsModal.tsx`](#srccomponentsaisettingsmodaltsx) · [`NotificationManager.tsx`](#srccomponentsnotificationmanagertsx) · [`InstallPrompt.tsx`](#srccomponentsinstallprompttsx) · [`GuideModal.tsx`](#srccomponentsguidemodaltsx) · [`HelpModal.tsx`](#srccomponentshelpmodaltsx) · [`GameTutorialFlow.tsx`](#srccomponentsgametutorialflowtsx) · [`WelcomePromptModal.tsx`](#srccomponentswelcomeprompmodaltsx) · [`CityPicker.tsx`](#srccomponentscitypickertsx)
+- **Conta e configurações:** [`SettingsPage.tsx`](#srccomponentssettingspagetsx) · [`SettingsModal.tsx`](#srccomponentssettingsmodaltsx) · [`AccountSection.tsx`](#srccomponentsaccountsectiontsx) · [`AccountDataSection.tsx`](#srccomponentsaccountdatasectiontsx) · [`AISettingsModal.tsx`](#srccomponentsaisettingsmodaltsx) · [`NotificationManager.tsx`](#srccomponentsnotificationmanagertsx) · [`InstallPrompt.tsx`](#srccomponentsinstallprompttsx) · [`GuideModal.tsx`](#srccomponentsguidemodaltsx) · [`HelpModal.tsx`](#srccomponentshelpmodaltsx) · [`GameTutorialFlow.tsx`](#srccomponentsgametutorialflowtsx) · [`WelcomePromptModal.tsx`](#srccomponentswelcomepromptmodaltsx) · [`CityPicker.tsx`](#srccomponentscitypickertsx)
 - **Onboarding e oráculo:** [`SoulmonOnboarding.tsx`](#srccomponentssoulmononboardingtsx) · [`OraclePage.tsx`](#srccomponentsoraclepagetsx) · [`SoulTestItem.tsx`](#srccomponentssoultestitemtsx) · [`AlignmentIcons.tsx`](#srccomponentsalignmenticonstsx) · [`PixelizerCard.tsx`](#srccomponentspixelizercardtsx) · [`NewReadingModal.tsx`](#srccomponentsnewreadingmodaltsx)
 - **Comunidade:** [`LibraryPage.tsx`](#srccomponentslibrarypagetsx) · [`PlayerDetailModal.tsx`](#srccomponentsplayerdetailmodaltsx) · [`CoopPanel.tsx`](#srccomponentscooppaneltsx) · [`TournamentPage.tsx`](#srccomponentstournamentpagetsx)
 - **Infraestrutura de UI:** [`ConfirmDialog.tsx`](#srccomponentsconfirmdialogtsx) · [`PixelFrame.tsx`](#srccomponentspixelframetsx) · [`figma/ImageWithFallback.tsx`](#srccomponentsfigmaimagewithfallbacktsx) · [`form/FormKit.tsx`](#srccomponentsformformkittsx) · [`pixel/HomeHud.tsx`](#srccomponentspixelhomehudtsx) · [`pixel/PixelKit.tsx`](#srccomponentspixelpixelkittsx) · [`pixel/RitualPanel.tsx`](#srccomponentspixelritualpaneltsx) · [`ui/Icon.tsx`](#srccomponentsuiicontsx) · [`ui/NavGlyphs.tsx`](#srccomponentsuinavglyphstsx) · [`ui/OfflineSeal.tsx`](#srccomponentsuiofflinesealtsx) · [`ui/ScreenSkeleton.tsx`](#srccomponentsuiscreenskeletontsx) · [`ui/Viewport.tsx`](#srccomponentsuiviewporttsx) · [`ui/sonner.tsx`](#srccomponentsuisonnertsx)
@@ -52,7 +52,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/ActivitiesPage.tsx`
 **Dono de:** hub de MINIJOGOS (Dungeon/Arena/Dino/RPS) — não é a lista de hábitos, apesar do nome. A Loja não é card daqui (é destino da `BottomNav`).
-**Props principais:** não documentado por interface própria no topo do arquivo lido; recebe callbacks de jogo e dados de progresso (ver o corpo para a lista completa — arquivo de 299 linhas).
+**Props principais:** não documentado por interface própria no topo do arquivo lido; recebe callbacks de jogo e dados de progresso (ver o corpo para a lista completa — arquivo de 298 linhas — corrigido de "299" por doc-verificador, `wc -l`, 10/09/2026).
 **Exports:** `ActivitiesPage(props)`.
 **Estado/efeitos relevantes:** `useState<'dungeon' | 'arena' | 'dino' | 'rps' | null>` (`openGame`) controla qual minijogo está aberto sobre a página.
 **Chamado por:** `src/App.tsx` via `lazy(() => import('./components/ActivitiesPage'))` (`grep -n "lazy(" src/App.tsx`, 09/09/2026).
@@ -214,7 +214,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/DinoGame.tsx`
 **Dono de:** o minijogo Dino Runner — o pet pulando obstáculos que sobem de tier (Bakemon→Tuskmon→Gigadramon→Titamon) conforme o tempo decorrido.
-**Props principais:** não documentado por interface própria no trecho lido (arquivo de 293 linhas — ver props recebidas do `ActivitiesPage`).
+**Props principais:** não documentado por interface própria no trecho lido (arquivo de 292 linhas — corrigido de "293" por doc-verificador, `wc -l`, 10/09/2026 — ver props recebidas do `ActivitiesPage`).
 **Exports:** `DinoGame(props)`.
 **Estado/efeitos relevantes:** `useRef` para `canvasRef`, `scoreElRef`, `petImgRef`, `tierImgsRef`, `phaseRef`, o laço de física (`g`); `useState` (`phase`, `finalScore`, `earned`, `best` — lido de `STORAGE_KEYS.DINO_BEST` via `readNumber`); `useCallback` (`jump`); toca `playTaskComplete` (`src/utils/sounds.ts`); grava recorde com `writeLocal`.
 **Chamado por:** `src/components/ActivitiesPage.tsx` (`grep -rl "from '.*/DinoGame'" src`, 09/09/2026).
@@ -232,7 +232,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/DungeonGame.tsx`
 **Dono de:** o minijogo Masmorra — run de até 5 andares (`MAX_FLOORS`, declarado NESTE arquivo, não em `utils/dungeon.ts`), escada de 6 inimigos por andar, combate por `TimingBar`.
-**Props principais:** `Popup` (interface interna) e as props recebidas do `ActivitiesPage` (não redeclaradas aqui em detalhe — arquivo de 569 linhas).
+**Props principais:** `Popup` (interface interna) e as props recebidas do `ActivitiesPage` (não redeclaradas aqui em detalhe — arquivo de 568 linhas — corrigido de "569" por doc-verificador, `wc -l`, 10/09/2026).
 **Exports:** `DungeonGame(props)`.
 **Estado/efeitos relevantes:** `useState` para `enemies`, `enemyIdx`, `enemyHp`, `playerHp`, `phase`, `popup`, `hitFx`, `rewardMsg`, `defendTimeLeft`, `baseLevel` (de `getDungeonDifficulty()`), `floor`, `best` (de `getDungeonBest()`), `runScore`, `runScenes` (de `buildRunScenes()`); `useRef`/`useCallback` (`after`, temporizadores); toca `playFeed` (`src/utils/sounds.ts`); chama `buildDungeonWave`, `recordDungeonScore`, `setDungeonDifficultyAtLeast`, `deepStartCost`/`canBuyDeepStart` de `src/utils/dungeon.ts`.
 **Chamado por:** `src/components/ActivitiesPage.tsx` (`grep -rl "from '.*/DungeonGame'" src`, 09/09/2026).
@@ -583,7 +583,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/ShopModal.tsx`
 **Dono de:** a Loja — dois segmentos por MOEDA (Bits/Torneio), missões embutidas no próprio card bloqueado.
-**Props principais:** sem interface nomeada no trecho lido — recebe inventário do save, saldo de Bits/Emblemas, `language` e callbacks de compra (arquivo de 488 linhas).
+**Props principais:** sem interface nomeada no trecho lido — recebe inventário do save, saldo de Bits/Emblemas, `language` e callbacks de compra (arquivo de 487 linhas — corrigido de "488" por doc-verificador, `wc -l`, 10/09/2026).
 **Exports:** `ShopModal(props)`.
 **Estado/efeitos relevantes:** `useState` (`seg: ShopSegment`, `flash`, `exchanging`); lê `SHOP_ITEMS`/`TOURNAMENT_ITEMS` de `src/utils/shop.ts`, `MISSIONS`/`isShopItemUnlocked` de `src/utils/missions.ts`; renderiza `UnlockNudge`.
 **Chamado por:** `grep -rl "from '.*/ShopModal'" src` (testes); consumo real em `src/App.tsx` via `lazy(() => import('./components/ShopModal'))` (09/09/2026).
@@ -745,7 +745,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/form/FormKit.tsx`
 **Dono de:** as primitivas de formulário do kit `--sm2-*` (campos, chips, segmentos, bottom sheet) — usadas por seis+ superfícies para não divergir em silêncio.
-**Props principais:** cada função tem props próprias — `Field` estende `React.InputHTMLAttributes<HTMLInputElement>`; `Chip`, `Segment`, `CheckRow`, `ModalSheet` têm assinaturas próprias (ver o corpo, arquivo de 333 linhas).
+**Props principais:** cada função tem props próprias — `Field` estende `React.InputHTMLAttributes<HTMLInputElement>`; `Chip`, `Segment`, `CheckRow`, `ModalSheet` têm assinaturas próprias (ver o corpo, arquivo de 332 linhas — corrigido de "333" por doc-verificador, `wc -l`, 10/09/2026).
 **Exports:** `SM2_SHADOW_CARD`, `SM2_SHADOW_SHEET` (const) · `sm2Text`, `sm2Hint`, `sm2Label`, `sm2TitleStyle` (const, estilos de texto) · `sm2Button(variant, disabled?)` · `Field(props)` · `Chip(props)` · `Segment(props)` · `CheckRow(props)` · `ModalSheet(props)` — bottom sheet com `useDialogA11y` embutido · `default`.
 **Estado/efeitos relevantes:** `useState` interno a alguns componentes (ex.: `ModalSheet`); usa `useDialogA11y` (`src/hooks/useDialogA11y.ts`) para foco preso/Escape/devolução de foco.
 **Chamado por:** praticamente toda a árvore de telas/modais (`grep -rl "from '.*/FormKit'" src` lista dezenas de arquivos — `AISettingsModal`, `AccountDataSection`, `CreateModal`, `DailyReportModal`, `ShopModal`, `SoulmonOnboarding` etc., 09/09/2026).
@@ -763,7 +763,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 
 ### `src/components/pixel/PixelKit.tsx`
 **Dono de:** os primitivos de UI da direção visual pixel (`docs/ui-refs/SPEC-UI-PIXEL.md`) — botão, painel, barra segmentada, checkbox, abas, chip, tag, switch, medidor, slot.
-**Props principais:** cada função tem sua interface própria — `PixelButtonProps`, `PixelPanelProps`, `PixelSegmentedBarProps`, `PixelCheckboxProps`, `PixelTabItem`/`PixelTabsProps`, `PixelChoiceChipProps`, `PixelTagProps`, `PixelSwitchProps`, `PixelMeterProps`, `PixelSlotProps`, `PixelChipProps` (arquivo de 557 linhas).
+**Props principais:** cada função tem sua interface própria — `PixelButtonProps`, `PixelPanelProps`, `PixelSegmentedBarProps`, `PixelCheckboxProps`, `PixelTabItem`/`PixelTabsProps`, `PixelChoiceChipProps`, `PixelTagProps`, `PixelSwitchProps`, `PixelMeterProps`, `PixelSlotProps`, `PixelChipProps` (arquivo de 556 linhas — corrigido de "557" por doc-verificador, `wc -l`, 10/09/2026).
 **Exports:** `PixelSize` (type) · `PixelButton(props)` · `PixelPanel(props)` · `PixelSegmentedBar(props)` · `PixelCheckbox(props)` · `PixelTabs(props)` — conserto do "G9" (a seleção de aba passou a ser carregada pela sublinha, não só por cor de texto) · `PixelChoiceChip(props)` · `PixelTag(props)` — sem hover, é etiqueta informativa · `PixelSwitch(props)` · `PixelMeter(props)` · `PixelSlot(props)` — casa de 44px, fallback é o quadro vazio, nunca emoji do sistema · `PixelChip(props)`.
 **Estado/efeitos relevantes:** nenhum estado global — cada primitivo é apresentacional; a arte 9-slice usa PNGs recortados na bbox alfa (`src/assets/soulmon/ui/btn-{sm,md,lg}.png`, via `sharp`, determinístico).
 **Chamado por:** `src/components/ArenaGame.tsx`, `CompanionHUD.tsx`, `DinoGame.tsx`, `DungeonGame.tsx`, `GameTutorialFlow.tsx`, `NightmareBattle.tsx`, `PlayCard.tsx`, `RPSGame.tsx`, `RestWindowCard.tsx`, `StepsCard.tsx`, `WeeklyReportCard.tsx`, `pixel/RitualPanel.tsx` (`grep -rl "from '.*/PixelKit'" src`, 09/09/2026).

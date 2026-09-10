@@ -1,6 +1,6 @@
 # Identidade visual e sonora do Soulmon
 
-> **Dono:** doc-redator-identidade · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-identidade · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador (a devolução TINTA × FILL foi fechada pelo orquestrador com a leitura do teste)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx` — 11 arquivos, 216 testes, verde em 09/09/2026.
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S13).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -230,9 +230,15 @@ classes `.sm-px-*` no CSS
 (`grep -o '\.sm2-[a-z0-9-]*' src/index.css | sort -u | wc -l` e o mesmo para
 `.sm-px-`), e **61** arquivos `.tsx` de produção já citam `sm2-`.
 
-**A regra estrutural do conjunto novo é TINTA × FILL**: todo acento tem dois
-tokens e eles **nunca** têm o mesmo valor — `*-ink` é cor de texto/glifo,
+**A regra estrutural do conjunto novo é TINTA × FILL**: todo acento declara o
+PAR `*-ink` + `*-fill` mais `--sm2-on-<acento>` — `*-ink` é cor de texto/glifo,
 `*-fill` é preenchimento, e texto POR CIMA de um fill usa `--sm2-on-<acento>`.
+Os dois tokens **podem** coincidir em valor: `--sm2-primary-ink` = `--sm2-primary-fill`
+(`#5FF3E0` no escuro, `#0B6F68` no claro) e o par `danger` também (`#FF8B8B` / `#B3261E`);
+o que a régua proíbe é a coincidência no acento `gold`, o único em que tinta e fill
+têm papéis de contraste distintos (`ACENTOS = ['gold', 'danger']` no teste, e a
+desigualdade só é exigida sob `acento === 'gold'` — o comentário do teste diz
+"`'danger'` pode coincidir num tema"). Verificado em 10/09/2026.
 Régua: `src/styles/tokens.contrast.test.ts`, bloco *"tinta e fill nunca são a
 mesma cor"*. Verificado em 09/09/2026:
 `grep -nE "^\s*color: var\(--sm2-[a-z]+-fill\)" src/index.css | wc -l` → **0**.
@@ -313,7 +319,7 @@ em `src/components/ui/`. **Não reintroduza `var(--foreground)` /
 |---|---|---|
 | Paridade de tema | `src/styles/tokens.contrast.test.ts` | token de cor `--sm2-*` declarado só no claro (ficaria preso sob `[data-theme="dark"]`) ou só no escuro |
 | Contraste AA | idem | par (ink, surface), (muted, surface), (primary, bg), (gold, surface), (btn-text, primary) e os do toast abaixo do mínimo, **nos dois temas**, pela fórmula da WCAG 2.x escrita à mão no teste |
-| Tinta × fill | idem | `*-ink` e `*-fill` do mesmo acento com o MESMO valor; acento sem `on-` declarado |
+| Tinta × fill | idem | acento `primary`/`gold`/`danger` sem o trio `ink`+`fill`+`on-` declarado; `gold-ink` = `gold-fill` em qualquer tema (só `gold` exige valores distintos) |
 | Ícone sem box | idem | `.sm2-icon` desenhando moldura/fundo/borda/padding |
 | Fonte self-host | idem | `@font-face` apontando para CDN |
 | Piso tipográfico | idem | escala com degrau abaixo de 12px |
@@ -1166,7 +1172,7 @@ Nenhum dos nomes propostos pelo plano foi criado. Medido com
 | `--sm-bisel` / `--sm-tela` / `--sm-anel` | **não** | valores literais em `.sm2-viewport` e `.sm2-device` |
 | `--sm-toque-min` 44px | **não** | `.sm-btn { min-height: 44px }`, `.sm-px-switch { height: 44px }`, `.sm-tap-44` — literais |
 | `--sm-dur-1/2/3` · `--sm-ease` · `--sm-steps` | **não** | `--sm2-dur-tap/enter/page` + `--sm2-ease`; `steps()` escrito no call-site |
-| **Guarda sugerida**: teste varrendo `index.css` atrás de `color: var(--sm-*-fill)` | **existe, no conjunto novo** | `src/styles/tokens.contrast.test.ts` prova que `*-ink` ≠ `*-fill` por acento. E `grep -nE "^\s*color: var\(--sm2-[a-z]+-fill\)" src/index.css \| wc -l` → **0** |
+| **Guarda sugerida**: teste varrendo `index.css` atrás de `color: var(--sm-*-fill)` | **existe, no conjunto novo** | `src/styles/tokens.contrast.test.ts` prova que todo acento tem o trio `ink`/`fill`/`on-` e que `gold-ink` ≠ `gold-fill`. E `grep -nE "^\s*color: var\(--sm2-[a-z]+-fill\)" src/index.css \| wc -l` → **0** |
 | **`src/components/SmIcon.tsx`** como dono único do ícone | **não existe com esse nome** | `src/components/ui/Icon.tsx` → `Icon` faz o papel, com a mesma API (`name`/`size`/`fill`/`weight`/`tone`/`label`) e mais um motor de glifo próprio (`NavGlyphs`) que o plano não previa |
 | `RowIcon.tsx` absorvido e apagado | **cumprido** | `find src -name "RowIcon*"` → nada |
 | `iconRegistry.ts` (142 PNGs) descartado | **cumprido** | `find src -name "iconRegistry*"` → nada |

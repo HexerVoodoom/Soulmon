@@ -50,7 +50,7 @@
 **Régua:** `functions/api/chat.memoria.test.js`, `chat.promptInjection.test.js`, `costCeiling.test.js`.
 **Chamado por:** `src/components/ChatBox.tsx` (a maior superfície de texto livre do produto).
 
-### `functions/api/community.js` (1046 linhas)
+### `functions/api/community.js` (1045 linhas — corrigido de "1046" por doc-verificador, `wc -l`, 10/09/2026)
 **Rota:** `/api/community` · **Métodos:** `OPTIONS`, `GET`/`POST` roteados por `?action=` (inventário lista `[Options, ANY]`).
 **Dono de:** perfis públicos, Tournament (PvP assíncrono), Biblioteca (diretório + amigos + presentes) e o modo Cooperativo (Fase 4.3). Ações: `profile` (POST), `players`/`player`/`opponents` (GET), `match` (POST), `rank`/`seasonResult` (GET), `closeSeason` (POST, admin), `trophies` (GET), `friends` (POST, até 5), `gift`/`gifts` (POST/GET, 20 bits, 1×/dia por amigo), `coopCreate`/`coopJoin`/`coop`/`coopCheckin`/`coopLeave`.
 **Auth:** `authorizeSaveAccess` nas 6 ações que exigem dono (ver comentário do CORS); `id` de entrada é sempre o saveId do PRÓPRIO dono — alvos de outra pessoa chegam como `pid` público, resolvido pelo índice `pid:<pid>`. `closeSeason` usa `SEASON_ADMIN_KEY` (segredo próprio, fora de `_auth.js`).
@@ -91,7 +91,7 @@
 **Chamado por:** `src/utils/notifications.ts` (`registerForPushNotifications`, via `@capacitor/push-notifications`), só no Android nativo.
 **Avisos do arquivo:** até 09/09/2026 era cópia parada da irmã (`subscribe.js`) — sem teto de apelido, sem validação de chave, sem rate limit; hoje compartilha `_pushIdentity.js`.
 
-### `functions/api/generate-sprite.js` (558 linhas)
+### `functions/api/generate-sprite.js` (557 linhas — corrigido de "558" por doc-verificador, `wc -l`, 10/09/2026)
 **Rota:** `/api/generate-sprite` · **Métodos:** `OPTIONS`, `POST`.
 **Dono de:** gerar 1 sprite de Soulmon — provedor primário Higgsfield (Soul, com referência de imagem para cadeia de evolução), fallback Gemini (texto puro) se o Higgsfield recusar por política de conteúdo. Republica SEMPRE em `/api/sprite-image?k=...` (nunca devolve `data:` nem URL de outro domínio) e faz dedupe multi-device por resultado (sem TTL) e por requisição em voo (`inflight`, TTL curto).
 **Auth:** `requirePaidTier` (fail-closed sem `_entitlements.js` configurado) + `authorizeSaveAccess`.
@@ -101,7 +101,7 @@
 **Régua:** `functions/api/generate-sprite.cap.test.js`, `.dedupe.test.js`, `.release.test.js`, `.tier.test.js`, `aiRoutes.release.test.js`.
 **Chamado por:** `src/utils/spriteGen.ts` (`requestSprite`), acionado por `src/hooks/useSpriteGeneration.ts` e pela `OraclePage`.
 
-### `functions/api/metrics.js` (750 linhas)
+### `functions/api/metrics.js` (749 linhas — corrigido de "750" por doc-verificador, `wc -l`, 10/09/2026)
 **Rota:** `/api/metrics` · **Métodos:** `OPTIONS`, `GET` (leitura administrativa), `POST` (ingestão de lote) — via `onRequestGet` + `onRequest` genérico (inventário lista `[Options, Get, ANY]`).
 **Dono de:** telemetria agregada por DIA — nunca por usuário, nunca com identidade. `POST` recebe um lote (`sanitizeBatch`, allowlist `EVENT_SCHEMA`, até `MAX_EVENTS=100` eventos, corpo até `MAX_BODY_BYTES=16KB`), soma em `applyAggregate` e grava um agregado por dia (`m:<dia>`). `GET` lê uma janela de dias (`dayRange`, teto `MAX_READ_DAYS=92`) e soma (`mergeTotals`), incluindo `summarizeNorthStar`.
 **Auth:** `POST` não exige — `batch.id` é validado só em formato e DESCARTADO (nunca vira chave nem log). `GET` exige `X-Metrics-Key` == `env.METRICS_ADMIN_KEY`, comparado em tempo constante; sem a variável configurada, a rota responde **404** (não 401, para não confirmar que existe).
@@ -166,7 +166,7 @@
 
 ## Módulos internos
 
-### `functions/api/_aiGuard.js` (367 linhas)
+### `functions/api/_aiGuard.js` (366 linhas — corrigido de "367" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** o portão de TODA rota que gasta dinheiro em API de terceiro (chat, suggest-tasks, sprite) — três travas por conta/dia, por conta vitalício (só sprite), por forma vitalício (só sprite), e global por dia/mês — fail-closed (contador ilegível recusa, nunca libera).
 **Exports:**
 - `AI_LIMITS` — os tetos por bucket (`chat`/`suggest`/`sprite`), com `perAccount`/`perAccountLifetime`/`perFormLifetime`/`global`/`globalMonth`.
@@ -188,7 +188,7 @@
 **Régua:** `functions/api/_auth.test.js`, `saveId.parity.test.js`, `community.playerOracle.test.js`.
 **Avisos do arquivo:** `emailToSaveId` — o corte em 32 caracteres tem que bater EXATAMENTE com o cliente, senão todo usuário autenticado tomaria 403.
 
-### `functions/api/_billing.js` (471 linhas)
+### `functions/api/_billing.js` (470 linhas — corrigido de "471" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** verificação de compra por LOJA (a "caixa registradora" — `_entitlements.js` é a "carteira" única). Google Play (service account → token OAuth2 → API do Android Publisher) e Steam (autenticação de ticket de sessão + `InitTxn`/`FinalizeTxn`).
 **Exports:**
 - `PRODUCTS` — catálogo de SKU → `{grantTier, grantCredits, consumable}` (ids batendo com o Play Console).
@@ -215,7 +215,7 @@
 **Régua:** `functions/api/bond.parity.test.js` — varre milhares de valores de `totalXP` e exige que este arquivo e `src/utils/bond.ts` respondam o MESMO nível (footgun 9: cópia deliberada, travada por paridade comportamental porque Pages Functions não importam de `src/`).
 **Avisos do arquivo:** o que NÃO foi copiado, de propósito: tabela de XP por evento, tetos diários, escada de recompensas e títulos. Limite honesto: `bondLevelOf` barra quem forja só o `pvpEnabled`, não quem forja o `totalXP` do save inteiro.
 
-### `functions/api/_entitlements.js` (490 linhas)
+### `functions/api/_entitlements.js` (489 linhas — corrigido de "490" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** FONTE DA VERDADE de tudo que envolve dinheiro real — tier, créditos, uso de IA vitalício, resgate de comprovante de compra, auditoria de reembolso. O cliente NUNCA dita tier nem saldo.
 **Exports:**
 - `ENT_PREFIX='ent:'`, `ORDER_PREFIX='ord:'`, `VALID_ID` — namespace e validação de id.

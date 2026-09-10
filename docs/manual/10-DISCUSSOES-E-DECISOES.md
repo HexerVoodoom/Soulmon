@@ -1,6 +1,6 @@
 # Discussões e decisões — onde cada uma vive
 
-> **Dono:** doc-historiador · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-historiador · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
 > **Verificação:** abra cada caminho citado e confira a seção nomeada existe (`grep -n "^## " <caminho>`)
 > **Não cobre:** o CONTEÚDO integral de cada discussão — este documento é um ÍNDICE, não a discussão. Para "como chegamos aqui" em datas e commits, veja `09-HISTORICO.md`
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde este índice apontar para um documento que discorda do código, o código está certo e o documento apontado tem defeito — não este índice.
@@ -259,13 +259,13 @@ Briefing do squad de revisão: `../squad/00-BRIEFING.md` (14/08/2026).
 | 19/08/2026 | `../PLANO-DESIGN.md#7-riscos-e-o-que-eu-recuso` | Lista explícita do que o plano recusa fazer | — | — |
 | 18/ago/2026 | `CLAUDE.md` raiz, "UI: regras visuais do dono" | Ícone NUNCA dentro de box — vale no app inteiro | Moldura/placa em ícones | — |
 | — | `product/soulmon-01/ui/gap-analysis.md` e `gap-analysis-r2.md` | Duas rodadas de gap analysis entre a referência visual e o app | — | — |
-| 06/09/2026 | `../STATUS.md#-dois-sistemas-de-tema-no-mesmo-css` (footgun 10 do `CLAUDE.md`) | `body` trocado para `--sm-bg`/`--sm-ink`; nunca reintroduzir `var(--foreground)`/`var(--background)` em texto novo | Manter o scaffold shadcn herdado do Figma como fonte de cor | achado de contraste (texto quase preto sobre card verde-escuro) |
+| 06/09/2026 | `../STATUS.md` (seção "Antes disso: contraste do tema escuro", 17/ago/2026 — não tem heading próprio; a versão canônica do achado é o footgun 10 do `CLAUDE.md`) | `body` trocado para `--sm-bg`/`--sm-ink`; nunca reintroduzir `var(--foreground)`/`var(--background)` em texto novo | Manter o scaffold shadcn herdado do Figma como fonte de cor | achado de contraste (texto quase preto sobre card verde-escuro) |
 
 ---
 
 ## 12. Desktop e Steam
 
-Fonte principal: `../desktop/README.md` (31/07/2026), `../desktop/STEAM.md`
+Fonte principal: `../../desktop/README.md` (31/07/2026), `../../desktop/STEAM.md`
 (31/07/2026) e `../PLANO-DESKTOP-STEAM.md` (31/07/2026, com a seção
 `#9-onde-este-documento-e-a-auditoria-discordaram--e-quem-venceu` registrando
 o próprio doc perdendo para uma auditoria).
@@ -274,8 +274,8 @@ o próprio doc perdendo para uma auditoria).
 |---|---|---|---|---|
 | 31/07/2026 | `../PLANO-DESKTOP-STEAM.md#0-as-três-frentes` | Overlay é controle remoto do app, não um segundo app — lê/escreve save por `/api/save` | Reimplementar regras de jogo no desktop | fechado pela decisão de "regras deixaram de ser cópia" (`f6fb5f30`, ver `CLAUDE.md` footgun 9) |
 | 26/08/2026 | `../PLANO-DESKTOP-STEAM.md#9-onde-este-documento-e-a-auditoria-discordaram--e-quem-venceu` | Registro de onde o plano e a auditoria discordaram, e qual dos dois venceu | O que o plano original previa (perdeu no item registrado) | — |
-| 26/08/2026 | `../desktop/STEAM.md#empacotamento-executado-pela-primeira-vez--26ago2026` | O empacotamento (`npm run dist:steam`) rodou pela primeira vez, 274 MB, EXIT=0 | — | falta só `steamcmd` com login de parceiro (dono) |
-| — | `../desktop/README.md#-duas-coisas-que-valem-saber-antes-de-mexer` | Duas advertências operacionais registradas antes de qualquer edição no overlay | — | — |
+| 26/08/2026 | `../../desktop/STEAM.md#empacotamento-executado-pela-primeira-vez--26ago2026` | O empacotamento (`npm run dist:steam`) rodou pela primeira vez, 274 MB, EXIT=0 | — | falta só `steamcmd` com login de parceiro (dono) |
+| — | `../../desktop/README.md#-duas-coisas-que-valem-saber-antes-de-mexer` | Duas advertências operacionais registradas antes de qualquer edição no overlay | — | — |
 | 26/08/2026 | `CLAUDE.md` raiz, footgun 9 | "As tabelas de HP/energia NÃO são mais cópia" (`d56bba7a`) — desktop importa de `types/progression.ts` | Copiar as tabelas (causava rebaixamento de save mega a rookie) | — |
 
 ---

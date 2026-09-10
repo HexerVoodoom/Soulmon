@@ -1,6 +1,6 @@
 # Visão — o que o Soulmon é, para quem, e o que ele nunca pode virar
 
-> **Dono:** doc-redator-regras · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-regras · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
 > **Verificação:** `npx vitest run src/utils/currencies.test.ts src/utils/monetization.fronteira.test.ts src/utils/restWindow.test.ts src/utils/passives.test.ts src/utils/bond.test.ts src/utils/habitRhythm.test.ts src/hooks/useDailyReset.test.ts src/plugins/widgetSemCobranca.contract.test.ts` — são os testes que travam, em código, as linhas vermelhas citadas aqui. Toda contagem deste doc traz, na própria linha, o comando que a mediu em 09/09/2026.
 > **Não cobre:** as regras de jogo em si (→ `02-REGRAS-DE-NEGOCIO.md`), telas e navegação (→ `03-FLUXO-DE-TELAS.md`), identidade visual (→ `04-IDENTIDADE-VISUAL.md`), arquitetura, deploy e integrações (→ `05-ARQUITETURA.md`, `08-INTEGRACOES-E-DEPLOY.md`), o histórico das decisões (→ `09-HISTORICO.md`, `10-DISCUSSOES-E-DECISOES.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

@@ -166,7 +166,7 @@
 **Régua:** `src/types/progression.test.ts`, `src/types/ultra.doisCaminhos.test.ts`.
 **Avisos do arquivo:** ⚰️ `LEGACY_FORM_TIERS` não existe mais (57 ids de espécie Bandai removidos em 07/09/2026) — id fora do esquema cai direto em `'rookie'`.
 
-### `src/types/taskModel.ts` (369 linhas)
+### `src/types/taskModel.ts` (368 linhas — corrigido de "369" por doc-verificador, `wc -l`, 10/09/2026)
 **Dono de:** TODOS os tipos e constantes do motor de tarefas/hábitos (`docs/PLANO-TAREFAS.md`) — dono único, nenhum outro arquivo inventa número deste domínio.
 **Exports:**
 - `Schedule` — como um hábito se repete: `weekdays` (modelo antigo, padrão de save velho), `timesPerWeek`, `everyNDays` (`from: 'schedule' | 'completion'`).

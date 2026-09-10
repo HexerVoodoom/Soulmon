@@ -1,6 +1,6 @@
 # Arquitetura
 
-> **Dono:** doc-redator-arquitetura · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-arquitetura · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
 > **Verificação:** `npx tsc --noEmit` · `npx tsc -p tsconfig.server.json --noEmit` · `npx tsc -p desktop/tsconfig.json --noEmit` · `npx vitest run` · `npm run build`; os contratos de fronteira são `src/deploy/appUrl.contract.test.ts`, `src/deploy/firebaseNoBuild.contract.test.ts`, `src/deploy/swCache.contract.test.ts`, `src/security/csp.test.ts`
 > **Não cobre:** as regras do jogo (→ `02-REGRAS-DE-NEGOCIO.md`), as telas (→ `03-FLUXO-DE-TELAS.md`), tokens e estilo (→ `04-IDENTIDADE-VISUAL.md`), função por função (→ `06-REFERENCIA/`), o esquema do save e as chaves de storage (→ `07-DADOS-E-SAVE.md`), credenciais e deploy (→ `08-INTEGRACOES-E-DEPLOY.md`).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.

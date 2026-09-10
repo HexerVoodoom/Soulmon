@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** rascunho
+> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do `soulmon-screen-cartographer`, cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -498,7 +498,8 @@ A Home empilha, nesta ordem de render:
 - **O microfone**: `micDisponivel` nasce `null` (**otimista**: `null` desenha o
   microfone) e só vira `false` quando o servidor responde. A busca acontece na
   **primeira interação** com a barra, nunca na montagem — há guard exigindo que
-  montar o `CompanionHUD` não toque a rede:
+  montar o `CompanionHUD` não toque a rede (`CompanionHUD.render.test.tsx`, caso
+  "monta sem tocar a rede"):
 
   ```ts
   const garantirConfig = useCallback(async () => {
