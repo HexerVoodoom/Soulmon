@@ -18,7 +18,7 @@ encaixam. Segue o §1 do `squad-som/CONTRACT.md` (mesmo formato de agente).
 - Corpo, H2 nesta ordem: `## Mandato` · `## Entradas` · `## Framework Operacional` ·
   `## Barra de Qualidade` · `## Anti-Padrões` · `## Handoffs` · `## Voz`.
 
-## 2. Roster (9)
+## 2. Roster (10)
 
 | id | model | possui | pergunta que possui |
 |---|---|---|---|
@@ -31,6 +31,7 @@ encaixam. Segue o §1 do `squad-som/CONTRACT.md` (mesmo formato de agente).
 | `doc-historiador` | sonnet | `09-HISTORICO.md`, `10-DISCUSSOES-E-DECISOES.md` | "quando mudou, por quê, e onde a discussão está registrada?" |
 | `doc-verificador` | opus | o carimbo `verificado` — **bloqueante** | "isto está escrito é o que o código faz?" |
 | `doc-bibliotecario` | opus | `00-MAPA.md`, `11-GLOSSARIO.md`, `12-COMO-MANTER.md`, a ligação com `00-START-HERE.md`/`CLAUDE.md` | "uma sessão nova acha isto em um salto?" |
+| `doc-mantenedor` | opus | a **sincronização pós-merge** (skill `manter-docs`): `scripts/docs-delta.mjs`, `docs/manual/.sincronizado.json`, o despacho dos redatores/verificador por delta | "o que mudou no código desde a última vez que o manual foi verdade?" |
 
 ### Agentes do repositório reusados (sem clone)
 

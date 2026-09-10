@@ -1,0 +1,102 @@
+# Sincronização do manual (docs/manual/) a cada merge na main.
+#
+# Dois jobs. O primeiro é BARATO e roda sempre: mede o delta entre o último SHA
+# sincronizado (docs/manual/.sincronizado.json) e o HEAD, roda o guard do
+# manual e escreve o resultado no sumário do run. O segundo só roda se houver
+# delta E se o segredo ANTHROPIC_API_KEY existir: ele levanta o
+# `doc-mantenedor` (skill /manter-docs) que atualiza os docs afetados,
+# verifica, grava o SHA e abre um PR `docs/sync-<sha>` — e o mergeia, pela
+# regra de autonomia do CLAUDE.md.
+#
+# Sem o segredo, o job é PULADO (não falha): a sincronização fica para a
+# próxima sessão, cujo hook de início (.claude/hooks/session-start.sh) avisa
+# `docs: DEFASADO` e o coordenador manda o mantenedor rodar antes de tudo.
+# Ligar o segredo é "depende do dono" — docs/STATUS.md.
+#
+# Anti-loop: o merge do PR de sincronização é um push na main que dispara este
+# workflow de novo; como o commit grava `.sincronizado.json` = HEAD e só toca
+# docs/, o delta volta vazio e o segundo job não roda.
+name: docs-sync
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/manual/**'
+      - 'dist/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  delta:
+    name: delta do manual + guard
+    runs-on: ubuntu-latest
+    outputs:
+      tem_delta: ${{ steps.delta.outputs.tem_delta }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Guard do manual
+        run: npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts
+      - name: Delta desde o último SHA sincronizado
+        id: delta
+        run: |
+          node scripts/docs-delta.mjs | tee delta.md
+          echo "## Delta do manual" >> "$GITHUB_STEP_SUMMARY"
+          cat delta.md >> "$GITHUB_STEP_SUMMARY"
+          if node scripts/docs-delta.mjs --strict > /dev/null; then
+            echo "tem_delta=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tem_delta=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::o manual está defasado em relação a este push — o job 'mantenedor' cuida disso se ANTHROPIC_API_KEY existir; senão, a próxima sessão roda /manter-docs"
+          fi
+
+  mantenedor:
+    name: doc-mantenedor (/manter-docs auto)
+    needs: delta
+    if: needs.delta.outputs.tem_delta == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    env:
+      TEM_CHAVE: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - name: Sem ANTHROPIC_API_KEY — pulando (depende do dono)
+        if: env.TEM_CHAVE != 'true'
+        run: echo "::notice::ANTHROPIC_API_KEY não configurada; a sincronização fica para a próxima sessão (/manter-docs)."
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        if: env.TEM_CHAVE == 'true'
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        if: env.TEM_CHAVE == 'true'
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+        if: env.TEM_CHAVE == 'true'
+      - name: Rodar o doc-mantenedor
+        if: env.TEM_CHAVE == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: |
+            Você está no repositório do Soulmon, na main, logo depois de um merge. Invoque a
+            skill `manter-docs` com o argumento `auto` e siga-a até o fim: delta, redatores,
+            verificação, carimbo, `.sincronizado.json`, bloco no `docs/STATUS.md`. Trabalhe
+            numa branch `docs/sync-<sha curto do HEAD>`, faça commit
+            `docs(manual): sincronização pós-merge <sha curto>`, push, abra o PR contra a
+            main e faça o merge (regra de autonomia do CLAUDE.md). Se o delta for vazio,
+            não crie branch nem PR — só diga "sincronizado".
+          claude_args: '--max-turns 80'

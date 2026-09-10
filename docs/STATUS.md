@@ -7,6 +7,33 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🤖 10/09/2026 — TODA SESSÃO COMEÇA PELO COORDENADOR, E O MANUAL SE SINCRONIZA A CADA MERGE
+>
+> Dois agentes novos e a automação que os aciona:
+> - **`soulmon-coordenador`** (`/soulmon [start|rotear|status|fechar]`): o
+>   especialista que toda sessão consulta primeiro. Lê `docs/manual/00-MAPA.md`,
+>   este STATUS e o `CLAUDE.md`; roteia o pedido pela tabela da skill
+>   (`.claude/skills/soulmon-coordenador/SKILL.md`) para o orquestrador dono —
+>   maestro, os sete guardas, squad-som, squad-docs, prod-squad, design-lead,
+>   security/qa — e no fechamento cobra portões, bloco aqui, PR + merge na hora
+>   e a sincronização do manual.
+> - **`doc-mantenedor`** (`/manter-docs [auto|desde <sha>|status]`): sincroniza
+>   `docs/manual/` com o código depois de cada merge — `scripts/docs-delta.mjs`
+>   mede o que mudou desde `docs/manual/.sincronizado.json`, um redator por doc
+>   recebe o diff, o verificador recarimba, o SHA é gravado. Delta só.
+> - **Hook de sessão** `.claude/hooks/session-start.sh` (em `.claude/settings.json`):
+>   instala `node_modules` se faltar (uma sessão web de 09/09 nasceu sem) e
+>   imprime o briefing com a ordem de invocar `/soulmon start`. Síncrono.
+> - **Workflow `docs-sync.yml`**: a cada push na `main`, job `delta` (sempre:
+>   mede + guard + sumário) e job `mantenedor` (só com delta **e** o segredo
+>   `ANTHROPIC_API_KEY`) que roda `/manter-docs auto` e abre/mergeia
+>   `docs/sync-<sha>`. Anti-loop: o commit de sincronização só toca `docs/`,
+>   então o push dele volta com delta vazio.
+>
+> ⏳ **Depende do dono:** criar o segredo `ANTHROPIC_API_KEY` em Settings →
+> Secrets → Actions para o job `mantenedor` rodar no servidor. Sem ele nada
+> quebra — a sincronização acontece no início da próxima sessão, pelo hook.
+
 > ## 📚 10/09/2026 — O MANUAL COMPLETO EXISTE: `docs/manual/00-MAPA.md` é a porta de entrada
 >
 > A SQUAD-DOCS (`.claude/skills/squad-docs/`, 9 agentes `doc-*`, comando

@@ -295,9 +295,14 @@ Uma linha por arquivo. **Etiqueta**: `vivo` (descreve o estado e é mantido) · 
 | [`memory/product-context.md`](../../memory/product-context.md) | brief compartilhado do produto para as personas do squad | vivo | parcial — idem |
 | [`desktop/README.md`](../../desktop/README.md) | build, release e política de publicação do overlay Electron | vivo | parcial — [06-REFERENCIA/desktop.md](06-REFERENCIA/desktop.md) e [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §3.3 |
 | [`migrations/README.md`](../../migrations/README.md) | como aplicar as migrações D1 | vivo | parcial — [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) §8.3 |
-| [`.claude/agents/`](../../.claude/agents/) | 50 definições de agente (`ls .claude/agents/*.md \| wc -l` → 50, em 10/09/2026), incluindo os 11 `doc-*` da SQUAD-DOCS | vivo | não — o roster está resumido em [12-COMO-MANTER.md](12-COMO-MANTER.md) §9 |
+| [`.claude/agents/`](../../.claude/agents/) | 51 definições de agente (`ls .claude/agents/*.md \| wc -l` → 51, em 10/09/2026): os `soulmon-*` da revisão e dos guardas, os `som-*`, os `doc-*` da SQUAD-DOCS, e os dois que nasceram em 10/09/2026 — **`soulmon-coordenador`** (toda sessão começa e termina por ele) e **`doc-mantenedor`** (sincroniza este manual a cada merge) | vivo | não — o roster está resumido em [12-COMO-MANTER.md](12-COMO-MANTER.md) §9 |
 | [`.claude/skills/squad-docs/METODO.md`](../../.claude/skills/squad-docs/METODO.md) | **fonte canônica das dez regras R1–R10** de documentação | vivo | sim, em versão operacional: [12-COMO-MANTER.md](12-COMO-MANTER.md) |
-| [`.claude/commands/`](../../.claude/commands/) | 5 comandos de barra (`/documentar`, `/revisao-soulmon`, `/implementar-wp`, `/destrinchar-estudo`, `/guarda-soulmon`) | vivo | não |
+| [`.claude/commands/`](../../.claude/commands/) | 7 comandos de barra (`/soulmon`, `/manter-docs`, `/documentar`, `/revisao-soulmon`, `/implementar-wp`, `/destrinchar-estudo`, `/guarda-soulmon`) | vivo | não |
+| [`.claude/skills/soulmon-coordenador/SKILL.md`](../../.claude/skills/soulmon-coordenador/SKILL.md) | a **tabela de roteamento** (pedido → orquestrador dono → o que vai no briefing) e o protocolo de fechamento de sessão | vivo | resumido em §8 abaixo |
+| [`.claude/skills/manter-docs/SKILL.md`](../../.claude/skills/manter-docs/SKILL.md) | o procedimento de sincronização pós-merge do manual (delta → redatores → verificação → carimbo → `.sincronizado.json`) | vivo | resumido em [12-COMO-MANTER.md](12-COMO-MANTER.md) §11 |
+| [`.claude/hooks/session-start.sh`](../../.claude/hooks/session-start.sh) + [`.claude/settings.json`](../../.claude/settings.json) | o hook de início de sessão: instala dependências se faltarem e imprime o briefing (git, delta do manual, guard, o que depende do dono) com a ordem de invocar `/soulmon start` | vivo | §8 |
+| [`.github/workflows/docs-sync.yml`](../../.github/workflows/docs-sync.yml) | a cada push na `main`: mede o delta do manual, roda o guard e — se `ANTHROPIC_API_KEY` existir — levanta o `doc-mantenedor` para sincronizar e abrir/mergear o PR `docs/sync-<sha>` | vivo | §8 |
+| `docs/manual/.sincronizado.json` | o SHA da última sincronização do manual, gravado pelo `doc-mantenedor`; base de `scripts/docs-delta.mjs`. **Nunca se edita à mão** | vivo (máquina) | — |
 | [`product/soulmon-01/`](../../product/soulmon-01/) | 28 relatórios de rodadas de balanceamento, varredura de QA e alinhamento de UI (`find product -name '*.md' \| wc -l` → 28, em 10/09/2026). O mais citado pelo `CLAUDE.md` é [`balance/carga-diaria.md`](../../product/soulmon-01/balance/carga-diaria.md) (decisões P1–P5) | registro | parcial — as decisões P1/P5 estão em [02 §1](02-REGRAS-DE-NEGOCIO.md#coracoes) e [02 §7](02-REGRAS-DE-NEGOCIO.md#dia-completo) |
 
 ### 6.2 `docs/` — primeiro nível
@@ -418,12 +423,25 @@ Lido dos cabeçalhos em 10/09/2026 com `grep -o '\*\*Dono:\*\* [a-z-]*\|\*\*Data
 
 O método completo — as dez regras R1–R10, o cabeçalho obrigatório, o ciclo, como carimbar e o que fazer quando cada item do guard fica vermelho — está em **[12-COMO-MANTER.md](12-COMO-MANTER.md)**. A fonte canônica das regras é [`.claude/skills/squad-docs/METODO.md`](../../.claude/skills/squad-docs/METODO.md).
 
+### 8.1 Quem mantém, e quando roda sozinho (desde 10/09/2026)
+
+| Momento | O que roda | Quem |
+|---|---|---|
+| **Início de toda sessão** | `.claude/hooks/session-start.sh` (registrado em `.claude/settings.json`) instala dependências se faltarem e imprime o briefing: git, `node scripts/docs-delta.mjs --resumo`, o guard, o topo do `STATUS.md` — e a ordem de invocar **`/soulmon start`** | `soulmon-coordenador` — lê este mapa inteiro, roteia o pedido pela tabela de [`soulmon-coordenador/SKILL.md`](../../.claude/skills/soulmon-coordenador/SKILL.md), e se o briefing disser `docs: DEFASADO` manda o mantenedor rodar antes de qualquer trabalho |
+| **Fechamento de sessão** | `/soulmon fechar`: portões, bloco no STATUS, PR + merge ff-only, e então **`/manter-docs auto`** | `soulmon-coordenador` → `doc-mantenedor` |
+| **A cada push na `main`** | [`.github/workflows/docs-sync.yml`](../../.github/workflows/docs-sync.yml): job `delta` (sempre: mede + guard + sumário) e job `mantenedor` (só com delta e `ANTHROPIC_API_KEY`): `/manter-docs auto` numa branch `docs/sync-<sha>`, PR e merge | `doc-mantenedor` |
+
+O que o mantenedor faz: `node scripts/docs-delta.mjs` compara `docs/manual/.sincronizado.json` com o HEAD e devolve, por doc, os arquivos que o afetam (mais módulos novos sem entrada, entradas de módulos apagados e módulos com exports mudados); um redator por doc recebe o diff; o `doc-verificador` confere o que mudou e recarimba; o `doc-bibliotecario` atualiza este mapa se nasceu doc/módulo/skill; o SHA é gravado. **Delta só** — o commit de sincronização toca `docs/manual/`, `docs/STATUS.md` e nada mais. Detalhe em [12-COMO-MANTER.md](12-COMO-MANTER.md) §11.
+
+### 8.2 Os comandos
+
 O guard, que roda antes de todo commit que toca `docs/`:
 
 ```bash
 npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts
+node scripts/docs-delta.mjs          # o manual está defasado? por doc
 ```
 
-Para uma rodada completa da squad de documentação (medir → redigir → verificar → indexar → travar), use a skill **`/squad-docs`**. Para uma correção pontual, edite o doc dono à mão, rode o guard e carimbe conforme [12-COMO-MANTER.md](12-COMO-MANTER.md) §6.
+Para uma rodada completa da squad de documentação (medir → redigir → verificar → indexar → travar), use a skill **`/squad-docs`**. Para a sincronização pós-merge, **`/manter-docs`**. Para uma correção pontual, edite o doc dono à mão, rode o guard e carimbe conforme [12-COMO-MANTER.md](12-COMO-MANTER.md) §6.
 
 **A trava que este arquivo guarda:** um doc novo em `docs/` só nasce se entrar neste mapa. O item (a) do guard fica vermelho enquanto ele não entrar, e a etiqueta certa (`vivo`/`registro`/`pesquisa`/`plano`) é obrigatória — "é antigo demais para indexar" não é uma saída, é como a pasta `historico-digiapp/` nasceu.

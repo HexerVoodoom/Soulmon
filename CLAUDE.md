@@ -66,6 +66,13 @@ via `language === 'pt-BR'`).
 > lá que está escrito o que NÃO ler primeiro. Este arquivo continua tendo
 > precedência sobre o manual (código > teste > `CLAUDE.md` > manual); quem
 > guarda o índice é `src/docsManual.contract.test.ts`.
+> **Desde 10/09/2026 isto roda sozinho**: o hook `.claude/hooks/session-start.sh`
+> abre toda sessão com o briefing (git, delta do manual, guard, o que depende
+> do dono) e a ordem de invocar **`/soulmon start`** — o `soulmon-coordenador`,
+> que roteia qualquer pedido para o orquestrador dono e, ao fechar, cobra
+> portões, STATUS, PR + merge e a sincronização do manual pelo
+> **`doc-mantenedor`** (`/manter-docs`, também disparado a cada push na `main`
+> por `.github/workflows/docs-sync.yml`).
 
 > ## ⚠️ NINGUÉM NUNCA USOU O APP EM PRODUÇÃO (07/09/2026, informado pelo dono)
 >

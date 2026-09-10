@@ -228,3 +228,29 @@ Antes de fechar qualquer sessão que tenha tocado em código ou em documentaçã
 - [ ] **Commit** em PT-BR, no formato `docs(manual): <resumo>` — e, pela regra de
       autonomia do [`CLAUDE.md`](../../CLAUDE.md), PR e merge ff-only na hora, sem loop de
       check-in.
+
+## 11. A sincronização automática pós-merge (desde 10/09/2026)
+
+O manual não espera uma rodada da squad para acompanhar o código. Três gatilhos
+levantam o **`doc-mantenedor`** (`.claude/agents/doc-mantenedor.md`, skill
+[`manter-docs`](../../.claude/skills/manter-docs/SKILL.md), comando `/manter-docs`):
+
+1. **O hook de início de sessão** (`.claude/hooks/session-start.sh`) imprime
+   `node scripts/docs-delta.mjs --resumo`. Se disser `docs: DEFASADO`, o
+   `soulmon-coordenador` (`/soulmon start`) despacha `/manter-docs auto` antes do
+   trabalho novo.
+2. **O fechamento de sessão** (`/soulmon fechar`), logo depois do merge.
+3. **O workflow `.github/workflows/docs-sync.yml`**, a cada push na `main` — o
+   job `delta` mede sempre; o job `mantenedor` só roda com delta e com o segredo
+   `ANTHROPIC_API_KEY` no repositório (sem ele, fica para o gatilho 1).
+
+O que ele faz, na ordem: `docs-delta.mjs --json` (base = `docs/manual/.sincronizado.json`)
+→ um redator dono por doc afetado, com o diff → `doc-verificador` nas seções tocadas,
+recarimbo com a data → `doc-bibliotecario` se nasceu doc/módulo/skill/agente → guard →
+grava `.sincronizado.json` (`sha` = HEAD sincronizado) + bloco no `STATUS.md` → commit
+`docs(manual): sincronização pós-merge <sha>` → PR → merge ff-only.
+
+Regras: o commit de sincronização só toca `docs/manual/` e `docs/STATUS.md`; sem delta
+não há commit; sem verificação não há carimbo; código errado vira `⚠️ divergência` no
+doc e item no STATUS, nunca conserto de código. **Nunca edite `.sincronizado.json` à
+mão** — é o que faz o próximo delta começar de onde o anterior parou.
