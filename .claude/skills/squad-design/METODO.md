@@ -19,7 +19,7 @@ de **o que está na tela, em que ordem e por quê** — e ela é verificável co
 | # | Regra | Fonte |
 |---|---|---|
 | **W1** | **Cinza, sem identidade.** Só caixas, texto real e hierarquia. Zero cor de marca, zero fonte de marca, zero sprite (um placeholder "PET" no lugar do visor). Se dá para dizer que é o Soulmon pela cor, é mockup, não wireframe. | método |
-| **W2** | **Texto real, nunca lorem.** Os rótulos, títulos e microcopy são os do código (`03-FLUXO-DE-TELAS.md`, componentes) ou propostos com marca `[novo]`. Copy é estrutura. | `docs/manual/03` |
+| **W2** | **Texto real, nunca lorem — em INGLÊS.** Os rótulos, títulos e microcopy são os do código (`03-FLUXO-DE-TELAS.md`, componentes) ou propostos com marca `[novo]`. Inglês é a língua principal do artboard (é a base do produto); PT-BR vai como nota `PT: …` no rodapé, e ganha artboard próprio só onde o comprimento muda a caixa (decisão do dono, 13/09/2026). Copy é estrutura. | `docs/manual/03`, `CLAUDE.md` › Idioma |
 | **W3** | **Todo estado desenhado**: vazio · carregando · erro · primeira vez · demo × pago · reduced-motion onde muda a estrutura. Um wireframe só do "caso feliz" não está pronto. | `03-FLUXO` §4 (estados) |
 | **W4** | **Uma pergunta por tela.** Cada wireframe declara, no rodapé, a pergunta que o jogador responde ali ("o que faço agora?", "como está meu bicho?"). Tela com duas perguntas vira duas telas ou uma hierarquia clara. | Mobbin §15.1, `PLANO-PRODUTO` |
 | **W5** | **Frequência manda na ordem**: Home e lista de tarefas primeiro; Oráculo por último. Prioridade = quantas vezes por dia a tela é vista. | `soulmon-design-lead` |

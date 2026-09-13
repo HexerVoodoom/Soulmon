@@ -7,6 +7,32 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## ✅ 13/09/2026 — O DONO RESPONDEU AS 20 DECISÕES PRÉVIAS DOS WIREFRAMES
+>
+> Em modal, uma a uma: as 11 dúvidas do `docs/design/INVENTARIO-WIREFRAMES.md`
+> §3.2 e as 9 tensões pesquisa × decisão do `PRINCIPIOS-DE-WIREFRAME.md` §14.
+> Registro completo em **`docs/design/DECISOES-WIREFRAME.md`**. O que muda:
+> - **Canvases**: Pet e Social ganham canvas próprio; Onboarding parte em
+>   funil (5º) e oráculo (último). Ordem final no `HANDOFF-WIREFRAMES.md` §4.
+> - **Inglês é a língua do artboard** (PT no rodapé; artboard extra só onde a
+>   caixa muda).
+> - **Cinco decisões de produto REABERTAS** → `REGISTRO-DE-DECISOES.md` §13:
+>   oferta no reveal (dispensável, padrão Garmin); contador "N de M" no widget
+>   (só com ≥ 1 feita); live-ops rotativo que não tira; card compartilhável
+>   mensal com piso; escudos visíveis sempre, inclusive zero. **O código ainda
+>   faz o antigo** — implementar passa pelo guarda dono e muda
+>   `widgetSemCobranca.contract.test.ts` (13.2) e a linha correspondente do
+>   `CLAUDE.md`.
+> - Mantidas: prestígio visível sem o escudo quebrar a aura (fecha a D4: o
+>   que dói perder é só o coração), veto #21 ao estágio do amigo, psicométrico
+>   invisível, conta primeiro com o porquê visível.
+> - `fora` do desenho: os três ramos de save antigo (`STAT-10`, `EVO-23`,
+>   `ONB-13`) e a variante sheet do `ShopModal` sem caminho vivo — **candidatos
+>   a remoção de código, decisão sua**.
+> - Seis superfícies sem descrição no manual (inclui o seletor de comida, P0)
+>   estão sendo **medidas no código** pelo cartógrafo e entram no
+>   `03-FLUXO-DE-TELAS.md` §4 (sem verificação ainda — cabeçalho marca).
+
 > ## 🎨 13/09/2026 — REDESENHO EM DUAS FASES: A SQUAD-DESIGN E O HANDOFF DOS WIREFRAMES
 >
 > O dono pediu o redesenho do app começando por wireframes de TODAS as telas,

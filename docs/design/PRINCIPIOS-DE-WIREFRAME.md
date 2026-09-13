@@ -387,6 +387,8 @@ a pesquisa contradiz uma decisão, a tensão está em **§14** e **não foi deci
 
 ## §14 Tensões pesquisa × decisão registrada (NÃO decididas aqui)
 
+> **Decididas pelo dono em 13/09/2026** — a resposta a cada linha está em [DECISOES-WIREFRAME.md](DECISOES-WIREFRAME.md) §3 (T1, T2, T4, T5 reabertas; T3 segue a pesquisa; T6–T9 mantidas com ajuste). As reaberturas estão no `REGISTRO-DE-DECISOES.md` §13. O wireframe desenha a decisão NOVA e marca `[decisão 13/09]`.
+
 | # | A pesquisa diz | A decisão registrada diz | Onde |
 |---|---|---|---|
 | T1 | **Paywall no reveal.** "O paywall que converte é o que chega como conclusão do investimento do quiz"; quiz longo converte +40% quando o resultado é vendido ali | **Não cobrar no reveal**; value moment = 1º dia completo. Paywall após value moment = 2,1× mais trial starts. Gatilho de revisão declarado: **conversão < 1%** | `G01` lição 4 · `G05` F4 × `REG §5.3` (conflito C.3 #1) · `M-sust §5` |

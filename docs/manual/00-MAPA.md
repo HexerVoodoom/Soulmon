@@ -392,7 +392,7 @@ Anexos factuais (**registro**, cada um é a foto do código no dia): [plano-melh
 |---|---|---|---|
 | [design/PRINCIPIOS-DE-WIREFRAME.md](../design/PRINCIPIOS-DE-WIREFRAME.md) | a pesquisa (dossiê Mobbin, os seis dossiês por área, estudos, decisões, linhas vermelhas) reduzida ao que cada FAMÍLIA de tela obriga e proíbe, com a seção de origem de cada regra | vivo | `design-curador-padroes` |
 | [design/INVENTARIO-WIREFRAMES.md](../design/INVENTARIO-WIREFRAMES.md) | a tabela-mestra: toda tela × estado derivada do [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md), com `id`, fluxo, prioridade P0–P2 e o estado do wireframe (`a desenhar` → `desenhado` → `criticado` → `aprovado`); o link do canvas de cada fluxo entra aqui | vivo | `soulmon-screen-cartographer` |
-| `design/DECISOES-WIREFRAME.md` | entra / volta / sai por fluxo, escrito pelo `soulmon-design-lead` a cada `decidir` (nasce na primeira sessão de desenho) | decisões | `soulmon-design-lead` |
+| [design/DECISOES-WIREFRAME.md](../design/DECISOES-WIREFRAME.md) | as 20 decisões prévias do dono (13/09/2026: 11 dúvidas do inventário + 9 tensões da pesquisa, cinco reabertas no `REGISTRO-DE-DECISOES.md` §13) e, a cada `decidir`, o entra/volta/sai por fluxo | decisões | `soulmon-design-lead` |
 | `design/wireframes/<fluxo>/` | os arquivos de trabalho de cada canvas (`Main.dc.html`, um `.dc.html` por tela × estado, `canvas.json`) — commitados; o `.html` publicado não | canvas | `design-wireframer` |
 
 ### 6.6 `docs/historico-digiapp/` — o que NÃO se lê

@@ -1,7 +1,7 @@
 # Handoff — redesenho do Soulmon, Fase 1: wireframes de todas as telas
 
 > **Dono:** `soulmon-coordenador` (orquestrador da SQUAD-DESIGN) · **Data:** 13/09/2026 ·
-> **Estado:** pronto para a sessão de desenho
+> **Estado:** pronto para a sessão de desenho — **as 20 decisões prévias estão respondidas em [design/DECISOES-WIREFRAME.md](design/DECISOES-WIREFRAME.md) (13/09/2026)**
 > **Verificação:** `docs/design/INVENTARIO-WIREFRAMES.md` (a lista do que desenhar, com
 > estado por tela) e `docs/design/PRINCIPIOS-DE-WIREFRAME.md` (o que cada família de tela
 > obriga e proíbe, com procedência). O guard do manual continua valendo:
@@ -79,13 +79,16 @@ Os fluxos, na ordem de frequência de uso (W5) — a Home é vista todo dia; o O
 | 1 | **Home** | `wireframes/home/` | visor do pet, HUD (corações/energia/moedas), ações (comer/carinho/banho/dormir/brincar), chat, o slot de avisos com "+N", `FirstDayCard`, `PlayCard`, `RestWindowCard`, `StepsCard` | P0 |
 | 2 | **Atividades** | `wireframes/atividades/` | lista (hábitos × tarefas), `QuickAddBar`, criar/editar tarefa e hábito, foco do dia, carga do dia, `TriagePile`, `HabitConstancy`, assombrada, adiamento, someday/dropped | P0 |
 | 3 | **Rituais** | `wireframes/rituais/` | `MorningCheckIn`, `DailyReportModal` + humor, `WeeklyReportCard`, fresh start, `MorningDream`, `NightmareBattle`, `BalanceWeekModal`, `ProtectProgressModal` | P0 |
-| 4 | **Onboarding** | `wireframes/onboarding/` | splash, `IntroScreen`, portão de identidade/e-mail, free × pago, `GOAL_STEP`/`STRUGGLE_STEP`, `DEMO_PICK`, as 6 perguntas, a bifurcação dos 20 itens, geração, reveal, `GameTutorialFlow`, `WelcomePromptModal`, `mode='upgrade'` | P1 |
-| 5 | **Evolução** | `wireframes/evolucao/` | `EvolutionPath` (escada, cadeado, galho previsto), `EvolutionCeremony`, `EvolveTaskModal`, `RebirthModal`, `UnlockNudge` (variantes), `MilestoneCeremony` | P1 |
-| 6 | **Jogos** | `wireframes/jogos/` | hub de minijogos, `DungeonGame` (andar, escada, cenário, resultado, Glitchtama), `ArenaGame`, `DinoGame`, `RPSGame`, `TournamentPage` (rodada, faixas, ranking, troféus) | P1 |
-| 7 | **Loja e economia** | `wireframes/loja/` | `ShopModal` (dois segmentos, seções, item bloqueado com dica), detalhe de item, `ItemsWindow` (pastinha), missões e missões semanais, `CreditsModal`, `UnlockAccountModal`, `TinyOffer` | P1 |
-| 8 | **Estatísticas e coleção** | `wireframes/estatisticas/` | `StatsPage`, `BestiaryCard`, `FormAlbum`, `DreamDex`, `MemoriesCard`, `AdventureDiary`, `PetPage` | P1 |
-| 9 | **Conta e configurações** | `wireframes/conta/` | `SettingsPage`, `SettingsModal`, `AISettingsModal`, `AccountSection`, `AccountDataSection`, `NotificationManager`/priming, `InstallPrompt`, `GuideModal`, `HelpModal`, `LibraryPage`, `CoopPanel`, `PlayerDetailModal` | P2 |
-| 10 | **Fora do app** | `wireframes/fora-do-app/` | os 5 widgets Android, o overlay Electron (faixa + menu), as notificações push (10h/16h/20h/22h/deitar/cocô) | P2 |
+| 4 | **Pet** | `wireframes/pet/` | `PetPage`, `DreamDex`, `AdventureDiary` (canvas próprio por decisão D1 de 13/09) | P0+ |
+| 5 | **Onboarding — funil** | `wireframes/onboarding-funil/` | splash, `IntroScreen`, portão de identidade/e-mail (com o valor ANTES do campo, T9), free × pago, `GOAL_STEP`/`STRUGGLE_STEP`, `DEMO_PICK`, `GameTutorialFlow`, `WelcomePromptModal` | P1 |
+| 6 | **Evolução** | `wireframes/evolucao/` | `EvolutionPath` (escada, cadeado, galho previsto), `EvolutionCeremony`, `EvolveTaskModal`, `RebirthModal`, `UnlockNudge` (variantes), `MilestoneCeremony` | P1 |
+| 7 | **Jogos** | `wireframes/jogos/` | hub de minijogos, `DungeonGame` (andar, escada, cenário, resultado, Glitchtama), `ArenaGame`, `DinoGame`, `RPSGame`, `TournamentPage` (rodada, faixas, ranking, troféus) | P1 |
+| 8 | **Loja e economia** | `wireframes/loja/` | `ShopModal` (dois segmentos, seções, item bloqueado com dica), detalhe de item, `ItemsWindow` (pastinha), missões e missões semanais, `CreditsModal`, `UnlockAccountModal`, `TinyOffer` | P1 |
+| 9 | **Estatísticas e coleção** | `wireframes/estatisticas/` | `StatsPage`, `BestiaryCard`, `FormAlbum`, `MemoriesCard`, escudos visíveis como posse (T5) | P1 |
+| 10 | **Social** | `wireframes/social/` | `LibraryPage` (NPCs, amigos sem escada nem rank — T7), `CoopPanel`, `PlayerDetailModal`, presentear; artboard offline (D9). Canvas próprio por decisão D2; parecer obrigatório do guarda da linha vermelha | P1 |
+| 11 | **Conta e configurações** | `wireframes/conta/` | `SettingsPage`, `SettingsModal`, `AISettingsModal`, `AccountSection`, `AccountDataSection`, `NotificationManager`/priming, `InstallPrompt`, `GuideModal`, `HelpModal` | P2 |
+| 12 | **Fora do app** | `wireframes/fora-do-app/` | os 5 widgets Android (com o contador "N de M" só com ≥ 1 feita — T2), o overlay Electron (faixa + menu), as notificações push (10h/16h/20h/22h/deitar/cocô) | P2 |
+| 13 | **Onboarding — oráculo** | `wireframes/onboarding-oraculo/` | as 6 perguntas, a bifurcação dos 20 itens, geração, reveal **com a oferta dispensável (T1)** e sem retorno psicométrico (T8), `mode='upgrade'` | P2 (último, W5) |
 
 A lista exata de telas × estados, com o `id` de cada artboard, está no
 `INVENTARIO-WIREFRAMES.md` §1: **150 telas, 272 artboards** (45 P0 · 121 P1 · 106 P2,
@@ -95,16 +98,15 @@ desenhada. O que está fora (superfícies mortas ou inalcançáveis: `OraclePage
 `PixelizerCard`, o atalho de dono sem chamador, a aba Missões, as frases de cobrança do
 widget) está no §3.1 — não desenhe o que o código não alcança.
 
-**Antes do primeiro `desenhar`, o `soulmon-design-lead` responde as 11 dúvidas do
-`INVENTARIO-WIREFRAMES.md` §3.2** — quatro travam o começo: onde vive a sub-aba `pet`
-(Evolução ou canvas próprio), onde vive a Biblioteca (hoje hospedada em Conta só pelo
-caminho do menu), se o Onboarding parte em duas metades (funil em 4º, ritual do oráculo em
-7º), e o seletor de comida (`HOME-35`, P0) sem descrição no manual — medir no código ou
-desenhar como hipótese marcada. E as **9 tensões pesquisa × decisão** do
-`PRINCIPIOS-DE-WIREFRAME.md` §14 (paywall no reveal, contador no widget, "FOMO saudável",
-card mensal, estoque de escudo visível, prestígio visual, estágio real do amigo,
-psicométrico invisível, valor antes de cadastro) **não se decidem no wireframe**: o
-wireframe segue a decisão registrada e o rodapé anota a tensão para o dono.
+**As 11 dúvidas do `INVENTARIO-WIREFRAMES.md` §3.2 e as 9 tensões do
+`PRINCIPIOS-DE-WIREFRAME.md` §14 já foram respondidas pelo dono em 13/09/2026** — a tabela
+completa está em [design/DECISOES-WIREFRAME.md](design/DECISOES-WIREFRAME.md). Resumo do que
+muda o desenho: Pet e Social viram canvases próprios; Onboarding parte em funil (5º) e
+oráculo (último); ramos de save antigo e a loja-sheet ficam `fora`; as seis superfícies sem
+descrição foram medidas no código (03-FLUXO §4); `reduced-motion` só onde a estrutura muda;
+**inglês é a língua do artboard**; carga do dia no check-in e no topo da lista; offline nas
+quatro superfícies de rede; e cinco decisões de produto reabertas (oferta no reveal,
+contador no widget, live-ops que não tira, card mensal, escudos visíveis).
 
 ## 5. Como desenhar (o formato)
 
@@ -117,9 +119,11 @@ wireframe segue a decisão registrada e o rodapé anota a tensão para o dono.
 - **Cinza (W1):** texto `#111`, secundário `#666`, caixas `#ddd`, bordas `#999`. Sem cor de
   marca, sem fonte de marca (system-ui), sem sprite — no visor, um retângulo com "PET".
   Ícone = círculo com rótulo textual. Sem barra de status falsa, sem teclado falso.
-- **Texto real (W2):** rótulos e microcopy vêm do código (via `03-FLUXO` §4 e o componente).
-  Texto proposto leva a marca `[novo]`. Nunca lorem. EN + PT quando o rótulo é de UI (basta
-  PT no artboard e a nota "EN: …" no rodapé quando diferir de forma que importe).
+- **Texto real, em inglês (W2):** rótulos e microcopy vêm do código (via `03-FLUXO` §4 e o
+  componente), em **inglês** — a língua principal do produto e do wireframe (decisão D8,
+  13/09/2026). PT-BR vai como nota `PT: …` no rodapé; artboard extra só onde o comprimento
+  muda a caixa (a barra inferior, botões de largura fixa — é o caso medido de "ATIVIDADES"
+  em 61px numa caixa de 54px). Texto proposto leva a marca `[novo]`. Nunca lorem.
 - **Rodapé fixo em todo artboard:** **Pergunta** (a única que a tela responde, W4) ·
   **Chega por / Sai para** (do `03`) · **Sai da tela atual** (o que o wireframe remove, com
   motivo — W9) · **Fontes** (as seções dos princípios e as regras do `02` usadas — W8).
@@ -154,9 +158,11 @@ e contraste AA nos dois temas (`src/styles/tokens.contrast.test.ts`). Só então
 
 - A direção de arte "O Visor" (pixel dentro, limpo fora) — decidida pelo dono; a Fase 1 não
   a discute porque não usa cor, e a Fase 2 a aplica.
-- As 21 linhas vermelhas (`01-VISAO.md` §7) e as decisões do `REGISTRO-DE-DECISOES.md`.
-  Onde a pesquisa contradiz uma decisão, os princípios registram a tensão; quem decide é o
-  dono, não o wireframe.
+- As 21 linhas vermelhas (`01-VISAO.md` §7) e as decisões do `REGISTRO-DE-DECISOES.md` —
+  **com as cinco reaberturas de 13/09/2026 já registradas lá (§13)**: oferta no reveal,
+  contador no widget, live-ops rotativo que não tira, card mensal, escudos visíveis. O
+  wireframe desenha essas cinco como decisão NOVA e marca `[decisão 13/09]`; tudo o mais
+  segue o registro. Tensão nova que apareça no desenho vai para o rodapé e para o dono.
 - Regras de jogo: o wireframe mostra a regra como ela É (`02-REGRAS-DE-NEGOCIO.md`); mudar
   regra é outro fluxo (`/implementar-wp`).
 

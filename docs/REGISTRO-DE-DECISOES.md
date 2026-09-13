@@ -741,3 +741,25 @@ técnico, antes mesmo de a hipótese de produto ser testada.**
 - A hipótese do **`signInWithRedirect`** (§10.2) — precisa de conta real e popup barrado.
 - A **folga que não cobre o dreno de cocô** (§5.1) — decidir se cobre ou se fica escrito que não cobre.
 - O **preço em R$ para quem está em inglês** (§5.4).
+
+## 13. As decisões do dono de 13/09/2026 — cinco reaberturas, na rodada de wireframes
+
+Contexto: a SQUAD-DESIGN destilou a pesquisa em `docs/design/PRINCIPIOS-DE-WIREFRAME.md` e
+achou nove pontos em que a pesquisa contradiz uma decisão registrada aqui (§14 daquele doc).
+O dono respondeu as nove em 13/09/2026, em modal. Quatro mantidas (T6 prestígio visível sem
+o escudo quebrar, T7 veto #21 mantido, T8 psicométrico invisível, T9 conta primeiro com o
+porquê visível — registradas em `docs/design/DECISOES-WIREFRAME.md` §3). Cinco **reabrem**
+decisão desta página; o que o código faz hoje continua sendo o antigo até alguém implementar.
+
+| # | Decisão nova | Substitui | Evidência que pesou | Alternativa que perdeu | Gatilho para rever |
+|---|---|---|---|---|---|
+| 13.1 | **Oferta no reveal** — dispensável pelo card, largura parcial, container igual ao não-comercial, "agora não" com peso de primário; sem tabela free × pago, sem preço riscado | §5.3 "não cobrar no reveal; value moment = 1º dia completo" | quiz longo converte +40% quando o resultado é vendido ali (`G01` lição 4, `G05` F4) | oferta só após o value moment (2,1× trial starts em outro contexto) | conversão no reveal < a do pós-value-moment por 30 dias medidos, ou abandono do reveal subir |
+| 13.2 | **Contador do dia no widget** ("N de M"), só com ≥ 1 feita, sem verbo de cobrança | WP2.6 "nenhuma frase do widget cita quantidade" (`M-const §2`, `M-LV` E1) | `G07 §5` item 2 — visível sem abrir o app | widget só com pet + faixa de constância | qualquer sinal de que o número vira cobrança (o placar antigo só aparecia para quem perdia o dia — é o que não pode voltar). **Implementar exige mudar `src/plugins/widgetSemCobranca.contract.test.ts` e a linha do `CLAUDE.md`** |
+| 13.3 | **Live-ops rotativo que NÃO tira** (visita/conteúdo semanal que aparece por tempo, mas o que foi ganho fica) | leitura estrita de #15 como "nada rotativo" | `G07 §6` item 13 | ritual fixo (Rodada do Torneio) como único evento | #15 continua: nada de "última chance", contagem regressiva ou "expira" na copy; se a copy escorregar, volta |
+| 13.4 | **Card compartilhável mensal**, além do da evolução — ambos com piso (nenhum campo em zero) | `MOB §16.5` / WP4.8 "gatilho = forma nova, nunca calendário" | `G01` lição 18 | só o card da evolução | card mensal com campo em zero é proibido; se o piso não segurar, sai |
+| 13.5 | **Estoque de escudos visível sempre, inclusive zero**, como posse ("o que você tem"), sem placar | decisão 4 (`MOB §16.1` #4) "estoque invisível"; código mostra só `> 0` | leitura positiva em seção de propriedade do sistema (Yazio, `MOB §15.5`) | invisível / só quando > 0 | Duolingo mediu que o 3º escudo treina ausência; se o número visível virar meta, volta a `> 0` |
+
+**Não decidido aqui:** nada disto muda regra de jogo (`02-REGRAS-DE-NEGOCIO.md`); muda
+superfície. Quem implementa passa pelo guarda dono (constância para 13.2/13.5, sustento para
+13.1, permanência para 13.3/13.4) e pelo `soulmon-guarda-linha-vermelha`.
+
