@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2624,
+      "h": 2699,
       "page": "page-1"
     },
     {
@@ -33,14 +33,14 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1364,
+      "h": 1409,
       "page": "page-1"
     },
     {
       "file": "HomeCarregando.dc.html",
       "title": "HOME-04 · HOME-46 · ScreenSkeleton",
       "x": 0,
-      "y": 2764,
+      "y": 2839,
       "w": 390,
       "h": 1199,
       "page": "page-1"
@@ -49,7 +49,7 @@
       "file": "HomeSemMetricas.dc.html",
       "title": "HOME-05 · hideMetrics (constância sem números)",
       "x": 490,
-      "y": 2764,
+      "y": 2839,
       "w": 390,
       "h": 1214,
       "page": "page-1"
@@ -58,7 +58,7 @@
       "file": "HomeOffline.dc.html",
       "title": "HOME-44 · OfflineSeal",
       "x": 980,
-      "y": 2764,
+      "y": 2839,
       "w": 390,
       "h": 1184,
       "page": "page-1"
@@ -67,7 +67,7 @@
       "file": "HomeErro.dc.html",
       "title": "HOME-47 · ErrorBoundary",
       "x": 1470,
-      "y": 2764,
+      "y": 2839,
       "w": 390,
       "h": 1139,
       "page": "page-1"
@@ -150,7 +150,7 @@
       "x": 0,
       "y": 1384,
       "w": 390,
-      "h": 1824,
+      "h": 1854,
       "page": "page-3"
     },
     {
@@ -184,7 +184,7 @@
       "file": "ItensVazio.dc.html",
       "title": "HOME-38 · pastinha vazia",
       "x": 0,
-      "y": 3348,
+      "y": 3378,
       "w": 390,
       "h": 1124,
       "page": "page-3"
@@ -193,7 +193,7 @@
       "file": "ItensUsar.dc.html",
       "title": "HOME-39 · usar item especial",
       "x": 490,
-      "y": 3348,
+      "y": 3378,
       "w": 390,
       "h": 1244,
       "page": "page-3"
@@ -213,7 +213,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1854,
+      "h": 1944,
       "page": "page-4"
     },
     {
@@ -238,7 +238,7 @@
       "file": "NavMenu.dc.html",
       "title": "HOME-42 · menu sanduíche",
       "x": 0,
-      "y": 1994,
+      "y": 2084,
       "w": 390,
       "h": 1214,
       "page": "page-4"
@@ -247,7 +247,7 @@
       "file": "FeedbackEstados.dc.html",
       "title": "HOME-45 · HOME-48 · toast e aria-live",
       "x": 490,
-      "y": 1994,
+      "y": 2084,
       "w": 390,
       "h": 1244,
       "page": "page-4"
@@ -260,7 +260,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Home (Fase 1, cinza, rodada 2 pós-crítica de 13/09/2026). Viewport 390×844 + rodapé por artboard (Pergunta · Chega/Sai · Sai da tela atual · Fontes · PT · Notas). Inglês é a língua do artboard (D8). Números nos quadradinhos = ordem de foco (1 = skip link, oculto). Tags HOME-xx = linha do INVENTARIO-WIREFRAMES.md; [novo] = copy ou estrutura proposta, não do código. Páginas: composição · slot de avisos e HUD · pet e cuidado · chat, play e chrome."
+      "text": "Soulmon — Wireframes Home (Fase 1, cinza, rodada 3 — carimbo do design-critic, 13/09/2026). Viewport 390×844 + rodapé por artboard (Pergunta · Chega/Sai · Sai da tela atual · Fontes · PT · Notas). Inglês é a língua do artboard (D8). Números nos quadradinhos = ordem de foco (1 = skip link, oculto). Tags HOME-xx = linha do INVENTARIO-WIREFRAMES.md; [novo] = copy ou estrutura proposta, não do código. Páginas: composição · slot de avisos e HUD · pet e cuidado · chat, play e chrome."
     }
   ],
   "pages": [
