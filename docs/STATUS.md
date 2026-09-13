@@ -7,6 +7,32 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🎨 13/09/2026 — REDESENHO EM DUAS FASES: A SQUAD-DESIGN E O HANDOFF DOS WIREFRAMES
+>
+> O dono pediu o redesenho do app começando por wireframes de TODAS as telas,
+> com o que a pesquisa (Mobbin, estudos) ensinou, e a identidade só depois.
+> Não havia squad de design formal — havia agentes soltos. Entrou:
+> - **`/squad-design`** (`.claude/skills/squad-design/`): método **W1–W10**
+>   (cinza, texto real, todo estado, uma pergunta por tela, frequência manda,
+>   nada cobra, filas como estrutura, referência com procedência, o que sai é
+>   nomeado, aceite executável), duas fases com checkpoint do dono entre elas.
+>   Dois agentes novos — `design-curador-padroes` e `design-wireframer` — e
+>   seis reusados (design-lead decide, cartógrafo mede, product-designer
+>   opina, design-critic critica bloqueante, guarda-linha-vermelha veta,
+>   visual-designer na Fase 2).
+> - **`docs/HANDOFF-WIREFRAMES.md`**: o que a próxima sessão lê primeiro — a
+>   ordem de leitura, os 10 fluxos por frequência, o formato do canvas
+>   (`docs/design/wireframes/<fluxo>/`, artboards 390×844, skill `design`),
+>   o aceite e a Fase 2 combinada.
+> - **`docs/design/PRINCIPIOS-DE-WIREFRAME.md`** (a pesquisa por família de
+>   tela, com seção de origem) e **`docs/design/INVENTARIO-WIREFRAMES.md`**
+>   (toda tela × estado, com prioridade e estado do wireframe).
+>
+> Por que wireframe antes: o redesenho de agosto aplicou identidade sobre
+> estrutura não decidida — `04-IDENTIDADE-VISUAL.md` §11 mede o resultado.
+> **Nada foi desenhado ainda**: a primeira sessão de desenho começa pela Home
+> (`/squad-design desenhar home`).
+
 > ## 🤖 10/09/2026 — TODA SESSÃO COMEÇA PELO COORDENADOR, E O MANUAL SE SINCRONIZA A CADA MERGE
 >
 > Dois agentes novos e a automação que os aciona:

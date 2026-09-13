@@ -297,7 +297,8 @@ Uma linha por arquivo. **Etiqueta**: `vivo` (descreve o estado e é mantido) · 
 | [`migrations/README.md`](../../migrations/README.md) | como aplicar as migrações D1 | vivo | parcial — [07-DADOS-E-SAVE.md](07-DADOS-E-SAVE.md) §8.3 |
 | [`.claude/agents/`](../../.claude/agents/) | 51 definições de agente (`ls .claude/agents/*.md \| wc -l` → 51, em 10/09/2026): os `soulmon-*` da revisão e dos guardas, os `som-*`, os `doc-*` da SQUAD-DOCS, e os dois que nasceram em 10/09/2026 — **`soulmon-coordenador`** (toda sessão começa e termina por ele) e **`doc-mantenedor`** (sincroniza este manual a cada merge) | vivo | não — o roster está resumido em [12-COMO-MANTER.md](12-COMO-MANTER.md) §9 |
 | [`.claude/skills/squad-docs/METODO.md`](../../.claude/skills/squad-docs/METODO.md) | **fonte canônica das dez regras R1–R10** de documentação | vivo | sim, em versão operacional: [12-COMO-MANTER.md](12-COMO-MANTER.md) |
-| [`.claude/commands/`](../../.claude/commands/) | 7 comandos de barra (`/soulmon`, `/manter-docs`, `/documentar`, `/revisao-soulmon`, `/implementar-wp`, `/destrinchar-estudo`, `/guarda-soulmon`) | vivo | não |
+| [`.claude/commands/`](../../.claude/commands/) | 8 comandos de barra (`/soulmon`, `/manter-docs`, `/documentar`, `/squad-design`, `/revisao-soulmon`, `/implementar-wp`, `/destrinchar-estudo`, `/guarda-soulmon`) | vivo | não |
+| [`.claude/skills/squad-design/`](../../.claude/skills/squad-design/) | a **SQUAD-DESIGN** (13/09/2026): redesenho em duas fases — wireframes em cinza de todas as telas, depois a identidade. `SKILL.md` (comandos `desenhar/criticar/decidir/identidade`), `CONTRACT.md` (roster: `design-curador-padroes`, `design-wireframer` + design-lead, cartógrafo, product-designer, design-critic, guarda-linha-vermelha, visual-designer), `METODO.md` (regras **W1–W10**) | vivo | §8 e [HANDOFF-WIREFRAMES.md](../HANDOFF-WIREFRAMES.md) |
 | [`.claude/skills/soulmon-coordenador/SKILL.md`](../../.claude/skills/soulmon-coordenador/SKILL.md) | a **tabela de roteamento** (pedido → orquestrador dono → o que vai no briefing) e o protocolo de fechamento de sessão | vivo | resumido em §8 abaixo |
 | [`.claude/skills/manter-docs/SKILL.md`](../../.claude/skills/manter-docs/SKILL.md) | o procedimento de sincronização pós-merge do manual (delta → redatores → verificação → carimbo → `.sincronizado.json`) | vivo | resumido em [12-COMO-MANTER.md](12-COMO-MANTER.md) §11 |
 | [`.claude/hooks/session-start.sh`](../../.claude/hooks/session-start.sh) + [`.claude/settings.json`](../../.claude/settings.json) | o hook de início de sessão: instala dependências se faltarem e imprime o briefing (git, delta do manual, guard, o que depende do dono) com a ordem de invocar `/soulmon start` | vivo | §8 |
@@ -323,6 +324,7 @@ Uma linha por arquivo. **Etiqueta**: `vivo` (descreve o estado e é mantido) · 
 | [HANDOFF-ARTE-GEMINI.md](../HANDOFF-ARTE-GEMINI.md) | roteiro da sessão de geração de arte no navegador (08/09/2026) | plano | não |
 | [HANDOFF-QA-REVISAO.md](../HANDOFF-QA-REVISAO.md) | handoff para a sessão de QA, incluindo "onde eu provavelmente errei" | registro | parcial — os achados foram para [`STATUS.md`](../STATUS.md) |
 | [HANDOFF-SESSAO-LOCAL.md](../HANDOFF-SESSAO-LOCAL.md) | o que só uma sessão na máquina do dono consegue terminar | plano | parcial — [08-INTEGRACOES-E-DEPLOY.md](08-INTEGRACOES-E-DEPLOY.md) §4 |
+| [HANDOFF-WIREFRAMES.md](../HANDOFF-WIREFRAMES.md) | **o handoff da Fase 1 do redesenho** (13/09/2026): o que ler, a squad, os 10 fluxos na ordem de frequência, o formato do canvas, o aceite W1–W10, a Fase 2 combinada | vivo | é a porta de entrada de `docs/design/` (§6.7) |
 | [INVENTARIO-TELAS.md](../INVENTARIO-TELAS.md) | mapa da superfície visual medido em 19/08/2026 pelo cartógrafo de telas | registro | parcial — [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md) é o vigente e cita esta medição |
 | [ORACULO.md](../ORACULO.md) | as duas metades do oráculo (leitura e criação), ponta a ponta | vivo | parcial — [02 §22](02-REGRAS-DE-NEGOCIO.md#oraculo) resume; o detalhe continua aqui |
 | [PALCO-E-DECORACAO.md](../PALCO-E-DECORACAO.md) | contrato com quem desenha: espaços do palco em px, `setting`, `fits` | vivo | parcial — [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) §7 |
@@ -383,6 +385,15 @@ Anexos factuais (**registro**, cada um é a foto do código no dia): [plano-melh
 | [squad/01-RUBRICA.md](../squad/01-RUBRICA.md) | rubrica e template que tornam 14 análises comparáveis | vivo | não |
 | [squad/02-SQUAD.md](../squad/02-SQUAD.md) | mapa dos 14 agentes de revisão | vivo | não |
 | [ui-refs/SPEC-UI-PIXEL.md](../ui-refs/SPEC-UI-PIXEL.md) | spec textual da direção pixel-art a partir das referências de 14/08/2026 (as folhas `.png` estão na mesma pasta) | plano | parcial — [04-IDENTIDADE-VISUAL.md](04-IDENTIDADE-VISUAL.md) §1 e §11 |
+
+### 6.7 `docs/design/` — o redesenho em duas fases (desde 13/09/2026)
+
+| Doc | O que é | Etiqueta | Dono |
+|---|---|---|---|
+| [design/PRINCIPIOS-DE-WIREFRAME.md](../design/PRINCIPIOS-DE-WIREFRAME.md) | a pesquisa (dossiê Mobbin, os seis dossiês por área, estudos, decisões, linhas vermelhas) reduzida ao que cada FAMÍLIA de tela obriga e proíbe, com a seção de origem de cada regra | vivo | `design-curador-padroes` |
+| [design/INVENTARIO-WIREFRAMES.md](../design/INVENTARIO-WIREFRAMES.md) | a tabela-mestra: toda tela × estado derivada do [03-FLUXO-DE-TELAS.md](03-FLUXO-DE-TELAS.md), com `id`, fluxo, prioridade P0–P2 e o estado do wireframe (`a desenhar` → `desenhado` → `criticado` → `aprovado`); o link do canvas de cada fluxo entra aqui | vivo | `soulmon-screen-cartographer` |
+| `design/DECISOES-WIREFRAME.md` | entra / volta / sai por fluxo, escrito pelo `soulmon-design-lead` a cada `decidir` (nasce na primeira sessão de desenho) | decisões | `soulmon-design-lead` |
+| `design/wireframes/<fluxo>/` | os arquivos de trabalho de cada canvas (`Main.dc.html`, um `.dc.html` por tela × estado, `canvas.json`) — commitados; o `.html` publicado não | canvas | `design-wireframer` |
 
 ### 6.6 `docs/historico-digiapp/` — o que NÃO se lê
 

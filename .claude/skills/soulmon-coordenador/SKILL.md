@@ -25,7 +25,7 @@ skill é a sua régua: a tabela de roteamento e o protocolo de fechamento.
 | Ciclo de produto formal (discovery → maintainer), PRD, ADR | `prod-squad` | skill `prod-squad` | `memory/product-context.md`, `01-VISAO.md`, `05-ARQUITETURA.md` |
 | Som, trilha, loudness, autoplay | orquestrador `squad-som` | `/squad-som` | `docs/SOM.md`, `04-IDENTIDADE-VISUAL.md` §som, S1..S13 |
 | Documentação (novo doc, doc apodreceu, "onde está X") | `squad-docs` / `doc-mantenedor` | `/documentar`, `/manter-docs` | `00-MAPA.md`, `12-COMO-MANTER.md` |
-| Redesign, tokens, telas, arte de UI | `soulmon-design-lead` → `soulmon-screen-cartographer` → `soulmon-visual-designer` | agentes | `03-FLUXO-DE-TELAS.md`, `04-IDENTIDADE-VISUAL.md`, `docs/PLANO-DESIGN.md` |
+| Redesign, wireframes, hierarquia de tela, tokens, arte de UI | orquestrador `squad-design` (design-lead decide · cartógrafo mede · curador de padrões · wireframer · design-critic bloqueante · visual-designer na Fase 2) | `/squad-design` | `docs/HANDOFF-WIREFRAMES.md`, `docs/design/*`, `03-FLUXO-DE-TELAS.md`, `04-IDENTIDADE-VISUAL.md`, `docs/PLANO-DESIGN.md` |
 | Arte de criatura, sprites, PI, nomes | `soulmon-ip-brand-guardian` + `soulmon-monster-taming-designer` | agentes | `04` §arte, `docs/Attributions.md`, `docs/ORACULO.md` |
 | Oráculo, onboarding, primeiro dia | `soulmon-guarda-nascimento` | `/implementar-wp` | `02` §21–22, `03` §onboarding, `docs/ORACULO.md` |
 | Push, chat, presença fora do app | `soulmon-guarda-vinculo` | `/implementar-wp` | `02` §58, `08` §push, `03` §fora do app |
