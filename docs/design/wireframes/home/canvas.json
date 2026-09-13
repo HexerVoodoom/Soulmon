@@ -1,0 +1,279 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "HOME-01 · dia normal",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1934,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeVazio.dc.html",
+      "title": "HOME-02 · sem atividade",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1259,
+      "page": "page-1"
+    },
+    {
+      "file": "HomePrimeiroDia.dc.html",
+      "title": "HOME-03 · primeira vez",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1244,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeCarregando.dc.html",
+      "title": "HOME-04 · HOME-46 · skeleton",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1214,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeSemMetricas.dc.html",
+      "title": "HOME-05 · HOME-08 · hideMetrics",
+      "x": 0,
+      "y": 2074,
+      "w": 390,
+      "h": 1154,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeOffline.dc.html",
+      "title": "HOME-44 · OfflineSeal",
+      "x": 490,
+      "y": 2074,
+      "w": 390,
+      "h": 1169,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeErro.dc.html",
+      "title": "HOME-47 · ErrorBoundary",
+      "x": 980,
+      "y": 2074,
+      "w": 390,
+      "h": 1139,
+      "page": "page-1"
+    },
+    {
+      "file": "HomeAvisosExpandido.dc.html",
+      "title": "HOME-10 · slot expandido",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1154,
+      "page": "page-2"
+    },
+    {
+      "file": "HomeAvisosCartoes.dc.html",
+      "title": "HOME-13 · 14 · 15 · 16 · os cartões",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1974,
+      "page": "page-2"
+    },
+    {
+      "file": "FirstDayEstados.dc.html",
+      "title": "HOME-11 · HOME-12 · FirstDayCard",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1629,
+      "page": "page-2"
+    },
+    {
+      "file": "HomeHudEstados.dc.html",
+      "title": "HOME-06 · 07 · 08 · HomeHud",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1629,
+      "page": "page-2"
+    },
+    {
+      "file": "PetCarinho.dc.html",
+      "title": "HOME-18 · carinho em curso",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1199,
+      "page": "page-3"
+    },
+    {
+      "file": "PetDormindo.dc.html",
+      "title": "HOME-19 · dormindo",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1169,
+      "page": "page-3"
+    },
+    {
+      "file": "PetAssombrado.dc.html",
+      "title": "HOME-20 · assombrado",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1184,
+      "page": "page-3"
+    },
+    {
+      "file": "PetPodeEvoluir.dc.html",
+      "title": "HOME-22 · pode evoluir",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1214,
+      "page": "page-3"
+    },
+    {
+      "file": "PetDeckEstados.dc.html",
+      "title": "HOME-21 · 23 · 24 · deck e palco",
+      "x": 0,
+      "y": 1354,
+      "w": 390,
+      "h": 1749,
+      "page": "page-3"
+    },
+    {
+      "file": "PetCheio.dc.html",
+      "title": "HOME-36 · recusa por teto (não é tela)",
+      "x": 490,
+      "y": 1354,
+      "w": 390,
+      "h": 1229,
+      "page": "page-3"
+    },
+    {
+      "file": "AlimentarFolha.dc.html",
+      "title": "HOME-35 · seletor de comida",
+      "x": 980,
+      "y": 1354,
+      "w": 390,
+      "h": 1259,
+      "page": "page-3"
+    },
+    {
+      "file": "ItensPastinha.dc.html",
+      "title": "HOME-37 · pastinha",
+      "x": 1470,
+      "y": 1354,
+      "w": 390,
+      "h": 1229,
+      "page": "page-3"
+    },
+    {
+      "file": "ItensVazio.dc.html",
+      "title": "HOME-38 · pastinha vazia",
+      "x": 0,
+      "y": 3243,
+      "w": 390,
+      "h": 1139,
+      "page": "page-3"
+    },
+    {
+      "file": "ItensUsar.dc.html",
+      "title": "HOME-39 · usar item especial",
+      "x": 490,
+      "y": 3243,
+      "w": 390,
+      "h": 1229,
+      "page": "page-3"
+    },
+    {
+      "file": "ChatEstados.dc.html",
+      "title": "HOME-25 → 30 · ChatBox",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1779,
+      "page": "page-4"
+    },
+    {
+      "file": "PlayCardEstados.dc.html",
+      "title": "HOME-31 · 32 · 33 · PlayCard",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1719,
+      "page": "page-4"
+    },
+    {
+      "file": "TrilhaEvolucao.dc.html",
+      "title": "HOME-34 · EvoTrail — sai",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1704,
+      "page": "page-4"
+    },
+    {
+      "file": "NavEstados.dc.html",
+      "title": "HOME-40 · 41 · 43 · barra e skip link",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1749,
+      "page": "page-4"
+    },
+    {
+      "file": "NavMenu.dc.html",
+      "title": "HOME-42 · menu sanduíche",
+      "x": 0,
+      "y": 1919,
+      "w": 390,
+      "h": 1214,
+      "page": "page-4"
+    },
+    {
+      "file": "FeedbackEstados.dc.html",
+      "title": "HOME-45 · HOME-48 · toast e aria-live",
+      "x": 490,
+      "y": 1919,
+      "w": 390,
+      "h": 1184,
+      "page": "page-4"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "home-leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -150,
+      "w": 760,
+      "text": "Soulmon — Wireframes Home (Fase 1, cinza). Viewport 390×844 + rodapé por artboard (Pergunta · Chega/Sai · Sai da tela atual · Fontes · PT). Inglês é a língua do artboard (D8). Páginas: composição · slot de avisos e HUD · pet e cuidado · chat, cartões e chrome. Tags HOME-xx = linha do INVENTARIO-WIREFRAMES.md. Nenhuma das cinco reaberturas de 13/09 toca a Home."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Home — composição"
+    },
+    {
+      "id": "page-2",
+      "name": "Home — slot de avisos e HUD"
+    },
+    {
+      "id": "page-3",
+      "name": "Home — pet e cuidado"
+    },
+    {
+      "id": "page-4",
+      "name": "Home — chat, cartões e chrome"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
