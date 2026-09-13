@@ -1,6 +1,6 @@
 {
-  "sha": "5b636040125a4eb46c2813055c2f557fcb4fa3ba",
+  "sha": "d2d8dcf9faa6841110fc77974c9a3052d07256db",
   "data": "13/09/2026",
-  "por": "doc-mantenedor (sessão) — fechamento da SQUAD-DESIGN",
+  "por": "doc-mantenedor (sessão) — decisões de wireframe",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
