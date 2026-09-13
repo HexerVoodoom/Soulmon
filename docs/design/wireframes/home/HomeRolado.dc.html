@@ -91,38 +91,54 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 </style>
 </helmet>
 <div class="ab">
-<div class="phone tall"><div class="sheet">
-    <p class="s">One button on the right, and it <b>changes action</b> — never two nodes swapped: the focus node stays stable (03 §4.3). Real labels: Record message · Send message · Stop recording · Sending message…</p>
-    <div class="strip"><p class="cap"><span class="tag">HOME-25</span> normal — sem texto, mic otimista (<code>micDisponivel</code> nasce <code>null</code>)</p><div class="dock">
-    <div class="input" role="textbox" aria-label="Talk to your Soulmon">&gt;_</div>
-    <span class="tap" style="min-width:44px" role="button" aria-label="Record message" ><span class="ico ">mic</span></span>
-  </div></div>
-    <div class="strip"><p class="cap"><span class="tag">HOME-26</span> com texto — o botão vira enviar (<code>hasText</code>)</p><div class="dock">
-    <div class="input" role="textbox" aria-label="Talk to your Soulmon"><span style="color:#111">Feeling good today</span></div>
-    <span class="tap" style="min-width:44px" role="button" aria-label="Send message" ><span class="ico ">send</span></span>
-  </div></div>
-    <div class="strip"><p class="cap"><span class="tag">HOME-27</span> sem transcrição — <code>micDisponivel === false</code>: o botão CONTINUA no DOM, glifo <code>send</code>, <code>aria-disabled</code> sem texto</p><div class="dock">
-    <div class="input" role="textbox" aria-label="Talk to your Soulmon">&gt;_</div>
-    <span class="tap" style="min-width:44px" role="button" aria-label="Send message" aria-disabled="true"><span class="ico ">send</span></span>
-  </div></div>
-    <div class="strip"><p class="cap"><span class="tag">HOME-28</span> gravando — <code>isRecording</code> → <code>stop_circle</code></p><div class="dock">
-    <div class="input" role="textbox" aria-label="Talk to your Soulmon">&gt;_</div>
-    <span class="tap" style="min-width:44px" role="button" aria-label="Stop recording" ><span class="ico on">stop</span></span>
-  </div></div>
-    <div class="strip"><p class="cap"><span class="tag">HOME-29</span> carregando — <code>isLoading</code> → <code>sync</code> girando (reduced-motion: parado)</p><div class="dock">
-    <div class="input" role="textbox" aria-label="Talk to your Soulmon">&gt;_</div>
-    <span class="tap" style="min-width:44px" role="button" aria-label="Sending message…" ><span class="ico ">sync</span></span>
-  </div></div>
-    <div class="strip"><p class="cap"><span class="tag">HOME-30</span> permissão negada — o PET fala; a barra não muda</p><div class="bubble" style="position:relative;left:0;right:0;top:0">I could not reach the microphone. You can still type here 🎤</div></div>
-    <div class="strip"><p class="cap"><span class="tag">D9</span> offline — a IA não responde: toast e respostas locais; a barra continua igual</p><div class="toast" style="position:relative;left:0;right:0;bottom:0;box-shadow:none">AI unavailable, using local responses</div></div>
-  </div></div>
+<div class="phone"><div class="content"><header class="hdr">
+    <h1 class="h1">SOULMON</h1>
+    
+  </header>
+        <section aria-label="Your Soulmon" style="display:flex;flex-direction:column;gap:6px"><div class="stage" aria-label="Pet stage">
+    
+    <div class="shadow"></div>
+    <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"><i class="fo">2</i></span>PET</div>
+    
+    <div class="meters">
+    <span class="m" role="progressbar" aria-label="Health" aria-valuenow="2" aria-valuemax="3"><span class="lbl">HP</span><span class="seg"><i class="on"></i><i class="on"></i><i class=""></i></span><span class="b" style="color:#111">2/3</span></span>
+    <span class="m" role="progressbar" aria-label="Energy" aria-valuenow="1" aria-valuemax="4"><span class="lbl">EN</span><span class="seg"><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="b" style="color:#111">1/4</span></span>
+  </div>
+    
+  </div><div class="nameline"><p class="t b">Pixel <span class="tag">sample</span></p><p class="s">Companion</p></div><div class="deck" role="group" aria-label="Care actions"><span class="tap" role="button" aria-label="Feed" ><i class="fo">3</i><span class="ico ">feed</span><span>Feed</span></span><span class="tap" role="button" aria-label="Items" ><i class="fo">4</i><span class="ico ">items</span><span>Items</span></span><span class="tap" role="button" aria-label="Bath" ><i class="fo">5</i><span class="ico ">bath</span><span>Bath</span></span><span class="tap" role="button" aria-label="Sleep" ><i class="fo">6</i><span class="ico ">sleep</span><span>Sleep</span></span><span class="tap" role="button" aria-label="Play" ><i class="fo">7</i><span class="ico ">play</span><span>Play</span></span></div></section>
+        <p class="sticky">▲ fixed (<code>.sm-pet-sticky</code>) · scrolls under it ▼</p>
+        <section class="card" style="padding:0;gap:0" aria-labelledby="rt"><div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #ddd"><span class="ico ">ok</span><h2 id="rt" class="h2" style="flex:1">Daily rituals</h2><span class="b" aria-label="1 of 4 done">1/4</span></div><ul style="list-style:none;margin:0;padding:0 12px"><li class="row">
+    <span class="ico ">hab</span>
+    <div class="nm"><p class="t" style="">Drink water</p><p class="s">Habit · 2 of 8 today</p></div>
+    <span class="tap" style="min-width:44px" role="button" aria-label="Edit: Drink water"><i class="fo">8</i><span class="ico ">edit</span></span>
+    <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark as completed: Drink water"><i class="fo">9</i><i class=""></i></span>
+  </li><li class="row">
+    <span class="ico ">hab</span>
+    <div class="nm"><p class="t dim" style="text-decoration:line-through">Morning stretch</p><p class="s">Habit · done</p></div>
+    <span class="tap" style="min-width:44px" role="button" aria-label="Edit: Morning stretch"><i class="fo">10</i><span class="ico ">edit</span></span>
+    <span class="chk" role="checkbox" aria-checked="true" aria-label="Completed: Morning stretch"><i class="fo">11</i><i class="on"></i></span>
+  </li><li class="row">
+    <span class="ico ">task</span>
+    <div class="nm"><p class="t" style="">Reply to the landlord</p><p class="s">One-off task · quick</p></div>
+    <span class="tap" style="min-width:44px" role="button" aria-label="Edit: Reply to the landlord"><i class="fo">12</i><span class="ico ">edit</span></span>
+    <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark as completed: Reply to the landlord"><i class="fo">13</i><i class=""></i></span>
+  </li><li class="row">
+    <span class="ico ">hab</span>
+    <div class="nm"><p class="t" style="">Read 10 pages</p><p class="s">Habit · not today</p></div>
+    <span class="tap" style="min-width:44px" role="button" aria-label="Edit: Read 10 pages"><i class="fo">14</i><span class="ico ">edit</span></span>
+    <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark as completed: Read 10 pages"><i class="fo">15</i><i class=""></i></span>
+  </li></ul><div style="padding:10px 12px"><span class="btn" role="button" style="width:100%"><i class="fo">16</i>+ New Activity</span></div></section>
+        <details style="opacity:.75"><summary class="s" role="button" aria-expanded="false"><i class="fo">17</i>Put aside (2) — these ask nothing of you <span class="tag">ATIV-25</span></summary></details></div><div class="dock">
+    <i class="fo">18</i><div class="input" role="textbox" aria-label="Talk to your Soulmon">&gt;_</div>
+    <span class="tap" style="min-width:44px" role="button" aria-label="Record message" ><i class="fo">19</i><span class="ico ">mic</span></span>
+  </div><nav class="nav" aria-label="Main"><span class="navc on" role="button" aria-current="page"><i class="fo">20</i><span class="ico on">home</span><span>Home</span></span><span class="navc" role="button" ><i class="fo">21</i><span class="ico ">act</span><span>Games</span></span><span class="navc" role="button" ><i class="fo">22</i><span class="ico ">evo</span><span>Evolution</span></span><span class="navc" role="button" ><i class="fo">23</i><span class="ico ">shop</span><span>Shop</span></span><span class="navc" role="button" aria-expanded="false"><i class="fo">24</i><span class="ico ">menu</span><span>Menu</span></span></nav><span class="scrollhint">▲ slot and capture scrolled away under the pet</span></div>
 <footer class="foot">
-    <p><span class="b">Artboard</span> · <span class="tag">HOME-25</span> <span class="tag">HOME-26</span> <span class="tag">HOME-27</span> <span class="tag">HOME-28</span> <span class="tag">HOME-29</span> <span class="tag">HOME-30</span></p>
-    <h4>Pergunta</h4><p>"Can I say something to them?"</p>
-    <h4>Chega por / Sai para</h4><p>dock <code>position: fixed</code> acima da BottomNav — montado dentro do <code>CompanionHUD</code> e reancorado no <code>&lt;main&gt;</code> (03 §4.3; comentário do dock no <code>CompanionHUD.tsx</code>) → <code>handleSendMessage</code> / <code>handleMicClick</code>; a resposta vai para o balão</p>
-    <h4>Sai da tela atual</h4><ul><li>Segundo botão (mic + enviar lado a lado) — nunca dois em <code>? :</code> (03 §4.3).</li><li>Placeholder <code>&gt;_</code> como único rótulo — o nome acessível do campo é "Talk to your Soulmon" (<code>ChatBox.tsx</code>); o placeholder é decorativo.</li><li>Histórico visível — <code>history</code> vive em memória, 6 entradas, nada no save.</li></ul>
-    <h4>Fontes</h4><ul><li>03 §4.3 · <code>ChatBox.tsx</code> (rótulos reais dos quatro estados; <code>aria-label</code> do input)</li><li>CLAUDE.md › transcrição (sem <code>SUPABASE_*</code> o glifo vira enviar — D11: desenhar como o código faz)</li><li>D9 · W3 · W10 (botão 44px, <code>aria-disabled</code> em vez de sumir)</li></ul>
-    <h4>PT</h4><ul><li>Gravar mensagem · Enviar mensagem · Parar gravação · Enviando mensagem… · "Não consegui acessar o microfone. Dá para escrever aqui do mesmo jeito 🎤" · "IA indisponível — usando respostas locais"</li></ul>
+    <p><span class="b">Artboard</span> · <span class="tag">HOME-01</span></p>
+    <h4>Pergunta</h4><p>"What do I do now?" — the list, with the creature still watching</p>
+    <h4>Chega por / Sai para</h4><p>rolagem da Home (<code>.sm-pet-sticky</code>) → linha → Atividades · "Put aside" → ATIV-26</p>
+    <h4>Sai da tela atual</h4><ul><li>Nada novo sai: este artboard mostra a interação central (BitePal, M-vinc §1) que o artboard do topo não consegue mostrar — o pet fica, o resto rola por baixo; a lista ganha 356px (≈ 6 linhas).</li></ul>
+    <h4>Fontes</h4><ul><li>PRINCÍPIOS §1 (Home / visor)</li><li>03 §4.1 (itens 8 e 9: <code>RitualPanel</code> e a gaveta "Guardadas" fechada por padrão)</li><li>PRINCÍPIOS §2 (<code>RitualRow</code>: 1 selo + 1 checkbox + máx. 2 metadados; o lápis é controle — o canvas Atividades decide se ele fica visível ou vai para "mais")</li><li>W10: ordem de foco numerada no artboard — 1 é o skip link (oculto, HOME-43); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
+    <h4>PT</h4><ul><li>Rituais diários · Editar: … · Marcar como concluído · "Guardadas (2) — não cobram nada"</li></ul>
     
   </footer>
 </div>

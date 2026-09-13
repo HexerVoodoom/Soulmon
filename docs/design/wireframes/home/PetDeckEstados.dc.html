@@ -11,12 +11,10 @@
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#111;background:#fff;-webkit-font-smoothing:antialiased}
 a{color:#111}a:hover{color:#666}
 code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
-.ab{width:390px;display:flex;flex-direction:column;gap:0}
-.phone{width:390px;height:844px;}
+.ab{width:390px;display:flex;flex-direction:column}
+.phone{width:390px;height:844px;box-sizing:border-box;border:1px solid #999;position:relative;overflow:hidden;background:#fff;display:flex;flex-direction:column}
 .phone.tall{height:auto;min-height:844px}
-.scrollhint{position:absolute;right:12px;bottom:126px;font-size:10px;color:#666;background:#fff;border:1px dashed #999;border-radius:4px;padding:2px 6px}
-.phone{box-sizing:border-box;border:1px solid #999;position:relative;overflow:hidden;background:#fff;display:flex;flex-direction:column}
-.content{flex:1;overflow:hidden;padding:10px 16px 0;display:flex;flex-direction:column;gap:10px;min-height:0}
+.content{flex:1;overflow:hidden;padding:8px 16px 0;display:flex;flex-direction:column;gap:8px;min-height:0}
 .sheet{flex:1;overflow:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:12px;min-height:0}
 .box{background:#ddd;border:1px solid #999;border-radius:8px;box-sizing:border-box}
 .card{background:#fff;border:1px solid #999;border-radius:8px;padding:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px}
@@ -38,36 +36,41 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .dock{height:52px;border-top:1px solid #999;display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;flex:none;box-sizing:border-box}
 .input{flex:1;min-height:40px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 10px;color:#666;font-size:13px;box-sizing:border-box}
 .tag{display:inline-block;border:1px dashed #999;font-size:9px;color:#666;padding:0 4px;border-radius:3px;line-height:14px;font-weight:600;background:#fff;white-space:nowrap}
+.tag.novo{border-style:solid;color:#111}
 .note{font-size:10px;color:#666;line-height:1.25;margin:0}
-.fo{display:inline-flex;width:14px;height:14px;border:1px solid #111;font-size:9px;align-items:center;justify-content:center;border-radius:2px;background:#fff;color:#111;font-weight:700;flex:none;font-style:normal}
-.seg{display:flex;gap:2px}
-.seg i{display:block;width:8px;height:12px;border:1px solid #999;background:#fff}
+.fo{display:inline-flex;width:14px;height:14px;border:1px solid #111;font-size:9px;align-items:center;justify-content:center;border-radius:2px;background:#fff;color:#111;font-weight:700;flex:none;font-style:normal;margin-right:2px}
+.seg{display:inline-flex;gap:2px;vertical-align:middle}
+.seg i{display:block;width:9px;height:11px;border:1px solid #999;background:#fff}
 .seg i.on{background:#666}
 .seg i.half{background:linear-gradient(90deg,#666 50%,#fff 50%)}
-.hud{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px}
-.meter{display:flex;align-items:center;gap:4px;font-size:12px}
-.stage{position:relative;height:180px;border:1px solid #999;border-radius:10px;background:#fff;overflow:hidden;box-sizing:border-box}
-.stage .pet{position:absolute;left:140px;top:60px;width:110px;height:96px;border:1px solid #999;background:#ddd;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.1em;color:#666;box-sizing:border-box}
-.stage .shadow{position:absolute;left:125px;top:150px;width:140px;height:14px;border-radius:50%;background:#ddd;border:1px solid #999}
-.stage .bubble{position:absolute;left:16px;right:16px;top:12px;min-height:34px;border:1px solid #999;border-radius:8px;background:#fff;padding:6px 10px;font-size:12px;line-height:1.3;box-sizing:border-box}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:40px}
+.meters{position:absolute;left:10px;bottom:8px;display:flex;gap:12px;align-items:center;font-size:10px;color:#666}
+.meters .m{display:inline-flex;align-items:center;gap:4px}
+.meters .m .lbl{font-weight:700;letter-spacing:.04em}
+.stage{position:relative;height:200px;border:1px solid #999;border-radius:10px;background:#fff;overflow:hidden;box-sizing:border-box}
+.stage .pet{position:absolute;left:140px;top:56px;width:110px;height:96px;border:1px solid #999;background:#ddd;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.1em;color:#666;box-sizing:border-box}
+.stage .shadow{position:absolute;left:125px;top:146px;width:140px;height:14px;border-radius:50%;background:#ddd;border:1px solid #999}
+.stage .bubble{position:absolute;left:16px;right:16px;top:10px;min-height:32px;border:1px solid #999;border-radius:8px;background:#fff;padding:6px 10px;font-size:12px;line-height:1.3;box-sizing:border-box}
 .stage .bubble::after{content:"";position:absolute;left:170px;bottom:-9px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #999}
 .stage .prop{position:absolute;border:1px solid #999;background:#fff;border-radius:6px;font-size:9px;color:#666;padding:2px 5px}
-.stage .evolve{position:absolute;left:16px;right:16px;bottom:10px}
-.deck{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.deck .tap{border:1px solid transparent;border-radius:8px;position:relative}
+.stage .evolve{position:absolute;right:10px;bottom:8px}
+.deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.deck .tap{border:1px solid transparent;border-radius:8px;position:relative;padding:2px 0}
 .deck .tap.dis{color:#999}
-.badge{position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:#111}
+.deck .tap.dis .ico{border-style:dashed}
+.badge{position:absolute;top:4px;right:8px;width:8px;height:8px;border-radius:50%;background:#111}
 .nameline{text-align:center;line-height:1.2}
 .slot{display:flex;flex-direction:column;gap:6px}
 .more{min-height:44px;border:1px dashed #999;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;background:#fff}
-.row{display:flex;align-items:center;gap:10px;min-height:56px;border-top:1px solid #ddd}
+.sticky{border-top:1px dashed #666;font-size:9px;color:#666;text-align:center;line-height:14px;margin:0}
+.row{display:flex;align-items:center;gap:8px;min-height:56px;border-top:1px solid #ddd}
 .row:first-of-type{border-top:0}
 .row .chk{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
 .row .chk i{width:22px;height:22px;border:1px solid #999;border-radius:4px;display:block;background:#fff}
 .row .chk i.on{background:#666}
 .row .nm{flex:1;min-width:0}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.cell{min-height:80px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;box-sizing:border-box}
+.cell{min-height:80px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;box-sizing:border-box;text-align:center}
 .cell.sel{border-width:2px;border-color:#111;background:#ddd}
 .strip{border:1px dashed #999;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#fff}
 .strip .cap{font-size:10px;color:#666;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}
@@ -83,30 +86,45 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .popover .mr{min-height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-top:1px solid #ddd;font-size:13px}
 .popover .mr:first-child{border-top:0}
 .dim{opacity:.55}
-.cut{border-top:1px dashed #999;text-align:center;font-size:10px;color:#666;padding-top:4px;margin:0}
+.scrollhint{position:absolute;right:12px;bottom:126px;font-size:10px;color:#666;background:#fff;border:1px dashed #999;border-radius:4px;padding:2px 6px}
+.folha{position:absolute;left:0;right:0;bottom:0;border-top:1px solid #999;background:#fff;padding:12px 16px 16px;display:flex;flex-direction:column;gap:12px}
 </style>
 </helmet>
 <div class="ab">
 <div class="phone tall"><div class="sheet">
-    <div class="strip"><p class="cap"><span class="tag">HOME-21</span> itens novos — <code>hasNewItems</code> acende o selo do botão Items</p><div class="deck" role="group" aria-label="Care actions"><span class="tap" role="button" aria-label="Feed"><span class="ico ">feed</span><span>Feed</span></span><span class="tap" role="button" aria-label="Items"><span class="ico on">items</span><span>Items</span><span class="badge"></span></span><span class="tap" role="button" aria-label="Bath"><span class="ico ">bath</span><span>Bath</span></span><span class="tap" role="button" aria-label="Sleep"><span class="ico ">sleep</span><span>Sleep</span></span></div></div>
-    <div class="strip"><p class="cap"><span class="tag">HOME-23</span> banho em espera — <code>showerCooldown</code> 5 s contra toque duplo (não é gate de regra)</p><div class="deck" role="group" aria-label="Care actions"><span class="tap" role="button" aria-label="Feed"><span class="ico ">feed</span><span>Feed</span></span><span class="tap" role="button" aria-label="Items"><span class="ico ">items</span><span>Items</span></span><span class="tap dis" role="button" aria-label="Bath"><span class="ico ">bath</span><span>Bath</span></span><span class="tap" role="button" aria-label="Sleep"><span class="ico ">sleep</span><span>Sleep</span></span></div></div>
+    <div class="strip"><p class="cap"><span class="tag">HOME-21</span> itens novos — <code>hasNewItems</code> acende o selo do botão Items (aria-label "Items — new")</p><div class="deck" role="group" aria-label="Care actions"><span class="tap" role="button" aria-label="Feed" ><span class="ico ">feed</span><span>Feed</span></span><span class="tap" role="button" aria-label="Items — new" ><span class="ico on">items</span><span>Items</span><span class="badge"></span></span><span class="tap" role="button" aria-label="Bath" ><span class="ico ">bath</span><span>Bath</span></span><span class="tap" role="button" aria-label="Sleep" ><span class="ico ">sleep</span><span>Sleep</span></span><span class="tap" role="button" aria-label="Play" ><span class="ico ">play</span><span>Play</span></span></div></div>
+    <div class="strip"><p class="cap"><span class="tag">HOME-23</span> banho em espera — <code>showerCooldown</code> 5 s contra toque duplo (não é gate de regra) · <code>aria-disabled</code>, borda tracejada, não só cor</p><div class="deck" role="group" aria-label="Care actions"><span class="tap" role="button" aria-label="Feed" ><span class="ico ">feed</span><span>Feed</span></span><span class="tap" role="button" aria-label="Items" ><span class="ico ">items</span><span>Items</span></span><span class="tap dis" role="button" aria-label="Bath" aria-disabled="true"><span class="ico ">bath</span><span>Bath</span></span><span class="tap" role="button" aria-label="Sleep" ><span class="ico ">sleep</span><span>Sleep</span></span><span class="tap" role="button" aria-label="Play" ><span class="ico ">play</span><span>Play</span></span></div></div>
     <div class="strip"><p class="cap"><span class="tag">HOME-24</span> cocô presente — adereço no palco; sai pelo banho (<code>cleanPoop</code>)</p><div class="stage" aria-label="Pet stage">
-    <span class="prop" style="left:60px;top:160px">poop</span>
+    <span class="prop" style="left:60px;top:130px">poop</span>
     <div class="shadow"></div>
-    <div class="pet" style="">PET</div>
+    <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"></span>PET</div>
     
-    
+    <div class="meters">
+    <span class="m" role="progressbar" aria-label="Health" aria-valuenow="2" aria-valuemax="3"><span class="lbl">HP</span><span class="seg"><i class="on"></i><i class="on"></i><i class=""></i></span><span class="b" style="color:#111">2/3</span></span>
+    <span class="m" role="progressbar" aria-label="Energy" aria-valuenow="2" aria-valuemax="4"><span class="lbl">EN</span><span class="seg"><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i></span><span class="b" style="color:#111">2/4</span></span>
+  </div>
     
   </div></div>
-    <p class="note">The deck is 4 cells, 44px each, label under a naked icon (PD §0.7). Order is the literal array: feed · items · bath · sleep.</p>
+    <div class="strip"><p class="cap">retorno após ausência — <code>welcomeBackLine</code> no balão (PRINCÍPIOS §1 "estados"; sem linha própria no inventário → achado para o cartógrafo)</p><div class="stage" aria-label="Pet stage">
+    <div class="bubble">I missed you these days. No rush.</div>
+    <div class="shadow"></div>
+    <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"></span>PET</div>
+    
+    <div class="meters">
+    <span class="m" role="progressbar" aria-label="Health" aria-valuenow="1" aria-valuemax="3"><span class="lbl">HP</span><span class="seg"><i class="on"></i><i class=""></i><i class=""></i></span><span class="b" style="color:#111">1/3</span></span>
+    <span class="m" role="progressbar" aria-label="Energy" aria-valuenow="1" aria-valuemax="4"><span class="lbl">EN</span><span class="seg"><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="b" style="color:#111">1/4</span></span>
+  </div>
+    
+  </div></div>
+    <p class="note">Deck = 5 cells (feed · items · bath · sleep · play <span class="tag novo">novo</span>), 44px each, label under a naked icon (PD §0.7).</p>
   </div></div>
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">HOME-21</span> <span class="tag">HOME-23</span> <span class="tag">HOME-24</span></p>
     <h4>Pergunta</h4><p>"What does my creature need from me right now?" — one prop at a time</p>
-    <h4>Chega por / Sai para</h4><p>compra/drop (<code>newItemsReady</code>) · ação <code>bath</code> · relógio de cocô (<code>useCareSystem</code>, polling 10 s) → <code>handleOpenItems</code> · <code>handleShowerClick</code> · banho limpa</p>
-    <h4>Sai da tela atual</h4><ul><li>Contagem de itens novos no selo (um ponto, não "+3") — o selo é presença, não placar.</li><li>Texto "wait 5 s" no banho — o cooldown é anti-toque-duplo, invisível como regra (03 §4.2).</li><li>Frase "your pet needs a bath" — o cocô é adereço; se o pet fala, é o ÚNICO desejo de <code>needsAttention</code> (02 §13).</li></ul>
-    <h4>Fontes</h4><ul><li>03 §4.2 (deck literal; <code>disabled: showerCooldown</code>; <code>hasNewItems</code>) · 03 §4.25 (<code>useCareSystem</code>)</li><li>02 §13 (<code>needsAttention</code> devolve no máximo UM desejo: banho → brincar → comida)</li><li>PRINCÍPIOS §1 (adereço, nunca frase) · PD §0.7 (ícone pelado)</li><li>W10 (44px por célula; rótulo visível = <code>aria-label</code>)</li></ul>
-    <h4>PT</h4><ul><li>Alimentar · Itens · Banho · Dormir</li><li>"Um banhinho cairia super bem." (desejo)</li></ul>
+    <h4>Chega por / Sai para</h4><p>compra/drop (<code>newItemsReady</code>) · ação <code>bath</code> · relógio de cocô (<code>useCareSystem</code>, polling 10 s) · <code>daysAway</code> na abertura → <code>handleOpenItems</code> · <code>handleShowerClick</code> · banho limpa</p>
+    <h4>Sai da tela atual</h4><ul><li>Contagem de itens novos no selo (um ponto, não "+3") — o selo é presença, não placar.</li><li>Texto "wait 5 s" no banho — o cooldown é anti-toque-duplo, invisível como regra.</li><li>Frase "your pet needs a bath" — o cocô é adereço; se o pet fala, é o ÚNICO desejo de <code>needsAttention</code> (02 §13).</li><li>No retorno: nenhum número de dias, nenhum zero (PRINCÍPIOS §4; <code>welcomeBack.ts</code>: "nem 'você estava sumido', nem 'vamos recuperar'").</li></ul>
+    <h4>Fontes</h4><ul><li>03 §4.2 (deck literal; <code>disabled: showerCooldown</code>; <code>hasNewItems</code>) · 03 §4.25 (<code>useCareSystem</code>)</li><li>02 §13 (<code>needsAttention</code> devolve no máximo UM desejo: banho → brincar → comida)</li><li><code>welcomeBack.ts</code> (buckets sem número; "You came back!", "I missed you these days. No rush.") · MOB §10A Lovi</li><li>PRINCÍPIOS §1 (adereço, nunca frase) · PD §0.7 · W10 (WCAG 1.4.1: estado não só por cor)</li></ul>
+    <h4>PT</h4><ul><li>Alimentar · Itens · Banho · Dormir · Brincar</li><li>"Um banhinho cairia super bem." (desejo)</li><li>"Senti saudade esses dias. Sem pressa."</li></ul>
     
   </footer>
 </div>

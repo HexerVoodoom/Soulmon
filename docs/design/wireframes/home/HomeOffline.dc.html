@@ -11,12 +11,10 @@
 body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#111;background:#fff;-webkit-font-smoothing:antialiased}
 a{color:#111}a:hover{color:#666}
 code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
-.ab{width:390px;display:flex;flex-direction:column;gap:0}
-.phone{width:390px;height:844px;}
+.ab{width:390px;display:flex;flex-direction:column}
+.phone{width:390px;height:844px;box-sizing:border-box;border:1px solid #999;position:relative;overflow:hidden;background:#fff;display:flex;flex-direction:column}
 .phone.tall{height:auto;min-height:844px}
-.scrollhint{position:absolute;right:12px;bottom:126px;font-size:10px;color:#666;background:#fff;border:1px dashed #999;border-radius:4px;padding:2px 6px}
-.phone{box-sizing:border-box;border:1px solid #999;position:relative;overflow:hidden;background:#fff;display:flex;flex-direction:column}
-.content{flex:1;overflow:hidden;padding:10px 16px 0;display:flex;flex-direction:column;gap:10px;min-height:0}
+.content{flex:1;overflow:hidden;padding:8px 16px 0;display:flex;flex-direction:column;gap:8px;min-height:0}
 .sheet{flex:1;overflow:hidden;padding:12px 16px;display:flex;flex-direction:column;gap:12px;min-height:0}
 .box{background:#ddd;border:1px solid #999;border-radius:8px;box-sizing:border-box}
 .card{background:#fff;border:1px solid #999;border-radius:8px;padding:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:8px}
@@ -38,36 +36,41 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .dock{height:52px;border-top:1px solid #999;display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;flex:none;box-sizing:border-box}
 .input{flex:1;min-height:40px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;align-items:center;padding:0 10px;color:#666;font-size:13px;box-sizing:border-box}
 .tag{display:inline-block;border:1px dashed #999;font-size:9px;color:#666;padding:0 4px;border-radius:3px;line-height:14px;font-weight:600;background:#fff;white-space:nowrap}
+.tag.novo{border-style:solid;color:#111}
 .note{font-size:10px;color:#666;line-height:1.25;margin:0}
-.fo{display:inline-flex;width:14px;height:14px;border:1px solid #111;font-size:9px;align-items:center;justify-content:center;border-radius:2px;background:#fff;color:#111;font-weight:700;flex:none;font-style:normal}
-.seg{display:flex;gap:2px}
-.seg i{display:block;width:8px;height:12px;border:1px solid #999;background:#fff}
+.fo{display:inline-flex;width:14px;height:14px;border:1px solid #111;font-size:9px;align-items:center;justify-content:center;border-radius:2px;background:#fff;color:#111;font-weight:700;flex:none;font-style:normal;margin-right:2px}
+.seg{display:inline-flex;gap:2px;vertical-align:middle}
+.seg i{display:block;width:9px;height:11px;border:1px solid #999;background:#fff}
 .seg i.on{background:#666}
 .seg i.half{background:linear-gradient(90deg,#666 50%,#fff 50%)}
-.hud{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:44px}
-.meter{display:flex;align-items:center;gap:4px;font-size:12px}
-.stage{position:relative;height:180px;border:1px solid #999;border-radius:10px;background:#fff;overflow:hidden;box-sizing:border-box}
-.stage .pet{position:absolute;left:140px;top:60px;width:110px;height:96px;border:1px solid #999;background:#ddd;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.1em;color:#666;box-sizing:border-box}
-.stage .shadow{position:absolute;left:125px;top:150px;width:140px;height:14px;border-radius:50%;background:#ddd;border:1px solid #999}
-.stage .bubble{position:absolute;left:16px;right:16px;top:12px;min-height:34px;border:1px solid #999;border-radius:8px;background:#fff;padding:6px 10px;font-size:12px;line-height:1.3;box-sizing:border-box}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:40px}
+.meters{position:absolute;left:10px;bottom:8px;display:flex;gap:12px;align-items:center;font-size:10px;color:#666}
+.meters .m{display:inline-flex;align-items:center;gap:4px}
+.meters .m .lbl{font-weight:700;letter-spacing:.04em}
+.stage{position:relative;height:200px;border:1px solid #999;border-radius:10px;background:#fff;overflow:hidden;box-sizing:border-box}
+.stage .pet{position:absolute;left:140px;top:56px;width:110px;height:96px;border:1px solid #999;background:#ddd;display:flex;align-items:center;justify-content:center;font-weight:700;letter-spacing:.1em;color:#666;box-sizing:border-box}
+.stage .shadow{position:absolute;left:125px;top:146px;width:140px;height:14px;border-radius:50%;background:#ddd;border:1px solid #999}
+.stage .bubble{position:absolute;left:16px;right:16px;top:10px;min-height:32px;border:1px solid #999;border-radius:8px;background:#fff;padding:6px 10px;font-size:12px;line-height:1.3;box-sizing:border-box}
 .stage .bubble::after{content:"";position:absolute;left:170px;bottom:-9px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:9px solid #999}
 .stage .prop{position:absolute;border:1px solid #999;background:#fff;border-radius:6px;font-size:9px;color:#666;padding:2px 5px}
-.stage .evolve{position:absolute;left:16px;right:16px;bottom:10px}
-.deck{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.deck .tap{border:1px solid transparent;border-radius:8px;position:relative}
+.stage .evolve{position:absolute;right:10px;bottom:8px}
+.deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.deck .tap{border:1px solid transparent;border-radius:8px;position:relative;padding:2px 0}
 .deck .tap.dis{color:#999}
-.badge{position:absolute;top:4px;right:10px;width:8px;height:8px;border-radius:50%;background:#111}
+.deck .tap.dis .ico{border-style:dashed}
+.badge{position:absolute;top:4px;right:8px;width:8px;height:8px;border-radius:50%;background:#111}
 .nameline{text-align:center;line-height:1.2}
 .slot{display:flex;flex-direction:column;gap:6px}
 .more{min-height:44px;border:1px dashed #999;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;background:#fff}
-.row{display:flex;align-items:center;gap:10px;min-height:56px;border-top:1px solid #ddd}
+.sticky{border-top:1px dashed #666;font-size:9px;color:#666;text-align:center;line-height:14px;margin:0}
+.row{display:flex;align-items:center;gap:8px;min-height:56px;border-top:1px solid #ddd}
 .row:first-of-type{border-top:0}
 .row .chk{width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex:none}
 .row .chk i{width:22px;height:22px;border:1px solid #999;border-radius:4px;display:block;background:#fff}
 .row .chk i.on{background:#666}
 .row .nm{flex:1;min-width:0}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.cell{min-height:80px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;box-sizing:border-box}
+.cell{min-height:80px;border:1px solid #999;border-radius:8px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11px;box-sizing:border-box;text-align:center}
 .cell.sel{border-width:2px;border-color:#111;background:#ddd}
 .strip{border:1px dashed #999;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;background:#fff}
 .strip .cap{font-size:10px;color:#666;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0}
@@ -83,41 +86,41 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .popover .mr{min-height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-top:1px solid #ddd;font-size:13px}
 .popover .mr:first-child{border-top:0}
 .dim{opacity:.55}
-.cut{border-top:1px dashed #999;text-align:center;font-size:10px;color:#666;padding-top:4px;margin:0}
+.scrollhint{position:absolute;right:12px;bottom:126px;font-size:10px;color:#666;background:#fff;border:1px dashed #999;border-radius:4px;padding:2px 6px}
+.folha{position:absolute;left:0;right:0;bottom:0;border-top:1px solid #999;background:#fff;padding:12px 16px 16px;display:flex;flex-direction:column;gap:12px}
 </style>
 </helmet>
 <div class="ab">
-<div class="phone"><div class="content"><header class="hud">
+<div class="phone"><div class="content"><header class="hdr">
     <h1 class="h1">SOULMON</h1>
-    <div style="display:flex;align-items:center;gap:10px">
-      
-      <div class="meter" role="progressbar" aria-label="Health"><span class="ico ">hp</span><span class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i></span><span class="b">3/5</span></div>
-       <div class="meter" role="progressbar" aria-label="Energy"><span class="ico ">en</span><span class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="b">4/8</span></div>
-    </div>
+    
   </header>
-      <section aria-label="Your Soulmon" style="display:flex;flex-direction:column;gap:8px"><div class="stage" aria-label="Pet stage">
+        <section aria-label="Your Soulmon" style="display:flex;flex-direction:column;gap:6px"><div class="stage" aria-label="Pet stage">
     
     <div class="shadow"></div>
-    <div class="pet" style="">PET</div>
+    <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"><i class="fo">2</i></span>PET</div>
     
+    <div class="meters">
+    <span class="m" role="progressbar" aria-label="Health" aria-valuenow="2" aria-valuemax="3"><span class="lbl">HP</span><span class="seg"><i class="on"></i><i class="on"></i><i class=""></i></span><span class="b" style="color:#111">2/3</span></span>
+    <span class="m" role="progressbar" aria-label="Energy" aria-valuenow="2" aria-valuemax="4"><span class="lbl">EN</span><span class="seg"><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i></span><span class="b" style="color:#111">2/4</span></span>
+  </div>
     
-    
-  </div><div class="nameline"><p class="t b" style="font-style:italic;color:#666">{pet name}</p><p class="s">{bond title — derived from XP}</p></div><div class="deck" role="group" aria-label="Care actions"><span class="tap" role="button" aria-label="Feed"><span class="ico ">feed</span><span>Feed</span></span><span class="tap" role="button" aria-label="Items"><span class="ico ">items</span><span>Items</span></span><span class="tap" role="button" aria-label="Bath"><span class="ico ">bath</span><span>Bath</span></span><span class="tap" role="button" aria-label="Sleep"><span class="ico ">sleep</span><span>Sleep</span></span></div></section>
-      <div class="slot"><div class="btn ghost" style="justify-content:flex-start;gap:8px"><span class="ico ">tidy</span><span>Tidy the pile</span><span class="b">(3)</span></div><div class="more" aria-expanded="false"><span class="ico ">▾</span><span class="b">+1</span> notice</div></div>
-      <section class="card" aria-label="Play"><p class="h2">PLAY</p><p class="t">Want to play for a bit?</p><p class="s">Costs 1 energy and grants +10% Bits on your next minigame, plus one attribute point.</p><span class="btn" style="align-self:flex-start">Play</span></section>
-      <div style="display:flex;flex-direction:column;gap:4px">
-    <div style="display:flex;gap:8px"><div class="input">Capture in one line…</div><span class="tap" style="min-width:44px;border:1px solid #999;border-radius:8px;background:#ddd" role="button" aria-label="Add"><span class="ico ">add</span></span></div>
-    <p class="s" style="display:flex;align-items:center;gap:4px;min-height:24px"><span class="ico ">▾</span>Shortcuts</p>
-  </div></div><div class="dock" aria-label="Talk to your Soulmon">
-    <div class="input">&gt;_</div>
-    <span class="tap" style="min-width:44px" role="button" aria-label="Speak" ><span class="ico ">mic</span></span>
-  </div><nav class="nav" aria-label="Main"><span class="navc on" role="button" aria-current="page"><span class="ico on">home</span><span>Home</span></span><span class="navc" role="button" ><span class="ico ">act</span><span>Games</span></span><span class="navc" role="button" ><span class="ico ">evo</span><span>Evolution</span></span><span class="navc" role="button" ><span class="ico ">shop</span><span>Shop</span></span><span class="navc" role="button" aria-expanded="false"><span class="ico ">menu</span><span>Menu</span></span></nav><div class="seal" role="status" aria-live="polite"><span class="ico ">off</span>NO SIGNAL</div><span style="position:absolute;left:8px;top:8px"><span class="tag">HOME-44</span></span></div>
+  </div><div class="nameline"><p class="t b">Pixel <span class="tag">sample</span></p><p class="s">Companion</p></div><div class="deck" role="group" aria-label="Care actions"><span class="tap" role="button" aria-label="Feed" ><i class="fo">3</i><span class="ico ">feed</span><span>Feed</span></span><span class="tap" role="button" aria-label="Items" ><i class="fo">4</i><span class="ico ">items</span><span>Items</span></span><span class="tap" role="button" aria-label="Bath" ><i class="fo">5</i><span class="ico ">bath</span><span>Bath</span></span><span class="tap" role="button" aria-label="Sleep" ><i class="fo">6</i><span class="ico ">sleep</span><span>Sleep</span></span><span class="tap" role="button" aria-label="Play" ><i class="fo">7</i><span class="ico ">play</span><span>Play</span></span></div></section>
+        <p class="sticky">▲ fixed (<code>.sm-pet-sticky</code>) · scrolls under it ▼</p>
+        <div class="slot"><div class="btn ghost" role="button" style="justify-content:flex-start;gap:8px"><i class="fo">8</i><span class="ico ">tidy</span><span>Tidy the pile</span></div><div class="more" role="button" aria-expanded="false"><i class="fo">9</i><span class="ico ">▾</span><span class="b">+1</span> notice</div></div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+    <div style="display:flex;gap:8px"><i class="fo">10</i><div class="input" role="textbox" aria-label="Capture a task or habit in one line">Capture in one line…</div><span class="tap" style="min-width:44px;border:1px solid #999;border-radius:8px;background:#ddd" role="button" aria-label="Add"><i class="fo">11</i><span class="ico ">add</span></span></div>
+    <p class="s" style="display:flex;align-items:center;gap:4px;min-height:24px" role="button" aria-expanded="false"><i class="fo">12</i><span class="ico ">▾</span>Shortcuts</p>
+  </div></div><div class="dock">
+    <i class="fo">13</i><div class="input" role="textbox" aria-label="Talk to your Soulmon">&gt;_</div>
+    <span class="tap" style="min-width:44px" role="button" aria-label="Record message" ><i class="fo">14</i><span class="ico ">mic</span></span>
+  </div><nav class="nav" aria-label="Main"><span class="navc on" role="button" aria-current="page"><i class="fo">15</i><span class="ico on">home</span><span>Home</span></span><span class="navc" role="button" ><i class="fo">16</i><span class="ico ">act</span><span>Games</span></span><span class="navc" role="button" ><i class="fo">17</i><span class="ico ">evo</span><span>Evolution</span></span><span class="navc" role="button" ><i class="fo">18</i><span class="ico ">shop</span><span>Shop</span></span><span class="navc" role="button" aria-expanded="false"><i class="fo">19</i><span class="ico ">menu</span><span>Menu</span></span></nav><div class="seal" role="status" aria-live="polite"><span class="ico ">off</span>NO SIGNAL</div><span style="position:absolute;left:8px;top:8px"><span class="tag">HOME-44</span></span></div>
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">HOME-44</span></p>
     <h4>Pergunta</h4><p>"Can I keep going?" — yes; the seal only says the cloud save is waiting</p>
     <h4>Chega por / Sai para</h4><p>eventos <code>online</code>/<code>offline</code> na raiz do App → — (não bloqueia nada)</p>
-    <h4>Sai da tela atual</h4><ul><li>Nenhum bloqueio, nenhum modal de "sem conexão": o app segue; o chat é a única superfície da Home que depende de rede e ganha artboard próprio (D9 — ChatEstados).</li></ul>
-    <h4>Fontes</h4><ul><li>03 §4.25 (<code>OfflineSeal</code>, <code>cloud_off</code>, "SEM SINAL"/"NO SIGNAL", não bloqueia)</li><li>D9 (offline nas quatro superfícies de rede) · W3</li></ul>
+    <h4>Sai da tela atual</h4><ul><li>Nenhum bloqueio, nenhum modal de "sem conexão": o app segue; o chat é a única superfície da Home que depende de rede e tem estado offline em ChatEstados (D9). O selo fica no topo e não cobre nenhuma célula da barra.</li></ul>
+    <h4>Fontes</h4><ul><li>03 §4.25 (<code>OfflineSeal</code>, <code>cloud_off</code>, "SEM SINAL"/"NO SIGNAL", não bloqueia; <code>pointer-events: none</code>)</li><li>D9 · W3</li></ul>
     <h4>PT</h4><ul><li>SEM SINAL — "Sem sinal — o Soulmon continua funcionando offline"</li></ul>
     
   </footer>
