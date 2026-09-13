@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Inventário MEDIDO do código para a documentação (`docs/manual/`).
  *
