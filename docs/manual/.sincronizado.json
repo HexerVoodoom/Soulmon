@@ -1,6 +1,6 @@
 {
-  "sha": "cf69b081ba5c325e8d50334a90ddf3d9f109aab8",
-  "data": "10/09/2026",
-  "por": "doc-mantenedor (sessão) — fechamento do PR do coordenador",
+  "sha": "5b636040125a4eb46c2813055c2f557fcb4fa3ba",
+  "data": "13/09/2026",
+  "por": "doc-mantenedor (sessão) — fechamento da SQUAD-DESIGN",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
