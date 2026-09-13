@@ -29,9 +29,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 > - `fora` do desenho: os três ramos de save antigo (`STAT-10`, `EVO-23`,
 >   `ONB-13`) e a variante sheet do `ShopModal` sem caminho vivo — **candidatos
 >   a remoção de código, decisão sua**.
-> - Seis superfícies sem descrição no manual (inclui o seletor de comida, P0)
->   estão sendo **medidas no código** pelo cartógrafo e entram no
->   `03-FLUXO-DE-TELAS.md` §4 (sem verificação ainda — cabeçalho marca).
+> - As seis superfícies sem descrição no manual foram **medidas no código** e
+>   entraram no `03-FLUXO-DE-TELAS.md` §4 (§4.2a, §4.2b, §4.6a, §4.6b, §4.8a,
+>   §4.23a). Três achados da medição: **`SettingsModal` é inalcançável** —
+>   `handleOpenAISettings` desce `App.tsx` → `CompanionHUD` → `ChatBox` e o
+>   `ChatBox` só desestrutura a prop, nunca a chama (mesma família da
+>   `OraclePage`; o caminho real de Personalidade é menu → Configurações →
+>   "Personalidade"); a recusa de comida com o pet cheio **não é tela** (fala de
+>   3500 ms, sem decrementar); e **quatro superfícies não têm régua nenhuma**
+>   (`ItemsWindow` vazio, o visual da recusa da loja, os botões de troca de
+>   Créditos, a `StatsPage` inteira — nenhum teste as monta).
 
 > ## 🎨 13/09/2026 — REDESENHO EM DUAS FASES: A SQUAD-DESIGN E O HANDOFF DOS WIREFRAMES
 >

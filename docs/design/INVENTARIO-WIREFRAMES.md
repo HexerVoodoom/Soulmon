@@ -97,11 +97,11 @@ está vazio em 13/09/2026).
 | `HOME-32` | Home | `PlayCard` | já brincou — `playedToday` | idem | — | P1 | a desenhar |
 | `HOME-33` | Home | `PlayCard` | com efeito — `buff` | idem | — | P2 | a desenhar |
 | `HOME-34` | Home | `EvoTrail` | normal — `(gameState.soulmonStages?.length ?? 0) > 0` | trilha na Home | `onOpen` → `setCurrentView('evolution')` | P1 | a desenhar |
-| `HOME-35` | Home | seletor de comida | normal — `setFeedOpen(true)` pela ação `feed` do deck. ⚠️ **medição faltando**: o `03` cita a abertura e não descreve a superfície | ação `feed` | `handleFeed` | P0 | a desenhar |
-| `HOME-36` | Home | seletor de comida | recusa por teto — regra de `careRules` (`FOOD_LIMIT_PER_HOUR`), o pet fala que está cheio, **sem toast**. ⚠️ medição faltando no `03` | idem | — | P1 | a desenhar |
+| `HOME-35` | Home | seletor de comida | normal — `setFeedOpen(true)` pela ação `feed` do deck; `ModalSheet` "Alimentar"/"Feed" com a grade de `foodStock` (`n > 0 && !isSpecialItem(emoji)`, ordenada por quantidade), célula de 72px com arte/emoji + `×N`, e a dica "+1 de energia e pontos de atributo". **Medido em 13/09/2026** → `03` §4.2a | ação `feed` | `handleDeckFeed` fecha a folha e chama `handleFeed` | P0 | a desenhar |
+| `HOME-36` | Home | seletor de comida | recusa por teto — `FOOD_LIMIT_PER_HOUR` (= `MAX_STAGE_REQUIREMENT`) sobre `careCaps.feedTimes`. ⚠️ **não é uma tela**: a folha JÁ fechou; `setFullSignal(n => n + 1)` faz o pet falar por 3500 ms, **sem toast, sem modal e sem decrementar o item**. O artboard é o estado do pet, não do seletor. **Medido em 13/09/2026** → `03` §4.2a | idem | — | P1 | a desenhar |
 | `HOME-37` | Home | `ItemsWindow` (pastinha) | normal — `{showItemsWindow && (…)}`; `handleOpenItems` **alterna** e zera `newItemsReady` | botão `items` do deck | alterna | P1 | a desenhar |
-| `HOME-38` | Home | `ItemsWindow` | vazio — `foodInventory` sem itens. ⚠️ medição faltando no `03` | idem | — | P1 | a desenhar |
-| `HOME-39` | Home | `ItemsWindow` | uso de item especial — `applySpecialItem`/`specialRefusal` (coraçãozinho, chip, Glitchtama com `'daily-cap'`). ⚠️ **medição faltando**: a regra é do `CLAUDE.md`, o `03` não descreve a superfície | toque no item | — | P2 | a desenhar |
+| `HOME-38` | Home | `ItemsWindow` | vazio — `items.length === 0` (`Object.entries(foodInventory).filter(([, c]) => c > 0)`): **ilustração, não texto cru** — `mascot-raven.png` 72×72 em `opacity: .85` + "Sua pastinha está vazia. Conclua uma atividade para ganhar comida.", e **sem rodapé** (o `footer` só existe com `detail`). **Medido em 13/09/2026** → `03` §4.2b | idem | — | P1 | a desenhar |
+| `HOME-39` | Home | `ItemsWindow` | uso de item especial — toque seleciona (borda `--sm2-primary-ink`) e o **rodapé** traz nome + `effectLine` + "Usar"; `use()` chama `onFeed` e limpa a seleção, **sem fechar a folha**. Três recusas com três canais distintos: `'daily-cap'` (🌀) = **toast** e o item continua na grade, `'already-full'` (💗) = **fala do pet** (`healCapSignal`), `'no-stock'` = **silêncio**. **Medido em 13/09/2026** → `03` §4.2b | toque no item | — | P2 | a desenhar |
 | `HOME-40` | Home | `BottomNav` | normal — 4 destinos + menu sanduíche (teto declarado no cabeçalho do componente) | sempre montada | as cinco células | P0 | a desenhar |
 | `HOME-41` | Home | `BottomNav` | célula ativa — seleção é **sublinhado ciano**, nunca placa preenchida (regra de UI do `CLAUDE.md`) | navegação | — | P0 | a desenhar |
 | `HOME-42` | Home | menu sanduíche (popover) | normal — 4 `MenuRow`: Biblioteca, Créditos (`onOpenCredits`, só se a prop existir), Configurações, "Refazer o ritual" (`onResetOnboarding`, idem) | célula 5 | `library` · `creditsOpen` · `settings` · `ConfirmDialog` | P0 | a desenhar |
@@ -309,20 +309,20 @@ está vazio em 13/09/2026).
 | `LOJA-04` | Loja | card de item | **travado** — item com `unlock`: aparece escurecido com 🔒 e **o próprio card diz a missão e o progresso**. ⚰️ o estado `hintFor` ("tocar para revelar") saiu | missão não cumprida | — | P1 | a desenhar |
 | `LOJA-05` | Loja | card de item | já comprado | compra anterior | — | P1 | a desenhar |
 | `LOJA-06` | Loja | card de item | flash de compra — `flash` (medido em 19/08/2026; o `03` não detalha) | `handleShopBuy` | — | P1 | a desenhar |
-| `LOJA-07` | Loja | card de item | saldo insuficiente. ⚠️ **medição faltando** no `03` | toque sem Bits | — | P1 | a desenhar |
+| `LOJA-07` | Loja | card de item | saldo insuficiente — **o card NÃO é desabilitado**: só o preço esmaece (`opacity: affordable ? 1 : 0.5`), e o toque acende `flash` por 2600 ms (borda e `sub` em `--sm2-danger-ink` + "Saldo insuficiente para X." na região `role="status" aria-live="polite"` + `vibrate(60)`). Sem tela de "comprar Bits". **Medido em 13/09/2026** → `03` §4.6a | toque sem Bits | — | P1 | a desenhar |
 | `LOJA-08` | Loja | segmento `shop` | **demo** — `{seg === 'shop' && accountTier === 'demo' && onUnlock && (…)}` monta o `UnlockNudge` com `reason="shop"` | visita | `setUnlockReason('shop')` | P1 | a desenhar |
 | `LOJA-09` | Loja | segmento `tournament` | missões semanais — **no topo**, sob `{seg === 'tournament' && (weeklyMissions?.length ?? 0) > 0 && (…)}`: 3 por semana ISO, determinísticas por `weekKey`, pagas em Emblemas | troca de segmento | — | P1 | a desenhar |
 | `LOJA-10` | Loja | segmento `tournament` | itens de Emblemas — `TOURNAMENT_ITEMS` (8, escada 8/12/15/20/25/40/55/70); **tudo cosmético, e isso é regra** | idem | `handleShopBuy` | P1 | a desenhar |
 | `LOJA-11` | Loja | segmento `tournament` | sem missões — `weeklyMissions?.length === 0` (o bloco não monta) | semana sem sorteio | — | P2 | a desenhar |
 | `LOJA-12` | Loja | `ShopModal` sem `asPage` | como modal — a mesma `body` dentro de um `ModalSheet` com título "Loja"/"Shop". ⚠️ o `App.tsx` **sempre passa `asPage`**; a variante existe e não é usada — ver §3 | nenhum caminho vivo | — | P2 | a desenhar |
-| `LOJA-13` | Loja | troca Créditos → Bits | degraus de `BITS_EXCHANGE` (1 Crédito = 10 Bits) e estado `exchanging`. ⚠️ **do `INVENTARIO-TELAS.md` (19/08/2026), §5.11 — o `03` não cita**; lá também está o achado de que o 💎 emoji convivia com `icon-gem.png` na mesma tela, contra a regra das três moedas | segmento `shop` | — | P1 | a desenhar |
+| `LOJA-13` | Loja | troca Créditos → Bits | os **3** degraus de `BITS_EXCHANGE` (`CREDIT_TO_BITS` = 10), **último nó do corpo**, só em `{seg === 'shop'}`; cinco estados (`can` / sem Créditos / `busy` = `sync` e os outros dois travados / falhou / concluiu, os dois últimos pela região `aria-live` + toast). ⚰️ **O achado de 19/08/2026 (💎 emoji convivendo com `icon-gem.png`) não vale mais**: hoje é um glifo só, `diamond`, e Bits seguem sem ícone. **Medido em 13/09/2026** → `03` §4.6b | segmento `shop` | — | P1 | a desenhar |
 
 ### 1.8 Estatísticas
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
 | `STAT-01` | Estatísticas | `StatsPage` | normal — quatro cartões, cada um com condição literal | chip "Estatísticas" | os outros dois chips | P2 | a desenhar |
-| `STAT-02` | Estatísticas | `StatsPage` | **primeira-vez / vazio** — medição de 19/08/2026: três listas vazias seguidas em texto cru ("No activities completed yet." / "No tasks completed yet." / "No history yet."), sem ilustração nem CTA. ⚠️ **medição faltando**: o `03` não descreve o vazio | 1º uso | — | P2 | a desenhar |
+| `STAT-02` | Estatísticas | `StatsPage` | **primeira-vez / vazio** — ⚰️ a medição de 19/08/2026 (três listas cruas: "No activities completed yet." / "No tasks completed yet." / "No history yet.") **venceu**: nenhuma das três strings existe. Hoje são **duas** listas, cada uma mantendo `<section>` + `<h3>` e trocando o `<ul>` por uma frase de FUTURO ("Nada concluído ainda. A primeira vez já aparece aqui." / "O histórico começa na sua próxima conclusão."); Vínculo e A jornada montam sempre, as demais seções somem. Continua **sem ilustração e sem CTA**. **Medido em 13/09/2026** → `03` §4.8a | 1º uso | — | P2 | a desenhar |
 | `STAT-03` | Estatísticas | `BirthCard` | normal — `{birth && (…)}`; o `App.tsx` monta `birth` sob `bornAt \&#124;\&#124; soulmonMeta?.baseName \&#124;\&#124; demoCharacterId` | `StatsPage` | — | P2 | a desenhar |
 | `STAT-04` | Estatísticas | `BirthCard` | **demo** — `displaySprite` lê o acervo, que o demo nunca preenche, então há fallback `getSpriteForStage('rookie', gameState.demoCharacterId)` | `accountTier === 'demo'` | — | P2 | a desenhar |
 | `STAT-05` | Estatísticas | `BestiaryCard` | ausente — `{(bestiary?.length ?? 0) > 0 && (…)}`: sem nenhum inimigo visto, o cartão **não monta**. A condição é **PRÓPRIA, não aninhada no álbum** (o álbum depende de `soulmonStages`, que o jogador grátis não tem — e é ele quem mais roda masmorra) | nenhum encontro | — | P2 | a desenhar |
@@ -348,8 +348,8 @@ está vazio em 13/09/2026).
 | `CONTA-10` | Conta | `RestWindowCard` | sem métricas — switch `onToggleMetrics`: esconde números e **preserva as recompensas**. **Proibido nesta tela**: score de 0 a 100 e gráfico de estágios do sono | switch | `hideMetrics` no save | P1 | a desenhar |
 | `CONTA-11` | Conta | `StepsCard` | disponível — `{currentView === 'settings' && stepsAvailable === true && gameState.stepsConsent !== 'declined' && (…)}`; **some por completo** sem sensor (PWA) | APK com sensor | — | P2 | a desenhar |
 | `CONTA-12` | Conta | `StepsCard` | consentimento — vem **antes** do diálogo do sistema; `'declined'` é **definitivo** (insistir depois de um "não" é assédio) | 1ª visita | — | P2 | a desenhar |
-| `CONTA-13` | Conta | `SettingsModal` | painel rápido de IA — `{settingsOpen && (…)}` na raiz do `App`, **aberto pelo menu** | menu | `onClose` | P2 | a desenhar |
-| `CONTA-14` | Conta | `AISettingsModal` | normal — **separado** do `SettingsModal`. ⚠️ o `INVENTARIO-TELAS.md` (19/08/2026) diz "via `CompanionHUD`"; o `03` não repete o caminho — ver §3 | ver §3 | `onClose` | P2 | a desenhar |
+| `CONTA-13` | Conta | `SettingsModal` | painel rápido de IA — `{settingsOpen && (…)}` na raiz do `App`. ⚠️ **não é "aberto pelo menu": é INALCANÇÁVEL** — o único chamador de `setSettingsOpen(true)` é `handleOpenAISettings`, que desce até o `ChatBox` e nunca é chamado (medido em 13/09/2026). Mesma família do `OraclePage`; ver `03` §4.23a | nenhum caminho vivo | `onClose` | P2 | a desenhar |
+| `CONTA-14` | Conta | `AISettingsModal` | normal — 3 grupos de chips (`tone` · `emojiIntensity` · `motivationStyle`) + `Disclosure` "Mais opções" (`CREATIVITY` e `customKeywords`, contador só acima de 400/500); rodapé "Padrão" (local) + "Salvar"; `useEffect` ressincroniza a cada abertura, então fechar sem salvar descarta. **Caminho de abertura REAL, medido em 13/09/2026**: menu sanduíche → "Configurações" (`onNavigate('settings')`) → `SettingsPage` → `ActionRow` "Personalidade" → `setShowAISettings(true)`. ⚰️ O "via `CompanionHUD`" do `INVENTARIO-TELAS.md` (19/08/2026) é a fiação MORTA que abriria o `SettingsModal` (ver `CONTA-13`). → `03` §4.23a | `SettingsPage` | `onClose` | P2 | a desenhar |
 | `CONTA-15` | Conta | `GuideModal` (via `ContentModals`) | normal — `guideModalOpen`; **os números saem das CONSTANTES**, nunca de texto à mão | `onOpenGuide` da `SettingsPage` | `onClose` | P2 | a desenhar |
 | `CONTA-16` | Conta | `HelpModal` | glossário — `showHelpModal`, idem | `onOpenGlossary` | `onClose` | P2 | a desenhar |
 | `CONTA-17` | Conta | `ConfirmDialog` | "Refazer o ritual" — `resetOnboardingOpen`; o texto diz que Soulmon, atividades, Bits e progresso **continuam** | linha do menu | confirma ou cancela | P2 | a desenhar |
@@ -498,6 +498,8 @@ push na ordem do relógio (`FORA-12`→`FORA-18`).
 
 ### 3.2 Em aberto — precisa de decisão do `soulmon-design-lead`
 
+> **Respondidas pelo dono em 13/09/2026** — ver [DECISOES-WIREFRAME.md](DECISOES-WIREFRAME.md) §1–§2. Em resumo: (1) Pet → canvas próprio; (2) Biblioteca → canvas próprio "Social"; (3) Onboarding dividido (funil 5º, oráculo último); (4) ramos de save antigo → `fora`; (5) `LOJA-12` → `fora`, achado no STATUS; (6) medir no código antes de desenhar (rodada do cartógrafo em 13/09); (7) reduced-motion só onde a estrutura muda; (8) inglês é a língua do artboard; (9) offline nas quatro; (10) carga do dia no check-in + topo da lista; (11) nenhuma divergência reaberta. A tabela-mestra ainda carrega os ids antigos (`EVO-22`→`EVO-29`, `CONTA-26`→`CONTA-32`) até a primeira sessão de desenho renumerá-los para `PET-*`/`SOC-*`.
+
 1. **A sub-aba `Soulmon` (`pet`) não tem fluxo próprio no `CONTRACT.md`.** Ela divide a
    célula da barra com Evolução e Estatísticas, e hoje está no canvas de Evolução
    (`EVO-22`→`EVO-29`, **8 artboards**: `PetPage`, `DreamDex`, `AdventureDiary`). Fica ali, ou
@@ -522,15 +524,24 @@ push na ordem do relógio (`FORA-12`→`FORA-18`).
 5. **`LOJA-12` — `ShopModal` sem `asPage`.** A variante `ModalSheet` existe no componente e o
    `App.tsx` **sempre** passa `asPage`. Código vivo sem caminho vivo: desenhar, ou registrar
    como achado?
-6. **As seis linhas marcadas `medição faltando`** — `HOME-35`, `HOME-36`, `HOME-38`,
-   `HOME-39`, `LOJA-07` e `STAT-02`: o `03` não descreve a superfície ou o estado. Mais duas
-   descritas **só por um lado**: `LOJA-13` e `CONTA-14`, que só o `INVENTARIO-TELAS.md` de
-   19/08/2026 descreve — e no `CONTA-14` os dois **discordam** sobre o caminho de abertura.
-   (Confira a lista com
-   `` grep -E '^\| `' docs/design/INVENTARIO-WIREFRAMES.md | grep -c 'medição faltando' ``.) Duas saídas: medir no código antes de desenhar
-   (fora do meu briefing, que é medir o documento), ou desenhar com o que há e marcar o
-   artboard como hipótese. **O seletor de comida (`HOME-35`) é P0** — é uma das quatro ações do
-   deck e não tem descrição em lugar nenhum do manual.
+6. ✅ **RESOLVIDO em 13/09/2026 — as oito linhas foram MEDIDAS NO CÓDIGO.** Eram seis
+   marcadas `medição faltando` (`HOME-35`, `HOME-36`, `HOME-38`, `HOME-39`, `LOJA-07`,
+   `STAT-02`) e mais duas descritas **só por um lado** (`LOJA-13` e `CONTA-14`). O dono
+   escolheu a primeira das duas saídas — medir antes de desenhar, e não desenhar hipótese.
+   O resultado virou **6 subseções novas** no `03`
+   ([`../manual/03-FLUXO-DE-TELAS.md`](../manual/03-FLUXO-DE-TELAS.md) §4.2a, §4.2b, §4.6a,
+   §4.6b, §4.8a, §4.23a), marcadas "(medido em 13/09/2026, a pedido do inventário de
+   wireframes)" e **verificadas pelo `doc-verificador` em 13/09/2026** — o cabeçalho do `03`
+   carrega o carimbo. Três achados saíram junto: o `HOME-36` **não é uma tela** (a folha já
+   fechou; o artboard é o pet falando); a medição de 19/08/2026 do `STAT-02` **venceu** (as
+   três strings cruas não existem mais, e são duas listas, não três); e no `CONTA-14` o
+   caminho real é **`SettingsPage` → `ActionRow` "Personalidade"**, enquanto o
+   "via `CompanionHUD`" do `INVENTARIO-TELAS.md` é fiação morta que levaria ao
+   `SettingsModal` inalcançável (`CONTA-13`, novo achado para o `../STATUS.md`).
+   (Confira que a marca sumiu com
+   `` grep -E '^\| `' docs/design/INVENTARIO-WIREFRAMES.md | grep -c 'medição faltando' ``,
+   que hoje devolve `0`.) **O seletor de comida (`HOME-35`) continua P0** — é uma das quatro
+   ações do deck.
 7. **`reduced-motion` (W3).** O `03` só cita `reducedMotion` na `MilestoneCeremony`
    (`RIT-21`), onde ele **só desliga animação e háptico** e a pausa continua a mesma. As
    outras superfícies com movimento — `EvolutionCeremony` (3000 ms de intercalação sobre vídeo

@@ -1,6 +1,6 @@
 # Fluxo de telas do Soulmon
 
-> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
+> **Dono:** doc-redator-telas · **Data:** 09/09/2026 · **Estado:** verificado em 13/09/2026 por doc-verificador (6 subseções novas; o restante verificado em 10/09/2026)
 > **Verificação:** `npx vitest run src/components/filaDeAvisos.contract.test.ts src/components/evolucaoManual.contract.test.ts src/components/ofertaDoisCanais.contract.test.ts src/components/upgradeReveal.contract.test.ts src/components/textoBilingue.contract.test.ts src/plugins/widgetSemCobranca.contract.test.ts` · guard do manual: `npx vitest run src/docsManual.contract.test.ts`
 > **Não cobre:** aparência (cor, tipografia, espaçamento, tokens `--sm2-*`) — é do `04-IDENTIDADE-VISUAL.md`; as REGRAS que as telas aplicam (corações, meta do dia, evolução, moedas) — são do `02-REGRAS-DE-NEGOCIO.md`; a assinatura de cada componente — é de [`06-REFERENCIA/components.md`](06-REFERENCIA/components.md); percurso real com o app rodando — é do `soulmon-screen-cartographer`, cuja medição de 19/08/2026 está em [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -484,6 +484,131 @@ A Home empilha, nesta ordem de render:
   `CompanionHUD.vinculo.render.test.tsx`, `CompanionHUD.voz.render.test.tsx`,
   `CompanionHUD.reacao.render.test.tsx`, `src/components/som-presenca-d11.render.test.tsx`.
 
+### 4.2a O seletor de comida — a folha "Alimentar" (medido em 13/09/2026, a pedido do inventário de wireframes)
+
+**Chega por**: a ação `feed` do deck do `CompanionHUD` —
+`onClick: () => setFeedOpen(true)` · **Sai para**:
+`onClose={() => setFeedOpen(false)}`, o × / Escape do `ModalSheet`, ou escolher
+uma comida — `handleDeckFeed` **fecha a folha antes** de chamar `onFeed`.
+
+**Aparece quando** (condição literal):
+
+```jsx
+<ModalSheet
+  open={feedOpen}
+  onClose={() => setFeedOpen(false)}
+  title={language === 'pt-BR' ? 'Alimentar' : 'Feed'}
+  language={language}
+>
+  {foodStock.length === 0 ? (…parágrafo…) : (…grade…)}
+</ModalSheet>
+```
+
+com
+
+```ts
+const foodStock = Object.entries(foodInventory)
+  .filter(([emoji, n]) => n > 0 && !isSpecialItem(emoji))
+  .sort((a, b) => b[1] - a[1]);
+```
+
+**Estados** — os três existem, e o terceiro **não é uma tela**:
+
+| Estado | Condição | O que se vê |
+|---|---|---|
+| com estoque (`HOME-35`) | `foodStock.length > 0` | grade `repeat(auto-fill, minmax(72px, 1fr))`; cada célula é um `<button>` de `minHeight: 72` com a arte (`ITEM_ART[emoji]`, 34px, `imageRendering: 'pixelated'`) ou o emoji, `×N` em `sm2-num`, e `aria-label` = `` `${FOOD_NAME_BY_EMOJI[emoji] ?? emoji} × ${n}` ``. Abaixo, a dica: "Cada comida dá +1 de energia e pontos de atributo. Se a barriga estiver cheia, seu Soulmon avisa." / "Each food gives +1 energy and attribute points. If its belly is full, your Soulmon will say so." |
+| vazio | `foodStock.length === 0` | **um parágrafo, e só** — "Sua pastinha está sem comida. Conclua uma tarefa ou hábito para ganhar comida — é assim que seu Soulmon come." / "You're out of food. Complete a task or habit to earn some — that's how your Soulmon eats." Sem grade, sem botão, sem ilustração |
+| recusa por teto (`HOME-36`) | acontece **depois** de a folha fechar | ver abaixo |
+
+**A recusa (`HOME-36`) é fala do pet, não superfície.** `handleDeckFeed` faz
+`setFeedOpen(false)` e delega; quem recusa é o `handleFeed` do `App.tsx`:
+
+```ts
+if (feedTimesFor(gameState.careCaps, now).length >= FOOD_LIMIT_PER_HOUR) {
+  setFullSignal(n => n + 1); // pet says "I'm full"
+  return;
+}
+```
+
+`fullSignal` é um contador que **só cresce**; no `CompanionHUD` ele dispara um
+`speak(…, 3500)` sorteado entre três frases PT/EN ("Estou cheio! Me dá uma
+horinha…" / "I'm full! Give me an hour…"). **Sem toast, sem modal, sem estado de
+erro na folha** — e o item **não** é decrementado (o `return` é antes do
+updater). `FOOD_LIMIT_PER_HOUR` é `MAX_STAGE_REQUIREMENT` (derivado do maior
+`FORM_REQUIREMENTS[…].required`, nunca um literal) e a janela é deslizante de
+1 h sobre `careCaps.feedTimes`, que mora no SAVE.
+
+**Item especial não entra aqui**: `isSpecialItem` (dono: `src/utils/shop.ts`)
+tira 🌀 / 💗 / 🦠 / 💾 / 💉 do `foodStock` — eles se usam na pastinha (§4.2b).
+Misturá-los faria "Alimentar" gastar um consumível caro por engano.
+
+**Dono**: `src/components/CompanionHUD.tsx` (`feedOpen`, `foodStock`,
+`handleDeckFeed`) para a TELA; a REGRA é do `handleFeed` (`src/App.tsx`) sobre
+`src/utils/careRules.ts` (`feedFood`, `FOOD_LIMIT_PER_HOUR`) ·
+**Régua**: `src/components/CompanionHUD.cta.test.tsx` (abre a folha, escolhe a
+comida, exige que o especial NÃO apareça e que o vazio explique como conseguir),
+`src/utils/careRules.test.ts` (o teto por hora).
+
+### 4.2b `ItemsWindow` — a pastinha: o vazio e o uso de item especial (medido em 13/09/2026, a pedido do inventário de wireframes)
+
+**Chega por**: a ação `items` do deck → `onOpenItems` → `handleOpenItems`, que
+**alterna** (`setShowItemsWindow(prev => !prev)`) e apaga o selo
+(`setNewItemsReady(false)`) · **Sai para**:
+`onClose={() => setShowItemsWindow(false)}`.
+
+**Aparece quando**: `{showItemsWindow && (<ItemsWindow … />)}` na raiz do
+`App.tsx` (§4.25). O componente não tem prop `open` própria: monta já com
+`<ModalSheet open …>`. O selo do botão do deck vem de `hasNewItems={newItemsReady}`,
+e `newItemsReady` acende quando o total do inventário cresce
+(`if (total > prevInventoryTotalRef.current) setNewItemsReady(true);`).
+
+**Estados**:
+
+| Estado | Condição literal | O que se vê |
+|---|---|---|
+| vazio (`HOME-38`) | `items.length === 0`, com `const items = Object.entries(foodInventory).filter(([, c]) => c > 0)` | **ilustração, não texto cru**: `mascot-raven.png` 72×72 com `opacity: .85`, centralizado, e a frase "Sua pastinha está vazia. Conclua uma atividade para ganhar comida." / "Your item folder is empty. Complete an activity to earn food." **Sem rodapé** — o `footer` do `ModalSheet` só existe com `detail` |
+| com itens, nada escolhido | `detail === null` | grade de 3 colunas (`repeat(3, 1fr)`); cada célula tem arte (`ITEM_ART`, 38px) ou emoji, nome e `×N`, com `aria-pressed={active}` e `aria-label` = `` `${getFoodName(emoji, language)} ×${count}` `` |
+| item escolhido | `const detail = selected && foodInventory[selected] > 0 ? selected : null` | a célula ganha borda `--sm2-primary-ink` e fundo `--sm2-primary-soft`; o **rodapé** mostra nome + `effectLine` e o botão "Usar" / "Use" |
+
+**O uso (`HOME-39`)**. "Usar" chama `use(emoji)` → `onFeed(emoji)` (que é o
+`handleFeed` do `App.tsx`) e limpa a seleção. **A tela não decide nada**:
+`effectLine` lê `CHIP_BOOST` / `HEART_HEAL` de `src/utils/shop.ts` — nunca um
+número à mão —, e o dono do USO é `src/utils/specialItemUse.ts`
+(`specialRefusal` / `applySpecialItem`), não o `careUpdaters.ts`. As três
+recusas, transcritas do `handleFeed`:
+
+```ts
+const refused = specialRefusal(gameState, foodEmoji, agora);
+if (refused === 'no-stock') return;
+if (refused === 'daily-cap') {
+  toast(language === 'pt-BR'
+    ? '🌀 Um Glitchtama por dia. Ele te espera amanhã.'
+    : '🌀 One Glitchtama a day. It will wait for you tomorrow.');
+  return;
+}
+if (refused === 'already-full') { setHealCapSignal(n => n + 1); return; }
+```
+
+- **`'daily-cap'`** (🌀 Glitchtama além de `GLITCHTAMA_PER_DAY`): **toast**, e a
+  pastinha continua aberta com o item **ainda na grade** — a recusa acontece
+  antes do decremento, então ele volta e vale amanhã. A frase diz o que fazer,
+  não o que foi negado.
+- **`'already-full'`** (💗 Coraçãozinho com `healthPoints >= maxHealthPoints`):
+  **fala do pet**, pelo mesmo canal do `fullSignal` (`healCapSignal` →
+  `speak(…, 3500)`). Nenhum toast, nenhum texto dentro da pastinha.
+- **`'no-stock'`**: silêncio total.
+
+**Sucesso**: `playTaskComplete()` para 🌀 e 💗, `playFeed()` para chip;
+`setFeedAnim` roda a mesma animação de comer do caminho comum; só o 🌀 ganha
+toast ("🌀 Glitchtama! +1 dia completo" / "🌀 Glitchtama! +1 complete day").
+A folha **não fecha** ao usar — só a seleção é limpa.
+
+**Dono**: `src/components/ItemsWindow.tsx` (a tela) + `src/utils/specialItemUse.ts`
+(a regra) · **Régua**: `src/utils/specialItemUse.test.ts` (cada número e as três
+recusas, inclusive os dois toques no mesmo lote do React).
+⚠️ **A TELA não tem régua**: não existe nenhum `ItemsWindow.*.test.tsx`
+(`ls src/components | grep ItemsWindow` devolve só o `.tsx`, 13/09/2026).
+
 ### 4.3 `ChatBox` — a barra de conversa
 
 **Chega por**: montada dentro do `CompanionHUD` · **Sai para**: nada.
@@ -601,6 +726,115 @@ type ShopSegment = 'shop' | 'tournament';
   `ShopModal.missoes.render.test.tsx`, `ShopModal.convitePassivo.render.test.tsx`,
   `src/utils/weeklyMissions.fiacao.test.ts`.
 
+### 4.6a Loja — o card sem saldo (medido em 13/09/2026, a pedido do inventário de wireframes)
+
+**Chega por**: tocar o card de um item cujo preço passa do saldo da moeda dele
+(`LOJA-07`) · **Sai para**: nada — não navega, não fecha, não abre modal.
+
+⚠️ **O card NÃO é desabilitado por saldo.** `disabled={!action}` só alcança o
+item bloqueado por missão (`unlocked === false`, que deixa `action` `undefined`)
+e o item já possuído troca a ação por equipar. Com saldo insuficiente o card
+segue clicável, e a recusa é o retorno de `onBuy`:
+
+```ts
+const buy = (item: ShopItem) => {
+  const name = isPt ? item.namePt : item.nameEn;
+  const ok = onBuy(item.id);
+  say(item.id, ok, ok
+    ? (isPt ? `${name} comprado.` : `${name} purchased.`)
+    : (isPt ? `Saldo insuficiente para ${name}.` : `Not enough to buy ${name}.`));
+};
+```
+
+**Aparece quando** — dois sinais, um permanente e um momentâneo:
+
+```ts
+const affordable = (isEmblem ? emblems : points) >= item.price;   // permanente
+const failing = flash?.id === item.id && !flash.ok;               // 2600 ms
+```
+
+**O que se vê/faz**:
+
+- **Antes do toque**, só o PREÇO esmaece: `opacity: affordable ? 1 : 0.5` no
+  número (Bits em `bitsNum`, **sem ícone**; Emblemas em `emblemNum` com o
+  `military_tech` dourado ao lado). Arte, nome, descrição e borda **não mudam** —
+  a loja continua mostrando o catálogo inteiro.
+- **No toque**, `say(...)` acende `flash` e três coisas duram 2600 ms: a borda do
+  card vira `--sm2-danger-ink`; a linha `sub` do card (a descrição) troca de cor
+  para `--sm2-danger-ink`; e a região `role="status" aria-live="polite"` do topo
+  substitui a dica ("Ganhe Bits nos minijogos.") pela frase de recusa, em tinta
+  de perigo. Junto vai `navigator.vibrate?.(60)` — o sucesso vibra 25.
+- Passados os 2600 ms, `setFlash(f => (f && f.id === id ? null : f))` devolve
+  tudo ao estado normal. **Não há tela de "comprar Bits"**, nem atalho para o
+  minijogo, nem convite de Créditos no ponto da recusa.
+
+⚠️ **A frase é a mesma para as duas recusas de `shopBuyRefusal`** (`'no-funds'`
+e `'already-owned'`): o `ShopModal` lê só o `boolean`, nunca o motivo. Na prática
+só `'no-funds'` chega pelo card, pelo desvio de ação descrito acima.
+
+**Dono**: `src/components/ShopModal.tsx` (`buy`, `say`, `affordable`, `failing`)
+para a TELA; a regra é de `src/utils/shopBuy.ts` (`shopBuyRefusal`, reconferida
+sobre o `prev` em `applyShopBuy`) e do `handleShopBuy` (`src/App.tsx`) ·
+**Régua**: `src/utils/shopBuy.test.ts` (a recusa `'no-funds'` e o duplo clique
+com saldo exatamente igual ao preço). ⚠️ **O ESTADO VISUAL não tem régua** —
+`grep -n "Saldo\|afford" src/components/ShopModal.missoes.render.test.tsx src/components/ShopModal.convitePassivo.render.test.tsx`
+não devolve nada (13/09/2026).
+
+### 4.6b Loja — a troca Créditos → Bits (medido em 13/09/2026, a pedido do inventário de wireframes)
+
+**Chega por**: rolar até o fim do segmento `'shop'` (`LOJA-13`) · **Sai para**:
+nada — a troca acontece ali mesmo.
+
+**Aparece quando**: `{seg === 'shop' && exchange}` — **último nó do corpo da
+Loja**, depois das três seções e depois do `UnlockNudge` do demo. No segmento
+`'tournament'` ela não existe.
+
+**O que se vê/faz**: uma linha de cabeçalho com o ícone `diamond` (tom primário)
++ "Trocar Créditos por Bits — você tem N" / "Swap Credits for Bits — you have N",
+e abaixo os **três** degraus de `BITS_EXCHANGE`, lado a lado, cada um `flex: 1`:
+
+```ts
+export const CREDIT_TO_BITS = 10;
+export const BITS_EXCHANGE = [
+  { credits: 10, bits: 10 * CREDIT_TO_BITS },
+  { credits: 25, bits: 25 * CREDIT_TO_BITS },
+  { credits: 60, bits: 60 * CREDIT_TO_BITS },
+] as const;
+```
+
+Cada botão é `diamond` + `credits` → `arrow_forward` → `bits`, com `aria-label`
+"Trocar N Créditos por M Bits" / "Swap N Credits for M Bits".
+
+**Estados**:
+
+| Estado | Condição literal | O que se vê |
+|---|---|---|
+| disponível | `const can = credits >= pack.credits && exchanging === null` | `sm2Button('ghost')`, ícones em tom primário |
+| sem Créditos | `credits < pack.credits` | `disabled`, `sm2Button('ghost', true)`, ícones em `muted` |
+| em voo | `const busy = exchanging === pack.credits` | o `diamond` do degrau em voo vira `sync`; **os outros dois também ficam `disabled`**, porque `can` exige `exchanging === null` |
+| falhou | `ok === false` no `await onExchangeCredits(pack.credits)` | a região `aria-live` diz "A troca não foi concluída. Tente de novo." / "The swap did not go through. Try again."; e o `handleExchangeCredits` do `App.tsx` ainda dá `toast('Créditos insuficientes.')` quando é o servidor que recusa |
+| concluiu | `ok === true` | "+M Bits." na região `aria-live` + `toast('+M Bits!')`; o saldo do rodapé (ou do topo, com `asPage`) já mostra o número novo |
+
+**A direção é uma só, e a ausência é a regra**: não existe Bits → Créditos, porque
+Créditos são a moeda que libera gerar o pet próprio e farmá-los em minijogo
+anularia a única coisa que o dinheiro real compra com exclusividade
+(`src/utils/currencies.ts`). **O gasto é do SERVIDOR**:
+`spendCredits(pack.credits, 'exchange-bits')`; os Bits só entram depois que ele
+confirma, e `credits`/`accountTier` são reescritos com o que ele devolveu (`ent`).
+
+⚠️ **O achado de 19/08/2026 do [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md)
+§5.11 — o emoji 💎 convivendo com `icon-gem.png` nesta tela — não vale mais.**
+Hoje há **um** desenho de Crédito no app, o glifo `diamond` do `<Icon>`, e a
+lápide está no cabeçalho do `ShopModal.tsx` ("o emoji de gem e o `icon-gem.png`
+que conviviam NESTA tela morreram aqui"). Bits continuam **sem ícone nenhum** —
+a ausência é a distinção.
+
+**Dono**: `src/components/ShopModal.tsx` (`exchange`, `exchanging`, `say`) +
+`src/utils/currencies.ts` (`BITS_EXCHANGE`, `CREDIT_TO_BITS`) +
+`handleExchangeCredits` (`src/App.tsx`) · **Régua**:
+`src/utils/currencies.test.ts` (os degraus e a fronteira das três moedas).
+⚠️ **Nenhum teste monta os botões de troca.**
+
 ### 4.7 Soulmon — `currentView === 'pet'`
 
 **Chega por**: chip "Soulmon" da fileira de sub-abas · **Sai para**: os outros
@@ -642,6 +876,52 @@ Quatro cartões, cada um com condição literal dentro da `StatsPage`:
 
 **Régua**: `BestiaryCard.render.test.tsx`, `FormAlbum.render.test.tsx`,
 `BirthCard.render.test.tsx`, `MemoriesCard.render.test.tsx`.
+
+### 4.8a Estatísticas — a primeira vez / o vazio (medido em 13/09/2026, a pedido do inventário de wireframes)
+
+**Chega por**: o chip "Estatísticas" no primeiro uso (`STAT-02`) · **Sai para**:
+os outros dois chips.
+
+⚠️ **A medição de 19/08/2026 do [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md)
+está vencida.** Ela descreve **três** listas vazias em texto cru ("No activities
+completed yet." / "No tasks completed yet." / "No history yet."); nenhuma das três
+strings existe hoje — `grep -n "No activities\|No tasks\|No history" src/components/StatsPage.tsx`
+não devolve nada (13/09/2026). As duas tabelas de topo viraram **uma** ("O que
+você mais repete"), e as frases foram reescritas.
+
+**O que a tela mostra com o save zerado**, seção por seção:
+
+| Seção | Condição literal | Na primeira vez |
+|---|---|---|
+| Vínculo | nenhuma — **sempre monta** | a PALAVRA primeiro: `title ?? (isPt ? 'Recém-chegados' : 'Just met')`, "Nível 0" embaixo, `role="progressbar"` em 0% e a frase "Ele só sobe. Cuidar de você é o que aproxima vocês dois — nada aqui desce, nunca." |
+| Quem é o seu Soulmon | `{(passive || carePattern) && (…)}` | **some inteira** sem traço nem ritmo. Com o traço de nascimento sorteado, aparece só ele: `carePattern` só é passado quando a leitura é confiável (§ `utils/carePattern.ts`) |
+| A jornada | nenhuma — **sempre monta** | "0 dias completos até aqui" (`streakDays`, em `--sm2-font-display`). Tudo o mais é condicional: `daysTogether` (`typeof daysTogether === 'number'`), `BirthCard` (`{birth && …}`), `BestiaryCard` (`{(bestiary?.length ?? 0) > 0 && …}`), `FormAlbum` (`{album && album.length > 0 && …}`), a linha legada (`{!album && formNames.length > 0 && …}`), `feitos` (`{feitos.length > 0 && …}`) e `soulGoal` (`{journey?.soulGoal && …}`) |
+| A estação | `{season && (…)}` | o rótulo da estação; **os caminhos só aparecem andados** (`const andados = status.paths.filter(p => p.current >= 1)`) — progresso zero **não** vira `0/20` na tela |
+| O que você mais repete | `topRepeated.length === 0` | "Nada concluído ainda. A primeira vez já aparece aqui." / "Nothing finished yet. The very first one shows up here." |
+| Últimas conclusões | `recent.length === 0` | "O histórico começa na sua próxima conclusão." / "History starts at your next completion." |
+
+com (as duas derivações, sem o `useMemo` que as envolve no arquivo):
+
+```ts
+const topRepeated = Object.entries(activityStats)
+  .filter(([, s]) => s.completionCount > 0)
+  .sort((a, b) => b[1].completionCount - a[1].completionCount)
+  .slice(0, 5);
+const recent = completedTasks.slice(-10).reverse();
+```
+
+**O vazio tem forma declarada, e ela é mínima**: as duas listas **mantêm** o
+`<section>` e o `<h3>`, e trocam só o `<ul>` por um `<p style={sm2Hint}>`.
+**Não há ilustração e não há CTA** — ao contrário da pastinha (§4.2b), que usa o
+mascote. As duas frases falam do FUTURO ("já aparece aqui", "começa na sua
+próxima conclusão"), nunca da falta; é a mesma trava de forma que proíbe o
+`0/20` da estação e o "faltam N" do bestiário.
+
+**Dono**: `src/components/StatsPage.tsx` (`topRepeated`, `recent`) ·
+**Régua**: ⚠️ **nenhuma para o vazio.** Há `BirthCard.render.test.tsx`,
+`BestiaryCard.render.test.tsx` e `FormAlbum.render.test.tsx` para os cartões, e
+**nenhum teste monta a `StatsPage`** (`ls src/components | grep -i 'StatsPage.*test'`
+não devolve nada, 13/09/2026).
 
 ### 4.9 `OraclePage` — `currentView === 'oracle'`, inalcançável
 
@@ -981,10 +1261,75 @@ Três blocos, com condições literais:
   depois de um "não" é assédio. O consentimento vem **antes** do diálogo do
   sistema.
 - **`SettingsModal`** (o painel rápido de IA) e **`AISettingsModal`** são
-  separados: `{settingsOpen && (…)}` na raiz do `App`, aberto pelo menu.
+  separados: `{settingsOpen && (…)}` na raiz do `App`. ⚠️ Esta linha dizia
+  "aberto pelo menu" e era falso — `settingsOpen` não tem gatilho vivo, e o
+  caminho real de "Personalidade" é esta página: ver §4.23a (13/09/2026).
 - **Dono**: `src/components/SettingsPage.tsx` e vizinhos · **Régua**:
   `AccountDataSection.render.test.tsx`,
   `src/components/settingsTelemetry.render.test.tsx`.
+
+### 4.23a `AISettingsModal` — o caminho real de abertura (medido em 13/09/2026, a pedido do inventário de wireframes)
+
+**Chega por**: **`SettingsPage` → `ActionRow` "Personalidade" / "Personality" →
+`setShowAISettings(true)`**, no mesmo grupo que tem o switch "Conversa com IA" /
+"AI chat". E a `SettingsPage` chega-se pela linha "Configurações" do menu
+sanduíche da `BottomNav` (`onClick={() => { onNavigate('settings'); setMenuOpen(false); }}`
+→ `currentView === 'settings'`) · **Sai para**:
+`onClose={() => setShowAISettings(false)}`; "Salvar" / "Save" faz
+`onSave(settings)` e fecha no mesmo gesto.
+
+⚠️ **Este é o achado do inventário de wireframes (`CONTA-14`), e os dois docs
+discordavam**: o [`../INVENTARIO-TELAS.md`](../INVENTARIO-TELAS.md) (19/08/2026)
+diz "via `CompanionHUD`", e este documento não repetia o caminho. **O caminho
+pelo `CompanionHUD` existe como FIAÇÃO e está MORTO** — medido em 13/09/2026:
+
+```
+$ grep -n "handleOpenAISettings" src/App.tsx
+4072:  const handleOpenAISettings = useCallback(() => setSettingsOpen(true), []);
+5032:                onOpenAISettings={handleOpenAISettings}
+
+$ grep -n "onOpenAISettings" src/components/ChatBox.tsx
+19:  onOpenAISettings?: () => void;
+48:  onOpenAISettings,
+```
+
+A prop desce `App.tsx` → `CompanionHUD` → `ChatBox`, e o `ChatBox` **nunca a
+chama**: as duas ocorrências são a declaração no tipo e a desestruturação.
+Como `handleOpenAISettings` é o único chamador de `setSettingsOpen(true)`,
+`{settingsOpen && (…SettingsModal…)}` **nunca monta** — e com ele fica
+inalcançável a **segunda** instância de `AISettingsModal`, a que vive dentro do
+`SettingsModal`. É a mesma família do §4.9 (`OraclePage`): componente montado
+atrás de um estado sem gatilho. Vai para o [`../STATUS.md`](../STATUS.md).
+
+**Aparece quando**: `<AISettingsModal isOpen={showAISettings} … />` — a folha é o
+próprio componente (`ModalSheet` com `open={isOpen}`, `role="dialog"`,
+`aria-modal="true"`, `aria-label` "Personalidade" / "Personality", z-index 120,
+Escape e foco presos por `useDialogA11y`).
+
+**O que se vê/faz** — quatro grupos de chips, todos PT/EN, e um bloco escondido:
+
+| Bloco | Campo | Opções |
+|---|---|---|
+| "Como seu Soulmon fala" / "How it talks" | `tone` | Tranquilo · Elétrico · Sereno · Brincalhão |
+| "Emojis" | `emojiIntensity` | Nenhum · Poucos · Alguns · Muitos |
+| "Como seu Soulmon te incentiva" / "How it encourages you" | `motivationStyle` | Anima · Provoca · Acolhe · Equilibrado |
+| `Disclosure` "Mais opções" / "More options" | `temperature` (`CREATIVITY`, três degraus; o marcado é `nearestCreativity(s.temperature)`) e `customKeywords` (`<textarea>` de `maxLength={500}`) | Previsível · Equilibrado · Criativo |
+
+O contador do `<textarea>` **só aparece perto do limite**
+(`{s.customKeywords.length > 400 && (…)}`), em `aria-live="polite"`. O rodapé tem
+dois botões: "Padrão" / "Default" (`setS(defaultSettings)`, **local** — não
+salva) e "Salvar" / "Save".
+
+**Estados**: o estado local `s` é ressincronizado a cada abertura —
+`useEffect(() => { setS(currentSettings || defaultSettings); }, [currentSettings, isOpen])`
+—, então **fechar sem salvar descarta** tudo o que foi mexido.
+
+**Dono**: `src/components/AISettingsModal.tsx` (a folha) e
+`src/components/SettingsPage.tsx` (o caminho vivo) · **Régua: nenhuma.**
+`grep -rln "AISettingsModal" src --include=*.test.tsx` devolve um único arquivo,
+`src/components/settingsTelemetry.render.test.tsx`, e **só por `import type`** —
+ele monta a `SettingsPage`, nunca a folha (13/09/2026).
+⚠️ **Nada trava o caminho de abertura**, nem a morte do `SettingsModal`.
 
 ### 4.24 Créditos e Nova Leitura
 

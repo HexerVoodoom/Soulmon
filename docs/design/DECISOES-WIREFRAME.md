@@ -17,7 +17,7 @@
 |---|---|---|---|
 | D1 | Sub-aba do pet (`PetPage`, `DreamDex`, `AdventureDiary`) | **Canvas próprio "Pet"** | 11º canvas; desenhado logo após Rituais (P0+). `EVO-22`→`EVO-29` migram para `PET-*` |
 | D2 | Biblioteca (social, coop, presentes) | **Canvas próprio "Social"** | 12º canvas; o `soulmon-guarda-linha-vermelha` dá parecer sobre ele inteiro. `CONTA-26`→`CONTA-32` migram para `SOC-*`; o caminho de chegada continua sendo o menu |
-| D3 | Posição do Onboarding | **Dividido**: funil (identidade → free/pago → objetivo → escolher personagem) em **4º**; ritual do Oráculo em **último** | Dois canvases: `onboarding-funil/` e `onboarding-oraculo/` |
+| D3 | Posição do Onboarding | **Dividido**: funil (identidade → free/pago → objetivo → escolher personagem) em **5º** (logo depois do canvas Pet, que a D1 acrescentou); ritual do Oráculo em **último** | Dois canvases: `onboarding-funil/` e `onboarding-oraculo/` |
 | D5 | `ShopModal` variante sheet (sem `asPage`, sem caminho vivo) | **Registrar como achado, não desenhar** | `LOJA-12` → `fora`; item no STATUS como candidato a remoção |
 | D9 | Offline | **Artboard offline nas quatro superfícies de rede** (Biblioteca, Torneio, chat, geração de sprite) | +4 artboards; o `OfflineSeal` continua na raiz |
 
