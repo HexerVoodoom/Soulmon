@@ -81,8 +81,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .dots i{display:block;width:10px;height:10px;border:1px solid #999;background:#fff;box-sizing:border-box}
 .dots i.done{background:#666;border-radius:50%}
 .dots i.shield{background:#fff;border:2px solid #666;transform:rotate(45deg);width:9px;height:9px}
-.dots i.miss{height:2px;border:0;background:#999;width:10px;align-self:center}
-.dots i.notdue{border-radius:50%;border-style:dashed}
+.dots i.dash{height:2px;border:0;background:#999;width:10px;align-self:center}
+.dots i.ring{border-radius:50%;border-style:dashed}
+.dots i.slot{width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff}
 .steps{display:flex;flex-direction:column;gap:2px;margin-top:2px}
 .step{display:flex;align-items:center;gap:6px;min-height:44px;font-size:12px}
 .step i{width:18px;height:18px;border:1px solid #999;border-radius:4px;display:block;background:#fff;flex:none}
@@ -124,15 +125,15 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
         <p class="note">slot de avisos, posição 7 (<code>firstDay → hp → semanal → triagem → priming → recomeco → carga</code>) <span class="tag novo">novo</span>; texto <code>role="status"</code>, SEM moldura (aviso de carga é texto); só depois do check-in do dia e só enquanto <code>plannedEffort &gt; OVERCOMMIT_EFFORT</code> (estritamente maior: 7 não dispara, 8 dispara); some quando a carga cai</p>
         <section class="card" style="padding:0;gap:0" aria-labelledby="rt"><div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #ddd"><span class="ico ">ok</span><h2 id="rt" class="h2" style="flex:1">Daily rituals</h2></div><ul style="list-style:none;margin:0;padding:0 12px"><li class="row" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Plan the trip"><i class="fo">8</i><p class="t" style="" title="Plan the trip">Plan the trip</p><p class="s">Work</p></div>
+    <div class="nm" role="button" aria-label="Edit: Plan the trip" ><i class="fo">8</i><p class="t" style="" title="Plan the trip">Plan the trip</p><p class="s">Work</p></div>
     <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark task as completed: Plan the trip" ><i class="fo">9</i><i class=""></i></span><div class="chips" style="padding-left:32px;margin-top:-2px;width:100%"><span class="chip">project</span></div>
   </li><li class="row" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Write the report"><i class="fo">10</i><p class="t" style="" title="Write the report">Write the report</p><p class="s">Work</p></div>
+    <div class="nm" role="button" aria-label="Edit: Write the report" ><i class="fo">10</i><p class="t" style="" title="Write the report">Write the report</p><p class="s">Work</p></div>
     <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark task as completed: Write the report" ><i class="fo">11</i><i class=""></i></span><div class="chips" style="padding-left:32px;margin-top:-2px;width:100%"><span class="chip">project</span></div>
   </li><li class="row" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Call the dentist"><i class="fo">12</i><p class="t" style="" title="Call the dentist">Call the dentist</p><p class="s">One-off task</p></div>
+    <div class="nm" role="button" aria-label="Edit: Call the dentist" ><i class="fo">12</i><p class="t" style="" title="Call the dentist">Call the dentist</p><p class="s">One-off task</p></div>
     <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark task as completed: Call the dentist" ><i class="fo">13</i><i class=""></i></span><div class="chips" style="padding-left:32px;margin-top:-2px;width:100%"><span class="chip">medium</span></div>
   </li></ul><div style="padding:10px 12px"><span class="btn" role="button" style="width:100%"><i class="fo">14</i>+ New Activity</span></div></section></div><div class="dock"><i class="fo">15</i><div class="input" role="textbox" aria-label="Talk to your Soulmon">&gt;_</div><span class="tap" style="min-width:44px" role="button" aria-label="Record message"><i class="fo">16</i><span class="ico ">mic</span></span></div><nav class="nav" aria-label="Main"><span class="navc on" role="button" aria-current="page"><i class="fo">17</i><span class="ico on">home</span><span>Home</span></span><span class="navc" role="button" ><i class="fo">18</i><span class="ico ">act</span><span>Games</span></span><span class="navc" role="button" ><i class="fo">19</i><span class="ico ">evo</span><span>Evolution</span></span><span class="navc" role="button" ><i class="fo">20</i><span class="ico ">shop</span><span>Shop</span></span><span class="navc" role="button" aria-expanded="false"><i class="fo">21</i><span class="ico ">menu</span><span>Menu</span></span></nav></div>
 <footer class="foot">

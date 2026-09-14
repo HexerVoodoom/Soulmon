@@ -81,8 +81,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .dots i{display:block;width:10px;height:10px;border:1px solid #999;background:#fff;box-sizing:border-box}
 .dots i.done{background:#666;border-radius:50%}
 .dots i.shield{background:#fff;border:2px solid #666;transform:rotate(45deg);width:9px;height:9px}
-.dots i.miss{height:2px;border:0;background:#999;width:10px;align-self:center}
-.dots i.notdue{border-radius:50%;border-style:dashed}
+.dots i.dash{height:2px;border:0;background:#999;width:10px;align-self:center}
+.dots i.ring{border-radius:50%;border-style:dashed}
+.dots i.slot{width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff}
 .steps{display:flex;flex-direction:column;gap:2px;margin-top:2px}
 .step{display:flex;align-items:center;gap:6px;min-height:44px;font-size:12px}
 .step i{width:18px;height:18px;border:1px solid #999;border-radius:4px;display:block;background:#fff;flex:none}
@@ -117,27 +118,27 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
       <p class="s">Task row = selo · text column (= Edit button: name + subtitle) · checkbox. The <code>TaskMeta</code> ribbon is a SECOND line under the row, outside the button; "postponed N times" is its own 44px button.</p>
       <div class="strip"><p class="cap"><span class="tag">ATIV-04</span> <span class="tag">ATIV-08</span> normal — prazo (data real) e esforço (quick · medium · project; <code>aria-label="Effort 1 of 3, quick"</code>)</p><ul style="list-style:none;margin:0;padding:0"><li class="row" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Reply to the landlord"><i class="fo">2</i><p class="t" style="" title="Reply to the landlord">Reply to the landlord</p><p class="s">One-off task</p></div>
+    <div class="nm" role="button" aria-label="Edit: Reply to the landlord" ><i class="fo">2</i><p class="t" style="" title="Reply to the landlord">Reply to the landlord</p><p class="s">One-off task</p></div>
     <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark task as completed: Reply to the landlord" ><i class="fo">3</i><i class=""></i></span><div class="chips" style="padding-left:32px;margin-top:-2px;width:100%"><span class="chip">Fri, Sep 20</span><span class="chip">quick</span></div>
   </li></ul></div>
       <div class="strip"><p class="cap"><span class="tag">ATIV-09</span> adiada — "postponed N times" (botão próprio); em <code>POSTPONE_NUDGE_AT</code> = 3 fica sublinhado e abre o nudge (ATIV-20) por toque</p><ul style="list-style:none;margin:0;padding:0"><li class="row" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Plan the trip"><i class="fo">4</i><p class="t" style="" title="Plan the trip">Plan the trip</p><p class="s">Work</p></div>
+    <div class="nm" role="button" aria-label="Edit: Plan the trip" ><i class="fo">4</i><p class="t" style="" title="Plan the trip">Plan the trip</p><p class="s">Work</p></div>
     <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark task as completed: Plan the trip" ><i class="fo">5</i><i class=""></i></span><div class="chips" style="padding-left:32px;margin-top:-2px;width:100%"><span class="chip">project</span><span class="chip on" role="button" aria-label="postponed 3 times — tap for a way out" style="min-height:44px;text-decoration:underline"><i class="fo">6</i><span class="ico ">clock</span>postponed 3 times</span></div>
   </li></ul></div>
       <div class="strip"><p class="cap"><span class="tag">ATIV-10</span> assombrada — parada há <code>HAUNTED_AFTER_DAYS</code> (7): cor dedicada (borda dupla), chip "haunted · +relief"; <code>title</code> = "Idle for N days. Finishing it gives a relief bonus." — o número de dias NÃO entra na linha</p><ul style="list-style:none;margin:0;padding:0"><li class="row haunt" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Call the dentist"><i class="fo">7</i><p class="t" style="" title="Call the dentist">Call the dentist</p><p class="s">One-off task</p></div>
+    <div class="nm" role="button" aria-label="Edit: Call the dentist" ><i class="fo">7</i><p class="t" style="" title="Call the dentist">Call the dentist</p><p class="s">One-off task</p></div>
     <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark task as completed: Call the dentist" ><i class="fo">8</i><i class=""></i></span><div class="chips" style="padding-left:32px;margin-top:-2px;width:100%"><span class="chip">quick</span><span class="chip" title="Idle for N days. Finishing it gives a relief bonus."><span class="ico ">ghost</span>haunted · +relief</span></div>
   </li></ul></div>
       <div class="strip"><p class="cap">assombrada por prazo — <code>title</code> = "Past due and still here. Finishing it gives a relief bonus."; a data vencida não é repetida na linha</p><ul style="list-style:none;margin:0;padding:0"><li class="row haunt" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Renew the passport"><i class="fo">9</i><p class="t" style="" title="Renew the passport">Renew the passport</p><p class="s">One-off task</p></div>
+    <div class="nm" role="button" aria-label="Edit: Renew the passport" ><i class="fo">9</i><p class="t" style="" title="Renew the passport">Renew the passport</p><p class="s">One-off task</p></div>
     <span class="chk" role="checkbox" aria-checked="false" aria-label="Mark task as completed: Renew the passport" ><i class="fo">10</i><i class=""></i></span><div class="chips" style="padding-left:32px;margin-top:-2px;width:100%"><span class="chip">Sep 10</span><span class="chip">medium</span><span class="chip" title="Past due and still here. Finishing it gives a relief bonus."><span class="ico ">ghost</span>haunted · +relief</span></div>
   </li></ul></div>
       <div class="strip"><p class="cap">concluída hoje — riscada, inerte, no fim do painel; <code>TaskMeta</code> oculto <span class="tag novo">novo</span></p><ul style="list-style:none;margin:0;padding:0"><li class="row" style="flex-wrap:wrap">
     <span class="ico ">task</span>
-    <div class="nm" role="button" aria-label="Edit: Reply to the landlord"><i class="fo">11</i><p class="t dim" style="text-decoration:line-through" title="Reply to the landlord">Reply to the landlord</p><p class="s">One-off task · done today</p></div>
+    <div class="nm" role="button" aria-label="Edit: Reply to the landlord" aria-disabled="true"><p class="t dim" style="text-decoration:line-through" title="Reply to the landlord">Reply to the landlord</p><p class="s">One-off task · done today</p></div>
     <span class="chk" role="checkbox" aria-checked="true" aria-label="Task completed: Reply to the landlord" aria-disabled="true"><i class="on"></i></span>
   </li></ul></div>
       <p class="note">Two chips + the postponed button at most on a live task; three metadata (deadline · effort · haunted) happen only on a haunted task with a deadline — registered as the PD §5 edge, not hidden.</p>

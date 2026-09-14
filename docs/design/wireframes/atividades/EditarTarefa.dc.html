@@ -81,8 +81,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .dots i{display:block;width:10px;height:10px;border:1px solid #999;background:#fff;box-sizing:border-box}
 .dots i.done{background:#666;border-radius:50%}
 .dots i.shield{background:#fff;border:2px solid #666;transform:rotate(45deg);width:9px;height:9px}
-.dots i.miss{height:2px;border:0;background:#999;width:10px;align-self:center}
-.dots i.notdue{border-radius:50%;border-style:dashed}
+.dots i.dash{height:2px;border:0;background:#999;width:10px;align-self:center}
+.dots i.ring{border-radius:50%;border-style:dashed}
+.dots i.slot{width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff}
 .steps{display:flex;flex-direction:column;gap:2px;margin-top:2px}
 .step{display:flex;align-items:center;gap:6px;min-height:44px;font-size:12px}
 .step i{width:18px;height:18px;border:1px solid #999;border-radius:4px;display:block;background:#fff;flex:none}
@@ -130,7 +131,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
       <div style="display:flex;align-items:center;gap:8px;min-height:44px" role="checkbox" aria-checked="true" aria-label="Deadline"><i class="fo">18</i><span class="chk" style="width:32px;height:32px"><i class="on"></i></span><span class="t">Deadline</span></div><div style="display:flex;gap:8px"><div style="flex:1"><div><p class="lbl">Deadline date</p><div class="input on" role="textbox" aria-label="Deadline date"><i class="fo">19</i>Fri, Sep 20</div></div></div><div style="flex:1"><div><p class="lbl">Deadline time</p><div class="input on" role="textbox" aria-label="Deadline time"><i class="fo">20</i>18:00</div></div></div></div>
       <div style="display:flex;align-items:center;gap:8px;min-height:44px" role="checkbox" aria-checked="true" aria-label="Alarm"><i class="fo">21</i><span class="chk" style="width:32px;height:32px"><i class="on"></i></span><span class="t">Alarm</span></div><div><p class="lbl">Alarm</p><div class="radios" role="radiogroup" aria-label="Alarm"><span class="radio" role="radio" aria-checked="false"><i class="fo">22</i>2h before</span><span class="radio on" role="radio" aria-checked="true"><i class="fo">23</i>1h before</span><span class="radio" role="radio" aria-checked="false"><i class="fo">24</i>30min before</span></div></div><div><p class="lbl">Alarm</p><div class="input on" role="textbox" aria-label="Alarm"><i class="fo">25</i>17:00</div></div><p class="note">presets only with a deadline; the time field is the custom alarm</p>
       <div style="display:flex;gap:8px;margin-top:4px"><span class="btn ghost" role="button" style="flex:1"><i class="fo">26</i>Cancel</span><span class="btn" role="button" style="flex:1.4" ><i class="fo">27</i>Save</span></div>
-      <span class="s" role="button" style="min-height:44px;display:flex;align-items:center;justify-content:center;border:1px dashed #999;border-radius:8px"><i class="fo">28</i>Delete</span><p class="note"><code>quiet</code> + <code>danger-ink</code>, abaixo e separado do primário (como o código); apagar hábito com histórico apaga o marco — confirmação que NOMEIA o que vai ("This habit is a Sapling — 30 days.") é ressalva do guarda (4e), não desenhada: regra</p>
+      <span class="s" role="button" style="min-height:44px;display:flex;align-items:center;justify-content:center;border:1px dashed #999;border-radius:8px"><i class="fo">28</i>Delete</span><p class="note"><code>quiet</code> + <code>danger-ink</code>, abaixo e separado do primário (como o código); uma tarefa não tem marco — apagar perde só o item (o caminho sem perda é "Let it go", 02 §31)</p>
     
     </div></div>
 <footer class="foot">

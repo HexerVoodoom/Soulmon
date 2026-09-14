@@ -81,8 +81,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .dots i{display:block;width:10px;height:10px;border:1px solid #999;background:#fff;box-sizing:border-box}
 .dots i.done{background:#666;border-radius:50%}
 .dots i.shield{background:#fff;border:2px solid #666;transform:rotate(45deg);width:9px;height:9px}
-.dots i.miss{height:2px;border:0;background:#999;width:10px;align-self:center}
-.dots i.notdue{border-radius:50%;border-style:dashed}
+.dots i.dash{height:2px;border:0;background:#999;width:10px;align-self:center}
+.dots i.ring{border-radius:50%;border-style:dashed}
+.dots i.slot{width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff}
 .steps{display:flex;flex-direction:column;gap:2px;margin-top:2px}
 .step{display:flex;align-items:center;gap:6px;min-height:44px;font-size:12px}
 .step i{width:18px;height:18px;border:1px solid #999;border-radius:4px;display:block;background:#fff;flex:none}
@@ -118,22 +119,23 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"></span>PET</div>
     
   </div></div>
-    <div class="folha" role="dialog" aria-modal="true" aria-label="Edit activity" style="max-height:780px">
-      <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">Edit activity</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><i class="fo">2</i><span class="ico ">x</span></span></div>
+    <div class="folha" role="dialog" aria-modal="true" aria-label="Edit activity" style="max-height:860px">
+      <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">Edit activity</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><i class="fo">4</i><span class="ico ">x</span></span></div>
       
       <section class="card" aria-label="Habit card" style="border-style:solid"><span class="tag novo">novo</span> <span class="tag">ficha</span>
-        <div class="chips" style="align-items:center"><span class="dots" role="img" aria-label="Constancy window: 5 of the last 7"><i class="done"></i><i class="done"></i><i class="notdue"></i><i class="done"></i><i class="shield"></i><i class="done"></i><i class="done"></i></span><span class="t b" aria-label="5 of the last 7">5 of the last 7</span><span class="ico" style="" role="img" aria-label="Maturity: Sprout">sprout</span><span class="s">Maturity: Sprout</span></div>
+        <div class="chips" style="align-items:center"><span class="dots" role="img" aria-label="Constancy window: 5 of the last 7"><i class="done"></i><i class="done"></i><i class="ring"></i><i class="done"></i><i class="shield"></i><i class="done"></i><i class="done"></i></span><span class="t b">5 of the last 7</span><span class="ico" style="" role="img" aria-label="Maturity: Sprout">sprout</span><span class="s">Maturity: Sprout</span></div>
         <p class="note"><span class="tag">ATIV-11</span> "N of the last 7" (<code>CONSTANCY_WINDOW_DAYS</code>) — never a percentage; denominator = due days only</p>
-        <div class="chips" style="align-items:center"><span class="s">Rest shields</span><span class="dots" role="img" aria-label="2 rest shields available"><i class="shield"></i><i class="shield"></i><i style="width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff"></i></span></div>
+        <div class="chips" style="align-items:center"><span class="s">Rest shields</span><span class="dots" role="img" aria-label="2 rest shields available"><i class="shield"></i><i class="shield"></i><i class="slot"></i></span></div>
         <p class="s">They arrive with steady weeks and step in on their own when a day slips. <span class="tag novo">novo</span></p>
         <p class="note"><span class="tag novo">decisão 13/09</span> T5 / 13.5 — escudos como POSSE, inclusive zero, POR HÁBITO (<code>HabitRhythm.shields</code>): <code>REST_SHIELD_MAX</code> (3) casas, casa vazia = losango vazado (nunca o glifo de "não devido"); na LISTA só <code>&gt; 0</code> (código) — três contornos × N hábitos leem "você não tem" 3N vezes; zero visível aqui e em Estatísticas</p>
-        <div class="chips" style="align-items:center"><span class="s">Rest shields</span><span class="dots" role="img" aria-label="0 rest shields available"><i style="width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff"></i><i style="width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff"></i><i style="width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff"></i></span><span class="note">zero, as possession</span></div>
+        <div class="chips" style="align-items:center"><span class="s">Rest shields</span><span class="dots" role="img" aria-label="0 rest shields available"><i class="slot"></i><i class="slot"></i><i class="slot"></i></span><span class="note">zero, as possession</span></div>
         <p class="s">Nothing resets here: one missed day costs a dot, not your history.</p>
         <p class="note">legend: ● done · ◆ protected by a shield · ○ missed · — not due</p>
       </section>
-      <div class="strip"><p class="cap"><span class="tag">ATIV-12</span> <code>hideMetrics</code> — só o NÚMERO sai ("5 of the last 7"); janela, glifo e escudos ficam (recompensas preservadas, 02 §40)</p><div class="chips" style="align-items:center"><span class="dots" role="img" aria-label="Constancy window"><i class="done"></i><i class="done"></i><i class="notdue"></i><i class="done"></i><i class="shield"></i><i class="done"></i><i class="done"></i></span><span class="ico" style="" role="img" aria-label="Maturity: Sprout">sprout</span><span class="dots" aria-label="2 rest shields available"><i class="shield"></i><i class="shield"></i></span></div></div>
+      <div class="strip"><p class="cap"><span class="tag">ATIV-12</span> <code>hideMetrics</code> — só o NÚMERO sai ("5 of the last 7"); janela, glifo e escudos ficam (recompensas preservadas, 02 §40)</p><div class="chips" style="align-items:center"><span class="dots" role="img" aria-label="Constancy window"><i class="done"></i><i class="done"></i><i class="ring"></i><i class="done"></i><i class="shield"></i><i class="done"></i><i class="done"></i></span><span class="ico" style="" role="img" aria-label="Maturity: Sprout">sprout</span><span class="dots" role="img" aria-label="2 rest shields available"><i class="shield"></i><i class="shield"></i></span></div></div>
       <div class="strip"><p class="cap"><span class="tag">ATIV-13</span> marcos — <code>HABIT_MILESTONES</code> 7 / 21 / 66 dias efetivos: seed → sprout → sapling → tree; multiplicador ≥ 1; <span class="tag novo">decisão 13/09</span> T6 — a aura de 28 dias é tratamento do glifo (anel), escudo não a quebra, some em silêncio</p><div class="chips"><span class="ico" style="" role="img" aria-label="Maturity: Seed">seed</span><span class="ico" style="" role="img" aria-label="Maturity: Sprout">sprout</span><span class="ico" style="" role="img" aria-label="Maturity: Sapling">sapling</span><span class="ico" style="" role="img" aria-label="Maturity: Tree">tree</span><span class="ico on" style="box-shadow:0 0 0 3px #ddd;" role="img" aria-label="Maturity: Sapling · Steady rhythm over the last 28 days">sapling</span><span class="note">← with the steady-rhythm aura</span></div></div>
-      <p class="note">the form (Name · Category · Repeat · Anchor · Steps · Time) continues below — see EditarAtividade</p>
+      <p class="note">the form (Name · Category · Repeat · Anchor · Steps · Time) continues below — see EditarAtividade; the <code>ModalSheet</code> footer (Cancel · Save) is FIXED at the bottom of the sheet, always visible</p>
+      <div style="display:flex;gap:8px;margin-top:4px"><span class="btn ghost" role="button" style="flex:1"><i class="fo">2</i>Cancel</span><span class="btn" role="button" style="flex:1.4" ><i class="fo">3</i>Save</span></div>
     
     </div></div>
 <footer class="foot">

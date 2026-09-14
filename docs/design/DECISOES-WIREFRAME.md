@@ -119,3 +119,58 @@ mantidas.
 - **Para o cartógrafo:** a condição de `HOME-08` está errada (`hideMeters` é fixo no topo desde 27/08; o toggle é `HOME-05`); "retorno após ausência" (`welcomeBackLine`) e "Home rolada" não têm linha — anotado no inventário §2.1.
 - **Para o `docs/STATUS.md` (dívidas):** o `ScreenSkeleton` não tem a forma da página (V3); o `HomeHud` entrega a regra por `title=` (invisível no toque/teclado); "+10%" não existe — o código imprime `+20%` (`PLAY_BUFF_MULTIPLIER = 1.2`), e o número deve ser dado, nunca escrito à mão.
 - **Para o `staff-frontend`, quando implementar:** a lista de S1–S7 e E1–E7 é o diff da Home; nenhum item muda regra de jogo (`02`); as copies `[novo]` passam pelo `soulmon-guarda-linha-vermelha` como critério de aceite (já dado neste parecer).
+
+## 6. Atividades: entra / volta / sai (decisão do `soulmon-design-lead`, 14/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Atividades](https://claude.ai/code/artifact/4c632c62-a413-42f3-b6a4-35244038bde1)
+> (rodada 3 — carimbo do `design-critic` na rodada 2, ressalvas de amostra aplicadas) · arquivos em `docs/design/wireframes/atividades/` (`Main.dc.html` + 16
+> `<TelaEstado>.dc.html` + `canvas.json`; 27 linhas `ATIV-*` em 17 artboards).
+> **Crítica:** `design-critic` (rodada 1: "não passa", 9 bloqueantes — quase todos de fidelidade ao
+> código; **rodada 2: CARIMBO passa**; rodada 3 aplicou as 7 ressalvas de amostra R1–R7), `soulmon-product-designer` (achado que
+> mudou o canvas: o CTA da Home abre o `EditModal`, não o `CreateModal`; `handleAddNewTask` não
+> tem chamador), `soulmon-guarda-linha-vermelha` (família **APROVADA COM RESSALVA** — 3 vetos
+> cirúrgicos, todos de copy/superfície).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. As regras fechadas na Home
+> (§5: piso de dígitos, regra de canal, célula inerte × recusa do pet) valem aqui.
+
+### 6.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| A1 | **Um só modal de criação**: o CTA "+ New Activity" abre o `CreateModal` (uma linha de captura + "More options" fechado, como o código já desenha); o `EditModal` só edita | Hoje o CTA abre o `EditModal` sem `initialData` ("`create_modal` só abre a partir da tela de evolução", `App.tsx`) e `handleAddNewTask` não tem chamador — tarefa avulsa na Home só nasce pela barra; dois modais de criação são W4 cruzado (product-designer §6) | O funil "home_edit × create_modal" (duas populações na telemetria) muda de nome; **ATIV-18** (teto do demo dentro do `EditModal`) perde o caminho vivo — vira achado no STATUS, como o `LOJA-12` |
+| A2 | **Linha de hábito com dois metadados**: a janela de 7 e o glifo de maturidade (a aura de 28 dias é tratamento do glifo, não chip). "N of the last 7", escudos, legenda e "Nothing resets here" vão para a **ficha do hábito**, no topo do `EditModal` (1 toque no nome) | `PD §5` (1 selo + 1 checkbox + máx. 2 metadados, "verificável por teste de DOM"); `M-const §1` (aura "já vestida" no ícone); a dobra: 358px sob o pet fixo, linha de 77px → 60px = 6 hábitos em vez de 4 (product-designer §2) | O dígito de constância na Home (fica no `aria-label` da janela e na ficha) |
+| A3 | **Tarefas concluídas hoje ficam no fim do painel**, riscadas e inertes, lidas de `completedTasks` | A regra `completeTask` (remove de `tasks`, alimenta meta/selo/relatório; 6 testes) **não muda**; muda a superfície: o mesmo gesto tinha dois comportamentos (hábito feito fica, tarefa feita some); Finch mantém como prova (`MOB §15.5`); Todoist mostra no fim; a pergunta da tela é "o que eu escolho fazer" — o restante vem primeiro | ~60px por tarefa feita; a linha é `aria-disabled` (não existe desconcluir — dar undo seria regra) |
+| A4 | **Cabeçalho `feitos/total` sobre o dia devido**: o denominador exclui o hábito fora do dia; o numerador inclui as concluídas de hoje; dígito só com feitos ≥ 1 | Guarda 1a (hábito inerte no denominador é dívida que não dá para pagar hoje: "5/5" nunca fecha num dia de hábito leve); E5/13.7 (piso); o código hoje conta só `tasks` (a concluída sai da conta) — achado para o STATUS | Nada de regra: é o cálculo da UI |
+| A5 | **Carga do dia = 7ª entrada da fila 2** (`… → recomeco → carga`), como texto `role="status"` sem moldura, só depois do check-in e só enquanto `plannedEffort > OVERCOMMIT_EFFORT` (estritamente maior) | D10 (decisão do dono) + W7 (superfície nova entra numa das duas filas, com posição declarada); `PRINCÍPIOS §2` (aviso de carga é texto); a moldura tracejada era o léxico de célula inerte (Home E7) | Quando HP ≤ 1 e carga coincidem, a carga vira "+1" — HP é mais urgente. `filaDeAvisos.contract.test.ts` ganha a 7ª chave (estrutura). **Dívida registrada:** a lista não tem gesto de "amanhã"; o convite aponta para editar "When I plan to do it" (não contado, `02 §30`), nunca um `postpone` contado (guarda 3) |
+| A6 | **Escudos por hábito** (T5/13.5): na lista só `> 0` (como o código); **zero visível na ficha do hábito e em Estatísticas**, três casas de `REST_SHIELD_MAX`, casa vazia = losango vazado (nunca o glifo de "não devido"); frase única para os dois estados `[novo]`: "They arrive with steady weeks and step in on their own when a day slips." | `HabitRhythm.shields` é **por hábito** (`earnShield(rhythm)`) — uma linha agregada mentiria (product-designer §5); três contornos × N hábitos na Home leem "você não tem" 3N vezes (`HabitConstancy.tsx`); guarda 2e ("Spent automatically…" sob casas vazias diz que foram gastos) | O "sempre visível" do dono fica a um toque (ficha) e em Estatísticas — não na linha da Home |
+| A7 | **Copy nova** `[novo]`: título do nudge do teto "Want a ceiling that grows with you?" (o código diz "Want to create without limits?" — **VETADO** pelo guarda 4b: o pago tem teto, `activityCapFor`); "M steps" no lugar de "0/M steps"; "done today" no subtítulo da concluída | Guarda 4b (precedente C-S1: o app mentindo na tela em que cobra); piso E5 | Nada de regra; lote WP5.9 |
+| A8 | **Estado "0 das últimas 7" = silêncio** (janela + glifo, nenhuma frase) | Guarda 2a: "não uma frase de consolo, que seria cobrança com sorriso"; piso E5 | Nada |
+
+### 6.2 Volta (a crítica pediu ou a rodada 1 tinha; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | Confirmação de "Delete" que nomeia o que vai ("This habit is a Sapling — 30 days.") ou "Put aside" para hábito (guarda 4e) | **Adiado → tensão para o dono** | É regra (apagar hábito com histórico apaga marco, `02 §28`); o wireframe desenha o Delete como o código (abaixo, quiet, separado do primário) |
+| V2 | Copy da recusa da barra "That didn't fit — you've reached your item limit." → "free mode holds N active habits. One-off tasks still fit." (guarda 9a) | **Volta ao código no canvas; vira critério de aceite** | W2 (texto real); a alternativa está na nota do artboard para o `staff-frontend` |
+| V3 | Passos aceitos no nudge: substituem a tarefa ou somam? (guarda 5) | **Adiado → lead/dono** | Regra do `onDecompose`; o wireframe desenha o que existe |
+| V4 | Recompensa material ao terminar a triagem ("terminar rende recompensa", `CLAUDE.md`) | **Sai** (guarda 6d: VETADO; não existe no código — divergência já registrada em `02 §34`) | #16/#19; a copy real "You decided on N items…" fica: N é decidido (feito ≥ 1) |
+| V5 | Foco do dia (0/1/2/3) na lista (`PRINCÍPIOS §2` estados) | **Não desenhado** | `02 §32` "Onde a UI mostra" = check-in e selo do HUD; inventar seria funcionalidade sem regra — lacuna registrada |
+
+### 6.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **O segundo modal de criação** (`EditModal` como criação) e, com ele, o teto do demo dentro do `EditModal` (ATIV-18) | A1; guarda 4d (trancar edição no teto seria paywall que interrompe fluxo — o código não tranca edição, `blocked = atCap && !initialData`) |
+| S2 | **A linha agregada de escudos "para a lista inteira"** (rodada 1) e as casas vazias na linha da Home | A6 |
+| S3 | **"N of the last 7" na linha** (vai para a ficha) | A2 |
+| S4 | **"Want to create without limits?"** | A7 (veto 4b) |
+| S5 | **A tarefa concluída que some da lista** (superfície; a regra fica) | A3 |
+| S6 | **O cartão tracejado de carga do dia** (rodada 1) | A5 |
+| S7 | O lápis — **não existe no código**; a rodada 1 o marcava como `[novo]` por engano (crítico B9). O nome da linha É o botão de editar | `RitualPanel.tsx`, decisão 5 do cabeçalho |
+
+### 6.4 O que fica registrado para depois
+
+- **Para o dono, no checkpoint:** A1, A2, A3 e A5/A6 são as mudanças estruturais — a recomendação é aprovar as cinco; V1 (confirmar Delete nomeando o marco) e V3 (passos do nudge substituem ou somam) são decisões de regra suas.
+- **Para o cartógrafo:** `03 §4.5` está defasado em dois pontos (CTA → `CreateModal`; "toque no lápis"); `03 §4.1` diz "tarefas por `completed`" (concluídas nem estão em `tasks`); `ATIV-05` no inventário descreve a regra certa e a prova errada; `ATIV-18` deixa de ter caminho vivo.
+- **Para o `docs/STATUS.md` (achados):** `feitos/total` cego às tarefas concluídas (`App.tsx`); `"0/3 steps"` impresso antes do primeiro passo (fura o piso); "Bring back" a 36px; "Want to create without limits?" (C-S1); `handleAddNewTask` sem chamador; o `CLAUDE.md` promete recompensa na triagem que o código não tem.
+- **Para o `staff-frontend`:** A1–A8 e S1–S7 são o diff do motor de tarefas; nenhum item muda regra de jogo (`02`); as copies `[novo]` passam pelo guarda como aceite (dado neste parecer); a régua A4 é da UI, não do motor.

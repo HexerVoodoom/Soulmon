@@ -81,8 +81,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 .dots i{display:block;width:10px;height:10px;border:1px solid #999;background:#fff;box-sizing:border-box}
 .dots i.done{background:#666;border-radius:50%}
 .dots i.shield{background:#fff;border:2px solid #666;transform:rotate(45deg);width:9px;height:9px}
-.dots i.miss{height:2px;border:0;background:#999;width:10px;align-self:center}
-.dots i.notdue{border-radius:50%;border-style:dashed}
+.dots i.dash{height:2px;border:0;background:#999;width:10px;align-self:center}
+.dots i.ring{border-radius:50%;border-style:dashed}
+.dots i.slot{width:9px;height:9px;border:2px dashed #999;transform:rotate(45deg);background:#fff}
 .steps{display:flex;flex-direction:column;gap:2px;margin-top:2px}
 .step{display:flex;align-items:center;gap:6px;min-height:44px;font-size:12px}
 .step i{width:18px;height:18px;border:1px solid #999;border-radius:4px;display:block;background:#fff;flex:none}
@@ -119,19 +120,20 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     
   </div></div>
     <div class="folha" role="dialog" aria-modal="true" aria-label="New Activity" style="max-height:980px">
-      <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">New Activity</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><i class="fo">24</i><span class="ico ">x</span></span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">New Activity</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><i class="fo">25</i><span class="ico ">x</span></span></div>
       
       <div class="input" role="textbox" aria-label="Quick add"><i class="fo">2</i><span class="s">{quickAddHint — e.g. "Meditate 10 minutes every day"}</span></div>
       <p class="s">Enter fills in the rest. Nothing is saved until you hit Save.</p>
       <p class="s" role="button" aria-expanded="false" style="min-height:44px;display:flex;align-items:center;gap:4px"><i class="fo">3</i><span class="ico ">▾</span>More options</p>
-      <div style="display:flex;gap:8px;margin-top:4px"><span class="btn ghost" role="button" style="flex:1"><i class="fo">4</i>Cancel</span><span class="btn" role="button" style="flex:1.4" ><i class="fo">5</i>Save</span></div>
-      <div class="strip"><p class="cap">aberto — <code>showForm</code>: o formulário inteiro atrás da divulgação</p>
+      <div style="display:flex;gap:8px;margin-top:4px"><span class="btn ghost" role="button" style="flex:1"><i class="fo">4</i>Cancel</span><span class="btn dis" role="button" style="flex:1.4" aria-disabled="true"><i class="fo">5</i>Save</span></div><p class="note">Save nasce inerte sem nome (<code>disabled={!name.trim()}</code>)</p>
+      <div class="strip"><p class="cap">aberto — <code>showForm</code>: o formulário inteiro atrás da divulgação, na ordem do código</p>
         <div><p class="lbl">Name</p><div class="input" role="textbox" aria-label="Name"><i class="fo">6</i>Ex: Meditate 10 minutes</div></div>
-        <div class="segm" role="radiogroup" aria-label="Frequency"><span class="on" role="radio" aria-checked="true"><i class="fo">7</i>Recurring</span><span role="radio" aria-checked="false"><i class="fo">8</i>One-time</span></div>
-        <div><p class="lbl">Repeat</p><div class="radios" role="radiogroup" aria-label="Repeat"><span class="radio on" role="radio" aria-checked="true"><i class="fo">9</i>Every day</span><span class="radio" role="radio" aria-checked="false"><i class="fo">10</i>Weekdays<span class="note">Mon to Fri</span></span><span class="radio" role="radio" aria-checked="false"><i class="fo">11</i>Light<span class="note">Mon · Wed · Fri</span></span><span class="radio" role="radio" aria-checked="false"><i class="fo">12</i>Customize</span></div></div>
-        <div><p class="lbl">Category</p><div class="chips" role="group" aria-label="Category"><span class="chip on" role="button" style="min-height:44px;padding:0 12px"><i class="fo">13</i>Health</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">14</i>Creativity</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">15</i>Discipline</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">16</i>Study</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">17</i>Work</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">18</i>Social</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">19</i>Wellness</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">20</i>Fitness</span></div></div><p class="note">Strengthens {attribute} — and the highest one decides the evolution branch.</p>
+        <div><p class="lbl">Category</p><div class="chips" role="group" aria-label="Category"><span class="chip on" role="button" style="min-height:44px;padding:0 12px"><i class="fo">7</i>Health</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">8</i>Creativity</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">9</i>Discipline</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">10</i>Study</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">11</i>Work</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">12</i>Social</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">13</i>Wellness</span><span class="chip" role="button" style="min-height:44px;padding:0 12px"><i class="fo">14</i>Fitness</span></div></div><p class="note">Strengthens {attribute} — and the highest one decides the evolution branch.</p>
+        <div class="segm" role="radiogroup" aria-label="Frequency"><span class="on" role="radio" aria-checked="true"><i class="fo">15</i>Recurring</span><span role="radio" aria-checked="false"><i class="fo">16</i>One-time</span></div>
+        <div><p class="lbl">Repeat</p><div class="radios" role="radiogroup" aria-label="Repeat"><span class="radio on" role="radio" aria-checked="true"><i class="fo">17</i>Every day</span><span class="radio" role="radio" aria-checked="false"><i class="fo">18</i>Weekdays<span class="note">Mon to Fri</span></span><span class="radio" role="radio" aria-checked="false"><i class="fo">19</i>Light<span class="note">Mon · Wed · Fri</span></span><span class="radio" role="radio" aria-checked="false"><i class="fo">20</i>Customize</span></div></div>
         <div><p class="lbl">Anchor (optional)</p><div style="display:flex;gap:6px"><div class="input" role="textbox" aria-label="After breakfast"><i class="fo">21</i>After breakfast</div><div class="input" role="textbox" aria-label="At the kitchen table"><i class="fo">22</i>At the kitchen table</div></div></div>
         <div><div style="display:flex;align-items:center;justify-content:space-between"><p class="lbl">Steps (optional)</p><span class="btn ghost" role="button" style="min-height:40px"><i class="fo">23</i><span class="ico ">add</span>Add</span></div></div>
+        <div><p class="lbl">Time (optional)</p><div class="input" role="textbox" aria-label="Time (optional)"><i class="fo">24</i>08:00</div></div>
         <p class="note">One-time: Effort (Quick · Medium · Project) · When I plan to do it · Deadline · Alarm — see EditarTarefa</p></div>
     
     </div></div>
