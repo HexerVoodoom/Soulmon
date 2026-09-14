@@ -1,0 +1,189 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "ATIV-02 · lista parcial (2/5)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1769,
+      "page": "page-1"
+    },
+    {
+      "file": "ListaVazia.dc.html",
+      "title": "ATIV-01 · vazio",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1274,
+      "page": "page-1"
+    },
+    {
+      "file": "ListaCompleta.dc.html",
+      "title": "ATIV-03 · meta do dia cumprida",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1259,
+      "page": "page-1"
+    },
+    {
+      "file": "CargaDoDia.dc.html",
+      "title": "D10 · carga do dia no topo da lista [decisão 13/09]",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1319,
+      "page": "page-1"
+    },
+    {
+      "file": "LinhaTarefaEstados.dc.html",
+      "title": "ATIV-04 · 05 · 08 · 09 · 10 · linha de tarefa e TaskMeta",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 2004,
+      "page": "page-2"
+    },
+    {
+      "file": "LinhaHabitoEstados.dc.html",
+      "title": "ATIV-06 · 07 · linha de hábito, passos e constância",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 2064,
+      "page": "page-2"
+    },
+    {
+      "file": "ConstanciaEstados.dc.html",
+      "title": "ATIV-11 · 12 · 13 · constância, maturidade, aura e escudos",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1839,
+      "page": "page-2"
+    },
+    {
+      "file": "CriarAtividade.dc.html",
+      "title": "ATIV-15 · CreateModal",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1454,
+      "page": "page-3"
+    },
+    {
+      "file": "CriarTetoDemo.dc.html",
+      "title": "ATIV-16 · demo no teto",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1424,
+      "page": "page-3"
+    },
+    {
+      "file": "EditarAtividade.dc.html",
+      "title": "ATIV-17 · 18 · EditModal (+ demo no teto)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1274,
+      "page": "page-3"
+    },
+    {
+      "file": "EditarTarefa.dc.html",
+      "title": "ATIV-19 · TaskEditModal",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1304,
+      "page": "page-3"
+    },
+    {
+      "file": "CapturaRapida.dc.html",
+      "title": "ATIV-14 · QuickAddBar",
+      "x": 0,
+      "y": 1594,
+      "w": 390,
+      "h": 1794,
+      "page": "page-3"
+    },
+    {
+      "file": "NudgeAdiamento.dc.html",
+      "title": "ATIV-20 · PostponeNudgeSheet",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1484,
+      "page": "page-4"
+    },
+    {
+      "file": "EquilibrarSemana.dc.html",
+      "title": "ATIV-21 · 27 · botão + BalanceWeekModal",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1334,
+      "page": "page-4"
+    },
+    {
+      "file": "TriagemFila.dc.html",
+      "title": "ATIV-22 · 23 · TriagePile (fila e carta)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1394,
+      "page": "page-4"
+    },
+    {
+      "file": "TriagemFim.dc.html",
+      "title": "ATIV-24 · fim da fila",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1199,
+      "page": "page-4"
+    },
+    {
+      "file": "GuardadasEstados.dc.html",
+      "title": "ATIV-25 · 26 · gaveta \"Put aside\"",
+      "x": 0,
+      "y": 1624,
+      "w": 390,
+      "h": 1779,
+      "page": "page-4"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Atividades (Fase 1, cinza, 13–14/09/2026). O motor de tarefas mora DENTRO da Home: a composição da página é do canvas Home; aqui ficam os átomos (linha, metadados, constância), os modais e as saídas (nudge, equilíbrio, triagem, gaveta). Viewport 390×844 + rodapé por artboard. Inglês é a língua do artboard (D8). Números = ordem de foco (1 = skip link, oculto). Tags ATIV-xx = linha do INVENTARIO-WIREFRAMES.md; [novo] = proposto; [decisão 13/09] = decisão do dono desenhada como NOVA (D10 carga do dia; T5 escudos; T6 aura). As regras fechadas na Home valem aqui: piso ≥ 1 para dígito de feito, regra de canal, célula inerte × recusa do pet."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Atividades — a lista"
+    },
+    {
+      "id": "page-2",
+      "name": "Atividades — linhas e metadados"
+    },
+    {
+      "id": "page-3",
+      "name": "Atividades — criar e editar"
+    },
+    {
+      "id": "page-4",
+      "name": "Atividades — saídas"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
