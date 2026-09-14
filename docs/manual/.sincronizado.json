@@ -1,6 +1,6 @@
 {
-  "sha": "f673a082922831f28c14f98ad4ca0a637c0fce66",
+  "sha": "8f23d5fd87c245b79ef48012198808c2561ebc42",
   "data": "14/09/2026",
-  "por": "doc-mantenedor (sessão) — delta 96d8dbdb→f673a082: wireframes de Rituais aprovados, decisões 13.10/13.11, DECISOES-WIREFRAME §7",
+  "por": "doc-mantenedor (sessão) — marcador: o delta f673a082→8f23d5fd era só o bloco de STATUS da própria sincronização",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
