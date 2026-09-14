@@ -93,7 +93,7 @@ mantidas.
 
 | # | Pedido | Decisão | Motivo |
 |---|---|---|---|
-| V1 | Restringir a pastinha (Items) aos itens especiais — hoje ela também alimenta comida comum, duplicando a folha Feed (W4 cruzado, product-designer §5) | **Adiado → tensão para o dono** | É mudança de **regra** (`03 §4.2b`: `use()` → `onFeed` para qualquer item), não de wireframe; vai para o `REGISTRO-DE-DECISOES.md` se o dono quiser |
+| V1 | Restringir a pastinha (Items) aos itens especiais — hoje ela também alimenta comida comum, duplicando a folha Feed (W4 cruzado, product-designer §5) | **Decidido pelo dono (14/09/2026): pastinha só com especiais** → `REGISTRO` 13.6 | Era regra, não wireframe; o canvas Loja/Atividades desenha a pastinha sem comida comum; a Home fica como está (a folha Alimentar é a única porta da comida) |
 | V2 | Calar o pulso de presença de 3 min (`getIdlePhrase`) | **Volta parcial**: o pulso fica, o léxico muda | `M-vinc §8` pede trocar a frase, não calar; sai só o léxico de cobrança (ver S4). A fome vira pose + o desejo único de `needsAttention` (`02 §13`) |
 | V3 | Skeleton "em forma de página" (GoFundMe, `MOB §3`) | **Volta**: desenhado como o código (visor 56×40 + "LOADING") | D11 (desenhar como o código faz); a proposta vai ao `docs/STATUS.md` como dívida, não ao wireframe |
 | V4 | Tirar o lápis da `RitualRow` (3 controles contra `PD §5` "1 selo + 1 checkbox + 2 metadados") | **Adiado → canvas Atividades** | A linha é átomo do fluxo Atividades (inventário §0: "a composição fica na página; o átomo fica no fluxo que o possui") |
@@ -115,7 +115,7 @@ mantidas.
 
 ### 5.4 O que fica registrado para depois (não muda agora)
 
-- **Para o dono, no checkpoint:** (1) E1, E2 e E7 são as mudanças estruturais da Home — a recomendação é aprovar as três; (2) V1 (pastinha só especiais?) é decisão de regra sua; (3) a distinção posse × dívida de E5 fica escrita aqui para não colidir com a 13.5.
+- **Checkpoint fechado em 14/09/2026 — o dono APROVOU** (E1, E2, E7 entram; 13.6 pastinha só especiais; 13.7 posse × dívida). Registro do que foi apresentado: (1) E1, E2 e E7 são as mudanças estruturais da Home — a recomendação era aprovar as três; (2) V1 (pastinha só especiais?) é decisão de regra sua; (3) a distinção posse × dívida de E5 fica escrita aqui para não colidir com a 13.5.
 - **Para o cartógrafo:** a condição de `HOME-08` está errada (`hideMeters` é fixo no topo desde 27/08; o toggle é `HOME-05`); "retorno após ausência" (`welcomeBackLine`) e "Home rolada" não têm linha — anotado no inventário §2.1.
 - **Para o `docs/STATUS.md` (dívidas):** o `ScreenSkeleton` não tem a forma da página (V3); o `HomeHud` entrega a regra por `title=` (invisível no toque/teclado); "+10%" não existe — o código imprime `+20%` (`PLAY_BUFF_MULTIPLIER = 1.2`), e o número deve ser dado, nunca escrito à mão.
 - **Para o `staff-frontend`, quando implementar:** a lista de S1–S7 e E1–E7 é o diff da Home; nenhum item muda regra de jogo (`02`); as copies `[novo]` passam pelo `soulmon-guarda-linha-vermelha` como critério de aceite (já dado neste parecer).

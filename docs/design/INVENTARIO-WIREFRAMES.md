@@ -63,54 +63,54 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `HOME-01` | Home | Home (`currentView === 'main'`) | normal — com atividades cadastradas | célula 1 da `BottomNav`; valor inicial de `currentView` | qualquer célula da barra | P0 | criticado |
-| `HOME-02` | Home | Home | vazio — `emptyMessage={total === 0 ? t.main.noActivityRegistered : undefined}` | idem | `handleAddNewActivity` | P0 | criticado |
-| `HOME-03` | Home | Home | primeira-vez — `FirstDayCard` no slot, sem `PlayCard` (`jaConcluiuAlgo` falso), sem `EvoTrail` (`soulmonStages` vazio) | fim do `GameTutorialFlow` | — | P0 | criticado |
-| `HOME-04` | Home | Home | carregando — `Suspense` com `<ScreenSkeleton>` | navegação para página `lazy()` | — | P0 | criticado |
-| `HOME-05` | Home | Home | sem métricas — `hideMetrics={gameState.rest?.hideMetrics === true}` | switch do `RestWindowCard` | — | P1 | criticado |
-| `HOME-06` | Home | `HomeHud` | normal — wordmark (`<h1>` da Home), energia e vida | montado sempre | — | P0 | criticado |
-| `HOME-07` | Home | `HomeHud` | selo do dia — `focusSealed` = `focoDoDiaCompleto` (binário) | as 3 do foco concluídas | — | P0 | criticado |
-| `HOME-08` | Home | `HomeHud` | medidores ocultos — modo `hideMeters` | idem `HOME-05` | — | P1 | criticado |
-| `HOME-09` | Home | slot de avisos (fila 2) | colapsado — renderiza `avisos[0]`, resto vira `+N` (`resto = avisos.length - 1`) | IIFE do `App.tsx` | expande | P0 | criticado |
-| `HOME-10` | Home | slot de avisos | expandido — `avisosAbertos` | toque no `+N` | colapsa | P0 | criticado |
-| `HOME-11` | Home | `FirstDayCard` | normal — `shouldShowFirstDay(gameState.firstDay, playerDayKey(...))`; 3 gestos de `FIRST_DAY_GESTURES` | aviso 0 da fila 2 | some na virada (não tem botão de fechar) | P0 | criticado |
-| `HOME-12` | Home | `FirstDayCard` | parcial — `!allGesturesDone(p)` com gestos já feitos; **não dá prêmio, não abre modal, não cobra** | idem | idem | P0 | criticado |
-| `HOME-13` | Home | aviso de HP (bloco `sm2-notice-warn` inline) | normal — `healthPoints <= 1 && > 0 && dailyDone < hpSafeToday && !hpBannerDismissed` | aviso 1 da fila 2 | `hpBannerDismissed` | P1 | criticado |
-| `HOME-14` | Home | aviso de triagem (botão "Arrumar a pilha") | normal — `triageQueue(gameState.tasks, agoraA).length > 0` | aviso 3 da fila 2 | `handleOpenTriage` → `ATIV-22` | P0 | criticado |
-| `HOME-15` | Home | priming de push (seção inline) | normal — `mostrarPrimingDePush` (`shouldPrimePush`); "Pode sim" ou "Agora não" | aviso 4 da fila 2 | resposta do jogador | P1 | criticado |
-| `HOME-16` | Home | aviso de recomeço (bloco `sm2-notice` inline) | normal — `freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language)` | aviso 5 da fila 2 | `freshStartDismissed` | P1 | criticado |
-| `HOME-17` | Home | `CompanionHUD` | normal — pet acordado, deck de 4 ações (`div.sm2-deck`, `role="group"`) | montado o tempo todo na Home | não navega | P0 | criticado |
-| `HOME-18` | Home | `CompanionHUD` | carinho em curso — `<button className="sm2-rub">`, `onPointerDown/Move/Up`; teclado roda ciclo de 2 s | gesto sobre o sprite | `onPet` → `handlePet` | P0 | criticado |
-| `HOME-19` | Home | `CompanionHUD` | dormindo — `isSleeping` troca a ação de dormir por acordar | ação `sleep` do deck | idem | P0 | criticado |
-| `HOME-20` | Home | `CompanionHUD` | assombrado — `hauntedWatching` acrescenta `sm-pet-haunted`; **gesto, sem texto junto** | tarefa vencida ou parada `HAUNTED_AFTER_DAYS` | — | P1 | criticado |
-| `HOME-21` | Home | `CompanionHUD` | itens novos — `hasNewItems` acende o selo do botão de itens | compra ou drop | `handleOpenItems` | P1 | criticado |
-| `HOME-22` | Home | `CompanionHUD` | pode evoluir — `{canEvolve && !isSleeping && (…)}` monta o botão "Evoluir" | barra cheia e cadeado aberto | `onEvolveRequest` → `EVO-13` | P1 | criticado |
-| `HOME-23` | Home | `CompanionHUD` | banho em espera — `disabled: showerCooldown` (5 s contra toque duplo; **não é gate de regra**) | ação `bath` | `handleShowerClick` | P1 | criticado |
-| `HOME-24` | Home | área do pet com cocô | normal — agendamento de `useCareSystem` (polling 10 s) | virada do relógio de cocô | `cleanPoop` pelo banho | P1 | criticado |
-| `HOME-25` | Home | `ChatBox` | normal — sem texto, mic otimista (`micDisponivel` nasce `null`) | montada dentro do `CompanionHUD` | não navega | P0 | criticado |
-| `HOME-26` | Home | `ChatBox` | com texto — o botão único vira enviar (`hasText ... ? handleSendMessage : handleMicClick`) | digitação | `handleSendMessage` | P0 | criticado |
-| `HOME-27` | Home | `ChatBox` | sem transcrição — `micDisponivel === false`: o `<button>` **continua no DOM**, vira glifo `send`, com `aria-disabled` sem texto | resposta de `fetchServerConfig` | — | P1 | criticado |
-| `HOME-28` | Home | `ChatBox` | gravando — `isRecording` → `stop_circle` em tom `danger` | `handleMicClick` | envio ou parada | P1 | criticado |
-| `HOME-29` | Home | `ChatBox` | carregando — `isLoading` → glifo `sync` girando | envio | resposta | P1 | criticado |
-| `HOME-30` | Home | `ChatBox` | permissão negada — o pet fala "Não consegui acessar o microfone. Dá para escrever aqui do mesmo jeito 🎤" | recusa do sistema | — | P1 | criticado |
-| `HOME-31` | Home | `PlayCard` | disponível — `{jaConcluiuAlgo && (…)}` e `canPlay` (energia ≥ `PLAY_ENERGY_COST`) | cartão na Home | não navega | P1 | criticado |
-| `HOME-32` | Home | `PlayCard` | já brincou — `playedToday` | idem | — | P1 | criticado |
-| `HOME-33` | Home | `PlayCard` | com efeito — `buff` | idem | — | P2 | criticado |
-| `HOME-34` | Home | `EvoTrail` | normal — `(gameState.soulmonStages?.length ?? 0) > 0` | trilha na Home | `onOpen` → `setCurrentView('evolution')` | P1 | criticado |
-| `HOME-35` | Home | seletor de comida | normal — `setFeedOpen(true)` pela ação `feed` do deck; `ModalSheet` "Alimentar"/"Feed" com a grade de `foodStock` (`n > 0 && !isSpecialItem(emoji)`, ordenada por quantidade), célula de 72px com arte/emoji + `×N`, e a dica "+1 de energia e pontos de atributo". **Medido em 13/09/2026** → `03` §4.2a | ação `feed` | `handleDeckFeed` fecha a folha e chama `handleFeed` | P0 | criticado |
-| `HOME-36` | Home | seletor de comida | recusa por teto — `FOOD_LIMIT_PER_HOUR` (= `MAX_STAGE_REQUIREMENT`) sobre `careCaps.feedTimes`. ⚠️ **não é uma tela**: a folha JÁ fechou; `setFullSignal(n => n + 1)` faz o pet falar por 3500 ms, **sem toast, sem modal e sem decrementar o item**. O artboard é o estado do pet, não do seletor. **Medido em 13/09/2026** → `03` §4.2a | idem | — | P1 | criticado |
-| `HOME-37` | Home | `ItemsWindow` (pastinha) | normal — `{showItemsWindow && (…)}`; `handleOpenItems` **alterna** e zera `newItemsReady` | botão `items` do deck | alterna | P1 | criticado |
-| `HOME-38` | Home | `ItemsWindow` | vazio — `items.length === 0` (`Object.entries(foodInventory).filter(([, c]) => c > 0)`): **ilustração, não texto cru** — `mascot-raven.png` 72×72 em `opacity: .85` + "Sua pastinha está vazia. Conclua uma atividade para ganhar comida.", e **sem rodapé** (o `footer` só existe com `detail`). **Medido em 13/09/2026** → `03` §4.2b | idem | — | P1 | criticado |
-| `HOME-39` | Home | `ItemsWindow` | uso de item especial — toque seleciona (borda `--sm2-primary-ink`) e o **rodapé** traz nome + `effectLine` + "Usar"; `use()` chama `onFeed` e limpa a seleção, **sem fechar a folha**. Três recusas com três canais distintos: `'daily-cap'` (🌀) = **toast** e o item continua na grade, `'already-full'` (💗) = **fala do pet** (`healCapSignal`), `'no-stock'` = **silêncio**. **Medido em 13/09/2026** → `03` §4.2b | toque no item | — | P2 | criticado |
-| `HOME-40` | Home | `BottomNav` | normal — 4 destinos + menu sanduíche (teto declarado no cabeçalho do componente) | sempre montada | as cinco células | P0 | criticado |
-| `HOME-41` | Home | `BottomNav` | célula ativa — seleção é **sublinhado ciano**, nunca placa preenchida (regra de UI do `CLAUDE.md`) | navegação | — | P0 | criticado |
-| `HOME-42` | Home | menu sanduíche (popover) | normal — 4 `MenuRow`: Biblioteca, Créditos (`onOpenCredits`, só se a prop existir), Configurações, "Refazer o ritual" (`onResetOnboarding`, idem) | célula 5 | `library` · `creditsOpen` · `settings` · `ConfirmDialog` | P0 | criticado |
-| `HOME-43` | Home | "Pular para o conteúdo" | normal — `<a href="#conteudo">`, primeiro nó focável do documento | foco por teclado | `<main tabIndex={-1}>` | P1 | criticado |
-| `HOME-44` | Home | `OfflineSeal` | offline — acende pelos eventos `online`/`offline`; **não bloqueia nada** | raiz do `App`, sempre | — | P1 | criticado |
-| `HOME-45` | Home | `Toaster` (sonner) | aviso de uma linha — último nó do `App` | qualquer ação que avise | — | P1 | criticado |
-| `HOME-46` | Home | `ScreenSkeleton` | carregando — `Suspense fallback` de toda página `lazy()`. ⚰️ substituiu os `fallback={null}` (13 pontos medidos em 19/08/2026) que deixavam a tela **em branco** | navegação | a página | P0 | criticado |
-| `HOME-47` | Home | `ErrorBoundary` | erro — `getDerivedStateFromError` troca a tela pelo fallback; loga só em `DEV` | envolve a árvore em `main.tsx` | — | P1 | criticado |
-| `HOME-48` | Home | região `aria-live` do visor | anúncio — `spriteText('tuned', language)` quando `visorAnunciou` | sintonia do visor | — | P2 | criticado |
+| `HOME-01` | Home | Home (`currentView === 'main'`) | normal — com atividades cadastradas | célula 1 da `BottomNav`; valor inicial de `currentView` | qualquer célula da barra | P0 | aprovado |
+| `HOME-02` | Home | Home | vazio — `emptyMessage={total === 0 ? t.main.noActivityRegistered : undefined}` | idem | `handleAddNewActivity` | P0 | aprovado |
+| `HOME-03` | Home | Home | primeira-vez — `FirstDayCard` no slot, sem `PlayCard` (`jaConcluiuAlgo` falso), sem `EvoTrail` (`soulmonStages` vazio) | fim do `GameTutorialFlow` | — | P0 | aprovado |
+| `HOME-04` | Home | Home | carregando — `Suspense` com `<ScreenSkeleton>` | navegação para página `lazy()` | — | P0 | aprovado |
+| `HOME-05` | Home | Home | sem métricas — `hideMetrics={gameState.rest?.hideMetrics === true}` | switch do `RestWindowCard` | — | P1 | aprovado |
+| `HOME-06` | Home | `HomeHud` | normal — wordmark (`<h1>` da Home), energia e vida | montado sempre | — | P0 | aprovado |
+| `HOME-07` | Home | `HomeHud` | selo do dia — `focusSealed` = `focoDoDiaCompleto` (binário) | as 3 do foco concluídas | — | P0 | aprovado |
+| `HOME-08` | Home | `HomeHud` | medidores ocultos — modo `hideMeters` | idem `HOME-05` | — | P1 | aprovado |
+| `HOME-09` | Home | slot de avisos (fila 2) | colapsado — renderiza `avisos[0]`, resto vira `+N` (`resto = avisos.length - 1`) | IIFE do `App.tsx` | expande | P0 | aprovado |
+| `HOME-10` | Home | slot de avisos | expandido — `avisosAbertos` | toque no `+N` | colapsa | P0 | aprovado |
+| `HOME-11` | Home | `FirstDayCard` | normal — `shouldShowFirstDay(gameState.firstDay, playerDayKey(...))`; 3 gestos de `FIRST_DAY_GESTURES` | aviso 0 da fila 2 | some na virada (não tem botão de fechar) | P0 | aprovado |
+| `HOME-12` | Home | `FirstDayCard` | parcial — `!allGesturesDone(p)` com gestos já feitos; **não dá prêmio, não abre modal, não cobra** | idem | idem | P0 | aprovado |
+| `HOME-13` | Home | aviso de HP (bloco `sm2-notice-warn` inline) | normal — `healthPoints <= 1 && > 0 && dailyDone < hpSafeToday && !hpBannerDismissed` | aviso 1 da fila 2 | `hpBannerDismissed` | P1 | aprovado |
+| `HOME-14` | Home | aviso de triagem (botão "Arrumar a pilha") | normal — `triageQueue(gameState.tasks, agoraA).length > 0` | aviso 3 da fila 2 | `handleOpenTriage` → `ATIV-22` | P0 | aprovado |
+| `HOME-15` | Home | priming de push (seção inline) | normal — `mostrarPrimingDePush` (`shouldPrimePush`); "Pode sim" ou "Agora não" | aviso 4 da fila 2 | resposta do jogador | P1 | aprovado |
+| `HOME-16` | Home | aviso de recomeço (bloco `sm2-notice` inline) | normal — `freshStartDismissed ? null : freshStartOffer(gameState, agoraA, language)` | aviso 5 da fila 2 | `freshStartDismissed` | P1 | aprovado |
+| `HOME-17` | Home | `CompanionHUD` | normal — pet acordado, deck de 4 ações (`div.sm2-deck`, `role="group"`) | montado o tempo todo na Home | não navega | P0 | aprovado |
+| `HOME-18` | Home | `CompanionHUD` | carinho em curso — `<button className="sm2-rub">`, `onPointerDown/Move/Up`; teclado roda ciclo de 2 s | gesto sobre o sprite | `onPet` → `handlePet` | P0 | aprovado |
+| `HOME-19` | Home | `CompanionHUD` | dormindo — `isSleeping` troca a ação de dormir por acordar | ação `sleep` do deck | idem | P0 | aprovado |
+| `HOME-20` | Home | `CompanionHUD` | assombrado — `hauntedWatching` acrescenta `sm-pet-haunted`; **gesto, sem texto junto** | tarefa vencida ou parada `HAUNTED_AFTER_DAYS` | — | P1 | aprovado |
+| `HOME-21` | Home | `CompanionHUD` | itens novos — `hasNewItems` acende o selo do botão de itens | compra ou drop | `handleOpenItems` | P1 | aprovado |
+| `HOME-22` | Home | `CompanionHUD` | pode evoluir — `{canEvolve && !isSleeping && (…)}` monta o botão "Evoluir" | barra cheia e cadeado aberto | `onEvolveRequest` → `EVO-13` | P1 | aprovado |
+| `HOME-23` | Home | `CompanionHUD` | banho em espera — `disabled: showerCooldown` (5 s contra toque duplo; **não é gate de regra**) | ação `bath` | `handleShowerClick` | P1 | aprovado |
+| `HOME-24` | Home | área do pet com cocô | normal — agendamento de `useCareSystem` (polling 10 s) | virada do relógio de cocô | `cleanPoop` pelo banho | P1 | aprovado |
+| `HOME-25` | Home | `ChatBox` | normal — sem texto, mic otimista (`micDisponivel` nasce `null`) | montada dentro do `CompanionHUD` | não navega | P0 | aprovado |
+| `HOME-26` | Home | `ChatBox` | com texto — o botão único vira enviar (`hasText ... ? handleSendMessage : handleMicClick`) | digitação | `handleSendMessage` | P0 | aprovado |
+| `HOME-27` | Home | `ChatBox` | sem transcrição — `micDisponivel === false`: o `<button>` **continua no DOM**, vira glifo `send`, com `aria-disabled` sem texto | resposta de `fetchServerConfig` | — | P1 | aprovado |
+| `HOME-28` | Home | `ChatBox` | gravando — `isRecording` → `stop_circle` em tom `danger` | `handleMicClick` | envio ou parada | P1 | aprovado |
+| `HOME-29` | Home | `ChatBox` | carregando — `isLoading` → glifo `sync` girando | envio | resposta | P1 | aprovado |
+| `HOME-30` | Home | `ChatBox` | permissão negada — o pet fala "Não consegui acessar o microfone. Dá para escrever aqui do mesmo jeito 🎤" | recusa do sistema | — | P1 | aprovado |
+| `HOME-31` | Home | `PlayCard` | disponível — `{jaConcluiuAlgo && (…)}` e `canPlay` (energia ≥ `PLAY_ENERGY_COST`) | cartão na Home | não navega | P1 | aprovado |
+| `HOME-32` | Home | `PlayCard` | já brincou — `playedToday` | idem | — | P1 | aprovado |
+| `HOME-33` | Home | `PlayCard` | com efeito — `buff` | idem | — | P2 | aprovado |
+| `HOME-34` | Home | `EvoTrail` | normal — `(gameState.soulmonStages?.length ?? 0) > 0` | trilha na Home | `onOpen` → `setCurrentView('evolution')` | P1 | aprovado |
+| `HOME-35` | Home | seletor de comida | normal — `setFeedOpen(true)` pela ação `feed` do deck; `ModalSheet` "Alimentar"/"Feed" com a grade de `foodStock` (`n > 0 && !isSpecialItem(emoji)`, ordenada por quantidade), célula de 72px com arte/emoji + `×N`, e a dica "+1 de energia e pontos de atributo". **Medido em 13/09/2026** → `03` §4.2a | ação `feed` | `handleDeckFeed` fecha a folha e chama `handleFeed` | P0 | aprovado |
+| `HOME-36` | Home | seletor de comida | recusa por teto — `FOOD_LIMIT_PER_HOUR` (= `MAX_STAGE_REQUIREMENT`) sobre `careCaps.feedTimes`. ⚠️ **não é uma tela**: a folha JÁ fechou; `setFullSignal(n => n + 1)` faz o pet falar por 3500 ms, **sem toast, sem modal e sem decrementar o item**. O artboard é o estado do pet, não do seletor. **Medido em 13/09/2026** → `03` §4.2a | idem | — | P1 | aprovado |
+| `HOME-37` | Home | `ItemsWindow` (pastinha) | normal — `{showItemsWindow && (…)}`; `handleOpenItems` **alterna** e zera `newItemsReady` | botão `items` do deck | alterna | P1 | aprovado |
+| `HOME-38` | Home | `ItemsWindow` | vazio — `items.length === 0` (`Object.entries(foodInventory).filter(([, c]) => c > 0)`): **ilustração, não texto cru** — `mascot-raven.png` 72×72 em `opacity: .85` + "Sua pastinha está vazia. Conclua uma atividade para ganhar comida.", e **sem rodapé** (o `footer` só existe com `detail`). **Medido em 13/09/2026** → `03` §4.2b | idem | — | P1 | aprovado |
+| `HOME-39` | Home | `ItemsWindow` | uso de item especial — toque seleciona (borda `--sm2-primary-ink`) e o **rodapé** traz nome + `effectLine` + "Usar"; `use()` chama `onFeed` e limpa a seleção, **sem fechar a folha**. Três recusas com três canais distintos: `'daily-cap'` (🌀) = **toast** e o item continua na grade, `'already-full'` (💗) = **fala do pet** (`healCapSignal`), `'no-stock'` = **silêncio**. **Medido em 13/09/2026** → `03` §4.2b | toque no item | — | P2 | aprovado |
+| `HOME-40` | Home | `BottomNav` | normal — 4 destinos + menu sanduíche (teto declarado no cabeçalho do componente) | sempre montada | as cinco células | P0 | aprovado |
+| `HOME-41` | Home | `BottomNav` | célula ativa — seleção é **sublinhado ciano**, nunca placa preenchida (regra de UI do `CLAUDE.md`) | navegação | — | P0 | aprovado |
+| `HOME-42` | Home | menu sanduíche (popover) | normal — 4 `MenuRow`: Biblioteca, Créditos (`onOpenCredits`, só se a prop existir), Configurações, "Refazer o ritual" (`onResetOnboarding`, idem) | célula 5 | `library` · `creditsOpen` · `settings` · `ConfirmDialog` | P0 | aprovado |
+| `HOME-43` | Home | "Pular para o conteúdo" | normal — `<a href="#conteudo">`, primeiro nó focável do documento | foco por teclado | `<main tabIndex={-1}>` | P1 | aprovado |
+| `HOME-44` | Home | `OfflineSeal` | offline — acende pelos eventos `online`/`offline`; **não bloqueia nada** | raiz do `App`, sempre | — | P1 | aprovado |
+| `HOME-45` | Home | `Toaster` (sonner) | aviso de uma linha — último nó do `App` | qualquer ação que avise | — | P1 | aprovado |
+| `HOME-46` | Home | `ScreenSkeleton` | carregando — `Suspense fallback` de toda página `lazy()`. ⚰️ substituiu os `fallback={null}` (13 pontos medidos em 19/08/2026) que deixavam a tela **em branco** | navegação | a página | P0 | aprovado |
+| `HOME-47` | Home | `ErrorBoundary` | erro — `getDerivedStateFromError` troca a tela pelo fallback; loga só em `DEV` | envolve a árvore em `main.tsx` | — | P1 | aprovado |
+| `HOME-48` | Home | região `aria-live` do visor | anúncio — `spriteText('tuned', language)` quando `visorAnunciou` | sintonia do visor | — | P2 | aprovado |
 
 ### 1.2 Atividades (o motor de tarefas — mora dentro da Home)
 

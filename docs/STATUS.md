@@ -7,7 +7,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## 📐 13–14/09/2026 — WIREFRAMES DA HOME: DESENHADOS, CRITICADOS, CARIMBADOS — CHECKPOINT DO DONO PENDENTE
+> ## 📐 13–14/09/2026 — WIREFRAMES DA HOME: DESENHADOS, CRITICADOS, CARIMBADOS E APROVADOS PELO DONO
 >
 > Primeira sessão de desenho da SQUAD-DESIGN (Fase 1). Canvas publicado:
 > **https://claude.ai/code/artifact/935e9dc7-3597-465d-b2ad-54ea65aa0332**
@@ -31,7 +31,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   piso ≥ 1 para dígitos de "feito", sombra de contato, 4 copies novas.
 >   **Sai:** EvoTrail da Home, PlayCard, léxico de cobrança da fala idle,
 >   o "(N)" da pilha, "ou um carinho" do aviso de HP, "nagging" do recomeço.
-> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair.
+> - **✅ Checkpoint fechado em 14/09/2026 (modal):** aprovado. Decisões novas no `REGISTRO` §13: **13.6** pastinha só com itens especiais; **13.7** zero visível só em posse, nunca em dívida do dia.
 >   Duas decisões de regra ficaram para você: (a) a pastinha (Itens) também
 >   alimenta comida comum, duplicando a folha Alimentar — restringir a
 >   especiais é `REGISTRO`, não wireframe; (b) escudos (13.5) são POSSE e
@@ -50,9 +50,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   página; o `HomeHud` entrega a regra por `title=` (invisível no toque e no
 >   teclado); "+10%" não existe — o código imprime `+20%`
 >   (`PLAY_BUFF_MULTIPLIER`), e o número tem de ser dado, nunca escrito.
-> - **Branch:** `design/wireframes-home` (pushada). Merge na `main` só
->   depois do seu OK no checkpoint (o handoff §9 pede o OK antes de marcar
->   `aprovado`). Próximos fluxos: Atividades, Rituais (P0).
+> - **Branch:** `design/wireframes-home`, mergeada na `main` após o OK. O hook
+>   de sessão passou a ler `Test Files` além de `Tests`. Próximos fluxos:
+>   Atividades, Rituais (P0).
 
 > ## ✅ 13/09/2026 — O DONO RESPONDEU AS 20 DECISÕES PRÉVIAS DOS WIREFRAMES
 >
