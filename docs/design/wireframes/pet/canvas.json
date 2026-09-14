@@ -1,0 +1,113 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "PET-01 · ficha — a forma atual (PetPage)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1559,
+      "page": "page-1"
+    },
+    {
+      "file": "FichaRolada.dc.html",
+      "title": "PET-01 · ficha rolada — quem já foi (formas anteriores)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1499,
+      "page": "page-1"
+    },
+    {
+      "file": "FichaEstados.dc.html",
+      "title": "PET-01 · 02 · ficha — estados (habilidades, classe, o vazio, o legado)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1854,
+      "page": "page-1"
+    },
+    {
+      "file": "DexVazio.dc.html",
+      "title": "PET-03 · coleção de sonhos — vazia",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1814,
+      "page": "page-2"
+    },
+    {
+      "file": "DexParcial.dc.html",
+      "title": "PET-04 · coleção de sonhos — parcial (com data e nº de catálogo no obtido)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1799,
+      "page": "page-2"
+    },
+    {
+      "file": "DexCompleto.dc.html",
+      "title": "PET-05 · coleção de sonhos — completa (30 de 30)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1589,
+      "page": "page-2"
+    },
+    {
+      "file": "DiarioVazio.dc.html",
+      "title": "PET-06 · diário de aventuras — vazio",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1379,
+      "page": "page-3"
+    },
+    {
+      "file": "DiarioComEntradas.dc.html",
+      "title": "PET-07 · diário de aventuras — com entradas (o mais recente primeiro)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1409,
+      "page": "page-3"
+    },
+    {
+      "file": "PetCarregando.dc.html",
+      "title": "PET-08 · sub-aba Soulmon — carregando (três Suspense)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1289,
+      "page": "page-3"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Pet (Fase 1, cinza, rodada 1, 14/09/2026; canvas próprio por D1 — os ids EVO-22→29 viram PET-01→08). A sub-aba \"Soulmon\" (célula 3 da barra, chip do meio) empilha três blocos, cada um em Suspense próprio: a FICHA (PetPage: a forma atual no Visor 64×64×3, nome, estágio · classe, descrição, as duas habilidades, as formas anteriores), a COLEÇÃO DE SONHOS (DreamDex: 30 cenas em 3 raridades, silhueta + ??? para o não coletado) e o DIÁRIO DE AVENTURAS (só o que já aconteceu). Regras herdadas: piso de dígitos (E5/13.7 — coleção é POSSE, zero pode; mas PRINCÍPIOS §9 proíbe \"0 de 30\" no topo de uma grade toda em silhueta), nada cobra (W6). [novo] = copy ou estrutura proposta; [decisão 13/09] = D4 (PET-02 = save legado, fora). Números = ordem de foco (1 = skip link, oculto)."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Pet — a ficha da criatura"
+    },
+    {
+      "id": "page-2",
+      "name": "Pet — coleção de sonhos"
+    },
+    {
+      "id": "page-3",
+      "name": "Pet — diário de aventuras e carregando"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}

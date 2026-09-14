@@ -229,7 +229,20 @@ está vazio em 13/09/2026).
 | `RIT-25` | Rituais | `WelcomePromptModal` | as duas metades juntas — são **independentes**; quando nenhuma tem o que dizer ele devolve `null` (e é por isso que não dá para consultá-lo de fora) | idem | — | P2 | aprovado |
 | `RIT-26` | Rituais | `FirstTaskCompletedPopup` (via `GamePopups`) | **uma vez na vida** — `showFirstTaskPopup`, guardado por `FIRST_TASK_POPUP_SHOWN` e por uma varredura (`anyStepCompleted` / `anyTaskCompleted`) | 1ª conclusão | fecha | P1 | aprovado |
 
-### 1.5 Evolução (inclui a sub-aba Soulmon — ver §3)
+### 1.4a Pet (a sub-aba Soulmon: ficha, coleção de sonhos, diário — canvas próprio por D1)
+
+| id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
+|---|---|---|---|---|---|---|---|
+| `PET-01` | Pet | `PetPage` (sub-aba Soulmon) | normal — as formas **já desbloqueadas** (nunca as futuras), descrição do oráculo, `classTitle` e as duas habilidades | chip "Soulmon" | os outros dois chips | P2 | desenhado |
+| `PET-02` | Pet | `PetPage` | save legado sem `soulProfile` — simplesmente **não mostra habilidades** | save antigo | — | P2 | fora |
+| `PET-03` | Pet | `DreamDex` | vazio — os 30 do `DREAM_CATALOG`, o não coletado é **silhueta, nunca "faltando"** | sub-aba Soulmon | — | P2 | desenhado |
+| `PET-04` | Pet | `DreamDex` | parcial — `dexProgress` **só cresce**: barra de coleção, não de desempenho | noites na janela | — | P2 | desenhado |
+| `PET-05` | Pet | `DreamDex` | completo — 30 de 30 | coleção cheia | — | P2 | desenhado |
+| `PET-06` | Pet | `AdventureDiary` | vazio — `entries={gameState.adventures ?? []}` | sub-aba Soulmon | — | P2 | desenhado |
+| `PET-07` | Pet | `AdventureDiary` | com entradas — **só o que já aconteceu; não mostra lacuna, de propósito** (o contrário do Dex) | aventuras | — | P2 | desenhado |
+| `PET-08` | Pet | sub-aba Soulmon | carregando — cada um dos três blocos em `Suspense` com `<ScreenSkeleton language={language} />` | navegação | — | P2 | desenhado |
+
+### 1.5 Evolução (a sub-aba Soulmon migrou para §1.4a — D1)
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
@@ -254,14 +267,6 @@ está vazio em 13/09/2026).
 | `EVO-19` | Evolução | `RebirthModal` | escolhas — criatura (campo aberto), escola (as 6 do class-system) e elemento (base ou par de 2º nível) | dentro do modal | `applyRebirth` | P2 | a desenhar |
 | `EVO-20` | Evolução | recusa de renascimento | **`not-paid`** — `{currentView === 'evolution' && rebirthRefusal(gameState) === 'not-paid' && (…UnlockNudge reason="evolution"…)}`. `not-ultra` **não vira convite** (a página já conta a escada) e `already-used` é registro, nunca oferta repetida | visita | `setUnlockReason('evolution')` | P2 | a desenhar |
 | `EVO-21` | Evolução | linha "Renasceu do …" | registro — `{currentView === 'evolution' && gameState.rebirth && (…)}`; o registro **nunca é apagado** (é o que impede a segunda vez) | após renascer | — | P2 | a desenhar |
-| `EVO-22` | Evolução | `PetPage` (sub-aba Soulmon) | normal — as formas **já desbloqueadas** (nunca as futuras), descrição do oráculo, `classTitle` e as duas habilidades | chip "Soulmon" | os outros dois chips | P2 | a desenhar |
-| `EVO-23` | Evolução | `PetPage` | save legado sem `soulProfile` — simplesmente **não mostra habilidades** | save antigo | — | P2 | a desenhar |
-| `EVO-24` | Evolução | `DreamDex` | vazio — os 30 do `DREAM_CATALOG`, o não coletado é **silhueta, nunca "faltando"** | sub-aba Soulmon | — | P2 | a desenhar |
-| `EVO-25` | Evolução | `DreamDex` | parcial — `dexProgress` **só cresce**: barra de coleção, não de desempenho | noites na janela | — | P2 | a desenhar |
-| `EVO-26` | Evolução | `DreamDex` | completo — 30 de 30 | coleção cheia | — | P2 | a desenhar |
-| `EVO-27` | Evolução | `AdventureDiary` | vazio — `entries={gameState.adventures ?? []}` | sub-aba Soulmon | — | P2 | a desenhar |
-| `EVO-28` | Evolução | `AdventureDiary` | com entradas — **só o que já aconteceu; não mostra lacuna, de propósito** (o contrário do Dex) | aventuras | — | P2 | a desenhar |
-| `EVO-29` | Evolução | sub-aba Soulmon | carregando — cada um dos três blocos em `Suspense` com `<ScreenSkeleton language={language} />` | navegação | — | P2 | a desenhar |
 
 ### 1.6 Jogos (a página `currentView === 'games'`, os 4 minijogos e o Torneio)
 
@@ -406,13 +411,14 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 1 | `wireframes/home/` — **[canvas publicado](https://claude.ai/code/artifact/935e9dc7-3597-465d-b2ad-54ea65aa0332)** (13/09/2026, 28 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 27 `<TelaEstado>.dc.html` + `canvas.json`) | 26 | 48 | 21 / 24 / 3 | a tela que existe em 100% das sessões; carrega o chrome (`BottomNav`, menu, `Toaster`, `ScreenSkeleton`) que toda outra herda |
 | 2 | `wireframes/atividades/` — **[canvas publicado](https://claude.ai/code/artifact/4c632c62-a413-42f3-b6a4-35244038bde1)** (14/09/2026, 17 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`) | 16 | 27 | 13 / 14 / 0 | o átomo mais repetido do app (`RitualRow`); uma linha bem desenhada arruma a Home inteira |
 | 3 | `wireframes/rituais/` — **[canvas publicado](https://claude.ai/code/artifact/526d821f-9d70-497e-bb70-c932701c3a3a)** (14/09/2026, 21 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 20 `<TelaEstado>.dc.html` + `canvas.json`) | 10 | 26 | 11 / 10 / 5 | check-in e relatório passam por todo usuário ativo **todo dia**, e as duas filas são estrutura (W7) |
-| 4 | `evolucao.dc.html` | 14 | 29 | 0 / 12 / 17 | o clímax do jogo e o único lugar onde demo × pago muda a página inteira |
-| 5 | `jogos.dc.html` | 7 | 25 | 0 / 20 / 5 | semanal, mas é onde mora a maior máquina de estados do app (9 fases da masmorra) |
-| 6 | `loja.dc.html` | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
-| 7 | `onboarding.dc.html` | 31 | 43 | 0 / 22 / 21 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
-| 8 | `estatisticas.dc.html` | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
-| 9 | `conta.dc.html` | 18 | 33 | 0 / 8 / 25 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
-| 10 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
+| 4 | `wireframes/pet/` — **[canvas publicado](https://claude.ai/code/artifact/80f27593-30d4-4c5d-a322-8f9ef3d0549e)** (14/09/2026, 9 artboards em 3 páginas, rodada 1; `Main.dc.html` + 8 `<TelaEstado>.dc.html` + `canvas.json`) | 3 | 8 | 0 / 0 / 8 | D1: canvas próprio, logo após Rituais — a ficha é onde a criatura é heroína, e o Dex é a única coleção do jogo |
+| 5 | `evolucao.dc.html` | 11 | 21 | 0 / 12 / 9 | o clímax do jogo e o único lugar onde demo × pago muda a página inteira |
+| 6 | `jogos.dc.html` | 7 | 25 | 0 / 20 / 5 | semanal, mas é onde mora a maior máquina de estados do app (9 fases da masmorra) |
+| 7 | `loja.dc.html` | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
+| 8 | `onboarding.dc.html` | 31 | 43 | 0 / 22 / 21 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
+| 9 | `estatisticas.dc.html` | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
+| 10 | `conta.dc.html` | 18 | 33 | 0 / 8 / 25 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
+| 11 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a
@@ -441,6 +447,13 @@ movimento-reduzido (`RIT-20`, `RIT-21`) → os que entram por gate ou por últim
 (`RIT-22`→`RIT-26`).
 
 **Desenhado, criticado e aprovado pelo dono em 14/09/2026** (`design-wireframer`; crítica em duas rodadas — `design-critic` B1–B5/R1–R7 aplicados, `soulmon-product-designer` #1–#10, `soulmon-guarda-linha-vermelha` aprovada com ressalva; decisão do lead em `DECISOES-WIREFRAME.md` §7; checkpoint em modal): 26 linhas em 21 artboards — os dois quadros de fila (`Main` = RIT-01, `Fila2Slot` = RIT-02, com a 7ª entrada de §6 A5), o check-in (`CheckInNormal` 03, `CheckInPendencias` 04 + carga D10, `CheckInSemTarefas` 05, `CheckInOfertaReduzida` 06, `CheckInEstados` 07), o relatório diário (`RelatorioNormal` 08/11/12/15, `RelatorioDiaCompleto` 09/12, `RelatorioRetorno` 10, `RelatorioOferta` 14, `RelatorioEstados` 11/12/13/15), o sonho (`SonhoComCena` 16, `SonhoSemCena` 17), a semana (`SemanaCartao` 18, `SemanaSemSugestao` 19), a cerimônia (`MarcoCerimonia` 20/21 — D7: movimento reduzido como nota) e os que entram por gate (`ProtegerProgresso` 22, `WelcomeInstalar` 23, `WelcomeNotificacoes` 24/25, `PrimeiraTarefa` 26). Cada artboard leva a tag `RIT-xx` que cobre.
+
+### 2.3a Pet
+**A ficha primeiro** (`PET-01`, com o rolado e os estados) → a coleção de sonhos nos três
+estados (`PET-03`→`PET-05`) → o diário (`PET-06`, `PET-07`) → carregando (`PET-08`). `PET-02`
+(save legado) é `fora` por D4.
+
+**Desenhado em 14/09/2026** (`design-wireframer`): 7 linhas em 9 artboards — `Main` (PET-01, a heroína no Visor + habilidades), `FichaRolada` (as formas anteriores), `FichaEstados` (poder assíncrono, classe ausente, o vazio, PET-02 como nota), `DexVazio`/`DexParcial`/`DexCompleto` (PET-03/04/05), `DiarioVazio`/`DiarioComEntradas` (PET-06/07), `PetCarregando` (PET-08). Cada artboard leva a tag `PET-xx` que cobre.
 
 ### 2.4 Evolução
 Sub-abas (`EVO-01`) → `EvolutionPath` com o cadeado como ação dominante
@@ -585,22 +598,22 @@ push na ordem do relógio (`FORA-12`→`FORA-18`).
 
 ```bash
 # artboards (uma linha = um artboard)
-grep -cE '^\| `(HOME|ATIV|ONB|RIT|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md
+grep -cE '^\| `(HOME|ATIV|ONB|RIT|PET|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md
 
 # telas distintas (coluna 3 da tabela, deduplicada)
-grep -E '^\| `(HOME|ATIV|ONB|RIT|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md \
+grep -E '^\| `(HOME|ATIV|ONB|RIT|PET|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md \
   | awk -F'|' '{gsub(/^ +| +$/,"",$4); print $4}' | sort -u | wc -l
 
 # artboards por fluxo
-for p in HOME ATIV ONB RIT EVO JOGO LOJA STAT CONTA FORA; do \
+for p in HOME ATIV ONB RIT PET EVO JOGO LOJA STAT CONTA FORA; do \
   printf "%-6s %s\n" "$p" "$(grep -c "^| \`$p-" docs/design/INVENTARIO-WIREFRAMES.md)"; done
 
 # por prioridade
-grep -E '^\| `(HOME|ATIV|ONB|RIT|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md \
+grep -E '^\| `(HOME|ATIV|ONB|RIT|PET|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md \
   | awk -F'|' '{gsub(/ /,"",$8); print $8}' | sort | uniq -c
 
 # o que já saiu do "a desenhar"
-grep -E '^\| `(HOME|ATIV|ONB|RIT|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md \
+grep -E '^\| `(HOME|ATIV|ONB|RIT|PET|EVO|JOGO|LOJA|STAT|CONTA|FORA)-' docs/design/INVENTARIO-WIREFRAMES.md \
   | awk -F'|' '{gsub(/ /,"",$9); print $9}' | sort | uniq -c
 
 # o tamanho deste documento
@@ -617,7 +630,7 @@ wc -l docs/design/INVENTARIO-WIREFRAMES.md
 | P1 · semanal ou de alta carga | **121** |
 | P2 · raro, uma vez na vida ou fora do app | **106** |
 | `a desenhar` | **272** (nenhum canvas existe — `docs/design/wireframes/` está vazio) |
-| fluxos (canvases) | **10** |
+| fluxos (canvases) | **11** |
 
 | fluxo | telas | artboards | P0 | P1 | P2 |
 |---|---|---|---|---|---|
@@ -625,7 +638,8 @@ wc -l docs/design/INVENTARIO-WIREFRAMES.md
 | Atividades | 16 | 27 | 13 | 14 | 0 |
 | Onboarding | 31 | 43 | 0 | 22 | 21 |
 | Rituais | 10 | 26 | 11 | 10 | 5 |
-| Evolução | 14 | 29 | 0 | 12 | 17 |
+| Pet | 3 | 8 | 0 | 0 | 8 |
+| Evolução | 11 | 21 | 0 | 12 | 9 |
 | Jogos | 7 | 25 | 0 | 20 | 5 |
 | Loja | 6 | 13 | 0 | 11 | 2 |
 | Estatísticas | 5 | 10 | 0 | 0 | 10 |
