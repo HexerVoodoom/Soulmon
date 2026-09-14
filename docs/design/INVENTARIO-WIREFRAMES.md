@@ -154,26 +154,26 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `ONB-01` | Onboarding | splash estática (`#splash` do `index.html`) | normal — HTML puro, pintado **antes** do bundle; nada é clicável | carregar a página | `remover()` do `main.tsx` (rAF duplo + `setTimeout(1200)` fora do rAF, como rede de segurança) | P2 | a desenhar |
-| `ONB-02` | Onboarding | splash estática | **erro de WebView** — o `<script>` inline testa `CSS.supports('color','oklch(0 0 0)')` e `color-mix`; falhando, monta aviso bilíngue no `#root` **e remove a splash** | idem | nada (é terminal) | P2 | a desenhar |
-| `ONB-03` | Onboarding | `IntroScreen` | normal — vídeo de marca; tocar (`skip`) reagenda a saída para 400 ms | `showIntro` nasce `true` | `onFinish` → `setShowIntro(false)` | P2 | a desenhar |
-| `ONB-04` | Onboarding | `IntroScreen` | erro — `onError` do `<video>` liga `videoFailed`: mascote + wordmark sobre gradiente, `scheduleFinish(1500)` | idem | idem | P2 | a desenhar |
-| `ONB-05` | Onboarding | `IDENTITY_STEP` (−6) | carregando — `authEmail === null` (ainda não se sabe; checagem assíncrona) | passo inicial do ritual | — | P1 | a desenhar |
-| `ONB-06` | Onboarding | `IDENTITY_STEP` | normal — `authEmail === ''` (deslogado): "Continue with Google" ou "New User" | idem | `GOOGLE_STEP` · `EMAIL_STEP` | P1 | a desenhar |
-| `ONB-07` | Onboarding | `IDENTITY_STEP` | ocupado — `authOcupado` desabilita o botão | toque | — | P1 | a desenhar |
-| `ONB-08` | Onboarding | `IDENTITY_STEP` | erro — `textoErroAuth`, tabelado nos dois idiomas (`popup-bloqueado`, `dominio-nao-autorizado`, `sem-resposta`, …) | falha de auth | volta ao portão | P1 | a desenhar |
-| `ONB-09` | Onboarding | `IDENTITY_STEP` | sem Firebase — `aoContinuarSemConta`: "falta de configuração vira ausência de conta, **nunca porta trancada**"; aceite e 18+ continuam obrigatórios (`podeAutenticar`) | ambiente sem config | `GOAL_STEP` | P1 | a desenhar |
-| `ONB-10` | Onboarding | `GOOGLE_STEP` (−9) | normal — aceite dos Termos + 18+, então o pop-up | portão | `aposAutenticar` grava e-mail, carimba `ConsentRecord`, `setStep(GOAL_STEP)` | P1 | a desenhar |
-| `ONB-11` | Onboarding | `GOOGLE_STEP` | sem resposta — `GOOGLE_SEM_RESPOSTA_MS` (120 000 ms): o botão volta com mensagem honesta, **sem cancelar a promessa original** | 2 min sem retorno | — | P1 | a desenhar |
-| `ONB-12` | Onboarding | `EMAIL_STEP` (−8) | normal — e-mail + senha, aceite e 18+ | portão | `aposAutenticar` · `back` volta ao portão | P1 | a desenhar |
-| `ONB-13` | Onboarding | `EMAIL_STEP` | rascunho retomado — `readGateDraft()` devolve objetivo, dificuldade e aceite quando o link de e-mail levou a pessoa para fora e a página recarregou | volta do link | — | P2 | a desenhar |
-| `ONB-14` | Onboarding | `GOAL_STEP` (−2) | normal — "por que você quer mudar" (`soulGoal`); **pulável** (botão que limpa o campo e chama `next()`) | depois de autenticar | `STRUGGLE_STEP` | P1 | a desenhar |
-| `ONB-15` | Onboarding | `STRUGGLE_STEP` (−3) | normal — "o que te atrapalha" (`soulStruggle`); **pulável**, idem | `GOAL_STEP` | `CHOICE_STEP` | P1 | a desenhar |
-| `ONB-16` | Onboarding | `CHOICE_STEP` (−7) | normal — "Começar agora — é grátis" (`setFlow('demo')`) × "Quero o completo — `precoLabel`" (`handleUnlockFull`) | `STRUGGLE_STEP` | `DEMO_PICK` · passo 1 | P1 | a desenhar |
-| `ONB-17` | Onboarding | `CHOICE_STEP` | compra indisponível — `!isBillingAvailable()`: "A compra está disponível no app Android (Google Play)…" e **nada acontece** | toque no completo | — | P1 | a desenhar |
-| `ONB-18` | Onboarding | `CHOICE_STEP` | recusa por login — `authUsavel && !authEmail`: "Entre com seu e-mail antes de comprar" (a compra manda o `saveId` como `obfuscatedAccountId`) | idem | portão | P1 | a desenhar |
-| `ONB-19` | Onboarding | `CHOICE_STEP` | compra recusada — `setUnlockMessage`, com texto próprio para `result.reason === 'cancelled'` ("Compra cancelada.") e outro para o resto | retorno do billing | — | P1 | a desenhar |
-| `ONB-20` | Onboarding | `DEMO_PICK` (−1) | normal — os 3 personagens pré-prontos (`PREMADE_CHARACTERS`) | `CHOICE_STEP` grátis | `REGISTER` · `back` volta ao `CHOICE_STEP` | P1 | a desenhar |
+| `ONB-01` | Onboarding | splash estática (`#splash` do `index.html`) | normal — HTML puro, pintado **antes** do bundle; nada é clicável | carregar a página | `remover()` do `main.tsx` (rAF duplo + `setTimeout(1200)` fora do rAF, como rede de segurança) | P2 | desenhado |
+| `ONB-02` | Onboarding | splash estática | **erro de WebView** — o `<script>` inline testa `CSS.supports('color','oklch(0 0 0)')` e `color-mix`; falhando, monta aviso bilíngue no `#root` **e remove a splash** | idem | nada (é terminal) | P2 | desenhado |
+| `ONB-03` | Onboarding | `IntroScreen` | normal — vídeo de marca; tocar (`skip`) reagenda a saída para 400 ms | `showIntro` nasce `true` | `onFinish` → `setShowIntro(false)` | P2 | desenhado |
+| `ONB-04` | Onboarding | `IntroScreen` | erro — `onError` do `<video>` liga `videoFailed`: mascote + wordmark sobre gradiente, `scheduleFinish(1500)` | idem | idem | P2 | desenhado |
+| `ONB-05` | Onboarding | `IDENTITY_STEP` (−6) | carregando — `authEmail === null` (ainda não se sabe; checagem assíncrona) | passo inicial do ritual | — | P1 | desenhado |
+| `ONB-06` | Onboarding | `IDENTITY_STEP` | normal — `authEmail === ''` (deslogado): "Continue with Google" ou "New User" | idem | `GOOGLE_STEP` · `EMAIL_STEP` | P1 | desenhado |
+| `ONB-07` | Onboarding | `IDENTITY_STEP` | ocupado — `authOcupado` desabilita o botão | toque | — | P1 | desenhado |
+| `ONB-08` | Onboarding | `IDENTITY_STEP` | erro — `textoErroAuth`, tabelado nos dois idiomas (`popup-bloqueado`, `dominio-nao-autorizado`, `sem-resposta`, …) | falha de auth | volta ao portão | P1 | desenhado |
+| `ONB-09` | Onboarding | `IDENTITY_STEP` | sem Firebase — `aoContinuarSemConta`: "falta de configuração vira ausência de conta, **nunca porta trancada**"; aceite e 18+ continuam obrigatórios (`podeAutenticar`) | ambiente sem config | `GOAL_STEP` | P1 | desenhado |
+| `ONB-10` | Onboarding | `GOOGLE_STEP` (−9) | normal — aceite dos Termos + 18+, então o pop-up | portão | `aposAutenticar` grava e-mail, carimba `ConsentRecord`, `setStep(GOAL_STEP)` | P1 | desenhado |
+| `ONB-11` | Onboarding | `GOOGLE_STEP` | sem resposta — `GOOGLE_SEM_RESPOSTA_MS` (120 000 ms): o botão volta com mensagem honesta, **sem cancelar a promessa original** | 2 min sem retorno | — | P1 | desenhado |
+| `ONB-12` | Onboarding | `EMAIL_STEP` (−8) | normal — e-mail + senha, aceite e 18+ | portão | `aposAutenticar` · `back` volta ao portão | P1 | desenhado |
+| `ONB-13` | Onboarding | `EMAIL_STEP` | rascunho retomado — `readGateDraft()` devolve objetivo, dificuldade e aceite quando o link de e-mail levou a pessoa para fora e a página recarregou | volta do link | — | P2 | fora |
+| `ONB-14` | Onboarding | `GOAL_STEP` (−2) | normal — "por que você quer mudar" (`soulGoal`); **pulável** (botão que limpa o campo e chama `next()`) | depois de autenticar | `STRUGGLE_STEP` | P1 | desenhado |
+| `ONB-15` | Onboarding | `STRUGGLE_STEP` (−3) | normal — "o que te atrapalha" (`soulStruggle`); **pulável**, idem | `GOAL_STEP` | `CHOICE_STEP` | P1 | desenhado |
+| `ONB-16` | Onboarding | `CHOICE_STEP` (−7) | normal — "Começar agora — é grátis" (`setFlow('demo')`) × "Quero o completo — `precoLabel`" (`handleUnlockFull`) | `STRUGGLE_STEP` | `DEMO_PICK` · passo 1 | P1 | desenhado |
+| `ONB-17` | Onboarding | `CHOICE_STEP` | compra indisponível — `!isBillingAvailable()`: "A compra está disponível no app Android (Google Play)…" e **nada acontece** | toque no completo | — | P1 | desenhado |
+| `ONB-18` | Onboarding | `CHOICE_STEP` | recusa por login — `authUsavel && !authEmail`: "Entre com seu e-mail antes de comprar" (a compra manda o `saveId` como `obfuscatedAccountId`) | idem | portão | P1 | desenhado |
+| `ONB-19` | Onboarding | `CHOICE_STEP` | compra recusada — `setUnlockMessage`, com texto próprio para `result.reason === 'cancelled'` ("Compra cancelada.") e outro para o resto | retorno do billing | — | P1 | desenhado |
+| `ONB-20` | Onboarding | `DEMO_PICK` (−1) | normal — os 3 personagens pré-prontos (`PREMADE_CHARACTERS`) | `CHOICE_STEP` grátis | `REGISTER` · `back` volta ao `CHOICE_STEP` | P1 | desenhado |
 | `ONB-21` | Onboarding | `AGE_BLOCK` (−5) | muro de idade — saída **única**: `restartFromAgeBlock` | data de nascimento < 18 | reinício | P2 | a desenhar |
 | `ONB-22` | Onboarding | passo 1 — nome completo | normal — não pulável | `CHOICE_STEP` pago ou `mode='upgrade'` | passo 2 | P2 | a desenhar |
 | `ONB-23` | Onboarding | passo 2 — data de nascimento | normal — serve ao mapa astral **e** ao 18+ | passo 1 | passo 3 · `AGE_BLOCK` | P2 | a desenhar |
@@ -187,16 +187,16 @@ está vazio em 13/09/2026).
 | `ONB-31` | Onboarding | `GENERATING` | normal — tela de geração; **o rascunho nunca retoma aqui nem depois** (`readOracleDraft(mode, DEEP_END - 1)`) | fim do teste | `REVEAL` | P2 | a desenhar |
 | `ONB-32` | Onboarding | `REVEAL` | com sprite — nome + descrição + batismo; "Nascer `nome`" emite `track('reveal_seen', { has_sprite, funnel, duration })` | `GENERATING` | `REGISTER` ou `onRevealed` (upgrade) | P2 | a desenhar |
 | `ONB-33` | Onboarding | `REVEAL` | sem sprite — `REVEAL_WAIT_MS` (12 000 ms) é o **teto da espera**; passado ele o reveal segue só com texto e o desenho entra pelo acervo depois | espera estourada | idem | P2 | a desenhar |
-| `ONB-34` | Onboarding | `REGISTER` | **demo** — apelido **+ tonalidade** | `DEMO_PICK` | `onComplete` → `GameTutorialFlow` | P1 | a desenhar |
+| `ONB-34` | Onboarding | `REGISTER` | **demo** — apelido **+ tonalidade** | `DEMO_PICK` | `onComplete` → `GameTutorialFlow` | P1 | desenhado |
 | `ONB-35` | Onboarding | `REGISTER` | **pago** — apelido | `REVEAL` | idem | P2 | a desenhar |
 | `ONB-36` | Onboarding | barra de progresso do ritual | normal — `role="progressbar"`, montada sob `step > 0 && step <= lastStep` (**não existe nos passos negativos**) | transversal | — | P1 | a desenhar |
 | `ONB-37` | Onboarding | `SoulmonOnboarding mode='upgrade'` | entrada — `step` começa em `1`, `flow` já é `'oracle'`; **não há portão, `CHOICE_STEP`, `DEMO_PICK` nem `REGISTER`** | card da Evolução com `accountTier === 'paid'` e `demoCharacterId` → `setUpgradeRitual(true)` | `handleUpgradeRevealed` troca **só a criatura** | P2 | a desenhar |
 | `ONB-38` | Onboarding | `SoulmonOnboarding mode='upgrade'` | saída pela metade — `back()` no passo 1 chama `onCancel?.()` e volta ao jogo (a Evolução passa a mostrar o convite na variante `reveal`) | `back` no passo 1 | `setUpgradeRitual(false)` | P2 | a desenhar |
-| `ONB-39` | Onboarding | `GameTutorialFlow` | conceito — `PAGES.length` = **1**: "Seu Soulmon nasceu!" / "Your Soulmon is born!" | portão `!hasCompletedTutorial` | `TASK_STEP` | P1 | a desenhar |
-| `ONB-40` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | vazio — criação **obrigatória** da 1ª atividade: objetivo, `CATEGORIES` (8) e CTA travado | conceito | sugestões | P1 | a desenhar |
-| `ONB-41` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | com sugestões — retorno da API | toque em sugerir | `onComplete(activities.slice(0, remaining))` → `handleCompleteTutorial` | P1 | a desenhar |
-| `ONB-42` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | erro/offline — `fallbackTasks` devolve até 4 tarefas locais de dois minutos (`FALLBACK_BY_CATEGORY`) | falha de rede | idem | P1 | a desenhar |
-| `ONB-43` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | primeira ordenação — `orderCategoriesForGoal` põe na frente a área que o `soulGoal` descreveu, **e o texto não sai do aparelho** (decisão D8) | `soulGoal` preenchido | idem | P1 | a desenhar |
+| `ONB-39` | Onboarding | `GameTutorialFlow` | conceito — `PAGES.length` = **1**: "Seu Soulmon nasceu!" / "Your Soulmon is born!" | portão `!hasCompletedTutorial` | `TASK_STEP` | P1 | desenhado |
+| `ONB-40` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | vazio — criação **obrigatória** da 1ª atividade: objetivo, `CATEGORIES` (8) e CTA travado | conceito | sugestões | P1 | desenhado |
+| `ONB-41` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | com sugestões — retorno da API | toque em sugerir | `onComplete(activities.slice(0, remaining))` → `handleCompleteTutorial` | P1 | desenhado |
+| `ONB-42` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | erro/offline — `fallbackTasks` devolve até 4 tarefas locais de dois minutos (`FALLBACK_BY_CATEGORY`) | falha de rede | idem | P1 | desenhado |
+| `ONB-43` | Onboarding | `GameTutorialFlow` · `TASK_STEP` | primeira ordenação — `orderCategoriesForGoal` põe na frente a área que o `soulGoal` descreveu, **e o texto não sai do aparelho** (decisão D8) | `soulGoal` preenchido | idem | P1 | desenhado |
 
 ### 1.4 Rituais (as duas filas, o diário e as cerimônias)
 
@@ -415,10 +415,11 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 | 5 | `evolucao.dc.html` | 11 | 21 | 0 / 12 / 9 | o clímax do jogo e o único lugar onde demo × pago muda a página inteira |
 | 6 | `jogos.dc.html` | 7 | 25 | 0 / 20 / 5 | semanal, mas é onde mora a maior máquina de estados do app (9 fases da masmorra) |
 | 7 | `loja.dc.html` | 6 | 13 | 0 / 11 / 2 | semanal; e é onde as três moedas não podem se confundir |
-| 8 | `onboarding.dc.html` | 31 | 43 | 0 / 22 / 21 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
+| 8 | `wireframes/onboarding-funil/` — **[canvas publicado](https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6)** (14/09/2026, 17 artboards em 4 páginas, rodada 1; `Main.dc.html` + 16 `<TelaEstado>.dc.html` + `canvas.json`; D3: o funil — ONB-01→20, 34, 39→43; ONB-13 `fora` por D4) | 18 | 26 | 0 / 21 / 5 | uma vez por jogador — mas por **todos** eles. Ver a ressalva na §3.2 item 3 |
 | 9 | `estatisticas.dc.html` | 5 | 10 | 0 / 0 / 10 | raro; três coleções (bestiário, álbum, nascimento) com a mesma gramática de silhueta |
 | 10 | `conta.dc.html` | 18 | 33 | 0 / 8 / 25 | raro, mas é onde a compra acontece e onde a Biblioteca ficou hospedada (§3.2 item 2) |
 | 11 | `fora-do-app.dc.html` | 17 | 18 | 0 / 0 / 18 | 5 widgets + overlay + 7 copies de push: superfície que a pessoa vê **sem decidir abrir** |
+| 12 | `wireframes/onboarding-oraculo/` (D3: o ritual — ONB-21→33, 35→38) | 13 | 17 | 0 / 1 / 16 | uma vez por jogador pagante; é o último canvas por W5 |
 
 ### 2.1 Home — ordem sugerida dentro do canvas
 Chrome primeiro (`HOME-40`→`HOME-42`, `HOME-43`), porque tudo se desenha dentro dele → a
@@ -478,6 +479,8 @@ Splash e intro (`ONB-01`→`ONB-04`) → **o portão de conta com os cinco estad
 (`ONB-16`→`ONB-20`) → o caminho do oráculo, que W5 manda por último
 (`ONB-21`→`ONB-33`, `ONB-36`, `ONB-37`, `ONB-38`) → cadastro (`ONB-34`, `ONB-35`) → tutorial
 (`ONB-39`→`ONB-43`).
+
+**Funil desenhado em 14/09/2026** (`design-wireframer`; D3 divide o Onboarding em dois canvases): 25 linhas em 17 artboards — splash (`Main` 01, `SplashWebView` 02, `IntroEstados` 03/04), o portão (`PortaoDuasPortas` 06, `PortaoGoogle` 10/11, `PortaoEmail` 12, `PortaoEstados` 05/07/08/09 + 13 como nota), as perguntas e a bifurcação (`Objetivo` 14, `Atrapalha` 15, `Escolha` 16, `EscolhaEstados` 17/18/19, `EscolherPersonagem` 20, `CadastroDemo` 34) e o tutorial (`TutorialConceito` 39, `TutorialTarefa` 40/43, `TutorialSugestoes` 41, `TutorialErro` 42). `ONB-13` é `fora` por D4. O ritual do Oráculo (ONB-21→33, 35→38) é o canvas `onboarding-oraculo/`, o último.
 
 ### 2.8 Estatísticas
 `StatsPage` cheia e vazia (`STAT-01`, `STAT-02`) → nascimento (`STAT-03`, `STAT-04`) →
@@ -630,13 +633,14 @@ wc -l docs/design/INVENTARIO-WIREFRAMES.md
 | P1 · semanal ou de alta carga | **121** |
 | P2 · raro, uma vez na vida ou fora do app | **106** |
 | `a desenhar` | **272** (nenhum canvas existe — `docs/design/wireframes/` está vazio) |
-| fluxos (canvases) | **11** |
+| fluxos (canvases) | **12** |
 
 | fluxo | telas | artboards | P0 | P1 | P2 |
 |---|---|---|---|---|---|
 | Home | 26 | 48 | 21 | 24 | 3 |
 | Atividades | 16 | 27 | 13 | 14 | 0 |
-| Onboarding | 31 | 43 | 0 | 22 | 21 |
+| Onboarding-funil | 18 | 26 | 0 | 21 | 5 |
+| Onboarding-oráculo | 13 | 17 | 0 | 1 | 16 |
 | Rituais | 10 | 26 | 11 | 10 | 5 |
 | Pet | 3 | 8 | 0 | 0 | 8 |
 | Evolução | 11 | 21 | 0 | 12 | 9 |
