@@ -7,6 +7,53 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📐 13–14/09/2026 — WIREFRAMES DA HOME: DESENHADOS, CRITICADOS, CARIMBADOS — CHECKPOINT DO DONO PENDENTE
+>
+> Primeira sessão de desenho da SQUAD-DESIGN (Fase 1). Canvas publicado:
+> **https://claude.ai/code/artifact/935e9dc7-3597-465d-b2ad-54ea65aa0332**
+> (28 artboards em 4 páginas; arquivos em `docs/design/wireframes/home/`:
+> `Main.dc.html` + 27 `<TelaEstado>.dc.html` + `canvas.json`). As 48 linhas
+> `HOME-*` do inventário estão desenhadas, com rodapé fixo em cada artboard
+> (Pergunta · Chega/Sai · Sai da tela atual · Fontes · PT) e ordem de foco
+> numerada. Inglês é a língua do artboard (D8).
+> - **Crítica em três rodadas:** `design-critic` (rodada 1: "não passa", 6
+>   bloqueantes; rodada 2: 1 gate; **rodada 3: CARIMBO passa**),
+>   `soulmon-product-designer` (mediu a dobra: "Daily rituals" nascia a 739px
+>   com o dock a 722) e `soulmon-guarda-linha-vermelha` (família **APROVADA
+>   COM RESSALVA**: 1 veto — o dígito "(N)" do "Arrumar a pilha", `02 §34` —
+>   e 4 ressalvas que viraram aceite).
+> - **Decisão do design-lead** em `docs/design/DECISOES-WIREFRAME.md` §5
+>   (entra / volta / sai). As mudanças estruturais, todas marcadas `[novo]`
+>   no canvas: **Play vira a 5ª célula do deck** (`02 §13` já manda; fecha a
+>   dobra), **slot de avisos abaixo do pet fixo**, **medidores dentro do
+>   palco** (como o código faz desde 27/08 — a rodada 1 reproduzia a
+>   composição que você rejeitou), regra única de célula inerte no deck,
+>   piso ≥ 1 para dígitos de "feito", sombra de contato, 4 copies novas.
+>   **Sai:** EvoTrail da Home, PlayCard, léxico de cobrança da fala idle,
+>   o "(N)" da pilha, "ou um carinho" do aviso de HP, "nagging" do recomeço.
+> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair.
+>   Duas decisões de regra ficaram para você: (a) a pastinha (Itens) também
+>   alimenta comida comum, duplicando a folha Alimentar — restringir a
+>   especiais é `REGISTRO`, não wireframe; (b) escudos (13.5) são POSSE e
+>   podem mostrar zero; "N de M" é dívida do dia e não pode — a distinção
+>   está escrita na decisão E5 para não colidir com a 13.5.
+> - **Achados de passagem:** (1) `src/docsManual.contract.test.ts` falhava
+>   inteiro (0 testes) por causa do `#!/usr/bin/env node` em
+>   `scripts/docs-inventario.mjs` — o vite-node avalia o módulo dentro de uma
+>   função; **corrigido** (shebang removido; `node scripts/…` continua
+>   funcionando). (2) **O hook de sessão mascarava esse FAIL**: só lê a linha
+>   `Tests`, não a `Test Files` — vale acrescentar `Test Files` ao grep de
+>   `.claude/hooks/session-start.sh`. (3) Inventário: a condição de `HOME-08`
+>   não bate com o código (`hideMeters` é fixo no topo desde 27/08; o toggle
+>   é `HOME-05`); "retorno após ausência" e "Home rolada" não têm linha —
+>   anotado no §2.1. (4) Dívidas de UI: o `ScreenSkeleton` não tem a forma da
+>   página; o `HomeHud` entrega a regra por `title=` (invisível no toque e no
+>   teclado); "+10%" não existe — o código imprime `+20%`
+>   (`PLAY_BUFF_MULTIPLIER`), e o número tem de ser dado, nunca escrito.
+> - **Branch:** `design/wireframes-home` (pushada). Merge na `main` só
+>   depois do seu OK no checkpoint (o handoff §9 pede o OK antes de marcar
+>   `aprovado`). Próximos fluxos: Atividades, Rituais (P0).
+
 > ## ✅ 13/09/2026 — O DONO RESPONDEU AS 20 DECISÕES PRÉVIAS DOS WIREFRAMES
 >
 > Em modal, uma a uma: as 11 dúvidas do `docs/design/INVENTARIO-WIREFRAMES.md`
