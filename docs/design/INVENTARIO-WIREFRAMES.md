@@ -403,7 +403,7 @@ Um fluxo por despacho, dois agentes nunca no mesmo canvas (`CONTRACT.md`).
 
 | ordem | canvas | telas | artboards | P0 / P1 / P2 | por quê nesta posição |
 |---|---|---|---|---|---|
-| 1 | `wireframes/home/` — **[canvas publicado](https://claude.ai/code/artifact/935e9dc7-3597-465d-b2ad-54ea65aa0332)** (13/09/2026, 28 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 26 `<TelaEstado>.dc.html` + `canvas.json`) | 26 | 48 | 21 / 24 / 3 | a tela que existe em 100% das sessões; carrega o chrome (`BottomNav`, menu, `Toaster`, `ScreenSkeleton`) que toda outra herda |
+| 1 | `wireframes/home/` — **[canvas publicado](https://claude.ai/code/artifact/935e9dc7-3597-465d-b2ad-54ea65aa0332)** (13/09/2026, 28 artboards em 4 páginas, rodada 2 pós-crítica; `Main.dc.html` + 27 `<TelaEstado>.dc.html` + `canvas.json`) | 26 | 48 | 21 / 24 / 3 | a tela que existe em 100% das sessões; carrega o chrome (`BottomNav`, menu, `Toaster`, `ScreenSkeleton`) que toda outra herda |
 | 2 | `atividades.dc.html` | 16 | 27 | 13 / 14 / 0 | o átomo mais repetido do app (`RitualRow`); uma linha bem desenhada arruma a Home inteira |
 | 3 | `rituais.dc.html` | 10 | 26 | 11 / 10 / 5 | check-in e relatório passam por todo usuário ativo **todo dia**, e as duas filas são estrutura (W7) |
 | 4 | `evolucao.dc.html` | 14 | 29 | 0 / 12 / 17 | o clímax do jogo e o único lugar onde demo × pago muda a página inteira |
