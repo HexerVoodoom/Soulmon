@@ -1,6 +1,6 @@
 {
-  "sha": "b3e4631fd3b89864a10e7ce88f2d68896bb63bd0",
+  "sha": "1ceb3bc8b24526f776da3551ee1fb269eb007a0d",
   "data": "14/09/2026",
-  "por": "doc-mantenedor (sessão) — delta 8f23d5fd→b3e4631f: wireframes do Pet aprovados (D1: EVO-22→29 viraram PET-01→08), DECISOES-WIREFRAME §8",
+  "por": "doc-mantenedor (sessão) — marcador: o delta b3e4631f→1ceb3bc8 era só o bloco de STATUS da própria sincronização",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
