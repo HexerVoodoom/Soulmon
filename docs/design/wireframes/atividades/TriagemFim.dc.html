@@ -118,22 +118,23 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"></span>PET</div>
     
   </div></div>
-    <div class="folha" role="dialog" aria-modal="true" aria-label="Tidy the pile" style="max-height:640px">
+    <div class="folha" role="dialog" aria-modal="true" aria-label="Tidy the pile" style="max-height:700px">
       <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">Tidy the pile</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><i class="fo">3</i><span class="ico ">x</span></span></div>
       
-      <p class="s">4 of 4 decided</p>
-      <div class="card" style="align-items:center;text-align:center;padding:24px 12px"><span class="box" style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#666">PET</span><p class="t b">Pile tidied!</p><p class="s">planning is what lightens the load (Masicampo &amp; Baumeister) — the reward is the pet's reaction + the reward the code grants on finishing, not a number</p></div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="seg" role="progressbar" aria-label="4 of 4 decided" aria-valuenow="4" aria-valuemax="4"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="s">4 of 4 decided</span></div>
+      <div class="card" style="align-items:center;text-align:center;padding:24px 12px"><span class="box" style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#666">PET</span><p class="t b">Pile tidied!</p><p class="s">You decided on 4 items. Deciding what NOT to do is real planning — and that's what lifts the weight, not an empty list.</p></div>
       <span class="btn" role="button" style="width:100%"><i class="fo">2</i>Back</span>
-      <div class="strip"><p class="cap">variante — nada para decidir ao abrir</p><p class="t b">The pile was already tidy</p><span class="btn" style="width:100%">Back</span></div>
+      <div class="strip"><p class="cap">variante — nada para decidir ao abrir</p><p class="t b">The pile was already tidy</p><p class="s">Nothing stuck here today. Your Soulmon took a nap instead.</p><span class="btn" style="width:100%">Back</span></div>
+      <p class="note">no material reward on finishing (guarda 6d: none exists in the code; <code>CLAUDE.md</code> "terminar rende recompensa" is a divergence noted in 02 §34) — the reward is the sentence and the pet's reaction; "N items" counts what was DECIDED (feito, ≥ 1)</p>
     
     </div></div>
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">ATIV-24</span></p>
-    <h4>Pergunta</h4><p>"Am I done?" — yes; the reward is relief, and the pet says so</p>
+    <h4>Pergunta</h4><p>"Am I done?" — yes; the relief is the sentence, not a prize</p>
     <h4>Chega por / Sai para</h4><p>última carta decidida → "Back" → <code>onClose={() =&gt; setTriageTasks(null)}</code></p>
-    <h4>Sai da tela atual</h4><ul><li>Placar ("you decided 4 tasks!") — o número já estava no cabeçalho; a peça final é reação, não contagem (PRINCÍPIOS §5: celebração sem número que pode zerar).</li></ul>
-    <h4>Fontes</h4><ul><li><code>TriagePile.tsx</code> ("Pile tidied!", "The pile was already tidy", "Back") · CLAUDE.md › Arrumar a pilha ("terminar rende recompensa: planejar é o que alivia")</li><li>02 §34 · PRINCÍPIOS §5 · §13</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
-    <h4>PT</h4><ul><li>"Pilha arrumada!" · "A pilha já estava arrumada" · Voltar</li></ul>
+    <h4>Sai da tela atual</h4><ul><li>A anotação de designer no lugar da copy (rodada 1) — restaurada a copy real das duas variantes (W2).</li><li>Recompensa material ao terminar — VETADA (guarda 6d: #16/#19); o <code>CLAUDE.md</code> promete e o código não tem — divergência já registrada em 02 §34.</li></ul>
+    <h4>Fontes</h4><ul><li><code>TriagePile.tsx</code> ("Pile tidied!"; "You decided on N items. Deciding what NOT to do is real planning — and that's what lifts the weight, not an empty list."; "The pile was already tidy"; "Nothing stuck here today. Your Soulmon took a nap instead."; "Back")</li><li>02 §34 · PRINCÍPIOS §5 · §13 · 13.7 (N decidido = feito)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li><li>crítica de 14/09/2026 (design-critic, product-designer, guarda-linha-vermelha)</li></ul>
+    <h4>PT</h4><ul><li>"Pilha arrumada!" · "Você decidiu N itens. Decidir o que NÃO fazer é planejar de verdade — e é isso que tira o peso, não uma lista vazia." · "A pilha já estava arrumada" · "Nada parado por aqui hoje. Seu Soulmon aproveitou pra cochilar." · Voltar</li></ul>
     
   </footer>
 </div>

@@ -114,21 +114,21 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 </helmet>
 <div class="ab">
 <div class="phone tall"><div class="sheet">
-    <div class="strip"><p class="cap"><span class="tag">ATIV-14</span> vazia — sempre acima do painel; "Add" inerte sem texto</p><div style="display:flex;flex-direction:column;gap:4px">
+    <div class="strip"><p class="cap"><span class="tag">ATIV-14</span> vazia — sempre acima do painel; "Add" inerte (<code>aria-disabled</code>) sem texto</p><div style="display:flex;flex-direction:column;gap:4px">
     <div style="display:flex;gap:8px"><div class="input" role="textbox" aria-label="Capture a task or habit in one line">Capture in one line…</div><span class="tap dim" style="min-width:44px;border:1px solid #999;border-radius:8px;background:#ddd" role="button" aria-label="Add"><span class="ico ">add</span></span></div>
     
     <p class="s" style="display:flex;align-items:center;gap:4px;min-height:44px" role="button" aria-expanded="false"><span class="ico ">▾</span>Shortcuts</p>
     
   </div></div>
-    <div class="strip"><p class="cap">digitando — os chips mostram o que o parser entendeu enquanto se digita (<code>parseQuickAdd</code>); Enter grava pelos MESMOS <code>commit*</code> do modal</p><div style="display:flex;flex-direction:column;gap:4px">
+    <div class="strip"><p class="cap">digitando — os chips mostram o que o parser entendeu (<code>parseQuickAdd</code>); Enter grava pelos MESMOS <code>commit*</code> do modal</p><div style="display:flex;flex-direction:column;gap:4px">
     <div style="display:flex;gap:8px"><div class="input on" role="textbox" aria-label="Capture a task or habit in one line"><span style="color:#111">Read 10 pages 3x !2</span></div><span class="tap" style="min-width:44px;border:1px solid #999;border-radius:8px;background:#ddd" role="button" aria-label="Add"><span class="ico ">add</span></span></div>
     <div class="chips"><span class="chip on">3× per week</span><span class="chip on">effort 2</span></div>
     <p class="s" style="display:flex;align-items:center;gap:4px;min-height:44px" role="button" aria-expanded="false"><span class="ico ">▾</span>Shortcuts</p>
     
   </div></div>
-    <div class="strip"><p class="cap">teto recusou — <code>onCommit</code> devolve <code>false</code>: a barra avisa e MANTÉM o texto (<code>role="alert"</code>)</p><div style="display:flex;flex-direction:column;gap:4px">
-    <div style="display:flex;gap:8px"><div class="input on" role="textbox" aria-label="Capture a task or habit in one line"><span style="color:#111">Read 10 pages 3x !2</span></div><span class="tap" style="min-width:44px;border:1px solid #999;border-radius:8px;background:#ddd" role="button" aria-label="Add"><span class="ico ">add</span></span></div>
-    <div class="chips"><span class="chip on">3× per week</span><span class="chip on">effort 2</span></div><p class="t" role="alert">That didn’t fit — you’ve reached your item limit.</p>
+    <div class="strip"><p class="cap">teto recusou — <code>onCommit</code> devolve <code>false</code>: a barra avisa (<code>role="alert"</code>) e MANTÉM o texto</p><div style="display:flex;flex-direction:column;gap:4px">
+    <div style="display:flex;gap:8px"><div class="input on" role="textbox" aria-label="Capture a task or habit in one line"><span style="color:#111">Evening walk every day</span></div><span class="tap" style="min-width:44px;border:1px solid #999;border-radius:8px;background:#ddd" role="button" aria-label="Add"><span class="ico ">add</span></span></div>
+    <div class="chips"><span class="chip on">every day</span></div><p class="t" role="alert">That didn’t fit — you’ve reached your item limit.</p>
     <p class="s" style="display:flex;align-items:center;gap:4px;min-height:44px" role="button" aria-expanded="false"><span class="ico ">▾</span>Shortcuts</p>
     
   </div></div>
@@ -138,15 +138,21 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <p class="s" style="display:flex;align-items:center;gap:4px;min-height:44px" role="button" aria-expanded="true"><span class="ico ">▴</span>Shortcuts</p>
     <p class="s" style="border:1px dashed #999;border-radius:8px;padding:6px 8px"><code>quickAddHint('en')</code> — the same shortcut list the CreateModal shows (e.g. "3x", "every 2 days", "!2", "@monday") <span class="tag">texto vem de utils/quickAdd.ts</span></p>
   </div></div>
+    <div class="strip"><p class="cap"><span class="tag">ATIV-27</span> "Balance my week" no contexto — entre a barra e o painel, só com <code>podeEquilibrar</code></p><div style="display:flex;flex-direction:column;gap:4px">
+    <div style="display:flex;gap:8px"><div class="input" role="textbox" aria-label="Capture a task or habit in one line">Capture in one line…</div><span class="tap dim" style="min-width:44px;border:1px solid #999;border-radius:8px;background:#ddd" role="button" aria-label="Add"><span class="ico ">add</span></span></div>
+    
+    <p class="s" style="display:flex;align-items:center;gap:4px;min-height:44px" role="button" aria-expanded="false"><span class="ico ">▾</span>Shortcuts</p>
+    
+  </div><span class="btn ghost" role="button"><span class="ico ">eco</span>Balance my week</span><div class="box" style="height:40px;display:flex;align-items:center;justify-content:center;color:#666;font-size:11px">Daily rituals</div></div>
   </div></div>
 <footer class="foot">
-    <p><span class="b">Artboard</span> · <span class="tag">ATIV-14</span></p>
+    <p><span class="b">Artboard</span> · <span class="tag">ATIV-14</span> <span class="tag">ATIV-27</span></p>
     <h4>Pergunta</h4><p>"Can I just write it down?" — one line, no form</p>
-    <h4>Chega por / Sai para</h4><p>Home, acima do painel → <code>onCommit={handleQuickAdd}</code> → <code>commitTaskCreate</code>/<code>commitHabitCreate</code> (o teto é deles)</p>
-    <h4>Sai da tela atual</h4><ul><li>Validação, recusa ou aviso do parser — não existem (02 §35: o que não for reconhecido continua no nome).</li><li>Vermelho no alerta do teto — a frase é <code>role="alert"</code> em texto comum (W6); o que resolve o teto é o <code>UnlockNudge</code> do modal, não a barra.</li></ul>
-    <h4>Fontes</h4><ul><li><code>QuickAddBar.tsx</code> ("Capture in one line…", "Add", "Shortcuts", "That didn't fit — you've reached your item limit.", chips "N× per week" / "every N days" / "effort N") · <code>utils/quickAdd.ts</code></li><li>02 §35 (não valida, não recusa, não grava por conta própria) · PLANO-TAREFAS §2.5</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
-    <h4>PT</h4><ul><li>Anotar numa linha… · Adicionar · Atalhos · "Não coube agora — você chegou ao limite de itens." · "3× por semana" · "a cada N dias" · "esforço N"</li></ul>
-    
+    <h4>Chega por / Sai para</h4><p>Home, acima do painel (03 §4.1 itens 6–7) → <code>onCommit={handleQuickAdd}</code> → <code>commitTaskCreate</code>/<code>commitHabitCreate</code> · botão → ATIV-21</p>
+    <h4>Sai da tela atual</h4><ul><li>Validação, recusa ou aviso do parser — não existem (02 §35).</li><li>Vermelho no alerta do teto — texto comum com <code>role="alert"</code> (W6).</li></ul>
+    <h4>Fontes</h4><ul><li><code>QuickAddBar.tsx</code> ("Capture in one line…", "Add", "Shortcuts", "That didn't fit — you've reached your item limit.", chips) · <code>utils/quickAdd.ts</code></li><li>02 §35 · §36 (o botão só com <code>valeEquilibrar</code>) · PLANO-TAREFAS §2.5</li><li>W10 ("Add" inerte com <code>aria-disabled</code>) · W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
+    <h4>PT</h4><ul><li>Anotar numa linha… · Adicionar · Atalhos · "Não coube agora — você chegou ao limite de itens." · Equilibrar minha semana</li></ul>
+    <h4>Notas</h4><ul><li>Ressalva do guarda (9a), critério de aceite para o staff: o teto é de HÁBITOS; "item limit" faz a pessoa parar de anotar tarefas — alternativa <code>[novo]</code> "That didn't fit — free mode holds N active habits. One-off tasks still fit." Copy do código mantida no artboard (W2).</li></ul>
   </footer>
 </div>
 </x-dc>

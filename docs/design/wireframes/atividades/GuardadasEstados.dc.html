@@ -115,20 +115,20 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 <div class="ab">
 <div class="phone tall"><div class="sheet">
       <div class="strip"><p class="cap"><span class="tag">ATIV-25</span> fechada — <code>&lt;details&gt;</code> fechado por padrão, sob a lista, esmaecida; diz em uma linha que nada ali cobra</p><details style="opacity:.75"><summary class="s" role="button" aria-expanded="false" style="min-height:44px;display:flex;align-items:center"><i class="fo">2</i>Put aside (2) — these ask nothing of you</summary></details></div>
-      <div class="strip"><p class="cap"><span class="tag">ATIV-26</span> aberta — <code>someday</code> e <code>dropped</code> com o status em palavra e "Bring back" (<code>handleRestoreTask</code>)</p>
+      <div class="strip"><p class="cap"><span class="tag">ATIV-26</span> aberta — <code>someday</code> e <code>dropped</code> com o status em palavra e "Bring back" (<code>handleRestoreTask</code>), 44px</p>
         <details open style="opacity:.75"><summary class="s" role="button" aria-expanded="true" style="min-height:44px;display:flex;align-items:center">Put aside (2) — these ask nothing of you</summary>
         <ul style="list-style:none;margin:0;padding:8px 0 0">
-          <li style="display:flex;align-items:center;gap:8px;min-height:44px"><span class="ico ">task</span><span class="t" style="flex:1">Learn the ukulele</span><span class="note">someday</span><span class="btn ghost" role="button" style="min-height:36px;padding:0 10px;font-size:12px"><i class="fo">3</i>Bring back</span></li>
-          <li style="display:flex;align-items:center;gap:8px;min-height:44px"><span class="ico ">task</span><span class="t" style="flex:1">Sort the garage</span><span class="note">let go</span><span class="btn ghost" role="button" style="min-height:36px;padding:0 10px;font-size:12px"><i class="fo">4</i>Bring back</span></li>
+          <li style="display:flex;align-items:center;gap:8px;min-height:44px"><span class="ico ">task</span><span class="t" style="flex:1">Learn the ukulele</span><span class="note">someday</span><span class="btn ghost" role="button" style="min-height:44px;padding:0 12px;font-size:12px"><i class="fo">3</i>Bring back</span></li>
+          <li style="display:flex;align-items:center;gap:8px;min-height:44px"><span class="ico ">task</span><span class="t" style="flex:1">Sort the garage</span><span class="note">let go</span><span class="btn ghost" role="button" style="min-height:44px;padding:0 12px;font-size:12px"><i class="fo">4</i>Bring back</span></li>
         </ul></details></div>
-      <p class="note">"someday" = deliberately inert (Things 3); "let go" = terminal with a way back (TickTick Won't Do). Neither is deleted, neither is "done" (02 §31).</p>
+      <p class="note">"someday" = deliberately inert; "let go" = terminal with a way back. Neither is deleted, neither is "done" (02 §31; REG §5.2).</p>
     </div></div>
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">ATIV-25</span> <span class="tag">ATIV-26</span></p>
     <h4>Pergunta</h4><p>"Where did the things I set aside go — and can I get them back?"</p>
-    <h4>Chega por / Sai para</h4><p>sob a lista, <code>guardadas.length &gt; 0</code> → "Bring back" → <code>handleRestoreTask</code> (<code>restore</code> → <code>open</code>)</p>
-    <h4>Sai da tela atual</h4><ul><li>Contagem por status ("1 someday · 1 let go") — o total da gaveta basta; é POSSE (pode mostrar número), não dívida.</li><li>Botão de apagar dentro da gaveta — apagar perde contexto (02 §31); a única saída é voltar.</li></ul>
-    <h4>Fontes</h4><ul><li><code>App.tsx</code> ("Put aside (N) — these ask nothing of you", "someday", "let go", "Bring back") · 03 §4.1 (item 9)</li><li>02 §31 (não deleta, não conclui, não pontua; continua consultável)</li><li>PRINCÍPIOS §2 (someday/dropped visíveis) · 13.7 (posse × dívida)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
+    <h4>Chega por / Sai para</h4><p>sob a lista, <code>guardadas.length &gt; 0</code> → "Bring back" → <code>handleRestoreTask</code> (<code>restore</code> → <code>open</code>; o contador de adiamentos volta a 0 — um dos oito perdões, custa dois gestos, fica)</p>
+    <h4>Sai da tela atual</h4><ul><li>Contagem por status — o total da gaveta basta; é POSSE (13.7).</li><li>Botão de apagar dentro da gaveta — apagar perde contexto (02 §31).</li><li>"Bring back" a 36px (rodada 1 e código) — 44px aqui; dívida do código no STATUS.</li></ul>
+    <h4>Fontes</h4><ul><li><code>App.tsx</code> ("Put aside (N) — these ask nothing of you", "someday", "let go", "Bring back") · 03 §4.1 (item 9)</li><li>02 §31 · REG §5.2 (Someday do Things 3; Won't Do do TickTick) · PRINCÍPIOS §2 · 13.7</li><li>guarda 7 · W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
     <h4>PT</h4><ul><li>"Guardadas (N) — não cobram nada" · "algum dia" · "deixada pra lá" · Retomar</li></ul>
     
   </footer>

@@ -118,24 +118,25 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"></span>PET</div>
     
   </div></div>
-    <div class="folha" role="dialog" aria-modal="true" aria-label="Tidy the pile" style="max-height:700px">
+    <div class="folha" role="dialog" aria-modal="true" aria-label="Tidy the pile" style="max-height:820px">
       <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">Tidy the pile</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><i class="fo">6</i><span class="ico ">x</span></span></div>
       
-      <p class="s">1 of 4 decided <span class="note">— counts what was DECIDED, never what is pending (02 §34)</span></p>
-      <div class="card"><p class="t b">Plan the trip</p><p class="s">idle for 9 days · effort 2 of 3</p></div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="seg" role="progressbar" aria-label="1 of 4 decided" aria-valuenow="1" aria-valuemax="4"><i class="on"></i><i></i><i></i><i></i></span><span class="s">1 of 4 decided</span></div>
+      <div class="card"><p class="t b">Plan the trip</p><p class="s">idle for 9 days · effort 2 of 3</p><p class="s">Where does it live now? Any answer works — including none.</p></div>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px" role="group" aria-label="Decide">
       <span class="btn ghost" role="button" style="flex-direction:column;min-height:64px;gap:2px" aria-label="Today"><i class="fo">2</i><span class="ico ">today</span><span>Today</span><span class="note">moves to today’s list</span></span><span class="btn ghost" role="button" style="flex-direction:column;min-height:64px;gap:2px" aria-label="This week"><i class="fo">3</i><span class="ico ">week</span><span>This week</span><span class="note">comes back in a few days</span></span><span class="btn ghost" role="button" style="flex-direction:column;min-height:64px;gap:2px" aria-label="Someday"><i class="fo">4</i><span class="ico ">someday</span><span>Someday</span><span class="note">no nagging, no aging</span></span><span class="btn ghost" role="button" style="flex-direction:column;min-height:64px;gap:2px" aria-label="Let it go"><i class="fo">5</i><span class="ico ">drop</span><span>Let it go</span><span class="note">a dignified exit, undoable</span></span>
     </div>
-      <p class="note"><span class="tag">ATIV-22</span> fila CONGELADA ao abrir (<code>setTriageTasks(triageQueue(…))</code>) — o contador não mente enquanto encolhe · <span class="tag">ATIV-23</span> quatro saídas com a MESMA moldura, glifo + palavra, nunca cor · "This week" é um adiamento CONTADO (02 §30)</p>
+      <div class="strip"><p class="cap">carta de tarefa vencida — a data, nunca "N days late"</p><p class="t b">Renew the passport</p><p class="s">was due 9/10/2026 · effort 2 of 3</p></div>
+      <p class="note"><span class="tag">ATIV-22</span> fila CONGELADA ao abrir (<code>setTriageTasks(triageQueue(…))</code>) — a barra só sobe · <span class="tag">ATIV-23</span> quatro saídas com a MESMA moldura, glifo + palavra, nunca cor · "This week" é um adiamento CONTADO (02 §30)</p>
     
     </div></div>
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">ATIV-22</span> <span class="tag">ATIV-23</span></p>
     <h4>Pergunta</h4><p>"What do I do with each of these?" — one card, four equal exits</p>
     <h4>Chega por / Sai para</h4><p>"Tidy the pile" no slot de avisos (<code>handleOpenTriage</code>; <code>interstitial === 'triage'</code>) → <code>handleTriageResolve</code> → <code>toOpen</code> · <code>postpone</code> · <code>toSomeday</code> · <code>drop</code> · última carta → ATIV-24 · × → <code>setTriageTasks(null)</code></p>
-    <h4>Sai da tela atual</h4><ul><li>Total de pendências no topo — proibido (02 §34); o cabeçalho conta o decidido.</li><li>Vermelho, "overdue", "you are late" — a carta diz FATOS ("idle for 9 days · effort 2 of 3"), sem adjetivo.</li><li>Ação primária destacada — as quatro têm o mesmo peso (02 §34; PRINCÍPIOS §2).</li></ul>
-    <h4>Fontes</h4><ul><li><code>TriagePile.tsx</code> ("Tidy the pile", "N of M decided", "idle for N days", "effort N of 3", "Untitled task", Today "moves to today’s list", This week "comes back in a few days", Someday "no nagging, no aging", "Let it go", "Back")</li><li>02 §34 (triagem: quatro saídas, mesma moldura, glifo + palavra; fila congelada) · §30 · §31</li><li>PRINCÍPIOS §2 · §13 (Focus-trap dentro da folha; × por último; Escape = Cancel (PRINCÍPIOS §13).) · REG §5.2</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
-    <h4>PT</h4><ul><li>Arrumar a pilha · "N de M decididas" · "parada há N dias" · "esforço N de 3" · Hoje ("vai pra lista de hoje") · Esta semana ("volta nos próximos dias") · Algum dia ("não cobra, não envelhece") · Deixar pra lá ("saída digna, com volta atrás") · Voltar</li></ul>
+    <h4>Sai da tela atual</h4><ul><li>Total de pendências no topo — proibido (02 §34); a barra e o texto contam o DECIDIDO, só dentro da folha que a pessoa abriu (o "(N)" do botão da Home já saiu — S5).</li><li>Vermelho, "overdue", "N days late" — a carta diz FATOS: "idle for N days" ou "was due <date>", sem adjetivo (guarda 6b: o número de dias vive só na carta).</li><li>Ação primária destacada — as quatro têm o mesmo peso.</li></ul>
+    <h4>Fontes</h4><ul><li><code>TriagePile.tsx</code> ("Tidy the pile"; <code>role="progressbar"</code> "N of M decided"; "idle for N days"; "was due <date>"; "effort N of 3"; "Untitled task"; "Where does it live now? Any answer works — including none."; Today "moves to today’s list"; This week "comes back in a few days"; Someday "no nagging, no aging"; Let it go "a dignified exit, undoable")</li><li>02 §34 · §30 · §31 · PRINCÍPIOS §2 · §13 · REG §5.2</li><li>guarda 6a–6c · W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
+    <h4>PT</h4><ul><li>Arrumar a pilha · "N de M decididas" · "parada há N dias" · "venceu em <data>" · "esforço N de 3" · "Onde ela vive agora? Qualquer resposta serve — inclusive nenhuma." · Hoje / Esta semana / Algum dia / Deixar pra lá ("saída digna, com volta atrás")</li></ul>
     
   </footer>
 </div>

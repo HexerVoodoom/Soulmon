@@ -2,11 +2,11 @@
   "artboards": [
     {
       "file": "Main.dc.html",
-      "title": "ATIV-02 · lista parcial (2/5)",
+      "title": "ATIV-02 · lista parcial",
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1769,
+      "h": 1904,
       "page": "page-1"
     },
     {
@@ -15,61 +15,61 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1274,
+      "h": 1244,
       "page": "page-1"
     },
     {
       "file": "ListaCompleta.dc.html",
-      "title": "ATIV-03 · meta do dia cumprida",
+      "title": "ATIV-03 · 05 · meta do dia cumprida; concluídas no fim",
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1259,
+      "h": 1409,
       "page": "page-1"
     },
     {
       "file": "CargaDoDia.dc.html",
-      "title": "D10 · carga do dia no topo da lista [decisão 13/09]",
+      "title": "D10 · carga do dia = 7ª entrada da fila 2 [decisão 13/09]",
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1319,
+      "h": 1469,
       "page": "page-1"
     },
     {
       "file": "LinhaTarefaEstados.dc.html",
-      "title": "ATIV-04 · 05 · 08 · 09 · 10 · linha de tarefa e TaskMeta",
+      "title": "ATIV-04 · 08 · 09 · 10 · linha de tarefa e TaskMeta",
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 2004,
+      "h": 1974,
       "page": "page-2"
     },
     {
       "file": "LinhaHabitoEstados.dc.html",
-      "title": "ATIV-06 · 07 · linha de hábito, passos e constância",
+      "title": "ATIV-06 · 07 · linha de hábito, passos e janela",
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 2064,
+      "h": 2259,
       "page": "page-2"
     },
     {
-      "file": "ConstanciaEstados.dc.html",
-      "title": "ATIV-11 · 12 · 13 · constância, maturidade, aura e escudos",
+      "file": "FichaHabito.dc.html",
+      "title": "ATIV-11 · 12 · 13 · a ficha do hábito (topo do EditModal) [novo — estrutura] + T5/T6",
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1839,
+      "h": 1454,
       "page": "page-2"
     },
     {
       "file": "CriarAtividade.dc.html",
-      "title": "ATIV-15 · CreateModal",
+      "title": "ATIV-15 · CreateModal — fechado (uma linha) e aberto",
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1454,
+      "h": 1544,
       "page": "page-3"
     },
     {
@@ -78,16 +78,16 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1424,
+      "h": 1469,
       "page": "page-3"
     },
     {
       "file": "EditarAtividade.dc.html",
-      "title": "ATIV-17 · 18 · EditModal (+ demo no teto)",
+      "title": "ATIV-17 · 18 · EditModal (edição; o teto NÃO tranca edição)",
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1274,
+      "h": 1484,
       "page": "page-3"
     },
     {
@@ -96,16 +96,16 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1304,
+      "h": 1544,
       "page": "page-3"
     },
     {
       "file": "CapturaRapida.dc.html",
-      "title": "ATIV-14 · QuickAddBar",
+      "title": "ATIV-14 · 27 · QuickAddBar (+ o botão de equilibrar no contexto)",
       "x": 0,
-      "y": 1594,
+      "y": 1684,
       "w": 390,
-      "h": 1794,
+      "h": 1884,
       "page": "page-3"
     },
     {
@@ -114,16 +114,16 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1484,
+      "h": 1559,
       "page": "page-4"
     },
     {
       "file": "EquilibrarSemana.dc.html",
-      "title": "ATIV-21 · 27 · botão + BalanceWeekModal",
+      "title": "ATIV-21 · BalanceWeekModal",
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1334,
+      "h": 1454,
       "page": "page-4"
     },
     {
@@ -141,16 +141,16 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1199,
+      "h": 1349,
       "page": "page-4"
     },
     {
       "file": "GuardadasEstados.dc.html",
       "title": "ATIV-25 · 26 · gaveta \"Put aside\"",
       "x": 0,
-      "y": 1624,
+      "y": 1699,
       "w": 390,
-      "h": 1779,
+      "h": 1794,
       "page": "page-4"
     }
   ],
@@ -161,7 +161,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Atividades (Fase 1, cinza, 13–14/09/2026). O motor de tarefas mora DENTRO da Home: a composição da página é do canvas Home; aqui ficam os átomos (linha, metadados, constância), os modais e as saídas (nudge, equilíbrio, triagem, gaveta). Viewport 390×844 + rodapé por artboard. Inglês é a língua do artboard (D8). Números = ordem de foco (1 = skip link, oculto). Tags ATIV-xx = linha do INVENTARIO-WIREFRAMES.md; [novo] = proposto; [decisão 13/09] = decisão do dono desenhada como NOVA (D10 carga do dia; T5 escudos; T6 aura). As regras fechadas na Home valem aqui: piso ≥ 1 para dígito de feito, regra de canal, célula inerte × recusa do pet."
+      "text": "Soulmon — Wireframes Atividades (Fase 1, cinza, rodada 2 pós-crítica, 14/09/2026). O motor de tarefas mora DENTRO da Home. A RitualRow é a do código: selo · coluna de texto = botão de editar · chevron (com passos) ou checkbox. Três decisões do lead marcadas [novo — estrutura]: um só modal de criação (CTA → CreateModal); linha de hábito = janela de 7 + glifo de maturidade, o resto na FICHA do hábito (topo do EditModal); escudos por hábito (lista só > 0, zero na ficha) e carga do dia como 7ª entrada da fila 2. [decisão 13/09] = D10, T5, T6. Números = ordem de foco (1 = skip link, oculto). Tags ATIV-xx = inventário."
     }
   ],
   "pages": [
@@ -171,7 +171,7 @@
     },
     {
       "id": "page-2",
-      "name": "Atividades — linhas e metadados"
+      "name": "Atividades — linhas, metadados e ficha"
     },
     {
       "id": "page-3",
