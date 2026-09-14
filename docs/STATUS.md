@@ -7,6 +7,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `f673a082` (wireframes de Rituais)
+>
+> `doc-mantenedor` (sessão): delta `96d8dbdb` → `f673a082`, 5 commits, sem módulo
+> novo. Redatores: `doc-bibliotecario` (`00-MAPA.md` §6.7 — três fluxos em
+> `aprovado`, 101 das 272 linhas do inventário, `DECISOES-WIREFRAME.md` §7, os 21
+> artboards de `rituais/`), `doc-historiador` (`10-DISCUSSOES-E-DECISOES.md` —
+> 13.11 na §4, 13.10 na §8, a decisão de Rituais e o bloco de 14/09 na §11, §17),
+> `doc-redator-regras` (`01-VISAO.md`: **sem alteração** — 13.10 mantém "humor nunca
+> pontua"; 13.11 não toca no que o doc descreve). Verificados e carimbados pelo
+> `doc-verificador` em 14/09/2026; guard verde (10/10). Aviso do redator de regras:
+> 13.10 (alvo 5 em `mood-checkins`) e 13.11 (carimbo ao mostrar) são decisões
+> registradas, **não implementadas** — o código segue em `target: 3` e no toque.
+
 > ## ☀️ 14/09/2026 — WIREFRAMES DE RITUAIS: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS PELO DONO
 >
 > Terceiro fluxo da SQUAD-DESIGN (Fase 1). Canvas publicado:
