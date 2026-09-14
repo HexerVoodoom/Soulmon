@@ -7,6 +7,23 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `708893c0` (wireframes da Home)
+>
+> `doc-mantenedor` (sessão): delta `d2d8dcf9` → `708893c0`, 9 commits, sem módulo
+> novo. Redatores: `doc-bibliotecario` (`00-MAPA.md` §6.1/§6.7/§8.1 e
+> `12-COMO-MANTER.md` §11 — o hook lê `Test Files` além de `Tests`; a Home
+> aprovada e o canvas no índice), `doc-historiador` (`10-DISCUSSOES-E-DECISOES.md`
+> — decisões 13.6/13.7, a decisão da Home e o bloco de 13–14/09), `doc-redator-regras`
+> (`01-VISAO.md`: **sem alteração**, o doc não descreve o que 13.6/13.7 mudam).
+> Verificados e carimbados pelo `doc-verificador` em 14/09/2026; guard verde.
+> De passagem: o blob do `REGISTRO-DE-DECISOES.md` tinha virado CRLF no commit
+> das decisões 13.6/13.7 — normalizado de volta a LF (conteúdo inalterado); o
+> inventário dizia "26 `<TelaEstado>`" para a Home — são 27 (+ `Main`); e o parágrafo da §2.1 do inventário (Home + achados para o
+> cartógrafo) nunca tinha chegado ao arquivo — o `replace` de 13/09 falhou em
+> silêncio por CRLF; entrou em `ed4d18d3`. Na reverificação o bug do shebang **não
+> reproduziu** (vitest 4.1.9 aceitou `#!` com o cache de transform quente); a
+> evidência é o commit `95e60ff9` + a saída original desta sessão.
+
 > ## 📐 13–14/09/2026 — WIREFRAMES DA HOME: DESENHADOS, CRITICADOS, CARIMBADOS E APROVADOS PELO DONO
 >
 > Primeira sessão de desenho da SQUAD-DESIGN (Fase 1). Canvas publicado:

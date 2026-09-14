@@ -1,6 +1,6 @@
 # Discussões e decisões — onde cada uma vive
 
-> **Dono:** doc-historiador · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
+> **Dono:** doc-historiador · **Data:** 14/09/2026 · **Estado:** verificado em 14/09/2026 por doc-verificador
 > **Verificação:** abra cada caminho citado e confira a seção nomeada existe (`grep -n "^## " <caminho>`)
 > **Não cobre:** o CONTEÚDO integral de cada discussão — este documento é um ÍNDICE, não a discussão. Para "como chegamos aqui" em datas e commits, veja `09-HISTORICO.md`
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde este índice apontar para um documento que discorda do código, o código está certo e o documento apontado tem defeito — não este índice.
@@ -18,7 +18,9 @@ tem índice próprio em `## 0. Índice`, organizado em §5.1–§5.8 (por tema, 
 mesmo agrupamento usado abaixo), §6/§6.1 (decisões de 07–09/09/2026, inclusive
 som), §7 (12 apostas falseáveis), §8 (mapa de exposição), §9 (a crítica mais
 forte), §10 (o que a pesquisa contradisse), §12 (o que a revisão adversarial
-de 08/09/2026 confirmou e derrubou). Consolidado em 08/09/2026
+de 08/09/2026 confirmou e derrubou), §13 (as decisões do dono na rodada de
+wireframes — 13.1–13.5 em 13/09/2026, 13.6–13.7 em 14/09/2026, no checkpoint
+da Home). Consolidado em 08/09/2026
 (`git log --diff-filter=A --format=%ad --date=short -- docs/REGISTRO-DE-DECISOES.md`
 → `2026-09-08`, commit `01a64199`), revisado no mesmo dia por uma sessão de QA
 adversarial (§12 do próprio documento). **As tabelas abaixo citam uma amostra
@@ -162,6 +164,7 @@ WP4.1–4.14). Plano-mãe: `../PLANO-EVOLUCAO.md` (07/08/2026).
 | 06/09/2026 | `PLANO-MELHORIAS.md` §15, D5+D6 | D5: apagar `daysToEvolve` (a escada fica só em `required`). D6: Ultra sem degeneração forçada | D5 alt.: escada crescente. D6 alt.: manter a exigência de negligência no topo | — |
 | 06/09/2026 | `../RENASCIMENTO.md#a-ideia` | Rebirth: depois do Ultra, escolher quem a criatura volta a ser | — | seção "Aberto (próxima rodada)" do mesmo doc |
 | 02/09/2026 | `../plano-melhorias/mobbin/permanencia.md#0b-correção-de-evidência-antes-dos-achados--o-roster-de-60-não-existe` | Correção de evidência registrada ANTES dos achados: uma premissa do corpus estava errada | — | — |
+| 14/09/2026 | `../REGISTRO-DE-DECISOES.md#13-as-decisões-do-dono-de-13092026--cinco-reaberturas-na-rodada-de-wireframes` §13, linha 13.6 | 🧭 dono (14/09/2026, checkpoint da Home, em modal): "Pastinha (Itens) só com itens especiais (🌀💗🦠💾💉); comida comum só pela folha Alimentar" — nasceu como o pedido V1 de `../design/DECISOES-WIREFRAME.md` §5.2 (W4 cruzado: `use()` → `onFeed` para qualquer item, "duas portas para a mesma geladeira"); era regra, não wireframe, por isso voltou ao `REGISTRO` | Manter as duas portas | "se alguém precisar comer pela pastinha (ex.: comida como item de uso), volta" |
 
 ---
 
@@ -250,7 +253,11 @@ teria incentivo para relativizar a própria proibição").
 Fonte principal: `../PLANO-DESIGN.md` (criado 19/08/2026 — mesmo dia do
 início do redesenho "O Visor", ver `09-HISTORICO.md` §1.3) e as rodadas de
 alinhamento em `product/soulmon-01/ui/align-round1.md` a `align-round6.md`.
-Briefing do squad de revisão: `../squad/00-BRIEFING.md` (14/08/2026).
+Briefing do squad de revisão: `../squad/00-BRIEFING.md` (14/08/2026). Desde
+13/09/2026 as decisões do redesenho em wireframes vivem em
+`../design/DECISOES-WIREFRAME.md` (a cada `decidir`, o entra/volta/sai por
+fluxo — §5 é a Home) e as de REGRA que nascem ali voltam para o
+`../REGISTRO-DE-DECISOES.md` §13.
 
 | Data | Onde | O que foi decidido | Alternativa que perdeu | Gatilho de revisão |
 |---|---|---|---|---|
@@ -260,6 +267,9 @@ Briefing do squad de revisão: `../squad/00-BRIEFING.md` (14/08/2026).
 | 18/ago/2026 | `CLAUDE.md` raiz, "UI: regras visuais do dono" | Ícone NUNCA dentro de box — vale no app inteiro | Moldura/placa em ícones | — |
 | — | `product/soulmon-01/ui/gap-analysis.md` e `gap-analysis-r2.md` | Duas rodadas de gap analysis entre a referência visual e o app | — | — |
 | 06/09/2026 | `../STATUS.md` (seção "Antes disso: contraste do tema escuro", 17/ago/2026 — não tem heading próprio; a versão canônica do achado é o footgun 10 do `CLAUDE.md`) | `body` trocado para `--sm-bg`/`--sm-ink`; nunca reintroduzir `var(--foreground)`/`var(--background)` em texto novo | Manter o scaffold shadcn herdado do Figma como fonte de cor | achado de contraste (texto quase preto sobre card verde-escuro) |
+| 13/09/2026 (checkpoint fechado em 14/09/2026) | `../design/DECISOES-WIREFRAME.md#5-home-entra--volta--sai-decisão-do-soulmon-design-lead-13092026` §5.1–§5.4 | Decisão do `soulmon-design-lead` sobre a Home, em três tabelas: **entra** (E1–E9 — "Play vira a 5ª célula do deck", "Slot de avisos abaixo do pet", "Medidores dentro do palco", regra única de célula inerte, "Piso ≥ 1 para todo dígito de 'feito'", sombra de contato, 4 copies `[novo]`), **volta** (V1–V7) e **sai** (S1–S7 — EvoTrail, PlayCard, léxico de cobrança da fala idle, o "(N)" da pilha, vetado pelo guarda). Canvas: [Soulmon — Wireframes Home](https://claude.ai/code/artifact/935e9dc7-3597-465d-b2ad-54ea65aa0332) (28 artboards, arquivos em `../design/wireframes/home/`). §5.4: "Checkpoint fechado em 14/09/2026 — o dono APROVOU (E1, E2, E7 entram; 13.6 pastinha só especiais; 13.7 posse × dívida)" | Palco ≤ 140px (V5), skeleton "em forma de página" (V3), nível do Vínculo em dígito (V7) — recusados com motivo; medidores acima do palco (S3, "composição rejeitada em 27/08/2026") | "O código ainda faz o antigo; o wireframe desenha o novo e marca `[novo]`" — S1–S7 e E1–E7 são o diff da Home para o `staff-frontend`, sem mudar regra de jogo |
+| 14/09/2026 | `../REGISTRO-DE-DECISOES.md#13-as-decisões-do-dono-de-13092026--cinco-reaberturas-na-rodada-de-wireframes` §13, linha 13.7 | 🧭 dono (14/09/2026, checkpoint da Home, em modal): "Zero visível só em POSSE, nunca em DÍVIDA do dia" — escudos/coleção podem mostrar `0` (13.5); "N de M feitos" só ganha dígito com N ≥ 1 (piso); "é a mesma régua da 13.2" (widget) e a distinção E5 de `../design/DECISOES-WIREFRAME.md` §5.1, escrita "para não colidir com a 13.5" (parecer do `soulmon-guarda-linha-vermelha` 8b) | "dígito sempre visível, inclusive `0 de M`" | "se o piso esconder informação que o jogador pede (ex.: 'por que não aparece o contador?'), rever" |
+| 13–14/09/2026 | `../STATUS.md#-1314092026--wireframes-da-home-desenhados-criticados-carimbados-e-aprovados-pelo-dono` | Registro de ESTADO, não decisão: crítica em três rodadas (`design-critic` rodada 1 "não passa" → rodada 3 "CARIMBO passa"; `soulmon-product-designer` mediu a dobra; `soulmon-guarda-linha-vermelha` "APROVADA COM RESSALVA", 1 veto); as 48 linhas `HOME-*` de `../design/INVENTARIO-WIREFRAMES.md` passaram a `aprovado`, com o link do canvas na tabela-mestra. Achados de passagem: `src/docsManual.contract.test.ts` falhava inteiro (0 testes) por um `#!/usr/bin/env node` em `scripts/docs-inventario.mjs` (corrigido) e o hook `.claude/hooks/session-start.sh` mascarava o FAIL por ler só a linha `Tests` (corrigido: lê `Test Files`, `708893c0`); dívidas de UI anotadas (`ScreenSkeleton` sem a forma da página, `HomeHud` entregando a regra por `title=`, "+10%" onde o código imprime `+20%` via `PLAY_BUFF_MULTIPLIER`) | — | próximos fluxos: Atividades, Rituais (P0) |
 
 ---
 
@@ -373,6 +383,7 @@ nasceram depois" (o critério que rege a Janela de Descanso).
 | `docs/DEPENDE-DE-VOCE.md` | Lista consolidada do que só o dono pode fazer (parcialmente superada por `STATUS.md` §3 — checar as duas) |
 | `docs/GUIA-EXPERIENCIA.md` | O guia mestre pré-Mobbin — sumário executivo, jornada etapa por etapa, DON'Ts, roadmap, decisões do dono (§H), rodada 2 pós-transcrição (§I) |
 | `docs/Attributions.md` | Atribuições de código, sprites, áudio e tipografia — e o registro de que "saiu tudo" era meia verdade |
+| `docs/design/` | O redesenho em duas fases (desde 13/09/2026): `PRINCIPIOS-DE-WIREFRAME.md` (a pesquisa reduzida ao que cada família de tela obriga e proíbe), `INVENTARIO-WIREFRAMES.md` (tela × estado, com o estado do wireframe — `a desenhar` → `aprovado` — e o link do canvas de cada fluxo), `DECISOES-WIREFRAME.md` (as decisões prévias do dono de 13/09/2026 e, por fluxo, o entra/volta/sai do `soulmon-design-lead`; §5 é a Home, 13–14/09/2026) e `wireframes/<fluxo>/` (os `.dc.html` de cada canvas). Decisão de REGRA que nasce ali não fica ali: volta para o `REGISTRO-DE-DECISOES.md` §13 (13.1–13.7). Porta de entrada: `docs/HANDOFF-WIREFRAMES.md` |
 | `desktop/README.md` / `desktop/STEAM.md` | Arquitetura do overlay Electron e o guia de empacotamento para a Steam |
 | `memory/company.md` / `memory/product-context.md` | Contexto de operador e produto usado por agentes de outras squads (ProdSquad) — não é registro de decisão do Soulmon em si |
 

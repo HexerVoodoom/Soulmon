@@ -1,6 +1,6 @@
 # Como manter o manual
 
-> **Dono:** doc-bibliotecario · **Data:** 09/09/2026 · **Estado:** verificado em 10/09/2026 por doc-verificador
+> **Dono:** doc-bibliotecario · **Data:** 14/09/2026 · **Estado:** verificado em 14/09/2026 por doc-verificador
 > **Verificação:** `npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts` (as duas travas descritas aqui) + `node scripts/docs-inventario.mjs` (a medição que alimenta o ciclo)
 > **Não cobre:** o CONTEÚDO de nenhum doc (cada um tem dono declarado no próprio cabeçalho) e as regras do jogo ([02-REGRAS-DE-NEGOCIO.md](02-REGRAS-DE-NEGOCIO.md)). Aqui só se responde "como se escreve, verifica e trava documentação neste repositório".
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -236,9 +236,16 @@ levantam o **`doc-mantenedor`** (`.claude/agents/doc-mantenedor.md`, skill
 [`manter-docs`](../../.claude/skills/manter-docs/SKILL.md), comando `/manter-docs`):
 
 1. **O hook de início de sessão** (`.claude/hooks/session-start.sh`) imprime
-   `node scripts/docs-delta.mjs --resumo`. Se disser `docs: DEFASADO`, o
-   `soulmon-coordenador` (`/soulmon start`) despacha `/manter-docs auto` antes do
-   trabalho novo.
+   `node scripts/docs-delta.mjs --resumo` e o resultado do guard. Se disser
+   `docs: DEFASADO`, o `soulmon-coordenador` (`/soulmon start`) despacha
+   `/manter-docs auto` antes do trabalho novo. **O resultado do guard são DUAS
+   linhas do vitest — `Test Files` e `Tests`** (desde `708893c0`, 14/09/2026).
+   ⚰️ Era só `Tests`, e isso deixava verde uma suíte que falha ao PARSEAR: em
+   13/09/2026 um shebang num módulo importado pelo vitest
+   (`scripts/docs-inventario.mjs`, consertado em `95e60ff9`) derrubou o arquivo
+   `src/docsManual.contract.test.ts` inteiro (0 testes; o `docsSemMentira`, que não importa
+   o módulo, seguiu passando) — a falha aparece em `Test Files` (`1 failed | 1 passed`), não em `Tests`. Se o briefing mostrar `Test Files` com `failed`,
+   o guard **não rodou**: trate como vermelho, mesmo que `Tests` não acuse nada.
 2. **O fechamento de sessão** (`/soulmon fechar`), logo depois do merge.
 3. **O workflow `.github/workflows/docs-sync.yml`**, a cada push na `main` — o
    job `delta` mede sempre; o job `mantenedor` só roda com delta e com o segredo
