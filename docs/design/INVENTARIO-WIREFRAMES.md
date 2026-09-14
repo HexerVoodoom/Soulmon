@@ -233,14 +233,14 @@ está vazio em 13/09/2026).
 
 | id | fluxo | tela | estado (condição do `03`) | chega por | sai para | prio | estado do wireframe |
 |---|---|---|---|---|---|---|---|
-| `PET-01` | Pet | `PetPage` (sub-aba Soulmon) | normal — as formas **já desbloqueadas** (nunca as futuras), descrição do oráculo, `classTitle` e as duas habilidades | chip "Soulmon" | os outros dois chips | P2 | desenhado |
+| `PET-01` | Pet | `PetPage` (sub-aba Soulmon) | normal — as formas **já desbloqueadas** (nunca as futuras), descrição do oráculo, `classTitle` e as duas habilidades | chip "Soulmon" | os outros dois chips | P2 | aprovado |
 | `PET-02` | Pet | `PetPage` | save legado sem `soulProfile` — simplesmente **não mostra habilidades** | save antigo | — | P2 | fora |
-| `PET-03` | Pet | `DreamDex` | vazio — os 30 do `DREAM_CATALOG`, o não coletado é **silhueta, nunca "faltando"** | sub-aba Soulmon | — | P2 | desenhado |
-| `PET-04` | Pet | `DreamDex` | parcial — `dexProgress` **só cresce**: barra de coleção, não de desempenho | noites na janela | — | P2 | desenhado |
-| `PET-05` | Pet | `DreamDex` | completo — 30 de 30 | coleção cheia | — | P2 | desenhado |
-| `PET-06` | Pet | `AdventureDiary` | vazio — `entries={gameState.adventures ?? []}` | sub-aba Soulmon | — | P2 | desenhado |
-| `PET-07` | Pet | `AdventureDiary` | com entradas — **só o que já aconteceu; não mostra lacuna, de propósito** (o contrário do Dex) | aventuras | — | P2 | desenhado |
-| `PET-08` | Pet | sub-aba Soulmon | carregando — cada um dos três blocos em `Suspense` com `<ScreenSkeleton language={language} />` | navegação | — | P2 | desenhado |
+| `PET-03` | Pet | `DreamDex` | vazio — os 30 do `DREAM_CATALOG`, o não coletado é **silhueta, nunca "faltando"** | sub-aba Soulmon | — | P2 | aprovado |
+| `PET-04` | Pet | `DreamDex` | parcial — `dexProgress` **só cresce**: barra de coleção, não de desempenho | noites na janela | — | P2 | aprovado |
+| `PET-05` | Pet | `DreamDex` | completo — 30 de 30 | coleção cheia | — | P2 | aprovado |
+| `PET-06` | Pet | `AdventureDiary` | vazio — `entries={gameState.adventures ?? []}` | sub-aba Soulmon | — | P2 | aprovado |
+| `PET-07` | Pet | `AdventureDiary` | com entradas — **só o que já aconteceu; não mostra lacuna, de propósito** (o contrário do Dex) | aventuras | — | P2 | aprovado |
+| `PET-08` | Pet | sub-aba Soulmon | carregando — cada um dos três blocos em `Suspense` com `<ScreenSkeleton language={language} />` | navegação | — | P2 | aprovado |
 
 ### 1.5 Evolução (a sub-aba Soulmon migrou para §1.4a — D1)
 
@@ -453,7 +453,7 @@ movimento-reduzido (`RIT-20`, `RIT-21`) → os que entram por gate ou por últim
 estados (`PET-03`→`PET-05`) → o diário (`PET-06`, `PET-07`) → carregando (`PET-08`). `PET-02`
 (save legado) é `fora` por D4.
 
-**Desenhado em 14/09/2026** (`design-wireframer`): 7 linhas em 9 artboards — `Main` (PET-01, a heroína no Visor + habilidades), `FichaRolada` (as formas anteriores), `FichaEstados` (poder assíncrono, classe ausente, o vazio, PET-02 como nota), `DexVazio`/`DexParcial`/`DexCompleto` (PET-03/04/05), `DiarioVazio`/`DiarioComEntradas` (PET-06/07), `PetCarregando` (PET-08). Cada artboard leva a tag `PET-xx` que cobre.
+**Desenhado, criticado e aprovado pelo dono em 14/09/2026** (`design-wireframer`; crítica em duas rodadas — `design-critic` B1/R1/R2 aplicados, `soulmon-product-designer` #1–#8, `soulmon-guarda-linha-vermelha` aprovada com ressalva, veto 1a ao `[novo]` que suprimia o "0 of 30"; decisão do lead em `DECISOES-WIREFRAME.md` §8; checkpoint em modal): 7 linhas em 9 artboards — `Main` (PET-01, a heroína no Visor + habilidades), `FichaRolada` (as formas anteriores), `FichaEstados` (poder assíncrono, classe ausente, o vazio, PET-02 como nota), `DexVazio`/`DexParcial`/`DexCompleto` (PET-03/04/05), `DiarioVazio`/`DiarioComEntradas` (PET-06/07), `PetCarregando` (PET-08). Cada artboard leva a tag `PET-xx` que cobre.
 
 ### 2.4 Evolução
 Sub-abas (`EVO-01`) → `EvolutionPath` com o cadeado como ação dominante

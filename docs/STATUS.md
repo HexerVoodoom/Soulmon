@@ -7,7 +7,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## 🐾 14/09/2026 — WIREFRAMES DO PET: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+> ## 🐾 14/09/2026 — WIREFRAMES DO PET: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS PELO DONO
 >
 > Quarto canvas da SQUAD-DESIGN (Fase 1; canvas próprio por D1 — `EVO-22`→`EVO-29`
 > viraram `PET-01`→`PET-08`, inventário §1.4a). Canvas publicado:
@@ -24,8 +24,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   obtida com "#NN · data" (índice global + `dreamDates`, P2); sub-abas como o código (P3);
 >   estados da ficha que o inventário não tinha (P4). **Sai:** a barra vazia, o `tablist`,
 >   o nível numérico na ficha.
-> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Sem decisão de
->   regra nova nesta rodada.
+> - **✅ Checkpoint fechado em 14/09/2026 (modal):** o dono APROVOU P1–P4. Sem decisão de
+>   regra nova (a tensão 13.7 × PRINCÍPIOS §9 no Dex vazio foi resolvida pelo lead com a
+>   régua de E5/A6: dígito quieto fica, barra e frações-todas-em-zero saem).
 > - **Achados de passagem (código):** `DreamDex` sempre renderiza contador + `progressbar`
 >   mesmo em zero; `rest.dreamDates` é carimbado e nunca exibido; as sub-abas são três
 >   `<button>` sem grupo nem estado ativo para leitor de tela; a coluna ficha → Dex → diário
@@ -33,8 +34,8 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   do estágio não têm seção no `02-REGRAS-DE-NEGOCIO.md` (só em `utils/soulProfile/ficha/skills`);
 >   o estado vazio da ficha (`formas.length === 0`) não tem linha no inventário; a data das
 >   formas anteriores tem dois candidatos a dono (`FormAlbum` × ficha) — recomendação: `FormAlbum`.
-> - **Branch:** `design/wireframes-pet` (pushada). Merge só após o seu OK.
->   Próximo canvas: Onboarding-funil (D3).
+> - **Branch:** `design/wireframes-pet` — mergeada na `main` (ff) após o OK. Próximo
+>   canvas: Onboarding-funil (D3).
 
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `f673a082` (wireframes de Rituais)
 >

@@ -279,7 +279,7 @@ mantidas.
 
 ### 8.4 O que fica registrado para depois
 
-- **Para o dono, no checkpoint:** P1 e P2 são as mudanças estruturais — a recomendação é aprovar as duas; não há decisão de regra nova (a tensão 13.7 × §9 foi resolvida pelo lead com a régua já aprovada em E5/A6).
+- **Checkpoint fechado em 14/09/2026 — o dono APROVOU** (P1–P4 entram; sem decisão de regra nova — a tensão 13.7 × §9 foi resolvida pelo lead com a régua já aprovada em E5/A6). Registro do que foi apresentado: P1 e P2 eram as mudanças estruturais — a recomendação era aprovar as duas.
 - **Para o cartógrafo:** o estado vazio da ficha (`formas.length === 0`) existe no código e não tem linha no inventário; as duas habilidades do estágio **não têm seção no `02-REGRAS-DE-NEGOCIO.md`** (a regra vive só em `utils/soulProfile/ficha/skills` — o `02 §15` é atributos e galhos); a data das formas tem de ter UM dono de tela (V2).
 - **Para o `docs/STATUS.md` (achados de código):** (a) `DreamDex` sempre renderiza contador + `progressbar`, mesmo em zero; (b) `dreamDates` carimbado no save e nunca exibido; (c) a fileira de sub-abas são três `<button>` sem grupo nem estado ativo para leitor de tela; (d) a sub-aba Soulmon não tem sinal de posição ao rolar (ficha → Dex → diário); (e) três `ScreenSkeleton` empilhados; (f) as habilidades do estágio sem seção no manual.
 - **Para o `staff-frontend`:** P1–P4 e S1–S5 são o diff do Pet; nenhum item muda regra de jogo; aceites do guarda: 1c (as frações somem só com as três em zero), 2a (a data das formas em uma casa só).
