@@ -7,6 +7,19 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `5540226c` (wireframes de Atividades)
+>
+> `doc-mantenedor` (sessão): delta `f3bec2ce` → `5540226c`, 5 commits, sem módulo
+> novo. Redatores: `doc-bibliotecario` (`00-MAPA.md` §6.7 — dois fluxos em
+> `aprovado`, 75 das 272 linhas do inventário, `DECISOES-WIREFRAME.md` §6, os 17
+> artboards de `atividades/`), `doc-historiador` (`10-DISCUSSOES-E-DECISOES.md` —
+> decisões 13.8/13.9 na §2, a decisão de Atividades e o bloco de 14/09 na §11, §17),
+> `doc-redator-regras` (`01-VISAO.md`: **sem alteração** — 13.8 e 13.9 aplicam as
+> regras de perda 1 e 3, não as mudam). Verificados e carimbados pelo
+> `doc-verificador` em 14/09/2026; guard verde (10/10). De passagem: o parágrafo
+> "Decididas em 14/09/2026" do `REGISTRO-DE-DECISOES.md` §13 apontava só para a §5
+> do `DECISOES-WIREFRAME.md` — 13.8/13.9 moram na §6; corrigido em commit à parte.
+
 > ## 📋 14/09/2026 — WIREFRAMES DE ATIVIDADES: DESENHADOS, CRITICADOS, CARIMBADOS E APROVADOS PELO DONO
 >
 > Segundo fluxo da SQUAD-DESIGN (Fase 1). Canvas publicado:

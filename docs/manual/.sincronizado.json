@@ -1,6 +1,6 @@
 {
-  "sha": "f3bec2ce55f7b932a3725c29aec68d96a90c07b9",
+  "sha": "5540226c602f305305f024981195a8f07151c71a",
   "data": "14/09/2026",
-  "por": "doc-mantenedor (sessão) — marcador: o delta 708893c0→f3bec2ce era só CRLF do REGISTRO, o inventário §2.1 (já verificado em ed4d18d3) e o bloco de STATUS da própria sincronização",
+  "por": "doc-mantenedor (sessão) — delta f3bec2ce→5540226c: wireframes de Atividades aprovados, decisões 13.8/13.9, DECISOES-WIREFRAME §6",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
