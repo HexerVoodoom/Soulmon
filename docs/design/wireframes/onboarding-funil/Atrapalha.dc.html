@@ -122,14 +122,15 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
       <div class="input" role="textbox" aria-multiline="true" aria-label="And what gets in your way the most?" style="min-height:96px;align-items:flex-start;padding:10px"><i class="fo">2</i><span style="color:#999">e.g. I start strong and quit in week two</span></div>
       <span class="btn" role="button"    style="width:100%;"><i class="fo">3</i>Continue</span>
       <span class="btn ghost" role="button"    style="width:100%;border-color:transparent;"><i class="fo">4</i>I’d rather not say right now</span>
-      <span class="btn ghost" role="button"    style="width:100%;border-color:transparent;"><i class="fo">5</i>Back</span>
+      <span class="btn ghost" role="button"    style="width:100%;border-color:transparent;"><i class="fo">5</i>Back <span class="tag novo">novo</span></span>
+      <p class="note">the code has NO way back here (<code>back()</code> supports <code>STRUGGLE → GOAL</code>, but no button calls it) — a dead end; the Back is a proposal (B1)</p>
     </div>
 </div></div>
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">ONB-15</span></p>
     <h4>Pergunta</h4><p>"What usually gets in the way?" — the second open question, with proof that the first one landed</p>
-    <h4>Chega por / Sai para</h4><p><code>STRUGGLE_STEP</code> (−3) → "Continue" / pular → <code>CHOICE_STEP</code> (ONB-16) · "Back" → <code>GOAL_STEP</code></p>
-    <h4>Sai da tela atual</h4><ul><li>A linha "Noted. Your Soulmon will remember." só existe com <code>soulGoal</code> preenchido — quem pulou a primeira não vê eco (código).</li><li>Qualquer leitura psicológica da resposta na tela (02 §22: o Oráculo não mostra diagnóstico).</li></ul>
+    <h4>Chega por / Sai para</h4><p><code>STRUGGLE_STEP</code> (−3) → "Continue" / pular → <code>CHOICE_STEP</code> (ONB-16) · "Back" <code>[novo]</code> → <code>GOAL_STEP</code> (hoje não há botão: beco sem saída)</p>
+    <h4>Sai da tela atual</h4><ul><li>A linha "Noted. Your Soulmon will remember." só existe com <code>soulGoal</code> preenchido — quem pulou a primeira não vê eco (código).</li><li>Qualquer leitura psicológica da resposta na tela (02 §22: o Oráculo não mostra diagnóstico).</li><li><b>Entra um "Back"</b> <span class="tag novo">novo</span> — o código não tem saída para trás em <code>STRUGGLE_STEP</code> (nem em <code>CHOICE_STEP</code> e <code>REGISTER</code>): <code>back()</code> sabe voltar, nenhum botão o chama. Achado para o STATUS (B1); a proposta é o botão quiet que os passos do ritual já têm.</li></ul>
     <h4>Fontes</h4><ul><li><code>SoulmonOnboarding.tsx</code> <code>STRUGGLE_STEP</code> ("And what gets in your way the most?"; "Noted. Your Soulmon will remember." sob <code>soulGoal.trim().length &gt; 0</code>; placeholder "e.g. I start strong and quit in week two")</li><li>02 §21 (<code>soulStruggle</code> volta só na oferta reduzida — RIT-06) · 03 §2.3</li><li>PRINCÍPIOS §3 (Onboarding: a criatura antes do pedágio; justificativa por campo; erro que preserva o input; nada de consentimento pré-marcado) (ecoar o que foi respondido é a prova de que a resposta foi usada — Lovi)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
     <h4>PT</h4><ul><li>"E o que mais te atrapalha hoje?" · "Anotado. Seu Soulmon vai lembrar disso." · "Ex.: começo animado e largo na segunda semana"</li></ul>
     

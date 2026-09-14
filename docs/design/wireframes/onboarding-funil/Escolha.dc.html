@@ -121,13 +121,14 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
       <span class="btn" role="button"    style="width:100%;"><i class="fo">2</i>Start now — it’s free</span>
       <span class="btn ghost" role="button"   aria-label="Get the full game — &lt;price&gt;" style="width:100%;"><i class="fo">3</i>Get the full game — <code>precoLabel</code></span>
       <p class="note">grátis é o caminho PRINCIPAL (primário): pedir dinheiro de quem ainda não viu o app funcionar é o jeito mais caro de perder o usuário · <code>precoLabel</code> vem de <code>useUnlockPriceLabel</code> (o preço da loja do aparelho; fora do Android, a constante publicada)</p>
-      <span class="btn ghost" role="button"    style="width:100%;border-color:transparent;"><i class="fo">4</i>Back</span>
+      <span class="btn ghost" role="button"    style="width:100%;border-color:transparent;"><i class="fo">4</i>Back <span class="tag novo">novo</span></span>
+      <p class="note">no Back in the code here either (B1) — <code>back()</code> supports <code>CHOICE → STRUGGLE</code>; the button is a proposal</p>
     </div>
 </div></div>
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">ONB-16</span></p>
     <h4>Pergunta</h4><p>"Do I try it first, or take the whole thing now?" — free is the primary; the purchase never closes</p>
-    <h4>Chega por / Sai para</h4><p><code>CHOICE_STEP</code> (−7) → "Start now — it’s free" → <code>setFlow('demo')</code> → <code>DEMO_PICK</code> (ONB-20) · "Get the full game" → <code>handleUnlockFull</code> → passo 1 do ritual (canvas Onboarding-oráculo) · "Back" → <code>STRUGGLE_STEP</code></p>
+    <h4>Chega por / Sai para</h4><p><code>CHOICE_STEP</code> (−7) → "Start now — it’s free" → <code>setFlow('demo')</code> → <code>DEMO_PICK</code> (ONB-20) · "Get the full game" → <code>handleUnlockFull</code> → passo 1 do ritual (canvas Onboarding-oráculo) · "Back" <code>[novo]</code> → <code>STRUGGLE_STEP</code> (hoje sem botão)</p>
     <h4>Sai da tela atual</h4><ul><li>Tabela free × pago, lista de features, preço riscado, "última chance" — nada (T1/13.1 é sobre o REVEAL; aqui a bifurcação tem dois botões e uma frase).</li><li>O completo como primário (Replika: venda antes do valor).</li></ul>
     <h4>Fontes</h4><ul><li><code>SoulmonOnboarding.tsx</code> <code>CHOICE_STEP</code> ("How do you want to start?"; "You can change later: the purchase stays available inside the app."; "Start now — it’s free"; "Get the full game — <code>precoLabel</code>" com <code>aria-busy</code> em <code>unlockLoading</code>)</li><li>03 §2.3 · REGISTRO §5.3 (não cobrar no reveal; value moment = 1º dia completo) · PRINCÍPIOS §3 (a criatura antes do pedágio) · PRINCÍPIOS §8</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
     <h4>PT</h4><ul><li>"Como você quer começar?" · "Dá para mudar depois: a compra continua disponível dentro do app." · "Começar agora — é grátis" · "Quero o completo — <code>preço</code>"</li></ul>

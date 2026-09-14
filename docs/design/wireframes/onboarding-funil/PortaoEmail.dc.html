@@ -114,7 +114,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 </style>
 </helmet>
 <div class="ab">
-<div class="phone"><div class="content" style="padding:24px 20px 0;gap:0;overflow:hidden">
+<div class="phone tall"><div class="content" style="padding:24px 20px 0;gap:0;overflow:hidden">
   
   <h2 class="h2" style="font-size:18px;margin-bottom:6px">Create your account</h2>
   <div style="display:flex;flex-direction:column;gap:12px">
@@ -128,6 +128,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
       <span class="btn dis" role="button" aria-disabled="true"  aria-label="Create account" style="width:100%;">Create account</span>
       <span class="btn ghost" role="button"    style="width:100%;"><i class="fo">8</i>I already have an account — sign in</span>
       <span class="btn ghost" role="button"    style="width:100%;border-color:transparent;"><i class="fo">9</i>Back</span>
+      <div class="strip"><p class="cap">a mesma tela em "Sign in" (<code>!criandoConta</code>): título e primário trocam, o link inverte, "I forgot my password" aparece; <code>aria-invalid</code> no e-mail malformado; <code>role="status"</code> depois do reset</p><h2 class="h2">Sign in</h2><div><p class="lbl" style="margin-bottom:6px">Email</p><div class="input on" role="textbox" aria-label="Email" aria-invalid="true" style="min-height:44px"><i class="fo">10</i>maria@exemplo</div><p class="s" style="margin-top:4px"><code>aria-invalid="true"</code> — e-mail malformado</p></div><span class="btn dis" role="button" aria-disabled="true"  aria-label="Sign in" style="width:100%;">Sign in</span><span class="btn ghost" role="button"    style="width:100%;"><i class="fo">11</i>Create account</span><span class="btn ghost" role="button"    style="width:100%;border-color:transparent;"><i class="fo">12</i>I forgot my password</span><p class="t" role="status" style="border-left:3px solid #666;padding-left:8px">We sent an email to reset your password. If it does not show up, check your spam.</p></div>
     </div>
 </div></div>
 <footer class="foot">
@@ -136,8 +137,8 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <h4>Chega por / Sai para</h4><p><code>EMAIL_STEP</code> (−8) pela porta "New User" (<code>criandoConta</code>); o mesmo passo vira "Sign in" pelo link → "Create account" / "Sign in" → <code>aposAutenticar</code> → <code>GOAL_STEP</code> (ONB-14) · "Back" → portão</p>
     <h4>Sai da tela atual</h4><ul><li>Duas telas (criar × entrar) — é UMA, com o título e o primário trocando (<code>criandoConta</code>); o link inverte ("I already have an account — sign in" ↔ "Create account"); em "Sign in" aparece "I forgot my password".</li><li>Checkbox pré-marcado (#18).</li><li>Senha com regra escondida — a regra está no placeholder ("At least 6 characters").</li></ul>
     <h4>Fontes</h4><ul><li><code>SoulmonOnboarding.tsx</code> <code>EMAIL_STEP</code> ("Create your account" / "Sign in"; "Email" + "you@example.com"; "Password" + "At least 6 characters"; <code>aria-invalid</code> no e-mail inválido; <code>role="alert"</code> vermelho-tinta para erro e <code>role="status"</code> para aviso; "Create account" / "Sign in" com <code>aria-busy</code>; "I already have an account — sign in" / "Create account"; "I forgot my password"; "Back")</li><li>03 §2.3 · PRINCÍPIOS §3 (Onboarding: a criatura antes do pedágio; justificativa por campo; erro que preserva o input; nada de consentimento pré-marcado)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
-    <h4>PT</h4><ul><li>"Criar sua conta" / "Entrar" · E-mail · "voce@exemplo.com" · Senha · "Mínimo de 6 caracteres" · "Criar conta" / "Entrar" · "Já tenho conta — entrar" / "Criar conta" · "Esqueci minha senha" · Voltar</li><li>"Antes de começar" · "Entrar no Soulmon" · "Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez." · "Entrar com Google" · ou · "Novo usuário" · "Ler os Termos de Uso" / "Ler a Política de Privacidade" · "Li e concordo com os Termos de Uso e a Política de Privacidade" · "Tenho 18 anos ou mais" · "18 anos é a idade mínima do Soulmon. Não pedimos nem guardamos sua data de nascimento." · Continuar · Voltar</li></ul>
-    
+    <h4>PT</h4><ul><li>"Criar sua conta" / "Entrar" · E-mail · "voce@exemplo.com" · Senha · "Mínimo de 6 caracteres" · "Criar conta" / "Entrar" · "Já tenho conta — entrar" / "Criar conta" · "Esqueci minha senha" · "Enviamos um e-mail para redefinir sua senha. Se não aparecer, olhe o spam." · Voltar</li><li>"Antes de começar" · "Entrar no Soulmon" · "Sua conta guarda o progresso e amarra qualquer compra a você. A sessão fica salva — não precisa entrar de novo a cada vez." · "Entrar com Google" · ou · "Novo usuário" · "Ler os Termos de Uso" / "Ler a Política de Privacidade" · "Li e concordo com os Termos de Uso e a Política de Privacidade" · "Tenho 18 anos ou mais" · "18 anos é a idade mínima do Soulmon. Não pedimos nem guardamos sua data de nascimento." · Continuar · Voltar</li></ul>
+    <h4>Notas</h4><ul><li>crítica de 14/09/2026: design-critic W3 (o par "Sign in" + reset + <code>aria-invalid</code> não estava desenhado) · guarda 2b (aprovado)</li></ul>
   </footer>
 </div>
 </x-dc>

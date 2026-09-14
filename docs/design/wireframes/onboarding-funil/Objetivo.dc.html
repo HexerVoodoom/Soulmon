@@ -116,7 +116,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 <div class="ab">
 <div class="phone"><div class="content" style="padding:24px 20px 0;gap:0;overflow:hidden">
   
-  <h2 class="h2" style="font-size:18px;margin-bottom:6px">What do you want to improve in your life?</h2>
+  <h2 class="h2" style="font-size:18px;margin-bottom:6px">What do you want to improve in your life?</h2><p class="s" style="margin-bottom:18px">Your Soulmon brings this back on the days that count. <span class="tag novo">novo</span></p>
   <div style="display:flex;flex-direction:column;gap:12px">
       <div class="input" role="textbox" aria-multiline="true" aria-label="What do you want to improve in your life?" style="min-height:96px;align-items:flex-start;padding:10px"><i class="fo">2</i><span style="color:#999">e.g. get back to studying without beating myself up</span></div>
       <span class="btn" role="button"    style="width:100%;"><i class="fo">3</i>Continue</span>
@@ -128,10 +128,10 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <p><span class="b">Artboard</span> · <span class="tag">ONB-14</span></p>
     <h4>Pergunta</h4><p>"Why do I want to change?" — asked once, in your words, and skippable</p>
     <h4>Chega por / Sai para</h4><p><code>GOAL_STEP</code> (−2), depois de autenticar (ou de ONB-09) → "Continue" → <code>STRUGGLE_STEP</code> (ONB-15) · "I’d rather not say right now" limpa o campo e chama <code>next()</code></p>
-    <h4>Sai da tela atual</h4><ul><li>Obrigatoriedade — pular é de propósito: obrigar a escrever antes de ver o app é o pedágio que o Finch não cobra (PRINCÍPIOS §3).</li><li>Justificativa visível do campo — o código não diz para que serve o <code>soulGoal</code> aqui; onde ele volta é o relatório (RIT-09: "Remember why you started") e o tutorial (ONB-43: ordena as áreas). PRINCÍPIOS §3 pede "justificativa por campo" — <code>[novo]</code> a considerar pelo lead: uma linha "Your Soulmon brings this back on the days that count." (ver Notas).</li></ul>
+    <h4>Sai da tela atual</h4><ul><li>Obrigatoriedade — pular é de propósito: obrigar a escrever antes de ver o app é o pedágio que o Finch não cobra (PRINCÍPIOS §3).</li><li><b>Entra a justificativa do campo</b> <span class="tag novo">novo</span>: "Your Soulmon brings this back on the days that count." — o código não diz para que serve o <code>soulGoal</code> aqui; onde ele volta é o relatório (RIT-09: "Remember why you started") e o tutorial (ONB-43: ordena as áreas). PRINCÍPIOS §3 "justificativa por campo" é OBRIGATÓRIO (crítico item 2: nota de rodapé não satisfaz; product-designer #4). A frase promete só o que 02 §21 permite (volta em momentos-chave; nunca vira nota, meta, cobrança).</li></ul>
     <h4>Fontes</h4><ul><li><code>SoulmonOnboarding.tsx</code> <code>GOAL_STEP</code> ("What do you want to improve in your life?"; placeholder "e.g. get back to studying without beating myself up"; "Continue"; "I’d rather not say right now")</li><li>02 §21 (o "porquê" não vira nota, meta, cobrança nem lembrete; volta em momentos-chave) · 03 §2.3</li><li>PRINCÍPIOS §3 (Onboarding: a criatura antes do pedágio; justificativa por campo; erro que preserva o input; nada de consentimento pré-marcado) (Replika: justificativa por campo — separável da arquitetura ruim)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
     <h4>PT</h4><ul><li>"O que você quer melhorar na sua vida?" · "Ex.: quero voltar a estudar sem me cobrar tanto" · Continuar · "Prefiro não responder agora"</li></ul>
-    <h4>Notas</h4><ul><li><span class="tag novo">novo</span> proposta de justificativa (não desenhada na tela, só aqui): "Your Soulmon brings this back on the days that count." — PT: "Seu Soulmon devolve isso nos dias que importam." Decisão do lead: é copy nova numa tela que hoje não tem hint.</li></ul>
+    <h4>Notas</h4><ul><li>PT da justificativa: "Seu Soulmon devolve isso nos dias que importam."</li><li>crítica de 14/09/2026: design-critic [novo] 2 · product-designer #4 · guarda 2d (aprovado)</li></ul>
   </footer>
 </div>
 </x-dc>

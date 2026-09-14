@@ -115,7 +115,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 </helmet>
 <div class="ab">
 <div class="phone"><div class="content" style="padding:24px 20px 0;gap:10px;overflow:hidden">
-      <span role="progressbar" aria-valuemin="1" aria-valuemax="2" aria-valuenow="2" aria-label="Step 2 of 2" style="display:block;height:6px;border:1px solid #999;border-radius:999px;overflow:hidden;background:#fff;margin-bottom:16px"><span style="display:block;width:100%;height:100%;background:#666"></span></span>
+      <span role="progressbar" aria-valuemin="1" aria-valuemax="2" aria-valuenow="2" aria-label="Step 2 of 2" style="display:flex;gap:6px;justify-content:center;margin-bottom:16px"><i style="display:block;width:8px;height:8px;border-radius:50%;border:1px solid #666;background:#666"></i><i style="display:block;width:8px;height:8px;border-radius:50%;border:1px solid #666;background:#666"></i></span>
       <h2 class="h2" style="font-size:18px">What’s your goal?</h2>
       <div class="input on" role="textbox" aria-multiline="true" aria-label="What’s your goal?" style="min-height:96px;align-items:flex-start;padding:10px"><i class="fo">2</i>get back to studying without beating myself up</div>
       <div class="chips" role="group" aria-label="Life areas (optional)"><span role="button" aria-pressed="false"  class="chip" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">3</i>Health</span><span role="button" aria-pressed="false"  class="chip" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">4</i>Creativity</span><span role="button" aria-pressed="false"  class="chip" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">5</i>Discipline</span><span role="button" aria-pressed="true"  class="chip on" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">6</i>Study</span><span role="button" aria-pressed="false"  class="chip" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">7</i>Work</span><span role="button" aria-pressed="false"  class="chip" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">8</i>Social</span><span role="button" aria-pressed="false"  class="chip" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">9</i>Wellness</span><span role="button" aria-pressed="false"  class="chip" style="min-height:44px;padding:0 12px;font-size:12px;"><i class="fo">10</i>Fitness</span></div>
@@ -126,7 +126,8 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
         <span role="button" aria-pressed="false"  class="card" style="flex-direction:row;align-items:center;gap:10px;min-height:44px;padding:8px 12px;"><i class="fo">14</i><span class="ico ">o</span><span class="t">Review yesterday’s notes for 10 minutes</span></span>
         <span role="button" aria-pressed="false" aria-disabled="true" class="card" style="flex-direction:row;align-items:center;gap:10px;min-height:44px;padding:8px 12px;opacity:.5;"><span class="ico ">o</span><span class="t">Write one question to ask the teacher</span></span>
       </div>
-      <p class="note">4th suggestion <code>aria-disabled</code>: <code>atCap</code> (<code>remaining</code> = ceiling of the stage minus existing) — the ceiling is a fact of the stage, not a paywall here</p>
+      <p class="s">Stage limit of 2 activities reached — unselect something to swap.</p>
+      <p class="note">the sentence above is REAL UI (<code>atCap</code>, tinta dourada no código), not an annotation (B3); the 4th suggestion is <code>aria-disabled</code> — the ceiling is a fact of the stage, not a paywall (guarda 3b)</p>
       <span class="btn" role="button"    style="width:100%;"><i class="fo">15</i>Add 2 and start</span>
     </div></div>
 <footer class="foot">
@@ -134,8 +135,8 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <h4>Pergunta</h4><p>"Which of these do I actually want?" — pick, don’t type; the ceiling shows as inert, not as a wall</p>
     <h4>Chega por / Sai para</h4><p>retorno de <code>suggestTasks</code> (API) → "Add 2 and start" → <code>onComplete</code> → <code>handleCompleteTutorial</code> → Home (HOME-11)</p>
     <h4>Sai da tela atual</h4><ul><li>Sugestão como texto solto — cada uma é um botão <code>aria-pressed</code> de 44px.</li><li>Nudge de compra no teto (ATIV-16/S1 do canvas Atividades: o teto tranca a criação, nunca vende aqui); a célula além do teto é INERTE (E7).</li><li>Contagem "N/M selecionadas" — o CTA carrega o número ("Add 2 and start"), e só ≥ 1.</li></ul>
-    <h4>Fontes</h4><ul><li><code>GameTutorialFlow.tsx</code> (<code>suggestions.map</code> com <code>aria-pressed</code>, <code>disabled</code> em <code>!isSel &amp;&amp; atCap</code>; "Add <code>effectiveCount</code> and start"; o objetivo digitado também conta como 1 — <code>customKey</code>)</li><li>03 §2.4 · 02 §33 · DECISOES §5 E7 (célula inerte = não existe agora por regra)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li></ul>
-    <h4>PT</h4><ul><li>"Adicionar N e começar"</li></ul>
+    <h4>Fontes</h4><ul><li><code>GameTutorialFlow.tsx</code> (<code>suggestions.map</code> com <code>aria-pressed</code>, <code>disabled</code> em <code>!isSel &amp;&amp; atCap</code>; "Stage limit of N activities reached — unselect something to swap."; "Add <code>effectiveCount</code> and start"; o objetivo digitado também conta como 1 — <code>customKey</code>)</li><li>03 §2.4 · 02 §33 · DECISOES §5 E7 (célula inerte = não existe agora por regra)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code></li><li>crítica de 14/09/2026: design-critic B3 · guarda 3b (aprovado)</li></ul>
+    <h4>PT</h4><ul><li>"Limite de N atividades do estágio atingido — desmarque algo pra trocar." · "Adicionar N e começar"</li></ul>
     
   </footer>
 </div>

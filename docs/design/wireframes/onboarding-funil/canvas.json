@@ -24,7 +24,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1749,
+      "h": 1779,
       "page": "page-1"
     },
     {
@@ -51,7 +51,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1559,
+      "h": 2154,
       "page": "page-2"
     },
     {
@@ -60,7 +60,7 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1884,
+      "h": 2034,
       "page": "page-2"
     },
     {
@@ -69,7 +69,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1514,
+      "h": 1544,
       "page": "page-3"
     },
     {
@@ -78,7 +78,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1349,
+      "h": 1439,
       "page": "page-3"
     },
     {
@@ -114,7 +114,7 @@
       "x": 490,
       "y": 2009,
       "w": 390,
-      "h": 1424,
+      "h": 1529,
       "page": "page-3"
     },
     {
@@ -132,7 +132,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1454,
+      "h": 1694,
       "page": "page-4"
     },
     {
@@ -141,7 +141,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1289,
+      "h": 1349,
       "page": "page-4"
     },
     {
@@ -161,7 +161,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Onboarding-funil (Fase 1, cinza, rodada 1, 14/09/2026). Por D3 o onboarding é DOIS canvases: este é o FUNIL (splash → intro → portão de conta → duas perguntas abertas → grátis × completo → escolher personagem → cadastro demo → tutorial da 1ª atividade); o ritual do Oráculo (passos 1..REVEAL, o caminho pago) é o último canvas. Os passos negativos (IDENTITY −6, GOOGLE −9, EMAIL −8, GOAL −2, STRUGGLE −3, CHOICE −7, DEMO_PICK −1) NÃO têm barra de progresso (ONB-36, oráculo). T9 (conta primeiro, com o porquê visível) vale no portão. [novo] = copy/estrutura proposta; [decisão 13/09] = D4 (ONB-13 rascunho retomado = fora), D11. Números = ordem de foco (1 = skip link, oculto)."
+      "text": "Soulmon — Wireframes Onboarding-funil (Fase 1, cinza, rodada 2 pós-crítica, 14/09/2026). Por D3 o onboarding é DOIS canvases: este é o FUNIL (splash → intro → portão de conta → duas perguntas abertas → grátis × completo → escolher personagem → cadastro demo → tutorial da 1ª atividade); o ritual do Oráculo (passos 1..REVEAL, o caminho pago) é o último canvas. Os passos negativos (IDENTITY −6, GOOGLE −9, EMAIL −8, GOAL −2, STRUGGLE −3, CHOICE −7, DEMO_PICK −1) NÃO têm barra de progresso (ONB-36, oráculo). T9 (conta primeiro, com o porquê visível) vale no portão. [novo] = copy/estrutura proposta; [decisão 13/09] = D4 (ONB-13 rascunho retomado = fora), D11. Números = ordem de foco (1 = skip link, oculto)."
     }
   ],
   "pages": [
