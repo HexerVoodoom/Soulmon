@@ -283,3 +283,57 @@ mantidas.
 - **Para o cartógrafo:** o estado vazio da ficha (`formas.length === 0`) existe no código e não tem linha no inventário; as duas habilidades do estágio **não têm seção no `02-REGRAS-DE-NEGOCIO.md`** (a regra vive só em `utils/soulProfile/ficha/skills` — o `02 §15` é atributos e galhos); a data das formas tem de ter UM dono de tela (V2).
 - **Para o `docs/STATUS.md` (achados de código):** (a) `DreamDex` sempre renderiza contador + `progressbar`, mesmo em zero; (b) `dreamDates` carimbado no save e nunca exibido; (c) a fileira de sub-abas são três `<button>` sem grupo nem estado ativo para leitor de tela; (d) a sub-aba Soulmon não tem sinal de posição ao rolar (ficha → Dex → diário); (e) três `ScreenSkeleton` empilhados; (f) as habilidades do estágio sem seção no manual.
 - **Para o `staff-frontend`:** P1–P4 e S1–S5 são o diff do Pet; nenhum item muda regra de jogo; aceites do guarda: 1c (as frações somem só com as três em zero), 2a (a data das formas em uma casa só).
+
+## 9. Onboarding-funil: entra / volta / sai (decisão do `soulmon-design-lead`, 14/09/2026)
+
+> **Canvas:** [Soulmon — Wireframes Onboarding-funil](https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6)
+> (rodada 2, pós-crítica) · arquivos em `docs/design/wireframes/onboarding-funil/` (`Main.dc.html` + 16
+> `<TelaEstado>.dc.html` + `canvas.json`; 25 linhas `ONB-*` do funil em 17 artboards — `ONB-13` é `fora` por D4).
+> Por **D3** o Onboarding são dois canvases: este é o FUNIL (splash → intro → portão → perguntas → grátis ×
+> completo → personagem → cadastro demo → tutorial); o ritual do Oráculo (`ONB-21`→`ONB-33`, `35`→`38`) é o
+> último canvas.
+> **Crítica:** `design-critic` (rodada 1: "não passa", 4 bloqueantes B1–B4 + W3 — aplicados na rodada 2),
+> `soulmon-product-designer` (6 achados; os que mudaram o canvas: o nascimento demo sem a criatura, o
+> objetivo perguntado duas vezes, a justificativa do campo), `soulmon-guarda-linha-vermelha` (família
+> **APROVADA COM RESSALVA** — nenhum veto; 2 ressalvas: rotular o estado pós-marcação em ONB-09 e a
+> disclosure da IA no tutorial).
+> **Precedência:** código > teste > `CLAUDE.md` > manual > este doc. Valem T9 (conta primeiro, com o porquê),
+> D4 (rascunho = fora), D8 (o objetivo não sai do aparelho para ordenar), D11.
+
+### 9.1 Entra (estrutura ou copy nova, marcada `[novo]` no canvas)
+
+| # | O que entra | Motivo (fonte) | O que perde |
+|---|---|---|---|
+| O1 | **O sprite grande do personagem escolhido no cadastro demo** (`ONB-34`), na tonalidade escolhida | O caminho grátis nasce sem a criatura na tela do nascimento — o `REGISTER` demo não tem `<img>` (product-designer #1, fatal); PRINCÍPIOS §3 ("o reveal tem a criatura desenhada"; Finch entrega o birb, não um parágrafo); a arte existe (`src/assets/soulmon/lines/`) | Nada de regra |
+| O2 | **A justificativa do campo de objetivo** (`ONB-14`): "Your Soulmon brings this back on the days that count." | PRINCÍPIOS §3 "justificativa por campo" é obrigatório (crítico item 2: nota de rodapé não satisfaz; product-designer #4); a frase promete só o que `02 §21` permite (volta em momentos-chave — RIT-09, ONB-43; nunca vira nota, meta, cobrança) | Nada |
+| O3 | **O objetivo do tutorial nasce pré-carregado com o `soulGoal`** (`ONB-40`), editável; com ONB-14 pulado, mostra o placeholder | "What do you want to improve in your life?" e "What’s your goal?" são a mesma pergunta duas vezes em três telas (product-designer #3); o valor já está no save — não é funcionalidade nova | O campo vazio |
+| O4 | **Um "Back" nos três becos sem saída** — `STRUGGLE_STEP`, `CHOICE_STEP`, `REGISTER` | `back()` sabe voltar dos três e nenhum botão o chama (crítico B1: a rodada 1 os desenhava como se existissem); o botão quiet é o mesmo que os passos do ritual já têm | Nada de regra; achado de código |
+| O5 | **Rótulo e teclado no skip da intro** (`ONB-03`): `aria-label="Skip intro"` na superfície, com Enter/Espaço | W10 (toda ação com rótulo e caminho de teclado); hoje a raiz só tem `onClick` (crítico B4) | Nada |
+| O6 | **O aviso junto de "Suggest tasks with AI"** (`ONB-40`): "Your goal is sent to the AI to write suggestions." | Guarda 2e: o objetivo VAI para `/api/suggest-tasks` (`minimizeForAi` tira identificador direto, não dado de saúde) e a política de privacidade não menciona o endpoint — aceite: linha na política PT/EN antes de implementar + o aviso curto | Nada de regra |
+| O7 | **Estados que a rodada 1 não tinha**: o par "Sign in" do e-mail (reset enviado como `role="status"`, `aria-invalid`, "I forgot my password"); ONB-05 como o que é (a tela sem-Firebase por um tick); o rótulo real do teto no tutorial ("Stage limit of N activities reached — unselect something to swap.") como UI; a barra do tutorial como pontinhos, como o código | W3 (crítico); B2, B3; fidelidade | Nada |
+
+### 9.2 Volta (a crítica pediu; o lead recusa ou adia)
+
+| # | Pedido | Decisão | Motivo |
+|---|---|---|---|
+| V1 | **Reordenar o funil**: as duas perguntas abertas (ONB-14/15) DEPOIS do personagem e do cadastro (ONB-20/34), para a criatura subir da 7ª para a 5ª tela (product-designer #2, "criatura antes do pedágio") | **→ dono** | Muda a ordem dos `step` em `SoulmonOnboarding.tsx` e o funil medido (PP Parte 0); é a maior alavanca do canvas e não é do wireframe decidir. Custo: perde "a conta fica atrás, o ritual à frente" das perguntas; ganha fundir com O3 (a pergunta do tutorial). Recomendação do lead: reordenar |
+| V2 | O porquê da ausência de conta em ONB-09 (T9 parcial; product-designer #5): "No account here — your progress stays on this device." | **Adiado → lote de copy** | Copy nova numa tela que hoje tem hint próprio; registrada como candidata |
+| V3 | A métrica "8 telas + WelcomePromptModal" (PP Parte 0) × as 10 telas contadas no canvas (o tutorial são 2) | **→ STATUS** | Reconciliar a régua, não o desenho |
+| V4 | Copy dizendo que a 1ª atividade do tutorial é REAL (vai para `gameState.activities`), não demo | **Adiado → lote de copy** | Achado para o STATUS; nenhuma tela diz isso hoje |
+
+### 9.3 Sai (o que a superfície de hoje tem e o wireframe não tem)
+
+| # | Sai | Motivo |
+|---|---|---|
+| S1 | **O campo de objetivo vazio no tutorial** | O3 |
+| S2 | **O nascimento demo sem a criatura** | O1 |
+| S3 | **O "carregando" do portão como tela própria** (rodada 1) — é a tela sem-Firebase por um tick | Crítico B2 |
+| S4 | **A barra contínua do tutorial** (rodada 1) — são pontinhos | Fidelidade |
+| S5 | **O rascunho retomado do portão** (`ONB-13`) | D4: `fora` |
+
+### 9.4 O que fica registrado para depois
+
+- **Para o dono, no checkpoint:** O1, O2, O3, O4 são as mudanças estruturais — a recomendação é aprovar as quatro; **V1 (reordenar o funil: criatura antes das perguntas) é decisão sua** — o lead recomenda reordenar.
+- **Para o cartógrafo:** `03 §2.3` não diz que `STRUGGLE`, `CHOICE` e `REGISTER` não têm volta; `03 §2.4` não diz que o campo de objetivo do tutorial é independente do `soulGoal`; a régua "8 telas" de PP Parte 0 exclui o tutorial.
+- **Para o `docs/STATUS.md` (achados de código):** (a) três becos sem saída no funil (`back()` sem botão em `STRUGGLE_STEP`, `CHOICE_STEP`, `REGISTER`); (b) `REGISTER` demo sem `<img>`; (c) durante a checagem assíncrona o portão renderiza a tela sem-Firebase por um tick — quem toca "Continue" entra sem conta mesmo com Firebase configurado (`mostrarAuth = authUsavel && !authEmail`, `authUsavel` nasce `false`); (d) o skip da intro sem rótulo nem `onKeyDown`; (e) `/api/suggest-tasks` recebe `goalText` e a `privacidade.html` não o menciona; (f) o objetivo perguntado duas vezes (ONB-14 e ONB-40); (g) nenhuma copy diz que a 1ª atividade é real; (h) a métrica "8 telas" × 10 contadas.
+- **Para o `staff-frontend`:** O1–O7 e S1–S5 são o diff do funil; nenhum item muda regra de jogo; aceites do guarda: 2c (as caixas de ONB-09 nascem desmarcadas — o artboard mostra o estado pós-marcação), 2e (linha na política antes de implementar a disclosure); V1 espera o dono.

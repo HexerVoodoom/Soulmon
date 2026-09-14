@@ -7,6 +7,38 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 🚪 14/09/2026 — WIREFRAMES DO ONBOARDING-FUNIL: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+>
+> Quinto canvas da SQUAD-DESIGN (Fase 1; D3 divide o Onboarding em funil + oráculo — este é
+> o funil). Canvas publicado:
+> **https://claude.ai/code/artifact/443c5305-7e71-4a8f-8e2e-ca343206e8c6**
+> (17 artboards em 4 páginas; `docs/design/wireframes/onboarding-funil/`). 25 linhas `ONB-*`
+> desenhadas (`ONB-13` = `fora`, D4); decisão do design-lead em
+> `docs/design/DECISOES-WIREFRAME.md` §9.
+> - **Crítica em duas rodadas:** `design-critic` (r1 "não passa" — B1 três "Back" que o código
+>   não tem; B2 o "carregando" do portão; B3 o rótulo do teto como UI; B4 o skip sem teclado;
+>   W3 o par "Sign in" — todos aplicados), `soulmon-product-designer` (6 achados: o nascimento
+>   demo sem a criatura; a criatura só na 7ª tela; o objetivo perguntado 2×),
+>   `soulmon-guarda-linha-vermelha` (**APROVADA COM RESSALVA**, nenhum veto: rotular o estado
+>   pós-marcação em ONB-09; disclosure da IA no tutorial).
+> - **Decisões estruturais** (`[novo]`): o sprite grande no cadastro demo (O1); a
+>   justificativa do campo de objetivo (O2); o objetivo do tutorial pré-carregado com o
+>   `soulGoal` (O3); "Back" nos três becos sem saída (O4); skip da intro com rótulo e teclado
+>   (O5); aviso da IA junto do botão (O6). **Sai:** o campo vazio do tutorial, o nascimento sem
+>   criatura, a barra contínua (são pontinhos).
+> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Uma decisão sua:
+>   **reordenar o funil** para a criatura vir ANTES das duas perguntas abertas (hoje ela é a 7ª
+>   tela; reordenando, a 5ª) — muda a ordem dos passos no código e o funil medido.
+> - **Achados de passagem (código):** `STRUGGLE_STEP`, `CHOICE_STEP` e `REGISTER` não têm
+>   botão de voltar (`back()` sabe, ninguém chama); o `REGISTER` demo não tem `<img>`; durante
+>   a checagem assíncrona de auth o portão renderiza a tela sem-Firebase por um tick — tocar
+>   "Continue" ali entra sem conta mesmo com Firebase configurado; o skip da intro não tem
+>   rótulo nem `onKeyDown`; `/api/suggest-tasks` recebe o objetivo e a `privacidade.html` não
+>   menciona o endpoint; o objetivo é perguntado em ONB-14 e de novo em ONB-40; nenhuma copy
+>   diz que a 1ª atividade do tutorial é real; a régua "8 telas" (PP Parte 0) × 10 contadas.
+> - **Branch:** `design/wireframes-onboarding-funil` (pushada). Merge só após o seu OK.
+>   Próximo canvas: Evolução.
+
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `b3e4631f` (wireframes do Pet)
 >
 > `doc-mantenedor` (sessão): delta `8f23d5fd` → `b3e4631f`, 5 commits, sem módulo
