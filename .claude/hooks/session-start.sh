@@ -22,7 +22,7 @@ git fetch -q origin main 2>/dev/null || true
 ATRAS=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo '?')
 DELTA=$(node scripts/docs-delta.mjs --resumo 2>/dev/null || echo 'docs: (não medido — scripts/docs-delta.mjs falhou)')
 DONO=$(grep -m1 -oE '^> ## ⏳ DEPENDE DO DONO \([0-9/]+\)[^\n]*' docs/STATUS.md 2>/dev/null | sed 's/^> ## //')
-GUARD=$( (npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts 2>&1 | grep -E '^\s+Tests ' | sed 's/^ *//') || echo 'guard do manual: não rodou')
+GUARD=$( (npx vitest run src/docsManual.contract.test.ts src/docsSemMentira.contract.test.ts 2>&1 | grep -E '^\s+(Test Files|Tests) ' | sed 's/^ *//') || echo 'guard do manual: não rodou')
 
 cat <<BRIEF
 ## Soulmon — briefing de início de sessão (hook .claude/hooks/session-start.sh)
