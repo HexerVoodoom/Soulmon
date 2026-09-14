@@ -7,6 +7,16 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
+> ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `b3e4631f` (wireframes do Pet)
+>
+> `doc-mantenedor` (sessão): delta `8f23d5fd` → `b3e4631f`, 5 commits, sem módulo
+> novo. Redatores: `doc-bibliotecario` (`00-MAPA.md` §6.7 — quatro fluxos em
+> `aprovado`, 108 das 272 linhas, 11 canvases, `DECISOES-WIREFRAME.md` §8, os 9
+> artboards de `pet/`), `doc-historiador` (`10-DISCUSSOES-E-DECISOES.md` §11 e §17 —
+> a decisão do Pet e o bloco de 14/09; nada em §13: o `REGISTRO` não mudou).
+> `01-VISAO.md` fora do delta. Verificados pelo `doc-verificador` em 14/09/2026;
+> guard verde (10/10).
+
 > ## 🐾 14/09/2026 — WIREFRAMES DO PET: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS PELO DONO
 >
 > Quarto canvas da SQUAD-DESIGN (Fase 1; canvas próprio por D1 — `EVO-22`→`EVO-29`
