@@ -1,0 +1,225 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "RIT-01 · fila 1 — os intersticiais (quadro de estrutura)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1764,
+      "page": "page-1"
+    },
+    {
+      "file": "Fila2Slot.dc.html",
+      "title": "RIT-02 · fila 2 — o slot de avisos (quadro de estrutura)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1719,
+      "page": "page-1"
+    },
+    {
+      "file": "CheckInNormal.dc.html",
+      "title": "RIT-03 · check-in — normal",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1589,
+      "page": "page-2"
+    },
+    {
+      "file": "CheckInPendencias.dc.html",
+      "title": "RIT-04 · check-in — pendências de ontem primeiro (+ carga do dia)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1514,
+      "page": "page-2"
+    },
+    {
+      "file": "CheckInSemTarefas.dc.html",
+      "title": "RIT-05 · check-in — sem tarefas para foco",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1469,
+      "page": "page-2"
+    },
+    {
+      "file": "CheckInOfertaReduzida.dc.html",
+      "title": "RIT-06 · check-in — oferta reduzida (never miss twice)",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1574,
+      "page": "page-2"
+    },
+    {
+      "file": "CheckInEstados.dc.html",
+      "title": "RIT-07 · check-in — pulado e os estados de borda",
+      "x": 0,
+      "y": 1729,
+      "w": 390,
+      "h": 1854,
+      "page": "page-2"
+    },
+    {
+      "file": "RelatorioNormal.dc.html",
+      "title": "RIT-08 · relatório — dia com perda de coração (normal)",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1664,
+      "page": "page-3"
+    },
+    {
+      "file": "RelatorioDiaCompleto.dc.html",
+      "title": "RIT-09 · relatório — dia completo (o soulGoal volta)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1484,
+      "page": "page-3"
+    },
+    {
+      "file": "RelatorioRetorno.dc.html",
+      "title": "RIT-10 · relatório — retorno de ausência (welcomeBack)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1724,
+      "page": "page-3"
+    },
+    {
+      "file": "RelatorioOferta.dc.html",
+      "title": "RIT-14 · relatório — convite de compra (demo, 1º dia completo da semana)",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1679,
+      "page": "page-3"
+    },
+    {
+      "file": "RelatorioEstados.dc.html",
+      "title": "RIT-11 · 12 · 13 · 15 · relatório — humor, aventura, memória, corações e as notas",
+      "x": 0,
+      "y": 1864,
+      "w": 390,
+      "h": 2214,
+      "page": "page-3"
+    },
+    {
+      "file": "SonhoComCena.dc.html",
+      "title": "RIT-16 · sonho da manhã — com cena",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1424,
+      "page": "page-4"
+    },
+    {
+      "file": "SonhoSemCena.dc.html",
+      "title": "RIT-17 · sonho da manhã — sem cena (bom-dia neutro)",
+      "x": 490,
+      "y": 0,
+      "w": 390,
+      "h": 1334,
+      "page": "page-4"
+    },
+    {
+      "file": "SemanaCartao.dc.html",
+      "title": "RIT-18 · relatório semanal — cartão no slot da Home (domingo)",
+      "x": 980,
+      "y": 0,
+      "w": 390,
+      "h": 1649,
+      "page": "page-4"
+    },
+    {
+      "file": "SemanaSemSugestao.dc.html",
+      "title": "RIT-19 · relatório semanal — sem sugestão · sem substância · estreia",
+      "x": 1470,
+      "y": 0,
+      "w": 390,
+      "h": 1809,
+      "page": "page-4"
+    },
+    {
+      "file": "MarcoCerimonia.dc.html",
+      "title": "RIT-20 · 21 · cerimônia do marco (espera o gesto) — e movimento reduzido",
+      "x": 0,
+      "y": 1949,
+      "w": 390,
+      "h": 1604,
+      "page": "page-4"
+    },
+    {
+      "file": "ProtegerProgresso.dc.html",
+      "title": "RIT-22 · proteger o progresso (e-mail) — gate reativo",
+      "x": 490,
+      "y": 1949,
+      "w": 390,
+      "h": 1514,
+      "page": "page-4"
+    },
+    {
+      "file": "WelcomeInstalar.dc.html",
+      "title": "RIT-23 · welcome prompt — instalar a PWA",
+      "x": 980,
+      "y": 1949,
+      "w": 390,
+      "h": 1319,
+      "page": "page-4"
+    },
+    {
+      "file": "WelcomeNotificacoes.dc.html",
+      "title": "RIT-24 · 25 · welcome prompt — notificações (e as duas metades)",
+      "x": 1470,
+      "y": 1949,
+      "w": 390,
+      "h": 1304,
+      "page": "page-4"
+    },
+    {
+      "file": "PrimeiraTarefa.dc.html",
+      "title": "RIT-26 · primeira tarefa concluída (uma vez na vida)",
+      "x": 0,
+      "y": 3693,
+      "w": 390,
+      "h": 1364,
+      "page": "page-4"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "leia",
+      "page": "page-1",
+      "x": 0,
+      "y": -170,
+      "w": 900,
+      "text": "Soulmon — Wireframes Rituais (Fase 1, cinza, rodada 1, 14/09/2026). Os dois quadros de fila vêm primeiro: são a regra que governa o resto (W7). Cada intersticial é desenhado como o código o monta (centrado, z-200, foco preso, Escape = a saída sem culpa); o semanal é CARTÃO no slot da Home (posição 2); a cerimônia do marco fica fora das filas de propósito (z-300, espera o gesto). Regras herdadas da Home/Atividades: piso de dígitos (E5/13.7 — dívida nunca em zero; posse pode), regra de canal, nada cobra (W6). [novo] = copy ou estrutura proposta, não do código; [decisão 13/09] = D7 (reduced-motion como nota), D10 (carga no check-in). Números = ordem de foco (1 = skip link, oculto). Tags RIT-xx = inventário."
+    }
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Rituais — as duas filas"
+    },
+    {
+      "id": "page-2",
+      "name": "Rituais — check-in da manhã"
+    },
+    {
+      "id": "page-3",
+      "name": "Rituais — relatório diário"
+    },
+    {
+      "id": "page-4",
+      "name": "Rituais — sonho, semana, marco e os que entram por gate"
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
+}
