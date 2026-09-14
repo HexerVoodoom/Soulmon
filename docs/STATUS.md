@@ -7,7 +7,7 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 - **O que depende de você (dono do projeto)** → seção 3
 - Dívidas conhecidas que ainda não valem o custo → seção 4
 
-> ## ☀️ 14/09/2026 — WIREFRAMES DE RITUAIS: DESENHADOS, CRITICADOS, CORRIGIDOS — CHECKPOINT DO DONO PENDENTE
+> ## ☀️ 14/09/2026 — WIREFRAMES DE RITUAIS: DESENHADOS, CRITICADOS, CORRIGIDOS E APROVADOS PELO DONO
 >
 > Terceiro fluxo da SQUAD-DESIGN (Fase 1). Canvas publicado:
 > **https://claude.ai/code/artifact/526d821f-9d70-497e-bb70-c932701c3a3a**
@@ -28,10 +28,10 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   linha no semanal (R5); estado "aceitei" da oferta reduzida (R6); primeira tarefa
 >   como cerimônia, fora das filas de propósito (R8). **Sai:** o × da cerimônia, o
 >   número de dias fora, os zeros de dívida, "streak".
-> - **⏳ DEPENDE DE VOCÊ (checkpoint):** aprovar / devolver / mandar sair. Duas
->   decisões de regra suas: (a) a missão semanal `mood-checkins` (2 Emblemas por
->   responder o humor) fica no pool? (b) o "1×/semana" da oferta no relatório conta ao
->   MOSTRAR ou ao TOCAR (hoje é ao tocar)?
+> - **✅ Checkpoint fechado em 14/09/2026 (modal):** o dono APROVOU R1–R8. Duas decisões de
+>   regra novas no `REGISTRO-DE-DECISOES.md` §13: **13.10** a missão semanal `mood-checkins`
+>   fica, com alvo 5 em vez de 3; **13.11** o "1×/semana" do convite no relatório conta ao
+>   MOSTRAR (`offerShownWeek` na exibição, não no toque).
 > - **Achados de passagem (código):** `FirstTaskCompletedPopup` (`ModalSheet` z-120)
 >   monta SOB um intersticial aberto, invisível, com trap próprio — e a 1ª conclusão
 >   da vida pode ser o "just 5 minutes today?" do check-in; `ProtectProgressModal` e
@@ -43,8 +43,9 @@ ou concluído, registre aqui**, senão se perde entre sessões.
 >   "You're on a good streak!" com gate de 5 tarefas; `restDayUsed`/`weeklyRelief`
 >   sem `!welcome`; `offerShownWeek` gravado no toque; "You were away N days";
 >   "chosen focus: 0"; `03 §4.21` diz que o gate "substituiu" o timer — coexistem.
-> - **Branch:** `design/wireframes-rituais` (pushada). Merge só após o seu OK.
->   Próximo canvas: Pet (D1).
+> - **Branch:** `design/wireframes-rituais` — mergeada na `main` (ff) após o OK. Próximo
+>   canvas: Pet (D1). Para o `staff-frontend`: 13.10 muda `weeklyMissions.ts` (alvo 5);
+>   13.11 muda `onOpenOffer`/`offerMoment.ts` (carimbo na exibição).
 
 > ## 📚 14/09/2026 — MANUAL SINCRONIZADO COM `5540226c` (wireframes de Atividades)
 >
