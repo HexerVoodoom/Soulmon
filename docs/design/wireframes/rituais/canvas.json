@@ -6,7 +6,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1764,
+      "h": 1839,
       "page": "page-1"
     },
     {
@@ -24,7 +24,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1589,
+      "h": 1619,
       "page": "page-2"
     },
     {
@@ -33,7 +33,7 @@
       "x": 490,
       "y": 0,
       "w": 390,
-      "h": 1514,
+      "h": 1619,
       "page": "page-2"
     },
     {
@@ -42,7 +42,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1469,
+      "h": 1364,
       "page": "page-2"
     },
     {
@@ -51,16 +51,16 @@
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1574,
+      "h": 1604,
       "page": "page-2"
     },
     {
       "file": "CheckInEstados.dc.html",
       "title": "RIT-07 · check-in — pulado e os estados de borda",
       "x": 0,
-      "y": 1729,
+      "y": 1759,
       "w": 390,
-      "h": 1854,
+      "h": 1914,
       "page": "page-2"
     },
     {
@@ -69,7 +69,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1664,
+      "h": 1874,
       "page": "page-3"
     },
     {
@@ -87,25 +87,25 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1724,
+      "h": 1964,
       "page": "page-3"
     },
     {
       "file": "RelatorioOferta.dc.html",
-      "title": "RIT-14 · relatório — convite de compra (demo, 1º dia completo da semana)",
+      "title": "RIT-14 · relatório — convite de compra (demo, dia completo, 1×/semana)",
       "x": 1470,
       "y": 0,
       "w": 390,
-      "h": 1679,
+      "h": 1799,
       "page": "page-3"
     },
     {
       "file": "RelatorioEstados.dc.html",
       "title": "RIT-11 · 12 · 13 · 15 · relatório — humor, aventura, memória, corações e as notas",
       "x": 0,
-      "y": 1864,
+      "y": 2104,
       "w": 390,
-      "h": 2214,
+      "h": 2229,
       "page": "page-3"
     },
     {
@@ -114,7 +114,7 @@
       "x": 0,
       "y": 0,
       "w": 390,
-      "h": 1424,
+      "h": 1514,
       "page": "page-4"
     },
     {
@@ -132,7 +132,7 @@
       "x": 980,
       "y": 0,
       "w": 390,
-      "h": 1649,
+      "h": 1739,
       "page": "page-4"
     },
     {
@@ -150,7 +150,7 @@
       "x": 0,
       "y": 1949,
       "w": 390,
-      "h": 1604,
+      "h": 1754,
       "page": "page-4"
     },
     {
@@ -159,7 +159,7 @@
       "x": 490,
       "y": 1949,
       "w": 390,
-      "h": 1514,
+      "h": 1694,
       "page": "page-4"
     },
     {
@@ -168,7 +168,7 @@
       "x": 980,
       "y": 1949,
       "w": 390,
-      "h": 1319,
+      "h": 1304,
       "page": "page-4"
     },
     {
@@ -184,9 +184,9 @@
       "file": "PrimeiraTarefa.dc.html",
       "title": "RIT-26 · primeira tarefa concluída (uma vez na vida)",
       "x": 0,
-      "y": 3693,
+      "y": 3843,
       "w": 390,
-      "h": 1364,
+      "h": 1484,
       "page": "page-4"
     }
   ],
@@ -197,7 +197,7 @@
       "x": 0,
       "y": -170,
       "w": 900,
-      "text": "Soulmon — Wireframes Rituais (Fase 1, cinza, rodada 1, 14/09/2026). Os dois quadros de fila vêm primeiro: são a regra que governa o resto (W7). Cada intersticial é desenhado como o código o monta (centrado, z-200, foco preso, Escape = a saída sem culpa); o semanal é CARTÃO no slot da Home (posição 2); a cerimônia do marco fica fora das filas de propósito (z-300, espera o gesto). Regras herdadas da Home/Atividades: piso de dígitos (E5/13.7 — dívida nunca em zero; posse pode), regra de canal, nada cobra (W6). [novo] = copy ou estrutura proposta, não do código; [decisão 13/09] = D7 (reduced-motion como nota), D10 (carga no check-in). Números = ordem de foco (1 = skip link, oculto). Tags RIT-xx = inventário."
+      "text": "Soulmon — Wireframes Rituais (Fase 1, cinza, rodada 2 pós-crítica, 14/09/2026). Os dois quadros de fila vêm primeiro: são a regra que governa o resto (W7). Cada intersticial é desenhado como o código o monta (centrado, z-200, foco preso, Escape = a saída sem culpa); o semanal é CARTÃO no slot da Home (posição 2); a cerimônia do marco fica fora das filas de propósito (z-300, espera o gesto). Regras herdadas da Home/Atividades: piso de dígitos (E5/13.7 — dívida nunca em zero; posse pode), regra de canal, nada cobra (W6). [novo] = copy ou estrutura proposta, não do código; [decisão 13/09] = D7 (reduced-motion como nota), D10 (carga no check-in). Números = ordem de foco (1 = skip link, oculto). Tags RIT-xx = inventário."
     }
   ],
   "pages": [

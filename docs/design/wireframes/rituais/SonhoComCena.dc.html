@@ -121,14 +121,14 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
   </div></div>
     <div style="position:absolute;inset:0;background:rgba(0,0,0,.06);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
       <div role="dialog" aria-modal="true" aria-label="Good morning! Your Soulmon dreamed..." style="width:100%;max-width:320px;max-height:800px;overflow:hidden;border:1px solid #999;border-radius:8px;background:#fff;position:relative;display:flex;flex-direction:column;gap:8px;padding:14px 16px 16px;box-sizing:border-box">
-        <span class="tap" role="button" aria-label="Close" style="position:absolute;top:2px;right:2px;min-width:44px"><i class="fo">3</i><span class="ico ">x</span></span>
+        <span class="tap" role="button" aria-label="Close" style="position:absolute;top:2px;right:2px;min-width:44px"><i class="fo">2</i><span class="ico ">x</span></span>
       <p class="s" style="text-align:center;margin-right:36px">Good morning! Your Soulmon dreamed...</p>
       <span class="box" style="width:72px;height:72px;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:9px;color:#666">DREAM ART</span>
       <p class="t b" style="text-align:center">Napping on a cloud</p>
       <p class="s" style="text-align:center;letter-spacing:.06em;text-transform:uppercase">Common <b>· New!</b></p>
       <p class="s" style="text-align:center">Your Soulmon spent the night napping on a cloud.</p>
       <p class="s" style="text-align:center">New scene in the dream collection.</p>
-      <div style="padding-top:8px"><span class="btn" role="button"  style="width:100%;"><i class="fo">2</i>Good morning!</span></div>
+      <div style="padding-top:8px"><span class="btn" role="button"  style="width:100%;"><i class="fo">3</i>Good morning!</span></div>
     
       </div>
     </div>
@@ -138,9 +138,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <h4>Pergunta</h4><p>"What did my Soulmon dream?" — a reward for the morning, never a verdict on the night</p>
     <h4>Chega por / Sai para</h4><p>fila 1, posição 4 (<code>interstitial === 'dream' &amp;&amp; morningDream</code>); guardas: acordado, 4h ≤ hora < 12h, uma <code>RestNight</code> com a chave do dia do jogador, 1×/dia (<code>MORNING_DREAM_SHOWN</code>) → × / "Good morning!" / Escape → <code>setMorningDream(null)</code> → o próximo da fila (pesadelo, se houver)</p>
     <h4>Sai da tela atual</h4><ul><li>Score, duração, nota, "you slept late", "regularity dropped" — nenhuma variante julga a noite (02 §41). A raridade vem da REGULARIDADE acumulada e é TEXTO, nunca uma barra.</li><li>Qualquer notificação noturna de desempenho — o feedback é só de manhã (ortossonia).</li></ul>
-    <h4>Fontes</h4><ul><li><code>MorningDream.tsx</code> ("Good morning! Your Soulmon dreamed..."; <code>labelEn</code>; Common / Rare / Legendary; "· New!"; "Your Soulmon spent the night <code>label</code>."; "New scene in the dream collection."; botão "Good morning!" com <code>autoFocus</code>)</li><li>03 §4.18 · 02 §41 (raridade da regularidade, nunca da duração; sem score; o Dex mostra silhueta, não "faltam N") · 02 §40</li><li>PRINCÍPIOS §4 (Rituais)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code>; foco preso + Escape em todo diálogo (<code>useDialogA11y</code>) — o × vem antes no DOM; o foco de montagem cai no botão (<code>autoFocus</code>)</li></ul>
+    <h4>Fontes</h4><ul><li><code>MorningDream.tsx</code> ("Good morning! Your Soulmon dreamed..."; <code>labelEn</code>; Common / Rare / Legendary; "· New!"; "Your Soulmon spent the night <code>label</code>."; "New scene in the dream collection."; botão "Good morning!" com <code>autoFocus</code>)</li><li>03 §4.18 · 02 §41 (raridade da regularidade, nunca da duração; sem score; o Dex mostra silhueta, não "faltam N") · 02 §40</li><li>PRINCÍPIOS §4 (Rituais) · guarda 2e (aprovado com ressalva: a raridade nunca vem com causa, nunca comparada com ontem, nunca à noite)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code>; foco preso + Escape em todo diálogo (<code>useDialogA11y</code>) — o × vem antes no DOM; o foco de montagem cai no botão (<code>autoFocus</code>)</li></ul>
     <h4>PT</h4><ul><li>"Bom dia! Seu Soulmon sonhou..." / "Bom dia!" · Comum / Raro / Lendário · "· Novo!" · "Seu Soulmon passou a noite <code>cena</code>." · "Cena nova na coleção de sonhos." · "Seu Soulmon acordou primeiro e ficou esperando você. Hoje não veio nenhuma cena da noite — e está tudo bem." · Fechar</li></ul>
-    
+    <h4>Notas</h4><ul><li>"New scene in the dream collection" não tem ponte para o Dex aqui — o <code>DreamDex</code> mora no canvas Pet (D1); o destino fica anotado, não desenhado (product-designer Q5).</li></ul>
   </footer>
 </div>
 </x-dc>

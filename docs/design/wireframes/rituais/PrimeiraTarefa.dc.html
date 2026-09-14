@@ -119,10 +119,11 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
     <div class="pet" style="" role="button" aria-label="Pet your Soulmon (hold to heal)"><span style="position:absolute;left:-18px;top:-2px"></span>PET</div>
     
   </div></div>
-    <div class="folha" role="dialog" aria-modal="true" aria-label="First task done!" style="max-height:400px">
+    <div class="folha" role="dialog" aria-modal="true" aria-label="First task done!" style="max-height:440px">
       <div style="display:flex;align-items:center;justify-content:space-between"><h2 class="h2">First task done!</h2><span class="tap" style="min-width:44px" role="button" aria-label="Close"><span class="tag">× = last in focus order · Escape closes</span><i class="fo">3</i><span class="ico ">x</span></span></div>
       
-      <div style="display:flex;justify-content:center"><span class="ico big">seed</span></div>
+      <div style="display:flex;justify-content:center;gap:10px;align-items:center"><span class="box" style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#666">PET</span><span class="ico big">seed</span></div>
+      <p class="note" style="text-align:center"><span class="tag novo">novo</span> the creature IN the piece — "It grew a little" with the sprite next to the 🌱 (Alan, MOB §6A: proof by use)</p>
       <p class="t" style="text-align:center">It grew a little just now. One thing at a time, at your pace.</p>
       <span class="btn" role="button"  style="width:100%;"><i class="fo">2</i>Got it</span>
       <p class="note">guarded by <code>FIRST_TASK_POPUP_SHOWN</code> and by a sweep (<code>anyStepCompleted</code> / <code>anyTaskCompleted</code>); emits <code>first_task_done</code>.</p>
@@ -131,9 +132,9 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 <footer class="foot">
     <p><span class="b">Artboard</span> · <span class="tag">RIT-26</span></p>
     <h4>Pergunta</h4><p>"Did that count?" — yes, and the creature already shows it; one sentence, one button</p>
-    <h4>Chega por / Sai para</h4><p><code>showFirstTaskPopup</code> (via <code>GamePopups</code>), na PRIMEIRA conclusão da vida → "Got it" / × / Escape → <code>setShowFirstTaskPopup(false)</code></p>
-    <h4>Sai da tela atual</h4><ul><li>A segunda frase explicativa (a pessoa acabou de fazer a coisa; explicar a mecânica agora é roubar a comemoração — código já cortou).</li><li>Posição na fila: ela NÃO tem — monta por gate próprio, fora das duas filas e sem a justificativa que a cerimônia do marco tem. <span class="tag">achado para o lead / cartógrafo (W7)</span> — pode abrir em cima de um intersticial (dois focus-traps).</li></ul>
-    <h4>Fontes</h4><ul><li><code>FirstTaskCompletedPopup.tsx</code> (<code>ModalSheet</code>; "First task done!"; 🌱; "It grew a little just now. One thing at a time, at your pace."; "Got it")</li><li>03 §4.25 (<code>GamePopups</code>: uma vez na vida) · W7 + PRINCÍPIOS §13 (superfície nova entra numa das duas filas, com posição declarada)</li><li>PRINCÍPIOS §5 (Celebração × toast) (composição: emblema · nome · 1 linha · um botão; sem prêmio)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code>; foco preso + Escape em todo diálogo (<code>useDialogA11y</code>)</li></ul>
+    <h4>Chega por / Sai para</h4><p><code>showFirstTaskPopup</code> (via <code>GamePopups</code>), na PRIMEIRA conclusão da vida — inclusive quando ela é o "just 5 minutes today?" da oferta reduzida (RIT-06) → "Got it" / × / Escape → <code>setShowFirstTaskPopup(false)</code></p>
+    <h4>Sai da tela atual</h4><ul><li>Posição na fila: ela NÃO tem — <code>ModalSheet</code> z-120 monta por gate próprio, fora das duas filas, e POR BAIXO de um intersticial aberto (z-200): invisível, com trap próprio (N2 / product-designer #1). <span class="tag">achado para o lead / cartógrafo (W7)</span></li><li>Para o lead <span class="tag novo">novo — estrutura</span> (product-designer #1, Q5): mover a peça para a classe da cerimônia (fora das filas, z-300, espera o gesto, com o sprite) — ela É celebração (PRINCÍPIOS §5), não folha de sistema. Aqui está desenhada como o código (folha), com o sprite como única adição.</li></ul>
+    <h4>Fontes</h4><ul><li><code>FirstTaskCompletedPopup.tsx</code> (<code>ModalSheet</code>; "First task done!"; 🌱; "It grew a little just now. One thing at a time, at your pace."; "Got it") · <code>App.tsx</code> ~l.1925 (<code>setShowFirstTaskPopup(true)</code> em <code>handleToggleActivityCompletion</code>)</li><li>03 §4.25 (<code>GamePopups</code>: uma vez na vida) · W7 + PRINCÍPIOS §13 (superfície nova entra numa das duas filas, com posição declarada)</li><li>PRINCÍPIOS §5 (Celebração × toast) (composição: emblema · nome · 1 linha · um botão; sem prêmio; Alan — prova pelo uso) · guarda 2b (aprovado)</li><li>W10: ordem de foco numerada (1 = skip link, oculto); alvos ≥ 44px; rótulo = <code>aria-label</code>; foco preso + Escape em todo diálogo (<code>useDialogA11y</code>)</li><li>crítica de 14/09/2026: design-critic N2 · product-designer #1, Q5</li></ul>
     <h4>PT</h4><ul><li>"Primeira tarefa feita!" · "Seu Soulmon cresceu um pouquinho agora. Uma coisa de cada vez, no seu ritmo." · Entendi</li></ul>
     
   </footer>

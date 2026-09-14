@@ -115,15 +115,16 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.92em;color:#111}
 </helmet>
 <div class="ab">
 <div class="phone tall"><div class="sheet">
-      <div class="strip"><p class="cap"><span class="tag">RIT-19</span> <code>stackingSuggestion === null</code> — o cartão termina na linha dos sonhos. Nenhum texto no lugar ("not enough data yet" seria a cobrança com outro nome): o silêncio é a metade importante.</p><section class="card" aria-label="Your week">
+      <div class="strip"><p class="cap"><span class="tag">RIT-19</span> <code>stackingSuggestion === null</code> — o cartão termina na linha dos sonhos. Nenhum texto no lugar ("not enough data yet" seria a cobrança com outro nome): o silêncio é a metade importante. Aqui também <code>tasksDone === 0</code>: a linha de tarefas não existe.</p><section class="card" aria-label="Your week">
     <p class="t b" style="letter-spacing:.06em">YOUR WEEK</p>
     <p class="s">A read on the last seven days. None of this is a grade — it is just what happened.</p>
     <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px">
-      <li style="display:flex;align-items:center;gap:8px;min-height:28px"><span class="ico ">hab</span><span class="t" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Run <span class="s">· most consistent</span></span><span class="s">5 of 5</span></li>
-      <li style="display:flex;align-items:center;gap:8px;min-height:28px"><span class="ico ">hab</span><span class="t" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Read 10 pages</span><span class="s">3 of 7</span></li>
+      <li style="display:flex;align-items:center;gap:8px;min-height:28px"><span class="ico ">hab</span><span class="t" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Run <span class="s">· most consistent</span></span><span class="dots" role="img" aria-label="Constancy window: 5 of the last 5"><i class="done"></i><i class="dash"></i><i class="done"></i><i class="done"></i><i class="dash"></i><i class="done"></i><i class="done"></i></span><span class="s">5 of 5</span></li>
+      <li style="display:flex;align-items:center;gap:8px;min-height:28px"><span class="ico ">hab</span><span class="t" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Read 10 pages</span><span class="dots" role="img" aria-label="Constancy window: 3 of the last 7"><i class="done"></i><i class="ring"></i><i class="done"></i><i class="ring"></i><i class="ring"></i><i class="done"></i><i class="ring"></i></span><span class="s">3 of 7</span></li>
       
     </ul>
-    <p class="t">2 tasks done · 5 effort points <span class="tag novo">novo</span></p>
+    <p class="note"><span class="tag novo">novo — estrutura</span> one anatomy per line: window + "N of M" only with N ≥ 1 (the code prints "N of M" always, "0 of 4" included)</p>
+    <p class="note">"0 task(s) done · 0 effort point(s)" — line gone with <code>tasksDone === 0</code> <span class="tag novo">novo</span> (B2; guarda 4e)</p>
     <p class="s">Strongest in: Body <span class="tag">sample</span></p>
     <p class="s" style="display:flex;align-items:center;gap:6px"><span class="ico ">moon</span>4 dreams collected</p>
     
